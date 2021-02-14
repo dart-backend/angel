@@ -21,7 +21,7 @@ class MongoService extends Service<String, Map<String, dynamic>> {
       : super();
 
   SelectorBuilder _makeQuery([Map<String, dynamic> params_]) {
-    Map params = new Map.from(params_ ?? {});
+    Map params = Map.from(params_ ?? {});
     params = params..remove('provider');
     SelectorBuilder result = where.exists('_id');
 

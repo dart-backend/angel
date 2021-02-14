@@ -1,4 +1,5 @@
-import 'package:angel_container/angel_container.dart';
+import 'empty/empty.dart';
+import 'reflector.dart';
 
 /// A [Reflector] implementation that throws exceptions on all attempts
 /// to perform reflection.

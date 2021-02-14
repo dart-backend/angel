@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:convert';
 import 'package:body_parser/body_parser.dart';
 import 'package:dart2_constant/convert.dart';
 import 'package:http/http.dart' as http;
@@ -49,7 +50,7 @@ world
         'Form Data: \n${postData.replaceAll("\r", "\\r").replaceAll("\n", "\\n")}');
     var response = await client.post(url, headers: headers, body: postData);
     print('Response: ${response.body}');
-    Map jsons = json.decode(response.body);
+    var jsons = json.decode(response.body);
     var files = jsons['files'].map((map) {
       return map == null
           ? null
@@ -84,7 +85,7 @@ Hello world
         'Form Data: \n${postData.replaceAll("\r", "\\r").replaceAll("\n", "\\n")}');
     var response = await client.post(url, headers: headers, body: postData);
     print('Response: ${response.body}');
-    Map jsons = json.decode(response.body);
+    var jsons = json.decode(response.body);
     var files = jsons['files'];
     expect(files.length, equals(1));
     expect(files[0]['name'], equals('file'));
@@ -128,7 +129,7 @@ function main() {
         'Form Data: \n${postData.replaceAll("\r", "\\r").replaceAll("\n", "\\n")}');
     var response = await client.post(url, headers: headers, body: postData);
     print('Response: ${response.body}');
-    Map jsons = json.decode(response.body);
+    var jsons = json.decode(response.body);
     var files = jsons['files'];
     expect(files.length, equals(2));
     expect(files[0]['name'], equals('file'));

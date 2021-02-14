@@ -6,7 +6,7 @@ import 'package:angel_security/angel_security.dart';
 import 'package:logging/logging.dart';
 import 'package:pretty_logging/pretty_logging.dart';
 
-main() async {
+void main() async {
   // Logging boilerplate.
   Logger.root.onRecord.listen(prettyLog);
 

@@ -53,8 +53,9 @@ class PollingService extends Service {
   @override
   Angel get app => inner.app;
 
+  // TODO: To revisit this logic
   @override
-  Stream get onIndexed => _onIndexed.stream;
+  Stream<List> get onIndexed => _onIndexed.stream;
 
   @override
   Stream get onRead => _onRead.stream;
@@ -116,13 +117,20 @@ class PollingService extends Service {
     _onRemoved.close();
   }
 
+  // TODO: To revisit this logic
   @override
-  Future index([Map params]) {
+  Future<List> index([Map params]) {
     return inner.index().then((data) {
-      return asPaginated == true ? data['data'] : data;
+      //return asPaginated == true ? data['data'] : data;
+      return asPaginated == true ? data[0] : data;
     });
   }
 
+/*
+  @override
+  Future index([Map params]) {
+  }
+*/
   @override
   Future remove(id, [Map params]) {
     return inner.remove(id, params).then((result) {

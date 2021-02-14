@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
@@ -207,6 +208,25 @@ class BuildSystemFile extends File {
       fileSystem, reader, package, fileSystem.path.dirname(path));
 
   @override
+  Future<Uint8List> readAsBytes() {
+    // TODO: implement readAsBytes
+    throw UnimplementedError();
+  }
+
+  @override
+  Uint8List readAsBytesSync() {
+    // TODO: implement readAsBytesSync
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<List<String>> readAsLines({Encoding encoding = utf8}) {
+    // TODO: implement readAsLines
+    throw UnimplementedError();
+  }
+
+/*
+  @override
   Future<List<int>> readAsBytes() {
     var assetId = AssetId(package, path);
     return reader.readAsBytes(assetId);
@@ -217,7 +237,7 @@ class BuildSystemFile extends File {
   @override
   Future<List<String>> readAsLines({Encoding encoding = utf8}) =>
       throw _unsupported();
-
+*/
   @override
   List<String> readAsLinesSync({Encoding encoding = utf8}) =>
       throw _unsupported();

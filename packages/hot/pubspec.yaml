@@ -4,10 +4,12 @@ version: 2.0.6
 author: Tobe O <thosakwe@gmail.com>
 homepage: https://github.com/angel-dart/hot
 environment:
-  sdk: ">=2.0.0 <3.0.0"
+  sdk: ">=2.10.0 <2.12.0"
 dependencies:
-  angel_framework: ^2.0.0-alpha
-  angel_websocket: ^2.0.0-alpha
+  angel_framework: #^2.0.0-alpha
+    path: ../framework
+  angel_websocket: #^2.0.0-alpha
+    path: ../websocket
   charcode: ^1.0.0
   glob: ^1.0.0
   html_builder: ^1.0.0
@@ -16,6 +18,6 @@ dependencies:
   vm_service_lib: ^0.3.5
   watcher: ^0.9.0
 dev_dependencies:
-  http: ^0.11.3
+  http: ^0.12.0
   logging: ^0.11.0
   pedantic: ^1.0.0

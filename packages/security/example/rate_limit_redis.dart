@@ -7,10 +7,10 @@ import 'package:resp_client/resp_commands.dart';
 
 // We run this through angel_production, so that we can have
 // multiple instances, all using the same Redis queue.
-main(List<String> args) =>
+void main(List<String> args) =>
     Runner('rate_limit_redis', configureServer).run(args);
 
-configureServer(Angel app) async {
+void configureServer(Angel app) async {
   // Create a simple rate limiter that limits users to 10
   // queries per 30 seconds.
   //

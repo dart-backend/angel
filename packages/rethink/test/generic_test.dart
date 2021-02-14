@@ -3,7 +3,7 @@ import 'package:angel_framework/angel_framework.dart';
 import 'package:angel_rethink/angel_rethink.dart';
 import 'package:angel_test/angel_test.dart';
 import 'package:logging/logging.dart';
-import 'package:rethinkdb_driver/rethinkdb_driver.dart';
+import 'package:rethinkdb_dart/rethinkdb_dart.dart';
 import 'package:test/test.dart';
 import 'common.dart';
 

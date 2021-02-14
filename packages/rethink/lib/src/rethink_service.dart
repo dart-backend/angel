@@ -2,7 +2,7 @@ import 'dart:async';
 //import 'dart:io';
 import 'package:angel_framework/angel_framework.dart';
 import 'package:json_god/json_god.dart' as god;
-import 'package:rethinkdb_driver/rethinkdb_driver.dart';
+import 'package:rethinkdb_dart/rethinkdb_dart.dart';
 
 // Extends a RethinkDB query.
 typedef RqlQuery QueryCallback(RqlQuery query);
@@ -150,12 +150,14 @@ class RethinkService extends Service {
     });
   }
 
+  // TODO: Invalid override method
+/*
   @override
   Future index([Map params]) async {
     var query = buildQuery(table, params);
     return await _sendQuery(query);
   }
-
+*/
   @override
   Future read(id, [Map params]) async {
     var query = buildQuery(table.get(id?.toString()), params);

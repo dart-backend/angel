@@ -65,7 +65,7 @@ Future<BuildContext> buildContext(ClassElement clazz, ConstantReader annotation,
     }
   }
 
-  crawlClass(clazz.type);
+  crawlClass(clazz.thisType);
 
   for (var field in fields) {
     // Skip private fields

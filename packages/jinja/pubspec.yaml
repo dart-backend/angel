@@ -4,12 +4,14 @@ version: 1.0.0-rc.0
 homepage: https://github.com/angel-dart/jinja
 author: Tobe O <thosakwe@gmail.com>
 environment:
-  sdk: '>=2.0.0-dev <3.0.0'
+  sdk: '>=2.10.0 <2.12.0'
 dependencies:
-  angel_framework: ^2.0.0-alpha
+  angel_framework: #^2.0.0-alpha
+    path: ../framework
   jinja: ^0.0.4
 dev_dependencies:
-  angel_test: ^2.0.0
+  angel_test: #^2.0.0
+    path: ../test
   path: ^1.0.0
   pedantic: ^1.0.0
-  test: ^1.0.0
+  test: ^1.15.7

@@ -4,15 +4,18 @@ author: Tobe O <thosakwe@gmail.com>
 homepage: https://github.com/angel-dart/seo
 version: 2.0.0
 environment:
-  sdk: ">=2.0.0-dev <3.0.0"
+  sdk: ">=2.10.0 <2.12.0"
 dependencies:
-  angel_framework: ^2.0.0-alpha
-  angel_static: ^2.0.0-alpha
+  angel_framework: #^2.0.0-alpha
+    path: ../framework
+  angel_static: #^2.0.0-alpha
+    path: ../static
   file: ^5.0.0
   html: ^0.13.0
   http_parser: ^3.0.0
   path: ^1.0.0
 dev_dependencies:
-  angel_test: ^2.0.0-alpha
+  angel_test: #^2.0.0-alpha
+    path: ../test
   logging:
-  test: ^1.0.0
+  test: ^1.15.7

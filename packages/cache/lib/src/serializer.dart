@@ -12,11 +12,13 @@ RequestHandler cacheSerializationResults(
         shouldCache}) {
   return (RequestContext req, ResponseContext res) async {
     var oldSerializer = res.serializer;
-    var cache = <dynamic, String>{};
+
+    // TODO: Commented out as it is not doing anything useful
+    //var cache = <dynamic, String>{};
     res.serializer = (value) {
-      if (shouldCache == null) {
-        return cache.putIfAbsent(value, () => oldSerializer(value));
-      }
+      //if (shouldCache == null) {
+      //  return cache.putIfAbsent(value, () => oldSerializer(value));
+      //}
 
       return oldSerializer(value);
     };

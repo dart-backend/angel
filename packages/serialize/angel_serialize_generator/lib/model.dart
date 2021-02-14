@@ -85,7 +85,7 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
 
   bool shouldBeConstant(BuildContext ctx) {
     // Check if all fields are without a getter
-    return !isAssignableToModel(ctx.clazz.type) &&
+    return !isAssignableToModel(ctx.clazz.thisType) &&
         ctx.clazz.fields.every((f) =>
             f.getter?.isAbstract != false && f.setter?.isAbstract != false);
   }
@@ -109,7 +109,7 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
 
       for (var field in ctx.fields) {
         if (!shouldBeConstant(ctx) && isListOrMapType(field.type)) {
-          String typeName = const TypeChecker.fromRuntime(List)
+          var typeName = const TypeChecker.fromRuntime(List)
                   .isAssignableFromType(field.type)
               ? 'List'
               : 'Map';
@@ -181,7 +181,6 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
 
       var buf = StringBuffer('return ${ctx.modelClassName}(');
       int i = 0;
-
       for (var param in ctx.constructorParameters) {
         if (i++ > 0) buf.write(', ');
         buf.write(param.name);
@@ -208,31 +207,31 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
   static String generateEquality(DartType type, [bool nullable = false]) {
     if (type is InterfaceType) {
       if (const TypeChecker.fromRuntime(List).isAssignableFromType(type)) {
-        if (type.typeParameters.length == 1) {
+        if (type.typeArguments.length == 1) {
           var eq = generateEquality(type.typeArguments[0]);
-          return 'ListEquality<${type.typeArguments[0].name}>($eq)';
+          return 'ListEquality<${type.typeArguments[0].element.name}>($eq)';
         } else {
           return 'ListEquality()';
         }
       } else if (const TypeChecker.fromRuntime(Map)
           .isAssignableFromType(type)) {
-        if (type.typeParameters.length == 2) {
+        if (type.typeArguments.length == 2) {
           var keq = generateEquality(type.typeArguments[0]),
               veq = generateEquality(type.typeArguments[1]);
-          return 'MapEquality<${type.typeArguments[0].name}, ${type.typeArguments[1].name}>(keys: $keq, values: $veq)';
+          return 'MapEquality<${type.typeArguments[0].element.name}, ${type.typeArguments[1].element.name}>(keys: $keq, values: $veq)';
         } else {
           return 'MapEquality()';
         }
       }
 
-      return nullable ? null : 'DefaultEquality<${type.name}>()';
+      return nullable ? null : 'DefaultEquality<${type.element.name}>()';
     } else {
       return 'DefaultEquality()';
     }
   }
 
   static String Function(String, String) generateComparator(DartType type) {
-    if (type is! InterfaceType || type.name == 'dynamic') {
+    if (type is! InterfaceType || type.element.displayName == 'dynamic') {
       return (a, b) => '$a == $b';
     }
     var eq = generateEquality(type, true);
