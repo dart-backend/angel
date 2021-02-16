@@ -3,8 +3,9 @@ import 'dart:io';
 import 'package:args/args.dart';
 import 'package:io/ansi.dart';
 import 'package:io/io.dart';
-import 'package:dart_language_server/dart_language_server.dart';
-import 'package:jael_language_server/jael_language_server.dart';
+//import 'package:dart_language_server/dart_language_server.dart';
+import 'package:vs_jael_language_server/jael_language_server.dart';
+import 'package:vs_jael_language_server/src/protocol/language_server/server.dart';
 
 main(List<String> args) async {
   var argParser = new ArgParser()
@@ -56,7 +57,7 @@ main(List<String> args) async {
       );
       var zone = Zone.current.fork(specification: spec);
       await zone.run(() async {
-        var stdio = new StdIOLanguageServer.start(jaelServer);
+        var stdio = StdIOLanguageServer.start(jaelServer);
         await stdio.onDone;
       });
     }

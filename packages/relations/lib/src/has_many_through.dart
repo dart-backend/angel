@@ -29,8 +29,9 @@ HookedServiceEventListener hasManyThrough(String servicePath, String pivotPath,
         return assignForeignObjects(foreign, obj);
       else if (obj is Map)
         obj[foreignName] = foreign;
-      else if (obj is Extensible)
-        obj.properties[foreignName] = foreign;
+      //TODO: Undefined class
+      //else if (obj is Extensible)
+      //  obj.properties[foreignName] = foreign;
       else
         reflect(obj).setField(new Symbol(foreignName), foreign);
     }
@@ -40,8 +41,9 @@ HookedServiceEventListener hasManyThrough(String servicePath, String pivotPath,
         return getLocalKey(obj);
       else if (obj is Map)
         return obj[localKey ?? 'id'];
-      else if (obj is Extensible)
-        return obj.properties[localKey ?? 'id'];
+      //TODO: Undefined class
+      //else if (obj is Extensible)
+      //  return obj.properties[localKey ?? 'id'];
       else if (localKey == null || localKey == 'id')
         return obj.id;
       else
@@ -53,8 +55,9 @@ HookedServiceEventListener hasManyThrough(String servicePath, String pivotPath,
         return getPivotKey(obj);
       else if (obj is Map)
         return obj[pivotKey ?? 'id'];
-      else if (obj is Extensible)
-        return obj.properties[pivotKey ?? 'id'];
+      //TODO: Undefined class
+      //else if (obj is Extensible)
+      //  return obj.properties[pivotKey ?? 'id'];
       else if (pivotKey == null || pivotKey == 'id')
         return obj.id;
       else

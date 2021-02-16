@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:typed_data';
 import 'package:angel_framework/angel_framework.dart';
 import 'package:file/file.dart';
 import 'package:http_parser/http_parser.dart';
@@ -12,14 +11,16 @@ final RegExp _straySlashes = RegExp(r'(^/+)|(/+$)');
 String _pathify(String path) {
   var p = path.replaceAll(_straySlashes, '');
 
-  Map<String, String> replace = {};
+  var replace = {};
 
   for (Match match in _param.allMatches(p)) {
     if (match[3] != null) replace[match[0]] = ':${match[1]}';
   }
 
   replace.forEach((k, v) {
-    p = p.replaceAll(k, v);
+    if (k is String && v is String) {
+      p = p.replaceAll(k, v);
+    }
   });
 
   return p;
@@ -64,7 +65,7 @@ class VirtualDirectory {
     if (source != null) {
       _source = source;
     } else {
-      String dirPath = app.environment.isProduction ? './build/web' : './web';
+      var dirPath = app.environment.isProduction ? './build/web' : './web';
       _source = fileSystem.directory(dirPath);
     }
   }
@@ -148,7 +149,7 @@ class VirtualDirectory {
   /// Serves the index file of a [directory], if it exists.
   Future<bool> serveDirectory(Directory directory, String relative,
       FileStat stat, RequestContext req, ResponseContext res) async {
-    for (String indexFileName in indexFileNames) {
+    for (var indexFileName in indexFileNames) {
       final index =
           fileSystem.file(directory.absolute.uri.resolve(indexFileName));
       if (await index.exists()) {
@@ -168,34 +169,53 @@ class VirtualDirectory {
 
       res.write('<li><a href="..">..</a></li>');
 
-      List<FileSystemEntity> entities = await directory
+      var entities = await directory
           .list(followLinks: false)
           .toList()
           .then((l) => List.from(l));
       entities.sort((a, b) {
         if (a is Directory) {
-          if (b is Directory) return a.path.compareTo(b.path);
+          if (b is Directory) {
+            return a.path.compareTo(b.path);
+          }
           return -1;
         } else if (a is File) {
           if (b is Directory) {
             return 1;
-          } else if (b is File) return a.path.compareTo(b.path);
+          } else if (b is File) {
+            return a.path.compareTo(b.path);
+          }
           return -1;
-        } else if (b is Link) return a.path.compareTo(b.path);
+        } else if (a is Link) {
+          if (b is Directory) {
+            return 1;
+          } else if (b is Link) {
+            return a.path.compareTo(b.path);
+          }
+          return -1;
+        }
 
         return 1;
       });
 
       for (var entity in entities) {
-        var stub = p.basename(entity.path);
-        var href = stub;
+        String stub;
         String type;
 
         if (entity is File) {
           type = '[File]';
+          stub = p.basename(entity.path);
         } else if (entity is Directory) {
           type = '[Directory]';
-        } else if (entity is Link) type = '[Link]';
+          stub = p.basename(entity.path);
+        } else if (entity is Link) {
+          type = '[Link]';
+          stub = p.basename(entity.path);
+        } else {
+          //TODO: Handle unknown type
+
+        }
+        var href = stub;
 
         if (relative.isNotEmpty) href = '/' + relative + '/' + stub;
 
@@ -214,7 +234,7 @@ class VirtualDirectory {
 
   void _ensureContentTypeAllowed(String mimeType, RequestContext req) {
     var value = req.headers.value('accept');
-    bool acceptable = value == null ||
+    var acceptable = value == null ||
         value?.isNotEmpty != true ||
         (mimeType?.isNotEmpty == true && value?.contains(mimeType) == true) ||
         value?.contains('*/*') == true;
@@ -256,7 +276,7 @@ class VirtualDirectory {
       header = RangeHeader(items);
 
       for (var item in header.items) {
-        bool invalid = false;
+        var invalid = false;
 
         if (item.start != -1) {
           invalid = item.end != -1 && item.end < item.start;
@@ -266,17 +286,17 @@ class VirtualDirectory {
 
         if (invalid) {
           throw AngelHttpException(
-              Exception("Semantically invalid, or unbounded range."),
+              Exception('Semantically invalid, or unbounded range.'),
               statusCode: 416,
-              message: "Semantically invalid, or unbounded range.");
+              message: 'Semantically invalid, or unbounded range.');
         }
 
         // Ensure it's within range.
         if (item.start >= totalFileSize || item.end >= totalFileSize) {
           throw AngelHttpException(
-              Exception("Given range $item is out of bounds."),
+              Exception('Given range $item is out of bounds.'),
               statusCode: 416,
-              message: "Given range $item is out of bounds.");
+              message: 'Given range $item is out of bounds.');
         }
       }
 
@@ -285,8 +305,10 @@ class VirtualDirectory {
             statusCode: 416, message: '`Range` header may not be empty.');
       } else if (header.items.length == 1) {
         var item = header.items[0];
-        Stream<Uint8List> stream;
-        int len = 0, total = totalFileSize;
+        Stream<List<int>> stream;
+        var len = 0;
+
+        var total = totalFileSize;
 
         if (item.start == -1) {
           if (item.end == -1) {

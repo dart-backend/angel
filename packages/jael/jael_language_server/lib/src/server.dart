@@ -1,6 +1,6 @@
 import 'dart:async';
-import 'package:dart_language_server/src/protocol/language_server/interface.dart';
-import 'package:dart_language_server/src/protocol/language_server/messages.dart';
+//import 'package:dart_language_server/src/protocol/language_server/interface.dart';
+//import 'package:dart_language_server/src/protocol/language_server/messages.dart';
 import 'package:file/file.dart';
 import 'package:file/local.dart';
 import 'package:file/memory.dart';
@@ -13,6 +13,8 @@ import 'package:string_scanner/string_scanner.dart';
 import 'package:symbol_table/symbol_table.dart';
 import 'analyzer.dart';
 import 'object.dart';
+import 'protocol/language_server/interface.dart';
+import 'protocol/language_server/messages.dart';
 
 class JaelLanguageServer extends LanguageServer {
   var _diagnostics = new StreamController<Diagnostics>();

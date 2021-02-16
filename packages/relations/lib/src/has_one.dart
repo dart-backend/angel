@@ -17,9 +17,8 @@ HookedServiceEventListener hasOne(Pattern servicePath,
     String localKey,
     getLocalKey(obj),
     assignForeignObject(foreign, obj)}) {
-
   return (HookedServiceEvent e) async {
-    var ref = e.service.app.service(servicePath);
+    var ref = e.getService(servicePath);
     var foreignName = as?.isNotEmpty == true
         ? as
         : pluralize.singular(servicePath.toString());
@@ -30,8 +29,10 @@ HookedServiceEventListener hasOne(Pattern servicePath,
         return getLocalKey(obj);
       else if (obj is Map)
         return obj[localKey ?? 'id'];
-      else if (obj is Extensible)
-        return obj.properties[localKey ?? 'id'];
+
+      //TODO: Undefined class
+      //else if (obj is Extensible)
+      //  return obj.properties[localKey ?? 'id'];
       else if (localKey == null || localKey == 'id')
         return obj.id;
       else
@@ -43,8 +44,9 @@ HookedServiceEventListener hasOne(Pattern servicePath,
         return assignForeignObject(foreign, obj);
       else if (obj is Map)
         obj[foreignName] = foreign;
-      else if (obj is Extensible)
-        obj.properties[foreignName] = foreign;
+      //TODO: Undefined class
+      //else if (obj is Extensible)
+      //  obj.properties[foreignName] = foreign;
       else
         reflect(obj).setField(new Symbol(foreignName), foreign);
     }

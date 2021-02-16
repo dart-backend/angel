@@ -12,7 +12,7 @@ class CustomServiceGenerator extends ServiceGenerator {
 
   @override
   void applyToLibrary(LibraryBuilder library, String name, String lower) {
-    library.body.add(new Class((clazz) {
+    library.body.add(Class((clazz) {
       clazz
         ..name = '${name}Service'
         ..extend = refer('Service');

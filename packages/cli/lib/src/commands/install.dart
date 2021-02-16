@@ -14,7 +14,7 @@ import 'make/maker.dart';
 class InstallCommand extends Command {
   static const String repo = 'https://github.com/angel-dart/install.git';
   static final Directory installRepo =
-      new Directory.fromUri(homeDir.uri.resolve('./.angel/addons'));
+      Directory.fromUri(homeDir.uri.resolve('./.angel/addons'));
 
   @override
   String get name => 'install';
@@ -72,7 +72,7 @@ class InstallCommand extends Command {
 
       for (var packageName in argResults.rest) {
         var packageDir =
-            new Directory.fromUri(installRepo.uri.resolve(packageName));
+            Directory.fromUri(installRepo.uri.resolve(packageName));
 
         if (!await packageDir.exists())
           throw 'No add-on named "$packageName" is installed. You might need to run `angel install --update`.';
@@ -90,7 +90,7 @@ class InstallCommand extends Command {
             .map((k) {
               var dep = projectPubspec.dependencies[k];
               if (dep is HostedDependency)
-                return new MakerDependency(k, dep.version.toString());
+                return MakerDependency(k, dep.version.toString());
               return null;
             })
             .where((d) => d != null)
@@ -99,14 +99,13 @@ class InstallCommand extends Command {
         deps.addAll(projectPubspec.devDependencies.keys.map((k) {
           var dep = projectPubspec.devDependencies[k];
           if (dep is HostedDependency)
-            return new MakerDependency(k, dep.version.toString(), dev: true);
+            return MakerDependency(k, dep.version.toString(), dev: true);
           return null;
         }).where((d) => d != null));
 
         await depend(deps);
 
-        var promptFile =
-            new File.fromUri(packageDir.uri.resolve('angel_cli.yaml'));
+        var promptFile = File.fromUri(packageDir.uri.resolve('angel_cli.yaml'));
 
         if (await promptFile.exists()) {
           var contents = await promptFile.readAsString();
@@ -116,7 +115,7 @@ class InstallCommand extends Command {
           // Loads globs
           if (cfg['templates'] is List) {
             globs.addAll(
-                (cfg['templates'] as List).map((p) => new Glob(p.toString())));
+                (cfg['templates'] as List).map((p) => Glob(p.toString())));
           }
 
           if (cfg['values'] is Map) {
@@ -144,14 +143,14 @@ class InstallCommand extends Command {
           await for (var entity in src.list()) {
             if (entity is Directory) {
               var name = p.basename(entity.path);
-              var newDir = new Directory.fromUri(dst.uri.resolve(name));
+              var newDir = Directory.fromUri(dst.uri.resolve(name));
               await merge(
                   entity, newDir, prefix.isEmpty ? name : '$prefix/$name');
             } else if (entity is File &&
                 !entity.path.endsWith('angel_cli.yaml')) {
               var name = p.basename(entity.path);
               var target = dst.uri.resolve(name);
-              var targetFile = new File.fromUri(target);
+              var targetFile = File.fromUri(target);
               bool allClear = !await targetFile.exists();
 
               if (!allClear) {
@@ -187,7 +186,7 @@ class InstallCommand extends Command {
           }
         }
 
-        await merge(new Directory.fromUri(packageDir.uri.resolve('files')),
+        await merge(Directory.fromUri(packageDir.uri.resolve('files')),
             Directory.current, '');
         print('Successfully installed $packageName@${projectPubspec.version}.');
       }

@@ -1,4 +1,4 @@
-name: jael_language_server
+name: vs_jael_language_server
 version: 0.0.0
 description: Language Server Protocol implementation for the Jael templating engine.
 author: Tobe Osakwe <thosakwe@gmail.com>
@@ -7,11 +7,13 @@ environment:
   sdk: ">=2.10.0 <2.12.0"
 dependencies:
   args: ^1.0.0
-  dart_language_server: ^0.1.16
+#  dart_language_server: ^0.1.16
   file: ^5.0.0
   io: ^0.3.2
-  jael: ^2.0.0
-  jael_preprocessor: ^2.0.0
+  jael: #^2.0.0
+    path: ../../jael/jael
+  jael_preprocessor: #^2.0.0
+    path: ../../jael/jael_preprocessor
   json_rpc_2: ^2.0.0
   logging: ^0.11.3
   path: ^1.0.0

@@ -16,14 +16,14 @@ class MongoService extends Service<String, Map<String, dynamic>> {
   @deprecated
   final bool debug;
 
-  MongoService(DbCollection this.collection,
+  MongoService(this.collection,
       {this.allowRemoveAll = false, this.allowQuery = true, this.debug = true})
       : super();
 
   SelectorBuilder _makeQuery([Map<String, dynamic> params_]) {
-    Map params = Map.from(params_ ?? {});
+    var params = Map.from(params_ ?? {});
     params = params..remove('provider');
-    SelectorBuilder result = where.exists('_id');
+    var result = where.exists('_id');
 
     // You can pass a SelectorBuilder as 'query';
     if (params['query'] is SelectorBuilder) {
@@ -36,12 +36,13 @@ class MongoService extends Service<String, Map<String, dynamic>> {
               (allowQuery == true || !params.containsKey('provider'))) {
         if (params[key] is Map) {
           // If they send a map, then we'll sort by every key in the map
-          for (String fieldName in params[key].keys.where((x) => x is String)) {
+
+          for (var fieldName in params[key].keys.where((x) => x is String)) {
             var sorter = params[key][fieldName];
-            if (sorter is num) {
+            if (sorter is num && fieldName is String) {
               result = result.sortBy(fieldName, descending: sorter == -1);
-            } else if (sorter is String) {
-              result = result.sortBy(fieldName, descending: sorter == "-1");
+            } else if (sorter is String && fieldName is String) {
+              result = result.sortBy(fieldName, descending: sorter == '-1');
             } else if (sorter is SelectorBuilder) {
               result = result.and(sorter);
             }

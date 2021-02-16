@@ -26,7 +26,7 @@ class DoctorCommand extends Command {
         print(green.wrap(
             "$checkmark Git executable found: v${version.replaceAll('git version', '').trim()}"));
       } else
-        throw new Exception("Git executable exit code not 0");
+        throw Exception("Git executable exit code not 0");
     } catch (exc) {
       print(red.wrap("$ballot Git executable not found"));
     }

@@ -27,12 +27,13 @@ main() {
                   }));
             })));
 
-    app.service('authors').afterAll(
-        relations.hasOne('books', as: 'book', foreignKey: 'authorId'));
+    // TODO: Missing afterAll method
+    //  app.findService('authors').afterAll(
+    //      relations.hasOne('books', as: 'book', foreignKey: 'authorId'));
   });
 
   test('index', () async {
-    var authors = await app.service('authors').index();
+    var authors = await app.findService('authors').index();
     print(authors);
 
     expect(authors, allOf(isList, isNotEmpty));
@@ -49,7 +50,7 @@ main() {
 
   test('create', () async {
     var tolstoy = await app
-        .service('authors')
+        .findService('authors')
         .create(new Author(name: 'Leo Tolstoy').toJson());
 
     print(tolstoy);

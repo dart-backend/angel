@@ -263,41 +263,44 @@ Future preBuild(Directory projectDir) async {
   if (buildCode != 0) throw new Exception('Failed to pre-build resources.');
 }
 
+const RepoArchiveLocation = "https://github.com/angel-dart";
+const RepoLocation = "https://github.com/dukefirehawk";
+
 const BoilerplateInfo graphQLBoilerplate = const BoilerplateInfo(
   'GraphQL',
   "A starting point for GraphQL API servers.",
-  'https://github.com/angel-dart/angel.git',
+  '${RepoLocation}/boilerplates.git',
   ref: 'graphql',
 );
 
 const BoilerplateInfo ormBoilerplate = const BoilerplateInfo(
   'ORM',
   "A starting point for applications that use Angel's ORM.",
-  'https://github.com/angel-dart/angel.git',
+  '${RepoLocation}/boilerplates.git',
   ref: 'orm',
 );
 
 const BoilerplateInfo basicBoilerplate = const BoilerplateInfo(
     'Basic',
     'Minimal starting point for Angel 2.x - A simple server with only a few additional packages.',
-    'https://github.com/angel-dart/angel.git');
+    '${RepoLocation}/boilerplates.git');
 
 const BoilerplateInfo legacyBoilerplate = const BoilerplateInfo(
   'Legacy',
   'Minimal starting point for applications running Angel 1.1.x.',
-  'https://github.com/angel-dart/angel.git',
+  '${RepoArchiveLocation}/angel.git',
   ref: '1.1.x',
 );
 
 const BoilerplateInfo sharedBoilerplate = const BoilerplateInfo(
     'Shared',
     'Holds common models and files shared across multiple Dart projects.',
-    'https://github.com/angel-dart/boilerplate_shared.git');
+    '${RepoLocation}/boilerplate_shared.git');
 
 const BoilerplateInfo sharedOrmBoilerplate = const BoilerplateInfo(
   'Shared (ORM)',
   'Holds common models and files shared across multiple Dart projects.',
-  'https://github.com/angel-dart/boilerplate_shared.git',
+  '${RepoLocation}/boilerplate_shared.git',
   ref: 'orm',
 );
 
@@ -306,8 +309,8 @@ const List<BoilerplateInfo> boilerplates = const [
   //legacyBoilerplate,
   ormBoilerplate,
   graphQLBoilerplate,
-  sharedBoilerplate,
-  sharedOrmBoilerplate,
+  //sharedBoilerplate,
+  //sharedOrmBoilerplate,
 ];
 
 class BoilerplateInfo {

@@ -29,17 +29,17 @@ class RenameCommand extends Command {
       newName = prompts.get('Rename project to');
     }
 
-    newName = new ReCase(newName).snakeCase;
+    newName = ReCase(newName).snakeCase;
 
     var choice = prompts.getBool('Rename the project to `$newName`?');
 
     if (choice) {
       print('Renaming project to `$newName`...');
       var pubspecFile =
-          new File.fromUri(Directory.current.uri.resolve('pubspec.yaml'));
+          File.fromUri(Directory.current.uri.resolve('pubspec.yaml'));
 
       if (!await pubspecFile.exists()) {
-        throw new Exception('No pubspec.yaml found in current directory.');
+        throw Exception('No pubspec.yaml found in current directory.');
       } else {
         var pubspec = await loadPubspec();
         var oldName = pubspec.name;
@@ -66,7 +66,7 @@ renamePubspec(Directory dir, String oldName, String newName) async {
   if (await pubspecFile.exists()) {
     var contents = await pubspecFile.readAsString(), oldContents = contents;
     contents =
-        contents.replaceAll(new RegExp('name:\\s*$oldName'), 'name: $newName');
+        contents.replaceAll(RegExp('name:\\s*$oldName'), 'name: $newName');
 
     if (contents != oldContents) {
       await pubspecFile.writeAsString(contents);
@@ -76,7 +76,7 @@ renamePubspec(Directory dir, String oldName, String newName) async {
 //  print(cyan
 //      .wrap('Note that this does not actually modify your `pubspec.yaml`.'));
 // TODO: https://github.com/dart-lang/pubspec_parse/issues/17
-//  var newPubspec = new Pubspec.fromJson(pubspec.toJson()..['name'] = newName);
+//  var newPubspec =  Pubspec.fromJson(pubspec.toJson()..['name'] = newName);
 //  await newPubspec.save(dir);
 }
 
@@ -84,7 +84,7 @@ renameDartFiles(Directory dir, String oldName, String newName) async {
   if (!await dir.exists()) return;
 
   // Try to replace MongoDB URL
-  var configGlob = new Glob('config/**/*.yaml');
+  var configGlob = Glob('config/**/*.yaml');
 
   try {
     await for (var yamlFile in configGlob.list(root: dir.absolute.path)) {
@@ -98,19 +98,19 @@ renameDartFiles(Directory dir, String oldName, String newName) async {
     }
   } catch (_) {}
 
-  var entry = new File.fromUri(dir.uri.resolve('lib/$oldName.dart'));
+  var entry = File.fromUri(dir.uri.resolve('lib/$oldName.dart'));
 
   if (await entry.exists()) {
     await entry.rename(dir.uri.resolve('lib/$newName.dart').toFilePath());
     print('Renaming library file `${entry.absolute.path}`...');
   }
 
-  var fmt = new DartFormatter();
+  var fmt = DartFormatter();
   await for (FileSystemEntity file in dir.list(recursive: true)) {
     if (file is File && file.path.endsWith('.dart')) {
       var contents = await file.readAsString();
       var ast = parseCompilationUnit(contents);
-      var visitor = new RenamingVisitor(oldName, newName)
+      var visitor = RenamingVisitor(oldName, newName)
         ..visitCompilationUnit(ast);
 
       if (visitor.replace.isNotEmpty) {

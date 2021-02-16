@@ -15,11 +15,11 @@ class MakeCommand extends Command {
       'Generates common code for your project, such as projects and controllers.';
 
   MakeCommand() {
-    addSubcommand(new ControllerCommand());
-    addSubcommand(new MigrationCommand());
-    addSubcommand(new ModelCommand());
-    addSubcommand(new PluginCommand());
-    addSubcommand(new TestCommand());
-    addSubcommand(new ServiceCommand());
+    addSubcommand(ControllerCommand());
+    addSubcommand(MigrationCommand());
+    addSubcommand(ModelCommand());
+    addSubcommand(PluginCommand());
+    addSubcommand(TestCommand());
+    addSubcommand(ServiceCommand());
   }
 }

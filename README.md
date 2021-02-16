@@ -46,6 +46,12 @@ dart --observe bin/dev.dart
 
 Next, check out the [detailed documentation](https://docs.angel-dart.dev/v/2.x) to learn to flesh out your project.
 
+## Development
+
+* Install development version of Angel CLI
+`dart pub global activate --source path ./packages/cli`
+`dart pub global activate --source git https://github.com/dukefirehawk/angel/packages/cli`
+
 ## Examples and Documentation
 Visit the [documentation](https://docs.angel-dart.dev/v/2.x)
 for dozens of guides and resources, including video tutorials,
