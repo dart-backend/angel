@@ -27,9 +27,15 @@ Future<TestClient> connectTo(Angel app,
     {Map initialSession,
     bool autoDecodeGzip: true,
     bool useZone: false}) async {
-  if (!app.isProduction) app.configuration.putIfAbsent('testMode', () => true);
+  print("Load configuration");
+  if (!app.environment.isProduction) {
+    app.configuration.putIfAbsent('testMode', () => true);
+  }
 
-  for (var plugin in app.startupHooks) await plugin(app);
+  for (var plugin in app.startupHooks) {
+    print("Load plugins");
+    await plugin(app);
+  }
   return new TestClient(app,
       autoDecodeGzip: autoDecodeGzip != false, useZone: useZone)
     ..session.addAll(initialSession ?? {});
@@ -57,8 +63,8 @@ class TestClient extends client.BaseAngelClient {
   AngelHttp _http;
 
   TestClient(this.server, {this.autoDecodeGzip: true, bool useZone: false})
-      : super(new http.IOClient(), '/') {
-    _http = new AngelHttp(server, useZone: useZone);
+      : super(http.IOClient(), '/') {
+    _http = AngelHttp(server, useZone: useZone);
   }
 
   Future close() {
@@ -72,13 +78,13 @@ class TestClient extends client.BaseAngelClient {
       {String path: '/ws', Duration timeout}) async {
     if (_http.server == null) await _http.startServer();
     var url = _http.uri.replace(scheme: 'ws', path: path);
-    var ws = new _MockWebSockets(this, url.toString());
+    var ws = _MockWebSockets(this, url.toString());
     await ws.connect(timeout: timeout);
     return ws;
   }
 
   Future<StreamedResponse> send(http.BaseRequest request) async {
-    var rq = new MockHttpRequest(request.method, request.url);
+    var rq = MockHttpRequest(request.method, request.url);
     request.headers.forEach(rq.headers.add);
 
     if (request.url.userInfo.isNotEmpty) {
@@ -90,8 +96,7 @@ class TestClient extends client.BaseAngelClient {
       var encoded = rq.headers.value('authorization').substring(6);
       var decoded = utf8.decode(base64Url.decode(encoded));
       var oldRq = rq;
-      var newRq =
-          new MockHttpRequest(rq.method, rq.uri.replace(userInfo: decoded));
+      var newRq = MockHttpRequest(rq.method, rq.uri.replace(userInfo: decoded));
       oldRq.headers.forEach(newRq.headers.add);
       rq = newRq;
     }
@@ -123,14 +128,20 @@ class TestClient extends client.BaseAngelClient {
       stream = stream.transform(gzip.decoder);
     }
 
-    return new StreamedResponse(stream, rs.statusCode,
+    // TODO: Calling persistentConnection causes LateInitialization Exception
+    //var keepAliveState = rq.headers?.persistentConnection;
+    //if (keepAliveState == null) {
+    //  keepAliveState = false;
+    //}
+
+    return StreamedResponse(stream, rs.statusCode,
         contentLength: rs.contentLength,
         isRedirect: rs.headers['location'] != null,
         headers: extractedHeaders,
         persistentConnection:
             rq.headers.value('connection')?.toLowerCase()?.trim() ==
-                    'keep-alive' ||
-                rq.headers.persistentConnection == true,
+                'keep-alive',
+        //|| keepAliveState,
         reasonPhrase: rs.reasonPhrase);
   }
 
@@ -139,22 +150,21 @@ class TestClient extends client.BaseAngelClient {
 
   @override
   Stream<String> authenticateViaPopup(String url, {String eventName: 'token'}) {
-    throw new UnsupportedError(
+    throw UnsupportedError(
         'MockClient does not support authentication via popup.');
   }
 
   @override
   Future configure(client.AngelConfigurer configurer) =>
-      new Future.sync(() => configurer(this));
+      Future.sync(() => configurer(this));
 
   @override
   client.Service<Id, Data> service<Id, Data>(String path,
       {Type type, client.AngelDeserializer<Data> deserializer}) {
     String uri = path.toString().replaceAll(_straySlashes, "");
-    return _services.putIfAbsent(
-        uri,
-        () => new _MockService<Id, Data>(this, uri,
-            deserializer: deserializer)) as client.Service<Id, Data>;
+    return _services.putIfAbsent(uri,
+            () => _MockService<Id, Data>(this, uri, deserializer: deserializer))
+        as client.Service<Id, Data>;
   }
 }
 
@@ -188,6 +198,6 @@ class _MockWebSockets extends client.WebSockets {
       headers['authorization'] = 'Bearer ${app.authToken}';
 
     var socket = await WebSocket.connect(baseUrl.toString(), headers: headers);
-    return new IOWebSocketChannel(socket);
+    return IOWebSocketChannel(socket);
   }
 }

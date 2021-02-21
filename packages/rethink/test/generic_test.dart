@@ -14,17 +14,17 @@ main() {
   c.Service todoService;
 
   setUp(() async {
-    r = new Rethinkdb();
+    r = Rethinkdb();
     var conn = await r.connect();
 
-    app = new Angel();
-    app.use('/todos', new RethinkService(conn, r.table('todos')));
+    app = Angel();
+    app.use('/todos', RethinkService(conn, r.table('todos')));
 
     app.errorHandler = (e, req, res) async {
       print('Whoops: $e');
     };
 
-    app.logger = new Logger.detached('angel')..onRecord.listen(print);
+    app.logger = Logger.detached('angel')..onRecord.listen(print);
 
     client = await connectTo(app);
     todoService = client.service('todos');
@@ -39,7 +39,7 @@ main() {
   });
 
   test('create+read', () async {
-    var todo = new Todo(title: 'Clean your room');
+    var todo = Todo(title: 'Clean your room');
     var creation = await todoService.create(todo.toJson());
     print('Creation: $creation');
 
@@ -54,7 +54,7 @@ main() {
   });
 
   test('modify', () async {
-    var todo = new Todo(title: 'Clean your room');
+    var todo = Todo(title: 'Clean your room');
     var creation = await todoService.create(todo.toJson());
     print('Creation: $creation');
 
@@ -69,7 +69,7 @@ main() {
   });
 
   test('remove', () async {
-    var todo = new Todo(title: 'Clean your room');
+    var todo = Todo(title: 'Clean your room');
     var creation = await todoService.create(todo.toJson());
     print('Creation: $creation');
 

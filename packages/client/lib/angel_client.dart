@@ -64,6 +64,7 @@ abstract class Angel extends http.BaseClient {
   Stream<String> authenticateViaPopup(String url, {String eventName = 'token'});
 
   /// Disposes of any outstanding resources.
+  @override
   Future<void> close();
 
   /// Applies an [AngelConfigurer] to this instance.

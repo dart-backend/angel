@@ -6,7 +6,7 @@ class Game {
 
   const Game({this.playerOne, this.playerTwo});
 
-  factory Game.fromJson(Map data) => new Game(
+  factory Game.fromJson(Map data) => Game(
       playerOne: data['playerOne'].toString(),
       playerTwo: data['playerTwo'].toString());
 
@@ -21,7 +21,7 @@ class Game {
       other.playerTwo == playerTwo;
 }
 
-const Game johnVsBob = const Game(playerOne: 'John', playerTwo: 'Bob');
+const Game johnVsBob = Game(playerOne: 'John', playerTwo: 'Bob');
 
 @Expose('/game')
 class GameController extends WebSocketController {

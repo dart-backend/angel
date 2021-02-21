@@ -15,7 +15,7 @@ main() {
   TestClient client;
 
   setUp(() async {
-    var app = new Angel();
+    var app = Angel();
 
     app.get('/api/songs', (req, res) {
       var p = Paginator(mjAlbums, itemsPerPage: mjAlbums.length);
@@ -40,7 +40,7 @@ main() {
         path: '/api/songs',
         queryParameters: {r'$limit': (mjAlbums.length + 1).toString()}));
 
-    var page = new PaginationResult<Map<String, dynamic>>.fromMap(
+    var page = PaginationResult<Map<String, dynamic>>.fromMap(
         json.decode(response.body));
 
     print('page: ${page.toJson()}');

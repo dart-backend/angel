@@ -10,14 +10,14 @@ import 'package:http/src/streamed_response.dart' as http;
 import 'package:path/path.dart' as p;
 import 'angel_client.dart';
 
-const Map<String, String> _readHeaders = const {'Accept': 'application/json'};
-const Map<String, String> _writeHeaders = const {
+const Map<String, String> _readHeaders = {'Accept': 'application/json'};
+const Map<String, String> _writeHeaders = {
   'Accept': 'application/json',
   'Content-Type': 'application/json'
 };
 
 Map<String, String> _buildQuery(Map<String, dynamic> params) {
-  return params?.map((k, v) => new MapEntry(k, v.toString()));
+  return params?.map((k, v) => MapEntry(k, v.toString()));
 }
 
 bool _invalid(http.Response response) =>
@@ -31,16 +31,16 @@ AngelHttpException failure(http.Response response,
     var v = json.decode(response.body);
 
     if (v is Map && (v['is_error'] == true) || v['isError'] == true) {
-      return new AngelHttpException.fromMap(v as Map);
+      return AngelHttpException.fromMap(v as Map);
     } else {
-      return new AngelHttpException(error,
+      return AngelHttpException(error,
           message: message ??
               'Unhandled exception while connecting to Angel backend.',
           statusCode: response.statusCode,
           stackTrace: stack);
     }
   } catch (e, st) {
-    return new AngelHttpException(error ?? e,
+    return AngelHttpException(error ?? e,
         message: message ??
             'Angel backend did not return JSON - an error likely occurred.',
         statusCode: response.statusCode,
@@ -50,7 +50,7 @@ AngelHttpException failure(http.Response response,
 
 abstract class BaseAngelClient extends Angel {
   final StreamController<AngelAuthResult> _onAuthenticated =
-      new StreamController<AngelAuthResult>();
+      StreamController<AngelAuthResult>();
   final List<Service> _services = [];
   final http.BaseClient client;
 
@@ -85,16 +85,17 @@ abstract class BaseAngelClient extends Angel {
     }
 
     try {
-      var v = json.decode(response.body);
+      //var v = json.decode(response.body);
+      var v = jsonDecode(response.body);
 
       if (v is! Map ||
           !(v as Map).containsKey('data') ||
           !(v as Map).containsKey('token')) {
-        throw new AngelHttpException.notAuthenticated(
+        throw AngelHttpException.notAuthenticated(
             message: "Auth endpoint '$url' did not return a proper response.");
       }
 
-      var r = new AngelAuthResult.fromMap(v as Map);
+      var r = AngelAuthResult.fromMap(v as Map);
       _onAuthenticated.add(r);
       return r;
     } on AngelHttpException {
@@ -104,6 +105,7 @@ abstract class BaseAngelClient extends Angel {
     }
   }
 
+  @override
   Future<void> close() async {
     client.close();
     await _onAuthenticated.close();
@@ -112,14 +114,16 @@ abstract class BaseAngelClient extends Angel {
     });
   }
 
+  @override
   Future<void> logout() async {
     authToken = null;
   }
 
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) async {
-    if (authToken?.isNotEmpty == true)
+    if (authToken?.isNotEmpty == true) {
       request.headers['authorization'] ??= 'Bearer $authToken';
+    }
     return client.send(request);
   }
 
@@ -128,7 +132,7 @@ abstract class BaseAngelClient extends Angel {
       String method, url, Map<String, String> headers,
       [body, Encoding encoding]) async {
     var request =
-        new http.Request(method, url is Uri ? url : Uri.parse(url.toString()));
+        http.Request(method, url is Uri ? url : Uri.parse(url.toString()));
 
     if (headers != null) request.headers.addAll(headers);
 
@@ -137,12 +141,12 @@ abstract class BaseAngelClient extends Angel {
       if (body is String) {
         request.body = body;
       } else if (body is List<int>) {
-        request.bodyBytes = new List<int>.from(body);
+        request.bodyBytes = List<int>.from(body);
       } else if (body is Map<String, dynamic>) {
         request.bodyFields =
             body.map((k, v) => MapEntry(k, v is String ? v : v.toString()));
       } else {
-        throw new ArgumentError.value(body, 'body',
+        throw ArgumentError.value(body, 'body',
             'must be a String, List<int>, or Map<String, String>.');
       }
     }
@@ -154,7 +158,7 @@ abstract class BaseAngelClient extends Angel {
   Service<Id, Data> service<Id, Data>(String path,
       {Type type, AngelDeserializer<Data> deserializer}) {
     var url = baseUrl.replace(path: p.join(baseUrl.path, path));
-    var s = new BaseAngelService<Id, Data>(client, this, url,
+    var s = BaseAngelService<Id, Data>(client, this, url,
         deserializer: deserializer);
     _services.add(s);
     return s;
@@ -207,12 +211,12 @@ class BaseAngelService<Id, Data> extends Service<Id, Data> {
   final http.BaseClient client;
   final AngelDeserializer<Data> deserializer;
 
-  final StreamController<List<Data>> _onIndexed = new StreamController();
-  final StreamController<Data> _onRead = new StreamController(),
-      _onCreated = new StreamController(),
-      _onModified = new StreamController(),
-      _onUpdated = new StreamController(),
-      _onRemoved = new StreamController();
+  final StreamController<List<Data>> _onIndexed = StreamController();
+  final StreamController<Data> _onRead = StreamController(),
+      _onCreated = StreamController(),
+      _onModified = StreamController(),
+      _onUpdated = StreamController(),
+      _onRemoved = StreamController();
 
   @override
   Stream<List<Data>> get onIndexed => _onIndexed.stream;
@@ -253,8 +257,9 @@ class BaseAngelService<Id, Data> extends Service<Id, Data> {
     return deserializer != null ? deserializer(x) : x as Data;
   }
 
-  makeBody(x) {
-    return json.encode(x);
+  String makeBody(x) {
+    //return json.encode(x);
+    return jsonEncode(x);
   }
 
   Future<http.StreamedResponse> send(http.BaseRequest request) {
@@ -272,10 +277,11 @@ class BaseAngelService<Id, Data> extends Service<Id, Data> {
 
     try {
       if (_invalid(response)) {
-        if (_onIndexed.hasListener)
+        if (_onIndexed.hasListener) {
           _onIndexed.addError(failure(response));
-        else
+        } else {
           throw failure(response);
+        }
       }
 
       var v = json.decode(response.body) as List;
@@ -283,10 +289,11 @@ class BaseAngelService<Id, Data> extends Service<Id, Data> {
       _onIndexed.add(r);
       return r;
     } catch (e, st) {
-      if (_onIndexed.hasListener)
+      if (_onIndexed.hasListener) {
         _onIndexed.addError(e, st);
-      else
+      } else {
         throw failure(response, error: e, stack: st);
+      }
     }
 
     return null;

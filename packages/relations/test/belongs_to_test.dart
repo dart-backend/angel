@@ -8,19 +8,17 @@ main() {
   Angel app;
 
   setUp(() async {
-    app = new Angel()
-      ..use('/authors', new MapService())
-      ..use('/books', new MapService());
+    app = Angel()..use('/authors', MapService())..use('/books', MapService());
 
     await app.configure(seed(
         'authors',
-        new SeederConfiguration<Map>(
+        SeederConfiguration<Map>(
             count: 10,
             template: {'name': (Faker faker) => faker.person.name()},
             callback: (Map author, seed) {
               return seed(
                   'books',
-                  new SeederConfiguration(delete: false, count: 10, template: {
+                  SeederConfiguration(delete: false, count: 10, template: {
                     'authorId': author['id'],
                     'title': (Faker faker) =>
                         'I love to eat ${faker.food.dish()}'

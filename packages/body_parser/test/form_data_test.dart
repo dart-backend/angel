@@ -6,7 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:test/test.dart';
 import 'server_test.dart';
 
-main() {
+void main() {
   HttpServer server;
   String url;
   http.Client client;
@@ -21,7 +21,7 @@ main() {
     });
     url = 'http://localhost:${server.port}';
     print('Test server listening on $url');
-    client = new http.Client();
+    client = http.Client();
   });
 
   tearDown(() async {
@@ -64,7 +64,7 @@ world
   test('Single upload', () async {
     String boundary = 'myBoundary';
     Map<String, String> headers = {
-      'content-type': new ContentType("multipart", "form-data",
+      'content-type': ContentType("multipart", "form-data",
           parameters: {"boundary": boundary}).toString()
     };
     String postData = '''

@@ -12,7 +12,7 @@ import 'package:shelf/shelf.dart' as shelf;
 import 'package:stream_channel/stream_channel.dart';
 import 'package:test/test.dart';
 
-main() {
+void main() {
   http.Client client;
   HttpServer server;
   String url;

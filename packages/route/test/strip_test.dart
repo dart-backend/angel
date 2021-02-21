@@ -1,7 +1,7 @@
 import 'package:angel_route/string_util.dart';
 import 'package:test/test.dart';
 
-main() {
+void main() {
   test('strip leading', () {
     var a = '///a';
     var b = stripStraySlashes(a);

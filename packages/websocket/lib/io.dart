@@ -12,7 +12,7 @@ import 'base_websocket_client.dart';
 export 'package:angel_client/angel_client.dart';
 export 'angel_websocket.dart';
 
-final RegExp _straySlashes = new RegExp(r"(^/)|(/+$)");
+final RegExp _straySlashes = RegExp(r"(^/)|(/+$)");
 
 /// Queries an Angel server via WebSockets.
 class WebSockets extends BaseWebSocketClient {
@@ -20,14 +20,14 @@ class WebSockets extends BaseWebSocketClient {
 
   WebSockets(baseUrl,
       {bool reconnectOnClose = true, Duration reconnectInterval})
-      : super(new http.IOClient(), baseUrl,
+      : super(http.IOClient(), baseUrl,
             reconnectOnClose: reconnectOnClose,
             reconnectInterval: reconnectInterval);
 
   @override
   Stream<String> authenticateViaPopup(String url,
       {String eventName = 'token'}) {
-    throw new UnimplementedError(
+    throw UnimplementedError(
         'Opening popup windows is not supported in the `dart:io` client.');
   }
 
@@ -46,14 +46,14 @@ class WebSockets extends BaseWebSocketClient {
         headers: authToken?.isNotEmpty == true
             ? {'Authorization': 'Bearer $authToken'}
             : {});
-    return new IOWebSocketChannel(socket);
+    return IOWebSocketChannel(socket);
   }
 
   @override
   IoWebSocketsService<Id, Data> service<Id, Data>(String path,
       {Type type, AngelDeserializer<Data> deserializer}) {
-    String uri = path.replaceAll(_straySlashes, '');
-    return new IoWebSocketsService<Id, Data>(socket, this, uri, type);
+    var uri = path.replaceAll(_straySlashes, '');
+    return IoWebSocketsService<Id, Data>(socket, this, uri, type);
   }
 }
 

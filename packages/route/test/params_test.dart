@@ -1,7 +1,7 @@
 import 'package:angel_route/angel_route.dart';
 import 'package:test/test.dart';
 
-main() {
+void main() {
   final router = Router()..get('/hello', '')..get('/user/:id', '');
 
   router.group('/book/:id', (router) {

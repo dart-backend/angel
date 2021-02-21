@@ -10,12 +10,13 @@ dependencies:
     path: ../../framework
   code_buffer: ^1.0.0
   file: ^5.0.0
-  jael: ^2.0.0
+  jael: #^2.0.0
+    path: ../jael
   jael_preprocessor: #^2.0.0
     path: ../jael_preprocessor
   symbol_table: ^2.0.0
 dev_dependencies:
   angel_test: #^2.0.0-alpha
     path: ../../test
-  html:
+  html: ^0.14.0
   test: ^1.15.7

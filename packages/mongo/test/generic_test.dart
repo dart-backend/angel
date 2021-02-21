@@ -13,34 +13,34 @@ final headers = {
 
 final Map testGreeting = {'to': 'world'};
 
-wireHooked(HookedService hooked) {
+void wireHooked(HookedService hooked) {
   hooked.afterAll((HookedServiceEvent event) {
     print("Just ${event.eventName}: ${event.result}");
     print('Params: ${event.params}');
   });
 }
 
-main() {
+void main() {
   group('Generic Tests', () {
     Angel app;
     AngelHttp transport;
     http.Client client;
-    Db db = new Db('mongodb://localhost:27017/angel_mongo');
+    var db = Db('mongodb://localhost:27017/angel_mongo');
     DbCollection testData;
     String url;
     HookedService<String, Map<String, dynamic>, MongoService> greetingService;
 
     setUp(() async {
-      app = new Angel();
-      transport = new AngelHttp(app);
-      client = new http.Client();
+      app = Angel();
+      transport = AngelHttp(app);
+      client = http.Client();
       await db.open();
       testData = db.collection('test_data');
       // Delete anything before we start
       await testData.remove(<String, dynamic>{});
 
-      var service = new MongoService(testData, debug: true);
-      greetingService = new HookedService(service);
+      var service = MongoService(testData, debug: true);
+      greetingService = HookedService(service);
       wireHooked(greetingService);
 
       app.use('/api', greetingService);
@@ -105,7 +105,7 @@ main() {
       expect(response.statusCode, isIn([200, 201]));
       var created = god.deserialize(response.body) as Map;
 
-      var id = new ObjectId.fromHexString(created['id'] as String);
+      var id = ObjectId.fromHexString(created['id'] as String);
       var read = await greetingService.findOne({'query': where.id(id)});
       expect(read['id'], equals(created['id']));
       expect(read['to'], equals('world'));
@@ -118,7 +118,7 @@ main() {
       expect(response.statusCode, isIn([200, 201]));
       var created = god.deserialize(response.body) as Map;
 
-      var id = new ObjectId.fromHexString(created['id'] as String);
+      var id = ObjectId.fromHexString(created['id'] as String);
       var read = await greetingService.readMany([id.toHexString()]);
       expect(read, [created]);
       //expect(read['createdAt'], isNot(null));
@@ -195,7 +195,7 @@ main() {
 
       queried = await greetingService.index({
         "\$query": {
-          "_id": where.id(new ObjectId.fromHexString(world["id"] as String))
+          "_id": where.id(ObjectId.fromHexString(world["id"] as String))
         }
       });
       print(queried);

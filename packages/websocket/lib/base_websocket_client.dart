@@ -10,30 +10,29 @@ import 'package:web_socket_channel/status.dart' as status;
 import 'angel_websocket.dart';
 import 'constants.dart';
 
-final RegExp _straySlashes = new RegExp(r"(^/)|(/+$)");
+final RegExp _straySlashes = RegExp(r"(^/)|(/+$)");
 
 /// An [Angel] client that operates across WebSockets.
 abstract class BaseWebSocketClient extends BaseAngelClient {
   Duration _reconnectInterval;
   WebSocketChannel _socket;
-  final Queue<WebSocketAction> _queue = new Queue<WebSocketAction>();
+  final Queue<WebSocketAction> _queue = Queue<WebSocketAction>();
 
-  final StreamController _onData = new StreamController();
+  final StreamController _onData = StreamController();
   final StreamController<WebSocketEvent> _onAllEvents =
-      new StreamController<WebSocketEvent>();
+      StreamController<WebSocketEvent>();
   final StreamController<AngelAuthResult> _onAuthenticated =
-      new StreamController<AngelAuthResult>();
+      StreamController<AngelAuthResult>();
   final StreamController<AngelHttpException> _onError =
-      new StreamController<AngelHttpException>();
+      StreamController<AngelHttpException>();
   final StreamController<Map<String, WebSocketEvent>> _onServiceEvent =
-      new StreamController<Map<String, WebSocketEvent>>.broadcast();
+      StreamController<Map<String, WebSocketEvent>>.broadcast();
   final StreamController<WebSocketChannelException>
       _onWebSocketChannelException =
-      new StreamController<WebSocketChannelException>();
+      StreamController<WebSocketChannelException>();
 
   /// Use this to handle events that are not standard.
-  final WebSocketExtraneousEventHandler on =
-      new WebSocketExtraneousEventHandler();
+  final WebSocketExtraneousEventHandler on = WebSocketExtraneousEventHandler();
 
   /// Fired on all events.
   Stream<WebSocketEvent> get onAllEvents => _onAllEvents.stream;
@@ -89,7 +88,7 @@ abstract class BaseWebSocketClient extends BaseAngelClient {
   BaseWebSocketClient(http.BaseClient client, baseUrl,
       {this.reconnectOnClose = true, Duration reconnectInterval})
       : super(client, baseUrl) {
-    _reconnectInterval = reconnectInterval ?? new Duration(seconds: 10);
+    _reconnectInterval = reconnectInterval ?? Duration(seconds: 10);
   }
 
   @override
@@ -109,13 +108,13 @@ abstract class BaseWebSocketClient extends BaseAngelClient {
   /// Connects the WebSocket. [timeout] is optional.
   Future<WebSocketChannel> connect({Duration timeout}) async {
     if (timeout != null) {
-      var c = new Completer<WebSocketChannel>();
+      var c = Completer<WebSocketChannel>();
       Timer timer;
 
-      timer = new Timer(timeout, () {
+      timer = Timer(timeout, () {
         if (!c.isCompleted) {
           if (timer.isActive) timer.cancel();
-          c.completeError(new TimeoutException(
+          c.completeError(TimeoutException(
               'WebSocket connection exceeded timeout of ${timeout.inMilliseconds} ms',
               timeout));
         }
@@ -161,7 +160,7 @@ abstract class BaseWebSocketClient extends BaseAngelClient {
   WebSocketsService<Id, Data> service<Id, Data>(String path,
       {Type type, AngelDeserializer<Data> deserializer}) {
     String uri = path.toString().replaceAll(_straySlashes, '');
-    return new WebSocketsService<Id, Data>(socket, this, uri,
+    return WebSocketsService<Id, Data>(socket, this, uri,
         deserializer: deserializer);
   }
 
@@ -177,7 +176,7 @@ abstract class BaseWebSocketClient extends BaseAngelClient {
             var jsons = json.decode(data);
 
             if (jsons is Map) {
-              var event = new WebSocketEvent.fromJson(jsons);
+              var event = WebSocketEvent.fromJson(jsons);
 
               if (event.eventName?.isNotEmpty == true) {
                 _onAllEvents.add(event);
@@ -186,10 +185,10 @@ abstract class BaseWebSocketClient extends BaseAngelClient {
 
               if (event.eventName == errorEvent) {
                 var error =
-                    new AngelHttpException.fromMap((event.data ?? {}) as Map);
+                    AngelHttpException.fromMap((event.data ?? {}) as Map);
                 _onError.add(error);
               } else if (event.eventName == authenticatedEvent) {
-                var authResult = new AngelAuthResult.fromMap(event.data as Map);
+                var authResult = AngelAuthResult.fromMap(event.data as Map);
                 _onAuthenticated.add(authResult);
               } else if (event.eventName?.isNotEmpty == true) {
                 var split = event.eventName
@@ -210,7 +209,7 @@ abstract class BaseWebSocketClient extends BaseAngelClient {
         onDone: () {
           _socket = null;
           if (reconnectOnClose == true) {
-            new Timer.periodic(reconnectInterval, (Timer timer) async {
+            Timer.periodic(reconnectInterval, (Timer timer) async {
               var result;
 
               try {
@@ -238,7 +237,7 @@ abstract class BaseWebSocketClient extends BaseAngelClient {
 
   /// Attempts to authenticate a WebSocket, using a valid JWT.
   void authenticateViaJwt(String jwt) {
-    sendAction(new WebSocketAction(
+    sendAction(WebSocketAction(
       eventName: authenticateAction,
       params: {
         'query': {'jwt': jwt}
@@ -263,13 +262,13 @@ class WebSocketsService<Id, Data> extends Service<Id, Data> {
   final String path;
 
   final StreamController<WebSocketEvent> _onAllEvents =
-      new StreamController<WebSocketEvent>();
-  final StreamController<List<Data>> _onIndexed = new StreamController();
-  final StreamController<Data> _onRead = new StreamController<Data>();
-  final StreamController<Data> _onCreated = new StreamController<Data>();
-  final StreamController<Data> _onModified = new StreamController<Data>();
-  final StreamController<Data> _onUpdated = new StreamController<Data>();
-  final StreamController<Data> _onRemoved = new StreamController<Data>();
+      StreamController<WebSocketEvent>();
+  final StreamController<List<Data>> _onIndexed = StreamController();
+  final StreamController<Data> _onRead = StreamController<Data>();
+  final StreamController<Data> _onCreated = StreamController<Data>();
+  final StreamController<Data> _onModified = StreamController<Data>();
+  final StreamController<Data> _onUpdated = StreamController<Data>();
+  final StreamController<Data> _onRemoved = StreamController<Data>();
 
   /// Fired on all events.
   Stream<WebSocketEvent> get onAllEvents => _onAllEvents.stream;
@@ -316,7 +315,7 @@ class WebSocketsService<Id, Data> extends Service<Id, Data> {
 
   /// Deserializes the contents of an [event].
   WebSocketEvent<Data> transformEvent(WebSocketEvent event) {
-    return new WebSocketEvent(
+    return WebSocketEvent(
         eventName: event.eventName, data: deserialize(event.data));
   }
 
@@ -330,7 +329,7 @@ class WebSocketsService<Id, Data> extends Service<Id, Data> {
 
         if (event.eventName == indexedEvent) {
           var d = event.data;
-          var transformed = new WebSocketEvent(
+          var transformed = WebSocketEvent(
               eventName: event.eventName,
               data: d is Iterable ? d.map(deserialize).toList() : null);
           if (transformed.data != null) _onIndexed.add(transformed.data);
@@ -367,14 +366,14 @@ class WebSocketsService<Id, Data> extends Service<Id, Data> {
 
   @override
   Future<List<Data>> index([Map<String, dynamic> params]) async {
-    app.sendAction(new WebSocketAction(
+    app.sendAction(WebSocketAction(
         eventName: '$path::$indexAction', params: params ?? {}));
     return null;
   }
 
   @override
   Future<Data> read(id, [Map<String, dynamic> params]) async {
-    app.sendAction(new WebSocketAction(
+    app.sendAction(WebSocketAction(
         eventName: '$path::$readAction',
         id: id.toString(),
         params: params ?? {}));
@@ -383,14 +382,14 @@ class WebSocketsService<Id, Data> extends Service<Id, Data> {
 
   @override
   Future<Data> create(data, [Map<String, dynamic> params]) async {
-    app.sendAction(new WebSocketAction(
+    app.sendAction(WebSocketAction(
         eventName: '$path::$createAction', data: data, params: params ?? {}));
     return null;
   }
 
   @override
   Future<Data> modify(id, data, [Map<String, dynamic> params]) async {
-    app.sendAction(new WebSocketAction(
+    app.sendAction(WebSocketAction(
         eventName: '$path::$modifyAction',
         id: id.toString(),
         data: data,
@@ -400,7 +399,7 @@ class WebSocketsService<Id, Data> extends Service<Id, Data> {
 
   @override
   Future<Data> update(id, data, [Map<String, dynamic> params]) async {
-    app.sendAction(new WebSocketAction(
+    app.sendAction(WebSocketAction(
         eventName: '$path::$updateAction',
         id: id.toString(),
         data: data,
@@ -410,7 +409,7 @@ class WebSocketsService<Id, Data> extends Service<Id, Data> {
 
   @override
   Future<Data> remove(id, [Map<String, dynamic> params]) async {
-    app.sendAction(new WebSocketAction(
+    app.sendAction(WebSocketAction(
         eventName: '$path::$removeAction',
         id: id.toString(),
         params: params ?? {}));
@@ -428,14 +427,14 @@ class WebSocketExtraneousEventHandler {
 
   StreamController<WebSocketEvent> _getStream(String index) {
     if (_events[index] == null)
-      _events[index] = new StreamController<WebSocketEvent>();
+      _events[index] = StreamController<WebSocketEvent>();
 
     return _events[index];
   }
 
   Stream<WebSocketEvent> operator [](String index) {
     if (_events[index] == null)
-      _events[index] = new StreamController<WebSocketEvent>();
+      _events[index] = StreamController<WebSocketEvent>();
 
     return _events[index].stream;
   }

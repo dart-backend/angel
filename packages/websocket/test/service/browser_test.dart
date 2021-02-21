@@ -1,5 +1,5 @@
 import 'package:test/test.dart';
 
-main() {
+void main() {
   group('service.browser', () {});
 }

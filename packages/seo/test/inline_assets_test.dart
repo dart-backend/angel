@@ -18,7 +18,7 @@ void main() {
         var contents = await indexHtml.readAsBytes();
         res
           ..useBuffer()
-          ..contentType = new MediaType.parse('text/html; charset=utf-8')
+          ..contentType = MediaType.parse('text/html; charset=utf-8')
           ..buffer.add(contents);
       });
 
@@ -27,7 +27,7 @@ void main() {
 
     group('virtual_directory', inlineAssetsTests((app, dir) {
       var vDir = inlineAssetsFromVirtualDirectory(
-          new VirtualDirectory(app, dir.fileSystem, source: dir));
+          VirtualDirectory(app, dir.fileSystem, source: dir));
       app.fallback(vDir.handleRequest);
     }));
   });
@@ -41,8 +41,8 @@ void Function() inlineAssetsTests(InlineAssetTest f) {
     TestClient client;
 
     setUp(() async {
-      var app = new Angel();
-      var fs = new MemoryFileSystem();
+      var app = Angel();
+      var fs = MemoryFileSystem();
       var dir = fs.currentDirectory;
       f(app, dir);
       client = await connectTo(app);
@@ -52,7 +52,7 @@ void Function() inlineAssetsTests(InlineAssetTest f) {
         await file.writeAsString(contents[path].trim());
       }
 
-      app.logger = new Logger('angel_seo')
+      app.logger = Logger('angel_seo')
         ..onRecord.listen((rec) {
           print(rec);
           if (rec.error != null) print(rec.error);

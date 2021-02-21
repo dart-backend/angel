@@ -2,7 +2,7 @@ import 'package:angel_framework/angel_framework.dart';
 import 'package:angel_typed_service/angel_typed_service.dart';
 import 'package:test/test.dart';
 
-main() {
+void main() {
   var svc = TypedService<String, Todo>(MapService());
 
   test('force model', () {

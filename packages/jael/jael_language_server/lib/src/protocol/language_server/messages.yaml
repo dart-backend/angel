@@ -1,0 +1,321 @@
+TextDocumentItem:
+  uri: String
+  text: String
+  languageId: String
+  version: int
+
+TextDocumentIdentifier:
+  uri: String
+
+VersionedTextDocumentIdentifier:
+  uri: String
+  version: int
+
+TextDocumentContentChangeEvent:
+  range: Range
+  rangeLength: int
+  text: String
+
+Range:
+  start: Position
+  end: Position
+
+Position:
+  line: int
+  character: int
+
+Diagnostics:
+  uri: String
+  diagnostics:
+    listType: Diagnostic
+
+Diagnostic:
+  range: Range
+  severity: int
+  code: dynamic
+  source: String
+  message: String
+
+CompletionList:
+  isIncomplete: bool
+  items:
+    listType: CompletionItem
+
+CompletionItem:
+  label: String
+  kind: CompletionItemKind
+  detail: String
+  documentation: String
+  sortText: String
+  filterText: String
+  insertText: String
+  insertTextFormat: InsertTextFormat
+  textEdit: TextEdit
+  additionalTextEdits:
+    listType: TextEdit
+  command: Command
+  data: dynamic
+
+CompletionItemKind:
+  enumValues:
+    text: 1
+    method: 2
+    function: 3
+    constructor: 4
+    field: 5
+    variable: 6
+    classKind: 7
+    interface: 8
+    module: 9
+    property: 10
+    unit: 11
+    value: 12
+    enumKind: 13
+    keyword: 14
+    snippet: 15
+    color: 16
+    file: 17
+    reference: 18
+  wireType: int
+
+InsertTextFormat:
+  enumValues:
+    plainText: 1
+    snippet: 2
+  wireType: int
+
+TextEdit:
+  range: Range
+  newText: String
+
+Command:
+  title: String
+  command: String
+  arguments:
+    listType: dynamic
+
+Location:
+  uri: String
+  range: Range
+
+DynamicRegistrationCapability:
+  dynamicRegistration: bool
+
+WorkspaceClientCapabilities:
+  applyEdit: bool
+  didChangeConfiguration: DynamicRegistrationCapability
+  didChangeWatchedFiles: DynamicRegistrationCapability
+  symbol: DynamicRegistrationCapability
+  executeCommand: DynamicRegistrationCapability
+
+SynchronizationCapabilities:
+  dynamicRegistration: bool
+  willSave: bool
+  willSaveWaitUntil: bool
+  didSave: bool
+
+CompletionItemCapabilities:
+  snippetSupport: bool
+
+CompletionCapabilities:
+  dynamicRegistration: bool
+  completionItem: CompletionItemCapabilities
+
+HoverCapabilities:
+  dynamicRegistration: bool
+  contentFormat:
+    listType: String
+
+CodeActionCapabilities:
+  dynamicRegistration: bool
+  codeActionLiteralSupport: CodeActionLiteralSupport
+
+CodeActionLiteralSupport:
+  codeActionKind: CodeActionKinds
+
+CodeActionKinds:
+  valueSet:
+    listType: String # open ended enum
+
+TextDocumentClientCapabilities:
+  codeAction: CodeActionCapabilities
+  completion: CompletionCapabilities
+  hover: HoverCapabilities
+  synchronization: SynchronizationCapabilities
+  codeLens: DynamicRegistrationCapability
+  definition: DynamicRegistrationCapability
+  documentHighlight: DynamicRegistrationCapability
+  documentLink: DynamicRegistrationCapability
+  documentSymbol: DynamicRegistrationCapability
+  formatting: DynamicRegistrationCapability
+  onTypeFormatting: DynamicRegistrationCapability
+  references: DynamicRegistrationCapability
+  rename: DynamicRegistrationCapability
+
+ClientCapabilities:
+  workspace: WorkspaceClientCapabilities
+  textDocument: TextDocumentClientCapabilities
+
+TextDocumentSyncKind:
+  enumValues:
+    none: 0
+    full: 1
+    incremental: 2
+  wireType: int
+
+CompletionOptions:
+  resolveProvider: bool
+  triggerCharacters:
+    listType: String
+
+SignatureHelpOptions:
+  triggerCharacters:
+    listType: String
+
+CodeLensOptions:
+  resolveProvider: bool
+
+DocumentOnTypeFormattingOptions:
+  firstTriggerCharacter: String
+  moreTriggerCharacter:
+    listType: String
+
+DocumentLinkOptions:
+  resolveProvider: bool
+
+ExecuteCommandOptions:
+  commands:
+    listType: String
+
+SaveOptions:
+  includeText: bool
+
+TextDocumentSyncOptions:
+  openClose: bool
+  change: TextDocumentSyncKind
+  willSave: bool
+  willSaveWaitUntil: bool
+  save: SaveOptions
+
+ServerCapabilities:
+  codeActionProvider: bool
+  codeLensProvider: CodeLensOptions
+  completionProvider: CompletionOptions
+  definitionProvider: bool
+  documentFormattingProvider: bool
+  documentHighlightProvider: bool
+  documentLinkProvider: DocumentLinkOptions
+  documentOnTypeFormattingProvider: DocumentOnTypeFormattingOptions
+  documentRangeFormattingProvider: bool
+  documentSymbolProvider: bool
+  executeCommandProvider: ExecuteCommandOptions
+  hoverProvider: bool
+  implementationProvider: bool
+  referencesProvider: bool
+  renameProvider: bool
+  signatureHelpProvider: SignatureHelpOptions
+  textDocumentSync: TextDocumentSyncOptions
+  workspaceSymbolProvider: bool
+
+ReferenceContext:
+  includeDeclaration: bool
+
+Hover:
+  contents: String
+  range: Range
+
+HoverMarkup:
+  contents: MarkupContent
+  range: Range
+
+CodeActionContext:
+  diagnostics:
+    listType: Diagnostic
+
+CodeAction:
+  title: String
+  kind: String
+  diagnostics:
+    listType: Diagnostic
+  edit: WorkspaceEdit
+  command: Command
+
+ApplyWorkspaceEditParams:
+  label: String
+  edit: WorkspaceEdit
+
+WorkspaceEdit:
+  # Not using `documentChanges` since there is no reasonable way to support text
+  # document version
+  changes:
+    mapType:
+      listType: TextEdit
+
+DocumentHighlight:
+  range: Range
+  kind: DocumentHighlightKind
+
+DocumentHighlightKind:
+  enumValues:
+    text: 1
+    read: 2
+    write: 3
+  wireType: int
+
+SymbolInformation:
+  name: String
+  kind: SymbolKind
+  location: Location
+  containerName: String
+
+SymbolKind:
+  enumValues:
+    file: 1
+    module: 2
+    namespace: 3
+    package: 4
+    classSymbol: 5
+    method: 6
+    property: 7
+    field: 8
+    constructor: 9
+    enumSymbol: 10
+    interface: 11
+    function: 12
+    variable: 13
+    constant: 14
+    string: 15
+    number: 16
+    boolean: 17
+    array: 18
+    object: 19
+    key: 20
+    nullSymbol: 21
+    enumMember: 22
+    struct: 23
+    event: 24
+    operator: 25
+    typeParameter: 26
+  wireType: int
+
+MarkupContentKind:
+  enumValues:
+    plaintext: 'plaintext'
+    markdown: 'markdown'
+  wireType: String
+
+MarkupContent:
+  kind: MarkupContentKind
+  value: String
+
+MessageType:
+  enumValues:
+    error: 1
+    warning: 2
+    info: 3
+    log: 4
+  wireType: int
+
+ShowMessageParams:
+  type: MessageType
+  message: String

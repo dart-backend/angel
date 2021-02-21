@@ -29,12 +29,12 @@ class AngelWebSocket {
   final List<String> _servicesAlreadyWired = [];
 
   final StreamController<WebSocketAction> _onAction =
-      new StreamController<WebSocketAction>();
-  final StreamController _onData = new StreamController();
+      StreamController<WebSocketAction>();
+  final StreamController _onData = StreamController();
   final StreamController<WebSocketContext> _onConnection =
-      new StreamController<WebSocketContext>.broadcast();
+      StreamController<WebSocketContext>.broadcast();
   final StreamController<WebSocketContext> _onDisconnect =
-      new StreamController<WebSocketContext>.broadcast();
+      StreamController<WebSocketContext>.broadcast();
 
   final Angel app;
 
@@ -55,11 +55,11 @@ class AngelWebSocket {
   final bool sendErrors;
 
   /// A list of clients currently connected to this server via WebSockets.
-  List<WebSocketContext> get clients => new List.unmodifiable(_clients);
+  List<WebSocketContext> get clients => List.unmodifiable(_clients);
 
   /// Services that have already been hooked to fire socket events.
   List<String> get servicesAlreadyWired =>
-      new List.unmodifiable(_servicesAlreadyWired);
+      List.unmodifiable(_servicesAlreadyWired);
 
   /// Used to notify other nodes of an event's firing. Good for scaled applications.
   final StreamChannel<WebSocketEvent> synchronizationChannel;
@@ -139,14 +139,14 @@ class AngelWebSocket {
     var split = action.eventName.split("::");
 
     if (split.length < 2) {
-      socket.sendError(new AngelHttpException.badRequest());
+      socket.sendError(AngelHttpException.badRequest());
       return null;
     }
 
     var service = app.findService(split[0]);
 
     if (service == null) {
-      socket.sendError(new AngelHttpException.notFound(
+      socket.sendError(AngelHttpException.notFound(
           message: "No service \"${split[0]}\" exists."));
       return null;
     }
@@ -182,23 +182,23 @@ class AngelWebSocket {
             "${split[0]}::" + readEvent, await service.read(action.id, params));
         return null;
       } else if (actionName == createAction) {
-        return new WebSocketEvent(
+        return WebSocketEvent(
             eventName: "${split[0]}::" + createdEvent,
             data: await service.create(action.data, params));
       } else if (actionName == modifyAction) {
-        return new WebSocketEvent(
+        return WebSocketEvent(
             eventName: "${split[0]}::" + modifiedEvent,
             data: await service.modify(action.id, action.data, params));
       } else if (actionName == updateAction) {
-        return new WebSocketEvent(
+        return WebSocketEvent(
             eventName: "${split[0]}::" + updatedEvent,
             data: await service.update(action.id, action.data, params));
       } else if (actionName == removeAction) {
-        return new WebSocketEvent(
+        return WebSocketEvent(
             eventName: "${split[0]}::" + removedEvent,
             data: await service.remove(action.id, params));
       } else {
-        socket.sendError(new AngelHttpException.methodNotAllowed(
+        socket.sendError(AngelHttpException.methodNotAllowed(
             message: "Method Not Allowed: \"$actionName\""));
         return null;
       }
@@ -218,7 +218,7 @@ class AngelWebSocket {
         var jwt = action.params['query']['jwt'] as String;
         AuthToken token;
 
-        token = new AuthToken.validate(jwt, auth.hmac);
+        token = AuthToken.validate(jwt, auth.hmac);
         var user = await auth.deserializer(token.userId);
         socket.request
           ..container.registerSingleton<AuthToken>(token)
@@ -230,7 +230,7 @@ class AngelWebSocket {
         catchError(e, st, socket);
       }
     } else {
-      socket.sendError(new AngelHttpException.badRequest(
+      socket.sendError(AngelHttpException.badRequest(
           message: 'No JWT provided for authentication.'));
     }
   }
@@ -258,17 +258,17 @@ class AngelWebSocket {
     try {
       socket._onData.add(data);
       var fromJson = json.decode(data.toString());
-      var action = new WebSocketAction.fromJson(fromJson as Map);
+      var action = WebSocketAction.fromJson(fromJson as Map);
       _onAction.add(action);
 
       if (action.eventName == null ||
           action.eventName is! String ||
           action.eventName.isEmpty) {
-        throw new AngelHttpException.badRequest();
+        throw AngelHttpException.badRequest();
       }
 
       if (fromJson is Map && fromJson.containsKey("eventName")) {
-        socket._onAction.add(new WebSocketAction.fromJson(fromJson));
+        socket._onAction.add(WebSocketAction.fromJson(fromJson));
         socket.on
             ._getStreamForEvent(fromJson["eventName"].toString())
             .add(fromJson["data"] as Map);
@@ -298,12 +298,12 @@ class AngelWebSocket {
       socket.sendError(e);
       app.logger?.severe(e.message, e.error ?? e, e.stackTrace);
     } else if (sendErrors) {
-      var err = new AngelHttpException(e,
+      var err = AngelHttpException(e,
           message: e.toString(), stackTrace: st, errors: [st.toString()]);
       socket.sendError(err);
       app.logger?.severe(err.message, e, st);
     } else {
-      var err = new AngelHttpException(e);
+      var err = AngelHttpException(e);
       socket.sendError(err);
       app.logger?.severe(e.toString(), e, st);
     }
@@ -311,7 +311,7 @@ class AngelWebSocket {
 
   /// Transforms a [HookedServiceEvent], so that it can be broadcasted.
   Future<WebSocketEvent> transformEvent(HookedServiceEvent event) async {
-    return new WebSocketEvent(eventName: event.eventName, data: event.result);
+    return WebSocketEvent(eventName: event.eventName, data: event.result);
   }
 
   /// Hooks any [HookedService]s that are not being broadcasted yet.
@@ -349,7 +349,7 @@ class AngelWebSocket {
   Future<void> handleClient(WebSocketContext socket) async {
     var origin = socket.request.headers.value('origin');
     if (allowedOrigins != null && !allowedOrigins.contains(origin)) {
-      throw new AngelHttpException.forbidden(
+      throw AngelHttpException.forbidden(
           message:
               'WebSocket connections are not allowed from the origin "$origin".');
     }
@@ -382,11 +382,11 @@ class AngelWebSocket {
   Future<bool> handleRequest(RequestContext req, ResponseContext res) async {
     if (req is HttpRequestContext && res is HttpResponseContext) {
       if (!WebSocketTransformer.isUpgradeRequest(req.rawRequest))
-        throw new AngelHttpException.badRequest();
+        throw AngelHttpException.badRequest();
       await res.detach();
       var ws = await WebSocketTransformer.upgrade(req.rawRequest);
-      var channel = new IOWebSocketChannel(ws);
-      var socket = new WebSocketContext(channel, req, res);
+      var channel = IOWebSocketChannel(ws);
+      var socket = WebSocketContext(channel, req, res);
       scheduleMicrotask(() => handleClient(socket));
       return false;
     } else if (req is Http2RequestContext && res is Http2ResponseContext) {
@@ -398,28 +398,28 @@ class AngelWebSocket {
       var protocol = req.headers.value('sec-websocket-protocol');
 
       if (connection == null) {
-        throw new AngelHttpException.badRequest(
+        throw AngelHttpException.badRequest(
             message: 'Missing `connection` header.');
       } else if (!connection.contains('upgrade')) {
-        throw new AngelHttpException.badRequest(
+        throw AngelHttpException.badRequest(
             message: 'Missing "upgrade" in `connection` header.');
       } else if (upgrade != 'websocket') {
-        throw new AngelHttpException.badRequest(
+        throw AngelHttpException.badRequest(
             message: 'The `upgrade` header must equal "websocket".');
       } else if (version != '13') {
-        throw new AngelHttpException.badRequest(
+        throw AngelHttpException.badRequest(
             message: 'The `sec-websocket-version` header must equal "13".');
       } else if (key == null) {
-        throw new AngelHttpException.badRequest(
+        throw AngelHttpException.badRequest(
             message: 'Missing `sec-websocket-key` header.');
       } else if (protocol != null &&
           allowedProtocols != null &&
           !allowedProtocols.contains(protocol)) {
-        throw new AngelHttpException.badRequest(
+        throw AngelHttpException.badRequest(
             message: 'Disallowed `sec-websocket-protocol` header "$protocol".');
       } else {
         var stream = res.detach();
-        var ctrl = new StreamChannelController<List<int>>();
+        var ctrl = StreamChannelController<List<int>>();
 
         ctrl.local.stream.listen((buf) {
           stream.sendData(buf);
@@ -441,13 +441,13 @@ class AngelWebSocket {
         if (protocol != null) sink.add("Sec-WebSocket-Protocol: $protocol\r\n");
         sink.add("\r\n");
 
-        var ws = new WebSocketChannel(ctrl.foreign);
-        var socket = new WebSocketContext(ws, req, res);
+        var ws = WebSocketChannel(ctrl.foreign);
+        var socket = WebSocketContext(ws, req, res);
         scheduleMicrotask(() => handleClient(socket));
         return false;
       }
     } else {
-      throw new ArgumentError(
+      throw ArgumentError(
           'Not an HTTP/1.1 or HTTP/2 RequestContext+ResponseContext pair: $req, $res');
     }
   }

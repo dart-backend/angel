@@ -11,7 +11,7 @@ import 'package:web_socket_channel/html.dart';
 import 'base_websocket_client.dart';
 export 'angel_websocket.dart';
 
-final RegExp _straySlashes = new RegExp(r"(^/)|(/+$)");
+final RegExp _straySlashes = RegExp(r"(^/)|(/+$)");
 
 /// Queries an Angel server via WebSockets.
 class WebSockets extends BaseWebSocketClient {
@@ -19,7 +19,7 @@ class WebSockets extends BaseWebSocketClient {
 
   WebSockets(baseUrl,
       {bool reconnectOnClose = true, Duration reconnectInterval})
-      : super(new http.BrowserClient(), baseUrl,
+      : super(http.BrowserClient(), baseUrl,
             reconnectOnClose: reconnectOnClose,
             reconnectInterval: reconnectInterval);
 
@@ -35,15 +35,15 @@ class WebSockets extends BaseWebSocketClient {
   @override
   Stream<String> authenticateViaPopup(String url,
       {String eventName = 'token', String errorMessage}) {
-    var ctrl = new StreamController<String>();
+    var ctrl = StreamController<String>();
     var wnd = window.open(url, 'angel_client_auth_popup');
 
     Timer t;
     StreamSubscription<Event> sub;
-    t = new Timer.periodic(new Duration(milliseconds: 500), (timer) {
+    t = Timer.periodic(Duration(milliseconds: 500), (timer) {
       if (!ctrl.isClosed) {
         if (wnd.closed) {
-          ctrl.addError(new AngelHttpException.notAuthenticated(
+          ctrl.addError(AngelHttpException.notAuthenticated(
               message:
                   errorMessage ?? 'Authentication via popup window failed.'));
           ctrl.close();
@@ -72,17 +72,17 @@ class WebSockets extends BaseWebSocketClient {
 
     if (authToken?.isNotEmpty == true) {
       url = url.replace(
-          queryParameters: new Map<String, String>.from(url.queryParameters)
+          queryParameters: Map<String, String>.from(url.queryParameters)
             ..['token'] = authToken);
     }
 
-    var socket = new WebSocket(url.toString());
-    var completer = new Completer<WebSocketChannel>();
+    var socket = WebSocket(url.toString());
+    var completer = Completer<WebSocketChannel>();
 
     socket
       ..onOpen.listen((_) {
         if (!completer.isCompleted)
-          return completer.complete(new HtmlWebSocketChannel(socket));
+          return completer.complete(HtmlWebSocketChannel(socket));
       })
       ..onError.listen((e) {
         if (!completer.isCompleted)
@@ -96,7 +96,7 @@ class WebSockets extends BaseWebSocketClient {
   BrowserWebSocketsService<Id, Data> service<Id, Data>(String path,
       {Type type, AngelDeserializer<Data> deserializer}) {
     String uri = path.replaceAll(_straySlashes, '');
-    return new BrowserWebSocketsService<Id, Data>(socket, this, uri,
+    return BrowserWebSocketsService<Id, Data>(socket, this, uri,
         deserializer: deserializer);
   }
 }

@@ -8,7 +8,7 @@ const List<Map<String, String>> people = [
   {'name': 'John Smith'}
 ];
 
-main() {
+void main() {
   http.Client client;
 
   final Router router = Router();
