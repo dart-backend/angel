@@ -70,7 +70,11 @@ abstract class BaseAngelClient extends Angel {
     var segments = baseUrl.pathSegments
         .followedBy(p.split(authEndpoint))
         .followedBy([type]);
-    var url = baseUrl.replace(path: p.joinAll(segments));
+
+    // TODO: convert windows path to proper url
+    var p1 = p.joinAll(segments).replaceAll('\\', '/');
+
+    var url = baseUrl.replace(path: p1);
     http.Response response;
 
     if (credentials != null) {

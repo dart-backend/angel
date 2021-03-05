@@ -124,7 +124,7 @@ class AngelAuthResult {
 
   /// Attempts to deserialize a response from a [Map].
   factory AngelAuthResult.fromMap(Map data) {
-    final result = new AngelAuthResult();
+    final result = AngelAuthResult();
 
     if (data is Map && data.containsKey('token') && data['token'] is String)
       result._token = data['token'].toString();
@@ -133,10 +133,10 @@ class AngelAuthResult {
       result.data.addAll((data['data'] as Map<String, dynamic>) ?? {});
 
     if (result.token == null) {
-      throw new FormatException(
+      throw FormatException(
           'The required "token" field was not present in the given data.');
     } else if (data['data'] is! Map) {
-      throw new FormatException(
+      throw FormatException(
           'The required "data" field in the given data was not a map; instead, it was ${data['data']}.');
     }
 
@@ -145,7 +145,7 @@ class AngelAuthResult {
 
   /// Attempts to deserialize a response from a [String].
   factory AngelAuthResult.fromJson(String s) =>
-      new AngelAuthResult.fromMap(json.decode(s) as Map);
+      AngelAuthResult.fromMap(json.decode(s) as Map);
 
   /// Converts this instance into a JSON-friendly representation.
   Map<String, dynamic> toJson() {
@@ -200,7 +200,7 @@ abstract class Service<Id, Data> {
   ///
   /// Handy utility for handling data in a type-safe manner.
   Service<Id, U> map<U>(U Function(Data) encoder, Data Function(U) decoder) {
-    return new _MappedService(this, encoder, decoder);
+    return _MappedService(this, encoder, decoder);
   }
 }
 
@@ -215,7 +215,7 @@ class _MappedService<Id, Data, U> extends Service<Id, U> {
   Angel get app => inner.app;
 
   @override
-  Future close() => new Future.value();
+  Future close() => Future.value();
 
   @override
   Future<U> create(U data, [Map<String, dynamic> params]) {
@@ -281,19 +281,18 @@ class ServiceList<Id, Data> extends DelegatingList<Data> {
 
   final Service<Id, Data> service;
 
-  final StreamController<ServiceList<Id, Data>> _onChange =
-      new StreamController();
+  final StreamController<ServiceList<Id, Data>> _onChange = StreamController();
 
   final List<StreamSubscription> _subs = [];
 
   ServiceList(this.service, {this.idField = 'id', Equality<Data> equality})
       : super([]) {
     _equality = equality;
-    _equality ??= new EqualityBy<Data, Id>((map) {
+    _equality ??= EqualityBy<Data, Id>((map) {
       if (map is Map)
         return map[idField ?? 'id'] as Id;
       else
-        throw new UnsupportedError(
+        throw UnsupportedError(
             'ServiceList only knows how to find the id from a Map object. Provide a custom `Equality` in your call to the constructor.');
     });
     // Index

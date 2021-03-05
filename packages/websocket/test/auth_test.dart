@@ -36,22 +36,23 @@ void main() {
 
     await app.configure(auth.configureServer);
     var sock = AngelWebSocket(app);
+
     await app.configure(sock.configureServer);
     app.all('/ws', sock.handleRequest);
     app.logger = Logger('angel_auth')..onRecord.listen(print);
 
     var server = await http.startServer();
+
     client = c.Rest('http://${server.address.address}:${server.port}');
+
     ws = c.WebSockets('ws://${server.address.address}:${server.port}/ws');
     await ws.connect();
   });
 
   tearDown(() {
-    return Future.wait([
-      http.close(),
-      client.close(),
-      ws.close(),
-    ]);
+    http.close();
+    client.close();
+    ws.close();
   });
 
   test('auth event fires', () async {
