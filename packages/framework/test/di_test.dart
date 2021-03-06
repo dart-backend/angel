@@ -71,32 +71,33 @@ main() {
   });
 
   test("singleton in route", () async {
-    validateTodoSingleton(await client.get("$url/errands"));
+    validateTodoSingleton(await client.get(Uri.parse("$url/errands")));
   });
 
   test("singleton in controller", () async {
-    validateTodoSingleton(await client.get("$url/errands2"));
+    validateTodoSingleton(await client.get(Uri.parse("$url/errands2")));
   });
 
   test("make in route", () async {
-    var response = await client.get("$url/errands3");
+    var response = await client.get(Uri.parse("$url/errands3"));
     var text = await json.decode(response.body) as String;
     expect(text, equals(TEXT));
   });
 
   test("make in controller", () async {
-    var response = await client.get("$url/errands4");
+    var response = await client.get(Uri.parse("$url/errands4"));
     var text = await json.decode(response.body) as String;
     expect(text, equals(TEXT));
   });
 
   test('resolve from future in controller', () async {
-    var response = await client.post('$url/errands4/async', body: 'hey');
+    var response =
+        await client.post(Uri.parse('$url/errands4/async'), body: 'hey');
     expect(response.body, json.encode({'bar': 'hey'}));
   });
 
   test('resolve from future in route', () async {
-    var response = await client.post('$url/async', body: 'yes');
+    var response = await client.post(Uri.parse('$url/async'), body: 'yes');
     expect(response.body, json.encode({'baz': 'yes'}));
   });
 }

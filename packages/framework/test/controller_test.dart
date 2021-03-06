@@ -139,7 +139,7 @@ main() {
 
   test("middleware", () async {
     var rgx = RegExp("^Hello, world!");
-    var response = await client.get("$url/todos/0");
+    var response = await client.get(Uri.parse("$url/todos/0"));
     print('Response: ${response.body}');
 
     expect(rgx.firstMatch(response.body)?.start, equals(0));
@@ -152,7 +152,7 @@ main() {
 
   test("controller in group", () async {
     var rgx = RegExp("^Hello, world!");
-    var response = await client.get("$url/ctrl_group/todos/0");
+    var response = await client.get(Uri.parse("$url/ctrl_group/todos/0"));
     print('Response: ${response.body}');
 
     expect(rgx.firstMatch(response.body)?.start, equals(0));
@@ -164,7 +164,7 @@ main() {
   });
 
   test("named actions", () async {
-    var response = await client.get("$url/redirect");
+    var response = await client.get(Uri.parse("$url/redirect"));
     print('Response: ${response.body}');
     expect(response.body, equals("Hello, \"world!\""));
   });
