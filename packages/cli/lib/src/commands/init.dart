@@ -12,7 +12,7 @@ import 'pub.dart';
 import 'rename.dart';
 
 class InitCommand extends Command {
-  final KeyCommand _key = new KeyCommand();
+  final KeyCommand _key = KeyCommand();
 
   @override
   String get name => "init";
@@ -35,21 +35,19 @@ class InitCommand extends Command {
   @override
   run() async {
     Directory projectDir =
-        new Directory(argResults.rest.isEmpty ? "." : argResults.rest[0]);
+        Directory(argResults.rest.isEmpty ? "." : argResults.rest[0]);
     print("Creating new Angel project in ${projectDir.absolute.path}...");
     await _cloneRepo(projectDir);
     // await preBuild(projectDir);
     var secret = rs.randomAlphaNumeric(32);
     print('Generated new development JWT secret: $secret');
     await _key.changeSecret(
-        new File.fromUri(projectDir.uri.resolve('config/default.yaml')),
-        secret);
+        File.fromUri(projectDir.uri.resolve('config/default.yaml')), secret);
 
     secret = rs.randomAlphaNumeric(32);
     print('Generated new production JWT secret: $secret');
     await _key.changeSecret(
-        new File.fromUri(projectDir.uri.resolve('config/production.yaml')),
-        secret);
+        File.fromUri(projectDir.uri.resolve('config/production.yaml')), secret);
 
     var name = argResults.wasParsed('project-name')
         ? argResults['project-name'] as String
@@ -110,9 +108,9 @@ class InitCommand extends Command {
 
       switch (stat.type) {
         case FileSystemEntityType.directory:
-          return await _deleteRecursive(new Directory(path));
+          return await _deleteRecursive(Directory(path));
         case FileSystemEntityType.file:
-          return await _deleteRecursive(new File(path));
+          return await _deleteRecursive(File(path));
         default:
           break;
       }
@@ -198,7 +196,7 @@ class InitCommand extends Command {
         }
 
         if (await git.exitCode != 0) {
-          throw new Exception("Could not clone repo.");
+          throw Exception("Could not clone repo.");
         }
       }
 
@@ -224,7 +222,7 @@ class InitCommand extends Command {
         await preBuild(projectDir).catchError((_) => null);
       }
 
-      var gitDir = new Directory.fromUri(projectDir.uri.resolve(".git"));
+      var gitDir = Directory.fromUri(projectDir.uri.resolve(".git"));
       if (await gitDir.exists()) await gitDir.delete(recursive: true);
     } catch (e) {
       await boilerplateDir.delete(recursive: true).catchError((_) => null);
@@ -260,7 +258,7 @@ Future preBuild(Directory projectDir) async {
 
   var buildCode = await build.exitCode;
 
-  if (buildCode != 0) throw new Exception('Failed to pre-build resources.');
+  if (buildCode != 0) throw Exception('Failed to pre-build resources.');
 }
 
 const RepoArchiveLocation = "https://github.com/angel-dart";
