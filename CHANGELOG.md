@@ -6,6 +6,10 @@
 * Upgrade angel_model to 1.3.0
 * Upgrade angel_container to 1.3.0
 * Upgrade angel_framework to 2.3.0
+* Upgrade angel_client to 2.2.0
+* Upgrade angel_auth to 2.2.0
+* Upgrade angel_websocket to 2.3.0
+
 
 
 # 2.2.0
