@@ -6,9 +6,15 @@
 * Upgrade angel_model to 2.0.0
 * Upgrade angel_container to 2.0.0
 * Upgrade angel_framework to 3.0.0
-* Upgrade angel_client to 3.0.0
 * Upgrade angel_auth to 3.0.0
-* Upgrade angel_websocket to 3.0.0
+* Upgrade angel_configuration to 3.0.0
+* Upgrade angel_jael to 3.0.0
+* Upgrade jael to 3.0.0 (todo)
+* Upgrade jael_preprocessor to 3.0.0 (todo)
+* Upgrade test to 3.0.0 (todo)
+
+* Upgrade angel_client to 3.0.0 (todo)
+* Upgrade angel_websocket to 3.0.0 (todo)
 
 # 2.2.0
 * Changed Dart SDK requirements for all packages to ">=2.10.0 <2.12.0"
