@@ -122,7 +122,7 @@ main() {
   });
 
   test('login', () async {
-    final response = await client.post('$url/login',
+    final response = await client.post(Uri.parse('$url/login'),
         body: {'username': 'jdoe1', 'password': 'password'});
     print('Response: ${response.body}');
     expect(response.body, equals('Hello!'));
@@ -132,7 +132,7 @@ main() {
           : null);
 
   test('preserve existing user', () async {
-    final response = await client.post('$url/existing/foo',
+    final response = await client.post(Uri.parse('$url/existing/foo'),
         body: {'username': 'jdoe1', 'password': 'password'},
         headers: {'accept': 'application/json'});
     print('Response: ${response.body}');
