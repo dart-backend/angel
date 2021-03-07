@@ -1,12 +1,12 @@
 name: angel_auth
 description: A complete authentication plugin for Angel. Includes support for stateless JWT tokens, Basic Auth, and more.
-version: 2.3.0
+version: 3.0.0
 author: Tobe O <thosakwe@gmail.com>
 homepage: https://github.com/angel-dart/angel_auth
 environment:
   sdk: ">=2.10.0 <3.0.0"
 dependencies:
-  angel_framework: ^2.3.0
+  angel_framework: ^3.0.0
   charcode: ^1.0.0
   collection: ^1.0.0
   crypto: ^3.0.0
@@ -21,12 +21,7 @@ dev_dependencies:
   test: ^1.15.7
 dependency_overrides:
   angel_framework:
-    path: ../framework
-  angel_route:
-    path: ../route
-  angel_model:
-    path: ../model
-  angel_http_exception:
-    path: ../http_exception
-  angel_container: 
-    path: ../container/angel_container
+    git: 
+      url: https://github.com/dukefirehawk/angel.git
+      ref: sdk-2.12.x
+      path: packages/framework

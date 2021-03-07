@@ -1,5 +1,5 @@
 name: angel_model
-version: 1.3.0
+version: 2.0.0
 description: Angel's basic data model class, no longer with the added weight of the whole framework.
 author: Tobe O <thosakwe@gmail.com>
 homepage: https://github.com/dukefirehawk/angel/packages/model
