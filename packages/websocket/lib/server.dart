@@ -91,8 +91,8 @@ class AngelWebSocket {
       this.deserializer,
       this.allowedOrigins,
       this.allowedProtocols}) {
-    if (serializer == null) serializer = json.encode;
-    if (deserializer == null) deserializer = (params) => params;
+    serializer ??= json.encode;
+    deserializer ??= (params) => params;
   }
 
   HookedServiceEventListener serviceHook(String path) {
@@ -100,15 +100,16 @@ class AngelWebSocket {
       if (e.params != null && e.params['broadcast'] == false) return;
 
       var event = await transformEvent(e);
-      event.eventName = "$path::${event.eventName}";
+      event.eventName = '$path::${event.eventName}';
 
-      _filter(WebSocketContext socket) {
-        if (e.service.configuration.containsKey('ws:filter'))
+      dynamic _filter(WebSocketContext socket) {
+        if (e.service.configuration.containsKey('ws:filter')) {
           return e.service.configuration['ws:filter'](e, socket);
-        else if (e.params != null && e.params.containsKey('ws:filter'))
+        } else if (e.params != null && e.params.containsKey('ws:filter')) {
           return e.params['ws:filter'](e, socket);
-        else
+        } else {
           return true;
+        }
       }
 
       await batchEvent(event, filter: _filter);
@@ -236,8 +237,10 @@ class AngelWebSocket {
   }
 
   /// Hooks a service up to have its events broadcasted.
-  hookupService(Pattern _path, HookedService service) {
-    String path = _path.toString();
+  dynamic hookupService(Pattern _path, HookedService service) {
+    var path = _path.toString();
+
+    // TODO: Relook at this code
     service.after(
       [
         HookedServiceEvent.created,

@@ -12,8 +12,8 @@
 * Upgrade jael_preprocessor to 3.0.0
 * Upgrade validate to 3.0.0
 * Upgrade json_god to 3.0.0
+* Upgrade angel_client to 3.0.0
 
-* Upgrade angel_client to 3.0.0 (todo)
 * Upgrade angel_websocket to 3.0.0 (todo)
 * Upgrade test to 3.0.0 (todo)
 * Upgrade angel_jael to 3.0.0 (todo)
