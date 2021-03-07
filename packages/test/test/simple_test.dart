@@ -1,4 +1,3 @@
-import 'dart:convert';
 import 'dart:io';
 import 'package:angel_framework/angel_framework.dart';
 import 'package:angel_container/mirrors.dart';
@@ -65,7 +64,7 @@ void main() {
   group('matchers', () {
     group('isJson+hasStatus', () {
       test('get', () async {
-        final response = await client.get('/hello');
+        final response = await client.get(Uri.parse('/hello'));
         expect(response, isJson('Hello'));
       });
     });

@@ -62,7 +62,7 @@ main() {
   });
 
   test('can render', () async {
-    var response = await client.get('/github/thosakwe');
+    var response = await client.get(Uri.parse('/github/thosakwe'));
     print('Body:\n${response.body}');
     expect(
         html.parse(response.body).outerHtml,

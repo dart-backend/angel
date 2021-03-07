@@ -62,18 +62,19 @@ main() {
   group('matchers', () {
     group('isJson+hasStatus', () {
       test('get', () async {
-        final response = await client.get('/hello');
+        final response = await client.get(Uri.parse('/hello'));
         expect(response, isJson('Hello'));
       });
 
       test('post', () async {
-        final response = await client.post('/hello', body: {'foo': 'baz'});
+        final response =
+            await client.post(Uri.parse('/hello'), body: {'foo': 'baz'});
         expect(response, allOf(hasStatus(200), isJson({'bar': 'baz'})));
       });
     });
 
     test('isAngelHttpException', () async {
-      var res = await client.get('/error');
+      var res = await client.get(Uri.parse('/error'));
       print(res.body);
       expect(res, isAngelHttpException());
       expect(
@@ -83,20 +84,20 @@ main() {
     });
 
     test('hasBody', () async {
-      var res = await client.get('/body');
+      var res = await client.get(Uri.parse('/body'));
       expect(res, hasBody());
       expect(res, hasBody('OK'));
     });
 
     test('hasHeader', () async {
-      var res = await client.get('/hello');
+      var res = await client.get(Uri.parse('/hello'));
       expect(res, hasHeader('server'));
       expect(res, hasHeader('server', 'angel'));
       expect(res, hasHeader('server', ['angel']));
     });
 
     test('hasValidBody+hasContentType', () async {
-      var res = await client.get('/valid');
+      var res = await client.get(Uri.parse('/valid'));
       expect(res, hasContentType('application/json'));
       expect(
           res,
@@ -110,7 +111,7 @@ main() {
     });
 
     test('gzip decode', () async {
-      var res = await client.get('/gzip');
+      var res = await client.get(Uri.parse('/gzip'));
       expect(res, hasHeader('content-encoding', 'gzip'));
       expect(res, hasBody('Poop'));
     });

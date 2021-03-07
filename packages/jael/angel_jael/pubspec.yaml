@@ -13,7 +13,7 @@ dependencies:
       ref: sdk-2.12.x
       path: packages/framework
   code_buffer: ^1.0.0
-  file: ^5.0.0
+  file: ^6.0.0
   jael:
     git: 
       url: https://github.com/dukefirehawk/angel.git
@@ -31,5 +31,8 @@ dev_dependencies:
       url: https://github.com/dukefirehawk/angel.git
       ref: sdk-2.12.x
       path: packages/test
-  html: ^0.14.0
+  html: ^0.15.0
   test: ^1.15.7
+dependency_overrides:
+  web_socket_channel: ^2.0.0
+  http: ^0.13.0
