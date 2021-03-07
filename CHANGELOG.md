@@ -1,16 +1,14 @@
-# 2.3.0
+# 3.0.0
 * Changed Dart SDK requirements for all packages to ">=2.10.0 <3.0.0"
-* Upgrade angel_http_exception to 1.3.0
-* Upgrade angel_cli to 2.3.0. Rename not working.
-* Upgrade angel_route to 3.3.0
-* Upgrade angel_model to 1.3.0
-* Upgrade angel_container to 1.3.0
-* Upgrade angel_framework to 2.3.0
-* Upgrade angel_client to 2.2.0
-* Upgrade angel_auth to 2.2.0
-* Upgrade angel_websocket to 2.3.0
-
-
+* Upgrade angel_http_exception to 2.0.0
+* Upgrade angel_cli to 3.0.0. Rename not working.
+* Upgrade angel_route to 4.0.0
+* Upgrade angel_model to 2.0.0
+* Upgrade angel_container to 2.0.0
+* Upgrade angel_framework to 3.0.0
+* Upgrade angel_client to 3.0.0
+* Upgrade angel_auth to 3.0.0
+* Upgrade angel_websocket to 3.0.0
 
 # 2.2.0
 * Changed Dart SDK requirements for all packages to ">=2.10.0 <2.12.0"

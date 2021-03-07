@@ -268,20 +268,21 @@ const BoilerplateInfo graphQLBoilerplate = const BoilerplateInfo(
   'GraphQL',
   "A starting point for GraphQL API servers.",
   '${RepoLocation}/boilerplates.git',
-  ref: 'graphql',
+  ref: 'graphql-sdk-2.12.x',
 );
 
 const BoilerplateInfo ormBoilerplate = const BoilerplateInfo(
   'ORM',
   "A starting point for applications that use Angel's ORM.",
   '${RepoLocation}/boilerplates.git',
-  ref: 'orm',
+  ref: 'orm-sdk-2.12.x',
 );
 
 const BoilerplateInfo basicBoilerplate = const BoilerplateInfo(
     'Basic',
     'Minimal starting point for Angel 2.x - A simple server with only a few additional packages.',
-    '${RepoLocation}/boilerplates.git');
+    '${RepoLocation}/boilerplates.git',
+    ref: 'basic-sdk-2.12.x');
 
 const BoilerplateInfo legacyBoilerplate = const BoilerplateInfo(
   'Legacy',
