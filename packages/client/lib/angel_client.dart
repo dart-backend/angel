@@ -87,8 +87,8 @@ abstract class Angel extends http.BaseClient {
   Service<Id, Data> service<Id, Data>(String path,
       {@deprecated Type type, AngelDeserializer<Data> deserializer});
 
-  @override
-  Future<http.Response> delete(url, {Map<String, String> headers});
+  //@override
+  //Future<http.Response> delete(url, {Map<String, String> headers});
 
   @override
   Future<http.Response> get(url, {Map<String, String> headers});

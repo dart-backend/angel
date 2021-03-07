@@ -174,10 +174,10 @@ abstract class BaseAngelClient extends Angel {
     return u.replace(path: p.join(baseUrl.path, u.path));
   }
 
-  @override
-  Future<http.Response> delete(url, {Map<String, String> headers}) async {
-    return sendUnstreamed('DELETE', _join(url), headers);
-  }
+  //@override
+  //Future<http.Response> delete(url, {Map<String, String> headers}) async {
+  //  return sendUnstreamed('DELETE', _join(url), headers);
+  //}
 
   @override
   Future<http.Response> get(url, {Map<String, String> headers}) async {
