@@ -3,10 +3,15 @@ description: A complete authentication plugin for Angel. Includes support for st
 version: 3.0.0
 author: Tobe O <thosakwe@gmail.com>
 homepage: https://github.com/angel-dart/angel_auth
+publish_to: none
 environment:
   sdk: ">=2.10.0 <3.0.0"
 dependencies:
-  angel_framework: ^3.0.0
+  angel_framework:
+    git: 
+      url: https://github.com/dukefirehawk/angel.git
+      ref: sdk-2.12.x
+      path: packages/framework
   charcode: ^1.0.0
   collection: ^1.0.0
   crypto: ^3.0.0
@@ -19,9 +24,3 @@ dev_dependencies:
   logging: ^1.0.0
   pedantic: ^1.0.0
   test: ^1.15.7
-dependency_overrides:
-  angel_framework:
-    git: 
-      url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x
-      path: packages/framework
