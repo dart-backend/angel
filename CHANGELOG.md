@@ -30,6 +30,7 @@
 * Updated angel_migration_runner to 3.0.0
 * Updated angel_orm_test to 1.0.0
 * Updated angel_orm_postgres to 2.0.0
+* Update orm-sdk-2.12.x boilerplate
 
 
 # 2.2.0
