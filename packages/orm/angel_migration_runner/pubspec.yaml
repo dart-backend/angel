@@ -12,7 +12,7 @@ dependencies:
       url: https://github.com/dukefirehawk/angel.git
       ref: sdk-2.12.x
       path: packages/orm/angel_migration
-  angel_orm: #^2.0.0-dev.2
+  angel_orm:
     git: 
       url: https://github.com/dukefirehawk/angel.git
       ref: sdk-2.12.x
