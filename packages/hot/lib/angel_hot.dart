@@ -9,6 +9,7 @@ import 'package:angel_framework/http.dart';
 import 'package:angel_websocket/server.dart';
 import 'package:charcode/ascii.dart';
 import 'package:glob/glob.dart';
+import 'package:glob/list_local_fs.dart';
 import 'package:html_builder/elements.dart';
 import 'package:html_builder/html_builder.dart';
 import 'package:io/ansi.dart';
@@ -103,8 +104,9 @@ class HotReloader {
       response
         ..headers.set(HttpHeaders.contentEncodingHeader, 'gzip')
         ..add(gzip.encode(utf8.encode(_renderer.render(doc))));
-    } else
+    } else {
       response.write(_renderer.render(doc));
+    }
     response.close();
   }
 
@@ -113,11 +115,11 @@ class HotReloader {
   }
 
   Future handleRequest(HttpRequest request) async {
-    if (_server != null)
+    if (_server != null) {
       return await _handle(request);
-    else if (timeout == null)
+    } else if (timeout == null) {
       _requestQueue.add(request);
-    else {
+    } else {
       _requestQueue.add(request);
       Timer(timeout, () {
         if (_requestQueue.remove(request)) {
@@ -157,9 +159,10 @@ class HotReloader {
     var isHot = true;
     _server = await _generateServer();
 
-    if (_paths?.isNotEmpty != true)
+    if (_paths?.isNotEmpty != true) {
       _logWarning(
           'You have instantiated a HotReloader without providing any filesystem paths to watch.');
+    }
 
     bool _sw(String s) {
       return Platform.executableArguments.any((ss) => ss.startsWith(s));
@@ -173,10 +176,11 @@ class HotReloader {
       var info = await dev.Service.getInfo();
       var uri = info.serverUri;
       uri = uri.replace(path: p.join(uri.path, 'ws'));
-      if (uri.scheme == 'https')
+      if (uri.scheme == 'https') {
         uri = uri.replace(scheme: 'wss');
-      else
+      } else {
         uri = uri.replace(scheme: 'ws');
+      }
       _client = await vm.vmServiceConnectUri(uri.toString());
       _vmachine ??= await _client.getVM();
       _mainIsolate ??= _vmachine.isolates.first;
@@ -192,7 +196,9 @@ class HotReloader {
         //.transform(new _Debounce(new Duration(seconds: 1)))
         .listen(_handleWatchEvent);
 
-    while (_requestQueue.isNotEmpty) await _handle(_requestQueue.removeFirst());
+    while (_requestQueue.isNotEmpty) {
+      await _handle(_requestQueue.removeFirst());
+    }
     var server = _io = await HttpServer.bind(address ?? '127.0.0.1', port ?? 0);
     server.listen(handleRequest);
 
@@ -278,12 +284,14 @@ class HotReloader {
       } else if (path is Uri) {
         if (path.scheme == 'package') {
           var uri = await Isolate.resolvePackageUri(path);
-          if (uri != null)
+          if (uri != null) {
             await _listenToStat(uri.toFilePath());
-          else
+          } else {
             await _listenToStat(path.toFilePath());
-        } else
+          }
+        } else {
           await _listenToStat(path.toFilePath());
+        }
       } else {
         throw ArgumentError(
             'Hot reload paths must be a FileSystemEntity, a Uri, a String or a Glob. You provided: $path');
@@ -305,8 +313,9 @@ class HotReloader {
         } else if (stat.type == FileSystemEntityType.directory) {
           var dir = Directory(path);
           if (!await dir.exists()) return null;
-        } else
+        } else {
           return null;
+        }
 
         var watcher = Watcher(path);
 
@@ -357,7 +366,7 @@ class HotReloader {
     }
   }
 
-  _handleWatchEvent(WatchEvent e, [bool hot = true]) async {
+  void _handleWatchEvent(WatchEvent e, [bool hot = true]) async {
     _logInfo('${e.path} changed. Reloading server...\n');
     await _killServer();
     _server = null;
@@ -373,7 +382,9 @@ class HotReloader {
 
     var s = await _generateServer();
     _server = s;
-    while (_requestQueue.isNotEmpty) await _handle(_requestQueue.removeFirst());
+    while (_requestQueue.isNotEmpty) {
+      await _handle(_requestQueue.removeFirst());
+    }
   }
 }
 
