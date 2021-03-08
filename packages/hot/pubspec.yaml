@@ -20,7 +20,7 @@ dependencies:
   charcode: ^1.0.0
   glob: ^2.0.0
   html_builder: ^1.0.0
-  io: ^1.0.0
+  io: ^0.3.5
   path: ^1.0.0
   vm_service_lib: ^3.22.2+1
   watcher: ^1.0.0
