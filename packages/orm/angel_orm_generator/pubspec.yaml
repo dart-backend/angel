@@ -1,20 +1,33 @@
 name: angel_orm_generator
-version: 2.1.0-beta.2
+version: 3.0.0
 description: Code generators for Angel's ORM. Generates query builder classes.
 author: Tobe O <thosakwe@gmail.com>
 homepage: https://github.com/angel-dart/orm
+publish_to: none
 environment:
-  sdk: '>=2.10.0 <2.12.0'
+  sdk: '>=2.10.0 <3.0.0'
 dependencies:
   analyzer: ">=0.35.0 <2.0.0"
-  angel_model: #^1.0.0
-    path: ../../model
-  angel_serialize: #^2.0.0
-    path: ../../serialize/angel_serialize
-  angel_orm: #^2.1.0-beta
-    path: ../angel_orm
-  angel_serialize_generator: #^2.0.0
-    path: ../../serialize/angel_serialize_generator
+  angel_model:
+    git: 
+      url: https://github.com/dukefirehawk/angel.git
+      ref: sdk-2.12.x
+      path: packages/model
+  angel_serialize:
+    git: 
+      url: https://github.com/dukefirehawk/angel.git
+      ref: sdk-2.12.x
+      path: packages/serialize/angel_serialize
+  angel_orm:
+    git: 
+      url: https://github.com/dukefirehawk/angel.git
+      ref: sdk-2.12.x
+      path: packages/orm/angel_orm
+  angel_serialize_generator:
+    git: 
+      url: https://github.com/dukefirehawk/angel.git
+      ref: sdk-2.12.x
+      path: packages/serialize/angel_serialize_generator
   build: ^1.0.0
   build_config: ^0.4.0
   code_builder: ^3.0.0
@@ -22,21 +35,24 @@ dependencies:
   inflection2: ^0.4.2
   meta: ^1.0.0
   path: ^1.0.0
-  recase: ^2.0.0
+  recase: ^3.0.1
   source_gen: ^0.9.0
 dev_dependencies:
-  angel_framework: #^2.0.0-alpha
-    path: ../../framework
+  angel_framework:
+    git: 
+      url: https://github.com/dukefirehawk/angel.git
+      ref: sdk-2.12.x
+      path: packages/framework
   angel_migration:
-    path: ../angel_migration
+    git: 
+      url: https://github.com/dukefirehawk/angel.git
+      ref: sdk-2.12.x
+      path: packages/orm/angel_migration
   #angel_test: ^1.0.0
-  build_runner: ^1.0.0
+  build_runner: ^1.11.5
   collection: ^1.0.0
-  pedantic: ^1.0.0
-  postgres: ^1.0.0
-  test: ^1.15.7
-# dependency_overrides:
-#   angel_orm:
-#     path: ../angel_orm
-#   angel_serialize_generator:
-#     path: ../../serialize/angel_serialize_generator
+  pedantic: ^1.11.0
+  postgres:
+    git: 
+      url: https://github.com/dukefirehawk/postgresql-dart
+  test: ^1.16.5
