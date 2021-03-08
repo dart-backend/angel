@@ -12,7 +12,7 @@ dependencies:
       url: https://github.com/dukefirehawk/angel.git
       ref: sdk-2.12.x
       path: packages/framework
-  dotenv: ^2.0.0
+  dotenv: ^3.0.0-nullsafety.0
 #  file: ^5.0.0
   merge_map: ^1.0.0
   yaml: ^3.1.0
