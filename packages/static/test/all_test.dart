@@ -46,34 +46,34 @@ void main() {
   });
 
   test('can serve files, with correct Content-Type', () async {
-    var response = await client.get('$url/sample.txt');
+    var response = await client.get(Uri.parse('$url/sample.txt'));
     expect(response.body, equals('Hello world'));
     expect(response.headers['content-type'], contains('text/plain'));
   });
 
   test('can serve child directories', () async {
-    var response = await client.get('$url/nested');
+    var response = await client.get(Uri.parse('$url/nested'));
     expect(response.body, equals('Bird'));
     expect(response.headers['content-type'], contains('text/plain'));
   });
 
   test('non-existent files are skipped', () async {
-    var response = await client.get('$url/nonexist.ent');
+    var response = await client.get(Uri.parse('$url/nonexist.ent'));
     expect(response.body, equals('"Fallback"'));
   });
 
   test('can match index files', () async {
-    var response = await client.get(url);
+    var response = await client.get(Uri.parse(url));
     expect(response.body, equals('index!'));
   });
 
   test('virtualRoots can match index', () async {
-    var response = await client.get('$url/virtual');
+    var response = await client.get(Uri.parse('$url/virtual'));
     expect(response.body, equals('index!'));
   });
 
   test('chrome accept', () async {
-    var response = await client.get('$url/virtual', headers: {
+    var response = await client.get(Uri.parse('$url/virtual'), headers: {
       'accept':
           'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'
     });

@@ -46,7 +46,7 @@ void main() {
   });
 
   test('sets etag, cache-control, expires, last-modified', () async {
-    var response = await client.get('$url');
+    var response = await client.get(Uri.parse('$url'));
 
     print('Response status: ${response.statusCode}');
     print('Response body: ${response.body}');
@@ -60,7 +60,7 @@ void main() {
   });
 
   test('if-modified-since', () async {
-    var response = await client.get('$url', headers: {
+    var response = await client.get(Uri.parse('$url'), headers: {
       'if-modified-since':
           HttpDate.format(DateTime.now().add(Duration(days: 365)))
     });

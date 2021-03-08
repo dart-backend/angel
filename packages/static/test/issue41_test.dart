@@ -39,23 +39,23 @@ main() async {
   tearDown(() => client.close());
 
   test('prefix is not replaced in file paths', () async {
-    var response = await client.get('/swagger/swagger-ui.css');
+    var response = await client.get(Uri.parse('/swagger/swagger-ui.css'));
     print('Response: ${response.body}');
     expect(response, hasBody(swaggerUiCssContents));
   });
 
   test('get a file without prefix in name', () async {
-    var response = await client.get('/swagger/test.js');
+    var response = await client.get(Uri.parse('/swagger/test.js'));
     print('Response: ${response.body}');
     expect(response, hasBody(swaggerTestJsContents));
   });
 
   test('trailing slash at root', () async {
-    var response = await client.get('/swagger');
+    var response = await client.get(Uri.parse('/swagger'));
     var body1 = response.body;
     print('Response #1: $body1');
 
-    response = await client.get('/swagger/');
+    response = await client.get(Uri.parse('/swagger/'));
     var body2 = response.body;
     print('Response #2: $body2');
 
