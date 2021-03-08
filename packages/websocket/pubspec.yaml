@@ -31,7 +31,7 @@ dependencies:
   merge_map: ^1.0.0
   meta: ^1.0.0
   stream_channel: ^2.0.0
-  web_socket_channel: ^2.0.0
+  web_socket_channel: ^1.2.0
 dev_dependencies:
   angel_container: 
     git: 
