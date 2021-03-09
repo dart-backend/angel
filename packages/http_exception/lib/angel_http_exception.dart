@@ -15,13 +15,13 @@ class AngelHttpException implements Exception {
   final List<String> errors = [];
 
   /// The cause of this exception.
-  String message;
+  String? message;
 
   /// The [StackTrace] associated with this error.
-  StackTrace stackTrace;
+  StackTrace? stackTrace;
 
   /// An HTTP status code this exception will throw.
-  int statusCode;
+  int? statusCode;
 
   AngelHttpException(this.error,
       {this.message = '500 Internal Server Error',
@@ -52,7 +52,7 @@ class AngelHttpException implements Exception {
   factory AngelHttpException.fromMap(Map data) {
     return AngelHttpException(
       null,
-      statusCode: (data['status_code'] ?? data['statusCode']) as int,
+      statusCode: (data['status_code'] ?? data['statusCode']) as int?,
       message: data['message']?.toString(),
       errors: data['errors'] is Iterable
           ? ((data['errors'] as Iterable).map((x) => x.toString()).toList())
