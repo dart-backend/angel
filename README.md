@@ -25,27 +25,36 @@ See all the packages in the `packages/` directory.
 ## IMPORTANT NOTES
 This is a port of Angel Framework to work with Dart 2.10.x and above. Dart version below 2.10.x is not supported.
 
+Branch: master
+- Stable version of sdk-2.12.x branch
+
 Branch: sdk-2.10.x
 - Support dart 2.10.x only. Use sdk: ">=2.10.0 <2.12.0"
-- Status: Working. Not all plugin packages are tested.
+- Status: Migration completed. Not all plugin packages are tested.
 
 Branch: sdk-2.12.x
 - Support dart 2.12.x. Use sdk: ">=2.10.0 <3.0.0"
 - Do not support NNBD 
-- Status: Working. Not all plugin packages are migrated and tested.
+- Status: Basic and ORM templates are working with the core plugins migration completed. The remaining add on plugin packages are work in progress.
 
-Branch: adk-2.12.x-nnbd
+Branch: sdk-2.12.x-nnbd
 - Support dart 2.12.x. Use sdk: ">=2.12.0 <3.0.0"
 - Support NNBD
-- Status: To be available once all the dependency libraries support NNBD
+- Status: Not working yet. To be available once all the dependency libraries that support NNBD are released
 
-New features planned
+Changes involved:
+- Upgraded dependency libraries and fixed the deprecated API
+
+Deprecated features:
 - None
 
-To install Angel CLI, run the following command after install dart sdk
+New features:
+- To be decided
+
+To install Angel CLI, run the following command after installing dart sdk
 `dart pub global activate --source git https://github.com/dukefirehawk/angel/packages/cli`
 
-To use local development version of Angel CLI, run the following command after install dart sdk
+To use local development version of Angel CLI, run the following command after installing dart sdk
 `dart pub global activate --source path ./packages/cli`
 
 
