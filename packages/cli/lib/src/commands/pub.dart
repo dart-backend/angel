@@ -1,9 +1,9 @@
 import 'dart:io';
 
-final RegExp _leadingSlashes = new RegExp(r'^/+');
+final RegExp _leadingSlashes = RegExp(r'^/+');
 
 String resolvePub() {
-  var exec = new File(Platform.resolvedExecutable);
+  var exec = File(Platform.resolvedExecutable);
   var pubPath = exec.parent.uri.resolve('pub').path;
   if (Platform.isWindows)
     pubPath = pubPath.replaceAll(_leadingSlashes, '') + '.bat';

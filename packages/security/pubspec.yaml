@@ -4,16 +4,22 @@ description: Angel infrastructure for improving security, rate limiting, and mor
 author: Tobe O <thosakwe@gmail.com>
 homepage: https://github.com/angel-dart/security
 environment: 
-  sdk: ">=2.0.0-dev <3.0.0"
+  sdk: ">=2.10.0 <2.12.0"
 dependencies: 
-  angel_framework: ^2.0.0
+  angel_framework: #^2.0.0
+    path: ../framework
   crypto: ^2.0.0
 dev_dependencies: 
-  angel_auth: ^2.0.0
-  angel_production: ^1.0.0
-  angel_redis: ^1.0.0
-  angel_test: ^2.0.0
-  angel_validate: ^2.0.0
+  angel_auth: #^2.0.0
+    path: ../auth
+  angel_production: #^1.0.0
+    path: ../production
+  angel_redis: #^1.0.0
+    path: ../redis
+  angel_test: #^2.0.0
+    path: ../test
+  angel_validate: #^2.0.0
+    path: ../validate
   pedantic: ^1.0.0
   pretty_logging: ^1.0.0
-  test: ^1.0.0
+  test: ^1.15.7

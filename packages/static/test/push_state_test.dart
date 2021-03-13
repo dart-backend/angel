@@ -5,7 +5,7 @@ import 'package:file/memory.dart';
 import 'package:logging/logging.dart';
 import 'package:test/test.dart';
 
-main() {
+void main() {
   Angel app;
   MemoryFileSystem fileSystem;
   TestClient client;
@@ -47,7 +47,8 @@ main() {
   tearDown(() => client.close());
 
   test('serves as fallback', () async {
-    var response = await client.get('/nope');
+    var response = await client.get(Uri.parse('/nope'));
+    print(response);
     expect(response.body, 'index');
   });
 }

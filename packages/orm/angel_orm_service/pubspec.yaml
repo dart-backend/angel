@@ -4,12 +4,15 @@ description: Service implementation that wraps over Angel ORM Query classes.
 homepage: https://github.com/angel-dart/orm
 author: Tobe O <thosakwe@gmail.com>
 environment:
-  sdk: ">=2.0.0 <3.0.0"
+  sdk: '>=2.10.0 <2.12.0'
 dependencies:
-  angel_framework: ^2.0.0-alpha
-  angel_orm: ^2.0.0
+  angel_framework: #^2.0.0-alpha
+    path: ../../framework
+  angel_orm: #^2.0.0
+    path: ../angel_orm
 dev_dependencies:
-  angel_migration: ^2.0.0-alpha
+  angel_migration: #^2.0.0-alpha
+    path: ../angel_migration
   angel_migration_runner:
     path: ../angel_migration_runner
   angel_orm_generator:
@@ -18,12 +21,15 @@ dev_dependencies:
     path: ../angel_orm_postgres
   angel_orm_test:
     path: ../angel_orm_test
-  angel_serialize: ^2.0.0
+  angel_serialize: #^2.0.0
+    path: ../../serialize/angel_serialize
   build_runner: ^1.0.0
   logging: ^0.11.0
   pedantic: ^1.0.0
-  postgres: ^1.0.0
-  test: ^1.0.0
-dependency_overrides:
-  angel_migration:
-    path: ../angel_migration
+#  postgres: ^2.2.0
+  test: ^1.15.7
+
+
+#dependency_overrides:
+#  angel_migration:
+#    path: ../angel_migration

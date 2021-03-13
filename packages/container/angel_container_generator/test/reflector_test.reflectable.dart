@@ -17,9 +17,9 @@ import "package:reflectable/src/reflectable_builder_based.dart" as r;
 import "package:reflectable/reflectable.dart" as r show Reflectable;
 
 final _data = <r.Reflectable, r.ReflectorData>{
-  const prefix0.ContainedReflectable(): new r.ReflectorData(
+  const prefix0.ContainedReflectable(): r.ReflectorData(
       <m.TypeMirror>[
-        new r.NonGenericClassMirrorImpl(
+        r.NonGenericClassMirrorImpl(
             r"LowerPokemon",
             r".LowerPokemon",
             7,
@@ -31,16 +31,13 @@ final _data = <r.Reflectable, r.ReflectorData>{
             11,
             {},
             {},
-            {
-              r"": (b) =>
-                  (pokemon) => b ? new prefix1.LowerPokemon(pokemon) : null
-            },
+            {r"": (b) => (pokemon) => b ? prefix1.LowerPokemon(pokemon) : null},
             -1,
             0,
             const <int>[],
             const <Object>[prefix0.contained],
             null),
-        new r.NonGenericClassMirrorImpl(
+        r.NonGenericClassMirrorImpl(
             r"Pokemon",
             r".Pokemon",
             7,
@@ -54,16 +51,16 @@ final _data = <r.Reflectable, r.ReflectorData>{
             {},
             {
               r"": (b) =>
-                  (name, type) => b ? new prefix1.Pokemon(name, type) : null,
+                  (name, type) => b ? prefix1.Pokemon(name, type) : null,
               r"changeName": (b) => (other, name) =>
-                  b ? new prefix1.Pokemon.changeName(other, name) : null
+                  b ? prefix1.Pokemon.changeName(other, name) : null
             },
             -1,
             1,
             const <int>[],
             const <Object>[prefix0.contained],
             null),
-        new r.NonGenericClassMirrorImpl(
+        r.NonGenericClassMirrorImpl(
             r"KantoPokemon",
             r".KantoPokemon",
             7,
@@ -76,15 +73,15 @@ final _data = <r.Reflectable, r.ReflectorData>{
             {},
             {},
             {
-              r"": (b) => (name, type) =>
-                  b ? new prefix1.KantoPokemon(name, type) : null
+              r"": (b) =>
+                  (name, type) => b ? prefix1.KantoPokemon(name, type) : null
             },
             -1,
             2,
             const <int>[],
             const <Object>[prefix0.contained],
             null),
-        new r.NonGenericClassMirrorImpl(
+        r.NonGenericClassMirrorImpl(
             r"Artist",
             r".Artist",
             7,
@@ -96,13 +93,13 @@ final _data = <r.Reflectable, r.ReflectorData>{
             11,
             {},
             {},
-            {r"": (b) => ({name}) => b ? new prefix1.Artist(name: name) : null},
+            {r"": (b) => ({name}) => b ? prefix1.Artist(name: name) : null},
             -1,
             3,
             const <int>[],
             const <Object>[prefix0.contained],
             null),
-        new r.NonGenericClassMirrorImpl(
+        r.NonGenericClassMirrorImpl(
             r"Album",
             r".Album",
             7,
@@ -114,13 +111,13 @@ final _data = <r.Reflectable, r.ReflectorData>{
             11,
             {},
             {},
-            {r"": (b) => (artist) => b ? new prefix1.Album(artist) : null},
+            {r"": (b) => (artist) => b ? prefix1.Album(artist) : null},
             -1,
             4,
             const <int>[],
             const <Object>[prefix0.contained],
             null),
-        new r.NonGenericClassMirrorImpl(
+        r.NonGenericClassMirrorImpl(
             r"AlbumLength",
             r".AlbumLength",
             7,
@@ -134,14 +131,14 @@ final _data = <r.Reflectable, r.ReflectorData>{
             {},
             {
               r"": (b) => (artist, album) =>
-                  b ? new prefix1.AlbumLength(artist, album) : null
+                  b ? prefix1.AlbumLength(artist, album) : null
             },
             -1,
             5,
             const <int>[],
             const <Object>[prefix0.contained],
             null),
-        new r.NonGenericClassMirrorImpl(
+        r.NonGenericClassMirrorImpl(
             r"PokemonType",
             r".PokemonType",
             524295,
@@ -167,7 +164,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[],
             const <Object>[prefix0.contained],
             null),
-        new r.NonGenericClassMirrorImpl(
+        r.NonGenericClassMirrorImpl(
             r"ContainedReflectable",
             r".ContainedReflectable",
             7,
@@ -179,13 +176,13 @@ final _data = <r.Reflectable, r.ReflectorData>{
             -1,
             {},
             {},
-            {r"": (b) => () => b ? new prefix0.ContainedReflectable() : null},
+            {r"": (b) => () => b ? prefix0.ContainedReflectable() : null},
             -1,
             7,
             const <int>[],
             const <Object>[prefix0.contained],
             null),
-        new r.NonGenericClassMirrorImpl(
+        r.NonGenericClassMirrorImpl(
             r"int",
             r"dart.core.int",
             519,
@@ -230,7 +227,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             {},
             {
               r"fromEnvironment": (b) => (name, {defaultValue}) => b
-                  ? new int.fromEnvironment(name, defaultValue: defaultValue)
+                  ? int.fromEnvironment(name, defaultValue: defaultValue)
                   : null
             },
             -1,
@@ -238,7 +235,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[],
             const <Object>[],
             null),
-        new r.GenericClassMirrorImpl(
+        r.GenericClassMirrorImpl(
             r"Iterable",
             r"dart.core.Iterable",
             519,
@@ -323,8 +320,8 @@ final _data = <r.Reflectable, r.ReflectorData>{
             {},
             {
               r"generate": (b) => (count, [generator]) =>
-                  b ? new Iterable.generate(count, generator) : null,
-              r"empty": (b) => () => b ? new Iterable.empty() : null
+                  b ? Iterable.generate(count, generator) : null,
+              r"empty": (b) => () => b ? Iterable.empty() : null
             },
             -1,
             9,
@@ -334,7 +331,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             (o) => false,
             const <int>[15],
             9),
-        new r.GenericClassMirrorImpl(
+        r.GenericClassMirrorImpl(
             r"List",
             r"dart.core.List",
             519,
@@ -397,16 +394,16 @@ final _data = <r.Reflectable, r.ReflectorData>{
               r"": (b) => ([length]) =>
                   b ? (length == null ? List() : List(length)) : null,
               r"filled": (b) => (length, fill, {growable: false}) =>
-                  b ? new List.filled(length, fill, growable: growable) : null,
+                  b ? List.filled(length, fill, growable: growable) : null,
               r"from": (b) => (elements, {growable: true}) =>
-                  b ? new List.from(elements, growable: growable) : null,
+                  b ? List.from(elements, growable: growable) : null,
               r"of": (b) => (elements, {growable: true}) =>
-                  b ? new List.of(elements, growable: growable) : null,
+                  b ? List.of(elements, growable: growable) : null,
               r"generate": (b) => (length, generator, {growable: true}) => b
-                  ? new List.generate(length, generator, growable: growable)
+                  ? List.generate(length, generator, growable: growable)
                   : null,
               r"unmodifiable": (b) =>
-                  (elements) => b ? new List.unmodifiable(elements) : null
+                  (elements) => b ? List.unmodifiable(elements) : null
             },
             -1,
             10,
@@ -416,7 +413,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             (o) => false,
             const <int>[16],
             10),
-        new r.NonGenericClassMirrorImpl(
+        r.NonGenericClassMirrorImpl(
             r"Object",
             r"dart.core.Object",
             7,
@@ -428,13 +425,13 @@ final _data = <r.Reflectable, r.ReflectorData>{
             null,
             {},
             {},
-            {r"": (b) => () => b ? new Object() : null},
+            {r"": (b) => () => b ? Object() : null},
             -1,
             11,
             const <int>[],
             const <Object>[const pragma("vm:entry-point")],
             null),
-        new r.NonGenericClassMirrorImpl(
+        r.NonGenericClassMirrorImpl(
             r"String",
             r"dart.core.String",
             519,
@@ -484,11 +481,11 @@ final _data = <r.Reflectable, r.ReflectorData>{
             {},
             {
               r"fromCharCodes": (b) => (charCodes, [start = 0, end]) =>
-                  b ? new String.fromCharCodes(charCodes, start, end) : null,
+                  b ? String.fromCharCodes(charCodes, start, end) : null,
               r"fromCharCode": (b) =>
-                  (charCode) => b ? new String.fromCharCode(charCode) : null,
+                  (charCode) => b ? String.fromCharCode(charCode) : null,
               r"fromEnvironment": (b) => (name, {defaultValue}) => b
-                  ? new String.fromEnvironment(name, defaultValue: defaultValue)
+                  ? String.fromEnvironment(name, defaultValue: defaultValue)
                   : null
             },
             -1,
@@ -496,7 +493,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[],
             const <Object>[],
             null),
-        new r.NonGenericClassMirrorImpl(
+        r.NonGenericClassMirrorImpl(
             r"StringBuffer",
             r"dart.core.StringBuffer",
             7,
@@ -522,16 +519,13 @@ final _data = <r.Reflectable, r.ReflectorData>{
             11,
             {},
             {},
-            {
-              r"": (b) =>
-                  ([content = ""]) => b ? new StringBuffer(content) : null
-            },
+            {r"": (b) => ([content = ""]) => b ? StringBuffer(content) : null},
             -1,
             13,
             const <int>[14],
             const <Object>[],
             null),
-        new r.NonGenericClassMirrorImpl(
+        r.NonGenericClassMirrorImpl(
             r"StringSink",
             r"dart.core.StringSink",
             519,
@@ -549,13 +543,13 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[],
             const <Object>[],
             null),
-        new r.TypeVariableMirrorImpl(r"E", r"dart.core.Iterable.E",
+        r.TypeVariableMirrorImpl(r"E", r"dart.core.Iterable.E",
             const prefix0.ContainedReflectable(), -1, 9, <Object>[]),
-        new r.TypeVariableMirrorImpl(r"E", r"dart.core.List.E",
+        r.TypeVariableMirrorImpl(r"E", r"dart.core.List.E",
             const prefix0.ContainedReflectable(), -1, 10, <Object>[])
       ],
       <m.DeclarationMirror>[
-        new r.VariableMirrorImpl(
+        r.VariableMirrorImpl(
             r"pokemon",
             33797,
             0,
@@ -563,7 +557,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             1,
             1,
             1, const <int>[], const <Object>[]),
-        new r.VariableMirrorImpl(
+        r.VariableMirrorImpl(
             r"name",
             33797,
             1,
@@ -571,7 +565,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             12,
             12,
             12, const <int>[], const <Object>[]),
-        new r.VariableMirrorImpl(
+        r.VariableMirrorImpl(
             r"type",
             33797,
             1,
@@ -579,7 +573,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             6,
             6,
             6, const <int>[], const <Object>[]),
-        new r.VariableMirrorImpl(
+        r.VariableMirrorImpl(
             r"name",
             33797,
             3,
@@ -587,7 +581,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             12,
             12,
             12, const <int>[], const <Object>[]),
-        new r.VariableMirrorImpl(
+        r.VariableMirrorImpl(
             r"artist",
             33797,
             4,
@@ -595,7 +589,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             3,
             3,
             3, const <int>[], const <Object>[]),
-        new r.VariableMirrorImpl(
+        r.VariableMirrorImpl(
             r"artist",
             33797,
             5,
@@ -603,7 +597,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             3,
             3,
             3, const <int>[], const <Object>[]),
-        new r.VariableMirrorImpl(
+        r.VariableMirrorImpl(
             r"album",
             33797,
             5,
@@ -611,7 +605,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             4,
             4,
             4, const <int>[], const <Object>[]),
-        new r.VariableMirrorImpl(
+        r.VariableMirrorImpl(
             r"water",
             33941,
             6,
@@ -619,7 +613,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             6,
             6,
             6, const <int>[], const []),
-        new r.VariableMirrorImpl(
+        r.VariableMirrorImpl(
             r"fire",
             33941,
             6,
@@ -627,7 +621,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             6,
             6,
             6, const <int>[], const []),
-        new r.VariableMirrorImpl(
+        r.VariableMirrorImpl(
             r"grass",
             33941,
             6,
@@ -635,7 +629,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             6,
             6,
             6, const <int>[], const []),
-        new r.VariableMirrorImpl(
+        r.VariableMirrorImpl(
             r"ice",
             33941,
             6,
@@ -643,7 +637,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             6,
             6,
             6, const <int>[], const []),
-        new r.VariableMirrorImpl(
+        r.VariableMirrorImpl(
             r"poison",
             33941,
             6,
@@ -651,7 +645,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             6,
             6,
             6, const <int>[], const []),
-        new r.VariableMirrorImpl(
+        r.VariableMirrorImpl(
             r"flying",
             33941,
             6,
@@ -659,7 +653,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             6,
             6,
             6, const <int>[], const []),
-        new r.VariableMirrorImpl(
+        r.VariableMirrorImpl(
             r"index",
             33861,
             6,
@@ -667,7 +661,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             8,
             8,
             8, const <int>[], const []),
-        new r.VariableMirrorImpl(
+        r.VariableMirrorImpl(
             r"values",
             2131157,
             6,
@@ -677,9 +671,12 @@ final _data = <r.Reflectable, r.ReflectorData>{
             10,
             const <int>[6],
             const []),
-        new r.ImplicitGetterMirrorImpl(
-            const prefix0.ContainedReflectable(), 0, 1, 1, 15),
-        new r.MethodMirrorImpl(
+        r.ImplicitGetterMirrorImpl(
+            //const prefix0.ContainedReflectable(), 0, 1, 1, 15),
+            const prefix0.ContainedReflectable(),
+            0,
+            1),
+        r.MethodMirrorImpl(
             r"lowercaseName",
             131075,
             0,
@@ -690,18 +687,9 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
-            r"",
-            0,
-            0,
-            -1,
-            0,
-            0,
-            const <int>[],
-            const <int>[0],
-            const prefix0.ContainedReflectable(),
-            const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(r"", 0, 0, -1, 0, 0, const <int>[], const <int>[0],
+            const prefix0.ContainedReflectable(), const <Object>[]),
+        r.MethodMirrorImpl(
             r"==",
             131074,
             11,
@@ -712,7 +700,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[1],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"toString",
             131074,
             11,
@@ -723,7 +711,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"noSuchMethod",
             65538,
             11,
@@ -734,7 +722,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[2],
             const prefix0.ContainedReflectable(),
             const <Object>[const pragma("vm:entry-point")]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"hashCode",
             131075,
             11,
@@ -745,7 +733,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"runtimeType",
             131075,
             11,
@@ -756,7 +744,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"toString",
             131074,
             1,
@@ -767,11 +755,17 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[],
             const prefix0.ContainedReflectable(),
             const <Object>[override]),
-        new r.ImplicitGetterMirrorImpl(
-            const prefix0.ContainedReflectable(), 1, 12, 12, 24),
-        new r.ImplicitGetterMirrorImpl(
-            const prefix0.ContainedReflectable(), 2, 6, 6, 25),
-        new r.MethodMirrorImpl(
+        r.ImplicitGetterMirrorImpl(
+            //const prefix0.ContainedReflectable(), 1, 12, 12, 24),
+            const prefix0.ContainedReflectable(),
+            1,
+            12),
+        r.ImplicitGetterMirrorImpl(
+            //const prefix0.ContainedReflectable(), 2, 6, 6, 25),
+            const prefix0.ContainedReflectable(),
+            2,
+            6),
+        r.MethodMirrorImpl(
             r"",
             0,
             1,
@@ -782,7 +776,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[3, 4],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"changeName",
             1,
             1,
@@ -793,7 +787,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[5, 6],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"",
             0,
             2,
@@ -804,9 +798,12 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[7, 8],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.ImplicitGetterMirrorImpl(
-            const prefix0.ContainedReflectable(), 3, 12, 12, 29),
-        new r.MethodMirrorImpl(
+        r.ImplicitGetterMirrorImpl(
+            //const prefix0.ContainedReflectable(), 3, 12, 12, 29),
+            const prefix0.ContainedReflectable(),
+            3,
+            12),
+        r.MethodMirrorImpl(
             r"lowerName",
             131075,
             3,
@@ -817,20 +814,14 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
-            r"",
-            0,
-            3,
-            -1,
-            3,
-            3,
-            const <int>[],
-            const <int>[9],
+        r.MethodMirrorImpl(r"", 0, 3, -1, 3, 3, const <int>[], const <int>[9],
+            const prefix0.ContainedReflectable(), const <Object>[]),
+        r.ImplicitGetterMirrorImpl(
+            //const prefix0.ContainedReflectable(), 4, 3, 3, 32),
             const prefix0.ContainedReflectable(),
-            const <Object>[]),
-        new r.ImplicitGetterMirrorImpl(
-            const prefix0.ContainedReflectable(), 4, 3, 3, 32),
-        new r.MethodMirrorImpl(
+            4,
+            3),
+        r.MethodMirrorImpl(
             r"title",
             131075,
             4,
@@ -841,22 +832,19 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
-            r"",
-            0,
-            4,
-            -1,
-            4,
-            4,
-            const <int>[],
-            const <int>[10],
+        r.MethodMirrorImpl(r"", 0, 4, -1, 4, 4, const <int>[], const <int>[10],
+            const prefix0.ContainedReflectable(), const <Object>[]),
+        r.ImplicitGetterMirrorImpl(
+            //const prefix0.ContainedReflectable(), 5, 3, 3, 35),
             const prefix0.ContainedReflectable(),
-            const <Object>[]),
-        new r.ImplicitGetterMirrorImpl(
-            const prefix0.ContainedReflectable(), 5, 3, 3, 35),
-        new r.ImplicitGetterMirrorImpl(
-            const prefix0.ContainedReflectable(), 6, 4, 4, 36),
-        new r.MethodMirrorImpl(
+            5,
+            3),
+        r.ImplicitGetterMirrorImpl(
+            //const prefix0.ContainedReflectable(), 6, 4, 4, 36),
+            const prefix0.ContainedReflectable(),
+            6,
+            4),
+        r.MethodMirrorImpl(
             r"totalLength",
             131075,
             5,
@@ -867,7 +855,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"",
             0,
             5,
@@ -878,45 +866,51 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[11, 12],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
-            r"toString",
-            131074,
-            6,
-            12,
-            12,
-            12,
-            const <int>[],
-            const <int>[],
+        r.MethodMirrorImpl(r"toString", 131074, 6, 12, 12, 12, const <int>[],
+            const <int>[], const prefix0.ContainedReflectable(), const []),
+        r.ImplicitGetterMirrorImpl(
+            //const prefix0.ContainedReflectable(), 13, 8, 8, 40),
             const prefix0.ContainedReflectable(),
-            const []),
-        new r.ImplicitGetterMirrorImpl(
-            const prefix0.ContainedReflectable(), 13, 8, 8, 40),
-        new r.ImplicitGetterMirrorImpl(
-            const prefix0.ContainedReflectable(), 14, 15, 10, 41),
-        new r.ImplicitGetterMirrorImpl(
-            const prefix0.ContainedReflectable(), 7, 6, 6, 42),
-        new r.ImplicitGetterMirrorImpl(
-            const prefix0.ContainedReflectable(), 8, 6, 6, 43),
-        new r.ImplicitGetterMirrorImpl(
-            const prefix0.ContainedReflectable(), 9, 6, 6, 44),
-        new r.ImplicitGetterMirrorImpl(
-            const prefix0.ContainedReflectable(), 10, 6, 6, 45),
-        new r.ImplicitGetterMirrorImpl(
-            const prefix0.ContainedReflectable(), 11, 6, 6, 46),
-        new r.ImplicitGetterMirrorImpl(
-            const prefix0.ContainedReflectable(), 12, 6, 6, 47),
-        new r.MethodMirrorImpl(
-            r"",
-            128,
-            7,
-            -1,
-            7,
-            7,
-            const <int>[],
-            const <int>[],
+            13,
+            8),
+        r.ImplicitGetterMirrorImpl(
+            //const prefix0.ContainedReflectable(), 14, 15, 10, 41),
             const prefix0.ContainedReflectable(),
-            const <Object>[]),
-        new r.MethodMirrorImpl(
+            14,
+            15),
+        r.ImplicitGetterMirrorImpl(
+            //const prefix0.ContainedReflectable(), 7, 6, 6, 42),
+            const prefix0.ContainedReflectable(),
+            7,
+            6),
+        r.ImplicitGetterMirrorImpl(
+            //const prefix0.ContainedReflectable(), 8, 6, 6, 43),
+            const prefix0.ContainedReflectable(),
+            8,
+            6),
+        r.ImplicitGetterMirrorImpl(
+            //const prefix0.ContainedReflectable(), 9, 6, 6, 44),
+            const prefix0.ContainedReflectable(),
+            9,
+            6),
+        r.ImplicitGetterMirrorImpl(
+            //const prefix0.ContainedReflectable(), 10, 6, 6, 45),
+            const prefix0.ContainedReflectable(),
+            10,
+            6),
+        r.ImplicitGetterMirrorImpl(
+            //const prefix0.ContainedReflectable(), 11, 6, 6, 46),
+            const prefix0.ContainedReflectable(),
+            11,
+            6),
+        r.ImplicitGetterMirrorImpl(
+            //const prefix0.ContainedReflectable(), 12, 6, 6, 47),
+            const prefix0.ContainedReflectable(),
+            12,
+            6),
+        r.MethodMirrorImpl(r"", 128, 7, -1, 7, 7, const <int>[], const <int>[],
+            const prefix0.ContainedReflectable(), const <Object>[]),
+        r.MethodMirrorImpl(
             r"capabilities",
             4325379,
             null,
@@ -927,7 +921,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"canReflect",
             131074,
             null,
@@ -938,7 +932,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[13],
             const prefix0.ContainedReflectable(),
             const <Object>[override]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"reflect",
             131074,
             null,
@@ -949,7 +943,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[14],
             const prefix0.ContainedReflectable(),
             const <Object>[override]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"canReflectType",
             131074,
             null,
@@ -960,7 +954,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[15],
             const prefix0.ContainedReflectable(),
             const <Object>[override]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"reflectType",
             131074,
             null,
@@ -971,7 +965,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[16],
             const prefix0.ContainedReflectable(),
             const <Object>[override]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"findLibrary",
             131074,
             null,
@@ -982,7 +976,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[17],
             const prefix0.ContainedReflectable(),
             const <Object>[override]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"libraries",
             4325379,
             null,
@@ -993,7 +987,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[],
             const prefix0.ContainedReflectable(),
             const <Object>[override]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"annotatedClasses",
             4325379,
             null,
@@ -1004,7 +998,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[],
             const prefix0.ContainedReflectable(),
             const <Object>[override]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"&",
             131586,
             8,
@@ -1015,7 +1009,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[18],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"|",
             131586,
             8,
@@ -1026,7 +1020,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[19],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"^",
             131586,
             8,
@@ -1037,7 +1031,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[20],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"~",
             131586,
             8,
@@ -1048,7 +1042,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"<<",
             131586,
             8,
@@ -1059,7 +1053,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[21],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r">>",
             131586,
             8,
@@ -1070,7 +1064,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[22],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"modPow",
             131586,
             8,
@@ -1081,7 +1075,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[23, 24],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"modInverse",
             131586,
             8,
@@ -1092,7 +1086,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[25],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"gcd",
             131586,
             8,
@@ -1103,7 +1097,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[26],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"toUnsigned",
             131586,
             8,
@@ -1114,7 +1108,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[27],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"toSigned",
             131586,
             8,
@@ -1125,7 +1119,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[28],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"unary-",
             131586,
             8,
@@ -1136,7 +1130,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"abs",
             131586,
             8,
@@ -1147,7 +1141,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"round",
             131586,
             8,
@@ -1158,7 +1152,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"floor",
             131586,
             8,
@@ -1169,7 +1163,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"ceil",
             131586,
             8,
@@ -1180,7 +1174,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"truncate",
             131586,
             8,
@@ -1191,7 +1185,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"roundToDouble",
             131586,
             8,
@@ -1202,7 +1196,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"floorToDouble",
             131586,
             8,
@@ -1213,7 +1207,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"ceilToDouble",
             131586,
             8,
@@ -1224,7 +1218,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"truncateToDouble",
             131586,
             8,
@@ -1235,7 +1229,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"toString",
             131586,
             8,
@@ -1246,7 +1240,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"toRadixString",
             131586,
             8,
@@ -1257,7 +1251,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[29],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"parse",
             131090,
             8,
@@ -1268,7 +1262,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[30, 31, 32],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"tryParse",
             131090,
             8,
@@ -1279,7 +1273,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[33, 34],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"isEven",
             131587,
             8,
@@ -1290,7 +1284,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"isOdd",
             131587,
             8,
@@ -1301,7 +1295,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"bitLength",
             131587,
             8,
@@ -1312,7 +1306,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"sign",
             131587,
             8,
@@ -1323,7 +1317,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"fromEnvironment",
             129,
             8,
@@ -1334,7 +1328,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[35, 36],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"castFrom",
             4325394,
             9,
@@ -1345,18 +1339,9 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[37],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
-            r"cast",
-            4325378,
-            9,
-            9,
-            30,
-            9,
-            null,
-            const <int>[],
-            const prefix0.ContainedReflectable(),
-            const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(r"cast", 4325378, 9, 9, 30, 9, null, const <int>[],
+            const prefix0.ContainedReflectable(), const <Object>[]),
+        r.MethodMirrorImpl(
             r"followedBy",
             4325378,
             9,
@@ -1367,18 +1352,9 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[38],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
-            r"map",
-            4325378,
-            9,
-            9,
-            32,
-            9,
-            null,
-            const <int>[39],
-            const prefix0.ContainedReflectable(),
-            const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(r"map", 4325378, 9, 9, 32, 9, null, const <int>[39],
+            const prefix0.ContainedReflectable(), const <Object>[]),
+        r.MethodMirrorImpl(
             r"where",
             4325378,
             9,
@@ -1389,7 +1365,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[40],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"whereType",
             4325378,
             9,
@@ -1400,7 +1376,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"expand",
             4325378,
             9,
@@ -1411,7 +1387,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[41],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"contains",
             131074,
             9,
@@ -1422,7 +1398,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[42],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"forEach",
             262146,
             9,
@@ -1433,7 +1409,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[43],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"reduce",
             2,
             9,
@@ -1444,7 +1420,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[44],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"fold",
             2,
             9,
@@ -1455,7 +1431,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[45, 46],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"every",
             131074,
             9,
@@ -1466,7 +1442,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[47],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"join",
             131074,
             9,
@@ -1477,7 +1453,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[48],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"any",
             131074,
             9,
@@ -1488,7 +1464,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[49],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"toList",
             4325378,
             9,
@@ -1499,7 +1475,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[50],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"toSet",
             4325378,
             9,
@@ -1510,18 +1486,9 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
-            r"take",
-            4325378,
-            9,
-            9,
-            31,
-            9,
-            null,
-            const <int>[51],
-            const prefix0.ContainedReflectable(),
-            const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(r"take", 4325378, 9, 9, 31, 9, null, const <int>[51],
+            const prefix0.ContainedReflectable(), const <Object>[]),
+        r.MethodMirrorImpl(
             r"takeWhile",
             4325378,
             9,
@@ -1532,18 +1499,9 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[52],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
-            r"skip",
-            4325378,
-            9,
-            9,
-            31,
-            9,
-            null,
-            const <int>[53],
-            const prefix0.ContainedReflectable(),
-            const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(r"skip", 4325378, 9, 9, 31, 9, null, const <int>[53],
+            const prefix0.ContainedReflectable(), const <Object>[]),
+        r.MethodMirrorImpl(
             r"skipWhile",
             4325378,
             9,
@@ -1554,7 +1512,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[54],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"firstWhere",
             2,
             9,
@@ -1565,7 +1523,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[55, 56],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"lastWhere",
             2,
             9,
@@ -1576,7 +1534,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[57, 58],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"singleWhere",
             2,
             9,
@@ -1587,7 +1545,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[59, 60],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"elementAt",
             2,
             9,
@@ -1598,7 +1556,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[61],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"toString",
             131074,
             9,
@@ -1609,7 +1567,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"iterator",
             4325891,
             9,
@@ -1620,7 +1578,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"length",
             131075,
             9,
@@ -1631,7 +1589,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"isEmpty",
             131075,
             9,
@@ -1642,7 +1600,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"isNotEmpty",
             131075,
             9,
@@ -1653,7 +1611,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"first",
             3,
             9,
@@ -1664,7 +1622,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"last",
             3,
             9,
@@ -1675,7 +1633,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"single",
             3,
             9,
@@ -1686,9 +1644,9 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(r"", 128, 9, -1, 31, 9, null, const <int>[],
+        r.MethodMirrorImpl(r"", 128, 9, -1, 31, 9, null, const <int>[],
             const prefix0.ContainedReflectable(), const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"generate",
             1,
             9,
@@ -1699,9 +1657,9 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[62, 63],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(r"empty", 385, 9, -1, 31, 9, null, const <int>[],
+        r.MethodMirrorImpl(r"empty", 385, 9, -1, 31, 9, null, const <int>[],
             const prefix0.ContainedReflectable(), const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"castFrom",
             4325394,
             10,
@@ -1712,7 +1670,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[64],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"copyRange",
             262162,
             10,
@@ -1723,7 +1681,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[65, 66, 67, 68, 69],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"writeIterable",
             262162,
             10,
@@ -1734,7 +1692,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[70, 71, 72],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"cast",
             4325890,
             10,
@@ -1745,7 +1703,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"[]",
             514,
             10,
@@ -1756,7 +1714,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[73],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"[]=",
             262658,
             10,
@@ -1767,7 +1725,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[74, 75],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"add",
             262658,
             10,
@@ -1778,7 +1736,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[76],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"addAll",
             262658,
             10,
@@ -1789,7 +1747,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[77],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"sort",
             262658,
             10,
@@ -1800,7 +1758,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[78],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"shuffle",
             262658,
             10,
@@ -1811,7 +1769,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[79],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"indexOf",
             131586,
             10,
@@ -1822,7 +1780,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[80, 81],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"indexWhere",
             131586,
             10,
@@ -1833,7 +1791,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[82, 83],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"lastIndexWhere",
             131586,
             10,
@@ -1844,7 +1802,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[84, 85],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"lastIndexOf",
             131586,
             10,
@@ -1855,7 +1813,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[86, 87],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"clear",
             262658,
             10,
@@ -1866,7 +1824,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"insert",
             262658,
             10,
@@ -1877,7 +1835,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[88, 89],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"insertAll",
             262658,
             10,
@@ -1888,7 +1846,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[90, 91],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"setAll",
             262658,
             10,
@@ -1899,7 +1857,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[92, 93],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"remove",
             131586,
             10,
@@ -1910,7 +1868,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[94],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"removeAt",
             514,
             10,
@@ -1921,7 +1879,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[95],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"removeLast",
             514,
             10,
@@ -1932,7 +1890,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"removeWhere",
             262658,
             10,
@@ -1943,7 +1901,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[96],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"retainWhere",
             262658,
             10,
@@ -1954,18 +1912,9 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[97],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
-            r"+",
-            4325890,
-            10,
-            10,
-            42,
-            10,
-            null,
-            const <int>[98],
-            const prefix0.ContainedReflectable(),
-            const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(r"+", 4325890, 10, 10, 42, 10, null, const <int>[98],
+            const prefix0.ContainedReflectable(), const <Object>[]),
+        r.MethodMirrorImpl(
             r"sublist",
             4325890,
             10,
@@ -1976,7 +1925,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[99, 100],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"getRange",
             4325890,
             10,
@@ -1987,7 +1936,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[101, 102],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"setRange",
             262658,
             10,
@@ -1998,7 +1947,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[103, 104, 105, 106],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"removeRange",
             262658,
             10,
@@ -2009,7 +1958,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[107, 108],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"fillRange",
             262658,
             10,
@@ -2020,7 +1969,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[109, 110, 111],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"replaceRange",
             262658,
             10,
@@ -2031,7 +1980,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[112, 113, 114],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"asMap",
             4325890,
             10,
@@ -2042,7 +1991,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"first=",
             262660,
             10,
@@ -2053,7 +2002,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[127],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"last=",
             262660,
             10,
@@ -2064,7 +2013,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[128],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"length",
             131587,
             10,
@@ -2075,7 +2024,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"length=",
             262660,
             10,
@@ -2086,7 +2035,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[129],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"reversed",
             4325891,
             10,
@@ -2097,9 +2046,9 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(r"", 1, 10, -1, 42, 10, null, const <int>[115],
+        r.MethodMirrorImpl(r"", 1, 10, -1, 42, 10, null, const <int>[115],
             const prefix0.ContainedReflectable(), const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"filled",
             1,
             10,
@@ -2110,7 +2059,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[116, 117, 118],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"from",
             1,
             10,
@@ -2121,7 +2070,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[119, 120],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"of",
             1,
             10,
@@ -2132,7 +2081,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[121, 122],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"generate",
             1,
             10,
@@ -2143,7 +2092,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[123, 124, 125],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"unmodifiable",
             1,
             10,
@@ -2154,7 +2103,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[126],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"",
             128,
             11,
@@ -2165,7 +2114,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"[]",
             131586,
             12,
@@ -2176,7 +2125,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[130],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"codeUnitAt",
             131586,
             12,
@@ -2187,7 +2136,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[131],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"==",
             131586,
             12,
@@ -2198,7 +2147,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[132],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"compareTo",
             131586,
             12,
@@ -2209,7 +2158,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[133],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"endsWith",
             131586,
             12,
@@ -2220,7 +2169,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[134],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"startsWith",
             131586,
             12,
@@ -2231,7 +2180,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[135, 136],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"indexOf",
             131586,
             12,
@@ -2242,7 +2191,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[137, 138],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"lastIndexOf",
             131586,
             12,
@@ -2253,7 +2202,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[139, 140],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"+",
             131586,
             12,
@@ -2264,7 +2213,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[141],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"substring",
             131586,
             12,
@@ -2275,7 +2224,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[142, 143],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"trim",
             131586,
             12,
@@ -2286,7 +2235,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"trimLeft",
             131586,
             12,
@@ -2297,7 +2246,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"trimRight",
             131586,
             12,
@@ -2308,7 +2257,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"*",
             131586,
             12,
@@ -2319,7 +2268,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[144],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"padLeft",
             131586,
             12,
@@ -2330,7 +2279,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[145, 146],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"padRight",
             131586,
             12,
@@ -2341,7 +2290,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[147, 148],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"contains",
             131586,
             12,
@@ -2352,7 +2301,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[149, 150],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"replaceFirst",
             131586,
             12,
@@ -2363,7 +2312,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[151, 152, 153],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"replaceFirstMapped",
             131586,
             12,
@@ -2374,7 +2323,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[154, 155, 156],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"replaceAll",
             131586,
             12,
@@ -2385,7 +2334,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[157, 158],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"replaceAllMapped",
             131586,
             12,
@@ -2396,7 +2345,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[159, 160],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"replaceRange",
             131586,
             12,
@@ -2407,7 +2356,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[161, 162, 163],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"split",
             4325890,
             12,
@@ -2418,7 +2367,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[164],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"splitMapJoin",
             131586,
             12,
@@ -2429,7 +2378,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[165, 166, 167],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"toLowerCase",
             131586,
             12,
@@ -2440,7 +2389,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"toUpperCase",
             131586,
             12,
@@ -2451,7 +2400,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"length",
             131587,
             12,
@@ -2462,7 +2411,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"hashCode",
             131587,
             12,
@@ -2473,7 +2422,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"isEmpty",
             131587,
             12,
@@ -2484,7 +2433,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"isNotEmpty",
             131587,
             12,
@@ -2495,7 +2444,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"codeUnits",
             4325891,
             12,
@@ -2506,7 +2455,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"runes",
             131587,
             12,
@@ -2517,7 +2466,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"fromCharCodes",
             1,
             12,
@@ -2528,7 +2477,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[168, 169, 170],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"fromCharCode",
             1,
             12,
@@ -2539,7 +2488,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[171],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"fromEnvironment",
             129,
             12,
@@ -2550,7 +2499,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[172, 173],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"write",
             262146,
             13,
@@ -2561,7 +2510,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[174],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"writeCharCode",
             262146,
             13,
@@ -2572,7 +2521,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[175],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"writeAll",
             262146,
             13,
@@ -2583,7 +2532,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[176, 177],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"writeln",
             262146,
             13,
@@ -2594,7 +2543,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[178],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"clear",
             262146,
             13,
@@ -2605,7 +2554,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"toString",
             131074,
             13,
@@ -2616,7 +2565,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"length",
             131075,
             13,
@@ -2627,7 +2576,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"isEmpty",
             131075,
             13,
@@ -2638,7 +2587,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"isNotEmpty",
             131075,
             13,
@@ -2649,7 +2598,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"",
             0,
             13,
@@ -2660,7 +2609,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[179],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"write",
             262658,
             14,
@@ -2671,7 +2620,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[180],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"writeAll",
             262658,
             14,
@@ -2682,7 +2631,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[181, 182],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"writeln",
             262658,
             14,
@@ -2693,7 +2642,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[183],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(
+        r.MethodMirrorImpl(
             r"writeCharCode",
             262658,
             14,
@@ -2704,11 +2653,11 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <int>[184],
             const prefix0.ContainedReflectable(),
             const <Object>[]),
-        new r.MethodMirrorImpl(r"", 64, 14, -1, 14, 14, const <int>[],
+        r.MethodMirrorImpl(r"", 64, 14, -1, 14, 14, const <int>[],
             const <int>[], const prefix0.ContainedReflectable(), const [])
       ],
       <m.ParameterMirror>[
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"pokemon",
             32774,
             17,
@@ -2720,7 +2669,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"other",
             16390,
             18,
@@ -2732,7 +2681,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"invocation",
             32774,
             20,
@@ -2744,7 +2693,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"name",
             32774,
             26,
@@ -2756,7 +2705,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"type",
             32774,
             26,
@@ -2768,7 +2717,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"other",
             32774,
             27,
@@ -2780,7 +2729,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"name",
             32774,
             27,
@@ -2792,7 +2741,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"name",
             32774,
             28,
@@ -2804,7 +2753,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"type",
             32774,
             28,
@@ -2816,7 +2765,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"name",
             45062,
             31,
@@ -2828,7 +2777,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             #name),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"artist",
             32774,
             34,
@@ -2840,7 +2789,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"artist",
             32774,
             38,
@@ -2852,7 +2801,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"album",
             32774,
             38,
@@ -2864,7 +2813,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"reflectee",
             32774,
             50,
@@ -2876,7 +2825,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"reflectee",
             32774,
             51,
@@ -2888,7 +2837,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"type",
             32774,
             52,
@@ -2900,7 +2849,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"type",
             32774,
             53,
@@ -2912,7 +2861,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"libraryName",
             32774,
             54,
@@ -2924,7 +2873,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"other",
             32774,
             57,
@@ -2936,7 +2885,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"other",
             32774,
             58,
@@ -2948,7 +2897,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"other",
             32774,
             59,
@@ -2960,7 +2909,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"shiftAmount",
             32774,
             61,
@@ -2972,7 +2921,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"shiftAmount",
             32774,
             62,
@@ -2984,7 +2933,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"exponent",
             32774,
             63,
@@ -2996,7 +2945,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"modulus",
             32774,
             63,
@@ -3008,7 +2957,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"modulus",
             32774,
             64,
@@ -3020,7 +2969,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"other",
             32774,
             65,
@@ -3032,7 +2981,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"width",
             32774,
             66,
@@ -3044,7 +2993,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"width",
             32774,
             67,
@@ -3056,7 +3005,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"radix",
             32774,
             79,
@@ -3068,7 +3017,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"source",
             32774,
             80,
@@ -3080,7 +3029,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"radix",
             45062,
             80,
@@ -3092,7 +3041,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             #radix),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"onError",
             12294,
             80,
@@ -3104,7 +3053,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[deprecated],
             null,
             #onError),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"source",
             32774,
             81,
@@ -3116,7 +3065,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"radix",
             45062,
             81,
@@ -3128,7 +3077,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             #radix),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"name",
             32774,
             86,
@@ -3140,7 +3089,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"defaultValue",
             45062,
             86,
@@ -3152,7 +3101,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             #defaultValue),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"source",
             2129926,
             87,
@@ -3164,7 +3113,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"other",
             2129926,
             89,
@@ -3176,19 +3125,9 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
-            r"f",
-            6,
-            90,
-            const prefix0.ContainedReflectable(),
-            null,
-            52,
-            52,
-            null,
-            const <Object>[],
-            null,
-            null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(r"f", 6, 90, const prefix0.ContainedReflectable(),
+            null, 52, 52, null, const <Object>[], null, null),
+        r.ParameterMirrorImpl(
             r"test",
             6,
             91,
@@ -3200,19 +3139,9 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
-            r"f",
-            6,
-            93,
-            const prefix0.ContainedReflectable(),
-            null,
-            54,
-            54,
-            null,
-            const <Object>[],
-            null,
-            null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(r"f", 6, 93, const prefix0.ContainedReflectable(),
+            null, 54, 54, null, const <Object>[], null, null),
+        r.ParameterMirrorImpl(
             r"element",
             32774,
             94,
@@ -3224,19 +3153,9 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
-            r"f",
-            6,
-            95,
-            const prefix0.ContainedReflectable(),
-            null,
-            55,
-            55,
-            null,
-            const <Object>[],
-            null,
-            null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(r"f", 6, 95, const prefix0.ContainedReflectable(),
+            null, 55, 55, null, const <Object>[], null, null),
+        r.ParameterMirrorImpl(
             r"combine",
             6,
             96,
@@ -3248,7 +3167,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"initialValue",
             6,
             97,
@@ -3260,7 +3179,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"combine",
             6,
             97,
@@ -3272,7 +3191,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"test",
             6,
             98,
@@ -3284,7 +3203,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"separator",
             38918,
             99,
@@ -3296,7 +3215,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             "",
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"test",
             6,
             100,
@@ -3308,7 +3227,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"growable",
             47110,
             101,
@@ -3320,7 +3239,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             true,
             #growable),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"count",
             32774,
             103,
@@ -3332,7 +3251,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"test",
             6,
             104,
@@ -3344,7 +3263,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"count",
             32774,
             105,
@@ -3356,7 +3275,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"test",
             6,
             106,
@@ -3368,7 +3287,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"test",
             6,
             107,
@@ -3380,7 +3299,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"orElse",
             12294,
             107,
@@ -3392,7 +3311,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             #orElse),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"test",
             6,
             108,
@@ -3404,7 +3323,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"orElse",
             12294,
             108,
@@ -3416,7 +3335,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             #orElse),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"test",
             6,
             109,
@@ -3428,7 +3347,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"orElse",
             12294,
             109,
@@ -3440,7 +3359,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             #orElse),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"index",
             32774,
             110,
@@ -3452,7 +3371,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"count",
             32774,
             120,
@@ -3464,7 +3383,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"generator",
             4102,
             120,
@@ -3476,7 +3395,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"source",
             2129926,
             122,
@@ -3488,7 +3407,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"target",
             2129926,
             123,
@@ -3500,7 +3419,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"at",
             32774,
             123,
@@ -3512,7 +3431,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"source",
             2129926,
             123,
@@ -3524,7 +3443,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"start",
             36870,
             123,
@@ -3536,7 +3455,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"end",
             36870,
             123,
@@ -3548,7 +3467,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"target",
             2129926,
             124,
@@ -3560,7 +3479,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"at",
             32774,
             124,
@@ -3572,7 +3491,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"source",
             2129926,
             124,
@@ -3584,7 +3503,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"index",
             32774,
             126,
@@ -3596,7 +3515,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"index",
             32774,
             127,
@@ -3608,7 +3527,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"value",
             6,
             127,
@@ -3620,7 +3539,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"value",
             6,
             128,
@@ -3632,7 +3551,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"iterable",
             2129926,
             129,
@@ -3644,7 +3563,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"compare",
             4102,
             130,
@@ -3656,7 +3575,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"random",
             36870,
             131,
@@ -3668,7 +3587,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"element",
             6,
             132,
@@ -3680,7 +3599,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"start",
             38918,
             132,
@@ -3692,7 +3611,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             0,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"test",
             6,
             133,
@@ -3704,7 +3623,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"start",
             38918,
             133,
@@ -3716,7 +3635,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             0,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"test",
             6,
             134,
@@ -3728,7 +3647,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"start",
             36870,
             134,
@@ -3740,7 +3659,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"element",
             6,
             135,
@@ -3752,7 +3671,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"start",
             36870,
             135,
@@ -3764,7 +3683,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"index",
             32774,
             137,
@@ -3776,7 +3695,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"element",
             6,
             137,
@@ -3788,7 +3707,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"index",
             32774,
             138,
@@ -3800,7 +3719,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"iterable",
             2129926,
             138,
@@ -3812,7 +3731,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"index",
             32774,
             139,
@@ -3824,7 +3743,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"iterable",
             2129926,
             139,
@@ -3836,7 +3755,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"value",
             32774,
             140,
@@ -3848,7 +3767,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"index",
             32774,
             141,
@@ -3860,7 +3779,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"test",
             6,
             143,
@@ -3872,7 +3791,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"test",
             6,
             144,
@@ -3884,7 +3803,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"other",
             2129926,
             145,
@@ -3896,7 +3815,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"start",
             32774,
             146,
@@ -3908,7 +3827,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"end",
             36870,
             146,
@@ -3920,7 +3839,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"start",
             32774,
             147,
@@ -3932,7 +3851,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"end",
             32774,
             147,
@@ -3944,7 +3863,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"start",
             32774,
             148,
@@ -3956,7 +3875,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"end",
             32774,
             148,
@@ -3968,7 +3887,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"iterable",
             2129926,
             148,
@@ -3980,7 +3899,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"skipCount",
             38918,
             148,
@@ -3992,7 +3911,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             0,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"start",
             32774,
             149,
@@ -4004,7 +3923,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"end",
             32774,
             149,
@@ -4016,7 +3935,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"start",
             32774,
             150,
@@ -4028,7 +3947,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"end",
             32774,
             150,
@@ -4040,7 +3959,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"fillValue",
             4102,
             150,
@@ -4052,7 +3971,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"start",
             32774,
             151,
@@ -4064,7 +3983,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"end",
             32774,
             151,
@@ -4076,7 +3995,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"replacement",
             2129926,
             151,
@@ -4088,7 +4007,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"length",
             36870,
             158,
@@ -4100,7 +4019,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"length",
             32774,
             159,
@@ -4112,7 +4031,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"fill",
             6,
             159,
@@ -4124,7 +4043,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"growable",
             47110,
             159,
@@ -4136,7 +4055,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             false,
             #growable),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"elements",
             2129926,
             160,
@@ -4148,7 +4067,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"growable",
             47110,
             160,
@@ -4160,7 +4079,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             true,
             #growable),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"elements",
             2129926,
             161,
@@ -4172,7 +4091,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"growable",
             47110,
             161,
@@ -4184,7 +4103,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             true,
             #growable),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"length",
             32774,
             162,
@@ -4196,7 +4115,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"generator",
             6,
             162,
@@ -4208,7 +4127,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"growable",
             47110,
             162,
@@ -4220,7 +4139,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             true,
             #growable),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"elements",
             2129926,
             163,
@@ -4232,7 +4151,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"value",
             6,
             153,
@@ -4244,7 +4163,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"value",
             6,
             154,
@@ -4256,8 +4175,8 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
-            r"newLength",
+        r.ParameterMirrorImpl(
+            r"Length",
             32774,
             156,
             const prefix0.ContainedReflectable(),
@@ -4268,7 +4187,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"index",
             32774,
             165,
@@ -4280,7 +4199,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"index",
             32774,
             166,
@@ -4292,7 +4211,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"other",
             32774,
             167,
@@ -4304,7 +4223,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"other",
             32774,
             168,
@@ -4316,7 +4235,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"other",
             32774,
             169,
@@ -4328,7 +4247,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"pattern",
             32774,
             170,
@@ -4340,7 +4259,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"index",
             38918,
             170,
@@ -4352,7 +4271,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             0,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"pattern",
             32774,
             171,
@@ -4364,7 +4283,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"start",
             36870,
             171,
@@ -4376,7 +4295,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"pattern",
             32774,
             172,
@@ -4388,7 +4307,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"start",
             36870,
             172,
@@ -4400,7 +4319,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"other",
             32774,
             173,
@@ -4412,7 +4331,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"startIndex",
             32774,
             174,
@@ -4424,7 +4343,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"endIndex",
             36870,
             174,
@@ -4436,7 +4355,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"times",
             32774,
             178,
@@ -4448,7 +4367,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"width",
             32774,
             179,
@@ -4460,7 +4379,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"padding",
             38918,
             179,
@@ -4472,7 +4391,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             ' ',
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"width",
             32774,
             180,
@@ -4484,7 +4403,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"padding",
             38918,
             180,
@@ -4496,7 +4415,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             ' ',
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"other",
             32774,
             181,
@@ -4508,7 +4427,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"startIndex",
             38918,
             181,
@@ -4520,7 +4439,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             0,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"from",
             32774,
             182,
@@ -4532,7 +4451,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"to",
             32774,
             182,
@@ -4544,7 +4463,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"startIndex",
             38918,
             182,
@@ -4556,7 +4475,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             0,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"from",
             32774,
             183,
@@ -4568,7 +4487,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"replace",
             6,
             183,
@@ -4580,7 +4499,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"startIndex",
             38918,
             183,
@@ -4592,7 +4511,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             0,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"from",
             32774,
             184,
@@ -4604,7 +4523,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"replace",
             32774,
             184,
@@ -4616,7 +4535,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"from",
             32774,
             185,
@@ -4628,7 +4547,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"replace",
             6,
             185,
@@ -4640,7 +4559,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"start",
             32774,
             186,
@@ -4652,7 +4571,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"end",
             32774,
             186,
@@ -4664,7 +4583,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"replacement",
             32774,
             186,
@@ -4676,7 +4595,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"pattern",
             32774,
             187,
@@ -4688,7 +4607,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"pattern",
             32774,
             188,
@@ -4700,7 +4619,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"onMatch",
             12294,
             188,
@@ -4712,7 +4631,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             #onMatch),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"onNonMatch",
             12294,
             188,
@@ -4724,7 +4643,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             #onNonMatch),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"charCodes",
             2129926,
             197,
@@ -4736,7 +4655,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"start",
             38918,
             197,
@@ -4748,7 +4667,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             0,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"end",
             36870,
             197,
@@ -4760,7 +4679,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"charCode",
             32774,
             198,
@@ -4772,7 +4691,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"name",
             32774,
             199,
@@ -4784,7 +4703,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"defaultValue",
             45062,
             199,
@@ -4796,7 +4715,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             #defaultValue),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"obj",
             32774,
             200,
@@ -4808,7 +4727,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"charCode",
             32774,
             201,
@@ -4820,7 +4739,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"objects",
             2129926,
             202,
@@ -4832,7 +4751,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"separator",
             38918,
             202,
@@ -4844,7 +4763,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             "",
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"obj",
             38918,
             203,
@@ -4856,7 +4775,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             "",
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"content",
             38918,
             209,
@@ -4868,7 +4787,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             "",
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"obj",
             32774,
             210,
@@ -4880,7 +4799,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"objects",
             2129926,
             211,
@@ -4892,7 +4811,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             null,
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"separator",
             38918,
             211,
@@ -4904,7 +4823,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             "",
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"obj",
             38918,
             212,
@@ -4916,7 +4835,7 @@ final _data = <r.Reflectable, r.ReflectorData>{
             const <Object>[],
             "",
             null),
-        new r.ParameterMirrorImpl(
+        r.ParameterMirrorImpl(
             r"charCode",
             32774,
             213,

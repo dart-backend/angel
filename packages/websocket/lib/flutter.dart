@@ -19,14 +19,14 @@ class WebSockets extends BaseWebSocketClient {
 
   WebSockets(baseUrl,
       {bool reconnectOnClose = true, Duration reconnectInterval})
-      : super(new http.IOClient(), baseUrl,
+      : super(http.IOClient(), baseUrl,
             reconnectOnClose: reconnectOnClose,
             reconnectInterval: reconnectInterval);
 
   @override
   Stream<String> authenticateViaPopup(String url,
       {String eventName = 'token'}) {
-    throw new UnimplementedError(
+    throw UnimplementedError(
         'Opening popup windows is not supported in the `dart:io` client.');
   }
 
@@ -45,6 +45,6 @@ class WebSockets extends BaseWebSocketClient {
         headers: authToken?.isNotEmpty == true
             ? {'Authorization': 'Bearer $authToken'}
             : {});
-    return new IOWebSocketChannel(socket);
+    return IOWebSocketChannel(socket);
   }
 }

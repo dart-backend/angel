@@ -43,7 +43,7 @@ class ControllerCommand extends Command {
       const MakerDependency('angel_framework', '^2.0.0')
     ];
 
-    // ${pubspec.name}.src.models.${rc.snakeCase}
+    //${pubspec.name}.src.models.${rc.snakeCase}
 
     var rc = new ReCase(name);
     var controllerLib = new Library((controllerLib) {

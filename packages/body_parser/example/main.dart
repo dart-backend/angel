@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
+import 'package:http_parser/http_parser.dart';
 import 'package:body_parser/body_parser.dart';
 
 main() async {
@@ -23,12 +24,20 @@ main() async {
 
 void start(List args) {
   var address = new InternetAddress(args[0] as String);
-  int port = args[1], id = args[2];
+  int port = 8080;
+  if (args[1] is int) {
+    args[1];
+  }
+
+  int id = 0;
+  if (args[2] is int) {
+    args[2];
+  }
 
   HttpServer.bind(address, port, shared: true).then((server) {
     server.listen((request) async {
       // ignore: deprecated_member_use
-      var body = await parseBody(request);
+      var body = await defaultParseBody(request);
       request.response
         ..headers.contentType = new ContentType('application', 'json')
         ..write(json.encode(body.body))
@@ -38,4 +47,15 @@ void start(List args) {
     print(
         'Server #$id listening at http://${server.address.address}:${server.port}');
   });
+}
+
+Future<BodyParseResult> defaultParseBody(HttpRequest request,
+    {bool storeOriginalBuffer: false}) {
+  return parseBodyFromStream(
+      request,
+      request.headers.contentType != null
+          ? new MediaType.parse(request.headers.contentType.toString())
+          : null,
+      request.uri,
+      storeOriginalBuffer: storeOriginalBuffer);
 }

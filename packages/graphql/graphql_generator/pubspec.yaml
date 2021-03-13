@@ -4,15 +4,18 @@ description: Generates GraphQL schemas from Dart classes, for use with pkg:graph
 author: Tobe O <thosakwe@gmail.com>
 homepage: https://github.com/angel-dart/graphql
 environment:
-  sdk: ">=2.0.0 <3.0.0"
+  sdk: ">=2.10.0 <2.12.0"
 dependencies:
   analyzer: ">=0.27.1 <2.0.0"
-  angel_model: ^1.0.0
-  angel_serialize_generator: ^2.0.0
+  angel_model: #^1.0.0
+    path: ../../model
+  angel_serialize_generator: #^2.0.0
+    path: ../../serialize/angel_serialize_generator
   build: ^1.0.0
   build_config: ^0.3.0
   code_builder: ^3.0.0
-  graphql_schema: ^1.0.2
+  graphql_schema: #^1.0.2
+    path: ../graphql_schema
   recase: ^2.0.0
   source_gen: ^0.9.4
 dev_dependencies:

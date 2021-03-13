@@ -19,7 +19,7 @@ class WebSocketController extends Controller {
 
   /// Sends an event to all clients.
   void broadcast(String eventName, data, {filter(WebSocketContext socket)}) {
-    ws.batchEvent(new WebSocketEvent(eventName: eventName, data: data),
+    ws.batchEvent(WebSocketEvent(eventName: eventName, data: data),
         filter: filter);
   }
 

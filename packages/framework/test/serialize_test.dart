@@ -35,11 +35,11 @@ main() {
   });
 
   test("correct content-type", () async {
-    var response = await client.get('$url/foo');
+    var response = await client.get(Uri.parse('$url/foo'));
     print('Response: ${response.body}');
     expect(response.headers['content-type'], contains('application/json'));
 
-    response = await client.get('$url/bar');
+    response = await client.get(Uri.parse('$url/bar'));
     print('Response: ${response.body}');
     expect(response.headers['content-type'], contains('text/html'));
   });

@@ -25,7 +25,7 @@ bool isSpecialId(OrmBuildContext ctx, FieldElement field) {
       field is! RelationFieldImpl &&
           (field.name == 'id' &&
               const TypeChecker.fromRuntime(Model)
-                  .isAssignableFromType(ctx.buildContext.clazz.type));
+                  .isAssignableFromType(ctx.buildContext.clazz.thisType));
 }
 
 Element _findElement(FieldElement field) {
@@ -248,7 +248,7 @@ Future<OrmBuildContext> buildOrmContext(
             joinTypeType.element.fields.where((f) => f.isEnumConstant).toList();
 
         for (int i = 0; i < enumFields.length; i++) {
-          if (enumFields[i].constantValue == joinTypeRdr) {
+          if (enumFields[i].computeConstantValue() == joinTypeRdr) {
             joinType = JoinType.values[i];
             break;
           }
@@ -279,7 +279,9 @@ Future<OrmBuildContext> buildOrmContext(
           var foreign = relation.throughContext ?? relation.foreign;
           var type = foreignField.type;
           if (isSpecialId(foreign, foreignField)) {
-            type = field.type.element.context.typeProvider.intType;
+            // TODO: incorrect type assignments
+            //type = field.type.element.context.typeProvider.intType;
+            type = field.type;
           }
           var rf = RelationFieldImpl(name, relation, type, field);
           ctx.effectiveFields.add(rf);

@@ -127,12 +127,12 @@ main() {
   });
 
   test('Can match basic url', () async {
-    var response = await client.get("$url/hello");
+    var response = await client.get(Uri.parse("$url/hello"));
     expect(response.body, equals('"world"'));
   });
 
   test('Can match url with multiple parameters', () async {
-    var response = await client.get('$url/name/HELLO/last/WORLD');
+    var response = await client.get(Uri.parse('$url/name/HELLO/last/WORLD'));
     print('Response: ${response.body}');
     var json_ = json.decode(response.body);
     expect(json_, const IsInstanceOf<Map>());
@@ -141,18 +141,18 @@ main() {
   });
 
   test('Chained routes', () async {
-    var response = await client.get("$url/chained");
+    var response = await client.get(Uri.parse("$url/chained"));
     expect(response.body, equals('abc'));
   });
 
   test('Can nest another Angel instance', () async {
-    var response = await client.post('$url/nes/ted/foo');
+    var response = await client.post(Uri.parse('$url/nes/ted/foo'));
     var json_ = json.decode(response.body);
     expect(json_['route'], equals('foo'));
   });
 
   test('Can parse parameters from a nested Angel instance', () async {
-    var response = await client.get('$url/todos/1337/action/test');
+    var response = await client.get(Uri.parse('$url/todos/1337/action/test'));
     var json_ = json.decode(response.body);
     print('JSON: $json_');
     expect(json_['id'], equals('1337'));
@@ -160,27 +160,27 @@ main() {
   });
 
   test('Can add and use named middleware', () async {
-    var response = await client.get('$url/intercepted');
+    var response = await client.get(Uri.parse('$url/intercepted'));
     expect(response.body, equals('Middleware'));
   });
 
   test('Middleware via metadata', () async {
     // Metadata
-    var response = await client.get('$url/meta');
+    var response = await client.get(Uri.parse('$url/meta'));
     expect(response.body, equals('Middleware'));
   });
 
   test('Can serialize function result as JSON', () async {
     Map headers = <String, String>{'Content-Type': 'application/json'};
     String postData = json.encode({'it': 'works'});
-    var response = await client.post("$url/lambda",
+    var response = await client.post(Uri.parse("$url/lambda"),
         headers: headers as Map<String, String>, body: postData);
     print('Response: ${response.body}');
     expect(json.decode(response.body)['it'], equals('works'));
   });
 
   test('Fallback routes', () async {
-    var response = await client.get('$url/my_favorite_artist');
+    var response = await client.get(Uri.parse('$url/my_favorite_artist'));
     expect(response.body, equals('"MJ"'));
   });
 
@@ -193,32 +193,32 @@ main() {
   });
 
   test('Redirect to named routes', () async {
-    var response = await client.get('$url/named');
+    var response = await client.get(Uri.parse('$url/named'));
     print(response.body);
     expect(json.decode(response.body), equals('Hello tests'));
   });
 
   test('Match routes, even with query params', () async {
-    var response =
-        await client.get("$url/log?foo=bar&bar=baz&baz.foo=bar&baz.bar=foo");
+    var response = await client
+        .get(Uri.parse("$url/log?foo=bar&bar=baz&baz.foo=bar&baz.bar=foo"));
     print(response.body);
     expect(json.decode(response.body), equals('Logged'));
 
-    response = await client.get("$url/query/foo?bar=baz");
+    response = await client.get(Uri.parse("$url/query/foo?bar=baz"));
     print(response.body);
     expect(response.body, equals("Service with Middleware"));
   });
 
   test('only match route with matching method', () async {
-    var response = await client.get("$url/method");
+    var response = await client.get(Uri.parse("$url/method"));
     print(response.body);
     expect(response.body, '"Only GET"');
 
-    response = await client.post("$url/method");
+    response = await client.post(Uri.parse("$url/method"));
     print(response.body);
     expect(response.body, '"Only POST"');
 
-    response = await client.patch("$url/method");
+    response = await client.patch(Uri.parse("$url/method"));
     print(response.body);
     expect(response.body, '"MJ"');
   });

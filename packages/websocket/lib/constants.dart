@@ -61,7 +61,7 @@ const String EVENT_UPDATED = updatedEvent;
 const String EVENT_REMOVED = removedEvent;
 
 /// The standard Angel service actions.
-const List<String> actions = const <String>[
+const List<String> actions = <String>[
   indexAction,
   readAction,
   createAction,
@@ -74,7 +74,7 @@ const List<String> actions = const <String>[
 const List<String> ACTIONS = actions;
 
 /// The standard Angel service events.
-const List<String> events = const <String>[
+const List<String> events = <String>[
   indexedEvent,
   readEvent,
   createdEvent,

@@ -20,17 +20,18 @@ var options = ExternalAuthOptions(
 /// Github doesn't properly follow the OAuth2 spec, so here's logic to parse their response.
 Map<String, dynamic> parseParamsFromGithub(MediaType contentType, String body) {
   if (contentType.type == 'application') {
-    if (contentType.subtype == 'x-www-form-urlencoded')
+    if (contentType.subtype == 'x-www-form-urlencoded') {
       return Uri.splitQueryString(body);
-    else if (contentType.subtype == 'json')
+    } else if (contentType.subtype == 'json') {
       return (json.decode(body) as Map).cast<String, String>();
+    }
   }
 
   throw FormatException(
       'Invalid content-type $contentType; expected application/x-www-form-urlencoded or application/json.');
 }
 
-main() async {
+void main() async {
   // Create the server instance.
   var app = Angel();
   var http = AngelHttp(app);
@@ -60,7 +61,7 @@ main() async {
 
     // This function is called when the user ACCEPTS the request to sign in with Github.
     (client, req, res) async {
-      var response = await client.get('https://api.github.com/user');
+      var response = await client.get(Uri.parse('https://api.github.com/user'));
       var ghUser = json.decode(response.body);
       var id = ghUser['id'] as int;
 

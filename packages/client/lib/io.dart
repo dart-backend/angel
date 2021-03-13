@@ -13,13 +13,13 @@ export 'angel_client.dart';
 class Rest extends BaseAngelClient {
   final List<Service> _services = [];
 
-  Rest(String path) : super(new http.Client() as http.BaseClient, path);
+  Rest(String path) : super(http.Client() as http.BaseClient, path);
 
   @override
   Service<Id, Data> service<Id, Data>(String path,
       {Type type, AngelDeserializer deserializer}) {
     var url = baseUrl.replace(path: p.join(baseUrl.path, path));
-    var s = new RestService<Id, Data>(client, this, url, type);
+    var s = RestService<Id, Data>(client, this, url, type);
     _services.add(s);
     return s;
   }
@@ -27,10 +27,11 @@ class Rest extends BaseAngelClient {
   @override
   Stream<String> authenticateViaPopup(String url,
       {String eventName = 'token'}) {
-    throw new UnimplementedError(
+    throw UnimplementedError(
         'Opening popup windows is not supported in the `dart:io` client.');
   }
 
+  @override
   Future close() async {
     await super.close();
     await Future.wait(_services.map((s) => s.close())).then((_) {
@@ -48,6 +49,7 @@ class RestService<Id, Data> extends BaseAngelService<Id, Data> {
 
   @override
   Data deserialize(x) {
+    print(x);
     if (type != null) {
       return x.runtimeType == type
           ? x as Data
@@ -58,7 +60,8 @@ class RestService<Id, Data> extends BaseAngelService<Id, Data> {
   }
 
   @override
-  makeBody(x) {
+  String makeBody(x) {
+    print(x);
     if (type != null) {
       return super.makeBody(god.serializeObject(x));
     }

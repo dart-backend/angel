@@ -40,7 +40,7 @@ AngelConfigurer jinja({
       varClose: varClose,
       commentOpen: commentOpen,
       commentClose: commentClose,
-      defaultValue: defaultValue,
+      //defaultValue: defaultValue,
       autoReload: autoReload,
       filters: filters,
       tests: tests,

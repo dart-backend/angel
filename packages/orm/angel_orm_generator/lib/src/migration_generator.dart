@@ -67,7 +67,7 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
   Method buildUpMigration(OrmBuildContext ctx, LibraryBuilder lib) {
     return Method((meth) {
       var autoIdAndDateFields = const TypeChecker.fromRuntime(Model)
-          .isAssignableFromType(ctx.buildContext.clazz.type);
+          .isAssignableFromType(ctx.buildContext.clazz.thisType);
       meth
         ..name = 'up'
         ..annotations.add(refer('override'))

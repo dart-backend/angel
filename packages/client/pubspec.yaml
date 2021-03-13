@@ -1,23 +1,41 @@
 name: angel_client
-version: 2.0.2
+version: 3.0.0
 description: Support for querying Angel servers in the browser, Flutter, and command-line.
 author: Tobe O <thosakwe@gmail.com>
 homepage: https://github.com/angel-dart/angel_client
+publish_to: none
 environment:
-  sdk: ">=2.0.0-dev <3.0.0"
+  sdk: ">=2.10.0 <3.0.0"
 dependencies:
-  angel_http_exception: ^1.0.0
+  angel_http_exception:
+    git: 
+      url: https://github.com/dukefirehawk/angel.git
+      ref: sdk-2.12.x
+      path: packages/http_exception
   collection: ^1.0.0
-  http: ^0.12.0
-  json_god: ">=2.0.0-beta <3.0.0"
+  http: ^0.13.0
+  json_god:
+    git: 
+      url: https://github.com/dukefirehawk/angel.git
+      ref: sdk-2.12.x
+      path: packages/json_god
+  #dart_json_mapper: ^1.7.0
   meta: ^1.0.0
   path: ^1.0.0
 dev_dependencies:
-  angel_framework: ^2.0.0-alpha
-  angel_model: ^1.0.0
+  angel_framework:
+    git: 
+      url: https://github.com/dukefirehawk/angel.git
+      ref: sdk-2.12.x
+      path: packages/framework
+  angel_model:
+    git: 
+      url: https://github.com/dukefirehawk/angel.git
+      ref: sdk-2.12.x
+      path: packages/model
   async: ^2.0.0
   build_runner: ^1.0.0
-  build_web_compilers: ^1.0.0
+  build_web_compilers: ^2.12.2
   mock_request: ^1.0.0
-  pedantic: ^1.0.0
-  test: ^1.0.0
+  pedantic: ^1.11.0
+  test: ^1.16.5

@@ -4,7 +4,7 @@ part of angel_websocket.server;
 /// [RequestContext] and [ResponseContext] attached.
 class WebSocketContext {
   /// Use this to listen for events.
-  _WebSocketEventTable on = new _WebSocketEventTable();
+  _WebSocketEventTable on = _WebSocketEventTable();
 
   /// The underlying [StreamChannel].
   final StreamChannel channel;
@@ -16,13 +16,13 @@ class WebSocketContext {
   final ResponseContext response;
 
   StreamController<WebSocketAction> _onAction =
-      new StreamController<WebSocketAction>();
+      StreamController<WebSocketAction>();
 
   StreamController<void> _onAuthenticated = StreamController();
 
-  StreamController<Null> _onClose = new StreamController<Null>();
+  StreamController<Null> _onClose = StreamController<Null>();
 
-  StreamController _onData = new StreamController();
+  StreamController _onData = StreamController();
 
   /// Fired on any [WebSocketAction];
   Stream<WebSocketAction> get onAction => _onAction.stream;
@@ -52,8 +52,8 @@ class WebSocketContext {
 
   /// Sends an arbitrary [WebSocketEvent];
   void send(String eventName, data) {
-    channel.sink.add(json
-        .encode(new WebSocketEvent(eventName: eventName, data: data).toJson()));
+    channel.sink.add(
+        json.encode(WebSocketEvent(eventName: eventName, data: data).toJson()));
   }
 
   /// Sends an error event.
@@ -65,7 +65,7 @@ class _WebSocketEventTable {
 
   StreamController<Map> _getStreamForEvent(String eventName) {
     if (!_handlers.containsKey(eventName))
-      _handlers[eventName] = new StreamController<Map>();
+      _handlers[eventName] = StreamController<Map>();
     return _handlers[eventName];
   }
 

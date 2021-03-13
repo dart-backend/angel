@@ -33,7 +33,10 @@ main() {
       // Manually broadcast. Even though app1 has no clients, it *should*
       // propagate to app2.
       var ws = req.container.make<AngelWebSocket>();
-      var body = await req.parseBody();
+
+      // TODO: body is void
+      //var body = await req.parseBody();
+      var body = {};
       ws.batchEvent(new WebSocketEvent(
         eventName: 'message',
         data: body['message'],

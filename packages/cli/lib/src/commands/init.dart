@@ -12,7 +12,7 @@ import 'pub.dart';
 import 'rename.dart';
 
 class InitCommand extends Command {
-  final KeyCommand _key = new KeyCommand();
+  final KeyCommand _key = KeyCommand();
 
   @override
   String get name => "init";
@@ -35,21 +35,19 @@ class InitCommand extends Command {
   @override
   run() async {
     Directory projectDir =
-        new Directory(argResults.rest.isEmpty ? "." : argResults.rest[0]);
+        Directory(argResults.rest.isEmpty ? "." : argResults.rest[0]);
     print("Creating new Angel project in ${projectDir.absolute.path}...");
     await _cloneRepo(projectDir);
     // await preBuild(projectDir);
     var secret = rs.randomAlphaNumeric(32);
     print('Generated new development JWT secret: $secret');
     await _key.changeSecret(
-        new File.fromUri(projectDir.uri.resolve('config/default.yaml')),
-        secret);
+        File.fromUri(projectDir.uri.resolve('config/default.yaml')), secret);
 
     secret = rs.randomAlphaNumeric(32);
     print('Generated new production JWT secret: $secret');
     await _key.changeSecret(
-        new File.fromUri(projectDir.uri.resolve('config/production.yaml')),
-        secret);
+        File.fromUri(projectDir.uri.resolve('config/production.yaml')), secret);
 
     var name = argResults.wasParsed('project-name')
         ? argResults['project-name'] as String
@@ -110,9 +108,9 @@ class InitCommand extends Command {
 
       switch (stat.type) {
         case FileSystemEntityType.directory:
-          return await _deleteRecursive(new Directory(path));
+          return await _deleteRecursive(Directory(path));
         case FileSystemEntityType.file:
-          return await _deleteRecursive(new File(path));
+          return await _deleteRecursive(File(path));
         default:
           break;
       }
@@ -198,7 +196,7 @@ class InitCommand extends Command {
         }
 
         if (await git.exitCode != 0) {
-          throw new Exception("Could not clone repo.");
+          throw Exception("Could not clone repo.");
         }
       }
 
@@ -224,7 +222,7 @@ class InitCommand extends Command {
         await preBuild(projectDir).catchError((_) => null);
       }
 
-      var gitDir = new Directory.fromUri(projectDir.uri.resolve(".git"));
+      var gitDir = Directory.fromUri(projectDir.uri.resolve(".git"));
       if (await gitDir.exists()) await gitDir.delete(recursive: true);
     } catch (e) {
       await boilerplateDir.delete(recursive: true).catchError((_) => null);
@@ -260,44 +258,48 @@ Future preBuild(Directory projectDir) async {
 
   var buildCode = await build.exitCode;
 
-  if (buildCode != 0) throw new Exception('Failed to pre-build resources.');
+  if (buildCode != 0) throw Exception('Failed to pre-build resources.');
 }
+
+const RepoArchiveLocation = "https://github.com/angel-dart";
+const RepoLocation = "https://github.com/dukefirehawk";
 
 const BoilerplateInfo graphQLBoilerplate = const BoilerplateInfo(
   'GraphQL',
   "A starting point for GraphQL API servers.",
-  'https://github.com/angel-dart/angel.git',
-  ref: 'graphql',
+  '${RepoLocation}/boilerplates.git',
+  ref: 'graphql-sdk-2.12.x',
 );
 
 const BoilerplateInfo ormBoilerplate = const BoilerplateInfo(
   'ORM',
   "A starting point for applications that use Angel's ORM.",
-  'https://github.com/angel-dart/angel.git',
-  ref: 'orm',
+  '${RepoLocation}/boilerplates.git',
+  ref: 'orm-sdk-2.12.x',
 );
 
 const BoilerplateInfo basicBoilerplate = const BoilerplateInfo(
     'Basic',
     'Minimal starting point for Angel 2.x - A simple server with only a few additional packages.',
-    'https://github.com/angel-dart/angel.git');
+    '${RepoLocation}/boilerplates.git',
+    ref: 'basic-sdk-2.12.x');
 
 const BoilerplateInfo legacyBoilerplate = const BoilerplateInfo(
   'Legacy',
   'Minimal starting point for applications running Angel 1.1.x.',
-  'https://github.com/angel-dart/angel.git',
+  '${RepoArchiveLocation}/angel.git',
   ref: '1.1.x',
 );
 
 const BoilerplateInfo sharedBoilerplate = const BoilerplateInfo(
     'Shared',
     'Holds common models and files shared across multiple Dart projects.',
-    'https://github.com/angel-dart/boilerplate_shared.git');
+    '${RepoLocation}/boilerplate_shared.git');
 
 const BoilerplateInfo sharedOrmBoilerplate = const BoilerplateInfo(
   'Shared (ORM)',
   'Holds common models and files shared across multiple Dart projects.',
-  'https://github.com/angel-dart/boilerplate_shared.git',
+  '${RepoLocation}/boilerplate_shared.git',
   ref: 'orm',
 );
 
@@ -306,8 +308,8 @@ const List<BoilerplateInfo> boilerplates = const [
   //legacyBoilerplate,
   ormBoilerplate,
   graphQLBoilerplate,
-  sharedBoilerplate,
-  sharedOrmBoilerplate,
+  //sharedBoilerplate,
+  //sharedOrmBoilerplate,
 ];
 
 class BoilerplateInfo {

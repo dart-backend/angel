@@ -1,11 +1,12 @@
 import 'dart:io';
+import 'dart:convert';
 import 'package:body_parser/body_parser.dart';
 import 'package:dart2_constant/convert.dart';
 import 'package:http/http.dart' as http;
 import 'package:test/test.dart';
 import 'server_test.dart';
 
-main() {
+void main() {
   HttpServer server;
   String url;
   http.Client client;
@@ -20,7 +21,7 @@ main() {
     });
     url = 'http://localhost:${server.port}';
     print('Test server listening on $url');
-    client = new http.Client();
+    client = http.Client();
   });
 
   tearDown(() async {
@@ -49,7 +50,7 @@ world
         'Form Data: \n${postData.replaceAll("\r", "\\r").replaceAll("\n", "\\n")}');
     var response = await client.post(url, headers: headers, body: postData);
     print('Response: ${response.body}');
-    Map jsons = json.decode(response.body);
+    var jsons = json.decode(response.body);
     var files = jsons['files'].map((map) {
       return map == null
           ? null
@@ -63,7 +64,7 @@ world
   test('Single upload', () async {
     String boundary = 'myBoundary';
     Map<String, String> headers = {
-      'content-type': new ContentType("multipart", "form-data",
+      'content-type': ContentType("multipart", "form-data",
           parameters: {"boundary": boundary}).toString()
     };
     String postData = '''
@@ -84,7 +85,7 @@ Hello world
         'Form Data: \n${postData.replaceAll("\r", "\\r").replaceAll("\n", "\\n")}');
     var response = await client.post(url, headers: headers, body: postData);
     print('Response: ${response.body}');
-    Map jsons = json.decode(response.body);
+    var jsons = json.decode(response.body);
     var files = jsons['files'];
     expect(files.length, equals(1));
     expect(files[0]['name'], equals('file'));
@@ -128,7 +129,7 @@ function main() {
         'Form Data: \n${postData.replaceAll("\r", "\\r").replaceAll("\n", "\\n")}');
     var response = await client.post(url, headers: headers, body: postData);
     print('Response: ${response.body}');
-    Map jsons = json.decode(response.body);
+    var jsons = json.decode(response.body);
     var files = jsons['files'];
     expect(files.length, equals(2));
     expect(files[0]['name'], equals('file'));

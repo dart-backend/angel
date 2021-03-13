@@ -40,7 +40,7 @@ Builder typescriptDefinitionBuilder(_) {
 /// Converts a [DartType] to a [TypeReference].
 TypeReference convertTypeReference(DartType t) {
   return TypeReference((b) {
-    b..symbol = t.name;
+    b..symbol = t.element?.displayName;
 
     if (t is InterfaceType) {
       b.types.addAll(t.typeArguments.map(convertTypeReference));
@@ -101,9 +101,9 @@ String dartObjectToString(DartObject v) {
     // Find the index of the enum, then find the member.
     for (var field in type.element.fields) {
       if (field.isEnumConstant && field.isStatic) {
-        var value = type.element.getField(field.name).constantValue;
+        var value = type.element.getField(field.name).computeConstantValue();
         if (value == v) {
-          return '${type.name}.${field.name}';
+          return '${type.element?.displayName}.${field.name}';
         }
       }
     }
@@ -169,12 +169,14 @@ bool isAssignableToModel(DartType type) =>
 /// Compute a [String] representation of a [type].
 String typeToString(DartType type) {
   if (type is InterfaceType) {
-    if (type.typeArguments.isEmpty) return type.name;
-    return type.name +
-        '<' +
-        type.typeArguments.map(typeToString).join(', ') +
-        '>';
+    if (type.typeArguments.isEmpty) {
+      return type.element?.displayName;
+    }
+
+    var name = type.element?.displayName ?? '';
+
+    return name + '<' + type.typeArguments.map(typeToString).join(', ') + '>';
   } else {
-    return type.name;
+    return type.element?.displayName;
   }
 }

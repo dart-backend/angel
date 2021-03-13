@@ -1,14 +1,14 @@
-import 'package:angel_client/angel_client.dart';
 import 'dart:convert';
 import 'package:test/test.dart';
 import 'common.dart';
 
-main() {
-  var app = new MockAngel();
-  Service todoService = app.service('api/todos');
+void main() {
+  var app = MockAngel();
+  var todoService = app.service('api/todos');
 
   test('sets method,body,headers,path', () async {
-    await app.post('/post', headers: {'method': 'post'}, body: 'post');
+    await app.post(Uri.parse('/post'),
+        headers: {'method': 'post'}, body: 'post');
     expect(app.client.spec.method, 'POST');
     expect(app.client.spec.path, '/post');
     expect(app.client.spec.headers['method'], 'post');

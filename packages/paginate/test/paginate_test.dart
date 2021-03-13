@@ -2,12 +2,12 @@ import 'package:angel_paginate/angel_paginate.dart';
 import 'package:test/test.dart';
 
 // Count-down from 100, then 101 at the end...
-final List<int> DATA = new List<int>.generate(100, (i) => 100 - i)..add(101);
+final List<int> DATA = List<int>.generate(100, (i) => 100 - i)..add(101);
 
-main() {
+void main() {
   group('cache', () {
-    var cached = new Paginator<int>(DATA),
-        uncached = new Paginator<int>(DATA, useCache: false);
+    var cached = Paginator<int>(DATA),
+        uncached = Paginator<int>(DATA, useCache: false);
 
     test('always cache current', () {
       expect(cached.current, cached.current);
@@ -34,7 +34,7 @@ main() {
   });
 
   test('default state', () {
-    var paginator = new Paginator<int>(DATA);
+    var paginator = Paginator<int>(DATA);
     expect(paginator.index, 0);
     expect(paginator.pageNumber, 1);
     expect(paginator.itemsPerPage, 5);
@@ -51,7 +51,7 @@ main() {
 
   group('paginate', () {
     test('first page', () {
-      var paginator = new Paginator<int>(DATA);
+      var paginator = Paginator<int>(DATA);
       expect(paginator.pageNumber, 1);
       var r = paginator.current;
       print(r.toJson());
@@ -67,7 +67,7 @@ main() {
   });
 
   test('third page', () {
-    var paginator = new Paginator<int>(DATA)..goToPage(3);
+    var paginator = Paginator<int>(DATA)..goToPage(3);
     expect(paginator.pageNumber, 3);
     var r = paginator.current;
     print(r.toJson());
@@ -85,7 +85,7 @@ main() {
   });
 
   test('last page', () {
-    var paginator = new Paginator<int>(DATA);
+    var paginator = Paginator<int>(DATA);
     paginator.goToPage(paginator.lastPageNumber);
     var r = paginator.current;
     expect(r.total, DATA.length);
@@ -100,7 +100,7 @@ main() {
   });
 
   test('dump pages', () {
-    var paginator = new Paginator<int>(DATA);
+    var paginator = Paginator<int>(DATA);
     print('${paginator.lastPageNumber} page(s) of data:');
 
     do {
@@ -110,7 +110,7 @@ main() {
   });
 
   test('empty collection', () {
-    var paginator = new Paginator([]);
+    var paginator = Paginator([]);
     var page = paginator.current;
     print(page.toJson());
 

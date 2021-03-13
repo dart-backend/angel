@@ -1,7 +1,8 @@
 import 'dart:async';
 import 'dart:mirrors' as dart;
-import 'package:angel_container/angel_container.dart';
-import 'package:angel_container/src/reflector.dart';
+
+import '../exception.dart';
+import '../reflector.dart';
 
 /// A [Reflector] implementation that forwards to `dart:mirrors`.
 ///

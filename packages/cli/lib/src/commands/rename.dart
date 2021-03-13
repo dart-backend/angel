@@ -1,8 +1,10 @@
 import 'dart:io';
-import 'package:analyzer/analyzer.dart';
+import 'package:analyzer/dart/ast/ast.dart';
+import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:args/command_runner.dart';
 import 'package:dart_style/dart_style.dart';
 import 'package:glob/glob.dart';
+import 'package:glob/list_local_fs.dart';
 import 'package:io/ansi.dart';
 import 'package:prompts/prompts.dart' as prompts;
 import 'package:recase/recase.dart';
@@ -14,7 +16,7 @@ class RenameCommand extends Command {
   String get name => 'rename';
 
   @override
-  String get description => 'Renames the current project.';
+  String get description => 'Renames the current project (To be available).';
 
   @override
   String get invocation => '$name <new name>';
@@ -29,17 +31,20 @@ class RenameCommand extends Command {
       newName = prompts.get('Rename project to');
     }
 
-    newName = new ReCase(newName).snakeCase;
+    newName = ReCase(newName).snakeCase;
 
     var choice = prompts.getBool('Rename the project to `$newName`?');
 
+    // TODO: To be available once the issue is fixed
     if (choice) {
+      print('Rename the project is currently not available');
+      /*
       print('Renaming project to `$newName`...');
       var pubspecFile =
-          new File.fromUri(Directory.current.uri.resolve('pubspec.yaml'));
+          File.fromUri(Directory.current.uri.resolve('pubspec.yaml'));
 
       if (!await pubspecFile.exists()) {
-        throw new Exception('No pubspec.yaml found in current directory.');
+        throw Exception('No pubspec.yaml found in current directory.');
       } else {
         var pubspec = await loadPubspec();
         var oldName = pubspec.name;
@@ -53,6 +58,7 @@ class RenameCommand extends Command {
         stderr.addStream(pub.stderr);
         await pub.exitCode;
       }
+      */
     }
   }
 }
@@ -61,12 +67,12 @@ renamePubspec(Directory dir, String oldName, String newName) async {
 //  var pubspec = await loadPubspec(dir);
   print(cyan.wrap('Renaming your project to `$newName.`'));
 
-  var pubspecFile = new File.fromUri(dir.uri.resolve('pubspec.yaml'));
+  var pubspecFile = File.fromUri(dir.uri.resolve('pubspec.yaml'));
 
   if (await pubspecFile.exists()) {
     var contents = await pubspecFile.readAsString(), oldContents = contents;
     contents =
-        contents.replaceAll(new RegExp('name:\\s*$oldName'), 'name: $newName');
+        contents.replaceAll(RegExp('name:\\s*$oldName'), 'name: $newName');
 
     if (contents != oldContents) {
       await pubspecFile.writeAsString(contents);
@@ -76,7 +82,7 @@ renamePubspec(Directory dir, String oldName, String newName) async {
 //  print(cyan
 //      .wrap('Note that this does not actually modify your `pubspec.yaml`.'));
 // TODO: https://github.com/dart-lang/pubspec_parse/issues/17
-//  var newPubspec = new Pubspec.fromJson(pubspec.toJson()..['name'] = newName);
+//  var newPubspec =  Pubspec.fromJson(pubspec.toJson()..['name'] = newName);
 //  await newPubspec.save(dir);
 }
 
@@ -84,34 +90,39 @@ renameDartFiles(Directory dir, String oldName, String newName) async {
   if (!await dir.exists()) return;
 
   // Try to replace MongoDB URL
-  var configGlob = new Glob('config/**/*.yaml');
+  var configGlob = Glob('config/**/*.yaml');
 
   try {
     await for (var yamlFile in configGlob.list(root: dir.absolute.path)) {
       if (yamlFile is File) {
         print(
             'Replacing occurrences of "$oldName" with "$newName" in file "${yamlFile.absolute.path}"...');
-        var contents = await yamlFile.readAsString();
-        contents = contents.replaceAll(oldName, newName);
-        await yamlFile.writeAsString(contents);
+        if (yamlFile is File) {
+          var contents = (yamlFile as File).readAsStringSync();
+          contents = contents.replaceAll(oldName, newName);
+          (yamlFile as File).writeAsStringSync(contents);
+        }
       }
     }
   } catch (_) {}
 
-  var entry = new File.fromUri(dir.uri.resolve('lib/$oldName.dart'));
+  var entry = File.fromUri(dir.uri.resolve('lib/$oldName.dart'));
 
   if (await entry.exists()) {
     await entry.rename(dir.uri.resolve('lib/$newName.dart').toFilePath());
     print('Renaming library file `${entry.absolute.path}`...');
   }
 
-  var fmt = new DartFormatter();
+  var fmt = DartFormatter();
   await for (FileSystemEntity file in dir.list(recursive: true)) {
     if (file is File && file.path.endsWith('.dart')) {
       var contents = await file.readAsString();
-      var ast = parseCompilationUnit(contents);
-      var visitor = new RenamingVisitor(oldName, newName)
-        ..visitCompilationUnit(ast);
+
+      // TODO: Issue to be fixed: parseCompilationUnit uses Hubbub library which uses discontinued Google front_end library
+      // front_end package. Temporarily commeted out
+      //var ast = parseCompilationUnit(contents);
+      var visitor = RenamingVisitor(oldName, newName);
+      //  ..visitCompilationUnit(ast);
 
       if (visitor.replace.isNotEmpty) {
         visitor.replace.forEach((range, replacement) {

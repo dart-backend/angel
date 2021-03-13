@@ -31,8 +31,8 @@ main() {
   });
 
   test("allow override of method", () async {
-    var response = await client
-        .get('$url/foo', headers: {'X-HTTP-Method-Override': 'POST'});
+    var response = await client.get(Uri.parse('$url/foo'),
+        headers: {'X-HTTP-Method-Override': 'POST'});
     print('Response: ${response.body}');
     expect(json.decode(response.body), equals({'hello': 'world'}));
   });

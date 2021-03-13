@@ -59,7 +59,7 @@ main() {
         count++;
       });
 
-    var response = await client.get("$url/todos");
+    var response = await client.get(Uri.parse("$url/todos"));
     print(response.body);
     expect(count, equals(2));
   });
@@ -73,7 +73,7 @@ main() {
         event.cancel({"this_hook": "should never run"});
       });
 
-    var response = await client.post("$url/todos",
+    var response = await client.post(Uri.parse("$url/todos"),
         body: json.encode({"arbitrary": "data"}),
         headers: headers as Map<String, String>);
     print(response.body);
@@ -93,7 +93,7 @@ main() {
         event.cancel({"this_hook": "should never run either"});
       });
 
-    var response = await client.get("$url/todos");
+    var response = await client.get(Uri.parse("$url/todos"));
     print(response.body);
     var result = json.decode(response.body) as List;
     expect(result[0]["angel"], equals("framework"));
@@ -121,7 +121,7 @@ main() {
       print('Indexing books at path: ${e.request.path}');
     });
 
-    var response = await client.get('$url/books');
+    var response = await client.get(Uri.parse('$url/books'));
     print(response.body);
 
     var result = json.decode(response.body);

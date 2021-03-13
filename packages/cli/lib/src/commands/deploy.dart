@@ -11,7 +11,7 @@ class DeployCommand extends Command {
       'Generates scaffolding + helper functionality for deploying servers. Run this in your project root.';
 
   DeployCommand() {
-    addSubcommand(new NginxCommand());
-    addSubcommand(new SystemdCommand());
+    addSubcommand(NginxCommand());
+    addSubcommand(SystemdCommand());
   }
 }

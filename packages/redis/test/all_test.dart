@@ -10,7 +10,7 @@ main() async {
 
   setUp(() async {
     connection = await connectSocket('localhost');
-    service = new RedisService(new RespCommands(new RespClient(connection)),
+    service = RedisService(RespCommands(RespClient(connection)),
         prefix: 'angel_redis_test');
   });
 
@@ -43,13 +43,13 @@ main() async {
   });
 
   test('read', () async {
-    var id = 'poobah${new DateTime.now().millisecondsSinceEpoch}';
+    var id = 'poobah${DateTime.now().millisecondsSinceEpoch}';
     var input = await service.create({'id': id, 'bar': 'baz'});
     expect(await service.read(id), input);
   });
 
   test('modify', () async {
-    var id = 'jamboree${new DateTime.now().millisecondsSinceEpoch}';
+    var id = 'jamboree${DateTime.now().millisecondsSinceEpoch}';
     await service.create({'id': id, 'bar': 'baz', 'yes': 'no'});
     var output = await service.modify(id, {'bar': 'quux'});
     expect(output, {'id': id, 'bar': 'quux', 'yes': 'no'});
@@ -57,7 +57,7 @@ main() async {
   });
 
   test('update', () async {
-    var id = 'hoopla${new DateTime.now().millisecondsSinceEpoch}';
+    var id = 'hoopla${DateTime.now().millisecondsSinceEpoch}';
     await service.create({'id': id, 'bar': 'baz'});
     var output = await service.update(id, {'yes': 'no'});
     expect(output, {'id': id, 'yes': 'no'});
@@ -65,7 +65,7 @@ main() async {
   });
 
   test('remove', () async {
-    var id = 'gelatin${new DateTime.now().millisecondsSinceEpoch}';
+    var id = 'gelatin${DateTime.now().millisecondsSinceEpoch}';
     var input = await service.create({'id': id, 'bar': 'baz'});
     expect(await service.remove(id), input);
     expect(await service.respCommands.exists([id]), 0);

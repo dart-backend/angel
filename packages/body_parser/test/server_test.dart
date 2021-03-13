@@ -26,7 +26,7 @@ String jsonEncodeBody(BodyParseResult result) {
   });
 }
 
-main() {
+void main() {
   HttpServer server;
   String url;
   http.Client client;
@@ -42,7 +42,7 @@ main() {
     });
     url = 'http://localhost:${server.port}';
     print('Test server listening on $url');
-    client = new http.Client();
+    client = http.Client();
   });
   tearDown(() async {
     await server.close(force: true);

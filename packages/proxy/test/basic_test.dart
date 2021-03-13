@@ -8,7 +8,7 @@ import 'package:logging/logging.dart';
 import 'package:test/test.dart';
 import 'common.dart';
 
-main() {
+void main() {
   Angel app;
   var client = http.IOClient();
   HttpServer server, testServer;
@@ -32,8 +32,8 @@ main() {
     print('Proxy 1 on: ${proxy1.baseUrl}');
     print('Proxy 2 on: ${proxy2.baseUrl}');
 
-    app.all("/proxy/*", proxy1.handleRequest);
-    app.all("*", proxy2.handleRequest);
+    app.all('/proxy/*', proxy1.handleRequest);
+    app.all('*', proxy2.handleRequest);
 
     app.fallback((req, res) {
       print('Intercepting empty from ${req.uri}');

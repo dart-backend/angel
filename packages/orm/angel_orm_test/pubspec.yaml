@@ -1,20 +1,40 @@
 name: angel_orm_test
+version: 1.0.0
 publish_to: none
 description: Common tests for Angel ORM backends.
 environment:
-  sdk: ">=2.0.0 <3.0.0"
+  sdk: '>=2.10.0 <3.0.0'
 dependencies:
   angel_migration:
-    path: ../angel_migration
-  angel_model: ^1.0.0
-  angel_orm: ^2.0.0
-  angel_serialize: ^2.0.0
-  test: ^1.0.0
+    git: 
+      url: https://github.com/dukefirehawk/angel.git
+      ref: sdk-2.12.x
+      path: packages/orm/angel_migration
+  angel_model:
+    git: 
+      url: https://github.com/dukefirehawk/angel.git
+      ref: sdk-2.12.x
+      path: packages/model
+  angel_orm:
+    git: 
+      url: https://github.com/dukefirehawk/angel.git
+      ref: sdk-2.12.x
+      path: packages/orm/angel_orm
+  angel_serialize:
+    git: 
+      url: https://github.com/dukefirehawk/angel.git
+      ref: sdk-2.12.x
+      path: packages/serialize/angel_serialize
+  test: ^1.15.7
 dev_dependencies:
   angel_orm_generator:
-    path: ../angel_orm_generator
-  angel_framework: ^2.0.0
+    git: 
+      url: https://github.com/dukefirehawk/angel.git
+      ref: sdk-2.12.x
+      path: packages/orm/angel_orm_generator
+  angel_framework:
+    git: 
+      url: https://github.com/dukefirehawk/angel.git
+      ref: sdk-2.12.x
+      path: packages/framework
   build_runner: ^1.0.0
-dependency_overrides:
-  angel_orm:
-    path: ../angel_orm

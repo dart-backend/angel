@@ -1,4 +1,4 @@
-import 'package:angel_container/angel_container.dart';
+import '../reflector.dart';
 
 /// A [Reflector] implementation that performs simple [Map] lookups.
 ///

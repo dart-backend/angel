@@ -1,6 +1,6 @@
 import 'dart:async';
-import 'package:dart_language_server/src/protocol/language_server/interface.dart';
-import 'package:dart_language_server/src/protocol/language_server/messages.dart';
+//import 'package:dart_language_server/src/protocol/language_server/interface.dart';
+//import 'package:dart_language_server/src/protocol/language_server/messages.dart';
 import 'package:file/file.dart';
 import 'package:file/local.dart';
 import 'package:file/memory.dart';
@@ -11,9 +11,13 @@ import 'package:path/path.dart' as p;
 import 'package:source_span/source_span.dart';
 import 'package:string_scanner/string_scanner.dart';
 import 'package:symbol_table/symbol_table.dart';
-import 'analyzer.dart';
-import 'formatter.dart';
-import 'object.dart';
+
+import 'protocol/language_server/interface.dart';
+import 'protocol/language_server/messages.dart';
+
+import './analyzer.dart';
+import './formatter.dart' as fmt;
+import './object.dart';
 
 class JaelLanguageServer extends LanguageServer {
   var _diagnostics = new StreamController<Diagnostics>();
@@ -502,7 +506,7 @@ class JaelLanguageServer extends LanguageServer {
       var document =
           parseDocument(contents, sourceUrl: file.uri, onError: errors.add);
       if (errors.isNotEmpty) return null;
-      var formatter = new JaelFormatter(
+      var formatter = fmt.JaelFormatter(
           formattingOptions.tabSize, formattingOptions.insertSpaces);
       var formatted = formatter.apply(document);
       logger.info('Original:${contents}\nFormatted:\n$formatted');

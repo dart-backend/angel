@@ -1,5 +1,6 @@
+import 'dart:convert';
 import 'package:angel_framework/angel_framework.dart';
-import 'package:json_god/json_god.dart' as god;
+//import 'package:json_god/json_god.dart' as god;
 
 @deprecated
 class CustomMapService extends Service {
@@ -32,7 +33,7 @@ class CustomMapService extends Service {
 
   @override
   create(data, [params]) async {
-    Map d = data is Map ? data : god.serializeObject(data);
+    Map d = data is Map ? data : jsonDecode(data);
     d['id'] = _items.length.toString();
     _items.add(d);
     return d;

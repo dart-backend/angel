@@ -9,11 +9,15 @@ Includes functionality such as:
 * Renaming projects
 * Much more...
 
-To install:
+* To install:
 
 ```bash
 $ pub global activate angel_cli
 ```
+
+* Install development version
+`dart pub global activate --source path ./packages/cli`
+`dart pub global activate --source git https://github.com/dukefirehawk/angel/packages/cli`
 
 And then, for information on each command:
 

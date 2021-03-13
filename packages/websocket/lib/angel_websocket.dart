@@ -8,14 +8,14 @@ class WebSocketEvent<Data> {
 
   WebSocketEvent({String this.eventName, this.data});
 
-  factory WebSocketEvent.fromJson(Map data) => new WebSocketEvent(
+  factory WebSocketEvent.fromJson(Map data) => WebSocketEvent(
       eventName: data['eventName'].toString(), data: data['data'] as Data);
 
   WebSocketEvent<T> cast<T>() {
     if (T == Data) {
       return this as WebSocketEvent<T>;
     } else {
-      return new WebSocketEvent<T>(eventName: eventName, data: data as T);
+      return WebSocketEvent<T>(eventName: eventName, data: data as T);
     }
   }
 
@@ -34,7 +34,7 @@ class WebSocketAction {
   WebSocketAction(
       {String this.id, String this.eventName, this.data, this.params});
 
-  factory WebSocketAction.fromJson(Map data) => new WebSocketAction(
+  factory WebSocketAction.fromJson(Map data) => WebSocketAction(
       id: data['id'].toString(),
       eventName: data['eventName'].toString(),
       data: data['data'],

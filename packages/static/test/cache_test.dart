@@ -2,19 +2,18 @@ import 'dart:io' show HttpDate;
 import 'package:angel_framework/angel_framework.dart';
 import 'package:angel_framework/http.dart';
 import 'package:angel_static/angel_static.dart';
-import 'package:file/file.dart';
 import 'package:file/local.dart';
 import 'package:http/http.dart' show Client;
 import 'package:logging/logging.dart';
 import 'package:matcher/matcher.dart';
 import 'package:test/test.dart';
 
-main() {
+void main() {
   Angel app;
   AngelHttp http;
-  Directory testDir = const LocalFileSystem().directory('test');
+  var testDir = const LocalFileSystem().directory('test');
   String url;
-  Client client = Client();
+  var client = Client();
 
   setUp(() async {
     app = Angel();
@@ -39,7 +38,7 @@ main() {
       });
 
     var server = await http.startServer();
-    url = "http://${server.address.host}:${server.port}";
+    url = 'http://${server.address.host}:${server.port}';
   });
 
   tearDown(() async {
@@ -47,7 +46,7 @@ main() {
   });
 
   test('sets etag, cache-control, expires, last-modified', () async {
-    var response = await client.get("$url");
+    var response = await client.get(Uri.parse('$url'));
 
     print('Response status: ${response.statusCode}');
     print('Response body: ${response.body}');
@@ -61,7 +60,7 @@ main() {
   });
 
   test('if-modified-since', () async {
-    var response = await client.get("$url", headers: {
+    var response = await client.get(Uri.parse('$url'), headers: {
       'if-modified-since':
           HttpDate.format(DateTime.now().add(Duration(days: 365)))
     });

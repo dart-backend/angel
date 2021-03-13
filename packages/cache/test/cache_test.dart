@@ -42,8 +42,8 @@ main() async {
       };
 
       client = await connectTo(app);
-      response1 = await client.get('/date.txt');
-      response2 = await client.get('/date.txt');
+      response1 = await client.get(Uri.parse('/date.txt'));
+      response2 = await client.get(Uri.parse('/date.txt'));
       print(response2.headers);
       lastModified = HttpDate.parse(response2.headers['last-modified']);
       print('Response 1 status: ${response1.statusCode}');
@@ -76,7 +76,7 @@ main() async {
 
     test('invalidate', () async {
       await client.sendUnstreamed('PURGE', '/date.txt', {});
-      var response = await client.get('/date.txt');
+      var response = await client.get(Uri.parse('/date.txt'));
       print('Response after invalidation: ${response.body}');
       expect(response.body, isNot(response1.body));
     });
@@ -86,14 +86,14 @@ main() async {
         'if-modified-since':
             HttpDate.format(lastModified.add(const Duration(days: 1)))
       };
-      var response = await client.get('/date.txt', headers: headers);
+      var response = await client.get(Uri.parse('/date.txt'), headers: headers);
       print('Sending headers: $headers');
       print('Response (${response.statusCode}): ${response.headers}');
       expect(response.statusCode, 304);
     });
 
     test('last-modified in the past', () async {
-      var response = await client.get('/date.txt', headers: {
+      var response = await client.get(Uri.parse('/date.txt'), headers: {
         'if-modified-since':
             HttpDate.format(lastModified.subtract(const Duration(days: 10)))
       });

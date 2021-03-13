@@ -27,7 +27,7 @@ HookedServiceEventListener belongsTo(Pattern servicePath,
   }
 
   return (HookedServiceEvent e) async {
-    var ref = e.service.app.service(servicePath);
+    var ref = e.getService(servicePath);
     if (ref == null) throw noService(servicePath);
 
     _getForeignKey(obj) {
@@ -35,8 +35,9 @@ HookedServiceEventListener belongsTo(Pattern servicePath,
         return getForeignKey(obj);
       else if (obj is Map)
         return obj[localId];
-      else if (obj is Extensible)
-        return obj.properties[localId];
+      //TODO: Undefined class
+      //else if (obj is Extensible)
+      //  return obj.properties[localId];
       else if (localId == null || localId == 'userId')
         return obj.userId;
       else
@@ -48,8 +49,9 @@ HookedServiceEventListener belongsTo(Pattern servicePath,
         return assignForeignObject(foreign, obj);
       else if (obj is Map)
         obj[foreignName] = foreign;
-      else if (obj is Extensible)
-        obj.properties[foreignName] = foreign;
+      //TODO: Undefined class
+      //else if (obj is Extensible)
+      //  obj.properties[foreignName] = foreign;
       else
         reflect(obj).setField(new Symbol(foreignName), foreign);
     }
