@@ -30,27 +30,29 @@ Branch: master
 
 Branch: sdk-2.10.x
 - Support dart 2.10.x only. Use sdk: ">=2.10.0 <2.12.0"
-- Status: Migration completed. Not all plugin packages are tested.
+- Status: Working
+- Notes: Migration completed. Not all plugin packages are tested.
 
 Branch: sdk-2.12.x
 - Support dart 2.12.x. Use sdk: ">=2.10.0 <3.0.0"
 - Do not support NNBD 
-- Status: Basic and ORM templates are working with the core plugins migration completed. The remaining add on plugin packages are work in progress.
+- Status: Working
+- Notes: Basic and ORM templates are working with the core plugins migration completed. The remaining add on plugin packages are work in progress.
 
 Branch: sdk-2.12.x-nnbd
 - Support dart 2.12.x. Use sdk: ">=2.12.0 <3.0.0"
 - Support NNBD
-- Status: Not working yet. To be available once all the dependency libraries that support NNBD are released
+- Status: Not working
+- Notes: To be available once all the dependency libraries that support NNBD are released
 
-Changes involved:
+Changes:
 - Upgraded dependency libraries and fixed the deprecated API
 
-Deprecated features:
+Deprecated Features:
 - None
 
 New features:
-- To be decided
-
+- None
 
 ## Installation & Setup
 
@@ -59,12 +61,8 @@ Once you have [Dart](https://www.dartlang.org/) installed, bootstrapping a proje
 Install the [Angel CLI](https://github.com/dukefirehawk/cli):
 
 ```bash
-`pub global activate --source git https://github.com/dukefirehawk/cli.git`
+pub global activate --source git https://github.com/dukefirehawk/cli.git
 ```
-
-Install local development version of Angel CLI
-
-`pub global activate --source path ./packages/cli`
 
 Bootstrap a project:
 
@@ -76,6 +74,12 @@ You can even have your server run and be *hot-reloaded* on file changes:
 
 ```bash
 dart --observe bin/dev.dart
+```
+
+(For CLI development only)Install Angel CLI
+
+```bash
+pub global activate --source path ./packages/cli
 ```
 
 Next, check out the [detailed documentation](https://docs.angel-dart.dev/v/2.x) to learn to flesh out your project.
