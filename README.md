@@ -22,8 +22,8 @@ With features like the following, Angel is the all-in-one framework you should c
 
 See all the packages in the `packages/` directory.
 
-## Important Notes
-This is a port to get Angel Framework to work with Dart 2.10.x and above. Dart version below 2.10.x is not supported.
+## IMPORTANT NOTES
+This is a port of Angel Framework to work with Dart 2.10.x and above. Dart version below 2.10.x is not supported.
 
 Branch: sdk-2.10.x
 - Support dart 2.10.x only. Use sdk: ">=2.10.0 <2.12.0"
@@ -34,13 +34,20 @@ Branch: sdk-2.12.x
 - Do not support NNBD 
 - Status: Working. Not all plugin packages are migrated and tested.
 
-Branch: 2.12.x-nnbd
+Branch: adk-2.12.x-nnbd
 - Support dart 2.12.x. Use sdk: ">=2.12.0 <3.0.0"
 - Support NNBD
 - Status: To be available once all the dependency libraries support NNBD
 
 New features planned
 - None
+
+To install Angel CLI, run the following command after install dart sdk
+`dart pub global activate --source git https://github.com/dukefirehawk/angel/packages/cli`
+
+To use local development version of Angel CLI, run the following command after install dart sdk
+`dart pub global activate --source path ./packages/cli`
+
 
 ## Installation & Setup
 
