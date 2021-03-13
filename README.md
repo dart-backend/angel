@@ -52,9 +52,11 @@ New features:
 - To be decided
 
 To install Angel CLI, run the following command after installing dart sdk
+
 `dart pub global activate --source git https://github.com/dukefirehawk/angel/packages/cli`
 
 To use local development version of Angel CLI, run the following command after installing dart sdk
+
 `dart pub global activate --source path ./packages/cli`
 
 
