@@ -51,24 +51,20 @@ Deprecated features:
 New features:
 - To be decided
 
-To install Angel CLI, run the following command after installing dart sdk
-
-`dart pub global activate --source git https://github.com/dukefirehawk/angel/packages/cli`
-
-To use local development version of Angel CLI, run the following command after installing dart sdk
-
-`dart pub global activate --source path ./packages/cli`
-
 
 ## Installation & Setup
 
 Once you have [Dart](https://www.dartlang.org/) installed, bootstrapping a project is as simple as running a few shell commands:
 
-Install the [Angel CLI](https://github.com/angel-dart/cli):
+Install the [Angel CLI](https://github.com/dukefirehawk/cli):
 
 ```bash
-pub global activate angel_cli
+`pub global activate --source git https://github.com/dukefirehawk/cli.git`
 ```
+
+Install local development version of Angel CLI
+
+`pub global activate --source path ./packages/cli`
 
 Bootstrap a project:
 
@@ -83,12 +79,6 @@ dart --observe bin/dev.dart
 ```
 
 Next, check out the [detailed documentation](https://docs.angel-dart.dev/v/2.x) to learn to flesh out your project.
-
-## Development
-
-* Install development version of Angel CLI
-`dart pub global activate --source path ./packages/cli`
-`dart pub global activate --source git https://github.com/dukefirehawk/angel/packages/cli`
 
 ## Examples and Documentation
 Visit the [documentation](https://docs.angel-dart.dev/v/2.x)
