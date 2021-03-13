@@ -42,6 +42,7 @@
 * Updated angel_auth_cors to 3.0.0
 * Updated angel_container_generator to 2.0.0
 * Updated angel_file_service to 3.0.0
+* Updated angel_eventsource to 2.0.0 (use a fork of eventsource)
 
 # 2.2.0
 * Changed Dart SDK requirements for all packages to ">=2.10.0 <2.12.0"
