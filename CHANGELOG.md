@@ -1,4 +1,10 @@
-# 3.0.0
+# 3.0.1 (NNBD)
+* Changed Dart SDK requirements for all packages to ">=2.12.0 <3.0.0" to support NNBD. 
+* Updated pretty_logging to 2.0.0
+* Updated angel_http_exception to 2.0.0
+* Updated angel_cli to 3.0.0. (Rename not working)
+
+# 3.0.0 (Non NNBD)
 * Changed Dart SDK requirements for all packages to ">=2.10.0 <3.0.0"
 * Updated pretty_logging to 2.0.0
 * Updated angel_http_exception to 2.0.0
@@ -31,7 +37,8 @@
 * Updated angel_orm_test to 1.0.0
 * Updated angel_orm_postgres to 2.0.0
 * Update orm-sdk-2.12.x boilerplate
-
+* Updated angel_auth_oauth2 to 3.0.0
+* Updated angel_auth_cache to 3.0.0
 
 # 2.2.0
 * Changed Dart SDK requirements for all packages to ">=2.10.0 <2.12.0"
@@ -39,6 +46,6 @@
 * Fixed broken code due to 3rd party libraries update
 * Revert packages/validate from version 3.0 to version 2.2
 
-# 2.1.1 and before
-* Refer to packages/framework/CHANGELOG.md
+# 2.1.x and below
+* Refer to the orginal repo before the fork
 
