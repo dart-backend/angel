@@ -22,14 +22,46 @@ With features like the following, Angel is the all-in-one framework you should c
 
 See all the packages in the `packages/` directory.
 
+## IMPORTANT NOTES
+This is a port of Angel Framework to work with Dart 2.10.x and above. Dart version below 2.10.x is not supported.
+
+Branch: master
+- Stable version of sdk-2.12.x branch
+
+Branch: sdk-2.10.x
+- Support dart 2.10.x only. Use sdk: ">=2.10.0 <2.12.0"
+- Status: Working
+- Notes: Migration completed. Not all plugin packages are tested.
+
+Branch: sdk-2.12.x
+- Support dart 2.12.x. Use sdk: ">=2.10.0 <3.0.0"
+- Do not support NNBD 
+- Status: Working
+- Notes: Basic and ORM templates are working with the core plugins migration completed. The remaining add on plugin packages are work in progress.
+
+Branch: sdk-2.12.x-nnbd
+- Support dart 2.12.x. Use sdk: ">=2.12.0 <3.0.0"
+- Support NNBD
+- Status: Not working
+- Notes: To be available once all the dependency libraries that support NNBD are released
+
+Changes:
+- Upgraded dependency libraries and fixed the deprecated API
+
+Deprecated Features:
+- None
+
+New features:
+- None
+
 ## Installation & Setup
 
 Once you have [Dart](https://www.dartlang.org/) installed, bootstrapping a project is as simple as running a few shell commands:
 
-Install the [Angel CLI](https://github.com/angel-dart/cli):
+Install the [Angel CLI](https://github.com/dukefirehawk/cli):
 
 ```bash
-pub global activate angel_cli
+pub global activate --source git https://github.com/dukefirehawk/cli.git
 ```
 
 Bootstrap a project:
@@ -44,13 +76,13 @@ You can even have your server run and be *hot-reloaded* on file changes:
 dart --observe bin/dev.dart
 ```
 
+(For CLI development only)Install Angel CLI
+
+```bash
+pub global activate --source path ./packages/cli
+```
+
 Next, check out the [detailed documentation](https://docs.angel-dart.dev/v/2.x) to learn to flesh out your project.
-
-## Development
-
-* Install development version of Angel CLI
-`dart pub global activate --source path ./packages/cli`
-`dart pub global activate --source git https://github.com/dukefirehawk/angel/packages/cli`
 
 ## Examples and Documentation
 Visit the [documentation](https://docs.angel-dart.dev/v/2.x)
