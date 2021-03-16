@@ -1,8 +1,8 @@
 name: pretty_logging
-version: 2.1.0
+version: 4.0.0
 description: Standalone helper for colorful logging output, using pkg:io AnsiCode.
-author: Tobe Osakwe <thosakwe@gmail.com>
-homepage: https://github.com/angel-dart/pretty_logging
+#author: Tobe Osakwe <thosakwe@gmail.com>
+homepage: https://github.com/dukefirehawk/angel
 environment:
   sdk: '>=2.12.0 <3.0.0'
 dependencies:
