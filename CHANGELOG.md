@@ -2,7 +2,9 @@
 * Changed Dart SDK requirements for all packages to ">=2.12.0 <3.0.0" to support NNBD. 
 * Updated pretty_logging to 3.0.0
 * Updated angel_http_exception to 3.0.0
-* Moved to https://github.com/dukefirehawk/cli
+* Moved angel_cli to https://github.com/dukefirehawk/cli
+* Added code_buffer 2.0.0
+* Added combinator 2.0.0
 * Updated angel_route to 5.0.0
 
 # 3.0.0 (Non NNBD)

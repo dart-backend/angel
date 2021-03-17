@@ -1,0 +1,20 @@
+name: combinator
+version: 2.0.0
+description: Packrat parser combinators that support static typing, generics, file spans, memoization, and more.
+author: Tobe O <thosakwe@gmail.com>
+homepage: https://github.com/thosakwe/combinator.git
+publish_to: none
+environment:
+  sdk: ">=2.10.0 <3.0.0"
+dependencies:
+  code_buffer:
+    git: 
+      url: https://github.com/dukefirehawk/angel.git
+      ref: sdk-2.12.x_nnbd
+      path: packages/code_buffer
+  matcher: ^0.12.0
+  source_span: ^1.8.1
+  string_scanner: ^1.1.0
+  tuple: ^2.0.0
+dev_dependencies:
+  test: ^1.16.8
