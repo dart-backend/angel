@@ -8,6 +8,9 @@
 * Updated angel_route to 5.0.0
 * Updated angel_model to 3.0.0
 * Updated angel_container to 3.0.0
+* Updated angel_framework to 4.0.0
+    - merge_map
+    - mock_request
 
 # 3.0.0 (Non NNBD)
 * Changed Dart SDK requirements for all packages to ">=2.10.0 <3.0.0"

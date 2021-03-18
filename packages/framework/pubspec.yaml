@@ -1,5 +1,5 @@
 name: angel_framework
-version: 3.0.0
+version: 4.0.0
 description: A high-powered HTTP server with dependency injection, routing and much more.
 author: Tobe O <thosakwe@gmail.com>
 homepage: https://github.com/angel-dart/angel_framework
@@ -10,25 +10,29 @@ dependencies:
   angel_container:
     git: 
       url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x
+      ref: sdk-2.12.x_nnbd
       path: packages/container/angel_container
   angel_http_exception:
     git: 
       url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x
+      ref: sdk-2.12.x_nnbd
       path: packages/http_exception
   angel_model:
     git: 
       url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x
+      ref: sdk-2.12.x_nnbd
       path: packages/model
   angel_route:
     git: 
       url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x
+      ref: sdk-2.12.x_nnbd
       path: packages/route
   charcode: ^1.0.0
-  combinator: ^1.0.0
+  combinator:
+    git: 
+      url: https://github.com/dukefirehawk/angel.git
+      ref: sdk-2.12.x_nnbd
+      path: packages/combinator
   file: ^6.1.0
   http_parser: ^4.0.0
   http_server: ^0.9.0
