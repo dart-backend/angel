@@ -4,14 +4,14 @@ part of lex.src.combinator;
 ///
 /// You can provide a custom [errorMessage].
 Parser<T> longest<T>(Iterable<Parser<T>> parsers,
-    {Object errorMessage, SyntaxErrorSeverity severity}) {
+    {Object? errorMessage, SyntaxErrorSeverity? severity}) {
   return new _Longest(
       parsers, errorMessage, severity ?? SyntaxErrorSeverity.error);
 }
 
 class _Longest<T> extends Parser<T> {
   final Iterable<Parser<T>> parsers;
-  final Object errorMessage;
+  final Object? errorMessage;
   final SyntaxErrorSeverity severity;
 
   _Longest(this.parsers, this.errorMessage, this.severity);
@@ -31,7 +31,7 @@ class _Longest<T> extends Parser<T> {
     var results = <ParseResult<T>>[];
 
     for (var parser in inactive) {
-      var result = parser._parse(args.increaseDepth());
+      var result = parser._parse(args.increaseDepth())!;
 
       if (result.successful && result.span != null)
         results.add(result);
@@ -41,8 +41,8 @@ class _Longest<T> extends Parser<T> {
     }
 
     if (results.isNotEmpty) {
-      results.sort((a, b) => b.span.length.compareTo(a.span.length));
-      args.scanner.scan(results.first.span.text);
+      results.sort((a, b) => b.span!.length.compareTo(a.span!.length));
+      args.scanner.scan(results.first.span!.text);
       return results.first;
     }
 
@@ -66,7 +66,7 @@ class _Longest<T> extends Parser<T> {
     var results = <ParseResult<T>>[];
 
     for (var parser in parsers) {
-      var result = parser._parse(args.increaseDepth());
+      var result = parser._parse(args.increaseDepth())!;
 
       if (result.successful)
         results.add(result);
@@ -76,8 +76,8 @@ class _Longest<T> extends Parser<T> {
     }
 
     if (results.isNotEmpty) {
-      results.sort((a, b) => b.span.length.compareTo(a.span.length));
-      args.scanner.scan(results.first.span.text);
+      results.sort((a, b) => b.span!.length.compareTo(a.span!.length));
+      args.scanner.scan(results.first.span!.text);
       return results.first;
     }
 

@@ -8,11 +8,11 @@ class _Index<T> extends Parser<T> {
 
   @override
   ParseResult<T> __parse(ParseArgs args) {
-    var result = parser._parse(args.increaseDepth());
-    Object value;
+    ParseResult<List<T>> result = parser._parse(args.increaseDepth())!;
+    Object? value;
 
     if (result.successful)
-      value = index == -1 ? result.value.last : result.value.elementAt(index);
+      value = index == -1 ? result.value!.last : result.value!.elementAt(index);
 
     return new ParseResult<T>(
       args.trampoline,
@@ -21,7 +21,7 @@ class _Index<T> extends Parser<T> {
       result.successful,
       result.errors,
       span: result.span,
-      value: value as T,
+      value: value as T?,
     );
   }
 

@@ -2,14 +2,14 @@ part of lex.src.combinator;
 
 class _Negate<T> extends Parser<T> {
   final Parser<T> parser;
-  final String errorMessage;
+  final String? errorMessage;
   final SyntaxErrorSeverity severity;
 
   _Negate(this.parser, this.errorMessage, this.severity);
 
   @override
   ParseResult<T> __parse(ParseArgs args) {
-    var result = parser._parse(args.increaseDepth()).change(parser: this);
+    var result = parser._parse(args.increaseDepth())!.change(parser: this);
 
     if (!result.successful) {
       return new ParseResult<T>(

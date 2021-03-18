@@ -3,7 +3,7 @@ part of lex.src.combinator;
 class _Check<T> extends Parser<T> {
   final Parser<T> parser;
   final Matcher matcher;
-  final String errorMessage;
+  final String? errorMessage;
   final SyntaxErrorSeverity severity;
 
   _Check(this.parser, this.matcher, this.errorMessage, this.severity);
@@ -11,7 +11,7 @@ class _Check<T> extends Parser<T> {
   @override
   ParseResult<T> __parse(ParseArgs args) {
     var matchState = {};
-    var result = parser._parse(args.increaseDepth()).change(parser: this);
+    var result = parser._parse(args.increaseDepth())!.change(parser: this);
     if (!result.successful)
       return result;
     else if (!matcher.matches(result.value, matchState)) {

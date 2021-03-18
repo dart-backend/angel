@@ -4,21 +4,21 @@ part of lex.src.combinator;
 ///
 /// If [failFast] is `true` (default), then the first failure to parse will abort the parse.
 ListParser<T> chain<T>(Iterable<Parser<T>> parsers,
-    {bool failFast: true, SyntaxErrorSeverity severity}) {
+    {bool failFast: true, SyntaxErrorSeverity? severity}) {
   return new _Chain<T>(
       parsers, failFast != false, severity ?? SyntaxErrorSeverity.error);
 }
 
 class _Alt<T> extends Parser<T> {
   final Parser<T> parser;
-  final String errorMessage;
+  final String? errorMessage;
   final SyntaxErrorSeverity severity;
 
   _Alt(this.parser, this.errorMessage, this.severity);
 
   @override
   ParseResult<T> __parse(ParseArgs args) {
-    var result = parser._parse(args.increaseDepth());
+    var result = parser._parse(args.increaseDepth())!;
     return result.successful
         ? result
         : result.addErrors([
@@ -43,12 +43,12 @@ class _Chain<T> extends ListParser<T> {
   @override
   ParseResult<List<T>> __parse(ParseArgs args) {
     var errors = <SyntaxError>[];
-    var results = <T>[];
-    var spans = <FileSpan>[];
+    var results = <T?>[];
+    var spans = <FileSpan?>[];
     bool successful = true;
 
     for (var parser in parsers) {
-      var result = parser._parse(args.increaseDepth());
+      var result = parser._parse(args.increaseDepth())!;
 
       if (!result.successful) {
         if (parser is _Alt) errors.addAll(result.errors);
@@ -66,10 +66,10 @@ class _Chain<T> extends ListParser<T> {
       if (result.span != null) spans.add(result.span);
     }
 
-    FileSpan span;
+    FileSpan? span;
 
     if (spans.isNotEmpty) {
-      span = spans.reduce((a, b) => a.expand(b));
+      span = spans.reduce((a, b) => a!.expand(b!));
     }
 
     return new ParseResult<List<T>>(

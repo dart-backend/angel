@@ -3,18 +3,18 @@ part of lex.src.combinator;
 class _Safe<T> extends Parser<T> {
   final Parser<T> parser;
   final bool backtrack;
-  final String errorMessage;
+  final String? errorMessage;
   final SyntaxErrorSeverity severity;
   bool _triggered = false;
 
   _Safe(this.parser, this.backtrack, this.errorMessage, this.severity);
 
   @override
-  ParseResult<T> __parse(ParseArgs args) {
+  ParseResult<T>? __parse(ParseArgs args) {
     var replay = args.scanner.position;
 
     try {
-      if (_triggered) throw null;
+      if (_triggered) throw Exception();
       return parser._parse(args.increaseDepth());
     } catch (_) {
       _triggered = true;

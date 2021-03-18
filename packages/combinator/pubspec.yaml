@@ -5,7 +5,7 @@ author: Tobe O <thosakwe@gmail.com>
 homepage: https://github.com/thosakwe/combinator.git
 publish_to: none
 environment:
-  sdk: ">=2.10.0 <3.0.0"
+  sdk: '>=2.12.0 <3.0.0'
 dependencies:
   code_buffer:
     git: 

@@ -1,26 +1,26 @@
 part of lex.src.combinator;
 
-class _Repeat<T> extends ListParser<T> {
+class _Repeat<T> extends ListParser<T?> {
   final Parser<T> parser;
   final int count;
   final bool exact, backtrack;
-  final String tooFew, tooMany;
+  final String? tooFew, tooMany;
   final SyntaxErrorSeverity severity;
 
   _Repeat(this.parser, this.count, this.exact, this.tooFew, this.tooMany,
       this.backtrack, this.severity);
 
   @override
-  ParseResult<List<T>> __parse(ParseArgs args) {
+  ParseResult<List<T?>> __parse(ParseArgs args) {
     var errors = <SyntaxError>[];
-    var results = <T>[];
-    var spans = <FileSpan>[];
+    var results = <T?>[];
+    var spans = <FileSpan?>[];
     int success = 0, replay = args.scanner.position;
-    ParseResult<T> result;
+    ParseResult<T>? result;
 
     do {
       result = parser._parse(args.increaseDepth());
-      if (result.successful) {
+      if (result!.successful) {
         success++;
         results.add(result.value);
         replay = args.scanner.position;
@@ -41,12 +41,12 @@ class _Repeat<T> extends ListParser<T> {
 
       if (backtrack) args.scanner.position = replay;
 
-      return new ParseResult<List<T>>(
+      return new ParseResult<List<T?>>(
           args.trampoline, args.scanner, this, false, errors);
     } else if (success > count && exact) {
       if (backtrack) args.scanner.position = replay;
 
-      return new ParseResult<List<T>>(
+      return new ParseResult<List<T?>>(
           args.trampoline, args.scanner, this, false, [
         new SyntaxError(
           severity,
@@ -56,8 +56,8 @@ class _Repeat<T> extends ListParser<T> {
       ]);
     }
 
-    var span = spans.reduce((a, b) => a.expand(b));
-    return new ParseResult<List<T>>(
+    var span = spans.reduce((a, b) => a!.expand(b!));
+    return new ParseResult<List<T?>>(
       args.trampoline,
       args.scanner,
       this,

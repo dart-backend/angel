@@ -8,12 +8,12 @@ class _Compare<T> extends ListParser<T> {
 
   @override
   ParseResult<List<T>> __parse(ParseArgs args) {
-    var result = parser._parse(args.increaseDepth());
+    ParseResult<List<T>> result = parser._parse(args.increaseDepth())!;
     if (!result.successful) return result;
 
     result = result.change(
         value: result.value?.isNotEmpty == true ? result.value : []);
-    result = result.change(value: new List<T>.from(result.value));
+    result = result.change(value: new List<T>.from(result.value!));
     return new ParseResult<List<T>>(
       args.trampoline,
       args.scanner,
@@ -21,7 +21,7 @@ class _Compare<T> extends ListParser<T> {
       true,
       [],
       span: result.span,
-      value: result.value..sort(compare),
+      value: result.value?..sort(compare),
     );
   }
 

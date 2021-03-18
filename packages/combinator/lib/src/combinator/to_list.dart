@@ -1,16 +1,16 @@
 part of lex.src.combinator;
 
-class _ToList<T> extends ListParser<T> {
+class _ToList<T> extends ListParser<T?> {
   final Parser<T> parser;
 
   _ToList(this.parser);
 
   @override
-  ParseResult<List<T>> __parse(ParseArgs args) {
-    var result = parser._parse(args.increaseDepth());
+  ParseResult<List<T?>> __parse(ParseArgs args) {
+    var result = parser._parse(args.increaseDepth())!;
 
     if (result.value is List) {
-      return (result as ParseResult<List<T>>).change(parser: this);
+      return (result as ParseResult<List<T?>>).change(parser: this);
     }
 
     return new ParseResult(

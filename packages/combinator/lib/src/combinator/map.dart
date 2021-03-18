@@ -8,7 +8,7 @@ class _Map<T, U> extends Parser<U> {
 
   @override
   ParseResult<U> __parse(ParseArgs args) {
-    var result = parser._parse(args.increaseDepth());
+    var result = parser._parse(args.increaseDepth())!;
     return new ParseResult<U>(
       args.trampoline,
       args.scanner,
@@ -34,7 +34,7 @@ class _Map<T, U> extends Parser<U> {
 
 class _Change<T, U> extends Parser<U> {
   final Parser<T> parser;
-  final ParseResult<U> Function(ParseResult<T>) f;
+  final ParseResult<U> Function(ParseResult<T>?) f;
 
   _Change(this.parser, this.f);
 

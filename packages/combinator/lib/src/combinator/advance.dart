@@ -8,7 +8,7 @@ class _Advance<T> extends Parser<T> {
 
   @override
   ParseResult<T> __parse(ParseArgs args) {
-    var result = parser._parse(args.increaseDepth()).change(parser: this);
+    var result = parser._parse(args.increaseDepth())!.change(parser: this);
     if (result.successful) args.scanner.position += amount;
     return result;
   }

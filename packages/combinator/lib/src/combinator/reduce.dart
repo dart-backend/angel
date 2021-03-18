@@ -8,7 +8,7 @@ class _Reduce<T> extends Parser<T> {
 
   @override
   ParseResult<T> __parse(ParseArgs args) {
-    var result = parser._parse(args.increaseDepth());
+    ParseResult<List<T>> result = parser._parse(args.increaseDepth())!;
 
     if (!result.successful)
       return new ParseResult<T>(
@@ -28,7 +28,7 @@ class _Reduce<T> extends Parser<T> {
       result.successful,
       [],
       span: result.span,
-      value: result.value.isEmpty ? null : result.value.reduce(combine),
+      value: result.value!.isEmpty ? null : result.value!.reduce(combine),
     );
   }
 

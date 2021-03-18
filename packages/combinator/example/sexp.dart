@@ -27,21 +27,21 @@ void main() {
 
   var number = match(new RegExp(r'[0-9]+(\.[0-9]+)?'),
           errorMessage: 'Expected a number.')
-      .map((r) => num.parse(r.span.text));
+      .map((r) => num.parse(r.span!.text));
 
   var id = match(
           new RegExp(
               r'[A-Za-z_!\\$",\\+-\\./:;\\?<>%&\\*@\[\]\\{\}\\|`\\^~][A-Za-z0-9_!\\$",\\+-\\./:;\\?<>%&\*@\[\]\\{\}\\|`\\^~]*'),
           errorMessage: 'Expected an ID')
       .map((r) =>
-          symbols[r.span.text] ??= throw "Undefined symbol: '${r.span.text}'");
+          symbols[r.span!.text] ??= throw "Undefined symbol: '${r.span!.text}'");
 
   var atom = number.castDynamic().or(id);
 
   var list = expr.space().times(2, exact: false).map((r) {
     try {
       var out = [];
-      var q = new Queue.from(r.value.reversed);
+      var q = new Queue.from(r.value!.reversed);
 
       while (q.isNotEmpty) {
         var current = q.removeFirst();
@@ -69,8 +69,8 @@ void main() {
 
   while (true) {
     stdout.write('> ');
-    var line = stdin.readLineSync();
-    var result = expr.parse(new SpanScanner(line));
+    var line = stdin.readLineSync()!;
+    var result = expr.parse(new SpanScanner(line))!;
 
     if (result.errors.isNotEmpty) {
       for (var error in result.errors) {

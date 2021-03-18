@@ -17,19 +17,19 @@ final Parser decimal = ( // digits, (dot, digits)?
 
 final Parser number = //
     (minus.opt() & decimal) // minus?, decimal
-        .map<num>((r) => num.parse(r.span.text));
+        .map<num>((r) => num.parse(r.span!.text));
 
 main() {
   while (true) {
     stdout.write('Enter a number: ');
-    var line = stdin.readLineSync();
+    var line = stdin.readLineSync()!;
     var scanner = new SpanScanner(line, sourceUrl: 'stdin');
-    var result = number.parse(scanner);
+    var result = number.parse(scanner)!;
 
     if (!result.successful) {
       for (var error in result.errors) {
         stderr.writeln(error.toolString);
-        stderr.writeln(error.span.highlight(color: true));
+        stderr.writeln(error.span!.highlight(color: true));
       }
     } else
       print(result.value);

@@ -7,7 +7,7 @@ part of lex.src.combinator;
 /// You can provide a custom [errorMessage]. You can set it to `false` to not
 /// generate any error at all.
 Parser<T> any<T>(Iterable<Parser<T>> parsers,
-    {bool backtrack: true, errorMessage, SyntaxErrorSeverity severity}) {
+    {bool backtrack: true, errorMessage, SyntaxErrorSeverity? severity}) {
   return new _Any(parsers, backtrack != false, errorMessage,
       severity ?? SyntaxErrorSeverity.error);
 }
@@ -33,7 +33,7 @@ class _Any<T> extends Parser<T> {
     int replay = args.scanner.position;
 
     for (var parser in inactive) {
-      var result = parser._parse(args.increaseDepth());
+      var result = parser._parse(args.increaseDepth())!;
 
       if (result.successful)
         return result;
@@ -58,7 +58,7 @@ class _Any<T> extends Parser<T> {
   }
 
   @override
-  ParseResult<T> __parse(ParseArgs args) {
+  ParseResult<T>? __parse(ParseArgs args) {
     // Never called
     return null;
   }
