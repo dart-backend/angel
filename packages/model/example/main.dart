@@ -6,15 +6,15 @@ void main() {
 }
 
 class Todo extends Model {
-  String text;
+  String? text;
 
-  bool isComplete;
+  bool? isComplete;
 
   Todo(
-      {String id,
+      {String? id,
       this.text,
       this.isComplete,
-      DateTime createdAt,
-      DateTime updatedAt})
+      DateTime? createdAt,
+      DateTime? updatedAt})
       : super(id: id, createdAt: createdAt, updatedAt: updatedAt);
 }
