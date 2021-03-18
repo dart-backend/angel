@@ -7,11 +7,11 @@ class Container {
   final Map<Type, dynamic> _singletons = {};
   final Map<Type, dynamic Function(Container)> _factories = {};
   final Map<String, dynamic> _namedSingletons = {};
-  final Container _parent;
+  final Container? _parent;
 
   Container(this.reflector) : _parent = null;
 
-  Container._child(this._parent) : reflector = _parent.reflector;
+  Container._child(Container this._parent) : reflector = _parent.reflector;
 
   bool get isRoot => _parent == null;
 
@@ -23,8 +23,8 @@ class Container {
   }
 
   /// Determines if the container has an injection of the given type.
-  bool has<T>([Type t]) {
-    var search = this;
+  bool has<T>([Type? t]) {
+    Container? search = this;
     t ??= T == dynamic ? t : T;
 
     while (search != null) {
@@ -42,7 +42,7 @@ class Container {
 
   /// Determines if the container has a named singleton with the given [name].
   bool hasNamed(String name) {
-    var search = this;
+    Container? search = this;
 
     while (search != null) {
       if (search._namedSingletons.containsKey(name)) {
@@ -59,9 +59,9 @@ class Container {
   ///
   /// It is similar to [make], but resolves an injection of either
   /// `Future<T>` or `T`.
-  Future<T> makeAsync<T>([Type type]) {
+  Future<T>? makeAsync<T>([Type? type]) {
     type ??= T;
-    Type futureType; //.Future<T>.value(null).runtimeType;
+    Type? futureType; //.Future<T>.value(null).runtimeType;
 
     if (T == dynamic) {
       try {
@@ -87,18 +87,18 @@ class Container {
   ///
   /// In contexts where a static generic type cannot be used, use
   /// the [type] argument, instead of [T].
-  T make<T>([Type type]) {
+  T? make<T>([Type? type]) {
     type ??= T;
 
-    var search = this;
+    Container? search = this;
 
     while (search != null) {
       if (search._singletons.containsKey(type)) {
         // Find a singleton, if any.
-        return search._singletons[type] as T;
+        return search._singletons[type] as T?;
       } else if (search._factories.containsKey(type)) {
         // Find a factory, if any.
-        return search._factories[type](this) as T;
+        return search._factories[type]!(this) as T?;
       } else {
         search = search._parent;
       }
@@ -115,8 +115,8 @@ class Container {
 
       var constructor = reflectedType.constructors.firstWhere(
           (c) => isDefault(c.name),
-          orElse: () => throw ReflectionException(
-              '${reflectedType.name} has no default constructor, and therefore cannot be instantiated.'));
+          orElse: (() => throw ReflectionException(
+              '${reflectedType.name} has no default constructor, and therefore cannot be instantiated.')) as ReflectedFunction Function()?);
 
       for (var param in constructor.parameters) {
         var value = make(param.type.reflectedType);
@@ -131,7 +131,7 @@ class Container {
       return reflectedType.newInstance(
           isDefault(constructor.name) ? '' : constructor.name,
           positional,
-          named, []).reflectee as T;
+          named, []).reflectee as T?;
     } else {
       throw ReflectionException(
           '$type is not a class, and therefore cannot be instantiated.');
@@ -144,7 +144,7 @@ class Container {
   ///
   /// Returns [f].
   T Function(Container) registerLazySingleton<T>(T Function(Container) f,
-      {Type as}) {
+      {Type? as}) {
     return registerFactory<T>(
       (container) {
         var r = f(container);
@@ -159,7 +159,7 @@ class Container {
   /// type within *this* container will return the result of [f].
   ///
   /// Returns [f].
-  T Function(Container) registerFactory<T>(T Function(Container) f, {Type as}) {
+  T Function(Container) registerFactory<T>(T Function(Container) f, {Type? as}) {
     as ??= T;
 
     if (_factories.containsKey(as)) {
@@ -174,7 +174,7 @@ class Container {
   /// type within *this* container will return [object].
   ///
   /// Returns [object].
-  T registerSingleton<T>(T object, {Type as}) {
+  T registerSingleton<T>(T object, {Type? as}) {
     as ??= T == dynamic ? as : T;
 
     if (_singletons.containsKey(as ?? object.runtimeType)) {
@@ -192,11 +192,11 @@ class Container {
   ///
   /// [findByName] is best reserved for internal logic that end users of code should
   /// not see.
-  T findByName<T>(String name) {
+  T? findByName<T>(String name) {
     if (_namedSingletons.containsKey(name)) {
-      return _namedSingletons[name] as T;
+      return _namedSingletons[name] as T?;
     } else if (_parent != null) {
-      return _parent.findByName<T>(name);
+      return _parent!.findByName<T>(name);
     } else {
       throw StateError(
           'This container does not have a singleton named "$name".');

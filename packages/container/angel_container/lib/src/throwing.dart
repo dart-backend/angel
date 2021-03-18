@@ -17,7 +17,7 @@ class ThrowingReflector extends Reflector {
   const ThrowingReflector({this.errorMessage = defaultErrorMessage});
 
   @override
-  String getName(Symbol symbol) => const EmptyReflector().getName(symbol);
+  String? getName(Symbol symbol) => const EmptyReflector().getName(symbol);
 
   UnsupportedError _error() => UnsupportedError(errorMessage);
 

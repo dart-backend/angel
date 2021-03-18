@@ -3,10 +3,11 @@
 * Updated pretty_logging to 3.0.0
 * Updated angel_http_exception to 3.0.0
 * Moved angel_cli to https://github.com/dukefirehawk/cli
-* Added code_buffer 2.0.0
-* Added combinator 2.0.0
+* Added code_buffer and updated to 2.0.0
+* Added combinator and updated to 2.0.0
 * Updated angel_route to 5.0.0
 * Updated angel_model to 3.0.0
+* Updated angel_container to 3.0.0
 
 # 3.0.0 (Non NNBD)
 * Changed Dart SDK requirements for all packages to ">=2.10.0 <3.0.0"

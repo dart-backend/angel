@@ -2,7 +2,7 @@ import 'package:angel_container/angel_container.dart';
 import 'package:test/test.dart';
 
 void main() {
-  Container container;
+  late Container container;
 
   setUp(() {
     container = Container(const EmptyReflector())
@@ -37,14 +37,14 @@ void main() {
 }
 
 class Artist {
-  final String name;
-  final Song song;
+  final String? name;
+  final Song? song;
 
   Artist({this.name, this.song});
 }
 
 class Song {
-  final String title;
+  final String? title;
 
   Song({this.title});
 }

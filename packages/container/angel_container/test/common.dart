@@ -7,7 +7,7 @@ void returnVoidFromAFunction(int x) {}
 
 void testReflector(Reflector reflector) {
   var blaziken = Pokemon('Blaziken', PokemonType.fire);
-  Container container;
+  late Container container;
 
   setUp(() {
     container = Container(reflector);
@@ -16,7 +16,7 @@ void testReflector(Reflector reflector) {
   });
 
   test('get field', () {
-    var blazikenMirror = reflector.reflectInstance(blaziken);
+    var blazikenMirror = reflector.reflectInstance(blaziken)!;
     expect(blazikenMirror.getField('type').reflectee, blaziken.type);
   });
 
@@ -24,19 +24,19 @@ void testReflector(Reflector reflector) {
     var mirror = reflector.reflectFunction(returnVoidFromAFunction);
 
     test('void return type returns dynamic', () {
-      expect(mirror.returnType, reflector.reflectType(dynamic));
+      expect(mirror!.returnType, reflector.reflectType(dynamic));
     });
 
     test('counts parameters', () {
-      expect(mirror.parameters, hasLength(1));
+      expect(mirror!.parameters, hasLength(1));
     });
 
     test('counts types parameters', () {
-      expect(mirror.typeParameters, isEmpty);
+      expect(mirror!.typeParameters, isEmpty);
     });
 
     test('correctly reflects parameter types', () {
-      var p = mirror.parameters[0];
+      var p = mirror!.parameters[0];
       expect(p.name, 'x');
       expect(p.isRequired, true);
       expect(p.isNamed, false);
@@ -67,12 +67,12 @@ void testReflector(Reflector reflector) {
   });
 
   test('constructor injects singleton', () {
-    var lower = container.make<LowerPokemon>();
+    var lower = container.make<LowerPokemon>()!;
     expect(lower.lowercaseName, blaziken.name.toLowerCase());
   });
 
   test('newInstance works', () {
-    var type = container.reflector.reflectType(Pokemon);
+    var type = container.reflector.reflectType(Pokemon)!;
     var instance =
         type.newInstance('changeName', [blaziken, 'Charizard']).reflectee
             as Pokemon;
@@ -83,7 +83,7 @@ void testReflector(Reflector reflector) {
 
   test('isAssignableTo', () {
     var pokemonType = container.reflector.reflectType(Pokemon);
-    var kantoPokemonType = container.reflector.reflectType(KantoPokemon);
+    var kantoPokemonType = container.reflector.reflectType(KantoPokemon)!;
 
     expect(kantoPokemonType.isAssignableTo(pokemonType), true);
     expect(

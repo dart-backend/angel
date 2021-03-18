@@ -2,7 +2,7 @@ import 'package:angel_container/angel_container.dart';
 import 'package:test/test.dart';
 
 void main() {
-  Container container;
+  late Container container;
 
   setUp(() {
     container = Container(const EmptyReflector());
@@ -10,7 +10,7 @@ void main() {
   });
 
   test('fetch by name', () {
-    expect(container.findByName<Foo>('foo').bar, 'baz');
+    expect(container.findByName<Foo>('foo')!.bar, 'baz');
   });
 
   test('cannot redefine', () {
@@ -28,7 +28,7 @@ void main() {
 }
 
 class Foo {
-  final String bar;
+  final String? bar;
 
   Foo({this.bar});
 }
