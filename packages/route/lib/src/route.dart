@@ -2,17 +2,17 @@ part of angel_route.src.router;
 
 /// Represents a virtual location within an application.
 class Route<T> {
-  final String method;
+  final String? method;
   final String path;
-  final List<T> handlers;
+  final List<T>? handlers;
   final Map<String, Map<String, dynamic>> _cache = {};
-  final RouteDefinition _routeDefinition;
-  String name;
-  Parser<RouteResult> _parser;
+  final RouteDefinition? _routeDefinition;
+  String? name;
+  Parser<RouteResult?>? _parser;
 
-  Route(this.path, {@required this.method, @required this.handlers})
+  Route(this.path, {required this.method, required this.handlers})
       : _routeDefinition = RouteGrammar.routeDefinition
-            .parse(SpanScanner(path.replaceAll(_straySlashes, '')))
+            .parse(SpanScanner(path.replaceAll(_straySlashes, '')))!
             .value {
     if (_routeDefinition?.segments?.isNotEmpty != true) {
       _parser = match('').map((r) => RouteResult({}));
@@ -26,7 +26,7 @@ class Route<T> {
         method: b.method, handlers: b.handlers);
   }
 
-  Parser<RouteResult> get parser => _parser ??= _routeDefinition.compile();
+  Parser<RouteResult?>? get parser => _parser ??= _routeDefinition!.compile();
 
   @override
   String toString() {
@@ -42,7 +42,7 @@ class Route<T> {
     var b = StringBuffer();
     int i = 0;
 
-    for (var seg in _routeDefinition.segments) {
+    for (var seg in _routeDefinition!.segments) {
       if (i++ > 0) b.write('/');
       if (seg is ConstantSegment) {
         b.write(seg.text);
@@ -50,7 +50,7 @@ class Route<T> {
         if (!params.containsKey(seg.name)) {
           throw ArgumentError('Missing parameter "${seg.name}".');
         }
-        b.write(params[seg.name]);
+        b.write(params[seg.name!]);
       }
     }
 
@@ -61,19 +61,19 @@ class Route<T> {
 /// The result of matching an individual route.
 class RouteResult {
   /// The parsed route parameters.
-  final Map<String, dynamic> params;
+  final Map<String?, dynamic> params;
 
   /// Optional. An explicit "tail" value to set.
-  String get tail => _tail;
+  String? get tail => _tail;
 
-  String _tail;
+  String? _tail;
 
-  RouteResult(this.params, {String tail}) : _tail = tail;
+  RouteResult(this.params, {String? tail}) : _tail = tail;
 
-  void _setTail(String v) => _tail ??= v;
+  void _setTail(String? v) => _tail ??= v;
 
   /// Adds parameters.
-  void addAll(Map<String, dynamic> map) {
+  void addAll(Map<String?, dynamic> map) {
     params.addAll(map);
   }
 }

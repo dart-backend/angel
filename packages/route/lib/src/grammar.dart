@@ -4,14 +4,14 @@ class RouteGrammar {
   static const String notSlashRgx = r'([^/]+)';
   //static final RegExp rgx = RegExp(r'\((.+)\)');
   static final Parser<String> notSlash =
-      match<String>(RegExp(notSlashRgx)).value((r) => r.span.text);
+      match<String>(RegExp(notSlashRgx)).value((r) => r.span!.text);
 
-  static final Parser<Match> regExp =
-      match<Match>(RegExp(r'\(([^\n)]+)\)([^/]+)?'))
+  static final Parser<Match?> regExp =
+      match<Match?>(RegExp(r'\(([^\n)]+)\)([^/]+)?'))
           .value((r) => r.scanner.lastMatch);
 
-  static final Parser<Match> parameterName =
-      match<Match>(RegExp('$notSlashRgx?' r':([A-Za-z0-9_]+)' r'([^(/\n])?'))
+  static final Parser<Match?> parameterName =
+      match<Match?>(RegExp('$notSlashRgx?' r':([A-Za-z0-9_]+)' r'([^(/\n])?'))
           .value((r) => r.scanner.lastMatch);
 
   static final Parser<ParameterSegment> parameterSegment = chain([
@@ -19,12 +19,12 @@ class RouteGrammar {
     match<bool>('?').value((r) => true).opt(),
     regExp.opt(),
   ]).map((r) {
-    var match = r.value[0] as Match;
-    var rgxMatch = r.value[2] as Match;
+    var match = r.value![0] as Match;
+    var rgxMatch = r.value![2] as Match?;
 
     var pre = match[1] ?? '';
     var post = match[3] ?? '';
-    RegExp rgx;
+    RegExp? rgx;
 
     if (rgxMatch != null) {
       rgx = RegExp('(${rgxMatch[1]})');
@@ -41,23 +41,23 @@ class RouteGrammar {
     }
 
     var s = ParameterSegment(match[2], rgx);
-    return r.value[1] == true ? OptionalSegment(s) : s;
+    return r.value![1] == true ? OptionalSegment(s) : s;
   });
 
   static final Parser<ParsedParameterSegment> parsedParameterSegment = chain([
     match(RegExp(r'(int|num|double)'),
             errorMessage: 'Expected "int","double", or "num".')
-        .map((r) => r.span.text),
+        .map((r) => r.span!.text),
     parameterSegment,
   ]).map((r) {
     return ParsedParameterSegment(
-        r.value[0] as String, r.value[1] as ParameterSegment);
+        r.value![0] as String, r.value![1] as ParameterSegment);
   });
 
   static final Parser<WildcardSegment> wildcardSegment =
       match<WildcardSegment>(RegExp('$notSlashRgx?' r'\*' '$notSlashRgx?'))
           .value((r) {
-    var m = r.scanner.lastMatch;
+    var m = r.scanner.lastMatch!;
     var pre = m[1] ?? '';
     var post = m[2] ?? '';
     return WildcardSegment(pre, post);
@@ -95,8 +95,8 @@ class RouteDefinition {
 
   RouteDefinition(this.segments);
 
-  Parser<RouteResult> compile() {
-    Parser<RouteResult> out;
+  Parser<RouteResult?>? compile() {
+    Parser<RouteResult?>? out;
 
     for (int i = 0; i < segments.length; i++) {
       var s = segments[i];
@@ -116,7 +116,7 @@ class RouteDefinition {
 abstract class RouteSegment {
   Parser<RouteResult> compile(bool isLast);
 
-  Parser<RouteResult> compileNext(Parser<RouteResult> p, bool isLast);
+  Parser<RouteResult?> compileNext(Parser<RouteResult> p, bool isLast);
 }
 
 class SlashSegment implements RouteSegment {
@@ -139,7 +139,7 @@ class SlashSegment implements RouteSegment {
 }
 
 class ConstantSegment extends RouteSegment {
-  final String text;
+  final String? text;
 
   ConstantSegment(this.text);
 
@@ -150,7 +150,7 @@ class ConstantSegment extends RouteSegment {
 
   @override
   Parser<RouteResult> compile(bool isLast) {
-    return match(text).map((r) => RouteResult({}));
+    return match(text!).map((r) => RouteResult({}));
   }
 
   @override
@@ -183,13 +183,13 @@ class WildcardSegment extends RouteSegment {
   @override
   Parser<RouteResult> compile(bool isLast) {
     return match(_compile(isLast))
-        .map((r) => RouteResult({}, tail: r.scanner.lastMatch[1]));
+        .map((r) => RouteResult({}, tail: r.scanner.lastMatch![1]));
   }
 
   @override
   Parser<RouteResult> compileNext(Parser<RouteResult> p, bool isLast) {
     return p.then(compile(isLast)).map((r) {
-      var items = r.value.cast<RouteResult>();
+      var items = r.value!.cast<RouteResult>();
       var a = items[0], b = items[1];
       return a
         ..addAll(b?.params ?? {})
@@ -214,44 +214,44 @@ class OptionalSegment extends ParameterSegment {
   }
 
   @override
-  Parser<RouteResult> compileNext(Parser<RouteResult> p, bool isLast) {
+  Parser<RouteResult?> compileNext(Parser<RouteResult> p, bool isLast) {
     return p.then(_compile().opt()).map((r) {
-      if (r.value[1] == null) return r.value[0] as RouteResult;
-      return (r.value[0] as RouteResult)
-        ..addAll({name: Uri.decodeComponent(r.value[1] as String)});
+      if (r.value![1] == null) return r.value![0] as RouteResult?;
+      return (r.value![0] as RouteResult)
+        ..addAll({name: Uri.decodeComponent(r.value![1] as String)});
     });
   }
 }
 
 class ParameterSegment extends RouteSegment {
-  final String name;
-  final RegExp regExp;
+  final String? name;
+  final RegExp? regExp;
 
   ParameterSegment(this.name, this.regExp);
 
   @override
   String toString() {
-    if (regExp != null) return 'Param: $name (${regExp.pattern})';
+    if (regExp != null) return 'Param: $name (${regExp!.pattern})';
     return 'Param: $name';
   }
 
-  Parser<String> _compile() {
+  Parser<String?> _compile() {
     return regExp != null
-        ? match<String>(regExp).value((r) => r.scanner.lastMatch[1])
+        ? match<String?>(regExp!).value((r) => r.scanner.lastMatch![1])
         : RouteGrammar.notSlash;
   }
 
   @override
   Parser<RouteResult> compile(bool isLast) {
     return _compile()
-        .map((r) => RouteResult({name: Uri.decodeComponent(r.value)}));
+        .map((r) => RouteResult({name: Uri.decodeComponent(r.value!)}));
   }
 
   @override
-  Parser<RouteResult> compileNext(Parser<RouteResult> p, bool isLast) {
+  Parser<RouteResult?> compileNext(Parser<RouteResult> p, bool isLast) {
     return p.then(_compile()).map((r) {
-      return (r.value[0] as RouteResult)
-        ..addAll({name: Uri.decodeComponent(r.value[1] as String)});
+      return (r.value![0] as RouteResult)
+        ..addAll({name: Uri.decodeComponent(r.value![1] as String)});
     });
   }
 }
@@ -276,15 +276,15 @@ class ParsedParameterSegment extends RouteSegment {
   @override
   Parser<RouteResult> compile(bool isLast) {
     return parameter._compile().map((r) => RouteResult(
-        {parameter.name: getValue(Uri.decodeComponent(r.span.text))}));
+        {parameter.name: getValue(Uri.decodeComponent(r.span!.text))}));
   }
 
   @override
   Parser<RouteResult> compileNext(Parser<RouteResult> p, bool isLast) {
     return p.then(parameter._compile()).map((r) {
-      return (r.value[0] as RouteResult)
+      return (r.value![0] as RouteResult)
         ..addAll({
-          parameter.name: getValue(Uri.decodeComponent(r.value[1] as String))
+          parameter.name: getValue(Uri.decodeComponent(r.value![1] as String))
         });
     });
   }

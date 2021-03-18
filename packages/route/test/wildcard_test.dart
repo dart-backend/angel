@@ -26,21 +26,21 @@ void main() {
   test('tail explicitly set intermediate', () {
     var results = router.resolveAbsolute('/songs/in_the/key');
     var result = results.first;
-    print(results.map((r) => {r.route.path: r.tail}));
+    print(results.map((r) => {r.route!.path: r.tail}));
     expect(result.tail, 'in_the');
   });
 
   test('tail explicitly set at end', () {
     var results = router.resolveAbsolute('/isnt/she/epic');
     var result = results.first;
-    print(results.map((r) => {r.route.path: r.tail}));
+    print(results.map((r) => {r.route!.path: r.tail}));
     expect(result.tail, 'epic');
   });
 
   test('tail with trailing', () {
     var results = router.resolveAbsolute('/isnt/she/epic/fail');
     var result = results.first;
-    print(results.map((r) => {r.route.path: r.tail}));
+    print(results.map((r) => {r.route!.path: r.tail}));
     expect(result.tail, 'epic/fail');
   });
 }

@@ -7,9 +7,9 @@ void main() {
     ..get('/double/double:id', '')
     ..get('/num/num:id', '');
 
-  num getId(String path) {
+  num? getId(String path) {
     var result = router.resolveAbsolute(path).first;
-    return result.allParams['id'] as num;
+    return result.allParams['id'] as num?;
   }
 
   test('parse', () {

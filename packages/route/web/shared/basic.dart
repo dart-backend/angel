@@ -9,15 +9,15 @@ basic(BrowserRouter router) {
     final route = result?.route;
 
     if (route == null) {
-      $h1.text = 'No Active Route';
-      $ul.children
+      $h1!.text = 'No Active Route';
+      $ul!.children
         ..clear()
         ..add(LIElement()..text = '(empty)');
     } else {
-      $h1.text = 'Active Route: ${route.name ?? route.path}';
-      $ul.children
+      $h1!.text = 'Active Route: ${route.name ?? route.path}';
+      $ul!.children
         ..clear()
-        ..addAll(result.allHandlers
+        ..addAll(result!.allHandlers
             .map((handler) => LIElement()..text = handler.toString()));
     }
   });
