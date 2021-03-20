@@ -3,20 +3,22 @@ import 'package:angel_auth/angel_auth.dart';
 import 'package:angel_framework/angel_framework.dart';
 import 'package:angel_framework/http.dart';
 import 'dart:convert';
+import 'package:collection/collection.dart' show IterableExtension;
 import 'package:http/http.dart' as http;
 import 'package:io/ansi.dart';
 import 'package:logging/logging.dart';
 import 'package:test/test.dart';
+import 'package:collection/collection.dart';
 
 class User extends Model {
-  String username, password;
+  String? username, password;
 
   User({this.username, this.password});
 
   static User parse(Map map) {
     return User(
-      username: map['username'] as String,
-      password: map['password'] as String,
+      username: map['username'] as String?,
+      password: map['password'] as String?,
     );
   }
 
@@ -31,27 +33,27 @@ class User extends Model {
   }
 }
 
-main() {
-  Angel app;
-  AngelHttp angelHttp;
-  AngelAuth<User> auth;
-  http.Client client;
+void main() {
+  Angel? app;
+  late AngelHttp angelHttp;
+  AngelAuth<User?> auth;
+  http.Client? client;
   HttpServer server;
-  String url;
+  String? url;
 
   setUp(() async {
     hierarchicalLoggingEnabled = true;
     app = Angel();
     angelHttp = AngelHttp(app);
-    app.use('/users', MapService());
+    app!.use('/users', MapService());
 
-    var oldErrorHandler = app.errorHandler;
-    app.errorHandler = (e, req, res) {
-      app.logger.severe(e.message, e, e.stackTrace ?? StackTrace.current);
+    var oldErrorHandler = app!.errorHandler;
+    app!.errorHandler = (e, req, res) {
+      app!.logger!.severe(e.message, e, e.stackTrace ?? StackTrace.current);
       return oldErrorHandler(e, req, res);
     };
 
-    app.logger = Logger('angel_auth')
+    app!.logger = Logger('angel_auth')
       ..level = Level.FINEST
       ..onRecord.listen((rec) {
         print(rec);
@@ -65,28 +67,30 @@ main() {
         }
       });
 
-    await app
-        .findService('users')
+    await app!
+        .findService('users')!
         .create({'username': 'jdoe1', 'password': 'password'});
 
-    auth = AngelAuth<User>();
-    auth.serializer = (u) => u.id;
+    auth = AngelAuth<User?>();
+    auth.serializer = (u) => u!.id;
     auth.deserializer =
-        (id) async => await app.findService('users').read(id) as User;
+        (id) async => await app!.findService('users')!.read(id) as User;
 
-    await app.configure(auth.configureServer);
+    await app!.configure(auth.configureServer);
 
     auth.strategies['local'] = LocalAuthStrategy((username, password) async {
-      var users = await app
-          .findService('users')
+      var users = await app!
+          .findService('users')!
           .index()
           .then((it) => it.map<User>((m) => User.parse(m as Map)).toList());
-      return users.firstWhere(
-          (user) => user.username == username && user.password == password,
-          orElse: () => null);
+
+      var result = users.firstWhereOrNull(
+          (user) => user.username == username && user.password == password);
+
+      return Future.value(result);
     });
 
-    app.post(
+    app!.post(
         '/login',
         auth.authenticate('local',
             AngelAuthOptions(callback: (req, res, token) {
@@ -95,10 +99,10 @@ main() {
             ..close();
         })));
 
-    app.chain([
+    app!.chain([
       (req, res) {
-        if (!req.container.has<User>()) {
-          req.container.registerSingleton<User>(
+        if (!req.container!.has<User>()) {
+          req.container!.registerSingleton<User>(
               User(username: req.params['name']?.toString()));
         }
         return true;
@@ -114,7 +118,7 @@ main() {
   });
 
   tearDown(() async {
-    client.close();
+    client!.close();
     await angelHttp.close();
     app = null;
     client = null;
@@ -122,7 +126,7 @@ main() {
   });
 
   test('login', () async {
-    final response = await client.post(Uri.parse('$url/login'),
+    final response = await client!.post(Uri.parse('$url/login'),
         body: {'username': 'jdoe1', 'password': 'password'});
     print('Response: ${response.body}');
     expect(response.body, equals('Hello!'));
@@ -132,7 +136,7 @@ main() {
           : null);
 
   test('preserve existing user', () async {
-    final response = await client.post(Uri.parse('$url/existing/foo'),
+    final response = await client!.post(Uri.parse('$url/existing/foo'),
         body: {'username': 'jdoe1', 'password': 'password'},
         headers: {'accept': 'application/json'});
     print('Response: ${response.body}');

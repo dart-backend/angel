@@ -6,7 +6,7 @@ import 'package:test/test.dart';
 const Duration threeDays = const Duration(days: 3);
 
 void main() {
-  Cookie defaultCookie;
+  late Cookie defaultCookie;
   var auth = AngelAuth(
     secureCookies: true,
     cookieDomain: 'SECURE',
@@ -21,7 +21,7 @@ void main() {
 
   test('sets expires', () {
     var now = DateTime.now();
-    var expiry = auth.protectCookie(defaultCookie).expires;
+    var expiry = auth.protectCookie(defaultCookie).expires!;
     var diff = expiry.difference(now);
     expect(diff.inSeconds, threeDays.inSeconds);
   });

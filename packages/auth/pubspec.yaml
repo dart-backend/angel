@@ -1,11 +1,11 @@
 name: angel_auth
 description: A complete authentication plugin for Angel. Includes support for stateless JWT tokens, Basic Auth, and more.
-version: 3.0.0
+version: 4.0.0
 author: Tobe O <thosakwe@gmail.com>
 homepage: https://github.com/angel-dart/angel_auth
 publish_to: none
 environment:
-  sdk: ">=2.10.0 <3.0.0"
+  sdk: '>=2.12.0 <3.0.0'
 dependencies:
   angel_framework:
     git: 
@@ -17,7 +17,7 @@ dependencies:
   crypto: ^3.0.0
   http_parser: ^4.0.0
   meta: ^1.3.0
-  quiver_hashcode: ^3.0.0+1
+  quiver: ^3.0.0
 dev_dependencies:
   http: ^0.13.1
   io: ^1.0.0

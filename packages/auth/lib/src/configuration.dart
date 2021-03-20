@@ -1,15 +1,14 @@
 import 'package:charcode/ascii.dart';
 import 'package:collection/collection.dart';
-import 'package:meta/meta.dart';
-import 'package:quiver_hashcode/hashcode.dart';
+import 'package:quiver/core.dart';
 
 /// A common class containing parsing and validation logic for third-party authentication configuration.
 class ExternalAuthOptions {
   /// The user's identifier, otherwise known as an "application id".
-  final String clientId;
+  final String? clientId;
 
   /// The user's secret, other known as an "application secret".
-  final String clientSecret;
+  final String? clientSecret;
 
   /// The user's redirect URI.
   final Uri redirectUri;
@@ -27,9 +26,9 @@ class ExternalAuthOptions {
   }
 
   factory ExternalAuthOptions(
-      {@required String clientId,
-      @required String clientSecret,
-      @required redirectUri,
+      {required String? clientId,
+      required String? clientSecret,
+      required redirectUri,
       Iterable<String> scopes = const []}) {
     if (redirectUri is String) {
       return ExternalAuthOptions._(
@@ -51,8 +50,8 @@ class ExternalAuthOptions {
   /// * `redirect_uri`
   factory ExternalAuthOptions.fromMap(Map map) {
     return ExternalAuthOptions(
-      clientId: map['client_id'] as String,
-      clientSecret: map['client_secret'] as String,
+      clientId: map['client_id'] as String?,
+      clientSecret: map['client_secret'] as String?,
       redirectUri: map['redirect_uri'],
       scopes: map['scopes'] is Iterable
           ? ((map['scopes'] as Iterable).map((x) => x.toString()))
@@ -73,10 +72,10 @@ class ExternalAuthOptions {
 
   /// Creates a copy of this object, with the specified changes.
   ExternalAuthOptions copyWith(
-      {String clientId,
-      String clientSecret,
+      {String? clientId,
+      String? clientSecret,
       redirectUri,
-      Iterable<String> scopes}) {
+      Iterable<String>? scopes}) {
     return ExternalAuthOptions(
       clientId: clientId ?? this.clientId,
       clientSecret: clientSecret ?? this.clientSecret,
@@ -111,14 +110,14 @@ class ExternalAuthOptions {
   /// If no [asteriskCount] is given, then the number of asterisks will equal the length of
   /// the actual [clientSecret].
   @override
-  String toString({bool obscureSecret = true, int asteriskCount}) {
-    String secret;
+  String toString({bool obscureSecret = true, int? asteriskCount}) {
+    String? secret;
 
     if (!obscureSecret) {
       secret = clientSecret;
     } else {
       var codeUnits =
-          List<int>.filled(asteriskCount ?? clientSecret.length, $asterisk);
+          List<int>.filled(asteriskCount ?? clientSecret!.length, $asterisk);
       secret = String.fromCharCodes(codeUnits);
     }
 

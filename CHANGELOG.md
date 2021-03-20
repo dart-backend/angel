@@ -11,7 +11,7 @@
 * Added merge_map and updated to 2.0.0
 * Added mock_request and updated to 2.0.0
 * Updated angel_framework to 4.0.0 (Revisit TODO)
-* Updated angel_auth to 4.0.0 (todo)
+* Updated angel_auth to 4.0.0
 * Updated angel_configuration to 4.0.0 (todo)
 
 # 3.0.0 (Non NNBD)
