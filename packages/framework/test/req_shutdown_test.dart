@@ -7,10 +7,10 @@ import 'package:test/test.dart';
 import 'pretty_log.dart';
 
 void main() {
-  http.IOClient client;
-  AngelHttp driver;
-  Logger logger;
-  StringBuffer buf;
+  late http.IOClient client;
+  late AngelHttp driver;
+  late Logger logger;
+  late StringBuffer buf;
 
   setUp(() async {
     buf = StringBuffer();

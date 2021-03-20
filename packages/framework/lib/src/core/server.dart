@@ -26,21 +26,21 @@ typedef FutureOr<void> AngelConfigurer(Angel app);
 
 /// A function that asynchronously generates a view from the given path and data.
 typedef FutureOr<String> ViewGenerator(String path,
-    [Map<String, dynamic> data]);
+    [Map<String, dynamic>? data]);
 
 /// A powerful real-time/REST/MVC server class.
 class Angel extends Routable {
   static ViewGenerator noViewEngineConfigured =
-      (String view, [Map data]) => 'No view engine has been configured yet.';
+      (String view, [Map? data]) => 'No view engine has been configured yet.';
 
   final List<Angel> _children = [];
   final Map<
       String,
-      Tuple4<List, Map<String, dynamic>, ParseResult<RouteResult>,
+      Tuple4<List?, Map<String?, dynamic>, ParseResult<RouteResult?>?,
           MiddlewarePipeline>> handlerCache = HashMap();
 
-  Router<RequestHandler> _flattened;
-  Angel _parent;
+  Router<RequestHandler?>? _flattened;
+  Angel? _parent;
 
   /// A global Map of converters that can transform responses bodies.
   final Map<String, Converter<List<int>, List<int>>> encoders = {};
@@ -51,7 +51,7 @@ class Angel extends Routable {
   final MimeTypeResolver mimeTypeResolver = MimeTypeResolver();
 
   /// A middleware to inject a serialize on every request.
-  FutureOr<String> Function(dynamic) serializer;
+  FutureOr<String> Function(dynamic)? serializer;
 
   /// A [Map] of dependency data obtained via reflection.
   ///
@@ -59,7 +59,7 @@ class Angel extends Routable {
   Map<dynamic, InjectionRequest> get preContained => _preContained;
 
   /// Returns the [flatten]ed version of this router in production.
-  Router<RequestHandler> get optimizedRouter => _flattened ?? this;
+  Router<RequestHandler?> get optimizedRouter => _flattened ?? this;
 
   /// Determines whether to allow HTTP request method overrides.
   bool allowMethodOverrides = true;
@@ -67,10 +67,10 @@ class Angel extends Routable {
   /// All child application mounted on this instance.
   List<Angel> get children => List<Angel>.unmodifiable(_children);
 
-  final Map<Pattern, Controller> _controllers = {};
+  final Map<Pattern?, Controller> _controllers = {};
 
   /// A set of [Controller] objects that have been loaded into the application.
-  Map<Pattern, Controller> get controllers => _controllers;
+  Map<Pattern?, Controller> get controllers => _controllers;
 
   /// Now *deprecated*, in favor of [AngelEnv] and [angelEnv]. Use `app.environment.isProduction`
   /// instead.
@@ -91,10 +91,10 @@ class Angel extends Routable {
   final AngelEnvironment environment;
 
   /// Returns the parent instance of this application, if any.
-  Angel get parent => _parent;
+  Angel? get parent => _parent;
 
   /// Outputs diagnostics and debug messages.
-  Logger logger;
+  Logger? logger;
 
   /// Plug-ins to be called right before server startup.
   ///
@@ -121,7 +121,7 @@ class Angel extends Routable {
   /// A function that renders views.
   ///
   /// Called by [ResponseContext]@`render`.
-  ViewGenerator viewGenerator = noViewEngineConfigured;
+  ViewGenerator? viewGenerator = noViewEngineConfigured;
 
   /// The handler currently configured to run on [AngelHttpException]s.
   Function(AngelHttpException e, RequestContext req, ResponseContext res)
@@ -148,9 +148,9 @@ class Angel extends Routable {
   };
 
   @override
-  Route<RequestHandler> addRoute(
-      String method, String path, RequestHandler handler,
-      {Iterable<RequestHandler> middleware}) {
+  Route<RequestHandler?> addRoute(
+      String? method, String? path, RequestHandler? handler,
+      {Iterable<RequestHandler?>? middleware}) {
     middleware ??= [];
     if (_flattened != null) {
       logger?.warning(
@@ -163,7 +163,7 @@ class Angel extends Routable {
   }
 
   @override
-  mount(String path, Router<RequestHandler> router) {
+  mount(String path, Router<RequestHandler?> router) {
     if (_flattened != null) {
       logger?.warning(
           'WARNING: You added mounted a child router ($path) on the router, after it had been optimized.');
@@ -182,12 +182,12 @@ class Angel extends Routable {
   /// Loads some base dependencies into the service container.
   void bootstrapContainer() {
     if (runtimeType != Angel) {
-      container.registerSingleton(this);
+      container!.registerSingleton(this);
     }
 
-    container.registerSingleton<Angel>(this);
-    container.registerSingleton<Routable>(this);
-    container.registerSingleton<Router>(this);
+    container!.registerSingleton<Angel>(this);
+    container!.registerSingleton<Routable>(this);
+    container!.registerSingleton<Router>(this);
   }
 
   /// Shuts down the server, and closes any open [StreamController]s.
@@ -216,14 +216,14 @@ class Angel extends Routable {
 
   @override
   void dumpTree(
-      {callback(String tree),
+      {callback(String tree)?,
       String header = 'Dumping route tree:',
       String tab = '  ',
       bool showMatchers = false}) {
     if (environment.isProduction) {
       _flattened ??= flatten(this);
 
-      _flattened.dumpTree(
+      _flattened!.dumpTree(
           callback: callback,
           header: header?.isNotEmpty == true
               ? header
@@ -284,7 +284,7 @@ class Angel extends Routable {
   /// Attempts to find a property by the given name within this application.
   findProperty(key) {
     if (configuration.containsKey(key)) return configuration[key];
-    return parent != null ? parent.findProperty(key) : null;
+    return parent != null ? parent!.findProperty(key) : null;
   }
 
   /// Runs several optimizations, *if* [angelEnv.isProduction] is `true`.
@@ -305,7 +305,7 @@ class Angel extends Routable {
   /// If this function has been reflected before, then
   /// the execution will be faster, as the injection requirements were stored beforehand.
   Future runContained(Function handler, RequestContext req, ResponseContext res,
-      [Container container]) {
+      [Container? container]) {
     return Future.sync(() {
       if (_preContained.containsKey(handler)) {
         return handleContained(handler, _preContained[handler], container)(
@@ -318,11 +318,11 @@ class Angel extends Routable {
 
   /// Runs with DI, and *always* reflects. Prefer [runContained].
   Future runReflected(Function handler, RequestContext req, ResponseContext res,
-      [Container container]) {
+      [Container? container]) {
     container ??= req?.container ?? res?.app?.container;
     var h = handleContained(
         handler,
-        _preContained[handler] = preInject(handler, container.reflector),
+        _preContained[handler] = preInject(handler, container!.reflector),
         container);
     return Future.sync(() => h(req, res));
     // return   closureMirror.apply(args).reflectee;
@@ -340,13 +340,13 @@ class Angel extends Routable {
   /// provide a [type] argument as well.
   ///
   /// If you are on `Dart >=2.0.0`, simply call `mountController<T>()`.
-  Future<T> mountController<T extends Controller>([Type type]) {
-    var controller = container.make<T>(type);
+  Future<T> mountController<T extends Controller>([Type? type]) {
+    T controller = container!.make<T>(type)!;
     return configure(controller.configureServer).then((_) => controller);
   }
 
   /// Shorthand for calling `all('*', handler)`.
-  Route<RequestHandler> fallback(RequestHandler handler) {
+  Route<RequestHandler?> fallback(RequestHandler handler) {
     return all('*', handler);
   }
 

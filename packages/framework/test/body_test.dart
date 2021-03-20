@@ -13,9 +13,10 @@ void main() {
   Future<RequestContext> request(
       {bool asJson = true,
       bool parse = true,
-      Map<String, dynamic> bodyFields,
-      List bodyList}) async {
-    var rq = MockHttpRequest('POST', Uri(path: '/'));
+      Map<String, dynamic>? bodyFields,
+      List? bodyList}) async {
+    var rq =
+        MockHttpRequest('POST', Uri(path: '/'), persistentConnection: false);
 
     if (bodyFields != null) {
       if (asJson) {
@@ -115,16 +116,16 @@ void main() {
 }
 
 class Todo {
-  String text;
-  bool completed;
+  String? text;
+  bool? completed;
 
   Todo({this.text, this.completed});
 
-  static Todo fromMap(Map m) =>
-      Todo(text: m['text'] as String, completed: m['complete'] as bool);
+  static Todo fromMap(Map? m) =>
+      Todo(text: m!['text'] as String?, completed: m['complete'] as bool?);
 }
 
-class TodoCodec extends Codec<Todo, Map> {
+class TodoCodec extends Codec<Todo, Map?> {
   @override
   Converter<Map, Todo> get decoder => TodoDecoder();
 

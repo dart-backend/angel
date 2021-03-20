@@ -21,7 +21,7 @@ typedef FutureOr RequestHandler(RequestContext req, ResponseContext res);
 /// return `true`. Works well with [Router].chain.
 RequestHandler chain(Iterable<RequestHandler> handlers) {
   return (req, res) {
-    Future Function() runPipeline;
+    Future Function()? runPipeline;
 
     for (var handler in handlers) {
       if (handler == null) break;
@@ -42,19 +42,19 @@ RequestHandler chain(Iterable<RequestHandler> handlers) {
 }
 
 /// A routable server that can handle dynamic requests.
-class Routable extends Router<RequestHandler> {
+class Routable extends Router<RequestHandler?> {
   final Map<Pattern, Service> _services = {};
-  final Map<Pattern, Service> _serviceLookups = {};
+  final Map<Pattern, Service?> _serviceLookups = {};
   final Map configuration = {};
 
-  final Container _container;
+  final Container? _container;
 
-  Routable([Reflector reflector])
+  Routable([Reflector? reflector])
       : _container = reflector == null ? null : Container(reflector),
         super();
 
   /// A [Container] used to inject dependencies.
-  Container get container => _container;
+  Container? get container => _container;
 
   void close() {
     _services.clear();
@@ -73,34 +73,34 @@ class Routable extends Router<RequestHandler> {
   Stream<Service> get onService => _onService.stream;
 
   /// Retrieves the service assigned to the given path.
-  T findService<T extends Service>(Pattern path) {
+  T? findService<T extends Service?>(Pattern path) {
     return _serviceLookups.putIfAbsent(path, () {
       return _services[path] ??
           _services[path.toString().replaceAll(_straySlashes, '')];
-    }) as T;
+    }) as T?;
   }
 
   /// Shorthand for finding a [Service] in a statically-typed manner.
-  Service<Id, Data> findServiceOf<Id, Data>(Pattern path) {
+  Service<Id, Data>? findServiceOf<Id, Data>(Pattern path) {
     return findService<Service<Id, Data>>(path);
   }
 
   /// Shorthand for finding a [HookedService] in a statically-typed manner.
-  HookedService<dynamic, dynamic, T> findHookedService<T extends Service>(
+  HookedService<dynamic, dynamic, T>? findHookedService<T extends Service>(
       Pattern path) {
-    return findService(path) as HookedService<dynamic, dynamic, T>;
+    return findService(path) as HookedService<dynamic, dynamic, T>?;
   }
 
   @override
-  Route<RequestHandler> addRoute(
-      String method, String path, RequestHandler handler,
-      {Iterable<RequestHandler> middleware}) {
+  Route<RequestHandler?> addRoute(
+      String? method, String? path, RequestHandler? handler,
+      {Iterable<RequestHandler?>? middleware}) {
     middleware ??= [];
     final handlers = <RequestHandler>[];
     // Merge @Middleware declaration, if any
     var reflector = _container?.reflector;
     if (reflector != null && reflector is! ThrowingReflector) {
-      Middleware middlewareDeclaration =
+      Middleware? middlewareDeclaration =
           getAnnotation<Middleware>(handler, _container?.reflector);
       if (middlewareDeclaration != null) {
         handlers.addAll(middlewareDeclaration.handlers);
@@ -108,7 +108,7 @@ class Routable extends Router<RequestHandler> {
     }
 
     final handlerSequence = <RequestHandler>[];
-    handlerSequence.addAll(middleware ?? []);
+    handlerSequence.addAll(middleware as Iterable<FutureOr<dynamic>? Function(RequestContext<dynamic>, ResponseContext<dynamic>)>? ?? []);
     handlerSequence.addAll(handlers);
 
     return super.addRoute(method, path.toString(), handler,

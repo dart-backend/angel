@@ -6,24 +6,24 @@ import 'package:http2/transport.dart';
 import 'http2_request_context.dart';
 
 class Http2ResponseContext extends ResponseContext<ServerTransportStream> {
-  final Angel app;
+  final Angel? app;
   final ServerTransportStream stream;
 
   ServerTransportStream get rawResponse => stream;
 
-  LockableBytesBuilder _buffer;
+  LockableBytesBuilder? _buffer;
 
-  final Http2RequestContext _req;
+  final Http2RequestContext? _req;
 
   bool _isDetached = false,
       _isClosed = false,
       _streamInitialized = false,
       _isPush = false;
 
-  Uri _targetUri;
+  Uri? _targetUri;
 
   Http2ResponseContext(this.app, this.stream, this._req) {
-    _targetUri = _req.uri;
+    _targetUri = _req!.uri;
   }
 
   final List<Http2ResponseContext> _pushes = [];
@@ -43,9 +43,9 @@ class Http2ResponseContext extends ResponseContext<ServerTransportStream> {
   }
 
   @override
-  RequestContext get correspondingRequest => _req;
+  RequestContext? get correspondingRequest => _req;
 
-  Uri get targetUri => _targetUri;
+  Uri? get targetUri => _targetUri;
 
   @override
   bool get isOpen {
@@ -56,10 +56,10 @@ class Http2ResponseContext extends ResponseContext<ServerTransportStream> {
   bool get isBuffered => _buffer != null;
 
   @override
-  BytesBuilder get buffer => _buffer;
+  BytesBuilder? get buffer => _buffer;
 
   @override
-  void addError(Object error, [StackTrace stackTrace]) {
+  void addError(Object error, [StackTrace? stackTrace]) {
     super.addError(error, stackTrace);
   }
 
@@ -78,8 +78,8 @@ class Http2ResponseContext extends ResponseContext<ServerTransportStream> {
 
     if (encoders.isNotEmpty && correspondingRequest != null) {
       if (_allowedEncodings != null) {
-        for (var encodingName in _allowedEncodings) {
-          Converter<List<int>, List<int>> encoder;
+        for (var encodingName in _allowedEncodings!) {
+          Converter<List<int>, List<int>>? encoder;
           String key = encodingName;
 
           if (encoders.containsKey(encodingName)) {
@@ -98,11 +98,11 @@ class Http2ResponseContext extends ResponseContext<ServerTransportStream> {
 
     // Add all normal headers
     for (var key in this.headers.keys) {
-      headers.add(Header.ascii(key.toLowerCase(), this.headers[key]));
+      headers.add(Header.ascii(key.toLowerCase(), this.headers[key]!));
     }
 
     // Persist session ID
-    cookies.add(Cookie('DARTSESSID', _req.session.id));
+    cookies.add(Cookie('DARTSESSID', _req!.session!.id));
 
     // Send all cookies
     for (var cookie in cookies) {
@@ -113,10 +113,10 @@ class Http2ResponseContext extends ResponseContext<ServerTransportStream> {
     return _streamInitialized = true;
   }
 
-  Iterable<String> __allowedEncodings;
+  Iterable<String>? __allowedEncodings;
 
-  Iterable<String> get _allowedEncodings {
-    return __allowedEncodings ??= correspondingRequest.headers
+  Iterable<String>? get _allowedEncodings {
+    return __allowedEncodings ??= correspondingRequest!.headers!
         .value('accept-encoding')
         ?.split(',')
         ?.map((s) => s.trim())
@@ -138,8 +138,8 @@ class Http2ResponseContext extends ResponseContext<ServerTransportStream> {
 
     if (encoders.isNotEmpty && correspondingRequest != null) {
       if (_allowedEncodings != null) {
-        for (var encodingName in _allowedEncodings) {
-          Converter<List<int>, List<int>> encoder;
+        for (var encodingName in _allowedEncodings!) {
+          Converter<List<int>, List<int>>? encoder;
           String key = encodingName;
 
           if (encoders.containsKey(encodingName)) {
@@ -149,7 +149,7 @@ class Http2ResponseContext extends ResponseContext<ServerTransportStream> {
           }
 
           if (encoder != null) {
-            output = encoders[key].bind(output);
+            output = encoders[key]!.bind(output);
             break;
           }
         }
@@ -169,8 +169,8 @@ class Http2ResponseContext extends ResponseContext<ServerTransportStream> {
       if (!_isClosed) {
         if (encoders.isNotEmpty && correspondingRequest != null) {
           if (_allowedEncodings != null) {
-            for (var encodingName in _allowedEncodings) {
-              Converter<List<int>, List<int>> encoder;
+            for (var encodingName in _allowedEncodings!) {
+              Converter<List<int>, List<int>>? encoder;
               String key = encodingName;
 
               if (encoders.containsKey(encodingName)) {
@@ -180,7 +180,7 @@ class Http2ResponseContext extends ResponseContext<ServerTransportStream> {
               }
 
               if (encoder != null) {
-                data = encoders[key].convert(data);
+                data = encoders[key]!.convert(data);
                 break;
               }
             }
@@ -190,7 +190,7 @@ class Http2ResponseContext extends ResponseContext<ServerTransportStream> {
         stream.sendData(data);
       }
     } else {
-      buffer.add(data);
+      buffer!.add(data);
     }
   }
 
@@ -208,7 +208,7 @@ class Http2ResponseContext extends ResponseContext<ServerTransportStream> {
   /// Pushes a resource to the client.
   Http2ResponseContext push(String path,
       {Map<String, String> headers = const {}, String method = 'GET'}) {
-    var targetUri = _req.uri.replace(path: path);
+    var targetUri = _req!.uri!.replace(path: path);
 
     var h = <Header>[
       Header.ascii(':authority', targetUri.authority),
@@ -218,7 +218,7 @@ class Http2ResponseContext extends ResponseContext<ServerTransportStream> {
     ];
 
     for (var key in headers.keys) {
-      h.add(Header.ascii(key, headers[key]));
+      h.add(Header.ascii(key, headers[key]!));
     }
 
     var s = stream.push(h);

@@ -14,8 +14,8 @@ import 'package:test/test.dart';
 import 'encoders_buffer_test.dart' show encodingTests;
 
 main() {
-  Angel app;
-  AngelHttp http;
+  late Angel app;
+  late AngelHttp http;
 
   setUp(() {
     app = Angel(reflector: MirrorsReflector());

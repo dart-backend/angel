@@ -48,6 +48,6 @@ serverMain(_) async {
     print(e.stackTrace);
   };
 
-  var server = await http.startServer('127.0.0.1', 3000);
+  HttpServer server = await http.startServer('127.0.0.1', 3000);
   print('Listening at http://${server.address.address}:${server.port}');
 }

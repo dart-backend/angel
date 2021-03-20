@@ -16,7 +16,7 @@ main() async {
   // Simple fallback to throw a 404 on unknown paths.
   app.fallback((req, res) {
     throw AngelHttpException.notFound(
-      message: 'Unknown path: "${req.uri.path}"',
+      message: 'Unknown path: "${req.uri!.path}"',
     );
   });
 
@@ -40,7 +40,7 @@ class ArtistsController extends Controller {
   form(RequestContext req) async {
     // Deserialize the body into an artist.
     var artist = await req.deserializeBody((m) {
-      return Artist(name: m['name'] as String ?? '(unknown name)');
+      return Artist(name: m!['name'] as String? ?? '(unknown name)');
     });
 
     // Return it (it will be serialized to JSON).
@@ -49,7 +49,7 @@ class ArtistsController extends Controller {
 }
 
 class Artist {
-  final String name;
+  final String? name;
 
   Artist({this.name});
 

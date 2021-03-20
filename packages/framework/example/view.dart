@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:angel_container/mirrors.dart';
 import 'package:angel_framework/angel_framework.dart';
 import 'package:angel_framework/http.dart';
@@ -12,7 +14,7 @@ main() async {
   app.get('/', (req, res) => res.render('index', {'foo': 'bar'}));
 
   var http = AngelHttp(app);
-  var server = await http.startServer('127.0.0.1', 3000);
+  HttpServer server = await http.startServer('127.0.0.1', 3000);
   var url = 'http://${server.address.address}:${server.port}';
   print('Listening at $url');
 }

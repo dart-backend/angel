@@ -19,7 +19,7 @@ main() async {
       (req, res) => Future.error('Throwing just because I feel like!'));
 
   var http = AngelHttp(app);
-  var server = await http.startServer('127.0.0.1', 3000);
+  HttpServer server = await http.startServer('127.0.0.1', 3000);
   var url = 'http://${server.address.address}:${server.port}';
   print('Listening at $url');
 }

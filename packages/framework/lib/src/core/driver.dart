@@ -17,11 +17,11 @@ abstract class Driver<
     Server extends Stream<Request>,
     RequestContextType extends RequestContext,
     ResponseContextType extends ResponseContext> {
-  final Angel app;
+  final Angel? app;
   final bool useZone;
   bool _closed = false;
-  Server _server;
-  StreamSubscription<Request> _sub;
+  Server? _server;
+  StreamSubscription<Request>? _sub;
 
   /// The function used to bind this instance to a server..
   final Future<Server> Function(dynamic, int) serverGenerator;
@@ -32,25 +32,27 @@ abstract class Driver<
   Uri get uri;
 
   /// The native server running this instance.
-  Server get server => _server;
+  Server? get server => _server;
 
   Future<Server> generateServer(address, int port) =>
       serverGenerator(address, port);
 
   /// Starts, and returns the server.
-  Future<Server> startServer([address, int port]) {
+  Future<Server> startServer([address, int? port]) {
     var host = address ?? '127.0.0.1';
     return generateServer(host, port ?? 0).then((server) {
       _server = server;
-      return Future.wait(app.startupHooks.map(app.configure)).then((_) {
-        app.optimizeForProduction();
+      return Future.wait(app!.startupHooks.map(app!.configure)).then((_) {
+        app!.optimizeForProduction();
         _sub = server.listen((request) {
           var stream = createResponseStreamFromRawRequest(request);
           stream.listen((response) {
-            return handleRawRequest(request, response);
+            // TODO: To be revisited
+            handleRawRequest(request, response);
+            return;
           });
         });
-        return _server;
+        return _server!;
       });
     });
   }
@@ -60,8 +62,9 @@ abstract class Driver<
     if (_closed) return Future.value(_server);
     _closed = true;
     _sub?.cancel();
-    return app.close().then((_) =>
-        Future.wait(app.shutdownHooks.map(app.configure)).then((_) => _server));
+    return app!.close().then((_) =>
+        Future.wait(app!.shutdownHooks.map(app!.configure))
+            .then((_) => _server!));
   }
 
   Future<RequestContextType> createRequestContext(
@@ -69,9 +72,9 @@ abstract class Driver<
 
   Future<ResponseContextType> createResponseContext(
       Request request, Response response,
-      [RequestContextType correspondingRequest]);
+      [RequestContextType? correspondingRequest]);
 
-  void setHeader(Response response, String key, String value);
+  void setHeader(Response response, String key, String? value);
 
   void setContentLength(Response response, int length);
 
@@ -97,42 +100,42 @@ abstract class Driver<
           var path = req.path;
           if (path == '/') path = '';
 
-          Tuple4<List, Map<String, dynamic>, ParseResult<RouteResult>,
+          Tuple4<List?, Map<String?, dynamic>, ParseResult<RouteResult?>?,
               MiddlewarePipeline> resolveTuple() {
-            var r = app.optimizedRouter;
+            var r = app!.optimizedRouter;
             var resolved =
-                r.resolveAbsolute(path, method: req.method, strip: false);
-            var pipeline = MiddlewarePipeline<RequestHandler>(resolved);
+                r.resolveAbsolute(path, method: req.method!, strip: false);
+            var pipeline = MiddlewarePipeline<RequestHandler?>(resolved);
             return Tuple4(
               pipeline.handlers,
-              resolved.fold<Map<String, dynamic>>(
-                  <String, dynamic>{}, (out, r) => out..addAll(r.allParams)),
+              resolved.fold<Map<String?, dynamic>>(
+                  <String?, dynamic>{}, (out, r) => out..addAll(r.allParams)),
               resolved.isEmpty ? null : resolved.first.parseResult,
               pipeline,
             );
           }
 
-          var cacheKey = req.method + path;
-          var tuple = app.environment.isProduction
-              ? app.handlerCache.putIfAbsent(cacheKey, resolveTuple)
+          var cacheKey = req.method! + path!;
+          var tuple = app!.environment.isProduction
+              ? app!.handlerCache.putIfAbsent(cacheKey, resolveTuple)
               : resolveTuple();
-          var line = tuple.item4 as MiddlewarePipeline<RequestHandler>;
-          var it = MiddlewarePipelineIterator<RequestHandler>(line);
+          var line = tuple.item4 as MiddlewarePipeline<RequestHandler?>;
+          var it = MiddlewarePipelineIterator<RequestHandler?>(line);
 
           req.params.addAll(tuple.item2);
 
           req.container
-            ..registerSingleton<RequestContext>(req)
+            ?..registerSingleton<RequestContext>(req)
             ..registerSingleton<ResponseContext>(res)
             ..registerSingleton<MiddlewarePipeline>(tuple.item4)
-            ..registerSingleton<MiddlewarePipeline<RequestHandler>>(line)
+            ..registerSingleton<MiddlewarePipeline<RequestHandler?>>(line)
             ..registerSingleton<MiddlewarePipelineIterator>(it)
-            ..registerSingleton<MiddlewarePipelineIterator<RequestHandler>>(it)
-            ..registerSingleton<ParseResult<RouteResult>>(tuple.item3)
-            ..registerSingleton<ParseResult>(tuple.item3);
+            ..registerSingleton<MiddlewarePipelineIterator<RequestHandler?>>(it)
+            ..registerSingleton<ParseResult<RouteResult?>?>(tuple.item3)
+            ..registerSingleton<ParseResult?>(tuple.item3);
 
-          if (!app.environment.isProduction && app.logger != null) {
-            req.container.registerSingleton<Stopwatch>(Stopwatch()..start());
+          if (!app!.environment.isProduction && app!.logger != null) {
+            req.container!.registerSingleton<Stopwatch>(Stopwatch()..start());
           }
 
           return runPipeline(it, req, res, app)
@@ -161,10 +164,10 @@ abstract class Driver<
               (ee, StackTrace st) {
             var e = ee as AngelHttpException;
 
-            if (app.logger != null) {
+            if (app!.logger != null) {
               var error = e.error ?? e;
               var trace = Trace.from(e.stackTrace ?? StackTrace.current).terse;
-              app.logger.severe(e.message ?? e.toString(), error, trace);
+              app!.logger!.severe(e.message ?? e.toString(), error, trace);
             }
 
             return handleAngelHttpException(
@@ -173,16 +176,17 @@ abstract class Driver<
         } else {
           var zoneSpec = ZoneSpecification(
             print: (self, parent, zone, line) {
-              if (app.logger != null) {
-                app.logger.info(line);
+              if (app!.logger != null) {
+                app!.logger!.info(line);
               } else {
                 parent.print(zone, line);
               }
             },
             handleUncaughtError: (self, parent, zone, error, stackTrace) {
-              var trace = Trace.from(stackTrace ?? StackTrace.current).terse;
+              var trace = Trace.from(stackTrace).terse;
 
-              return Future(() {
+              // TODO: To be revisited
+              Future(() {
                 AngelHttpException e;
 
                 if (error is FormatException) {
@@ -191,24 +195,22 @@ abstract class Driver<
                   e = error;
                 } else {
                   e = AngelHttpException(error,
-                      stackTrace: stackTrace,
-                      message:
-                          error?.toString() ?? '500 Internal Server Error');
+                      stackTrace: stackTrace, message: error.toString());
                 }
 
-                if (app.logger != null) {
-                  app.logger.severe(e.message ?? e.toString(), error, trace);
+                if (app!.logger != null) {
+                  app!.logger!.severe(e.message ?? e.toString(), error, trace);
                 }
 
                 return handleAngelHttpException(
                     e, trace, req, res, request, response);
               }).catchError((e, StackTrace st) {
-                var trace = Trace.from(st ?? StackTrace.current).terse;
+                var trace = Trace.from(st).terse;
                 closeResponse(response);
                 // Ideally, we won't be in a position where an absolutely fatal error occurs,
                 // but if so, we'll need to log it.
-                if (app.logger != null) {
-                  app.logger.severe(
+                if (app!.logger != null) {
+                  app!.logger!.severe(
                       'Fatal error occurred when processing $uri.', e, trace);
                 } else {
                   stderr
@@ -218,12 +220,13 @@ abstract class Driver<
                     ..writeln(trace);
                 }
               });
+              return;
             },
           );
 
           var zone = Zone.current.fork(specification: zoneSpec);
-          req.container.registerSingleton<Zone>(zone);
-          req.container.registerSingleton<ZoneSpecification>(zoneSpec);
+          req.container!.registerSingleton<Zone>(zone);
+          req.container!.registerSingleton<ZoneSpecification>(zoneSpec);
 
           // If a synchronous error is thrown, it's not caught by `zone.run`,
           // so use a try/catch, and recover when need be.
@@ -240,17 +243,17 @@ abstract class Driver<
   }
 
   /// Handles an [AngelHttpException].
-  Future handleAngelHttpException(
+  Future? handleAngelHttpException(
       AngelHttpException e,
       StackTrace st,
-      RequestContext req,
-      ResponseContext res,
+      RequestContext? req,
+      ResponseContext? res,
       Request request,
       Response response,
       {bool ignoreFinalizers = false}) {
     if (req == null || res == null) {
       try {
-        app.logger?.severe(null, e, st);
+        app!.logger?.severe(null, e, st);
         setStatusCode(response, 500);
         writeStringToResponse(response, '500 Internal Server Error');
         closeResponse(response);
@@ -266,8 +269,8 @@ abstract class Driver<
     } else {
       res.statusCode = e.statusCode;
       handleError =
-          Future.sync(() => app.errorHandler(e, req, res)).then((result) {
-        return app.executeHandler(result, req, res).then((_) => res.close());
+          Future.sync(() => app!.errorHandler(e, req, res)).then((result) {
+        return app!.executeHandler(result, req, res).then((_) => res.close());
       });
     }
 
@@ -280,11 +283,11 @@ abstract class Driver<
       ResponseContext res,
       {bool ignoreFinalizers = false}) {
     Future<void> _cleanup(_) {
-      if (!app.environment.isProduction &&
-          app.logger != null &&
-          req.container.has<Stopwatch>()) {
-        var sw = req.container.make<Stopwatch>();
-        app.logger.info(
+      if (!app!.environment.isProduction &&
+          app!.logger != null &&
+          req.container!.has<Stopwatch>()) {
+        var sw = req.container!.make<Stopwatch>();
+        app!.logger!.info(
             "${res.statusCode} ${req.method} ${req.uri} (${sw?.elapsedMilliseconds ?? 'unknown'} ms)");
       }
       return req.close();
@@ -294,7 +297,7 @@ abstract class Driver<
 
     Future finalizers = ignoreFinalizers == true
         ? Future.value()
-        : Future.forEach(app.responseFinalizers, (f) => f(req, res));
+        : Future.forEach(app!.responseFinalizers, (dynamic f) => f(req, res));
 
     return finalizers.then((_) {
       //if (res.isOpen) res.close();
@@ -303,18 +306,18 @@ abstract class Driver<
         setHeader(response, key, res.headers[key]);
       }
 
-      setContentLength(response, res.buffer.length);
+      setContentLength(response, res.buffer!.length);
       setChunkedEncoding(response, res.chunked ?? true);
 
-      List<int> outputBuffer = res.buffer.toBytes();
+      List<int> outputBuffer = res.buffer!.toBytes();
 
       if (res.encoders.isNotEmpty) {
-        var allowedEncodings = req.headers
+        var allowedEncodings = req.headers!
             .value('accept-encoding')
             ?.split(',')
-            ?.map((s) => s.trim())
-            ?.where((s) => s.isNotEmpty)
-            ?.map((str) {
+            .map((s) => s.trim())
+            .where((s) => s.isNotEmpty)
+            .map((str) {
           // Ignore quality specifications in accept-encoding
           // ex. gzip;q=0.8
           if (!str.contains(';')) return str;
@@ -323,7 +326,7 @@ abstract class Driver<
 
         if (allowedEncodings != null) {
           for (var encodingName in allowedEncodings) {
-            Converter<List<int>, List<int>> encoder;
+            Converter<List<int>, List<int>>? encoder;
             String key = encodingName;
 
             if (res.encoders.containsKey(encodingName)) {
@@ -334,7 +337,7 @@ abstract class Driver<
 
             if (encoder != null) {
               setHeader(response, 'content-encoding', key);
-              outputBuffer = res.encoders[key].convert(outputBuffer);
+              outputBuffer = res.encoders[key]!.convert(outputBuffer);
               setContentLength(response, outputBuffer.length);
               break;
             }
@@ -352,16 +355,16 @@ abstract class Driver<
   /// Runs a [MiddlewarePipeline].
   static Future<void> runPipeline<RequestContextType extends RequestContext,
           ResponseContextType extends ResponseContext>(
-      MiddlewarePipelineIterator<RequestHandler> it,
+      MiddlewarePipelineIterator<RequestHandler?> it,
       RequestContextType req,
       ResponseContextType res,
-      Angel app) async {
+      Angel? app) async {
     var broken = false;
     while (it.moveNext()) {
       var current = it.current.handlers.iterator;
 
       while (!broken && current.moveNext()) {
-        var result = await app.executeHandler(current.current, req, res);
+        var result = await app!.executeHandler(current.current, req, res);
         if (result != true) {
           broken = true;
           break;

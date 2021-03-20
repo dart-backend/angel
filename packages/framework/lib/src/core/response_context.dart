@@ -26,14 +26,14 @@ abstract class ResponseContext<RawResponse>
     'server': 'angel',
   });
 
-  Completer _done;
+  Completer? _done;
   int _statusCode = 200;
 
   /// The [Angel] instance that is sending a response.
-  Angel app;
+  Angel? app;
 
   /// Is `Transfer-Encoding` chunked?
-  bool chunked;
+  bool? chunked;
 
   /// Any and all cookies to be sent to the user.
   final List<Cookie> cookies = [];
@@ -49,7 +49,7 @@ abstract class ResponseContext<RawResponse>
   final Map<String, dynamic> renderParams = {};
 
   /// Points to the [RequestContext] corresponding to this response.
-  RequestContext get correspondingRequest;
+  RequestContext? get correspondingRequest;
 
   @override
   Future get done => (_done ?? Completer()).future;
@@ -71,12 +71,12 @@ abstract class ResponseContext<RawResponse>
   /// ```dart
   /// app.injectSerializer(JSON.encode);
   /// ```
-  FutureOr<String> Function(dynamic) serializer = c.json.encode;
+  FutureOr<String> Function(dynamic)? serializer = c.json.encode;
 
   /// This response's status code.
   int get statusCode => _statusCode;
 
-  set statusCode(int value) {
+  set statusCode(int? value) {
     if (!isOpen) {
       throw closed();
     } else {
@@ -94,7 +94,7 @@ abstract class ResponseContext<RawResponse>
   bool get isBuffered;
 
   /// A set of UTF-8 encoded bytes that will be written to the response.
-  BytesBuilder get buffer;
+  BytesBuilder? get buffer;
 
   /// The underlying [RawResponse] under this instance.
   RawResponse get rawResponse;
@@ -108,14 +108,14 @@ abstract class ResponseContext<RawResponse>
   /// Gets or sets the content length to send back to a client.
   ///
   /// Returns `null` if the header is invalidly formatted.
-  int get contentLength {
-    return int.tryParse(headers['content-length']);
+  int? get contentLength {
+    return int.tryParse(headers['content-length']!);
   }
 
   /// Gets or sets the content length to send back to a client.
   ///
   /// If [value] is `null`, then the header will be removed.
-  set contentLength(int value) {
+  set contentLength(int? value) {
     if (value == null) {
       headers.remove('content-length');
     } else {
@@ -126,7 +126,7 @@ abstract class ResponseContext<RawResponse>
   /// Gets or sets the content type to send back to a client.
   MediaType get contentType {
     try {
-      return MediaType.parse(headers['content-type']);
+      return MediaType.parse(headers['content-type']!);
     } catch (_) {
       return MediaType('text', 'plain');
     }
@@ -140,18 +140,18 @@ abstract class ResponseContext<RawResponse>
   static StateError closed() => StateError('Cannot modify a closed response.');
 
   /// Sends a download as a response.
-  Future<void> download(File file, {String filename}) async {
+  Future<void> download(File file, {String? filename}) async {
     if (!isOpen) throw closed();
 
     headers["Content-Disposition"] =
         'attachment; filename="${filename ?? file.path}"';
-    contentType = MediaType.parse(lookupMimeType(file.path));
+    contentType = MediaType.parse(lookupMimeType(file.path)!);
     headers['content-length'] = file.lengthSync().toString();
 
     if (!isBuffered) {
       await file.openRead().cast<List<int>>().pipe(this);
     } else {
-      buffer.add(file.readAsBytesSync());
+      buffer!.add(file.readAsBytesSync());
       await close();
     }
   }
@@ -162,7 +162,7 @@ abstract class ResponseContext<RawResponse>
       (buffer as LockableBytesBuilder).lock();
     }
 
-    if (_done?.isCompleted == false) _done.complete();
+    if (_done?.isCompleted == false) _done!.complete();
     return Future.value();
   }
 
@@ -175,18 +175,18 @@ abstract class ResponseContext<RawResponse>
   ///
   /// You can override the [contentType] sent; by default it is `application/javascript`.
   Future<void> jsonp(value,
-      {String callbackName = "callback", MediaType contentType}) {
+      {String callbackName = "callback", MediaType? contentType}) {
     if (!isOpen) throw closed();
     this.contentType = contentType ?? MediaType('application', 'javascript');
-    write("$callbackName(${serializer(value)})");
+    write("$callbackName(${serializer!(value)})");
     return close();
   }
 
   /// Renders a view to the response stream, and closes the response.
-  Future<void> render(String view, [Map<String, dynamic> data]) {
+  Future<void> render(String view, [Map<String, dynamic>? data]) {
     if (!isOpen) throw closed();
     contentType = MediaType('text', 'html', {'charset': 'utf-8'});
-    return Future<String>.sync(() => app.viewGenerator(
+    return Future<String>.sync(() => app!.viewGenerator!(
         view,
         Map<String, dynamic>.from(renderParams)
           ..addAll(data ?? <String, dynamic>{}))).then((content) {
@@ -202,13 +202,13 @@ abstract class ResponseContext<RawResponse>
   /// based on the provided params.
   ///
   /// See [Router]#navigate for more. :)
-  Future<void> redirect(url, {bool absolute = true, int code = 302}) {
+  Future<void> redirect(url, {bool absolute = true, int? code = 302}) {
     if (!isOpen) throw closed();
     headers
       ..['content-type'] = 'text/html'
       ..['location'] = (url is String || url is Uri)
           ? url.toString()
-          : app.navigate(url as Iterable, absolute: absolute);
+          : app!.navigate(url as Iterable, absolute: absolute);
     statusCode = code ?? 302;
     write('''
     <!DOCTYPE html>
@@ -231,9 +231,9 @@ abstract class ResponseContext<RawResponse>
   }
 
   /// Redirects to the given named [Route].
-  Future<void> redirectTo(String name, [Map params, int code]) async {
+  Future<void> redirectTo(String name, [Map? params, int? code]) async {
     if (!isOpen) throw closed();
-    Route _findRoute(Router r) {
+    Route? _findRoute(Router r) {
       for (Route route in r.routes) {
         if (route is SymlinkRoute) {
           final m = _findRoute(route.router);
@@ -245,11 +245,11 @@ abstract class ResponseContext<RawResponse>
       return null;
     }
 
-    Route matched = _findRoute(app);
+    Route? matched = _findRoute(app!);
 
     if (matched != null) {
       await redirect(
-          matched.makeUri(params.keys.fold<Map<String, dynamic>>({}, (out, k) {
+          matched.makeUri(params!.keys.fold<Map<String, dynamic>>({}, (out, k) {
             return out..[k.toString()] = params[k];
           })),
           code: code);
@@ -260,7 +260,7 @@ abstract class ResponseContext<RawResponse>
   }
 
   /// Redirects to the given [Controller] action.
-  Future<void> redirectToAction(String action, [Map params, int code]) {
+  Future<void> redirectToAction(String action, [Map? params, int? code]) {
     if (!isOpen) throw closed();
     // UserController@show
     List<String> split = action.split("@");
@@ -270,14 +270,14 @@ abstract class ResponseContext<RawResponse>
           "Controller redirects must take the form of 'Controller@action'. You gave: $action");
     }
 
-    Controller controller =
-        app.controllers[split[0].replaceAll(_straySlashes, '')];
+    Controller? controller =
+        app!.controllers[split[0].replaceAll(_straySlashes, '')];
 
     if (controller == null) {
       throw Exception("Could not find a controller named '${split[0]}'");
     }
 
-    Route matched = controller.routeMappings[split[1]];
+    Route? matched = controller.routeMappings[split[1]];
 
     if (matched == null) {
       throw Exception(
@@ -285,24 +285,26 @@ abstract class ResponseContext<RawResponse>
     }
 
     final head = controller
-        .findExpose(app.container.reflector)
+        .findExpose(app!.container!.reflector)!
         .path
         .toString()
         .replaceAll(_straySlashes, '');
-    final tail = matched
-        .makeUri(params.keys.fold<Map<String, dynamic>>({}, (out, k) {
-          return out..[k.toString()] = params[k];
-        }))
-        .replaceAll(_straySlashes, '');
-
+    String tail = "";
+    if (params != null) {
+      tail = matched
+          .makeUri(params.keys.fold<Map<String, dynamic>>({}, (out, k) {
+            return out..[k.toString()] = params[k];
+          }))
+          .replaceAll(_straySlashes, '');
+    }
     return redirect('$head/$tail'.replaceAll(_straySlashes, ''), code: code);
   }
 
   /// Serializes data to the response.
-  Future<bool> serialize(value, {MediaType contentType}) async {
+  Future<bool> serialize(value, {MediaType? contentType}) async {
     if (!isOpen) throw closed();
     this.contentType = contentType ?? MediaType('application', 'json');
-    var text = await serializer(value);
+    var text = await serializer!(value);
     if (text.isEmpty) return true;
     write(text);
     await close();
@@ -314,13 +316,13 @@ abstract class ResponseContext<RawResponse>
   /// `HEAD` responses will not actually write data.
   Future streamFile(File file) async {
     if (!isOpen) throw closed();
-    var mimeType = app.mimeTypeResolver.lookup(file.path);
+    var mimeType = app!.mimeTypeResolver.lookup(file.path);
     contentLength = await file.length();
     contentType = mimeType == null
         ? MediaType('application', 'octet-stream')
         : MediaType.parse(mimeType);
 
-    if (correspondingRequest.method != 'HEAD') {
+    if (correspondingRequest!.method != 'HEAD') {
       return this
           .addStream(file.openRead().cast<List<int>>())
           .then((_) => this.close());
@@ -338,16 +340,16 @@ abstract class ResponseContext<RawResponse>
   Future addStream(Stream<List<int>> stream);
 
   @override
-  void addError(Object error, [StackTrace stackTrace]) {
+  void addError(Object error, [StackTrace? stackTrace]) {
     if (_done?.isCompleted == false) {
-      _done.completeError(error, stackTrace);
+      _done!.completeError(error, stackTrace);
     } else if (_done == null) {
-      Zone.current.handleUncaughtError(error, stackTrace);
+      Zone.current.handleUncaughtError(error, stackTrace!);
     }
   }
 
   /// Writes data to the response.
-  void write(value, {Encoding encoding}) {
+  void write(value, {Encoding? encoding}) {
     encoding ??= utf8;
 
     if (!isOpen && isBuffered) {
@@ -355,7 +357,7 @@ abstract class ResponseContext<RawResponse>
     } else if (!isBuffered) {
       add(encoding.encode(value.toString()));
     } else {
-      buffer.add(encoding.encode(value.toString()));
+      buffer!.add(encoding.encode(value.toString()));
     }
   }
 
@@ -366,12 +368,12 @@ abstract class ResponseContext<RawResponse>
     } else if (!isBuffered) {
       add([charCode]);
     } else {
-      buffer.addByte(charCode);
+      buffer!.addByte(charCode);
     }
   }
 
   @override
-  void writeln([Object obj = ""]) {
+  void writeln([Object? obj = ""]) {
     write(obj.toString());
     write('\r\n');
   }

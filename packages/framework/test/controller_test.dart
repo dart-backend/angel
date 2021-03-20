@@ -70,39 +70,39 @@ bool bar(RequestContext req, ResponseContext res) {
 }
 
 main() {
-  Angel app;
-  TodoController todoController;
-  NoExposeController noExposeCtrl;
-  HttpServer server;
+  Angel? app;
+  late TodoController todoController;
+  late NoExposeController noExposeCtrl;
+  late HttpServer server;
   http.Client client = http.Client();
-  String url;
+  String? url;
 
   setUp(() async {
     app = Angel(reflector: MirrorsReflector());
-    app.get(
+    app!.get(
         "/redirect",
         (req, res) async =>
             res.redirectToAction("TodoController@foo", {"foo": "world"}));
 
     // Register as a singleton, just for the purpose of this test
-    if (!app.container.has<TodoController>()) {
-      app.container.registerSingleton(todoController = TodoController());
+    if (!app!.container!.has<TodoController>()) {
+      app!.container!.registerSingleton(todoController = TodoController());
     }
 
     // Using mountController<T>();
-    await app.mountController<TodoController>();
+    await app!.mountController<TodoController>();
 
-    noExposeCtrl = await app.mountController<NoExposeController>();
+    noExposeCtrl = await app!.mountController<NoExposeController>();
 
     // Place controller in group. The applyRoutes() call, however, is async.
     // Until https://github.com/angel-dart/route/issues/28 is closed,
     // this will need to be done by manually mounting the router.
     var subRouter = Router<RequestHandler>();
-    await todoController.applyRoutes(subRouter, app.container.reflector);
-    app.mount('/ctrl_group', subRouter);
+    await todoController.applyRoutes(subRouter, app!.container!.reflector);
+    app!.mount('/ctrl_group', subRouter);
 
-    print(app.controllers);
-    app.dumpTree();
+    print(app!.controllers);
+    app!.dumpTree();
 
     server = await AngelHttp(app).startServer();
     url = 'http://${server.address.address}:${server.port}';
@@ -122,7 +122,7 @@ main() {
     var app = Angel(reflector: MirrorsReflector());
     app.get(
         '/foo',
-        ioc(({String bar}) {
+        ioc(({String? bar}) {
           return 2;
         }, optional: ['bar']));
     var rq = MockHttpRequest('GET', Uri(path: 'foo'));
@@ -171,7 +171,7 @@ main() {
 
   group('optional expose', () {
     test('removes suffixes from controller names', () {
-      expect(noExposeCtrl.mountPoint.path, 'no_expose');
+      expect(noExposeCtrl.mountPoint!.path, 'no_expose');
     });
 
     test('mounts correct routes', () {
@@ -182,7 +182,7 @@ main() {
 
     test('mounts correct methods', () {
       void expectMethod(String name, String method) {
-        expect(noExposeCtrl.routeMappings[name].method, method);
+        expect(noExposeCtrl.routeMappings[name]!.method, method);
       }
 
       expectMethod('getIndex', 'GET');
@@ -194,7 +194,7 @@ main() {
 
     test('mounts correct paths', () {
       void expectPath(String name, String path) {
-        expect(noExposeCtrl.routeMappings[name].path, path);
+        expect(noExposeCtrl.routeMappings[name]!.path, path);
       }
 
       expectPath('getIndex', '/');

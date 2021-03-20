@@ -51,7 +51,7 @@ main() {
     await app.errorHandler(e, req, res);
     await http.sendResponse(rq, rs, req, res);
     expect(
-      ContentType.parse(rs.headers.value('content-type')).mimeType,
+      ContentType.parse(rs.headers.value('content-type')!).mimeType,
       'text/html',
     );
     expect(rs.statusCode, e.statusCode);
@@ -116,8 +116,8 @@ main() {
     var http = AngelHttp(app);
     app.responseFinalizers
         .add((req, res) => throw AngelHttpException.forbidden());
-    RequestContext req;
-    ResponseContext res;
+    late RequestContext req;
+    late ResponseContext res;
 
     setUp(() async {
       var rq = MockHttpRequest('GET', $foo);
@@ -155,8 +155,8 @@ main() {
   });
 
   group('handleAngelHttpException', () {
-    Angel app;
-    AngelHttp http;
+    late Angel app;
+    late AngelHttp http;
 
     setUp(() async {
       app = Angel(reflector: MirrorsReflector());
@@ -182,7 +182,7 @@ main() {
       (http.handleRequest(rq));
       await rq.response.toList();
       expect(rq.response.statusCode, 403);
-      expect(rq.response.headers.contentType.mimeType, 'application/json');
+      expect(rq.response.headers.contentType!.mimeType, 'application/json');
     });
 
     test('can throw in finalizer', () async {
@@ -192,7 +192,7 @@ main() {
       (http.handleRequest(rq));
       await rq.response.toList();
       expect(rq.response.statusCode, 403);
-      expect(rq.response.headers.contentType.mimeType, 'application/json');
+      expect(rq.response.headers.contentType!.mimeType, 'application/json');
     });
 
     test('can send html', () async {

@@ -12,7 +12,7 @@ abstract class SafeCtrl<T> {
 
   void add(T event);
 
-  void addError(error, [StackTrace stackTrace]);
+  void addError(error, [StackTrace? stackTrace]);
 
   Future close();
 
@@ -20,16 +20,16 @@ abstract class SafeCtrl<T> {
 }
 
 class _SingleSafeCtrl<T> implements SafeCtrl<T> {
-  StreamController<T> _stream;
+  late StreamController<T> _stream;
   bool _hasListener = false, _initialized = false;
-  _InitCallback _initializer;
+  _InitCallback? _initializer;
 
   _SingleSafeCtrl() {
     _stream = StreamController<T>(onListen: () {
       _hasListener = true;
 
       if (!_initialized && _initializer != null) {
-        _initializer();
+        _initializer!();
         _initialized = true;
       }
     }, onPause: () {
@@ -50,8 +50,8 @@ class _SingleSafeCtrl<T> implements SafeCtrl<T> {
   }
 
   @override
-  void addError(error, [StackTrace stackTrace]) {
-    if (_hasListener) _stream.addError(error, stackTrace);
+  void addError(error, [StackTrace? stackTrace]) {
+    if (_hasListener) _stream.addError(error as Object, stackTrace);
   }
 
   @override
@@ -65,7 +65,7 @@ class _SingleSafeCtrl<T> implements SafeCtrl<T> {
       if (!_hasListener) {
         _initializer = callback;
       } else {
-        _initializer();
+        _initializer!();
         _initialized = true;
       }
     }
@@ -73,17 +73,17 @@ class _SingleSafeCtrl<T> implements SafeCtrl<T> {
 }
 
 class _BroadcastSafeCtrl<T> implements SafeCtrl<T> {
-  StreamController<T> _stream;
+  late StreamController<T> _stream;
   int _listeners = 0;
   bool _initialized = false;
-  _InitCallback _initializer;
+  _InitCallback? _initializer;
 
   _BroadcastSafeCtrl() {
     _stream = StreamController<T>.broadcast(onListen: () {
       _listeners++;
 
       if (!_initialized && _initializer != null) {
-        _initializer();
+        _initializer!();
         _initialized = true;
       }
     }, onCancel: () {
@@ -100,8 +100,8 @@ class _BroadcastSafeCtrl<T> implements SafeCtrl<T> {
   }
 
   @override
-  void addError(error, [StackTrace stackTrace]) {
-    if (_listeners > 0) _stream.addError(error, stackTrace);
+  void addError(error, [StackTrace? stackTrace]) {
+    if (_listeners > 0) _stream.addError(error as Object, stackTrace);
   }
 
   @override
@@ -115,7 +115,7 @@ class _BroadcastSafeCtrl<T> implements SafeCtrl<T> {
       if (_listeners <= 0) {
         _initializer = callback;
       } else {
-        _initializer();
+        _initializer!();
         _initialized = true;
       }
     }

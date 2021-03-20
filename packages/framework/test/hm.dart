@@ -6,7 +6,7 @@ main() async {
   var zone = Zone.current.fork(
     specification: ZoneSpecification(print: (self, parent, zone, line) {
       if (line == 'null') {
-        parent.print(zone, cyan.wrap(StackTrace.current.toString()));
+        parent.print(zone, cyan.wrap(StackTrace.current.toString())!);
       }
     }),
   );

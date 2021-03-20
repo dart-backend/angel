@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:angel_container/mirrors.dart';
 import 'package:angel_framework/angel_framework.dart' hide Header;
 import 'package:angel_framework/http2.dart';
+import 'package:collection/collection.dart' show IterableExtension;
 import 'package:http/src/multipart_file.dart' as http;
 import 'package:http/src/multipart_request.dart' as http;
 import 'package:http/io_client.dart';
@@ -22,10 +23,10 @@ Stream<List<int>> jfkStream() {
 
 void main() {
   var client = Http2Client();
-  IOClient h1c;
+  late IOClient h1c;
   Angel app;
-  AngelHttp2 http2;
-  Uri serverRoot;
+  late AngelHttp2 http2;
+  late Uri serverRoot;
 
   setUp(() async {
     app = Angel(reflector: MirrorsReflector())..encoders['gzip'] = gzip.encoder;
@@ -63,11 +64,13 @@ void main() {
 
     app.post('/upload', (req, res) async {
       await req.parseBody();
-      var body = req.bodyAsMap, files = req.uploadedFiles;
-      var file = files.firstWhere((f) => f.name == 'file');
+      var body = req.bodyAsMap;
+      List<UploadedFile> files = req.uploadedFiles ?? [];
+
+      UploadedFile file = files.firstWhereOrNull((f) => f.name == 'file')!;
       return [
         await file.data.map((l) => l.length).reduce((a, b) => a + b),
-        file.contentType.mimeType,
+        file.contentType!.mimeType,
         body
       ];
     });
@@ -103,13 +106,13 @@ void main() {
 
     http2 = AngelHttp2(app, ctx, allowHttp1: true);
 
-    var server = await http2.startServer();
+    SecureServerSocket server = await http2.startServer();
     serverRoot = Uri.parse('https://127.0.0.1:${server.port}');
   });
 
   tearDown(() async {
     await http2.close();
-    await h1c.close();
+    h1c.close();
   });
 
   test('buffered response', () async {
@@ -167,7 +170,7 @@ void main() {
   test('json response', () async {
     var response = await client.get(serverRoot.replace(path: '/json'));
     expect(response.body, json.encode({'foo': 'bar'}));
-    expect(ContentType.parse(response.headers['content-type']).mimeType,
+    expect(ContentType.parse(response.headers['content-type']!).mimeType,
         ContentType.json.mimeType);
   });
 

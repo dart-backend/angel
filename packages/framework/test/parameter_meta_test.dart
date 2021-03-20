@@ -24,7 +24,7 @@ void main() {
 
 parameterMetaTests() {
   Angel app;
-  AngelHttp http;
+  late AngelHttp http;
 
   setUp(() {
     app = Angel(reflector: MirrorsReflector());

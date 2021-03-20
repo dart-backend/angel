@@ -9,8 +9,8 @@ import 'package:mock_request/mock_request.dart';
 import 'package:test/test.dart';
 
 main() {
-  Angel app;
-  AngelHttp http;
+  late Angel app;
+  late AngelHttp http;
 
   setUp(() {
     app = Angel(reflector: MirrorsReflector())

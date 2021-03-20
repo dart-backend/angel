@@ -49,20 +49,20 @@ class HookedService<Id, Data, T extends Service<Id, Data>>
   }
 
   @override
-  FutureOr<Data> Function(RequestContext, ResponseContext) get readData =>
+  FutureOr<Data>? Function(RequestContext, ResponseContext?)? get readData =>
       inner.readData;
 
-  RequestContext _getRequest(Map params) {
+  RequestContext? _getRequest(Map? params) {
     if (params == null) return null;
-    return params['__requestctx'] as RequestContext;
+    return params['__requestctx'] as RequestContext?;
   }
 
-  ResponseContext _getResponse(Map params) {
+  ResponseContext? _getResponse(Map? params) {
     if (params == null) return null;
-    return params['__responsectx'] as ResponseContext;
+    return params['__responsectx'] as ResponseContext?;
   }
 
-  Map<String, dynamic> _stripReq(Map<String, dynamic> params) {
+  Map<String, dynamic>? _stripReq(Map<String, dynamic>? params) {
     if (params == null) {
       return params;
     } else {
@@ -95,7 +95,7 @@ class HookedService<Id, Data, T extends Service<Id, Data>>
 
   /// Adds hooks to this instance.
   void addHooks(Angel app) {
-    var hooks = getAnnotation<Hooks>(inner, app.container.reflector);
+    var hooks = getAnnotation<Hooks>(inner, app.container!.reflector);
     List<HookedServiceEventListener<Id, Data, T>> before = [], after = [];
 
     if (hooks != null) {
@@ -105,8 +105,8 @@ class HookedService<Id, Data, T extends Service<Id, Data>>
 
     void applyListeners(
         Function fn, HookedServiceEventDispatcher<Id, Data, T> dispatcher,
-        [bool isAfter]) {
-      Hooks hooks = getAnnotation<Hooks>(fn, app.container.reflector);
+        [bool? isAfter]) {
+      Hooks? hooks = getAnnotation<Hooks>(fn, app.container!.reflector);
       final listeners = <HookedServiceEventListener<Id, Data, T>>[]
         ..addAll(isAfter == true ? after : before);
 
@@ -140,7 +140,7 @@ class HookedService<Id, Data, T extends Service<Id, Data>>
           return true;
         });
 
-  void addRoutes([Service s]) {
+  void addRoutes([Service? s]) {
     super.addRoutes(s ?? inner);
   }
 
@@ -270,7 +270,7 @@ class HookedService<Id, Data, T extends Service<Id, Data>>
   }
 
   @override
-  Future<List<Data>> index([Map<String, dynamic> _params]) {
+  Future<List<Data>> index([Map<String, dynamic>? _params]) {
     var params = _stripReq(_params);
     return beforeIndexed
         ._emit(HookedServiceEvent(false, _getRequest(_params),
@@ -296,7 +296,7 @@ class HookedService<Id, Data, T extends Service<Id, Data>>
   }
 
   @override
-  Future<Data> read(Id id, [Map<String, dynamic> _params]) {
+  Future<Data> read(Id? id, [Map<String, dynamic>? _params]) {
     var params = _stripReq(_params);
     return beforeRead
         ._emit(HookedServiceEvent(false, _getRequest(_params),
@@ -322,7 +322,7 @@ class HookedService<Id, Data, T extends Service<Id, Data>>
   }
 
   @override
-  Future<Data> create(Data data, [Map<String, dynamic> _params]) {
+  Future<Data> create(Data? data, [Map<String, dynamic>? _params]) {
     var params = _stripReq(_params);
     return beforeCreated
         ._emit(HookedServiceEvent(false, _getRequest(_params),
@@ -337,7 +337,7 @@ class HookedService<Id, Data, T extends Service<Id, Data>>
             .then((after) => after.result as Data);
       }
 
-      return inner.create(before.data, params).then((result) {
+      return inner.create(before.data!, params).then((result) {
         return afterCreated
             ._emit(HookedServiceEvent(true, _getRequest(_params),
                 _getResponse(_params), inner, HookedServiceEvent.created,
@@ -348,7 +348,7 @@ class HookedService<Id, Data, T extends Service<Id, Data>>
   }
 
   @override
-  Future<Data> modify(Id id, Data data, [Map<String, dynamic> _params]) {
+  Future<Data> modify(Id? id, Data? data, [Map<String, dynamic>? _params]) {
     var params = _stripReq(_params);
     return beforeModified
         ._emit(HookedServiceEvent(false, _getRequest(_params),
@@ -366,7 +366,7 @@ class HookedService<Id, Data, T extends Service<Id, Data>>
             .then((after) => after.result as Data);
       }
 
-      return inner.modify(id, before.data, params).then((result) {
+      return inner.modify(id, before.data!, params).then((result) {
         return afterModified
             ._emit(HookedServiceEvent(true, _getRequest(_params),
                 _getResponse(_params), inner, HookedServiceEvent.created,
@@ -377,7 +377,7 @@ class HookedService<Id, Data, T extends Service<Id, Data>>
   }
 
   @override
-  Future<Data> update(Id id, Data data, [Map<String, dynamic> _params]) {
+  Future<Data> update(Id? id, Data? data, [Map<String, dynamic>? _params]) {
     var params = _stripReq(_params);
     return beforeUpdated
         ._emit(HookedServiceEvent(false, _getRequest(_params),
@@ -395,7 +395,7 @@ class HookedService<Id, Data, T extends Service<Id, Data>>
             .then((after) => after.result as Data);
       }
 
-      return inner.update(id, before.data, params).then((result) {
+      return inner.update(id, before.data!, params).then((result) {
         return afterUpdated
             ._emit(HookedServiceEvent(true, _getRequest(_params),
                 _getResponse(_params), inner, HookedServiceEvent.updated,
@@ -406,7 +406,7 @@ class HookedService<Id, Data, T extends Service<Id, Data>>
   }
 
   @override
-  Future<Data> remove(Id id, [Map<String, dynamic> _params]) {
+  Future<Data> remove(Id? id, [Map<String, dynamic>? _params]) {
     var params = _stripReq(_params);
     return beforeRemoved
         ._emit(HookedServiceEvent(false, _getRequest(_params),
@@ -434,7 +434,7 @@ class HookedService<Id, Data, T extends Service<Id, Data>>
   /// Fires an `after` event. This will not be propagated to clients,
   /// but will be broadcasted to WebSockets, etc.
   Future<HookedServiceEvent<Id, Data, T>> fire(String eventName, result,
-      [HookedServiceEventListener<Id, Data, T> callback]) {
+      [HookedServiceEventListener<Id, Data, T>? callback]) {
     HookedServiceEventDispatcher<Id, Data, T> dispatcher;
 
     switch (eventName) {
@@ -469,8 +469,8 @@ class HookedService<Id, Data, T extends Service<Id, Data>>
   Future<HookedServiceEvent<Id, Data, T>> fireEvent(
       HookedServiceEventDispatcher<Id, Data, T> dispatcher,
       HookedServiceEvent<Id, Data, T> event,
-      [HookedServiceEventListener<Id, Data, T> callback]) {
-    Future f;
+      [HookedServiceEventListener<Id, Data, T>? callback]) {
+    Future? f;
     if (callback != null && event?._canceled != true) {
       f = Future.sync(() => callback(event));
     }
@@ -480,7 +480,7 @@ class HookedService<Id, Data, T extends Service<Id, Data>>
 }
 
 /// Fired when a hooked service is invoked.
-class HookedServiceEvent<Id, Data, T extends Service<Id, Data>> {
+class HookedServiceEvent<Id, Data, T extends Service<Id?, Data?>> {
   static const String indexed = 'indexed';
   static const String read = 'read';
   static const String created = 'created';
@@ -506,38 +506,38 @@ class HookedServiceEvent<Id, Data, T extends Service<Id, Data>> {
   /// Resolves a service from the application.
   ///
   /// Shorthand for `e.service.app.service(...)`.
-  Service getService(Pattern path) => service.app.findService(path);
+  Service? getService(Pattern path) => service.app!.findService(path);
 
   bool _canceled = false;
   String _eventName;
-  Id _id;
+  Id? _id;
   bool _isAfter;
-  Data data;
-  Map<String, dynamic> _params;
-  RequestContext _request;
-  ResponseContext _response;
+  Data? data;
+  Map<String, dynamic>? _params;
+  RequestContext? _request;
+  ResponseContext? _response;
   var result;
 
   String get eventName => _eventName;
 
-  Id get id => _id;
+  Id? get id => _id;
 
   bool get isAfter => _isAfter == true;
 
   bool get isBefore => !isAfter;
 
-  Map get params => _params;
+  Map? get params => _params;
 
-  RequestContext get request => _request;
+  RequestContext? get request => _request;
 
-  ResponseContext get response => _response;
+  ResponseContext? get response => _response;
 
   /// The inner service whose method was hooked.
   T service;
 
   HookedServiceEvent(this._isAfter, this._request, this._response, this.service,
       this._eventName,
-      {Id id, this.data, Map<String, dynamic> params, this.result}) {
+      {Id? id, this.data, Map<String, dynamic>? params, this.result}) {
     _id = id;
     _params = params ?? {};
   }

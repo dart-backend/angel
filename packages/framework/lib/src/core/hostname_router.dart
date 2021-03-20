@@ -60,10 +60,10 @@ class HostnameRouter {
       Map<Pattern, FutureOr<void> Function(Angel)> configurers,
       {Reflector reflector = const EmptyReflector(),
       AngelEnvironment environment = angelEnv,
-      Logger logger,
+      Logger? logger,
       bool allowMethodOverrides = true,
-      FutureOr<String> Function(dynamic) serializer,
-      ViewGenerator viewGenerator}) {
+      FutureOr<String> Function(dynamic)? serializer,
+      ViewGenerator? viewGenerator}) {
     var creators = configurers.map((p, c) {
       return MapEntry(p, () async {
         var app = Angel(
@@ -89,17 +89,17 @@ class HostnameRouter {
     if (req.hostname != null) {
       for (var pattern in _patterns) {
         // print('${req.hostname} vs $_creators');
-        if (pattern.allMatches(req.hostname).isNotEmpty) {
+        if (pattern.allMatches(req.hostname!).isNotEmpty) {
           // Resolve the entire pipeline within the context of the selected app.
-          var app = _apps[pattern] ??= (await _creators[pattern]());
+          var app = _apps[pattern] ??= (await _creators[pattern]!());
           // print('App for ${req.hostname} = $app from $pattern');
           // app.dumpTree();
 
           var r = app.optimizedRouter;
-          var resolved = r.resolveAbsolute(req.path, method: req.method);
-          var pipeline = MiddlewarePipeline<RequestHandler>(resolved);
+          var resolved = r.resolveAbsolute(req.path, method: req.method!);
+          var pipeline = MiddlewarePipeline<RequestHandler?>(resolved);
           // print('Pipeline: $pipeline');
-          for (var handler in pipeline.handlers) {
+          for (var handler in pipeline.handlers!) {
             // print(handler);
             // Avoid stack overflow.
             if (handler == handleRequest) {

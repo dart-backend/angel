@@ -15,31 +15,31 @@ final String TEXT = "make your bed";
 final String OVER = "never";
 
 main() {
-  Angel app;
-  http.Client client;
-  HttpServer server;
-  String url;
+  Angel? app;
+  http.Client? client;
+  late HttpServer server;
+  String? url;
 
   setUp(() async {
     app = Angel(reflector: MirrorsReflector());
     client = http.Client();
 
     // Inject some todos
-    app.container.registerSingleton(Todo(text: TEXT, over: OVER));
-    app.container.registerFactory<Future<Foo>>((container) async {
-      var req = container.make<RequestContext>();
-      var text = await utf8.decoder.bind(req.body).join();
+    app!.container!.registerSingleton(Todo(text: TEXT, over: OVER));
+    app!.container!.registerFactory<Future<Foo>>((container) async {
+      var req = container.make<RequestContext>()!;
+      var text = await utf8.decoder.bind(req.body!).join();
       return Foo(text);
     });
 
-    app.get("/errands", ioc((Todo singleton) => singleton));
-    app.get(
+    app!.get("/errands", ioc((Todo singleton) => singleton));
+    app!.get(
         "/errands3",
-        ioc(({Errand singleton, Todo foo, RequestContext req}) =>
+        ioc(({required Errand singleton, Todo? foo, RequestContext? req}) =>
             singleton.text));
-    app.post('/async', ioc((Foo foo) => {'baz': foo.bar}));
-    await app.configure(SingletonController().configureServer);
-    await app.configure(ErrandController().configureServer);
+    app!.post('/async', ioc((Foo foo) => {'baz': foo.bar}));
+    await app!.configure(SingletonController().configureServer);
+    await app!.configure(ErrandController().configureServer);
 
     server = await AngelHttp(app).startServer();
     url = "http://${server.address.host}:${server.port}";
@@ -48,7 +48,7 @@ main() {
   tearDown(() async {
     app = null;
     url = null;
-    client.close();
+    client!.close();
     client = null;
     await server.close(force: true);
   });
@@ -71,33 +71,33 @@ main() {
   });
 
   test("singleton in route", () async {
-    validateTodoSingleton(await client.get(Uri.parse("$url/errands")));
+    validateTodoSingleton(await client!.get(Uri.parse("$url/errands")));
   });
 
   test("singleton in controller", () async {
-    validateTodoSingleton(await client.get(Uri.parse("$url/errands2")));
+    validateTodoSingleton(await client!.get(Uri.parse("$url/errands2")));
   });
 
   test("make in route", () async {
-    var response = await client.get(Uri.parse("$url/errands3"));
-    var text = await json.decode(response.body) as String;
+    var response = await client!.get(Uri.parse("$url/errands3"));
+    var text = await json.decode(response.body) as String?;
     expect(text, equals(TEXT));
   });
 
   test("make in controller", () async {
-    var response = await client.get(Uri.parse("$url/errands4"));
-    var text = await json.decode(response.body) as String;
+    var response = await client!.get(Uri.parse("$url/errands4"));
+    var text = await json.decode(response.body) as String?;
     expect(text, equals(TEXT));
   });
 
   test('resolve from future in controller', () async {
     var response =
-        await client.post(Uri.parse('$url/errands4/async'), body: 'hey');
+        await client!.post(Uri.parse('$url/errands4/async'), body: 'hey');
     expect(response.body, json.encode({'bar': 'hey'}));
   });
 
   test('resolve from future in route', () async {
-    var response = await client.post(Uri.parse('$url/async'), body: 'yes');
+    var response = await client!.post(Uri.parse('$url/async'), body: 'yes');
     expect(response.body, json.encode({'baz': 'yes'}));
   });
 }
@@ -137,7 +137,7 @@ class Foo {
 class Errand {
   Todo todo;
 
-  String get text => todo.text;
+  String? get text => todo.text;
 
   Errand(this.todo);
 }

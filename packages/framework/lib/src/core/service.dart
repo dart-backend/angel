@@ -68,29 +68,31 @@ class Service<Id, Data> extends Routable {
   List<RequestHandler> get bootstrappers => [];
 
   /// The [Angel] app powering this service.
-  Angel app;
+  Angel? app;
 
   /// Closes this service, including any database connections or stream controllers.
   void close() {}
 
   /// An optional [readData] function can be passed to handle non-map/non-json bodies.
-  Service({FutureOr<Data> Function(RequestContext, ResponseContext) readData}) {
-    _readData = readData ??
-        (req, res) {
-          if (req.bodyAsObject is! Data) {
-            throw AngelHttpException.badRequest(
-                message:
-                    'Invalid request body. Expected $Data; found ${req.bodyAsObject} instead.');
-          } else {
-            return req.bodyAsObject as Data;
-          }
-        };
+  Service(
+      {FutureOr<Data> Function(RequestContext, ResponseContext?)? readData}) {
+    _readData = readData;
+
+    _readData ??= (req, res) {
+      if (req.bodyAsObject is! Data) {
+        throw AngelHttpException.badRequest(
+            message:
+                'Invalid request body. Expected $Data; found ${req.bodyAsObject} instead.');
+      } else {
+        return req.bodyAsObject as Data?;
+      }
+    };
   }
 
-  FutureOr<Data> Function(RequestContext, ResponseContext) _readData;
+  FutureOr<Data>? Function(RequestContext, ResponseContext?)? _readData;
 
   /// A [Function] that reads the request body and converts it into [Data].
-  FutureOr<Data> Function(RequestContext, ResponseContext) get readData =>
+  FutureOr<Data>? Function(RequestContext, ResponseContext?)? get readData =>
       _readData;
 
   /// Retrieves the first object from the result of calling [index] with the given [params].
@@ -103,7 +105,7 @@ class Service<Id, Data> extends Routable {
   ///
   /// A custom [errorMessage] may be provided.
   Future<Data> findOne(
-      [Map<String, dynamic> params,
+      [Map<String, dynamic>? params,
       String errorMessage = 'No record was found matching the given query.']) {
     return index(params).then((result) {
       if (result == null) {
@@ -119,12 +121,12 @@ class Service<Id, Data> extends Routable {
   }
 
   /// Retrieves all resources.
-  Future<List<Data>> index([Map<String, dynamic> params]) {
+  Future<List<Data>> index([Map<String, dynamic>? params]) {
     throw AngelHttpException.methodNotAllowed();
   }
 
   /// Retrieves the desired resource.
-  Future<Data> read(Id id, [Map<String, dynamic> params]) {
+  Future<Data> read(Id? id, [Map<String, dynamic>? params]) {
     throw AngelHttpException.methodNotAllowed();
   }
 
@@ -132,27 +134,27 @@ class Service<Id, Data> extends Routable {
   ///
   /// Service implementations should override this to ensure data is fetched within a
   /// single round trip.
-  Future<List<Data>> readMany(List<Id> ids, [Map<String, dynamic> params]) {
+  Future<List<Data>> readMany(List<Id> ids, [Map<String, dynamic>? params]) {
     return Future.wait(ids.map((id) => read(id, params)));
   }
 
   /// Creates a resource.
-  Future<Data> create(Data data, [Map<String, dynamic> params]) {
+  Future<Data> create(Data data, [Map<String, dynamic>? params]) {
     throw AngelHttpException.methodNotAllowed();
   }
 
   /// Modifies a resource.
-  Future<Data> modify(Id id, Data data, [Map<String, dynamic> params]) {
+  Future<Data> modify(Id? id, Data data, [Map<String, dynamic>? params]) {
     throw AngelHttpException.methodNotAllowed();
   }
 
   /// Overwrites a resource.
-  Future<Data> update(Id id, Data data, [Map<String, dynamic> params]) {
+  Future<Data> update(Id? id, Data data, [Map<String, dynamic>? params]) {
     throw AngelHttpException.methodNotAllowed();
   }
 
   /// Removes the given resource.
-  Future<Data> remove(Id id, [Map<String, dynamic> params]) {
+  Future<Data> remove(Id? id, [Map<String, dynamic>? params]) {
     throw AngelHttpException.methodNotAllowed();
   }
 
@@ -161,14 +163,15 @@ class Service<Id, Data> extends Routable {
   ///
   /// Handy utility for handling data in a type-safe manner.
   Service<Id, U> map<U>(U Function(Data) encoder, Data Function(U) decoder,
-      {FutureOr<U> Function(RequestContext, ResponseContext) readData}) {
+      {FutureOr<U> Function(RequestContext, ResponseContext)? readData}) {
     readData ??= (req, res) async {
-      var inner = await this.readData(req, res);
+      Data inner = await this.readData!(req, res)!;
       return encoder(inner);
     };
 
     return AnonymousService<Id, U>(
-      readData: readData,
+      readData: readData as FutureOr<U> Function(
+          RequestContext<dynamic>, ResponseContext<dynamic>?)?,
       index: ([params]) {
         return index(params).then((it) => it.map(encoder).toList());
       },
@@ -195,7 +198,7 @@ class Service<Id, Data> extends Routable {
   /// The single type argument, [T], is used to determine how to parse the [id].
   ///
   /// For example, `parseId<bool>` attempts to parse the value as a [bool].
-  static T parseId<T>(id) {
+  static T? parseId<T>(id) {
     if (id == 'null' || id == null) {
       return null;
     } else if (T == String) {
@@ -214,7 +217,7 @@ class Service<Id, Data> extends Routable {
   }
 
   /// Generates RESTful routes pointing to this class's methods.
-  void addRoutes([Service service]) {
+  void addRoutes([Service? service]) {
     _addRoutesInner(service ?? this, bootstrappers);
   }
 
@@ -223,13 +226,13 @@ class Service<Id, Data> extends Routable {
     var handlers = List<RequestHandler>.from(handlerss);
 
     // Add global middleware if declared on the instance itself
-    Middleware before =
-        getAnnotation<Middleware>(service, app.container.reflector);
+    Middleware? before =
+        getAnnotation<Middleware>(service, app!.container!.reflector);
 
     if (before != null) handlers.addAll(before.handlers);
 
-    Middleware indexMiddleware =
-        getAnnotation<Middleware>(service.index, app.container.reflector);
+    Middleware? indexMiddleware =
+        getAnnotation<Middleware>(service.index, app!.container!.reflector);
     get('/', (req, res) {
       return this.index(mergeMap([
         {'query': req.queryParameters},
@@ -237,17 +240,19 @@ class Service<Id, Data> extends Routable {
         req.serviceParams
       ]));
     },
-        middleware: <RequestHandler>[]
+        middleware: []
           ..addAll(handlers)
-          ..addAll((indexMiddleware == null) ? [] : indexMiddleware.handlers));
+          ..addAll((indexMiddleware == null)
+              ? []
+              : indexMiddleware.handlers.toList()));
 
-    Middleware createMiddleware =
-        getAnnotation<Middleware>(service.create, app.container.reflector);
+    Middleware? createMiddleware =
+        getAnnotation<Middleware>(service.create, app!.container!.reflector);
     post('/', (req, ResponseContext res) {
       return req.parseBody().then((_) async {
         return await this
             .create(
-                await readData(req, res),
+                (await readData!(req, res))!,
                 mergeMap([
                   {'query': req.queryParameters},
                   restProvider,
@@ -261,11 +266,12 @@ class Service<Id, Data> extends Routable {
     },
         middleware: []
           ..addAll(handlers)
-          ..addAll(
-              (createMiddleware == null) ? [] : createMiddleware.handlers));
+          ..addAll((createMiddleware == null)
+              ? []
+              : createMiddleware.handlers.toList()));
 
-    Middleware readMiddleware =
-        getAnnotation<Middleware>(service.read, app.container.reflector);
+    Middleware? readMiddleware =
+        getAnnotation<Middleware>(service.read, app!.container!.reflector);
 
     get('/:id', (req, res) {
       return this.read(
@@ -278,15 +284,18 @@ class Service<Id, Data> extends Routable {
     },
         middleware: []
           ..addAll(handlers)
-          ..addAll((readMiddleware == null) ? [] : readMiddleware.handlers));
+          ..addAll((readMiddleware == null)
+              ? []
+              : readMiddleware.handlers.toList()));
 
-    Middleware modifyMiddleware =
-        getAnnotation<Middleware>(service.modify, app.container.reflector);
+    Middleware? modifyMiddleware =
+        getAnnotation<Middleware>(service.modify, app!.container!.reflector);
+
     patch('/:id', (req, res) {
       return req.parseBody().then((_) async {
         return await this.modify(
             parseId<Id>(req.params['id']),
-            await readData(req, res),
+            (await readData!(req, res))!,
             mergeMap([
               {'query': req.queryParameters},
               restProvider,
@@ -296,16 +305,17 @@ class Service<Id, Data> extends Routable {
     },
         middleware: []
           ..addAll(handlers)
-          ..addAll(
-              (modifyMiddleware == null) ? [] : modifyMiddleware.handlers));
+          ..addAll((modifyMiddleware == null)
+              ? []
+              : modifyMiddleware.handlers.toList()));
 
-    Middleware updateMiddleware =
-        getAnnotation<Middleware>(service.update, app.container.reflector);
+    Middleware? updateMiddleware =
+        getAnnotation<Middleware>(service.update, app!.container!.reflector);
     post('/:id', (req, res) {
       return req.parseBody().then((_) async {
         return await this.update(
             parseId<Id>(req.params['id']),
-            await readData(req, res),
+            (await readData!(req, res))!,
             mergeMap([
               {'query': req.queryParameters},
               restProvider,
@@ -315,13 +325,15 @@ class Service<Id, Data> extends Routable {
     },
         middleware: []
           ..addAll(handlers)
-          ..addAll(
-              (updateMiddleware == null) ? [] : updateMiddleware.handlers));
+          ..addAll((updateMiddleware == null)
+              ? []
+              : updateMiddleware.handlers.toList()));
+
     put('/:id', (req, res) {
       return req.parseBody().then((_) async {
         return await this.update(
             parseId<Id>(req.params['id']),
-            await readData(req, res),
+            (await readData!(req, res))!,
             mergeMap([
               {'query': req.queryParameters},
               restProvider,
@@ -331,11 +343,12 @@ class Service<Id, Data> extends Routable {
     },
         middleware: []
           ..addAll(handlers)
-          ..addAll(
-              (updateMiddleware == null) ? [] : updateMiddleware.handlers));
+          ..addAll((updateMiddleware == null)
+              ? []
+              : updateMiddleware.handlers.toList()));
 
-    Middleware removeMiddleware =
-        getAnnotation<Middleware>(service.remove, app.container.reflector);
+    Middleware? removeMiddleware =
+        getAnnotation<Middleware>(service.remove, app!.container!.reflector);
     delete('/', (req, res) {
       return this.remove(
           null,
@@ -347,8 +360,10 @@ class Service<Id, Data> extends Routable {
     },
         middleware: []
           ..addAll(handlers)
-          ..addAll(
-              (removeMiddleware == null) ? [] : removeMiddleware.handlers));
+          ..addAll((removeMiddleware == null)
+              ? []
+              : removeMiddleware.handlers.toList()));
+
     delete('/:id', (req, res) {
       return this.remove(
           parseId<Id>(req.params['id']),
@@ -360,8 +375,9 @@ class Service<Id, Data> extends Routable {
     },
         middleware: []
           ..addAll(handlers)
-          ..addAll(
-              (removeMiddleware == null) ? [] : removeMiddleware.handlers));
+          ..addAll((removeMiddleware == null)
+              ? []
+              : removeMiddleware.handlers.toList()));
 
     // REST compliance
     put('/', (req, res) => throw AngelHttpException.notFound());

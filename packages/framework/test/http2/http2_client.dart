@@ -89,11 +89,11 @@ class Http2Client extends BaseClient {
     var closed = await readResponse(stream, headers, body);
     return StreamedResponse(
       Stream.fromIterable([body.takeBytes()]),
-      int.parse(headers[':status']),
+      int.parse(headers[':status']!),
       headers: headers,
       isRedirect: headers.containsKey('location'),
       contentLength: headers.containsKey('content-length')
-          ? int.parse(headers['content-length'])
+          ? int.parse(headers['content-length']!)
           : null,
       request: request,
       reasonPhrase: null,

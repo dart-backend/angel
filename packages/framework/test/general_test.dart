@@ -7,10 +7,10 @@ import 'package:http/http.dart' as http;
 import 'package:test/test.dart';
 
 main() {
-  Angel app;
-  http.Client client;
-  HttpServer server;
-  String url;
+  Angel? app;
+  http.Client? client;
+  late HttpServer server;
+  String? url;
 
   setUp(() async {
     app = Angel(reflector: MirrorsReflector())
@@ -25,13 +25,13 @@ main() {
   tearDown(() async {
     app = null;
     url = null;
-    client.close();
+    client!.close();
     client = null;
     await server.close(force: true);
   });
 
   test("allow override of method", () async {
-    var response = await client.get(Uri.parse('$url/foo'),
+    var response = await client!.get(Uri.parse('$url/foo'),
         headers: {'X-HTTP-Method-Override': 'POST'});
     print('Response: ${response.body}');
     expect(json.decode(response.body), equals({'hello': 'world'}));

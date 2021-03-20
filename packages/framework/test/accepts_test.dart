@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:angel_container/mirrors.dart';
 import 'package:angel_framework/angel_framework.dart';
 import 'package:angel_framework/http.dart';
@@ -44,7 +45,7 @@ main() {
   });
 
   group('disallow null', () {
-    RequestContext req;
+    late RequestContext req;
 
     setUp(() async {
       req = await acceptContentTypes();
@@ -58,8 +59,9 @@ main() {
 
 Future<RequestContext> acceptContentTypes(
     [Iterable<String> contentTypes = const []]) {
-  var headerString = contentTypes.isEmpty ? null : contentTypes.join(',');
-  var rq = MockHttpRequest('GET', ENDPOINT);
+  var headerString =
+      contentTypes.isEmpty ? ContentType.html : contentTypes.join(',');
+  var rq = MockHttpRequest('GET', ENDPOINT, persistentConnection: false);
   rq.headers.set('accept', headerString);
   rq.close();
   var app = Angel(reflector: MirrorsReflector());

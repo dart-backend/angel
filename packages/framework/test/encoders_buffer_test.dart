@@ -17,7 +17,7 @@ Future<List<int>> getBody(MockHttpResponse rs) async {
 }
 
 main() {
-  Angel app;
+  late Angel app;
 
   setUp(() {
     app = Angel(reflector: MirrorsReflector());
@@ -43,7 +43,7 @@ main() {
 void encodingTests(Angel getApp()) {
   group('encoding', () {
     Angel app;
-    AngelHttp http;
+    late AngelHttp http;
 
     setUp(() {
       app = getApp();

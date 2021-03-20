@@ -5,7 +5,7 @@ import 'package:mock_request/mock_request.dart';
 import 'package:test/test.dart';
 
 void main() {
-  AngelHttp http;
+  late AngelHttp http;
 
   setUp(() async {
     var app = Angel();

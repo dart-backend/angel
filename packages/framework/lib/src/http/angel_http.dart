@@ -21,13 +21,13 @@ class AngelHttp extends Driver<HttpRequest, HttpResponse, HttpServer,
   @override
   Uri get uri => server == null
       ? Uri()
-      : Uri(scheme: 'http', host: server.address.address, port: server.port);
+      : Uri(scheme: 'http', host: server!.address.address, port: server!.port);
 
-  AngelHttp._(Angel app,
+  AngelHttp._(Angel? app,
       Future<HttpServer> Function(dynamic, int) serverGenerator, bool useZone)
       : super(app, serverGenerator, useZone: useZone);
 
-  factory AngelHttp(Angel app, {bool useZone = true}) {
+  factory AngelHttp(Angel? app, {bool useZone = true}) {
     return AngelHttp._(app, HttpServer.bind, useZone);
   }
 
@@ -52,7 +52,7 @@ class AngelHttp extends Driver<HttpRequest, HttpResponse, HttpServer,
   /// the server.
   factory AngelHttp.secure(
       Angel app, String certificateChainPath, String serverKeyPath,
-      {String password, bool useZone = true}) {
+      {String? password, bool useZone = true}) {
     var certificateChain =
         Platform.script.resolve(certificateChainPath).toFilePath();
     var serverKey = Platform.script.resolve(serverKeyPath).toFilePath();
@@ -64,7 +64,7 @@ class AngelHttp extends Driver<HttpRequest, HttpResponse, HttpServer,
 
   /// Use [server] instead.
   @deprecated
-  HttpServer get httpServer => server;
+  HttpServer? get httpServer => server;
 
   Future handleRequest(HttpRequest request) =>
       handleRawRequest(request, request.response);
@@ -87,17 +87,27 @@ class AngelHttp extends Driver<HttpRequest, HttpResponse, HttpServer,
       HttpRequest request, HttpResponse response) {
     var path = request.uri.path.replaceAll(_straySlashes, '');
     if (path.isEmpty) path = '/';
-    return HttpRequestContext.from(request, app, path);
+    return HttpRequestContext.from(request, app!, path);
   }
 
   @override
   Future<HttpResponseContext> createResponseContext(
       HttpRequest request, HttpResponse response,
-      [HttpRequestContext correspondingRequest]) {
-    return Future<HttpResponseContext>.value(
-        HttpResponseContext(response, app, correspondingRequest)
-          ..serializer = (app.serializer ?? json.encode)
-          ..encoders.addAll(app.encoders ?? {}));
+      [HttpRequestContext? correspondingRequest]) {
+    // TODO: Refactored to overcome NNBD migration error
+    HttpResponseContext context =
+        HttpResponseContext(response, app, correspondingRequest);
+
+    if (app!.serializer == null) {
+      context.serializer = json.encode;
+    } else {
+      context.serializer = app!.serializer;
+    }
+    return Future<HttpResponseContext>.value(context);
+//    return Future<HttpResponseContext>.value(
+//        HttpResponseContext(response, app, correspondingRequest)
+//          ..serializer = (app.serializer ?? json.encode)
+//          ..encoders.addAll(app.encoders ?? {}));
   }
 
   @override
@@ -114,8 +124,8 @@ class AngelHttp extends Driver<HttpRequest, HttpResponse, HttpServer,
       response.headers.contentLength = length;
 
   @override
-  void setHeader(HttpResponse response, String key, String value) =>
-      response.headers.set(key, value);
+  void setHeader(HttpResponse response, String key, String? value) =>
+      response.headers.set(key, value!);
 
   @override
   void setStatusCode(HttpResponse response, int value) =>

@@ -5,7 +5,7 @@ const AngelEnvironment angelEnv = AngelEnvironment();
 
 /// Queries the environment's `ANGEL_ENV` value.
 class AngelEnvironment {
-  final String _customValue;
+  final String? _customValue;
 
   /// You can optionally provide a custom value, in order to override the system's
   /// value.
