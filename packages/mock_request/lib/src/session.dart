@@ -7,13 +7,13 @@ class MockHttpSession extends MapBase implements HttpSession {
   @override
   String id;
 
-  MockHttpSession({this.id});
+  MockHttpSession({required this.id});
 
   @override
   int get length => _data.length;
 
   @override
-  dynamic operator [](Object key) => _data[key];
+  dynamic operator [](Object? key) => _data[key];
 
   @override
   void operator []=(key, value) {
@@ -29,10 +29,10 @@ class MockHttpSession extends MapBase implements HttpSession {
   }
 
   @override
-  bool containsKey(Object key) => _data.containsKey(key);
+  bool containsKey(Object? key) => _data.containsKey(key);
 
   @override
-  bool containsValue(Object value) => _data.containsValue(value);
+  bool containsValue(Object? value) => _data.containsValue(value);
 
   @override
   void destroy() {
@@ -61,7 +61,7 @@ class MockHttpSession extends MapBase implements HttpSession {
       _data.putIfAbsent(key, ifAbsent);
 
   @override
-  dynamic remove(Object key) => _data.remove(key);
+  dynamic remove(Object? key) => _data.remove(key);
 
   @override
   Iterable get values => _data.values;

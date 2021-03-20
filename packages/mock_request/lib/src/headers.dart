@@ -3,71 +3,71 @@ import 'dart:io';
 class MockHttpHeaders extends HttpHeaders {
   final Map<String, List<String>> _data = {};
   final List<String> _noFolding = [];
-  Uri _host;
+  Uri? _host;
 
   List<String> get doNotFold => List<String>.unmodifiable(_noFolding);
 
   @override
   ContentType get contentType {
     if (_data.containsKey(HttpHeaders.contentTypeHeader)) {
-      return ContentType.parse(_data[HttpHeaders.contentTypeHeader].join(','));
+      return ContentType.parse(_data[HttpHeaders.contentTypeHeader]!.join(','));
     } else {
-      return null;
+      return ContentType.html;
     }
   }
 
   @override
-  set contentType(ContentType value) =>
-      set(HttpHeaders.contentTypeHeader, value.value);
+  set contentType(ContentType? value) =>
+      set(HttpHeaders.contentTypeHeader, value?.value ?? ContentType.html);
 
   @override
   DateTime get date => _data.containsKey(HttpHeaders.dateHeader)
-      ? HttpDate.parse(_data[HttpHeaders.dateHeader].join(','))
-      : null;
+      ? HttpDate.parse(_data[HttpHeaders.dateHeader]!.join(','))
+      : DateTime.now();
 
   @override
-  set date(DateTime value) =>
-      set(HttpHeaders.dateHeader, HttpDate.format(value));
+  set date(DateTime? value) =>
+      set(HttpHeaders.dateHeader, HttpDate.format(value ?? DateTime.now()));
 
   @override
   DateTime get expires => _data.containsKey(HttpHeaders.expiresHeader)
-      ? HttpDate.parse(_data[HttpHeaders.expiresHeader].join(','))
-      : null;
+      ? HttpDate.parse(_data[HttpHeaders.expiresHeader]!.join(','))
+      : DateTime.now();
 
   @override
-  set expires(DateTime value) =>
-      set(HttpHeaders.expiresHeader, HttpDate.format(value));
+  set expires(DateTime? value) =>
+      set(HttpHeaders.expiresHeader, HttpDate.format(value ?? DateTime.now()));
 
   @override
   DateTime get ifModifiedSince =>
       _data.containsKey(HttpHeaders.ifModifiedSinceHeader)
-          ? HttpDate.parse(_data[HttpHeaders.ifModifiedSinceHeader].join(','))
-          : null;
+          ? HttpDate.parse(_data[HttpHeaders.ifModifiedSinceHeader]!.join(','))
+          : DateTime.now();
 
   @override
-  set ifModifiedSince(DateTime value) =>
-      set(HttpHeaders.ifModifiedSinceHeader, HttpDate.format(value));
+  set ifModifiedSince(DateTime? value) => set(HttpHeaders.ifModifiedSinceHeader,
+      HttpDate.format(value ?? DateTime.now()));
 
   @override
-  String get host {
+  String? get host {
     if (_host != null) {
-      return _host.host;
+      return _host!.host;
     } else if (_data.containsKey(HttpHeaders.hostHeader)) {
-      _host = Uri.parse(_data[HttpHeaders.hostHeader].join(','));
-      return _host.host;
+      _host = Uri.parse(_data[HttpHeaders.hostHeader]!.join(','));
+      return _host!.host;
     } else {
       return null;
     }
   }
 
   @override
-  int get port {
+  int? get port {
     host; // Parse it
     return _host?.port;
   }
 
   @override
-  List<String> operator [](String name) => _data[name.toLowerCase()];
+  List<String>? operator [](String name) => _data[name.toLowerCase()];
 
   @override
   void add(String name, Object value, {bool preserveHeaderCase = false}) {
@@ -75,9 +75,9 @@ class MockHttpHeaders extends HttpHeaders {
 
     if (_data.containsKey(lower)) {
       if (value is Iterable) {
-        _data[lower].addAll(value.map((x) => x.toString()).toList());
+        _data[lower]!.addAll(value.map((x) => x.toString()).toList());
       } else {
-        _data[lower].add(value.toString());
+        _data[lower]!.add(value.toString());
       }
     } else {
       if (value is Iterable) {
@@ -110,10 +110,10 @@ class MockHttpHeaders extends HttpHeaders {
     if (_data.containsKey(lower)) {
       if (value is Iterable) {
         for (var x in value) {
-          _data[lower].remove(x.toString());
+          _data[lower]!.remove(x.toString());
         }
       } else {
-        _data[lower].remove(value.toString());
+        _data[lower]!.remove(value.toString());
       }
     }
   }
@@ -136,7 +136,7 @@ class MockHttpHeaders extends HttpHeaders {
   }
 
   @override
-  String value(String name) => _data[name.toLowerCase()]?.join(',');
+  String? value(String name) => _data[name.toLowerCase()]?.join(',');
 
   @override
   String toString() {

@@ -16,22 +16,22 @@ class MockHttpResponse extends Stream<List<int>> implements HttpResponse {
   final List<Cookie> cookies = [];
 
   @override
-  HttpConnectionInfo connectionInfo =
-      MockHttpConnectionInfo(remoteAddress: InternetAddress.anyIPv4);
+  HttpConnectionInfo connectionInfo = MockHttpConnectionInfo(
+      remoteAddress: InternetAddress.anyIPv4);
 
   /// [copyBuffer] corresponds to `copy` on the [BytesBuilder] constructor.
   MockHttpResponse(
       {bool copyBuffer = true,
-      this.statusCode,
-      this.reasonPhrase,
-      this.contentLength,
+      required this.statusCode,
+      required this.reasonPhrase,
+      required this.contentLength,
       this.deadline,
-      this.encoding,
-      this.persistentConnection,
-      bool bufferOutput}) {
+      required this.encoding,
+      required this.persistentConnection,
+      bool? bufferOutput}) {
     _buf = BytesBuilder(copy: copyBuffer != false);
     _bufferOutput = bufferOutput != false;
-    statusCode ??= 200;
+    statusCode = 200;
   }
 
   @override
@@ -44,7 +44,7 @@ class MockHttpResponse extends Stream<List<int>> implements HttpResponse {
   int contentLength;
 
   @override
-  Duration deadline;
+  Duration? deadline;
 
   @override
   bool persistentConnection;
@@ -79,7 +79,7 @@ class MockHttpResponse extends Stream<List<int>> implements HttpResponse {
   }
 
   @override
-  void addError(error, [StackTrace stackTrace]) {
+  void addError(error, [StackTrace? stackTrace]) {
     if (_done.isCompleted) {
       throw StateError('Cannot add to closed MockHttpResponse.');
     } else {
@@ -120,7 +120,7 @@ class MockHttpResponse extends Stream<List<int>> implements HttpResponse {
   }
 
   @override
-  void write(Object obj) {
+  void write(Object? obj) {
     obj?.toString()?.codeUnits?.forEach(writeCharCode);
   }
 
@@ -135,14 +135,14 @@ class MockHttpResponse extends Stream<List<int>> implements HttpResponse {
   }
 
   @override
-  void writeln([Object obj = '']) {
+  void writeln([Object? obj = '']) {
     write(obj ?? '');
     add([$cr, $lf]);
   }
 
   @override
-  StreamSubscription<List<int>> listen(void Function(List<int> event) onData,
-          {Function onError, void Function() onDone, bool cancelOnError}) =>
+  StreamSubscription<List<int>> listen(void Function(List<int> event)? onData,
+          {Function? onError, void Function()? onDone, bool? cancelOnError}) =>
       _stream.stream.listen(onData,
           onError: onError,
           onDone: onDone,
