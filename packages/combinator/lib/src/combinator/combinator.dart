@@ -190,11 +190,18 @@ abstract class Parser<T> {
   Parser<List<T>> separatedBy(Parser other) {
     var suffix = other.then(this).index(1).cast<T>();
     return this.then(suffix.star()).map((r) {
-      var preceding =
-          r.value!.isEmpty ? [] : (r.value![0] == null ? [] : [r.value![0]]);
-      var out = List<T>.from(preceding);
-      if (r.value![1] != null) out.addAll(r.value![1] as List<T>);
-      return out;
+      List<dynamic>? v = r.value;
+      if (v != null) {
+        var preceding =
+            v.isEmpty ? [] : (r.value?[0] == null ? [] : [r.value?[0]]);
+        var out = List<T>.from(preceding);
+        if (r.value?[1] != null) {
+          out.addAll(r.value?[1] as List<T>);
+        }
+        return out;
+      } else {
+        return List<T>.empty(growable: true);
+      }
     });
   }
 
