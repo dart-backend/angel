@@ -122,8 +122,7 @@ class Parameter {
   /// Obtains a value for this parameter from a [RequestContext].
   getValue(RequestContext req) {
     if (cookie?.isNotEmpty == true) {
-      return req.cookies!.firstWhere((c) => c.name == cookie)?.value ??
-          defaultValue;
+      return req.cookies!.firstWhere((c) => c.name == cookie).value;
     }
     if (header?.isNotEmpty == true) {
       return req.headers!.value(header!) ?? defaultValue;

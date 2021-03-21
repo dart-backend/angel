@@ -159,7 +159,7 @@ class Angel extends Routable {
           'This route will be ignored, and no requests will ever reach it.');
     }
 
-    return super.addRoute(method, path, handler, middleware: middleware ?? []);
+    return super.addRoute(method, path, handler, middleware: middleware);
   }
 
   @override
@@ -225,21 +225,21 @@ class Angel extends Routable {
 
       _flattened!.dumpTree(
           callback: callback,
-          header: header?.isNotEmpty == true
+          header: header.isNotEmpty == true
               ? header
               : (environment.isProduction
                   ? 'Dumping flattened route tree:'
                   : 'Dumping route tree:'),
-          tab: tab ?? '  ');
+          tab: tab);
     } else {
       super.dumpTree(
           callback: callback,
-          header: header?.isNotEmpty == true
+          header: header.isNotEmpty == true
               ? header
               : (environment.isProduction
                   ? 'Dumping flattened route tree:'
                   : 'Dumping route tree:'),
-          tab: tab ?? '  ');
+          tab: tab);
     }
   }
 
@@ -319,7 +319,7 @@ class Angel extends Routable {
   /// Runs with DI, and *always* reflects. Prefer [runContained].
   Future runReflected(Function handler, RequestContext req, ResponseContext res,
       [Container? container]) {
-    container ??= req?.container ?? res?.app?.container;
+    container ??= req.container ?? res.app?.container;
     var h = handleContained(
         handler,
         _preContained[handler] = preInject(handler, container!.reflector),

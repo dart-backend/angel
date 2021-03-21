@@ -119,9 +119,9 @@ class Http2ResponseContext extends ResponseContext<ServerTransportStream> {
     return __allowedEncodings ??= correspondingRequest!.headers!
         .value('accept-encoding')
         ?.split(',')
-        ?.map((s) => s.trim())
-        ?.where((s) => s.isNotEmpty)
-        ?.map((str) {
+        .map((s) => s.trim())
+        .where((s) => s.isNotEmpty)
+        .map((str) {
       // Ignore quality specifications in accept-encoding
       // ex. gzip;q=0.8
       if (!str.contains(';')) return str;

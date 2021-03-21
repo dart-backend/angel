@@ -45,8 +45,6 @@ class HostnameRouter {
       });
     }
 
-    apps ??= {};
-    creators ??= {};
     apps = _parseMap(apps);
     creators = _parseMap(creators);
     var patterns = apps.keys.followedBy(creators.keys).toSet().toList();

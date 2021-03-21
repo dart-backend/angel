@@ -471,7 +471,7 @@ class HookedService<Id, Data, T extends Service<Id, Data>>
       HookedServiceEvent<Id, Data, T> event,
       [HookedServiceEventListener<Id, Data, T>? callback]) {
     Future? f;
-    if (callback != null && event?._canceled != true) {
+    if (callback != null && event._canceled != true) {
       f = Future.sync(() => callback(event));
     }
     f ??= Future.value();
@@ -560,7 +560,7 @@ class HookedServiceEventDispatcher<Id, Data, T extends Service<Id, Data>> {
   /// Fires an event, and returns it once it is either canceled, or all listeners have run.
   Future<HookedServiceEvent<Id, Data, T>> _emit(
       HookedServiceEvent<Id, Data, T> event) {
-    if (event?._canceled == true || event == null || listeners.isEmpty) {
+    if (event._canceled == true || listeners.isEmpty) {
       return Future.value(event);
     }
 

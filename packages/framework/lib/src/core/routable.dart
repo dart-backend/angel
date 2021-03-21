@@ -24,7 +24,7 @@ RequestHandler chain(Iterable<RequestHandler> handlers) {
     Future Function()? runPipeline;
 
     for (var handler in handlers) {
-      if (handler == null) break;
+      //if (handler == null) break;
 
       if (runPipeline == null) {
         runPipeline = () => Future.sync(() => handler(req, res));
@@ -108,7 +108,10 @@ class Routable extends Router<RequestHandler?> {
     }
 
     final handlerSequence = <RequestHandler>[];
-    handlerSequence.addAll(middleware as Iterable<FutureOr<dynamic>? Function(RequestContext<dynamic>, ResponseContext<dynamic>)>? ?? []);
+    handlerSequence.addAll(middleware as Iterable<
+            FutureOr<dynamic>? Function(
+                RequestContext<dynamic>, ResponseContext<dynamic>)>? ??
+        []);
     handlerSequence.addAll(handlers);
 
     return super.addRoute(method, path.toString(), handler,

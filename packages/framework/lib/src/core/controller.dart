@@ -128,13 +128,13 @@ class Controller {
 
         var injection = preInject(reflectedMethod!, reflector);
 
-        if (exposeDecl?.allowNull?.isNotEmpty == true) {
-          injection.optional?.addAll(exposeDecl.allowNull);
+        if (exposeDecl.allowNull.isNotEmpty == true) {
+          injection.optional.addAll(exposeDecl.allowNull);
         }
 
         // If there is no path, reverse-engineer one.
         var path = exposeDecl.path;
-        var httpMethod = exposeDecl.method ?? 'GET';
+        var httpMethod = exposeDecl.method;
         if (path == null) {
           // Try to build a route path by finding all potential
           // path segments, and then joining them.

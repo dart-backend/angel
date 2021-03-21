@@ -26,7 +26,7 @@ resolveInjection(requirement, InjectionRequest? injection, RequestContext req,
     ResponseContext res, bool throwOnUnresolved,
     [Container? container]) async {
   var propFromApp;
-  container ??= req?.container ?? res?.app?.container;
+  container ??= req.container ?? res.app?.container;
 
   if (requirement == RequestContext) {
     return req;
