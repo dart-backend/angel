@@ -22,8 +22,8 @@ class _Alt<T> extends Parser<T> {
     return result.successful
         ? result
         : result.addErrors([
-            new SyntaxError(severity ?? SyntaxErrorSeverity.error, errorMessage,
-                result.span ?? args.scanner.emptySpan),
+            new SyntaxError(
+                severity, errorMessage, result.span ?? args.scanner.emptySpan),
           ]);
   }
 

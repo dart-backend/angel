@@ -192,8 +192,8 @@ class WildcardSegment extends RouteSegment {
       var items = r.value!.cast<RouteResult>();
       var a = items[0], b = items[1];
       return a
-        ..addAll(b?.params ?? {})
-        .._setTail(b?.tail);
+        ..addAll(b.params ?? {})
+        .._setTail(b.tail);
     });
   }
 }

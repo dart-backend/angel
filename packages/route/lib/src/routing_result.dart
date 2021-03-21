@@ -26,9 +26,9 @@ class RoutingResult<T> {
 
   /// The [RoutingResult] that matched the most specific sub-path.
   RoutingResult<T> get deepest {
-    RoutingResult<T> search = this;
+    var search = this;
 
-    while (search?.nested?.isNotEmpty == true) {
+    while (search.nested?.isNotEmpty == true) {
       search = search.nested!.first;
     }
 
@@ -43,9 +43,7 @@ class RoutingResult<T> {
 
   /// The handlers at this sub-path.
   List<T> get handlers {
-    return <T>[]
-      ..addAll(shallowRouter!.middleware)
-      ..addAll(shallowRoute!.handlers!);
+    return <T>[...shallowRouter!.middleware, ...shallowRoute!.handlers!];
   }
 
   /// All handlers on this sub-path and its children.
@@ -69,7 +67,7 @@ class RoutingResult<T> {
 
   /// All parameters on this sub-path and its children.
   Map<String?, dynamic> get allParams {
-    final Map<String?, dynamic> params = {};
+    final params = <String?, dynamic>{};
 
     void crawl(RoutingResult result) {
       params.addAll(result.params);
@@ -92,6 +90,6 @@ class RoutingResult<T> {
       this.shallowRoute,
       this.shallowRouter,
       required this.tail}) {
-    this.params.addAll(params ?? {});
+    this.params.addAll(params);
   }
 }
