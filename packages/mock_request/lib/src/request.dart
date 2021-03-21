@@ -51,11 +51,11 @@ class MockHttpRequest
       String? protocolVersion,
       String? sessionId,
       this.certificate,
-      required this.persistentConnection}) {
+      this.persistentConnection = true}) {
     _buf = BytesBuilder(copy: copyBuffer != false);
     _session = MockHttpSession(id: sessionId ?? 'mock-http-session');
-    this.protocolVersion =
-        protocolVersion?.isNotEmpty == true ? protocolVersion! : '1.1';
+
+    this.protocolVersion = protocolVersion ?? '1.1';
   }
 
   @override
