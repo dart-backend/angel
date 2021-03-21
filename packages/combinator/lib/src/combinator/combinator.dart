@@ -196,8 +196,8 @@ abstract class Parser<T> {
             v.isEmpty ? [] : (r.value?[0] == null ? [] : [r.value?[0]]);
         var out = List<T>.from(preceding);
         if (r.value?[1] != null) {
-          (r.value?[1] as List<T>).forEach((element) {
-            out.add(element);
+          r.value?[1].forEach((element) {
+            out.add(element as T);
           });
         }
         return out;
