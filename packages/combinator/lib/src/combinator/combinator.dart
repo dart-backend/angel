@@ -193,7 +193,7 @@ abstract class Parser<T> {
       var preceding =
           r.value!.isEmpty ? [] : (r.value![0] == null ? [] : [r.value![0]]);
       var out = List<T>.from(preceding);
-      if (r.value![1] != null) out.addAll(r.value![1] as Iterable<T>);
+      if (r.value![1] != null) out.addAll(r.value![1] as List<T>);
       return out;
     });
   }

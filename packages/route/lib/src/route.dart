@@ -14,7 +14,7 @@ class Route<T> {
       : _routeDefinition = RouteGrammar.routeDefinition
             .parse(SpanScanner(path.replaceAll(_straySlashes, '')))!
             .value {
-    if (_routeDefinition?.segments?.isNotEmpty != true) {
+    if (_routeDefinition?.segments.isNotEmpty != true) {
       _parser = match('').map((r) => RouteResult({}));
     }
   }
