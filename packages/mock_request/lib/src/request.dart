@@ -135,12 +135,12 @@ class MockHttpRequest
 
   @override
   void write(Object? obj) {
-    obj?.toString()?.codeUnits?.forEach(writeCharCode);
+    obj?.toString().codeUnits.forEach(writeCharCode);
   }
 
   @override
   void writeAll(Iterable objects, [String separator = '']) {
-    write(objects.join(separator ?? ''));
+    write(objects.join(separator));
   }
 
   @override
@@ -231,7 +231,7 @@ class MockHttpRequest
 
   @override
   Future<String> join([String separator = '']) =>
-      _stream.stream.join(separator ?? '');
+      _stream.stream.join(separator);
 
   @override
   Future<Uint8List> get last => _stream.stream.last;
