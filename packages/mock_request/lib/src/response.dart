@@ -16,8 +16,8 @@ class MockHttpResponse extends Stream<List<int>> implements HttpResponse {
   final List<Cookie> cookies = [];
 
   @override
-  HttpConnectionInfo connectionInfo = MockHttpConnectionInfo(
-      remoteAddress: InternetAddress.anyIPv4);
+  HttpConnectionInfo connectionInfo =
+      MockHttpConnectionInfo(remoteAddress: InternetAddress.anyIPv4);
 
   /// [copyBuffer] corresponds to `copy` on the [BytesBuilder] constructor.
   MockHttpResponse(
@@ -116,17 +116,17 @@ class MockHttpResponse extends Stream<List<int>> implements HttpResponse {
   @override
   Future redirect(Uri location,
       {int status = HttpStatus.movedTemporarily}) async {
-    statusCode = status ?? HttpStatus.movedTemporarily;
+    statusCode = status;
   }
 
   @override
   void write(Object? obj) {
-    obj?.toString()?.codeUnits?.forEach(writeCharCode);
+    obj?.toString().codeUnits.forEach(writeCharCode);
   }
 
   @override
   void writeAll(Iterable objects, [String separator = '']) {
-    write(objects.join(separator ?? ''));
+    write(objects.join(separator));
   }
 
   @override
