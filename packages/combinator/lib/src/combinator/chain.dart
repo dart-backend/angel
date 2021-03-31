@@ -18,7 +18,7 @@ class _Alt<T> extends Parser<T> {
 
   @override
   ParseResult<T> __parse(ParseArgs args) {
-    var result = parser._parse(args.increaseDepth())!;
+    var result = parser._parse(args.increaseDepth());
     return result.successful
         ? result
         : result.addErrors([
@@ -48,7 +48,7 @@ class _Chain<T> extends ListParser<T> {
     bool successful = true;
 
     for (var parser in parsers) {
-      var result = parser._parse(args.increaseDepth())!;
+      var result = parser._parse(args.increaseDepth());
 
       if (!result.successful) {
         if (parser is _Alt) errors.addAll(result.errors);

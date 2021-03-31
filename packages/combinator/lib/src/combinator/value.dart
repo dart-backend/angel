@@ -8,7 +8,7 @@ class _Value<T> extends Parser<T> {
 
   @override
   ParseResult<T> __parse(ParseArgs args) {
-    var result = parser._parse(args.increaseDepth())!.change(parser: this);
+    var result = parser._parse(args.increaseDepth()).change(parser: this);
     return result.successful ? result.change(value: f(result)) : result;
   }
 

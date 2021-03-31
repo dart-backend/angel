@@ -16,22 +16,26 @@ class Reference<T> extends Parser<T> {
   }
 
   @override
-  ParseResult<T>? __parse(ParseArgs args) {
+  ParseResult<T> __parse(ParseArgs args) {
     if (_parser == null)
       throw new StateError('There is no parser assigned to this reference.');
     return _parser!._parse(args);
   }
 
   @override
-  ParseResult<T>? _parse(ParseArgs args) {
+  ParseResult<T> _parse(ParseArgs args) {
+    if (_parser == null)
+      throw new StateError('There is no parser assigned to this reference.');
     return _parser!._parse(args);
   }
 
   @override
   void stringify(CodeBuffer buffer) {
-    if (_parser == null)
+    if (_parser == null) {
       buffer.writeln('(undefined reference <$T>)');
-    else if (!printed) _parser!.stringify(buffer);
+    } else if (!printed) {
+      _parser!.stringify(buffer);
+    }
     printed = true;
     buffer.writeln('(previously printed reference)');
   }

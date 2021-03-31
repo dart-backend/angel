@@ -8,7 +8,7 @@ part of lex.src.combinator;
 /// generate any error at all.
 Parser<T> any<T>(Iterable<Parser<T>> parsers,
     {bool backtrack: true, errorMessage, SyntaxErrorSeverity? severity}) {
-  return new _Any(parsers, backtrack != false, errorMessage,
+  return _Any(parsers, backtrack != false, errorMessage,
       severity ?? SyntaxErrorSeverity.error);
 }
 
@@ -26,14 +26,14 @@ class _Any<T> extends Parser<T> {
         .where((p) => !args.trampoline.isActive(p, args.scanner.position));
 
     if (inactive.isEmpty) {
-      return new ParseResult(args.trampoline, args.scanner, this, false, []);
+      return ParseResult(args.trampoline, args.scanner, this, false, []);
     }
 
     var errors = <SyntaxError>[];
     int replay = args.scanner.position;
 
     for (var parser in inactive) {
-      var result = parser._parse(args.increaseDepth())!;
+      var result = parser._parse(args.increaseDepth());
 
       if (result.successful)
         return result;
@@ -45,7 +45,7 @@ class _Any<T> extends Parser<T> {
 
     if (errorMessage != false) {
       errors.add(
-        new SyntaxError(
+        SyntaxError(
           severity,
           errorMessage?.toString() ??
               'No match found for ${parsers.length} alternative(s)',
@@ -54,13 +54,13 @@ class _Any<T> extends Parser<T> {
       );
     }
 
-    return new ParseResult(args.trampoline, args.scanner, this, false, errors);
+    return ParseResult(args.trampoline, args.scanner, this, false, errors);
   }
 
   @override
-  ParseResult<T>? __parse(ParseArgs args) {
+  ParseResult<T> __parse(ParseArgs args) {
     // Never called
-    return null;
+    throw ArgumentError("[Combinator] Invalid method call");
   }
 
   @override

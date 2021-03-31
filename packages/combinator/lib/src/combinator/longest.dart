@@ -31,7 +31,7 @@ class _Longest<T> extends Parser<T> {
     var results = <ParseResult<T>>[];
 
     for (var parser in inactive) {
-      var result = parser._parse(args.increaseDepth())!;
+      var result = parser._parse(args.increaseDepth());
 
       if (result.successful && result.span != null)
         results.add(result);
@@ -66,7 +66,7 @@ class _Longest<T> extends Parser<T> {
     var results = <ParseResult<T>>[];
 
     for (var parser in parsers) {
-      var result = parser._parse(args.increaseDepth())!;
+      var result = parser._parse(args.increaseDepth());
 
       if (result.successful)
         results.add(result);

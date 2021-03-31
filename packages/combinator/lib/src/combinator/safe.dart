@@ -3,14 +3,14 @@ part of lex.src.combinator;
 class _Safe<T> extends Parser<T> {
   final Parser<T> parser;
   final bool backtrack;
-  final String? errorMessage;
+  final String errorMessage;
   final SyntaxErrorSeverity severity;
   bool _triggered = false;
 
   _Safe(this.parser, this.backtrack, this.errorMessage, this.severity);
 
   @override
-  ParseResult<T>? __parse(ParseArgs args) {
+  ParseResult<T> __parse(ParseArgs args) {
     var replay = args.scanner.position;
 
     try {
@@ -21,16 +21,13 @@ class _Safe<T> extends Parser<T> {
       if (backtrack) args.scanner.position = replay;
       var errors = <SyntaxError>[];
 
-      if (errorMessage != null) {
-        // TODO: Custom severity for all errors?
-        errors.add(
-          new SyntaxError(
-            severity,
-            errorMessage,
-            args.scanner.lastSpan ?? args.scanner.emptySpan,
-          ),
-        );
-      }
+      errors.add(
+        new SyntaxError(
+          severity,
+          errorMessage,
+          args.scanner.lastSpan ?? args.scanner.emptySpan,
+        ),
+      );
 
       return new ParseResult<T>(
           args.trampoline, args.scanner, this, false, errors);

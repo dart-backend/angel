@@ -11,7 +11,7 @@ class _Check<T> extends Parser<T> {
   @override
   ParseResult<T> __parse(ParseArgs args) {
     var matchState = {};
-    var result = parser._parse(args.increaseDepth())!.change(parser: this);
+    var result = parser._parse(args.increaseDepth()).change(parser: this);
     if (!result.successful)
       return result;
     else if (!matcher.matches(result.value, matchState)) {

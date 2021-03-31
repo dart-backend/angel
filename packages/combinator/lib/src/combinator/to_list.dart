@@ -7,7 +7,7 @@ class _ToList<T> extends ListParser<T?> {
 
   @override
   ParseResult<List<T?>> __parse(ParseArgs args) {
-    var result = parser._parse(args.increaseDepth())!;
+    var result = parser._parse(args.increaseDepth());
 
     if (result.value is List) {
       return (result as ParseResult<List<T?>>).change(parser: this);

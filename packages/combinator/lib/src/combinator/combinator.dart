@@ -67,9 +67,9 @@ class ParseArgs {
 
 /// A parser combinator, which can parse very complicated grammars in a manageable manner.
 abstract class Parser<T> {
-  ParseResult<T>? __parse(ParseArgs args);
+  ParseResult<T> __parse(ParseArgs args);
 
-  ParseResult<T>? _parse(ParseArgs args) {
+  ParseResult<T> _parse(ParseArgs args) {
     var pos = args.scanner.position;
 
     if (args.trampoline.hasMemoized(this, pos))
@@ -86,7 +86,7 @@ abstract class Parser<T> {
   }
 
   /// Parses text from a [SpanScanner].
-  ParseResult<T>? parse(SpanScanner scanner, [int depth = 1]) {
+  ParseResult<T> parse(SpanScanner scanner, [int depth = 1]) {
     var args = ParseArgs(Trampoline(), scanner, depth);
     return _parse(args);
   }
@@ -105,7 +105,7 @@ abstract class Parser<T> {
 
   // TODO: Type issue
   /// Runs the given function, which changes the returned [ParseResult] into one relating to a [U] object.
-  Parser<U> change<U>(ParseResult<U> Function(ParseResult<T>?) f) {
+  Parser<U> change<U>(ParseResult<U> Function(ParseResult<T>) f) {
     return _Change<T, U>(this, f);
   }
 
@@ -140,8 +140,10 @@ abstract class Parser<T> {
   /// Ensures this pattern is not matched.
   ///
   /// You can provide an [errorMessage].
-  Parser<T> negate({String? errorMessage, SyntaxErrorSeverity? severity}) =>
-      _Negate<T>(this, errorMessage, severity ?? SyntaxErrorSeverity.error);
+  Parser<T> negate(
+          {String errorMessage = 'Negate error',
+          SyntaxErrorSeverity severity = SyntaxErrorSeverity.error}) =>
+      _Negate<T>(this, errorMessage, severity);
 
   /// Caches the results of parse attempts at various locations within the source text.
   ///
@@ -153,7 +155,7 @@ abstract class Parser<T> {
   /// Consumes `this` and another parser, but only considers the result of `this` parser.
   Parser<T> and(Parser other) => then(other).change<T>((r) {
         return ParseResult<T>(
-          r!.trampoline,
+          r.trampoline,
           r.scanner,
           this,
           r.successful,
@@ -176,7 +178,7 @@ abstract class Parser<T> {
   /// The generated parser only runs once; repeated uses always exit eagerly.
   Parser<T> safe(
           {bool backtrack: true,
-          String? errorMessage,
+          String errorMessage = "error",
           SyntaxErrorSeverity? severity}) =>
       _Safe<T>(
           this, backtrack, errorMessage, severity ?? SyntaxErrorSeverity.error);
@@ -240,7 +242,7 @@ abstract class Parser<T> {
   Parser<T> space() => trail(RegExp(r'[ \n\r\t]+'));
 
   /// Consumes 0 or more instance(s) of this parser.
-  ListParser<T?> star({bool backtrack: true}) =>
+  ListParser<T> star({bool backtrack: true}) =>
       times(1, exact: false, backtrack: backtrack).opt();
 
   /// Shortcut for [chain]-ing two parsers together.
@@ -259,10 +261,10 @@ abstract class Parser<T> {
   /// an infinite amount of occurrences after the specified [count].
   ///
   /// You can provide custom error messages for when there are [tooFew] or [tooMany] occurrences.
-  ListParser<T?> times(int count,
+  ListParser<T> times(int count,
       {bool exact: true,
-      String? tooFew,
-      String? tooMany,
+      String tooFew = 'Too few',
+      String tooMany = 'Too many',
       bool backtrack: true,
       SyntaxErrorSeverity? severity}) {
     return _Repeat<T>(this, count, exact, tooFew, tooMany, backtrack,

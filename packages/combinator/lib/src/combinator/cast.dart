@@ -7,7 +7,7 @@ class _Cast<T, U extends T> extends Parser<U> {
 
   @override
   ParseResult<U> __parse(ParseArgs args) {
-    var result = parser._parse(args.increaseDepth())!;
+    var result = parser._parse(args.increaseDepth());
     return new ParseResult<U>(
       args.trampoline,
       args.scanner,
@@ -38,7 +38,7 @@ class _CastDynamic<T> extends Parser<dynamic> {
 
   @override
   ParseResult<dynamic> __parse(ParseArgs args) {
-    var result = parser._parse(args.increaseDepth())!;
+    var result = parser._parse(args.increaseDepth());
     return new ParseResult<dynamic>(
       args.trampoline,
       args.scanner,

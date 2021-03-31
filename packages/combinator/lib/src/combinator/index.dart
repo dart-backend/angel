@@ -8,7 +8,7 @@ class _Index<T> extends Parser<T> {
 
   @override
   ParseResult<T> __parse(ParseArgs args) {
-    ParseResult<List<T>> result = parser._parse(args.increaseDepth())!;
+    ParseResult<List<T>> result = parser._parse(args.increaseDepth());
     Object? value;
 
     if (result.successful)
