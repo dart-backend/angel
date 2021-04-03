@@ -2,28 +2,37 @@ part of angel_route.src.router;
 
 /// Represents a virtual location within an application.
 class Route<T> {
-  String method;
-  String path;
+  final String method;
+  final String path;
   final Map<String, Map<String, dynamic>> _cache = {};
-  String name = '';
+  final RouteDefinition? _routeDefinition;
+  final List<T> handlers;
+  String? name;
   Parser<RouteResult>? _parser;
-  late RouteDefinition _routeDefinition;
-  late List<T> handlers;
 
-  Route(this.path, {required this.method, required this.handlers}) {
+  Route(this.path, {required this.method, required this.handlers})
+      : _routeDefinition = RouteGrammar.routeDefinition
+            .parse(SpanScanner(path.replaceAll(_straySlashes, '')))
+            .value {
+    if (_routeDefinition?.segments.isNotEmpty != true) {
+      _parser = match('').map((r) => RouteResult({}));
+    }
+
+    /*
     var result = RouteGrammar.routeDefinition
         .parse(SpanScanner(path.replaceAll(_straySlashes, '')));
 
     if (result.value != null) {
+      
       //throw ArgumentError('[Route] Failed to create route for $path');
-      _routeDefinition = result.value!;
-
+      _routeDefinition = result.value;
       if (_routeDefinition.segments.isEmpty) {
         _parser = match('').map((r) => RouteResult({}));
       }
     } else {
-      //print('[Route] Failed to create route for $path');
+      _parser = match('').map((r) => RouteResult({}));
     }
+    */
   }
 
   factory Route.join(Route<T> a, Route<T> b) {
@@ -35,7 +44,7 @@ class Route<T> {
 
   //List<T> get handlers => _handlers;
 
-  Parser<RouteResult>? get parser => _parser ??= _routeDefinition.compile();
+  Parser<RouteResult>? get parser => _parser ??= _routeDefinition?.compile();
 
   @override
   String toString() {
@@ -51,15 +60,17 @@ class Route<T> {
     var b = StringBuffer();
     var i = 0;
 
-    for (var seg in _routeDefinition.segments) {
-      if (i++ > 0) b.write('/');
-      if (seg is ConstantSegment) {
-        b.write(seg.text);
-      } else if (seg is ParameterSegment) {
-        if (!params.containsKey(seg.name)) {
-          throw ArgumentError('Missing parameter "${seg.name}".');
+    if (_routeDefinition != null) {
+      for (var seg in _routeDefinition!.segments) {
+        if (i++ > 0) b.write('/');
+        if (seg is ConstantSegment) {
+          b.write(seg.text);
+        } else if (seg is ParameterSegment) {
+          if (!params.containsKey(seg.name)) {
+            throw ArgumentError('Missing parameter "${seg.name}".');
+          }
+          b.write(params[seg.name]);
         }
-        b.write(params[seg.name]);
       }
     }
 

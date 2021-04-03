@@ -182,7 +182,7 @@ class _PushStateRouter<T> extends _BrowserRouterImpl<T> {
     //  _onRoute.add(_current = null);
     //} else {
     final route = resolved.route;
-    var thisPath = route.name;
+    var thisPath = route.name ?? '';
     if (thisPath.isEmpty) {
       thisPath = route.path;
     }
