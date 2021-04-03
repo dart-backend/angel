@@ -18,10 +18,10 @@ main() {
     'Accept': 'application/json',
     'Content-Type': 'application/json'
   };
-  Angel? app;
+  late Angel app;
   late MapService service;
-  String? url;
-  http.Client? client;
+  late String url;
+  late http.Client client;
 
   setUp(() async {
     app = Angel(reflector: MirrorsReflector())
@@ -37,16 +37,13 @@ main() {
   });
 
   tearDown(() async {
-    await app!.close();
-    app = null;
-    url = null;
-    client!.close();
-    client = null;
+    await app.close();
+    client.close();
   });
 
   group('memory', () {
     test('can index an empty service', () async {
-      var response = await client!.get(Uri.parse("$url/todos/"));
+      var response = await client.get(Uri.parse("$url/todos/"));
       print(response.body);
       expect(response.body, equals('[]'));
       print(response.body);
@@ -55,7 +52,7 @@ main() {
 
     test('can create data', () async {
       String postData = json.encode({'text': 'Hello, world!'});
-      var response = await client!.post(Uri.parse("$url/todos"),
+      var response = await client.post(Uri.parse("$url/todos"),
           headers: headers as Map<String, String>, body: postData);
       expect(response.statusCode, 201);
       var jsons = json.decode(response.body);
@@ -65,9 +62,9 @@ main() {
 
     test('can fetch data', () async {
       String postData = json.encode({'text': 'Hello, world!'});
-      await client!.post(Uri.parse("$url/todos"),
+      await client.post(Uri.parse("$url/todos"),
           headers: headers as Map<String, String>, body: postData);
-      var response = await client!.get(Uri.parse("$url/todos/0"));
+      var response = await client.get(Uri.parse("$url/todos/0"));
       expect(response.statusCode, 200);
       var jsons = json.decode(response.body);
       print(jsons);
@@ -76,12 +73,12 @@ main() {
 
     test('can modify data', () async {
       String postData = json.encode({'text': 'Hello, world!'});
-      await client!.post(Uri.parse("$url/todos"),
+      await client.post(Uri.parse("$url/todos"),
           headers: headers as Map<String, String>, body: postData);
       postData = json.encode({'text': 'modified'});
 
-      var response = await client!
-          .patch(Uri.parse("$url/todos/0"), headers: headers, body: postData);
+      var response = await client.patch(Uri.parse("$url/todos/0"),
+          headers: headers, body: postData);
       expect(response.statusCode, 200);
       var jsons = json.decode(response.body);
       print(jsons);
@@ -90,12 +87,12 @@ main() {
 
     test('can overwrite data', () async {
       String postData = json.encode({'text': 'Hello, world!'});
-      await client!.post(Uri.parse("$url/todos"),
+      await client.post(Uri.parse("$url/todos"),
           headers: headers as Map<String, String>, body: postData);
       postData = json.encode({'over': 'write'});
 
-      var response = await client!
-          .post(Uri.parse("$url/todos/0"), headers: headers, body: postData);
+      var response = await client.post(Uri.parse("$url/todos/0"),
+          headers: headers, body: postData);
       expect(response.statusCode, 200);
       var jsons = json.decode(response.body);
       print(jsons);
@@ -116,12 +113,12 @@ main() {
 
     test('can delete data', () async {
       String postData = json.encode({'text': 'Hello, world!'});
-      var created = await client!
+      var created = await client
           .post(Uri.parse("$url/todos"),
               headers: headers as Map<String, String>, body: postData)
           .then((r) => json.decode(r.body));
       var response =
-          await client!.delete(Uri.parse("$url/todos/${created['id']}"));
+          await client.delete(Uri.parse("$url/todos/${created['id']}"));
       expect(response.statusCode, 200);
       var json_ = json.decode(response.body);
       print(json_);
@@ -129,7 +126,7 @@ main() {
     });
 
     test('cannot remove all unless explicitly set', () async {
-      var response = await client!.delete(Uri.parse('$url/todos/null'));
+      var response = await client.delete(Uri.parse('$url/todos/null'));
       expect(response.statusCode, 403);
     });
   });

@@ -8,7 +8,7 @@ void main() {
   router.get('/user/:id', 'GET');
   router.get('/first/:first/last/:last', 'GET').name = 'full_name';
 
-  navigate(params) {
+  String navigate(params) {
     final uri = router.navigate(params as Iterable);
     print('Uri: $uri');
     return uri;

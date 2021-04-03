@@ -5,5 +5,5 @@ part of angel_route.src.router;
 class SymlinkRoute<T> extends Route<T> {
   final Router<T> router;
   SymlinkRoute(String path, this.router)
-      : super(path, method: null, handlers: null);
+      : super(path, method: 'GET', handlers: <T>[]);
 }

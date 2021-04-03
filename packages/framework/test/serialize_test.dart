@@ -8,10 +8,10 @@ import 'package:http_parser/http_parser.dart';
 import 'package:test/test.dart';
 
 main() {
-  Angel? app;
-  http.Client? client;
+  late Angel app;
+  late http.Client client;
   late HttpServer server;
-  String? url;
+  late String url;
 
   setUp(() async {
     app = Angel(reflector: MirrorsReflector())
@@ -27,19 +27,16 @@ main() {
   });
 
   tearDown(() async {
-    app = null;
-    url = null;
-    client!.close();
-    client = null;
+    client.close();
     await server.close(force: true);
   });
 
   test("correct content-type", () async {
-    var response = await client!.get(Uri.parse('$url/foo'));
+    var response = await client.get(Uri.parse('$url/foo'));
     print('Response: ${response.body}');
     expect(response.headers['content-type'], contains('application/json'));
 
-    response = await client!.get(Uri.parse('$url/bar'));
+    response = await client.get(Uri.parse('$url/bar'));
     print('Response: ${response.body}');
     expect(response.headers['content-type'], contains('text/html'));
   });

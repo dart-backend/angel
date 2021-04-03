@@ -1,25 +1,30 @@
 import 'dart:html';
 import 'package:angel_route/browser.dart';
 
-basic(BrowserRouter router) {
+void basic(BrowserRouter router) {
   final $h1 = window.document.querySelector('h1');
   final $ul = window.document.getElementById('handlers');
 
   router.onResolve.listen((result) {
-    final route = result?.route;
+    final route = result.route;
 
-    if (route == null) {
-      $h1!.text = 'No Active Route';
-      $ul!.children
+    // TODO: Relook at this logic
+    //if (route == null) {
+    //  $h1!.text = 'No Active Route';
+    //  $ul!.children
+    //    ..clear()
+    //    ..add(LIElement()..text = '(empty)');
+    //} else {
+    if ($h1 != null && $ul != null) {
+      $h1.text = 'Active Route: ${route.name}';
+      $ul.children
         ..clear()
-        ..add(LIElement()..text = '(empty)');
-    } else {
-      $h1!.text = 'Active Route: ${route.name ?? route.path}';
-      $ul!.children
-        ..clear()
-        ..addAll(result!.allHandlers
+        ..addAll(result.allHandlers
             .map((handler) => LIElement()..text = handler.toString()));
+    } else {
+      print('No active Route');
     }
+    //}
   });
 
   router.get('a', 'a handler');

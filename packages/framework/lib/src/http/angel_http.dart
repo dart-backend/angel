@@ -19,15 +19,19 @@ final RegExp _straySlashes = RegExp(r'(^/+)|(/+$)');
 class AngelHttp extends Driver<HttpRequest, HttpResponse, HttpServer,
     HttpRequestContext, HttpResponseContext> {
   @override
-  Uri get uri => server == null
-      ? Uri()
-      : Uri(scheme: 'http', host: server!.address.address, port: server!.port);
+  Uri get uri {
+    if (server == null) {
+      throw ArgumentError("[AngelHttp] Server instance not intialised");
+    }
+    return Uri(
+        scheme: 'http', host: server!.address.address, port: server!.port);
+  }
 
-  AngelHttp._(Angel? app,
+  AngelHttp._(Angel app,
       Future<HttpServer> Function(dynamic, int) serverGenerator, bool useZone)
       : super(app, serverGenerator, useZone: useZone);
 
-  factory AngelHttp(Angel? app, {bool useZone = true}) {
+  factory AngelHttp(Angel app, {bool useZone = true}) {
     return AngelHttp._(app, HttpServer.bind, useZone);
   }
 
@@ -59,12 +63,18 @@ class AngelHttp extends Driver<HttpRequest, HttpResponse, HttpServer,
     var serverContext = SecurityContext();
     serverContext.useCertificateChain(certificateChain, password: password);
     serverContext.usePrivateKey(serverKey, password: password);
+
     return AngelHttp.fromSecurityContext(app, serverContext, useZone: useZone);
   }
 
   /// Use [server] instead.
   @deprecated
-  HttpServer? get httpServer => server;
+  HttpServer get httpServer {
+    if (server == null) {
+      throw ArgumentError("[AngelHttp] Server instance not initialised");
+    }
+    return server!;
+  }
 
   Future handleRequest(HttpRequest request) =>
       handleRawRequest(request, request.response);
@@ -75,7 +85,6 @@ class AngelHttp extends Driver<HttpRequest, HttpResponse, HttpServer,
 
   @override
   Future<HttpServer> close() async {
-    await server?.close();
     return await super.close();
   }
 
@@ -87,7 +96,7 @@ class AngelHttp extends Driver<HttpRequest, HttpResponse, HttpServer,
       HttpRequest request, HttpResponse response) {
     var path = request.uri.path.replaceAll(_straySlashes, '');
     if (path.isEmpty) path = '/';
-    return HttpRequestContext.from(request, app!, path);
+    return HttpRequestContext.from(request, app, path);
   }
 
   @override
@@ -98,10 +107,10 @@ class AngelHttp extends Driver<HttpRequest, HttpResponse, HttpServer,
     HttpResponseContext context =
         HttpResponseContext(response, app, correspondingRequest);
 
-    if (app!.serializer == null) {
+    if (app.serializer == null) {
       context.serializer = json.encode;
     } else {
-      context.serializer = app!.serializer;
+      context.serializer = app.serializer;
     }
     return Future<HttpResponseContext>.value(context);
 //    return Future<HttpResponseContext>.value(

@@ -30,7 +30,7 @@ RequestHandler chain(Iterable<RequestHandler> handlers) {
         runPipeline = () => Future.sync(() => handler(req, res));
       } else {
         var current = runPipeline;
-        runPipeline = () => current().then((result) => !res.isOpen
+        runPipeline = () => current().then((result) => res.isOpen
             ? Future.value(result)
             : req.app.executeHandler(handler, req, res));
       }
@@ -42,7 +42,7 @@ RequestHandler chain(Iterable<RequestHandler> handlers) {
 }
 
 /// A routable server that can handle dynamic requests.
-class Routable extends Router<RequestHandler?> {
+class Routable extends Router<RequestHandler> {
   final Map<Pattern, Service> _services = {};
   final Map<Pattern, Service?> _serviceLookups = {};
   final Map configuration = {};
@@ -92,10 +92,9 @@ class Routable extends Router<RequestHandler?> {
   }
 
   @override
-  Route<RequestHandler?> addRoute(
-      String? method, String? path, RequestHandler? handler,
-      {Iterable<RequestHandler?>? middleware}) {
-    middleware ??= [];
+  Route<RequestHandler> addRoute(
+      String method, String path, RequestHandler handler,
+      {Iterable<RequestHandler> middleware = const Iterable.empty()}) {
     final handlers = <RequestHandler>[];
     // Merge @Middleware declaration, if any
     var reflector = _container?.reflector;
@@ -108,10 +107,7 @@ class Routable extends Router<RequestHandler?> {
     }
 
     final handlerSequence = <RequestHandler>[];
-    handlerSequence.addAll(middleware as Iterable<
-            FutureOr<dynamic>? Function(
-                RequestContext<dynamic>, ResponseContext<dynamic>)>? ??
-        []);
+    handlerSequence.addAll(middleware);
     handlerSequence.addAll(handlers);
 
     return super.addRoute(method, path.toString(), handler,

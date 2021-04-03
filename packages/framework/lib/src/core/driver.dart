@@ -4,6 +4,7 @@ import 'dart:io' show stderr, Cookie;
 import 'package:angel_http_exception/angel_http_exception.dart';
 import 'package:angel_route/angel_route.dart';
 import 'package:combinator/combinator.dart';
+import 'package:logging/logging.dart';
 import 'package:stack_trace/stack_trace.dart';
 import 'package:tuple/tuple.dart';
 import 'core.dart';
@@ -17,11 +18,12 @@ abstract class Driver<
     Server extends Stream<Request>,
     RequestContextType extends RequestContext,
     ResponseContextType extends ResponseContext> {
-  final Angel? app;
+  final Angel app;
   final bool useZone;
   bool _closed = false;
-  Server? _server;
+  late Server _server;
   StreamSubscription<Request>? _sub;
+  final log = Logger('Driver');
 
   /// The function used to bind this instance to a server..
   final Future<Server> Function(dynamic, int) serverGenerator;
@@ -32,39 +34,44 @@ abstract class Driver<
   Uri get uri;
 
   /// The native server running this instance.
-  Server? get server => _server;
+  Server get server => _server;
 
   Future<Server> generateServer(address, int port) =>
       serverGenerator(address, port);
 
   /// Starts, and returns the server.
-  Future<Server> startServer([address, int? port]) {
+  Future<Server> startServer([address, int port = 5000]) {
     var host = address ?? '127.0.0.1';
-    return generateServer(host, port ?? 0).then((server) {
+    return generateServer(host, port).then((server) {
       _server = server;
-      return Future.wait(app!.startupHooks.map(app!.configure)).then((_) {
-        app!.optimizeForProduction();
+      return Future.wait(app.startupHooks.map(app.configure)).then((_) {
+        app.optimizeForProduction();
         _sub = server.listen((request) {
           var stream = createResponseStreamFromRawRequest(request);
           stream.listen((response) {
             // TODO: To be revisited
             handleRawRequest(request, response);
-            return;
           });
         });
-        return _server!;
+        return Future.value(_server);
       });
+    }).catchError((error) {
+      log.severe("Failed to create server", error);
+      throw ArgumentError("[Driver]Failed to create server");
     });
   }
 
   /// Shuts down the underlying server.
   Future<Server> close() {
-    if (_closed) return Future.value(_server);
+    if (_closed) {
+      return Future.value(_server);
+    }
     _closed = true;
+
     _sub?.cancel();
-    return app!.close().then((_) =>
-        Future.wait(app!.shutdownHooks.map(app!.configure))
-            .then((_) => _server!));
+    return app.close().then((_) =>
+        Future.wait(app.shutdownHooks.map(app.configure))
+            .then((_) => Future.value(_server)));
   }
 
   Future<RequestContextType> createRequestContext(
@@ -102,7 +109,7 @@ abstract class Driver<
 
           Tuple4<List?, Map<String?, dynamic>, ParseResult<RouteResult?>?,
               MiddlewarePipeline> resolveTuple() {
-            var r = app!.optimizedRouter;
+            var r = app.optimizedRouter;
             var resolved =
                 r.resolveAbsolute(path, method: req.method!, strip: false);
             var pipeline = MiddlewarePipeline<RequestHandler?>(resolved);
@@ -116,8 +123,8 @@ abstract class Driver<
           }
 
           var cacheKey = req.method! + path!;
-          var tuple = app!.environment.isProduction
-              ? app!.handlerCache.putIfAbsent(cacheKey, resolveTuple)
+          var tuple = app.environment.isProduction
+              ? app.handlerCache.putIfAbsent(cacheKey, resolveTuple)
               : resolveTuple();
           var line = tuple.item4 as MiddlewarePipeline<RequestHandler?>;
           var it = MiddlewarePipelineIterator<RequestHandler?>(line);
@@ -134,7 +141,7 @@ abstract class Driver<
             ..registerSingleton<ParseResult<RouteResult?>?>(tuple.item3)
             ..registerSingleton<ParseResult?>(tuple.item3);
 
-          if (!app!.environment.isProduction && app!.logger != null) {
+          if (app.environment.isProduction && app.logger != null) {
             req.container!.registerSingleton<Stopwatch>(Stopwatch()..start());
           }
 
@@ -160,14 +167,14 @@ abstract class Driver<
                 stackTrace: st,
                 statusCode: 500,
                 message: e?.toString() ?? '500 Internal Server Error');
-          }, test: (e) => e is! AngelHttpException).catchError(
+          }, test: (e) => e is AngelHttpException).catchError(
               (ee, StackTrace st) {
             var e = ee as AngelHttpException;
 
-            if (app!.logger != null) {
+            if (app.logger != null) {
               var error = e.error ?? e;
               var trace = Trace.from(e.stackTrace ?? StackTrace.current).terse;
-              app!.logger!.severe(e.message ?? e.toString(), error, trace);
+              app.logger?.severe(e.message ?? e.toString(), error, trace);
             }
 
             return handleAngelHttpException(
@@ -176,8 +183,8 @@ abstract class Driver<
         } else {
           var zoneSpec = ZoneSpecification(
             print: (self, parent, zone, line) {
-              if (app!.logger != null) {
-                app!.logger!.info(line);
+              if (app.logger != null) {
+                app.logger?.info(line);
               } else {
                 parent.print(zone, line);
               }
@@ -198,8 +205,8 @@ abstract class Driver<
                       stackTrace: stackTrace, message: error.toString());
                 }
 
-                if (app!.logger != null) {
-                  app!.logger!.severe(e.message ?? e.toString(), error, trace);
+                if (app.logger != null) {
+                  app.logger?.severe(e.message ?? e.toString(), error, trace);
                 }
 
                 return handleAngelHttpException(
@@ -209,8 +216,8 @@ abstract class Driver<
                 closeResponse(response);
                 // Ideally, we won't be in a position where an absolutely fatal error occurs,
                 // but if so, we'll need to log it.
-                if (app!.logger != null) {
-                  app!.logger!.severe(
+                if (app.logger != null) {
+                  app.logger?.severe(
                       'Fatal error occurred when processing $uri.', e, trace);
                 } else {
                   stderr
@@ -220,7 +227,6 @@ abstract class Driver<
                     ..writeln(trace);
                 }
               });
-              return;
             },
           );
 
@@ -243,7 +249,7 @@ abstract class Driver<
   }
 
   /// Handles an [AngelHttpException].
-  Future? handleAngelHttpException(
+  Future handleAngelHttpException(
       AngelHttpException e,
       StackTrace st,
       RequestContext? req,
@@ -253,12 +259,12 @@ abstract class Driver<
       {bool ignoreFinalizers = false}) {
     if (req == null || res == null) {
       try {
-        app!.logger?.severe(null, e, st);
+        app.logger?.severe(null, e, st);
         setStatusCode(response, 500);
         writeStringToResponse(response, '500 Internal Server Error');
         closeResponse(response);
       } finally {
-        return null;
+        return Future.value();
       }
     }
 
@@ -269,8 +275,8 @@ abstract class Driver<
     } else {
       res.statusCode = e.statusCode;
       handleError =
-          Future.sync(() => app!.errorHandler(e, req, res)).then((result) {
-        return app!.executeHandler(result, req, res).then((_) => res.close());
+          Future.sync(() => app.errorHandler(e, req, res)).then((result) {
+        return app.executeHandler(result, req, res).then((_) => res.close());
       });
     }
 
@@ -283,11 +289,11 @@ abstract class Driver<
       ResponseContext res,
       {bool ignoreFinalizers = false}) {
     Future<void> _cleanup(_) {
-      if (!app!.environment.isProduction &&
-          app!.logger != null &&
+      if (app.environment.isProduction &&
+          app.logger != null &&
           req.container!.has<Stopwatch>()) {
         var sw = req.container!.make<Stopwatch>();
-        app!.logger!.info(
+        app.logger?.info(
             "${res.statusCode} ${req.method} ${req.uri} (${sw?.elapsedMilliseconds ?? 'unknown'} ms)");
       }
       return req.close();
@@ -297,7 +303,7 @@ abstract class Driver<
 
     Future finalizers = ignoreFinalizers == true
         ? Future.value()
-        : Future.forEach(app!.responseFinalizers, (dynamic f) => f(req, res));
+        : Future.forEach(app.responseFinalizers, (dynamic f) => f(req, res));
 
     return finalizers.then((_) {
       //if (res.isOpen) res.close();
@@ -358,13 +364,13 @@ abstract class Driver<
       MiddlewarePipelineIterator<RequestHandler?> it,
       RequestContextType req,
       ResponseContextType res,
-      Angel? app) async {
+      Angel app) async {
     var broken = false;
     while (it.moveNext()) {
       var current = it.current.handlers.iterator;
 
       while (!broken && current.moveNext()) {
-        var result = await app!.executeHandler(current.current, req, res);
+        var result = await app.executeHandler(current.current, req, res);
         if (result != true) {
           broken = true;
           break;

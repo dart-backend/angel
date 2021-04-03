@@ -17,7 +17,7 @@ String stripStray(String haystack, String needle) {
   }
 
   // Find last leading index of slash
-  for (int i = firstSlash + 1; i < haystack.length; i++) {
+  for (var i = firstSlash + 1; i < haystack.length; i++) {
     if (haystack[i] != needle) {
       var sub = haystack.substring(i);
 
@@ -25,7 +25,7 @@ String stripStray(String haystack, String needle) {
 
       var lastSlash = sub.lastIndexOf(needle);
 
-      for (int j = lastSlash - 1; j >= 0; j--) {
+      for (var j = lastSlash - 1; j >= 0; j--) {
         if (sub[j] != needle) {
           return sub.substring(0, j + 1);
         }
