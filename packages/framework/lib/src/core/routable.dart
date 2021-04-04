@@ -32,7 +32,7 @@ RequestHandler chain(Iterable<RequestHandler> handlers) {
         var current = runPipeline;
         runPipeline = () => current().then((result) => res.isOpen
             ? Future.value(result)
-            : req.app.executeHandler(handler, req, res));
+            : req.app!.executeHandler(handler, req, res));
       }
     }
 
@@ -73,7 +73,7 @@ class Routable extends Router<RequestHandler> {
   Stream<Service> get onService => _onService.stream;
 
   /// Retrieves the service assigned to the given path.
-  T? findService<T extends Service?>(Pattern path) {
+  T? findService<T extends Service>(Pattern path) {
     return _serviceLookups.putIfAbsent(path, () {
       return _services[path] ??
           _services[path.toString().replaceAll(_straySlashes, '')];
@@ -94,7 +94,7 @@ class Routable extends Router<RequestHandler> {
   @override
   Route<RequestHandler> addRoute(
       String method, String path, RequestHandler handler,
-      {Iterable<RequestHandler> middleware = const Iterable.empty()}) {
+      {Iterable<RequestHandler>? middleware}) {
     final handlers = <RequestHandler>[];
     // Merge @Middleware declaration, if any
     var reflector = _container?.reflector;
@@ -107,7 +107,9 @@ class Routable extends Router<RequestHandler> {
     }
 
     final handlerSequence = <RequestHandler>[];
-    handlerSequence.addAll(middleware);
+    if (middleware != null) {
+      handlerSequence.addAll(middleware);
+    }
     handlerSequence.addAll(handlers);
 
     return super.addRoute(method, path.toString(), handler,

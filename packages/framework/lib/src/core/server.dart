@@ -36,10 +36,10 @@ class Angel extends Routable {
   final List<Angel> _children = [];
   final Map<
       String,
-      Tuple4<List?, Map<String?, dynamic>, ParseResult<RouteResult?>?,
+      Tuple4<List, Map<String, dynamic>, ParseResult<RouteResult>?,
           MiddlewarePipeline>> handlerCache = HashMap();
 
-  Router<RequestHandler?>? _flattened;
+  Router<RequestHandler>? _flattened;
   Angel? _parent;
 
   /// A global Map of converters that can transform responses bodies.
@@ -59,7 +59,7 @@ class Angel extends Routable {
   Map<dynamic, InjectionRequest> get preContained => _preContained;
 
   /// Returns the [flatten]ed version of this router in production.
-  Router<RequestHandler?> get optimizedRouter => _flattened ?? this;
+  Router<RequestHandler> get optimizedRouter => _flattened ?? this;
 
   /// Determines whether to allow HTTP request method overrides.
   bool allowMethodOverrides = true;
@@ -67,10 +67,10 @@ class Angel extends Routable {
   /// All child application mounted on this instance.
   List<Angel> get children => List<Angel>.unmodifiable(_children);
 
-  final Map<Pattern?, Controller> _controllers = {};
+  final Map<Pattern, Controller> _controllers = {};
 
   /// A set of [Controller] objects that have been loaded into the application.
-  Map<Pattern?, Controller> get controllers => _controllers;
+  Map<Pattern, Controller> get controllers => _controllers;
 
   /// Now *deprecated*, in favor of [AngelEnv] and [angelEnv]. Use `app.environment.isProduction`
   /// instead.
@@ -148,9 +148,9 @@ class Angel extends Routable {
   };
 
   @override
-  Route<RequestHandler?> addRoute(
-      String? method, String? path, RequestHandler? handler,
-      {Iterable<RequestHandler?>? middleware}) {
+  Route<RequestHandler> addRoute(
+      String method, String path, RequestHandler handler,
+      {Iterable<RequestHandler>? middleware}) {
     middleware ??= [];
     if (_flattened != null) {
       logger?.warning(
@@ -163,7 +163,7 @@ class Angel extends Routable {
   }
 
   @override
-  mount(String path, Router<RequestHandler?> router) {
+  mount(String path, Router<RequestHandler> router) {
     if (_flattened != null) {
       logger?.warning(
           'WARNING: You added mounted a child router ($path) on the router, after it had been optimized.');
@@ -182,12 +182,12 @@ class Angel extends Routable {
   /// Loads some base dependencies into the service container.
   void bootstrapContainer() {
     if (runtimeType != Angel) {
-      container!.registerSingleton(this);
+      container?.registerSingleton(this);
     }
 
-    container!.registerSingleton<Angel>(this);
-    container!.registerSingleton<Routable>(this);
-    container!.registerSingleton<Router>(this);
+    container?.registerSingleton<Angel>(this);
+    container?.registerSingleton<Routable>(this);
+    container?.registerSingleton<Router>(this);
   }
 
   /// Shuts down the server, and closes any open [StreamController]s.
@@ -284,7 +284,8 @@ class Angel extends Routable {
   /// Attempts to find a property by the given name within this application.
   findProperty(key) {
     if (configuration.containsKey(key)) return configuration[key];
-    return parent != null ? parent!.findProperty(key) : null;
+
+    return parent != null ? parent?.findProperty(key) : null;
   }
 
   /// Runs several optimizations, *if* [angelEnv.isProduction] is `true`.
@@ -308,7 +309,7 @@ class Angel extends Routable {
       [Container? container]) {
     return Future.sync(() {
       if (_preContained.containsKey(handler)) {
-        return handleContained(handler, _preContained[handler], container)(
+        return handleContained(handler, _preContained[handler]!, container)(
             req, res);
       }
 
@@ -319,7 +320,7 @@ class Angel extends Routable {
   /// Runs with DI, and *always* reflects. Prefer [runContained].
   Future runReflected(Function handler, RequestContext req, ResponseContext res,
       [Container? container]) {
-    container ??= req.container ?? res.app?.container;
+    container ??= req.container ?? res.app!.container;
     var h = handleContained(
         handler,
         _preContained[handler] = preInject(handler, container!.reflector),

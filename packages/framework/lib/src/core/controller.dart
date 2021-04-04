@@ -21,12 +21,12 @@ class Controller {
   List<RequestHandler> middleware = [];
 
   /// A mapping of route paths to routes, produced from the [Expose] annotations on this class.
-  Map<String?, Route> routeMappings = {};
+  Map<String, Route> routeMappings = {};
 
-  SymlinkRoute<RequestHandler?>? _mountPoint;
+  SymlinkRoute<RequestHandler>? _mountPoint;
 
   /// The route at which this controller is mounted on the server.
-  SymlinkRoute<RequestHandler?>? get mountPoint => _mountPoint;
+  SymlinkRoute<RequestHandler>? get mountPoint => _mountPoint;
 
   Controller({this.injectSingleton = true});
 
@@ -47,8 +47,8 @@ class Controller {
   }
 
   /// Applies the routes from this [Controller] to some [router].
-  Future<String?> applyRoutes(
-      Router<RequestHandler?> router, Reflector reflector) async {
+  Future<String> applyRoutes(
+      Router<RequestHandler> router, Reflector reflector) async {
     // Load global expose decl
     var classMirror = reflector.reflectClass(this.runtimeType)!;
     Expose? exposeDecl = findExpose(reflector);
@@ -58,7 +58,8 @@ class Controller {
     }
 
     var routable = Routable();
-    _mountPoint = router.mount(exposeDecl.path!, routable);
+    var m = router.mount(exposeDecl.path!, routable);
+    _mountPoint = m;
     var typeMirror = reflector.reflectType(this.runtimeType);
 
     // Pre-reflect methods
@@ -72,7 +73,10 @@ class Controller {
     classMirror.declarations.forEach(routeBuilder);
 
     // Return the name.
-    return exposeDecl.as?.isNotEmpty == true ? exposeDecl.as : typeMirror!.name;
+    var result =
+        exposeDecl.as?.isNotEmpty == true ? exposeDecl.as : typeMirror!.name;
+
+    return Future.value(result);
   }
 
   void Function(ReflectedDeclaration) _routeBuilder(
@@ -117,8 +121,8 @@ class Controller {
             method.parameters[0].type.reflectedType == RequestContext &&
             method.parameters[1].type.reflectedType == ResponseContext) {
           // Create a regular route
-          routeMappings[name] = routable
-              .addRoute(exposeDecl.method, exposeDecl.path,
+          routeMappings[name ?? ''] = routable
+              .addRoute(exposeDecl.method, exposeDecl.path ?? '',
                   (RequestContext req, ResponseContext res) {
             var result = reflectedMethod!(req, res);
             return result is RequestHandler ? result(req, res) : result;
@@ -190,7 +194,7 @@ class Controller {
           if (!path.startsWith('/')) path = '/$path';
         }
 
-        routeMappings[name] = routable.addRoute(
+        routeMappings[name ?? ''] = routable.addRoute(
             httpMethod, path, handleContained(reflectedMethod, injection),
             middleware: middleware);
       }

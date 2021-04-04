@@ -49,7 +49,7 @@ class HookedService<Id, Data, T extends Service<Id, Data>>
   }
 
   @override
-  FutureOr<Data>? Function(RequestContext, ResponseContext?)? get readData =>
+  FutureOr<Data> Function(RequestContext, ResponseContext)? get readData =>
       inner.readData;
 
   RequestContext? _getRequest(Map? params) {
@@ -296,7 +296,7 @@ class HookedService<Id, Data, T extends Service<Id, Data>>
   }
 
   @override
-  Future<Data> read(Id? id, [Map<String, dynamic>? _params]) {
+  Future<Data> read(Id id, [Map<String, dynamic>? _params]) {
     var params = _stripReq(_params);
     return beforeRead
         ._emit(HookedServiceEvent(false, _getRequest(_params),
@@ -322,7 +322,7 @@ class HookedService<Id, Data, T extends Service<Id, Data>>
   }
 
   @override
-  Future<Data> create(Data? data, [Map<String, dynamic>? _params]) {
+  Future<Data> create(Data data, [Map<String, dynamic>? _params]) {
     var params = _stripReq(_params);
     return beforeCreated
         ._emit(HookedServiceEvent(false, _getRequest(_params),
@@ -348,7 +348,7 @@ class HookedService<Id, Data, T extends Service<Id, Data>>
   }
 
   @override
-  Future<Data> modify(Id? id, Data? data, [Map<String, dynamic>? _params]) {
+  Future<Data> modify(Id id, Data data, [Map<String, dynamic>? _params]) {
     var params = _stripReq(_params);
     return beforeModified
         ._emit(HookedServiceEvent(false, _getRequest(_params),
@@ -377,7 +377,7 @@ class HookedService<Id, Data, T extends Service<Id, Data>>
   }
 
   @override
-  Future<Data> update(Id? id, Data? data, [Map<String, dynamic>? _params]) {
+  Future<Data> update(Id id, Data data, [Map<String, dynamic>? _params]) {
     var params = _stripReq(_params);
     return beforeUpdated
         ._emit(HookedServiceEvent(false, _getRequest(_params),
@@ -406,7 +406,7 @@ class HookedService<Id, Data, T extends Service<Id, Data>>
   }
 
   @override
-  Future<Data> remove(Id? id, [Map<String, dynamic>? _params]) {
+  Future<Data> remove(Id id, [Map<String, dynamic>? _params]) {
     var params = _stripReq(_params);
     return beforeRemoved
         ._emit(HookedServiceEvent(false, _getRequest(_params),
@@ -480,7 +480,7 @@ class HookedService<Id, Data, T extends Service<Id, Data>>
 }
 
 /// Fired when a hooked service is invoked.
-class HookedServiceEvent<Id, Data, T extends Service<Id?, Data?>> {
+class HookedServiceEvent<Id, Data, T extends Service<Id, Data?>> {
   static const String indexed = 'indexed';
   static const String read = 'read';
   static const String created = 'created';

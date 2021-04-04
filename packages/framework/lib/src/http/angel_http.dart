@@ -20,11 +20,10 @@ class AngelHttp extends Driver<HttpRequest, HttpResponse, HttpServer,
     HttpRequestContext, HttpResponseContext> {
   @override
   Uri get uri {
-    if (server == null) {
-      throw ArgumentError("[AngelHttp] Server instance not intialised");
-    }
-    return Uri(
-        scheme: 'http', host: server!.address.address, port: server!.port);
+    //if (server == null) {
+    //  throw ArgumentError("[AngelHttp] Server instance not intialised");
+    //}
+    return Uri(scheme: 'http', host: server.address.address, port: server.port);
   }
 
   AngelHttp._(Angel app,
@@ -70,10 +69,10 @@ class AngelHttp extends Driver<HttpRequest, HttpResponse, HttpServer,
   /// Use [server] instead.
   @deprecated
   HttpServer get httpServer {
-    if (server == null) {
-      throw ArgumentError("[AngelHttp] Server instance not initialised");
-    }
-    return server!;
+    //if (server == null) {
+    //  throw ArgumentError("[AngelHttp] Server instance not initialised");
+    //}
+    return server;
   }
 
   Future handleRequest(HttpRequest request) =>

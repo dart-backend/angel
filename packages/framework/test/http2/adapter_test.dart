@@ -70,7 +70,7 @@ void main() {
       UploadedFile file = files.firstWhereOrNull((f) => f.name == 'file')!;
       return [
         await file.data.map((l) => l.length).reduce((a, b) => a + b),
-        file.contentType!.mimeType,
+        file.contentType.mimeType,
         body
       ];
     });
@@ -188,7 +188,7 @@ void main() {
   test('server push', () async {
     var socket = await SecureSocket.connect(
       serverRoot.host,
-      serverRoot.port ?? 443,
+      serverRoot.port,
       onBadCertificate: (_) => true,
       supportedProtocols: ['h2'],
     );

@@ -45,7 +45,9 @@ class AngelHttp2 extends Driver<Socket, ServerTransportStream,
   }
 
   factory AngelHttp2(Angel app, SecurityContext securityContext,
-      {bool useZone = true, bool allowHttp1 = false, ServerSettings? settings}) {
+      {bool useZone = true,
+      bool allowHttp1 = false,
+      ServerSettings? settings}) {
     return AngelHttp2.custom(app, securityContext, SecureServerSocket.bind,
         allowHttp1: allowHttp1, settings: settings);
   }
@@ -71,14 +73,15 @@ class AngelHttp2 extends Driver<Socket, ServerTransportStream,
 
   @override
   Future<SecureServerSocket> generateServer([address, int? port]) async {
-    SecureServerSocket s = await serverGenerator(address ?? '127.0.0.1', port ?? 0);
+    SecureServerSocket s =
+        await serverGenerator(address ?? '127.0.0.1', port ?? 0);
     return _artificial = _AngelHttp2ServerSocket(s, this);
   }
 
   @override
   Future<SecureServerSocket> close() async {
     await _artificial!.close();
-    await _http?.close();
+    await _http.close();
     return await super.close();
   }
 
@@ -98,7 +101,7 @@ class AngelHttp2 extends Driver<Socket, ServerTransportStream,
   @override
   Future<Http2RequestContext> createRequestContext(
       Socket request, ServerTransportStream response) {
-    return Http2RequestContext.from(response, request, app!, _sessions, _uuid);
+    return Http2RequestContext.from(response, request, app, _sessions, _uuid);
   }
 
   @override
@@ -106,7 +109,7 @@ class AngelHttp2 extends Driver<Socket, ServerTransportStream,
       Socket request, ServerTransportStream response,
       [Http2RequestContext? correspondingRequest]) async {
     return Http2ResponseContext(app, response, correspondingRequest)
-      ..encoders.addAll(app!.encoders);
+      ..encoders.addAll(app.encoders);
   }
 
   @override
@@ -140,8 +143,8 @@ class AngelHttp2 extends Driver<Socket, ServerTransportStream,
   @override
   Uri get uri => Uri(
       scheme: 'https',
-      host: server!.address.address,
-      port: server!.port != 443 ? server!.port : null);
+      host: server.address.address,
+      port: server.port != 443 ? server.port : null);
 
   @override
   void writeStringToResponse(ServerTransportStream response, String value) {
@@ -208,7 +211,7 @@ class _AngelHttp2ServerSocket extends Stream<SecureSocket>
       },
       onDone: _ctrl.close,
       onError: (e, st) {
-        driver.app!.logger!.warning(
+        driver.app.logger!.warning(
             'HTTP/2 incoming connection failure: ', e, st as StackTrace);
       },
     );

@@ -116,8 +116,8 @@ class Http2ResponseContext extends ResponseContext<ServerTransportStream> {
   Iterable<String>? __allowedEncodings;
 
   Iterable<String>? get _allowedEncodings {
-    return __allowedEncodings ??= correspondingRequest!.headers!
-        .value('accept-encoding')
+    return __allowedEncodings ??= correspondingRequest?.headers
+        ?.value('accept-encoding')
         ?.split(',')
         .map((s) => s.trim())
         .where((s) => s.isNotEmpty)

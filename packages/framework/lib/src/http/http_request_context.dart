@@ -9,15 +9,16 @@ import '../core/core.dart';
 /// An implementation of [RequestContext] that wraps a [HttpRequest].
 class HttpRequestContext extends RequestContext<HttpRequest?> {
   Container? _container;
-  MediaType? _contentType;
+  MediaType _contentType = MediaType("text", "html");
   HttpRequest? _io;
-  String? _override, _path;
+  String? _override;
+  String _path = '';
 
   @override
   Container? get container => _container;
 
   @override
-  MediaType? get contentType {
+  MediaType get contentType {
     return _contentType;
   }
 
@@ -32,8 +33,8 @@ class HttpRequestContext extends RequestContext<HttpRequest?> {
   }
 
   @override
-  String? get hostname {
-    return rawRequest!.headers.value('host');
+  String get hostname {
+    return rawRequest?.headers.value('host') ?? "localhost";
   }
 
   /// The underlying [HttpRequest] instance underneath this context.
@@ -53,7 +54,7 @@ class HttpRequestContext extends RequestContext<HttpRequest?> {
   }
 
   @override
-  String? get path {
+  String get path {
     return _path;
   }
 
@@ -88,7 +89,7 @@ class HttpRequestContext extends RequestContext<HttpRequest?> {
 
     ctx.app = app;
     ctx._contentType = request.headers.contentType == null
-        ? null
+        ? MediaType("text", "html")
         : MediaType.parse(request.headers.contentType.toString());
     ctx._override = override;
 
@@ -128,9 +129,10 @@ class HttpRequestContext extends RequestContext<HttpRequest?> {
 
   @override
   Future close() {
-    _contentType = null;
+    //_contentType = null;
     _io = null;
-    _override = _path = null;
+    _override = null;
+    //_path = null;
     return super.close();
   }
 }

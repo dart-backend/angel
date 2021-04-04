@@ -11,7 +11,7 @@ class Http2Client extends BaseClient {
     // Connect a socket
     var socket = await SecureSocket.connect(
       request.url.host,
-      request.url.port ?? 443,
+      request.url.port,
       onBadCertificate: (_) => true,
       supportedProtocols: ['h2'],
     );

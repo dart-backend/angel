@@ -75,7 +75,7 @@ class Service<Id, Data> extends Routable {
 
   /// An optional [readData] function can be passed to handle non-map/non-json bodies.
   Service(
-      {FutureOr<Data> Function(RequestContext, ResponseContext?)? readData}) {
+      {FutureOr<Data> Function(RequestContext, ResponseContext)? readData}) {
     _readData = readData;
 
     _readData ??= (req, res) {
@@ -84,15 +84,15 @@ class Service<Id, Data> extends Routable {
             message:
                 'Invalid request body. Expected $Data; found ${req.bodyAsObject} instead.');
       } else {
-        return req.bodyAsObject as Data?;
+        return req.bodyAsObject as Data;
       }
     };
   }
 
-  FutureOr<Data>? Function(RequestContext, ResponseContext?)? _readData;
+  FutureOr<Data> Function(RequestContext, ResponseContext)? _readData;
 
   /// A [Function] that reads the request body and converts it into [Data].
-  FutureOr<Data>? Function(RequestContext, ResponseContext?)? get readData =>
+  FutureOr<Data> Function(RequestContext, ResponseContext)? get readData =>
       _readData;
 
   /// Retrieves the first object from the result of calling [index] with the given [params].
@@ -108,14 +108,10 @@ class Service<Id, Data> extends Routable {
       [Map<String, dynamic>? params,
       String errorMessage = 'No record was found matching the given query.']) {
     return index(params).then((result) {
-      if (result == null) {
+      if (result.isEmpty) {
         throw AngelHttpException.notFound(message: errorMessage);
       } else {
-        if (result.isEmpty) {
-          throw AngelHttpException.notFound(message: errorMessage);
-        } else {
-          return result.first;
-        }
+        return result.first;
       }
     });
   }
@@ -126,7 +122,7 @@ class Service<Id, Data> extends Routable {
   }
 
   /// Retrieves the desired resource.
-  Future<Data> read(Id? id, [Map<String, dynamic>? params]) {
+  Future<Data> read(Id id, [Map<String, dynamic>? params]) {
     throw AngelHttpException.methodNotAllowed();
   }
 
@@ -144,17 +140,17 @@ class Service<Id, Data> extends Routable {
   }
 
   /// Modifies a resource.
-  Future<Data> modify(Id? id, Data data, [Map<String, dynamic>? params]) {
+  Future<Data> modify(Id id, Data data, [Map<String, dynamic>? params]) {
     throw AngelHttpException.methodNotAllowed();
   }
 
   /// Overwrites a resource.
-  Future<Data> update(Id? id, Data data, [Map<String, dynamic>? params]) {
+  Future<Data> update(Id id, Data data, [Map<String, dynamic>? params]) {
     throw AngelHttpException.methodNotAllowed();
   }
 
   /// Removes the given resource.
-  Future<Data> remove(Id? id, [Map<String, dynamic>? params]) {
+  Future<Data> remove(Id id, [Map<String, dynamic>? params]) {
     throw AngelHttpException.methodNotAllowed();
   }
 
@@ -170,8 +166,7 @@ class Service<Id, Data> extends Routable {
     };
 
     return AnonymousService<Id, U>(
-      readData: readData as FutureOr<U> Function(
-          RequestContext<dynamic>, ResponseContext<dynamic>?)?,
+      readData: readData,
       index: ([params]) {
         return index(params).then((it) => it.map(encoder).toList());
       },
@@ -198,9 +193,9 @@ class Service<Id, Data> extends Routable {
   /// The single type argument, [T], is used to determine how to parse the [id].
   ///
   /// For example, `parseId<bool>` attempts to parse the value as a [bool].
-  static T? parseId<T>(id) {
+  static T parseId<T>(id) {
     if (id == 'null' || id == null) {
-      return null;
+      return '' as T;
     } else if (T == String) {
       return id.toString() as T;
     } else if (T == int) {
@@ -351,7 +346,7 @@ class Service<Id, Data> extends Routable {
         getAnnotation<Middleware>(service.remove, app!.container!.reflector);
     delete('/', (req, res) {
       return this.remove(
-          null,
+          '' as Id,
           mergeMap([
             {'query': req.queryParameters},
             restProvider,

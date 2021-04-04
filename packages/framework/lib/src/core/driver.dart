@@ -107,27 +107,27 @@ abstract class Driver<
           var path = req.path;
           if (path == '/') path = '';
 
-          Tuple4<List?, Map<String?, dynamic>, ParseResult<RouteResult?>?,
+          Tuple4<List, Map<String, dynamic>, ParseResult<RouteResult>,
               MiddlewarePipeline> resolveTuple() {
             var r = app.optimizedRouter;
             var resolved =
-                r.resolveAbsolute(path, method: req.method!, strip: false);
-            var pipeline = MiddlewarePipeline<RequestHandler?>(resolved);
+                r.resolveAbsolute(path, method: req.method, strip: false);
+            var pipeline = MiddlewarePipeline<RequestHandler>(resolved);
             return Tuple4(
-              pipeline.handlers,
-              resolved.fold<Map<String?, dynamic>>(
-                  <String?, dynamic>{}, (out, r) => out..addAll(r.allParams)),
-              resolved.isEmpty ? null : resolved.first.parseResult,
+              pipeline.handlers!,
+              resolved.fold<Map<String, dynamic>>(
+                  <String, dynamic>{}, (out, r) => out..addAll(r.allParams)),
+              (resolved.isEmpty ? null : resolved.first.parseResult)!,
               pipeline,
             );
           }
 
-          var cacheKey = req.method! + path!;
+          var cacheKey = req.method + path;
           var tuple = app.environment.isProduction
               ? app.handlerCache.putIfAbsent(cacheKey, resolveTuple)
               : resolveTuple();
-          var line = tuple.item4 as MiddlewarePipeline<RequestHandler?>;
-          var it = MiddlewarePipelineIterator<RequestHandler?>(line);
+          var line = tuple.item4 as MiddlewarePipeline<RequestHandler>;
+          var it = MiddlewarePipelineIterator<RequestHandler>(line);
 
           req.params.addAll(tuple.item2);
 
@@ -135,10 +135,10 @@ abstract class Driver<
             ?..registerSingleton<RequestContext>(req)
             ..registerSingleton<ResponseContext>(res)
             ..registerSingleton<MiddlewarePipeline>(tuple.item4)
-            ..registerSingleton<MiddlewarePipeline<RequestHandler?>>(line)
+            ..registerSingleton<MiddlewarePipeline<RequestHandler>>(line)
             ..registerSingleton<MiddlewarePipelineIterator>(it)
-            ..registerSingleton<MiddlewarePipelineIterator<RequestHandler?>>(it)
-            ..registerSingleton<ParseResult<RouteResult?>?>(tuple.item3)
+            ..registerSingleton<MiddlewarePipelineIterator<RequestHandler>>(it)
+            ..registerSingleton<ParseResult<RouteResult>?>(tuple.item3)
             ..registerSingleton<ParseResult?>(tuple.item3);
 
           if (app.environment.isProduction && app.logger != null) {
@@ -318,8 +318,8 @@ abstract class Driver<
       List<int> outputBuffer = res.buffer!.toBytes();
 
       if (res.encoders.isNotEmpty) {
-        var allowedEncodings = req.headers!
-            .value('accept-encoding')
+        var allowedEncodings = req.headers
+            ?.value('accept-encoding')
             ?.split(',')
             .map((s) => s.trim())
             .where((s) => s.isNotEmpty)
@@ -361,7 +361,7 @@ abstract class Driver<
   /// Runs a [MiddlewarePipeline].
   static Future<void> runPipeline<RequestContextType extends RequestContext,
           ResponseContextType extends ResponseContext>(
-      MiddlewarePipelineIterator<RequestHandler?> it,
+      MiddlewarePipelineIterator<RequestHandler> it,
       RequestContextType req,
       ResponseContextType res,
       Angel app) async {

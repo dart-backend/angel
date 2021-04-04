@@ -14,13 +14,13 @@ final RegExp _straySlashes = RegExp(r'(^/+)|(/+$)');
 class Http2RequestContext extends RequestContext<ServerTransportStream?> {
   final StreamController<List<int>> _body = StreamController();
   final Container container;
-  List<Cookie>? _cookies;
+  List<Cookie> _cookies = <Cookie>[];
   HttpHeaders? _headers;
   String? _method, _override, _path;
-  HttpSession? _session;
   late Socket _socket;
   ServerTransportStream? _stream;
   Uri? _uri;
+  HttpSession? _session;
 
   Http2RequestContext._(this.container);
 
@@ -124,8 +124,7 @@ class Http2RequestContext extends RequestContext<ServerTransportStream?> {
     }, cancelOnError: true, onError: c.completeError);
 
     // Apply session
-    var dartSessId =
-        cookies.firstWhereOrNull((c) => c.name == 'DARTSESSID');
+    var dartSessId = cookies.firstWhereOrNull((c) => c.name == 'DARTSESSID');
 
     if (dartSessId == null) {
       dartSessId = Cookie('DARTSESSID', uuid.v4());
@@ -140,7 +139,7 @@ class Http2RequestContext extends RequestContext<ServerTransportStream?> {
   }
 
   @override
-  List<Cookie>? get cookies => _cookies;
+  List<Cookie> get cookies => _cookies;
 
   /// The underlying HTTP/2 [ServerTransportStream].
   ServerTransportStream? get stream => _stream;
@@ -157,22 +156,22 @@ class Http2RequestContext extends RequestContext<ServerTransportStream?> {
   InternetAddress get remoteAddress => _socket.remoteAddress;
 
   @override
-  String? get path {
-    return _path;
+  String get path {
+    return _path ?? '';
   }
 
   @override
-  String? get originalMethod {
-    return _method;
+  String get originalMethod {
+    return _method ?? 'GET';
   }
 
   @override
-  String? get method {
-    return _override ?? _method;
+  String get method {
+    return _override ?? _method ?? 'GET';
   }
 
   @override
-  String? get hostname => _headers!.value('host');
+  String get hostname => _headers?.value('host') ?? 'localhost';
 
   @override
   HttpHeaders? get headers => _headers;

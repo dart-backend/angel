@@ -67,10 +67,12 @@ class MapService extends Service<String?, Map<String, dynamic>> {
   }
 
   @override
-  Future<Map<String, dynamic>> read(String? id, [Map<String, dynamic>? params]) {
+  Future<Map<String, dynamic>> read(String? id,
+      [Map<String, dynamic>? params]) {
     return Future.value(items.firstWhere(_matchesId(id),
         orElse: (() => throw AngelHttpException.notFound(
-            message: 'No record found for ID $id')) as Map<String, dynamic> Function()?));
+                message: 'No record found for ID $id'))
+            as Map<String, dynamic> Function()?));
   }
 
   @override

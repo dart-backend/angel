@@ -13,27 +13,31 @@ RequestHandler ioc(Function handler, {Iterable<String> optional = const []}) {
 
   return (req, res) {
     if (injection == null) {
-      injection = preInject(handler, req.app.container!.reflector);
-      injection!.optional.addAll(optional);
-      contained = handleContained(handler, injection);
+      if (req.app!.container != null) {
+        injection = preInject(handler, req.app!.container!.reflector);
+        if (injection != null) {
+          injection?.optional.addAll(optional);
+          contained = handleContained(handler, injection!);
+        }
+      }
     }
 
-    return req.app.executeHandler(contained, req, res);
+    return req.app!.executeHandler(contained, req, res);
   };
 }
 
-resolveInjection(requirement, InjectionRequest? injection, RequestContext req,
+resolveInjection(requirement, InjectionRequest injection, RequestContext req,
     ResponseContext res, bool throwOnUnresolved,
     [Container? container]) async {
   var propFromApp;
-  container ??= req.container ?? res.app?.container;
+  container ??= req.container ?? res.app!.container;
 
   if (requirement == RequestContext) {
     return req;
   } else if (requirement == ResponseContext) {
     return res;
   } else if (requirement is String &&
-      injection!.parameters.containsKey(requirement)) {
+      injection.parameters.containsKey(requirement)) {
     var param = injection.parameters[requirement]!;
     var value = param.getValue(req);
     if (value == null && param.required != false) throw param.error as Object;
@@ -44,9 +48,9 @@ resolveInjection(requirement, InjectionRequest? injection, RequestContext req,
     }
     if (req.params.containsKey(requirement)) {
       return req.params[requirement];
-    } else if ((propFromApp = req.app.findProperty(requirement)) != null) {
+    } else if ((propFromApp = req.app!.findProperty(requirement)) != null) {
       return propFromApp;
-    } else if (injection!.optional.contains(requirement)) {
+    } else if (injection.optional.contains(requirement)) {
       return null;
     } else if (throwOnUnresolved) {
       throw ArgumentError(
@@ -59,7 +63,7 @@ resolveInjection(requirement, InjectionRequest? injection, RequestContext req,
     var key = requirement.first;
     var type = requirement.last;
     if (req.params.containsKey(key) ||
-        req.app.configuration.containsKey(key) ||
+        req.app!.configuration.containsKey(key) ||
         _primitiveTypes.contains(type)) {
       return await resolveInjection(
           key, injection, req, res, throwOnUnresolved, container);
@@ -95,10 +99,10 @@ bool suitableForInjection(
 }
 
 /// Handles a request with a DI-enabled handler.
-RequestHandler handleContained(Function? handler, InjectionRequest? injection,
+RequestHandler handleContained(Function handler, InjectionRequest injection,
     [Container? container]) {
   return (RequestContext req, ResponseContext res) async {
-    if (injection!.parameters.isNotEmpty &&
+    if (injection.parameters.isNotEmpty &&
         injection.parameters.values.any((p) => p.match != null) &&
         !suitableForInjection(req, res, injection)) return Future.value(true);
 
@@ -116,7 +120,7 @@ RequestHandler handleContained(Function? handler, InjectionRequest? injection,
           [entry.key, entry.value], injection, req, res, false, container);
     }
 
-    return Function.apply(handler!, args, named);
+    return Function.apply(handler, args, named);
   };
 }
 

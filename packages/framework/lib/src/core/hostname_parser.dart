@@ -17,7 +17,7 @@ class HostnameSyntaxParser {
 
   RegExp parse() {
     var b = StringBuffer();
-    var parts = Queue<String?>();
+    var parts = Queue<String>();
 
     while (!_scanner.isDone) {
       if (_scanner.scan('|')) {
