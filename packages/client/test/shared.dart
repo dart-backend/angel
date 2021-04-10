@@ -1,14 +1,14 @@
 import 'package:angel_model/angel_model.dart';
 
 class Postcard extends Model {
-  String location;
-  String message;
+  String? location;
+  String? message;
 
-  Postcard({String id, this.location, this.message}) {
+  Postcard({String? id, this.location, this.message}) {
     this.id = id;
   }
 
-  factory Postcard.fromJson(Map data) => new Postcard(
+  factory Postcard.fromJson(Map data) => Postcard(
       id: data['id'].toString(),
       location: data['location'].toString(),
       message: data['message'].toString());

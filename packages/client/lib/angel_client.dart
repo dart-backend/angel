@@ -9,13 +9,13 @@ export 'package:angel_http_exception/angel_http_exception.dart';
 import 'package:meta/meta.dart';
 
 /// A function that configures an [Angel] client in some way.
-typedef FutureOr<void> AngelConfigurer(Angel app);
+typedef AngelConfigurer = FutureOr<void> Function(Angel app);
 
 /// A function that deserializes data received from the server.
 ///
 /// This is only really necessary in the browser, where `json_god`
 /// doesn't work.
-typedef T AngelDeserializer<T>(x);
+typedef AngelDeserializer<T> = T? Function(dynamic x);
 
 /// Represents an Angel server that we are querying.
 abstract class Angel extends http.BaseClient {
@@ -23,7 +23,7 @@ abstract class Angel extends http.BaseClient {
   /// that is automatically attached to every request sent.
   ///
   /// This is designed with `package:angel_auth` in mind.
-  String authToken;
+  String? authToken;
 
   /// The root URL at which the target server.
   final Uri baseUrl;
@@ -46,7 +46,7 @@ abstract class Angel extends http.BaseClient {
   ///
   /// The given [credentials] are sent to server as-is; the request body is sent as JSON.
   Future<AngelAuthResult> authenticate(
-      {@required String type,
+      {required String type,
       credentials,
       String authEndpoint = '/auth',
       @deprecated String reviveEndpoint = '/auth/token'});
@@ -85,57 +85,59 @@ abstract class Angel extends http.BaseClient {
   /// You can pass a custom [deserializer], which is typically necessary in cases where
   /// `dart:mirrors` does not exist.
   Service<Id, Data> service<Id, Data>(String path,
-      {@deprecated Type type, AngelDeserializer<Data> deserializer});
+      {@deprecated Type? type, AngelDeserializer<Data>? deserializer});
 
   //@override
   //Future<http.Response> delete(url, {Map<String, String> headers});
 
   @override
-  Future<http.Response> get(url, {Map<String, String> headers});
+  Future<http.Response> get(url, {Map<String, String>? headers});
 
   @override
-  Future<http.Response> head(url, {Map<String, String> headers});
+  Future<http.Response> head(url, {Map<String, String>? headers});
 
   @override
   Future<http.Response> patch(url,
-      {body, Map<String, String> headers, Encoding encoding});
+      {body, Map<String, String>? headers, Encoding? encoding});
 
   @override
   Future<http.Response> post(url,
-      {body, Map<String, String> headers, Encoding encoding});
+      {body, Map<String, String>? headers, Encoding? encoding});
 
   @override
   Future<http.Response> put(url,
-      {body, Map<String, String> headers, Encoding encoding});
+      {body, Map<String, String>? headers, Encoding? encoding});
 }
 
 /// Represents the result of authentication with an Angel server.
 class AngelAuthResult {
-  String _token;
+  String? _token;
   final Map<String, dynamic> data = {};
 
   /// The JSON Web token that was sent with this response.
-  String get token => _token;
+  String? get token => _token;
 
-  AngelAuthResult({String token, Map<String, dynamic> data = const {}}) {
+  AngelAuthResult({String? token, Map<String, dynamic> data = const {}}) {
     _token = token;
-    this.data.addAll(data ?? {});
+    this.data.addAll(data);
   }
 
   /// Attempts to deserialize a response from a [Map].
-  factory AngelAuthResult.fromMap(Map data) {
+  factory AngelAuthResult.fromMap(Map? data) {
     final result = AngelAuthResult();
 
-    if (data is Map && data.containsKey('token') && data['token'] is String)
+    if (data is Map && data.containsKey('token') && data['token'] is String) {
       result._token = data['token'].toString();
+    }
 
-    if (data is Map)
-      result.data.addAll((data['data'] as Map<String, dynamic>) ?? {});
+    if (data is Map) {
+      result.data.addAll((data['data'] as Map<String, dynamic>?) ?? {});
+    }
 
     if (result.token == null) {
       throw FormatException(
           'The required "token" field was not present in the given data.');
-    } else if (data['data'] is! Map) {
+    } else if (data!['data'] is! Map) {
       throw FormatException(
           'The required "data" field in the given data was not a map; instead, it was ${data['data']}.');
     }
@@ -145,7 +147,7 @@ class AngelAuthResult {
 
   /// Attempts to deserialize a response from a [String].
   factory AngelAuthResult.fromJson(String s) =>
-      AngelAuthResult.fromMap(json.decode(s) as Map);
+      AngelAuthResult.fromMap(json.decode(s) as Map?);
 
   /// Converts this instance into a JSON-friendly representation.
   Map<String, dynamic> toJson() {
@@ -179,22 +181,22 @@ abstract class Service<Id, Data> {
   Future close();
 
   /// Retrieves all resources.
-  Future<List<Data>> index([Map<String, dynamic> params]);
+  Future<List<Data>?> index([Map<String, dynamic>? params]);
 
   /// Retrieves the desired resource.
-  Future<Data> read(Id id, [Map<String, dynamic> params]);
+  Future<Data> read(Id id, [Map<String, dynamic>? params]);
 
   /// Creates a resource.
-  Future<Data> create(Data data, [Map<String, dynamic> params]);
+  Future<Data> create(Data data, [Map<String, dynamic>? params]);
 
   /// Modifies a resource.
-  Future<Data> modify(Id id, Data data, [Map<String, dynamic> params]);
+  Future<Data> modify(Id id, Data data, [Map<String, dynamic>? params]);
 
   /// Overwrites a resource.
-  Future<Data> update(Id id, Data data, [Map<String, dynamic> params]);
+  Future<Data> update(Id id, Data data, [Map<String, dynamic>? params]);
 
   /// Removes the given resource.
-  Future<Data> remove(Id id, [Map<String, dynamic> params]);
+  Future<Data> remove(Id id, [Map<String, dynamic>? params]);
 
   /// Creates a [Service] that wraps over this one, and maps input and output using two converter functions.
   ///
@@ -218,17 +220,17 @@ class _MappedService<Id, Data, U> extends Service<Id, U> {
   Future close() => Future.value();
 
   @override
-  Future<U> create(U data, [Map<String, dynamic> params]) {
+  Future<U> create(U data, [Map<String, dynamic>? params]) {
     return inner.create(decoder(data)).then(encoder);
   }
 
   @override
-  Future<List<U>> index([Map<String, dynamic> params]) {
-    return inner.index(params).then((l) => l.map(encoder).toList());
+  Future<List<U>> index([Map<String, dynamic>? params]) {
+    return inner.index(params).then((l) => l!.map(encoder).toList());
   }
 
   @override
-  Future<U> modify(Id id, U data, [Map<String, dynamic> params]) {
+  Future<U> modify(Id id, U data, [Map<String, dynamic>? params]) {
     return inner.modify(id, decoder(data), params).then(encoder);
   }
 
@@ -252,17 +254,17 @@ class _MappedService<Id, Data, U> extends Service<Id, U> {
   Stream<U> get onUpdated => inner.onUpdated.map(encoder);
 
   @override
-  Future<U> read(Id id, [Map<String, dynamic> params]) {
+  Future<U> read(Id id, [Map<String, dynamic>? params]) {
     return inner.read(id, params).then(encoder);
   }
 
   @override
-  Future<U> remove(Id id, [Map<String, dynamic> params]) {
+  Future<U> remove(Id id, [Map<String, dynamic>? params]) {
     return inner.remove(id, params).then(encoder);
   }
 
   @override
-  Future<U> update(Id id, U data, [Map<String, dynamic> params]) {
+  Future<U> update(Id id, U data, [Map<String, dynamic>? params]) {
     return inner.update(id, decoder(data), params).then(encoder);
   }
 }
@@ -275,9 +277,9 @@ class ServiceList<Id, Data> extends DelegatingList<Data> {
   /// A function used to compare the ID's two items for equality.
   ///
   /// Defaults to comparing the [idField] of `Map` instances.
-  Equality<Data> get equality => _equality;
+  Equality<Data>? get equality => _equality;
 
-  Equality<Data> _equality;
+  Equality<Data>? _equality;
 
   final Service<Id, Data> service;
 
@@ -285,15 +287,16 @@ class ServiceList<Id, Data> extends DelegatingList<Data> {
 
   final List<StreamSubscription> _subs = [];
 
-  ServiceList(this.service, {this.idField = 'id', Equality<Data> equality})
+  ServiceList(this.service, {this.idField = 'id', Equality<Data>? equality})
       : super([]) {
     _equality = equality;
-    _equality ??= EqualityBy<Data, Id>((map) {
-      if (map is Map)
-        return map[idField ?? 'id'] as Id;
-      else
+    _equality ??= EqualityBy<Data, Id?>((map) {
+      if (map is Map) {
+        return map[idField] as Id?;
+      } else {
         throw UnsupportedError(
             'ServiceList only knows how to find the id from a Map object. Provide a custom `Equality` in your call to the constructor.');
+      }
     });
     // Index
     _subs.add(service.onIndexed.where(_notNull).listen((data) {
@@ -310,15 +313,17 @@ class ServiceList<Id, Data> extends DelegatingList<Data> {
     }));
 
     // Modified/Updated
-    handleModified(Data item) {
+    void handleModified(Data item) {
       var indices = <int>[];
 
-      for (int i = 0; i < length; i++) {
-        if (_equality.equals(item, this[i])) indices.add(i);
+      for (var i = 0; i < length; i++) {
+        if (_equality!.equals(item, this[i])) indices.add(i);
       }
 
       if (indices.isNotEmpty) {
-        for (var i in indices) this[i] = item;
+        for (var i in indices) {
+          this[i] = item;
+        }
 
         _onChange.add(this);
       }
@@ -331,7 +336,7 @@ class ServiceList<Id, Data> extends DelegatingList<Data> {
 
     // Removed
     _subs.add(service.onRemoved.where(_notNull).listen((item) {
-      removeWhere((x) => _equality.equals(item, x));
+      removeWhere((x) => _equality!.equals(item, x));
       _onChange.add(this);
     }));
   }

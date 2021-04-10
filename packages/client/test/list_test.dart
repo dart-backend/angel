@@ -6,22 +6,22 @@ import 'package:angel_framework/http.dart' as s;
 import 'package:pedantic/pedantic.dart';
 import 'package:test/test.dart';
 
-main() {
-  HttpServer server;
-  c.Angel app;
-  c.ServiceList list;
-  StreamQueue queue;
+void main() {
+  late HttpServer server;
+  late c.Angel app;
+  late c.ServiceList list;
+  late StreamQueue queue;
 
   setUp(() async {
-    var serverApp = new s.Angel();
-    var http = new s.AngelHttp(serverApp);
-    serverApp.use('/api/todos', new s.MapService(autoIdAndDateFields: false));
+    var serverApp = s.Angel();
+    var http = s.AngelHttp(serverApp);
+    serverApp.use('/api/todos', s.MapService(autoIdAndDateFields: false));
 
     server = await http.startServer();
     var uri = 'http://${server.address.address}:${server.port}';
-    app = new c.Rest(uri);
-    list = new c.ServiceList(app.service('api/todos'));
-    queue = new StreamQueue(list.onChange);
+    app = c.Rest(uri);
+    list = c.ServiceList(app.service('api/todos'));
+    queue = StreamQueue(list.onChange);
   });
 
   tearDown(() async {

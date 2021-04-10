@@ -13,20 +13,21 @@ export 'angel_client.dart';
 
 /// Queries an Angel server via REST.
 class Rest extends BaseAngelClient {
-  Rest(String basePath) : super(new http.BrowserClient(), basePath);
+  Rest(String basePath) : super(http.BrowserClient(), basePath);
 
+  @override
   Future<AngelAuthResult> authenticate(
-      {String type,
+      {String? type,
       credentials,
       String authEndpoint = '/auth',
       @deprecated String reviveEndpoint = '/auth/token'}) async {
     if (type == null || type == 'token') {
       if (!window.localStorage.containsKey('token')) {
-        throw new Exception(
+        throw Exception(
             'Cannot revive token from localStorage - there is none.');
       }
 
-      var token = json.decode(window.localStorage['token']);
+      var token = json.decode(window.localStorage['token']!);
       credentials ??= {'token': token};
     }
 
@@ -39,33 +40,34 @@ class Rest extends BaseAngelClient {
 
   @override
   Stream<String> authenticateViaPopup(String url,
-      {String eventName = 'token', String errorMessage}) {
-    var ctrl = new StreamController<String>();
+      {String eventName = 'token', String? errorMessage}) {
+    var ctrl = StreamController<String>();
     var wnd = window.open(url, 'angel_client_auth_popup');
 
     Timer t;
-    StreamSubscription sub;
-    t = new Timer.periodic(new Duration(milliseconds: 500), (timer) {
+    StreamSubscription? sub;
+    t = Timer.periodic(Duration(milliseconds: 500), (timer) {
       if (!ctrl.isClosed) {
-        if (wnd.closed) {
-          ctrl.addError(new AngelHttpException.notAuthenticated(
+        if (wnd.closed!) {
+          ctrl.addError(AngelHttpException.notAuthenticated(
               message:
                   errorMessage ?? 'Authentication via popup window failed.'));
           ctrl.close();
           timer.cancel();
           sub?.cancel();
         }
-      } else
+      } else {
         timer.cancel();
+      }
     });
 
-    sub = window.on[eventName ?? 'token'].listen((Event ev) {
+    sub = window.on[eventName].listen((Event ev) {
       var e = ev as CustomEvent;
       if (!ctrl.isClosed) {
         ctrl.add(e.detail.toString());
         t.cancel();
         ctrl.close();
-        sub.cancel();
+        sub!.cancel();
       }
     });
 
