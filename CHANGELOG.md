@@ -2,7 +2,7 @@
 * Changed Dart SDK requirements for all packages to ">=2.12.0 <3.0.0" to support NNBD. 
 * Updated pretty_logging to 3.0.0 (0/0 tests)
 * Updated angel_http_exception to 3.0.0 (0/0 tests)
-* Moved angel_cli to https://github.com/dukefirehawk/cli
+* Moved angel_cli to https://github.com/dukefirehawk/cli (Not migrated)
 * Added code_buffer and updated to 2.0.0 (16/16 tests)
 * Added combinator and updated to 2.0.0 (16/16 tests)
 * Updated angel_route to 5.0.0 (35/35 tests passed)
@@ -12,7 +12,20 @@
 * Added mock_request and updated to 2.0.0 (0/0 tests)
 * Updated angel_framework to 4.0.0 (146/149 tests passed)
 * Updated angel_auth to 4.0.0 (22/32 test passed)
-* Updated angel_configuration to 4.0.0 (In progress)
+* Updated angel_configuration to 4.0.0 (6/8 test passed)
+* Updated angel_validate to 4.0.0 (6/7 test passed)
+* Updated json_god to 4.0.0 (13/13 test passed)
+* Updated angel_client to 3.0.0 (in progress)
+* Updated angel_websocket to 3.0.0 (in progress)
+* Updated test to 3.0.0 (in progress)
+* Updated jael to 3.0.0 (in progress)
+* Updated jael_preprocessor to 3.0.0 (in progress)
+* Updated angel_jael to 3.0.0 (in progress)
+* Updated pub_sub to 3.0.0 (in progress)
+* Updated production to 2.0.0 (in progress)
+* Updated hot to 3.0.0 (in progress)
+* Updated static to 3.0.0 (in progress)
+* Update basic-sdk-2.12.x boilerplate (in progress)
 
 # 3.0.0 (Non NNBD)
 * Changed Dart SDK requirements for all packages to ">=2.10.0 <3.0.0"
@@ -25,12 +38,12 @@
 * Updated angel_framework to 3.0.0
 * Updated angel_auth to 3.0.0
 * Updated angel_configuration to 3.0.0
-* Updated jael to 3.0.0
-* Updated jael_preprocessor to 3.0.0
-* Updated validate to 3.0.0
+* Updated angel_validate to 3.0.0
 * Added and updated json_god to 3.0.0
 * Updated angel_client to 3.0.0
 * Updated angel_websocket to 3.0.0 (one issue to be resolved)
+* Updated jael to 3.0.0
+* Updated jael_preprocessor to 3.0.0
 * Updated test to 3.0.0
 * Updated angel_jael to 3.0.0 (Issue with 2 dependencies)
 * Added pub_sub and updated to 3.0.0

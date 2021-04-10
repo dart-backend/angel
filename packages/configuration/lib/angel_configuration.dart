@@ -44,7 +44,7 @@ Future<void> _loadYamlFile(Map map, File yamlFile, Map<String, String> env,
       }
     }
 
-    for (var key in configMap.keys as Iterable<String>) {
+    for (var key in configMap.keys) {
       out[key] = _applyEnv(configMap[key], env, warn);
     }
 

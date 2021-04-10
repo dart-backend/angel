@@ -2,9 +2,9 @@ import 'dart:html';
 
 import 'package:angel_validate/angel_validate.dart';
 
-final $errors = querySelector('#errors') as UListElement;
-final $form = querySelector('#form') as FormElement;
-final $blank = querySelector('[name="blank"]') as InputElement;
+final $errors = querySelector('#errors') as UListElement?;
+final $form = querySelector('#form') as FormElement?;
+final $blank = querySelector('[name="blank"]') as InputElement?;
 
 final Validator formSchema = Validator({
   'firstName*': [isString, isNotEmpty],
@@ -29,9 +29,9 @@ final Validator formSchema = Validator({
 });
 
 main() {
-  $form.onSubmit.listen((e) {
+  $form!.onSubmit.listen((e) {
     e.preventDefault();
-    $errors.children.clear();
+    $errors!.children.clear();
 
     var formData = {};
 
@@ -39,7 +39,7 @@ main() {
       formData[key] = (querySelector('[name="$key"]') as InputElement).value;
     });
 
-    if ($blank.value.isNotEmpty) formData['blank'] = $blank.value;
+    if ($blank!.value!.isNotEmpty) formData['blank'] = $blank!.value;
 
     print('Form data: $formData');
 
@@ -47,7 +47,7 @@ main() {
       var passportInfo =
           formSchema.enforceParsed(formData, ['age', 'familySize']);
 
-      $errors.children
+      $errors!.children
         ..add(success('Successfully registered for a passport.'))
         ..add(success('First Name: ${passportInfo["firstName"]}'))
         ..add(success('Last Name: ${passportInfo["lastName"]}'))
@@ -55,7 +55,7 @@ main() {
         ..add(success(
             'Number of People in Family: ${passportInfo["familySize"]}'));
     } on ValidationException catch (e) {
-      $errors.children.addAll(e.errors.map((error) {
+      $errors!.children.addAll(e.errors.map((error) {
         return LIElement()..text = error;
       }));
     }

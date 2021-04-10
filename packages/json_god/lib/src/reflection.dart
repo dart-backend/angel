@@ -7,7 +7,7 @@ const Symbol hashCodeSymbol = #hashCode;
 const Symbol runtimeTypeSymbol = #runtimeType;
 
 typedef Serializer(value);
-typedef Deserializer(value, {Type outputType});
+typedef Deserializer(value, {Type? outputType});
 
 List<Symbol> _findGetters(ClassMirror classMirror) {
   List<Symbol> result = [];
@@ -110,7 +110,7 @@ _deserializeFromJsonByReflection(
     throw new ArgumentError('$outputType is not a class.');
   }
 
-  var type = typeMirror as ClassMirror;
+  var type = typeMirror;
   var fromJson =
       new Symbol('${MirrorSystem.getName(type.simpleName)}.fromJson');
 
@@ -166,7 +166,7 @@ _deserializeFromJsonByReflection(
         Symbol symbolForGetter = classMirror.instanceMembers.keys
             .firstWhere((x) => x == searchSymbol);
         Type requiredType = classMirror
-            .instanceMembers[symbolForGetter].returnType.reflectedType;
+            .instanceMembers[symbolForGetter]!.returnType.reflectedType;
         if (data[key].runtimeType != requiredType) {
           logger.info("Currently, $key is a ${data[key].runtimeType}.");
           logger.info("However, $key must be a $requiredType.");

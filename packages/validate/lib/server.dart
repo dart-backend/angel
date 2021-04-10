@@ -55,17 +55,19 @@ RequestHandler validate(Validator validator,
     {String errorMessage = 'Invalid data.'}) {
   return (RequestContext req, res) async {
     await req.parseBody();
-    var result = await asyncApplyValidator(validator, req.bodyAsMap, req.app);
+    var app = req.app;
+    if (app != null) {
+      var result = await asyncApplyValidator(validator, req.bodyAsMap, app);
 
-    if (result.errors.isNotEmpty) {
-      throw AngelHttpException.badRequest(
-          message: errorMessage, errors: result.errors);
+      if (result.errors.isNotEmpty) {
+        throw AngelHttpException.badRequest(
+            message: errorMessage, errors: result.errors);
+      }
+
+      req.bodyAsMap
+        ..clear()
+        ..addAll(result.data);
     }
-
-    req.bodyAsMap
-      ..clear()
-      ..addAll(result.data);
-
     return true;
   };
 }
@@ -75,18 +77,20 @@ RequestHandler validate(Validator validator,
 RequestHandler validateQuery(Validator validator,
     {String errorMessage = 'Invalid data.'}) {
   return (RequestContext req, res) async {
-    var result =
-        await asyncApplyValidator(validator, req.queryParameters, req.app);
+    var app = req.app;
+    if (app != null) {
+      var result =
+          await asyncApplyValidator(validator, req.queryParameters, app);
 
-    if (result.errors.isNotEmpty) {
-      throw AngelHttpException.badRequest(
-          message: errorMessage, errors: result.errors);
+      if (result.errors.isNotEmpty) {
+        throw AngelHttpException.badRequest(
+            message: errorMessage, errors: result.errors);
+      }
+
+      req.queryParameters
+        ..clear()
+        ..addAll(result.data);
     }
-
-    req.queryParameters
-      ..clear()
-      ..addAll(result.data);
-
     return true;
   };
 }
@@ -96,17 +100,19 @@ RequestHandler validateQuery(Validator validator,
 HookedServiceEventListener validateEvent(Validator validator,
     {String errorMessage = 'Invalid data.'}) {
   return (HookedServiceEvent e) async {
-    var result = await asyncApplyValidator(
-        validator, e.data as Map, (e.request?.app ?? e.service.app));
+    var app = e.request?.app ?? e.service.app;
+    if (app != null) {
+      var result = await asyncApplyValidator(validator, e.data as Map, app);
 
-    if (result.errors.isNotEmpty) {
-      throw AngelHttpException.badRequest(
-          message: errorMessage, errors: result.errors);
+      if (result.errors.isNotEmpty) {
+        throw AngelHttpException.badRequest(
+            message: errorMessage, errors: result.errors);
+      }
+
+      e.data
+        ..clear()
+        ..addAll(result.data);
     }
-
-    e.data
-      ..clear()
-      ..addAll(result.data);
   };
 }
 
@@ -122,7 +128,7 @@ Future<ValidationResult> asyncApplyValidator(
     var value = result.data[key];
     var description = StringDescription("'$key': expected ");
 
-    for (var rule in validator.rules[key]) {
+    for (var rule in validator.rules[key]!) {
       if (rule is AngelMatcher) {
         var r = await rule.matchesWithAngel(value, key, result.data, {}, app);
 

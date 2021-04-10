@@ -18,21 +18,21 @@ void printRecord(LogRecord rec) {
 }
 
 void main() {
-  Angel app;
-  AngelHttp http;
+  Angel? app;
+  late AngelHttp http;
   //TestClient client;
 
   setUp(() async {
     app = Angel();
-    http = AngelHttp(app, useZone: false);
+    http = AngelHttp(app!, useZone: false);
 
-    app.chain([validate(echoSchema)]).post('/echo',
+    app!.chain([validate(echoSchema)]).post('/echo',
         (RequestContext req, res) async {
       await req.parseBody();
       res.write('Hello, ${req.bodyAsMap['message']}!');
     });
 
-    app.logger = Logger('angel')..onRecord.listen(printRecord);
+    app!.logger = Logger('angel')..onRecord.listen(printRecord);
     //client = await connectTo(app);
   });
 

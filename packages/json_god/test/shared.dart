@@ -5,20 +5,20 @@ import 'package:stack_trace/stack_trace.dart';
 void printRecord(LogRecord rec) {
   print(rec);
   if (rec.error != null) print(rec.error);
-  if (rec.stackTrace != null) print(new Chain.forTrace(rec.stackTrace).terse);
+  if (rec.stackTrace != null) print(new Chain.forTrace(rec.stackTrace!).terse);
 }
 
 class SampleNestedClass {
-  String bar;
+  String? bar;
 
-  SampleNestedClass([String this.bar]);
+  SampleNestedClass([String? this.bar]);
 }
 
 class SampleClass {
-  String hello;
+  String? hello;
   List<SampleNestedClass> nested = [];
 
-  SampleClass([String this.hello]);
+  SampleClass([String? this.hello]);
 }
 
 @WithSchemaUrl(

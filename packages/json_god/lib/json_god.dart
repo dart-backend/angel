@@ -1,7 +1,8 @@
 /// A robust library for JSON serialization and deserialization.
 library json_god;
 
-import 'package:dart2_constant/convert.dart';
+//import 'package:dart2_constant/convert.dart';
+import 'dart:convert';
 import 'package:logging/logging.dart';
 import 'src/reflection.dart' as reflection;
 

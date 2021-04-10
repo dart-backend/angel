@@ -47,15 +47,15 @@ testDeserializationOfMaps() {
 }
 
 class Pokedex {
-  Map<String, int> pokemon;
+  Map<String, int>? pokemon;
 }
 
 testDeserializationOfMapsWithReflection() {
   var s = '{"pokemon": {"Bulbasaur": 1, "Deoxys": 382}}';
   var pokedex = god.deserialize(s, outputType: Pokedex) as Pokedex;
   expect(pokedex.pokemon, hasLength(2));
-  expect(pokedex.pokemon['Bulbasaur'], 1);
-  expect(pokedex.pokemon['Deoxys'], 382);
+  expect(pokedex.pokemon!['Bulbasaur'], 1);
+  expect(pokedex.pokemon!['Deoxys'], 382);
 }
 
 testDeserializationOfListsAsWellAsViaReflection() {

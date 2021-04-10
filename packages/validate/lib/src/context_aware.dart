@@ -44,10 +44,9 @@ class _PredicateWithContext extends ContextAwareMatcher {
   _PredicateWithContext(this.f, this.desc);
 
   @override
-  Description describe(Description description) =>
-      desc == null ? description : description.add(desc);
+  Description describe(Description description) => description.add(desc);
 
   @override
   bool matchesWithContext(item, String key, Map context, Map matchState) =>
-      f(item, key, context, matchState);
+      f(item as Object, key, context, matchState);
 }

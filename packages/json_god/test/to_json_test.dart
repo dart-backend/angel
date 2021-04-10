@@ -20,7 +20,7 @@ main() {
 }
 
 class Foo {
-  String text;
+  String? text;
 
   String get foo => 'poo$text';
 
