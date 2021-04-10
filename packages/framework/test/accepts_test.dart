@@ -60,7 +60,7 @@ main() {
 Future<RequestContext> acceptContentTypes(
     [Iterable<String> contentTypes = const []]) {
   var headerString =
-      contentTypes.isEmpty ? ContentType.html : contentTypes.join(',');
+      contentTypes.isEmpty ? ContentType.text : contentTypes.join(',');
   var rq = MockHttpRequest('GET', ENDPOINT, persistentConnection: false);
   rq.headers.set('accept', headerString);
   rq.close();

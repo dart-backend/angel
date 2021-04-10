@@ -8,18 +8,16 @@ const List<Type> _primitiveTypes = [String, int, num, double, Null];
 ///
 /// Calling [ioc] also auto-serializes the result of a [handler].
 RequestHandler ioc(Function handler, {Iterable<String> optional = const []}) {
-  InjectionRequest? injection;
-  RequestHandler? contained;
-
   return (req, res) {
-    if (injection == null) {
-      if (req.app!.container != null) {
-        injection = preInject(handler, req.app!.container!.reflector);
-        if (injection != null) {
-          injection?.optional.addAll(optional);
-          contained = handleContained(handler, injection!);
-        }
-      }
+    RequestHandler? contained;
+
+    if (req.app?.container != null) {
+      InjectionRequest injection =
+          preInject(handler, req.app!.container!.reflector);
+      //if (injection != null) {
+      injection.optional.addAll(optional);
+      contained = handleContained(handler, injection);
+      //}
     }
 
     return req.app!.executeHandler(contained, req, res);

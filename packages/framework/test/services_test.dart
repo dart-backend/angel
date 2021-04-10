@@ -126,6 +126,7 @@ main() {
     });
 
     test('cannot remove all unless explicitly set', () async {
+      var a = "1234";
       var response = await client.delete(Uri.parse('$url/todos/null'));
       expect(response.statusCode, 403);
     });

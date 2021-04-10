@@ -41,7 +41,7 @@ class AuthToken {
       DateTime? issuedAt,
       Map payload = const {}}) {
     this.issuedAt = issuedAt ?? DateTime.now();
-    this.payload.addAll(payload?.keys?.fold(
+    this.payload.addAll(payload.keys.fold(
             {},
             ((out, k) => out..[k.toString()] = payload[k])
                 as Map<String, dynamic>? Function(

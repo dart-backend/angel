@@ -217,16 +217,16 @@ class AngelAuth<User> {
 
   /// Retrieves a JWT from a request, if any was sent at all.
   String? getJwt(RequestContext req) {
-    if (req.headers!.value("Authorization") != null) {
-      final authHeader = req.headers!.value("Authorization")!;
+    if (req.headers!.value('Authorization') != null) {
+      final authHeader = req.headers!.value('Authorization')!;
 
       // Allow Basic auth to fall through
       if (_rgxBearer.hasMatch(authHeader)) {
-        return authHeader.replaceAll(_rgxBearer, "").trim();
+        return authHeader.replaceAll(_rgxBearer, '').trim();
       }
     } else if (allowCookie &&
-        req.cookies!.any((cookie) => cookie.name == "token")) {
-      return req.cookies!.firstWhere((cookie) => cookie.name == "token").value;
+        req.cookies.any((cookie) => cookie.name == 'token')) {
+      return req.cookies.firstWhere((cookie) => cookie.name == 'token').value;
     } else if (allowTokenInQuery &&
         req.uri!.queryParameters['token'] is String) {
       return req.uri!.queryParameters['token']?.toString();
@@ -266,7 +266,7 @@ class AngelAuth<User> {
       var jwt = getJwt(req);
 
       if (jwt == null) {
-        var body = await req.parseBody().then((_) => req.bodyAsMap!);
+        var body = await req.parseBody().then((_) => req.bodyAsMap);
         jwt = body['token']?.toString();
       }
       if (jwt == null) {

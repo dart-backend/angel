@@ -33,7 +33,7 @@ main() async {
     });
 
   app.errorHandler = (e, req, res) {
-    print(e.message ?? e.error ?? e);
+    print(e.message);
     print(e.stackTrace);
     return e.toJson();
   };

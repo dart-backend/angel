@@ -21,7 +21,7 @@ Future<void> _loadYamlFile(Map map, File yamlFile, Map<String, String> env,
 
     var out = {};
 
-    var configMap = Map.of(config as Map);
+    var configMap = Map.of(config);
 
     // Check for _include
     if (configMap.containsKey('_include')) {
@@ -44,8 +44,8 @@ Future<void> _loadYamlFile(Map map, File yamlFile, Map<String, String> env,
       }
     }
 
-    for (String key in configMap.keys) {
-      out[key] = _applyEnv(configMap[key], env ?? {}, warn);
+    for (var key in configMap.keys as Iterable<String>) {
+      out[key] = _applyEnv(configMap[key], env, warn);
     }
 
     map.addAll(mergeMap(
@@ -58,7 +58,7 @@ Future<void> _loadYamlFile(Map map, File yamlFile, Map<String, String> env,
   }
 }
 
-Object _applyEnv(
+Object? _applyEnv(
     var v, Map<String, String> env, void Function(String msg) warn) {
   if (v is String) {
     if (v.startsWith(r'$') && v.length > 1) {
@@ -74,10 +74,10 @@ Object _applyEnv(
       return v;
     }
   } else if (v is Iterable) {
-    return v.map((x) => _applyEnv(x, env ?? {}, warn)).toList();
+    return v.map((x) => _applyEnv(x, env, warn)).toList();
   } else if (v is Map) {
     return v.keys
-        .fold<Map>({}, (out, k) => out..[k] = _applyEnv(v[k], env ?? {}, warn));
+        .fold<Map>({}, (out, k) => out..[k] = _applyEnv(v[k], env, warn));
   } else {
     return v;
   }
@@ -88,9 +88,9 @@ Object _applyEnv(
 /// You can override [onWarning]; otherwise, configuration errors will throw.
 Future<Map> loadStandaloneConfiguration(FileSystem fileSystem,
     {String directoryPath = './config',
-    String overrideEnvironmentName,
-    String envPath,
-    void Function(String message) onWarning}) async {
+    String? overrideEnvironmentName,
+    String? envPath,
+    void Function(String message)? onWarning}) async {
   var sourceDirectory = fileSystem.directory(directoryPath);
   var env = dotenv.env;
   var envFile = sourceDirectory.childFile(envPath ?? '.env');
@@ -127,8 +127,8 @@ Future<Map> loadStandaloneConfiguration(FileSystem fileSystem,
 /// You can also specify a custom [envPath] to load system configuration from.
 AngelConfigurer configuration(FileSystem fileSystem,
     {String directoryPath = './config',
-    String overrideEnvironmentName,
-    String envPath}) {
+    String? overrideEnvironmentName,
+    String? envPath}) {
   return (Angel app) async {
     var config = await loadStandaloneConfiguration(
       fileSystem,

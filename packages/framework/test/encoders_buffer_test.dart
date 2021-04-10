@@ -98,8 +98,8 @@ void encodingTests(Angel getApp()) {
     });
 
     test('only uses one encoder', () async {
-      var rq = MockHttpRequest('GET', Uri.parse('/hello'))
-        ..headers.set('accept-encoding', ['gzip', 'deflate']);
+      var rq = MockHttpRequest('GET', Uri.parse('/hello'));
+      rq.headers.set('accept-encoding', ['gzip', 'deflate']);
       await rq.close();
       var rs = rq.response;
       await http.handleRequest(rq);

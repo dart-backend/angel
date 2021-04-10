@@ -22,6 +22,10 @@ abstract class Driver<
   final bool useZone;
   bool _closed = false;
   late Server _server;
+
+  // TODO: Ugly fix
+  bool isServerInitialised = false;
+
   StreamSubscription<Request>? _sub;
   final log = Logger('Driver');
 
@@ -34,16 +38,27 @@ abstract class Driver<
   Uri get uri;
 
   /// The native server running this instance.
-  Server get server => _server;
+  Server? get server {
+    // TODO: Ugly fix
+    if (isServerInitialised) {
+      return _server;
+    } else {
+      return null;
+    }
+  }
 
   Future<Server> generateServer(address, int port) =>
       serverGenerator(address, port);
 
   /// Starts, and returns the server.
-  Future<Server> startServer([address, int port = 5000]) {
+  Future<Server> startServer([address, int port = 0]) {
     var host = address ?? '127.0.0.1';
     return generateServer(host, port).then((server) {
       _server = server;
+
+      // TODO: Ugly fix
+      isServerInitialised = true;
+
       return Future.wait(app.startupHooks.map(app.configure)).then((_) {
         app.optimizeForProduction();
         _sub = server.listen((request) {
@@ -62,16 +77,23 @@ abstract class Driver<
   }
 
   /// Shuts down the underlying server.
-  Future<Server> close() {
+  Future<void> close() {
     if (_closed) {
-      return Future.value(_server);
+      //return Future.value(_server);
+      return Future.value();
     }
     _closed = true;
 
     _sub?.cancel();
+
+    return app.close().then((_) =>
+        Future.wait(app.shutdownHooks.map(app.configure))
+            .then((_) => Future.value()));
+    /*
     return app.close().then((_) =>
         Future.wait(app.shutdownHooks.map(app.configure))
             .then((_) => Future.value(_server)));
+    */
   }
 
   Future<RequestContextType> createRequestContext(
@@ -81,7 +103,7 @@ abstract class Driver<
       Request request, Response response,
       [RequestContextType? correspondingRequest]);
 
-  void setHeader(Response response, String key, String? value);
+  void setHeader(Response response, String key, String value);
 
   void setContentLength(Response response, int length);
 
@@ -174,7 +196,7 @@ abstract class Driver<
             if (app.logger != null) {
               var error = e.error ?? e;
               var trace = Trace.from(e.stackTrace ?? StackTrace.current).terse;
-              app.logger?.severe(e.message ?? e.toString(), error, trace);
+              app.logger?.severe(e.message, error, trace);
             }
 
             return handleAngelHttpException(
@@ -206,7 +228,7 @@ abstract class Driver<
                 }
 
                 if (app.logger != null) {
-                  app.logger?.severe(e.message ?? e.toString(), error, trace);
+                  app.logger?.severe(e.message, error, trace);
                 }
 
                 return handleAngelHttpException(
@@ -309,7 +331,7 @@ abstract class Driver<
       //if (res.isOpen) res.close();
 
       for (var key in res.headers.keys) {
-        setHeader(response, key, res.headers[key]);
+        setHeader(response, key, res.headers[key] ?? '');
       }
 
       setContentLength(response, res.buffer!.length);

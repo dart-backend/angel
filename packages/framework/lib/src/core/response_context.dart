@@ -9,6 +9,7 @@ import 'dart:typed_data';
 import 'package:angel_route/angel_route.dart';
 import 'package:file/file.dart';
 import 'package:http_parser/http_parser.dart';
+import 'package:logging/logging.dart';
 import 'package:mime/mime.dart';
 
 import 'controller.dart';
@@ -25,6 +26,8 @@ abstract class ResponseContext<RawResponse>
     'content-type': 'text/plain',
     'server': 'angel',
   });
+
+  final log = Logger('ResponseContext');
 
   Completer? _done;
   int _statusCode = 200;
@@ -76,11 +79,11 @@ abstract class ResponseContext<RawResponse>
   /// This response's status code.
   int get statusCode => _statusCode;
 
-  set statusCode(int? value) {
+  set statusCode(int value) {
     if (!isOpen) {
       throw closed();
     } else {
-      _statusCode = value ?? 200;
+      _statusCode = value; // ?? 200;
     }
   }
 
@@ -202,7 +205,7 @@ abstract class ResponseContext<RawResponse>
   /// based on the provided params.
   ///
   /// See [Router]#navigate for more. :)
-  Future<void> redirect(url, {bool absolute = true, int? code = 302}) {
+  Future<void> redirect(url, {bool absolute = true, int? code}) {
     if (!isOpen) throw closed();
     headers
       ..['content-type'] = 'text/html'
@@ -344,7 +347,11 @@ abstract class ResponseContext<RawResponse>
     if (_done?.isCompleted == false) {
       _done!.completeError(error, stackTrace);
     } else if (_done == null) {
-      Zone.current.handleUncaughtError(error, stackTrace!);
+      if (stackTrace != null) {
+        Zone.current.handleUncaughtError(error, stackTrace);
+      } else {
+        log.warning("[ResponseContext] stackTrace is null");
+      }
     }
   }
 

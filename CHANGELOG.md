@@ -1,17 +1,17 @@
 # 4.0.0 (NNBD)
 * Changed Dart SDK requirements for all packages to ">=2.12.0 <3.0.0" to support NNBD. 
-* Updated pretty_logging to 3.0.0
-* Updated angel_http_exception to 3.0.0
+* Updated pretty_logging to 3.0.0 (0/0 tests)
+* Updated angel_http_exception to 3.0.0 (0/0 tests)
 * Moved angel_cli to https://github.com/dukefirehawk/cli
-* Added code_buffer and updated to 2.0.0
-* Added combinator and updated to 2.0.0
-* Updated angel_route to 5.0.0 
-* Updated angel_model to 3.0.0
-* Updated angel_container to 3.0.0
-* Added merge_map and updated to 2.0.0
-* Added mock_request and updated to 2.0.0
-* Updated angel_framework to 4.0.0 (Revisit TODO, Fix failed tests)
-* Updated angel_auth to 4.0.0 (In progress)
+* Added code_buffer and updated to 2.0.0 (16/16 tests)
+* Added combinator and updated to 2.0.0 (16/16 tests)
+* Updated angel_route to 5.0.0 (35/35 tests passed)
+* Updated angel_model to 3.0.0 (0/0 tests)
+* Updated angel_container to 3.0.0 (55/55 tests passed)
+* Added merge_map and updated to 2.0.0 (6/6 tests passed)
+* Added mock_request and updated to 2.0.0 (0/0 tests)
+* Updated angel_framework to 4.0.0 (146/149 tests passed)
+* Updated angel_auth to 4.0.0 (22/32 test passed)
 * Updated angel_configuration to 4.0.0 (In progress)
 
 # 3.0.0 (Non NNBD)

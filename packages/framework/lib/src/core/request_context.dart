@@ -43,7 +43,7 @@ abstract class RequestContext<RawRequest> {
   Map<String, dynamic> _bodyFields = {};
   List _bodyList = [];
   List<UploadedFile> _uploadedFiles = <UploadedFile>[];
-  MediaType _contentType = MediaType("text", "html");
+  MediaType _contentType = MediaType("text", "plain");
 
   /// The underlying [RawRequest] provided by the driver.
   RawRequest get rawRequest;

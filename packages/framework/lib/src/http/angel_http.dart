@@ -23,7 +23,8 @@ class AngelHttp extends Driver<HttpRequest, HttpResponse, HttpServer,
     //if (server == null) {
     //  throw ArgumentError("[AngelHttp] Server instance not intialised");
     //}
-    return Uri(scheme: 'http', host: server.address.address, port: server.port);
+    return Uri(
+        scheme: 'http', host: server?.address.address, port: server?.port);
   }
 
   AngelHttp._(Angel app,
@@ -67,13 +68,13 @@ class AngelHttp extends Driver<HttpRequest, HttpResponse, HttpServer,
   }
 
   /// Use [server] instead.
-  @deprecated
-  HttpServer get httpServer {
-    //if (server == null) {
-    //  throw ArgumentError("[AngelHttp] Server instance not initialised");
-    //}
-    return server;
-  }
+  //@deprecated
+  //HttpServer get httpServer {
+  //if (server == null) {
+  //  throw ArgumentError("[AngelHttp] Server instance not initialised");
+  //}
+  //  return server;
+  //}
 
   Future handleRequest(HttpRequest request) =>
       handleRawRequest(request, request.response);
@@ -83,7 +84,7 @@ class AngelHttp extends Driver<HttpRequest, HttpResponse, HttpServer,
       response.cookies.addAll(cookies);
 
   @override
-  Future<HttpServer> close() async {
+  Future<void> close() async {
     return await super.close();
   }
 
@@ -105,12 +106,8 @@ class AngelHttp extends Driver<HttpRequest, HttpResponse, HttpServer,
     // TODO: Refactored to overcome NNBD migration error
     HttpResponseContext context =
         HttpResponseContext(response, app, correspondingRequest);
-
-    if (app.serializer == null) {
-      context.serializer = json.encode;
-    } else {
-      context.serializer = app.serializer;
-    }
+    context.serializer = (app.serializer ?? json.encode);
+    context.encoders.addAll(app.encoders);
     return Future<HttpResponseContext>.value(context);
 //    return Future<HttpResponseContext>.value(
 //        HttpResponseContext(response, app, correspondingRequest)
@@ -132,8 +129,8 @@ class AngelHttp extends Driver<HttpRequest, HttpResponse, HttpServer,
       response.headers.contentLength = length;
 
   @override
-  void setHeader(HttpResponse response, String key, String? value) =>
-      response.headers.set(key, value!);
+  void setHeader(HttpResponse response, String key, String value) =>
+      response.headers.set(key, value);
 
   @override
   void setStatusCode(HttpResponse response, int value) =>

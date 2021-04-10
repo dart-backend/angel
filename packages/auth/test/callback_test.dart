@@ -34,7 +34,7 @@ class User extends Model {
 }
 
 void main() {
-  Angel? app;
+  late Angel app;
   late AngelHttp angelHttp;
   AngelAuth<User?> auth;
   http.Client? client;
@@ -45,15 +45,15 @@ void main() {
     hierarchicalLoggingEnabled = true;
     app = Angel();
     angelHttp = AngelHttp(app);
-    app!.use('/users', MapService());
+    app.use('/users', MapService());
 
-    var oldErrorHandler = app!.errorHandler;
-    app!.errorHandler = (e, req, res) {
-      app!.logger!.severe(e.message, e, e.stackTrace ?? StackTrace.current);
+    var oldErrorHandler = app.errorHandler;
+    app.errorHandler = (e, req, res) {
+      app.logger!.severe(e.message, e, e.stackTrace ?? StackTrace.current);
       return oldErrorHandler(e, req, res);
     };
 
-    app!.logger = Logger('angel_auth')
+    app.logger = Logger('angel_auth')
       ..level = Level.FINEST
       ..onRecord.listen((rec) {
         print(rec);
@@ -67,19 +67,19 @@ void main() {
         }
       });
 
-    await app!
+    await app
         .findService('users')!
         .create({'username': 'jdoe1', 'password': 'password'});
 
     auth = AngelAuth<User?>();
     auth.serializer = (u) => u!.id;
     auth.deserializer =
-        (id) async => await app!.findService('users')!.read(id) as User;
+        (id) async => await app.findService('users')!.read(id) as User;
 
-    await app!.configure(auth.configureServer);
+    await app.configure(auth.configureServer);
 
     auth.strategies['local'] = LocalAuthStrategy((username, password) async {
-      var users = await app!
+      var users = await app
           .findService('users')!
           .index()
           .then((it) => it.map<User>((m) => User.parse(m as Map)).toList());
@@ -90,7 +90,7 @@ void main() {
       return Future.value(result);
     });
 
-    app!.post(
+    app.post(
         '/login',
         auth.authenticate('local',
             AngelAuthOptions(callback: (req, res, token) {
@@ -99,7 +99,7 @@ void main() {
             ..close();
         })));
 
-    app!.chain([
+    app.chain([
       (req, res) {
         if (!req.container!.has<User>()) {
           req.container!.registerSingleton<User>(
@@ -120,7 +120,7 @@ void main() {
   tearDown(() async {
     client!.close();
     await angelHttp.close();
-    app = null;
+    //app = null;
     client = null;
     url = null;
   });

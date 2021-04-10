@@ -79,7 +79,7 @@ class AngelHttp2 extends Driver<Socket, ServerTransportStream,
   }
 
   @override
-  Future<SecureServerSocket> close() async {
+  Future<void> close() async {
     await _artificial!.close();
     await _http.close();
     return await super.close();
@@ -143,8 +143,8 @@ class AngelHttp2 extends Driver<Socket, ServerTransportStream,
   @override
   Uri get uri => Uri(
       scheme: 'https',
-      host: server.address.address,
-      port: server.port != 443 ? server.port : null);
+      host: server?.address.address,
+      port: server?.port != 443 ? server?.port : null);
 
   @override
   void writeStringToResponse(ServerTransportStream response, String value) {

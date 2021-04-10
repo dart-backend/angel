@@ -9,7 +9,7 @@ import '../core/core.dart';
 /// An implementation of [RequestContext] that wraps a [HttpRequest].
 class HttpRequestContext extends RequestContext<HttpRequest?> {
   Container? _container;
-  MediaType _contentType = MediaType("text", "html");
+  MediaType _contentType = MediaType("text", "plain");
   HttpRequest? _io;
   String? _override;
   String _path = '';
@@ -89,7 +89,7 @@ class HttpRequestContext extends RequestContext<HttpRequest?> {
 
     ctx.app = app;
     ctx._contentType = request.headers.contentType == null
-        ? MediaType("text", "html")
+        ? MediaType("text", "plain")
         : MediaType.parse(request.headers.contentType.toString());
     ctx._override = override;
 

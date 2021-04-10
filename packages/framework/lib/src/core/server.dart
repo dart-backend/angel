@@ -135,7 +135,7 @@ class Angel extends Routable {
     }
 
     res.contentType = MediaType('text', 'html', {'charset': 'utf8'});
-    res.statusCode = e.statusCode;
+    res.statusCode = e.statusCode; // ?? 200;
     res.write("<!DOCTYPE html><html><head><title>${e.message}</title>");
     res.write("</head><body><h1>${e.message}</h1><ul>");
 
