@@ -16,7 +16,7 @@
 * Updated angel_validate to 4.0.0 (6/7 test passed)
 * Updated json_god to 4.0.0 (13/13 test passed)
 * Updated angel_client to 4.0.0 (6/13 test passed)
-* Updated angel_websocket to 3.0.0 (in progress)
+* Updated angel_websocket to 4.0.0 (in progress)
 * Updated test to 3.0.0 (in progress)
 * Updated jael to 3.0.0 (in progress)
 * Updated jael_preprocessor to 3.0.0 (in progress)

@@ -12,44 +12,46 @@ class WebSocketController extends Controller {
   /// The plug-in instance powering this controller.
   final AngelWebSocket ws;
 
-  Map<String, MethodMirror> _handlers = {};
-  Map<String, Symbol> _handlerSymbols = {};
+  final Map<String, MethodMirror> _handlers = {};
+  final Map<String, Symbol> _handlerSymbols = {};
 
   WebSocketController(this.ws) : super();
 
   /// Sends an event to all clients.
-  void broadcast(String eventName, data, {filter(WebSocketContext socket)}) {
+  void broadcast(String eventName, data,
+      {Function(WebSocketContext socket) filter}) {
     ws.batchEvent(WebSocketEvent(eventName: eventName, data: data),
         filter: filter);
   }
 
   /// Fired on new connections.
-  onConnect(WebSocketContext socket) {}
+  dynamic onConnect(WebSocketContext socket) {}
 
   /// Fired on disconnections.
-  onDisconnect(WebSocketContext socket) {}
+  dynamic onDisconnect(WebSocketContext socket) {}
 
   /// Fired on all incoming actions.
-  onAction(WebSocketAction action, WebSocketContext socket) async {}
+  dynamic onAction(WebSocketAction action, WebSocketContext socket) async {}
 
   /// Fired on arbitrary incoming data.
-  onData(data, WebSocketContext socket) {}
+  dynamic onData(data, WebSocketContext socket) {}
 
   @override
   Future configureServer(Angel app) async {
-    if (findExpose(app.container.reflector) != null)
+    if (findExpose(app.container.reflector) != null) {
       await super.configureServer(app);
+    }
 
-    InstanceMirror instanceMirror = reflect(this);
-    ClassMirror classMirror = reflectClass(this.runtimeType);
+    var instanceMirror = reflect(this);
+    var classMirror = reflectClass(runtimeType);
     classMirror.instanceMembers.forEach((sym, mirror) {
       if (mirror.isRegularMethod) {
-        InstanceMirror exposeMirror = mirror.metadata.firstWhere(
+        var exposeMirror = mirror.metadata.firstWhere(
             (mirror) => mirror.reflectee is ExposeWs,
             orElse: () => null);
 
         if (exposeMirror != null) {
-          ExposeWs exposeWs = exposeMirror.reflectee as ExposeWs;
+          var exposeWs = exposeMirror.reflectee as ExposeWs;
           _handlers[exposeWs.eventName] = mirror;
           _handlerSymbols[exposeWs.eventName] = sym;
         }

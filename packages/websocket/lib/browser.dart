@@ -11,7 +11,7 @@ import 'package:web_socket_channel/html.dart';
 import 'base_websocket_client.dart';
 export 'angel_websocket.dart';
 
-final RegExp _straySlashes = RegExp(r"(^/)|(/+$)");
+final RegExp _straySlashes = RegExp(r'(^/)|(/+$)');
 
 /// Queries an Angel server via WebSockets.
 class WebSockets extends BaseWebSocketClient {
@@ -50,8 +50,9 @@ class WebSockets extends BaseWebSocketClient {
           timer.cancel();
           sub?.cancel();
         }
-      } else
+      } else {
         timer.cancel();
+      }
     });
 
     sub = window.on[eventName ?? 'token'].listen((e) {
@@ -81,12 +82,14 @@ class WebSockets extends BaseWebSocketClient {
 
     socket
       ..onOpen.listen((_) {
-        if (!completer.isCompleted)
+        if (!completer.isCompleted) {
           return completer.complete(HtmlWebSocketChannel(socket));
+        }
       })
       ..onError.listen((e) {
-        if (!completer.isCompleted)
+        if (!completer.isCompleted) {
           return completer.completeError(e is ErrorEvent ? e.error : e);
+        }
       });
 
     return completer.future;
@@ -95,7 +98,7 @@ class WebSockets extends BaseWebSocketClient {
   @override
   BrowserWebSocketsService<Id, Data> service<Id, Data>(String path,
       {Type type, AngelDeserializer<Data> deserializer}) {
-    String uri = path.replaceAll(_straySlashes, '');
+    var uri = path.replaceAll(_straySlashes, '');
     return BrowserWebSocketsService<Id, Data>(socket, this, uri,
         deserializer: deserializer);
   }

@@ -7,8 +7,8 @@ import 'package:angel_framework/angel_framework.dart';
 HookedServiceEventListener doNotBroadcast([provider]) {
   return (HookedServiceEvent e) {
     if (e.params != null && e.params.containsKey('provider')) {
-      bool deny = false;
-      Iterable providers = provider is Iterable ? provider : [provider];
+      var deny = false;
+      var providers = provider is Iterable ? provider : [provider];
 
       for (var p in providers) {
         if (deny) break;
@@ -19,9 +19,10 @@ HookedServiceEventListener doNotBroadcast([provider]) {
               e.params['provider'] == p.via;
         } else if (p == null) {
           deny = true;
-        } else
+        } else {
           deny =
               deny || (e.params['provider'] as Providers).via == p.toString();
+        }
       }
 
       e.params['broadcast'] = false;

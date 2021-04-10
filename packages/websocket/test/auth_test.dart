@@ -1,4 +1,3 @@
-import 'dart:async';
 import 'package:angel_auth/angel_auth.dart';
 import 'package:angel_client/io.dart' as c;
 import 'package:angel_framework/angel_framework.dart';

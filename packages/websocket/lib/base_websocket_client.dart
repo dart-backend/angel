@@ -10,7 +10,7 @@ import 'package:web_socket_channel/status.dart' as status;
 import 'angel_websocket.dart';
 import 'constants.dart';
 
-final RegExp _straySlashes = RegExp(r"(^/)|(/+$)");
+final RegExp _straySlashes = RegExp(r'(^/)|(/+$)');
 
 /// An [Angel] client that operates across WebSockets.
 abstract class BaseWebSocketClient extends BaseAngelClient {
@@ -38,6 +38,7 @@ abstract class BaseWebSocketClient extends BaseAngelClient {
   Stream<WebSocketEvent> get onAllEvents => _onAllEvents.stream;
 
   /// Fired whenever a WebSocket is successfully authenticated.
+  @override
   Stream<AngelAuthResult> get onAuthenticated => _onAuthenticated.stream;
 
   /// A broadcast stream of data coming from the [socket].
@@ -143,6 +144,8 @@ abstract class BaseWebSocketClient extends BaseAngelClient {
       return await c.future.then((socket) {
         _socket = socket;
         listen();
+
+        return _socket;
       });
     } else {
       _socket = await getConnectedWebSocket();
@@ -159,7 +162,7 @@ abstract class BaseWebSocketClient extends BaseAngelClient {
   @override
   WebSocketsService<Id, Data> service<Id, Data>(String path,
       {Type type, AngelDeserializer<Data> deserializer}) {
-    String uri = path.toString().replaceAll(_straySlashes, '');
+    var uri = path.toString().replaceAll(_straySlashes, '');
     return WebSocketsService<Id, Data>(socket, this, uri,
         deserializer: deserializer);
   }
@@ -192,7 +195,7 @@ abstract class BaseWebSocketClient extends BaseAngelClient {
                 _onAuthenticated.add(authResult);
               } else if (event.eventName?.isNotEmpty == true) {
                 var split = event.eventName
-                    .split("::")
+                    .split('::')
                     .where((str) => str.isNotEmpty)
                     .toList();
 
@@ -225,14 +228,15 @@ abstract class BaseWebSocketClient extends BaseAngelClient {
   }
 
   /// Serializes data to JSON.
-  serialize(x) => json.encode(x);
+  dynamic serialize(x) => json.encode(x);
 
   /// Sends the given [action] on the [socket].
   void sendAction(WebSocketAction action) {
-    if (_socket == null)
+    if (_socket == null) {
       _queue.addLast(action);
-    else
+    } else {
       socket.sink.add(serialize(action));
+    }
   }
 
   /// Attempts to authenticate a WebSocket, using a valid JWT.
@@ -274,27 +278,34 @@ class WebSocketsService<Id, Data> extends Service<Id, Data> {
   Stream<WebSocketEvent> get onAllEvents => _onAllEvents.stream;
 
   /// Fired on `index` events.
+  @override
   Stream<List<Data>> get onIndexed => _onIndexed.stream;
 
   /// Fired on `read` events.
+  @override
   Stream<Data> get onRead => _onRead.stream;
 
   /// Fired on `created` events.
+  @override
   Stream<Data> get onCreated => _onCreated.stream;
 
   /// Fired on `modified` events.
+  @override
   Stream<Data> get onModified => _onModified.stream;
 
   /// Fired on `updated` events.
+  @override
   Stream<Data> get onUpdated => _onUpdated.stream;
 
   /// Fired on `removed` events.
+  @override
   Stream<Data> get onRemoved => _onRemoved.stream;
 
   WebSocketsService(this.socket, this.app, this.path, {this.deserializer}) {
     listen();
   }
 
+  @override
   Future close() async {
     await _onAllEvents.close();
     await _onCreated.close();
@@ -306,7 +317,7 @@ class WebSocketsService<Id, Data> extends Service<Id, Data> {
   }
 
   /// Serializes an [action] to be sent over a WebSocket.
-  serialize(WebSocketAction action) => json.encode(action);
+  dynamic serialize(WebSocketAction action) => json.encode(action);
 
   /// Deserializes data from a [WebSocketEvent].
   Data deserialize(x) {
@@ -423,18 +434,20 @@ class WebSocketsService<Id, Data> extends Service<Id, Data> {
 
 /// Contains a dynamic Map of [WebSocketEvent] streams.
 class WebSocketExtraneousEventHandler {
-  Map<String, StreamController<WebSocketEvent>> _events = {};
+  final Map<String, StreamController<WebSocketEvent>> _events = {};
 
   StreamController<WebSocketEvent> _getStream(String index) {
-    if (_events[index] == null)
+    if (_events[index] == null) {
       _events[index] = StreamController<WebSocketEvent>();
+    }
 
     return _events[index];
   }
 
   Stream<WebSocketEvent> operator [](String index) {
-    if (_events[index] == null)
+    if (_events[index] == null) {
       _events[index] = StreamController<WebSocketEvent>();
+    }
 
     return _events[index].stream;
   }

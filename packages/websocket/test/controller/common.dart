@@ -28,7 +28,7 @@ class GameController extends WebSocketController {
   GameController(AngelWebSocket ws) : super(ws);
 
   @ExposeWs('search')
-  search(WebSocketContext socket) async {
+  dynamic search(WebSocketContext socket) async {
     print('User is searching for a game...');
     socket.send('searched', johnVsBob);
   }

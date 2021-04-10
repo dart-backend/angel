@@ -544,8 +544,8 @@ class HookedServiceEvent<Id, Data, T extends Service<Id, Data?>> {
 }
 
 /// Triggered on a hooked service event.
-typedef FutureOr HookedServiceEventListener<Id, Data,
-    T extends Service<Id, Data>>(HookedServiceEvent<Id, Data, T> event);
+typedef HookedServiceEventListener<Id, Data, T extends Service<Id, Data>>
+    = FutureOr<dynamic> Function(HookedServiceEvent<Id, Data, T> event);
 
 /// Can be listened to, but events may be canceled.
 class HookedServiceEventDispatcher<Id, Data, T extends Service<Id, Data>> {

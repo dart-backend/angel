@@ -22,10 +22,10 @@ import 'service.dart';
 //final RegExp _straySlashes = RegExp(r'(^/+)|(/+$)');
 
 /// A function that configures an [Angel] server in some way.
-typedef FutureOr<void> AngelConfigurer(Angel app);
+typedef AngelConfigurer = FutureOr<void> Function(Angel app);
 
 /// A function that asynchronously generates a view from the given path and data.
-typedef FutureOr<String> ViewGenerator(String path,
+typedef ViewGenerator = FutureOr<String> Function(String path,
     [Map<String, dynamic>? data]);
 
 /// A powerful real-time/REST/MVC server class.

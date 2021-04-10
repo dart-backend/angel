@@ -10,7 +10,7 @@ class Todo extends Model {
   String text;
   String when;
 
-  Todo({String this.text, String this.when});
+  Todo({this.text, this.when});
 }
 
 class TodoService extends MapService {
@@ -23,7 +23,7 @@ class TodoService extends MapService {
   }
 }
 
-testIndex(BaseWebSocketClient client) async {
+dynamic testIndex(BaseWebSocketClient client) async {
   var todoService = client.service('api/todos');
   scheduleMicrotask(() => todoService.index());
 

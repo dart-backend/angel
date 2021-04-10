@@ -6,7 +6,7 @@ class WebSocketEvent<Data> {
   String eventName;
   Data data;
 
-  WebSocketEvent({String this.eventName, this.data});
+  WebSocketEvent({this.eventName, this.data});
 
   factory WebSocketEvent.fromJson(Map data) => WebSocketEvent(
       eventName: data['eventName'].toString(), data: data['data'] as Data);
@@ -31,8 +31,7 @@ class WebSocketAction {
   var data;
   Map<String, dynamic> params;
 
-  WebSocketAction(
-      {String this.id, String this.eventName, this.data, this.params});
+  WebSocketAction({this.id, this.eventName, this.data, this.params});
 
   factory WebSocketAction.fromJson(Map data) => WebSocketAction(
       id: data['id'].toString(),

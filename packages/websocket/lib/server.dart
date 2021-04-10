@@ -21,11 +21,11 @@ part 'websocket_context.dart';
 
 part 'websocket_controller.dart';
 
-typedef String WebSocketResponseSerializer(data);
+typedef WebSocketResponseSerializer = String Function(dynamic data);
 
 /// Broadcasts events from [HookedService]s, and handles incoming [WebSocketAction]s.
 class AngelWebSocket {
-  List<WebSocketContext> _clients = <WebSocketContext>[];
+  final List<WebSocketContext> _clients = <WebSocketContext>[];
   final List<String> _servicesAlreadyWired = [];
 
   final StreamController<WebSocketAction> _onAction =
@@ -118,7 +118,7 @@ class AngelWebSocket {
 
   /// Slates an event to be dispatched.
   Future<void> batchEvent(WebSocketEvent event,
-      {filter(WebSocketContext socket), bool notify = true}) async {
+      {Function(WebSocketContext socket) filter, bool notify = true}) async {
     // Default implementation will just immediately fire events
     _clients.forEach((client) async {
       dynamic result = true;
@@ -128,8 +128,9 @@ class AngelWebSocket {
       }
     });
 
-    if (synchronizationChannel != null && notify != false)
+    if (synchronizationChannel != null && notify != false) {
       synchronizationChannel.sink.add(event);
+    }
   }
 
   /// Returns a list of events yet to be sent.
@@ -137,7 +138,7 @@ class AngelWebSocket {
 
   /// Responds to an incoming action on a WebSocket.
   Future handleAction(WebSocketAction action, WebSocketContext socket) async {
-    var split = action.eventName.split("::");
+    var split = action.eventName.split('::');
 
     if (split.length < 2) {
       socket.sendError(AngelHttpException.badRequest());
@@ -148,7 +149,7 @@ class AngelWebSocket {
 
     if (service == null) {
       socket.sendError(AngelHttpException.notFound(
-          message: "No service \"${split[0]}\" exists."));
+          message: 'No service \"${split[0]}\" exists.'));
       return null;
     }
 
@@ -157,17 +158,18 @@ class AngelWebSocket {
     if (action.params is! Map) action.params = <String, dynamic>{};
 
     if (allowClientParams != true) {
-      if (action.params['query'] is Map)
+      if (action.params['query'] is Map) {
         action.params = {'query': action.params['query']};
-      else
+      } else {
         action.params = {};
+      }
     }
 
     var params = mergeMap<String, dynamic>([
       ((deserializer ?? (params) => params)(action.params))
           as Map<String, dynamic>,
       {
-        "provider": Providers.websocket,
+        'provider': Providers.websocket,
         '__requestctx': socket.request,
         '__responsectx': socket.response
       }
@@ -176,31 +178,31 @@ class AngelWebSocket {
     try {
       if (actionName == indexAction) {
         socket.send(
-            "${split[0]}::" + indexedEvent, await service.index(params));
+            '${split[0]}::' + indexedEvent, await service.index(params));
         return null;
       } else if (actionName == readAction) {
         socket.send(
-            "${split[0]}::" + readEvent, await service.read(action.id, params));
+            '${split[0]}::' + readEvent, await service.read(action.id, params));
         return null;
       } else if (actionName == createAction) {
         return WebSocketEvent(
-            eventName: "${split[0]}::" + createdEvent,
+            eventName: '${split[0]}::' + createdEvent,
             data: await service.create(action.data, params));
       } else if (actionName == modifyAction) {
         return WebSocketEvent(
-            eventName: "${split[0]}::" + modifiedEvent,
+            eventName: '${split[0]}::' + modifiedEvent,
             data: await service.modify(action.id, action.data, params));
       } else if (actionName == updateAction) {
         return WebSocketEvent(
-            eventName: "${split[0]}::" + updatedEvent,
+            eventName: '${split[0]}::' + updatedEvent,
             data: await service.update(action.id, action.data, params));
       } else if (actionName == removeAction) {
         return WebSocketEvent(
-            eventName: "${split[0]}::" + removedEvent,
+            eventName: '${split[0]}::' + removedEvent,
             data: await service.remove(action.id, params));
       } else {
         socket.sendError(AngelHttpException.methodNotAllowed(
-            message: "Method Not Allowed: \"$actionName\""));
+            message: 'Method Not Allowed: \"$actionName\"'));
         return null;
       }
     } catch (e, st) {
@@ -223,7 +225,7 @@ class AngelWebSocket {
         var user = await auth.deserializer(token.userId);
         socket.request
           ..container.registerSingleton<AuthToken>(token)
-          ..container.registerSingleton(user, as: user.runtimeType as Type);
+          ..container.registerSingleton(user, as: user.runtimeType);
         socket._onAuthenticated.add(null);
         socket.send(authenticatedEvent,
             {'token': token.serialize(auth.hmac), 'data': user});
@@ -257,7 +259,7 @@ class AngelWebSocket {
   Future handleConnect(WebSocketContext socket) async {}
 
   /// Handles incoming data from a WebSocket.
-  handleData(WebSocketContext socket, data) async {
+  dynamic handleData(WebSocketContext socket, data) async {
     try {
       socket._onData.add(data);
       var fromJson = json.decode(data.toString());
@@ -270,18 +272,19 @@ class AngelWebSocket {
         throw AngelHttpException.badRequest();
       }
 
-      if (fromJson is Map && fromJson.containsKey("eventName")) {
+      if (fromJson is Map && fromJson.containsKey('eventName')) {
         socket._onAction.add(WebSocketAction.fromJson(fromJson));
         socket.on
-            ._getStreamForEvent(fromJson["eventName"].toString())
-            .add(fromJson["data"] as Map);
+            ._getStreamForEvent(fromJson['eventName'].toString())
+            .add(fromJson['data'] as Map);
       }
 
-      if (action.eventName == authenticateAction)
+      if (action.eventName == authenticateAction) {
         await handleAuth(action, socket);
+      }
 
-      if (action.eventName.contains("::")) {
-        var split = action.eventName.split("::");
+      if (action.eventName.contains('::')) {
+        var split = action.eventName.split('::');
 
         if (split.length >= 2) {
           if (actions.contains(split[1])) {
@@ -318,8 +321,8 @@ class AngelWebSocket {
   }
 
   /// Hooks any [HookedService]s that are not being broadcasted yet.
-  wireAllServices(Angel app) {
-    for (Pattern key in app.services.keys.where((x) {
+  void wireAllServices(Angel app) {
+    for (var key in app.services.keys.where((x) {
       return !_servicesAlreadyWired.contains(x) &&
           app.services[x] is HookedService;
     })) {
@@ -329,10 +332,11 @@ class AngelWebSocket {
 
   /// Configures an [Angel] instance to listen for WebSocket connections.
   Future configureServer(Angel app) async {
-    app..container.registerSingleton(this);
+    app.container.registerSingleton(this);
 
-    if (runtimeType != AngelWebSocket)
-      app..container.registerSingleton<AngelWebSocket>(this);
+    if (runtimeType != AngelWebSocket) {
+      app.container.registerSingleton<AngelWebSocket>(this);
+    }
 
     // Set up services
     wireAllServices(app);
@@ -384,9 +388,10 @@ class AngelWebSocket {
   /// Handles an incoming HTTP request.
   Future<bool> handleRequest(RequestContext req, ResponseContext res) async {
     if (req is HttpRequestContext && res is HttpResponseContext) {
-      if (!WebSocketTransformer.isUpgradeRequest(req.rawRequest))
+      if (!WebSocketTransformer.isUpgradeRequest(req.rawRequest)) {
         throw AngelHttpException.badRequest();
-      await res.detach();
+      }
+      res.detach();
       var ws = await WebSocketTransformer.upgrade(req.rawRequest);
       var channel = IOWebSocketChannel(ws);
       var socket = WebSocketContext(channel, req, res);
@@ -437,12 +442,12 @@ class AngelWebSocket {
         }
 
         var sink = utf8.encoder.startChunkedConversion(ctrl.foreign.sink);
-        sink.add("HTTP/1.1 101 Switching Protocols\r\n"
-            "Upgrade: websocket\r\n"
-            "Connection: Upgrade\r\n"
-            "Sec-WebSocket-Accept: ${WebSocketChannel.signKey(key)}\r\n");
-        if (protocol != null) sink.add("Sec-WebSocket-Protocol: $protocol\r\n");
-        sink.add("\r\n");
+        sink.add('HTTP/1.1 101 Switching Protocols\r\n'
+            'Upgrade: websocket\r\n'
+            'Connection: Upgrade\r\n'
+            'Sec-WebSocket-Accept: ${WebSocketChannel.signKey(key)}\r\n');
+        if (protocol != null) sink.add('Sec-WebSocket-Protocol: $protocol\r\n');
+        sink.add('\r\n');
 
         var ws = WebSocketChannel(ctrl.foreign);
         var socket = WebSocketContext(ws, req, res);

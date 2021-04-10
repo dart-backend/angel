@@ -1,6 +1,6 @@
 import 'dart:async';
 
-typedef void _InitCallback();
+typedef _InitCallback = void Function();
 
 /// A [StreamController] boilerplate that prevents memory leaks.
 abstract class SafeCtrl<T> {
