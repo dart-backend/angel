@@ -480,7 +480,7 @@ class HookedService<Id, Data, T extends Service<Id, Data>>
 }
 
 /// Fired when a hooked service is invoked.
-class HookedServiceEvent<Id, Data, T extends Service<Id, Data?>> {
+class HookedServiceEvent<Id, Data, T extends Service<Id, Data>> {
   static const String indexed = 'indexed';
   static const String read = 'read';
   static const String created = 'created';
