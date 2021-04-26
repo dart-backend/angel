@@ -2,7 +2,7 @@ import 'package:angel_framework/angel_framework.dart';
 import 'package:angel_websocket/server.dart';
 
 class Game {
-  final String playerOne, playerTwo;
+  final String? playerOne, playerTwo;
 
   const Game({this.playerOne, this.playerTwo});
 

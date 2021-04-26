@@ -61,14 +61,14 @@ class WebSocketContext {
 }
 
 class _WebSocketEventTable {
-  final Map<String, StreamController<Map>> _handlers = {};
+  final Map<String, StreamController<Map?>> _handlers = {};
 
-  StreamController<Map> _getStreamForEvent(String eventName) {
+  StreamController<Map?>? _getStreamForEvent(String eventName) {
     if (!_handlers.containsKey(eventName)) {
-      _handlers[eventName] = StreamController<Map>();
+      _handlers[eventName] = StreamController<Map?>();
     }
     return _handlers[eventName];
   }
 
-  Stream<Map> operator [](String key) => _getStreamForEvent(key).stream;
+  Stream<Map?> operator [](String key) => _getStreamForEvent(key)!.stream;
 }

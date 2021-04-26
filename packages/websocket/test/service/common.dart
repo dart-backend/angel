@@ -7,8 +7,8 @@ import 'package:angel_websocket/server.dart';
 import 'package:test/test.dart';
 
 class Todo extends Model {
-  String text;
-  String when;
+  String? text;
+  String? when;
 
   Todo({this.text, this.when});
 }

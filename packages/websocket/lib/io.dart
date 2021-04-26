@@ -18,7 +18,7 @@ class WebSockets extends BaseWebSocketClient {
   final List<IoWebSocketsService> _services = [];
 
   WebSockets(baseUrl,
-      {bool reconnectOnClose = true, Duration reconnectInterval})
+      {bool reconnectOnClose = true, Duration? reconnectInterval})
       : super(http.IOClient(), baseUrl,
             reconnectOnClose: reconnectOnClose,
             reconnectInterval: reconnectInterval);
@@ -49,17 +49,18 @@ class WebSockets extends BaseWebSocketClient {
   }
 
   @override
-  IoWebSocketsService<Id, Data> service<Id, Data>(String path,
-      {Type type, AngelDeserializer<Data> deserializer}) {
+  Service<Id, Data> service<Id, Data>(String path,
+      {Type? type, AngelDeserializer<Data>? deserializer}) {
     var uri = path.replaceAll(_straySlashes, '');
-    return IoWebSocketsService<Id, Data>(socket, this, uri, type);
+    return IoWebSocketsService<Id, Data>(socket, this, uri, type)
+        as Service<Id, Data>;
   }
 }
 
 class IoWebSocketsService<Id, Data> extends WebSocketsService<Id, Data> {
-  final Type type;
+  final Type? type;
 
   IoWebSocketsService(
-      WebSocketChannel socket, WebSockets app, String uri, this.type)
+      WebSocketChannel? socket, WebSockets app, String uri, this.type)
       : super(socket, app, uri);
 }

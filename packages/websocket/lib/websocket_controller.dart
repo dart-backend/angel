@@ -19,7 +19,7 @@ class WebSocketController extends Controller {
 
   /// Sends an event to all clients.
   void broadcast(String eventName, data,
-      {Function(WebSocketContext socket) filter}) {
+      {Function(WebSocketContext socket)? filter}) {
     ws.batchEvent(WebSocketEvent(eventName: eventName, data: data),
         filter: filter);
   }
@@ -38,7 +38,7 @@ class WebSocketController extends Controller {
 
   @override
   Future configureServer(Angel app) async {
-    if (findExpose(app.container.reflector) != null) {
+    if (findExpose(app.container!.reflector) != null) {
       await super.configureServer(app);
     }
 
@@ -46,9 +46,8 @@ class WebSocketController extends Controller {
     var classMirror = reflectClass(runtimeType);
     classMirror.instanceMembers.forEach((sym, mirror) {
       if (mirror.isRegularMethod) {
-        var exposeMirror = mirror.metadata.firstWhere(
-            (mirror) => mirror.reflectee is ExposeWs,
-            orElse: () => null);
+        var exposeMirror = mirror.metadata
+            .firstWhereOrNull((mirror) => mirror.reflectee is ExposeWs);
 
         if (exposeMirror != null) {
           var exposeWs = exposeMirror.reflectee as ExposeWs;
@@ -59,8 +58,8 @@ class WebSocketController extends Controller {
     });
 
     ws.onConnection.listen((socket) async {
-      if (!socket.request.container.has<WebSocketContext>()) {
-        socket.request.container.registerSingleton<WebSocketContext>(socket);
+      if (!socket.request.container!.has<WebSocketContext>()) {
+        socket.request.container!.registerSingleton<WebSocketContext>(socket);
       }
 
       await onConnect(socket);
@@ -68,14 +67,14 @@ class WebSocketController extends Controller {
       socket.onData.listen((data) => onData(data, socket));
 
       socket.onAction.listen((WebSocketAction action) async {
-        var container = socket.request.container.createChild();
+        var container = socket.request.container!.createChild();
         container.registerSingleton<WebSocketAction>(action);
 
         try {
           await onAction(action, socket);
 
           if (_handlers.containsKey(action.eventName)) {
-            var methodMirror = _handlers[action.eventName];
+            var methodMirror = _handlers[action.eventName!]!;
             var fn = instanceMirror.getField(methodMirror.simpleName).reflectee;
             return app.runContained(
                 fn as Function, socket.request, socket.response, container);

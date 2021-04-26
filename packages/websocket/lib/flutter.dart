@@ -17,7 +17,7 @@ class WebSockets extends BaseWebSocketClient {
   final List<WebSocketsService> _services = [];
 
   WebSockets(baseUrl,
-      {bool reconnectOnClose = true, Duration reconnectInterval})
+      {bool reconnectOnClose = true, Duration? reconnectInterval})
       : super(http.IOClient(), baseUrl,
             reconnectOnClose: reconnectOnClose,
             reconnectInterval: reconnectInterval);

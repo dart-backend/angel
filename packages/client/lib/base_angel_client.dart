@@ -21,9 +21,7 @@ Map<String, String>? _buildQuery(Map<String, dynamic>? params) {
 }
 
 bool _invalid(http.Response response) =>
-    response.statusCode == null ||
-    response.statusCode < 200 ||
-    response.statusCode >= 300;
+    response.statusCode < 200 || response.statusCode >= 300;
 
 AngelHttpException failure(http.Response response,
     {error, String? message, StackTrace? stack}) {
@@ -249,7 +247,7 @@ class BaseAngelService<Id, Data> extends Service<Id, Data?> {
   }
 
   BaseAngelService(this.client, this.app, baseUrl, {this.deserializer})
-      : this.baseUrl = baseUrl is Uri ? baseUrl : Uri.parse(baseUrl.toString());
+      : baseUrl = baseUrl is Uri ? baseUrl : Uri.parse(baseUrl.toString());
 
   /// Use [baseUrl] instead.
   @deprecated

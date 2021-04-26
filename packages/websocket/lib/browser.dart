@@ -18,7 +18,7 @@ class WebSockets extends BaseWebSocketClient {
   final List<BrowserWebSocketsService> _services = [];
 
   WebSockets(baseUrl,
-      {bool reconnectOnClose = true, Duration reconnectInterval})
+      {bool reconnectOnClose = true, Duration? reconnectInterval})
       : super(http.BrowserClient(), baseUrl,
             reconnectOnClose: reconnectOnClose,
             reconnectInterval: reconnectInterval);
@@ -34,15 +34,15 @@ class WebSockets extends BaseWebSocketClient {
 
   @override
   Stream<String> authenticateViaPopup(String url,
-      {String eventName = 'token', String errorMessage}) {
+      {String eventName = 'token', String? errorMessage}) {
     var ctrl = StreamController<String>();
     var wnd = window.open(url, 'angel_client_auth_popup');
 
     Timer t;
-    StreamSubscription<Event> sub;
+    StreamSubscription<Event>? sub;
     t = Timer.periodic(Duration(milliseconds: 500), (timer) {
       if (!ctrl.isClosed) {
-        if (wnd.closed) {
+        if (wnd.closed!) {
           ctrl.addError(AngelHttpException.notAuthenticated(
               message:
                   errorMessage ?? 'Authentication via popup window failed.'));
@@ -55,12 +55,12 @@ class WebSockets extends BaseWebSocketClient {
       }
     });
 
-    sub = window.on[eventName ?? 'token'].listen((e) {
+    sub = window.on[eventName].listen((e) {
       if (!ctrl.isClosed) {
         ctrl.add((e as CustomEvent).detail.toString());
         t.cancel();
         ctrl.close();
-        sub.cancel();
+        sub!.cancel();
       }
     });
 
@@ -73,7 +73,7 @@ class WebSockets extends BaseWebSocketClient {
 
     if (authToken?.isNotEmpty == true) {
       url = url.replace(
-          queryParameters: Map<String, String>.from(url.queryParameters)
+          queryParameters: Map<String, String?>.from(url.queryParameters)
             ..['token'] = authToken);
     }
 
@@ -88,7 +88,7 @@ class WebSockets extends BaseWebSocketClient {
       })
       ..onError.listen((e) {
         if (!completer.isCompleted) {
-          return completer.completeError(e is ErrorEvent ? e.error : e);
+          return completer.completeError(e is ErrorEvent ? e.error! : e);
         }
       });
 
@@ -96,18 +96,18 @@ class WebSockets extends BaseWebSocketClient {
   }
 
   @override
-  BrowserWebSocketsService<Id, Data> service<Id, Data>(String path,
-      {Type type, AngelDeserializer<Data> deserializer}) {
+  Service<Id, Data> service<Id, Data>(String path,
+      {Type? type, AngelDeserializer<Data>? deserializer}) {
     var uri = path.replaceAll(_straySlashes, '');
     return BrowserWebSocketsService<Id, Data>(socket, this, uri,
-        deserializer: deserializer);
+        deserializer: deserializer) as Service<Id, Data>;
   }
 }
 
 class BrowserWebSocketsService<Id, Data> extends WebSocketsService<Id, Data> {
-  final Type type;
+  final Type? type;
 
-  BrowserWebSocketsService(WebSocketChannel socket, WebSockets app, String uri,
-      {this.type, AngelDeserializer<Data> deserializer})
+  BrowserWebSocketsService(WebSocketChannel? socket, WebSockets app, String uri,
+      {this.type, AngelDeserializer<Data>? deserializer})
       : super(socket, app, uri, deserializer: deserializer);
 }

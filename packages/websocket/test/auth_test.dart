@@ -11,9 +11,9 @@ const Map<String, String> USER = {'username': 'foo', 'password': 'bar'};
 
 void main() {
   Angel app;
-  AngelHttp http;
-  c.Angel client;
-  c.WebSockets ws;
+  late AngelHttp http;
+  late c.Angel client;
+  late c.WebSockets ws;
 
   setUp(() async {
     app = Angel();

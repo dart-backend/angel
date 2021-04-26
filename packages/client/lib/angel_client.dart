@@ -6,7 +6,6 @@ import 'package:collection/collection.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 export 'package:angel_http_exception/angel_http_exception.dart';
-import 'package:meta/meta.dart';
 
 /// A function that configures an [Angel] client in some way.
 typedef AngelConfigurer = FutureOr<void> Function(Angel app);
@@ -29,7 +28,7 @@ abstract class Angel extends http.BaseClient {
   final Uri baseUrl;
 
   Angel(baseUrl)
-      : this.baseUrl = baseUrl is Uri ? baseUrl : Uri.parse(baseUrl.toString());
+      : baseUrl = baseUrl is Uri ? baseUrl : Uri.parse(baseUrl.toString());
 
   /// Prefer to use [baseUrl] instead.
   @deprecated

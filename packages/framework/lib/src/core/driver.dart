@@ -191,16 +191,26 @@ abstract class Driver<
                 message: e?.toString() ?? '500 Internal Server Error');
           }, test: (e) => e is AngelHttpException).catchError(
               (ee, StackTrace st) {
-            var e = ee as AngelHttpException;
+            //print(">>>> Framework error: $ee");
+            //var t = (st).runtimeType;
+            //print(">>>> StackTrace: $t");
+            AngelHttpException e;
+            if (ee is AngelHttpException) {
+              e = ee;
+            } else {
+              e = AngelHttpException(ee,
+                  stackTrace: st,
+                  statusCode: 500,
+                  message: ee?.toString() ?? '500 Internal Server Error');
+            }
 
             if (app.logger != null) {
               var error = e.error ?? e;
-              var trace = Trace.from(e.stackTrace ?? StackTrace.current).terse;
+              var trace = Trace.from(StackTrace.current).terse;
               app.logger?.severe(e.message, error, trace);
             }
 
-            return handleAngelHttpException(
-                e, e.stackTrace ?? st, req, res, request, response);
+            return handleAngelHttpException(e, st, req, res, request, response);
           });
         } else {
           var zoneSpec = ZoneSpecification(
