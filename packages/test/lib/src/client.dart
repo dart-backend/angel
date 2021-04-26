@@ -24,7 +24,7 @@ final Uuid _uuid = new Uuid();*/
 
 /// Shorthand for bootstrapping a [TestClient].
 Future<TestClient> connectTo(Angel app,
-    {Map initialSession,
+    {Map? initialSession,
     bool autoDecodeGzip: true,
     bool useZone: false}) async {
   print("Load configuration");
@@ -58,9 +58,9 @@ class TestClient extends client.BaseAngelClient {
   final Angel server;
 
   @override
-  String authToken;
+  String? authToken;
 
-  AngelHttp _http;
+  late AngelHttp _http;
 
   TestClient(this.server, {this.autoDecodeGzip: true, bool useZone: false})
       : super(http.IOClient(), '/') {
@@ -68,14 +68,14 @@ class TestClient extends client.BaseAngelClient {
   }
 
   Future close() {
-    this.client.close();
+    this.client!.close();
     return server.close();
   }
 
   /// Opens a WebSockets connection to the server. This will automatically bind the server
   /// over HTTP, if it is not already listening. Unfortunately, WebSockets cannot be mocked (yet!).
   Future<client.WebSockets> websocket(
-      {String path: '/ws', Duration timeout}) async {
+      {String path: '/ws', Duration? timeout}) async {
     if (_http.server == null) await _http.startServer();
     var url = _http.uri.replace(scheme: 'ws', path: path);
     var ws = _MockWebSockets(this, url.toString());
@@ -93,7 +93,7 @@ class TestClient extends client.BaseAngelClient {
       rq.headers.add('authorization', 'Basic $encoded');
     } else if (rq.headers.value('authorization')?.startsWith('Basic ') ==
         true) {
-      var encoded = rq.headers.value('authorization').substring(6);
+      var encoded = rq.headers.value('authorization')!.substring(6);
       var decoded = utf8.decode(base64Url.decode(encoded));
       var oldRq = rq;
       var newRq = MockHttpRequest(rq.method, rq.uri.replace(userInfo: decoded));
@@ -139,14 +139,14 @@ class TestClient extends client.BaseAngelClient {
         isRedirect: rs.headers['location'] != null,
         headers: extractedHeaders,
         persistentConnection:
-            rq.headers.value('connection')?.toLowerCase()?.trim() ==
+            rq.headers.value('connection')?.toLowerCase().trim() ==
                 'keep-alive',
         //|| keepAliveState,
         reasonPhrase: rs.reasonPhrase);
   }
 
   @override
-  String basePath;
+  late String basePath;
 
   @override
   Stream<String> authenticateViaPopup(String url, {String eventName: 'token'}) {
@@ -160,7 +160,7 @@ class TestClient extends client.BaseAngelClient {
 
   @override
   client.Service<Id, Data> service<Id, Data>(String path,
-      {Type type, client.AngelDeserializer<Data> deserializer}) {
+      {Type? type, client.AngelDeserializer<Data>? deserializer}) {
     String uri = path.toString().replaceAll(_straySlashes, "");
     return _services.putIfAbsent(uri,
             () => _MockService<Id, Data>(this, uri, deserializer: deserializer))
@@ -172,12 +172,12 @@ class _MockService<Id, Data> extends client.BaseAngelService<Id, Data> {
   final TestClient _app;
 
   _MockService(this._app, String basePath,
-      {client.AngelDeserializer<Data> deserializer})
+      {client.AngelDeserializer<Data>? deserializer})
       : super(null, _app, basePath, deserializer: deserializer);
 
   @override
   Future<StreamedResponse> send(http.BaseRequest request) {
-    if (app.authToken != null && app.authToken.isNotEmpty) {
+    if (app.authToken != null && app.authToken!.isNotEmpty) {
       request.headers['authorization'] ??= 'Bearer ${app.authToken}';
     }
 

@@ -9,7 +9,9 @@ import 'package:angel_validate/angel_validate.dart';
 ///
 /// You can optionally check for a matching [message], [statusCode] and [errors].
 Matcher isAngelHttpException(
-        {String message, int statusCode, Iterable<String> errors: const []}) =>
+        {String? message,
+        int? statusCode,
+        Iterable<String> errors: const []}) =>
     new _IsAngelHttpException(
         message: message, statusCode: statusCode, errors: errors);
 
@@ -98,7 +100,7 @@ class _HasContentType extends Matcher {
       if (!item.headers.containsKey('content-type')) return false;
 
       if (contentType is ContentType) {
-        var compare = ContentType.parse(item.headers['content-type']);
+        var compare = ContentType.parse(item.headers['content-type']!);
         return equals(contentType.mimeType)
             .matches(compare.mimeType, matchState);
       } else {
@@ -136,7 +138,7 @@ class _HasHeader extends Matcher {
         Iterable v = value is Iterable ? (value as Iterable) : [value];
         return v
             .map((x) => x.toString())
-            .every(item.headers[key.toLowerCase()].split(',').contains);
+            .every(item.headers[key.toLowerCase()]!.split(',').contains);
       }
     } else {
       return false;
@@ -182,13 +184,13 @@ class _HasValidBody extends Matcher {
 }
 
 class _IsAngelHttpException extends Matcher {
-  String message;
-  int statusCode;
+  String? message;
+  int? statusCode;
   final List<String> errors = [];
 
   _IsAngelHttpException(
       {this.message, this.statusCode, Iterable<String> errors: const []}) {
-    this.errors.addAll(errors ?? []);
+    this.errors.addAll(errors);
   }
 
   @override

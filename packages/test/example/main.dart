@@ -6,8 +6,8 @@ import 'package:angel_websocket/server.dart';
 import 'package:test/test.dart';
 
 main() {
-  Angel app;
-  TestClient client;
+  Angel? app;
+  late TestClient client;
 
   setUp(() async {
     app = new Angel()
@@ -43,15 +43,15 @@ main() {
               index: ([params]) async => [
                     {'michael': 'jackson'}
                   ],
-              create: (data, [params]) async => {'foo': 'bar'}));
+              create: (dynamic data, [params]) async => {'foo': 'bar'}));
 
     var ws = new AngelWebSocket(app);
-    await app.configure(ws.configureServer);
-    app.all('/ws', ws.handleRequest);
+    await app!.configure(ws.configureServer);
+    app!.all('/ws', ws.handleRequest);
 
-    app.errorHandler = (e, req, res) => e.toJson();
+    app!.errorHandler = (e, req, res) => e.toJson();
 
-    client = await connectTo(app);
+    client = await connectTo(app!);
   });
 
   tearDown(() async {
