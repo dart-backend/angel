@@ -18,6 +18,7 @@
 * Migrated angel_client to 4.0.0 (6/13 tests passed)
 * Migrated angel_websocket to 4.0.0 (2/3 tests passed)
 * Updated test to 4.0.0 (1/1 test passed)
+* Added symbol_table and migrated to 2.0.0 (16/16 tests passed)
 * Updated jael to 3.0.0 (in progress)
 * Updated jael_preprocessor to 3.0.0 (in progress)
 * Updated angel_jael to 3.0.0 (in progress)
