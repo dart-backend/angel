@@ -1,8 +1,9 @@
 name: symbol_table
-version: 2.0.0
+version: 3.0.0
 description: A generic symbol table implementation in Dart, with support for scopes and constants.
 author: Tobe O <thosakwe@gmail.com>
 homepage: https://github.com/thosakwe/symbol_table
+publish_to: none
 environment:
   sdk: '>=2.12.0 <3.0.0'
 dependencies:

@@ -4,7 +4,7 @@ import 'expression.dart';
 import 'token.dart';
 
 class Identifier extends Expression {
-  final Token id;
+  final Token? id;
 
   Identifier(this.id);
 
@@ -23,25 +23,25 @@ class Identifier extends Expression {
           if (scope.resolve('!strict!')?.value == false) return null;
           throw ArgumentError('The name "$name" does not exist in this scope.');
         }
-        return scope.resolve(name).value;
+        return scope.resolve(name)!.value;
     }
   }
 
-  String get name => id.span.text;
+  String get name => id!.span!.text;
 
   @override
-  FileSpan get span => id.span;
+  FileSpan? get span => id!.span;
 }
 
 class SyntheticIdentifier extends Identifier {
   @override
   final String name;
 
-  SyntheticIdentifier(this.name, [Token token]) : super(token);
+  SyntheticIdentifier(this.name, [Token? token]) : super(token);
 
   @override
-  FileSpan get span {
-    if (id != null) return id.span;
+  FileSpan? get span {
+    if (id != null) return id!.span;
     throw UnsupportedError('Cannot get the span of a SyntheticIdentifier.');
   }
 }

@@ -3,11 +3,11 @@ import 'ast/ast.dart';
 /// Jael formatter
 class JaelFormatter {
   final num tabSize;
-  final bool insertSpaces;
+  final bool? insertSpaces;
   final int maxLineLength;
   var _buffer = StringBuffer();
   int _level = 0;
-  String _spaces;
+  String? _spaces;
 
   static String _spaceString(int tabSize) {
     var b = StringBuffer();
@@ -18,7 +18,7 @@ class JaelFormatter {
   }
 
   JaelFormatter(this.tabSize, this.insertSpaces, this.maxLineLength) {
-    _spaces = insertSpaces ? _spaceString(tabSize.toInt()) : '\t';
+    _spaces = insertSpaces! ? _spaceString(tabSize.toInt()) : '\t';
   }
 
   void _indent() {
@@ -38,20 +38,20 @@ class JaelFormatter {
   int get _spaceLength {
     var out = 0;
     for (int i = 0; i < _level; i++) {
-      out += _spaces.length;
+      out += _spaces!.length;
     }
     return out;
   }
 
-  String apply(Document document) {
+  String apply(Document? document) {
     if (document?.doctype != null) {
       _buffer.write('<!doctype');
 
-      if (document.doctype.html != null) _buffer.write(' html');
-      if (document.doctype.public != null) _buffer.write(' public');
+      if (document!.doctype!.html != null) _buffer.write(' html');
+      if (document.doctype!.public != null) _buffer.write(' public');
 
-      if (document.doctype.url != null) {
-        _buffer.write('${document.doctype.url}');
+      if (document.doctype!.url != null) {
+        _buffer.write('${document.doctype!.url}');
       }
 
       _buffer.writeln('>');
@@ -62,7 +62,7 @@ class JaelFormatter {
     return _buffer.toString().trim();
   }
 
-  int _formatChild(ElementChild child, int lineLength,
+  int _formatChild(ElementChild? child, int lineLength,
       {bool isFirst = false, bool isLast = false}) {
     if (child == null) {
       return lineLength;
@@ -72,11 +72,11 @@ class JaelFormatter {
       var b = StringBuffer('{{');
       if (child.isRaw) b.write('-');
       b.write(' ');
-      b.write(child.expression.span.text.trim());
+      b.write(child.expression.span!.text.trim());
       b.write(' }}');
       s = b.toString();
     } else {
-      s = child.span.text;
+      s = child.span!.text;
     }
     if (isFirst) {
       s = s.trimLeft();
@@ -145,7 +145,7 @@ class JaelFormatter {
     _indent();
     var lll = _spaceLength;
     var i = 1;
-    ElementChild last;
+    ElementChild? last;
     for (var c in element.children) {
       if (lll == _spaceLength && c is! Element) {
         _applySpacing();
@@ -186,7 +186,7 @@ class JaelFormatter {
       } else {
         if (attr.nequ != null) b.write('!=');
         if (attr.equals != null) b.write('=');
-        b.write(attr.value.span.text);
+        b.write(attr.value!.span!.text);
       }
     }
     return b.toString();

@@ -28,12 +28,12 @@ class ConditionalParselet implements InfixParselet {
   const ConditionalParselet();
 
   @override
-  Expression parse(Parser parser, Expression left, Token token) {
+  Expression? parse(Parser parser, Expression? left, Token? token) {
     var ifTrue = parser.parseExpression(0);
 
     if (ifTrue == null) {
       parser.errors.add(JaelError(JaelErrorSeverity.error,
-          'Missing expression in conditional expression.', token.span));
+          'Missing expression in conditional expression.', token!.span));
       return null;
     }
 
@@ -48,7 +48,7 @@ class ConditionalParselet implements InfixParselet {
 
     if (ifFalse == null) {
       parser.errors.add(JaelError(JaelErrorSeverity.error,
-          'Missing expression in conditional expression.', colon.span));
+          'Missing expression in conditional expression.', colon!.span));
       return null;
     }
 
@@ -62,14 +62,14 @@ class BinaryParselet implements InfixParselet {
   const BinaryParselet(this.precedence);
 
   @override
-  Expression parse(Parser parser, Expression left, Token token) {
+  Expression? parse(Parser parser, Expression? left, Token? token) {
     var right = parser.parseExpression(precedence);
 
     if (right == null) {
-      if (token.type != TokenType.gt) {
+      if (token!.type != TokenType.gt) {
         parser.errors.add(JaelError(
             JaelErrorSeverity.error,
-            'Missing expression after operator "${token.span.text}", following expression ${left.span.text}.',
+            'Missing expression after operator "${token.span!.text}", following expression ${left!.span!.text}.',
             token.span));
       }
       return null;
@@ -86,10 +86,10 @@ class CallParselet implements InfixParselet {
   int get precedence => 19;
 
   @override
-  Expression parse(Parser parser, Expression left, Token token) {
+  Expression? parse(Parser parser, Expression? left, Token? token) {
     List<Expression> arguments = [];
     List<NamedArgument> namedArguments = [];
-    Expression argument = parser.parseExpression(0);
+    Expression? argument = parser.parseExpression(0);
 
     while (argument != null) {
       arguments.add(argument);
@@ -98,7 +98,7 @@ class CallParselet implements InfixParselet {
       argument = parser.parseExpression(0);
     }
 
-    NamedArgument namedArgument = parser.parseNamedArgument();
+    NamedArgument? namedArgument = parser.parseNamedArgument();
 
     while (namedArgument != null) {
       namedArguments.add(namedArgument);
@@ -109,7 +109,7 @@ class CallParselet implements InfixParselet {
 
     if (!parser.next(TokenType.rParen)) {
       var lastSpan = arguments.isEmpty ? null : arguments.last.span;
-      lastSpan ??= token.span;
+      lastSpan ??= token!.span;
       parser.errors.add(JaelError(JaelErrorSeverity.error,
           'Missing ")" after argument list.', lastSpan));
       return null;
@@ -126,12 +126,12 @@ class IndexerParselet implements InfixParselet {
   int get precedence => 19;
 
   @override
-  Expression parse(Parser parser, Expression left, Token token) {
+  Expression? parse(Parser parser, Expression? left, Token? token) {
     var indexer = parser.parseExpression(0);
 
     if (indexer == null) {
       parser.errors.add(JaelError(
-          JaelErrorSeverity.error, 'Missing expression after "[".', left.span));
+          JaelErrorSeverity.error, 'Missing expression after "[".', left!.span));
       return null;
     }
 
@@ -152,12 +152,12 @@ class MemberParselet implements InfixParselet {
   int get precedence => 19;
 
   @override
-  Expression parse(Parser parser, Expression left, Token token) {
+  Expression? parse(Parser parser, Expression? left, Token? token) {
     var name = parser.parseIdentifier();
 
     if (name == null) {
       parser.errors.add(JaelError(JaelErrorSeverity.error,
-          'Expected the name of a property following "."', token.span));
+          'Expected the name of a property following "."', token!.span));
       return null;
     }
 

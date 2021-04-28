@@ -6,17 +6,17 @@ import 'member.dart';
 import 'token.dart';
 
 class NewExpression extends Expression {
-  final Token $new;
+  final Token? $new;
   final Call call;
 
   NewExpression(this.$new, this.call);
 
   @override
-  FileSpan get span => $new.span.expand(call.span);
+  FileSpan get span => $new!.span!.expand(call.span);
 
   @override
   compute(scope) {
-    var targetType = call.target.compute(scope);
+    var targetType = call.target!.compute(scope);
     var positional = call.computePositional(scope);
     var named = call.computeNamed(scope);
     var name = '';

@@ -3,14 +3,14 @@ import 'expression.dart';
 import 'token.dart';
 
 class BinaryExpression extends Expression {
-  final Expression left, right;
-  final Token operator;
+  final Expression? left, right;
+  final Token? operator;
 
   BinaryExpression(this.left, this.operator, this.right);
 
   @override
   compute(scope) {
-    var l = left.compute(scope), r = right.compute(scope);
+    var l = left!.compute(scope), r = right!.compute(scope);
 
     switch (operator?.type) {
       case TokenType.asterisk:
@@ -43,5 +43,5 @@ class BinaryExpression extends Expression {
   }
 
   @override
-  FileSpan get span => left.span.expand(operator.span).expand(right.span);
+  FileSpan get span => left!.span!.expand(operator!.span!).expand(right!.span!);
 }
