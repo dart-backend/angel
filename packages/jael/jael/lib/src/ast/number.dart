@@ -25,10 +25,7 @@ class NumberLiteral extends Literal {
 
   @override
   num compute(scope) {
-    if (number.span.text == null) {
-      return 0;
-    }
-    return _value ??= parse(number.span.text!);
+    return _value ??= parse(number.span.text);
   }
 }
 
@@ -45,9 +42,6 @@ class HexLiteral extends Literal {
 
   @override
   num compute(scope) {
-    if (hex.span.text == null) {
-      return 0;
-    }
-    return _value ??= parse(hex.span.text!);
+    return _value ??= parse(hex.span.text);
   }
 }

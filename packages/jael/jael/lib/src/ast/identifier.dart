@@ -4,9 +4,16 @@ import 'expression.dart';
 import 'token.dart';
 
 class Identifier extends Expression {
-  final Token id;
+  late Token id;
 
   Identifier(this.id);
+
+  // TODO: Fix for SyntheticIdentifier
+  Identifier.noToken(Token? token) {
+    if (token != null) {
+      id = token;
+    }
+  }
 
   @override
   dynamic compute(SymbolTable? scope) {
@@ -27,7 +34,7 @@ class Identifier extends Expression {
     }
   }
 
-  String get name => id.span.text ?? '';
+  String get name => id.span.text;
 
   @override
   FileSpan get span => id.span;
@@ -37,11 +44,11 @@ class SyntheticIdentifier extends Identifier {
   @override
   final String name;
 
-  SyntheticIdentifier(this.name, [Token? token]) : super(token!);
+  SyntheticIdentifier(this.name, [Token? token]) : super.noToken(token);
 
   @override
   FileSpan get span {
-    return id.span;
-    //throw UnsupportedError('Cannot get the span of a SyntheticIdentifier.');
+    //return id.span;
+    throw UnsupportedError('Cannot get the span of a SyntheticIdentifier.');
   }
 }

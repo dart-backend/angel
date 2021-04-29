@@ -304,9 +304,9 @@ class Renderer {
       SymbolTable scope, bool html5, int index, int total) {
     if (child is Text && parent.tagName.name != 'textarea') {
       if (index == 0) {
-        buffer.write(child.span.text?.trimLeft());
+        buffer.write(child.span.text.trimLeft());
       } else if (index == total - 1) {
-        buffer.write(child.span.text?.trimRight());
+        buffer.write(child.span.text.trimRight());
       } else {
         buffer.write(child.span.text);
       }

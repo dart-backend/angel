@@ -72,11 +72,11 @@ class JaelFormatter {
       var b = StringBuffer('{{');
       if (child.isRaw) b.write('-');
       b.write(' ');
-      b.write(child.expression.span.text?.trim());
+      b.write(child.expression.span.text.trim());
       b.write(' }}');
       s = b.toString();
     } else {
-      s = child.span.text ?? '';
+      s = child.span.text;
     }
     if (isFirst) {
       s = s.trimLeft();

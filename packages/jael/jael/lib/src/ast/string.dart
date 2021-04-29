@@ -13,11 +13,8 @@ class StringLiteral extends Literal {
 
   static String parseValue(Token string) {
     var buf = StringBuffer();
-    if (string.span.text == null) {
-      return buf.toString();
-    }
 
-    var text = string.span.text!.substring(1, string.span.text!.length - 1);
+    var text = string.span.text.substring(1, string.span.text.length - 1);
     var codeUnits = text.codeUnits;
 
     for (var i = 0; i < codeUnits.length; i++) {

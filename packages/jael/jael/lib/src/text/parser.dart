@@ -91,7 +91,7 @@ class Parser {
     }
     var doctype = _current;
     var html = parseIdentifier();
-    if (html == null || html.span.text?.toLowerCase() != 'html') {
+    if (html == null || html.span.text.toLowerCase() != 'html') {
       errors.add(JaelError(
           JaelErrorSeverity.error,
           'Expected "html" in doctype declaration.',
@@ -112,7 +112,7 @@ class Parser {
       return Doctype(lt, doctype, html, null, null, null, _current);
     }
 
-    if (public.span.text?.toLowerCase() != 'public') {
+    if (public.span.text.toLowerCase() != 'public') {
       //errors.add(JaelError(
       //    JaelErrorSeverity.error,
       //    'Expected "public" in doctype declaration.',

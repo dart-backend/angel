@@ -9,7 +9,7 @@ class Interpolation extends ElementChild {
 
   Interpolation(this.doubleCurlyL, this.expression, this.doubleCurlyR);
 
-  bool get isRaw => doubleCurlyL.span.text?.endsWith('-') ?? false;
+  bool get isRaw => doubleCurlyL.span.text.endsWith('-');
 
   @override
   FileSpan get span {

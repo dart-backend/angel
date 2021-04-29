@@ -167,7 +167,7 @@ class _Scanner implements Scanner {
 
         var span = _scanner.spanFrom(start, end);
 
-        if (span.text?.isNotEmpty == true) {
+        if (span.text.isNotEmpty == true) {
           tokens.add(Token(TokenType.text, span, null));
         }
       }
@@ -205,9 +205,7 @@ class _Scanner implements Scanner {
           var token = potential.first;
           tokens.add(token);
 
-          if (token.span.text != null) {
-            _scanner.scan(token.span.text!);
-          }
+          _scanner.scan(token.span.text);
 
           if (token.type == TokenType.lt) {
             brackets.addFirst(token);
