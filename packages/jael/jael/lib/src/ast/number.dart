@@ -4,13 +4,13 @@ import 'expression.dart';
 import 'token.dart';
 
 class NumberLiteral extends Literal {
-  final Token? number;
+  final Token number;
   num? _value;
 
   NumberLiteral(this.number);
 
   @override
-  FileSpan? get span => number!.span;
+  FileSpan get span => number.span;
 
   static num parse(String value) {
     var e = value.indexOf('E');
@@ -24,24 +24,30 @@ class NumberLiteral extends Literal {
   }
 
   @override
-  compute(scope) {
-    return _value ??= parse(number!.span!.text);
+  num compute(scope) {
+    if (number.span.text == null) {
+      return 0;
+    }
+    return _value ??= parse(number.span.text!);
   }
 }
 
 class HexLiteral extends Literal {
-  final Token? hex;
+  final Token hex;
   num? _value;
 
   HexLiteral(this.hex);
 
   @override
-  FileSpan? get span => hex!.span;
+  FileSpan get span => hex.span;
 
   static num parse(String value) => int.parse(value.substring(2), radix: 16);
 
   @override
-  compute(scope) {
-    return _value ??= parse(hex!.span!.text);
+  num compute(scope) {
+    if (hex.span.text == null) {
+      return 0;
+    }
+    return _value ??= parse(hex.span.text!);
   }
 }

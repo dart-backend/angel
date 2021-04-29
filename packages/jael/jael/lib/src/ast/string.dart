@@ -6,17 +6,21 @@ import 'expression.dart';
 import 'token.dart';
 
 class StringLiteral extends Literal {
-  final Token? string;
+  final Token string;
   final String value;
 
   StringLiteral(this.string, this.value);
 
   static String parseValue(Token string) {
-    var text = string.span!.text.substring(1, string.span!.text.length - 1);
-    var codeUnits = text.codeUnits;
     var buf = StringBuffer();
+    if (string.span.text == null) {
+      return buf.toString();
+    }
 
-    for (int i = 0; i < codeUnits.length; i++) {
+    var text = string.span.text!.substring(1, string.span.text!.length - 1);
+    var codeUnits = text.codeUnits;
+
+    for (var i = 0; i < codeUnits.length; i++) {
       var ch = codeUnits[i];
 
       if (ch == $backslash) {
@@ -66,10 +70,10 @@ class StringLiteral extends Literal {
   }
 
   @override
-  compute(SymbolTable scope) {
+  String compute(SymbolTable? scope) {
     return value;
   }
 
   @override
-  FileSpan? get span => string!.span;
+  FileSpan get span => string.span;
 }

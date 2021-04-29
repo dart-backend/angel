@@ -12,33 +12,34 @@ class Document extends AstNode {
   Document(this.doctype, this.root);
 
   @override
-  FileSpan? get span {
+  FileSpan get span {
     if (doctype == null) return root.span;
-    return doctype!.span.expand(root.span!);
+    return doctype!.span.expand(root.span);
   }
 }
 
 class HtmlComment extends ElementChild {
-  final Token? htmlComment;
+  final Token htmlComment;
 
   HtmlComment(this.htmlComment);
 
   @override
-  FileSpan? get span => htmlComment!.span;
+  FileSpan get span => htmlComment.span;
 }
 
 class Text extends ElementChild {
-  final Token? text;
+  final Token text;
 
   Text(this.text);
 
   @override
-  FileSpan? get span => text!.span;
+  FileSpan get span => text.span;
 }
 
 class Doctype extends AstNode {
-  final Token? lt, doctype, gt;
-  final Identifier? html, public;
+  final Token lt, doctype, gt;
+  final Identifier html;
+  final Identifier? public;
   final StringLiteral? name, url;
 
   Doctype(this.lt, this.doctype, this.html, this.public, this.name, this.url,
@@ -46,15 +47,15 @@ class Doctype extends AstNode {
 
   @override
   FileSpan get span {
-    if (public == null) {
-      return lt!.span!.expand(doctype!.span!).expand(html!.span!).expand(gt!.span!);
+    if (public == null || name == null || url == null) {
+      return lt.span.expand(doctype.span).expand(html.span).expand(gt.span);
     }
-    return lt!.span!
-        .expand(doctype!.span!)
-        .expand(html!.span!)
-        .expand(public!.span!)
-        .expand(name!.span!)
-        .expand(url!.span!)
-        .expand(gt!.span!);
+    return lt.span
+        .expand(doctype.span)
+        .expand(html.span)
+        .expand(public!.span)
+        .expand(name!.span)
+        .expand(url!.span)
+        .expand(gt.span);
   }
 }

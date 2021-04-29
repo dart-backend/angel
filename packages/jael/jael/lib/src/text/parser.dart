@@ -7,12 +7,12 @@ class Parser {
   final Scanner scanner;
   final bool asDSX;
 
-  Token? _current;
+  late Token _current;
   int _index = -1;
 
   Parser(this.scanner, {this.asDSX = false});
 
-  Token? get current => _current;
+  Token get current => _current;
 
   int _nextPrecedence() {
     var tok = peek();
@@ -68,8 +68,11 @@ class Parser {
 
   StringLiteral? implicitString() {
     if (next(TokenType.string)) {
-      return prefixParselets[TokenType.string]!.parse(this, _current)
-          as StringLiteral?;
+      var result = prefixParselets[TokenType.string]?.parse(this, _current);
+      if (result != null) {
+        return result as StringLiteral;
+      }
+      return null;
     }
     /*else if (next(TokenType.text)) {
 
@@ -86,12 +89,14 @@ class Parser {
       _index--;
       return null;
     }
-    var doctype = _current, html = parseIdentifier() as Token?;
-    if (html?.span?.text.toLowerCase() != 'html') {
+    var doctype = _current;
+    var html = parseIdentifier();
+    if (html == null || html.span.text?.toLowerCase() != 'html') {
       errors.add(JaelError(
           JaelErrorSeverity.error,
           'Expected "html" in doctype declaration.',
-          html?.span ?? doctype!.span));
+          html?.span ?? doctype.span));
+
       return null;
     }
 
@@ -99,19 +104,23 @@ class Parser {
     if (public == null) {
       if (!next(TokenType.gt)) {
         errors.add(JaelError(JaelErrorSeverity.error,
-            'Expected ">" in doctype declaration.', html!.span));
+            'Expected ">" in doctype declaration.', html.span));
+        // ?? doctype.span));
         return null;
       }
 
-      return Doctype(
-          lt, doctype, html as Identifier?, null, null, null, _current);
+      return Doctype(lt, doctype, html, null, null, null, _current);
     }
 
-    if (public.span?.text.toLowerCase() != 'public') {
-      errors.add(JaelError(
-          JaelErrorSeverity.error,
-          'Expected "public" in doctype declaration.',
-          public.span ?? html!.span));
+    if (public.span.text?.toLowerCase() != 'public') {
+      //errors.add(JaelError(
+      //    JaelErrorSeverity.error,
+      //    'Expected "public" in doctype declaration.',
+      //    public!.span ?? html?.span));
+
+      errors.add(JaelError(JaelErrorSeverity.error,
+          'Expected "public" in doctype declaration.', public.span));
+
       return null;
     }
 
@@ -123,24 +132,23 @@ class Parser {
       return null;
     }
 
-    var name = stringParser!.parse(this, _current) as StringLiteral?;
+    var name = stringParser?.parse(this, _current) as StringLiteral;
 
     if (!next(TokenType.string)) {
       errors.add(JaelError(JaelErrorSeverity.error,
-          'Expected string in doctype declaration.', name!.span));
+          'Expected string in doctype declaration.', name.span));
       return null;
     }
 
-    var url = stringParser.parse(this, _current) as StringLiteral?;
+    var url = stringParser?.parse(this, _current) as StringLiteral;
 
     if (!next(TokenType.gt)) {
       errors.add(JaelError(JaelErrorSeverity.error,
-          'Expected ">" in doctype declaration.', url!.span));
+          'Expected ">" in doctype declaration.', url.span));
       return null;
     }
 
-    return Doctype(
-        lt, doctype, html as Identifier?, public, name, url, _current);
+    return Doctype(lt, doctype, html, public, name, url, _current);
   }
 
   ElementChild? parseElementChild() =>
@@ -162,7 +170,7 @@ class Parser {
 
     if (expression == null) {
       errors.add(JaelError(JaelErrorSeverity.error,
-          'Missing expression in interpolation.', doubleCurlyL!.span));
+          'Missing expression in interpolation.', doubleCurlyL.span));
       return null;
     }
 
@@ -190,7 +198,7 @@ class Parser {
 
     if (tagName == null) {
       errors.add(
-          JaelError(JaelErrorSeverity.error, 'Missing tag name.', lt!.span));
+          JaelError(JaelErrorSeverity.error, 'Missing tag name.', lt.span));
       return null;
     }
 
@@ -208,7 +216,7 @@ class Parser {
 
       if (!next(TokenType.gt)) {
         errors.add(JaelError(JaelErrorSeverity.error,
-            'Missing ">" in self-closing "${tagName.name}" tag.', slash!.span));
+            'Missing ">" in self-closing "${tagName.name}" tag.', slash.span));
         return null;
       }
 
@@ -252,7 +260,7 @@ class Parser {
 
     if (!next(TokenType.slash)) {
       errors.add(JaelError(JaelErrorSeverity.error,
-          'Missing "/" in "${tagName.name}" closing tag.', lt2!.span));
+          'Missing "/" in "${tagName.name}" closing tag.', lt2.span));
       return null;
     }
 
@@ -263,15 +271,15 @@ class Parser {
       errors.add(JaelError(
           JaelErrorSeverity.error,
           'Missing "${tagName.name}" in "${tagName.name}" closing tag.',
-          slash!.span));
+          slash.span));
       return null;
     }
 
     if (tagName2.name != tagName.name) {
       errors.add(JaelError(
           JaelErrorSeverity.error,
-          'Mismatched closing tags. Expected "${tagName.span!.text}"; got "${tagName2.name}" instead.',
-          lt2!.span));
+          'Mismatched closing tags. Expected "${tagName.span.text}"; got "${tagName2.name}" instead.',
+          lt2.span));
       return null;
     }
 
@@ -292,7 +300,7 @@ class Parser {
     if ((id = parseIdentifier()) != null) {
       // Nothing
     } else if (next(TokenType.string)) {
-      string = StringLiteral(_current, StringLiteral.parseValue(_current!));
+      string = StringLiteral(_current, StringLiteral.parseValue(_current));
     } else {
       return null;
     }
@@ -342,12 +350,12 @@ class Parser {
 
     for (var type in prefixParselets.keys) {
       if (next(type)) {
-        var left = prefixParselets[type]!.parse(this, _current);
+        var left = prefixParselets[type]?.parse(this, _current);
 
         while (precedence < _nextPrecedence()) {
           _current = scanner.tokens[++_index];
 
-          if (_current!.type == TokenType.slash &&
+          if (_current.type == TokenType.slash &&
               peek()?.type == TokenType.gt) {
             // Handle `/>`
             //
@@ -357,11 +365,14 @@ class Parser {
             return left;
           }
 
-          var infix = infixParselets[_current!.type]!;
-          var newLeft = infix.parse(this, left, _current);
+          var infix = infixParselets[_current.type]!;
+          Expression? newLeft;
+          if (left != null) {
+            newLeft = infix.parse(this, left, _current);
+          }
 
           if (newLeft == null) {
-            if (_current!.type == TokenType.gt) _index--;
+            if (_current.type == TokenType.gt) _index--;
             return left;
           }
           left = newLeft;
@@ -388,11 +399,11 @@ class Parser {
 
     if (value == null) {
       errors.add(JaelError(JaelErrorSeverity.error,
-          'Missing expression in key-value pair.', colon!.span));
+          'Missing expression in key-value pair.', colon.span));
       return null;
     }
 
-    return KeyValuePair(key, colon, value as Expression?);
+    return KeyValuePair(key, colon, value as Expression);
   }
 
   NamedArgument? parseNamedArgument() {
@@ -409,7 +420,7 @@ class Parser {
 
     if (value == null) {
       errors.add(JaelError(JaelErrorSeverity.error,
-          'Missing expression in named argument.', colon!.span));
+          'Missing expression in named argument.', colon.span));
       return null;
     }
 

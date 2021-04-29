@@ -55,7 +55,7 @@ final Map<Pattern, TokenType> _expressionPatterns = {
   '.': TokenType.dot,
   '??': TokenType.elvis,
   '?.': TokenType.elvis_dot,
-  '=': TokenType.equals,
+  //'=': TokenType.equals,
   '!': TokenType.exclamation,
   '-': TokenType.minus,
   '%': TokenType.percent,
@@ -66,14 +66,14 @@ final Map<Pattern, TokenType> _expressionPatterns = {
   '}': TokenType.rCurly,
   '(': TokenType.lParen,
   ')': TokenType.rParen,
-  '/': TokenType.slash,
-  '<': TokenType.lt,
+  //'/': TokenType.slash,
+  //'<': TokenType.lt,
   '<=': TokenType.lte,
-  '>': TokenType.gt,
+  //'>': TokenType.gt,
   '>=': TokenType.gte,
   '==': TokenType.equ,
-  '!=': TokenType.nequ,
-  '=': TokenType.equals,
+  //'!=': TokenType.nequ,
+  //'=': TokenType.equals,
   RegExp(r'-?[0-9]+(\.[0-9]+)?([Ee][0-9]+)?'): TokenType.number,
   RegExp(r'0x[A-Fa-f0-9]+'): TokenType.hex,
   _string1: TokenType.string,
@@ -82,47 +82,50 @@ final Map<Pattern, TokenType> _expressionPatterns = {
 };
 
 class _Scanner implements Scanner {
+  @override
   final List<JaelError> errors = [];
+
+  @override
   final List<Token> tokens = [];
   _ScannerState state = _ScannerState.html;
   final Queue<String?> openTags = Queue();
 
-  SpanScanner? _scanner;
+  late SpanScanner _scanner;
 
   _Scanner(String text, sourceUrl) {
     _scanner = SpanScanner(text, sourceUrl: sourceUrl);
   }
 
   void scan({bool asDSX = false}) {
-    while (!_scanner!.isDone) {
+    while (!_scanner.isDone) {
       if (state == _ScannerState.html) {
         scanHtml(asDSX);
       } else if (state == _ScannerState.freeText) {
         // Just keep parsing until we hit "</"
-        var start = _scanner!.state, end = start;
+        var start = _scanner.state, end = start;
 
-        while (!_scanner!.isDone) {
+        while (!_scanner.isDone) {
           // Skip through comments
-          if (_scanner!.scan(_htmlComment)) continue;
+          if (_scanner.scan(_htmlComment)) continue;
 
           // Break on {{ or {
-          if (_scanner!.matches(asDSX ? '{' : '{{')) {
+          if (_scanner.matches(asDSX ? '{' : '{{')) {
             state = _ScannerState.html;
             //_scanner.position--;
             break;
           }
 
-          var ch = _scanner!.readChar();
+          var ch = _scanner.readChar();
 
           if (ch == $lt) {
             // && !_scanner.isDone) {
-            if (_scanner!.matches('/')) {
+            if (_scanner.matches('/')) {
               // If we reached "</", backtrack and break into HTML
               openTags.removeFirst();
-              _scanner!.position--;
+              _scanner.position--;
               state = _ScannerState.html;
               break;
-            } else if (_scanner!.matches(_id)) {
+            } else if (_scanner.matches(_id)) {
               // Also break when we reach <foo.
               //
               // HOWEVER, that is also JavaScript. So we must
@@ -132,26 +135,26 @@ class _Scanner implements Scanner {
 
               if (!shouldBreak) {
                 // Try to see if we are closing a script tag
-                var replay = _scanner!.state;
+                var replay = _scanner.state;
                 _scanner
-                  ?..readChar()
+                  ..readChar()
                   ..scan(_whitespace);
                 //print(_scanner.emptySpan.highlight());
 
-                if (_scanner!.matches(_id)) {
+                if (_scanner.matches(_id)) {
                   //print(_scanner.lastMatch[0]);
-                  shouldBreak = _scanner!.lastMatch![0] == 'script';
-                  _scanner!.position--;
+                  shouldBreak = _scanner.lastMatch?[0] == 'script';
+                  _scanner.position--;
                 }
 
                 if (!shouldBreak) {
-                  _scanner!.state = replay;
+                  _scanner.state = replay;
                 }
               }
 
               if (shouldBreak) {
                 openTags.removeFirst();
-                _scanner!.position--;
+                _scanner.position--;
                 state = _ScannerState.html;
                 break;
               }
@@ -159,12 +162,12 @@ class _Scanner implements Scanner {
           }
 
           // Otherwise, just add to the "buffer"
-          end = _scanner!.state;
+          end = _scanner.state;
         }
 
-        var span = _scanner!.spanFrom(start, end);
+        var span = _scanner.spanFrom(start, end);
 
-        if (span.text.isNotEmpty) {
+        if (span.text?.isNotEmpty == true) {
           tokens.add(Token(TokenType.text, span, null));
         }
       }
@@ -182,35 +185,41 @@ class _Scanner implements Scanner {
 
         while (true) {
           // Scan whitespace
-          _scanner!.scan(_whitespace);
+          _scanner.scan(_whitespace);
 
           _expressionPatterns.forEach((pattern, type) {
-            if (_scanner!.matches(pattern)) {
-              potential
-                  .add(Token(type, _scanner!.lastSpan, _scanner!.lastMatch));
+            if (_scanner.matches(pattern)) {
+              if (_scanner.lastSpan != null) {
+                potential
+                    .add(Token(type, _scanner.lastSpan!, _scanner.lastMatch));
+              } else {
+                // TODO: To be relooked
+              }
             }
           });
 
-          potential.sort((a, b) => b.span!.length.compareTo(a.span!.length));
+          potential.sort((a, b) => b.span.length.compareTo(a.span.length));
 
           if (potential.isEmpty) break;
 
           var token = potential.first;
           tokens.add(token);
 
-          _scanner!.scan(token.span!.text);
+          if (token.span.text != null) {
+            _scanner.scan(token.span.text!);
+          }
 
           if (token.type == TokenType.lt) {
             brackets.addFirst(token);
 
             // Try to see if we are at a tag.
-            var replay = _scanner!.state;
-            _scanner!.scan(_whitespace);
+            var replay = _scanner.state;
+            _scanner.scan(_whitespace);
 
-            if (_scanner!.matches(_id)) {
-              openTags.addFirst(_scanner!.lastMatch![0]);
+            if (_scanner.matches(_id)) {
+              openTags.addFirst(_scanner.lastMatch![0]);
             } else {
-              _scanner!.state = replay;
+              _scanner.state = replay;
             }
           } else if (token.type == TokenType.slash) {
             // Only push if we're at </foo
@@ -226,11 +235,11 @@ class _Scanner implements Scanner {
               brackets.removeFirst();
 
               // Now, ONLY continue parsing HTML if the next character is '<'.
-              var replay = _scanner!.state;
-              _scanner!.scan(_whitespace);
+              var replay = _scanner.state;
+              _scanner.scan(_whitespace);
 
-              if (!_scanner!.matches('<')) {
-                _scanner!.state = replay;
+              if (!_scanner.matches('<')) {
+                _scanner.state = replay;
                 state = _ScannerState.freeText;
                 break;
               }
@@ -241,11 +250,11 @@ class _Scanner implements Scanner {
               // We're at foo>, try to parse text?
               brackets.removeFirst();
 
-              var replay = _scanner!.state;
-              _scanner!.scan(_whitespace);
+              var replay = _scanner.state;
+              _scanner.scan(_whitespace);
 
-              if (!_scanner!.matches('<')) {
-                _scanner!.state = replay;
+              if (!_scanner.matches('<')) {
+                _scanner.state = replay;
                 state = _ScannerState.freeText;
                 break;
               }
@@ -259,7 +268,7 @@ class _Scanner implements Scanner {
           potential.clear();
         }
       }
-    } while (brackets.isNotEmpty && !_scanner!.isDone);
+    } while (brackets.isNotEmpty && !_scanner.isDone);
 
     state = _ScannerState.freeText;
   }

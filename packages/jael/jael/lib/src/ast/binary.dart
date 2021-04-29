@@ -3,16 +3,16 @@ import 'expression.dart';
 import 'token.dart';
 
 class BinaryExpression extends Expression {
-  final Expression? left, right;
-  final Token? operator;
+  final Expression left, right;
+  final Token operator;
 
   BinaryExpression(this.left, this.operator, this.right);
 
   @override
-  compute(scope) {
-    var l = left!.compute(scope), r = right!.compute(scope);
+  dynamic compute(scope) {
+    var l = left.compute(scope), r = right.compute(scope);
 
-    switch (operator?.type) {
+    switch (operator.type) {
       case TokenType.asterisk:
         return l * r;
       case TokenType.slash:
@@ -38,10 +38,10 @@ class BinaryExpression extends Expression {
         return l ?? r;
       default:
         throw UnsupportedError(
-            'Unsupported binary operator: "${operator?.span?.text ?? "<null>"}".');
+            'Unsupported binary operator: "${operator.span.text ?? "<null>"}".');
     }
   }
 
   @override
-  FileSpan get span => left!.span!.expand(operator!.span!).expand(right!.span!);
+  FileSpan get span => left.span.expand(operator.span).expand(right.span);
 }

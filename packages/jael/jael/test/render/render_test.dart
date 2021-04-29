@@ -3,7 +3,7 @@ import 'package:jael/jael.dart' as jael;
 import 'package:symbol_table/symbol_table.dart';
 import 'package:test/test.dart';
 
-main() {
+void main() {
   test('attribute binding', () {
     const template = '''
 <html>

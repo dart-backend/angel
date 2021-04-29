@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:code_buffer/code_buffer.dart';
 import 'package:collection/collection.dart' show IterableExtension;
+import 'package:source_span/source_span.dart';
 import 'package:symbol_table/symbol_table.dart';
 import 'ast/ast.dart';
 import 'text/parser.dart';
@@ -8,7 +9,7 @@ import 'text/scanner.dart';
 
 /// Parses a Jael document.
 Document? parseDocument(String text,
-    {sourceUrl, bool asDSX = false, void onError(JaelError error)?}) {
+    {sourceUrl, bool asDSX = false, void Function(JaelError error)? onError}) {
   var scanner = scan(text, sourceUrl: sourceUrl, asDSX: asDSX);
 
   //scanner.tokens.forEach(print);
@@ -56,12 +57,12 @@ class Renderer {
         ..writeln('<li>')
         ..indent()
         ..writeln(
-            '<b>$type:</b> ${error.span!.start.toolString}: ${error.message}')
+            '<b>$type:</b> ${error.span.start.toolString}: ${error.message}')
         ..writeln('<br>')
         ..writeln(
           '<span style="color: red;">' +
               htmlEscape
-                  .convert(error.span!.highlight(color: false))
+                  .convert(error.span.highlight(color: false))
                   .replaceAll('\n', '<br>') +
               '</span>',
         )
@@ -161,7 +162,7 @@ class Renderer {
       buffer.writeln('>');
       buffer.indent();
 
-      for (int i = 0; i < element.children.length; i++) {
+      for (var i = 0; i < element.children.length; i++) {
         var child = element.children.elementAt(i);
         renderElementChild(element, child, buffer, childScope, html5, i,
             element.children.length);
@@ -278,7 +279,7 @@ class Renderer {
           ?.value
           ?.compute(scope);
       if (comparison == value) {
-        for (int i = 0; i < child.children.length; i++) {
+        for (var i = 0; i < child.children.length; i++) {
           var c = child.children.elementAt(i);
           renderElementChild(
               element, c, buffer, scope, html5, i, child.children.length);
@@ -303,11 +304,11 @@ class Renderer {
       SymbolTable scope, bool html5, int index, int total) {
     if (child is Text && parent.tagName.name != 'textarea') {
       if (index == 0) {
-        buffer.write(child.span!.text.trimLeft());
+        buffer.write(child.span.text?.trimLeft());
       } else if (index == total - 1) {
-        buffer.write(child.span!.text.trimRight());
+        buffer.write(child.span.text?.trimRight());
       } else {
-        buffer.write(child.span!.text);
+        buffer.write(child.span.text);
       }
     } else if (child is Interpolation) {
       var value = child.expression.compute(scope);
@@ -369,7 +370,7 @@ class Renderer {
     }
 
     if (renderAs == false) {
-      for (int i = 0; i < template!.children.length; i++) {
+      for (var i = 0; i < template!.children.length; i++) {
         var child = template.children.elementAt(i);
         renderElementChild(
             element, child, buffer, scope, html5, i, element.children.length);

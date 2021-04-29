@@ -1,12 +1,12 @@
 # 4.0.0 (NNBD)
 * Changed Dart SDK requirements for all packages to ">=2.12.0 <3.0.0" to support NNBD. 
-* Migrated pretty_logging to 3.0.0 (0/0 tests)
-* Migrated angel_http_exception to 3.0.0 (0/0 tests)
+* Migrated pretty_logging to 3.0.0 (0/0 tests passed)
+* Migrated angel_http_exception to 3.0.0 (0/0 tests passed)
 * Moved angel_cli to https://github.com/dukefirehawk/cli (Not migrated)
-* Added code_buffer and migrated to 2.0.0 (16/16 tests)
-* Added combinator and migrated to 2.0.0 (16/16 tests)
+* Added code_buffer and migrated to 2.0.0 (16/16 tests passed)
+* Added combinator and migrated to 2.0.0 (16/16 tests passed)
 * Migrated angel_route to 5.0.0 (35/35 tests passed)
-* Migrated angel_model to 3.0.0 (0/0 tests)
+* Migrated angel_model to 3.0.0 (0/0 tests passed)
 * Migrated angel_container to 3.0.0 (55/55 tests passed)
 * Added merge_map and migrated to 2.0.0 (6/6 tests passed)
 * Added mock_request and migrated to 2.0.0 (0/0 tests)
@@ -19,7 +19,7 @@
 * Migrated angel_websocket to 4.0.0 (2/3 tests passed)
 * Updated test to 4.0.0 (1/1 test passed)
 * Added symbol_table and migrated to 2.0.0 (16/16 tests passed)
-* Updated jael to 3.0.0 (in progress)
+* Migrated jael to 4.0.0 (17/20 tests passed)
 * Updated jael_preprocessor to 3.0.0 (in progress)
 * Updated angel_jael to 3.0.0 (in progress)
 * Updated pub_sub to 3.0.0 (in progress)
@@ -30,27 +30,27 @@
 
 # 3.0.0 (Non NNBD)
 * Changed Dart SDK requirements for all packages to ">=2.10.0 <3.0.0"
-* Updated pretty_logging to 2.0.0
-* Updated angel_http_exception to 2.0.0
+* Updated pretty_logging to 2.0.0 (0/0 tests passed)
+* Updated angel_http_exception to 2.0.0 (0/0 tests passed)
 * Updated angel_cli to 3.0.0. (Rename not working)
-* Updated angel_route to 4.0.0
-* Updated angel_model to 2.0.0
-* Updated angel_container to 2.0.0
-* Updated angel_framework to 3.0.0
-* Updated angel_auth to 3.0.0
-* Updated angel_configuration to 3.0.0
-* Updated angel_validate to 3.0.0
-* Added and updated json_god to 3.0.0
-* Updated angel_client to 3.0.0
-* Updated angel_websocket to 3.0.0
-* Updated jael to 3.0.0
-* Updated jael_preprocessor to 3.0.0
-* Updated test to 3.0.0
-* Updated angel_jael to 3.0.0 (Issue with 2 dependencies)
-* Added pub_sub and updated to 3.0.0
-* Updated production to 2.0.0
-* Updated hot to 3.0.0
-* Updated static to 3.0.0
+* Updated angel_route to 4.0.0 (35/35 tests passed)
+* Updated angel_model to 2.0.0 (0/0 tests passed)
+* Updated angel_container to 2.0.0 (55/55 tests passed)
+* Updated angel_framework to 3.0.0 (151/151 tests passed)
+* Updated angel_auth to 3.0.0 (28/32 tests passed)
+* Updated angel_configuration to 3.0.0 (6/8 tests passed)
+* Updated angel_validate to 3.0.0 (7/7 tests passed)
+* Added and updated json_god to 3.0.0 (7/7 tests passed)
+* Updated angel_client to 3.0.0 (10/13 tests passed)
+* Updated angel_websocket to 3.0.0 (3/3 tests passed)
+* Updated jael to 3.0.0 (20/20 tests passed)
+* Updated jael_preprocessor to 3.0.0 (5/5 tests passed)
+* Updated test to 3.0.0 (1/1 tests passed)
+* Updated angel_jael to 3.0.0 (1/1 tests passed, Issue with 2 dependencies)
+* Added pub_sub and updated to 3.0.0 (8/16 tests passed)
+* Updated production to 2.0.0 (0/0 tests passed)
+* Updated hot to 3.0.0 (0/0 tests passed)
+* Updated static to 3.0.0 (12/12 tests passed)
 * Update basic-sdk-2.12.x boilerplate
 * Updated angel_serialize to 3.0.0
 * Updated angel_serialize_generator to 3.0.0

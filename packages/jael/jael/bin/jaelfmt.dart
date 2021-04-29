@@ -85,7 +85,6 @@ Future<void> formatStat(
       break;
     default:
       throw 'No file or directory found at "$path".';
-      break;
   }
 }
 
@@ -120,5 +119,9 @@ String? format(String? filename, String content, ArgResults argResults) {
       int.parse(argResults['tab-size'] as String),
       argResults['insert-spaces'] as bool?,
       int.parse(argResults['line-length'] as String));
+
+  if (doc == null) {
+    return null;
+  }
   return fmt.apply(doc);
 }

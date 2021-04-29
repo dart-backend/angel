@@ -3,7 +3,7 @@ import 'package:jael/src/text/scanner.dart';
 import 'package:test/test.dart';
 import 'common.dart';
 
-main() {
+void main() {
   test('plain html', () {
     var tokens = scan('<img src="foo.png" />', sourceUrl: 'test.jael').tokens;
     tokens.forEach(print);

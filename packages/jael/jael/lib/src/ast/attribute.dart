@@ -15,13 +15,14 @@ class Attribute extends AstNode {
 
   bool get isRaw => nequ != null;
 
-  Expression? get nameNode => id ?? string;
+  Expression get nameNode => id ?? string!;
 
   String get name => string?.value ?? id!.name;
 
   @override
-  FileSpan? get span {
-    if (equals == null) return nameNode!.span;
-    return nameNode!.span!.expand(equals?.span ?? nequ!.span!).expand(value!.span!);
+  FileSpan get span {
+    if (equals == null || value == null) return nameNode.span;
+    //return nameNode.span.expand(equals!.span ?? nequ!.span).expand(value!.span);
+    return nameNode.span.expand(equals!.span).expand(value!.span);
   }
 }

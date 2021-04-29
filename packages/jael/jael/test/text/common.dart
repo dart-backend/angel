@@ -19,6 +19,6 @@ class _IsToken extends Matcher {
   bool matches(item, Map matchState) {
     return item is Token &&
         item.type == type &&
-        (text == null || item.span!.text == text);
+        (text == null || item.span.text == text);
   }
 }

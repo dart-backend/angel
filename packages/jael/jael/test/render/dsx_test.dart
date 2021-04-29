@@ -16,9 +16,9 @@ void main() {
     expect(foo.getAttribute('bar')?.value?.compute(null), 'baz');
     expect(
         foo
-            .getAttribute('yes')!
-            .value!
-            .compute(SymbolTable(values: {'no': 'maybe'})),
+            .getAttribute('yes')
+            ?.value
+            ?.compute(SymbolTable(values: {'no': 'maybe'})),
         'maybe');
   });
 
