@@ -12,33 +12,33 @@ import 'package:symbol_table/symbol_table.dart';
 ///
 /// To apply additional transforms to parsed documents, provide a set of [patch] functions.
 AngelConfigurer jael(Directory viewsDirectory,
-    {String fileExtension,
-    bool strictResolution: false,
-    bool cacheViews: false,
-    Iterable<Patcher> patch,
-    bool asDSX: false,
-    CodeBuffer createBuffer()}) {
-  var cache = <String, Document>{};
+    {String? fileExtension,
+    bool strictResolution = false,
+    bool cacheViews = false,
+    Iterable<Patcher>? patch,
+    bool asDSX = false,
+    CodeBuffer createBuffer()?}) {
+  var cache = <String, Document?>{};
   fileExtension ??= '.jael';
   createBuffer ??= () => new CodeBuffer();
 
   return (Angel app) async {
-    app.viewGenerator = (String name, [Map locals]) async {
+    app.viewGenerator = (String name, [Map? locals]) async {
       var errors = <JaelError>[];
-      Document processed;
+      Document? processed;
 
       if (cacheViews == true && cache.containsKey(name)) {
         processed = cache[name];
       } else {
-        var file = viewsDirectory.childFile(name + fileExtension);
+        var file = viewsDirectory.childFile(name + fileExtension!);
         var contents = await file.readAsString();
         var doc = parseDocument(contents,
-            sourceUrl: file.uri, asDSX: asDSX == true, onError: errors.add);
+            sourceUrl: file.uri, asDSX: asDSX == true, onError: errors.add)!;
         processed = doc;
 
         try {
-          processed = await resolve(doc, viewsDirectory,
-              patch: patch, onError: errors.add);
+          processed = await (resolve(doc, viewsDirectory,
+              patch: patch, onError: errors.add));
         } catch (_) {
           // Ignore these errors, so that we can show syntax errors.
         }
@@ -48,15 +48,15 @@ AngelConfigurer jael(Directory viewsDirectory,
         }
       }
 
-      var buf = createBuffer();
-      var scope = new SymbolTable(
-          values: locals?.keys?.fold<Map<String, dynamic>>(<String, dynamic>{},
+      var buf = createBuffer!();
+      var scope = SymbolTable(
+          values: locals?.keys.fold<Map<String, dynamic>>(<String, dynamic>{},
                   (out, k) => out..[k.toString()] = locals[k]) ??
               <String, dynamic>{});
 
       if (errors.isEmpty) {
         try {
-          const Renderer().render(processed, buf, scope,
+          const Renderer().render(processed!, buf, scope,
               strictResolution: strictResolution == true);
           return buf.toString();
         } on JaelError catch (e) {

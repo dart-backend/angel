@@ -11,7 +11,7 @@ main() {
   // because those packages are already tested.
   //
   // Instead, just test that we can render at all.
-  TestClient client;
+  late TestClient client;
 
   setUp(() async {
     var app = new Angel();

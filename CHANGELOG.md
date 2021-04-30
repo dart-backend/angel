@@ -21,7 +21,7 @@
 * Added symbol_table and migrated to 2.0.0 (16/16 tests passed)
 * Migrated jael to 4.0.0 (20/20 tests passed)
 * Migrated jael_preprocessor to 3.0.0 (5/5 tests passed)
-* Updated angel_jael to 3.0.0 (in progress)
+* Migrated angel_jael to 4.0.0 (1/1 test passed)
 * Updated pub_sub to 3.0.0 (in progress)
 * Updated production to 2.0.0 (in progress)
 * Updated hot to 3.0.0 (in progress)
