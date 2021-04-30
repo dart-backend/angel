@@ -7,10 +7,10 @@ import 'package:symbol_table/symbol_table.dart';
 import 'package:test/test.dart';
 
 main() {
-  FileSystem fileSystem;
+  late FileSystem fileSystem;
 
   setUp(() {
-    fileSystem = new MemoryFileSystem();
+    fileSystem = MemoryFileSystem();
 
     // a.jl
     fileSystem.file('a.jl').writeAsStringSync('<b>a.jl</b>');
@@ -51,13 +51,13 @@ main() {
   test('blocks are replaced or kept', () async {
     var file = fileSystem.file('c.jl');
     var original = jael.parseDocument(await file.readAsString(),
-        sourceUrl: file.uri, onError: (e) => throw e);
-    var processed = await jael.resolve(
+        sourceUrl: file.uri, onError: (e) => throw e)!;
+    var processed = await (jael.resolve(
         original, fileSystem.directory(fileSystem.currentDirectory),
-        onError: (e) => throw e);
-    var buf = new CodeBuffer();
-    var scope = new SymbolTable();
-    const jael.Renderer().render(processed, buf, scope);
+        onError: (e) => throw e));
+    var buf = CodeBuffer();
+    var scope = SymbolTable();
+    const jael.Renderer().render(processed!, buf, scope);
     print(buf);
 
     expect(
@@ -76,13 +76,13 @@ main() {
   test('block defaults are emitted', () async {
     var file = fileSystem.file('b.jl');
     var original = jael.parseDocument(await file.readAsString(),
-        sourceUrl: file.uri, onError: (e) => throw e);
-    var processed = await jael.resolve(
+        sourceUrl: file.uri, onError: (e) => throw e)!;
+    var processed = await (jael.resolve(
         original, fileSystem.directory(fileSystem.currentDirectory),
-        onError: (e) => throw e);
-    var buf = new CodeBuffer();
-    var scope = new SymbolTable();
-    const jael.Renderer().render(processed, buf, scope);
+        onError: (e) => throw e));
+    var buf = CodeBuffer();
+    var scope = SymbolTable();
+    const jael.Renderer().render(processed!, buf, scope);
     print(buf);
 
     expect(
@@ -104,13 +104,13 @@ main() {
       () async {
     var file = fileSystem.file('d.jl');
     var original = jael.parseDocument(await file.readAsString(),
-        sourceUrl: file.uri, onError: (e) => throw e);
-    var processed = await jael.resolve(
+        sourceUrl: file.uri, onError: (e) => throw e)!;
+    var processed = await (jael.resolve(
         original, fileSystem.directory(fileSystem.currentDirectory),
-        onError: (e) => throw e);
-    var buf = new CodeBuffer();
-    var scope = new SymbolTable();
-    const jael.Renderer().render(processed, buf, scope);
+        onError: (e) => throw e));
+    var buf = CodeBuffer();
+    var scope = SymbolTable();
+    const jael.Renderer().render(processed!, buf, scope);
     print(buf);
 
     expect(
@@ -129,13 +129,13 @@ main() {
   test('blocks within blocks', () async {
     var file = fileSystem.file('foxtrot.jl');
     var original = jael.parseDocument(await file.readAsString(),
-        sourceUrl: file.uri, onError: (e) => throw e);
-    var processed = await jael.resolve(
+        sourceUrl: file.uri, onError: (e) => throw e)!;
+    var processed = await (jael.resolve(
         original, fileSystem.directory(fileSystem.currentDirectory),
-        onError: (e) => throw e);
-    var buf = new CodeBuffer();
-    var scope = new SymbolTable();
-    const jael.Renderer().render(processed, buf, scope);
+        onError: (e) => throw e));
+    var buf = CodeBuffer();
+    var scope = SymbolTable();
+    const jael.Renderer().render(processed!, buf, scope);
     print(buf);
 
     expect(

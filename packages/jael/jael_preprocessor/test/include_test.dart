@@ -7,10 +7,10 @@ import 'package:symbol_table/symbol_table.dart';
 import 'package:test/test.dart';
 
 main() {
-  FileSystem fileSystem;
+  late FileSystem fileSystem;
 
   setUp(() {
-    fileSystem = new MemoryFileSystem();
+    fileSystem = MemoryFileSystem();
 
     // a.jl
     fileSystem.file('a.jl').writeAsStringSync('<b>a.jl</b>');
@@ -25,12 +25,12 @@ main() {
   test('includes are expanded', () async {
     var file = fileSystem.file('c.jl');
     var original = jael.parseDocument(await file.readAsString(),
-        sourceUrl: file.uri, onError: (e) => throw e);
+        sourceUrl: file.uri, onError: (e) => throw e)!;
     var processed = await jael.resolveIncludes(original,
         fileSystem.directory(fileSystem.currentDirectory), (e) => throw e);
-    var buf = new CodeBuffer();
-    var scope = new SymbolTable();
-    const jael.Renderer().render(processed, buf, scope);
+    var buf = CodeBuffer();
+    var scope = SymbolTable();
+    const jael.Renderer().render(processed!, buf, scope);
     print(buf);
 
     expect(
