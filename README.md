@@ -23,36 +23,28 @@ With features like the following, Angel is the all-in-one framework you should c
 See all the packages in the `packages/` directory.
 
 ## IMPORTANT NOTES
-This is a port of Angel Framework to work with Dart 2.10.x and above. Dart version below 2.10.x is not supported.
+This is a port of Angel Framework to work with Dart SDK 2.12.x and above. Dart SDK 2.12.x and below are not supported. 
 
 Branch: master
-- Stable version of sdk-2.12.x branch
-
-Branch: sdk-2.10.x
-- Support dart 2.10.x only. Use sdk: ">=2.10.0 <2.12.0"
-- Status: Working
-- Notes: Migration completed. Not all plugin packages are tested.
+- Same as sdk-2.12.x branch
 
 Branch: sdk-2.12.x
-- Support dart 2.12.x. Use sdk: ">=2.10.0 <3.0.0"
-- Do not support NNBD 
-- Status: Working
-- Notes: Basic and ORM templates are working with the core plugins migration completed. The remaining add on plugin packages are work in progress.
+- Required Dart SDK: ">=2.10.0 <3.0.0"
+- NNBD Support: No
+- Status: Production
+- Notes: Not all packages are fully tested. Refer to WIKI page for details. The Basic and ORM boilerplates are working and can be found at https://github.com/dukefirehawk/boilerplates under "basic-sdk-2.12.x" and "orm-sdk-2.12.x" branch respectively. 
 
-Branch: sdk-2.12.x-nnbd
-- Support dart 2.12.x. Use sdk: ">=2.12.0 <3.0.0"
-- Support NNBD
-- Status: Not working
-- Notes: To be available once all the dependency libraries that support NNBD are released
+Branch: sdk-2.12.x_nnbd
+- Required Dart SDK: ">=2.12.0 <3.0.0"
+- NNBD Support: Yes
+- Status: Development 
+- Notes: Migration and code refactoring in progress. Refer to WIKI page for details.
 
-Changes:
-- Upgraded dependency libraries and fixed the deprecated API
-
-Deprecated Features:
-- None
-
-New features:
-- None
+Branch: sdk-2.10.x 
+- Required Dart SDK: ">=2.10.0 <2.12.0"
+- NNBD support: No
+- Status: Retired
+- Notes: Upgrade completed. Not all packages are fully tested. This branch is the baseline used in migrating the framework to Dart SDK 2.12.x. It may still work with Dart SDK 2.10.x but no longer maintained. 
 
 ## Installation & Setup
 

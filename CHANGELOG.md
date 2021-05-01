@@ -1,4 +1,4 @@
-# 3.0.1 (NNBD)
+# 4.0.0 (NNBD)
 * Changed Dart SDK requirements for all packages to ">=2.12.0 <3.0.0" to support NNBD. 
 * Updated pretty_logging to 2.0.0
 * Updated angel_http_exception to 2.0.0
