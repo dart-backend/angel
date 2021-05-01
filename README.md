@@ -31,14 +31,14 @@ Branch: master
 Branch: sdk-2.12.x
 - Required Dart SDK: ">=2.10.0 <3.0.0"
 - NNBD Support: No
-- Status: Production
-- Notes: Not all packages are fully tested. Refer to WIKI page for details. The Basic and ORM boilerplates are working and can be found at https://github.com/dukefirehawk/boilerplates under "basic-sdk-2.12.x" and "orm-sdk-2.12.x" branch respectively. 
+- Status: Beta release
+- Notes: Not all packages are fully tested. Refer to WIKI page for details. The basic and ORM templates can be found at https://github.com/dukefirehawk/boilerplates under "basic-sdk-2.12.x" and "orm-sdk-2.12.x" branch respectively. 
 
 Branch: sdk-2.12.x_nnbd
 - Required Dart SDK: ">=2.12.0 <3.0.0"
 - NNBD Support: Yes
-- Status: Development 
-- Notes: Migration and code refactoring in progress. Refer to WIKI page for details.
+- Status: Alpha release
+- Notes: Heavy migration and code refactoring in progress. Refer to WIKI page for details. The basic template can be found at https://github.com/dukefirehawk/boilerplates under "basic-sdk-2.12.x_nnbd".
 
 Branch: sdk-2.10.x 
 - Required Dart SDK: ">=2.10.0 <2.12.0"
