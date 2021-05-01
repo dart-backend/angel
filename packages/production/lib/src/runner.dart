@@ -35,9 +35,9 @@ _  ___ |  /|  / / /_/ / _  /___  _  /___
                                         
 ''';
 
-  static void handleLogRecord(LogRecord record, RunnerOptions options) {
-    if (options.quiet) return;
-    var code = chooseLogColor(record.level);
+  static void handleLogRecord(LogRecord? record, RunnerOptions options) {
+    if (options.quiet!) return;
+    var code = chooseLogColor(record!.level);
 
     if (record.error == null) print(code.wrap(record.toString()));
 
@@ -55,15 +55,17 @@ _  ___ |  /|  / / /_/ / _  /___  _  /___
 
   /// Chooses a color based on the logger [level].
   static AnsiCode chooseLogColor(Level level) {
-    if (level == Level.SHOUT)
+    if (level == Level.SHOUT) {
       return backgroundRed;
-    else if (level == Level.SEVERE)
+    } else if (level == Level.SEVERE) {
       return red;
-    else if (level == Level.WARNING)
+    } else if (level == Level.WARNING) {
       return yellow;
-    else if (level == Level.INFO)
+    } else if (level == Level.INFO) {
       return cyan;
-    else if (level == Level.FINER || level == Level.FINEST) return lightGray;
+    } else if (level == Level.FINER || level == Level.FINEST) {
+      return lightGray;
+    }
     return resetAll;
   }
 
@@ -94,11 +96,12 @@ _  ___ |  /|  / / /_/ / _  /___  _  /___
         .then((isolate) {})
         .catchError(c.completeError);
 
-    onLogRecord.listen((msg) => handleLogRecord(msg as LogRecord, options));
+    onLogRecord.listen((msg) => handleLogRecord(msg as LogRecord?, options));
 
     onError.listen((msg) {
       if (msg is List) {
-        var e = msg[0], st = StackTrace.fromString(msg[1].toString());
+        dynamic e = msg[0];
+        var st = StackTrace.fromString(msg[1].toString());
         handleLogRecord(
             LogRecord(
                 Level.SEVERE, 'Fatal error', runnerArgs.loggerName, e, st),
@@ -111,7 +114,7 @@ _  ___ |  /|  / / /_/ / _  /___  _  /___
     });
 
     onExit.listen((_) {
-      if (options.respawn) {
+      if (options.respawn!) {
         handleLogRecord(
             LogRecord(
                 Level.WARNING,
@@ -132,13 +135,13 @@ _  ___ |  /|  / / /_/ / _  /___  _  /___
 
   /// Starts a number of isolates, running identical instances of an Angel application.
   Future run(List<String> args) async {
-    pub_sub.Server server;
+    late pub_sub.Server server;
 
     try {
       var argResults = RunnerOptions.argParser.parse(args);
       var options = RunnerOptions.fromArgResults(argResults);
 
-      if (options.ssl || options.http2) {
+      if (options.ssl! || options.http2!) {
         if (options.certificateFile == null) {
           throw ArgParserException('Missing --certificate-file option.');
         } else if (options.keyFile == null) {
@@ -148,7 +151,7 @@ _  ___ |  /|  / / /_/ / _  /___  _  /___
 
       print(darkGray.wrap(asciiArt.trim() +
           '\n\n' +
-          "A batteries-included, full-featured, full-stack framework in Dart." +
+          'A batteries-included, full-featured, full-stack framework in Dart.' +
           '\n\n' +
           'https://angel-dart.github.io\n'));
 
@@ -157,13 +160,13 @@ _  ___ |  /|  / / /_/ / _  /___  _  /___
         return;
       }
 
-      print('Starting `${name}` application...');
+      print('Starting `$name` application...');
 
       var adapter = pub_sub.IsolateAdapter();
       server = pub_sub.Server([adapter]);
 
       // Register clients
-      for (int i = 0; i < Platform.numberOfProcessors; i++) {
+      for (var i = 0; i < Platform.numberOfProcessors; i++) {
         server.registerClient(pub_sub.ClientInfo('client$i'));
       }
 
@@ -184,7 +187,7 @@ _  ___ |  /|  / / /_/ / _  /___  _  /___
         ..writeln(red.wrap(st.toString()));
       exitCode = 1;
     } finally {
-      await server?.close();
+      await server.close();
     }
   }
 
@@ -203,8 +206,8 @@ _  ___ |  /|  / / /_/ / _  /___  _  /___
           pub_sub.IsolateClient('client${argsWithId.id}', args.pubSubSendPort);
 
       var app = Angel(reflector: args.reflector)
-        ..container.registerSingleton<pub_sub.Client>(client)
-        ..container.registerSingleton(InstanceInfo(id: argsWithId.id));
+        ..container!.registerSingleton<pub_sub.Client>(client)
+        ..container!.registerSingleton(InstanceInfo(id: argsWithId.id));
 
       app.shutdownHooks.add((_) => client.close());
 
@@ -216,31 +219,31 @@ _  ___ |  /|  / / /_/ / _  /___  _  /___
       }
 
       AngelHttp http;
-      SecurityContext securityContext;
+      late SecurityContext securityContext;
       Uri serverUrl;
 
-      if (args.options.ssl || args.options.http2) {
+      if (args.options.ssl! || args.options.http2!) {
         securityContext = SecurityContext();
-        securityContext.useCertificateChain(args.options.certificateFile,
+        securityContext.useCertificateChain(args.options.certificateFile!,
             password: args.options.certificatePassword);
-        securityContext.usePrivateKey(args.options.keyFile,
+        securityContext.usePrivateKey(args.options.keyFile!,
             password: args.options.keyPassword);
       }
 
-      if (args.options.ssl) {
+      if (args.options.ssl!) {
         http = AngelHttp.custom(app, startSharedSecure(securityContext),
-            useZone: args.options.useZone);
+            useZone: args.options.useZone!);
       } else {
         http =
-            AngelHttp.custom(app, startShared, useZone: args.options.useZone);
+            AngelHttp.custom(app, startShared, useZone: args.options.useZone!);
       }
 
       Driver driver;
 
-      if (args.options.http2) {
+      if (args.options.http2!) {
         securityContext.setAlpnProtocols(['h2'], true);
         var http2 = AngelHttp2.custom(app, securityContext, startSharedHttp2,
-            useZone: args.options.useZone);
+            useZone: args.options.useZone!);
         http2.onHttp1.listen(http.handleRequest);
         driver = http2;
       } else {
@@ -249,8 +252,9 @@ _  ___ |  /|  / / /_/ / _  /___  _  /___
 
       await driver.startServer(args.options.hostname, args.options.port);
       serverUrl = driver.uri;
-      if (args.options.ssl || args.options.http2)
+      if (args.options.ssl! || args.options.http2!) {
         serverUrl = serverUrl.replace(scheme: 'https');
+      }
       print('Instance #${argsWithId.id} listening at $serverUrl');
     });
   }

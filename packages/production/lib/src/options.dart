@@ -30,13 +30,13 @@ class RunnerOptions {
     ..addOption('key-file', help: 'The PEM key file to read.')
     ..addOption('key-password', help: 'The PEM key file password.');
 
-  final String hostname,
+  final String? hostname,
       certificateFile,
       keyFile,
       certificatePassword,
       keyPassword;
   final int concurrency, port;
-  final bool useZone, respawn, quiet, ssl, http2;
+  final bool? useZone, respawn, quiet, ssl, http2;
 
   RunnerOptions(
       {this.hostname = '127.0.0.1',
@@ -54,25 +54,25 @@ class RunnerOptions {
 
   factory RunnerOptions.fromArgResults(ArgResults argResults) {
     return RunnerOptions(
-      hostname: argResults['address'] as String,
+      hostname: argResults['address'] as String?,
       port: int.parse(argResults['port'] as String),
       concurrency: int.parse(argResults['concurrency'] as String),
-      useZone: argResults['use-zone'] as bool,
-      respawn: argResults['respawn'] as bool,
-      quiet: argResults['quiet'] as bool,
+      useZone: argResults['use-zone'] as bool?,
+      respawn: argResults['respawn'] as bool?,
+      quiet: argResults['quiet'] as bool?,
       certificateFile: argResults.wasParsed('certificate-file')
-          ? argResults['certificate-file'] as String
+          ? argResults['certificate-file'] as String?
           : null,
       keyFile: argResults.wasParsed('key-file')
-          ? argResults['key-file'] as String
+          ? argResults['key-file'] as String?
           : null,
-      ssl: argResults['ssl'] as bool,
-      http2: argResults['http2'] as bool,
+      ssl: argResults['ssl'] as bool?,
+      http2: argResults['http2'] as bool?,
       certificatePassword: argResults.wasParsed('certificate-password')
-          ? argResults['certificate-password'] as String
+          ? argResults['certificate-password'] as String?
           : null,
       keyPassword: argResults.wasParsed('key-password')
-          ? argResults['key-password'] as String
+          ? argResults['key-password'] as String?
           : null,
     );
   }

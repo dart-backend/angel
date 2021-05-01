@@ -1,29 +1,29 @@
 name: angel_production
-version: 2.0.0
+version: 3.0.0
 description: Helpers for concurrency, message-passing, rotating loggers, and other production functionality in Angel.
 author: Tobe O <thosakwe@gmail.com>
 homepage: https://github.com/angel-dart/production
 publish_to: none
 environment:
-  sdk: ">=2.10.0 <3.0.0"
+  sdk: '>=2.12.0 <3.0.0'
 dependencies:
   angel_container:
     git: 
       url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x
+      ref: sdk-2.12.x_nnbd
       path: packages/container/angel_container
   angel_framework:
     git: 
       url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x
+      ref: sdk-2.12.x_nnbd
       path: packages/framework
   pub_sub:
     git: 
       url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x
+      ref: sdk-2.12.x_nnbd
       path: packages/pub_sub
-  args: ^2.0.0
-  io: ^0.3.5
-  logging: ^1.0.0
+  args: ^2.1.0
+  io: ^1.0.0
+  logging: ^1.0.1
 dev_dependencies:
-  pedantic: ^1.0.0
+  pedantic: ^1.11.0
