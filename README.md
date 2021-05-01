@@ -46,10 +46,11 @@ Branch: sdk-2.10.x
 - Status: Retired
 - Notes: Not all packages are fully tested. This branch is the baseline used in migrating the framework to support Dart SDK 2.12.x and beyond. It may still work with Dart SDK 2.10.x but no longer maintained. Do not work with Dart SDK < 2.10.x. 
 
-## Starting a new project in Angel NNBD
+### Testing Angel Framework in NNBD mode
+Creating new project
 1. Clone `https://github.com/dukefirehawk/boilerplates/tree/basic-sdk-2.12.x_nnbd` project.
 
-## Migrating an existing project to Angel NNBD
+Migrating an existing project to Angel NNBD
 1. WARNING. Backup your existing code first as the following migration process cannot be reversed.
 2. Run `dart pub outdated --mode=null-safety`. Make sure all the packages besides "angel_*" are upgradable.
 3. Update all "angel_*" packages with dependencies in `https://github.com/dukefirehawk/boilerplates/tree/basic-sdk-2.12.x_nnbd/pubspec.yaml` file. Refer to WIKI on the migrated Angel NNBD packages.
@@ -57,7 +58,7 @@ Branch: sdk-2.10.x
 5. Run `dart migrate` to perform the migration.
 6. Fix and resolve NNDB related warnings and errors.
 
-## Installation & Setup
+## Installation & Setup 
 
 Once you have [Dart](https://www.dartlang.org/) installed, bootstrapping a project is as simple as running a few shell commands:
 
