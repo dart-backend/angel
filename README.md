@@ -23,7 +23,7 @@ With features like the following, Angel is the all-in-one framework you should c
 See all the packages in the `packages/` directory.
 
 ## IMPORTANT NOTES
-This is a port of Angel Framework to work with Dart SDK 2.12.x and above. Dart SDK 2.12.x and below are not supported. 
+This is a port of Angel Framework to work with Dart SDK 2.12.x and above. Dart SDK 2.12.x and below are not supported.
 
 Branch: master
 - Same as sdk-2.12.x branch
@@ -44,7 +44,18 @@ Branch: sdk-2.10.x
 - Required Dart SDK: ">=2.10.0 <2.12.0"
 - NNBD support: No
 - Status: Retired
-- Notes: Upgrade completed. Not all packages are fully tested. This branch is the baseline used in migrating the framework to Dart SDK 2.12.x. It may still work with Dart SDK 2.10.x but no longer maintained. 
+- Notes: Not all packages are fully tested. This branch is the baseline used in migrating the framework to support Dart SDK 2.12.x and beyond. It may still work with Dart SDK 2.10.x but no longer maintained. Do not work with Dart SDK < 2.10.x. 
+
+## Starting a new project in Angel NNBD
+1. Clone `https://github.com/dukefirehawk/boilerplates/tree/basic-sdk-2.12.x_nnbd` project.
+
+## Migrating an existing project to Angel NNBD
+1. WARNING. Backup your existing code first as the following migration process cannot be reversed.
+2. Run `dart pub outdated --mode=null-safety`. Make sure all the packages besides "angel_*" are upgradable.
+3. Update all "angel_*" packages with dependencies in `https://github.com/dukefirehawk/boilerplates/tree/basic-sdk-2.12.x_nnbd/pubspec.yaml` file. Refer to WIKI on the migrated Angel NNBD packages.
+4. Run `dart pub upgrade --null-safety`.
+5. Run `dart migrate` to perform the migration.
+6. Fix and resolve NNDB related warnings and errors.
 
 ## Installation & Setup
 
