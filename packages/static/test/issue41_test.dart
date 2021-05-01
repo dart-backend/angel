@@ -9,9 +9,9 @@ import 'package:test/test.dart';
 final Directory swaggerUiDistDir =
     const LocalFileSystem().directory('test/node_modules/swagger-ui-dist');
 
-main() async {
-  TestClient client;
-  String swaggerUiCssContents, swaggerTestJsContents;
+void main() async {
+  late TestClient client;
+  late String swaggerUiCssContents, swaggerTestJsContents;
 
   setUp(() async {
     // Load file contents

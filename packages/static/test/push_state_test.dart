@@ -8,7 +8,7 @@ import 'package:test/test.dart';
 void main() {
   Angel app;
   MemoryFileSystem fileSystem;
-  TestClient client;
+  late TestClient client;
 
   setUp(() async {
     fileSystem = MemoryFileSystem();

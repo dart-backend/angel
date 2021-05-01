@@ -10,9 +10,9 @@ import 'package:test/test.dart';
 
 void main() {
   Angel app;
-  AngelHttp http;
+  late AngelHttp http;
   var testDir = const LocalFileSystem().directory('test');
-  String url;
+  late String url;
   var client = Client();
 
   setUp(() async {
@@ -42,7 +42,7 @@ void main() {
   });
 
   tearDown(() async {
-    if (http.server != null) await http.server.close(force: true);
+    if (http.server != null) await http.server!.close(force: true);
   });
 
   test('sets etag, cache-control, expires, last-modified', () async {

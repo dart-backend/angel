@@ -28,14 +28,14 @@ String _pathify(String path) {
 
 /// A static server plug-in.
 class VirtualDirectory {
-  String _prefix;
-  Directory _source;
+  String? _prefix;
+  Directory? _source;
 
   /// The directory to serve files from.
-  Directory get source => _source;
+  Directory? get source => _source;
 
   /// An optional callback to run before serving files.
-  final Function(File file, RequestContext req, ResponseContext res) callback;
+  final Function(File file, RequestContext req, ResponseContext res)? callback;
 
   final Angel app;
   final FileSystem fileSystem;
@@ -47,7 +47,7 @@ class VirtualDirectory {
   final String publicPath;
 
   /// If `true` (default: `false`), then if a directory does not contain any of the specific [indexFileNames], a default directory listing will be served.
-  final bool allowDirectoryListing;
+  final bool? allowDirectoryListing;
 
   /// If `true` (default: `true`), then files will be opened as streams and piped into the request.
   ///
@@ -55,7 +55,7 @@ class VirtualDirectory {
   final bool useBuffer;
 
   VirtualDirectory(this.app, this.fileSystem,
-      {Directory source,
+      {Directory? source,
       this.indexFileNames = const ['index.html'],
       this.publicPath = '/',
       this.callback,
@@ -75,9 +75,9 @@ class VirtualDirectory {
     if (req.method != 'GET' && req.method != 'HEAD') {
       return Future<bool>.value(true);
     }
-    var path = req.uri.path.replaceAll(_straySlashes, '');
+    var path = req.uri!.path.replaceAll(_straySlashes, '');
 
-    if (_prefix?.isNotEmpty == true && !path.startsWith(_prefix)) {
+    if (_prefix?.isNotEmpty == true && !path.startsWith(_prefix!)) {
       return Future<bool>.value(true);
     }
 
@@ -89,7 +89,7 @@ class VirtualDirectory {
   /// You can also limit this functionality to specific values of the `Accept` header, ex. `text/html`.
   /// If [accepts] is `null`, OR at least one of the content types in [accepts] is present,
   /// the view will be served.
-  RequestHandler pushState(String path, {Iterable accepts}) {
+  RequestHandler pushState(String path, {Iterable? accepts}) {
     var vPath = path.replaceAll(_straySlashes, '');
     if (_prefix?.isNotEmpty == true) vPath = '$_prefix/$vPath';
 
@@ -98,7 +98,7 @@ class VirtualDirectory {
       if (path == vPath) return Future<bool>.value(true);
 
       if (accepts?.isNotEmpty == true) {
-        if (!accepts.any((x) => req.accepts(x, strict: true))) {
+        if (!accepts!.any((x) => req.accepts(x, strict: true))) {
           return Future<bool>.value(true);
         }
       }
@@ -110,17 +110,17 @@ class VirtualDirectory {
   /// Writes the file at the given virtual [path] to a response.
   Future<bool> servePath(
       String path, RequestContext req, ResponseContext res) async {
-    if (_prefix.isNotEmpty) {
+    if (_prefix!.isNotEmpty) {
       // Only replace the *first* incidence
       // Resolve: https://github.com/angel-dart/angel/issues/41
-      path = path.replaceFirst(RegExp('^' + _pathify(_prefix)), '');
+      path = path.replaceFirst(RegExp('^' + _pathify(_prefix!)), '');
     }
 
     if (path.isEmpty) path = '.';
     path = path.replaceAll(_straySlashes, '');
 
-    var absolute = source.absolute.uri.resolve(path).toFilePath();
-    var parent = source.absolute.uri.toFilePath();
+    var absolute = source!.absolute.uri.resolve(path).toFilePath();
+    var parent = source!.absolute.uri.toFilePath();
 
     if (!p.isWithin(parent, absolute) && !p.equals(parent, absolute)) {
       return true;
@@ -199,8 +199,8 @@ class VirtualDirectory {
       });
 
       for (var entity in entities) {
-        String stub;
-        String type;
+        String? stub;
+        String? type;
 
         if (entity is File) {
           type = '[File]';
@@ -217,10 +217,19 @@ class VirtualDirectory {
         }
         var href = stub;
 
-        if (relative.isNotEmpty) href = '/' + relative + '/' + stub;
+        if (relative.isNotEmpty) {
+          stub ??= '';
+          href = '/' + relative + '/' + stub;
+        }
 
-        if (entity is Directory) href += '/';
-        href = Uri.encodeFull(href);
+        if (entity is Directory) {
+          if (href == null) {
+            href = '/';
+          } else {
+            href += '/';
+          }
+        }
+        href = Uri.encodeFull(href!);
 
         res.write('<li><a href="$href">$type $stub</a></li>');
       }
@@ -233,11 +242,11 @@ class VirtualDirectory {
   }
 
   void _ensureContentTypeAllowed(String mimeType, RequestContext req) {
-    var value = req.headers.value('accept');
+    var value = req.headers!.value('accept');
     var acceptable = value == null ||
-        value?.isNotEmpty != true ||
-        (mimeType?.isNotEmpty == true && value?.contains(mimeType) == true) ||
-        value?.contains('*/*') == true;
+        value.isNotEmpty != true ||
+        (mimeType.isNotEmpty == true && value.contains(mimeType) == true) ||
+        value.contains('*/*') == true;
     if (!acceptable) {
       throw AngelHttpException(
           UnsupportedError(
@@ -253,8 +262,9 @@ class VirtualDirectory {
     res.headers['accept-ranges'] = 'bytes';
 
     if (callback != null) {
-      return await req.app.executeHandler(
-          (RequestContext req, ResponseContext res) => callback(file, req, res),
+      return await req.app!.executeHandler(
+          (RequestContext req, ResponseContext res) =>
+              callback!(file, req, res),
           req,
           res);
     }
@@ -267,10 +277,10 @@ class VirtualDirectory {
     res.contentType = MediaType.parse(type);
     if (useBuffer == true) res.useBuffer();
 
-    if (req.headers.value('range')?.startsWith('bytes=') != true) {
+    if (req.headers!.value('range')?.startsWith('bytes=') != true) {
       await res.streamFile(file);
     } else {
-      var header = RangeHeader.parse(req.headers.value('range'));
+      var header = RangeHeader.parse(req.headers!.value('range')!);
       var items = RangeHeader.foldItems(header.items);
       var totalFileSize = await file.length();
       header = RangeHeader(items);

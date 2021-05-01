@@ -27,8 +27,10 @@
 * Added html_builder and migrated to 2.0.0 (1/1 tests passed)
 * Migrated hot to 4.0.0 (0/0 tests passed)
 * Added range_header and migrated to 3.0.0 (12/12 tests passed)
-* Updated static to 3.0.0 (in progress)
-* Update basic-sdk-2.12.x boilerplate (in progress)
+* Updated static to 4.0.0 (in progress)
+* Update basic-sdk-2.12.x_nnbd boilerplate (in progress)
+* Updated angel_serialize to 5.0.0 (in progress)
+* Updated angel_serialize_generator to 5.0.0 (in progress)
 
 # 3.0.0 (Non NNBD)
 * Changed Dart SDK requirements for all packages to ">=2.10.0 <3.0.0"
