@@ -49,7 +49,7 @@ class CachingVirtualDirectory extends VirtualDirectory {
       bool allowDirectoryListing,
       bool useBuffer = false,
       String publicPath,
-      callback(File file, RequestContext req, ResponseContext res)})
+      Function(File file, RequestContext req, ResponseContext res) callback})
       : super(app, fileSystem,
             source: source,
             indexFileNames: indexFileNames ?? ['index.html'],
@@ -67,7 +67,7 @@ class CachingVirtualDirectory extends VirtualDirectory {
       return super.serveFile(file, stat, req, res);
     }
 
-    bool shouldNotCache = noCache == true;
+    var shouldNotCache = noCache == true;
 
     if (!shouldNotCache) {
       shouldNotCache = req.headers.value('cache-control') == 'no-cache' ||
@@ -79,7 +79,7 @@ class CachingVirtualDirectory extends VirtualDirectory {
       return super.serveFile(file, stat, req, res);
     } else {
       var ifModified = req.headers.ifModifiedSince;
-      bool ifRange = false;
+      var ifRange = false;
 
       try {
         ifModified = HttpDate.parse(req.headers.value('if-range'));
@@ -129,7 +129,7 @@ class CachingVirtualDirectory extends VirtualDirectory {
         }
 
         if (etagsToMatchAgainst?.isNotEmpty == true) {
-          bool hasBeenModified = false;
+          var hasBeenModified = false;
 
           for (var etag in etagsToMatchAgainst) {
             if (etag == '*') {

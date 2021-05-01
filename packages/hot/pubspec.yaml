@@ -1,6 +1,6 @@
 name: angel_hot
 description: Supports hot reloading/hot code push of Angel servers on file changes.
-version: 3.0.0
+version: 4.0.0
 author: Tobe O <thosakwe@gmail.com>
 homepage: https://github.com/angel-dart/hot
 publish_to: none
@@ -10,19 +10,19 @@ dependencies:
   angel_framework:
     git: 
       url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x
+      ref: sdk-2.12.x_nnbd
       path: packages/framework
-  angel_websocket: #^2.0.0-alpha
+  angel_websocket:
    git: 
       url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x
+      ref: sdk-2.12.x_nnbd
       path: packages/websocket
   charcode: ^1.0.0
   glob: ^2.0.0
   html_builder: ^1.0.0
   io: ^0.3.5
   path: ^1.0.0
-  vm_service_lib: ^3.22.2+1
+  vm_service: ^5.5.0
   watcher: ^1.0.0
 dev_dependencies:
   http: ^0.13.0

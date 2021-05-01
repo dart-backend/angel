@@ -4,7 +4,7 @@ import 'package:angel_static/angel_static.dart';
 import 'package:file/local.dart';
 import 'package:logging/logging.dart';
 
-main(List<String> args) async {
+void main(List<String> args) async {
   var app = Angel();
   var http = AngelHttp(app);
   var fs = const LocalFileSystem();

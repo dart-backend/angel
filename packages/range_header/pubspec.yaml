@@ -1,0 +1,20 @@
+name: range_header
+version: 2.0.2+2
+description: Range header parser for Dart. Beyond parsing, a stream transformer is included.
+author: Tobe O <thosakwe@gmail.com>
+homepage: https://github.com/thosakwe/range_header
+environment:
+  sdk: ">=2.0.0-dev <3.0.0"
+dependencies:
+  async: ^2.0.0
+  charcode: ^1.0.0
+  quiver_hashcode: ^2.0.0
+  source_span: ^1.0.0
+  string_scanner: ^1.0.0
+dev_dependencies:
+  angel_framework:
+  angel_static: ^2.0.0
+  file:
+  http_parser: ^3.0.0
+  logging: ^0.11.0
+  test: ^1.0.0

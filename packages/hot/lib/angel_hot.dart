@@ -14,8 +14,8 @@ import 'package:html_builder/elements.dart';
 import 'package:html_builder/html_builder.dart';
 import 'package:io/ansi.dart';
 import 'package:path/path.dart' as p;
-import 'package:vm_service_lib/vm_service_lib.dart' as vm;
-import 'package:vm_service_lib/vm_service_lib_io.dart' as vm;
+import 'package:vm_service/vm_service.dart' as vm;
+import 'package:vm_service/vm_service_io.dart' as vm;
 import 'package:watcher/watcher.dart';
 
 /// A utility class that watches the filesystem for changes, and starts new instances of an Angel server.
@@ -374,7 +374,7 @@ class HotReloader {
     if (hot) {
       var report = await _client.reloadSources(_mainIsolate.id);
 
-      if (!report.success) {
+      if (report.success != null) {
         _logWarning(
             'Hot reload failed - perhaps some sources have not been generated yet.');
       }

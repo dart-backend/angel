@@ -225,7 +225,7 @@ class VirtualDirectory {
         res.write('<li><a href="$href">$type $stub</a></li>');
       }
 
-      res..write('</body></html>');
+      res.write('</body></html>');
       return false;
     }
 

@@ -10,7 +10,7 @@ dependencies:
   angel_framework:
     git: 
       url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x
+      ref: sdk-2.12.x_nnbd
       path: packages/framework
   convert: ^3.0.0
   crypto: ^3.0.0
@@ -22,7 +22,7 @@ dev_dependencies:
   angel_test:
     git: 
       url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x
+      ref: sdk-2.12.x_nnbd
       path: packages/test
   http:
   logging: ^1.0.0
