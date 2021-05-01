@@ -20,7 +20,7 @@
 * Updated validate to 3.0.0
 * Added and updated json_god to 3.0.0
 * Updated angel_client to 3.0.0
-* Updated angel_websocket to 3.0.0 (one issue to be resolved)
+* Updated angel_websocket to 3.0.0 (3/3 tests passed)
 * Updated test to 3.0.0
 * Updated angel_jael to 3.0.0 (Issue with 2 dependencies)
 * Added pub_sub and updated to 3.0.0

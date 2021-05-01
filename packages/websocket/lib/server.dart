@@ -95,10 +95,37 @@ class AngelWebSocket {
     deserializer ??= (params) => params;
   }
 
-  HookedServiceEventListener serviceHook(String path) {
+  /*
+  * Deprecated as the return type caused compile time failure.
+  */
+  HookedServiceEventListener _serviceHookOriginal(String path) {
     return (HookedServiceEvent e) async {
-      if (e.params != null && e.params['broadcast'] == false) return;
+      if (e.params != null && e.params['broadcast'] == false) {
+        return;
+      }
+      var event = await transformEvent(e);
+      event.eventName = '$path::${event.eventName}';
 
+      dynamic _filter(WebSocketContext socket) {
+        if (e.service.configuration.containsKey('ws:filter')) {
+          return e.service.configuration['ws:filter'](e, socket);
+        } else if (e.params != null && e.params.containsKey('ws:filter')) {
+          return e.params['ws:filter'](e, socket);
+        } else {
+          return true;
+        }
+      }
+
+      await batchEvent(event, filter: _filter);
+    };
+  }
+
+  FutureOr<dynamic> Function(HookedServiceEvent<dynamic, dynamic, Service> e)
+      serviceHook(String path) {
+    return (HookedServiceEvent e) async {
+      if (e.params != null && e.params['broadcast'] == false) {
+        return;
+      }
       var event = await transformEvent(e);
       event.eventName = '$path::${event.eventName}';
 
