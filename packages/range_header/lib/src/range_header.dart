@@ -1,4 +1,5 @@
 import 'dart:collection';
+import 'exception.dart';
 import 'parser.dart';
 import 'range_header_item.dart';
 import 'range_header_impl.dart';
@@ -9,12 +10,12 @@ abstract class RangeHeader {
   UnmodifiableListView<RangeHeaderItem> get items;
 
   const factory RangeHeader(Iterable<RangeHeaderItem> items,
-      {String rangeUnit}) = _ConstantRangeHeader;
+      {String? rangeUnit}) = _ConstantRangeHeader;
 
   /// Eliminates any overlapping [items], sorts them, and folds them all into the most efficient representation possible.
   static UnmodifiableListView<RangeHeaderItem> foldItems(
       Iterable<RangeHeaderItem> items) {
-    var out = new Set<RangeHeaderItem>();
+    var out = Set<RangeHeaderItem>();
 
     for (var item in items) {
       // Remove any overlapping items, consolidate them.
@@ -37,27 +38,30 @@ abstract class RangeHeader {
   ///
   /// If [fold] is `true`, the items will be folded into the most compact
   /// possible representation.
+  ///
   factory RangeHeader.parse(String text,
-      {Iterable<String> allowedRangeUnits, bool fold: true}) {
+      {Iterable<String>? allowedRangeUnits, bool fold: true}) {
     var tokens = scan(text, allowedRangeUnits?.toList() ?? ['bytes']);
     var parser = new Parser(tokens);
     var header = parser.parseRangeHeader();
-    if (header == null) return null;
+    if (header == null) {
+      throw InvalidRangeHeaderException('Header is null');
+    }
     var items = foldItems(header.items);
     return RangeHeaderImpl(header.rangeUnit, items);
   }
 
   /// Returns this header's range unit. Most commonly, this is `bytes`.
-  String get rangeUnit;
+  String? get rangeUnit;
 }
 
 class _ConstantRangeHeader implements RangeHeader {
   final Iterable<RangeHeaderItem> items_;
-  final String rangeUnit;
+  final String? rangeUnit;
 
   const _ConstantRangeHeader(this.items_, {this.rangeUnit: 'bytes'});
 
   @override
   UnmodifiableListView<RangeHeaderItem> get items =>
-      new UnmodifiableListView(items_);
+      UnmodifiableListView(items_);
 }

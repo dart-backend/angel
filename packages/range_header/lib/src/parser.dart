@@ -13,7 +13,7 @@ enum TokenType { RANGE_UNIT, COMMA, INT, DASH, EQUALS }
 
 class Token {
   final TokenType type;
-  final SourceSpan span;
+  final SourceSpan? span;
 
   Token(this.type, this.span);
 }
@@ -57,31 +57,31 @@ List<Token> scan(String text, List<String> allowedRangeUnits) {
 }
 
 class Parser {
-  Token _current;
+  Token? _current;
   int _index = -1;
   final List<Token> tokens;
 
   Parser(this.tokens);
 
-  Token get current => _current;
+  Token? get current => _current;
 
   bool get done => _index >= tokens.length - 1;
 
   RangeHeaderParseException _expected(String type) {
-    int offset = current?.span?.start?.offset;
+    int? offset = current?.span?.start.offset;
 
     if (offset == null) return new RangeHeaderParseException('Expected $type.');
 
-    Token peek;
+    Token? peek;
 
     if (_index < tokens.length - 1) peek = tokens[_index + 1];
 
     if (peek != null && peek.span != null) {
       return new RangeHeaderParseException(
-          'Expected $type at offset $offset, found "${peek.span.text}" instead. \nSource:\n${peek.span?.highlight() ?? peek.type}');
+          'Expected $type at offset $offset, found "${peek.span!.text}" instead. \nSource:\n${peek.span?.highlight() ?? peek.type}');
     } else
       return new RangeHeaderParseException(
-          'Expected $type at offset $offset, but the header string ended without one.\nSource:\n${current.span?.highlight() ?? current.type}');
+          'Expected $type at offset $offset, but the header string ended without one.\nSource:\n${current!.span?.highlight() ?? current!.type}');
   }
 
   bool next(TokenType type) {
@@ -95,13 +95,13 @@ class Parser {
       return false;
   }
 
-  RangeHeader parseRangeHeader() {
+  RangeHeader? parseRangeHeader() {
     if (next(TokenType.RANGE_UNIT)) {
-      var unit = current.span.text;
+      var unit = current!.span!.text;
       next(TokenType.EQUALS); // Consume =, if any.
 
       List<RangeHeaderItem> items = [];
-      RangeHeaderItem item = parseHeaderItem();
+      RangeHeaderItem? item = parseHeaderItem();
 
       while (item != null) {
         items.add(item);
@@ -120,13 +120,13 @@ class Parser {
       return null;
   }
 
-  RangeHeaderItem parseHeaderItem() {
+  RangeHeaderItem? parseHeaderItem() {
     if (next(TokenType.INT)) {
       // i.e 500-544, or 600-
-      var start = int.parse(current.span.text);
+      var start = int.parse(current!.span!.text);
       if (next(TokenType.DASH)) {
         if (next(TokenType.INT)) {
-          return new RangeHeaderItem(start, int.parse(current.span.text));
+          return new RangeHeaderItem(start, int.parse(current!.span!.text));
         } else
           return new RangeHeaderItem(start);
       } else
@@ -134,7 +134,7 @@ class Parser {
     } else if (next(TokenType.DASH)) {
       // i.e. -599
       if (next(TokenType.INT)) {
-        return new RangeHeaderItem(-1, int.parse(current.span.text));
+        return new RangeHeaderItem(-1, int.parse(current!.span!.text));
       } else
         throw _expected('integer');
     } else

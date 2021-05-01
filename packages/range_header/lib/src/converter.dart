@@ -16,9 +16,9 @@ class RangeHeaderTransformer
   final int totalLength;
 
   RangeHeaderTransformer(this.header, this.mimeType, this.totalLength,
-      {String boundary})
+      {String? boundary})
       : this.boundary = boundary ?? _randomString() {
-    if (header == null || header.items.isEmpty) {
+    if (header.items.isEmpty) {
       throw new ArgumentError('`header` cannot be null or empty.');
     }
   }

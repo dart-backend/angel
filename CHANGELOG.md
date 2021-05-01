@@ -26,7 +26,7 @@
 * Migrated production to 3.0.0 (0/0 tests passed)
 * Added html_builder and migrated to 2.0.0 (1/1 tests passed)
 * Migrated hot to 4.0.0 (0/0 tests passed)
-* Added range_header and migrated to 2.0.0 (16/16 tests passed)
+* Added range_header and migrated to 3.0.0 (12/12 tests passed)
 * Updated static to 3.0.0 (in progress)
 * Update basic-sdk-2.12.x boilerplate (in progress)
 

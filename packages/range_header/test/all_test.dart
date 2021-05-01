@@ -1,27 +1,32 @@
-import 'package:range_header/range_header.dart';
 import 'package:test/test.dart';
+
+import '../lib/range_header.dart';
+import '../lib/src/range_header.dart';
 
 final Matcher throwsRangeParseException =
     throwsA(const TypeMatcher<RangeHeaderParseException>());
 
+final Matcher throwsInvalidRangeHeaderException =
+    throwsA(const TypeMatcher<InvalidRangeHeaderException>());
+
 main() {
   group('one item', () {
     test('start and end', () {
-      var r = new RangeHeader.parse('bytes 1-200');
+      var r = RangeHeader.parse('bytes 1-200');
       expect(r.items, hasLength(1));
       expect(r.items.first.start, 1);
       expect(r.items.first.end, 200);
     });
 
     test('start only', () {
-      var r = new RangeHeader.parse('bytes 1-');
+      var r = RangeHeader.parse('bytes 1-');
       expect(r.items, hasLength(1));
       expect(r.items.first.start, 1);
       expect(r.items.first.end, -1);
     });
 
     test('end only', () {
-      var r = new RangeHeader.parse('bytes -200');
+      var r = RangeHeader.parse('bytes -200');
       print(r.items);
       expect(r.items, hasLength(1));
       expect(r.items.first.start, -1);
@@ -31,7 +36,7 @@ main() {
 
   group('multiple items', () {
     test('three items', () {
-      var r = new RangeHeader.parse('bytes 1-20, 21-40, 41-60');
+      var r = RangeHeader.parse('bytes 1-20, 21-40, 41-60');
       print(r.items);
       expect(r.items, hasLength(3));
       expect(r.items[0].start, 1);
@@ -43,7 +48,7 @@ main() {
     });
 
     test('one item without end', () {
-      var r = new RangeHeader.parse('bytes 1-20, 21-');
+      var r = RangeHeader.parse('bytes 1-20, 21-');
       print(r.items);
       expect(r.items, hasLength(2));
       expect(r.items[0].start, 1);
@@ -55,42 +60,38 @@ main() {
 
   group('failures', () {
     test('no start with no end', () {
-      expect(new RangeHeader.parse('-'), isNull);
+      expect(() => RangeHeader.parse('-'), throwsInvalidRangeHeaderException);
     });
   });
 
   group('exceptions', () {
     test('invalid character', () {
-      expect(() => new RangeHeader.parse('!!!'), throwsRangeParseException);
+      expect(() => RangeHeader.parse('!!!'), throwsRangeParseException);
     });
 
     test('no ranges', () {
-      expect(() => new RangeHeader.parse('bytes'), throwsRangeParseException);
+      expect(() => RangeHeader.parse('bytes'), throwsRangeParseException);
     });
 
     test('no dash after int', () {
-      expect(() => new RangeHeader.parse('bytes 3'), throwsRangeParseException);
-      expect(
-          () => new RangeHeader.parse('bytes 3,'), throwsRangeParseException);
-      expect(
-          () => new RangeHeader.parse('bytes 3 24'), throwsRangeParseException);
+      expect(() => RangeHeader.parse('bytes 3'), throwsRangeParseException);
+      expect(() => RangeHeader.parse('bytes 3,'), throwsRangeParseException);
+      expect(() => RangeHeader.parse('bytes 3 24'), throwsRangeParseException);
     });
 
     test('no int after dash', () {
-      expect(
-          () => new RangeHeader.parse('bytes -,'), throwsRangeParseException);
+      expect(() => RangeHeader.parse('bytes -,'), throwsRangeParseException);
     });
   });
 
   group('complete coverage', () {
     test('exception toString()', () {
-      var m = new RangeHeaderParseException('hey');
+      var m = RangeHeaderParseException('hey');
       expect(m.toString(), contains('hey'));
     });
   });
 
   test('content-range', () {
-    expect(
-        new RangeHeader.parse('bytes 1-2').items[0].toContentRange(3), '1-2/3');
+    expect(RangeHeader.parse('bytes 1-2').items[0].toContentRange(3), '1-2/3');
   });
 }

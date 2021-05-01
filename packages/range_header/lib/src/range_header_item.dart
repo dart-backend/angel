@@ -71,7 +71,7 @@ class RangeHeaderItem implements Comparable<RangeHeaderItem> {
   /// Please adhere to the standard!!!
   /// http://httpwg.org/specs/rfc7233.html
 
-  String toContentRange([int totalSize]) {
+  String toContentRange([int? totalSize]) {
     // var maxIndex = totalSize != null ? (totalSize - 1).toString() : '*';
     var s = start > -1 ? start : 0;
 

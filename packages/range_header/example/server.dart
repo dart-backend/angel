@@ -1,16 +1,9 @@
-import 'dart:async';
-import 'dart:io' show HttpHeaders, HttpStatus;
-import 'dart:typed_data';
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_framework/http.dart';
-import 'package:angel_static/angel_static.dart';
-import 'package:file/file.dart';
-import 'package:file/local.dart';
-import 'package:http_parser/http_parser.dart';
-import 'package:logging/logging.dart';
-import 'package:range_header/range_header.dart';
+//import 'package:angel_framework/angel_framework.dart';
+//import 'package:angel_framework/http.dart';
+//import 'package:angel_static/angel_static.dart';
 
 main() async {
+  /*
   var app = new Angel();
   var http = new AngelHttp(app);
   var fs = const LocalFileSystem();
@@ -32,8 +25,9 @@ main() async {
   app.fallback((req, res) => throw new AngelHttpException.notFound());
   await http.startServer('127.0.0.1', 3000);
   print('Listening at ${http.uri}');
+  */
 }
-
+/*
 class _RangingVirtualDirectory extends VirtualDirectory {
   _RangingVirtualDirectory(Angel app, Directory source)
       : super(app, source.fileSystem,
@@ -106,3 +100,4 @@ class _RangingVirtualDirectory extends VirtualDirectory {
     }
   }
 }
+*/

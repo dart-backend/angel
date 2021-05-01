@@ -6,7 +6,7 @@ var file = new File('some_video.mp4');
 handleRequest(HttpRequest request) async {
   // Parse the header
   var header =
-      new RangeHeader.parse(request.headers.value(HttpHeaders.rangeHeader));
+      new RangeHeader.parse(request.headers.value(HttpHeaders.rangeHeader)!);
 
   // Optimize/canonicalize it
   var items = RangeHeader.foldItems(header.items);
