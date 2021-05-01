@@ -20,17 +20,17 @@ import 'package:watcher/watcher.dart';
 
 /// A utility class that watches the filesystem for changes, and starts new instances of an Angel server.
 class HotReloader {
-  vm.VmService _client;
-  vm.IsolateRef _mainIsolate;
+  late vm.VmService _client;
+  vm.IsolateRef? _mainIsolate;
   final StreamController<WatchEvent> _onChange =
       StreamController<WatchEvent>.broadcast();
   final List _paths = [];
   final StringRenderer _renderer = StringRenderer(pretty: false);
   final Queue<HttpRequest> _requestQueue = Queue<HttpRequest>();
-  HttpServer _io;
-  AngelHttp _server;
-  Duration _timeout;
-  vm.VM _vmachine;
+  late HttpServer _io;
+  AngelHttp? _server;
+  Duration? _timeout;
+  vm.VM? _vmachine;
 
   /// If `true` (default), then developers can `press 'r' to reload` the application on-the-fly.
   ///
@@ -48,7 +48,7 @@ class HotReloader {
   ///
   /// If the timeout expires, then the request will be immediately terminated with a `502 Bad Gateway` error.
   /// Default: `5s`
-  Duration get timeout => _timeout;
+  Duration? get timeout => _timeout;
 
   /// The Dart VM service host.
   ///
@@ -65,16 +65,16 @@ class HotReloader {
   /// [paths] can contain [FileSystemEntity], [Uri], [String] and [Glob] only.
   /// URI's can be `package:` URI's as well.
   HotReloader(this.generator, Iterable paths,
-      {Duration timeout,
+      {Duration? timeout,
       this.vmServiceHost = 'localhost',
       this.vmServicePort = 8181,
       this.enableHotkeys = true}) {
     _timeout = timeout ?? Duration(seconds: 5);
-    _paths.addAll(paths ?? []);
+    _paths.addAll(paths);
   }
 
   Future close() async {
-    await _io?.close(force: true);
+    await _io.close(force: true);
     await _onChange.close();
   }
 
@@ -99,7 +99,7 @@ class HotReloader {
     if (request.headers
             .value(HttpHeaders.acceptEncodingHeader)
             ?.toLowerCase()
-            ?.contains('gzip') ==
+            .contains('gzip') ==
         true) {
       response
         ..headers.set(HttpHeaders.contentEncodingHeader, 'gzip')
@@ -111,7 +111,7 @@ class HotReloader {
   }
 
   Future _handle(HttpRequest request) {
-    return _server.handleRequest(request);
+    return _server!.handleRequest(request);
   }
 
   Future handleRequest(HttpRequest request) async {
@@ -121,11 +121,11 @@ class HotReloader {
       _requestQueue.add(request);
     } else {
       _requestQueue.add(request);
-      Timer(timeout, () {
+      Timer(timeout!, () {
         if (_requestQueue.remove(request)) {
           // Send 502 response
           sendError(request, HttpStatus.badGateway, '502 Bad Gateway',
-              'Request timed out after ${timeout.inMilliseconds}ms.');
+              'Request timed out after ${timeout!.inMilliseconds}ms.');
         }
       });
     }
@@ -139,27 +139,27 @@ class HotReloader {
   }
 
   void _logWarning(String msg) {
-    if (_server?.app?.logger != null) {
-      _server.app.logger.warning(msg);
+    if (_server?.app.logger != null) {
+      _server!.app.logger!.warning(msg);
     } else {
       print(yellow.wrap('WARNING: $msg'));
     }
   }
 
   void _logInfo(String msg) {
-    if (_server?.app?.logger != null) {
-      _server.app.logger.info(msg);
+    if (_server?.app.logger != null) {
+      _server!.app.logger!.info(msg);
     } else {
       print(lightGray.wrap(msg));
     }
   }
 
   /// Starts listening to requests and filesystem events.
-  Future<HttpServer> startServer([address, int port]) async {
+  Future<HttpServer> startServer([address, int? port]) async {
     var isHot = true;
     _server = await _generateServer();
 
-    if (_paths?.isNotEmpty != true) {
+    if (_paths.isNotEmpty != true) {
       _logWarning(
           'You have instantiated a HotReloader without providing any filesystem paths to watch.');
     }
@@ -174,7 +174,7 @@ class HotReloader {
       isHot = false;
     } else {
       var info = await dev.Service.getInfo();
-      var uri = info.serverUri;
+      var uri = info.serverUri!;
       uri = uri.replace(path: p.join(uri.path, 'ws'));
       if (uri.scheme == 'https') {
         uri = uri.replace(scheme: 'wss');
@@ -183,10 +183,10 @@ class HotReloader {
       }
       _client = await vm.vmServiceConnectUri(uri.toString());
       _vmachine ??= await _client.getVM();
-      _mainIsolate ??= _vmachine.isolates.first;
+      _mainIsolate ??= _vmachine!.isolates!.first;
 
-      for (var isolate in _vmachine.isolates) {
-        await _client.setExceptionPauseMode(isolate.id, 'None');
+      for (var isolate in _vmachine!.isolates!) {
+        await _client.setExceptionPauseMode(isolate.id!, 'None');
       }
 
       await _listenToFilesystem();
@@ -206,7 +206,8 @@ class HotReloader {
     if (enableHotkeys) {
       var serverUri =
           Uri(scheme: 'http', host: server.address.address, port: server.port);
-      var observatoryUri = await dev.Service.getInfo().then((i) => i.serverUri);
+      var observatoryUri =
+          await dev.Service.getInfo().then((i) => i.serverUri!);
 
       print(styleBold.wrap(
           '\n🔥  To hot reload changes while running, press "r". To hot restart (and rebuild state), press "R".'));
@@ -234,7 +235,7 @@ class HotReloader {
         stdin.lineMode = stdin.echoMode = false;
       } catch (_) {}
 
-      StreamSubscription<int> sub;
+      late StreamSubscription<int> sub;
 
       try {
         sub = stdin.expand((l) => l).listen((ch) async {
@@ -245,10 +246,10 @@ class HotReloader {
           if (ch == $R) {
             _logInfo('Manually restarting server...\n');
             await _killServer();
-            await _server.close();
+            await _server!.close();
             var addr = _io.address.address;
             var port = _io.port;
-            await _io?.close(force: true);
+            await _io.close(force: true);
             await startServer(addr, port);
           } else if (ch == $q) {
             stdin.echoMode = stdin.lineMode = true;
@@ -271,7 +272,7 @@ class HotReloader {
     return server;
   }
 
-  _listenToFilesystem() async {
+  Future<void> _listenToFilesystem() async {
     for (var path in _paths) {
       if (path is String) {
         await _listenToStat(path);
@@ -299,8 +300,8 @@ class HotReloader {
     }
   }
 
-  _listenToStat(String path) async {
-    _listen() async {
+  Future<void> _listenToStat(String path) async {
+    Future _listen() async {
       try {
         var stat = await FileStat.stat(path);
         if (stat.type == FileSystemEntityType.link) {
@@ -320,7 +321,7 @@ class HotReloader {
         var watcher = Watcher(path);
 
         watcher.events.listen(_onChange.add, onError: (e) {
-          _logWarning('Could not listen to file changes at ${path}: $e');
+          _logWarning('Could not listen to file changes at $path: $e');
         });
 
         // print('Listening for file changes at ${path}...');
@@ -344,21 +345,21 @@ class HotReloader {
       scheduleMicrotask(() async {
         // Disconnect active WebSockets
         try {
-          var ws = _server.app.container.make<AngelWebSocket>();
+          var ws = _server!.app.container!.make<AngelWebSocket>()!;
 
           for (var client in ws.clients) {
             try {
               await client.close();
             } catch (e) {
               _logWarning(
-                  'Couldn\'t close WebSocket from session #${client.request.session.id}: $e');
+                  'Couldn\'t close WebSocket from session #${client.request.session!.id}: $e');
             }
           }
 
           // await Future.forEach(
           //     _server.app.shutdownHooks, _server.app.configure);
-          await _server.app.close();
-          _server.app.logger?.clearListeners();
+          await _server!.app.close();
+          _server!.app.logger?.clearListeners();
         } catch (_) {
           // Fail silently...
         }
@@ -372,7 +373,7 @@ class HotReloader {
     _server = null;
 
     if (hot) {
-      var report = await _client.reloadSources(_mainIsolate.id);
+      var report = await _client.reloadSources(_mainIsolate!.id!);
 
       if (report.success != null) {
         _logWarning(

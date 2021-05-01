@@ -1,5 +1,5 @@
 class Foo {
-  final String bar;
+  final String? bar;
 
   Foo({this.bar});
 

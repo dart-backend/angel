@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:angel_hot/angel_hot.dart';
 import 'server.dart';
 
-main() async {
+void main() async {
   var hot = HotReloader(createServer, [
     Directory('src'),
     'server.dart',
