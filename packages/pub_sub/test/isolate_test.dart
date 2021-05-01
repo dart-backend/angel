@@ -3,23 +3,23 @@ import 'package:pub_sub/pub_sub.dart';
 import 'package:pub_sub/isolate.dart';
 import 'package:test/test.dart';
 
-main() {
-  Server server;
-  Client client1, client2, client3;
-  IsolateClient trustedClient;
-  IsolateAdapter adapter;
+void main() {
+  late Server server;
+  late Client client1, client2, client3;
+  late IsolateClient trustedClient;
+  late IsolateAdapter adapter;
 
   setUp(() async {
-    adapter = new IsolateAdapter();
+    adapter = IsolateAdapter();
     client1 =
-        new IsolateClient('isolate_test::secret', adapter.receivePort.sendPort);
-    client2 = new IsolateClient(
-        'isolate_test::secret2', adapter.receivePort.sendPort);
-    client3 = new IsolateClient(
-        'isolate_test::secret3', adapter.receivePort.sendPort);
-    trustedClient = new IsolateClient(null, adapter.receivePort.sendPort);
+        IsolateClient('isolate_test::secret', adapter.receivePort.sendPort);
+    client2 =
+        IsolateClient('isolate_test::secret2', adapter.receivePort.sendPort);
+    client3 =
+        IsolateClient('isolate_test::secret3', adapter.receivePort.sendPort);
+    trustedClient = IsolateClient(null, adapter.receivePort.sendPort);
 
-    server = new Server([adapter])
+    server = Server([adapter])
       ..registerClient(const ClientInfo('isolate_test::secret'))
       ..registerClient(const ClientInfo('isolate_test::secret2'))
       ..registerClient(const ClientInfo('isolate_test::secret3'))
@@ -51,7 +51,7 @@ main() {
       expect(trustedClient.clientId, isNotNull);
     });
     test('can sub/unsub', () async {
-      String clientId;
+      String? clientId;
       await trustedClient.publish('heyaaa', 'byeaa');
       expect(clientId = trustedClient.clientId, isNotNull);
 
@@ -88,7 +88,7 @@ main() {
   group('isolate_server', () {
     test('reject unknown client id', () async {
       try {
-        var client = new IsolateClient(
+        var client = IsolateClient(
             'isolate_test::invalid', adapter.receivePort.sendPort);
         await client.publish('foo', 'bar');
         throw 'Invalid client ID\'s should throw an error, but they do not.';
@@ -99,7 +99,7 @@ main() {
 
     test('reject unprivileged publish', () async {
       try {
-        var client = new IsolateClient(
+        var client = IsolateClient(
             'isolate_test::no_publish', adapter.receivePort.sendPort);
         await client.publish('foo', 'bar');
         throw 'Unprivileged publishes should throw an error, but they do not.';
@@ -110,7 +110,7 @@ main() {
 
     test('reject unprivileged subscribe', () async {
       try {
-        var client = new IsolateClient(
+        var client = IsolateClient(
             'isolate_test::no_subscribe', adapter.receivePort.sendPort);
         await client.subscribe('foo');
         throw 'Unprivileged subscribes should throw an error, but they do not.';

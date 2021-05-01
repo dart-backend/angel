@@ -6,17 +6,17 @@ import 'package:pub_sub/json_rpc_2.dart';
 import 'package:stream_channel/stream_channel.dart';
 import 'package:test/test.dart';
 
-main() {
-  ServerSocket serverSocket;
-  Server server;
-  Client client1, client2, client3;
-  JsonRpc2Client trustedClient;
+void main() {
+  late ServerSocket serverSocket;
+  late Server server;
+  late Client client1, client2, client3;
+  late JsonRpc2Client trustedClient;
   JsonRpc2Adapter adapter;
 
   setUp(() async {
     serverSocket = await ServerSocket.bind(InternetAddress.loopbackIPv4, 0);
 
-    adapter = new JsonRpc2Adapter(
+    adapter = JsonRpc2Adapter(
         serverSocket.map<StreamChannel<String>>(streamSocket),
         isTrusted: true);
 
@@ -29,15 +29,12 @@ main() {
     var socket4 =
         await Socket.connect(InternetAddress.loopbackIPv4, serverSocket.port);
 
-    client1 =
-        new JsonRpc2Client('json_rpc_2_test::secret', streamSocket(socket1));
-    client2 =
-        new JsonRpc2Client('json_rpc_2_test::secret2', streamSocket(socket2));
-    client3 =
-        new JsonRpc2Client('json_rpc_2_test::secret3', streamSocket(socket3));
-    trustedClient = new JsonRpc2Client(null, streamSocket(socket4));
+    client1 = JsonRpc2Client('json_rpc_2_test::secret', streamSocket(socket1));
+    client2 = JsonRpc2Client('json_rpc_2_test::secret2', streamSocket(socket2));
+    client3 = JsonRpc2Client('json_rpc_2_test::secret3', streamSocket(socket3));
+    trustedClient = JsonRpc2Client(null, streamSocket(socket4));
 
-    server = new Server([adapter])
+    server = Server([adapter])
       ..registerClient(const ClientInfo('json_rpc_2_test::secret'))
       ..registerClient(const ClientInfo('json_rpc_2_test::secret2'))
       ..registerClient(const ClientInfo('json_rpc_2_test::secret3'))
@@ -64,7 +61,7 @@ main() {
       expect(trustedClient.clientId, isNotNull);
     });
     test('can sub/unsub', () async {
-      String clientId;
+      String? clientId;
       await trustedClient.publish('heyaaa', 'byeaa');
       expect(clientId = trustedClient.clientId, isNotNull);
 
@@ -104,7 +101,7 @@ main() {
         var sock = await Socket.connect(
             InternetAddress.loopbackIPv4, serverSocket.port);
         var client =
-            new JsonRpc2Client('json_rpc_2_test::invalid', streamSocket(sock));
+            JsonRpc2Client('json_rpc_2_test::invalid', streamSocket(sock));
         await client.publish('foo', 'bar');
         throw 'Invalid client ID\'s should throw an error, but they do not.';
       } on PubSubException catch (e) {
@@ -116,8 +113,8 @@ main() {
       try {
         var sock = await Socket.connect(
             InternetAddress.loopbackIPv4, serverSocket.port);
-        var client = new JsonRpc2Client(
-            'json_rpc_2_test::no_publish', streamSocket(sock));
+        var client =
+            JsonRpc2Client('json_rpc_2_test::no_publish', streamSocket(sock));
         await client.publish('foo', 'bar');
         throw 'Unprivileged publishes should throw an error, but they do not.';
       } on PubSubException catch (e) {
@@ -129,8 +126,8 @@ main() {
       try {
         var sock = await Socket.connect(
             InternetAddress.loopbackIPv4, serverSocket.port);
-        var client = new JsonRpc2Client(
-            'json_rpc_2_test::no_subscribe', streamSocket(sock));
+        var client =
+            JsonRpc2Client('json_rpc_2_test::no_subscribe', streamSocket(sock));
         await client.subscribe('foo');
         throw 'Unprivileged subscribes should throw an error, but they do not.';
       } on PubSubException catch (e) {
@@ -141,18 +138,20 @@ main() {
 }
 
 StreamChannel<String> streamSocket(Socket socket) {
-  var channel = new _SocketStreamChannel(socket);
-  return channel.transform(new StreamChannelTransformer.fromCodec(utf8));
+  var channel = _SocketStreamChannel(socket);
+  return channel
+      .cast<List<int>>()
+      .transform(StreamChannelTransformer.fromCodec(utf8));
 }
 
 class _SocketStreamChannel extends StreamChannelMixin<List<int>> {
-  _SocketSink _sink;
+  _SocketSink? _sink;
   final Socket socket;
 
   _SocketStreamChannel(this.socket);
 
   @override
-  StreamSink<List<int>> get sink => _sink ??= new _SocketSink(socket);
+  StreamSink<List<int>> get sink => _sink ??= _SocketSink(socket);
 
   @override
   Stream<List<int>> get stream => socket;
@@ -169,7 +168,7 @@ class _SocketSink extends StreamSink<List<int>> {
   }
 
   @override
-  void addError(Object error, [StackTrace stackTrace]) {
+  void addError(Object error, [StackTrace? stackTrace]) {
     Zone.current.errorCallback(error, stackTrace);
   }
 

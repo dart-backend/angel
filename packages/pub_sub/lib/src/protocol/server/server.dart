@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 import 'adapter.dart';
 import 'client.dart';
+import 'package:collection/collection.dart' show IterableExtension;
 import 'publish.dart';
 import 'subscription.dart';
 
@@ -12,32 +13,32 @@ import 'subscription.dart';
 class Server {
   final List<Adapter> _adapters = [];
   final List<ClientInfo> _clients = [];
-  final _rnd = new Random.secure();
-  final Map<String, List<Subscription>> _subscriptions = {};
+  final _rnd = Random.secure();
+  final Map<String?, List<Subscription>> _subscriptions = {};
   bool _started = false;
   int _adHocIds = 0;
 
   /// Initialize a server, optionally with a number of [adapters].
   Server([Iterable<Adapter> adapters = const []]) {
-    _adapters.addAll(adapters ?? []);
+    _adapters.addAll(adapters);
   }
 
   /// Adds a new [Adapter] to adapt incoming clients from a new interface.
   void addAdapter(Adapter adapter) {
-    if (_started)
-      throw new StateError(
+    if (_started) {
+      throw StateError(
           'You cannot add new adapters after the server has started listening.');
-    else {
+    } else {
       _adapters.add(adapter);
     }
   }
 
   /// Registers a new client with the server.
   void registerClient(ClientInfo client) {
-    if (_started)
-      throw new StateError(
+    if (_started) {
+      throw StateError(
           'You cannot register new clients after the server has started listening.');
-    else {
+    } else {
       _clients.add(client);
     }
   }
@@ -48,25 +49,26 @@ class Server {
     _adapters.clear();
     _clients.clear();
     _subscriptions.clear();
-    return new Future.value();
+    return Future.value();
   }
 
   String _newClientId() {
     // Create an unpredictable-enough ID. The harder it is for an attacker to guess, the better.
     var id =
-        'pub_sub::adhoc_client${_rnd.nextDouble()}::${_adHocIds++}:${new DateTime.now().millisecondsSinceEpoch * _rnd.nextDouble()}';
+        'pub_sub::adhoc_client${_rnd.nextDouble()}::${_adHocIds++}:${DateTime.now().millisecondsSinceEpoch * _rnd.nextDouble()}';
 
     // This client is coming from a trusted source, and can therefore both publish and subscribe.
-    _clients.add(new ClientInfo(id));
+    _clients.add(ClientInfo(id));
     return id;
   }
 
   void start() {
-    if (_adapters.isEmpty)
-      throw new StateError(
+    if (_adapters.isEmpty) {
+      throw StateError(
           'Cannot start a SyncServer that has no adapters attached.');
-    else if (_started)
-      throw new StateError('A SyncServer may only be started once.');
+    } else if (_started) {
+      throw StateError('A SyncServer may only be started once.');
+    }
 
     _started = true;
 
@@ -77,15 +79,14 @@ class Server {
     for (var adapter in _adapters) {
       // Handle publishes
       adapter.onPublish.listen((rq) {
-        ClientInfo client;
-        String clientId;
+        ClientInfo? client;
+        String? clientId;
 
         if (rq.clientId?.isNotEmpty == true ||
             adapter.isTrustedPublishRequest(rq)) {
           clientId =
               rq.clientId?.isNotEmpty == true ? rq.clientId : _newClientId();
-          client =
-              _clients.firstWhere((c) => c.id == clientId, orElse: () => null);
+          client = _clients.firstWhereOrNull((c) => c.id == clientId);
         }
 
         if (client == null) {
@@ -98,28 +99,27 @@ class Server {
               [];
 
           if (listeners.isEmpty) {
-            rq.accept(new PublishResponse(0, clientId));
+            rq.accept(PublishResponse(0, clientId));
           } else {
             for (var listener in listeners) {
               listener.dispatch(rq.value);
             }
 
-            rq.accept(new PublishResponse(listeners.length, clientId));
+            rq.accept(PublishResponse(listeners.length, clientId));
           }
         }
       });
 
       // Listen for incoming subscriptions
       adapter.onSubscribe.listen((rq) async {
-        ClientInfo client;
-        String clientId;
+        ClientInfo? client;
+        String? clientId;
 
         if (rq.clientId?.isNotEmpty == true ||
             adapter.isTrustedSubscriptionRequest(rq)) {
           clientId =
               rq.clientId?.isNotEmpty == true ? rq.clientId : _newClientId();
-          client =
-              _clients.firstWhere((c) => c.id == clientId, orElse: () => null);
+          client = _clients.firstWhereOrNull((c) => c.id == clientId);
         }
 
         if (client == null) {
@@ -135,12 +135,11 @@ class Server {
 
       // Unregister subscriptions on unsubscribe
       adapter.onUnsubscribe.listen((rq) {
-        Subscription toRemove;
-        List<Subscription> sourceList;
+        Subscription? toRemove;
+        late List<Subscription> sourceList;
 
         for (var list in _subscriptions.values) {
-          toRemove = list.firstWhere((s) => s.id == rq.subscriptionId,
-              orElse: () => null);
+          toRemove = list.firstWhereOrNull((s) => s.id == rq.subscriptionId);
           if (toRemove != null) {
             sourceList = list;
             break;
