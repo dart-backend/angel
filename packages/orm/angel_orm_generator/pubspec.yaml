@@ -40,7 +40,7 @@ dependencies:
   path: ^1.8.0
   recase: ^4.0.0
   source_gen: ^1.0.0
-  collection: ^1.15.0-nullsafety.4
+  collection: ^1.15.0
 dev_dependencies:
   angel_framework:
     git: 
@@ -54,9 +54,6 @@ dev_dependencies:
       path: packages/orm/angel_migration
   #angel_test: ^1.0.0
   build_runner: ^2.0.1
-  collection: ^1.15.0
   pedantic: ^1.11.0
   postgres: ^2.3.2
-  #  git: 
-  #    url: https://github.com/dukefirehawk/postgresql-dart
   test: ^1.17.3
