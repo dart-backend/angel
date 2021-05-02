@@ -2,7 +2,7 @@ export 'dart:convert' show json, Codec, Converter;
 export 'package:angel_model/angel_model.dart';
 export 'package:collection/collection.dart';
 export 'package:meta/meta.dart' show required, Required;
-export 'package:quiver_hashcode/hashcode.dart' show hashObjects;
+export 'package:quiver/core.dart' show hashObjects;
 
 /// Excludes a field from being excluded.
 class Exclude extends SerializableField {
@@ -35,19 +35,19 @@ class HasAlias extends SerializableField {
 /// Attaches options to a field.
 class SerializableField {
   /// An alternative name for this field.
-  final String alias;
+  final String? alias;
 
   /// A default for this field.
   final defaultValue;
 
   /// A custom serializer for this field.
-  final Symbol serializer;
+  final Symbol? serializer;
 
   /// A custom serializer for this field.
-  final Symbol deserializer;
+  final Symbol? deserializer;
 
   /// An error message to be printed when the provided value is invalid.
-  final String errorMessage;
+  final String? errorMessage;
 
   /// Whether this field can be set to `null`.
   final bool isNullable;
@@ -67,7 +67,7 @@ class SerializableField {
   ///
   /// Ex. If you have a field that serializes to a JSON string,
   /// specify `serializesTo: String`.
-  final Type serializesTo;
+  final Type? serializesTo;
 
   const SerializableField(
       {this.alias,
