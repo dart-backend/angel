@@ -8,9 +8,9 @@ part of 'main.dart';
 
 class EmployeeMigration extends Migration {
   @override
-  up(Schema schema) {
+  void up(Schema schema) {
     schema.create('employees', (table) {
-      table.serial('id')..primaryKey();
+      table.serial('id').primaryKey();
       table.timeStamp('created_at');
       table.timeStamp('updated_at');
       table.varChar('unique_id');
@@ -21,7 +21,7 @@ class EmployeeMigration extends Migration {
   }
 
   @override
-  down(Schema schema) {
+  void down(Schema schema) {
     schema.drop('employees');
   }
 }
@@ -30,8 +30,8 @@ class EmployeeMigration extends Migration {
 // OrmGenerator
 // **************************************************************************
 
-class EmployeeQuery extends Query<Employee, EmployeeQueryWhere> {
-  EmployeeQuery({Set<String> trampoline}) {
+class EmployeeQuery extends Query<Employee?, EmployeeQueryWhere?> {
+  EmployeeQuery({Set<String>? trampoline}) {
     trampoline ??= Set();
     trampoline.add(tableName);
     _where = EmployeeQueryWhere(this);
@@ -40,7 +40,7 @@ class EmployeeQuery extends Query<Employee, EmployeeQueryWhere> {
   @override
   final EmployeeQueryValues values = EmployeeQueryValues();
 
-  EmployeeQueryWhere _where;
+  EmployeeQueryWhere? _where;
 
   @override
   get casts {
@@ -66,7 +66,7 @@ class EmployeeQuery extends Query<Employee, EmployeeQueryWhere> {
   }
 
   @override
-  EmployeeQueryWhere get where {
+  EmployeeQueryWhere? get where {
     return _where;
   }
 
@@ -75,15 +75,15 @@ class EmployeeQuery extends Query<Employee, EmployeeQueryWhere> {
     return EmployeeQueryWhere(this);
   }
 
-  static Employee parseRow(List row) {
+  static Employee? parseRow(List row) {
     if (row.every((x) => x == null)) return null;
     var model = Employee(
-        id: (row[0] as String),
-        createdAt: (row[1] as DateTime),
-        updatedAt: (row[2] as DateTime),
-        uniqueId: (row[3] as String),
-        firstName: (row[4] as String),
-        lastName: (row[5] as String),
+        id: (row[0] as String?),
+        createdAt: (row[1] as DateTime?),
+        updatedAt: (row[2] as DateTime?),
+        uniqueId: (row[3] as String?),
+        firstName: (row[4] as String?),
+        lastName: (row[5] as String?),
         salary: double.tryParse(row[6].toString()));
     return model;
   }
@@ -130,41 +130,41 @@ class EmployeeQueryValues extends MapQueryValues {
     return {'salary': 'decimal'};
   }
 
-  String get id {
-    return (values['id'] as String);
+  String? get id {
+    return (values['id'] as String?);
   }
 
-  set id(String value) => values['id'] = value;
-  DateTime get createdAt {
-    return (values['created_at'] as DateTime);
+  set id(String? value) => values['id'] = value;
+  DateTime? get createdAt {
+    return (values['created_at'] as DateTime?);
   }
 
-  set createdAt(DateTime value) => values['created_at'] = value;
-  DateTime get updatedAt {
-    return (values['updated_at'] as DateTime);
+  set createdAt(DateTime? value) => values['created_at'] = value;
+  DateTime? get updatedAt {
+    return (values['updated_at'] as DateTime?);
   }
 
-  set updatedAt(DateTime value) => values['updated_at'] = value;
-  String get uniqueId {
-    return (values['unique_id'] as String);
+  set updatedAt(DateTime? value) => values['updated_at'] = value;
+  String? get uniqueId {
+    return (values['unique_id'] as String?);
   }
 
-  set uniqueId(String value) => values['unique_id'] = value;
-  String get firstName {
-    return (values['first_name'] as String);
+  set uniqueId(String? value) => values['unique_id'] = value;
+  String? get firstName {
+    return (values['first_name'] as String?);
   }
 
-  set firstName(String value) => values['first_name'] = value;
-  String get lastName {
-    return (values['last_name'] as String);
+  set firstName(String? value) => values['first_name'] = value;
+  String? get lastName {
+    return (values['last_name'] as String?);
   }
 
-  set lastName(String value) => values['last_name'] = value;
-  double get salary {
+  set lastName(String? value) => values['last_name'] = value;
+  double? get salary {
     return double.tryParse((values['salary'] as String));
   }
 
-  set salary(double value) => values['salary'] = value.toString();
+  set salary(double? value) => values['salary'] = value.toString();
   void copyFrom(Employee model) {
     id = model.id;
     createdAt = model.createdAt;
@@ -193,36 +193,36 @@ class Employee extends _Employee {
 
   /// A unique identifier corresponding to this item.
   @override
-  String id;
+  String? id;
 
   /// The time at which this item was created.
   @override
-  DateTime createdAt;
+  DateTime? createdAt;
 
   /// The last time at which this item was updated.
   @override
-  DateTime updatedAt;
+  DateTime? updatedAt;
 
   @override
-  String uniqueId;
+  String? uniqueId;
 
   @override
-  final String firstName;
+  final String? firstName;
 
   @override
-  final String lastName;
+  final String? lastName;
 
   @override
-  final double salary;
+  final double? salary;
 
   Employee copyWith(
-      {String id,
-      DateTime createdAt,
-      DateTime updatedAt,
-      String uniqueId,
-      String firstName,
-      String lastName,
-      double salary}) {
+      {String? id,
+      DateTime? createdAt,
+      DateTime? updatedAt,
+      String? uniqueId,
+      String? firstName,
+      String? lastName,
+      double? salary}) {
     return Employee(
         id: id ?? this.id,
         createdAt: createdAt ?? this.createdAt,
@@ -284,32 +284,29 @@ class EmployeeSerializer extends Codec<Employee, Map> {
   const EmployeeSerializer();
 
   @override
-  get encoder => const EmployeeEncoder();
+  EmployeeEncoder get encoder => const EmployeeEncoder();
   @override
-  get decoder => const EmployeeDecoder();
+  EmployeeDecoder get decoder => const EmployeeDecoder();
   static Employee fromMap(Map map) {
     return Employee(
-        id: map['id'] as String,
+        id: map['id'] as String?,
         createdAt: map['created_at'] != null
             ? (map['created_at'] is DateTime
-                ? (map['created_at'] as DateTime)
+                ? (map['created_at'] as DateTime?)
                 : DateTime.parse(map['created_at'].toString()))
             : null,
         updatedAt: map['updated_at'] != null
             ? (map['updated_at'] is DateTime
-                ? (map['updated_at'] as DateTime)
+                ? (map['updated_at'] as DateTime?)
                 : DateTime.parse(map['updated_at'].toString()))
             : null,
-        uniqueId: map['unique_id'] as String,
-        firstName: map['first_name'] as String,
-        lastName: map['last_name'] as String,
-        salary: map['salary'] as double);
+        uniqueId: map['unique_id'] as String?,
+        firstName: map['first_name'] as String?,
+        lastName: map['last_name'] as String?,
+        salary: map['salary'] as double?);
   }
 
   static Map<String, dynamic> toMap(_Employee model) {
-    if (model == null) {
-      return null;
-    }
     return {
       'id': model.id,
       'created_at': model.createdAt?.toIso8601String(),

@@ -31,7 +31,7 @@ TypeReference futureOf(String type) {
 
 /// Builder that generates `.orm.g.dart`, with an abstract `FooOrm` class.
 class OrmGenerator extends GeneratorForAnnotation<Orm> {
-  final bool autoSnakeCaseNames;
+  final bool? autoSnakeCaseNames;
 
   OrmGenerator({this.autoSnakeCaseNames});
 
@@ -48,7 +48,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
     }
   }
 
-  Library buildOrmLibrary(AssetId inputId, OrmBuildContext ctx) {
+  Library buildOrmLibrary(AssetId inputId, OrmBuildContext? ctx) {
     return Library((lib) {
       // Create `FooQuery` class
       // Create `FooQueryWhere` class
@@ -58,9 +58,9 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
     });
   }
 
-  Class buildQueryClass(OrmBuildContext ctx) {
+  Class buildQueryClass(OrmBuildContext? ctx) {
     return Class((clazz) {
-      var rc = ctx.buildContext.modelClassNameRecase;
+      var rc = ctx!.buildContext.modelClassNameRecase;
       var queryWhereType = refer('${rc.pascalCase}QueryWhere');
       clazz
         ..name = '${rc.pascalCase}Query'
@@ -80,7 +80,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
           ..annotations.add(refer('override'))
           ..type = MethodType.getter
           ..body = Block((b) {
-            var args = <String, Expression>{};
+            var args = <String?, Expression>{};
 
             for (var field in ctx.effectiveFields) {
               var name = ctx.buildContext.resolveFieldName(field.name);
@@ -113,7 +113,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
           ..annotations.add(refer('override'))
           ..type = MethodType.getter
           ..body = Block((b) {
-            b.addExpression(literalString(ctx.tableName).returned);
+            b.addExpression(literalString(ctx.tableName!).returned);
           });
       }));
 
@@ -126,7 +126,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
           ..body = Block((b) {
             var names = ctx.effectiveFields
                 .map((f) =>
-                    literalString(ctx.buildContext.resolveFieldName(f.name)))
+                    literalString(ctx.buildContext.resolveFieldName(f.name)!))
                 .toList();
             b.addExpression(literalConstList(names).returned);
           });
@@ -168,7 +168,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
             ..name = 'row'
             ..type = refer('List')))
           ..body = Block((b) {
-            int i = 0;
+            var i = 0;
             var args = <String, Expression>{};
 
             for (var field in ctx.effectiveFields) {
@@ -211,12 +211,12 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                 RelationshipType.belongsTo,
                 RelationshipType.hasMany
               ].contains(relation.type)) return;
-              var foreign = relation.foreign;
+              var foreign = relation.foreign!;
               var skipToList = refer('row')
                   .property('skip')
                   .call([literalNum(i)])
                   .property('take')
-                  .call([literalNum(relation.foreign.effectiveFields.length)])
+                  .call([literalNum(relation.foreign!.effectiveFields.length)])
                   .property('toList')
                   .call([]);
               var parsed = refer(
@@ -236,7 +236,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
               var blockStr = block.accept(DartEmitter());
               var ifStr = 'if (row.length > $i) { $blockStr }';
               b.statements.add(Code(ifStr));
-              i += relation.foreign.effectiveFields.length;
+              i += relation.foreign!.effectiveFields.length;
             });
 
             b.addExpression(refer('model').returned);
@@ -277,10 +277,10 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
 
             // Add any manual SQL expressions.
             ctx.columns.forEach((name, col) {
-              if (col != null && col.hasExpression) {
+              if (col.hasExpression) {
                 var lhs = refer('expressions').index(
-                    literalString(ctx.buildContext.resolveFieldName(name)));
-                var rhs = literalString(col.expression);
+                    literalString(ctx.buildContext.resolveFieldName(name)!));
+                var rhs = literalString(col.expression!);
                 b.addExpression(lhs.assign(rhs));
               }
             });
@@ -301,13 +301,15 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
 
                 // If this is a many-to-many, add the fields from the other object.
 
-                var additionalStrs = relation.foreign.effectiveFields.map((f) =>
-                    relation.foreign.buildContext.resolveFieldName(f.name));
-                var additionalFields = additionalStrs.map(literalString);
+                var additionalStrs = relation.foreign!.effectiveFields.map(
+                    (f) => relation.foreign!.buildContext
+                        .resolveFieldName(f.name));
+                var additionalFields = additionalStrs
+                    .map(literalString as Expression Function(String?));
 
                 var joinArgs = [relation.localKey, relation.foreignKey]
-                    .map(literalString)
-                    .toList();
+                    .map(literalString as Function(String?))
+                    .toList() as List<Expression>;
 
                 // In the case of a many-to-many, we don't generate a subquery field,
                 // as it easily leads to stack overflows.
@@ -318,10 +320,10 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                   // FROM users
                   // LEFT JOIN role_users ON role_users.user_id=users.id)
                   var foreignFields = additionalStrs
-                      .map((f) => '${relation.foreign.tableName}.$f');
+                      .map((f) => '${relation.foreign!.tableName}.$f');
                   var b = StringBuffer('(SELECT ');
                   // role_users.role_id
-                  b.write('${relation.throughContext.tableName}');
+                  b.write('${relation.throughContext!.tableName}');
                   b.write('.${relation.foreignKey}');
                   // , <user_fields>
                   b.write(foreignFields.isEmpty
@@ -329,39 +331,39 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                       : ', ' + foreignFields.join(', '));
                   // FROM users
                   b.write(' FROM ');
-                  b.write(relation.foreign.tableName);
+                  b.write(relation.foreign!.tableName);
                   // LEFT JOIN role_users
-                  b.write(' LEFT JOIN ${relation.throughContext.tableName}');
+                  b.write(' LEFT JOIN ${relation.throughContext!.tableName}');
                   // Figure out which field on the "through" table points to users (foreign).
                   var throughRelation =
-                      relation.throughContext.relations.values.firstWhere((e) {
-                    return e.foreignTable == relation.foreign.tableName;
+                      relation.throughContext!.relations.values.firstWhere((e) {
+                    return e.foreignTable == relation.foreign!.tableName;
                   }, orElse: () {
                     // _Role has a many-to-many to _User through _RoleUser, but
                     // _RoleUser has no relation pointing to _User.
                     var b = StringBuffer();
                     b.write(ctx.buildContext.modelClassName);
                     b.write('has a many-to-many relationship to ');
-                    b.write(relation.foreign.buildContext.modelClassName);
+                    b.write(relation.foreign!.buildContext.modelClassName);
                     b.write(' through ');
                     b.write(
-                        relation.throughContext.buildContext.modelClassName);
+                        relation.throughContext!.buildContext.modelClassName);
                     b.write(', but ');
                     b.write(
-                        relation.throughContext.buildContext.modelClassName);
+                        relation.throughContext!.buildContext.modelClassName);
                     b.write('has no relation pointing to ');
-                    b.write(relation.foreign.buildContext.modelClassName);
+                    b.write(relation.foreign!.buildContext.modelClassName);
                     b.write('.');
                     throw b.toString();
                   });
 
                   // ON role_users.user_id=users.id)
                   b.write(' ON ');
-                  b.write('${relation.throughContext.tableName}');
+                  b.write('${relation.throughContext!.tableName}');
                   b.write('.');
                   b.write(throughRelation.localKey);
                   b.write('=');
-                  b.write(relation.foreign.tableName);
+                  b.write(relation.foreign!.tableName);
                   b.write('.');
                   b.write(throughRelation.foreignKey);
                   b.write(')');
@@ -377,7 +379,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                   // There'll be a private `_field`, and then a getter, named `field`,
                   // that returns the subquery object.
                   var foreignQueryType = refer(
-                      foreign.buildContext.modelClassNameRecase.pascalCase +
+                      foreign!.buildContext.modelClassNameRecase.pascalCase +
                           'Query');
                   clazz
                     ..fields.add(Field((b) => b
@@ -415,7 +417,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
 
       if (manyToMany.isNotEmpty) {
         var outExprs = manyToMany.map<Expression>((e) {
-          var foreignTableName = e.value.throughContext.tableName;
+          var foreignTableName = e.value.throughContext!.tableName;
           return CodeExpression(Code('''
           (!(
             trampoline.contains('${ctx.tableName}')
@@ -495,9 +497,9 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
     });
   }
 
-  Class buildWhereClass(OrmBuildContext ctx) {
+  Class buildWhereClass(OrmBuildContext? ctx) {
     return Class((clazz) {
-      var rc = ctx.buildContext.modelClassNameRecase;
+      var rc = ctx!.buildContext.modelClassNameRecase;
       clazz
         ..name = '${rc.pascalCase}QueryWhere'
         ..extend = refer('QueryWhere');
@@ -519,7 +521,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
 
       // Add builders for each field
       for (var field in ctx.effectiveNormalFields) {
-        var name = field.name;
+        String? name = field.name;
         var args = <Expression>[];
         DartType type;
         Reference builderType;
@@ -535,7 +537,9 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
             isSpecialId(ctx, field)) {
           builderType = TypeReference((b) => b
             ..symbol = 'NumericSqlExpressionBuilder'
-            ..types.add(refer(isSpecialId(ctx, field) ? 'int' : type.name)));
+            ..types.add(refer(isSpecialId(ctx, field)
+                ? 'int'
+                : type.getDisplayString(withNullability: true))));
         } else if (type is InterfaceType && type.element.isEnum) {
           builderType = TypeReference((b) => b
             ..symbol = 'EnumSqlExpressionBuilder'
@@ -555,7 +559,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
             .isAssignableFromType(type)) {
           builderType = refer('ListSqlExpressionBuilder');
         } else if (ctx.relations.containsKey(field.name)) {
-          var relation = ctx.relations[field.name];
+          var relation = ctx.relations[field.name]!;
           if (relation.type != RelationshipType.belongsTo) {
             continue;
           } else {
@@ -566,7 +570,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
           }
         } else {
           throw UnsupportedError(
-              'Cannot generate ORM code for field of type ${field.type.name}.');
+              'Cannot generate ORM code for field of type ${field.type.getDisplayString(withNullability: false)}.');
         }
 
         clazz.fields.add(Field((b) {
@@ -579,7 +583,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
             refer(field.name)
                 .assign(builderType.newInstance([
                   refer('query'),
-                  literalString(ctx.buildContext.resolveFieldName(field.name))
+                  literalString(ctx.buildContext.resolveFieldName(field.name)!)
                 ].followedBy(args)))
                 .code,
           );
@@ -597,9 +601,9 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
     });
   }
 
-  Class buildValuesClass(OrmBuildContext ctx) {
+  Class buildValuesClass(OrmBuildContext? ctx) {
     return Class((clazz) {
-      var rc = ctx.buildContext.modelClassNameRecase;
+      var rc = ctx!.buildContext.modelClassNameRecase;
       clazz
         ..name = '${rc.pascalCase}QueryValues'
         ..extend = refer('MapQueryValues');
@@ -611,7 +615,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
           ..annotations.add(refer('override'))
           ..type = MethodType.getter
           ..body = Block((b) {
-            var args = <String, Expression>{};
+            var args = <String?, Expression>{};
 
             for (var field in ctx.effectiveFields) {
               var fType = field.type;
@@ -637,7 +641,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
         var type = convertTypeReference(field.type);
 
         clazz.methods.add(Method((b) {
-          var value = refer('values').index(literalString(name));
+          var value = refer('values').index(literalString(name!));
 
           if (fType is InterfaceType && fType.element.isEnum) {
             var asInt = value.asA(refer('int'));
@@ -682,7 +686,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
               ..name = 'value'
               ..type = type))
             ..body =
-                refer('values').index(literalString(name)).assign(value).code;
+                refer('values').index(literalString(name!)).assign(value).code;
         }));
       }
 
@@ -709,7 +713,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                 var prop = refer('model').property(original);
                 // Add only if present
                 var target = refer('values').index(literalString(
-                    ctx.buildContext.resolveFieldName(field.name)));
+                    ctx.buildContext.resolveFieldName(field.name)!));
                 var foreign = field.relationship.throughContext ??
                     field.relationship.foreign;
                 var foreignField = field.relationship.findForeignField(ctx);
