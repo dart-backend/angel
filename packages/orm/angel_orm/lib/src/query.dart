@@ -325,7 +325,7 @@ abstract class Query<T, Where extends QueryWhere?> extends QueryBase<T> {
     return super.getOne(executor);
   }
 
-  Future<List<T>> delete(QueryExecutor executor) {
+  Future<List<T>?> delete(QueryExecutor executor) {
     var sql = compile({}, preamble: 'DELETE', withFields: false);
 
     if (_joins.isEmpty) {
@@ -346,7 +346,8 @@ abstract class Query<T, Where extends QueryWhere?> extends QueryBase<T> {
   }
 
   Future<T?> deleteOne(QueryExecutor executor) {
-    return delete(executor).then((it) => it.isEmpty ? null : it.first);
+    return delete(executor)
+        .then((it) => it?.isEmpty == true ? null : it?.first);
   }
 
   Future<T?> insert(QueryExecutor executor) {
