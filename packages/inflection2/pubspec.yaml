@@ -5,5 +5,7 @@ homepage: https://github.com/thosakwe/dart-inflection
 publish_to: none
 environment:
   sdk: '>=2.12.0 <3.0.0'
+dependencies:
+
 dev_dependencies:
   test: ^1.17.3
