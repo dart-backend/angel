@@ -30,7 +30,7 @@ final Parser credentialString = match<Map<String, String>?>(
     .value((r) {
   var decoded = utf8.decode(base64Url.decode(r.span!.text));
   var scanner = new SpanScanner(decoded);
-  return credentials.parse(scanner)!.value;
+  return credentials.parse(scanner).value;
 });
 
 final Parser basic = match<Null>('Basic').space();
@@ -42,7 +42,7 @@ void main() {
     stdout.write('Enter a basic auth value: ');
     var line = stdin.readLineSync()!;
     var scanner = new SpanScanner(line, sourceUrl: 'stdin');
-    var result = basicAuth.parse(scanner)!;
+    var result = basicAuth.parse(scanner);
 
     if (!result.successful) {
       for (var error in result.errors) {

@@ -33,8 +33,8 @@ void main() {
           new RegExp(
               r'[A-Za-z_!\\$",\\+-\\./:;\\?<>%&\\*@\[\]\\{\}\\|`\\^~][A-Za-z0-9_!\\$",\\+-\\./:;\\?<>%&\*@\[\]\\{\}\\|`\\^~]*'),
           errorMessage: 'Expected an ID')
-      .map((r) =>
-          symbols[r.span!.text] ??= throw "Undefined symbol: '${r.span!.text}'");
+      .map((r) => symbols[r.span!.text] ??=
+          throw "Undefined symbol: '${r.span!.text}'");
 
   var atom = number.castDynamic().or(id);
 
@@ -70,7 +70,7 @@ void main() {
   while (true) {
     stdout.write('> ');
     var line = stdin.readLineSync()!;
-    var result = expr.parse(new SpanScanner(line))!;
+    var result = expr.parse(new SpanScanner(line));
 
     if (result.errors.isNotEmpty) {
       for (var error in result.errors) {

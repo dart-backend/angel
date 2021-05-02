@@ -57,7 +57,7 @@ void main() {
     stdout.write('Enter an expression: ');
     var line = stdin.readLineSync()!;
     var scanner = new SpanScanner(line, sourceUrl: 'stdin');
-    var result = calculator.parse(scanner)!;
+    var result = calculator.parse(scanner);
 
     if (!result.successful) {
       for (var error in result.errors) {

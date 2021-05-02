@@ -17,7 +17,7 @@
 * Migrated json_god to 4.0.0 (13/13 tests passed)
 * Migrated angel_client to 4.0.0 (6/13 tests passed)
 * Migrated angel_websocket to 4.0.0 (2/3 tests passed)
-* Migrated test to 4.0.0 (1/1 test passed)
+* Migrated angel_test to 4.0.0 (1/1 test passed)
 * Added symbol_table and migrated to 2.0.0 (16/16 tests passed)
 * Migrated jael to 4.0.0 (20/20 tests passed)
 * Migrated jael_preprocessor to 3.0.0 (5/5 tests passed)
@@ -28,9 +28,9 @@
 * Migrated hot to 4.0.0 (0/0 tests passed)
 * Added range_header and migrated to 3.0.0 (12/12 tests passed)
 * Migrated static to 4.0.0 (1/1 test passed)
-* Migrated basic-sdk-2.12.x_nnbd template to 4.0.0 (1/1 test passed)
-* Updated angel_serialize to 5.0.0 (in progress)
-* Updated angel_serialize_generator to 5.0.0 (in progress)
+* Created basic-sdk-2.12.x_nnbd template (1/1 test passed)
+* Updated angel_serialize to 4.0.0 (in progress)
+* Updated angel_serialize_generator to 4.0.0 (in progress)
 
 # 3.0.0 (Non NNBD)
 * Changed Dart SDK requirements for all packages to ">=2.10.0 <3.0.0"

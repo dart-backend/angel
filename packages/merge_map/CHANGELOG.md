@@ -1,3 +1,6 @@
+# 2.0.0
+* Migrated to work with Dart SDK 2.12.x NNBD
+
 # 1.0.2
 * Add an example, for Pub's sake.
 

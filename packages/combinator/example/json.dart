@@ -57,7 +57,7 @@ main() {
     stdout.write('Enter some JSON: ');
     var line = stdin.readLineSync()!;
     var scanner = new SpanScanner(line, sourceUrl: 'stdin');
-    var result = JSON.parse(scanner)!;
+    var result = JSON.parse(scanner);
 
     if (!result.successful) {
       for (var error in result.errors) {

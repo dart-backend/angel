@@ -1,3 +1,6 @@
+# 3.0.0
+* Migrated to work with Dart SDK 2.12.x NNBD
+
 # 2.0.2
 * Fix bug in `toContentRange` that printed invalid indices.
 * Fold header items by default.

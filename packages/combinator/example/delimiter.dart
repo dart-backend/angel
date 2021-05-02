@@ -15,7 +15,7 @@ main() {
     stdout.write('Enter a string (ex "a,b,c"): ');
     var line = stdin.readLineSync()!;
     var scanner = new SpanScanner(line, sourceUrl: 'stdin');
-    var result = id.separatedBy(match(',').space()).parse(scanner)!;
+    var result = id.separatedBy(match(',').space()).parse(scanner);
 
     if (!result.successful) {
       for (var error in result.errors) {

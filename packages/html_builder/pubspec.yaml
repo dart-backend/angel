@@ -1,7 +1,6 @@
 name: html_builder
 description: Build HTML AST's and render them to HTML. This can be used as an internal DSL, i.e. for a templating engine.
 version: 2.0.0
-author: Tobe O <thosakwe@gmail.com>
 homepage: https://github.com/thosakwe/html_builder
 environment:
   sdk: '>=2.12.0 <3.0.0'

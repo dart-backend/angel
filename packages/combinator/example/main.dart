@@ -24,7 +24,7 @@ main() {
     stdout.write('Enter a number: ');
     var line = stdin.readLineSync()!;
     var scanner = new SpanScanner(line, sourceUrl: 'stdin');
-    var result = number.parse(scanner)!;
+    var result = number.parse(scanner);
 
     if (!result.successful) {
       for (var error in result.errors) {

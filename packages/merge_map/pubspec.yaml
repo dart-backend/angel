@@ -2,8 +2,7 @@ name: merge_map
 description: Combine multiple Maps into one. Equivalent to Object.assign in JS.
 version: 2.0.0
 homepage: https://github.com/thosakwe/merge_map
-author: Tobe O <thosakwe@gmail.com>
 environment:
   sdk: '>=2.12.0 <3.0.0'
 dev_dependencies:
-  test: ^1.16.8
+  test: ^1.17.3

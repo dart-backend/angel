@@ -1,3 +1,6 @@
+# 2.0.0
+* Migrated to support Dart SDK 2.12.x NNBD
+
 # 1.1.0
 * Add `tupleX` parsers. Hooray for strong typing!
 

@@ -10,5 +10,5 @@ void main() {
   var grammar = tuple3(pub, dart, lang);
 
   var scanner = SpanScanner('pub dart lang');
-  print(grammar.parse(scanner)!.value);
+  print(grammar.parse(scanner).value);
 }

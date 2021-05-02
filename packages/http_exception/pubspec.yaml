@@ -1,8 +1,7 @@
 name: angel_http_exception
 version: 3.0.0
 description: Exception class that can be serialized to JSON and serialized to clients.
-#author: Tobe O <thosakwe@gmail.com>
-homepage: https://github.com/dukefirehawk/angel/packages/http_exception
+homepage: https://github.com/dukefirehawk/angel
 environment:
   sdk: '>=2.12.0 <3.0.0'
 dev_dependencies:

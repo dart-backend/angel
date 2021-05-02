@@ -1,8 +1,7 @@
 name: angel_hot
 description: Supports hot reloading/hot code push of Angel servers on file changes.
 version: 4.0.0
-author: Tobe O <thosakwe@gmail.com>
-homepage: https://github.com/angel-dart/hot
+homepage: https://github.com/dukefirehawk/angel
 publish_to: none
 environment:
   sdk: '>=2.12.0 <3.0.0'

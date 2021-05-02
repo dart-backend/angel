@@ -1,7 +1,6 @@
-author: Tobe O <thosakwe@gmail.com>
-description: Testing utility library for the Angel framework. Use with package:test.
-homepage: https://github.com/angel-dart/test.git
 name: angel_test
+description: Testing utility library for the Angel framework. Use with package:test.
+homepage: https://github.com/dukefirehawk/angel
 version: 4.0.0
 publish_to: none
 environment: 

@@ -31,7 +31,7 @@ main() {
     stdout.write('Enter a query string: ');
     var line = stdin.readLineSync()!;
     var scanner = new SpanScanner(line, sourceUrl: 'stdin');
-    var result = pairs.parse(scanner)!;
+    var result = pairs.parse(scanner);
 
     if (!result.successful) {
       for (var error in result.errors) {

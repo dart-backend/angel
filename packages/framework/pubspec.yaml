@@ -1,8 +1,7 @@
 name: angel_framework
 version: 4.0.0
 description: A high-powered HTTP server with dependency injection, routing and much more.
-author: Tobe O <thosakwe@gmail.com>
-homepage: https://github.com/angel-dart/angel_framework
+homepage: https://github.com/dukefirehawk/angel
 publish_to: none
 environment:
   sdk: '>=2.12.0 <3.0.0'
@@ -52,10 +51,8 @@ dependencies:
       ref: sdk-2.12.x_nnbd
       path: packages/mock_request
   path: ^1.8.0
-  # pedantic: ^1.0.0
-  #quiver_hashcode: ^3.0.0+1
   quiver: ^3.0.0
-  recase: ^4.0.0-nullsafety.0
+  recase: ^4.0.0
   stack_trace: ^1.10.0
   string_scanner: ^1.1.0
   tuple: ^2.0.0
@@ -64,6 +61,5 @@ dependencies:
 dev_dependencies:
   http: ^0.13.1
   io: ^1.0.0
-  #pretty_logging: ^1.0.0
-  test: ^1.16.8
+  test: ^1.17.3
 
