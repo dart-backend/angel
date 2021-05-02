@@ -11,9 +11,9 @@ part 'has_map.g.dart';
 @orm
 @serializable
 abstract class _HasMap {
-  Map get value;
+  Map? get value;
 
-  List get list;
+  List? get list;
 
   // TODO: Support custom serializers
   // @SerializableField(

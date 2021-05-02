@@ -10,13 +10,13 @@ part 'order.g.dart';
 @serializable
 abstract class _Order extends Model {
   @belongsTo
-  _Customer get customer;
+  _Customer? get customer;
 
-  int get employeeId;
+  int? get employeeId;
 
-  DateTime get orderDate;
+  DateTime? get orderDate;
 
-  int get shipperId;
+  int? get shipperId;
 }
 
 @orm

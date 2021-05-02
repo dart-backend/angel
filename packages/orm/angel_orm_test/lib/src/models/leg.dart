@@ -10,15 +10,15 @@ part 'leg.g.dart';
 @orm
 class _Leg extends Model {
   @hasOne
-  _Foot foot;
+  _Foot? foot;
 
-  String name;
+  String? name;
 }
 
 @serializable
 @Orm(tableName: 'feet')
 class _Foot extends Model {
-  int legId;
+  int? legId;
 
-  double nToes;
+  double? nToes;
 }

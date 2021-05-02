@@ -20,5 +20,5 @@ abstract class _HasCar extends Model {
   // Car get car;
 
   @SerializableField(isNullable: false, defaultValue: CarType.sedan)
-  CarType get type;
+  CarType? get type;
 }

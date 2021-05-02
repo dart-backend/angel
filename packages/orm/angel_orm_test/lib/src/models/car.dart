@@ -9,8 +9,8 @@ part 'car.g.dart';
 @serializable
 @orm
 class _Car extends Model {
-  String make;
-  String description;
-  bool familyFriendly;
-  DateTime recalledAt;
+  String? make;
+  String? description;
+  bool? familyFriendly;
+  DateTime? recalledAt;
 }

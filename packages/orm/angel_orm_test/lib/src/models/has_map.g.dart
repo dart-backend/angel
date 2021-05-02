@@ -25,8 +25,9 @@ class HasMapMigration extends Migration {
 // OrmGenerator
 // **************************************************************************
 
-class HasMapQuery extends Query<HasMap, HasMapQueryWhere> {
-  HasMapQuery({Query parent, Set<String> trampoline}) : super(parent: parent) {
+class HasMapQuery extends Query<HasMap?, HasMapQueryWhere?> {
+  HasMapQuery({Query? parent, Set<String>? trampoline})
+      : super(parent: parent) {
     trampoline ??= Set();
     trampoline.add(tableName);
     _where = HasMapQueryWhere(this);
@@ -35,7 +36,7 @@ class HasMapQuery extends Query<HasMap, HasMapQueryWhere> {
   @override
   final HasMapQueryValues values = HasMapQueryValues();
 
-  HasMapQueryWhere _where;
+  HasMapQueryWhere? _where;
 
   @override
   get casts {
@@ -53,7 +54,7 @@ class HasMapQuery extends Query<HasMap, HasMapQueryWhere> {
   }
 
   @override
-  HasMapQueryWhere get where {
+  HasMapQueryWhere? get where {
     return _where;
   }
 
@@ -62,11 +63,11 @@ class HasMapQuery extends Query<HasMap, HasMapQueryWhere> {
     return HasMapQueryWhere(this);
   }
 
-  static HasMap parseRow(List row) {
+  static HasMap? parseRow(List row) {
     if (row.every((x) => x == null)) return null;
     var model = HasMap(
-        value: (row[0] as Map<dynamic, dynamic>),
-        list: (row[1] as List<dynamic>));
+        value: (row[0] as Map<dynamic, dynamic>?),
+        list: (row[1] as List<dynamic>?));
     return model;
   }
 
@@ -97,16 +98,16 @@ class HasMapQueryValues extends MapQueryValues {
     return {'list': 'jsonb'};
   }
 
-  Map<dynamic, dynamic> get value {
-    return (values['value'] as Map<dynamic, dynamic>);
+  Map<dynamic, dynamic>? get value {
+    return (values['value'] as Map<dynamic, dynamic>?);
   }
 
-  set value(Map<dynamic, dynamic> value) => values['value'] = value;
-  List<dynamic> get list {
-    return (json.decode((values['list'] as String)) as List);
+  set value(Map<dynamic, dynamic>? value) => values['value'] = value;
+  List<dynamic>? get list {
+    return (json.decode((values['list'] as String)) as List?);
   }
 
-  set list(List<dynamic> value) => values['list'] = json.encode(value);
+  set list(List<dynamic>? value) => values['list'] = json.encode(value);
   void copyFrom(HasMap model) {
     value = model.value;
     list = model.list;
@@ -122,12 +123,12 @@ class HasMap implements _HasMap {
   const HasMap({this.value, this.list});
 
   @override
-  final Map<dynamic, dynamic> value;
+  final Map<dynamic, dynamic>? value;
 
   @override
-  final List<dynamic> list;
+  final List<dynamic>? list;
 
-  HasMap copyWith({Map<dynamic, dynamic> value, List<dynamic> list}) {
+  HasMap copyWith({Map<dynamic, dynamic>? value, List<dynamic>? list}) {
     return HasMap(value: value ?? this.value, list: list ?? this.list);
   }
 
@@ -192,9 +193,6 @@ class HasMapSerializer extends Codec<HasMap, Map> {
   }
 
   static Map<String, dynamic> toMap(_HasMap model) {
-    if (model == null) {
-      return null;
-    }
     return {'value': model.value, 'list': model.list};
   }
 }

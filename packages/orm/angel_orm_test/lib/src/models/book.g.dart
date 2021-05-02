@@ -50,8 +50,8 @@ class AuthorMigration extends Migration {
 // OrmGenerator
 // **************************************************************************
 
-class BookQuery extends Query<Book, BookQueryWhere> {
-  BookQuery({Query parent, Set<String> trampoline}) : super(parent: parent) {
+class BookQuery extends Query<Book?, BookQueryWhere?> {
+  BookQuery({Query? parent, Set<String>? trampoline}) : super(parent: parent) {
     trampoline ??= Set();
     trampoline.add(tableName);
     _where = BookQueryWhere(this);
@@ -68,11 +68,11 @@ class BookQuery extends Query<Book, BookQueryWhere> {
   @override
   final BookQueryValues values = BookQueryValues();
 
-  BookQueryWhere _where;
+  BookQueryWhere? _where;
 
-  AuthorQuery _author;
+  AuthorQuery? _author;
 
-  AuthorQuery _partnerAuthor;
+  AuthorQuery? _partnerAuthor;
 
   @override
   get casts {
@@ -97,7 +97,7 @@ class BookQuery extends Query<Book, BookQueryWhere> {
   }
 
   @override
-  BookQueryWhere get where {
+  BookQueryWhere? get where {
     return _where;
   }
 
@@ -106,13 +106,13 @@ class BookQuery extends Query<Book, BookQueryWhere> {
     return BookQueryWhere(this);
   }
 
-  static Book parseRow(List row) {
+  static Book? parseRow(List row) {
     if (row.every((x) => x == null)) return null;
     var model = Book(
         id: row[0].toString(),
-        createdAt: (row[1] as DateTime),
-        updatedAt: (row[2] as DateTime),
-        name: (row[5] as String));
+        createdAt: (row[1] as DateTime?),
+        updatedAt: (row[2] as DateTime?),
+        name: (row[5] as String?));
     if (row.length > 6) {
       model = model.copyWith(
           author: AuthorQuery.parseRow(row.skip(6).take(4).toList()));
@@ -129,11 +129,11 @@ class BookQuery extends Query<Book, BookQueryWhere> {
     return parseRow(row);
   }
 
-  AuthorQuery get author {
+  AuthorQuery? get author {
     return _author;
   }
 
-  AuthorQuery get partnerAuthor {
+  AuthorQuery? get partnerAuthor {
     return _partnerAuthor;
   }
 }
@@ -172,51 +172,52 @@ class BookQueryValues extends MapQueryValues {
     return {};
   }
 
-  String get id {
-    return (values['id'] as String);
+  String? get id {
+    return (values['id'] as String?);
   }
 
-  set id(String value) => values['id'] = value;
-  DateTime get createdAt {
-    return (values['created_at'] as DateTime);
+  set id(String? value) => values['id'] = value;
+  DateTime? get createdAt {
+    return (values['created_at'] as DateTime?);
   }
 
-  set createdAt(DateTime value) => values['created_at'] = value;
-  DateTime get updatedAt {
-    return (values['updated_at'] as DateTime);
+  set createdAt(DateTime? value) => values['created_at'] = value;
+  DateTime? get updatedAt {
+    return (values['updated_at'] as DateTime?);
   }
 
-  set updatedAt(DateTime value) => values['updated_at'] = value;
-  int get authorId {
-    return (values['author_id'] as int);
+  set updatedAt(DateTime? value) => values['updated_at'] = value;
+  int? get authorId {
+    return (values['author_id'] as int?);
   }
 
-  set authorId(int value) => values['author_id'] = value;
-  int get partnerAuthorId {
-    return (values['partner_author_id'] as int);
+  set authorId(int? value) => values['author_id'] = value;
+  int? get partnerAuthorId {
+    return (values['partner_author_id'] as int?);
   }
 
-  set partnerAuthorId(int value) => values['partner_author_id'] = value;
-  String get name {
-    return (values['name'] as String);
+  set partnerAuthorId(int? value) => values['partner_author_id'] = value;
+  String? get name {
+    return (values['name'] as String?);
   }
 
-  set name(String value) => values['name'] = value;
+  set name(String? value) => values['name'] = value;
   void copyFrom(Book model) {
     createdAt = model.createdAt;
     updatedAt = model.updatedAt;
     name = model.name;
     if (model.author != null) {
-      values['author_id'] = model.author.id;
+      values['author_id'] = model.author!.id;
     }
     if (model.partnerAuthor != null) {
-      values['partner_author_id'] = model.partnerAuthor.id;
+      values['partner_author_id'] = model.partnerAuthor!.id;
     }
   }
 }
 
-class AuthorQuery extends Query<Author, AuthorQueryWhere> {
-  AuthorQuery({Query parent, Set<String> trampoline}) : super(parent: parent) {
+class AuthorQuery extends Query<Author?, AuthorQueryWhere?> {
+  AuthorQuery({Query? parent, Set<String>? trampoline})
+      : super(parent: parent) {
     trampoline ??= Set();
     trampoline.add(tableName);
     _where = AuthorQueryWhere(this);
@@ -225,7 +226,7 @@ class AuthorQuery extends Query<Author, AuthorQueryWhere> {
   @override
   final AuthorQueryValues values = AuthorQueryValues();
 
-  AuthorQueryWhere _where;
+  AuthorQueryWhere? _where;
 
   @override
   get casts {
@@ -243,7 +244,7 @@ class AuthorQuery extends Query<Author, AuthorQueryWhere> {
   }
 
   @override
-  AuthorQueryWhere get where {
+  AuthorQueryWhere? get where {
     return _where;
   }
 
@@ -252,13 +253,13 @@ class AuthorQuery extends Query<Author, AuthorQueryWhere> {
     return AuthorQueryWhere(this);
   }
 
-  static Author parseRow(List row) {
+  static Author? parseRow(List row) {
     if (row.every((x) => x == null)) return null;
     var model = Author(
         id: row[0].toString(),
-        createdAt: (row[1] as DateTime),
-        updatedAt: (row[2] as DateTime),
-        name: (row[3] as String));
+        createdAt: (row[1] as DateTime?),
+        updatedAt: (row[2] as DateTime?),
+        name: (row[3] as String?));
     return model;
   }
 
@@ -295,26 +296,26 @@ class AuthorQueryValues extends MapQueryValues {
     return {};
   }
 
-  String get id {
-    return (values['id'] as String);
+  String? get id {
+    return (values['id'] as String?);
   }
 
-  set id(String value) => values['id'] = value;
-  DateTime get createdAt {
-    return (values['created_at'] as DateTime);
+  set id(String? value) => values['id'] = value;
+  DateTime? get createdAt {
+    return (values['created_at'] as DateTime?);
   }
 
-  set createdAt(DateTime value) => values['created_at'] = value;
-  DateTime get updatedAt {
-    return (values['updated_at'] as DateTime);
+  set createdAt(DateTime? value) => values['created_at'] = value;
+  DateTime? get updatedAt {
+    return (values['updated_at'] as DateTime?);
   }
 
-  set updatedAt(DateTime value) => values['updated_at'] = value;
-  String get name {
-    return (values['name'] as String);
+  set updatedAt(DateTime? value) => values['updated_at'] = value;
+  String? get name {
+    return (values['name'] as String?);
   }
 
-  set name(String value) => values['name'] = value;
+  set name(String? value) => values['name'] = value;
   void copyFrom(Author model) {
     createdAt = model.createdAt;
     updatedAt = model.updatedAt;
@@ -338,32 +339,32 @@ class Book extends _Book {
 
   /// A unique identifier corresponding to this item.
   @override
-  String id;
+  String? id;
 
   /// The time at which this item was created.
   @override
-  DateTime createdAt;
+  DateTime? createdAt;
 
   /// The last time at which this item was updated.
   @override
-  DateTime updatedAt;
+  DateTime? updatedAt;
 
   @override
-  _Author author;
+  _Author? author;
 
   @override
-  _Author partnerAuthor;
+  _Author? partnerAuthor;
 
   @override
-  String name;
+  String? name;
 
   Book copyWith(
-      {String id,
-      DateTime createdAt,
-      DateTime updatedAt,
-      _Author author,
-      _Author partnerAuthor,
-      String name}) {
+      {String? id,
+      DateTime? createdAt,
+      DateTime? updatedAt,
+      _Author? author,
+      _Author? partnerAuthor,
+      String? name}) {
     return Book(
         id: id ?? this.id,
         createdAt: createdAt ?? this.createdAt,
@@ -404,21 +405,21 @@ class Author extends _Author {
 
   /// A unique identifier corresponding to this item.
   @override
-  String id;
+  String? id;
 
   /// The time at which this item was created.
   @override
-  DateTime createdAt;
+  DateTime? createdAt;
 
   /// The last time at which this item was updated.
   @override
-  DateTime updatedAt;
+  DateTime? updatedAt;
 
   @override
-  final String name;
+  final String? name;
 
   Author copyWith(
-      {String id, DateTime createdAt, DateTime updatedAt, String name}) {
+      {String? id, DateTime? createdAt, DateTime? updatedAt, String? name}) {
     return Author(
         id: id ?? this.id,
         createdAt: createdAt ?? this.createdAt,
@@ -444,7 +445,7 @@ class Author extends _Author {
     return "Author(id=$id, createdAt=$createdAt, updatedAt=$updatedAt, name=$name)";
   }
 
-  Map<String, dynamic> toJson() {
+  Map<String, dynamic>? toJson() {
     return AuthorSerializer.toMap(this);
   }
 }
@@ -478,15 +479,15 @@ class BookSerializer extends Codec<Book, Map> {
   get decoder => const BookDecoder();
   static Book fromMap(Map map) {
     return Book(
-        id: map['id'] as String,
+        id: map['id'] as String?,
         createdAt: map['created_at'] != null
             ? (map['created_at'] is DateTime
-                ? (map['created_at'] as DateTime)
+                ? (map['created_at'] as DateTime?)
                 : DateTime.parse(map['created_at'].toString()))
             : null,
         updatedAt: map['updated_at'] != null
             ? (map['updated_at'] is DateTime
-                ? (map['updated_at'] as DateTime)
+                ? (map['updated_at'] as DateTime?)
                 : DateTime.parse(map['updated_at'].toString()))
             : null,
         author: map['author'] != null
@@ -495,13 +496,10 @@ class BookSerializer extends Codec<Book, Map> {
         partnerAuthor: map['partner_author'] != null
             ? AuthorSerializer.fromMap(map['partner_author'] as Map)
             : null,
-        name: map['name'] as String);
+        name: map['name'] as String?);
   }
 
   static Map<String, dynamic> toMap(_Book model) {
-    if (model == null) {
-      return null;
-    }
     return {
       'id': model.id,
       'created_at': model.createdAt?.toIso8601String(),
@@ -538,11 +536,11 @@ abstract class BookFields {
 
 const AuthorSerializer authorSerializer = AuthorSerializer();
 
-class AuthorEncoder extends Converter<Author, Map> {
+class AuthorEncoder extends Converter<Author, Map?> {
   const AuthorEncoder();
 
   @override
-  Map convert(Author model) => AuthorSerializer.toMap(model);
+  Map? convert(Author model) => AuthorSerializer.toMap(model);
 }
 
 class AuthorDecoder extends Converter<Map, Author> {
@@ -552,7 +550,7 @@ class AuthorDecoder extends Converter<Map, Author> {
   Author convert(Map map) => AuthorSerializer.fromMap(map);
 }
 
-class AuthorSerializer extends Codec<Author, Map> {
+class AuthorSerializer extends Codec<Author, Map?> {
   const AuthorSerializer();
 
   @override
@@ -561,21 +559,21 @@ class AuthorSerializer extends Codec<Author, Map> {
   get decoder => const AuthorDecoder();
   static Author fromMap(Map map) {
     return Author(
-        id: map['id'] as String,
+        id: map['id'] as String?,
         createdAt: map['created_at'] != null
             ? (map['created_at'] is DateTime
-                ? (map['created_at'] as DateTime)
+                ? (map['created_at'] as DateTime?)
                 : DateTime.parse(map['created_at'].toString()))
             : null,
         updatedAt: map['updated_at'] != null
             ? (map['updated_at'] is DateTime
-                ? (map['updated_at'] as DateTime)
+                ? (map['updated_at'] as DateTime?)
                 : DateTime.parse(map['updated_at'].toString()))
             : null,
-        name: map['name'] as String ?? 'Tobe Osakwe');
+        name: map['name'] as String? ?? 'Tobe Osakwe');
   }
 
-  static Map<String, dynamic> toMap(_Author model) {
+  static Map<String, dynamic>? toMap(_Author? model) {
     if (model == null) {
       return null;
     }

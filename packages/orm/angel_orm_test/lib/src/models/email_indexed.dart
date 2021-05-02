@@ -9,20 +9,20 @@ part 'email_indexed.g.dart';
 @orm
 abstract class _Role {
   @PrimaryKey(columnType: ColumnType.varChar)
-  String get role;
+  String? get role;
 
   @ManyToMany(_RoleUser)
-  List<_User> get users;
+  List<_User?>? get users;
 }
 
 @serializable
 @orm
 abstract class _RoleUser {
   @belongsTo
-  _Role get role;
+  _Role? get role;
 
   @belongsTo
-  _User get user;
+  _User? get user;
 }
 
 @serializable
@@ -30,10 +30,10 @@ abstract class _RoleUser {
 abstract class _User {
   // @PrimaryKey(columnType: ColumnType.varChar)
   @primaryKey
-  String get email;
-  String get name;
-  String get password;
+  String? get email;
+  String? get name;
+  String? get password;
 
   @ManyToMany(_RoleUser)
-  List<_Role> get roles;
+  List<_Role?>? get roles;
 }

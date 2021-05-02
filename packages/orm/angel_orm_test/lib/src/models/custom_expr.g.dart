@@ -46,8 +46,9 @@ class AlphabetMigration extends Migration {
 // OrmGenerator
 // **************************************************************************
 
-class NumbersQuery extends Query<Numbers, NumbersQueryWhere> {
-  NumbersQuery({Query parent, Set<String> trampoline}) : super(parent: parent) {
+class NumbersQuery extends Query<Numbers?, NumbersQueryWhere?> {
+  NumbersQuery({Query? parent, Set<String>? trampoline})
+      : super(parent: parent) {
     trampoline ??= Set();
     trampoline.add(tableName);
     expressions['two'] = 'SELECT 2';
@@ -57,7 +58,7 @@ class NumbersQuery extends Query<Numbers, NumbersQueryWhere> {
   @override
   final NumbersQueryValues values = NumbersQueryValues();
 
-  NumbersQueryWhere _where;
+  NumbersQueryWhere? _where;
 
   @override
   get casts {
@@ -75,7 +76,7 @@ class NumbersQuery extends Query<Numbers, NumbersQueryWhere> {
   }
 
   @override
-  NumbersQueryWhere get where {
+  NumbersQueryWhere? get where {
     return _where;
   }
 
@@ -84,13 +85,13 @@ class NumbersQuery extends Query<Numbers, NumbersQueryWhere> {
     return NumbersQueryWhere(this);
   }
 
-  static Numbers parseRow(List row) {
+  static Numbers? parseRow(List row) {
     if (row.every((x) => x == null)) return null;
     var model = Numbers(
         id: row[0].toString(),
-        createdAt: (row[1] as DateTime),
-        updatedAt: (row[2] as DateTime),
-        two: (row[3] as int));
+        createdAt: (row[1] as DateTime?),
+        updatedAt: (row[2] as DateTime?),
+        two: (row[3] as int?));
     return model;
   }
 
@@ -124,29 +125,29 @@ class NumbersQueryValues extends MapQueryValues {
     return {};
   }
 
-  String get id {
-    return (values['id'] as String);
+  String? get id {
+    return (values['id'] as String?);
   }
 
-  set id(String value) => values['id'] = value;
-  DateTime get createdAt {
-    return (values['created_at'] as DateTime);
+  set id(String? value) => values['id'] = value;
+  DateTime? get createdAt {
+    return (values['created_at'] as DateTime?);
   }
 
-  set createdAt(DateTime value) => values['created_at'] = value;
-  DateTime get updatedAt {
-    return (values['updated_at'] as DateTime);
+  set createdAt(DateTime? value) => values['created_at'] = value;
+  DateTime? get updatedAt {
+    return (values['updated_at'] as DateTime?);
   }
 
-  set updatedAt(DateTime value) => values['updated_at'] = value;
+  set updatedAt(DateTime? value) => values['updated_at'] = value;
   void copyFrom(Numbers model) {
     createdAt = model.createdAt;
     updatedAt = model.updatedAt;
   }
 }
 
-class AlphabetQuery extends Query<Alphabet, AlphabetQueryWhere> {
-  AlphabetQuery({Query parent, Set<String> trampoline})
+class AlphabetQuery extends Query<Alphabet?, AlphabetQueryWhere?> {
+  AlphabetQuery({Query? parent, Set<String>? trampoline})
       : super(parent: parent) {
     trampoline ??= Set();
     trampoline.add(tableName);
@@ -160,9 +161,9 @@ class AlphabetQuery extends Query<Alphabet, AlphabetQueryWhere> {
   @override
   final AlphabetQueryValues values = AlphabetQueryValues();
 
-  AlphabetQueryWhere _where;
+  AlphabetQueryWhere? _where;
 
-  NumbersQuery _numbers;
+  NumbersQuery? _numbers;
 
   @override
   get casts {
@@ -180,7 +181,7 @@ class AlphabetQuery extends Query<Alphabet, AlphabetQueryWhere> {
   }
 
   @override
-  AlphabetQueryWhere get where {
+  AlphabetQueryWhere? get where {
     return _where;
   }
 
@@ -189,13 +190,13 @@ class AlphabetQuery extends Query<Alphabet, AlphabetQueryWhere> {
     return AlphabetQueryWhere(this);
   }
 
-  static Alphabet parseRow(List row) {
+  static Alphabet? parseRow(List row) {
     if (row.every((x) => x == null)) return null;
     var model = Alphabet(
         id: row[0].toString(),
-        createdAt: (row[1] as DateTime),
-        updatedAt: (row[2] as DateTime),
-        value: (row[3] as String));
+        createdAt: (row[1] as DateTime?),
+        updatedAt: (row[2] as DateTime?),
+        value: (row[3] as String?));
     if (row.length > 5) {
       model = model.copyWith(
           numbers: NumbersQuery.parseRow(row.skip(5).take(4).toList()));
@@ -208,7 +209,7 @@ class AlphabetQuery extends Query<Alphabet, AlphabetQueryWhere> {
     return parseRow(row);
   }
 
-  NumbersQuery get numbers {
+  NumbersQuery? get numbers {
     return _numbers;
   }
 }
@@ -243,37 +244,37 @@ class AlphabetQueryValues extends MapQueryValues {
     return {};
   }
 
-  String get id {
-    return (values['id'] as String);
+  String? get id {
+    return (values['id'] as String?);
   }
 
-  set id(String value) => values['id'] = value;
-  DateTime get createdAt {
-    return (values['created_at'] as DateTime);
+  set id(String? value) => values['id'] = value;
+  DateTime? get createdAt {
+    return (values['created_at'] as DateTime?);
   }
 
-  set createdAt(DateTime value) => values['created_at'] = value;
-  DateTime get updatedAt {
-    return (values['updated_at'] as DateTime);
+  set createdAt(DateTime? value) => values['created_at'] = value;
+  DateTime? get updatedAt {
+    return (values['updated_at'] as DateTime?);
   }
 
-  set updatedAt(DateTime value) => values['updated_at'] = value;
-  String get value {
-    return (values['value'] as String);
+  set updatedAt(DateTime? value) => values['updated_at'] = value;
+  String? get value {
+    return (values['value'] as String?);
   }
 
-  set value(String value) => values['value'] = value;
-  int get numbersId {
-    return (values['numbers_id'] as int);
+  set value(String? value) => values['value'] = value;
+  int? get numbersId {
+    return (values['numbers_id'] as int?);
   }
 
-  set numbersId(int value) => values['numbers_id'] = value;
+  set numbersId(int? value) => values['numbers_id'] = value;
   void copyFrom(Alphabet model) {
     createdAt = model.createdAt;
     updatedAt = model.updatedAt;
     value = model.value;
     if (model.numbers != null) {
-      values['numbers_id'] = model.numbers.id;
+      values['numbers_id'] = model.numbers!.id;
     }
   }
 }
@@ -288,21 +289,21 @@ class Numbers extends _Numbers {
 
   /// A unique identifier corresponding to this item.
   @override
-  String id;
+  String? id;
 
   /// The time at which this item was created.
   @override
-  DateTime createdAt;
+  DateTime? createdAt;
 
   /// The last time at which this item was updated.
   @override
-  DateTime updatedAt;
+  DateTime? updatedAt;
 
   @override
-  int two;
+  int? two;
 
   Numbers copyWith(
-      {String id, DateTime createdAt, DateTime updatedAt, int two}) {
+      {String? id, DateTime? createdAt, DateTime? updatedAt, int? two}) {
     return Numbers(
         id: id ?? this.id,
         createdAt: createdAt ?? this.createdAt,
@@ -328,7 +329,7 @@ class Numbers extends _Numbers {
     return "Numbers(id=$id, createdAt=$createdAt, updatedAt=$updatedAt, two=$two)";
   }
 
-  Map<String, dynamic> toJson() {
+  Map<String, dynamic>? toJson() {
     return NumbersSerializer.toMap(this);
   }
 }
@@ -339,28 +340,28 @@ class Alphabet extends _Alphabet {
 
   /// A unique identifier corresponding to this item.
   @override
-  String id;
+  String? id;
 
   /// The time at which this item was created.
   @override
-  DateTime createdAt;
+  DateTime? createdAt;
 
   /// The last time at which this item was updated.
   @override
-  DateTime updatedAt;
+  DateTime? updatedAt;
 
   @override
-  String value;
+  String? value;
 
   @override
-  _Numbers numbers;
+  _Numbers? numbers;
 
   Alphabet copyWith(
-      {String id,
-      DateTime createdAt,
-      DateTime updatedAt,
-      String value,
-      _Numbers numbers}) {
+      {String? id,
+      DateTime? createdAt,
+      DateTime? updatedAt,
+      String? value,
+      _Numbers? numbers}) {
     return Alphabet(
         id: id ?? this.id,
         createdAt: createdAt ?? this.createdAt,
@@ -399,11 +400,11 @@ class Alphabet extends _Alphabet {
 
 const NumbersSerializer numbersSerializer = NumbersSerializer();
 
-class NumbersEncoder extends Converter<Numbers, Map> {
+class NumbersEncoder extends Converter<Numbers, Map?> {
   const NumbersEncoder();
 
   @override
-  Map convert(Numbers model) => NumbersSerializer.toMap(model);
+  Map? convert(Numbers model) => NumbersSerializer.toMap(model);
 }
 
 class NumbersDecoder extends Converter<Map, Numbers> {
@@ -413,7 +414,7 @@ class NumbersDecoder extends Converter<Map, Numbers> {
   Numbers convert(Map map) => NumbersSerializer.fromMap(map);
 }
 
-class NumbersSerializer extends Codec<Numbers, Map> {
+class NumbersSerializer extends Codec<Numbers, Map?> {
   const NumbersSerializer();
 
   @override
@@ -422,21 +423,21 @@ class NumbersSerializer extends Codec<Numbers, Map> {
   get decoder => const NumbersDecoder();
   static Numbers fromMap(Map map) {
     return Numbers(
-        id: map['id'] as String,
+        id: map['id'] as String?,
         createdAt: map['created_at'] != null
             ? (map['created_at'] is DateTime
-                ? (map['created_at'] as DateTime)
+                ? (map['created_at'] as DateTime?)
                 : DateTime.parse(map['created_at'].toString()))
             : null,
         updatedAt: map['updated_at'] != null
             ? (map['updated_at'] is DateTime
-                ? (map['updated_at'] as DateTime)
+                ? (map['updated_at'] as DateTime?)
                 : DateTime.parse(map['updated_at'].toString()))
             : null,
-        two: map['two'] as int);
+        two: map['two'] as int?);
   }
 
-  static Map<String, dynamic> toMap(_Numbers model) {
+  static Map<String, dynamic>? toMap(_Numbers? model) {
     if (model == null) {
       return null;
     }
@@ -486,27 +487,24 @@ class AlphabetSerializer extends Codec<Alphabet, Map> {
   get decoder => const AlphabetDecoder();
   static Alphabet fromMap(Map map) {
     return Alphabet(
-        id: map['id'] as String,
+        id: map['id'] as String?,
         createdAt: map['created_at'] != null
             ? (map['created_at'] is DateTime
-                ? (map['created_at'] as DateTime)
+                ? (map['created_at'] as DateTime?)
                 : DateTime.parse(map['created_at'].toString()))
             : null,
         updatedAt: map['updated_at'] != null
             ? (map['updated_at'] is DateTime
-                ? (map['updated_at'] as DateTime)
+                ? (map['updated_at'] as DateTime?)
                 : DateTime.parse(map['updated_at'].toString()))
             : null,
-        value: map['value'] as String,
+        value: map['value'] as String?,
         numbers: map['numbers'] != null
             ? NumbersSerializer.fromMap(map['numbers'] as Map)
             : null);
   }
 
   static Map<String, dynamic> toMap(_Alphabet model) {
-    if (model == null) {
-      return null;
-    }
     return {
       'id': model.id,
       'created_at': model.createdAt?.toIso8601String(),

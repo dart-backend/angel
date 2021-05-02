@@ -4,9 +4,9 @@ import 'package:test/test.dart';
 import 'models/leg.dart';
 
 hasOneTests(FutureOr<QueryExecutor> Function() createExecutor,
-    {FutureOr<void> Function(QueryExecutor) close}) {
-  QueryExecutor executor;
-  Leg originalLeg;
+    {FutureOr<void> Function(QueryExecutor)? close}) {
+  late QueryExecutor executor;
+  Leg? originalLeg;
   close ??= (_) => null;
 
   setUp(() async {
@@ -15,82 +15,82 @@ hasOneTests(FutureOr<QueryExecutor> Function() createExecutor,
     originalLeg = await query.insert(executor);
   });
 
-  tearDown(() => close(executor));
+  tearDown(() => close!(executor));
 
   test('sets to null if no child', () async {
     print(LegQuery().compile(Set()));
-    var query = new LegQuery()..where.id.equals(int.parse(originalLeg.id));
-    var leg = await query.getOne(executor);
+    var query = new LegQuery()..where!.id.equals(int.parse(originalLeg!.id!));
+    var leg = await (query.getOne(executor) as FutureOr<Leg>);
     print(leg.toJson());
-    expect(leg.name, originalLeg.name);
-    expect(leg.id, originalLeg.id);
+    expect(leg.name, originalLeg!.name);
+    expect(leg.id, originalLeg!.id);
     expect(leg.foot, isNull);
   });
 
   test('can fetch one foot', () async {
     var footQuery = new FootQuery()
-      ..values.legId = int.parse(originalLeg.id)
+      ..values.legId = int.parse(originalLeg!.id!)
       ..values.nToes = 5.64;
-    var legQuery = new LegQuery()..where.id.equals(int.parse(originalLeg.id));
-    var foot = await footQuery.insert(executor);
-    var leg = await legQuery.getOne(executor);
+    var legQuery = new LegQuery()..where!.id.equals(int.parse(originalLeg!.id!));
+    var foot = await (footQuery.insert(executor) as FutureOr<Foot>);
+    var leg = await (legQuery.getOne(executor) as FutureOr<Leg>);
 
-    expect(leg.name, originalLeg.name);
-    expect(leg.id, originalLeg.id);
+    expect(leg.name, originalLeg!.name);
+    expect(leg.id, originalLeg!.id);
     expect(leg.foot, isNotNull);
-    expect(leg.foot.id, foot.id);
-    expect(leg.foot.nToes, foot.nToes);
+    expect(leg.foot!.id, foot.id);
+    expect(leg.foot!.nToes, foot.nToes);
   });
 
   test('only fetches one foot even if there are multiple', () async {
     var footQuery = new FootQuery()
-      ..values.legId = int.parse(originalLeg.id)
+      ..values.legId = int.parse(originalLeg!.id!)
       ..values.nToes = 24;
-    var legQuery = new LegQuery()..where.id.equals(int.parse(originalLeg.id));
-    var foot = await footQuery.insert(executor);
-    var leg = await legQuery.getOne(executor);
-    expect(leg.name, originalLeg.name);
-    expect(leg.id, originalLeg.id);
+    var legQuery = new LegQuery()..where!.id.equals(int.parse(originalLeg!.id!));
+    var foot = await (footQuery.insert(executor) as FutureOr<Foot>);
+    var leg = await (legQuery.getOne(executor) as FutureOr<Leg>);
+    expect(leg.name, originalLeg!.name);
+    expect(leg.id, originalLeg!.id);
     expect(leg.foot, isNotNull);
-    expect(leg.foot.id, foot.id);
-    expect(leg.foot.nToes, foot.nToes);
+    expect(leg.foot!.id, foot.id);
+    expect(leg.foot!.nToes, foot.nToes);
   });
 
   test('sets foot on update', () async {
     var footQuery = new FootQuery()
-      ..values.legId = int.parse(originalLeg.id)
+      ..values.legId = int.parse(originalLeg!.id!)
       ..values.nToes = 5.64;
     var legQuery = new LegQuery()
-      ..where.id.equals(int.parse(originalLeg.id))
-      ..values.copyFrom(originalLeg.copyWith(name: 'Right'));
-    var foot = await footQuery.insert(executor);
-    var leg = await legQuery.updateOne(executor);
+      ..where!.id.equals(int.parse(originalLeg!.id!))
+      ..values.copyFrom(originalLeg!.copyWith(name: 'Right'));
+    var foot = await (footQuery.insert(executor) as FutureOr<Foot>);
+    var leg = await (legQuery.updateOne(executor) as FutureOr<Leg>);
     print(leg.toJson());
     expect(leg.name, 'Right');
     expect(leg.foot, isNotNull);
-    expect(leg.foot.id, foot.id);
-    expect(leg.foot.nToes, foot.nToes);
+    expect(leg.foot!.id, foot.id);
+    expect(leg.foot!.nToes, foot.nToes);
   });
 
   test('sets foot on delete', () async {
     var footQuery = new FootQuery()
-      ..values.legId = int.parse(originalLeg.id)
+      ..values.legId = int.parse(originalLeg!.id!)
       ..values.nToes = 5.64;
-    var legQuery = new LegQuery()..where.id.equals(int.parse(originalLeg.id));
-    var foot = await footQuery.insert(executor);
-    var leg = await legQuery.deleteOne(executor);
+    var legQuery = new LegQuery()..where!.id.equals(int.parse(originalLeg!.id!));
+    var foot = await (footQuery.insert(executor) as FutureOr<Foot>);
+    var leg = await (legQuery.deleteOne(executor) as FutureOr<Leg>);
     print(leg.toJson());
-    expect(leg.name, originalLeg.name);
+    expect(leg.name, originalLeg!.name);
     expect(leg.foot, isNotNull);
-    expect(leg.foot.id, foot.id);
-    expect(leg.foot.nToes, foot.nToes);
+    expect(leg.foot!.id, foot.id);
+    expect(leg.foot!.nToes, foot.nToes);
   });
 
   test('sets null on false subquery', () async {
     var legQuery = new LegQuery()
-      ..where.id.equals(originalLeg.idAsInt)
-      ..foot.where.legId.equals(originalLeg.idAsInt + 1024);
-    var leg = await legQuery.getOne(executor);
+      ..where!.id.equals(originalLeg!.idAsInt!)
+      ..foot!.where!.legId.equals(originalLeg!.idAsInt! + 1024);
+    var leg = await (legQuery.getOne(executor) as FutureOr<Leg>);
     expect(leg.foot, isNull);
   });
 }

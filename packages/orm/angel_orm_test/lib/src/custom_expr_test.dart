@@ -5,9 +5,9 @@ import 'models/custom_expr.dart';
 import 'util.dart';
 
 customExprTests(FutureOr<QueryExecutor> Function() createExecutor,
-    {FutureOr<void> Function(QueryExecutor) close}) {
-  QueryExecutor executor;
-  Numbers numbersModel;
+    {FutureOr<void> Function(QueryExecutor)? close}) {
+  late QueryExecutor executor;
+  Numbers? numbersModel;
 
   close ??= (_) => null;
 
@@ -22,22 +22,22 @@ customExprTests(FutureOr<QueryExecutor> Function() createExecutor,
     numbersModel = await nQuery.insert(executor);
   });
 
-  tearDown(() => close(executor));
+  tearDown(() => close!(executor));
 
   test('fetches correct result', () async {
-    expect(numbersModel.two, 2);
+    expect(numbersModel!.two, 2);
   });
 
   test('in relation', () async {
     var abcQuery = AlphabetQuery();
     abcQuery.values
       ..value = 'abc'
-      ..numbersId = numbersModel.idAsInt
-      ..createdAt = numbersModel.createdAt
-      ..updatedAt = numbersModel.updatedAt;
-    var abc = await abcQuery.insert(executor);
+      ..numbersId = numbersModel!.idAsInt
+      ..createdAt = numbersModel!.createdAt
+      ..updatedAt = numbersModel!.updatedAt;
+    var abc = await (abcQuery.insert(executor) as FutureOr<Alphabet>);
     expect(abc.numbers, numbersModel);
-    expect(abc.numbers.two, 2);
+    expect(abc.numbers!.two, 2);
     expect(abc.value, 'abc');
   });
 }

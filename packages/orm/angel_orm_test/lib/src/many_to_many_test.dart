@@ -6,10 +6,10 @@ import 'models/user.dart';
 import 'util.dart';
 
 manyToManyTests(FutureOr<QueryExecutor> Function() createExecutor,
-    {FutureOr<void> Function(QueryExecutor) close}) {
-  QueryExecutor executor;
-  Role canPub, canSub;
-  User thosakwe;
+    {FutureOr<void> Function(QueryExecutor)? close}) {
+  late QueryExecutor executor;
+  Role? canPub, canSub;
+  User? thosakwe;
   close ??= (_) => null;
 
   Future<void> dumpQuery(String query) async {
@@ -18,7 +18,8 @@ manyToManyTests(FutureOr<QueryExecutor> Function() createExecutor,
     print('==================================================');
     print('                  DUMPING QUERY');
     print(query);
-    var rows = await executor.query(null, query, {});
+    //var rows = await executor.query(null, query, {});
+    var rows = await executor.query('', query, {});
     print('\n${rows.length} row(s):');
     rows.forEach((r) => print('  * $r'));
     print('==================================================\n\n');
@@ -65,16 +66,16 @@ manyToManyTests(FutureOr<QueryExecutor> Function() createExecutor,
     printSeparator('Allow thosakwe to publish');
     var thosakwePubQuery = RoleUserQuery();
     thosakwePubQuery.values
-      ..userId = int.parse(thosakwe.id)
-      ..roleId = int.parse(canPub.id);
+      ..userId = int.parse(thosakwe!.id!)
+      ..roleId = int.parse(canPub!.id!);
     await thosakwePubQuery.insert(executor);
 
     // Allow thosakwe to subscribe...
     printSeparator('Allow thosakwe to subscribe');
     var thosakweSubQuery = RoleUserQuery();
     thosakweSubQuery.values
-      ..userId = int.parse(thosakwe.id)
-      ..roleId = int.parse(canSub.id);
+      ..userId = int.parse(thosakwe!.id!)
+      ..roleId = int.parse(canSub!.id!);
     await thosakweSubQuery.insert(executor);
 
     // Print all users...
@@ -90,16 +91,16 @@ manyToManyTests(FutureOr<QueryExecutor> Function() createExecutor,
     print('==================================================\n\n');
   });
 
-  tearDown(() => close(executor));
+  tearDown(() => close!(executor));
 
-  Future<User> fetchThosakwe() async {
-    var query = UserQuery()..where.id.equals(int.parse(thosakwe.id));
+  Future<User?> fetchThosakwe() async {
+    var query = UserQuery()..where!.id.equals(int.parse(thosakwe!.id!));
     return await query.getOne(executor);
   }
 
   test('fetch roles for user', () async {
     printSeparator('Fetch roles for user test');
-    var user = await fetchThosakwe();
+    var user = await (fetchThosakwe() as FutureOr<User>);
     expect(user.roles, hasLength(2));
     expect(user.roles, contains(canPub));
     expect(user.roles, contains(canSub));
@@ -107,8 +108,8 @@ manyToManyTests(FutureOr<QueryExecutor> Function() createExecutor,
 
   test('fetch users for role', () async {
     for (var role in [canPub, canSub]) {
-      var query = RoleQuery()..where.id.equals(role.idAsInt);
-      var r = await query.getOne(executor);
+      var query = RoleQuery()..where!.id.equals(role!.idAsInt!);
+      var r = await (query.getOne(executor) as FutureOr<Role>);
       expect(r.users.toList(), [thosakwe]);
     }
   });
@@ -121,12 +122,12 @@ manyToManyTests(FutureOr<QueryExecutor> Function() createExecutor,
       ..username = 'Prince'
       ..password = 'Rogers'
       ..email = 'Nelson';
-    var user = await userQuery.insert(executor);
+    var user = await (userQuery.insert(executor) as FutureOr<User>);
     expect(user.roles, isEmpty);
 
     // Fetch again, just to be doubly sure.
-    var query = UserQuery()..where.id.equals(user.idAsInt);
-    var fetched = await query.getOne(executor);
+    var query = UserQuery()..where!.id.equals(user.idAsInt!);
+    var fetched = await (query.getOne(executor) as FutureOr<User>);
     expect(fetched.roles, isEmpty);
   });
 }

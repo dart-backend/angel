@@ -4,8 +4,8 @@ import 'package:test/test.dart';
 import 'models/has_car.dart';
 
 enumAndNestedTests(FutureOr<QueryExecutor> Function() createExecutor,
-    {FutureOr<void> Function(QueryExecutor) close}) {
-  QueryExecutor executor;
+    {FutureOr<void> Function(QueryExecutor)? close}) {
+  late QueryExecutor executor;
   close ??= (_) => null;
 
   setUp(() async {
@@ -14,12 +14,12 @@ enumAndNestedTests(FutureOr<QueryExecutor> Function() createExecutor,
 
   test('insert', () async {
     var query = HasCarQuery()..values.type = CarType.sedan;
-    var result = await query.insert(executor);
+    var result = await (query.insert(executor) as FutureOr<HasCar>);
     expect(result.type, CarType.sedan);
   });
 
   group('query', () {
-    HasCar initialValue;
+    HasCar? initialValue;
 
     setUp(() async {
       var query = HasCarQuery();
@@ -29,10 +29,10 @@ enumAndNestedTests(FutureOr<QueryExecutor> Function() createExecutor,
 
     test('query by enum', () async {
       // Check for mismatched type
-      var query = HasCarQuery()..where.type.equals(CarType.atv);
+      var query = HasCarQuery()..where!.type.equals(CarType.atv);
       expect(await query.get(executor), isEmpty);
 
-      query = HasCarQuery()..where.type.equals(initialValue.type);
+      query = HasCarQuery()..where!.type.equals(initialValue!.type);
       expect(await query.getOne(executor), initialValue);
     });
   });

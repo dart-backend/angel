@@ -4,10 +4,10 @@ import 'package:test/test.dart';
 import 'models/tree.dart';
 
 hasManyTests(FutureOr<QueryExecutor> Function() createExecutor,
-    {FutureOr<void> Function(QueryExecutor) close}) {
-  QueryExecutor executor;
-  Tree appleTree;
-  int treeId;
+    {FutureOr<void> Function(QueryExecutor)? close}) {
+  late QueryExecutor executor;
+  Tree? appleTree;
+  late int treeId;
   close ??= (_) => null;
 
   setUp(() async {
@@ -15,24 +15,24 @@ hasManyTests(FutureOr<QueryExecutor> Function() createExecutor,
 
     executor = await createExecutor();
     appleTree = await query.insert(executor);
-    treeId = int.parse(appleTree.id);
+    treeId = int.parse(appleTree!.id!);
   });
 
-  tearDown(() => close(executor));
+  tearDown(() => close!(executor));
 
   test('list is empty if there is nothing', () {
-    expect(appleTree.rings, 10);
-    expect(appleTree.fruits, isEmpty);
+    expect(appleTree!.rings, 10);
+    expect(appleTree!.fruits, isEmpty);
   });
 
   group('mutations', () {
-    Fruit apple, banana;
+    Fruit? apple, banana;
 
     void verify(Tree tree) {
-      print(tree.fruits.map(FruitSerializer.toMap).toList());
+      print(tree.fruits!.map(FruitSerializer.toMap).toList());
       expect(tree.fruits, hasLength(2));
-      expect(tree.fruits[0].commonName, apple.commonName);
-      expect(tree.fruits[1].commonName, banana.commonName);
+      expect(tree.fruits![0].commonName, apple!.commonName);
+      expect(tree.fruits![1].commonName, banana!.commonName);
     }
 
     setUp(() async {
@@ -49,31 +49,31 @@ hasManyTests(FutureOr<QueryExecutor> Function() createExecutor,
     });
 
     test('can fetch any children', () async {
-      var query = new TreeQuery()..where.id.equals(treeId);
-      var tree = await query.getOne(executor);
+      var query = new TreeQuery()..where!.id.equals(treeId);
+      var tree = await (query.getOne(executor) as FutureOr<Tree>);
       verify(tree);
     });
 
     test('sets on update', () async {
       var tq = new TreeQuery()
-        ..where.id.equals(treeId)
+        ..where!.id.equals(treeId)
         ..values.rings = 24;
-      var tree = await tq.updateOne(executor);
+      var tree = await (tq.updateOne(executor) as FutureOr<Tree>);
       verify(tree);
       expect(tree.rings, 24);
     });
 
     test('sets on delete', () async {
-      var tq = new TreeQuery()..where.id.equals(treeId);
-      var tree = await tq.deleteOne(executor);
+      var tq = new TreeQuery()..where!.id.equals(treeId);
+      var tree = await (tq.deleteOne(executor) as FutureOr<Tree>);
       verify(tree);
     });
 
     test('returns empty on false subquery', () async {
       var tq = new TreeQuery()
-        ..where.id.equals(treeId)
-        ..fruits.where.commonName.equals('Kiwi');
-      var tree = await tq.getOne(executor);
+        ..where!.id.equals(treeId)
+        ..fruits!.where!.commonName.equals('Kiwi');
+      var tree = await (tq.getOne(executor) as FutureOr<Tree>);
       expect(tree.fruits, isEmpty);
     });
   });

@@ -8,14 +8,14 @@ part 'custom_expr.g.dart';
 @orm
 class _Numbers extends Model {
   @Column(expression: 'SELECT 2')
-  int two;
+  int? two;
 }
 
 @serializable
 @orm
 class _Alphabet extends Model {
-  String value;
+  String? value;
 
   @belongsTo
-  _Numbers numbers;
+  _Numbers? numbers;
 }

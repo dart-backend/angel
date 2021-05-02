@@ -11,15 +11,15 @@ part 'tree.g.dart';
 @orm
 class _Tree extends Model {
   @Column(indexType: IndexType.unique, type: ColumnType.smallInt)
-  int rings;
+  int? rings;
 
   @hasMany
-  List<_Fruit> fruits;
+  List<_Fruit>? fruits;
 }
 
 @serializable
 @orm
 class _Fruit extends Model {
-  int treeId;
-  String commonName;
+  int? treeId;
+  String? commonName;
 }

@@ -48,8 +48,8 @@ class CustomerMigration extends Migration {
 // OrmGenerator
 // **************************************************************************
 
-class OrderQuery extends Query<Order, OrderQueryWhere> {
-  OrderQuery({Query parent, Set<String> trampoline}) : super(parent: parent) {
+class OrderQuery extends Query<Order?, OrderQueryWhere?> {
+  OrderQuery({Query? parent, Set<String>? trampoline}) : super(parent: parent) {
     trampoline ??= Set();
     trampoline.add(tableName);
     _where = OrderQueryWhere(this);
@@ -62,9 +62,9 @@ class OrderQuery extends Query<Order, OrderQueryWhere> {
   @override
   final OrderQueryValues values = OrderQueryValues();
 
-  OrderQueryWhere _where;
+  OrderQueryWhere? _where;
 
-  CustomerQuery _customer;
+  CustomerQuery? _customer;
 
   @override
   get casts {
@@ -90,7 +90,7 @@ class OrderQuery extends Query<Order, OrderQueryWhere> {
   }
 
   @override
-  OrderQueryWhere get where {
+  OrderQueryWhere? get where {
     return _where;
   }
 
@@ -99,15 +99,15 @@ class OrderQuery extends Query<Order, OrderQueryWhere> {
     return OrderQueryWhere(this);
   }
 
-  static Order parseRow(List row) {
+  static Order? parseRow(List row) {
     if (row.every((x) => x == null)) return null;
     var model = Order(
         id: row[0].toString(),
-        createdAt: (row[1] as DateTime),
-        updatedAt: (row[2] as DateTime),
-        employeeId: (row[4] as int),
-        orderDate: (row[5] as DateTime),
-        shipperId: (row[6] as int));
+        createdAt: (row[1] as DateTime?),
+        updatedAt: (row[2] as DateTime?),
+        employeeId: (row[4] as int?),
+        orderDate: (row[5] as DateTime?),
+        shipperId: (row[6] as int?));
     if (row.length > 7) {
       model = model.copyWith(
           customer: CustomerQuery.parseRow(row.skip(7).take(3).toList()));
@@ -120,7 +120,7 @@ class OrderQuery extends Query<Order, OrderQueryWhere> {
     return parseRow(row);
   }
 
-  CustomerQuery get customer {
+  CustomerQuery? get customer {
     return _customer;
   }
 }
@@ -169,41 +169,41 @@ class OrderQueryValues extends MapQueryValues {
     return {};
   }
 
-  String get id {
-    return (values['id'] as String);
+  String? get id {
+    return (values['id'] as String?);
   }
 
-  set id(String value) => values['id'] = value;
-  DateTime get createdAt {
-    return (values['created_at'] as DateTime);
+  set id(String? value) => values['id'] = value;
+  DateTime? get createdAt {
+    return (values['created_at'] as DateTime?);
   }
 
-  set createdAt(DateTime value) => values['created_at'] = value;
-  DateTime get updatedAt {
-    return (values['updated_at'] as DateTime);
+  set createdAt(DateTime? value) => values['created_at'] = value;
+  DateTime? get updatedAt {
+    return (values['updated_at'] as DateTime?);
   }
 
-  set updatedAt(DateTime value) => values['updated_at'] = value;
-  int get customerId {
-    return (values['customer_id'] as int);
+  set updatedAt(DateTime? value) => values['updated_at'] = value;
+  int? get customerId {
+    return (values['customer_id'] as int?);
   }
 
-  set customerId(int value) => values['customer_id'] = value;
-  int get employeeId {
-    return (values['employee_id'] as int);
+  set customerId(int? value) => values['customer_id'] = value;
+  int? get employeeId {
+    return (values['employee_id'] as int?);
   }
 
-  set employeeId(int value) => values['employee_id'] = value;
-  DateTime get orderDate {
-    return (values['order_date'] as DateTime);
+  set employeeId(int? value) => values['employee_id'] = value;
+  DateTime? get orderDate {
+    return (values['order_date'] as DateTime?);
   }
 
-  set orderDate(DateTime value) => values['order_date'] = value;
-  int get shipperId {
-    return (values['shipper_id'] as int);
+  set orderDate(DateTime? value) => values['order_date'] = value;
+  int? get shipperId {
+    return (values['shipper_id'] as int?);
   }
 
-  set shipperId(int value) => values['shipper_id'] = value;
+  set shipperId(int? value) => values['shipper_id'] = value;
   void copyFrom(Order model) {
     createdAt = model.createdAt;
     updatedAt = model.updatedAt;
@@ -211,13 +211,13 @@ class OrderQueryValues extends MapQueryValues {
     orderDate = model.orderDate;
     shipperId = model.shipperId;
     if (model.customer != null) {
-      values['customer_id'] = model.customer.id;
+      values['customer_id'] = model.customer!.id;
     }
   }
 }
 
-class CustomerQuery extends Query<Customer, CustomerQueryWhere> {
-  CustomerQuery({Query parent, Set<String> trampoline})
+class CustomerQuery extends Query<Customer?, CustomerQueryWhere?> {
+  CustomerQuery({Query? parent, Set<String>? trampoline})
       : super(parent: parent) {
     trampoline ??= Set();
     trampoline.add(tableName);
@@ -227,7 +227,7 @@ class CustomerQuery extends Query<Customer, CustomerQueryWhere> {
   @override
   final CustomerQueryValues values = CustomerQueryValues();
 
-  CustomerQueryWhere _where;
+  CustomerQueryWhere? _where;
 
   @override
   get casts {
@@ -245,7 +245,7 @@ class CustomerQuery extends Query<Customer, CustomerQueryWhere> {
   }
 
   @override
-  CustomerQueryWhere get where {
+  CustomerQueryWhere? get where {
     return _where;
   }
 
@@ -254,12 +254,12 @@ class CustomerQuery extends Query<Customer, CustomerQueryWhere> {
     return CustomerQueryWhere(this);
   }
 
-  static Customer parseRow(List row) {
+  static Customer? parseRow(List row) {
     if (row.every((x) => x == null)) return null;
     var model = Customer(
         id: row[0].toString(),
-        createdAt: (row[1] as DateTime),
-        updatedAt: (row[2] as DateTime));
+        createdAt: (row[1] as DateTime?),
+        updatedAt: (row[2] as DateTime?));
     return model;
   }
 
@@ -293,21 +293,21 @@ class CustomerQueryValues extends MapQueryValues {
     return {};
   }
 
-  String get id {
-    return (values['id'] as String);
+  String? get id {
+    return (values['id'] as String?);
   }
 
-  set id(String value) => values['id'] = value;
-  DateTime get createdAt {
-    return (values['created_at'] as DateTime);
+  set id(String? value) => values['id'] = value;
+  DateTime? get createdAt {
+    return (values['created_at'] as DateTime?);
   }
 
-  set createdAt(DateTime value) => values['created_at'] = value;
-  DateTime get updatedAt {
-    return (values['updated_at'] as DateTime);
+  set createdAt(DateTime? value) => values['created_at'] = value;
+  DateTime? get updatedAt {
+    return (values['updated_at'] as DateTime?);
   }
 
-  set updatedAt(DateTime value) => values['updated_at'] = value;
+  set updatedAt(DateTime? value) => values['updated_at'] = value;
   void copyFrom(Customer model) {
     createdAt = model.createdAt;
     updatedAt = model.updatedAt;
@@ -331,36 +331,36 @@ class Order extends _Order {
 
   /// A unique identifier corresponding to this item.
   @override
-  String id;
+  String? id;
 
   /// The time at which this item was created.
   @override
-  DateTime createdAt;
+  DateTime? createdAt;
 
   /// The last time at which this item was updated.
   @override
-  DateTime updatedAt;
+  DateTime? updatedAt;
 
   @override
-  final _Customer customer;
+  final _Customer? customer;
 
   @override
-  final int employeeId;
+  final int? employeeId;
 
   @override
-  final DateTime orderDate;
+  final DateTime? orderDate;
 
   @override
-  final int shipperId;
+  final int? shipperId;
 
   Order copyWith(
-      {String id,
-      DateTime createdAt,
-      DateTime updatedAt,
-      _Customer customer,
-      int employeeId,
-      DateTime orderDate,
-      int shipperId}) {
+      {String? id,
+      DateTime? createdAt,
+      DateTime? updatedAt,
+      _Customer? customer,
+      int? employeeId,
+      DateTime? orderDate,
+      int? shipperId}) {
     return Order(
         id: id ?? this.id,
         createdAt: createdAt ?? this.createdAt,
@@ -404,17 +404,17 @@ class Customer extends _Customer {
 
   /// A unique identifier corresponding to this item.
   @override
-  String id;
+  String? id;
 
   /// The time at which this item was created.
   @override
-  DateTime createdAt;
+  DateTime? createdAt;
 
   /// The last time at which this item was updated.
   @override
-  DateTime updatedAt;
+  DateTime? updatedAt;
 
-  Customer copyWith({String id, DateTime createdAt, DateTime updatedAt}) {
+  Customer copyWith({String? id, DateTime? createdAt, DateTime? updatedAt}) {
     return Customer(
         id: id ?? this.id,
         createdAt: createdAt ?? this.createdAt,
@@ -438,7 +438,7 @@ class Customer extends _Customer {
     return "Customer(id=$id, createdAt=$createdAt, updatedAt=$updatedAt)";
   }
 
-  Map<String, dynamic> toJson() {
+  Map<String, dynamic>? toJson() {
     return CustomerSerializer.toMap(this);
   }
 }
@@ -472,33 +472,30 @@ class OrderSerializer extends Codec<Order, Map> {
   get decoder => const OrderDecoder();
   static Order fromMap(Map map) {
     return Order(
-        id: map['id'] as String,
+        id: map['id'] as String?,
         createdAt: map['created_at'] != null
             ? (map['created_at'] is DateTime
-                ? (map['created_at'] as DateTime)
+                ? (map['created_at'] as DateTime?)
                 : DateTime.parse(map['created_at'].toString()))
             : null,
         updatedAt: map['updated_at'] != null
             ? (map['updated_at'] is DateTime
-                ? (map['updated_at'] as DateTime)
+                ? (map['updated_at'] as DateTime?)
                 : DateTime.parse(map['updated_at'].toString()))
             : null,
         customer: map['customer'] != null
             ? CustomerSerializer.fromMap(map['customer'] as Map)
             : null,
-        employeeId: map['employee_id'] as int,
+        employeeId: map['employee_id'] as int?,
         orderDate: map['order_date'] != null
             ? (map['order_date'] is DateTime
-                ? (map['order_date'] as DateTime)
+                ? (map['order_date'] as DateTime?)
                 : DateTime.parse(map['order_date'].toString()))
             : null,
-        shipperId: map['shipper_id'] as int);
+        shipperId: map['shipper_id'] as int?);
   }
 
   static Map<String, dynamic> toMap(_Order model) {
-    if (model == null) {
-      return null;
-    }
     return {
       'id': model.id,
       'created_at': model.createdAt?.toIso8601String(),
@@ -539,11 +536,11 @@ abstract class OrderFields {
 
 const CustomerSerializer customerSerializer = CustomerSerializer();
 
-class CustomerEncoder extends Converter<Customer, Map> {
+class CustomerEncoder extends Converter<Customer, Map?> {
   const CustomerEncoder();
 
   @override
-  Map convert(Customer model) => CustomerSerializer.toMap(model);
+  Map? convert(Customer model) => CustomerSerializer.toMap(model);
 }
 
 class CustomerDecoder extends Converter<Map, Customer> {
@@ -553,7 +550,7 @@ class CustomerDecoder extends Converter<Map, Customer> {
   Customer convert(Map map) => CustomerSerializer.fromMap(map);
 }
 
-class CustomerSerializer extends Codec<Customer, Map> {
+class CustomerSerializer extends Codec<Customer, Map?> {
   const CustomerSerializer();
 
   @override
@@ -562,20 +559,20 @@ class CustomerSerializer extends Codec<Customer, Map> {
   get decoder => const CustomerDecoder();
   static Customer fromMap(Map map) {
     return Customer(
-        id: map['id'] as String,
+        id: map['id'] as String?,
         createdAt: map['created_at'] != null
             ? (map['created_at'] is DateTime
-                ? (map['created_at'] as DateTime)
+                ? (map['created_at'] as DateTime?)
                 : DateTime.parse(map['created_at'].toString()))
             : null,
         updatedAt: map['updated_at'] != null
             ? (map['updated_at'] is DateTime
-                ? (map['updated_at'] as DateTime)
+                ? (map['updated_at'] as DateTime?)
                 : DateTime.parse(map['updated_at'].toString()))
             : null);
   }
 
-  static Map<String, dynamic> toMap(_Customer model) {
+  static Map<String, dynamic>? toMap(_Customer? model) {
     if (model == null) {
       return null;
     }

@@ -10,9 +10,9 @@ part 'user.g.dart';
 @serializable
 @orm
 abstract class _User extends Model {
-  String get username;
-  String get password;
-  String get email;
+  String? get username;
+  String? get password;
+  String? get email;
 
   @ManyToMany(_RoleUser)
   List<_Role> get roles;
@@ -22,16 +22,16 @@ abstract class _User extends Model {
 @orm
 abstract class _RoleUser {
   @belongsTo
-  _Role get role;
+  _Role? get role;
 
   @belongsTo
-  _User get user;
+  _User? get user;
 }
 
 @serializable
 @orm
 abstract class _Role extends Model {
-  String name;
+  String? name;
 
   @ManyToMany(_RoleUser)
   List<_User> get users;
