@@ -23,10 +23,10 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
 
   /// Generate an extended model class.
   void generateClass(
-      BuildContext ctx, LibraryBuilder file, ConstantReader annotation) {
+      BuildContext? ctx, LibraryBuilder file, ConstantReader annotation) {
     file.body.add(Class((clazz) {
       clazz
-        ..name = ctx.modelClassNameRecase.pascalCase
+        ..name = ctx!.modelClassNameRecase.pascalCase
         ..annotations.add(refer('generatedSerializable'));
 
       for (var ann in ctx.includeAnnotations) {
@@ -57,7 +57,7 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
 
           for (var el in [field.getter, field]) {
             if (el?.documentationComment != null) {
-              b.docs.addAll(el.documentationComment.split('\n'));
+              b.docs.addAll(el!.documentationComment!.split('\n'));
             }
           }
         }));
@@ -92,10 +92,10 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
 
   /// Generate a constructor with named parameters.
   void generateConstructor(
-      BuildContext ctx, ClassBuilder clazz, LibraryBuilder file) {
+      BuildContext? ctx, ClassBuilder clazz, LibraryBuilder file) {
     clazz.constructors.add(Constructor((constructor) {
       // Add all `super` params
-      constructor.constant = (ctx.clazz.unnamedConstructor?.isConst == true ||
+      constructor.constant = (ctx!.clazz.unnamedConstructor?.isConst == true ||
               shouldBeConstant(ctx)) &&
           ctx.fields.every((f) {
             return f.setter == null && f is! ShimFieldImpl;
@@ -113,7 +113,7 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
                   .isAssignableFromType(field.type)
               ? 'List'
               : 'Map';
-          var defaultValue = typeName == 'List' ? '[]' : '{}';
+          String? defaultValue = typeName == 'List' ? '[]' : '{}';
           var existingDefault = ctx.defaults[field.name];
 
           if (existingDefault != null) {
@@ -136,7 +136,7 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
           var existingDefault = ctx.defaults[field.name];
 
           if (existingDefault != null) {
-            b.defaultTo = Code(dartObjectToString(existingDefault));
+            b.defaultTo = Code(dartObjectToString(existingDefault)!);
           }
 
           if (!isListOrMapType(field.type)) {
@@ -164,11 +164,11 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
 
   /// Generate a `copyWith` method.
   void generateCopyWithMethod(
-      BuildContext ctx, ClassBuilder clazz, LibraryBuilder file) {
+      BuildContext? ctx, ClassBuilder clazz, LibraryBuilder file) {
     clazz.methods.add(Method((method) {
       method
         ..name = 'copyWith'
-        ..returns = ctx.modelClassType;
+        ..returns = ctx!.modelClassType;
 
       // Add all `super` params
       if (ctx.constructorParameters.isNotEmpty) {
@@ -204,12 +204,12 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
     }));
   }
 
-  static String generateEquality(DartType type, [bool nullable = false]) {
+  static String? generateEquality(DartType type, [bool nullable = false]) {
     if (type is InterfaceType) {
       if (const TypeChecker.fromRuntime(List).isAssignableFromType(type)) {
         if (type.typeArguments.length == 1) {
           var eq = generateEquality(type.typeArguments[0]);
-          return 'ListEquality<${type.typeArguments[0].element.name}>($eq)';
+          return 'ListEquality<${type.typeArguments[0].element!.name}>($eq)';
         } else {
           return 'ListEquality()';
         }
@@ -218,7 +218,7 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
         if (type.typeArguments.length == 2) {
           var keq = generateEquality(type.typeArguments[0]),
               veq = generateEquality(type.typeArguments[1]);
-          return 'MapEquality<${type.typeArguments[0].element.name}, ${type.typeArguments[1].element.name}>(keys: $keq, values: $veq)';
+          return 'MapEquality<${type.typeArguments[0].element!.name}, ${type.typeArguments[1].element!.name}>(keys: $keq, values: $veq)';
         } else {
           return 'MapEquality()';
         }
@@ -239,7 +239,7 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
     return (a, b) => '$eq.equals($a, $b)';
   }
 
-  void generateHashCode(BuildContext ctx, ClassBuilder clazz) {
+  void generateHashCode(BuildContext? ctx, ClassBuilder clazz) {
     clazz
       ..methods.add(Method((method) {
         method
@@ -248,20 +248,20 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
           ..returns = refer('int')
           ..annotations.add(refer('override'))
           ..body = refer('hashObjects')
-              .call([literalList(ctx.fields.map((f) => refer(f.name)))])
+              .call([literalList(ctx!.fields.map((f) => refer(f.name)))])
               .returned
               .statement;
       }));
   }
 
-  void generateToString(BuildContext ctx, ClassBuilder clazz) {
+  void generateToString(BuildContext? ctx, ClassBuilder clazz) {
     clazz.methods.add(Method((b) {
       b
         ..name = 'toString'
         ..returns = refer('String')
         ..annotations.add(refer('override'))
         ..body = Block((b) {
-          var buf = StringBuffer('\"${ctx.modelClassName}(');
+          var buf = StringBuffer('\"${ctx!.modelClassName}(');
           var i = 0;
           for (var field in ctx.fields) {
             if (i++ > 0) buf.write(', ');
@@ -274,14 +274,14 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
   }
 
   void generateEqualsOperator(
-      BuildContext ctx, ClassBuilder clazz, LibraryBuilder file) {
+      BuildContext? ctx, ClassBuilder clazz, LibraryBuilder file) {
     clazz.methods.add(Method((method) {
       method
         ..name = 'operator =='
         ..returns = Reference('bool')
         ..requiredParameters.add(Parameter((b) => b.name = 'other'));
 
-      var buf = ['other is ${ctx.originalClassName}'];
+      var buf = ['other is ${ctx!.originalClassName}'];
 
       buf.addAll(ctx.fields.map((f) {
         return generateComparator(f.type)('other.${f.name}', f.name);

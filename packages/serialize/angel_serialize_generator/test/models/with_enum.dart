@@ -7,11 +7,11 @@ part 'with_enum.g.dart';
 @serializable
 abstract class _WithEnum {
   @DefaultsTo(WithEnumType.b)
-  WithEnumType get type;
+  WithEnumType? get type;
 
-  List<int> get finalList;
+  List<int>? get finalList;
 
-  Uint8List get imageBytes;
+  Uint8List? get imageBytes;
 }
 
 enum WithEnumType { a, b, c }

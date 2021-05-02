@@ -4,9 +4,9 @@ import 'package:collection/collection.dart';
 import 'package:meta/meta.dart';
 part 'has_map.g.dart';
 
-Map _fromString(v) => json.decode(v.toString()) as Map;
+Map? _fromString(v) => json.decode(v.toString()) as Map?;
 
-String _toString(Map v) => json.encode(v);
+String _toString(Map? v) => json.encode(v);
 
 @serializable
 abstract class _HasMap {
@@ -15,5 +15,5 @@ abstract class _HasMap {
       deserializer: #_fromString,
       isNullable: false,
       serializesTo: String)
-  Map get value;
+  Map? get value;
 }

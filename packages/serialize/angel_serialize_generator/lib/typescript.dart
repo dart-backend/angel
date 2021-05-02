@@ -13,13 +13,13 @@ class TypeScriptDefinitionBuilder implements Builder {
   }
 
   Future<String> compileToTypeScriptType(
-      BuildContext ctx,
+      BuildContext? ctx,
       String fieldName,
       DartType type,
       List<String> refs,
       List<CodeBuffer> ext,
       BuildStep buildStep) async {
-    String typeScriptType = 'any';
+    var typeScriptType = 'any';
 
     var types = const {
       num: 'number',
@@ -58,7 +58,7 @@ class TypeScriptDefinitionBuilder implements Builder {
       );*/
 
         typeScriptType =
-            ctx.modelClassNameRecase.pascalCase + ReCase(fieldName).pascalCase;
+            ctx!.modelClassNameRecase.pascalCase + ReCase(fieldName).pascalCase;
 
         ext.add(CodeBuffer()
           ..writeln('interface $typeScriptType {')
@@ -81,10 +81,11 @@ class TypeScriptDefinitionBuilder implements Builder {
 
         if (!p.equals(sourcePath, targetPath)) {
           var relative = p.relative(targetPath, from: sourcePath);
-          String ref;
+          String? ref;
 
           if (type.element.source.uri.scheme == 'asset') {
-            var id = AssetId.resolve(type.element.source.uri.toString());
+            var id =
+                AssetId.resolve(Uri.parse(type.element.source.uri.toString()));
             if (id.package != buildStep.inputId.package) {
               ref = '/// <reference types="${id.package}" />';
             }
@@ -103,14 +104,14 @@ class TypeScriptDefinitionBuilder implements Builder {
           if (!refs.contains(ref)) refs.add(ref);
         }
 
-        var ctx = await buildContext(
+        var ctx = await (buildContext(
           type.element,
           ConstantReader(
               serializableTypeChecker.firstAnnotationOf(type.element)),
           buildStep,
           buildStep.resolver,
           autoSnakeCaseNames,
-        );
+        ) as FutureOr<BuildContext>);
         typeScriptType = ctx.modelClassNameRecase.pascalCase;
       }
     }
@@ -120,7 +121,7 @@ class TypeScriptDefinitionBuilder implements Builder {
 
   @override
   Future build(BuildStep buildStep) async {
-    var contexts = <BuildContext>[];
+    var contexts = <BuildContext?>[];
     LibraryReader lib;
 
     try {
@@ -159,7 +160,7 @@ class TypeScriptDefinitionBuilder implements Builder {
           element.element as ClassElement,
           element.annotation,
           buildStep,
-          await buildStep.resolver,
+          buildStep.resolver,
           autoSnakeCaseNames != false));
     }
 
@@ -181,7 +182,7 @@ class TypeScriptDefinitionBuilder implements Builder {
     for (var ctx in contexts) {
       // interface Bar { ... }
       buf
-        ..writeln('interface ${ctx.modelClassNameRecase.pascalCase} {')
+        ..writeln('interface ${ctx!.modelClassNameRecase.pascalCase} {')
         ..indent();
 
       var ext = <CodeBuffer>[];
@@ -195,7 +196,11 @@ class TypeScriptDefinitionBuilder implements Builder {
             ctx.resolveSerializedFieldType(field.name), refs, ext, buildStep);
 
         // foo: string;
-        if (!ctx.requiredFields.containsKey(field.name)) alias += '?';
+        if (!ctx.requiredFields.containsKey(field.name)) {
+          if (alias != null) {
+            alias += '?';
+          }
+        }
         buf.writeln('$alias: $typeScriptType;');
       }
 

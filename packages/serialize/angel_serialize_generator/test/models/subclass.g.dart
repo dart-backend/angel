@@ -8,15 +8,15 @@ part of 'subclass.dart';
 
 @generatedSerializable
 class Animal extends _Animal {
-  Animal({@required this.genus, @required this.species});
+  Animal({required this.genus, required this.species});
 
   @override
-  String genus;
+  String? genus;
 
   @override
-  String species;
+  String? species;
 
-  Animal copyWith({String genus, String species}) {
+  Animal copyWith({String? genus, String? species}) {
     return Animal(genus: genus ?? this.genus, species: species ?? this.species);
   }
 
@@ -41,18 +41,18 @@ class Animal extends _Animal {
 
 @generatedSerializable
 class Bird extends _Bird {
-  Bird({@required this.genus, @required this.species, this.isSparrow = false});
+  Bird({required this.genus, required this.species, this.isSparrow = false});
 
   @override
-  String genus;
+  String? genus;
 
   @override
-  String species;
+  String? species;
 
   @override
-  bool isSparrow;
+  bool? isSparrow;
 
-  Bird copyWith({String genus, String species, bool isSparrow}) {
+  Bird copyWith({String? genus, String? species, bool? isSparrow}) {
     return Bird(
         genus: genus ?? this.genus,
         species: species ?? this.species,
@@ -118,13 +118,10 @@ class AnimalSerializer extends Codec<Animal, Map> {
     }
 
     return Animal(
-        genus: map['genus'] as String, species: map['species'] as String);
+        genus: map['genus'] as String?, species: map['species'] as String?);
   }
 
   static Map<String, dynamic> toMap(_Animal model) {
-    if (model == null) {
-      return null;
-    }
     if (model.genus == null) {
       throw FormatException("Missing required field 'genus' on Animal.");
     }
@@ -178,15 +175,12 @@ class BirdSerializer extends Codec<Bird, Map> {
     }
 
     return Bird(
-        genus: map['genus'] as String,
-        species: map['species'] as String,
-        isSparrow: map['is_sparrow'] as bool ?? false);
+        genus: map['genus'] as String?,
+        species: map['species'] as String?,
+        isSparrow: map['is_sparrow'] as bool? ?? false);
   }
 
   static Map<String, dynamic> toMap(_Bird model) {
-    if (model == null) {
-      return null;
-    }
     if (model.genus == null) {
       throw FormatException("Missing required field 'genus' on Bird.");
     }

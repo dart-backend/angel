@@ -31,10 +31,14 @@ const TypeChecker generatedSerializableTypeChecker =
 final Map<String, BuildContext> _cache = {};
 
 /// Create a [BuildContext].
-Future<BuildContext> buildContext(ClassElement clazz, ConstantReader annotation,
-    BuildStep buildStep, Resolver resolver, bool autoSnakeCaseNames,
+Future<BuildContext?> buildContext(
+    ClassElement clazz,
+    ConstantReader annotation,
+    BuildStep buildStep,
+    Resolver resolver,
+    bool autoSnakeCaseNames,
     {bool heedExclude = true}) async {
-  var id = clazz.location.components.join('-');
+  var id = clazz.location!.components.join('-');
   if (_cache.containsKey(id)) {
     return _cache[id];
   }
@@ -53,11 +57,11 @@ Future<BuildContext> buildContext(ClassElement clazz, ConstantReader annotation,
         annotation.peek('includeAnnotations')?.listValue ?? <DartObject>[],
   );
   // var lib = await resolver.libraryFor(buildStep.inputId);
-  List<String> fieldNames = [];
+  var fieldNames = <String>[];
   var fields = <FieldElement>[];
 
   // Crawl for classes from parent classes.
-  void crawlClass(InterfaceType t) {
+  void crawlClass(InterfaceType? t) {
     while (t != null) {
       fields.insertAll(0, t.element.fields);
       t.interfaces.forEach(crawlClass);
@@ -74,8 +78,8 @@ Future<BuildContext> buildContext(ClassElement clazz, ConstantReader annotation,
     }
 
     if (field.getter != null &&
-        (field.setter != null || field.getter.isAbstract)) {
-      var el = field.setter == null ? field.getter : field;
+        (field.setter != null || field.getter!.isAbstract)) {
+      var el = field.setter == null ? field.getter! : field;
       fieldNames.add(field.name);
 
       // Check for @SerializableField
@@ -100,11 +104,11 @@ Future<BuildContext> buildContext(ClassElement clazz, ConstantReader annotation,
           ctx.requiredFields[field.name] = reason;
         }
 
-        if (sField.exclude) {
+        if (sField.exclude!) {
           // ignore: deprecated_member_use
           ctx.excluded[field.name] = Exclude(
-            canSerialize: sField.canSerialize,
-            canDeserialize: sField.canDeserialize,
+            canSerialize: sField.canSerialize!,
+            canDeserialize: sField.canDeserialize!,
           );
         }
       }
@@ -156,17 +160,17 @@ Future<BuildContext> buildContext(ClassElement clazz, ConstantReader annotation,
 
         // Check for alias
         // ignore: deprecated_member_use
-        Alias alias;
+        Alias? alias;
         var aliasAnn = aliasTypeChecker.firstAnnotationOf(el);
 
         if (aliasAnn != null) {
           // ignore: deprecated_member_use
-          alias = Alias(aliasAnn.getField('name').toStringValue());
+          alias = Alias(aliasAnn.getField('name')!.toStringValue()!);
           foundNone = false;
         }
 
-        if (alias?.name?.isNotEmpty == true) {
-          ctx.aliases[field.name] = alias.name;
+        if (alias?.name.isNotEmpty == true) {
+          ctx.aliases[field.name] = alias!.name;
         } else if (autoSnakeCaseNames != false) {
           ctx.aliases[field.name] = ReCase(field.name).snakeCase;
         }
@@ -234,7 +238,7 @@ Future<BuildContext> buildContext(ClassElement clazz, ConstantReader annotation,
   // }
 
   // Get constructor params, if any
-  ctx.constructorParameters.addAll(clazz.unnamedConstructor.parameters);
+  ctx.constructorParameters.addAll(clazz.unnamedConstructor!.parameters);
 
   return ctx;
 }

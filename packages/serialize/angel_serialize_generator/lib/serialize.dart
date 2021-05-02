@@ -6,7 +6,7 @@ class SerializerGenerator extends GeneratorForAnnotation<Serializable> {
   const SerializerGenerator({this.autoSnakeCaseNames = true});
 
   @override
-  Future<String> generateForAnnotatedElement(
+  Future<String?> generateForAnnotatedElement(
       Element element, ConstantReader annotation, BuildStep buildStep) async {
     if (element.kind != ElementKind.CLASS) {
       throw 'Only classes can be annotated with a @Serializable() annotation.';
@@ -25,7 +25,7 @@ class SerializerGenerator extends GeneratorForAnnotation<Serializable> {
     }
 
     var lib = Library((b) {
-      generateClass(serializers.map((s) => s.toIntValue()).toList(), ctx, b);
+      generateClass(serializers.map((s) => s.toIntValue()).toList(), ctx!, b);
       generateFieldsClass(ctx, b);
     });
 
@@ -35,7 +35,7 @@ class SerializerGenerator extends GeneratorForAnnotation<Serializable> {
 
   /// Generate a serializer class.
   void generateClass(
-      List<int> serializers, BuildContext ctx, LibraryBuilder file) {
+      List<int?> serializers, BuildContext ctx, LibraryBuilder file) {
     // Generate canonical codecs, etc.
     var pascal = ctx.modelClassNameRecase.pascalCase,
         camel = ctx.modelClassNameRecase.camelCase;
@@ -105,7 +105,7 @@ class ${pascal}Decoder extends Converter<Map, ${pascal}> {
         ..requiredParameters.add(Parameter((b) {
           b
             ..name = 'model'
-            ..type = refer(ctx.originalClassName);
+            ..type = refer(ctx.originalClassName!);
         }));
 
       var buf = StringBuffer();
@@ -143,7 +143,7 @@ class ${pascal}Decoder extends Converter<Map, ${pascal}> {
         }
 
         if (ctx.fieldInfo[field.name]?.serializer != null) {
-          var name = MirrorSystem.getName(ctx.fieldInfo[field.name].serializer);
+          var name = MirrorSystem.getName(ctx.fieldInfo[field.name]!.serializer!);
           serializedRepresentation = '$name(model.${field.name})';
         }
 
@@ -154,12 +154,12 @@ class ${pascal}Decoder extends Converter<Map, ${pascal}> {
 
         // Serialize model classes via `XSerializer.toMap`
         else if (isModelClass(type)) {
-          var rc = ReCase(type.name);
+          var rc = ReCase(type.name!);
           serializedRepresentation =
               '${serializerToMap(rc, 'model.${field.name}')}';
         } else if (type is InterfaceType) {
           if (isListOfModelType(type)) {
-            var name = type.typeArguments[0].name;
+            var name = type.typeArguments[0].name!;
             if (name.startsWith('_')) name = name.substring(1);
             var rc = ReCase(name);
             var m = serializerToMap(rc, 'm');
@@ -168,7 +168,7 @@ class ${pascal}Decoder extends Converter<Map, ${pascal}> {
               ?.map((m) => $m)
               ?.toList()''';
           } else if (isMapToModelType(type)) {
-            var rc = ReCase(type.typeArguments[1].name);
+            var rc = ReCase(type.typeArguments[1].name!);
             serializedRepresentation =
                 '''model.${field.name}.keys?.fold({}, (map, key) {
               return map..[key] =
@@ -255,7 +255,7 @@ class ${pascal}Decoder extends Converter<Map, ${pascal}> {
         String deserializedRepresentation =
             "map['$alias'] as ${typeToString(type)}";
 
-        var defaultValue = 'null';
+        String? defaultValue = 'null';
         var existingDefault = ctx.defaults[field.name];
 
         if (existingDefault != null) {
@@ -266,7 +266,7 @@ class ${pascal}Decoder extends Converter<Map, ${pascal}> {
 
         if (ctx.fieldInfo[field.name]?.deserializer != null) {
           var name =
-              MirrorSystem.getName(ctx.fieldInfo[field.name].deserializer);
+              MirrorSystem.getName(ctx.fieldInfo[field.name]!.deserializer!);
           deserializedRepresentation = "$name(map['$alias'])";
         } else if (dateTimeTypeChecker.isAssignableFromType(type)) {
           deserializedRepresentation = "map['$alias'] != null ? "
@@ -276,20 +276,20 @@ class ${pascal}Decoder extends Converter<Map, ${pascal}> {
 
         // Serialize model classes via `XSerializer.toMap`
         else if (isModelClass(type)) {
-          var rc = ReCase(type.name);
+          var rc = ReCase(type.name!);
           deserializedRepresentation = "map['$alias'] != null"
               " ? ${rc.pascalCase}Serializer.fromMap(map['$alias'] as Map)"
               " : $defaultValue";
         } else if (type is InterfaceType) {
           if (isListOfModelType(type)) {
-            var rc = ReCase(type.typeArguments[0].name);
+            var rc = ReCase(type.typeArguments[0].name!);
             deserializedRepresentation = "map['$alias'] is Iterable"
                 " ? List.unmodifiable(((map['$alias'] as Iterable)"
                 ".whereType<Map>())"
                 ".map(${rc.pascalCase}Serializer.fromMap))"
                 " : $defaultValue";
           } else if (isMapToModelType(type)) {
-            var rc = ReCase(type.typeArguments[1].name);
+            var rc = ReCase(type.typeArguments[1].name!);
             deserializedRepresentation = '''
                 map['$alias'] is Map
                   ? Map.unmodifiable((map['$alias'] as Map).keys.fold({}, (out, key) {
@@ -359,11 +359,11 @@ class ${pascal}Decoder extends Converter<Map, ${pascal}> {
     }));
   }
 
-  void generateFieldsClass(BuildContext ctx, LibraryBuilder file) {
+  void generateFieldsClass(BuildContext? ctx, LibraryBuilder file) {
     file.body.add(Class((clazz) {
       clazz
         ..abstract = true
-        ..name = '${ctx.modelClassNameRecase.pascalCase}Fields';
+        ..name = '${ctx!.modelClassNameRecase.pascalCase}Fields';
 
       clazz.fields.add(Field((b) {
         b

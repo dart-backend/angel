@@ -11,12 +11,12 @@ class Todo extends _Todo {
   Todo({this.text, this.completed});
 
   @override
-  String text;
+  String? text;
 
   @override
-  bool completed;
+  bool? completed;
 
-  Todo copyWith({String text, bool completed}) {
+  Todo copyWith({String? text, bool? completed}) {
     return Todo(
         text: text ?? this.text, completed: completed ?? this.completed);
   }
@@ -69,13 +69,10 @@ class TodoSerializer extends Codec<Todo, Map> {
   get decoder => const TodoDecoder();
   static Todo fromMap(Map map) {
     return Todo(
-        text: map['text'] as String, completed: map['completed'] as bool);
+        text: map['text'] as String?, completed: map['completed'] as bool?);
   }
 
   static Map<String, dynamic> toMap(_Todo model) {
-    if (model == null) {
-      return null;
-    }
     return {'text': model.text, 'completed': model.completed};
   }
 }

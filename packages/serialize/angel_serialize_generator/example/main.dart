@@ -4,6 +4,6 @@ part 'main.g.dart';
 
 @serializable
 class _Todo {
-  String text;
-  bool completed;
+  String? text;
+  bool? completed;
 }

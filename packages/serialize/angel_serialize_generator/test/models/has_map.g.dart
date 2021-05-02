@@ -8,12 +8,12 @@ part of 'has_map.dart';
 
 @generatedSerializable
 class HasMap implements _HasMap {
-  const HasMap({@required this.value});
+  const HasMap({required this.value});
 
   @override
-  final Map<dynamic, dynamic> value;
+  final Map<dynamic, dynamic>? value;
 
-  HasMap copyWith({Map<dynamic, dynamic> value}) {
+  HasMap copyWith({Map<dynamic, dynamic>? value}) {
     return HasMap(value: value ?? this.value);
   }
 
@@ -75,9 +75,6 @@ class HasMapSerializer extends Codec<HasMap, Map> {
   }
 
   static Map<String, dynamic> toMap(_HasMap model) {
-    if (model == null) {
-      return null;
-    }
     if (model.value == null) {
       throw FormatException("Missing required field 'value' on HasMap.");
     }

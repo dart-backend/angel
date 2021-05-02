@@ -14,38 +14,38 @@ part 'book.g.dart';
   ],
 )
 abstract class _Book extends Model {
-  String author, title, description;
+  String? author, title, description;
 
   /// The number of pages the book has.
-  int pageCount;
+  int? pageCount;
 
-  List<double> notModels;
+  List<double>? notModels;
 
   @SerializableField(alias: 'camelCase', isNullable: true)
-  String camelCaseString;
+  String? camelCaseString;
 }
 
 @Serializable(serializers: Serializers.all)
 abstract class _Author extends Model {
   @SerializableField(isNullable: false)
-  String get name;
+  String? get name;
 
   String get customMethod => 'hey!';
 
   @SerializableField(
       isNullable: false, errorMessage: 'Custom message for missing `age`')
-  int get age;
+  int? get age;
 
   List<_Book> get books;
 
   /// The newest book.
-  _Book get newestBook;
+  _Book? get newestBook;
 
   @SerializableField(exclude: true, isNullable: true)
-  String get secret;
+  String? get secret;
 
   @SerializableField(exclude: true, canDeserialize: true, isNullable: true)
-  String get obscured;
+  String? get obscured;
 }
 
 @Serializable(serializers: Serializers.all)
@@ -61,9 +61,9 @@ abstract class _Bookmark extends Model {
   List<int> get history;
 
   @SerializableField(isNullable: false)
-  int get page;
+  int? get page;
 
-  String get comment;
+  String? get comment;
 
   _Bookmark(this.book);
 }

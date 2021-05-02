@@ -38,9 +38,9 @@ Builder typescriptDefinitionBuilder(_) {
 }
 
 /// Converts a [DartType] to a [TypeReference].
-TypeReference convertTypeReference(DartType t) {
+TypeReference convertTypeReference(DartType? t) {
   return TypeReference((b) {
-    b..symbol = t.element?.displayName;
+    b.symbol = t!.element?.displayName;
 
     if (t is InterfaceType) {
       b.types.addAll(t.typeArguments.map(convertTypeReference));
@@ -50,21 +50,21 @@ TypeReference convertTypeReference(DartType t) {
 
 Expression convertObject(DartObject o) {
   if (o.isNull) return literalNull;
-  if (o.toBoolValue() != null) return literalBool(o.toBoolValue());
-  if (o.toIntValue() != null) return literalNum(o.toIntValue());
-  if (o.toDoubleValue() != null) return literalNum(o.toDoubleValue());
+  if (o.toBoolValue() != null) return literalBool(o.toBoolValue()!);
+  if (o.toIntValue() != null) return literalNum(o.toIntValue()!);
+  if (o.toDoubleValue() != null) return literalNum(o.toDoubleValue()!);
   if (o.toSymbolValue() != null) {
-    return CodeExpression(Code('#' + o.toSymbolValue()));
+    return CodeExpression(Code('#' + o.toSymbolValue()!));
   }
-  if (o.toStringValue() != null) return literalString(o.toStringValue());
+  if (o.toStringValue() != null) return literalString(o.toStringValue()!);
   if (o.toTypeValue() != null) return convertTypeReference(o.toTypeValue());
   if (o.toListValue() != null) {
-    return literalList(o.toListValue().map(convertObject));
+    return literalList(o.toListValue()!.map(convertObject));
   }
   if (o.toMapValue() != null) {
     return literalMap(o
-        .toMapValue()
-        .map((k, v) => MapEntry(convertObject(k), convertObject(v))));
+        .toMapValue()!
+        .map((k, v) => MapEntry(convertObject(k!), convertObject(v!))));
   }
 
   var rev = ConstantReader(o).revive();
@@ -74,36 +74,48 @@ Expression convertObject(DartObject o) {
       rev.namedArguments.map((k, v) => MapEntry(k, convertObject(v))));
 }
 
-String dartObjectToString(DartObject v) {
+String? dartObjectToString(DartObject v) {
   var type = v.type;
   if (v.isNull) return 'null';
-  if (v.toBoolValue() != null) return v.toBoolValue().toString();
-  if (v.toIntValue() != null) return v.toIntValue().toString();
-  if (v.toDoubleValue() != null) return v.toDoubleValue().toString();
-  if (v.toSymbolValue() != null) return '#' + v.toSymbolValue();
-  if (v.toTypeValue() != null) return v.toTypeValue().name;
+  if (v.toBoolValue() != null) {
+    return v.toBoolValue().toString();
+  }
+  if (v.toIntValue() != null) {
+    return v.toIntValue().toString();
+  }
+  if (v.toDoubleValue() != null) {
+    return v.toDoubleValue().toString();
+  }
+  if (v.toSymbolValue() != null) {
+    return '#' + v.toSymbolValue()!;
+  }
+  if (v.toTypeValue() != null) {
+    return v.toTypeValue()!.getDisplayString(withNullability: true);
+  }
   if (v.toListValue() != null) {
-    return 'const [' + v.toListValue().map(dartObjectToString).join(', ') + ']';
+    return 'const [' +
+        v.toListValue()!.map(dartObjectToString).join(', ') +
+        ']';
   }
   if (v.toMapValue() != null) {
     return 'const {' +
-        v.toMapValue().entries.map((entry) {
-          var k = dartObjectToString(entry.key);
-          var v = dartObjectToString(entry.value);
+        v.toMapValue()!.entries.map((entry) {
+          var k = dartObjectToString(entry.key!);
+          var v = dartObjectToString(entry.value!);
           return '$k: $v';
         }).join(', ') +
         '}';
   }
   if (v.toStringValue() != null) {
-    return literalString(v.toStringValue()).accept(DartEmitter()).toString();
+    return literalString(v.toStringValue()!).accept(DartEmitter()).toString();
   }
   if (type is InterfaceType && type.element.isEnum) {
     // Find the index of the enum, then find the member.
     for (var field in type.element.fields) {
       if (field.isEnumConstant && field.isStatic) {
-        var value = type.element.getField(field.name).computeConstantValue();
+        var value = type.element.getField(field.name)!.computeConstantValue();
         if (value == v) {
-          return '${type.element?.displayName}.${field.name}';
+          return '${type.element.displayName}.${field.name}';
         }
       }
     }
@@ -113,14 +125,14 @@ String dartObjectToString(DartObject v) {
 }
 
 /// Determines if a type supports `package:angel_serialize`.
-bool isModelClass(DartType t) {
+bool isModelClass(DartType? t) {
   if (t == null) return false;
 
-  if (serializableTypeChecker.hasAnnotationOf(t.element)) {
+  if (serializableTypeChecker.hasAnnotationOf(t.element!)) {
     return true;
   }
 
-  if (generatedSerializableTypeChecker.hasAnnotationOf(t.element)) {
+  if (generatedSerializableTypeChecker.hasAnnotationOf(t.element!)) {
     return true;
   }
 
@@ -167,13 +179,13 @@ bool isAssignableToModel(DartType type) =>
     const TypeChecker.fromRuntime(Model).isAssignableFromType(type);
 
 /// Compute a [String] representation of a [type].
-String typeToString(DartType type) {
+String? typeToString(DartType type) {
   if (type is InterfaceType) {
     if (type.typeArguments.isEmpty) {
-      return type.element?.displayName;
+      return type.element.displayName;
     }
 
-    var name = type.element?.displayName ?? '';
+    var name = type.element.displayName;
 
     return name + '<' + type.typeArguments.map(typeToString).join(', ') + '>';
   } else {
