@@ -1,8 +1,7 @@
 name: angel_orm
 version: 4.0.0
 description: Runtime support for Angel's ORM. Includes base classes for queries.
-homepage: https://github.com/angel-dart/orm
-environment:
+homepage: https://github.com/dukefirehawk/angel
   sdk: '>=2.12.0 <3.0.0'
 dependencies:
   charcode: ^1.2.0

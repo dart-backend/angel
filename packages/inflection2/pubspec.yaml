@@ -1,0 +1,9 @@
+name: inflection2
+version: 1.0.0
+description: Grammatical Inflection encoders.
+homepage: https://github.com/thosakwe/dart-inflection
+publish_to: none
+environment:
+  sdk: '>=2.12.0 <3.0.0'
+dev_dependencies:
+  test: ^1.17.3
