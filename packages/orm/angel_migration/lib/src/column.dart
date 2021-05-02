@@ -2,23 +2,23 @@ import 'package:angel_orm/angel_orm.dart';
 
 class MigrationColumn extends Column {
   final List<MigrationColumnReference> _references = [];
-  bool _nullable;
-  IndexType _index;
+  late bool _nullable;
+  IndexType? _index;
   dynamic _defaultValue;
 
   @override
   bool get isNullable => _nullable;
 
   @override
-  IndexType get indexType => _index;
+  IndexType get indexType => _index!;
 
   get defaultValue => _defaultValue;
 
   List<MigrationColumnReference> get externalReferences =>
       new List<MigrationColumnReference>.unmodifiable(_references);
 
-  MigrationColumn(ColumnType type,
-      {bool isNullable: true, int length, IndexType indexType, defaultValue})
+  MigrationColumn(ColumnType? type,
+      {bool isNullable: true, int? length, IndexType? indexType, defaultValue})
       : super(type: type, length: length) {
     _nullable = isNullable;
     _index = indexType;
@@ -49,11 +49,11 @@ class MigrationColumn extends Column {
 
 class MigrationColumnReference {
   final String foreignTable, foreignKey;
-  String _behavior;
+  String? _behavior;
 
   MigrationColumnReference._(this.foreignTable, this.foreignKey);
 
-  String get behavior => _behavior;
+  String? get behavior => _behavior;
 
   StateError _locked() =>
       new StateError('Cannot override existing "$_behavior" behavior.');
