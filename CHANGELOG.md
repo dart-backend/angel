@@ -28,21 +28,18 @@
 * Migrated hot to 4.0.0 (0/0 tests passed)
 * Added range_header and migrated to 3.0.0 (12/12 tests passed)
 * Migrated static to 4.0.0 (1/1 test passed)
-* Created basic-sdk-2.12.x_nnbd template (1/1 test passed)
+* Created basic-sdk-2.12.x_nnbd template (1/1 test passed) <= Milestone 1
 * Migrated angel_serialize to 4.0.0 (0/0 test passed)
 * Migrated angel_serialize_generator to 4.0.0 (33/33 tests passed)
-* Updated angel_orm to 3.0.0 (in progress)
-* Updated angel_migration to 3.0.0 (in progress)
-* Updated angel_orm_generator to 3.0.0 (in progress, use a fork of postgres) 
+* Updated angel_orm to 3.0.0 (0/0 tests passed)
+* Updated angel_migration to 3.0.0 (0/0 tests passed)
+* Added inflection2 and migrated to 1.0.0 (28/32 tests passed)
+* Updated angel_orm_generator to 3.0.0 (in progress) 
 * Updated angel_migration_runner to 3.0.0 (in progress)
 * Updated angel_orm_test to 1.0.0 (in progress)
 * Updated angel_orm_postgres to 2.0.0 (in progress)
-* Update orm-sdk-2.12.x boilerplate (in progress)
-* Updated angel_serialize to 4.0.0 (0/0 tests passed)
-* Updated angel_serialize_generator to 4.0.0 (33/33 tests passed)
-* Updated angel_orm to 4.0.0 (0/0 tests passed)
-* Updated angel_migration to 4.0.0 (0/0 tests passed)
-* Updated angel_orm_generator to 3.0.0 (use a fork of postgres)
+* Update orm-sdk-2.12.x boilerplate (in progress) <= Milestone 2
+
 
 # 3.0.0 (Non NNBD)
 * Changed Dart SDK requirements for all packages to ">=2.10.0 <3.0.0"
