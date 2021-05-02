@@ -8,9 +8,9 @@ final DateFormat dateYmdHms = DateFormat('yyyy-MM-dd HH:mm:ss');
 abstract class SqlExpressionBuilder<T> {
   final Query query;
   final String columnName;
-  String _cast;
+  String? _cast;
   bool _isProperty = false;
-  String _substitution;
+  String? _substitution;
 
   SqlExpressionBuilder(this.query, this.columnName);
 
@@ -21,15 +21,15 @@ abstract class SqlExpressionBuilder<T> {
 
   bool get hasValue;
 
-  String compile();
+  String? compile();
 }
 
 class NumericSqlExpressionBuilder<T extends num>
     extends SqlExpressionBuilder<T> {
   bool _hasValue = false;
   String _op = '=';
-  String _raw;
-  T _value;
+  String? _raw;
+  T? _value;
 
   NumericSqlExpressionBuilder(Query query, String columnName)
       : super(query, columnName);
@@ -45,7 +45,7 @@ class NumericSqlExpressionBuilder<T extends num>
   }
 
   @override
-  String compile() {
+  String? compile() {
     if (_raw != null) return _raw;
     if (_value == null) return null;
     var v = _value.toString();
@@ -121,8 +121,8 @@ class EnumSqlExpressionBuilder<T> extends SqlExpressionBuilder<T> {
   final int Function(T) _getValue;
   bool _hasValue = false;
   String _op = '=';
-  String _raw;
-  int _value;
+  String? _raw;
+  int? _value;
 
   EnumSqlExpressionBuilder(Query query, String columnName, this._getValue)
       : super(query, columnName);
@@ -141,7 +141,7 @@ class EnumSqlExpressionBuilder<T> extends SqlExpressionBuilder<T> {
       UnsupportedError('Enums do not support this operation.');
 
   @override
-  String compile() {
+  String? compile() {
     if (_raw != null) return _raw;
     if (_value == null) return null;
     return '$_op $_value';
@@ -182,7 +182,7 @@ class EnumSqlExpressionBuilder<T> extends SqlExpressionBuilder<T> {
 
 class StringSqlExpressionBuilder extends SqlExpressionBuilder<String> {
   bool _hasValue = false;
-  String _op = '=', _raw, _value;
+  String? _op = '=', _raw, _value;
 
   StringSqlExpressionBuilder(Query query, String columnName)
       : super(query, columnName);
@@ -203,7 +203,7 @@ class StringSqlExpressionBuilder extends SqlExpressionBuilder<String> {
   }
 
   @override
-  String compile() {
+  String? compile() {
     if (_raw != null) return _raw;
     if (_value == null) return null;
     return "$_op @$substitution";
@@ -232,7 +232,7 @@ class StringSqlExpressionBuilder extends SqlExpressionBuilder<String> {
   /// carNameBuilder.like('%Mazda%');
   /// carNameBuilder.like((name) => 'Mazda %$name%');
   /// ```
-  void like(String pattern, {String Function(String) sanitize}) {
+  void like(String pattern, {String Function(String)? sanitize}) {
     sanitize ??= (s) => pattern;
     _raw = 'LIKE \'' + sanitize('@$substitution') + '\'';
     query.substitutionValues[substitution] = pattern;
@@ -287,8 +287,8 @@ class StringSqlExpressionBuilder extends SqlExpressionBuilder<String> {
 
 class BooleanSqlExpressionBuilder extends SqlExpressionBuilder<bool> {
   bool _hasValue = false;
-  String _op = '=', _raw;
-  bool _value;
+  String? _op = '=', _raw;
+  bool? _value;
 
   BooleanSqlExpressionBuilder(Query query, String columnName)
       : super(query, columnName);
@@ -304,10 +304,10 @@ class BooleanSqlExpressionBuilder extends SqlExpressionBuilder<bool> {
   }
 
   @override
-  String compile() {
+  String? compile() {
     if (_raw != null) return _raw;
     if (_value == null) return null;
-    var v = _value ? 'TRUE' : 'FALSE';
+    var v = _value! ? 'TRUE' : 'FALSE';
     if (_cast != null) v = 'CAST ($v AS $_cast)';
     return '$_op $v';
   }
@@ -336,9 +336,14 @@ class BooleanSqlExpressionBuilder extends SqlExpressionBuilder<bool> {
 }
 
 class DateTimeSqlExpressionBuilder extends SqlExpressionBuilder<DateTime> {
-  NumericSqlExpressionBuilder<int> _year, _month, _day, _hour, _minute, _second;
+  NumericSqlExpressionBuilder<int>? _year,
+      _month,
+      _day,
+      _hour,
+      _minute,
+      _second;
 
-  String _raw;
+  String? _raw;
 
   DateTimeSqlExpressionBuilder(Query query, String columnName)
       : super(query, columnName);
@@ -431,25 +436,25 @@ class DateTimeSqlExpressionBuilder extends SqlExpressionBuilder<DateTime> {
   }
 
   @override
-  String compile() {
+  String? compile() {
     if (_raw?.isNotEmpty == true) return _raw;
-    List<String> parts = [];
-    if (year?.hasValue == true) {
+    var parts = <String>[];
+    if (year.hasValue == true) {
       parts.add('YEAR($columnName) ${year.compile()}');
     }
-    if (month?.hasValue == true) {
+    if (month.hasValue == true) {
       parts.add('MONTH($columnName) ${month.compile()}');
     }
-    if (day?.hasValue == true) {
+    if (day.hasValue == true) {
       parts.add('DAY($columnName) ${day.compile()}');
     }
-    if (hour?.hasValue == true) {
+    if (hour.hasValue == true) {
       parts.add('HOUR($columnName) ${hour.compile()}');
     }
-    if (minute?.hasValue == true) {
+    if (minute.hasValue == true) {
       parts.add('MINUTE($columnName) ${minute.compile()}');
     }
-    if (second?.hasValue == true) {
+    if (second.hasValue == true) {
       parts.add('SECOND($columnName) ${second.compile()}');
     }
 
@@ -460,9 +465,9 @@ class DateTimeSqlExpressionBuilder extends SqlExpressionBuilder<DateTime> {
 abstract class JsonSqlExpressionBuilder<T, K> extends SqlExpressionBuilder<T> {
   final List<JsonSqlExpressionBuilderProperty> _properties = [];
   bool _hasValue = false;
-  T _value;
-  String _op;
-  String _raw;
+  T? _value;
+  String? _op;
+  String? _raw;
 
   JsonSqlExpressionBuilder(Query query, String columnName)
       : super(query, columnName);
@@ -480,7 +485,7 @@ abstract class JsonSqlExpressionBuilder<T, K> extends SqlExpressionBuilder<T> {
   @override
   bool get hasValue => _hasValue || _properties.any((p) => p.hasValue);
 
-  _encodeValue(T v) => v;
+  T? _encodeValue(T? v) => v;
 
   bool _change(String op, T value) {
     _raw = null;
@@ -501,7 +506,7 @@ abstract class JsonSqlExpressionBuilder<T, K> extends SqlExpressionBuilder<T> {
   }
 
   @override
-  String compile() {
+  String? compile() {
     var s = _compile();
     if (!_properties.any((p) => p.hasValue)) return s;
     s ??= '';
@@ -515,7 +520,7 @@ abstract class JsonSqlExpressionBuilder<T, K> extends SqlExpressionBuilder<T> {
           s ??= '';
 
           if (p.typed is! DateTimeSqlExpressionBuilder) {
-            s += '${p.typed.columnName} ';
+            s += '${p.typed!.columnName} ';
           }
 
           s += c;
@@ -526,7 +531,7 @@ abstract class JsonSqlExpressionBuilder<T, K> extends SqlExpressionBuilder<T> {
     return s;
   }
 
-  String _compile() {
+  String? _compile() {
     if (_raw != null) return _raw;
     if (_value == null) return null;
     return "::jsonb $_op @$substitution::jsonb";
@@ -564,7 +569,7 @@ class ListSqlExpressionBuilder extends JsonSqlExpressionBuilder<List, int> {
       : super(query, columnName);
 
   @override
-  _encodeValue(List v) => json.encode(v);
+  List<dynamic>? _encodeValue(List<dynamic>? v) => [json.encode(v)];
 
   @override
   JsonSqlExpressionBuilderProperty _property(int name) {
@@ -576,27 +581,27 @@ class JsonSqlExpressionBuilderProperty {
   final JsonSqlExpressionBuilder builder;
   final String name;
   final bool isInt;
-  SqlExpressionBuilder _typed;
+  SqlExpressionBuilder? _typed;
 
   JsonSqlExpressionBuilderProperty(this.builder, this.name, this.isInt);
 
-  SqlExpressionBuilder get typed => _typed;
+  SqlExpressionBuilder? get typed => _typed;
 
   bool get hasValue => _typed?.hasValue == true;
 
-  String compile() => _typed?.compile();
+  String? compile() => _typed?.compile();
 
-  T _set<T extends SqlExpressionBuilder>(T Function() value) {
+  T? _set<T extends SqlExpressionBuilder?>(T Function() value) {
     if (_typed is T) {
-      return _typed as T;
+      return _typed as T?;
     } else if (_typed != null) {
       throw StateError(
           '$nameString is already typed as $_typed, and cannot be changed.');
     } else {
       _typed = value()
-        .._cast = 'text'
+        ?.._cast = 'text'
         .._isProperty = true;
-      return _typed as T;
+      return _typed as T?;
     }
   }
 
@@ -608,44 +613,56 @@ class JsonSqlExpressionBuilderProperty {
   void get isNotNull {
     builder
       .._hasValue = true
-      .._raw ??= ''
-      .._raw += "$nameString IS NOT NULL";
+      .._raw ??= '';
+
+    var r = builder._raw;
+    if (r != null) {
+      builder._raw = r + '$nameString IS NOT NULL';
+    } else {
+      builder._raw = '$nameString IS NOT NULL';
+    }
   }
 
   void get isNull {
     builder
       .._hasValue = true
-      .._raw ??= ''
-      .._raw += "$nameString IS NULL";
+      .._raw ??= '';
+
+    var r = builder._raw;
+    if (r != null) {
+      builder._raw = r + '$nameString IS NULL';
+    } else {
+      builder._raw = '$nameString IS NULL';
+    }
   }
 
-  StringSqlExpressionBuilder get asString {
+  StringSqlExpressionBuilder? get asString {
     return _set(() => StringSqlExpressionBuilder(builder.query, nameString));
   }
 
-  BooleanSqlExpressionBuilder get asBool {
+  BooleanSqlExpressionBuilder? get asBool {
     return _set(() => BooleanSqlExpressionBuilder(builder.query, nameString));
   }
 
-  DateTimeSqlExpressionBuilder get asDateTime {
+  DateTimeSqlExpressionBuilder? get asDateTime {
     return _set(() => DateTimeSqlExpressionBuilder(builder.query, nameString));
   }
 
-  NumericSqlExpressionBuilder<double> get asDouble {
+  NumericSqlExpressionBuilder<double>? get asDouble {
     return _set(
         () => NumericSqlExpressionBuilder<double>(builder.query, nameString));
   }
 
-  NumericSqlExpressionBuilder<int> get asInt {
+  NumericSqlExpressionBuilder<int>? get asInt {
     return _set(
         () => NumericSqlExpressionBuilder<int>(builder.query, nameString));
   }
 
-  MapSqlExpressionBuilder get asMap {
+  MapSqlExpressionBuilder? get asMap {
     return _set(() => MapSqlExpressionBuilder(builder.query, nameString));
   }
 
-  ListSqlExpressionBuilder get asList {
+  ListSqlExpressionBuilder? get asList {
     return _set(() => ListSqlExpressionBuilder(builder.query, nameString));
   }
 }

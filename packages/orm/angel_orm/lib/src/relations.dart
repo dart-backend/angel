@@ -9,11 +9,11 @@ abstract class RelationshipType {
 
 class Relationship {
   final int type;
-  final String localKey;
-  final String foreignKey;
-  final String foreignTable;
-  final bool cascadeOnDelete;
-  final JoinType joinType;
+  final String? localKey;
+  final String? foreignKey;
+  final String? foreignTable;
+  final bool? cascadeOnDelete;
+  final JoinType? joinType;
 
   const Relationship(this.type,
       {this.localKey,
@@ -25,11 +25,11 @@ class Relationship {
 
 class HasMany extends Relationship {
   const HasMany(
-      {String localKey,
-      String foreignKey,
-      String foreignTable,
+      {String? localKey,
+      String? foreignKey,
+      String? foreignTable,
       bool cascadeOnDelete = false,
-      JoinType joinType})
+      JoinType? joinType})
       : super(RelationshipType.hasMany,
             localKey: localKey,
             foreignKey: foreignKey,
@@ -42,11 +42,11 @@ const HasMany hasMany = HasMany();
 
 class HasOne extends Relationship {
   const HasOne(
-      {String localKey,
-      String foreignKey,
-      String foreignTable,
+      {String? localKey,
+      String? foreignKey,
+      String? foreignTable,
       bool cascadeOnDelete = false,
-      JoinType joinType})
+      JoinType? joinType})
       : super(RelationshipType.hasOne,
             localKey: localKey,
             foreignKey: foreignKey,
@@ -59,10 +59,10 @@ const HasOne hasOne = HasOne();
 
 class BelongsTo extends Relationship {
   const BelongsTo(
-      {String localKey,
-      String foreignKey,
-      String foreignTable,
-      JoinType joinType})
+      {String? localKey,
+      String? foreignKey,
+      String? foreignTable,
+      JoinType? joinType})
       : super(RelationshipType.belongsTo,
             localKey: localKey,
             foreignKey: foreignKey,
@@ -76,11 +76,11 @@ class ManyToMany extends Relationship {
   final Type through;
 
   const ManyToMany(this.through,
-      {String localKey,
-      String foreignKey,
-      String foreignTable,
+      {String? localKey,
+      String? foreignKey,
+      String? foreignTable,
       bool cascadeOnDelete = false,
-      JoinType joinType})
+      JoinType? joinType})
       : super(
             RelationshipType.hasMany, // Many-to-Many is actually just a hasMany
             localKey: localKey,

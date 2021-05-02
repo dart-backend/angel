@@ -32,19 +32,21 @@ abstract class QueryBase<T> {
         }
       }).join(', ');
 
-  String compile(Set<String> trampoline,
-      {bool includeTableName = false, String preamble, bool withFields = true});
+  String? compile(Set<String> trampoline,
+      {bool includeTableName = false,
+      String? preamble,
+      bool withFields = true});
 
   T deserialize(List row);
 
   Future<List<T>> get(QueryExecutor executor) async {
-    var sql = compile(Set());
+    var sql = compile({});
     return executor
         .query(tableName, sql, substitutionValues)
         .then((it) => it.map(deserialize).toList());
   }
 
-  Future<T> getOne(QueryExecutor executor) {
+  Future<T?> getOne(QueryExecutor executor) {
     return get(executor).then((it) => it.isEmpty ? null : it.first);
   }
 

@@ -5,12 +5,12 @@ import 'query.dart';
 class JoinBuilder {
   final JoinType type;
   final Query from;
-  final String key, value, op, alias;
+  final String? key, value, op, alias;
   final bool aliasAllFields;
 
   /// A callback to produces the expression to join against, i.e.
   /// a table name, or the result of compiling a query.
-  final String Function() to;
+  final String? Function() to;
   final List<String> additionalFields;
 
   JoinBuilder(this.type, this.from, this.to, this.key, this.value,
@@ -39,7 +39,7 @@ class JoinBuilder {
     return right;
   }
 
-  String compile(Set<String> trampoline) {
+  String? compile(Set<String>? trampoline) {
     var compiledTo = to();
     if (compiledTo == null) return null;
     var b = StringBuffer();

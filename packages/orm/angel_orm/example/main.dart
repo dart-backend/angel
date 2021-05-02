@@ -7,15 +7,15 @@ import 'package:angel_serialize/angel_serialize.dart';
 part 'main.g.dart';
 part 'main.serializer.g.dart';
 
-main() async {
+void main() async {
   var query = EmployeeQuery()
-    ..where.firstName.equals('Rich')
-    ..where.lastName.equals('Person')
-    ..orWhere((w) => w.salary.greaterThanOrEqualTo(75000))
+    ..where?.firstName.equals('Rich')
+    ..where?.lastName.equals('Person')
+    ..orWhere((w) => w?.salary.greaterThanOrEqualTo(75000))
     ..join('companies', 'company_id', 'id');
 
   var richPerson = await query.getOne(_FakeExecutor());
-  print(richPerson.toJson());
+  print(richPerson?.toJson());
 }
 
 class _FakeExecutor extends QueryExecutor {
@@ -23,7 +23,7 @@ class _FakeExecutor extends QueryExecutor {
 
   @override
   Future<List<List>> query(
-      String tableName, String query, Map<String, dynamic> substitutionValues,
+      String tableName, String? query, Map<String, dynamic> substitutionValues,
       [returningFields]) async {
     var now = DateTime.now();
     print(
@@ -42,25 +42,25 @@ class _FakeExecutor extends QueryExecutor {
 @orm
 @serializable
 abstract class _Employee extends Model {
-  String get firstName;
+  String? get firstName;
 
-  String get lastName;
+  String? get lastName;
 
-  double get salary;
+  double? get salary;
 }
 
-class EmployeeQuery extends Query<Employee, EmployeeQueryWhere> {
+class EmployeeQuery extends Query<Employee, EmployeeQueryWhere?> {
   @override
   final QueryValues values = MapQueryValues();
 
-  EmployeeQueryWhere _where;
+  EmployeeQueryWhere? _where;
 
   EmployeeQuery() {
     _where = EmployeeQueryWhere(this);
   }
 
   @override
-  EmployeeQueryWhere get where => _where;
+  EmployeeQueryWhere? get where => _where;
 
   @override
   String get tableName => 'employees';

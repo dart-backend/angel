@@ -17,30 +17,30 @@ class Employee extends _Employee {
       this.updatedAt});
 
   @override
-  final String id;
+  final String? id;
 
   @override
-  final String firstName;
+  final String? firstName;
 
   @override
-  final String lastName;
+  final String? lastName;
 
   @override
-  final double salary;
+  final double? salary;
 
   @override
-  final DateTime createdAt;
+  final DateTime? createdAt;
 
   @override
-  final DateTime updatedAt;
+  final DateTime? updatedAt;
 
   Employee copyWith(
-      {String id,
-      String firstName,
-      String lastName,
-      double salary,
-      DateTime createdAt,
-      DateTime updatedAt}) {
+      {String? id,
+      String? firstName,
+      String? lastName,
+      double? salary,
+      DateTime? createdAt,
+      DateTime? updatedAt}) {
     return Employee(
         id: id ?? this.id,
         firstName: firstName ?? this.firstName,
