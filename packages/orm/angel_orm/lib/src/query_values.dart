@@ -22,7 +22,7 @@ abstract class QueryValues {
 
     var fieldSet = data.keys.join(', ');
     var b = StringBuffer('INSERT INTO $tableName ($fieldSet) VALUES (');
-    int i = 0;
+    var i = 0;
 
     for (var entry in data.entries) {
       if (i++ > 0) b.write(', ');
@@ -41,7 +41,7 @@ abstract class QueryValues {
     var data = toMap();
     if (data.isEmpty) return null;
     var b = StringBuffer('SET');
-    int i = 0;
+    var i = 0;
 
     for (var entry in data.entries) {
       if (i++ > 0) b.write(',');

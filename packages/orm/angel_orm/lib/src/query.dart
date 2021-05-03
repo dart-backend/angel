@@ -27,6 +27,7 @@ abstract class Query<T, Where extends QueryWhere?> extends QueryBase<T> {
 
   Query({this.parent});
 
+  @override
   Map<String, dynamic> get substitutionValues =>
       parent?.substitutionValues ?? super.substitutionValues;
 
@@ -64,6 +65,8 @@ abstract class Query<T, Where extends QueryWhere?> extends QueryBase<T> {
       n = nn;
       nn++;
       _names[name] = nn;
+    } else {
+      _names[name] = 1;
     }
     return n == 0 ? name : '$name$n';
   }
@@ -138,7 +141,7 @@ abstract class Query<T, Where extends QueryWhere?> extends QueryBase<T> {
     }
   }
 
-  String? Function() _compileJoin(tableName, Set<String> trampoline) {
+  String Function() _compileJoin(tableName, Set<String> trampoline) {
     if (tableName is String) {
       return () => tableName;
     } else if (tableName is Query) {
@@ -248,7 +251,8 @@ abstract class Query<T, Where extends QueryWhere?> extends QueryBase<T> {
 
     var compiledJoins = <JoinBuilder, String?>{};
 
-    if (fields == null) {
+    //if (fields == null) {
+    if (fields.isEmpty) {
       f = ['*'];
     } else {
       f = List<String>.from(fields.map((s) {
@@ -325,7 +329,7 @@ abstract class Query<T, Where extends QueryWhere?> extends QueryBase<T> {
     return super.getOne(executor);
   }
 
-  Future<List<T>?> delete(QueryExecutor executor) {
+  Future<List<T>> delete(QueryExecutor executor) {
     var sql = compile({}, preamble: 'DELETE', withFields: false);
 
     if (_joins.isEmpty) {
@@ -345,12 +349,12 @@ abstract class Query<T, Where extends QueryWhere?> extends QueryBase<T> {
     }
   }
 
-  Future<T?> deleteOne(QueryExecutor executor) {
-    return delete(executor)
-        .then((it) => it?.isEmpty == true ? null : it?.first);
+  Future<Optional<T>> deleteOne(QueryExecutor executor) {
+    return delete(executor).then((it) =>
+        it.isEmpty == true ? Optional.empty() : Optional.ofNullable(it.first));
   }
 
-  Future<T?> insert(QueryExecutor executor) {
+  Future<Optional<T>> insert(QueryExecutor executor) {
     var insertion = values.compileInsert(this, tableName);
 
     if (insertion == null) {
@@ -360,9 +364,10 @@ abstract class Query<T, Where extends QueryWhere?> extends QueryBase<T> {
       var returning = fields.map(adornWithTableName).join(', ');
       var sql = compile({});
       sql = 'WITH $tableName as ($insertion RETURNING $returning) ' + sql;
-      return executor
-          .query(tableName, sql, substitutionValues)
-          .then((it) => it.isEmpty ? null : deserialize(it.first));
+      return executor.query(tableName, sql, substitutionValues).then((it) =>
+          it.isEmpty
+              ? Optional.empty()
+              : Optional.ofNullable(deserialize(it.first)));
     }
   }
 
@@ -390,7 +395,8 @@ abstract class Query<T, Where extends QueryWhere?> extends QueryBase<T> {
     }
   }
 
-  Future<T?> updateOne(QueryExecutor executor) {
-    return update(executor).then((it) => it.isEmpty ? null : it.first);
+  Future<Optional<T>> updateOne(QueryExecutor executor) {
+    return update(executor).then(
+        (it) => it.isEmpty ? Optional.empty() : Optional.ofNullable(it.first));
   }
 }
