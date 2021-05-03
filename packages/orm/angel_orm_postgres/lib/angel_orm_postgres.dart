@@ -41,7 +41,7 @@ class PostgreSqlExecutor extends QueryExecutor {
   }
 
   @override
-  Future<T?> transaction<T>(FutureOr<T> Function(QueryExecutor) f) async {
+  Future<T> transaction<T>(FutureOr<T> Function(QueryExecutor) f) async {
     if (_connection is! PostgreSQLConnection) {
       return await f(this);
     }
@@ -54,6 +54,8 @@ class PostgreSqlExecutor extends QueryExecutor {
         logger?.fine('Entering transaction');
         var tx = PostgreSqlExecutor(ctx, logger: logger);
         returnValue = await f(tx);
+
+        return returnValue;
       } catch (e) {
         ctx.cancelTransaction(reason: e.toString());
         rethrow;
@@ -70,7 +72,7 @@ class PostgreSqlExecutor extends QueryExecutor {
           'The transaction was cancelled with reason "${txResult.reason}".');
       //}
     } else {
-      return returnValue;
+      return returnValue!;
     }
   }
 }
@@ -136,7 +138,7 @@ class PostgreSqlExecutorPool extends QueryExecutor {
   }
 
   @override
-  Future<T?> transaction<T>(FutureOr<T> Function(QueryExecutor) f) {
+  Future<T> transaction<T>(FutureOr<T> Function(QueryExecutor) f) {
     return _pool.withResource(() async {
       var executor = await _next();
       return executor.transaction(f);

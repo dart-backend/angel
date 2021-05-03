@@ -14,6 +14,7 @@ dependencies:
   logging: ^1.0.1
   pool: ^1.5.0
   postgres: ^2.3.2
+  #optional: ^6.0.0-nullsafety.2
 
 dev_dependencies:
   angel_orm_test:
@@ -27,6 +28,7 @@ dev_dependencies:
       ref: sdk-2.12.x_nnbd
       path: packages/pretty_logging
   test: ^1.17.3
+
 #dependency_overrides:
 #  angel_orm_test:
 #    path: ../angel_orm_test
