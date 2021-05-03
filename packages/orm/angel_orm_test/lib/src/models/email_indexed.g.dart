@@ -128,13 +128,13 @@ class RoleQuery extends Query<Role?, RoleQueryWhere?> {
   @override
   get(QueryExecutor executor) {
     return super.get(executor).then((result) {
-      return result.fold<List<Role?>>([], (out, model) {
-        var idx = out.indexWhere((m) => m!.role == model!.role);
+      return result.fold<List<Role>>([], (out, model) {
+        var idx = out.indexWhere((m) => m.role == model!.role);
 
         if (idx == -1) {
-          return out..add(model);
+          return out..add(model!);
         } else {
-          var l = out[idx]!;
+          var l = out[idx];
           return out
             ..[idx] = l.copyWith(
                 users: List<_User?>.from(l.users ?? [])
@@ -166,13 +166,13 @@ class RoleQuery extends Query<Role?, RoleQueryWhere?> {
   @override
   delete(QueryExecutor executor) {
     return super.delete(executor).then((result) {
-      return result.fold<List<Role?>>([], (out, model) {
-        var idx = out.indexWhere((m) => m!.role == model!.role);
+      return result.fold<List<Role>>([], (out, model) {
+        var idx = out.indexWhere((m) => m.role == model!.role);
 
         if (idx == -1) {
-          return out..add(model);
+          return out..add(model!);
         } else {
-          var l = out[idx]!;
+          var l = out[idx];
           return out
             ..[idx] = l.copyWith(
                 users: List<_User?>.from(l.users ?? [])
@@ -420,13 +420,13 @@ class UserQuery extends Query<User?, UserQueryWhere?> {
   @override
   update(QueryExecutor executor) {
     return super.update(executor).then((result) {
-      return result.fold<List<User?>>([], (out, model) {
-        var idx = out.indexWhere((m) => m!.email == model!.email);
+      return result.fold<List<User>>([], (out, model) {
+        var idx = out.indexWhere((m) => m.email == model!.email);
 
         if (idx == -1) {
-          return out..add(model);
+          return out..add(model!);
         } else {
-          var l = out[idx]!;
+          var l = out[idx];
           return out
             ..[idx] = l.copyWith(
                 roles: List<_Role?>.from(l.roles ?? [])
@@ -439,13 +439,13 @@ class UserQuery extends Query<User?, UserQueryWhere?> {
   @override
   delete(QueryExecutor executor) {
     return super.delete(executor).then((result) {
-      return result.fold<List<User?>>([], (out, model) {
-        var idx = out.indexWhere((m) => m!.email == model!.email);
+      return result.fold<List<User>>([], (out, model) {
+        var idx = out.indexWhere((m) => m.email == model!.email);
 
         if (idx == -1) {
-          return out..add(model);
+          return out..add(model!);
         } else {
-          var l = out[idx]!;
+          var l = out[idx];
           return out
             ..[idx] = l.copyWith(
                 roles: List<_Role?>.from(l.roles ?? [])
