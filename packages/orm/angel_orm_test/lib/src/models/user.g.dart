@@ -143,13 +143,13 @@ class UserQuery extends Query<User?, UserQueryWhere?> {
   @override
   get(QueryExecutor executor) {
     return super.get(executor).then((result) {
-      return result.fold<List<User?>>([], (out, model) {
-        var idx = out.indexWhere((m) => m!.id == model!.id);
+      return result.fold<List<User>>([], (out, model) {
+        var idx = out.indexWhere((m) => m.id == model!.id);
 
         if (idx == -1) {
-          return out..add(model);
+          return out..add(model!);
         } else {
-          var l = out[idx]!;
+          var l = out[idx];
           return out
             ..[idx] = l.copyWith(
                 roles: List<_Role>.from(l.roles)..addAll(model!.roles));
@@ -161,13 +161,13 @@ class UserQuery extends Query<User?, UserQueryWhere?> {
   @override
   update(QueryExecutor executor) {
     return super.update(executor).then((result) {
-      return result.fold<List<User?>>([], (out, model) {
-        var idx = out.indexWhere((m) => m!.id == model!.id);
+      return result.fold<List<User>>([], (out, model) {
+        var idx = out.indexWhere((m) => m.id == model!.id);
 
         if (idx == -1) {
-          return out..add(model);
+          return out..add(model!);
         } else {
-          var l = out[idx]!;
+          var l = out[idx];
           return out
             ..[idx] = l.copyWith(
                 roles: List<_Role>.from(l.roles)..addAll(model!.roles));
@@ -179,13 +179,13 @@ class UserQuery extends Query<User?, UserQueryWhere?> {
   @override
   delete(QueryExecutor executor) {
     return super.delete(executor).then((result) {
-      return result.fold<List<User?>>([], (out, model) {
-        var idx = out.indexWhere((m) => m!.id == model!.id);
+      return result.fold<List<User>>([], (out, model) {
+        var idx = out.indexWhere((m) => m.id == model!.id);
 
         if (idx == -1) {
-          return out..add(model);
+          return out..add(model!);
         } else {
-          var l = out[idx]!;
+          var l = out[idx];
           return out
             ..[idx] = l.copyWith(
                 roles: List<_Role>.from(l.roles)..addAll(model!.roles));
