@@ -130,7 +130,7 @@ standaloneTests(FutureOr<QueryExecutor> Function() createExecutor,
             ..orWhere((w) => w!.familyFriendly.isTrue);
           print(query.compile(Set(), preamble: 'DELETE FROM "cars"'));
 
-          List<Car?> cars = await query.delete(executor);
+          List<Car?>? cars = await query.delete(executor);
           expect(cars, hasLength(1));
           expect(cars.first!.toJson(), ferrari!.toJson());
         });

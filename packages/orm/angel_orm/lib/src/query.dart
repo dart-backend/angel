@@ -6,6 +6,7 @@ import 'query_base.dart';
 import 'query_executor.dart';
 import 'query_values.dart';
 import 'query_where.dart';
+import 'package:optional/optional.dart';
 
 /// A SQL `SELECT` query builder.
 abstract class Query<T, Where extends QueryWhere?> extends QueryBase<T> {
@@ -125,7 +126,7 @@ abstract class Query<T, Where extends QueryWhere?> extends QueryBase<T> {
   }
 
   String _joinAlias(Set<String>? trampoline) {
-    int i = _joins.length;
+    var i = _joins.length;
 
     while (true) {
       var a = 'a$i';
@@ -137,13 +138,13 @@ abstract class Query<T, Where extends QueryWhere?> extends QueryBase<T> {
     }
   }
 
-  String? Function() _compileJoin(tableName, Set<String>? trampoline) {
+  String? Function() _compileJoin(tableName, Set<String> trampoline) {
     if (tableName is String) {
       return () => tableName;
     } else if (tableName is Query) {
       return () {
         var c = tableName.compile(trampoline);
-        if (c == null) return c;
+        //if (c == null) return c;
         return '($c)';
       };
     } else {
@@ -160,7 +161,7 @@ abstract class Query<T, Where extends QueryWhere?> extends QueryBase<T> {
       String foreignKey,
       String op,
       List<String> additionalFields) {
-    trampoline ??= Set();
+    trampoline ??= <String>{};
 
     // Pivot tables guard against ambiguous fields by excluding tables
     // that have already been queried in this scope.
@@ -170,19 +171,17 @@ abstract class Query<T, Where extends QueryWhere?> extends QueryBase<T> {
     }
 
     var to = _compileJoin(tableName, trampoline);
-    if (to != null) {
-      var alias = _joinAlias(trampoline);
-      if (tableName is Query) {
-        for (var field in tableName.fields) {
-          tableName.aliases[field] = '${alias}_$field';
-        }
+    var alias = _joinAlias(trampoline);
+    if (tableName is Query) {
+      for (var field in tableName.fields) {
+        tableName.aliases[field] = '${alias}_$field';
       }
-      _joins.add(JoinBuilder(type, this, to, localKey, foreignKey,
-          op: op,
-          alias: alias,
-          additionalFields: additionalFields,
-          aliasAllFields: tableName is Query));
     }
+    _joins.add(JoinBuilder(type, this, to, localKey, foreignKey,
+        op: op,
+        alias: alias,
+        additionalFields: additionalFields,
+        aliasAllFields: tableName is Query));
   }
 
   /// Execute an `INNER JOIN` against another table.
@@ -231,14 +230,15 @@ abstract class Query<T, Where extends QueryWhere?> extends QueryBase<T> {
   }
 
   @override
-  String? compile(Set<String>? trampoline,
+  String compile(Set<String> trampoline,
       {bool includeTableName = false,
       String? preamble,
       bool withFields = true,
       String? fromQuery}) {
     // One table MAY appear multiple times in a query.
     if (!canCompile(trampoline)) {
-      return null;
+      //return null;
+      throw Exception('One table appear multiple times in a query');
     }
 
     includeTableName = includeTableName || _joins.isNotEmpty;
@@ -320,7 +320,7 @@ abstract class Query<T, Where extends QueryWhere?> extends QueryBase<T> {
   }
 
   @override
-  Future<T?> getOne(QueryExecutor executor) {
+  Future<Optional<T>> getOne(QueryExecutor executor) {
     //limit(1);
     return super.getOne(executor);
   }
@@ -358,7 +358,7 @@ abstract class Query<T, Where extends QueryWhere?> extends QueryBase<T> {
     } else {
       // TODO: How to do this in a non-Postgres DB?
       var returning = fields.map(adornWithTableName).join(', ');
-      var sql = compile({})!;
+      var sql = compile({});
       sql = 'WITH $tableName as ($insertion RETURNING $returning) ' + sql;
       return executor
           .query(tableName, sql, substitutionValues)
@@ -381,7 +381,7 @@ abstract class Query<T, Where extends QueryWhere?> extends QueryBase<T> {
       if (_limit != null) updateSql.write(' LIMIT $_limit');
 
       var returning = fields.map(adornWithTableName).join(', ');
-      var sql = compile({})!;
+      var sql = compile({});
       sql = 'WITH $tableName as ($updateSql RETURNING $returning) ' + sql;
 
       return executor

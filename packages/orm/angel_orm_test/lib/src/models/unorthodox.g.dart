@@ -304,18 +304,21 @@ class WeirdJoinQuery extends Query<WeirdJoin?, WeirdJoinQueryWhere?> {
   @override
   get(QueryExecutor executor) {
     return super.get(executor).then((result) {
-      return result.fold<List<WeirdJoin?>>([], (out, model) {
-        var idx = out.indexWhere((m) => m!.id == model!.id);
+      return result.fold<List<WeirdJoin>>([], (out, model) {
+        var idx = out.indexWhere((m) => m.id == model!.id);
 
         if (idx == -1) {
-          return out..add(model);
+          return out..add(model!);
         } else {
-          var l = out[idx]!;
+          var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                numbas: List<_Numba?>.from(l.numbas ?? [])
-                  ..addAll(model!.numbas ?? []),
-                foos: List<_Foo?>.from(l.foos ?? [])..addAll(model.foos ?? []));
+                numbas: List<_Numba>.from(l.numbas ?? [])
+                  ..addAll(model == null
+                      ? []
+                      : List<_Numba>.from(model.numbas ?? [])),
+                foos: List<_Foo?>.from(l.foos ?? [])
+                  ..addAll(model?.foos ?? []));
         }
       });
     });
@@ -324,13 +327,13 @@ class WeirdJoinQuery extends Query<WeirdJoin?, WeirdJoinQueryWhere?> {
   @override
   update(QueryExecutor executor) {
     return super.update(executor).then((result) {
-      return result.fold<List<WeirdJoin?>>([], (out, model) {
-        var idx = out.indexWhere((m) => m!.id == model!.id);
+      return result.fold<List<WeirdJoin>>([], (out, model) {
+        var idx = out.indexWhere((m) => m.id == model!.id);
 
         if (idx == -1) {
-          return out..add(model);
+          return out..add(model!);
         } else {
-          var l = out[idx]!;
+          var l = out[idx];
           return out
             ..[idx] = l.copyWith(
                 numbas: List<_Numba?>.from(l.numbas ?? [])
@@ -344,13 +347,13 @@ class WeirdJoinQuery extends Query<WeirdJoin?, WeirdJoinQueryWhere?> {
   @override
   delete(QueryExecutor executor) {
     return super.delete(executor).then((result) {
-      return result.fold<List<WeirdJoin?>>([], (out, model) {
-        var idx = out.indexWhere((m) => m!.id == model!.id);
+      return result.fold<List<WeirdJoin>>([], (out, model) {
+        var idx = out.indexWhere((m) => m.id == model!.id);
 
         if (idx == -1) {
-          return out..add(model);
+          return out..add(model!);
         } else {
-          var l = out[idx]!;
+          var l = out[idx];
           return out
             ..[idx] = l.copyWith(
                 numbas: List<_Numba?>.from(l.numbas ?? [])

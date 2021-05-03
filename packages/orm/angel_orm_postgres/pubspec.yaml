@@ -27,3 +27,8 @@ dev_dependencies:
       ref: sdk-2.12.x_nnbd
       path: packages/pretty_logging
   test: ^1.17.3
+#dependency_overrides:
+#  angel_orm_test:
+#    path: ../angel_orm_test
+#  angel_orm:
+#    path: ../angel_orm

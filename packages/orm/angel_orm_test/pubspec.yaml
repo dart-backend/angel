@@ -38,3 +38,7 @@ dev_dependencies:
       ref: sdk-2.12.x_nnbd
       path: packages/framework
   build_runner: ^2.0.1
+  
+#dependency_overrides:
+#  angel_orm:
+#    path: ../angel_orm

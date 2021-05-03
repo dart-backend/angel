@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'query_executor.dart';
 import 'union.dart';
+import 'package:optional/optional.dart';
 
 /// A base class for objects that compile to SQL queries, typically within an ORM.
 abstract class QueryBase<T> {
@@ -32,9 +33,9 @@ abstract class QueryBase<T> {
         }
       }).join(', ');
 
-  String? compile(Set<String> trampoline,
+  String compile(Set<String> trampoline,
       {bool includeTableName = false,
-      String? preamble,
+      String preamble = '',
       bool withFields = true});
 
   T deserialize(List row);
@@ -46,8 +47,10 @@ abstract class QueryBase<T> {
         .then((it) => it.map(deserialize).toList());
   }
 
-  Future<T?> getOne(QueryExecutor executor) {
-    return get(executor).then((it) => it.isEmpty ? null : it.first);
+  Future<Optional<T>> getOne(QueryExecutor executor) {
+    //return get(executor).then((it) => it.isEmpty ?  : it.first);
+    return get(executor).then(
+        (it) => it.isEmpty ? Optional.empty() : Optional.ofNullable(it.first));
   }
 
   Union<T> union(QueryBase<T> other) {

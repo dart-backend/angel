@@ -160,13 +160,13 @@ class TreeQuery extends Query<Tree?, TreeQueryWhere?> {
   @override
   delete(QueryExecutor executor) {
     return super.delete(executor).then((result) {
-      return result.fold<List<Tree?>>([], (out, model) {
-        var idx = out.indexWhere((m) => m!.id == model!.id);
+      return result.fold<List<Tree>>([], (out, model) {
+        var idx = out.indexWhere((m) => m.id == model!.id);
 
         if (idx == -1) {
-          return out..add(model);
+          return out..add(model!);
         } else {
-          var l = out[idx]!;
+          var l = out[idx];
           return out
             ..[idx] = l.copyWith(
                 fruits: List<_Fruit>.from(l.fruits ?? [])

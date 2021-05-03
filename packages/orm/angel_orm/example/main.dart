@@ -15,7 +15,9 @@ void main() async {
     ..join('companies', 'company_id', 'id');
 
   var richPerson = await query.getOne(_FakeExecutor());
-  print(richPerson?.toJson());
+  if (richPerson.isPresent) {
+    print(richPerson.first.toJson());
+  }
 }
 
 class _FakeExecutor extends QueryExecutor {
@@ -24,7 +26,7 @@ class _FakeExecutor extends QueryExecutor {
   @override
   Future<List<List>> query(
       String tableName, String? query, Map<String, dynamic> substitutionValues,
-      [returningFields]) async {
+      [returningFields = const []]) async {
     var now = DateTime.now();
     print(
         '_FakeExecutor received query: $query and values: $substitutionValues');

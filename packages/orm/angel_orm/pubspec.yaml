@@ -28,3 +28,4 @@ dev_dependencies:
   build_runner: ^2.0.1
   pedantic: ^1.11.0
   test: ^1.17.3
+  optional: ^6.0.0-nullsafety.2
