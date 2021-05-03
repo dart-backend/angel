@@ -34,10 +34,10 @@
 * Migrated angel_orm to 3.0.0 (0/0 tests passed)
 * Migrated angel_migration to 3.0.0 (0/0 tests passed)
 * Added inflection2 and migrated to 1.0.0 (28/32 tests passed)
-* Updated angel_orm_generator to 4.0.0 (0/0 tests passed) 
-* Updated angel_migration_runner to 3.0.0 (0/0 tests passed)
-* Updated angel_orm_test to 1.0.0 (in progress)
-* Updated angel_orm_postgres to 2.0.0 (in progress)
+* Migrated angel_orm_generator to 4.0.0 (0/0 tests passed) 
+* Migrated angel_migration_runner to 3.0.0 (0/0 tests passed)
+* Migrated angel_orm_test to 3.0.0 (0/0 tests passed)
+* Migrated angel_orm_postgres to 3.0.0 (0/0 tests passed)
 * Update orm-sdk-2.12.x boilerplate (in progress) <= Milestone 2
 
 

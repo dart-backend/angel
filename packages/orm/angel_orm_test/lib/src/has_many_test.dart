@@ -11,7 +11,7 @@ hasManyTests(FutureOr<QueryExecutor> Function() createExecutor,
   close ??= (_) => null;
 
   setUp(() async {
-    var query = new TreeQuery()..values.rings = 10;
+    var query = TreeQuery()..values.rings = 10;
 
     executor = await createExecutor();
     appleTree = await query.insert(executor);
@@ -36,11 +36,11 @@ hasManyTests(FutureOr<QueryExecutor> Function() createExecutor,
     }
 
     setUp(() async {
-      var appleQuery = new FruitQuery()
+      var appleQuery = FruitQuery()
         ..values.treeId = treeId
         ..values.commonName = 'Apple';
 
-      var bananaQuery = new FruitQuery()
+      var bananaQuery = FruitQuery()
         ..values.treeId = treeId
         ..values.commonName = 'Banana';
 
@@ -49,13 +49,13 @@ hasManyTests(FutureOr<QueryExecutor> Function() createExecutor,
     });
 
     test('can fetch any children', () async {
-      var query = new TreeQuery()..where!.id.equals(treeId);
+      var query = TreeQuery()..where!.id.equals(treeId);
       var tree = await (query.getOne(executor) as FutureOr<Tree>);
       verify(tree);
     });
 
     test('sets on update', () async {
-      var tq = new TreeQuery()
+      var tq = TreeQuery()
         ..where!.id.equals(treeId)
         ..values.rings = 24;
       var tree = await (tq.updateOne(executor) as FutureOr<Tree>);
@@ -64,13 +64,13 @@ hasManyTests(FutureOr<QueryExecutor> Function() createExecutor,
     });
 
     test('sets on delete', () async {
-      var tq = new TreeQuery()..where!.id.equals(treeId);
+      var tq = TreeQuery()..where!.id.equals(treeId);
       var tree = await (tq.deleteOne(executor) as FutureOr<Tree>);
       verify(tree);
     });
 
     test('returns empty on false subquery', () async {
-      var tq = new TreeQuery()
+      var tq = TreeQuery()
         ..where!.id.equals(treeId)
         ..fruits!.where!.commonName.equals('Kiwi');
       var tree = await (tq.getOne(executor) as FutureOr<Tree>);

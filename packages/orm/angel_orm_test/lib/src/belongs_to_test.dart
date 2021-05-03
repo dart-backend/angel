@@ -16,14 +16,14 @@ belongsToTests(FutureOr<QueryExecutor> Function() createExecutor,
     executor = await createExecutor();
 
     // Insert an author
-    var query = new AuthorQuery()..values.name = 'J.K. Rowling';
+    var query = AuthorQuery()..values.name = 'J.K. Rowling';
     jkRowling = await query.insert(executor);
 
     query.values.name = 'J.K. Jameson';
     jameson = await query.insert(executor);
 
     // And a book
-    var bookQuery = new BookQuery();
+    var bookQuery = BookQuery();
     bookQuery.values
       ..authorId = int.parse(jkRowling!.id!)
       ..partnerAuthorId = int.parse(jameson!.id!)
@@ -36,7 +36,7 @@ belongsToTests(FutureOr<QueryExecutor> Function() createExecutor,
 
   group('selects', () {
     test('select all', () async {
-      var query = new BookQuery();
+      var query = BookQuery();
       List<Book?> books = await query.get(executor);
       expect(books, hasLength(1));
 
@@ -52,7 +52,7 @@ belongsToTests(FutureOr<QueryExecutor> Function() createExecutor,
     });
 
     test('select one', () async {
-      var query = new BookQuery();
+      var query = BookQuery();
       query.where!.id.equals(int.parse(deathlyHallows!.id!));
       print(query.compile(Set()));
 
@@ -68,15 +68,15 @@ belongsToTests(FutureOr<QueryExecutor> Function() createExecutor,
     });
 
     test('where clause', () async {
-      var query = new BookQuery()
+      var query = BookQuery()
         ..where!.name.equals('Goblet of Fire')
         ..orWhere((w) => w!.authorId.equals(int.parse(jkRowling!.id!)));
       print(query.compile(Set()));
 
-      List<Book?> books = await query.get(executor);
+      List<Book> books = await query.get(executor) as List<Book>;
       expect(books, hasLength(1));
 
-      var book = books.first!;
+      var book = books.first;
       print(book.toJson());
       expect(book.id, deathlyHallows!.id);
       expect(book.name, deathlyHallows!.name);
@@ -88,9 +88,9 @@ belongsToTests(FutureOr<QueryExecutor> Function() createExecutor,
     });
 
     test('union', () async {
-      var query1 = new BookQuery()..where!.name.like('Deathly%');
-      var query2 = new BookQuery()..where!.authorId.equals(-1);
-      var query3 = new BookQuery()
+      var query1 = BookQuery()..where!.name.like('Deathly%');
+      var query2 = BookQuery()..where!.authorId.equals(-1);
+      var query3 = BookQuery()
         ..where!.name.isIn(['Goblet of Fire', 'Order of the Phoenix']);
       query1
         ..union(query2)
@@ -126,12 +126,12 @@ belongsToTests(FutureOr<QueryExecutor> Function() createExecutor,
 
   test('delete stream', () async {
     printSeparator('Delete stream test');
-    var query = new BookQuery()..where!.name.equals(deathlyHallows!.name!);
+    var query = BookQuery()..where!.name.equals(deathlyHallows!.name!);
     print(query.compile(Set(), preamble: 'DELETE', withFields: false));
-    List<Book?> books = await query.delete(executor);
+    List<Book>? books = await query.delete(executor) as List<Book>;
     expect(books, hasLength(1));
 
-    var book = books.first!;
+    var book = books.first;
     expect(book.id, deathlyHallows!.id);
     expect(book.author, isNotNull);
     expect(book.author!.name, jkRowling!.name);
@@ -139,7 +139,7 @@ belongsToTests(FutureOr<QueryExecutor> Function() createExecutor,
 
   test('update book', () async {
     var cloned = deathlyHallows!.copyWith(name: "Sorcerer's Stone");
-    var query = new BookQuery()
+    var query = BookQuery()
       ..where!.id.equals(int.parse(cloned.id!))
       ..values.copyFrom(cloned);
     var book = await (query.updateOne(executor) as FutureOr<Book>);

@@ -13,13 +13,13 @@ Future<void> closePg(QueryExecutor executor) =>
     (executor as PostgreSqlExecutor).close();
 
 Future<PostgreSqlExecutor> connectToPostgres(Iterable<String> schemas) async {
-  var conn = new PostgreSQLConnection('127.0.0.1', 5432, 'angel_orm_test',
-      username: Platform.environment['POSTGRES_USERNAME'] ?? 'postgres',
-      password: Platform.environment['POSTGRES_PASSWORD'] ?? 'password');
+  var conn = PostgreSQLConnection('127.0.0.1', 5432, 'orm_test',
+      username: Platform.environment['POSTGRES_USERNAME'] ?? 'test',
+      password: Platform.environment['POSTGRES_PASSWORD'] ?? 'test123');
   await conn.open();
 
   for (var s in schemas)
-    await conn.execute(await new File('test/migrations/$s.sql').readAsString());
+    await conn.execute(await File('test/migrations/$s.sql').readAsString());
 
-  return new PostgreSqlExecutor(conn, logger: Logger.root);
+  return PostgreSqlExecutor(conn, logger: Logger.root);
 }
