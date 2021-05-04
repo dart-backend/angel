@@ -32,7 +32,7 @@ class EmployeeMigration extends Migration {
 
 class EmployeeQuery extends Query<Employee?, EmployeeQueryWhere?> {
   EmployeeQuery({Set<String>? trampoline}) {
-    trampoline ??= Set();
+    trampoline ??= {};
     trampoline.add(tableName);
     _where = EmployeeQueryWhere(this);
   }
@@ -43,17 +43,17 @@ class EmployeeQuery extends Query<Employee?, EmployeeQueryWhere?> {
   EmployeeQueryWhere? _where;
 
   @override
-  get casts {
+  Map<String, String> get casts {
     return {'salary': 'text'};
   }
 
   @override
-  get tableName {
+  String get tableName {
     return 'employees';
   }
 
   @override
-  get fields {
+  List<String> get fields {
     return const [
       'id',
       'created_at',
@@ -89,7 +89,7 @@ class EmployeeQuery extends Query<Employee?, EmployeeQueryWhere?> {
   }
 
   @override
-  deserialize(List row) {
+  Employee? deserialize(List row) {
     return parseRow(row);
   }
 }
@@ -119,7 +119,7 @@ class EmployeeQueryWhere extends QueryWhere {
   final NumericSqlExpressionBuilder<double> salary;
 
   @override
-  get expressionBuilders {
+  List<SqlExpressionBuilder> get expressionBuilders {
     return [id, createdAt, updatedAt, uniqueId, firstName, lastName, salary];
   }
 }
@@ -252,7 +252,7 @@ class Employee extends _Employee {
 
   @override
   String toString() {
-    return "Employee(id=$id, createdAt=$createdAt, updatedAt=$updatedAt, uniqueId=$uniqueId, firstName=$firstName, lastName=$lastName, salary=$salary)";
+    return 'Employee(id=$id, createdAt=$createdAt, updatedAt=$updatedAt, uniqueId=$uniqueId, firstName=$firstName, lastName=$lastName, salary=$salary)';
   }
 
   Map<String, dynamic> toJson() {

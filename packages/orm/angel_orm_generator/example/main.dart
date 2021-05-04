@@ -6,7 +6,7 @@ import 'package:angel_orm/src/query.dart';
 import 'package:angel_serialize/angel_serialize.dart';
 part 'main.g.dart';
 
-main() async {
+void main() async {
   var query = EmployeeQuery()
     ..where!.firstName.equals('Rich')
     ..where!.lastName.equals('Person')
