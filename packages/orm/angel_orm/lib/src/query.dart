@@ -336,7 +336,7 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
       return executor
           .query(tableName, sql, substitutionValues,
               fields.map(adornWithTableName).toList())
-          .then((it) => it.map(deserialize).toList());
+          .then((it) => deserializeList(it));
     } else {
       return executor.transaction((tx) async {
         // TODO: Can this be done with just *one* query?
@@ -367,7 +367,7 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
       return executor.query(tableName, sql, substitutionValues).then((it) =>
           it.isEmpty
               ? Optional.empty()
-              : Optional.ofNullable(deserialize(it.first)));
+              : Optional.ofNullable(deserialize(it.first).value));
     }
   }
 
@@ -391,7 +391,7 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
 
       return executor
           .query(tableName, sql, substitutionValues)
-          .then((it) => it.map(deserialize).toList());
+          .then((it) => deserializeList(it));
     }
   }
 

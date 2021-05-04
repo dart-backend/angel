@@ -4,6 +4,8 @@ import 'package:angel_model/angel_model.dart';
 import 'package:angel_orm/angel_orm.dart';
 import 'package:angel_orm/src/query.dart';
 import 'package:angel_serialize/angel_serialize.dart';
+import 'package:optional/optional.dart';
+
 part 'main.g.dart';
 part 'main.serializer.g.dart';
 
@@ -75,14 +77,14 @@ class EmployeeQuery extends Query<Employee, EmployeeQueryWhere> {
   EmployeeQueryWhere newWhereClause() => EmployeeQueryWhere(this);
 
   @override
-  Employee deserialize(List row) {
-    return Employee(
+  Optional<Employee> deserialize(List row) {
+    return Optional.ofNullable(Employee(
         id: row[0].toString(),
         firstName: row[1] as String,
         lastName: row[2] as String,
         salary: row[3] as double,
         createdAt: row[4] as DateTime,
-        updatedAt: row[5] as DateTime);
+        updatedAt: row[5] as DateTime));
   }
 }
 

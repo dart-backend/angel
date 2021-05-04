@@ -118,10 +118,10 @@ standaloneTests(FutureOr<QueryExecutor> Function() createExecutor,
           var id = int.parse(ferrari!.id!);
           var query = CarQuery()..where!.id.equals(id);
           var carOpt = await (query.deleteOne(executor));
-          if (carOpt.isPresent) {
+          carOpt.ifPresent((car) {
             var car = carOpt.value;
             expect(car.toJson(), ferrari!.toJson());
-          }
+          });
 
           List<Car> cars = await CarQuery().get(executor);
           expect(cars, isEmpty);
@@ -151,11 +151,11 @@ standaloneTests(FutureOr<QueryExecutor> Function() createExecutor,
           var cloned = ferrari!.copyWith(make: 'Angel');
           var query = CarQuery()..values.copyFrom(cloned);
           var carOpt = await (query.updateOne(executor));
-          if (carOpt.isPresent) {
+          carOpt.ifPresent((car) {
             var car = carOpt.value;
             print(car.toJson());
             expect(car.toJson(), cloned.toJson());
-          }
+          });
         });
       });
     });
@@ -172,7 +172,7 @@ standaloneTests(FutureOr<QueryExecutor> Function() createExecutor,
         ..createdAt = now
         ..updatedAt = now;
       var carOpt = await (query.insert(executor));
-      if (carOpt.isPresent) {
+      carOpt.ifPresent((car) {
         var car = carOpt.value;
         expect(car.id, isNotNull);
         expect(car.make, 'Honda');
@@ -181,9 +181,7 @@ standaloneTests(FutureOr<QueryExecutor> Function() createExecutor,
         expect(
             dateYmdHms.format(car.recalledAt!), dateYmdHms.format(recalledAt));
         expect(car.createdAt, allOf(isNotNull, equals(car.updatedAt)));
-      } else {
-        print("Car is null");
-      }
+      });
     });
 
     test('insert car', () async {

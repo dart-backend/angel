@@ -39,14 +39,26 @@ abstract class QueryBase<T> {
       String preamble = '',
       bool withFields = true});
 
-  T deserialize(List row);
+  Optional<T> deserialize(List row);
+
+  List<T> deserializeList(List<List<dynamic>> it) {
+    var optResult = it.map(deserialize).toList();
+    var result = <T>[];
+    optResult.forEach((element) {
+      element.ifPresent((item) {
+        result.add(item);
+      });
+    });
+
+    return result;
+  }
 
   Future<List<T>> get(QueryExecutor executor) async {
     var sql = compile({});
 
     return executor
         .query(tableName, sql, substitutionValues)
-        .then((it) => it.map(deserialize).toList());
+        .then((it) => deserializeList(it));
   }
 
   Future<Optional<T>> getOne(QueryExecutor executor) {
