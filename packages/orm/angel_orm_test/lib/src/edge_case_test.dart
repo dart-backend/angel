@@ -25,7 +25,7 @@ edgeCaseTests(FutureOr<QueryExecutor> Function() createExecutor,
 
     setUp(() async {
       var query = UnorthodoxQuery()..values.name = 'Hey';
-      unorthodox = await query.insert(executor);
+      unorthodox = (await query.insert(executor)).value;
     });
 
     test('belongs to', () async {
@@ -42,12 +42,12 @@ edgeCaseTests(FutureOr<QueryExecutor> Function() createExecutor,
 
       setUp(() async {
         var wjQuery = WeirdJoinQuery()..values.joinName = unorthodox!.name;
-        weirdJoin = await wjQuery.insert(executor);
+        weirdJoin = (await wjQuery.insert(executor)).value;
 
         var gbQuery = SongQuery()
           ..values.weirdJoinId = weirdJoin!.id
           ..values.title = 'Girl Blue';
-        girlBlue = await gbQuery.insert(executor);
+        girlBlue = (await gbQuery.insert(executor)).value;
       });
 
       test('has one', () async {
@@ -65,7 +65,7 @@ edgeCaseTests(FutureOr<QueryExecutor> Function() createExecutor,
             ..values.parent = weirdJoin!.id
             ..values.i = i;
           var model = await query.insert(executor);
-          numbas.add(model);
+          numbas.add(model.value);
         }
 
         var query = WeirdJoinQuery()..where!.id.equals(weirdJoin!.id!);
@@ -76,7 +76,8 @@ edgeCaseTests(FutureOr<QueryExecutor> Function() createExecutor,
 
       test('many to many', () async {
         var fooQuery = FooQuery()..values.bar = 'baz';
-        var fooBar = await fooQuery.insert(executor).then((foo) => foo!.bar!);
+        var fooBar =
+            await fooQuery.insert(executor).then((foo) => foo.value.bar);
         var pivotQuery = FooPivotQuery()
           ..values.weirdJoinId = weirdJoin!.id
           ..values.fooBar = fooBar;
@@ -86,7 +87,7 @@ edgeCaseTests(FutureOr<QueryExecutor> Function() createExecutor,
         var foo = await (fooQuery.getOne(executor) as FutureOr<Foo>);
         print(foo.toJson());
         print(weirdJoin!.toJson());
-        expect(foo.weirdJoins![0]!.id, weirdJoin!.id);
+        expect(foo.weirdJoins![0].id, weirdJoin!.id);
       });
     });
   });

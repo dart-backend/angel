@@ -18,7 +18,7 @@ customExprTests(FutureOr<QueryExecutor> Function() createExecutor,
     nQuery.values
       ..createdAt = now
       ..updatedAt = now;
-    numbersModel = await nQuery.insert(executor);
+    numbersModel = (await nQuery.insert(executor)).value;
   });
 
   tearDown(() => close!(executor));

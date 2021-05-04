@@ -30,7 +30,7 @@ class CarMigration extends Migration {
 // OrmGenerator
 // **************************************************************************
 
-class CarQuery extends Query<Car?, CarQueryWhere?> {
+class CarQuery extends Query<Car, CarQueryWhere> {
   CarQuery({Query? parent, Set<String>? trampoline}) : super(parent: parent) {
     trampoline ??= Set();
     trampoline.add(tableName);
@@ -75,8 +75,10 @@ class CarQuery extends Query<Car?, CarQueryWhere?> {
     return CarQueryWhere(this);
   }
 
-  static Car? parseRow(List row) {
-    if (row.every((x) => x == null)) return null;
+  static Optional<Car> parseRow(List row) {
+    if (row.every((x) => x == null)) {
+      return Optional.empty();
+    }
     var model = Car(
         id: row[0].toString(),
         createdAt: (row[1] as DateTime?),
@@ -85,12 +87,12 @@ class CarQuery extends Query<Car?, CarQueryWhere?> {
         description: (row[4] as String?),
         familyFriendly: (row[5] as bool?),
         recalledAt: (row[6] as DateTime?));
-    return model;
+    return Optional.ofNullable(model);
   }
 
   @override
-  deserialize(List row) {
-    return parseRow(row);
+  Car deserialize(List row) {
+    return parseRow(row).value;
   }
 }
 

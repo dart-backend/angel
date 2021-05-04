@@ -50,7 +50,7 @@ class AuthorMigration extends Migration {
 // OrmGenerator
 // **************************************************************************
 
-class BookQuery extends Query<Book?, BookQueryWhere?> {
+class BookQuery extends Query<Book, BookQueryWhere> {
   BookQuery({Query? parent, Set<String>? trampoline}) : super(parent: parent) {
     trampoline ??= Set();
     trampoline.add(tableName);
@@ -106,8 +106,10 @@ class BookQuery extends Query<Book?, BookQueryWhere?> {
     return BookQueryWhere(this);
   }
 
-  static Book? parseRow(List row) {
-    if (row.every((x) => x == null)) return null;
+  static Optional<Book> parseRow(List row) {
+    if (row.every((x) => x == null)) {
+      return Optional.empty();
+    }
     var model = Book(
         id: row[0].toString(),
         createdAt: (row[1] as DateTime?),
@@ -115,18 +117,19 @@ class BookQuery extends Query<Book?, BookQueryWhere?> {
         name: (row[5] as String?));
     if (row.length > 6) {
       model = model.copyWith(
-          author: AuthorQuery.parseRow(row.skip(6).take(4).toList()));
+          author: AuthorQuery.parseRow(row.skip(6).take(4).toList()).value);
     }
     if (row.length > 10) {
       model = model.copyWith(
-          partnerAuthor: AuthorQuery.parseRow(row.skip(10).take(4).toList()));
+          partnerAuthor:
+              AuthorQuery.parseRow(row.skip(10).take(4).toList()).value);
     }
-    return model;
+    return Optional.ofNullable(model);
   }
 
   @override
-  deserialize(List row) {
-    return parseRow(row);
+  Book deserialize(List row) {
+    return parseRow(row).value;
   }
 
   AuthorQuery? get author {
@@ -215,7 +218,7 @@ class BookQueryValues extends MapQueryValues {
   }
 }
 
-class AuthorQuery extends Query<Author?, AuthorQueryWhere?> {
+class AuthorQuery extends Query<Author, AuthorQueryWhere> {
   AuthorQuery({Query? parent, Set<String>? trampoline})
       : super(parent: parent) {
     trampoline ??= Set();
@@ -253,19 +256,21 @@ class AuthorQuery extends Query<Author?, AuthorQueryWhere?> {
     return AuthorQueryWhere(this);
   }
 
-  static Author? parseRow(List row) {
-    if (row.every((x) => x == null)) return null;
+  static Optional<Author> parseRow(List row) {
+    if (row.every((x) => x == null)) {
+      return Optional.empty();
+    }
     var model = Author(
         id: row[0].toString(),
-        createdAt: (row[1] as DateTime?),
-        updatedAt: (row[2] as DateTime?),
-        name: (row[3] as String?));
-    return model;
+        createdAt: (row[1]),
+        updatedAt: (row[2]),
+        name: (row[3]));
+    return Optional.ofNullable(model);
   }
 
   @override
-  deserialize(List row) {
-    return parseRow(row);
+  Author deserialize(List row) {
+    return parseRow(row).value;
   }
 }
 

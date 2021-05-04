@@ -75,7 +75,7 @@ class RoleQuery extends Query<Role, RoleQueryWhere> {
   @override
   final RoleQueryValues values = RoleQueryValues();
 
-  RoleQueryWhere? _where;
+  late RoleQueryWhere _where;
 
   @override
   get casts {
@@ -102,42 +102,44 @@ class RoleQuery extends Query<Role, RoleQueryWhere> {
     return RoleQueryWhere(this);
   }
 
-  static Role? parseRow(List row) {
-    if (row.every((x) => x == null)) return null;
+  static Optional<Role> parseRow(List row) {
+    if (row.every((x) => x == null)) {
+      return Optional.empty();
+    }
     var model = Role(role: (row[0] as String?));
     if (row.length > 1) {
-      model = model.copyWith(
-          users: [UserQuery.parseRow(row.skip(1).take(3).toList())]
-              .where((x) => x != null)
-              .toList());
+      var rowData = UserQuery.parseRow(row.skip(1).take(3).toList());
+      if (rowData.isPresent) {
+        model = model.copyWith(users: [rowData.value]);
+      }
     }
-    return model;
+    return Optional.ofNullable(model);
   }
 
   @override
-  deserialize(List row) {
-    return parseRow(row);
+  Role deserialize(List row) {
+    return parseRow(row).value;
   }
 
   @override
   bool canCompile(trampoline) {
-    return (!(trampoline?.contains('roles') == true &&
-        trampoline?.contains('role_users') == true));
+    return (!(trampoline.contains('roles') == true &&
+        trampoline.contains('role_users') == true));
   }
 
   @override
   get(QueryExecutor executor) {
     return super.get(executor).then((result) {
       return result.fold<List<Role>>([], (out, model) {
-        var idx = out.indexWhere((m) => m.role == model!.role);
+        var idx = out.indexWhere((m) => m.role == model.role);
 
         if (idx == -1) {
-          return out..add(model!);
+          return out..add(model);
         } else {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                users: List<_User>.from(l.users)..addAll(model!.users));
+                users: List<_User>.from(l.users)..addAll(model.users));
         }
       });
     });
@@ -146,16 +148,16 @@ class RoleQuery extends Query<Role, RoleQueryWhere> {
   @override
   update(QueryExecutor executor) {
     return super.update(executor).then((result) {
-      return result.fold<List<Role?>>([], (out, model) {
-        var idx = out.indexWhere((m) => m!.role == model!.role);
+      return result.fold<List<Role>>([], (out, model) {
+        var idx = out.indexWhere((m) => m.role == model.role);
 
         if (idx == -1) {
           return out..add(model);
         } else {
-          var l = out[idx]!;
+          var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                users: List<_User>.from(l.users)..addAll(model!.users));
+                users: List<_User>.from(l.users)..addAll(model.users));
         }
       });
     });
@@ -165,15 +167,15 @@ class RoleQuery extends Query<Role, RoleQueryWhere> {
   delete(QueryExecutor executor) {
     return super.delete(executor).then((result) {
       return result.fold<List<Role>>([], (out, model) {
-        var idx = out.indexWhere((m) => m.role == model!.role);
+        var idx = out.indexWhere((m) => m.role == model.role);
 
         if (idx == -1) {
-          return out..add(model!);
+          return out..add(model);
         } else {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                users: List<_User>.from(l.users)..addAll(model!.users));
+                users: List<_User>.from(l.users)..addAll(model.users));
         }
       });
     });
@@ -208,7 +210,7 @@ class RoleQueryValues extends MapQueryValues {
   }
 }
 
-class RoleUserQuery extends Query<RoleUser?, RoleUserQueryWhere?> {
+class RoleUserQuery extends Query<RoleUser, RoleUserQueryWhere> {
   RoleUserQuery({Query? parent, Set<String>? trampoline})
       : super(parent: parent) {
     trampoline ??= Set();
@@ -257,23 +259,30 @@ class RoleUserQuery extends Query<RoleUser?, RoleUserQueryWhere?> {
     return RoleUserQueryWhere(this);
   }
 
-  static RoleUser? parseRow(List row) {
-    if (row.every((x) => x == null)) return null;
+  static Optional<RoleUser> parseRow(List row) {
+    if (row.every((x) => x == null)) {
+      return Optional.empty();
+    }
     var model = RoleUser();
     if (row.length > 2) {
-      model = model.copyWith(
-          role: RoleQuery.parseRow(row.skip(2).take(1).toList()));
+      var r = RoleQuery.parseRow(row.skip(2).take(1).toList());
+      if (r.isPresent) {
+        model = model.copyWith(role: r.value);
+      }
     }
     if (row.length > 3) {
-      model = model.copyWith(
-          user: UserQuery.parseRow(row.skip(3).take(3).toList()));
+      var u = UserQuery.parseRow(row.skip(3).take(3).toList());
+      if (u.isPresent) {
+        model = model.copyWith(
+            user: UserQuery.parseRow(row.skip(3).take(3).toList()).value);
+      }
     }
-    return model;
+    return Optional.ofNullable(model);
   }
 
   @override
-  deserialize(List row) {
-    return parseRow(row);
+  RoleUser deserialize(List row) {
+    return parseRow(row).value;
   }
 
   RoleQuery? get role {
@@ -342,7 +351,7 @@ class UserQuery extends Query<User, UserQueryWhere> {
   @override
   final UserQueryValues values = UserQueryValues();
 
-  UserQueryWhere _where;
+  UserQueryWhere? _where;
 
   @override
   get casts {
@@ -360,7 +369,7 @@ class UserQuery extends Query<User, UserQueryWhere> {
   }
 
   @override
-  UserQueryWhere get where {
+  UserQueryWhere? get where {
     return _where;
   }
 
@@ -369,30 +378,34 @@ class UserQuery extends Query<User, UserQueryWhere> {
     return UserQueryWhere(this);
   }
 
-  static User? parseRow(List row) {
-    if (row.every((x) => x == null)) return null;
+  static Optional<User> parseRow(List row) {
+    if (row.every((x) => x == null)) {
+      return Optional.empty();
+    }
     var model = User(
         email: (row[0] as String?),
         name: (row[1] as String?),
         password: (row[2] as String?));
     if (row.length > 3) {
-      model = model.copyWith(
-          roles: [RoleQuery.parseRow(row.skip(3).take(1).toList())]
-              .where((x) => x != null)
-              .toList());
+      var d = RoleQuery.parseRow(row.skip(3).take(1).toList());
+
+      model = model.copyWith(roles: [d.value]);
+//          roles: [RoleQuery.parseRow(row.skip(3).take(1).toList())]
+//              .where((x) => x != null)
+//              .toList());
     }
-    return model;
+    return Optional.ofNullable(model);
   }
 
   @override
-  deserialize(List row) {
-    return parseRow(row);
+  User deserialize(List row) {
+    return parseRow(row).value;
   }
 
   @override
   bool canCompile(trampoline) {
-    return (!(trampoline?.contains('users') == true &&
-        trampoline?.contains('role_users') == true));
+    return (!(trampoline.contains('users') == true &&
+        trampoline.contains('role_users') == true));
   }
 
   @override
@@ -586,15 +599,12 @@ class User implements _User {
   final List<_Role> roles;
 
   User copyWith(
-      {String? email,
-      String? name,
-      String? password,
-      List<_Role> roles = const []}) {
+      {String? email, String? name, String? password, List<_Role>? roles}) {
     return User(
         email: email ?? this.email,
         name: name ?? this.name,
         password: password ?? this.password,
-        roles: roles);
+        roles: roles ?? []);
   }
 
   bool operator ==(other) {

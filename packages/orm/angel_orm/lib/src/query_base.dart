@@ -19,7 +19,8 @@ abstract class QueryBase<T> {
 
   /// The list of fields returned by this query.
   ///
-  /// If it's `null`, then this query will perform a `SELECT *`.
+  /// @deprecated If it's `null`, then this query will perform a `SELECT *`.
+  /// If it's empty, then this query will perform a `SELECT *`.
   List<String> get fields;
 
   /// A String of all [fields], joined by a comma (`,`).
@@ -42,6 +43,7 @@ abstract class QueryBase<T> {
 
   Future<List<T>> get(QueryExecutor executor) async {
     var sql = compile({});
+
     return executor
         .query(tableName, sql, substitutionValues)
         .then((it) => it.map(deserialize).toList());

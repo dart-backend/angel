@@ -45,7 +45,7 @@ class FootMigration extends Migration {
 // OrmGenerator
 // **************************************************************************
 
-class LegQuery extends Query<Leg?, LegQueryWhere?> {
+class LegQuery extends Query<Leg, LegQueryWhere> {
   LegQuery({Query? parent, Set<String>? trampoline}) : super(parent: parent) {
     trampoline ??= Set();
     trampoline.add(tableName);
@@ -94,8 +94,10 @@ class LegQuery extends Query<Leg?, LegQueryWhere?> {
     return LegQueryWhere(this);
   }
 
-  static Leg? parseRow(List row) {
-    if (row.every((x) => x == null)) return null;
+  static Optional<Leg> parseRow(List row) {
+    if (row.every((x) => x == null)) {
+      return Optional.empty();
+    }
     var model = Leg(
         id: row[0].toString(),
         createdAt: (row[1] as DateTime?),
@@ -103,14 +105,14 @@ class LegQuery extends Query<Leg?, LegQueryWhere?> {
         name: (row[3] as String?));
     if (row.length > 4) {
       model = model.copyWith(
-          foot: FootQuery.parseRow(row.skip(4).take(5).toList()));
+          foot: FootQuery.parseRow(row.skip(4).take(5).toList()).value);
     }
-    return model;
+    return Optional.ofNullable(model);
   }
 
   @override
-  deserialize(List row) {
-    return parseRow(row);
+  Leg deserialize(List row) {
+    return parseRow(row).value;
   }
 
   FootQuery? get foot {
@@ -172,7 +174,7 @@ class LegQueryValues extends MapQueryValues {
   }
 }
 
-class FootQuery extends Query<Foot?, FootQueryWhere?> {
+class FootQuery extends Query<Foot, FootQueryWhere> {
   FootQuery({Query? parent, Set<String>? trampoline}) : super(parent: parent) {
     trampoline ??= Set();
     trampoline.add(tableName);
@@ -209,20 +211,22 @@ class FootQuery extends Query<Foot?, FootQueryWhere?> {
     return FootQueryWhere(this);
   }
 
-  static Foot? parseRow(List row) {
-    if (row.every((x) => x == null)) return null;
+  static Optional<Foot> parseRow(List row) {
+    if (row.every((x) => x == null)) {
+      return Optional.empty();
+    }
     var model = Foot(
         id: row[0].toString(),
         createdAt: (row[1] as DateTime?),
         updatedAt: (row[2] as DateTime?),
         legId: (row[3] as int?),
         nToes: double.tryParse(row[4].toString()));
-    return model;
+    return Optional.ofNullable(model);
   }
 
   @override
-  deserialize(List row) {
-    return parseRow(row);
+  Foot deserialize(List row) {
+    return parseRow(row).value;
   }
 }
 

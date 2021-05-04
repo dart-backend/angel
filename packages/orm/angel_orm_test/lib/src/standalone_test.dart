@@ -24,7 +24,7 @@ standaloneTests(FutureOr<QueryExecutor> Function() createExecutor,
     // var row = [0, 'Mazda', 'CX9', true, y2k, y2k, y2k];
     var row = [0, y2k, y2k, 'Mazda', 'CX9', true, y2k];
     print(row);
-    var car = CarQuery().deserialize(row)!;
+    var car = CarQuery().deserialize(row);
     print(car.toJson());
     expect(car.id, '0');
     expect(car.make, 'Mazda');
@@ -47,7 +47,7 @@ standaloneTests(FutureOr<QueryExecutor> Function() createExecutor,
 
     group('selects', () {
       test('select all', () async {
-        List<Car?> cars = await CarQuery().get(executor);
+        List<Car> cars = await CarQuery().get(executor);
         expect(cars, []);
       });
 
@@ -60,19 +60,19 @@ standaloneTests(FutureOr<QueryExecutor> Function() createExecutor,
             ..make = 'Ferrari東'
             ..description = 'Vroom vroom!'
             ..familyFriendly = false;
-          ferrari = await query.insert(executor);
+          ferrari = (await query.insert(executor)).value;
         });
 
         test('where clause is applied', () async {
           var query = CarQuery()..where!.familyFriendly.isTrue;
-          List<Car?> cars = await query.get(executor);
+          List<Car> cars = await query.get(executor);
           expect(cars, isEmpty);
 
           var sportsCars = CarQuery()..where!.familyFriendly.isFalse;
           cars = await sportsCars.get(executor);
-          print(cars.map((c) => c!.toJson()));
+          print(cars.map((c) => c.toJson()));
 
-          var car = cars.first!;
+          var car = cars.first;
           expect(car.make, ferrari!.make);
           expect(car.description, ferrari!.description);
           expect(car.familyFriendly, ferrari!.familyFriendly);
@@ -80,10 +80,10 @@ standaloneTests(FutureOr<QueryExecutor> Function() createExecutor,
         });
 
         test('union', () async {
-          var query1 = CarQuery()..where!.make.like('%Fer%');
-          var query2 = CarQuery()..where!.familyFriendly.isTrue;
-          var query3 = CarQuery()..where!.description.equals('Submarine');
-          Union<Car?> union = query1.union(query2).unionAll(query3);
+          var query1 = CarQuery()..where?.make.like('%Fer%');
+          var query2 = CarQuery()..where?.familyFriendly.isTrue;
+          var query3 = CarQuery()..where?.description.equals('Submarine');
+          Union<Car> union = query1.union(query2).unionAll(query3);
           print(union.compile(Set()));
           var cars = await union.get(executor);
           expect(cars, hasLength(1));
@@ -93,17 +93,17 @@ standaloneTests(FutureOr<QueryExecutor> Function() createExecutor,
           var query = CarQuery()
             ..where!.make.like('Fer%')
             ..orWhere((where) => where
-              ?..familyFriendly.isTrue
+              ..familyFriendly.isTrue
               ..make.equals('Honda'));
           print(query.compile(Set()));
-          List<Car?> cars = await query.get(executor);
+          List<Car> cars = await query.get(executor);
           expect(cars, hasLength(1));
         });
 
         test('limit obeyed', () async {
           var query = CarQuery()..limit(0);
           print(query.compile(Set()));
-          List<Car?> cars = await query.get(executor);
+          List<Car> cars = await query.get(executor);
           expect(cars, isEmpty);
         });
 
@@ -120,28 +120,28 @@ standaloneTests(FutureOr<QueryExecutor> Function() createExecutor,
           var car = await (query.deleteOne(executor) as FutureOr<Car>);
           expect(car.toJson(), ferrari!.toJson());
 
-          List<Car?> cars = await CarQuery().get(executor);
+          List<Car> cars = await CarQuery().get(executor);
           expect(cars, isEmpty);
         });
 
         test('delete stream', () async {
           var query = CarQuery()
             ..where!.make.equals('Ferrari東')
-            ..orWhere((w) => w!.familyFriendly.isTrue);
+            ..orWhere((w) => w.familyFriendly.isTrue);
           print(query.compile(Set(), preamble: 'DELETE FROM "cars"'));
 
-          List<Car?>? cars = await query.delete(executor);
+          List<Car> cars = await query.delete(executor);
           expect(cars, hasLength(1));
-          expect(cars.first!.toJson(), ferrari!.toJson());
+          expect(cars.first.toJson(), ferrari!.toJson());
         });
 
         test('update', () async {
           var query = CarQuery()
             ..where!.id.equals(int.parse(ferrari!.id!))
             ..values.make = 'Hyundai';
-          List<Car?> cars = await query.update(executor);
+          List<Car> cars = await query.update(executor);
           expect(cars, hasLength(1));
-          expect(cars.first!.make, 'Hyundai');
+          expect(cars.first.make, 'Hyundai');
         });
 
         test('update car', () async {

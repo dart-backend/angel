@@ -3,6 +3,8 @@ import 'package:angel_migration/angel_migration.dart';
 import 'package:angel_orm/angel_orm.dart';
 import 'package:angel_serialize/angel_serialize.dart';
 import 'package:collection/collection.dart';
+import 'package:optional/optional.dart';
+
 part 'has_map.g.dart';
 
 // String _boolToCustom(bool v) => v ? 'yes' : 'no';

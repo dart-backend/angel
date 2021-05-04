@@ -14,7 +14,7 @@ hasManyTests(FutureOr<QueryExecutor> Function() createExecutor,
     var query = TreeQuery()..values.rings = 10;
 
     executor = await createExecutor();
-    appleTree = await query.insert(executor);
+    appleTree = (await query.insert(executor)).value;
     treeId = int.parse(appleTree!.id!);
   });
 
@@ -44,8 +44,8 @@ hasManyTests(FutureOr<QueryExecutor> Function() createExecutor,
         ..values.treeId = treeId
         ..values.commonName = 'Banana';
 
-      apple = await appleQuery.insert(executor);
-      banana = await bananaQuery.insert(executor);
+      apple = (await appleQuery.insert(executor)).value;
+      banana = (await bananaQuery.insert(executor)).value;
     });
 
     test('can fetch any children', () async {

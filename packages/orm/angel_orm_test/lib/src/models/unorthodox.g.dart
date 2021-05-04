@@ -105,7 +105,7 @@ class FooPivotMigration extends Migration {
 // OrmGenerator
 // **************************************************************************
 
-class UnorthodoxQuery extends Query<Unorthodox?, UnorthodoxQueryWhere?> {
+class UnorthodoxQuery extends Query<Unorthodox, UnorthodoxQueryWhere> {
   UnorthodoxQuery({Query? parent, Set<String>? trampoline})
       : super(parent: parent) {
     trampoline ??= Set();
@@ -143,15 +143,17 @@ class UnorthodoxQuery extends Query<Unorthodox?, UnorthodoxQueryWhere?> {
     return UnorthodoxQueryWhere(this);
   }
 
-  static Unorthodox? parseRow(List row) {
-    if (row.every((x) => x == null)) return null;
+  static Optional<Unorthodox> parseRow(List row) {
+    if (row.every((x) => x == null)) {
+      return Optional.empty();
+    }
     var model = Unorthodox(name: (row[0] as String?));
-    return model;
+    return Optional.ofNullable(model);
   }
 
   @override
-  deserialize(List row) {
-    return parseRow(row);
+  Unorthodox deserialize(List row) {
+    return parseRow(row).value;
   }
 }
 
@@ -183,7 +185,7 @@ class UnorthodoxQueryValues extends MapQueryValues {
   }
 }
 
-class WeirdJoinQuery extends Query<WeirdJoin?, WeirdJoinQueryWhere?> {
+class WeirdJoinQuery extends Query<WeirdJoin, WeirdJoinQueryWhere> {
   WeirdJoinQuery({Query? parent, Set<String>? trampoline})
       : super(parent: parent) {
     trampoline ??= Set();
@@ -252,35 +254,34 @@ class WeirdJoinQuery extends Query<WeirdJoin?, WeirdJoinQueryWhere?> {
     return WeirdJoinQueryWhere(this);
   }
 
-  static WeirdJoin? parseRow(List row) {
-    if (row.every((x) => x == null)) return null;
+  static Optional<WeirdJoin> parseRow(List row) {
+    if (row.every((x) => x == null)) {
+      return Optional.empty();
+    }
     var model = WeirdJoin(id: (row[0] as int?));
     if (row.length > 2) {
       model = model.copyWith(
-          unorthodox: UnorthodoxQuery.parseRow(row.skip(2).take(1).toList()));
+          unorthodox:
+              UnorthodoxQuery.parseRow(row.skip(2).take(1).toList()).value);
     }
     if (row.length > 3) {
       model = model.copyWith(
-          song: SongQuery.parseRow(row.skip(3).take(5).toList()));
+          song: SongQuery.parseRow(row.skip(3).take(5).toList()).value);
     }
     if (row.length > 8) {
       model = model.copyWith(
-          numbas: [NumbaQuery.parseRow(row.skip(8).take(2).toList())]
-              .where((x) => x != null)
-              .toList());
+          numbas: [NumbaQuery.parseRow(row.skip(8).take(2).toList()).value]);
     }
     if (row.length > 10) {
       model = model.copyWith(
-          foos: [FooQuery.parseRow(row.skip(10).take(1).toList())]
-              .where((x) => x != null)
-              .toList());
+          foos: [FooQuery.parseRow(row.skip(10).take(1).toList()).value]);
     }
-    return model;
+    return Optional.ofNullable(model);
   }
 
   @override
-  deserialize(List row) {
-    return parseRow(row);
+  WeirdJoin deserialize(List row) {
+    return parseRow(row).value;
   }
 
   UnorthodoxQuery? get unorthodox {
@@ -297,28 +298,25 @@ class WeirdJoinQuery extends Query<WeirdJoin?, WeirdJoinQueryWhere?> {
 
   @override
   bool canCompile(trampoline) {
-    return (!(trampoline?.contains('weird_joins') == true &&
-        trampoline?.contains('foo_pivots') == true));
+    return (!(trampoline.contains('weird_joins') == true &&
+        trampoline.contains('foo_pivots') == true));
   }
 
   @override
   get(QueryExecutor executor) {
     return super.get(executor).then((result) {
       return result.fold<List<WeirdJoin>>([], (out, model) {
-        var idx = out.indexWhere((m) => m.id == model!.id);
+        var idx = out.indexWhere((m) => m.id == model.id);
 
         if (idx == -1) {
-          return out..add(model!);
+          return out..add(model);
         } else {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
                 numbas: List<_Numba>.from(l.numbas ?? [])
-                  ..addAll(model == null
-                      ? []
-                      : List<_Numba>.from(model.numbas ?? [])),
-                foos: List<_Foo?>.from(l.foos ?? [])
-                  ..addAll(model?.foos ?? []));
+                  ..addAll(List<_Numba>.from(model.numbas ?? [])),
+                foos: List<_Foo?>.from(l.foos ?? [])..addAll(model.foos ?? []));
         }
       });
     });
@@ -328,16 +326,16 @@ class WeirdJoinQuery extends Query<WeirdJoin?, WeirdJoinQueryWhere?> {
   update(QueryExecutor executor) {
     return super.update(executor).then((result) {
       return result.fold<List<WeirdJoin>>([], (out, model) {
-        var idx = out.indexWhere((m) => m.id == model!.id);
+        var idx = out.indexWhere((m) => m.id == model.id);
 
         if (idx == -1) {
-          return out..add(model!);
+          return out..add(model);
         } else {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
                 numbas: List<_Numba?>.from(l.numbas ?? [])
-                  ..addAll(model!.numbas ?? []),
+                  ..addAll(model.numbas ?? []),
                 foos: List<_Foo?>.from(l.foos ?? [])..addAll(model.foos ?? []));
         }
       });
@@ -348,16 +346,16 @@ class WeirdJoinQuery extends Query<WeirdJoin?, WeirdJoinQueryWhere?> {
   delete(QueryExecutor executor) {
     return super.delete(executor).then((result) {
       return result.fold<List<WeirdJoin>>([], (out, model) {
-        var idx = out.indexWhere((m) => m.id == model!.id);
+        var idx = out.indexWhere((m) => m.id == model.id);
 
         if (idx == -1) {
-          return out..add(model!);
+          return out..add(model);
         } else {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
                 numbas: List<_Numba?>.from(l.numbas ?? [])
-                  ..addAll(model!.numbas ?? []),
+                  ..addAll(model.numbas ?? []),
                 foos: List<_Foo?>.from(l.foos ?? [])..addAll(model.foos ?? []));
         }
       });
@@ -404,7 +402,7 @@ class WeirdJoinQueryValues extends MapQueryValues {
   }
 }
 
-class SongQuery extends Query<Song?, SongQueryWhere?> {
+class SongQuery extends Query<Song, SongQueryWhere> {
   SongQuery({Query? parent, Set<String>? trampoline}) : super(parent: parent) {
     trampoline ??= Set();
     trampoline.add(tableName);
@@ -441,20 +439,22 @@ class SongQuery extends Query<Song?, SongQueryWhere?> {
     return SongQueryWhere(this);
   }
 
-  static Song? parseRow(List row) {
-    if (row.every((x) => x == null)) return null;
+  static Optional<Song> parseRow(List row) {
+    if (row.every((x) => x == null)) {
+      return Optional.empty();
+    }
     var model = Song(
         id: row[0].toString(),
         createdAt: (row[1] as DateTime?),
         updatedAt: (row[2] as DateTime?),
         weirdJoinId: (row[3] as int?),
         title: (row[4] as String?));
-    return model;
+    return Optional.ofNullable(model);
   }
 
   @override
-  deserialize(List row) {
-    return parseRow(row);
+  Song deserialize(List row) {
+    return parseRow(row).value;
   }
 }
 
@@ -521,7 +521,7 @@ class SongQueryValues extends MapQueryValues {
   }
 }
 
-class NumbaQuery extends Query<Numba?, NumbaQueryWhere?> {
+class NumbaQuery extends Query<Numba, NumbaQueryWhere> {
   NumbaQuery({Query? parent, Set<String>? trampoline}) : super(parent: parent) {
     trampoline ??= Set();
     trampoline.add(tableName);
@@ -558,15 +558,17 @@ class NumbaQuery extends Query<Numba?, NumbaQueryWhere?> {
     return NumbaQueryWhere(this);
   }
 
-  static Numba? parseRow(List row) {
-    if (row.every((x) => x == null)) return null;
+  static Optional<Numba> parseRow(List row) {
+    if (row.every((x) => x == null)) {
+      return Optional.empty();
+    }
     var model = Numba(i: (row[0] as int?), parent: (row[1] as int?));
-    return model;
+    return Optional.ofNullable(model);
   }
 
   @override
-  deserialize(List row) {
-    return parseRow(row);
+  Numba deserialize(List row) {
+    return parseRow(row).value;
   }
 }
 
@@ -607,7 +609,7 @@ class NumbaQueryValues extends MapQueryValues {
   }
 }
 
-class FooQuery extends Query<Foo?, FooQueryWhere?> {
+class FooQuery extends Query<Foo, FooQueryWhere> {
   FooQuery({Query? parent, Set<String>? trampoline}) : super(parent: parent) {
     trampoline ??= Set();
     trampoline.add(tableName);
@@ -650,43 +652,44 @@ class FooQuery extends Query<Foo?, FooQueryWhere?> {
     return FooQueryWhere(this);
   }
 
-  static Foo? parseRow(List row) {
-    if (row.every((x) => x == null)) return null;
+  static Optional<Foo> parseRow(List row) {
+    if (row.every((x) => x == null)) {
+      return Optional.empty();
+    }
     var model = Foo(bar: (row[0] as String?));
     if (row.length > 1) {
-      model = model.copyWith(
-          weirdJoins: [WeirdJoinQuery.parseRow(row.skip(1).take(2).toList())]
-              .where((x) => x != null)
-              .toList());
+      model = model.copyWith(weirdJoins: [
+        WeirdJoinQuery.parseRow(row.skip(1).take(2).toList()).value
+      ]);
     }
-    return model;
+    return Optional.ofNullable(model);
   }
 
   @override
-  deserialize(List row) {
-    return parseRow(row);
+  Foo deserialize(List row) {
+    return parseRow(row).value;
   }
 
   @override
   bool canCompile(trampoline) {
-    return (!(trampoline?.contains('foos') == true &&
-        trampoline?.contains('foo_pivots') == true));
+    return (!(trampoline.contains('foos') == true &&
+        trampoline.contains('foo_pivots') == true));
   }
 
   @override
   get(QueryExecutor executor) {
     return super.get(executor).then((result) {
-      return result.fold<List<Foo?>>([], (out, model) {
-        var idx = out.indexWhere((m) => m!.bar == model!.bar);
+      return result.fold<List<Foo>>([], (out, model) {
+        var idx = out.indexWhere((m) => m.bar == model.bar);
 
         if (idx == -1) {
           return out..add(model);
         } else {
-          var l = out[idx]!;
+          var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                weirdJoins: List<_WeirdJoin?>.from(l.weirdJoins ?? [])
-                  ..addAll(model!.weirdJoins ?? []));
+                weirdJoins: List<_WeirdJoin>.from(l.weirdJoins ?? [])
+                  ..addAll(model.weirdJoins ?? []));
         }
       });
     });
@@ -695,17 +698,17 @@ class FooQuery extends Query<Foo?, FooQueryWhere?> {
   @override
   update(QueryExecutor executor) {
     return super.update(executor).then((result) {
-      return result.fold<List<Foo?>>([], (out, model) {
-        var idx = out.indexWhere((m) => m!.bar == model!.bar);
+      return result.fold<List<Foo>>([], (out, model) {
+        var idx = out.indexWhere((m) => m.bar == model.bar);
 
         if (idx == -1) {
           return out..add(model);
         } else {
-          var l = out[idx]!;
+          var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                weirdJoins: List<_WeirdJoin?>.from(l.weirdJoins ?? [])
-                  ..addAll(model!.weirdJoins ?? []));
+                weirdJoins: List<_WeirdJoin>.from(l.weirdJoins ?? [])
+                  ..addAll(model.weirdJoins ?? []));
         }
       });
     });
@@ -714,17 +717,17 @@ class FooQuery extends Query<Foo?, FooQueryWhere?> {
   @override
   delete(QueryExecutor executor) {
     return super.delete(executor).then((result) {
-      return result.fold<List<Foo?>>([], (out, model) {
-        var idx = out.indexWhere((m) => m!.bar == model!.bar);
+      return result.fold<List<Foo>>([], (out, model) {
+        var idx = out.indexWhere((m) => m.bar == model.bar);
 
         if (idx == -1) {
           return out..add(model);
         } else {
-          var l = out[idx]!;
+          var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                weirdJoins: List<_WeirdJoin?>.from(l.weirdJoins ?? [])
-                  ..addAll(model!.weirdJoins ?? []));
+                weirdJoins: List<_WeirdJoin>.from(l.weirdJoins ?? [])
+                  ..addAll(model.weirdJoins ?? []));
         }
       });
     });
@@ -759,7 +762,7 @@ class FooQueryValues extends MapQueryValues {
   }
 }
 
-class FooPivotQuery extends Query<FooPivot?, FooPivotQueryWhere?> {
+class FooPivotQuery extends Query<FooPivot, FooPivotQueryWhere> {
   FooPivotQuery({Query? parent, Set<String>? trampoline})
       : super(parent: parent) {
     trampoline ??= Set();
@@ -807,23 +810,26 @@ class FooPivotQuery extends Query<FooPivot?, FooPivotQueryWhere?> {
     return FooPivotQueryWhere(this);
   }
 
-  static FooPivot? parseRow(List row) {
-    if (row.every((x) => x == null)) return null;
+  static Optional<FooPivot> parseRow(List row) {
+    if (row.every((x) => x == null)) {
+      return Optional.empty();
+    }
     var model = FooPivot();
     if (row.length > 2) {
       model = model.copyWith(
-          weirdJoin: WeirdJoinQuery.parseRow(row.skip(2).take(2).toList()));
+          weirdJoin:
+              WeirdJoinQuery.parseRow(row.skip(2).take(2).toList()).value);
     }
     if (row.length > 4) {
-      model =
-          model.copyWith(foo: FooQuery.parseRow(row.skip(4).take(1).toList()));
+      model = model.copyWith(
+          foo: FooQuery.parseRow(row.skip(4).take(1).toList()).value);
     }
-    return model;
+    return Optional.ofNullable(model);
   }
 
   @override
-  deserialize(List row) {
-    return parseRow(row);
+  FooPivot deserialize(List row) {
+    return parseRow(row).value;
   }
 
   WeirdJoinQuery? get weirdJoin {
@@ -1070,9 +1076,9 @@ class Foo implements _Foo {
   final String? bar;
 
   @override
-  final List<_WeirdJoin?>? weirdJoins;
+  final List<_WeirdJoin>? weirdJoins;
 
-  Foo copyWith({String? bar, List<_WeirdJoin?>? weirdJoins}) {
+  Foo copyWith({String? bar, List<_WeirdJoin>? weirdJoins}) {
     return Foo(bar: bar ?? this.bar, weirdJoins: weirdJoins ?? this.weirdJoins);
   }
 

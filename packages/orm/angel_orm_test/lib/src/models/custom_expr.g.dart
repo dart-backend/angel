@@ -46,7 +46,7 @@ class AlphabetMigration extends Migration {
 // OrmGenerator
 // **************************************************************************
 
-class NumbersQuery extends Query<Numbers?, NumbersQueryWhere?> {
+class NumbersQuery extends Query<Numbers, NumbersQueryWhere> {
   NumbersQuery({Query? parent, Set<String>? trampoline})
       : super(parent: parent) {
     trampoline ??= Set();
@@ -85,19 +85,21 @@ class NumbersQuery extends Query<Numbers?, NumbersQueryWhere?> {
     return NumbersQueryWhere(this);
   }
 
-  static Numbers? parseRow(List row) {
-    if (row.every((x) => x == null)) return null;
+  static Optional<Numbers> parseRow(List row) {
+    if (row.every((x) => x == null)) {
+      return Optional.empty();
+    }
     var model = Numbers(
         id: row[0].toString(),
         createdAt: (row[1] as DateTime?),
         updatedAt: (row[2] as DateTime?),
         two: (row[3] as int?));
-    return model;
+    return Optional.ofNullable(model);
   }
 
   @override
-  deserialize(List row) {
-    return parseRow(row);
+  Numbers deserialize(List row) {
+    return parseRow(row).value;
   }
 }
 
@@ -146,7 +148,7 @@ class NumbersQueryValues extends MapQueryValues {
   }
 }
 
-class AlphabetQuery extends Query<Alphabet?, AlphabetQueryWhere?> {
+class AlphabetQuery extends Query<Alphabet, AlphabetQueryWhere> {
   AlphabetQuery({Query? parent, Set<String>? trampoline})
       : super(parent: parent) {
     trampoline ??= Set();
@@ -190,8 +192,10 @@ class AlphabetQuery extends Query<Alphabet?, AlphabetQueryWhere?> {
     return AlphabetQueryWhere(this);
   }
 
-  static Alphabet? parseRow(List row) {
-    if (row.every((x) => x == null)) return null;
+  static Optional<Alphabet> parseRow(List row) {
+    if (row.every((x) => x == null)) {
+      return Optional.empty();
+    }
     var model = Alphabet(
         id: row[0].toString(),
         createdAt: (row[1] as DateTime?),
@@ -199,14 +203,14 @@ class AlphabetQuery extends Query<Alphabet?, AlphabetQueryWhere?> {
         value: (row[3] as String?));
     if (row.length > 5) {
       model = model.copyWith(
-          numbers: NumbersQuery.parseRow(row.skip(5).take(4).toList()));
+          numbers: NumbersQuery.parseRow(row.skip(5).take(4).toList()).value);
     }
-    return model;
+    return Optional.ofNullable(model);
   }
 
   @override
-  deserialize(List row) {
-    return parseRow(row);
+  Alphabet deserialize(List row) {
+    return parseRow(row).value;
   }
 
   NumbersQuery? get numbers {

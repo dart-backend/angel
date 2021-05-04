@@ -25,7 +25,7 @@ class HasMapMigration extends Migration {
 // OrmGenerator
 // **************************************************************************
 
-class HasMapQuery extends Query<HasMap?, HasMapQueryWhere?> {
+class HasMapQuery extends Query<HasMap, HasMapQueryWhere> {
   HasMapQuery({Query? parent, Set<String>? trampoline})
       : super(parent: parent) {
     trampoline ??= Set();
@@ -63,17 +63,19 @@ class HasMapQuery extends Query<HasMap?, HasMapQueryWhere?> {
     return HasMapQueryWhere(this);
   }
 
-  static HasMap? parseRow(List row) {
-    if (row.every((x) => x == null)) return null;
+  static Optional<HasMap> parseRow(List row) {
+    if (row.every((x) => x == null)) {
+      return Optional.empty();
+    }
     var model = HasMap(
         value: (row[0] as Map<dynamic, dynamic>?),
         list: (row[1] as List<dynamic>?));
-    return model;
+    return Optional.ofNullable(model);
   }
 
   @override
-  deserialize(List row) {
-    return parseRow(row);
+  HasMap deserialize(List row) {
+    return parseRow(row).value;
   }
 }
 

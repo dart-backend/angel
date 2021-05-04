@@ -12,7 +12,7 @@ hasOneTests(FutureOr<QueryExecutor> Function() createExecutor,
   setUp(() async {
     executor = await createExecutor();
     var query = LegQuery()..values.name = 'Left';
-    originalLeg = await query.insert(executor);
+    originalLeg = (await query.insert(executor)).value;
   });
 
   tearDown(() => close!(executor));

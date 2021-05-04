@@ -44,7 +44,7 @@ hasMapTests(FutureOr<QueryExecutor> Function() createExecutor,
       query.values
         ..value = {'foo': 'bar'}
         ..list = ['1', 2, 3.0];
-      initialValue = await query.insert(executor);
+      initialValue = (await query.insert(executor)).value;
     });
 
     test('get all', () async {

@@ -48,10 +48,10 @@ manyToManyTests(FutureOr<QueryExecutor> Function() createExecutor,
 
     var canPubQuery = RoleQuery()..values.name = 'can_pub';
     var canSubQuery = RoleQuery()..values.name = 'can_sub';
-    canPub = await canPubQuery.insert(executor);
+    canPub = (await canPubQuery.insert(executor)).value;
     print('=== CANPUB: ${canPub?.toJson()}');
     // await dumpQuery(canPubQuery.compile(Set()));
-    canSub = await canSubQuery.insert(executor);
+    canSub = (await canSubQuery.insert(executor)).value;
     print('=== CANSUB: ${canSub?.toJson()}');
 
     var thosakweQuery = UserQuery();
@@ -59,7 +59,7 @@ manyToManyTests(FutureOr<QueryExecutor> Function() createExecutor,
       ..username = 'thosakwe'
       ..password = 'Hahahahayoureallythoughtiwasstupidenoughtotypethishere'
       ..email = 'thosakwe AT gmail.com';
-    thosakwe = await thosakweQuery.insert(executor);
+    thosakwe = (await thosakweQuery.insert(executor)).value;
     print('=== THOSAKWE: ${thosakwe?.toJson()}');
 
     // Allow thosakwe to publish...
@@ -95,7 +95,7 @@ manyToManyTests(FutureOr<QueryExecutor> Function() createExecutor,
 
   Future<User?> fetchThosakwe() async {
     var query = UserQuery()..where!.id.equals(int.parse(thosakwe!.id!));
-    return await query.getOne(executor);
+    return (await query.getOne(executor)).value;
   }
 
   test('fetch roles for user', () async {

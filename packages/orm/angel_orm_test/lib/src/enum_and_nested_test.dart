@@ -24,7 +24,7 @@ enumAndNestedTests(FutureOr<QueryExecutor> Function() createExecutor,
     setUp(() async {
       var query = HasCarQuery();
       query.values.type = CarType.sedan;
-      initialValue = await query.insert(executor);
+      initialValue = (await query.insert(executor)).value;
     });
 
     test('query by enum', () async {

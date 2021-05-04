@@ -48,7 +48,7 @@ class CustomerMigration extends Migration {
 // OrmGenerator
 // **************************************************************************
 
-class OrderQuery extends Query<Order?, OrderQueryWhere?> {
+class OrderQuery extends Query<Order, OrderQueryWhere> {
   OrderQuery({Query? parent, Set<String>? trampoline}) : super(parent: parent) {
     trampoline ??= Set();
     trampoline.add(tableName);
@@ -99,8 +99,10 @@ class OrderQuery extends Query<Order?, OrderQueryWhere?> {
     return OrderQueryWhere(this);
   }
 
-  static Order? parseRow(List row) {
-    if (row.every((x) => x == null)) return null;
+  static Optional<Order> parseRow(List row) {
+    if (row.every((x) => x == null)) {
+      return Optional.empty();
+    }
     var model = Order(
         id: row[0].toString(),
         createdAt: (row[1] as DateTime?),
@@ -110,14 +112,14 @@ class OrderQuery extends Query<Order?, OrderQueryWhere?> {
         shipperId: (row[6] as int?));
     if (row.length > 7) {
       model = model.copyWith(
-          customer: CustomerQuery.parseRow(row.skip(7).take(3).toList()));
+          customer: CustomerQuery.parseRow(row.skip(7).take(3).toList()).value);
     }
-    return model;
+    return Optional.ofNullable(model);
   }
 
   @override
-  deserialize(List row) {
-    return parseRow(row);
+  Order deserialize(List row) {
+    return parseRow(row).value;
   }
 
   CustomerQuery? get customer {
@@ -216,7 +218,7 @@ class OrderQueryValues extends MapQueryValues {
   }
 }
 
-class CustomerQuery extends Query<Customer?, CustomerQueryWhere?> {
+class CustomerQuery extends Query<Customer, CustomerQueryWhere> {
   CustomerQuery({Query? parent, Set<String>? trampoline})
       : super(parent: parent) {
     trampoline ??= Set();
@@ -254,18 +256,20 @@ class CustomerQuery extends Query<Customer?, CustomerQueryWhere?> {
     return CustomerQueryWhere(this);
   }
 
-  static Customer? parseRow(List row) {
-    if (row.every((x) => x == null)) return null;
+  static Optional<Customer> parseRow(List row) {
+    if (row.every((x) => x == null)) {
+      return Optional.empty();
+    }
     var model = Customer(
         id: row[0].toString(),
         createdAt: (row[1] as DateTime?),
         updatedAt: (row[2] as DateTime?));
-    return model;
+    return Optional.ofNullable(model);
   }
 
   @override
-  deserialize(List row) {
-    return parseRow(row);
+  Customer deserialize(List row) {
+    return parseRow(row).value;
   }
 }
 

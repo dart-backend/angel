@@ -27,7 +27,7 @@ class HasCarMigration extends Migration {
 // OrmGenerator
 // **************************************************************************
 
-class HasCarQuery extends Query<HasCar?, HasCarQueryWhere?> {
+class HasCarQuery extends Query<HasCar, HasCarQueryWhere> {
   HasCarQuery({Query? parent, Set<String>? trampoline})
       : super(parent: parent) {
     trampoline ??= Set();
@@ -65,19 +65,21 @@ class HasCarQuery extends Query<HasCar?, HasCarQueryWhere?> {
     return HasCarQueryWhere(this);
   }
 
-  static HasCar? parseRow(List row) {
-    if (row.every((x) => x == null)) return null;
+  static Optional<HasCar> parseRow(List row) {
+    if (row.every((x) => x == null)) {
+      return Optional.empty();
+    }
     var model = HasCar(
         id: row[0].toString(),
         createdAt: (row[1] as DateTime?),
         updatedAt: (row[2] as DateTime?),
         type: row[3] == null ? null : CarType.values[(row[3] as int)]);
-    return model;
+    return Optional.ofNullable(model);
   }
 
   @override
-  deserialize(List row) {
-    return parseRow(row);
+  HasCar deserialize(List row) {
+    return parseRow(row).value;
   }
 }
 

@@ -45,7 +45,7 @@ class FruitMigration extends Migration {
 // OrmGenerator
 // **************************************************************************
 
-class TreeQuery extends Query<Tree?, TreeQueryWhere?> {
+class TreeQuery extends Query<Tree, TreeQueryWhere> {
   TreeQuery({Query? parent, Set<String>? trampoline}) : super(parent: parent) {
     trampoline ??= Set();
     trampoline.add(tableName);
@@ -94,8 +94,10 @@ class TreeQuery extends Query<Tree?, TreeQueryWhere?> {
     return TreeQueryWhere(this);
   }
 
-  static Tree? parseRow(List row) {
-    if (row.every((x) => x == null)) return null;
+  static Optional<Tree> parseRow(List row) {
+    if (row.every((x) => x == null)) {
+      return Optional.empty();
+    }
     var model = Tree(
         id: row[0].toString(),
         createdAt: (row[1] as DateTime?),
@@ -103,16 +105,14 @@ class TreeQuery extends Query<Tree?, TreeQueryWhere?> {
         rings: (row[3] as int?));
     if (row.length > 4) {
       model = model.copyWith(
-          fruits: [FruitQuery.parseRow(row.skip(4).take(5).toList())]
-              .where((x) => x != null)
-              .toList());
+          fruits: [FruitQuery.parseRow(row.skip(4).take(5).toList()).value]);
     }
-    return model;
+    return Optional.ofNullable(model);
   }
 
   @override
-  deserialize(List row) {
-    return parseRow(row);
+  Tree deserialize(List row) {
+    return parseRow(row).value;
   }
 
   FruitQuery? get fruits {
@@ -122,17 +122,17 @@ class TreeQuery extends Query<Tree?, TreeQueryWhere?> {
   @override
   get(QueryExecutor executor) {
     return super.get(executor).then((result) {
-      return result.fold<List<Tree?>>([], (out, model) {
-        var idx = out.indexWhere((m) => m!.id == model!.id);
+      return result.fold<List<Tree>>([], (out, model) {
+        var idx = out.indexWhere((m) => m.id == model.id);
 
         if (idx == -1) {
           return out..add(model);
         } else {
-          var l = out[idx]!;
+          var l = out[idx];
           return out
             ..[idx] = l.copyWith(
                 fruits: List<_Fruit>.from(l.fruits ?? [])
-                  ..addAll(model!.fruits ?? []));
+                  ..addAll(model.fruits ?? []));
         }
       });
     });
@@ -141,17 +141,17 @@ class TreeQuery extends Query<Tree?, TreeQueryWhere?> {
   @override
   update(QueryExecutor executor) {
     return super.update(executor).then((result) {
-      return result.fold<List<Tree?>>([], (out, model) {
-        var idx = out.indexWhere((m) => m!.id == model!.id);
+      return result.fold<List<Tree>>([], (out, model) {
+        var idx = out.indexWhere((m) => m.id == model.id);
 
         if (idx == -1) {
           return out..add(model);
         } else {
-          var l = out[idx]!;
+          var l = out[idx];
           return out
             ..[idx] = l.copyWith(
                 fruits: List<_Fruit>.from(l.fruits ?? [])
-                  ..addAll(model!.fruits ?? []));
+                  ..addAll(model.fruits ?? []));
         }
       });
     });
@@ -161,16 +161,16 @@ class TreeQuery extends Query<Tree?, TreeQueryWhere?> {
   delete(QueryExecutor executor) {
     return super.delete(executor).then((result) {
       return result.fold<List<Tree>>([], (out, model) {
-        var idx = out.indexWhere((m) => m.id == model!.id);
+        var idx = out.indexWhere((m) => m.id == model.id);
 
         if (idx == -1) {
-          return out..add(model!);
+          return out..add(model);
         } else {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
                 fruits: List<_Fruit>.from(l.fruits ?? [])
-                  ..addAll(model!.fruits ?? []));
+                  ..addAll(model.fruits ?? []));
         }
       });
     });
@@ -231,7 +231,7 @@ class TreeQueryValues extends MapQueryValues {
   }
 }
 
-class FruitQuery extends Query<Fruit?, FruitQueryWhere?> {
+class FruitQuery extends Query<Fruit, FruitQueryWhere> {
   FruitQuery({Query? parent, Set<String>? trampoline}) : super(parent: parent) {
     trampoline ??= Set();
     trampoline.add(tableName);
@@ -268,20 +268,22 @@ class FruitQuery extends Query<Fruit?, FruitQueryWhere?> {
     return FruitQueryWhere(this);
   }
 
-  static Fruit? parseRow(List row) {
-    if (row.every((x) => x == null)) return null;
+  static Optional<Fruit> parseRow(List row) {
+    if (row.every((x) => x == null)) {
+      return Optional.empty();
+    }
     var model = Fruit(
         id: row[0].toString(),
         createdAt: (row[1] as DateTime?),
         updatedAt: (row[2] as DateTime?),
         treeId: (row[3] as int?),
         commonName: (row[4] as String?));
-    return model;
+    return Optional.ofNullable(model);
   }
 
   @override
-  deserialize(List row) {
-    return parseRow(row);
+  Fruit deserialize(List row) {
+    return parseRow(row).value;
   }
 }
 
