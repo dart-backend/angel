@@ -7,7 +7,7 @@ import 'package:angel_orm_test/src/models/car.dart';
 class CarController extends Controller {
   @Expose('/luxury')
   Future<List<Car?>> getLuxuryCars(QueryExecutor connection) {
-    var query = new CarQuery();
+    var query = CarQuery();
     query.where
       ?..familyFriendly.equals(false)
       ..createdAt.year.greaterThanOrEqualTo(2014)

@@ -141,9 +141,13 @@ class EnumSqlExpressionBuilder<T> extends SqlExpressionBuilder<T> {
       UnsupportedError('Enums do not support this operation.');
 
   @override
-  String? compile() {
-    if (_raw != null) return _raw;
-    if (_value == null) return null;
+  String compile() {
+    if (_raw != null) {
+      return _raw!;
+    }
+    if (_value == null) {
+      return '';
+    }
     return '$_op $_value';
   }
 
@@ -243,7 +247,7 @@ class StringSqlExpressionBuilder extends SqlExpressionBuilder<String> {
   void isBetween(String lower, String upper) {
     query.substitutionValues[lowerName] = lower;
     query.substitutionValues[upperName] = upper;
-    _raw = "BETWEEN @$lowerName AND @$upperName";
+    _raw = 'BETWEEN @$lowerName AND @$upperName';
     _hasValue = true;
   }
 
@@ -506,10 +510,10 @@ abstract class JsonSqlExpressionBuilder<T, K> extends SqlExpressionBuilder<T> {
   }
 
   @override
-  String? compile() {
+  String compile() {
     var s = _compile();
     if (!_properties.any((p) => p.hasValue)) return s;
-    s ??= '';
+    //s ??= '';
 
     for (var p in _properties) {
       if (p.hasValue) {
@@ -517,7 +521,7 @@ abstract class JsonSqlExpressionBuilder<T, K> extends SqlExpressionBuilder<T> {
 
         if (c != null) {
           _hasValue = true;
-          s ??= '';
+          //s ??= '';
 
           if (p.typed is! DateTimeSqlExpressionBuilder) {
             s += '${p.typed!.columnName} ';
@@ -531,10 +535,14 @@ abstract class JsonSqlExpressionBuilder<T, K> extends SqlExpressionBuilder<T> {
     return s;
   }
 
-  String? _compile() {
-    if (_raw != null) return _raw;
-    if (_value == null) return null;
-    return "::jsonb $_op @$substitution::jsonb";
+  String _compile() {
+    if (_raw != null) {
+      return _raw!;
+    }
+    if (_value == null) {
+      return '';
+    }
+    return '::jsonb $_op @$substitution::jsonb';
   }
 
   void contains(T value) {

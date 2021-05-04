@@ -12,7 +12,7 @@ abstract class _Role {
   String? get role;
 
   @ManyToMany(_RoleUser)
-  List<_User?>? get users;
+  List<_User> get users;
 }
 
 @serializable
@@ -35,5 +35,5 @@ abstract class _User {
   String? get password;
 
   @ManyToMany(_RoleUser)
-  List<_Role?>? get roles;
+  List<_Role> get roles;
 }

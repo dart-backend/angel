@@ -9,7 +9,7 @@ import 'query_where.dart';
 import 'package:optional/optional.dart';
 
 /// A SQL `SELECT` query builder.
-abstract class Query<T, Where extends QueryWhere?> extends QueryBase<T> {
+abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
   final List<JoinBuilder> _joins = [];
   final Map<String, int> _names = {};
   final List<OrderBy> _orderBy = [];
@@ -80,27 +80,27 @@ abstract class Query<T, Where extends QueryWhere?> extends QueryBase<T> {
   /// Determines whether this query can be compiled.
   ///
   /// Used to prevent ambiguities in joins.
-  bool canCompile(Set<String>? trampoline) => true;
+  bool canCompile(Set<String> trampoline) => true;
 
   /// Shorthand for calling [where].or with a [Where] clause.
   void andWhere(void Function(Where) f) {
     var w = newWhereClause();
     f(w);
-    where?.and(w);
+    where.and(w);
   }
 
   /// Shorthand for calling [where].or with a [Where] clause.
   void notWhere(void Function(Where) f) {
     var w = newWhereClause();
     f(w);
-    where?.not(w);
+    where.not(w);
   }
 
   /// Shorthand for calling [where].or with a [Where] clause.
   void orWhere(void Function(Where) f) {
     var w = newWhereClause();
     f(w);
-    where?.or(w);
+    where.or(w);
   }
 
   /// Limit the number of rows to return.
@@ -128,12 +128,12 @@ abstract class Query<T, Where extends QueryWhere?> extends QueryBase<T> {
     _crossJoin = tableName;
   }
 
-  String _joinAlias(Set<String>? trampoline) {
+  String _joinAlias(Set<String> trampoline) {
     var i = _joins.length;
 
     while (true) {
       var a = 'a$i';
-      if (trampoline!.add(a)) {
+      if (trampoline.add(a)) {
         return a;
       } else {
         i++;
@@ -310,8 +310,8 @@ abstract class Query<T, Where extends QueryWhere?> extends QueryBase<T> {
     }
 
     var whereClause =
-        where?.compile(tableName: includeTableName ? tableName : null);
-    if (whereClause?.isNotEmpty == true) {
+        where.compile(tableName: includeTableName ? tableName : null);
+    if (whereClause.isNotEmpty == true) {
       b.write(' WHERE $whereClause');
     }
     if (_groupBy != null) b.write(' GROUP BY $_groupBy');
@@ -357,7 +357,7 @@ abstract class Query<T, Where extends QueryWhere?> extends QueryBase<T> {
   Future<Optional<T>> insert(QueryExecutor executor) {
     var insertion = values.compileInsert(this, tableName);
 
-    if (insertion == null) {
+    if (insertion == '') {
       throw StateError('No values have been specified for update.');
     } else {
       // TODO: How to do this in a non-Postgres DB?
@@ -375,12 +375,12 @@ abstract class Query<T, Where extends QueryWhere?> extends QueryBase<T> {
     var updateSql = StringBuffer('UPDATE $tableName ');
     var valuesClause = values.compileForUpdate(this);
 
-    if (valuesClause == null) {
+    if (valuesClause == '') {
       throw StateError('No values have been specified for update.');
     } else {
       updateSql.write(' $valuesClause');
-      var whereClause = where?.compile();
-      if (whereClause?.isNotEmpty == true) {
+      var whereClause = where.compile();
+      if (whereClause.isNotEmpty == true) {
         updateSql.write(' WHERE $whereClause');
       }
       if (_limit != null) updateSql.write(' LIMIT $_limit');
