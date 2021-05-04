@@ -195,17 +195,14 @@ standaloneTests(FutureOr<QueryExecutor> Function() createExecutor,
           recalledAt: recalledAt);
       var query = CarQuery()..values.copyFrom(beetle);
       var carOpt = await (query.insert(executor));
-      if (carOpt.isPresent) {
-        var car = carOpt.value;
+      carOpt.ifPresent((car) {
         print(car.toJson());
         expect(car.make, beetle.make);
         expect(car.description, beetle.description);
         expect(car.familyFriendly, beetle.familyFriendly);
         expect(dateYmdHms.format(car.recalledAt!),
             dateYmdHms.format(beetle.recalledAt!));
-      } else {
-        print("Car is null");
-      }
+      });
     });
   });
 }

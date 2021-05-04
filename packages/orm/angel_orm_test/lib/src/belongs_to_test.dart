@@ -144,11 +144,13 @@ belongsToTests(FutureOr<QueryExecutor> Function() createExecutor,
     var query = BookQuery()
       ..where!.id.equals(int.parse(cloned.id!))
       ..values.copyFrom(cloned);
-    var book = await (query.updateOne(executor) as FutureOr<Book>);
-    print(book.toJson());
-    expect(book.name, cloned.name);
-    expect(book.author, isNotNull);
-    expect(book.author!.name, jkRowling!.name);
+    var bookOpt = await (query.updateOne(executor));
+    bookOpt.ifPresent((book) {
+      print(book.toJson());
+      expect(book.name, cloned.name);
+      expect(book.author, isNotNull);
+      expect(book.author!.name, jkRowling!.name);
+    });
   });
 
   group('joined subquery', () {
