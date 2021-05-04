@@ -130,8 +130,8 @@ class UserQuery extends Query<User, UserQueryWhere> {
   }
 
   @override
-  User deserialize(List row) {
-    return parseRow(row).value;
+  Optional<User> deserialize(List row) {
+    return parseRow(row);
   }
 
   @override
@@ -341,8 +341,8 @@ class RoleUserQuery extends Query<RoleUser, RoleUserQueryWhere> {
   }
 
   @override
-  RoleUser deserialize(List row) {
-    return parseRow(row).value;
+  Optional<RoleUser> deserialize(List row) {
+    return parseRow(row);
   }
 
   RoleQuery? get role {
@@ -464,8 +464,8 @@ class RoleQuery extends Query<Role, RoleQueryWhere> {
   }
 
   @override
-  Role deserialize(List row) {
-    return parseRow(row).value;
+  Optional<Role> deserialize(List row) {
+    return parseRow(row);
   }
 
   @override

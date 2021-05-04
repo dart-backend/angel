@@ -98,8 +98,8 @@ class NumbersQuery extends Query<Numbers, NumbersQueryWhere> {
   }
 
   @override
-  Numbers deserialize(List row) {
-    return parseRow(row).value;
+  Optional<Numbers> deserialize(List row) {
+    return parseRow(row);
   }
 }
 
@@ -209,8 +209,8 @@ class AlphabetQuery extends Query<Alphabet, AlphabetQueryWhere> {
   }
 
   @override
-  Alphabet deserialize(List row) {
-    return parseRow(row).value;
+  Optional<Alphabet> deserialize(List row) {
+    return parseRow(row);
   }
 
   NumbersQuery? get numbers {

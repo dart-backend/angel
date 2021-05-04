@@ -91,8 +91,8 @@ class CarQuery extends Query<Car, CarQueryWhere> {
   }
 
   @override
-  Car deserialize(List row) {
-    return parseRow(row).value;
+  Optional<Car> deserialize(List row) {
+    return parseRow(row);
   }
 }
 

@@ -111,8 +111,8 @@ class TreeQuery extends Query<Tree, TreeQueryWhere> {
   }
 
   @override
-  Tree deserialize(List row) {
-    return parseRow(row).value;
+  Optional<Tree> deserialize(List row) {
+    return parseRow(row);
   }
 
   FruitQuery? get fruits {
@@ -282,8 +282,8 @@ class FruitQuery extends Query<Fruit, FruitQueryWhere> {
   }
 
   @override
-  Fruit deserialize(List row) {
-    return parseRow(row).value;
+  Optional<Fruit> deserialize(List row) {
+    return parseRow(row);
   }
 }
 

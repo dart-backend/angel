@@ -128,8 +128,8 @@ class BookQuery extends Query<Book, BookQueryWhere> {
   }
 
   @override
-  Book deserialize(List row) {
-    return parseRow(row).value;
+  Optional<Book> deserialize(List row) {
+    return parseRow(row);
   }
 
   AuthorQuery? get author {
@@ -269,8 +269,8 @@ class AuthorQuery extends Query<Author, AuthorQueryWhere> {
   }
 
   @override
-  Author deserialize(List row) {
-    return parseRow(row).value;
+  Optional<Author> deserialize(List row) {
+    return parseRow(row);
   }
 }
 

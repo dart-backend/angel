@@ -111,8 +111,8 @@ class LegQuery extends Query<Leg, LegQueryWhere> {
   }
 
   @override
-  Leg deserialize(List row) {
-    return parseRow(row).value;
+  Optional<Leg> deserialize(List row) {
+    return parseRow(row);
   }
 
   FootQuery? get foot {
@@ -225,8 +225,8 @@ class FootQuery extends Query<Foot, FootQueryWhere> {
   }
 
   @override
-  Foot deserialize(List row) {
-    return parseRow(row).value;
+  Optional<Foot> deserialize(List row) {
+    return parseRow(row);
   }
 }
 

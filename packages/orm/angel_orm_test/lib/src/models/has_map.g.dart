@@ -74,8 +74,8 @@ class HasMapQuery extends Query<HasMap, HasMapQueryWhere> {
   }
 
   @override
-  HasMap deserialize(List row) {
-    return parseRow(row).value;
+  Optional<HasMap> deserialize(List row) {
+    return parseRow(row);
   }
 }
 

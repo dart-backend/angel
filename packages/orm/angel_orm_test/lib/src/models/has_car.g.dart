@@ -78,8 +78,8 @@ class HasCarQuery extends Query<HasCar, HasCarQueryWhere> {
   }
 
   @override
-  HasCar deserialize(List row) {
-    return parseRow(row).value;
+  Optional<HasCar> deserialize(List row) {
+    return parseRow(row);
   }
 }
 

@@ -152,8 +152,8 @@ class UnorthodoxQuery extends Query<Unorthodox, UnorthodoxQueryWhere> {
   }
 
   @override
-  Unorthodox deserialize(List row) {
-    return parseRow(row).value;
+  Optional<Unorthodox> deserialize(List row) {
+    return parseRow(row);
   }
 }
 
@@ -280,8 +280,8 @@ class WeirdJoinQuery extends Query<WeirdJoin, WeirdJoinQueryWhere> {
   }
 
   @override
-  WeirdJoin deserialize(List row) {
-    return parseRow(row).value;
+  Optional<WeirdJoin> deserialize(List row) {
+    return parseRow(row);
   }
 
   UnorthodoxQuery? get unorthodox {
@@ -453,8 +453,8 @@ class SongQuery extends Query<Song, SongQueryWhere> {
   }
 
   @override
-  Song deserialize(List row) {
-    return parseRow(row).value;
+  Optional<Song> deserialize(List row) {
+    return parseRow(row);
   }
 }
 
@@ -567,8 +567,8 @@ class NumbaQuery extends Query<Numba, NumbaQueryWhere> {
   }
 
   @override
-  Numba deserialize(List row) {
-    return parseRow(row).value;
+  Optional<Numba> deserialize(List row) {
+    return parseRow(row);
   }
 }
 
@@ -666,8 +666,8 @@ class FooQuery extends Query<Foo, FooQueryWhere> {
   }
 
   @override
-  Foo deserialize(List row) {
-    return parseRow(row).value;
+  Optional<Foo> deserialize(List row) {
+    return parseRow(row);
   }
 
   @override
@@ -828,8 +828,8 @@ class FooPivotQuery extends Query<FooPivot, FooPivotQueryWhere> {
   }
 
   @override
-  FooPivot deserialize(List row) {
-    return parseRow(row).value;
+  Optional<FooPivot> deserialize(List row) {
+    return parseRow(row);
   }
 
   WeirdJoinQuery? get weirdJoin {

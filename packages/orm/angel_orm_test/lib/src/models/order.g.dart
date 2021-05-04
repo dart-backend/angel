@@ -118,8 +118,8 @@ class OrderQuery extends Query<Order, OrderQueryWhere> {
   }
 
   @override
-  Order deserialize(List row) {
-    return parseRow(row).value;
+  Optional<Order> deserialize(List row) {
+    return parseRow(row);
   }
 
   CustomerQuery? get customer {
@@ -268,8 +268,8 @@ class CustomerQuery extends Query<Customer, CustomerQueryWhere> {
   }
 
   @override
-  Customer deserialize(List row) {
-    return parseRow(row).value;
+  Optional<Customer> deserialize(List row) {
+    return parseRow(row);
   }
 }
 
