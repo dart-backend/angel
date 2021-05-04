@@ -34,12 +34,12 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
   /// A reference to an abstract query builder.
   ///
   /// This is usually a generated class.
-  Where get where;
+  Where? get where;
 
   /// A set of values, for an insertion or update.
   ///
   /// This is usually a generated class.
-  QueryValues get values;
+  QueryValues? get values;
 
   /// Preprends the [tableName] to the [String], [s].
   String adornWithTableName(String s) {
@@ -86,21 +86,21 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
   void andWhere(void Function(Where) f) {
     var w = newWhereClause();
     f(w);
-    where.and(w);
+    where?.and(w);
   }
 
   /// Shorthand for calling [where].or with a [Where] clause.
   void notWhere(void Function(Where) f) {
     var w = newWhereClause();
     f(w);
-    where.not(w);
+    where?.not(w);
   }
 
   /// Shorthand for calling [where].or with a [Where] clause.
   void orWhere(void Function(Where) f) {
     var w = newWhereClause();
     f(w);
-    where.or(w);
+    where?.or(w);
   }
 
   /// Limit the number of rows to return.
@@ -310,8 +310,8 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
     }
 
     var whereClause =
-        where.compile(tableName: includeTableName ? tableName : null);
-    if (whereClause.isNotEmpty == true) {
+        where?.compile(tableName: includeTableName ? tableName : null);
+    if (whereClause?.isNotEmpty == true) {
       b.write(' WHERE $whereClause');
     }
     if (_groupBy != null) b.write(' GROUP BY $_groupBy');
@@ -355,7 +355,7 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
   }
 
   Future<Optional<T>> insert(QueryExecutor executor) {
-    var insertion = values.compileInsert(this, tableName);
+    var insertion = values?.compileInsert(this, tableName);
 
     if (insertion == '') {
       throw StateError('No values have been specified for update.');
@@ -373,14 +373,14 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
 
   Future<List<T>> update(QueryExecutor executor) async {
     var updateSql = StringBuffer('UPDATE $tableName ');
-    var valuesClause = values.compileForUpdate(this);
+    var valuesClause = values?.compileForUpdate(this);
 
     if (valuesClause == '') {
       throw StateError('No values have been specified for update.');
     } else {
       updateSql.write(' $valuesClause');
-      var whereClause = where.compile();
-      if (whereClause.isNotEmpty == true) {
+      var whereClause = where?.compile();
+      if (whereClause?.isNotEmpty == true) {
         updateSql.write(' WHERE $whereClause');
       }
       if (_limit != null) updateSql.write(' LIMIT $_limit');

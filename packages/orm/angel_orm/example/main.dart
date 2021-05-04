@@ -11,7 +11,7 @@ void main() async {
   var query = EmployeeQuery()
     ..where?.firstName.equals('Rich')
     ..where?.lastName.equals('Person')
-    ..orWhere((w) => w?.salary.greaterThanOrEqualTo(75000))
+    ..orWhere((w) => w.salary.greaterThanOrEqualTo(75000))
     ..join('companies', 'company_id', 'id');
 
   var richPerson = await query.getOne(_FakeExecutor());
@@ -51,7 +51,7 @@ abstract class _Employee extends Model {
   double? get salary;
 }
 
-class EmployeeQuery extends Query<Employee, EmployeeQueryWhere?> {
+class EmployeeQuery extends Query<Employee, EmployeeQueryWhere> {
   @override
   final QueryValues values = MapQueryValues();
 
