@@ -148,6 +148,9 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
       return () {
         var c = tableName.compile(trampoline);
         //if (c == null) return c;
+        if (c == '') {
+          return c;
+        }
         return '($c)';
       };
     } else {
@@ -241,7 +244,8 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
     // One table MAY appear multiple times in a query.
     if (!canCompile(trampoline)) {
       //return null;
-      throw Exception('One table appear multiple times in a query');
+      //throw Exception('One table appear multiple times in a query');
+      return '';
     }
 
     includeTableName = includeTableName || _joins.isNotEmpty;
@@ -285,7 +289,8 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
       }));
       _joins.forEach((j) {
         var c = compiledJoins[j] = j.compile(trampoline);
-        if (c != null) {
+        //if (c != null) {
+        if (c != '') {
           var additional = j.additionalFields.map(j.nameFor).toList();
           f.addAll(additional);
         } else {

@@ -10,7 +10,7 @@ class JoinBuilder {
 
   /// A callback to produces the expression to join against, i.e.
   /// a table name, or the result of compiling a query.
-  final String? Function() to;
+  final String Function() to;
   final List<String> additionalFields;
 
   JoinBuilder(this.type, this.from, this.to, this.key, this.value,
@@ -39,9 +39,12 @@ class JoinBuilder {
     return right;
   }
 
-  String? compile(Set<String>? trampoline) {
+  String compile(Set<String>? trampoline) {
     var compiledTo = to();
-    if (compiledTo == null) return null;
+    //if (compiledTo == null) return null;
+    if (compiledTo == '') {
+      return '';
+    }
     var b = StringBuffer();
     var left = '${from.tableName}.$key';
     var right = fieldName;
