@@ -24,7 +24,7 @@ customExprTests(FutureOr<QueryExecutor> Function() createExecutor,
   tearDown(() => close!(executor));
 
   test('fetches correct result', () async {
-    expect(numbersModel!.two, 2);
+    expect(numbersModel?.two, 2);
   });
 
   test('in relation', () async {
@@ -34,9 +34,12 @@ customExprTests(FutureOr<QueryExecutor> Function() createExecutor,
       ..numbersId = numbersModel!.idAsInt
       ..createdAt = numbersModel!.createdAt
       ..updatedAt = numbersModel!.updatedAt;
-    var abc = await (abcQuery.insert(executor) as FutureOr<Alphabet>);
-    expect(abc.numbers, numbersModel);
-    expect(abc.numbers!.two, 2);
-    expect(abc.value, 'abc');
+    var abcOpt = await (abcQuery.insert(executor));
+    expect(abcOpt.isPresent, true);
+    abcOpt.ifPresent((abc) {
+      expect(abc.numbers, numbersModel);
+      expect(abc.numbers?.two, 2);
+      expect(abc.value, 'abc');
+    });
   });
 }

@@ -130,11 +130,11 @@ belongsToTests(FutureOr<QueryExecutor> Function() createExecutor,
     printSeparator('Delete stream test');
     var query = BookQuery()..where!.name.equals(deathlyHallows!.name!);
     print(query.compile(Set(), preamble: 'DELETE', withFields: false));
-    List<Book>? books = await query.delete(executor);
+    List<Book> books = await query.delete(executor);
     expect(books, hasLength(1));
 
     var book = books.first;
-    expect(book.id, deathlyHallows!.id);
+    expect(book.id, deathlyHallows?.id);
     expect(book.author, isNotNull);
     expect(book.author!.name, jkRowling!.name);
   });
@@ -142,9 +142,10 @@ belongsToTests(FutureOr<QueryExecutor> Function() createExecutor,
   test('update book', () async {
     var cloned = deathlyHallows!.copyWith(name: "Sorcerer's Stone");
     var query = BookQuery()
-      ..where!.id.equals(int.parse(cloned.id!))
+      ..where?.id.equals(int.parse(cloned.id!))
       ..values.copyFrom(cloned);
     var bookOpt = await (query.updateOne(executor));
+    expect(bookOpt.isPresent, true);
     bookOpt.ifPresent((book) {
       print(book.toJson());
       expect(book.name, cloned.name);

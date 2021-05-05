@@ -63,13 +63,19 @@ hasOneTests(FutureOr<QueryExecutor> Function() createExecutor,
     var legQuery = LegQuery()
       ..where!.id.equals(int.parse(originalLeg!.id!))
       ..values.copyFrom(originalLeg!.copyWith(name: 'Right'));
-    var foot = await (footQuery.insert(executor) as FutureOr<Foot>);
-    var leg = await (legQuery.updateOne(executor) as FutureOr<Leg>);
-    print(leg.toJson());
-    expect(leg.name, 'Right');
-    expect(leg.foot, isNotNull);
-    expect(leg.foot!.id, foot.id);
-    expect(leg.foot!.nToes, foot.nToes);
+    var footOpt = await (footQuery.insert(executor));
+    var legOpt = await (legQuery.updateOne(executor));
+    expect(footOpt.isPresent, true);
+    expect(legOpt.isPresent, true);
+    legOpt.ifPresent((leg) {
+      print(leg.toJson());
+      expect(leg.name, 'Right');
+      expect(leg.foot, isNotNull);
+      footOpt.ifPresent((foot) {
+        expect(leg.foot!.id, foot.id);
+        expect(leg.foot!.nToes, foot.nToes);
+      });
+    });
   });
 
   test('sets foot on delete', () async {
@@ -77,20 +83,29 @@ hasOneTests(FutureOr<QueryExecutor> Function() createExecutor,
       ..values.legId = int.parse(originalLeg!.id!)
       ..values.nToes = 5.64;
     var legQuery = LegQuery()..where!.id.equals(int.parse(originalLeg!.id!));
-    var foot = await (footQuery.insert(executor) as FutureOr<Foot>);
-    var leg = await (legQuery.deleteOne(executor) as FutureOr<Leg>);
-    print(leg.toJson());
-    expect(leg.name, originalLeg!.name);
-    expect(leg.foot, isNotNull);
-    expect(leg.foot!.id, foot.id);
-    expect(leg.foot!.nToes, foot.nToes);
+    var footOpt = await (footQuery.insert(executor));
+    var legOpt = await (legQuery.deleteOne(executor));
+    expect(footOpt.isPresent, true);
+    expect(legOpt.isPresent, true);
+    legOpt.ifPresent((leg) {
+      print(leg.toJson());
+      expect(leg.name, originalLeg?.name);
+      expect(leg.foot, isNotNull);
+      footOpt.ifPresent((foot) {
+        expect(leg.foot!.id, foot.id);
+        expect(leg.foot!.nToes, foot.nToes);
+      });
+    });
   });
 
   test('sets null on false subquery', () async {
     var legQuery = LegQuery()
       ..where!.id.equals(originalLeg!.idAsInt!)
       ..foot!.where!.legId.equals(originalLeg!.idAsInt! + 1024);
-    var leg = await (legQuery.getOne(executor) as FutureOr<Leg>);
-    expect(leg.foot, isNull);
+    var legOpt = await (legQuery.getOne(executor));
+    expect(legOpt.isPresent, true);
+    legOpt.ifPresent((leg) {
+      expect(leg.foot, isNull);
+    });
   });
 }
