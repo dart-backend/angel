@@ -123,11 +123,12 @@ class UserQuery extends Query<User, UserQueryWhere> {
         password: (row[4] as String?),
         email: (row[5] as String?));
     if (row.length > 6) {
-      model = model.copyWith(roles: [
-        RoleQuery.parseRow(row.skip(6).take(4).toList()).firstOrNull
-      ]);
+      var roleOpt = RoleQuery.parseRow(row.skip(6).take(4).toList());
+      roleOpt.ifPresent((role) {
+        model = model.copyWith(roles: [role]);
+      });
     }
-    return Optional.ofNullable(model);
+    return Optional.of(model);
   }
 
   @override
@@ -597,8 +598,8 @@ class User extends _User {
       this.username,
       this.password,
       this.email,
-      List<_Role?>? roles})
-      : this.roles = List.unmodifiable(roles ?? []);
+      List<_Role> roles = const []})
+      : this.roles = List.unmodifiable(roles);
 
   /// A unique identifier corresponding to this item.
   @override
@@ -631,7 +632,7 @@ class User extends _User {
       String? username,
       String? password,
       String? email,
-      List<_Role?>? roles}) {
+      List<_Role> roles = const []}) {
     return User(
         id: id ?? this.id,
         createdAt: createdAt ?? this.createdAt,
@@ -639,7 +640,7 @@ class User extends _User {
         username: username ?? this.username,
         password: password ?? this.password,
         email: email ?? this.email,
-        roles: roles ?? this.roles);
+        roles: roles);
   }
 
   bool operator ==(other) {
@@ -812,7 +813,7 @@ class UserSerializer extends Codec<User, Map?> {
         roles: map['roles'] is Iterable
             ? List.unmodifiable(((map['roles'] as Iterable).whereType<Map>())
                 .map(RoleSerializer.fromMap))
-            : null);
+            : []);
   }
 
   static Map<String, dynamic>? toMap(_User? model) {
