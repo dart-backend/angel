@@ -104,8 +104,9 @@ class TreeQuery extends Query<Tree, TreeQueryWhere> {
         updatedAt: (row[2] as DateTime?),
         rings: (row[3] as int?));
     if (row.length > 4) {
-      model = model.copyWith(
-          fruits: [FruitQuery.parseRow(row.skip(4).take(5).toList()).value]);
+      model = model.copyWith(fruits: [
+        FruitQuery.parseRow(row.skip(4).take(5).toList()).firstOrNull
+      ]);
     }
     return Optional.ofNullable(model);
   }

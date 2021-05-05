@@ -261,20 +261,21 @@ class WeirdJoinQuery extends Query<WeirdJoin, WeirdJoinQueryWhere> {
     var model = WeirdJoin(id: (row[0] as int?));
     if (row.length > 2) {
       model = model.copyWith(
-          unorthodox:
-              UnorthodoxQuery.parseRow(row.skip(2).take(1).toList()).value);
+          unorthodox: UnorthodoxQuery.parseRow(row.skip(2).take(1).toList())
+              .firstOrNull);
     }
     if (row.length > 3) {
       model = model.copyWith(
-          song: SongQuery.parseRow(row.skip(3).take(5).toList()).value);
+          song: SongQuery.parseRow(row.skip(3).take(5).toList()).firstOrNull);
     }
     if (row.length > 8) {
-      model = model.copyWith(
-          numbas: [NumbaQuery.parseRow(row.skip(8).take(2).toList()).value]);
+      model = model.copyWith(numbas: [
+        NumbaQuery.parseRow(row.skip(8).take(2).toList()).firstOrNull
+      ]);
     }
     if (row.length > 10) {
       model = model.copyWith(
-          foos: [FooQuery.parseRow(row.skip(10).take(1).toList()).value]);
+          foos: [FooQuery.parseRow(row.skip(10).take(1).toList()).firstOrNull]);
     }
     return Optional.ofNullable(model);
   }

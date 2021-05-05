@@ -123,8 +123,9 @@ class UserQuery extends Query<User, UserQueryWhere> {
         password: (row[4] as String?),
         email: (row[5] as String?));
     if (row.length > 6) {
-      model = model.copyWith(
-          roles: [RoleQuery.parseRow(row.skip(6).take(4).toList()).value]);
+      model = model.copyWith(roles: [
+        RoleQuery.parseRow(row.skip(6).take(4).toList()).firstOrNull
+      ]);
     }
     return Optional.ofNullable(model);
   }

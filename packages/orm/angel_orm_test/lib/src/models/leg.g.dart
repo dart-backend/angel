@@ -105,7 +105,7 @@ class LegQuery extends Query<Leg, LegQueryWhere> {
         name: (row[3] as String?));
     if (row.length > 4) {
       model = model.copyWith(
-          foot: FootQuery.parseRow(row.skip(4).take(5).toList()).value);
+          foot: FootQuery.parseRow(row.skip(4).take(5).toList()).firstOrNull);
     }
     return Optional.ofNullable(model);
   }
