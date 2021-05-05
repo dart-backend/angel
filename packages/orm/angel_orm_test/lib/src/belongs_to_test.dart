@@ -58,15 +58,18 @@ belongsToTests(FutureOr<QueryExecutor> Function() createExecutor,
       query.where!.id.equals(int.parse(deathlyHallows!.id!));
       print(query.compile(Set()));
 
-      var book = await (query.getOne(executor) as FutureOr<Book>);
-      print(book.toJson());
-      expect(book.id, deathlyHallows!.id);
-      expect(book.name, deathlyHallows!.name);
+      var bookOpt = await query.getOne(executor);
+      expect(bookOpt.isPresent, true);
+      bookOpt.ifPresent((book) {
+        print(book.toJson());
+        expect(book.id, deathlyHallows!.id);
+        expect(book.name, deathlyHallows!.name);
 
-      var author = book.author!;
-      print(AuthorSerializer.toMap(author));
-      expect(author.id, jkRowling!.id);
-      expect(author.name, jkRowling!.name);
+        var author = book.author!;
+        print(AuthorSerializer.toMap(author));
+        expect(author.id, jkRowling!.id);
+        expect(author.name, jkRowling!.name);
+      });
     });
 
     test('where clause', () async {

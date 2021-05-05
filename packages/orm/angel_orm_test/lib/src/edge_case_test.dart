@@ -111,9 +111,9 @@ edgeCaseTests(FutureOr<QueryExecutor> Function() createExecutor,
         await pivotQuery.insert(executor);
         fooQuery = FooQuery()..where!.bar.equals('baz');
 
-        var fooObj = await fooQuery.getOne(executor);
-        expect(fooObj.isPresent, true);
-        fooObj.ifPresent((foo) {
+        var fooOpt = await fooQuery.getOne(executor);
+        expect(fooOpt.isPresent, true);
+        fooOpt.ifPresent((foo) {
           print(foo.toJson());
           print(weirdJoin!.toJson());
           expect(foo.weirdJoins![0].id, weirdJoin!.id);
