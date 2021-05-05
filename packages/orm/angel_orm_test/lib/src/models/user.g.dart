@@ -332,14 +332,18 @@ class RoleUserQuery extends Query<RoleUser, RoleUserQueryWhere> {
     }
     var model = RoleUser();
     if (row.length > 2) {
-      model = model.copyWith(
-          role: RoleQuery.parseRow(row.skip(2).take(4).toList()).value);
+      var roleOpt = RoleQuery.parseRow(row.skip(2).take(4).toList());
+      roleOpt.ifPresent((role) {
+        model = model.copyWith(role: role);
+      });
     }
     if (row.length > 6) {
-      model = model.copyWith(
-          user: UserQuery.parseRow(row.skip(6).take(6).toList()).value);
+      var userOpt = UserQuery.parseRow(row.skip(6).take(6).toList());
+      userOpt.ifPresent((user) {
+        model = model.copyWith(user: user);
+      });
     }
-    return Optional.ofNullable(model);
+    return Optional.of(model);
   }
 
   @override
