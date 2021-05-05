@@ -19,9 +19,12 @@ hasMapTests(FutureOr<QueryExecutor> Function() createExecutor,
     query.values
       ..value = {'foo': 'bar'}
       ..list = ['1', 2, 3.0];
-    var model = await (query.insert(executor) as FutureOr<HasMap>);
-    print(model.toJson());
-    expect(model, HasMap(value: {'foo': 'bar'}, list: ['1', 2, 3.0]));
+    var modelOpt = await (query.insert(executor));
+    expect(modelOpt.isPresent, true);
+    modelOpt.ifPresent((model) {
+      print(model.toJson());
+      expect(model, HasMap(value: {'foo': 'bar'}, list: ['1', 2, 3.0]));
+    });
   });
 
   test('update', () async {
@@ -29,11 +32,13 @@ hasMapTests(FutureOr<QueryExecutor> Function() createExecutor,
     query.values
       ..value = {'foo': 'bar'}
       ..list = ['1', 2, 3.0];
-    var model = await (query.insert(executor) as FutureOr<HasMap>);
-    print(model.toJson());
-
-    query = HasMapQuery()..values.copyFrom(model);
-    expect(await query.updateOne(executor), model);
+    var modelOpt = await (query.insert(executor));
+    expect(modelOpt.isPresent, true);
+    modelOpt.ifPresent((model) async {
+      print(model.toJson());
+      query = HasMapQuery()..values.copyFrom(model);
+      expect(await query.updateOne(executor), model);
+    });
   });
 
   group('query', () {
@@ -73,7 +78,7 @@ hasMapTests(FutureOr<QueryExecutor> Function() createExecutor,
     });
 
     test('property equals', () async {
-      var query = HasMapQuery()..where!.value['foo'].asString!.equals('bar');
+      var query = HasMapQuery()..where!.value['foo'].asString?.equals('bar');
       expect(await query.get(executor), [initialValue]);
 
       query = HasMapQuery()..where!.value['foo'].asString!.equals('baz');

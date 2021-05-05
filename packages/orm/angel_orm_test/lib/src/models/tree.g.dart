@@ -104,9 +104,10 @@ class TreeQuery extends Query<Tree, TreeQueryWhere> {
         updatedAt: (row[2] as DateTime?),
         rings: (row[3] as int?));
     if (row.length > 4) {
-      model = model.copyWith(fruits: [
-        FruitQuery.parseRow(row.skip(4).take(5).toList()).firstOrNull
-      ]);
+      var modelOpt = FruitQuery.parseRow(row.skip(4).take(5).toList());
+      modelOpt.ifPresent((m) {
+        model = model.copyWith(fruits: [m]);
+      });
     }
     return Optional.ofNullable(model);
   }
@@ -362,8 +363,8 @@ class Tree extends _Tree {
       this.createdAt,
       this.updatedAt,
       this.rings,
-      List<_Fruit?>? fruits})
-      : this.fruits = List.unmodifiable(fruits ?? []);
+      List<_Fruit> fruits = const []})
+      : this.fruits = List.unmodifiable(fruits);
 
   /// A unique identifier corresponding to this item.
   @override
@@ -388,13 +389,13 @@ class Tree extends _Tree {
       DateTime? createdAt,
       DateTime? updatedAt,
       int? rings,
-      List<_Fruit?>? fruits}) {
+      List<_Fruit> fruits = const []}) {
     return Tree(
         id: id ?? this.id,
         createdAt: createdAt ?? this.createdAt,
         updatedAt: updatedAt ?? this.updatedAt,
         rings: rings ?? this.rings,
-        fruits: fruits ?? this.fruits);
+        fruits: fruits);
   }
 
   bool operator ==(other) {
@@ -527,7 +528,7 @@ class TreeSerializer extends Codec<Tree, Map> {
         fruits: map['fruits'] is Iterable
             ? List.unmodifiable(((map['fruits'] as Iterable).whereType<Map>())
                 .map(FruitSerializer.fromMap))
-            : null);
+            : []);
   }
 
   static Map<String, dynamic> toMap(_Tree model) {
