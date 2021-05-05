@@ -16,8 +16,11 @@ edgeCaseTests(FutureOr<QueryExecutor> Function() createExecutor,
 
   test('can create object with no id', () async {
     var query = UnorthodoxQuery()..values.name = 'Hey';
-    var model = await query.insert(executor);
-    expect(model, Unorthodox(name: 'Hey'));
+    var modelOpt = await query.insert(executor);
+    expect(modelOpt.isPresent, true);
+    modelOpt.ifPresent((model) {
+      expect(model, Unorthodox(name: 'Hey'));
+    });
   });
 
   group('relations on non-model', () {
@@ -25,15 +28,22 @@ edgeCaseTests(FutureOr<QueryExecutor> Function() createExecutor,
 
     setUp(() async {
       var query = UnorthodoxQuery()..values.name = 'Hey';
-      unorthodox = (await query.insert(executor)).value;
+
+      var unorthodoxOpt = await query.insert(executor);
+      unorthodoxOpt.ifPresent((value) {
+        unorthodox = value;
+      });
     });
 
     test('belongs to', () async {
       var query = WeirdJoinQuery()..values.joinName = unorthodox!.name;
-      var model = await (query.insert(executor) as FutureOr<WeirdJoin>);
-      print(model.toJson());
-      expect(model.id, isNotNull); // Postgres should set this.
-      expect(model.unorthodox, unorthodox);
+      var modelOpt = await query.insert(executor);
+      expect(modelOpt.isPresent, true);
+      modelOpt.ifPresent((model) {
+        print(model.toJson());
+        expect(model.id, isNotNull); // Postgres should set this.
+        expect(model.unorthodox, unorthodox);
+      });
     });
 
     group('layered', () {
@@ -42,36 +52,53 @@ edgeCaseTests(FutureOr<QueryExecutor> Function() createExecutor,
 
       setUp(() async {
         var wjQuery = WeirdJoinQuery()..values.joinName = unorthodox!.name;
-        weirdJoin = (await wjQuery.insert(executor)).value;
 
-        var gbQuery = SongQuery()
-          ..values.weirdJoinId = weirdJoin!.id
-          ..values.title = 'Girl Blue';
-        girlBlue = (await gbQuery.insert(executor)).value;
+        var weirdJoinOpt = await wjQuery.insert(executor);
+        //weirdJoin = (await wjQuery.insert(executor)).value;
+        weirdJoinOpt.ifPresent((value1) async {
+          weirdJoin = value1;
+          var gbQuery = SongQuery()
+            ..values.weirdJoinId = value1.id
+            ..values.title = 'Girl Blue';
+
+          var girlBlueOpt = await gbQuery.insert(executor);
+          girlBlueOpt.ifPresent((value2) {
+            girlBlue = value2;
+          });
+        });
       });
 
       test('has one', () async {
         var query = WeirdJoinQuery()..where!.id.equals(weirdJoin!.id!);
-        var wj = await (query.getOne(executor) as FutureOr<WeirdJoin>);
-        print(wj.toJson());
-        expect(wj.song, girlBlue);
+        var wjOpt = await query.getOne(executor);
+        expect(wjOpt.isPresent, true);
+        wjOpt.ifPresent((wj) {
+          print(wj.toJson());
+          expect(wj.song, girlBlue);
+        });
       });
 
       test('has many', () async {
-        var numbas = <Numba?>[];
+        var numbas = <Numba>[];
 
         for (int i = 0; i < 15; i++) {
           var query = NumbaQuery()
             ..values.parent = weirdJoin!.id
             ..values.i = i;
-          var model = await query.insert(executor);
-          numbas.add(model.value);
+          var modelObj = await query.insert(executor);
+          expect(modelObj.isPresent, true);
+          modelObj.ifPresent((model) {
+            numbas.add(model);
+          });
         }
 
         var query = WeirdJoinQuery()..where!.id.equals(weirdJoin!.id!);
-        var wj = await (query.getOne(executor) as FutureOr<WeirdJoin>);
-        print(wj.toJson());
-        expect(wj.numbas, numbas);
+        var wjObj = await query.getOne(executor);
+        expect(wjObj.isPresent, true);
+        wjObj.ifPresent((wj) {
+          print(wj.toJson());
+          expect(wj.numbas, numbas);
+        });
       });
 
       test('many to many', () async {
@@ -84,10 +111,13 @@ edgeCaseTests(FutureOr<QueryExecutor> Function() createExecutor,
         await pivotQuery.insert(executor);
         fooQuery = FooQuery()..where!.bar.equals('baz');
 
-        var foo = await (fooQuery.getOne(executor) as FutureOr<Foo>);
-        print(foo.toJson());
-        print(weirdJoin!.toJson());
-        expect(foo.weirdJoins![0].id, weirdJoin!.id);
+        var fooObj = await fooQuery.getOne(executor);
+        expect(fooObj.isPresent, true);
+        fooObj.ifPresent((foo) {
+          print(foo.toJson());
+          print(weirdJoin!.toJson());
+          expect(foo.weirdJoins![0].id, weirdJoin!.id);
+        });
       });
     });
   });

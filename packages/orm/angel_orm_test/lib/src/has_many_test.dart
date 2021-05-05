@@ -43,38 +43,55 @@ hasManyTests(FutureOr<QueryExecutor> Function() createExecutor,
       var bananaQuery = FruitQuery()
         ..values.treeId = treeId
         ..values.commonName = 'Banana';
-
-      apple = (await appleQuery.insert(executor)).value;
-      banana = (await bananaQuery.insert(executor)).value;
+      var appleOpt = await appleQuery.insert(executor);
+      var bananaOpt = await bananaQuery.insert(executor);
+      appleOpt.ifPresent((a) {
+        apple = a;
+      });
+      bananaOpt.ifPresent((a) {
+        banana = a;
+      });
     });
 
     test('can fetch any children', () async {
       var query = TreeQuery()..where!.id.equals(treeId);
-      var tree = await (query.getOne(executor) as FutureOr<Tree>);
-      verify(tree);
+      var treeOpt = await (query.getOne(executor));
+      expect(treeOpt.isPresent, true);
+      treeOpt.ifPresent((tree) {
+        verify(tree);
+      });
     });
 
     test('sets on update', () async {
       var tq = TreeQuery()
         ..where!.id.equals(treeId)
         ..values.rings = 24;
-      var tree = await (tq.updateOne(executor) as FutureOr<Tree>);
-      verify(tree);
-      expect(tree.rings, 24);
+      var treeOpt = await (tq.updateOne(executor));
+      expect(treeOpt.isPresent, true);
+      treeOpt.ifPresent((tree) {
+        verify(tree);
+        expect(tree.rings, 24);
+      });
     });
 
     test('sets on delete', () async {
       var tq = TreeQuery()..where!.id.equals(treeId);
-      var tree = await (tq.deleteOne(executor) as FutureOr<Tree>);
-      verify(tree);
+      var treeOpt = await (tq.deleteOne(executor));
+      expect(treeOpt.isPresent, true);
+      treeOpt.ifPresent((tree) {
+        verify(tree);
+      });
     });
 
     test('returns empty on false subquery', () async {
       var tq = TreeQuery()
         ..where!.id.equals(treeId)
         ..fruits!.where!.commonName.equals('Kiwi');
-      var tree = await (tq.getOne(executor) as FutureOr<Tree>);
-      expect(tree.fruits, isEmpty);
+      var treeOpt = await (tq.getOne(executor));
+      expect(treeOpt.isPresent, true);
+      treeOpt.ifPresent((tree) {
+        expect(tree.fruits, isEmpty);
+      });
     });
   });
 }

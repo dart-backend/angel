@@ -659,9 +659,10 @@ class FooQuery extends Query<Foo, FooQueryWhere> {
     }
     var model = Foo(bar: (row[0] as String?));
     if (row.length > 1) {
-      model = model.copyWith(weirdJoins: [
-        WeirdJoinQuery.parseRow(row.skip(1).take(2).toList()).value
-      ]);
+      var weirdOpt = WeirdJoinQuery.parseRow(row.skip(1).take(2).toList());
+      weirdOpt.ifPresent((value) {
+        model = model.copyWith(weirdJoins: [value]);
+      });
     }
     return Optional.ofNullable(model);
   }
