@@ -116,8 +116,11 @@ manyToManyTests(FutureOr<QueryExecutor> Function() createExecutor,
   test('fetch users for role', () async {
     for (var role in [canPub, canSub]) {
       var query = RoleQuery()..where!.id.equals(role!.idAsInt!);
-      var r = await (query.getOne(executor) as FutureOr<Role>);
-      expect(r.users.toList(), [thosakwe]);
+      var rOpt = await query.getOne(executor);
+      expect(rOpt.isPresent, true);
+      rOpt.ifPresent((r) async {
+        expect(r.users.toList(), [thosakwe]);
+      });
     }
   });
 

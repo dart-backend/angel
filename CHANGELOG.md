@@ -37,7 +37,7 @@
 * Migrated angel_orm_generator to 4.0.0 (0/0 tests passed) 
 * Migrated angel_migration_runner to 3.0.0 (0/0 tests passed)
 * Migrated angel_orm_test to 3.0.0 (0/0 tests passed)
-* Migrated angel_orm_postgres to 3.0.0 (45/54 tests passed)
+* Migrated angel_orm_postgres to 3.0.0 (46/54 tests passed)
 * Update orm-sdk-2.12.x boilerplate (in progress) <= Milestone 2
 
 

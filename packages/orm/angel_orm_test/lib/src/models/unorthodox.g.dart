@@ -818,13 +818,16 @@ class FooPivotQuery extends Query<FooPivot, FooPivotQueryWhere> {
     }
     var model = FooPivot();
     if (row.length > 2) {
-      model = model.copyWith(
-          weirdJoin:
-              WeirdJoinQuery.parseRow(row.skip(2).take(2).toList()).value);
+      var modelOpt = WeirdJoinQuery.parseRow(row.skip(2).take(2).toList());
+      modelOpt.ifPresent((m) {
+        model = model.copyWith(weirdJoin: m);
+      });
     }
     if (row.length > 4) {
-      model = model.copyWith(
-          foo: FooQuery.parseRow(row.skip(4).take(1).toList()).value);
+      var modelOpt = FooQuery.parseRow(row.skip(4).take(1).toList());
+      modelOpt.ifPresent((m) {
+        model = model.copyWith(foo: m);
+      });
     }
     return Optional.ofNullable(model);
   }
