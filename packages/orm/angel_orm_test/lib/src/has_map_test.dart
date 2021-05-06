@@ -34,11 +34,12 @@ hasMapTests(FutureOr<QueryExecutor> Function() createExecutor,
       ..list = ['1', 2, 3.0];
     var modelOpt = await (query.insert(executor));
     expect(modelOpt.isPresent, true);
-    modelOpt.ifPresent((model) async {
+    if (modelOpt.isPresent) {
+      var model = modelOpt.value;
       print(model.toJson());
       query = HasMapQuery()..values.copyFrom(model);
       expect(await query.updateOne(executor), model);
-    });
+    }
   });
 
   group('query', () {
@@ -70,11 +71,13 @@ hasMapTests(FutureOr<QueryExecutor> Function() createExecutor,
     test('list equals', () async {
       var query = HasMapQuery();
       query.where!.list.equals(['1', 2, 3.0]);
-      expect(await query.get(executor), [initialValue]);
+      var result = await query.get(executor);
+      expect(result, [initialValue]);
 
       query = HasMapQuery();
       query.where!.list.equals(['10', 20, 30.0]);
-      expect(await query.get(executor), isEmpty);
+      var result2 = await query.get(executor);
+      expect(result2, isEmpty);
     });
 
     test('property equals', () async {

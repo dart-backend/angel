@@ -33,10 +33,12 @@ enumAndNestedTests(FutureOr<QueryExecutor> Function() createExecutor,
     test('query by enum', () async {
       // Check for mismatched type
       var query = HasCarQuery()..where!.type.equals(CarType.atv);
-      expect(await query.get(executor), isEmpty);
+      var result = await query.get(executor);
+      expect(result, isEmpty);
 
       query = HasCarQuery()..where!.type.equals(initialValue!.type);
-      expect(await query.getOne(executor), initialValue);
+      var oneResult = await query.getOne(executor);
+      expect(oneResult.value, initialValue);
     });
   });
 }
