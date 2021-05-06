@@ -38,7 +38,11 @@ hasMapTests(FutureOr<QueryExecutor> Function() createExecutor,
       var model = modelOpt.value;
       print(model.toJson());
       query = HasMapQuery()..values.copyFrom(model);
-      expect(await query.updateOne(executor), model);
+      var result = await query.updateOne(executor);
+      expect(result.isPresent, true);
+      result.ifPresent((m) {
+        expect(m, model);
+      });
     }
   });
 
@@ -70,12 +74,12 @@ hasMapTests(FutureOr<QueryExecutor> Function() createExecutor,
 
     test('list equals', () async {
       var query = HasMapQuery();
-      query.where!.list.equals(['1', 2, 3.0]);
+      query.where?.list.equals(['1', 2, 3.0]);
       var result = await query.get(executor);
       expect(result, [initialValue]);
 
       query = HasMapQuery();
-      query.where!.list.equals(['10', 20, 30.0]);
+      query.where?.list.equals(['10', 20, 30.0]);
       var result2 = await query.get(executor);
       expect(result2, isEmpty);
     });
