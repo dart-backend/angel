@@ -30,7 +30,7 @@ class EmployeeMigration extends Migration {
 // OrmGenerator
 // **************************************************************************
 
-class EmployeeQuery extends Query<Employee?, EmployeeQueryWhere?> {
+class EmployeeQuery extends Query<Employee, EmployeeQueryWhere> {
   EmployeeQuery({Set<String>? trampoline}) {
     trampoline ??= {};
     trampoline.add(tableName);
@@ -75,8 +75,10 @@ class EmployeeQuery extends Query<Employee?, EmployeeQueryWhere?> {
     return EmployeeQueryWhere(this);
   }
 
-  static Employee? parseRow(List row) {
-    if (row.every((x) => x == null)) return null;
+  static Optional<Employee> parseRow(List row) {
+    if (row.every((x) => x == null)) {
+      return Optional.empty();
+    }
     var model = Employee(
         id: (row[0] as String?),
         createdAt: (row[1] as DateTime?),
@@ -85,11 +87,11 @@ class EmployeeQuery extends Query<Employee?, EmployeeQueryWhere?> {
         firstName: (row[4] as String?),
         lastName: (row[5] as String?),
         salary: double.tryParse(row[6].toString()));
-    return model;
+    return Optional.of(model);
   }
 
   @override
-  Employee? deserialize(List row) {
+  Optional<Employee> deserialize(List row) {
     return parseRow(row);
   }
 }

@@ -95,15 +95,22 @@ manyToManyTests(FutureOr<QueryExecutor> Function() createExecutor,
 
   Future<User?> fetchThosakwe() async {
     var query = UserQuery()..where!.id.equals(int.parse(thosakwe!.id!));
-    return (await query.getOne(executor)).value;
+    var userOpt = await query.getOne(executor);
+    expect(userOpt.isPresent, true);
+    if (userOpt.isPresent) {
+      return userOpt.value;
+    } else {
+      return null;
+    }
   }
 
   test('fetch roles for user', () async {
     printSeparator('Fetch roles for user test');
-    var user = await (fetchThosakwe() as FutureOr<User>);
-    expect(user.roles, hasLength(2));
-    expect(user.roles, contains(canPub));
-    expect(user.roles, contains(canSub));
+    var user = await fetchThosakwe();
+
+    expect(user?.roles, hasLength(2));
+    expect(user?.roles, contains(canPub));
+    expect(user?.roles, contains(canSub));
   });
 
   test('fetch users for role', () async {
@@ -122,12 +129,18 @@ manyToManyTests(FutureOr<QueryExecutor> Function() createExecutor,
       ..username = 'Prince'
       ..password = 'Rogers'
       ..email = 'Nelson';
-    var user = await (userQuery.insert(executor) as FutureOr<User>);
-    expect(user.roles, isEmpty);
+    var userOpt = await userQuery.insert(executor);
+    expect(userOpt.isPresent, true);
+    userOpt.ifPresent((user) async {
+      expect(user.roles, isEmpty);
 
-    // Fetch again, just to be doubly sure.
-    var query = UserQuery()..where!.id.equals(user.idAsInt!);
-    var fetched = await (query.getOne(executor) as FutureOr<User>);
-    expect(fetched.roles, isEmpty);
+      // Fetch again, just to be doubly sure.
+      var query = UserQuery()..where!.id.equals(user.idAsInt!);
+      var fetchedOpt = await query.getOne(executor);
+      expect(fetchedOpt.isPresent, true);
+      fetchedOpt.ifPresent((fetched) {
+        expect(fetched.roles, isEmpty);
+      });
+    });
   });
 }

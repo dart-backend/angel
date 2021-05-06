@@ -42,11 +42,11 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
       return null;
     }
 
-    var resolver = await buildStep.resolver;
+    var resolver = buildStep.resolver;
     var ctx = await buildOrmContext({}, element, annotation, buildStep,
         resolver, autoSnakeCaseNames != false);
     var lib = generateMigrationLibrary(ctx, element, resolver, buildStep);
-    if (lib == null) return null;
+    //if (lib == null) return null;
     return DartFormatter().format(lib.accept(DartEmitter()).toString());
   }
 
@@ -79,7 +79,7 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
           ..body = Block((closureBody) {
             var table = refer('table');
 
-            List<String?> dup = [];
+            var dup = <String>[];
             ctx.columns.forEach((name, col) {
               // Skip custom-expression columns.
               if (col.hasExpression) return;
@@ -106,13 +106,16 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
                     if (relationship.localKey == key) return;
                   }
                 }
-
-                dup.add(key);
+                if (key != null) {
+                  dup.add(key);
+                } else {
+                  print('Skip: key is null');
+                }
               }
 
               String? methodName;
-              List<Expression> positional = [literal(key)];
-              Map<String, Expression> named = {};
+              var positional = <Expression>[literal(key)];
+              var named = <String, Expression>{};
 
               if (autoIdAndDateFields != false && name == 'id') {
                 methodName = 'serial';
@@ -195,7 +198,7 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
                   try {
                     var index =
                         ConstantReader(defaultValue).read('index').intValue;
-                    if (index != null) defaultExpr = literalNum(index);
+                    defaultExpr = literalNum(index);
                   } catch (_) {
                     // Extremely weird error occurs here: `Not an instance of int`.
                     // Definitely an analyzer issue.

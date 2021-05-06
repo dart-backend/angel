@@ -72,7 +72,7 @@ class RelationshipReader {
         orElse: () {
       throw '${ctx.buildContext.clazz.name} has no field that maps to the name "$localKey", '
           'but it has a @HasMany() relation that expects such a field.';
-    } as FieldElement Function()?);
+    });
   }
 
   FieldElement findForeignField(OrmBuildContext? ctx) {
@@ -82,6 +82,6 @@ class RelationshipReader {
         orElse: () {
       throw '${foreign.buildContext.clazz.name} has no field that maps to the name "$foreignKey", '
           'but ${ctx!.buildContext.clazz.name} has a @HasMany() relation that expects such a field.';
-    } as FieldElement Function()?);
+    });
   }
 }

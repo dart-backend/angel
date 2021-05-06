@@ -247,7 +247,7 @@ Future<OrmBuildContext?> buildOrmContext(
         var enumFields =
             joinTypeType.element.fields.where((f) => f.isEnumConstant).toList();
 
-        for (int i = 0; i < enumFields.length; i++) {
+        for (var i = 0; i < enumFields.length; i++) {
           if (enumFields[i].computeConstantValue() == joinTypeRdr) {
             joinType = JoinType.values[i];
             break;
@@ -411,6 +411,7 @@ class RelationFieldImpl extends ShimFieldImpl {
 
   String get originalFieldName => originalField.name;
 
+  @override
   PropertyAccessorElement? get getter => originalField.getter;
 }
 
