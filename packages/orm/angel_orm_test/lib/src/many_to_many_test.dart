@@ -134,7 +134,8 @@ manyToManyTests(FutureOr<QueryExecutor> Function() createExecutor,
       ..email = 'Nelson';
     var userOpt = await userQuery.insert(executor);
     expect(userOpt.isPresent, true);
-    userOpt.ifPresent((user) async {
+    if (userOpt.isPresent) {
+      var user = userOpt.value;
       expect(user.roles, isEmpty);
 
       // Fetch again, just to be doubly sure.
@@ -144,6 +145,6 @@ manyToManyTests(FutureOr<QueryExecutor> Function() createExecutor,
       fetchedOpt.ifPresent((fetched) {
         expect(fetched.roles, isEmpty);
       });
-    });
+    }
   });
 }
