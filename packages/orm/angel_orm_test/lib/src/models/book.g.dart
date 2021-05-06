@@ -116,15 +116,18 @@ class BookQuery extends Query<Book, BookQueryWhere> {
         updatedAt: (row[2] as DateTime?),
         name: (row[5] as String?));
     if (row.length > 6) {
-      model = model.copyWith(
-          author: AuthorQuery.parseRow(row.skip(6).take(4).toList()).value);
+      var modelOpt = AuthorQuery.parseRow(row.skip(6).take(4).toList());
+      modelOpt.ifPresent((m) {
+        model = model.copyWith(author: m);
+      });
     }
     if (row.length > 10) {
-      model = model.copyWith(
-          partnerAuthor:
-              AuthorQuery.parseRow(row.skip(10).take(4).toList()).value);
+      var modelOpt = AuthorQuery.parseRow(row.skip(10).take(4).toList());
+      modelOpt.ifPresent((m) {
+        model = model.copyWith(partnerAuthor: m);
+      });
     }
-    return Optional.ofNullable(model);
+    return Optional.of(model);
   }
 
   @override

@@ -94,7 +94,7 @@ class NumbersQuery extends Query<Numbers, NumbersQueryWhere> {
         createdAt: (row[1] as DateTime?),
         updatedAt: (row[2] as DateTime?),
         two: (row[3] as int?));
-    return Optional.ofNullable(model);
+    return Optional.of(model);
   }
 
   @override
@@ -202,10 +202,12 @@ class AlphabetQuery extends Query<Alphabet, AlphabetQueryWhere> {
         updatedAt: (row[2] as DateTime?),
         value: (row[3] as String?));
     if (row.length > 5) {
-      model = model.copyWith(
-          numbers: NumbersQuery.parseRow(row.skip(5).take(4).toList()).value);
+      var modelOpt = NumbersQuery.parseRow(row.skip(5).take(4).toList());
+      modelOpt.ifPresent((m) {
+        model = model.copyWith(numbers: m);
+      });
     }
-    return Optional.ofNullable(model);
+    return Optional.of(model);
   }
 
   @override

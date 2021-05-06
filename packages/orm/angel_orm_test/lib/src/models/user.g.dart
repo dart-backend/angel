@@ -461,12 +461,12 @@ class RoleQuery extends Query<Role, RoleQueryWhere> {
         updatedAt: (row[2] as DateTime?),
         name: (row[3] as String?));
     if (row.length > 4) {
-      var userOpt = UserQuery.parseRow(row.skip(4).take(6).toList());
-      userOpt.ifPresent((user) {
-        model = model.copyWith(users: [user]);
+      var modelOpt = UserQuery.parseRow(row.skip(4).take(6).toList());
+      modelOpt.ifPresent((m) {
+        model = model.copyWith(users: [m]);
       });
     }
-    return Optional.ofNullable(model);
+    return Optional.of(model);
   }
 
   @override

@@ -148,7 +148,7 @@ class UnorthodoxQuery extends Query<Unorthodox, UnorthodoxQueryWhere> {
       return Optional.empty();
     }
     var model = Unorthodox(name: (row[0] as String?));
-    return Optional.ofNullable(model);
+    return Optional.of(model);
   }
 
   @override
@@ -260,24 +260,30 @@ class WeirdJoinQuery extends Query<WeirdJoin, WeirdJoinQueryWhere> {
     }
     var model = WeirdJoin(id: (row[0] as int?));
     if (row.length > 2) {
-      model = model.copyWith(
-          unorthodox: UnorthodoxQuery.parseRow(row.skip(2).take(1).toList())
-              .firstOrNull);
+      var modelOpt = UnorthodoxQuery.parseRow(row.skip(2).take(1).toList());
+      modelOpt.ifPresent((m) {
+        model = model.copyWith(unorthodox: m);
+      });
     }
     if (row.length > 3) {
-      model = model.copyWith(
-          song: SongQuery.parseRow(row.skip(3).take(5).toList()).firstOrNull);
+      var modelOpt = SongQuery.parseRow(row.skip(3).take(5).toList());
+      modelOpt.ifPresent((m) {
+        model = model.copyWith(song: m);
+      });
     }
     if (row.length > 8) {
-      model = model.copyWith(numbas: [
-        NumbaQuery.parseRow(row.skip(8).take(2).toList()).firstOrNull
-      ]);
+      var modelOpt = NumbaQuery.parseRow(row.skip(8).take(2).toList());
+      modelOpt.ifPresent((m) {
+        model = model.copyWith(numbas: [m]);
+      });
     }
     if (row.length > 10) {
-      model = model.copyWith(
-          foos: [FooQuery.parseRow(row.skip(10).take(1).toList()).firstOrNull]);
+      var modelOpt = FooQuery.parseRow(row.skip(10).take(1).toList());
+      modelOpt.ifPresent((m) {
+        model = model.copyWith(foos: [m]);
+      });
     }
-    return Optional.ofNullable(model);
+    return Optional.of(model);
   }
 
   @override
@@ -450,7 +456,7 @@ class SongQuery extends Query<Song, SongQueryWhere> {
         updatedAt: (row[2] as DateTime?),
         weirdJoinId: (row[3] as int?),
         title: (row[4] as String?));
-    return Optional.ofNullable(model);
+    return Optional.of(model);
   }
 
   @override
@@ -564,7 +570,7 @@ class NumbaQuery extends Query<Numba, NumbaQueryWhere> {
       return Optional.empty();
     }
     var model = Numba(i: (row[0] as int?), parent: (row[1] as int?));
-    return Optional.ofNullable(model);
+    return Optional.of(model);
   }
 
   @override
@@ -659,9 +665,9 @@ class FooQuery extends Query<Foo, FooQueryWhere> {
     }
     var model = Foo(bar: (row[0] as String?));
     if (row.length > 1) {
-      var weirdOpt = WeirdJoinQuery.parseRow(row.skip(1).take(2).toList());
-      weirdOpt.ifPresent((value) {
-        model = model.copyWith(weirdJoins: [value]);
+      var modelOpt = WeirdJoinQuery.parseRow(row.skip(1).take(2).toList());
+      modelOpt.ifPresent((m) {
+        model = model.copyWith(weirdJoins: [m]);
       });
     }
     return Optional.ofNullable(model);

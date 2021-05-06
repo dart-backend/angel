@@ -67,10 +67,8 @@ class HasMapQuery extends Query<HasMap, HasMapQueryWhere> {
     if (row.every((x) => x == null)) {
       return Optional.empty();
     }
-    var model = HasMap(
-        value: (row[0] as Map<dynamic, dynamic>?),
-        list: (row[1] as List<dynamic>?));
-    return Optional.ofNullable(model);
+    var model = HasMap(value: (row[0]), list: (row[1]));
+    return Optional.of(model);
   }
 
   @override
@@ -100,16 +98,16 @@ class HasMapQueryValues extends MapQueryValues {
     return {'list': 'jsonb'};
   }
 
-  Map<dynamic, dynamic>? get value {
-    return (values['value'] as Map<dynamic, dynamic>?);
+  Map<dynamic, dynamic> get value {
+    return (values['value'] as Map<dynamic, dynamic>);
   }
 
-  set value(Map<dynamic, dynamic>? value) => values['value'] = value;
-  List<dynamic>? get list {
-    return (json.decode((values['list'] as String)) as List?);
+  set value(Map<dynamic, dynamic> value) => values['value'] = value;
+  List<dynamic> get list {
+    return (json.decode((values['list'] as String)) as List);
   }
 
-  set list(List<dynamic>? value) => values['list'] = json.encode(value);
+  set list(List<dynamic> value) => values['list'] = json.encode(value);
   void copyFrom(HasMap model) {
     value = model.value;
     list = model.list;
@@ -122,16 +120,17 @@ class HasMapQueryValues extends MapQueryValues {
 
 @generatedSerializable
 class HasMap implements _HasMap {
-  const HasMap({this.value, this.list});
+  const HasMap({this.value = const {}, this.list = const []});
 
   @override
-  final Map<dynamic, dynamic>? value;
+  final Map<dynamic, dynamic> value;
 
   @override
-  final List<dynamic>? list;
+  final List<dynamic> list;
 
-  HasMap copyWith({Map<dynamic, dynamic>? value, List<dynamic>? list}) {
-    return HasMap(value: value ?? this.value, list: list ?? this.list);
+  HasMap copyWith(
+      {Map<dynamic, dynamic> value = const {}, List<dynamic> list = const []}) {
+    return HasMap(value: value, list: list);
   }
 
   bool operator ==(other) {
@@ -188,10 +187,10 @@ class HasMapSerializer extends Codec<HasMap, Map> {
     return HasMap(
         value: map['value'] is Map
             ? (map['value'] as Map).cast<dynamic, dynamic>()
-            : null,
+            : {},
         list: map['list'] is Iterable
             ? (map['list'] as Iterable).cast<dynamic>().toList()
-            : null);
+            : []);
   }
 
   static Map<String, dynamic> toMap(_HasMap model) {

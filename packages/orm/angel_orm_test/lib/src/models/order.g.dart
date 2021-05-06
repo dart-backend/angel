@@ -111,10 +111,12 @@ class OrderQuery extends Query<Order, OrderQueryWhere> {
         orderDate: (row[5] as DateTime?),
         shipperId: (row[6] as int?));
     if (row.length > 7) {
-      model = model.copyWith(
-          customer: CustomerQuery.parseRow(row.skip(7).take(3).toList()).value);
+      var modelOpt = CustomerQuery.parseRow(row.skip(7).take(3).toList());
+      modelOpt.ifPresent((m) {
+        model = model.copyWith(customer: m);
+      });
     }
-    return Optional.ofNullable(model);
+    return Optional.of(model);
   }
 
   @override
@@ -264,7 +266,7 @@ class CustomerQuery extends Query<Customer, CustomerQueryWhere> {
         id: row[0].toString(),
         createdAt: (row[1] as DateTime?),
         updatedAt: (row[2] as DateTime?));
-    return Optional.ofNullable(model);
+    return Optional.of(model);
   }
 
   @override

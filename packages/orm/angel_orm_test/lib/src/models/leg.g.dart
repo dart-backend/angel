@@ -104,10 +104,12 @@ class LegQuery extends Query<Leg, LegQueryWhere> {
         updatedAt: (row[2] as DateTime?),
         name: (row[3] as String?));
     if (row.length > 4) {
-      model = model.copyWith(
-          foot: FootQuery.parseRow(row.skip(4).take(5).toList()).firstOrNull);
+      var modelOpt = FootQuery.parseRow(row.skip(4).take(5).toList());
+      modelOpt.ifPresent((m) {
+        model = model.copyWith(foot: m);
+      });
     }
-    return Optional.ofNullable(model);
+    return Optional.of(model);
   }
 
   @override
@@ -221,7 +223,7 @@ class FootQuery extends Query<Foot, FootQueryWhere> {
         updatedAt: (row[2] as DateTime?),
         legId: (row[3] as int?),
         nToes: double.tryParse(row[4].toString()));
-    return Optional.ofNullable(model);
+    return Optional.of(model);
   }
 
   @override

@@ -109,7 +109,7 @@ class TreeQuery extends Query<Tree, TreeQueryWhere> {
         model = model.copyWith(fruits: [m]);
       });
     }
-    return Optional.ofNullable(model);
+    return Optional.of(model);
   }
 
   @override
@@ -280,7 +280,7 @@ class FruitQuery extends Query<Fruit, FruitQueryWhere> {
         updatedAt: (row[2] as DateTime?),
         treeId: (row[3] as int?),
         commonName: (row[4] as String?));
-    return Optional.ofNullable(model);
+    return Optional.of(model);
   }
 
   @override

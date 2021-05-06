@@ -74,7 +74,7 @@ class HasCarQuery extends Query<HasCar, HasCarQueryWhere> {
         createdAt: (row[1] as DateTime?),
         updatedAt: (row[2] as DateTime?),
         type: row[3] == null ? null : CarType.values[(row[3] as int)]);
-    return Optional.ofNullable(model);
+    return Optional.of(model);
   }
 
   @override

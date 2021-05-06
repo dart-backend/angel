@@ -108,10 +108,10 @@ class RoleQuery extends Query<Role, RoleQueryWhere> {
     }
     var model = Role(role: (row[0] as String?));
     if (row.length > 1) {
-      var rowData = UserQuery.parseRow(row.skip(1).take(3).toList());
-      if (rowData.isPresent) {
-        model = model.copyWith(users: [rowData.value]);
-      }
+      var rowDataOpt = UserQuery.parseRow(row.skip(1).take(3).toList());
+      rowDataOpt.ifPresent((m) {
+        model = model.copyWith(users: [m]);
+      });
     }
     return Optional.ofNullable(model);
   }
@@ -265,17 +265,16 @@ class RoleUserQuery extends Query<RoleUser, RoleUserQueryWhere> {
     }
     var model = RoleUser();
     if (row.length > 2) {
-      var r = RoleQuery.parseRow(row.skip(2).take(1).toList());
-      if (r.isPresent) {
-        model = model.copyWith(role: r.value);
-      }
+      var modelOpt = RoleQuery.parseRow(row.skip(2).take(1).toList());
+      modelOpt.ifPresent((m) {
+        model = model.copyWith(role: m);
+      });
     }
     if (row.length > 3) {
-      var u = UserQuery.parseRow(row.skip(3).take(3).toList());
-      if (u.isPresent) {
-        model = model.copyWith(
-            user: UserQuery.parseRow(row.skip(3).take(3).toList()).value);
-      }
+      var modelOpt = UserQuery.parseRow(row.skip(3).take(3).toList());
+      modelOpt.ifPresent((m) {
+        model = model.copyWith(user: m);
+      });
     }
     return Optional.ofNullable(model);
   }
@@ -387,14 +386,16 @@ class UserQuery extends Query<User, UserQueryWhere> {
         name: (row[1] as String?),
         password: (row[2] as String?));
     if (row.length > 3) {
-      var d = RoleQuery.parseRow(row.skip(3).take(1).toList());
+      var modelOpt = RoleQuery.parseRow(row.skip(3).take(1).toList());
+      modelOpt.ifPresent((m) {
+        model = model.copyWith(roles: [m]);
+      });
 
-      model = model.copyWith(roles: [d.value]);
 //          roles: [RoleQuery.parseRow(row.skip(3).take(1).toList())]
 //              .where((x) => x != null)
 //              .toList());
     }
-    return Optional.ofNullable(model);
+    return Optional.of(model);
   }
 
   @override

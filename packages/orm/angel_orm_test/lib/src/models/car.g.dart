@@ -87,7 +87,7 @@ class CarQuery extends Query<Car, CarQueryWhere> {
         description: (row[4] as String?),
         familyFriendly: (row[5] as bool?),
         recalledAt: (row[6] as DateTime?));
-    return Optional.ofNullable(model);
+    return Optional.of(model);
   }
 
   @override
