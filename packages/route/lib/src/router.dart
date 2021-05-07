@@ -65,7 +65,7 @@ class Router<T> {
   /// for requests with the given method (case-insensitive).
   /// Provide '*' as the method to respond to all methods.
   Route<T> addRoute(String method, String path, T handler,
-      {Iterable<T>? middleware}) {
+      {Iterable<T> middleware = const []}) {
     if (_useCache == true) {
       throw StateError('Cannot add routes after caching is enabled.');
     }
@@ -73,7 +73,7 @@ class Router<T> {
     // Check if any mounted routers can match this
     final handlers = <T>[handler];
 
-    middleware ??= <T>[];
+    //middleware ??= <T>[];
 
     handlers.insertAll(0, middleware);
 
@@ -165,7 +165,7 @@ class Router<T> {
   /// Returns the created route.
   /// You can also register middleware within the router.
   SymlinkRoute<T> group(String path, void Function(Router<T> router) callback,
-      {Iterable<T> middleware = const Iterable.empty(), String name = ''}) {
+      {Iterable<T> middleware = const [], String name = ''}) {
     final router = Router<T>().._middleware.addAll(middleware);
     callback(router);
     return mount(path, router)..name = name;
@@ -174,8 +174,7 @@ class Router<T> {
   /// Asynchronous equivalent of [group].
   Future<SymlinkRoute<T>> groupAsync(
       String path, FutureOr<void> Function(Router<T> router) callback,
-      {Iterable<T> middleware = const Iterable.empty(),
-      String name = ''}) async {
+      {Iterable<T> middleware = const [], String name = ''}) async {
     final router = Router<T>().._middleware.addAll(middleware);
     await callback(router);
     return mount(path, router)..name = name;
@@ -372,42 +371,43 @@ class Router<T> {
   }
 
   /// Adds a route that responds to any request matching the given path.
-  Route<T> all(String path, T handler, {Iterable<T>? middleware}) {
+  Route<T> all(String path, T handler, {Iterable<T> middleware = const []}) {
     return addRoute('*', path, handler, middleware: middleware);
   }
 
   /// Adds a route that responds to a DELETE request.
-  Route<T> delete(String path, T handler, {Iterable<T>? middleware}) {
+  Route<T> delete(String path, T handler, {Iterable<T> middleware = const []}) {
     return addRoute('DELETE', path, handler, middleware: middleware);
   }
 
   /// Adds a route that responds to a GET request.
-  Route<T> get(String path, T handler, {Iterable<T>? middleware}) {
+  Route<T> get(String path, T handler, {Iterable<T> middleware = const []}) {
     return addRoute('GET', path, handler, middleware: middleware);
   }
 
   /// Adds a route that responds to a HEAD request.
-  Route<T> head(String path, T handler, {Iterable<T>? middleware}) {
+  Route<T> head(String path, T handler, {Iterable<T> middleware = const []}) {
     return addRoute('HEAD', path, handler, middleware: middleware);
   }
 
   /// Adds a route that responds to a OPTIONS request.
-  Route<T> options(String path, T handler, {Iterable<T>? middleware}) {
+  Route<T> options(String path, T handler,
+      {Iterable<T> middleware = const {}}) {
     return addRoute('OPTIONS', path, handler, middleware: middleware);
   }
 
   /// Adds a route that responds to a POST request.
-  Route<T> post(String path, T handler, {Iterable<T>? middleware}) {
+  Route<T> post(String path, T handler, {Iterable<T> middleware = const []}) {
     return addRoute('POST', path, handler, middleware: middleware);
   }
 
   /// Adds a route that responds to a PATCH request.
-  Route<T> patch(String path, T handler, {Iterable<T>? middleware}) {
+  Route<T> patch(String path, T handler, {Iterable<T> middleware = const []}) {
     return addRoute('PATCH', path, handler, middleware: middleware);
   }
 
   /// Adds a route that responds to a PUT request.
-  Route put(String path, T handler, {Iterable<T>? middleware}) {
+  Route put(String path, T handler, {Iterable<T> middleware = const []}) {
     return addRoute('PUT', path, handler, middleware: middleware);
   }
 }
@@ -424,8 +424,7 @@ class _ChainedRouter<T> extends Router<T> {
 
   @override
   Route<T> addRoute(String method, String path, handler,
-      {Iterable<T>? middleware}) {
-    middleware ??= <T>[];
+      {Iterable<T> middleware = const []}) {
     var route = super.addRoute(method, path, handler,
         middleware: [..._handlers, ...middleware]);
     //_root._routes.add(route);
@@ -434,8 +433,7 @@ class _ChainedRouter<T> extends Router<T> {
 
   @override
   SymlinkRoute<T> group(String path, void Function(Router<T> router) callback,
-      {Iterable<T>? middleware, String name = ''}) {
-    middleware ??= <T>[];
+      {Iterable<T> middleware = const [], String? name}) {
     final router = _ChainedRouter<T>(_root, [..._handlers, ...middleware]);
     callback(router);
     return mount(path, router)..name = name;
@@ -444,8 +442,7 @@ class _ChainedRouter<T> extends Router<T> {
   @override
   Future<SymlinkRoute<T>> groupAsync(
       String path, FutureOr<void> Function(Router<T> router) callback,
-      {Iterable<T>? middleware, String name = ''}) async {
-    middleware ??= <T>[];
+      {Iterable<T> middleware = const [], String? name}) async {
     final router = _ChainedRouter<T>(_root, [..._handlers, ...middleware]);
     await callback(router);
     return mount(path, router)..name = name;

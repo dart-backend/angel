@@ -72,6 +72,7 @@ hasMapTests(FutureOr<QueryExecutor> Function() createExecutor,
       expect(await query.get(executor), isEmpty);
     });
 
+    // TODO: Failed test case
     test('list equals', () async {
       var query = HasMapQuery();
       query.where?.list.equals(['1', 2, 3.0]);

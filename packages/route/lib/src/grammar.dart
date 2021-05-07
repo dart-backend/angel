@@ -4,7 +4,7 @@ class RouteGrammar {
   static const String notSlashRgx = r'([^/]+)';
   //static final RegExp rgx = RegExp(r'\((.+)\)');
   static final Parser<String> notSlash =
-      match<String>(RegExp(notSlashRgx)).value((r) => r.span!.text);
+      match<String>(RegExp(notSlashRgx)).value((r) => r.span?.text ?? '');
 
   static final Parser<Match?> regExp =
       match<Match?>(RegExp(r'\(([^\n)]+)\)([^/]+)?'))

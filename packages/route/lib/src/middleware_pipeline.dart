@@ -4,10 +4,11 @@ import 'router.dart';
 class MiddlewarePipeline<T> {
   /// All the possible routes that matched the given path.
   final Iterable<RoutingResult<T>> routingResults;
-  List<T>? _handlers;
+  final List<T> _handlers = [];
 
   /// An ordered list of every handler delegated to handle this request.
-  List<T>? get handlers {
+  List<T> get handlers {
+    /*
     if (_handlers != null) return _handlers;
     final handlers = <T>[];
 
@@ -16,6 +17,17 @@ class MiddlewarePipeline<T> {
     }
 
     return _handlers = handlers;
+
+    */
+    if (_handlers.isEmpty) {
+      return _handlers;
+    }
+
+    for (var result in routingResults) {
+      _handlers.addAll(result.allHandlers);
+    }
+
+    return _handlers;
   }
 
   MiddlewarePipeline(Iterable<RoutingResult<T>> routingResults)

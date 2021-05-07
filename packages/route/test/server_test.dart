@@ -87,12 +87,12 @@ void main() {
           router.resolveAbsolute(req.uri.toString(), method: req.method);
       final pipeline = MiddlewarePipeline(results);
 
-      if (pipeline.handlers!.isEmpty) {
+      if (pipeline.handlers.isEmpty) {
         res
           ..statusCode = 404
           ..writeln('404 Not Found');
       } else {
-        for (final handler in pipeline.handlers!) {
+        for (final handler in pipeline.handlers) {
           if (!((await handler(req, res)) as bool)) break;
         }
       }
@@ -151,7 +151,8 @@ void main() {
   group('mount', () {
     group('path', () {
       test('top-level', () async {
-        final res = await client!.post(Uri.parse('$url/beatles/spinal_clacker'));
+        final res =
+            await client!.post(Uri.parse('$url/beatles/spinal_clacker'));
         print('Response: ${res.body}');
         expect(res.body, equals('come together'));
       });
@@ -197,7 +198,8 @@ void main() {
       await expect404(client!.head(Uri.parse(url!)));
       await expect404(client!.patch(Uri.parse('$url/people')));
       await expect404(client!.post(Uri.parse('$url/people/0')));
-      await expect404(client!.delete(Uri.parse('$url/beatles2/spinal_clacker')));
+      await expect404(
+          client!.delete(Uri.parse('$url/beatles2/spinal_clacker')));
     });
   });
 }
