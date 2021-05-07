@@ -123,7 +123,7 @@ abstract class Parser<T> {
 
   /// Removes multiple errors that occur in the same spot; this can reduce noise in parser output.
   Parser<T> foldErrors({bool equal(SyntaxError a, SyntaxError b)?}) {
-    equal ??= (b, e) => b.span!.start.offset == e.span!.start.offset;
+    equal ??= (b, e) => b.span?.start.offset == e.span?.start.offset;
     return _FoldErrors<T>(this, equal);
   }
 
@@ -308,10 +308,10 @@ abstract class ListParser<T> extends Parser<List<T>> {
 
   /// Modifies this parser, returning only the values that match a predicate.
   Parser<List<T>> where(bool Function(T) f) =>
-      map<List<T>>((r) => r.value!.where(f).toList());
+      map<List<T>>((r) => r.value?.where(f).toList() ?? []);
 
   /// Condenses a [ListParser] into having a value of the combined span's text.
-  Parser<String> flatten() => map<String>((r) => r.span!.text);
+  Parser<String> flatten() => map<String>((r) => r.span?.text ?? '');
 }
 
 /// Prevents stack overflow in recursive parsers.
@@ -325,7 +325,7 @@ class Trampoline {
   }
 
   ParseResult<T> getMemoized<T>(Parser parser, int position) {
-    return _memo[parser]!.firstWhere((t) => t.item1 == position).item2
+    return _memo[parser]?.firstWhere((t) => t.item1 == position).item2
         as ParseResult<T>;
   }
 
@@ -350,7 +350,7 @@ class Trampoline {
   }
 
   void exit(Parser parser) {
-    if (_active.containsKey(parser)) _active[parser]!.removeFirst();
+    if (_active.containsKey(parser)) _active[parser]?.removeFirst();
   }
 }
 
