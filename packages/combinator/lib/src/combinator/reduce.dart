@@ -11,7 +11,7 @@ class _Reduce<T> extends Parser<T> {
     ParseResult<List<T>> result = parser._parse(args.increaseDepth());
 
     if (!result.successful)
-      return new ParseResult<T>(
+      return ParseResult<T>(
         args.trampoline,
         args.scanner,
         this,
@@ -21,7 +21,7 @@ class _Reduce<T> extends Parser<T> {
 
     result = result.change(
         value: result.value?.isNotEmpty == true ? result.value : []);
-    return new ParseResult<T>(
+    return ParseResult<T>(
       args.trampoline,
       args.scanner,
       this,

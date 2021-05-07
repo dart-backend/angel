@@ -9,7 +9,7 @@ class _MaxDepth<T> extends Parser<T> {
   @override
   ParseResult<T> __parse(ParseArgs args) {
     if (args.depth > cap) {
-      return new ParseResult<T>(args.trampoline, args.scanner, this, false, []);
+      return ParseResult<T>(args.trampoline, args.scanner, this, false, []);
     }
 
     return parser._parse(args.increaseDepth());

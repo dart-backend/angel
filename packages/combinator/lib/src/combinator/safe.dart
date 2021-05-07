@@ -22,15 +22,14 @@ class _Safe<T> extends Parser<T> {
       var errors = <SyntaxError>[];
 
       errors.add(
-        new SyntaxError(
+        SyntaxError(
           severity,
           errorMessage,
           args.scanner.lastSpan ?? args.scanner.emptySpan,
         ),
       );
 
-      return new ParseResult<T>(
-          args.trampoline, args.scanner, this, false, errors);
+      return ParseResult<T>(args.trampoline, args.scanner, this, false, errors);
     }
   }
 

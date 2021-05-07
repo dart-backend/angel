@@ -13,7 +13,7 @@ class Recursion<T> {
     postfix ??= {};
   }
 
-  Parser<T> precedence(int p) => new _Precedence(this, p);
+  Parser<T> precedence(int p) =>  _Precedence(this, p);
 
   void stringify(CodeBuffer buffer) {
     buffer
@@ -106,7 +106,7 @@ class _Precedence<T> extends Parser<T> {
           // If we're not done scanning, then we need some sort of guard to ensure the
           // that this exact parser does not run again in the exact position.
         }
-        return new ParseResult(
+        return  ParseResult(
           args.trampoline,
           args.scanner,
           this,
@@ -118,7 +118,7 @@ class _Precedence<T> extends Parser<T> {
       }
     }
 
-    return new ParseResult(
+    return  ParseResult(
       args.trampoline,
       args.scanner,
       this,

@@ -5,7 +5,7 @@ part of lex.src.combinator;
 /// If [failFast] is `true` (default), then the first failure to parse will abort the parse.
 ListParser<T> chain<T>(Iterable<Parser<T>> parsers,
     {bool failFast: true, SyntaxErrorSeverity? severity}) {
-  return new _Chain<T>(
+  return _Chain<T>(
       parsers, failFast != false, severity ?? SyntaxErrorSeverity.error);
 }
 
@@ -22,7 +22,7 @@ class _Alt<T> extends Parser<T> {
     return result.successful
         ? result
         : result.addErrors([
-            new SyntaxError(
+            SyntaxError(
                 severity, errorMessage, result.span ?? args.scanner.emptySpan),
           ]);
   }
@@ -43,8 +43,8 @@ class _Chain<T> extends ListParser<T> {
   @override
   ParseResult<List<T>> __parse(ParseArgs args) {
     var errors = <SyntaxError>[];
-    var results = <T?>[];
-    var spans = <FileSpan?>[];
+    var results = <T>[];
+    var spans = <FileSpan>[];
     bool successful = true;
 
     for (var parser in parsers) {
@@ -54,32 +54,36 @@ class _Chain<T> extends ListParser<T> {
         if (parser is _Alt) errors.addAll(result.errors);
 
         if (failFast) {
-          return new ParseResult(
+          return ParseResult(
               args.trampoline, args.scanner, this, false, result.errors);
         }
 
         successful = false;
       }
 
-      results.add(result.value);
+      if (result.value != null) {
+        results.add(result.value!);
+      }
 
-      if (result.span != null) spans.add(result.span);
+      if (result.span != null) {
+        spans.add(result.span!);
+      }
     }
 
     FileSpan? span;
 
     if (spans.isNotEmpty) {
-      span = spans.reduce((a, b) => a!.expand(b!));
+      span = spans.reduce((a, b) => a.expand(b));
     }
 
-    return new ParseResult<List<T>>(
+    return ParseResult<List<T>>(
       args.trampoline,
       args.scanner,
       this,
       successful,
       errors,
       span: span,
-      value: new List<T>.unmodifiable(results),
+      value: List<T>.unmodifiable(results),
     );
   }
 

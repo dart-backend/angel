@@ -4,7 +4,7 @@ import 'common.dart';
 
 main() {
   var number = chain([
-    match(new RegExp(r'[0-9]+')).value((r) => int.parse(r.span!.text)),
+    match(RegExp(r'[0-9]+')).value((r) => int.parse(r.span!.text)),
     match(',').opt(),
   ]).first().cast<int>();
 

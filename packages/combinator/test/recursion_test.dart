@@ -6,12 +6,12 @@ void main() {}
 
 /*
 void main() {
-  var number = match(new RegExp(r'-?[0-9]+(\.[0-9]+)?'))
+  var number = match( RegExp(r'-?[0-9]+(\.[0-9]+)?'))
       .map<num>((r) => num.parse(r.span.text));
 
   var term = reference<num>();
 
-  var r = new Recursion<num>();
+  var r =  Recursion<num>();
 
   r.prefix = [number];
 
@@ -32,7 +32,7 @@ void main() {
   term.parser = r.precedence(0);
 
   num parse(String text) {
-    var scanner = new SpanScanner(text);
+    var scanner =  SpanScanner(text);
     var result = term.parse(scanner);
     print(result.span.highlight());
     return result.value;

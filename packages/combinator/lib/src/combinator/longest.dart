@@ -5,8 +5,7 @@ part of lex.src.combinator;
 /// You can provide a custom [errorMessage].
 Parser<T> longest<T>(Iterable<Parser<T>> parsers,
     {Object? errorMessage, SyntaxErrorSeverity? severity}) {
-  return new _Longest(
-      parsers, errorMessage, severity ?? SyntaxErrorSeverity.error);
+  return _Longest(parsers, errorMessage, severity ?? SyntaxErrorSeverity.error);
 }
 
 class _Longest<T> extends Parser<T> {
@@ -23,7 +22,7 @@ class _Longest<T> extends Parser<T> {
         .where((p) => !args.trampoline.isActive(p, args.scanner.position));
 
     if (inactive.isEmpty) {
-      return new ParseResult(args.trampoline, args.scanner, this, false, []);
+      return ParseResult(args.trampoline, args.scanner, this, false, []);
     }
 
     int replay = args.scanner.position;
@@ -48,7 +47,7 @@ class _Longest<T> extends Parser<T> {
 
     if (errorMessage != false)
       errors.add(
-        new SyntaxError(
+        SyntaxError(
           severity,
           errorMessage?.toString() ??
               'No match found for ${parsers.length} alternative(s)',
@@ -56,7 +55,7 @@ class _Longest<T> extends Parser<T> {
         ),
       );
 
-    return new ParseResult(args.trampoline, args.scanner, this, false, errors);
+    return ParseResult(args.trampoline, args.scanner, this, false, errors);
   }
 
   @override
@@ -82,7 +81,7 @@ class _Longest<T> extends Parser<T> {
     }
 
     errors.add(
-      new SyntaxError(
+      SyntaxError(
         severity,
         errorMessage?.toString() ??
             'No match found for ${parsers.length} alternative(s)',
@@ -90,7 +89,7 @@ class _Longest<T> extends Parser<T> {
       ),
     );
 
-    return new ParseResult(args.trampoline, args.scanner, this, false, errors);
+    return ParseResult(args.trampoline, args.scanner, this, false, errors);
   }
 
   @override

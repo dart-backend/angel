@@ -16,11 +16,10 @@ class _Check<T> extends Parser<T> {
       return result;
     else if (!matcher.matches(result.value, matchState)) {
       return result.change(successful: false).addErrors([
-        new SyntaxError(
+        SyntaxError(
           severity,
           errorMessage ??
-              matcher.describe(new StringDescription('Expected ')).toString() +
-                  '.',
+              matcher.describe(StringDescription('Expected ')).toString() + '.',
           result.span,
         ),
       ]);
@@ -30,7 +29,7 @@ class _Check<T> extends Parser<T> {
 
   @override
   void stringify(CodeBuffer buffer) {
-    var d = matcher.describe(new StringDescription());
+    var d = matcher.describe(StringDescription());
     buffer
       ..writeln('check($d) (')
       ..indent();

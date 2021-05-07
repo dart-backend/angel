@@ -14,7 +14,7 @@ class _Index<T> extends Parser<T> {
     if (result.successful)
       value = index == -1 ? result.value!.last : result.value!.elementAt(index);
 
-    return new ParseResult<T>(
+    return ParseResult<T>(
       args.trampoline,
       args.scanner,
       this,

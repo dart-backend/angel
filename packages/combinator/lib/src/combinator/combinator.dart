@@ -249,7 +249,7 @@ abstract class Parser<T> {
   ListParser<dynamic> then(Parser other) => chain<dynamic>([this, other]);
 
   /// Casts this instance into a [ListParser].
-  ListParser<T?> toList() => _ToList<T>(this);
+  ListParser<T> toList() => _ToList<T>(this);
 
   /// Consumes and ignores any trailing occurrences of [pattern].
   Parser<T> trail(Pattern pattern) =>
@@ -371,7 +371,7 @@ class ParseResult<T> {
   ParseResult<T> change(
       {Parser<T>? parser,
       bool? successful,
-      Iterable<SyntaxError>? errors,
+      Iterable<SyntaxError> errors = const [],
       FileSpan? span,
       T? value}) {
     return ParseResult<T>(
@@ -379,7 +379,7 @@ class ParseResult<T> {
       scanner,
       parser ?? this.parser,
       successful ?? this.successful,
-      errors ?? this.errors,
+      errors,
       span: span ?? this.span,
       value: value ?? this.value,
     );

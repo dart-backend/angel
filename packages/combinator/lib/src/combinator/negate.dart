@@ -12,7 +12,7 @@ class _Negate<T> extends Parser<T> {
     var result = parser._parse(args.increaseDepth()).change(parser: this);
 
     if (!result.successful) {
-      return new ParseResult<T>(
+      return ParseResult<T>(
         args.trampoline,
         args.scanner,
         this,
@@ -27,7 +27,7 @@ class _Negate<T> extends Parser<T> {
 
     if (errorMessage != null) {
       result = result.addErrors([
-        new SyntaxError(
+        SyntaxError(
           severity,
           errorMessage,
           result.span,
