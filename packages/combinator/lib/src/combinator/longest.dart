@@ -16,7 +16,7 @@ class _Longest<T> extends Parser<T> {
   _Longest(this.parsers, this.errorMessage, this.severity);
 
   @override
-  ParseResult<T> _parse(ParseArgs args) {
+  ParseResult<T?> _parse(ParseArgs args) {
     var inactive = parsers
         .toList()
         .where((p) => !args.trampoline.isActive(p, args.scanner.position));
@@ -27,7 +27,7 @@ class _Longest<T> extends Parser<T> {
 
     int replay = args.scanner.position;
     var errors = <SyntaxError>[];
-    var results = <ParseResult<T>>[];
+    var results = <ParseResult<T?>>[];
 
     for (var parser in inactive) {
       var result = parser._parse(args.increaseDepth());
@@ -59,10 +59,10 @@ class _Longest<T> extends Parser<T> {
   }
 
   @override
-  ParseResult<T> __parse(ParseArgs args) {
+  ParseResult<T?> __parse(ParseArgs args) {
     int replay = args.scanner.position;
     var errors = <SyntaxError>[];
-    var results = <ParseResult<T>>[];
+    var results = <ParseResult<T?>>[];
 
     for (var parser in parsers) {
       var result = parser._parse(args.increaseDepth());

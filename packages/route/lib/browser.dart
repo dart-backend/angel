@@ -11,10 +11,10 @@ final RegExp _straySlashes = RegExp(r'(^/+)|(/+$)');
 /// A variation of the [Router] support both hash routing and push state.
 abstract class BrowserRouter<T> extends Router<T> {
   /// Fires whenever the active route changes. Fires `null` if none is selected (404).
-  Stream<RoutingResult<T>> get onResolve;
+  Stream<RoutingResult<T?>> get onResolve;
 
   /// Fires whenever the active route changes. Fires `null` if none is selected (404).
-  Stream<Route<T>> get onRoute;
+  Stream<Route<T?>> get onRoute;
 
   /// Set `hash` to true to use hash routing instead of push state.
   /// `listen` as `true` will call `listen` after initialization.
@@ -48,17 +48,17 @@ abstract class _BrowserRouterImpl<T> extends Router<T>
     implements BrowserRouter<T> {
   bool _listening = false;
   Route? _current;
-  final StreamController<RoutingResult<T>> _onResolve =
-      StreamController<RoutingResult<T>>();
-  final StreamController<Route<T>> _onRoute = StreamController<Route<T>>();
+  final StreamController<RoutingResult<T?>> _onResolve =
+      StreamController<RoutingResult<T?>>();
+  final StreamController<Route<T?>> _onRoute = StreamController<Route<T?>>();
 
   Route? get currentRoute => _current;
 
   @override
-  Stream<RoutingResult<T>> get onResolve => _onResolve.stream;
+  Stream<RoutingResult<T?>> get onResolve => _onResolve.stream;
 
   @override
-  Stream<Route<T>> get onRoute => _onRoute.stream;
+  Stream<Route<T?>> get onRoute => _onRoute.stream;
 
   _BrowserRouterImpl({bool listen = false}) : super() {
     if (listen != false) this.listen();
@@ -69,8 +69,7 @@ abstract class _BrowserRouterImpl<T> extends Router<T>
   void go(Iterable linkParams) => _goTo(navigate(linkParams));
 
   @override
-  Route on(String path, T handler,
-          {Iterable<T> middleware = const Iterable.empty()}) =>
+  Route on(String path, T handler, {Iterable<T> middleware = const []}) =>
       all(path, handler, middleware: middleware);
 
   void prepareAnchors() {
@@ -108,7 +107,9 @@ abstract class _BrowserRouterImpl<T> extends Router<T>
 
 class _HashRouter<T> extends _BrowserRouterImpl<T> {
   _HashRouter({required bool listen}) : super(listen: listen) {
-    if (listen) this.listen();
+    if (listen) {
+      this.listen();
+    }
   }
 
   @override

@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:angel_auth/angel_auth.dart';
 import 'package:test/test.dart';
 
-const Duration threeDays = const Duration(days: 3);
+const Duration threeDays = Duration(days: 3);
 
 void main() {
   late Cookie defaultCookie;

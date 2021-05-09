@@ -2,14 +2,14 @@ part of lex.src.combinator;
 
 class _Map<T, U> extends Parser<U> {
   final Parser<T> parser;
-  final U Function(ParseResult<T>) f;
+  final U Function(ParseResult<T?>) f;
 
   _Map(this.parser, this.f);
 
   @override
-  ParseResult<U> __parse(ParseArgs args) {
+  ParseResult<U?> __parse(ParseArgs args) {
     var result = parser._parse(args.increaseDepth());
-    return ParseResult<U>(
+    return ParseResult<U?>(
       args.trampoline,
       args.scanner,
       this,
@@ -34,12 +34,12 @@ class _Map<T, U> extends Parser<U> {
 
 class _Change<T, U> extends Parser<U> {
   final Parser<T> parser;
-  final ParseResult<U> Function(ParseResult<T>) f;
+  final ParseResult<U?> Function(ParseResult<T?>) f;
 
   _Change(this.parser, this.f);
 
   @override
-  ParseResult<U> __parse(ParseArgs args) {
+  ParseResult<U?> __parse(ParseArgs args) {
     return f(parser._parse(args.increaseDepth())).change(parser: this);
   }
 

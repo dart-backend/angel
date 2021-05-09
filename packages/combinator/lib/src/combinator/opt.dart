@@ -7,7 +7,7 @@ class _Opt<T> extends Parser<T> {
   _Opt(this.parser, this.backtrack);
 
   @override
-  ParseResult<T> __parse(ParseArgs args) {
+  ParseResult<T?> __parse(ParseArgs args) {
     var replay = args.scanner.position;
     var result = parser._parse(args.increaseDepth());
 
@@ -35,9 +35,9 @@ class _ListOpt<T> extends ListParser<T> {
   _ListOpt(this.parser, this.backtrack);
 
   @override
-  ParseResult<List<T>> __parse(ParseArgs args) {
+  ParseResult<List<T>?> __parse(ParseArgs args) {
     var replay = args.scanner.position;
-    ParseResult<List<T>> result = parser._parse(args.increaseDepth());
+    ParseResult<List<T>?> result = parser._parse(args.increaseDepth());
 
     if (!result.successful) args.scanner.position = replay;
 

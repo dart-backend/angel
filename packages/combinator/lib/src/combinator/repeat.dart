@@ -12,12 +12,12 @@ class _Repeat<T> extends ListParser<T> {
       this.backtrack, this.severity);
 
   @override
-  ParseResult<List<T>> __parse(ParseArgs args) {
+  ParseResult<List<T>?> __parse(ParseArgs args) {
     var errors = <SyntaxError>[];
     var results = <T>[];
     var spans = <FileSpan>[];
     int success = 0, replay = args.scanner.position;
-    ParseResult<T>? result;
+    ParseResult<T?> result;
 
     do {
       result = parser._parse(args.increaseDepth());
@@ -51,7 +51,7 @@ class _Repeat<T> extends ListParser<T> {
     } else if (success > count && exact) {
       if (backtrack) args.scanner.position = replay;
 
-      return ParseResult<List<T>>(args.trampoline, args.scanner, this, false, [
+      return ParseResult<List<T>?>(args.trampoline, args.scanner, this, false, [
         SyntaxError(
           severity,
           tooMany,

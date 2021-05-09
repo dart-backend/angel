@@ -96,7 +96,7 @@ class HostnameRouter {
         var resolved = r.resolveAbsolute(req.path, method: req.method);
         var pipeline = MiddlewarePipeline<RequestHandler>(resolved);
         // print('Pipeline: $pipeline');
-        for (var handler in pipeline.handlers!) {
+        for (var handler in pipeline.handlers) {
           // print(handler);
           // Avoid stack overflow.
           if (handler == handleRequest) {

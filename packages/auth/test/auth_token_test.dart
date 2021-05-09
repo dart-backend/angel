@@ -1,12 +1,12 @@
-import "package:angel_auth/src/auth_token.dart";
-import "package:crypto/crypto.dart";
-import "package:test/test.dart";
+import 'package:angel_auth/src/auth_token.dart';
+import 'package:crypto/crypto.dart';
+import 'package:test/test.dart';
 
-main() async {
-  final Hmac hmac = Hmac(sha256, "angel_auth".codeUnits);
+void main() async {
+  final hmac = Hmac(sha256, 'angel_auth'.codeUnits);
 
-  test("sample serialization", () {
-    var token = AuthToken(ipAddress: "localhost", userId: "thosakwe");
+  test('sample serialization', () {
+    var token = AuthToken(ipAddress: 'localhost', userId: 'thosakwe');
     var jwt = token.serialize(hmac);
     print(jwt);
 
@@ -17,7 +17,7 @@ main() async {
   });
 
   test('custom payload', () {
-    var token = AuthToken(ipAddress: "localhost", userId: "thosakwe", payload: {
+    var token = AuthToken(ipAddress: 'localhost', userId: 'thosakwe', payload: {
       "foo": "bar",
       "baz": {
         "one": 1,

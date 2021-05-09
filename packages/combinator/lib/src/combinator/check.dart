@@ -9,7 +9,7 @@ class _Check<T> extends Parser<T> {
   _Check(this.parser, this.matcher, this.errorMessage, this.severity);
 
   @override
-  ParseResult<T> __parse(ParseArgs args) {
+  ParseResult<T?> __parse(ParseArgs args) {
     var matchState = {};
     var result = parser._parse(args.increaseDepth()).change(parser: this);
     if (!result.successful)

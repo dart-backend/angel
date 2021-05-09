@@ -6,13 +6,13 @@ class RouteGrammar {
   static final Parser<String> notSlash =
       match<String>(RegExp(notSlashRgx)).value((r) => r.span?.text ?? '');
 
-  static final Parser<Match?> regExp =
-      match<Match?>(RegExp(r'\(([^\n)]+)\)([^/]+)?'))
-          .value((r) => r.scanner.lastMatch);
+  static final Parser<Match> regExp =
+      match<Match>(RegExp(r'\(([^\n)]+)\)([^/]+)?'))
+          .value((r) => r.scanner.lastMatch!);
 
-  static final Parser<Match?> parameterName =
-      match<Match?>(RegExp('$notSlashRgx?' r':([A-Za-z0-9_]+)' r'([^(/\n])?'))
-          .value((r) => r.scanner.lastMatch);
+  static final Parser<Match> parameterName =
+      match<Match>(RegExp('$notSlashRgx?' r':([A-Za-z0-9_]+)' r'([^(/\n])?'))
+          .value((r) => r.scanner.lastMatch!);
 
   static final Parser<ParameterSegment> parameterSegment = chain([
     parameterName,

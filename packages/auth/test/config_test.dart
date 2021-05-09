@@ -70,6 +70,7 @@ void main() {
       );
     });
 
+/* Deprecated as clientId and clientSecret cannot be null
     test('ensures id not null', () {
       expect(
         () => ExternalAuthOptions(
@@ -89,6 +90,7 @@ void main() {
         throwsArgumentError,
       );
     });
+    */
   });
 
   group('fromMap()', () {

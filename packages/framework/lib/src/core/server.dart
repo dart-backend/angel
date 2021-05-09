@@ -36,7 +36,7 @@ class Angel extends Routable {
   final List<Angel> _children = [];
   final Map<
       String,
-      Tuple4<List, Map<String, dynamic>, ParseResult<RouteResult>?,
+      Tuple4<List, Map<String, dynamic>, ParseResult<RouteResult>,
           MiddlewarePipeline>> handlerCache = HashMap();
 
   Router<RequestHandler>? _flattened;
@@ -150,8 +150,8 @@ class Angel extends Routable {
   @override
   Route<RequestHandler> addRoute(
       String method, String path, RequestHandler handler,
-      {Iterable<RequestHandler>? middleware}) {
-    middleware ??= [];
+      {Iterable<RequestHandler> middleware = const []}) {
+    //middleware ??= [];
     if (_flattened != null) {
       logger?.warning(
           'WARNING: You added a route ($method $path) to the router, after it had been optimized.');

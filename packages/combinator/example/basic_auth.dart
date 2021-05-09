@@ -18,7 +18,7 @@ final Parser<Map<String, String>> credentials = chain<String>([
   match<String>(':'),
   string.opt(),
 ]).map<Map<String, String>>(
-    (r) => {'username': r.value![0], 'password': r.value![2]});
+    (r) => {'username': r.value![0]!, 'password': r.value![2]!});
 
 /// We can actually embed a parser within another parser.
 ///

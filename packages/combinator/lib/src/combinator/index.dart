@@ -8,11 +8,26 @@ class _Index<T> extends Parser<T> {
 
   @override
   ParseResult<T> __parse(ParseArgs args) {
-    ParseResult<List<T>> result = parser._parse(args.increaseDepth());
+    ParseResult<List<T>?> result = parser._parse(args.increaseDepth());
     Object? value;
 
-    if (result.successful)
-      value = index == -1 ? result.value!.last : result.value!.elementAt(index);
+    if (result.successful) {
+      var vList = result.value;
+      if (vList == null) {
+        throw ArgumentError("ParseResult is null");
+      }
+      if (index == -1) {
+        value = vList.last;
+      } else {
+        if (index < vList.length) {
+          //TODO: Look at this
+//          print(">>>>Index: $index, Size: ${vList.length}");
+//        value =
+//            index == -1 ? result.value!.last : result.value!.elementAt(index);
+          value = result.value!.elementAt(index);
+        }
+      }
+    }
 
     return ParseResult<T>(
       args.trampoline,

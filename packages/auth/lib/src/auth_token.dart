@@ -30,7 +30,7 @@ class AuthToken {
 
   String? ipAddress;
   late DateTime issuedAt;
-  num? lifeSpan;
+  num lifeSpan;
   var userId;
   Map<String, dynamic> payload = {};
 
@@ -41,12 +41,17 @@ class AuthToken {
       DateTime? issuedAt,
       Map payload = const {}}) {
     this.issuedAt = issuedAt ?? DateTime.now();
+    this.payload.addAll(payload.keys
+            .fold({}, ((out, k) => out?..[k.toString()] = payload[k])) ??
+        {});
+    /*
     this.payload.addAll(payload.keys.fold(
             {},
             ((out, k) => out..[k.toString()] = payload[k])
                 as Map<String, dynamic>? Function(
                     Map<String, dynamic>?, dynamic)) ??
         {});
+    */
   }
 
   factory AuthToken.fromJson(String jsons) =>
@@ -55,10 +60,10 @@ class AuthToken {
   factory AuthToken.fromMap(Map data) {
     return AuthToken(
         ipAddress: data['aud'].toString(),
-        lifeSpan: data['exp'] as num?,
+        lifeSpan: data['exp'] as num,
         issuedAt: DateTime.parse(data['iat'].toString()),
         userId: data['sub'],
-        payload: data['pld'] as Map? ?? {});
+        payload: data['pld'] as Map);
   }
 
   factory AuthToken.parse(String jwt) {

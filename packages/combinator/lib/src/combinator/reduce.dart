@@ -7,8 +7,8 @@ class _Reduce<T> extends Parser<T> {
   _Reduce(this.parser, this.combine);
 
   @override
-  ParseResult<T> __parse(ParseArgs args) {
-    ParseResult<List<T>> result = parser._parse(args.increaseDepth());
+  ParseResult<T?> __parse(ParseArgs args) {
+    ParseResult<List<T>?> result = parser._parse(args.increaseDepth());
 
     if (!result.successful)
       return ParseResult<T>(

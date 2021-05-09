@@ -6,11 +6,14 @@ import 'package:angel_framework/angel_framework.dart';
 /// [realm] defaults to `'angel_auth'`.
 RequestHandler forceBasicAuth<User>({String? realm}) {
   return (RequestContext req, ResponseContext res) async {
-    if (req.container!.has<User>()) {
-      return true;
-    } else if (req.container!.has<Future<User>>()) {
-      await req.container!.makeAsync<User>();
-      return true;
+    if (req.container != null) {
+      var reqContainer = req.container!;
+      if (reqContainer.has<User>()) {
+        return true;
+      } else if (reqContainer.has<Future<User>>()) {
+        await reqContainer.makeAsync<User>();
+        return true;
+      }
     }
 
     res.headers['www-authenticate'] = 'Basic realm="${realm ?? 'angel_auth'}"';
@@ -31,11 +34,16 @@ RequestHandler requireAuthentication<User>() {
       }
     }
 
-    if (req.container!.has<User>() || req.method == 'OPTIONS') {
-      return true;
-    } else if (req.container!.has<Future<User>>()) {
-      await req.container!.makeAsync<User>();
-      return true;
+    if (req.container != null) {
+      var reqContainer = req.container!;
+      if (reqContainer.has<User>() || req.method == 'OPTIONS') {
+        return true;
+      } else if (reqContainer.has<Future<User>>()) {
+        await reqContainer.makeAsync<User>();
+        return true;
+      } else {
+        return _reject(res);
+      }
     } else {
       return _reject(res);
     }

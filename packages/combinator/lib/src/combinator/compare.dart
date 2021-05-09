@@ -7,8 +7,8 @@ class _Compare<T> extends ListParser<T> {
   _Compare(this.parser, this.compare);
 
   @override
-  ParseResult<List<T>> __parse(ParseArgs args) {
-    ParseResult<List<T>> result = parser._parse(args.increaseDepth());
+  ParseResult<List<T>?> __parse(ParseArgs args) {
+    ParseResult<List<T>?> result = parser._parse(args.increaseDepth());
     if (!result.successful) return result;
 
     result = result.change(

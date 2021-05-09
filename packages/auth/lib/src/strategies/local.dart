@@ -38,10 +38,13 @@ class LocalAuthStrategy<User> extends AuthStrategy<User> {
     User? verificationResult;
 
     if (allowBasic) {
-      var authHeader = req.headers!.value('authorization') ?? '';
+      var authHeader = req.headers?.value('authorization') ?? '';
 
       if (_rgxBasic.hasMatch(authHeader)) {
-        var base64AuthString = _rgxBasic.firstMatch(authHeader)!.group(1)!;
+        var base64AuthString = _rgxBasic.firstMatch(authHeader)?.group(1);
+        if (base64AuthString == null) {
+          return null;
+        }
         var authString = String.fromCharCodes(base64.decode(base64AuthString));
         if (_rgxUsrPass.hasMatch(authString)) {
           Match usrPassMatch = _rgxUsrPass.firstMatch(authString)!;
@@ -51,7 +54,7 @@ class LocalAuthStrategy<User> extends AuthStrategy<User> {
           throw AngelHttpException.badRequest(errors: [invalidMessage]);
         }
 
-        if (verificationResult == false || verificationResult == null) {
+        if (verificationResult == null) {
           res
             ..statusCode = 401
             ..headers['www-authenticate'] = 'Basic realm="$realm"';
@@ -68,16 +71,16 @@ class LocalAuthStrategy<User> extends AuthStrategy<User> {
           .parseBody()
           .then((_) => req.bodyAsMap)
           .catchError((_) => <String, dynamic>{});
-      if (body != null) {
-        if (_validateString(body[usernameField]?.toString()) &&
-            _validateString(body[passwordField]?.toString())) {
-          verificationResult = await verifier(
-              body[usernameField]?.toString(), body[passwordField]?.toString());
-        }
+      //if (body != null) {
+      if (_validateString(body[usernameField].toString()) &&
+          _validateString(body[passwordField].toString())) {
+        verificationResult = await verifier(
+            body[usernameField].toString(), body[passwordField].toString());
       }
+      //}
     }
 
-    if (verificationResult == false || verificationResult == null) {
+    if (verificationResult == null) {
       if (options.failureRedirect != null &&
           options.failureRedirect!.isNotEmpty) {
         await res.redirect(options.failureRedirect, code: 401);

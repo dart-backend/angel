@@ -3,9 +3,9 @@ part of lex.src.combinator;
 /// Expects to parse a sequence of [parsers].
 ///
 /// If [failFast] is `true` (default), then the first failure to parse will abort the parse.
-ListParser<T> chain<T>(Iterable<Parser<T>> parsers,
+ListParser<T?> chain<T>(Iterable<Parser<T>> parsers,
     {bool failFast: true, SyntaxErrorSeverity? severity}) {
-  return _Chain<T>(
+  return _Chain<T?>(
       parsers, failFast != false, severity ?? SyntaxErrorSeverity.error);
 }
 
@@ -17,7 +17,7 @@ class _Alt<T> extends Parser<T> {
   _Alt(this.parser, this.errorMessage, this.severity);
 
   @override
-  ParseResult<T> __parse(ParseArgs args) {
+  ParseResult<T?> __parse(ParseArgs args) {
     var result = parser._parse(args.increaseDepth());
     return result.successful
         ? result
@@ -33,7 +33,7 @@ class _Alt<T> extends Parser<T> {
   }
 }
 
-class _Chain<T> extends ListParser<T> {
+class _Chain<T> extends ListParser<T?> {
   final Iterable<Parser<T>> parsers;
   final bool failFast;
   final SyntaxErrorSeverity severity;
@@ -41,9 +41,9 @@ class _Chain<T> extends ListParser<T> {
   _Chain(this.parsers, this.failFast, this.severity);
 
   @override
-  ParseResult<List<T>> __parse(ParseArgs args) {
+  ParseResult<List<T?>?> __parse(ParseArgs args) {
     var errors = <SyntaxError>[];
-    var results = <T>[];
+    var results = <T?>[];
     var spans = <FileSpan>[];
     bool successful = true;
 
@@ -61,9 +61,7 @@ class _Chain<T> extends ListParser<T> {
         successful = false;
       }
 
-      if (result.value != null) {
-        results.add(result.value!);
-      }
+      results.add(result.value);
 
       if (result.span != null) {
         spans.add(result.span!);
@@ -76,14 +74,14 @@ class _Chain<T> extends ListParser<T> {
       span = spans.reduce((a, b) => a.expand(b));
     }
 
-    return ParseResult<List<T>>(
+    return ParseResult<List<T?>?>(
       args.trampoline,
       args.scanner,
       this,
       successful,
       errors,
       span: span,
-      value: List<T>.unmodifiable(results),
+      value: List<T?>.unmodifiable(results),
     );
   }
 

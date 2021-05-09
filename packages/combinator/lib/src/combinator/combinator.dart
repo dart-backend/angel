@@ -67,9 +67,9 @@ class ParseArgs {
 
 /// A parser combinator, which can parse very complicated grammars in a manageable manner.
 abstract class Parser<T> {
-  ParseResult<T> __parse(ParseArgs args);
+  ParseResult<T?> __parse(ParseArgs args);
 
-  ParseResult<T> _parse(ParseArgs args) {
+  ParseResult<T?> _parse(ParseArgs args) {
     var pos = args.scanner.position;
 
     if (args.trampoline.hasMemoized(this, pos))
@@ -86,7 +86,7 @@ abstract class Parser<T> {
   }
 
   /// Parses text from a [SpanScanner].
-  ParseResult<T> parse(SpanScanner scanner, [int depth = 1]) {
+  ParseResult<T?> parse(SpanScanner scanner, [int depth = 1]) {
     var args = ParseArgs(Trampoline(), scanner, depth);
     return _parse(args);
   }
@@ -105,7 +105,7 @@ abstract class Parser<T> {
 
   // TODO: Type issue
   /// Runs the given function, which changes the returned [ParseResult] into one relating to a [U] object.
-  Parser<U> change<U>(ParseResult<U> Function(ParseResult<T>) f) {
+  Parser<U> change<U>(ParseResult<U?> Function(ParseResult<T?>) f) {
     return _Change<T, U>(this, f);
   }
 
@@ -128,7 +128,7 @@ abstract class Parser<T> {
   }
 
   /// Transforms the parse result using a unary function.
-  Parser<U> map<U>(U Function(ParseResult<T>) f) {
+  Parser<U> map<U>(U Function(ParseResult<T?>) f) {
     return _Map<T, U>(this, f);
   }
 
@@ -192,20 +192,18 @@ abstract class Parser<T> {
   Parser<List<T>> separatedBy(Parser other) {
     var suffix = other.then(this).index(1).cast<T>();
     return this.then(suffix.star()).map((r) {
-      List<dynamic>? v = r.value;
-      if (v != null) {
-        var preceding =
-            v.isEmpty ? [] : (r.value?[0] == null ? [] : [r.value?[0]]);
-        var out = List<T>.from(preceding);
-        if (r.value?[1] != null) {
-          r.value?[1].forEach((element) {
-            out.add(element as T);
-          });
-        }
-        return out;
-      } else {
-        return List<T>.empty(growable: true);
+      var v = r.value;
+      if (v == null || v.length < 2) {
+        return [];
       }
+      var preceding = v.isEmpty ? [] : (v[0] == null ? [] : [v[0]]);
+      var out = List<T>.from(preceding);
+      if (v[1] != null) {
+        v[1].forEach((element) {
+          out.add(element as T);
+        });
+      }
+      return out;
     });
   }
 
@@ -278,7 +276,7 @@ abstract class Parser<T> {
   Parser<T> opt({bool backtrack: true}) => _Opt(this, backtrack);
 
   /// Sets the value of the [ParseResult].
-  Parser<T> value(T Function(ParseResult<T>) f) {
+  Parser<T> value(T Function(ParseResult<T?>) f) {
     return _Value<T>(this, f);
   }
 
@@ -379,7 +377,7 @@ class ParseResult<T> {
       scanner,
       parser ?? this.parser,
       successful ?? this.successful,
-      errors,
+      errors.isNotEmpty ? errors : this.errors,
       span: span ?? this.span,
       value: value ?? this.value,
     );

@@ -7,7 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:logging/logging.dart';
 import 'package:test/test.dart';
 
-final AngelAuth<Map<String, String>?> auth = AngelAuth<Map<String, String>?>();
+final AngelAuth<Map<String, String>> auth = AngelAuth<Map<String, String>>();
 var headers = <String, String>{'accept': 'application/json'};
 var localOpts = AngelAuthOptions<Map<String, String>>(
     failureRedirect: '/failure', successRedirect: '/success');
@@ -113,12 +113,13 @@ void main() async {
     auth.strategies.clear();
     auth.strategies['local'] =
         LocalAuthStrategy(verifier, forceBasic: true, realm: 'test');
-    var response = await client!.get(Uri.parse('$url/hello'), headers: {
+    var response = await client?.get(Uri.parse('$url/hello'), headers: {
       'accept': 'application/json',
       'content-type': 'application/json'
     });
-    print(response.headers);
-    print('Body <${response.body}>');
-    expect(response.headers['www-authenticate'], equals('Basic realm="test"'));
+    print('Header = ${response?.headers}');
+    print('Body <${response?.body}>');
+    var head = response?.headers['www-authenticate'];
+    expect(head, equals('Basic realm="test"'));
   });
 }

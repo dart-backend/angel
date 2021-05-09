@@ -7,6 +7,7 @@ environment:
   sdk: '>=2.12.0 <3.0.0'
 dependencies:
   angel_framework:
+#    path: ../framework
     git: 
       url: https://github.com/dukefirehawk/angel.git
       ref: sdk-2.12.x_nnbd
@@ -23,3 +24,7 @@ dev_dependencies:
   logging: ^1.0.0
   pedantic: ^1.11.0
   test: ^1.17.3
+
+#dependency_overrides:
+#  angel_container:
+#    path: ../container/angel_container
