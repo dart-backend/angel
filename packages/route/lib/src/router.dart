@@ -311,7 +311,7 @@ class Router<T> {
           if (parseResult != null) {
             if (parseResult.successful && scanner.isDone) {
               var tailResult = parseResult.value?.tail ?? '';
-              print(tailResult);
+              //print(tailResult);
               var result = RoutingResult<T>(
                   parseResult: parseResult,
                   params: parseResult.value!.params,
@@ -334,13 +334,13 @@ class Router<T> {
 
   /// Returns the result of [resolve] with [path] passed as
   /// both `absolute` and `relative`.
-  Iterable<RoutingResult<T?>> resolveAbsolute(String path,
+  Iterable<RoutingResult<T>> resolveAbsolute(String path,
           {String method = 'GET', bool strip = true}) =>
       resolveAll(path, path, method: method, strip: strip);
 
   /// Finds every possible [Route] that matches the given path,
   /// with the given method.
-  Iterable<RoutingResult<T?>> resolveAll(String absolute, String relative,
+  Iterable<RoutingResult<T>> resolveAll(String absolute, String relative,
       {String method = 'GET', bool strip = true}) {
     if (_useCache == true) {
       return _cache.putIfAbsent('$method$absolute',

@@ -10,7 +10,7 @@ class _Safe<T> extends Parser<T> {
   _Safe(this.parser, this.backtrack, this.errorMessage, this.severity);
 
   @override
-  ParseResult<T?> __parse(ParseArgs args) {
+  ParseResult<T> __parse(ParseArgs args) {
     var replay = args.scanner.position;
 
     try {

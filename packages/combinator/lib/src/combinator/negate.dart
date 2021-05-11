@@ -8,7 +8,7 @@ class _Negate<T> extends Parser<T> {
   _Negate(this.parser, this.errorMessage, this.severity);
 
   @override
-  ParseResult<T?> __parse(ParseArgs args) {
+  ParseResult<T> __parse(ParseArgs args) {
     var result = parser._parse(args.increaseDepth()).change(parser: this);
 
     if (!result.successful) {

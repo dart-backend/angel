@@ -139,7 +139,8 @@ abstract class Driver<
               pipeline.handlers,
               resolved.fold<Map<String, dynamic>>(
                   <String, dynamic>{}, (out, r) => out..addAll(r.allParams)),
-              (resolved.isEmpty ? null : resolved.first.parseResult)!,
+              //(resolved.isEmpty ? null : resolved.first.parseResult),
+              resolved.first.parseResult,
               pipeline,
             );
           }

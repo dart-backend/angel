@@ -11,11 +11,11 @@ main() {
   var numbers = number.plus();
 
   test('sort', () {
-    var parser = numbers.sort((a, b) => a!.compareTo(b!));
+    var parser = numbers.sort((a, b) => a.compareTo(b));
     expect(parser.parse(scan('21,2,3,34,20')).value, [2, 3, 20, 21, 34]);
   });
   test('reduce', () {
-    var parser = numbers.reduce((a, b) => a! + b!);
+    var parser = numbers.reduce((a, b) => a + b);
     expect(parser.parse(scan('21,2,3,34,20')).value, 80);
     expect(parser.parse(scan('not numbers')).value, isNull);
   });

@@ -21,7 +21,7 @@ class _Any<T> extends Parser<T> {
   _Any(this.parsers, this.backtrack, this.errorMessage, this.severity);
 
   @override
-  ParseResult<T?> _parse(ParseArgs args) {
+  ParseResult<T> _parse(ParseArgs args) {
     var inactive = parsers
         .where((p) => !args.trampoline.isActive(p, args.scanner.position));
 

@@ -7,7 +7,7 @@ class _FoldErrors<T> extends Parser<T> {
   _FoldErrors(this.parser, this.equal);
 
   @override
-  ParseResult<T?> __parse(ParseArgs args) {
+  ParseResult<T> __parse(ParseArgs args) {
     var result = parser._parse(args.increaseDepth()).change(parser: this);
     var errors = result.errors.fold<List<SyntaxError>>([], (out, e) {
       if (!out.any((b) => equal(e, b))) out.add(e);

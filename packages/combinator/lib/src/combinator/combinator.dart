@@ -7,6 +7,7 @@ import 'package:matcher/matcher.dart';
 import 'package:source_span/source_span.dart';
 import 'package:string_scanner/string_scanner.dart';
 import 'package:tuple/tuple.dart';
+import 'package:optional/optional.dart';
 import '../error.dart';
 
 part 'any.dart';
@@ -67,9 +68,9 @@ class ParseArgs {
 
 /// A parser combinator, which can parse very complicated grammars in a manageable manner.
 abstract class Parser<T> {
-  ParseResult<T?> __parse(ParseArgs args);
+  ParseResult<T> __parse(ParseArgs args);
 
-  ParseResult<T?> _parse(ParseArgs args) {
+  ParseResult<T> _parse(ParseArgs args) {
     var pos = args.scanner.position;
 
     if (args.trampoline.hasMemoized(this, pos))
@@ -86,7 +87,7 @@ abstract class Parser<T> {
   }
 
   /// Parses text from a [SpanScanner].
-  ParseResult<T?> parse(SpanScanner scanner, [int depth = 1]) {
+  ParseResult<T> parse(SpanScanner scanner, [int depth = 1]) {
     var args = ParseArgs(Trampoline(), scanner, depth);
     return _parse(args);
   }
@@ -105,7 +106,7 @@ abstract class Parser<T> {
 
   // TODO: Type issue
   /// Runs the given function, which changes the returned [ParseResult] into one relating to a [U] object.
-  Parser<U> change<U>(ParseResult<U?> Function(ParseResult<T?>) f) {
+  Parser<U> change<U>(ParseResult<U> Function(ParseResult<T>) f) {
     return _Change<T, U>(this, f);
   }
 
@@ -128,7 +129,7 @@ abstract class Parser<T> {
   }
 
   /// Transforms the parse result using a unary function.
-  Parser<U> map<U>(U Function(ParseResult<T?>) f) {
+  Parser<U> map<U>(U Function(ParseResult<T>) f) {
     return _Map<T, U>(this, f);
   }
 
@@ -171,7 +172,7 @@ abstract class Parser<T> {
   Parser<T> or<U>(Parser<T> other) => any<T>([this, other]);
 
   /// Parses this sequence one or more times.
-  ListParser<T?> plus() => times(1, exact: false);
+  ListParser<T> plus() => times(1, exact: false);
 
   /// Safely escapes this parser when an error occurs.
   ///
@@ -207,11 +208,11 @@ abstract class Parser<T> {
     });
   }
 
-  Parser<T?> surroundedByCurlyBraces({T? defaultValue}) => opt()
+  Parser<T> surroundedByCurlyBraces({required T defaultValue}) => opt()
       .surroundedBy(match('{').space(), match('}').space())
       .map((r) => r.value ?? defaultValue);
 
-  Parser<T?> surroundedBySquareBrackets({T? defaultValue}) => opt()
+  Parser<T> surroundedBySquareBrackets({required T defaultValue}) => opt()
       .surroundedBy(match('[').space(), match(']').space())
       .map((r) => r.value ?? defaultValue);
 
@@ -336,7 +337,9 @@ class Trampoline {
   }
 
   bool isActive(Parser parser, int position) {
-    if (!_active.containsKey(parser)) return false;
+    if (!_active.containsKey(parser)) {
+      return false;
+    }
     var q = _active[parser]!;
     if (q.isEmpty) return false;
     //return q.contains(position);

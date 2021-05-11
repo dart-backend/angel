@@ -24,7 +24,7 @@ Parser<num> calculatorGrammar() {
         expr.space(),
         match<Null>(op).space() as Parser<num>,
         expr.space(),
-      ]).map((r) => f(r.value![0]!, r.value![2]!)),
+      ]).map((r) => f(r.value![0], r.value![2])),
     );
   }
 
