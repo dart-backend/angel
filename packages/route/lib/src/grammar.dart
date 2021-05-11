@@ -20,7 +20,12 @@ class RouteGrammar {
     regExp.opt(),
   ]).map((r) {
     var match = r.value![0] as Match;
-    var rgxMatch = r.value![2] as Match?;
+
+    var r2 = r.value![2];
+    Match? rgxMatch;
+    if (r2 != 'NULL') {
+      rgxMatch = r2 as Match?;
+    }
 
     var pre = match[1] ?? '';
     var post = match[3] ?? '';

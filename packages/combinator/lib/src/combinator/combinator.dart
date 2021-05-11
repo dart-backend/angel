@@ -7,7 +7,6 @@ import 'package:matcher/matcher.dart';
 import 'package:source_span/source_span.dart';
 import 'package:string_scanner/string_scanner.dart';
 import 'package:tuple/tuple.dart';
-import 'package:optional/optional.dart';
 import '../error.dart';
 
 part 'any.dart';
@@ -199,7 +198,7 @@ abstract class Parser<T> {
       }
       var preceding = v.isEmpty ? [] : (v[0] == null ? [] : [v[0]]);
       var out = List<T>.from(preceding);
-      if (v[1] != null) {
+      if (v[1] != null && v[1] != "NULL") {
         v[1].forEach((element) {
           out.add(element as T);
         });

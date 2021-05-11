@@ -43,7 +43,7 @@ class _Chain<T> extends ListParser<T> {
   @override
   ParseResult<List<T>> __parse(ParseArgs args) {
     var errors = <SyntaxError>[];
-    var results = <T?>[];
+    var results = <T>[];
     var spans = <FileSpan>[];
     bool successful = true;
 
@@ -62,9 +62,14 @@ class _Chain<T> extends ListParser<T> {
       }
 
       //TODO: To be looked at
-      //if (result.value != null) {
-      results.add(result.value);
-      //}
+      if (result.value != null) {
+        //print(result.value.runtimeType);
+        results.add(result.value!);
+      } else {
+        //print("Add NULL");
+        // Add dummy "NULL" String
+        results.add("NULL" as T);
+      }
 
       if (result.span != null) {
         spans.add(result.span!);

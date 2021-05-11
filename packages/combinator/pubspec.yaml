@@ -15,6 +15,5 @@ dependencies:
   source_span: ^1.8.1
   string_scanner: ^1.1.0
   tuple: ^2.0.0
-  optional: ^6.0.0-nullsafety.2
 dev_dependencies:
   test: ^1.17.3
