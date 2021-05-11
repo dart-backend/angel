@@ -66,9 +66,7 @@ class _Chain<T> extends ListParser<T> {
         //print(result.value.runtimeType);
         results.add(result.value!);
       } else {
-        //print("Add NULL");
-        // Add dummy "NULL" String
-        results.add("NULL" as T);
+        //print("NULL");
       }
 
       if (result.span != null) {
