@@ -43,9 +43,15 @@ class ExternalAuthOptions {
   /// * `client_secret`
   /// * `redirect_uri`
   factory ExternalAuthOptions.fromMap(Map map) {
+    var clientId = map['client_id'];
+    var clientSecret = map['client_secret'];
+    if (clientId == null || clientSecret == null) {
+      throw ArgumentError('Invalid clientId and/or clientSecret');
+    }
+
     return ExternalAuthOptions(
-      clientId: map['client_id'] as String,
-      clientSecret: map['client_secret'] as String,
+      clientId: clientId as String,
+      clientSecret: clientSecret as String,
       redirectUri: map['redirect_uri'],
       scopes: map['scopes'] is Iterable
           ? ((map['scopes'] as Iterable).map((x) => x.toString()))
@@ -66,13 +72,13 @@ class ExternalAuthOptions {
 
   /// Creates a copy of this object, with the specified changes.
   ExternalAuthOptions copyWith(
-      {String clientId = '',
-      String clientSecret = '',
+      {String? clientId,
+      String? clientSecret,
       redirectUri,
       Iterable<String> scopes = const []}) {
     return ExternalAuthOptions(
-      clientId: clientId,
-      clientSecret: clientSecret,
+      clientId: clientId ?? this.clientId,
+      clientSecret: clientSecret ?? this.clientSecret,
       redirectUri: redirectUri ?? this.redirectUri,
       scopes: (scopes).followedBy(this.scopes),
     );
