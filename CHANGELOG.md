@@ -10,7 +10,7 @@
 * Migrated angel_container to 3.0.0 (55/55 tests passed)
 * Added merge_map and migrated to 2.0.0 (6/6 tests passed)
 * Added mock_request and migrated to 2.0.0 (0/0 tests)
-* Migrated angel_framework to 4.0.0 (146/149 tests passed)
+* Migrated angel_framework to 4.0.0 (146/150 tests passed)
 * Migrated angel_auth to 4.0.0 (21/30 tests passed)
 * Migrated angel_configuration to 4.0.0 (6/8 testspassed)
 * Migrated angel_validate to 4.0.0 (6/7 tests passed)

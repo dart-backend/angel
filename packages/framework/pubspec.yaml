@@ -22,11 +22,11 @@ dependencies:
       ref: sdk-2.12.x_nnbd
       path: packages/model
   angel_route:
-    path: ../route
-#    git: 
-#      url: https://github.com/dukefirehawk/angel.git
-#      ref: sdk-2.12.x_nnbd
-#      path: packages/route
+#    path: ../route
+    git: 
+      url: https://github.com/dukefirehawk/angel.git
+      ref: sdk-2.12.x_nnbd
+      path: packages/route
   charcode: ^1.2.0
   combinator:
     git: 
