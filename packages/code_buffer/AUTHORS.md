@@ -10,5 +10,3 @@ Primary Authors
 
     Tobe has written much of the original code prior to NNBD migration. He has moved on and
     is no longer involved with the project.
-
-Thomas Hii <dukefirehawk.apps@gmail.com>
