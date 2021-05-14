@@ -20,9 +20,9 @@ class CodeBuffer implements StringBuffer {
   int _length = 0;
 
   CodeBuffer(
-      {this.space: '  ',
-      this.newline: '\n',
-      this.trailingNewline: false,
+      {this.space = '  ',
+      this.newline = '\n',
+      this.trailingNewline = false,
       this.sourceUrl});
 
   /// Creates a [CodeBuffer] that does not emit additional whitespace.
