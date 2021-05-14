@@ -1,7 +1,7 @@
 import 'dart:io';
-import 'package:angel_auth/angel_auth.dart';
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_framework/http.dart';
+import 'package:angel3_auth/angel3_auth.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_framework/http.dart';
 import 'dart:convert';
 import 'package:collection/collection.dart' show IterableExtension;
 import 'package:http/http.dart' as http;

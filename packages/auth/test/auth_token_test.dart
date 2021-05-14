@@ -1,4 +1,4 @@
-import 'package:angel_auth/src/auth_token.dart';
+import 'package:angel3_auth/src/auth_token.dart';
 import 'package:crypto/crypto.dart';
 import 'package:test/test.dart';
 

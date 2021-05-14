@@ -1,4 +1,4 @@
-library angel_auth;
+library angel3_auth;
 
 export 'src/middleware/require_auth.dart';
 export 'src/strategies/strategies.dart';

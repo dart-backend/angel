@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:angel_framework/angel_framework.dart';
+import 'package:angel3_framework/angel3_framework.dart';
 import 'auth_token.dart';
 
 typedef AngelAuthCallback = FutureOr Function(

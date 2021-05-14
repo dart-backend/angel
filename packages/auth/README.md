@@ -1,7 +1,8 @@
-# angel_auth
+# angel3_auth
+[![version](https://img.shields.io/badge/pub-v2.12.4-brightgreen)](https://pub.dartlang.org/packages/angel3_auth)
+[![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 
-[![Pub](https://img.shields.io/pub/v/angel_auth.svg)](https://pub.dartlang.org/packages/angel_auth)
-[![build status](https://travis-ci.org/angel-dart/auth.svg?branch=master)](https://travis-ci.org/angel-dart/auth)
+[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/auth/LICENSE)
 
 A complete authentication plugin for Angel. Inspired by Passport.
 
@@ -76,7 +77,7 @@ configureServer(Angel app) async {
 ```
 
 This renders a simple HTML page that fires the user's JWT as a `token` event in `window.opener`.
-`angel_client` [exposes this as a Stream](https://github.com/angel-dart/client#authentication):
+`angel_client` [exposes this as a Stream](https://github.com/dukefirehawk/angel/tree/angel3/packages/client#authentication):
 
 ```dart
 app.authenticateViaPopup('/auth/google').listen((jwt) {

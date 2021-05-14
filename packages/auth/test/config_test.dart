@@ -1,4 +1,4 @@
-import 'package:angel_auth/angel_auth.dart';
+import 'package:angel3_auth/angel3_auth.dart';
 import 'package:test/test.dart';
 
 void main() {
