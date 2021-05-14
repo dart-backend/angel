@@ -1,4 +1,4 @@
-import '../../angel_container.dart';
+import '../../angel3_container.dart';
 
 final Map<Symbol, String?> _symbolNames = <Symbol, String?>{};
 

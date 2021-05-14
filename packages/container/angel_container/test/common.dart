@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:angel_container/angel_container.dart';
+import 'package:angel3_container/angel3_container.dart';
 import 'package:test/test.dart';
 
 void returnVoidFromAFunction(int x) {}
