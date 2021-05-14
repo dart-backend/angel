@@ -1,3 +1,5 @@
+# 3.0.1
+* Fixed invalid homepage url in pubspec.yaml
 # 3.0.0
 * Migrated to support Dart SDK 2.12.x NNBD
 
