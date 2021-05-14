@@ -1,19 +1,20 @@
-# mock_request
+# angel3_mock_request
+[![version](https://img.shields.io/badge/pub-v2.12.4-brightgreen)](https://pub.dartlang.org/packages/angel3_mock_request)
+[![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 
-[![Pub](https://img.shields.io/pub/v/mock_request.svg)](https://pub.dartlang.org/packages/mock_request)
-[![build status](https://travis-ci.org/thosakwe/mock_request.svg)](https://travis-ci.org/thosakwe/mock_request)
+[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/mock_request)
 
 Manufacture dart:io HttpRequests, HttpResponses, HttpHeaders, etc.
 This makes it possible to test server-side Dart applications without
 having to ever bind to a port.
 
 This package was originally designed to testing
-[Angel](https://github.com/angel-dart/angel/wiki)
+[Angel](https://github.com/dukefirehawk/angel)
 applications smoother, but works with any Dart-based server. :)
 
 # Usage
 ```dart
-var rq = new MockHttpRequest('GET', Uri.parse('/foo'));
+var rq = MockHttpRequest('GET', Uri.parse('/foo'));
 await rq.close();
 await app.handleRequest(rq); // Run within your server-side application
 var rs = rq.response;

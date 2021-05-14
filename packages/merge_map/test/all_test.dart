@@ -1,4 +1,4 @@
-import "package:merge_map/merge_map.dart";
+import "package:angel3_merge_map/angel3_merge_map.dart";
 import "package:test/test.dart";
 
 void main() {

@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:mock_request/mock_request.dart';
+import 'package:angel3_mock_request/angel3_mock_request.dart';
 
 Future<void> main() async {
   var rq =

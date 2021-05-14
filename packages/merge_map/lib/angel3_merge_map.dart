@@ -1,5 +1,5 @@
 /// Exposes the [mergeMap] function, which... merges Maps.
-library merge_map;
+library angel3_merge_map;
 
 _copyValues<K, V>(
     Map<K, V> from, Map<K, V?>? to, bool recursive, bool acceptNull) {
@@ -28,7 +28,7 @@ Map<K, V> mergeMap<K, V>(Iterable<Map<K, V>> maps,
     {bool recursive: true, bool acceptNull: false}) {
   Map<K, V> result = <K, V>{};
   maps.forEach((Map<K, V> map) {
-    if (map != null) _copyValues(map, result, recursive, acceptNull);
+    _copyValues(map, result, recursive, acceptNull);
   });
   return result;
 }
