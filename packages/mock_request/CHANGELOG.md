@@ -1,3 +1,5 @@
+# 2.0.0
+* Migrated to work with Dart SDK 2.12.x NNBD
 # 1.0.7
 * Prepare for upcoming Dart SDK change where `HttpHeaders` methods
 `add` and `set` take an additional optional parameter `preserveHeaderCase` (thanks @domesticmouse!).
