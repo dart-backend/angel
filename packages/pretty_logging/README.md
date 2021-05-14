@@ -1,5 +1,8 @@
 # pretty\_logging
-[![Pub](https://img.shields.io/pub/v/pretty_logging.svg)](https://pub.dartlang.org/packages/pretty_logging)
+[![version](https://img.shields.io/badge/pub-v2.12.4-brightgreen)](https://pub.dartlang.org/packages/angel3_pretty_logging)
+[![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
+
+[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/pretty_logging)
 
 Standalone helper for colorful logging output, using pkg:io AnsiCode.
 
@@ -8,7 +11,7 @@ In your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  pretty_logging: 1.0.0
+  angel3_pretty_logging: ^3.0.0
 ```
 
 # Usage
