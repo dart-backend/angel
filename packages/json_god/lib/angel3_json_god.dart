@@ -1,5 +1,5 @@
 /// A robust library for JSON serialization and deserialization.
-library json_god;
+library angel3_json_god;
 
 //import 'package:dart2_constant/convert.dart';
 import 'dart:convert';
@@ -15,4 +15,4 @@ part 'src/util.dart';
 @deprecated
 bool debug = false;
 
-final Logger logger = new Logger('json_god');
+final Logger logger = Logger('json_god');

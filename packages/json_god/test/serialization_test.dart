@@ -1,7 +1,7 @@
 //import 'package:dart2_constant/convert.dart';
 import 'dart:convert';
 
-import 'package:json_god/json_god.dart' as god;
+import 'package:angel3_json_god/angel3_json_god.dart' as god;
 import 'package:test/test.dart';
 import 'shared.dart';
 
@@ -33,7 +33,7 @@ testSerializationOfPrimitives() {
 }
 
 testSerializationOfDates() {
-  DateTime date = new DateTime.now();
+  DateTime date = DateTime.now();
   String s = god.serialize({'date': date});
 
   print(s);
@@ -43,8 +43,8 @@ testSerializationOfDates() {
 }
 
 testSerializationOfMaps() {
-  var simple = json.decode(god.serialize(
-      {'hello': 'world', 'one': 1, 'class': new SampleClass('world')}));
+  var simple = json.decode(god
+      .serialize({'hello': 'world', 'one': 1, 'class': SampleClass('world')}));
   var nested = json.decode(god.serialize({
     'foo': {
       'bar': 'baz',
@@ -66,8 +66,8 @@ testSerializationOfLists() {
   List pandorasBox = [
     1,
     "2",
-    {"num": 3, "four": new SampleClass('five')},
-    new SampleClass('six')..nested.add(new SampleNestedClass('seven'))
+    {"num": 3, "four": SampleClass('five')},
+    SampleClass('six')..nested.add(SampleNestedClass('seven'))
   ];
   String s = god.serialize(pandorasBox);
   print(s);
@@ -91,10 +91,10 @@ testSerializationOfLists() {
 }
 
 testSerializationViaReflection() {
-  SampleClass sample = new SampleClass('world');
+  SampleClass sample = SampleClass('world');
 
   for (int i = 0; i < 3; i++) {
-    sample.nested.add(new SampleNestedClass('baz'));
+    sample.nested.add(SampleNestedClass('baz'));
   }
 
   String s = god.serialize(sample);
@@ -110,8 +110,8 @@ testSerializationViaReflection() {
 }
 
 testSerializationWithSchemaValidation() async {
-  BabelRc babelRc = new BabelRc(
-      presets: ['es2015', 'stage-0'], plugins: ['add-module-exports']);
+  BabelRc babelRc =
+      BabelRc(presets: ['es2015', 'stage-0'], plugins: ['add-module-exports']);
 
   String s = god.serialize(babelRc);
   print(s);

@@ -1,4 +1,4 @@
-part of json_god;
+part of angel3_json_god;
 
 /// Thrown when schema validation fails.
 class JsonValidationError implements Exception {
@@ -7,7 +7,7 @@ class JsonValidationError implements Exception {
   final String cause;
 
   const JsonValidationError(
-      String this.cause, this.invalidData);//, Schema this.schema);
+      String this.cause, this.invalidData); //, Schema this.schema);
 }
 
 /// Specifies a schema to validate a class with.

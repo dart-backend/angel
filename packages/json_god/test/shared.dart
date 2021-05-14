@@ -1,11 +1,11 @@
 import 'package:logging/logging.dart';
-import 'package:json_god/json_god.dart';
+import 'package:angel3_json_god/angel3_json_god.dart';
 import 'package:stack_trace/stack_trace.dart';
 
 void printRecord(LogRecord rec) {
   print(rec);
   if (rec.error != null) print(rec.error);
-  if (rec.stackTrace != null) print(new Chain.forTrace(rec.stackTrace!).terse);
+  if (rec.stackTrace != null) print(Chain.forTrace(rec.stackTrace!).terse);
 }
 
 class SampleNestedClass {

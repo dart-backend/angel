@@ -1,21 +1,23 @@
-# JSON God v2
+# angel3_json_god
+[![version](https://img.shields.io/badge/pub-v2.12.4-brightgreen)](https://pub.dartlang.org/packages/angel3_json_god)
+[![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 
-[![Pub](https://img.shields.io/pub/v/json_god.svg)](https://pub.dartlang.org/packages/json_god)
-[![build status](https://travis-ci.org/thosakwe/json_god.svg)](https://travis-ci.org/thosakwe/json_god)
+[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/json_god/LICENSE)
+
 
 The ***new and improved*** definitive solution for JSON in Dart.
 
 
 # Installation
     dependencies:
-        json_god: ^2.0.0-beta
+        angel3_json_god: ^4.0.0
 
 # Usage
 
 It is recommended to import the library under an alias, i.e., `god`.
 
 ```dart
-import 'package:json_god/json_god.dart' as god;
+import 'package:angel3_json_god/angel3_json_god.dart' as god;
 ```
 
 ## Serializing JSON
@@ -42,13 +44,13 @@ class B {
     A nested;
     B(String hello, String foo) {
       this.hello = hello;
-      this.nested = new A(foo);
+      this.nested =  A(foo);
     }
 }
 
 main() {
-    God god = new God();
-    print(god.serialize(new B("world", "bar")));
+    God god =  God();
+    print(god.serialize( B("world", "bar")));
 }
 
 // Output: {"hello":"world","nested":{"foo":"bar"}}
@@ -78,18 +80,18 @@ class Child {
 
 class Parent {
   String hello;
-  Child child = new Child();
+  Child child =  Child();
 }
 
 main() {
-  God god = new God();
+  God god =  God();
   Parent parent = god.deserialize('{"hello":"world","child":{"foo":"bar"}}', Parent);
   print(parent);
 }
 ```
 
 **Any JSON-deserializable classes must initializable without parameters.
-If `new Foo()` would throw an error, then you can't use Foo with JSON.**
+If ` Foo()` would throw an error, then you can't use Foo with JSON.**
 
 This allows for validation of a sort, as only fields you have declared will be
 accepted.

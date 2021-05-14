@@ -1,4 +1,4 @@
-part of json_god;
+part of angel3_json_god;
 
 /// Deserializes a JSON string into a Dart datum.
 ///
@@ -14,7 +14,8 @@ deserializeJson(String s, {Type? outputType}) {
   logger.info("Deserializing the following JSON: $s");
 
   if (outputType == null) {
-    logger.info("No output type was specified, so we are just using json.decode");
+    logger
+        .info("No output type was specified, so we are just using json.decode");
     return json.decode(s);
   } else {
     logger.info("Now deserializing to type: $outputType");

@@ -1,4 +1,4 @@
-part of json_god;
+part of angel3_json_god;
 
 /// Serializes any arbitrary Dart datum to JSON. Supports schema validation.
 String serialize(value) {
