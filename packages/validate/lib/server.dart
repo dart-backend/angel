@@ -1,13 +1,13 @@
 /// Support for using `angel_validate` with the Angel Framework.
-library angel_validate.server;
+library angel3_validate.server;
 
 import 'dart:async';
 
-import 'package:angel_framework/angel_framework.dart';
+import 'package:angel3_framework/angel3_framework.dart';
 import 'src/async.dart';
-import 'angel_validate.dart';
+import 'angel3_validate.dart';
 export 'src/async.dart';
-export 'angel_validate.dart';
+export 'angel3_validate.dart';
 
 /// Auto-parses numbers in `req.bodyAsMap`.
 RequestHandler autoParseBody(List<String> fields) {

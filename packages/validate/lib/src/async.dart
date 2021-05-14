@@ -1,6 +1,6 @@
 import 'dart:async';
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_http_exception/angel_http_exception.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_http_exception/angel3_http_exception.dart';
 import 'package:matcher/matcher.dart';
 import 'context_aware.dart';
 

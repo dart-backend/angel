@@ -1,6 +1,6 @@
 import 'dart:html';
 
-import 'package:angel_validate/angel_validate.dart';
+import 'package:angel3_validate/angel3_validate.dart';
 
 final $errors = querySelector('#errors') as UListElement?;
 final $form = querySelector('#form') as FormElement?;
@@ -28,7 +28,7 @@ final Validator formSchema = Validator({
       "I told you to leave that field blank, but instead you typed '{{value}}'..."
 });
 
-main() {
+void main() {
   $form!.onSubmit.listen((e) {
     e.preventDefault();
     $errors!.children.clear();

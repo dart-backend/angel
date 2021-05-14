@@ -1,5 +1,5 @@
 /// Cross-platform validation library based on `matcher`.
-library angel_validate;
+library angel3_validate;
 
 export 'package:matcher/matcher.dart';
 export 'src/context_aware.dart';

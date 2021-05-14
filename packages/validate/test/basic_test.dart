@@ -1,4 +1,4 @@
-import 'package:angel_validate/angel_validate.dart';
+import 'package:angel3_validate/angel3_validate.dart';
 import 'package:test/test.dart';
 
 final Validator emailSchema =
