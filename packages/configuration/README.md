@@ -1,7 +1,9 @@
-# configuration
+# angel3_configuration
+[![version](https://img.shields.io/badge/pub-v2.12.4-brightgreen)](https://pub.dartlang.org/packages/angel3_configuration)
+[![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 
-[![Pub](https://img.shields.io/pub/v/angel_configuration.svg)](https://pub.dartlang.org/packages/angel_configuration)
-[![build status](https://travis-ci.org/angel-dart/configuration.svg)](https://travis-ci.org/angel-dart/configuration)
+[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/configuration/LICENSE)
+
 
 Automatic YAML configuration loader for Angel.
 
@@ -17,7 +19,7 @@ In `pubspec.yaml`:
 
 ```yaml
 dependencies:
-    angel_configuration: ^2.0.0
+    angel3_configuration: ^3.0.0
 ```
 
 # Usage

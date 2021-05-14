@@ -1,62 +1,31 @@
-# Created by .ignore support plugin (hsz.mobi)
-### JetBrains template
-.idea
-*.iml
+# See https://www.dartlang.org/tools/private-files.html
 
-# Covers JetBrains IDEs: IntelliJ, RubyMine, PhpStorm, AppCode, PyCharm, CLion, Android Studio and Webstorm
-# Reference: https://intellij-support.jetbrains.com/hc/en-us/articles/206544839
+# Files and directories created by pub
+.dart_tool
+.packages
+.pub/
+build/
 
-# User-specific stuff:
-.idea/workspace.xml
-.idea/tasks.xml
-.idea/dictionaries
-.idea/vcs.xml
-.idea/jsLibraryMappings.xml
+# If you're building an application, you may want to check-in your pubspec.lock
+pubspec.lock
 
-# Sensitive or high-churn files:
-.idea/dataSources.ids
-.idea/dataSources.xml
-.idea/dataSources.local.xml
-.idea/sqlDataSources.xml
-.idea/dynamic.xml
-.idea/uiDesigner.xml
+# Directory created by dartdoc
+# If you don't generate documentation locally you can remove this line.
+doc/api/
 
-# Gradle:
-.idea/gradle.xml
-.idea/libraries
-
-# Mongo Explorer plugin:
-.idea/mongoSettings.xml
-
-## File-based project format:
-*.iws
-
-## Plugin-specific files:
-
-# IntelliJ
-/out/
-
-# mpeltonen/sbt-idea plugin
-.idea_modules/
-
-# JIRA plugin
-atlassian-ide-plugin.xml
-
-# Crashlytics plugin (for Android Studio and IntelliJ)
-com_crashlytics_export_strings.xml
-crashlytics.properties
-crashlytics-build.properties
-fabric.properties
 ### Dart template
 # See https://www.dartlang.org/tools/private-files.html
 
 # Files and directories created by pub
-.buildlog
-.packages
+
+# SDK 1.20 and later (no longer creates packages directories)
+
+# Older SDK versions
+# (Include if the minimum SDK version specified in pubsepc.yaml is earlier than 1.20)
 .project
-.pub/
-build/
+.buildlog
 **/packages/
+
 
 # Files created by dart2js
 # (Most Dart developers will use pub build to compile Dart, use/modify these
@@ -70,10 +39,33 @@ build/
 *.info.json
 
 # Directory created by dartdoc
-doc/api/
 
 # Don't commit pubspec lock file
 # (Library packages only! Remove pattern if developing an application package)
-pubspec.lock
+### JetBrains template
+# Covers JetBrains IDEs: IntelliJ, RubyMine, PhpStorm, AppCode, PyCharm, CLion, Android Studio and Webstorm
+# Reference: https://intellij-support.jetbrains.com/hc/en-us/articles/206544839
 
-.dart_tool
+# User-specific stuff:
+
+## VsCode
+.vscode/
+
+## File-based project format:
+*.iws
+
+## Plugin-specific files:
+
+# IntelliJ
+.idea/
+/out/
+.idea_modules/
+
+# JIRA plugin
+atlassian-ide-plugin.xml
+
+# Crashlytics plugin (for Android Studio and IntelliJ)
+com_crashlytics_export_strings.xml
+crashlytics.properties
+crashlytics-build.properties
+fabric.properties
