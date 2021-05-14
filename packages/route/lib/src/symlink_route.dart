@@ -1,4 +1,4 @@
-part of angel_route.src.router;
+part of angel3_route.src.router;
 
 /// Placeholder [Route] to serve as a symbolic link
 /// to a mounted [Router].

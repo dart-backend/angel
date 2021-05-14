@@ -1,4 +1,4 @@
-library angel_route;
+library angel3_route;
 
 export 'src/middleware_pipeline.dart';
 export 'src/router.dart';

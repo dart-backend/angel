@@ -1,4 +1,4 @@
-part of angel_route.src.router;
+part of angel3_route.src.router;
 
 /// Represents a complex result of navigating to a path.
 class RoutingResult<T> {

@@ -1,5 +1,5 @@
 import 'dart:html';
-import 'package:angel_route/browser.dart';
+import 'package:angel3_route/browser.dart';
 
 void basic(BrowserRouter router) {
   final $h1 = window.document.querySelector('h1');

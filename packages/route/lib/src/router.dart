@@ -1,7 +1,7 @@
-library angel_route.src.router;
+library angel3_route.src.router;
 
 import 'dart:async';
-import 'package:combinator/combinator.dart';
+import 'package:angel3_combinator/angel3_combinator.dart';
 import 'package:string_scanner/string_scanner.dart';
 
 import '../string_util.dart';
