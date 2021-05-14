@@ -1,4 +1,4 @@
-import 'package:angel_model/angel_model.dart';
+import 'package:angel3_model/angel3_model.dart';
 
 void main() {
   var todo = Todo(id: '34', isComplete: false);
