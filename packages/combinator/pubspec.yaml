@@ -1,16 +1,12 @@
-name: combinator
-version: 2.0.0-beta.1
+name: angel3_combinator
+version: 2.0.0
 description: Packrat parser combinators that support static typing, generics, file spans, memoization, and more.
-homepage: https://github.com/dukefirehawk/angel/tree/sdk-2.12.x_nnbd/packages/combinator
+homepage: https://github.com/dukefirehawk/angel/tree/angel3/packages/combinator
 publish_to: none
 environment:
   sdk: '>=2.12.0 <3.0.0'
 dependencies:
-  code_buffer:
-    git: 
-      url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x_nnbd
-      path: packages/code_buffer
+  angel3_code_buffer: ^2.0.0
   matcher: ^0.12.0
   source_span: ^1.8.1
   string_scanner: ^1.1.0

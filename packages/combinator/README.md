@@ -1,6 +1,8 @@
-# combinator
-[![version](https://img.shields.io/pub/v/combinator.svg)](https://pub.dartlang.org/packages/combinator)
-[![build status](https://travis-ci.org/thosakwe/combinator.svg)](https://travis-ci.org/thosakwe/combinator)
+# angel3_combinator
+[![version](https://img.shields.io/badge/pub-v2.12.4-brightgreen)](https://pub.dartlang.org/packages/angel3_combinator)
+[![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
+
+[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/combinator)
 
 Packrat parser combinators that support static typing, generics, file spans, memoization, and more.
 
@@ -16,7 +18,7 @@ The examples contain examples of using:
 void main() {
   // Parse a Pattern (usually String or RegExp).
   var foo = match('foo');
-  var number = match(new RegExp(r'[0-9]+'), errorMessage: 'Expected a number.');
+  var number = match(RegExp(r'[0-9]+'), errorMessage: 'Expected a number.');
   
   // Set a value.
   var numWithValue = number.map((r) => int.parse(r.span.text));
@@ -64,7 +66,7 @@ void main() {
 
 ## Error Messages
 Parsers without descriptive error messages can lead to frustrating dead-ends
-for end-users. Fortunately, `combinator` is built with error handling in mind.
+for end-users. Fortunately, `angel3_combinator` is built with error handling in mind.
 
 ```dart
 void main(Parser parser) {
@@ -98,7 +100,7 @@ void main(Parser parser) {
 ```
 
 ## For Programming Languages
-`combinator` was conceived to make writing parsers for complex grammars easier,
+`angel3_combinator` was conceived to make writing parsers for complex grammars easier,
 namely programming languages. Thus, there are functions built-in to make common constructs
 easier:
 
@@ -115,6 +117,6 @@ void main(Parser parser) {
 ```
 
 ## Differences between this and Petitparser
-* `combinator` makes extensive use of Dart's dynamic typing
-* `combinator` supports detailed error messages (with configurable severity)
-* `combinator` keeps track of locations (ex. `line 1: 3`)
+* `angel3_combinator` makes extensive use of Dart's dynamic typing
+* `angel3_combinator` supports detailed error messages (with configurable severity)
+* `angel3_combinator` keeps track of locations (ex. `line 1: 3`)

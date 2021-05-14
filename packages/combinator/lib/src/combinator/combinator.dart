@@ -2,7 +2,7 @@ library lex.src.combinator;
 
 import 'dart:collection';
 
-import 'package:code_buffer/code_buffer.dart';
+import 'package:angel3_code_buffer/angel3_code_buffer.dart';
 import 'package:matcher/matcher.dart';
 import 'package:source_span/source_span.dart';
 import 'package:string_scanner/string_scanner.dart';

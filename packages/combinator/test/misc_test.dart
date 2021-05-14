@@ -1,9 +1,9 @@
-import 'package:combinator/combinator.dart';
+import 'package:angel3_combinator/angel3_combinator.dart';
 import 'package:matcher/matcher.dart';
 import 'package:test/test.dart';
 import 'common.dart';
 
-main() {
+void main() {
   test('advance', () {
     var scanner = scan('hello world');
 

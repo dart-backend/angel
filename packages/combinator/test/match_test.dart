@@ -1,8 +1,8 @@
-import 'package:combinator/combinator.dart';
+import 'package:angel3_combinator/angel3_combinator.dart';
 import 'package:test/test.dart';
 import 'common.dart';
 
-main() {
+void main() {
   test('match string', () {
     expect(match('hello').parse(scan('hello world')).successful, isTrue);
   });

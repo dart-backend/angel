@@ -2,14 +2,14 @@
 
 import 'dart:convert';
 import 'dart:io';
-import 'package:combinator/combinator.dart';
+import 'package:angel3_combinator/angel3_combinator.dart';
 import 'package:string_scanner/string_scanner.dart';
 
 /// Parse a part of a decoded Basic auth string.
 ///
 /// Namely, the `username` or `password` in `{username}:{password}`.
 final Parser<String> string =
-    match<String>(new RegExp(r'[^:$]+'), errorMessage: 'Expected a string.')
+    match<String>(RegExp(r'[^:$]+'), errorMessage: 'Expected a string.')
         .value((r) => r.span!.text);
 
 /// Transforms `{username}:{password}` to `{"username": username, "password": password}`.
@@ -25,11 +25,11 @@ final Parser<Map<String, String>> credentials = chain<String>([
 /// This is used here to BASE64URL-decode a string, and then
 /// parse the decoded string.
 final Parser credentialString = match<Map<String, String>?>(
-        new RegExp(r'([^\n$]+)'),
+        RegExp(r'([^\n$]+)'),
         errorMessage: 'Expected a credential string.')
     .value((r) {
   var decoded = utf8.decode(base64Url.decode(r.span!.text));
-  var scanner = new SpanScanner(decoded);
+  var scanner = SpanScanner(decoded);
   return credentials.parse(scanner).value;
 });
 
@@ -41,7 +41,7 @@ void main() {
   while (true) {
     stdout.write('Enter a basic auth value: ');
     var line = stdin.readLineSync()!;
-    var scanner = new SpanScanner(line, sourceUrl: 'stdin');
+    var scanner = SpanScanner(line, sourceUrl: 'stdin');
     var result = basicAuth.parse(scanner);
 
     if (!result.successful) {

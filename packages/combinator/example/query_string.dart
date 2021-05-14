@@ -1,7 +1,7 @@
 // For some reason, this cannot be run in checked mode???
 
 import 'dart:io';
-import 'package:combinator/combinator.dart';
+import 'package:angel3_combinator/angel3_combinator.dart';
 import 'package:string_scanner/string_scanner.dart';
 
 final Parser<String> key =
@@ -30,7 +30,7 @@ main() {
   while (true) {
     stdout.write('Enter a query string: ');
     var line = stdin.readLineSync()!;
-    var scanner = new SpanScanner(line, sourceUrl: 'stdin');
+    var scanner = SpanScanner(line, sourceUrl: 'stdin');
     var result = pairs.parse(scanner);
 
     if (!result.successful) {

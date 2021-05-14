@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'package:combinator/combinator.dart';
+import 'package:angel3_combinator/angel3_combinator.dart';
 import 'package:string_scanner/string_scanner.dart';
 
 final Parser<String> id =
@@ -14,7 +14,7 @@ main() {
   while (true) {
     stdout.write('Enter a string (ex "a,b,c"): ');
     var line = stdin.readLineSync()!;
-    var scanner = new SpanScanner(line, sourceUrl: 'stdin');
+    var scanner = SpanScanner(line, sourceUrl: 'stdin');
     var result = id.separatedBy(match(',').space()).parse(scanner);
 
     if (!result.successful) {

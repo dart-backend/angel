@@ -1,8 +1,8 @@
-import 'package:combinator/combinator.dart';
+import 'package:angel3_combinator/angel3_combinator.dart';
 import 'package:test/test.dart';
 import 'common.dart';
 
-main() {
+void main() {
   var parser = match('hello').value((r) => 'world');
 
   test('sets value', () {

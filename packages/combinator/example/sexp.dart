@@ -1,7 +1,7 @@
 import 'dart:collection';
 import 'dart:io';
 import 'dart:math';
-import 'package:combinator/combinator.dart';
+import 'package:angel3_combinator/angel3_combinator.dart';
 import 'package:string_scanner/string_scanner.dart';
 import 'package:tuple/tuple.dart';
 
@@ -10,7 +10,7 @@ void main() {
   var symbols = <String, dynamic>{};
 
   void registerFunction(String name, int nArgs, Function(List<num>) f) {
-    symbols[name] = new Tuple2(nArgs, f);
+    symbols[name] = Tuple2(nArgs, f);
   }
 
   registerFunction('**', 2, (args) => pow(args[0], args[1]));
@@ -25,12 +25,12 @@ void main() {
     return args[0];
   });
 
-  var number = match(new RegExp(r'[0-9]+(\.[0-9]+)?'),
-          errorMessage: 'Expected a number.')
-      .map((r) => num.parse(r.span!.text));
+  var number =
+      match(RegExp(r'[0-9]+(\.[0-9]+)?'), errorMessage: 'Expected a number.')
+          .map((r) => num.parse(r.span!.text));
 
   var id = match(
-          new RegExp(
+          RegExp(
               r'[A-Za-z_!\\$",\\+-\\./:;\\?<>%&\\*@\[\]\\{\}\\|`\\^~][A-Za-z0-9_!\\$",\\+-\\./:;\\?<>%&\*@\[\]\\{\}\\|`\\^~]*'),
           errorMessage: 'Expected an ID')
       .map((r) => symbols[r.span!.text] ??=
@@ -41,7 +41,7 @@ void main() {
   var list = expr.space().times(2, exact: false).map((r) {
     try {
       var out = [];
-      var q = new Queue.from(r.value!.reversed);
+      var q = Queue.from(r.value!.reversed);
 
       while (q.isNotEmpty) {
         var current = q.removeFirst();
@@ -70,7 +70,7 @@ void main() {
   while (true) {
     stdout.write('> ');
     var line = stdin.readLineSync()!;
-    var result = expr.parse(new SpanScanner(line));
+    var result = expr.parse(SpanScanner(line));
 
     if (result.errors.isNotEmpty) {
       for (var error in result.errors) {

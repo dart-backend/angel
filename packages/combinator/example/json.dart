@@ -1,12 +1,12 @@
 import 'dart:io';
-import 'package:combinator/combinator.dart';
+import 'package:angel3_combinator/angel3_combinator.dart';
 import 'package:string_scanner/string_scanner.dart';
 
 Parser jsonGrammar() {
   var expr = reference();
 
   // Parse a number
-  var number = match<num>(new RegExp(r'-?[0-9]+(\.[0-9]+)?'),
+  var number = match<num>(RegExp(r'-?[0-9]+(\.[0-9]+)?'),
           errorMessage: 'Expected a number.')
       .value(
     (r) => num.parse(r.span!.text),
@@ -14,7 +14,7 @@ Parser jsonGrammar() {
 
   // Parse a string (no escapes supported, because lazy).
   var string =
-      match(new RegExp(r'"[^"]*"'), errorMessage: 'Expected a string.').value(
+      match(RegExp(r'"[^"]*"'), errorMessage: 'Expected a string.').value(
     (r) => r.span!.text.substring(1, r.span!.text.length - 1),
   );
 
@@ -56,7 +56,7 @@ main() {
   while (true) {
     stdout.write('Enter some JSON: ');
     var line = stdin.readLineSync()!;
-    var scanner = new SpanScanner(line, sourceUrl: 'stdin');
+    var scanner = SpanScanner(line, sourceUrl: 'stdin');
     var result = JSON.parse(scanner);
 
     if (!result.successful) {

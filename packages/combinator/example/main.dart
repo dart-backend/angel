@@ -1,11 +1,11 @@
 import 'dart:io';
-import 'package:combinator/combinator.dart';
+import 'package:angel3_combinator/angel3_combinator.dart';
 import 'package:string_scanner/string_scanner.dart';
 
 final Parser minus = match('-');
 
 final Parser<int> digit =
-    match(new RegExp(r'[0-9]'), errorMessage: 'Expected a number');
+    match(RegExp(r'[0-9]'), errorMessage: 'Expected a number');
 
 final Parser digits = digit.plus();
 
@@ -23,7 +23,7 @@ main() {
   while (true) {
     stdout.write('Enter a number: ');
     var line = stdin.readLineSync()!;
-    var scanner = new SpanScanner(line, sourceUrl: 'stdin');
+    var scanner = SpanScanner(line, sourceUrl: 'stdin');
     var result = number.parse(scanner);
 
     if (!result.successful) {
