@@ -1,8 +1,8 @@
-import 'package:code_buffer/code_buffer.dart';
+import 'package:angel3_code_buffer/angel3_code_buffer.dart';
 import 'package:test/test.dart';
 
-main() {
-  var a = new CodeBuffer(), b = new CodeBuffer();
+void main() {
+  var a = CodeBuffer(), b = CodeBuffer();
 
   setUp(() {
     a.writeln('outer block 1');
@@ -30,7 +30,7 @@ main() {
   });
 
   test('sets lastLine+lastSpan', () {
-    var c = new CodeBuffer()
+    var c = CodeBuffer()
       ..indent()
       ..write('>')
       ..writeln('innermost');

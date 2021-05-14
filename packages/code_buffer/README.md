@@ -1,6 +1,8 @@
-# code_buffer
-[![Pub](https://img.shields.io/pub/v/code_buffer.svg)](https://pub.dartlang.org/packages/code_buffer)
-[![build status](https://travis-ci.org/thosakwe/code_buffer.svg)](https://travis-ci.org/thosakwe/code_buffer)
+# angel3_code_buffer
+[![version](https://img.shields.io/badge/pub-v2.12.4-brightgreen)](https://pub.dartlang.org/packages/angel3_code_buffer)
+[![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
+
+[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/code_buffer)
 
 An advanced StringBuffer geared toward generating code, and source maps.
 
@@ -9,7 +11,7 @@ In your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  code_buffer: ^1.0.0
+  angel3_code_buffer: ^2.0.0
 ```
 
 # Usage
@@ -17,7 +19,7 @@ Use a `CodeBuffer` just like any regular `StringBuffer`:
 
 ```dart
 String someFunc() {
-    var buf = new CodeBuffer();
+    var buf = CodeBuffer();
     buf
       ..write('hello ')
       ..writeln('world!');
@@ -29,9 +31,9 @@ However, a `CodeBuffer` supports indentation.
 
 ```dart
 void someOtherFunc() {
-  var buf = new CodeBuffer();
+  var buf = CodeBuffer();
   // Custom options...
-  var buf = new CodeBuffer(newline: '\r\n', space: '\t', trailingNewline: true);
+  var buf = CodeBuffer(newline: '\r\n', space: '\t', trailingNewline: true);
   
   // Any following lines will have an incremented indentation level...
   buf.indent();

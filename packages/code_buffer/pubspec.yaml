@@ -1,7 +1,7 @@
-name: code_buffer
+name: angel3_code_buffer
 version: 2.0.0
 description: An advanced StringBuffer geared toward generating code, and source maps.
-homepage: https://github.com/dukefirehawk/angel
+homepage: https://github.com/dukefirehawk/angel/tree/angel3/packages/code_buffer
 environment:
   sdk: '>=2.12.0 <3.0.0'
 dependencies:

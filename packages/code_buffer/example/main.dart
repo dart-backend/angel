@@ -1,4 +1,4 @@
-import 'package:code_buffer/code_buffer.dart';
+import 'package:angel3_code_buffer/angel3_code_buffer.dart';
 import 'package:test/test.dart';
 
 /// Use a `CodeBuffer` just like any regular `StringBuffer`:
@@ -16,7 +16,8 @@ void someOtherFunc() {
 
   // Custom options...
   // ignore: unused_local_variable
-  var customBuf = new CodeBuffer(newline: '\r\n', space: '\t', trailingNewline: true);
+  var customBuf =
+      new CodeBuffer(newline: '\r\n', space: '\t', trailingNewline: true);
 
   // Without whitespace..
   // ignore: unused_local_variable

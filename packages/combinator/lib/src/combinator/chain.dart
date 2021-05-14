@@ -61,12 +61,10 @@ class _Chain<T> extends ListParser<T> {
         successful = false;
       }
 
-      //TODO: To be looked at
       if (result.value != null) {
-        //print(result.value.runtimeType);
         results.add(result.value!);
       } else {
-        //print("NULL");
+        results.add("NULL" as T);
       }
 
       if (result.span != null) {

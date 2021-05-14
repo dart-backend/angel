@@ -1,9 +1,9 @@
 import 'package:charcode/charcode.dart';
-import 'package:code_buffer/code_buffer.dart';
+import 'package:angel3_code_buffer/angel3_code_buffer.dart';
 import 'package:test/test.dart';
 
-main() {
-  var buf = new CodeBuffer();
+void main() {
+  var buf = CodeBuffer();
   tearDown(buf.clear);
 
   test('writeCharCode', () {

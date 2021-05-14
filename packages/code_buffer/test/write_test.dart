@@ -1,9 +1,9 @@
 import 'package:charcode/charcode.dart';
-import 'package:code_buffer/code_buffer.dart';
 import 'package:test/test.dart';
+import 'package:angel3_code_buffer/angel3_code_buffer.dart';
 
 main() {
-  var buf = new CodeBuffer();
+  var buf = CodeBuffer();
   tearDown(buf.clear);
 
   test('writeCharCode', () {
@@ -17,7 +17,7 @@ main() {
   });
 
   test('custom space', () {
-    var b = new CodeBuffer(space: '+')
+    var b = CodeBuffer(space: '+')
       ..writeln('foo')
       ..indent()
       ..writeln('baz');
@@ -25,7 +25,7 @@ main() {
   });
 
   test('custom newline', () {
-    var b = new CodeBuffer(newline: 'N')
+    var b = CodeBuffer(newline: 'N')
       ..writeln('foo')
       ..indent()
       ..writeln('baz');
@@ -33,7 +33,7 @@ main() {
   });
 
   test('trailing newline', () {
-    var b = new CodeBuffer(trailingNewline: true)..writeln('foo');
+    var b = CodeBuffer(trailingNewline: true)..writeln('foo');
     expect(b.toString(), 'foo\n');
   });
 
