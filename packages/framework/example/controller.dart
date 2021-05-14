@@ -1,9 +1,9 @@
-import 'package:angel_container/mirrors.dart';
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_framework/http.dart';
+import 'package:angel3_container/mirrors.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_framework/http.dart';
 import 'package:logging/logging.dart';
 
-main() async {
+void main() async {
   // Logging set up/boilerplate
   Logger.root.onRecord.listen(print);
 

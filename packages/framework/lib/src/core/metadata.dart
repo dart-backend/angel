@@ -1,6 +1,6 @@
 library angel_framework.http.metadata;
 
-import 'package:angel_http_exception/angel_http_exception.dart';
+import 'package:angel3_http_exception/angel3_http_exception.dart';
 
 import 'hooked_service.dart' show HookedServiceEventListener;
 import 'request_context.dart';

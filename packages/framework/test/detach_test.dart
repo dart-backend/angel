@@ -1,7 +1,7 @@
 import 'dart:convert';
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_framework/http.dart';
-import 'package:mock_request/mock_request.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_framework/http.dart';
+import 'package:angel3_mock_request/angel3_mock_request.dart';
 import 'package:test/test.dart';
 
 void main() {

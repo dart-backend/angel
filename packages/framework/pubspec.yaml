@@ -1,59 +1,28 @@
-name: angel_framework
+name: angel3_framework
 version: 4.0.0
 description: A high-powered HTTP server with dependency injection, routing and much more.
-homepage: https://github.com/dukefirehawk/angel
-publish_to: none
+homepage: https://github.com/dukefirehawk/angel/tree/angel3/packages/framework
 environment:
   sdk: '>=2.12.0 <3.0.0'
 dependencies:
-  angel_container:
-    git: 
-      url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x_nnbd
-      path: packages/container/angel_container
-  angel_http_exception:
-    git: 
-      url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x_nnbd
-      path: packages/http_exception
-  angel_model:
-    git: 
-      url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x_nnbd
-      path: packages/model
-  angel_route:
-#    path: ../route
-    git: 
-      url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x_nnbd
-      path: packages/route
+  angel3_container: ^3.0.0
+  angel3_http_exception: ^3.0.0
+  angel3_model: ^3.0.0
+  angel3_route: ^5.0.0
+  angel3_combinator: ^2.0.0
+  angel3_merge_map: ^2.0.0
+  angel3_mock_request: ^2.0.0
   charcode: ^1.2.0
-  combinator:
-#    path: ../combinator
-    git: 
-      url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x_nnbd
-      path: packages/combinator
   file: ^6.1.0
   http_parser: ^4.0.0
   http_server: ^1.0.0
   http2: ^2.0.0
   logging: ^1.0.0
   matcher: ^0.12.10
-  merge_map:
-    git: 
-      url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x_nnbd
-      path: packages/merge_map
   meta: ^1.3.0
   mime: ^1.0.0
-  mock_request:
-    git: 
-      url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x_nnbd
-      path: packages/mock_request
   path: ^1.8.0
-  quiver: ^3.0.0
+  quiver: ^3.0.1
   recase: ^4.0.0
   stack_trace: ^1.10.0
   string_scanner: ^1.1.0
@@ -63,5 +32,5 @@ dependencies:
 dev_dependencies:
   http: ^0.13.1
   io: ^1.0.0
-  test: ^1.17.3
+  test: ^1.17.4
 

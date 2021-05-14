@@ -1,16 +1,17 @@
-# angel_framework
+# angel3_framework
+[![version](https://img.shields.io/badge/pub-v2.12.4-brightgreen)](https://pub.dartlang.org/packages/angel3_framework)
+[![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 
-[![Pub](https://img.shields.io/pub/v/angel_framework.svg)](https://pub.dartlang.org/packages/angel_framework)
-[![build status](https://travis-ci.org/angel-dart/framework.svg)](https://travis-ci.org/angel-dart/framework)
+[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/framework/LICENSE)
 
 A high-powered HTTP server with support for dependency injection, sophisticated routing and more.
 
-This is the core of the [Angel](https://github.com/angel-dart/angel) framework.
+This is the core of the [Angel](https://github.com/dukefirehawk/angel/tree/angel3) framework.
 To build real-world applications, please see the [homepage](https://angel-dart.dev).
 
 ```dart
-import 'package:angel_container/mirrors.dart';
-import 'package:angel_framework/angel_framework.dart';
+import 'package:angel3_container/mirrors.dart';
+import 'package:angel3_framework/angel3_framework.dart';
 
 main() async {
     var app = Angel(reflector: MirrorsReflector());

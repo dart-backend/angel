@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:angel_container/angel_container.dart';
+import 'package:angel3_container/angel3_container.dart';
 import 'package:http_parser/http_parser.dart';
 
 import '../core/core.dart';

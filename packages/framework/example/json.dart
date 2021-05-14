@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:isolate';
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_framework/http.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_framework/http.dart';
 
-main() async {
+void main() async {
   int x = 0;
   var c = Completer();
   var exit = ReceivePort();

@@ -1,9 +1,11 @@
 [![The Angel Framework](https://angel-dart.github.io/assets/images/logo.png)](https://angel-dart.dev)
 
 [![Gitter](https://img.shields.io/gitter/room/nwjs/nw.js.svg)](https://gitter.im/angel_dart/discussion)
-[![Pub](https://img.shields.io/pub/v/angel_framework.svg)](https://pub.dartlang.org/packages/angel_framework)
+[![Pub](https://img.shields.io/pub/v/angel_framework.svg)](https://pub.dartlang.org/packages/angel3_framework)
 [![Build status](https://travis-ci.org/angel-dart/framework.svg?branch=master)](https://travis-ci.org/angel-dart/framework)
 ![License](https://img.shields.io/github/license/angel-dart/framework.svg)
+[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/LICENSE)
+
 
 **A polished, production-ready backend framework in Dart.**
 

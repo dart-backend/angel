@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'package:angel_container/mirrors.dart';
-import 'package:angel_framework/angel_framework.dart' hide Header;
-import 'package:angel_framework/http2.dart';
+import 'package:angel3_container/mirrors.dart';
+import 'package:angel3_framework/angel3_framework.dart' hide Header;
+import 'package:angel3_framework/http2.dart';
 import 'package:collection/collection.dart' show IterableExtension;
 import 'package:http/src/multipart_file.dart' as http;
 import 'package:http/src/multipart_request.dart' as http;

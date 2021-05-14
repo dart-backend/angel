@@ -2,14 +2,14 @@
 [![version](https://img.shields.io/badge/pub-v2.12.4-brightgreen)](https://pub.dartlang.org/packages/angel3_mock_request)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 
-[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/mock_request)
+[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/mock_request/LICENSE)
 
 Manufacture dart:io HttpRequests, HttpResponses, HttpHeaders, etc.
 This makes it possible to test server-side Dart applications without
 having to ever bind to a port.
 
 This package was originally designed to testing
-[Angel](https://github.com/dukefirehawk/angel)
+[Angel](https://github.com/dukefirehawk/angel/tree/angel3)
 applications smoother, but works with any Dart-based server. :)
 
 # Usage

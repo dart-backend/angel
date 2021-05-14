@@ -1,12 +1,12 @@
 import 'dart:io';
-import 'package:angel_container/mirrors.dart';
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_framework/http.dart';
+import 'package:angel3_container/mirrors.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_framework/http.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:test/test.dart';
 
-main() {
+void main() {
   late Angel app;
   late http.Client client;
   late HttpServer server;

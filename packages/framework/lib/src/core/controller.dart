@@ -1,8 +1,8 @@
 library angel_framework.http.controller;
 
 import 'dart:async';
-import 'package:angel_container/angel_container.dart';
-import 'package:angel_route/angel_route.dart';
+import 'package:angel3_container/angel3_container.dart';
+import 'package:angel3_route/angel3_route.dart';
 import 'package:meta/meta.dart';
 import 'package:recase/recase.dart';
 import '../core/core.dart';

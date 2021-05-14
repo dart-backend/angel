@@ -1,8 +1,8 @@
 library angel_framework.http.service;
 
 import 'dart:async';
-import 'package:angel_http_exception/angel_http_exception.dart';
-import 'package:merge_map/merge_map.dart';
+import 'package:angel3_http_exception/angel3_http_exception.dart';
+import 'package:angel3_merge_map/angel3_merge_map.dart';
 import 'package:quiver/core.dart';
 import '../util.dart';
 import 'anonymous_service.dart';

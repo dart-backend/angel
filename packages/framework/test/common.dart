@@ -1,6 +1,6 @@
 library angel_framework.test.common;
 
-import 'package:angel_framework/angel_framework.dart';
+import 'package:angel3_framework/angel3_framework.dart';
 import 'package:matcher/matcher.dart';
 
 class Todo extends Model {

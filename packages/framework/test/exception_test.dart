@@ -1,9 +1,9 @@
-import 'package:angel_framework/angel_framework.dart';
+import 'package:angel3_framework/angel3_framework.dart';
 import 'dart:convert';
 import 'package:matcher/matcher.dart';
 import 'package:test/test.dart';
 
-main() {
+void main() {
   test('named constructors', () {
     expect(
         AngelHttpException.badRequest(), isException(400, '400 Bad Request'));

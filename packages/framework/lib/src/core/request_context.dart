@@ -11,7 +11,7 @@ import 'dart:io'
         HttpSession,
         InternetAddress;
 
-import 'package:angel_container/angel_container.dart';
+import 'package:angel3_container/angel3_container.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:http_server/http_server.dart';
 import 'package:meta/meta.dart';

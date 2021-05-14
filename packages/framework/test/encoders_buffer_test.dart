@@ -3,10 +3,10 @@ import 'dart:convert';
 import 'dart:io' show BytesBuilder;
 import 'dart:io';
 
-import 'package:angel_container/mirrors.dart';
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_framework/http.dart';
-import 'package:mock_request/mock_request.dart';
+import 'package:angel3_container/mirrors.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_framework/http.dart';
+import 'package:angel3_mock_request/angel3_mock_request.dart';
 import 'package:test/test.dart';
 
 Future<List<int>> getBody(MockHttpResponse rs) async {
@@ -16,7 +16,7 @@ Future<List<int>> getBody(MockHttpResponse rs) async {
   return bb.takeBytes();
 }
 
-main() {
+void main() {
   late Angel app;
 
   setUp(() {
