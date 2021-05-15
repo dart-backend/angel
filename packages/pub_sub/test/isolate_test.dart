@@ -1,6 +1,6 @@
 import 'dart:async';
-import 'package:pub_sub/pub_sub.dart';
-import 'package:pub_sub/isolate.dart';
+import 'package:angel3_pub_sub/angel3_pub_sub.dart';
+import 'package:angel3_pub_sub/isolate.dart';
 import 'package:test/test.dart';
 
 void main() {

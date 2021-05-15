@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:isolate';
 import 'package:uuid/uuid.dart';
-import '../../pub_sub.dart';
+import '../../angel3_pub_sub.dart';
 
 /// A [Adapter] implementation that communicates via [SendPort]s and [ReceivePort]s.
 class IsolateAdapter extends Adapter {

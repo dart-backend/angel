@@ -1,15 +1,14 @@
-name: pub_sub
+name: angel3_pub_sub
 version: 3.0.0
 description: Keep application instances in sync with a simple pub/sub API.
-homepage: https://github.com/thosakwe/pub_sub
-publish_to: none
+homepage: https://github.com/dukefirehawk/angel/tree/angel3/packages/pub_sub
 environment:
   sdk: '>=2.12.0 <3.0.0'
 dependencies:
   json_rpc_2: ^3.0.0
   stream_channel: ^2.1.0
   uuid: ^3.0.4
-  collection: ^1.15.0-nullsafety.4
+  collection: ^1.15.0
 dev_dependencies:
   pedantic: ^1.11.0
-  test: ^1.17.3
+  test: ^1.17.4
