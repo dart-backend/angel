@@ -4,7 +4,7 @@ library angel_client.flutter;
 import 'dart:async';
 import 'package:http/http.dart' as http;
 import 'base_angel_client.dart';
-export 'angel_client.dart';
+export 'angel3_client.dart';
 
 /// Queries an Angel server via REST.
 class Rest extends BaseAngelClient {

@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:convert' show Encoding;
-import 'package:angel_http_exception/angel_http_exception.dart';
+import 'package:angel3_http_exception/angel3_http_exception.dart';
 import 'dart:convert';
 import 'package:http/src/base_client.dart' as http;
 import 'package:http/src/base_request.dart' as http;
@@ -8,7 +8,7 @@ import 'package:http/src/request.dart' as http;
 import 'package:http/src/response.dart' as http;
 import 'package:http/src/streamed_response.dart' as http;
 import 'package:path/path.dart' as p;
-import 'angel_client.dart';
+import 'angel3_client.dart';
 
 const Map<String, String> _readHeaders = {'Accept': 'application/json'};
 const Map<String, String> _writeHeaders = {

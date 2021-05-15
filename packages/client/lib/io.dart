@@ -3,11 +3,11 @@ library angel_client.cli;
 
 import 'dart:async';
 import 'package:http/http.dart' as http;
-import 'package:json_god/json_god.dart' as god;
+import 'package:angel3_json_god/angel3_json_god.dart' as god;
 import 'package:path/path.dart' as p;
-import 'angel_client.dart';
+import 'angel3_client.dart';
 import 'base_angel_client.dart';
-export 'angel_client.dart';
+export 'angel3_client.dart';
 
 /// Queries an Angel server via REST.
 class Rest extends BaseAngelClient {

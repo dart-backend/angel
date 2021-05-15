@@ -6,10 +6,10 @@ import 'dart:async'
 import 'dart:html' show CustomEvent, Event, window;
 import 'dart:convert';
 import 'package:http/browser_client.dart' as http;
-import 'angel_client.dart';
+import 'angel3_client.dart';
 // import 'auth_types.dart' as auth_types;
 import 'base_angel_client.dart';
-export 'angel_client.dart';
+export 'angel3_client.dart';
 
 /// Queries an Angel server via REST.
 class Rest extends BaseAngelClient {

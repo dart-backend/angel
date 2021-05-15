@@ -1,4 +1,4 @@
-import 'package:angel_model/angel_model.dart';
+import 'package:angel3_model/angel3_model.dart';
 
 class Postcard extends Model {
   String? location;
