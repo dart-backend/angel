@@ -1,5 +1,5 @@
-# pretty\_logging
-[![version](https://img.shields.io/badge/pub-v3.0.2-brightgreen)](https://pub.dartlang.org/packages/angel3_pretty_logging)
+# angel3_pretty_logging
+[![version](https://img.shields.io/badge/pub-v3.0.3-brightgreen)](https://pub.dartlang.org/packages/angel3_pretty_logging)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 [![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
 
