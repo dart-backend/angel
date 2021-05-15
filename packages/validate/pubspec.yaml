@@ -1,6 +1,6 @@
 name: angel3_validate
 description: Cross-platform request body validation library based on `matcher`.
-version: 4.0.0
+version: 4.0.1
 homepage: https://github.com/dukefirehawk/angel/tree/angel3/packages/validate
 environment:
   sdk: '>=2.12.0 <3.0.0'
