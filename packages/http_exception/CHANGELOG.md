@@ -1,10 +1,12 @@
 # 3.0.2
 * Updated LICENSE link
+
 # 3.0.1
 * Updated README
 
 # 3.0.0
 * Migrated to support Dart SDK 2.12.x NNBD
+
 # 2.0.0
 * Migrated to work with Dart SDK 2.12.x Non NNBD
 
