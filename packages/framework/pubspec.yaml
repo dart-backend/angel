@@ -1,5 +1,5 @@
 name: angel3_framework
-version: 4.0.0
+version: 4.0.1
 description: A high-powered HTTP server with dependency injection, routing and much more.
 homepage: https://github.com/dukefirehawk/angel/tree/angel3/packages/framework
 environment:
