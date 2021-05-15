@@ -3,7 +3,7 @@ import 'models/book.dart';
 
 const String deathlyHallowsIsbn = '0-545-01022-5';
 
-main() {
+void main() {
   var deathlyHallows = Book(
       id: '0',
       author: 'J.K. Rowling',
@@ -21,8 +21,8 @@ main() {
       age: 51,
       books: [deathlyHallows],
       newestBook: deathlyHallows);
-  Map<dynamic, dynamic> serializedJkRowling = authorSerializer.encode(jkRowling);
-  Map<dynamic, dynamic>? deathlyHallowsMap = bookSerializer.encode(deathlyHallows);
+  var serializedJkRowling = authorSerializer.encode(jkRowling);
+  var deathlyHallowsMap = bookSerializer.encode(deathlyHallows);
   print('J.K. Rowling: $jkRowling');
 
   var library = Library(collection: {deathlyHallowsIsbn: deathlyHallows});
@@ -63,7 +63,7 @@ main() {
 
     test('heeds canDeserialize', () {
       var map = Map.from(serializedJkRowling)..['obscured'] = 'foo';
-      Author author = authorSerializer.decode(map);
+      var author = authorSerializer.decode(map);
       expect(author.obscured, 'foo');
     });
 

@@ -21,6 +21,7 @@ class Todo extends _Todo {
         text: text ?? this.text, completed: completed ?? this.completed);
   }
 
+  @override
   bool operator ==(other) {
     return other is _Todo && other.text == text && other.completed == completed;
   }
@@ -32,7 +33,7 @@ class Todo extends _Todo {
 
   @override
   String toString() {
-    return "Todo(text=$text, completed=$completed)";
+    return 'Todo(text=$text, completed=$completed)';
   }
 
   Map<String, dynamic> toJson() {
@@ -64,9 +65,11 @@ class TodoSerializer extends Codec<Todo, Map> {
   const TodoSerializer();
 
   @override
-  get encoder => const TodoEncoder();
+  TodoEncoder get encoder => const TodoEncoder();
+
   @override
-  get decoder => const TodoDecoder();
+  TodoDecoder get decoder => const TodoDecoder();
+
   static Todo fromMap(Map map) {
     return Todo(
         text: map['text'] as String?, completed: map['completed'] as bool?);

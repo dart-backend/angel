@@ -1,7 +1,7 @@
 library angel_serialize.test.models.book;
 
-import 'package:angel_model/angel_model.dart';
-import 'package:angel_serialize/angel_serialize.dart';
+import 'package:angel3_model/angel3_model.dart';
+import 'package:angel3_serialize/angel3_serialize.dart';
 import 'package:collection/collection.dart';
 import 'package:meta/meta.dart';
 part 'book.g.dart';

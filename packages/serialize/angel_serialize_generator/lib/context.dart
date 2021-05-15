@@ -1,7 +1,7 @@
 import 'package:analyzer/dart/constant/value.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
-import 'package:angel_serialize/angel_serialize.dart';
+import 'package:angel3_serialize/angel3_serialize.dart';
 import 'package:code_builder/code_builder.dart';
 import 'package:recase/recase.dart';
 import 'package:source_gen/source_gen.dart';

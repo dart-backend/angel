@@ -1,7 +1,7 @@
 import 'dart:convert';
-import 'package:angel_serialize/angel_serialize.dart';
+import 'package:angel3_serialize/angel3_serialize.dart';
 import 'package:collection/collection.dart';
-import 'package:meta/meta.dart';
+//import 'package:meta/meta.dart';
 part 'has_map.g.dart';
 
 Map? _fromString(v) => json.decode(v.toString()) as Map?;

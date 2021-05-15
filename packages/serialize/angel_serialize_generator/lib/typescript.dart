@@ -1,4 +1,4 @@
-part of angel_serialize_generator;
+part of angel3_serialize_generator;
 
 class TypeScriptDefinitionBuilder implements Builder {
   final bool autoSnakeCaseNames;

@@ -1,4 +1,4 @@
-part of angel_serialize_generator;
+part of angel3_serialize_generator;
 
 class SerializerGenerator extends GeneratorForAnnotation<Serializable> {
   final bool autoSnakeCaseNames;
@@ -13,7 +13,7 @@ class SerializerGenerator extends GeneratorForAnnotation<Serializable> {
     }
 
     var ctx = await buildContext(element as ClassElement, annotation, buildStep,
-        await buildStep.resolver, autoSnakeCaseNames != false);
+        buildStep.resolver, autoSnakeCaseNames != false);
 
     var serializers = annotation.peek('serializers')?.listValue ?? [];
 
@@ -44,29 +44,28 @@ class SerializerGenerator extends GeneratorForAnnotation<Serializable> {
       file.body.add(Code('''
 const ${pascal}Serializer ${camel}Serializer = ${pascal}Serializer();
 
-class ${pascal}Encoder extends Converter<${pascal}, Map> {
+class ${pascal}Encoder extends Converter<$pascal, Map> {
   const ${pascal}Encoder();
 
   @override
-  Map convert(${pascal} model) => ${pascal}Serializer.toMap(model);
+  Map convert($pascal model) => ${pascal}Serializer.toMap(model);
 }
 
-class ${pascal}Decoder extends Converter<Map, ${pascal}> {
+class ${pascal}Decoder extends Converter<Map, $pascal> {
   const ${pascal}Decoder();
   
   @override
-  ${pascal} convert(Map map) => ${pascal}Serializer.fromMap(map);
+  $pascal convert(Map map) => ${pascal}Serializer.fromMap(map);
 }
     '''));
     }
 
     file.body.add(Class((clazz) {
-      clazz..name = '${pascal}Serializer';
+      clazz.name = '${pascal}Serializer';
       if (ctx.constructorParameters.isEmpty) {
-        clazz
-          ..extend = TypeReference((b) => b
-            ..symbol = 'Codec'
-            ..types.addAll([ctx.modelClassType, refer('Map')]));
+        clazz.extend = TypeReference((b) => b
+          ..symbol = 'Codec'
+          ..types.addAll([ctx.modelClassType, refer('Map')]));
 
         // Add constructor, Codec impl, etc.
         clazz.constructors.add(Constructor((b) => b..constant = true));
@@ -120,7 +119,7 @@ class ${pascal}Decoder extends Converter<Map, ${pascal}> {
       });
 
       buf.writeln('return {');
-      int i = 0;
+      var i = 0;
 
       // Add named parameters
       for (var field in ctx.fields) {
@@ -133,7 +132,7 @@ class ${pascal}Decoder extends Converter<Map, ${pascal}> {
 
         if (i++ > 0) buf.write(', ');
 
-        String serializedRepresentation = 'model.${field.name}';
+        var serializedRepresentation = 'model.${field.name}';
 
         String serializerToMap(ReCase rc, String value) {
           // if (rc.pascalCase == ctx.modelClassName) {
@@ -143,7 +142,8 @@ class ${pascal}Decoder extends Converter<Map, ${pascal}> {
         }
 
         if (ctx.fieldInfo[field.name]?.serializer != null) {
-          var name = MirrorSystem.getName(ctx.fieldInfo[field.name]!.serializer!);
+          var name =
+              MirrorSystem.getName(ctx.fieldInfo[field.name]!.serializer!);
           serializedRepresentation = '$name(model.${field.name})';
         }
 
@@ -236,7 +236,7 @@ class ${pascal}Decoder extends Converter<Map, ${pascal}> {
       });
 
       buf.writeln('return ${ctx.modelClassName}(');
-      int i = 0;
+      var i = 0;
 
       for (var param in ctx.constructorParameters) {
         if (i++ > 0) buf.write(', ');
@@ -252,7 +252,7 @@ class ${pascal}Decoder extends Converter<Map, ${pascal}> {
 
         if (i++ > 0) buf.write(', ');
 
-        String deserializedRepresentation =
+        var deserializedRepresentation =
             "map['$alias'] as ${typeToString(type)}";
 
         String? defaultValue = 'null';
@@ -271,7 +271,7 @@ class ${pascal}Decoder extends Converter<Map, ${pascal}> {
         } else if (dateTimeTypeChecker.isAssignableFromType(type)) {
           deserializedRepresentation = "map['$alias'] != null ? "
               "(map['$alias'] is DateTime ? (map['$alias'] as DateTime) : DateTime.parse(map['$alias'].toString()))"
-              " : $defaultValue";
+              ' : $defaultValue';
         }
 
         // Serialize model classes via `XSerializer.toMap`
@@ -279,15 +279,15 @@ class ${pascal}Decoder extends Converter<Map, ${pascal}> {
           var rc = ReCase(type.name!);
           deserializedRepresentation = "map['$alias'] != null"
               " ? ${rc.pascalCase}Serializer.fromMap(map['$alias'] as Map)"
-              " : $defaultValue";
+              ' : $defaultValue';
         } else if (type is InterfaceType) {
           if (isListOfModelType(type)) {
             var rc = ReCase(type.typeArguments[0].name!);
             deserializedRepresentation = "map['$alias'] is Iterable"
                 " ? List.unmodifiable(((map['$alias'] as Iterable)"
-                ".whereType<Map>())"
-                ".map(${rc.pascalCase}Serializer.fromMap))"
-                " : $defaultValue";
+                '.whereType<Map>())'
+                '.map(${rc.pascalCase}Serializer.fromMap))'
+                ' : $defaultValue';
           } else if (isMapToModelType(type)) {
             var rc = ReCase(type.typeArguments[1].name!);
             deserializedRepresentation = '''

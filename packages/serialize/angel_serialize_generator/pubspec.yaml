@@ -1,27 +1,14 @@
-name: angel_serialize_generator
+name: angel3_serialize_generator
 version: 4.0.0
 description: Model serialization generators, designed for use with Angel. Combine with angel_serialize for flexible modeling.
-homepage: https://github.com/dukefirehawk/angel
-publish_to: none
+homepage: https://github.com/dukefirehawk/angel/tree/angel3/packages/serialize/angel_serialize_generator
 environment:
   sdk: '>=2.12.0 <3.0.0'
 dependencies:
   analyzer: ^1.5.0
-  angel_model:
-    git: 
-      url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x_nnbd
-      path: packages/model
-  angel_serialize:
-    git: 
-      url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x_nnbd
-      path: packages/serialize/angel_serialize
-  code_buffer:
-    git: 
-      url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x_nnbd
-      path: packages/code_buffer
+  angel3_model: ^3.0.0
+  angel3_serialize: ^4.0.0
+  angel3_code_buffer: ^2.0.0
   build: ^2.0.1
   build_config: ^1.0.0
   code_builder: ^4.0.0
@@ -34,7 +21,4 @@ dev_dependencies:
   build_runner: ^2.0.1
   collection: ^1.15.0
   pedantic: ^1.11.0
-  test: ^1.17.3
-# dependency_overrides:
-#   angel_serialize:
-#     path: ../angel_serialize
+  test: ^1.17.4
