@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:isolate';
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_production/angel_production.dart';
-import 'package:pub_sub/pub_sub.dart' as pub_sub;
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_production/angel3_production.dart';
+import 'package:angel3_pub_sub/angel3_pub_sub.dart' as pub_sub;
 
 void main(List<String> args) => Runner('example', configureServer).run(args);
 

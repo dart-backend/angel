@@ -1,5 +1,9 @@
-# production
-[![Pub](https://img.shields.io/pub/v/angel_production.svg)](https://pub.dartlang.org/packages/angel_production)
+# angel3_production
+[![version](https://img.shields.io/badge/pub-v3.0.0-brightgreen)](https://pub.dartlang.org/packages/angel3_production)
+[![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
+[![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
+
+[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/production/LICENSE)
 
 Helpers for concurrency, message-passing, rotating loggers, and other production functionality in Angel.
 
@@ -19,8 +23,8 @@ application:
 ```dart
 import 'dart:async';
 import 'dart:isolate';
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_production/angel_production.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_production/angel3_production.dart';
 
 main(List<String> args) => Runner('example', configureServer).run(args);
 
@@ -42,7 +46,7 @@ infrastructure.
 When combined with `systemd`, deploying Angel applications on Linux can be very simple.
 
 ## Message Passing
-The `Runner` class uses [`package:pub_sub`](https://github.com/thosakwe/pub_sub) to coordinate
+The `Runner` class uses [`package:angel3_pub_sub`](https://github.com/dukefirehawk/angel/tree/angel3/packages/pub_sub) to coordinate
 message passing between isolates.
 
 When one isolate sends a message, all other isolates will
@@ -80,7 +84,7 @@ print('This is instance #${instanceInfo.id}');
 The `Runner` class supplies options like the following:
 
 ```
-Tobes-MacBook-Air:production thosakwe$ dart example/main.dart --help
+Prod-MacBook-Air:production appuser$ dart example/main.dart --help
 ____________   ________________________ 
 ___    |__  | / /_  ____/__  ____/__  / 
 __  /| |_   |/ /_  / __ __  __/  __  /  

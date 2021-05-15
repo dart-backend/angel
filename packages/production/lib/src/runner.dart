@@ -1,16 +1,16 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:isolate';
-import 'package:angel_container/angel_container.dart';
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_framework/http.dart';
-import 'package:angel_framework/http2.dart';
+import 'package:angel3_container/angel3_container.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_framework/http.dart';
+import 'package:angel3_framework/http2.dart';
 import 'package:args/args.dart';
 import 'package:io/ansi.dart';
 import 'package:io/io.dart';
 import 'package:logging/logging.dart';
-import 'package:pub_sub/isolate.dart' as pub_sub;
-import 'package:pub_sub/pub_sub.dart' as pub_sub;
+import 'package:angel3_pub_sub/isolate.dart' as pub_sub;
+import 'package:angel3_pub_sub/angel3_pub_sub.dart' as pub_sub;
 import 'instance_info.dart';
 import 'options.dart';
 
