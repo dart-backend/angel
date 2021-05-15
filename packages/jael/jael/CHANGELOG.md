@@ -1,5 +1,6 @@
 # 4.0.0
 * Migrated to support Dart SDK 2.12.x NNBD
+* Renamed jael to jael3
 
 # 3.0.0
 * Migrated to work with Dart SDK 2.12.x Non NNBD

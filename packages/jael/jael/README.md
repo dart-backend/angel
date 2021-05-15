@@ -1,9 +1,9 @@
-# jael2
-[![version](https://img.shields.io/badge/pub-v4.0.0-brightgreen)](https://pub.dartlang.org/packages/jael2)
+# jael3
+[![version](https://img.shields.io/badge/pub-v4.0.0-brightgreen)](https://pub.dartlang.org/packages/jael3)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 [![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
 
-[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/jael/jael2/LICENSE)
+[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/jael/jael3/LICENSE)
 
 A simple server-side HTML templating engine for Dart.
 
@@ -14,7 +14,7 @@ In your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  jael2: ^4.0.0
+  jael3: ^4.0.0
 ```
 
 # API
@@ -50,4 +50,4 @@ void myFunction() {
 ```
 
 Pre-processing (i.e. handling of blocks and includes) is handled
-by `package:jael_preprocessor.`.
+by `package:jael3_preprocessor.`.

@@ -1,7 +1,7 @@
-name: jael2
+name: jael3
 version: 4.0.0
 description:  A simple server-side HTML templating engine for Dart. Comparable to Blade or Liquid.
-homepage: https://github.com/dukefirehawk/angel/tree/angel3/packages/jael/jael2
+homepage: https://github.com/dukefirehawk/angel/tree/angel3/packages/jael/jael3
 environment:
   sdk: '>=2.12.0 <3.0.0'
 dependencies:
