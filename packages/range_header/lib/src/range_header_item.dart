@@ -1,5 +1,6 @@
 import 'dart:math';
-import 'package:quiver_hashcode/hashcode.dart';
+
+import 'package:quiver/core.dart';
 
 /// Represents an individual range, with an optional start index and optional end index.
 class RangeHeaderItem implements Comparable<RangeHeaderItem> {
@@ -14,8 +15,8 @@ class RangeHeaderItem implements Comparable<RangeHeaderItem> {
   /// Joins two items together into the largest possible range.
   RangeHeaderItem consolidate(RangeHeaderItem other) {
     if (!(other.overlaps(this)))
-      throw new ArgumentError('The two ranges do not overlap.');
-    return new RangeHeaderItem(min(start, other.start), max(end, other.end));
+      throw ArgumentError('The two ranges do not overlap.');
+    return RangeHeaderItem(min(start, other.start), max(end, other.end));
   }
 
   @override
@@ -77,7 +78,7 @@ class RangeHeaderItem implements Comparable<RangeHeaderItem> {
 
     if (end == -1) {
       if (totalSize == null) {
-        throw new UnsupportedError(
+        throw UnsupportedError(
             'If the end of this range is unknown, `totalSize` must not be null.');
       } else {
         // if (end == totalSize - 1) {

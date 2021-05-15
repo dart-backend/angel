@@ -1,7 +1,9 @@
-# range_header
+# angel3_range_header
+[![version](https://img.shields.io/badge/pub-v3.0.0-brightgreen)](https://pub.dartlang.org/packages/angel3_range_header)
+[![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
+[![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
 
-[![Pub](https://img.shields.io/pub/v/range_header.svg)](https://pub.dartlang.org/packages/range_header)
-[![build status](https://travis-ci.org/thosakwe/range_header.svg)](https://travis-ci.org/thosakwe/range_header)
+[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/range_header/LICENSE)
 
 Range header parser for Dart.
 
@@ -10,7 +12,7 @@ In your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  range_header: ^2.0.0
+  angel3_range_header: ^3.0.0
 ```
 
 # Usage
@@ -18,11 +20,11 @@ dependencies:
 ```dart
 handleRequest(HttpRequest request) async {
   // Parse the header
-  var header = new RangeHeader.parse(request.headers.value(HttpHeaders.rangeHeader));
+  var header = RangeHeader.parse(request.headers.value(HttpHeaders.rangeHeader));
 
   // Optimize/canonicalize it
   var items = RangeHeader.foldItems(header.items);
-  header = new RangeHeader(items);
+  header = RangeHeader(items);
 
   // Get info
   header.items;
@@ -30,7 +32,7 @@ handleRequest(HttpRequest request) async {
   print(header.items[0].toContentRange(fileSize));
 
   // Serve the file
-  var transformer = new RangeHeaderTransformer(header);
+  var transformer = RangeHeaderTransformer(header);
   await file.openRead().transform(transformer).pipe(request.response);
 }
 ```

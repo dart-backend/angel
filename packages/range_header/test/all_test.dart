@@ -1,6 +1,6 @@
 import 'package:test/test.dart';
 
-import '../lib/range_header.dart';
+import '../lib/angel3_range_header.dart';
 import '../lib/src/range_header.dart';
 
 final Matcher throwsRangeParseException =
@@ -9,7 +9,7 @@ final Matcher throwsRangeParseException =
 final Matcher throwsInvalidRangeHeaderException =
     throwsA(const TypeMatcher<InvalidRangeHeaderException>());
 
-main() {
+void main() {
   group('one item', () {
     test('start and end', () {
       var r = RangeHeader.parse('bytes 1-200');
