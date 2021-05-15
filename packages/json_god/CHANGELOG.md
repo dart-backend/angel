@@ -1,3 +1,6 @@
+# 4.0.3
+* Fixed static analysis errors
+
 # 4.0.2
 * Updated pubspec description
 * Fixed static analysis errors

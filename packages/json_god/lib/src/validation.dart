@@ -7,19 +7,19 @@ class JsonValidationError implements Exception {
   final String cause;
 
   const JsonValidationError(
-      String this.cause, this.invalidData); //, Schema this.schema);
+      this.cause, this.invalidData); //, Schema this.schema);
 }
 
 /// Specifies a schema to validate a class with.
 class WithSchema {
   final Map schema;
 
-  const WithSchema(Map this.schema);
+  const WithSchema(this.schema);
 }
 
 /// Specifies a schema to validate a class with.
 class WithSchemaUrl {
   final String schemaUrl;
 
-  const WithSchemaUrl(String this.schemaUrl);
+  const WithSchemaUrl(this.schemaUrl);
 }
