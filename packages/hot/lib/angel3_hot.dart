@@ -4,14 +4,14 @@ import 'dart:convert';
 import 'dart:developer' as dev;
 import 'dart:io';
 import 'dart:isolate';
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_framework/http.dart';
-import 'package:angel_websocket/server.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_framework/http.dart';
+import 'package:angel3_websocket/server.dart';
 import 'package:charcode/ascii.dart';
 import 'package:glob/glob.dart';
 import 'package:glob/list_local_fs.dart';
-import 'package:html_builder/elements.dart';
-import 'package:html_builder/html_builder.dart';
+import 'package:angel3_html_builder/elements.dart';
+import 'package:angel3_html_builder/angel3_html_builder.dart';
 import 'package:io/ansi.dart';
 import 'package:path/path.dart' as p;
 import 'package:vm_service/vm_service.dart' as vm;
@@ -193,7 +193,7 @@ class HotReloader {
     }
 
     _onChange.stream
-        //.transform(new _Debounce(new Duration(seconds: 1)))
+        //.transform( _Debounce( Duration(seconds: 1)))
         .listen(_handleWatchEvent);
 
     while (_requestQueue.isNotEmpty) {

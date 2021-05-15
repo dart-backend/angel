@@ -1,20 +1,24 @@
-# hot
-[![Pub](https://img.shields.io/pub/v/angel_hot.svg)](https://pub.dartlang.org/packages/angel_hot)
+# angel3_hot
+[![version](https://img.shields.io/badge/pub-v4.0.0-brightgreen)](https://pub.dartlang.org/packages/angel3_hot)
+[![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
+[![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
+
+[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/hot/LICENSE)
 
 ![Screenshot of terminal](screenshots/screenshot.png)
 
 Supports *hot reloading* of Angel servers on file changes. This is faster and
 more reliable than merely reactively restarting a `Process`.
 
-This package only works with the [Angel framework](https://github.com/angel-dart/angel).
+This package only works with the [Angel framework](https://github.com/dukefirehawk/angel/tree/angel3).
 
 # Installation
 In your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  angel_framework: ^2.0.0-alpha
-  angel_hot: ^2.0.0
+  angel3_framework: ^4.0.0
+  angel3_hot: ^4.0.0
 ```
 
 # Usage

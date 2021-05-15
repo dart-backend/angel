@@ -1,26 +1,13 @@
-name: angel_hot
+name: angel3_hot
 description: Supports hot reloading/hot code push of Angel servers on file changes.
 version: 4.0.0
-homepage: https://github.com/dukefirehawk/angel
-publish_to: none
+homepage: https://github.com/dukefirehawk/angel/tree/angel3/packages/hot
 environment:
   sdk: '>=2.12.0 <3.0.0'
 dependencies:
-  angel_framework:
-    git: 
-      url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x_nnbd
-      path: packages/framework
-  angel_websocket:
-   git: 
-      url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x_nnbd
-      path: packages/websocket
-  html_builder:
-    git: 
-      url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x_nnbd
-      path: packages/html_builder
+  angel3_framework: ^4.0.0
+  angel3_websocket: ^4.0.0
+  angel3_html_builder: ^2.0.0
   charcode: ^1.2.0
   glob: ^2.0.1
   io: ^1.0.0
