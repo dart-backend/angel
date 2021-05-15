@@ -1,3 +1,6 @@
+# 4.0.2
+* Updated README
+
 # 4.0.1
 * Updated README
 

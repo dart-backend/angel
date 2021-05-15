@@ -160,6 +160,7 @@ abstract class ResponseContext<RawResponse>
   }
 
   /// Prevents more data from being written to the response, and locks it entire from further editing.
+  @override
   Future<void> close() {
     if (buffer is LockableBytesBuilder) {
       (buffer as LockableBytesBuilder).lock();
@@ -326,9 +327,7 @@ abstract class ResponseContext<RawResponse>
         : MediaType.parse(mimeType);
 
     if (correspondingRequest!.method != 'HEAD') {
-      return this
-          .addStream(file.openRead().cast<List<int>>())
-          .then((_) => this.close());
+      return addStream(file.openRead().cast<List<int>>()).then((_) => close());
     }
   }
 
@@ -356,6 +355,7 @@ abstract class ResponseContext<RawResponse>
   }
 
   /// Writes data to the response.
+  @override
   void write(value, {Encoding? encoding}) {
     encoding ??= utf8;
 

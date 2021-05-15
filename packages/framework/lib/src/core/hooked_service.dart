@@ -45,7 +45,7 @@ class HookedService<Id, Data, T extends Service<Id, Data>>
 
   HookedService(this.inner) {
     // Clone app instance
-    if (inner.app != null) this.app = inner.app;
+    if (inner.app != null) app = inner.app;
   }
 
   @override
@@ -131,6 +131,7 @@ class HookedService<Id, Data, T extends Service<Id, Data>>
     applyListeners(inner.remove, afterRemoved, true);
   }
 
+  @override
   List<RequestHandler> get bootstrappers =>
       List<RequestHandler>.from(super.bootstrappers)
         ..add((RequestContext req, ResponseContext res) {
@@ -140,6 +141,7 @@ class HookedService<Id, Data, T extends Service<Id, Data>>
           return true;
         });
 
+  @override
   void addRoutes([Service? s]) {
     super.addRoutes(s ?? inner);
   }
@@ -509,13 +511,13 @@ class HookedServiceEvent<Id, Data, T extends Service<Id, Data>> {
   Service? getService(Pattern path) => service.app!.findService(path);
 
   bool _canceled = false;
-  String _eventName;
+  final String _eventName;
   Id? _id;
-  bool _isAfter;
+  final bool _isAfter;
   Data? data;
   Map<String, dynamic>? _params;
-  RequestContext? _request;
-  ResponseContext? _response;
+  final RequestContext? _request;
+  final ResponseContext? _response;
   var result;
 
   String get eventName => _eventName;

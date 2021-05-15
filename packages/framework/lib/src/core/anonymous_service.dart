@@ -13,12 +13,15 @@ class AnonymousService<Id, Data> extends Service<Id, Data> {
   FutureOr<Data> Function(Id, Data, [Map<String, dynamic>?])? _modify, _update;
 
   AnonymousService(
-      {FutureOr<List<Data>> index([Map<String, dynamic>? params])?,
-      FutureOr<Data> read(Id id, [Map<String, dynamic>? params])?,
-      FutureOr<Data> create(Data data, [Map<String, dynamic>? params])?,
-      FutureOr<Data> modify(Id id, Data data, [Map<String, dynamic>? params])?,
-      FutureOr<Data> update(Id id, Data data, [Map<String, dynamic>? params])?,
-      FutureOr<Data> remove(Id id, [Map<String, dynamic>? params])?,
+      {FutureOr<List<Data>> Function([Map<String, dynamic>? params])? index,
+      FutureOr<Data> Function(Id id, [Map<String, dynamic>? params])? read,
+      FutureOr<Data> Function(Data data, [Map<String, dynamic>? params])?
+          create,
+      FutureOr<Data> Function(Id id, Data data, [Map<String, dynamic>? params])?
+          modify,
+      FutureOr<Data> Function(Id id, Data data, [Map<String, dynamic>? params])?
+          update,
+      FutureOr<Data> Function(Id id, [Map<String, dynamic>? params])? remove,
       FutureOr<Data> Function(RequestContext, ResponseContext)? readData})
       : super(readData: readData) {
     _index = index;

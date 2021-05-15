@@ -145,7 +145,9 @@ abstract class RequestContext<RawRequest> {
   List? get bodyAsList {
     if (!hasParsedBody) {
       throw StateError('The request body has not been parsed yet.');
-    } else if (_bodyList == null) {
+      // TODO: Relook at this
+      //} else if (_bodyList == null) {
+    } else if (_bodyList.isEmpty) {
       throw StateError('The request body, $_bodyObject, is not a List.');
     }
 
@@ -258,9 +260,8 @@ abstract class RequestContext<RawRequest> {
       _hasParsedBody = true;
 
       var contentBody = body;
-      if (contentBody == null) {
-        contentBody = Stream.empty();
-      }
+      //TODO: Relook at this
+      contentBody ??= Stream.empty();
 
       if (contentType.type == 'application' && contentType.subtype == 'json') {
         _uploadedFiles = [];

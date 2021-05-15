@@ -126,9 +126,7 @@ class Http2RequestContext extends RequestContext<ServerTransportStream?> {
     // Apply session
     var dartSessId = cookies.firstWhereOrNull((c) => c.name == 'DARTSESSID');
 
-    if (dartSessId == null) {
-      dartSessId = Cookie('DARTSESSID', uuid.v4());
-    }
+    dartSessId ??= Cookie('DARTSESSID', uuid.v4());
 
     req._session = sessions.putIfAbsent(
       dartSessId.value,

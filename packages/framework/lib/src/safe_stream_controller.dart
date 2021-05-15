@@ -16,7 +16,7 @@ abstract class SafeCtrl<T> {
 
   Future close();
 
-  void whenInitialized(void callback());
+  void whenInitialized(void Function() callback);
 }
 
 class _SingleSafeCtrl<T> implements SafeCtrl<T> {
@@ -60,7 +60,7 @@ class _SingleSafeCtrl<T> implements SafeCtrl<T> {
   }
 
   @override
-  void whenInitialized(void callback()) {
+  void whenInitialized(void Function() callback) {
     if (!_initialized) {
       if (!_hasListener) {
         _initializer = callback;
@@ -110,7 +110,7 @@ class _BroadcastSafeCtrl<T> implements SafeCtrl<T> {
   }
 
   @override
-  void whenInitialized(void callback()) {
+  void whenInitialized(void Function() callback) {
     if (!_initialized) {
       if (_listeners <= 0) {
         _initializer = callback;

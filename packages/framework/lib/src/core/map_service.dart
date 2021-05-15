@@ -71,8 +71,7 @@ class MapService extends Service<String?, Map<String, dynamic>> {
       [Map<String, dynamic>? params]) {
     return Future.value(items.firstWhere(_matchesId(id),
         orElse: (() => throw AngelHttpException.notFound(
-                message: 'No record found for ID $id'))
-            as Map<String, dynamic> Function()?));
+            message: 'No record found for ID $id'))));
   }
 
   @override
@@ -112,9 +111,8 @@ class MapService extends Service<String?, Map<String, dynamic>> {
       var result = Map<String, dynamic>.from(item)..addAll(data);
 
       if (autoIdAndDateFields == true) {
-        result
-          ..[autoSnakeCaseNames == false ? 'updatedAt' : 'updated_at'] =
-              DateTime.now().toIso8601String();
+        result[autoSnakeCaseNames == false ? 'updatedAt' : 'updated_at'] =
+            DateTime.now().toIso8601String();
       }
       return Future.value(items[idx] = result);
     });

@@ -20,7 +20,7 @@ T? getAnnotation<T>(obj, Reflector? reflector) {
       var methodMirror = reflector.reflectFunction(obj)!;
       return matchingAnnotation<T>(methodMirror.annotations);
     } else {
-      var classMirror = reflector.reflectClass(obj.runtimeType as Type)!;
+      var classMirror = reflector.reflectClass(obj.runtimeType)!;
       return matchingAnnotation<T>(classMirror.annotations);
     }
   }

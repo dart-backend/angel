@@ -4,7 +4,7 @@ import 'package:string_scanner/string_scanner.dart';
 /// Parses a string into a [RegExp] that is matched against hostnames.
 class HostnameSyntaxParser {
   final SpanScanner _scanner;
-  var _safe = RegExp(r"[0-9a-zA-Z-_:]+");
+  final _safe = RegExp(r"[0-9a-zA-Z-_:]+");
 
   HostnameSyntaxParser(String hostname)
       : _scanner = SpanScanner(hostname, sourceUrl: hostname);

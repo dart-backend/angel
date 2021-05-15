@@ -66,7 +66,8 @@ class Routable extends Router<RequestHandler> {
   /// A set of [Service] objects that have been mapped into routes.
   Map<Pattern, Service> get services => _services;
 
-  StreamController<Service> _onService = StreamController<Service>.broadcast();
+  final StreamController<Service> _onService =
+      StreamController<Service>.broadcast();
 
   /// Fired whenever a service is added to this instance.
   ///
@@ -108,9 +109,7 @@ class Routable extends Router<RequestHandler> {
     }
 
     final handlerSequence = <RequestHandler>[];
-    if (middleware != null) {
-      handlerSequence.addAll(middleware);
-    }
+    handlerSequence.addAll(middleware);
     handlerSequence.addAll(handlers);
 
     return super.addRoute(method, path.toString(), handler,

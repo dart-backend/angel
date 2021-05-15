@@ -168,7 +168,7 @@ class _FakeServerSocket extends Stream<Socket> implements ServerSocket {
 
   @override
   Future<ServerSocket> close() async {
-    (_ctrl.close());
+    await (_ctrl.close());
     return this;
   }
 
@@ -217,10 +217,13 @@ class _AngelHttp2ServerSocket extends Stream<SecureSocket>
     );
   }
 
+  @override
   InternetAddress get address => socket.address;
 
+  @override
   int get port => socket.port;
 
+  @override
   Future<SecureServerSocket> close() {
     _sub?.cancel();
     _fake.close();

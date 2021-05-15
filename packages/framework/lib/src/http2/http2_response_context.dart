@@ -9,6 +9,7 @@ class Http2ResponseContext extends ResponseContext<ServerTransportStream> {
   final Angel? app;
   final ServerTransportStream stream;
 
+  @override
   ServerTransportStream get rawResponse => stream;
 
   LockableBytesBuilder? _buffer;

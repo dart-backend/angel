@@ -38,6 +38,7 @@ class HttpRequestContext extends RequestContext<HttpRequest?> {
   }
 
   /// The underlying [HttpRequest] instance underneath this context.
+  @override
   HttpRequest? get rawRequest => _io;
 
   @override

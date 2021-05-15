@@ -71,6 +71,7 @@ class Service<Id, Data> extends Routable {
   Angel? app;
 
   /// Closes this service, including any database connections or stream controllers.
+  @override
   void close() {}
 
   /// An optional [readData] function can be passed to handle non-map/non-json bodies.
@@ -230,7 +231,7 @@ class Service<Id, Data> extends Routable {
     Middleware? indexMiddleware =
         getAnnotation<Middleware>(service.index, app!.container!.reflector);
     get('/', (req, res) {
-      return this.index(mergeMap([
+      return index(mergeMap([
         {'query': req.queryParameters},
         restProvider,
         req.serviceParams
@@ -246,15 +247,13 @@ class Service<Id, Data> extends Routable {
         getAnnotation<Middleware>(service.create, app!.container!.reflector);
     post('/', (req, ResponseContext res) {
       return req.parseBody().then((_) async {
-        return await this
-            .create(
-                (await readData!(req, res))!,
-                mergeMap([
-                  {'query': req.queryParameters},
-                  restProvider,
-                  req.serviceParams
-                ]))
-            .then((r) {
+        return await create(
+            (await readData!(req, res))!,
+            mergeMap([
+              {'query': req.queryParameters},
+              restProvider,
+              req.serviceParams
+            ])).then((r) {
           res.statusCode = 201;
           return r;
         });
@@ -270,7 +269,7 @@ class Service<Id, Data> extends Routable {
         getAnnotation<Middleware>(service.read, app!.container!.reflector);
 
     get('/:id', (req, res) {
-      return this.read(
+      return read(
           parseId<Id>(req.params['id']),
           mergeMap([
             {'query': req.queryParameters},
@@ -289,7 +288,7 @@ class Service<Id, Data> extends Routable {
 
     patch('/:id', (req, res) {
       return req.parseBody().then((_) async {
-        return await this.modify(
+        return await modify(
             parseId<Id>(req.params['id']),
             (await readData!(req, res))!,
             mergeMap([
@@ -309,7 +308,7 @@ class Service<Id, Data> extends Routable {
         getAnnotation<Middleware>(service.update, app!.container!.reflector);
     post('/:id', (req, res) {
       return req.parseBody().then((_) async {
-        return await this.update(
+        return await update(
             parseId<Id>(req.params['id']),
             (await readData!(req, res))!,
             mergeMap([
@@ -327,7 +326,7 @@ class Service<Id, Data> extends Routable {
 
     put('/:id', (req, res) {
       return req.parseBody().then((_) async {
-        return await this.update(
+        return await update(
             parseId<Id>(req.params['id']),
             (await readData!(req, res))!,
             mergeMap([
@@ -346,7 +345,7 @@ class Service<Id, Data> extends Routable {
     Middleware? removeMiddleware =
         getAnnotation<Middleware>(service.remove, app!.container!.reflector);
     delete('/', (req, res) {
-      return this.remove(
+      return remove(
           '' as Id,
           mergeMap([
             {'query': req.queryParameters},
@@ -361,7 +360,7 @@ class Service<Id, Data> extends Routable {
               : removeMiddleware.handlers.toList()));
 
     delete('/:id', (req, res) {
-      return this.remove(
+      return remove(
           parseId<Id>(req.params['id']),
           mergeMap([
             {'query': req.queryParameters},

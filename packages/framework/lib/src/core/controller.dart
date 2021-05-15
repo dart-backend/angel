@@ -50,7 +50,7 @@ class Controller {
   Future<String> applyRoutes(
       Router<RequestHandler> router, Reflector reflector) async {
     // Load global expose decl
-    var classMirror = reflector.reflectClass(this.runtimeType)!;
+    var classMirror = reflector.reflectClass(runtimeType)!;
     Expose? exposeDecl = findExpose(reflector);
 
     if (exposeDecl == null) {
@@ -60,7 +60,7 @@ class Controller {
     var routable = Routable();
     var m = router.mount(exposeDecl.path!, routable);
     _mountPoint = m;
-    var typeMirror = reflector.reflectType(this.runtimeType);
+    var typeMirror = reflector.reflectType(runtimeType);
 
     // Pre-reflect methods
     var instanceMirror = reflector.reflectInstance(this);
