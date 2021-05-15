@@ -1,6 +1,9 @@
-# html_builder
-[![Pub](https://img.shields.io/pub/v/html_builder.svg)](https://pub.dartlang.org/packages/html_builder)
-[![build status](https://travis-ci.org/thosakwe/html_builder.svg)](https://travis-ci.org/thosakwe/html_builder)
+# angel3_html_builder
+[![version](https://img.shields.io/badge/pub-v2.0.0-brightgreen)](https://pub.dartlang.org/packages/angel3_html_builder)
+[![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
+[![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
+
+[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/html_builder/LICENSE)
 
 Build HTML AST's and render them to HTML.
 
@@ -11,14 +14,14 @@ In your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  html_builder: ^1.0.0
+  angel3_html_builder: ^2.0.0
 ```
 
 # Usage
 ```dart
-import 'package:html_builder/html_builder.dart';
+import 'package:angel3_html_builder/angel3_html_builder.dart';
 
-main() {
+void main() {
     // Akin to React.createElement(...);
     var $el = h('my-element', p: {}, c: []);
 
@@ -64,9 +67,9 @@ i    // Null attributes do not appear.
 
 Standard HTML5 elements:
 ```dart
-import 'package:html_builder/elements.dart';
+import 'package:angel3_html_builder/elements.dart';
 
-main() {
+void main() {
     var $dom = html(lang: 'en', c: [
         head(c: [
             title(c: [text('Hello, world!')])
@@ -81,16 +84,16 @@ main() {
 
 Rendering to HTML:
 ```dart
-String html = new StringRenderer().render($dom);
+String html = StringRenderer().render($dom);
 ```
 
-Example with the [Angel](https://github.com/angel-dart/angel) server-side framework,
-which has [dedicated html_builder support](https://github.com/angel-dart/html):
+Example with the [Angel](https://github.com/dukefirehawk/angel/tree/angel3) server-side framework,
+which has [dedicated html_builder support](https://github.com/dukefirehawk/angel/tree/html):
 
 ```dart
 import 'dart:io';
-import 'package:angel_framework/angel_framework.dart';
-import 'package:html_builder/elements.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_html_builder/elements.dart';
 
 configureViews(Angel app) async {
     app.get('/foo/:id', (req, res) async {

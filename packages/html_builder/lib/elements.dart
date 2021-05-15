@@ -1,8 +1,8 @@
 /// Helper functions to build common HTML5 elements.
-library html_builder.elements;
+library angel3_html_builder.elements;
 
-import 'html_builder.dart';
-export 'html_builder.dart';
+import 'angel3_html_builder.dart';
+export 'angel3_html_builder.dart';
 
 Map<String, dynamic> _apply(Iterable<Map<String, dynamic>> props,
     [Map<String, dynamic>? attrs]) {

@@ -1,9 +1,9 @@
 import 'package:html/parser.dart' as html5;
-import 'package:html_builder/elements.dart';
-import 'package:html_builder/html_builder.dart';
+import 'package:angel3_html_builder/elements.dart';
+import 'package:angel3_html_builder/angel3_html_builder.dart';
 import 'package:test/test.dart';
 
-main() {
+void main() {
   test('pretty', () {
     var $dom = html(
       lang: 'en',
