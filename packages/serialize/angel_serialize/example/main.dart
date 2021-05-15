@@ -1,5 +1,5 @@
 // ignore_for_file: unused_element
-import 'package:angel_serialize/angel_serialize.dart';
+import 'package:angel3_serialize/angel3_serialize.dart';
 
 @serializable
 class _Todo {
