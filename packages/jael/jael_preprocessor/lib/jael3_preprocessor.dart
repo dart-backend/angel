@@ -2,8 +2,8 @@ import 'dart:async';
 import 'dart:collection';
 import 'package:collection/collection.dart' show IterableExtension;
 import 'package:file/file.dart';
-import 'package:jael/jael.dart';
-import 'package:symbol_table/symbol_table.dart';
+import 'package:jael3/jael3.dart';
+import 'package:angel3_symbol_table/angel3_symbol_table.dart';
 
 /// Modifies a Jael document.
 typedef FutureOr<Document>? Patcher(Document? document,

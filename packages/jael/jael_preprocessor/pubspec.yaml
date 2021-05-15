@@ -1,28 +1,14 @@
-name: jael_preprocessor
+name: jael3_preprocessor
 version: 4.0.0
 description: A pre-processor for resolving blocks and includes within Jael templates.
-homepage: https://github.com/dukefirehawk/angel
-publish_to: none
+homepage: https://github.com/dukefirehawk/angel/tree/angel3/packages/jael/jael_preprocessor
 environment:
   sdk: '>=2.12.0 <3.0.0'
 dependencies:
   file: ^6.1.0
-  jael:
-    git: 
-      url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x_nnbd
-      path: packages/jael/jael
-  symbol_table:
-    git: 
-      url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x_nnbd
-      path: packages/symbol_table
-  collection: ^1.15.0-nullsafety.4
+  jael3: ^4.0.0
+  angel3_symbol_table: ^2.0.0
+  collection: ^1.15.0
 dev_dependencies:
-  code_buffer:
-    git: 
-      url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x_nnbd
-      path: packages/code_buffer
-
-  test: ^1.17.3
+  angel3_code_buffer: ^2.0.0
+  test: ^1.17.4

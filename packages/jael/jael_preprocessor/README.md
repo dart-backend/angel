@@ -1,16 +1,19 @@
-# jael_preprocessor
-[![Pub](https://img.shields.io/pub/v/jael_preprocessor.svg)](https://pub.dartlang.org/packages/jael_preprocessor)
-[![build status](https://travis-ci.org/angel-dart/jael.svg)](https://travis-ci.org/angel-dart/jael)
+# jael3_preprocessor
+[![version](https://img.shields.io/badge/pub-v4.0.0-brightgreen)](https://pub.dartlang.org/packages/jael3_preprocessor)
+[![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
+[![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
+
+[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/jael/jael_preprocessor/LICENSE)
 
 A pre-processor for resolving blocks and includes within
-[Jael](https://github.com/angel-dart/jael) templates.
+[Jael](https://github.com/dukefirehawk/angel/tree/angel3/packages/jael/jael) templates.
 
 # Installation
 In your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  jael_prepreprocessor: ^1.0.0-alpha
+  jael3_prepreprocessor: ^4.0.0
 ```
 
 # Usage
@@ -24,7 +27,7 @@ To keep things simple, just use the `resolve` function, which will
 take care of inheritance for you.
 
 ```dart
-import 'package:jael_preprocessor/jael_preprocessor.dart' as jael;
+import 'package:jael3_preprocessor/jael3_preprocessor.dart' as jael;
 
 myFunction() async {
   var doc = await parseTemplateSomehow();

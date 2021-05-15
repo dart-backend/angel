@@ -1,12 +1,12 @@
-import 'package:code_buffer/code_buffer.dart';
+import 'package:angel3_code_buffer/angel3_code_buffer.dart';
 import 'package:file/file.dart';
 import 'package:file/memory.dart';
-import 'package:jael/jael.dart' as jael;
-import 'package:jael_preprocessor/jael_preprocessor.dart' as jael;
-import 'package:symbol_table/symbol_table.dart';
+import 'package:jael3/jael3.dart' as jael;
+import 'package:jael3_preprocessor/jael3_preprocessor.dart' as jael;
+import 'package:angel3_symbol_table/angel3_symbol_table.dart';
 import 'package:test/test.dart';
 
-main() {
+void main() {
   late FileSystem fileSystem;
 
   setUp(() {
