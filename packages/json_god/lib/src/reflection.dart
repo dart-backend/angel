@@ -102,8 +102,7 @@ deserialize(value, Type outputType, Deserializer deserializer,
 
 /// Uses mirrors to deserialize an object.
 _deserializeFromJsonByReflection(
-    data, Deserializer deserializer, Type outputType,
-    [@deprecated bool debug = false]) {
+    data, Deserializer deserializer, Type outputType) {
   // Check for fromJson
   var typeMirror = reflectType(outputType);
 

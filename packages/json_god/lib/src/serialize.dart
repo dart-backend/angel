@@ -21,8 +21,9 @@ serializeObject(value) {
   } else if (value is Map) {
     logger.info("Serializing this Map: $value");
     return serializeMap(value);
-  } else
+  } else {
     return serializeObject(reflection.serialize(value, serializeObject));
+  }
 }
 
 /// Recursively transforms a Map and its children into JSON-serializable data.
