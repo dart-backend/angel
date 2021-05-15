@@ -1,5 +1,5 @@
 name: angel3_combinator
-version: 2.0.0
+version: 2.0.1
 description: Packrat parser combinators that support static typing, generics, file spans, memoization, and more.
 homepage: https://github.com/dukefirehawk/angel/tree/angel3/packages/combinator
 environment:
