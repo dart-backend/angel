@@ -1,5 +1,5 @@
 name: angel3_http_exception
-version: 3.0.0
+version: 3.0.1
 description: Exception class that can be serialized to JSON and serialized to clients.
 homepage: https://github.com/dukefirehawk/angel/tree/angel3/packages/http_exception
 environment:
