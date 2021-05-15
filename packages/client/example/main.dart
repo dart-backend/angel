@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:angel_client/angel_client.dart';
+import 'package:angel3_client/angel3_client.dart';
 
 Future doSomething(Angel app) async {
   var userService = app

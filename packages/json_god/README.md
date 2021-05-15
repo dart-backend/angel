@@ -1,6 +1,7 @@
 # angel3_json_god
 [![version](https://img.shields.io/badge/pub-v2.12.4-brightgreen)](https://pub.dartlang.org/packages/angel3_json_god)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
+[![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
 
 [![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/json_god/LICENSE)
 
@@ -34,7 +35,6 @@ print(json);
 
 You can easily serialize classes, too. JSON God also supports classes as members.
 ```dart
-import 'package:angel3_json_god/angel3_json_god.dart' as god;
 
 class A {
     String foo;

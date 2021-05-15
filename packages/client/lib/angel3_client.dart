@@ -1,11 +1,11 @@
 /// Client library for the Angel framework.
-library angel_client;
+library angel3_client;
 
 import 'dart:async';
 import 'package:collection/collection.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-export 'package:angel_http_exception/angel_http_exception.dart';
+export 'package:angel3_http_exception/angel3_http_exception.dart';
 
 /// A function that configures an [Angel] client in some way.
 typedef AngelConfigurer = FutureOr<void> Function(Angel app);
