@@ -1,3 +1,6 @@
+# 2.0.2
+* Run `dartfmt -w .`
+
 # 2.0.1
 * Added pedantic dart rules
 
