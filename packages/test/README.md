@@ -1,19 +1,22 @@
-# angel_test
-[![Pub](https://img.shields.io/pub/v/angel_test.svg)](https://pub.dartlang.org/packages/angel_test)
-[![build status](https://travis-ci.org/angel-dart/test.svg)](https://travis-ci.org/angel-dart/test)
+# angel3_test
+[![version](https://img.shields.io/badge/pub-v4.0.0-brightgreen)](https://pub.dartlang.org/packages/angel3_tet)
+[![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
+[![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
+
+[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/test/LICENSE)
 
 Testing utility library for the Angel framework.
 
 # TestClient
-The `TestClient` class is a custom `angel_client` that sends mock requests to your server.
+The `TestClient` class is a custom `angel3_client` that sends mock requests to your server.
 This means that you will not have to bind your server to HTTP to run.
-Plus, it is an `angel_client`, and thus supports services and other goodies.
+Plus, it is an `angel3_client`, and thus supports services and other goodies.
 
 The `TestClient` also supports WebSockets. WebSockets cannot be mocked (yet!) within this library,
 so calling the `websocket()` function will also bind your server to HTTP, if it is not already listening.
 
 The return value is a `WebSockets` client instance
-(from [`package:angel_websocket`](https://github.com/angel-dart/websocket));
+(from [`package:angel3_websocket`](https://github.com/dukefirehawk/angel/tree/angel3/packages/websocket));
 
 ```dart
 var ws = await client.websocket('/ws');
@@ -52,12 +55,12 @@ test('error', () async {
 
 `hasValidBody` is one of the most powerful `Matcher`s in this library,
 because it allows you to validate a JSON body against a
-[validation schema](https://github.com/angel-dart/validate).
+[validation schema](https://github.com/dukefirehawk/angel/tree/angel3/packages/validate).
 
 Angel provides a comprehensive validation library that integrates tightly
-with the very `matcher` package that you already use for testing. :)
+with the very `matcher` package that you already use for testing.
 
-[https://github.com/angel-dart/validate](https://github.com/angel-dart/validate)
+[`package:angel3_validate`](https://github.com/dukefirehawk/angel/tree/angel3/packages//validate)
 
 ```dart
 test('validate response', () async {

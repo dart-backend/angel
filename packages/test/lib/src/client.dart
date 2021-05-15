@@ -1,26 +1,26 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'package:angel_client/base_angel_client.dart' as client;
-import 'package:angel_client/io.dart' as client;
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_framework/http.dart';
-import 'package:angel_websocket/io.dart' as client;
+import 'package:angel3_client/base_angel_client.dart' as client;
+import 'package:angel3_client/io.dart' as client;
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_framework/http.dart';
+import 'package:angel3_websocket/io.dart' as client;
 import 'package:http/http.dart' as http hide StreamedResponse;
 import 'package:http/io_client.dart' as http;
 import 'package:http/src/streamed_response.dart';
-import 'package:mock_request/mock_request.dart';
+import 'package:angel3_mock_request/angel3_mock_request.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:web_socket_channel/io.dart';
 //import 'package:uuid/uuid.dart';
 
-final RegExp _straySlashes = new RegExp(r"(^/)|(/+$)");
+final RegExp _straySlashes = RegExp(r"(^/)|(/+$)");
 /*const Map<String, String> _readHeaders = const {'Accept': 'application/json'};
 const Map<String, String> _writeHeaders = const {
   'Accept': 'application/json',
   'Content-Type': 'application/json'
 };
-final Uuid _uuid = new Uuid();*/
+final Uuid _uuid =  Uuid();*/
 
 /// Shorthand for bootstrapping a [TestClient].
 Future<TestClient> connectTo(Angel app,
@@ -36,7 +36,7 @@ Future<TestClient> connectTo(Angel app,
     print("Load plugins");
     await plugin(app);
   }
-  return new TestClient(app,
+  return TestClient(app,
       autoDecodeGzip: autoDecodeGzip != false, useZone: useZone)
     ..session.addAll(initialSession ?? {});
 }
@@ -46,7 +46,7 @@ class TestClient extends client.BaseAngelClient {
   final Map<String, client.Service> _services = {};
 
   /// Session info to be sent to the server on every request.
-  final HttpSession session = new MockHttpSession(id: 'angel-test-client');
+  final HttpSession session = MockHttpSession(id: 'angel-test-client');
 
   /// A list of cookies to be sent to and received from the server.
   final List<Cookie> cookies = [];
@@ -101,9 +101,9 @@ class TestClient extends client.BaseAngelClient {
       rq = newRq;
     }
 
-    if (authToken?.isNotEmpty == true)
+    if (authToken?.isNotEmpty == true) {
       rq.headers.add('authorization', 'Bearer $authToken');
-
+    }
     rq..cookies.addAll(cookies)..session.addAll(session);
 
     await request.finalize().pipe(rq);

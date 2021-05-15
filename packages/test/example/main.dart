@@ -1,20 +1,20 @@
 import 'dart:io';
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_test/angel_test.dart';
-import 'package:angel_validate/angel_validate.dart';
-import 'package:angel_websocket/server.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_test/angel3_test.dart';
+import 'package:angel3_validate/angel3_validate.dart';
+import 'package:angel3_websocket/server.dart';
 import 'package:test/test.dart';
 
-main() {
+void main() {
   Angel? app;
   late TestClient client;
 
   setUp(() async {
-    app = new Angel()
+    app = Angel()
       ..get('/hello', (req, res) => 'Hello')
       ..get(
           '/error',
-          (req, res) => throw new AngelHttpException.forbidden(message: 'Test')
+          (req, res) => throw AngelHttpException.forbidden(message: 'Test')
             ..errors.addAll(['foo', 'bar']))
       ..get('/body', (req, res) {
         res
@@ -39,13 +39,13 @@ main() {
       })
       ..use(
           '/foo',
-          new AnonymousService(
+          AnonymousService(
               index: ([params]) async => [
                     {'michael': 'jackson'}
                   ],
               create: (dynamic data, [params]) async => {'foo': 'bar'}));
 
-    var ws = new AngelWebSocket(app);
+    var ws = AngelWebSocket(app);
     await app!.configure(ws.configureServer);
     app!.all('/ws', ws.handleRequest);
 
@@ -101,9 +101,9 @@ main() {
       expect(res, hasContentType('application/json'));
       expect(
           res,
-          hasValidBody(new Validator({
+          hasValidBody(Validator({
             'michael*': [isString, isNotEmpty, equals('jackson')],
-            'billie': new Validator({
+            'billie': Validator({
               'jean': [isString, isNotEmpty],
               'is_my_lover': [isBool, isFalse]
             })
