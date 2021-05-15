@@ -88,7 +88,7 @@ class SymbolTable<T> {
     }
 
     crawl(this);
-    return new List<Variable<T>>.unmodifiable(out);
+    return List<Variable<T>>.unmodifiable(out);
   }
 
   /// Helper for calling [allVariablesWithVisibility] to fetch all public variables.
@@ -126,7 +126,7 @@ class SymbolTable<T> {
     }
 
     crawl(this);
-    return new List<Variable<T>>.unmodifiable(out);
+    return List<Variable<T>>.unmodifiable(out);
   }
 
   Variable<T>? operator [](String name) => resolve(name);
@@ -152,11 +152,11 @@ class SymbolTable<T> {
   Variable<T> create(String name, {T? value, bool? constant}) {
     // Check if it exists first.
     if (_variables.any((v) => v.name == name))
-      throw new StateError(
+      throw StateError(
           'A symbol named "$name" already exists within the current context.');
 
     _wipeLookupCache(name);
-    Variable<T> v = new Variable._(name, this, value: value);
+    Variable<T> v = Variable._(name, this, value: value);
     if (constant == true) v.lock();
     _variables.add(v);
     return v;
@@ -282,7 +282,7 @@ class SymbolTable<T> {
       .._root = _root;
 
     table._variables.addAll(_variables.map((Variable v) {
-      Variable<T> variable = new Variable._(v.name, this, value: v.value);
+      Variable<T> variable = Variable._(v.name, this, value: v.value);
       variable.visibility = v.visibility;
 
       if (v.isImmutable) variable.lock();

@@ -1,7 +1,7 @@
-import 'package:symbol_table/symbol_table.dart';
+import 'package:angel3_symbol_table/angel3_symbol_table.dart';
 import 'package:test/test.dart';
 
-main() {
+void main() {
   late SymbolTable<int> scope;
 
   setUp(() {

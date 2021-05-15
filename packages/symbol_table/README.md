@@ -1,6 +1,9 @@
-# symbol_table
-[![Pub](https://img.shields.io/pub/v/symbol_table.svg)](https://pub.dartlang.org/packages/symbol_table)
-[![build status](https://travis-ci.org/thosakwe/symbol_table.svg)](https://travis-ci.org/thosakwe/symbol_table)
+# angel3_symbol_table
+[![version](https://img.shields.io/badge/pub-v2.0.0-brightgreen)](https://pub.dartlang.org/packages/angel3_symbol_table)
+[![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
+[![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
+
+[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/symbol_table/LICENSE)
 
 A generic symbol table implementation in Dart, with support for scopes and constants.
 The symbol tables produced by this package are hierarchical (in this case, tree-shaped),
@@ -11,11 +14,11 @@ To represent a symbol, use `Variable`. I opted for the name
 `Variable` to avoid conflict with the Dart primitive `Symbol`.
 
 ```dart
-var foo = new Variable<String>('foo');
-var bar = new Variable<String>('bar', value: 'baz');
+var foo =  Variable<String>('foo');
+var bar =  Variable<String>('bar', value: 'baz');
 
 // Call `lock` to mark a symbol as immutable.
-var shelley = new Variable<String>('foo', value: 'bar')..lock();
+var shelley =  Variable<String>('foo', value: 'bar')..lock();
 
 foo.value = 'bar';
 shelley.value = 'Mary'; // Throws a StateError - constants cannot be overwritten.
@@ -37,8 +40,8 @@ myVariable.visibility = Visibility.private;
 It's easy to create a basic symbol table:
 
 ```dart
-var mySymbolTable = new SymbolTable<int>();
-var doubles = new SymbolTable<double>(values: {
+var mySymbolTable =  SymbolTable<int>();
+var doubles =  SymbolTable<double>(values: {
   'hydrogen': 1.0,
   'avogadro': 6.022e23
 });
