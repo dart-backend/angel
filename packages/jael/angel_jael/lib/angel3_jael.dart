@@ -1,9 +1,9 @@
-import 'package:angel_framework/angel_framework.dart';
-import 'package:code_buffer/code_buffer.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_code_buffer/angel3_code_buffer.dart';
 import 'package:file/file.dart';
-import 'package:jael/jael.dart';
-import 'package:jael_preprocessor/jael_preprocessor.dart';
-import 'package:symbol_table/symbol_table.dart';
+import 'package:jael3/jael3.dart';
+import 'package:jael3_preprocessor/jael3_preprocessor.dart';
+import 'package:angel3_symbol_table/angel3_symbol_table.dart';
 
 /// Configures an Angel server to use Jael to render templates.
 ///
@@ -20,7 +20,7 @@ AngelConfigurer jael(Directory viewsDirectory,
     CodeBuffer createBuffer()?}) {
   var cache = <String, Document?>{};
   fileExtension ??= '.jael';
-  createBuffer ??= () => new CodeBuffer();
+  createBuffer ??= () => CodeBuffer();
 
   return (Angel app) async {
     app.viewGenerator = (String name, [Map? locals]) async {
