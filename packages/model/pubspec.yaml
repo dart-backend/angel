@@ -1,5 +1,5 @@
 name: angel3_model
-version: 3.0.0
+version: 3.0.1
 description: Angel's basic data model class, no longer with the added weight of the whole framework.
 homepage: https://github.com/dukefirehawk/angel/tree/angel3/packages/model
 environment:
