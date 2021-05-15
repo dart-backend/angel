@@ -7,10 +7,10 @@ import 'package:http/io_client.dart' as http;
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:web_socket_channel/io.dart';
 import 'base_websocket_client.dart';
-export 'package:angel_client/angel_client.dart';
-export 'angel_websocket.dart';
+export 'package:angel3_client/angel3_client.dart';
+export 'angel3_websocket.dart';
 
-// final RegExp _straySlashes = new RegExp(r"(^/)|(/+$)");
+// final RegExp _straySlashes = RegExp(r"(^/)|(/+$)");
 
 /// Queries an Angel server via WebSockets.
 class WebSockets extends BaseWebSocketClient {

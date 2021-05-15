@@ -1,4 +1,4 @@
-part of angel_websocket.server;
+part of angel3_websocket.server;
 
 /// Represents a WebSocket session, with the original
 /// [RequestContext] and [ResponseContext] attached.

@@ -1,4 +1,4 @@
-part of angel_websocket.server;
+part of angel3_websocket.server;
 
 /// Marks a method as available to WebSockets.
 class ExposeWs {

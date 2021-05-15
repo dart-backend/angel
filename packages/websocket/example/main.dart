@@ -1,8 +1,8 @@
 import 'dart:io';
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_framework/http.dart';
-import 'package:angel_framework/http2.dart';
-import 'package:angel_websocket/server.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_framework/http.dart';
+import 'package:angel3_framework/http2.dart';
+import 'package:angel3_websocket/server.dart';
 import 'package:file/local.dart';
 import 'package:logging/logging.dart';
 

@@ -1,13 +1,13 @@
 import 'dart:async';
 import 'dart:collection';
 import 'dart:convert';
-import 'package:angel_client/angel_client.dart';
-import 'package:angel_client/base_angel_client.dart';
-import 'package:angel_http_exception/angel_http_exception.dart';
+import 'package:angel3_client/angel3_client.dart';
+import 'package:angel3_client/base_angel_client.dart';
+import 'package:angel3_http_exception/angel3_http_exception.dart';
 import 'package:http/src/base_client.dart' as http;
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:web_socket_channel/status.dart' as status;
-import 'angel_websocket.dart';
+import 'angel3_websocket.dart';
 import 'constants.dart';
 
 final RegExp _straySlashes = RegExp(r'(^/)|(/+$)');

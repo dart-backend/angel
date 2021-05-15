@@ -1,15 +1,15 @@
 /// Browser WebSocket client library for the Angel framework.
-library angel_websocket.browser;
+library angel3_websocket.browser;
 
 import 'dart:async';
 import 'dart:html';
-import 'package:angel_client/angel_client.dart';
-import 'package:angel_http_exception/angel_http_exception.dart';
+import 'package:angel3_client/angel3_client.dart';
+import 'package:angel3_http_exception/angel3_http_exception.dart';
 import 'package:http/browser_client.dart' as http;
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:web_socket_channel/html.dart';
 import 'base_websocket_client.dart';
-export 'angel_websocket.dart';
+export 'angel3_websocket.dart';
 
 final RegExp _straySlashes = RegExp(r'(^/)|(/+$)');
 

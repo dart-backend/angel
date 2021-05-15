@@ -1,9 +1,9 @@
 import 'dart:async';
 
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_model/angel_model.dart';
-import 'package:angel_websocket/base_websocket_client.dart';
-import 'package:angel_websocket/server.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_model/angel3_model.dart';
+import 'package:angel3_websocket/base_websocket_client.dart';
+import 'package:angel3_websocket/server.dart';
 import 'package:test/test.dart';
 
 class Todo extends Model {

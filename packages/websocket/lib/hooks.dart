@@ -1,4 +1,4 @@
-import 'package:angel_framework/angel_framework.dart';
+import 'package:angel3_framework/angel3_framework.dart';
 
 /// Prevents a WebSocket event from being broadcasted, to any client from the given [provider].
 ///

@@ -1,22 +1,22 @@
 /// Server-side support for WebSockets.
-library angel_websocket.server;
+library angel3_websocket.server;
 
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:mirrors';
-import 'package:angel_auth/angel_auth.dart';
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_framework/http.dart';
-import 'package:angel_framework/http2.dart';
-import 'package:merge_map/merge_map.dart';
+import 'package:angel3_auth/angel3_auth.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_framework/http.dart';
+import 'package:angel3_framework/http2.dart';
+import 'package:angel3_merge_map/angel3_merge_map.dart';
 import 'package:stream_channel/stream_channel.dart';
 import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:collection/collection.dart' show IterableExtension;
-import 'angel_websocket.dart';
+import 'angel3_websocket.dart';
 import 'constants.dart';
-export 'angel_websocket.dart';
+export 'angel3_websocket.dart';
 
 part 'websocket_context.dart';
 
@@ -249,14 +249,14 @@ class AngelWebSocket {
         var jwt = action.params!['query']['jwt'] as String;
         AuthToken token;
 
-        token = AuthToken.validate(jwt, auth.hmac!);
-        var user = await auth.deserializer!(token.userId);
+        token = AuthToken.validate(jwt, auth.hmac);
+        var user = await auth.deserializer!(token.userId as Object);
         socket.request
           ..container!.registerSingleton<AuthToken>(token)
           ..container!.registerSingleton(user, as: user.runtimeType);
         socket._onAuthenticated.add(null);
         socket.send(authenticatedEvent,
-            {'token': token.serialize(auth.hmac!), 'data': user});
+            {'token': token.serialize(auth.hmac), 'data': user});
       } catch (e, st) {
         catchError(e, st, socket);
       }

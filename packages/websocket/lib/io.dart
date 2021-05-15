@@ -1,15 +1,15 @@
 /// Command-line WebSocket client library for the Angel framework.
-library angel_websocket.io;
+library angel3_websocket.io;
 
 import 'dart:async';
 import 'dart:io';
-import 'package:angel_client/angel_client.dart';
+import 'package:angel3_client/angel3_client.dart';
 import 'package:http/io_client.dart' as http;
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:web_socket_channel/io.dart';
 import 'base_websocket_client.dart';
-export 'package:angel_client/angel_client.dart';
-export 'angel_websocket.dart';
+export 'package:angel3_client/angel3_client.dart';
+export 'angel3_websocket.dart';
 
 final RegExp _straySlashes = RegExp(r'(^/)|(/+$)');
 
