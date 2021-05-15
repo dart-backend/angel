@@ -1,36 +1,22 @@
-name: angel_static
+name: angel3_static
 description: Static server middleware for Angel. Also capable of serving Range responses.
 version: 4.0.0
-homepage: https://github.com/dukefirehawk/angel
-publish_to: none
+homepage: https://github.com/dukefirehawk/angel/tree/angel3/packages/static
 environment:
   sdk: '>=2.12.0 <3.0.0'
 dependencies:
-  angel_framework:
-    git: 
-      url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x_nnbd
-      path: packages/framework
-  range_header:
-    git: 
-      url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x_nnbd
-      path: packages/range_header
+  angel3_framework: ^4.0.0
+  angel3_range_header: ^3.0.0
   convert: ^3.0.0
   crypto: ^3.0.1
   file: ^6.1.0
   http_parser: ^4.0.0
   path: ^1.8.0
-
 dev_dependencies:
-  angel_test:
-    git: 
-      url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x_nnbd
-      path: packages/test
+  angel3_test: ^4.0.0
   http: ^0.13.2
   logging: ^1.0.1
   matcher: ^0.12.10
   pedantic: ^1.11.0
-  test: ^1.17.3
+  test: ^1.17.4
   
