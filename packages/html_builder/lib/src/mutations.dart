@@ -3,7 +3,7 @@ import 'node_builder.dart';
 
 /// Returns a function that rebuilds an arbitrary [Node] by applying the [transform] to it.
 Node Function(Node) rebuild(NodeBuilder Function(NodeBuilder) transform,
-    {bool selfClosing: false}) {
+    {bool selfClosing = false}) {
   return (node) =>
       transform(NodeBuilder.from(node)).build(selfClosing: selfClosing);
 }

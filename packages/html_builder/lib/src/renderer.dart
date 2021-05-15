@@ -14,10 +14,10 @@ abstract class StringRenderer implements Renderer<String> {
   /// If [pretty] is `true` (default), then [whitespace] (default: `'  '`) will be inserted between nodes.
   /// You can also provide a [doctype] (default: `html`).
   factory StringRenderer(
-          {bool html5: true,
-          bool pretty: true,
-          String doctype: 'html',
-          String whitespace: '  '}) =>
+          {bool html5 = true,
+          bool pretty = true,
+          String doctype = 'html',
+          String whitespace = '  '}) =>
       pretty == true
           ? _PrettyStringRendererImpl(
               html5: html5 != false, doctype: doctype, whitespace: whitespace)
@@ -81,7 +81,9 @@ class _PrettyStringRendererImpl implements StringRenderer {
   _PrettyStringRendererImpl({this.html5, this.whitespace, this.doctype});
 
   void _applyTabs(int tabs, StringBuffer buf) {
-    for (int i = 0; i < tabs; i++) buf.write(whitespace ?? '  ');
+    for (var i = 0; i < tabs; i++) {
+      buf.write(whitespace ?? '  ');
+    }
   }
 
   void _renderInto(int tabs, Node node, StringBuffer buf) {

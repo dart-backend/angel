@@ -8,7 +8,7 @@ class NodeBuilder {
   Node? _existing;
 
   NodeBuilder(this.tagName,
-      {this.attributes: const {}, this.children: const []});
+      {this.attributes = const {}, this.children = const []});
 
   /// Creates a [NodeBuilder] that just spits out an already-existing [Node].
   factory NodeBuilder.existing(Node existingNode) =>
@@ -19,7 +19,7 @@ class NodeBuilder {
       children: List<Node>.from(node.children));
 
   /// Builds the node.
-  Node build({bool selfClosing: false}) =>
+  Node build({bool selfClosing = false}) =>
       _existing ??
       (selfClosing
           ? SelfClosingNode(tagName, attributes)
@@ -85,9 +85,11 @@ class NodeBuilder {
     var clazz = attributes['class'];
     var classes = <String>[];
 
-    if (clazz is String)
+    if (clazz is String) {
       classes.addAll(clazz.split(' '));
-    else if (clazz is Iterable) classes.addAll(clazz.map((s) => s.toString()));
+    } else if (clazz is Iterable) {
+      classes.addAll(clazz.map((s) => s.toString()));
+    }
 
     return setClasses(f(classes));
   }

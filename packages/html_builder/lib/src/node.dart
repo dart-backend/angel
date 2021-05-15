@@ -20,7 +20,7 @@ class Node {
 
   Node._selfClosing(this.tagName,
       [Map<String, dynamic> attributes = const {}]) {
-    this..attributes.addAll(attributes);
+    this.attributes.addAll(attributes);
   }
 
   @override
@@ -35,7 +35,10 @@ class Node {
 
 /// Represents a self-closing tag, i.e. `<br>`.
 class SelfClosingNode extends Node {
+  @override
   final String tagName;
+
+  @override
   final Map<String, dynamic> attributes = {};
 
   @override

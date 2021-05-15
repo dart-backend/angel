@@ -1,3 +1,6 @@
+# 2.0.1
+* Added pedantic dart rules
+
 # 2.0.0
 * Migrated to work with Dart SDK 2.12.x NNBD
 
