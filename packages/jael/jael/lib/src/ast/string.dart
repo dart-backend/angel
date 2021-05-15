@@ -1,6 +1,6 @@
 import 'package:charcode/charcode.dart';
 import 'package:source_span/source_span.dart';
-import 'package:symbol_table/symbol_table.dart';
+import 'package:angel3_symbol_table/angel3_symbol_table.dart';
 import '../ast/ast.dart';
 import 'expression.dart';
 import 'token.dart';

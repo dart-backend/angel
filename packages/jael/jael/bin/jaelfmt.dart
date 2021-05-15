@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:args/args.dart';
-import 'package:jael/jael.dart';
+import 'package:jael3/jael3.dart';
 
 var argParser = ArgParser()
   ..addOption('line-length',
@@ -29,7 +29,7 @@ var argParser = ArgParser()
       help: 'Overwrite input files with formatted output.',
       negatable: false);
 
-main(List<String> args) async {
+void main(List<String> args) async {
   try {
     var argResults = argParser.parse(args);
     if (argResults['help'] as bool) {
@@ -41,7 +41,7 @@ main(List<String> args) async {
     if (argResults.rest.isEmpty) {
       var text = await stdin.transform(utf8.decoder).join();
       var result =
-          await format(argResults['stdin-name'] as String?, text, argResults);
+          format(argResults['stdin-name'] as String?, text, argResults);
       if (result != null) print(result);
     } else {
       for (var arg in argResults.rest) {

@@ -1,5 +1,5 @@
-import 'package:jael/jael.dart';
-import 'package:symbol_table/symbol_table.dart';
+import 'package:jael3/jael3.dart';
+import 'package:angel3_symbol_table/angel3_symbol_table.dart';
 import 'package:test/test.dart';
 
 void main() {

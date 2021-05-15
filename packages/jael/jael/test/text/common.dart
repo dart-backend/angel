@@ -1,5 +1,5 @@
 import 'package:matcher/matcher.dart';
-import 'package:jael/src/ast/token.dart';
+import 'package:jael3/src/ast/token.dart';
 
 Matcher isToken(TokenType type, [String? text]) => _IsToken(type, text);
 

@@ -3,7 +3,7 @@
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 [![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
 
-[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/jael/jael3/LICENSE)
+[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/jael/jael/LICENSE)
 
 A simple server-side HTML templating engine for Dart.
 
@@ -18,7 +18,7 @@ dependencies:
 ```
 
 # API
-The core `jael` package exports classes for parsing Jael templates,
+The core `jael3` package exports classes for parsing Jael templates,
 an AST library, and a `Renderer` class that generates HTML on-the-fly.
 
 ```dart

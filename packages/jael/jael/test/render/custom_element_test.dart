@@ -1,7 +1,7 @@
 import 'dart:math';
-import 'package:code_buffer/code_buffer.dart';
-import 'package:jael/jael.dart' as jael;
-import 'package:symbol_table/symbol_table.dart';
+import 'package:angel3_code_buffer/angel3_code_buffer.dart';
+import 'package:jael3/jael3.dart' as jael;
+import 'package:angel3_symbol_table/angel3_symbol_table.dart';
 import 'package:test/test.dart';
 
 void main() {
