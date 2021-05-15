@@ -27,7 +27,7 @@
 * Added html_builder and migrated to 2.0.0 (1/1 tests passed)
 * Migrated hot to 4.0.0 (0/0 tests passed)
 * Added range_header and migrated to 3.0.0 (12/12 tests passed)
-* Migrated static to 4.0.0 (1/1 test passed)
+* Migrated static to 4.0.0 (11/12 test passed)
 * Created basic-sdk-2.12.x_nnbd template (1/1 test passed) <= Milestone 1
 * Migrated angel_serialize to 4.0.0 (0/0 test passed)
 * Migrated angel_serialize_generator to 4.0.0 (33/33 tests passed)
