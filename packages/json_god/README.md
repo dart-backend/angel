@@ -5,7 +5,7 @@
 [![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/json_god/LICENSE)
 
 
-The ***new and improved*** definitive solution for JSON in Dart.
+The ***new and improved*** definitive solution for JSON in Dart. It supports synchronously transform an object into a JSON string and also deserialize a JSON string back into an instance of any type.
 
 
 # Installation
@@ -14,7 +14,7 @@ The ***new and improved*** definitive solution for JSON in Dart.
 
 # Usage
 
-It is recommended to import the library under an alias, i.e., `god`.
+It is recommended to import the library under an alias, i.e., `god`. 
 
 ```dart
 import 'package:angel3_json_god/angel3_json_god.dart' as god;
@@ -34,14 +34,16 @@ print(json);
 
 You can easily serialize classes, too. JSON God also supports classes as members.
 ```dart
+import 'package:angel3_json_god/angel3_json_god.dart' as god;
+
 class A {
     String foo;
     A(this.foo);
 }
 
 class B {
-    String hello;
-    A nested;
+    late String hello;
+    late A nested;
     B(String hello, String foo) {
       this.hello = hello;
       this.nested =  A(foo);
@@ -49,7 +51,6 @@ class B {
 }
 
 main() {
-    God god =  God();
     print(god.serialize( B("world", "bar")));
 }
 
@@ -105,11 +106,3 @@ HasAnInt invalid = god.deserialize('["some invalid input"]', HasAnInt);
 
 An exception will be thrown if validation fails.
 
-# Thank you for using JSON God
-
-Thank you for using this library. I hope you like it.
-
-Feel free to follow me on Twitter: 
-[@thosakwe](http://twitter.com/thosakwe)
-
-Or, check out [my blog](https://thosakwe.com)

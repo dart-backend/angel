@@ -1,3 +1,7 @@
+# 4.0.1
+* Added example
+* Updated README.md
+
 # 4.0.0
 * Migrated to support Dart SDK 2.12.x NNBD
 

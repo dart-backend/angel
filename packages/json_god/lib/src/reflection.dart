@@ -89,10 +89,11 @@ deserialize(value, Type outputType, Deserializer deserializer,
         throw ArgumentError(
             '${typeArguments[0].reflectedType} is not a class.');
       }
-    } else if (value is Map)
+    } else if (value is Map) {
       return _deserializeFromJsonByReflection(value, deserializer, outputType);
-    else
+    } else {
       return deserializer(value);
+    }
   } catch (e, st) {
     logger.severe('Deserialization failed.', e, st);
     rethrow;

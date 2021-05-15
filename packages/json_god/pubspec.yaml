@@ -1,5 +1,5 @@
 name: angel3_json_god
-version: 4.0.0
+version: 4.0.1
 description: Easy JSON serialization and deserialization in Dart.
 homepage: https://github.com/dukefirehawk/angel/tree/angel3/packages/json_god
 environment:
