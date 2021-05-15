@@ -1,3 +1,5 @@
+# 3.0.2
+* Updated LICENSE link
 # 3.0.1
 * Updated README
 
