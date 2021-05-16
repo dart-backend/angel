@@ -37,14 +37,14 @@ Branch: angel3 (Active development)
 - Publish      : Yes. See all packages with `angel3_` prefix on [pub.dev](https://pub.dev/publishers/dukefirehawk.com/packages).
 - NNDB Support : Yes
 - Status       : Beta
-- Notes        : Basic and ORM templates are working with the key packages migration completed. Not all packages are fully tested.
+- Notes        : Basic template is working with the key packages migrated. ORM and GraphQL templates are in progress. Not all packages are fully tested.
 
 Branch: sdk-2.12.x-nnbd (Active development)
 - Dart version : 2.12.x and above. Use sdk: ">=2.12.0 <3.0.0"
 - Publish      : No (For NNBD migration and development use only)
 - NNDB Support : Yes
 - Status       : Beta
-- Notes        : Basic and ORM templates are working with key packages migration. Not all packages are fully tested.
+- Notes        : Basic and ORM templates are working with key packages migrated. Not all packages are fully tested.
 
 For more details, checkout [Project Status](https://github.com/dukefirehawk/angel/wiki/Project-Status)
 
@@ -52,7 +52,7 @@ For more details, checkout [Project Status](https://github.com/dukefirehawk/ange
 
 1. Download and install [Dart](https://www.dartlang.org/)
 2. Download the starter project from [Angel3 Basic Template](https://github.com/dukefirehawk/boilerplates/tree/angel3-basic)
-3. Next, check out the [detailed documentation](https://docs.angel-dart.dev/v/2.x) to learn to flesh out your project. For the current release of Angel3, the existing documents and tutorials for Angel are still relevant and works. In the future, this resources will be updated accordingly.
+3. Next, check out the [detailed documentation](https://docs.angel-dart.dev/v/2.x) to learn to flesh out your project. For the current release of Angel3, the existing documents and tutorials for Angel are still relevant and works. In the future, this resources will be updated or migrated accordingly.
 
 <!---
 Once you have [Dart](https://www.dartlang.org/) installed, bootstrapping a project is as simple as running a few shell commands:
@@ -82,7 +82,7 @@ pub global activate --source path ./packages/cli
 ```
 -->
 
-### Migrating to Angel3 Framework
+### Upgrading Angel to Angel3
 
 Check out [Migrating from Angel to Angel3](https://github.com/dukefirehawk/angel/wiki/Migrating-from-Angel-to-Angel3)
 
