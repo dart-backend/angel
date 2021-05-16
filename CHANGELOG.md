@@ -40,7 +40,6 @@
 * Migrated angel_orm_postgres to 3.0.0 (51/54 tests passed)
 * Create orm-sdk-2.12.x boilerplate (in progress) <= Milestone 2
 
-
 # 3.0.0 (Non NNBD)
 * Changed Dart SDK requirements for all packages to ">=2.10.0 <3.0.0"
 * Updated pretty_logging to 2.0.0 (0/0 tests passed)

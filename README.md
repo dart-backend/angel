@@ -1,60 +1,51 @@
 [![The Angel Framework](https://angel-dart.github.io/assets/images/logo.png)](https://angel-dart.dev)
 
 [![Gitter](https://img.shields.io/gitter/room/nwjs/nw.js.svg)](https://gitter.im/angel_dart/discussion)
-[![Pub](https://img.shields.io/pub/v/angel_framework.svg)](https://pub.dartlang.org/packages/angel3_framework)
-[![Build status](https://travis-ci.org/angel-dart/framework.svg?branch=master)](https://travis-ci.org/angel-dart/framework)
-![License](https://img.shields.io/github/license/angel-dart/framework.svg)
-[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/LICENSE)
+[![version](https://img.shields.io/badge/pub-v4.0.1-brightgreen)](https://pub.dartlang.org/packages/framework)
+
+[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/LICENSE)
 
 
-**A polished, production-ready backend framework in Dart.**
+**A polished, production-ready backend framework in Dart with NNBD support.**
 
 -----
 ## About
-Angel is a full-stack Web framework in Dart. It aims to
-streamline development by providing many common features
-out-of-the-box in a consistent manner.
+Angel3 is a port of the original Angel framework to support NNBD in Dart SDK 2.12.x and above.
+It is a full-stack Web framework in Dart that aims to streamline development by providing many common features out-of-the-box in a consistent manner. One of the main goal is to enable developers to build both frontend
+and backend in the same language, Dart. Angel3 framework is designed as a collection of plugins that enable developers to pick and choose the parts needed for their projects. A series of starter templates are also provided for quick start and trial run with Angel3 framework.  
 
-With features like the following, Angel is the all-in-one framework you should choose to build your next project:
-* GraphQL Support
-* PostgreSQL ORM
-* Dependency Injection
+The availabe features in Angel3 are:
 * Static File Handling
+* Basic Authentication
+* PostgreSQL ORM
 * And much more...
 
 See all the packages in the `packages/` directory.
 
 ## IMPORTANT NOTES
-This is a port of Angel Framework to work with Dart 2.10.x and above. Dart version below 2.10.x is not supported.
+The migration of Angel Framework to Angel3 framework is still ongoing. About 35 out of 70++ packages have been migrated and tested to be stable and working as expected. Angel3 framework need more testing to get it to production quality. Hence, the Angel3 stable packages have been published with prefix `angel3_` on `pub.dev`for developers to try out.
+
+In order to acknowledge contributions, AUTHORS.md has been added to every Angel3 packages. This way no matter what the contributions are, be it code review, testing or submit PR, can all be recorded in this file. If you are the original author of the original Angel packages, feel free to send a PR to update that file.
+
 
 Branch: master
-- Stable version of sdk-2.12.x branch
+- Stable version of `angel3` branch
 
-Branch: sdk-2.10.x
-- Support dart 2.10.x only. Use sdk: ">=2.10.0 <2.12.0"
-- Status: Working
-- Notes: Migration completed. Not all plugin packages are tested.
+Branch: angel3 (Active development)
+- Dart version : 2.12.x and above. Use sdk: ">=2.12.0 <3.0.0"
+- Publish      : Yes. See all packages with `angel3_` prefix on [pub.dev](https://pub.dev/publishers/dukefirehawk.com/packages).
+- NNDB Support : Yes
+- Status       : Beta
+- Notes        : Basic and ORM templates are working with the key packages migration completed. Not all packages are fully tested.
 
-Branch: sdk-2.12.x
-- Support dart 2.12.x. Use sdk: ">=2.10.0 <3.0.0"
-- Do not support NNBD 
-- Status: Working
-- Notes: Basic and ORM templates are working with the core plugins migration completed. The remaining add on plugin packages are work in progress.
+Branch: sdk-2.12.x-nnbd (Active development)
+- Dart version : 2.12.x and above. Use sdk: ">=2.12.0 <3.0.0"
+- Publish      : No (Internal use only)
+- NNDB Support : Yes
+- Status       : Beta
+- Notes        : Basic and ORM templates are working with key packages migration. Not all packages are fully tested.
 
-Branch: sdk-2.12.x-nnbd
-- Support dart 2.12.x. Use sdk: ">=2.12.0 <3.0.0"
-- Support NNBD
-- Status: Not working
-- Notes: To be available once all the dependency libraries that support NNBD are released
-
-Changes:
-- Upgraded dependency libraries and fixed the deprecated API
-
-Deprecated Features:
-- None
-
-New features:
-- None
+For more details, checkout [Project Status](https://github.com/dukefirehawk/angel/wiki/Project-Status)
 
 ## Installation & Setup
 
@@ -85,6 +76,10 @@ pub global activate --source path ./packages/cli
 ```
 
 Next, check out the [detailed documentation](https://docs.angel-dart.dev/v/2.x) to learn to flesh out your project.
+
+### Migrating to Angel3 Framework
+
+Checkout [Migrating from Angel to Angel3](https://github.com/dukefirehawk/angel/wiki/Migrating-from-Angel-to-Angel3)
 
 ## Examples and Documentation
 Visit the [documentation](https://docs.angel-dart.dev/v/2.x)
