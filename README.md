@@ -1,7 +1,7 @@
-[![The Angel Framework](https://angel-dart.github.io/assets/images/logo.png)](https://angel-dart.dev)
+[![The Angel Framework](./logo3.png)](https://angel-dart.dev)
 
 [![Gitter](https://img.shields.io/gitter/room/nwjs/nw.js.svg)](https://gitter.im/angel_dart/discussion)
-[![version](https://img.shields.io/badge/pub-v4.0.1-brightgreen)](https://pub.dartlang.org/packages/framework)
+[![version](https://img.shields.io/badge/pub-v4.0.0-brightgreen)](https://pub.dartlang.org/packages/framework)
 
 [![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/LICENSE)
 
@@ -40,7 +40,7 @@ Branch: angel3 (Active development)
 
 Branch: sdk-2.12.x-nnbd (Active development)
 - Dart version : 2.12.x and above. Use sdk: ">=2.12.0 <3.0.0"
-- Publish      : No (Internal use only)
+- Publish      : No (For NNBD migration and development use only)
 - NNDB Support : Yes
 - Status       : Beta
 - Notes        : Basic and ORM templates are working with key packages migration. Not all packages are fully tested.
