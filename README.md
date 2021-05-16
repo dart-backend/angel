@@ -1,5 +1,6 @@
-[![Angel 3 Framework](./logo3.png)](https://angel-dart.dev)
+[![Angel 3 Framework](./logo3.png)]
 
+<!--- (https://angel-dart.dev) -->
 [![version](https://img.shields.io/badge/pub-v4.0.0-brightgreen)](https://pub.dartlang.org/packages/framework)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 [![Gitter](https://img.shields.io/gitter/room/nwjs/nw.js.svg)](https://gitter.im/angel_dart/discussion)
@@ -28,7 +29,6 @@ The migration of Angel Framework to Angel3 framework is still ongoing. About 35 
 
 In order to acknowledge contributions, AUTHORS.md has been added to every Angel3 packages. This way no matter what the contributions are, be it code review, testing or submit PR, can all be recorded in this file. If you are the original author of the original Angel packages, feel free to send a PR to update that file.
 
-
 Branch: master
 - Stable version of `angel3` branch
 
@@ -50,6 +50,11 @@ For more details, checkout [Project Status](https://github.com/dukefirehawk/ange
 
 ## Installation & Setup
 
+1. Download and install [Dart](https://www.dartlang.org/)
+2. Download the starter project from [Angel3 Basic Template](https://github.com/dukefirehawk/boilerplates/tree/angel3-basic)
+3. Next, check out the [detailed documentation](https://docs.angel-dart.dev/v/2.x) to learn to flesh out your project. For the current release of Angel3, the existing documents and tutorials for Angel are still relevant and works. In the future, this resources will be updated accordingly.
+
+<!---
 Once you have [Dart](https://www.dartlang.org/) installed, bootstrapping a project is as simple as running a few shell commands:
 
 Install the [Angel CLI](https://github.com/dukefirehawk/cli):
@@ -75,12 +80,11 @@ dart --observe bin/dev.dart
 ```bash
 pub global activate --source path ./packages/cli
 ```
-
-Next, check out the [detailed documentation](https://docs.angel-dart.dev/v/2.x) to learn to flesh out your project.
+-->
 
 ### Migrating to Angel3 Framework
 
-Checkout [Migrating from Angel to Angel3](https://github.com/dukefirehawk/angel/wiki/Migrating-from-Angel-to-Angel3)
+Check out [Migrating from Angel to Angel3](https://github.com/dukefirehawk/angel/wiki/Migrating-from-Angel-to-Angel3)
 
 ## Examples and Documentation
 Visit the [documentation](https://docs.angel-dart.dev/v/2.x)
