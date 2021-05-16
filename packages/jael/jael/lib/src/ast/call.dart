@@ -1,5 +1,5 @@
 import 'package:source_span/source_span.dart';
-import 'package:symbol_table/symbol_table.dart';
+import 'package:angel3_symbol_table/angel3_symbol_table.dart';
 import 'ast_node.dart';
 import 'expression.dart';
 import 'identifier.dart';
@@ -17,23 +17,23 @@ class Call extends Expression {
   @override
   FileSpan get span {
     return arguments
-        .fold<FileSpan>(target.span, (out, a) => out.expand(a.span))
-        .expand(namedArguments.fold<FileSpan>(
-            lParen.span, (out, a) => out.expand(a.span)))
+        .fold<FileSpan?>(target.span, (out, a) => out!.expand(a.span))!
+        .expand(namedArguments.fold<FileSpan?>(
+            lParen.span, (out, a) => out!.expand(a.span))!)
         .expand(rParen.span);
   }
 
-  List computePositional(SymbolTable scope) =>
+  List computePositional(SymbolTable? scope) =>
       arguments.map((e) => e.compute(scope)).toList();
 
-  Map<Symbol, dynamic> computeNamed(SymbolTable scope) {
+  Map<Symbol, dynamic> computeNamed(SymbolTable? scope) {
     return namedArguments.fold<Map<Symbol, dynamic>>({}, (out, a) {
       return out..[Symbol(a.name.name)] = a.value.compute(scope);
     });
   }
 
   @override
-  compute(scope) {
+  dynamic compute(scope) {
     var callee = target.compute(scope);
     var args = computePositional(scope);
     var named = computeNamed(scope);

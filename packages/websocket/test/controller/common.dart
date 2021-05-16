@@ -1,8 +1,8 @@
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_websocket/server.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_websocket/server.dart';
 
 class Game {
-  final String playerOne, playerTwo;
+  final String? playerOne, playerTwo;
 
   const Game({this.playerOne, this.playerTwo});
 
@@ -28,7 +28,7 @@ class GameController extends WebSocketController {
   GameController(AngelWebSocket ws) : super(ws);
 
   @ExposeWs('search')
-  search(WebSocketContext socket) async {
+  dynamic search(WebSocketContext socket) async {
     print('User is searching for a game...');
     socket.send('searched', johnVsBob);
   }

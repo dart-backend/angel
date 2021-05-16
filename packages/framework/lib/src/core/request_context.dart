@@ -11,12 +11,14 @@ import 'dart:io'
         HttpSession,
         InternetAddress;
 
-import 'package:angel_container/angel_container.dart';
+import 'package:angel3_container/angel3_container.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:http_server/http_server.dart';
 import 'package:meta/meta.dart';
 import 'package:mime/mime.dart';
 import 'package:path/path.dart' as p;
+import 'package:collection/collection.dart';
+import 'package:logging/logging.dart';
 
 import 'metadata.dart';
 import 'response_context.dart';
@@ -29,15 +31,19 @@ part 'injection.dart';
 abstract class RequestContext<RawRequest> {
   /// Similar to [Angel.shutdownHooks], allows for logic to be executed
   /// when a [RequestContext] is done being processed.
+  final log = Logger('RequestContext');
+
   final List<FutureOr<void> Function()> shutdownHooks = [];
 
-  String _acceptHeaderCache, _extensionCache;
-  bool _acceptsAllCache, _hasParsedBody = false, _closed = false;
-  Map<String, dynamic> _bodyFields, _queryParameters;
-  List _bodyList;
-  Object _bodyObject;
-  List<UploadedFile> _uploadedFiles;
-  MediaType _contentType;
+  String? _acceptHeaderCache, _extensionCache;
+  bool? _acceptsAllCache;
+  Map<String, dynamic>? _queryParameters;
+  Object? _bodyObject;
+  bool _hasParsedBody = false, _closed = false;
+  Map<String, dynamic> _bodyFields = {};
+  List _bodyList = [];
+  List<UploadedFile> _uploadedFiles = <UploadedFile>[];
+  MediaType _contentType = MediaType("text", "plain");
 
   /// The underlying [RawRequest] provided by the driver.
   RawRequest get rawRequest;
@@ -46,22 +52,22 @@ abstract class RequestContext<RawRequest> {
   final Map<String, dynamic> serviceParams = {};
 
   /// The [Angel] instance that is responding to this request.
-  Angel app;
+  Angel? app;
 
   /// Any cookies sent with this request.
-  List<Cookie> get cookies;
+  List<Cookie> get cookies => <Cookie>[];
 
   /// All HTTP headers sent with this request.
-  HttpHeaders get headers;
+  HttpHeaders? get headers;
 
   /// The requested hostname.
-  String get hostname;
+  String get hostname => 'localhost';
 
   /// The IoC container that can be used to provide functionality to produce
   /// objects of a given type.
   ///
   /// This is a *child* of the container found in `app`.
-  Container get container;
+  Container? get container;
 
   /// The user's IP.
   String get ip => remoteAddress.address;
@@ -69,24 +75,33 @@ abstract class RequestContext<RawRequest> {
   /// This request's HTTP method.
   ///
   /// This may have been processed by an override. See [originalMethod] to get the real method.
-  String get method;
+  String get method => 'GET';
 
   /// The original HTTP verb sent to the server.
-  String get originalMethod;
+  String get originalMethod => 'GET';
 
   /// The content type of an incoming request.
-  MediaType get contentType =>
-      _contentType ??= MediaType.parse(headers.contentType.toString());
+  MediaType get contentType {
+    if (headers?.contentType != null) {
+      try {
+        _contentType = MediaType.parse(headers!.contentType.toString());
+      } catch (e) {
+        log.warning(
+            'Invalid media type [${headers!.contentType.toString()}]', e);
+      }
+    }
+    return _contentType;
+  }
 
   /// The URL parameters extracted from the request URI.
   Map<String, dynamic> params = <String, dynamic>{};
 
   /// The requested path.
-  String get path;
+  String get path => '';
 
   /// Is this an **XMLHttpRequest**?
   bool get isXhr {
-    return headers.value("X-Requested-With")?.trim()?.toLowerCase() ==
+    return headers?.value("X-Requested-With")?.trim().toLowerCase() ==
         'xmlhttprequest';
   }
 
@@ -94,13 +109,13 @@ abstract class RequestContext<RawRequest> {
   InternetAddress get remoteAddress;
 
   /// The user's HTTP session.
-  HttpSession get session;
+  HttpSession? get session;
 
   /// The [Uri] instance representing the path this request is responding to.
-  Uri get uri;
+  Uri? get uri;
 
   /// The [Stream] of incoming binary data sent from the client.
-  Stream<List<int>> get body;
+  Stream<List<int>>? get body;
 
   /// Returns `true` if [parseBody] has been called so far.
   bool get hasParsedBody => _hasParsedBody;
@@ -111,9 +126,10 @@ abstract class RequestContext<RawRequest> {
   Map<String, dynamic> get bodyAsMap {
     if (!hasParsedBody) {
       throw StateError('The request body has not been parsed yet.');
-    } else if (_bodyFields == null) {
-      throw StateError('The request body, $_bodyObject, is not a Map.');
     }
+    // else if (_bodyFields == null) {
+    //  throw StateError('The request body, $_bodyObject, is not a Map.');
+    //}
 
     return _bodyFields;
   }
@@ -121,15 +137,17 @@ abstract class RequestContext<RawRequest> {
   /// This setter allows you to explicitly set the request body **exactly once**.
   ///
   /// Use this if the format of the body is not natively parsed by Angel.
-  set bodyAsMap(Map<String, dynamic> value) => bodyAsObject = value;
+  set bodyAsMap(Map<String, dynamic>? value) => bodyAsObject = value;
 
   /// Returns a *mutable* [List] parsed from the request [body].
   ///
   /// Note that [parseBody] must be called first.
-  List get bodyAsList {
+  List? get bodyAsList {
     if (!hasParsedBody) {
       throw StateError('The request body has not been parsed yet.');
-    } else if (_bodyList == null) {
+      // TODO: Relook at this
+      //} else if (_bodyList == null) {
+    } else if (_bodyList.isEmpty) {
       throw StateError('The request body, $_bodyObject, is not a List.');
     }
 
@@ -139,12 +157,12 @@ abstract class RequestContext<RawRequest> {
   /// This setter allows you to explicitly set the request body **exactly once**.
   ///
   /// Use this if the format of the body is not natively parsed by Angel.
-  set bodyAsList(List value) => bodyAsObject = value;
+  set bodyAsList(List? value) => bodyAsObject = value;
 
   /// Returns the parsed request body, whatever it may be (typically a [Map] or [List]).
   ///
   /// Note that [parseBody] must be called first.
-  Object get bodyAsObject {
+  Object? get bodyAsObject {
     if (!hasParsedBody) {
       throw StateError('The request body has not been parsed yet.');
     }
@@ -170,7 +188,7 @@ abstract class RequestContext<RawRequest> {
   /// Returns a *mutable* map of the files parsed from the request [body].
   ///
   /// Note that [parseBody] must be called first.
-  List<UploadedFile> get uploadedFiles {
+  List<UploadedFile>? get uploadedFiles {
     if (!hasParsedBody) {
       throw StateError('The request body has not been parsed yet.');
     }
@@ -179,13 +197,13 @@ abstract class RequestContext<RawRequest> {
   }
 
   /// Returns a *mutable* map of the fields contained in the query.
-  Map<String, dynamic> get queryParameters =>
-      _queryParameters ??= Map<String, dynamic>.from(uri.queryParameters);
+  Map<String, dynamic> get queryParameters => _queryParameters ??=
+      Map<String, dynamic>.from(uri?.queryParameters ?? {});
 
   /// Returns the file extension of the requested path, if any.
   ///
   /// Includes the leading `.`, if there is one.
-  String get extension => _extensionCache ??= p.extension(uri.path);
+  String get extension => _extensionCache ??= p.extension(uri?.path ?? '');
 
   /// Returns `true` if the client's `Accept` header indicates that the given [contentType] is considered a valid response.
   ///
@@ -207,14 +225,14 @@ abstract class RequestContext<RawRequest> {
           'RequestContext.accepts expects the `contentType` parameter to NOT be null.');
     }
 
-    _acceptHeaderCache ??= headers.value('accept');
+    _acceptHeaderCache ??= headers?.value('accept');
 
     if (_acceptHeaderCache == null) {
       return true;
-    } else if (strict != true && _acceptHeaderCache.contains('*/*')) {
+    } else if (strict != true && _acceptHeaderCache!.contains('*/*')) {
       return true;
     } else {
-      return _acceptHeaderCache.contains(contentTypeString);
+      return _acceptHeaderCache!.contains(contentTypeString);
     }
   }
 
@@ -222,30 +240,34 @@ abstract class RequestContext<RawRequest> {
   bool get acceptsAll => _acceptsAllCache ??= accepts('*/*');
 
   /// Shorthand for deserializing [bodyAsMap], using some transformer function [f].
-  Future<T> deserializeBody<T>(FutureOr<T> Function(Map) f,
+  Future<T> deserializeBody<T>(FutureOr<T> Function(Map?) f,
       {Encoding encoding = utf8}) async {
     await parseBody(encoding: encoding);
     return await f(bodyAsMap);
   }
 
   /// Shorthand for decoding [bodyAsMap], using some [codec].
-  Future<T> decodeBody<T>(Codec<T, Map> codec, {Encoding encoding = utf8}) =>
+  Future<T> decodeBody<T>(Codec<T, Map?> codec, {Encoding encoding = utf8}) =>
       deserializeBody(codec.decode, encoding: encoding);
 
   /// Manually parses the request body, if it has not already been parsed.
   Future<void> parseBody({Encoding encoding = utf8}) async {
-    if (contentType == null) {
-      throw FormatException('Missing "content-type" header.');
-    }
+    //if (contentType == null) {
+    //  throw FormatException('Missing "content-type" header.');
+    //}
 
     if (!_hasParsedBody) {
       _hasParsedBody = true;
 
+      var contentBody = body;
+      //TODO: Relook at this
+      contentBody ??= Stream.empty();
+
       if (contentType.type == 'application' && contentType.subtype == 'json') {
         _uploadedFiles = [];
 
-        var parsed = _bodyObject =
-            await encoding.decoder.bind(body).join().then(json.decode);
+        var parsed = (_bodyObject =
+            await encoding.decoder.bind(contentBody).join().then(json.decode));
 
         if (parsed is Map) {
           _bodyFields = Map<String, dynamic>.from(parsed);
@@ -256,16 +278,16 @@ abstract class RequestContext<RawRequest> {
           contentType.subtype == 'x-www-form-urlencoded') {
         _uploadedFiles = [];
         var parsed = await encoding.decoder
-            .bind(body)
+            .bind(contentBody)
             .join()
             .then((s) => Uri.splitQueryString(s, encoding: encoding));
         _bodyFields = Map<String, dynamic>.from(parsed);
       } else if (contentType.type == 'multipart' &&
           contentType.subtype == 'form-data' &&
           contentType.parameters.containsKey('boundary')) {
-        var boundary = contentType.parameters['boundary'];
+        var boundary = contentType.parameters['boundary'] ?? '';
         var transformer = MimeMultipartTransformer(boundary);
-        var parts = transformer.bind(body).map((part) =>
+        var parts = transformer.bind(contentBody).map((part) =>
             HttpMultipartFormData.parse(part, defaultEncoding: encoding));
         _bodyFields = {};
         _uploadedFiles = [];
@@ -277,8 +299,10 @@ abstract class RequestContext<RawRequest> {
               part.contentDisposition.parameters.containsKey('name')) {
             // If there is no name, then don't parse it.
             var key = part.contentDisposition.parameters['name'];
-            var value = await part.join();
-            _bodyFields[key] = value;
+            if (key != null) {
+              var value = await part.join();
+              _bodyFields[key] = value;
+            }
           }
         }
       } else {
@@ -297,7 +321,7 @@ abstract class RequestContext<RawRequest> {
       _acceptHeaderCache = null;
       serviceParams.clear();
       params.clear();
-      await Future.forEach(shutdownHooks, (hook) => hook());
+      await Future.forEach(shutdownHooks, (dynamic hook) => hook());
     }
   }
 }
@@ -306,8 +330,9 @@ abstract class RequestContext<RawRequest> {
 class UploadedFile {
   /// The underlying `form-data` item.
   final HttpMultipartFormData formData;
+  final log = Logger('UploadedFile');
 
-  MediaType _contentType;
+  MediaType _contentType = MediaType("multipart", "form-data");
 
   UploadedFile(this.formData);
 
@@ -316,22 +341,35 @@ class UploadedFile {
 
   /// The filename associated with the data on the user's system.
   /// Returns [:null:] if not present.
-  String get filename => formData.contentDisposition.parameters['filename'];
+  String? get filename => formData.contentDisposition.parameters['filename'];
 
   /// The name of the field associated with this data.
   /// Returns [:null:] if not present.
-  String get name => formData.contentDisposition.parameters['name'];
+  String? get name => formData.contentDisposition.parameters['name'];
 
   /// The parsed [:Content-Type:] header of the [:HttpMultipartFormData:].
   /// Returns [:null:] if not present.
-  MediaType get contentType => _contentType ??= (formData.contentType == null
-      ? null
-      : MediaType.parse(formData.contentType.toString()));
+  //MediaType get contentType => _contentType ??= (formData.contentType == null
+  //    ? null
+  //    : MediaType.parse(formData.contentType.toString()));
+
+  MediaType get contentType {
+    if (formData.contentType != null) {
+      try {
+        _contentType = MediaType.parse(formData.contentType.toString());
+      } catch (e) {
+        log.warning(
+            'Invalue media type [${formData.contentType.toString()}]', e);
+      }
+    }
+
+    return _contentType;
+  }
 
   /// The parsed [:Content-Transfer-Encoding:] header of the
   /// [:HttpMultipartFormData:]. This field is used to determine how to decode
   /// the data. Returns [:null:] if not present.
-  HeaderValue get contentTransferEncoding => formData.contentTransferEncoding;
+  HeaderValue? get contentTransferEncoding => formData.contentTransferEncoding;
 
   /// Reads the contents of the file into a single linear buffer.
   ///

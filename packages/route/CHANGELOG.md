@@ -1,3 +1,12 @@
+# 5.0.1
+* Updated README
+
+# 5.0.0
+* Migrated to support Dart SDK 2.12.x NNBD
+
+# 4.0.0
+* Migrated to work with Dart SDK 2.12.x Non NNBD
+
 # 3.1.0+1
 * Accidentally hit `CTRL-C` while uploading `3.1.0`; this version ensures everything is ok.
 

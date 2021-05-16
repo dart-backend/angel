@@ -1,6 +1,6 @@
-import 'package:angel_validate/angel_validate.dart';
+import 'package:angel3_validate/angel3_validate.dart';
 
-main() {
+void main() {
   var bio = Validator({
     'age*': [isInt, greaterThanOrEqualTo(0)],
     'birthYear*': isInt,

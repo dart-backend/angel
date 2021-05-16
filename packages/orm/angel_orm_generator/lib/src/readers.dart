@@ -20,21 +20,21 @@ class ColumnReader {
 
   bool get isNullable => reader.peek('isNullable')?.boolValue ?? true;
 
-  int get length => reader.peek('length')?.intValue;
+  int? get length => reader.peek('length')?.intValue;
 
-  DartObject get defaultValue => reader.peek('defaultValue')?.objectValue;
+  DartObject? get defaultValue => reader.peek('defaultValue')?.objectValue;
 }
 
 class RelationshipReader {
   final int type;
-  final String localKey;
-  final String foreignKey;
-  final String foreignTable;
-  final bool cascadeOnDelete;
-  final DartType through;
-  final OrmBuildContext foreign;
-  final OrmBuildContext throughContext;
-  final JoinType joinType;
+  final String? localKey;
+  final String? foreignKey;
+  final String? foreignTable;
+  final bool? cascadeOnDelete;
+  final DartType? through;
+  final OrmBuildContext? foreign;
+  final OrmBuildContext? throughContext;
+  final JoinType? joinType;
 
   const RelationshipReader(this.type,
       {this.localKey,
@@ -75,13 +75,13 @@ class RelationshipReader {
     });
   }
 
-  FieldElement findForeignField(OrmBuildContext ctx) {
-    var foreign = throughContext ?? this.foreign;
+  FieldElement findForeignField(OrmBuildContext? ctx) {
+    var foreign = throughContext ?? this.foreign!;
     return foreign.effectiveFields.firstWhere(
         (f) => foreign.buildContext.resolveFieldName(f.name) == foreignKey,
         orElse: () {
       throw '${foreign.buildContext.clazz.name} has no field that maps to the name "$foreignKey", '
-          'but ${ctx.buildContext.clazz.name} has a @HasMany() relation that expects such a field.';
+          'but ${ctx!.buildContext.clazz.name} has a @HasMany() relation that expects such a field.';
     });
   }
 }

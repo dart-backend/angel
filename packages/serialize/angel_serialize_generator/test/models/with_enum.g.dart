@@ -11,16 +11,16 @@ class WithEnum implements _WithEnum {
   const WithEnum({this.type = WithEnumType.b, this.finalList, this.imageBytes});
 
   @override
-  final WithEnumType type;
+  final WithEnumType? type;
 
   @override
-  final List<int> finalList;
+  final List<int>? finalList;
 
   @override
-  final Uint8List imageBytes;
+  final Uint8List? imageBytes;
 
   WithEnum copyWith(
-      {WithEnumType type, List<int> finalList, Uint8List imageBytes}) {
+      {WithEnumType? type, List<int>? finalList, Uint8List? imageBytes}) {
     return WithEnum(
         type: type ?? this.type,
         finalList: finalList ?? this.finalList,
@@ -80,7 +80,7 @@ class WithEnumSerializer extends Codec<WithEnum, Map> {
   static WithEnum fromMap(Map map) {
     return WithEnum(
         type: map['type'] is WithEnumType
-            ? (map['type'] as WithEnumType)
+            ? (map['type'] as WithEnumType?)
             : (map['type'] is int
                 ? WithEnumType.values[map['type'] as int]
                 : WithEnumType.b),
@@ -88,7 +88,7 @@ class WithEnumSerializer extends Codec<WithEnum, Map> {
             ? (map['final_list'] as Iterable).cast<int>().toList()
             : null,
         imageBytes: map['image_bytes'] is Uint8List
-            ? (map['image_bytes'] as Uint8List)
+            ? (map['image_bytes'] as Uint8List?)
             : (map['image_bytes'] is Iterable<int>
                 ? Uint8List.fromList(
                     (map['image_bytes'] as Iterable<int>).toList())
@@ -99,15 +99,12 @@ class WithEnumSerializer extends Codec<WithEnum, Map> {
   }
 
   static Map<String, dynamic> toMap(_WithEnum model) {
-    if (model == null) {
-      return null;
-    }
     return {
       'type':
-          model.type == null ? null : WithEnumType.values.indexOf(model.type),
+          model.type == null ? null : WithEnumType.values.indexOf(model.type!),
       'final_list': model.finalList,
       'image_bytes':
-          model.imageBytes == null ? null : base64.encode(model.imageBytes)
+          model.imageBytes == null ? null : base64.encode(model.imageBytes!)
     };
   }
 }

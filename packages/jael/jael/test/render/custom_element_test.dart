@@ -1,7 +1,7 @@
 import 'dart:math';
-import 'package:code_buffer/code_buffer.dart';
-import 'package:jael/jael.dart' as jael;
-import 'package:symbol_table/symbol_table.dart';
+import 'package:angel3_code_buffer/angel3_code_buffer.dart';
+import 'package:jael3/jael3.dart' as jael;
+import 'package:angel3_symbol_table/angel3_symbol_table.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -105,8 +105,8 @@ void main() {
   });
 }
 
-String render(String template, [Map<String, dynamic> values]) {
-  var doc = jael.parseDocument(template, onError: (e) => throw e);
+String render(String template, [Map<String, dynamic> values = const {}]) {
+  var doc = jael.parseDocument(template, onError: (e) => throw e)!;
   var buffer = CodeBuffer();
   const jael.Renderer().render(doc, buffer, SymbolTable(values: values));
   return buffer.toString();

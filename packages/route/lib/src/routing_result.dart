@@ -1,4 +1,4 @@
-part of angel_route.src.router;
+part of angel3_route.src.router;
 
 /// Represents a complex result of navigating to a path.
 class RoutingResult<T> {
@@ -28,7 +28,7 @@ class RoutingResult<T> {
   RoutingResult<T> get deepest {
     var search = this;
 
-    while (search?.nested?.isNotEmpty == true) {
+    while (search.nested.isNotEmpty == true) {
       search = search.nested.first;
     }
 
@@ -43,9 +43,7 @@ class RoutingResult<T> {
 
   /// The handlers at this sub-path.
   List<T> get handlers {
-    return <T>[]
-      ..addAll(shallowRouter.middleware)
-      ..addAll(shallowRoute.handlers);
+    return <T>[...shallowRouter.middleware, ...shallowRoute.handlers];
   }
 
   /// All handlers on this sub-path and its children.
@@ -55,7 +53,7 @@ class RoutingResult<T> {
     void crawl(RoutingResult<T> result) {
       handlers.addAll(result.handlers);
 
-      if (result.nested?.isNotEmpty == true) {
+      if (result.nested.isNotEmpty == true) {
         for (var r in result.nested) {
           crawl(r);
         }
@@ -69,12 +67,12 @@ class RoutingResult<T> {
 
   /// All parameters on this sub-path and its children.
   Map<String, dynamic> get allParams {
-    final Map<String, dynamic> params = {};
+    final params = <String, dynamic>{};
 
     void crawl(RoutingResult result) {
       params.addAll(result.params);
 
-      if (result.nested?.isNotEmpty == true) {
+      if (result.nested.isNotEmpty == true) {
         for (var r in result.nested) {
           crawl(r);
         }
@@ -86,12 +84,12 @@ class RoutingResult<T> {
   }
 
   RoutingResult(
-      {this.parseResult,
+      {required this.parseResult,
       Map<String, dynamic> params = const {},
-      this.nested,
-      this.shallowRoute,
-      this.shallowRouter,
-      @required this.tail}) {
-    this.params.addAll(params ?? {});
+      this.nested = const Iterable.empty(),
+      required this.shallowRoute,
+      required this.shallowRouter,
+      required this.tail}) {
+    this.params.addAll(params);
   }
 }

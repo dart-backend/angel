@@ -1,9 +1,9 @@
 // ignore_for_file: unused_element
-import 'package:angel_serialize/angel_serialize.dart';
+import 'package:angel3_serialize/angel3_serialize.dart';
 part 'main.g.dart';
 
 @serializable
 class _Todo {
-  String text;
-  bool completed;
+  String? text;
+  bool? completed;
 }

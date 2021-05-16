@@ -1,6 +1,9 @@
-# validate
-[![Pub](https://img.shields.io/pub/v/angel_validate.svg)](https://pub.dartlang.org/packages/angel_validate)
-[![build status](https://travis-ci.org/angel-dart/validate.svg)](https://travis-ci.org/angel-dart/validate)
+# angel3_validate
+[![version](https://img.shields.io/badge/pub-v4.0.1-brightgreen)](https://pub.dartlang.org/packages/angel3_validate)
+[![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
+[![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
+
+[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/validate/LICENSE)
 
 [Live Example](https://angel-dart.github.io/validate)
 
@@ -33,7 +36,7 @@ For convenience's sake, this library also exports `matcher`.
 ## Creating a Validator
 
 ```dart
-import 'package:angel_validate/angel_validate.dart';
+import 'package:angel3_validate/angel3_validate.dart';
 
 main() {
     var validator = Validator({
@@ -144,7 +147,7 @@ main() {
 ```
 
 # Custom Error Messages
-If these are not present, `angel_validate` will *attempt* to generate
+If these are not present, `angel3_validate` will *attempt* to generate
 a coherent error message on its own.
 
 ```dart
@@ -286,8 +289,8 @@ main() {
 * `filterQuery(only)`: Same as `filterBody`, but operates on `req.query`.
 
 ```dart
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_validate/server.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_validate/server.dart';
 
 final Validator echo = Validator({
     'message*': (String message) => message.length >= 5
@@ -300,7 +303,7 @@ final Validator todo = Validator({
     'completed': false
 });
 
-main() async {
+void main() async {
     var app = Angel();
 
     app.chain([validate(echo)]).post('/echo', (req, res) async {

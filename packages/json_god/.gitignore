@@ -1,36 +1,31 @@
 # See https://www.dartlang.org/tools/private-files.html
-.idea
-**/bower_components/
 
 # Files and directories created by pub
-.buildlog
+.dart_tool
 .packages
-.project
 .pub/
 build/
-**/packages/
 
-# Files created by dart2js
-# (Most Dart developers will use pub build to compile Dart, use/modify these
-#  rules if you intend to use dart2js directly
-#  Convention is to use extension '.dart.js' for Dart compiled to Javascript to
-#  differentiate from explicit Javascript files)
-# *.dart.js
-*.part.js
-*.js.deps
-# *.js.map
-*.info.json
+# If you're building an application, you may want to check-in your pubspec.lock
+pubspec.lock
 
 # Directory created by dartdoc
-doc/
+# If you don't generate documentation locally you can remove this line.
+doc/api/
 
-# Don't commit pubspec lock file
-# (Library packages only! Remove pattern if developing an application package)
-pubspec.lock
 ### Dart template
 # See https://www.dartlang.org/tools/private-files.html
 
 # Files and directories created by pub
+
+# SDK 1.20 and later (no longer creates packages directories)
+
+# Older SDK versions
+# (Include if the minimum SDK version specified in pubsepc.yaml is earlier than 1.20)
+.project
+.buildlog
+**/packages/
+
 
 # Files created by dart2js
 # (Most Dart developers will use pub build to compile Dart, use/modify these
@@ -38,7 +33,13 @@ pubspec.lock
 #  Convention is to use extension '.dart.js' for Dart compiled to Javascript to
 #  differentiate from explicit Javascript files)
 *.dart.js
+*.part.js
+*.js.deps
+*.js.map
+*.info.json
+
 # Directory created by dartdoc
+
 # Don't commit pubspec lock file
 # (Library packages only! Remove pattern if developing an application package)
 ### JetBrains template
@@ -46,22 +47,9 @@ pubspec.lock
 # Reference: https://intellij-support.jetbrains.com/hc/en-us/articles/206544839
 
 # User-specific stuff:
-.idea/tasks.xml
-.idea/dictionaries
-.idea/jsLibraryMappings.xml
 
-# Sensitive or high-churn files:
-.idea/dataSources.ids
-.idea/dataSources.xml
-.idea/dataSources.local.xml
-.idea/sqlDataSources.xml
-.idea/dynamic.xml
-.idea/uiDesigner.xml
-
-# Gradle:
-.idea/gradle.xml
-# Mongo Explorer plugin:
-.idea/mongoSettings.xml
+## VsCode
+.vscode/
 
 ## File-based project format:
 *.iws
@@ -69,9 +57,8 @@ pubspec.lock
 ## Plugin-specific files:
 
 # IntelliJ
+.idea/
 /out/
-
-# mpeltonen/sbt-idea plugin
 .idea_modules/
 
 # JIRA plugin

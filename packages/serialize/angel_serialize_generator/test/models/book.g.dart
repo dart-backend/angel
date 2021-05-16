@@ -18,51 +18,51 @@ class Book extends _Book {
       this.title,
       this.description,
       this.pageCount,
-      List<double> notModels,
+      List<double>? notModels,
       this.camelCaseString})
       : this.notModels = List.unmodifiable(notModels ?? []);
 
   /// A unique identifier corresponding to this item.
   @override
-  String id;
+  String? id;
 
   /// The time at which this item was created.
   @override
-  DateTime createdAt;
+  DateTime? createdAt;
 
   /// The last time at which this item was updated.
   @override
-  DateTime updatedAt;
+  DateTime? updatedAt;
 
   @override
-  String author;
+  String? author;
 
   @override
-  String title;
+  String? title;
 
   @override
-  String description;
+  String? description;
 
   /// The number of pages the book has.
   @override
-  int pageCount;
+  int? pageCount;
 
   @override
-  List<double> notModels;
+  List<double>? notModels;
 
   @override
-  String camelCaseString;
+  String? camelCaseString;
 
   Book copyWith(
-      {String id,
-      DateTime createdAt,
-      DateTime updatedAt,
-      String author,
-      String title,
-      String description,
-      int pageCount,
-      List<double> notModels,
-      String camelCaseString}) {
+      {String? id,
+      DateTime? createdAt,
+      DateTime? updatedAt,
+      String? author,
+      String? title,
+      String? description,
+      int? pageCount,
+      List<double>? notModels,
+      String? camelCaseString}) {
     return Book(
         id: id ?? this.id,
         createdAt: createdAt ?? this.createdAt,
@@ -106,10 +106,10 @@ class Book extends _Book {
 
   @override
   String toString() {
-    return "Book(id=$id, createdAt=$createdAt, updatedAt=$updatedAt, author=$author, title=$title, description=$description, pageCount=$pageCount, notModels=$notModels, camelCaseString=$camelCaseString)";
+    return 'Book(id=$id, createdAt=$createdAt, updatedAt=$updatedAt, author=$author, title=$title, description=$description, pageCount=$pageCount, notModels=$notModels, camelCaseString=$camelCaseString)';
   }
 
-  Map<String, dynamic> toJson() {
+  Map<String, dynamic>? toJson() {
     return BookSerializer.toMap(this);
   }
 }
@@ -120,9 +120,9 @@ class Author extends _Author {
       {this.id,
       this.createdAt,
       this.updatedAt,
-      @required this.name,
-      @required this.age,
-      List<_Book> books,
+      required this.name,
+      required this.age,
+      List<_Book>? books,
       this.newestBook,
       this.secret,
       this.obscured})
@@ -130,45 +130,45 @@ class Author extends _Author {
 
   /// A unique identifier corresponding to this item.
   @override
-  String id;
+  String? id;
 
   /// The time at which this item was created.
   @override
-  DateTime createdAt;
+  DateTime? createdAt;
 
   /// The last time at which this item was updated.
   @override
-  DateTime updatedAt;
+  DateTime? updatedAt;
 
   @override
-  final String name;
+  final String? name;
 
   @override
-  final int age;
+  final int? age;
 
   @override
   final List<_Book> books;
 
   /// The newest book.
   @override
-  final _Book newestBook;
+  final _Book? newestBook;
 
   @override
-  final String secret;
+  final String? secret;
 
   @override
-  final String obscured;
+  final String? obscured;
 
   Author copyWith(
-      {String id,
-      DateTime createdAt,
-      DateTime updatedAt,
-      String name,
-      int age,
-      List<_Book> books,
-      _Book newestBook,
-      String secret,
-      String obscured}) {
+      {String? id,
+      DateTime? createdAt,
+      DateTime? updatedAt,
+      String? name,
+      int? age,
+      List<_Book>? books,
+      _Book? newestBook,
+      String? secret,
+      String? obscured}) {
     return Author(
         id: id ?? this.id,
         createdAt: createdAt ?? this.createdAt,
@@ -212,7 +212,7 @@ class Author extends _Author {
 
   @override
   String toString() {
-    return "Author(id=$id, createdAt=$createdAt, updatedAt=$updatedAt, name=$name, age=$age, books=$books, newestBook=$newestBook, secret=$secret, obscured=$obscured)";
+    return 'Author(id=$id, createdAt=$createdAt, updatedAt=$updatedAt, name=$name, age=$age, books=$books, newestBook=$newestBook, secret=$secret, obscured=$obscured)';
   }
 
   Map<String, dynamic> toJson() {
@@ -223,29 +223,29 @@ class Author extends _Author {
 @generatedSerializable
 class Library extends _Library {
   Library(
-      {this.id, this.createdAt, this.updatedAt, Map<String, _Book> collection})
-      : this.collection = Map.unmodifiable(collection ?? {});
+      {this.id, this.createdAt, this.updatedAt, Map<String, _Book>? collection})
+      : collection = Map.unmodifiable(collection ?? {});
 
   /// A unique identifier corresponding to this item.
   @override
-  String id;
+  String? id;
 
   /// The time at which this item was created.
   @override
-  DateTime createdAt;
+  DateTime? createdAt;
 
   /// The last time at which this item was updated.
   @override
-  DateTime updatedAt;
+  DateTime? updatedAt;
 
   @override
   final Map<String, _Book> collection;
 
   Library copyWith(
-      {String id,
-      DateTime createdAt,
-      DateTime updatedAt,
-      Map<String, _Book> collection}) {
+      {String? id,
+      DateTime? createdAt,
+      DateTime? updatedAt,
+      Map<String, _Book>? collection}) {
     return Library(
         id: id ?? this.id,
         createdAt: createdAt ?? this.createdAt,
@@ -271,7 +271,7 @@ class Library extends _Library {
 
   @override
   String toString() {
-    return "Library(id=$id, createdAt=$createdAt, updatedAt=$updatedAt, collection=$collection)";
+    return 'Library(id=$id, createdAt=$createdAt, updatedAt=$updatedAt, collection=$collection)';
   }
 
   Map<String, dynamic> toJson() {
@@ -285,40 +285,40 @@ class Bookmark extends _Bookmark {
       {this.id,
       this.createdAt,
       this.updatedAt,
-      List<int> history,
-      @required this.page,
+      List<int>? history,
+      required this.page,
       this.comment})
-      : this.history = List.unmodifiable(history ?? []),
+      : history = List.unmodifiable(history ?? []),
         super(book);
 
   /// A unique identifier corresponding to this item.
   @override
-  String id;
+  String? id;
 
   /// The time at which this item was created.
   @override
-  DateTime createdAt;
+  DateTime? createdAt;
 
   /// The last time at which this item was updated.
   @override
-  DateTime updatedAt;
+  DateTime? updatedAt;
 
   @override
   final List<int> history;
 
   @override
-  final int page;
+  final int? page;
 
   @override
-  final String comment;
+  final String? comment;
 
   Bookmark copyWith(_Book book,
-      {String id,
-      DateTime createdAt,
-      DateTime updatedAt,
-      List<int> history,
-      int page,
-      String comment}) {
+      {String? id,
+      DateTime? createdAt,
+      DateTime? updatedAt,
+      List<int>? history,
+      int? page,
+      String? comment}) {
     return Bookmark(book,
         id: id ?? this.id,
         createdAt: createdAt ?? this.createdAt,
@@ -346,7 +346,7 @@ class Bookmark extends _Bookmark {
 
   @override
   String toString() {
-    return "Bookmark(id=$id, createdAt=$createdAt, updatedAt=$updatedAt, history=$history, page=$page, comment=$comment)";
+    return 'Bookmark(id=$id, createdAt=$createdAt, updatedAt=$updatedAt, history=$history, page=$page, comment=$comment)';
   }
 
   Map<String, dynamic> toJson() {
@@ -360,11 +360,11 @@ class Bookmark extends _Bookmark {
 
 const BookSerializer bookSerializer = BookSerializer();
 
-class BookEncoder extends Converter<Book, Map> {
+class BookEncoder extends Converter<Book, Map?> {
   const BookEncoder();
 
   @override
-  Map convert(Book model) => BookSerializer.toMap(model);
+  Map? convert(Book model) => BookSerializer.toMap(model);
 }
 
 class BookDecoder extends Converter<Map, Book> {
@@ -374,37 +374,39 @@ class BookDecoder extends Converter<Map, Book> {
   Book convert(Map map) => BookSerializer.fromMap(map);
 }
 
-class BookSerializer extends Codec<Book, Map> {
+class BookSerializer extends Codec<Book, Map?> {
   const BookSerializer();
 
   @override
-  get encoder => const BookEncoder();
+  BookEncoder get encoder => const BookEncoder();
+
   @override
-  get decoder => const BookDecoder();
+  BookDecoder get decoder => const BookDecoder();
+
   static Book fromMap(Map map) {
     return Book(
-        id: map['id'] as String,
+        id: map['id'] as String?,
         createdAt: map['created_at'] != null
             ? (map['created_at'] is DateTime
-                ? (map['created_at'] as DateTime)
+                ? (map['created_at'] as DateTime?)
                 : DateTime.parse(map['created_at'].toString()))
             : null,
         updatedAt: map['updated_at'] != null
             ? (map['updated_at'] is DateTime
-                ? (map['updated_at'] as DateTime)
+                ? (map['updated_at'] as DateTime?)
                 : DateTime.parse(map['updated_at'].toString()))
             : null,
-        author: map['author'] as String,
-        title: map['title'] as String,
-        description: map['description'] as String,
-        pageCount: map['page_count'] as int,
+        author: map['author'] as String?,
+        title: map['title'] as String?,
+        description: map['description'] as String?,
+        pageCount: map['page_count'] as int?,
         notModels: map['not_models'] is Iterable
             ? (map['not_models'] as Iterable).cast<double>().toList()
             : null,
-        camelCaseString: map['camelCase'] as String);
+        camelCaseString: map['camelCase'] as String?);
   }
 
-  static Map<String, dynamic> toMap(_Book model) {
+  static Map<String, dynamic>? toMap(_Book? model) {
     if (model == null) {
       return null;
     }
@@ -474,32 +476,34 @@ class AuthorSerializer extends Codec<Author, Map> {
   const AuthorSerializer();
 
   @override
-  get encoder => const AuthorEncoder();
+  AuthorEncoder get encoder => const AuthorEncoder();
+
   @override
-  get decoder => const AuthorDecoder();
+  AuthorDecoder get decoder => const AuthorDecoder();
+
   static Author fromMap(Map map) {
     if (map['name'] == null) {
       throw FormatException("Missing required field 'name' on Author.");
     }
 
     if (map['age'] == null) {
-      throw FormatException("Custom message for missing `age`");
+      throw FormatException('Custom message for missing `age`');
     }
 
     return Author(
-        id: map['id'] as String,
+        id: map['id'] as String?,
         createdAt: map['created_at'] != null
             ? (map['created_at'] is DateTime
-                ? (map['created_at'] as DateTime)
+                ? (map['created_at'] as DateTime?)
                 : DateTime.parse(map['created_at'].toString()))
             : null,
         updatedAt: map['updated_at'] != null
             ? (map['updated_at'] is DateTime
-                ? (map['updated_at'] as DateTime)
+                ? (map['updated_at'] as DateTime?)
                 : DateTime.parse(map['updated_at'].toString()))
             : null,
-        name: map['name'] as String,
-        age: map['age'] as int,
+        name: map['name'] as String?,
+        age: map['age'] as int?,
         books: map['books'] is Iterable
             ? List.unmodifiable(((map['books'] as Iterable).whereType<Map>())
                 .map(BookSerializer.fromMap))
@@ -507,19 +511,16 @@ class AuthorSerializer extends Codec<Author, Map> {
         newestBook: map['newest_book'] != null
             ? BookSerializer.fromMap(map['newest_book'] as Map)
             : null,
-        obscured: map['obscured'] as String);
+        obscured: map['obscured'] as String?);
   }
 
   static Map<String, dynamic> toMap(_Author model) {
-    if (model == null) {
-      return null;
-    }
     if (model.name == null) {
       throw FormatException("Missing required field 'name' on Author.");
     }
 
     if (model.age == null) {
-      throw FormatException("Custom message for missing `age`");
+      throw FormatException('Custom message for missing `age`');
     }
 
     return {
@@ -528,7 +529,7 @@ class AuthorSerializer extends Codec<Author, Map> {
       'updated_at': model.updatedAt?.toIso8601String(),
       'name': model.name,
       'age': model.age,
-      'books': model.books?.map((m) => BookSerializer.toMap(m))?.toList(),
+      'books': model.books.map((m) => BookSerializer.toMap(m)).toList(),
       'newest_book': BookSerializer.toMap(model.newestBook)
     };
   }
@@ -586,20 +587,22 @@ class LibrarySerializer extends Codec<Library, Map> {
   const LibrarySerializer();
 
   @override
-  get encoder => const LibraryEncoder();
+  LibraryEncoder get encoder => const LibraryEncoder();
+
   @override
-  get decoder => const LibraryDecoder();
+  LibraryDecoder get decoder => const LibraryDecoder();
+
   static Library fromMap(Map map) {
     return Library(
-        id: map['id'] as String,
+        id: map['id'] as String?,
         createdAt: map['created_at'] != null
             ? (map['created_at'] is DateTime
-                ? (map['created_at'] as DateTime)
+                ? (map['created_at'] as DateTime?)
                 : DateTime.parse(map['created_at'].toString()))
             : null,
         updatedAt: map['updated_at'] != null
             ? (map['updated_at'] is DateTime
-                ? (map['updated_at'] as DateTime)
+                ? (map['updated_at'] as DateTime?)
                 : DateTime.parse(map['updated_at'].toString()))
             : null,
         collection: map['collection'] is Map
@@ -613,14 +616,11 @@ class LibrarySerializer extends Codec<Library, Map> {
   }
 
   static Map<String, dynamic> toMap(_Library model) {
-    if (model == null) {
-      return null;
-    }
     return {
       'id': model.id,
       'created_at': model.createdAt?.toIso8601String(),
       'updated_at': model.updatedAt?.toIso8601String(),
-      'collection': model.collection.keys?.fold({}, (map, key) {
+      'collection': model.collection.keys.fold({}, (dynamic map, key) {
         return map..[key] = BookSerializer.toMap(model.collection[key]);
       })
     };
@@ -651,28 +651,25 @@ abstract class BookmarkSerializer {
     }
 
     return Bookmark(book,
-        id: map['id'] as String,
+        id: map['id'] as String?,
         createdAt: map['created_at'] != null
             ? (map['created_at'] is DateTime
-                ? (map['created_at'] as DateTime)
+                ? (map['created_at'] as DateTime?)
                 : DateTime.parse(map['created_at'].toString()))
             : null,
         updatedAt: map['updated_at'] != null
             ? (map['updated_at'] is DateTime
-                ? (map['updated_at'] as DateTime)
+                ? (map['updated_at'] as DateTime?)
                 : DateTime.parse(map['updated_at'].toString()))
             : null,
         history: map['history'] is Iterable
             ? (map['history'] as Iterable).cast<int>().toList()
             : null,
-        page: map['page'] as int,
-        comment: map['comment'] as String);
+        page: map['page'] as int?,
+        comment: map['comment'] as String?);
   }
 
   static Map<String, dynamic> toMap(_Bookmark model) {
-    if (model == null) {
-      return null;
-    }
     if (model.page == null) {
       throw FormatException("Missing required field 'page' on Bookmark.");
     }

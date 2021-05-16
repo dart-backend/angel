@@ -106,7 +106,7 @@ class FooPivotMigration extends Migration {
 // **************************************************************************
 
 class UnorthodoxQuery extends Query<Unorthodox, UnorthodoxQueryWhere> {
-  UnorthodoxQuery({Query parent, Set<String> trampoline})
+  UnorthodoxQuery({Query? parent, Set<String>? trampoline})
       : super(parent: parent) {
     trampoline ??= Set();
     trampoline.add(tableName);
@@ -116,7 +116,7 @@ class UnorthodoxQuery extends Query<Unorthodox, UnorthodoxQueryWhere> {
   @override
   final UnorthodoxQueryValues values = UnorthodoxQueryValues();
 
-  UnorthodoxQueryWhere _where;
+  UnorthodoxQueryWhere? _where;
 
   @override
   get casts {
@@ -134,7 +134,7 @@ class UnorthodoxQuery extends Query<Unorthodox, UnorthodoxQueryWhere> {
   }
 
   @override
-  UnorthodoxQueryWhere get where {
+  UnorthodoxQueryWhere? get where {
     return _where;
   }
 
@@ -143,14 +143,16 @@ class UnorthodoxQuery extends Query<Unorthodox, UnorthodoxQueryWhere> {
     return UnorthodoxQueryWhere(this);
   }
 
-  static Unorthodox parseRow(List row) {
-    if (row.every((x) => x == null)) return null;
-    var model = Unorthodox(name: (row[0] as String));
-    return model;
+  static Optional<Unorthodox> parseRow(List row) {
+    if (row.every((x) => x == null)) {
+      return Optional.empty();
+    }
+    var model = Unorthodox(name: (row[0] as String?));
+    return Optional.of(model);
   }
 
   @override
-  deserialize(List row) {
+  Optional<Unorthodox> deserialize(List row) {
     return parseRow(row);
   }
 }
@@ -173,18 +175,18 @@ class UnorthodoxQueryValues extends MapQueryValues {
     return {};
   }
 
-  String get name {
-    return (values['name'] as String);
+  String? get name {
+    return (values['name'] as String?);
   }
 
-  set name(String value) => values['name'] = value;
+  set name(String? value) => values['name'] = value;
   void copyFrom(Unorthodox model) {
     name = model.name;
   }
 }
 
 class WeirdJoinQuery extends Query<WeirdJoin, WeirdJoinQueryWhere> {
-  WeirdJoinQuery({Query parent, Set<String> trampoline})
+  WeirdJoinQuery({Query? parent, Set<String>? trampoline})
       : super(parent: parent) {
     trampoline ??= Set();
     trampoline.add(tableName);
@@ -219,13 +221,13 @@ class WeirdJoinQuery extends Query<WeirdJoin, WeirdJoinQueryWhere> {
   @override
   final WeirdJoinQueryValues values = WeirdJoinQueryValues();
 
-  WeirdJoinQueryWhere _where;
+  WeirdJoinQueryWhere? _where;
 
-  UnorthodoxQuery _unorthodox;
+  UnorthodoxQuery? _unorthodox;
 
-  SongQuery _song;
+  SongQuery? _song;
 
-  NumbaQuery _numbas;
+  NumbaQuery? _numbas;
 
   @override
   get casts {
@@ -243,7 +245,7 @@ class WeirdJoinQuery extends Query<WeirdJoin, WeirdJoinQueryWhere> {
   }
 
   @override
-  WeirdJoinQueryWhere get where {
+  WeirdJoinQueryWhere? get where {
     return _where;
   }
 
@@ -252,53 +254,59 @@ class WeirdJoinQuery extends Query<WeirdJoin, WeirdJoinQueryWhere> {
     return WeirdJoinQueryWhere(this);
   }
 
-  static WeirdJoin parseRow(List row) {
-    if (row.every((x) => x == null)) return null;
-    var model = WeirdJoin(id: (row[0] as int));
+  static Optional<WeirdJoin> parseRow(List row) {
+    if (row.every((x) => x == null)) {
+      return Optional.empty();
+    }
+    var model = WeirdJoin(id: (row[0] as int?));
     if (row.length > 2) {
-      model = model.copyWith(
-          unorthodox: UnorthodoxQuery.parseRow(row.skip(2).take(1).toList()));
+      var modelOpt = UnorthodoxQuery.parseRow(row.skip(2).take(1).toList());
+      modelOpt.ifPresent((m) {
+        model = model.copyWith(unorthodox: m);
+      });
     }
     if (row.length > 3) {
-      model = model.copyWith(
-          song: SongQuery.parseRow(row.skip(3).take(5).toList()));
+      var modelOpt = SongQuery.parseRow(row.skip(3).take(5).toList());
+      modelOpt.ifPresent((m) {
+        model = model.copyWith(song: m);
+      });
     }
     if (row.length > 8) {
-      model = model.copyWith(
-          numbas: [NumbaQuery.parseRow(row.skip(8).take(2).toList())]
-              .where((x) => x != null)
-              .toList());
+      var modelOpt = NumbaQuery.parseRow(row.skip(8).take(2).toList());
+      modelOpt.ifPresent((m) {
+        model = model.copyWith(numbas: [m]);
+      });
     }
     if (row.length > 10) {
-      model = model.copyWith(
-          foos: [FooQuery.parseRow(row.skip(10).take(1).toList())]
-              .where((x) => x != null)
-              .toList());
+      var modelOpt = FooQuery.parseRow(row.skip(10).take(1).toList());
+      modelOpt.ifPresent((m) {
+        model = model.copyWith(foos: [m]);
+      });
     }
-    return model;
+    return Optional.of(model);
   }
 
   @override
-  deserialize(List row) {
+  Optional<WeirdJoin> deserialize(List row) {
     return parseRow(row);
   }
 
-  UnorthodoxQuery get unorthodox {
+  UnorthodoxQuery? get unorthodox {
     return _unorthodox;
   }
 
-  SongQuery get song {
+  SongQuery? get song {
     return _song;
   }
 
-  NumbaQuery get numbas {
+  NumbaQuery? get numbas {
     return _numbas;
   }
 
   @override
   bool canCompile(trampoline) {
-    return (!(trampoline.contains('weird_joins') &&
-        trampoline.contains('foo_pivots')));
+    return (!(trampoline.contains('weird_joins') == true &&
+        trampoline.contains('foo_pivots') == true));
   }
 
   @override
@@ -314,8 +322,8 @@ class WeirdJoinQuery extends Query<WeirdJoin, WeirdJoinQueryWhere> {
           return out
             ..[idx] = l.copyWith(
                 numbas: List<_Numba>.from(l.numbas ?? [])
-                  ..addAll(model.numbas ?? []),
-                foos: List<_Foo>.from(l.foos ?? [])..addAll(model.foos ?? []));
+                  ..addAll(List<_Numba>.from(model.numbas ?? [])),
+                foos: List<_Foo?>.from(l.foos ?? [])..addAll(model.foos ?? []));
         }
       });
     });
@@ -333,9 +341,9 @@ class WeirdJoinQuery extends Query<WeirdJoin, WeirdJoinQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                numbas: List<_Numba>.from(l.numbas ?? [])
+                numbas: List<_Numba?>.from(l.numbas ?? [])
                   ..addAll(model.numbas ?? []),
-                foos: List<_Foo>.from(l.foos ?? [])..addAll(model.foos ?? []));
+                foos: List<_Foo?>.from(l.foos ?? [])..addAll(model.foos ?? []));
         }
       });
     });
@@ -353,9 +361,9 @@ class WeirdJoinQuery extends Query<WeirdJoin, WeirdJoinQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                numbas: List<_Numba>.from(l.numbas ?? [])
+                numbas: List<_Numba?>.from(l.numbas ?? [])
                   ..addAll(model.numbas ?? []),
-                foos: List<_Foo>.from(l.foos ?? [])..addAll(model.foos ?? []));
+                foos: List<_Foo?>.from(l.foos ?? [])..addAll(model.foos ?? []));
         }
       });
     });
@@ -383,26 +391,26 @@ class WeirdJoinQueryValues extends MapQueryValues {
     return {};
   }
 
-  int get id {
-    return (values['id'] as int);
+  int? get id {
+    return (values['id'] as int?);
   }
 
-  set id(int value) => values['id'] = value;
-  String get joinName {
-    return (values['join_name'] as String);
+  set id(int? value) => values['id'] = value;
+  String? get joinName {
+    return (values['join_name'] as String?);
   }
 
-  set joinName(String value) => values['join_name'] = value;
+  set joinName(String? value) => values['join_name'] = value;
   void copyFrom(WeirdJoin model) {
     id = model.id;
     if (model.unorthodox != null) {
-      values['join_name'] = model.unorthodox.name;
+      values['join_name'] = model.unorthodox!.name;
     }
   }
 }
 
 class SongQuery extends Query<Song, SongQueryWhere> {
-  SongQuery({Query parent, Set<String> trampoline}) : super(parent: parent) {
+  SongQuery({Query? parent, Set<String>? trampoline}) : super(parent: parent) {
     trampoline ??= Set();
     trampoline.add(tableName);
     _where = SongQueryWhere(this);
@@ -411,7 +419,7 @@ class SongQuery extends Query<Song, SongQueryWhere> {
   @override
   final SongQueryValues values = SongQueryValues();
 
-  SongQueryWhere _where;
+  SongQueryWhere? _where;
 
   @override
   get casts {
@@ -429,7 +437,7 @@ class SongQuery extends Query<Song, SongQueryWhere> {
   }
 
   @override
-  SongQueryWhere get where {
+  SongQueryWhere? get where {
     return _where;
   }
 
@@ -438,19 +446,21 @@ class SongQuery extends Query<Song, SongQueryWhere> {
     return SongQueryWhere(this);
   }
 
-  static Song parseRow(List row) {
-    if (row.every((x) => x == null)) return null;
+  static Optional<Song> parseRow(List row) {
+    if (row.every((x) => x == null)) {
+      return Optional.empty();
+    }
     var model = Song(
         id: row[0].toString(),
-        createdAt: (row[1] as DateTime),
-        updatedAt: (row[2] as DateTime),
-        weirdJoinId: (row[3] as int),
-        title: (row[4] as String));
-    return model;
+        createdAt: (row[1] as DateTime?),
+        updatedAt: (row[2] as DateTime?),
+        weirdJoinId: (row[3] as int?),
+        title: (row[4] as String?));
+    return Optional.of(model);
   }
 
   @override
-  deserialize(List row) {
+  Optional<Song> deserialize(List row) {
     return parseRow(row);
   }
 }
@@ -485,31 +495,31 @@ class SongQueryValues extends MapQueryValues {
     return {};
   }
 
-  String get id {
-    return (values['id'] as String);
+  String? get id {
+    return (values['id'] as String?);
   }
 
-  set id(String value) => values['id'] = value;
-  DateTime get createdAt {
-    return (values['created_at'] as DateTime);
+  set id(String? value) => values['id'] = value;
+  DateTime? get createdAt {
+    return (values['created_at'] as DateTime?);
   }
 
-  set createdAt(DateTime value) => values['created_at'] = value;
-  DateTime get updatedAt {
-    return (values['updated_at'] as DateTime);
+  set createdAt(DateTime? value) => values['created_at'] = value;
+  DateTime? get updatedAt {
+    return (values['updated_at'] as DateTime?);
   }
 
-  set updatedAt(DateTime value) => values['updated_at'] = value;
-  int get weirdJoinId {
-    return (values['weird_join_id'] as int);
+  set updatedAt(DateTime? value) => values['updated_at'] = value;
+  int? get weirdJoinId {
+    return (values['weird_join_id'] as int?);
   }
 
-  set weirdJoinId(int value) => values['weird_join_id'] = value;
-  String get title {
-    return (values['title'] as String);
+  set weirdJoinId(int? value) => values['weird_join_id'] = value;
+  String? get title {
+    return (values['title'] as String?);
   }
 
-  set title(String value) => values['title'] = value;
+  set title(String? value) => values['title'] = value;
   void copyFrom(Song model) {
     createdAt = model.createdAt;
     updatedAt = model.updatedAt;
@@ -519,7 +529,7 @@ class SongQueryValues extends MapQueryValues {
 }
 
 class NumbaQuery extends Query<Numba, NumbaQueryWhere> {
-  NumbaQuery({Query parent, Set<String> trampoline}) : super(parent: parent) {
+  NumbaQuery({Query? parent, Set<String>? trampoline}) : super(parent: parent) {
     trampoline ??= Set();
     trampoline.add(tableName);
     _where = NumbaQueryWhere(this);
@@ -528,7 +538,7 @@ class NumbaQuery extends Query<Numba, NumbaQueryWhere> {
   @override
   final NumbaQueryValues values = NumbaQueryValues();
 
-  NumbaQueryWhere _where;
+  NumbaQueryWhere? _where;
 
   @override
   get casts {
@@ -546,7 +556,7 @@ class NumbaQuery extends Query<Numba, NumbaQueryWhere> {
   }
 
   @override
-  NumbaQueryWhere get where {
+  NumbaQueryWhere? get where {
     return _where;
   }
 
@@ -555,14 +565,16 @@ class NumbaQuery extends Query<Numba, NumbaQueryWhere> {
     return NumbaQueryWhere(this);
   }
 
-  static Numba parseRow(List row) {
-    if (row.every((x) => x == null)) return null;
-    var model = Numba(i: (row[0] as int), parent: (row[1] as int));
-    return model;
+  static Optional<Numba> parseRow(List row) {
+    if (row.every((x) => x == null)) {
+      return Optional.empty();
+    }
+    var model = Numba(i: (row[0] as int?), parent: (row[1] as int?));
+    return Optional.of(model);
   }
 
   @override
-  deserialize(List row) {
+  Optional<Numba> deserialize(List row) {
     return parseRow(row);
   }
 }
@@ -588,16 +600,16 @@ class NumbaQueryValues extends MapQueryValues {
     return {};
   }
 
-  int get i {
-    return (values['i'] as int);
+  int? get i {
+    return (values['i'] as int?);
   }
 
-  set i(int value) => values['i'] = value;
-  int get parent {
-    return (values['parent'] as int);
+  set i(int? value) => values['i'] = value;
+  int? get parent {
+    return (values['parent'] as int?);
   }
 
-  set parent(int value) => values['parent'] = value;
+  set parent(int? value) => values['parent'] = value;
   void copyFrom(Numba model) {
     i = model.i;
     parent = model.parent;
@@ -605,7 +617,7 @@ class NumbaQueryValues extends MapQueryValues {
 }
 
 class FooQuery extends Query<Foo, FooQueryWhere> {
-  FooQuery({Query parent, Set<String> trampoline}) : super(parent: parent) {
+  FooQuery({Query? parent, Set<String>? trampoline}) : super(parent: parent) {
     trampoline ??= Set();
     trampoline.add(tableName);
     _where = FooQueryWhere(this);
@@ -620,7 +632,7 @@ class FooQuery extends Query<Foo, FooQueryWhere> {
   @override
   final FooQueryValues values = FooQueryValues();
 
-  FooQueryWhere _where;
+  FooQueryWhere? _where;
 
   @override
   get casts {
@@ -638,7 +650,7 @@ class FooQuery extends Query<Foo, FooQueryWhere> {
   }
 
   @override
-  FooQueryWhere get where {
+  FooQueryWhere? get where {
     return _where;
   }
 
@@ -647,27 +659,29 @@ class FooQuery extends Query<Foo, FooQueryWhere> {
     return FooQueryWhere(this);
   }
 
-  static Foo parseRow(List row) {
-    if (row.every((x) => x == null)) return null;
-    var model = Foo(bar: (row[0] as String));
-    if (row.length > 1) {
-      model = model.copyWith(
-          weirdJoins: [WeirdJoinQuery.parseRow(row.skip(1).take(2).toList())]
-              .where((x) => x != null)
-              .toList());
+  static Optional<Foo> parseRow(List row) {
+    if (row.every((x) => x == null)) {
+      return Optional.empty();
     }
-    return model;
+    var model = Foo(bar: (row[0] as String?));
+    if (row.length > 1) {
+      var modelOpt = WeirdJoinQuery.parseRow(row.skip(1).take(2).toList());
+      modelOpt.ifPresent((m) {
+        model = model.copyWith(weirdJoins: [m]);
+      });
+    }
+    return Optional.ofNullable(model);
   }
 
   @override
-  deserialize(List row) {
+  Optional<Foo> deserialize(List row) {
     return parseRow(row);
   }
 
   @override
   bool canCompile(trampoline) {
-    return (!(trampoline.contains('foos') &&
-        trampoline.contains('foo_pivots')));
+    return (!(trampoline.contains('foos') == true &&
+        trampoline.contains('foo_pivots') == true));
   }
 
   @override
@@ -746,18 +760,18 @@ class FooQueryValues extends MapQueryValues {
     return {};
   }
 
-  String get bar {
-    return (values['bar'] as String);
+  String? get bar {
+    return (values['bar'] as String?);
   }
 
-  set bar(String value) => values['bar'] = value;
+  set bar(String? value) => values['bar'] = value;
   void copyFrom(Foo model) {
     bar = model.bar;
   }
 }
 
 class FooPivotQuery extends Query<FooPivot, FooPivotQueryWhere> {
-  FooPivotQuery({Query parent, Set<String> trampoline})
+  FooPivotQuery({Query? parent, Set<String>? trampoline})
       : super(parent: parent) {
     trampoline ??= Set();
     trampoline.add(tableName);
@@ -773,11 +787,11 @@ class FooPivotQuery extends Query<FooPivot, FooPivotQueryWhere> {
   @override
   final FooPivotQueryValues values = FooPivotQueryValues();
 
-  FooPivotQueryWhere _where;
+  FooPivotQueryWhere? _where;
 
-  WeirdJoinQuery _weirdJoin;
+  WeirdJoinQuery? _weirdJoin;
 
-  FooQuery _foo;
+  FooQuery? _foo;
 
   @override
   get casts {
@@ -795,7 +809,7 @@ class FooPivotQuery extends Query<FooPivot, FooPivotQueryWhere> {
   }
 
   @override
-  FooPivotQueryWhere get where {
+  FooPivotQueryWhere? get where {
     return _where;
   }
 
@@ -804,30 +818,36 @@ class FooPivotQuery extends Query<FooPivot, FooPivotQueryWhere> {
     return FooPivotQueryWhere(this);
   }
 
-  static FooPivot parseRow(List row) {
-    if (row.every((x) => x == null)) return null;
+  static Optional<FooPivot> parseRow(List row) {
+    if (row.every((x) => x == null)) {
+      return Optional.empty();
+    }
     var model = FooPivot();
     if (row.length > 2) {
-      model = model.copyWith(
-          weirdJoin: WeirdJoinQuery.parseRow(row.skip(2).take(2).toList()));
+      var modelOpt = WeirdJoinQuery.parseRow(row.skip(2).take(2).toList());
+      modelOpt.ifPresent((m) {
+        model = model.copyWith(weirdJoin: m);
+      });
     }
     if (row.length > 4) {
-      model =
-          model.copyWith(foo: FooQuery.parseRow(row.skip(4).take(1).toList()));
+      var modelOpt = FooQuery.parseRow(row.skip(4).take(1).toList());
+      modelOpt.ifPresent((m) {
+        model = model.copyWith(foo: m);
+      });
     }
-    return model;
+    return Optional.ofNullable(model);
   }
 
   @override
-  deserialize(List row) {
+  Optional<FooPivot> deserialize(List row) {
     return parseRow(row);
   }
 
-  WeirdJoinQuery get weirdJoin {
+  WeirdJoinQuery? get weirdJoin {
     return _weirdJoin;
   }
 
-  FooQuery get foo {
+  FooQuery? get foo {
     return _foo;
   }
 }
@@ -853,22 +873,22 @@ class FooPivotQueryValues extends MapQueryValues {
     return {};
   }
 
-  int get weirdJoinId {
-    return (values['weird_join_id'] as int);
+  int? get weirdJoinId {
+    return (values['weird_join_id'] as int?);
   }
 
-  set weirdJoinId(int value) => values['weird_join_id'] = value;
-  String get fooBar {
-    return (values['foo_bar'] as String);
+  set weirdJoinId(int? value) => values['weird_join_id'] = value;
+  String? get fooBar {
+    return (values['foo_bar'] as String?);
   }
 
-  set fooBar(String value) => values['foo_bar'] = value;
+  set fooBar(String? value) => values['foo_bar'] = value;
   void copyFrom(FooPivot model) {
     if (model.weirdJoin != null) {
-      values['weird_join_id'] = model.weirdJoin.id;
+      values['weird_join_id'] = model.weirdJoin!.id;
     }
     if (model.foo != null) {
-      values['foo_bar'] = model.foo.bar;
+      values['foo_bar'] = model.foo!.bar;
     }
   }
 }
@@ -882,9 +902,9 @@ class Unorthodox implements _Unorthodox {
   const Unorthodox({this.name});
 
   @override
-  final String name;
+  final String? name;
 
-  Unorthodox copyWith({String name}) {
+  Unorthodox copyWith({String? name}) {
     return Unorthodox(name: name ?? this.name);
   }
 
@@ -902,7 +922,7 @@ class Unorthodox implements _Unorthodox {
     return "Unorthodox(name=$name)";
   }
 
-  Map<String, dynamic> toJson() {
+  Map<String, dynamic>? toJson() {
     return UnorthodoxSerializer.toMap(this);
   }
 }
@@ -913,26 +933,26 @@ class WeirdJoin implements _WeirdJoin {
       {this.id, this.unorthodox, this.song, this.numbas, this.foos});
 
   @override
-  final int id;
+  final int? id;
 
   @override
-  final _Unorthodox unorthodox;
+  final _Unorthodox? unorthodox;
 
   @override
-  final _Song song;
+  final _Song? song;
 
   @override
-  final List<_Numba> numbas;
+  final List<_Numba?>? numbas;
 
   @override
-  final List<_Foo> foos;
+  final List<_Foo?>? foos;
 
   WeirdJoin copyWith(
-      {int id,
-      _Unorthodox unorthodox,
-      _Song song,
-      List<_Numba> numbas,
-      List<_Foo> foos}) {
+      {int? id,
+      _Unorthodox? unorthodox,
+      _Song? song,
+      List<_Numba?>? numbas,
+      List<_Foo?>? foos}) {
     return WeirdJoin(
         id: id ?? this.id,
         unorthodox: unorthodox ?? this.unorthodox,
@@ -946,9 +966,9 @@ class WeirdJoin implements _WeirdJoin {
         other.id == id &&
         other.unorthodox == unorthodox &&
         other.song == song &&
-        ListEquality<_Numba>(DefaultEquality<_Numba>())
+        ListEquality<_Numba?>(DefaultEquality<_Numba>())
             .equals(other.numbas, numbas) &&
-        ListEquality<_Foo>(DefaultEquality<_Foo>()).equals(other.foos, foos);
+        ListEquality<_Foo?>(DefaultEquality<_Foo>()).equals(other.foos, foos);
   }
 
   @override
@@ -961,7 +981,7 @@ class WeirdJoin implements _WeirdJoin {
     return "WeirdJoin(id=$id, unorthodox=$unorthodox, song=$song, numbas=$numbas, foos=$foos)";
   }
 
-  Map<String, dynamic> toJson() {
+  Map<String, dynamic>? toJson() {
     return WeirdJoinSerializer.toMap(this);
   }
 }
@@ -972,28 +992,28 @@ class Song extends _Song {
 
   /// A unique identifier corresponding to this item.
   @override
-  String id;
+  String? id;
 
   /// The time at which this item was created.
   @override
-  DateTime createdAt;
+  DateTime? createdAt;
 
   /// The last time at which this item was updated.
   @override
-  DateTime updatedAt;
+  DateTime? updatedAt;
 
   @override
-  final int weirdJoinId;
+  final int? weirdJoinId;
 
   @override
-  final String title;
+  final String? title;
 
   Song copyWith(
-      {String id,
-      DateTime createdAt,
-      DateTime updatedAt,
-      int weirdJoinId,
-      String title}) {
+      {String? id,
+      DateTime? createdAt,
+      DateTime? updatedAt,
+      int? weirdJoinId,
+      String? title}) {
     return Song(
         id: id ?? this.id,
         createdAt: createdAt ?? this.createdAt,
@@ -1021,7 +1041,7 @@ class Song extends _Song {
     return "Song(id=$id, createdAt=$createdAt, updatedAt=$updatedAt, weirdJoinId=$weirdJoinId, title=$title)";
   }
 
-  Map<String, dynamic> toJson() {
+  Map<String, dynamic>? toJson() {
     return SongSerializer.toMap(this);
   }
 }
@@ -1031,12 +1051,12 @@ class Numba extends _Numba {
   Numba({this.i, this.parent});
 
   @override
-  int i;
+  int? i;
 
   @override
-  int parent;
+  int? parent;
 
-  Numba copyWith({int i, int parent}) {
+  Numba copyWith({int? i, int? parent}) {
     return Numba(i: i ?? this.i, parent: parent ?? this.parent);
   }
 
@@ -1054,7 +1074,7 @@ class Numba extends _Numba {
     return "Numba(i=$i, parent=$parent)";
   }
 
-  Map<String, dynamic> toJson() {
+  Map<String, dynamic>? toJson() {
     return NumbaSerializer.toMap(this);
   }
 }
@@ -1064,19 +1084,19 @@ class Foo implements _Foo {
   const Foo({this.bar, this.weirdJoins});
 
   @override
-  final String bar;
+  final String? bar;
 
   @override
-  final List<_WeirdJoin> weirdJoins;
+  final List<_WeirdJoin>? weirdJoins;
 
-  Foo copyWith({String bar, List<_WeirdJoin> weirdJoins}) {
+  Foo copyWith({String? bar, List<_WeirdJoin>? weirdJoins}) {
     return Foo(bar: bar ?? this.bar, weirdJoins: weirdJoins ?? this.weirdJoins);
   }
 
   bool operator ==(other) {
     return other is _Foo &&
         other.bar == bar &&
-        ListEquality<_WeirdJoin>(DefaultEquality<_WeirdJoin>())
+        ListEquality<_WeirdJoin?>(DefaultEquality<_WeirdJoin>())
             .equals(other.weirdJoins, weirdJoins);
   }
 
@@ -1090,7 +1110,7 @@ class Foo implements _Foo {
     return "Foo(bar=$bar, weirdJoins=$weirdJoins)";
   }
 
-  Map<String, dynamic> toJson() {
+  Map<String, dynamic>? toJson() {
     return FooSerializer.toMap(this);
   }
 }
@@ -1100,12 +1120,12 @@ class FooPivot implements _FooPivot {
   const FooPivot({this.weirdJoin, this.foo});
 
   @override
-  final _WeirdJoin weirdJoin;
+  final _WeirdJoin? weirdJoin;
 
   @override
-  final _Foo foo;
+  final _Foo? foo;
 
-  FooPivot copyWith({_WeirdJoin weirdJoin, _Foo foo}) {
+  FooPivot copyWith({_WeirdJoin? weirdJoin, _Foo? foo}) {
     return FooPivot(
         weirdJoin: weirdJoin ?? this.weirdJoin, foo: foo ?? this.foo);
   }
@@ -1137,11 +1157,11 @@ class FooPivot implements _FooPivot {
 
 const UnorthodoxSerializer unorthodoxSerializer = UnorthodoxSerializer();
 
-class UnorthodoxEncoder extends Converter<Unorthodox, Map> {
+class UnorthodoxEncoder extends Converter<Unorthodox, Map?> {
   const UnorthodoxEncoder();
 
   @override
-  Map convert(Unorthodox model) => UnorthodoxSerializer.toMap(model);
+  Map? convert(Unorthodox model) => UnorthodoxSerializer.toMap(model);
 }
 
 class UnorthodoxDecoder extends Converter<Map, Unorthodox> {
@@ -1151,7 +1171,7 @@ class UnorthodoxDecoder extends Converter<Map, Unorthodox> {
   Unorthodox convert(Map map) => UnorthodoxSerializer.fromMap(map);
 }
 
-class UnorthodoxSerializer extends Codec<Unorthodox, Map> {
+class UnorthodoxSerializer extends Codec<Unorthodox, Map?> {
   const UnorthodoxSerializer();
 
   @override
@@ -1159,10 +1179,10 @@ class UnorthodoxSerializer extends Codec<Unorthodox, Map> {
   @override
   get decoder => const UnorthodoxDecoder();
   static Unorthodox fromMap(Map map) {
-    return Unorthodox(name: map['name'] as String);
+    return Unorthodox(name: map['name'] as String?);
   }
 
-  static Map<String, dynamic> toMap(_Unorthodox model) {
+  static Map<String, dynamic>? toMap(_Unorthodox? model) {
     if (model == null) {
       return null;
     }
@@ -1178,11 +1198,11 @@ abstract class UnorthodoxFields {
 
 const WeirdJoinSerializer weirdJoinSerializer = WeirdJoinSerializer();
 
-class WeirdJoinEncoder extends Converter<WeirdJoin, Map> {
+class WeirdJoinEncoder extends Converter<WeirdJoin, Map?> {
   const WeirdJoinEncoder();
 
   @override
-  Map convert(WeirdJoin model) => WeirdJoinSerializer.toMap(model);
+  Map? convert(WeirdJoin model) => WeirdJoinSerializer.toMap(model);
 }
 
 class WeirdJoinDecoder extends Converter<Map, WeirdJoin> {
@@ -1192,7 +1212,7 @@ class WeirdJoinDecoder extends Converter<Map, WeirdJoin> {
   WeirdJoin convert(Map map) => WeirdJoinSerializer.fromMap(map);
 }
 
-class WeirdJoinSerializer extends Codec<WeirdJoin, Map> {
+class WeirdJoinSerializer extends Codec<WeirdJoin, Map?> {
   const WeirdJoinSerializer();
 
   @override
@@ -1201,7 +1221,7 @@ class WeirdJoinSerializer extends Codec<WeirdJoin, Map> {
   get decoder => const WeirdJoinDecoder();
   static WeirdJoin fromMap(Map map) {
     return WeirdJoin(
-        id: map['id'] as int,
+        id: map['id'] as int?,
         unorthodox: map['unorthodox'] != null
             ? UnorthodoxSerializer.fromMap(map['unorthodox'] as Map)
             : null,
@@ -1218,7 +1238,7 @@ class WeirdJoinSerializer extends Codec<WeirdJoin, Map> {
             : null);
   }
 
-  static Map<String, dynamic> toMap(_WeirdJoin model) {
+  static Map<String, dynamic>? toMap(_WeirdJoin? model) {
     if (model == null) {
       return null;
     }
@@ -1226,8 +1246,8 @@ class WeirdJoinSerializer extends Codec<WeirdJoin, Map> {
       'id': model.id,
       'unorthodox': UnorthodoxSerializer.toMap(model.unorthodox),
       'song': SongSerializer.toMap(model.song),
-      'numbas': model.numbas?.map((m) => NumbaSerializer.toMap(m))?.toList(),
-      'foos': model.foos?.map((m) => FooSerializer.toMap(m))?.toList()
+      'numbas': model.numbas?.map((m) => NumbaSerializer.toMap(m)).toList(),
+      'foos': model.foos?.map((m) => FooSerializer.toMap(m)).toList()
     };
   }
 }
@@ -1254,11 +1274,11 @@ abstract class WeirdJoinFields {
 
 const SongSerializer songSerializer = SongSerializer();
 
-class SongEncoder extends Converter<Song, Map> {
+class SongEncoder extends Converter<Song, Map?> {
   const SongEncoder();
 
   @override
-  Map convert(Song model) => SongSerializer.toMap(model);
+  Map? convert(Song model) => SongSerializer.toMap(model);
 }
 
 class SongDecoder extends Converter<Map, Song> {
@@ -1268,7 +1288,7 @@ class SongDecoder extends Converter<Map, Song> {
   Song convert(Map map) => SongSerializer.fromMap(map);
 }
 
-class SongSerializer extends Codec<Song, Map> {
+class SongSerializer extends Codec<Song, Map?> {
   const SongSerializer();
 
   @override
@@ -1277,22 +1297,22 @@ class SongSerializer extends Codec<Song, Map> {
   get decoder => const SongDecoder();
   static Song fromMap(Map map) {
     return Song(
-        id: map['id'] as String,
+        id: map['id'] as String?,
         createdAt: map['created_at'] != null
             ? (map['created_at'] is DateTime
-                ? (map['created_at'] as DateTime)
+                ? (map['created_at'] as DateTime?)
                 : DateTime.parse(map['created_at'].toString()))
             : null,
         updatedAt: map['updated_at'] != null
             ? (map['updated_at'] is DateTime
-                ? (map['updated_at'] as DateTime)
+                ? (map['updated_at'] as DateTime?)
                 : DateTime.parse(map['updated_at'].toString()))
             : null,
-        weirdJoinId: map['weird_join_id'] as int,
-        title: map['title'] as String);
+        weirdJoinId: map['weird_join_id'] as int?,
+        title: map['title'] as String?);
   }
 
-  static Map<String, dynamic> toMap(_Song model) {
+  static Map<String, dynamic>? toMap(_Song? model) {
     if (model == null) {
       return null;
     }
@@ -1328,11 +1348,11 @@ abstract class SongFields {
 
 const NumbaSerializer numbaSerializer = NumbaSerializer();
 
-class NumbaEncoder extends Converter<Numba, Map> {
+class NumbaEncoder extends Converter<Numba, Map?> {
   const NumbaEncoder();
 
   @override
-  Map convert(Numba model) => NumbaSerializer.toMap(model);
+  Map? convert(Numba model) => NumbaSerializer.toMap(model);
 }
 
 class NumbaDecoder extends Converter<Map, Numba> {
@@ -1342,7 +1362,7 @@ class NumbaDecoder extends Converter<Map, Numba> {
   Numba convert(Map map) => NumbaSerializer.fromMap(map);
 }
 
-class NumbaSerializer extends Codec<Numba, Map> {
+class NumbaSerializer extends Codec<Numba, Map?> {
   const NumbaSerializer();
 
   @override
@@ -1350,10 +1370,10 @@ class NumbaSerializer extends Codec<Numba, Map> {
   @override
   get decoder => const NumbaDecoder();
   static Numba fromMap(Map map) {
-    return Numba(i: map['i'] as int, parent: map['parent'] as int);
+    return Numba(i: map['i'] as int?, parent: map['parent'] as int?);
   }
 
-  static Map<String, dynamic> toMap(_Numba model) {
+  static Map<String, dynamic>? toMap(_Numba? model) {
     if (model == null) {
       return null;
     }
@@ -1371,11 +1391,11 @@ abstract class NumbaFields {
 
 const FooSerializer fooSerializer = FooSerializer();
 
-class FooEncoder extends Converter<Foo, Map> {
+class FooEncoder extends Converter<Foo, Map?> {
   const FooEncoder();
 
   @override
-  Map convert(Foo model) => FooSerializer.toMap(model);
+  Map? convert(Foo model) => FooSerializer.toMap(model);
 }
 
 class FooDecoder extends Converter<Map, Foo> {
@@ -1385,7 +1405,7 @@ class FooDecoder extends Converter<Map, Foo> {
   Foo convert(Map map) => FooSerializer.fromMap(map);
 }
 
-class FooSerializer extends Codec<Foo, Map> {
+class FooSerializer extends Codec<Foo, Map?> {
   const FooSerializer();
 
   @override
@@ -1394,7 +1414,7 @@ class FooSerializer extends Codec<Foo, Map> {
   get decoder => const FooDecoder();
   static Foo fromMap(Map map) {
     return Foo(
-        bar: map['bar'] as String,
+        bar: map['bar'] as String?,
         weirdJoins: map['weird_joins'] is Iterable
             ? List.unmodifiable(
                 ((map['weird_joins'] as Iterable).whereType<Map>())
@@ -1402,14 +1422,14 @@ class FooSerializer extends Codec<Foo, Map> {
             : null);
   }
 
-  static Map<String, dynamic> toMap(_Foo model) {
+  static Map<String, dynamic>? toMap(_Foo? model) {
     if (model == null) {
       return null;
     }
     return {
       'bar': model.bar,
       'weird_joins':
-          model.weirdJoins?.map((m) => WeirdJoinSerializer.toMap(m))?.toList()
+          model.weirdJoins?.map((m) => WeirdJoinSerializer.toMap(m)).toList()
     };
   }
 }
@@ -1456,9 +1476,6 @@ class FooPivotSerializer extends Codec<FooPivot, Map> {
   }
 
   static Map<String, dynamic> toMap(_FooPivot model) {
-    if (model == null) {
-      return null;
-    }
     return {
       'weird_join': WeirdJoinSerializer.toMap(model.weirdJoin),
       'foo': FooSerializer.toMap(model.foo)

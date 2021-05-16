@@ -4,7 +4,7 @@ import 'package:string_scanner/string_scanner.dart';
 /// Parses a string into a [RegExp] that is matched against hostnames.
 class HostnameSyntaxParser {
   final SpanScanner _scanner;
-  var _safe = RegExp(r"[0-9a-zA-Z-_:]+");
+  final _safe = RegExp(r"[0-9a-zA-Z-_:]+");
 
   HostnameSyntaxParser(String hostname)
       : _scanner = SpanScanner(hostname, sourceUrl: hostname);
@@ -25,7 +25,7 @@ class HostnameSyntaxParser {
           throw _formatExc('No hostname parts found before "|".');
         } else {
           var next = _parseHostnamePart();
-          if (next == null) {
+          if (next.isEmpty) {
             throw _formatExc('No hostname parts found after "|".');
           } else {
             var prev = parts.removeLast();
@@ -33,11 +33,11 @@ class HostnameSyntaxParser {
           }
         }
       } else {
-        var part = _parseHostnamePart();
-        if (part != null) {
+        String part = _parseHostnamePart();
+        if (part.isNotEmpty) {
           if (_scanner.scan('.')) {
             var subPart = _parseHostnamePart(shouldThrow: false);
-            while (subPart != null) {
+            while (subPart.isNotEmpty) {
               part += '\\.' + subPart;
               if (_scanner.scan('.')) {
                 subPart = _parseHostnamePart(shouldThrow: false);
@@ -46,7 +46,6 @@ class HostnameSyntaxParser {
               }
             }
           }
-
           parts.add(part);
         }
       }
@@ -71,12 +70,12 @@ class HostnameSyntaxParser {
     } else if (_scanner.scan('+')) {
       return r'[^$]+';
     } else if (_scanner.scan(_safe)) {
-      return _scanner.lastMatch[0];
+      return _scanner.lastMatch?[0] ?? "";
     } else if (!_scanner.isDone && shouldThrow) {
-      var s = String.fromCharCode(_scanner.peekChar());
+      var s = String.fromCharCode(_scanner.peekChar()!);
       throw _formatExc('Unexpected character "$s".');
     } else {
-      return null;
+      return "";
     }
   }
 }

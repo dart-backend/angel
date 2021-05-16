@@ -2,21 +2,21 @@ import 'dart:async';
 import 'package:stream_channel/stream_channel.dart';
 import 'package:json_rpc_2/json_rpc_2.dart' as json_rpc_2;
 import 'package:uuid/uuid.dart';
-import '../../pub_sub.dart';
+import '../../angel3_pub_sub.dart';
 
 /// A [Adapter] implementation that communicates via JSON RPC 2.0.
 class JsonRpc2Adapter extends Adapter {
   final StreamController<PublishRequest> _onPublish =
-      new StreamController<PublishRequest>();
+      StreamController<PublishRequest>();
   final StreamController<SubscriptionRequest> _onSubscribe =
-      new StreamController<SubscriptionRequest>();
+      StreamController<SubscriptionRequest>();
   final StreamController<UnsubscriptionRequest> _onUnsubscribe =
-      new StreamController<UnsubscriptionRequest>();
+      StreamController<UnsubscriptionRequest>();
 
   final List<json_rpc_2.Peer> _peers = [];
-  final Uuid _uuid = new Uuid();
+  final Uuid _uuid = Uuid();
 
-  json_rpc_2.Peer _peer;
+  json_rpc_2.Peer? _peer;
 
   /// A [Stream] of incoming clients, who can both send and receive string data.
   final Stream<StreamChannel<String>> clientStream;
@@ -44,10 +44,10 @@ class JsonRpc2Adapter extends Adapter {
 
     Future.wait(_peers.where((s) => !s.isClosed).map((s) => s.close()))
         .then((_) => _peers.clear());
-    return new Future.value();
+    return Future.value();
   }
 
-  String _getClientId(json_rpc_2.Parameters params) {
+  String? _getClientId(json_rpc_2.Parameters params) {
     try {
       return params['client_id'].asString;
     } catch (_) {
@@ -58,14 +58,14 @@ class JsonRpc2Adapter extends Adapter {
   @override
   void start() {
     clientStream.listen((client) {
-      var peer = _peer = new json_rpc_2.Peer(client);
+      var peer = _peer = json_rpc_2.Peer(client);
 
       peer.registerMethod('publish', (json_rpc_2.Parameters params) async {
         var requestId = params['request_id'].asString;
         var clientId = _getClientId(params);
         var eventName = params['event_name'].asString;
         var value = params['value'].value;
-        var rq = new _JsonRpc2PublishRequestImpl(
+        var rq = _JsonRpc2PublishRequestImpl(
             requestId, clientId, eventName, value, peer);
         _onPublish.add(rq);
       });
@@ -74,7 +74,7 @@ class JsonRpc2Adapter extends Adapter {
         var requestId = params['request_id'].asString;
         var clientId = _getClientId(params);
         var eventName = params['event_name'].asString;
-        var rq = new _JsonRpc2SubscriptionRequestImpl(
+        var rq = _JsonRpc2SubscriptionRequestImpl(
             clientId, eventName, requestId, peer, _uuid);
         _onSubscribe.add(rq);
       });
@@ -83,7 +83,7 @@ class JsonRpc2Adapter extends Adapter {
         var requestId = params['request_id'].asString;
         var clientId = _getClientId(params);
         var subscriptionId = params['subscription_id'].asString;
-        var rq = new _JsonRpc2UnsubscriptionRequestImpl(
+        var rq = _JsonRpc2UnsubscriptionRequestImpl(
             clientId, subscriptionId, peer, requestId);
         _onUnsubscribe.add(rq);
       });
@@ -104,8 +104,14 @@ class JsonRpc2Adapter extends Adapter {
 }
 
 class _JsonRpc2PublishRequestImpl extends PublishRequest {
-  final String requestId, clientId, eventName;
+  final String requestId;
+
+  @override
+  final String? clientId, eventName;
+
+  @override
   final value;
+
   final json_rpc_2.Peer peer;
 
   _JsonRpc2PublishRequestImpl(
@@ -135,7 +141,7 @@ class _JsonRpc2PublishRequestImpl extends PublishRequest {
 
 class _JsonRpc2SubscriptionRequestImpl extends SubscriptionRequest {
   @override
-  final String clientId, eventName;
+  final String? clientId, eventName;
 
   final String requestId;
 
@@ -147,7 +153,7 @@ class _JsonRpc2SubscriptionRequestImpl extends SubscriptionRequest {
       this.clientId, this.eventName, this.requestId, this.peer, this._uuid);
 
   @override
-  FutureOr<Subscription> accept(String clientId) {
+  FutureOr<Subscription> accept(String? clientId) {
     var id = _uuid.v4();
     peer.sendNotification(requestId, {
       'status': true,
@@ -155,7 +161,7 @@ class _JsonRpc2SubscriptionRequestImpl extends SubscriptionRequest {
       'subscription_id': id,
       'client_id': clientId
     });
-    return new _JsonRpc2SubscriptionImpl(clientId, id, eventName, peer);
+    return _JsonRpc2SubscriptionImpl(clientId, id, eventName, peer);
   }
 
   @override
@@ -170,9 +176,9 @@ class _JsonRpc2SubscriptionRequestImpl extends SubscriptionRequest {
 
 class _JsonRpc2SubscriptionImpl extends Subscription {
   @override
-  final String clientId, id;
+  final String? clientId, id;
 
-  final String eventName;
+  final String? eventName;
 
   final json_rpc_2.Peer peer;
 
@@ -186,7 +192,7 @@ class _JsonRpc2SubscriptionImpl extends Subscription {
 
 class _JsonRpc2UnsubscriptionRequestImpl extends UnsubscriptionRequest {
   @override
-  final String clientId;
+  final String? clientId;
 
   @override
   final String subscriptionId;

@@ -5,7 +5,7 @@ import 'token.dart';
 
 class NumberLiteral extends Literal {
   final Token number;
-  num _value;
+  num? _value;
 
   NumberLiteral(this.number);
 
@@ -24,14 +24,14 @@ class NumberLiteral extends Literal {
   }
 
   @override
-  compute(scope) {
+  num compute(scope) {
     return _value ??= parse(number.span.text);
   }
 }
 
 class HexLiteral extends Literal {
   final Token hex;
-  num _value;
+  num? _value;
 
   HexLiteral(this.hex);
 
@@ -41,7 +41,7 @@ class HexLiteral extends Literal {
   static num parse(String value) => int.parse(value.substring(2), radix: 16);
 
   @override
-  compute(scope) {
+  num compute(scope) {
     return _value ??= parse(hex.span.text);
   }
 }

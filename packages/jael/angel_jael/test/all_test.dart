@@ -1,23 +1,23 @@
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_jael/angel_jael.dart';
-import 'package:angel_test/angel_test.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_jael/angel3_jael.dart';
+import 'package:angel3_test/angel3_test.dart';
 import 'package:file/memory.dart';
 import 'package:html/parser.dart' as html;
 import 'package:logging/logging.dart';
 import 'package:test/test.dart';
 
-main() {
+void main() {
   // These tests need not actually test that the preprocessor or renderer works,
   // because those packages are already tested.
   //
   // Instead, just test that we can render at all.
-  TestClient client;
+  late TestClient client;
 
   setUp(() async {
-    var app = new Angel();
+    var app = Angel();
     app.configuration['properties'] = app.configuration;
 
-    var fileSystem = new MemoryFileSystem();
+    var fileSystem = MemoryFileSystem();
     var viewsDirectory = fileSystem.directory('views')..createSync();
 
     viewsDirectory.childFile('layout.jael').writeAsStringSync('''
@@ -49,9 +49,9 @@ main() {
       jael(viewsDirectory),
     );
 
-    app.fallback((req, res) => throw new AngelHttpException.notFound());
+    app.fallback((req, res) => throw AngelHttpException.notFound());
 
-    app.logger = new Logger('angel')
+    app.logger = Logger('angel')
       ..onRecord.listen((rec) {
         print(rec);
         if (rec.error != null) print(rec.error);

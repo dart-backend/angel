@@ -1,16 +1,16 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'package:pub_sub/pub_sub.dart';
-import 'package:pub_sub/json_rpc_2.dart';
+import 'package:angel3_pub_sub/angel3_pub_sub.dart';
+import 'package:angel3_pub_sub/json_rpc_2.dart';
 import 'package:stream_channel/stream_channel.dart';
 import 'package:test/test.dart';
 
 void main() {
-  ServerSocket serverSocket;
-  Server server;
-  Client client1, client2, client3;
-  JsonRpc2Client trustedClient;
+  late ServerSocket serverSocket;
+  late Server server;
+  late Client client1, client2, client3;
+  late JsonRpc2Client trustedClient;
   JsonRpc2Adapter adapter;
 
   setUp(() async {
@@ -65,7 +65,7 @@ void main() {
       expect(trustedClient.clientId, isNotNull);
     });
     test('can sub/unsub', () async {
-      String clientId;
+      String? clientId;
       await trustedClient.publish('heyaaa', 'byeaa');
       expect(clientId = trustedClient.clientId, isNotNull);
 
@@ -143,12 +143,13 @@ void main() {
 
 StreamChannel<String> streamSocket(Socket socket) {
   var channel = _SocketStreamChannel(socket);
-  var transfomer = StreamChannelTransformer.fromCodec(utf8);
-  return channel.cast<List<int>>().transform(transfomer);
+  return channel
+      .cast<List<int>>()
+      .transform(StreamChannelTransformer.fromCodec(utf8));
 }
 
 class _SocketStreamChannel extends StreamChannelMixin<List<int>> {
-  _SocketSink _sink;
+  _SocketSink? _sink;
   final Socket socket;
 
   _SocketStreamChannel(this.socket);
@@ -171,7 +172,7 @@ class _SocketSink extends StreamSink<List<int>> {
   }
 
   @override
-  void addError(Object error, [StackTrace stackTrace]) {
+  void addError(Object error, [StackTrace? stackTrace]) {
     Zone.current.errorCallback(error, stackTrace);
   }
 

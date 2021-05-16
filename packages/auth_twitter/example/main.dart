@@ -38,8 +38,8 @@ main() async {
           'http://localhost:3000/auth/twitter/callback',
     ),
     (twit, req, res) async {
-      var response = await twit.twitterClient
-          .get('https://api.twitter.com/1.1/account/verify_credentials.json');
+      var response = await twit.twitterClient.get(Uri.parse(
+          'https://api.twitter.com/1.1/account/verify_credentials.json'));
       var userData = json.decode(response.body) as Map;
       return _User(userData['screen_name'] as String);
     },

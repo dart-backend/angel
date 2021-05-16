@@ -2,11 +2,11 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:angel_container/mirrors.dart';
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_framework/http.dart';
+import 'package:angel3_container/mirrors.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_framework/http.dart';
 import 'package:http/http.dart' as http;
-import 'package:mock_request/mock_request.dart';
+import 'package:angel3_mock_request/angel3_mock_request.dart';
 import 'package:test/test.dart';
 
 import 'common.dart';
@@ -70,12 +70,12 @@ bool bar(RequestContext req, ResponseContext res) {
 }
 
 main() {
-  Angel app;
-  TodoController todoController;
-  NoExposeController noExposeCtrl;
-  HttpServer server;
+  late Angel app;
+  late TodoController todoController;
+  late NoExposeController noExposeCtrl;
+  late HttpServer server;
   http.Client client = http.Client();
-  String url;
+  String? url;
 
   setUp(() async {
     app = Angel(reflector: MirrorsReflector());
@@ -85,8 +85,8 @@ main() {
             res.redirectToAction("TodoController@foo", {"foo": "world"}));
 
     // Register as a singleton, just for the purpose of this test
-    if (!app.container.has<TodoController>()) {
-      app.container.registerSingleton(todoController = TodoController());
+    if (!app.container!.has<TodoController>()) {
+      app.container!.registerSingleton(todoController = TodoController());
     }
 
     // Using mountController<T>();
@@ -98,7 +98,7 @@ main() {
     // Until https://github.com/angel-dart/route/issues/28 is closed,
     // this will need to be done by manually mounting the router.
     var subRouter = Router<RequestHandler>();
-    await todoController.applyRoutes(subRouter, app.container.reflector);
+    await todoController.applyRoutes(subRouter, app.container!.reflector);
     app.mount('/ctrl_group', subRouter);
 
     print(app.controllers);
@@ -110,7 +110,6 @@ main() {
 
   tearDown(() async {
     await server.close(force: true);
-    app = null;
     url = null;
   });
 
@@ -122,7 +121,7 @@ main() {
     var app = Angel(reflector: MirrorsReflector());
     app.get(
         '/foo',
-        ioc(({String bar}) {
+        ioc(({String? bar}) {
           return 2;
         }, optional: ['bar']));
     var rq = MockHttpRequest('GET', Uri(path: 'foo'));
@@ -171,7 +170,7 @@ main() {
 
   group('optional expose', () {
     test('removes suffixes from controller names', () {
-      expect(noExposeCtrl.mountPoint.path, 'no_expose');
+      expect(noExposeCtrl.mountPoint!.path, 'no_expose');
     });
 
     test('mounts correct routes', () {
@@ -182,7 +181,7 @@ main() {
 
     test('mounts correct methods', () {
       void expectMethod(String name, String method) {
-        expect(noExposeCtrl.routeMappings[name].method, method);
+        expect(noExposeCtrl.routeMappings[name]!.method, method);
       }
 
       expectMethod('getIndex', 'GET');
@@ -194,7 +193,7 @@ main() {
 
     test('mounts correct paths', () {
       void expectPath(String name, String path) {
-        expect(noExposeCtrl.routeMappings[name].path, path);
+        expect(noExposeCtrl.routeMappings[name]!.path, path);
       }
 
       expectPath('getIndex', '/');

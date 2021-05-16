@@ -11,12 +11,12 @@ class GamepadButton implements _GamepadButton {
   const GamepadButton({this.name, this.radius});
 
   @override
-  final String name;
+  final String? name;
 
   @override
-  final int radius;
+  final int? radius;
 
-  GamepadButton copyWith({String name, int radius}) {
+  GamepadButton copyWith({String? name, int? radius}) {
     return GamepadButton(
         name: name ?? this.name, radius: radius ?? this.radius);
   }
@@ -44,18 +44,18 @@ class GamepadButton implements _GamepadButton {
 
 @generatedSerializable
 class Gamepad extends _Gamepad {
-  Gamepad({List<_GamepadButton> buttons, Map<String, dynamic> dynamicMap})
+  Gamepad({List<_GamepadButton>? buttons, Map<String, dynamic>? dynamicMap})
       : this.buttons = List.unmodifiable(buttons ?? []),
         this.dynamicMap = Map.unmodifiable(dynamicMap ?? {});
 
   @override
-  List<_GamepadButton> buttons;
+  List<_GamepadButton>? buttons;
 
   @override
-  Map<String, dynamic> dynamicMap;
+  Map<String, dynamic>? dynamicMap;
 
   Gamepad copyWith(
-      {List<_GamepadButton> buttons, Map<String, dynamic> dynamicMap}) {
+      {List<_GamepadButton>? buttons, Map<String, dynamic>? dynamicMap}) {
     return Gamepad(
         buttons: buttons ?? this.buttons,
         dynamicMap: dynamicMap ?? this.dynamicMap);
@@ -115,13 +115,10 @@ class GamepadButtonSerializer extends Codec<GamepadButton, Map> {
   get decoder => const GamepadButtonDecoder();
   static GamepadButton fromMap(Map map) {
     return GamepadButton(
-        name: map['name'] as String, radius: map['radius'] as int);
+        name: map['name'] as String?, radius: map['radius'] as int?);
   }
 
   static Map<String, dynamic> toMap(_GamepadButton model) {
-    if (model == null) {
-      return null;
-    }
     return {'name': model.name, 'radius': model.radius};
   }
 }
@@ -169,12 +166,9 @@ class GamepadSerializer extends Codec<Gamepad, Map> {
   }
 
   static Map<String, dynamic> toMap(_Gamepad model) {
-    if (model == null) {
-      return null;
-    }
     return {
       'buttons':
-          model.buttons?.map((m) => GamepadButtonSerializer.toMap(m))?.toList(),
+          model.buttons?.map((m) => GamepadButtonSerializer.toMap(m)).toList(),
       'dynamic_map': model.dynamicMap
     };
   }

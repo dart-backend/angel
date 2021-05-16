@@ -1,18 +1,18 @@
 import 'dart:io';
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_container/mirrors.dart';
-import 'package:angel_test/angel_test.dart';
-import 'package:angel_websocket/server.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_container/mirrors.dart';
+import 'package:angel3_test/angel3_test.dart';
+import 'package:angel3_websocket/server.dart';
 import 'package:test/test.dart';
 
 void main() {
-  Angel app;
-  TestClient client;
+  Angel? app;
+  late TestClient client;
 
   setUp(() async {
     app = Angel(reflector: MirrorsReflector())
       ..get('/hello', (req, res) => 'Hello')
-      ..get('/user_info', (req, res) => {'u': req.uri.userInfo})
+      ..get('/user_info', (req, res) => {'u': req.uri!.userInfo})
       ..get(
           '/error',
           (req, res) => throw AngelHttpException.forbidden(message: 'Test')
@@ -48,12 +48,12 @@ void main() {
                   <String, dynamic>{'foo': 'bar'}));
 
     var ws = AngelWebSocket(app);
-    await app.configure(ws.configureServer);
-    app.all('/ws', ws.handleRequest);
+    await app!.configure(ws.configureServer);
+    app!.all('/ws', ws.handleRequest);
 
-    app.errorHandler = (e, req, res) => e.toJson();
+    app!.errorHandler = (e, req, res) => e.toJson();
 
-    client = await connectTo(app, useZone: false);
+    client = await connectTo(app!, useZone: false);
   });
 
   tearDown(() async {

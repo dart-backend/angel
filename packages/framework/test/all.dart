@@ -30,7 +30,7 @@ import 'view_generator_test.dart' as view_generator;
 import 'package:test/test.dart';
 
 /// For running with coverage
-main() {
+void main() {
   print(cyan.wrap('Running tests on ${Platform.version}'));
   group('404_hole', hole404.main);
   group('accepts', accepts.main);

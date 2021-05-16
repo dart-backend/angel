@@ -26,7 +26,8 @@ class HasMapMigration extends Migration {
 // **************************************************************************
 
 class HasMapQuery extends Query<HasMap, HasMapQueryWhere> {
-  HasMapQuery({Query parent, Set<String> trampoline}) : super(parent: parent) {
+  HasMapQuery({Query? parent, Set<String>? trampoline})
+      : super(parent: parent) {
     trampoline ??= Set();
     trampoline.add(tableName);
     _where = HasMapQueryWhere(this);
@@ -35,7 +36,7 @@ class HasMapQuery extends Query<HasMap, HasMapQueryWhere> {
   @override
   final HasMapQueryValues values = HasMapQueryValues();
 
-  HasMapQueryWhere _where;
+  HasMapQueryWhere? _where;
 
   @override
   get casts {
@@ -53,7 +54,7 @@ class HasMapQuery extends Query<HasMap, HasMapQueryWhere> {
   }
 
   @override
-  HasMapQueryWhere get where {
+  HasMapQueryWhere? get where {
     return _where;
   }
 
@@ -62,16 +63,16 @@ class HasMapQuery extends Query<HasMap, HasMapQueryWhere> {
     return HasMapQueryWhere(this);
   }
 
-  static HasMap parseRow(List row) {
-    if (row.every((x) => x == null)) return null;
-    var model = HasMap(
-        value: (row[0] as Map<dynamic, dynamic>),
-        list: (row[1] as List<dynamic>));
-    return model;
+  static Optional<HasMap> parseRow(List row) {
+    if (row.every((x) => x == null)) {
+      return Optional.empty();
+    }
+    var model = HasMap(value: (row[0]), list: (row[1]));
+    return Optional.of(model);
   }
 
   @override
-  deserialize(List row) {
+  Optional<HasMap> deserialize(List row) {
     return parseRow(row);
   }
 }
@@ -119,7 +120,7 @@ class HasMapQueryValues extends MapQueryValues {
 
 @generatedSerializable
 class HasMap implements _HasMap {
-  const HasMap({this.value, this.list});
+  const HasMap({this.value = const {}, this.list = const []});
 
   @override
   final Map<dynamic, dynamic> value;
@@ -127,8 +128,9 @@ class HasMap implements _HasMap {
   @override
   final List<dynamic> list;
 
-  HasMap copyWith({Map<dynamic, dynamic> value, List<dynamic> list}) {
-    return HasMap(value: value ?? this.value, list: list ?? this.list);
+  HasMap copyWith(
+      {Map<dynamic, dynamic> value = const {}, List<dynamic> list = const []}) {
+    return HasMap(value: value, list: list);
   }
 
   bool operator ==(other) {
@@ -185,16 +187,13 @@ class HasMapSerializer extends Codec<HasMap, Map> {
     return HasMap(
         value: map['value'] is Map
             ? (map['value'] as Map).cast<dynamic, dynamic>()
-            : null,
+            : {},
         list: map['list'] is Iterable
             ? (map['list'] as Iterable).cast<dynamic>().toList()
-            : null);
+            : []);
   }
 
   static Map<String, dynamic> toMap(_HasMap model) {
-    if (model == null) {
-      return null;
-    }
     return {'value': model.value, 'list': model.list};
   }
 }

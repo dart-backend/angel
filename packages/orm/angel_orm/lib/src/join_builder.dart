@@ -5,7 +5,7 @@ import 'query.dart';
 class JoinBuilder {
   final JoinType type;
   final Query from;
-  final String key, value, op, alias;
+  final String? key, value, op, alias;
   final bool aliasAllFields;
 
   /// A callback to produces the expression to join against, i.e.
@@ -39,9 +39,12 @@ class JoinBuilder {
     return right;
   }
 
-  String compile(Set<String> trampoline) {
+  String compile(Set<String>? trampoline) {
     var compiledTo = to();
-    if (compiledTo == null) return null;
+    //if (compiledTo == null) return null;
+    if (compiledTo == '') {
+      return '';
+    }
     var b = StringBuffer();
     var left = '${from.tableName}.$key';
     var right = fieldName;

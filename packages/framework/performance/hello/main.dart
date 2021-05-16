@@ -1,10 +1,10 @@
 /// A basic server that prints "Hello, world!"
 library performance.hello;
 
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_framework/http.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_framework/http.dart';
 
-main() async {
+void main() async {
   var app = Angel();
   var http = AngelHttp.custom(app, startShared, useZone: false);
 

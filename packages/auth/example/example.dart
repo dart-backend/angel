@@ -1,13 +1,13 @@
 import 'dart:async';
-import 'package:angel_auth/angel_auth.dart';
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_framework/http.dart';
+import 'package:angel3_auth/angel3_auth.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_framework/http.dart';
 
-main() async {
+void main() async {
   var app = Angel();
-  var auth = AngelAuth<User>();
+  var auth = AngelAuth<User?>();
 
-  auth.serializer = (user) => user.id;
+  auth.serializer = (user) => user!.id;
 
   auth.deserializer = (id) => fetchAUserByIdSomehow(id);
 
@@ -30,7 +30,7 @@ main() async {
 }
 
 class User {
-  String id, username, password;
+  String? id, username, password;
 }
 
 Future<User> fetchAUserByIdSomehow(id) async {

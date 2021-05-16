@@ -1,21 +1,24 @@
-# JSON God v2
+# angel3_json_god
+[![version](https://img.shields.io/badge/pub-v4.0.3-brightgreen)](https://pub.dartlang.org/packages/angel3_json_god)
+[![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
+[![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
 
-[![Pub](https://img.shields.io/pub/v/json_god.svg)](https://pub.dartlang.org/packages/json_god)
-[![build status](https://travis-ci.org/thosakwe/json_god.svg)](https://travis-ci.org/thosakwe/json_god)
+[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/json_god/LICENSE)
 
-The ***new and improved*** definitive solution for JSON in Dart.
+
+The ***new and improved*** definitive solution for JSON in Dart. It supports synchronously transform an object into a JSON string and also deserialize a JSON string back into an instance of any type.
 
 
 # Installation
     dependencies:
-        json_god: ^2.0.0-beta
+        angel3_json_god: ^4.0.0
 
 # Usage
 
-It is recommended to import the library under an alias, i.e., `god`.
+It is recommended to import the library under an alias, i.e., `god`. 
 
 ```dart
-import 'package:json_god/json_god.dart' as god;
+import 'package:angel3_json_god/angel3_json_god.dart' as god;
 ```
 
 ## Serializing JSON
@@ -32,23 +35,23 @@ print(json);
 
 You can easily serialize classes, too. JSON God also supports classes as members.
 ```dart
+
 class A {
     String foo;
     A(this.foo);
 }
 
 class B {
-    String hello;
-    A nested;
+    late String hello;
+    late A nested;
     B(String hello, String foo) {
       this.hello = hello;
-      this.nested = new A(foo);
+      this.nested =  A(foo);
     }
 }
 
 main() {
-    God god = new God();
-    print(god.serialize(new B("world", "bar")));
+    print(god.serialize( B("world", "bar")));
 }
 
 // Output: {"hello":"world","nested":{"foo":"bar"}}
@@ -78,18 +81,18 @@ class Child {
 
 class Parent {
   String hello;
-  Child child = new Child();
+  Child child =  Child();
 }
 
 main() {
-  God god = new God();
+  God god =  God();
   Parent parent = god.deserialize('{"hello":"world","child":{"foo":"bar"}}', Parent);
   print(parent);
 }
 ```
 
 **Any JSON-deserializable classes must initializable without parameters.
-If `new Foo()` would throw an error, then you can't use Foo with JSON.**
+If ` Foo()` would throw an error, then you can't use Foo with JSON.**
 
 This allows for validation of a sort, as only fields you have declared will be
 accepted.
@@ -103,11 +106,3 @@ HasAnInt invalid = god.deserialize('["some invalid input"]', HasAnInt);
 
 An exception will be thrown if validation fails.
 
-# Thank you for using JSON God
-
-Thank you for using this library. I hope you like it.
-
-Feel free to follow me on Twitter: 
-[@thosakwe](http://twitter.com/thosakwe)
-
-Or, check out [my blog](https://thosakwe.com)

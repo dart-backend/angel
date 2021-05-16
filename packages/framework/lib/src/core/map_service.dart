@@ -1,11 +1,11 @@
 import 'dart:async';
 
-import 'package:angel_http_exception/angel_http_exception.dart';
+import 'package:angel3_http_exception/angel3_http_exception.dart';
 
 import 'service.dart';
 
 /// A basic service that manages an in-memory list of maps.
-class MapService extends Service<String, Map<String, dynamic>> {
+class MapService extends Service<String?, Map<String, dynamic>> {
   /// If set to `true`, clients can remove all items by passing a `null` `id` to `remove`.
   ///
   /// `false` by default.
@@ -48,14 +48,14 @@ class MapService extends Service<String, Map<String, dynamic>> {
   }
 
   @override
-  Future<List<Map<String, dynamic>>> index([Map<String, dynamic> params]) {
+  Future<List<Map<String, dynamic>>> index([Map<String, dynamic>? params]) {
     if (allowQuery == false || params == null || params['query'] is! Map) {
       return Future.value(items);
     } else {
-      var query = params['query'] as Map;
+      var query = params['query'] as Map?;
 
       return Future.value(items.where((item) {
-        for (var key in query.keys) {
+        for (var key in query!.keys) {
           if (!item.containsKey(key)) {
             return false;
           } else if (item[key] != query[key]) return false;
@@ -67,15 +67,16 @@ class MapService extends Service<String, Map<String, dynamic>> {
   }
 
   @override
-  Future<Map<String, dynamic>> read(String id, [Map<String, dynamic> params]) {
+  Future<Map<String, dynamic>> read(String? id,
+      [Map<String, dynamic>? params]) {
     return Future.value(items.firstWhere(_matchesId(id),
-        orElse: () => throw AngelHttpException.notFound(
-            message: 'No record found for ID $id')));
+        orElse: (() => throw AngelHttpException.notFound(
+            message: 'No record found for ID $id'))));
   }
 
   @override
   Future<Map<String, dynamic>> create(Map<String, dynamic> data,
-      [Map<String, dynamic> params]) {
+      [Map<String, dynamic>? params]) {
     if (data is! Map) {
       throw AngelHttpException.badRequest(
           message:
@@ -95,8 +96,8 @@ class MapService extends Service<String, Map<String, dynamic>> {
   }
 
   @override
-  Future<Map<String, dynamic>> modify(String id, Map<String, dynamic> data,
-      [Map<String, dynamic> params]) {
+  Future<Map<String, dynamic>> modify(String? id, Map<String, dynamic> data,
+      [Map<String, dynamic>? params]) {
     if (data is! Map) {
       throw AngelHttpException.badRequest(
           message:
@@ -110,17 +111,16 @@ class MapService extends Service<String, Map<String, dynamic>> {
       var result = Map<String, dynamic>.from(item)..addAll(data);
 
       if (autoIdAndDateFields == true) {
-        result
-          ..[autoSnakeCaseNames == false ? 'updatedAt' : 'updated_at'] =
-              DateTime.now().toIso8601String();
+        result[autoSnakeCaseNames == false ? 'updatedAt' : 'updated_at'] =
+            DateTime.now().toIso8601String();
       }
       return Future.value(items[idx] = result);
     });
   }
 
   @override
-  Future<Map<String, dynamic>> update(String id, Map<String, dynamic> data,
-      [Map<String, dynamic> params]) {
+  Future<Map<String, dynamic>> update(String? id, Map<String, dynamic> data,
+      [Map<String, dynamic>? params]) {
     if (data is! Map) {
       throw AngelHttpException.badRequest(
           message:
@@ -149,8 +149,8 @@ class MapService extends Service<String, Map<String, dynamic>> {
   }
 
   @override
-  Future<Map<String, dynamic>> remove(String id,
-      [Map<String, dynamic> params]) {
+  Future<Map<String, dynamic>> remove(String? id,
+      [Map<String, dynamic>? params]) {
     if (id == null || id == 'null') {
       // Remove everything...
       if (!(allowRemoveAll == true ||

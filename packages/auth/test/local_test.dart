@@ -1,7 +1,7 @@
 import 'dart:async';
-import 'package:angel_auth/angel_auth.dart';
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_framework/http.dart';
+import 'package:angel3_auth/angel3_auth.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_framework/http.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:logging/logging.dart';
@@ -13,11 +13,11 @@ var localOpts = AngelAuthOptions<Map<String, String>>(
     failureRedirect: '/failure', successRedirect: '/success');
 Map<String, String> sampleUser = {'hello': 'world'};
 
-Future<Map<String, String>> verifier(String username, String password) async {
+Future<Map<String, String>> verifier(String? username, String? password) async {
   if (username == 'username' && password == 'password') {
     return sampleUser;
   } else {
-    return null;
+    throw ArgumentError('Unexpected type for data');
   }
 }
 
@@ -31,10 +31,10 @@ Future wireAuth(Angel app) async {
 
 void main() async {
   Angel app;
-  AngelHttp angelHttp;
-  http.Client client;
-  String url;
-  String basicAuthUrl;
+  late AngelHttp angelHttp;
+  http.Client? client;
+  String? url;
+  String? basicAuthUrl;
 
   setUp(() async {
     client = http.Client();
@@ -72,7 +72,7 @@ void main() async {
   });
 
   test('can use "auth" as middleware', () async {
-    var response = await client.get(Uri.parse('$url/success'),
+    var response = await client!.get(Uri.parse('$url/success'),
         headers: {'Accept': 'application/json'});
     print(response.body);
     expect(response.statusCode, equals(403));
@@ -80,7 +80,7 @@ void main() async {
 
   test('successRedirect', () async {
     var postData = {'username': 'username', 'password': 'password'};
-    var response = await client.post(Uri.parse('$url/login'),
+    var response = await client!.post(Uri.parse('$url/login'),
         body: json.encode(postData),
         headers: {'content-type': 'application/json'});
     expect(response.statusCode, equals(302));
@@ -89,7 +89,7 @@ void main() async {
 
   test('failureRedirect', () async {
     var postData = {'username': 'password', 'password': 'username'};
-    var response = await client.post(Uri.parse('$url/login'),
+    var response = await client!.post(Uri.parse('$url/login'),
         body: json.encode(postData),
         headers: {'content-type': 'application/json'});
     print('Login response: ${response.body}');
@@ -99,13 +99,13 @@ void main() async {
 
   test('allow basic', () async {
     var authString = base64.encode('username:password'.runes.toList());
-    var response = await client.get(Uri.parse('$url/hello'),
+    var response = await client!.get(Uri.parse('$url/hello'),
         headers: {'authorization': 'Basic $authString'});
     expect(response.body, equals('"Woo auth"'));
   });
 
   test('allow basic via URL encoding', () async {
-    var response = await client.get(Uri.parse('$basicAuthUrl/hello'));
+    var response = await client!.get(Uri.parse('$basicAuthUrl/hello'));
     expect(response.body, equals('"Woo auth"'));
   });
 
@@ -113,12 +113,13 @@ void main() async {
     auth.strategies.clear();
     auth.strategies['local'] =
         LocalAuthStrategy(verifier, forceBasic: true, realm: 'test');
-    var response = await client.get(Uri.parse('$url/hello'), headers: {
+    var response = await client?.get(Uri.parse('$url/hello'), headers: {
       'accept': 'application/json',
       'content-type': 'application/json'
     });
-    print(response.headers);
-    print('Body <${response.body}>');
-    expect(response.headers['www-authenticate'], equals('Basic realm="test"'));
+    print('Header = ${response?.headers}');
+    print('Body <${response?.body}>');
+    var head = response?.headers['www-authenticate'];
+    expect(head, equals('Basic realm="test"'));
   });
 }

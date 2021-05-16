@@ -1,45 +1,44 @@
-import 'package:angel_container/mirrors.dart';
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_framework/http.dart';
+import 'dart:io';
+
+import 'package:angel3_container/mirrors.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_framework/http.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:stack_trace/stack_trace.dart';
 import 'package:test/test.dart';
 
 class Todo extends Model {
-  String text;
-  String over;
+  String? text;
+  String? over;
 }
 
-main() {
+void main() {
   Map headers = <String, String>{
     'Accept': 'application/json',
     'Content-Type': 'application/json'
   };
-  Angel app;
-  MapService service;
-  String url;
-  http.Client client;
+  late Angel app;
+  late MapService service;
+  late String url;
+  late http.Client client;
 
   setUp(() async {
     app = Angel(reflector: MirrorsReflector())
       ..use('/todos', service = MapService())
       ..errorHandler = (e, req, res) {
         if (e.error != null) print('Whoops: ${e.error}');
-        if (e.stackTrace != null) print(Chain.forTrace(e.stackTrace).terse);
+        if (e.stackTrace != null) print(Chain.forTrace(e.stackTrace!).terse);
       };
 
-    var server = await AngelHttp(app).startServer();
+    HttpServer server = await AngelHttp(app).startServer();
     client = http.Client();
     url = "http://${server.address.host}:${server.port}";
   });
 
   tearDown(() async {
     await app.close();
-    app = null;
-    url = null;
     client.close();
-    client = null;
   });
 
   group('memory', () {
@@ -79,7 +78,7 @@ main() {
       postData = json.encode({'text': 'modified'});
 
       var response = await client.patch(Uri.parse("$url/todos/0"),
-          headers: headers as Map<String, String>, body: postData);
+          headers: headers, body: postData);
       expect(response.statusCode, 200);
       var jsons = json.decode(response.body);
       print(jsons);
@@ -93,7 +92,7 @@ main() {
       postData = json.encode({'over': 'write'});
 
       var response = await client.post(Uri.parse("$url/todos/0"),
-          headers: headers as Map<String, String>, body: postData);
+          headers: headers, body: postData);
       expect(response.statusCode, 200);
       var jsons = json.decode(response.body);
       print(jsons);
@@ -108,7 +107,7 @@ main() {
         await service.create({'baz': 'quux'})
       ];
 
-      var ids = items.map((m) => m['id'] as String).toList();
+      var ids = items.map((m) => m['id'] as String?).toList();
       expect(await service.readMany(ids), items);
     });
 
@@ -127,6 +126,7 @@ main() {
     });
 
     test('cannot remove all unless explicitly set', () async {
+      var a = "1234";
       var response = await client.delete(Uri.parse('$url/todos/null'));
       expect(response.statusCode, 403);
     });

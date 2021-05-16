@@ -2,9 +2,9 @@ import 'builder.dart';
 
 /// Builds a SQL `WHERE` clause.
 abstract class QueryWhere {
-  final Set<QueryWhere> _and = Set();
-  final Set<QueryWhere> _not = Set();
-  final Set<QueryWhere> _or = Set();
+  final Set<QueryWhere> _and = {};
+  final Set<QueryWhere> _not = {};
+  final Set<QueryWhere> _or = {};
 
   Iterable<SqlExpressionBuilder> get expressionBuilders;
 
@@ -20,9 +20,9 @@ abstract class QueryWhere {
     _or.add(other);
   }
 
-  String compile({String tableName}) {
+  String compile({String? tableName}) {
     var b = StringBuffer();
-    int i = 0;
+    var i = 0;
 
     for (var builder in expressionBuilders) {
       var key = builder.columnName;

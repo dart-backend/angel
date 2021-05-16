@@ -5,21 +5,23 @@ import 'package:angel_model/angel_model.dart';
 import 'package:angel_orm/angel_orm.dart';
 import 'package:angel_serialize/angel_serialize.dart';
 import 'package:collection/collection.dart';
+import 'package:optional/optional.dart';
+
 part 'tree.g.dart';
 
 @serializable
 @orm
 class _Tree extends Model {
   @Column(indexType: IndexType.unique, type: ColumnType.smallInt)
-  int rings;
+  int? rings;
 
   @hasMany
-  List<_Fruit> fruits;
+  List<_Fruit>? fruits;
 }
 
 @serializable
 @orm
 class _Fruit extends Model {
-  int treeId;
-  String commonName;
+  int? treeId;
+  String? commonName;
 }

@@ -1,11 +1,11 @@
 import 'package:matcher/matcher.dart';
-import 'package:jael/src/ast/token.dart';
+import 'package:jael3/src/ast/token.dart';
 
-Matcher isToken(TokenType type, [String text]) => _IsToken(type, text);
+Matcher isToken(TokenType type, [String? text]) => _IsToken(type, text);
 
 class _IsToken extends Matcher {
   final TokenType type;
-  final String text;
+  final String? text;
 
   _IsToken(this.type, [this.text]);
 

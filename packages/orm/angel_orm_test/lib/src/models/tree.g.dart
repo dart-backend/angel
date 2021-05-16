@@ -46,7 +46,7 @@ class FruitMigration extends Migration {
 // **************************************************************************
 
 class TreeQuery extends Query<Tree, TreeQueryWhere> {
-  TreeQuery({Query parent, Set<String> trampoline}) : super(parent: parent) {
+  TreeQuery({Query? parent, Set<String>? trampoline}) : super(parent: parent) {
     trampoline ??= Set();
     trampoline.add(tableName);
     _where = TreeQueryWhere(this);
@@ -65,9 +65,9 @@ class TreeQuery extends Query<Tree, TreeQueryWhere> {
   @override
   final TreeQueryValues values = TreeQueryValues();
 
-  TreeQueryWhere _where;
+  TreeQueryWhere? _where;
 
-  FruitQuery _fruits;
+  FruitQuery? _fruits;
 
   @override
   get casts {
@@ -85,7 +85,7 @@ class TreeQuery extends Query<Tree, TreeQueryWhere> {
   }
 
   @override
-  TreeQueryWhere get where {
+  TreeQueryWhere? get where {
     return _where;
   }
 
@@ -94,28 +94,30 @@ class TreeQuery extends Query<Tree, TreeQueryWhere> {
     return TreeQueryWhere(this);
   }
 
-  static Tree parseRow(List row) {
-    if (row.every((x) => x == null)) return null;
+  static Optional<Tree> parseRow(List row) {
+    if (row.every((x) => x == null)) {
+      return Optional.empty();
+    }
     var model = Tree(
         id: row[0].toString(),
-        createdAt: (row[1] as DateTime),
-        updatedAt: (row[2] as DateTime),
-        rings: (row[3] as int));
+        createdAt: (row[1] as DateTime?),
+        updatedAt: (row[2] as DateTime?),
+        rings: (row[3] as int?));
     if (row.length > 4) {
-      model = model.copyWith(
-          fruits: [FruitQuery.parseRow(row.skip(4).take(5).toList())]
-              .where((x) => x != null)
-              .toList());
+      var modelOpt = FruitQuery.parseRow(row.skip(4).take(5).toList());
+      modelOpt.ifPresent((m) {
+        model = model.copyWith(fruits: [m]);
+      });
     }
-    return model;
+    return Optional.of(model);
   }
 
   @override
-  deserialize(List row) {
+  Optional<Tree> deserialize(List row) {
     return parseRow(row);
   }
 
-  FruitQuery get fruits {
+  FruitQuery? get fruits {
     return _fruits;
   }
 
@@ -204,26 +206,26 @@ class TreeQueryValues extends MapQueryValues {
     return {};
   }
 
-  String get id {
-    return (values['id'] as String);
+  String? get id {
+    return (values['id'] as String?);
   }
 
-  set id(String value) => values['id'] = value;
-  DateTime get createdAt {
-    return (values['created_at'] as DateTime);
+  set id(String? value) => values['id'] = value;
+  DateTime? get createdAt {
+    return (values['created_at'] as DateTime?);
   }
 
-  set createdAt(DateTime value) => values['created_at'] = value;
-  DateTime get updatedAt {
-    return (values['updated_at'] as DateTime);
+  set createdAt(DateTime? value) => values['created_at'] = value;
+  DateTime? get updatedAt {
+    return (values['updated_at'] as DateTime?);
   }
 
-  set updatedAt(DateTime value) => values['updated_at'] = value;
-  int get rings {
-    return (values['rings'] as int);
+  set updatedAt(DateTime? value) => values['updated_at'] = value;
+  int? get rings {
+    return (values['rings'] as int?);
   }
 
-  set rings(int value) => values['rings'] = value;
+  set rings(int? value) => values['rings'] = value;
   void copyFrom(Tree model) {
     createdAt = model.createdAt;
     updatedAt = model.updatedAt;
@@ -232,7 +234,7 @@ class TreeQueryValues extends MapQueryValues {
 }
 
 class FruitQuery extends Query<Fruit, FruitQueryWhere> {
-  FruitQuery({Query parent, Set<String> trampoline}) : super(parent: parent) {
+  FruitQuery({Query? parent, Set<String>? trampoline}) : super(parent: parent) {
     trampoline ??= Set();
     trampoline.add(tableName);
     _where = FruitQueryWhere(this);
@@ -241,7 +243,7 @@ class FruitQuery extends Query<Fruit, FruitQueryWhere> {
   @override
   final FruitQueryValues values = FruitQueryValues();
 
-  FruitQueryWhere _where;
+  FruitQueryWhere? _where;
 
   @override
   get casts {
@@ -259,7 +261,7 @@ class FruitQuery extends Query<Fruit, FruitQueryWhere> {
   }
 
   @override
-  FruitQueryWhere get where {
+  FruitQueryWhere? get where {
     return _where;
   }
 
@@ -268,19 +270,21 @@ class FruitQuery extends Query<Fruit, FruitQueryWhere> {
     return FruitQueryWhere(this);
   }
 
-  static Fruit parseRow(List row) {
-    if (row.every((x) => x == null)) return null;
+  static Optional<Fruit> parseRow(List row) {
+    if (row.every((x) => x == null)) {
+      return Optional.empty();
+    }
     var model = Fruit(
         id: row[0].toString(),
-        createdAt: (row[1] as DateTime),
-        updatedAt: (row[2] as DateTime),
-        treeId: (row[3] as int),
-        commonName: (row[4] as String));
-    return model;
+        createdAt: (row[1] as DateTime?),
+        updatedAt: (row[2] as DateTime?),
+        treeId: (row[3] as int?),
+        commonName: (row[4] as String?));
+    return Optional.of(model);
   }
 
   @override
-  deserialize(List row) {
+  Optional<Fruit> deserialize(List row) {
     return parseRow(row);
   }
 }
@@ -315,31 +319,31 @@ class FruitQueryValues extends MapQueryValues {
     return {};
   }
 
-  String get id {
-    return (values['id'] as String);
+  String? get id {
+    return (values['id'] as String?);
   }
 
-  set id(String value) => values['id'] = value;
-  DateTime get createdAt {
-    return (values['created_at'] as DateTime);
+  set id(String? value) => values['id'] = value;
+  DateTime? get createdAt {
+    return (values['created_at'] as DateTime?);
   }
 
-  set createdAt(DateTime value) => values['created_at'] = value;
-  DateTime get updatedAt {
-    return (values['updated_at'] as DateTime);
+  set createdAt(DateTime? value) => values['created_at'] = value;
+  DateTime? get updatedAt {
+    return (values['updated_at'] as DateTime?);
   }
 
-  set updatedAt(DateTime value) => values['updated_at'] = value;
-  int get treeId {
-    return (values['tree_id'] as int);
+  set updatedAt(DateTime? value) => values['updated_at'] = value;
+  int? get treeId {
+    return (values['tree_id'] as int?);
   }
 
-  set treeId(int value) => values['tree_id'] = value;
-  String get commonName {
-    return (values['common_name'] as String);
+  set treeId(int? value) => values['tree_id'] = value;
+  String? get commonName {
+    return (values['common_name'] as String?);
   }
 
-  set commonName(String value) => values['common_name'] = value;
+  set commonName(String? value) => values['common_name'] = value;
   void copyFrom(Fruit model) {
     createdAt = model.createdAt;
     updatedAt = model.updatedAt;
@@ -359,39 +363,39 @@ class Tree extends _Tree {
       this.createdAt,
       this.updatedAt,
       this.rings,
-      List<_Fruit> fruits})
-      : this.fruits = List.unmodifiable(fruits ?? []);
+      List<_Fruit> fruits = const []})
+      : this.fruits = List.unmodifiable(fruits);
 
   /// A unique identifier corresponding to this item.
   @override
-  String id;
+  String? id;
 
   /// The time at which this item was created.
   @override
-  DateTime createdAt;
+  DateTime? createdAt;
 
   /// The last time at which this item was updated.
   @override
-  DateTime updatedAt;
+  DateTime? updatedAt;
 
   @override
-  int rings;
+  int? rings;
 
   @override
-  List<_Fruit> fruits;
+  List<_Fruit>? fruits;
 
   Tree copyWith(
-      {String id,
-      DateTime createdAt,
-      DateTime updatedAt,
-      int rings,
-      List<_Fruit> fruits}) {
+      {String? id,
+      DateTime? createdAt,
+      DateTime? updatedAt,
+      int? rings,
+      List<_Fruit> fruits = const []}) {
     return Tree(
         id: id ?? this.id,
         createdAt: createdAt ?? this.createdAt,
         updatedAt: updatedAt ?? this.updatedAt,
         rings: rings ?? this.rings,
-        fruits: fruits ?? this.fruits);
+        fruits: fruits);
   }
 
   bool operator ==(other) {
@@ -426,28 +430,28 @@ class Fruit extends _Fruit {
 
   /// A unique identifier corresponding to this item.
   @override
-  String id;
+  String? id;
 
   /// The time at which this item was created.
   @override
-  DateTime createdAt;
+  DateTime? createdAt;
 
   /// The last time at which this item was updated.
   @override
-  DateTime updatedAt;
+  DateTime? updatedAt;
 
   @override
-  int treeId;
+  int? treeId;
 
   @override
-  String commonName;
+  String? commonName;
 
   Fruit copyWith(
-      {String id,
-      DateTime createdAt,
-      DateTime updatedAt,
-      int treeId,
-      String commonName}) {
+      {String? id,
+      DateTime? createdAt,
+      DateTime? updatedAt,
+      int? treeId,
+      String? commonName}) {
     return Fruit(
         id: id ?? this.id,
         createdAt: createdAt ?? this.createdAt,
@@ -509,34 +513,31 @@ class TreeSerializer extends Codec<Tree, Map> {
   get decoder => const TreeDecoder();
   static Tree fromMap(Map map) {
     return Tree(
-        id: map['id'] as String,
+        id: map['id'] as String?,
         createdAt: map['created_at'] != null
             ? (map['created_at'] is DateTime
-                ? (map['created_at'] as DateTime)
+                ? (map['created_at'] as DateTime?)
                 : DateTime.parse(map['created_at'].toString()))
             : null,
         updatedAt: map['updated_at'] != null
             ? (map['updated_at'] is DateTime
-                ? (map['updated_at'] as DateTime)
+                ? (map['updated_at'] as DateTime?)
                 : DateTime.parse(map['updated_at'].toString()))
             : null,
-        rings: map['rings'] as int,
+        rings: map['rings'] as int?,
         fruits: map['fruits'] is Iterable
             ? List.unmodifiable(((map['fruits'] as Iterable).whereType<Map>())
                 .map(FruitSerializer.fromMap))
-            : null);
+            : []);
   }
 
   static Map<String, dynamic> toMap(_Tree model) {
-    if (model == null) {
-      return null;
-    }
     return {
       'id': model.id,
       'created_at': model.createdAt?.toIso8601String(),
       'updated_at': model.updatedAt?.toIso8601String(),
       'rings': model.rings,
-      'fruits': model.fruits?.map((m) => FruitSerializer.toMap(m))?.toList()
+      'fruits': model.fruits?.map((m) => FruitSerializer.toMap(m)).toList()
     };
   }
 }
@@ -586,25 +587,22 @@ class FruitSerializer extends Codec<Fruit, Map> {
   get decoder => const FruitDecoder();
   static Fruit fromMap(Map map) {
     return Fruit(
-        id: map['id'] as String,
+        id: map['id'] as String?,
         createdAt: map['created_at'] != null
             ? (map['created_at'] is DateTime
-                ? (map['created_at'] as DateTime)
+                ? (map['created_at'] as DateTime?)
                 : DateTime.parse(map['created_at'].toString()))
             : null,
         updatedAt: map['updated_at'] != null
             ? (map['updated_at'] is DateTime
-                ? (map['updated_at'] as DateTime)
+                ? (map['updated_at'] as DateTime?)
                 : DateTime.parse(map['updated_at'].toString()))
             : null,
-        treeId: map['tree_id'] as int,
-        commonName: map['common_name'] as String);
+        treeId: map['tree_id'] as int?,
+        commonName: map['common_name'] as String?);
   }
 
   static Map<String, dynamic> toMap(_Fruit model) {
-    if (model == null) {
-      return null;
-    }
     return {
       'id': model.id,
       'created_at': model.createdAt?.toIso8601String(),

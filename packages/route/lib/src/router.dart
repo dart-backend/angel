@@ -1,8 +1,7 @@
-library angel_route.src.router;
+library angel3_route.src.router;
 
 import 'dart:async';
-import 'package:combinator/combinator.dart';
-import 'package:meta/meta.dart';
+import 'package:angel3_combinator/angel3_combinator.dart';
 import 'package:string_scanner/string_scanner.dart';
 
 import '../string_util.dart';
@@ -66,8 +65,7 @@ class Router<T> {
   /// for requests with the given method (case-insensitive).
   /// Provide '*' as the method to respond to all methods.
   Route<T> addRoute(String method, String path, T handler,
-      {Iterable<T> middleware}) {
-    middleware ??= <T>[];
+      {Iterable<T> middleware = const []}) {
     if (_useCache == true) {
       throw StateError('Cannot add routes after caching is enabled.');
     }
@@ -75,7 +73,9 @@ class Router<T> {
     // Check if any mounted routers can match this
     final handlers = <T>[handler];
 
-    if (middleware != null) handlers.insertAll(0, middleware);
+    //middleware ??= <T>[];
+
+    handlers.insertAll(0, middleware);
 
     final route = Route<T>(path, method: method, handlers: handlers);
     _routes.add(route);
@@ -115,29 +115,29 @@ class Router<T> {
   /// Creates a visual representation of the route hierarchy and
   /// passes it to a callback. If none is provided, `print` is called.
   void dumpTree(
-      {callback(String tree),
+      {Function(String tree)? callback,
       String header = 'Dumping route tree:',
       String tab = '  '}) {
     final buf = StringBuffer();
-    int tabs = 0;
+    var tabs = 0;
 
-    if (header != null && header.isNotEmpty) {
+    if (header.isNotEmpty) {
       buf.writeln(header);
     }
 
     buf.writeln('<root>');
 
-    indent() {
-      for (int i = 0; i < tabs; i++) {
+    void indent() {
+      for (var i = 0; i < tabs; i++) {
         buf.write(tab);
       }
     }
 
-    dumpRouter(Router router) {
+    void dumpRouter(Router router) {
       indent();
       tabs++;
 
-      for (Route route in router.routes) {
+      for (var route in router.routes) {
         indent();
         buf.write('- ');
         if (route is! SymlinkRoute) buf.write('${route.method} ');
@@ -164,9 +164,8 @@ class Router<T> {
   ///
   /// Returns the created route.
   /// You can also register middleware within the router.
-  SymlinkRoute<T> group(String path, void callback(Router<T> router),
-      {Iterable<T> middleware, String name}) {
-    middleware ??= <T>[];
+  SymlinkRoute<T> group(String path, void Function(Router<T> router) callback,
+      {Iterable<T> middleware = const [], String name = ''}) {
     final router = Router<T>().._middleware.addAll(middleware);
     callback(router);
     return mount(path, router)..name = name;
@@ -174,9 +173,8 @@ class Router<T> {
 
   /// Asynchronous equivalent of [group].
   Future<SymlinkRoute<T>> groupAsync(
-      String path, FutureOr<void> callback(Router<T> router),
-      {Iterable<T> middleware, String name}) async {
-    middleware ??= <T>[];
+      String path, FutureOr<void> Function(Router<T> router) callback,
+      {Iterable<T> middleware = const [], String name = ''}) async {
     final router = Router<T>().._middleware.addAll(middleware);
     await callback(router);
     return mount(path, router)..name = name;
@@ -210,16 +208,16 @@ class Router<T> {
   /// router.navigate(['users/:id', {'id': '1337'}, 'profile']);
   /// ```
   String navigate(Iterable linkParams, {bool absolute = true}) {
-    final List<String> segments = [];
+    final segments = <String>[];
     Router search = this;
-    Route lastRoute;
+    Route? lastRoute;
 
     for (final param in linkParams) {
-      bool resolved = false;
+      var resolved = false;
 
       if (param is String) {
         // Search by name
-        for (Route route in search.routes) {
+        for (var route in search.routes) {
           if (route.name == param) {
             segments.add(route.path.replaceAll(_straySlashes, ''));
             lastRoute = route;
@@ -236,18 +234,23 @@ class Router<T> {
         // Search by path
         if (!resolved) {
           var scanner = SpanScanner(param.replaceAll(_straySlashes, ''));
-          for (Route route in search.routes) {
-            int pos = scanner.position;
-            if (route.parser.parse(scanner).successful && scanner.isDone) {
-              segments.add(route.path.replaceAll(_straySlashes, ''));
-              lastRoute = route;
+          for (var route in search.routes) {
+            var pos = scanner.position;
+            var parseResult = route.parser?.parse(scanner);
+            if (parseResult != null) {
+              if (parseResult.successful && scanner.isDone) {
+                segments.add(route.path.replaceAll(_straySlashes, ''));
+                lastRoute = route;
 
-              if (route is SymlinkRoute<T>) {
-                search = route.router;
+                if (route is SymlinkRoute<T>) {
+                  search = route.router;
+                }
+
+                resolved = true;
+                break;
+              } else {
+                scanner.position = pos;
               }
-
-              resolved = true;
-              break;
             } else {
               scanner.position = pos;
             }
@@ -281,39 +284,44 @@ class Router<T> {
 
   /// Finds the first [Route] that matches the given path,
   /// with the given method.
-  bool resolve(String absolute, String relative, List<RoutingResult<T>> out,
+  bool resolve(String absolute, String relative, List<RoutingResult<T?>> out,
       {String method = 'GET', bool strip = true}) {
     final cleanRelative =
         strip == false ? relative : stripStraySlashes(relative);
     var scanner = SpanScanner(cleanRelative);
 
     bool crawl(Router<T> r) {
-      bool success = false;
+      var success = false;
 
       for (var route in r.routes) {
-        int pos = scanner.position;
+        var pos = scanner.position;
 
         if (route is SymlinkRoute<T>) {
-          if (route.parser.parse(scanner).successful) {
-            var s = crawl(route.router);
-            if (s) success = true;
+          if (route.parser != null) {
+            var pp = route.parser!;
+            if (pp.parse(scanner).successful) {
+              var s = crawl(route.router);
+              if (s) success = true;
+            }
           }
 
           scanner.position = pos;
         } else if (route.method == '*' || route.method == method) {
-          var parseResult = route.parser.parse(scanner);
-
-          if (parseResult.successful && scanner.isDone) {
-            var result = RoutingResult<T>(
-                parseResult: parseResult,
-                params: parseResult.value.params,
-                shallowRoute: route,
-                shallowRouter: this,
-                tail: (parseResult.value.tail ?? '') + scanner.rest);
-            out.add(result);
-            success = true;
+          var parseResult = route.parser?.parse(scanner);
+          if (parseResult != null) {
+            if (parseResult.successful && scanner.isDone) {
+              var tailResult = parseResult.value?.tail ?? '';
+              //print(tailResult);
+              var result = RoutingResult<T>(
+                  parseResult: parseResult,
+                  params: parseResult.value!.params,
+                  shallowRoute: route,
+                  shallowRouter: this,
+                  tail: tailResult + scanner.rest);
+              out.add(result);
+              success = true;
+            }
           }
-
           scanner.position = pos;
         }
       }
@@ -363,42 +371,43 @@ class Router<T> {
   }
 
   /// Adds a route that responds to any request matching the given path.
-  Route<T> all(String path, T handler, {Iterable<T> middleware}) {
+  Route<T> all(String path, T handler, {Iterable<T> middleware = const []}) {
     return addRoute('*', path, handler, middleware: middleware);
   }
 
   /// Adds a route that responds to a DELETE request.
-  Route<T> delete(String path, T handler, {Iterable<T> middleware}) {
+  Route<T> delete(String path, T handler, {Iterable<T> middleware = const []}) {
     return addRoute('DELETE', path, handler, middleware: middleware);
   }
 
   /// Adds a route that responds to a GET request.
-  Route<T> get(String path, T handler, {Iterable<T> middleware}) {
+  Route<T> get(String path, T handler, {Iterable<T> middleware = const []}) {
     return addRoute('GET', path, handler, middleware: middleware);
   }
 
   /// Adds a route that responds to a HEAD request.
-  Route<T> head(String path, T handler, {Iterable<T> middleware}) {
+  Route<T> head(String path, T handler, {Iterable<T> middleware = const []}) {
     return addRoute('HEAD', path, handler, middleware: middleware);
   }
 
   /// Adds a route that responds to a OPTIONS request.
-  Route<T> options(String path, T handler, {Iterable<T> middleware}) {
+  Route<T> options(String path, T handler,
+      {Iterable<T> middleware = const {}}) {
     return addRoute('OPTIONS', path, handler, middleware: middleware);
   }
 
   /// Adds a route that responds to a POST request.
-  Route<T> post(String path, T handler, {Iterable<T> middleware}) {
+  Route<T> post(String path, T handler, {Iterable<T> middleware = const []}) {
     return addRoute('POST', path, handler, middleware: middleware);
   }
 
   /// Adds a route that responds to a PATCH request.
-  Route<T> patch(String path, T handler, {Iterable<T> middleware}) {
+  Route<T> patch(String path, T handler, {Iterable<T> middleware = const []}) {
     return addRoute('PATCH', path, handler, middleware: middleware);
   }
 
   /// Adds a route that responds to a PUT request.
-  Route put(String path, T handler, {Iterable<T> middleware}) {
+  Route put(String path, T handler, {Iterable<T> middleware = const []}) {
     return addRoute('PUT', path, handler, middleware: middleware);
   }
 }
@@ -407,37 +416,34 @@ class _ChainedRouter<T> extends Router<T> {
   final List<T> _handlers = <T>[];
   Router _root;
 
-  _ChainedRouter.empty();
+  _ChainedRouter.empty() : _root = Router();
 
-  _ChainedRouter(Router root, Iterable<T> middleware) {
-    this._root = root;
+  _ChainedRouter(this._root, Iterable<T> middleware) {
     _handlers.addAll(middleware);
   }
 
   @override
   Route<T> addRoute(String method, String path, handler,
-      {Iterable<T> middleware}) {
+      {Iterable<T> middleware = const []}) {
     var route = super.addRoute(method, path, handler,
-        middleware: []..addAll(_handlers)..addAll(middleware ?? []));
+        middleware: [..._handlers, ...middleware]);
     //_root._routes.add(route);
     return route;
   }
 
   @override
-  SymlinkRoute<T> group(String path, void callback(Router<T> router),
-      {Iterable<T> middleware, String name}) {
-    final router = _ChainedRouter<T>(
-        _root, []..addAll(_handlers)..addAll(middleware ?? []));
+  SymlinkRoute<T> group(String path, void Function(Router<T> router) callback,
+      {Iterable<T> middleware = const [], String? name}) {
+    final router = _ChainedRouter<T>(_root, [..._handlers, ...middleware]);
     callback(router);
     return mount(path, router)..name = name;
   }
 
   @override
   Future<SymlinkRoute<T>> groupAsync(
-      String path, FutureOr<void> callback(Router<T> router),
-      {Iterable<T> middleware, String name}) async {
-    final router = _ChainedRouter<T>(
-        _root, []..addAll(_handlers)..addAll(middleware ?? []));
+      String path, FutureOr<void> Function(Router<T> router) callback,
+      {Iterable<T> middleware = const [], String? name}) async {
+    final router = _ChainedRouter<T>(_root, [..._handlers, ...middleware]);
     await callback(router);
     return mount(path, router)..name = name;
   }
@@ -453,7 +459,7 @@ class _ChainedRouter<T> extends Router<T> {
   @override
   _ChainedRouter<T> chain(Iterable<T> middleware) {
     final piped = _ChainedRouter<T>.empty().._root = _root;
-    piped._handlers.addAll([]..addAll(_handlers)..addAll(middleware));
+    piped._handlers.addAll([..._handlers, ...middleware]);
     var route = SymlinkRoute<T>('/', piped);
     _routes.add(route);
     return piped;

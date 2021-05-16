@@ -11,7 +11,7 @@ class MapLiteral extends Literal {
   MapLiteral(this.lCurly, this.pairs, this.rCurly);
 
   @override
-  compute(scope) {
+  Map compute(scope) {
     return pairs.fold<Map>({}, (out, p) {
       var key, value;
 
@@ -24,7 +24,7 @@ class MapLiteral extends Literal {
         }
       } else {
         key = p.key.compute(scope);
-        value = p.value.compute(scope);
+        value = p.value?.compute(scope);
       }
 
       return out..[key] = value;
@@ -34,20 +34,22 @@ class MapLiteral extends Literal {
   @override
   FileSpan get span {
     return pairs
-        .fold<FileSpan>(lCurly.span, (out, p) => out.expand(p.span))
+        .fold<FileSpan?>(lCurly.span, (out, p) => out?.expand(p.span))!
         .expand(rCurly.span);
   }
 }
 
 class KeyValuePair extends AstNode {
-  final Expression key, value;
-  final Token colon;
+  final Expression key;
+  final Expression? value;
+
+  final Token? colon;
 
   KeyValuePair(this.key, this.colon, this.value);
 
   @override
   FileSpan get span {
-    if (colon == null) return key.span;
-    return colon.span.expand(colon.span).expand(value.span);
+    if (colon == null || value == null) return key.span;
+    return colon!.span.expand(colon!.span).expand(value!.span);
   }
 }

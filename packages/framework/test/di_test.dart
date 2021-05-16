@@ -1,12 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'package:angel_container/angel_container.dart';
-import 'package:angel_framework/http.dart';
-import 'package:angel_container/mirrors.dart';
-import 'package:angel_framework/angel_framework.dart';
+import 'package:angel3_container/angel3_container.dart';
+import 'package:angel3_framework/http.dart';
+import 'package:angel3_container/mirrors.dart';
+import 'package:angel3_framework/angel3_framework.dart';
 import 'package:http/http.dart' as http;
-import 'package:mock_request/mock_request.dart';
+import 'package:angel3_mock_request/angel3_mock_request.dart';
 import 'package:test/test.dart';
 
 import 'common.dart';
@@ -14,28 +14,28 @@ import 'common.dart';
 final String TEXT = "make your bed";
 final String OVER = "never";
 
-main() {
-  Angel app;
-  http.Client client;
-  HttpServer server;
-  String url;
+void main() {
+  late Angel app;
+  late http.Client client;
+  late HttpServer server;
+  String? url;
 
   setUp(() async {
     app = Angel(reflector: MirrorsReflector());
     client = http.Client();
 
     // Inject some todos
-    app.container.registerSingleton(Todo(text: TEXT, over: OVER));
-    app.container.registerFactory<Future<Foo>>((container) async {
-      var req = container.make<RequestContext>();
-      var text = await utf8.decoder.bind(req.body).join();
+    app.container!.registerSingleton(Todo(text: TEXT, over: OVER));
+    app.container!.registerFactory<Future<Foo>>((container) async {
+      var req = container.make<RequestContext>()!;
+      var text = await utf8.decoder.bind(req.body!).join();
       return Foo(text);
     });
 
     app.get("/errands", ioc((Todo singleton) => singleton));
     app.get(
         "/errands3",
-        ioc(({Errand singleton, Todo foo, RequestContext req}) =>
+        ioc(({required Errand singleton, Todo? foo, RequestContext? req}) =>
             singleton.text));
     app.post('/async', ioc((Foo foo) => {'baz': foo.bar}));
     await app.configure(SingletonController().configureServer);
@@ -46,10 +46,8 @@ main() {
   });
 
   tearDown(() async {
-    app = null;
     url = null;
     client.close();
-    client = null;
     await server.close(force: true);
   });
 
@@ -80,13 +78,13 @@ main() {
 
   test("make in route", () async {
     var response = await client.get(Uri.parse("$url/errands3"));
-    var text = await json.decode(response.body) as String;
+    var text = await json.decode(response.body) as String?;
     expect(text, equals(TEXT));
   });
 
   test("make in controller", () async {
     var response = await client.get(Uri.parse("$url/errands4"));
-    var text = await json.decode(response.body) as String;
+    var text = await json.decode(response.body) as String?;
     expect(text, equals(TEXT));
   });
 
@@ -137,7 +135,7 @@ class Foo {
 class Errand {
   Todo todo;
 
-  String get text => todo.text;
+  String? get text => todo.text;
 
   Errand(this.todo);
 }

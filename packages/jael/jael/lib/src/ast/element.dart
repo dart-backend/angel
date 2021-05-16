@@ -1,3 +1,4 @@
+import 'package:collection/collection.dart' show IterableExtension;
 import 'package:source_span/source_span.dart';
 import 'ast_node.dart';
 import 'attribute.dart';
@@ -38,15 +39,18 @@ abstract class Element extends ElementChild {
 
   Iterable<ElementChild> get children;
 
-  Attribute getAttribute(String name) =>
-      attributes.firstWhere((a) => a.name == name, orElse: () => null);
+  Attribute? getAttribute(String name) =>
+      attributes.firstWhereOrNull((a) => a.name == name);
 }
 
 class SelfClosingElement extends Element {
-  final Token lt, slash, gt;
+  final Token? slash;
+  final Token lt, gt;
 
+  @override
   final Identifier tagName;
 
+  @override
   final Iterable<Attribute> attributes;
 
   @override
@@ -60,18 +64,17 @@ class SelfClosingElement extends Element {
     var start = attributes.fold<FileSpan>(
         lt.span.expand(tagName.span), (out, a) => out.expand(a.span));
     return slash != null
-        ? start.expand(slash.span).expand(gt.span)
+        ? start.expand(slash!.span).expand(gt.span)
         : start.expand(gt.span);
   }
 }
 
 class RegularElement extends Element {
-  final Token lt, gt, lt2, slash, gt2;
+  final Token? gt2;
+  final Token lt2, slash, lt, gt;
 
   final Identifier tagName, tagName2;
-
   final Iterable<Attribute> attributes;
-
   final Iterable<ElementChild> children;
 
   RegularElement(this.lt, this.tagName, this.attributes, this.gt, this.children,
@@ -91,6 +94,6 @@ class RegularElement extends Element {
         .expand(lt2.span)
         .expand(slash.span)
         .expand(tagName2.span)
-        .expand(gt2.span);
+        .expand(gt2!.span);
   }
 }

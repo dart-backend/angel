@@ -1,3 +1,9 @@
+# 4.0.0
+* Migrated to support Dart SDK 2.12.x NNBD
+
+# 3.0.0
+* Migrated to work with Dart SDK 2.12.x Non NNBD
+
 # 2.1.0-beta.2
 * Support for custom SQL expressions.
 

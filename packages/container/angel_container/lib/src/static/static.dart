@@ -16,7 +16,7 @@ class StaticReflector extends Reflector {
       this.instances = const {}});
 
   @override
-  String getName(Symbol symbol) {
+  String? getName(Symbol symbol) {
     if (!names.containsKey(symbol)) {
       throw ArgumentError(
           'The value of $symbol is unknown - it was not generated.');
@@ -26,11 +26,11 @@ class StaticReflector extends Reflector {
   }
 
   @override
-  ReflectedClass reflectClass(Type clazz) =>
-      reflectType(clazz) as ReflectedClass;
+  ReflectedClass? reflectClass(Type clazz) =>
+      reflectType(clazz) as ReflectedClass?;
 
   @override
-  ReflectedFunction reflectFunction(Function function) {
+  ReflectedFunction? reflectFunction(Function function) {
     if (!functions.containsKey(function)) {
       throw ArgumentError(
           'There is no reflection information available about $function.');
@@ -40,7 +40,7 @@ class StaticReflector extends Reflector {
   }
 
   @override
-  ReflectedInstance reflectInstance(Object object) {
+  ReflectedInstance? reflectInstance(Object object) {
     if (!instances.containsKey(object)) {
       throw ArgumentError(
           'There is no reflection information available about $object.');
@@ -50,7 +50,7 @@ class StaticReflector extends Reflector {
   }
 
   @override
-  ReflectedType reflectType(Type type) {
+  ReflectedType? reflectType(Type type) {
     if (!types.containsKey(type)) {
       throw ArgumentError(
           'There is no reflection information available about $type.');

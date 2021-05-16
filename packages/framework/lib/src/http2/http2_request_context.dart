@@ -1,25 +1,26 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'package:angel_container/src/container.dart';
-import 'package:angel_framework/angel_framework.dart';
+import 'package:angel3_container/src/container.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:collection/collection.dart' show IterableExtension;
 import 'package:http2/transport.dart';
-import 'package:mock_request/mock_request.dart';
+import 'package:angel3_mock_request/angel3_mock_request.dart';
 import 'package:uuid/uuid.dart';
 
 final RegExp _comma = RegExp(r',\s*');
 final RegExp _straySlashes = RegExp(r'(^/+)|(/+$)');
 
-class Http2RequestContext extends RequestContext<ServerTransportStream> {
+class Http2RequestContext extends RequestContext<ServerTransportStream?> {
   final StreamController<List<int>> _body = StreamController();
   final Container container;
-  List<Cookie> _cookies;
-  HttpHeaders _headers;
-  String _method, _override, _path;
-  HttpSession _session;
-  Socket _socket;
-  ServerTransportStream _stream;
-  Uri _uri;
+  List<Cookie> _cookies = <Cookie>[];
+  HttpHeaders? _headers;
+  String? _method, _override, _path;
+  late Socket _socket;
+  ServerTransportStream? _stream;
+  Uri? _uri;
+  HttpSession? _session;
 
   Http2RequestContext._(this.container);
 
@@ -33,7 +34,7 @@ class Http2RequestContext extends RequestContext<ServerTransportStream> {
       Map<String, MockHttpSession> sessions,
       Uuid uuid) {
     var c = Completer<Http2RequestContext>();
-    var req = Http2RequestContext._(app.container.createChild())
+    var req = Http2RequestContext._(app.container!.createChild())
       ..app = app
       .._socket = socket
       .._stream = stream;
@@ -123,16 +124,13 @@ class Http2RequestContext extends RequestContext<ServerTransportStream> {
     }, cancelOnError: true, onError: c.completeError);
 
     // Apply session
-    var dartSessId =
-        cookies.firstWhere((c) => c.name == 'DARTSESSID', orElse: () => null);
+    var dartSessId = cookies.firstWhereOrNull((c) => c.name == 'DARTSESSID');
 
-    if (dartSessId == null) {
-      dartSessId = Cookie('DARTSESSID', uuid.v4());
-    }
+    dartSessId ??= Cookie('DARTSESSID', uuid.v4());
 
     req._session = sessions.putIfAbsent(
       dartSessId.value,
-      () => MockHttpSession(id: dartSessId.value),
+      () => MockHttpSession(id: dartSessId!.value),
     );
 
     return c.future;
@@ -142,13 +140,13 @@ class Http2RequestContext extends RequestContext<ServerTransportStream> {
   List<Cookie> get cookies => _cookies;
 
   /// The underlying HTTP/2 [ServerTransportStream].
-  ServerTransportStream get stream => _stream;
+  ServerTransportStream? get stream => _stream;
 
   @override
-  Uri get uri => _uri;
+  Uri? get uri => _uri;
 
   @override
-  HttpSession get session {
+  HttpSession? get session {
     return _session;
   }
 
@@ -157,24 +155,24 @@ class Http2RequestContext extends RequestContext<ServerTransportStream> {
 
   @override
   String get path {
-    return _path;
+    return _path ?? '';
   }
 
   @override
   String get originalMethod {
-    return _method;
+    return _method ?? 'GET';
   }
 
   @override
   String get method {
-    return _override ?? _method;
+    return _override ?? _method ?? 'GET';
   }
 
   @override
-  String get hostname => _headers.value('host');
+  String get hostname => _headers?.value('host') ?? 'localhost';
 
   @override
-  HttpHeaders get headers => _headers;
+  HttpHeaders? get headers => _headers;
 
   @override
   Future close() {
@@ -183,5 +181,5 @@ class Http2RequestContext extends RequestContext<ServerTransportStream> {
   }
 
   @override
-  ServerTransportStream get rawRequest => _stream;
+  ServerTransportStream? get rawRequest => _stream;
 }

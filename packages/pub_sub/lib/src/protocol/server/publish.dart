@@ -1,10 +1,10 @@
 /// Represents a request to publish information to other clients.
 abstract class PublishRequest {
   /// The ID of the client sending this request.
-  String get clientId;
+  String? get clientId;
 
   /// The name of the event to be sent.
-  String get eventName;
+  String? get eventName;
 
   /// The value to be published as an event.
   dynamic get value;
@@ -22,7 +22,7 @@ class PublishResponse {
   final int listeners;
 
   /// The client ID returned the server. Significant in cases where an ad-hoc client was registered.
-  final String clientId;
+  final String? clientId;
 
   const PublishResponse(this.listeners, this.clientId);
 }

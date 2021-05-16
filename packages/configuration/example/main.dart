@@ -1,7 +1,7 @@
 import 'dart:async';
 
-import 'package:angel_configuration/angel_configuration.dart';
-import 'package:angel_framework/angel_framework.dart';
+import 'package:angel3_configuration/angel3_configuration.dart';
+import 'package:angel3_framework/angel3_framework.dart';
 import 'package:file/local.dart';
 
 Future<void> main() async {

@@ -3,11 +3,11 @@ library angel_client.cli;
 
 import 'dart:async';
 import 'package:http/http.dart' as http;
-import 'package:json_god/json_god.dart' as god;
+import 'package:angel3_json_god/angel3_json_god.dart' as god;
 import 'package:path/path.dart' as p;
-import 'angel_client.dart';
+import 'angel3_client.dart';
 import 'base_angel_client.dart';
-export 'angel_client.dart';
+export 'angel3_client.dart';
 
 /// Queries an Angel server via REST.
 class Rest extends BaseAngelClient {
@@ -17,11 +17,11 @@ class Rest extends BaseAngelClient {
 
   @override
   Service<Id, Data> service<Id, Data>(String path,
-      {Type type, AngelDeserializer deserializer}) {
+      {Type? type, AngelDeserializer? deserializer}) {
     var url = baseUrl.replace(path: p.join(baseUrl.path, path));
     var s = RestService<Id, Data>(client, this, url, type);
     _services.add(s);
-    return s;
+    return s as Service<Id, Data>;
   }
 
   @override
@@ -42,21 +42,21 @@ class Rest extends BaseAngelClient {
 
 /// Queries an Angel service via REST.
 class RestService<Id, Data> extends BaseAngelService<Id, Data> {
-  final Type type;
+  final Type? type;
 
-  RestService(http.BaseClient client, BaseAngelClient app, url, this.type)
+  RestService(http.BaseClient? client, BaseAngelClient app, url, this.type)
       : super(client, app, url);
 
   @override
-  Data deserialize(x) {
+  Data? deserialize(x) {
     print(x);
     if (type != null) {
       return x.runtimeType == type
-          ? x as Data
-          : god.deserializeDatum(x, outputType: type) as Data;
+          ? x as Data?
+          : god.deserializeDatum(x, outputType: type) as Data?;
     }
 
-    return x as Data;
+    return x as Data?;
   }
 
   @override

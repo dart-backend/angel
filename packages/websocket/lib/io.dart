@@ -1,25 +1,24 @@
 /// Command-line WebSocket client library for the Angel framework.
-library angel_websocket.io;
+library angel3_websocket.io;
 
 import 'dart:async';
 import 'dart:io';
-import 'package:angel_client/angel_client.dart';
-import 'package:http/http.dart' as http;
+import 'package:angel3_client/angel3_client.dart';
 import 'package:http/io_client.dart' as http;
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:web_socket_channel/io.dart';
 import 'base_websocket_client.dart';
-export 'package:angel_client/angel_client.dart';
-export 'angel_websocket.dart';
+export 'package:angel3_client/angel3_client.dart';
+export 'angel3_websocket.dart';
 
-final RegExp _straySlashes = RegExp(r"(^/)|(/+$)");
+final RegExp _straySlashes = RegExp(r'(^/)|(/+$)');
 
 /// Queries an Angel server via WebSockets.
 class WebSockets extends BaseWebSocketClient {
   final List<IoWebSocketsService> _services = [];
 
   WebSockets(baseUrl,
-      {bool reconnectOnClose = true, Duration reconnectInterval})
+      {bool reconnectOnClose = true, Duration? reconnectInterval})
       : super(http.IOClient(), baseUrl,
             reconnectOnClose: reconnectOnClose,
             reconnectInterval: reconnectInterval);
@@ -50,17 +49,18 @@ class WebSockets extends BaseWebSocketClient {
   }
 
   @override
-  IoWebSocketsService<Id, Data> service<Id, Data>(String path,
-      {Type type, AngelDeserializer<Data> deserializer}) {
+  Service<Id, Data> service<Id, Data>(String path,
+      {Type? type, AngelDeserializer<Data>? deserializer}) {
     var uri = path.replaceAll(_straySlashes, '');
-    return IoWebSocketsService<Id, Data>(socket, this, uri, type);
+    return IoWebSocketsService<Id, Data>(socket, this, uri, type)
+        as Service<Id, Data>;
   }
 }
 
 class IoWebSocketsService<Id, Data> extends WebSocketsService<Id, Data> {
-  final Type type;
+  final Type? type;
 
   IoWebSocketsService(
-      WebSocketChannel socket, WebSockets app, String uri, this.type)
+      WebSocketChannel? socket, WebSockets app, String uri, this.type)
       : super(socket, app, uri);
 }

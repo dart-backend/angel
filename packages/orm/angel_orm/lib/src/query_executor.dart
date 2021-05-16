@@ -9,7 +9,7 @@ abstract class QueryExecutor {
   /// Executes a single query.
   Future<List<List>> query(
       String tableName, String query, Map<String, dynamic> substitutionValues,
-      [List<String> returningFields]);
+      [List<String> returningFields = const []]);
 
   /// Enters a database transaction, performing the actions within,
   /// and returning the results of [f].

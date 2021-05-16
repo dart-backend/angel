@@ -1,11 +1,11 @@
 import 'dart:io';
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_framework/http.dart';
-import 'package:angel_framework/http2.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_framework/http.dart';
+import 'package:angel3_framework/http2.dart';
 import 'package:logging/logging.dart';
 import 'common.dart';
 
-main() async {
+void main() async {
   var app = Angel()
     ..encoders.addAll({
       'gzip': gzip.encoder,
@@ -25,7 +25,7 @@ main() async {
   try {
     ctx.setAlpnProtocols(['h2'], true);
   } catch (e, st) {
-    app.logger.severe(
+    app.logger!.severe(
       'Cannot set ALPN protocol on server to `h2`. The server will only serve HTTP/1.x.',
       e,
       st,

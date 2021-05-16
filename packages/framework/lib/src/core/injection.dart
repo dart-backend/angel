@@ -8,25 +8,27 @@ const List<Type> _primitiveTypes = [String, int, num, double, Null];
 ///
 /// Calling [ioc] also auto-serializes the result of a [handler].
 RequestHandler ioc(Function handler, {Iterable<String> optional = const []}) {
-  InjectionRequest injection;
-  RequestHandler contained;
-
   return (req, res) {
-    if (injection == null) {
-      injection = preInject(handler, req.app.container.reflector);
-      injection.optional.addAll(optional ?? []);
+    RequestHandler? contained;
+
+    if (req.app?.container != null) {
+      InjectionRequest injection =
+          preInject(handler, req.app!.container!.reflector);
+      //if (injection != null) {
+      injection.optional.addAll(optional);
       contained = handleContained(handler, injection);
+      //}
     }
 
-    return req.app.executeHandler(contained, req, res);
+    return req.app!.executeHandler(contained, req, res);
   };
 }
 
 resolveInjection(requirement, InjectionRequest injection, RequestContext req,
     ResponseContext res, bool throwOnUnresolved,
-    [Container container]) async {
+    [Container? container]) async {
   var propFromApp;
-  container ??= req?.container ?? res?.app?.container;
+  container ??= req.container ?? res.app!.container;
 
   if (requirement == RequestContext) {
     return req;
@@ -34,17 +36,17 @@ resolveInjection(requirement, InjectionRequest injection, RequestContext req,
     return res;
   } else if (requirement is String &&
       injection.parameters.containsKey(requirement)) {
-    var param = injection.parameters[requirement];
+    var param = injection.parameters[requirement]!;
     var value = param.getValue(req);
-    if (value == null && param.required != false) throw param.error;
+    if (value == null && param.required != false) throw param.error as Object;
     return value;
   } else if (requirement is String) {
-    if (req.container.hasNamed(requirement)) {
-      return req.container.findByName(requirement);
+    if (req.container!.hasNamed(requirement)) {
+      return req.container!.findByName(requirement);
     }
     if (req.params.containsKey(requirement)) {
       return req.params[requirement];
-    } else if ((propFromApp = req.app.findProperty(requirement)) != null) {
+    } else if ((propFromApp = req.app!.findProperty(requirement)) != null) {
       return propFromApp;
     } else if (injection.optional.contains(requirement)) {
       return null;
@@ -59,7 +61,7 @@ resolveInjection(requirement, InjectionRequest injection, RequestContext req,
     var key = requirement.first;
     var type = requirement.last;
     if (req.params.containsKey(key) ||
-        req.app.configuration.containsKey(key) ||
+        req.app!.configuration.containsKey(key) ||
         _primitiveTypes.contains(type)) {
       return await resolveInjection(
           key, injection, req, res, throwOnUnresolved, container);
@@ -69,7 +71,7 @@ resolveInjection(requirement, InjectionRequest injection, RequestContext req,
     }
   } else if (requirement is Type && requirement != dynamic) {
     try {
-      var futureType = container.reflector.reflectFutureOf(requirement);
+      var futureType = container!.reflector.reflectFutureOf(requirement);
       if (container.has(futureType.reflectedType)) {
         return await container.make(futureType.reflectedType);
       }
@@ -77,7 +79,7 @@ resolveInjection(requirement, InjectionRequest injection, RequestContext req,
       // Ignore.
     }
 
-    return await container.make(requirement);
+    return await container!.make(requirement);
   } else if (throwOnUnresolved) {
     throw ArgumentError(
         '$requirement cannot be injected into a request handler.');
@@ -96,7 +98,7 @@ bool suitableForInjection(
 
 /// Handles a request with a DI-enabled handler.
 RequestHandler handleContained(Function handler, InjectionRequest injection,
-    [Container container]) {
+    [Container? container]) {
   return (RequestContext req, ResponseContext res) async {
     if (injection.parameters.isNotEmpty &&
         injection.parameters.values.any((p) => p.match != null) &&
@@ -157,7 +159,7 @@ class InjectionRequest {
 InjectionRequest preInject(Function handler, Reflector reflector) {
   var injection = InjectionRequest();
 
-  var closureMirror = reflector.reflectFunction(handler);
+  var closureMirror = reflector.reflectFunction(handler)!;
 
   if (closureMirror.parameters.isEmpty) return injection;
 
@@ -169,9 +171,8 @@ InjectionRequest preInject(Function handler, Reflector reflector) {
     var _Parameter = reflector.reflectType(Parameter);
 
     var p = parameter.annotations
-        .firstWhere((m) => m.type.isAssignableTo(_Parameter),
-            orElse: () => null)
-        ?.reflectee as Parameter;
+        .firstWhereOrNull((m) => m.type.isAssignableTo(_Parameter))
+        ?.reflectee as Parameter?;
     //print(p);
     if (p != null) {
       injection.parameters[name] = Parameter(

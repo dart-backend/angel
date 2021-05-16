@@ -1,26 +1,26 @@
-import 'package:angel_container/angel_container.dart';
+import 'package:angel3_container/angel3_container.dart';
 
 final RegExp straySlashes = RegExp(r'(^/+)|(/+$)');
 
-T matchingAnnotation<T>(List<ReflectedInstance> metadata) {
+T? matchingAnnotation<T>(List<ReflectedInstance> metadata) {
   for (ReflectedInstance metaDatum in metadata) {
     if (metaDatum.type.reflectedType == T) {
-      return metaDatum.reflectee as T;
+      return metaDatum.reflectee as T?;
     }
   }
 
   return null;
 }
 
-T getAnnotation<T>(obj, Reflector reflector) {
+T? getAnnotation<T>(obj, Reflector? reflector) {
   if (reflector == null) {
     return null;
   } else {
     if (obj is Function) {
-      var methodMirror = reflector.reflectFunction(obj);
+      var methodMirror = reflector.reflectFunction(obj)!;
       return matchingAnnotation<T>(methodMirror.annotations);
     } else {
-      var classMirror = reflector.reflectClass(obj.runtimeType as Type);
+      var classMirror = reflector.reflectClass(obj.runtimeType)!;
       return matchingAnnotation<T>(classMirror.annotations);
     }
   }

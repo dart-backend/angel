@@ -1,6 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:angel_route/angel_route.dart';
+import 'package:angel3_route/angel3_route.dart';
 import 'package:http/http.dart' as http;
 import 'package:test/test.dart';
 
@@ -9,11 +9,11 @@ const List<Map<String, String>> people = [
 ];
 
 void main() {
-  http.Client client;
+  http.Client? client;
 
   final router = Router();
-  HttpServer server;
-  String url;
+  late HttpServer server;
+  String? url;
 
   router.get('/', (req, res) {
     res.write('Root');
@@ -103,7 +103,7 @@ void main() {
 
   tearDown(() async {
     await server.close(force: true);
-    client.close();
+    client!.close();
     client = null;
     url = null;
   });
@@ -111,13 +111,13 @@ void main() {
   group('top-level', () {
     group('get', () {
       test('root', () async {
-        final res = await client.get(Uri.parse(url));
+        final res = await client!.get(Uri.parse(url!));
         print('Response: ${res.body}');
         expect(res.body, equals('Root'));
       });
 
       test('path', () async {
-        final res = await client.get(Uri.parse('$url/hello'));
+        final res = await client!.get(Uri.parse('$url/hello'));
         print('Response: ${res.body}');
         expect(res.body, equals('World'));
       });
@@ -127,20 +127,20 @@ void main() {
   group('group', () {
     group('top-level', () {
       test('root', () async {
-        final res = await client.get(Uri.parse('$url/people'));
+        final res = await client!.get(Uri.parse('$url/people'));
         print('Response: ${res.body}');
         expect(json.decode(res.body), equals(people));
       });
 
       group('param', () {
         test('root', () async {
-          final res = await client.get(Uri.parse('$url/people/0'));
+          final res = await client!.get(Uri.parse('$url/people/0'));
           print('Response: ${res.body}');
           expect(json.decode(res.body), equals(people.first));
         });
 
         test('path', () async {
-          final res = await client.get(Uri.parse('$url/people/0/name'));
+          final res = await client!.get(Uri.parse('$url/people/0/name'));
           print('Response: ${res.body}');
           expect(json.decode(res.body), equals(people.first['name']));
         });
@@ -151,20 +151,21 @@ void main() {
   group('mount', () {
     group('path', () {
       test('top-level', () async {
-        final res = await client.post(Uri.parse('$url/beatles/spinal_clacker'));
+        final res =
+            await client!.post(Uri.parse('$url/beatles/spinal_clacker'));
         print('Response: ${res.body}');
         expect(res.body, equals('come together'));
       });
 
       test('fallback', () async {
-        final res = await client.patch(Uri.parse('$url/beatles/muddy_water'));
+        final res = await client!.patch(Uri.parse('$url/beatles/muddy_water'));
         print('Response: ${res.body}');
         expect(res.body, equals('together'));
       });
 
       test('fallback', () async {
         final res =
-            await client.patch(Uri.parse('$url/beatles/spanil_clakcer'));
+            await client!.patch(Uri.parse('$url/beatles/spanil_clakcer'));
         print('Response: ${res.body}');
         expect(res.body, equals('together'));
       });
@@ -172,7 +173,7 @@ void main() {
 
     test('deep nested', () async {
       final res =
-          await client.get(Uri.parse('$url/beatles/big/yellow/submarine'));
+          await client!.get(Uri.parse('$url/beatles/big/yellow/submarine'));
       print('Response: ${res.body}');
       expect(res.body, equals('we all live in a'));
     });
@@ -187,17 +188,18 @@ void main() {
         });
 
     test('path', () async {
-      await expect404(client.get(Uri.parse('$url/foo')));
-      await expect404(client.get(Uri.parse('$url/bye')));
-      await expect404(client.get(Uri.parse('$url/people/0/age')));
-      await expect404(client.get(Uri.parse('$url/beatles2')));
+      await expect404(client!.get(Uri.parse('$url/foo')));
+      await expect404(client!.get(Uri.parse('$url/bye')));
+      await expect404(client!.get(Uri.parse('$url/people/0/age')));
+      await expect404(client!.get(Uri.parse('$url/beatles2')));
     });
 
     test('method', () async {
-      await expect404(client.head(Uri.parse(url)));
-      await expect404(client.patch(Uri.parse('$url/people')));
-      await expect404(client.post(Uri.parse('$url/people/0')));
-      await expect404(client.delete(Uri.parse('$url/beatles2/spinal_clacker')));
+      await expect404(client!.head(Uri.parse(url!)));
+      await expect404(client!.patch(Uri.parse('$url/people')));
+      await expect404(client!.post(Uri.parse('$url/people/0')));
+      await expect404(
+          client!.delete(Uri.parse('$url/beatles2/spinal_clacker')));
     });
   });
 }

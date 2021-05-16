@@ -12,11 +12,11 @@ class HttpResponseContext extends ResponseContext<HttpResponse> {
   /// The underlying [HttpResponse] under this instance.
   @override
   final HttpResponse rawResponse;
-  Angel app;
+  Angel? app;
 
-  LockableBytesBuilder _buffer;
+  LockableBytesBuilder? _buffer;
 
-  final HttpRequestContext _correspondingRequest;
+  final HttpRequestContext? _correspondingRequest;
   bool _isDetached = false, _isClosed = false, _streamInitialized = false;
 
   HttpResponseContext(this.rawResponse, this.app, [this._correspondingRequest]);
@@ -28,7 +28,7 @@ class HttpResponseContext extends ResponseContext<HttpResponse> {
   }
 
   @override
-  RequestContext get correspondingRequest {
+  RequestContext? get correspondingRequest {
     return _correspondingRequest;
   }
 
@@ -41,10 +41,10 @@ class HttpResponseContext extends ResponseContext<HttpResponse> {
   bool get isBuffered => _buffer != null;
 
   @override
-  BytesBuilder get buffer => _buffer;
+  BytesBuilder? get buffer => _buffer;
 
   @override
-  void addError(Object error, [StackTrace stackTrace]) {
+  void addError(Object error, [StackTrace? stackTrace]) {
     rawResponse.addError(error, stackTrace);
     super.addError(error, stackTrace);
   }
@@ -54,15 +54,15 @@ class HttpResponseContext extends ResponseContext<HttpResponse> {
     _buffer = LockableBytesBuilder();
   }
 
-  Iterable<String> __allowedEncodings;
+  Iterable<String>? __allowedEncodings;
 
-  Iterable<String> get _allowedEncodings {
-    return __allowedEncodings ??= correspondingRequest.headers
-        .value('accept-encoding')
+  Iterable<String>? get _allowedEncodings {
+    return __allowedEncodings ??= correspondingRequest?.headers
+        ?.value('accept-encoding')
         ?.split(',')
-        ?.map((s) => s.trim())
-        ?.where((s) => s.isNotEmpty)
-        ?.map((str) {
+        .map((s) => s.trim())
+        .where((s) => s.isNotEmpty)
+        .map((str) {
       // Ignore quality specifications in accept-encoding
       // ex. gzip;q=0.8
       if (!str.contains(';')) return str;
@@ -89,7 +89,7 @@ class HttpResponseContext extends ResponseContext<HttpResponse> {
       headers.forEach(rawResponse.headers.set);
 
       if (headers.containsKey('content-length')) {
-        rawResponse.contentLength = int.tryParse(headers['content-length']) ??
+        rawResponse.contentLength = int.tryParse(headers['content-length']!) ??
             rawResponse.contentLength;
       }
 
@@ -100,8 +100,8 @@ class HttpResponseContext extends ResponseContext<HttpResponse> {
 
       if (encoders.isNotEmpty && correspondingRequest != null) {
         if (_allowedEncodings != null) {
-          for (var encodingName in _allowedEncodings) {
-            Converter<List<int>, List<int>> encoder;
+          for (var encodingName in _allowedEncodings!) {
+            Converter<List<int>, List<int>>? encoder;
             String key = encodingName;
 
             if (encoders.containsKey(encodingName)) {
@@ -134,8 +134,8 @@ class HttpResponseContext extends ResponseContext<HttpResponse> {
 
     if (encoders.isNotEmpty && correspondingRequest != null) {
       if (_allowedEncodings != null) {
-        for (var encodingName in _allowedEncodings) {
-          Converter<List<int>, List<int>> encoder;
+        for (var encodingName in _allowedEncodings!) {
+          Converter<List<int>, List<int>>? encoder;
           String key = encodingName;
 
           if (encoders.containsKey(encodingName)) {
@@ -145,7 +145,7 @@ class HttpResponseContext extends ResponseContext<HttpResponse> {
           }
 
           if (encoder != null) {
-            output = encoders[key].bind(output);
+            output = encoders[key]!.bind(output);
             break;
           }
         }
@@ -165,8 +165,8 @@ class HttpResponseContext extends ResponseContext<HttpResponse> {
 
         if (encoders.isNotEmpty && correspondingRequest != null) {
           if (_allowedEncodings != null) {
-            for (var encodingName in _allowedEncodings) {
-              Converter<List<int>, List<int>> encoder;
+            for (var encodingName in _allowedEncodings!) {
+              Converter<List<int>, List<int>>? encoder;
               String key = encodingName;
 
               if (encoders.containsKey(encodingName)) {
@@ -176,7 +176,7 @@ class HttpResponseContext extends ResponseContext<HttpResponse> {
               }
 
               if (encoder != null) {
-                data = encoders[key].convert(data);
+                data = encoders[key]!.convert(data);
                 break;
               }
             }
@@ -186,7 +186,7 @@ class HttpResponseContext extends ResponseContext<HttpResponse> {
         rawResponse.add(data);
       }
     } else {
-      buffer.add(data);
+      buffer!.add(data);
     }
   }
 
@@ -203,7 +203,7 @@ class HttpResponseContext extends ResponseContext<HttpResponse> {
             // this try/catch prevents a crash.
           }
         } else {
-          _buffer.lock();
+          _buffer!.lock();
         }
 
         _isClosed = true;

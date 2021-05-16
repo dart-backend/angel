@@ -11,7 +11,7 @@ class Http2Client extends BaseClient {
     // Connect a socket
     var socket = await SecureSocket.connect(
       request.url.host,
-      request.url.port ?? 443,
+      request.url.port,
       onBadCertificate: (_) => true,
       supportedProtocols: ['h2'],
     );
@@ -89,11 +89,11 @@ class Http2Client extends BaseClient {
     var closed = await readResponse(stream, headers, body);
     return StreamedResponse(
       Stream.fromIterable([body.takeBytes()]),
-      int.parse(headers[':status']),
+      int.parse(headers[':status']!),
       headers: headers,
       isRedirect: headers.containsKey('location'),
       contentLength: headers.containsKey('content-length')
-          ? int.parse(headers['content-length'])
+          ? int.parse(headers['content-length']!)
           : null,
       request: request,
       reasonPhrase: null,

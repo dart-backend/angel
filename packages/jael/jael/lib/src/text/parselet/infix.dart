@@ -28,7 +28,7 @@ class ConditionalParselet implements InfixParselet {
   const ConditionalParselet();
 
   @override
-  Expression parse(Parser parser, Expression left, Token token) {
+  Expression? parse(Parser parser, Expression left, Token token) {
     var ifTrue = parser.parseExpression(0);
 
     if (ifTrue == null) {
@@ -57,12 +57,13 @@ class ConditionalParselet implements InfixParselet {
 }
 
 class BinaryParselet implements InfixParselet {
+  @override
   final int precedence;
 
   const BinaryParselet(this.precedence);
 
   @override
-  Expression parse(Parser parser, Expression left, Token token) {
+  Expression? parse(Parser parser, Expression left, Token token) {
     var right = parser.parseExpression(precedence);
 
     if (right == null) {
@@ -86,10 +87,10 @@ class CallParselet implements InfixParselet {
   int get precedence => 19;
 
   @override
-  Expression parse(Parser parser, Expression left, Token token) {
-    List<Expression> arguments = [];
-    List<NamedArgument> namedArguments = [];
-    Expression argument = parser.parseExpression(0);
+  Expression? parse(Parser parser, Expression left, Token token) {
+    var arguments = <Expression>[];
+    var namedArguments = <NamedArgument>[];
+    var argument = parser.parseExpression(0);
 
     while (argument != null) {
       arguments.add(argument);
@@ -98,7 +99,7 @@ class CallParselet implements InfixParselet {
       argument = parser.parseExpression(0);
     }
 
-    NamedArgument namedArgument = parser.parseNamedArgument();
+    var namedArgument = parser.parseNamedArgument();
 
     while (namedArgument != null) {
       namedArguments.add(namedArgument);
@@ -126,7 +127,7 @@ class IndexerParselet implements InfixParselet {
   int get precedence => 19;
 
   @override
-  Expression parse(Parser parser, Expression left, Token token) {
+  Expression? parse(Parser parser, Expression left, Token token) {
     var indexer = parser.parseExpression(0);
 
     if (indexer == null) {
@@ -152,7 +153,7 @@ class MemberParselet implements InfixParselet {
   int get precedence => 19;
 
   @override
-  Expression parse(Parser parser, Expression left, Token token) {
+  Expression? parse(Parser parser, Expression left, Token token) {
     var name = parser.parseIdentifier();
 
     if (name == null) {

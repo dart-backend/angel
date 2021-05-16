@@ -1,6 +1,9 @@
-# angel_websocket
-[![Pub](https://img.shields.io/pub/v/angel_websocket.svg)](https://pub.dartlang.org/packages/angel_websocket)
-[![build status](https://travis-ci.org/angel-dart/websocket.svg)](https://travis-ci.org/angel-dart/websocket)
+# angel3_websocket
+[![version](https://img.shields.io/badge/pub-v4.0.0-brightgreen)](https://pub.dartlang.org/packages/angel3_websocket)
+[![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
+[![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
+
+[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/websocket/LICENSE)
 
 WebSocket plugin for Angel.
 
@@ -17,13 +20,13 @@ WebSocket contexts are add to `req.properties` as `'socket'`.
 **Server-side**
 
 ```dart
-import "package:angel_framework/angel_framework.dart";
-import "package:angel_websocket/server.dart";
+import "package:angel3_framework/angel3_framework.dart";
+import "package:angel3_websocket/server.dart";
 
 main() async {
-  var app = new Angel();
+  var app =  Angel();
 
-  var ws = new AngelWebSocket();
+  var ws =  AngelWebSocket();
   
   // This is a plug-in. It hooks all your services,
   // to automatically broadcast events.
@@ -78,7 +81,7 @@ class MyController extends WebSocketController {
   // Event filtering
   @ExposeWs("foo")
   void foo() {
-    broadcast(new WebSocketEvent(...), filter: (socket) async => ...);
+    broadcast( WebSocketEvent(...), filter: (socket) async => ...);
   }
 }
 ```
@@ -86,7 +89,7 @@ class MyController extends WebSocketController {
 **Client Use**
 
 This repo also provides two client libraries `browser` and `io` that extend the base
-`angel_client` interface, and allow you to use a very similar API on the client to that of
+`angel3_client` interface, and allow you to use a very similar API on the client to that of
 the server.
 
 The provided clients also automatically try to reconnect their WebSockets when disconnected,
@@ -99,10 +102,10 @@ Clients can even perform authentication over WebSockets.
 **In the Browser**
 
 ```dart
-import "package:angel_websocket/browser.dart";
+import "package:angel3_websocket/browser.dart";
 
 main() async {
-  Angel app = new WebSockets("/ws");
+  Angel app =  WebSockets("/ws");
   await app.connect();
 
   var Cars = app.service("api/cars");
@@ -127,8 +130,8 @@ main() async {
 **CLI Client**
 
 ```dart
-import "package:angel_framework/common.dart";
-import "package:angel_websocket/io.dart";
+import "package:angel3_framework/common.dart";
+import "package:angel3_websocket/io.dart";
 
 // You can include these in a shared file and access on both client and server
 class Car extends Model {
@@ -141,7 +144,7 @@ class Car extends Model {
 }
 
 main() async {
-  Angel app = new WebSockets("/ws");
+  Angel app =  WebSockets("/ws");
 
   // Wait for WebSocket connection...
   await app.connect();

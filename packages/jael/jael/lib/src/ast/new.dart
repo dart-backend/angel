@@ -15,7 +15,7 @@ class NewExpression extends Expression {
   FileSpan get span => $new.span.expand(call.span);
 
   @override
-  compute(scope) {
+  dynamic compute(scope) {
     var targetType = call.target.compute(scope);
     var positional = call.computePositional(scope);
     var named = call.computeNamed(scope);

@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:args/args.dart';
-import 'package:jael/jael.dart';
+import 'package:jael3/jael3.dart';
 
 var argParser = ArgParser()
   ..addOption('line-length',
@@ -29,7 +29,7 @@ var argParser = ArgParser()
       help: 'Overwrite input files with formatted output.',
       negatable: false);
 
-main(List<String> args) async {
+void main(List<String> args) async {
   try {
     var argResults = argParser.parse(args);
     if (argResults['help'] as bool) {
@@ -41,7 +41,7 @@ main(List<String> args) async {
     if (argResults.rest.isEmpty) {
       var text = await stdin.transform(utf8.decoder).join();
       var result =
-          await format(argResults['stdin-name'] as String, text, argResults);
+          format(argResults['stdin-name'] as String?, text, argResults);
       if (result != null) print(result);
     } else {
       for (var arg in argResults.rest) {
@@ -85,20 +85,19 @@ Future<void> formatStat(
       break;
     default:
       throw 'No file or directory found at "$path".';
-      break;
   }
 }
 
 Future<void> formatFile(File file, ArgResults argResults) async {
   var content = await file.readAsString();
-  var formatted = await format(file.path, content, argResults);
+  var formatted = format(file.path, content, argResults);
   if (formatted == null) return;
   if (argResults['overwrite'] as bool) {
     if (formatted != content) {
       if (argResults['dry-run'] as bool) {
         print('Would have formatted ${file.path}');
       } else {
-        await file.writeAsStringSync(formatted);
+        file.writeAsStringSync(formatted);
         print('Formatted ${file.path}');
       }
     } else {
@@ -109,7 +108,7 @@ Future<void> formatFile(File file, ArgResults argResults) async {
   }
 }
 
-String format(String filename, String content, ArgResults argResults) {
+String? format(String? filename, String content, ArgResults argResults) {
   var errored = false;
   var doc = parseDocument(content, sourceUrl: filename, onError: (e) {
     stderr.writeln(e);
@@ -118,7 +117,11 @@ String format(String filename, String content, ArgResults argResults) {
   if (errored) return null;
   var fmt = JaelFormatter(
       int.parse(argResults['tab-size'] as String),
-      argResults['insert-spaces'] as bool,
+      argResults['insert-spaces'] as bool?,
       int.parse(argResults['line-length'] as String));
+
+  if (doc == null) {
+    return null;
+  }
   return fmt.apply(doc);
 }

@@ -1,4 +1,4 @@
-import 'package:angel_http_exception/angel_http_exception.dart';
+import 'package:angel3_http_exception/angel3_http_exception.dart';
 
 void main() =>
-    throw new AngelHttpException.notFound(message: "Can't find that page!");
+    throw AngelHttpException.notFound(message: "Can't find that page!");

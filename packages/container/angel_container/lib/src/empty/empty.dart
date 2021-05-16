@@ -1,6 +1,6 @@
-import '../../angel_container.dart';
+import '../../angel3_container.dart';
 
-final Map<Symbol, String> _symbolNames = <Symbol, String>{};
+final Map<Symbol, String?> _symbolNames = <Symbol, String?>{};
 
 /// A [Reflector] implementation that performs no actual reflection,
 /// instead returning empty objects on every invocation.
@@ -13,9 +13,9 @@ class EmptyReflector extends Reflector {
   const EmptyReflector();
 
   @override
-  String getName(Symbol symbol) {
+  String? getName(Symbol symbol) {
     return _symbolNames.putIfAbsent(
-        symbol, () => symbolRegex.firstMatch(symbol.toString()).group(1));
+        symbol, () => symbolRegex.firstMatch(symbol.toString())!.group(1));
   }
 
   @override
@@ -52,13 +52,13 @@ class _EmptyReflectedClass extends ReflectedClass {
   @override
   ReflectedInstance newInstance(
       String constructorName, List positionalArguments,
-      [Map<String, dynamic> namedArguments, List<Type> typeArguments]) {
+      [Map<String, dynamic>? namedArguments, List<Type>? typeArguments]) {
     throw UnsupportedError(
         'Classes reflected via an EmptyReflector cannot be instantiated.');
   }
 
   @override
-  bool isAssignableTo(ReflectedType other) {
+  bool isAssignableTo(ReflectedType? other) {
     return other == this;
   }
 
@@ -75,13 +75,13 @@ class _EmptyReflectedType extends ReflectedType {
   @override
   ReflectedInstance newInstance(
       String constructorName, List positionalArguments,
-      [Map<String, dynamic> namedArguments, List<Type> typeArguments]) {
+      [Map<String, dynamic>? namedArguments, List<Type>? typeArguments]) {
     throw UnsupportedError(
         'Types reflected via an EmptyReflector cannot be instantiated.');
   }
 
   @override
-  bool isAssignableTo(ReflectedType other) {
+  bool isAssignableTo(ReflectedType? other) {
     return other == this;
   }
 

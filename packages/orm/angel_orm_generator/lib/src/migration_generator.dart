@@ -29,7 +29,7 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
   const MigrationGenerator({this.autoSnakeCaseNames = true});
 
   @override
-  Future<String> generateForAnnotatedElement(
+  Future<String?> generateForAnnotatedElement(
       Element element, ConstantReader annotation, BuildStep buildStep) async {
     if (element is! ClassElement) {
       throw 'Only classes can be annotated with @ORM().';
@@ -42,21 +42,20 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
       return null;
     }
 
-    var resolver = await buildStep.resolver;
-    var ctx = await buildOrmContext({}, element as ClassElement, annotation,
-        buildStep, resolver, autoSnakeCaseNames != false);
-    var lib = generateMigrationLibrary(
-        ctx, element as ClassElement, resolver, buildStep);
-    if (lib == null) return null;
+    var resolver = buildStep.resolver;
+    var ctx = await buildOrmContext({}, element, annotation, buildStep,
+        resolver, autoSnakeCaseNames != false);
+    var lib = generateMigrationLibrary(ctx, element, resolver, buildStep);
+    //if (lib == null) return null;
     return DartFormatter().format(lib.accept(DartEmitter()).toString());
   }
 
-  Library generateMigrationLibrary(OrmBuildContext ctx, ClassElement element,
+  Library generateMigrationLibrary(OrmBuildContext? ctx, ClassElement element,
       Resolver resolver, BuildStep buildStep) {
     return Library((lib) {
       lib.body.add(Class((clazz) {
         clazz
-          ..name = '${ctx.buildContext.modelClassName}Migration'
+          ..name = '${ctx!.buildContext.modelClassName}Migration'
           ..extend = refer('Migration')
           ..methods
               .addAll([buildUpMigration(ctx, lib), buildDownMigration(ctx)]);
@@ -64,10 +63,10 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
     });
   }
 
-  Method buildUpMigration(OrmBuildContext ctx, LibraryBuilder lib) {
+  Method buildUpMigration(OrmBuildContext? ctx, LibraryBuilder lib) {
     return Method((meth) {
       var autoIdAndDateFields = const TypeChecker.fromRuntime(Model)
-          .isAssignableFromType(ctx.buildContext.clazz.thisType);
+          .isAssignableFromType(ctx!.buildContext.clazz.thisType);
       meth
         ..name = 'up'
         ..annotations.add(refer('override'))
@@ -80,7 +79,7 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
           ..body = Block((closureBody) {
             var table = refer('table');
 
-            List<String> dup = [];
+            var dup = <String>[];
             ctx.columns.forEach((name, col) {
               // Skip custom-expression columns.
               if (col.hasExpression) return;
@@ -103,17 +102,20 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
                     (autoIdAndDateFields != false && name == 'id'))) {
                   // Check for relationships that might duplicate
                   for (var rName in ctx.relations.keys) {
-                    var relationship = ctx.relations[rName];
+                    var relationship = ctx.relations[rName]!;
                     if (relationship.localKey == key) return;
                   }
                 }
-
-                dup.add(key);
+                if (key != null) {
+                  dup.add(key);
+                } else {
+                  print('Skip: key is null');
+                }
               }
 
-              String methodName;
-              List<Expression> positional = [literal(key)];
-              Map<String, Expression> named = {};
+              String? methodName;
+              var positional = <Expression>[literal(key)];
+              var named = <String, Expression>{};
 
               if (autoIdAndDateFields != false && name == 'id') {
                 methodName = 'serial';
@@ -159,13 +161,13 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
                     if (col.length == null) {
                       methodName = 'declare';
                       provColumn = columnTypeType.newInstance([
-                        literal(col.type.name),
+                        literal(col.type!.name),
                       ]);
                     } else {
                       methodName = 'declareColumn';
                       provColumn = colType.newInstance([], {
                         'type': columnTypeType.newInstance([
-                          literal(col.type.name),
+                          literal(col.type!.name),
                         ]),
                         'length': literal(col.length),
                       });
@@ -183,10 +185,10 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
 
               if (defaultValue != null && !defaultValue.isNull) {
                 var type = defaultValue.type;
-                Expression defaultExpr;
+                Expression? defaultExpr;
 
                 if (const TypeChecker.fromRuntime(RawSql)
-                    .isAssignableFromType(defaultValue.type)) {
+                    .isAssignableFromType(defaultValue.type!)) {
                   var value =
                       ConstantReader(defaultValue).read('value').stringValue;
                   defaultExpr =
@@ -195,15 +197,15 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
                   // Default to enum index.
                   try {
                     var index =
-                        ConstantReader(defaultValue).read('index')?.intValue;
-                    if (index != null) defaultExpr = literalNum(index);
+                        ConstantReader(defaultValue).read('index').intValue;
+                    defaultExpr = literalNum(index);
                   } catch (_) {
                     // Extremely weird error occurs here: `Not an instance of int`.
                     // Definitely an analyzer issue.
                   }
                 } else {
                   defaultExpr = CodeExpression(
-                    Code(dartObjectToString(defaultValue)),
+                    Code(dartObjectToString(defaultValue)!),
                   );
                 }
 
@@ -250,7 +252,7 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
                 var columnTypeType = refer('ColumnType');
                 var key = relationship.localKey;
                 var keyType = relationship
-                    .foreign.columns[relationship.foreignKey].type.name;
+                    .foreign!.columns[relationship.foreignKey!]!.type!.name;
 
                 var field = table.property('declare').call([
                   literal(key),
@@ -284,7 +286,7 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
     });
   }
 
-  Method buildDownMigration(OrmBuildContext ctx) {
+  Method buildDownMigration(OrmBuildContext? ctx) {
     return Method((b) {
       b
         ..name = 'down'
@@ -293,7 +295,7 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
         ..body = Block((b) {
           var named = <String, Expression>{};
 
-          if (ctx.relations.values.any((r) =>
+          if (ctx!.relations.values.any((r) =>
               r.type == RelationshipType.hasOne ||
               r.type == RelationshipType.hasMany ||
               r.isManyToMany)) {
@@ -302,7 +304,7 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
 
           b.addExpression(_schema
               .property('drop')
-              .call([literalString(ctx.tableName)], named));
+              .call([literalString(ctx.tableName!)], named));
         });
     });
   }

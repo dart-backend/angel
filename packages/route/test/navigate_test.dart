@@ -1,4 +1,4 @@
-import 'package:angel_route/angel_route.dart';
+import 'package:angel3_route/angel3_route.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -8,7 +8,7 @@ void main() {
   router.get('/user/:id', 'GET');
   router.get('/first/:first/last/:last', 'GET').name = 'full_name';
 
-  navigate(params) {
+  String navigate(params) {
     final uri = router.navigate(params as Iterable);
     print('Uri: $uri');
     return uri;

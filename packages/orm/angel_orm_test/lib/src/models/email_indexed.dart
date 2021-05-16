@@ -1,6 +1,8 @@
 import 'package:angel_migration/angel_migration.dart';
 import 'package:angel_orm/angel_orm.dart';
 import 'package:angel_serialize/angel_serialize.dart';
+import 'package:optional/optional.dart';
+
 part 'email_indexed.g.dart';
 
 // * https://github.com/angel-dart/angel/issues/116
@@ -9,7 +11,7 @@ part 'email_indexed.g.dart';
 @orm
 abstract class _Role {
   @PrimaryKey(columnType: ColumnType.varChar)
-  String get role;
+  String? get role;
 
   @ManyToMany(_RoleUser)
   List<_User> get users;
@@ -19,10 +21,10 @@ abstract class _Role {
 @orm
 abstract class _RoleUser {
   @belongsTo
-  _Role get role;
+  _Role? get role;
 
   @belongsTo
-  _User get user;
+  _User? get user;
 }
 
 @serializable
@@ -30,9 +32,9 @@ abstract class _RoleUser {
 abstract class _User {
   // @PrimaryKey(columnType: ColumnType.varChar)
   @primaryKey
-  String get email;
-  String get name;
-  String get password;
+  String? get email;
+  String? get name;
+  String? get password;
 
   @ManyToMany(_RoleUser)
   List<_Role> get roles;

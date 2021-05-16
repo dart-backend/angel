@@ -4,15 +4,15 @@ import 'package:quiver/core.dart';
 abstract class Reflector {
   const Reflector();
 
-  String getName(Symbol symbol);
+  String? getName(Symbol symbol);
 
-  ReflectedClass reflectClass(Type clazz);
+  ReflectedClass? reflectClass(Type clazz);
 
-  ReflectedFunction reflectFunction(Function function);
+  ReflectedFunction? reflectFunction(Function function);
 
-  ReflectedType reflectType(Type type);
+  ReflectedType? reflectType(Type type);
 
-  ReflectedInstance reflectInstance(Object object);
+  ReflectedInstance? reflectInstance(Object object);
 
   ReflectedType reflectFutureOf(Type type) {
     throw UnsupportedError('`reflectFutureOf` requires `dart:mirrors`.');
@@ -22,7 +22,7 @@ abstract class Reflector {
 abstract class ReflectedInstance {
   final ReflectedType type;
   final ReflectedClass clazz;
-  final Object reflectee;
+  final Object? reflectee;
 
   const ReflectedInstance(this.type, this.clazz, this.reflectee);
 
@@ -56,9 +56,9 @@ abstract class ReflectedType {
 
   ReflectedInstance newInstance(
       String constructorName, List positionalArguments,
-      [Map<String, dynamic> namedArguments, List<Type> typeArguments]);
+      [Map<String, dynamic>? namedArguments, List<Type>? typeArguments]);
 
-  bool isAssignableTo(ReflectedType other);
+  bool isAssignableTo(ReflectedType? other);
 }
 
 abstract class ReflectedClass extends ReflectedType {
@@ -94,7 +94,7 @@ abstract class ReflectedClass extends ReflectedType {
 class ReflectedDeclaration {
   final String name;
   final bool isStatic;
-  final ReflectedFunction function;
+  final ReflectedFunction? function;
 
   const ReflectedDeclaration(this.name, this.isStatic, this.function);
 

@@ -1,3 +1,10 @@
+# 4.0.0
+* Migrated to support Dart SDK 2.12.x NNBD
+* Migrateed quiver_hashcode to quiver
+
+# 3.0.0
+* Migrated to work with Dart SDK 2.12.x Non NNBD
+
 # 2.2.3+3
 * Add `exclude: true` to `super` call in `Exclude` constructor.
 

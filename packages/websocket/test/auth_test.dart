@@ -1,10 +1,9 @@
-import 'dart:async';
-import 'package:angel_auth/angel_auth.dart';
-import 'package:angel_client/io.dart' as c;
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_framework/http.dart';
-import 'package:angel_websocket/io.dart' as c;
-import 'package:angel_websocket/server.dart';
+import 'package:angel3_auth/angel3_auth.dart';
+import 'package:angel3_client/io.dart' as c;
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_framework/http.dart';
+import 'package:angel3_websocket/io.dart' as c;
+import 'package:angel3_websocket/server.dart';
 import 'package:logging/logging.dart';
 import 'package:test/test.dart';
 
@@ -12,9 +11,9 @@ const Map<String, String> USER = {'username': 'foo', 'password': 'bar'};
 
 void main() {
   Angel app;
-  AngelHttp http;
-  c.Angel client;
-  c.WebSockets ws;
+  late AngelHttp http;
+  late c.Angel client;
+  late c.WebSockets ws;
 
   setUp(() async {
     app = Angel();

@@ -1,4 +1,4 @@
-import 'package:angel_route/browser.dart';
+import 'package:angel3_route/browser.dart';
 import '../shared/basic.dart';
 
-main() => basic(BrowserRouter());
+void main() => basic(BrowserRouter());

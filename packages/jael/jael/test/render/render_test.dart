@@ -1,9 +1,9 @@
-import 'package:code_buffer/code_buffer.dart';
-import 'package:jael/jael.dart' as jael;
-import 'package:symbol_table/symbol_table.dart';
+import 'package:angel3_code_buffer/angel3_code_buffer.dart';
+import 'package:jael3/jael3.dart' as jael;
+import 'package:angel3_symbol_table/angel3_symbol_table.dart';
 import 'package:test/test.dart';
 
-main() {
+void main() {
   test('attribute binding', () {
     const template = '''
 <html>
@@ -16,8 +16,8 @@ main() {
 ''';
 
     var buf = CodeBuffer();
-    jael.Document document;
-    SymbolTable scope;
+    jael.Document? document;
+    late SymbolTable scope;
 
     try {
       document = jael.parseDocument(template, sourceUrl: 'test.jael');
@@ -33,7 +33,7 @@ main() {
     }
 
     expect(document, isNotNull);
-    const jael.Renderer().render(document, buf, scope);
+    const jael.Renderer().render(document!, buf, scope);
     print(buf);
 
     expect(
@@ -66,7 +66,7 @@ main() {
 
     var buf = CodeBuffer();
     //jael.scan(template, sourceUrl: 'test.jael').tokens.forEach(print);
-    var document = jael.parseDocument(template, sourceUrl: 'test.jael');
+    var document = jael.parseDocument(template, sourceUrl: 'test.jael')!;
     var scope = SymbolTable<dynamic>(values: {
       'pokemon': const _Pokemon('Darkrai', 'Dark'),
     });
@@ -106,7 +106,7 @@ main() {
 ''';
 
     var buf = CodeBuffer();
-    var document = jael.parseDocument(template, sourceUrl: 'test.jael');
+    var document = jael.parseDocument(template, sourceUrl: 'test.jael')!;
     var scope = SymbolTable<dynamic>(values: {
       'starters': starters,
     });
@@ -151,7 +151,7 @@ main() {
 ''';
 
     var buf = CodeBuffer();
-    var document = jael.parseDocument(template, sourceUrl: 'test.jael');
+    var document = jael.parseDocument(template, sourceUrl: 'test.jael')!;
     var scope = SymbolTable<dynamic>(values: {
       'starters': starters,
     });
@@ -197,7 +197,7 @@ main() {
 ''';
 
     var buf = CodeBuffer();
-    var document = jael.parseDocument(template, sourceUrl: 'test.jael');
+    var document = jael.parseDocument(template, sourceUrl: 'test.jael')!;
     var scope = SymbolTable();
 
     const jael.Renderer().render(document, buf, scope);
@@ -243,7 +243,7 @@ main() {
 ''';
 
     var buf = CodeBuffer();
-    var document = jael.parseDocument(template, sourceUrl: 'test.jael');
+    var document = jael.parseDocument(template, sourceUrl: 'test.jael')!;
     var scope = SymbolTable();
 
     const jael.Renderer().render(document, buf, scope);
@@ -268,7 +268,7 @@ main() {
 ''';
 
     var buf = CodeBuffer();
-    var document = jael.parseDocument(template, sourceUrl: 'test.jael');
+    var document = jael.parseDocument(template, sourceUrl: 'test.jael')!;
     var scope = SymbolTable();
 
     const jael.Renderer().render(document, buf, scope);
@@ -299,7 +299,7 @@ main() {
 ''';
 
     var buf = CodeBuffer();
-    var document = jael.parseDocument(template, sourceUrl: 'test.jael');
+    var document = jael.parseDocument(template, sourceUrl: 'test.jael')!;
     var scope = SymbolTable<dynamic>(values: {
       'account': _Account(isDisabled: true),
     });
@@ -326,7 +326,7 @@ main() {
 ''';
 
     var buf = CodeBuffer();
-    var document = jael.parseDocument(template, sourceUrl: 'test.jael');
+    var document = jael.parseDocument(template, sourceUrl: 'test.jael')!;
     var scope = SymbolTable<dynamic>(values: {
       'account': _Account(isDisabled: null),
     });
@@ -351,7 +351,7 @@ class _Pokemon {
 }
 
 class _Account {
-  final bool isDisabled;
+  final bool? isDisabled;
 
   _Account({this.isDisabled});
 }

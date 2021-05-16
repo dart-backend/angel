@@ -1,4 +1,4 @@
-import 'package:json_god/json_god.dart' as god;
+import 'package:angel3_json_god/angel3_json_god.dart' as god;
 import 'package:test/test.dart';
 import 'shared.dart';
 
@@ -10,7 +10,8 @@ main() {
 
     test('deserialize maps', testDeserializationOfMaps);
 
-    test('deserialize maps + reflection', testDeserializationOfMapsWithReflection);
+    test('deserialize maps + reflection',
+        testDeserializationOfMapsWithReflection);
 
     test('deserialize lists + reflection',
         testDeserializationOfListsAsWellAsViaReflection);
@@ -33,7 +34,7 @@ testDeserializationOfMaps() {
       '{"hello":"world", "one": 1, "class": {"hello": "world"}}';
   String nestedJson =
       '{"foo": {"bar": "baz", "funny": {"how": "life", "seems": 2, "hate": "us sometimes"}}}';
-  var simple = god.deserialize(simpleJson ) as Map;
+  var simple = god.deserialize(simpleJson) as Map;
   var nested = god.deserialize(nestedJson) as Map;
 
   expect(simple['hello'], equals('world'));
@@ -47,15 +48,15 @@ testDeserializationOfMaps() {
 }
 
 class Pokedex {
-  Map<String, int> pokemon;
+  Map<String, int>? pokemon;
 }
 
 testDeserializationOfMapsWithReflection() {
   var s = '{"pokemon": {"Bulbasaur": 1, "Deoxys": 382}}';
   var pokedex = god.deserialize(s, outputType: Pokedex) as Pokedex;
   expect(pokedex.pokemon, hasLength(2));
-  expect(pokedex.pokemon['Bulbasaur'], 1);
-  expect(pokedex.pokemon['Deoxys'], 382);
+  expect(pokedex.pokemon!['Bulbasaur'], 1);
+  expect(pokedex.pokemon!['Deoxys'], 382);
 }
 
 testDeserializationOfListsAsWellAsViaReflection() {
@@ -78,7 +79,8 @@ testDeserializationOfListsAsWellAsViaReflection() {
   ]
   ''';
 
-  var list = god.deserialize(json, outputType: (<SampleClass>[]).runtimeType) as List<SampleClass>;
+  var list = god.deserialize(json, outputType: (<SampleClass>[]).runtimeType)
+      as List<SampleClass>;
   SampleClass first = list[0];
   SampleClass second = list[1];
 
@@ -99,7 +101,8 @@ testDeserializationWithSchemaValidation() async {
   String babelRcJson =
       '{"presets":["es2015","stage-0"],"plugins":["add-module-exports"]}';
 
-  var deserialized = god.deserialize(babelRcJson, outputType: BabelRc) as BabelRc;
+  var deserialized =
+      god.deserialize(babelRcJson, outputType: BabelRc) as BabelRc;
 
   print(deserialized.presets.runtimeType);
   expect(deserialized.presets is List, equals(true));

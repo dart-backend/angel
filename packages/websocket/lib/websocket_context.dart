@@ -1,4 +1,4 @@
-part of angel_websocket.server;
+part of angel3_websocket.server;
 
 /// Represents a WebSocket session, with the original
 /// [RequestContext] and [ResponseContext] attached.
@@ -15,14 +15,14 @@ class WebSocketContext {
   /// The original [ResponseContext].
   final ResponseContext response;
 
-  StreamController<WebSocketAction> _onAction =
+  final StreamController<WebSocketAction> _onAction =
       StreamController<WebSocketAction>();
 
-  StreamController<void> _onAuthenticated = StreamController();
+  final StreamController<void> _onAuthenticated = StreamController();
 
-  StreamController<Null> _onClose = StreamController<Null>();
+  final StreamController<Null> _onClose = StreamController<Null>();
 
-  StreamController _onData = StreamController();
+  final StreamController _onData = StreamController();
 
   /// Fired on any [WebSocketAction];
   Stream<WebSocketAction> get onAction => _onAction.stream;
@@ -45,7 +45,7 @@ class WebSocketContext {
       await _onAction.close();
       await _onAuthenticated.close();
       await _onData.close();
-      await _onClose.add(null);
+      _onClose.add(null);
       await _onClose.close();
     });
   }
@@ -61,13 +61,14 @@ class WebSocketContext {
 }
 
 class _WebSocketEventTable {
-  Map<String, StreamController<Map>> _handlers = {};
+  final Map<String, StreamController<Map?>> _handlers = {};
 
-  StreamController<Map> _getStreamForEvent(String eventName) {
-    if (!_handlers.containsKey(eventName))
-      _handlers[eventName] = StreamController<Map>();
+  StreamController<Map?>? _getStreamForEvent(String eventName) {
+    if (!_handlers.containsKey(eventName)) {
+      _handlers[eventName] = StreamController<Map?>();
+    }
     return _handlers[eventName];
   }
 
-  Stream<Map> operator [](String key) => _getStreamForEvent(key).stream;
+  Stream<Map?> operator [](String key) => _getStreamForEvent(key)!.stream;
 }

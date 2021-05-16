@@ -1,7 +1,6 @@
 import 'package:charcode/ascii.dart';
 import 'package:collection/collection.dart';
-import 'package:meta/meta.dart';
-import 'package:quiver_hashcode/hashcode.dart';
+import 'package:quiver/core.dart';
 
 /// A common class containing parsing and validation logic for third-party authentication configuration.
 class ExternalAuthOptions {
@@ -18,18 +17,12 @@ class ExternalAuthOptions {
   final Set<String> scopes;
 
   ExternalAuthOptions._(
-      this.clientId, this.clientSecret, this.redirectUri, this.scopes) {
-    if (clientId == null) {
-      throw ArgumentError.notNull('clientId');
-    } else if (clientSecret == null) {
-      throw ArgumentError.notNull('clientSecret');
-    }
-  }
+      this.clientId, this.clientSecret, this.redirectUri, this.scopes);
 
   factory ExternalAuthOptions(
-      {@required String clientId,
-      @required String clientSecret,
-      @required redirectUri,
+      {required String clientId,
+      required String clientSecret,
+      required redirectUri,
       Iterable<String> scopes = const []}) {
     if (redirectUri is String) {
       return ExternalAuthOptions._(
@@ -50,9 +43,15 @@ class ExternalAuthOptions {
   /// * `client_secret`
   /// * `redirect_uri`
   factory ExternalAuthOptions.fromMap(Map map) {
+    var clientId = map['client_id'];
+    var clientSecret = map['client_secret'];
+    if (clientId == null || clientSecret == null) {
+      throw ArgumentError('Invalid clientId and/or clientSecret');
+    }
+
     return ExternalAuthOptions(
-      clientId: map['client_id'] as String,
-      clientSecret: map['client_secret'] as String,
+      clientId: clientId as String,
+      clientSecret: clientSecret as String,
       redirectUri: map['redirect_uri'],
       scopes: map['scopes'] is Iterable
           ? ((map['scopes'] as Iterable).map((x) => x.toString()))
@@ -73,15 +72,15 @@ class ExternalAuthOptions {
 
   /// Creates a copy of this object, with the specified changes.
   ExternalAuthOptions copyWith(
-      {String clientId,
-      String clientSecret,
+      {String? clientId,
+      String? clientSecret,
       redirectUri,
-      Iterable<String> scopes}) {
+      Iterable<String> scopes = const []}) {
     return ExternalAuthOptions(
       clientId: clientId ?? this.clientId,
       clientSecret: clientSecret ?? this.clientSecret,
       redirectUri: redirectUri ?? this.redirectUri,
-      scopes: (scopes ??= []).followedBy(this.scopes),
+      scopes: (scopes).followedBy(this.scopes),
     );
   }
 
@@ -111,8 +110,8 @@ class ExternalAuthOptions {
   /// If no [asteriskCount] is given, then the number of asterisks will equal the length of
   /// the actual [clientSecret].
   @override
-  String toString({bool obscureSecret = true, int asteriskCount}) {
-    String secret;
+  String toString({bool obscureSecret = true, int? asteriskCount}) {
+    String? secret;
 
     if (!obscureSecret) {
       secret = clientSecret;

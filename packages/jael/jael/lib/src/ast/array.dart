@@ -9,12 +9,12 @@ class Array extends Expression {
   Array(this.lBracket, this.rBracket, this.items);
 
   @override
-  compute(scope) => items.map((e) => e.compute(scope)).toList();
+  List compute(scope) => items.map((e) => e.compute(scope)).toList();
 
   @override
   FileSpan get span {
     return items
-        .fold<FileSpan>(lBracket.span, (out, i) => out.expand(i.span))
+        .fold<FileSpan?>(lBracket.span, (out, i) => out!.expand(i.span))!
         .expand(rBracket.span);
   }
 }
@@ -34,7 +34,7 @@ class IndexerExpression extends Expression {
   }
 
   @override
-  compute(scope) {
+  dynamic compute(scope) {
     var a = target.compute(scope), b = indexer.compute(scope);
     return a[b];
   }

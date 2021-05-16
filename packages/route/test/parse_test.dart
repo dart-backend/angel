@@ -1,4 +1,4 @@
-import 'package:angel_route/angel_route.dart';
+import 'package:angel3_route/angel3_route.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -7,9 +7,9 @@ void main() {
     ..get('/double/double:id', '')
     ..get('/num/num:id', '');
 
-  num getId(String path) {
+  num? getId(String path) {
     var result = router.resolveAbsolute(path).first;
-    return result.allParams['id'] as num;
+    return result.allParams['id'] as num?;
   }
 
   test('parse', () {

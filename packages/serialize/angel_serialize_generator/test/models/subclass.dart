@@ -1,18 +1,18 @@
-import 'package:angel_serialize/angel_serialize.dart';
+import 'package:angel3_serialize/angel3_serialize.dart';
 part 'subclass.g.dart';
 
 @serializable
 class _Animal {
   @notNull
-  String genus;
+  String? genus;
   @notNull
-  String species;
+  String? species;
 }
 
 @serializable
 class _Bird extends _Animal {
   @DefaultsTo(false)
-  bool isSparrow;
+  bool? isSparrow;
 }
 
 var saxaulSparrow = Bird(

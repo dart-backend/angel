@@ -9,7 +9,7 @@ class PostgreSqlExecutor extends QueryExecutor {
   PostgreSQLExecutionContext _connection;
 
   /// An optional [Logger] to print information to.
-  final Logger logger;
+  final Logger? logger;
 
   PostgreSqlExecutor(this._connection, {this.logger});
 
@@ -27,8 +27,8 @@ class PostgreSqlExecutor extends QueryExecutor {
 
   @override
   Future<List<List>> query(
-      String tableName, String query, Map<String, dynamic> substitutionValues,
-      [List<String> returningFields]) {
+      String tableName, String? query, Map<String, dynamic> substitutionValues,
+      [List<String>? returningFields]) {
     if (returningFields != null) {
       var fields = returningFields.join(', ');
       var returning = 'RETURNING $fields';
@@ -37,21 +37,25 @@ class PostgreSqlExecutor extends QueryExecutor {
 
     logger?.fine('Query: $query');
     logger?.fine('Values: $substitutionValues');
-    return _connection.query(query, substitutionValues: substitutionValues);
+    return _connection.query(query!, substitutionValues: substitutionValues);
   }
 
   @override
   Future<T> transaction<T>(FutureOr<T> Function(QueryExecutor) f) async {
-    if (_connection is! PostgreSQLConnection) return await f(this);
+    if (_connection is! PostgreSQLConnection) {
+      return await f(this);
+    }
 
     var conn = _connection as PostgreSQLConnection;
-    T returnValue;
+    T? returnValue;
 
     var txResult = await conn.transaction((ctx) async {
       try {
         logger?.fine('Entering transaction');
         var tx = PostgreSqlExecutor(ctx, logger: logger);
         returnValue = await f(tx);
+
+        return returnValue;
       } catch (e) {
         ctx.cancelTransaction(reason: e.toString());
         rethrow;
@@ -61,14 +65,14 @@ class PostgreSqlExecutor extends QueryExecutor {
     });
 
     if (txResult is PostgreSQLRollback) {
-      if (txResult.reason == null) {
-        throw StateError('The transaction was cancelled.');
-      } else {
-        throw StateError(
-            'The transaction was cancelled with reason "${txResult.reason}".');
-      }
+      //if (txResult.reason == null) {
+      //  throw StateError('The transaction was cancelled.');
+      //} else {
+      throw StateError(
+          'The transaction was cancelled with reason "${txResult.reason}".');
+      //}
     } else {
-      return returnValue;
+      return returnValue!;
     }
   }
 }
@@ -84,7 +88,7 @@ class PostgreSqlExecutorPool extends QueryExecutor {
   final PostgreSQLConnection Function() connectionFactory;
 
   /// An optional [Logger] to print information to.
-  final Logger logger;
+  final Logger? logger;
 
   final List<PostgreSqlExecutor> _connections = [];
   int _index = 0;
@@ -124,8 +128,8 @@ class PostgreSqlExecutorPool extends QueryExecutor {
 
   @override
   Future<List<List>> query(
-      String tableName, String query, Map<String, dynamic> substitutionValues,
-      [List<String> returningFields]) {
+      String tableName, String? query, Map<String, dynamic> substitutionValues,
+      [List<String>? returningFields]) {
     return _pool.withResource(() async {
       var executor = await _next();
       return executor.query(

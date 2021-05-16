@@ -1,23 +1,20 @@
-# angel_client
+# angel3_client
+[![version](https://img.shields.io/badge/pub-v4.0.0-brightgreen)](https://pub.dartlang.org/packages/angel3_client)
+[![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
+[![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
 
-[![Pub](https://img.shields.io/pub/v/angel_client.svg)](https://pub.dartlang.org/packages/angel_client)
-[![build status](https://travis-ci.org/angel-dart/client.svg)](https://travis-ci.org/angel-dart/client)
-
-Client library for the Angel framework.
-This library provides virtually the same API as an Angel server.
-The client can run in the browser, in Flutter, or on the command-line.
-In addition, the client supports `angel_auth` authentication.
+[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/client/LICENSE)
 
 # Usage
 
 ```dart
 // Choose one or the other, depending on platform
-import 'package:angel_client/io.dart';
-import 'package:angel_client/browser.dart';
-import 'package:angel_client/flutter.dart';
+import 'package:angel3_client/io.dart';
+import 'package:angel3_client/browser.dart';
+import 'package:angel3_client/flutter.dart';
 
 main() async {
-  Angel app = new Rest("http://localhost:3000");
+  Angel app = Rest("http://localhost:3000");
 }
 ```
 
@@ -33,7 +30,7 @@ foo() async {
 }
 ```
 
-The CLI client also supports reflection via `json_god`. There is no need to work with Maps;
+The CLI client also supports reflection via `angel3_json_god`. There is no need to work with Maps;
 you can use the same class on the client and the server.
 
 ```dart
@@ -96,9 +93,9 @@ Use `ServiceList` for this case:
 
 ```dart
 build(BuildContext context) async {
-  var list = new ServiceList(app.service('api/todos'));
+  var list = ServiceList(app.service('api/todos'));
   
-  return new StreamBuilder(
+  return StreamBuilder(
     stream: list.onChange,
     builder: _yourBuildFunction,
   );

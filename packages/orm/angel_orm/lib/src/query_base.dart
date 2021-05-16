@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'query_executor.dart';
 import 'union.dart';
+import 'package:optional/optional.dart';
 
 /// A base class for objects that compile to SQL queries, typically within an ORM.
 abstract class QueryBase<T> {
@@ -18,7 +19,8 @@ abstract class QueryBase<T> {
 
   /// The list of fields returned by this query.
   ///
-  /// If it's `null`, then this query will perform a `SELECT *`.
+  /// @deprecated If it's `null`, then this query will perform a `SELECT *`.
+  /// If it's empty, then this query will perform a `SELECT *`.
   List<String> get fields;
 
   /// A String of all [fields], joined by a comma (`,`).
@@ -33,19 +35,36 @@ abstract class QueryBase<T> {
       }).join(', ');
 
   String compile(Set<String> trampoline,
-      {bool includeTableName = false, String preamble, bool withFields = true});
+      {bool includeTableName = false,
+      String preamble = '',
+      bool withFields = true});
 
-  T deserialize(List row);
+  Optional<T> deserialize(List row);
 
-  Future<List<T>> get(QueryExecutor executor) async {
-    var sql = compile(Set());
-    return executor
-        .query(tableName, sql, substitutionValues)
-        .then((it) => it.map(deserialize).toList());
+  List<T> deserializeList(List<List<dynamic>> it) {
+    var optResult = it.map(deserialize).toList();
+    var result = <T>[];
+    optResult.forEach((element) {
+      element.ifPresent((item) {
+        result.add(item);
+      });
+    });
+
+    return result;
   }
 
-  Future<T> getOne(QueryExecutor executor) {
-    return get(executor).then((it) => it.isEmpty ? null : it.first);
+  Future<List<T>> get(QueryExecutor executor) async {
+    var sql = compile({});
+
+    return executor
+        .query(tableName, sql, substitutionValues)
+        .then((it) => deserializeList(it));
+  }
+
+  Future<Optional<T>> getOne(QueryExecutor executor) {
+    //return get(executor).then((it) => it.isEmpty ?  : it.first);
+    return get(executor).then(
+        (it) => it.isEmpty ? Optional.empty() : Optional.ofNullable(it.first));
   }
 
   Union<T> union(QueryBase<T> other) {

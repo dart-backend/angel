@@ -1,9 +1,9 @@
-import 'package:angel_framework/angel_framework.dart';
+import 'package:angel3_framework/angel3_framework.dart';
 import 'package:test/test.dart';
 
 void main() {
   MapService inner;
-  Service<String, Todo> mapped;
+  late Service<String?, Todo> mapped;
 
   setUp(() {
     inner = MapService();
@@ -22,8 +22,8 @@ void main() {
   });
 
   group('after create', () {
-    Todo result;
-    String id;
+    late Todo result;
+    String? id;
 
     setUp(() async {
       result = await mapped.create(Todo(text: 'hello', complete: false));
@@ -55,16 +55,16 @@ void main() {
 }
 
 class Todo {
-  final String id, text;
-  final bool complete;
+  final String? id, text;
+  final bool? complete;
 
   Todo({this.id, this.text, this.complete});
 
   static Todo fromMap(Map<String, dynamic> json) {
     return Todo(
-        id: json['id'] as String,
-        text: json['text'] as String,
-        complete: json['complete'] as bool);
+        id: json['id'] as String?,
+        text: json['text'] as String?,
+        complete: json['complete'] as bool?);
   }
 
   static Map<String, dynamic> toMap(Todo model) {

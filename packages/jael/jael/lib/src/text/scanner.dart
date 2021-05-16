@@ -55,7 +55,7 @@ final Map<Pattern, TokenType> _expressionPatterns = {
   '.': TokenType.dot,
   '??': TokenType.elvis,
   '?.': TokenType.elvis_dot,
-  '=': TokenType.equals,
+  //'=': TokenType.equals,
   '!': TokenType.exclamation,
   '-': TokenType.minus,
   '%': TokenType.percent,
@@ -66,14 +66,14 @@ final Map<Pattern, TokenType> _expressionPatterns = {
   '}': TokenType.rCurly,
   '(': TokenType.lParen,
   ')': TokenType.rParen,
-  '/': TokenType.slash,
-  '<': TokenType.lt,
+  //'/': TokenType.slash,
+  //'<': TokenType.lt,
   '<=': TokenType.lte,
-  '>': TokenType.gt,
+  //'>': TokenType.gt,
   '>=': TokenType.gte,
   '==': TokenType.equ,
-  '!=': TokenType.nequ,
-  '=': TokenType.equals,
+  //'!=': TokenType.nequ,
+  //'=': TokenType.equals,
   RegExp(r'-?[0-9]+(\.[0-9]+)?([Ee][0-9]+)?'): TokenType.number,
   RegExp(r'0x[A-Fa-f0-9]+'): TokenType.hex,
   _string1: TokenType.string,
@@ -82,12 +82,15 @@ final Map<Pattern, TokenType> _expressionPatterns = {
 };
 
 class _Scanner implements Scanner {
+  @override
   final List<JaelError> errors = [];
+
+  @override
   final List<Token> tokens = [];
   _ScannerState state = _ScannerState.html;
-  final Queue<String> openTags = Queue();
+  final Queue<String?> openTags = Queue();
 
-  SpanScanner _scanner;
+  late SpanScanner _scanner;
 
   _Scanner(String text, sourceUrl) {
     _scanner = SpanScanner(text, sourceUrl: sourceUrl);
@@ -140,7 +143,7 @@ class _Scanner implements Scanner {
 
                 if (_scanner.matches(_id)) {
                   //print(_scanner.lastMatch[0]);
-                  shouldBreak = _scanner.lastMatch[0] == 'script';
+                  shouldBreak = _scanner.lastMatch?[0] == 'script';
                   _scanner.position--;
                 }
 
@@ -164,7 +167,7 @@ class _Scanner implements Scanner {
 
         var span = _scanner.spanFrom(start, end);
 
-        if (span.text.isNotEmpty) {
+        if (span.text.isNotEmpty == true) {
           tokens.add(Token(TokenType.text, span, null));
         }
       }
@@ -186,7 +189,12 @@ class _Scanner implements Scanner {
 
           _expressionPatterns.forEach((pattern, type) {
             if (_scanner.matches(pattern)) {
-              potential.add(Token(type, _scanner.lastSpan, _scanner.lastMatch));
+              if (_scanner.lastSpan != null) {
+                potential
+                    .add(Token(type, _scanner.lastSpan!, _scanner.lastMatch));
+              } else {
+                // TODO: To be relooked
+              }
             }
           });
 
@@ -207,7 +215,7 @@ class _Scanner implements Scanner {
             _scanner.scan(_whitespace);
 
             if (_scanner.matches(_id)) {
-              openTags.addFirst(_scanner.lastMatch[0]);
+              openTags.addFirst(_scanner.lastMatch![0]);
             } else {
               _scanner.state = replay;
             }

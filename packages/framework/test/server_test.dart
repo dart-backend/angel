@@ -2,18 +2,18 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:angel_container/mirrors.dart';
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_framework/http.dart';
+import 'package:angel3_container/mirrors.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_framework/http.dart';
 import 'package:matcher/matcher.dart';
-import 'package:mock_request/mock_request.dart';
+import 'package:angel3_mock_request/angel3_mock_request.dart';
 
 import 'package:test/test.dart';
 
 final Uri $foo = Uri.parse('http://localhost:3000/foo');
 
 /// Additional tests to improve coverage of server.dart
-main() {
+void main() {
   group('scoping', () {
     var parent = Angel(reflector: MirrorsReflector())..configuration['two'] = 2;
     var child = Angel(reflector: MirrorsReflector());
@@ -51,7 +51,7 @@ main() {
     await app.errorHandler(e, req, res);
     await http.sendResponse(rq, rs, req, res);
     expect(
-      ContentType.parse(rs.headers.value('content-type')).mimeType,
+      ContentType.parse(rs.headers.value('content-type')!).mimeType,
       'text/html',
     );
     expect(rs.statusCode, e.statusCode);
@@ -116,8 +116,8 @@ main() {
     var http = AngelHttp(app);
     app.responseFinalizers
         .add((req, res) => throw AngelHttpException.forbidden());
-    RequestContext req;
-    ResponseContext res;
+    late RequestContext req;
+    late ResponseContext res;
 
     setUp(() async {
       var rq = MockHttpRequest('GET', $foo);
@@ -155,8 +155,8 @@ main() {
   });
 
   group('handleAngelHttpException', () {
-    Angel app;
-    AngelHttp http;
+    late Angel app;
+    late AngelHttp http;
 
     setUp(() async {
       app = Angel(reflector: MirrorsReflector());
@@ -182,7 +182,7 @@ main() {
       (http.handleRequest(rq));
       await rq.response.toList();
       expect(rq.response.statusCode, 403);
-      expect(rq.response.headers.contentType.mimeType, 'application/json');
+      expect(rq.response.headers.contentType!.mimeType, 'application/json');
     });
 
     test('can throw in finalizer', () async {
@@ -192,7 +192,7 @@ main() {
       (http.handleRequest(rq));
       await rq.response.toList();
       expect(rq.response.statusCode, 403);
-      expect(rq.response.headers.contentType.mimeType, 'application/json');
+      expect(rq.response.headers.contentType!.mimeType, 'application/json');
     });
 
     test('can send html', () async {

@@ -1,6 +1,6 @@
 library angel_framework.http.metadata;
 
-import 'package:angel_http_exception/angel_http_exception.dart';
+import 'package:angel3_http_exception/angel3_http_exception.dart';
 
 import 'hooked_service.dart' show HookedServiceEventListener;
 import 'request_context.dart';
@@ -45,9 +45,9 @@ const NoExpose noExpose = NoExpose();
 /// ```
 class Expose {
   final String method;
-  final String path;
-  final Iterable<RequestHandler> middleware;
-  final String as;
+  final String? path;
+  final Iterable<RequestHandler>? middleware;
+  final String? as;
   final List<String> allowNull;
 
   static const Expose get = Expose(null, method: 'GET'),
@@ -71,16 +71,16 @@ class Expose {
 /// Used to apply special dependency injections or functionality to a function parameter.
 class Parameter {
   /// Inject the value of a request cookie.
-  final String cookie;
+  final String? cookie;
 
   /// Inject the value of a request header.
-  final String header;
+  final String? header;
 
   /// Inject the value of a key from the session.
-  final String session;
+  final String? session;
 
   /// Inject the value of a key from the query.
-  final String query;
+  final String? query;
 
   /// Only execute the handler if the value of this parameter matches the given value.
   final match;
@@ -89,7 +89,7 @@ class Parameter {
   final defaultValue;
 
   /// If `true` (default), then an error will be thrown if this parameter is not present.
-  final bool required;
+  final bool? required;
 
   const Parameter(
       {this.cookie,
@@ -122,17 +122,16 @@ class Parameter {
   /// Obtains a value for this parameter from a [RequestContext].
   getValue(RequestContext req) {
     if (cookie?.isNotEmpty == true) {
-      return req.cookies.firstWhere((c) => c.name == cookie)?.value ??
-          defaultValue;
+      return req.cookies.firstWhere((c) => c.name == cookie).value;
     }
     if (header?.isNotEmpty == true) {
-      return req.headers.value(header) ?? defaultValue;
+      return req.headers?.value(header ?? '') ?? defaultValue;
     }
     if (session?.isNotEmpty == true) {
-      return req.session[session] ?? defaultValue;
+      return req.session?[session] ?? defaultValue;
     }
     if (query?.isNotEmpty == true) {
-      return req.uri.queryParameters[query] ?? defaultValue;
+      return req.uri?.queryParameters[query] ?? defaultValue;
     }
     return defaultValue;
   }

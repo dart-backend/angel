@@ -1,6 +1,6 @@
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_static/angel_static.dart';
-import 'package:angel_test/angel_test.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_static/angel3_static.dart';
+import 'package:angel3_test/angel3_test.dart';
 import 'package:file/file.dart';
 import 'package:file/local.dart';
 import 'package:logging/logging.dart';
@@ -9,9 +9,9 @@ import 'package:test/test.dart';
 final Directory swaggerUiDistDir =
     const LocalFileSystem().directory('test/node_modules/swagger-ui-dist');
 
-main() async {
-  TestClient client;
-  String swaggerUiCssContents, swaggerTestJsContents;
+void main() async {
+  late TestClient client;
+  late String swaggerUiCssContents, swaggerTestJsContents;
 
   setUp(() async {
     // Load file contents

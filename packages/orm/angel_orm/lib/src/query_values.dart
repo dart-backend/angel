@@ -18,11 +18,12 @@ abstract class QueryValues {
     var data = Map<String, dynamic>.from(toMap());
     var keys = data.keys.toList();
     keys.where((k) => !query.fields.contains(k)).forEach(data.remove);
-    if (data.isEmpty) return null;
-
+    if (data.isEmpty) {
+      return '';
+    }
     var fieldSet = data.keys.join(', ');
     var b = StringBuffer('INSERT INTO $tableName ($fieldSet) VALUES (');
-    int i = 0;
+    var i = 0;
 
     for (var entry in data.entries) {
       if (i++ > 0) b.write(', ');
@@ -39,9 +40,11 @@ abstract class QueryValues {
 
   String compileForUpdate(Query query) {
     var data = toMap();
-    if (data.isEmpty) return null;
+    if (data.isEmpty) {
+      return '';
+    }
     var b = StringBuffer('SET');
-    int i = 0;
+    var i = 0;
 
     for (var entry in data.entries) {
       if (i++ > 0) b.write(',');

@@ -1,14 +1,13 @@
 name: angel_migration
-version: 3.0.0
+version: 4.0.0
 description: Database migration runtime for Angel's ORM. Use this package to define schemas.
-author: Tobe O <thosakwe@gmail.com>
-homepage: https://github.com/angel-dart/migration
+homepage: https://github.com/dukefirehawk/angel
 publish_to: none
 environment:
-  sdk: '>=2.10.0 <3.0.0'
+  sdk: '>=2.12.0 <3.0.0'
 dependencies:
   angel_orm:
     git: 
       url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x
+      ref: sdk-2.12.x_nnbd
       path: packages/orm/angel_orm

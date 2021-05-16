@@ -1,13 +1,14 @@
 import 'dart:async';
-import 'package:angel_container/mirrors.dart';
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_framework/http.dart';
-import 'package:mock_request/mock_request.dart';
+import 'dart:io';
+import 'package:angel3_container/mirrors.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_framework/http.dart';
+import 'package:angel3_mock_request/angel3_mock_request.dart';
 import 'package:test/test.dart';
 
 final Uri ENDPOINT = Uri.parse('http://example.com/accept');
 
-main() {
+void main() {
   test('no content type', () async {
     var req = await acceptContentTypes();
     expect(req.acceptsAll, isFalse);
@@ -44,7 +45,7 @@ main() {
   });
 
   group('disallow null', () {
-    RequestContext req;
+    late RequestContext req;
 
     setUp(() async {
       req = await acceptContentTypes();
@@ -58,8 +59,9 @@ main() {
 
 Future<RequestContext> acceptContentTypes(
     [Iterable<String> contentTypes = const []]) {
-  var headerString = contentTypes.isEmpty ? null : contentTypes.join(',');
-  var rq = MockHttpRequest('GET', ENDPOINT);
+  var headerString =
+      contentTypes.isEmpty ? ContentType.text : contentTypes.join(',');
+  var rq = MockHttpRequest('GET', ENDPOINT, persistentConnection: false);
   rq.headers.set('accept', headerString);
   rq.close();
   var app = Angel(reflector: MirrorsReflector());

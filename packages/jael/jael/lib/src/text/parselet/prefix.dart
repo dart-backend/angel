@@ -24,7 +24,7 @@ class NotParselet implements PrefixParselet {
           'Missing expression after "!" in negation expression.', token.span));
     }
 
-    return Negation(token, expression);
+    return Negation(token, expression!);
   }
 }
 
@@ -32,14 +32,14 @@ class NewParselet implements PrefixParselet {
   const NewParselet();
 
   @override
-  Expression parse(Parser parser, Token token) {
+  Expression? parse(Parser parser, Token token) {
     var call = parser.parseExpression(0);
 
     if (call == null) {
       parser.errors.add(JaelError(
           JaelErrorSeverity.error,
           '"new" must precede a call expression. Nothing was found.',
-          call.span));
+          call!.span));
       return null;
     } else if (call is Call) {
       return NewExpression(token, call);
@@ -79,9 +79,9 @@ class ArrayParselet implements PrefixParselet {
   const ArrayParselet();
 
   @override
-  Expression parse(Parser parser, Token token) {
-    List<Expression> items = [];
-    Expression item = parser.parseExpression(0);
+  Expression? parse(Parser parser, Token token) {
+    var items = <Expression>[];
+    var item = parser.parseExpression(0);
 
     while (item != null) {
       items.add(item);
@@ -106,7 +106,7 @@ class MapParselet implements PrefixParselet {
   const MapParselet();
 
   @override
-  Expression parse(Parser parser, Token token) {
+  Expression? parse(Parser parser, Token token) {
     var pairs = <KeyValuePair>[];
     var pair = parser.parseKeyValuePair();
 
@@ -139,12 +139,12 @@ class ParenthesisParselet implements PrefixParselet {
   const ParenthesisParselet();
 
   @override
-  Expression parse(Parser parser, Token token) {
+  Expression? parse(Parser parser, Token? token) {
     var expression = parser.parseExpression(0);
 
     if (expression == null) {
       parser.errors.add(JaelError(JaelErrorSeverity.error,
-          'Missing expression after "(".', token.span));
+          'Missing expression after "(".', token!.span));
       return null;
     }
 

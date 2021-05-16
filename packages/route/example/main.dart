@@ -1,8 +1,8 @@
 import 'dart:math';
 
-import 'package:angel_route/angel_route.dart';
+import 'package:angel3_route/angel3_route.dart';
 
-main() {
+void main() {
   final router = Router();
 
   router.get('/whois/~:user', () {});

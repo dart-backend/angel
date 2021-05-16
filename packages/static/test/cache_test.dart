@@ -1,7 +1,7 @@
 import 'dart:io' show HttpDate;
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_framework/http.dart';
-import 'package:angel_static/angel_static.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_framework/http.dart';
+import 'package:angel3_static/angel3_static.dart';
 import 'package:file/local.dart';
 import 'package:http/http.dart' show Client;
 import 'package:logging/logging.dart';
@@ -10,9 +10,9 @@ import 'package:test/test.dart';
 
 void main() {
   Angel app;
-  AngelHttp http;
+  late AngelHttp http;
   var testDir = const LocalFileSystem().directory('test');
-  String url;
+  late String url;
   var client = Client();
 
   setUp(() async {
@@ -42,7 +42,7 @@ void main() {
   });
 
   tearDown(() async {
-    if (http.server != null) await http.server.close(force: true);
+    if (http.server != null) await http.server!.close(force: true);
   });
 
   test('sets etag, cache-control, expires, last-modified', () async {

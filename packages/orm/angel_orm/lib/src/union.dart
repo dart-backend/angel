@@ -1,4 +1,5 @@
 import 'query_base.dart';
+import 'package:optional/optional.dart';
 
 /// Represents the `UNION` of two subqueries.
 class Union<T> extends QueryBase<T> {
@@ -11,7 +12,7 @@ class Union<T> extends QueryBase<T> {
   @override
   final String tableName;
 
-  Union(this.left, this.right, {this.all = false, String tableName})
+  Union(this.left, this.right, {this.all = false, String? tableName})
       : this.tableName = tableName ?? left.tableName {
     substitutionValues
       ..addAll(left.substitutionValues)
@@ -22,12 +23,12 @@ class Union<T> extends QueryBase<T> {
   List<String> get fields => left.fields;
 
   @override
-  T deserialize(List row) => left.deserialize(row);
+  Optional<T> deserialize(List row) => left.deserialize(row);
 
   @override
   String compile(Set<String> trampoline,
       {bool includeTableName = false,
-      String preamble,
+      String? preamble,
       bool withFields = true}) {
     var selector = all == true ? 'UNION ALL' : 'UNION';
     var t1 = Set<String>.from(trampoline);

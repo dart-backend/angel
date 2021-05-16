@@ -1,3 +1,6 @@
+# 3.0.0
+* Migrated to work with Dart SDK 2.12.x Non NNBD
+
 # 2.1.7+1
 * Fix a bug where new directories were not being created in
 `init`.

@@ -4,18 +4,22 @@ import 'package:angel_model/angel_model.dart';
 import 'package:angel_orm/angel_orm.dart';
 import 'package:angel_orm/src/query.dart';
 import 'package:angel_serialize/angel_serialize.dart';
+import 'package:optional/optional.dart';
+
 part 'main.g.dart';
 part 'main.serializer.g.dart';
 
-main() async {
+void main() async {
   var query = EmployeeQuery()
-    ..where.firstName.equals('Rich')
-    ..where.lastName.equals('Person')
+    ..where?.firstName.equals('Rich')
+    ..where?.lastName.equals('Person')
     ..orWhere((w) => w.salary.greaterThanOrEqualTo(75000))
     ..join('companies', 'company_id', 'id');
 
   var richPerson = await query.getOne(_FakeExecutor());
-  print(richPerson.toJson());
+  if (richPerson.isPresent) {
+    print(richPerson.first.toJson());
+  }
 }
 
 class _FakeExecutor extends QueryExecutor {
@@ -23,8 +27,8 @@ class _FakeExecutor extends QueryExecutor {
 
   @override
   Future<List<List>> query(
-      String tableName, String query, Map<String, dynamic> substitutionValues,
-      [returningFields]) async {
+      String tableName, String? query, Map<String, dynamic> substitutionValues,
+      [returningFields = const []]) async {
     var now = DateTime.now();
     print(
         '_FakeExecutor received query: $query and values: $substitutionValues');
@@ -42,25 +46,25 @@ class _FakeExecutor extends QueryExecutor {
 @orm
 @serializable
 abstract class _Employee extends Model {
-  String get firstName;
+  String? get firstName;
 
-  String get lastName;
+  String? get lastName;
 
-  double get salary;
+  double? get salary;
 }
 
 class EmployeeQuery extends Query<Employee, EmployeeQueryWhere> {
   @override
   final QueryValues values = MapQueryValues();
 
-  EmployeeQueryWhere _where;
+  EmployeeQueryWhere? _where;
 
   EmployeeQuery() {
     _where = EmployeeQueryWhere(this);
   }
 
   @override
-  EmployeeQueryWhere get where => _where;
+  EmployeeQueryWhere? get where => _where;
 
   @override
   String get tableName => 'employees';
@@ -73,14 +77,14 @@ class EmployeeQuery extends Query<Employee, EmployeeQueryWhere> {
   EmployeeQueryWhere newWhereClause() => EmployeeQueryWhere(this);
 
   @override
-  Employee deserialize(List row) {
-    return Employee(
+  Optional<Employee> deserialize(List row) {
+    return Optional.ofNullable(Employee(
         id: row[0].toString(),
         firstName: row[1] as String,
         lastName: row[2] as String,
         salary: row[3] as double,
         createdAt: row[4] as DateTime,
-        updatedAt: row[5] as DateTime);
+        updatedAt: row[5] as DateTime));
   }
 }
 

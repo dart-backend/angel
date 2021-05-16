@@ -1,13 +1,13 @@
 import 'dart:convert';
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_framework/http.dart';
-import 'package:angel_jael/angel_jael.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_framework/http.dart';
+import 'package:angel3_jael/angel3_jael.dart';
 import 'package:file/local.dart';
 import 'package:logging/logging.dart';
 
 main() async {
-  var app = new Angel();
-  var http = new AngelHttp(app);
+  var app = Angel();
+  var http = AngelHttp(app);
   var fileSystem = const LocalFileSystem();
 
   await app.configure(
@@ -30,9 +30,9 @@ main() async {
     });
   });
 
-  app.fallback((req, res) => throw new AngelHttpException.notFound());
+  app.fallback((req, res) => throw AngelHttpException.notFound());
 
-  app.logger = new Logger('angel')
+  app.logger = Logger('angel')
     ..onRecord.listen((rec) {
       print(rec);
       if (rec.error != null) print(rec.error);

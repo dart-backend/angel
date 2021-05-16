@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'package:angel_framework/angel_framework.dart' hide Header;
-import 'package:angel_framework/http.dart';
+import 'package:angel3_framework/angel3_framework.dart' hide Header;
+import 'package:angel3_framework/http.dart';
 import 'package:http2/transport.dart';
-import 'package:mock_request/mock_request.dart';
+import 'package:angel3_mock_request/angel3_mock_request.dart';
 import 'http2_request_context.dart';
 import 'http2_response_context.dart';
 import 'package:uuid/uuid.dart';
@@ -18,14 +18,14 @@ Future<SecureServerSocket> startSharedHttp2(
 /// Adapts `package:http2`'s [ServerTransportConnection] to serve Angel.
 class AngelHttp2 extends Driver<Socket, ServerTransportStream,
     SecureServerSocket, Http2RequestContext, Http2ResponseContext> {
-  final ServerSettings settings;
-  AngelHttp _http;
+  final ServerSettings? settings;
+  late AngelHttp _http;
   final StreamController<HttpRequest> _onHttp1 = StreamController();
   final Map<String, MockHttpSession> _sessions = {};
   final Uuid _uuid = Uuid();
-  _AngelHttp2ServerSocket _artificial;
+  _AngelHttp2ServerSocket? _artificial;
 
-  SecureServerSocket get socket => _artificial;
+  SecureServerSocket? get socket => _artificial;
 
   AngelHttp2._(
       Angel app,
@@ -45,7 +45,9 @@ class AngelHttp2 extends Driver<Socket, ServerTransportStream,
   }
 
   factory AngelHttp2(Angel app, SecurityContext securityContext,
-      {bool useZone = true, bool allowHttp1 = false, ServerSettings settings}) {
+      {bool useZone = true,
+      bool allowHttp1 = false,
+      ServerSettings? settings}) {
     return AngelHttp2.custom(app, securityContext, SecureServerSocket.bind,
         allowHttp1: allowHttp1, settings: settings);
   }
@@ -57,7 +59,7 @@ class AngelHttp2 extends Driver<Socket, ServerTransportStream,
           address, int port, SecurityContext ctx),
       {bool useZone = true,
       bool allowHttp1 = false,
-      ServerSettings settings}) {
+      ServerSettings? settings}) {
     return AngelHttp2._(app, (address, port) {
       var addr = address is InternetAddress
           ? address
@@ -70,15 +72,16 @@ class AngelHttp2 extends Driver<Socket, ServerTransportStream,
   Stream<HttpRequest> get onHttp1 => _onHttp1.stream;
 
   @override
-  Future<SecureServerSocket> generateServer([address, int port]) async {
-    var s = await serverGenerator(address ?? '127.0.0.1', port ?? 0);
+  Future<SecureServerSocket> generateServer([address, int? port]) async {
+    SecureServerSocket s =
+        await serverGenerator(address ?? '127.0.0.1', port ?? 0);
     return _artificial = _AngelHttp2ServerSocket(s, this);
   }
 
   @override
-  Future<SecureServerSocket> close() async {
-    await _artificial.close();
-    await _http?.close();
+  Future<void> close() async {
+    await _artificial!.close();
+    await _http.close();
     return await super.close();
   }
 
@@ -104,7 +107,7 @@ class AngelHttp2 extends Driver<Socket, ServerTransportStream,
   @override
   Future<Http2ResponseContext> createResponseContext(
       Socket request, ServerTransportStream response,
-      [Http2RequestContext correspondingRequest]) async {
+      [Http2RequestContext? correspondingRequest]) async {
     return Http2ResponseContext(app, response, correspondingRequest)
       ..encoders.addAll(app.encoders);
   }
@@ -128,8 +131,8 @@ class AngelHttp2 extends Driver<Socket, ServerTransportStream,
   }
 
   @override
-  void setHeader(ServerTransportStream response, String key, String value) {
-    response.sendHeaders([Header.ascii(key, value)]);
+  void setHeader(ServerTransportStream response, String key, String? value) {
+    response.sendHeaders([Header.ascii(key, value!)]);
   }
 
   @override
@@ -140,8 +143,8 @@ class AngelHttp2 extends Driver<Socket, ServerTransportStream,
   @override
   Uri get uri => Uri(
       scheme: 'https',
-      host: server.address.address,
-      port: server.port != 443 ? server.port : null);
+      host: server?.address.address,
+      port: server?.port != 443 ? server?.port : null);
 
   @override
   void writeStringToResponse(ServerTransportStream response, String value) {
@@ -165,7 +168,7 @@ class _FakeServerSocket extends Stream<Socket> implements ServerSocket {
 
   @override
   Future<ServerSocket> close() async {
-    (_ctrl.close());
+    await (_ctrl.close());
     return this;
   }
 
@@ -173,8 +176,8 @@ class _FakeServerSocket extends Stream<Socket> implements ServerSocket {
   int get port => angel.port;
 
   @override
-  StreamSubscription<Socket> listen(void Function(Socket event) onData,
-      {Function onError, void Function() onDone, bool cancelOnError}) {
+  StreamSubscription<Socket> listen(void Function(Socket event)? onData,
+      {Function? onError, void Function()? onDone, bool? cancelOnError}) {
     return _ctrl.stream.listen(onData,
         cancelOnError: cancelOnError, onError: onError, onDone: onDone);
   }
@@ -185,8 +188,8 @@ class _AngelHttp2ServerSocket extends Stream<SecureSocket>
   final SecureServerSocket socket;
   final AngelHttp2 driver;
   final _ctrl = StreamController<SecureSocket>();
-  _FakeServerSocket _fake;
-  StreamSubscription _sub;
+  late _FakeServerSocket _fake;
+  StreamSubscription? _sub;
 
   _AngelHttp2ServerSocket(this.socket, this.driver) {
     _fake = _FakeServerSocket(this);
@@ -208,16 +211,19 @@ class _AngelHttp2ServerSocket extends Stream<SecureSocket>
       },
       onDone: _ctrl.close,
       onError: (e, st) {
-        driver.app.logger.warning(
+        driver.app.logger!.warning(
             'HTTP/2 incoming connection failure: ', e, st as StackTrace);
       },
     );
   }
 
+  @override
   InternetAddress get address => socket.address;
 
+  @override
   int get port => socket.port;
 
+  @override
   Future<SecureServerSocket> close() {
     _sub?.cancel();
     _fake.close();
@@ -227,10 +233,10 @@ class _AngelHttp2ServerSocket extends Stream<SecureSocket>
 
   @override
   StreamSubscription<SecureSocket> listen(
-      void Function(SecureSocket event) onData,
-      {Function onError,
-      void Function() onDone,
-      bool cancelOnError}) {
+      void Function(SecureSocket event)? onData,
+      {Function? onError,
+      void Function()? onDone,
+      bool? cancelOnError}) {
     return _ctrl.stream.listen(onData,
         cancelOnError: cancelOnError, onError: onError, onDone: onDone);
   }

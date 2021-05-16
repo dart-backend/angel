@@ -1,4 +1,4 @@
-import 'package:angel_framework/angel_framework.dart';
+import 'package:angel3_framework/angel3_framework.dart';
 
 /// Prevents a WebSocket event from being broadcasted, to any client from the given [provider].
 ///
@@ -6,25 +6,26 @@ import 'package:angel_framework/angel_framework.dart';
 /// If [provider] is `null`, any provider will be blocked.
 HookedServiceEventListener doNotBroadcast([provider]) {
   return (HookedServiceEvent e) {
-    if (e.params != null && e.params.containsKey('provider')) {
-      bool deny = false;
-      Iterable providers = provider is Iterable ? provider : [provider];
+    if (e.params != null && e.params!.containsKey('provider')) {
+      var deny = false;
+      var providers = provider is Iterable ? provider : [provider];
 
       for (var p in providers) {
         if (deny) break;
 
         if (p is Providers) {
           deny = deny ||
-              p == e.params['provider'] ||
-              e.params['provider'] == p.via;
+              p == e.params!['provider'] ||
+              e.params!['provider'] == p.via;
         } else if (p == null) {
           deny = true;
-        } else
+        } else {
           deny =
-              deny || (e.params['provider'] as Providers).via == p.toString();
+              deny || (e.params!['provider'] as Providers).via == p.toString();
+        }
       }
 
-      e.params['broadcast'] = false;
+      e.params!['broadcast'] = false;
     }
   };
 }

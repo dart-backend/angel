@@ -19,10 +19,10 @@ class Conditional extends Expression {
   }
 
   @override
-  compute(scope) {
+  dynamic compute(scope) {
     var v = condition.compute(scope) as bool;
 
-    if (scope.resolve('!strict!')?.value == false) {
+    if (scope?.resolve('!strict!')?.value == false) {
       v = v == true;
     }
 

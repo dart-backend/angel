@@ -1,4 +1,4 @@
-import 'package:angel_model/angel_model.dart';
+import 'package:angel3_model/angel3_model.dart';
 
 void main() {
   var todo = Todo(id: '34', isComplete: false);
@@ -6,15 +6,15 @@ void main() {
 }
 
 class Todo extends Model {
-  String text;
+  String? text;
 
-  bool isComplete;
+  bool? isComplete;
 
   Todo(
-      {String id,
+      {String? id,
       this.text,
       this.isComplete,
-      DateTime createdAt,
-      DateTime updatedAt})
+      DateTime? createdAt,
+      DateTime? updatedAt})
       : super(id: id, createdAt: createdAt, updatedAt: updatedAt);
 }

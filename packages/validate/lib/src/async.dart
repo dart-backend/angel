@@ -1,6 +1,6 @@
 import 'dart:async';
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_http_exception/angel_http_exception.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_http_exception/angel3_http_exception.dart';
 import 'package:matcher/matcher.dart';
 import 'context_aware.dart';
 
@@ -56,7 +56,7 @@ AngelMatcher matchAsync(FutureOr<Matcher> Function(String, Object) matcher,
 /// Returns an [AngelMatcher] that verifies that an item with the given [idField]
 /// exists in the service at [servicePath], without throwing a `404` or returning `null`.
 AngelMatcher idExistsInService(String servicePath,
-    {String idField = 'id', String description}) {
+    {String idField = 'id', String? description}) {
   return predicateWithAngel(
     (key, item, app) async {
       try {
@@ -108,14 +108,13 @@ class _MatchWithAngel extends AngelMatcher {
   _MatchWithAngel(this.f, this.description);
 
   @override
-  Description describe(Description description) => this.description == null
-      ? description
-      : description.add(this.description);
+  Description describe(Description description) =>
+      description.add(this.description);
 
   @override
   Future<bool> matchesWithAngel(
       item, String key, Map context, Map matchState, Angel app) {
-    return Future.sync(() => f(item, context, app)).then((result) {
+    return Future.sync(() => f(item as Object, context, app)).then((result) {
       return result.matches(item, matchState);
     });
   }
@@ -128,14 +127,13 @@ class _PredicateWithAngel extends AngelMatcher {
   _PredicateWithAngel(this.predicate, this.description);
 
   @override
-  Description describe(Description description) => this.description == null
-      ? description
-      : description.add(this.description);
+  Description describe(Description description) =>
+      description.add(this.description);
 
   @override
   Future<bool> matchesWithAngel(
       item, String key, Map context, Map matchState, Angel app) {
-    return Future<bool>.sync(() => predicate(key, item, app));
+    return Future<bool>.sync(() => predicate(key, item as Object, app));
   }
 }
 
@@ -147,15 +145,14 @@ class _MatchAsync extends AngelMatcher {
   _MatchAsync(this.matcher, this.feature, this.description);
 
   @override
-  Description describe(Description description) => this.description == null
-      ? description
-      : description.add(this.description);
+  Description describe(Description description) =>
+      description.add(this.description);
 
   @override
   Future<bool> matchesWithAngel(
       item, String key, Map context, Map matchState, Angel app) async {
     var f = await feature();
-    var m = await matcher(key, f);
+    var m = await matcher(key, f as Object);
     var c = wrapAngelMatcher(m);
     return await c.matchesWithAngel(item, key, context, matchState, app);
   }

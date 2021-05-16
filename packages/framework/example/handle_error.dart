@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'dart:io';
-import 'package:angel_container/mirrors.dart';
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_framework/http.dart';
+import 'package:angel3_container/mirrors.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_framework/http.dart';
 import 'package:logging/logging.dart';
 
-main() async {
+void main() async {
   var app = Angel(reflector: MirrorsReflector())
     ..logger = (Logger('angel')
       ..onRecord.listen((rec) {
@@ -19,7 +19,7 @@ main() async {
       (req, res) => Future.error('Throwing just because I feel like!'));
 
   var http = AngelHttp(app);
-  var server = await http.startServer('127.0.0.1', 3000);
+  HttpServer? server = await http.startServer('127.0.0.1', 3000);
   var url = 'http://${server.address.address}:${server.port}';
   print('Listening at $url');
 }

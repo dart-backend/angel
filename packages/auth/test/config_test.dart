@@ -1,4 +1,4 @@
-import 'package:angel_auth/angel_auth.dart';
+import 'package:angel3_auth/angel3_auth.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -70,6 +70,7 @@ void main() {
       );
     });
 
+/* Deprecated as clientId and clientSecret cannot be null
     test('ensures id not null', () {
       expect(
         () => ExternalAuthOptions(
@@ -89,6 +90,7 @@ void main() {
         throwsArgumentError,
       );
     });
+    */
   });
 
   group('fromMap()', () {

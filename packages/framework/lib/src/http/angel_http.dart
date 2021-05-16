@@ -8,7 +8,7 @@ import 'dart:io'
         HttpServer,
         Platform,
         SecurityContext;
-import 'package:angel_framework/angel_framework.dart';
+import 'package:angel3_framework/angel3_framework.dart';
 import '../core/core.dart';
 import 'http_request_context.dart';
 import 'http_response_context.dart';
@@ -19,9 +19,13 @@ final RegExp _straySlashes = RegExp(r'(^/+)|(/+$)');
 class AngelHttp extends Driver<HttpRequest, HttpResponse, HttpServer,
     HttpRequestContext, HttpResponseContext> {
   @override
-  Uri get uri => server == null
-      ? Uri()
-      : Uri(scheme: 'http', host: server.address.address, port: server.port);
+  Uri get uri {
+    //if (server == null) {
+    //  throw ArgumentError("[AngelHttp] Server instance not intialised");
+    //}
+    return Uri(
+        scheme: 'http', host: server?.address.address, port: server?.port);
+  }
 
   AngelHttp._(Angel app,
       Future<HttpServer> Function(dynamic, int) serverGenerator, bool useZone)
@@ -52,19 +56,25 @@ class AngelHttp extends Driver<HttpRequest, HttpResponse, HttpServer,
   /// the server.
   factory AngelHttp.secure(
       Angel app, String certificateChainPath, String serverKeyPath,
-      {String password, bool useZone = true}) {
+      {String? password, bool useZone = true}) {
     var certificateChain =
         Platform.script.resolve(certificateChainPath).toFilePath();
     var serverKey = Platform.script.resolve(serverKeyPath).toFilePath();
     var serverContext = SecurityContext();
     serverContext.useCertificateChain(certificateChain, password: password);
     serverContext.usePrivateKey(serverKey, password: password);
+
     return AngelHttp.fromSecurityContext(app, serverContext, useZone: useZone);
   }
 
   /// Use [server] instead.
-  @deprecated
-  HttpServer get httpServer => server;
+  //@deprecated
+  //HttpServer get httpServer {
+  //if (server == null) {
+  //  throw ArgumentError("[AngelHttp] Server instance not initialised");
+  //}
+  //  return server;
+  //}
 
   Future handleRequest(HttpRequest request) =>
       handleRawRequest(request, request.response);
@@ -74,8 +84,7 @@ class AngelHttp extends Driver<HttpRequest, HttpResponse, HttpServer,
       response.cookies.addAll(cookies);
 
   @override
-  Future<HttpServer> close() async {
-    await server?.close();
+  Future<void> close() async {
     return await super.close();
   }
 
@@ -93,11 +102,17 @@ class AngelHttp extends Driver<HttpRequest, HttpResponse, HttpServer,
   @override
   Future<HttpResponseContext> createResponseContext(
       HttpRequest request, HttpResponse response,
-      [HttpRequestContext correspondingRequest]) {
-    return Future<HttpResponseContext>.value(
-        HttpResponseContext(response, app, correspondingRequest)
-          ..serializer = (app.serializer ?? json.encode)
-          ..encoders.addAll(app.encoders ?? {}));
+      [HttpRequestContext? correspondingRequest]) {
+    // TODO: Refactored to overcome NNBD migration error
+    HttpResponseContext context =
+        HttpResponseContext(response, app, correspondingRequest);
+    context.serializer = (app.serializer ?? json.encode);
+    context.encoders.addAll(app.encoders);
+    return Future<HttpResponseContext>.value(context);
+//    return Future<HttpResponseContext>.value(
+//        HttpResponseContext(response, app, correspondingRequest)
+//          ..serializer = (app.serializer ?? json.encode)
+//          ..encoders.addAll(app.encoders ?? {}));
   }
 
   @override

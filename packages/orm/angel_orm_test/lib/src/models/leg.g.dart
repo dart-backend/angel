@@ -46,7 +46,7 @@ class FootMigration extends Migration {
 // **************************************************************************
 
 class LegQuery extends Query<Leg, LegQueryWhere> {
-  LegQuery({Query parent, Set<String> trampoline}) : super(parent: parent) {
+  LegQuery({Query? parent, Set<String>? trampoline}) : super(parent: parent) {
     trampoline ??= Set();
     trampoline.add(tableName);
     _where = LegQueryWhere(this);
@@ -65,9 +65,9 @@ class LegQuery extends Query<Leg, LegQueryWhere> {
   @override
   final LegQueryValues values = LegQueryValues();
 
-  LegQueryWhere _where;
+  LegQueryWhere? _where;
 
-  FootQuery _foot;
+  FootQuery? _foot;
 
   @override
   get casts {
@@ -85,7 +85,7 @@ class LegQuery extends Query<Leg, LegQueryWhere> {
   }
 
   @override
-  LegQueryWhere get where {
+  LegQueryWhere? get where {
     return _where;
   }
 
@@ -94,26 +94,30 @@ class LegQuery extends Query<Leg, LegQueryWhere> {
     return LegQueryWhere(this);
   }
 
-  static Leg parseRow(List row) {
-    if (row.every((x) => x == null)) return null;
+  static Optional<Leg> parseRow(List row) {
+    if (row.every((x) => x == null)) {
+      return Optional.empty();
+    }
     var model = Leg(
         id: row[0].toString(),
-        createdAt: (row[1] as DateTime),
-        updatedAt: (row[2] as DateTime),
-        name: (row[3] as String));
+        createdAt: (row[1] as DateTime?),
+        updatedAt: (row[2] as DateTime?),
+        name: (row[3] as String?));
     if (row.length > 4) {
-      model = model.copyWith(
-          foot: FootQuery.parseRow(row.skip(4).take(5).toList()));
+      var modelOpt = FootQuery.parseRow(row.skip(4).take(5).toList());
+      modelOpt.ifPresent((m) {
+        model = model.copyWith(foot: m);
+      });
     }
-    return model;
+    return Optional.of(model);
   }
 
   @override
-  deserialize(List row) {
+  Optional<Leg> deserialize(List row) {
     return parseRow(row);
   }
 
-  FootQuery get foot {
+  FootQuery? get foot {
     return _foot;
   }
 }
@@ -145,26 +149,26 @@ class LegQueryValues extends MapQueryValues {
     return {};
   }
 
-  String get id {
-    return (values['id'] as String);
+  String? get id {
+    return (values['id'] as String?);
   }
 
-  set id(String value) => values['id'] = value;
-  DateTime get createdAt {
-    return (values['created_at'] as DateTime);
+  set id(String? value) => values['id'] = value;
+  DateTime? get createdAt {
+    return (values['created_at'] as DateTime?);
   }
 
-  set createdAt(DateTime value) => values['created_at'] = value;
-  DateTime get updatedAt {
-    return (values['updated_at'] as DateTime);
+  set createdAt(DateTime? value) => values['created_at'] = value;
+  DateTime? get updatedAt {
+    return (values['updated_at'] as DateTime?);
   }
 
-  set updatedAt(DateTime value) => values['updated_at'] = value;
-  String get name {
-    return (values['name'] as String);
+  set updatedAt(DateTime? value) => values['updated_at'] = value;
+  String? get name {
+    return (values['name'] as String?);
   }
 
-  set name(String value) => values['name'] = value;
+  set name(String? value) => values['name'] = value;
   void copyFrom(Leg model) {
     createdAt = model.createdAt;
     updatedAt = model.updatedAt;
@@ -173,7 +177,7 @@ class LegQueryValues extends MapQueryValues {
 }
 
 class FootQuery extends Query<Foot, FootQueryWhere> {
-  FootQuery({Query parent, Set<String> trampoline}) : super(parent: parent) {
+  FootQuery({Query? parent, Set<String>? trampoline}) : super(parent: parent) {
     trampoline ??= Set();
     trampoline.add(tableName);
     _where = FootQueryWhere(this);
@@ -182,7 +186,7 @@ class FootQuery extends Query<Foot, FootQueryWhere> {
   @override
   final FootQueryValues values = FootQueryValues();
 
-  FootQueryWhere _where;
+  FootQueryWhere? _where;
 
   @override
   get casts {
@@ -200,7 +204,7 @@ class FootQuery extends Query<Foot, FootQueryWhere> {
   }
 
   @override
-  FootQueryWhere get where {
+  FootQueryWhere? get where {
     return _where;
   }
 
@@ -209,19 +213,21 @@ class FootQuery extends Query<Foot, FootQueryWhere> {
     return FootQueryWhere(this);
   }
 
-  static Foot parseRow(List row) {
-    if (row.every((x) => x == null)) return null;
+  static Optional<Foot> parseRow(List row) {
+    if (row.every((x) => x == null)) {
+      return Optional.empty();
+    }
     var model = Foot(
         id: row[0].toString(),
-        createdAt: (row[1] as DateTime),
-        updatedAt: (row[2] as DateTime),
-        legId: (row[3] as int),
+        createdAt: (row[1] as DateTime?),
+        updatedAt: (row[2] as DateTime?),
+        legId: (row[3] as int?),
         nToes: double.tryParse(row[4].toString()));
-    return model;
+    return Optional.of(model);
   }
 
   @override
-  deserialize(List row) {
+  Optional<Foot> deserialize(List row) {
     return parseRow(row);
   }
 }
@@ -256,31 +262,31 @@ class FootQueryValues extends MapQueryValues {
     return {'n_toes': 'decimal'};
   }
 
-  String get id {
-    return (values['id'] as String);
+  String? get id {
+    return (values['id'] as String?);
   }
 
-  set id(String value) => values['id'] = value;
-  DateTime get createdAt {
-    return (values['created_at'] as DateTime);
+  set id(String? value) => values['id'] = value;
+  DateTime? get createdAt {
+    return (values['created_at'] as DateTime?);
   }
 
-  set createdAt(DateTime value) => values['created_at'] = value;
-  DateTime get updatedAt {
-    return (values['updated_at'] as DateTime);
+  set createdAt(DateTime? value) => values['created_at'] = value;
+  DateTime? get updatedAt {
+    return (values['updated_at'] as DateTime?);
   }
 
-  set updatedAt(DateTime value) => values['updated_at'] = value;
-  int get legId {
-    return (values['leg_id'] as int);
+  set updatedAt(DateTime? value) => values['updated_at'] = value;
+  int? get legId {
+    return (values['leg_id'] as int?);
   }
 
-  set legId(int value) => values['leg_id'] = value;
-  double get nToes {
+  set legId(int? value) => values['leg_id'] = value;
+  double? get nToes {
     return double.tryParse((values['n_toes'] as String));
   }
 
-  set nToes(double value) => values['n_toes'] = value.toString();
+  set nToes(double? value) => values['n_toes'] = value.toString();
   void copyFrom(Foot model) {
     createdAt = model.createdAt;
     updatedAt = model.updatedAt;
@@ -299,28 +305,28 @@ class Leg extends _Leg {
 
   /// A unique identifier corresponding to this item.
   @override
-  String id;
+  String? id;
 
   /// The time at which this item was created.
   @override
-  DateTime createdAt;
+  DateTime? createdAt;
 
   /// The last time at which this item was updated.
   @override
-  DateTime updatedAt;
+  DateTime? updatedAt;
 
   @override
-  _Foot foot;
+  _Foot? foot;
 
   @override
-  String name;
+  String? name;
 
   Leg copyWith(
-      {String id,
-      DateTime createdAt,
-      DateTime updatedAt,
-      _Foot foot,
-      String name}) {
+      {String? id,
+      DateTime? createdAt,
+      DateTime? updatedAt,
+      _Foot? foot,
+      String? name}) {
     return Leg(
         id: id ?? this.id,
         createdAt: createdAt ?? this.createdAt,
@@ -359,28 +365,28 @@ class Foot extends _Foot {
 
   /// A unique identifier corresponding to this item.
   @override
-  String id;
+  String? id;
 
   /// The time at which this item was created.
   @override
-  DateTime createdAt;
+  DateTime? createdAt;
 
   /// The last time at which this item was updated.
   @override
-  DateTime updatedAt;
+  DateTime? updatedAt;
 
   @override
-  int legId;
+  int? legId;
 
   @override
-  double nToes;
+  double? nToes;
 
   Foot copyWith(
-      {String id,
-      DateTime createdAt,
-      DateTime updatedAt,
-      int legId,
-      double nToes}) {
+      {String? id,
+      DateTime? createdAt,
+      DateTime? updatedAt,
+      int? legId,
+      double? nToes}) {
     return Foot(
         id: id ?? this.id,
         createdAt: createdAt ?? this.createdAt,
@@ -408,7 +414,7 @@ class Foot extends _Foot {
     return "Foot(id=$id, createdAt=$createdAt, updatedAt=$updatedAt, legId=$legId, nToes=$nToes)";
   }
 
-  Map<String, dynamic> toJson() {
+  Map<String, dynamic>? toJson() {
     return FootSerializer.toMap(this);
   }
 }
@@ -442,27 +448,24 @@ class LegSerializer extends Codec<Leg, Map> {
   get decoder => const LegDecoder();
   static Leg fromMap(Map map) {
     return Leg(
-        id: map['id'] as String,
+        id: map['id'] as String?,
         createdAt: map['created_at'] != null
             ? (map['created_at'] is DateTime
-                ? (map['created_at'] as DateTime)
+                ? (map['created_at'] as DateTime?)
                 : DateTime.parse(map['created_at'].toString()))
             : null,
         updatedAt: map['updated_at'] != null
             ? (map['updated_at'] is DateTime
-                ? (map['updated_at'] as DateTime)
+                ? (map['updated_at'] as DateTime?)
                 : DateTime.parse(map['updated_at'].toString()))
             : null,
         foot: map['foot'] != null
             ? FootSerializer.fromMap(map['foot'] as Map)
             : null,
-        name: map['name'] as String);
+        name: map['name'] as String?);
   }
 
   static Map<String, dynamic> toMap(_Leg model) {
-    if (model == null) {
-      return null;
-    }
     return {
       'id': model.id,
       'created_at': model.createdAt?.toIso8601String(),
@@ -495,11 +498,11 @@ abstract class LegFields {
 
 const FootSerializer footSerializer = FootSerializer();
 
-class FootEncoder extends Converter<Foot, Map> {
+class FootEncoder extends Converter<Foot, Map?> {
   const FootEncoder();
 
   @override
-  Map convert(Foot model) => FootSerializer.toMap(model);
+  Map? convert(Foot model) => FootSerializer.toMap(model);
 }
 
 class FootDecoder extends Converter<Map, Foot> {
@@ -509,7 +512,7 @@ class FootDecoder extends Converter<Map, Foot> {
   Foot convert(Map map) => FootSerializer.fromMap(map);
 }
 
-class FootSerializer extends Codec<Foot, Map> {
+class FootSerializer extends Codec<Foot, Map?> {
   const FootSerializer();
 
   @override
@@ -518,22 +521,22 @@ class FootSerializer extends Codec<Foot, Map> {
   get decoder => const FootDecoder();
   static Foot fromMap(Map map) {
     return Foot(
-        id: map['id'] as String,
+        id: map['id'] as String?,
         createdAt: map['created_at'] != null
             ? (map['created_at'] is DateTime
-                ? (map['created_at'] as DateTime)
+                ? (map['created_at'] as DateTime?)
                 : DateTime.parse(map['created_at'].toString()))
             : null,
         updatedAt: map['updated_at'] != null
             ? (map['updated_at'] is DateTime
-                ? (map['updated_at'] as DateTime)
+                ? (map['updated_at'] as DateTime?)
                 : DateTime.parse(map['updated_at'].toString()))
             : null,
-        legId: map['leg_id'] as int,
-        nToes: map['n_toes'] as double);
+        legId: map['leg_id'] as int?,
+        nToes: map['n_toes'] as double?);
   }
 
-  static Map<String, dynamic> toMap(_Foot model) {
+  static Map<String, dynamic>? toMap(_Foot? model) {
     if (model == null) {
       return null;
     }

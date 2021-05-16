@@ -14,7 +14,7 @@ class PostgresMigrationRunner implements MigrationRunner {
 
   PostgresMigrationRunner(this.connection,
       {Iterable<Migration> migrations = const [], bool connected: false}) {
-    if (migrations?.isNotEmpty == true) migrations.forEach(addMigration);
+    if (migrations.isNotEmpty == true) migrations.forEach(addMigration);
     _connected = connected == true;
   }
 
@@ -62,7 +62,7 @@ class PostgresMigrationRunner implements MigrationRunner {
       int batch = curBatch + 1;
 
       for (var k in toRun) {
-        var migration = migrations[k];
+        var migration = migrations[k]!;
         var schema = new PostgresSchema();
         migration.up(schema);
         print('Bringing up "$k"...');
@@ -93,7 +93,7 @@ class PostgresMigrationRunner implements MigrationRunner {
 
     if (toRun.isNotEmpty) {
       for (var k in toRun.reversed) {
-        var migration = migrations[k];
+        var migration = migrations[k]!;
         var schema = new PostgresSchema();
         migration.down(schema);
         print('Bringing down "$k"...');
@@ -117,7 +117,7 @@ class PostgresMigrationRunner implements MigrationRunner {
 
     if (toRun.isNotEmpty) {
       for (var k in toRun.reversed) {
-        var migration = migrations[k];
+        var migration = migrations[k]!;
         var schema = new PostgresSchema();
         migration.down(schema);
         print('Bringing down "$k"...');

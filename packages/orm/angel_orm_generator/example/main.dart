@@ -4,16 +4,17 @@ import 'package:angel_model/angel_model.dart';
 import 'package:angel_orm/angel_orm.dart';
 import 'package:angel_orm/src/query.dart';
 import 'package:angel_serialize/angel_serialize.dart';
+import 'package:optional/optional.dart';
 part 'main.g.dart';
 
-main() async {
+void main() async {
   var query = EmployeeQuery()
-    ..where.firstName.equals('Rich')
-    ..where.lastName.equals('Person')
+    ..where!.firstName.equals('Rich')
+    ..where!.lastName.equals('Person')
     ..orWhere((w) => w.salary.greaterThanOrEqualTo(75000))
     ..join('companies', 'company_id', 'id');
 
-  var richPerson = await query.getOne(_FakeExecutor());
+  var richPerson = await (query.getOne(_FakeExecutor()) as FutureOr<Employee>);
   print(richPerson.toJson());
 }
 
@@ -22,8 +23,8 @@ class _FakeExecutor extends QueryExecutor {
 
   @override
   Future<List<List>> query(
-      String tableName, String query, Map<String, dynamic> substitutionValues,
-      [returningFields]) async {
+      String tableName, String? query, Map<String, dynamic> substitutionValues,
+      [returningFields = const []]) async {
     var now = DateTime.now();
     print(
         '_FakeExecutor received query: $query and values: $substitutionValues');
@@ -41,12 +42,12 @@ class _FakeExecutor extends QueryExecutor {
 @orm
 @serializable
 abstract class _Employee extends Model {
-  String get firstName;
+  String? get firstName;
 
-  String get lastName;
+  String? get lastName;
 
   @Column(indexType: IndexType.unique)
-  String uniqueId;
+  String? uniqueId;
 
-  double get salary;
+  double? get salary;
 }

@@ -1,4 +1,4 @@
-import 'package:angel_http_exception/angel_http_exception.dart';
+import 'package:angel3_http_exception/angel3_http_exception.dart';
 import 'package:matcher/matcher.dart';
 import 'context_aware.dart';
 import 'context_validator.dart';
@@ -8,17 +8,17 @@ final RegExp _forbidden = RegExp(r'!$');
 final RegExp _optional = RegExp(r'\?$');
 
 /// Returns a value based the result of a computation.
-typedef DefaultValueFunction();
+typedef DefaultValueFunction = Function();
 
 /// Generates an error message based on the given input.
-typedef String CustomErrorMessageFunction(item);
+typedef CustomErrorMessageFunction = String Function(dynamic item);
 
 /// Determines if a value is valid.
-typedef bool Filter(value);
+typedef Filter = bool Function(dynamic value);
 
 /// Converts the desired fields to their numeric representations, if present.
 Map<String, dynamic> autoParse(Map inputData, Iterable<String> fields) {
-  Map<String, dynamic> data = {};
+  var data = <String, dynamic>{};
 
   for (var key in inputData.keys) {
     if (!fields.contains(key)) {
@@ -83,7 +83,7 @@ class Validator extends Matcher {
             schema[keys] is Iterable ? schema[keys] : [schema[keys]];
         var iterable = [];
 
-        _addTo(x) {
+        void _addTo(x) {
           if (x is Iterable) {
             x.forEach(_addTo);
           } else {
@@ -111,8 +111,8 @@ class Validator extends Matcher {
   Validator(Map<String, dynamic> schema,
       {Map<String, dynamic> defaultValues = const {},
       Map<String, dynamic> customErrorMessages = const {}}) {
-    this.defaultValues.addAll(defaultValues ?? {});
-    this.customErrorMessages.addAll(customErrorMessages ?? {});
+    this.defaultValues.addAll(defaultValues);
+    this.customErrorMessages.addAll(customErrorMessages);
     _importSchema(schema);
   }
 
@@ -121,18 +121,18 @@ class Validator extends Matcher {
 
   /// Validates, and filters input data.
   ValidationResult check(Map inputData) {
-    List<String> errors = [];
+    var errors = <String>[];
     var input = Map.from(inputData);
-    Map<String, dynamic> data = {};
+    var data = <String, dynamic>{};
 
-    for (String key in defaultValues.keys) {
+    for (var key in defaultValues.keys) {
       if (!input.containsKey(key)) {
         var value = defaultValues[key];
         input[key] = value is DefaultValueFunction ? value() : value;
       }
     }
 
-    for (String field in forbiddenFields) {
+    for (var field in forbiddenFields) {
       if (input.containsKey(field)) {
         if (!customErrorMessages.containsKey(field)) {
           errors.add("'$field' is forbidden.");
@@ -142,7 +142,7 @@ class Validator extends Matcher {
       }
     }
 
-    for (String field in requiredFields) {
+    for (var field in requiredFields) {
       if (!_hasContextValidators(rules[field] ?? [])) {
         if (!input.containsKey(field)) {
           if (!customErrorMessages.containsKey(field)) {
@@ -162,7 +162,7 @@ class Validator extends Matcher {
         var value = input[key];
         var description = StringDescription("'$key': expected ");
 
-        for (var matcher in rules[key]) {
+        for (var matcher in rules[key]!) {
           if (matcher is ContextValidator) {
             if (!matcher.validate(key, input)) {
               errors.add(matcher
@@ -175,7 +175,7 @@ class Validator extends Matcher {
         }
 
         if (valid) {
-          for (Matcher matcher in rules[key]) {
+          for (var matcher in rules[key]!) {
             try {
               if (matcher is Validator) {
                 var result = matcher.check(value as Map);
@@ -271,12 +271,12 @@ class Validator extends Matcher {
       {Map<String, dynamic> defaultValues = const {},
       Map<String, dynamic> customErrorMessages = const {},
       bool overwrite = false}) {
-    Map<String, dynamic> _schema = {};
+    var _schema = <String, dynamic>{};
     var child = Validator.empty()
       ..defaultValues.addAll(this.defaultValues)
-      ..defaultValues.addAll(defaultValues ?? {})
+      ..defaultValues.addAll(defaultValues)
       ..customErrorMessages.addAll(this.customErrorMessages)
-      ..customErrorMessages.addAll(customErrorMessages ?? {})
+      ..customErrorMessages.addAll(customErrorMessages)
       ..requiredFields.addAll(requiredFields)
       ..rules.addAll(rules);
 
@@ -320,7 +320,7 @@ class Validator extends Matcher {
       return;
     }
 
-    rules[key].add(rule);
+    rules[key]!.add(rule);
   }
 
   /// Adds all given [rules].
@@ -331,7 +331,7 @@ class Validator extends Matcher {
   /// Removes a [rule].
   void removeRule(String key, Matcher rule) {
     if (rules.containsKey(key)) {
-      rules[key].remove(rule);
+      rules[key]!.remove(rule);
     }
   }
 
@@ -377,17 +377,19 @@ class ValidationResult {
 /// Occurs when user-provided data is invalid.
 class ValidationException extends AngelHttpException {
   /// A list of errors that resulted in the given data being marked invalid.
+  @override
   final List<String> errors = [];
 
   /// A descriptive message describing the error.
+  @override
   final String message;
 
   ValidationException(this.message, {Iterable<String> errors = const []})
       : super(FormatException(message),
             statusCode: 400,
-            errors: (errors ?? <String>[]).toSet().toList(),
+            errors: (errors).toSet().toList(),
             stackTrace: StackTrace.current) {
-    if (errors != null) this.errors.addAll(errors.toSet());
+    this.errors.addAll(errors.toSet());
   }
 
   @override
@@ -400,8 +402,10 @@ class ValidationException extends AngelHttpException {
       return 'Validation error: ${errors.first}';
     }
 
-    var messages = ['${errors.length} validation errors:\n']
-      ..addAll(errors.map((error) => '* $error'));
+    var messages = [
+      '${errors.length} validation errors:\n',
+      ...errors.map((error) => '* $error')
+    ];
 
     return messages.join('\n');
   }

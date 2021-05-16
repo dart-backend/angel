@@ -9,26 +9,23 @@ part of 'main.dart';
 abstract class EmployeeSerializer {
   static Employee fromMap(Map map) {
     return Employee(
-        id: map['id'] as String,
-        firstName: map['first_name'] as String,
-        lastName: map['last_name'] as String,
-        salary: map['salary'] as double,
+        id: map['id'] as String?,
+        firstName: map['first_name'] as String?,
+        lastName: map['last_name'] as String?,
+        salary: map['salary'] as double?,
         createdAt: map['created_at'] != null
             ? (map['created_at'] is DateTime
-                ? (map['created_at'] as DateTime)
+                ? (map['created_at'] as DateTime?)
                 : DateTime.parse(map['created_at'].toString()))
             : null,
         updatedAt: map['updated_at'] != null
             ? (map['updated_at'] is DateTime
-                ? (map['updated_at'] as DateTime)
+                ? (map['updated_at'] as DateTime?)
                 : DateTime.parse(map['updated_at'].toString()))
             : null);
   }
 
   static Map<String, dynamic> toMap(Employee model) {
-    if (model == null) {
-      return null;
-    }
     return {
       'id': model.id,
       'first_name': model.firstName,

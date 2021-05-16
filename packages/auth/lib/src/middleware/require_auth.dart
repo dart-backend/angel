@@ -1,16 +1,19 @@
 import 'dart:async';
-import 'package:angel_framework/angel_framework.dart';
+import 'package:angel3_framework/angel3_framework.dart';
 
 /// Forces Basic authentication over the requested resource, with the given [realm] name, if no JWT is present.
 ///
 /// [realm] defaults to `'angel_auth'`.
-RequestHandler forceBasicAuth<User>({String realm}) {
+RequestHandler forceBasicAuth<User>({String? realm}) {
   return (RequestContext req, ResponseContext res) async {
-    if (req.container.has<User>())
-      return true;
-    else if (req.container.has<Future<User>>()) {
-      await req.container.makeAsync<User>();
-      return true;
+    if (req.container != null) {
+      var reqContainer = req.container!;
+      if (reqContainer.has<User>()) {
+        return true;
+      } else if (reqContainer.has<Future<User>>()) {
+        await reqContainer.makeAsync<User>();
+        return true;
+      }
     }
 
     res.headers['www-authenticate'] = 'Basic realm="${realm ?? 'angel_auth'}"';
@@ -26,16 +29,23 @@ RequestHandler requireAuthentication<User>() {
       if (throwError) {
         res.statusCode = 403;
         throw AngelHttpException.forbidden();
-      } else
+      } else {
         return false;
+      }
     }
 
-    if (req.container.has<User>() || req.method == 'OPTIONS')
-      return true;
-    else if (req.container.has<Future<User>>()) {
-      await req.container.makeAsync<User>();
-      return true;
-    } else
+    if (req.container != null) {
+      var reqContainer = req.container!;
+      if (reqContainer.has<User>() || req.method == 'OPTIONS') {
+        return true;
+      } else if (reqContainer.has<Future<User>>()) {
+        await reqContainer.makeAsync<User>();
+        return true;
+      } else {
+        return _reject(res);
+      }
+    } else {
       return _reject(res);
+    }
   };
 }

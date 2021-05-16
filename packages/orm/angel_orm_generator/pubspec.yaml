@@ -1,58 +1,60 @@
 name: angel_orm_generator
-version: 3.0.0
+version: 4.0.0
 description: Code generators for Angel's ORM. Generates query builder classes.
-author: Tobe O <thosakwe@gmail.com>
-homepage: https://github.com/angel-dart/orm
+homepage: https://github.com/dukefirehawk/angel
 publish_to: none
 environment:
-  sdk: '>=2.10.0 <3.0.0'
+  sdk: '>=2.12.0 <3.0.0'
 dependencies:
-  analyzer: ">=0.35.0 <2.0.0"
+  analyzer: ^1.5.0
   angel_model:
     git: 
       url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x
+      ref: sdk-2.12.x_nnbd
       path: packages/model
   angel_serialize:
     git: 
       url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x
+      ref: sdk-2.12.x_nnbd
       path: packages/serialize/angel_serialize
   angel_orm:
     git: 
       url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x
+      ref: sdk-2.12.x_nnbd
       path: packages/orm/angel_orm
   angel_serialize_generator:
     git: 
       url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x
+      ref: sdk-2.12.x_nnbd
       path: packages/serialize/angel_serialize_generator
-  build: ^1.0.0
-  build_config: ^0.4.0
-  code_builder: ^3.0.0
-  dart_style: ^1.0.0
-  inflection2: ^0.4.2
-  meta: ^1.0.0
-  path: ^1.0.0
-  recase: ^3.0.1
-  source_gen: ^0.9.0
+  inflection2:
+    git: 
+      url: https://github.com/dukefirehawk/angel.git
+      ref: sdk-2.12.x_nnbd
+      path: packages/inflection2
+  build: ^2.0.1
+  build_config: ^1.0.0
+  code_builder: ^4.0.0
+  dart_style: ^2.0.1
+  meta: ^1.3.0
+  path: ^1.8.0
+  recase: ^4.0.0
+  source_gen: ^1.0.0
+  collection: ^1.15.0
 dev_dependencies:
   angel_framework:
     git: 
       url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x
+      ref: sdk-2.12.x_nnbd
       path: packages/framework
   angel_migration:
     git: 
       url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x
+      ref: sdk-2.12.x_nnbd
       path: packages/orm/angel_migration
   #angel_test: ^1.0.0
-  build_runner: ^1.11.5
-  collection: ^1.0.0
+  build_runner: ^2.0.1
   pedantic: ^1.11.0
-  postgres:
-    git: 
-      url: https://github.com/dukefirehawk/postgresql-dart
-  test: ^1.16.5
+  postgres: ^2.3.2
+  test: ^1.17.3
+  optional: ^6.0.0-nullsafety.2

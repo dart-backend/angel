@@ -1,12 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_framework/http.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_framework/http.dart';
 //import 'package:angel_test/angel_test.dart';
-import 'package:angel_validate/server.dart';
+import 'package:angel3_validate/server.dart';
 import 'package:logging/logging.dart';
-import 'package:mock_request/mock_request.dart';
+import 'package:angel3_mock_request/angel3_mock_request.dart';
 import 'package:test/test.dart';
 
 final Validator echoSchema = Validator({'message*': isString});
@@ -18,21 +18,21 @@ void printRecord(LogRecord rec) {
 }
 
 void main() {
-  Angel app;
-  AngelHttp http;
+  Angel? app;
+  late AngelHttp http;
   //TestClient client;
 
   setUp(() async {
     app = Angel();
-    http = AngelHttp(app, useZone: false);
+    http = AngelHttp(app!, useZone: false);
 
-    app.chain([validate(echoSchema)]).post('/echo',
+    app!.chain([validate(echoSchema)]).post('/echo',
         (RequestContext req, res) async {
       await req.parseBody();
       res.write('Hello, ${req.bodyAsMap['message']}!');
     });
 
-    app.logger = Logger('angel')..onRecord.listen(printRecord);
+    app!.logger = Logger('angel')..onRecord.listen(printRecord);
     //client = await connectTo(app);
   });
 

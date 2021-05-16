@@ -1,7 +1,7 @@
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_framework/http.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_framework/http.dart';
 
-main() async {
+void main() async {
   var app = Angel();
   var http = AngelHttp(app);
 

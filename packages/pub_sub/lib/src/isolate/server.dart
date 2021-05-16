@@ -1,21 +1,21 @@
 import 'dart:async';
 import 'dart:isolate';
 import 'package:uuid/uuid.dart';
-import '../../pub_sub.dart';
+import '../../angel3_pub_sub.dart';
 
 /// A [Adapter] implementation that communicates via [SendPort]s and [ReceivePort]s.
 class IsolateAdapter extends Adapter {
   final Map<String, SendPort> _clients = {};
   final StreamController<PublishRequest> _onPublish =
-      new StreamController<PublishRequest>();
+      StreamController<PublishRequest>();
   final StreamController<SubscriptionRequest> _onSubscribe =
-      new StreamController<SubscriptionRequest>();
+      StreamController<SubscriptionRequest>();
   final StreamController<UnsubscriptionRequest> _onUnsubscribe =
-      new StreamController<UnsubscriptionRequest>();
-  final Uuid _uuid = new Uuid();
+      StreamController<UnsubscriptionRequest>();
+  final Uuid _uuid = Uuid();
 
   /// A [ReceivePort] on which to listen for incoming data.
-  final ReceivePort receivePort = new ReceivePort();
+  final ReceivePort receivePort = ReceivePort();
 
   @override
   Stream<PublishRequest> get onPublish => _onPublish.stream;
@@ -33,7 +33,7 @@ class IsolateAdapter extends Adapter {
     _onPublish.close();
     _onSubscribe.close();
     _onUnsubscribe.close();
-    return new Future.value();
+    return Future.value();
   }
 
   @override
@@ -48,22 +48,22 @@ class IsolateAdapter extends Adapter {
           data['request_id'] is String &&
           data['method'] is String &&
           data['params'] is Map) {
-        var id = data['id'] as String,
-            requestId = data['request_id'] as String,
-            method = data['method'] as String;
-        var params = data['params'] as Map;
-        var sp = _clients[id];
+        var id = data['id'] as String?,
+            requestId = data['request_id'] as String?,
+            method = data['method'] as String?;
+        var params = data['params'] as Map?;
+        var sp = _clients[id!];
 
         if (sp == null) {
           // There's nobody to respond to, so don't send anything to anyone. Oops.
         } else if (method == 'publish') {
-          if (_isValidClientId(params['client_id']) &&
+          if (_isValidClientId(params!['client_id']) &&
               params['event_name'] is String &&
               params.containsKey('value')) {
-            var clientId = params['client_id'] as String,
-                eventName = params['event_name'] as String;
+            var clientId = params['client_id'] as String?,
+                eventName = params['event_name'] as String?;
             var value = params['value'];
-            var rq = new _IsolatePublishRequestImpl(
+            var rq = _IsolatePublishRequestImpl(
                 requestId, clientId, eventName, value, sp);
             _onPublish.add(rq);
           } else {
@@ -74,11 +74,11 @@ class IsolateAdapter extends Adapter {
             });
           }
         } else if (method == 'subscribe') {
-          if (_isValidClientId(params['client_id']) &&
+          if (_isValidClientId(params!['client_id']) &&
               params['event_name'] is String) {
-            var clientId = params['client_id'] as String,
-                eventName = params['event_name'] as String;
-            var rq = new _IsolateSubscriptionRequestImpl(
+            var clientId = params['client_id'] as String?,
+                eventName = params['event_name'] as String?;
+            var rq = _IsolateSubscriptionRequestImpl(
                 clientId, eventName, sp, requestId, _uuid);
             _onSubscribe.add(rq);
           } else {
@@ -89,11 +89,11 @@ class IsolateAdapter extends Adapter {
             });
           }
         } else if (method == 'unsubscribe') {
-          if (_isValidClientId(params['client_id']) &&
+          if (_isValidClientId(params!['client_id']) &&
               params['subscription_id'] is String) {
-            var clientId = params['client_id'] as String,
-                subscriptionId = params['subscription_id'] as String;
-            var rq = new _IsolateUnsubscriptionRequestImpl(
+            var clientId = params['client_id'] as String?,
+                subscriptionId = params['subscription_id'] as String?;
+            var rq = _IsolateUnsubscriptionRequestImpl(
                 clientId, subscriptionId, sp, requestId);
             _onUnsubscribe.add(rq);
           } else {
@@ -132,17 +132,17 @@ class IsolateAdapter extends Adapter {
 
 class _IsolatePublishRequestImpl extends PublishRequest {
   @override
-  final String clientId;
+  final String? clientId;
 
   @override
-  final String eventName;
+  final String? eventName;
 
   @override
   final value;
 
   final SendPort sendPort;
 
-  final String requestId;
+  final String? requestId;
 
   _IsolatePublishRequestImpl(
       this.requestId, this.clientId, this.eventName, this.value, this.sendPort);
@@ -171,14 +171,14 @@ class _IsolatePublishRequestImpl extends PublishRequest {
 
 class _IsolateSubscriptionRequestImpl extends SubscriptionRequest {
   @override
-  final String clientId;
+  final String? clientId;
 
   @override
-  final String eventName;
+  final String? eventName;
 
   final SendPort sendPort;
 
-  final String requestId;
+  final String? requestId;
 
   final Uuid _uuid;
 
@@ -195,22 +195,22 @@ class _IsolateSubscriptionRequestImpl extends SubscriptionRequest {
   }
 
   @override
-  FutureOr<Subscription> accept(String clientId) {
+  FutureOr<Subscription> accept(String? clientId) {
     var id = _uuid.v4();
     sendPort.send({
       'status': true,
       'request_id': requestId,
       'result': {'subscription_id': id, 'client_id': clientId}
     });
-    return new _IsolateSubscriptionImpl(clientId, id, eventName, sendPort);
+    return _IsolateSubscriptionImpl(clientId, id, eventName, sendPort);
   }
 }
 
 class _IsolateSubscriptionImpl extends Subscription {
   @override
-  final String clientId, id;
+  final String? clientId, id;
 
-  final String eventName;
+  final String? eventName;
 
   final SendPort sendPort;
 
@@ -225,14 +225,14 @@ class _IsolateSubscriptionImpl extends Subscription {
 
 class _IsolateUnsubscriptionRequestImpl extends UnsubscriptionRequest {
   @override
-  final String clientId;
+  final String? clientId;
 
   @override
-  final String subscriptionId;
+  final String? subscriptionId;
 
   final SendPort sendPort;
 
-  final String requestId;
+  final String? requestId;
 
   _IsolateUnsubscriptionRequestImpl(
       this.clientId, this.subscriptionId, this.sendPort, this.requestId);

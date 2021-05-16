@@ -1,13 +1,13 @@
 import 'dart:async';
-import 'package:pub_sub/pub_sub.dart';
-import 'package:pub_sub/isolate.dart';
+import 'package:angel3_pub_sub/angel3_pub_sub.dart';
+import 'package:angel3_pub_sub/isolate.dart';
 import 'package:test/test.dart';
 
 void main() {
-  Server server;
-  Client client1, client2, client3;
-  IsolateClient trustedClient;
-  IsolateAdapter adapter;
+  late Server server;
+  late Client client1, client2, client3;
+  late IsolateClient trustedClient;
+  late IsolateAdapter adapter;
 
   setUp(() async {
     adapter = IsolateAdapter();
@@ -51,7 +51,7 @@ void main() {
       expect(trustedClient.clientId, isNotNull);
     });
     test('can sub/unsub', () async {
-      String clientId;
+      String? clientId;
       await trustedClient.publish('heyaaa', 'byeaa');
       expect(clientId = trustedClient.clientId, isNotNull);
 

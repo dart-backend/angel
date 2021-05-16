@@ -31,7 +31,7 @@ class CarMigration extends Migration {
 // **************************************************************************
 
 class CarQuery extends Query<Car, CarQueryWhere> {
-  CarQuery({Query parent, Set<String> trampoline}) : super(parent: parent) {
+  CarQuery({Query? parent, Set<String>? trampoline}) : super(parent: parent) {
     trampoline ??= Set();
     trampoline.add(tableName);
     _where = CarQueryWhere(this);
@@ -40,7 +40,7 @@ class CarQuery extends Query<Car, CarQueryWhere> {
   @override
   final CarQueryValues values = CarQueryValues();
 
-  CarQueryWhere _where;
+  CarQueryWhere? _where;
 
   @override
   get casts {
@@ -66,7 +66,7 @@ class CarQuery extends Query<Car, CarQueryWhere> {
   }
 
   @override
-  CarQueryWhere get where {
+  CarQueryWhere? get where {
     return _where;
   }
 
@@ -75,21 +75,23 @@ class CarQuery extends Query<Car, CarQueryWhere> {
     return CarQueryWhere(this);
   }
 
-  static Car parseRow(List row) {
-    if (row.every((x) => x == null)) return null;
+  static Optional<Car> parseRow(List row) {
+    if (row.every((x) => x == null)) {
+      return Optional.empty();
+    }
     var model = Car(
         id: row[0].toString(),
-        createdAt: (row[1] as DateTime),
-        updatedAt: (row[2] as DateTime),
-        make: (row[3] as String),
-        description: (row[4] as String),
-        familyFriendly: (row[5] as bool),
-        recalledAt: (row[6] as DateTime));
-    return model;
+        createdAt: (row[1] as DateTime?),
+        updatedAt: (row[2] as DateTime?),
+        make: (row[3] as String?),
+        description: (row[4] as String?),
+        familyFriendly: (row[5] as bool?),
+        recalledAt: (row[6] as DateTime?));
+    return Optional.of(model);
   }
 
   @override
-  deserialize(List row) {
+  Optional<Car> deserialize(List row) {
     return parseRow(row);
   }
 }
@@ -138,41 +140,41 @@ class CarQueryValues extends MapQueryValues {
     return {};
   }
 
-  String get id {
-    return (values['id'] as String);
+  String? get id {
+    return (values['id'] as String?);
   }
 
-  set id(String value) => values['id'] = value;
-  DateTime get createdAt {
-    return (values['created_at'] as DateTime);
+  set id(String? value) => values['id'] = value;
+  DateTime? get createdAt {
+    return (values['created_at'] as DateTime?);
   }
 
-  set createdAt(DateTime value) => values['created_at'] = value;
-  DateTime get updatedAt {
-    return (values['updated_at'] as DateTime);
+  set createdAt(DateTime? value) => values['created_at'] = value;
+  DateTime? get updatedAt {
+    return (values['updated_at'] as DateTime?);
   }
 
-  set updatedAt(DateTime value) => values['updated_at'] = value;
-  String get make {
-    return (values['make'] as String);
+  set updatedAt(DateTime? value) => values['updated_at'] = value;
+  String? get make {
+    return (values['make'] as String?);
   }
 
-  set make(String value) => values['make'] = value;
-  String get description {
-    return (values['description'] as String);
+  set make(String? value) => values['make'] = value;
+  String? get description {
+    return (values['description'] as String?);
   }
 
-  set description(String value) => values['description'] = value;
-  bool get familyFriendly {
-    return (values['family_friendly'] as bool);
+  set description(String? value) => values['description'] = value;
+  bool? get familyFriendly {
+    return (values['family_friendly'] as bool?);
   }
 
-  set familyFriendly(bool value) => values['family_friendly'] = value;
-  DateTime get recalledAt {
-    return (values['recalled_at'] as DateTime);
+  set familyFriendly(bool? value) => values['family_friendly'] = value;
+  DateTime? get recalledAt {
+    return (values['recalled_at'] as DateTime?);
   }
 
-  set recalledAt(DateTime value) => values['recalled_at'] = value;
+  set recalledAt(DateTime? value) => values['recalled_at'] = value;
   void copyFrom(Car model) {
     createdAt = model.createdAt;
     updatedAt = model.updatedAt;
@@ -200,36 +202,36 @@ class Car extends _Car {
 
   /// A unique identifier corresponding to this item.
   @override
-  String id;
+  String? id;
 
   /// The time at which this item was created.
   @override
-  DateTime createdAt;
+  DateTime? createdAt;
 
   /// The last time at which this item was updated.
   @override
-  DateTime updatedAt;
+  DateTime? updatedAt;
 
   @override
-  String make;
+  String? make;
 
   @override
-  String description;
+  String? description;
 
   @override
-  bool familyFriendly;
+  bool? familyFriendly;
 
   @override
-  DateTime recalledAt;
+  DateTime? recalledAt;
 
   Car copyWith(
-      {String id,
-      DateTime createdAt,
-      DateTime updatedAt,
-      String make,
-      String description,
-      bool familyFriendly,
-      DateTime recalledAt}) {
+      {String? id,
+      DateTime? createdAt,
+      DateTime? updatedAt,
+      String? make,
+      String? description,
+      bool? familyFriendly,
+      DateTime? recalledAt}) {
     return Car(
         id: id ?? this.id,
         createdAt: createdAt ?? this.createdAt,
@@ -303,31 +305,28 @@ class CarSerializer extends Codec<Car, Map> {
   get decoder => const CarDecoder();
   static Car fromMap(Map map) {
     return Car(
-        id: map['id'] as String,
+        id: map['id'] as String?,
         createdAt: map['created_at'] != null
             ? (map['created_at'] is DateTime
-                ? (map['created_at'] as DateTime)
+                ? (map['created_at'] as DateTime?)
                 : DateTime.parse(map['created_at'].toString()))
             : null,
         updatedAt: map['updated_at'] != null
             ? (map['updated_at'] is DateTime
-                ? (map['updated_at'] as DateTime)
+                ? (map['updated_at'] as DateTime?)
                 : DateTime.parse(map['updated_at'].toString()))
             : null,
-        make: map['make'] as String,
-        description: map['description'] as String,
-        familyFriendly: map['family_friendly'] as bool,
+        make: map['make'] as String?,
+        description: map['description'] as String?,
+        familyFriendly: map['family_friendly'] as bool?,
         recalledAt: map['recalled_at'] != null
             ? (map['recalled_at'] is DateTime
-                ? (map['recalled_at'] as DateTime)
+                ? (map['recalled_at'] as DateTime?)
                 : DateTime.parse(map['recalled_at'].toString()))
             : null);
   }
 
   static Map<String, dynamic> toMap(_Car model) {
-    if (model == null) {
-      return null;
-    }
     return {
       'id': model.id,
       'created_at': model.createdAt?.toIso8601String(),

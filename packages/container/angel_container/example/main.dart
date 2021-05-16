@@ -1,7 +1,7 @@
 import 'dart:async';
 
-import 'package:angel_container/angel_container.dart';
-import 'package:angel_container/mirrors.dart';
+import 'package:angel3_container/angel3_container.dart';
+import 'package:angel3_container/mirrors.dart';
 
 Future<void> main() async {
   // Create a container instance.
@@ -21,14 +21,14 @@ Future<void> main() async {
   });
 
   // Use `make` to create an instance.
-  var truck = container.make<Truck>();
+  var truck = container.make<Truck>()!;
 
   // You can also resolve injections asynchronously.
   container.registerFactory<Future<int>>((_) async => 24);
   print(await container.makeAsync<int>());
 
   // Asynchronous resolution also works for plain objects.
-  await container.makeAsync<Truck>().then((t) => t.drive());
+  await container.makeAsync<Truck>()!.then((t) => t.drive());
 
   // Register a named singleton.
   container.registerNamedSingleton('the_truck', truck);
@@ -37,7 +37,7 @@ Future<void> main() async {
   truck.drive();
 
   // Should print the same.
-  container.findByName<Truck>('the_truck').drive();
+  container.findByName<Truck>('the_truck')!.drive();
 
   // We can make a child container with its own factory.
   var childContainer = container.createChild();
@@ -47,10 +47,10 @@ Future<void> main() async {
   });
 
   // Make a truck with 5666 HP.
-  childContainer.make<Truck>().drive();
+  childContainer.make<Truck>()!.drive();
 
   // However, calling `make<Engine>` will return the Engine singleton we created above.
-  print(childContainer.make<Engine>().horsePower);
+  print(childContainer.make<Engine>()!.horsePower);
 }
 
 abstract class Truck {
@@ -64,12 +64,12 @@ class Engine {
 }
 
 class _TruckImpl implements Truck {
-  final Engine engine;
+  final Engine? engine;
 
   _TruckImpl(this.engine);
 
   @override
   void drive() {
-    print('Vroom! I have ${engine.horsePower} horsepower in my engine.');
+    print('Vroom! I have ${engine!.horsePower} horsepower in my engine.');
   }
 }

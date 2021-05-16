@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:io' show HttpDate;
-import 'package:angel_framework/angel_framework.dart';
+import 'package:angel3_framework/angel3_framework.dart';
 import 'package:file/file.dart';
 import 'virtual_directory.dart';
 
@@ -39,17 +39,17 @@ class CachingVirtualDirectory extends VirtualDirectory {
 
   CachingVirtualDirectory(Angel app, FileSystem fileSystem,
       {this.accessLevel = CacheAccessLevel.PUBLIC,
-      Directory source,
-      bool debug,
-      Iterable<String> indexFileNames,
+      Directory? source,
+      bool? debug,
+      Iterable<String>? indexFileNames,
       this.maxAge = 0,
       this.noCache = false,
       this.onlyInProduction = false,
       this.useEtags = true,
-      bool allowDirectoryListing,
+      bool? allowDirectoryListing,
       bool useBuffer = false,
-      String publicPath,
-      callback(File file, RequestContext req, ResponseContext res)})
+      String? publicPath,
+      Function(File file, RequestContext req, ResponseContext res)? callback})
       : super(app, fileSystem,
             source: source,
             indexFileNames: indexFileNames ?? ['index.html'],
@@ -63,26 +63,26 @@ class CachingVirtualDirectory extends VirtualDirectory {
       File file, FileStat stat, RequestContext req, ResponseContext res) {
     res.headers['accept-ranges'] = 'bytes';
 
-    if (onlyInProduction == true && req.app.environment.isProduction != true) {
+    if (onlyInProduction == true && req.app!.environment.isProduction != true) {
       return super.serveFile(file, stat, req, res);
     }
 
-    bool shouldNotCache = noCache == true;
+    var shouldNotCache = noCache == true;
 
     if (!shouldNotCache) {
-      shouldNotCache = req.headers.value('cache-control') == 'no-cache' ||
-          req.headers.value('pragma') == 'no-cache';
+      shouldNotCache = req.headers!.value('cache-control') == 'no-cache' ||
+          req.headers!.value('pragma') == 'no-cache';
     }
 
     if (shouldNotCache) {
       res.headers['cache-control'] = 'private, max-age=0, no-cache';
       return super.serveFile(file, stat, req, res);
     } else {
-      var ifModified = req.headers.ifModifiedSince;
-      bool ifRange = false;
+      var ifModified = req.headers!.ifModifiedSince;
+      var ifRange = false;
 
       try {
-        ifModified = HttpDate.parse(req.headers.value('if-range'));
+        ifModified = HttpDate.parse(req.headers!.value('if-range')!);
         ifRange = true;
       } catch (_) {
         // Fail silently...
@@ -97,7 +97,7 @@ class CachingVirtualDirectory extends VirtualDirectory {
             setCachedHeaders(stat.modified, req, res);
 
             if (useEtags && _etags.containsKey(file.absolute.path)) {
-              res.headers['ETag'] = _etags[file.absolute.path];
+              res.headers['ETag'] = _etags[file.absolute.path]!;
             }
 
             if (ifRange) {
@@ -120,18 +120,18 @@ class CachingVirtualDirectory extends VirtualDirectory {
       // If-modified didn't work; try etags
 
       if (useEtags == true) {
-        var etagsToMatchAgainst = req.headers['if-none-match'];
+        var etagsToMatchAgainst = req.headers!['if-none-match'];
         ifRange = false;
 
         if (etagsToMatchAgainst?.isNotEmpty != true) {
-          etagsToMatchAgainst = req.headers['if-range'];
+          etagsToMatchAgainst = req.headers!['if-range'];
           ifRange = etagsToMatchAgainst?.isNotEmpty == true;
         }
 
         if (etagsToMatchAgainst?.isNotEmpty == true) {
-          bool hasBeenModified = false;
+          var hasBeenModified = false;
 
-          for (var etag in etagsToMatchAgainst) {
+          for (var etag in etagsToMatchAgainst!) {
             if (etag == '*') {
               hasBeenModified = true;
             } else {
@@ -166,16 +166,16 @@ class CachingVirtualDirectory extends VirtualDirectory {
 
   void setCachedHeaders(
       DateTime modified, RequestContext req, ResponseContext res) {
-    var privacy = accessLevelToString(accessLevel ?? CacheAccessLevel.PUBLIC);
+    var privacy = accessLevelToString(accessLevel);
 
     res.headers
-      ..['cache-control'] = '$privacy, max-age=${maxAge ?? 0}'
+      ..['cache-control'] = '$privacy, max-age=$maxAge'
       ..['last-modified'] = HttpDate.format(modified);
 
-    if (maxAge != null) {
-      var expiry = DateTime.now().add(Duration(seconds: maxAge ?? 0));
-      res.headers['expires'] = HttpDate.format(expiry);
-    }
+    //if (maxAge != null) {
+    var expiry = DateTime.now().add(Duration(seconds: maxAge));
+    res.headers['expires'] = HttpDate.format(expiry);
+    //}
   }
 }
 

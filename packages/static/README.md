@@ -1,6 +1,10 @@
-# static
-[![Pub](https://img.shields.io/pub/v/angel_static.svg)](https://pub.dartlang.org/packages/angel_static)
-[![build status](https://travis-ci.org/angel-dart/static.svg?branch=master)](https://travis-ci.org/angel-dart/static)
+# angel3_static
+[![version](https://img.shields.io/badge/pub-v4.0.1-brightgreen)](https://pub.dartlang.org/packages/angel3_static)
+[![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
+[![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
+
+[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/static/LICENSE)
+
 
 Static server infrastructure for Angel.
 
@@ -11,20 +15,20 @@ In `pubspec.yaml`:
 
 ```yaml
 dependencies:
-    angel_static: ^2.0.0-alpha
+    angel3_static: ^4.0.0
 ```
 
 # Usage
 To serve files from a directory, you need to create a `VirtualDirectory`.
-Keep in mind that `angel_static` uses `package:file` instead of `dart:io`.
+Keep in mind that `angel3_static` uses `package:file` instead of `dart:io`.
 
 ```dart
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_framework/http.dart';
-import 'package:angel_static/angel_static.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_framework/http.dart';
+import 'package:angel3_static/angel3_static.dart';
 import 'package:file/local.dart';
 
-main() async {
+void main() async {
   var app = Angel();
   var fs = const LocalFileSystem();
 

@@ -1,23 +1,23 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:angel_container/mirrors.dart';
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_framework/http.dart';
+import 'package:angel3_container/mirrors.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_framework/http.dart';
 import 'package:http/http.dart' as http;
 import 'package:test/test.dart';
 import 'common.dart';
 
-main() {
+void main() {
   Map headers = <String, String>{
     'Accept': 'application/json',
     'Content-Type': 'application/json'
   };
 
-  Angel app;
-  HttpServer server;
-  String url;
-  http.Client client;
-  HookedService todoService;
+  late Angel app;
+  late HttpServer server;
+  late String url;
+  late http.Client client;
+  late HookedService todoService;
 
   setUp(() async {
     app = Angel(reflector: MirrorsReflector());
@@ -25,14 +25,15 @@ main() {
     app.use('/todos', MapService());
     app.use('/books', BookService());
 
-    todoService = app.findHookedService<MapService>('todos');
+    todoService = app.findHookedService<MapService>('todos')
+        as HookedService<dynamic, dynamic, Service>;
 
     todoService.beforeAllStream().listen((e) {
       print('Fired ${e.eventName}! Data: ${e.data}; Params: ${e.params}');
     });
 
     app.errorHandler = (e, req, res) {
-      throw e.error;
+      throw e.error as Object;
     };
 
     server = await AngelHttp(app).startServer();
@@ -41,11 +42,7 @@ main() {
 
   tearDown(() async {
     await server.close(force: true);
-    app = null;
-    url = null;
     client.close();
-    client = null;
-    todoService = null;
   });
 
   test("listen before and after", () async {
@@ -114,11 +111,12 @@ main() {
   });
 
   test('inject request + response', () async {
-    HookedService books = app.findService('books');
+    HookedService books = app.findService('books')
+        as HookedService<dynamic, dynamic, Service<dynamic, dynamic>>;
 
     books.beforeIndexed.listen((e) {
       expect([e.request, e.response], everyElement(isNotNull));
-      print('Indexing books at path: ${e.request.path}');
+      print('Indexing books at path: ${e.request?.path}');
     });
 
     var response = await client.get(Uri.parse('$url/books'));
@@ -137,8 +135,8 @@ main() {
       var type = e.isBefore ? 'before' : 'after';
       print('Params to $type ${e.eventName}: ${e.params}');
       expect(e.params, isMap);
-      expect(e.params.keys, contains('provider'));
-      expect(e.params['provider'], const IsInstanceOf<Providers>());
+      expect(e.params?.keys, contains('provider'));
+      expect(e.params?['provider'], const IsInstanceOf<Providers>());
     }
 
     svc

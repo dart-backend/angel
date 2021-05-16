@@ -1,6 +1,6 @@
 import 'package:charcode/charcode.dart';
 import 'package:source_span/source_span.dart';
-import 'package:symbol_table/symbol_table.dart';
+import 'package:angel3_symbol_table/angel3_symbol_table.dart';
 import '../ast/ast.dart';
 import 'expression.dart';
 import 'token.dart';
@@ -12,11 +12,12 @@ class StringLiteral extends Literal {
   StringLiteral(this.string, this.value);
 
   static String parseValue(Token string) {
-    var text = string.span.text.substring(1, string.span.text.length - 1);
-    var codeUnits = text.codeUnits;
     var buf = StringBuffer();
 
-    for (int i = 0; i < codeUnits.length; i++) {
+    var text = string.span.text.substring(1, string.span.text.length - 1);
+    var codeUnits = text.codeUnits;
+
+    for (var i = 0; i < codeUnits.length; i++) {
       var ch = codeUnits[i];
 
       if (ch == $backslash) {
@@ -66,7 +67,7 @@ class StringLiteral extends Literal {
   }
 
   @override
-  compute(SymbolTable scope) {
+  String compute(SymbolTable? scope) {
     return value;
   }
 

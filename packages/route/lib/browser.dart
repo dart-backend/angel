@@ -1,9 +1,8 @@
 import 'dart:async' show Stream, StreamController;
 import 'dart:html';
-
 import 'package:path/path.dart' as p;
 
-import 'angel_route.dart';
+import 'angel3_route.dart';
 
 final RegExp _hash = RegExp(r'^#/');
 final RegExp _straySlashes = RegExp(r'(^/+)|(/+$)');
@@ -11,10 +10,10 @@ final RegExp _straySlashes = RegExp(r'(^/+)|(/+$)');
 /// A variation of the [Router] support both hash routing and push state.
 abstract class BrowserRouter<T> extends Router<T> {
   /// Fires whenever the active route changes. Fires `null` if none is selected (404).
-  Stream<RoutingResult<T>> get onResolve;
+  Stream<RoutingResult<T?>> get onResolve;
 
   /// Fires whenever the active route changes. Fires `null` if none is selected (404).
-  Stream<Route<T>> get onRoute;
+  Stream<Route<T?>> get onRoute;
 
   /// Set `hash` to true to use hash routing instead of push state.
   /// `listen` as `true` will call `listen` after initialization.
@@ -47,20 +46,20 @@ abstract class BrowserRouter<T> extends Router<T> {
 abstract class _BrowserRouterImpl<T> extends Router<T>
     implements BrowserRouter<T> {
   bool _listening = false;
-  Route _current;
-  StreamController<RoutingResult<T>> _onResolve =
-      StreamController<RoutingResult<T>>();
-  StreamController<Route<T>> _onRoute = StreamController<Route<T>>();
+  Route? _current;
+  final StreamController<RoutingResult<T?>> _onResolve =
+      StreamController<RoutingResult<T?>>();
+  final StreamController<Route<T?>> _onRoute = StreamController<Route<T?>>();
 
-  Route get currentRoute => _current;
-
-  @override
-  Stream<RoutingResult<T>> get onResolve => _onResolve.stream;
+  Route? get currentRoute => _current;
 
   @override
-  Stream<Route<T>> get onRoute => _onRoute.stream;
+  Stream<RoutingResult<T?>> get onResolve => _onResolve.stream;
 
-  _BrowserRouterImpl({bool listen}) : super() {
+  @override
+  Stream<Route<T?>> get onRoute => _onRoute.stream;
+
+  _BrowserRouterImpl({bool listen = false}) : super() {
     if (listen != false) this.listen();
     prepareAnchors();
   }
@@ -68,7 +67,8 @@ abstract class _BrowserRouterImpl<T> extends Router<T>
   @override
   void go(Iterable linkParams) => _goTo(navigate(linkParams));
 
-  Route on(String path, T handler, {Iterable<T> middleware}) =>
+  @override
+  Route on(String path, T handler, {Iterable<T> middleware = const []}) =>
       all(path, handler, middleware: middleware);
 
   void prepareAnchors() {
@@ -76,14 +76,14 @@ abstract class _BrowserRouterImpl<T> extends Router<T>
         .querySelectorAll('a')
         .cast<AnchorElement>(); //:not([dynamic])');
 
-    for (final AnchorElement $a in anchors) {
+    for (final $a in anchors) {
       if ($a.attributes.containsKey('href') &&
-          !$a.attributes.containsKey('download') &&
-          !$a.attributes.containsKey('target') &&
+          $a.attributes.containsKey('download') &&
+          $a.attributes.containsKey('target') &&
           $a.attributes['rel'] != 'external') {
         $a.onClick.listen((e) {
           e.preventDefault();
-          _goTo($a.attributes['href']);
+          _goTo($a.attributes['href']!);
           //go($a.attributes['href'].split('/').where((str) => str.isNotEmpty));
         });
       }
@@ -105,8 +105,10 @@ abstract class _BrowserRouterImpl<T> extends Router<T>
 }
 
 class _HashRouter<T> extends _BrowserRouterImpl<T> {
-  _HashRouter({bool listen}) : super(listen: listen) {
-    if (listen) this.listen();
+  _HashRouter({required bool listen}) : super(listen: listen) {
+    if (listen) {
+      this.listen();
+    }
   }
 
   @override
@@ -118,24 +120,28 @@ class _HashRouter<T> extends _BrowserRouterImpl<T> {
     final path = window.location.hash.replaceAll(_hash, '');
     var allResolved = resolveAbsolute(path);
 
-    final resolved = allResolved.isEmpty ? null : allResolved.first;
-
-    if (resolved == null) {
-      _onResolve.add(null);
-      _onRoute.add(_current = null);
-    } else if (resolved != null && resolved.route != _current) {
-      _onResolve.add(resolved);
-      _onRoute.add(_current = resolved.route);
+    if (allResolved.isEmpty) {
+      // TODO: Need fixing
+      //_onResolve.add(null);
+      //_onRoute.add(_current = null);
+      _current = null;
+    } else {
+      var resolved = allResolved.first;
+      if (resolved.route != _current) {
+        _onResolve.add(resolved);
+        _onRoute.add(_current = resolved.route);
+      }
     }
   }
 
   void handlePath(String path) {
     final resolved = resolveAbsolute(path).first;
 
-    if (resolved == null) {
-      _onResolve.add(null);
-      _onRoute.add(_current = null);
-    } else if (resolved != null && resolved.route != _current) {
+    //if (resolved == null) {
+    //  _onResolve.add(null);
+    //  _onRoute.add(_current = null);
+    //} else
+    if (resolved.route != _current) {
       _onResolve.add(resolved);
       _onRoute.add(_current = resolved.route);
     }
@@ -149,12 +155,12 @@ class _HashRouter<T> extends _BrowserRouterImpl<T> {
 }
 
 class _PushStateRouter<T> extends _BrowserRouterImpl<T> {
-  String _basePath;
+  late String _basePath;
 
-  _PushStateRouter({bool listen, Route root}) : super(listen: listen) {
+  _PushStateRouter({required bool listen}) : super(listen: listen) {
     var $base = window.document.querySelector('base[href]') as BaseElement;
 
-    if ($base?.href?.isNotEmpty != true) {
+    if ($base.href.isNotEmpty != true) {
       throw StateError(
           'You must have a <base href="<base-url-here>"> element present in your document to run the push state router.');
     }
@@ -167,20 +173,24 @@ class _PushStateRouter<T> extends _BrowserRouterImpl<T> {
     final resolved = resolveAbsolute(uri).first;
     var relativeUri = uri;
 
-    if (_basePath?.isNotEmpty == true) {
+    if (_basePath.isNotEmpty) {
       relativeUri = p.join(_basePath, uri.replaceAll(_straySlashes, ''));
     }
 
-    if (resolved == null) {
-      _onResolve.add(null);
-      _onRoute.add(_current = null);
-    } else {
-      final route = resolved.route;
-      window.history.pushState({'path': route.path, 'params': {}},
-          route.name ?? route.path, relativeUri);
-      _onResolve.add(resolved);
-      _onRoute.add(_current = route);
+    //if (resolved == null) {
+    //  _onResolve.add(null);
+    //  _onRoute.add(_current = null);
+    //} else {
+    final route = resolved.route;
+    var thisPath = route.name ?? '';
+    if (thisPath.isEmpty) {
+      thisPath = route.path;
     }
+    window.history
+        .pushState({'path': route.path, 'params': {}}, thisPath, relativeUri);
+    _onResolve.add(resolved);
+    _onRoute.add(_current = route);
+    //}
   }
 
   void handleState(state) {
@@ -188,17 +198,19 @@ class _PushStateRouter<T> extends _BrowserRouterImpl<T> {
       var path = state['path'].toString();
       final resolved = resolveAbsolute(path).first;
 
-      if (resolved != null && resolved.route != _current) {
+      if (resolved.route != _current) {
         //properties.addAll(state['properties'] ?? {});
         _onResolve.add(resolved);
         _onRoute.add(_current = resolved.route);
       } else {
-        _onResolve.add(null);
-        _onRoute.add(_current = null);
+        //_onResolve.add(null);
+        //_onRoute.add(_current = null);
+        _current = null;
       }
     } else {
-      _onResolve.add(null);
-      _onRoute.add(_current = null);
+      //_onResolve.add(null);
+      //_onRoute.add(_current = null);
+      _current = null;
     }
   }
 

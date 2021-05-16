@@ -1,38 +1,21 @@
-name: angel_jael
-version: 3.0.0
+name: angel3_jael
+version: 4.0.0
 description: Angel support for the Jael templating engine, similar to Blade or Liquid.
-author: Tobe O <thosakwe@gmail.com>
-homepage: https://github.com/angel-dart/jael/tree/master/jael
-publish_to: none
+homepage: https://github.com/dukefirehawk/angel/tree/angel3/packages/jael/angel_jael
 environment:
-  sdk: '>=2.10.0 <3.0.0'
+  sdk: '>=2.12.0 <3.0.0'
 dependencies:
-  angel_framework:
-    git: 
-      url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x
-      path: packages/framework
-  code_buffer: ^1.0.0
+  angel3_framework: ^4.0.0
+  angel3_code_buffer: ^2.0.0
+  angel3_symbol_table: ^2.0.0
+  jael3: ^4.0.0
+  jael3_preprocessor: ^4.0.0
   file: ^6.0.0
-  jael:
-    git: 
-      url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x
-      path: packages/jael/jael
-  jael_preprocessor:
-    git: 
-      url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x
-      path: packages/jael/jael_preprocessor
-  symbol_table: ^2.0.0
+  logging: ^1.0.1
 dev_dependencies:
-  angel_test:
-    git: 
-      url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x
-      path: packages/test
+  angel3_test: ^4.0.0
   html: ^0.15.0
-  test: ^1.15.7
-dependency_overrides:
-  web_socket_channel: ^2.0.0
-  http: ^0.13.0
+  test: ^1.17.3
+#dependency_overrides:
+#  web_socket_channel: ^2.0.0
+#  http: ^0.13.0

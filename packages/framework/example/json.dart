@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:isolate';
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_framework/http.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_framework/http.dart';
 
-main() async {
+void main() async {
   int x = 0;
   var c = Completer();
   var exit = ReceivePort();
@@ -44,10 +44,10 @@ serverMain(_) async {
   });
 
   app.errorHandler = (e, req, res) {
-    print(e.message ?? e.error ?? e);
+    print(e.message);
     print(e.stackTrace);
   };
 
-  var server = await http.startServer('127.0.0.1', 3000);
+  HttpServer server = await http.startServer('127.0.0.1', 3000);
   print('Listening at http://${server.address.address}:${server.port}');
 }

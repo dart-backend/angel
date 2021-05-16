@@ -1,15 +1,22 @@
 import 'package:source_span/source_span.dart';
-import 'package:symbol_table/symbol_table.dart';
+import 'package:angel3_symbol_table/angel3_symbol_table.dart';
 import 'expression.dart';
 import 'token.dart';
 
 class Identifier extends Expression {
-  final Token id;
+  late Token id;
 
   Identifier(this.id);
 
+  // TODO: Fix for SyntheticIdentifier
+  Identifier.noToken(Token? token) {
+    if (token != null) {
+      id = token;
+    }
+  }
+
   @override
-  compute(SymbolTable scope) {
+  dynamic compute(SymbolTable? scope) {
     switch (name) {
       case 'null':
         return null;
@@ -18,12 +25,12 @@ class Identifier extends Expression {
       case 'false':
         return false;
       default:
-        var symbol = scope.resolve(name);
+        var symbol = scope?.resolve(name);
         if (symbol == null) {
-          if (scope.resolve('!strict!')?.value == false) return null;
+          if (scope?.resolve('!strict!')?.value == false) return null;
           throw ArgumentError('The name "$name" does not exist in this scope.');
         }
-        return scope.resolve(name).value;
+        return scope?.resolve(name)!.value;
     }
   }
 
@@ -37,11 +44,11 @@ class SyntheticIdentifier extends Identifier {
   @override
   final String name;
 
-  SyntheticIdentifier(this.name, [Token token]) : super(token);
+  SyntheticIdentifier(this.name, [Token? token]) : super.noToken(token);
 
   @override
   FileSpan get span {
-    if (id != null) return id.span;
+    //return id.span;
     throw UnsupportedError('Cannot get the span of a SyntheticIdentifier.');
   }
 }

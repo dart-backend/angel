@@ -1,4 +1,4 @@
-import 'package:json_god/json_god.dart' as god;
+import 'package:angel3_json_god/angel3_json_god.dart' as god;
 import 'package:test/test.dart';
 import 'shared.dart';
 
@@ -13,20 +13,20 @@ main() {
   });
 
   test('toJson', () {
-    var foo = new Foo(text: 'baz');
+    var foo = Foo(text: 'baz');
     var data = god.serializeObject(foo);
     expect(data, equals({'bar': 'baz', 'foo': 'poobaz'}));
   });
 }
 
 class Foo {
-  String text;
+  String? text;
 
   String get foo => 'poo$text';
 
   Foo({this.text});
 
-  factory Foo.fromJson(Map json) => new Foo(text: json['bar'].toString());
+  factory Foo.fromJson(Map json) => Foo(text: json['bar'].toString());
 
   Map toJson() => {'bar': text, 'foo': foo};
 }

@@ -1,20 +1,21 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:angel_container/angel_container.dart';
+import 'package:angel3_container/angel3_container.dart';
 import 'package:http_parser/http_parser.dart';
 
 import '../core/core.dart';
 
 /// An implementation of [RequestContext] that wraps a [HttpRequest].
-class HttpRequestContext extends RequestContext<HttpRequest> {
-  Container _container;
-  MediaType _contentType;
-  HttpRequest _io;
-  String _override, _path;
+class HttpRequestContext extends RequestContext<HttpRequest?> {
+  Container? _container;
+  MediaType _contentType = MediaType("text", "plain");
+  HttpRequest? _io;
+  String? _override;
+  String _path = '';
 
   @override
-  Container get container => _container;
+  Container? get container => _container;
 
   @override
   MediaType get contentType {
@@ -23,24 +24,25 @@ class HttpRequestContext extends RequestContext<HttpRequest> {
 
   @override
   List<Cookie> get cookies {
-    return rawRequest.cookies;
+    return rawRequest!.cookies;
   }
 
   @override
   HttpHeaders get headers {
-    return rawRequest.headers;
+    return rawRequest!.headers;
   }
 
   @override
   String get hostname {
-    return rawRequest.headers.value('host');
+    return rawRequest?.headers.value('host') ?? "localhost";
   }
 
   /// The underlying [HttpRequest] instance underneath this context.
-  HttpRequest get rawRequest => _io;
+  @override
+  HttpRequest? get rawRequest => _io;
 
   @override
-  Stream<List<int>> get body => _io;
+  Stream<List<int>>? get body => _io;
 
   @override
   String get method {
@@ -49,7 +51,7 @@ class HttpRequestContext extends RequestContext<HttpRequest> {
 
   @override
   String get originalMethod {
-    return rawRequest.method;
+    return rawRequest!.method;
   }
 
   @override
@@ -59,24 +61,24 @@ class HttpRequestContext extends RequestContext<HttpRequest> {
 
   @override
   InternetAddress get remoteAddress {
-    return rawRequest.connectionInfo.remoteAddress;
+    return rawRequest!.connectionInfo!.remoteAddress;
   }
 
   @override
   HttpSession get session {
-    return rawRequest.session;
+    return rawRequest!.session;
   }
 
   @override
   Uri get uri {
-    return rawRequest.uri;
+    return rawRequest!.uri;
   }
 
   /// Magically transforms an [HttpRequest] into a [RequestContext].
   static Future<HttpRequestContext> from(
       HttpRequest request, Angel app, String path) {
     HttpRequestContext ctx = HttpRequestContext()
-      .._container = app.container.createChild();
+      .._container = app.container!.createChild();
 
     String override = request.method;
 
@@ -88,7 +90,7 @@ class HttpRequestContext extends RequestContext<HttpRequest> {
 
     ctx.app = app;
     ctx._contentType = request.headers.contentType == null
-        ? null
+        ? MediaType("text", "plain")
         : MediaType.parse(request.headers.contentType.toString());
     ctx._override = override;
 
@@ -128,9 +130,10 @@ class HttpRequestContext extends RequestContext<HttpRequest> {
 
   @override
   Future close() {
-    _contentType = null;
+    //_contentType = null;
     _io = null;
-    _override = _path = null;
+    _override = null;
+    //_path = null;
     return super.close();
   }
 }

@@ -1,6 +1,6 @@
 import 'dart:async';
-import 'package:angel_container/angel_container.dart';
-import 'package:angel_route/angel_route.dart';
+import 'package:angel3_container/angel3_container.dart';
+import 'package:angel3_route/angel3_route.dart';
 import 'package:logging/logging.dart';
 import 'env.dart';
 import 'hostname_parser.dart';
@@ -45,8 +45,6 @@ class HostnameRouter {
       });
     }
 
-    apps ??= {};
-    creators ??= {};
     apps = _parseMap(apps);
     creators = _parseMap(creators);
     var patterns = apps.keys.followedBy(creators.keys).toSet().toList();
@@ -60,10 +58,10 @@ class HostnameRouter {
       Map<Pattern, FutureOr<void> Function(Angel)> configurers,
       {Reflector reflector = const EmptyReflector(),
       AngelEnvironment environment = angelEnv,
-      Logger logger,
+      Logger? logger,
       bool allowMethodOverrides = true,
-      FutureOr<String> Function(dynamic) serializer,
-      ViewGenerator viewGenerator}) {
+      FutureOr<String> Function(dynamic)? serializer,
+      ViewGenerator? viewGenerator}) {
     var creators = configurers.map((p, c) {
       return MapEntry(p, () async {
         var app = Angel(
@@ -86,30 +84,28 @@ class HostnameRouter {
   /// Also returns `true` if all of the sub-app's handlers returned
   /// `true`.
   Future<bool> handleRequest(RequestContext req, ResponseContext res) async {
-    if (req.hostname != null) {
-      for (var pattern in _patterns) {
-        // print('${req.hostname} vs $_creators');
-        if (pattern.allMatches(req.hostname).isNotEmpty) {
-          // Resolve the entire pipeline within the context of the selected app.
-          var app = _apps[pattern] ??= (await _creators[pattern]());
-          // print('App for ${req.hostname} = $app from $pattern');
-          // app.dumpTree();
+    for (var pattern in _patterns) {
+      // print('${req.hostname} vs $_creators');
+      if (pattern.allMatches(req.hostname).isNotEmpty) {
+        // Resolve the entire pipeline within the context of the selected app.
+        var app = _apps[pattern] ??= (await _creators[pattern]!());
+        // print('App for ${req.hostname} = $app from $pattern');
+        // app.dumpTree();
 
-          var r = app.optimizedRouter;
-          var resolved = r.resolveAbsolute(req.path, method: req.method);
-          var pipeline = MiddlewarePipeline<RequestHandler>(resolved);
-          // print('Pipeline: $pipeline');
-          for (var handler in pipeline.handlers) {
-            // print(handler);
-            // Avoid stack overflow.
-            if (handler == handleRequest) {
-              continue;
-            } else if (!await app.executeHandler(handler, req, res)) {
-              // print('$handler TERMINATED');
-              return false;
-            } else {
-              // print('$handler CONTINUED');
-            }
+        var r = app.optimizedRouter;
+        var resolved = r.resolveAbsolute(req.path, method: req.method);
+        var pipeline = MiddlewarePipeline<RequestHandler>(resolved);
+        // print('Pipeline: $pipeline');
+        for (var handler in pipeline.handlers) {
+          // print(handler);
+          // Avoid stack overflow.
+          if (handler == handleRequest) {
+            continue;
+          } else if (!await app.executeHandler(handler, req, res)) {
+            // print('$handler TERMINATED');
+            return false;
+          } else {
+            // print('$handler CONTINUED');
           }
         }
       }

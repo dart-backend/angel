@@ -29,7 +29,7 @@ abstract class Table {
 
   MigrationColumn text(String name) => declare(name, ColumnType.text);
 
-  MigrationColumn varChar(String name, {int length}) {
+  MigrationColumn varChar(String name, {int? length}) {
     if (length == null) return declare(name, ColumnType.varChar);
     return declareColumn(
         name, new Column(type: ColumnType.varChar, length: length));

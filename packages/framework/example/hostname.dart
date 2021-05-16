@@ -1,6 +1,6 @@
 import 'dart:async';
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_framework/http.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_framework/http.dart';
 import 'package:logging/logging.dart';
 
 Future<void> apiConfigurer(Angel app) async {
@@ -14,7 +14,7 @@ Future<void> frontendConfigurer(Angel app) async {
   app.fallback((req, res) => '(usually an index page would be shown here.)');
 }
 
-main() async {
+void main() async {
   // Logging set up/boilerplate
   hierarchicalLoggingEnabled = true;
   //Logger.root.onRecord.listen(prettyLog);
@@ -33,7 +33,7 @@ main() async {
     });
 
   app.errorHandler = (e, req, res) {
-    print(e.message ?? e.error ?? e);
+    print(e.message);
     print(e.stackTrace);
     return e.toJson();
   };

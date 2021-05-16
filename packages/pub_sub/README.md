@@ -1,50 +1,53 @@
-# pub_sub
-[![Pub](https://img.shields.io/pub/v/pub_sub.svg)](https://pub.dartlang.org/packages/pub_sub)
-[![build status](https://travis-ci.org/thosakwe/pub_sub.svg)](https://travis-ci.org/thosakwe/pub_sub)
+# angel3_pub_sub
+[![version](https://img.shields.io/badge/pub-v3.0.0-brightgreen)](https://pub.dartlang.org/packages/angel3_pub_sub)
+[![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
+[![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
+
+[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/pub_sub/LICENSE)
 
 Keep application instances in sync with a simple pub/sub API.
 
 # Installation
-Add `pub_sub` as a dependency in your `pubspec.yaml` file:
+Add `angel3_pub_sub` as a dependency in your `pubspec.yaml` file:
 
 ```yaml
 dependencies:
-  pub_sub: ^1.0.0
+  angel3_pub_sub: ^3.0.0
 ```
 
 Then, be sure to run `pub get` in your terminal.
 
 # Usage
-`pub_sub` is your typical pub/sub API. However, `pub_sub` enforces authentication of every
-request. It is very possible that `pub_sub` will run on both servers and in the browser,
-or on a platform like Flutter. Thus, there are provisions available to limit
+`pub_sub` is your typical pub/sub API. However, `angel3_pub_sub` enforces authentication of every
+request. It is very possible that `angel3_pub_sub` will run on both servers and in the browser,
+or on a platform angel3_pub_sublike Flutter. Thus, there are provisions available to limit
 access.
 
-**Be careful to not leak any `pub_sub` client ID's if operating over a network.**
+**Be careful to not leak any `angel3_pub_sub` client ID's if operating over a network.**
 If you do, you risk malicious users injecting events into your application, which
 could ultimately spell *disaster*.
 
-A `pub_sub` server can operate across multiple *adapters*, which take care of interfacing data over different
+A `angel3_pub_sub` server can operate across multiple *adapters*, which take care of interfacing data over different
 media. For example, a single server can handle pub/sub between multiple Isolates and TCP Sockets, as well as
 WebSockets, simultaneously.
 
 ```dart
-import 'package:pub_sub/pub_sub.dart' as pub_sub;
+import 'package:angel3_pub_sub/angel3_pub_sub.dart' as pub_sub;
 
 main() async {
-  var server = new pub_sub.Server([
-    new FooAdapter(...),
-    new BarAdapter(...)
+  var server =  pub_sub.Server([
+     FooAdapter(...),
+     BarAdapter(...)
   ]);
 
-  server.addAdapter(new BazAdapter(...));
+  server.addAdapter( BazAdapter(...));
 
   // Call `start` to activate adapters, and begin handling requests.
   server.start();
 }
 ```
 ### Trusted Clients
-You can use `package:pub_sub` without explicitly registering
+You can use `package:angel3_pub_sub` without explicitly registering
 clients, *if and only if* those clients come from trusted sources.
 
 Clients via `Isolate` are always trusted.
@@ -53,10 +56,10 @@ Clients via `package:json_rpc_2` must be explicitly marked
 as trusted (i.e. using an IP whitelist mechanism):
 
 ```dart
-new JsonRpc2Adapter(..., isTrusted: false);
+JsonRpc2Adapter(..., isTrusted: false);
 
 // Pass `null` as Client ID when trusted...
-new pub_sub.IsolateClient(null);
+pub_sub.IsolateClient(null);
 ```
 
 ### Access Control
@@ -66,7 +69,7 @@ if it is impossible to register new clients, then malicious users cannot grant t
 privileges within the system.
 
 ```dart
-import 'package:pub_sub/pub_sub.dart' as pub_sub;
+import 'package:angel3_pub_sub/angel3_pub_sub.dart' as pub_sub;
 
 main() async {
   // ...
@@ -87,25 +90,25 @@ main() async {
 
 ## Isolates
 If you are just running multiple instances of a server,
-use `package:pub_sub/isolate.dart`. 
+use `package:angel3_pub_sub/isolate.dart`. 
 
 You'll need one isolate to be the master. Typically this is the first isolate you create.
 
 ```dart
 import 'dart:io';
 import 'dart:isolate';
-import 'package:pub_sub/isolate.dart' as pub_sub;
-import 'package:pub_sub/pub_sub.dart' as pub_sub;
+import 'package:angel3_pub_sub/isolate.dart' as pub_sub;
+import 'package:angel3_pub_sub/angel3_pub_sub.dart' as pub_sub;
 
-main() async {
+void main() async {
   // Easily bring up a server.
-  var adapter = new pub_sub.IsolateAdapter();
-  var server = new pub_sub.Server([adapter]);
+  var adapter = pub_sub.IsolateAdapter();
+  var server = pub_sub.Server([adapter]);
 
   // You then need to create a client that will connect to the adapter.
   // Each isolate in your application should contain a client.
   for (int i = 0; i < Platform.numberOfProcessors - 1; i++) {
-    server.registerClient(new pub_sub.ClientInfo('client$i'));
+    server.registerClient(pub_sub.ClientInfo('client$i'));
   }
 
   // Start the server.
@@ -123,7 +126,7 @@ main() async {
 
 void isolateMain(List args) {
   var client =
-      new pub_sub.IsolateClient('client${args[0]}', args[1] as SendPort);
+      pub_sub.IsolateClient('client${args[0]}', args[1] as SendPort);
 
   // The client will connect automatically. In the meantime, we can start subscribing to events.
   client.subscribe('user::logged_in').then((sub) {
@@ -138,14 +141,14 @@ void isolateMain(List args) {
 
 ## JSON RPC 2.0
 If you are not running on isolates, you need to import
-`package:pub_sub/json_rpc_2.dart`. This library leverages `package:json_rpc_2` and
+`package:angel3_pub_sub/json_rpc_2.dart`. This library leverages `package:json_rpc_2` and
 `package:stream_channel` to create clients and servers that can hypothetically run on any
 medium, i.e. WebSockets, or TCP Sockets.
 
-Check out `test/json_rpc_2_test.dart` for an example of serving `pub_sub` over TCP sockets.
+Check out `test/json_rpc_2_test.dart` for an example of serving `angel3_pub_sub` over TCP sockets.
 
 # Protocol
-`pub_sub` is built upon a simple RPC, and this package includes
+`angel3_pub_sub` is built upon a simple RPC, and this package includes
 an implementation that runs via `SendPort`s and `ReceivePort`s, as
 well as one that runs on any `StreamChannel<String>`.
 
@@ -213,7 +216,7 @@ Clients can send the following (3) methods:
 * `unsubscribe` (`subscription_id`:string): Unsubscribe from an event you previously subscribed to.
 * `publish` (`event_name`:string, `value`:any): Publish an event to all other clients who are subscribed.
 
-The client and server in `package:pub_sub/isolate.dart` must make extra
+The client and server in `package:angel3_pub_sub/isolate.dart` must make extra
 provisions to keep track of client ID's. Since `SendPort`s and `ReceivePort`s
 do not have any sort of guaranteed-unique ID's, new clients must send their
 `SendPort` to the server before sending any requests. The server then responds

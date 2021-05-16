@@ -1,9 +1,9 @@
 import 'dart:html';
-import 'package:angel_websocket/browser.dart';
+import 'package:angel3_websocket/browser.dart';
 
 /// Dummy app to ensure client works with DDC.
-main() {
-  var app = new WebSockets(window.location.origin);
+void main() {
+  var app = WebSockets(window.location.origin);
   window.alert(app.baseUrl.toString());
 
   app.connect().catchError((_) {

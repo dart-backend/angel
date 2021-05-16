@@ -1,4 +1,4 @@
-import 'package:angel_validate/angel_validate.dart';
+import 'package:angel3_validate/angel3_validate.dart';
 import 'package:test/test.dart';
 
 final Validator emailSchema =
@@ -43,7 +43,7 @@ main() {
 
   test('comma in schema', () {
     expect(todoSchema.rules.keys, allOf(contains('foo'), contains('bar')));
-    expect([todoSchema.rules['foo'].first, todoSchema.rules['bar'].first],
-        everyElement(predicate((x) => x == isTrue)));
+    expect([todoSchema.rules['foo']!.first, todoSchema.rules['bar']!.first],
+        everyElement(predicate((dynamic x) => x == isTrue)));
   });
 }
