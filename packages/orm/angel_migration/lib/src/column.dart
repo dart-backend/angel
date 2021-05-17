@@ -1,4 +1,4 @@
-import 'package:angel_orm/angel_orm.dart';
+import 'package:angel3_orm/angel3_orm.dart';
 
 class MigrationColumn extends Column {
   final List<MigrationColumnReference> _references = [];
@@ -12,10 +12,10 @@ class MigrationColumn extends Column {
   @override
   IndexType get indexType => _index!;
 
-  get defaultValue => _defaultValue;
+  dynamic get defaultValue => _defaultValue;
 
   List<MigrationColumnReference> get externalReferences =>
-      new List<MigrationColumnReference>.unmodifiable(_references);
+      List<MigrationColumnReference>.unmodifiable(_references);
 
   MigrationColumn(ColumnType? type,
       {bool isNullable: true, int? length, IndexType? indexType, defaultValue})
@@ -27,7 +27,7 @@ class MigrationColumn extends Column {
 
   factory MigrationColumn.from(Column column) => column is MigrationColumn
       ? column
-      : new MigrationColumn(column.type,
+      : MigrationColumn(column.type,
           isNullable: column.isNullable,
           length: column.length,
           indexType: column.indexType);
@@ -41,7 +41,7 @@ class MigrationColumn extends Column {
   MigrationColumn primaryKey() => this.._index = IndexType.primaryKey;
 
   MigrationColumnReference references(String foreignTable, String foreignKey) {
-    var ref = new MigrationColumnReference._(foreignTable, foreignKey);
+    var ref = MigrationColumnReference._(foreignTable, foreignKey);
     _references.add(ref);
     return ref;
   }
@@ -56,7 +56,7 @@ class MigrationColumnReference {
   String? get behavior => _behavior;
 
   StateError _locked() =>
-      new StateError('Cannot override existing "$_behavior" behavior.');
+      StateError('Cannot override existing "$_behavior" behavior.');
 
   void onDeleteCascade() {
     if (_behavior != null) throw _locked();

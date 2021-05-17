@@ -1,9 +1,9 @@
 /// These are straightforward migrations.
 ///
 /// You will likely never have to actually write these yourself.
-library angel_migration.example.todo;
+library angel3_migration.example.todo;
 
-import 'package:angel_migration/angel_migration.dart';
+import 'package:angel3_migration/angel3_migration.dart';
 
 class UserMigration implements Migration {
   @override

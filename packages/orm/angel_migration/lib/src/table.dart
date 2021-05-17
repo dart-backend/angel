@@ -1,11 +1,11 @@
-import 'package:angel_orm/angel_orm.dart';
+import 'package:angel3_orm/angel3_orm.dart';
 import 'column.dart';
 
 abstract class Table {
   MigrationColumn declareColumn(String name, Column column);
 
   MigrationColumn declare(String name, ColumnType type) =>
-      declareColumn(name, new MigrationColumn(type));
+      declareColumn(name, MigrationColumn(type));
 
   MigrationColumn serial(String name) => declare(name, ColumnType.serial);
 
@@ -22,7 +22,7 @@ abstract class Table {
   @deprecated
   MigrationColumn dateTime(String name) => timeStamp(name, timezone: true);
 
-  MigrationColumn timeStamp(String name, {bool timezone: false}) {
+  MigrationColumn timeStamp(String name, {bool timezone = false}) {
     if (timezone != true) return declare(name, ColumnType.timeStamp);
     return declare(name, ColumnType.timeStampWithTimeZone);
   }
@@ -32,7 +32,7 @@ abstract class Table {
   MigrationColumn varChar(String name, {int? length}) {
     if (length == null) return declare(name, ColumnType.varChar);
     return declareColumn(
-        name, new Column(type: ColumnType.varChar, length: length));
+        name, Column(type: ColumnType.varChar, length: length));
   }
 }
 
