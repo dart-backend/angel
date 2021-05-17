@@ -4,8 +4,8 @@
 ///
 /// [A List of 100 Irregular Plural Nouns in English](http://grammar.about.com/od/words/a/A-List-Of-Irregular-Plural-Nouns-In-English.htm)
 final Map<String, String> irregularPluralNouns = const {
-  "person": "people",
-  "man": "men",
-  "child": "children",
-  "sex": "sexes"
+  'person': 'people',
+  'man': 'men',
+  'child': 'children',
+  'sex': 'sexes'
 };

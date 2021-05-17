@@ -49,7 +49,7 @@ class SingularEncoder extends Converter<String, String> {
   }
 
   void addInflectionRule(String plural, dynamic singular) {
-    _inflectionRules.add([new RegExp(plural, caseSensitive: false), singular]);
+    _inflectionRules.add([RegExp(plural, caseSensitive: false), singular]);
   }
 
   void addIrregularInflectionRule(String singular, String plural) {
@@ -59,23 +59,23 @@ class SingularEncoder extends Converter<String, String> {
     final prest = plural.substring(1);
 
     if (s0.toUpperCase() == p0.toUpperCase()) {
-      addInflectionRule('(${s0})${srest}\$', (Match m) => '${m[1]}${srest}');
-      addInflectionRule('(${p0})${prest}\$', (Match m) => '${m[1]}${srest}');
+      addInflectionRule('($s0)$srest\$', (Match m) => '${m[1]}$srest');
+      addInflectionRule('($p0)$prest\$', (Match m) => '${m[1]}$srest');
     } else {
-      addInflectionRule('${s0.toUpperCase()}(?i)${srest}\$',
-          (Match m) => '${s0.toUpperCase()}${srest}');
-      addInflectionRule('${s0.toLowerCase()}(?i)${srest}\$',
-          (Match m) => '${s0.toUpperCase()}${srest}');
-      addInflectionRule('${p0.toUpperCase()}(?i)${prest}\$',
-          (Match m) => '${s0.toUpperCase()}${srest}');
-      addInflectionRule('${p0.toLowerCase()}(?i)${prest}\$',
-          (Match m) => '${s0.toLowerCase()}${srest}');
+      addInflectionRule('${s0.toUpperCase()}(?i)$srest\$',
+          (Match m) => '${s0.toUpperCase()}$srest');
+      addInflectionRule('${s0.toLowerCase()}(?i)$srest\$',
+          (Match m) => '${s0.toUpperCase()}$srest');
+      addInflectionRule('${p0.toUpperCase()}(?i)$prest\$',
+          (Match m) => '${s0.toUpperCase()}$srest');
+      addInflectionRule('${p0.toLowerCase()}(?i)$prest\$',
+          (Match m) => '${s0.toLowerCase()}$srest');
     }
   }
 
   @override
   String convert(String word) {
-    if (!word.isEmpty) {
+    if (word.isNotEmpty) {
       if (uncountableNouns.contains(word.toLowerCase())) {
         return word;
       } else {
@@ -92,4 +92,4 @@ class SingularEncoder extends Converter<String, String> {
   }
 }
 
-final Converter<String, String> SINGULAR = new SingularEncoder();
+final Converter<String, String> SINGULAR = SingularEncoder();

@@ -25,12 +25,12 @@ class PastEncoder extends Converter<String, String> {
 
   void addInflectionRule(String presentOrParticiple, dynamic past) {
     _inflectionRules
-        .add([new RegExp(presentOrParticiple, caseSensitive: false), past]);
+        .add([RegExp(presentOrParticiple, caseSensitive: false), past]);
   }
 
   void addIrregularInflectionRule(String presentOrParticiple, String past) {
     _inflectionRules.add([
-      new RegExp(
+      RegExp(
           r'^(back|dis|for|fore|in|inter|mis|off|over|out|par|pre|re|type|un|under|up)?' +
               presentOrParticiple +
               r'$',
@@ -41,13 +41,14 @@ class PastEncoder extends Converter<String, String> {
 
   @override
   String convert(String word) {
-    if (!word.isEmpty) {
-      if (word.contains("ed", word.length - 2)) {
-        RegExp reg = new RegExp(
+    if (word.isNotEmpty) {
+      if (word.contains('ed', word.length - 2)) {
+        var reg = RegExp(
             r'^(back|dis|for|fore|in|inter|mis|off|over|out|par|pre|re|type|un|under|up)(.+)$');
         if (reg.hasMatch(word)) {
-          if (!verbsEndingWithEd.contains(reg.firstMatch(word)!.group(2)))
+          if (!verbsEndingWithEd.contains(reg.firstMatch(word)!.group(2))) {
             return word;
+          }
         } else if (!verbsEndingWithEd.contains(word)) {
           return word;
         }
@@ -65,4 +66,4 @@ class PastEncoder extends Converter<String, String> {
   }
 }
 
-final Converter<String, String> PAST = new PastEncoder();
+final Converter<String, String> PAST = PastEncoder();

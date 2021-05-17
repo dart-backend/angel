@@ -41,7 +41,7 @@ class PluralEncoder extends Converter<String, String> {
   }
 
   void addInflectionRule(String singular, dynamic plural) {
-    _inflectionRules.add([new RegExp(singular, caseSensitive: false), plural]);
+    _inflectionRules.add([RegExp(singular, caseSensitive: false), plural]);
   }
 
   void addIrregularInflectionRule(String singular, String plural) {
@@ -51,23 +51,23 @@ class PluralEncoder extends Converter<String, String> {
     final prest = plural.substring(1);
 
     if (s0.toUpperCase() == p0.toUpperCase()) {
-      addInflectionRule('(${s0})${srest}\$', (Match m) => '${m[1]}${prest}');
-      addInflectionRule('(${p0})${prest}\$', (Match m) => '${m[1]}${prest}');
+      addInflectionRule('($s0)$srest\$', (Match m) => '${m[1]}$prest');
+      addInflectionRule('($p0)$prest\$', (Match m) => '${m[1]}$prest');
     } else {
-      addInflectionRule('${s0.toUpperCase()}(?i)${srest}\$',
-          (Match m) => '${p0.toUpperCase()}${prest}');
-      addInflectionRule('${s0.toLowerCase()}(?i)${srest}\$',
-          (Match m) => '${p0.toUpperCase()}${prest}');
-      addInflectionRule('${p0.toUpperCase()}(?i)${prest}\$',
-          (Match m) => '${p0.toUpperCase()}${prest}');
-      addInflectionRule('${p0.toLowerCase()}(?i)${prest}\$',
-          (Match m) => '${p0.toLowerCase()}${prest}');
+      addInflectionRule('${s0.toUpperCase()}(?i)$srest\$',
+          (Match m) => '${p0.toUpperCase()}$prest');
+      addInflectionRule('${s0.toLowerCase()}(?i)$srest\$',
+          (Match m) => '${p0.toUpperCase()}$prest');
+      addInflectionRule('${p0.toUpperCase()}(?i)$prest\$',
+          (Match m) => '${p0.toUpperCase()}$prest');
+      addInflectionRule('${p0.toLowerCase()}(?i)$prest\$',
+          (Match m) => '${p0.toLowerCase()}$prest');
     }
   }
 
   @override
   String convert(String word) {
-    if (!word.isEmpty) {
+    if (word.isNotEmpty) {
       if (uncountableNouns.contains(word.toLowerCase())) {
         return word;
       } else {
@@ -84,4 +84,4 @@ class PluralEncoder extends Converter<String, String> {
   }
 }
 
-final Converter<String, String> PLURAL = new PluralEncoder();
+final Converter<String, String> PLURAL = PluralEncoder();

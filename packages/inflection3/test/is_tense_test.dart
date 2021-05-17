@@ -1,11 +1,10 @@
 library inflection3.is_tense.test;
 
 import 'package:test/test.dart';
-
-import '../lib/inflection3.dart';
+import 'package:inflection3/inflection3.dart';
 
 void main() {
-  group("isTense", () {
+  group('isTense', () {
     test('correctly identifies if a word is in past tense', () {
       expect(isPastTense('run'), false);
       expect(isPastTense('ran'), true);

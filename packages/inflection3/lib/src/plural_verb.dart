@@ -28,12 +28,12 @@ class PluralVerbEncoder extends Converter<String, String> {
   }
 
   void addInflectionRule(String singular, dynamic plural) {
-    _inflectionRules.add([new RegExp(singular, caseSensitive: false), plural]);
+    _inflectionRules.add([RegExp(singular, caseSensitive: false), plural]);
   }
 
   @override
   String convert(String word) {
-    if (!word.isEmpty) {
+    if (word.isNotEmpty) {
       for (var r in _inflectionRules) {
         var pattern = r.first as RegExp;
         if (pattern.hasMatch(word)) {
@@ -46,4 +46,4 @@ class PluralVerbEncoder extends Converter<String, String> {
   }
 }
 
-final Converter<String, String> PLURALVERB = new PluralVerbEncoder();
+final Converter<String, String> PLURALVERB = PluralVerbEncoder();

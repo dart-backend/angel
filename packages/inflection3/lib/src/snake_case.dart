@@ -2,9 +2,9 @@
 
 import 'dart:convert';
 
-final _underscoreRE0 = new RegExp(r'''([A-Z\d]+)([A-Z][a-z])''');
-final _underscoreRE1 = new RegExp(r'''([a-z\d])([A-Z])''');
-final _underscoreRE2 = new RegExp(r'[-\s]');
+final _underscoreRE0 = RegExp(r'''([A-Z\d]+)([A-Z][a-z])''');
+final _underscoreRE1 = RegExp(r'''([a-z\d])([A-Z])''');
+final _underscoreRE2 = RegExp(r'[-\s]');
 
 class SnakeCaseEncoder extends Converter<String, String> {
   const SnakeCaseEncoder();
@@ -14,11 +14,11 @@ class SnakeCaseEncoder extends Converter<String, String> {
   @override
   String convert(String phrase) {
     return phrase
-        .replaceAllMapped(_underscoreRE0, (match) => "${match[1]}_${match[2]}")
-        .replaceAllMapped(_underscoreRE1, (match) => "${match[1]}_${match[2]}")
-        .replaceAll(_underscoreRE2, "_")
+        .replaceAllMapped(_underscoreRE0, (match) => '${match[1]}_${match[2]}')
+        .replaceAllMapped(_underscoreRE1, (match) => '${match[1]}_${match[2]}')
+        .replaceAll(_underscoreRE2, '_')
         .toLowerCase();
   }
 }
 
-const Converter<String, String> SNAKE_CASE = const SnakeCaseEncoder();
+const Converter<String, String> SNAKE_CASE = SnakeCaseEncoder();
