@@ -18,8 +18,8 @@ class JoinBuilder {
       this.alias,
       this.additionalFields = const [],
       this.aliasAllFields = false}) {
-    assert(to != null,
-        'computation of this join threw an error, and returned null.');
+    //assert(to != null,
+    //    'computation of this join threw an error, and returned null.');
   }
 
   String get fieldName {
