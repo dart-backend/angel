@@ -1,8 +1,8 @@
-library inflection.test;
+library inflection3.test;
 
 import 'package:test/test.dart';
 
-import '../lib/inflection2.dart';
+import '../lib/inflection3.dart';
 
 void main() {
   group("The inflection library", () {

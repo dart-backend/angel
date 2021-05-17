@@ -1,6 +1,6 @@
-import '../lib/inflection2.dart';
+import '../lib/inflection3.dart';
 
-main() {
+void main() {
   // Using 'shortcut' functions.
 
   print(pluralize("house")); // => "houses"

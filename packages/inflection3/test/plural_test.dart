@@ -1,8 +1,8 @@
-library inflection.plural.test;
+library inflection3.plural.test;
 
 import 'package:test/test.dart';
 
-import '../lib/inflection2.dart';
+import '../lib/inflection3.dart';
 import '../lib/src/uncountable_nouns.dart';
 
 void main() {

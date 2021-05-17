@@ -1,4 +1,4 @@
-library inflection.plural_verb.test;
+library inflection3.plural_verb.test;
 
 import 'package:test/test.dart';
 

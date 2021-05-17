@@ -1,4 +1,4 @@
-library inflection.spinal_case.test;
+library inflection3.spinal_case.test;
 
 import 'package:test/test.dart';
 

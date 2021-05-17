@@ -1,4 +1,4 @@
-library inflection.past.test;
+library inflection3.past.test;
 
 import 'package:test/test.dart';
 

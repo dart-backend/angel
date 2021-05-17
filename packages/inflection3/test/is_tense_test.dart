@@ -1,8 +1,8 @@
-library inflection.is_tense.test;
+library inflection3.is_tense.test;
 
 import 'package:test/test.dart';
 
-import '../lib/inflection2.dart';
+import '../lib/inflection3.dart';
 
 void main() {
   group("isTense", () {

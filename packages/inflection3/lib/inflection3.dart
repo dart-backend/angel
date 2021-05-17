@@ -4,7 +4,7 @@
 ///
 /// [ActiveSupport Inflector](https://github.com/rails/rails/tree/master/activesupport/lib/active_support/inflector)
 /// [Letter case](http://en.wikipedia.org/wiki/Letter_case#Special_case_styles)
-library inflection2;
+library inflection3;
 
 import 'src/past.dart';
 import 'src/plural.dart';

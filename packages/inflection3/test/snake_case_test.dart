@@ -1,4 +1,4 @@
-library inflection.snake_case.test;
+library inflection3.snake_case.test;
 
 import 'package:test/test.dart';
 

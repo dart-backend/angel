@@ -1,4 +1,4 @@
-library inflection.singular_verb.test;
+library inflection3.singular_verb.test;
 
 import 'package:test/test.dart';
 

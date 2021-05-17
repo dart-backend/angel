@@ -1,4 +1,4 @@
-import '../inflection2.dart';
+import '../inflection3.dart';
 
 /// returns true if this word is in the past tense
 bool isPastTense(String word) {
