@@ -3,15 +3,15 @@ import 'dart:async';
 import 'package:analyzer/dart/constant/value.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
-import 'package:angel_model/angel_model.dart';
-import 'package:angel_orm/angel_orm.dart';
-import 'package:angel_serialize/angel_serialize.dart';
-import 'package:angel_serialize_generator/angel_serialize_generator.dart';
-import 'package:angel_serialize_generator/build_context.dart';
-import 'package:angel_serialize_generator/context.dart';
+import 'package:angel3_model/angel3_model.dart';
+import 'package:angel3_orm/angel3_orm.dart';
+import 'package:angel3_serialize/angel3_serialize.dart';
+import 'package:angel3_serialize_generator/angel3_serialize_generator.dart';
+import 'package:angel3_serialize_generator/build_context.dart';
+import 'package:angel3_serialize_generator/context.dart';
 import 'package:build/build.dart';
 import 'package:collection/collection.dart' show IterableExtension;
-import 'package:inflection2/inflection2.dart';
+import 'package:inflection3/inflection3.dart';
 import 'package:recase/recase.dart';
 import 'package:source_gen/source_gen.dart';
 
@@ -114,16 +114,13 @@ Future<OrmBuildContext?> buildOrmContext(
           type: ColumnType.serial, indexType: IndexType.primaryKey);
     }
 
-    if (column == null) {
-      // Guess what kind of column this is...
-      column = Column(
-        type: inferColumnType(
-          buildCtx.resolveSerializedFieldType(field.name),
-        ),
-      );
-    }
+    column ??= Column(
+      type: inferColumnType(
+        buildCtx.resolveSerializedFieldType(field.name),
+      ),
+    );
 
-    if (column != null && column.type == null) {
+    if (column.type == null) {
       column = Column(
         isNullable: column.isNullable,
         length: column.length,

@@ -1,37 +1,16 @@
 name: angel_orm_generator
-version: 4.0.0
+version: 4.0.0-beta.1
 description: Code generators for Angel's ORM. Generates query builder classes.
-homepage: https://github.com/dukefirehawk/angel
-publish_to: none
+homepage: https://github.com/dukefirehawk/angel/tree/angel3/packages/orm/angel3_orm_generator
 environment:
   sdk: '>=2.12.0 <3.0.0'
 dependencies:
   analyzer: ^1.5.0
-  angel_model:
-    git: 
-      url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x_nnbd
-      path: packages/model
-  angel_serialize:
-    git: 
-      url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x_nnbd
-      path: packages/serialize/angel_serialize
-  angel_orm:
-    git: 
-      url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x_nnbd
-      path: packages/orm/angel_orm
-  angel_serialize_generator:
-    git: 
-      url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x_nnbd
-      path: packages/serialize/angel_serialize_generator
-  inflection2:
-    git: 
-      url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x_nnbd
-      path: packages/inflection2
+  angel3_model: ^3.0.0
+  angel3_serialize: ^4.0.0
+  angel3_orm: ^4.0.0-beta.1
+  angel3_serialize_generator: ^4.0.0
+  inflection3: ^0.5.3+1
   build: ^2.0.1
   build_config: ^1.0.0
   code_builder: ^4.0.0
@@ -42,16 +21,8 @@ dependencies:
   source_gen: ^1.0.0
   collection: ^1.15.0
 dev_dependencies:
-  angel_framework:
-    git: 
-      url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x_nnbd
-      path: packages/framework
-  angel_migration:
-    git: 
-      url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x_nnbd
-      path: packages/orm/angel_migration
+  angel3_framework: ^4.0.0
+  angel3_migration: ^4.0.0-beta.1
   #angel_test: ^1.0.0
   build_runner: ^2.0.1
   pedantic: ^1.11.0
