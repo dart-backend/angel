@@ -1,3 +1,6 @@
+# 2.0.2
+* Resolved static analysis warnings
+
 # 2.0.1
 * Resolved static analysis warnings
 
