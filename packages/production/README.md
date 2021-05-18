@@ -1,5 +1,5 @@
 # angel3_production
-[![version](https://img.shields.io/badge/pub-v3.0.0-brightgreen)](https://pub.dartlang.org/packages/angel3_production)
+[![version](https://img.shields.io/badge/pub-v3.0.1-brightgreen)](https://pub.dartlang.org/packages/angel3_production)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 [![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
 
@@ -26,7 +26,7 @@ import 'dart:isolate';
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_production/angel3_production.dart';
 
-main(List<String> args) => Runner('example', configureServer).run(args);
+void main(List<String> args) => Runner('example', configureServer).run(args);
 
 Future configureServer(Angel app) async {
   app.get('/', (req, res) => 'Hello, production world!');

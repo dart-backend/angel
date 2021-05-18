@@ -1,3 +1,6 @@
+# 3.0.1
+* Fixed static analysis warnings
+
 # 3.0.0
 * Migrated to support Dart SDK 2.12.x NNBD
 

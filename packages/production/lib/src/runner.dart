@@ -94,7 +94,11 @@ _  ___ |  /|  / / /_/ / _  /___  _  /___
             onError: onError.sendPort,
             errorsAreFatal: true && false)
         .then((isolate) {})
-        .catchError(c.completeError);
+        //.catchError(c.completeError);
+        .catchError((e) {
+      c.completeError(e as Object);
+      return null;
+    });
 
     onLogRecord.listen((msg) => handleLogRecord(msg as LogRecord?, options));
 
@@ -213,10 +217,8 @@ _  ___ |  /|  / / /_/ / _  /___  _  /___
 
       await app.configure(args.configureServer);
 
-      if (app.logger == null) {
-        app.logger = Logger(args.loggerName)
-          ..onRecord.listen((rec) => Runner.handleLogRecord(rec, args.options));
-      }
+      app.logger ??= Logger(args.loggerName)
+        ..onRecord.listen((rec) => Runner.handleLogRecord(rec, args.options));
 
       AngelHttp http;
       late SecurityContext securityContext;
