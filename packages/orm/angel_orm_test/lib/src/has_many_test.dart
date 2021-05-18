@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:angel_orm/angel_orm.dart';
+import 'package:angel3_orm/angel3_orm.dart';
 import 'package:test/test.dart';
 import 'models/tree.dart';
 

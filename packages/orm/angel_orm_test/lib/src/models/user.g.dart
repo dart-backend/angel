@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of angel_orm_generator.test.models.user;
+part of angel3_orm_generator.test.models.user;
 
 // **************************************************************************
 // MigrationGenerator

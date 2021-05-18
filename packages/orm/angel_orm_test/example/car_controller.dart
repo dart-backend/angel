@@ -1,7 +1,7 @@
 import 'dart:async';
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_orm/angel_orm.dart';
-import 'package:angel_orm_test/src/models/car.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_orm/angel3_orm.dart';
+import 'package:angel3_orm_test/src/models/car.dart';
 
 @Expose('/api/cars')
 class CarController extends Controller {

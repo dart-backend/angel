@@ -1,5 +1,5 @@
 name: angel3_migration_runner
-version: 4.0.0-beta.1
+version: 4.0.0-beta.2
 description: Command-line based database migration runner for Angel's ORM.
 homepage: https://github.com/dukefirehawk/angel/tree/angel3/packages/orm/angel_migration_runner
 environment:
