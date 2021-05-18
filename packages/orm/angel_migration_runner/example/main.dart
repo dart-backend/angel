@@ -1,21 +1,21 @@
-import 'package:angel_migration/angel_migration.dart';
-import 'package:angel_migration_runner/angel_migration_runner.dart';
-import 'package:angel_migration_runner/postgres.dart';
-import 'package:angel_orm/angel_orm.dart';
+import 'package:angel3_migration/angel3_migration.dart';
+import 'package:angel3_migration_runner/angel3_migration_runner.dart';
+import 'package:angel3_migration_runner/postgres.dart';
+import 'package:angel3_orm/angel3_orm.dart';
 import 'package:postgres/postgres.dart';
-import '../../angel_migration/example/todo.dart';
+import 'todo.dart';
 
-var migrationRunner = new PostgresMigrationRunner(
-  new PostgreSQLConnection('127.0.0.1', 5432, 'test',
+var migrationRunner = PostgresMigrationRunner(
+  PostgreSQLConnection('127.0.0.1', 5432, 'test',
       username: 'postgres', password: 'postgres'),
   migrations: [
-    new UserMigration(),
-    new TodoMigration(),
-    new FooMigration(),
+    UserMigration(),
+    TodoMigration(),
+    FooMigration(),
   ],
 );
 
-main(List<String> args) => runMigrations(migrationRunner, args);
+void main(List<String> args) => runMigrations(migrationRunner, args);
 
 class FooMigration extends Migration {
   @override

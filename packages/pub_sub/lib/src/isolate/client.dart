@@ -159,7 +159,7 @@ class _IsolateClientSubscription extends ClientSubscription {
   }
 
   @override
-  StreamSubscription listen(void onData(event)?,
+  StreamSubscription listen(void Function(dynamic event)? onData,
       {Function? onError, void Function()? onDone, bool? cancelOnError}) {
     return _stream.stream.listen(onData,
         onError: onError, onDone: onDone, cancelOnError: cancelOnError);
