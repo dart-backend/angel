@@ -11,7 +11,7 @@ import 'package:angel3_validate/angel3_validate.dart';
 Matcher isAngelHttpException(
         {String? message,
         int? statusCode,
-        Iterable<String> errors: const []}) =>
+        Iterable<String> errors = const []}) =>
     _IsAngelHttpException(
         message: message, statusCode: statusCode, errors: errors);
 
@@ -71,10 +71,11 @@ class _HasBody extends Matcher {
   bool matches(item, Map matchState) {
     if (item is http.Response) {
       if (body == true) return isNotEmpty.matches(item.bodyBytes, matchState);
-      if (body is List<int>)
+      if (body is List<int>) {
         return equals(body).matches(item.bodyBytes, matchState);
-      else
+      } else {
         return equals(body.toString()).matches(item.body, matchState);
+      }
     } else {
       return false;
     }
@@ -121,10 +122,11 @@ class _HasHeader extends Matcher {
 
   @override
   Description describe(Description description) {
-    if (value == true)
+    if (value == true) {
       return description.add('contains header $key');
-    else
+    } else {
       return description.add('contains header $key with value(s) $value');
+    }
   }
 
   @override
@@ -135,7 +137,7 @@ class _HasHeader extends Matcher {
             .matches(item.headers.keys, matchState);
       } else {
         if (!item.headers.containsKey(key.toLowerCase())) return false;
-        Iterable v = value is Iterable ? (value as Iterable) : [value];
+        var v = value is Iterable ? (value as Iterable) : [value];
         return v
             .map((x) => x.toString())
             .every(item.headers[key.toLowerCase()]!.split(',').contains);
@@ -189,7 +191,7 @@ class _IsAngelHttpException extends Matcher {
   final List<String> errors = [];
 
   _IsAngelHttpException(
-      {this.message, this.statusCode, Iterable<String> errors: const []}) {
+      {this.message, this.statusCode, Iterable<String> errors = const []}) {
     this.errors.addAll(errors);
   }
 
@@ -237,11 +239,17 @@ class _IsAngelHttpException extends Matcher {
             errors.isEmpty) {
           return true;
         } else {
-          if (statusCode != null) if (!equals(statusCode)
-              .matches(exc.statusCode, matchState)) return false;
+          if (statusCode != null) {
+            if (!equals(statusCode).matches(exc.statusCode, matchState)) {
+              return false;
+            }
+          }
 
-          if (message?.isNotEmpty == true) if (!equals(message)
-              .matches(exc.message, matchState)) return false;
+          if (message?.isNotEmpty == true) {
+            if (!equals(message).matches(exc.message, matchState)) {
+              return false;
+            }
+          }
 
           if (errors.isNotEmpty) {
             if (!errors.every(

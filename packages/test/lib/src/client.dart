@@ -14,7 +14,7 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:web_socket_channel/io.dart';
 //import 'package:uuid/uuid.dart';
 
-final RegExp _straySlashes = RegExp(r"(^/)|(/+$)");
+final RegExp _straySlashes = RegExp(r'(^/)|(/+$)');
 /*const Map<String, String> _readHeaders = const {'Accept': 'application/json'};
 const Map<String, String> _writeHeaders = const {
   'Accept': 'application/json',
@@ -25,15 +25,15 @@ final Uuid _uuid =  Uuid();*/
 /// Shorthand for bootstrapping a [TestClient].
 Future<TestClient> connectTo(Angel app,
     {Map? initialSession,
-    bool autoDecodeGzip: true,
-    bool useZone: false}) async {
-  print("Load configuration");
+    bool autoDecodeGzip = true,
+    bool useZone = false}) async {
+  print('Load configuration');
   if (!app.environment.isProduction) {
     app.configuration.putIfAbsent('testMode', () => true);
   }
 
   for (var plugin in app.startupHooks) {
-    print("Load plugins");
+    print('Load plugins');
     await plugin(app);
   }
   return TestClient(app,
@@ -62,11 +62,12 @@ class TestClient extends client.BaseAngelClient {
 
   late AngelHttp _http;
 
-  TestClient(this.server, {this.autoDecodeGzip: true, bool useZone: false})
+  TestClient(this.server, {this.autoDecodeGzip = true, bool useZone = false})
       : super(http.IOClient(), '/') {
     _http = AngelHttp(server, useZone: useZone);
   }
 
+  @override
   Future close() {
     this.client!.close();
     return server.close();
@@ -75,7 +76,7 @@ class TestClient extends client.BaseAngelClient {
   /// Opens a WebSockets connection to the server. This will automatically bind the server
   /// over HTTP, if it is not already listening. Unfortunately, WebSockets cannot be mocked (yet!).
   Future<client.WebSockets> websocket(
-      {String path: '/ws', Duration? timeout}) async {
+      {String path = '/ws', Duration? timeout}) async {
     if (_http.server == null) await _http.startServer();
     var url = _http.uri.replace(scheme: 'ws', path: path);
     var ws = _MockWebSockets(this, url.toString());
@@ -83,6 +84,7 @@ class TestClient extends client.BaseAngelClient {
     return ws;
   }
 
+  @override
   Future<StreamedResponse> send(http.BaseRequest request) async {
     var rq = MockHttpRequest(request.method, request.url);
     request.headers.forEach(rq.headers.add);
@@ -115,7 +117,7 @@ class TestClient extends client.BaseAngelClient {
       ..clear()
       ..addAll(rq.session);
 
-    Map<String, String> extractedHeaders = {};
+    var extractedHeaders = <String, String>{};
 
     rs.headers.forEach((k, v) {
       extractedHeaders[k] = v.join(',');
@@ -128,7 +130,7 @@ class TestClient extends client.BaseAngelClient {
       stream = stream.transform(gzip.decoder);
     }
 
-    // TODO: Calling persistentConnection causes LateInitialization Exception
+    // Calling persistentConnection causes LateInitialization Exception
     //var keepAliveState = rq.headers?.persistentConnection;
     //if (keepAliveState == null) {
     //  keepAliveState = false;
@@ -149,7 +151,8 @@ class TestClient extends client.BaseAngelClient {
   late String basePath;
 
   @override
-  Stream<String> authenticateViaPopup(String url, {String eventName: 'token'}) {
+  Stream<String> authenticateViaPopup(String url,
+      {String eventName = 'token'}) {
     throw UnsupportedError(
         'MockClient does not support authentication via popup.');
   }
@@ -161,7 +164,7 @@ class TestClient extends client.BaseAngelClient {
   @override
   client.Service<Id, Data> service<Id, Data>(String path,
       {Type? type, client.AngelDeserializer<Data>? deserializer}) {
-    String uri = path.toString().replaceAll(_straySlashes, "");
+    var uri = path.toString().replaceAll(_straySlashes, '');
     return _services.putIfAbsent(uri,
             () => _MockService<Id, Data>(this, uri, deserializer: deserializer))
         as client.Service<Id, Data>;
@@ -192,10 +195,11 @@ class _MockWebSockets extends client.WebSockets {
 
   @override
   Future<WebSocketChannel> getConnectedWebSocket() async {
-    Map<String, String> headers = {};
+    var headers = <String, String>{};
 
-    if (app.authToken?.isNotEmpty == true)
+    if (app.authToken?.isNotEmpty == true) {
       headers['authorization'] = 'Bearer ${app.authToken}';
+    }
 
     var socket = await WebSocket.connect(baseUrl.toString(), headers: headers);
     return IOWebSocketChannel(socket);

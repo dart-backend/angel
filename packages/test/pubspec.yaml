@@ -1,5 +1,5 @@
 name: angel3_test
-version: 4.0.1
+version: 4.0.2
 description: Testing utility library for the Angel framework. Use with package:test.
 homepage: https://github.com/dukefirehawk/angel/tree/angel3/packages/test
 environment: 
@@ -17,4 +17,5 @@ dependencies:
   web_socket_channel: ^2.0.0
 dev_dependencies: 
   test: ^1.17.4
+  pedantic: ^1.11.0
   

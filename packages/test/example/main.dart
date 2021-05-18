@@ -34,8 +34,8 @@ void main() {
       ..get('/gzip', (req, res) async {
         res
           ..headers['content-encoding'] = 'gzip'
-          ..add(gzip.encode('Poop'.codeUnits))
-          ..close();
+          ..add(gzip.encode('Poop'.codeUnits));
+        await res.close();
       })
       ..use(
           '/foo',
@@ -135,7 +135,7 @@ void main() {
     test('websocket', () async {
       var ws = await client.websocket();
       var foo = ws.service('foo');
-      foo.create({});
+      await foo.create({});
       var result = await foo.onCreated.first;
       expect(result.data, equals({'foo': 'bar'}));
     });

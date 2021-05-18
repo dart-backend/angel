@@ -1,3 +1,6 @@
+# 4.0.2
+* Resolved static analysis warnings
+
 # 4.0.1
 * Updated AUTHORS and LICENSE
 

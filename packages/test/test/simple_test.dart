@@ -35,8 +35,8 @@ void main() {
       ..get('/gzip', (req, res) async {
         res
           ..headers['content-encoding'] = 'gzip'
-          ..add(gzip.encode('Poop'.codeUnits))
-          ..close();
+          ..add(gzip.encode('Poop'.codeUnits));
+        await res.close();
       })
       ..use(
           '/foo',
