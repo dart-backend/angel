@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:collection';
-import 'package:angel_migration/angel_migration.dart';
+import 'package:angel3_migration/angel3_migration.dart';
 import 'package:postgres/postgres.dart';
 import '../runner.dart';
 import '../util.dart';
@@ -9,7 +9,7 @@ import 'schema.dart';
 class PostgresMigrationRunner implements MigrationRunner {
   final Map<String, Migration> migrations = {};
   final PostgreSQLConnection connection;
-  final Queue<Migration> _migrationQueue = new Queue();
+  final Queue<Migration> _migrationQueue = Queue();
   bool _connected = false;
 
   PostgresMigrationRunner(this.connection,
@@ -27,7 +27,7 @@ class PostgresMigrationRunner implements MigrationRunner {
     while (_migrationQueue.isNotEmpty) {
       var migration = _migrationQueue.removeFirst();
       var path = await absoluteSourcePath(migration.runtimeType);
-      migrations.putIfAbsent(path.replaceAll("\\", "\\\\"), () => migration);
+      migrations.putIfAbsent(path.replaceAll('\\', '\\\\'), () => migration);
     }
 
     if (!_connected) {
@@ -49,8 +49,8 @@ class PostgresMigrationRunner implements MigrationRunner {
   Future up() async {
     await _init();
     var r = await connection.query('SELECT path from migrations;');
-    Iterable<String> existing = r.expand((x) => x).cast<String>();
-    List<String> toRun = [];
+    var existing = r.expand((x) => x).cast<String>();
+    var toRun = <String>[];
 
     migrations.forEach((k, v) {
       if (!existing.contains(k)) toRun.add(k);
@@ -58,12 +58,12 @@ class PostgresMigrationRunner implements MigrationRunner {
 
     if (toRun.isNotEmpty) {
       var r = await connection.query('SELECT MAX(batch) from migrations;');
-      int curBatch = (r[0][0] ?? 0) as int;
-      int batch = curBatch + 1;
+      var curBatch = (r[0][0] ?? 0) as int;
+      var batch = curBatch + 1;
 
       for (var k in toRun) {
         var migration = migrations[k]!;
-        var schema = new PostgresSchema();
+        var schema = PostgresSchema();
         migration.up(schema);
         print('Bringing up "$k"...');
         await schema.run(connection).then((_) {
@@ -81,11 +81,11 @@ class PostgresMigrationRunner implements MigrationRunner {
     await _init();
 
     var r = await connection.query('SELECT MAX(batch) from migrations;');
-    int curBatch = (r[0][0] ?? 0) as int;
+    var curBatch = (r[0][0] ?? 0) as int;
     r = await connection
         .query('SELECT path from migrations WHERE batch = $curBatch;');
-    Iterable<String> existing = r.expand((x) => x).cast<String>();
-    List<String> toRun = [];
+    var existing = r.expand((x) => x).cast<String>();
+    var toRun = <String>[];
 
     migrations.forEach((k, v) {
       if (existing.contains(k)) toRun.add(k);
@@ -94,7 +94,7 @@ class PostgresMigrationRunner implements MigrationRunner {
     if (toRun.isNotEmpty) {
       for (var k in toRun.reversed) {
         var migration = migrations[k]!;
-        var schema = new PostgresSchema();
+        var schema = PostgresSchema();
         migration.down(schema);
         print('Bringing down "$k"...');
         await schema.run(connection).then((_) {
@@ -112,13 +112,13 @@ class PostgresMigrationRunner implements MigrationRunner {
     await _init();
     var r = await connection
         .query('SELECT path from migrations ORDER BY batch DESC;');
-    Iterable<String> existing = r.expand((x) => x).cast<String>();
+    var existing = r.expand((x) => x).cast<String>();
     var toRun = existing.where(migrations.containsKey).toList();
 
     if (toRun.isNotEmpty) {
       for (var k in toRun.reversed) {
         var migration = migrations[k]!;
-        var schema = new PostgresSchema();
+        var schema = PostgresSchema();
         migration.down(schema);
         print('Bringing down "$k"...');
         await schema.run(connection).then((_) {

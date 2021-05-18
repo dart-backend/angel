@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:angel_migration/angel_migration.dart';
+import 'package:angel3_migration/angel3_migration.dart';
 
 abstract class MigrationRunner {
   void addMigration(Migration migration);
