@@ -201,7 +201,7 @@ Future<OrmBuildContext?> buildOrmContext(
                 pluralize(foreign!.buildContext.modelClassNameRecase.snakeCase);
           } on StackOverflowError {
             throw UnsupportedError(
-                'There is an infinite cycle between ${clazz.name} and ${field.type.name}. This triggered a stack overflow.');
+                'There is an infinite cycle between ${clazz.name} and ${field.type.getDisplayString(withNullability: true)}. This triggered a stack overflow.');
           }
         }
       }
@@ -276,7 +276,6 @@ Future<OrmBuildContext?> buildOrmContext(
           var foreign = relation.throughContext ?? relation.foreign;
           var type = foreignField.type;
           if (isSpecialId(foreign, foreignField)) {
-            // TODO: incorrect type assignments
             //type = field.type.element.context.typeProvider.intType;
             type = field.type;
           }
@@ -288,7 +287,7 @@ Future<OrmBuildContext?> buildOrmContext(
       ctx.relations[field.name] = relation;
     } else {
       if (column.type == null) {
-        throw 'Cannot infer SQL column type for field "${ctx.buildContext.originalClassName}.${field.name}" with type "${field.type.displayName}".';
+        throw 'Cannot infer SQL column type for field "${ctx.buildContext.originalClassName}.${field.name}" with type "${field.type.getDisplayString(withNullability: true)}".';
       }
 
       // Expressions...
