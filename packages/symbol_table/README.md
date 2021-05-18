@@ -1,5 +1,5 @@
 # angel3_symbol_table
-[![version](https://img.shields.io/badge/pub-v2.0.0-brightgreen)](https://pub.dartlang.org/packages/angel3_symbol_table)
+[![version](https://img.shields.io/badge/pub-v2.0.1-brightgreen)](https://pub.dartlang.org/packages/angel3_symbol_table)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 [![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
 
@@ -52,7 +52,7 @@ doubles.create('one', value: 1.0);
 doubles.create('one', value: 1.0, constant: true);
 
 // Set a variable within an ancestor, OR create a new variable if none exists.
-doubles.assign('two', value: 2.0);
+doubles.assign('two', 2.0);
 
 // Completely remove a variable.
 doubles.remove('two');

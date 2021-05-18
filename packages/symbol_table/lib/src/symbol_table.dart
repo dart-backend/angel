@@ -17,7 +17,7 @@ class SymbolTable<T> {
   /// Initializes an empty symbol table.
   ///
   /// You can optionally provide a [Map] of starter [values].
-  SymbolTable({Map<String, T> values: const {}}) {
+  SymbolTable({Map<String, T> values = const {}}) {
     if (values.isNotEmpty == true) {
       values.forEach((k, v) {
         _variables.add(Variable<T>._(k, this, value: v));
@@ -40,7 +40,7 @@ class SymbolTable<T> {
   }
 
   /// Sets a local context for values within this scope to be resolved against.
-  void set context(T? value) {
+  set context(T? value) {
     _context = value;
   }
 
@@ -59,9 +59,11 @@ class SymbolTable<T> {
   SymbolTable<T>? get root {
     if (_root != null) return _root;
 
-    SymbolTable<T> out = this;
+    var out = this;
 
-    while (out._parent != null) out = out._parent!;
+    while (out._parent != null) {
+      out = out._parent!;
+    }
 
     return _root = out;
   }
@@ -73,8 +75,8 @@ class SymbolTable<T> {
   ///
   /// This list is unmodifiable.
   List<Variable<T>> get allVariables {
-    List<String> distinct = [];
-    List<Variable<T>> out = [];
+    var distinct = <String>[];
+    var out = <Variable<T>>[];
 
     void crawl(SymbolTable<T> table) {
       for (var v in table._variables) {
@@ -111,8 +113,8 @@ class SymbolTable<T> {
   ///
   /// This list is unmodifiable.
   List<Variable<T>> allVariablesWithVisibility(Visibility visibility) {
-    List<String> distinct = [];
-    List<Variable<T>> out = [];
+    var distinct = <String>[];
+    var out = <Variable<T>>[];
 
     void crawl(SymbolTable<T> table) {
       for (var v in table._variables) {
@@ -151,12 +153,13 @@ class SymbolTable<T> {
   /// You may optionally provide a [value], or mark the variable as [constant].
   Variable<T> create(String name, {T? value, bool? constant}) {
     // Check if it exists first.
-    if (_variables.any((v) => v.name == name))
+    if (_variables.any((v) => v.name == name)) {
       throw StateError(
           'A symbol named "$name" already exists within the current context.');
+    }
 
     _wipeLookupCache(name);
-    Variable<T> v = Variable._(name, this, value: value);
+    var v = Variable<T>._(name, this, value: value);
     if (constant == true) v.lock();
     _variables.add(v);
     return v;
@@ -208,12 +211,13 @@ class SymbolTable<T> {
     var v = _lookupCache.putIfAbsent(name, () {
       var variable = _variables.firstWhereOrNull((v) => v.name == name);
 
-      if (variable != null)
+      if (variable != null) {
         return variable;
-      else if (_parent != null)
+      } else if (_parent != null) {
         return _parent?.resolve(name);
-      else
+      } else {
         return null;
+      }
     });
 
     if (v == null) {
@@ -238,7 +242,7 @@ class SymbolTable<T> {
   /// Creates a child scope within this one.
   ///
   /// You may optionally provide starter [values].
-  SymbolTable<T> createChild({Map<String, T> values: const {}}) {
+  SymbolTable<T> createChild({Map<String, T> values = const {}}) {
     var child = SymbolTable(values: values);
     child
       .._depth = _depth + 1
@@ -273,7 +277,7 @@ class SymbolTable<T> {
   /// The forked scope is essentially orphaned and stands alone; although its
   /// [parent] getter will point to the parent of the original scope, the parent
   /// will not be aware of the new scope's existence.
-  SymbolTable<T> fork({Map<String, T> values: const {}}) {
+  SymbolTable<T> fork({Map<String, T> values = const {}}) {
     var table = SymbolTable<T>();
 
     table
@@ -282,7 +286,7 @@ class SymbolTable<T> {
       .._root = _root;
 
     table._variables.addAll(_variables.map((Variable v) {
-      Variable<T> variable = Variable._(v.name, this, value: v.value);
+      var variable = Variable<T>._(v.name, this, value: v.value as T?);
       variable.visibility = v.visibility;
 
       if (v.isImmutable) variable.lock();
@@ -297,7 +301,7 @@ class SymbolTable<T> {
   /// The variation will the input [name], but with a numerical suffix appended.
   /// Ex. `foo1`, `bar24`
   String uniqueName(String name) {
-    int count = 0;
+    var count = 0;
     SymbolTable? search = this;
 
     while (search != null) {
