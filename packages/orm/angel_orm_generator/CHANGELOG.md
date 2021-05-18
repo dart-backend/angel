@@ -1,3 +1,6 @@
+# 4.0.0-beta.2
+* Updated home page link
+
 # 4.0.0-beta.1
 * Migrated to support Dart SDK 2.12.x NNBD
 
