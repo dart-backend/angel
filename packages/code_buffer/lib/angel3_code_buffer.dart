@@ -69,7 +69,7 @@ class CodeBuffer implements StringBuffer {
   /// Copies the contents of this [CodeBuffer] into another, preserving indentation and source mapping information.
   void copyInto(CodeBuffer other) {
     if (_lines.isEmpty) return;
-    int i = 0;
+    var i = 0;
 
     for (var line in _lines) {
       // To compute offset:
@@ -175,25 +175,27 @@ class CodeBuffer implements StringBuffer {
   }
 
   @override
-  void writeln([Object? obj = ""]) {
+  void writeln([Object? obj = '']) {
     if (obj != null && obj != '') write(obj);
     _currentLine = null;
     _length++;
   }
 
   @override
-  void writeAll(Iterable objects, [String separator = ""]) {
+  void writeAll(Iterable objects, [String separator = '']) {
     write(objects.join(separator));
   }
 
   @override
   String toString() {
     var buf = StringBuffer();
-    int i = 0;
+    var i = 0;
 
     for (var line in lines) {
       if (i++ > 0) buf.write(newline);
-      for (int j = 0; j < line.indentationLevel; j++) buf.write(space);
+      for (var j = 0; j < line.indentationLevel; j++) {
+        buf.write(space);
+      }
       buf.write(line._buf.toString());
     }
 

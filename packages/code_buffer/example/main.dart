@@ -3,7 +3,7 @@ import 'package:test/test.dart';
 
 /// Use a `CodeBuffer` just like any regular `StringBuffer`:
 String someFunc() {
-  var buf = new CodeBuffer();
+  var buf = CodeBuffer();
   buf
     ..write('hello ')
     ..writeln('world!');
@@ -12,16 +12,16 @@ String someFunc() {
 
 /// However, a `CodeBuffer` supports indentation.
 void someOtherFunc() {
-  var buf = new CodeBuffer();
+  var buf = CodeBuffer();
 
   // Custom options...
   // ignore: unused_local_variable
   var customBuf =
-      new CodeBuffer(newline: '\r\n', space: '\t', trailingNewline: true);
+      CodeBuffer(newline: '\r\n', space: '\t', trailingNewline: true);
 
   // Without whitespace..
   // ignore: unused_local_variable
-  var minifyingBuf = new CodeBuffer.noWhitespace();
+  var minifyingBuf = CodeBuffer.noWhitespace();
 
   // Any following lines will have an incremented indentation level...
   buf.indent();

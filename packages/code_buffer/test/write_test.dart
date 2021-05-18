@@ -2,7 +2,7 @@ import 'package:charcode/charcode.dart';
 import 'package:test/test.dart';
 import 'package:angel3_code_buffer/angel3_code_buffer.dart';
 
-main() {
+void main() {
   var buf = CodeBuffer();
   tearDown(buf.clear);
 
