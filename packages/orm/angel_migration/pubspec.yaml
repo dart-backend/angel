@@ -1,5 +1,5 @@
 name: angel3_migration
-version: 4.0.0-beta.1
+version: 4.0.0-beta.2
 description: Database migration runtime for Angel's ORM. Use this package to define schemas.
 homepage: https://github.com/dukefirehawk/angel/tree/angel3/packages/orm/angel_migration
 environment:

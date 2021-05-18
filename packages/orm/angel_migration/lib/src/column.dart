@@ -18,7 +18,7 @@ class MigrationColumn extends Column {
       List<MigrationColumnReference>.unmodifiable(_references);
 
   MigrationColumn(ColumnType? type,
-      {bool isNullable: true, int? length, IndexType? indexType, defaultValue})
+      {bool isNullable = true, int? length, IndexType? indexType, defaultValue})
       : super(type: type, length: length) {
     _nullable = isNullable;
     _index = indexType;
