@@ -11,7 +11,7 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
     }
 
     var ctx = await buildContext(element as ClassElement, annotation, buildStep,
-        await buildStep.resolver, true);
+        buildStep.resolver, true);
 
     var lib = Library((b) {
       generateClass(ctx, b, annotation);
@@ -180,7 +180,7 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
       }
 
       var buf = StringBuffer('return ${ctx.modelClassName}(');
-      int i = 0;
+      var i = 0;
       for (var param in ctx.constructorParameters) {
         if (i++ > 0) buf.write(', ');
         buf.write(param.name);
@@ -240,18 +240,17 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
   }
 
   void generateHashCode(BuildContext? ctx, ClassBuilder clazz) {
-    clazz
-      ..methods.add(Method((method) {
-        method
-          ..name = 'hashCode'
-          ..type = MethodType.getter
-          ..returns = refer('int')
-          ..annotations.add(refer('override'))
-          ..body = refer('hashObjects')
-              .call([literalList(ctx!.fields.map((f) => refer(f.name)))])
-              .returned
-              .statement;
-      }));
+    clazz.methods.add(Method((method) {
+      method
+        ..name = 'hashCode'
+        ..type = MethodType.getter
+        ..returns = refer('int')
+        ..annotations.add(refer('override'))
+        ..body = refer('hashObjects')
+            .call([literalList(ctx!.fields.map((f) => refer(f.name)))])
+            .returned
+            .statement;
+    }));
   }
 
   void generateToString(BuildContext? ctx, ClassBuilder clazz) {
