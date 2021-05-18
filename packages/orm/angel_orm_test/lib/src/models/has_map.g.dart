@@ -67,7 +67,10 @@ class HasMapQuery extends Query<HasMap, HasMapQueryWhere> {
     if (row.every((x) => x == null)) {
       return Optional.empty();
     }
-    var model = HasMap(value: (row[0]), list: (row[1]));
+
+    var m = {};
+    m[row[0]] = row[0];
+    var model = HasMap(value: m, list: [row[1]]);
     return Optional.of(model);
   }
 
@@ -148,7 +151,7 @@ class HasMap implements _HasMap {
 
   @override
   String toString() {
-    return "HasMap(value=$value, list=$list)";
+    return 'HasMap(value=$value, list=$list)';
   }
 
   Map<String, dynamic> toJson() {

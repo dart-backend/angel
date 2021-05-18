@@ -265,9 +265,9 @@ class AuthorQuery extends Query<Author, AuthorQueryWhere> {
     }
     var model = Author(
         id: row[0].toString(),
-        createdAt: (row[1]),
-        updatedAt: (row[2]),
-        name: (row[3]));
+        createdAt: (row[1] as DateTime?),
+        updatedAt: (row[2] as DateTime?),
+        name: (row[3]) as String?);
     return Optional.ofNullable(model);
   }
 

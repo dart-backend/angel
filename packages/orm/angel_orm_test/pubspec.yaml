@@ -16,3 +16,4 @@ dev_dependencies:
   angel3_framework: ^4.0.0
   build_runner: ^2.0.1
   optional: ^6.0.0-nullsafety.2
+  pedantic: ^1.11.0
