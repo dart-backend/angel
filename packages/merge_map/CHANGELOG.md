@@ -1,3 +1,6 @@
+# 2.0.2
+* Resolve static analysis warnings
+
 # 2.0.1
 * Updated README
 

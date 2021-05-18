@@ -1,7 +1,7 @@
 /// Exposes the [mergeMap] function, which... merges Maps.
 library angel3_merge_map;
 
-_copyValues<K, V>(
+dynamic _copyValues<K, V>(
     Map<K, V> from, Map<K, V?>? to, bool recursive, bool acceptNull) {
   for (var key in from.keys) {
     if (from[key] is Map<K, V> && recursive) {
@@ -25,8 +25,8 @@ _copyValues<K, V>(
 /// then if the value on a map is `null`, it will be ignored, and
 /// that `null` will not be copied.
 Map<K, V> mergeMap<K, V>(Iterable<Map<K, V>> maps,
-    {bool recursive: true, bool acceptNull: false}) {
-  Map<K, V> result = <K, V>{};
+    {bool recursive = true, bool acceptNull = false}) {
+  var result = <K, V>{};
   maps.forEach((Map<K, V> map) {
     _copyValues(map, result, recursive, acceptNull);
   });
