@@ -51,12 +51,8 @@ void main() {
   });
 
   tearDown(() {
-    Future.wait([
-      server?.close(),
-      client1?.close(),
-      client2?.close(),
-      client3?.close()
-    ]);
+    Future.wait(
+        [server.close(), client1.close(), client2.close(), client3.close()]);
   });
 
   group('trusted', () {

@@ -12,7 +12,7 @@ void main() async {
   // Every untrusted client in your application should be pre-registered.
   //
   // In the case of Isolates, however, those are always implicitly trusted.
-  for (int i = 0; i < Platform.numberOfProcessors - 1; i++) {
+  for (var i = 0; i < Platform.numberOfProcessors - 1; i++) {
     server.registerClient(pub_sub.ClientInfo('client$i'));
   }
 
