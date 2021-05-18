@@ -179,6 +179,7 @@ class _ReflectedClassMirror extends ReflectedClass {
 }
 
 class _ReflectedDeclarationMirror extends ReflectedDeclaration {
+  @override
   final String name;
   final dart.MethodMirror mirror;
 

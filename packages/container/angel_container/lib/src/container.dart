@@ -116,7 +116,7 @@ class Container {
       var constructor = reflectedType.constructors.firstWhere(
           (c) => isDefault(c.name),
           orElse: (() => throw ReflectionException(
-              '${reflectedType.name} has no default constructor, and therefore cannot be instantiated.')) as ReflectedFunction Function()?);
+              '${reflectedType.name} has no default constructor, and therefore cannot be instantiated.')));
 
       for (var param in constructor.parameters) {
         var value = make(param.type.reflectedType);
@@ -159,7 +159,8 @@ class Container {
   /// type within *this* container will return the result of [f].
   ///
   /// Returns [f].
-  T Function(Container) registerFactory<T>(T Function(Container) f, {Type? as}) {
+  T Function(Container) registerFactory<T>(T Function(Container) f,
+      {Type? as}) {
     as ??= T;
 
     if (_factories.containsKey(as)) {

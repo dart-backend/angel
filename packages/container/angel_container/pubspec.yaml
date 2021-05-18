@@ -1,5 +1,5 @@
 name: angel3_container
-version: 3.0.1
+version: 3.0.2
 description: A hierarchical DI container, and pluggable backends for reflection.
 homepage: https://github.com/dukefirehawk/angel/tree/angel3/packages/container/angel_container
 environment:
