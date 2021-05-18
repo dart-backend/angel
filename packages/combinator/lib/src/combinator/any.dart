@@ -7,7 +7,7 @@ part of lex.src.combinator;
 /// You can provide a custom [errorMessage]. You can set it to `false` to not
 /// generate any error at all.
 Parser<T> any<T>(Iterable<Parser<T>> parsers,
-    {bool backtrack: true, errorMessage, SyntaxErrorSeverity? severity}) {
+    {bool backtrack = true, errorMessage, SyntaxErrorSeverity? severity}) {
   return _Any(parsers, backtrack != false, errorMessage,
       severity ?? SyntaxErrorSeverity.error);
 }
@@ -30,14 +30,14 @@ class _Any<T> extends Parser<T> {
     }
 
     var errors = <SyntaxError>[];
-    int replay = args.scanner.position;
+    var replay = args.scanner.position;
 
     for (var parser in inactive) {
       var result = parser._parse(args.increaseDepth());
 
-      if (result.successful)
+      if (result.successful) {
         return result;
-      else {
+      } else {
         if (backtrack) args.scanner.position = replay;
         if (parser is _Alt) errors.addAll(result.errors);
       }
@@ -60,7 +60,7 @@ class _Any<T> extends Parser<T> {
   @override
   ParseResult<T> __parse(ParseArgs args) {
     // Never called
-    throw ArgumentError("[Combinator] Invalid method call");
+    throw ArgumentError('[Combinator] Invalid method call');
   }
 
   @override
@@ -68,7 +68,7 @@ class _Any<T> extends Parser<T> {
     buffer
       ..writeln('any(${parsers.length}) (')
       ..indent();
-    int i = 1;
+    var i = 1;
 
     for (var parser in parsers) {
       buffer

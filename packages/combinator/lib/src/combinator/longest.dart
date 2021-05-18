@@ -25,16 +25,16 @@ class _Longest<T> extends Parser<T> {
       return ParseResult(args.trampoline, args.scanner, this, false, []);
     }
 
-    int replay = args.scanner.position;
+    var replay = args.scanner.position;
     var errors = <SyntaxError>[];
     var results = <ParseResult<T>>[];
 
     for (var parser in inactive) {
       var result = parser._parse(args.increaseDepth());
 
-      if (result.successful && result.span != null)
+      if (result.successful && result.span != null) {
         results.add(result);
-      else if (parser is _Alt) errors.addAll(result.errors);
+      } else if (parser is _Alt) errors.addAll(result.errors);
 
       args.scanner.position = replay;
     }
@@ -45,7 +45,7 @@ class _Longest<T> extends Parser<T> {
       return results.first;
     }
 
-    if (errorMessage != false)
+    if (errorMessage != false) {
       errors.add(
         SyntaxError(
           severity,
@@ -54,22 +54,23 @@ class _Longest<T> extends Parser<T> {
           args.scanner.emptySpan,
         ),
       );
+    }
 
     return ParseResult(args.trampoline, args.scanner, this, false, errors);
   }
 
   @override
   ParseResult<T> __parse(ParseArgs args) {
-    int replay = args.scanner.position;
+    var replay = args.scanner.position;
     var errors = <SyntaxError>[];
     var results = <ParseResult<T>>[];
 
     for (var parser in parsers) {
       var result = parser._parse(args.increaseDepth());
 
-      if (result.successful)
+      if (result.successful) {
         results.add(result);
-      else if (parser is _Alt) errors.addAll(result.errors);
+      } else if (parser is _Alt) errors.addAll(result.errors);
 
       args.scanner.position = replay;
     }
@@ -97,7 +98,7 @@ class _Longest<T> extends Parser<T> {
     buffer
       ..writeln('longest(${parsers.length}) (')
       ..indent();
-    int i = 1;
+    var i = 1;
 
     for (var parser in parsers) {
       buffer

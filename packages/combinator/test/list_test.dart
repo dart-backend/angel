@@ -2,7 +2,7 @@ import 'package:angel3_combinator/angel3_combinator.dart';
 import 'package:test/test.dart';
 import 'common.dart';
 
-main() {
+void main() {
   var number = chain([
     match(RegExp(r'[0-9]+')).value((r) => int.parse(r.span!.text)),
     match(',').opt(),

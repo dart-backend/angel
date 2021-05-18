@@ -13,7 +13,7 @@ class _ToList<T> extends ListParser<T> {
       return (result as ParseResult<List<T>>).change(parser: this);
     }
 
-    List<T> values = [];
+    var values = <T>[];
     if (result.value != null) {
       values.add(result.value!);
     }

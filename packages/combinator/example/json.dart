@@ -50,7 +50,7 @@ Parser jsonGrammar() {
   return expr.foldErrors();
 }
 
-main() {
+void main() {
   var JSON = jsonGrammar();
 
   while (true) {
@@ -64,7 +64,8 @@ main() {
         print(error.toolString);
         print(error.span!.highlight(color: true));
       }
-    } else
+    } else {
       print(result.value);
+    }
   }
 }

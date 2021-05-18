@@ -49,7 +49,8 @@ void main() {
         print(error.toolString);
         print(error.span!.highlight(color: true));
       }
-    } else
+    } else {
       print(result.value);
+    }
   }
 }

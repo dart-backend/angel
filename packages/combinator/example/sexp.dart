@@ -45,12 +45,13 @@ void main() {
 
       while (q.isNotEmpty) {
         var current = q.removeFirst();
-        if (current is! Tuple2)
+        if (current is! Tuple2) {
           out.insert(0, current);
-        else {
+        } else {
           var args = [];
-          for (int i = 0; i < (current.item1 as num); i++)
+          for (var i = 0; i < (current.item1 as num); i++) {
             args.add(out.removeLast());
+          }
           out.add(current.item2(args));
         }
       }

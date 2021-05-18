@@ -8,23 +8,26 @@ class Reference<T> extends Parser<T> {
 
   Reference._();
 
-  void set parser(Parser<T> value) {
-    if (_parser != null)
+  set parser(Parser<T> value) {
+    if (_parser != null) {
       throw StateError('There is already a parser assigned to this reference.');
+    }
     _parser = value;
   }
 
   @override
   ParseResult<T> __parse(ParseArgs args) {
-    if (_parser == null)
+    if (_parser == null) {
       throw StateError('There is no parser assigned to this reference.');
+    }
     return _parser!._parse(args);
   }
 
   @override
   ParseResult<T> _parse(ParseArgs args) {
-    if (_parser == null)
+    if (_parser == null) {
       throw StateError('There is no parser assigned to this reference.');
+    }
     return _parser!._parse(args);
   }
 

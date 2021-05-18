@@ -10,7 +10,7 @@ final Parser<String> id =
 // pattern.
 //
 // This is useful for parsing arrays or map literals.
-main() {
+void main() {
   while (true) {
     stdout.write('Enter a string (ex "a,b,c"): ');
     var line = stdin.readLineSync()!;
@@ -22,7 +22,8 @@ main() {
         print(error.toolString);
         print(error.span!.highlight(color: true));
       }
-    } else
+    } else {
       print(result.value);
+    }
   }
 }

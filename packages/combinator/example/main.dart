@@ -19,7 +19,7 @@ final Parser number = //
     (minus.opt() & decimal) // minus?, decimal
         .map<num>((r) => num.parse(r.span!.text));
 
-main() {
+void main() {
   while (true) {
     stdout.write('Enter a number: ');
     var line = stdin.readLineSync()!;
@@ -31,7 +31,8 @@ main() {
         stderr.writeln(error.toolString);
         stderr.writeln(error.span!.highlight(color: true));
       }
-    } else
+    } else {
       print(result.value);
+    }
   }
 }

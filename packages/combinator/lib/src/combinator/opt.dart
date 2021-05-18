@@ -37,7 +37,7 @@ class _ListOpt<T> extends ListParser<T> {
   @override
   ParseResult<List<T>> __parse(ParseArgs args) {
     var replay = args.scanner.position;
-    ParseResult<List<T>> result = parser._parse(args.increaseDepth());
+    var result = parser._parse(args.increaseDepth());
 
     if (!result.successful) args.scanner.position = replay;
 

@@ -72,11 +72,13 @@ abstract class Parser<T> {
   ParseResult<T> _parse(ParseArgs args) {
     var pos = args.scanner.position;
 
-    if (args.trampoline.hasMemoized(this, pos))
+    if (args.trampoline.hasMemoized(this, pos)) {
       return args.trampoline.getMemoized<T>(this, pos);
+    }
 
-    if (args.trampoline.isActive(this, pos))
+    if (args.trampoline.isActive(this, pos)) {
       return ParseResult(args.trampoline, args.scanner, this, false, []);
+    }
 
     args.trampoline.enter(this, pos);
     var result = __parse(args);
@@ -103,7 +105,6 @@ abstract class Parser<T> {
   /// Casts this parser to produce [dynamic] objects.
   Parser<dynamic> castDynamic() => _CastDynamic<T>(this);
 
-  // TODO: Type issue
   /// Runs the given function, which changes the returned [ParseResult] into one relating to a [U] object.
   Parser<U> change<U>(ParseResult<U> Function(ParseResult<T>) f) {
     return _Change<T, U>(this, f);
@@ -122,7 +123,7 @@ abstract class Parser<T> {
       _Alt<T>(this, errorMessage, severity ?? SyntaxErrorSeverity.error);
 
   /// Removes multiple errors that occur in the same spot; this can reduce noise in parser output.
-  Parser<T> foldErrors({bool equal(SyntaxError a, SyntaxError b)?}) {
+  Parser<T> foldErrors({bool Function(SyntaxError a, SyntaxError b)? equal}) {
     equal ??= (b, e) => b.span?.start.offset == e.span?.start.offset;
     return _FoldErrors<T>(this, equal);
   }
@@ -177,8 +178,8 @@ abstract class Parser<T> {
   ///
   /// The generated parser only runs once; repeated uses always exit eagerly.
   Parser<T> safe(
-          {bool backtrack: true,
-          String errorMessage = "error",
+          {bool backtrack = true,
+          String errorMessage = 'error',
           SyntaxErrorSeverity? severity}) =>
       _Safe<T>(
           this, backtrack, errorMessage, severity ?? SyntaxErrorSeverity.error);
@@ -191,14 +192,14 @@ abstract class Parser<T> {
   /// Use this as a shortcut to parse arrays, parameter lists, etc.
   Parser<List<T>> separatedBy(Parser other) {
     var suffix = other.then(this).index(1).cast<T>();
-    return this.then(suffix.star()).map((r) {
+    return then(suffix.star()).map((r) {
       var v = r.value;
       if (v == null || v.length < 2) {
         return [];
       }
       var preceding = v.isEmpty ? [] : (v[0] == null ? [] : [v[0]]);
       var out = List<T>.from(preceding);
-      if (v[1] != null && v[1] != "NULL") {
+      if (v[1] != null && v[1] != 'NULL') {
         v[1].forEach((element) {
           out.add(element as T);
         });
@@ -240,7 +241,7 @@ abstract class Parser<T> {
   Parser<T> space() => trail(RegExp(r'[ \n\r\t]+'));
 
   /// Consumes 0 or more instance(s) of this parser.
-  ListParser<T> star({bool backtrack: true}) =>
+  ListParser<T> star({bool backtrack = true}) =>
       times(1, exact: false, backtrack: backtrack).opt();
 
   /// Shortcut for [chain]-ing two parsers together.
@@ -260,10 +261,10 @@ abstract class Parser<T> {
   ///
   /// You can provide custom error messages for when there are [tooFew] or [tooMany] occurrences.
   ListParser<T> times(int count,
-      {bool exact: true,
+      {bool exact = true,
       String tooFew = 'Too few',
       String tooMany = 'Too many',
-      bool backtrack: true,
+      bool backtrack = true,
       SyntaxErrorSeverity? severity}) {
     return _Repeat<T>(this, count, exact, tooFew, tooMany, backtrack,
         severity ?? SyntaxErrorSeverity.error);
@@ -273,7 +274,7 @@ abstract class Parser<T> {
   ///
   /// If [backtrack] is `true` (default), then a failed parse will not
   /// modify the scanner state.
-  Parser<T> opt({bool backtrack: true}) => _Opt(this, backtrack);
+  Parser<T> opt({bool backtrack = true}) => _Opt(this, backtrack);
 
   /// Sets the value of the [ParseResult].
   Parser<T> value(T Function(ParseResult<T?>) f) {
@@ -302,7 +303,7 @@ abstract class ListParser<T> extends Parser<List<T>> {
   ListParser<T> sort(Comparator<T> compare) => _Compare(this, compare);
 
   @override
-  ListParser<T> opt({bool backtrack: true}) => _ListOpt(this, backtrack);
+  ListParser<T> opt({bool backtrack = true}) => _ListOpt(this, backtrack);
 
   /// Modifies this parser, returning only the values that match a predicate.
   Parser<List<T>> where(bool Function(T) f) =>

@@ -64,7 +64,8 @@ void main() {
         stderr.writeln(error.toolString);
         stderr.writeln(error.span!.highlight(color: true));
       }
-    } else
+    } else {
       print(result.value);
+    }
   }
 }

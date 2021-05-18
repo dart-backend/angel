@@ -15,7 +15,7 @@ class _Match<T> extends Parser<T> {
   @override
   ParseResult<T> __parse(ParseArgs args) {
     var scanner = args.scanner;
-    if (!scanner.scan(pattern))
+    if (!scanner.scan(pattern)) {
       return ParseResult(args.trampoline, scanner, this, false, [
         SyntaxError(
           severity,
@@ -23,6 +23,7 @@ class _Match<T> extends Parser<T> {
           scanner.emptySpan,
         ),
       ]);
+    }
     return ParseResult<T>(
       args.trampoline,
       scanner,

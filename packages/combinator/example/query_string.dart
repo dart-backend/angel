@@ -26,7 +26,7 @@ final Parser pairs = pair
 
 final Parser queryString = pairs.opt();
 
-main() {
+void main() {
   while (true) {
     stdout.write('Enter a query string: ');
     var line = stdin.readLineSync()!;
@@ -38,7 +38,8 @@ main() {
         print(error.toolString);
         print(error.span!.highlight(color: true));
       }
-    } else
+    } else {
       print(result.value);
+    }
   }
 }

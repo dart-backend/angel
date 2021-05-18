@@ -16,7 +16,8 @@ class _Repeat<T> extends ListParser<T> {
     var errors = <SyntaxError>[];
     var results = <T>[];
     var spans = <FileSpan>[];
-    int success = 0, replay = args.scanner.position;
+    var success = 0;
+    var replay = args.scanner.position;
     ParseResult<T> result;
 
     do {

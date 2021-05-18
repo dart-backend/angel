@@ -8,9 +8,9 @@ class _Reduce<T> extends Parser<T> {
 
   @override
   ParseResult<T> __parse(ParseArgs args) {
-    ParseResult<List<T>> result = parser._parse(args.increaseDepth());
+    var result = parser._parse(args.increaseDepth());
 
-    if (!result.successful)
+    if (!result.successful) {
       return ParseResult<T>(
         args.trampoline,
         args.scanner,
@@ -18,6 +18,7 @@ class _Reduce<T> extends Parser<T> {
         false,
         result.errors,
       );
+    }
 
     result = result.change(
         value: result.value?.isNotEmpty == true ? result.value : []);

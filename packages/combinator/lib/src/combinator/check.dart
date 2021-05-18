@@ -12,9 +12,9 @@ class _Check<T> extends Parser<T> {
   ParseResult<T> __parse(ParseArgs args) {
     var matchState = {};
     var result = parser._parse(args.increaseDepth()).change(parser: this);
-    if (!result.successful)
+    if (!result.successful) {
       return result;
-    else if (!matcher.matches(result.value, matchState)) {
+    } else if (!matcher.matches(result.value, matchState)) {
       return result.change(successful: false).addErrors([
         SyntaxError(
           severity,
@@ -23,8 +23,9 @@ class _Check<T> extends Parser<T> {
           result.span,
         ),
       ]);
-    } else
+    } else {
       return result;
+    }
   }
 
   @override

@@ -4,7 +4,7 @@ part of lex.src.combinator;
 ///
 /// If [failFast] is `true` (default), then the first failure to parse will abort the parse.
 ListParser<T> chain<T>(Iterable<Parser<T>> parsers,
-    {bool failFast: true, SyntaxErrorSeverity? severity}) {
+    {bool failFast = true, SyntaxErrorSeverity? severity}) {
   return _Chain<T>(
       parsers, failFast != false, severity ?? SyntaxErrorSeverity.error);
 }
@@ -45,7 +45,7 @@ class _Chain<T> extends ListParser<T> {
     var errors = <SyntaxError>[];
     var results = <T>[];
     var spans = <FileSpan>[];
-    bool successful = true;
+    var successful = true;
 
     for (var parser in parsers) {
       var result = parser._parse(args.increaseDepth());
@@ -64,7 +64,7 @@ class _Chain<T> extends ListParser<T> {
       if (result.value != null) {
         results.add(result.value!);
       } else {
-        results.add("NULL" as T);
+        results.add('NULL' as T);
       }
 
       if (result.span != null) {
@@ -94,7 +94,7 @@ class _Chain<T> extends ListParser<T> {
     buffer
       ..writeln('chain(${parsers.length}) (')
       ..indent();
-    int i = 1;
+    var i = 1;
 
     for (var parser in parsers) {
       buffer
