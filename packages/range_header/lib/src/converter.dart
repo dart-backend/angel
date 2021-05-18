@@ -17,15 +17,15 @@ class RangeHeaderTransformer
 
   RangeHeaderTransformer(this.header, this.mimeType, this.totalLength,
       {String? boundary})
-      : this.boundary = boundary ?? _randomString() {
+      : boundary = boundary ?? _randomString() {
     if (header.items.isEmpty) {
-      throw new ArgumentError('`header` cannot be null or empty.');
+      throw ArgumentError('`header` cannot be null or empty.');
     }
   }
 
   /// Computes the content length that will be written to a response, given a stream of the given [totalFileSize].
   int computeContentLength(int totalFileSize) {
-    int len = 0;
+    var len = 0;
 
     for (var item in header.items) {
       if (item.start == -1) {
@@ -59,15 +59,15 @@ class RangeHeaderTransformer
 
   @override
   Stream<List<int>> bind(Stream<List<int>> stream) {
-    var ctrl = new StreamController<List<int>>();
+    var ctrl = StreamController<List<int>>();
 
-    new Future(() async {
+    Future(() async {
       var index = 0;
-      var enqueued = new Queue<List<int>>();
-      var q = new StreamQueue(stream);
+      var enqueued = Queue<List<int>>();
+      var q = StreamQueue(stream);
 
       Future<List<int>> absorb(int length) async {
-        var out = new BytesBuilder();
+        var out = BytesBuilder();
 
         while (out.length < length) {
           var remaining = length - out.length;
@@ -101,7 +101,7 @@ class RangeHeaderTransformer
           // If we get this far, and the stream is EMPTY, the user requested
           // too many bytes.
           if (out.length < length && enqueued.isEmpty && !(await q.hasNext)) {
-            throw new StateError(
+            throw StateError(
                 'The range denoted is bigger than the size of the input stream.');
           }
         }
@@ -110,7 +110,7 @@ class RangeHeaderTransformer
       }
 
       for (var item in header.items) {
-        var chunk = new BytesBuilder();
+        var chunk = BytesBuilder();
 
         // Skip until we reach the start index.
         while (index < item.start) {
@@ -120,8 +120,12 @@ class RangeHeaderTransformer
 
         // Next, absorb until we reach the end.
         if (item.end == -1) {
-          while (enqueued.isNotEmpty) chunk.add(enqueued.removeFirst());
-          while (await q.hasNext) chunk.add(await q.next);
+          while (enqueued.isNotEmpty) {
+            chunk.add(enqueued.removeFirst());
+          }
+          while (await q.hasNext) {
+            chunk.add(await q.next);
+          }
         } else {
           var remaining = item.end - index;
           chunk.add(await absorb(remaining));
@@ -141,23 +145,27 @@ class RangeHeaderTransformer
 
       ctrl.add(utf8.encode('--$boundary--\r\n'));
 
-      ctrl.close();
-    }).catchError(ctrl.addError);
+      await ctrl.close();
+    }).catchError((e) {
+      ctrl.addError(e as Object);
+      return null;
+    });
 
     return ctrl.stream;
   }
 }
 
-var _rnd = new Random();
+var _rnd = Random();
 String _randomString(
-    {int length: 32,
-    String validChars:
+    {int length = 32,
+    String validChars =
         'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'}) {
   var len = _rnd.nextInt((length - 10)) + 10;
-  var buf = new StringBuffer();
+  var buf = StringBuffer();
 
-  while (buf.length < len)
+  while (buf.length < len) {
     buf.writeCharCode(validChars.codeUnitAt(_rnd.nextInt(validChars.length)));
+  }
 
   return buf.toString();
 }

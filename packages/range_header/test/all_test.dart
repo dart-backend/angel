@@ -1,7 +1,5 @@
+import 'package:angel3_range_header/angel3_range_header.dart';
 import 'package:test/test.dart';
-
-import '../lib/angel3_range_header.dart';
-import '../lib/src/range_header.dart';
 
 final Matcher throwsRangeParseException =
     throwsA(const TypeMatcher<RangeHeaderParseException>());

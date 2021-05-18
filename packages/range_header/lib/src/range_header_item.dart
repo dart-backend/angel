@@ -14,8 +14,9 @@ class RangeHeaderItem implements Comparable<RangeHeaderItem> {
 
   /// Joins two items together into the largest possible range.
   RangeHeaderItem consolidate(RangeHeaderItem other) {
-    if (!(other.overlaps(this)))
+    if (!(other.overlaps(this))) {
       throw ArgumentError('The two ranges do not overlap.');
+    }
     return RangeHeaderItem(min(start, other.start), max(end, other.end));
   }
 
@@ -56,12 +57,13 @@ class RangeHeaderItem implements Comparable<RangeHeaderItem> {
 
   @override
   String toString() {
-    if (start > -1 && end > -1)
+    if (start > -1 && end > -1) {
       return '$start-$end';
-    else if (start > -1)
+    } else if (start > -1) {
       return '$start-';
-    else
+    } else {
       return '-$end';
+    }
   }
 
   /// Creates a representation of this instance suitable for a `Content-Range` header.

@@ -15,7 +15,7 @@ abstract class RangeHeader {
   /// Eliminates any overlapping [items], sorts them, and folds them all into the most efficient representation possible.
   static UnmodifiableListView<RangeHeaderItem> foldItems(
       Iterable<RangeHeaderItem> items) {
-    var out = Set<RangeHeaderItem>();
+    var out = <RangeHeaderItem>{};
 
     for (var item in items) {
       // Remove any overlapping items, consolidate them.
@@ -28,7 +28,7 @@ abstract class RangeHeader {
       out.add(item);
     }
 
-    return new UnmodifiableListView(out.toList()..sort());
+    return UnmodifiableListView(out.toList()..sort());
   }
 
   /// Attempts to parse a [RangeHeader] from its [text] representation.
@@ -40,9 +40,9 @@ abstract class RangeHeader {
   /// possible representation.
   ///
   factory RangeHeader.parse(String text,
-      {Iterable<String>? allowedRangeUnits, bool fold: true}) {
+      {Iterable<String>? allowedRangeUnits, bool fold = true}) {
     var tokens = scan(text, allowedRangeUnits?.toList() ?? ['bytes']);
-    var parser = new Parser(tokens);
+    var parser = Parser(tokens);
     var header = parser.parseRangeHeader();
     if (header == null) {
       throw InvalidRangeHeaderException('Header is null');
@@ -57,9 +57,10 @@ abstract class RangeHeader {
 
 class _ConstantRangeHeader implements RangeHeader {
   final Iterable<RangeHeaderItem> items_;
+  @override
   final String? rangeUnit;
 
-  const _ConstantRangeHeader(this.items_, {this.rangeUnit: 'bytes'});
+  const _ConstantRangeHeader(this.items_, {this.rangeUnit = 'bytes'});
 
   @override
   UnmodifiableListView<RangeHeaderItem> get items =>

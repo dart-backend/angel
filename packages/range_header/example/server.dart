@@ -2,7 +2,7 @@
 //import 'package:angel_framework/http.dart';
 //import 'package:angel_static/angel_static.dart';
 
-main() async {
+void main() async {
   /*
   var app = new Angel();
   var http = new AngelHttp(app);

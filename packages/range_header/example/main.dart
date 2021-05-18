@@ -3,7 +3,7 @@ import 'package:angel3_range_header/angel3_range_header.dart';
 
 var file = File('some_video.mp4');
 
-handleRequest(HttpRequest request) async {
+void handleRequest(HttpRequest request) async {
   // Parse the header
   var header =
       RangeHeader.parse(request.headers.value(HttpHeaders.rangeHeader)!);

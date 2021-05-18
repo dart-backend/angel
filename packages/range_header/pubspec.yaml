@@ -1,5 +1,5 @@
 name: angel3_range_header
-version: 3.0.0
+version: 3.0.1
 description: Range header parser for Dart. Beyond parsing, a stream transformer is included.
 homepage: https://github.com/dukefirehawk/angel/tree/angel3/packages/range_header
 environment:
@@ -11,9 +11,8 @@ dependencies:
   source_span: ^1.8.1
   string_scanner: ^1.1.0
 dev_dependencies:
-  #angel_framework:
-  #angel_static: ^2.0.0
   file: ^6.1.0
   http_parser: ^4.0.0
   logging: ^1.0.1
   test: ^1.17.4
+  pedantic: ^1.11.0
