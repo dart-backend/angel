@@ -6,15 +6,15 @@ import 'package:jael3/jael3.dart';
 import 'package:angel3_symbol_table/angel3_symbol_table.dart';
 
 /// Modifies a Jael document.
-typedef FutureOr<Document>? Patcher(Document? document,
-    Directory currentDirectory, void onError(JaelError error)?);
+typedef Patcher = FutureOr<Document>? Function(Document? document,
+    Directory currentDirectory, void Function(JaelError error)? onError);
 
 /// Expands all `block[name]` tags within the template, replacing them with the correct content.
 ///
 /// To apply additional patches to resolved documents, provide a set of [patch]
 /// functions.
 Future<Document?> resolve(Document document, Directory currentDirectory,
-    {void onError(JaelError error)?, Iterable<Patcher>? patch}) async {
+    {void Function(JaelError error)? onError, Iterable<Patcher>? patch}) async {
   onError ?? (e) => throw e;
 
   // Resolve all includes...
@@ -24,7 +24,9 @@ Future<Document?> resolve(Document document, Directory currentDirectory,
   var patched = await applyInheritance(
       includesResolved, currentDirectory, onError, patch);
 
-  if (patch?.isNotEmpty != true) return patched;
+  if (patch?.isNotEmpty != true) {
+    return patched;
+  }
 
   for (var p in patch!) {
     patched = await p(patched, currentDirectory, onError);
@@ -37,7 +39,7 @@ Future<Document?> resolve(Document document, Directory currentDirectory,
 Future<Document?> applyInheritance(
     Document? document,
     Directory currentDirectory,
-    void onError(JaelError error)?,
+    void Function(JaelError error)? onError,
     Iterable<Patcher>? patch) async {
   if (document == null) {
     return null;
@@ -102,7 +104,7 @@ Future<Document?> applyInheritance(
     while (hierarchy!.extendsTemplates.isNotEmpty) {
       var tmpl = hierarchy.extendsTemplates.removeFirst();
       var definedOverrides = findBlockOverrides(tmpl, onError);
-      if (definedOverrides == null) break;
+      //if (definedOverrides == null) break;
       out =
           setOut(out!, definedOverrides, hierarchy.extendsTemplates.isNotEmpty);
     }
@@ -117,7 +119,7 @@ Future<Document?> applyInheritance(
 }
 
 Map<String, RegularElement> findBlockOverrides(
-    Element tmpl, void onError(JaelError e)?) {
+    Element tmpl, void Function(JaelError e)? onError) {
   var out = <String, RegularElement>{};
 
   for (var child in tmpl.children) {
@@ -137,7 +139,7 @@ Map<String, RegularElement> findBlockOverrides(
 
 /// Resolves the document hierarchy at a given node in the tree.
 Future<DocumentHierarchy?> resolveHierarchy(Document document,
-    Directory currentDirectory, void onError(JaelError e)?) async {
+    Directory currentDirectory, void Function(JaelError e)? onError) async {
   var extendsTemplates = Queue<Element>();
   String? parent;
 
@@ -175,7 +177,7 @@ class DocumentHierarchy {
 Iterable<ElementChild> replaceBlocks(
     Element element,
     Map<String?, RegularElement> definedOverrides,
-    void onError(JaelError e)?,
+    void Function(JaelError e)? onError,
     bool replaceWithDefault,
     bool anyTemplatesRemain) {
   if (element.tagName.name == 'block') {
@@ -234,7 +236,7 @@ Iterable<ElementChild> replaceBlocks(
 Element replaceChildrenOfElement(
     Element el,
     Map<String, RegularElement> definedOverrides,
-    void onError(JaelError e)?,
+    void Function(JaelError e)? onError,
     bool replaceWithDefault,
     bool anyTemplatesRemain) {
   if (el is RegularElement) {
@@ -248,7 +250,7 @@ Element replaceChildrenOfElement(
 RegularElement replaceChildrenOfRegularElement(
     RegularElement el,
     Map<String?, RegularElement> definedOverrides,
-    void onError(JaelError e)?,
+    void Function(JaelError e)? onError,
     bool replaceWithDefault,
     bool anyTemplatesRemain) {
   var children = allChildrenOfRegularElement(
@@ -260,7 +262,7 @@ RegularElement replaceChildrenOfRegularElement(
 List<ElementChild> allChildrenOfRegularElement(
     RegularElement el,
     Map<String?, RegularElement> definedOverrides,
-    void onError(JaelError e)?,
+    void Function(JaelError e)? onError,
     bool replaceWithDefault,
     bool anyTemplatesRemain) {
   var children = <ElementChild>[];
@@ -278,7 +280,7 @@ List<ElementChild> allChildrenOfRegularElement(
 }
 
 /// Finds the name of the parent template.
-String? getParent(Document document, void onError(JaelError error)?) {
+String? getParent(Document document, void Function(JaelError error)? onError) {
   var element = document.root;
   if (element.tagName.name != 'extend') return null;
 
@@ -300,11 +302,11 @@ String? getParent(Document document, void onError(JaelError error)?) {
 
 /// Expands all `include[src]` tags within the template, and fills in the content of referenced files.
 Future<Document?> resolveIncludes(Document? document,
-    Directory currentDirectory, void onError(JaelError error)?) async {
+    Directory currentDirectory, void Function(JaelError error)? onError) async {
   if (document == null) {
     return null;
   }
-  Element? rootElement =
+  var rootElement =
       await _expandIncludes(document.root, currentDirectory, onError);
   if (rootElement != null) {
     return Document(document.doctype, rootElement);
@@ -314,16 +316,16 @@ Future<Document?> resolveIncludes(Document? document,
 }
 
 Future<Element?> _expandIncludes(Element element, Directory currentDirectory,
-    void onError(JaelError error)?) async {
+    void Function(JaelError error)? onError) async {
   if (element.tagName.name != 'include') {
-    if (element is SelfClosingElement)
+    if (element is SelfClosingElement) {
       return element;
-    else if (element is RegularElement) {
-      List<ElementChild> expanded = [];
+    } else if (element is RegularElement) {
+      var expanded = <ElementChild>[];
 
       for (var child in element.children) {
         if (child is Element) {
-          Element? includeElement =
+          var includeElement =
               await _expandIncludes(child, currentDirectory, onError);
           if (includeElement != null) {
             expanded.add(includeElement);
