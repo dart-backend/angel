@@ -1,12 +1,12 @@
 import 'dart:async';
-import 'package:angel_orm/angel_orm.dart';
+import 'package:angel3_orm/angel3_orm.dart';
 import 'package:logging/logging.dart';
 import 'package:pool/pool.dart';
 import 'package:postgres/postgres.dart';
 
 /// A [QueryExecutor] that queries a PostgreSQL database.
 class PostgreSqlExecutor extends QueryExecutor {
-  PostgreSQLExecutionContext _connection;
+  final PostgreSQLExecutionContext _connection;
 
   /// An optional [Logger] to print information to.
   final Logger? logger;
@@ -92,28 +92,28 @@ class PostgreSqlExecutorPool extends QueryExecutor {
 
   final List<PostgreSqlExecutor> _connections = [];
   int _index = 0;
-  final Pool _pool, _connMutex = new Pool(1);
+  final Pool _pool, _connMutex = Pool(1);
 
   PostgreSqlExecutorPool(this.size, this.connectionFactory, {this.logger})
-      : _pool = new Pool(size) {
+      : _pool = Pool(size) {
     assert(size > 0, 'Connection pool cannot be empty.');
   }
 
   /// Closes all connections.
   Future close() async {
-    _pool.close();
-    _connMutex.close();
+    await _pool.close();
+    await _connMutex.close();
     return Future.wait(_connections.map((c) => c.close()));
   }
 
   Future _open() async {
     if (_connections.isEmpty) {
-      _connections.addAll(await Future.wait(new List.generate(size, (_) {
+      _connections.addAll(await Future.wait(List.generate(size, (_) {
         logger?.fine('Spawning connections...');
         var conn = connectionFactory();
         return conn
             .open()
-            .then((_) => new PostgreSqlExecutor(conn, logger: logger));
+            .then((_) => PostgreSqlExecutor(conn, logger: logger));
       })));
     }
   }

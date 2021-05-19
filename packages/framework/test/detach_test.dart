@@ -13,8 +13,8 @@ void main() {
 
     app.get('/detach', (req, res) async {
       if (res is HttpResponseContext) {
-        var io = await res.detach();
-        io..write('Hey!');
+        var io = res.detach();
+        io.write('Hey!');
         await io.close();
       } else {
         throw StateError('This endpoint only supports HTTP/1.1.');

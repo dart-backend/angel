@@ -1,4 +1,4 @@
-# 3.0.0
+# 3.0.0-beta.1
 * Migrated to support Dart SDK 2.12.x NNBD
 
 # 2.0.0

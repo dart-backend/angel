@@ -40,7 +40,7 @@ void main() {
   encodingTests(() => app);
 }
 
-void encodingTests(Angel getApp()) {
+void encodingTests(Angel Function() getApp) {
   group('encoding', () {
     Angel app;
     late AngelHttp http;

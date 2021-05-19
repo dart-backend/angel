@@ -17,7 +17,7 @@ void main() {
     expect(app.preContained.keys, contains(echoAppFoo));
 
     var rq = MockHttpRequest('GET', Uri(path: '/foo'));
-    (rq.close());
+    await rq.close();
     await AngelHttp(app).handleRequest(rq);
     var rs = rq.response;
     var body = await rs.transform(utf8.decoder).join();

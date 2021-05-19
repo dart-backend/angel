@@ -40,7 +40,7 @@ void main() {
 
   test('String type annotation', () async {
     var rq = MockHttpRequest('GET', Uri.parse('/string/hello'));
-    (rq.close());
+    await rq.close();
     await http.handleRequest(rq);
     var rs = await rq.response.transform(utf8.decoder).join();
     expect(rs, json.encode('hello'));
@@ -48,7 +48,7 @@ void main() {
 
   test('Primitive after parsed param injection', () async {
     var rq = MockHttpRequest('GET', Uri.parse('/num/parsed/24'));
-    (rq.close());
+    await rq.close();
     await http.handleRequest(rq);
     var rs = await rq.response.transform(utf8.decoder).join();
     expect(rs, json.encode(24));
@@ -56,7 +56,7 @@ void main() {
 
   test('globally-injected primitive', () async {
     var rq = MockHttpRequest('GET', Uri.parse('/num/global'));
-    (rq.close());
+    await rq.close();
     await http.handleRequest(rq);
     var rs = await rq.response.transform(utf8.decoder).join();
     expect(rs, json.encode(305));
@@ -65,7 +65,7 @@ void main() {
   test('unparsed primitive throws error', () async {
     try {
       var rq = MockHttpRequest('GET', Uri.parse('/num/unparsed/32'));
-      (rq.close());
+      await rq.close();
       var req = await http.createRequestContext(rq, rq.response);
       var res = await http.createResponseContext(rq, rq.response, req);
       await app.runContained((num unparsed) => unparsed, req, res);

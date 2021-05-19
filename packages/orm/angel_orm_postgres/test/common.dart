@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:io';
-import 'package:angel_orm/angel_orm.dart';
-import 'package:angel_orm_postgres/angel_orm_postgres.dart';
+import 'package:angel3_orm/angel3_orm.dart';
+import 'package:angel3_orm_postgres/angel3_orm_postgres.dart';
 import 'package:logging/logging.dart';
 import 'package:postgres/postgres.dart';
 
@@ -18,8 +18,9 @@ Future<PostgreSqlExecutor> connectToPostgres(Iterable<String> schemas) async {
       password: Platform.environment['POSTGRES_PASSWORD'] ?? 'test123');
   await conn.open();
 
-  for (var s in schemas)
+  for (var s in schemas) {
     await conn.execute(await File('test/migrations/$s.sql').readAsString());
+  }
 
   return PostgreSqlExecutor(conn, logger: Logger.root);
 }
