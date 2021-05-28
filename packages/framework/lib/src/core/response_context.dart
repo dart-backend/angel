@@ -74,7 +74,7 @@ abstract class ResponseContext<RawResponse>
   /// ```dart
   /// app.injectSerializer(JSON.encode);
   /// ```
-  FutureOr<String> Function(dynamic)? serializer = c.json.encode;
+  FutureOr<String> Function(dynamic) serializer = c.json.encode;
 
   /// This response's status code.
   int get statusCode => _statusCode;
@@ -182,7 +182,7 @@ abstract class ResponseContext<RawResponse>
       {String callbackName = "callback", MediaType? contentType}) {
     if (!isOpen) throw closed();
     this.contentType = contentType ?? MediaType('application', 'javascript');
-    write("$callbackName(${serializer!(value)})");
+    write("$callbackName(${serializer(value)})");
     return close();
   }
 
@@ -308,7 +308,7 @@ abstract class ResponseContext<RawResponse>
   Future<bool> serialize(value, {MediaType? contentType}) async {
     if (!isOpen) throw closed();
     this.contentType = contentType ?? MediaType('application', 'json');
-    var text = await serializer!(value);
+    var text = await serializer(value);
     if (text.isEmpty) return true;
     write(text);
     await close();

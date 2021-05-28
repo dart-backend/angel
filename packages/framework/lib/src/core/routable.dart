@@ -31,7 +31,7 @@ RequestHandler chain(Iterable<RequestHandler> handlers) {
         runPipeline = () => Future.sync(() => handler(req, res));
       } else {
         var current = runPipeline;
-        runPipeline = () => current().then((result) => res.isOpen
+        runPipeline = () => current().then((result) => !res.isOpen
             ? Future.value(result)
             : req.app!.executeHandler(handler, req, res));
       }

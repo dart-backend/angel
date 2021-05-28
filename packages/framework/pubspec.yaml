@@ -9,8 +9,7 @@ dependencies:
   angel3_container: ^3.0.0
   angel3_http_exception: ^3.0.0
   angel3_model: ^3.0.0
-  angel3_route: #^5.0.0
-    path: ../route
+  angel3_route: ^5.0.0
   angel3_combinator: ^2.0.0
   angel3_merge_map: ^2.0.0
   angel3_mock_request: ^2.0.0

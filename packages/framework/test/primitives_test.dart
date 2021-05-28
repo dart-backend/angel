@@ -63,16 +63,11 @@ void main() {
   });
 
   test('unparsed primitive throws error', () async {
-    try {
-      var rq = MockHttpRequest('GET', Uri.parse('/num/unparsed/32'));
-      await rq.close();
-      var req = await http.createRequestContext(rq, rq.response);
-      var res = await http.createResponseContext(rq, rq.response, req);
-      await app.runContained((num unparsed) => unparsed, req, res);
-      throw StateError(
-          'ArgumentError should be thrown if a parameter cannot be resolved.');
-    } on ArgumentError {
-      // Success
-    }
+    var rq = MockHttpRequest('GET', Uri.parse('/num/unparsed/32'));
+    await rq.close();
+    var req = await http.createRequestContext(rq, rq.response);
+    var res = await http.createResponseContext(rq, rq.response, req);
+    expect(() => app.runContained((num unparsed) => unparsed, req, res),
+        throwsA(isA<ArgumentError>()));
   });
 }
