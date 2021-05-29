@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:angel3_auth/angel3_auth.dart';
+import 'package:angel3_container/mirrors.dart';
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_framework/http.dart';
 import 'dart:convert';
@@ -36,14 +37,14 @@ class User extends Model {
 void main() {
   late Angel app;
   late AngelHttp angelHttp;
-  AngelAuth<User?> auth;
+  AngelAuth<User> auth;
   http.Client? client;
   HttpServer server;
   String? url;
 
   setUp(() async {
     hierarchicalLoggingEnabled = true;
-    app = Angel();
+    app = Angel(reflector: MirrorsReflector());
     angelHttp = AngelHttp(app);
     app.use('/users', MapService());
 
@@ -71,8 +72,8 @@ void main() {
         .findService('users')!
         .create({'username': 'jdoe1', 'password': 'password'});
 
-    auth = AngelAuth<User?>();
-    auth.serializer = (u) => u!.id;
+    auth = AngelAuth<User>();
+    auth.serializer = (u) => u.id;
     auth.deserializer =
         (id) async => await app.findService('users')!.read(id) as User;
 

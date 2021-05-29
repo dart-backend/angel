@@ -12,7 +12,7 @@
 * Added merge_map and migrated to 2.0.0 (6/6 tests passed)
 * Added mock_request and migrated to 2.0.0 (0/0 tests)
 * Migrated angel_framework to 4.0.0 (149/150 tests passed)
-* Migrated angel_auth to 4.0.0 (23/30 tests passed)
+* Migrated angel_auth to 4.0.0 (25/30 tests passed)
 * Migrated angel_configuration to 4.0.0 (6/8 testspassed)
 * Migrated angel_validate to 4.0.0 (6/7 tests passed)
 * Migrated json_god to 4.0.0 (13/13 tests passed)
@@ -40,6 +40,8 @@
 * Migrated angel_orm_test to 3.0.0 (0/0 tests passed)
 * Migrated angel_orm_postgres to 3.0.0 (51/54 tests passed)
 * Create orm-sdk-2.12.x boilerplate (in progress) <= Milestone 2
+* Migrate angel_cache
+* Migrate angel_cors
 
 # 3.0.0 (Non NNBD)
 * Changed Dart SDK requirements for all packages to ">=2.10.0 <3.0.0"

@@ -1,3 +1,6 @@
+# 4.0.2
+* Added MirrorsReflector to test cases
+
 # 4.0.1
 * Updated README
 
