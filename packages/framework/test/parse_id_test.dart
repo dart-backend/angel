@@ -3,11 +3,8 @@ import 'package:test/test.dart';
 
 void main() {
   test('null', () {
-    //expect(Service.parseId('null'), null);
-    //expect(Service.parseId(null), null);
-
-    expect(() => Service.parseId('null'), throwsArgumentError);
-    expect(() => Service.parseId(null), throwsArgumentError);
+    expect(Service.parseId('null'), 'null');
+    expect(Service.parseId(null), 'null');
   });
 
   test('String', () {

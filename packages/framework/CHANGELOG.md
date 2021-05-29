@@ -1,3 +1,8 @@
+# 4.0.3
+* Fixed "Primitive after parsed param injection" test case
+* Fixed "Cannot remove all unless explicitly set" test case
+* Fixed "null" test case
+
 # 4.0.2
 * Updated README
 
