@@ -8,7 +8,7 @@ dependencies:
   angel3_framework: ^4.0.0
   angel3_http_exception: ^3.0.0
   crypto: ^3.0.1
-  collection: ^1.15.0-nullsafety.4
+  collection: ^1.15.0
 dev_dependencies: 
   angel3_validate: ^4.0.0
   angel3_test: ^4.0.0

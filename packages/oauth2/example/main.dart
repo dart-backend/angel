@@ -1,7 +1,7 @@
 // ignore_for_file: todo
 import 'dart:async';
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_oauth2/angel_oauth2.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_oauth2/angel3_oauth2.dart';
 
 void main() async {
   var app = Angel();
