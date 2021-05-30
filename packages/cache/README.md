@@ -1,6 +1,9 @@
-# cache
-[![Pub](https://img.shields.io/pub/v/angel_cache.svg)](https://pub.dartlang.org/packages/angel_cache)
-[![build status](https://travis-ci.org/angel-dart/cache.svg)](https://travis-ci.org/angel-dart/cache)
+# angel3_cache
+[![version](https://img.shields.io/badge/pub-v4.0.0-brightgreen)](https://pub.dartlang.org/packages/angel3_cache)
+[![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
+[![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
+
+[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/cache/LICENSE)
 
 Support for server-side caching in [Angel](https://angel-dart.github.io).
 
@@ -17,13 +20,13 @@ This can improve the performance of sending objects that are complex to serializ
 You can pass a [shouldCache] callback to determine which values should be cached.
 
 ```dart
-main() async {
-    var app = new Angel()..lazyParseBodies = true;
+void main() async {
+    var app = Angel()..lazyParseBodies = true;
     
     app.use(
       '/api/todos',
-      new CacheService(
-        database: new AnonymousService(
+      CacheService(
+        database: AnonymousService(
           index: ([params]) {
             print('Fetched directly from the underlying service at ${new DateTime.now()}!');
             return ['foo', 'bar', 'baz'];
@@ -51,10 +54,10 @@ To initialize a simple cache:
 ```dart
 Future configureServer(Angel app) async {
   // Simple instance.
-  var cache = new ResponseCache();
+  var cache = ResponseCache();
   
   // You can also pass an invalidation timeout.
-  var cache = new ResponseCache(timeout: const Duration(days: 2));
+  var cache = ResponseCache(timeout: const Duration(days: 2));
   
   // Close the cache when the application closes.
   app.shutdownHooks.add((_) => cache.close());
@@ -62,8 +65,8 @@ Future configureServer(Angel app) async {
   // Use `patterns` to specify which resources should be cached.
   cache.patterns.addAll([
     'robots.txt',
-    new RegExp(r'\.(png|jpg|gif|txt)$'),
-    new Glob('public/**/*'),
+    RegExp(r'\.(png|jpg|gif|txt)$'),
+    Glob('public/**/*'),
   ]);
   
   // REQUIRED: The middleware that serves cached responses
@@ -85,7 +88,7 @@ to ensure no arbitrary attacker can hack your cache:
 Future configureServer(Angel app) async {
   app.addRoute('PURGE', '*', (req, res) {
     if (req.ip != '127.0.0.1')
-      throw new AngelHttpException.forbidden();
+      throw AngelHttpException.forbidden();
     return cache.purge(req.uri.path);
   });
 }

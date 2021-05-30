@@ -1,8 +1,8 @@
 import 'dart:convert';
-import 'package:angel_auth/angel_auth.dart';
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_framework/http.dart';
-import 'package:angel_auth_oauth2/angel_auth_oauth2.dart';
+import 'package:angel3_auth/angel3_auth.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_framework/http.dart';
+import 'package:angel3_auth_oauth2/angel3_auth_oauth2.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:logging/logging.dart';
 
@@ -63,7 +63,7 @@ void main() async {
     (client, req, res) async {
       var response = await client.get(Uri.parse('https://api.github.com/user'));
       var ghUser = json.decode(response.body);
-      var id = ghUser['id'] as int;
+      var id = ghUser['id'] as int?;
 
       var matchingUsers = await mappedUserService.index({
         'query': {'github_id': id}
@@ -85,7 +85,7 @@ void main() async {
     },
 
     // We have to pass this parser function when working with Github.
-    getParameters: parseParamsFromGithub,
+    //getParameters: parseParamsFromGithub,
   );
 
   // Mount some routes
@@ -98,7 +98,7 @@ void main() async {
         //
         // Use `confirmPopupAuthentication`, which is bundled with
         // `package:angel_auth`.
-        var user = req.container.make<User>();
+        var user = req.container!.make<User>()!;
         res.write('Your user info: ${user.toJson()}\n\n');
         res.write('Your JWT: $jwt');
         await res.close();
@@ -113,14 +113,14 @@ void main() async {
 
 class User extends Model {
   @override
-  String id;
+  String? id;
 
-  int githubId;
+  int? githubId;
 
   User({this.id, this.githubId});
 
   static User parse(Map map) =>
-      User(id: map['id'] as String, githubId: map['github_id'] as int);
+      User(id: map['id'] as String?, githubId: map['github_id'] as int?);
 
   static Map<String, dynamic> serialize(User user) => user.toJson();
 

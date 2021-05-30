@@ -1,8 +1,8 @@
-library angel_auth_oauth2;
+library angel3_auth_oauth2;
 
 import 'dart:async';
-import 'package:angel_auth/angel_auth.dart';
-import 'package:angel_framework/angel_framework.dart';
+import 'package:angel3_auth/angel3_auth.dart';
+import 'package:angel3_framework/angel3_framework.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:oauth2/oauth2.dart' as oauth2;
 
@@ -28,33 +28,33 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
   final Uri tokenEndpoint;
 
   /// An optional callback used to parse the response from a server who does not follow the OAuth 2.0 spec.
-  final Map<String, dynamic> Function(MediaType, String) getParameters;
+  final Map<String, dynamic> Function(MediaType?, String)? getParameters;
 
   /// An optional delimiter used to send requests to server who does not follow the OAuth 2.0 spec.
   final String delimiter;
 
-  Uri _redirect;
+  Uri? _redirect;
 
   OAuth2Strategy(this.options, this.authorizationEndpoint, this.tokenEndpoint,
       this.verifier, this.onError,
       {this.getParameters, this.delimiter = ' '});
 
-  oauth2.AuthorizationCodeGrant _createGrant() =>
-      new oauth2.AuthorizationCodeGrant(options.clientId, authorizationEndpoint,
-          tokenEndpoint,
-          secret: options.clientSecret,
-          delimiter: delimiter,
-          getParameters: getParameters);
+  oauth2.AuthorizationCodeGrant _createGrant() => oauth2.AuthorizationCodeGrant(
+      options.clientId, authorizationEndpoint, tokenEndpoint,
+      secret: options.clientSecret,
+      delimiter: delimiter,
+      getParameters: getParameters);
 
   @override
-  FutureOr<User> authenticate(RequestContext req, ResponseContext res,
-      [AngelAuthOptions<User> options]) async {
+  FutureOr<User?> authenticate(RequestContext req, ResponseContext res,
+      [AngelAuthOptions<User>? options]) async {
     if (options != null) {
       var result = await authenticateCallback(req, res, options);
-      if (result is User)
+      if (result is User) {
         return result;
-      else
+      } else {
         return null;
+      }
     }
 
     if (_redirect == null) {
@@ -65,20 +65,20 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
       );
     }
 
-    res.redirect(_redirect);
+    await res.redirect(_redirect);
     return null;
   }
 
   /// The endpoint that is invoked by the third-party after successful authentication.
   Future<dynamic> authenticateCallback(RequestContext req, ResponseContext res,
-      [AngelAuthOptions options]) async {
+      [AngelAuthOptions? options]) async {
     var grant = _createGrant();
     grant.getAuthorizationUrl(this.options.redirectUri,
         scopes: this.options.scopes);
 
     try {
       var client =
-          await grant.handleAuthorizationResponse(req.uri.queryParameters);
+          await grant.handleAuthorizationResponse(req.uri!.queryParameters);
       return await verifier(client, req, res);
     } on oauth2.AuthorizationException catch (e) {
       return await onError(e, req, res);

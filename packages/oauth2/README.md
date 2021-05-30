@@ -1,6 +1,9 @@
-# oauth2
-[![Pub](https://img.shields.io/pub/v/angel_oauth2.svg)](https://pub.dartlang.org/packages/angel_oauth2)
-[![build status](https://travis-ci.org/angel-dart/oauth2.svg)](https://travis-ci.org/angel-dart/oauth2)
+# angel3_oauth2
+[![version](https://img.shields.io/badge/pub-v4.0.0-brightgreen)](https://pub.dartlang.org/packages/angel3_oauth2)
+[![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
+[![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
+
+[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/oauth2/LICENSE)
 
 A class containing handlers that can be used within
 [Angel](https://angel-dart.github.io/) to build a spec-compliant
@@ -16,8 +19,8 @@ In your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  angel_framework: ^2.0.0-alpha
-  angel_oauth2: ^2.0.0
+  angel3_framework: ^4.0.0
+  angel3_oauth2: ^4.0.0
 ```
 
 # Usage
@@ -28,7 +31,7 @@ Your server needs to have definitions of at least two types:
 Define a server class as such:
 
 ```dart
-import 'package:angel_oauth2/angel_oauth2.dart' as oauth2;
+import 'package:angel3_oauth2/angel3_oauth2.dart' as oauth2;
 
 class MyServer extends oauth2.AuthorizationServer<Client, User> {}
 ```

@@ -1,11 +1,11 @@
-import 'package:angel_http_exception/angel_http_exception.dart';
+import 'package:angel3_http_exception/angel3_http_exception.dart';
 
 /// An Angel-friendly wrapper around OAuth2 [ErrorResponse] instances.
 class AuthorizationException extends AngelHttpException {
   final ErrorResponse errorResponse;
 
   AuthorizationException(this.errorResponse,
-      {StackTrace stackTrace, int statusCode, error})
+      {StackTrace? stackTrace, int? statusCode, error})
       : super(error ?? errorResponse,
             stackTrace: stackTrace, message: '', statusCode: statusCode ?? 400);
 
@@ -16,8 +16,9 @@ class AuthorizationException extends AngelHttpException {
       'error_description': errorResponse.description,
     };
 
-    if (errorResponse.uri != null)
+    if (errorResponse.uri != null) {
       m['error_uri'] = errorResponse.uri.toString();
+    }
 
     return m;
   }
@@ -78,10 +79,10 @@ class ErrorResponse {
   final String description;
 
   /// An optional [Uri] directing users to more information about the error.
-  final Uri uri;
+  final Uri? uri;
 
   /// The exact value received from the client, if a "state" parameter was present in the client authorization request.
-  final String state;
+  final String? state;
 
   const ErrorResponse(this.code, this.description, this.state, {this.uri});
 

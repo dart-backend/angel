@@ -1,6 +1,6 @@
-import 'package:angel_cache/angel_cache.dart';
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_framework/http.dart';
+import 'package:angel3_cache/angel3_cache.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_framework/http.dart';
 
 main() async {
   var app = Angel();
@@ -13,7 +13,7 @@ main() async {
         print(
             'Fetched directly from the underlying service at ${new DateTime.now()}!');
         return ['foo', 'bar', 'baz'];
-      }, read: (id, [params]) {
+      }, read: (dynamic id, [params]) {
         return {id: '$id at ${new DateTime.now()}'};
       }),
     ),

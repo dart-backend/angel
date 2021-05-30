@@ -1,26 +1,17 @@
-name: angel_cache
-version: 3.0.0
-homepage: https://github.com/angel-dart/cache
-description: Support for server-side caching in Angel.
-author: Tobe O <thosakwe@gmail.com>
-publish_to: none
+name: angel3_cache
+version: 4.0.0
+description: Support for server-side caching in Angel3 Framework
+homepage: https://github.com/dukefirehawk/angel/tree/angel3/packages/cache
 environment:
-  sdk: ">=2.10.0 <3.0.0"
+  sdk: '>=2.12.0 <3.0.0'
 dependencies:
-  angel_framework:
-    git: 
-      url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x
-      path: packages/framework
-  collection: ^1.0.0
-  meta: ^1.0.0
-  pool: ^1.0.0
+  angel3_framework: ^4.0.0
+  collection: ^1.15.0
+  meta: ^1.4.0
+  pool: ^1.5.0
 dev_dependencies:
-  angel_test:
-    git: 
-      url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x
-      path: packages/test
-  glob: ^2.0.0
-  http: ^0.13.0
-  test: ^1.16.5
+  angel3_test: ^4.0.0
+  glob: ^2.0.1
+  http: ^0.13.3
+  test: ^1.17.5
+  pedantic: ^1.11.0

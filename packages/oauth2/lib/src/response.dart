@@ -4,13 +4,13 @@ class AuthorizationTokenResponse {
   final String accessToken;
 
   /// An optional key that can be used to refresh the [accessToken] past its expiration.
-  final String refreshToken;
+  final String? refreshToken;
 
   /// An optional, but recommended integer that signifies the time left until the [accessToken] expires.
-  final int expiresIn;
+  final int? expiresIn;
 
   /// Optional, if identical to the scope requested by the client; otherwise, required.
-  final Iterable<String> scope;
+  final Iterable<String>? scope;
 
   const AuthorizationTokenResponse(this.accessToken,
       {this.refreshToken, this.expiresIn, this.scope});
@@ -19,7 +19,7 @@ class AuthorizationTokenResponse {
     var map = <String, dynamic>{'access_token': accessToken};
     if (refreshToken?.isNotEmpty == true) map['refresh_token'] = refreshToken;
     if (expiresIn != null) map['expires_in'] = expiresIn;
-    if (scope != null) map['scope'] = scope.toList();
+    if (scope != null) map['scope'] = scope!.toList();
     return map;
   }
 }
@@ -40,12 +40,12 @@ class DeviceCodeResponse {
   /// OPTIONAL.  A verification URI that includes the [userCode] (or
   /// other information with the same function as the [userCode]),
   /// designed for non-textual transmission.
-  final Uri verificationUriComplete;
+  final Uri? verificationUriComplete;
 
   /// OPTIONAL.  The minimum amount of time in seconds that the client
   /// SHOULD wait between polling requests to the token endpoint.  If no
   /// value is provided, clients MUST use 5 as the default.
-  final int interval;
+  final int? interval;
 
   /// The lifetime, in *seconds* of the [deviceCode] and [userCode].
   final int expiresIn;

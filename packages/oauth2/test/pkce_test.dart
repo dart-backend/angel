@@ -1,21 +1,21 @@
 import 'dart:async';
 import 'dart:collection';
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_framework/http.dart';
-import 'package:angel_oauth2/angel_oauth2.dart';
-import 'package:angel_test/angel_test.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_framework/http.dart';
+import 'package:angel3_oauth2/angel3_oauth2.dart';
+import 'package:angel3_test/angel3_test.dart';
 import 'package:logging/logging.dart';
 import 'package:test/test.dart';
 import 'common.dart';
 
-main() {
+void main() {
   Angel app;
-  Uri authorizationEndpoint, tokenEndpoint;
-  TestClient testClient;
+  late Uri authorizationEndpoint, tokenEndpoint;
+  late TestClient testClient;
 
   setUp(() async {
     app = Angel();
-    app.container.registerSingleton(AuthCodes());
+    app.container!.registerSingleton(AuthCodes());
 
     var server = _Server();
 
@@ -53,14 +53,14 @@ main() {
         'redirect_uri': 'https://freddie.mercu.ry',
         'code_challenge': 'foo',
       });
-      var response = await testClient
-          .get(url.toString(), headers: {'accept': 'application/json'});
+      var response =
+          await testClient.get(url, headers: {'accept': 'application/json'});
       print(response.body);
       expect(
           response,
           allOf(
             hasStatus(200),
-            isJson({"code": "ok"}),
+            isJson({'code': 'ok'}),
           ));
     });
 
@@ -72,14 +72,14 @@ main() {
         'code_challenge': 'foo',
         'code_challenge_method': 'plain',
       });
-      var response = await testClient
-          .get(url.toString(), headers: {'accept': 'application/json'});
+      var response =
+          await testClient.get(url, headers: {'accept': 'application/json'});
       print(response.body);
       expect(
           response,
           allOf(
             hasStatus(200),
-            isJson({"code": "ok"}),
+            isJson({'code': 'ok'}),
           ));
     });
 
@@ -91,14 +91,14 @@ main() {
         'code_challenge': 'foo',
         'code_challenge_method': 's256',
       });
-      var response = await testClient
-          .get(url.toString(), headers: {'accept': 'application/json'});
+      var response =
+          await testClient.get(url, headers: {'accept': 'application/json'});
       print(response.body);
       expect(
           response,
           allOf(
             hasStatus(200),
-            isJson({"code": "ok"}),
+            isJson({'code': 'ok'}),
           ));
     });
 
@@ -110,16 +110,16 @@ main() {
         'code_challenge': 'foo',
         'code_challenge_method': 'bar',
       });
-      var response = await testClient
-          .get(url.toString(), headers: {'accept': 'application/json'});
+      var response =
+          await testClient.get(url, headers: {'accept': 'application/json'});
       print(response.body);
       expect(
           response,
           allOf(
             hasStatus(400),
             isJson({
-              "error": "invalid_request",
-              "error_description":
+              'error': 'invalid_request',
+              'error_description':
                   "The `code_challenge_method` parameter must be either 'plain' or 's256'."
             }),
           ));
@@ -131,16 +131,16 @@ main() {
         'client_id': 'freddie mercury',
         'redirect_uri': 'https://freddie.mercu.ry'
       });
-      var response = await testClient
-          .get(url.toString(), headers: {'accept': 'application/json'});
+      var response =
+          await testClient.get(url, headers: {'accept': 'application/json'});
       print(response.body);
       expect(
           response,
           allOf(
             hasStatus(400),
             isJson({
-              "error": "invalid_request",
-              "error_description": "Missing `code_challenge` parameter."
+              'error': 'invalid_request',
+              'error_description': 'Missing `code_challenge` parameter.'
             }),
           ));
     });
@@ -150,7 +150,7 @@ main() {
     test('with correct verifier', () async {
       var url = tokenEndpoint.replace(
           userInfo: '${pseudoApplication.id}:${pseudoApplication.secret}');
-      var response = await testClient.post(url.toString(), headers: {
+      var response = await testClient.post(url, headers: {
         'accept': 'application/json',
         // 'authorization': 'Basic ' + base64Url.encode(ascii.encode(url.userInfo))
       }, body: {
@@ -166,13 +166,13 @@ main() {
           response,
           allOf(
             hasStatus(200),
-            isJson({"token_type": "bearer", "access_token": "yes"}),
+            isJson({'token_type': 'bearer', 'access_token': 'yes'}),
           ));
     });
     test('with incorrect verifier', () async {
       var url = tokenEndpoint.replace(
           userInfo: '${pseudoApplication.id}:${pseudoApplication.secret}');
-      var response = await testClient.post(url.toString(), headers: {
+      var response = await testClient.post(url, headers: {
         'accept': 'application/json',
         // 'authorization': 'Basic ' + base64Url.encode(ascii.encode(url.userInfo))
       }, body: {
@@ -189,9 +189,9 @@ main() {
           allOf(
             hasStatus(400),
             isJson({
-              "error": "invalid_grant",
-              "error_description":
-                  "The given `code_verifier` parameter is invalid."
+              'error': 'invalid_grant',
+              'error_description':
+                  'The given `code_verifier` parameter is invalid.'
             }),
           ));
     });
@@ -199,7 +199,7 @@ main() {
     test('with missing verifier', () async {
       var url = tokenEndpoint.replace(
           userInfo: '${pseudoApplication.id}:${pseudoApplication.secret}');
-      var response = await testClient.post(url.toString(), headers: {
+      var response = await testClient.post(url, headers: {
         'accept': 'application/json',
         // 'authorization': 'Basic ' + base64Url.encode(ascii.encode(url.userInfo))
       }, body: {
@@ -215,8 +215,8 @@ main() {
           allOf(
             hasStatus(400),
             isJson({
-              "error": "invalid_request",
-              "error_description": "Missing `code_verifier` parameter."
+              'error': 'invalid_request',
+              'error_description': 'Missing `code_verifier` parameter.'
             }),
           ));
     });
@@ -225,34 +225,34 @@ main() {
 
 class _Server extends AuthorizationServer<PseudoApplication, Map> {
   @override
-  FutureOr<PseudoApplication> findClient(String clientId) {
+  FutureOr<PseudoApplication> findClient(String? clientId) {
     return pseudoApplication;
   }
 
   @override
   Future<bool> verifyClient(
-      PseudoApplication client, String clientSecret) async {
+      PseudoApplication client, String? clientSecret) async {
     return client.secret == clientSecret;
   }
 
   @override
   Future requestAuthorizationCode(
       PseudoApplication client,
-      String redirectUri,
+      String? redirectUri,
       Iterable<String> scopes,
       String state,
       RequestContext req,
       ResponseContext res,
       bool implicit) async {
-    req.container.make<Pkce>();
+    req.container!.make<Pkce>();
     return {'code': 'ok'};
   }
 
   @override
   Future<AuthorizationTokenResponse> exchangeAuthorizationCodeForToken(
-      PseudoApplication client,
-      String authCode,
-      String redirectUri,
+      PseudoApplication? client,
+      String? authCode,
+      String? redirectUri,
       RequestContext req,
       ResponseContext res) async {
     var codeVerifier = await getPkceCodeVerifier(req);
@@ -266,7 +266,7 @@ class AuthCodes extends MapBase<String, String> with MapMixin<String, String> {
   var inner = <String, String>{};
 
   @override
-  String operator [](Object key) => inner[key];
+  String? operator [](Object? key) => inner[key as String];
 
   @override
   void operator []=(String key, String value) => inner[key] = value;
@@ -278,5 +278,5 @@ class AuthCodes extends MapBase<String, String> with MapMixin<String, String> {
   Iterable<String> get keys => inner.keys;
 
   @override
-  String remove(Object key) => inner.remove(key);
+  String? remove(Object? key) => inner.remove(key);
 }

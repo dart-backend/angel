@@ -1,6 +1,6 @@
 import 'dart:async';
-import 'package:angel_cors/angel_cors.dart';
-import 'package:angel_framework/angel_framework.dart';
+import 'package:angel3_cors/angel3_cors.dart';
+import 'package:angel3_framework/angel3_framework.dart';
 
 Future configureServer(Angel app) async {
   // The default options will allow CORS for any request.
@@ -43,7 +43,7 @@ Future configureServer(Angel app) async {
   app.fallback(dynamicCors((req, res) {
     return CorsOptions(
       origin: [
-        req.headers.value('origin') ?? 'https://pub.dartlang.org',
+        req.headers!.value('origin') ?? 'https://pub.dartlang.org',
         RegExp(r'\.com$'),
       ],
     );

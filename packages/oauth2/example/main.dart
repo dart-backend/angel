@@ -3,7 +3,7 @@ import 'dart:async';
 import 'package:angel_framework/angel_framework.dart';
 import 'package:angel_oauth2/angel_oauth2.dart';
 
-main() async {
+void main() async {
   var app = Angel();
   var oauth2 = _ExampleAuthorizationServer();
   var _rgxBearer = RegExp(r'^[Bb]earer ([^\n\s]+)$');
@@ -17,7 +17,7 @@ main() async {
   // Assume that all other requests must be authenticated...
   app.fallback((req, res) {
     var authToken =
-        req.headers.value('authorization')?.replaceAll(_rgxBearer, '')?.trim();
+        req.headers!.value('authorization')?.replaceAll(_rgxBearer, '').trim();
 
     if (authToken == null) {
       throw AngelHttpException.forbidden();
@@ -38,13 +38,13 @@ class User {}
 class _ExampleAuthorizationServer
     extends AuthorizationServer<ThirdPartyApp, User> {
   @override
-  FutureOr<ThirdPartyApp> findClient(String clientId) {
+  FutureOr<ThirdPartyApp> findClient(String? clientId) {
     // TODO: Add your code to find the app associated with a client ID.
     throw UnimplementedError();
   }
 
   @override
-  FutureOr<bool> verifyClient(ThirdPartyApp client, String clientSecret) {
+  FutureOr<bool> verifyClient(ThirdPartyApp client, String? clientSecret) {
     // TODO: Add your code to verify a client secret, if given one.
     throw UnimplementedError();
   }
@@ -52,7 +52,7 @@ class _ExampleAuthorizationServer
   @override
   FutureOr requestAuthorizationCode(
       ThirdPartyApp client,
-      String redirectUri,
+      String? redirectUri,
       Iterable<String> scopes,
       String state,
       RequestContext req,
@@ -64,9 +64,9 @@ class _ExampleAuthorizationServer
 
   @override
   FutureOr<AuthorizationTokenResponse> exchangeAuthorizationCodeForToken(
-      ThirdPartyApp client,
-      String authCode,
-      String redirectUri,
+      ThirdPartyApp? client,
+      String? authCode,
+      String? redirectUri,
       RequestContext req,
       ResponseContext res) {
     // TODO: Here, you'll convert the auth code into a full-fledged token.

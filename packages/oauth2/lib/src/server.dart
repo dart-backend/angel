@@ -1,16 +1,16 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:angel_framework/angel_framework.dart';
+import 'package:angel3_framework/angel3_framework.dart';
 import 'exception.dart';
 import 'pkce.dart';
 import 'response.dart';
 import 'token_type.dart';
 
 /// A request handler that performs an arbitrary authorization token grant.
-typedef FutureOr<AuthorizationTokenResponse> ExtensionGrant(
+typedef ExtensionGrant = FutureOr<AuthorizationTokenResponse> Function(
     RequestContext req, ResponseContext res);
 
-Future<String> _getParam(RequestContext req, String name, String state,
+Future<String?> _getParam(RequestContext req, String name, String state,
     {bool body = false, bool throwIfEmpty = true}) async {
   Map<String, dynamic> data;
 
@@ -46,7 +46,7 @@ Future<Iterable<String>> _getScopes(RequestContext req,
     data = req.queryParameters;
   }
 
-  return data['scope']?.toString()?.split(' ') ?? [];
+  return data['scope']?.toString().split(' ') ?? [];
 }
 
 /// An OAuth2 authorization server, which issues access tokens to third parties.
@@ -60,14 +60,14 @@ abstract class AuthorizationServer<Client, User> {
   Map<String, ExtensionGrant> get extensionGrants => {};
 
   /// Finds the [Client] application associated with the given [clientId].
-  FutureOr<Client> findClient(String clientId);
+  FutureOr<Client>? findClient(String? clientId);
 
   /// Verify that a [client] is the one identified by the [clientSecret].
-  FutureOr<bool> verifyClient(Client client, String clientSecret);
+  FutureOr<bool> verifyClient(Client client, String? clientSecret);
 
   /// Retrieves the PKCE `code_verifier` parameter from a [RequestContext], or throws.
   Future<String> getPkceCodeVerifier(RequestContext req,
-      {bool body = true, String state, Uri uri}) async {
+      {bool body = true, String? state, Uri? uri}) async {
     var data = body
         ? await req.parseBody().then((_) => req.bodyAsMap)
         : req.queryParameters;
@@ -75,14 +75,14 @@ abstract class AuthorizationServer<Client, User> {
 
     if (codeVerifier == null) {
       throw AuthorizationException(ErrorResponse(ErrorResponse.invalidRequest,
-          "Missing `code_verifier` parameter.", state,
+          'Missing `code_verifier` parameter.', state,
           uri: uri));
     } else if (codeVerifier is! String) {
       throw AuthorizationException(ErrorResponse(ErrorResponse.invalidRequest,
-          "The `code_verifier` parameter must be a string.", state,
+          'The `code_verifier` parameter must be a string.', state,
           uri: uri));
     } else {
-      return codeVerifier as String;
+      return codeVerifier;
     }
   }
 
@@ -95,7 +95,7 @@ abstract class AuthorizationServer<Client, User> {
   /// the same.
   FutureOr<void> requestAuthorizationCode(
       Client client,
-      String redirectUri,
+      String? redirectUri,
       Iterable<String> scopes,
       String state,
       RequestContext req,
@@ -113,16 +113,16 @@ abstract class AuthorizationServer<Client, User> {
 
   /// Exchanges an authorization code for an authorization token.
   FutureOr<AuthorizationTokenResponse> exchangeAuthorizationCodeForToken(
-      Client client,
-      String authCode,
-      String redirectUri,
+      Client? client,
+      String? authCode,
+      String? redirectUri,
       RequestContext req,
       ResponseContext res) {
     throw AuthorizationException(
       ErrorResponse(
         ErrorResponse.unsupportedResponseType,
         'Authorization code grants are not supported.',
-        req.uri.queryParameters['state'] ?? '',
+        req.uri!.queryParameters['state'] ?? '',
       ),
       statusCode: 400,
     );
@@ -130,8 +130,8 @@ abstract class AuthorizationServer<Client, User> {
 
   /// Refresh an authorization token.
   FutureOr<AuthorizationTokenResponse> refreshAuthorizationToken(
-      Client client,
-      String refreshToken,
+      Client? client,
+      String? refreshToken,
       Iterable<String> scopes,
       RequestContext req,
       ResponseContext res) async {
@@ -148,9 +148,9 @@ abstract class AuthorizationServer<Client, User> {
 
   /// Issue an authorization token to a user after authenticating them via [username] and [password].
   FutureOr<AuthorizationTokenResponse> resourceOwnerPasswordCredentialsGrant(
-      Client client,
-      String username,
-      String password,
+      Client? client,
+      String? username,
+      String? password,
       Iterable<String> scopes,
       RequestContext req,
       ResponseContext res) async {
@@ -167,7 +167,7 @@ abstract class AuthorizationServer<Client, User> {
 
   /// Performs a client credentials grant. Only use this in situations where the client is 100% trusted.
   FutureOr<AuthorizationTokenResponse> clientCredentialsGrant(
-      Client client, RequestContext req, ResponseContext res) async {
+      Client? client, RequestContext req, ResponseContext res) async {
     var body = await req.parseBody().then((_) => req.bodyAsMap);
     throw AuthorizationException(
       ErrorResponse(
@@ -196,7 +196,7 @@ abstract class AuthorizationServer<Client, User> {
   /// Produces an authorization token from a given device code.
   FutureOr<AuthorizationTokenResponse> exchangeDeviceCodeForToken(
       Client client,
-      String deviceCode,
+      String? deviceCode,
       String state,
       RequestContext req,
       ResponseContext res) async {
@@ -213,7 +213,7 @@ abstract class AuthorizationServer<Client, User> {
 
   /// Returns the [Uri] that a client can be redirected to in the case of an implicit grant.
   Uri completeImplicitGrant(AuthorizationTokenResponse token, Uri redirectUri,
-      {String state}) {
+      {String? state}) {
     var queryParameters = <String, String>{};
 
     queryParameters.addAll({
@@ -223,17 +223,18 @@ abstract class AuthorizationServer<Client, User> {
 
     if (state != null) queryParameters['state'] = state;
 
-    if (token.expiresIn != null)
+    if (token.expiresIn != null) {
       queryParameters['expires_in'] = token.expiresIn.toString();
+    }
 
-    if (token.scope != null) queryParameters['scope'] = token.scope.join(' ');
+    if (token.scope != null) queryParameters['scope'] = token.scope!.join(' ');
 
     var fragment =
         queryParameters.keys.fold<StringBuffer>(StringBuffer(), (buf, k) {
       if (buf.isNotEmpty) buf.write('&');
       return buf
         ..write(
-          '$k=' + Uri.encodeComponent(queryParameters[k]),
+          '$k=' + Uri.encodeComponent(queryParameters[k]!),
         );
     }).toString();
 
@@ -244,14 +245,14 @@ abstract class AuthorizationServer<Client, User> {
   /// of grant the client is requesting.
   Future<void> authorizationEndpoint(
       RequestContext req, ResponseContext res) async {
-    String state = '';
+    var state = '';
 
     try {
       var query = req.queryParameters;
       state = query['state']?.toString() ?? '';
       var responseType = await _getParam(req, 'response_type', state);
 
-      req.container.registerLazySingleton<Pkce>((_) {
+      req.container!.registerLazySingleton<Pkce>((_) {
         return Pkce.fromJson(req.queryParameters, state: state);
       });
 
@@ -260,7 +261,7 @@ abstract class AuthorizationServer<Client, User> {
         var clientId = await _getParam(req, 'client_id', state);
 
         // Find client
-        var client = await findClient(clientId);
+        var client = await findClient(clientId)!;
 
         if (client == null) {
           throw AuthorizationException(ErrorResponse(
@@ -309,16 +310,16 @@ abstract class AuthorizationServer<Client, User> {
   /// A request handler that either exchanges authorization codes for authorization tokens,
   /// or refreshes authorization tokens.
   Future tokenEndpoint(RequestContext req, ResponseContext res) async {
-    String state = '';
-    Client client;
+    var state = '';
+    Client? client;
 
     try {
-      AuthorizationTokenResponse response;
+      AuthorizationTokenResponse? response;
       var body = await req.parseBody().then((_) => req.bodyAsMap);
 
       state = body['state']?.toString() ?? '';
 
-      req.container.registerLazySingleton<Pkce>((_) {
+      req.container!.registerLazySingleton<Pkce>((_) {
         return Pkce.fromJson(req.bodyAsMap, state: state);
       });
 
@@ -328,11 +329,11 @@ abstract class AuthorizationServer<Client, User> {
       if (grantType != 'urn:ietf:params:oauth:grant-type:device_code' &&
           grantType != null) {
         var match =
-            _rgxBasic.firstMatch(req.headers.value('authorization') ?? '');
+            _rgxBasic.firstMatch(req.headers!.value('authorization') ?? '');
 
         if (match != null) {
           match = _rgxBasicAuth
-              .firstMatch(String.fromCharCodes(base64Url.decode(match[1])));
+              .firstMatch(String.fromCharCodes(base64Url.decode(match[1]!)));
         }
 
         if (match == null) {
@@ -402,7 +403,7 @@ abstract class AuthorizationServer<Client, User> {
           );
         }
       } else if (extensionGrants.containsKey(grantType)) {
-        response = await extensionGrants[grantType](req, res);
+        response = await extensionGrants[grantType!]!(req, res);
       } else if (grantType == null) {
         // This is a device code grant.
         var clientId = await _getParam(req, 'client_id', state, body: true);

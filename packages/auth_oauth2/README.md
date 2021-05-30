@@ -1,8 +1,11 @@
-# auth_oauth2
+# angel3_auth_oauth2
+[![version](https://img.shields.io/badge/pub-v4.0.0-brightgreen)](https://pub.dartlang.org/packages/angel3_auth_oauth2)
+[![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
+[![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
 
-[![Pub](https://img.shields.io/pub/v/angel_auth_oauth2.svg)](https://pub.dartlang.org/packages/angel_auth_oauth2)
+[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/auth_oauth2/LICENSE)
 
-`package:angel_auth` strategy for OAuth2 login, i.e. Facebook or Github.
+`package:angel3_auth` strategy for OAuth2 login, i.e. Facebook or Github.
 
 # Usage
 First, create an options object:
@@ -77,7 +80,7 @@ Set up two routes:
   
 In the case of the callback route, you may want to display an HTML page that closes
 a popup window. In this case, use `confirmPopupAuthentication`, which is bundled with
-`package:angel_auth`, as a `callback` function:
+`package:angel3_auth`, as a `callback` function:
 
 ```dart
 configureServer(Angel app) async {

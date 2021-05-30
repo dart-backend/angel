@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:io' show HttpDate;
-import 'package:angel_framework/angel_framework.dart';
+import 'package:angel3_framework/angel3_framework.dart';
 import 'package:pool/pool.dart';
 
 /// A flexible response cache for Angel.
@@ -14,7 +14,7 @@ class ResponseCache {
   final List<Pattern> patterns = [];
 
   /// An optional timeout, after which a given response will be removed from the cache, and the contents refreshed.
-  final Duration timeout;
+  final Duration? timeout;
 
   final Map<String, _CachedResponse> _cache = {};
   final Map<String, Pool> _writeLocks = {};
@@ -38,21 +38,21 @@ class ResponseCache {
   Future<bool> ifModifiedSince(RequestContext req, ResponseContext res) async {
     if (req.method != 'GET' && req.method != 'HEAD') return true;
 
-    if (req.headers.ifModifiedSince != null) {
-      var modifiedSince = req.headers.ifModifiedSince;
+    if (req.headers!.ifModifiedSince != null) {
+      var modifiedSince = req.headers!.ifModifiedSince;
 
       // Check if there is a cache entry.
       for (var pattern in patterns) {
         if (pattern.allMatches(_getEffectivePath(req)).isNotEmpty &&
             _cache.containsKey(_getEffectivePath(req))) {
-          var response = _cache[_getEffectivePath(req)];
+          var response = _cache[_getEffectivePath(req)]!;
           //print('timestamp ${response.timestamp} vs since ${modifiedSince}');
 
-          if (response.timestamp.compareTo(modifiedSince) <= 0) {
+          if (response.timestamp.compareTo(modifiedSince!) <= 0) {
             if (timeout != null) {
               // If the cache timeout has been met, don't send the cached response.
               if (new DateTime.now().toUtc().difference(response.timestamp) >=
-                  timeout) return true;
+                  timeout!) return true;
             }
 
             res.statusCode = 304;
@@ -66,7 +66,7 @@ class ResponseCache {
   }
 
   String _getEffectivePath(RequestContext req) =>
-      ignoreQueryAndFragment == true ? req.uri.path : req.uri.toString();
+      ignoreQueryAndFragment == true ? req.uri!.path : req.uri.toString();
 
   /// Serves content from the cache, if applicable.
   Future<bool> handleRequest(RequestContext req, ResponseContext res) async {
@@ -77,7 +77,7 @@ class ResponseCache {
     // Check if there is a cache entry.
     //
     // If `if-modified-since` is present, this check has already been performed.
-    if (req.headers.ifModifiedSince == null) {
+    if (req.headers!.ifModifiedSince == null) {
       for (var pattern in patterns) {
         if (pattern.allMatches(_getEffectivePath(req)).isNotEmpty) {
           var now = new DateTime.now().toUtc();
@@ -87,10 +87,10 @@ class ResponseCache {
 
             if (timeout != null) {
               // If the cache timeout has been met, don't send the cached response.
-              if (now.difference(response.timestamp) >= timeout) return true;
+              if (now.difference(response!.timestamp) >= timeout!) return true;
             }
 
-            _setCachedHeaders(response.timestamp, req, res);
+            _setCachedHeaders(response!.timestamp, req, res);
             res
               ..headers.addAll(response.headers)
               ..add(response.body)
@@ -123,8 +123,8 @@ class ResponseCache {
           if (timeout == null) return true;
 
           // Otherwise, don't invalidate unless the timeout has been exceeded.
-          var response = _cache[_getEffectivePath(req)];
-          if (now.difference(response.timestamp) < timeout) return true;
+          var response = _cache[_getEffectivePath(req)]!;
+          if (now.difference(response.timestamp) < timeout!) return true;
 
           // If the cache entry should be invalidated, then invalidate it.
           purge(_getEffectivePath(req));
@@ -135,7 +135,7 @@ class ResponseCache {
             _writeLocks.putIfAbsent(_getEffectivePath(req), () => new Pool(1));
         await writeLock.withResource(() {
           _cache[_getEffectivePath(req)] = new _CachedResponse(
-              new Map.from(res.headers), res.buffer.toBytes(), now);
+              new Map.from(res.headers), res.buffer!.toBytes(), now);
         });
 
         _setCachedHeaders(now, req, res);
@@ -154,7 +154,7 @@ class ResponseCache {
       ..['last-modified'] = HttpDate.format(modified);
 
     if (timeout != null) {
-      var expiry = new DateTime.now().add(timeout);
+      var expiry = new DateTime.now().add(timeout!);
       res.headers['expires'] = HttpDate.format(expiry);
     }
   }

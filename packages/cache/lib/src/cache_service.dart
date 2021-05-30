@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:collection/collection.dart';
-import 'package:angel_framework/angel_framework.dart';
-import 'package:meta/meta.dart';
+import 'package:angel3_framework/angel3_framework.dart';
 
 /// An Angel [Service] that caches data from another service.
 ///
@@ -21,22 +20,20 @@ class CacheService<Id, Data> extends Service<Id, Data> {
   /// If you want to return a cached result more-often-than-not, you may want to enable this.
   final bool ignoreParams;
 
-  final Duration timeout;
+  final Duration? timeout;
 
   final Map<Id, _CachedItem<Data>> _cache = {};
-  _CachedItem<List<Data>> _indexed;
+  _CachedItem<List<Data>>? _indexed;
 
   CacheService(
-      {@required this.database,
-      @required this.cache,
+      {required this.database,
+      required this.cache,
       this.ignoreParams: false,
-      this.timeout}) {
-    assert(database != null);
-  }
+      this.timeout}) {}
 
   Future<T> _getCached<T>(
-      Map<String, dynamic> params,
-      _CachedItem get(),
+      Map<String, dynamic>? params,
+      _CachedItem? get(),
       FutureOr<T> getFresh(),
       FutureOr<T> getCached(),
       FutureOr<T> save(T data, DateTime now)) async {
@@ -46,7 +43,7 @@ class CacheService<Id, Data> extends Service<Id, Data> {
     if (cached != null) {
       // If the entry has expired, don't send from the cache
       var expired =
-          timeout != null && now.difference(cached.timestamp) >= timeout;
+          timeout != null && now.difference(cached.timestamp) >= timeout!;
 
       if (timeout == null || !expired) {
         // Read from the cache if necessary
@@ -54,7 +51,7 @@ class CacheService<Id, Data> extends Service<Id, Data> {
             (params != null &&
                 cached.params != null &&
                 const MapEquality().equals(
-                    params['query'] as Map, cached.params['query'] as Map));
+                    params['query'] as Map?, cached.params['query'] as Map?));
         if (queryEqual) {
           return await getCached();
         }
@@ -69,7 +66,7 @@ class CacheService<Id, Data> extends Service<Id, Data> {
   }
 
   @override
-  Future<List<Data>> index([Map<String, dynamic> params]) {
+  Future<List<Data>> index([Map<String, dynamic>? params]) {
     return _getCached(
       params,
       () => _indexed,
@@ -83,7 +80,7 @@ class CacheService<Id, Data> extends Service<Id, Data> {
   }
 
   @override
-  Future<Data> read(Id id, [Map<String, dynamic> params]) async {
+  Future<Data> read(Id id, [Map<String, dynamic>? params]) async {
     return _getCached<Data>(
       params,
       () => _cache[id],
@@ -97,27 +94,27 @@ class CacheService<Id, Data> extends Service<Id, Data> {
   }
 
   @override
-  Future<Data> create(data, [Map<String, dynamic> params]) {
+  Future<Data> create(data, [Map<String, dynamic>? params]) {
     _indexed = null;
     return database.create(data, params);
   }
 
   @override
-  Future<Data> modify(Id id, Data data, [Map<String, dynamic> params]) {
+  Future<Data> modify(Id id, Data data, [Map<String, dynamic>? params]) {
     _indexed = null;
     _cache.remove(id);
     return database.modify(id, data, params);
   }
 
   @override
-  Future<Data> update(Id id, Data data, [Map<String, dynamic> params]) {
+  Future<Data> update(Id id, Data data, [Map<String, dynamic>? params]) {
     _indexed = null;
     _cache.remove(id);
     return database.modify(id, data, params);
   }
 
   @override
-  Future<Data> remove(Id id, [Map<String, dynamic> params]) {
+  Future<Data> remove(Id id, [Map<String, dynamic>? params]) {
     _indexed = null;
     _cache.remove(id);
     return database.remove(id, params);
@@ -127,7 +124,7 @@ class CacheService<Id, Data> extends Service<Id, Data> {
 class _CachedItem<Data> {
   final params;
   final DateTime timestamp;
-  final Data data;
+  final Data? data;
 
   _CachedItem(this.params, this.timestamp, [this.data]);
 

@@ -1,16 +1,16 @@
 /// Angel CORS middleware.
-library angel_cors;
+library angel3_cors;
 
 import 'dart:async';
 
-import 'package:angel_framework/angel_framework.dart';
+import 'package:angel3_framework/angel3_framework.dart';
 import 'src/cors_options.dart';
 export 'src/cors_options.dart';
 
 /// Determines if a request origin is CORS-able.
-typedef bool _CorsFilter(String origin);
+typedef _CorsFilter = bool Function(String origin);
 
-bool _isOriginAllowed(String origin, [allowedOrigin]) {
+bool _isOriginAllowed(String? origin, [allowedOrigin]) {
   allowedOrigin ??= [];
   if (allowedOrigin is Iterable) {
     return allowedOrigin.any((x) => _isOriginAllowed(origin, x));
@@ -38,12 +38,12 @@ Future<bool> Function(RequestContext, ResponseContext) dynamicCors(
 
 /// Applies the given [CorsOptions].
 Future<bool> Function(RequestContext, ResponseContext) cors(
-    [CorsOptions options]) {
+    [CorsOptions? options]) {
   options ??= CorsOptions();
 
   return (req, res) async {
     // access-control-allow-credentials
-    if (options.credentials == true) {
+    if (options!.credentials == true) {
       res.headers['access-control-allow-credentials'] = 'true';
     }
 
@@ -51,9 +51,9 @@ Future<bool> Function(RequestContext, ResponseContext) cors(
     if (req.method == 'OPTIONS' && options.allowedHeaders.isNotEmpty) {
       res.headers['access-control-allow-headers'] =
           options.allowedHeaders.join(',');
-    } else if (req.headers['access-control-request-headers'] != null) {
+    } else if (req.headers!['access-control-request-headers'] != null) {
       res.headers['access-control-allow-headers'] =
-          req.headers.value('access-control-request-headers');
+          req.headers!.value('access-control-request-headers')!;
     }
 
     // access-control-expose-headers
@@ -80,11 +80,11 @@ Future<bool> Function(RequestContext, ResponseContext) cors(
         ..headers['access-control-allow-origin'] = options.origin as String
         ..headers['vary'] = 'origin';
     } else {
-      bool isAllowed =
-          _isOriginAllowed(req.headers.value('origin'), options.origin);
+      var isAllowed =
+          _isOriginAllowed(req.headers!.value('origin'), options.origin);
 
       res.headers['access-control-allow-origin'] =
-          isAllowed ? req.headers.value('origin') : false.toString();
+          isAllowed ? req.headers!.value('origin')! : false.toString();
 
       if (isAllowed) {
         res.headers['vary'] = 'origin';
@@ -92,7 +92,8 @@ Future<bool> Function(RequestContext, ResponseContext) cors(
     }
 
     if (req.method != 'OPTIONS') return true;
-    res.statusCode = options.successStatus ?? 204;
+    //res.statusCode = options.successStatus ?? 204;
+    res.statusCode = options.successStatus;
     res.contentLength = 0;
     await res.close();
     return options.preflightContinue;

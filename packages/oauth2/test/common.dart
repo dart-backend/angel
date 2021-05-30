@@ -14,7 +14,7 @@ const List<PseudoUser> pseudoUsers = [
 ];
 
 class PseudoUser {
-  final String username, password;
+  final String? username, password;
 
   const PseudoUser({this.username, this.password});
 }

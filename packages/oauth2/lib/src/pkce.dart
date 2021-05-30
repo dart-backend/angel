@@ -9,7 +9,7 @@ class Pkce {
   final String codeChallengeMethod;
 
   /// The proof key that is used to secure public clients.
-  final String codeChallenge;
+  final String? codeChallenge;
 
   Pkce(this.codeChallengeMethod, this.codeChallenge) {
     assert(codeChallengeMethod == 'plain' || codeChallengeMethod == 's256',
@@ -17,7 +17,7 @@ class Pkce {
   }
 
   /// Attempts to parse a [codeChallenge] and [codeChallengeMethod] from a [Map].
-  factory Pkce.fromJson(Map data, {String state, Uri uri}) {
+  factory Pkce.fromJson(Map data, {String? state, Uri? uri}) {
     var codeChallenge = data['code_challenge']?.toString();
     var codeChallengeMethod =
         data['code_challenge_method']?.toString() ?? 'plain';
@@ -44,7 +44,7 @@ class Pkce {
   bool get isS256 => codeChallengeMethod == 's256';
 
   /// Determines if a given [codeVerifier] is valid.
-  void validate(String codeVerifier, {String state, Uri uri}) {
+  void validate(String codeVerifier, {String? state, Uri? uri}) {
     String foreignChallenge;
 
     if (isS256) {
@@ -57,7 +57,7 @@ class Pkce {
     if (foreignChallenge != codeChallenge) {
       throw AuthorizationException(
         ErrorResponse(ErrorResponse.invalidGrant,
-            "The given `code_verifier` parameter is invalid.", state,
+            'The given `code_verifier` parameter is invalid.', state,
             uri: uri),
       );
     }

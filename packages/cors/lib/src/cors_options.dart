@@ -22,7 +22,7 @@ class CorsOptions {
   /// Configures the **Access-Control-Max-Age** CORS header. Set to an integer to pass the header, otherwise it is omitted.
   ///
   /// Default: `null`
-  final int maxAge;
+  final int? maxAge;
 
   /// The status code to be sent on successful `OPTIONS` requests, if [preflightContinue] is `false`.
   final int successStatus;
@@ -50,7 +50,7 @@ class CorsOptions {
 
   CorsOptions(
       {Iterable<String> allowedHeaders = const [],
-      this.credentials,
+      this.credentials = false,
       this.maxAge,
       Iterable<String> methods = const [
         'GET',
@@ -64,10 +64,10 @@ class CorsOptions {
       this.successStatus = 204,
       this.preflightContinue = false,
       Iterable<String> exposedHeaders = const []}) {
-    if (allowedHeaders != null) this.allowedHeaders.addAll(allowedHeaders);
+    this.allowedHeaders.addAll(allowedHeaders);
 
-    if (methods != null) this.methods.addAll(methods);
+    this.methods.addAll(methods);
 
-    if (exposedHeaders != null) this.exposedHeaders.addAll(exposedHeaders);
+    this.exposedHeaders.addAll(exposedHeaders);
   }
 }

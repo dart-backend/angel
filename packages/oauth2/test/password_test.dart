@@ -1,15 +1,16 @@
 import 'dart:async';
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_framework/http.dart';
-import 'package:angel_oauth2/angel_oauth2.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_framework/http.dart';
+import 'package:angel3_oauth2/angel3_oauth2.dart';
+import 'package:collection/collection.dart' show IterableExtension;
 import 'package:logging/logging.dart';
 import 'package:oauth2/oauth2.dart' as oauth2;
 import 'package:test/test.dart';
 import 'common.dart';
 
-main() {
-  Angel app;
-  Uri tokenEndpoint;
+void main() {
+  late Angel app;
+  late Uri tokenEndpoint;
 
   setUp(() async {
     app = Angel();
@@ -50,7 +51,7 @@ main() {
   });
 
   test('force correct username+password', () async {
-    oauth2.Client client;
+    oauth2.Client? client;
 
     try {
       client = await oauth2.resourceOwnerPasswordGrant(
@@ -88,20 +89,20 @@ main() {
 class _AuthorizationServer
     extends AuthorizationServer<PseudoApplication, PseudoUser> {
   @override
-  PseudoApplication findClient(String clientId) {
+  PseudoApplication? findClient(String? clientId) {
     return clientId == pseudoApplication.id ? pseudoApplication : null;
   }
 
   @override
   Future<bool> verifyClient(
-      PseudoApplication client, String clientSecret) async {
+      PseudoApplication client, String? clientSecret) async {
     return client.secret == clientSecret;
   }
 
   @override
   Future<AuthorizationTokenResponse> refreshAuthorizationToken(
-      PseudoApplication client,
-      String refreshToken,
+      PseudoApplication? client,
+      String? refreshToken,
       Iterable<String> scopes,
       RequestContext req,
       ResponseContext res) async {
@@ -110,15 +111,14 @@ class _AuthorizationServer
 
   @override
   Future<AuthorizationTokenResponse> resourceOwnerPasswordCredentialsGrant(
-      PseudoApplication client,
-      String username,
-      String password,
+      PseudoApplication? client,
+      String? username,
+      String? password,
       Iterable<String> scopes,
       RequestContext req,
       ResponseContext res) async {
-    var user = pseudoUsers.firstWhere(
-        (u) => u.username == username && u.password == password,
-        orElse: () => null);
+    var user = pseudoUsers.firstWhereOrNull(
+        (u) => u.username == username && u.password == password);
 
     if (user == null) {
       var body = await req.parseBody().then((_) => req.bodyAsMap);

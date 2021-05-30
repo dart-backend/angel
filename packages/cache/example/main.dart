@@ -1,6 +1,6 @@
-import 'package:angel_cache/angel_cache.dart';
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_framework/http.dart';
+import 'package:angel3_cache/angel3_cache.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_framework/http.dart';
 import 'package:glob/glob.dart';
 
 main() async {
@@ -23,8 +23,8 @@ main() async {
   app.addRoute('PURGE', '*', (req, res) {
     if (req.ip != '127.0.0.1') throw AngelHttpException.forbidden();
 
-    cache.purge(req.uri.path);
-    print('Purged ${req.uri.path}');
+    cache.purge(req.uri!.path);
+    print('Purged ${req.uri!.path}');
   });
 
   // The response finalizer that actually saves the content

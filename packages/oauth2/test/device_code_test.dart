@@ -1,14 +1,14 @@
 import 'dart:async';
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_test/angel_test.dart';
-import 'package:angel_oauth2/angel_oauth2.dart';
-import 'package:angel_validate/angel_validate.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_test/angel3_test.dart';
+import 'package:angel3_oauth2/angel3_oauth2.dart';
+import 'package:angel3_validate/angel3_validate.dart';
 import 'package:logging/logging.dart';
 import 'package:test/test.dart';
 import 'common.dart';
 
-main() {
-  TestClient client;
+void main() {
+  late TestClient client;
 
   setUp(() async {
     var app = Angel();
@@ -38,7 +38,7 @@ main() {
 
   group('get initial code', () {
     test('invalid client id', () async {
-      var response = await client.post('/oauth2/token', body: {
+      var response = await client.post(Uri.parse('/oauth2/token'), body: {
         'client_id': 'barr',
       });
       print(response.body);
@@ -46,7 +46,7 @@ main() {
     });
 
     test('valid client id, no scopes', () async {
-      var response = await client.post('/oauth2/token', body: {
+      var response = await client.post(Uri.parse('/oauth2/token'), body: {
         'client_id': 'foo',
       });
       print(response.body);
@@ -55,16 +55,16 @@ main() {
           allOf(
             hasStatus(200),
             isJson({
-              "device_code": "foo",
-              "user_code": "bar",
-              "verification_uri": "https://regiostech.com?scopes",
-              "expires_in": 3600
+              'device_code': 'foo',
+              'user_code': 'bar',
+              'verification_uri': 'https://regiostech.com?scopes',
+              'expires_in': 3600
             }),
           ));
     });
 
     test('valid client id, with scopes', () async {
-      var response = await client.post('/oauth2/token', body: {
+      var response = await client.post(Uri.parse('/oauth2/token'), body: {
         'client_id': 'foo',
         'scope': 'bar baz quux',
       });
@@ -74,11 +74,11 @@ main() {
           allOf(
             hasStatus(200),
             isJson({
-              "device_code": "foo",
-              "user_code": "bar",
-              "verification_uri": Uri.parse("https://regiostech.com").replace(
+              'device_code': 'foo',
+              'user_code': 'bar',
+              'verification_uri': Uri.parse('https://regiostech.com').replace(
                   queryParameters: {'scopes': 'bar,baz,quux'}).toString(),
-              "expires_in": 3600
+              'expires_in': 3600
             }),
           ));
     });
@@ -86,7 +86,7 @@ main() {
 
   group('get token', () {
     test('valid device code + timing', () async {
-      var response = await client.post('/oauth2/token', body: {
+      var response = await client.post(Uri.parse('/oauth2/token'), body: {
         'grant_type': 'urn:ietf:params:oauth:grant-type:device_code',
         'client_id': 'foo',
         'device_code': 'bar',
@@ -97,7 +97,7 @@ main() {
           response,
           allOf(
             hasStatus(200),
-            isJson({"token_type": "bearer", "access_token": "foo"}),
+            isJson({'token_type': 'bearer', 'access_token': 'foo'}),
           ));
     });
 
@@ -108,7 +108,7 @@ main() {
     // The logic for throwing errors and turning them into responses
     // has already been tested.
     test('failure', () async {
-      var response = await client.post('/oauth2/token', body: {
+      var response = await client.post(Uri.parse('/oauth2/token'), body: {
         'grant_type': 'urn:ietf:params:oauth:grant-type:device_code',
         'client_id': 'foo',
         'device_code': 'brute',
@@ -120,9 +120,9 @@ main() {
           allOf(
             hasStatus(400),
             isJson({
-              "error": "slow_down",
-              "error_description":
-                  "Ho, brother! Ho, whoa, whoa, whoa now! You got too much dip on your chip!"
+              'error': 'slow_down',
+              'error_description':
+                  'Ho, brother! Ho, whoa, whoa, whoa now! You got too much dip on your chip!'
             }),
           ));
     });
@@ -132,13 +132,13 @@ main() {
 class _AuthorizationServer
     extends AuthorizationServer<PseudoApplication, PseudoUser> {
   @override
-  PseudoApplication findClient(String clientId) {
+  PseudoApplication? findClient(String? clientId) {
     return clientId == pseudoApplication.id ? pseudoApplication : null;
   }
 
   @override
   Future<bool> verifyClient(
-      PseudoApplication client, String clientSecret) async {
+      PseudoApplication client, String? clientSecret) async {
     return client.secret == clientSecret;
   }
 
@@ -156,14 +156,14 @@ class _AuthorizationServer
   @override
   FutureOr<AuthorizationTokenResponse> exchangeDeviceCodeForToken(
       PseudoApplication client,
-      String deviceCode,
+      String? deviceCode,
       String state,
       RequestContext req,
       ResponseContext res) {
     if (deviceCode == 'brute') {
       throw AuthorizationException(ErrorResponse(
           ErrorResponse.slowDown,
-          "Ho, brother! Ho, whoa, whoa, whoa now! You got too much dip on your chip!",
+          'Ho, brother! Ho, whoa, whoa, whoa now! You got too much dip on your chip!',
           state));
     }
 

@@ -1,6 +1,10 @@
-# cors
-[![Pub](https://img.shields.io/pub/v/angel_cors.svg)](https://pub.dartlang.org/packages/angel_cors)
-[![build status](https://travis-ci.org/angel-dart/cors.svg)](https://travis-ci.org/angel-dart/cors)
+# angel3_cors
+[![version](https://img.shields.io/badge/pub-v4.0.0-brightgreen)](https://pub.dartlang.org/packages/angel3_cors)
+[![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
+[![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
+
+[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/cors/LICENSE)
+
 
 Angel CORS middleware.
 Port of [the original Express CORS middleware](https://github.com/expressjs/cors).
