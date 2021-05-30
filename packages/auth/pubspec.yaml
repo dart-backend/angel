@@ -1,13 +1,12 @@
 name: angel3_auth
 description: A complete authentication plugin for Angel. Includes support for stateless JWT tokens, Basic Auth, and more.
 version: 4.0.2
-homepage: https://github.com/dukefirehawk/angel/tree/angel3/packages/auth
-publish_to: none
+#publish_to: none
 environment:
   sdk: '>=2.12.0 <3.0.0'
 dependencies:
-  angel3_framework: #^4.0.0
-    path: ../framework
+  angel3_framework: ^4.0.0
+#    path: ../framework
   charcode: ^1.2.0
   collection: ^1.15.0
   crypto: ^3.0.0
