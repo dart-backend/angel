@@ -188,7 +188,7 @@ abstract class Driver<
             }
             throw AngelHttpException(e,
                 stackTrace: st,
-                statusCode: 500,
+                statusCode: (e is AngelHttpException) ? e.statusCode : 500,
                 message: e?.toString() ?? '500 Internal Server Error');
           }, test: (e) => e is AngelHttpException).catchError(
               (ee, StackTrace st) {

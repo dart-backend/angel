@@ -1,6 +1,6 @@
 name: angel3_cache
 version: 4.0.0
-description: Support for server-side caching in Angel3 Framework
+description: Support server-side caching of reponse data from services.
 homepage: https://github.com/dukefirehawk/angel/tree/angel3/packages/cache
 environment:
   sdk: '>=2.12.0 <3.0.0'
