@@ -1,3 +1,6 @@
+# 4.0.3
+* Fixed "failureRedirect" test case
+
 # 4.0.2
 * Added MirrorsReflector to test cases
 

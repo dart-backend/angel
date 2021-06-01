@@ -1,3 +1,6 @@
+# 4.0.4
+* Fixed response returning incorrect status code
+
 # 4.0.3
 * Fixed "Primitive after parsed param injection" test case
 * Fixed "Cannot remove all unless explicitly set" test case
