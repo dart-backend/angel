@@ -8,7 +8,7 @@ bool _validateString(String? str) => str != null && str.isNotEmpty;
 
 /// Determines the validity of an incoming username and password.
 // typedef FutureOr<User> LocalAuthVerifier<User>(String? username, String? password);
-typedef LocalAuthVerifier<User> = FutureOr<User> Function(
+typedef LocalAuthVerifier<User> = FutureOr<User?> Function(
     String? username, String? password);
 
 class LocalAuthStrategy<User> extends AuthStrategy<User> {

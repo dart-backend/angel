@@ -13,11 +13,12 @@ var localOpts = AngelAuthOptions<Map<String, String>>(
     failureRedirect: '/failure', successRedirect: '/success');
 Map<String, String> sampleUser = {'hello': 'world'};
 
-Future<Map<String, String>> verifier(String? username, String? password) async {
+Future<Map<String, String>?> verifier(
+    String? username, String? password) async {
   if (username == 'username' && password == 'password') {
     return sampleUser;
   } else {
-    throw ArgumentError('Unexpected type for data');
+    return null;
   }
 }
 
