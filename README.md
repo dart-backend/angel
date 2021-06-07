@@ -52,7 +52,7 @@ For more details, checkout [Project Status](https://github.com/dukefirehawk/ange
 
 1. Download and install [Dart](https://www.dartlang.org/)
 2. Download the starter project from [Angel3 Basic Template](https://github.com/dukefirehawk/boilerplates/tree/angel3-basic)
-3. Next, check out the [detailed documentation](https://docs.angel-dart.dev/v/2.x) to learn to flesh out your project. For the current release of Angel3, the existing documents and tutorials for Angel are still relevant and works. In the future, these resources will be migrated and updated accordingly.
+3. Next, check out the [detailed documentation](https://angel3-docs.dukefirehawk.com/) to learn to flesh out your project. For the current release of Angel3, the existing documents and tutorials for Angel are still relevant and works. In the future, these resources will be migrated and updated accordingly.
 
 <!---
 Once you have [Dart](https://www.dartlang.org/) installed, bootstrapping a project is as simple as running a few shell commands:
@@ -84,20 +84,20 @@ pub global activate --source path ./packages/cli
 
 ### Upgrading Angel to Angel3
 
-Check out [Migrating from Angel to Angel3](https://github.com/dukefirehawk/angel/wiki/Migrating-from-Angel-to-Angel3)
+Check out [Migrating from Angel to Angel3](https://angel3-docs.dukefirehawk.com/migration/angel-2.x.x-to-angel3/migration-guide-3)
 
 ## Examples and Documentation
-Visit the [documentation](https://docs.angel-dart.dev/v/2.x)
+Visit the [documentation](https://angel3-docs.dukefirehawk.com/)
 for dozens of guides and resources, including video tutorials,
 to get up and running as quickly as possible with Angel.
 
 Examples and complete projects can be found
-[here](https://github.com/angel-dart/examples-v2).
+[here](https://github.com/dukefirehawk/angel3-examples).
 
 
 You can also view the [API Documentation](http://www.dartdocs.org/documentation/angel_framework/latest).
 
-There is also an [Awesome Angel :fire:](https://github.com/angel-dart/awesome-angel) list.
+There is also an [Awesome Angel :fire:](https://github.com/dukefirehawk/angel3-awesome) list.
 
 ## Contributing
-Interested in contributing to Angel? Start by reading the contribution guide [here](CONTRIBUTING.md).
+Interested in contributing to Angel3? Start by reading the contribution guide [here](CONTRIBUTING.md).
