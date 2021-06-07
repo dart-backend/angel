@@ -1,5 +1,5 @@
 # angel3_auth
-[![version](https://img.shields.io/badge/pub-v4.0.3-brightgreen)](https://pub.dartlang.org/packages/angel3_auth)
+[![version](https://img.shields.io/badge/pub-v4.0.4-brightgreen)](https://pub.dartlang.org/packages/angel3_auth)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 [![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
 

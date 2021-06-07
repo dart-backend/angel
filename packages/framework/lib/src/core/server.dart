@@ -116,6 +116,7 @@ class Angel extends Routable {
   ///
   /// Packages like `package:angel_configuration` populate this map
   /// for you.
+  @override
   final Map configuration = {};
 
   /// A function that renders views.
@@ -193,6 +194,7 @@ class Angel extends Routable {
   /// Shuts down the server, and closes any open [StreamController]s.
   ///
   /// The server will be **COMPLETELY DEFUNCT** after this operation!
+  @override
   Future close() {
     Future.forEach(services.values, (Service service) {
       service.close();
@@ -216,7 +218,7 @@ class Angel extends Routable {
 
   @override
   void dumpTree(
-      {callback(String tree)?,
+      {Function(String tree)? callback,
       String header = 'Dumping route tree:',
       String tab = '  ',
       bool showMatchers = false}) {

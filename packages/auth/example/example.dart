@@ -5,11 +5,9 @@ import 'package:angel3_framework/http.dart';
 
 void main() async {
   var app = Angel();
-  var auth = AngelAuth<User?>();
-
-  auth.serializer = (user) => user!.id;
-
-  auth.deserializer = (id) => fetchAUserByIdSomehow(id);
+  var auth = AngelAuth<User>(
+      serializer: (user) => user.id,
+      deserializer: (id) => fetchAUserByIdSomehow(id));
 
   // Middleware to decode JWT's and inject a user object...
   await app.configure(auth.configureServer);

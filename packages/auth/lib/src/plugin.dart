@@ -3,6 +3,8 @@ import 'dart:io';
 import 'dart:math';
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:crypto/crypto.dart';
+import 'package:logging/logging.dart';
+
 import 'auth_token.dart';
 import 'options.dart';
 import 'strategy.dart';
@@ -41,6 +43,8 @@ class AngelAuth<User> {
   /// This is a security provision. Even if a user's JWT is stolen, a remote attacker will not be able to impersonate anyone.
   final bool enforceIp;
 
+  final log = Logger('AngelAuth');
+
   /// The endpoint to mount [reviveJwt] at. If `null`, then no revival route is mounted. Default: `/auth/token`.
   String reviveTokenEndpoint;
 
@@ -48,10 +52,10 @@ class AngelAuth<User> {
   Map<String, AuthStrategy<User>> strategies = {};
 
   /// Serializes a user into a unique identifier associated only with one identity.
-  FutureOr Function(User)? serializer;
+  FutureOr Function(User) serializer;
 
   /// Deserializes a unique identifier into its associated identity. In most cases, this is a user object or model instance.
-  FutureOr<User> Function(Object)? deserializer;
+  FutureOr<User> Function(Object) deserializer;
 
   /// Fires the result of [deserializer] whenever a user signs in to the application.
   Stream<User> get onLogin => _onLogin.stream;
@@ -76,9 +80,9 @@ class AngelAuth<User> {
   /// `jwtLifeSpan` - should be in *milliseconds*.
   AngelAuth(
       {String? jwtKey,
-      this.serializer,
-      this.deserializer,
-      num? jwtLifeSpan,
+      required this.serializer,
+      required this.deserializer,
+      num jwtLifeSpan = -1,
       this.allowCookie = true,
       this.allowTokenInQuery = true,
       this.enforceIp = true,
@@ -88,12 +92,13 @@ class AngelAuth<User> {
       this.reviveTokenEndpoint = '/auth/token'})
       : super() {
     _hs256 = Hmac(sha256, (jwtKey ?? _randomString()).codeUnits);
-    _jwtLifeSpan = jwtLifeSpan?.toInt() ?? -1;
+    _jwtLifeSpan = jwtLifeSpan.toInt();
   }
 
   /// Configures an Angel server to decode and validate JSON Web tokens on demand,
   /// whenever an instance of [User] is injected.
   Future<void> configureServer(Angel app) async {
+    /*
     if (serializer == null) {
       throw StateError(
           'An `AngelAuth` plug-in was called without its `serializer` being set. All authentication will fail.');
@@ -102,17 +107,23 @@ class AngelAuth<User> {
       throw StateError(
           'An `AngelAuth` plug-in was called without its `deserializer` being set. All authentication will fail.');
     }
+    */
 
-    app.container!.registerSingleton(this);
+    var appContainer = app.container!;
+    appContainer.registerSingleton(this);
     if (runtimeType != AngelAuth) {
-      app.container!.registerSingleton(this, as: AngelAuth);
+      appContainer.registerSingleton(this, as: AngelAuth);
     }
 
-    if (!app.container!.has<_AuthResult<User>>()) {
-      app.container!
+    if (!appContainer.has<_AuthResult<User>>()) {
+      appContainer
           .registerLazySingleton<Future<_AuthResult<User>>>((container) async {
-        var req = container.make<RequestContext>()!;
-        var res = container.make<ResponseContext>()!;
+        var req = container.make<RequestContext>();
+        var res = container.make<ResponseContext>();
+        if (req == null || res == null) {
+          throw AngelHttpException.forbidden();
+        }
+
         var result = await _decodeJwt(req, res);
         if (result != null) {
           return result;
@@ -121,15 +132,14 @@ class AngelAuth<User> {
         }
       });
 
-      app.container!.registerLazySingleton<Future<User>>((container) async {
-        var result = await container.makeAsync<_AuthResult<User>>()!;
-        return result.user;
+      appContainer.registerLazySingleton<Future<User>>((container) async {
+        var result = await container.makeAsync<_AuthResult<User>>();
+        return result!.user;
       });
 
-      app.container!
-          .registerLazySingleton<Future<AuthToken>>((container) async {
-        var result = await container.makeAsync<_AuthResult<User>>()!;
-        return result.token;
+      appContainer.registerLazySingleton<Future<AuthToken>>((container) async {
+        var result = await container.makeAsync<_AuthResult<User>>();
+        return result!.token;
       });
     }
 
@@ -142,12 +152,13 @@ class AngelAuth<User> {
 
   void _apply(
       RequestContext req, ResponseContext? res, AuthToken token, User user) {
-    if (!req.container!.has<User>()) {
-      req.container!.registerSingleton<User>(user);
+    var reqContainer = req.container!;
+    if (!reqContainer.has<User>()) {
+      reqContainer.registerSingleton<User>(user);
     }
 
-    if (!req.container!.has<AuthToken>()) {
-      req.container!.registerSingleton<AuthToken>(token);
+    if (!reqContainer.has<AuthToken>()) {
+      reqContainer.registerSingleton<AuthToken>(token);
     }
 
     if (allowCookie) {
@@ -209,7 +220,7 @@ class AngelAuth<User> {
         }
       }
 
-      var user = await deserializer!(token.userId as Object);
+      var user = await deserializer(token.userId as Object);
       _apply(req, res, token, user);
       return _AuthResult(user, token);
     }
@@ -298,7 +309,7 @@ class AngelAuth<User> {
           _addProtectedCookie(res, 'token', token.serialize(_hs256));
         }
 
-        final data = await deserializer!(token.userId as Object);
+        final data = await deserializer(token.userId as Object);
         return {'data': data, 'token': token.serialize(_hs256)};
       }
     } catch (e) {
@@ -337,14 +348,21 @@ class AngelAuth<User> {
         var strategy = strategies[name] ??=
             throw ArgumentError('No strategy "$name" found.');
 
-        var hasExisting = req.container!.has<User>();
+        var reqContainer = req.container;
+
+        if (reqContainer == null) {
+          print('req.container is null');
+        }
+
+        var hasExisting = reqContainer?.has<User>() ?? false;
         var result = hasExisting
-            ? req.container!.make<User>()
-            : await strategy.authenticate(req, res, options!);
-        if (result == true) {
+            ? reqContainer?.make<User>()
+            : await strategy.authenticate(req, res, options);
+
+        if (result != null && result == true) {
           return result;
         } else if (result != false && result != null) {
-          var userId = await serializer!(result);
+          var userId = await serializer(result);
 
           // Create JWT
           var token = AuthToken(
@@ -352,11 +370,12 @@ class AngelAuth<User> {
           var jwt = token.serialize(_hs256);
 
           if (options?.tokenCallback != null) {
-            if (!req.container!.has<User>()) {
-              req.container!.registerSingleton<User>(result);
+            var hasUser = reqContainer?.has<User>() ?? false;
+            if (!hasUser) {
+              reqContainer?.registerSingleton<User>(result);
             }
 
-            var r = await options!.tokenCallback!(req, res, token, result);
+            var r = await options?.tokenCallback!(req, res, token, result);
             if (r != null) return r;
             jwt = token.serialize(_hs256);
           }
@@ -368,19 +387,19 @@ class AngelAuth<User> {
           }
 
           if (options?.callback != null) {
-            return await options!.callback!(req, res, jwt);
+            return await options?.callback!(req, res, jwt);
           }
 
           if (options?.successRedirect?.isNotEmpty == true) {
-            await res.redirect(options!.successRedirect);
+            await res.redirect(options?.successRedirect);
             return false;
           } else if (options?.canRespondWithJson != false &&
               req.accepts('application/json')) {
             var user = hasExisting
                 ? result
-                : await deserializer!((await serializer!(result)) as Object);
+                : await deserializer((await serializer(result)) as Object);
             _onLogin.add(user);
-            return {"data": user, "token": jwt};
+            return {'data': user, 'token': jwt};
           }
 
           return true;
@@ -404,7 +423,7 @@ class AngelAuth<User> {
 
   /// Log a user in on-demand.
   Future login(AuthToken token, RequestContext req, ResponseContext res) async {
-    var user = await deserializer!(token.userId as Object);
+    var user = await deserializer(token.userId as Object);
     _apply(req, res, token, user);
     _onLogin.add(user);
 
@@ -415,7 +434,7 @@ class AngelAuth<User> {
 
   /// Log a user in on-demand.
   Future loginById(userId, RequestContext req, ResponseContext res) async {
-    var user = await deserializer!(userId as Object);
+    var user = await deserializer(userId as Object);
     var token =
         AuthToken(userId: userId, lifeSpan: _jwtLifeSpan, ipAddress: req.ip);
     _apply(req, res, token, user);

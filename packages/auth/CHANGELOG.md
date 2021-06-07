@@ -1,3 +1,7 @@
+# 4.0.4
+* Changed serializer and deserializer to be required
+* Fixed "allow basic" test case
+
 # 4.0.3
 * Fixed "failureRedirect" test case
 

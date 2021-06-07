@@ -18,10 +18,10 @@ void main() async {
 
   test('custom payload', () {
     var token = AuthToken(ipAddress: 'localhost', userId: 'thosakwe', payload: {
-      "foo": "bar",
-      "baz": {
-        "one": 1,
-        "franken": ["stein"]
+      'foo': 'bar',
+      'baz': {
+        'one': 1,
+        'franken': ['stein']
       }
     });
     var jwt = token.serialize(hmac);

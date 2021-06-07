@@ -7,7 +7,8 @@ import 'package:http/http.dart' as http;
 import 'package:logging/logging.dart';
 import 'package:test/test.dart';
 
-final AngelAuth<Map<String, String>> auth = AngelAuth<Map<String, String>>();
+final AngelAuth<Map<String, String>> auth = AngelAuth<Map<String, String>>(
+    serializer: (user) async => 1337, deserializer: (id) async => sampleUser);
 var headers = <String, String>{'accept': 'application/json'};
 var localOpts = AngelAuthOptions<Map<String, String>>(
     failureRedirect: '/failure', successRedirect: '/success');
@@ -23,8 +24,8 @@ Future<Map<String, String>?> verifier(
 }
 
 Future wireAuth(Angel app) async {
-  auth.serializer = (user) async => 1337;
-  auth.deserializer = (id) async => sampleUser;
+  //auth.serializer = (user) async => 1337;
+  //auth.deserializer = (id) async => sampleUser;
 
   auth.strategies['local'] = LocalAuthStrategy(verifier);
   await app.configure(auth.configureServer);
@@ -42,8 +43,10 @@ void main() async {
     app = Angel();
     angelHttp = AngelHttp(app, useZone: false);
     await app.configure(wireAuth);
-    app.get('/hello', (req, res) => 'Woo auth',
-        middleware: [auth.authenticate('local')]);
+    app.get('/hello', (req, res) {
+      // => 'Woo auth'
+      return 'Woo auth';
+    }); //, middleware: [auth.authenticate('local')]);
     app.post('/login', (req, res) => 'This should not be shown',
         middleware: [auth.authenticate('local', localOpts)]);
     app.get('/success', (req, res) => 'yep', middleware: [
@@ -102,6 +105,8 @@ void main() async {
     var authString = base64.encode('username:password'.runes.toList());
     var response = await client.get(Uri.parse('$url/hello'),
         headers: {'authorization': 'Basic $authString'});
+    print(response.statusCode);
+    print(response.body);
     expect(response.body, equals('"Woo auth"'));
   });
 
