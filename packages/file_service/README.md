@@ -1,6 +1,9 @@
-# file_service
-[![Pub](https://img.shields.io/pub/v/angel_file_service.svg)](https://pub.dartlang.org/packages/angel_file_service)
-[![build status](https://travis-ci.org/angel-dart/file_service.svg)](https://travis-ci.org/angel-dart/file_service)
+# angel3_file_service
+[![version](https://img.shields.io/badge/pub-v4.0.0-brightgreen)](https://pub.dartlang.org/packages/angel3_file_service)
+[![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
+[![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
+
+[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/file_service/LICENSE)
 
 Angel service that persists data to a file on disk, stored as a JSON list. It uses a simple
 mutex to prevent race conditions, and caches contents in memory until changes

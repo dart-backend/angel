@@ -1,12 +1,12 @@
-import 'package:angel_file_service/angel_file_service.dart';
+import 'package:angel3_file_service/angel3_file_service.dart';
 import 'package:file/file.dart';
 import 'package:file/memory.dart';
 import 'package:test/test.dart';
 
-main() {
+void main() {
   MemoryFileSystem fs;
   File dbFile;
-  JsonFileService service;
+  late JsonFileService service;
 
   setUp(() async {
     fs = new MemoryFileSystem();

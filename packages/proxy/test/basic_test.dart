@@ -1,22 +1,23 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_framework/http.dart';
-import 'package:angel_proxy/angel_proxy.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_framework/http.dart';
+import 'package:angel3_proxy/angel3_proxy.dart';
 import 'package:http/io_client.dart' as http;
 import 'package:logging/logging.dart';
 import 'package:test/test.dart';
 import 'common.dart';
 
 void main() {
-  Angel app;
+  Angel? app;
   var client = http.IOClient();
-  HttpServer server, testServer;
-  String url;
+  //late HttpServer server;
+  late HttpServer testServer;
+  String? url;
 
   setUp(() async {
     app = Angel();
-    var appHttp = AngelHttp(app);
+    var appHttp = AngelHttp(app!);
 
     testServer = await startTestServer();
 
@@ -32,15 +33,15 @@ void main() {
     print('Proxy 1 on: ${proxy1.baseUrl}');
     print('Proxy 2 on: ${proxy2.baseUrl}');
 
-    app.all('/proxy/*', proxy1.handleRequest);
-    app.all('*', proxy2.handleRequest);
+    app!.all('/proxy/*', proxy1.handleRequest);
+    app!.all('*', proxy2.handleRequest);
 
-    app.fallback((req, res) {
+    app!.fallback((req, res) {
       print('Intercepting empty from ${req.uri}');
       res.write('intercept empty');
     });
 
-    app.logger = Logger('angel');
+    app!.logger = Logger('angel');
 
     Logger.root.onRecord.listen((rec) {
       print(rec);
@@ -53,32 +54,32 @@ void main() {
   });
 
   tearDown(() async {
-    await testServer?.close(force: true);
-    await server?.close(force: true);
+    await testServer.close(force: true);
+    //await server.close(force: true);
     app = null;
     url = null;
   });
 
   test('publicPath', () async {
-    final response = await client.get('$url/proxy/hello');
+    final response = await client.get(Uri.parse('$url/proxy/hello'));
     print('Response: ${response.body}');
     expect(response.body, equals('world'));
   });
 
   test('empty', () async {
-    var response = await client.get('$url/proxy/empty');
+    var response = await client.get(Uri.parse('$url/proxy/empty'));
     print('Response: ${response.body}');
     expect(response.body, 'intercept empty');
   });
 
   test('mapTo', () async {
-    final response = await client.get('$url/bar');
+    final response = await client.get(Uri.parse('$url/bar'));
     print('Response: ${response.body}');
     expect(response.body, equals('baz'));
   });
 
   test('original buffer', () async {
-    var response = await client.post('$url/proxy/body',
+    var response = await client.post(Uri.parse('$url/proxy/body'),
         body: json.encode({'foo': 'bar'}),
         headers: {'content-type': 'application/json'});
     print('Response: ${response.body}');

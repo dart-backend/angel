@@ -1,18 +1,18 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:angel_framework/angel_framework.dart';
+import 'package:angel3_framework/angel3_framework.dart';
 import 'package:file/file.dart';
 import 'package:pool/pool.dart';
 
 /// Persists in-memory changes to a file on disk.
 class JsonFileService extends Service<String, Map<String, dynamic>> {
-  FileStat _lastStat;
+  FileStat? _lastStat;
   final Pool _mutex = new Pool(1);
-  MapService _store;
+  late MapService _store;
   final File file;
 
   JsonFileService(this.file,
-      {bool allowRemoveAll: false, bool allowQuery: true, MapService store}) {
+      {bool allowRemoveAll: false, bool allowQuery: true, MapService? store}) {
     _store = store ??
         new MapService(
             allowRemoveAll: allowRemoveAll == true,
@@ -32,7 +32,7 @@ class JsonFileService extends Service<String, Map<String, dynamic>> {
 
       if (_lastStat == null ||
           stat.modified.millisecondsSinceEpoch >
-              _lastStat.modified.millisecondsSinceEpoch) {
+              _lastStat!.modified.millisecondsSinceEpoch) {
         _lastStat = stat;
 
         var contents = await file.readAsString();
@@ -59,18 +59,18 @@ class JsonFileService extends Service<String, Map<String, dynamic>> {
 
   @override
   Future<List<Map<String, dynamic>>> index(
-          [Map<String, dynamic> params]) async =>
+          [Map<String, dynamic>? params]) async =>
       _load()
           .then((_) => _store.index(params))
           .then((it) => it.map(_jsonifyToSD).toList());
 
   @override
-  Future<Map<String, dynamic>> read(id, [Map<String, dynamic> params]) =>
+  Future<Map<String, dynamic>> read(id, [Map<String, dynamic>? params]) =>
       _load().then((_) => _store.read(id, params)).then(_jsonifyToSD);
 
   @override
   Future<Map<String, dynamic>> create(data,
-      [Map<String, dynamic> params]) async {
+      [Map<String, dynamic>? params]) async {
     await _load();
     var created = await _store.create(data, params).then(_jsonifyToSD);
     await _save();
@@ -78,7 +78,8 @@ class JsonFileService extends Service<String, Map<String, dynamic>> {
   }
 
   @override
-  Future<Map<String, dynamic>> remove(id, [Map<String, dynamic> params]) async {
+  Future<Map<String, dynamic>> remove(id,
+      [Map<String, dynamic>? params]) async {
     await _load();
     var r = await _store.remove(id, params).then(_jsonifyToSD);
     await _save();
@@ -87,7 +88,7 @@ class JsonFileService extends Service<String, Map<String, dynamic>> {
 
   @override
   Future<Map<String, dynamic>> update(id, data,
-      [Map<String, dynamic> params]) async {
+      [Map<String, dynamic>? params]) async {
     await _load();
     var r = await _store.update(id, data, params).then(_jsonifyToSD);
     await _save();
@@ -96,7 +97,7 @@ class JsonFileService extends Service<String, Map<String, dynamic>> {
 
   @override
   Future<Map<String, dynamic>> modify(id, data,
-      [Map<String, dynamic> params]) async {
+      [Map<String, dynamic>? params]) async {
     await _load();
     var r = await _store.update(id, data, params).then(_jsonifyToSD);
     await _save();
