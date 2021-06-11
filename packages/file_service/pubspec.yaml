@@ -1,6 +1,6 @@
 name: angel3_file_service
-version: 4.0.0
-description: Angel service that persists data to a file on disk.
+version: 4.0.1
+description: Angel service that persists data to a file on disk, stored as a JSON list.
 homepage: https://github.com/dukefirehawk/angel/tree/angel3/packages/file_service
 environment:
   sdk: '>=2.12.0 <3.0.0'

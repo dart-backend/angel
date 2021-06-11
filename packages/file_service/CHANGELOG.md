@@ -1,3 +1,6 @@
+# 4.0.1
+* Updated package description
+
 # 4.0.0
 * Migrated to support Dart SDK 2.12.x NNBD
 
