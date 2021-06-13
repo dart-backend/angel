@@ -1,6 +1,0 @@
-language: dart
-dart:
-  - dev
-  - stable
-script:
-  - bash -ex travis.sh
