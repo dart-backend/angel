@@ -1,3 +1,6 @@
+# 4.1.0
+* Updated `vm_service` to 7.1.x
+
 # 4.0.0
 * Migrated to support Dart SDK 2.12.x NNBD
 
