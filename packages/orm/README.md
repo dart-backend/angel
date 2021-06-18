@@ -1,13 +1,14 @@
-# orm
-[![Pub](https://img.shields.io/pub/v/angel_orm.svg)](https://pub.dartlang.org/packages/angel_orm)
-[![build status](https://travis-ci.org/angel-dart/orm.svg)](https://travis-ci.org/angel-dart/orm)
+# ORM
+[![version](https://img.shields.io/badge/pub-v4.0.0-brightgreen)](https://pub.dartlang.org/packages/angel3_orm)
+[![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
+[![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
 
-Source-generated PostgreSQL ORM for use with the
-[Angel framework](https://angel-dart.github.io).
-Now you can combine the power and flexibility of Angel with a strongly-typed ORM.
+[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/orm/LICENSE)
+
+Source-generated ORM for use with the [Angel3 framework](https://github.com/dukefirehawk/angel). Now you can combine the power and flexibility of Angel3 with a strongly-typed ORM.
 
 Documentation for migrations can be found here:
-https://angel-dart.gitbook.io/angel/v/2.x/orm/migrations
+[ORM Migration](https://angel3-docs.dukefirehawk.com/guides/orm/migrations)
 
 * [Usage](#usage)
 * [Model Definitions](#models)
@@ -23,29 +24,28 @@ https://angel-dart.gitbook.io/angel/v/2.x/orm/migrations
 You'll need these dependencies in your `pubspec.yaml`:
 ```yaml
 dependencies:
-  angel_orm: ^2.0.0-dev
+  angel3_orm: ^4.0.0-beta.1
 dev_dependencies:
-  angel_orm_generator: ^2.0.0-dev
-  build_runner: ^1.0.0
+  angel3_orm_generator: ^4.0.0-beta.1
+  build_runner: ^2.0.0
 ```
 
-`package:angel_orm_generator` exports a class that you can include
-in a `package:build` flow:
+`package:angel3_orm_generator` exports a class that you can include in a `package:build` flow:
 * `PostgresOrmGenerator` - Fueled by `package:source_gen`; include this within a `SharedPartBuilder`.
 
 However, it also includes a `build.yaml` that builds ORM files automatically, so you shouldn't
 have to do any configuration at all.
 
 # Models
-The ORM works best when used with `package:angel_serialize`:
+The ORM works best when used with `package:angel3_serialize`:
 
 ```dart
 library angel_orm.test.models.car;
 
-import 'package:angel_migration/angel_migration.dart';
-import 'package:angel_model/angel_model.dart';
-import 'package:angel_orm/angel_orm.dart';
-import 'package:angel_serialize/angel_serialize.dart';
+import 'package:angel3_migration/angel3_migration.dart';
+import 'package:angel3_model/angel3_model.dart';
+import 'package:angel3_orm/angel3_orm.dart';
+import 'package:angel3_serialize/angel3_serialize.dart';
 part 'car.g.dart';
 
 @serializable
@@ -65,7 +65,7 @@ abstract class _Car extends Model {
 abstract class _NoMigrations extends Model {}
 ```
 
-Models can use the `@SerializableField()` annotation; `package:angel_orm` obeys it.
+Models can use the `@SerializableField()` annotation; `package:angel3_orm` obeys it.
 
 After building, you'll have access to a `Query` class with strongly-typed methods that
 allow to run asynchronous queries without a headache.
@@ -86,8 +86,8 @@ abstract class _ThisIsNotAnAngelModel {
 MVC just got a whole lot easier:
 
 ```dart
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_orm/angel_orm.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_orm/angel3_orm.dart';
 import 'car.dart';
 import 'car.orm.g.dart';
 
@@ -110,7 +110,7 @@ class CarController extends Controller {
   @Expose('/recalled_since_2008')
   carsRecalledSince2008(QueryExecutor executor) {
     // Instantiate a Car query, which is auto-generated. This class helps us build fluent queries easily.
-    var query = new CarQuery();
+    var query = CarQuery();
     query.where
       ..familyFriendly.equals(false)
       ..recalledAt.year.greaterThanOrEqualTo(2008);
@@ -128,7 +128,7 @@ class CarController extends Controller {
   createCar(QueryExecutor executor) async {
     // `package:angel_orm` generates a strongly-typed `insert` function on the query class.
     // Say goodbye to typos!!!
-    var query = new CarQuery();
+    var query = CarQuery();
     query.values
       ..familyFriendly = true
       ..make 'Honda';
@@ -141,7 +141,7 @@ class CarController extends Controller {
 ```
 
 # Relations
-`angel_orm` supports the following relationships:
+`angel3_orm` supports the following relationships:
 
 * `@HasOne()` (one-to-one)
 * `@HasMany()` (one-to-many)

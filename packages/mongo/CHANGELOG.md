@@ -1,3 +1,6 @@
+# 3.0.0
+* Migrated to support Dart SDK 2.12.x NNBD
+
 # 2.0.3
 * Add null-coalescing check when processing queries: https://github.com/angel-dart/mongo/pull/12
 

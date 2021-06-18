@@ -89,7 +89,7 @@ class MongoService extends Service<String, Map<String, dynamic>> {
   @override
   Future<List<Map<String, dynamic>>> index(
       [Map<String, dynamic> params]) async {
-    return await (await collection.find(_makeQuery(params)))
+    return await (collection.find(_makeQuery(params)))
         .map((x) => _jsonify(x, params))
         .toList();
   }
@@ -110,7 +110,7 @@ class MongoService extends Service<String, Map<String, dynamic>> {
           upsert: true);
       return _jsonify(result);
     } catch (e, st) {
-      throw new AngelHttpException(e, stackTrace: st);
+      throw AngelHttpException(e, stackTrace: st);
     }
   }
 
@@ -122,7 +122,7 @@ class MongoService extends Service<String, Map<String, dynamic>> {
     var found = await collection.findOne(_makeQuery(params));
 
     if (found == null) {
-      throw new AngelHttpException.notFound(message: errorMessage);
+      throw AngelHttpException.notFound(message: errorMessage);
     }
 
     return _jsonify(found, params);
@@ -131,11 +131,11 @@ class MongoService extends Service<String, Map<String, dynamic>> {
   @override
   Future<Map<String, dynamic>> read(String id,
       [Map<String, dynamic> params]) async {
-    ObjectId _id = _makeId(id);
+    var _id = _makeId(id);
     var found = await collection.findOne(where.id(_id).and(_makeQuery(params)));
 
     if (found == null) {
-      throw new AngelHttpException.notFound(
+      throw AngelHttpException.notFound(
           message: 'No record found for ID ${_id.toHexString()}');
     }
 
@@ -147,9 +147,7 @@ class MongoService extends Service<String, Map<String, dynamic>> {
       [Map<String, dynamic> params]) async {
     var q = _makeQuery(params);
     q = ids.fold(q, (q, id) => q.or(where.id(_makeId(id))));
-    return await (await collection.find(q))
-        .map((x) => _jsonify(x, params))
-        .toList();
+    return await (collection.find(q)).map((x) => _jsonify(x, params)).toList();
   }
 
   @override
@@ -160,10 +158,11 @@ class MongoService extends Service<String, Map<String, dynamic>> {
     try {
       target = await read(id, params);
     } on AngelHttpException catch (e) {
-      if (e.statusCode == 404)
+      if (e.statusCode == 404) {
         return await create(data, params);
-      else
+      } else {
         rethrow;
+      }
     }
 
     var result = mergeMap([target, _removeSensitive(data)]);
@@ -177,7 +176,7 @@ class MongoService extends Service<String, Map<String, dynamic>> {
       return result;
     } catch (e, st) {
       //printDebug(e, st, 'MODIFY');
-      throw new AngelHttpException(e, stackTrace: st);
+      throw AngelHttpException(e, stackTrace: st);
     }
   }
 
@@ -205,7 +204,7 @@ class MongoService extends Service<String, Map<String, dynamic>> {
       return result;
     } catch (e, st) {
       //printDebug(e, st, 'UPDATE');
-      throw new AngelHttpException(e, stackTrace: st);
+      throw AngelHttpException(e, stackTrace: st);
     }
   }
 
@@ -232,7 +231,7 @@ class MongoService extends Service<String, Map<String, dynamic>> {
       return _jsonify(result);
     } catch (e, st) {
       //printDebug(e, st, 'REMOVE');
-      throw new AngelHttpException(e, stackTrace: st);
+      throw AngelHttpException(e, stackTrace: st);
     }
   }
 }
