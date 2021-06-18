@@ -1,6 +1,7 @@
 import 'package:angel_migration/angel_migration.dart';
 import 'package:angel_serialize/angel_serialize.dart';
 import 'package:angel_orm/angel_orm.dart';
+import 'package:optional/optional.dart';
 part 'pokemon.g.dart';
 
 enum PokemonType {
@@ -19,15 +20,15 @@ enum PokemonType {
 @orm
 abstract class _Pokemon extends Model {
   @notNull
-  String get species;
+  String? get species;
 
-  String get name;
-
-  @notNull
-  int get level;
+  String? get name;
 
   @notNull
-  PokemonType get type1;
+  int? get level;
 
-  PokemonType get type2;
+  @notNull
+  PokemonType? get type1;
+
+  PokemonType? get type2;
 }

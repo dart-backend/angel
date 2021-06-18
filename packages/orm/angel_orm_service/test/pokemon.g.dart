@@ -8,9 +8,9 @@ part of 'pokemon.dart';
 
 class PokemonMigration extends Migration {
   @override
-  up(Schema schema) {
+  void up(Schema schema) {
     schema.create('pokemons', (table) {
-      table.serial('id')..primaryKey();
+      table.serial('id').primaryKey();
       table.varChar('species');
       table.varChar('name');
       table.integer('level');
@@ -22,7 +22,7 @@ class PokemonMigration extends Migration {
   }
 
   @override
-  down(Schema schema) {
+  void down(Schema schema) {
     schema.drop('pokemons');
   }
 }
@@ -32,8 +32,8 @@ class PokemonMigration extends Migration {
 // **************************************************************************
 
 class PokemonQuery extends Query<Pokemon, PokemonQueryWhere> {
-  PokemonQuery({Set<String> trampoline}) {
-    trampoline ??= Set();
+  PokemonQuery({Set<String>? trampoline}) {
+    trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = PokemonQueryWhere(this);
   }
@@ -41,20 +41,20 @@ class PokemonQuery extends Query<Pokemon, PokemonQueryWhere> {
   @override
   final PokemonQueryValues values = PokemonQueryValues();
 
-  PokemonQueryWhere _where;
+  PokemonQueryWhere? _where;
 
   @override
-  get casts {
+  Map<String, String> get casts {
     return {};
   }
 
   @override
-  get tableName {
+  String get tableName {
     return 'pokemons';
   }
 
   @override
-  get fields {
+  List<String> get fields {
     return const [
       'id',
       'species',
@@ -68,7 +68,7 @@ class PokemonQuery extends Query<Pokemon, PokemonQueryWhere> {
   }
 
   @override
-  PokemonQueryWhere get where {
+  PokemonQueryWhere? get where {
     return _where;
   }
 
@@ -77,23 +77,23 @@ class PokemonQuery extends Query<Pokemon, PokemonQueryWhere> {
     return PokemonQueryWhere(this);
   }
 
-  static Pokemon parseRow(List row) {
+  static Pokemon? parseRow(List row) {
     if (row.every((x) => x == null)) return null;
     var model = Pokemon(
         id: row[0].toString(),
-        species: (row[1] as String),
-        name: (row[2] as String),
-        level: (row[3] as int),
+        species: (row[1] as String?),
+        name: (row[2] as String?),
+        level: (row[3] as int?),
         type1: row[4] == null ? null : PokemonType.values[(row[4] as int)],
         type2: row[5] == null ? null : PokemonType.values[(row[5] as int)],
-        createdAt: (row[6] as DateTime),
-        updatedAt: (row[7] as DateTime));
+        createdAt: (row[6] as DateTime?),
+        updatedAt: (row[7] as DateTime?));
     return model;
   }
 
   @override
-  deserialize(List row) {
-    return parseRow(row);
+  Optional<Pokemon> deserialize(List row) {
+    return Optional.ofNullable(parseRow(row));
   }
 }
 
@@ -127,57 +127,57 @@ class PokemonQueryWhere extends QueryWhere {
   final DateTimeSqlExpressionBuilder updatedAt;
 
   @override
-  get expressionBuilders {
+  List<SqlExpressionBuilder> get expressionBuilders {
     return [id, species, name, level, type1, type2, createdAt, updatedAt];
   }
 }
 
 class PokemonQueryValues extends MapQueryValues {
   @override
-  get casts {
+  Map<String, String> get casts {
     return {};
   }
 
-  String get id {
-    return (values['id'] as String);
+  String? get id {
+    return (values['id'] as String?);
   }
 
-  set id(String value) => values['id'] = value;
-  String get species {
-    return (values['species'] as String);
+  set id(String? value) => values['id'] = value;
+  String? get species {
+    return (values['species'] as String?);
   }
 
-  set species(String value) => values['species'] = value;
-  String get name {
-    return (values['name'] as String);
+  set species(String? value) => values['species'] = value;
+  String? get name {
+    return (values['name'] as String?);
   }
 
-  set name(String value) => values['name'] = value;
-  int get level {
-    return (values['level'] as int);
+  set name(String? value) => values['name'] = value;
+  int? get level {
+    return (values['level'] as int?);
   }
 
-  set level(int value) => values['level'] = value;
+  set level(int? value) => values['level'] = value;
   PokemonType get type1 {
     return PokemonType.values[(values['type1'] as int)];
   }
 
-  set type1(PokemonType value) => values['type1'] = value?.index;
+  set type1(PokemonType? value) => values['type1'] = value?.index;
   PokemonType get type2 {
     return PokemonType.values[(values['type2'] as int)];
   }
 
-  set type2(PokemonType value) => values['type2'] = value?.index;
-  DateTime get createdAt {
-    return (values['created_at'] as DateTime);
+  set type2(PokemonType? value) => values['type2'] = value?.index;
+  DateTime? get createdAt {
+    return (values['created_at'] as DateTime?);
   }
 
-  set createdAt(DateTime value) => values['created_at'] = value;
-  DateTime get updatedAt {
-    return (values['updated_at'] as DateTime);
+  set createdAt(DateTime? value) => values['created_at'] = value;
+  DateTime? get updatedAt {
+    return (values['updated_at'] as DateTime?);
   }
 
-  set updatedAt(DateTime value) => values['updated_at'] = value;
+  set updatedAt(DateTime? value) => values['updated_at'] = value;
   void copyFrom(Pokemon model) {
     species = model.species;
     name = model.name;
@@ -197,47 +197,47 @@ class PokemonQueryValues extends MapQueryValues {
 class Pokemon extends _Pokemon {
   Pokemon(
       {this.id,
-      @required this.species,
+      required this.species,
       this.name,
-      @required this.level,
-      @required this.type1,
+      required this.level,
+      required this.type1,
       this.type2,
       this.createdAt,
       this.updatedAt});
 
   @override
-  final String id;
+  final String? id;
 
   @override
-  final String species;
+  final String? species;
 
   @override
-  final String name;
+  final String? name;
 
   @override
-  final int level;
+  final int? level;
 
   @override
-  final PokemonType type1;
+  final PokemonType? type1;
 
   @override
-  final PokemonType type2;
+  final PokemonType? type2;
 
   @override
-  final DateTime createdAt;
+  final DateTime? createdAt;
 
   @override
-  final DateTime updatedAt;
+  final DateTime? updatedAt;
 
   Pokemon copyWith(
-      {String id,
-      String species,
-      String name,
-      int level,
-      PokemonType type1,
-      PokemonType type2,
-      DateTime createdAt,
-      DateTime updatedAt}) {
+      {String? id,
+      String? species,
+      String? name,
+      int? level,
+      PokemonType? type1,
+      PokemonType? type2,
+      DateTime? createdAt,
+      DateTime? updatedAt}) {
     return Pokemon(
         id: id ?? this.id,
         species: species ?? this.species,
@@ -249,6 +249,7 @@ class Pokemon extends _Pokemon {
         updatedAt: updatedAt ?? this.updatedAt);
   }
 
+  @override
   bool operator ==(other) {
     return other is _Pokemon &&
         other.id == id &&
@@ -269,7 +270,7 @@ class Pokemon extends _Pokemon {
 
   @override
   String toString() {
-    return "Pokemon(id=$id, species=$species, name=$name, level=$level, type1=$type1, type2=$type2, createdAt=$createdAt, updatedAt=$updatedAt)";
+    return 'Pokemon(id=$id, species=$species, name=$name, level=$level, type1=$type1, type2=$type2, createdAt=$createdAt, updatedAt=$updatedAt)';
   }
 
   Map<String, dynamic> toJson() {
@@ -301,9 +302,9 @@ class PokemonSerializer extends Codec<Pokemon, Map> {
   const PokemonSerializer();
 
   @override
-  get encoder => const PokemonEncoder();
+  PokemonEncoder get encoder => const PokemonEncoder();
   @override
-  get decoder => const PokemonDecoder();
+  PokemonDecoder get decoder => const PokemonDecoder();
   static Pokemon fromMap(Map map) {
     if (map['species'] == null) {
       throw FormatException("Missing required field 'species' on Pokemon.");
@@ -318,36 +319,33 @@ class PokemonSerializer extends Codec<Pokemon, Map> {
     }
 
     return Pokemon(
-        id: map['id'] as String,
-        species: map['species'] as String,
-        name: map['name'] as String,
-        level: map['level'] as int,
+        id: map['id'] as String?,
+        species: map['species'] as String?,
+        name: map['name'] as String?,
+        level: map['level'] as int?,
         type1: map['type1'] is PokemonType
-            ? (map['type1'] as PokemonType)
+            ? (map['type1'] as PokemonType?)
             : (map['type1'] is int
                 ? PokemonType.values[map['type1'] as int]
                 : null),
         type2: map['type2'] is PokemonType
-            ? (map['type2'] as PokemonType)
+            ? (map['type2'] as PokemonType?)
             : (map['type2'] is int
                 ? PokemonType.values[map['type2'] as int]
                 : null),
         createdAt: map['created_at'] != null
             ? (map['created_at'] is DateTime
-                ? (map['created_at'] as DateTime)
+                ? (map['created_at'] as DateTime?)
                 : DateTime.parse(map['created_at'].toString()))
             : null,
         updatedAt: map['updated_at'] != null
             ? (map['updated_at'] is DateTime
-                ? (map['updated_at'] as DateTime)
+                ? (map['updated_at'] as DateTime?)
                 : DateTime.parse(map['updated_at'].toString()))
             : null);
   }
 
   static Map<String, dynamic> toMap(_Pokemon model) {
-    if (model == null) {
-      return null;
-    }
     if (model.species == null) {
       throw FormatException("Missing required field 'species' on Pokemon.");
     }
@@ -366,9 +364,9 @@ class PokemonSerializer extends Codec<Pokemon, Map> {
       'name': model.name,
       'level': model.level,
       'type1':
-          model.type1 == null ? null : PokemonType.values.indexOf(model.type1),
+          model.type1 == null ? null : PokemonType.values.indexOf(model.type1!),
       'type2':
-          model.type2 == null ? null : PokemonType.values.indexOf(model.type2),
+          model.type2 == null ? null : PokemonType.values.indexOf(model.type2!),
       'created_at': model.createdAt?.toIso8601String(),
       'updated_at': model.updatedAt?.toIso8601String()
     };

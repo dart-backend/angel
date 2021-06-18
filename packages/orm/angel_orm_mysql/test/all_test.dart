@@ -1,4 +1,4 @@
-import 'package:angel_orm_test/angel_orm_test.dart';
+import 'package:angel3_orm_test/angel3_orm_test.dart';
 import 'package:logging/logging.dart';
 import 'package:test/test.dart';
 import 'common.dart';

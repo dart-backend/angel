@@ -33,14 +33,14 @@ class OrmService<Id, Data, TQuery extends Query<Data, QueryWhere>>
       {this.idField = 'id',
       this.allowRemoveAll = false,
       this.allowQuery = true,
-      FutureOr<Data> Function(RequestContext, ResponseContext) readData})
+      FutureOr<Data> Function(RequestContext, ResponseContext)? readData})
       : super(readData: readData);
 
   SqlExpressionBuilder _findBuilder(TQuery query, String name) {
-    return query.where.expressionBuilders.firstWhere(
+    return query.where!.expressionBuilders.firstWhere(
         (b) => b.columnName == name,
-        orElse: () => throw ArgumentError(
-            '${query.where.runtimeType} has no expression builder for a column named "$name".'));
+        orElse: (() => throw ArgumentError(
+            '${query.where.runtimeType} has no expression builder for a column named "$name".')) as SqlExpressionBuilder<dynamic> Function()?);
   }
 
   void _apply(TQuery query, String name, dynamic value) {
@@ -53,7 +53,7 @@ class OrmService<Id, Data, TQuery extends Query<Data, QueryWhere>>
     }
   }
 
-  Future<void> _applyQuery(TQuery query, Map<String, dynamic> params) async {
+  Future<void> _applyQuery(TQuery query, Map<String, dynamic>? params) async {
     if (params == null || params.isEmpty) return;
 
     if (allowQuery || !params.containsKey('provider')) {
@@ -87,7 +87,7 @@ class OrmService<Id, Data, TQuery extends Query<Data, QueryWhere>>
 
   @override
   Future<List<Data>> readMany(List<Id> ids,
-      [Map<String, dynamic> params]) async {
+      [Map<String, dynamic>? params]) async {
     if (ids.isEmpty) {
       throw ArgumentError.value(ids, 'ids', 'cannot be empty');
     }
@@ -107,36 +107,36 @@ class OrmService<Id, Data, TQuery extends Query<Data, QueryWhere>>
   }
 
   @override
-  Future<List<Data>> index([Map<String, dynamic> params]) async {
+  Future<List<Data>> index([Map<String, dynamic>? params]) async {
     var query = await queryCreator();
     await _applyQuery(query, params);
     return await query.get(executor);
   }
 
   @override
-  Future<Data> read(Id id, [Map<String, dynamic> params]) async {
+  Future<Data> read(Id id, [Map<String, dynamic>? params]) async {
     var query = await queryCreator();
     _apply(query, idField, id);
     await _applyQuery(query, params);
     var result = await query.getOne(executor);
-    if (result != null) return result;
+    if (result != null && result.isPresent) return result.value;
     throw AngelHttpException.notFound(message: 'No record found for ID $id');
   }
 
   @override
   Future<Data> findOne(
-      [Map<String, dynamic> params,
+      [Map<String, dynamic>? params,
       String errorMessage =
           'No record was found matching the given query.']) async {
     var query = await queryCreator();
     await _applyQuery(query, params);
     var result = await query.getOne(executor);
-    if (result != null) return result;
+    if (result != null && result.isPresent) return result.value;
     throw AngelHttpException.notFound(message: errorMessage);
   }
 
   @override
-  Future<Data> create(Data data, [Map<String, dynamic> params]) async {
+  Future<Data> create(Data data, [Map<String, dynamic>? params]) async {
     var query = await queryCreator();
 
     try {
@@ -146,16 +146,18 @@ class OrmService<Id, Data, TQuery extends Query<Data, QueryWhere>>
           '${query.values.runtimeType} has no `copyFrom` method, but OrmService requires this for insertions.');
     }
 
-    return await query.insert(executor);
+    var result = await query.insert(executor);
+
+    return result.value;
   }
 
   @override
-  Future<Data> modify(Id id, Data data, [Map<String, dynamic> params]) {
+  Future<Data> modify(Id id, Data data, [Map<String, dynamic>? params]) {
     return update(id, data, params);
   }
 
   @override
-  Future<Data> update(Id id, Data data, [Map<String, dynamic> params]) async {
+  Future<Data> update(Id id, Data data, [Map<String, dynamic>? params]) async {
     var query = await queryCreator();
     _apply(query, idField, id);
     await _applyQuery(query, params);
@@ -168,12 +170,12 @@ class OrmService<Id, Data, TQuery extends Query<Data, QueryWhere>>
     }
 
     var result = await query.updateOne(executor);
-    if (result != null) return result;
+    if (result != null) return result.value;
     throw AngelHttpException.notFound(message: 'No record found for ID $id');
   }
 
   @override
-  Future<Data> remove(Id id, [Map<String, dynamic> params]) async {
+  Future<Data> remove(Id id, [Map<String, dynamic>? params]) async {
     var query = await queryCreator();
 
     if (id == null || id == 'null') {
@@ -189,7 +191,7 @@ class OrmService<Id, Data, TQuery extends Query<Data, QueryWhere>>
     }
 
     var result = await query.deleteOne(executor);
-    if (result != null) return result;
+    if (result != null && result.isPresent) return result.value;
     throw AngelHttpException.notFound(message: 'No record found for ID $id');
   }
 }

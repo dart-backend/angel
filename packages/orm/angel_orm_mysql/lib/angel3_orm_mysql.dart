@@ -1,15 +1,15 @@
 import 'dart:async';
-import 'package:angel_orm/angel_orm.dart';
+import 'package:angel3_orm/angel3_orm.dart';
 import 'package:logging/logging.dart';
 // import 'package:pool/pool.dart';
-import 'package:sqljocky5/connection/connection.dart';
-import 'package:sqljocky5/sqljocky.dart';
+import 'package:galileo_sqljocky5/public/connection/connection.dart';
+import 'package:galileo_sqljocky5/sqljocky.dart';
 
 class MySqlExecutor extends QueryExecutor {
   /// An optional [Logger] to write to.
-  final Logger logger;
+  final Logger? logger;
 
-  final Querier _connection;
+  final Querier? _connection;
 
   MySqlExecutor(this._connection, {this.logger});
 
@@ -23,7 +23,7 @@ class MySqlExecutor extends QueryExecutor {
 
   Future<Transaction> _startTransaction() {
     if (_connection is Transaction) {
-      return Future.value(_connection as Transaction);
+      return Future.value(_connection as Transaction?);
     } else if (_connection is MySqlConnection) {
       return (_connection as MySqlConnection).begin();
     } else {
@@ -34,7 +34,7 @@ class MySqlExecutor extends QueryExecutor {
   @override
   Future<List<List>> query(
       String tableName, String query, Map<String, dynamic> substitutionValues,
-      [List<String> returningFields]) {
+      [List<String> returningFields = const []]) {
     // Change @id -> ?
     for (var name in substitutionValues.keys) {
       query = query.replaceAll('@$name', '?');
@@ -43,8 +43,8 @@ class MySqlExecutor extends QueryExecutor {
     logger?.fine('Query: $query');
     logger?.fine('Values: $substitutionValues');
 
-    if (returningFields?.isNotEmpty != true) {
-      return _connection
+    if (returningFields.isNotEmpty != true) {
+      return _connection!
           .prepared(query, substitutionValues.values)
           .then((results) => results.map((r) => r.toList()).toList());
     } else {
@@ -63,7 +63,7 @@ class MySqlExecutor extends QueryExecutor {
           await tx.commit();
           return mapped;
         } catch (_) {
-          await tx?.rollback();
+          await tx.rollback();
           rethrow;
         }
       });
@@ -76,7 +76,7 @@ class MySqlExecutor extends QueryExecutor {
       return await f(this);
     }
 
-    Transaction tx;
+    Transaction? tx;
     try {
       tx = await _startTransaction();
       var executor = MySqlExecutor(tx, logger: logger);

@@ -9,9 +9,9 @@ import 'package:test/test.dart';
 import 'pokemon.dart';
 
 void main() {
-  Logger logger;
-  PostgreSqlExecutor executor;
-  Service<int, Pokemon> pokemonService;
+  late Logger logger;
+  late PostgreSqlExecutor executor;
+  late Service<int?, Pokemon> pokemonService;
 
   setUp(() async {
     var conn = PostgreSQLConnection('localhost', 5432, 'angel_orm_service_test',
@@ -60,7 +60,8 @@ void main() {
   });
 
   group('after create', () {
-    Pokemon giratina, pikachu;
+    late Pokemon giratina;
+    late Pokemon pikachu;
 
     setUp(() async {
       giratina = await pokemonService.create(Pokemon(
@@ -85,7 +86,7 @@ void main() {
       test('with callback', () async {
         var result = await pokemonService.index({
           'query': (PokemonQuery query) async {
-            query.where.level.equals(pikachu.level);
+            query.where!.level.equals(pikachu.level!);
           },
         });
 
@@ -163,7 +164,7 @@ void main() {
             pikachu);
         expect(
             () => pokemonService.findOne({
-                  'query': {PokemonFields.level: pikachu.level * 3}
+                  'query': {PokemonFields.level: pikachu.level! * 3}
                 }),
             throwsA(TypeMatcher<AngelHttpException>()));
       });

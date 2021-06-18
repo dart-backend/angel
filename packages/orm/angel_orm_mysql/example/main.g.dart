@@ -29,7 +29,7 @@ class TodoMigration extends Migration {
 // **************************************************************************
 
 class TodoQuery extends Query<Todo, TodoQueryWhere> {
-  TodoQuery({Set<String> trampoline}) {
+  TodoQuery({Set<String>? trampoline}) {
     trampoline ??= Set();
     trampoline.add(tableName);
     _where = TodoQueryWhere(this);
@@ -38,7 +38,7 @@ class TodoQuery extends Query<Todo, TodoQueryWhere> {
   @override
   final TodoQueryValues values = TodoQueryValues();
 
-  TodoQueryWhere _where;
+  TodoQueryWhere? _where;
 
   @override
   get casts {
@@ -56,7 +56,7 @@ class TodoQuery extends Query<Todo, TodoQueryWhere> {
   }
 
   @override
-  TodoQueryWhere get where {
+  TodoQueryWhere? get where {
     return _where;
   }
 
@@ -65,20 +65,20 @@ class TodoQuery extends Query<Todo, TodoQueryWhere> {
     return TodoQueryWhere(this);
   }
 
-  static Todo parseRow(List row) {
+  static Todo? parseRow(List row) {
     if (row.every((x) => x == null)) return null;
     var model = Todo(
         id: row[0].toString(),
-        isComplete: (row[1] as bool),
-        text: (row[2] as String),
-        createdAt: (row[3] as DateTime),
-        updatedAt: (row[4] as DateTime));
+        isComplete: (row[1] as bool?),
+        text: (row[2] as String?),
+        createdAt: (row[3] as DateTime?),
+        updatedAt: (row[4] as DateTime?));
     return model;
   }
 
   @override
-  deserialize(List row) {
-    return parseRow(row);
+  Optional<Todo> deserialize(List row) {
+    return Optional.ofNullable(parseRow(row));
   }
 }
 
@@ -112,31 +112,31 @@ class TodoQueryValues extends MapQueryValues {
     return {};
   }
 
-  int get id {
-    return (values['id'] as int);
+  int? get id {
+    return (values['id'] as int?);
   }
 
-  set id(int value) => values['id'] = value;
-  bool get isComplete {
-    return (values['is_complete'] as bool);
+  set id(int? value) => values['id'] = value;
+  bool? get isComplete {
+    return (values['is_complete'] as bool?);
   }
 
-  set isComplete(bool value) => values['is_complete'] = value;
-  String get text {
-    return (values['text'] as String);
+  set isComplete(bool? value) => values['is_complete'] = value;
+  String? get text {
+    return (values['text'] as String?);
   }
 
-  set text(String value) => values['text'] = value;
-  DateTime get createdAt {
-    return (values['created_at'] as DateTime);
+  set text(String? value) => values['text'] = value;
+  DateTime? get createdAt {
+    return (values['created_at'] as DateTime?);
   }
 
-  set createdAt(DateTime value) => values['created_at'] = value;
-  DateTime get updatedAt {
-    return (values['updated_at'] as DateTime);
+  set createdAt(DateTime? value) => values['created_at'] = value;
+  DateTime? get updatedAt {
+    return (values['updated_at'] as DateTime?);
   }
 
-  set updatedAt(DateTime value) => values['updated_at'] = value;
+  set updatedAt(DateTime? value) => values['updated_at'] = value;
   void copyFrom(Todo model) {
     isComplete = model.isComplete;
     text = model.text;
@@ -159,26 +159,26 @@ class Todo extends _Todo {
       this.updatedAt});
 
   @override
-  final String id;
+  final String? id;
 
   @override
-  final bool isComplete;
+  final bool? isComplete;
 
   @override
-  final String text;
+  final String? text;
 
   @override
-  final DateTime createdAt;
+  final DateTime? createdAt;
 
   @override
-  final DateTime updatedAt;
+  final DateTime? updatedAt;
 
   Todo copyWith(
-      {String id,
-      bool isComplete,
-      String text,
-      DateTime createdAt,
-      DateTime updatedAt}) {
+      {String? id,
+      bool? isComplete,
+      String? text,
+      DateTime? createdAt,
+      DateTime? updatedAt}) {
     return new Todo(
         id: id ?? this.id,
         isComplete: isComplete ?? this.isComplete,
@@ -218,25 +218,22 @@ abstract class TodoSerializer {
     }
 
     return new Todo(
-        id: map['id'] as String,
-        isComplete: map['is_complete'] as bool ?? false,
-        text: map['text'] as String,
+        id: map['id'] as String?,
+        isComplete: map['is_complete'] as bool? ?? false,
+        text: map['text'] as String?,
         createdAt: map['created_at'] != null
             ? (map['created_at'] is DateTime
-                ? (map['created_at'] as DateTime)
+                ? (map['created_at'] as DateTime?)
                 : DateTime.parse(map['created_at'].toString()))
             : null,
         updatedAt: map['updated_at'] != null
             ? (map['updated_at'] is DateTime
-                ? (map['updated_at'] as DateTime)
+                ? (map['updated_at'] as DateTime?)
                 : DateTime.parse(map['updated_at'].toString()))
             : null);
   }
 
   static Map<String, dynamic> toMap(_Todo model) {
-    if (model == null) {
-      return null;
-    }
     if (model.isComplete == null) {
       throw new FormatException(
           "Missing required field 'is_complete' on Todo.");

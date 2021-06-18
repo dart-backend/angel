@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'dart:io';
-import 'package:angel_orm/angel_orm.dart';
-import 'package:angel_orm_mysql/angel_orm_mysql.dart';
+import 'package:angel3_orm/angel3_orm.dart';
+import 'package:angel3_orm_mysql/angel3_orm_mysql.dart';
 import 'package:logging/logging.dart';
-import 'package:sqljocky5/sqljocky.dart';
+import 'package:galileo_sqljocky5/sqljocky.dart';
 
 FutureOr<QueryExecutor> Function() my(Iterable<String> schemas) {
   return () => connectToMySql(schemas);
@@ -20,9 +20,10 @@ Future<MySqlExecutor> connectToMySql(Iterable<String> schemas) async {
   var connection = await MySqlConnection.connect(settings);
   var logger = Logger('angel_orm_mysql');
 
-  for (var s in schemas)
+  for (var s in schemas) {
     await connection
-        .execute(await new File('test/migrations/$s.sql').readAsString());
+        .execute(await File('test/migrations/$s.sql').readAsString());
+  }
 
   return MySqlExecutor(connection, logger: logger);
 }

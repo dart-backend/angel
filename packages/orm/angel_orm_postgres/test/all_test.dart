@@ -1,17 +1,15 @@
-//import 'package:angel3_orm_test/angel3_orm_test.dart';
+import 'package:angel3_orm_test/angel3_orm_test.dart';
 import 'package:logging/logging.dart';
 import 'package:angel3_pretty_logging/angel3_pretty_logging.dart';
-//import 'package:test/test.dart';
-//import 'common.dart';
+import 'package:test/test.dart';
+import 'common.dart';
 
 void main() {
   Logger.root
     ..level = Level.ALL
     ..onRecord.listen(prettyLog);
 
-/*
   group('postgresql', () {
-
     group('belongsTo',
         () => belongsToTests(pg(['author', 'book']), close: closePg));
     group('customExpr',
@@ -31,5 +29,4 @@ void main() {
             manyToManyTests(pg(['user', 'role', 'user_role']), close: closePg));
     group('standalone', () => standaloneTests(pg(['car']), close: closePg));
   });
-  */
 }

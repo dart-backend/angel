@@ -1,35 +1,55 @@
 name: angel_orm_service
-version: 1.0.0
+version: 2.0.0
 description: Service implementation that wraps over Angel ORM Query classes.
 homepage: https://github.com/angel-dart/orm
-author: Tobe O <thosakwe@gmail.com>
+publish_to: none
 environment:
-  sdk: '>=2.10.0 <2.12.0'
+  sdk: '>=2.12.0 <3.0.0'
 dependencies:
-  angel_framework: #^2.0.0-alpha
-    path: ../../framework
-  angel_orm: #^2.0.0
-    path: ../angel_orm
+  angel_framework:
+    git: 
+      url: https://github.com/dukefirehawk/angel.git
+      ref: sdk-2.12.x_nnbd
+      path: packages/framework
+  angel_orm:
+    git: 
+      url: https://github.com/dukefirehawk/angel.git
+      ref: sdk-2.12.x_nnbd
+      path: packages/orm/angel_orm
+  postgres: ^2.3.2
+  optional: ^6.0.0-nullsafety.2
 dev_dependencies:
-  angel_migration: #^2.0.0-alpha
-    path: ../angel_migration
+  angel_migration:
+    git: 
+      url: https://github.com/dukefirehawk/angel.git
+      ref: sdk-2.12.x_nnbd
+      path: packages/orm/angel_migration
   angel_migration_runner:
-    path: ../angel_migration_runner
+    git: 
+      url: https://github.com/dukefirehawk/angel.git
+      ref: sdk-2.12.x_nnbd
+      path: packages/orm/angel_migration_runner
   angel_orm_generator:
-    path: ../angel_orm_generator
+    git: 
+      url: https://github.com/dukefirehawk/angel.git
+      ref: sdk-2.12.x_nnbd
+      path: packages/orm/angel_orm_generator
   angel_orm_postgres:
-    path: ../angel_orm_postgres
+    git: 
+      url: https://github.com/dukefirehawk/angel.git
+      ref: sdk-2.12.x_nnbd
+      path: packages/orm/angel_orm_postgres
   angel_orm_test:
-    path: ../angel_orm_test
-  angel_serialize: #^2.0.0
-    path: ../../serialize/angel_serialize
-  build_runner: ^1.0.0
-  logging: ^0.11.0
-  pedantic: ^1.0.0
-#  postgres: ^2.2.0
-  test: ^1.15.7
-
-
-#dependency_overrides:
-#  angel_migration:
-#    path: ../angel_migration
+    git: 
+      url: https://github.com/dukefirehawk/angel.git
+      ref: sdk-2.12.x_nnbd
+      path: packages/orm/angel_orm_test
+  angel_serialize:
+    git: 
+      url: https://github.com/dukefirehawk/angel.git
+      ref: sdk-2.12.x_nnbd
+      path: packages/serialize/angel_serialize
+  build_runner: ^2.0.4
+  logging: ^1.0.1
+  pedantic: ^1.11.0
+  test: ^1.17.7

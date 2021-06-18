@@ -5,7 +5,7 @@
 
 [![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/orm/angel_orm_postgres/LICENSE)
 
-PostgreSQL support for Angel's ORM.
+Postgresql support for Angel's ORM.
 
-For documentation about the ORM, head to the main project repo:
-https://github.com/angel-dart/orm
+For documentation about the ORM with postgres, head to the main project repo:
+[ORM Repo](https://github.com/dukefirehawk/angel/tree/angel3/packages/orm)
