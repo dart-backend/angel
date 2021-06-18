@@ -1,6 +1,9 @@
-# angel_orm_service
-[![Pub](https://img.shields.io/pub/v/angel_orm_service.svg)](https://pub.dartlang.org/packages/angel_orm_service)
-[![build status](https://travis-ci.org/angel-dart/orm.svg)](https://travis-ci.org/angel-dart/orm)
+# angel3_orm_service
+[![version](https://img.shields.io/badge/pub-v2.0.0-brightgreen)](https://pub.dartlang.org/packages/angel3_orm_service)
+[![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
+[![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
+
+[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/orm/angel_orm_service/LICENSE)
 
 Service implementation that wraps over Angel ORM Query classes.
 
@@ -9,7 +12,7 @@ In your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-    angel_orm_service: ^1.0.0
+    angel3_orm_service: ^2.0.0-beta.1
 ```
 
 ## Usage

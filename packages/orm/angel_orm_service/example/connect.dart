@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:io';
-import 'package:angel_orm_postgres/angel_orm_postgres.dart';
+import 'package:angel3_orm_postgres/angel3_orm_postgres.dart';
 import 'package:postgres/postgres.dart';
 
 final conn = PostgreSQLConnection('localhost', 5432, 'angel_orm_service_test',

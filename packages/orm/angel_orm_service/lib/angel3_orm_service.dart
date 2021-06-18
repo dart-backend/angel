@@ -1,6 +1,6 @@
 import 'dart:async';
-import 'package:angel_framework/angel_framework.dart' hide Query;
-import 'package:angel_orm/angel_orm.dart';
+import 'package:angel3_framework/angel3_framework.dart' hide Query;
+import 'package:angel3_orm/angel3_orm.dart';
 
 /// A [Service] implementation that wraps over a [Query] class generated
 /// via the Angel ORM.
@@ -40,7 +40,7 @@ class OrmService<Id, Data, TQuery extends Query<Data, QueryWhere>>
     return query.where!.expressionBuilders.firstWhere(
         (b) => b.columnName == name,
         orElse: (() => throw ArgumentError(
-            '${query.where.runtimeType} has no expression builder for a column named "$name".')) as SqlExpressionBuilder<dynamic> Function()?);
+            '${query.where.runtimeType} has no expression builder for a column named "$name".')));
   }
 
   void _apply(TQuery query, String name, dynamic value) {
@@ -119,7 +119,7 @@ class OrmService<Id, Data, TQuery extends Query<Data, QueryWhere>>
     _apply(query, idField, id);
     await _applyQuery(query, params);
     var result = await query.getOne(executor);
-    if (result != null && result.isPresent) return result.value;
+    if (result.isPresent) return result.value;
     throw AngelHttpException.notFound(message: 'No record found for ID $id');
   }
 
@@ -131,7 +131,7 @@ class OrmService<Id, Data, TQuery extends Query<Data, QueryWhere>>
     var query = await queryCreator();
     await _applyQuery(query, params);
     var result = await query.getOne(executor);
-    if (result != null && result.isPresent) return result.value;
+    if (result.isPresent) return result.value;
     throw AngelHttpException.notFound(message: errorMessage);
   }
 
@@ -170,7 +170,7 @@ class OrmService<Id, Data, TQuery extends Query<Data, QueryWhere>>
     }
 
     var result = await query.updateOne(executor);
-    if (result != null) return result.value;
+    if (result.isPresent) return result.value;
     throw AngelHttpException.notFound(message: 'No record found for ID $id');
   }
 
@@ -191,7 +191,7 @@ class OrmService<Id, Data, TQuery extends Query<Data, QueryWhere>>
     }
 
     var result = await query.deleteOne(executor);
-    if (result != null && result.isPresent) return result.value;
+    if (result.isPresent) return result.value;
     throw AngelHttpException.notFound(message: 'No record found for ID $id');
   }
 }

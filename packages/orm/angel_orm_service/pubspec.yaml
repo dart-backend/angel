@@ -1,54 +1,25 @@
-name: angel_orm_service
-version: 2.0.0
-description: Service implementation that wraps over Angel ORM Query classes.
-homepage: https://github.com/angel-dart/orm
-publish_to: none
+name: angel3_orm_service
+version: 2.0.0-beta.1
+description: Service implementation that wraps over Angel3 ORM Query classes.
+homepage: https://github.com/dukefirehawk/angel/tree/angel3/packages/orm/angel_orm_service
 environment:
   sdk: '>=2.12.0 <3.0.0'
 dependencies:
-  angel_framework:
-    git: 
-      url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x_nnbd
-      path: packages/framework
-  angel_orm:
-    git: 
-      url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x_nnbd
-      path: packages/orm/angel_orm
+  angel3_framework: ^4.0.0
+  angel3_orm: ^4.0.0-beta.1
   postgres: ^2.3.2
   optional: ^6.0.0-nullsafety.2
 dev_dependencies:
-  angel_migration:
+  angel3_migration: ^4.0.0-beta.1
+  angel3_migration_runner: ^4.0.0-beta.1
+  angel3_orm_generator: ^4.0.0-beta.1
+  angel3_orm_postgres: ^3.0.0-beta.1
+  angel3_serialize: ^4.0.0
+  angel3_orm_test: 
     git: 
       url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x_nnbd
-      path: packages/orm/angel_migration
-  angel_migration_runner:
-    git: 
-      url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x_nnbd
-      path: packages/orm/angel_migration_runner
-  angel_orm_generator:
-    git: 
-      url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x_nnbd
-      path: packages/orm/angel_orm_generator
-  angel_orm_postgres:
-    git: 
-      url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x_nnbd
-      path: packages/orm/angel_orm_postgres
-  angel_orm_test:
-    git: 
-      url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x_nnbd
+      ref: angel3
       path: packages/orm/angel_orm_test
-  angel_serialize:
-    git: 
-      url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x_nnbd
-      path: packages/serialize/angel_serialize
   build_runner: ^2.0.4
   logging: ^1.0.1
   pedantic: ^1.11.0

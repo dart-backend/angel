@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:io';
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_orm_postgres/angel_orm_postgres.dart';
-import 'package:angel_orm_service/angel_orm_service.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_orm_postgres/angel3_orm_postgres.dart';
+import 'package:angel3_orm_service/angel3_orm_service.dart';
 import 'package:logging/logging.dart';
 import 'package:postgres/postgres.dart';
 import 'package:test/test.dart';
