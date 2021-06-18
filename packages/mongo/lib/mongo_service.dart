@@ -1,4 +1,4 @@
-part of angel_mongo.services;
+part of angel3_mongo.services;
 
 /// Manipulates data from MongoDB as Maps.
 class MongoService extends Service<String, Map<String, dynamic>> {
@@ -20,14 +20,14 @@ class MongoService extends Service<String, Map<String, dynamic>> {
       {this.allowRemoveAll = false, this.allowQuery = true, this.debug = true})
       : super();
 
-  SelectorBuilder _makeQuery([Map<String, dynamic> params_]) {
+  SelectorBuilder? _makeQuery([Map<String, dynamic>? params_]) {
     var params = Map.from(params_ ?? {});
     params = params..remove('provider');
     var result = where.exists('_id');
 
     // You can pass a SelectorBuilder as 'query';
     if (params['query'] is SelectorBuilder) {
-      return params['query'] as SelectorBuilder;
+      return params['query'] as SelectorBuilder?;
     }
 
     for (var key in params.keys) {
@@ -54,7 +54,7 @@ class MongoService extends Service<String, Map<String, dynamic>> {
         }
       } else if (key == 'query' &&
           (allowQuery == true || !params.containsKey('provider'))) {
-        var query = params[key] as Map;
+        var query = params[key] as Map?;
         query?.forEach((key, v) {
           var value = v is Map<String, dynamic> ? _filterNoQuery(v) : v;
 
@@ -71,7 +71,7 @@ class MongoService extends Service<String, Map<String, dynamic>> {
   }
 
   Map<String, dynamic> _jsonify(Map<String, dynamic> doc,
-      [Map<String, dynamic> params]) {
+      [Map<String, dynamic>? params]) {
     var result = <String, dynamic>{};
 
     for (var key in doc.keys) {
@@ -88,7 +88,7 @@ class MongoService extends Service<String, Map<String, dynamic>> {
 
   @override
   Future<List<Map<String, dynamic>>> index(
-      [Map<String, dynamic> params]) async {
+      [Map<String, dynamic>? params]) async {
     return await (collection.find(_makeQuery(params)))
         .map((x) => _jsonify(x, params))
         .toList();
@@ -98,16 +98,16 @@ class MongoService extends Service<String, Map<String, dynamic>> {
 
   @override
   Future<Map<String, dynamic>> create(Map<String, dynamic> data,
-      [Map<String, dynamic> params]) async {
+      [Map<String, dynamic>? params]) async {
     var item = _removeSensitive(data);
 
     try {
-      var nonce = (await collection.db.getNonce())['nonce'] as String;
-      var result = await collection.findAndModify(
+      var nonce = (await collection.db.getNonce())['nonce'] as String?;
+      var result = await (collection.findAndModify(
           query: where.eq(_NONCE_KEY, nonce),
           update: item,
           returnNew: true,
-          upsert: true);
+          upsert: true) as FutureOr<Map<String, dynamic>>);
       return _jsonify(result);
     } catch (e, st) {
       throw AngelHttpException(e, stackTrace: st);
@@ -116,7 +116,7 @@ class MongoService extends Service<String, Map<String, dynamic>> {
 
   @override
   Future<Map<String, dynamic>> findOne(
-      [Map<String, dynamic> params,
+      [Map<String, dynamic>? params,
       String errorMessage =
           'No record was found matching the given query.']) async {
     var found = await collection.findOne(_makeQuery(params));
@@ -130,9 +130,10 @@ class MongoService extends Service<String, Map<String, dynamic>> {
 
   @override
   Future<Map<String, dynamic>> read(String id,
-      [Map<String, dynamic> params]) async {
+      [Map<String, dynamic>? params]) async {
     var _id = _makeId(id);
-    var found = await collection.findOne(where.id(_id).and(_makeQuery(params)));
+    var found =
+        await collection.findOne(where.id(_id).and(_makeQuery(params)!));
 
     if (found == null) {
       throw AngelHttpException.notFound(
@@ -144,15 +145,15 @@ class MongoService extends Service<String, Map<String, dynamic>> {
 
   @override
   Future<List<Map<String, dynamic>>> readMany(List<String> ids,
-      [Map<String, dynamic> params]) async {
+      [Map<String, dynamic>? params]) async {
     var q = _makeQuery(params);
-    q = ids.fold(q, (q, id) => q.or(where.id(_makeId(id))));
+    q = ids.fold(q, (q, id) => q!.or(where.id(_makeId(id))));
     return await (collection.find(q)).map((x) => _jsonify(x, params)).toList();
   }
 
   @override
   Future<Map<String, dynamic>> modify(String id, data,
-      [Map<String, dynamic> params]) async {
+      [Map<String, dynamic>? params]) async {
     Map<String, dynamic> target;
 
     try {
@@ -169,8 +170,10 @@ class MongoService extends Service<String, Map<String, dynamic>> {
     //result['updatedAt'] = new DateTime.now().toIso8601String();
 
     try {
-      var modified = await collection.findAndModify(
-          query: where.id(_makeId(id)), update: result, returnNew: true);
+      var modified = await (collection.findAndModify(
+          query: where.id(_makeId(id)),
+          update: result,
+          returnNew: true) as FutureOr<Map<String, dynamic>>);
       result = _jsonify(modified, params);
       result['id'] = _makeId(id).toHexString();
       return result;
@@ -182,7 +185,7 @@ class MongoService extends Service<String, Map<String, dynamic>> {
 
   @override
   Future<Map<String, dynamic>> update(String id, Map<String, dynamic> data,
-      [Map<String, dynamic> params]) async {
+      [Map<String, dynamic>? params]) async {
     var result = _removeSensitive(data);
     result['_id'] = _makeId(id);
     /*result['createdAt'] =
@@ -194,11 +197,11 @@ class MongoService extends Service<String, Map<String, dynamic>> {
     result['updatedAt'] = new DateTime.now().toIso8601String();*/
 
     try {
-      var updated = await collection.findAndModify(
+      var updated = await (collection.findAndModify(
           query: where.id(_makeId(id)),
           update: result,
           returnNew: true,
-          upsert: true);
+          upsert: true) as FutureOr<Map<String, dynamic>>);
       result = _jsonify(updated, params);
       result['id'] = _makeId(id).toHexString();
       return result;
@@ -210,8 +213,8 @@ class MongoService extends Service<String, Map<String, dynamic>> {
 
   @override
   Future<Map<String, dynamic>> remove(String id,
-      [Map<String, dynamic> params]) async {
-    if (id == null || id == 'null') {
+      [Map<String, dynamic>? params]) async {
+    if (id == 'null') {
       // Remove everything...
       if (!(allowRemoveAll == true ||
           params?.containsKey('provider') != true)) {
@@ -226,8 +229,9 @@ class MongoService extends Service<String, Map<String, dynamic>> {
     // var result = await read(id, params);
 
     try {
-      var result = await collection.findAndModify(
-          query: where.id(_makeId(id)), remove: true);
+      var result = await (collection.findAndModify(
+          query: where.id(_makeId(id)),
+          remove: true) as FutureOr<Map<String, dynamic>>);
       return _jsonify(result);
     } catch (e, st) {
       //printDebug(e, st, 'REMOVE');

@@ -1,3 +1,3 @@
-library angel_mongo;
+library angel3_mongo;
 
 export 'services.dart';

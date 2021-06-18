@@ -1,16 +1,18 @@
-# angel_mongo
+# angel3_mongo
+[![version](https://img.shields.io/badge/pub-v3.0.0-brightgreen)](https://pub.dartlang.org/packages/angel3_mongo)
+[![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
+[![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
 
-[![Pub](https://img.shields.io/pub/v/angel_mongo.svg)](https://pub.dartlang.org/packages/angel_mongo)
-[![build status](https://travis-ci.org/angel-dart/mongo.svg)](https://travis-ci.org/angel-dart/mongo)
+[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/mongo/LICENSE)
 
-MongoDB-enabled services for the Angel framework.
+MongoDB-enabled services for the Angel3 framework.
 
 # Installation
 Add the following to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  angel_mongo: ^2.0.0
+  angel3_mongo: ^3.0.0
 ```
 
 # Usage
@@ -26,11 +28,11 @@ class User extends Model {
   String password;
 }
 
-main() async {
-    var db = new Db('mongodb://localhost:27017/local');
+void main() async {
+    var db = Db('mongodb://localhost:27017/local');
     await db.open();
     
-    var service = app.use('/api/users', new MongoService(db.collection("users")));
+    var service = app.use('/api/users', MongoService(db.collection("users")));
     
     service.afterCreated.listen((event) {
         print("New user: ${event.result}");

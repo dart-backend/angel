@@ -1,28 +1,15 @@
-name: angel_mongo
+name: angel3_mongo
 version: 3.0.0
 description: MongoDB-enabled services for the Angel framework. Well-tested.
-homepage: https://github.com/angel-dart/angel_mongo
-publish_to: none
+homepage: https://github.com/dukefirehawk/angel/tree/angel3/packages/mongo
 environment:
-  sdk: '>=2.10.0 <3.0.0'
+  sdk: '>=2.12.0 <3.0.0'
 dependencies:
-  angel_framework:
-    git: 
-      url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x_nnbd
-      path: packages/framework
-  json_god:
-    git: 
-      url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x_nnbd
-      path: packages/json_god
-  merge_map:
-    git: 
-      url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x_nnbd
-      path: packages/merge_map
+  angel3_framework: ^4.0.0
+  angel3_json_god: ^4.0.0
+  angel3_merge_map: ^2.0.0
   mongo_dart: ^0.7.0
 dev_dependencies:
   http: ^0.13.0
-  pedantic: ^1.0.0
-  test: ^1.15.7
+  pedantic: ^1.11.0
+  test: ^1.17.0
