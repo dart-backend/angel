@@ -4,8 +4,8 @@ import 'package:angel_seeder/angel_seeder.dart';
 import 'package:test/test.dart';
 import 'common.dart';
 
-main() {
-  Angel app;
+void main() {
+  late Angel app;
 
   setUp(() async {
     app = Angel()..use('/authors', MapService())..use('/books', MapService());
@@ -32,15 +32,15 @@ main() {
   });
 
   test('index', () async {
-    var authors = await app.findService('authors').index();
+    var authors = await app.findService('authors')!.index();
     print(authors);
 
     expect(authors, allOf(isList, isNotEmpty));
 
-    for (Map author in authors) {
+    for (var author in authors.whereType<Map>()) {
       expect(author.keys, contains('books'));
 
-      List<Map> books = author['books'];
+      var books = author['books'] as List<Map>;
 
       for (var book in books) {
         expect(book['authorId'], equals(author['id']));
@@ -50,7 +50,7 @@ main() {
 
   test('create', () async {
     var tolstoy = await app
-        .findService('authors')
+        .findService('authors')!
         .create(Author(name: 'Leo Tolstoy').toJson());
 
     print(tolstoy);

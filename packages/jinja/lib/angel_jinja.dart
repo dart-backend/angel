@@ -9,45 +9,45 @@ import 'package:jinja/jinja.dart';
 /// All options other than [createLoader] are passed to either [FileSystemLoader]
 /// or [Environment].
 AngelConfigurer jinja({
-  Iterable<String> ext = const ['html'],
+  Set<String> ext = const {'html'},
   String path = 'lib/src/templates',
   bool followLinks = true,
-  String stmtOpen = '{%',
-  String stmtClose = '%}',
+  String blockStart = '{%',
+  String blockEnd = '%}',
   String varOpen = '{{',
   String varClose = '}}',
-  String commentOpen = '{#',
-  String commentClose = '#}',
+  String commentStart = '{#',
+  String commentEnd = '#}',
   defaultValue,
-  bool autoReload = true,
+  //bool autoReload = true,
   Map<String, Function> filters = const <String, Function>{},
   Map<String, Function> tests = const <String, Function>{},
-  Loader Function() createLoader,
+  Loader Function()? createLoader,
 }) {
   return (app) {
     createLoader ??= () {
       return FileSystemLoader(
-        ext: ext.toList(),
+        extensions: ext,
         path: path,
         followLinks: followLinks,
       );
     };
     var env = Environment(
-      loader: createLoader(),
-      stmtOpen: stmtOpen,
-      stmtClose: stmtClose,
-      varOpen: varOpen,
-      varClose: varClose,
-      commentOpen: commentOpen,
-      commentClose: commentClose,
+      loader: createLoader!(),
+      blockStart: blockStart,
+      blockEnd: blockEnd,
+      variableStart: varOpen,
+      variableEnd: varClose,
+      commentStart: commentStart,
+      commentEnd: commentEnd,
       //defaultValue: defaultValue,
-      autoReload: autoReload,
+      //autoReload: autoReload,
       filters: filters,
       tests: tests,
     );
 
     app.viewGenerator = (path, [values]) {
-      return env.getTemplate(path).render(values);
+      return env.getTemplate(path).render(values) as String;
     };
   };
 }

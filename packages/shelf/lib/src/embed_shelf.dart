@@ -11,8 +11,8 @@ import 'convert.dart';
 /// If [throwOnNullResponse] is `true` (default: `false`), then a 500 error will be thrown
 /// if the [handler] returns `null`.
 RequestHandler embedShelf(shelf.Handler handler,
-    {String handlerPath,
-    Map<String, Object> context,
+    {String? handlerPath,
+    Map<String, Object>? context,
     bool throwOnNullResponse = false}) {
   return (RequestContext req, ResponseContext res) async {
     var shelfRequest = await convertRequest(req, res,

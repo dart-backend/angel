@@ -1,3 +1,6 @@
+# 3.0.0
+* Migrated to support Dart SDK 2.12.x NNBD
+
 # 2.1.0
 * `pedantic` lints.
 * Add the `AngelShelf` driver class, which allows you to embed Angel within shelf.

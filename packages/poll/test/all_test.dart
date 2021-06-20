@@ -1,4 +1,5 @@
 import 'package:angel_framework/angel_framework.dart' as srv;
+import 'package:angel_container/mirrors.dart';
 import 'package:angel_poll/angel_poll.dart';
 import 'package:angel_test/angel_test.dart';
 import 'package:async/async.dart';
@@ -6,13 +7,18 @@ import 'package:logging/logging.dart';
 import 'package:test/test.dart';
 
 void main() {
-  srv.Service store;
-  TestClient client;
-  PollingService pollingService;
+  late srv.Service store;
+  late TestClient client;
+  late PollingService pollingService;
+
+  var created;
+  late StreamQueue onCreated;
+  late StreamQueue onModified;
+  late StreamQueue onRemoved;
 
   setUp(() async {
-    var app = new srv.Angel();
-    app.logger = new Logger.detached('angel_poll')
+    var app = srv.Angel(reflector: MirrorsReflector());
+    app.logger = Logger.detached('angel_poll')
       ..onRecord.listen((rec) {
         print(rec);
         if (rec.error != null) {
@@ -23,43 +29,37 @@ void main() {
 
     store = app.use(
       '/api/todos',
-      new srv.MapService(
+      srv.MapService(
         autoIdAndDateFields: false,
       ),
     );
 
     client = await connectTo(app);
 
-    pollingService = new PollingService(
+    pollingService = PollingService(
       client.service('api/todos'),
       const Duration(milliseconds: 100),
     );
+
+    onCreated = StreamQueue(pollingService.onCreated);
+    onModified = StreamQueue(pollingService.onModified);
+    onRemoved = StreamQueue(pollingService.onRemoved);
+
+    created = await store.create({
+      'id': '0',
+      'text': 'Clean your room',
+      'completed': false,
+    });
   });
 
-  tearDown(() => client.close());
+  tearDown(() {
+    onCreated.cancel();
+    onModified.cancel();
+    onRemoved.cancel();
+    client.close();
+  });
 
   group('events', () {
-    var created;
-    StreamQueue onCreated, onModified, onRemoved;
-
-    setUp(() async {
-      onCreated = new StreamQueue(pollingService.onCreated);
-      onModified = new StreamQueue(pollingService.onModified);
-      onRemoved = new StreamQueue(pollingService.onRemoved);
-
-      created = await store.create({
-        'id': '0',
-        'text': 'Clean your room',
-        'completed': false,
-      });
-    });
-
-    tearDown(() {
-      onCreated.cancel();
-      onModified.cancel();
-      onRemoved.cancel();
-    });
-
     test('fires indexed', () async {
       var indexed = await pollingService.index();
       print(indexed);
@@ -80,7 +80,7 @@ void main() {
 
       var result = await onModified.next;
       print(result);
-      expect(result, new Map.from(created)..['text'] = 'go to school');
+      expect(result, Map.from({'': created})..['text'] = 'go to school');
     });
 
     test('manual modify', () async {
@@ -91,7 +91,7 @@ void main() {
 
       var result = await onModified.next;
       print(result);
-      expect(result, new Map.from(created)..['text'] = 'eat');
+      expect(result, Map.from({'': created})..['text'] = 'eat');
     });
 
     test('fires removed', () async {

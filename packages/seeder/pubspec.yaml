@@ -1,13 +1,17 @@
 name: angel_seeder
+version: 2.0.0
 description: Straightforward data seeder for Angel services.
-version: 1.0.2
-author: Tobe O <thosakwe@gmail.com>
+publish_to: none
 environment:
-  sdk: ">=2.10.0 <2.12.0"
+  sdk: '>=2.12.0 <3.0.0'
 homepage: https://github.com/angel-dart/seeder
 dependencies:
-    angel_framework: #^1.0.0-dev
-      path: ../framework
-    faker: ^1.3.0
+  angel_framework:
+   git: 
+      url: https://github.com/dukefirehawk/angel.git
+      ref: sdk-2.12.x_nnbd
+      path: packages/framework
+  faker: ^2.0.0
 dev_dependencies:
-    test: ^1.15.7
+    test: ^1.17.8
+    pedantic: ^1.11.1

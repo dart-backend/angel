@@ -11,13 +11,15 @@ abstract class JaelObject {
 }
 
 class JaelCustomElement extends JaelObject {
+  @override
   final String name;
-  final attributes = new SplayTreeSet<String>();
+  final attributes = SplayTreeSet<String>();
 
   JaelCustomElement(this.name, FileSpan span) : super(span);
 }
 
 class JaelVariable extends JaelObject {
+  @override
   final String name;
   JaelVariable(this.name, FileSpan span) : super(span);
 }

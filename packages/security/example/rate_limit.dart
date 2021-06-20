@@ -9,7 +9,8 @@ void main() async {
   Logger.root.onRecord.listen(prettyLog);
 
   // Create an app, and HTTP driver.
-  var app = Angel(logger: Logger('rate_limit')), http = AngelHttp(app);
+  var app = Angel(logger: Logger('rate_limit'));
+  var http = AngelHttp(app);
 
   // Create a simple in-memory rate limiter that limits users to 5
   // queries per 30 seconds.

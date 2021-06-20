@@ -1,16 +1,20 @@
 name: angel_mustache
-description: Mustache view generator for Angel.
-author: thosakwe <thosakwe@gmail.com>
-homepage: https://github.com/angel-dart/angel_mustache
 version: 2.0.0
+description: Mustache view generator for Angel.
+homepage: https://github.com/angel-dart/angel_mustache
+publish_to: none
 environment:
-  sdk: ">=2.10.0 <2.12.0"
+  sdk: '>=2.12.0 <3.0.0'
 dependencies:
   angel_framework: #^2.0.0-alpha
-    path: ../framework
-  file: ^5.0.0
-  mustache4dart: ^3.0.0-dev
-  path: ^1.0.0
+    git: 
+      url: https://github.com/dukefirehawk/angel.git
+      ref: sdk-2.12.x_nnbd
+      path: packages/framework
+  file: ^6.1.2
+  mustache_template: ^2.0.0
+  path: ^1.8.0
 dev_dependencies:
-  http: ^0.12.2
-  test: ^1.15.7
+  http: ^0.13.3
+  test: ^1.17.8
+  pedantic: ^1.11.1

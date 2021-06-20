@@ -5,14 +5,14 @@ import 'plural.dart' as pluralize;
 import 'no_service.dart';
 
 HookedServiceEventListener hasManyThrough(String servicePath, String pivotPath,
-    {String as,
-    String localKey,
-    String pivotKey,
-    String foreignKey,
-    getLocalKey(obj),
-    getPivotKey(obj),
-    getForeignKey(obj),
-    assignForeignObjects(foreign, obj)}) {
+    {String? as,
+    String? localKey,
+    String? pivotKey,
+    String? foreignKey,
+    Function(dynamic obj)? getLocalKey,
+    Function(dynamic obj)? getPivotKey,
+    Function(dynamic obj)? getForeignKey,
+    Function(dynamic foreign, dynamic obj)? assignForeignObjects}) {
   var foreignName =
       as?.isNotEmpty == true ? as : pluralize.plural(servicePath.toString());
 
@@ -20,58 +20,52 @@ HookedServiceEventListener hasManyThrough(String servicePath, String pivotPath,
     var pivotService = e.getService(pivotPath);
     var foreignService = e.getService(servicePath);
 
-    if (pivotService == null)
+    if (pivotService == null) {
       throw noService(pivotPath);
-    else if (foreignService == null) throw noService(servicePath);
+    } else if (foreignService == null) throw noService(servicePath);
 
-    _assignForeignObjects(foreign, obj) {
-      if (assignForeignObjects != null)
+    dynamic _assignForeignObjects(foreign, obj) {
+      if (assignForeignObjects != null) {
         return assignForeignObjects(foreign, obj);
-      else if (obj is Map)
+      } else if (obj is Map) {
         obj[foreignName] = foreign;
-      //TODO: Undefined class
-      //else if (obj is Extensible)
-      //  obj.properties[foreignName] = foreign;
-      else
-        reflect(obj).setField(new Symbol(foreignName), foreign);
+      } else {
+        reflect(obj).setField(Symbol(foreignName!), foreign);
+      }
     }
 
-    _getLocalKey(obj) {
-      if (getLocalKey != null)
+    dynamic _getLocalKey(obj) {
+      if (getLocalKey != null) {
         return getLocalKey(obj);
-      else if (obj is Map)
+      } else if (obj is Map) {
         return obj[localKey ?? 'id'];
-      //TODO: Undefined class
-      //else if (obj is Extensible)
-      //  return obj.properties[localKey ?? 'id'];
-      else if (localKey == null || localKey == 'id')
+      } else if (localKey == null || localKey == 'id') {
         return obj.id;
-      else
-        return reflect(obj).getField(new Symbol(localKey ?? 'id')).reflectee;
+      } else {
+        return reflect(obj).getField(Symbol(localKey)).reflectee;
+      }
     }
 
-    _getPivotKey(obj) {
-      if (getPivotKey != null)
+    dynamic _getPivotKey(obj) {
+      if (getPivotKey != null) {
         return getPivotKey(obj);
-      else if (obj is Map)
+      } else if (obj is Map) {
         return obj[pivotKey ?? 'id'];
-      //TODO: Undefined class
-      //else if (obj is Extensible)
-      //  return obj.properties[pivotKey ?? 'id'];
-      else if (pivotKey == null || pivotKey == 'id')
+      } else if (pivotKey == null || pivotKey == 'id') {
         return obj.id;
-      else
-        return reflect(obj).getField(new Symbol(pivotKey ?? 'id')).reflectee;
+      } else {
+        return reflect(obj).getField(Symbol(pivotKey)).reflectee;
+      }
     }
 
-    _normalize(obj) async {
+    Future _normalize(obj) async {
       // First, resolve pivot
       var id = await _getLocalKey(obj);
       var indexed = await pivotService.index({
         'query': {pivotKey ?? 'userId': id}
       });
 
-      if (indexed == null || indexed is! List || indexed.isNotEmpty != true) {
+      if (indexed is! List || indexed.isNotEmpty != true) {
         await _assignForeignObjects([], obj);
       } else {
         // Now, resolve from foreign service
@@ -81,9 +75,7 @@ HookedServiceEventListener hasManyThrough(String servicePath, String pivotPath,
             'query': {foreignKey ?? 'postId': id}
           });
 
-          if (indexed == null ||
-              indexed is! List ||
-              indexed.isNotEmpty != true) {
+          if (indexed is! List || indexed.isNotEmpty != true) {
             await _assignForeignObjects([], pivot);
           } else {
             await _assignForeignObjects(indexed, pivot);
@@ -96,8 +88,10 @@ HookedServiceEventListener hasManyThrough(String servicePath, String pivotPath,
     }
 
     if (e.result is Iterable) {
-      await Future.wait(e.result.map(_normalize));
-    } else
+      //await Future.wait(e.result.map(_normalize));
+      await e.result.map(_normalize);
+    } else {
       await _normalize(e.result);
+    }
   };
 }

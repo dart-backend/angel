@@ -5,7 +5,7 @@ import 'util.dart';
 
 const AngelBenchmark emptyBenchmark = _EmptyBenchmark();
 
-main() => runBenchmarks([emptyBenchmark]);
+void main() => runBenchmarks([emptyBenchmark]);
 
 class _EmptyBenchmark implements AngelBenchmark {
   const _EmptyBenchmark();

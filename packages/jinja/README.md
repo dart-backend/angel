@@ -11,7 +11,7 @@ import 'package:angel_framework/http.dart';
 import 'package:angel_jinja/angel_jinja.dart';
 import 'package:path/path.dart' as p;
 
-main() async {
+void main() async {
   var app = Angel();
   var http = AngelHttp(app);
   var viewsDir = p.join(

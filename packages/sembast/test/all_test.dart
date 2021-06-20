@@ -3,15 +3,15 @@ import 'package:angel_framework/angel_framework.dart';
 import 'package:angel_http_exception/angel_http_exception.dart';
 import 'package:angel_sembast/angel_sembast.dart';
 import 'package:sembast/sembast.dart';
-import 'package:sembast/sembast_memory.dart';
+import 'package:sembast/sembast_io.dart';
 import 'package:test/test.dart';
 
 void main() async {
-  Database database;
-  SembastService service;
+  late Database database;
+  late SembastService service;
 
   setUp(() async {
-    database = await memoryDatabaseFactory.openDatabase('test.db');
+    database = await databaseFactoryIo.openDatabase('test.db');
     service = SembastService(database);
   });
 
@@ -62,7 +62,7 @@ void main() async {
 
   test('remove', () async {
     var input = await service.create({'bar': 'baz'});
-    var id = input['id'] as String;
+    var id = input['id'] as String?;
     expect(await service.remove(id), input);
     expect(await StoreRef.main().record(id).get(database), isNull);
   });
@@ -82,13 +82,13 @@ void main() async {
         throwsA(const TypeMatcher<AngelHttpException>()));
     expect(
         () => service.remove(null, {'provider': Providers.rest}),
-        throwsA(predicate((x) => x is AngelHttpException && x.statusCode == 403,
+        throwsA(predicate((dynamic x) => x is AngelHttpException && x.statusCode == 403,
             'throws forbidden')));
     expect(() => service.remove('null', {'provider': Providers.rest}),
         throwsA(const TypeMatcher<AngelHttpException>()));
     expect(
         () => service.remove('null', {'provider': Providers.rest}),
-        throwsA(predicate((x) => x is AngelHttpException && x.statusCode == 403,
+        throwsA(predicate((dynamic x) => x is AngelHttpException && x.statusCode == 403,
             'throws forbidden')));
   });
 

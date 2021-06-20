@@ -4,8 +4,9 @@ import 'package:angel_html/angel_html.dart';
 import 'package:html_builder/elements.dart';
 import 'package:logging/logging.dart';
 
-main() async {
-  var app = Angel(), http = AngelHttp(app);
+void main() async {
+  var app = Angel();
+  var http = AngelHttp(app);
   app.logger = Logger('angel_html')
     ..onRecord.listen((rec) {
       print(rec);
@@ -29,7 +30,7 @@ main() async {
       renderHtml(
         enforceAcceptHeader: true,
         renderer: StringRenderer(
-          doctype: null,
+          //doctype: null,
           pretty: false,
         ),
       ),

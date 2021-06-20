@@ -1,20 +1,22 @@
-import 'package:dart2_constant/convert.dart';
+import 'dart:convert';
 
-getValue(String value) {
+dynamic getValue(String value) {
   try {
-    num numValue = num.parse(value);
-    if (!numValue.isNaN)
+    var numValue = num.parse(value);
+    if (!numValue.isNaN) {
       return numValue;
-    else
+    } else {
       return value;
+    }
   } on FormatException {
-    if (value.startsWith('[') && value.endsWith(']'))
+    if (value.startsWith('[') && value.endsWith(']')) {
       return json.decode(value);
-    else if (value.startsWith('{') && value.endsWith('}'))
+    } else if (value.startsWith('{') && value.endsWith('}')) {
       return json.decode(value);
-    else if (value.trim().toLowerCase() == 'null')
+    } else if (value.trim().toLowerCase() == 'null') {
       return null;
-    else
+    } else {
       return value;
+    }
   }
 }

@@ -14,6 +14,7 @@ class CsrfFilter {
   CsrfFilter(this.cookieSigner);
 
   Future<CsrfToken> readCsrfToken(RequestContext req) async {
-    
+    // TODO: To be reviewed
+    return CsrfToken(req.hostname);
   }
 }

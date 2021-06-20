@@ -3,10 +3,10 @@ import 'package:angel_typed_service/angel_typed_service.dart';
 import 'package:test/test.dart';
 
 void main() {
-  var svc = TypedService<String, Todo>(MapService());
+  var svc = TypedService<String?, Todo>(MapService());
 
   test('force model', () {
-    expect(() => TypedService<String, int>(MapService()), throwsException);
+    expect(() => TypedService<String?, int>(MapService()), throwsException);
   });
 
   test('serialize', () {
@@ -31,9 +31,9 @@ void main() {
     var m = svc.deserialize({
       'createdAt': now.toIso8601String(),
       'updatedAt': now.toIso8601String()
-    });
+    })!;
     expect(m, const TypeMatcher<Todo>());
-    expect(m.createdAt.millisecondsSinceEpoch, now.millisecondsSinceEpoch);
+    expect(m.createdAt!.millisecondsSinceEpoch, now.millisecondsSinceEpoch);
   });
 
   test('deserialize date w/ underscore', () {
@@ -41,17 +41,17 @@ void main() {
     var m = svc.deserialize({
       'created_at': now.toIso8601String(),
       'updated_at': now.toIso8601String()
-    });
+    })!;
     expect(m, const TypeMatcher<Todo>());
-    expect(m.createdAt.millisecondsSinceEpoch, now.millisecondsSinceEpoch);
+    expect(m.createdAt!.millisecondsSinceEpoch, now.millisecondsSinceEpoch);
   });
 }
 
 class Todo extends Model {
-  String text;
-  bool completed;
+  String? text;
+  bool? completed;
   @override
-  DateTime createdAt, updatedAt;
-  Todo({String id, this.text, this.completed, this.createdAt, this.updatedAt})
+  DateTime? createdAt, updatedAt;
+  Todo({String? id, this.text, this.completed, this.createdAt, this.updatedAt})
       : super(id: id);
 }

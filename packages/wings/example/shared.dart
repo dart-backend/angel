@@ -1,7 +1,7 @@
 import 'package:angel_framework/angel_framework.dart';
 import 'package:angel_wings/angel_wings.dart';
 
-main() async {
+void main() async {
   var app = Angel();
   var wings1 = AngelWings.custom(app, startSharedWings);
   var wings2 = AngelWings.custom(app, startSharedWings);

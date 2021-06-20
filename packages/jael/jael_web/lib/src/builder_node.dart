@@ -2,7 +2,7 @@ import 'dom_builder.dart';
 import 'dom_node.dart';
 
 abstract class BuilderNode extends DomNode {
-  DomBuilderElement<T> build<T>(DomBuilder<T> dom);
+  DomBuilderElement<T>? build<T>(DomBuilder<T> dom);
 
   void destroy<T>(DomBuilderElement<T> el);
 }
@@ -21,7 +21,7 @@ class _Text extends BuilderNode {
   _Text(this.text);
 
   @override
-  DomBuilderElement<T> build<T>(DomBuilder<T> dom) {
+  DomBuilderElement<T>? build<T>(DomBuilder<T> dom) {
     dom.text(text);
     // TODO: implement build
     return null;
@@ -41,7 +41,7 @@ class _H extends BuilderNode {
   _H(this.tagName, this.props, this.children);
 
   @override
-  DomBuilderElement<T> build<T>(DomBuilder<T> dom) {
+  DomBuilderElement<T>? build<T>(DomBuilder<T> dom) {
     // TODO: implement build
     return null;
   }

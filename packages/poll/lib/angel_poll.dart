@@ -41,21 +41,20 @@ class PollingService extends Service {
   final List _items = [];
   final List<StreamSubscription> _subs = [];
 
-  final StreamController _onIndexed = new StreamController(),
-      _onRead = new StreamController(),
-      _onCreated = new StreamController(),
-      _onModified = new StreamController(),
-      _onUpdated = new StreamController(),
-      _onRemoved = new StreamController();
+  final StreamController<List<dynamic>> _onIndexed = StreamController(),
+      _onRead = StreamController(),
+      _onCreated = StreamController(),
+      _onModified = StreamController(),
+      _onUpdated = StreamController(),
+      _onRemoved = StreamController();
 
-  Timer _timer;
+  late Timer _timer;
 
   @override
   Angel get app => inner.app;
 
-  // TODO: To revisit this logic
   @override
-  Stream<List> get onIndexed => _onIndexed.stream;
+  Stream<List<dynamic>> get onIndexed => _onIndexed.stream;
 
   @override
   Stream get onRead => _onRead.stream;
@@ -73,16 +72,18 @@ class PollingService extends Service {
   Stream get onRemoved => _onRemoved.stream;
 
   PollingService(this.inner, Duration interval,
-      {this.checkForCreated: true,
-      this.checkForModified: true,
-      this.checkForRemoved: true,
-      this.idField: 'id',
-      this.asPaginated: false,
-      EqualityBy compareId,
-      this.compareItems: const MapEquality()})
-      : compareId = compareId ?? new EqualityBy((map) => map[idField ?? 'id']) {
-    _timer = new Timer.periodic(interval, (_) {
-      index().catchError(_onIndexed.addError);
+      {this.checkForCreated = true,
+      this.checkForModified = true,
+      this.checkForRemoved = true,
+      this.idField = 'id',
+      this.asPaginated = false,
+      EqualityBy? compareId,
+      this.compareItems = const MapEquality()})
+      : compareId = compareId ?? EqualityBy((map) => map[idField]) {
+    _timer = Timer.periodic(interval, (_) {
+      index().catchError((error) {
+        _onIndexed.addError(error as Object);
+      });
     });
 
     var streams = <Stream, StreamController>{
@@ -109,20 +110,21 @@ class PollingService extends Service {
   Future close() async {
     _timer.cancel();
     _subs.forEach((s) => s.cancel());
-    _onIndexed.close();
-    _onRead.close();
-    _onCreated.close();
-    _onModified.close();
-    _onUpdated.close();
-    _onRemoved.close();
+    await _onIndexed.close();
+    await _onRead.close();
+    await _onCreated.close();
+    await _onModified.close();
+    await _onUpdated.close();
+    await _onRemoved.close();
   }
 
   // TODO: To revisit this logic
   @override
-  Future<List> index([Map params]) {
+  Future<List<dynamic>> index([Map? params]) {
     return inner.index().then((data) {
       //return asPaginated == true ? data['data'] : data;
-      return asPaginated == true ? data[0] : data;
+      //return asPaginated == true ? data[0] : data;
+      return data!;
     });
   }
 
@@ -132,17 +134,17 @@ class PollingService extends Service {
   }
 */
   @override
-  Future remove(id, [Map params]) {
+  Future remove(id, [Map<String, dynamic>? params]) {
     return inner.remove(id, params).then((result) {
       _items.remove(result);
       return result;
     }).catchError(_onRemoved.addError);
   }
 
-  _handleUpdate(result) {
-    int index = -1;
+  dynamic _handleUpdate(result) {
+    var index = -1;
 
-    for (int i = 0; i < _items.length; i++) {
+    for (var i = 0; i < _items.length; i++) {
       if (compareId.equals(_items[i], result)) {
         index = i;
         break;
@@ -157,7 +159,7 @@ class PollingService extends Service {
   }
 
   @override
-  Future update(id, data, [Map params]) {
+  Future update(id, data, [Map<String, dynamic>? params]) {
     return inner
         .update(id, data, params)
         .then(_handleUpdate)
@@ -165,7 +167,7 @@ class PollingService extends Service {
   }
 
   @override
-  Future modify(id, data, [Map params]) {
+  Future modify(id, data, [Map<String, dynamic>? params]) {
     return inner
         .modify(id, data, params)
         .then(_handleUpdate)
@@ -173,7 +175,7 @@ class PollingService extends Service {
   }
 
   @override
-  Future create(data, [Map params]) {
+  Future create(data, [Map<String, dynamic>? params]) {
     return inner.create(data, params).then((result) {
       _items.add(result);
       return result;
@@ -181,18 +183,19 @@ class PollingService extends Service {
   }
 
   @override
-  Future read(id, [Map params]) {
+  Future read(id, [Map<String, dynamic>? params]) {
     return inner.read(id, params);
   }
 
-  void _handleIndexed(data) {
-    var items = asPaginated == true ? data['data'] : data;
-    bool changesComputed = false;
+  void _handleIndexed(List<dynamic> data) {
+    //var items = asPaginated == true ? data['data'] : data;
+    var items = data;
+    var changesComputed = false;
 
     if (checkForCreated != false) {
       var newItems = <int, dynamic>{};
 
-      for (int i = 0; i < items.length; i++) {
+      for (var i = 0; i < items.length; i++) {
         var item = items[i];
 
         if (!_items.any((i) => compareId.equals(i, item))) {
@@ -202,7 +205,7 @@ class PollingService extends Service {
 
       newItems.forEach((index, item) {
         _items.insert(index, item);
-        _onCreated.add(item);
+        _onCreated.add([item]);
       });
 
       changesComputed = newItems.isNotEmpty;
@@ -211,7 +214,7 @@ class PollingService extends Service {
     if (checkForRemoved != false) {
       var removedItems = <int, dynamic>{};
 
-      for (int i = 0; i < _items.length; i++) {
+      for (var i = 0; i < _items.length; i++) {
         var item = _items[i];
 
         if (!items.any((i) => compareId.equals(i, item))) {
@@ -221,7 +224,7 @@ class PollingService extends Service {
 
       removedItems.forEach((index, item) {
         _items.removeAt(index);
-        _onRemoved.add(item);
+        _onRemoved.add([item]);
       });
 
       changesComputed = changesComputed || removedItems.isNotEmpty;
@@ -231,7 +234,7 @@ class PollingService extends Service {
       var modifiedItems = <int, dynamic>{};
 
       for (var item in items) {
-        for (int i = 0; i < _items.length; i++) {
+        for (var i = 0; i < _items.length; i++) {
           var localItem = _items[i];
 
           if (compareId.equals(item, localItem)) {
@@ -244,7 +247,7 @@ class PollingService extends Service {
       }
 
       modifiedItems.forEach((index, item) {
-        _onModified.add(_items[index] = item);
+        _onModified.add([_items[index] = item]);
       });
 
       changesComputed = changesComputed || modifiedItems.isNotEmpty;
@@ -253,8 +256,8 @@ class PollingService extends Service {
     if (!changesComputed) {
       _items
         ..clear()
-        ..addAll(items);
-      _onIndexed.add(items);
+        ..add(items);
+      _onIndexed.add([items]);
     }
   }
 }

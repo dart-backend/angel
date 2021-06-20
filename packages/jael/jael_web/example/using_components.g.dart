@@ -17,7 +17,7 @@ abstract class _MyAppJaelTemplate implements Component<dynamic> {
 }
 
 abstract class _LabeledInputJaelTemplate implements Component<dynamic> {
-  String get name;
+  String? get name;
   @override
   DomNode render() {
     return h('div', {}, [
@@ -27,7 +27,7 @@ abstract class _LabeledInputJaelTemplate implements Component<dynamic> {
       h('br', {}, []),
       h('input', {
         'name': name,
-        'placeholder': "Enter " + name + "...",
+        'placeholder': "Enter " + name! + "...",
         'type': "text"
       }, [])
     ]);

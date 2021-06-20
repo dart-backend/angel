@@ -1,25 +1,36 @@
 name: jael_language_server
 version: 0.0.0
 description: Language Server Protocol implementation for the Jael templating engine.
-author: Tobe Osakwe <thosakwe@gmail.com>
 homepage: https://github.com/angel-dart/vscode
+publish_to: none
 environment:
-  sdk: '>=2.10.0 <2.12.0'
+  sdk: '>=2.12.0 <3.0.0'
 dependencies:
-  args: ^1.0.0
+  args: ^2.1.1
 #  dart_language_server: ^0.1.16
-  file: ^5.0.0
-  io: ^0.3.2
-  jael: #^2.0.0
-    path: ../jael
-  jael_preprocessor: #^2.0.0
-    path: ../jael_preprocessor
-  json_rpc_2: ^2.0.0
-  logging: ^0.11.3
-  path: ^1.0.0
-  source_span: ^1.0.0
-  string_scanner: ^1.0.0
-  symbol_table: ^2.0.0
+  file: ^6.1.2
+  io: ^1.0.0
+  jael:
+    git: 
+      url: https://github.com/dukefirehawk/angel.git
+      ref: sdk-2.12.x_nnbd
+      path: packages/jael/jael
+  jael_preprocessor:
+    git: 
+      url: https://github.com/dukefirehawk/angel.git
+      ref: sdk-2.12.x_nnbd
+      path: packages/jael/jael_preprocessor
+  json_rpc_2: ^3.0.1
+  logging: ^1.0.1
+  path: ^1.8.0
+  source_span: ^1.8.1
+  string_scanner: ^1.1.0
+  symbol_table:
+    git: 
+      url: https://github.com/dukefirehawk/angel.git
+      ref: sdk-2.12.x_nnbd
+      path: packages/symbol_table
+  pedantic: ^1.11.0
 executables:
   jael_language_server: jael_language_server
   

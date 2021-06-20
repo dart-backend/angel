@@ -6,14 +6,14 @@ import 'package:angel_static/angel_static.dart';
 import 'package:file/local.dart';
 import 'package:http_parser/http_parser.dart';
 
-main() async {
-  var app = new Angel();
+void main() async {
+  var app = Angel();
   var fs = const LocalFileSystem();
-  var http = new AngelHttp(app);
+  var http = AngelHttp(app);
 
   // You can wrap a [VirtualDirectory]
   var vDir = inlineAssetsFromVirtualDirectory(
-    new VirtualDirectory(
+    VirtualDirectory(
       app,
       fs,
       source: fs.directory('web'),
@@ -32,11 +32,11 @@ main() async {
     var indexHtml = fs.directory('web').childFile('index.html');
     var contents = await indexHtml.readAsString();
     res
-      ..contentType = new MediaType('text', 'html', {'charset': 'utf-8'})
-      ..buffer.add(utf8.encode(contents));
+      ..contentType = MediaType('text', 'html', {'charset': 'utf-8'})
+      ..buffer!.add(utf8.encode(contents));
   });
 
-  app.fallback((req, res) => throw new AngelHttpException.notFound());
+  app.fallback((req, res) => throw AngelHttpException.notFound());
 
   var server = await http.startServer('127.0.0.1', 3000);
   print('Listening at http://${server.address.address}:${server.port}');

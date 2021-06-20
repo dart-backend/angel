@@ -2,15 +2,16 @@ import 'package:angel_http_exception/angel_http_exception.dart';
 import 'package:angel_redis/angel_redis.dart';
 import 'package:resp_client/resp_client.dart';
 import 'package:resp_client/resp_commands.dart';
+import 'package:resp_client/resp_server.dart';
 import 'package:test/test.dart';
 
-main() async {
-  RespServerConnection connection;
-  RedisService service;
+void main() async {
+  late RespServerConnection connection;
+  late RedisService service;
 
   setUp(() async {
     connection = await connectSocket('localhost');
-    service = RedisService(RespCommands(RespClient(connection)),
+    service = RedisService(RespCommandsTier2(RespClient(connection)),
         prefix: 'angel_redis_test');
   });
 
@@ -36,7 +37,7 @@ main() async {
 
   test('create without id', () async {
     var input = {'bar': 'baz'};
-    var output = await service.create(input);
+    var output = await (service.create(input));
     print(output);
     expect(output.keys, contains('id'));
     expect(output, containsPair('bar', 'baz'));

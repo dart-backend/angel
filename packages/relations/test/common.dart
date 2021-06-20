@@ -6,13 +6,13 @@ import 'package:angel_framework/angel_framework.dart';
 class CustomMapService extends Service {
   final List<Map> _items = [];
 
-  Iterable<Map> tailor(Iterable<Map> items, Map params) {
+  Iterable<Map> tailor(Iterable<Map> items, Map? params) {
     if (params == null) return items;
 
     var r = items;
 
     if (params != null && params['query'] is Map) {
-      Map query = params['query'];
+      var query = params['query'] as Map;
 
       for (var key in query.keys) {
         r = r.where((m) => m[key] == query[key]);
@@ -23,30 +23,30 @@ class CustomMapService extends Service {
   }
 
   @override
-  index([params]) async => tailor(_items, params).toList();
+  Future<List<Map>> index([params]) async => tailor(_items, params).toList();
 
   @override
-  read(id, [Map params]) async {
+  Future<Map> read(id, [Map? params]) async {
     return tailor(_items, params).firstWhere((m) => m['id'] == id,
-        orElse: () => throw new AngelHttpException.notFound());
+        orElse: (() => throw AngelHttpException.notFound()) as Map<dynamic, dynamic> Function()?);
   }
 
   @override
-  create(data, [params]) async {
-    Map d = data is Map ? data : jsonDecode(data);
+  Future<Map> create(data, [params]) async {
+    var d = data is Map ? data : (jsonDecode(data as String) as Map?)!;
     d['id'] = _items.length.toString();
     _items.add(d);
     return d;
   }
 
   @override
-  remove(id, [params]) async {
+  Future remove(id, [params]) async {
     if (id == null) _items.clear();
   }
 }
 
 class Author {
-  String id, name;
+  String? id, name;
 
   Author({this.id, this.name});
 
@@ -54,7 +54,7 @@ class Author {
 }
 
 class Book {
-  String authorId, title;
+  String? authorId, title;
 
   Book({this.authorId, this.title});
 
@@ -62,8 +62,8 @@ class Book {
 }
 
 class Chapter {
-  String bookId, title;
-  int pageCount;
+  String? bookId, title;
+  int? pageCount;
 
   Chapter({this.bookId, this.title, this.pageCount});
 }

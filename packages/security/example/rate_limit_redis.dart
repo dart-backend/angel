@@ -4,6 +4,7 @@ import 'package:angel_production/angel_production.dart';
 import 'package:angel_security/angel_security.dart';
 import 'package:resp_client/resp_client.dart';
 import 'package:resp_client/resp_commands.dart';
+import 'package:resp_client/resp_server.dart';
 
 // We run this through angel_production, so that we can have
 // multiple instances, all using the same Redis queue.
@@ -19,8 +20,8 @@ void configureServer(Angel app) async {
   // Our Redis store will be used to manage windows.
   var connection = await connectSocket('localhost');
   var client = RespClient(connection);
-  var service =
-      RedisService(RespCommands(client), prefix: 'rate_limit_redis_example');
+  var service = RedisService(RespCommandsTier2(client),
+      prefix: 'rate_limit_redis_example');
   var rateLimiter = ServiceRateLimiter(
       10, Duration(seconds: 30), service, (req, res) => req.ip);
 
@@ -32,7 +33,7 @@ void configureServer(Angel app) async {
   // Basic routes.
   app
     ..get('/', (req, res) {
-      var instance = req.container.make<InstanceInfo>();
+      var instance = req.container!.make<InstanceInfo>()!;
       res.writeln('This is instance ${instance.id}.');
     })
     ..fallback((req, res) => throw AngelHttpException.notFound());

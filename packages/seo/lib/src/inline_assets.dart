@@ -19,11 +19,11 @@ RequestHandler inlineAssets(Directory assetDirectory) {
     if (!res.isOpen ||
         !res.isBuffered ||
         res.contentType.mimeType != 'text/html') {
-      return new Future<bool>.value(true);
+      return Future<bool>.value(true);
     } else {
-      var doc = html.parse(utf8.decode(res.buffer.takeBytes()));
+      var doc = html.parse(utf8.decode(res.buffer!.takeBytes()));
       return inlineAssetsIntoDocument(doc, assetDirectory).then((_) {
-        res.buffer.add(utf8.encode(doc.outerHtml));
+        res.buffer!.add(utf8.encode(doc.outerHtml));
         return false;
       });
     }
@@ -39,29 +39,29 @@ RequestHandler inlineAssets(Directory assetDirectory) {
 /// In this case, "internal resources" refers to a URI *without* a scheme, i.e. `/site.css` or
 /// `foo/bar/baz.js`.
 VirtualDirectory inlineAssetsFromVirtualDirectory(VirtualDirectory vDir) =>
-    new _InlineAssets(vDir);
+    _InlineAssets(vDir);
 
 /// Replaces `link` and `script` tags within a [doc] with the static contents they would otherwise trigger an HTTP request to.
 ///
 /// Powers both [inlineAssets] and [inlineAssetsFromVirtualDirectory].
 Future inlineAssetsIntoDocument(
-    html.Document doc, Directory assetDirectory) async {
+    html.Document doc, Directory? assetDirectory) async {
   var linksWithRel = doc.head
           ?.getElementsByTagName('link')
-          ?.where((link) => link.attributes['rel'] == 'stylesheet') ??
+          .where((link) => link.attributes['rel'] == 'stylesheet') ??
       <html.Element>[];
 
   for (var link in linksWithRel) {
     if (link.attributes.containsKey('data-no-inline')) {
       link.attributes.remove('data-no-inline');
     } else {
-      var uri = Uri.parse(link.attributes['href']);
+      var uri = Uri.parse(link.attributes['href']!);
 
       if (uri.scheme.isEmpty) {
-        var styleFile = assetDirectory.childFile(uri.path);
+        var styleFile = assetDirectory!.childFile(uri.path);
 
         if (await styleFile.exists()) {
-          var style = new html.Element.tag('style')
+          var style = html.Element.tag('style')
             ..innerHtml = await styleFile.readAsString();
           link.replaceWith(style);
         }
@@ -77,10 +77,10 @@ Future inlineAssetsIntoDocument(
     if (script.attributes.containsKey('data-no-inline')) {
       script.attributes.remove('data-no-inline');
     } else {
-      var uri = Uri.parse(script.attributes['src']);
+      var uri = Uri.parse(script.attributes['src']!);
 
       if (uri.scheme.isEmpty) {
-        var scriptFile = assetDirectory.childFile(uri.path);
+        var scriptFile = assetDirectory!.childFile(uri.path);
         if (await scriptFile.exists()) {
           script.attributes.remove('src');
           script.innerHtml = await scriptFile.readAsString();

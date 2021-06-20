@@ -10,7 +10,7 @@ import 'wireformat.dart';
 /// A Language Server communicating over stdin and stdout.
 class StdIOLanguageServer {
   final LanguageServer _server;
-  Future<void> onDone;
+  Future<void>? onDone;
 
   /// Wrap [_server] and register RPC methods using the LSP wire protocol.
   ///
@@ -38,10 +38,10 @@ class StdIOLanguageServer {
     peer
       ..registerMethod('initialize', (params) async {
         final serverCapabilities = await _server.initialize(
-            params['processId'].valueOr(0) as int,
-            params['rootUri'].valueOr('') as String,
+            params['processId'].valueOr(0) as int?,
+            params['rootUri'].valueOr('') as String?,
             ClientCapabilities.fromJson(params['capabilities'].value as Map),
-            params['trace'].valueOr('off') as String);
+            params['trace'].valueOr('off') as String?);
         _isInitialized = true;
         return {'capabilities': serverCapabilities.toJson()};
       })
@@ -122,31 +122,31 @@ class StdIOLanguageServer {
         (params) => _server
             .textDocumentReferences(
                 _document(params), _position(params), _referenceContext(params))
-            .then((r) => r?.map((e) => e.toJson())?.toList()));
+            .then((r) => r.map((e) => e.toJson()).toList()));
     _registerRequest(
         peer,
         'textDocument/implementation',
         (params) => _server
             .textDocumentImplementation(_document(params), _position(params))
-            .then((r) => r?.map((e) => e.toJson())?.toList()));
+            .then((r) => r.map((e) => e.toJson()).toList()));
     _registerRequest(
         peer,
         'textDocument/documentHighlight',
         (params) => _server
             .textDocumentHighlight(_document(params), _position(params))
-            .then((r) => r?.map((e) => e.toJson())?.toList()));
+            .then((r) => r.map((e) => e.toJson()).toList()));
     _registerRequest(
         peer,
         'textDocument/documentSymbol',
         (params) => _server
             .textDocumentSymbols(_document(params))
-            .then((r) => r?.map((e) => e.toJson())?.toList()));
+            .then((r) => r.map((e) => e.toJson()).toList()));
     _registerRequest(
         peer,
         'workspace/symbol',
         (params) => _server
             .workspaceSymbol(_query(params))
-            .then((r) => r?.map((e) => e.toJson())?.toList()));
+            .then((r) => r.map((e) => e.toJson()).toList()));
   }
 
   void _codeActionMethods(Peer peer) {
@@ -156,18 +156,18 @@ class StdIOLanguageServer {
         (params) => _server
             .textDocumentCodeAction(
                 _document(params), _range(params), _codeActionContext(params))
-            .then((r) => r?.map((e) => e.toJson())?.toList()));
+            .then((r) => r.map((e) => e.toJson()).toList()));
     _registerRequest(
         peer,
         'workspace/executeCommand',
         (params) => _server.workspaceExecuteCommand(
-            params['command'].value as String,
-            params['arguments']?.value as List));
+            params['command'].value as String?,
+            params['arguments']?.value as List?));
     _registerRequest(
         peer,
         'textDocument/rename',
         (params) async => (await _server.textDocumentRename(_document(params),
-                _position(params), params['newName'].value as String))
+                _position(params), params['newName'].value as String?))!
             .toJson());
   }
 }
@@ -198,4 +198,4 @@ List<TextDocumentContentChangeEvent> _contentChanges(params) =>
         .map((change) => TextDocumentContentChangeEvent.fromJson(change as Map))
         .toList();
 
-String _query(params) => params['query'].value as String;
+String? _query(params) => params['query'].value as String?;

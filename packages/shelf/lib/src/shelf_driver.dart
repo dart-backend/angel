@@ -2,18 +2,18 @@ import 'dart:async';
 import 'dart:io';
 import 'package:angel_framework/angel_framework.dart';
 import 'package:shelf/shelf.dart' as shelf;
+import 'package:shelf/shelf.dart';
 import 'shelf_request.dart';
 import 'shelf_response.dart';
 
-class AngelShelf extends Driver<shelf.Request, ShelfResponseContext,
+class AngelShelf extends Driver<shelf.Request, ShelfResponseContext?,
     Stream<shelf.Request>, ShelfRequestContext, ShelfResponseContext> {
   final StreamController<shelf.Request> incomingRequests = StreamController();
 
-  final FutureOr<shelf.Response> Function() notFound;
+  final FutureOr<shelf.Response> Function()? notFound;
 
-  AngelShelf(Angel app, {FutureOr<shelf.Response> Function() notFound})
-      : this.notFound =
-            notFound ?? (() => shelf.Response.notFound('Not Found')),
+  AngelShelf(Angel app, {FutureOr<shelf.Response> Function()? notFound})
+      : notFound = notFound ?? (() => shelf.Response.notFound('Not Found')),
         super(app, null, useZone: false) {
     // Inject a final handler that will keep responses open, if we are using the
     // driver as a middleware.
@@ -25,11 +25,15 @@ class AngelShelf extends Driver<shelf.Request, ShelfResponseContext,
     });
   }
 
-  Future<Stream<shelf.Request>> close() {
+  Future<Stream<Request>> aaa(dynamic param1, int param2) {}
+
+  @override
+  Future<void> close() {
     incomingRequests.close();
     return super.close();
   }
 
+  @override
   Future<Stream<shelf.Request>> Function(dynamic, int) get serverGenerator =>
       (_, __) async => incomingRequests.stream;
 
@@ -45,7 +49,7 @@ class AngelShelf extends Driver<shelf.Request, ShelfResponseContext,
       return response.shelfResponse;
     } else {
       // return await handler(request);
-      return notFound();
+      return notFound!();
     }
   }
 
@@ -67,25 +71,25 @@ class AngelShelf extends Driver<shelf.Request, ShelfResponseContext,
   Future<shelf.Response> handleAngelHttpException(
       AngelHttpException e,
       StackTrace st,
-      RequestContext req,
-      ResponseContext res,
+      RequestContext? req,
+      ResponseContext? res,
       shelf.Request request,
-      ShelfResponseContext response,
+      ShelfResponseContext? response,
       {bool ignoreFinalizers = false}) async {
     await super.handleAngelHttpException(e, st, req, res, request, response,
         ignoreFinalizers: ignoreFinalizers);
-    return response.shelfResponse;
+    return response!.shelfResponse;
   }
 
   @override
-  void addCookies(ShelfResponseContext response, Iterable<Cookie> cookies) {
+  void addCookies(ShelfResponseContext? response, Iterable<Cookie> cookies) {
     // Don't do anything here, otherwise you get duplicate cookies.
     // response.cookies.addAll(cookies);
   }
 
   @override
-  Future closeResponse(ShelfResponseContext response) {
-    return response.close();
+  Future closeResponse(ShelfResponseContext? response) {
+    return response!.close();
   }
 
   @override
@@ -95,55 +99,55 @@ class AngelShelf extends Driver<shelf.Request, ShelfResponseContext,
 
   @override
   Future<ShelfRequestContext> createRequestContext(
-      shelf.Request request, ShelfResponseContext response) {
+      shelf.Request request, ShelfResponseContext? response) {
     var path = request.url.path.replaceAll(_straySlashes, '');
     if (path.isEmpty) path = '/';
     var rq =
-        ShelfRequestContext(app, app.container.createChild(), request, path);
+        ShelfRequestContext(app, app.container!.createChild(), request, path);
     return Future.value(rq);
   }
 
   @override
   Future<ShelfResponseContext> createResponseContext(
-      shelf.Request request, ShelfResponseContext response,
-      [ShelfRequestContext correspondingRequest]) {
+      shelf.Request request, ShelfResponseContext? response,
+      [ShelfRequestContext? correspondingRequest]) {
     // Return the original response.
     return Future.value(response..correspondingRequest = correspondingRequest);
   }
 
   @override
-  Stream<ShelfResponseContext> createResponseStreamFromRawRequest(
+  Stream<ShelfResponseContext?> createResponseStreamFromRawRequest(
       shelf.Request request) {
     return Stream.fromIterable([null]);
   }
 
   @override
-  void setChunkedEncoding(ShelfResponseContext response, bool value) {
-    response.chunked = value;
+  void setChunkedEncoding(ShelfResponseContext? response, bool value) {
+    response!.chunked = value;
   }
 
   @override
-  void setContentLength(ShelfResponseContext response, int length) {
-    response.contentLength = length;
+  void setContentLength(ShelfResponseContext? response, int length) {
+    response!.contentLength = length;
   }
 
   @override
-  void setHeader(ShelfResponseContext response, String key, String value) {
-    response.headers[key] = value;
+  void setHeader(ShelfResponseContext? response, String key, String value) {
+    response!.headers[key] = value;
   }
 
   @override
-  void setStatusCode(ShelfResponseContext response, int value) {
-    response.statusCode = value;
+  void setStatusCode(ShelfResponseContext? response, int value) {
+    response!.statusCode = value;
   }
 
   @override
-  void writeStringToResponse(ShelfResponseContext response, String value) {
-    response.write(value);
+  void writeStringToResponse(ShelfResponseContext? response, String value) {
+    response!.write(value);
   }
 
   @override
-  void writeToResponse(ShelfResponseContext response, List<int> data) {
-    response.add(data);
+  void writeToResponse(ShelfResponseContext? response, List<int> data) {
+    response!.add(data);
   }
 }

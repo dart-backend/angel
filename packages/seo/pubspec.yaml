@@ -1,21 +1,31 @@
 name: angel_seo
-description: Helper infrastructure for building SEO-friendly Web backends in Angel.
-author: Tobe O <thosakwe@gmail.com>
-homepage: https://github.com/angel-dart/seo
 version: 2.0.0
+description: Helper infrastructure for building SEO-friendly Web backends in Angel.
+homepage: https://github.com/angel-dart/seo
+publish_to: none
 environment:
-  sdk: ">=2.10.0 <2.12.0"
+  sdk: '>=2.12.0 <3.0.0'
 dependencies:
-  angel_framework: #^2.0.0-alpha
-    path: ../framework
-  angel_static: #^2.0.0-alpha
-    path: ../static
-  file: ^5.0.0
-  html: ^0.13.0
-  http_parser: ^3.0.0
-  path: ^1.0.0
+  angel_framework:
+   git: 
+      url: https://github.com/dukefirehawk/angel.git
+      ref: sdk-2.12.x_nnbd
+      path: packages/framework
+  angel_static:
+   git: 
+      url: https://github.com/dukefirehawk/angel.git
+      ref: sdk-2.12.x_nnbd
+      path: packages/static
+  file: ^6.1.2
+  html: ^0.15.0
+  http_parser: ^4.0.0
+  path: ^1.8.0
 dev_dependencies:
-  angel_test: #^2.0.0-alpha
-    path: ../test
-  logging:
-  test: ^1.15.7
+  angel_test:
+   git: 
+      url: https://github.com/dukefirehawk/angel.git
+      ref: sdk-2.12.x_nnbd
+      path: packages/test
+  logging: ^1.0.1
+  test: ^1.17.8
+  pedantic: ^1.11.1

@@ -7,8 +7,8 @@ import 'package:io/io.dart';
 import 'package:jael_language_server/jael_language_server.dart';
 import 'package:jael_language_server/src/protocol/language_server/server.dart';
 
-main(List<String> args) async {
-  var argParser = new ArgParser()
+void main(List<String> args) async {
+  var argParser = ArgParser()
     ..addFlag('help',
         abbr: 'h', negatable: false, help: 'Print this help information.')
     ..addOption('log-file', help: 'A path to which to write a log file.');
@@ -25,14 +25,14 @@ main(List<String> args) async {
       printUsage();
       return;
     } else {
-      var jaelServer = new JaelLanguageServer();
+      var jaelServer = JaelLanguageServer();
 
       if (argResults.wasParsed('log-file')) {
-        var f = new File(argResults['log-file'] as String);
+        var f = File(argResults['log-file'] as String);
         await f.create(recursive: true);
 
         jaelServer.logger.onRecord.listen((rec) async {
-          var sink = await f.openWrite(mode: FileMode.append);
+          var sink = f.openWrite(mode: FileMode.append);
           sink.writeln(rec);
           if (rec.error != null) sink.writeln(rec.error);
           if (rec.stackTrace != null) sink.writeln(rec.stackTrace);
@@ -47,7 +47,7 @@ main(List<String> args) async {
         });
       }
 
-      var spec = new ZoneSpecification(
+      var spec = ZoneSpecification(
         handleUncaughtError: (self, parent, zone, error, stackTrace) {
           jaelServer.logger.severe('Uncaught', error, stackTrace);
         },
@@ -57,7 +57,7 @@ main(List<String> args) async {
       );
       var zone = Zone.current.fork(specification: spec);
       await zone.run(() async {
-        var stdio = new StdIOLanguageServer.start(jaelServer);
+        var stdio = StdIOLanguageServer.start(jaelServer);
         await stdio.onDone;
       });
     }

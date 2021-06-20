@@ -19,7 +19,7 @@ void main() {
         res
           ..useBuffer()
           ..contentType = MediaType.parse('text/html; charset=utf-8')
-          ..buffer.add(contents);
+          ..buffer!.add(contents);
       });
 
       app.responseFinalizers.add(inlineAssets(dir));
@@ -34,11 +34,11 @@ void main() {
 }
 
 /// Typedef for backwards-compatibility with Dart 1.
-typedef void InlineAssetTest(Angel app, Directory dir);
+typedef InlineAssetTest = void Function(Angel app, Directory dir);
 
 void Function() inlineAssetsTests(InlineAssetTest f) {
   return () {
-    TestClient client;
+    late TestClient client;
 
     setUp(() async {
       var app = Angel();
@@ -49,7 +49,7 @@ void Function() inlineAssetsTests(InlineAssetTest f) {
 
       for (var path in contents.keys) {
         var file = fs.file(path);
-        await file.writeAsString(contents[path].trim());
+        await file.writeAsString(contents[path]!.trim());
       }
 
       app.logger = Logger('angel_seo')
@@ -63,10 +63,11 @@ void Function() inlineAssetsTests(InlineAssetTest f) {
     tearDown(() => client.close());
 
     group('sends html', () {
-      html.Document doc;
+      late html.Document doc;
 
       setUp(() async {
-        var res = await client.get('/', headers: {'accept': 'text/html'});
+        var res =
+            await client.get(Uri.parse('/'), headers: {'accept': 'text/html'});
         print(res.body);
         doc = html.parse(res.body);
       });
@@ -78,18 +79,18 @@ void Function() inlineAssetsTests(InlineAssetTest f) {
 
         test('populates a <style>', () {
           var style = doc.querySelector('style');
-          expect(style?.innerHtml?.trim(), contents['site.css']);
+          expect(style?.innerHtml.trim(), contents['site.css']);
         });
 
         test('heeds data-no-inline', () {
-          var link = doc.querySelector('link');
+          var link = doc.querySelector('link')!;
           expect(link.attributes, containsPair('rel', 'stylesheet'));
           expect(link.attributes, containsPair('href', 'not-inlined.css'));
           expect(link.attributes.keys, isNot(contains('data-no-inline')));
         });
 
         test('preserves other attributes', () {
-          var link = doc.querySelector('link');
+          var link = doc.querySelector('link')!;
           expect(link.attributes, containsPair('data-foo', 'bar'));
         });
       });

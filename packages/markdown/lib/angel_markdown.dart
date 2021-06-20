@@ -4,7 +4,7 @@ import 'package:angel_framework/angel_framework.dart';
 import 'package:file/file.dart';
 import 'package:markdown/markdown.dart';
 
-final RegExp _braces = new RegExp(r'@?{{(((\\})|([^}]))+)}}');
+final RegExp _braces = RegExp(r'@?{{(((\\})|([^}]))+)}}');
 
 /// Configures an [Angel] instance to render Markdown templates from the specified [viewsDirectory].
 ///
@@ -18,7 +18,8 @@ AngelConfigurer markdown(
   Directory viewsDirectory, {
   String extension,
   ExtensionSet extensionSet,
-  FutureOr<String> template(String content, Map<String, dynamic> locals),
+  FutureOr<String> Function(String content, Map<String, dynamic> locals)
+      template,
 }) {
   extension ??= '.md';
   extensionSet ??= ExtensionSet.gitHubWeb;
@@ -40,9 +41,10 @@ AngelConfigurer markdown(
           var split = expr.split('.');
           var root = split[0];
 
-          if (locals?.containsKey(root) != true)
-            throw new UnimplementedError(
+          if (locals?.containsKey(root) != true) {
+            throw UnimplementedError(
                 'Expected a local named "$root", but none was provided. Expression text: "$text"');
+          }
 
           return _resolveDotNotation(split, locals[root]).toString();
         }
@@ -55,13 +57,13 @@ AngelConfigurer markdown(
   };
 }
 
-_resolveDotNotation(List<String> split, target) {
+dynamic _resolveDotNotation(List<String> split, target) {
   if (split.length == 1) return target;
 
-  InstanceMirror mirror = reflect(target);
+  var mirror = reflect(target);
 
-  for (int i = 1; i < split.length; i++) {
-    mirror = mirror.getField(new Symbol(split[i]));
+  for (var i = 1; i < split.length; i++) {
+    mirror = mirror.getField(Symbol(split[i]));
   }
 
   return mirror.reflectee;

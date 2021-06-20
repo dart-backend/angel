@@ -14,12 +14,12 @@ class ApplyWorkspaceEditParams {
               ? WorkspaceEdit.fromJson((params['edit'] as Map))
               : null,
           params.containsKey('label') && params['label'] != null
-              ? (params['label'] as String)
+              ? (params['label'] as String?)
               : null);
 
-  final WorkspaceEdit edit;
+  final WorkspaceEdit? edit;
 
-  final String label;
+  final String? label;
 
   Map toJson() => {'edit': edit?.toJson(), 'label': label};
   @override
@@ -40,9 +40,9 @@ class ApplyWorkspaceEditParams {
 class ApplyWorkspaceEditParams$Builder {
   ApplyWorkspaceEditParams$Builder._();
 
-  WorkspaceEdit edit;
+  WorkspaceEdit? edit;
 
-  String label;
+  String? label;
 }
 
 class ClientCapabilities {
@@ -63,9 +63,9 @@ class ClientCapabilities {
           ? WorkspaceClientCapabilities.fromJson((params['workspace'] as Map))
           : null);
 
-  final TextDocumentClientCapabilities textDocument;
+  final TextDocumentClientCapabilities? textDocument;
 
-  final WorkspaceClientCapabilities workspace;
+  final WorkspaceClientCapabilities? workspace;
 
   Map toJson() => {
         'textDocument': textDocument?.toJson(),
@@ -89,9 +89,9 @@ class ClientCapabilities {
 class ClientCapabilities$Builder {
   ClientCapabilities$Builder._();
 
-  TextDocumentClientCapabilities textDocument;
+  TextDocumentClientCapabilities? textDocument;
 
-  WorkspaceClientCapabilities workspace;
+  WorkspaceClientCapabilities? workspace;
 }
 
 class CodeAction {
@@ -117,25 +117,25 @@ class CodeAction {
           ? WorkspaceEdit.fromJson((params['edit'] as Map))
           : null,
       params.containsKey('kind') && params['kind'] != null
-          ? (params['kind'] as String)
+          ? (params['kind'] as String?)
           : null,
       params.containsKey('title') && params['title'] != null
-          ? (params['title'] as String)
+          ? (params['title'] as String?)
           : null);
 
-  final Command command;
+  final Command? command;
 
-  final List<Diagnostic> diagnostics;
+  final List<Diagnostic>? diagnostics;
 
-  final WorkspaceEdit edit;
+  final WorkspaceEdit? edit;
 
-  final String kind;
+  final String? kind;
 
-  final String title;
+  final String? title;
 
   Map toJson() => {
         'command': command?.toJson(),
-        'diagnostics': diagnostics?.map((v) => v?.toJson())?.toList(),
+        'diagnostics': diagnostics?.map((v) => v.toJson()).toList(),
         'edit': edit?.toJson(),
         'kind': kind,
         'title': title
@@ -164,15 +164,15 @@ class CodeAction {
 class CodeAction$Builder {
   CodeAction$Builder._();
 
-  Command command;
+  Command? command;
 
-  List<Diagnostic> diagnostics;
+  List<Diagnostic>? diagnostics;
 
-  WorkspaceEdit edit;
+  WorkspaceEdit? edit;
 
-  String kind;
+  String? kind;
 
-  String title;
+  String? title;
 }
 
 class CodeActionCapabilities {
@@ -196,12 +196,12 @@ class CodeActionCapabilities {
               : null,
           params.containsKey('dynamicRegistration') &&
                   params['dynamicRegistration'] != null
-              ? (params['dynamicRegistration'] as bool)
+              ? (params['dynamicRegistration'] as bool?)
               : null);
 
-  final CodeActionLiteralSupport codeActionLiteralSupport;
+  final CodeActionLiteralSupport? codeActionLiteralSupport;
 
-  final bool dynamicRegistration;
+  final bool? dynamicRegistration;
 
   Map toJson() => {
         'codeActionLiteralSupport': codeActionLiteralSupport?.toJson(),
@@ -225,9 +225,9 @@ class CodeActionCapabilities {
 class CodeActionCapabilities$Builder {
   CodeActionCapabilities$Builder._();
 
-  CodeActionLiteralSupport codeActionLiteralSupport;
+  CodeActionLiteralSupport? codeActionLiteralSupport;
 
-  bool dynamicRegistration;
+  bool? dynamicRegistration;
 }
 
 class CodeActionContext {
@@ -246,10 +246,9 @@ class CodeActionContext {
               .toList()
           : null);
 
-  final List<Diagnostic> diagnostics;
+  final List<Diagnostic>? diagnostics;
 
-  Map toJson() =>
-      {'diagnostics': diagnostics?.map((v) => v?.toJson())?.toList()};
+  Map toJson() => {'diagnostics': diagnostics?.map((v) => v.toJson()).toList()};
   @override
   int get hashCode {
     var hash = 698635161;
@@ -265,7 +264,7 @@ class CodeActionContext {
 class CodeActionContext$Builder {
   CodeActionContext$Builder._();
 
-  List<Diagnostic> diagnostics;
+  List<Diagnostic>? diagnostics;
 }
 
 class CodeActionKinds {
@@ -282,7 +281,7 @@ class CodeActionKinds {
           ? (params['valueSet'] as List).cast<String>()
           : null);
 
-  final List<String> valueSet;
+  final List<String>? valueSet;
 
   Map toJson() => {'valueSet': valueSet};
   @override
@@ -300,7 +299,7 @@ class CodeActionKinds {
 class CodeActionKinds$Builder {
   CodeActionKinds$Builder._();
 
-  List<String> valueSet;
+  List<String>? valueSet;
 }
 
 class CodeActionLiteralSupport {
@@ -319,7 +318,7 @@ class CodeActionLiteralSupport {
           ? CodeActionKinds.fromJson((params['codeActionKind'] as Map))
           : null);
 
-  final CodeActionKinds codeActionKind;
+  final CodeActionKinds? codeActionKind;
 
   Map toJson() => {'codeActionKind': codeActionKind?.toJson()};
   @override
@@ -338,7 +337,7 @@ class CodeActionLiteralSupport {
 class CodeActionLiteralSupport$Builder {
   CodeActionLiteralSupport$Builder._();
 
-  CodeActionKinds codeActionKind;
+  CodeActionKinds? codeActionKind;
 }
 
 class CodeLensOptions {
@@ -352,10 +351,10 @@ class CodeLensOptions {
 
   factory CodeLensOptions.fromJson(Map params) => CodeLensOptions._(
       params.containsKey('resolveProvider') && params['resolveProvider'] != null
-          ? (params['resolveProvider'] as bool)
+          ? (params['resolveProvider'] as bool?)
           : null);
 
-  final bool resolveProvider;
+  final bool? resolveProvider;
 
   Map toJson() => {'resolveProvider': resolveProvider};
   @override
@@ -373,7 +372,7 @@ class CodeLensOptions {
 class CodeLensOptions$Builder {
   CodeLensOptions$Builder._();
 
-  bool resolveProvider;
+  bool? resolveProvider;
 }
 
 class Command {
@@ -390,17 +389,17 @@ class Command {
           ? (params['arguments'] as List).cast<dynamic>()
           : null,
       params.containsKey('command') && params['command'] != null
-          ? (params['command'] as String)
+          ? (params['command'] as String?)
           : null,
       params.containsKey('title') && params['title'] != null
-          ? (params['title'] as String)
+          ? (params['title'] as String?)
           : null);
 
-  final List<dynamic> arguments;
+  final List<dynamic>? arguments;
 
-  final String command;
+  final String? command;
 
-  final String title;
+  final String? title;
 
   Map toJson() => {'arguments': arguments, 'command': command, 'title': title};
   @override
@@ -423,11 +422,11 @@ class Command {
 class Command$Builder {
   Command$Builder._();
 
-  List<dynamic> arguments;
+  List<dynamic>? arguments;
 
-  String command;
+  String? command;
 
-  String title;
+  String? title;
 }
 
 class CompletionCapabilities {
@@ -449,12 +448,12 @@ class CompletionCapabilities {
               : null,
           params.containsKey('dynamicRegistration') &&
                   params['dynamicRegistration'] != null
-              ? (params['dynamicRegistration'] as bool)
+              ? (params['dynamicRegistration'] as bool?)
               : null);
 
-  final CompletionItemCapabilities completionItem;
+  final CompletionItemCapabilities? completionItem;
 
-  final bool dynamicRegistration;
+  final bool? dynamicRegistration;
 
   Map toJson() => {
         'completionItem': completionItem?.toJson(),
@@ -478,9 +477,9 @@ class CompletionCapabilities {
 class CompletionCapabilities$Builder {
   CompletionCapabilities$Builder._();
 
-  CompletionItemCapabilities completionItem;
+  CompletionItemCapabilities? completionItem;
 
-  bool dynamicRegistration;
+  bool? dynamicRegistration;
 }
 
 class CompletionItem {
@@ -530,61 +529,61 @@ class CompletionItem {
           ? (params['data'] as dynamic)
           : null,
       params.containsKey('detail') && params['detail'] != null
-          ? (params['detail'] as String)
+          ? (params['detail'] as String?)
           : null,
       params.containsKey('documentation') && params['documentation'] != null
-          ? (params['documentation'] as String)
+          ? (params['documentation'] as String?)
           : null,
       params.containsKey('filterText') && params['filterText'] != null
-          ? (params['filterText'] as String)
+          ? (params['filterText'] as String?)
           : null,
       params.containsKey('insertText') && params['insertText'] != null
-          ? (params['insertText'] as String)
+          ? (params['insertText'] as String?)
           : null,
       params.containsKey('insertTextFormat') &&
               params['insertTextFormat'] != null
-          ? InsertTextFormat.fromJson((params['insertTextFormat'] as int))
+          ? InsertTextFormat.fromJson((params['insertTextFormat'] as int?))
           : null,
       params.containsKey('kind') && params['kind'] != null
-          ? CompletionItemKind.fromJson((params['kind'] as int))
+          ? CompletionItemKind.fromJson((params['kind'] as int?))
           : null,
       params.containsKey('label') && params['label'] != null
-          ? (params['label'] as String)
+          ? (params['label'] as String?)
           : null,
       params.containsKey('sortText') && params['sortText'] != null
-          ? (params['sortText'] as String)
+          ? (params['sortText'] as String?)
           : null,
       params.containsKey('textEdit') && params['textEdit'] != null
           ? TextEdit.fromJson((params['textEdit'] as Map))
           : null);
 
-  final List<TextEdit> additionalTextEdits;
+  final List<TextEdit>? additionalTextEdits;
 
-  final Command command;
+  final Command? command;
 
   final dynamic data;
 
-  final String detail;
+  final String? detail;
 
-  final String documentation;
+  final String? documentation;
 
-  final String filterText;
+  final String? filterText;
 
-  final String insertText;
+  final String? insertText;
 
-  final InsertTextFormat insertTextFormat;
+  final InsertTextFormat? insertTextFormat;
 
-  final CompletionItemKind kind;
+  final CompletionItemKind? kind;
 
-  final String label;
+  final String? label;
 
-  final String sortText;
+  final String? sortText;
 
-  final TextEdit textEdit;
+  final TextEdit? textEdit;
 
   Map toJson() => {
         'additionalTextEdits':
-            additionalTextEdits?.map((v) => v?.toJson())?.toList(),
+            additionalTextEdits?.map((v) => v.toJson()).toList(),
         'command': command?.toJson(),
         'data': data,
         'detail': detail,
@@ -635,29 +634,29 @@ class CompletionItem {
 class CompletionItem$Builder {
   CompletionItem$Builder._();
 
-  List<TextEdit> additionalTextEdits;
+  List<TextEdit>? additionalTextEdits;
 
-  Command command;
+  Command? command;
 
   dynamic data;
 
-  String detail;
+  String? detail;
 
-  String documentation;
+  String? documentation;
 
-  String filterText;
+  String? filterText;
 
-  String insertText;
+  String? insertText;
 
-  InsertTextFormat insertTextFormat;
+  InsertTextFormat? insertTextFormat;
 
-  CompletionItemKind kind;
+  CompletionItemKind? kind;
 
-  String label;
+  String? label;
 
-  String sortText;
+  String? sortText;
 
-  TextEdit textEdit;
+  TextEdit? textEdit;
 }
 
 class CompletionItemCapabilities {
@@ -673,10 +672,10 @@ class CompletionItemCapabilities {
   factory CompletionItemCapabilities.fromJson(Map params) =>
       CompletionItemCapabilities._(params.containsKey('snippetSupport') &&
               params['snippetSupport'] != null
-          ? (params['snippetSupport'] as bool)
+          ? (params['snippetSupport'] as bool?)
           : null);
 
-  final bool snippetSupport;
+  final bool? snippetSupport;
 
   Map toJson() => {'snippetSupport': snippetSupport};
   @override
@@ -695,11 +694,11 @@ class CompletionItemCapabilities {
 class CompletionItemCapabilities$Builder {
   CompletionItemCapabilities$Builder._();
 
-  bool snippetSupport;
+  bool? snippetSupport;
 }
 
 class CompletionItemKind {
-  factory CompletionItemKind.fromJson(int value) {
+  factory CompletionItemKind.fromJson(int? value) {
     const values = {
       7: CompletionItemKind.classKind,
       16: CompletionItemKind.color,
@@ -720,7 +719,7 @@ class CompletionItemKind {
       12: CompletionItemKind.value,
       6: CompletionItemKind.variable
     };
-    return values[value];
+    return values[value!]!;
   }
 
   const CompletionItemKind._(this._value);
@@ -777,7 +776,7 @@ class CompletionList {
 
   factory CompletionList.fromJson(Map params) => CompletionList._(
       params.containsKey('isIncomplete') && params['isIncomplete'] != null
-          ? (params['isIncomplete'] as bool)
+          ? (params['isIncomplete'] as bool?)
           : null,
       params.containsKey('items') && params['items'] != null
           ? (params['items'] as List)
@@ -785,13 +784,13 @@ class CompletionList {
               .toList()
           : null);
 
-  final bool isIncomplete;
+  final bool? isIncomplete;
 
-  final List<CompletionItem> items;
+  final List<CompletionItem?>? items;
 
   Map toJson() => {
         'isIncomplete': isIncomplete,
-        'items': items?.map((v) => v?.toJson())?.toList()
+        'items': items?.map((v) => v?.toJson()).toList()
       };
   @override
   int get hashCode {
@@ -811,9 +810,9 @@ class CompletionList {
 class CompletionList$Builder {
   CompletionList$Builder._();
 
-  bool isIncomplete;
+  bool? isIncomplete;
 
-  List<CompletionItem> items;
+  List<CompletionItem?>? items;
 }
 
 class CompletionOptions {
@@ -827,16 +826,16 @@ class CompletionOptions {
 
   factory CompletionOptions.fromJson(Map params) => CompletionOptions._(
       params.containsKey('resolveProvider') && params['resolveProvider'] != null
-          ? (params['resolveProvider'] as bool)
+          ? (params['resolveProvider'] as bool?)
           : null,
       params.containsKey('triggerCharacters') &&
               params['triggerCharacters'] != null
           ? (params['triggerCharacters'] as List).cast<String>()
           : null);
 
-  final bool resolveProvider;
+  final bool? resolveProvider;
 
-  final List<String> triggerCharacters;
+  final List<String>? triggerCharacters;
 
   Map toJson() => {
         'resolveProvider': resolveProvider,
@@ -860,9 +859,9 @@ class CompletionOptions {
 class CompletionOptions$Builder {
   CompletionOptions$Builder._();
 
-  bool resolveProvider;
+  bool? resolveProvider;
 
-  List<String> triggerCharacters;
+  List<String>? triggerCharacters;
 }
 
 class Diagnostic {
@@ -879,27 +878,27 @@ class Diagnostic {
           ? (params['code'] as dynamic)
           : null,
       params.containsKey('message') && params['message'] != null
-          ? (params['message'] as String)
+          ? (params['message'] as String?)
           : null,
       params.containsKey('range') && params['range'] != null
           ? Range.fromJson((params['range'] as Map))
           : null,
       params.containsKey('severity') && params['severity'] != null
-          ? (params['severity'] as int)
+          ? (params['severity'] as int?)
           : null,
       params.containsKey('source') && params['source'] != null
-          ? (params['source'] as String)
+          ? (params['source'] as String?)
           : null);
 
   final dynamic code;
 
-  final String message;
+  final String? message;
 
-  final Range range;
+  final Range? range;
 
-  final int severity;
+  final int? severity;
 
-  final String source;
+  final String? source;
 
   Map toJson() => {
         'code': code,
@@ -934,13 +933,13 @@ class Diagnostic$Builder {
 
   dynamic code;
 
-  String message;
+  String? message;
 
-  Range range;
+  Range? range;
 
-  int severity;
+  int? severity;
 
-  String source;
+  String? source;
 }
 
 class Diagnostics {
@@ -959,15 +958,15 @@ class Diagnostics {
               .toList()
           : null,
       params.containsKey('uri') && params['uri'] != null
-          ? (params['uri'] as String)
+          ? (params['uri'] as String?)
           : null);
 
-  final List<Diagnostic> diagnostics;
+  final List<Diagnostic>? diagnostics;
 
-  final String uri;
+  final String? uri;
 
   Map toJson() => {
-        'diagnostics': diagnostics?.map((v) => v?.toJson())?.toList(),
+        'diagnostics': diagnostics?.map((v) => v.toJson()).toList(),
         'uri': uri
       };
   @override
@@ -988,9 +987,9 @@ class Diagnostics {
 class Diagnostics$Builder {
   Diagnostics$Builder._();
 
-  List<Diagnostic> diagnostics;
+  List<Diagnostic>? diagnostics;
 
-  String uri;
+  String? uri;
 }
 
 class DocumentHighlight {
@@ -1004,15 +1003,15 @@ class DocumentHighlight {
 
   factory DocumentHighlight.fromJson(Map params) => DocumentHighlight._(
       params.containsKey('kind') && params['kind'] != null
-          ? DocumentHighlightKind.fromJson((params['kind'] as int))
+          ? DocumentHighlightKind.fromJson((params['kind'] as int?))
           : null,
       params.containsKey('range') && params['range'] != null
           ? Range.fromJson((params['range'] as Map))
           : null);
 
-  final DocumentHighlightKind kind;
+  final DocumentHighlightKind? kind;
 
-  final Range range;
+  final Range? range;
 
   Map toJson() => {'kind': kind?.toJson(), 'range': range?.toJson()};
   @override
@@ -1031,19 +1030,19 @@ class DocumentHighlight {
 class DocumentHighlight$Builder {
   DocumentHighlight$Builder._();
 
-  DocumentHighlightKind kind;
+  DocumentHighlightKind? kind;
 
-  Range range;
+  Range? range;
 }
 
 class DocumentHighlightKind {
-  factory DocumentHighlightKind.fromJson(int value) {
+  factory DocumentHighlightKind.fromJson(int? value) {
     const values = {
       2: DocumentHighlightKind.read,
       1: DocumentHighlightKind.text,
       3: DocumentHighlightKind.write
     };
-    return values[value];
+    return values[value!]!;
   }
 
   const DocumentHighlightKind._(this._value);
@@ -1070,10 +1069,10 @@ class DocumentLinkOptions {
 
   factory DocumentLinkOptions.fromJson(Map params) => DocumentLinkOptions._(
       params.containsKey('resolveProvider') && params['resolveProvider'] != null
-          ? (params['resolveProvider'] as bool)
+          ? (params['resolveProvider'] as bool?)
           : null);
 
-  final bool resolveProvider;
+  final bool? resolveProvider;
 
   Map toJson() => {'resolveProvider': resolveProvider};
   @override
@@ -1091,7 +1090,7 @@ class DocumentLinkOptions {
 class DocumentLinkOptions$Builder {
   DocumentLinkOptions$Builder._();
 
-  bool resolveProvider;
+  bool? resolveProvider;
 }
 
 class DocumentOnTypeFormattingOptions {
@@ -1110,16 +1109,16 @@ class DocumentOnTypeFormattingOptions {
       DocumentOnTypeFormattingOptions._(
           params.containsKey('firstTriggerCharacter') &&
                   params['firstTriggerCharacter'] != null
-              ? (params['firstTriggerCharacter'] as String)
+              ? (params['firstTriggerCharacter'] as String?)
               : null,
           params.containsKey('moreTriggerCharacter') &&
                   params['moreTriggerCharacter'] != null
               ? (params['moreTriggerCharacter'] as List).cast<String>()
               : null);
 
-  final String firstTriggerCharacter;
+  final String? firstTriggerCharacter;
 
-  final List<String> moreTriggerCharacter;
+  final List<String>? moreTriggerCharacter;
 
   Map toJson() => {
         'firstTriggerCharacter': firstTriggerCharacter,
@@ -1143,9 +1142,9 @@ class DocumentOnTypeFormattingOptions {
 class DocumentOnTypeFormattingOptions$Builder {
   DocumentOnTypeFormattingOptions$Builder._();
 
-  String firstTriggerCharacter;
+  String? firstTriggerCharacter;
 
-  List<String> moreTriggerCharacter;
+  List<String>? moreTriggerCharacter;
 }
 
 class DynamicRegistrationCapability {
@@ -1162,10 +1161,10 @@ class DynamicRegistrationCapability {
       DynamicRegistrationCapability._(
           params.containsKey('dynamicRegistration') &&
                   params['dynamicRegistration'] != null
-              ? (params['dynamicRegistration'] as bool)
+              ? (params['dynamicRegistration'] as bool?)
               : null);
 
-  final bool dynamicRegistration;
+  final bool? dynamicRegistration;
 
   Map toJson() => {'dynamicRegistration': dynamicRegistration};
   @override
@@ -1184,7 +1183,7 @@ class DynamicRegistrationCapability {
 class DynamicRegistrationCapability$Builder {
   DynamicRegistrationCapability$Builder._();
 
-  bool dynamicRegistration;
+  bool? dynamicRegistration;
 }
 
 class ExecuteCommandOptions {
@@ -1202,7 +1201,7 @@ class ExecuteCommandOptions {
           ? (params['commands'] as List).cast<String>()
           : null);
 
-  final List<String> commands;
+  final List<String>? commands;
 
   Map toJson() => {'commands': commands};
   @override
@@ -1220,7 +1219,7 @@ class ExecuteCommandOptions {
 class ExecuteCommandOptions$Builder {
   ExecuteCommandOptions$Builder._();
 
-  List<String> commands;
+  List<String>? commands;
 }
 
 class Hover {
@@ -1234,15 +1233,15 @@ class Hover {
 
   factory Hover.fromJson(Map params) => Hover._(
       params.containsKey('contents') && params['contents'] != null
-          ? (params['contents'] as String)
+          ? (params['contents'] as String?)
           : null,
       params.containsKey('range') && params['range'] != null
           ? Range.fromJson((params['range'] as Map))
           : null);
 
-  final String contents;
+  final String? contents;
 
-  final Range range;
+  final Range? range;
 
   Map toJson() => {'contents': contents, 'range': range?.toJson()};
   @override
@@ -1261,9 +1260,9 @@ class Hover {
 class Hover$Builder {
   Hover$Builder._();
 
-  String contents;
+  String? contents;
 
-  Range range;
+  Range? range;
 }
 
 class HoverCapabilities {
@@ -1281,12 +1280,12 @@ class HoverCapabilities {
           : null,
       params.containsKey('dynamicRegistration') &&
               params['dynamicRegistration'] != null
-          ? (params['dynamicRegistration'] as bool)
+          ? (params['dynamicRegistration'] as bool?)
           : null);
 
-  final List<String> contentFormat;
+  final List<String>? contentFormat;
 
-  final bool dynamicRegistration;
+  final bool? dynamicRegistration;
 
   Map toJson() => {
         'contentFormat': contentFormat,
@@ -1310,9 +1309,9 @@ class HoverCapabilities {
 class HoverCapabilities$Builder {
   HoverCapabilities$Builder._();
 
-  List<String> contentFormat;
+  List<String>? contentFormat;
 
-  bool dynamicRegistration;
+  bool? dynamicRegistration;
 }
 
 class HoverMarkup {
@@ -1332,9 +1331,9 @@ class HoverMarkup {
           ? Range.fromJson((params['range'] as Map))
           : null);
 
-  final MarkupContent contents;
+  final MarkupContent? contents;
 
-  final Range range;
+  final Range? range;
 
   Map toJson() => {'contents': contents?.toJson(), 'range': range?.toJson()};
   @override
@@ -1355,15 +1354,15 @@ class HoverMarkup {
 class HoverMarkup$Builder {
   HoverMarkup$Builder._();
 
-  MarkupContent contents;
+  MarkupContent? contents;
 
-  Range range;
+  Range? range;
 }
 
 class InsertTextFormat {
-  factory InsertTextFormat.fromJson(int value) {
+  factory InsertTextFormat.fromJson(int? value) {
     const values = {1: InsertTextFormat.plainText, 2: InsertTextFormat.snippet};
-    return values[value];
+    return values[value!]!;
   }
 
   const InsertTextFormat._(this._value);
@@ -1391,12 +1390,12 @@ class Location {
           ? Range.fromJson((params['range'] as Map))
           : null,
       params.containsKey('uri') && params['uri'] != null
-          ? (params['uri'] as String)
+          ? (params['uri'] as String?)
           : null);
 
-  final Range range;
+  final Range? range;
 
-  final String uri;
+  final String? uri;
 
   Map toJson() => {'range': range?.toJson(), 'uri': uri};
   @override
@@ -1415,9 +1414,9 @@ class Location {
 class Location$Builder {
   Location$Builder._();
 
-  Range range;
+  Range? range;
 
-  String uri;
+  String? uri;
 }
 
 class MarkupContent {
@@ -1431,15 +1430,15 @@ class MarkupContent {
 
   factory MarkupContent.fromJson(Map params) => MarkupContent._(
       params.containsKey('kind') && params['kind'] != null
-          ? MarkupContentKind.fromJson((params['kind'] as String))
+          ? MarkupContentKind.fromJson((params['kind'] as String?))
           : null,
       params.containsKey('value') && params['value'] != null
-          ? (params['value'] as String)
+          ? (params['value'] as String?)
           : null);
 
-  final MarkupContentKind kind;
+  final MarkupContentKind? kind;
 
-  final String value;
+  final String? value;
 
   Map toJson() => {'kind': kind?.toJson(), 'value': value};
   @override
@@ -1458,18 +1457,18 @@ class MarkupContent {
 class MarkupContent$Builder {
   MarkupContent$Builder._();
 
-  MarkupContentKind kind;
+  MarkupContentKind? kind;
 
-  String value;
+  String? value;
 }
 
 class MarkupContentKind {
-  factory MarkupContentKind.fromJson(String value) {
+  factory MarkupContentKind.fromJson(String? value) {
     const values = {
       'markdown': MarkupContentKind.markdown,
       'plaintext': MarkupContentKind.plaintext
     };
-    return values[value];
+    return values[value!]!;
   }
 
   const MarkupContentKind._(this._value);
@@ -1484,14 +1483,14 @@ class MarkupContentKind {
 }
 
 class MessageType {
-  factory MessageType.fromJson(int value) {
+  factory MessageType.fromJson(int? value) {
     const values = {
       1: MessageType.error,
       3: MessageType.info,
       4: MessageType.log,
       2: MessageType.warning
     };
-    return values[value];
+    return values[value!]!;
   }
 
   const MessageType._(this._value);
@@ -1520,15 +1519,15 @@ class Position {
 
   factory Position.fromJson(Map params) => Position._(
       params.containsKey('character') && params['character'] != null
-          ? (params['character'] as int)
+          ? (params['character'] as int?)
           : null,
       params.containsKey('line') && params['line'] != null
-          ? (params['line'] as int)
+          ? (params['line'] as int?)
           : null);
 
-  final int character;
+  final int? character;
 
-  final int line;
+  final int? line;
 
   Map toJson() => {'character': character, 'line': line};
   @override
@@ -1547,9 +1546,9 @@ class Position {
 class Position$Builder {
   Position$Builder._();
 
-  int character;
+  int? character;
 
-  int line;
+  int? line;
 }
 
 class Range {
@@ -1569,9 +1568,9 @@ class Range {
           ? Position.fromJson((params['start'] as Map))
           : null);
 
-  final Position end;
+  final Position? end;
 
-  final Position start;
+  final Position? start;
 
   Map toJson() => {'end': end?.toJson(), 'start': start?.toJson()};
   @override
@@ -1590,9 +1589,9 @@ class Range {
 class Range$Builder {
   Range$Builder._();
 
-  Position end;
+  Position? end;
 
-  Position start;
+  Position? start;
 }
 
 class ReferenceContext {
@@ -1607,10 +1606,10 @@ class ReferenceContext {
   factory ReferenceContext.fromJson(Map params) =>
       ReferenceContext._(params.containsKey('includeDeclaration') &&
               params['includeDeclaration'] != null
-          ? (params['includeDeclaration'] as bool)
+          ? (params['includeDeclaration'] as bool?)
           : null);
 
-  final bool includeDeclaration;
+  final bool? includeDeclaration;
 
   Map toJson() => {'includeDeclaration': includeDeclaration};
   @override
@@ -1629,7 +1628,7 @@ class ReferenceContext {
 class ReferenceContext$Builder {
   ReferenceContext$Builder._();
 
-  bool includeDeclaration;
+  bool? includeDeclaration;
 }
 
 class SaveOptions {
@@ -1643,10 +1642,10 @@ class SaveOptions {
 
   factory SaveOptions.fromJson(Map params) => SaveOptions._(
       params.containsKey('includeText') && params['includeText'] != null
-          ? (params['includeText'] as bool)
+          ? (params['includeText'] as bool?)
           : null);
 
-  final bool includeText;
+  final bool? includeText;
 
   Map toJson() => {'includeText': includeText};
   @override
@@ -1664,7 +1663,7 @@ class SaveOptions {
 class SaveOptions$Builder {
   SaveOptions$Builder._();
 
-  bool includeText;
+  bool? includeText;
 }
 
 class ServerCapabilities {
@@ -1714,7 +1713,7 @@ class ServerCapabilities {
 
   factory ServerCapabilities.fromJson(Map params) => ServerCapabilities._(
       params.containsKey('codeActionProvider') && params['codeActionProvider'] != null
-          ? (params['codeActionProvider'] as bool)
+          ? (params['codeActionProvider'] as bool?)
           : null,
       params.containsKey('codeLensProvider') && params['codeLensProvider'] != null
           ? CodeLensOptions.fromJson((params['codeLensProvider'] as Map))
@@ -1723,13 +1722,13 @@ class ServerCapabilities {
           ? CompletionOptions.fromJson((params['completionProvider'] as Map))
           : null,
       params.containsKey('definitionProvider') && params['definitionProvider'] != null
-          ? (params['definitionProvider'] as bool)
+          ? (params['definitionProvider'] as bool?)
           : null,
       params.containsKey('documentFormattingProvider') && params['documentFormattingProvider'] != null
-          ? (params['documentFormattingProvider'] as bool)
+          ? (params['documentFormattingProvider'] as bool?)
           : null,
       params.containsKey('documentHighlightProvider') && params['documentHighlightProvider'] != null
-          ? (params['documentHighlightProvider'] as bool)
+          ? (params['documentHighlightProvider'] as bool?)
           : null,
       params.containsKey('documentLinkProvider') && params['documentLinkProvider'] != null
           ? DocumentLinkOptions.fromJson(
@@ -1740,57 +1739,57 @@ class ServerCapabilities {
               (params['documentOnTypeFormattingProvider'] as Map))
           : null,
       params.containsKey('documentRangeFormattingProvider') && params['documentRangeFormattingProvider'] != null
-          ? (params['documentRangeFormattingProvider'] as bool)
+          ? (params['documentRangeFormattingProvider'] as bool?)
           : null,
       params.containsKey('documentSymbolProvider') && params['documentSymbolProvider'] != null
-          ? (params['documentSymbolProvider'] as bool)
+          ? (params['documentSymbolProvider'] as bool?)
           : null,
       params.containsKey('executeCommandProvider') && params['executeCommandProvider'] != null
           ? ExecuteCommandOptions.fromJson((params['executeCommandProvider'] as Map))
           : null,
-      params.containsKey('hoverProvider') && params['hoverProvider'] != null ? (params['hoverProvider'] as bool) : null,
-      params.containsKey('implementationProvider') && params['implementationProvider'] != null ? (params['implementationProvider'] as bool) : null,
-      params.containsKey('referencesProvider') && params['referencesProvider'] != null ? (params['referencesProvider'] as bool) : null,
-      params.containsKey('renameProvider') && params['renameProvider'] != null ? (params['renameProvider'] as bool) : null,
+      params.containsKey('hoverProvider') && params['hoverProvider'] != null ? (params['hoverProvider'] as bool?) : null,
+      params.containsKey('implementationProvider') && params['implementationProvider'] != null ? (params['implementationProvider'] as bool?) : null,
+      params.containsKey('referencesProvider') && params['referencesProvider'] != null ? (params['referencesProvider'] as bool?) : null,
+      params.containsKey('renameProvider') && params['renameProvider'] != null ? (params['renameProvider'] as bool?) : null,
       params.containsKey('signatureHelpProvider') && params['signatureHelpProvider'] != null ? SignatureHelpOptions.fromJson((params['signatureHelpProvider'] as Map)) : null,
       params.containsKey('textDocumentSync') && params['textDocumentSync'] != null ? TextDocumentSyncOptions.fromJson((params['textDocumentSync'] as Map)) : null,
-      params.containsKey('workspaceSymbolProvider') && params['workspaceSymbolProvider'] != null ? (params['workspaceSymbolProvider'] as bool) : null);
+      params.containsKey('workspaceSymbolProvider') && params['workspaceSymbolProvider'] != null ? (params['workspaceSymbolProvider'] as bool?) : null);
 
-  final bool codeActionProvider;
+  final bool? codeActionProvider;
 
-  final CodeLensOptions codeLensProvider;
+  final CodeLensOptions? codeLensProvider;
 
-  final CompletionOptions completionProvider;
+  final CompletionOptions? completionProvider;
 
-  final bool definitionProvider;
+  final bool? definitionProvider;
 
-  final bool documentFormattingProvider;
+  final bool? documentFormattingProvider;
 
-  final bool documentHighlightProvider;
+  final bool? documentHighlightProvider;
 
-  final DocumentLinkOptions documentLinkProvider;
+  final DocumentLinkOptions? documentLinkProvider;
 
-  final DocumentOnTypeFormattingOptions documentOnTypeFormattingProvider;
+  final DocumentOnTypeFormattingOptions? documentOnTypeFormattingProvider;
 
-  final bool documentRangeFormattingProvider;
+  final bool? documentRangeFormattingProvider;
 
-  final bool documentSymbolProvider;
+  final bool? documentSymbolProvider;
 
-  final ExecuteCommandOptions executeCommandProvider;
+  final ExecuteCommandOptions? executeCommandProvider;
 
-  final bool hoverProvider;
+  final bool? hoverProvider;
 
-  final bool implementationProvider;
+  final bool? implementationProvider;
 
-  final bool referencesProvider;
+  final bool? referencesProvider;
 
-  final bool renameProvider;
+  final bool? renameProvider;
 
-  final SignatureHelpOptions signatureHelpProvider;
+  final SignatureHelpOptions? signatureHelpProvider;
 
-  final TextDocumentSyncOptions textDocumentSync;
+  final TextDocumentSyncOptions? textDocumentSync;
 
-  final bool workspaceSymbolProvider;
+  final bool? workspaceSymbolProvider;
 
   Map toJson() => {
         'codeActionProvider': codeActionProvider,
@@ -1865,41 +1864,41 @@ class ServerCapabilities {
 class ServerCapabilities$Builder {
   ServerCapabilities$Builder._();
 
-  bool codeActionProvider;
+  bool? codeActionProvider;
 
-  CodeLensOptions codeLensProvider;
+  CodeLensOptions? codeLensProvider;
 
-  CompletionOptions completionProvider;
+  CompletionOptions? completionProvider;
 
-  bool definitionProvider;
+  bool? definitionProvider;
 
-  bool documentFormattingProvider;
+  bool? documentFormattingProvider;
 
-  bool documentHighlightProvider;
+  bool? documentHighlightProvider;
 
-  DocumentLinkOptions documentLinkProvider;
+  DocumentLinkOptions? documentLinkProvider;
 
-  DocumentOnTypeFormattingOptions documentOnTypeFormattingProvider;
+  DocumentOnTypeFormattingOptions? documentOnTypeFormattingProvider;
 
-  bool documentRangeFormattingProvider;
+  bool? documentRangeFormattingProvider;
 
-  bool documentSymbolProvider;
+  bool? documentSymbolProvider;
 
-  ExecuteCommandOptions executeCommandProvider;
+  ExecuteCommandOptions? executeCommandProvider;
 
-  bool hoverProvider;
+  bool? hoverProvider;
 
-  bool implementationProvider;
+  bool? implementationProvider;
 
-  bool referencesProvider;
+  bool? referencesProvider;
 
-  bool renameProvider;
+  bool? renameProvider;
 
-  SignatureHelpOptions signatureHelpProvider;
+  SignatureHelpOptions? signatureHelpProvider;
 
-  TextDocumentSyncOptions textDocumentSync;
+  TextDocumentSyncOptions? textDocumentSync;
 
-  bool workspaceSymbolProvider;
+  bool? workspaceSymbolProvider;
 }
 
 class ShowMessageParams {
@@ -1913,15 +1912,15 @@ class ShowMessageParams {
 
   factory ShowMessageParams.fromJson(Map params) => ShowMessageParams._(
       params.containsKey('message') && params['message'] != null
-          ? (params['message'] as String)
+          ? (params['message'] as String?)
           : null,
       params.containsKey('type') && params['type'] != null
-          ? MessageType.fromJson((params['type'] as int))
+          ? MessageType.fromJson((params['type'] as int?))
           : null);
 
-  final String message;
+  final String? message;
 
-  final MessageType type;
+  final MessageType? type;
 
   Map toJson() => {'message': message, 'type': type?.toJson()};
   @override
@@ -1942,9 +1941,9 @@ class ShowMessageParams {
 class ShowMessageParams$Builder {
   ShowMessageParams$Builder._();
 
-  String message;
+  String? message;
 
-  MessageType type;
+  MessageType? type;
 }
 
 class SignatureHelpOptions {
@@ -1963,7 +1962,7 @@ class SignatureHelpOptions {
           ? (params['triggerCharacters'] as List).cast<String>()
           : null);
 
-  final List<String> triggerCharacters;
+  final List<String>? triggerCharacters;
 
   Map toJson() => {'triggerCharacters': triggerCharacters};
   @override
@@ -1982,7 +1981,7 @@ class SignatureHelpOptions {
 class SignatureHelpOptions$Builder {
   SignatureHelpOptions$Builder._();
 
-  List<String> triggerCharacters;
+  List<String>? triggerCharacters;
 }
 
 class SymbolInformation {
@@ -1996,25 +1995,25 @@ class SymbolInformation {
 
   factory SymbolInformation.fromJson(Map params) => SymbolInformation._(
       params.containsKey('containerName') && params['containerName'] != null
-          ? (params['containerName'] as String)
+          ? (params['containerName'] as String?)
           : null,
       params.containsKey('kind') && params['kind'] != null
-          ? SymbolKind.fromJson((params['kind'] as int))
+          ? SymbolKind.fromJson((params['kind'] as int?))
           : null,
       params.containsKey('location') && params['location'] != null
           ? Location.fromJson((params['location'] as Map))
           : null,
       params.containsKey('name') && params['name'] != null
-          ? (params['name'] as String)
+          ? (params['name'] as String?)
           : null);
 
-  final String containerName;
+  final String? containerName;
 
-  final SymbolKind kind;
+  final SymbolKind? kind;
 
-  final Location location;
+  final Location? location;
 
-  final String name;
+  final String? name;
 
   Map toJson() => {
         'containerName': containerName,
@@ -2044,17 +2043,17 @@ class SymbolInformation {
 class SymbolInformation$Builder {
   SymbolInformation$Builder._();
 
-  String containerName;
+  String? containerName;
 
-  SymbolKind kind;
+  SymbolKind? kind;
 
-  Location location;
+  Location? location;
 
-  String name;
+  String? name;
 }
 
 class SymbolKind {
-  factory SymbolKind.fromJson(int value) {
+  factory SymbolKind.fromJson(int? value) {
     const values = {
       18: SymbolKind.array,
       17: SymbolKind.boolean,
@@ -2083,7 +2082,7 @@ class SymbolKind {
       26: SymbolKind.typeParameter,
       13: SymbolKind.variable
     };
-    return values[value];
+    return values[value!]!;
   }
 
   const SymbolKind._(this._value);
@@ -2161,27 +2160,27 @@ class SynchronizationCapabilities {
           Map params) =>
       SynchronizationCapabilities._(
           params.containsKey('didSave') && params['didSave'] != null
-              ? (params['didSave'] as bool)
+              ? (params['didSave'] as bool?)
               : null,
           params.containsKey('dynamicRegistration') &&
                   params['dynamicRegistration'] != null
-              ? (params['dynamicRegistration'] as bool)
+              ? (params['dynamicRegistration'] as bool?)
               : null,
           params.containsKey('willSave') && params['willSave'] != null
-              ? (params['willSave'] as bool)
+              ? (params['willSave'] as bool?)
               : null,
           params.containsKey('willSaveWaitUntil') &&
                   params['willSaveWaitUntil'] != null
-              ? (params['willSaveWaitUntil'] as bool)
+              ? (params['willSaveWaitUntil'] as bool?)
               : null);
 
-  final bool didSave;
+  final bool? didSave;
 
-  final bool dynamicRegistration;
+  final bool? dynamicRegistration;
 
-  final bool willSave;
+  final bool? willSave;
 
-  final bool willSaveWaitUntil;
+  final bool? willSaveWaitUntil;
 
   Map toJson() => {
         'didSave': didSave,
@@ -2211,13 +2210,13 @@ class SynchronizationCapabilities {
 class SynchronizationCapabilities$Builder {
   SynchronizationCapabilities$Builder._();
 
-  bool didSave;
+  bool? didSave;
 
-  bool dynamicRegistration;
+  bool? dynamicRegistration;
 
-  bool willSave;
+  bool? willSave;
 
-  bool willSaveWaitUntil;
+  bool? willSaveWaitUntil;
 }
 
 class TextDocumentClientCapabilities {
@@ -2300,31 +2299,31 @@ class TextDocumentClientCapabilities {
       params.containsKey('rename') && params['rename'] != null ? DynamicRegistrationCapability.fromJson((params['rename'] as Map)) : null,
       params.containsKey('synchronization') && params['synchronization'] != null ? SynchronizationCapabilities.fromJson((params['synchronization'] as Map)) : null);
 
-  final CodeActionCapabilities codeAction;
+  final CodeActionCapabilities? codeAction;
 
-  final DynamicRegistrationCapability codeLens;
+  final DynamicRegistrationCapability? codeLens;
 
-  final CompletionCapabilities completion;
+  final CompletionCapabilities? completion;
 
-  final DynamicRegistrationCapability definition;
+  final DynamicRegistrationCapability? definition;
 
-  final DynamicRegistrationCapability documentHighlight;
+  final DynamicRegistrationCapability? documentHighlight;
 
-  final DynamicRegistrationCapability documentLink;
+  final DynamicRegistrationCapability? documentLink;
 
-  final DynamicRegistrationCapability documentSymbol;
+  final DynamicRegistrationCapability? documentSymbol;
 
-  final DynamicRegistrationCapability formatting;
+  final DynamicRegistrationCapability? formatting;
 
-  final HoverCapabilities hover;
+  final HoverCapabilities? hover;
 
-  final DynamicRegistrationCapability onTypeFormatting;
+  final DynamicRegistrationCapability? onTypeFormatting;
 
-  final DynamicRegistrationCapability references;
+  final DynamicRegistrationCapability? references;
 
-  final DynamicRegistrationCapability rename;
+  final DynamicRegistrationCapability? rename;
 
-  final SynchronizationCapabilities synchronization;
+  final SynchronizationCapabilities? synchronization;
 
   Map toJson() => {
         'codeAction': codeAction?.toJson(),
@@ -2381,31 +2380,31 @@ class TextDocumentClientCapabilities {
 class TextDocumentClientCapabilities$Builder {
   TextDocumentClientCapabilities$Builder._();
 
-  CodeActionCapabilities codeAction;
+  CodeActionCapabilities? codeAction;
 
-  DynamicRegistrationCapability codeLens;
+  DynamicRegistrationCapability? codeLens;
 
-  CompletionCapabilities completion;
+  CompletionCapabilities? completion;
 
-  DynamicRegistrationCapability definition;
+  DynamicRegistrationCapability? definition;
 
-  DynamicRegistrationCapability documentHighlight;
+  DynamicRegistrationCapability? documentHighlight;
 
-  DynamicRegistrationCapability documentLink;
+  DynamicRegistrationCapability? documentLink;
 
-  DynamicRegistrationCapability documentSymbol;
+  DynamicRegistrationCapability? documentSymbol;
 
-  DynamicRegistrationCapability formatting;
+  DynamicRegistrationCapability? formatting;
 
-  HoverCapabilities hover;
+  HoverCapabilities? hover;
 
-  DynamicRegistrationCapability onTypeFormatting;
+  DynamicRegistrationCapability? onTypeFormatting;
 
-  DynamicRegistrationCapability references;
+  DynamicRegistrationCapability? references;
 
-  DynamicRegistrationCapability rename;
+  DynamicRegistrationCapability? rename;
 
-  SynchronizationCapabilities synchronization;
+  SynchronizationCapabilities? synchronization;
 }
 
 class TextDocumentContentChangeEvent {
@@ -2424,17 +2423,17 @@ class TextDocumentContentChangeEvent {
               ? Range.fromJson((params['range'] as Map))
               : null,
           params.containsKey('rangeLength') && params['rangeLength'] != null
-              ? (params['rangeLength'] as int)
+              ? (params['rangeLength'] as int?)
               : null,
           params.containsKey('text') && params['text'] != null
-              ? (params['text'] as String)
+              ? (params['text'] as String?)
               : null);
 
-  final Range range;
+  final Range? range;
 
-  final int rangeLength;
+  final int? rangeLength;
 
-  final String text;
+  final String? text;
 
   Map toJson() =>
       {'range': range?.toJson(), 'rangeLength': rangeLength, 'text': text};
@@ -2458,11 +2457,11 @@ class TextDocumentContentChangeEvent {
 class TextDocumentContentChangeEvent$Builder {
   TextDocumentContentChangeEvent$Builder._();
 
-  Range range;
+  Range? range;
 
-  int rangeLength;
+  int? rangeLength;
 
-  String text;
+  String? text;
 }
 
 class TextDocumentIdentifier {
@@ -2478,10 +2477,10 @@ class TextDocumentIdentifier {
   factory TextDocumentIdentifier.fromJson(Map params) =>
       TextDocumentIdentifier._(
           params.containsKey('uri') && params['uri'] != null
-              ? (params['uri'] as String)
+              ? (params['uri'] as String?)
               : null);
 
-  final String uri;
+  final String? uri;
 
   Map toJson() => {'uri': uri};
   @override
@@ -2499,7 +2498,7 @@ class TextDocumentIdentifier {
 class TextDocumentIdentifier$Builder {
   TextDocumentIdentifier$Builder._();
 
-  String uri;
+  String? uri;
 }
 
 class TextDocumentItem {
@@ -2513,25 +2512,25 @@ class TextDocumentItem {
 
   factory TextDocumentItem.fromJson(Map params) => TextDocumentItem._(
       params.containsKey('languageId') && params['languageId'] != null
-          ? (params['languageId'] as String)
+          ? (params['languageId'] as String?)
           : null,
       params.containsKey('text') && params['text'] != null
-          ? (params['text'] as String)
+          ? (params['text'] as String?)
           : null,
       params.containsKey('uri') && params['uri'] != null
-          ? (params['uri'] as String)
+          ? (params['uri'] as String?)
           : null,
       params.containsKey('version') && params['version'] != null
-          ? (params['version'] as int)
+          ? (params['version'] as int?)
           : null);
 
-  final String languageId;
+  final String? languageId;
 
-  final String text;
+  final String? text;
 
-  final String uri;
+  final String? uri;
 
-  final int version;
+  final int? version;
 
   Map toJson() =>
       {'languageId': languageId, 'text': text, 'uri': uri, 'version': version};
@@ -2557,23 +2556,23 @@ class TextDocumentItem {
 class TextDocumentItem$Builder {
   TextDocumentItem$Builder._();
 
-  String languageId;
+  String? languageId;
 
-  String text;
+  String? text;
 
-  String uri;
+  String? uri;
 
-  int version;
+  int? version;
 }
 
 class TextDocumentSyncKind {
-  factory TextDocumentSyncKind.fromJson(int value) {
+  factory TextDocumentSyncKind.fromJson(int? value) {
     const values = {
       1: TextDocumentSyncKind.full,
       2: TextDocumentSyncKind.incremental,
       0: TextDocumentSyncKind.none
     };
-    return values[value];
+    return values[value!]!;
   }
 
   const TextDocumentSyncKind._(this._value);
@@ -2605,31 +2604,31 @@ class TextDocumentSyncOptions {
           Map params) =>
       TextDocumentSyncOptions._(
           params.containsKey('change') && params['change'] != null
-              ? TextDocumentSyncKind.fromJson((params['change'] as int))
+              ? TextDocumentSyncKind.fromJson((params['change'] as int?))
               : null,
           params.containsKey('openClose') && params['openClose'] != null
-              ? (params['openClose'] as bool)
+              ? (params['openClose'] as bool?)
               : null,
           params.containsKey('save') && params['save'] != null
               ? SaveOptions.fromJson((params['save'] as Map))
               : null,
           params.containsKey('willSave') && params['willSave'] != null
-              ? (params['willSave'] as bool)
+              ? (params['willSave'] as bool?)
               : null,
           params.containsKey('willSaveWaitUntil') &&
                   params['willSaveWaitUntil'] != null
-              ? (params['willSaveWaitUntil'] as bool)
+              ? (params['willSaveWaitUntil'] as bool?)
               : null);
 
-  final TextDocumentSyncKind change;
+  final TextDocumentSyncKind? change;
 
-  final bool openClose;
+  final bool? openClose;
 
-  final SaveOptions save;
+  final SaveOptions? save;
 
-  final bool willSave;
+  final bool? willSave;
 
-  final bool willSaveWaitUntil;
+  final bool? willSaveWaitUntil;
 
   Map toJson() => {
         'change': change?.toJson(),
@@ -2662,15 +2661,15 @@ class TextDocumentSyncOptions {
 class TextDocumentSyncOptions$Builder {
   TextDocumentSyncOptions$Builder._();
 
-  TextDocumentSyncKind change;
+  TextDocumentSyncKind? change;
 
-  bool openClose;
+  bool? openClose;
 
-  SaveOptions save;
+  SaveOptions? save;
 
-  bool willSave;
+  bool? willSave;
 
-  bool willSaveWaitUntil;
+  bool? willSaveWaitUntil;
 }
 
 class TextEdit {
@@ -2684,15 +2683,15 @@ class TextEdit {
 
   factory TextEdit.fromJson(Map params) => TextEdit._(
       params.containsKey('newText') && params['newText'] != null
-          ? (params['newText'] as String)
+          ? (params['newText'] as String?)
           : null,
       params.containsKey('range') && params['range'] != null
           ? Range.fromJson((params['range'] as Map))
           : null);
 
-  final String newText;
+  final String? newText;
 
-  final Range range;
+  final Range? range;
 
   Map toJson() => {'newText': newText, 'range': range?.toJson()};
   @override
@@ -2711,9 +2710,9 @@ class TextEdit {
 class TextEdit$Builder {
   TextEdit$Builder._();
 
-  String newText;
+  String? newText;
 
-  Range range;
+  Range? range;
 }
 
 class VersionedTextDocumentIdentifier {
@@ -2729,15 +2728,15 @@ class VersionedTextDocumentIdentifier {
   factory VersionedTextDocumentIdentifier.fromJson(Map params) =>
       VersionedTextDocumentIdentifier._(
           params.containsKey('uri') && params['uri'] != null
-              ? (params['uri'] as String)
+              ? (params['uri'] as String?)
               : null,
           params.containsKey('version') && params['version'] != null
-              ? (params['version'] as int)
+              ? (params['version'] as int?)
               : null);
 
-  final String uri;
+  final String? uri;
 
-  final int version;
+  final int? version;
 
   Map toJson() => {'uri': uri, 'version': version};
   @override
@@ -2758,9 +2757,9 @@ class VersionedTextDocumentIdentifier {
 class VersionedTextDocumentIdentifier$Builder {
   VersionedTextDocumentIdentifier$Builder._();
 
-  String uri;
+  String? uri;
 
-  int version;
+  int? version;
 }
 
 class WorkspaceClientCapabilities {
@@ -2779,7 +2778,7 @@ class WorkspaceClientCapabilities {
           Map params) =>
       WorkspaceClientCapabilities._(
           params.containsKey('applyEdit') && params['applyEdit'] != null
-              ? (params['applyEdit'] as bool)
+              ? (params['applyEdit'] as bool?)
               : null,
           params.containsKey('didChangeConfiguration') &&
                   params['didChangeConfiguration'] != null
@@ -2801,15 +2800,15 @@ class WorkspaceClientCapabilities {
                   (params['symbol'] as Map))
               : null);
 
-  final bool applyEdit;
+  final bool? applyEdit;
 
-  final DynamicRegistrationCapability didChangeConfiguration;
+  final DynamicRegistrationCapability? didChangeConfiguration;
 
-  final DynamicRegistrationCapability didChangeWatchedFiles;
+  final DynamicRegistrationCapability? didChangeWatchedFiles;
 
-  final DynamicRegistrationCapability executeCommand;
+  final DynamicRegistrationCapability? executeCommand;
 
-  final DynamicRegistrationCapability symbol;
+  final DynamicRegistrationCapability? symbol;
 
   Map toJson() => {
         'applyEdit': applyEdit,
@@ -2842,15 +2841,15 @@ class WorkspaceClientCapabilities {
 class WorkspaceClientCapabilities$Builder {
   WorkspaceClientCapabilities$Builder._();
 
-  bool applyEdit;
+  bool? applyEdit;
 
-  DynamicRegistrationCapability didChangeConfiguration;
+  DynamicRegistrationCapability? didChangeConfiguration;
 
-  DynamicRegistrationCapability didChangeWatchedFiles;
+  DynamicRegistrationCapability? didChangeWatchedFiles;
 
-  DynamicRegistrationCapability executeCommand;
+  DynamicRegistrationCapability? executeCommand;
 
-  DynamicRegistrationCapability symbol;
+  DynamicRegistrationCapability? symbol;
 }
 
 class WorkspaceEdit {
@@ -2872,11 +2871,11 @@ class WorkspaceEdit {
                       .toList()))
           : null);
 
-  final Map<String, List<TextEdit>> changes;
+  final Map<String, List<TextEdit>>? changes;
 
   Map toJson() => {
         'changes': changes?.map((k, v) =>
-            MapEntry<String, dynamic>(k, v?.map((v) => v?.toJson())?.toList()))
+            MapEntry<String, dynamic>(k, v.map((v) => v.toJson()).toList()))
       };
   @override
   int get hashCode {
@@ -2893,7 +2892,7 @@ class WorkspaceEdit {
 class WorkspaceEdit$Builder {
   WorkspaceEdit$Builder._();
 
-  Map<String, List<TextEdit>> changes;
+  Map<String, List<TextEdit>>? changes;
 }
 
 int _hashCombine(int hash, int value) {

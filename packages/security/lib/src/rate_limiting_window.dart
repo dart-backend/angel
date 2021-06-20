@@ -15,27 +15,27 @@ class RateLimitingWindow<User> {
   ///
   /// This field is typically only set by the [RateLimiter] middleware,
   /// and is therefore optional in the constructor.
-  int pointLimit;
+  int? pointLimit;
 
   /// The amount of points the user can consume before hitting the
   /// rate limit for the current window.
   ///
   /// This field is typically only set by the [RateLimiter] middleware,
   /// and is therefore optional in the constructor.
-  int remainingPoints;
+  int? remainingPoints;
 
   /// The time at which the window will reset.
   ///
   /// This field is typically only set by the [RateLimiter] middleware,
   /// and is therefore optional in the constructor.
-  DateTime resetTime;
+  DateTime? resetTime;
 
   RateLimitingWindow(this.user, this.startTime, this.pointsConsumed,
       {this.pointLimit, this.remainingPoints, this.resetTime});
 
   factory RateLimitingWindow.fromJson(Map<String, dynamic> map) {
     return RateLimitingWindow(
-        map['user'] as User,
+        (map['user'] as User?)!,
         DateTime.parse(map['start_time'] as String),
         int.parse(map['points_consumed'] as String));
   }

@@ -13,17 +13,15 @@ import 'package:stream_channel/stream_channel.dart';
 import 'package:test/test.dart';
 
 void main() {
-  http.Client client;
-  HttpServer server;
-  String url;
+  late http.Client client;
+  late HttpServer server;
 
-  String _path(String p) {
+  Uri _path(String p) {
     return Uri(
-            scheme: 'http',
-            host: server.address.address,
-            port: server.port,
-            path: p)
-        .toString();
+        scheme: 'http',
+        host: server.address.address,
+        port: server.port,
+        path: p);
   }
 
   setUp(() async {
@@ -45,9 +43,8 @@ void main() {
           sink.close();
           print('b');
         });
-        return null;
-      } else if (request.url.path == 'throw') {
-        return null;
+        //} else if (request.url.path == 'throw') {
+        //  return null;
       } else {
         return shelf.Response.ok('Request for "${request.url}"');
       }
@@ -63,7 +60,7 @@ void main() {
   });
 
   tearDown(() async {
-    await client.close();
+    client.close();
     await server.close(force: true);
   });
 
@@ -86,7 +83,7 @@ void main() {
   test('shelf can hijack', () async {
     try {
       var client = HttpClient();
-      var rq = await client.openUrl('GET', Uri.parse(_path('/hijack')));
+      var rq = await client.openUrl('GET', _path('/hijack'));
       var rs = await rq.close();
       var body = await rs.cast<List<int>>().transform(utf8.decoder).join();
       print('Response: $body');

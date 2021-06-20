@@ -1,7 +1,7 @@
 import 'dom_node.dart';
 
 abstract class Component<State> extends DomNode {
-  State state;
+  late State state;
 
   DomNode render();
 

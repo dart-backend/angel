@@ -4,7 +4,7 @@ import 'package:angel_sembast/angel_sembast.dart';
 import 'package:logging/logging.dart';
 import 'package:sembast/sembast_io.dart';
 
-main() async {
+void main() async {
   var app = Angel();
   var db = await databaseFactoryIo.openDatabase('todos.db');
 

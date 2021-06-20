@@ -1,11 +1,11 @@
 import 'package:angel_client/io.dart';
 import 'package:angel_poll/angel_poll.dart';
 
-main() {
-  var app = new Rest('http://localhost:3000');
+void main() {
+  var app = Rest('http://localhost:3000');
 
-  var todos = new ServiceList(
-    new PollingService(
+  var todos = ServiceList(
+    PollingService(
       // Typically, you'll pass a REST-based service instance here.
       app.service('api/todos'),
 

@@ -21,7 +21,7 @@ class JaelComponentGenerator extends GeneratorForAnnotation<Jael> {
       Element element, ConstantReader annotation, BuildStep buildStep) async {
     if (element is ClassElement) {
       // Load the template
-      String templateString;
+      String? templateString;
       var inputId = buildStep.inputId;
       var ann = Jael(
         template: annotation.peek('template')?.stringValue,
@@ -47,10 +47,10 @@ class JaelComponentGenerator extends GeneratorForAnnotation<Jael> {
 
       var fs = BuildFileSystem(buildStep, inputId.package);
       var errors = <jael.JaelError>[];
-      var doc = await jael.parseDocument(templateString,
-          sourceUrl: inputId.uri, asDSX: ann.asDsx, onError: errors.add);
+      var doc = await jael.parseDocument(templateString!,
+          sourceUrl: inputId.uri, asDSX: ann.asDsx!, onError: errors.add);
       if (errors.isEmpty) {
-        doc = await jael.resolve(doc, fs.file(inputId.uri).parent,
+        doc = await jael.resolve(doc!, fs.file(inputId.uri).parent,
             onError: errors.add);
       }
 
@@ -98,7 +98,7 @@ class JaelComponentGenerator extends GeneratorForAnnotation<Jael> {
             ..returns = refer('DomNode')
             ..annotations.add(refer('override'))
             ..body = Block((b) {
-              var result = compileElementChild(doc.root);
+              var result = compileElementChild(doc!.root);
               b.addExpression(result.returned);
             });
         }));
@@ -123,7 +123,7 @@ class JaelComponentGenerator extends GeneratorForAnnotation<Jael> {
       for (var attr in child.attributes) {
         attrs[attr.name] = attr.value == null
             ? literalTrue
-            : CodeExpression(Code(attr.value.span.text));
+            : CodeExpression(Code(attr.value!.span.text));
       }
 
       var tagName = child.tagName.name;

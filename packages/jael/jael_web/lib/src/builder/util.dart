@@ -10,9 +10,9 @@ import 'package:file/file.dart';
 import 'package:path/src/context.dart';
 
 /// Converts a [DartType] to a [TypeReference].
-TypeReference convertTypeReference(DartType t) {
+TypeReference convertTypeReference(DartType? t) {
   return new TypeReference((b) {
-    b..symbol = t.name;
+    b..symbol = t!.name;
 
     if (t is InterfaceType) {
       b.types.addAll(t.typeArguments.map(convertTypeReference));
@@ -35,7 +35,7 @@ Parameter convertParameter(ParameterElement e) {
       ..type = convertTypeReference(e.type)
       ..named = e.isNamed
       ..defaultTo =
-          e.defaultValueCode == null ? null : Code(e.defaultValueCode);
+          e.defaultValueCode == null ? null : Code(e.defaultValueCode!);
   });
 }
 
@@ -68,11 +68,11 @@ class BuildFileSystem extends FileSystem {
 
   @override
   Directory directory(path) {
-    String p;
+    late String p;
     if (path is String)
       p = path;
     else if (path is Uri)
-      p = p.toString();
+      p = path.toString(); //p.toString();
     else if (path is FileSystemEntity)
       p = path.path;
     else
@@ -82,11 +82,11 @@ class BuildFileSystem extends FileSystem {
 
   @override
   File file(path) {
-    String p;
+    late String p;
     if (path is String)
       p = path;
     else if (path is Uri)
-      p = p.toString();
+      p = path.toString(); // p.toString();
     else if (path is FileSystemEntity)
       p = path.path;
     else
@@ -192,7 +192,7 @@ class BuildSystemFile extends File {
       throw _unsupported();
 
   @override
-  Stream<List<int>> openRead([int start, int end]) => throw _unsupported();
+  Stream<List<int>> openRead([int? start, int? end]) => throw _unsupported();
 
   @override
   RandomAccessFile openSync({FileMode mode = FileMode.read}) =>
@@ -347,10 +347,10 @@ class BuildSystemDirectory extends Directory {
   void createSync({bool recursive = false}) => throw _unsupported();
 
   @override
-  Future<Directory> createTemp([String prefix]) => throw _unsupported();
+  Future<Directory> createTemp([String? prefix]) => throw _unsupported();
 
   @override
-  Directory createTempSync([String prefix]) => throw _unsupported();
+  Directory createTempSync([String? prefix]) => throw _unsupported();
 
   @override
   Future<FileSystemEntity> delete({bool recursive = false}) =>

@@ -1,22 +1,22 @@
 import 'package:jael/jael.dart';
 
 class JaelFormatter {
-  final num tabSize;
-  final bool insertSpaces;
-  var _buffer = new StringBuffer();
+  final num? tabSize;
+  final bool? insertSpaces;
+  final _buffer = StringBuffer();
   int _level = 0;
-  String _spaces;
+  String? _spaces;
 
   static String _spaceString(int tabSize) {
-    var b = new StringBuffer();
-    for (int i = 0; i < tabSize; i++) {
+    var b = StringBuffer();
+    for (var i = 0; i < tabSize; i++) {
       b.write(' ');
     }
     return b.toString();
   }
 
   JaelFormatter(this.tabSize, this.insertSpaces) {
-    _spaces = insertSpaces ? _spaceString(tabSize.toInt()) : '\t';
+    _spaces = insertSpaces! ? _spaceString(tabSize!.toInt()) : '\t';
   }
 
   void _indent() {
@@ -28,18 +28,20 @@ class JaelFormatter {
   }
 
   void _applySpacing() {
-    for (int i = 0; i < _level; i++) _buffer.write(_spaces);
+    for (var i = 0; i < _level; i++) {
+      _buffer.write(_spaces);
+    }
   }
 
-  String apply(Document document) {
+  String apply(Document? document) {
     if (document?.doctype != null) {
       _buffer.write('<!doctype');
 
-      if (document.doctype.html != null) _buffer.write(' html');
-      if (document.doctype.public != null) _buffer.write(' public');
+      if (document!.doctype!.html != null) _buffer.write(' html');
+      if (document.doctype!.public != null) _buffer.write(' public');
 
-      if (document.doctype.url != null) {
-        _buffer.write('${document.doctype.url}');
+      if (document.doctype!.url != null) {
+        _buffer.write('${document.doctype!.url}');
       }
 
       _buffer.writeln();
@@ -50,14 +52,14 @@ class JaelFormatter {
     return _buffer.toString();
   }
 
-  void _formatChild(ElementChild child) {
+  void _formatChild(ElementChild? child) {
     if (child == null) return;
     _applySpacing();
-    if (child is Text)
+    if (child is Text) {
       _buffer.write(child.text.span.text);
-    else if (child is TextNode)
+    } else if (child is TextNode) {
       _buffer.write(child.text.span.text);
-    else if (child is Element) _formatElement(child);
+    } else if (child is Element) _formatElement(child);
   }
 
   void _formatElement(Element element) {
@@ -80,7 +82,7 @@ class JaelFormatter {
         } else {
           if (attr.nequ != null) _buffer.write('!=');
           if (attr.equals != null) _buffer.write('=');
-          _buffer.write(attr.value.span.text);
+          _buffer.write(attr.value!.span.text);
         }
       }
     }
@@ -109,7 +111,7 @@ class JaelFormatter {
       _applySpacing();
       _buffer.writeln('</${element.tagName.name}>');
     } else {
-      throw new ArgumentError();
+      throw ArgumentError();
     }
   }
 }

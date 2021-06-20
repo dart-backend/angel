@@ -6,7 +6,7 @@ import 'package:file/local.dart';
 import 'package:logging/logging.dart';
 import 'package:pretty_logging/pretty_logging.dart';
 
-main() async {
+void main() async {
   hierarchicalLoggingEnabled = true;
 
   var logger = Logger.detached('wings')
@@ -25,7 +25,7 @@ main() async {
     await req.parseBody();
     return req.bodyAsMap;
   });
-  
+
   app.fallback(vDir.handleRequest);
   app.fallback((req, res) => throw AngelHttpException.notFound());
 

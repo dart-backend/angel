@@ -3,9 +3,9 @@ import 'package:angel_mustache/angel_mustache.dart';
 import 'package:file/file.dart';
 import 'package:file/local.dart';
 
-const FileSystem fs = const LocalFileSystem();
+const FileSystem fs = LocalFileSystem();
 
-configureServer(Angel app) async {
+void configureServer(Angel app) async {
   // Run the plug-in
   await app.configure(mustache(fs.directory('views')));
 

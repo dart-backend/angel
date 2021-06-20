@@ -4,24 +4,25 @@ import 'package:faker/faker.dart';
 export 'package:faker/faker.dart';
 
 /// Generates data using a [Faker].
-typedef FakerCallback(Faker faker);
+typedef FakerCallback = Function(Faker faker);
 
 /// Used to seed nested objects.
-typedef SeederCallback<T>(T created,
-    seed(Pattern path, SeederConfiguration configuration, {bool verbose}));
+typedef SeederCallback<T> = Function(T created,
+    Function(Pattern path, SeederConfiguration configuration, {bool? verbose}));
 
 /// Seeds the given service in development.
 AngelConfigurer seed<T>(
   Pattern servicePath,
   SeederConfiguration<T> configuration, {
-  bool verbose: false,
+  bool verbose = false,
 }) {
   return (Angel app) async {
     if (configuration.runInProduction != true) return;
 
-    if (!app.services.containsKey(servicePath))
-      throw new ArgumentError(
+    if (!app.services.containsKey(servicePath)) {
+      throw ArgumentError(
           "App does not contain a service at path '$servicePath'.");
+    }
 
     if (configuration.disabled == true) {
       print("Service '$servicePath' will not be seeded.");
@@ -29,7 +30,7 @@ AngelConfigurer seed<T>(
     }
 
     var service = app.findService(servicePath);
-    var faker = new Faker();
+    var faker = Faker();
 
     Map _buildTemplate(Map data) {
       return data.keys.fold({}, (map, key) {
@@ -39,23 +40,26 @@ AngelConfigurer seed<T>(
           return map..[key] = value(faker);
         } else if (value is Function) {
           return map..[key] = value();
-        } else if (value is Map)
+        } else if (value is Map) {
           return map..[key] = _buildTemplate(value);
-        else
+        } else {
           return map..[key] = value;
+        }
       });
     }
 
-    _buildSeeder(Service service, {bool verbose}) {
+    Future<Null> Function(SeederConfiguration configuration) _buildSeeder(
+        Service? service,
+        {bool? verbose}) {
       return (SeederConfiguration configuration) async {
-        if (configuration.delete == true) await service.remove(null);
+        if (configuration.delete == true) await service!.remove(null);
 
-        int count = configuration.count ?? 1;
-        var rnd = new Random();
+        var count = configuration.count;
+        var rnd = Random();
         if (count < 1) count = 1;
 
-        for (int i = 0; i < count; i++) {
-          _gen(template) async {
+        for (var i = 0; i < count; i++) {
+          Future _gen(template) async {
             var data = template;
 
             if (data is Map) {
@@ -64,13 +68,13 @@ AngelConfigurer seed<T>(
               data = template(faker);
             }
 
-            var params = {}..addAll(configuration.params ?? {});
-            var result = await service.create(data, params);
+            var params = <String, dynamic>{}..addAll(configuration.params);
+            var result = await service!.create(data, params);
 
             if (configuration.callback != null) {
-              await configuration.callback(result,
+              await configuration.callback!(result,
                   (Pattern path, SeederConfiguration configuration,
-                      {bool verbose}) {
+                      {bool? verbose}) {
                 return _buildSeeder(app.findService(path),
                     verbose: verbose == true)(configuration);
               });
@@ -79,17 +83,19 @@ AngelConfigurer seed<T>(
 
           if (configuration.template != null) {
             await _gen(configuration.template);
-          } else if (configuration.templates?.isNotEmpty == true) {
+          } else if (configuration.templates.isNotEmpty == true) {
             var template = configuration.templates
                 .elementAt(rnd.nextInt(configuration.templates.length));
             await _gen(template);
-          } else
-            throw new ArgumentError(
+          } else {
+            throw ArgumentError(
                 'Configuration for service \'$servicePath\' must define at least one template.');
+          }
         }
 
-        if (verbose == true)
+        if (verbose == true) {
           print('Created $count object(s) in service \'$servicePath\'.');
+        }
       };
     }
 
@@ -100,7 +106,7 @@ AngelConfigurer seed<T>(
 /// Configures the seeder.
 class SeederConfiguration<T> {
   /// Optional callback on creation.
-  final SeederCallback<T> callback;
+  final SeederCallback<T>? callback;
 
   /// Number of objects to seed.
   final int count;
@@ -112,7 +118,7 @@ class SeederConfiguration<T> {
   final bool disabled;
 
   /// Optional service parameters to be passed.
-  final Map params;
+  final Map<String, dynamic> params;
 
   /// Unless this is `true`, the seeder will not run in production.
   final bool runInProduction;
@@ -125,11 +131,11 @@ class SeederConfiguration<T> {
 
   SeederConfiguration(
       {this.callback,
-      this.count: 1,
-      this.delete: true,
-      this.disabled: false,
-      this.params: const {},
-      this.runInProduction: false,
+      this.count = 1,
+      this.delete = true,
+      this.disabled = false,
+      this.params = const {},
+      this.runInProduction = false,
       this.template,
-      this.templates: const []});
+      this.templates = const []});
 }

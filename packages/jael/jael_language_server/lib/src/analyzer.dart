@@ -7,18 +7,19 @@ class Analyzer extends Parser {
   final Logger logger;
   Analyzer(Scanner scanner, this.logger) : super(scanner);
 
+  @override
   final errors = <JaelError>[];
-  var _scope = new SymbolTable<JaelObject>();
+  SymbolTable<JaelObject>? _scope = SymbolTable<JaelObject>();
   var allDefinitions = <Variable<JaelObject>>[];
 
-  SymbolTable<JaelObject> get parentScope =>
-      _scope.isRoot ? _scope : _scope.parent;
+  SymbolTable<JaelObject>? get parentScope =>
+      _scope!.isRoot ? _scope : _scope!.parent;
 
-  SymbolTable<JaelObject> get scope => _scope;
+  SymbolTable<JaelObject>? get scope => _scope;
 
   bool ensureAttributeIsPresent(Element element, String name) {
     if (element.getAttribute(name)?.value == null) {
-      addError(new JaelError(JaelErrorSeverity.error,
+      addError(JaelError(JaelErrorSeverity.error,
           'Missing required attribute `$name`.', element.span));
       return false;
     }
@@ -33,9 +34,9 @@ class Analyzer extends Parser {
   bool ensureAttributeIsConstantString(Element element, String name) {
     var a = element.getAttribute(name);
     if (a?.value is! StringLiteral || a?.value == null) {
-      var e = new JaelError(
+      var e = JaelError(
           JaelErrorSeverity.warning,
-          "`$name` attribute should be a constant string literal.",
+          '`$name` attribute should be a constant string literal.',
           a?.span ?? element.tagName.span);
       addError(e);
       return false;
@@ -45,18 +46,18 @@ class Analyzer extends Parser {
   }
 
   @override
-  Element parseElement() {
+  Element? parseElement() {
     try {
-      _scope = _scope.createChild();
+      _scope = _scope!.createChild();
       var element = super.parseElement();
       if (element == null) return null;
 
       // Check if any custom element exists.
-      _scope
+      _scope!
           .resolve(element.tagName.name)
           ?.value
           ?.usages
-          ?.add(new SymbolUsage(SymbolUsageType.read, element.span));
+          .add(SymbolUsage(SymbolUsageType.read, element.span));
 
       // Validate attrs
       var forEach = element.getAttribute('for-each');
@@ -64,14 +65,14 @@ class Analyzer extends Parser {
         var asAttr = element.getAttribute('as');
         if (asAttr != null) {
           if (ensureAttributeIsConstantString(element, 'as')) {
-            var asName = asAttr.string.value;
-            _scope.create(asName,
-                value: new JaelVariable(asName, asAttr.span), constant: true);
+            var asName = asAttr.string!.value;
+            _scope!.create(asName,
+                value: JaelVariable(asName, asAttr.span), constant: true);
           }
         }
 
         if (forEach.value != null) {
-          addError(new JaelError(JaelErrorSeverity.error,
+          addError(JaelError(JaelErrorSeverity.error,
               'Missing value for `for-each` directive.', forEach.span));
         }
       }
@@ -79,7 +80,7 @@ class Analyzer extends Parser {
       var iff = element.getAttribute('if');
       if (iff != null) {
         if (iff.value != null) {
-          addError(new JaelError(JaelErrorSeverity.error,
+          addError(JaelError(JaelErrorSeverity.error,
               'Missing value for `iff` directive.', iff.span));
         }
       }
@@ -94,29 +95,29 @@ class Analyzer extends Parser {
           //logger.info('Found <case> at ${element.span.start.toolString}');
         } else if (element.tagName.name == 'declare') {
           if (element.attributes.isEmpty) {
-            addError(new JaelError(
+            addError(JaelError(
                 JaelErrorSeverity.warning,
                 '`declare` directive does not define any new symbols.',
                 element.tagName.span));
           } else {
             for (var attr in element.attributes) {
-              _scope.create(attr.name,
-                  value: new JaelVariable(attr.name, attr.span));
+              _scope!
+                  .create(attr.name, value: JaelVariable(attr.name, attr.span));
             }
           }
         } else if (element.tagName.name == 'element') {
           if (ensureAttributeIsConstantString(element, 'name')) {
-            var nameCtx = element.getAttribute('name').value as StringLiteral;
+            var nameCtx = element.getAttribute('name')!.value as StringLiteral;
             var name = nameCtx.value;
             //logger.info(
             //    'Found custom element $name at ${element.span.start.toolString}');
             try {
-              var symbol = parentScope.create(name,
-                  value: new JaelCustomElement(name, element.tagName.span),
+              var symbol = parentScope!.create(name,
+                  value: JaelCustomElement(name, element.tagName.span),
                   constant: true);
               allDefinitions.add(symbol);
             } on StateError catch (e) {
-              addError(new JaelError(
+              addError(JaelError(
                   JaelErrorSeverity.error, e.message, element.tagName.span));
             }
           }
@@ -133,19 +134,19 @@ class Analyzer extends Parser {
 
       return element;
     } finally {
-      _scope = _scope.parent;
+      _scope = _scope!.parent;
       return null;
     }
   }
 
   @override
-  Expression parseExpression(int precedence) {
+  Expression? parseExpression(int precedence) {
     var expr = super.parseExpression(precedence);
     if (expr == null) return null;
 
     if (expr is Identifier) {
-      var ref = _scope.resolve(expr.name);
-      ref?.value?.usages?.add(new SymbolUsage(SymbolUsageType.read, expr.span));
+      var ref = _scope!.resolve(expr.name);
+      ref?.value?.usages.add(SymbolUsage(SymbolUsageType.read, expr.span));
     }
 
     return expr;

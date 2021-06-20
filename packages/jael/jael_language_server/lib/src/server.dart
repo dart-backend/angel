@@ -17,14 +17,14 @@ import 'protocol/language_server/interface.dart';
 import 'protocol/language_server/messages.dart';
 
 class JaelLanguageServer extends LanguageServer {
-  var _diagnostics = new StreamController<Diagnostics>();
-  var _done = new Completer();
-  var _memFs = new MemoryFileSystem();
-  var _localFs = const LocalFileSystem();
-  Directory _localRootDir, _memRootDir;
-  var logger = new Logger('jael');
-  Uri _rootUri;
-  var _workspaceEdits = new StreamController<ApplyWorkspaceEditParams>();
+  final _diagnostics = StreamController<Diagnostics>();
+  final _done = Completer();
+  final _memFs = MemoryFileSystem();
+  final _localFs = const LocalFileSystem();
+  Directory? _localRootDir, _memRootDir;
+  var logger = Logger('jael');
+  late Uri _rootUri;
+  final _workspaceEdits = StreamController<ApplyWorkspaceEditParams>();
 
   @override
   Stream<Diagnostics> get diagnostics => _diagnostics.stream;
@@ -48,24 +48,24 @@ class JaelLanguageServer extends LanguageServer {
     peer.registerMethod('textDocument/formatting',
         (json_rpc_2.Parameters params) async {
       var documentId =
-          new TextDocumentIdentifier.fromJson(params['textDocument'].asMap);
+          TextDocumentIdentifier.fromJson(params['textDocument'].asMap);
       var formattingOptions =
-          new FormattingOptions.fromJson(params['options'].asMap);
+          FormattingOptions.fromJson(params['options'].asMap);
       return await textDocumentFormatting(documentId, formattingOptions);
     });
   }
 
   @override
-  Future<ServerCapabilities> initialize(int clientPid, String rootUri,
-      ClientCapabilities clientCapabilities, String trace) async {
+  Future<ServerCapabilities> initialize(int? clientPid, String? rootUri,
+      ClientCapabilities clientCapabilities, String? trace) async {
     // Find our real root dir.
-    _localRootDir = _localFs.directory(_rootUri = Uri.parse(rootUri));
+    _localRootDir = _localFs.directory(_rootUri = Uri.parse(rootUri!));
     _memRootDir = _memFs.directory('/');
-    await _memRootDir.create(recursive: true);
+    await _memRootDir!.create(recursive: true);
     _memFs.currentDirectory = _memRootDir;
 
     // Copy all real files that end in *.jael (and *.jl for legacy) into the in-memory filesystem.
-    await for (var entity in _localRootDir.list(recursive: true)) {
+    await for (var entity in _localRootDir!.list(recursive: true)) {
       if (entity is File && p.extension(entity.path) == '.jael') {
         logger.info('HEY ${entity.path}');
         var file = _memFs.file(entity.absolute.path);
@@ -78,24 +78,24 @@ class JaelLanguageServer extends LanguageServer {
             'Found Jael file ${file.path}; copied to ${file.absolute.path}');
 
         // Analyze it
-        var documentId = new TextDocumentIdentifier((b) {
-          b..uri = _rootUri.replace(path: file.path).toString();
+        var documentId = TextDocumentIdentifier((b) {
+          b.uri = _rootUri.replace(path: file.path).toString();
         });
 
         await analyzerForId(documentId);
       }
     }
 
-    return new ServerCapabilities((b) {
+    return ServerCapabilities((b) {
       b
         ..codeActionProvider = false
-        ..completionProvider = new CompletionOptions((b) {
+        ..completionProvider = CompletionOptions((b) {
           b
             ..resolveProvider = true
             ..triggerCharacters =
                 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdeghijklmnopqrstuvxwyz'
                     .codeUnits
-                    .map((c) => new String.fromCharCode(c))
+                    .map((c) => String.fromCharCode(c))
                     .toList();
         })
         ..definitionProvider = true
@@ -108,13 +108,13 @@ class JaelLanguageServer extends LanguageServer {
         ..implementationProvider = true
         ..referencesProvider = true
         ..renameProvider = true
-        ..signatureHelpProvider = new SignatureHelpOptions((b) {})
-        ..textDocumentSync = new TextDocumentSyncOptions((b) {
+        ..signatureHelpProvider = SignatureHelpOptions((b) {})
+        ..textDocumentSync = TextDocumentSyncOptions((b) {
           b
             ..openClose = true
             ..change = TextDocumentSyncKind.full
-            ..save = new SaveOptions((b) {
-              b..includeText = false;
+            ..save = SaveOptions((b) {
+              b.includeText = false;
             })
             ..willSave = false
             ..willSaveWaitUntil = false;
@@ -124,7 +124,7 @@ class JaelLanguageServer extends LanguageServer {
   }
 
   Future<File> fileForId(TextDocumentIdentifier documentId) async {
-    var uri = Uri.parse(documentId.uri);
+    var uri = Uri.parse(documentId.uri!);
     var relativePath = uri.path;
     var file = _memFs.directory('/').childFile(relativePath);
 
@@ -156,14 +156,14 @@ class JaelLanguageServer extends LanguageServer {
 
   Future<Analyzer> analyzerForId(TextDocumentIdentifier documentId) async {
     var scanner = await scannerForId(documentId);
-    var analyzer = new Analyzer(scanner, logger)..errors.addAll(scanner.errors);
+    var analyzer = Analyzer(scanner, logger)..errors.addAll(scanner.errors);
     analyzer.parseDocument();
     emitDiagnostics(documentId.uri, analyzer.errors.map(toDiagnostic).toList());
     return analyzer;
   }
 
   Diagnostic toDiagnostic(JaelError e) {
-    return new Diagnostic((b) {
+    return Diagnostic((b) {
       b
         ..message = e.message
         ..range = toRange(e.span)
@@ -182,7 +182,7 @@ class JaelLanguageServer extends LanguageServer {
   }
 
   Range toRange(FileSpan span) {
-    return new Range((b) {
+    return Range((b) {
       b
         ..start = toPosition(span.start)
         ..end = toPosition(span.end);
@@ -190,8 +190,8 @@ class JaelLanguageServer extends LanguageServer {
   }
 
   Range emptyRange() {
-    return new Range((b) => b
-      ..start = b.end = new Position((b) {
+    return Range((b) => b
+      ..start = b.end = Position((b) {
         b
           ..character = 1
           ..line = 0;
@@ -199,15 +199,15 @@ class JaelLanguageServer extends LanguageServer {
   }
 
   Position toPosition(SourceLocation location) {
-    return new Position((b) {
+    return Position((b) {
       b
         ..line = location.line
         ..character = location.column;
     });
   }
 
-  Location toLocation(String uri, FileSpan span) {
-    return new Location((b) {
+  Location toLocation(String? uri, FileSpan span) {
+    return Location((b) {
       b
         ..range = toRange(span)
         ..uri = uri;
@@ -215,27 +215,27 @@ class JaelLanguageServer extends LanguageServer {
   }
 
   bool isReachable(JaelObject obj, Position position) {
-    return obj.span.start.line <= position.line &&
-        obj.span.start.column <= position.character;
+    return obj.span.start.line <= position.line! &&
+        obj.span.start.column <= position.character!;
   }
 
-  CompletionItem toCompletion(Variable<JaelObject> symbol) {
+  CompletionItem? toCompletion(Variable<JaelObject> symbol) {
     var value = symbol.value;
 
     if (value is JaelCustomElement) {
       var name = value.name;
-      return new CompletionItem((b) {
+      return CompletionItem((b) {
         b
           ..kind = CompletionItemKind.classKind
           ..label = symbol.name
-          ..textEdit = new TextEdit((b) {
+          ..textEdit = TextEdit((b) {
             b
               ..range = emptyRange()
               ..newText = '<$name\$1>\n    \$2\n</name>';
           });
       });
     } else if (value is JaelVariable) {
-      return new CompletionItem((b) {
+      return CompletionItem((b) {
         b
           ..kind = CompletionItemKind.variable
           ..label = symbol.name;
@@ -245,8 +245,8 @@ class JaelLanguageServer extends LanguageServer {
     return null;
   }
 
-  void emitDiagnostics(String uri, Iterable<Diagnostic> diagnostics) {
-    _diagnostics.add(new Diagnostics((b) {
+  void emitDiagnostics(String? uri, Iterable<Diagnostic> diagnostics) {
+    _diagnostics.add(Diagnostics((b) {
       logger.info('$uri => ${diagnostics.map((d) => d.message).toList()}');
       b
         ..diagnostics = diagnostics.toList()
@@ -256,43 +256,42 @@ class JaelLanguageServer extends LanguageServer {
 
   @override
   Future textDocumentDidOpen(TextDocumentItem document) async {
-    await analyzerForId(
-        new TextDocumentIdentifier((b) => b..uri = document.uri));
+    await analyzerForId(TextDocumentIdentifier((b) => b..uri = document.uri));
   }
 
   @override
   Future textDocumentDidChange(VersionedTextDocumentIdentifier documentId,
       List<TextDocumentContentChangeEvent> changes) async {
-    var id = new TextDocumentIdentifier((b) => b..uri = documentId.uri);
+    var id = TextDocumentIdentifier((b) => b..uri = documentId.uri);
     var file = await fileForId(id);
 
     for (var change in changes) {
       if (change.text != null) {
-        await file.writeAsString(change.text);
+        await file.writeAsString(change.text!);
       } else if (change.range != null) {
-        var contents = await file.readAsString();
+        String? contents = await file.readAsString();
 
         int findIndex(Position position) {
-          var lines = contents.split('\n');
+          var lines = contents!.split('\n');
 
           // Sum the length of the previous lines.
-          int lineLength = lines
-              .take(position.line - 1)
+          var lineLength = lines
+              .take(position.line! - 1)
               .map((s) => s.length)
               .reduce((a, b) => a + b);
-          return lineLength + position.character - 1;
+          return lineLength + position.character! - 1;
         }
 
         if (change.range == null) {
           contents = change.text;
         } else {
-          var start = findIndex(change.range.start),
-              end = findIndex(change.range.end);
-          contents = contents.replaceRange(start, end, change.text);
+          var start = findIndex(change.range!.start!),
+              end = findIndex(change.range!.end!);
+          contents = contents.replaceRange(start, end, change.text!);
         }
 
         logger.info('${file.path} => $contents');
-        await file.writeAsString(contents);
+        await file.writeAsString(contents!);
       }
     }
 
@@ -310,9 +309,9 @@ class JaelLanguageServer extends LanguageServer {
   Future<CompletionList> textDocumentCompletion(
       TextDocumentIdentifier documentId, Position position) async {
     var analyzer = await analyzerForId(documentId);
-    var symbols = analyzer.scope.allVariables;
-    var reachable = symbols.where((s) => isReachable(s.value, position));
-    return new CompletionList((b) {
+    var symbols = analyzer.scope!.allVariables;
+    var reachable = symbols.where((s) => isReachable(s.value!, position));
+    return CompletionList((b) {
       b
         ..isIncomplete = false
         ..items = reachable.map(toCompletion).toList();
@@ -320,16 +319,16 @@ class JaelLanguageServer extends LanguageServer {
   }
 
   final RegExp _id =
-      new RegExp(r'(([A-Za-z][A-Za-z0-9_]*-)*([A-Za-z][A-Za-z0-9_]*))');
+      RegExp(r'(([A-Za-z][A-Za-z0-9_]*-)*([A-Za-z][A-Za-z0-9_]*))');
 
-  Future<String> currentName(
+  Future<String?> currentName(
       TextDocumentIdentifier documentId, Position position) async {
     // First, read the file.
     var file = await fileForId(documentId);
     var contents = await file.readAsString();
 
     // Next, find the current index.
-    var scanner = new SpanScanner(contents);
+    var scanner = SpanScanner(contents);
 
     while (!scanner.isDone &&
         (scanner.state.line != position.line ||
@@ -339,10 +338,10 @@ class JaelLanguageServer extends LanguageServer {
 
     // Next, just read the name.
     if (scanner.matches(_id)) {
-      var longest = scanner.lastSpan.text;
+      var longest = scanner.lastSpan!.text;
 
       while (scanner.matches(_id) && scanner.position > 0 && !scanner.isDone) {
-        longest = scanner.lastSpan.text;
+        longest = scanner.lastSpan!.text;
         scanner.position--;
       }
 
@@ -352,19 +351,19 @@ class JaelLanguageServer extends LanguageServer {
     }
   }
 
-  Future<JaelObject> currentSymbol(
+  Future<JaelObject?> currentSymbol(
       TextDocumentIdentifier documentId, Position position) async {
     var name = await currentName(documentId, position);
     if (name == null) return null;
     var analyzer = await analyzerForId(documentId);
-    var symbols = analyzer.allDefinitions ?? analyzer.scope.allVariables;
+    var symbols = analyzer.allDefinitions; // ?? analyzer.scope!.allVariables;
     logger
         .info('Current symbols, seeking $name: ${symbols.map((v) => v.name)}');
-    return analyzer.scope.resolve(name)?.value;
+    return analyzer.scope!.resolve(name)?.value;
   }
 
   @override
-  Future<Location> textDocumentDefinition(
+  Future<Location?> textDocumentDefinition(
       TextDocumentIdentifier documentId, Position position) async {
     var symbol = await currentSymbol(documentId, position);
     if (symbol != null) {
@@ -379,7 +378,7 @@ class JaelLanguageServer extends LanguageServer {
     var symbol = await currentSymbol(documentId, position);
     if (symbol != null) {
       return symbol.usages.map((u) {
-        return new DocumentHighlight((b) {
+        return DocumentHighlight((b) {
           b
             ..range = toRange(u.span)
             ..kind = u.type == SymbolUsageType.definition
@@ -392,11 +391,11 @@ class JaelLanguageServer extends LanguageServer {
   }
 
   @override
-  Future<Hover> textDocumentHover(
+  Future<Hover?> textDocumentHover(
       TextDocumentIdentifier documentId, Position position) async {
     var symbol = await currentSymbol(documentId, position);
     if (symbol != null) {
-      return new Hover((b) {
+      return Hover((b) {
         b
           ..contents = symbol.span.text
           ..range = toRange(symbol.span);
@@ -430,27 +429,26 @@ class JaelLanguageServer extends LanguageServer {
 
   @override
   Future<WorkspaceEdit> textDocumentRename(TextDocumentIdentifier documentId,
-      Position position, String newName) async {
+      Position position, String? newName) async {
     var symbol = await currentSymbol(documentId, position);
     if (symbol != null) {
-      return new WorkspaceEdit((b) {
-        b
-          ..changes = {
-            symbol.name: symbol.usages.map((u) {
-              return new TextEdit((b) {
-                b
-                  ..range = toRange(u.span)
-                  ..newText = (symbol is JaelCustomElement &&
-                          u.type == SymbolUsageType.definition)
-                      ? '"$newName"'
-                      : newName;
-              });
-            }).toList()
-          };
+      return WorkspaceEdit((b) {
+        b.changes = {
+          symbol.name: symbol.usages.map((u) {
+            return TextEdit((b) {
+              b
+                ..range = toRange(u.span)
+                ..newText = (symbol is JaelCustomElement &&
+                        u.type == SymbolUsageType.definition)
+                    ? '"$newName"'
+                    : newName;
+            });
+          }).toList()
+        };
       });
     }
-    return new WorkspaceEdit((b) {
-      b..changes = {};
+    return WorkspaceEdit((b) {
+      b.changes = {};
     });
   }
 
@@ -459,28 +457,28 @@ class JaelLanguageServer extends LanguageServer {
       TextDocumentIdentifier documentId) async {
     var analyzer = await analyzerForId(documentId);
     return analyzer.allDefinitions.map((symbol) {
-      return new SymbolInformation((b) {
+      return SymbolInformation((b) {
         b
           ..kind = SymbolKind.classSymbol
           ..name = symbol.name
-          ..location = toLocation(documentId.uri, symbol.value.span);
+          ..location = toLocation(documentId.uri, symbol.value!.span);
       });
     }).toList();
   }
 
   @override
-  Future<void> workspaceExecuteCommand(String command, List arguments) async {
+  Future<void> workspaceExecuteCommand(String? command, List? arguments) async {
     // TODO: implement workspaceExecuteCommand
   }
 
   @override
-  Future<List<SymbolInformation>> workspaceSymbol(String query) async {
-    var values = <JaelObject>[];
+  Future<List<SymbolInformation>> workspaceSymbol(String? query) async {
+    var values = <JaelObject?>[];
 
-    await for (var file in _memRootDir.list(recursive: true)) {
+    await for (var file in _memRootDir!.list(recursive: true)) {
       if (file is File) {
-        var id = new TextDocumentIdentifier((b) {
-          b..uri = file.uri.toString();
+        var id = TextDocumentIdentifier((b) {
+          b.uri = file.uri.toString();
         });
         var analyzer = await analyzerForId(id);
         values.addAll(analyzer.allDefinitions.map((v) => v.value));
@@ -488,11 +486,11 @@ class JaelLanguageServer extends LanguageServer {
     }
 
     return values.map((o) {
-      return new SymbolInformation((b) {
+      return SymbolInformation((b) {
         b
-          ..name = o.name
+          ..name = o!.name
           ..location = toLocation(o.span.sourceUrl.toString(), o.span)
-          ..containerName = p.basename(o.span.sourceUrl.path)
+          ..containerName = p.basename(o.span.sourceUrl!.path)
           ..kind = o is JaelCustomElement
               ? SymbolKind.classSymbol
               : SymbolKind.variable;
@@ -500,7 +498,7 @@ class JaelLanguageServer extends LanguageServer {
     }).toList();
   }
 
-  Future<List<TextEdit>> textDocumentFormatting(
+  Future<List<TextEdit>?> textDocumentFormatting(
       TextDocumentIdentifier documentId,
       FormattingOptions formattingOptions) async {
     try {
@@ -510,16 +508,17 @@ class JaelLanguageServer extends LanguageServer {
       var document =
           parseDocument(contents, sourceUrl: file.uri, onError: errors.add);
       if (errors.isNotEmpty) return null;
-      var formatter = new JaelFormatter(
-          formattingOptions.tabSize, formattingOptions.insertSpaces, 80);
-      var formatted = formatter.apply(document);
-      logger.info('Original:${contents}\nFormatted:\n$formatted');
+      var formatter = JaelFormatter(
+          formattingOptions.tabSize!, formattingOptions.insertSpaces, 80);
+      var formatted = formatter.apply(document!);
+      logger.info('Original:$contents\nFormatted:\n$formatted');
       if (formatted.isNotEmpty) await file.writeAsString(formatted);
       return [
-        new TextEdit((b) {
+        TextEdit((b) {
           b
             ..newText = formatted
-            ..range = document == null ? emptyRange() : toRange(document.span);
+            ..range = toRange(document
+                .span); //document == null ? emptyRange() : toRange(document.span);
         })
       ];
     } catch (e, st) {
@@ -535,7 +534,7 @@ class JaelLanguageServer extends LanguageServer {
 
   @override
   // TODO: implement showMessages
-  Stream<ShowMessageParams> get showMessages => null;
+  Stream<ShowMessageParams>? get showMessages => null;
 }
 
 abstract class DiagnosticSeverity {
@@ -543,14 +542,14 @@ abstract class DiagnosticSeverity {
 }
 
 class FormattingOptions {
-  final num tabSize;
+  final num? tabSize;
 
-  final bool insertSpaces;
+  final bool? insertSpaces;
 
   FormattingOptions(this.tabSize, this.insertSpaces);
 
   factory FormattingOptions.fromJson(Map json) {
-    return new FormattingOptions(
-        json['tabSize'] as num, json['insertSpaces'] as bool);
+    return FormattingOptions(
+        json['tabSize'] as num?, json['insertSpaces'] as bool?);
   }
 }

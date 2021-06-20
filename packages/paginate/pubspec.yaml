@@ -1,15 +1,22 @@
 name: angel_paginate
-version: 2.0.0
+version: 3.0.0
 description: Platform-agnostic pagination library, with custom support for the Angel framework.
-author: Tobe O <thosakwe@gmail.com>
 homepage: https://github.com/angel-dart/paginate
+publish_to: none
 environment:
-  sdk: ">=2.10.0 <2.12.0"
+  sdk: '>=2.12.0 <3.0.0'
 dependencies:
-  angel_framework: #^2.0.0-alpha
-    path: ../framework
+  angel_framework:
+    git: 
+      url: https://github.com/dukefirehawk/angel.git
+      ref: sdk-2.12.x_nnbd
+      path: packages/framework
 dev_dependencies:
-  angel_test: #^2.0.0
-    path: ../test
-  logging: ^0.11.0
-  test: ^1.15.7
+  angel_test:
+    git: 
+      url: https://github.com/dukefirehawk/angel.git
+      ref: sdk-2.12.x_nnbd
+      path: packages/test
+  logging: ^1.0.1
+  test: ^1.17.8
+  pedantic: ^1.11.1

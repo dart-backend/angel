@@ -25,10 +25,10 @@ String getWingsServerSocketAddress(int pointer)
 
 int getWingsServerSocketPort(int pointer) native 'Dart_WingsSocket_getPort';
 
-void writeToNativeSocket(int fd, Uint8List data)
+void writeToNativeSocket(int? fd, Uint8List data)
     native 'Dart_WingsSocket_write';
 
-void closeNativeSocketDescriptor(int fd)
+void closeNativeSocketDescriptor(int? fd)
     native 'Dart_WingsSocket_closeDescriptor';
 
 SendPort wingsSocketListen(int pointer) native 'Dart_WingsSocket_listen';
@@ -39,7 +39,7 @@ void closeWingsSocket(int pointer, SendPort sendPort)
 SendPort wingsParseHttp() native 'Dart_WingsSocket_parseHttp';
 
 class WingsClientSocket {
-  final int fileDescriptor;
+  final int? fileDescriptor;
   final InternetAddress remoteAddress;
 
   WingsClientSocket(this.fileDescriptor, this.remoteAddress);
@@ -47,19 +47,19 @@ class WingsClientSocket {
 
 class WingsSocket extends Stream<WingsClientSocket> {
   final StreamController<WingsClientSocket> _ctrl = StreamController();
-  SendPort _acceptor;
-  InternetAddress _address;
+  late SendPort _acceptor;
+  InternetAddress? _address;
   final int _pointer;
   final RawReceivePort _recv;
   bool _open = true;
-  int _port;
+  int? _port;
 
   WingsSocket._(this._pointer, this._recv) {
     _acceptor = wingsSocketListen(_pointer);
     _recv.handler = (h) {
       if (!_ctrl.isClosed) {
         _ctrl.add(
-            WingsClientSocket(h[0] as int, InternetAddress(h[1] as String)));
+            WingsClientSocket(h[0] as int?, InternetAddress(h[1] as String)));
         _acceptor.send([_recv.sendPort, _pointer]);
       }
     };
@@ -110,10 +110,10 @@ class WingsSocket extends Stream<WingsClientSocket> {
 
   @override
   StreamSubscription<WingsClientSocket> listen(
-      void Function(WingsClientSocket event) onData,
-      {Function onError,
-      void Function() onDone,
-      bool cancelOnError}) {
+      void Function(WingsClientSocket event)? onData,
+      {Function? onError,
+      void Function()? onDone,
+      bool? cancelOnError}) {
     return _ctrl.stream
         .listen(onData, onError: onError, cancelOnError: cancelOnError);
   }

@@ -9,15 +9,15 @@ class PubSubSynchronizationChannel extends StreamChannelMixin<WebSocketEvent> {
   static const String eventName = 'angel_sync::event';
 
   final StreamChannelController<WebSocketEvent> _ctrl =
-      new StreamChannelController<WebSocketEvent>();
+      StreamChannelController<WebSocketEvent>();
 
-  pub_sub.ClientSubscription _subscription;
+  pub_sub.ClientSubscription? _subscription;
 
   final pub_sub.Client client;
 
   PubSubSynchronizationChannel(this.client) {
     _ctrl.local.stream.listen((e) {
-      return client
+      client
           .publish(eventName, e.toJson())
           .catchError(_ctrl.local.sink.addError);
     });
@@ -27,23 +27,27 @@ class PubSubSynchronizationChannel extends StreamChannelMixin<WebSocketEvent> {
         ..listen((data) {
           // Incoming is a Map
           if (data is Map) {
-            var e = new WebSocketEvent.fromJson(data);
+            var e = WebSocketEvent.fromJson(data);
             _ctrl.local.sink.add(e);
           }
         }, onError: _ctrl.local.sink.addError);
-    }).catchError(_ctrl.local.sink.addError);
+    }).catchError((error) {
+      _ctrl.local.sink.addError(error as Object);
+    });
   }
 
   @override
   Stream<WebSocketEvent> get stream => _ctrl.foreign.stream;
 
+  @override
   StreamSink<WebSocketEvent> get sink => _ctrl.foreign.sink;
 
   Future close() {
     if (_subscription != null) {
-      _subscription.unsubscribe().then((_) => client.close());
-    } else
+      _subscription!.unsubscribe().then((_) => client.close());
+    } else {
       client.close();
+    }
     return _ctrl.local.sink.close();
   }
 }

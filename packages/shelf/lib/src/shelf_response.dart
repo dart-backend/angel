@@ -6,24 +6,27 @@ import 'package:shelf/shelf.dart' as shelf;
 import 'shelf_request.dart';
 
 class ShelfResponseContext extends ResponseContext<ShelfResponseContext> {
+  @override
   final Angel app;
+
   final StreamController<List<int>> _ctrl = StreamController();
-  bool _isOpen = true,
-      _isDetached = false,
-      _wasClosedByHandler = false,
-      _handlersAreDone = false;
+  bool _isOpen = true;
+  bool _isDetached = false;
+  final bool _wasClosedByHandler = false;
+  bool _handlersAreDone = false;
 
   ShelfResponseContext(this.app);
 
-  ShelfRequestContext _correspondingRequest;
+  ShelfRequestContext? _correspondingRequest;
 
   bool get wasClosedByHandler => _wasClosedByHandler;
 
   void closeSilently() => _handlersAreDone = true;
 
-  ShelfRequestContext get correspondingRequest => _correspondingRequest;
+  @override
+  ShelfRequestContext? get correspondingRequest => _correspondingRequest;
 
-  set correspondingRequest(ShelfRequestContext value) {
+  set correspondingRequest(ShelfRequestContext? value) {
     if (_correspondingRequest == null) {
       _correspondingRequest = value;
     } else {
@@ -44,15 +47,15 @@ class ShelfResponseContext extends ResponseContext<ShelfResponseContext> {
     return super.close();
   }
 
-  Iterable<String> __allowedEncodings;
+  Iterable<String>? __allowedEncodings;
 
-  Iterable<String> get _allowedEncodings {
-    return __allowedEncodings ??= correspondingRequest.headers
+  Iterable<String>? get _allowedEncodings {
+    return __allowedEncodings ??= correspondingRequest!.headers
         .value('accept-encoding')
         ?.split(',')
-        ?.map((s) => s.trim())
-        ?.where((s) => s.isNotEmpty)
-        ?.map((str) {
+        .map((s) => s.trim())
+        .where((s) => s.isNotEmpty)
+        .map((str) {
       // Ignore quality specifications in accept-encoding
       // ex. gzip;q=0.8
       if (!str.contains(';')) return str;
@@ -63,13 +66,13 @@ class ShelfResponseContext extends ResponseContext<ShelfResponseContext> {
   @override
   Future addStream(Stream<List<int>> stream) {
     if (!isOpen && isBuffered) throw ResponseContext.closed();
-    Stream<List<int>> output = stream;
+    var output = stream;
 
     if (encoders.isNotEmpty && correspondingRequest != null) {
       if (_allowedEncodings != null) {
-        for (var encodingName in _allowedEncodings) {
-          Converter<List<int>, List<int>> encoder;
-          String key = encodingName;
+        for (var encodingName in _allowedEncodings!) {
+          Converter<List<int>, List<int>>? encoder;
+          var key = encodingName;
 
           if (encoders.containsKey(encodingName)) {
             encoder = encoders[encodingName];
@@ -78,7 +81,7 @@ class ShelfResponseContext extends ResponseContext<ShelfResponseContext> {
           }
 
           if (encoder != null) {
-            output = encoders[key].bind(output);
+            output = encoders[key]!.bind(output);
             break;
           }
         }
@@ -95,9 +98,9 @@ class ShelfResponseContext extends ResponseContext<ShelfResponseContext> {
     } else if (_isOpen) {
       if (encoders.isNotEmpty && correspondingRequest != null) {
         if (_allowedEncodings != null) {
-          for (var encodingName in _allowedEncodings) {
-            Converter<List<int>, List<int>> encoder;
-            String key = encodingName;
+          for (var encodingName in _allowedEncodings!) {
+            Converter<List<int>, List<int>>? encoder;
+            var key = encodingName;
 
             if (encoders.containsKey(encodingName)) {
               encoder = encoders[encodingName];
@@ -106,7 +109,7 @@ class ShelfResponseContext extends ResponseContext<ShelfResponseContext> {
             }
 
             if (encoder != null) {
-              data = encoders[key].convert(data);
+              data = encoders[key]!.convert(data);
               break;
             }
           }
@@ -118,7 +121,7 @@ class ShelfResponseContext extends ResponseContext<ShelfResponseContext> {
   }
 
   @override
-  BytesBuilder get buffer => null;
+  BytesBuilder? get buffer => null;
 
   @override
   FutureOr<ShelfResponseContext> detach() {

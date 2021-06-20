@@ -5,18 +5,18 @@ part 'stateful.g.dart';
 void main() {}
 
 class _AppState {
-  final int ticks;
+  final int? ticks;
 
   _AppState({this.ticks});
 
-  _AppState copyWith({int ticks}) {
+  _AppState copyWith({int? ticks}) {
     return _AppState(ticks: ticks ?? this.ticks);
   }
 }
 
 @Jael(template: '<div>Tick count: {{state.ticks}}</div>')
 class StatefulApp extends Component<_AppState> with _StatefulAppJaelTemplate {
-  Timer _timer;
+  Timer? _timer;
 
   StatefulApp() {
     state = _AppState(ticks: 0);
@@ -27,6 +27,6 @@ class StatefulApp extends Component<_AppState> with _StatefulAppJaelTemplate {
 
   @override
   void beforeDestroy() {
-    _timer.cancel();
+    _timer!.cancel();
   }
 }

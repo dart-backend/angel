@@ -14,7 +14,7 @@ class ServiceRateLimiter<Id> extends RateLimiter<Id> {
 
   ServiceRateLimiter(
       int maxPointsPerWindow, Duration windowDuration, this.service, this.getId,
-      {String errorMessage})
+      {String? errorMessage})
       : super(maxPointsPerWindow, windowDuration, errorMessage: errorMessage);
 
   @override

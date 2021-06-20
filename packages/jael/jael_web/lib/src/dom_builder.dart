@@ -6,7 +6,7 @@ abstract class DomBuilder<T> {
 }
 
 abstract class DomBuilderElement<T> extends DomBuilder<T> {
-  void attr(String name, [String value]);
+  void attr(String name, [String? value]);
 
   void attrs(Map<String, String> map);
 

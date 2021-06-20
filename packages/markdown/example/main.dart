@@ -5,7 +5,7 @@ import 'package:angel_framework/http.dart';
 import 'package:angel_markdown/angel_markdown.dart';
 import 'package:file/local.dart';
 
-main() async {
+void main() async {
   var app = await createServer();
   var http = AngelHttp(app);
   var server = await http.startServer(InternetAddress.loopbackIPv4, 3000);
@@ -14,7 +14,7 @@ main() async {
 
 Future<Angel> createServer() async {
   // Create a new server, and install the Markdown renderer.
-  var app = new Angel();
+  var app = Angel();
   var fs = LocalFileSystem();
   await app
       .configure(markdown(fs.directory('views'), template: (content, locals) {

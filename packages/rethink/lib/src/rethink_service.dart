@@ -5,7 +5,7 @@ import 'package:json_god/json_god.dart' as god;
 import 'package:rethinkdb_dart/rethinkdb_dart.dart';
 
 // Extends a RethinkDB query.
-typedef RqlQuery QueryCallback(RqlQuery query);
+typedef QueryCallback = RqlQuery Function(RqlQuery query);
 
 /// Queries a single RethinkDB table or query.
 class RethinkService extends Service {
@@ -33,47 +33,50 @@ class RethinkService extends Service {
   final RqlQuery table;
 
   RethinkService(this.connection, this.table,
-      {this.allowRemoveAll: false,
-      this.allowQuery: true,
-      this.debug: false,
-      this.listenForChanges: true})
-      : super() {}
+      {this.allowRemoveAll = false,
+      this.allowQuery = true,
+      this.debug = false,
+      this.listenForChanges = true})
+      : super();
 
   RqlQuery buildQuery(RqlQuery initialQuery, Map params) {
-    if (params != null)
+    if (params != null) {
       params['broadcast'] = params.containsKey('broadcast')
           ? params['broadcast']
           : (listenForChanges != true);
+    }
 
     var q = _getQueryInner(initialQuery, params);
 
-    if (params?.containsKey('reql') == true && params['reql'] is QueryCallback)
-      q = params['reql'](q);
+    if (params?.containsKey('reql') == true &&
+        params['reql'] is QueryCallback) {
+      q = params['reql'](q) as RqlQuery;
+    }
 
     return q ?? initialQuery;
   }
 
   RqlQuery _getQueryInner(RqlQuery query, Map params) {
-    if (params == null || !params.containsKey('query'))
+    if (params == null || !params.containsKey('query')) {
       return query;
-    else {
-      if (params['query'] is RqlQuery)
-        return params['query'];
-      else if (params['query'] is QueryCallback)
-        return params['query'](table);
-      else if (params['query'] is! Map || allowQuery != true)
+    } else {
+      if (params['query'] is RqlQuery) {
+        return params['query'] as RqlQuery;
+      } else if (params['query'] is QueryCallback) {
+        return params['query'](table) as RqlQuery;
+      } else if (params['query'] is! Map || allowQuery != true) {
         return query;
-      else {
-        Map q = params['query'];
+      } else {
+        var q = params['query'] as Map;
         return q.keys.fold<RqlQuery>(query, (out, key) {
           var val = q[key];
 
           if (val is RequestContext ||
               val is ResponseContext ||
               key == 'provider' ||
-              val is Providers)
+              val is Providers) {
             return out;
-          else {
+          } else {
             return out.filter({key.toString(): val});
           }
         });
@@ -84,34 +87,40 @@ class RethinkService extends Service {
   Future _sendQuery(RqlQuery query) async {
     var result = await query.run(connection);
 
-    if (result is Cursor)
+    if (result is Cursor) {
       return await result.toList();
-    else if (result is Map && result['generated_keys'] is List) {
-      if (result['generated_keys'].length == 1)
+    } else if (result is Map && result['generated_keys'] is List) {
+      if (result['generated_keys'].length == 1) {
         return await read(result['generated_keys'].first);
-      return await Future.wait(result['generated_keys'].map(read));
-    } else
+      }
+      //return await Future.wait(result['generated_keys'].map(read));
+      return await result['generated_keys'].map(read);
+    } else {
       return result;
+    }
   }
 
-  _serialize(data) {
-    if (data is Map)
+  dynamic _serialize(data) {
+    if (data is Map) {
       return data;
-    else if (data is Iterable)
+    } else if (data is Iterable) {
       return data.map(_serialize).toList();
-    else
+    } else {
       return god.serializeObject(data);
+    }
   }
 
-  _squeeze(data) {
-    if (data is Map)
+  dynamic _squeeze(data) {
+    if (data is Map) {
       return data.keys.fold<Map>({}, (map, k) => map..[k.toString()] = data[k]);
-    else if (data is Iterable)
+    } else if (data is Iterable) {
       return data.map(_squeeze).toList();
-    else
+    } else {
       return data;
+    }
   }
 
+  @override
   void onHooked(HookedService hookedService) {
     if (listenForChanges == true) {
       listenToQuery(table, hookedService);
@@ -119,31 +128,32 @@ class RethinkService extends Service {
   }
 
   Future listenToQuery(RqlQuery query, HookedService hookedService) async {
-    Feed feed = await query.changes({'include_types': true}).run(connection);
+    var feed =
+        await query.changes({'include_types': true}).run(connection) as Feed;
 
     feed.listen((Map event) {
-      String type = event['type']?.toString();
+      var type = event['type']?.toString();
       var newVal = event['new_val'], oldVal = event['old_val'];
 
       if (type == 'add') {
         // Create
         hookedService.fireEvent(
             hookedService.afterCreated,
-            new HookedServiceEvent(
+            HookedServiceEvent(
                 true, null, null, this, HookedServiceEvent.created,
                 result: newVal));
       } else if (type == 'change') {
         // Update
         hookedService.fireEvent(
             hookedService.afterCreated,
-            new HookedServiceEvent(
+            HookedServiceEvent(
                 true, null, null, this, HookedServiceEvent.updated,
                 result: newVal, id: oldVal['id'], data: newVal));
       } else if (type == 'remove') {
         // Remove
         hookedService.fireEvent(
             hookedService.afterCreated,
-            new HookedServiceEvent(
+            HookedServiceEvent(
                 true, null, null, this, HookedServiceEvent.removed,
                 result: oldVal, id: oldVal['id']));
       }
@@ -165,15 +175,15 @@ class RethinkService extends Service {
     //print('Found for $id: $found');
 
     if (found == null) {
-      throw new AngelHttpException.notFound(
-          message: 'No record found for ID $id');
-    } else
+      throw AngelHttpException.notFound(message: 'No record found for ID $id');
+    } else {
       return found;
+    }
   }
 
   @override
   Future create(data, [Map params]) async {
-    if (table is! Table) throw new AngelHttpException.methodNotAllowed();
+    if (table is! Table) throw AngelHttpException.methodNotAllowed();
 
     var d = _serialize(data);
     var q = table as Table;
@@ -189,10 +199,11 @@ class RethinkService extends Service {
       try {
         await read(d['id'], params);
       } on AngelHttpException catch (e) {
-        if (e.statusCode == 404)
+        if (e.statusCode == 404) {
           return await create(data, params);
-        else
+        } else {
           rethrow;
+        }
       }
     }
 
@@ -209,10 +220,11 @@ class RethinkService extends Service {
       try {
         await read(d['id'], params);
       } on AngelHttpException catch (e) {
-        if (e.statusCode == 404)
+        if (e.statusCode == 404) {
           return await create(data, params);
-        else
+        } else {
           rethrow;
+        }
       }
     }
 

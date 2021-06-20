@@ -1,10 +1,10 @@
 import 'dart:io';
 import 'package:angel_framework/angel_framework.dart';
 import 'package:angel_framework/http.dart';
-import 'package:angel_user_agent/angel_user_agent.dart';
-import 'package:user_agent/user_agent.dart';
+//import 'package:angel_user_agent/angel_user_agent.dart';
+//import 'package:user_agent/user_agent.dart';
 
-main() async {
+void main() async {
   var app = Angel();
   var http = AngelHttp(app);
 

@@ -1,14 +1,21 @@
-author: Tobe O <thosakwe@gmail.com>
+name: angel_relations
+version: 2.0.0
 description: Database-agnostic relations between Angel services.
 homepage: "https://github.com/angel-dart/relations.git"
-name: angel_relations
-version: 1.0.1
+publish_to: none
 environment:
-  sdk: ">=2.10.0 <2.12.0"
+  sdk: '>=2.12.0 <3.0.0'
 dependencies: 
-  angel_framework: #^1.0.0-dev
-    path: ../framework
+  angel_framework:
+   git: 
+      url: https://github.com/dukefirehawk/angel.git
+      ref: sdk-2.12.x_nnbd
+      path: packages/framework
 dev_dependencies:
-  angel_seeder: #^1.0.0
-    path: ../seeder
-  test: ^1.15.7
+  angel_seeder:
+   git: 
+      url: https://github.com/dukefirehawk/angel.git
+      ref: sdk-2.12.x_nnbd
+      path: packages/seeder
+  test: ^1.17.8
+  pedantic: ^1.11.1

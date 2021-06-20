@@ -33,7 +33,7 @@ class _Parser {
   bool _headerMode = true;
   int _contentLength = -1;
 
-  StreamSubscription _subscription;
+  late StreamSubscription _subscription;
 
   _Parser(Stream<List<int>> stream) {
     _subscription =

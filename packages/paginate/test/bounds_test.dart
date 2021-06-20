@@ -11,15 +11,15 @@ final List<Map<String, String>> mjAlbums = [
   {'michael': 'jackson'}
 ];
 
-main() {
-  TestClient client;
+void main() {
+  late TestClient client;
 
   setUp(() async {
     var app = Angel();
 
     app.get('/api/songs', (req, res) {
       var p = Paginator(mjAlbums, itemsPerPage: mjAlbums.length);
-      p.goToPage(int.parse(req.queryParameters['page'] ?? '1'));
+      p.goToPage(int.parse(req.queryParameters['page'] as String? ?? '1'));
       return p.current;
     });
 
@@ -41,7 +41,7 @@ main() {
         queryParameters: {r'$limit': (mjAlbums.length + 1).toString()}));
 
     var page = PaginationResult<Map<String, dynamic>>.fromMap(
-        json.decode(response.body));
+        json.decode(response.body) as Map<String, dynamic>);
 
     print('page: ${page.toJson()}');
 

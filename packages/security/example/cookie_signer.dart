@@ -11,7 +11,8 @@ void main() async {
   Logger.root.onRecord.listen(prettyLog);
 
   // Create an app, and HTTP driver.
-  var app = Angel(logger: Logger('cookie_signer')), http = AngelHttp(app);
+  var app = Angel(logger: Logger('cookie_signer'));
+  var http = AngelHttp(app);
 
   // Create a cookie signer. Uses an SHA256 Hmac by default.
   var signer = CookieSigner.fromStringKey(
@@ -37,7 +38,7 @@ void main() async {
   // here we will use it to log invalid cookies.
   app.get('/cookies', (req, res) {
     var verifiedCookies = signer.readCookies(req, onInvalidCookie: (cookie) {
-      app.logger.warning('Invalid cookie: $cookie');
+      app.logger!.warning('Invalid cookie: $cookie');
     });
     res.writeln('${verifiedCookies.length} verified cookie(s)');
     res.writeln('${req.cookies.length} total unverified cookie(s)');

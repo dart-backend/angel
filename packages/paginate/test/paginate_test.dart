@@ -53,7 +53,7 @@ void main() {
     test('first page', () {
       var paginator = Paginator<int>(DATA);
       expect(paginator.pageNumber, 1);
-      var r = paginator.current;
+      var r = paginator.current!;
       print(r.toJson());
       expect(r.total, DATA.length);
       expect(r.itemsPerPage, 5);
@@ -62,14 +62,14 @@ void main() {
       expect(r.nextPage, 2);
       expect(r.startIndex, 0);
       expect(r.endIndex, 4);
-      expect(r.data, DATA.skip(r.startIndex).take(r.itemsPerPage).toList());
+      expect(r.data, DATA.skip(r.startIndex!).take(r.itemsPerPage!).toList());
     });
   });
 
   test('third page', () {
     var paginator = Paginator<int>(DATA)..goToPage(3);
     expect(paginator.pageNumber, 3);
-    var r = paginator.current;
+    var r = paginator.current!;
     print(r.toJson());
     expect(r.total, DATA.length);
     expect(r.itemsPerPage, 5);
@@ -78,7 +78,7 @@ void main() {
     expect(r.nextPage, 4);
     expect(r.startIndex, 10);
     expect(r.endIndex, 14);
-    expect(r.data, DATA.skip(r.startIndex).take(r.itemsPerPage).toList());
+    expect(r.data, DATA.skip(r.startIndex!).take(r.itemsPerPage!).toList());
 
     paginator.back();
     expect(paginator.pageNumber, 2);
@@ -87,7 +87,7 @@ void main() {
   test('last page', () {
     var paginator = Paginator<int>(DATA);
     paginator.goToPage(paginator.lastPageNumber);
-    var r = paginator.current;
+    var r = paginator.current!;
     expect(r.total, DATA.length);
     expect(r.itemsPerPage, 5);
     expect(r.previousPage, paginator.lastPageNumber - 1);
@@ -96,7 +96,7 @@ void main() {
     expect(r.startIndex, (paginator.lastPageNumber - 1) * 5);
     expect(r.endIndex, r.startIndex);
     expect(r.data, [DATA.last]);
-    expect(r.data, DATA.skip(r.startIndex).take(r.itemsPerPage).toList());
+    expect(r.data, DATA.skip(r.startIndex!).take(r.itemsPerPage!).toList());
   });
 
   test('dump pages', () {
@@ -104,14 +104,14 @@ void main() {
     print('${paginator.lastPageNumber} page(s) of data:');
 
     do {
-      print('  * Page #${paginator.pageNumber}: ${paginator.current.data}');
+      print('  * Page #${paginator.pageNumber}: ${paginator.current!.data}');
       paginator.next();
     } while (paginator.canGoForward);
   });
 
   test('empty collection', () {
     var paginator = Paginator([]);
-    var page = paginator.current;
+    var page = paginator.current!;
     print(page.toJson());
 
     expect(page.total, 0);

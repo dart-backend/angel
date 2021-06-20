@@ -5,12 +5,12 @@ import 'package:html_builder/elements.dart';
 import 'package:html_builder/html_builder.dart';
 import 'package:test/test.dart';
 
-main() {
+void main() {
   Angel app;
-  TestClient client;
+  late TestClient client;
 
   setUp(() async {
-    app = new Angel();
+    app = Angel();
 
     app.fallback(renderHtml());
 
@@ -27,8 +27,8 @@ main() {
       chain([
         renderHtml(
           enforceAcceptHeader: true,
-          renderer: new StringRenderer(
-            doctype: null,
+          renderer: StringRenderer(
+            //doctype: null,
             pretty: false,
           ),
         ),
@@ -43,7 +43,7 @@ main() {
   tearDown(() => client.close());
 
   test('sets content type and body', () async {
-    var response = await client.get('/html');
+    var response = await client.get(Uri.parse('/html'));
     print('Response: ${response.body}');
 
     expect(
@@ -56,12 +56,13 @@ main() {
 
   group('enforce accept header', () {
     test('sends if correct accept or wildcard', () async {
-      var response = await client.get('/strict', headers: {'accept': '*/*'});
+      var response =
+          await client.get(Uri.parse('/strict'), headers: {'accept': '*/*'});
       print('Response: ${response.body}');
       expect(response,
           allOf(hasContentType('text/html'), hasBody('<div>strict</div>')));
 
-      response = await client.get('/strict',
+      response = await client.get(Uri.parse('/strict'),
           headers: {'accept': 'text/html,application/json,text/xml'});
       print('Response: ${response.body}');
       expect(response,
@@ -69,12 +70,12 @@ main() {
     });
 
     test('throws if incorrect or no accept', () async {
-      var response = await client.get('/strict');
-      print('Response: ${response.body}');
+      var response = await client.get(Uri.parse('/strict'));
+      print('Response: ${response.statusCode} ${response.body}');
       expect(response, hasStatus(406));
 
-      response = await client
-          .get('/strict', headers: {'accept': 'application/json,text/xml'});
+      response = await client.get(Uri.parse('/strict'),
+          headers: {'accept': 'application/json,text/xml'});
       print('Response: ${response.body}');
       expect(response,
           isAngelHttpException(statusCode: 406, message: '406 Not Acceptable'));

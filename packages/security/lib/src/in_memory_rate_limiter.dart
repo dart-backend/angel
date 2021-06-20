@@ -12,7 +12,7 @@ class InMemoryRateLimiter<User> extends RateLimiter<User> {
 
   InMemoryRateLimiter(
       int maxPointsPerWindow, Duration windowDuration, this.getUser,
-      {String errorMessage})
+      {String? errorMessage})
       : super(maxPointsPerWindow, windowDuration, errorMessage: errorMessage);
 
   @override

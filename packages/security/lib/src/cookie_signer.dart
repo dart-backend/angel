@@ -14,14 +14,14 @@ class CookieSigner {
 
   /// Creates an [hmac] from an array of [keyBytes] and a
   /// [hash] (defaults to [sha256]).
-  CookieSigner(List<int> keyBytes, {Hash hash})
+  CookieSigner(List<int> keyBytes, {Hash? hash})
       : hmac = Hmac(hash ?? sha256, keyBytes);
 
   CookieSigner.fromHmac(this.hmac);
 
   /// Creates an [hmac] from a string [key] and a
   /// [hash] (defaults to [sha256]).
-  factory CookieSigner.fromStringKey(String key, {Hash hash}) {
+  factory CookieSigner.fromStringKey(String key, {Hash? hash}) {
     return CookieSigner(utf8.encode(key), hash: hash);
   }
 
@@ -33,7 +33,7 @@ class CookieSigner {
   /// If an [onInvalidCookie] callback is passed, then it will
   /// be invoked for each unsigned or improperly-signed cookie.
   List<Cookie> readCookies(RequestContext req,
-      {void Function(Cookie) onInvalidCookie}) {
+      {void Function(Cookie)? onInvalidCookie}) {
     return req.cookies.fold([], (out, cookie) {
       var data = getCookiePayloadAndSignature(cookie.value);
       if (data == null || (data[1] != computeCookieSignature(data[0]))) {
@@ -66,7 +66,7 @@ class CookieSigner {
   /// Otherwise, returns a list with a length of 2, where
   /// the item at index `0` is the payload, and the item at
   /// index `1` is the signature.
-  List<String> getCookiePayloadAndSignature(String cookieValue) {
+  List<String>? getCookiePayloadAndSignature(String cookieValue) {
     var dot = cookieValue.indexOf('.');
     if (dot <= 0) {
       return null;

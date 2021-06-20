@@ -13,8 +13,8 @@ abstract class LanguageServer {
     _onDone.complete();
   }
 
-  Future<ServerCapabilities> initialize(int clientPid, String rootUri,
-          ClientCapabilities clientCapabilities, String trace) async =>
+  Future<ServerCapabilities> initialize(int? clientPid, String? rootUri,
+          ClientCapabilities clientCapabilities, String? trace) async =>
       ServerCapabilities((b) => b);
   void initialized() {}
   void textDocumentDidOpen(TextDocumentItem document) {}
@@ -24,7 +24,7 @@ abstract class LanguageServer {
   Future<CompletionList> textDocumentCompletion(
           TextDocumentIdentifier documentId, Position position) async =>
       CompletionList((b) => b);
-  Future<Location> textDocumentDefinition(
+  Future<Location?> textDocumentDefinition(
           TextDocumentIdentifier documentId, Position position) async =>
       null;
   Future<List<Location>> textDocumentReferences(
@@ -41,7 +41,7 @@ abstract class LanguageServer {
   Future<List<SymbolInformation>> textDocumentSymbols(
           TextDocumentIdentifier documentId) async =>
       [];
-  Future<List<SymbolInformation>> workspaceSymbol(String query) async => [];
+  Future<List<SymbolInformation>> workspaceSymbol(String? query) async => [];
   Future<dynamic> textDocumentHover(
           TextDocumentIdentifier documentId, Position position) async =>
       null;
@@ -51,13 +51,13 @@ abstract class LanguageServer {
           CodeActionContext context) async =>
       [];
   Future<void> workspaceExecuteCommand(
-      String command, List<dynamic> arguments) async {}
-  Future<WorkspaceEdit> textDocumentRename(TextDocumentIdentifier documentId,
-          Position position, String newName) async =>
+      String? command, List<dynamic>? arguments) async {}
+  Future<WorkspaceEdit?> textDocumentRename(TextDocumentIdentifier documentId,
+          Position position, String? newName) async =>
       null;
   Stream<Diagnostics> get diagnostics => Stream.empty();
   Stream<ApplyWorkspaceEditParams> get workspaceEdits => Stream.empty();
-  Stream<ShowMessageParams> get showMessages => Stream.empty();
+  Stream<ShowMessageParams>? get showMessages => Stream.empty();
   Stream<ShowMessageParams> get logMessages => Stream.empty();
 
   void setupExtraMethods(Peer peer) {}

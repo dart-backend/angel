@@ -19,7 +19,7 @@ class MyApp extends Component with _MyAppJaelTemplate {}
 </div>
 ''')
 class LabeledInput extends Component with _LabeledInputJaelTemplate {
-  final String name;
+  final String? name;
 
   LabeledInput({this.name});
 }

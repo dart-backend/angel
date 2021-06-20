@@ -15,10 +15,10 @@ import 'package:stream_channel/stream_channel.dart';
 /// If you want to read the request body, you *must* set `keepRawRequestBuffers` to `true`
 /// on your application instance.
 Future<shelf.Request> convertRequest(RequestContext req, ResponseContext res,
-    {String handlerPath, Map<String, Object> context}) async {
+    {String? handlerPath, Map<String, Object>? context}) async {
   var app = req.app;
   var headers = <String, String>{};
-  req.headers.forEach((k, v) {
+  req.headers!.forEach((k, v) {
     headers[k] = v.join(',');
   });
 
@@ -30,7 +30,7 @@ Future<shelf.Request> convertRequest(RequestContext req, ResponseContext res,
 
   protocolVersion = '1.1';
   requestedUri = Uri.parse('http://${req.hostname}');
-  requestedUri = requestedUri.replace(path: req.uri.path);
+  requestedUri = requestedUri.replace(path: req.uri!.path);
 
   onHijack = (void Function(StreamChannel<List<int>> channel) hijack) async {
     try {
@@ -39,7 +39,7 @@ Future<shelf.Request> convertRequest(RequestContext req, ResponseContext res,
       print('b');
       var ctrl = StreamChannelController<List<int>>();
       if (req.hasParsedBody) {
-        req.body.listen(ctrl.local.sink.add,
+        req.body!.listen(ctrl.local.sink.add,
             onError: ctrl.local.sink.addError, onDone: ctrl.local.sink.close);
       } else {
         await ctrl.local.sink.close();
@@ -47,12 +47,12 @@ Future<shelf.Request> convertRequest(RequestContext req, ResponseContext res,
       scheduleMicrotask(() => ctrl.local.stream.pipe(res));
       hijack(ctrl.foreign);
     } catch (e, st) {
-      app.logger
+      app?.logger
           ?.severe('An error occurred while hijacking a shelf request', e, st);
     }
   };
 
-  var url = req.uri;
+  var url = req.uri!;
 
   if (p.isAbsolute(url.path)) {
     url = url.replace(path: url.path.substring(1));
@@ -65,7 +65,7 @@ Future<shelf.Request> convertRequest(RequestContext req, ResponseContext res,
       url: url,
       body: req.body,
       context: {'angel_shelf.request': req}
-        ..addAll({'angel_shelf.container': req.container})
+        ..addAll({'angel_shelf.container': req.container!})
         ..addAll(context ?? {}),
       onHijack: onHijack);
 }

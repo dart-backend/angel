@@ -1,20 +1,19 @@
 import 'package:file/file.dart';
-import 'package:path/path.dart' as path;
 
 class MustacheContext {
-  Directory viewDirectory;
+  Directory? viewDirectory;
 
-  Directory partialDirectory;
+  Directory? partialDirectory;
 
-  String extension;
+  String? extension;
 
   MustacheContext([this.viewDirectory, this.partialDirectory, this.extension]);
 
   File resolveView(String viewName) {
-    return viewDirectory.childFile('${viewName}${extension}');
+    return viewDirectory!.childFile('$viewName$extension');
   }
 
   File resolvePartial(String partialName) {
-    return partialDirectory.childFile('${partialName}${extension}');
+    return partialDirectory!.childFile('$partialName$extension');
   }
 }

@@ -8,7 +8,7 @@ import 'package:shelf/shelf.dart' as shelf;
 import 'package:shelf/shelf_io.dart' as shelf_io;
 import 'package:shelf_static/shelf_static.dart';
 
-main() async {
+void main() async {
   Logger.root
     ..level = Level.ALL
     ..onRecord.listen(prettyLog);

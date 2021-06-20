@@ -55,7 +55,7 @@ Future<void> runBenchmarks(Iterable<AngelBenchmark> benchmarks,
       print(lightGray.wrap('Booting $fac server...'));
 
       var isolates = <Isolate>[];
-      for (int i = 0; i < Platform.numberOfProcessors; i++) {
+      for (var i = 0; i < Platform.numberOfProcessors; i++) {
         isolates
             .add(await Isolate.spawn(_angelIsolate, Tuple2(benchmark, fac)));
       }
@@ -86,7 +86,7 @@ void _httpIsolate(AngelBenchmark benchmark) {
 void _angelIsolate(Tuple2<AngelBenchmark, String> args) {
   Future(() async {
     var app = Angel();
-    Driver driver;
+    late Driver driver;
 
     if (args.item2 == 'angel_http') {
       driver = AngelHttp.custom(app, startShared);

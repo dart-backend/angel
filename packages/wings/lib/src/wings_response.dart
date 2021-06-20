@@ -7,31 +7,31 @@ import 'package:charcode/ascii.dart';
 import 'wings_request.dart';
 import 'wings_socket.dart';
 
-class WingsResponseContext extends ResponseContext<int> {
+class WingsResponseContext extends ResponseContext<int?> {
   @override
   final Angel app;
 
   @override
-  final WingsRequestContext correspondingRequest;
+  final WingsRequestContext? correspondingRequest;
 
-  LockableBytesBuilder _buffer;
+  LockableBytesBuilder? _buffer;
 
   @override
-  final int rawResponse;
+  final int? rawResponse;
 
   bool _isDetached = false, _isClosed = false, _streamInitialized = false;
 
   WingsResponseContext(this.app, this.rawResponse, [this.correspondingRequest]);
 
-  Iterable<String> __allowedEncodings;
+  Iterable<String>? __allowedEncodings;
 
-  Iterable<String> get _allowedEncodings {
-    return __allowedEncodings ??= correspondingRequest.headers
+  Iterable<String>? get _allowedEncodings {
+    return __allowedEncodings ??= correspondingRequest!.headers
         .value('accept-encoding')
         ?.split(',')
-        ?.map((s) => s.trim())
-        ?.where((s) => s.isNotEmpty)
-        ?.map((str) {
+        .map((s) => s.trim())
+        .where((s) => s.isNotEmpty)
+        .map((str) {
       // Ignore quality specifications in accept-encoding
       // ex. gzip;q=0.8
       if (!str.contains(';')) return str;
@@ -51,7 +51,7 @@ class WingsResponseContext extends ResponseContext<int> {
       headers.forEach((k, v) => outHeaders[k] = v);
 
       if (headers.containsKey('content-length')) {
-        var l = int.tryParse(headers['content-length']);
+        var l = int.tryParse(headers['content-length']!);
         if (l != null) {
           outHeaders['content-length'] = l.toString();
         }
@@ -63,9 +63,9 @@ class WingsResponseContext extends ResponseContext<int> {
 
       if (encoders.isNotEmpty && correspondingRequest != null) {
         if (_allowedEncodings != null) {
-          for (var encodingName in _allowedEncodings) {
-            Converter<List<int>, List<int>> encoder;
-            String key = encodingName;
+          for (var encodingName in _allowedEncodings!) {
+            Converter<List<int>, List<int>>? encoder;
+            var key = encodingName;
 
             if (encoders.containsKey(encodingName)) {
               encoder = encoders[encodingName];
@@ -109,13 +109,13 @@ class WingsResponseContext extends ResponseContext<int> {
     if (_isClosed && isBuffered) throw ResponseContext.closed();
     _openStream();
 
-    Stream<List<int>> output = stream;
+    var output = stream;
 
     if (encoders.isNotEmpty && correspondingRequest != null) {
       if (_allowedEncodings != null) {
-        for (var encodingName in _allowedEncodings) {
-          Converter<List<int>, List<int>> encoder;
-          String key = encodingName;
+        for (var encodingName in _allowedEncodings!) {
+          Converter<List<int>, List<int>>? encoder;
+          var key = encodingName;
 
           if (encoders.containsKey(encodingName)) {
             encoder = encoders[encodingName];
@@ -124,7 +124,7 @@ class WingsResponseContext extends ResponseContext<int> {
           }
 
           if (encoder != null) {
-            output = encoders[key].bind(output);
+            output = encoders[key]!.bind(output);
             break;
           }
         }
@@ -149,9 +149,9 @@ class WingsResponseContext extends ResponseContext<int> {
 
         if (encoders.isNotEmpty && correspondingRequest != null) {
           if (_allowedEncodings != null) {
-            for (var encodingName in _allowedEncodings) {
-              Converter<List<int>, List<int>> encoder;
-              String key = encodingName;
+            for (var encodingName in _allowedEncodings!) {
+              Converter<List<int>, List<int>>? encoder;
+              var key = encodingName;
 
               if (encoders.containsKey(encodingName)) {
                 encoder = encoders[encodingName];
@@ -160,7 +160,7 @@ class WingsResponseContext extends ResponseContext<int> {
               }
 
               if (encoder != null) {
-                data = encoders[key].convert(data);
+                data = encoders[key]!.convert(data);
                 break;
               }
             }
@@ -171,7 +171,7 @@ class WingsResponseContext extends ResponseContext<int> {
             rawResponse, data is Uint8List ? data : Uint8List.fromList(data));
       }
     } else {
-      buffer.add(data);
+      buffer!.add(data);
     }
   }
 
@@ -184,7 +184,7 @@ class WingsResponseContext extends ResponseContext<int> {
           _openStream();
           closeNativeSocketDescriptor(rawResponse);
         } else {
-          _buffer.lock();
+          _buffer!.lock();
         }
       }
 
@@ -194,12 +194,12 @@ class WingsResponseContext extends ResponseContext<int> {
   }
 
   @override
-  BytesBuilder get buffer => _buffer;
+  BytesBuilder? get buffer => _buffer;
 
   @override
   int detach() {
     _isDetached = true;
-    return rawResponse;
+    return rawResponse!;
   }
 
   @override

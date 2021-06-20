@@ -26,8 +26,8 @@ abstract class RateLimiter<User> {
   final String errorMessage;
 
   RateLimiter(this.maxPointsPerWindow, this.windowDuration,
-      {String errorMessage})
-      : this.errorMessage = errorMessage ?? 'Rate limit exceeded.';
+      {String? errorMessage})
+      : errorMessage = errorMessage ?? 'Rate limit exceeded.';
 
   /// Computes the current window in which the user is acting.
   ///
@@ -68,7 +68,7 @@ abstract class RateLimiter<User> {
       'x-ratelimit-limit': window.pointLimit.toString(),
       'x-ratelimit-remaining': window.remainingPoints.toString(),
       'x-ratelimit-reset':
-          (window.resetTime.millisecondsSinceEpoch ~/ 1000).toString(),
+          (window.resetTime!.millisecondsSinceEpoch ~/ 1000).toString(),
     });
   }
 
@@ -83,7 +83,7 @@ abstract class RateLimiter<User> {
   /// Whatever is returned here will be returned in [handleRequest].
   FutureOr<Object> rejectRequest(RequestContext req, ResponseContext res,
       RateLimitingWindow<User> window, DateTime currentTime) {
-    var retryAfter = window.resetTime.difference(currentTime);
+    var retryAfter = window.resetTime!.difference(currentTime);
     res.headers['retry-after'] = retryAfter.inSeconds.toString();
     throw AngelHttpException(null, message: errorMessage, statusCode: 429);
   }
@@ -134,16 +134,21 @@ abstract class RateLimiter<User> {
     // user over the rate limit.
     else if (currentWindow.pointsConsumed >= maxPointsPerWindow) {
       await sendWindowInformation(req, res, currentWindow);
-      var result = await rejectRequest(req, res, currentWindow, now);
-      if (result != null) return result;
+      await rejectRequest(req, res, currentWindow, now);
+      //var result = await rejectRequest(req, res, currentWindow, now);
+      //if (result != null) return result;
       return false;
     } else {
       // Add the cost of the current endpoint, and update the window.
       var cost = await getEndpointCost(req, res, currentWindow);
-      currentWindow
-        ..pointsConsumed += cost
-        ..remainingPoints -= cost;
-      if (currentWindow.remainingPoints < 0) {
+      currentWindow.pointsConsumed += cost;
+      var remaining = currentWindow.remainingPoints;
+      if (remaining == null) {
+        currentWindow.remainingPoints = 0;
+      } else {
+        currentWindow.remainingPoints = remaining - cost;
+      }
+      if (currentWindow.remainingPoints! < 0) {
         currentWindow.remainingPoints = 0;
       }
       await updateCurrentWindow(req, res, currentWindow, now);

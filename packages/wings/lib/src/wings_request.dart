@@ -12,23 +12,26 @@ enum _ParseState { method, url, headerField, headerValue, body }
 final RegExp _straySlashes = RegExp(r'(^/+)|(/+$)');
 
 class WingsRequestContext extends RequestContext<WingsClientSocket> {
+  @override
   final WingsClientSocket rawRequest;
+  @override
   final Container container;
 
   final StreamController<List<int>> _body = StreamController();
-  List<Cookie> _cookies, __cookies;
+  List<Cookie>? _cookies, __cookies;
   final LockableMockHttpHeaders _headers = LockableMockHttpHeaders();
   final RawReceivePort _recv;
-  InternetAddress _remoteAddress;
-  String _method, _override, _path;
-  Uri _uri;
+  late InternetAddress _remoteAddress;
+  String? _method, _override, _path;
+  Uri? _uri;
 
   @override
-  Angel app;
+  Angel? app;
 
-  WingsRequestContext._(this.app, this.rawRequest, this._recv)
-      : container = app.container.createChild();
+  WingsRequestContext._(Angel this.app, this.rawRequest, this._recv)
+      : container = app.container!.createChild();
 
+  @override
   Future<void> close() async {
     await _body.close();
     _recv.close();
@@ -116,13 +119,13 @@ class WingsRequestContext extends RequestContext<WingsClientSocket> {
 
           if (type == 0) {
             rq._uri = Uri.parse(value);
-            var path = rq._uri.path.replaceAll(_straySlashes, '');
+            var path = rq._uri!.path.replaceAll(_straySlashes, '');
             if (path.isEmpty) path = '/';
             rq._path = path;
           } else if (type == 1) {
             var k = value, v = ee[2] as String;
             if (k == 'cookie') {
-              rq.__cookies.add(Cookie.fromSetCookieValue(v));
+              rq.__cookies!.add(Cookie.fromSetCookieValue(v));
             } else {
               rq._headers.add(k, v);
             }
@@ -185,31 +188,31 @@ class WingsRequestContext extends RequestContext<WingsClientSocket> {
   Stream<List<int>> get body => _body.stream;
 
   @override
-  List<Cookie> get cookies => _cookies ??= List.unmodifiable(__cookies);
+  List<Cookie> get cookies => _cookies ??= List.unmodifiable(__cookies!);
 
   @override
   HttpHeaders get headers => _headers;
 
   @override
-  String get hostname => headers.value('host');
+  String get hostname => headers.value('host')!;
 
   @override
-  String get method => _override ??=
-      (headers.value('x-http-method-override')?.toUpperCase() ?? _method);
+  String get method => (_override ??=
+      (headers.value('x-http-method-override')?.toUpperCase() ?? _method))!;
 
   @override
-  String get originalMethod => _method;
+  String get originalMethod => _method!;
 
   @override
-  String get path => _path;
+  String get path => _path!;
 
   @override
   InternetAddress get remoteAddress => _remoteAddress;
 
   @override
   // TODO: implement session
-  HttpSession get session => null;
+  HttpSession? get session => null;
 
   @override
-  Uri get uri => _uri;
+  Uri? get uri => _uri;
 }

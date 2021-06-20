@@ -15,7 +15,7 @@ class ShelfRequestContext extends RequestContext {
   @override
   final String path;
 
-  List<Cookie> _cookies;
+  List<Cookie>? _cookies;
 
   @override
   final MockHttpHeaders headers = MockHttpHeaders();
@@ -38,18 +38,18 @@ class ShelfRequestContext extends RequestContext {
 
         for (var cookieString in cookieStrings) {
           try {
-            _cookies.add(Cookie.fromSetCookieValue(cookieString));
+            _cookies!.add(Cookie.fromSetCookieValue(cookieString));
           } catch (_) {
             // Ignore malformed cookies, and just don't add them to the container.
           }
         }
       }
     }
-    return _cookies;
+    return _cookies!;
   }
 
   @override
-  String get hostname => rawRequest.headers['host'];
+  String get hostname => rawRequest.headers['host']!;
 
   @override
   String get method {
@@ -66,11 +66,11 @@ class ShelfRequestContext extends RequestContext {
 
   @override
   // TODO: implement remoteAddress
-  InternetAddress get remoteAddress => null;
+  InternetAddress get remoteAddress => InternetAddress.loopbackIPv4;
 
   @override
   // TODO: implement session
-  HttpSession get session => null;
+  HttpSession? get session => null;
 
   @override
   Uri get uri => rawRequest.url;

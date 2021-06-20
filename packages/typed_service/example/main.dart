@@ -7,7 +7,7 @@ import 'package:file/local.dart';
 import 'package:json_god/json_god.dart' as god;
 import 'package:logging/logging.dart';
 
-main() async {
+void main() async {
   var app = Angel();
   var http = AngelHttp(app);
   var fs = LocalFileSystem();
@@ -20,7 +20,7 @@ main() async {
   app
     ..serializer = god.serialize
     ..logger = Logger.detached('typed_service')
-    ..logger.onRecord.listen((rec) {
+    ..logger!.onRecord.listen((rec) {
       print(rec);
       if (rec.error != null) print(rec.error);
       if (rec.stackTrace != null) print(rec.stackTrace);
@@ -31,12 +31,12 @@ main() async {
 }
 
 class Todo extends Model {
-  String text;
-  bool completed;
+  String? text;
+  bool? completed;
 
   @override
-  DateTime createdAt, updatedAt;
+  DateTime? createdAt, updatedAt;
 
-  Todo({String id, this.text, this.completed, this.createdAt, this.updatedAt})
+  Todo({String? id, this.text, this.completed, this.createdAt, this.updatedAt})
       : super(id: id);
 }

@@ -1,54 +1,54 @@
 import 'dart:io';
 import 'dart:convert';
 import 'package:body_parser/body_parser.dart';
-import 'package:dart2_constant/convert.dart';
 import 'package:http/http.dart' as http;
 import 'package:test/test.dart';
 import 'server_test.dart';
 
 void main() {
-  HttpServer server;
-  String url;
-  http.Client client;
+  HttpServer? server;
+  String? url;
+  http.Client? client;
 
   setUp(() async {
     server = await HttpServer.bind('127.0.0.1', 0);
-    server.listen((HttpRequest request) async {
+    server!.listen((HttpRequest request) async {
       //Server will simply return a JSON representation of the parsed body
       // ignore: deprecated_member_use
       request.response.write(jsonEncodeBody(await parseBody(request)));
       await request.response.close();
     });
-    url = 'http://localhost:${server.port}';
+    url = 'http://localhost:${server!.port}';
     print('Test server listening on $url');
     client = http.Client();
   });
 
   tearDown(() async {
-    await server.close(force: true);
-    client.close();
+    await server!.close(force: true);
+    client!.close();
     server = null;
     url = null;
     client = null;
   });
 
   test('No upload', () async {
-    String boundary = 'myBoundary';
-    Map<String, String> headers = {
+    var boundary = 'myBoundary';
+    var headers = <String, String>{
       'content-type': 'multipart/form-data; boundary=$boundary'
     };
-    String postData = '''
+    var postData = '''
 --$boundary
 Content-Disposition: form-data; name="hello"
 
 world
 --$boundary--
 '''
-        .replaceAll("\n", "\r\n");
+        .replaceAll('\n', '\r\n');
 
     print(
         'Form Data: \n${postData.replaceAll("\r", "\\r").replaceAll("\n", "\\n")}');
-    var response = await client.post(url, headers: headers, body: postData);
+    var response =
+        await client!.post(Uri.parse(url!), headers: headers, body: postData);
     print('Response: ${response.body}');
     var jsons = json.decode(response.body);
     var files = jsons['files'].map((map) {
@@ -62,12 +62,12 @@ world
   });
 
   test('Single upload', () async {
-    String boundary = 'myBoundary';
-    Map<String, String> headers = {
-      'content-type': ContentType("multipart", "form-data",
-          parameters: {"boundary": boundary}).toString()
+    var boundary = 'myBoundary';
+    var headers = <String, String>{
+      'content-type': ContentType('multipart', 'form-data',
+          parameters: {'boundary': boundary}).toString()
     };
-    String postData = '''
+    var postData = '''
 --$boundary
 Content-Disposition: form-data; name="hello"
 
@@ -79,11 +79,12 @@ Content-Type: application/dart
 Hello world
 --$boundary--
 '''
-        .replaceAll("\n", "\r\n");
+        .replaceAll('\n', '\r\n');
 
     print(
         'Form Data: \n${postData.replaceAll("\r", "\\r").replaceAll("\n", "\\n")}');
-    var response = await client.post(url, headers: headers, body: postData);
+    var response =
+        await client!.post(Uri.parse(url!), headers: headers, body: postData);
     print('Response: ${response.body}');
     var jsons = json.decode(response.body);
     var files = jsons['files'];
@@ -96,11 +97,11 @@ Hello world
   });
 
   test('Multiple upload', () async {
-    String boundary = 'myBoundary';
-    Map<String, String> headers = {
+    var boundary = 'myBoundary';
+    var headers = <String, String>{
       'content-type': 'multipart/form-data; boundary=$boundary'
     };
-    String postData = '''
+    var postData = '''
 --$boundary
 Content-Disposition: form-data; name="json"
 
@@ -123,11 +124,12 @@ function main() {
 }
 --$boundary--
 '''
-        .replaceAll("\n", "\r\n");
+        .replaceAll('\n', '\r\n');
 
     print(
         'Form Data: \n${postData.replaceAll("\r", "\\r").replaceAll("\n", "\\n")}');
-    var response = await client.post(url, headers: headers, body: postData);
+    var response =
+        await client!.post(Uri.parse(url!), headers: headers, body: postData);
     print('Response: ${response.body}');
     var jsons = json.decode(response.body);
     var files = jsons['files'];

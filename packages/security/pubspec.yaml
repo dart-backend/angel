@@ -1,25 +1,47 @@
 name: angel_security
-version: 2.0.0-alpha.1
+version: 3.0.0
 description: Angel infrastructure for improving security, rate limiting, and more.
-author: Tobe O <thosakwe@gmail.com>
 homepage: https://github.com/angel-dart/security
+publish_to: none
 environment: 
-  sdk: ">=2.10.0 <2.12.0"
+  sdk: '>=2.12.0 <3.0.0'
 dependencies: 
-  angel_framework: #^2.0.0
-    path: ../framework
-  crypto: ^2.0.0
+  angel_framework:
+    git: 
+      url: https://github.com/dukefirehawk/angel.git
+      ref: sdk-2.12.x_nnbd
+      path: packages/framework
+  crypto: ^3.0.1
 dev_dependencies: 
-  angel_auth: #^2.0.0
-    path: ../auth
-  angel_production: #^1.0.0
-    path: ../production
-  angel_redis: #^1.0.0
-    path: ../redis
-  angel_test: #^2.0.0
-    path: ../test
-  angel_validate: #^2.0.0
-    path: ../validate
-  pedantic: ^1.0.0
-  pretty_logging: ^1.0.0
-  test: ^1.15.7
+  angel_auth:
+    git: 
+      url: https://github.com/dukefirehawk/angel.git
+      ref: sdk-2.12.x_nnbd
+      path: packages/auth
+  angel_production:
+    git: 
+      url: https://github.com/dukefirehawk/angel.git
+      ref: sdk-2.12.x_nnbd
+      path: packages/production
+  angel_redis:
+    git: 
+      url: https://github.com/dukefirehawk/angel.git
+      ref: sdk-2.12.x_nnbd
+      path: packages/redis
+  angel_test:
+    git: 
+      url: https://github.com/dukefirehawk/angel.git
+      ref: sdk-2.12.x_nnbd
+      path: packages/test
+  angel_validate:
+    git: 
+      url: https://github.com/dukefirehawk/angel.git
+      ref: sdk-2.12.x_nnbd
+      path: packages/validate
+  pretty_logging:
+    git: 
+      url: https://github.com/dukefirehawk/angel.git
+      ref: sdk-2.12.x_nnbd
+      path: packages/pretty_logging
+  pedantic: ^1.11.1
+  test: ^1.17.8
