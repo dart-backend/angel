@@ -4,7 +4,7 @@ description: Shelf interop with Angel. Use this to wrap existing server code.
 homepage: https://github.com/angel-dart/shelf
 publish_to: none
 environment:
-  sdk: '>=2.10.0 <3.0.0'
+  sdk: '>=2.12.0 <3.0.0'
 dependencies:
   angel_framework:
    git: 

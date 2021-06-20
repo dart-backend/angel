@@ -1,5 +1,5 @@
 /// A library for parsing HTTP request bodies and queries.
-library body_parser;
+library angel3_body_parser;
 
 export 'src/body_parse_result.dart';
 export 'src/file_upload_info.dart';

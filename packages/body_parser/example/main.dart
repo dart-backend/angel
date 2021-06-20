@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:isolate';
 import 'package:http_parser/http_parser.dart';
-import 'package:body_parser/body_parser.dart';
+import 'package:angel3_body_parser/angel3_body_parser.dart';
 
 void main() async {
   var address = '127.0.0.1';

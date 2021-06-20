@@ -14,7 +14,7 @@ class _User {
   Map<String, dynamic> toJson() => {'handle': handle};
 }
 
-main() async {
+void main() async {
   var app = Angel();
   var http = AngelHttp(app);
   var auth = AngelAuth<_User>(
@@ -48,7 +48,7 @@ main() async {
       if (e.isDenial) {
         res.write("Why'd you say no???");
       } else {
-        res.write("oops: ${e.message}");
+        res.write('oops: ${e.message}');
       }
     },
   );
@@ -57,18 +57,17 @@ main() async {
     ..fallback(auth.decodeJwt)
     ..get('/', auth.authenticate('twitter'));
 
-  app
-    ..get(
-      '/auth/twitter/callback',
-      auth.authenticate(
-        'twitter',
-        AngelAuthOptions(
-          callback: (req, res, jwt) {
-            return res.redirect('/home?token=$jwt');
-          },
-        ),
+  app.get(
+    '/auth/twitter/callback',
+    auth.authenticate(
+      'twitter',
+      AngelAuthOptions(
+        callback: (req, res, jwt) {
+          return res.redirect('/home?token=$jwt');
+        },
       ),
-    );
+    ),
+  );
 
   app.get(
     '/home',

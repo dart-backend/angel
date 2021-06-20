@@ -1,7 +1,7 @@
 import 'dart:convert';
 import 'dart:io' show HttpRequest, HttpServer;
 
-import 'package:body_parser/body_parser.dart';
+import 'package:angel3_body_parser/angel3_body_parser.dart';
 import 'package:http/http.dart' as http;
 import 'package:test/test.dart';
 
@@ -93,8 +93,8 @@ void main() {
     };
     test('POST Simple', () async {
       print('Body: hello=world');
-      var response = await client!.post(Uri.parse(url!),
-          headers: headers, body: 'hello=world');
+      var response = await client!
+          .post(Uri.parse(url!), headers: headers, body: 'hello=world');
       print('Response: ${response.body}');
       var result = json.decode(response.body);
       expect(result['query'], equals({}));

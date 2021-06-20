@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'dart:convert';
-import 'package:body_parser/body_parser.dart';
+import 'package:angel3_body_parser/angel3_body_parser.dart';
 import 'package:http/http.dart' as http;
 import 'package:test/test.dart';
 import 'server_test.dart';

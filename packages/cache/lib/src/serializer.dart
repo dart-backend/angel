@@ -20,7 +20,7 @@ RequestHandler cacheSerializationResults(
       //  return cache.putIfAbsent(value, () => oldSerializer(value));
       //}
 
-      return oldSerializer!(value);
+      return oldSerializer(value);
     };
 
     return true;

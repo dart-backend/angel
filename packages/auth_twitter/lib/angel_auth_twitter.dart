@@ -32,7 +32,7 @@ class TwitterStrategy<User> extends AuthStrategy<User> {
 
   TwitterStrategy(this.options, this.verifier, this.onError,
       {http.BaseClient client, Uri baseUrl})
-      : this.baseUrl = baseUrl ?? Uri.parse('https://api.twitter.com') {
+      : baseUrl = baseUrl ?? Uri.parse('https://api.twitter.com') {
     var tokens = oauth.Tokens(
         consumerId: options.clientId, consumerKey: options.clientSecret);
     _client = oauth.Client(tokens, client: client);

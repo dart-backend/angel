@@ -1,14 +1,15 @@
-# body_parser
-[![Pub](https://img.shields.io/pub/v/body_parser.svg)](https://pub.dartlang.org/packages/body_parser)
-[![build status](https://travis-ci.org/angel-dart/body_parser.svg)](https://travis-ci.org/angel-dart/body_parser)
+# Angel3 Body Parser
+[![version](https://img.shields.io/badge/pub-v2.0.0-brightgreen)](https://pub.dartlang.org/packages/angel3_body_parser)
+[![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
+[![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
 
-Parse request bodies and query strings in Dart, as well multipart/form-data uploads. No external
-dependencies required.
+[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/body_parser/LICENSE)
 
-This is the request body parser powering the
-[Angel](https://angel-dart.github.io)
-framework. If you are looking for a server-side solution with dependency injection,
-WebSockets, and more, then I highly recommend it as your first choice. Bam!
+**Forked from `body_parser` to support NNBD**
+
+Parse request bodies and query strings in Dart, as well multipart/form-data uploads. No external dependencies required.
+
+This is the request body parser powering the [Angel3](https://github.com/dukefirehawk/angel) framework. If you are looking for a server-side solution with dependency injection, WebSockets, and more, then I highly recommend it as your first choice. Bam!
 
 ### Contents
 
@@ -33,7 +34,7 @@ To install Body Parser for your Dart project, simply add body_parser to your
 pub dependencies.
 
     dependencies:
-        body_parser: any
+        angel3_body_parser: ^2.0.0
 
 # Usage
 
@@ -42,7 +43,7 @@ You can easily parse the query string and request body for a request by calling 
 
 ```dart
 import 'dart:convert';
-import 'package:body_parser/body_parser.dart';
+import 'package:angel3_body_parser/angel3_body_parser.dart';
 
 main() async {
     // ...
@@ -55,8 +56,7 @@ main() async {
 
 You can also use `buildMapFromUri(Map, String)` to populate a map from a URL encoded string.
 
-This can easily be used with a library like [JSON God](https://github.com/thosakwe/json_god)
-to build structured JSON/REST APIs. Add validation and you've got an instant backend.
+This can easily be used with a library like [Angel3 JSON God](https://pub.dev/packages/angel3_json_god) to build structured JSON/REST APIs. Add validation and you've got an instant backend.
 
 ```dart
 MyClass create(HttpRequest request) async {
@@ -69,13 +69,12 @@ In cases where you need to parse unrecognized content types, `body_parser` won't
 on its own. However, you can use the `originalBuffer` property of a `BodyParseResult` to see the original
 request buffer. To get this functionality, pass `storeOriginalBuffer` as `true` when calling `parseBody`.
 
-For example, if you wanted to
-[parse GraphQL queries within your server](https://github.com/angel-dart/graphql)...
+For example, if you wanted to [parse GraphQL queries within your server](https://github.com/dukefirehawk/graphql_dart)...
 
 ```dart
 app.get('/graphql', (req, res) async {
   if (req.headers.contentType.mimeType == 'application/graphql') {
-    var graphQlString = new String.fromCharCodes(req.originalBuffer);
+    var graphQlString = String.fromCharCodes(req.originalBuffer);
     // ...
   }
 });
