@@ -1,8 +1,6 @@
-name: user_agent
+name: user_agent_analyzer
 version: 3.0.0
-description: A Dart user agent detection library.
-homepage: https://github.com/thosakwe/user_agent
-publish_to: none
+description: A library that identify the type of devices and web browsers based on User-Agent.
 environment:
   sdk: '>=2.12.0 <3.0.0'
 dev_dependencies:

@@ -1,4 +1,4 @@
-import 'package:user_agent/user_agent.dart';
+import 'package:user_agent_analyzer/user_agent_analyzer.dart';
 
 void main() {
   var ua = UserAgent(

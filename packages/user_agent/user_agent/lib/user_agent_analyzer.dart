@@ -1,4 +1,4 @@
-library user_agent;
+library user_agent_analyzer;
 
 /// Utils for device detection.
 class UserAgent {
