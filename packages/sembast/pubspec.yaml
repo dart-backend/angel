@@ -2,7 +2,6 @@ name: angel3_sembast
 version: 2.0.0
 description: A sembast-powered CRUD services for the Angel3 framework.
 homepage: https://github.com/dukefirehawk/angel/tree/angel3/packages/sembast
-publish_to: none
 environment:
   sdk: '>=2.12.0 <3.0.0'
 dependencies:

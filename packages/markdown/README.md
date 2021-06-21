@@ -1,24 +1,28 @@
-# markdown
-[![Pub](https://img.shields.io/pub/v/angel_markdown.svg)](https://pub.dartlang.org/packages/angel_markdown)
+# Angel3 Markdown
 
-Markdown view generator for Angel. 
+[![version](https://img.shields.io/badge/pub-v3.0.0-brightgreen)](https://pub.dartlang.org/packages/angel3_markdown)
+[![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
+[![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
 
-With this plug-in, you can easily serve
-static sites without doing more than writing simple Markdown. Thus, it is a friendly
-choice for writing API documentation or other tedious HTML-writing tasks.
+[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/markdown/LICENSE)
 
-# Installation
+Markdown view generator for Angel3.
+
+With this plug-in, you can easily serve static sites without doing more than writing simple Markdown. Thus, it is a friendly choice for writing API documentation or other tedious HTML-writing tasks.
+
+## Installation
+
 In your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  angel_framework: ^1.0.0
-  angel_markdown: ^1.0.0
+  angel3_framework: ^4.0.0
+  angel3_markdown: ^3.0.0
 ```
 
-# Usage
-It's very straightforward to configure an Angel server to use Markdown.
-Keep in mind to use `package:file` instead of `dart:io`:
+## Usage
+
+It's very straightforward to configure an Angel server to use Markdown. Keep in mind to use `package:file` instead of `dart:io`:
 
 ```dart
 configureServer(Angel app) async {
@@ -40,11 +44,12 @@ configureServer(Angel app) async {
 }
 ```
 
-`package:angel_markdown` by default searches for files with a `.md` extension; however,
+`package:angel3_markdown` by default searches for files with a `.md` extension; however,
 you can easily override this.
 
 ## Interpolation
-`angel_markdown` can interpolate the values of data from `locals` before building the Markdown.
+
+`angel3_markdown` can interpolate the values of data from `locals` before building the Markdown.
 
 For example, with the following template `species.md`:
 
@@ -66,6 +71,7 @@ requestHandler(ResponseContext res) {
 To disable interpolation for a single bracket, prefix it with an `@`, ex: `@{{raw | not_interpolated | angular}}`.
 
 ## Templates
+
 Markdown is frequently used to build the *content* of sites, but not the templates.
 You might want to wrap the content of pages in a custom template to apply pretty
 CSS and JS, etc:
@@ -95,5 +101,6 @@ The `template` function will have access to whatever values were passed to the r
 or an empty `Map`.
 
 ## Enhancing Markdown
+
 You can pass an `extensionSet` to add additional features to the Markdown renderer.
 By default, this plug-in configures it to enable Github-flavored Markdown.

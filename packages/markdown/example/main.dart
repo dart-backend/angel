@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:io';
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_framework/http.dart';
-import 'package:angel_markdown/angel_markdown.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_framework/http.dart';
+import 'package:angel3_markdown/angel3_markdown.dart';
 import 'package:file/local.dart';
 
 void main() async {

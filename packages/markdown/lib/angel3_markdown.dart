@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:mirrors';
-import 'package:angel_framework/angel_framework.dart';
+import 'package:angel3_framework/angel3_framework.dart';
 import 'package:file/file.dart';
 import 'package:markdown/markdown.dart';
 
