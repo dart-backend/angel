@@ -1,38 +1,44 @@
-# sembast
-[![Pub](https://img.shields.io/pub/v/angel_sembast.svg)](https://pub.dartlang.org/packages/angel_sembast)
-[![build status](https://travis-ci.org/angel-dart/sembast.svg)](https://travis-ci.org/angel-dart/sembast)
+# Angel3 Sembast
 
-package:sembast-powered CRUD services for the Angel framework.
+[![version](https://img.shields.io/badge/pub-v2.0.0-brightgreen)](https://pub.dartlang.org/packages/angel3_sembast)
+[![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
+[![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
 
-# Installation
+[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/sembast/LICENSE)
+
+A sembast-powered CRUD services for the Angel3 framework.
+
+## Installation
 
 Add the following to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  angel_sembast: ^1.0.0
+  angel3_sembast: ^2.0.0
 ```
 
-# Usage
+## Usage
 
 This library exposes one main class: `SembastService`.
 
-## SembastService
+### SembastService
 
 This class interacts with a `Database` and `Store` (from `package:sembast`) and serializes data to and from Maps.
 
-## Querying
+### Querying
 
 You can query these services as follows:
 
-    /path/to/service?foo=bar
+```dart
+/path/to/service?foo=bar
+```
 
 The above will query the database to find records where 'foo' equals 'bar'.
 
 The former will sort result in ascending order of creation, and so will the latter.
 
 ```dart
-List queried = await MyService.index({r"query": where.id(new Finder(filter: new Filter(...))));
+List queried = await MyService.index({r"query": where.id(Finder(filter: Filter(...))));
 ```
 
 Of course, you can use `package:sembast` queries. Just pass it as `query` within `params`.

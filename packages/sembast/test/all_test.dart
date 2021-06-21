@@ -1,7 +1,7 @@
 import 'dart:collection';
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_http_exception/angel_http_exception.dart';
-import 'package:angel_sembast/angel_sembast.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_http_exception/angel3_http_exception.dart';
+import 'package:angel3_sembast/angel3_sembast.dart';
 import 'package:sembast/sembast.dart';
 import 'package:sembast/sembast_io.dart';
 import 'package:test/test.dart';
@@ -82,13 +82,15 @@ void main() async {
         throwsA(const TypeMatcher<AngelHttpException>()));
     expect(
         () => service.remove(null, {'provider': Providers.rest}),
-        throwsA(predicate((dynamic x) => x is AngelHttpException && x.statusCode == 403,
+        throwsA(predicate(
+            (dynamic x) => x is AngelHttpException && x.statusCode == 403,
             'throws forbidden')));
     expect(() => service.remove('null', {'provider': Providers.rest}),
         throwsA(const TypeMatcher<AngelHttpException>()));
     expect(
         () => service.remove('null', {'provider': Providers.rest}),
-        throwsA(predicate((dynamic x) => x is AngelHttpException && x.statusCode == 403,
+        throwsA(predicate(
+            (dynamic x) => x is AngelHttpException && x.statusCode == 403,
             'throws forbidden')));
   });
 

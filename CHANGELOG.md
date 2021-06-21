@@ -1,9 +1,12 @@
-# 4.0.0 (NNBD)
+# Change Log
+
+## 4.0.0 (NNBD)
+
 * Published all packages with `angel3_` prefix
-* Changed Dart SDK requirements for all packages to ">=2.12.0 <3.0.0" to support NNBD. 
+* Changed Dart SDK requirements for all packages to ">=2.12.0 <3.0.0" to support NNBD.
 * Migrated pretty_logging to 3.0.0 (0/0 tests passed)
 * Migrated angel_http_exception to 3.0.0 (0/0 tests passed)
-* Moved angel_cli to https://github.com/dukefirehawk/cli (Not migrated yet)
+* Moved angel_cli to <https://github.com/dukefirehawk/cli> (Not migrated yet)
 * Added code_buffer and migrated to 2.0.0 (16/16 tests passed)
 * Added combinator and migrated to 2.0.0 (16/16 tests passed)
 * Migrated angel_route to 5.0.0 (35/35 tests passed)
@@ -35,7 +38,7 @@
 * Migrated angel_orm to 3.0.0 (0/0 tests passed)
 * Migrated angel_migration to 3.0.0 (0/0 tests passed)
 * Added inflection2 and migrated to 1.0.0 (28/32 tests passed)
-* Migrated angel_orm_generator to 4.0.0 (0/0 tests passed) 
+* Migrated angel_orm_generator to 4.0.0 (0/0 tests passed)
 * Migrated angel_migration_runner to 3.0.0 (0/0 tests passed)
 * Migrated angel_orm_test to 3.0.0 (0/0 tests passed)
 * Migrated angel_orm_postgres to 3.0.0 (51/54 tests passed)
@@ -74,7 +77,8 @@
 * Migrated user_agent to 2.0.0 (0/0 tests passed)
 * Migrated angel_user_agent to 2.0.0 (0/0 tests passed)
 
-# 3.0.0 (Non NNBD)
+## 3.0.0 (Non NNBD)
+
 * Changed Dart SDK requirements for all packages to ">=2.10.0 <3.0.0"
 * Updated pretty_logging to 2.0.0 (0/0 tests passed)
 * Updated angel_http_exception to 2.0.0 (0/0 tests passed)
@@ -116,12 +120,13 @@
 * Updated angel_eventsource to 2.0.0 (use a fork of eventsource)
 * Updated angel_auth_twitter to 3.0.0 (use a fork of twitter and oauth)
 
-# 2.2.0
+## 2.2.0
+
 * Changed Dart SDK requirements for all packages to ">=2.10.0 <2.12.0"
 * Upgraded 3rd party libraries to the latest version prior to dart 2.12
 * Fixed broken code due to 3rd party libraries update
 * Revert packages/validate from version 3.0 to version 2.2
 
-# 2.1.x and below
-* Refer to the orginal repo before the fork
+## 2.1.x and below
 
+* Refer to the orginal repo before the fork

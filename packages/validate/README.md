@@ -1,4 +1,5 @@
 # angel3_validate
+
 [![version](https://img.shields.io/badge/pub-v4.0.1-brightgreen)](https://pub.dartlang.org/packages/angel3_validate)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 [![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
@@ -16,24 +17,25 @@ the same validation rules for forms on the server, and on the frontend.
 
 For convenience's sake, this library also exports `matcher`.
 
-* [Examples](#examples)
-  * [Creating a Validator](#creating-a-validator)
-  * [Validating Data](#validating-data)
-  * [Required Fields](#required-fields)
-  * [Forbidden Fields](#forbidden-fields)
-  * [Default Values](#default-values)
-  * [Custom Validator Functions](#custom-validator-functions)
-* [Auto-parsing Numbers](#autoparse)
-* [Filtering Maps](#filter)
-* [Custom Error Messages](#custom-error-messages)
-* [Extending Validators](#extending-validators)
-* [Bundled Matchers](#bundled-matchers)
-* [Nested Validators](#nested-validators)
-* [Use with Angel](#use-with-angel)
+- [angel3_validate](#angel3_validate)
+  - [Examples](#examples)
+    - [Creating a Validator](#creating-a-validator)
+    - [Validating data](#validating-data)
+    - [Required Fields](#required-fields)
+    - [Forbidden Fields](#forbidden-fields)
+    - [Default values](#default-values)
+    - [Custom Validator Functions](#custom-validator-functions)
+    - [Custom Error Messages](#custom-error-messages)
+    - [autoParse](#autoparse)
+    - [filter](#filter)
+    - [Extending Validators](#extending-validators)
+    - [Bundled Matchers](#bundled-matchers)
+    - [Nested Validators](#nested-validators)
+    - [Use with Angel](#use-with-angel)
 
-# Examples
+## Examples
 
-## Creating a Validator
+### Creating a Validator
 
 ```dart
 import 'package:angel3_validate/angel3_validate.dart';
@@ -54,7 +56,7 @@ main() {
 }
 ```
 
-## Validating data
+### Validating data
 
 The `Validator` will filter out fields that have no validation rules.
 You can rest easy knowing that attackers cannot slip extra data into
@@ -86,7 +88,8 @@ main() {
 }
 ```
 
-## Required Fields
+### Required Fields
+
 Fields are optional by default.
 
 Suffix a field name with a `'*'` to mark it as required, and
@@ -103,12 +106,12 @@ main() {
 }
 ```
 
-## Forbidden Fields
+### Forbidden Fields
+
 To prevent a field from showing up in valid data, suffix it
 with a `'!'`.
 
-
-## Default values
+### Default values
 
 If not present, default values will be filled in *before* validation.
 This means that they can still be used with required fields.
@@ -125,7 +128,8 @@ final Validator todo = Validator({
 Default values can also be parameterless, *synchronous* functions
 that return a single value.
 
-## Custom Validator Functions
+### Custom Validator Functions
+
 Creating a whole `Matcher` class is sometimes cumbersome, but if
 you pass a function to the constructor, it will be wrapped in a
 `Matcher` instance.
@@ -146,7 +150,8 @@ main() {
 }
 ```
 
-# Custom Error Messages
+### Custom Error Messages
+
 If these are not present, `angel3_validate` will *attempt* to generate
 a coherent error message on its own.
 
@@ -157,9 +162,11 @@ Validator({
     'age': 'You must be an adult to see this page.'
 });
 ```
+
 The string `{{value}}` will be replaced inside your error message automatically.
 
-# autoParse
+### autoParse
+
 Oftentimes, fields that we want to validate as numbers are passed as strings.
 Calling `autoParse` will correct this before validation.
 
@@ -176,7 +183,8 @@ main() {
 
 You can also call `checkParsed` or `enforceParsed` as a shorthand.
 
-# filter
+### filter
+
 This is a helper function to extract only the desired keys from a `Map`.
 
 ```dart
@@ -186,7 +194,8 @@ var only = filter(inputData, ['foo']);
 print(only); // { foo: bar }
 ```
 
-# Extending Validators
+### Extending Validators
+
 You can add situation-specific rules within a child validator.
 You can also use `extend` to mark fields as required or forbidden that originally
 were not. Default value and custom error message extension is also supported.
@@ -225,24 +234,26 @@ register(Map userData) {
 }
 ```
 
-# Bundled Matchers
+### Bundled Matchers
+
 This library includes some `Matcher`s for common validations,
 including:
 
-* `isAlphaDash`: Asserts that a `String` is alphanumeric, but also lets it contain dashes or underscores.
-* `isAlphaNum`: Asserts that a `String` is alphanumeric.
-* `isBool`: Asserts that a value either equals `true` or `false`.
-* `isEmail`: Asserts that a `String` complies to the RFC 5322 e-mail standard.
-* `isInt`: Asserts that a value is an `int`.
-* `isNum`: Asserts that a value is a `num`.
-* `isString`: Asserts that a value is a `String`.
-* `isNonEmptyString`: Asserts that a value is a non-empty `String`.
-* `isUrl`: Asserts that a `String` is an HTTPS or HTTP URL.
+- `isAlphaDash`: Asserts that a `String` is alphanumeric, but also lets it contain dashes or underscores.
+- `isAlphaNum`: Asserts that a `String` is alphanumeric.
+- `isBool`: Asserts that a value either equals `true` or `false`.
+- `isEmail`: Asserts that a `String` complies to the RFC 5322 e-mail standard.
+- `isInt`: Asserts that a value is an `int`.
+- `isNum`: Asserts that a value is a `num`.
+- `isString`: Asserts that a value is a `String`.
+- `isNonEmptyString`: Asserts that a value is a non-empty `String`.
+- `isUrl`: Asserts that a `String` is an HTTPS or HTTP URL.
 
 The remaining functionality is
 [effectively implemented by the `matcher` package](https://www.dartdocs.org/documentation/matcher/0.12.0%2B2/matcher/matcher-library.html).
 
-# Nested Validators
+### Nested Validators
+
 Very often, the data we validate contains other data within. You can pass
 a `Validator` instance to the constructor, because it extends the
 `Matcher` class.
@@ -277,16 +288,17 @@ main() {
 }
 ```
 
-# Use with Angel
+### Use with Angel
 
 `server.dart` exposes seven helper middleware:
-* `validate(validator)`: Validates and filters `req.bodyAsMap`, and throws an `AngelHttpException.BadRequest` if data is invalid.
-* `validateEvent(validator)`: Sets `e.data` to the result of validation on a service event.
-* `validateQuery(validator)`: Same as `validate`, but operates on `req.query`.
-* `autoParseBody(fields)`: Auto-parses numbers in `req.bodyAsMap`.
-* `autoParseQuery(fields)`: Same as `autoParseBody`, but operates on `req.query`.
-* `filterBody(only)`: Filters unwanted data out of `req.bodyAsMap`.
-* `filterQuery(only)`: Same as `filterBody`, but operates on `req.query`.
+
+- `validate(validator)`: Validates and filters `req.bodyAsMap`, and throws an `AngelHttpException.BadRequest` if data is invalid.
+- `validateEvent(validator)`: Sets `e.data` to the result of validation on a service event.
+- `validateQuery(validator)`: Same as `validate`, but operates on `req.query`.
+- `autoParseBody(fields)`: Auto-parses numbers in `req.bodyAsMap`.
+- `autoParseQuery(fields)`: Same as `autoParseBody`, but operates on `req.query`.
+- `filterBody(only)`: Filters unwanted data out of `req.bodyAsMap`.
+- `filterQuery(only)`: Same as `filterBody`, but operates on `req.query`.
 
 ```dart
 import 'package:angel3_framework/angel3_framework.dart';

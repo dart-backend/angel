@@ -8,14 +8,13 @@ void main() async {
   var app = Angel();
   var http = AngelHttp(app);
 
-  // TODO: Commented out due to unknow class
-
+  //TODO: To be reviewed
   app.get(
     '/',
     waterfall([
       parseUserAgent,
       (req, res) {
-        var ua = req.container.make<UserAgent>();
+        var ua = req.container.make<UserAgent>() as UserAgent;
         return ua.isChrome
             ? 'Woohoo! You are running Chrome.'
             : 'Sorry, we only support Google Chrome.';

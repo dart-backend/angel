@@ -1,6 +1,6 @@
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_framework/http.dart';
-import 'package:angel_sembast/angel_sembast.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_framework/http.dart';
+import 'package:angel3_sembast/angel3_sembast.dart';
 import 'package:logging/logging.dart';
 import 'package:sembast/sembast_io.dart';
 
