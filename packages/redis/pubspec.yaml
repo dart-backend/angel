@@ -1,21 +1,12 @@
-name: angel_redis
+name: angel3_redis
 version: 2.0.0
 description: An Angel service provider for Redis. Works well for caching volatile data.
-homepage: https://github.com/angel-dart/redis
-publish_to: none
+homepage: https://github.com/dukefirehawk/angel/tree/angel3/packages/redis
 environment:
   sdk: '>=2.12.0 <3.0.0'
 dependencies:
   angel_framework:
-   git: 
-      url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x_nnbd
-      path: packages/framework
   angel_http_exception:
-   git: 
-      url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x_nnbd
-      path: packages/http_exception
   resp_client: ^1.2.0
 dev_dependencies:
   test: ^1.17.8

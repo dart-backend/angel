@@ -69,20 +69,19 @@ Future<BodyParseResult> parseBodyFromStream(
           stream = data;
         }
 
-        var parts = MimeMultipartTransformer(contentType.parameters['boundary']!)
-            .bind(stream)
-            .map((part) =>
-                HttpMultipartFormData.parse(part, defaultEncoding: utf8));
+        var parts =
+            MimeMultipartTransformer(contentType.parameters['boundary']!)
+                .bind(stream)
+                .map((part) =>
+                    HttpMultipartFormData.parse(part, defaultEncoding: utf8));
 
         await for (HttpMultipartFormData part in parts) {
           if (part.isBinary ||
               part.contentDisposition.parameters.containsKey('filename')) {
             var builder = await part.fold(
                 BytesBuilder(copy: false),
-                (BytesBuilder b, d) => b
-                  ..add(d is! String
-                      ? (d as List<int>?)!
-                      : d.codeUnits));
+                (BytesBuilder b, d) =>
+                    b..add(d is! String ? (d as List<int>?)! : d.codeUnits));
             var upload = FileUploadInfo(
                 mimeType: part.contentType!.mimeType,
                 name: part.contentDisposition.parameters['name'],
@@ -97,8 +96,8 @@ Future<BodyParseResult> parseBodyFromStream(
           }
         }
       } else if (contentType.mimeType == 'application/json') {
-        result.body
-            .addAll(_foldToStringDynamic(json.decode(await getBody()) as Map?)!);
+        result.body.addAll(
+            _foldToStringDynamic(json.decode(await getBody()) as Map?)!);
       } else if (contentType.mimeType == 'application/x-www-form-urlencoded') {
         var body = await getBody();
         buildMapFromUri(result.body, body);

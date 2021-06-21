@@ -1,5 +1,5 @@
 name: angel3_body_parser
-version: 2.0.0
+version: 2.0.1
 description: Parse request bodies and query strings in Dart. Supports JSON, URL-encoded, and multi-part bodies.
 homepage: https://github.com/dukefirehawk/angel/tree/angel3/packages/body_parser
 environment:
