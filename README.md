@@ -93,7 +93,7 @@ Check out [Migrating to Angel3](https://angel3-docs.dukefirehawk.com/migration/a
 
 ## Examples and Documentation
 
-Visit the [documentation](https://angel3-docs.dukefirehawk.com/) for dozens of guides and resources, including video tutorials, to get up and running as quickly as possible with Angel.
+Visit the [documentation](https://angel3-docs.dukefirehawk.com/) for dozens of guides and resources, including video tutorials, to get up and running as quickly as possible with Angel3 framework.
 
 Examples and complete projects can be found [here](https://github.com/dukefirehawk/angel3-examples).
 

@@ -1,4 +1,5 @@
-# angel3_pretty_logging
+# Angel3 Petty Logging
+
 [![version](https://img.shields.io/badge/pub-v3.0.3-brightgreen)](https://pub.dartlang.org/packages/angel3_pretty_logging)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 [![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
@@ -7,7 +8,8 @@
 
 Standalone helper for colorful logging output, using pkg:io AnsiCode.
 
-# Installation
+## Installation
+
 In your `pubspec.yaml`:
 
 ```yaml
@@ -15,15 +17,15 @@ dependencies:
   angel3_pretty_logging: ^3.0.0
 ```
 
-# Usage
+## Usage
+
 Basic usage is very simple:
 
 ```dart
 myLogger.onRecord.listen(prettyLog);
 ```
 
-However, you can conditionally pass logic to omit printing an
-error, provide colors, or to provide a custom print function:
+However, you can conditionally pass logic to omit printing an error, provide colors, or to provide a custom print function:
 
 ```dart
 var pretty = prettyLog(

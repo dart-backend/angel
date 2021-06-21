@@ -108,8 +108,13 @@ class AngelAuth<User> {
           'An `AngelAuth` plug-in was called without its `deserializer` being set. All authentication will fail.');
     }
     */
-
+    if (app.container == null) {
+      log.severe('Angel.container is null.');
+      throw StateError(
+          'Angel.container is null. All authentication will fail.');
+    }
     var appContainer = app.container!;
+
     appContainer.registerSingleton(this);
     if (runtimeType != AngelAuth) {
       appContainer.registerSingleton(this, as: AngelAuth);
@@ -132,14 +137,14 @@ class AngelAuth<User> {
         }
       });
 
-      appContainer.registerLazySingleton<Future<User>>((container) async {
+      appContainer.registerLazySingleton<Future<User?>>((container) async {
         var result = await container.makeAsync<_AuthResult<User>>();
-        return result!.user;
+        return result?.user;
       });
 
-      appContainer.registerLazySingleton<Future<AuthToken>>((container) async {
+      appContainer.registerLazySingleton<Future<AuthToken?>>((container) async {
         var result = await container.makeAsync<_AuthResult<User>>();
-        return result!.token;
+        return result?.token;
       });
     }
 
@@ -151,7 +156,13 @@ class AngelAuth<User> {
   }
 
   void _apply(
-      RequestContext req, ResponseContext? res, AuthToken token, User user) {
+      RequestContext req, ResponseContext res, AuthToken token, User user) {
+    if (req.container == null) {
+      log.severe('RequestContext.container is null.');
+      throw StateError(
+          'RequestContext.container is not set. All authentication will fail.');
+    }
+
     var reqContainer = req.container!;
     if (!reqContainer.has<User>()) {
       reqContainer.registerSingleton<User>(user);
@@ -162,7 +173,7 @@ class AngelAuth<User> {
     }
 
     if (allowCookie) {
-      _addProtectedCookie(res!, 'token', token.serialize(_hs256));
+      _addProtectedCookie(res, 'token', token.serialize(_hs256));
     }
   }
 
@@ -188,7 +199,7 @@ class AngelAuth<User> {
   /// }
   /// ```
   @deprecated
-  Future decodeJwt(RequestContext req, ResponseContext res) async {
+  Future decodeJwtOld(RequestContext req, ResponseContext res) async {
     if (req.method == 'POST' && req.path == reviveTokenEndpoint) {
       return await reviveJwt(req, res);
     } else {
@@ -231,18 +242,23 @@ class AngelAuth<User> {
   /// Retrieves a JWT from a request, if any was sent at all.
   String? getJwt(RequestContext req) {
     if (req.headers?.value('Authorization') != null) {
-      final authHeader = req.headers!.value('Authorization')!;
-
-      // Allow Basic auth to fall through
-      if (_rgxBearer.hasMatch(authHeader)) {
-        return authHeader.replaceAll(_rgxBearer, '').trim();
+      final authHeader = req.headers?.value('Authorization');
+      if (authHeader != null) {
+        // Allow Basic auth to fall through
+        if (_rgxBearer.hasMatch(authHeader)) {
+          return authHeader.replaceAll(_rgxBearer, '').trim();
+        }
       }
+
+      log.info('RequestContext.headers is null');
     } else if (allowCookie &&
         req.cookies.any((cookie) => cookie.name == 'token')) {
       return req.cookies.firstWhere((cookie) => cookie.name == 'token').value;
-    } else if (allowTokenInQuery &&
-        req.uri?.queryParameters['token'] is String) {
-      return req.uri!.queryParameters['token']?.toString();
+    } else if (allowTokenInQuery) {
+      //&& req.uri?.queryParameters['token'] is String) {
+      if (req.uri != null) {
+        return req.uri?.queryParameters['token']?.toString();
+      }
     }
 
     return null;

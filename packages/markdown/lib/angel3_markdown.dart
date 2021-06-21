@@ -16,28 +16,28 @@ final RegExp _braces = RegExp(r'@?{{(((\\})|([^}]))+)}}');
 /// and returns a String, or a `Future<String>`.
 AngelConfigurer markdown(
   Directory viewsDirectory, {
-  String extension,
-  ExtensionSet extensionSet,
-  FutureOr<String> Function(String content, Map<String, dynamic> locals)
+  String? extension,
+  ExtensionSet? extensionSet,
+  FutureOr<String> Function(String content, Map<String, dynamic> locals)?
       template,
 }) {
   extension ??= '.md';
   extensionSet ??= ExtensionSet.gitHubWeb;
 
   return (Angel app) async {
-    app.viewGenerator = (String name, [Map<String, dynamic> locals]) async {
+    app.viewGenerator = (String name, [Map<String, dynamic>? locals]) async {
       var file = viewsDirectory.childFile(
-          viewsDirectory.fileSystem.path.setExtension(name, extension));
+          viewsDirectory.fileSystem.path.setExtension(name, extension!));
       var contents = await file.readAsString();
 
       contents = contents.replaceAllMapped(_braces, (m) {
-        var text = m[0];
+        var text = m[0]!;
 
         if (text.startsWith('@')) {
           // Raw braces
           return text.substring(1);
         } else {
-          var expr = m[1];
+          var expr = m[1]!;
           var split = expr.split('.');
           var root = split[0];
 
@@ -46,7 +46,7 @@ AngelConfigurer markdown(
                 'Expected a local named "$root", but none was provided. Expression text: "$text"');
           }
 
-          return _resolveDotNotation(split, locals[root]).toString();
+          return _resolveDotNotation(split, locals![root]).toString();
         }
       });
 
