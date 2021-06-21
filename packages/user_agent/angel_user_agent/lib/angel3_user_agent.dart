@@ -1,5 +1,5 @@
-import 'package:angel_framework/angel_framework.dart';
-import 'package:user_agent/user_agent.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:user_agent_analyzer/user_agent_analyzer.dart';
 
 /// Injects a [UserAgent] factory into requests.
 ///

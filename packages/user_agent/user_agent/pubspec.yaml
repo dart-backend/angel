@@ -1,5 +1,5 @@
 name: user_agent_analyzer
-version: 3.0.0
+version: 3.0.1
 description: A library to identify the type of devices and web browsers based on User-Agent string.
 homepage: https://github.com/dukefirehawk/angel/tree/angel3/packages/user_agent/user_agent
 environment:

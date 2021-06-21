@@ -1,19 +1,10 @@
-name: angel_user_agent
+name: angel3_user_agent
 version: 3.0.0
-description: Angel middleware to parse and inject a User Agent object into requests.
-homepage: https://github.com/angel-dart/user_agent
-publish_to: none
+description: Angel3 middleware to parse and inject a User Agent object into requests.
+homepage: https://github.com/dukefirehawk/angel/tree/angel3/packages/user_agent/angel_user_agent
 environment:
   sdk: '>=2.12.0 <3.0.0'
 dependencies:
-  angel_framework:
-    git: 
-      url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x_nnbd
-      path: packages/framework
-  user_agent:
-    git: 
-      url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x_nnbd
-      path: packages/user_agent/user_agent
+  angel3_framework: ^4.0.0
+  user_agent_analyzer: ^3.0.0
   pedantic: ^1.11.1

@@ -2,11 +2,11 @@ library user_agent_analyzer;
 
 /// Utils for device detection.
 class UserAgent {
-  bool? _isChrome;
-  bool? _isOpera;
-  bool? _isIE;
-  bool? _isFirefox;
-  bool? _isWebKit;
+  bool _isChrome = false;
+  bool _isOpera = false;
+  bool _isIE = false;
+  bool _isFirefox = false;
+  bool _isWebKit = false;
   String? _cachedCssPrefix;
   String? _cachedPropertyPrefix;
 
@@ -172,32 +172,32 @@ class UserAgent {
   bool get isBlackberryTablet => isBlackberry && contains('tablet');
 
   /// Determines if the current device is running Chrome.
-  bool? get isChrome {
-    _isChrome ??= value.contains('Chrome', 0);
+  bool get isChrome {
+    _isChrome = value.contains('Chrome', 0);
     return _isChrome;
   }
 
   /// Determines if the current device is running Opera.
-  bool? get isOpera {
-    _isOpera ??= value.contains('Opera', 0);
+  bool get isOpera {
+    _isOpera = value.contains('Opera', 0);
     return _isOpera;
   }
 
   /// Determines if the current device is running Internet Explorer.
-  bool? get isIE {
-    _isIE ??= !isOpera! && value.contains('Trident/', 0);
+  bool get isIE {
+    _isIE = !isOpera && value.contains('Trident/', 0);
     return _isIE;
   }
 
   /// Determines if the current device is running Firefox.
-  bool? get isFirefox {
-    _isFirefox ??= value.contains('Firefox', 0);
+  bool get isFirefox {
+    _isFirefox = value.contains('Firefox', 0);
     return _isFirefox;
   }
 
   /// Determines if the current device is running WebKit.
-  bool? get isWebKit {
-    _isWebKit ??= !isOpera! && value.contains('WebKit', 0);
+  bool get isWebKit {
+    _isWebKit = !isOpera && value.contains('WebKit', 0);
     return _isWebKit;
   }
 
@@ -205,11 +205,11 @@ class UserAgent {
   String get cssPrefix {
     var prefix = _cachedCssPrefix;
     if (prefix != null) return prefix;
-    if (isFirefox!) {
+    if (isFirefox) {
       prefix = '-moz-';
-    } else if (isIE!) {
+    } else if (isIE) {
       prefix = '-ms-';
-    } else if (isOpera!) {
+    } else if (isOpera) {
       prefix = '-o-';
     } else {
       prefix = '-webkit-';
@@ -221,11 +221,11 @@ class UserAgent {
   String get propertyPrefix {
     var prefix = _cachedPropertyPrefix;
     if (prefix != null) return prefix;
-    if (isFirefox!) {
+    if (isFirefox) {
       prefix = 'moz';
-    } else if (isIE!) {
+    } else if (isIE) {
       prefix = 'ms';
-    } else if (isOpera!) {
+    } else if (isOpera) {
       prefix = 'o';
     } else {
       prefix = 'webkit';

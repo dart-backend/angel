@@ -1,15 +1,15 @@
 import 'dart:io';
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_framework/http.dart';
-//import 'package:angel_user_agent/angel_user_agent.dart';
-//import 'package:user_agent/user_agent.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_framework/http.dart';
+import 'package:angel3_user_agent/angel3_user_agent.dart';
+import 'package:user_agent_analyzer/user_agent_analyzer.dart';
 
 void main() async {
   var app = Angel();
   var http = AngelHttp(app);
 
   // TODO: Commented out due to unknow class
-  /*
+
   app.get(
     '/',
     waterfall([
@@ -22,7 +22,6 @@ void main() async {
       },
     ]),
   );
-  */
 
   var server = await http.startServer(InternetAddress.anyIPv4, 3000);
   print('Listening at http://${server.address.address}:${server.port}');
