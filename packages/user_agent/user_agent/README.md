@@ -8,7 +8,7 @@
 
 **Forked from `user_agent` to support NNBD**
 
-A library that identify the type of devices and web browsers based on User-Agent.
+A library to identify the type of devices and web browsers based on `User-Agent` string.
 
 Runs anywhere.
 
