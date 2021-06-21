@@ -1,4 +1,4 @@
-import 'package:angel_http_exception/angel_http_exception.dart';
+import 'package:angel3_http_exception/angel3_http_exception.dart';
 import 'package:angel3_redis/angel3_redis.dart';
 import 'package:resp_client/resp_client.dart';
 import 'package:resp_client/resp_commands.dart';
