@@ -1,5 +1,5 @@
 import 'package:angel_http_exception/angel_http_exception.dart';
-import 'package:angel_redis/angel_redis.dart';
+import 'package:angel3_redis/angel3_redis.dart';
 import 'package:resp_client/resp_client.dart';
 import 'package:resp_client/resp_commands.dart';
 import 'package:resp_client/resp_server.dart';
