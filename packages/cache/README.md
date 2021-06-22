@@ -1,19 +1,19 @@
-# angel3_cache
-[![version](https://img.shields.io/badge/pub-v4.0.0-brightgreen)](https://pub.dartlang.org/packages/angel3_cache)
+# Angel3 Cache
+
+[![version](https://img.shields.io/badge/pub-v4.0.1-brightgreen)](https://pub.dartlang.org/packages/angel3_cache)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 [![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
 
 [![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/cache/LICENSE)
 
-Support for server-side caching in [Angel](https://angel-dart.github.io).
+Support for server-side caching in [Angel3](https://github.com/dukefirehawk/angel).
 
 ## `CacheService`
 
-A `Service` class that caches data from one service, storing it in another.
-An imaginable use case is storing results from MongoDB or another database in
-MemcacheD/Redis.
+A `Service` class that caches data from one service, storing it in another. An imaginable use case is storing results from MongoDB or another database in MemcacheD/Redis.
 
 ## `cacheSerializationResults`
+
 A middleware that enables the caching of response serialization.
 
 This can improve the performance of sending objects that are complex to serialize.
@@ -41,13 +41,12 @@ void main() async {
 ```
 
 ## `ResponseCache`
-A flexible response cache for Angel.
 
-Use this to improve real and perceived response of Web applications,
-as well as to memoize expensive responses.
+A flexible response cache for Angel3.
 
-Supports the `If-Modified-Since` header, as well as storing the contents of
-response buffers in memory.
+Use this to improve real and perceived response of Web applications, as well as to memoize expensive responses.
+
+Supports the `If-Modified-Since` header, as well as storing the contents of response buffers in memory.
 
 To initialize a simple cache:
 
@@ -78,11 +77,10 @@ Future configureServer(Angel app) async {
 ```
 
 ### Purging the Cache
+
 Call `invalidate` to remove a resource from a `ResponseCache`.
 
-Some servers expect a reverse proxy or caching layer to support `PURGE` requests.
-If this is your case, make sure to include some sort of validation (maybe IP-based)
-to ensure no arbitrary attacker can hack your cache:
+Some servers expect a reverse proxy or caching layer to support `PURGE` requests. If this is your case, make sure to include some sort of validation (maybe IP-based) to ensure no arbitrary attacker can hack your cache:
 
 ```dart
 Future configureServer(Angel app) async {

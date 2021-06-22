@@ -20,7 +20,7 @@ class CacheService<Id, Data> extends Service<Id, Data> {
   /// If you want to return a cached result more-often-than-not, you may want to enable this.
   final bool ignoreParams;
 
-  final Duration? timeout;
+  final Duration timeout;
 
   final Map<Id, _CachedItem<Data>> _cache = {};
   _CachedItem<List<Data>>? _indexed;
@@ -28,28 +28,26 @@ class CacheService<Id, Data> extends Service<Id, Data> {
   CacheService(
       {required this.database,
       required this.cache,
-      this.ignoreParams: false,
-      this.timeout}) {}
+      this.timeout = const Duration(minutes: 10),
+      this.ignoreParams = false});
 
   Future<T> _getCached<T>(
-      Map<String, dynamic>? params,
-      _CachedItem? get(),
-      FutureOr<T> getFresh(),
-      FutureOr<T> getCached(),
-      FutureOr<T> save(T data, DateTime now)) async {
+      Map<String, dynamic> params,
+      _CachedItem? Function() get,
+      FutureOr<T> Function() getFresh,
+      FutureOr<T> Function() getCached,
+      FutureOr<T> Function(T data, DateTime now) save) async {
     var cached = get();
-    var now = new DateTime.now().toUtc();
+    var now = DateTime.now().toUtc();
 
     if (cached != null) {
       // If the entry has expired, don't send from the cache
-      var expired =
-          timeout != null && now.difference(cached.timestamp) >= timeout!;
+      var expired = now.difference(cached.timestamp) >= timeout;
 
-      if (timeout == null || !expired) {
+      if (!expired) {
         // Read from the cache if necessary
         var queryEqual = ignoreParams == true ||
-            (params != null &&
-                cached.params != null &&
+            (cached.params != null &&
                 const MapEquality().equals(
                     params['query'] as Map?, cached.params['query'] as Map?));
         if (queryEqual) {
@@ -68,12 +66,12 @@ class CacheService<Id, Data> extends Service<Id, Data> {
   @override
   Future<List<Data>> index([Map<String, dynamic>? params]) {
     return _getCached(
-      params,
+      params ?? {},
       () => _indexed,
       () => database.index(params),
       () => _indexed?.data ?? [],
       (data, now) async {
-        _indexed = new _CachedItem(params, now, data);
+        _indexed = _CachedItem(params, now, data);
         return data;
       },
     );
@@ -82,12 +80,12 @@ class CacheService<Id, Data> extends Service<Id, Data> {
   @override
   Future<Data> read(Id id, [Map<String, dynamic>? params]) async {
     return _getCached<Data>(
-      params,
+      params ?? {},
       () => _cache[id],
       () => database.read(id, params),
       () => cache.read(id),
       (data, now) async {
-        _cache[id] = new _CachedItem(params, now, data);
+        _cache[id] = _CachedItem(params, now, data);
         return await cache.modify(id, data);
       },
     );

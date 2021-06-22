@@ -14,11 +14,12 @@ RequestHandler cacheSerializationResults(
     var oldSerializer = res.serializer;
 
     // TODO: Commented out as it is not doing anything useful
-    //var cache = <dynamic, String>{};
+    var cache = <dynamic, String>{};
+
     res.serializer = (value) {
-      //if (shouldCache == null) {
-      //  return cache.putIfAbsent(value, () => oldSerializer(value));
-      //}
+      if (shouldCache == null) {
+        return cache.putIfAbsent(value, () => oldSerializer(value) as String);
+      }
 
       return oldSerializer(value);
     };

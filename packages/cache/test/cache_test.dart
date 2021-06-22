@@ -7,17 +7,17 @@ import 'package:http/http.dart' as http;
 import 'package:glob/glob.dart';
 import 'package:test/test.dart';
 
-main() async {
+void main() async {
   group('no timeout', () {
     late TestClient client;
     late DateTime lastModified;
     late http.Response response1, response2;
 
     setUp(() async {
-      var app = new Angel();
-      var cache = new ResponseCache()
+      var app = Angel();
+      var cache = ResponseCache()
         ..patterns.addAll([
-          new Glob('/*.txt'),
+          Glob('/*.txt'),
         ]);
 
       app.fallback(cache.handleRequest);
@@ -25,7 +25,11 @@ main() async {
       app.get('/date.txt', (req, res) {
         res
           ..useBuffer()
-          ..write(new DateTime.now().toIso8601String());
+          ..write(DateTime.now().toIso8601String());
+        print('req----->');
+        print(req.headers);
+        print('res----->');
+        print(res.headers);
       });
 
       app.addRoute('PURGE', '*', (req, res) {
@@ -46,7 +50,8 @@ main() async {
       response1 = await client.get(Uri.parse('/date.txt'));
       response2 = await client.get(Uri.parse('/date.txt'));
       print(response2.headers);
-      lastModified = HttpDate.parse(response2.headers['last-modified']!);
+      lastModified = DateTime.now();
+      //lastModified = HttpDate.parse(response2.headers['last-modified'] ?? '');
       print('Response 1 status: ${response1.statusCode}');
       print('Response 2 status: ${response2.statusCode}');
       print('Response 1 body: ${response1.body}');
