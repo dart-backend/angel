@@ -1,6 +1,6 @@
 # Angel3 Body Parser
 
-[![version](https://img.shields.io/badge/pub-v2.0.1-brightgreen)](https://pub.dartlang.org/packages/angel3_body_parser)
+[![version](https://img.shields.io/badge/pub-v2.1.0-brightgreen)](https://pub.dartlang.org/packages/angel3_body_parser)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 [![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
 
@@ -32,7 +32,7 @@ A benefit of this is that primitive types are automatically deserialized correct
 To install Body Parser for your Dart project, simply add body_parser to your pub dependencies.
 
     dependencies:
-        angel3_body_parser: ^2.0.0
+        angel3_body_parser: ^2.1.0
 
 ### Usage
 

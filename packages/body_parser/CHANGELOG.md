@@ -1,5 +1,9 @@
 # Change Log
 
+## 2.1.0
+
+* Replaced `http_server` with `belatuk_http_server`
+
 ## 2.0.1
 
 * Fixed source code formating warning

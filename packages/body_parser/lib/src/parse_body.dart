@@ -4,7 +4,7 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:http_parser/http_parser.dart';
-import 'package:http_server/http_server.dart';
+import 'package:belatuk_http_server/belatuk_http_server.dart';
 import 'package:mime/mime.dart';
 
 import 'body_parse_result.dart';
