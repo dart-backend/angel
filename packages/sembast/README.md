@@ -1,12 +1,12 @@
-# Angel3 Sembast
+# A Sembast Persistent Service for Angel3
 
-[![version](https://img.shields.io/badge/pub-v2.0.0-brightgreen)](https://pub.dartlang.org/packages/angel3_sembast)
+[![version](https://img.shields.io/badge/pub-v2.0.1-brightgreen)](https://pub.dartlang.org/packages/angel3_sembast)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 [![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
 
 [![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/sembast/LICENSE)
 
-A sembast-powered CRUD services for the Angel3 framework.
+A plugin service that persist data to Sembast for Angel3 framework.
 
 ## Installation
 
