@@ -1,5 +1,6 @@
-# angel3_html_builder
-[![version](https://img.shields.io/badge/pub-v2.0.2-brightgreen)](https://pub.dartlang.org/packages/angel3_html_builder)
+# Angel3 Html Builder
+
+[![version](https://img.shields.io/badge/pub-v2.0.3-brightgreen)](https://pub.dartlang.org/packages/angel3_html_builder)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 [![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
 
@@ -9,7 +10,8 @@ Build HTML AST's and render them to HTML.
 
 This can be used as an internal DSL, i.e. for a templating engine.
 
-# Installation
+## Installation
+
 In your `pubspec.yaml`:
 
 ```yaml
@@ -17,7 +19,8 @@ dependencies:
   angel3_html_builder: ^2.0.0
 ```
 
-# Usage
+## Usage
+
 ```dart
 import 'package:angel3_html_builder/angel3_html_builder.dart';
 
@@ -25,13 +28,12 @@ void main() {
     // Akin to React.createElement(...);
     var $el = h('my-element', p: {}, c: []);
 
-
     // Attributes can be plain Strings.
     h('foo', p: {
         'bar': 'baz'
     });
 
-i    // Null attributes do not appear.
+    // Null attributes do not appear.
     h('foo', p: {
         'does-not-appear': null
     });
@@ -41,7 +43,7 @@ i    // Null attributes do not appear.
         'appears': true,
         'does-not-appear': false
     });
-:
+
     // Or, a String or Map.
     h('foo', p: {
         'style': 'background-color: white; color: red;'
@@ -51,7 +53,7 @@ i    // Null attributes do not appear.
         'style': {
             'background-color': 'white',
             'color': 'red'
-/        }
+        }
     });
 
     // Or, a String or Iterable.
