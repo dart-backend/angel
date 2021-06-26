@@ -1,6 +1,6 @@
 # Angel3 Security
 
-[![version](https://img.shields.io/badge/pub-v3.0.0-brightgreen)](https://pub.dartlang.org/packages/angel3_security)
+[![version](https://img.shields.io/badge/pub-v3.0.1-brightgreen)](https://pub.dartlang.org/packages/angel3_security)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 [![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
 

@@ -1,5 +1,5 @@
 name: angel3_security
-version: 3.0.0
+version: 3.0.1
 description: Angel infrastructure for improving security, rate limiting, and more
 homepage: https://github.com/dukefirehawk/angel/tree/angel3/packages/security
 environment: 
