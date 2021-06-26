@@ -8,7 +8,7 @@ part of 'has_map.dart';
 
 class HasMapMigration extends Migration {
   @override
-  up(Schema schema) {
+  void up(Schema schema) {
     schema.create('has_maps', (table) {
       table.declare('value', ColumnType('jsonb'));
       table.declare('list', ColumnType('jsonb'));
@@ -16,7 +16,7 @@ class HasMapMigration extends Migration {
   }
 
   @override
-  down(Schema schema) {
+  void down(Schema schema) {
     schema.drop('has_maps');
   }
 }
@@ -28,7 +28,7 @@ class HasMapMigration extends Migration {
 class HasMapQuery extends Query<HasMap, HasMapQueryWhere> {
   HasMapQuery({Query? parent, Set<String>? trampoline})
       : super(parent: parent) {
-    trampoline ??= Set();
+    trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = HasMapQueryWhere(this);
   }
@@ -39,17 +39,17 @@ class HasMapQuery extends Query<HasMap, HasMapQueryWhere> {
   HasMapQueryWhere? _where;
 
   @override
-  get casts {
+  Map<String, String> get casts {
     return {};
   }
 
   @override
-  get tableName {
+  String get tableName {
     return 'has_maps';
   }
 
   @override
-  get fields {
+  List<String> get fields {
     return const ['value', 'list'];
   }
 
@@ -90,14 +90,14 @@ class HasMapQueryWhere extends QueryWhere {
   final ListSqlExpressionBuilder list;
 
   @override
-  get expressionBuilders {
+  List<SqlExpressionBuilder> get expressionBuilders {
     return [value, list];
   }
 }
 
 class HasMapQueryValues extends MapQueryValues {
   @override
-  get casts {
+  Map<String, String> get casts {
     return {'list': 'jsonb'};
   }
 
@@ -136,6 +136,7 @@ class HasMap implements _HasMap {
     return HasMap(value: value, list: list);
   }
 
+  @override
   bool operator ==(other) {
     return other is _HasMap &&
         MapEquality<dynamic, dynamic>(
@@ -183,9 +184,9 @@ class HasMapSerializer extends Codec<HasMap, Map> {
   const HasMapSerializer();
 
   @override
-  get encoder => const HasMapEncoder();
+  HasMapEncoder get encoder => const HasMapEncoder();
   @override
-  get decoder => const HasMapDecoder();
+  HasMapDecoder get decoder => const HasMapDecoder();
   static HasMap fromMap(Map map) {
     return HasMap(
         value: map['value'] is Map

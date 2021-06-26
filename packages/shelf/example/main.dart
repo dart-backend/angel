@@ -6,7 +6,7 @@ import 'package:logging/logging.dart';
 import 'package:pretty_logging/pretty_logging.dart';
 import 'package:shelf_static/shelf_static.dart';
 
-main() async {
+void main() async {
   Logger.root
     ..level = Level.ALL
     ..onRecord.listen(prettyLog);

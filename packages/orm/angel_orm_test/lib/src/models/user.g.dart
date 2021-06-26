@@ -8,9 +8,9 @@ part of angel3_orm_generator.test.models.user;
 
 class UserMigration extends Migration {
   @override
-  up(Schema schema) {
+  void up(Schema schema) {
     schema.create('users', (table) {
-      table.serial('id')..primaryKey();
+      table.serial('id').primaryKey();
       table.timeStamp('created_at');
       table.timeStamp('updated_at');
       table.varChar('username');
@@ -20,14 +20,14 @@ class UserMigration extends Migration {
   }
 
   @override
-  down(Schema schema) {
+  void down(Schema schema) {
     schema.drop('users', cascade: true);
   }
 }
 
 class RoleUserMigration extends Migration {
   @override
-  up(Schema schema) {
+  void up(Schema schema) {
     schema.create('role_users', (table) {
       table.declare('role_id', ColumnType('serial')).references('roles', 'id');
       table.declare('user_id', ColumnType('serial')).references('users', 'id');
@@ -35,16 +35,16 @@ class RoleUserMigration extends Migration {
   }
 
   @override
-  down(Schema schema) {
+  void down(Schema schema) {
     schema.drop('role_users');
   }
 }
 
 class RoleMigration extends Migration {
   @override
-  up(Schema schema) {
+  void up(Schema schema) {
     schema.create('roles', (table) {
-      table.serial('id')..primaryKey();
+      table.serial('id').primaryKey();
       table.timeStamp('created_at');
       table.timeStamp('updated_at');
       table.varChar('name');
@@ -52,7 +52,7 @@ class RoleMigration extends Migration {
   }
 
   @override
-  down(Schema schema) {
+  void down(Schema schema) {
     schema.drop('roles', cascade: true);
   }
 }
@@ -63,7 +63,7 @@ class RoleMigration extends Migration {
 
 class UserQuery extends Query<User, UserQueryWhere> {
   UserQuery({Query? parent, Set<String>? trampoline}) : super(parent: parent) {
-    trampoline ??= Set();
+    trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = UserQueryWhere(this);
     leftJoin(
@@ -80,17 +80,17 @@ class UserQuery extends Query<User, UserQueryWhere> {
   UserQueryWhere? _where;
 
   @override
-  get casts {
+  Map<String, String> get casts {
     return {};
   }
 
   @override
-  get tableName {
+  String get tableName {
     return 'users';
   }
 
   @override
-  get fields {
+  List<String> get fields {
     return const [
       'id',
       'created_at',
@@ -143,7 +143,7 @@ class UserQuery extends Query<User, UserQueryWhere> {
   }
 
   @override
-  get(QueryExecutor executor) {
+  Future<List<User>> get(QueryExecutor executor) {
     return super.get(executor).then((result) {
       return result.fold<List<User>>([], (out, model) {
         var idx = out.indexWhere((m) => m.id == model.id);
@@ -161,7 +161,7 @@ class UserQuery extends Query<User, UserQueryWhere> {
   }
 
   @override
-  update(QueryExecutor executor) {
+  Future<List<User>> update(QueryExecutor executor) {
     return super.update(executor).then((result) {
       return result.fold<List<User>>([], (out, model) {
         var idx = out.indexWhere((m) => m.id == model.id);
@@ -179,7 +179,7 @@ class UserQuery extends Query<User, UserQueryWhere> {
   }
 
   @override
-  delete(QueryExecutor executor) {
+  Future<List<User>> delete(QueryExecutor executor) {
     return super.delete(executor).then((result) {
       return result.fold<List<User>>([], (out, model) {
         var idx = out.indexWhere((m) => m.id == model.id);
@@ -219,14 +219,14 @@ class UserQueryWhere extends QueryWhere {
   final StringSqlExpressionBuilder email;
 
   @override
-  get expressionBuilders {
+  List<SqlExpressionBuilder> get expressionBuilders {
     return [id, createdAt, updatedAt, username, password, email];
   }
 }
 
 class UserQueryValues extends MapQueryValues {
   @override
-  get casts {
+  Map<String, String> get casts {
     return {};
   }
 
@@ -272,7 +272,7 @@ class UserQueryValues extends MapQueryValues {
 class RoleUserQuery extends Query<RoleUser, RoleUserQueryWhere> {
   RoleUserQuery({Query? parent, Set<String>? trampoline})
       : super(parent: parent) {
-    trampoline ??= Set();
+    trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = RoleUserQueryWhere(this);
     leftJoin(_role = RoleQuery(trampoline: trampoline, parent: this), 'role_id',
@@ -302,17 +302,17 @@ class RoleUserQuery extends Query<RoleUser, RoleUserQueryWhere> {
   UserQuery? _user;
 
   @override
-  get casts {
+  Map<String, String> get casts {
     return {};
   }
 
   @override
-  get tableName {
+  String get tableName {
     return 'role_users';
   }
 
   @override
-  get fields {
+  List<String> get fields {
     return const ['role_id', 'user_id'];
   }
 
@@ -370,14 +370,14 @@ class RoleUserQueryWhere extends QueryWhere {
   final NumericSqlExpressionBuilder<int> userId;
 
   @override
-  get expressionBuilders {
+  List<SqlExpressionBuilder> get expressionBuilders {
     return [roleId, userId];
   }
 }
 
 class RoleUserQueryValues extends MapQueryValues {
   @override
-  get casts {
+  Map<String, String> get casts {
     return {};
   }
 
@@ -403,7 +403,7 @@ class RoleUserQueryValues extends MapQueryValues {
 
 class RoleQuery extends Query<Role, RoleQueryWhere> {
   RoleQuery({Query? parent, Set<String>? trampoline}) : super(parent: parent) {
-    trampoline ??= Set();
+    trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = RoleQueryWhere(this);
     leftJoin(
@@ -427,17 +427,17 @@ class RoleQuery extends Query<Role, RoleQueryWhere> {
   RoleQueryWhere? _where;
 
   @override
-  get casts {
+  Map<String, String> get casts {
     return {};
   }
 
   @override
-  get tableName {
+  String get tableName {
     return 'roles';
   }
 
   @override
-  get fields {
+  List<String> get fields {
     return const ['id', 'created_at', 'updated_at', 'name'];
   }
 
@@ -481,7 +481,7 @@ class RoleQuery extends Query<Role, RoleQueryWhere> {
   }
 
   @override
-  get(QueryExecutor executor) {
+  Future<List<Role>> get(QueryExecutor executor) {
     return super.get(executor).then((result) {
       return result.fold<List<Role>>([], (out, model) {
         var idx = out.indexWhere((m) => m.id == model.id);
@@ -499,7 +499,7 @@ class RoleQuery extends Query<Role, RoleQueryWhere> {
   }
 
   @override
-  update(QueryExecutor executor) {
+  Future<List<Role>> update(QueryExecutor executor) {
     return super.update(executor).then((result) {
       return result.fold<List<Role>>([], (out, model) {
         var idx = out.indexWhere((m) => m.id == model.id);
@@ -517,7 +517,7 @@ class RoleQuery extends Query<Role, RoleQueryWhere> {
   }
 
   @override
-  delete(QueryExecutor executor) {
+  Future<List<Role>> delete(QueryExecutor executor) {
     return super.delete(executor).then((result) {
       return result.fold<List<Role>>([], (out, model) {
         var idx = out.indexWhere((m) => m.id == model.id);
@@ -551,14 +551,14 @@ class RoleQueryWhere extends QueryWhere {
   final StringSqlExpressionBuilder name;
 
   @override
-  get expressionBuilders {
+  List<SqlExpressionBuilder> get expressionBuilders {
     return [id, createdAt, updatedAt, name];
   }
 }
 
 class RoleQueryValues extends MapQueryValues {
   @override
-  get casts {
+  Map<String, String> get casts {
     return {};
   }
 
@@ -603,7 +603,7 @@ class User extends _User {
       this.password,
       this.email,
       List<_Role> roles = const []})
-      : this.roles = List.unmodifiable(roles);
+      : roles = List.unmodifiable(roles);
 
   /// A unique identifier corresponding to this item.
   @override
@@ -647,6 +647,7 @@ class User extends _User {
         roles: roles);
   }
 
+  @override
   bool operator ==(other) {
     return other is _User &&
         other.id == id &&
@@ -667,7 +668,7 @@ class User extends _User {
 
   @override
   String toString() {
-    return "User(id=$id, createdAt=$createdAt, updatedAt=$updatedAt, username=$username, password=$password, email=$email, roles=$roles)";
+    return 'User(id=$id, createdAt=$createdAt, updatedAt=$updatedAt, username=$username, password=$password, email=$email, roles=$roles)';
   }
 
   Map<String, dynamic>? toJson() {
@@ -689,6 +690,7 @@ class RoleUser implements _RoleUser {
     return RoleUser(role: role ?? this.role, user: user ?? this.user);
   }
 
+  @override
   bool operator ==(other) {
     return other is _RoleUser && other.role == role && other.user == user;
   }
@@ -700,7 +702,7 @@ class RoleUser implements _RoleUser {
 
   @override
   String toString() {
-    return "RoleUser(role=$role, user=$user)";
+    return 'RoleUser(role=$role, user=$user)';
   }
 
   Map<String, dynamic> toJson() {
@@ -712,7 +714,7 @@ class RoleUser implements _RoleUser {
 class Role extends _Role {
   Role(
       {this.id, this.createdAt, this.updatedAt, this.name, List<_User?>? users})
-      : this.users = List.unmodifiable(users ?? []);
+      : users = List.unmodifiable(users ?? []);
 
   /// A unique identifier corresponding to this item.
   @override
@@ -746,6 +748,7 @@ class Role extends _Role {
         users: users ?? this.users);
   }
 
+  @override
   bool operator ==(other) {
     return other is _Role &&
         other.id == id &&
@@ -763,7 +766,7 @@ class Role extends _Role {
 
   @override
   String toString() {
-    return "Role(id=$id, createdAt=$createdAt, updatedAt=$updatedAt, name=$name, users=$users)";
+    return 'Role(id=$id, createdAt=$createdAt, updatedAt=$updatedAt, name=$name, users=$users)';
   }
 
   Map<String, dynamic>? toJson() {
@@ -795,9 +798,9 @@ class UserSerializer extends Codec<User, Map?> {
   const UserSerializer();
 
   @override
-  get encoder => const UserEncoder();
+  UserEncoder get encoder => const UserEncoder();
   @override
-  get decoder => const UserDecoder();
+  UserDecoder get decoder => const UserDecoder();
   static User fromMap(Map map) {
     return User(
         id: map['id'] as String?,
@@ -882,9 +885,9 @@ class RoleUserSerializer extends Codec<RoleUser, Map> {
   const RoleUserSerializer();
 
   @override
-  get encoder => const RoleUserEncoder();
+  RoleUserEncoder get encoder => const RoleUserEncoder();
   @override
-  get decoder => const RoleUserDecoder();
+  RoleUserDecoder get decoder => const RoleUserDecoder();
   static RoleUser fromMap(Map map) {
     return RoleUser(
         role: map['role'] != null
@@ -931,9 +934,9 @@ class RoleSerializer extends Codec<Role, Map?> {
   const RoleSerializer();
 
   @override
-  get encoder => const RoleEncoder();
+  RoleEncoder get encoder => const RoleEncoder();
   @override
-  get decoder => const RoleDecoder();
+  RoleDecoder get decoder => const RoleDecoder();
   static Role fromMap(Map map) {
     return Role(
         id: map['id'] as String?,

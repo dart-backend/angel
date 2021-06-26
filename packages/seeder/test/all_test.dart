@@ -55,7 +55,7 @@ class Todo extends Model {
   final String? text;
   final bool? completed;
 
-  Todo({String? id, this.text, this.completed: false}) {
+  Todo({String? id, this.text, this.completed = false}) {
     this.id = id;
   }
 

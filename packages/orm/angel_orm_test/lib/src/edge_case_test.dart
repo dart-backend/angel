@@ -3,7 +3,7 @@ import 'package:angel3_orm/angel3_orm.dart';
 import 'package:test/test.dart';
 import 'models/unorthodox.dart';
 
-edgeCaseTests(FutureOr<QueryExecutor> Function() createExecutor,
+void edgeCaseTests(FutureOr<QueryExecutor> Function() createExecutor,
     {FutureOr<void> Function(QueryExecutor)? close}) {
   late QueryExecutor executor;
   close ??= (_) => null;
@@ -81,7 +81,7 @@ edgeCaseTests(FutureOr<QueryExecutor> Function() createExecutor,
       test('has many', () async {
         var numbas = <Numba>[];
 
-        for (int i = 0; i < 15; i++) {
+        for (var i = 0; i < 15; i++) {
           var query = NumbaQuery()
             ..values.parent = weirdJoin!.id
             ..values.i = i;

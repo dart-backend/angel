@@ -182,7 +182,7 @@ void main() {
   });
 
   group('404', () {
-    expect404(r) => r.then((res) {
+    dynamic expect404(r) => r.then((res) {
           print('Response (${res.statusCode}): ${res.body}');
           expect(res.statusCode, equals(404));
         });

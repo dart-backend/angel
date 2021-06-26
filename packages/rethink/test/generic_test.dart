@@ -7,7 +7,7 @@ import 'package:rethinkdb_dart/rethinkdb_dart.dart';
 import 'package:test/test.dart';
 import 'common.dart';
 
-main() {
+void main() {
   Angel app;
   TestClient client;
   Rethinkdb r;

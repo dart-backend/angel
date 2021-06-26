@@ -73,8 +73,12 @@ class RegularElement extends Element {
   final Token? gt2;
   final Token lt2, slash, lt, gt;
 
-  final Identifier tagName, tagName2;
+  @override
+  final Identifier tagName;
+  final Identifier tagName2;
+  @override
   final Iterable<Attribute> attributes;
+  @override
   final Iterable<ElementChild> children;
 
   RegularElement(this.lt, this.tagName, this.attributes, this.gt, this.children,

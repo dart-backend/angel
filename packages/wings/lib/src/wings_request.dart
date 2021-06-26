@@ -7,7 +7,7 @@ import 'package:angel_framework/angel_framework.dart';
 import 'package:mock_request/mock_request.dart';
 import 'wings_socket.dart';
 
-enum _ParseState { method, url, headerField, headerValue, body }
+//enum _ParseState { method, url, headerField, headerValue, body }
 
 final RegExp _straySlashes = RegExp(r'(^/+)|(/+$)');
 

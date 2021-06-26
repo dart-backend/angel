@@ -8,10 +8,10 @@ part of 'main.dart';
 
 class TodoMigration extends Migration {
   @override
-  up(Schema schema) {
+  void up(Schema schema) {
     schema.create('todos', (table) {
-      table.serial('id')..primaryKey();
-      table.boolean('is_complete')..defaultsTo(false);
+      table.serial('id').primaryKey();
+      table.boolean('is_complete').defaultsTo(false);
       table.varChar('text');
       table.timeStamp('created_at');
       table.timeStamp('updated_at');
@@ -19,7 +19,7 @@ class TodoMigration extends Migration {
   }
 
   @override
-  down(Schema schema) {
+  void down(Schema schema) {
     schema.drop('todos');
   }
 }
@@ -30,7 +30,7 @@ class TodoMigration extends Migration {
 
 class TodoQuery extends Query<Todo, TodoQueryWhere> {
   TodoQuery({Set<String>? trampoline}) {
-    trampoline ??= Set();
+    trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = TodoQueryWhere(this);
   }
@@ -41,17 +41,17 @@ class TodoQuery extends Query<Todo, TodoQueryWhere> {
   TodoQueryWhere? _where;
 
   @override
-  get casts {
+  Map<String, String> get casts {
     return {};
   }
 
   @override
-  get tableName {
+  String get tableName {
     return 'todos';
   }
 
   @override
-  get fields {
+  List<String> get fields {
     return const ['id', 'is_complete', 'text', 'created_at', 'updated_at'];
   }
 
@@ -101,14 +101,14 @@ class TodoQueryWhere extends QueryWhere {
   final DateTimeSqlExpressionBuilder updatedAt;
 
   @override
-  get expressionBuilders {
+  List<SqlExpressionBuilder> get expressionBuilders {
     return [id, isComplete, text, createdAt, updatedAt];
   }
 }
 
 class TodoQueryValues extends MapQueryValues {
   @override
-  get casts {
+  Map<String, String> get casts {
     return {};
   }
 
@@ -179,7 +179,7 @@ class Todo extends _Todo {
       String? text,
       DateTime? createdAt,
       DateTime? updatedAt}) {
-    return new Todo(
+    return Todo(
         id: id ?? this.id,
         isComplete: isComplete ?? this.isComplete,
         text: text ?? this.text,
@@ -187,6 +187,7 @@ class Todo extends _Todo {
         updatedAt: updatedAt ?? this.updatedAt);
   }
 
+  @override
   bool operator ==(other) {
     return other is _Todo &&
         other.id == id &&
@@ -213,11 +214,10 @@ class Todo extends _Todo {
 abstract class TodoSerializer {
   static Todo fromMap(Map map) {
     if (map['is_complete'] == null) {
-      throw new FormatException(
-          "Missing required field 'is_complete' on Todo.");
+      throw FormatException("Missing required field 'is_complete' on Todo.");
     }
 
-    return new Todo(
+    return Todo(
         id: map['id'] as String?,
         isComplete: map['is_complete'] as bool? ?? false,
         text: map['text'] as String?,
@@ -235,8 +235,7 @@ abstract class TodoSerializer {
 
   static Map<String, dynamic> toMap(_Todo model) {
     if (model.isComplete == null) {
-      throw new FormatException(
-          "Missing required field 'is_complete' on Todo.");
+      throw FormatException("Missing required field 'is_complete' on Todo.");
     }
 
     return {

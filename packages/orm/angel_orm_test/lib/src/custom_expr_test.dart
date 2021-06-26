@@ -3,7 +3,7 @@ import 'package:angel3_orm/angel3_orm.dart';
 import 'package:test/test.dart';
 import 'models/custom_expr.dart';
 
-customExprTests(FutureOr<QueryExecutor> Function() createExecutor,
+void customExprTests(FutureOr<QueryExecutor> Function() createExecutor,
     {FutureOr<void> Function(QueryExecutor)? close}) {
   late QueryExecutor executor;
   Numbers? numbersModel;

@@ -77,7 +77,7 @@ void main() {
 
   _expectHelloBye(String path) async {
     var rq = MockHttpRequest('GET', Uri.parse(path));
-    (rq.close());
+    await (rq.close());
     await http.handleRequest(rq);
     var body = await rq.response.transform(utf8.decoder).join();
     expect(body, 'Hello, world!bye');
@@ -90,7 +90,7 @@ void main() {
   test('cannot write after close', () async {
     try {
       var rq = MockHttpRequest('GET', Uri.parse('/overwrite'));
-      (rq.close());
+      await (rq.close());
       await http.handleRequest(rq);
       var body = await rq.response.transform(utf8.decoder).join();
 
@@ -105,7 +105,7 @@ void main() {
   test('res => addError', () async {
     try {
       var rq = MockHttpRequest('GET', Uri.parse('/error'));
-      (rq.close());
+      await (rq.close());
       await http.handleRequest(rq);
       var body = await rq.response.transform(utf8.decoder).join();
       throw 'addError should throw error; response: $body';

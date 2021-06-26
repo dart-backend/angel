@@ -5,7 +5,7 @@ import 'package:test/test.dart';
 import 'models/user.dart';
 import 'util.dart';
 
-manyToManyTests(FutureOr<QueryExecutor> Function() createExecutor,
+void manyToManyTests(FutureOr<QueryExecutor> Function() createExecutor,
     {FutureOr<void> Function(QueryExecutor)? close}) {
   late QueryExecutor executor;
   Role? canPub, canSub;

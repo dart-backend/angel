@@ -21,6 +21,7 @@ class GamepadButton implements _GamepadButton {
         name: name ?? this.name, radius: radius ?? this.radius);
   }
 
+  @override
   bool operator ==(other) {
     return other is _GamepadButton &&
         other.name == name &&
@@ -34,7 +35,7 @@ class GamepadButton implements _GamepadButton {
 
   @override
   String toString() {
-    return "GamepadButton(name=$name, radius=$radius)";
+    return 'GamepadButton(name=$name, radius=$radius)';
   }
 
   Map<String, dynamic> toJson() {
@@ -45,8 +46,8 @@ class GamepadButton implements _GamepadButton {
 @generatedSerializable
 class Gamepad extends _Gamepad {
   Gamepad({List<_GamepadButton>? buttons, Map<String, dynamic>? dynamicMap})
-      : this.buttons = List.unmodifiable(buttons ?? []),
-        this.dynamicMap = Map.unmodifiable(dynamicMap ?? {});
+      : buttons = List.unmodifiable(buttons ?? []),
+        dynamicMap = Map.unmodifiable(dynamicMap ?? {});
 
   @override
   List<_GamepadButton>? buttons;
@@ -61,6 +62,7 @@ class Gamepad extends _Gamepad {
         dynamicMap: dynamicMap ?? this.dynamicMap);
   }
 
+  @override
   bool operator ==(other) {
     return other is _Gamepad &&
         ListEquality<_GamepadButton>(DefaultEquality<_GamepadButton>())
@@ -77,7 +79,7 @@ class Gamepad extends _Gamepad {
 
   @override
   String toString() {
-    return "Gamepad(buttons=$buttons, dynamicMap=$dynamicMap)";
+    return 'Gamepad(buttons=$buttons, dynamicMap=$dynamicMap)';
   }
 
   Map<String, dynamic> toJson() {
@@ -110,9 +112,9 @@ class GamepadButtonSerializer extends Codec<GamepadButton, Map> {
   const GamepadButtonSerializer();
 
   @override
-  get encoder => const GamepadButtonEncoder();
+  GamepadButtonEncoder get encoder => const GamepadButtonEncoder();
   @override
-  get decoder => const GamepadButtonDecoder();
+  GamepadButtonDecoder get decoder => const GamepadButtonDecoder();
   static GamepadButton fromMap(Map map) {
     return GamepadButton(
         name: map['name'] as String?, radius: map['radius'] as int?);
@@ -151,9 +153,9 @@ class GamepadSerializer extends Codec<Gamepad, Map> {
   const GamepadSerializer();
 
   @override
-  get encoder => const GamepadEncoder();
+  GamepadEncoder get encoder => const GamepadEncoder();
   @override
-  get decoder => const GamepadDecoder();
+  GamepadDecoder get decoder => const GamepadDecoder();
   static Gamepad fromMap(Map map) {
     return Gamepad(
         buttons: map['buttons'] is Iterable

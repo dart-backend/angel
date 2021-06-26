@@ -17,6 +17,7 @@ class HasMap implements _HasMap {
     return HasMap(value: value ?? this.value);
   }
 
+  @override
   bool operator ==(other) {
     return other is _HasMap &&
         MapEquality<dynamic, dynamic>(
@@ -31,7 +32,7 @@ class HasMap implements _HasMap {
 
   @override
   String toString() {
-    return "HasMap(value=$value)";
+    return 'HasMap(value=$value)';
   }
 
   Map<String, dynamic> toJson() {
@@ -63,9 +64,9 @@ class HasMapSerializer extends Codec<HasMap, Map> {
   const HasMapSerializer();
 
   @override
-  get encoder => const HasMapEncoder();
+  HasMapEncoder get encoder => const HasMapEncoder();
   @override
-  get decoder => const HasMapDecoder();
+  HasMapDecoder get decoder => const HasMapDecoder();
   static HasMap fromMap(Map map) {
     if (map['value'] == null) {
       throw FormatException("Missing required field 'value' on HasMap.");

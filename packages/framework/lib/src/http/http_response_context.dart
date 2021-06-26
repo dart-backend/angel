@@ -12,6 +12,8 @@ class HttpResponseContext extends ResponseContext<HttpResponse> {
   /// The underlying [HttpResponse] under this instance.
   @override
   final HttpResponse rawResponse;
+
+  @override
   Angel? app;
 
   LockableBytesBuilder? _buffer;

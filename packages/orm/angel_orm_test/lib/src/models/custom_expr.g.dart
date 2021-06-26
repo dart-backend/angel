@@ -8,25 +8,25 @@ part of 'custom_expr.dart';
 
 class NumbersMigration extends Migration {
   @override
-  up(Schema schema) {
+  void up(Schema schema) {
     schema.create('numbers', (table) {
-      table.serial('id')..primaryKey();
+      table.serial('id').primaryKey();
       table.timeStamp('created_at');
       table.timeStamp('updated_at');
     });
   }
 
   @override
-  down(Schema schema) {
+  void down(Schema schema) {
     schema.drop('numbers');
   }
 }
 
 class AlphabetMigration extends Migration {
   @override
-  up(Schema schema) {
+  void up(Schema schema) {
     schema.create('alphabets', (table) {
-      table.serial('id')..primaryKey();
+      table.serial('id').primaryKey();
       table.timeStamp('created_at');
       table.timeStamp('updated_at');
       table.varChar('value');
@@ -37,7 +37,7 @@ class AlphabetMigration extends Migration {
   }
 
   @override
-  down(Schema schema) {
+  void down(Schema schema) {
     schema.drop('alphabets');
   }
 }
@@ -49,7 +49,7 @@ class AlphabetMigration extends Migration {
 class NumbersQuery extends Query<Numbers, NumbersQueryWhere> {
   NumbersQuery({Query? parent, Set<String>? trampoline})
       : super(parent: parent) {
-    trampoline ??= Set();
+    trampoline ??= <String>{};
     trampoline.add(tableName);
     expressions['two'] = 'SELECT 2';
     _where = NumbersQueryWhere(this);
@@ -61,17 +61,17 @@ class NumbersQuery extends Query<Numbers, NumbersQueryWhere> {
   NumbersQueryWhere? _where;
 
   @override
-  get casts {
+  Map<String, String> get casts {
     return {};
   }
 
   @override
-  get tableName {
+  String get tableName {
     return 'numbers';
   }
 
   @override
-  get fields {
+  List<String> get fields {
     return const ['id', 'created_at', 'updated_at', 'two'];
   }
 
@@ -116,14 +116,14 @@ class NumbersQueryWhere extends QueryWhere {
   final DateTimeSqlExpressionBuilder updatedAt;
 
   @override
-  get expressionBuilders {
+  List<SqlExpressionBuilder> get expressionBuilders {
     return [id, createdAt, updatedAt];
   }
 }
 
 class NumbersQueryValues extends MapQueryValues {
   @override
-  get casts {
+  Map<String, String> get casts {
     return {};
   }
 
@@ -151,7 +151,7 @@ class NumbersQueryValues extends MapQueryValues {
 class AlphabetQuery extends Query<Alphabet, AlphabetQueryWhere> {
   AlphabetQuery({Query? parent, Set<String>? trampoline})
       : super(parent: parent) {
-    trampoline ??= Set();
+    trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = AlphabetQueryWhere(this);
     leftJoin(_numbers = NumbersQuery(trampoline: trampoline, parent: this),
@@ -168,17 +168,17 @@ class AlphabetQuery extends Query<Alphabet, AlphabetQueryWhere> {
   NumbersQuery? _numbers;
 
   @override
-  get casts {
+  Map<String, String> get casts {
     return {};
   }
 
   @override
-  get tableName {
+  String get tableName {
     return 'alphabets';
   }
 
   @override
-  get fields {
+  List<String> get fields {
     return const ['id', 'created_at', 'updated_at', 'value', 'numbers_id'];
   }
 
@@ -239,14 +239,14 @@ class AlphabetQueryWhere extends QueryWhere {
   final NumericSqlExpressionBuilder<int> numbersId;
 
   @override
-  get expressionBuilders {
+  List<SqlExpressionBuilder> get expressionBuilders {
     return [id, createdAt, updatedAt, value, numbersId];
   }
 }
 
 class AlphabetQueryValues extends MapQueryValues {
   @override
-  get casts {
+  Map<String, String> get casts {
     return {};
   }
 
@@ -317,6 +317,7 @@ class Numbers extends _Numbers {
         two: two ?? this.two);
   }
 
+  @override
   bool operator ==(other) {
     return other is _Numbers &&
         other.id == id &&
@@ -332,7 +333,7 @@ class Numbers extends _Numbers {
 
   @override
   String toString() {
-    return "Numbers(id=$id, createdAt=$createdAt, updatedAt=$updatedAt, two=$two)";
+    return 'Numbers(id=$id, createdAt=$createdAt, updatedAt=$updatedAt, two=$two)';
   }
 
   Map<String, dynamic>? toJson() {
@@ -376,6 +377,7 @@ class Alphabet extends _Alphabet {
         numbers: numbers ?? this.numbers);
   }
 
+  @override
   bool operator ==(other) {
     return other is _Alphabet &&
         other.id == id &&
@@ -392,7 +394,7 @@ class Alphabet extends _Alphabet {
 
   @override
   String toString() {
-    return "Alphabet(id=$id, createdAt=$createdAt, updatedAt=$updatedAt, value=$value, numbers=$numbers)";
+    return 'Alphabet(id=$id, createdAt=$createdAt, updatedAt=$updatedAt, value=$value, numbers=$numbers)';
   }
 
   Map<String, dynamic> toJson() {
@@ -424,9 +426,9 @@ class NumbersSerializer extends Codec<Numbers, Map?> {
   const NumbersSerializer();
 
   @override
-  get encoder => const NumbersEncoder();
+  NumbersEncoder get encoder => const NumbersEncoder();
   @override
-  get decoder => const NumbersDecoder();
+  NumbersDecoder get decoder => const NumbersDecoder();
   static Numbers fromMap(Map map) {
     return Numbers(
         id: map['id'] as String?,
@@ -488,9 +490,9 @@ class AlphabetSerializer extends Codec<Alphabet, Map> {
   const AlphabetSerializer();
 
   @override
-  get encoder => const AlphabetEncoder();
+  AlphabetEncoder get encoder => const AlphabetEncoder();
   @override
-  get decoder => const AlphabetDecoder();
+  AlphabetDecoder get decoder => const AlphabetDecoder();
   static Alphabet fromMap(Map map) {
     return Alphabet(
         id: map['id'] as String?,

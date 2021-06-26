@@ -164,7 +164,7 @@ class HookedService<Id, Data, T extends Service<Id, Data>>
         case HookedServiceEvent.removed:
           return beforeRemoved;
         default:
-          throw ArgumentError('Invalid service method: ${name}');
+          throw ArgumentError('Invalid service method: $name');
       }
     }).forEach((HookedServiceEventDispatcher<Id, Data, T> dispatcher) =>
         dispatcher.listen(listener));
@@ -188,7 +188,7 @@ class HookedService<Id, Data, T extends Service<Id, Data>>
         case HookedServiceEvent.removed:
           return afterRemoved;
         default:
-          throw ArgumentError('Invalid service method: ${name}');
+          throw ArgumentError('Invalid service method: $name');
       }
     }).forEach((HookedServiceEventDispatcher<Id, Data, T> dispatcher) =>
         dispatcher.listen(listener));

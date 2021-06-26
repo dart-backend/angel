@@ -54,13 +54,13 @@ class NumericSqlExpressionBuilder<T extends num>
     return '$_op $v';
   }
 
-  operator <(T value) => _change('<', value);
+  bool operator <(T value) => _change('<', value);
 
-  operator >(T value) => _change('>', value);
+  bool operator >(T value) => _change('>', value);
 
-  operator <=(T value) => _change('<=', value);
+  bool operator <=(T value) => _change('<=', value);
 
-  operator >=(T value) => _change('>=', value);
+  bool operator >=(T value) => _change('>=', value);
 
   void get isNull {
     _raw = 'IS NULL';
@@ -210,7 +210,7 @@ class StringSqlExpressionBuilder extends SqlExpressionBuilder<String> {
   String? compile() {
     if (_raw != null) return _raw;
     if (_value == null) return null;
-    return "$_op @$substitution";
+    return '$_op @$substitution';
   }
 
   void isEmpty() => equals('');
@@ -254,7 +254,7 @@ class StringSqlExpressionBuilder extends SqlExpressionBuilder<String> {
   void isNotBetween(String lower, String upper) {
     query.substitutionValues[lowerName] = lower;
     query.substitutionValues[upperName] = upper;
-    _raw = "NOT BETWEEN @$lowerName AND @$upperName";
+    _raw = 'NOT BETWEEN @$lowerName AND @$upperName';
     _hasValue = true;
   }
 
@@ -381,13 +381,13 @@ class DateTimeSqlExpressionBuilder extends SqlExpressionBuilder<DateTime> {
     return true;
   }
 
-  operator <(DateTime value) => _change('<', value, true);
+  bool operator <(DateTime value) => _change('<', value, true);
 
-  operator <=(DateTime value) => _change('<=', value, true);
+  bool operator <=(DateTime value) => _change('<=', value, true);
 
-  operator >(DateTime value) => _change('>', value, true);
+  bool operator >(DateTime value) => _change('>', value, true);
 
-  operator >=(DateTime value) => _change('>=', value, true);
+  bool operator >=(DateTime value) => _change('>=', value, true);
 
   void equals(DateTime value, {bool includeTime = true}) {
     _change('=', value, includeTime != false);

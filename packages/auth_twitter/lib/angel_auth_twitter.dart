@@ -81,7 +81,7 @@ class TwitterStrategy<User> extends AuthStrategy<User> {
           'accept': 'application/json'
         },
         body: {
-          "oauth_callback": options.redirectUri.toString()
+          'oauth_callback': options.redirectUri.toString()
         }).then(handleUrlEncodedResponse);
   }
 
@@ -91,17 +91,18 @@ class TwitterStrategy<User> extends AuthStrategy<User> {
     try {
       if (options != null) {
         var result = await authenticateCallback(req, res, options);
-        if (result is User)
+        if (result is User) {
           return result;
-        else
+        } else {
           return null;
+        }
       } else {
         var result = await getRequestToken();
         var token = result['oauth_token'];
         var url = baseUrl.replace(
             path: p.join(baseUrl.path, 'oauth/authorize'),
             queryParameters: {'oauth_token': token});
-        res.redirect(url);
+        await res.redirect(url);
         return null;
       }
     } on TwitterAuthorizationException catch (e) {

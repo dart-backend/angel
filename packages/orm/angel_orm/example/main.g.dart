@@ -50,6 +50,7 @@ class Employee extends _Employee {
         updatedAt: updatedAt ?? this.updatedAt);
   }
 
+  @override
   bool operator ==(other) {
     return other is _Employee &&
         other.id == id &&

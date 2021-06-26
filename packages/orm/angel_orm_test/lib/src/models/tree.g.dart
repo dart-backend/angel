@@ -8,9 +8,9 @@ part of angel3_orm_generator.test.models.tree;
 
 class TreeMigration extends Migration {
   @override
-  up(Schema schema) {
+  void up(Schema schema) {
     schema.create('trees', (table) {
-      table.serial('id')..primaryKey();
+      table.serial('id').primaryKey();
       table.timeStamp('created_at');
       table.timeStamp('updated_at');
       table.declare('rings', ColumnType('smallint'));
@@ -18,16 +18,16 @@ class TreeMigration extends Migration {
   }
 
   @override
-  down(Schema schema) {
+  void down(Schema schema) {
     schema.drop('trees', cascade: true);
   }
 }
 
 class FruitMigration extends Migration {
   @override
-  up(Schema schema) {
+  void up(Schema schema) {
     schema.create('fruits', (table) {
-      table.serial('id')..primaryKey();
+      table.serial('id').primaryKey();
       table.timeStamp('created_at');
       table.timeStamp('updated_at');
       table.integer('tree_id');
@@ -36,7 +36,7 @@ class FruitMigration extends Migration {
   }
 
   @override
-  down(Schema schema) {
+  void down(Schema schema) {
     schema.drop('fruits');
   }
 }
@@ -47,7 +47,7 @@ class FruitMigration extends Migration {
 
 class TreeQuery extends Query<Tree, TreeQueryWhere> {
   TreeQuery({Query? parent, Set<String>? trampoline}) : super(parent: parent) {
-    trampoline ??= Set();
+    trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = TreeQueryWhere(this);
     leftJoin(_fruits = FruitQuery(trampoline: trampoline, parent: this), 'id',
@@ -70,17 +70,17 @@ class TreeQuery extends Query<Tree, TreeQueryWhere> {
   FruitQuery? _fruits;
 
   @override
-  get casts {
+  Map<String, String> get casts {
     return {};
   }
 
   @override
-  get tableName {
+  String get tableName {
     return 'trees';
   }
 
   @override
-  get fields {
+  List<String> get fields {
     return const ['id', 'created_at', 'updated_at', 'rings'];
   }
 
@@ -122,7 +122,7 @@ class TreeQuery extends Query<Tree, TreeQueryWhere> {
   }
 
   @override
-  get(QueryExecutor executor) {
+  Future<List<Tree>> get(QueryExecutor executor) {
     return super.get(executor).then((result) {
       return result.fold<List<Tree>>([], (out, model) {
         var idx = out.indexWhere((m) => m.id == model.id);
@@ -141,7 +141,7 @@ class TreeQuery extends Query<Tree, TreeQueryWhere> {
   }
 
   @override
-  update(QueryExecutor executor) {
+  Future<List<Tree>> update(QueryExecutor executor) {
     return super.update(executor).then((result) {
       return result.fold<List<Tree>>([], (out, model) {
         var idx = out.indexWhere((m) => m.id == model.id);
@@ -160,7 +160,7 @@ class TreeQuery extends Query<Tree, TreeQueryWhere> {
   }
 
   @override
-  delete(QueryExecutor executor) {
+  Future<List<Tree>> delete(QueryExecutor executor) {
     return super.delete(executor).then((result) {
       return result.fold<List<Tree>>([], (out, model) {
         var idx = out.indexWhere((m) => m.id == model.id);
@@ -195,14 +195,14 @@ class TreeQueryWhere extends QueryWhere {
   final NumericSqlExpressionBuilder<int> rings;
 
   @override
-  get expressionBuilders {
+  List<SqlExpressionBuilder> get expressionBuilders {
     return [id, createdAt, updatedAt, rings];
   }
 }
 
 class TreeQueryValues extends MapQueryValues {
   @override
-  get casts {
+  Map<String, String> get casts {
     return {};
   }
 
@@ -235,7 +235,7 @@ class TreeQueryValues extends MapQueryValues {
 
 class FruitQuery extends Query<Fruit, FruitQueryWhere> {
   FruitQuery({Query? parent, Set<String>? trampoline}) : super(parent: parent) {
-    trampoline ??= Set();
+    trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = FruitQueryWhere(this);
   }
@@ -246,17 +246,17 @@ class FruitQuery extends Query<Fruit, FruitQueryWhere> {
   FruitQueryWhere? _where;
 
   @override
-  get casts {
+  Map<String, String> get casts {
     return {};
   }
 
   @override
-  get tableName {
+  String get tableName {
     return 'fruits';
   }
 
   @override
-  get fields {
+  List<String> get fields {
     return const ['id', 'created_at', 'updated_at', 'tree_id', 'common_name'];
   }
 
@@ -308,14 +308,14 @@ class FruitQueryWhere extends QueryWhere {
   final StringSqlExpressionBuilder commonName;
 
   @override
-  get expressionBuilders {
+  List<SqlExpressionBuilder> get expressionBuilders {
     return [id, createdAt, updatedAt, treeId, commonName];
   }
 }
 
 class FruitQueryValues extends MapQueryValues {
   @override
-  get casts {
+  Map<String, String> get casts {
     return {};
   }
 
@@ -364,7 +364,7 @@ class Tree extends _Tree {
       this.updatedAt,
       this.rings,
       List<_Fruit> fruits = const []})
-      : this.fruits = List.unmodifiable(fruits);
+      : fruits = List.unmodifiable(fruits);
 
   /// A unique identifier corresponding to this item.
   @override
@@ -398,6 +398,7 @@ class Tree extends _Tree {
         fruits: fruits);
   }
 
+  @override
   bool operator ==(other) {
     return other is _Tree &&
         other.id == id &&
@@ -415,7 +416,7 @@ class Tree extends _Tree {
 
   @override
   String toString() {
-    return "Tree(id=$id, createdAt=$createdAt, updatedAt=$updatedAt, rings=$rings, fruits=$fruits)";
+    return 'Tree(id=$id, createdAt=$createdAt, updatedAt=$updatedAt, rings=$rings, fruits=$fruits)';
   }
 
   Map<String, dynamic> toJson() {
@@ -460,6 +461,7 @@ class Fruit extends _Fruit {
         commonName: commonName ?? this.commonName);
   }
 
+  @override
   bool operator ==(other) {
     return other is _Fruit &&
         other.id == id &&
@@ -476,7 +478,7 @@ class Fruit extends _Fruit {
 
   @override
   String toString() {
-    return "Fruit(id=$id, createdAt=$createdAt, updatedAt=$updatedAt, treeId=$treeId, commonName=$commonName)";
+    return 'Fruit(id=$id, createdAt=$createdAt, updatedAt=$updatedAt, treeId=$treeId, commonName=$commonName)';
   }
 
   Map<String, dynamic> toJson() {
@@ -508,9 +510,9 @@ class TreeSerializer extends Codec<Tree, Map> {
   const TreeSerializer();
 
   @override
-  get encoder => const TreeEncoder();
+  TreeEncoder get encoder => const TreeEncoder();
   @override
-  get decoder => const TreeDecoder();
+  TreeDecoder get decoder => const TreeDecoder();
   static Tree fromMap(Map map) {
     return Tree(
         id: map['id'] as String?,
@@ -582,9 +584,9 @@ class FruitSerializer extends Codec<Fruit, Map> {
   const FruitSerializer();
 
   @override
-  get encoder => const FruitEncoder();
+  FruitEncoder get encoder => const FruitEncoder();
   @override
-  get decoder => const FruitDecoder();
+  FruitDecoder get decoder => const FruitDecoder();
   static Fruit fromMap(Map map) {
     return Fruit(
         id: map['id'] as String?,

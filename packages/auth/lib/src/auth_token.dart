@@ -107,12 +107,12 @@ class AuthToken {
 
   Map toJson() {
     return _splayify({
-      "iss": "angel_auth",
-      "aud": ipAddress,
-      "exp": lifeSpan,
-      "iat": issuedAt.toIso8601String(),
-      "sub": userId,
-      "pld": _splayify(payload)
+      'iss': 'angel_auth',
+      'aud': ipAddress,
+      'exp': lifeSpan,
+      'iat': issuedAt.toIso8601String(),
+      'sub': userId,
+      'pld': _splayify(payload)
     });
   }
 }

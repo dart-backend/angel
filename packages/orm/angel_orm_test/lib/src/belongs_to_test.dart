@@ -5,7 +5,7 @@ import 'models/book.dart';
 
 import 'util.dart';
 
-belongsToTests(FutureOr<QueryExecutor> Function() createExecutor,
+void belongsToTests(FutureOr<QueryExecutor> Function() createExecutor,
     {FutureOr<void> Function(QueryExecutor)? close}) {
   late QueryExecutor executor;
   Author? jkRowling;
@@ -38,7 +38,7 @@ belongsToTests(FutureOr<QueryExecutor> Function() createExecutor,
   group('selects', () {
     test('select all', () async {
       var query = BookQuery();
-      List<Book> books = await query.get(executor);
+      var books = await query.get(executor);
       expect(books, hasLength(1));
 
       var book = books.first;
@@ -55,7 +55,7 @@ belongsToTests(FutureOr<QueryExecutor> Function() createExecutor,
     test('select one', () async {
       var query = BookQuery();
       query.where!.id.equals(int.parse(deathlyHallows!.id!));
-      print(query.compile(Set()));
+      print(query.compile({}));
 
       var bookOpt = await query.getOne(executor);
       expect(bookOpt.isPresent, true);
@@ -75,9 +75,9 @@ belongsToTests(FutureOr<QueryExecutor> Function() createExecutor,
       var query = BookQuery()
         ..where!.name.equals('Goblet of Fire')
         ..orWhere((w) => w.authorId.equals(int.parse(jkRowling!.id!)));
-      print(query.compile(Set()));
+      print(query.compile({}));
 
-      List<Book> books = await query.get(executor);
+      var books = await query.get(executor);
       expect(books, hasLength(1));
 
       var book = books.first;
@@ -99,9 +99,9 @@ belongsToTests(FutureOr<QueryExecutor> Function() createExecutor,
       query1
         ..union(query2)
         ..unionAll(query3);
-      print(query1.compile(Set()));
+      print(query1.compile({}));
 
-      List<Book> books = await query1.get(executor);
+      var books = await query1.get(executor);
       expect(books, hasLength(1));
 
       var book = books.first;
@@ -117,7 +117,7 @@ belongsToTests(FutureOr<QueryExecutor> Function() createExecutor,
 
     test('order by', () async {
       var query = AuthorQuery()..orderBy(AuthorFields.name, descending: true);
-      List<Author> authors = await query.get(executor);
+      var authors = await query.get(executor);
       expect(authors, [jkRowling, jameson]);
     });
   });
@@ -131,8 +131,8 @@ belongsToTests(FutureOr<QueryExecutor> Function() createExecutor,
   test('delete stream', () async {
     printSeparator('Delete stream test');
     var query = BookQuery()..where!.name.equals(deathlyHallows!.name!);
-    print(query.compile(Set(), preamble: 'DELETE', withFields: false));
-    List<Book> books = await query.delete(executor);
+    print(query.compile({}, preamble: 'DELETE', withFields: false));
+    var books = await query.delete(executor);
     expect(books, hasLength(1));
 
     var book = books.first;

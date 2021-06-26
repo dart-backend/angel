@@ -56,7 +56,7 @@ HookedServiceEventListener belongsToMany(Pattern servicePath,
           'query': {foreignKey ?? 'id': id}
         });
 
-        if (indexed == null || indexed is! List || indexed.isNotEmpty != true) {
+        if (indexed is! List || indexed.isNotEmpty != true) {
           await _assignForeignObject(null, obj);
         } else {
           var child = indexed is Iterable ? indexed.toList() : [indexed];

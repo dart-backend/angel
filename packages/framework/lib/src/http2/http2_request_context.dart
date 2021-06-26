@@ -13,6 +13,7 @@ final RegExp _straySlashes = RegExp(r'(^/+)|(/+$)');
 
 class Http2RequestContext extends RequestContext<ServerTransportStream?> {
   final StreamController<List<int>> _body = StreamController();
+  @override
   final Container container;
   List<Cookie> _cookies = <Cookie>[];
   HttpHeaders? _headers;

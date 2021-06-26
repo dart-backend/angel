@@ -205,7 +205,7 @@ class Renderer {
           element.gt2);
     }
 
-    int i = 0;
+    var i = 0;
     for (var item in attribute.value!.compute(scope)) {
       var childScope = scope.createChild(values: {alias: item, indexAs: i++});
       renderElement(strippedElement, buffer, childScope, html5);
@@ -255,7 +255,7 @@ class Renderer {
           value: attribute.value?.compute(scope), constant: true);
     }
 
-    for (int i = 0; i < element.children.length; i++) {
+    for (var i = 0; i < element.children.length; i++) {
       var child = element.children.elementAt(i);
       renderElementChild(
           element, child, buffer, scope, html5, i, element.children.length);

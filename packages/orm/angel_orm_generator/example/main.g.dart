@@ -128,7 +128,7 @@ class EmployeeQueryWhere extends QueryWhere {
 
 class EmployeeQueryValues extends MapQueryValues {
   @override
-  get casts {
+  Map<String, String> get casts {
     return {'salary': 'decimal'};
   }
 
@@ -235,6 +235,7 @@ class Employee extends _Employee {
         salary: salary ?? this.salary);
   }
 
+  @override
   bool operator ==(other) {
     return other is _Employee &&
         other.id == id &&

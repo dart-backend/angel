@@ -8,9 +8,9 @@ part of angel_orm3.generator.models.car;
 
 class CarMigration extends Migration {
   @override
-  up(Schema schema) {
+  void up(Schema schema) {
     schema.create('cars', (table) {
-      table.serial('id')..primaryKey();
+      table.serial('id').primaryKey();
       table.timeStamp('created_at');
       table.timeStamp('updated_at');
       table.varChar('make');
@@ -21,7 +21,7 @@ class CarMigration extends Migration {
   }
 
   @override
-  down(Schema schema) {
+  void down(Schema schema) {
     schema.drop('cars');
   }
 }
@@ -32,7 +32,7 @@ class CarMigration extends Migration {
 
 class CarQuery extends Query<Car, CarQueryWhere> {
   CarQuery({Query? parent, Set<String>? trampoline}) : super(parent: parent) {
-    trampoline ??= Set();
+    trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = CarQueryWhere(this);
   }
@@ -43,17 +43,17 @@ class CarQuery extends Query<Car, CarQueryWhere> {
   CarQueryWhere? _where;
 
   @override
-  get casts {
+  Map<String, String> get casts {
     return {};
   }
 
   @override
-  get tableName {
+  String get tableName {
     return 'cars';
   }
 
   @override
-  get fields {
+  List<String> get fields {
     return const [
       'id',
       'created_at',
@@ -121,7 +121,7 @@ class CarQueryWhere extends QueryWhere {
   final DateTimeSqlExpressionBuilder recalledAt;
 
   @override
-  get expressionBuilders {
+  List<SqlExpressionBuilder> get expressionBuilders {
     return [
       id,
       createdAt,
@@ -136,7 +136,7 @@ class CarQueryWhere extends QueryWhere {
 
 class CarQueryValues extends MapQueryValues {
   @override
-  get casts {
+  Map<String, String> get casts {
     return {};
   }
 
@@ -242,6 +242,7 @@ class Car extends _Car {
         recalledAt: recalledAt ?? this.recalledAt);
   }
 
+  @override
   bool operator ==(other) {
     return other is _Car &&
         other.id == id &&
@@ -268,7 +269,7 @@ class Car extends _Car {
 
   @override
   String toString() {
-    return "Car(id=$id, createdAt=$createdAt, updatedAt=$updatedAt, make=$make, description=$description, familyFriendly=$familyFriendly, recalledAt=$recalledAt)";
+    return 'Car(id=$id, createdAt=$createdAt, updatedAt=$updatedAt, make=$make, description=$description, familyFriendly=$familyFriendly, recalledAt=$recalledAt)';
   }
 
   Map<String, dynamic> toJson() {
@@ -300,9 +301,9 @@ class CarSerializer extends Codec<Car, Map> {
   const CarSerializer();
 
   @override
-  get encoder => const CarEncoder();
+  CarEncoder get encoder => const CarEncoder();
   @override
-  get decoder => const CarDecoder();
+  CarDecoder get decoder => const CarDecoder();
   static Car fromMap(Map map) {
     return Car(
         id: map['id'] as String?,

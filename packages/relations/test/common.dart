@@ -11,7 +11,7 @@ class CustomMapService extends Service {
 
     var r = items;
 
-    if (params != null && params['query'] is Map) {
+    if (params['query'] is Map) {
       var query = params['query'] as Map;
 
       for (var key in query.keys) {
@@ -28,7 +28,7 @@ class CustomMapService extends Service {
   @override
   Future<Map> read(id, [Map? params]) async {
     return tailor(_items, params).firstWhere((m) => m['id'] == id,
-        orElse: (() => throw AngelHttpException.notFound()) as Map<dynamic, dynamic> Function()?);
+        orElse: (() => throw AngelHttpException.notFound()));
   }
 
   @override

@@ -13,7 +13,7 @@ class Union<T> extends QueryBase<T> {
   final String tableName;
 
   Union(this.left, this.right, {this.all = false, String? tableName})
-      : this.tableName = tableName ?? left.tableName {
+      : tableName = tableName ?? left.tableName {
     substitutionValues
       ..addAll(left.substitutionValues)
       ..addAll(right.substitutionValues);

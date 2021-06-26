@@ -1,7 +1,7 @@
 import 'package:angel3_symbol_table/angel3_symbol_table.dart';
 
 void main(List<String> args) {
-  var mySymbolTable = SymbolTable<int>();
+  //var mySymbolTable = SymbolTable<int>();
   var doubles =
       SymbolTable<double>(values: {'hydrogen': 1.0, 'avogadro': 6.022e23});
 
@@ -17,10 +17,10 @@ void main(List<String> args) {
   doubles.remove('two');
 
 // Find a symbol, either in this symbol table or an ancestor.
-  var symbol1 = doubles.resolve('one');
+  //var symbol1 = doubles.resolve('one');
 
 // Find OR create a symbol.
-  var symbol2 = doubles.resolveOrCreate('one');
-  var symbol3 = doubles.resolveOrCreate('one', value: 1.0);
-  var symbol4 = doubles.resolveOrCreate('one', value: 1.0, constant: true);
+  //var symbol2 = doubles.resolveOrCreate('one');
+  //var symbol3 = doubles.resolveOrCreate('one', value: 1.0);
+  //var symbol4 = doubles.resolveOrCreate('one', value: 1.0, constant: true);
 }

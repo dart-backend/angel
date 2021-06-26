@@ -3,7 +3,7 @@ import 'package:angel3_orm/angel3_orm.dart';
 import 'package:test/test.dart';
 import 'models/has_map.dart';
 
-hasMapTests(FutureOr<QueryExecutor> Function() createExecutor,
+void hasMapTests(FutureOr<QueryExecutor> Function() createExecutor,
     {FutureOr<void> Function(QueryExecutor)? close}) {
   late QueryExecutor executor;
   close ??= (_) => null;

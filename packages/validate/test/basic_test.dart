@@ -13,7 +13,7 @@ final Validator todoSchema = Validator({
   'completed': false
 });
 
-main() {
+void main() {
   test('custom error message', () {
     var result = emailSchema.check({'to': 2});
 

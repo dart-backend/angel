@@ -13,7 +13,7 @@ class PostgresMigrationRunner implements MigrationRunner {
   bool _connected = false;
 
   PostgresMigrationRunner(this.connection,
-      {Iterable<Migration> migrations = const [], bool connected: false}) {
+      {Iterable<Migration> migrations = const [], bool connected = false}) {
     if (migrations.isNotEmpty == true) migrations.forEach(addMigration);
     _connected = connected == true;
   }

@@ -391,8 +391,10 @@ final _data = <r.Reflectable, r.ReflectorData>{
             },
             {},
             {
-              r"": (b) => ([length]) =>
-                  b ? (length == null ? List() : List(length)) : null,
+              r"": (b) => ([length]) => b
+                  ? (length == null ? [] : []
+                    ..length)
+                  : null,
               r"filled": (b) => (length, fill, {growable: false}) =>
                   b ? List.filled(length, fill, growable: growable) : null,
               r"from": (b) => (elements, {growable: true}) =>

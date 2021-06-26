@@ -20,6 +20,7 @@ class Goat implements _Goat {
     return Goat(integer: integer ?? this.integer, list: list ?? this.list);
   }
 
+  @override
   bool operator ==(other) {
     return other is _Goat &&
         other.integer == integer &&
@@ -33,7 +34,7 @@ class Goat implements _Goat {
 
   @override
   String toString() {
-    return "Goat(integer=$integer, list=$list)";
+    return 'Goat(integer=$integer, list=$list)';
   }
 
   Map<String, dynamic> toJson() {
@@ -65,9 +66,9 @@ class GoatSerializer extends Codec<Goat, Map> {
   const GoatSerializer();
 
   @override
-  get encoder => const GoatEncoder();
+  GoatEncoder get encoder => const GoatEncoder();
   @override
-  get decoder => const GoatDecoder();
+  GoatDecoder get decoder => const GoatDecoder();
   static Goat fromMap(Map map) {
     return Goat(
         integer: map['integer'] as int? ?? 34,

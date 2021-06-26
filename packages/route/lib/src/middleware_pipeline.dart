@@ -31,7 +31,7 @@ class MiddlewarePipeline<T> {
   }
 
   MiddlewarePipeline(Iterable<RoutingResult<T>> routingResults)
-      : this.routingResults = routingResults.toList();
+      : routingResults = routingResults.toList();
 }
 
 /// Iterates through a [MiddlewarePipeline].

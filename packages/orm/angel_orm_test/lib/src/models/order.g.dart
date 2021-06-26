@@ -8,9 +8,9 @@ part of angel3_orm_generator.test.models.order;
 
 class OrderMigration extends Migration {
   @override
-  up(Schema schema) {
+  void up(Schema schema) {
     schema.create('orders', (table) {
-      table.serial('id')..primaryKey();
+      table.serial('id').primaryKey();
       table.timeStamp('created_at');
       table.timeStamp('updated_at');
       table.integer('employee_id');
@@ -23,23 +23,23 @@ class OrderMigration extends Migration {
   }
 
   @override
-  down(Schema schema) {
+  void down(Schema schema) {
     schema.drop('orders');
   }
 }
 
 class CustomerMigration extends Migration {
   @override
-  up(Schema schema) {
+  void up(Schema schema) {
     schema.create('customers', (table) {
-      table.serial('id')..primaryKey();
+      table.serial('id').primaryKey();
       table.timeStamp('created_at');
       table.timeStamp('updated_at');
     });
   }
 
   @override
-  down(Schema schema) {
+  void down(Schema schema) {
     schema.drop('customers');
   }
 }
@@ -50,7 +50,7 @@ class CustomerMigration extends Migration {
 
 class OrderQuery extends Query<Order, OrderQueryWhere> {
   OrderQuery({Query? parent, Set<String>? trampoline}) : super(parent: parent) {
-    trampoline ??= Set();
+    trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = OrderQueryWhere(this);
     leftJoin(_customer = CustomerQuery(trampoline: trampoline, parent: this),
@@ -67,17 +67,17 @@ class OrderQuery extends Query<Order, OrderQueryWhere> {
   CustomerQuery? _customer;
 
   @override
-  get casts {
+  Map<String, String> get casts {
     return {};
   }
 
   @override
-  get tableName {
+  String get tableName {
     return 'orders';
   }
 
   @override
-  get fields {
+  List<String> get fields {
     return const [
       'id',
       'created_at',
@@ -154,7 +154,7 @@ class OrderQueryWhere extends QueryWhere {
   final NumericSqlExpressionBuilder<int> shipperId;
 
   @override
-  get expressionBuilders {
+  List<SqlExpressionBuilder> get expressionBuilders {
     return [
       id,
       createdAt,
@@ -169,7 +169,7 @@ class OrderQueryWhere extends QueryWhere {
 
 class OrderQueryValues extends MapQueryValues {
   @override
-  get casts {
+  Map<String, String> get casts {
     return {};
   }
 
@@ -223,7 +223,7 @@ class OrderQueryValues extends MapQueryValues {
 class CustomerQuery extends Query<Customer, CustomerQueryWhere> {
   CustomerQuery({Query? parent, Set<String>? trampoline})
       : super(parent: parent) {
-    trampoline ??= Set();
+    trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = CustomerQueryWhere(this);
   }
@@ -234,17 +234,17 @@ class CustomerQuery extends Query<Customer, CustomerQueryWhere> {
   CustomerQueryWhere? _where;
 
   @override
-  get casts {
+  Map<String, String> get casts {
     return {};
   }
 
   @override
-  get tableName {
+  String get tableName {
     return 'customers';
   }
 
   @override
-  get fields {
+  List<String> get fields {
     return const ['id', 'created_at', 'updated_at'];
   }
 
@@ -288,14 +288,14 @@ class CustomerQueryWhere extends QueryWhere {
   final DateTimeSqlExpressionBuilder updatedAt;
 
   @override
-  get expressionBuilders {
+  List<SqlExpressionBuilder> get expressionBuilders {
     return [id, createdAt, updatedAt];
   }
 }
 
 class CustomerQueryValues extends MapQueryValues {
   @override
-  get casts {
+  Map<String, String> get casts {
     return {};
   }
 
@@ -377,6 +377,7 @@ class Order extends _Order {
         shipperId: shipperId ?? this.shipperId);
   }
 
+  @override
   bool operator ==(other) {
     return other is _Order &&
         other.id == id &&
@@ -396,7 +397,7 @@ class Order extends _Order {
 
   @override
   String toString() {
-    return "Order(id=$id, createdAt=$createdAt, updatedAt=$updatedAt, customer=$customer, employeeId=$employeeId, orderDate=$orderDate, shipperId=$shipperId)";
+    return 'Order(id=$id, createdAt=$createdAt, updatedAt=$updatedAt, customer=$customer, employeeId=$employeeId, orderDate=$orderDate, shipperId=$shipperId)';
   }
 
   Map<String, dynamic> toJson() {
@@ -427,6 +428,7 @@ class Customer extends _Customer {
         updatedAt: updatedAt ?? this.updatedAt);
   }
 
+  @override
   bool operator ==(other) {
     return other is _Customer &&
         other.id == id &&
@@ -441,7 +443,7 @@ class Customer extends _Customer {
 
   @override
   String toString() {
-    return "Customer(id=$id, createdAt=$createdAt, updatedAt=$updatedAt)";
+    return 'Customer(id=$id, createdAt=$createdAt, updatedAt=$updatedAt)';
   }
 
   Map<String, dynamic>? toJson() {
@@ -473,9 +475,9 @@ class OrderSerializer extends Codec<Order, Map> {
   const OrderSerializer();
 
   @override
-  get encoder => const OrderEncoder();
+  OrderEncoder get encoder => const OrderEncoder();
   @override
-  get decoder => const OrderDecoder();
+  OrderDecoder get decoder => const OrderDecoder();
   static Order fromMap(Map map) {
     return Order(
         id: map['id'] as String?,
@@ -560,9 +562,9 @@ class CustomerSerializer extends Codec<Customer, Map?> {
   const CustomerSerializer();
 
   @override
-  get encoder => const CustomerEncoder();
+  CustomerEncoder get encoder => const CustomerEncoder();
   @override
-  get decoder => const CustomerDecoder();
+  CustomerDecoder get decoder => const CustomerDecoder();
   static Customer fromMap(Map map) {
     return Customer(
         id: map['id'] as String?,

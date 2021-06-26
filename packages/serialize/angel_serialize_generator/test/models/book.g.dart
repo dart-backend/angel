@@ -20,7 +20,7 @@ class Book extends _Book {
       this.pageCount,
       List<double>? notModels,
       this.camelCaseString})
-      : this.notModels = List.unmodifiable(notModels ?? []);
+      : notModels = List.unmodifiable(notModels ?? []);
 
   /// A unique identifier corresponding to this item.
   @override
@@ -75,6 +75,7 @@ class Book extends _Book {
         camelCaseString: camelCaseString ?? this.camelCaseString);
   }
 
+  @override
   bool operator ==(other) {
     return other is _Book &&
         other.id == id &&
@@ -126,7 +127,7 @@ class Author extends _Author {
       this.newestBook,
       this.secret,
       this.obscured})
-      : this.books = List.unmodifiable(books ?? []);
+      : books = List.unmodifiable(books ?? []);
 
   /// A unique identifier corresponding to this item.
   @override
@@ -181,6 +182,7 @@ class Author extends _Author {
         obscured: obscured ?? this.obscured);
   }
 
+  @override
   bool operator ==(other) {
     return other is _Author &&
         other.id == id &&
@@ -253,6 +255,7 @@ class Library extends _Library {
         collection: collection ?? this.collection);
   }
 
+  @override
   bool operator ==(other) {
     return other is _Library &&
         other.id == id &&
@@ -328,6 +331,7 @@ class Bookmark extends _Bookmark {
         comment: comment ?? this.comment);
   }
 
+  @override
   bool operator ==(other) {
     return other is _Bookmark &&
         other.id == id &&

@@ -48,6 +48,7 @@ class _Numba implements Comparable<_Numba> {
 
   int? parent;
 
+  @override
   int compareTo(_Numba other) => i!.compareTo(other.i!);
 }
 

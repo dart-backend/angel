@@ -23,9 +23,7 @@ class ServiceRateLimiter<Id> extends RateLimiter<Id> {
     var id = await getId(req, res);
     try {
       var data = await service.read(id);
-      if (data != null) {
-        return RateLimitingWindow.fromJson(data);
-      }
+      return RateLimitingWindow.fromJson(data);
     } catch (e) {
       if (e is AngelHttpException) {
         if (e.statusCode == 404) {

@@ -8,9 +8,9 @@ part of angel3_orm_generator.test.models.leg;
 
 class LegMigration extends Migration {
   @override
-  up(Schema schema) {
+  void up(Schema schema) {
     schema.create('legs', (table) {
-      table.serial('id')..primaryKey();
+      table.serial('id').primaryKey();
       table.timeStamp('created_at');
       table.timeStamp('updated_at');
       table.varChar('name');
@@ -18,16 +18,16 @@ class LegMigration extends Migration {
   }
 
   @override
-  down(Schema schema) {
+  void down(Schema schema) {
     schema.drop('legs', cascade: true);
   }
 }
 
 class FootMigration extends Migration {
   @override
-  up(Schema schema) {
+  void up(Schema schema) {
     schema.create('feet', (table) {
-      table.serial('id')..primaryKey();
+      table.serial('id').primaryKey();
       table.timeStamp('created_at');
       table.timeStamp('updated_at');
       table.integer('leg_id');
@@ -36,7 +36,7 @@ class FootMigration extends Migration {
   }
 
   @override
-  down(Schema schema) {
+  void down(Schema schema) {
     schema.drop('feet');
   }
 }
@@ -47,7 +47,7 @@ class FootMigration extends Migration {
 
 class LegQuery extends Query<Leg, LegQueryWhere> {
   LegQuery({Query? parent, Set<String>? trampoline}) : super(parent: parent) {
-    trampoline ??= Set();
+    trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = LegQueryWhere(this);
     leftJoin(
@@ -70,17 +70,17 @@ class LegQuery extends Query<Leg, LegQueryWhere> {
   FootQuery? _foot;
 
   @override
-  get casts {
+  Map<String, String> get casts {
     return {};
   }
 
   @override
-  get tableName {
+  String get tableName {
     return 'legs';
   }
 
   @override
-  get fields {
+  List<String> get fields {
     return const ['id', 'created_at', 'updated_at', 'name'];
   }
 
@@ -138,14 +138,14 @@ class LegQueryWhere extends QueryWhere {
   final StringSqlExpressionBuilder name;
 
   @override
-  get expressionBuilders {
+  List<SqlExpressionBuilder> get expressionBuilders {
     return [id, createdAt, updatedAt, name];
   }
 }
 
 class LegQueryValues extends MapQueryValues {
   @override
-  get casts {
+  Map<String, String> get casts {
     return {};
   }
 
@@ -178,7 +178,7 @@ class LegQueryValues extends MapQueryValues {
 
 class FootQuery extends Query<Foot, FootQueryWhere> {
   FootQuery({Query? parent, Set<String>? trampoline}) : super(parent: parent) {
-    trampoline ??= Set();
+    trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = FootQueryWhere(this);
   }
@@ -189,17 +189,17 @@ class FootQuery extends Query<Foot, FootQueryWhere> {
   FootQueryWhere? _where;
 
   @override
-  get casts {
+  Map<String, String> get casts {
     return {'n_toes': 'text'};
   }
 
   @override
-  get tableName {
+  String get tableName {
     return 'feet';
   }
 
   @override
-  get fields {
+  List<String> get fields {
     return const ['id', 'created_at', 'updated_at', 'leg_id', 'n_toes'];
   }
 
@@ -251,14 +251,14 @@ class FootQueryWhere extends QueryWhere {
   final NumericSqlExpressionBuilder<double> nToes;
 
   @override
-  get expressionBuilders {
+  List<SqlExpressionBuilder> get expressionBuilders {
     return [id, createdAt, updatedAt, legId, nToes];
   }
 }
 
 class FootQueryValues extends MapQueryValues {
   @override
-  get casts {
+  Map<String, String> get casts {
     return {'n_toes': 'decimal'};
   }
 
@@ -335,6 +335,7 @@ class Leg extends _Leg {
         name: name ?? this.name);
   }
 
+  @override
   bool operator ==(other) {
     return other is _Leg &&
         other.id == id &&
@@ -351,7 +352,7 @@ class Leg extends _Leg {
 
   @override
   String toString() {
-    return "Leg(id=$id, createdAt=$createdAt, updatedAt=$updatedAt, foot=$foot, name=$name)";
+    return 'Leg(id=$id, createdAt=$createdAt, updatedAt=$updatedAt, foot=$foot, name=$name)';
   }
 
   Map<String, dynamic> toJson() {
@@ -395,6 +396,7 @@ class Foot extends _Foot {
         nToes: nToes ?? this.nToes);
   }
 
+  @override
   bool operator ==(other) {
     return other is _Foot &&
         other.id == id &&
@@ -411,7 +413,7 @@ class Foot extends _Foot {
 
   @override
   String toString() {
-    return "Foot(id=$id, createdAt=$createdAt, updatedAt=$updatedAt, legId=$legId, nToes=$nToes)";
+    return 'Foot(id=$id, createdAt=$createdAt, updatedAt=$updatedAt, legId=$legId, nToes=$nToes)';
   }
 
   Map<String, dynamic>? toJson() {
@@ -443,9 +445,9 @@ class LegSerializer extends Codec<Leg, Map> {
   const LegSerializer();
 
   @override
-  get encoder => const LegEncoder();
+  LegEncoder get encoder => const LegEncoder();
   @override
-  get decoder => const LegDecoder();
+  LegDecoder get decoder => const LegDecoder();
   static Leg fromMap(Map map) {
     return Leg(
         id: map['id'] as String?,
@@ -516,9 +518,9 @@ class FootSerializer extends Codec<Foot, Map?> {
   const FootSerializer();
 
   @override
-  get encoder => const FootEncoder();
+  FootEncoder get encoder => const FootEncoder();
   @override
-  get decoder => const FootDecoder();
+  FootDecoder get decoder => const FootDecoder();
   static Foot fromMap(Map map) {
     return Foot(
         id: map['id'] as String?,

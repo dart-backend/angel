@@ -27,6 +27,7 @@ class WithEnum implements _WithEnum {
         imageBytes: imageBytes ?? this.imageBytes);
   }
 
+  @override
   bool operator ==(other) {
     return other is _WithEnum &&
         other.type == type &&
@@ -42,7 +43,7 @@ class WithEnum implements _WithEnum {
 
   @override
   String toString() {
-    return "WithEnum(type=$type, finalList=$finalList, imageBytes=$imageBytes)";
+    return 'WithEnum(type=$type, finalList=$finalList, imageBytes=$imageBytes)';
   }
 
   Map<String, dynamic> toJson() {
@@ -74,9 +75,9 @@ class WithEnumSerializer extends Codec<WithEnum, Map> {
   const WithEnumSerializer();
 
   @override
-  get encoder => const WithEnumEncoder();
+  WithEnumEncoder get encoder => const WithEnumEncoder();
   @override
-  get decoder => const WithEnumDecoder();
+  WithEnumDecoder get decoder => const WithEnumDecoder();
   static WithEnum fromMap(Map map) {
     return WithEnum(
         type: map['type'] is WithEnumType

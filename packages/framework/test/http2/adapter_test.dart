@@ -205,7 +205,7 @@ void main() {
       Header.ascii(':scheme', serverRoot.scheme),
     ];
 
-    var stream = await connection.makeRequest(headers, endStream: true);
+    var stream = connection.makeRequest(headers, endStream: true);
 
     var bb = await stream.incomingMessages
         .where((s) => s is DataStreamMessage)

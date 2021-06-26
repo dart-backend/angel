@@ -66,7 +66,7 @@ class DeviceCodeResponse {
     }
 
     if (interval != null) out['interval'] = interval;
-    if (expiresIn != null) out['expires_in'] = expiresIn;
+    out['expires_in'] = expiresIn;
 
     return out;
   }

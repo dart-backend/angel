@@ -57,9 +57,7 @@ class WingsResponseContext extends ResponseContext<int?> {
         }
       }
 
-      if (contentType != null) {
-        outHeaders['content-type'] = contentType.toString();
-      }
+      outHeaders['content-type'] = contentType.toString();
 
       if (encoders.isNotEmpty && correspondingRequest != null) {
         if (_allowedEncodings != null) {

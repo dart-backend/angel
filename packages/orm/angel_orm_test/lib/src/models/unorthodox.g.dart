@@ -8,23 +8,23 @@ part of 'unorthodox.dart';
 
 class UnorthodoxMigration extends Migration {
   @override
-  up(Schema schema) {
+  void up(Schema schema) {
     schema.create('unorthodoxes', (table) {
       table.varChar('name');
     });
   }
 
   @override
-  down(Schema schema) {
+  void down(Schema schema) {
     schema.drop('unorthodoxes');
   }
 }
 
 class WeirdJoinMigration extends Migration {
   @override
-  up(Schema schema) {
+  void up(Schema schema) {
     schema.create('weird_joins', (table) {
-      table.integer('id')..primaryKey();
+      table.integer('id').primaryKey();
       table
           .declare('join_name', ColumnType('varchar'))
           .references('unorthodoxes', 'name');
@@ -32,16 +32,16 @@ class WeirdJoinMigration extends Migration {
   }
 
   @override
-  down(Schema schema) {
+  void down(Schema schema) {
     schema.drop('weird_joins', cascade: true);
   }
 }
 
 class SongMigration extends Migration {
   @override
-  up(Schema schema) {
+  void up(Schema schema) {
     schema.create('songs', (table) {
-      table.serial('id')..primaryKey();
+      table.serial('id').primaryKey();
       table.timeStamp('created_at');
       table.timeStamp('updated_at');
       table.integer('weird_join_id');
@@ -50,43 +50,43 @@ class SongMigration extends Migration {
   }
 
   @override
-  down(Schema schema) {
+  void down(Schema schema) {
     schema.drop('songs');
   }
 }
 
 class NumbaMigration extends Migration {
   @override
-  up(Schema schema) {
+  void up(Schema schema) {
     schema.create('numbas', (table) {
-      table.integer('i')..primaryKey();
+      table.integer('i').primaryKey();
       table.integer('parent');
     });
   }
 
   @override
-  down(Schema schema) {
+  void down(Schema schema) {
     schema.drop('numbas');
   }
 }
 
 class FooMigration extends Migration {
   @override
-  up(Schema schema) {
+  void up(Schema schema) {
     schema.create('foos', (table) {
-      table.varChar('bar')..primaryKey();
+      table.varChar('bar').primaryKey();
     });
   }
 
   @override
-  down(Schema schema) {
+  void down(Schema schema) {
     schema.drop('foos', cascade: true);
   }
 }
 
 class FooPivotMigration extends Migration {
   @override
-  up(Schema schema) {
+  void up(Schema schema) {
     schema.create('foo_pivots', (table) {
       table
           .declare('weird_join_id', ColumnType('int'))
@@ -96,7 +96,7 @@ class FooPivotMigration extends Migration {
   }
 
   @override
-  down(Schema schema) {
+  void down(Schema schema) {
     schema.drop('foo_pivots');
   }
 }
@@ -108,7 +108,7 @@ class FooPivotMigration extends Migration {
 class UnorthodoxQuery extends Query<Unorthodox, UnorthodoxQueryWhere> {
   UnorthodoxQuery({Query? parent, Set<String>? trampoline})
       : super(parent: parent) {
-    trampoline ??= Set();
+    trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = UnorthodoxQueryWhere(this);
   }
@@ -119,17 +119,17 @@ class UnorthodoxQuery extends Query<Unorthodox, UnorthodoxQueryWhere> {
   UnorthodoxQueryWhere? _where;
 
   @override
-  get casts {
+  Map<String, String> get casts {
     return {};
   }
 
   @override
-  get tableName {
+  String get tableName {
     return 'unorthodoxes';
   }
 
   @override
-  get fields {
+  List<String> get fields {
     return const ['name'];
   }
 
@@ -164,14 +164,14 @@ class UnorthodoxQueryWhere extends QueryWhere {
   final StringSqlExpressionBuilder name;
 
   @override
-  get expressionBuilders {
+  List<SqlExpressionBuilder> get expressionBuilders {
     return [name];
   }
 }
 
 class UnorthodoxQueryValues extends MapQueryValues {
   @override
-  get casts {
+  Map<String, String> get casts {
     return {};
   }
 
@@ -188,7 +188,7 @@ class UnorthodoxQueryValues extends MapQueryValues {
 class WeirdJoinQuery extends Query<WeirdJoin, WeirdJoinQueryWhere> {
   WeirdJoinQuery({Query? parent, Set<String>? trampoline})
       : super(parent: parent) {
-    trampoline ??= Set();
+    trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = WeirdJoinQueryWhere(this);
     leftJoin(
@@ -230,17 +230,17 @@ class WeirdJoinQuery extends Query<WeirdJoin, WeirdJoinQueryWhere> {
   NumbaQuery? _numbas;
 
   @override
-  get casts {
+  Map<String, String> get casts {
     return {};
   }
 
   @override
-  get tableName {
+  String get tableName {
     return 'weird_joins';
   }
 
   @override
-  get fields {
+  List<String> get fields {
     return const ['id', 'join_name'];
   }
 
@@ -310,7 +310,7 @@ class WeirdJoinQuery extends Query<WeirdJoin, WeirdJoinQueryWhere> {
   }
 
   @override
-  get(QueryExecutor executor) {
+  Future<List<WeirdJoin>> get(QueryExecutor executor) {
     return super.get(executor).then((result) {
       return result.fold<List<WeirdJoin>>([], (out, model) {
         var idx = out.indexWhere((m) => m.id == model.id);
@@ -330,7 +330,7 @@ class WeirdJoinQuery extends Query<WeirdJoin, WeirdJoinQueryWhere> {
   }
 
   @override
-  update(QueryExecutor executor) {
+  Future<List<WeirdJoin>> update(QueryExecutor executor) {
     return super.update(executor).then((result) {
       return result.fold<List<WeirdJoin>>([], (out, model) {
         var idx = out.indexWhere((m) => m.id == model.id);
@@ -350,7 +350,7 @@ class WeirdJoinQuery extends Query<WeirdJoin, WeirdJoinQueryWhere> {
   }
 
   @override
-  delete(QueryExecutor executor) {
+  Future<List<WeirdJoin>> delete(QueryExecutor executor) {
     return super.delete(executor).then((result) {
       return result.fold<List<WeirdJoin>>([], (out, model) {
         var idx = out.indexWhere((m) => m.id == model.id);
@@ -380,14 +380,14 @@ class WeirdJoinQueryWhere extends QueryWhere {
   final StringSqlExpressionBuilder joinName;
 
   @override
-  get expressionBuilders {
+  List<SqlExpressionBuilder> get expressionBuilders {
     return [id, joinName];
   }
 }
 
 class WeirdJoinQueryValues extends MapQueryValues {
   @override
-  get casts {
+  Map<String, String> get casts {
     return {};
   }
 
@@ -411,7 +411,7 @@ class WeirdJoinQueryValues extends MapQueryValues {
 
 class SongQuery extends Query<Song, SongQueryWhere> {
   SongQuery({Query? parent, Set<String>? trampoline}) : super(parent: parent) {
-    trampoline ??= Set();
+    trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = SongQueryWhere(this);
   }
@@ -422,17 +422,17 @@ class SongQuery extends Query<Song, SongQueryWhere> {
   SongQueryWhere? _where;
 
   @override
-  get casts {
+  Map<String, String> get casts {
     return {};
   }
 
   @override
-  get tableName {
+  String get tableName {
     return 'songs';
   }
 
   @override
-  get fields {
+  List<String> get fields {
     return const ['id', 'created_at', 'updated_at', 'weird_join_id', 'title'];
   }
 
@@ -484,14 +484,14 @@ class SongQueryWhere extends QueryWhere {
   final StringSqlExpressionBuilder title;
 
   @override
-  get expressionBuilders {
+  List<SqlExpressionBuilder> get expressionBuilders {
     return [id, createdAt, updatedAt, weirdJoinId, title];
   }
 }
 
 class SongQueryValues extends MapQueryValues {
   @override
-  get casts {
+  Map<String, String> get casts {
     return {};
   }
 
@@ -530,7 +530,7 @@ class SongQueryValues extends MapQueryValues {
 
 class NumbaQuery extends Query<Numba, NumbaQueryWhere> {
   NumbaQuery({Query? parent, Set<String>? trampoline}) : super(parent: parent) {
-    trampoline ??= Set();
+    trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = NumbaQueryWhere(this);
   }
@@ -541,17 +541,17 @@ class NumbaQuery extends Query<Numba, NumbaQueryWhere> {
   NumbaQueryWhere? _where;
 
   @override
-  get casts {
+  Map<String, String> get casts {
     return {};
   }
 
   @override
-  get tableName {
+  String get tableName {
     return 'numbas';
   }
 
   @override
-  get fields {
+  List<String> get fields {
     return const ['i', 'parent'];
   }
 
@@ -589,14 +589,14 @@ class NumbaQueryWhere extends QueryWhere {
   final NumericSqlExpressionBuilder<int> parent;
 
   @override
-  get expressionBuilders {
+  List<SqlExpressionBuilder> get expressionBuilders {
     return [i, parent];
   }
 }
 
 class NumbaQueryValues extends MapQueryValues {
   @override
-  get casts {
+  Map<String, String> get casts {
     return {};
   }
 
@@ -618,7 +618,7 @@ class NumbaQueryValues extends MapQueryValues {
 
 class FooQuery extends Query<Foo, FooQueryWhere> {
   FooQuery({Query? parent, Set<String>? trampoline}) : super(parent: parent) {
-    trampoline ??= Set();
+    trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = FooQueryWhere(this);
     leftJoin(
@@ -635,17 +635,17 @@ class FooQuery extends Query<Foo, FooQueryWhere> {
   FooQueryWhere? _where;
 
   @override
-  get casts {
+  Map<String, String> get casts {
     return {};
   }
 
   @override
-  get tableName {
+  String get tableName {
     return 'foos';
   }
 
   @override
-  get fields {
+  List<String> get fields {
     return const ['bar'];
   }
 
@@ -685,7 +685,7 @@ class FooQuery extends Query<Foo, FooQueryWhere> {
   }
 
   @override
-  get(QueryExecutor executor) {
+  Future<List<Foo>> get(QueryExecutor executor) {
     return super.get(executor).then((result) {
       return result.fold<List<Foo>>([], (out, model) {
         var idx = out.indexWhere((m) => m.bar == model.bar);
@@ -704,7 +704,7 @@ class FooQuery extends Query<Foo, FooQueryWhere> {
   }
 
   @override
-  update(QueryExecutor executor) {
+  Future<List<Foo>> update(QueryExecutor executor) {
     return super.update(executor).then((result) {
       return result.fold<List<Foo>>([], (out, model) {
         var idx = out.indexWhere((m) => m.bar == model.bar);
@@ -723,7 +723,7 @@ class FooQuery extends Query<Foo, FooQueryWhere> {
   }
 
   @override
-  delete(QueryExecutor executor) {
+  Future<List<Foo>> delete(QueryExecutor executor) {
     return super.delete(executor).then((result) {
       return result.fold<List<Foo>>([], (out, model) {
         var idx = out.indexWhere((m) => m.bar == model.bar);
@@ -749,14 +749,14 @@ class FooQueryWhere extends QueryWhere {
   final StringSqlExpressionBuilder bar;
 
   @override
-  get expressionBuilders {
+  List<SqlExpressionBuilder> get expressionBuilders {
     return [bar];
   }
 }
 
 class FooQueryValues extends MapQueryValues {
   @override
-  get casts {
+  Map<String, String> get casts {
     return {};
   }
 
@@ -773,7 +773,7 @@ class FooQueryValues extends MapQueryValues {
 class FooPivotQuery extends Query<FooPivot, FooPivotQueryWhere> {
   FooPivotQuery({Query? parent, Set<String>? trampoline})
       : super(parent: parent) {
-    trampoline ??= Set();
+    trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = FooPivotQueryWhere(this);
     leftJoin(_weirdJoin = WeirdJoinQuery(trampoline: trampoline, parent: this),
@@ -794,17 +794,17 @@ class FooPivotQuery extends Query<FooPivot, FooPivotQueryWhere> {
   FooQuery? _foo;
 
   @override
-  get casts {
+  Map<String, String> get casts {
     return {};
   }
 
   @override
-  get tableName {
+  String get tableName {
     return 'foo_pivots';
   }
 
   @override
-  get fields {
+  List<String> get fields {
     return const ['weird_join_id', 'foo_bar'];
   }
 
@@ -862,14 +862,14 @@ class FooPivotQueryWhere extends QueryWhere {
   final StringSqlExpressionBuilder fooBar;
 
   @override
-  get expressionBuilders {
+  List<SqlExpressionBuilder> get expressionBuilders {
     return [weirdJoinId, fooBar];
   }
 }
 
 class FooPivotQueryValues extends MapQueryValues {
   @override
-  get casts {
+  Map<String, String> get casts {
     return {};
   }
 
@@ -908,6 +908,7 @@ class Unorthodox implements _Unorthodox {
     return Unorthodox(name: name ?? this.name);
   }
 
+  @override
   bool operator ==(other) {
     return other is _Unorthodox && other.name == name;
   }
@@ -919,7 +920,7 @@ class Unorthodox implements _Unorthodox {
 
   @override
   String toString() {
-    return "Unorthodox(name=$name)";
+    return 'Unorthodox(name=$name)';
   }
 
   Map<String, dynamic>? toJson() {
@@ -961,6 +962,7 @@ class WeirdJoin implements _WeirdJoin {
         foos: foos ?? this.foos);
   }
 
+  @override
   bool operator ==(other) {
     return other is _WeirdJoin &&
         other.id == id &&
@@ -978,7 +980,7 @@ class WeirdJoin implements _WeirdJoin {
 
   @override
   String toString() {
-    return "WeirdJoin(id=$id, unorthodox=$unorthodox, song=$song, numbas=$numbas, foos=$foos)";
+    return 'WeirdJoin(id=$id, unorthodox=$unorthodox, song=$song, numbas=$numbas, foos=$foos)';
   }
 
   Map<String, dynamic>? toJson() {
@@ -1022,6 +1024,7 @@ class Song extends _Song {
         title: title ?? this.title);
   }
 
+  @override
   bool operator ==(other) {
     return other is _Song &&
         other.id == id &&
@@ -1038,7 +1041,7 @@ class Song extends _Song {
 
   @override
   String toString() {
-    return "Song(id=$id, createdAt=$createdAt, updatedAt=$updatedAt, weirdJoinId=$weirdJoinId, title=$title)";
+    return 'Song(id=$id, createdAt=$createdAt, updatedAt=$updatedAt, weirdJoinId=$weirdJoinId, title=$title)';
   }
 
   Map<String, dynamic>? toJson() {
@@ -1060,6 +1063,7 @@ class Numba extends _Numba {
     return Numba(i: i ?? this.i, parent: parent ?? this.parent);
   }
 
+  @override
   bool operator ==(other) {
     return other is _Numba && other.i == i && other.parent == parent;
   }
@@ -1071,7 +1075,7 @@ class Numba extends _Numba {
 
   @override
   String toString() {
-    return "Numba(i=$i, parent=$parent)";
+    return 'Numba(i=$i, parent=$parent)';
   }
 
   Map<String, dynamic>? toJson() {
@@ -1093,6 +1097,7 @@ class Foo implements _Foo {
     return Foo(bar: bar ?? this.bar, weirdJoins: weirdJoins ?? this.weirdJoins);
   }
 
+  @override
   bool operator ==(other) {
     return other is _Foo &&
         other.bar == bar &&
@@ -1107,7 +1112,7 @@ class Foo implements _Foo {
 
   @override
   String toString() {
-    return "Foo(bar=$bar, weirdJoins=$weirdJoins)";
+    return 'Foo(bar=$bar, weirdJoins=$weirdJoins)';
   }
 
   Map<String, dynamic>? toJson() {
@@ -1130,6 +1135,7 @@ class FooPivot implements _FooPivot {
         weirdJoin: weirdJoin ?? this.weirdJoin, foo: foo ?? this.foo);
   }
 
+  @override
   bool operator ==(other) {
     return other is _FooPivot &&
         other.weirdJoin == weirdJoin &&
@@ -1143,7 +1149,7 @@ class FooPivot implements _FooPivot {
 
   @override
   String toString() {
-    return "FooPivot(weirdJoin=$weirdJoin, foo=$foo)";
+    return 'FooPivot(weirdJoin=$weirdJoin, foo=$foo)';
   }
 
   Map<String, dynamic> toJson() {
@@ -1175,9 +1181,9 @@ class UnorthodoxSerializer extends Codec<Unorthodox, Map?> {
   const UnorthodoxSerializer();
 
   @override
-  get encoder => const UnorthodoxEncoder();
+  UnorthodoxEncoder get encoder => const UnorthodoxEncoder();
   @override
-  get decoder => const UnorthodoxDecoder();
+  UnorthodoxDecoder get decoder => const UnorthodoxDecoder();
   static Unorthodox fromMap(Map map) {
     return Unorthodox(name: map['name'] as String?);
   }
@@ -1216,9 +1222,9 @@ class WeirdJoinSerializer extends Codec<WeirdJoin, Map?> {
   const WeirdJoinSerializer();
 
   @override
-  get encoder => const WeirdJoinEncoder();
+  WeirdJoinEncoder get encoder => const WeirdJoinEncoder();
   @override
-  get decoder => const WeirdJoinDecoder();
+  WeirdJoinDecoder get decoder => const WeirdJoinDecoder();
   static WeirdJoin fromMap(Map map) {
     return WeirdJoin(
         id: map['id'] as int?,
@@ -1292,9 +1298,9 @@ class SongSerializer extends Codec<Song, Map?> {
   const SongSerializer();
 
   @override
-  get encoder => const SongEncoder();
+  SongEncoder get encoder => const SongEncoder();
   @override
-  get decoder => const SongDecoder();
+  SongDecoder get decoder => const SongDecoder();
   static Song fromMap(Map map) {
     return Song(
         id: map['id'] as String?,
@@ -1366,9 +1372,9 @@ class NumbaSerializer extends Codec<Numba, Map?> {
   const NumbaSerializer();
 
   @override
-  get encoder => const NumbaEncoder();
+  NumbaEncoder get encoder => const NumbaEncoder();
   @override
-  get decoder => const NumbaDecoder();
+  NumbaDecoder get decoder => const NumbaDecoder();
   static Numba fromMap(Map map) {
     return Numba(i: map['i'] as int?, parent: map['parent'] as int?);
   }
@@ -1409,9 +1415,9 @@ class FooSerializer extends Codec<Foo, Map?> {
   const FooSerializer();
 
   @override
-  get encoder => const FooEncoder();
+  FooEncoder get encoder => const FooEncoder();
   @override
-  get decoder => const FooDecoder();
+  FooDecoder get decoder => const FooDecoder();
   static Foo fromMap(Map map) {
     return Foo(
         bar: map['bar'] as String?,
@@ -1462,9 +1468,9 @@ class FooPivotSerializer extends Codec<FooPivot, Map> {
   const FooPivotSerializer();
 
   @override
-  get encoder => const FooPivotEncoder();
+  FooPivotEncoder get encoder => const FooPivotEncoder();
   @override
-  get decoder => const FooPivotDecoder();
+  FooPivotDecoder get decoder => const FooPivotDecoder();
   static FooPivot fromMap(Map map) {
     return FooPivot(
         weirdJoin: map['weird_join'] != null

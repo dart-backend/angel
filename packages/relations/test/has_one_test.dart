@@ -1,5 +1,4 @@
 import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_relations/angel_relations.dart' as relations;
 import 'package:angel_seeder/angel_seeder.dart';
 import 'package:test/test.dart';
 import 'common.dart';
@@ -36,7 +35,7 @@ void main() {
 
     expect(authors, allOf(isList, isNotEmpty));
 
-    for (Map author in authors.whereType<Map>()) {
+    for (var author in authors.whereType<Map>()) {
       expect(author.keys, contains('book'));
 
       var book = author['book'] as Map;

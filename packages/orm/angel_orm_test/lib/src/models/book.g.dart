@@ -8,9 +8,9 @@ part of angel_orm3.generator.models.book;
 
 class BookMigration extends Migration {
   @override
-  up(Schema schema) {
+  void up(Schema schema) {
     schema.create('books', (table) {
-      table.serial('id')..primaryKey();
+      table.serial('id').primaryKey();
       table.timeStamp('created_at');
       table.timeStamp('updated_at');
       table.varChar('name');
@@ -24,24 +24,24 @@ class BookMigration extends Migration {
   }
 
   @override
-  down(Schema schema) {
+  void down(Schema schema) {
     schema.drop('books');
   }
 }
 
 class AuthorMigration extends Migration {
   @override
-  up(Schema schema) {
+  void up(Schema schema) {
     schema.create('authors', (table) {
-      table.serial('id')..primaryKey();
+      table.serial('id').primaryKey();
       table.timeStamp('created_at');
       table.timeStamp('updated_at');
-      table.varChar('name', length: 255)..defaultsTo('Tobe Osakwe');
+      table.varChar('name', length: 255).defaultsTo('Tobe Osakwe');
     });
   }
 
   @override
-  down(Schema schema) {
+  void down(Schema schema) {
     schema.drop('authors');
   }
 }
@@ -52,7 +52,7 @@ class AuthorMigration extends Migration {
 
 class BookQuery extends Query<Book, BookQueryWhere> {
   BookQuery({Query? parent, Set<String>? trampoline}) : super(parent: parent) {
-    trampoline ??= Set();
+    trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = BookQueryWhere(this);
     join(_author = AuthorQuery(trampoline: trampoline, parent: this),
@@ -75,17 +75,17 @@ class BookQuery extends Query<Book, BookQueryWhere> {
   AuthorQuery? _partnerAuthor;
 
   @override
-  get casts {
+  Map<String, String> get casts {
     return {};
   }
 
   @override
-  get tableName {
+  String get tableName {
     return 'books';
   }
 
   @override
-  get fields {
+  List<String> get fields {
     return const [
       'id',
       'created_at',
@@ -167,14 +167,14 @@ class BookQueryWhere extends QueryWhere {
   final StringSqlExpressionBuilder name;
 
   @override
-  get expressionBuilders {
+  List<SqlExpressionBuilder> get expressionBuilders {
     return [id, createdAt, updatedAt, authorId, partnerAuthorId, name];
   }
 }
 
 class BookQueryValues extends MapQueryValues {
   @override
-  get casts {
+  Map<String, String> get casts {
     return {};
   }
 
@@ -224,7 +224,7 @@ class BookQueryValues extends MapQueryValues {
 class AuthorQuery extends Query<Author, AuthorQueryWhere> {
   AuthorQuery({Query? parent, Set<String>? trampoline})
       : super(parent: parent) {
-    trampoline ??= Set();
+    trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = AuthorQueryWhere(this);
   }
@@ -235,17 +235,17 @@ class AuthorQuery extends Query<Author, AuthorQueryWhere> {
   AuthorQueryWhere? _where;
 
   @override
-  get casts {
+  Map<String, String> get casts {
     return {};
   }
 
   @override
-  get tableName {
+  String get tableName {
     return 'authors';
   }
 
   @override
-  get fields {
+  List<String> get fields {
     return const ['id', 'created_at', 'updated_at', 'name'];
   }
 
@@ -293,14 +293,14 @@ class AuthorQueryWhere extends QueryWhere {
   final StringSqlExpressionBuilder name;
 
   @override
-  get expressionBuilders {
+  List<SqlExpressionBuilder> get expressionBuilders {
     return [id, createdAt, updatedAt, name];
   }
 }
 
 class AuthorQueryValues extends MapQueryValues {
   @override
-  get casts {
+  Map<String, String> get casts {
     return {};
   }
 
@@ -382,6 +382,7 @@ class Book extends _Book {
         name: name ?? this.name);
   }
 
+  @override
   bool operator ==(other) {
     return other is _Book &&
         other.id == id &&
@@ -399,7 +400,7 @@ class Book extends _Book {
 
   @override
   String toString() {
-    return "Book(id=$id, createdAt=$createdAt, updatedAt=$updatedAt, author=$author, partnerAuthor=$partnerAuthor, name=$name)";
+    return 'Book(id=$id, createdAt=$createdAt, updatedAt=$updatedAt, author=$author, partnerAuthor=$partnerAuthor, name=$name)';
   }
 
   Map<String, dynamic> toJson() {
@@ -435,6 +436,7 @@ class Author extends _Author {
         name: name ?? this.name);
   }
 
+  @override
   bool operator ==(other) {
     return other is _Author &&
         other.id == id &&
@@ -450,7 +452,7 @@ class Author extends _Author {
 
   @override
   String toString() {
-    return "Author(id=$id, createdAt=$createdAt, updatedAt=$updatedAt, name=$name)";
+    return 'Author(id=$id, createdAt=$createdAt, updatedAt=$updatedAt, name=$name)';
   }
 
   Map<String, dynamic>? toJson() {
@@ -482,9 +484,9 @@ class BookSerializer extends Codec<Book, Map> {
   const BookSerializer();
 
   @override
-  get encoder => const BookEncoder();
+  BookEncoder get encoder => const BookEncoder();
   @override
-  get decoder => const BookDecoder();
+  BookDecoder get decoder => const BookDecoder();
   static Book fromMap(Map map) {
     return Book(
         id: map['id'] as String?,
@@ -562,9 +564,9 @@ class AuthorSerializer extends Codec<Author, Map?> {
   const AuthorSerializer();
 
   @override
-  get encoder => const AuthorEncoder();
+  AuthorEncoder get encoder => const AuthorEncoder();
   @override
-  get decoder => const AuthorDecoder();
+  AuthorDecoder get decoder => const AuthorDecoder();
   static Author fromMap(Map map) {
     return Author(
         id: map['id'] as String?,

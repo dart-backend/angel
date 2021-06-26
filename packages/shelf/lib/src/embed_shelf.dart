@@ -19,8 +19,8 @@ RequestHandler embedShelf(shelf.Handler handler,
         handlerPath: handlerPath, context: context);
     try {
       var result = await handler(shelfRequest);
-      if (result is! shelf.Response && result != null) return result;
-      if (result == null && throwOnNullResponse == true) {
+      if (result is! shelf.Response) return result;
+      if (throwOnNullResponse == true) {
         throw AngelHttpException('Internal Server Error');
       }
       await mergeShelfResponse(result, res);

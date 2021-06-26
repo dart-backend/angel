@@ -20,6 +20,7 @@ class Animal extends _Animal {
     return Animal(genus: genus ?? this.genus, species: species ?? this.species);
   }
 
+  @override
   bool operator ==(other) {
     return other is _Animal && other.genus == genus && other.species == species;
   }
@@ -31,7 +32,7 @@ class Animal extends _Animal {
 
   @override
   String toString() {
-    return "Animal(genus=$genus, species=$species)";
+    return 'Animal(genus=$genus, species=$species)';
   }
 
   Map<String, dynamic> toJson() {
@@ -59,6 +60,7 @@ class Bird extends _Bird {
         isSparrow: isSparrow ?? this.isSparrow);
   }
 
+  @override
   bool operator ==(other) {
     return other is _Bird &&
         other.genus == genus &&
@@ -73,7 +75,7 @@ class Bird extends _Bird {
 
   @override
   String toString() {
-    return "Bird(genus=$genus, species=$species, isSparrow=$isSparrow)";
+    return 'Bird(genus=$genus, species=$species, isSparrow=$isSparrow)';
   }
 
   Map<String, dynamic> toJson() {
@@ -105,9 +107,9 @@ class AnimalSerializer extends Codec<Animal, Map> {
   const AnimalSerializer();
 
   @override
-  get encoder => const AnimalEncoder();
+  AnimalEncoder get encoder => const AnimalEncoder();
   @override
-  get decoder => const AnimalDecoder();
+  AnimalDecoder get decoder => const AnimalDecoder();
   static Animal fromMap(Map map) {
     if (map['genus'] == null) {
       throw FormatException("Missing required field 'genus' on Animal.");
@@ -162,9 +164,9 @@ class BirdSerializer extends Codec<Bird, Map> {
   const BirdSerializer();
 
   @override
-  get encoder => const BirdEncoder();
+  BirdEncoder get encoder => const BirdEncoder();
   @override
-  get decoder => const BirdDecoder();
+  BirdDecoder get decoder => const BirdDecoder();
   static Bird fromMap(Map map) {
     if (map['genus'] == null) {
       throw FormatException("Missing required field 'genus' on Bird.");

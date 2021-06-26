@@ -8,9 +8,9 @@ part of 'has_car.dart';
 
 class HasCarMigration extends Migration {
   @override
-  up(Schema schema) {
+  void up(Schema schema) {
     schema.create('has_cars', (table) {
-      table.serial('id')..primaryKey();
+      table.serial('id').primaryKey();
       table.timeStamp('created_at');
       table.timeStamp('updated_at');
       table.integer('type');
@@ -18,7 +18,7 @@ class HasCarMigration extends Migration {
   }
 
   @override
-  down(Schema schema) {
+  void down(Schema schema) {
     schema.drop('has_cars');
   }
 }
@@ -30,7 +30,7 @@ class HasCarMigration extends Migration {
 class HasCarQuery extends Query<HasCar, HasCarQueryWhere> {
   HasCarQuery({Query? parent, Set<String>? trampoline})
       : super(parent: parent) {
-    trampoline ??= Set();
+    trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = HasCarQueryWhere(this);
   }
@@ -41,17 +41,17 @@ class HasCarQuery extends Query<HasCar, HasCarQueryWhere> {
   HasCarQueryWhere? _where;
 
   @override
-  get casts {
+  Map<String, String> get casts {
     return {};
   }
 
   @override
-  get tableName {
+  String get tableName {
     return 'has_cars';
   }
 
   @override
-  get fields {
+  List<String> get fields {
     return const ['id', 'created_at', 'updated_at', 'type'];
   }
 
@@ -100,14 +100,14 @@ class HasCarQueryWhere extends QueryWhere {
   final EnumSqlExpressionBuilder<CarType?> type;
 
   @override
-  get expressionBuilders {
+  List<SqlExpressionBuilder> get expressionBuilders {
     return [id, createdAt, updatedAt, type];
   }
 }
 
 class HasCarQueryValues extends MapQueryValues {
   @override
-  get casts {
+  Map<String, String> get casts {
     return {};
   }
 
@@ -170,6 +170,7 @@ class HasCar extends _HasCar {
         type: type ?? this.type);
   }
 
+  @override
   bool operator ==(other) {
     return other is _HasCar &&
         other.id == id &&
@@ -185,7 +186,7 @@ class HasCar extends _HasCar {
 
   @override
   String toString() {
-    return "HasCar(id=$id, createdAt=$createdAt, updatedAt=$updatedAt, type=$type)";
+    return 'HasCar(id=$id, createdAt=$createdAt, updatedAt=$updatedAt, type=$type)';
   }
 
   Map<String, dynamic> toJson() {
@@ -217,9 +218,9 @@ class HasCarSerializer extends Codec<HasCar, Map> {
   const HasCarSerializer();
 
   @override
-  get encoder => const HasCarEncoder();
+  HasCarEncoder get encoder => const HasCarEncoder();
   @override
-  get decoder => const HasCarDecoder();
+  HasCarDecoder get decoder => const HasCarDecoder();
   static HasCar fromMap(Map map) {
     if (map['type'] == null) {
       throw FormatException("Missing required field 'type' on HasCar.");

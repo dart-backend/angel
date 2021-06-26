@@ -8,21 +8,21 @@ part of 'email_indexed.dart';
 
 class RoleMigration extends Migration {
   @override
-  up(Schema schema) {
+  void up(Schema schema) {
     schema.create('roles', (table) {
-      table.declare('role', ColumnType('varchar'))..primaryKey();
+      table.declare('role', ColumnType('varchar')).primaryKey();
     });
   }
 
   @override
-  down(Schema schema) {
+  void down(Schema schema) {
     schema.drop('roles', cascade: true);
   }
 }
 
 class RoleUserMigration extends Migration {
   @override
-  up(Schema schema) {
+  void up(Schema schema) {
     schema.create('role_users', (table) {
       table
           .declare('role_role', ColumnType('varchar'))
@@ -34,23 +34,23 @@ class RoleUserMigration extends Migration {
   }
 
   @override
-  down(Schema schema) {
+  void down(Schema schema) {
     schema.drop('role_users');
   }
 }
 
 class UserMigration extends Migration {
   @override
-  up(Schema schema) {
+  void up(Schema schema) {
     schema.create('users', (table) {
-      table.varChar('email')..primaryKey();
+      table.varChar('email').primaryKey();
       table.varChar('name');
       table.varChar('password');
     });
   }
 
   @override
-  down(Schema schema) {
+  void down(Schema schema) {
     schema.drop('users', cascade: true);
   }
 }
@@ -61,7 +61,7 @@ class UserMigration extends Migration {
 
 class RoleQuery extends Query<Role, RoleQueryWhere> {
   RoleQuery({Query? parent, Set<String>? trampoline}) : super(parent: parent) {
-    trampoline ??= Set();
+    trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = RoleQueryWhere(this);
     leftJoin(
@@ -78,17 +78,17 @@ class RoleQuery extends Query<Role, RoleQueryWhere> {
   late RoleQueryWhere _where;
 
   @override
-  get casts {
+  Map<String, String> get casts {
     return {};
   }
 
   @override
-  get tableName {
+  String get tableName {
     return 'roles';
   }
 
   @override
-  get fields {
+  List<String> get fields {
     return const ['role'];
   }
 
@@ -128,7 +128,7 @@ class RoleQuery extends Query<Role, RoleQueryWhere> {
   }
 
   @override
-  get(QueryExecutor executor) {
+  Future<List<Role>> get(QueryExecutor executor) {
     return super.get(executor).then((result) {
       return result.fold<List<Role>>([], (out, model) {
         var idx = out.indexWhere((m) => m.role == model.role);
@@ -146,7 +146,7 @@ class RoleQuery extends Query<Role, RoleQueryWhere> {
   }
 
   @override
-  update(QueryExecutor executor) {
+  Future<List<Role>> update(QueryExecutor executor) {
     return super.update(executor).then((result) {
       return result.fold<List<Role>>([], (out, model) {
         var idx = out.indexWhere((m) => m.role == model.role);
@@ -164,7 +164,7 @@ class RoleQuery extends Query<Role, RoleQueryWhere> {
   }
 
   @override
-  delete(QueryExecutor executor) {
+  Future<List<Role>> delete(QueryExecutor executor) {
     return super.delete(executor).then((result) {
       return result.fold<List<Role>>([], (out, model) {
         var idx = out.indexWhere((m) => m.role == model.role);
@@ -189,14 +189,14 @@ class RoleQueryWhere extends QueryWhere {
   final StringSqlExpressionBuilder role;
 
   @override
-  get expressionBuilders {
+  List<SqlExpressionBuilder> get expressionBuilders {
     return [role];
   }
 }
 
 class RoleQueryValues extends MapQueryValues {
   @override
-  get casts {
+  Map<String, String> get casts {
     return {};
   }
 
@@ -213,7 +213,7 @@ class RoleQueryValues extends MapQueryValues {
 class RoleUserQuery extends Query<RoleUser, RoleUserQueryWhere> {
   RoleUserQuery({Query? parent, Set<String>? trampoline})
       : super(parent: parent) {
-    trampoline ??= Set();
+    trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = RoleUserQueryWhere(this);
     leftJoin(_role = RoleQuery(trampoline: trampoline, parent: this),
@@ -235,17 +235,17 @@ class RoleUserQuery extends Query<RoleUser, RoleUserQueryWhere> {
   UserQuery? _user;
 
   @override
-  get casts {
+  Map<String, String> get casts {
     return {};
   }
 
   @override
-  get tableName {
+  String get tableName {
     return 'role_users';
   }
 
   @override
-  get fields {
+  List<String> get fields {
     return const ['role_role', 'user_email'];
   }
 
@@ -303,14 +303,14 @@ class RoleUserQueryWhere extends QueryWhere {
   final StringSqlExpressionBuilder userEmail;
 
   @override
-  get expressionBuilders {
+  List<SqlExpressionBuilder> get expressionBuilders {
     return [roleRole, userEmail];
   }
 }
 
 class RoleUserQueryValues extends MapQueryValues {
   @override
-  get casts {
+  Map<String, String> get casts {
     return {};
   }
 
@@ -336,7 +336,7 @@ class RoleUserQueryValues extends MapQueryValues {
 
 class UserQuery extends Query<User, UserQueryWhere> {
   UserQuery({Query? parent, Set<String>? trampoline}) : super(parent: parent) {
-    trampoline ??= Set();
+    trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = UserQueryWhere(this);
     leftJoin(
@@ -353,17 +353,17 @@ class UserQuery extends Query<User, UserQueryWhere> {
   UserQueryWhere? _where;
 
   @override
-  get casts {
+  Map<String, String> get casts {
     return {};
   }
 
   @override
-  get tableName {
+  String get tableName {
     return 'users';
   }
 
   @override
-  get fields {
+  List<String> get fields {
     return const ['email', 'name', 'password'];
   }
 
@@ -410,7 +410,7 @@ class UserQuery extends Query<User, UserQueryWhere> {
   }
 
   @override
-  get(QueryExecutor executor) {
+  Future<List<User>> get(QueryExecutor executor) {
     return super.get(executor).then((result) {
       return result.fold<List<User>>([], (out, model) {
         var idx = out.indexWhere((m) => m.email == model.email);
@@ -428,7 +428,7 @@ class UserQuery extends Query<User, UserQueryWhere> {
   }
 
   @override
-  update(QueryExecutor executor) {
+  Future<List<User>> update(QueryExecutor executor) {
     return super.update(executor).then((result) {
       return result.fold<List<User>>([], (out, model) {
         var idx = out.indexWhere((m) => m.email == model.email);
@@ -446,7 +446,7 @@ class UserQuery extends Query<User, UserQueryWhere> {
   }
 
   @override
-  delete(QueryExecutor executor) {
+  Future<List<User>> delete(QueryExecutor executor) {
     return super.delete(executor).then((result) {
       return result.fold<List<User>>([], (out, model) {
         var idx = out.indexWhere((m) => m.email == model.email);
@@ -477,14 +477,14 @@ class UserQueryWhere extends QueryWhere {
   final StringSqlExpressionBuilder password;
 
   @override
-  get expressionBuilders {
+  List<SqlExpressionBuilder> get expressionBuilders {
     return [email, name, password];
   }
 }
 
 class UserQueryValues extends MapQueryValues {
   @override
-  get casts {
+  Map<String, String> get casts {
     return {};
   }
 
@@ -528,6 +528,7 @@ class Role implements _Role {
     return Role(role: role ?? this.role, users: users);
   }
 
+  @override
   bool operator ==(other) {
     return other is _Role &&
         other.role == role &&
@@ -542,7 +543,7 @@ class Role implements _Role {
 
   @override
   String toString() {
-    return "Role(role=$role, users=$users)";
+    return 'Role(role=$role, users=$users)';
   }
 
   Map<String, dynamic> toJson() {
@@ -564,6 +565,7 @@ class RoleUser implements _RoleUser {
     return RoleUser(role: role ?? this.role, user: user ?? this.user);
   }
 
+  @override
   bool operator ==(other) {
     return other is _RoleUser && other.role == role && other.user == user;
   }
@@ -575,7 +577,7 @@ class RoleUser implements _RoleUser {
 
   @override
   String toString() {
-    return "RoleUser(role=$role, user=$user)";
+    return 'RoleUser(role=$role, user=$user)';
   }
 
   Map<String, dynamic> toJson() {
@@ -608,6 +610,7 @@ class User implements _User {
         roles: roles ?? []);
   }
 
+  @override
   bool operator ==(other) {
     return other is _User &&
         other.email == email &&
@@ -624,7 +627,7 @@ class User implements _User {
 
   @override
   String toString() {
-    return "User(email=$email, name=$name, password=$password, roles=$roles)";
+    return 'User(email=$email, name=$name, password=$password, roles=$roles)';
   }
 
   Map<String, dynamic> toJson() {
@@ -656,9 +659,9 @@ class RoleSerializer extends Codec<Role, Map?> {
   const RoleSerializer();
 
   @override
-  get encoder => const RoleEncoder();
+  RoleEncoder get encoder => const RoleEncoder();
   @override
-  get decoder => const RoleDecoder();
+  RoleDecoder get decoder => const RoleDecoder();
   static Role fromMap(Map map) {
     return Role(
         role: map['role'] as String?,
@@ -704,9 +707,9 @@ class RoleUserSerializer extends Codec<RoleUser, Map> {
   const RoleUserSerializer();
 
   @override
-  get encoder => const RoleUserEncoder();
+  RoleUserEncoder get encoder => const RoleUserEncoder();
   @override
-  get decoder => const RoleUserDecoder();
+  RoleUserDecoder get decoder => const RoleUserDecoder();
   static RoleUser fromMap(Map map) {
     return RoleUser(
         role: map['role'] != null
@@ -753,9 +756,9 @@ class UserSerializer extends Codec<User, Map?> {
   const UserSerializer();
 
   @override
-  get encoder => const UserEncoder();
+  UserEncoder get encoder => const UserEncoder();
   @override
-  get decoder => const UserDecoder();
+  UserDecoder get decoder => const UserDecoder();
   static User fromMap(Map map) {
     return User(
         email: map['email'] as String?,

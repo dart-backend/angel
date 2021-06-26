@@ -3,7 +3,7 @@ import 'package:angel3_orm/angel3_orm.dart';
 import 'package:test/test.dart';
 import 'models/leg.dart';
 
-hasOneTests(FutureOr<QueryExecutor> Function() createExecutor,
+void hasOneTests(FutureOr<QueryExecutor> Function() createExecutor,
     {FutureOr<void> Function(QueryExecutor)? close}) {
   late QueryExecutor executor;
   Leg? originalLeg;
@@ -18,7 +18,7 @@ hasOneTests(FutureOr<QueryExecutor> Function() createExecutor,
   tearDown(() => close!(executor));
 
   test('sets to null if no child', () async {
-    print(LegQuery().compile(Set()));
+    print(LegQuery().compile({}));
     var query = LegQuery()..where!.id.equals(int.parse(originalLeg!.id!));
     var legOpt = await (query.getOne(executor));
     expect(legOpt.isPresent, true);

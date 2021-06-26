@@ -7,7 +7,7 @@ part of 'stateful.dart';
 // **************************************************************************
 
 abstract class _StatefulAppJaelTemplate implements Component<_AppState> {
-  Timer? get _timer;
+  //Timer? get _timer;
   void beforeDestroy();
   @override
   DomNode render() {

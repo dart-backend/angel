@@ -75,6 +75,7 @@ Future<void> runBenchmarks(Iterable<AngelBenchmark> benchmarks,
   exit(0);
 }
 
+/*
 void _httpIsolate(AngelBenchmark benchmark) {
   Future(() async {
     var raw = await HttpServer.bind(InternetAddress.loopbackIPv4, testPort,
@@ -82,6 +83,7 @@ void _httpIsolate(AngelBenchmark benchmark) {
     raw.listen((r) => benchmark.rawHandler(r, r.response));
   });
 }
+*/
 
 void _angelIsolate(Tuple2<AngelBenchmark, String> args) {
   Future(() async {

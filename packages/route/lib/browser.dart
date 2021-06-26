@@ -23,7 +23,7 @@ abstract class BrowserRouter<T> extends Router<T> {
         : _PushStateRouter<T>(listen: listen);
   }
 
-  BrowserRouter._() : super();
+  //BrowserRouter._() : super();
 
   void _goTo(String path);
 
