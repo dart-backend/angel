@@ -70,7 +70,7 @@ parameterMetaTests() {
   test('injects header or throws', () async {
     // Invalid request
     var rq = MockHttpRequest('GET', Uri.parse('/header'));
-    rq.close();
+    await rq.close();
     var rs = rq.response;
     http.handleRequest(rq);
 
@@ -80,7 +80,7 @@ parameterMetaTests() {
     // Valid request
     rq = MockHttpRequest('GET', Uri.parse('/header'))
       ..headers.add('x-foo', 'bar');
-    rq.close();
+    await rq.close();
     rs = rq.response;
     http.handleRequest(rq);
 
@@ -93,7 +93,7 @@ parameterMetaTests() {
   test('injects session or throws', () async {
     // Invalid request
     var rq = MockHttpRequest('GET', Uri.parse('/session'));
-    rq.close();
+    await rq.close();
     var rs = rq.response;
     http
         .handleRequest(rq)
@@ -105,7 +105,7 @@ parameterMetaTests() {
 
     rq = MockHttpRequest('GET', Uri.parse('/session'));
     rq.session['foo'] = 'bar';
-    rq.close();
+    await rq.close();
     rs = rq.response;
     http.handleRequest(rq);
 
@@ -119,7 +119,7 @@ parameterMetaTests() {
 
   test('pattern matching', () async {
     var rq = MockHttpRequest('GET', Uri.parse('/match?mode=pos'));
-    rq.close();
+    await rq.close();
     var rs = rq.response;
     http.handleRequest(rq);
     var body = await readResponse(rs);
@@ -128,7 +128,7 @@ parameterMetaTests() {
     expect(body, json.encode('YES pos'));
 
     rq = MockHttpRequest('GET', Uri.parse('/match?mode=neg'));
-    rq.close();
+    await rq.close();
     rs = rq.response;
     http.handleRequest(rq);
     body = await readResponse(rs);
@@ -138,7 +138,7 @@ parameterMetaTests() {
 
     // Fallback
     rq = MockHttpRequest('GET', Uri.parse('/match?mode=ambi'));
-    rq.close();
+    await rq.close();
     rs = rq.response;
     http.handleRequest(rq);
     body = await readResponse(rs);

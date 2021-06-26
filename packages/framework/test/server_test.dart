@@ -178,7 +178,7 @@ void main() {
     test('can send json', () async {
       var rq = MockHttpRequest('GET', Uri(path: 'wtf'))
         ..headers.set('accept', 'application/json');
-      rq.close();
+      await rq.close();
       http.handleRequest(rq);
       await rq.response.toList();
       expect(rq.response.statusCode, 403);
@@ -188,7 +188,7 @@ void main() {
     test('can throw in finalizer', () async {
       var rq = MockHttpRequest('GET', Uri(path: 'wtf'))
         ..headers.set('accept', 'application/json');
-      rq.close();
+      await rq.close();
       http.handleRequest(rq);
       await rq.response.toList();
       expect(rq.response.statusCode, 403);
@@ -198,7 +198,7 @@ void main() {
     test('can send html', () async {
       var rq = MockHttpRequest('GET', Uri(path: 'wtf2'));
       //rq.headers.set('accept', 'text/html');
-      rq.close();
+      await rq.close();
       http.handleRequest(rq);
       await rq.response.toList();
       expect(rq.response.statusCode, 403);
