@@ -70,9 +70,9 @@ parameterMetaTests() {
   test('injects header or throws', () async {
     // Invalid request
     var rq = MockHttpRequest('GET', Uri.parse('/header'));
-    await (rq.close());
+    rq.close();
     var rs = rq.response;
-    await (http.handleRequest(rq));
+    http.handleRequest(rq);
 
     await printResponse(rs);
     expect(rs.statusCode, 400);
@@ -80,9 +80,9 @@ parameterMetaTests() {
     // Valid request
     rq = MockHttpRequest('GET', Uri.parse('/header'))
       ..headers.add('x-foo', 'bar');
-    await (rq.close());
+    rq.close();
     rs = rq.response;
-    await (http.handleRequest(rq));
+    http.handleRequest(rq);
 
     var body = await readResponse(rs);
     print('Body: $body');
@@ -93,21 +93,21 @@ parameterMetaTests() {
   test('injects session or throws', () async {
     // Invalid request
     var rq = MockHttpRequest('GET', Uri.parse('/session'));
-    await (rq.close());
+    rq.close();
     var rs = rq.response;
-    await (http
+    http
         .handleRequest(rq)
         .timeout(const Duration(seconds: 5))
-        .catchError((_) => null));
+        .catchError((_) => null);
 
     await printResponse(rs);
     expect(rs.statusCode, 500);
 
     rq = MockHttpRequest('GET', Uri.parse('/session'));
     rq.session['foo'] = 'bar';
-    await (rq.close());
+    rq.close();
     rs = rq.response;
-    await (http.handleRequest(rq));
+    http.handleRequest(rq);
 
     await printResponse(rs);
     expect(rs.statusCode, 200);
@@ -119,18 +119,18 @@ parameterMetaTests() {
 
   test('pattern matching', () async {
     var rq = MockHttpRequest('GET', Uri.parse('/match?mode=pos'));
-    await (rq.close());
+    rq.close();
     var rs = rq.response;
-    await (http.handleRequest(rq));
+    http.handleRequest(rq);
     var body = await readResponse(rs);
     print('Body: $body');
     expect(rs.statusCode, 200);
     expect(body, json.encode('YES pos'));
 
     rq = MockHttpRequest('GET', Uri.parse('/match?mode=neg'));
-    await (rq.close());
+    rq.close();
     rs = rq.response;
-    await (http.handleRequest(rq));
+    http.handleRequest(rq);
     body = await readResponse(rs);
     print('Body: $body');
     expect(rs.statusCode, 200);
@@ -138,9 +138,9 @@ parameterMetaTests() {
 
     // Fallback
     rq = MockHttpRequest('GET', Uri.parse('/match?mode=ambi'));
-    await (rq.close());
+    rq.close();
     rs = rq.response;
-    await (http.handleRequest(rq));
+    http.handleRequest(rq);
     body = await readResponse(rs);
     print('Body: $body');
     expect(rs.statusCode, 200);

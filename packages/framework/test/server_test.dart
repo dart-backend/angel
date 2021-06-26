@@ -178,8 +178,8 @@ void main() {
     test('can send json', () async {
       var rq = MockHttpRequest('GET', Uri(path: 'wtf'))
         ..headers.set('accept', 'application/json');
-      await (rq.close());
-      await (http.handleRequest(rq));
+      rq.close();
+      http.handleRequest(rq);
       await rq.response.toList();
       expect(rq.response.statusCode, 403);
       expect(rq.response.headers.contentType!.mimeType, 'application/json');
@@ -188,8 +188,8 @@ void main() {
     test('can throw in finalizer', () async {
       var rq = MockHttpRequest('GET', Uri(path: 'wtf'))
         ..headers.set('accept', 'application/json');
-      await (rq.close());
-      await (http.handleRequest(rq));
+      rq.close();
+      http.handleRequest(rq);
       await rq.response.toList();
       expect(rq.response.statusCode, 403);
       expect(rq.response.headers.contentType!.mimeType, 'application/json');
@@ -197,9 +197,9 @@ void main() {
 
     test('can send html', () async {
       var rq = MockHttpRequest('GET', Uri(path: 'wtf2'));
-      rq.headers.set('accept', 'text/html');
-      await (rq.close());
-      await (http.handleRequest(rq));
+      //rq.headers.set('accept', 'text/html');
+      rq.close();
+      http.handleRequest(rq);
       await rq.response.toList();
       expect(rq.response.statusCode, 403);
       expect(rq.response.headers.contentType?.mimeType, 'text/html');
