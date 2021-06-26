@@ -1,19 +1,24 @@
-# paginate
-[![Pub](https://img.shields.io/pub/v/angel_paginate.svg)](https://pub.dartlang.org/packages/angel_paginate)
-[![build status](https://travis-ci.org/angel-dart/paginate.svg)](https://travis-ci.org/angel-dart/paginate)
+# Paginate
 
-Platform-agnostic pagination library, with custom support for the
-[Angel framework](https://github.com/angel-dart/angel).
+[![version](https://img.shields.io/badge/pub-v3.0.0-brightgreen)](https://pub.dartlang.org/packages/angel3_paginate)
+[![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
+[![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
 
-# Installation
+[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/paginate/LICENSE)
+
+Platform-agnostic pagination library, with custom support for the [Angel3 framework](https://github.com/dukefirehawk/angel).
+
+## Installation
+
 In your `pubspec.yaml` file:
 
 ```yaml
 dependencies:
-  angel_paginate: ^2.0.0
+  angel3_paginate: ^3.0.0
 ```
 
-# Usage
+## Usage
+
 This library exports a `Paginator<T>`, which can be used to efficiently produce
 instances of `PaginationResult<T>`. Pagination results, when serialized to JSON, look like
 this:
@@ -37,9 +42,9 @@ serialized via their `toJson()` method.
 To create a paginator:
 
 ```dart
-import 'package:angel_paginate/angel_paginate.dart';
+import 'package:angel3_paginate/angel3_paginate.dart';
 
-main() {
+void main() {
   var p = new Paginator(iterable);
   
   // Get the current page (default: page 1)

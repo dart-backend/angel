@@ -1,7 +1,7 @@
 import 'dart:convert';
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_paginate/angel_paginate.dart';
-import 'package:angel_test/angel_test.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_paginate/angel3_paginate.dart';
+import 'package:angel3_test/angel3_test.dart';
 import 'package:logging/logging.dart';
 import 'package:test/test.dart';
 

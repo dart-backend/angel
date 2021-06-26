@@ -1,4 +1,4 @@
-import 'package:angel_paginate/angel_paginate.dart';
+import 'package:angel3_paginate/angel3_paginate.dart';
 import 'package:test/test.dart';
 
 // Count-down from 100, then 101 at the end...

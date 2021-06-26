@@ -1,4 +1,4 @@
-import 'package:angel_paginate/angel_paginate.dart';
+import 'package:angel3_paginate/angel3_paginate.dart';
 
 void main() {
   var iterable = [1, 2, 3, 4];
