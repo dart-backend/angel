@@ -9,9 +9,9 @@ void main() {
   late JsonFileService service;
 
   setUp(() async {
-    fs = new MemoryFileSystem();
+    fs = MemoryFileSystem();
     dbFile = fs.file('db.json');
-    service = new JsonFileService(dbFile);
+    service = JsonFileService(dbFile);
 
     await dbFile.writeAsString('''
     [
@@ -26,9 +26,9 @@ void main() {
 
   test('index no params', () async {
     expect(await service.index(), [
-      {"id": "0", "foo": "bar"},
-      {"id": "1", "foo": "baz"},
-      {"id": "2", "foo": "quux"}
+      {'id': '0', 'foo': 'bar'},
+      {'id': '1', 'foo': 'baz'},
+      {'id': '2', 'foo': 'quux'}
     ]);
   });
 
@@ -38,7 +38,7 @@ void main() {
         'query': {'foo': 'bar'}
       }),
       [
-        {"id": "0", "foo": "bar"}
+        {'id': '0', 'foo': 'bar'}
       ],
     );
   });
@@ -46,7 +46,7 @@ void main() {
   test('read', () async {
     expect(
       await service.read('2'),
-      {"id": "2", "foo": "quux"},
+      {'id': '2', 'foo': 'quux'},
     );
   });
 
@@ -64,8 +64,8 @@ void main() {
   test('delete', () async {
     await service.remove('2');
     expect(await service.index(), [
-      {"id": "0", "foo": "bar"},
-      {"id": "1", "foo": "baz"}
+      {'id': '0', 'foo': 'bar'},
+      {'id': '1', 'foo': 'baz'}
     ]);
   });
 }

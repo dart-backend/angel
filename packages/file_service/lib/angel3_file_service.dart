@@ -7,14 +7,16 @@ import 'package:pool/pool.dart';
 /// Persists in-memory changes to a file on disk.
 class JsonFileService extends Service<String, Map<String, dynamic>> {
   FileStat? _lastStat;
-  final Pool _mutex = new Pool(1);
+  final Pool _mutex = Pool(1);
   late MapService _store;
   final File file;
 
   JsonFileService(this.file,
-      {bool allowRemoveAll: false, bool allowQuery: true, MapService? store}) {
+      {bool allowRemoveAll = false,
+      bool allowQuery = true,
+      MapService? store}) {
     _store = store ??
-        new MapService(
+        MapService(
             allowRemoveAll: allowRemoveAll == true,
             allowQuery: allowQuery != false);
   }
@@ -45,7 +47,7 @@ class JsonFileService extends Service<String, Map<String, dynamic>> {
     });
   }
 
-  _save() {
+  Future<File> _save() {
     return _mutex.withResource(() {
       return file
           .writeAsString(json.encode(_store.items.map(_jsonify).toList()));
@@ -105,17 +107,18 @@ class JsonFileService extends Service<String, Map<String, dynamic>> {
   }
 }
 
-_safeForJson(x) {
-  if (x is DateTime)
+dynamic _safeForJson(x) {
+  if (x is DateTime) {
     return x.toIso8601String();
-  else if (x is Map)
+  } else if (x is Map) {
     return _jsonify(x);
-  else if (x is num || x is String || x is bool || x == null)
+  } else if (x is num || x is String || x is bool || x == null) {
     return x;
-  else if (x is Iterable)
+  } else if (x is Iterable) {
     return x.map(_safeForJson).toList();
-  else
+  } else {
     return x.toString();
+  }
 }
 
 Map _jsonify(Map map) {
@@ -129,14 +132,15 @@ dynamic _revive(x) {
   if (x is Map) {
     return x.keys.fold<Map<String, dynamic>>(
         {}, (out, k) => out..[k.toString()] = _revive(x[k]));
-  } else if (x is Iterable)
+  } else if (x is Iterable) {
     return x.map(_revive).toList();
-  else if (x is String) {
+  } else if (x is String) {
     try {
       return DateTime.parse(x);
     } catch (e) {
       return x;
     }
-  } else
+  } else {
     return x;
+  }
 }
