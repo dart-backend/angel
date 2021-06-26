@@ -49,7 +49,7 @@ class CacheService<Id, Data> extends Service<Id, Data> {
         var queryEqual = ignoreParams == true ||
             (cached.params != null &&
                 const MapEquality().equals(
-                    params['query'] as Map?, cached.params['query'] as Map?));
+                    params['query'] as Map, cached.params['query'] as Map));
         if (queryEqual) {
           return await getCached();
         }

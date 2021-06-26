@@ -13,7 +13,7 @@
 * Migrated angel_model to 3.0.0 (0/0 tests passed)
 * Migrated angel_container to 3.0.0 (55/55 tests passed)
 * Added merge_map and migrated to 2.0.0 (6/6 tests passed)
-* Added mock_request and migrated to 2.0.0 (0/0 tests)
+* Added mock_request and migrated to 2.0.0 (5/5 tests)
 * Migrated angel_framework to 4.0.0 (149/150 tests passed)
 * Migrated angel_auth to 4.0.0 (27/30 tests passed)
 * Migrated angel_configuration to 4.0.0 (6/8 testspassed)
@@ -44,7 +44,7 @@
 * Migrated angel_orm_postgres to 3.0.0 (51/54 tests passed)
 * Create orm-sdk-2.12.x boilerplate (in progress) <= Milestone 2
 * Migrated angel_auth_oauth2 to 4.0.0 (0/0 tests passed)
-* Migrated angel_auth_cache to 4.0.0 (0/7 tests passed)
+* Migrated angel_auth_cache to 4.0.0 (4/7 tests passed)
 * Migrated angel_auth_cors to 4.0.0  (10/15 tests passed)
 * Migrated angel_oauth2 to 4.0.0 (17/25 tests passed)
 * Migrated angel_proxy to 4.0.0 (5/7 tests passed)

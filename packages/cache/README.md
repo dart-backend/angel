@@ -1,4 +1,4 @@
-# Angel3 Cache
+# HTTP Caching for Angel3
 
 [![version](https://img.shields.io/badge/pub-v4.0.1-brightgreen)](https://pub.dartlang.org/packages/angel3_cache)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
@@ -6,7 +6,7 @@
 
 [![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/cache/LICENSE)
 
-Support for server-side caching in [Angel3](https://github.com/dukefirehawk/angel).
+A service that provides HTTP caching to the response data for [Angel3](https://github.com/dukefirehawk/angel).
 
 ## `CacheService`
 
@@ -16,8 +16,7 @@ A `Service` class that caches data from one service, storing it in another. An i
 
 A middleware that enables the caching of response serialization.
 
-This can improve the performance of sending objects that are complex to serialize.
-You can pass a [shouldCache] callback to determine which values should be cached.
+This can improve the performance of sending objects that are complex to serialize. You can pass a [shouldCache] callback to determine which values should be cached.
 
 ```dart
 void main() async {

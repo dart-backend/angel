@@ -1,7 +1,6 @@
 import 'package:angel3_cache/angel3_cache.dart';
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_framework/http.dart';
-import 'package:glob/glob.dart';
 
 void main() async {
   var app = Angel();
@@ -9,7 +8,7 @@ void main() async {
   // Cache a glob
   var cache = ResponseCache()
     ..patterns.addAll([
-      Glob('/*.txt'),
+      RegExp('^/?\\w+\\.txt'),
     ]);
 
   // Handle `if-modified-since` header, and also send cached content
@@ -21,7 +20,9 @@ void main() async {
 
   // Support purging the cache.
   app.addRoute('PURGE', '*', (req, res) {
-    if (req.ip != '127.0.0.1') throw AngelHttpException.forbidden();
+    if (req.ip != '127.0.0.1') {
+      throw AngelHttpException.forbidden();
+    }
 
     cache.purge(req.uri!.path);
     print('Purged ${req.uri!.path}');

@@ -3,6 +3,8 @@
 ## 4.0.1
 
 * Updated pubspec description
+* Fixed: Return `200` with cached data instead of `403`
+* Updated broken Unit Tests
 
 ## 4.0.0
 

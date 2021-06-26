@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io' show HttpDate;
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:pool/pool.dart';
+import 'package:logging/logging.dart';
 
 /// A flexible response cache for Angel.
 ///
@@ -22,6 +23,8 @@ class ResponseCache {
   /// If `true` (default: `false`), then caching of results will discard URI query parameters and fragments.
   final bool ignoreQueryAndFragment;
 
+  final log = Logger('ResponseCache');
+
   ResponseCache(
       {this.timeout = const Duration(minutes: 10),
       this.ignoreQueryAndFragment = false});
@@ -38,26 +41,41 @@ class ResponseCache {
   ///
   /// This prevents the server from even having to access the cache, and plays very well with static assets.
   Future<bool> ifModifiedSince(RequestContext req, ResponseContext res) async {
-    if (req.method != 'GET' && req.method != 'HEAD') return true;
+    if (req.method != 'GET' && req.method != 'HEAD') {
+      return true;
+    }
 
-    if (req.headers!.ifModifiedSince != null) {
-      var modifiedSince = req.headers!.ifModifiedSince;
-
+    var modifiedSince = req.headers?.ifModifiedSince;
+    if (modifiedSince != null) {
       // Check if there is a cache entry.
       for (var pattern in patterns) {
-        if (pattern.allMatches(_getEffectivePath(req)).isNotEmpty &&
-            _cache.containsKey(_getEffectivePath(req))) {
-          var response = _cache[_getEffectivePath(req)]!;
-          //print('timestamp ${response.timestamp} vs since ${modifiedSince}');
+        var reqPath = _getEffectivePath(req);
 
-          if (response.timestamp.compareTo(modifiedSince!) <= 0) {
+        if (pattern.allMatches(reqPath).isNotEmpty &&
+            _cache.containsKey(reqPath)) {
+          var response = _cache[reqPath];
+
+          //log.info('timestamp ${response?.timestamp} vs since $modifiedSince');
+
+          if (response != null &&
+              response.timestamp.compareTo(modifiedSince) <= 0) {
             // If the cache timeout has been met, don't send the cached response.
-            if (DateTime.now().toUtc().difference(response.timestamp) >=
-                timeout) {
+            var timeDiff =
+                DateTime.now().toUtc().difference(response.timestamp);
+
+            //log.info(
+            //    'Time Diff: ${timeDiff.inMilliseconds} >=  ${timeout.inMilliseconds}');
+            if (timeDiff.inMilliseconds >= timeout.inMilliseconds) {
               return true;
             }
 
-            res.statusCode = 304;
+            // Old code: res.statusCode = 304;
+            // Return the response stored in the cache
+            _setCachedHeaders(response.timestamp, req, res);
+            res
+              ..headers.addAll(response.headers)
+              ..add(response.body);
+            await res.close();
             return false;
           }
         }
@@ -67,8 +85,13 @@ class ResponseCache {
     return true;
   }
 
-  String _getEffectivePath(RequestContext req) =>
-      ignoreQueryAndFragment == true ? req.uri!.path : req.uri.toString();
+  String _getEffectivePath(RequestContext req) {
+    if (req.uri == null) {
+      log.severe('Request URI is null');
+      throw ArgumentError('Request URI is null');
+    }
+    return ignoreQueryAndFragment == true ? req.uri!.path : req.uri.toString();
+  }
 
   /// Serves content from the cache, if applicable.
   Future<bool> handleRequest(RequestContext req, ResponseContext res) async {
@@ -114,37 +137,41 @@ class ResponseCache {
     if (res.statusCode == 304) {
       return true;
     }
+
     if (req.method != 'GET' && req.method != 'HEAD') {
       return true;
     }
 
     // Check if there is a cache entry.
     for (var pattern in patterns) {
-      if (pattern.allMatches(_getEffectivePath(req)).isNotEmpty) {
+      var reqPath = _getEffectivePath(req);
+
+      if (pattern.allMatches(reqPath).isNotEmpty) {
         var now = DateTime.now().toUtc();
 
         // Invalidate the response, if need be.
-        if (_cache.containsKey(_getEffectivePath(req))) {
+        if (_cache.containsKey(reqPath)) {
           // If there is no timeout, don't invalidate.
           //if (timeout == null) return true;
 
           // Otherwise, don't invalidate unless the timeout has been exceeded.
-          var response = _cache[_getEffectivePath(req)];
+          var response = _cache[reqPath];
           if (response == null ||
               now.difference(response.timestamp) < timeout) {
             return true;
           }
 
           // If the cache entry should be invalidated, then invalidate it.
-          purge(_getEffectivePath(req));
+          purge(reqPath);
         }
 
         // Save the response.
-        var writeLock =
-            _writeLocks.putIfAbsent(_getEffectivePath(req), () => Pool(1));
+        var writeLock = _writeLocks.putIfAbsent(reqPath, () => Pool(1));
         await writeLock.withResource(() {
-          _cache[_getEffectivePath(req)] = _CachedResponse(
-              Map.from(res.headers), res.buffer!.toBytes(), now);
+          if (res.buffer != null) {
+            _cache[reqPath] = _CachedResponse(
+                Map.from(res.headers), res.buffer!.toBytes(), now);
+          }
         });
 
         _setCachedHeaders(now, req, res);
