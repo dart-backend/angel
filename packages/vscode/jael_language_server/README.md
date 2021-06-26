@@ -1,1 +1,0 @@
-# Jael Language Server for Vs Code
