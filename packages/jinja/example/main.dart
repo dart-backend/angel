@@ -1,7 +1,7 @@
 import 'dart:io';
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_framework/http.dart';
-import 'package:angel_jinja/angel_jinja.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_framework/http.dart';
+import 'package:angel3_jinja/angel3_jinja.dart';
 import 'package:path/path.dart' as p;
 
 void main() async {

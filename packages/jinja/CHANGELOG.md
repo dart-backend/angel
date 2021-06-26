@@ -1,6 +1,9 @@
-# 2.0.0
+# Change Log
+
+## 2.0.0
+
 * Migrated to support Dart SDK 2.12.x NNBD
 
-# 1.0.0
+## 1.0.0
 
-- Initial version, created by Stagehand
+* Initial version, created by Stagehand
