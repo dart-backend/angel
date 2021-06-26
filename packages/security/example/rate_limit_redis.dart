@@ -1,7 +1,7 @@
-import 'package:angel_redis/angel_redis.dart';
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_production/angel_production.dart';
-import 'package:angel_security/angel_security.dart';
+import 'package:angel3_redis/angel3_redis.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_production/angel3_production.dart';
+import 'package:angel3_security/angel3_security.dart';
 import 'package:resp_client/resp_client.dart';
 import 'package:resp_client/resp_commands.dart';
 import 'package:resp_client/resp_server.dart';

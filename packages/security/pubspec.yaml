@@ -1,47 +1,18 @@
-name: angel_security
+name: angel3_security
 version: 3.0.0
-description: Angel infrastructure for improving security, rate limiting, and more.
-homepage: https://github.com/angel-dart/security
-publish_to: none
+description: Angel infrastructure for improving security, rate limiting, and more
+homepage: https://github.com/dukefirehawk/angel/tree/angel3/packages/security
 environment: 
   sdk: '>=2.12.0 <3.0.0'
 dependencies: 
-  angel_framework:
-    git: 
-      url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x_nnbd
-      path: packages/framework
+  angel3_framework: ^4.0.0
   crypto: ^3.0.1
 dev_dependencies: 
-  angel_auth:
-    git: 
-      url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x_nnbd
-      path: packages/auth
-  angel_production:
-    git: 
-      url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x_nnbd
-      path: packages/production
-  angel_redis:
-    git: 
-      url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x_nnbd
-      path: packages/redis
-  angel_test:
-    git: 
-      url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x_nnbd
-      path: packages/test
-  angel_validate:
-    git: 
-      url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x_nnbd
-      path: packages/validate
-  pretty_logging:
-    git: 
-      url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x_nnbd
-      path: packages/pretty_logging
+  angel3_auth: ^4.0.0
+  angel3_production: ^3.0.0
+  angel3_redis: ^2.0.0
+  angel3_test: ^4.0.0
+  angel3_validate: ^4.0.0
+  angel3_pretty_logging: ^3.0.0
   pedantic: ^1.11.1
   test: ^1.17.8

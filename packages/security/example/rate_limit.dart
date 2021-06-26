@@ -1,8 +1,8 @@
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_framework/http.dart';
-import 'package:angel_security/angel_security.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_framework/http.dart';
+import 'package:angel3_security/angel3_security.dart';
 import 'package:logging/logging.dart';
-import 'package:pretty_logging/pretty_logging.dart';
+import 'package:angel3_pretty_logging/angel3_pretty_logging.dart';
 
 void main() async {
   // Logging boilerplate.

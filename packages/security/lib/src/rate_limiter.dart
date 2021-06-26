@@ -1,6 +1,6 @@
 import 'dart:async';
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_security/angel_security.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_security/angel3_security.dart';
 import 'rate_limiting_window.dart';
 
 /// A base class that facilitates rate limiting API's or endpoints,
