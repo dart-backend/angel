@@ -44,7 +44,7 @@
 * Migrated angel_orm_postgres to 3.0.0 (51/54 tests passed)
 * Create orm-sdk-2.12.x boilerplate (in progress) <= Milestone 2
 * Migrated angel_auth_oauth2 to 4.0.0 (0/0 tests passed)
-* Migrated angel_auth_cache to 4.0.0 (4/7 tests passed)
+* Migrated angel_auth_cache to 4.0.0 (7/7 tests passed)
 * Migrated angel_auth_cors to 4.0.0  (10/15 tests passed)
 * Migrated angel_oauth2 to 4.0.0 (17/25 tests passed)
 * Migrated angel_proxy to 4.0.0 (5/7 tests passed)

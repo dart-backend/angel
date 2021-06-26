@@ -1,16 +1,11 @@
-name: angel_mustache
-version: 2.0.0
-description: Mustache view generator for Angel.
-homepage: https://github.com/angel-dart/angel_mustache
-publish_to: none
+name: angel3_mustache
+version: 3.0.0
+description: A service that renders Mustache template into HTML view for Angel3
+homepage: https://github.com/dukefirehawk/angel/tree/angel3/packages/mustache
 environment:
   sdk: '>=2.12.0 <3.0.0'
 dependencies:
-  angel_framework: #^2.0.0-alpha
-    git: 
-      url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x_nnbd
-      path: packages/framework
+  angel3_framework: ^4.0.0
   file: ^6.1.2
   mustache_template: ^2.0.0
   path: ^1.8.0

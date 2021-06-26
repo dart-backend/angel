@@ -1,22 +1,26 @@
-# mustache
-[![Gitter](https://img.shields.io/gitter/room/nwjs/nw.js.svg)](https://gitter.im/angel_dart/discussion)
-[![version](https://img.shields.io/pub/v/angel_mustache.svg)](https://pub.dartlang.org/packages/angel_mustache)
-[![build status](https://travis-ci.org/angel-dart/mustache.svg?branch=master)](https://travis-ci.org/angel-dart/mustache)
+# Mustache Template Renderer for Angel3
 
-Mustache (Handlebars) view generator for the [Angel](https://github.com/angel-dart/angel)
-web server framework.
+[![version](https://img.shields.io/badge/pub-v3.0.0-brightgreen)](https://pub.dartlang.org/packages/angel3_mustache)
+[![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
+[![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
+
+[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/mustache/LICENSE)
+
+A service that renders Mustache template into HTML view for [Angel3](https://github.com/dukefirehawk/angel) framework.
 
 Thanks so much @c4wrd for his help with bringing this project to life!
 
-# Installation
+## Installation
+
 In `pubspec.yaml`:
 
 ```yaml
 dependencies:
-    angel_mustache: ^2.0.0
+    angel3_mustache: ^3.0.0
 ```
 
-# Usage
+## Usage
+
 ```dart
 const FileSystem fs = const LocalFileSystem();
 
@@ -29,7 +33,8 @@ configureServer(Angel app) async {
 }
 ```
 
-# Options
+@# Options
+
 - **partialsPath**: A path within the viewsDirectory to search for partials in.
     Default is `./partials`.
 - **fileExtension**: The file extension to search for. Default is `.mustache`.

@@ -1,6 +1,6 @@
 import 'dart:async';
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_mustache/angel_mustache.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_mustache/angel3_mustache.dart';
 import 'package:file/file.dart';
 import 'package:file/local.dart';
 import 'package:test/test.dart';

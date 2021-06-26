@@ -2,8 +2,8 @@ import 'dart:async';
 import 'dart:collection';
 import 'package:file/file.dart';
 
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_mustache/src/mustache_context.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_mustache/src/mustache_context.dart';
 
 class MustacheViewCache {
   /// The context for which views and partials are
