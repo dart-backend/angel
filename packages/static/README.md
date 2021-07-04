@@ -1,16 +1,17 @@
-# angel3_static
+# Angel3 Static Files Service
+
 [![version](https://img.shields.io/badge/pub-v4.0.1-brightgreen)](https://pub.dartlang.org/packages/angel3_static)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 [![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
 
 [![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/static/LICENSE)
 
-
-Static server infrastructure for Angel.
+This package supports serving static files such as html, css and js for [Angel3 framework](https://pub.dartlang.org/packages/angel3).
 
 *Can also handle `Range` requests now, making it suitable for media streaming, ex. music, video, etc.*
 
-# Installation
+## Installation
+
 In `pubspec.yaml`:
 
 ```yaml
@@ -18,9 +19,9 @@ dependencies:
     angel3_static: ^4.0.0
 ```
 
-# Usage
-To serve files from a directory, you need to create a `VirtualDirectory`.
-Keep in mind that `angel3_static` uses `package:file` instead of `dart:io`.
+## Usage
+
+To serve files from a directory, you need to create a `VirtualDirectory`. Keep in mind that `angel3_static` uses `package:file` instead of `dart:io`.
 
 ```dart
 import 'package:angel3_framework/angel3_framework.dart';
@@ -46,10 +47,9 @@ void main() async {
 }
 ```
 
-# Push State
-`VirtualDirectory` also exposes a `pushState` method that returns a
-request handler that serves the file at a given path as a fallback, unless
-the user is requesting that file. This can be very useful for SPA's.
+## Push State
+
+`VirtualDirectory` also exposes a `pushState` method that returns a request handler that serves the file at a given path as a fallback, unless the user is requesting that file. This can be very useful for SPA's.
 
 ```dart
 // Create VirtualDirectory as well
@@ -62,8 +62,10 @@ app.fallback(vDir.handleRequest);
 app.fallback(vDir.pushState('index.html'));
 ```
 
-# Options
+## Options
+
 The `VirtualDirectory` API accepts a few named parameters:
+
 - **source**: A `Directory` containing the files to be served. If left null, then Angel will serve either from `web` (in development) or
     `build/web` (in production), depending on your `ANGEL_ENV`.
 - **indexFileNames**: A `List<String>` of filenames that should be served as index pages. Default is `['index.html']`.

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io' show HttpDate;
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:file/file.dart';
+import 'package:logging/logging.dart';
 import 'virtual_directory.dart';
 
 /// Returns a string representation of the given [CacheAccessLevel].
@@ -18,6 +19,8 @@ String accessLevelToString(CacheAccessLevel accessLevel) {
 
 /// A `VirtualDirectory` that also sets `Cache-Control` headers.
 class CachingVirtualDirectory extends VirtualDirectory {
+  final _log = Logger('CachingVirtualDirectory');
+
   final Map<String, String> _etags = {};
 
   /// Either `PUBLIC` or `PRIVATE`.
@@ -40,20 +43,20 @@ class CachingVirtualDirectory extends VirtualDirectory {
   CachingVirtualDirectory(Angel app, FileSystem fileSystem,
       {this.accessLevel = CacheAccessLevel.PUBLIC,
       Directory? source,
-      bool? debug,
-      Iterable<String>? indexFileNames,
+      bool debug = false,
+      Iterable<String> indexFileNames = const ['index.html'],
       this.maxAge = 0,
       this.noCache = false,
       this.onlyInProduction = false,
       this.useEtags = true,
-      bool? allowDirectoryListing,
+      bool allowDirectoryListing = false,
       bool useBuffer = false,
-      String? publicPath,
+      String publicPath = '/',
       Function(File file, RequestContext req, ResponseContext res)? callback})
       : super(app, fileSystem,
             source: source,
-            indexFileNames: indexFileNames ?? ['index.html'],
-            publicPath: publicPath ?? '/',
+            indexFileNames: indexFileNames,
+            publicPath: publicPath,
             callback: callback,
             allowDirectoryListing: allowDirectoryListing,
             useBuffer: useBuffer);
@@ -63,27 +66,35 @@ class CachingVirtualDirectory extends VirtualDirectory {
       File file, FileStat stat, RequestContext req, ResponseContext res) {
     res.headers['accept-ranges'] = 'bytes';
 
-    if (onlyInProduction == true && req.app!.environment.isProduction != true) {
+    if (onlyInProduction == true && req.app?.environment.isProduction != true) {
       return super.serveFile(file, stat, req, res);
     }
+
+    if (req.headers == null) {
+      _log.severe('Missing headers in the RequestContext');
+      throw ArgumentError('Missing headers in the RequestContext');
+    }
+    var reqHeaders = req.headers!;
 
     var shouldNotCache = noCache == true;
 
     if (!shouldNotCache) {
-      shouldNotCache = req.headers!.value('cache-control') == 'no-cache' ||
-          req.headers!.value('pragma') == 'no-cache';
+      shouldNotCache = reqHeaders.value('cache-control') == 'no-cache' ||
+          reqHeaders.value('pragma') == 'no-cache';
     }
 
     if (shouldNotCache) {
       res.headers['cache-control'] = 'private, max-age=0, no-cache';
       return super.serveFile(file, stat, req, res);
     } else {
-      var ifModified = req.headers!.ifModifiedSince;
+      var ifModified = reqHeaders.ifModifiedSince;
       var ifRange = false;
 
       try {
-        ifModified = HttpDate.parse(req.headers!.value('if-range')!);
-        ifRange = true;
+        if (reqHeaders.value('if-range') != null) {
+          ifModified = HttpDate.parse(reqHeaders.value('if-range')!);
+          ifRange = true;
+        }
       } catch (_) {
         // Fail silently...
       }
@@ -97,7 +108,9 @@ class CachingVirtualDirectory extends VirtualDirectory {
             setCachedHeaders(stat.modified, req, res);
 
             if (useEtags && _etags.containsKey(file.absolute.path)) {
-              res.headers['ETag'] = _etags[file.absolute.path]!;
+              if (_etags[file.absolute.path] != null) {
+                res.headers['ETag'] = _etags[file.absolute.path]!;
+              }
             }
 
             if (ifRange) {
@@ -111,6 +124,8 @@ class CachingVirtualDirectory extends VirtualDirectory {
             return super.serveFile(file, stat, req, res);
           }
         } catch (_) {
+          _log.severe(
+              'Invalid date for ${ifRange ? 'if-range' : 'if-not-modified-since'} header.');
           throw AngelHttpException.badRequest(
               message:
                   'Invalid date for ${ifRange ? 'if-range' : 'if-not-modified-since'} header.');
@@ -120,18 +135,18 @@ class CachingVirtualDirectory extends VirtualDirectory {
       // If-modified didn't work; try etags
 
       if (useEtags == true) {
-        var etagsToMatchAgainst = req.headers!['if-none-match'];
+        var etagsToMatchAgainst = reqHeaders['if-none-match'] ?? [];
         ifRange = false;
 
-        if (etagsToMatchAgainst?.isNotEmpty != true) {
-          etagsToMatchAgainst = req.headers!['if-range'];
-          ifRange = etagsToMatchAgainst?.isNotEmpty == true;
+        if (etagsToMatchAgainst.isEmpty) {
+          etagsToMatchAgainst = reqHeaders['if-range'] ?? [];
+          ifRange = etagsToMatchAgainst.isNotEmpty;
         }
 
-        if (etagsToMatchAgainst?.isNotEmpty == true) {
+        if (etagsToMatchAgainst.isNotEmpty) {
           var hasBeenModified = false;
 
-          for (var etag in etagsToMatchAgainst!) {
+          for (var etag in etagsToMatchAgainst) {
             if (etag == '*') {
               hasBeenModified = true;
             } else {

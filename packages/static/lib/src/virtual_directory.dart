@@ -3,6 +3,7 @@ import 'package:angel3_framework/angel3_framework.dart';
 import 'package:file/file.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:path/path.dart' as p;
+import 'package:logging/logging.dart';
 import 'package:angel3_range_header/angel3_range_header.dart';
 
 final RegExp _param = RegExp(r':([A-Za-z0-9_]+)(\((.+)\))?');
@@ -28,11 +29,13 @@ String _pathify(String path) {
 
 /// A static server plug-in.
 class VirtualDirectory {
-  String? _prefix;
-  Directory? _source;
+  final _log = Logger('VirtualDirectory');
+
+  late String _prefix;
+  late Directory _source;
 
   /// The directory to serve files from.
-  Directory? get source => _source;
+  Directory get source => _source;
 
   /// An optional callback to run before serving files.
   final Function(File file, RequestContext req, ResponseContext res)? callback;
@@ -47,7 +50,7 @@ class VirtualDirectory {
   final String publicPath;
 
   /// If `true` (default: `false`), then if a directory does not contain any of the specific [indexFileNames], a default directory listing will be served.
-  final bool? allowDirectoryListing;
+  final bool allowDirectoryListing;
 
   /// If `true` (default: `true`), then files will be opened as streams and piped into the request.
   ///
@@ -77,7 +80,7 @@ class VirtualDirectory {
     }
     var path = req.uri!.path.replaceAll(_straySlashes, '');
 
-    if (_prefix?.isNotEmpty == true && !path.startsWith(_prefix!)) {
+    if (_prefix.isNotEmpty == true && !path.startsWith(_prefix)) {
       return Future<bool>.value(true);
     }
 
@@ -91,7 +94,7 @@ class VirtualDirectory {
   /// the view will be served.
   RequestHandler pushState(String path, {Iterable? accepts}) {
     var vPath = path.replaceAll(_straySlashes, '');
-    if (_prefix?.isNotEmpty == true) vPath = '$_prefix/$vPath';
+    if (_prefix.isNotEmpty == true) vPath = '$_prefix/$vPath';
 
     return (RequestContext req, ResponseContext res) {
       var path = req.path.replaceAll(_straySlashes, '');
@@ -110,20 +113,26 @@ class VirtualDirectory {
   /// Writes the file at the given virtual [path] to a response.
   Future<bool> servePath(
       String path, RequestContext req, ResponseContext res) async {
-    if (_prefix!.isNotEmpty) {
+    if (_prefix.isNotEmpty) {
       // Only replace the *first* incidence
       // Resolve: https://github.com/angel-dart/angel/issues/41
-      path = path.replaceFirst(RegExp('^' + _pathify(_prefix!)), '');
+      path = path.replaceFirst(RegExp('^' + _pathify(_prefix)), '');
     }
 
     if (path.isEmpty) path = '.';
     path = path.replaceAll(_straySlashes, '');
 
-    var absolute = source!.absolute.uri.resolve(path).toFilePath();
-    var parent = source!.absolute.uri.toFilePath();
+    var absolute = source.absolute.uri.resolve(path).toFilePath();
+    var parent = source.absolute.uri.toFilePath();
 
     if (!p.isWithin(parent, absolute) && !p.equals(parent, absolute)) {
       return true;
+    }
+
+    // Replace the separator when running on Windows with file system
+    // detected as Linux
+    if (absolute.contains('\\') && fileSystem.path.separator == '/') {
+      absolute = absolute.replaceAll('\\', '/');
     }
 
     var stat = await fileSystem.stat(absolute);
@@ -199,8 +208,8 @@ class VirtualDirectory {
       });
 
       for (var entity in entities) {
-        String? stub;
-        String? type;
+        String stub;
+        String type;
 
         if (entity is File) {
           type = '[File]';
@@ -213,23 +222,24 @@ class VirtualDirectory {
           stub = p.basename(entity.path);
         } else {
           //TODO: Handle unknown type
-
+          _log.severe('Unknown file entity. Not a file, directory or link.');
+          type = '[]';
+          stub = '';
         }
         var href = stub;
 
         if (relative.isNotEmpty) {
-          stub ??= '';
           href = '/' + relative + '/' + stub;
         }
 
         if (entity is Directory) {
-          if (href == null) {
+          if (href == '') {
             href = '/';
           } else {
             href += '/';
           }
         }
-        href = Uri.encodeFull(href!);
+        href = Uri.encodeFull(href);
 
         res.write('<li><a href="$href">$type $stub</a></li>');
       }
@@ -242,12 +252,13 @@ class VirtualDirectory {
   }
 
   void _ensureContentTypeAllowed(String mimeType, RequestContext req) {
-    var value = req.headers!.value('accept');
+    var value = req.headers?.value('accept');
     var acceptable = value == null ||
         value.isNotEmpty != true ||
         (mimeType.isNotEmpty == true && value.contains(mimeType) == true) ||
         value.contains('*/*') == true;
     if (!acceptable) {
+      _log.severe('Mime type [$value] is not supported');
       throw AngelHttpException(
           UnsupportedError(
               'Client requested $value, but server wanted to send $mimeType.'),
@@ -262,11 +273,12 @@ class VirtualDirectory {
     res.headers['accept-ranges'] = 'bytes';
 
     if (callback != null) {
-      return await req.app!.executeHandler(
-          (RequestContext req, ResponseContext res) =>
-              callback!(file, req, res),
-          req,
-          res);
+      return await req.app?.executeHandler(
+              (RequestContext req, ResponseContext res) =>
+                  callback!(file, req, res),
+              req,
+              res) ??
+          true;
     }
 
     var type =
@@ -277,13 +289,20 @@ class VirtualDirectory {
     res.contentType = MediaType.parse(type);
     if (useBuffer == true) res.useBuffer();
 
-    if (req.headers!.value('range')?.startsWith('bytes=') != true) {
+    if (req.headers == null) {
+      _log.severe('Missing headers in the RequestContext');
+      throw ArgumentError('Missing headers in the RequestContext');
+    }
+    var reqHeaders = req.headers!;
+
+    if (reqHeaders.value('range')?.startsWith('bytes=') != true) {
       await res.streamFile(file);
     } else {
-      var header = RangeHeader.parse(req.headers!.value('range')!);
+      var header = RangeHeader.parse(reqHeaders.value('range')!);
       var items = RangeHeader.foldItems(header.items);
-      var totalFileSize = await file.length();
       header = RangeHeader(items);
+
+      var totalFileSize = await file.length();
 
       for (var item in header.items) {
         var invalid = false;
