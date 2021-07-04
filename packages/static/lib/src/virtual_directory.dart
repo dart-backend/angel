@@ -129,10 +129,15 @@ class VirtualDirectory {
       return true;
     }
 
-    // Replace the separator when running on Windows with file system
-    // detected as Linux
+    // Update to the correct file separator based on file system
     if (absolute.contains('\\') && fileSystem.path.separator == '/') {
       absolute = absolute.replaceAll('\\', '/');
+      _log.warning(
+          'Incompatible file system type is used. Changed file separator from "\\" to "/".');
+    } else if (absolute.contains('/') && fileSystem.path.separator == '\\') {
+      absolute = absolute.replaceAll('/', '\\');
+      _log.warning(
+          'Incompatible file system type. Changed file separator from "/" to "\\".');
     }
 
     var stat = await fileSystem.stat(absolute);

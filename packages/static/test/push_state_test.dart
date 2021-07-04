@@ -11,7 +11,11 @@ void main() {
   late TestClient client;
 
   setUp(() async {
+    // For teting on Linux/MacOS
     fileSystem = MemoryFileSystem();
+
+    // For testing on Windows
+    //fileSystem = MemoryFileSystem(style: FileSystemStyle.windows);
 
     var webDir = fileSystem.directory('web');
     await webDir.create(recursive: true);

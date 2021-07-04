@@ -15,7 +15,7 @@
 * Added merge_map and migrated to 2.0.0 (6/6 tests passed)
 * Added mock_request and migrated to 2.0.0 (5/5 tests)
 * Migrated angel_framework to 4.0.0 (149/150 tests passed)
-* Migrated angel_auth to 4.0.0 (27/30 tests passed)
+* Migrated angel_auth to 4.0.0 (29/30 tests passed)
 * Migrated angel_configuration to 4.0.0 (6/8 testspassed)
 * Migrated angel_validate to 4.0.0 (6/7 tests passed)
 * Migrated json_god to 4.0.0 (13/13 tests passed)
@@ -31,7 +31,7 @@
 * Added html_builder and migrated to 2.0.0 (1/1 tests passed)
 * Migrated hot to 4.0.0 (0/0 tests passed)
 * Added range_header and migrated to 3.0.0 (12/12 tests passed)
-* Migrated static to 4.0.0 (11/12 test passed)
+* Migrated angel_static to 4.0.0 (12/12 test passed)
 * Created basic-sdk-2.12.x_nnbd template (1/1 test passed) <= Milestone 1
 * Migrated angel_serialize to 4.0.0 (0/0 test passed)
 * Migrated angel_serialize_generator to 4.0.0 (33/33 tests passed)
