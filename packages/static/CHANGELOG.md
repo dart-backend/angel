@@ -4,7 +4,7 @@
 
 * Fixed NNBD related issues
 * Added logging to `VirtualDirectory` and `CachingVirtualDirectory` to capture exception
-* Auto detect and change file separator when POSIX file system is on Windows and vice versa
+* Auto detect and change file separator when POSIX file system is used on Windows and vice versa
 * Fixed `push_state_test` unit test failure on Windows
 * 12/12 unit tests passed
 
