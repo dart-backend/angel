@@ -1,9 +1,12 @@
 import 'package:charcode/ascii.dart';
 import 'package:collection/collection.dart';
 import 'package:quiver/core.dart';
+import 'package:logging/logging.dart';
 
 /// A common class containing parsing and validation logic for third-party authentication configuration.
 class ExternalAuthOptions {
+  static final _log = Logger('VirtualDirectory');
+
   /// The user's identifier, otherwise known as an "application id".
   final String clientId;
 
@@ -31,6 +34,7 @@ class ExternalAuthOptions {
       return ExternalAuthOptions._(
           clientId, clientSecret, redirectUri, scopes.toSet());
     } else {
+      _log.severe('RedirectUri is not valid');
       throw ArgumentError.value(
           redirectUri, 'redirectUri', 'must be a String or Uri');
     }
@@ -46,6 +50,7 @@ class ExternalAuthOptions {
     var clientId = map['client_id'];
     var clientSecret = map['client_secret'];
     if (clientId == null || clientSecret == null) {
+      _log.severe('clientId or clientSecret is null');
       throw ArgumentError('Invalid clientId and/or clientSecret');
     }
 

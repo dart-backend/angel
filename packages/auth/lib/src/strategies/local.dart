@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:logging/logging.dart';
 import 'package:angel3_framework/angel3_framework.dart';
 import '../options.dart';
 import '../strategy.dart';
@@ -12,6 +13,8 @@ typedef LocalAuthVerifier<User> = FutureOr<User?> Function(
     String? username, String? password);
 
 class LocalAuthStrategy<User> extends AuthStrategy<User> {
+  final _log = Logger('LocalAuthStrategy');
+
   final RegExp _rgxBasic = RegExp(r'^Basic (.+)$', caseSensitive: false);
   final RegExp _rgxUsrPass = RegExp(r'^([^:]+):(.+)$');
 
@@ -29,7 +32,9 @@ class LocalAuthStrategy<User> extends AuthStrategy<User> {
       this.invalidMessage = 'Please provide a valid username and password.',
       this.allowBasic = true,
       this.forceBasic = false,
-      this.realm = 'Authentication is required.'});
+      this.realm = 'Authentication is required.'}) {
+    _log.info('Using LocalAuthStrategy');
+  }
 
   @override
   Future<User?> authenticate(RequestContext req, ResponseContext res,
@@ -51,6 +56,7 @@ class LocalAuthStrategy<User> extends AuthStrategy<User> {
           verificationResult =
               await verifier(usrPassMatch.group(1), usrPassMatch.group(2));
         } else {
+          _log.severe('Bad request: $invalidMessage');
           throw AngelHttpException.badRequest(errors: [invalidMessage]);
         }
 
@@ -96,6 +102,7 @@ class LocalAuthStrategy<User> extends AuthStrategy<User> {
     } else if (verificationResult != false) {
       return verificationResult;
     } else {
+      _log.info('Not authenticated');
       throw AngelHttpException.notAuthenticated();
     }
   }

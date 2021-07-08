@@ -2,6 +2,7 @@ import 'dart:collection';
 import 'package:angel3_framework/angel3_framework.dart';
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
+import 'package:logging/logging.dart';
 
 /// Calls [BASE64URL], but also works for strings with lengths
 /// that are *not* multiples of 4.
@@ -25,6 +26,8 @@ String decodeBase64(String str) {
 }
 
 class AuthToken {
+  static final _log = Logger('AuthToken');
+
   final SplayTreeMap<String, String> _header =
       SplayTreeMap.from({'alg': 'HS256', 'typ': 'JWT'});
 
@@ -70,6 +73,7 @@ class AuthToken {
     var split = jwt.split('.');
 
     if (split.length != 3) {
+      _log.severe('Invalid JWT');
       throw AngelHttpException.notAuthenticated(message: 'Invalid JWT.');
     }
 
@@ -81,6 +85,7 @@ class AuthToken {
     var split = jwt.split('.');
 
     if (split.length != 3) {
+      _log.severe('Invalid JWT');
       throw AngelHttpException.notAuthenticated(message: 'Invalid JWT.');
     }
 
@@ -90,6 +95,7 @@ class AuthToken {
     var signature = base64Url.encode(hmac.convert(data.codeUnits).bytes);
 
     if (signature != split[2]) {
+      _log.severe('JWT payload does not match hashed version');
       throw AngelHttpException.notAuthenticated(
           message: 'JWT payload does not match hashed version.');
     }

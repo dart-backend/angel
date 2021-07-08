@@ -1,21 +1,21 @@
-# angel3_auth
+# Angel3 Anthentication
+
 [![version](https://img.shields.io/badge/pub-v4.0.4-brightgreen)](https://pub.dartlang.org/packages/angel3_auth)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 [![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
 
 [![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/auth/LICENSE)
 
-A complete authentication plugin for Angel. Inspired by Passport.
+A complete authentication plugin for Angel3. Inspired by Passport. More details in the [User Guide](https://angel3-docs.dukefirehawk.com/guides/authentication).
 
-# Wiki
-[Click here](https://github.com/angel-dart/auth/wiki).
+## Bundled Strategies
 
-# Bundled Strategies
 * Local (with and without Basic Auth)
-* Find other strategies (Twitter, Google, OAuth2, etc.) on Pub!!!
+* Find other strategies (Twitter, Google, OAuth2, etc.) on pub
 
-# Example
-Ensure you have read the [wiki](https://github.com/angel-dart/auth/wiki).
+## Example
+
+Ensure you have read the [User Guide](https://angel3-docs.dukefirehawk.com/guides/authentication).
 
 ```dart
 configureServer(Angel app) async {
@@ -50,11 +50,11 @@ configureServer(Angel app) async {
 }
 ```
 
-# Default Authentication Callback
+## Default Authentication Callback
+
 A frequent use case within SPA's is opening OAuth login endpoints in a separate window.
-[`angel_client`](https://github.com/angel-dart/client)
-provides a facility for this, which works perfectly with the default callback provided
-in this package.
+[`angel3_client`](https://github.com/dukefirehawk/angel/tree/angel3/packages/client)
+provides a facility for this, which works perfectly with the default callback provided in this package.
 
 ```dart
 configureServer(Angel app) async {
@@ -78,7 +78,7 @@ configureServer(Angel app) async {
 ```
 
 This renders a simple HTML page that fires the user's JWT as a `token` event in `window.opener`.
-`angel_client` [exposes this as a Stream](https://github.com/dukefirehawk/angel/tree/angel3/packages/client#authentication):
+`angel3_client` [exposes this as a Stream](https://github.com/dukefirehawk/angel/tree/angel3/packages/client#authentication):
 
 ```dart
 app.authenticateViaPopup('/auth/google').listen((jwt) {

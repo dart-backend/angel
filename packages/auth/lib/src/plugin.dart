@@ -11,6 +11,8 @@ import 'strategy.dart';
 
 /// Handles authentication within an Angel application.
 class AngelAuth<User> {
+  final _log = Logger('AngelAuth');
+
   late Hmac _hs256;
   late int _jwtLifeSpan;
   final StreamController<User> _onLogin = StreamController<User>(),
@@ -42,8 +44,6 @@ class AngelAuth<User> {
   ///
   /// This is a security provision. Even if a user's JWT is stolen, a remote attacker will not be able to impersonate anyone.
   final bool enforceIp;
-
-  final log = Logger('AngelAuth');
 
   /// The endpoint to mount [reviveJwt] at. If `null`, then no revival route is mounted. Default: `/auth/token`.
   String reviveTokenEndpoint;
@@ -109,7 +109,7 @@ class AngelAuth<User> {
     }
     */
     if (app.container == null) {
-      log.severe('Angel.container is null.');
+      _log.severe('Angel3 container is null');
       throw StateError(
           'Angel.container is null. All authentication will fail.');
     }
@@ -126,6 +126,7 @@ class AngelAuth<User> {
         var req = container.make<RequestContext>();
         var res = container.make<ResponseContext>();
         if (req == null || res == null) {
+          _log.severe('RequestContext or responseContext is null');
           throw AngelHttpException.forbidden();
         }
 
@@ -133,6 +134,7 @@ class AngelAuth<User> {
         if (result != null) {
           return result;
         } else {
+          _log.severe('JWT is null');
           throw AngelHttpException.forbidden();
         }
       });
@@ -148,7 +150,7 @@ class AngelAuth<User> {
       });
     }
 
-    app.post(reviveTokenEndpoint, reviveJwt);
+    app.post(reviveTokenEndpoint, _reviveJwt);
 
     app.shutdownHooks.add((_) {
       _onLogin.close();
@@ -158,7 +160,7 @@ class AngelAuth<User> {
   void _apply(
       RequestContext req, ResponseContext res, AuthToken token, User user) {
     if (req.container == null) {
-      log.severe('RequestContext.container is null.');
+      _log.severe('RequestContext.container is null');
       throw StateError(
           'RequestContext.container is not set. All authentication will fail.');
     }
@@ -199,9 +201,9 @@ class AngelAuth<User> {
   /// }
   /// ```
   @deprecated
-  Future decodeJwtOld(RequestContext req, ResponseContext res) async {
+  Future decodeJwt(RequestContext req, ResponseContext res) async {
     if (req.method == 'POST' && req.path == reviveTokenEndpoint) {
-      return await reviveJwt(req, res);
+      return await _reviveJwt(req, res);
     } else {
       await _decodeJwt(req, res);
       return true;
@@ -217,6 +219,7 @@ class AngelAuth<User> {
 
       if (enforceIp) {
         if (req.ip != token.ipAddress) {
+          _log.severe('JWT cannot be accessed from this IP address');
           throw AngelHttpException.forbidden(
               message: 'JWT cannot be accessed from this IP address.');
         }
@@ -227,6 +230,7 @@ class AngelAuth<User> {
             token.issuedAt.add(Duration(milliseconds: token.lifeSpan.toInt()));
 
         if (!expiry.isAfter(DateTime.now())) {
+          _log.severe('Expired JWT');
           throw AngelHttpException.forbidden(message: 'Expired JWT.');
         }
       }
@@ -250,7 +254,7 @@ class AngelAuth<User> {
         }
       }
 
-      log.info('RequestContext.headers is null');
+      _log.info('RequestContext.headers is null');
     } else if (allowCookie &&
         req.cookies.any((cookie) => cookie.name == 'token')) {
       return req.cookies.firstWhere((cookie) => cookie.name == 'token').value;
@@ -289,7 +293,7 @@ class AngelAuth<User> {
   }
 
   /// Attempts to revive an expired (or still alive) JWT.
-  Future<Map<String, dynamic>> reviveJwt(
+  Future<Map<String, dynamic>> _reviveJwt(
       RequestContext req, ResponseContext res) async {
     try {
       var jwt = getJwt(req);
@@ -298,12 +302,15 @@ class AngelAuth<User> {
         var body = await req.parseBody().then((_) => req.bodyAsMap);
         jwt = body['token']?.toString();
       }
+
       if (jwt == null) {
+        _log.severe('No JWT provided');
         throw AngelHttpException.forbidden(message: 'No JWT provided');
       } else {
         var token = AuthToken.validate(jwt, _hs256);
         if (enforceIp) {
           if (req.ip != token.ipAddress) {
+            _log.severe('WT cannot be accessed from this IP address');
             throw AngelHttpException.forbidden(
                 message: 'JWT cannot be accessed from this IP address.');
           }
@@ -329,7 +336,10 @@ class AngelAuth<User> {
         return {'data': data, 'token': token.serialize(_hs256)};
       }
     } catch (e) {
-      if (e is AngelHttpException) rethrow;
+      if (e is AngelHttpException) {
+        rethrow;
+      }
+      _log.severe('Malformed JWT');
       throw AngelHttpException.badRequest(message: 'Malformed JWT');
     }
   }
@@ -385,13 +395,13 @@ class AngelAuth<User> {
               userId: userId, lifeSpan: _jwtLifeSpan, ipAddress: req.ip);
           var jwt = token.serialize(_hs256);
 
-          if (options?.tokenCallback != null) {
+          if (options != null && options.tokenCallback != null) {
             var hasUser = reqContainer?.has<User>() ?? false;
             if (!hasUser) {
               reqContainer?.registerSingleton<User>(result);
             }
 
-            var r = await options?.tokenCallback!(req, res, token, result);
+            var r = await options.tokenCallback!(req, res, token, result);
             if (r != null) return r;
             jwt = token.serialize(_hs256);
           }
@@ -402,15 +412,25 @@ class AngelAuth<User> {
             _addProtectedCookie(res, 'token', jwt);
           }
 
-          if (options?.callback != null) {
-            return await options?.callback!(req, res, jwt);
-          }
+          // Options is not null
+          if (options != null) {
+            if (options.callback != null) {
+              return await options.callback!(req, res, jwt);
+            }
 
-          if (options?.successRedirect?.isNotEmpty == true) {
-            await res.redirect(options?.successRedirect);
-            return false;
-          } else if (options?.canRespondWithJson != false &&
-              req.accepts('application/json')) {
+            if (options.successRedirect?.isNotEmpty == true) {
+              await res.redirect(options.successRedirect);
+              return false;
+            } else if (options.canRespondWithJson &&
+                req.accepts('application/json')) {
+              var user = hasExisting
+                  ? result
+                  : await deserializer((await serializer(result)) as Object);
+              _onLogin.add(user);
+              return {'data': user, 'token': jwt};
+            }
+            // Options is null
+          } else if (hasExisting && req.accepts('application/json')) {
             var user = hasExisting
                 ? result
                 : await deserializer((await serializer(result)) as Object);
@@ -426,8 +446,8 @@ class AngelAuth<User> {
               res.statusCode == 302 ||
               res.headers.containsKey('location')) {
             return false;
-          } else if (options?.failureRedirect != null) {
-            await res.redirect(options!.failureRedirect);
+          } else if (options != null && options.failureRedirect != null) {
+            await res.redirect(options.failureRedirect);
             return false;
           } else {
             throw AngelHttpException.notAuthenticated();

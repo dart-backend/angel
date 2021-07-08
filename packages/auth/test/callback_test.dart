@@ -50,7 +50,7 @@ void main() {
 
     var oldErrorHandler = app.errorHandler;
     app.errorHandler = (e, req, res) {
-      app.logger!.severe(e.message, e, e.stackTrace ?? StackTrace.current);
+      app.logger?.severe(e.message, e, e.stackTrace ?? StackTrace.current);
       return oldErrorHandler(e, req, res);
     };
 
@@ -69,8 +69,8 @@ void main() {
       });
 
     await app
-        .findService('users')!
-        .create({'username': 'jdoe1', 'password': 'password'});
+        .findService('users')
+        ?.create({'username': 'jdoe1', 'password': 'password'});
 
     auth = AngelAuth<User>(
         serializer: (u) => u.id,
@@ -84,11 +84,11 @@ void main() {
 
     auth.strategies['local'] = LocalAuthStrategy((username, password) async {
       var users = await app
-          .findService('users')!
-          .index()
+          .findService('users')
+          ?.index()
           .then((it) => it.map<User>((m) => User.parse(m as Map)).toList());
 
-      var result = users.firstWhereOrNull(
+      var result = users?.firstWhereOrNull(
           (user) => user.username == username && user.password == password);
 
       return Future.value(result);
@@ -144,6 +144,7 @@ void main() {
         body: {'username': 'jdoe1', 'password': 'password'},
         headers: {'accept': 'application/json'});
     print('Response: ${response.body}');
+    print(response.headers);
     expect(json.decode(response.body)['data']['username'], equals('foo'));
   });
 }

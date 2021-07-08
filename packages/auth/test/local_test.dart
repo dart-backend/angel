@@ -46,7 +46,7 @@ void main() async {
     app.get('/hello', (req, res) {
       // => 'Woo auth'
       return 'Woo auth';
-    }); //, middleware: [auth.authenticate('local')]);
+    }, middleware: [auth.authenticate('local')]);
     app.post('/login', (req, res) => 'This should not be shown',
         middleware: [auth.authenticate('local', localOpts)]);
     app.get('/success', (req, res) => 'yep', middleware: [
@@ -54,8 +54,11 @@ void main() async {
     ]);
     app.get('/failure', (req, res) => 'nope');
 
-    app.logger = Logger('angel_auth')
+    app.logger = Logger('local_test')
       ..onRecord.listen((rec) {
+        print(
+            '${rec.time}: ${rec.level.name}: ${rec.loggerName}: ${rec.message}');
+
         if (rec.error != null) {
           print(rec.error);
           print(rec.stackTrace);
@@ -96,12 +99,23 @@ void main() async {
     var response = await client.post(Uri.parse('$url/login'),
         body: json.encode(postData),
         headers: {'content-type': 'application/json'});
-    print('Login response: ${response.body}');
+    print('Status Code: ${response.statusCode}');
+    print(response.headers);
+    print(response.body);
     expect(response.headers['location'], equals('/failure'));
     expect(response.statusCode, equals(401));
   });
 
-  test('allow basic', () async {
+  test('basic auth without authorization', () async {
+    var response = await client.get(Uri.parse('$url/hello'));
+    print('Status Code: ${response.statusCode}');
+    print(response.headers);
+    print(response.body);
+    expect(response.statusCode, equals(401));
+  });
+
+  //test('allow basic', () async {
+  test('basic auth with authorization', () async {
     var authString = base64.encode('username:password'.runes.toList());
     var response = await client.get(Uri.parse('$url/hello'),
         headers: {'authorization': 'Basic $authString'});
