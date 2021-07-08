@@ -8,6 +8,7 @@
   * Websocket
   * Configuration
   * Validate
+  * ORM
   * Framework
 * Add more examples
 * Improve User Guide

@@ -56,7 +56,7 @@ class LocalAuthStrategy<User> extends AuthStrategy<User> {
           verificationResult =
               await verifier(usrPassMatch.group(1), usrPassMatch.group(2));
         } else {
-          _log.severe('Bad request: $invalidMessage');
+          _log.warning('Bad request: $invalidMessage');
           throw AngelHttpException.badRequest(errors: [invalidMessage]);
         }
 

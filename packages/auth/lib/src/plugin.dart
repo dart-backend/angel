@@ -126,7 +126,7 @@ class AngelAuth<User> {
         var req = container.make<RequestContext>();
         var res = container.make<ResponseContext>();
         if (req == null || res == null) {
-          _log.severe('RequestContext or responseContext is null');
+          _log.warning('RequestContext or responseContext is null');
           throw AngelHttpException.forbidden();
         }
 
@@ -134,7 +134,7 @@ class AngelAuth<User> {
         if (result != null) {
           return result;
         } else {
-          _log.severe('JWT is null');
+          _log.warning('JWT is null');
           throw AngelHttpException.forbidden();
         }
       });
@@ -219,7 +219,7 @@ class AngelAuth<User> {
 
       if (enforceIp) {
         if (req.ip != token.ipAddress) {
-          _log.severe('JWT cannot be accessed from this IP address');
+          _log.warning('JWT cannot be accessed from this IP address');
           throw AngelHttpException.forbidden(
               message: 'JWT cannot be accessed from this IP address.');
         }
@@ -230,7 +230,7 @@ class AngelAuth<User> {
             token.issuedAt.add(Duration(milliseconds: token.lifeSpan.toInt()));
 
         if (!expiry.isAfter(DateTime.now())) {
-          _log.severe('Expired JWT');
+          _log.warning('Expired JWT');
           throw AngelHttpException.forbidden(message: 'Expired JWT.');
         }
       }
@@ -304,13 +304,13 @@ class AngelAuth<User> {
       }
 
       if (jwt == null) {
-        _log.severe('No JWT provided');
+        _log.warning('No JWT provided');
         throw AngelHttpException.forbidden(message: 'No JWT provided');
       } else {
         var token = AuthToken.validate(jwt, _hs256);
         if (enforceIp) {
           if (req.ip != token.ipAddress) {
-            _log.severe('WT cannot be accessed from this IP address');
+            _log.warning('WT cannot be accessed from this IP address');
             throw AngelHttpException.forbidden(
                 message: 'JWT cannot be accessed from this IP address.');
           }
@@ -339,7 +339,7 @@ class AngelAuth<User> {
       if (e is AngelHttpException) {
         rethrow;
       }
-      _log.severe('Malformed JWT');
+      _log.warning('Malformed JWT');
       throw AngelHttpException.badRequest(message: 'Malformed JWT');
     }
   }
@@ -371,8 +371,11 @@ class AngelAuth<User> {
       for (var i = 0; i < names.length; i++) {
         var name = names[i];
 
-        var strategy = strategies[name] ??=
-            throw ArgumentError('No strategy "$name" found.');
+        var strategy = strategies[name];
+        if (strategy == null) {
+          _log.severe('No strategy "$name" found.');
+          throw ArgumentError('No strategy "$name" found.');
+        }
 
         var reqContainer = req.container;
 
@@ -450,6 +453,7 @@ class AngelAuth<User> {
             await res.redirect(options.failureRedirect);
             return false;
           } else {
+            _log.warning('Not authenticated');
             throw AngelHttpException.notAuthenticated();
           }
         }

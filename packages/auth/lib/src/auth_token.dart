@@ -73,7 +73,7 @@ class AuthToken {
     var split = jwt.split('.');
 
     if (split.length != 3) {
-      _log.severe('Invalid JWT');
+      _log.warning('Invalid JWT');
       throw AngelHttpException.notAuthenticated(message: 'Invalid JWT.');
     }
 
@@ -85,7 +85,7 @@ class AuthToken {
     var split = jwt.split('.');
 
     if (split.length != 3) {
-      _log.severe('Invalid JWT');
+      _log.warning('Invalid JWT');
       throw AngelHttpException.notAuthenticated(message: 'Invalid JWT.');
     }
 
@@ -95,7 +95,7 @@ class AuthToken {
     var signature = base64Url.encode(hmac.convert(data.codeUnits).bytes);
 
     if (signature != split[2]) {
-      _log.severe('JWT payload does not match hashed version');
+      _log.warning('JWT payload does not match hashed version');
       throw AngelHttpException.notAuthenticated(
           message: 'JWT payload does not match hashed version.');
     }
