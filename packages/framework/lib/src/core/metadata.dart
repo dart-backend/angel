@@ -58,7 +58,7 @@ class Expose {
       head = Expose(null, method: 'HEAD');
 
   const Expose(this.path,
-      {this.method = "GET",
+      {this.method = 'GET',
       this.middleware = const [],
       this.as,
       this.allowNull = const []});
@@ -101,7 +101,7 @@ class Parameter {
       this.required});
 
   /// Returns an error that can be thrown when the parameter is not present.
-  get error {
+  Object? get error {
     if (cookie?.isNotEmpty == true) {
       return AngelHttpException.badRequest(
           message: 'Missing required cookie "$cookie".');
@@ -120,7 +120,7 @@ class Parameter {
   }
 
   /// Obtains a value for this parameter from a [RequestContext].
-  getValue(RequestContext req) {
+  dynamic getValue(RequestContext req) {
     if (cookie?.isNotEmpty == true) {
       return req.cookies.firstWhere((c) => c.name == cookie).value;
     }

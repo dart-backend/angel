@@ -4,7 +4,7 @@ import 'package:string_scanner/string_scanner.dart';
 /// Parses a string into a [RegExp] that is matched against hostnames.
 class HostnameSyntaxParser {
   final SpanScanner _scanner;
-  final _safe = RegExp(r"[0-9a-zA-Z-_:]+");
+  final _safe = RegExp(r'[0-9a-zA-Z-_:]+');
 
   HostnameSyntaxParser(String hostname)
       : _scanner = SpanScanner(hostname, sourceUrl: hostname);
@@ -33,7 +33,7 @@ class HostnameSyntaxParser {
           }
         }
       } else {
-        String part = _parseHostnamePart();
+        var part = _parseHostnamePart();
         if (part.isNotEmpty) {
           if (_scanner.scan('.')) {
             var subPart = _parseHostnamePart(shouldThrow: false);
@@ -70,12 +70,12 @@ class HostnameSyntaxParser {
     } else if (_scanner.scan('+')) {
       return r'[^$]+';
     } else if (_scanner.scan(_safe)) {
-      return _scanner.lastMatch?[0] ?? "";
+      return _scanner.lastMatch?[0] ?? '';
     } else if (!_scanner.isDone && shouldThrow) {
       var s = String.fromCharCode(_scanner.peekChar()!);
       throw _formatExc('Unexpected character "$s".');
     } else {
-      return "";
+      return '';
     }
   }
 }

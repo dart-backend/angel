@@ -52,7 +52,7 @@ void main() {
 
   test('does not continue processing after streaming', () async {
     var url = driver.uri.replace(path: '/hey');
-    for (int i = 0; i < 100; i++) {
+    for (var i = 0; i < 100; i++) {
       var r = await client.get(url);
       print('#$i: ${r.statusCode}: ${r.body}');
       expect(r.statusCode, 200);

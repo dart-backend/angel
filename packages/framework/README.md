@@ -1,15 +1,14 @@
 # Angel3 Framework
 
-[![version](https://img.shields.io/badge/pub-v4.1.0-brightgreen)](https://pub.dartlang.org/packages/angel3_framework)
+[![version](https://img.shields.io/badge/pub-v4.1.1-brightgreen)](https://pub.dartlang.org/packages/angel3_framework)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 [![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
 
 [![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/framework/LICENSE)
 
-A high-powered HTTP server with support for dependency injection, sophisticated routing and more.
+A high-powered HTTP server with support for dependency injection, sophisticated routing and more. Angel3 is designed to keep the core minimal but extensible. Angel3 won't dictate which database or web templating engine to use. Everything is customizable, so that Angel3 can grow to support your application as your use cases increases in complexity.
 
-This is the core of the [Angel3](https://github.com/dukefirehawk/angel/tree/angel3) framework.
-To build real-world applications, please see the [homepage](https://angel-dart.dev).
+This is the core of the [Angel3](https://github.com/dukefirehawk/angel/tree/angel3) framework. To build real-world applications, please see the [User Guide](https://angel3-docs.dukefirehawk.com).
 
 ```dart
 import 'package:angel3_container/mirrors.dart';
@@ -19,7 +18,7 @@ void main() async {
     var app = Angel(reflector: MirrorsReflector());
 
     // Index route. Returns JSON.
-    app.get('/', (req, res) => res.write('Welcome to Angel!'));
+    app.get('/', (req, res) => res.write('Welcome to Angel3!'));
   
     // Accepts a URL like /greet/foo or /greet/bob.
     app.get(

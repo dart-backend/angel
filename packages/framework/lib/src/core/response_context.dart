@@ -146,7 +146,7 @@ abstract class ResponseContext<RawResponse>
   Future<void> download(File file, {String? filename}) async {
     if (!isOpen) throw closed();
 
-    headers["Content-Disposition"] =
+    headers['Content-Disposition'] =
         'attachment; filename="${filename ?? file.path}"';
     contentType = MediaType.parse(lookupMimeType(file.path)!);
     headers['content-length'] = file.lengthSync().toString();
@@ -179,10 +179,10 @@ abstract class ResponseContext<RawResponse>
   ///
   /// You can override the [contentType] sent; by default it is `application/javascript`.
   Future<void> jsonp(value,
-      {String callbackName = "callback", MediaType? contentType}) {
+      {String callbackName = 'callback', MediaType? contentType}) {
     if (!isOpen) throw closed();
     this.contentType = contentType ?? MediaType('application', 'javascript');
-    write("$callbackName(${serializer(value)})");
+    write('$callbackName(${serializer(value)})');
     return close();
   }
 
@@ -238,7 +238,7 @@ abstract class ResponseContext<RawResponse>
   Future<void> redirectTo(String name, [Map? params, int? code]) async {
     if (!isOpen) throw closed();
     Route? _findRoute(Router r) {
-      for (Route route in r.routes) {
+      for (var route in r.routes) {
         if (route is SymlinkRoute) {
           final m = _findRoute(route.router);
 
@@ -249,7 +249,7 @@ abstract class ResponseContext<RawResponse>
       return null;
     }
 
-    Route? matched = _findRoute(app!);
+    var matched = _findRoute(app!);
 
     if (matched != null) {
       await redirect(
@@ -267,21 +267,20 @@ abstract class ResponseContext<RawResponse>
   Future<void> redirectToAction(String action, [Map? params, int? code]) {
     if (!isOpen) throw closed();
     // UserController@show
-    List<String> split = action.split("@");
+    var split = action.split('@');
 
     if (split.length < 2) {
       throw Exception(
           "Controller redirects must take the form of 'Controller@action'. You gave: $action");
     }
 
-    Controller? controller =
-        app!.controllers[split[0].replaceAll(_straySlashes, '')];
+    var controller = app!.controllers[split[0].replaceAll(_straySlashes, '')];
 
     if (controller == null) {
       throw Exception("Could not find a controller named '${split[0]}'");
     }
 
-    Route? matched = controller.routeMappings[split[1]];
+    var matched = controller.routeMappings[split[1]];
 
     if (matched == null) {
       throw Exception(
@@ -293,7 +292,7 @@ abstract class ResponseContext<RawResponse>
         .path
         .toString()
         .replaceAll(_straySlashes, '');
-    String tail = "";
+    var tail = '';
     if (params != null) {
       tail = matched
           .makeUri(params.keys.fold<Map<String, dynamic>>({}, (out, k) {
@@ -349,7 +348,7 @@ abstract class ResponseContext<RawResponse>
       if (stackTrace != null) {
         Zone.current.handleUncaughtError(error, stackTrace);
       } else {
-        log.warning("[ResponseContext] stackTrace is null");
+        log.warning('[ResponseContext] stackTrace is null');
       }
     }
   }
@@ -380,13 +379,13 @@ abstract class ResponseContext<RawResponse>
   }
 
   @override
-  void writeln([Object? obj = ""]) {
+  void writeln([Object? obj = '']) {
     write(obj.toString());
     write('\r\n');
   }
 
   @override
-  void writeAll(Iterable objects, [String separator = ""]) {
+  void writeAll(Iterable objects, [String separator = '']) {
     write(objects.join(separator));
   }
 }

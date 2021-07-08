@@ -51,10 +51,10 @@ class Controller {
       Router<RequestHandler> router, Reflector reflector) async {
     // Load global expose decl
     var classMirror = reflector.reflectClass(runtimeType)!;
-    Expose? exposeDecl = findExpose(reflector);
+    var exposeDecl = findExpose(reflector);
 
     if (exposeDecl == null) {
-      throw Exception("All controllers must carry an @Expose() declaration.");
+      throw Exception('All controllers must carry an @Expose() declaration.');
     }
 
     var routable = Routable();
@@ -64,9 +64,7 @@ class Controller {
 
     // Pre-reflect methods
     var instanceMirror = reflector.reflectInstance(this);
-    final handlers = <RequestHandler>[]
-      ..addAll(exposeDecl.middleware!)
-      ..addAll(middleware);
+    final handlers = <RequestHandler>[...exposeDecl.middleware!, ...middleware];
     final routeBuilder =
         _routeBuilder(reflector, instanceMirror, routable, handlers);
     await configureRoutes(routable);
@@ -109,10 +107,11 @@ class Controller {
 
         var reflectedMethod =
             instanceMirror!.getField(methodName).reflectee as Function?;
-        var middleware = <RequestHandler>[]
-          ..addAll(handlers)
-          ..addAll(exposeDecl.middleware!);
-        String? name =
+        var middleware = <RequestHandler>[
+          ...handlers,
+          ...exposeDecl.middleware!
+        ];
+        var name =
             exposeDecl.as?.isNotEmpty == true ? exposeDecl.as : methodName;
 
         // Check if normal

@@ -37,7 +37,7 @@ void main() {
   });
 
   test('strict', () async {
-    var req = await acceptContentTypes(['text/html', "*/*"]);
+    var req = await acceptContentTypes(['text/html', '*/*']);
     expect(req.accepts('text/html'), isTrue);
     //expect(req.accepts(ContentType.HTML), isTrue);
     //expect(req.accepts(ContentType.JSON, strict: true), isFalse);

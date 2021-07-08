@@ -104,8 +104,7 @@ class AngelHttp extends Driver<HttpRequest, HttpResponse, HttpServer,
       HttpRequest request, HttpResponse response,
       [HttpRequestContext? correspondingRequest]) {
     // TODO: Refactored to overcome NNBD migration error
-    HttpResponseContext context =
-        HttpResponseContext(response, app, correspondingRequest);
+    var context = HttpResponseContext(response, app, correspondingRequest);
     context.serializer = (app.serializer ?? json.encode);
     context.encoders.addAll(app.encoders);
     return Future<HttpResponseContext>.value(context);

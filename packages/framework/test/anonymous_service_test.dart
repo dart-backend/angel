@@ -1,7 +1,7 @@
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:test/test.dart';
 
-main() {
+void main() {
   test('custom methods', () async {
     var svc = AnonymousService<String?, String?>(
         index: ([p]) async => ['index'],

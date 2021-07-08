@@ -3,7 +3,7 @@ library performance.hello;
 
 import 'dart:io';
 
-main() {
+Future<Null> main() {
   return HttpServer.bind('127.0.0.1', 3000, shared: true).then((server) {
     print('Listening at http://${server.address.address}:${server.port}');
 

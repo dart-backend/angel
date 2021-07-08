@@ -14,7 +14,7 @@ void main() async {
   app.get('/', (req, res) => res.render('index', {'foo': 'bar'}));
 
   var http = AngelHttp(app);
-  HttpServer server = await http.startServer('127.0.0.1', 3000);
+  var server = await http.startServer('127.0.0.1', 3000);
   var url = 'http://${server.address.address}:${server.port}';
   print('Listening at $url');
 }

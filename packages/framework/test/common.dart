@@ -19,7 +19,7 @@ class Todo extends Model {
 
 class BookService extends Service {
   @override
-  index([params]) async {
+  Future<List> index([params]) async {
     print('Book params: $params');
 
     return [
@@ -28,7 +28,7 @@ class BookService extends Service {
   }
 }
 
-incrementTodoTimes(e) {
+void incrementTodoTimes(e) {
   IncrementService.TIMES++;
 }
 
@@ -38,7 +38,7 @@ class IncrementService extends Service {
 
   @override
   @Hooks(after: [incrementTodoTimes])
-  index([params]) async => [];
+  Future<List> index([params]) async => [];
 }
 
 class IsInstanceOf<T> implements Matcher {

@@ -101,7 +101,7 @@ class Routable extends Router<RequestHandler> {
     // Merge @Middleware declaration, if any
     var reflector = _container?.reflector;
     if (reflector != null && reflector is! ThrowingReflector) {
-      Middleware? middlewareDeclaration =
+      var middlewareDeclaration =
           getAnnotation<Middleware>(handler, _container?.reflector);
       if (middlewareDeclaration != null) {
         handlers.addAll(middlewareDeclaration.handlers);

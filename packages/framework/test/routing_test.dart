@@ -12,15 +12,16 @@ import 'package:test/test.dart';
 import 'common.dart';
 
 @Middleware([interceptor])
-testMiddlewareMetadata(RequestContext req, ResponseContext res) async {
-  return "This should not be shown.";
+Future<String> testMiddlewareMetadata(
+    RequestContext req, ResponseContext res) async {
+  return 'This should not be shown.';
 }
 
 @Middleware([interceptService])
 class QueryService extends Service {
   @override
   @Middleware([interceptor])
-  read(id, [Map? params]) async => params;
+  Future<Map?> read(id, [Map? params]) async => params;
 }
 
 void interceptor(RequestContext req, ResponseContext res) {
@@ -30,11 +31,11 @@ void interceptor(RequestContext req, ResponseContext res) {
 }
 
 bool interceptService(RequestContext req, ResponseContext res) {
-  res.write("Service with ");
+  res.write('Service with ');
   return true;
 }
 
-main() {
+void main() {
   late Angel app;
   late Angel nested;
   late Angel todos;
@@ -88,8 +89,8 @@ main() {
       await res.redirectTo('Named routes', {'name': 'tests'});
     });
     app.get('/log', (RequestContext req, res) async {
-      print("Query: ${req.queryParameters}");
-      return "Logged";
+      print('Query: ${req.queryParameters}');
+      return 'Logged';
     });
 
     app.get('/method', (req, res) => 'Only GET');
@@ -112,8 +113,8 @@ main() {
     //app.dumpTree(header: "DUMPING ROUTES:", showMatchers: true);
 
     client = http.Client();
-    HttpServer server = await AngelHttp(app).startServer('127.0.0.1', 0);
-    url = "http://${server.address.host}:${server.port}";
+    var server = await AngelHttp(app).startServer('127.0.0.1', 0);
+    url = 'http://${server.address.host}:${server.port}';
   });
 
   tearDown(() async {
@@ -122,7 +123,7 @@ main() {
   });
 
   test('Can match basic url', () async {
-    var response = await client.get(Uri.parse("$url/hello"));
+    var response = await client.get(Uri.parse('$url/hello'));
     expect(response.body, equals('"world"'));
   });
 
@@ -136,7 +137,7 @@ main() {
   });
 
   test('Chained routes', () async {
-    var response = await client.get(Uri.parse("$url/chained"));
+    var response = await client.get(Uri.parse('$url/chained'));
     expect(response.body, equals('abc'));
   });
 
@@ -167,8 +168,8 @@ main() {
 
   test('Can serialize function result as JSON', () async {
     Map headers = <String, String>{'Content-Type': 'application/json'};
-    String postData = json.encode({'it': 'works'});
-    var response = await client.post(Uri.parse("$url/lambda"),
+    var postData = json.encode({'it': 'works'});
+    var response = await client.post(Uri.parse('$url/lambda'),
         headers: headers as Map<String, String>, body: postData);
     print('Response: ${response.body}');
     expect(json.decode(response.body)['it'], equals('works'));
@@ -197,25 +198,25 @@ main() {
 
   test('Match routes, even with query params', () async {
     var response = await client
-        .get(Uri.parse("$url/log?foo=bar&bar=baz&baz.foo=bar&baz.bar=foo"));
+        .get(Uri.parse('$url/log?foo=bar&bar=baz&baz.foo=bar&baz.bar=foo'));
     print(response.body);
     expect(json.decode(response.body), equals('Logged'));
 
-    response = await client.get(Uri.parse("$url/query/foo?bar=baz"));
+    response = await client.get(Uri.parse('$url/query/foo?bar=baz'));
     print(response.body);
-    expect(response.body, equals("Service with Middleware"));
+    expect(response.body, equals('Service with Middleware'));
   });
 
   test('only match route with matching method', () async {
-    var response = await client.get(Uri.parse("$url/method"));
+    var response = await client.get(Uri.parse('$url/method'));
     print(response.body);
     expect(response.body, '"Only GET"');
 
-    response = await client.post(Uri.parse("$url/method"));
+    response = await client.post(Uri.parse('$url/method'));
     print(response.body);
     expect(response.body, '"Only POST"');
 
-    response = await client.patch(Uri.parse("$url/method"));
+    response = await client.patch(Uri.parse('$url/method'));
     print(response.body);
     expect(response.body, '"MJ"');
   });

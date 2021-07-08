@@ -11,11 +11,11 @@ import 'package:test/test.dart';
 
 import 'common.dart';
 
-@Expose("/todos", middleware: [foo])
+@Expose('/todos', middleware: [foo])
 class TodoController extends Controller {
-  List<Todo> todos = [Todo(text: "Hello", over: "world")];
+  List<Todo> todos = [Todo(text: 'Hello', over: 'world')];
 
-  @Expose("/:id", middleware: [bar])
+  @Expose('/:id', middleware: [bar])
   Future<Todo> fetchTodo(
       String id, RequestContext req, ResponseContext res) async {
     expect(req, isNotNull);
@@ -23,7 +23,7 @@ class TodoController extends Controller {
     return todos[int.parse(id)];
   }
 
-  @Expose("/namedRoute/:foo", as: "foo")
+  @Expose('/namedRoute/:foo', as: 'foo')
   Future<String> someRandomRoute(
       RequestContext req, ResponseContext res) async {
     return "${req.params['foo']}!";
@@ -37,7 +37,7 @@ class NoExposeController extends Controller {
 
   String repeatName(String name, int times) {
     var b = StringBuffer();
-    for (int i = 0; i < times; i++) {
+    for (var i = 0; i < times; i++) {
       b.writeln(name);
     }
     return b.toString();
@@ -56,33 +56,33 @@ class NoExposeController extends Controller {
 @Expose('/named', as: 'foo')
 class NamedController extends Controller {
   @Expose('/optional/:arg?', allowNull: ['arg'])
-  optional() => 2;
+  int optional() => 2;
 }
 
 bool foo(RequestContext req, ResponseContext res) {
-  res.write("Hello, ");
+  res.write('Hello, ');
   return true;
 }
 
 bool bar(RequestContext req, ResponseContext res) {
-  res.write("world!");
+  res.write('world!');
   return true;
 }
 
-main() {
+void main() {
   late Angel app;
   late TodoController todoController;
   late NoExposeController noExposeCtrl;
   late HttpServer server;
-  http.Client client = http.Client();
+  var client = http.Client();
   String? url;
 
   setUp(() async {
     app = Angel(reflector: MirrorsReflector());
     app.get(
-        "/redirect",
+        '/redirect',
         (req, res) async =>
-            res.redirectToAction("TodoController@foo", {"foo": "world"}));
+            res.redirectToAction('TodoController@foo', {'foo': 'world'}));
 
     // Register as a singleton, just for the purpose of this test
     if (!app.container!.has<TodoController>()) {
@@ -136,36 +136,36 @@ main() {
     expect(app.controllers['foo'], const IsInstanceOf<NamedController>());
   });
 
-  test("middleware", () async {
-    var rgx = RegExp("^Hello, world!");
-    var response = await client.get(Uri.parse("$url/todos/0"));
+  test('middleware', () async {
+    var rgx = RegExp('^Hello, world!');
+    var response = await client.get(Uri.parse('$url/todos/0'));
     print('Response: ${response.body}');
 
     expect(rgx.firstMatch(response.body)?.start, equals(0));
 
-    var todo = json.decode(response.body.replaceAll(rgx, "")) as Map;
-    print("Todo: $todo");
-    expect(todo['text'], equals("Hello"));
-    expect(todo['over'], equals("world"));
+    var todo = json.decode(response.body.replaceAll(rgx, '')) as Map;
+    print('Todo: $todo');
+    expect(todo['text'], equals('Hello'));
+    expect(todo['over'], equals('world'));
   });
 
-  test("controller in group", () async {
-    var rgx = RegExp("^Hello, world!");
-    var response = await client.get(Uri.parse("$url/ctrl_group/todos/0"));
+  test('controller in group', () async {
+    var rgx = RegExp('^Hello, world!');
+    var response = await client.get(Uri.parse('$url/ctrl_group/todos/0'));
     print('Response: ${response.body}');
 
     expect(rgx.firstMatch(response.body)?.start, equals(0));
 
-    var todo = json.decode(response.body.replaceAll(rgx, "")) as Map;
-    print("Todo: $todo");
-    expect(todo['text'], equals("Hello"));
-    expect(todo['over'], equals("world"));
+    var todo = json.decode(response.body.replaceAll(rgx, '')) as Map;
+    print('Todo: $todo');
+    expect(todo['text'], equals('Hello'));
+    expect(todo['over'], equals('world'));
   });
 
-  test("named actions", () async {
-    var response = await client.get(Uri.parse("$url/redirect"));
+  test('named actions', () async {
+    var response = await client.get(Uri.parse('$url/redirect'));
     print('Response: ${response.body}');
-    expect(response.body, equals("Hello, \"world!\""));
+    expect(response.body, equals('Hello, \"world!\"'));
   });
 
   group('optional expose', () {

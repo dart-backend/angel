@@ -37,7 +37,7 @@ class ArtistsController extends Controller {
   }
 
   @Expose.post
-  form(RequestContext req) async {
+  Future<Artist> form(RequestContext req) async {
     // Deserialize the body into an artist.
     var artist = await req.deserializeBody((m) {
       return Artist(name: m!['name'] as String? ?? '(unknown name)');

@@ -1,7 +1,9 @@
-# Angel Results
+# Angel Performance Results
+
 5 consecutive trials run on a Windows 10 box with 4GB RAM, and several programs open in the background.
 
 Setup:
+
 * Angel framework `1.0.8`
 * Running `wrk` 4.0.2.2
 * 2 threads
@@ -9,10 +11,11 @@ Setup:
 * 30 seconds
 
 Average:
+
 * `11070.18` req/sec
 * `11.86` ms latency
 
-```
+```bash
 tobe@LAPTOP-VBHCSVRH:/mnt/c/Users/thosa$ wrk -c 256 -d 30 -t 2 http://localhost:3000
 Running 30s test @ http://localhost:3000
   2 threads and 256 connections

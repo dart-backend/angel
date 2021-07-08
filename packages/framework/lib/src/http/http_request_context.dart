@@ -9,7 +9,7 @@ import '../core/core.dart';
 /// An implementation of [RequestContext] that wraps a [HttpRequest].
 class HttpRequestContext extends RequestContext<HttpRequest?> {
   Container? _container;
-  MediaType _contentType = MediaType("text", "plain");
+  MediaType _contentType = MediaType('text', 'plain');
   HttpRequest? _io;
   String? _override;
   String _path = '';
@@ -34,7 +34,7 @@ class HttpRequestContext extends RequestContext<HttpRequest?> {
 
   @override
   String get hostname {
-    return rawRequest?.headers.value('host') ?? "localhost";
+    return rawRequest?.headers.value('host') ?? 'localhost';
   }
 
   /// The underlying [HttpRequest] instance underneath this context.
@@ -77,10 +77,9 @@ class HttpRequestContext extends RequestContext<HttpRequest?> {
   /// Magically transforms an [HttpRequest] into a [RequestContext].
   static Future<HttpRequestContext> from(
       HttpRequest request, Angel app, String path) {
-    HttpRequestContext ctx = HttpRequestContext()
-      .._container = app.container!.createChild();
+    var ctx = HttpRequestContext().._container = app.container!.createChild();
 
-    String override = request.method;
+    var override = request.method;
 
     if (app.allowMethodOverrides == true) {
       override =
@@ -90,7 +89,7 @@ class HttpRequestContext extends RequestContext<HttpRequest?> {
 
     ctx.app = app;
     ctx._contentType = request.headers.contentType == null
-        ? MediaType("text", "plain")
+        ? MediaType('text', 'plain')
         : MediaType.parse(request.headers.contentType.toString());
     ctx._override = override;
 

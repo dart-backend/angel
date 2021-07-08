@@ -1,5 +1,10 @@
 # Change Log
 
+## 4.1.1
+
+* Updated link to `Angel3` home page
+* Fixed pedantic warnings
+
 ## 4.1.0
 
 * Replaced `http_server` with `belatuk_http_server`

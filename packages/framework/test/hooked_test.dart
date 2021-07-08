@@ -37,7 +37,7 @@ void main() {
     };
 
     server = await AngelHttp(app).startServer();
-    url = "http://${server.address.host}:${server.port}";
+    url = 'http://${server.address.host}:${server.port}';
   });
 
   tearDown(() async {
@@ -45,8 +45,8 @@ void main() {
     client.close();
   });
 
-  test("listen before and after", () async {
-    int count = 0;
+  test('listen before and after', () async {
+    var count = 0;
 
     todoService
       ..beforeIndexed.listen((_) {
@@ -56,44 +56,44 @@ void main() {
         count++;
       });
 
-    var response = await client.get(Uri.parse("$url/todos"));
+    var response = await client.get(Uri.parse('$url/todos'));
     print(response.body);
     expect(count, equals(2));
   });
 
-  test("cancel before", () async {
+  test('cancel before', () async {
     todoService.beforeCreated
       ..listen((HookedServiceEvent event) {
-        event.cancel({"hello": "hooked world"});
+        event.cancel({'hello': 'hooked world'});
       })
       ..listen((HookedServiceEvent event) {
-        event.cancel({"this_hook": "should never run"});
+        event.cancel({'this_hook': 'should never run'});
       });
 
-    var response = await client.post(Uri.parse("$url/todos"),
-        body: json.encode({"arbitrary": "data"}),
+    var response = await client.post(Uri.parse('$url/todos'),
+        body: json.encode({'arbitrary': 'data'}),
         headers: headers as Map<String, String>);
     print(response.body);
     var result = json.decode(response.body) as Map;
-    expect(result["hello"], equals("hooked world"));
+    expect(result['hello'], equals('hooked world'));
   });
 
-  test("cancel after", () async {
+  test('cancel after', () async {
     todoService.afterIndexed
       ..listen((HookedServiceEvent event) async {
         // Hooks can be Futures ;)
         event.cancel([
-          {"angel": "framework"}
+          {'angel': 'framework'}
         ]);
       })
       ..listen((HookedServiceEvent event) {
-        event.cancel({"this_hook": "should never run either"});
+        event.cancel({'this_hook': 'should never run either'});
       });
 
-    var response = await client.get(Uri.parse("$url/todos"));
+    var response = await client.get(Uri.parse('$url/todos'));
     print(response.body);
     var result = json.decode(response.body) as List;
-    expect(result[0]["angel"], equals("framework"));
+    expect(result[0]['angel'], equals('framework'));
   });
 
   test('asStream() fires', () async {
@@ -111,7 +111,7 @@ void main() {
   });
 
   test('inject request + response', () async {
-    HookedService books = app.findService('books')
+    var books = app.findService('books')
         as HookedService<dynamic, dynamic, Service<dynamic, dynamic>>;
 
     books.beforeIndexed.listen((e) {
@@ -131,7 +131,7 @@ void main() {
   test('contains provider in before and after', () async {
     var svc = HookedService(AnonymousService(index: ([p]) async => []));
 
-    ensureProviderIsPresent(HookedServiceEvent e) {
+    void ensureProviderIsPresent(HookedServiceEvent e) {
       var type = e.isBefore ? 'before' : 'after';
       print('Params to $type ${e.eventName}: ${e.params}');
       expect(e.params, isMap);

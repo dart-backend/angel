@@ -57,6 +57,6 @@ void main() async {
   // HTTP/1.x requests will fallback to `AngelHttp`
   http2.onHttp1.listen(http1.handleRequest);
 
-  SecureServerSocket server = await http2.startServer('127.0.0.1', 3000);
+  var server = await http2.startServer('127.0.0.1', 3000);
   print('Listening at https://${server.address.address}:${server.port}');
 }

@@ -75,7 +75,7 @@ void main() {
 
   tearDown(() => http.close());
 
-  _expectHelloBye(String path) async {
+  void _expectHelloBye(String path) async {
     var rq = MockHttpRequest('GET', Uri.parse(path));
     await (rq.close());
     await http.handleRequest(rq);

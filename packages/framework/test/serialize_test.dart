@@ -23,7 +23,7 @@ void main() {
     client = http.Client();
 
     server = await AngelHttp(app).startServer();
-    url = "http://${server.address.host}:${server.port}";
+    url = 'http://${server.address.host}:${server.port}';
   });
 
   tearDown(() async {
@@ -31,7 +31,7 @@ void main() {
     await server.close(force: true);
   });
 
-  test("correct content-type", () async {
+  test('correct content-type', () async {
     var response = await client.get(Uri.parse('$url/foo'));
     print('Response: ${response.body}');
     expect(response.headers['content-type'], contains('application/json'));

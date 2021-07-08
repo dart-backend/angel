@@ -19,7 +19,7 @@ void main() {
     client = http.Client();
 
     server = await AngelHttp(app).startServer();
-    url = "http://${server.address.host}:${server.port}";
+    url = 'http://${server.address.host}:${server.port}';
   });
 
   tearDown(() async {
@@ -27,7 +27,7 @@ void main() {
     await server.close(force: true);
   });
 
-  test("allow override of method", () async {
+  test('allow override of method', () async {
     var response = await client.get(Uri.parse('$url/foo'),
         headers: {'X-HTTP-Method-Override': 'POST'});
     print('Response: ${response.body}');

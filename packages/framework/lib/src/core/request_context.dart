@@ -31,7 +31,7 @@ part 'injection.dart';
 abstract class RequestContext<RawRequest> {
   /// Similar to [Angel.shutdownHooks], allows for logic to be executed
   /// when a [RequestContext] is done being processed.
-  final log = Logger('RequestContext');
+  final _log = Logger('RequestContext');
 
   final List<FutureOr<void> Function()> shutdownHooks = [];
 
@@ -43,7 +43,7 @@ abstract class RequestContext<RawRequest> {
   Map<String, dynamic> _bodyFields = {};
   List _bodyList = [];
   List<UploadedFile> _uploadedFiles = <UploadedFile>[];
-  MediaType _contentType = MediaType("text", "plain");
+  MediaType _contentType = MediaType('text', 'plain');
 
   /// The underlying [RawRequest] provided by the driver.
   RawRequest get rawRequest;
@@ -86,7 +86,7 @@ abstract class RequestContext<RawRequest> {
       try {
         _contentType = MediaType.parse(headers!.contentType.toString());
       } catch (e) {
-        log.warning(
+        _log.warning(
             'Invalid media type [${headers!.contentType.toString()}]', e);
       }
     }
@@ -101,7 +101,7 @@ abstract class RequestContext<RawRequest> {
 
   /// Is this an **XMLHttpRequest**?
   bool get isXhr {
-    return headers?.value("X-Requested-With")?.trim().toLowerCase() ==
+    return headers?.value('X-Requested-With')?.trim().toLowerCase() ==
         'xmlhttprequest';
   }
 
@@ -221,6 +221,7 @@ abstract class RequestContext<RawRequest> {
 
     // Change to assert
     if (contentTypeString == null) {
+      _log.severe('RequestContext.accepts is null');
       throw ArgumentError(
           'RequestContext.accepts expects the `contentType` parameter to NOT be null.');
     }
@@ -259,9 +260,7 @@ abstract class RequestContext<RawRequest> {
     if (!_hasParsedBody) {
       _hasParsedBody = true;
 
-      var contentBody = body;
-      //TODO: Relook at this
-      contentBody ??= Stream.empty();
+      var contentBody = body ?? Stream.empty();
 
       if (contentType.type == 'application' && contentType.subtype == 'json') {
         _uploadedFiles = [];
@@ -332,7 +331,7 @@ class UploadedFile {
   final HttpMultipartFormData formData;
   final log = Logger('UploadedFile');
 
-  MediaType _contentType = MediaType("multipart", "form-data");
+  MediaType _contentType = MediaType('multipart', 'form-data');
 
   UploadedFile(this.formData);
 

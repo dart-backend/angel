@@ -137,14 +137,14 @@ class Angel extends Routable {
 
     res.contentType = MediaType('text', 'html', {'charset': 'utf8'});
     res.statusCode = e.statusCode; // ?? 200;
-    res.write("<!DOCTYPE html><html><head><title>${e.message}</title>");
-    res.write("</head><body><h1>${e.message}</h1><ul>");
+    res.write('<!DOCTYPE html><html><head><title>${e.message}</title>');
+    res.write('</head><body><h1>${e.message}</h1><ul>');
 
-    for (String error in e.errors) {
-      res.write("<li>$error</li>");
+    for (var error in e.errors) {
+      res.write('<li>$error</li>');
     }
 
-    res.write("</ul></body></html>");
+    res.write('</ul></body></html>');
     res.close();
   };
 
@@ -164,7 +164,8 @@ class Angel extends Routable {
   }
 
   @override
-  mount(String path, Router<RequestHandler> router) {
+  SymlinkRoute<RequestHandler> mount(
+      String path, Router<RequestHandler> router) {
     if (_flattened != null) {
       logger?.warning(
           'WARNING: You added mounted a child router ($path) on the router, after it had been optimized.');
@@ -284,7 +285,7 @@ class Angel extends Routable {
   }
 
   /// Attempts to find a property by the given name within this application.
-  findProperty(key) {
+  dynamic findProperty(key) {
     if (configuration.containsKey(key)) return configuration[key];
 
     return parent != null ? parent?.findProperty(key) : null;
@@ -344,7 +345,7 @@ class Angel extends Routable {
   ///
   /// If you are on `Dart >=2.0.0`, simply call `mountController<T>()`.
   Future<T> mountController<T extends Controller>([Type? type]) {
-    T controller = container!.make<T>(type)!;
+    var controller = container!.make<T>(type)!;
     return configure(controller.configureServer).then((_) => controller);
   }
 

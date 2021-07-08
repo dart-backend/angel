@@ -5,6 +5,7 @@ import 'package:angel3_container/mirrors.dart';
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_framework/http.dart';
 import 'package:angel3_mock_request/angel3_mock_request.dart';
+import 'package:logging/logging.dart';
 
 import 'package:test/test.dart';
 
@@ -22,7 +23,7 @@ void main() {
   group('parameter_meta', parameterMetaTests);
 }
 
-parameterMetaTests() {
+void parameterMetaTests() {
   Angel app;
   late AngelHttp http;
 
@@ -58,13 +59,12 @@ parameterMetaTests() {
       return 'DEFAULT $mode';
     }));
 
-    /*app.logger = Logger('parameter_meta_test')
+    app.logger = Logger('parameter_meta_test')
       ..onRecord.listen((rec) {
         print(rec);
         if (rec.error != null) print(rec.error);
         if (rec.stackTrace != null) print(rec.stackTrace);
       });
-    */
   });
 
   test('injects header or throws', () async {
@@ -72,6 +72,7 @@ parameterMetaTests() {
     var rq = MockHttpRequest('GET', Uri.parse('/header'));
     await rq.close();
     var rs = rq.response;
+    //TODO: Using await will hang. To be resolved.
     http.handleRequest(rq);
 
     await printResponse(rs);

@@ -25,4 +25,4 @@ void main() {
   }, skip: 'Angel no longer has to preinject functions');
 }
 
-echoAppFoo(String foo) => foo;
+String echoAppFoo(String foo) => foo;

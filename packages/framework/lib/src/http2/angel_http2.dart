@@ -55,8 +55,9 @@ class AngelHttp2 extends Driver<Socket, ServerTransportStream,
   factory AngelHttp2.custom(
       Angel app,
       SecurityContext ctx,
-      Future<SecureServerSocket> serverGenerator(
-          address, int port, SecurityContext ctx),
+      Future<SecureServerSocket> Function(
+              InternetAddress? address, int port, SecurityContext ctx)
+          serverGenerator,
       {bool useZone = true,
       bool allowHttp1 = false,
       ServerSettings? settings}) {
@@ -73,8 +74,7 @@ class AngelHttp2 extends Driver<Socket, ServerTransportStream,
 
   @override
   Future<SecureServerSocket> generateServer([address, int? port]) async {
-    SecureServerSocket s =
-        await serverGenerator(address ?? '127.0.0.1', port ?? 0);
+    var s = await serverGenerator(address ?? '127.0.0.1', port ?? 0);
     return _artificial = _AngelHttp2ServerSocket(s, this);
   }
 

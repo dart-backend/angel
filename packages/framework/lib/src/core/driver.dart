@@ -71,8 +71,8 @@ abstract class Driver<
         return Future.value(_server);
       });
     }).catchError((error) {
-      log.severe("Failed to create server", error);
-      throw ArgumentError("[Driver]Failed to create server");
+      log.severe('Failed to create server', error);
+      throw ArgumentError('[Driver]Failed to create server');
     });
   }
 
@@ -125,7 +125,7 @@ abstract class Driver<
   Future handleRawRequest(Request request, Response response) {
     return createRequestContext(request, response).then((req) {
       return createResponseContext(request, response, req).then((res) {
-        handle() {
+        Future handle() {
           var path = req.path;
           if (path == '/') path = '';
 
@@ -334,7 +334,7 @@ abstract class Driver<
 
     if (!res.isBuffered) return res.close().then(_cleanup);
 
-    Future finalizers = ignoreFinalizers == true
+    var finalizers = ignoreFinalizers == true
         ? Future.value()
         : Future.forEach(app.responseFinalizers, (dynamic f) => f(req, res));
 
@@ -366,7 +366,7 @@ abstract class Driver<
         if (allowedEncodings != null) {
           for (var encodingName in allowedEncodings) {
             Converter<List<int>, List<int>>? encoder;
-            String key = encodingName;
+            var key = encodingName;
 
             if (res.encoders.containsKey(encodingName)) {
               encoder = res.encoders[encodingName];

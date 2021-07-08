@@ -23,9 +23,9 @@ class Providers {
 
   const Providers(this.via);
 
-  static const String viaRest = "rest";
-  static const String viaWebsocket = "websocket";
-  static const String viaGraphQL = "graphql";
+  static const String viaRest = 'rest';
+  static const String viaWebsocket = 'websocket';
+  static const String viaGraphQL = 'graphql';
 
   /// Represents a request via REST.
   static const Providers rest = Providers(viaRest);
@@ -162,7 +162,7 @@ class Service<Id, Data> extends Routable {
   Service<Id, U> map<U>(U Function(Data) encoder, Data Function(U) decoder,
       {FutureOr<U> Function(RequestContext, ResponseContext)? readData}) {
     readData ??= (req, res) async {
-      Data inner = await this.readData!(req, res)!;
+      var inner = await this.readData!(req, res)!;
       return encoder(inner);
     };
 
@@ -223,12 +223,11 @@ class Service<Id, Data> extends Routable {
     var handlers = List<RequestHandler>.from(handlerss);
 
     // Add global middleware if declared on the instance itself
-    Middleware? before =
-        getAnnotation<Middleware>(service, app!.container!.reflector);
+    var before = getAnnotation<Middleware>(service, app!.container!.reflector);
 
     if (before != null) handlers.addAll(before.handlers);
 
-    Middleware? indexMiddleware =
+    var indexMiddleware =
         getAnnotation<Middleware>(service.index, app!.container!.reflector);
     get('/', (req, res) {
       return index(mergeMap([
@@ -236,14 +235,12 @@ class Service<Id, Data> extends Routable {
         restProvider,
         req.serviceParams
       ]));
-    },
-        middleware: []
-          ..addAll(handlers)
-          ..addAll((indexMiddleware == null)
-              ? []
-              : indexMiddleware.handlers.toList()));
+    }, middleware: [
+      ...handlers,
+      ...(indexMiddleware == null) ? [] : indexMiddleware.handlers.toList()
+    ]);
 
-    Middleware? createMiddleware =
+    var createMiddleware =
         getAnnotation<Middleware>(service.create, app!.container!.reflector);
     post('/', (req, ResponseContext res) {
       return req.parseBody().then((_) async {
@@ -258,14 +255,12 @@ class Service<Id, Data> extends Routable {
           return r;
         });
       });
-    },
-        middleware: []
-          ..addAll(handlers)
-          ..addAll((createMiddleware == null)
-              ? []
-              : createMiddleware.handlers.toList()));
+    }, middleware: [
+      ...handlers,
+      ...(createMiddleware == null) ? [] : createMiddleware.handlers.toList()
+    ]);
 
-    Middleware? readMiddleware =
+    var readMiddleware =
         getAnnotation<Middleware>(service.read, app!.container!.reflector);
 
     get('/:id', (req, res) {
@@ -276,14 +271,12 @@ class Service<Id, Data> extends Routable {
             restProvider,
             req.serviceParams
           ]));
-    },
-        middleware: []
-          ..addAll(handlers)
-          ..addAll((readMiddleware == null)
-              ? []
-              : readMiddleware.handlers.toList()));
+    }, middleware: [
+      ...handlers,
+      ...(readMiddleware == null) ? [] : readMiddleware.handlers.toList()
+    ]);
 
-    Middleware? modifyMiddleware =
+    var modifyMiddleware =
         getAnnotation<Middleware>(service.modify, app!.container!.reflector);
 
     patch('/:id', (req, res) {
@@ -297,14 +290,12 @@ class Service<Id, Data> extends Routable {
               req.serviceParams
             ]));
       });
-    },
-        middleware: []
-          ..addAll(handlers)
-          ..addAll((modifyMiddleware == null)
-              ? []
-              : modifyMiddleware.handlers.toList()));
+    }, middleware: [
+      ...handlers,
+      ...(modifyMiddleware == null) ? [] : modifyMiddleware.handlers.toList()
+    ]);
 
-    Middleware? updateMiddleware =
+    var updateMiddleware =
         getAnnotation<Middleware>(service.update, app!.container!.reflector);
     post('/:id', (req, res) {
       return req.parseBody().then((_) async {
@@ -317,12 +308,10 @@ class Service<Id, Data> extends Routable {
               req.serviceParams
             ]));
       });
-    },
-        middleware: []
-          ..addAll(handlers)
-          ..addAll((updateMiddleware == null)
-              ? []
-              : updateMiddleware.handlers.toList()));
+    }, middleware: [
+      ...handlers,
+      ...(updateMiddleware == null) ? [] : updateMiddleware.handlers.toList()
+    ]);
 
     put('/:id', (req, res) {
       return req.parseBody().then((_) async {
@@ -335,14 +324,12 @@ class Service<Id, Data> extends Routable {
               req.serviceParams
             ]));
       });
-    },
-        middleware: []
-          ..addAll(handlers)
-          ..addAll((updateMiddleware == null)
-              ? []
-              : updateMiddleware.handlers.toList()));
+    }, middleware: [
+      ...handlers,
+      ...(updateMiddleware == null) ? [] : updateMiddleware.handlers.toList()
+    ]);
 
-    Middleware? removeMiddleware =
+    var removeMiddleware =
         getAnnotation<Middleware>(service.remove, app!.container!.reflector);
     delete('/', (req, res) {
       return remove(
@@ -352,12 +339,10 @@ class Service<Id, Data> extends Routable {
             restProvider,
             req.serviceParams
           ]));
-    },
-        middleware: []
-          ..addAll(handlers)
-          ..addAll((removeMiddleware == null)
-              ? []
-              : removeMiddleware.handlers.toList()));
+    }, middleware: [
+      ...handlers,
+      ...(removeMiddleware == null) ? [] : removeMiddleware.handlers.toList()
+    ]);
 
     delete('/:id', (req, res) {
       return remove(
@@ -367,12 +352,10 @@ class Service<Id, Data> extends Routable {
             restProvider,
             req.serviceParams
           ]));
-    },
-        middleware: []
-          ..addAll(handlers)
-          ..addAll((removeMiddleware == null)
-              ? []
-              : removeMiddleware.handlers.toList()));
+    }, middleware: [
+      ...handlers,
+      ...(removeMiddleware == null) ? [] : removeMiddleware.handlers.toList()
+    ]);
 
     // REST compliance
     put('/', (req, res) => throw AngelHttpException.notFound());

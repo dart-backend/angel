@@ -1,17 +1,20 @@
 # `dart:io` Results
+
 5 consecutive trials run on a Windows 10 box with 4GB RAM, and several programs open in the background.
 
 Setup:
+
 * Running `wrk` 4.0.2.2
 * 2 threads
 * 256 connections
 * 30 seconds
 
 Average:
+
 * `14598.16` req/sec
 * `8.88` ms latency
 
-```
+```bash
 tobe@LAPTOP-VBHCSVRH:/mnt/c/Users/thosa$ wrk -c 256 -d 30 -t 2 http://localhost:3000
 Running 30s test @ http://localhost:3000
   2 threads and 256 connections

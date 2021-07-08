@@ -104,7 +104,7 @@ class HttpResponseContext extends ResponseContext<HttpResponse> {
         if (_allowedEncodings != null) {
           for (var encodingName in _allowedEncodings!) {
             Converter<List<int>, List<int>>? encoder;
-            String key = encodingName;
+            var key = encodingName;
 
             if (encoders.containsKey(encodingName)) {
               encoder = encoders[encodingName];
@@ -132,13 +132,13 @@ class HttpResponseContext extends ResponseContext<HttpResponse> {
     if (_isClosed && isBuffered) throw ResponseContext.closed();
     _openStream();
 
-    Stream<List<int>> output = stream;
+    var output = stream;
 
     if (encoders.isNotEmpty && correspondingRequest != null) {
       if (_allowedEncodings != null) {
         for (var encodingName in _allowedEncodings!) {
           Converter<List<int>, List<int>>? encoder;
-          String key = encodingName;
+          var key = encodingName;
 
           if (encoders.containsKey(encodingName)) {
             encoder = encoders[encodingName];
@@ -169,7 +169,7 @@ class HttpResponseContext extends ResponseContext<HttpResponse> {
           if (_allowedEncodings != null) {
             for (var encodingName in _allowedEncodings!) {
               Converter<List<int>, List<int>>? encoder;
-              String key = encodingName;
+              var key = encodingName;
 
               if (encoders.containsKey(encodingName)) {
                 encoder = encoders[encodingName];

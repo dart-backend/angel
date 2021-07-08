@@ -3,7 +3,7 @@ import 'package:angel3_container/angel3_container.dart';
 final RegExp straySlashes = RegExp(r'(^/+)|(/+$)');
 
 T? matchingAnnotation<T>(List<ReflectedInstance> metadata) {
-  for (ReflectedInstance metaDatum in metadata) {
+  for (var metaDatum in metadata) {
     if (metaDatum.type.reflectedType == T) {
       return metaDatum.reflectee as T?;
     }

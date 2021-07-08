@@ -12,8 +12,7 @@ RequestHandler ioc(Function handler, {Iterable<String> optional = const []}) {
     RequestHandler? contained;
 
     if (req.app?.container != null) {
-      InjectionRequest injection =
-          preInject(handler, req.app!.container!.reflector);
+      var injection = preInject(handler, req.app!.container!.reflector);
       //if (injection != null) {
       injection.optional.addAll(optional);
       contained = handleContained(handler, injection);
@@ -104,9 +103,9 @@ RequestHandler handleContained(Function handler, InjectionRequest injection,
         injection.parameters.values.any((p) => p.match != null) &&
         !suitableForInjection(req, res, injection)) return Future.value(true);
 
-    List args = [];
+    var args = [];
 
-    Map<Symbol, dynamic> named = {};
+    var named = <Symbol, dynamic>{};
 
     for (var r in injection.required) {
       args.add(await resolveInjection(r, injection, req, res, true, container));

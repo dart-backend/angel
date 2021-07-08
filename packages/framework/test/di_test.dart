@@ -11,8 +11,8 @@ import 'package:test/test.dart';
 
 import 'common.dart';
 
-final String TEXT = "make your bed";
-final String OVER = "never";
+final String TEXT = 'make your bed';
+final String OVER = 'never';
 
 void main() {
   late Angel app;
@@ -32,9 +32,9 @@ void main() {
       return Foo(text);
     });
 
-    app.get("/errands", ioc((Todo singleton) => singleton));
+    app.get('/errands', ioc((Todo singleton) => singleton));
     app.get(
-        "/errands3",
+        '/errands3',
         ioc(({required Errand singleton, Todo? foo, RequestContext? req}) =>
             singleton.text));
     app.post('/async', ioc((Foo foo) => {'baz': foo.bar}));
@@ -42,7 +42,7 @@ void main() {
     await app.configure(ErrandController().configureServer);
 
     server = await AngelHttp(app).startServer();
-    url = "http://${server.address.host}:${server.port}";
+    url = 'http://${server.address.host}:${server.port}';
   });
 
   tearDown(() async {
@@ -68,22 +68,22 @@ void main() {
     expect(text, json.encode('Hey!'));
   });
 
-  test("singleton in route", () async {
-    validateTodoSingleton(await client.get(Uri.parse("$url/errands")));
+  test('singleton in route', () async {
+    validateTodoSingleton(await client.get(Uri.parse('$url/errands')));
   });
 
-  test("singleton in controller", () async {
-    validateTodoSingleton(await client.get(Uri.parse("$url/errands2")));
+  test('singleton in controller', () async {
+    validateTodoSingleton(await client.get(Uri.parse('$url/errands2')));
   });
 
-  test("make in route", () async {
-    var response = await client.get(Uri.parse("$url/errands3"));
+  test('make in route', () async {
+    var response = await client.get(Uri.parse('$url/errands3'));
     var text = await json.decode(response.body) as String?;
     expect(text, equals(TEXT));
   });
 
-  test("make in controller", () async {
-    var response = await client.get(Uri.parse("$url/errands4"));
+  test('make in controller', () async {
+    var response = await client.get(Uri.parse('$url/errands4'));
     var text = await json.decode(response.body) as String?;
     expect(text, equals(TEXT));
   });
@@ -102,26 +102,26 @@ void main() {
 
 void validateTodoSingleton(response) {
   var todo = json.decode(response.body.toString()) as Map;
-  expect(todo["id"], equals(null));
-  expect(todo["text"], equals(TEXT));
-  expect(todo["over"], equals(OVER));
+  expect(todo['id'], equals(null));
+  expect(todo['text'], equals(TEXT));
+  expect(todo['over'], equals(OVER));
 }
 
-@Expose("/errands2")
+@Expose('/errands2')
 class SingletonController extends Controller {
-  @Expose("/")
-  todo(Todo singleton) => singleton;
+  @Expose('/')
+  Todo todo(Todo singleton) => singleton;
 }
 
-@Expose("/errands4")
+@Expose('/errands4')
 class ErrandController extends Controller {
-  @Expose("/")
-  errand(Errand errand) {
+  @Expose('/')
+  String? errand(Errand errand) {
     return errand.text;
   }
 
   @Expose('/async', method: 'POST')
-  asyncResolve(Foo foo) {
+  Map<String, String> asyncResolve(Foo foo) {
     return {'bar': foo.bar};
   }
 }
