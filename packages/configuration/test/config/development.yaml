@@ -1,5 +1,5 @@
 _include:
-  - "./include.yaml"
+  - "./custom.yaml"
 hello: world
 foo:
   version: bar

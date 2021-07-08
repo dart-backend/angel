@@ -1,21 +1,23 @@
-# angel3_configuration
-[![version](https://img.shields.io/badge/pub-v4.0.0-brightgreen)](https://pub.dartlang.org/packages/angel3_configuration)
+# Angel3 Configuration Loader
+
+[![version](https://img.shields.io/badge/pub-v4.0.1-brightgreen)](https://pub.dev/packages/angel3_configuration)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 [![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
 
 [![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/configuration/LICENSE)
 
+Automatic YAML configuration loader for [Angel3 framework](https://pub.dev/packages/angel3)
 
-Automatic YAML configuration loader for Angel.
+## About
 
-# About
 Any web app needs different configuration for development and production. This plugin will search
 for a `config/default.yaml` file. If it is found, configuration from it is loaded into `app.configuration`.
 Then, it will look for a `config/$ANGEL_ENV` file. (i.e. config/development.yaml). If this found, all of its
 configuration be loaded, and will override anything loaded from the `default.yaml` file. This allows for your
 app to work under different conditions without you re-coding anything. :)
 
-# Installation
+## Installation
+
 In `pubspec.yaml`:
 
 ```yaml
@@ -23,9 +25,10 @@ dependencies:
     angel3_configuration: ^3.0.0
 ```
 
-# Usage
+## Usage
 
-**Example Configuration**
+Example Configuration
+
 ```yaml
 # Define normal YAML objects
 some_key: foo
@@ -36,6 +39,7 @@ this_is_a_map:
 ```
 
 You can also load configuration from the environment:
+
 ```yaml
 # Loaded from the environment
 system_path: $PATH
@@ -45,6 +49,7 @@ If a `.env` file is present in your configuration directory (i.e. `config/.env`)
 applying YAML configuration.
 
 You can also include values from one file into another:
+
 ```yaml
 _include:
   - "./include-prod.yaml"
@@ -53,15 +58,13 @@ _include: "just-one-file.yaml"
 ```
 
 **Server-side**
-Call `configuration()`. The loaded configuration will be available in your application's
-`configuration` map.
+Call `configuration()`. The loaded configuration will be available in your application's `configuration` map.
 
 `configuration` also accepts a `sourceDirectory` or `overrideEnvironmentName` parameter.
 The former will allow you to search in a directory other than `config`, and the latter lets you
 override `$ANGEL_ENV` by specifying a specific configuration name to look for (i.e. `production`).
 
-This package uses
-[`package:merge_map`](https://github.com/thosakwe/merge_map)
+This package uses [`package:angel3_merge_map`](https://pub.dev/packages/angel3_merge_map)
 internally, so existing configurations can be deeply merged.
 
 Example:

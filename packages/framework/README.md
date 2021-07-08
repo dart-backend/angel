@@ -1,6 +1,6 @@
 # Angel3 Framework
 
-[![version](https://img.shields.io/badge/pub-v4.1.1-brightgreen)](https://pub.dartlang.org/packages/angel3_framework)
+[![version](https://img.shields.io/badge/pub-v4.1.1-brightgreen)](https://pub.dev/packages/angel3_framework)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 [![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
 

@@ -1,7 +1,8 @@
 name: angel3_configuration
 description: Automatic YAML application configuration loader for Angel, with .env support.
-version: 4.0.0
-homepage: https://github.com/dukefirehawk/angel/tree/angel3/packages/configuration
+version: 4.0.1
+homepage: https://angel3-framework.web.app/
+repository: https://github.com/dukefirehawk/angel/tree/angel3/packages/configuration
 environment:
   sdk: '>=2.12.0 <3.0.0'
 dependencies:
