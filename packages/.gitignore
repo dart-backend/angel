@@ -50,6 +50,7 @@ doc/api/
 
 ## VsCode
 .vscode/
+!.vscode/settings.json
 
 ## File-based project format:
 *.iws

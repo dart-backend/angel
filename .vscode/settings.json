@@ -1,5 +1,17 @@
 {
     "files.watcherExclude": {
         "**/target": true
-    }
+    },
+    "[javascript]": {
+      "editor.defaultFormatter": "esbenp.prettier-vscode",
+      "editor.formatOnSave": true
+    },
+    "beautify.language": {
+      "html": ["html"],
+      "css": [],
+      "js": []
+    },
+    "editor.codeActionsOnSave": {
+      "source.fixAll.markdownlint": true
+  }
 }
