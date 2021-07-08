@@ -4,12 +4,10 @@
 
 * Migrate all modules to support NNBD
 * Fix issues and failed unit test
+  * Validate
   * Client
   * Websocket
-  * Configuration
-  * Validate
   * ORM
-  * Framework
 * Add more examples
 * Improve User Guide
 * Update `Angel3` website
