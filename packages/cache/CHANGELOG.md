@@ -4,12 +4,13 @@
 
 * Updated README
 * Added home page link
+* All 7 unit tests passed
 
 ## 4.0.1
 
 * Updated pubspec description
 * Fixed: Return `200` with cached data instead of `403`
-* Updated broken Unit Tests
+* Updated broken unit tests
 
 ## 4.0.0
 
