@@ -1,11 +1,14 @@
-# angel3_client
-[![version](https://img.shields.io/badge/pub-v4.0.0-brightgreen)](https://pub.dartlang.org/packages/angel3_client)
+# Angel3 Client
+
+[![version](https://img.shields.io/badge/pub-v4.0.1-brightgreen)](https://pub.dartlang.org/packages/angel3_client)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 [![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
 
 [![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/client/LICENSE)
 
-# Usage
+A browser, mobile and command line based client that supports querying Angel3 servers
+
+## Usage
 
 ```dart
 // Choose one or the other, depending on platform
@@ -18,8 +21,7 @@ main() async {
 }
 ```
 
-You can call `service` to receive an instance of `Service`, which acts as a client to a
-service on the server at the given path (say that five times fast!).
+You can call `service` to receive an instance of `Service`, which acts as a client to a service on the server at the given path (say that five times fast!).
 
 ```dart
 foo() async {
@@ -30,8 +32,7 @@ foo() async {
 }
 ```
 
-The CLI client also supports reflection via `angel3_json_god`. There is no need to work with Maps;
-you can use the same class on the client and the server.
+The CLI client also supports reflection via `angel3_json_god`. There is no need to work with Maps; you can use the same class on the client and the server.
 
 ```dart
 class Todo extends Model {
@@ -50,11 +51,12 @@ bar() async {
 }
 ```
 
-Just like on the server, services support `index`, `read`, `create`, `modify`, `update` and
-`remove`.
+Just like on the server, services support `index`, `read`, `create`, `modify`, `update` and `remove`.
 
 ## Authentication
+
 Local auth:
+
 ```dart
 var auth = await app.authenticate(type: 'local', credentials: {username: ..., password: ...});
 print(auth.token);
@@ -62,6 +64,7 @@ print(auth.data); // User object
 ```
 
 Revive an existing jwt:
+
 ```dart
 Future<AngelAuthResult> reviveJwt(String jwt) {
   return app.authenticate(credentials: {'token': jwt});
@@ -69,6 +72,7 @@ Future<AngelAuthResult> reviveJwt(String jwt) {
 ```
 
 Via Popup:
+
 ```dart
 app.authenticateViaPopup('/auth/google').listen((jwt) {
   // Do something with the JWT
@@ -76,6 +80,7 @@ app.authenticateViaPopup('/auth/google').listen((jwt) {
 ```
 
 Resume a session from localStorage (browser only):
+
 ```dart
 // Automatically checks for JSON-encoded 'token' in localStorage,
 // and tries to revive it
@@ -83,13 +88,14 @@ await app.authenticate();
 ```
 
 Logout:
+
 ```dart
 await app.logout();
 ```
 
-# Live Updates
-Oftentimes, you will want to update a collection based on updates from a service.
-Use `ServiceList` for this case:
+## Live Updates
+
+Oftentimes, you will want to update a collection based on updates from a service. Use `ServiceList` for this case:
 
 ```dart
 build(BuildContext context) async {

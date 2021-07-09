@@ -12,7 +12,7 @@ class MockAngel extends BaseAngelClient {
   @override
   final SpecClient client = SpecClient();
 
-  MockAngel() : super(null, 'http://localhost:3000');
+  MockAngel() : super(SpecClient(), 'http://localhost:3000');
 
   @override
   Stream<String> authenticateViaPopup(String url,

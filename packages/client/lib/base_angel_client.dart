@@ -7,7 +7,7 @@ import 'package:http/src/base_request.dart' as http;
 import 'package:http/src/request.dart' as http;
 import 'package:http/src/response.dart' as http;
 import 'package:http/src/streamed_response.dart' as http;
-import 'package:path/path.dart' as p;
+import 'package:path/path.dart';
 import 'angel3_client.dart';
 
 const Map<String, String> _readHeaders = {'Accept': 'application/json'};
@@ -16,8 +16,8 @@ const Map<String, String> _writeHeaders = {
   'Content-Type': 'application/json'
 };
 
-Map<String, String>? _buildQuery(Map<String, dynamic>? params) {
-  return params?.map((k, v) => MapEntry(k, v.toString()));
+Map<String, String> _buildQuery(Map<String, dynamic>? params) {
+  return params?.map((k, v) => MapEntry(k, v.toString())) ?? {};
 }
 
 bool _invalid(http.Response response) =>
@@ -50,7 +50,9 @@ abstract class BaseAngelClient extends Angel {
   final StreamController<AngelAuthResult> _onAuthenticated =
       StreamController<AngelAuthResult>();
   final List<Service> _services = [];
-  final http.BaseClient? client;
+  final http.BaseClient client;
+
+  final _p = Context(style: Style.url);
 
   @override
   Stream<AngelAuthResult> get onAuthenticated => _onAuthenticated.stream;
@@ -66,13 +68,12 @@ abstract class BaseAngelClient extends Angel {
     type ??= 'token';
 
     var segments = baseUrl.pathSegments
-        .followedBy(p.split(authEndpoint))
+        .followedBy(_p.split(authEndpoint))
         .followedBy([type]);
 
-    // TODO: convert windows path to proper url
-    var p1 = p.joinAll(segments).replaceAll('\\', '/');
+    //var p1 = p.joinAll(segments).replaceAll('\\', '/');
 
-    var url = baseUrl.replace(path: p1);
+    var url = baseUrl.replace(path: _p.joinAll(segments));
     http.Response response;
 
     if (credentials != null) {
@@ -107,7 +108,7 @@ abstract class BaseAngelClient extends Angel {
 
   @override
   Future<void> close() async {
-    client!.close();
+    client.close();
     await _onAuthenticated.close();
     await Future.wait(_services.map((s) => s.close())).then((_) {
       _services.clear();
@@ -124,7 +125,7 @@ abstract class BaseAngelClient extends Angel {
     if (authToken?.isNotEmpty == true) {
       request.headers['authorization'] ??= 'Bearer $authToken';
     }
-    return client!.send(request);
+    return client.send(request);
   }
 
   /// Sends a non-streaming [Request] and returns a non-streaming [Response].
@@ -157,7 +158,7 @@ abstract class BaseAngelClient extends Angel {
   @override
   Service<Id, Data> service<Id, Data>(String path,
       {Type? type, AngelDeserializer<Data>? deserializer}) {
-    var url = baseUrl.replace(path: p.join(baseUrl.path, path));
+    var url = baseUrl.replace(path: _p.join(baseUrl.path, path));
     var s = BaseAngelService<Id, Data>(client, this, url,
         deserializer: deserializer);
     _services.add(s);
@@ -167,7 +168,7 @@ abstract class BaseAngelClient extends Angel {
   Uri _join(url) {
     var u = url is Uri ? url : Uri.parse(url.toString());
     if (u.hasScheme || u.hasAuthority) return u;
-    return u.replace(path: p.join(baseUrl.path, u.path));
+    return u.replace(path: _p.join(baseUrl.path, u.path));
   }
 
   //@override
@@ -208,8 +209,10 @@ class BaseAngelService<Id, Data> extends Service<Id, Data?> {
   @override
   final BaseAngelClient app;
   final Uri baseUrl;
-  final http.BaseClient? client;
+  final http.BaseClient client;
   final AngelDeserializer<Data>? deserializer;
+
+  final _p = Context(style: Style.url);
 
   final StreamController<List<Data?>> _onIndexed = StreamController();
   final StreamController<Data?> _onRead = StreamController(),
@@ -267,11 +270,11 @@ class BaseAngelService<Id, Data> extends Service<Id, Data?> {
       request.headers['Authorization'] = 'Bearer ${app.authToken}';
     }
 
-    return client!.send(request);
+    return client.send(request);
   }
 
   @override
-  Future<List<Data?>?> index([Map<String, dynamic>? params]) async {
+  Future<List<Data>> index([Map<String, dynamic>? params]) async {
     var url = baseUrl.replace(queryParameters: _buildQuery(params));
     var response = await app.sendUnstreamed('GET', url, _readHeaders);
 
@@ -285,7 +288,14 @@ class BaseAngelService<Id, Data> extends Service<Id, Data?> {
       }
 
       var v = json.decode(response.body) as List;
-      var r = v.map(deserialize).toList();
+      //var r = v.map(deserialize).toList();
+      var r = <Data>[];
+      v.forEach((element) {
+        var a = deserialize(element);
+        if (a != null) {
+          r.add(a);
+        }
+      });
       _onIndexed.add(r);
       return r;
     } catch (e, st) {
@@ -296,13 +306,15 @@ class BaseAngelService<Id, Data> extends Service<Id, Data?> {
       }
     }
 
-    return null;
+    return [];
   }
 
   @override
   Future<Data?> read(id, [Map<String, dynamic>? params]) async {
+    var pa = _p.join(baseUrl.path, id.toString());
+    print(pa);
     var url = baseUrl.replace(
-        path: p.join(baseUrl.path, id.toString()),
+        path: _p.join(baseUrl.path, id.toString()),
         queryParameters: _buildQuery(params));
 
     var response = await app.sendUnstreamed('GET', url, _readHeaders);
@@ -362,7 +374,7 @@ class BaseAngelService<Id, Data> extends Service<Id, Data?> {
   @override
   Future<Data?> modify(id, data, [Map<String, dynamic>? params]) async {
     var url = baseUrl.replace(
-        path: p.join(baseUrl.path, id.toString()),
+        path: _p.join(baseUrl.path, id.toString()),
         queryParameters: _buildQuery(params));
 
     var response =
@@ -394,7 +406,7 @@ class BaseAngelService<Id, Data> extends Service<Id, Data?> {
   @override
   Future<Data?> update(id, data, [Map<String, dynamic>? params]) async {
     var url = baseUrl.replace(
-        path: p.join(baseUrl.path, id.toString()),
+        path: _p.join(baseUrl.path, id.toString()),
         queryParameters: _buildQuery(params));
 
     var response =
@@ -426,7 +438,7 @@ class BaseAngelService<Id, Data> extends Service<Id, Data?> {
   @override
   Future<Data?> remove(id, [Map<String, dynamic>? params]) async {
     var url = baseUrl.replace(
-        path: p.join(baseUrl.path, id.toString()),
+        path: _p.join(baseUrl.path, id.toString()),
         queryParameters: _buildQuery(params));
 
     var response = await app.sendUnstreamed('DELETE', url, _readHeaders);

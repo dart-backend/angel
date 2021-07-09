@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:angel3_client/io.dart' as c;
 import 'package:angel3_framework/angel3_framework.dart' as s;
 import 'package:angel3_framework/http.dart' as s;
+import 'package:angel3_container/mirrors.dart';
 import 'package:pedantic/pedantic.dart';
 import 'package:test/test.dart';
 
@@ -13,11 +14,11 @@ void main() {
   late StreamQueue queue;
 
   setUp(() async {
-    var serverApp = s.Angel();
+    var serverApp = s.Angel(reflector: MirrorsReflector());
     var http = s.AngelHttp(serverApp);
     serverApp.use('/api/todos', s.MapService(autoIdAndDateFields: false));
-
     server = await http.startServer();
+
     var uri = 'http://${server.address.address}:${server.port}';
     app = c.Rest(uri);
     list = c.ServiceList(app.service('api/todos'));
