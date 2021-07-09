@@ -1,6 +1,6 @@
-# HTTP Caching for Angel3
+# Angel3 HTTP Cache
 
-[![version](https://img.shields.io/badge/pub-v4.0.1-brightgreen)](https://pub.dev/packages/angel3_cache)
+[![version](https://img.shields.io/badge/pub-v4.0.2-brightgreen)](https://pub.dev/packages/angel3_cache)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 [![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
 

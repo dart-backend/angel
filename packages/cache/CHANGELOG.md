@@ -1,5 +1,10 @@
 # Change Log
 
+## 4.0.2
+
+* Updated README
+* Added home page link
+
 ## 4.0.1
 
 * Updated pubspec description
