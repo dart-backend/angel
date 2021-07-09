@@ -1,6 +1,6 @@
 {
     "files.watcherExclude": {
-        "**/target": true
+      "**/target": true
     },
     "[javascript]": {
       "editor.defaultFormatter": "esbenp.prettier-vscode",

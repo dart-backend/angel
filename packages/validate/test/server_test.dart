@@ -12,7 +12,7 @@ import 'package:test/test.dart';
 final Validator echoSchema = Validator({'message*': isString});
 
 void printRecord(LogRecord rec) {
-  print(rec);
+  print('${rec.time}: ${rec.level.name}: ${rec.loggerName}: ${rec.message}');
   if (rec.error != null) print(rec.error);
   if (rec.stackTrace != null) print(rec.stackTrace);
 }

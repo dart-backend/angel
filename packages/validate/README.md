@@ -1,23 +1,18 @@
-# angel3_validate
+# Angel3 Request Validator
 
-[![version](https://img.shields.io/badge/pub-v4.0.1-brightgreen)](https://pub.dartlang.org/packages/angel3_validate)
+[![version](https://img.shields.io/badge/pub-v4.0.2-brightgreen)](https://pub.dartlang.org/packages/angel3_validate)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 [![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
 
 [![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/validate/LICENSE)
 
-[Live Example](https://angel-dart.github.io/validate)
+Validation library based on the `matcher` library, with Angel3 support. Why re-invent the wheel, when you can use the same validators you already use for tests?
 
-Validation library based on the `matcher` library, with Angel support.
-Why re-invent the wheel, when you can use the same validators you already
-use for tests?
-
-This library runs both on the server, and on the client. Thus, you can use
-the same validation rules for forms on the server, and on the frontend.
+This library runs both on the server, and on the client. Thus, you can use the same validation rules for forms on the server, and on the frontend.
 
 For convenience's sake, this library also exports `matcher`.
 
-- [angel3_validate](#angel3_validate)
+- [Angel3 Request Validator](#angel3-request-validator)
   - [Examples](#examples)
     - [Creating a Validator](#creating-a-validator)
     - [Validating data](#validating-data)
@@ -58,9 +53,7 @@ main() {
 
 ### Validating data
 
-The `Validator` will filter out fields that have no validation rules.
-You can rest easy knowing that attackers cannot slip extra data into
-your applications.
+The `Validator` will filter out fields that have no validation rules. You can rest easy knowing that attackers cannot slip extra data into your applications.
 
 ```dart
 main() {
@@ -92,8 +85,7 @@ main() {
 
 Fields are optional by default.
 
-Suffix a field name with a `'*'` to mark it as required, and
-to throw an error if it is not present.
+Suffix a field name with a `'*'` to mark it as required, and to throw an error if it is not present.
 
 ```dart
 main() {
@@ -108,13 +100,11 @@ main() {
 
 ### Forbidden Fields
 
-To prevent a field from showing up in valid data, suffix it
-with a `'!'`.
+To prevent a field from showing up in valid data, suffix it with a `'!'`.
 
 ### Default values
 
-If not present, default values will be filled in *before* validation.
-This means that they can still be used with required fields.
+If not present, default values will be filled in *before* validation. This means that they can still be used with required fields.
 
 ```dart
 final Validator todo = Validator({
@@ -125,17 +115,13 @@ final Validator todo = Validator({
 });
 ```
 
-Default values can also be parameterless, *synchronous* functions
-that return a single value.
+Default values can also be parameterless, *synchronous* functions that return a single value.
 
 ### Custom Validator Functions
 
-Creating a whole `Matcher` class is sometimes cumbersome, but if
-you pass a function to the constructor, it will be wrapped in a
-`Matcher` instance.
+Creating a whole `Matcher` class is sometimes cumbersome, but if you pass a function to the constructor, it will be wrapped in a `Matcher` instance.
 
-(It simply returns the value of calling
-[`predicate`](https://www.dartdocs.org/documentation/matcher/0.12.0%2B2/matcher/predicate.html).)
+(It simply returns the value of calling [`predicate`](https://pub.dev/documentation/matcher/latest/matcher/predicate.html).)
 
 The function must *synchronously* return a `bool`.
 
@@ -152,8 +138,7 @@ main() {
 
 ### Custom Error Messages
 
-If these are not present, `angel3_validate` will *attempt* to generate
-a coherent error message on its own.
+If these are not present, `angel3_validate` will *attempt* to generate a coherent error message on its own.
 
 ```dart
 Validator({
@@ -196,9 +181,7 @@ print(only); // { foo: bar }
 
 ### Extending Validators
 
-You can add situation-specific rules within a child validator.
-You can also use `extend` to mark fields as required or forbidden that originally
-were not. Default value and custom error message extension is also supported.
+You can add situation-specific rules within a child validator. You can also use `extend` to mark fields as required or forbidden that originally were not. Default value and custom error message extension is also supported.
 
 ```dart
 final Validator userValidator = Validator({
@@ -210,8 +193,7 @@ final Validator userValidator = Validator({
 });
 ```
 
-To mark a field as now optional, and no longer required,
-suffix its name with a `'?'`.
+To mark a field as now optional, and no longer required, suffix its name with a `'?'`.
 
 ```dart
 var ageIsOptional = userValidator.extend({
@@ -222,9 +204,7 @@ var ageIsOptional = userValidator.extend({
 });
 ```
 
-Note that by default, validation rules are simply appended to
-the existing list. To completely overwrite existing rules, set the
-`overwrite` flag to `true`.
+Note that by default, validation rules are simply appended to the existing list. To completely overwrite existing rules, set the `overwrite` flag to `true`.
 
 ```dart
 register(Map userData) {
@@ -236,8 +216,7 @@ register(Map userData) {
 
 ### Bundled Matchers
 
-This library includes some `Matcher`s for common validations,
-including:
+This library includes some `Matcher`s for common validations, including:
 
 - `isAlphaDash`: Asserts that a `String` is alphanumeric, but also lets it contain dashes or underscores.
 - `isAlphaNum`: Asserts that a `String` is alphanumeric.
@@ -249,14 +228,11 @@ including:
 - `isNonEmptyString`: Asserts that a value is a non-empty `String`.
 - `isUrl`: Asserts that a `String` is an HTTPS or HTTP URL.
 
-The remaining functionality is
-[effectively implemented by the `matcher` package](https://www.dartdocs.org/documentation/matcher/0.12.0%2B2/matcher/matcher-library.html).
+The remaining functionality is [effectively implemented by the `matcher` package](https://pub.dev/documentation/matcher/latest/matcher/matcher-library.html).
 
 ### Nested Validators
 
-Very often, the data we validate contains other data within. You can pass
-a `Validator` instance to the constructor, because it extends the
-`Matcher` class.
+Very often, the data we validate contains other data within. You can pass a `Validator` instance to the constructor, because it extends the `Matcher` class.
 
 ```dart
 main() {

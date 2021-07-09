@@ -17,7 +17,7 @@
 * Migrated angel_framework to 4.0.0 (149/150 tests passed)
 * Migrated angel_auth to 4.0.0 (31/31 tests passed)
 * Migrated angel_configuration to 4.0.0 (8/8 testspassed)
-* Migrated angel_validate to 4.0.0 (6/7 tests passed)
+* Migrated angel_validate to 4.0.0 (7/7 tests passed)
 * Migrated json_god to 4.0.0 (13/13 tests passed)
 * Migrated angel_client to 4.0.0 (6/13 tests passed)
 * Migrated angel_websocket to 4.0.0 (2/3 tests passed)
