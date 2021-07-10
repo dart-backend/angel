@@ -14,6 +14,7 @@ import 'package:stream_channel/stream_channel.dart';
 import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:collection/collection.dart' show IterableExtension;
+import 'package:logging/logging.dart';
 import 'angel3_websocket.dart';
 import 'constants.dart';
 export 'angel3_websocket.dart';
@@ -26,6 +27,8 @@ typedef WebSocketResponseSerializer = String Function(dynamic data);
 
 /// Broadcasts events from [HookedService]s, and handles incoming [WebSocketAction]s.
 class AngelWebSocket {
+  final _log = Logger('AngelWebSocket');
+
   final List<WebSocketContext> _clients = <WebSocketContext>[];
   final List<String> _servicesAlreadyWired = [];
 
@@ -258,6 +261,7 @@ class AngelWebSocket {
         return null;
       }
     } catch (e, st) {
+      _log.severe('Unable to handle unknown action');
       catchError(e, st, socket);
     }
   }
@@ -266,15 +270,15 @@ class AngelWebSocket {
   Future handleAuth(WebSocketAction action, WebSocketContext socket) async {
     if (allowAuth != false &&
         action.eventName == authenticateAction &&
-        action.params!['query'] is Map &&
-        action.params!['query']['jwt'] is String) {
+        action.params?['query'] is Map &&
+        action.params?['query']['jwt'] is String) {
       try {
         var auth = socket.request.container!.make<AngelAuth>()!;
         var jwt = action.params!['query']['jwt'] as String;
         AuthToken token;
 
         token = AuthToken.validate(jwt, auth.hmac);
-        var user = await auth.deserializer!(token.userId as Object);
+        var user = await auth.deserializer(token.userId as Object);
         socket.request
           ..container!.registerSingleton<AuthToken>(token)
           ..container!.registerSingleton(user, as: user.runtimeType);
@@ -282,6 +286,7 @@ class AngelWebSocket {
         socket.send(authenticatedEvent,
             {'token': token.serialize(auth.hmac), 'data': user});
       } catch (e, st) {
+        _log.severe('Authentication failed');
         catchError(e, st, socket);
       }
     } else {
@@ -345,6 +350,7 @@ class AngelWebSocket {
         }
       }
     } catch (e, st) {
+      _log.severe('Invalid data');
       catchError(e, st, socket);
     }
   }
@@ -353,16 +359,16 @@ class AngelWebSocket {
     // Send an error
     if (e is AngelHttpException) {
       socket.sendError(e);
-      app!.logger?.severe(e.message, e.error ?? e, e.stackTrace);
+      app?.logger?.severe(e.message, e.error ?? e, e.stackTrace);
     } else if (sendErrors) {
       var err = AngelHttpException(e,
           message: e.toString(), stackTrace: st, errors: [st.toString()]);
       socket.sendError(err);
-      app!.logger?.severe(err.message, e, st);
+      app?.logger?.severe(err.message, e, st);
     } else {
       var err = AngelHttpException(e);
       socket.sendError(err);
-      app!.logger?.severe(e.toString(), e, st);
+      app?.logger?.severe(e.toString(), e, st);
     }
   }
 
@@ -383,10 +389,10 @@ class AngelWebSocket {
 
   /// Configures an [Angel] instance to listen for WebSocket connections.
   Future configureServer(Angel app) async {
-    app.container!.registerSingleton(this);
+    app.container?.registerSingleton(this);
 
     if (runtimeType != AngelWebSocket) {
-      app.container!.registerSingleton<AngelWebSocket>(this);
+      app.container?.registerSingleton<AngelWebSocket>(this);
     }
 
     // Set up services
@@ -397,7 +403,7 @@ class AngelWebSocket {
     });
 
     if (synchronizationChannel != null) {
-      synchronizationChannel!.stream
+      synchronizationChannel?.stream
           .listen((e) => batchEvent(e, notify: false));
     }
 
@@ -406,7 +412,7 @@ class AngelWebSocket {
 
   /// Handles an incoming [WebSocketContext].
   Future<void> handleClient(WebSocketContext socket) async {
-    var origin = socket.request.headers!.value('origin');
+    var origin = socket.request.headers?.value('origin');
     if (allowedOrigins != null && !allowedOrigins!.contains(origin)) {
       throw AngelHttpException.forbidden(
           message:
@@ -418,7 +424,7 @@ class AngelWebSocket {
 
     _onConnection.add(socket);
 
-    socket.request.container!.registerSingleton<WebSocketContext>(socket);
+    socket.request.container?.registerSingleton<WebSocketContext>(socket);
 
     socket.channel.stream.listen(
       (data) {
@@ -451,11 +457,11 @@ class AngelWebSocket {
       return false;
     } else if (req is Http2RequestContext && res is Http2ResponseContext) {
       var connection =
-          req.headers!['connection']?.map((s) => s.toLowerCase().trim());
-      var upgrade = req.headers!.value('upgrade')?.toLowerCase();
-      var version = req.headers!.value('sec-websocket-version');
-      var key = req.headers!.value('sec-websocket-key');
-      var protocol = req.headers!.value('sec-websocket-protocol');
+          req.headers?['connection']?.map((s) => s.toLowerCase().trim());
+      var upgrade = req.headers?.value('upgrade')?.toLowerCase();
+      var version = req.headers?.value('sec-websocket-version');
+      var key = req.headers?.value('sec-websocket-key');
+      var protocol = req.headers?.value('sec-websocket-protocol');
 
       if (connection == null) {
         throw AngelHttpException.badRequest(

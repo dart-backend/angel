@@ -42,7 +42,7 @@ class WebSockets extends BaseWebSocketClient {
     StreamSubscription<Event>? sub;
     t = Timer.periodic(Duration(milliseconds: 500), (timer) {
       if (!ctrl.isClosed) {
-        if (wnd.closed!) {
+        if (wnd.closed == true) {
           ctrl.addError(AngelHttpException.notAuthenticated(
               message:
                   errorMessage ?? 'Authentication via popup window failed.'));
@@ -60,7 +60,7 @@ class WebSockets extends BaseWebSocketClient {
         ctrl.add((e as CustomEvent).detail.toString());
         t.cancel();
         ctrl.close();
-        sub!.cancel();
+        sub?.cancel();
       }
     });
 

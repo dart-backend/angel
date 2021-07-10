@@ -52,7 +52,7 @@ abstract class BaseAngelClient extends Angel {
   final List<Service> _services = [];
   final http.BaseClient client;
 
-  final _p = Context(style: Style.url);
+  final Context _p = Context(style: Style.url);
 
   @override
   Stream<AngelAuthResult> get onAuthenticated => _onAuthenticated.stream;
@@ -212,7 +212,7 @@ class BaseAngelService<Id, Data> extends Service<Id, Data?> {
   final http.BaseClient client;
   final AngelDeserializer<Data>? deserializer;
 
-  final _p = Context(style: Style.url);
+  final Context _p = Context(style: Style.url);
 
   final StreamController<List<Data?>> _onIndexed = StreamController();
   final StreamController<Data?> _onRead = StreamController(),

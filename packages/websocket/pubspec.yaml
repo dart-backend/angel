@@ -1,7 +1,8 @@
 name: angel3_websocket
-description: Support for using pkg:angel_client with WebSockets. Designed for Angel.
-version: 4.0.0
-homepage: https://github.com/dukefirehawk/angel/tree/angel3/packages/websocket
+description: This library provides WebSockets support for Angel3 framework.
+version: 4.0.1
+homepage: https://angel3-framework.web.app/
+repository: https://github.com/dukefirehawk/angel/tree/angel3/packages/websocket
 environment:
   sdk: '>=2.12.0 <3.0.0'
 dependencies:
@@ -15,10 +16,10 @@ dependencies:
   stream_channel: ^2.1.0
   web_socket_channel: ^2.1.0
   collection: ^1.15.0
+  logging: ^1.0.1
 dev_dependencies:
   angel3_container: ^3.0.0
   angel3_model: ^3.0.0
-  logging: ^1.0.1
   pedantic: ^1.11.0
   test: ^1.17.4
   

@@ -1,29 +1,24 @@
-# angel3_websocket
-[![version](https://img.shields.io/badge/pub-v4.0.0-brightgreen)](https://pub.dartlang.org/packages/angel3_websocket)
+# Angel3 Websocket Library
+
+[![version](https://img.shields.io/badge/pub-v4.0.1-brightgreen)](https://pub.dartlang.org/packages/angel3_websocket)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 [![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
 
 [![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/websocket/LICENSE)
 
-WebSocket plugin for Angel.
-
-This plugin broadcasts events from hooked services via WebSockets. 
-
-In addition, it adds itself to the app's IoC container as `AngelWebSocket`, so that it can be used
-in controllers as well.
+WebSocket plugin for Angel3. This plugin broadcasts events from hooked services via WebSockets. In addition, it adds itself to the app's IoC container as `AngelWebSocket`, so that it can be used in controllers as well.
 
 WebSocket contexts are add to `req.properties` as `'socket'`.
 
+## Usage
 
-# Usage
-
-**Server-side**
+### Server-side
 
 ```dart
 import "package:angel3_framework/angel3_framework.dart";
 import "package:angel3_websocket/server.dart";
 
-main() async {
+void main() async {
   var app =  Angel();
 
   var ws =  AngelWebSocket();
@@ -38,8 +33,7 @@ main() async {
 
 ```
 
-Filtering events is easy with hooked services. Just return a `bool`, whether
-synchronously or asynchronously.
+Filtering events is easy with hooked services. Just return a `bool`, whether synchronously or asynchronously.
 
 ```dart
 myService.properties['ws:filter'] = (HookedServiceEvent e, WebSocketContext socket) async {
@@ -51,14 +45,14 @@ myService.index({
 });
 ```
 
-**Adding Handlers within a Controller**
+#### Adding Handlers within a Controller
 
 `WebSocketController` extends a normal `Controller`, but also listens to WebSockets.
 
 ```dart
 import 'dart:async';
-import "package:angel_framework/angel_framework.dart";
-import "package:angel_websocket/server.dart";
+import "package:angel3_framework/angel3_framework.dart";
+import "package:angel3_websocket/server.dart";
 
 @Expose("/")
 class MyController extends WebSocketController {
@@ -86,25 +80,22 @@ class MyController extends WebSocketController {
 }
 ```
 
-**Client Use**
+### Client Use
 
-This repo also provides two client libraries `browser` and `io` that extend the base
-`angel3_client` interface, and allow you to use a very similar API on the client to that of
-the server.
+This repo also provides two client libraries `browser` and `io` that extend the base `angel3_client` interface, and allow you to use a very similar API on the client to that of the server.
 
-The provided clients also automatically try to reconnect their WebSockets when disconnected,
-which means you can restart your development server without having to reload browser windows.
+The provided clients also automatically try to reconnect their WebSockets when disconnected, which means you can restart your development server without having to reload browser windows.
 
 They also provide streams of data that pump out filtered data as it comes in from the server.
 
 Clients can even perform authentication over WebSockets.
 
-**In the Browser**
+#### In the Browser
 
 ```dart
 import "package:angel3_websocket/browser.dart";
 
-main() async {
+void main() async {
   Angel app =  WebSockets("/ws");
   await app.connect();
 
@@ -127,7 +118,7 @@ main() async {
 }
 ```
 
-**CLI Client**
+#### CLI Client
 
 ```dart
 import "package:angel3_framework/common.dart";

@@ -5,7 +5,7 @@ import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_framework/http.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:http/http.dart' as http;
-import 'package:path/path.dart' as p;
+import 'package:path/path.dart';
 
 final RegExp _straySlashes = RegExp(r'(^/+)|(/+$)');
 final MediaType _fallbackMediaType = MediaType('application', 'octet-stream');
@@ -15,6 +15,8 @@ final MediaType _fallbackMediaType = MediaType('application', 'octet-stream');
 /// Supports WebSockets, in addition to regular HTTP requests.
 class Proxy {
   String? _prefix;
+
+  final Context _p = Context(style: Style.url);
 
   /// The underlying [Client] to use.
   final http.Client httpClient;
@@ -82,12 +84,12 @@ class Proxy {
   Future<bool> handleRequest(RequestContext req, ResponseContext res) {
     var path = req.path.replaceAll(_straySlashes, '');
 
-    if (_prefix!.isNotEmpty) {
-      if (!p.isWithin(_prefix!, path) && !p.equals(_prefix!, path)) {
+    if (_prefix?.isNotEmpty == true) {
+      if (!_p.isWithin(_prefix!, path) && !_p.equals(_prefix!, path)) {
         return Future<bool>.value(true);
       }
 
-      path = p.relative(path, from: _prefix);
+      path = _p.relative(path, from: _prefix);
     }
 
     return servePath(path, req, res);
@@ -98,7 +100,7 @@ class Proxy {
       String path, RequestContext req, ResponseContext res) async {
     http.StreamedResponse rs;
 
-    var uri = baseUrl.replace(path: p.join(baseUrl.path, path));
+    var uri = baseUrl.replace(path: _p.join(baseUrl.path, path));
 
     try {
       if (req is HttpRequestContext &&
@@ -123,13 +125,13 @@ class Proxy {
         var headers = <String, String>{
           'host': uri.authority,
           'x-forwarded-for': req.remoteAddress.address,
-          'x-forwarded-port': req.uri!.port.toString(),
+          'x-forwarded-port': req.uri?.port.toString() ?? '',
           'x-forwarded-host':
-              req.headers!.host ?? req.headers!.value('host') ?? 'none',
+              req.headers?.host ?? req.headers?.value('host') ?? 'none',
           'x-forwarded-proto': uri.scheme,
         };
 
-        req.headers!.forEach((name, values) {
+        req.headers?.forEach((name, values) {
           headers[name] = values.join(',');
         });
 
@@ -139,8 +141,8 @@ class Proxy {
         List<int>? body;
 
         if (!req.hasParsedBody) {
-          body = await req.body!
-              .fold<BytesBuilder>(BytesBuilder(), (bb, buf) => bb..add(buf))
+          body = await req.body
+              ?.fold<BytesBuilder>(BytesBuilder(), (bb, buf) => bb..add(buf))
               .then((bb) => bb.takeBytes());
         }
 
@@ -149,13 +151,17 @@ class Proxy {
         rq.headers['host'] = rq.url.host;
         rq.encoding = Utf8Codec(allowMalformed: true);
 
-        if (body != null) rq.bodyBytes = body;
+        if (body != null) {
+          rq.bodyBytes = body;
+        }
 
         return httpClient.send(rq);
       }
 
       var future = accessRemote();
-      if (timeout != null) future = future.timeout(timeout!);
+      if (timeout != null) {
+        future = future.timeout(timeout!);
+      }
       rs = await future;
     } on TimeoutException catch (e, st) {
       if (recoverFromDead) return true;

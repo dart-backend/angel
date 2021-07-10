@@ -241,7 +241,7 @@ abstract class BaseWebSocketClient extends BaseAngelClient {
     if (_socket == null) {
       _queue.addLast(action);
     } else {
-      socket!.sink.add(serialize(action));
+      socket?.sink.add(serialize(action));
     }
   }
 

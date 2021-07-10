@@ -18,10 +18,8 @@ void main() {
   setUp(() async {
     app = Angel();
     http = AngelHttp(app, useZone: false);
-    var auth = AngelAuth();
-
-    auth.serializer = (_) async => 'baz';
-    auth.deserializer = (_) async => USER;
+    var auth = AngelAuth(
+        serializer: (_) async => 'baz', deserializer: (_) async => USER);
 
     auth.strategies['local'] = LocalAuthStrategy(
       (username, password) async {

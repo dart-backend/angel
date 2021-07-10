@@ -9,7 +9,7 @@ import 'package:test/test.dart';
 import 'common.dart';
 
 void main() {
-  Angel? app;
+  late Angel app;
   var client = http.IOClient();
   //late HttpServer server;
   late HttpServer testServer;
@@ -17,7 +17,7 @@ void main() {
 
   setUp(() async {
     app = Angel();
-    var appHttp = AngelHttp(app!);
+    var appHttp = AngelHttp(app);
 
     testServer = await startTestServer();
 
@@ -33,15 +33,15 @@ void main() {
     print('Proxy 1 on: ${proxy1.baseUrl}');
     print('Proxy 2 on: ${proxy2.baseUrl}');
 
-    app!.all('/proxy/*', proxy1.handleRequest);
-    app!.all('*', proxy2.handleRequest);
+    app.all('/proxy/*', proxy1.handleRequest);
+    app.all('*', proxy2.handleRequest);
 
-    app!.fallback((req, res) {
+    app.fallback((req, res) {
       print('Intercepting empty from ${req.uri}');
       res.write('intercept empty');
     });
 
-    app!.logger = Logger('angel');
+    app.logger = Logger('angel');
 
     Logger.root.onRecord.listen((rec) {
       print(rec);
@@ -56,7 +56,6 @@ void main() {
   tearDown(() async {
     await testServer.close(force: true);
     //await server.close(force: true);
-    app = null;
     url = null;
   });
 
