@@ -4,7 +4,7 @@
 ## 4.0.1
 
 * Updated README
-* Fixed NNBD issues
+* Refactored NNBD fixes
 * Fixed path issue on Windows
 * All 13 unit tests passed
 

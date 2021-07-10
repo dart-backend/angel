@@ -16,6 +16,7 @@ dev_dependencies:
   angel3_framework: ^4.0.0
   angel3_model: ^3.0.0
   angel3_mock_request: ^2.0.0
+  angel3_container: ^3.0.0
   async: ^2.6.1
   build_runner: ^1.12.2
   build_web_compilers: ^2.16.5
