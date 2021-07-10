@@ -1,13 +1,15 @@
-# angel3_auth_oauth2
-[![version](https://img.shields.io/badge/pub-v4.0.0-brightgreen)](https://pub.dartlang.org/packages/angel3_auth_oauth2)
+# Angel3 OAuth2 Handler
+
+[![version](https://img.shields.io/badge/pub-v4.0.1-brightgreen)](https://pub.dartlang.org/packages/angel3_auth_oauth2)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 [![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
 
 [![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/auth_oauth2/LICENSE)
 
-`package:angel3_auth` strategy for OAuth2 login, i.e. Facebook or Github.
+Angel3 library for authenticating users with remote identity providers via OAuth2, i.e. Facebook, Google, Azure AD, etc.
 
-# Usage
+## Usage
+
 First, create an options object:
 
 ```dart
@@ -23,11 +25,10 @@ configureServer(Angel app) async {
 }
 ```
 
-After getting authenticated against the remote server, we need to be able to identify
-users within our own application.
+After getting authenticated against the remote server, we need to be able to identify users within our own application.
 
 ```dart
-typedef FutureOr<User> OAuth2Verifier(oauth2.Client, RequestContext, ResponseContext);
+typedef OAuth2Verifier = FutureOr<User> Function(oauth2.Client, RequestContext, ResponseContext);
 
 /// You might use a pure function to create a verifier that queries a
 /// given service.
@@ -52,9 +53,7 @@ OAuth2Verifier oauth2verifier(Service<User> userService) {
 }
 ```
 
-Now, initialize an `OAuth2Strategy`, using the options and verifier.
-You'll also need to provide a name for this instance of the strategy.
-Consider using the name of the remote authentication provider (ex. `facebook`).
+Now, initialize an `OAuth2Strategy`, using the options and verifier. You'll also need to provide a name for this instance of the strategy. Consider using the name of the remote authentication provider (ex. `facebook`).
 
 ```dart
 configureServer(Angel app) {
@@ -73,14 +72,12 @@ configureServer(Angel app) {
 }
 ```
 
-Lastly, connect it to an `AngelAuth` instance, and wire it up to an `Angel` server.
-Set up two routes:
+Lastly, connect it to an `AngelAuth` instance, and wire it up to an `Angel` server. Set up two routes:
+
   1. Redirect users to the external provider
   2. Acts as a callback and handles an access code
   
-In the case of the callback route, you may want to display an HTML page that closes
-a popup window. In this case, use `confirmPopupAuthentication`, which is bundled with
-`package:angel3_auth`, as a `callback` function:
+In the case of the callback route, you may want to display an HTML page that closes a popup window. In this case, use `confirmPopupAuthentication`, which is bundled with `package:angel3_auth`, as a `callback` function:
 
 ```dart
 configureServer(Angel app) async {
@@ -103,9 +100,8 @@ configureServer(Angel app) async {
 ```
 
 ## Custom Scope Delimiter
-This package should work out-of-the-box for most OAuth2 providers, such as Github or Dropbox.
-However, if your OAuth2 scopes are separated by a delimiter other than the default (`' '`),
-you can add it in the `OAuth2Strategy` constructor:
+
+This package should work out-of-the-box for most OAuth2 providers, such as Github or Dropbox. However, if your OAuth2 scopes are separated by a delimiter other than the default (`' '`), you can add it in the `OAuth2Strategy` constructor:
 
 ```dart
 configureServer(Angel app) async {
@@ -114,11 +110,10 @@ configureServer(Angel app) async {
 ```
 
 ## Handling non-JSON responses
-Many OAuth2 providers do not follow the specification, and do not return
-`application/json` responses.
 
-You can add a `getParameters` callback to parse the contents of any arbitrary
-response:
+Many OAuth2 providers do not follow the specification, and do not return `application/json` responses.
+
+You can add a `getParameters` callback to parse the contents of any arbitrary response:
 
 ```dart
 OAuth2Strategy(
