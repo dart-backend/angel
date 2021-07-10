@@ -1,13 +1,15 @@
-# angel3_test
-[![version](https://img.shields.io/badge/pub-v4.0.2-brightgreen)](https://pub.dartlang.org/packages/angel3_test)
+# Angel3 Testing Library
+
+[![version](https://img.shields.io/badge/pub-v4.0.3-brightgreen)](https://pub.dartlang.org/packages/angel3_test)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 [![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
 
 [![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/test/LICENSE)
 
-Testing utility library for the Angel framework.
+Testing utility library for the Angel3 framework.
 
-# TestClient
+## TestClient
+
 The `TestClient` class is a custom `angel3_client` that sends mock requests to your server.
 This means that you will not have to bind your server to HTTP to run.
 Plus, it is an `angel3_client`, and thus supports services and other goodies.
@@ -26,7 +28,8 @@ ws.service('api/users').onCreated.listen(...);
 ws.onData.listen(...);
 ```
 
-# Matchers
+## Matchers
+
 Several `Matcher`s are bundled with this package, and run on any `package:http` `Response`,
 not just those returned by Angel.
 
@@ -53,12 +56,9 @@ test('error', () async {
 });
 ```
 
-`hasValidBody` is one of the most powerful `Matcher`s in this library,
-because it allows you to validate a JSON body against a
-[validation schema](https://github.com/dukefirehawk/angel/tree/angel3/packages/validate).
+`hasValidBody` is one of the most powerful `Matcher`s in this library, because it allows you to validate a JSON body against a [validation schema](https://github.com/dukefirehawk/angel/tree/angel3/packages/validate).
 
-Angel provides a comprehensive validation library that integrates tightly
-with the very `matcher` package that you already use for testing.
+Angel provides a comprehensive validation library that integrates tightly with the very `matcher` package that you already use for testing.
 
 [`package:angel3_validate`](https://github.com/dukefirehawk/angel/tree/angel3/packages//validate)
 

@@ -176,7 +176,7 @@ class _MockService<Id, Data> extends client.BaseAngelService<Id, Data> {
 
   _MockService(this._app, String basePath,
       {client.AngelDeserializer<Data>? deserializer})
-      : super(null, _app, basePath, deserializer: deserializer);
+      : super(_app, _app, basePath, deserializer: deserializer);
 
   @override
   Future<StreamedResponse> send(http.BaseRequest request) {
