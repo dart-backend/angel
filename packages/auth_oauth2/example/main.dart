@@ -47,11 +47,12 @@ void main() async {
   var mappedUserService = userService.map(User.parse, User.serialize);
 
   // Set up the authenticator plugin.
-  var auth =
-      AngelAuth<User>(jwtKey: 'oauth2 example secret', allowCookie: false);
-  auth.serializer = (user) async => user.id;
-  auth.deserializer = (id) => mappedUserService.read(id.toString());
-  app.fallback(auth.decodeJwt);
+  var auth = AngelAuth<User>(
+      serializer: (user) async => user.id,
+      deserializer: (id) => mappedUserService.read(id.toString()),
+      jwtKey: 'oauth2 example secret',
+      allowCookie: false);
+  await app.configure(auth.configureServer);
 
   /// Create an instance of the strategy class.
   auth.strategies['github'] = OAuth2Strategy(
