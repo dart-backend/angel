@@ -1,6 +1,6 @@
 # Angel3 Body Parser
 
-[![version](https://img.shields.io/badge/pub-v2.1.0-brightgreen)](https://pub.dartlang.org/packages/angel3_body_parser)
+[![version](https://img.shields.io/badge/pub-v2.1.1-brightgreen)](https://pub.dartlang.org/packages/angel3_body_parser)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 [![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
 
@@ -10,7 +10,7 @@
 
 Parse request bodies and query strings in Dart, as well multipart/form-data uploads. No external dependencies required.
 
-This is the request body parser powering the [Angel3](https://github.com/dukefirehawk/angel) framework. If you are looking for a server-side solution with dependency injection, WebSockets, and more, then I highly recommend it as your first choice. Bam!
+This is the request body parser powering the [Angel3 framework](https://github.com/dukefirehawk/angel). If you are looking for a server-side solution with dependency injection, WebSockets, and more, then I highly recommend it as your first choice. Bam!
 
 ## Contents
 

@@ -3,6 +3,7 @@ import 'dart:io' show HttpRequest, HttpServer;
 
 import 'package:angel3_body_parser/angel3_body_parser.dart';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import 'package:test/test.dart';
 
 const TOKEN =
@@ -26,6 +27,16 @@ String jsonEncodeBody(BodyParseResult result) {
   });
 }
 
+Future<BodyParseResult> _parseBody(HttpRequest request) {
+  return parseBodyFromStream(
+      request,
+      request.headers.contentType != null
+          ? MediaType.parse(request.headers.contentType.toString())
+          : null,
+      request.uri,
+      storeOriginalBuffer: true);
+}
+
 void main() {
   HttpServer? server;
   String? url;
@@ -37,7 +48,7 @@ void main() {
       //Server will simply return a JSON representation of the parsed body
       request.response.write(
           // ignore: deprecated_member_use
-          jsonEncodeBody(await parseBody(request, storeOriginalBuffer: true)));
+          jsonEncodeBody(await _parseBody(request)));
       await request.response.close();
     });
     url = 'http://localhost:${server!.port}';

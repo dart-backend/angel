@@ -1,5 +1,9 @@
 # Change Log
 
+## 2.1.1
+
+* Fixed calling deprecated methods in unit test
+
 ## 2.1.0
 
 * Replaced `http_server` with `belatuk_http_server`

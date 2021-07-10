@@ -2,8 +2,19 @@ import 'dart:io';
 import 'dart:convert';
 import 'package:angel3_body_parser/angel3_body_parser.dart';
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 import 'package:test/test.dart';
 import 'server_test.dart';
+
+Future<BodyParseResult> _parseBody(HttpRequest request) {
+  return parseBodyFromStream(
+      request,
+      request.headers.contentType != null
+          ? MediaType.parse(request.headers.contentType.toString())
+          : null,
+      request.uri,
+      storeOriginalBuffer: false);
+}
 
 void main() {
   HttpServer? server;
@@ -15,7 +26,7 @@ void main() {
     server!.listen((HttpRequest request) async {
       //Server will simply return a JSON representation of the parsed body
       // ignore: deprecated_member_use
-      request.response.write(jsonEncodeBody(await parseBody(request)));
+      request.response.write(jsonEncodeBody(await _parseBody(request)));
       await request.response.close();
     });
     url = 'http://localhost:${server!.port}';
