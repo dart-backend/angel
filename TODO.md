@@ -4,15 +4,15 @@
 
 * Migrate all modules to support NNBD
 * Fix issues and failed unit test
-  * Validate
-  * Client
   * Websocket
   * ORM
-* Add more examples
-* Improve User Guide
+  * OAuth2
+  * Proxy
+* Update examples
+* Update User Guide
 * Update `Angel3` website
-* Performance metric
+* Generate performance metric
 
 ## Long Term Goal
 
-* Upgrade Angel3 architecture
+* Optimise Angel3 architecture
