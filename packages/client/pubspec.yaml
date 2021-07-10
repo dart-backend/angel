@@ -2,7 +2,7 @@ name: angel3_client
 version: 4.0.1
 description: A browser, mobile and command line based client that supports querying Angel3 servers
 homepage: https://angel3-framework.web.app/
-respository: https://github.com/dukefirehawk/angel/tree/angel3/packages/client
+repository: https://github.com/dukefirehawk/angel/tree/angel3/packages/client
 environment:
   sdk: '>=2.12.0 <3.0.0'
 dependencies:
