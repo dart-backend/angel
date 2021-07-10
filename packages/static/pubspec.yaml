@@ -1,6 +1,6 @@
 name: angel3_static
-description: Static server middleware for Angel. Also capable of serving Range responses.
-version: 4.0.1
+description: This library provides a virtual directory to serve static files for Angel3 framework.
+version: 4.0.2
 homepage: https://github.com/dukefirehawk/angel
 repository: https://github.com/dukefirehawk/angel/tree/angel3/packages/static
 environment:

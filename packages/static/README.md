@@ -1,14 +1,12 @@
 # Angel3 Static Files Handler
 
-[![version](https://img.shields.io/badge/pub-v4.0.1-brightgreen)](https://pub.dartlang.org/packages/angel3_static)
+[![version](https://img.shields.io/badge/pub-v4.0.2-brightgreen)](https://pub.dev/packages/angel3_static)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 [![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
 
 [![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/static/LICENSE)
 
-This package supports serving static files such as html, css and js for [Angel3 framework](https://pub.dartlang.org/packages/angel3).
-
-*Can also handle `Range` requests now, making it suitable for media streaming, ex. music, video, etc.*
+This library provides a virtual directory to serve static files such as html, css and js for [Angel3 framework](https://pub.dev/packages/angel3). It can also handle `Range` requests, making it suitable for media streaming, i.e. music, video, etc.*
 
 ## Installation
 

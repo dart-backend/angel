@@ -35,6 +35,6 @@ void main(List<String> args) async {
   app.fallback((req, res) => throw AngelHttpException.notFound());
 
   var server = await http.startServer('127.0.0.1', 3000);
-  print('Serving from ${vDir.source!.path}');
+  print('Serving from ${vDir.source.path}');
   print('Listening at http://${server.address.address}:${server.port}');
 }
