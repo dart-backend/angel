@@ -8,6 +8,7 @@ import 'package:http/src/request.dart' as http;
 import 'package:http/src/response.dart' as http;
 import 'package:http/src/streamed_response.dart' as http;
 import 'package:path/path.dart';
+import 'package:logging/logging.dart';
 import 'angel3_client.dart';
 
 const Map<String, String> _readHeaders = {'Accept': 'application/json'};
@@ -47,6 +48,7 @@ AngelHttpException failure(http.Response response,
 }
 
 abstract class BaseAngelClient extends Angel {
+  final _log = Logger('BaseAngelClient');
   final StreamController<AngelAuthResult> _onAuthenticated =
       StreamController<AngelAuthResult>();
   final List<Service> _services = [];
@@ -89,6 +91,8 @@ abstract class BaseAngelClient extends Angel {
 
     try {
       //var v = json.decode(response.body);
+      _log.info(response.headers);
+
       var v = jsonDecode(response.body);
 
       if (v is! Map || !v.containsKey('data') || !v.containsKey('token')) {
@@ -102,6 +106,7 @@ abstract class BaseAngelClient extends Angel {
     } on AngelHttpException {
       rethrow;
     } catch (e, st) {
+      _log.severe('Authentication failed');
       throw failure(response, error: e, stack: st);
     }
   }
@@ -147,6 +152,7 @@ abstract class BaseAngelClient extends Angel {
         request.bodyFields =
             body.map((k, v) => MapEntry(k, v is String ? v : v.toString()));
       } else {
+        _log.severe('Body is not a String, List<int>, or Map<String, String>');
         throw ArgumentError.value(body, 'body',
             'must be a String, List<int>, or Map<String, String>.');
       }

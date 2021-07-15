@@ -5,6 +5,7 @@ import 'dart:async';
 import 'package:collection/collection.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:logging/logging.dart';
 export 'package:angel3_http_exception/angel3_http_exception.dart';
 
 /// A function that configures an [Angel] client in some way.
@@ -18,6 +19,8 @@ typedef AngelDeserializer<T> = T? Function(dynamic x);
 
 /// Represents an Angel server that we are querying.
 abstract class Angel extends http.BaseClient {
+  final _log = Logger('Angel');
+
   /// A mutable member. When this is set, it holds a JSON Web Token
   /// that is automatically attached to every request sent.
   ///

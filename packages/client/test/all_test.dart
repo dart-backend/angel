@@ -76,6 +76,7 @@ void main() {
     test('credentials send right body', () async {
       await app
           .authenticate(type: 'local', credentials: {'username': 'password'});
+      print(app.client.spec?.headers);
       expect(
         await read(app.client.spec!.request.finalize()),
         json.encode({'username': 'password'}),

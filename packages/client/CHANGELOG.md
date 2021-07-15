@@ -1,6 +1,11 @@
 
 # Change Log
 
+## 4.0.2
+
+* Added logging
+* Added unit test for authentication
+
 ## 4.0.1
 
 * Updated README
