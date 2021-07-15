@@ -4,7 +4,6 @@
 
 * Migrate all modules to support NNBD
 * Fix issues and failed unit test
-  * Websocket
   * ORM
   * OAuth2
   * Proxy

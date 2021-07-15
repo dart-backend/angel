@@ -47,7 +47,7 @@
 * Migrated angel_auth_cache to 4.0.0 (7/7 tests passed)
 * Migrated angel_auth_cors to 4.0.0  (15/15 tests passed)
 * Migrated angel_oauth2 to 4.0.0 (17/25 tests passed)
-* Migrated angel_proxy to 4.0.0 (5/7 tests passed)
+* Migrated angel_proxy to 4.0.0 (6/7 tests passed)
 * Migrated angel_file_service to 4.0.0 (6/6 tests passed)
 * Migrated graphql_parser to 2.0.0 (55/55 tests passed)
 * Migrated graphql_schema to 2.0.0 (34/35 tests passed)
