@@ -1,5 +1,10 @@
 # Change Log
 
+## 4.0.2
+
+* Fixed authentication unit test
+* All 3 unit tests passed
+
 ## 4.0.1
 
 * Updated README

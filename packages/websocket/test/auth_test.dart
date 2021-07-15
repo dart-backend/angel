@@ -35,6 +35,7 @@ void main() {
     var sock = AngelWebSocket(app);
 
     await app.configure(sock.configureServer);
+
     app.all('/ws', sock.handleRequest);
     app.logger = Logger('angel_auth')..onRecord.listen(print);
 
