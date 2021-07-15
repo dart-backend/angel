@@ -352,9 +352,12 @@ class AngelAuth<User> {
   /// or a `401 Not Authenticated` is thrown, if it is the last one.
   ///
   /// Any other result is considered an authenticated user, and terminates the loop.
-  RequestHandler authenticate(type, [AngelAuthOptions<User>? options]) {
+  RequestHandler authenticate(type, [AngelAuthOptions<User>? opt]) {
     return (RequestContext req, ResponseContext res) async {
+      var authOption = opt ?? AngelAuthOptions<User>();
+
       var names = <String>[];
+
       var arr = type is Iterable
           ? type.map((x) => x.toString()).toList()
           : [type.toString()];
@@ -386,11 +389,12 @@ class AngelAuth<User> {
         var hasExisting = reqContainer?.has<User>() ?? false;
         var result = hasExisting
             ? reqContainer?.make<User>()
-            : await strategy.authenticate(req, res, options);
+            : await strategy.authenticate(req, res, authOption);
 
-        if (result != null && result == true) {
+        if (result == true) {
           return result;
-        } else if (result != false && result != null) {
+        } else if (result != null && result != false) {
+          //} else if (result != null && result is Map && result.isNotEmpty) {
           var userId = await serializer(result);
 
           // Create JWT
@@ -398,13 +402,13 @@ class AngelAuth<User> {
               userId: userId, lifeSpan: _jwtLifeSpan, ipAddress: req.ip);
           var jwt = token.serialize(_hs256);
 
-          if (options != null && options.tokenCallback != null) {
+          if (authOption.tokenCallback != null) {
             var hasUser = reqContainer?.has<User>() ?? false;
             if (!hasUser) {
               reqContainer?.registerSingleton<User>(result);
             }
 
-            var r = await options.tokenCallback!(req, res, token, result);
+            var r = await authOption.tokenCallback!(req, res, token, result);
             if (r != null) return r;
             jwt = token.serialize(_hs256);
           }
@@ -416,24 +420,15 @@ class AngelAuth<User> {
           }
 
           // Options is not null
-          if (options != null) {
-            if (options.callback != null) {
-              return await options.callback!(req, res, jwt);
-            }
+          if (authOption.callback != null) {
+            return await authOption.callback!(req, res, jwt);
+          }
 
-            if (options.successRedirect?.isNotEmpty == true) {
-              await res.redirect(options.successRedirect);
-              return false;
-            } else if (options.canRespondWithJson &&
-                req.accepts('application/json')) {
-              var user = hasExisting
-                  ? result
-                  : await deserializer((await serializer(result)) as Object);
-              _onLogin.add(user);
-              return {'data': user, 'token': jwt};
-            }
-            // Options is null
-          } else if (hasExisting && req.accepts('application/json')) {
+          if (authOption.successRedirect?.isNotEmpty == true) {
+            await res.redirect(authOption.successRedirect);
+            return false;
+          } else if (authOption.canRespondWithJson &&
+              req.accepts('application/json')) {
             var user = hasExisting
                 ? result
                 : await deserializer((await serializer(result)) as Object);
@@ -449,8 +444,8 @@ class AngelAuth<User> {
               res.statusCode == 302 ||
               res.headers.containsKey('location')) {
             return false;
-          } else if (options != null && options.failureRedirect != null) {
-            await res.redirect(options.failureRedirect);
+          } else if (authOption.failureRedirect != null) {
+            await res.redirect(authOption.failureRedirect);
             return false;
           } else {
             _log.warning('Not authenticated');

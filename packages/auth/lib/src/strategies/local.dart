@@ -86,7 +86,8 @@ class LocalAuthStrategy<User> extends AuthStrategy<User> {
       //}
     }
 
-    if (verificationResult == null) {
+    if (verificationResult == null ||
+        (verificationResult is Map && verificationResult.isEmpty)) {
       if (options.failureRedirect != null &&
           options.failureRedirect!.isNotEmpty) {
         await res.redirect(options.failureRedirect, code: 401);
@@ -99,7 +100,8 @@ class LocalAuthStrategy<User> extends AuthStrategy<User> {
       }
 
       return null;
-    } else if (verificationResult != false) {
+    } else if (verificationResult != false ||
+        (verificationResult is Map && verificationResult.isNotEmpty)) {
       return verificationResult;
     } else {
       _log.info('Not authenticated');

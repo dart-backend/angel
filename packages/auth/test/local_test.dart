@@ -12,14 +12,16 @@ final AngelAuth<Map<String, String>> auth = AngelAuth<Map<String, String>>(
 var headers = <String, String>{'accept': 'application/json'};
 var localOpts = AngelAuthOptions<Map<String, String>>(
     failureRedirect: '/failure', successRedirect: '/success');
+var localOpts2 =
+    AngelAuthOptions<Map<String, String>>(canRespondWithJson: false);
+
 Map<String, String> sampleUser = {'hello': 'world'};
 
-Future<Map<String, String>?> verifier(
-    String? username, String? password) async {
+Future<Map<String, String>> verifier(String? username, String? password) async {
   if (username == 'username' && password == 'password') {
     return sampleUser;
   } else {
-    return null;
+    return {};
   }
 }
 
@@ -46,7 +48,7 @@ void main() async {
     app.get('/hello', (req, res) {
       // => 'Woo auth'
       return 'Woo auth';
-    }, middleware: [auth.authenticate('local')]);
+    }, middleware: [auth.authenticate('local', localOpts2)]);
     app.post('/login', (req, res) => 'This should not be shown',
         middleware: [auth.authenticate('local', localOpts)]);
     app.get('/success', (req, res) => 'yep', middleware: [

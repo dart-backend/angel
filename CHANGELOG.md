@@ -20,7 +20,7 @@
 * Migrated angel_validate to 4.0.0 (7/7 tests passed)
 * Migrated json_god to 4.0.0 (13/13 tests passed)
 * Migrated angel_client to 4.0.0 (13/13 tests passed)
-* Migrated angel_websocket to 4.0.0 (2/3 tests passed)
+* Migrated angel_websocket to 4.0.0 (3/3 tests passed)
 * Migrated angel_test to 4.0.0 (1/1 test passed)
 * Added symbol_table and migrated to 2.0.0 (16/16 tests passed)
 * Migrated jael to 4.0.0 (20/20 tests passed)

@@ -1,10 +1,15 @@
 # Change Log
 
+## 4.0.5
+
+* Added support for verifier function to return an empty Map instead of null
+* Fixed `canRespondWithJson` option to return data in the reponse body when set to true
+
 ## 4.0.4
 
 * Changed `serializer` and `deserializer` parameters to be required
 * Fixed HTTP basic authentication
-* Passed all 51 unit tests
+* All 31 unit tests passed
 
 ## 4.0.3
 
