@@ -140,7 +140,7 @@ class HotReloader {
 
   void _logWarning(String msg) {
     if (_server?.app.logger != null) {
-      _server!.app.logger!.warning(msg);
+      _server?.app.logger?.warning(msg);
     } else {
       print(yellow.wrap('WARNING: $msg'));
     }
@@ -148,7 +148,7 @@ class HotReloader {
 
   void _logInfo(String msg) {
     if (_server?.app.logger != null) {
-      _server!.app.logger!.info(msg);
+      _server?.app.logger?.info(msg);
     } else {
       print(lightGray.wrap(msg));
     }
@@ -183,10 +183,14 @@ class HotReloader {
       }
       _client = await vm.vmServiceConnectUri(uri.toString());
       _vmachine ??= await _client.getVM();
-      _mainIsolate ??= _vmachine!.isolates!.first;
+      _mainIsolate ??= _vmachine?.isolates?.first;
 
-      for (var isolate in _vmachine!.isolates!) {
-        await _client.setExceptionPauseMode(isolate.id!, 'None');
+      if (_vmachine != null) {
+        for (var isolate in _vmachine!.isolates ?? <vm.IsolateRef>[]) {
+          if (isolate.id != null) {
+            await _client.setExceptionPauseMode(isolate.id!, 'None');
+          }
+        }
       }
 
       await _listenToFilesystem();
@@ -206,16 +210,25 @@ class HotReloader {
     if (enableHotkeys) {
       var serverUri =
           Uri(scheme: 'http', host: server.address.address, port: server.port);
-      var observatoryUri =
-          await dev.Service.getInfo().then((i) => i.serverUri!);
+
+      var observatoryUri;
+      if (isHot) {
+        observatoryUri = await dev.Service.getInfo().then((i) => i.serverUri!);
+      }
 
       print(styleBold.wrap(
           '\n🔥  To hot reload changes while running, press "r". To hot restart (and rebuild state), press "R".'));
-      stdout.write('Your Angel server is listening at: ');
+      stdout.write('Your server is listening at: ');
       print(wrapWith('$serverUri', [cyan, styleUnderlined]));
-      stdout.write(
-          'An Observatory debugger and profiler on ${Platform.operatingSystem} is available at: ');
-      print(wrapWith('$observatoryUri', [cyan, styleUnderlined]));
+
+      if (isHot) {
+        stdout.write(
+            'An Observatory debugger and profiler on ${Platform.operatingSystem} is available at: ');
+        print(wrapWith('$observatoryUri', [cyan, styleUnderlined]));
+      } else {
+        stdout.write(
+            'The observatory debugger and profiler are not available.\n');
+      }
       print(
           'For a more detailed help message, press "h". To quit, press "q".\n');
 

@@ -1,6 +1,6 @@
 name: angel3_hot
 description: Supports hot reloading/hot code push of Angel servers on file changes.
-version: 4.1.0
+version: 4.1.1
 homepage: https://github.com/dukefirehawk/angel/tree/angel3/packages/hot
 environment:
   sdk: '>=2.12.0 <3.0.0'
