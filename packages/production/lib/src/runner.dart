@@ -26,7 +26,26 @@ class Runner {
   Runner(this.name, this.configureServer,
       {this.reflector = const EmptyReflector()});
 
+  static const String asciiArt2 = '''
+
+    ___    _   ________________   _____
+   /   |  / | / / ____/ ____/ /  |__  /
+  / /| | /  |/ / / __/ __/ / /    /_ < 
+ / ___ |/ /|  / /_/ / /___/ /______/ / 
+/_/  |_/_/ |_/\\____/_____/_____/____/ 
+                                                                                                                       
+''';
+
   static const String asciiArt = '''
+
+     _    _   _  ____ _____ _     _____ 
+    / \\  | \\ | |/ ___| ____| |   |___ / 
+   / _ \\ |  \\| | |  _|  _| | |     |_ \\ 
+  / ___ \\| |\\  | |_| | |___| |___ ___) |
+ /_/   \\_\\_| \\_|\\____|_____|_____|____/                                                                                 
+''';
+
+  static const String asciiArtOld = '''
 ____________   ________________________ 
 ___    |__  | / /_  ____/__  ____/__  / 
 __  /| |_   |/ /_  / __ __  __/  __  /  
@@ -139,7 +158,7 @@ _  ___ |  /|  / / /_/ / _  /___  _  /___
 
   /// Starts a number of isolates, running identical instances of an Angel application.
   Future run(List<String> args) async {
-    late pub_sub.Server server;
+    pub_sub.Server? server;
 
     try {
       var argResults = RunnerOptions.argParser.parse(args);
@@ -153,11 +172,11 @@ _  ___ |  /|  / / /_/ / _  /___  _  /___
         }
       }
 
-      print(darkGray.wrap(asciiArt.trim() +
+      print(darkGray.wrap(asciiArt +
           '\n\n' +
           'A batteries-included, full-featured, full-stack framework in Dart.' +
           '\n\n' +
-          'https://angel-dart.github.io\n'));
+          'https://angel3-framework.web.app\n'));
 
       if (argResults['help'] == true) {
         stdout..writeln('Options:')..writeln(RunnerOptions.argParser.usage);
@@ -191,7 +210,7 @@ _  ___ |  /|  / / /_/ / _  /___  _  /___
         ..writeln(red.wrap(st.toString()));
       exitCode = 1;
     } finally {
-      await server.close();
+      await server?.close();
     }
   }
 

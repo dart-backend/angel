@@ -1,24 +1,24 @@
-# angel3_production
-[![version](https://img.shields.io/badge/pub-v3.0.1-brightgreen)](https://pub.dartlang.org/packages/angel3_production)
+# Angel3 Production Runner
+
+[![version](https://img.shields.io/badge/pub-v3.0.2-brightgreen)](https://pub.dartlang.org/packages/angel3_production)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 [![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
 
 [![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/production/LICENSE)
 
-Helpers for concurrency, message-passing, rotating loggers, and other production functionality in Angel.
+Helpers for concurrency, message-passing, rotating loggers, and other production functionality in Angel3 framework.
 
-![Screenshot](screenshot.png)
+![Screenshot](angel3-screenshot.png)
 
-This will become the de-facto way to run Angel applications in deployed environments, as it
-takes care of inter-isolate communication, respawning dead processes, and other housekeeping for you automatically.
+This will become the de-facto way to run Angel3 applications in deployed environments, as it takes care of inter-isolate communication, respawning dead processes, and other housekeeping for you automatically.
 
 Most users will want to use the `Runner` class.
 
 ## `Runner`
+
 `Runner` is a utility, powered by `package:args`, that is intended to be the entry point of your application.
 
-Instantiate it as follows, and your file will become a command-line executable that spawns multiple instances of your
-application:
+Instantiate it as follows, and your file will become a command-line executable that spawns multiple instances of your application:
 
 ```dart
 import 'dart:async';
@@ -39,21 +39,18 @@ Future configureServer(Angel app) async {
 }
 ```
 
-`Runner` will automatically re-spawn crashed instances, unless `--no-respawn` is passed. This can prevent
-your server from entirely going down at the first error, and adds a layer of fault tolerance to your
-infrastructure.
+`Runner` will automatically re-spawn crashed instances, unless `--no-respawn` is passed. This can prevent your server from entirely going down at the first error, and adds a layer of fault tolerance to your infrastructure.
 
-When combined with `systemd`, deploying Angel applications on Linux can be very simple.
+When combined with `systemd`, deploying Angel3 applications on Linux can be very simple.
 
 ## Message Passing
+
 The `Runner` class uses [`package:angel3_pub_sub`](https://github.com/dukefirehawk/angel/tree/angel3/packages/pub_sub) to coordinate
 message passing between isolates.
 
-When one isolate sends a message, all other isolates will
-receive the same message, except for the isolate that sent it.
+When one isolate sends a message, all other isolates will receive the same message, except for the isolate that sent it.
 
-It is injected into your application's `Container` as
-`pub_sub.Client`, so you can use it as follows:
+It is injected into your application's `Container` as `pub_sub.Client`, so you can use it as follows:
 
 ```dart
 // Use the injected `pub_sub.Client` to send messages.
@@ -71,9 +68,8 @@ onGreetingChanged
 ```
 
 ## Run-time Metadata
-At run-time, you may want to know information about the currently-running instance,
-for example, which number instance. For this, the `InstanceInfo` class is injected
-into each instance:
+
+At run-time, you may want to know information about the currently-running instance, for example, which number instance. For this, the `InstanceInfo` class is injected into each instance:
 
 ```dart
 var instanceInfo = app.container.make<InstanceInfo>();
@@ -81,19 +77,20 @@ print('This is instance #${instanceInfo.id}');
 ```
 
 ## Command-line Options
+
 The `Runner` class supplies options like the following:
 
-```
-Prod-MacBook-Air:production appuser$ dart example/main.dart --help
-____________   ________________________ 
-___    |__  | / /_  ____/__  ____/__  / 
-__  /| |_   |/ /_  / __ __  __/  __  /  
-_  ___ |  /|  / / /_/ / _  /___  _  /___
-/_/  |_/_/ |_/  ____/  /_____/  /_____/
+```bash
+appuser$ dart example/main.dart --help
+     _    _   _  ____ _____ _     _____ 
+    / \  | \ | |/ ___| ____| |   |___ / 
+   / _ \ |  \| | |  _|  _| | |     |_ \ 
+  / ___ \| |\  | |_| | |___| |___ ___) |
+ /_/   \_\_| \_|\____|_____|_____|____/                                                                                 
 
 A batteries-included, full-featured, full-stack framework in Dart.
 
-https://angel-dart.github.io
+https://angel3-framework.web.app
 
 Options:
 -h, --help                    Print this help information.
