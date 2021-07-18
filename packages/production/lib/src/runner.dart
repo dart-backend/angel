@@ -55,7 +55,7 @@ _  ___ |  /|  / / /_/ / _  /___  _  /___
 ''';
 
   static void handleLogRecord(LogRecord? record, RunnerOptions options) {
-    if (options.quiet!) return;
+    if (options.quiet) return;
     var code = chooseLogColor(record!.level);
 
     if (record.error == null) print(code.wrap(record.toString()));
@@ -137,7 +137,7 @@ _  ___ |  /|  / / /_/ / _  /___  _  /___
     });
 
     onExit.listen((_) {
-      if (options.respawn!) {
+      if (options.respawn) {
         handleLogRecord(
             LogRecord(
                 Level.WARNING,
@@ -164,7 +164,7 @@ _  ___ |  /|  / / /_/ / _  /___  _  /___
       var argResults = RunnerOptions.argParser.parse(args);
       var options = RunnerOptions.fromArgResults(argResults);
 
-      if (options.ssl! || options.http2!) {
+      if (options.ssl || options.http2) {
         if (options.certificateFile == null) {
           throw ArgParserException('Missing --certificate-file option.');
         } else if (options.keyFile == null) {
@@ -243,28 +243,33 @@ _  ___ |  /|  / / /_/ / _  /___  _  /___
       late SecurityContext securityContext;
       Uri serverUrl;
 
-      if (args.options.ssl! || args.options.http2!) {
+      if (args.options.ssl || args.options.http2) {
         securityContext = SecurityContext();
-        securityContext.useCertificateChain(args.options.certificateFile!,
-            password: args.options.certificatePassword);
-        securityContext.usePrivateKey(args.options.keyFile!,
-            password: args.options.keyPassword);
+        if (args.options.certificateFile != null) {
+          securityContext.useCertificateChain(args.options.certificateFile!,
+              password: args.options.certificatePassword);
+        }
+
+        if (args.options.keyFile != null) {
+          securityContext.usePrivateKey(args.options.keyFile!,
+              password: args.options.keyPassword);
+        }
       }
 
-      if (args.options.ssl!) {
+      if (args.options.ssl) {
         http = AngelHttp.custom(app, startSharedSecure(securityContext),
-            useZone: args.options.useZone!);
+            useZone: args.options.useZone);
       } else {
         http =
-            AngelHttp.custom(app, startShared, useZone: args.options.useZone!);
+            AngelHttp.custom(app, startShared, useZone: args.options.useZone);
       }
 
       Driver driver;
 
-      if (args.options.http2!) {
+      if (args.options.http2) {
         securityContext.setAlpnProtocols(['h2'], true);
         var http2 = AngelHttp2.custom(app, securityContext, startSharedHttp2,
-            useZone: args.options.useZone!);
+            useZone: args.options.useZone);
         http2.onHttp1.listen(http.handleRequest);
         driver = http2;
       } else {
@@ -273,7 +278,7 @@ _  ___ |  /|  / / /_/ / _  /___  _  /___
 
       await driver.startServer(args.options.hostname, args.options.port);
       serverUrl = driver.uri;
-      if (args.options.ssl! || args.options.http2!) {
+      if (args.options.ssl || args.options.http2) {
         serverUrl = serverUrl.replace(scheme: 'https');
       }
       print('Instance #${argsWithId.id} listening at $serverUrl');

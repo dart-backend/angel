@@ -36,7 +36,7 @@ class RunnerOptions {
       certificatePassword,
       keyPassword;
   final int concurrency, port;
-  final bool? useZone, respawn, quiet, ssl, http2;
+  final bool useZone, respawn, quiet, ssl, http2;
 
   RunnerOptions(
       {this.hostname = '127.0.0.1',
@@ -57,17 +57,17 @@ class RunnerOptions {
       hostname: argResults['address'] as String?,
       port: int.parse(argResults['port'] as String),
       concurrency: int.parse(argResults['concurrency'] as String),
-      useZone: argResults['use-zone'] as bool?,
-      respawn: argResults['respawn'] as bool?,
-      quiet: argResults['quiet'] as bool?,
+      useZone: argResults['use-zone'] as bool? ?? false,
+      respawn: argResults['respawn'] as bool? ?? true,
+      quiet: argResults['quiet'] as bool? ?? false,
       certificateFile: argResults.wasParsed('certificate-file')
           ? argResults['certificate-file'] as String?
           : null,
       keyFile: argResults.wasParsed('key-file')
           ? argResults['key-file'] as String?
           : null,
-      ssl: argResults['ssl'] as bool?,
-      http2: argResults['http2'] as bool?,
+      ssl: argResults['ssl'] as bool? ?? false,
+      http2: argResults['http2'] as bool? ?? false,
       certificatePassword: argResults.wasParsed('certificate-password')
           ? argResults['certificate-password'] as String?
           : null,
