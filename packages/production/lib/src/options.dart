@@ -1,7 +1,9 @@
 import 'dart:io';
 import 'package:args/args.dart';
 
+/// Options for executing Runner.
 class RunnerOptions {
+  /// Command line arguements
   static final ArgParser argParser = ArgParser()
     ..addFlag('help',
         abbr: 'h', help: 'Print this help information.', negatable: false)

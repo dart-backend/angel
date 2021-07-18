@@ -54,9 +54,10 @@ _  ___ |  /|  / / /_/ / _  /___  _  /___
                                         
 ''';
 
+  /// LogRecord handler
   static void handleLogRecord(LogRecord? record, RunnerOptions options) {
-    if (options.quiet) return;
-    var code = chooseLogColor(record!.level);
+    if (options.quiet || record == null) return;
+    var code = chooseLogColor(record.level);
 
     if (record.error == null) print(code.wrap(record.toString()));
 
@@ -214,6 +215,7 @@ _  ___ |  /|  / / /_/ / _  /___  _  /___
     }
   }
 
+  /// Run with main isolate
   static void isolateMain(_RunnerArgsWithId argsWithId) {
     var args = argsWithId.args;
     hierarchicalLoggingEnabled = true;
