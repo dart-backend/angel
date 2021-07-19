@@ -3,22 +3,25 @@ import 'package:angel3_orm/angel3_orm.dart';
 class MigrationColumn extends Column {
   final List<MigrationColumnReference> _references = [];
   late bool _nullable;
-  IndexType? _index;
+  late IndexType _index;
   dynamic _defaultValue;
 
   @override
   bool get isNullable => _nullable;
 
   @override
-  IndexType get indexType => _index!;
+  IndexType get indexType => _index;
 
   dynamic get defaultValue => _defaultValue;
 
   List<MigrationColumnReference> get externalReferences =>
       List<MigrationColumnReference>.unmodifiable(_references);
 
-  MigrationColumn(ColumnType? type,
-      {bool isNullable = true, int? length, IndexType? indexType, defaultValue})
+  MigrationColumn(ColumnType type,
+      {bool isNullable = true,
+      int length = 256,
+      IndexType indexType = IndexType.standardIndex,
+      defaultValue})
       : super(type: type, length: length) {
     _nullable = isNullable;
     _index = indexType;
