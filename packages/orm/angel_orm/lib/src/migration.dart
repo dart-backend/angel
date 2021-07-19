@@ -18,10 +18,10 @@ class Column {
   final bool isNullable;
 
   /// Specifies the length of a `VARCHAR`.
-  final int? length;
+  final int length;
 
   /// Explicitly defines a SQL type for this column.
-  final ColumnType? type;
+  final ColumnType type;
 
   /// Specifies what kind of index this column is, if any.
   final IndexType indexType;
@@ -31,8 +31,8 @@ class Column {
 
   const Column(
       {this.isNullable = true,
-      this.length,
-      this.type,
+      this.length = 256,
+      this.type = ColumnType.varChar,
       this.indexType = IndexType.none,
       this.expression});
 
@@ -41,7 +41,7 @@ class Column {
 }
 
 class PrimaryKey extends Column {
-  const PrimaryKey({ColumnType? columnType})
+  const PrimaryKey({ColumnType columnType = ColumnType.varChar})
       : super(type: columnType, indexType: IndexType.primaryKey);
 }
 
