@@ -5,7 +5,7 @@ import 'package:charcode/ascii.dart';
 
 abstract class PostgresGenerator {
   static String columnType(MigrationColumn column) {
-    var str = column.type!.name;
+    var str = column.type.name;
     if (column.length != null) {
       return '$str(${column.length})';
     } else {

@@ -6,7 +6,7 @@
 
 [![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/orm/angel_migration/LICENSE)
 
-A database migration framework built for Angel3 ORM
+A database migration framework built for Angel3 ORM.
 
 Supported database:
 
