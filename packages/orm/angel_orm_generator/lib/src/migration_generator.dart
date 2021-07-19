@@ -161,13 +161,13 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
                     if (col.length == null) {
                       methodName = 'declare';
                       provColumn = columnTypeType.newInstance([
-                        literal(col.type!.name),
+                        literal(col.type.name),
                       ]);
                     } else {
                       methodName = 'declareColumn';
                       provColumn = colType.newInstance([], {
                         'type': columnTypeType.newInstance([
-                          literal(col.type!.name),
+                          literal(col.type.name),
                         ]),
                         'length': literal(col.length),
                       });
@@ -252,7 +252,7 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
                 var columnTypeType = refer('ColumnType');
                 var key = relationship.localKey;
                 var keyType = relationship
-                    .foreign!.columns[relationship.foreignKey!]!.type!.name;
+                    .foreign!.columns[relationship.foreignKey!]!.type.name;
 
                 var field = table.property('declare').call([
                   literal(key),

@@ -120,14 +120,12 @@ Future<OrmBuildContext?> buildOrmContext(
       ),
     );
 
-    if (column.type == null) {
-      column = Column(
-        isNullable: column.isNullable,
-        length: column.length,
-        indexType: column.indexType,
-        type: inferColumnType(field.type),
-      );
-    }
+    column = Column(
+      isNullable: column.isNullable,
+      length: column.length,
+      indexType: column.indexType,
+      type: inferColumnType(field.type),
+    );
 
     // Try to find a relationship
     var el = _findElement(field);
@@ -286,9 +284,11 @@ Future<OrmBuildContext?> buildOrmContext(
 
       ctx.relations[field.name] = relation;
     } else {
+      /*
       if (column.type == null) {
         throw 'Cannot infer SQL column type for field "${ctx.buildContext.originalClassName}.${field.name}" with type "${field.type.getDisplayString(withNullability: true)}".';
       }
+      */
 
       // Expressions...
       column = Column(
@@ -311,7 +311,7 @@ Future<OrmBuildContext?> buildOrmContext(
   return ctx;
 }
 
-ColumnType? inferColumnType(DartType type) {
+ColumnType inferColumnType(DartType type) {
   if (const TypeChecker.fromRuntime(String).isAssignableFromType(type)) {
     return ColumnType.varChar;
   }
@@ -336,12 +336,16 @@ ColumnType? inferColumnType(DartType type) {
   if (const TypeChecker.fromRuntime(List).isAssignableFromType(type)) {
     return ColumnType.jsonb;
   }
-  if (type is InterfaceType && type.element.isEnum) return ColumnType.int;
-  return null;
+  if (type is InterfaceType && type.element.isEnum) {
+    return ColumnType.int;
+  }
+
+  // Default to varChar
+  return ColumnType.varChar;
 }
 
 Column reviveColumn(ConstantReader cr) {
-  ColumnType? columnType;
+  ColumnType columnType;
 
   var indexTypeObj = cr.peek('indexType')?.objectValue;
   indexTypeObj ??= cr.revive().namedArguments['indexType'];
@@ -358,11 +362,14 @@ Column reviveColumn(ConstantReader cr) {
 
   if (columnObj != null) {
     columnType = _ColumnType(columnObj);
+  } else {
+    // Default to varchar
+    columnType = ColumnType.varChar;
   }
 
   return Column(
     isNullable: cr.peek('isNullable')?.boolValue ?? false,
-    length: cr.peek('length')?.intValue,
+    length: cr.peek('length')?.intValue ?? 256,
     type: columnType,
     indexType: indexType,
   );

@@ -1,4 +1,5 @@
-# angel3_orm_generator
+# Angel3 ORM Generator
+
 [![version](https://img.shields.io/badge/pub-v4.0.0-brightgreen)](https://pub.dartlang.org/packages/angel3_orm_generator)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 [![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
@@ -7,8 +8,8 @@
 
 Source code generators for Angel's ORM.
 This package can generate:
+
 * A strongly-typed ORM
 * SQL migration scripts
 
-For documentation about the ORM, head to the main project repo:
-https://github.com/angel-dart/orm
+For documentation about the ORM, see [Developer Guide](https://angel3-docs.dukefirehawk.com/guides/orm)
