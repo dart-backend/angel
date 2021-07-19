@@ -1,6 +1,6 @@
-# Paginate
+# Angel3 Paginate
 
-[![version](https://img.shields.io/badge/pub-v3.0.0-brightgreen)](https://pub.dartlang.org/packages/angel3_paginate)
+[![version](https://img.shields.io/badge/pub-v3.0.1-brightgreen)](https://pub.dartlang.org/packages/angel3_paginate)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 [![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
 
@@ -19,9 +19,7 @@ dependencies:
 
 ## Usage
 
-This library exports a `Paginator<T>`, which can be used to efficiently produce
-instances of `PaginationResult<T>`. Pagination results, when serialized to JSON, look like
-this:
+This library exports a `Paginator<T>`, which can be used to efficiently produce instances of `PaginationResult<T>`. Pagination results, when serialized to JSON, look like this:
 
 ```json
 {
@@ -36,8 +34,7 @@ this:
 }
 ```
 
-Results can be parsed from Maps using the `PaginationResult<T>.fromMap` constructor, and
-serialized via their `toJson()` method.
+Results can be parsed from Maps using the `PaginationResult<T>.fromMap` constructor, and serialized via their `toJson()` method.
 
 To create a paginator:
 
@@ -60,6 +57,4 @@ void main() {
 
 The entire Paginator API is documented, so check out the DartDocs.
 
-Paginators by default cache paginations, to improve performance as you shift through pages.
-This can be especially helpful in a client-side application where your UX involves a fast
-response time, i.e. a search page.
+Paginators by default cache paginations, to improve performance as you shift through pages. This can be especially helpful in a client-side application where your UX involves a fast response time, i.e. a search page.
