@@ -6,11 +6,7 @@ import 'package:charcode/ascii.dart';
 abstract class PostgresGenerator {
   static String columnType(MigrationColumn column) {
     var str = column.type.name;
-    if (column.length != null) {
-      return '$str(${column.length})';
-    } else {
-      return str;
-    }
+    return '$str(${column.length})';
   }
 
   static String compileColumn(MigrationColumn column) {
@@ -147,7 +143,7 @@ class PostgresAlterTable extends Table implements MutableTable {
   }
 
   @override
-  void changeColumnType(String name, ColumnType type, {int? length}) {
+  void changeColumnType(String name, ColumnType type, {int length = 256}) {
     _stack.add('ALTER COLUMN "$name" TYPE ' +
         PostgresGenerator.columnType(MigrationColumn(type, length: length)));
   }

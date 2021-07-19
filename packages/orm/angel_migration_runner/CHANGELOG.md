@@ -3,6 +3,9 @@
 ## 4.0.0-beta.3
 
 * Updated README
+* Fixed NNBD issue
+* Default database column to `varchar` type
+* Default the `varchar` column size to 256
 
 ## 4.0.0-beta.2
 
