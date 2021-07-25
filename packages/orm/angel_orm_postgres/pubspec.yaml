@@ -1,12 +1,12 @@
 name: angel3_orm_postgres
-version: 3.0.0-beta.2
+version: 3.0.0
 description: PostgreSQL support for Angel3 ORM. Includes functionality for querying and transactions.
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dukefirehawk/angel/tree/angel3/packages/orm/angel_orm_postgres
 environment:
   sdk: '>=2.12.0 <3.0.0'
 dependencies:
-  angel3_orm: ^4.0.0-beta.1
+  angel3_orm: ^4.0.0
   logging: ^1.0.1
   pool: ^1.5.0
   postgres: ^2.3.2
@@ -19,11 +19,4 @@ dev_dependencies:
       url: https://github.com/dukefirehawk/angel.git
       ref: angel3
       path: packages/orm/angel_orm_test
-dependency_overrides:
-  angel3_orm_test:
-    path: ../angel_orm_test
-  angel3_orm:
-    path: ../angel_orm
-  angel3_migration:
-    path: ../angel_migration
 
