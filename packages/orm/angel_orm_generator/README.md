@@ -6,8 +6,7 @@
 
 [![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/orm/angel3_orm_generator/LICENSE)
 
-Source code generators for Angel's ORM.
-This package can generate:
+Source code generators for Angel3 ORM. This package can generate:
 
 * A strongly-typed ORM
 * SQL migration scripts

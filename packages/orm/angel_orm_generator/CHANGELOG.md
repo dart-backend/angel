@@ -1,5 +1,10 @@
 # Change Log
 
+## 4.0.0-beta.4
+
+* Fixed `build.yaml`
+* Updated generated code to use `angel3` packages
+
 ## 4.0.0-beta.3
 
 * Updated README

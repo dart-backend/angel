@@ -14,7 +14,7 @@ Builder migrationBuilder(BuilderOptions options) {
   return SharedPartBuilder([
     MigrationGenerator(
         autoSnakeCaseNames: options.config['auto_snake_case_names'] != false)
-  ], 'angel_migration');
+  ], 'angel3_migration');
 }
 
 class MigrationGenerator extends GeneratorForAnnotation<Orm> {

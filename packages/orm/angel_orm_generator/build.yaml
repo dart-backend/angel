@@ -1,6 +1,6 @@
 builders:
-  angel_orm:
-    import: "package:angel_orm_generator/angel_orm_generator.dart"
+  angel3_orm:
+    import: "package:angel3_orm_generator/angel3_orm_generator.dart"
     builder_factories:
       - migrationBuilder
       - ormBuilder
@@ -8,12 +8,12 @@ builders:
     build_to: cache
     build_extensions:
       .dart:
-        - ".angel_migration.g.part"
-        - ".angel_orm.g.part"
+        - ".angel3_migration.g.part"
+        - ".angel3_orm.g.part"
     required_inputs:
-      - angel_serialize.g.part
-      - angel_serialize_serializer.g.part
+      - angel3_serialize.g.part
+      - angel3_serialize_serializer.g.part
     applies_builders:
-      - angel_serialize_generator|angel_serialize
+      - angel3_serialize_generator|angel3_serialize
       - source_gen|combining_builder
       - source_gen|part_cleanup"

@@ -20,7 +20,7 @@ Builder ormBuilder(BuilderOptions options) {
   return SharedPartBuilder([
     OrmGenerator(
         autoSnakeCaseNames: options.config['auto_snake_case_names'] != false)
-  ], 'angel_orm');
+  ], 'angel3_orm');
 }
 
 TypeReference futureOf(String type) {
