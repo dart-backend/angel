@@ -1,5 +1,5 @@
 name: angel3_orm_generator
-version: 4.0.0-beta.5
+version: 4.0.0
 description: Code generators for Angel3 ORM. Generates query builder classes.
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dukefirehawk/angel/tree/angel3/packages/orm/angel_orm_generator
@@ -9,7 +9,7 @@ dependencies:
   analyzer: ^1.5.0
   angel3_model: ^3.0.0
   angel3_serialize: ^4.0.0
-  angel3_orm: ^4.0.0-beta.1
+  angel3_orm: ^4.0.0
   angel3_serialize_generator: ^4.0.0
   inflection3: ^0.5.3+1
   build: ^2.0.1
@@ -22,12 +22,12 @@ dependencies:
   source_gen: ^1.0.0
   collection: ^1.15.0
   logging: ^1.0.0
+  optional: ^6.0.0
 dev_dependencies:
   angel3_framework: ^4.0.0
-  angel3_migration: ^4.0.0-beta.1
+  angel3_migration: ^4.0.0
   #angel_test: ^1.0.0
   build_runner: ^2.0.1
   pedantic: ^1.11.0
   postgres: ^2.3.2
   test: ^1.17.3
-  optional: ^6.0.0

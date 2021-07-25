@@ -1,5 +1,9 @@
 # Change Log
 
+## 4.0.0
+
+* Fixed `BuildContext` cast error
+
 ## 4.0.0-beta.5
 
 * Fixed `ColumnType` incorrect constructor

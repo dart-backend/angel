@@ -12,3 +12,11 @@ Source code generators for Angel3 ORM. This package can generate:
 * SQL migration scripts
 
 For documentation about the ORM, see [Developer Guide](https://angel3-docs.dukefirehawk.com/guides/orm)
+
+## Usage
+
+Run the following command to generate the required `.g.dart` files for Angel3 ORM.
+
+```bash
+    dart pub run build_runner build
+```
