@@ -1,5 +1,9 @@
 # Change Log
 
+## 4.0.0
+
+* Fixed NNBD
+
 ## 4.0.0-beta.3
 
 * Updated README
