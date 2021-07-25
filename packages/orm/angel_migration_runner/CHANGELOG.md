@@ -1,5 +1,9 @@
 # Change Log
 
+## 4.0.0
+
+* Fixed NNBD issues
+
 ## 4.0.0-beta.4
 
 * Logged exception of the db query execution to console
