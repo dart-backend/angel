@@ -402,7 +402,10 @@ class _ColumnType implements ColumnType {
   @override
   final String name;
 
-  _ColumnType(this.name);
+  @override
+  final bool hasSize;
+
+  _ColumnType(this.name, [this.hasSize = false]);
 }
 
 class RelationFieldImpl extends ShimFieldImpl {

@@ -1,5 +1,9 @@
 # Change Log
 
+## 4.0.0-beta.5
+
+* Fixed `ColumnType` incorrect constructor
+
 ## 4.0.0-beta.4
 
 * Fixed `build.yaml`
