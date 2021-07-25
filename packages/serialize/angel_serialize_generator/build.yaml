@@ -1,6 +1,6 @@
 builders:
   angel_serialize:
-    import: "package:angel_serialize_generator/angel_serialize_generator.dart"
+    import: "package:angel3_serialize_generator/angel3_serialize_generator.dart"
     builder_factories:
       - jsonModelBuilder
       - serializerBuilder
@@ -8,12 +8,12 @@ builders:
     build_to: cache
     build_extensions:
       .dart:
-        - ".angel_serialize.g.part"
-        - ".angel_serialize_serializer.g.part"
+        - ".angel3_serialize.g.part"
+        - ".angel3_serialize_serializer.g.part"
     applies_builders: ["source_gen|combining_builder", "source_gen|part_cleanup"]
-    runs_before: ["angel_orm_generator|angel_orm"]
+    runs_before: ["angel3_orm_generator|angel3_orm"]
   typescript:
-    import: "package:angel_serialize_generator/angel_serialize_generator.dart"
+    import: "package:angel3_serialize_generator/angel3_serialize_generator.dart"
     builder_factories:
       - typescriptDefinitionBuilder
     auto_apply: root_package
