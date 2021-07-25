@@ -1,20 +1,30 @@
 name: angel3_orm_test
-version: 3.0.0-beta.1
-description: Common tests for Angel ORM backends.
-homepage: https://github.com/dukefirehawk/angel/tree/angel3/packages/orm/angel_orm_test
+version: 3.0.0
+description: Common tests for Angel3 ORM. Reference implmentation of the generated ORM files.
+homepage: https://angel3-framework.web.app/
+repository: https://github.com/dukefirehawk/angel/tree/angel3/packages/orm/angel_orm_test
 environment:
   sdk: '>=2.12.0 <3.0.0'
 dependencies:
-  angel3_migration: ^4.0.0-beta.1
+  angel3_migration: ^4.0.0
   angel3_model: ^3.0.0
-  angel3_orm: ^4.0.0-beta.1
+  angel3_orm: ^4.0.0
   angel3_serialize: ^4.0.0
   io: ^1.0.0
   test: ^1.17.4
   collection: ^1.15.0
-  optional: ^6.0.0-nullsafety.2
+  optional: ^6.0.0
 dev_dependencies:
-  angel3_orm_generator: ^4.0.0-beta.1
+  angel3_orm_generator: ^4.0.0
   angel3_framework: ^4.0.0
   build_runner: ^2.0.1
   pedantic: ^1.11.0
+#dependency_overrides:
+#  angel3_migration_runner:
+#    path: ../angel_migration_runner
+#  angel3_orm:
+#    path: ../angel_orm
+#  angel3_migration:
+#    path: ..//angel_migration
+#  angel3_orm_generator:
+#    path: ../angel_orm_generator
