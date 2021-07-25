@@ -6,7 +6,7 @@ import 'models/custom_expr.dart';
 void customExprTests(FutureOr<QueryExecutor> Function() createExecutor,
     {FutureOr<void> Function(QueryExecutor)? close}) {
   late QueryExecutor executor;
-  Numbers? numbersModel;
+  late Numbers numbersModel;
 
   close ??= (_) => null;
 
@@ -27,16 +27,16 @@ void customExprTests(FutureOr<QueryExecutor> Function() createExecutor,
   tearDown(() => close!(executor));
 
   test('fetches correct result', () async {
-    expect(numbersModel?.two, 2);
+    expect(numbersModel.two, 2);
   });
 
   test('in relation', () async {
     var abcQuery = AlphabetQuery();
     abcQuery.values
       ..value = 'abc'
-      ..numbersId = numbersModel!.idAsInt
-      ..createdAt = numbersModel!.createdAt
-      ..updatedAt = numbersModel!.updatedAt;
+      ..numbersId = numbersModel.idAsInt
+      ..createdAt = numbersModel.createdAt
+      ..updatedAt = numbersModel.updatedAt;
     var abcOpt = await (abcQuery.insert(executor));
     expect(abcOpt.isPresent, true);
     abcOpt.ifPresent((abc) {
