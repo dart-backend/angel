@@ -21,6 +21,7 @@ dependencies:
   recase: ^4.0.0
   source_gen: ^1.0.0
   collection: ^1.15.0
+  logging: ^1.0.0
 dev_dependencies:
   angel3_framework: ^4.0.0
   angel3_migration: ^4.0.0-beta.1

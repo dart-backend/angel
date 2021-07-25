@@ -1,5 +1,9 @@
 # Change Log
 
+## 4.0.0
+
+* Updated `Optional` package
+
 ## 4.0.0-beta.4
 
 * Added `hasSize` to `ColumnType`

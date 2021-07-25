@@ -12,10 +12,13 @@ import 'package:angel3_serialize_generator/context.dart';
 import 'package:build/build.dart';
 import 'package:collection/collection.dart' show IterableExtension;
 import 'package:inflection3/inflection3.dart';
+import 'package:logging/logging.dart';
 import 'package:recase/recase.dart';
 import 'package:source_gen/source_gen.dart';
 
 import 'readers.dart';
+
+var _log = Logger('orm_build_context');
 
 bool isHasRelation(Relationship r) =>
     r.type == RelationshipType.hasOne || r.type == RelationshipType.hasMany;
@@ -74,19 +77,26 @@ Future<OrmBuildContext?> buildOrmContext(
           const TypeChecker.fromRuntime(GeneratedSerializable)
               .firstAnnotationOf(clazz)) !=
       null) {
-    clazz = clazz.supertype!.element;
+    if (clazz.supertype != null) {
+      clazz = clazz.supertype!.element;
+    }
   }
 
-  var id = clazz.location!.components.join('-');
+  var id = clazz.location?.components.join('-') ?? '';
   if (cache.containsKey(id)) {
     return cache[id];
   }
-  var buildCtx = await (buildContext(
+  var buildCtx = await buildContext(
       clazz, annotation, buildStep, resolver, autoSnakeCaseNames!,
-      heedExclude: heedExclude) as FutureOr<BuildContext>);
+      heedExclude: heedExclude);
   var ormAnnotation = reviveORMAnnotation(annotation);
   // print(
   //     'tableName (${annotation.objectValue.type.name}) => ${ormAnnotation.tableName} from ${clazz.name} (${annotation.revive().namedArguments})');
+  if (buildCtx == null) {
+    _log.severe('BuildContext is null');
+
+    return null;
+  }
   var ctx = OrmBuildContext(
       buildCtx,
       ormAnnotation,
