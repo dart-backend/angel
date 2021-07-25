@@ -1,5 +1,11 @@
 # Change Log
 
+## 4.0.0-beta.4
+
+* Logged exception of the db query execution to console
+* Added transaction to data insertion
+* Fixed SQL column generator to remove size from none character based data type
+
 ## 4.0.0-beta.3
 
 * Updated README

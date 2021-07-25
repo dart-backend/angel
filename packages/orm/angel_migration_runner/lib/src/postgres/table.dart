@@ -6,7 +6,11 @@ import 'package:charcode/ascii.dart';
 abstract class PostgresGenerator {
   static String columnType(MigrationColumn column) {
     var str = column.type.name;
-    return '$str(${column.length})';
+    if (column.type.hasSize) {
+      return '$str(${column.length})';
+    } else {
+      return '$str';
+    }
   }
 
   static String compileColumn(MigrationColumn column) {

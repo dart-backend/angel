@@ -4,7 +4,7 @@ import 'runner.dart';
 
 /// Runs the Angel Migration CLI.
 Future runMigrations(MigrationRunner migrationRunner, List<String> args) {
-  var cmd = CommandRunner('migration_runner', 'Executes Angel migrations.')
+  var cmd = CommandRunner('migration_runner', 'Executes Angel3 migrations.')
     ..addCommand(_UpCommand(migrationRunner))
     ..addCommand(_RefreshCommand(migrationRunner))
     ..addCommand(_ResetCommand(migrationRunner))
@@ -17,6 +17,7 @@ class _UpCommand extends Command {
 
   @override
   String get name => 'up';
+
   @override
   String get description => 'Runs outstanding migrations.';
 

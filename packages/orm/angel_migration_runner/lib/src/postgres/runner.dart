@@ -2,11 +2,14 @@ import 'dart:async';
 import 'dart:collection';
 import 'package:angel3_migration/angel3_migration.dart';
 import 'package:postgres/postgres.dart';
+import 'package:logging/logging.dart';
 import '../runner.dart';
 import '../util.dart';
 import 'schema.dart';
 
 class PostgresMigrationRunner implements MigrationRunner {
+  final _log = Logger('PostgresMigrationRunner');
+
   final Map<String, Migration> migrations = {};
   final PostgreSQLConnection connection;
   final Queue<Migration> _migrationQueue = Queue();
@@ -42,7 +45,11 @@ class PostgresMigrationRunner implements MigrationRunner {
       path varchar,
       PRIMARY KEY(id)
     );
-    ''');
+    ''').then((result) {
+      _log.info('Check and create "migrations" table');
+    }).catchError((e) {
+      _log.severe('Failed to create "migrations" table.');
+    });
   }
 
   @override
@@ -65,14 +72,22 @@ class PostgresMigrationRunner implements MigrationRunner {
         var migration = migrations[k]!;
         var schema = PostgresSchema();
         migration.up(schema);
-        print('Bringing up "$k"...');
+        _log.info('Added "$k" into "migrations" table.');
         await schema.run(connection).then((_) {
-          return connection.execute(
-              'INSERT INTO MIGRATIONS (batch, path) VALUES ($batch, \'$k\');');
+          return connection.transaction((ctx) async {
+            var result = await ctx.query(
+                "INSERT INTO MIGRATIONS (batch, path) VALUES ($batch, \'$k\')");
+
+            return result.affectedRowCount;
+          });
+          //return connection.execute(
+          //    'INSERT INTO MIGRATIONS (batch, path) VALUES ($batch, \'$k\');');
+        }).catchError((e) {
+          _log.severe('Failed to insert into "migrations" table.');
         });
       }
     } else {
-      print('No migrations found to bring up.');
+      _log.warning('Nothing to add into "migrations" table.');
     }
   }
 
@@ -96,14 +111,14 @@ class PostgresMigrationRunner implements MigrationRunner {
         var migration = migrations[k]!;
         var schema = PostgresSchema();
         migration.down(schema);
-        print('Bringing down "$k"...');
+        _log.info('Removed "$k" from "migrations" table.');
         await schema.run(connection).then((_) {
           return connection
               .execute('DELETE FROM migrations WHERE path = \'$k\';');
         });
       }
     } else {
-      print('No migrations found to roll back.');
+      _log.warning('Nothing to remove from "migrations" table.');
     }
   }
 
@@ -120,14 +135,14 @@ class PostgresMigrationRunner implements MigrationRunner {
         var migration = migrations[k]!;
         var schema = PostgresSchema();
         migration.down(schema);
-        print('Bringing down "$k"...');
+        _log.info('Removed "$k" from "migrations" table.');
         await schema.run(connection).then((_) {
           return connection
               .execute('DELETE FROM migrations WHERE path = \'$k\';');
         });
       }
     } else {
-      print('No migrations found to roll back.');
+      _log.warning('Nothing to remove from "migrations" table.');
     }
   }
 

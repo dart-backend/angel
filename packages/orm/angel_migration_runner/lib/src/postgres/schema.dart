@@ -2,8 +2,11 @@ import 'dart:async';
 import 'package:angel3_migration/angel3_migration.dart';
 import 'package:postgres/postgres.dart';
 import 'package:angel3_migration_runner/src/postgres/table.dart';
+import 'package:logging/logging.dart';
 
 class PostgresSchema extends Schema {
+  final _log = Logger('PostgresSchema');
+
   final int _indent;
   final StringBuffer _buf;
 
@@ -11,7 +14,18 @@ class PostgresSchema extends Schema {
 
   factory PostgresSchema() => PostgresSchema._(StringBuffer(), 0);
 
-  Future run(PostgreSQLConnection connection) => connection.execute(compile());
+  Future<int> run(PostgreSQLConnection connection) async {
+    //return connection.execute(compile());
+    var result = await connection.transaction((ctx) async {
+      var sql = compile();
+      var result = await ctx.query(sql).catchError((e) {
+        _log.severe('Failed to run query: [ $sql ]', e);
+      });
+      return result.affectedRowCount;
+    });
+
+    return (result is int) ? result : 0;
+  }
 
   String compile() => _buf.toString();
 
