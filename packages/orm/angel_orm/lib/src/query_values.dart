@@ -29,6 +29,7 @@ abstract class QueryValues {
       if (i++ > 0) b.write(', ');
 
       var name = query.reserveName(entry.key);
+
       var s = applyCast(entry.key, '@$name');
       query.substitutionValues[name] = entry.value;
       b.write(s);

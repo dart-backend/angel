@@ -1,5 +1,11 @@
 # Change Log
 
+## 4.0.1
+
+* Fixed expressions parsing error
+* Fixed json data type error
+* Added debug logging to sql query execution
+
 ## 4.0.0
 
 * Updated `Optional` package

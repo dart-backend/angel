@@ -1,10 +1,14 @@
 import 'dart:async';
+import 'package:logging/logging.dart';
+
 import 'query_executor.dart';
 import 'union.dart';
 import 'package:optional/optional.dart';
 
 /// A base class for objects that compile to SQL queries, typically within an ORM.
 abstract class QueryBase<T> {
+  final _log = Logger('QueryBase');
+
   /// Casts to perform when querying the database.
   Map<String, String> get casts => {};
 
@@ -56,9 +60,12 @@ abstract class QueryBase<T> {
   Future<List<T>> get(QueryExecutor executor) async {
     var sql = compile({});
 
-    return executor
-        .query(tableName, sql, substitutionValues)
-        .then((it) => deserializeList(it));
+    _log.fine('sql = $sql');
+    _log.fine('substitutionValues = $substitutionValues');
+
+    return executor.query(tableName, sql, substitutionValues).then((it) {
+      return deserializeList(it);
+    });
   }
 
   Future<Optional<T>> getOne(QueryExecutor executor) {

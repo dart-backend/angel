@@ -577,7 +577,7 @@ class ListSqlExpressionBuilder extends JsonSqlExpressionBuilder<List, int> {
       : super(query, columnName);
 
   @override
-  List<dynamic>? _encodeValue(List<dynamic>? v) => [json.encode(v)];
+  List<dynamic>? _encodeValue(List<dynamic>? v) => v; //[json.encode(v)];
 
   @override
   JsonSqlExpressionBuilderProperty _property(int name) {

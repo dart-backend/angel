@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'package:logging/logging.dart';
+
 import 'annotations.dart';
 import 'join_builder.dart';
 import 'order_by.dart';
@@ -10,6 +12,8 @@ import 'package:optional/optional.dart';
 
 /// A SQL `SELECT` query builder.
 abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
+  final _log = Logger('Query');
+
   final List<JoinBuilder> _joins = [];
   final Map<String, int> _names = {};
   final List<OrderBy> _orderBy = [];
@@ -44,8 +48,8 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
   /// Preprends the [tableName] to the [String], [s].
   String adornWithTableName(String s) {
     if (expressions.containsKey(s)) {
-      return '${expressions[s]} AS $s';
-      // return '(${expressions[s]} AS $s)';
+      //return '${expressions[s]} AS $s';
+      return '(${expressions[s]} AS $s)';
     } else {
       return '$tableName.$s';
     }
@@ -154,6 +158,7 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
         return '($c)';
       };
     } else {
+      _log.severe('$tableName must be a String or Query');
       throw ArgumentError.value(
           tableName, 'tableName', 'must be a String or Query');
     }
@@ -262,8 +267,8 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
       f = List<String>.from(fields.map((s) {
         String? ss = includeTableName ? '$tableName.$s' : s;
         if (expressions.containsKey(s)) {
-          // ss = '(' + expressions[s] + ')';
-          ss = expressions[s];
+          ss = '( ${expressions[s]} )';
+          //ss = expressions[s];
         }
         var cast = casts[s];
         if (cast != null) ss = 'CAST ($ss AS $cast)';
@@ -369,10 +374,11 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
       var returning = fields.map(adornWithTableName).join(', ');
       var sql = compile({});
       sql = 'WITH $tableName as ($insertion RETURNING $returning) ' + sql;
-      return executor.query(tableName, sql, substitutionValues).then((it) =>
-          it.isEmpty
-              ? Optional.empty()
-              : Optional.ofNullable(deserialize(it.first).value));
+
+      return executor.query(tableName, sql, substitutionValues).then((it) {
+        // Return SQL execution results
+        return it.isEmpty ? Optional.empty() : deserialize(it.first);
+      });
     }
   }
 
