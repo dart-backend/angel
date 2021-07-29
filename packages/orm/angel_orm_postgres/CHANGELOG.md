@@ -1,5 +1,9 @@
 # Change Log
 
+## 3.0.1
+
+* Fixed json data issue
+
 ## 3.0.0
 
 * Fixed NNBD issues

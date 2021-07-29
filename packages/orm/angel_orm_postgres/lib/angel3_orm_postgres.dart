@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:angel3_orm/angel3_orm.dart';
 import 'package:logging/logging.dart';
 import 'package:pool/pool.dart';
@@ -9,9 +10,15 @@ class PostgreSqlExecutor extends QueryExecutor {
   final PostgreSQLExecutionContext _connection;
 
   /// An optional [Logger] to print information to.
-  final Logger? logger;
+  late Logger logger;
 
-  PostgreSqlExecutor(this._connection, {this.logger});
+  PostgreSqlExecutor(this._connection, {Logger? logger}) {
+    if (logger != null) {
+      this.logger = logger;
+    } else {
+      this.logger = Logger('PostgreSqlExecutor');
+    }
+  }
 
   /// The underlying connection.
   PostgreSQLExecutionContext get connection => _connection;
@@ -27,7 +34,7 @@ class PostgreSqlExecutor extends QueryExecutor {
 
   @override
   Future<List<List>> query(
-      String tableName, String? query, Map<String, dynamic> substitutionValues,
+      String tableName, String query, Map<String, dynamic> substitutionValues,
       [List<String>? returningFields]) {
     if (returningFields != null) {
       var fields = returningFields.join(', ');
@@ -35,9 +42,20 @@ class PostgreSqlExecutor extends QueryExecutor {
       query = '$query $returning';
     }
 
-    logger?.fine('Query: $query');
-    logger?.fine('Values: $substitutionValues');
-    return _connection.query(query!, substitutionValues: substitutionValues);
+    logger.fine('Query: $query');
+    logger.fine('Values: $substitutionValues');
+
+    // Convert List into String
+    var param = <String, dynamic>{};
+    substitutionValues.forEach((key, value) {
+      if (value is List) {
+        param[key] = jsonEncode(value);
+      } else {
+        param[key] = value;
+      }
+    });
+
+    return _connection.query(query, substitutionValues: param);
   }
 
   @override
@@ -51,7 +69,7 @@ class PostgreSqlExecutor extends QueryExecutor {
 
     var txResult = await conn.transaction((ctx) async {
       try {
-        logger?.fine('Entering transaction');
+        logger.fine('Entering transaction');
         var tx = PostgreSqlExecutor(ctx, logger: logger);
         returnValue = await f(tx);
 
@@ -60,7 +78,7 @@ class PostgreSqlExecutor extends QueryExecutor {
         ctx.cancelTransaction(reason: e.toString());
         rethrow;
       } finally {
-        logger?.fine('Exiting transaction');
+        logger.fine('Exiting transaction');
       }
     });
 
@@ -88,14 +106,20 @@ class PostgreSqlExecutorPool extends QueryExecutor {
   final PostgreSQLConnection Function() connectionFactory;
 
   /// An optional [Logger] to print information to.
-  final Logger? logger;
+  late Logger logger;
 
   final List<PostgreSqlExecutor> _connections = [];
   int _index = 0;
   final Pool _pool, _connMutex = Pool(1);
 
-  PostgreSqlExecutorPool(this.size, this.connectionFactory, {this.logger})
+  PostgreSqlExecutorPool(this.size, this.connectionFactory, {Logger? logger})
       : _pool = Pool(size) {
+    if (logger != null) {
+      this.logger = logger;
+    } else {
+      this.logger = Logger('PostgreSqlExecutorPool');
+    }
+
     assert(size > 0, 'Connection pool cannot be empty.');
   }
 
@@ -109,7 +133,7 @@ class PostgreSqlExecutorPool extends QueryExecutor {
   Future _open() async {
     if (_connections.isEmpty) {
       _connections.addAll(await Future.wait(List.generate(size, (_) {
-        logger?.fine('Spawning connections...');
+        logger.fine('Spawning connections...');
         var conn = connectionFactory();
         return conn
             .open()
@@ -128,7 +152,7 @@ class PostgreSqlExecutorPool extends QueryExecutor {
 
   @override
   Future<List<List>> query(
-      String tableName, String? query, Map<String, dynamic> substitutionValues,
+      String tableName, String query, Map<String, dynamic> substitutionValues,
       [List<String>? returningFields]) {
     return _pool.withResource(() async {
       var executor = await _next();
