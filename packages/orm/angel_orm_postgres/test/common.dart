@@ -18,6 +18,7 @@ Future<PostgreSqlExecutor> connectToPostgres(Iterable<String> schemas) async {
       password: Platform.environment['POSTGRES_PASSWORD'] ?? 'test123');
   await conn.open();
 
+  // Run sql to create the tables
   for (var s in schemas) {
     await conn.execute(await File('test/migrations/$s.sql').readAsString());
   }

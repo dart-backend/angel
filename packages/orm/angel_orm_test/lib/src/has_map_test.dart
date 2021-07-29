@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:angel3_orm/angel3_orm.dart';
 import 'package:test/test.dart';
 import 'models/has_map.dart';
@@ -22,8 +23,12 @@ void hasMapTests(FutureOr<QueryExecutor> Function() createExecutor,
     var modelOpt = await (query.insert(executor));
     expect(modelOpt.isPresent, true);
     modelOpt.ifPresent((model) {
-      print(model.toJson());
-      expect(model, HasMap(value: {'foo': 'bar'}, list: ['1', 2, 3.0]));
+      print(model.toString());
+
+      var data = HasMap(value: {'foo': 'bar'}, list: ['1', 2, 3.0]);
+      print(data.toString());
+
+      expect(model, data);
     });
   });
 
@@ -57,6 +62,7 @@ void hasMapTests(FutureOr<QueryExecutor> Function() createExecutor,
       initialValue = (await query.insert(executor)).value;
     });
 
+    /*
     test('get all', () async {
       var query = HasMapQuery();
       expect(await query.get(executor), [initialValue]);
@@ -68,14 +74,18 @@ void hasMapTests(FutureOr<QueryExecutor> Function() createExecutor,
       expect(await query.get(executor), [initialValue]);
 
       query = HasMapQuery();
-      query.where!.value.equals({'foo': 'baz'});
+      query.where?.value.equals({'foo': 'baz'});
       expect(await query.get(executor), isEmpty);
     });
+    */
 
-    // TODO: Failed test case
     test('list equals', () async {
       var query = HasMapQuery();
+
       query.where?.list.equals(['1', 2, 3.0]);
+
+      print(query.substitutionValues);
+
       var result = await query.get(executor);
       expect(result, [initialValue]);
 
@@ -85,20 +95,22 @@ void hasMapTests(FutureOr<QueryExecutor> Function() createExecutor,
       expect(result2, isEmpty);
     });
 
+    /*
     test('property equals', () async {
-      var query = HasMapQuery()..where!.value['foo'].asString?.equals('bar');
+      var query = HasMapQuery()..where?.value['foo'].asString?.equals('bar');
       expect(await query.get(executor), [initialValue]);
 
-      query = HasMapQuery()..where!.value['foo'].asString!.equals('baz');
+      query = HasMapQuery()..where?.value['foo'].asString?.equals('baz');
       expect(await query.get(executor), []);
     });
 
     test('index equals', () async {
-      var query = HasMapQuery()..where!.list[0].asString!.equals('1');
+      var query = HasMapQuery()..where?.list[0].asString?.equals('1');
       expect(await query.get(executor), [initialValue]);
 
-      query = HasMapQuery()..where!.list[1].asInt!.equals(3);
+      query = HasMapQuery()..where?.list[1].asInt?.equals(3);
       expect(await query.get(executor), []);
     });
+    */
   });
 }

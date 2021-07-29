@@ -1,5 +1,9 @@
 # Change Log
 
+## 3.0.1
+
+* Fixed incorrect json data serialization
+  
 ## 3.0.0
 
 * Fixed NNBD issues

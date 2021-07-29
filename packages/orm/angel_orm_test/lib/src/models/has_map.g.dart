@@ -68,9 +68,9 @@ class HasMapQuery extends Query<HasMap, HasMapQueryWhere> {
       return Optional.empty();
     }
 
-    var m = {};
-    m[row[0]] = row[0];
-    var model = HasMap(value: m, list: [row[1]]);
+    var m = row[0] as Map;
+    var l = row[1] as List;
+    var model = HasMap(value: m, list: l);
     return Optional.of(model);
   }
 
