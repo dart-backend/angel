@@ -2,15 +2,14 @@
 
 ## Short Term Goal
 
-* Migrate all modules to support NNBD
-* Fix issues and failed unit test
-  * ORM
+* Fixing issues
+  * ORM source code generator
   * OAuth2
   * Proxy
 * Update examples
 * Update User Guide
-* Update `Angel3` website
-* Generate performance metric
+* Update website
+* Performance testing
 
 ## Long Term Goal
 

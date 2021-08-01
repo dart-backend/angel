@@ -45,17 +45,25 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
     var resolver = buildStep.resolver;
     var ctx = await buildOrmContext({}, element, annotation, buildStep,
         resolver, autoSnakeCaseNames != false);
+
+    if (ctx == null) {
+      throw 'Invalid ORM build context';
+    }
+
+    // Create `FooMigration` class
     var lib = generateMigrationLibrary(ctx, element, resolver, buildStep);
+
     //if (lib == null) return null;
-    return DartFormatter().format(lib.accept(DartEmitter()).toString());
+    return DartFormatter()
+        .format(lib.accept(DartEmitter(useNullSafetySyntax: true)).toString());
   }
 
-  Library generateMigrationLibrary(OrmBuildContext? ctx, ClassElement element,
+  Library generateMigrationLibrary(OrmBuildContext ctx, ClassElement element,
       Resolver resolver, BuildStep buildStep) {
     return Library((lib) {
       lib.body.add(Class((clazz) {
         clazz
-          ..name = '${ctx!.buildContext.modelClassName}Migration'
+          ..name = '${ctx.buildContext.modelClassName}Migration'
           ..extend = refer('Migration')
           ..methods
               .addAll([buildUpMigration(ctx, lib), buildDownMigration(ctx)]);
@@ -63,12 +71,13 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
     });
   }
 
-  Method buildUpMigration(OrmBuildContext? ctx, LibraryBuilder lib) {
+  Method buildUpMigration(OrmBuildContext ctx, LibraryBuilder lib) {
     return Method((meth) {
       var autoIdAndDateFields = const TypeChecker.fromRuntime(Model)
-          .isAssignableFromType(ctx!.buildContext.clazz.thisType);
+          .isAssignableFromType(ctx.buildContext.clazz.thisType);
       meth
         ..name = 'up'
+        ..returns = refer('void')
         ..annotations.add(refer('override'))
         ..requiredParameters.add(_schemaParam);
 
@@ -125,9 +134,7 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
                 switch (col.type) {
                   case ColumnType.varChar:
                     methodName = 'varChar';
-                    if (col.length != null) {
-                      named['length'] = literal(col.length);
-                    }
+                    named['length'] = literal(col.length);
                     break;
                   case ColumnType.serial:
                     methodName = 'serial';
@@ -179,6 +186,7 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
               }
 
               var field = table.property(methodName).call(positional, named);
+
               var cascade = <Expression>[];
 
               var defaultValue = ctx.buildContext.defaults[name];
@@ -226,12 +234,23 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
               }
 
               if (cascade.isNotEmpty) {
-                var b = StringBuffer()..writeln(field.accept(DartEmitter()));
+                var b = StringBuffer()
+                  ..writeln(
+                      field.accept(DartEmitter(useNullSafetySyntax: true)));
 
-                for (var ex in cascade) {
+                if (cascade.length == 1) {
+                  var ex = cascade[0];
                   b
-                    ..write('..')
-                    ..writeln(ex.accept(DartEmitter()));
+                    ..write('.')
+                    ..writeln(
+                        ex.accept(DartEmitter(useNullSafetySyntax: true)));
+                } else {
+                  for (var ex in cascade) {
+                    b
+                      ..write('..')
+                      ..writeln(
+                          ex.accept(DartEmitter(useNullSafetySyntax: true)));
+                  }
                 }
 
                 field = CodeExpression(Code(b.toString()));
@@ -290,6 +309,7 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
     return Method((b) {
       b
         ..name = 'down'
+        ..returns = refer('void')
         ..annotations.add(refer('override'))
         ..requiredParameters.add(_schemaParam)
         ..body = Block((b) {

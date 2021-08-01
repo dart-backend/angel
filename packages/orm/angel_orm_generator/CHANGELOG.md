@@ -1,5 +1,13 @@
 # Change Log
 
+## 4.0.1
+
+* Added `useNullSafetySyntax: true` to `DartEmitter`
+* Updated `*Migration` class generator to produce NNBD code
+* Updated `*Query` class generator to produce NNBD code
+* Updated `*QueryWhere` class generator to produce NNBD code
+* Updated `*QueryValues` class generator to produce NNBD code
+
 ## 4.0.0
 
 * Fixed `BuildContext` cast error

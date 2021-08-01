@@ -41,27 +41,39 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
     if (element is ClassElement) {
       var ctx = await buildOrmContext({}, element, annotation, buildStep,
           buildStep.resolver, autoSnakeCaseNames);
+      if (ctx == null) {
+        throw 'Invalid ORM build context';
+      }
       var lib = buildOrmLibrary(buildStep.inputId, ctx);
-      return lib.accept(DartEmitter()).toString();
+
+      return lib.accept(DartEmitter(useNullSafetySyntax: true)).toString();
     } else {
       throw 'The @Orm() annotation can only be applied to classes.';
     }
   }
 
-  Library buildOrmLibrary(AssetId inputId, OrmBuildContext? ctx) {
+  Library buildOrmLibrary(AssetId inputId, OrmBuildContext ctx) {
     return Library((lib) {
       // Create `FooQuery` class
-      // Create `FooQueryWhere` class
       lib.body.add(buildQueryClass(ctx));
+
+      // Create `FooQueryWhere` class
       lib.body.add(buildWhereClass(ctx));
+
+      // Create `FooQueryValues` class
       lib.body.add(buildValuesClass(ctx));
     });
   }
 
-  Class buildQueryClass(OrmBuildContext? ctx) {
+  Class buildQueryClass(OrmBuildContext ctx) {
     return Class((clazz) {
-      var rc = ctx!.buildContext.modelClassNameRecase;
+      var rc = ctx.buildContext.modelClassNameRecase;
+
       var queryWhereType = refer('${rc.pascalCase}QueryWhere');
+      var nullableQueryWhereType = TypeReference((b) => b
+        ..symbol = '${rc.pascalCase}QueryWhere'
+        ..isNullable = true);
+
       clazz
         ..name = '${rc.pascalCase}Query'
         ..extend = TypeReference((b) {
@@ -78,6 +90,10 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
         b
           ..name = 'casts'
           ..annotations.add(refer('override'))
+          ..returns = TypeReference((b) => b
+            ..symbol = 'Map'
+            ..types.add(refer('String'))
+            ..types.add(refer('String')))
           ..type = MethodType.getter
           ..body = Block((b) {
             var args = <String?, Expression>{};
@@ -110,6 +126,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
       clazz.methods.add(Method((m) {
         m
           ..name = 'tableName'
+          ..returns = refer('String')
           ..annotations.add(refer('override'))
           ..type = MethodType.getter
           ..body = Block((b) {
@@ -121,6 +138,10 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
       clazz.methods.add(Method((m) {
         m
           ..name = 'fields'
+          ..returns = TypeReference((b) => b
+            ..symbol = 'List'
+            ..types.add(TypeReference(
+                (b) => b..symbol = 'String'))) //refer('List<String>')
           ..annotations.add(refer('override'))
           ..type = MethodType.getter
           ..body = Block((b) {
@@ -136,7 +157,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
       clazz.fields.add(Field((b) {
         b
           ..name = '_where'
-          ..type = queryWhereType;
+          ..type = nullableQueryWhereType;
       }));
 
       // Add where getter
@@ -144,10 +165,11 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
         b
           ..name = 'where'
           ..type = MethodType.getter
-          ..returns = queryWhereType
+          ..returns = nullableQueryWhereType
           ..annotations.add(refer('override'))
           ..body = Block((b) => b.addExpression(refer('_where').returned));
       }));
+
       // newWhereClause()
       clazz.methods.add(Method((b) {
         b
@@ -158,12 +180,14 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
               queryWhereType.newInstance([refer('this')]).returned));
       }));
 
-      // Add deserialize()
+      // Add parseRow()
       clazz.methods.add(Method((m) {
         m
           ..name = 'parseRow'
           ..static = true
-          ..returns = ctx.buildContext.modelClassType
+          ..returns = TypeReference((b) => b
+            ..symbol = '${rc.pascalCase}'
+            ..isNullable = true) //refer('${rc.pascalCase}?')
           ..requiredParameters.add(Parameter((b) => b
             ..name = 'row'
             ..type = refer('List')))
@@ -225,7 +249,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                   .call([skipToList]);
               if (relation.type == RelationshipType.hasMany) {
                 parsed = literalList([parsed]);
-                var pp = parsed.accept(DartEmitter());
+                var pp = parsed.accept(DartEmitter(useNullSafetySyntax: true));
                 parsed = CodeExpression(
                     Code('$pp.where((x) => x != null).toList()'));
               }
@@ -233,7 +257,8 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                   refer('model').property('copyWith').call([], {name: parsed});
               var block =
                   Block((b) => b.addExpression(refer('model').assign(expr)));
-              var blockStr = block.accept(DartEmitter());
+              var blockStr =
+                  block.accept(DartEmitter(useNullSafetySyntax: true));
               var ifStr = 'if (row.length > $i) { $blockStr }';
               b.statements.add(Code(ifStr));
               i += relation.foreign!.effectiveFields.length;
@@ -243,15 +268,19 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
           });
       }));
 
+      // deserialize
       clazz.methods.add(Method((m) {
         m
           ..name = 'deserialize'
+          ..returns = refer('Optional<${rc.pascalCase}>')
           ..annotations.add(refer('override'))
           ..requiredParameters.add(Parameter((b) => b
             ..name = 'row'
             ..type = refer('List')))
           ..body = Block((b) {
-            b.addExpression(refer('parseRow').call([refer('row')]).returned);
+            b.addExpression(refer('Optional.ofNullable').call([
+              refer('parseRow').call([refer('row')])
+            ]).returned);
           });
       }));
 
@@ -261,17 +290,18 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
           ..optionalParameters.add(Parameter((b) => b
             ..named = true
             ..name = 'parent'
-            ..type = refer('Query')))
+            ..type = refer('Query?')))
           ..optionalParameters.add(Parameter((b) => b
             ..named = true
             ..name = 'trampoline'
-            ..type = TypeReference((b) => b
-              ..symbol = 'Set'
-              ..types.add(refer('String')))))
+            ..type = refer('Set<String>?')))
+          //TypeReference((b) => b
+          //..symbol = 'Set'
+          //..types.add(refer('String')))))
           ..initializers.add(Code('super(parent: parent)'))
           ..body = Block((b) {
             b.statements.addAll([
-              Code('trampoline ??= Set();'),
+              Code('trampoline ??= <String>{};'),
               Code('trampoline.add(tableName);'),
             ]);
 
@@ -444,7 +474,8 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
       if (ctx.relations.values.any((r) => r.type == RelationshipType.hasMany)) {
         for (var methodName in const ['get', 'update', 'delete']) {
           clazz.methods.add(Method((b) {
-            var type = ctx.buildContext.modelClassType.accept(DartEmitter());
+            var type = ctx.buildContext.modelClassType
+                .accept(DartEmitter(useNullSafetySyntax: true));
             b
               ..name = methodName
               ..annotations.add(refer('override'))
@@ -460,8 +491,8 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                 // This is only allowed with lists.
                 var field =
                     ctx.buildContext.fields.firstWhere((f) => f.name == name);
-                var typeLiteral =
-                    convertTypeReference(field.type).accept(DartEmitter());
+                var typeLiteral = convertTypeReference(field.type)
+                    .accept(DartEmitter(useNullSafetySyntax: true));
                 merge.add('''
                 $name: $typeLiteral.from(l.$name ?? [])..addAll(model.$name ?? [])
                 ''');
@@ -497,9 +528,9 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
     });
   }
 
-  Class buildWhereClass(OrmBuildContext? ctx) {
+  Class buildWhereClass(OrmBuildContext ctx) {
     return Class((clazz) {
-      var rc = ctx!.buildContext.modelClassNameRecase;
+      var rc = ctx.buildContext.modelClassNameRecase;
       clazz
         ..name = '${rc.pascalCase}QueryWhere'
         ..extend = refer('QueryWhere');
@@ -508,6 +539,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
       clazz.methods.add(Method((m) {
         m
           ..name = 'expressionBuilders'
+          ..returns = refer('List<SqlExpressionBuilder>')
           ..annotations.add(refer('override'))
           ..type = MethodType.getter
           ..body = Block((b) {
@@ -601,9 +633,10 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
     });
   }
 
-  Class buildValuesClass(OrmBuildContext? ctx) {
+  Class buildValuesClass(OrmBuildContext ctx) {
     return Class((clazz) {
-      var rc = ctx!.buildContext.modelClassNameRecase;
+      var rc = ctx.buildContext.modelClassNameRecase;
+
       clazz
         ..name = '${rc.pascalCase}QueryValues'
         ..extend = refer('MapQueryValues');
@@ -612,6 +645,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
       clazz.methods.add(Method((b) {
         b
           ..name = 'casts'
+          ..returns = refer('Map<String, String>')
           ..annotations.add(refer('override'))
           ..type = MethodType.getter
           ..body = Block((b) {
@@ -725,10 +759,11 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                 }
 
                 var cond = prop.notEqualTo(literalNull);
-                var condStr = cond.accept(DartEmitter());
+                var condStr =
+                    cond.accept(DartEmitter(useNullSafetySyntax: true));
                 var blkStr =
                     Block((b) => b.addExpression(target.assign(parsedId)))
-                        .accept(DartEmitter());
+                        .accept(DartEmitter(useNullSafetySyntax: true));
                 var ifStmt = Code('if ($condStr) { $blkStr }');
                 b.statements.add(ifStmt);
               }

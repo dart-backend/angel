@@ -40,11 +40,10 @@ pubspec.lock
 
 ## VsCode
 .vscode/
-#.vscode/*
-#!.vscode/settings.json
-#!.vscode/tasks.json
-#!.vscode/launch.json
-#!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
 
 # IntelliJ
 .idea/
@@ -75,3 +74,4 @@ logs/
 *.pem
 .DS_Store
 server_log.txt
+ormapp/
