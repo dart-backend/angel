@@ -14,8 +14,8 @@ class Exclude extends SerializableField {
 }
 
 /// No longer necessary, as this is the default.
-@deprecated
-const SerializableField nullable = SerializableField(isNullable: true);
+//@deprecated
+//const SerializableField nullable = SerializableField(isNullable: true);
 
 /// Marks a field as not accepting `null` values.
 const SerializableField notNull = SerializableField(isNullable: false);
@@ -88,7 +88,7 @@ class Serializable {
       {this.serializers = const [Serializers.map, Serializers.json],
       this.autoSnakeCaseNames = true,
       // ignore: deprecated_member_use_from_same_package
-      @deprecated this.autoIdAndDateFields = true,
+      //@deprecated this.autoIdAndDateFields = true,
       this.includeAnnotations = const []});
 
   /// A list of enabled serialization modes.
@@ -100,8 +100,8 @@ class Serializable {
   final bool autoSnakeCaseNames;
 
   /// Overrides the setting in `JsonModelGenerator`.
-  @deprecated
-  final bool autoIdAndDateFields;
+  //@deprecated
+  //final bool autoIdAndDateFields;
 
   /// A list of constant members to affix to the generated class.
   final List includeAnnotations;
@@ -131,6 +131,7 @@ abstract class Serializers {
   static const int typescript = 2;
 }
 
+/*
 @deprecated
 class DefaultValue {
   final value;
@@ -139,10 +140,10 @@ class DefaultValue {
 }
 
 @deprecated
-
 /// Prefer [SerializableField] instead.
 class Alias {
   final String name;
 
   const Alias(this.name);
 }
+*/

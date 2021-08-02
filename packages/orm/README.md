@@ -1,4 +1,5 @@
 # ORM
+
 [![version](https://img.shields.io/badge/pub-v4.0.0-brightgreen)](https://pub.dartlang.org/packages/angel3_orm)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 [![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
@@ -10,33 +11,38 @@ Source-generated ORM for use with the [Angel3 framework](https://github.com/duke
 Documentation for migrations can be found here:
 [ORM Migration](https://angel3-docs.dukefirehawk.com/guides/orm/migrations)
 
-* [Usage](#usage)
-* [Model Definitions](#models)
-* [MVC Example](#example)
-* [Relationships](#relations)
-  * [Many-to-Many Relationships](#many-to-many-relations)
-* [Columns (`@Column(...)`)](#columns)
-    * [Column Types](#column-types)
-    * [Indices](#indices)
-    * [Default Values](#default-values)
+- [ORM](#orm)
+  - [Usage](#usage)
+  - [Models](#models)
+  - [Example](#example)
+  - [Relations](#relations)
+    - [Many to Many Relations](#many-to-many-relations)
+  - [Columns](#columns)
+    - [Column Types](#column-types)
+    - [Indices](#indices)
+    - [Default Values](#default-values)
 
-# Usage
+## Usage
+
 You'll need these dependencies in your `pubspec.yaml`:
+
 ```yaml
 dependencies:
-  angel3_orm: ^4.0.0-beta.1
+  angel3_orm: ^4.0.0
 dev_dependencies:
-  angel3_orm_generator: ^4.0.0-beta.1
+  angel3_orm_generator: ^4.0.0
   build_runner: ^2.0.0
 ```
 
 `package:angel3_orm_generator` exports a class that you can include in a `package:build` flow:
-* `PostgresOrmGenerator` - Fueled by `package:source_gen`; include this within a `SharedPartBuilder`.
+
+- `PostgresOrmGenerator` - Fueled by `package:source_gen`; include this within a `SharedPartBuilder`.
 
 However, it also includes a `build.yaml` that builds ORM files automatically, so you shouldn't
 have to do any configuration at all.
 
-# Models
+## Models
+
 The ORM works best when used with `package:angel3_serialize`:
 
 ```dart
@@ -74,14 +80,14 @@ Remember that if you don't need automatic id-and-date fields, you can
 simply just not extend `Model`:
 
 ```dart
-@Serializable(autoIdAndDateFields: false)
+@Serializable
 abstract class _ThisIsNotAnAngelModel {
   @primaryKey
   String get username;
 }
 ```
 
-# Example
+## Example
 
 MVC just got a whole lot easier:
 
@@ -126,7 +132,7 @@ class CarController extends Controller {
   
   @Expose('/create', method: 'POST')
   createCar(QueryExecutor executor) async {
-    // `package:angel_orm` generates a strongly-typed `insert` function on the query class.
+    // `package:angel3_orm` generates a strongly-typed `insert` function on the query class.
     // Say goodbye to typos!!!
     var query = CarQuery();
     query.values
@@ -140,13 +146,14 @@ class CarController extends Controller {
 }
 ```
 
-# Relations
+## Relations
+
 `angel3_orm` supports the following relationships:
 
-* `@HasOne()` (one-to-one)
-* `@HasMany()` (one-to-many)
-* `@BelongsTo()` (one-to-one)
-* `@ManyToMany()` (many-to-many, using a "pivot" table)
+- `@HasOne()` (one-to-one)
+- `@HasMany()` (one-to-many)
+- `@BelongsTo()` (one-to-one)
+- `@ManyToMany()` (many-to-many, using a "pivot" table)
 
 The annotations can be abbreviated with the default options (ex. `@hasOne`), or supplied
 with custom parameters (ex. `@HasOne(foreignKey: 'foreign_id')`).
@@ -168,17 +175,16 @@ abstract class _Author extends Model {
 }
 ```
 
-The relationships will "just work" out-of-the-box, following any operation. For example,
-after fetching an `Author` from the database in the above example, the `books` field would
-be populated with a set of deserialized `Book` objects, also fetched from the database.
+The relationships will "just work" out-of-the-box, following any operation. For example, after fetching an `Author` from the database in the above example, the `books` field would be populated with a set of deserialized `Book` objects, also fetched from the database.
 
 Relationships use joins when possible, but in the case of `@HasMany()`, two queries are used:
-* One to fetch the object itself
-* One to fetch a list of related objects
 
-## Many to Many Relations
-A many-to-many relationship can now be modeled like so.
-`RoleUser` in this case is a pivot table joining `User` and `Role`.
+- One to fetch the object itself
+- One to fetch a list of related objects
+
+### Many to Many Relations
+
+A many-to-many relationship can now be modeled like so. `RoleUser` in this case is a pivot table joining `User` and `Role`.
 
 Note that in this case, the models must reference the private classes (`_User`, etc.), because the canonical versions (`User`, etc.) are not-yet-generated:
 
@@ -214,18 +220,21 @@ abstract class _Role extends Model {
 }
 ```
 
-TLDR: 
+TLDR:
+
 1. Make a pivot table, C, between two tables, table A and B
 2. C should `@belongsTo` both A and B. C *should not* extend `Model`.
 3. A should have a field: `@ManyToMany(_C) List<_B> get b;`
 4. B should have a field: `@ManyToMany(_C) List<_A> get a;`
 
-Test: https://raw.githubusercontent.com/angel-dart/orm/master/angel_orm_generator/test/many_to_many_test.dart
+Test: <https://raw.githubusercontent.com/angel-dart/orm/master/angel_orm_generator/test/many_to_many_test.dart>
 
-# Columns
+## Columns
+
 Use a `@Column()` annotation to change how a given field is handled within the ORM.
 
-## Column Types
+### Column Types
+
 Using the `@Column()` annotation, it is possible to explicitly declare the data type of any given field:
 
 ```dart
@@ -237,7 +246,8 @@ abstract class _Foo extends Model {
 }
 ```
 
-## Indices
+### Indices
+
 Columns can also have an `index`:
 
 ```dart
@@ -249,13 +259,12 @@ abstract class _Foo extends Model {
 }
 ```
 
-## Default Values
+### Default Values
+
 It is also possible to specify the default value of a field.
 **Note that this only works with primitive objects.**
 
-If a default value is supplied, the `SqlMigrationBuilder` will include
-it in the generated schema. The `PostgresOrmGenerator` ignores default values;
-it does not need them to function properly.
+If a default value is supplied, the `SqlMigrationBuilder` will include it in the generated schema. The `PostgresOrmGenerator` ignores default values; it does not need them to function properly.
 
 ```dart
 @serializable
