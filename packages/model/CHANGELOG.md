@@ -4,6 +4,7 @@
 
 * Updated README
 * Updated `id` to be `required`
+* Updated `idAsInt` to return `-1` instead of `null` for invalid id
 
 ## 3.0.1
 

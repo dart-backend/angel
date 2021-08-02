@@ -16,5 +16,5 @@ class Model {
   Model({required this.id, this.createdAt, this.updatedAt});
 
   /// Returns the [id], parsed as an [int].
-  int get idAsInt => int.tryParse(id) ?? 0;
+  int get idAsInt => int.tryParse(id) ?? -1;
 }
