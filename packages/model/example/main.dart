@@ -8,12 +8,12 @@ void main() {
 class Todo extends Model {
   String? text;
 
-  bool? isComplete;
+  bool isComplete;
 
   Todo(
-      {String? id,
+      {required String id,
       this.text,
-      this.isComplete,
+      this.isComplete = false,
       DateTime? createdAt,
       DateTime? updatedAt})
       : super(id: id, createdAt: createdAt, updatedAt: updatedAt);
