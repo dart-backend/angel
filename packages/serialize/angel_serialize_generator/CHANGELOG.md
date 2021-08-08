@@ -1,5 +1,15 @@
 # Change Log
 
+## 4.0.3
+
+* Added `useNullSafetySyntax: true` to DartEmitter
+* Fixed `JsonModelGenerator` class to produce correct NNBD code
+  * Replaced `@required` with `required`
+  * Fixed all none nullable field to be `required` in the constructor
+  * Fixed generated methods to return the correct type
+  * Fixed generated methods to be annnotated with `override` where applicable
+  * Removed redundant null checking in the generated code
+
 ## 4.0.2
 
 * Fixed `build.yaml` to use `angel3` packages

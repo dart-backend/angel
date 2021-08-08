@@ -25,7 +25,8 @@ class SerializerGenerator extends GeneratorForAnnotation<Serializable> {
     }
 
     var lib = Library((b) {
-      generateClass(serializers.map((s) => s.toIntValue()).toList(), ctx!, b);
+      generateClass(
+          serializers.map((s) => s.toIntValue() ?? 0).toList(), ctx!, b);
       generateFieldsClass(ctx, b);
     });
 
@@ -35,7 +36,7 @@ class SerializerGenerator extends GeneratorForAnnotation<Serializable> {
 
   /// Generate a serializer class.
   void generateClass(
-      List<int?> serializers, BuildContext ctx, LibraryBuilder file) {
+      List<int> serializers, BuildContext ctx, LibraryBuilder file) {
     // Generate canonical codecs, etc.
     var pascal = ctx.modelClassNameRecase.pascalCase,
         camel = ctx.modelClassNameRecase.camelCase;

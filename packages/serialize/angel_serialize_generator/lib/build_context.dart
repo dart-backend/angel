@@ -12,7 +12,7 @@ import 'package:source_gen/source_gen.dart';
 import 'context.dart';
 
 // ignore: deprecated_member_use
-const TypeChecker aliasTypeChecker = TypeChecker.fromRuntime(Alias);
+//const TypeChecker aliasTypeChecker = TypeChecker.fromRuntime(Alias);
 
 const TypeChecker dateTimeTypeChecker = TypeChecker.fromRuntime(DateTime);
 
@@ -89,11 +89,11 @@ Future<BuildContext?> buildContext(
         ctx.fieldInfo[field.name] = sField;
 
         if (sField.defaultValue != null) {
-          ctx.defaults[field.name] = sField.defaultValue;
+          ctx.defaults[field.name] = sField.defaultValue!;
         }
 
         if (sField.alias != null) {
-          ctx.aliases[field.name] = sField.alias;
+          ctx.aliases[field.name] = sField.alias!;
         } else if (autoSnakeCaseNames != false) {
           ctx.aliases[field.name] = ReCase(field.name).snakeCase;
         }
@@ -104,11 +104,11 @@ Future<BuildContext?> buildContext(
           ctx.requiredFields[field.name] = reason;
         }
 
-        if (sField.exclude!) {
+        if (sField.exclude) {
           // ignore: deprecated_member_use
           ctx.excluded[field.name] = Exclude(
-            canSerialize: sField.canSerialize!,
-            canDeserialize: sField.canDeserialize!,
+            canSerialize: sField.canSerialize,
+            canDeserialize: sField.canDeserialize,
           );
         }
       }
@@ -149,6 +149,7 @@ Future<BuildContext?> buildContext(
         }
 
         // Check for @DefaultValue()
+        /*
         var defAnn =
             // ignore: deprecated_member_use
             const TypeChecker.fromRuntime(DefaultValue).firstAnnotationOf(el);
@@ -157,9 +158,11 @@ Future<BuildContext?> buildContext(
           ctx.defaults[field.name] = rev;
           foundNone = false;
         }
+        */
 
         // Check for alias
         // ignore: deprecated_member_use
+        /*
         Alias? alias;
         var aliasAnn = aliasTypeChecker.firstAnnotationOf(el);
 
@@ -168,12 +171,14 @@ Future<BuildContext?> buildContext(
           alias = Alias(aliasAnn.getField('name')!.toStringValue()!);
           foundNone = false;
         }
+        
 
         if (alias?.name.isNotEmpty == true) {
           ctx.aliases[field.name] = alias!.name;
         } else if (autoSnakeCaseNames != false) {
           ctx.aliases[field.name] = ReCase(field.name).snakeCase;
         }
+        */
 
         // Check for @required
         var required =

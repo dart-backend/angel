@@ -5,6 +5,7 @@ import 'dart:mirrors';
 import 'dart:typed_data';
 import 'package:analyzer/dart/constant/value.dart';
 import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:angel3_model/angel3_model.dart';
 import 'package:angel3_serialize/angel3_serialize.dart';
@@ -38,9 +39,14 @@ Builder typescriptDefinitionBuilder(_) {
 }
 
 /// Converts a [DartType] to a [TypeReference].
-TypeReference convertTypeReference(DartType? t) {
+TypeReference convertTypeReference(DartType t, {bool forceNullable = false}) {
   return TypeReference((b) {
-    b.symbol = t!.element?.displayName;
+    b.symbol = t.element?.displayName;
+
+    // Generate nullable type
+    if (t.nullabilitySuffix == NullabilitySuffix.question || forceNullable) {
+      b.isNullable = true;
+    }
 
     if (t is InterfaceType) {
       b.types.addAll(t.typeArguments.map(convertTypeReference));
@@ -57,7 +63,7 @@ Expression convertObject(DartObject o) {
     return CodeExpression(Code('#' + o.toSymbolValue()!));
   }
   if (o.toStringValue() != null) return literalString(o.toStringValue()!);
-  if (o.toTypeValue() != null) return convertTypeReference(o.toTypeValue());
+  if (o.toTypeValue() != null) return convertTypeReference(o.toTypeValue()!);
   if (o.toListValue() != null) {
     return literalList(o.toListValue()!.map(convertObject));
   }
@@ -68,7 +74,7 @@ Expression convertObject(DartObject o) {
   }
 
   var rev = ConstantReader(o).revive();
-  Expression target = convertTypeReference(o.type);
+  Expression target = convertTypeReference(o.type!);
   target = rev.accessor.isEmpty ? target : target.property(rev.accessor);
   return target.call(rev.positionalArguments.map(convertObject),
       rev.namedArguments.map((k, v) => MapEntry(k, convertObject(v))));
@@ -107,7 +113,9 @@ String? dartObjectToString(DartObject v) {
         '}';
   }
   if (v.toStringValue() != null) {
-    return literalString(v.toStringValue()!).accept(DartEmitter()).toString();
+    return literalString(v.toStringValue()!)
+        .accept(DartEmitter(useNullSafetySyntax: true))
+        .toString();
   }
   if (type is InterfaceType && type.element.isEnum) {
     // Find the index of the enum, then find the member.

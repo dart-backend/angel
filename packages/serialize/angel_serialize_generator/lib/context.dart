@@ -15,10 +15,10 @@ class BuildContext {
   final Map<String, String> requiredFields = {};
 
   /// A map of field names to resolved names from `@Alias()` declarations.
-  final Map<String, String?> aliases = {};
+  final Map<String, String> aliases = {};
 
   /// A map of field names to their default values.
-  final Map<String, DartObject?> defaults = {};
+  final Map<String, DartObject> defaults = {};
 
   /// A map of fields to their related information.
   final Map<String, SerializableFieldMirror> fieldInfo = {};
@@ -30,7 +30,8 @@ class BuildContext {
   /// A map of "synthetic" fields, i.e. `id` and `created_at` injected automatically.
   final Map<String, bool> shimmed = {};
 
-  final bool? autoIdAndDateFields, autoSnakeCaseNames;
+  final bool autoIdAndDateFields;
+  final bool autoSnakeCaseNames;
 
   final String? originalClassName, sourceFilename;
 
@@ -52,18 +53,23 @@ class BuildContext {
   BuildContext(this.annotation, this.clazz,
       {this.originalClassName,
       this.sourceFilename,
-      this.autoSnakeCaseNames,
-      this.autoIdAndDateFields,
+      this.autoSnakeCaseNames = true,
+      this.autoIdAndDateFields = true,
       this.includeAnnotations = const <DartObject>[]});
 
   /// The name of the generated class.
-  String? get modelClassName => originalClassName!.startsWith('_')
-      ? originalClassName!.substring(1)
+  String? get modelClassName => originalClassName?.startsWith('_') == true
+      ? originalClassName?.substring(1)
       : originalClassName;
 
   /// A [ReCase] instance reflecting on the [modelClassName].
-  ReCase get modelClassNameRecase =>
-      _modelClassNameRecase ??= ReCase(modelClassName!);
+  ReCase get modelClassNameRecase {
+    if (modelClassName == null) {
+      throw ArgumentError('Model class cannot be null');
+    }
+    _modelClassNameRecase ??= ReCase(modelClassName!);
+    return _modelClassNameRecase!;
+  }
 
   TypeReference get modelClassType =>
       _modelClassType ??= TypeReference((b) => b.symbol = modelClassName);
@@ -92,7 +98,10 @@ class SerializableFieldMirror {
   final DartObject? defaultValue;
   final Symbol? serializer, deserializer;
   final String? errorMessage;
-  final bool? isNullable, canDeserialize, canSerialize, exclude;
+  final bool isNullable;
+  final bool canDeserialize;
+  final bool canSerialize;
+  final bool exclude;
   final DartType? serializesTo;
 
   SerializableFieldMirror(
@@ -101,9 +110,9 @@ class SerializableFieldMirror {
       this.serializer,
       this.deserializer,
       this.errorMessage,
-      this.isNullable,
-      this.canDeserialize,
-      this.canSerialize,
-      this.exclude,
+      this.isNullable = false,
+      this.canDeserialize = true,
+      this.canSerialize = true,
+      this.exclude = false,
       this.serializesTo});
 }

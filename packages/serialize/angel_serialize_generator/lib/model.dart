@@ -13,20 +13,26 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
     var ctx = await buildContext(element as ClassElement, annotation, buildStep,
         buildStep.resolver, true);
 
+    if (ctx == null) {
+      log.severe('Invalid builder context');
+      throw 'Invalid builder context';
+    }
+
     var lib = Library((b) {
       generateClass(ctx, b, annotation);
     });
 
-    var buf = lib.accept(DartEmitter());
+    var buf = lib.accept(DartEmitter(useNullSafetySyntax: true));
     return buf.toString();
   }
 
   /// Generate an extended model class.
   void generateClass(
-      BuildContext? ctx, LibraryBuilder file, ConstantReader annotation) {
+      BuildContext ctx, LibraryBuilder file, ConstantReader annotation) {
     file.body.add(Class((clazz) {
+      log.fine('Generate Class: ${ctx.modelClassNameRecase.pascalCase}');
       clazz
-        ..name = ctx!.modelClassNameRecase.pascalCase
+        ..name = ctx.modelClassNameRecase.pascalCase
         ..annotations.add(refer('generatedSerializable'));
 
       for (var ann in ctx.includeAnnotations) {
@@ -42,23 +48,28 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
       //if (ctx.importsPackageMeta)
       //  clazz.annotations.add(CodeExpression(Code('immutable')));
 
+      // Generate the fields for the class
       for (var field in ctx.fields) {
+        log.fine('Generate Field: ${field.name}');
         clazz.fields.add(Field((b) {
           b
             ..name = field.name
-            // ..modifier = FieldModifier.final$
-            ..annotations.add(CodeExpression(Code('override')))
+            //..modifier = FieldModifier.final$
+            //..annotations.add(CodeExpression(Code('override')))
+            ..annotations.add(refer('override'))
             ..type = convertTypeReference(field.type);
 
           // Fields should only be forced-final if the original field has no setter.
-          if (field.setter == null && field is! ShimFieldImpl) {
-            b.modifier = FieldModifier.final$;
-          }
+          //log.fine('Final: ${field.isFinal}');
+          //if (field.setter == null && field is! ShimFieldImpl) {
+          //if (field.isFinal) {
+          //  b.modifier = FieldModifier.final$;
+          //}
 
           for (var el in [field.getter, field]) {
-            if (el?.documentationComment != null) {
-              b.docs.addAll(el!.documentationComment!.split('\n'));
-            }
+            //if (el?.documentationComment != null) {
+            b.docs.addAll(el?.documentationComment?.split('\n') ?? []);
+            //}
           }
         }));
       }
@@ -92,16 +103,17 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
 
   /// Generate a constructor with named parameters.
   void generateConstructor(
-      BuildContext? ctx, ClassBuilder clazz, LibraryBuilder file) {
+      BuildContext ctx, ClassBuilder clazz, LibraryBuilder file) {
     clazz.constructors.add(Constructor((constructor) {
       // Add all `super` params
-      constructor.constant = (ctx!.clazz.unnamedConstructor?.isConst == true ||
+      constructor.constant = (ctx.clazz.unnamedConstructor?.isConst == true ||
               shouldBeConstant(ctx)) &&
           ctx.fields.every((f) {
             return f.setter == null && f is! ShimFieldImpl;
           });
 
       for (var param in ctx.constructorParameters) {
+        //log.fine('Contructor Parameter: ${param.name}');
         constructor.requiredParameters.add(Parameter((b) => b
           ..name = param.name
           ..type = convertTypeReference(param.type)));
@@ -126,7 +138,10 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
         }
       }
 
+      // Generate the parameters for the constructor
       for (var field in ctx.fields) {
+        //log.fine('Contructor Field: ${field.name}');
+
         constructor.optionalParameters.add(Parameter((b) {
           b
             ..toThis = shouldBeConstant(ctx)
@@ -146,8 +161,10 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
           }
 
           if (ctx.requiredFields.containsKey(field.name) &&
-              b.defaultTo == null) {
-            b.annotations.add(CodeExpression(Code('required')));
+                  b.defaultTo == null ||
+              (field.type.nullabilitySuffix != NullabilitySuffix.question)) {
+            //b.annotations.add(CodeExpression(Code('required')));
+            b.required = true;
           }
         }));
       }
@@ -164,11 +181,11 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
 
   /// Generate a `copyWith` method.
   void generateCopyWithMethod(
-      BuildContext? ctx, ClassBuilder clazz, LibraryBuilder file) {
+      BuildContext ctx, ClassBuilder clazz, LibraryBuilder file) {
     clazz.methods.add(Method((method) {
       method
         ..name = 'copyWith'
-        ..returns = ctx!.modelClassType;
+        ..returns = ctx.modelClassType;
 
       // Add all `super` params
       if (ctx.constructorParameters.isNotEmpty) {
@@ -192,7 +209,7 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
           b
             ..name = field.name
             ..named = true
-            ..type = convertTypeReference(field.type);
+            ..type = convertTypeReference(field.type, forceNullable: true);
         }));
 
         if (i++ > 0) buf.write(', ');
@@ -260,13 +277,13 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
         ..returns = refer('String')
         ..annotations.add(refer('override'))
         ..body = Block((b) {
-          var buf = StringBuffer('\"${ctx!.modelClassName}(');
+          var buf = StringBuffer('\'${ctx!.modelClassName}(');
           var i = 0;
           for (var field in ctx.fields) {
             if (i++ > 0) buf.write(', ');
             buf.write('${field.name}=\$${field.name}');
           }
-          buf.write(')\"');
+          buf.write(')\'');
           b.addExpression(CodeExpression(Code(buf.toString())).returned);
         });
     }));
@@ -277,6 +294,7 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
     clazz.methods.add(Method((method) {
       method
         ..name = 'operator =='
+        ..annotations.add(refer('override'))
         ..returns = Reference('bool')
         ..requiredParameters.add(Parameter((b) => b.name = 'other'));
 
