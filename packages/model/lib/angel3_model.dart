@@ -3,7 +3,7 @@
 /// Represents arbitrary data, with an associated ID and timestamps.
 class Model {
   /// A unique identifier corresponding to this item.
-  String id;
+  String? id;
 
   String? error;
 
@@ -13,8 +13,8 @@ class Model {
   /// The last time at which this item was updated.
   DateTime? updatedAt;
 
-  Model({required this.id, this.createdAt, this.updatedAt});
+  Model({this.id, this.createdAt, this.updatedAt});
 
   /// Returns the [id], parsed as an [int].
-  int get idAsInt => int.tryParse(id) ?? -1;
+  int get idAsInt => id != null ? int.tryParse(id!) ?? -1 : -1;
 }
