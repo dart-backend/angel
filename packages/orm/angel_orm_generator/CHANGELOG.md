@@ -1,5 +1,9 @@
 # Change Log
 
+## 4.0.2
+
+* Fixed NNBD issues
+
 ## 4.0.1
 
 * Added `useNullSafetySyntax: true` to `DartEmitter`

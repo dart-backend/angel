@@ -1,6 +1,6 @@
 # Angel3 ORM Generator
 
-[![version](https://img.shields.io/badge/pub-v4.0.1-brightgreen)](https://pub.dartlang.org/packages/angel3_orm_generator)
+[![version](https://img.shields.io/badge/pub-v4.0.2-brightgreen)](https://pub.dartlang.org/packages/angel3_orm_generator)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 [![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
 
@@ -18,5 +18,5 @@ For documentation about the ORM, see [Developer Guide](https://angel3-docs.dukef
 Run the following command to generate the required `.g.dart` files for Angel3 ORM.
 
 ```bash
-    dart pub run build_runner build
+    dart run build_runner build
 ```

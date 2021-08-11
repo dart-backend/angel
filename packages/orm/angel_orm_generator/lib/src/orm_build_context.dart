@@ -276,19 +276,22 @@ Future<OrmBuildContext?> buildOrmContext(
       //     'foreignKey=$foreignKey, localKey=$localKey');
 
       if (relation.type == RelationshipType.belongsTo) {
-        var name = ReCase(relation.localKey!).camelCase;
-        ctx.buildContext.aliases[name] = relation.localKey;
+        var localKey = relation.localKey;
+        if (localKey != null) {
+          var name = ReCase(localKey).camelCase;
+          ctx.buildContext.aliases[name] = localKey;
 
-        if (!ctx.effectiveFields.any((f) => f.name == field.name)) {
-          var foreignField = relation.findForeignField(ctx);
-          var foreign = relation.throughContext ?? relation.foreign;
-          var type = foreignField.type;
-          if (isSpecialId(foreign, foreignField)) {
-            //type = field.type.element.context.typeProvider.intType;
-            type = field.type;
+          if (!ctx.effectiveFields.any((f) => f.name == field.name)) {
+            var foreignField = relation.findForeignField(ctx);
+            var foreign = relation.throughContext ?? relation.foreign;
+            var type = foreignField.type;
+            if (isSpecialId(foreign, foreignField)) {
+              //type = field.type.element.context.typeProvider.intType;
+              type = field.type;
+            }
+            var rf = RelationFieldImpl(name, relation, type, field);
+            ctx.effectiveFields.add(rf);
           }
-          var rf = RelationFieldImpl(name, relation, type, field);
-          ctx.effectiveFields.add(rf);
         }
       }
 
