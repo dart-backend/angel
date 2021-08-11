@@ -72,11 +72,13 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
         clazz.constructors.add(Constructor((b) => b..constant = true));
         clazz.methods.add(Method((b) => b
           ..name = 'encoder'
+          ..returns = refer('${pascal}Encoder')
           ..type = MethodType.getter
           ..annotations.add(refer('override'))
           ..body = refer('${pascal}Encoder').constInstance([]).code));
         clazz.methods.add(Method((b) => b
           ..name = 'decoder'
+          ..returns = refer('${pascal}Decoder')
           ..type = MethodType.getter
           ..annotations.add(refer('override'))
           ..body = refer('${pascal}Decoder').constInstance([]).code));
@@ -110,6 +112,7 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
 
       var buf = StringBuffer();
 
+      /*
       ctx.requiredFields.forEach((key, msg) {
         if (ctx.excluded[key]?.canSerialize == false) return;
         buf.writeln('''
@@ -118,6 +121,7 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
         }
         ''');
       });
+      */
 
       buf.writeln('return {');
       var i = 0;
@@ -198,7 +202,7 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
 
       buf.write('};');
       method.body = Block.of([
-        Code('if (model == null) { return null; }'),
+//        Code('if (model == null) { return null; }'),
         Code(buf.toString()),
       ]);
     }));
