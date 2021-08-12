@@ -115,7 +115,7 @@ void manyToManyTests(FutureOr<QueryExecutor> Function() createExecutor,
 
   test('fetch users for role', () async {
     for (var role in [canPub, canSub]) {
-      var query = RoleQuery()..where!.id.equals(role!.idAsInt!);
+      var query = RoleQuery()..where!.id.equals(role!.idAsInt);
       var rOpt = await query.getOne(executor);
       expect(rOpt.isPresent, true);
       rOpt.ifPresent((r) async {
@@ -139,7 +139,7 @@ void manyToManyTests(FutureOr<QueryExecutor> Function() createExecutor,
       expect(user.roles, isEmpty);
 
       // Fetch again, just to be doubly sure.
-      var query = UserQuery()..where!.id.equals(user.idAsInt!);
+      var query = UserQuery()..where!.id.equals(user.idAsInt);
       var fetchedOpt = await query.getOne(executor);
       expect(fetchedOpt.isPresent, true);
       fetchedOpt.ifPresent((fetched) {

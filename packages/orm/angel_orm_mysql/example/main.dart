@@ -28,7 +28,7 @@ void main() async {
   var todo = await query.insert(executor);
   print(todo.value.toJson());
 
-  var query2 = TodoQuery()..where!.id.equals(todo.value.idAsInt!);
+  var query2 = TodoQuery()..where!.id.equals(todo.value.idAsInt);
   var todo2 = await query2.getOne(executor);
   print(todo2.value.toJson());
   print(todo == todo2);
