@@ -1,5 +1,9 @@
 # Change Log
 
+## 4.1.0
+
+* Upgraded to support major `analyzer` 2.0.0 release
+
 ## 4.0.2
 
 * Fixed NNBD issues
