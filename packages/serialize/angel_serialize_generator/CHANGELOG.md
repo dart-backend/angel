@@ -1,8 +1,12 @@
 # Change Log
 
+## 4.1.1
+
+* Fixed `SerializerGenerator` to recognize nullable class
+
 ## 4.1.0
 
-* Upgraded to support major `analyzer` 2.0.0 release
+* Upgraded to support `analyzer` 2.0.0 major release
 
 ## 4.0.3
 

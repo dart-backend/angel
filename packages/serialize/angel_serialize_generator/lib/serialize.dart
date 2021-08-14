@@ -8,6 +8,8 @@ class SerializerGenerator extends GeneratorForAnnotation<Serializable> {
   @override
   Future<String?> generateForAnnotatedElement(
       Element element, ConstantReader annotation, BuildStep buildStep) async {
+    log.fine('Running SerializerGenerator');
+
     if (element.kind != ElementKind.CLASS) {
       throw 'Only classes can be annotated with a @Serializable() annotation.';
     }
@@ -15,9 +17,16 @@ class SerializerGenerator extends GeneratorForAnnotation<Serializable> {
     var ctx = await buildContext(element as ClassElement, annotation, buildStep,
         buildStep.resolver, autoSnakeCaseNames != false);
 
+    if (ctx == null) {
+      log.severe('Invalid builder context');
+      throw 'Invalid builder context';
+    }
+
     var serializers = annotation.peek('serializers')?.listValue ?? [];
 
-    if (serializers.isEmpty) return null;
+    if (serializers.isEmpty) {
+      return null;
+    }
 
     // Check if any serializer is recognized
     if (!serializers.any((s) => Serializers.all.contains(s.toIntValue()))) {
@@ -26,7 +35,7 @@ class SerializerGenerator extends GeneratorForAnnotation<Serializable> {
 
     var lib = Library((b) {
       generateClass(
-          serializers.map((s) => s.toIntValue() ?? 0).toList(), ctx!, b);
+          serializers.map((s) => s.toIntValue() ?? 0).toList(), ctx, b);
       generateFieldsClass(ctx, b);
     });
 
@@ -37,9 +46,13 @@ class SerializerGenerator extends GeneratorForAnnotation<Serializable> {
   /// Generate a serializer class.
   void generateClass(
       List<int> serializers, BuildContext ctx, LibraryBuilder file) {
+    log.fine('Generate serailizer class');
+
     // Generate canonical codecs, etc.
-    var pascal = ctx.modelClassNameRecase.pascalCase,
-        camel = ctx.modelClassNameRecase.camelCase;
+    var pascal = ctx.modelClassNameRecase.pascalCase.replaceAll('?', '');
+    var camel = ctx.modelClassNameRecase.camelCase.replaceAll('?', '');
+
+    log.fine('Pascal = $pascal, camel = $camel');
 
     if (ctx.constructorParameters.isEmpty) {
       file.body.add(Code('''
@@ -143,7 +156,7 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
           // if (rc.pascalCase == ctx.modelClassName) {
           //   return '($value)?.toJson()';
           // }
-          return '${rc.pascalCase}Serializer.toMap($value)';
+          return '${rc.pascalCase.replaceAll('?', '')}Serializer.toMap($value)';
         }
 
         if (ctx.fieldInfo[field.name]?.serializer != null) {
@@ -285,7 +298,7 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
         else if (isModelClass(type)) {
           var rc = ReCase(type.getDisplayString(withNullability: true));
           deserializedRepresentation = "map['$alias'] != null"
-              " ? ${rc.pascalCase}Serializer.fromMap(map['$alias'] as Map)"
+              " ? ${rc.pascalCase.replaceAll('?', '')}Serializer.fromMap(map['$alias'] as Map)"
               ' : $defaultValue';
         } else if (type is InterfaceType) {
           if (isListOfModelType(type)) {
@@ -294,7 +307,7 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
             deserializedRepresentation = "map['$alias'] is Iterable"
                 " ? List.unmodifiable(((map['$alias'] as Iterable)"
                 '.whereType<Map>())'
-                '.map(${rc.pascalCase}Serializer.fromMap))'
+                '.map(${rc.pascalCase.replaceAll('?', '')}Serializer.fromMap))'
                 ' : $defaultValue';
           } else if (isMapToModelType(type)) {
             var rc = ReCase(
@@ -302,7 +315,7 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
             deserializedRepresentation = '''
                 map['$alias'] is Map
                   ? Map.unmodifiable((map['$alias'] as Map).keys.fold({}, (out, key) {
-                       return out..[key] = ${rc.pascalCase}Serializer
+                       return out..[key] = ${rc.pascalCase.replaceAll('?', '')}Serializer
                         .fromMap(((map['$alias'] as Map)[key]) as Map);
                     }))
                   : $defaultValue
@@ -368,11 +381,13 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
     }));
   }
 
-  void generateFieldsClass(BuildContext? ctx, LibraryBuilder file) {
+  void generateFieldsClass(BuildContext ctx, LibraryBuilder file) {
+    log.fine('Generate serializer fields');
+
     file.body.add(Class((clazz) {
       clazz
         ..abstract = true
-        ..name = '${ctx!.modelClassNameRecase.pascalCase}Fields';
+        ..name = '${ctx.modelClassNameRecase.pascalCase}Fields';
 
       clazz.fields.add(Field((b) {
         b
