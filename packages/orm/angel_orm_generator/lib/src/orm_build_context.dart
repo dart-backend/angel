@@ -12,24 +12,21 @@ import 'package:angel3_serialize_generator/context.dart';
 import 'package:build/build.dart';
 import 'package:collection/collection.dart' show IterableExtension;
 import 'package:inflection3/inflection3.dart';
-import 'package:logging/logging.dart';
 import 'package:recase/recase.dart';
 import 'package:source_gen/source_gen.dart';
 
 import 'readers.dart';
 
-var _log = Logger('orm_build_context');
-
 bool isHasRelation(Relationship r) =>
     r.type == RelationshipType.hasOne || r.type == RelationshipType.hasMany;
 
-bool isSpecialId(OrmBuildContext? ctx, FieldElement field) {
+bool isSpecialId(OrmBuildContext ctx, FieldElement field) {
   return
       // field is ShimFieldImpl &&
       field is! RelationFieldImpl &&
           (field.name == 'id' &&
               const TypeChecker.fromRuntime(Model)
-                  .isAssignableFromType(ctx!.buildContext.clazz.thisType));
+                  .isAssignableFromType(ctx.buildContext.clazz.thisType));
 }
 
 Element _findElement(FieldElement field) {
@@ -37,7 +34,7 @@ Element _findElement(FieldElement field) {
 }
 
 FieldElement? findPrimaryFieldInList(
-    OrmBuildContext? ctx, Iterable<FieldElement> fields) {
+    OrmBuildContext ctx, Iterable<FieldElement> fields) {
   for (var field_ in fields) {
     var field = field_ is RelationFieldImpl ? field_.originalField : field_;
     var element = _findElement(field);
@@ -93,7 +90,7 @@ Future<OrmBuildContext?> buildOrmContext(
   // print(
   //     'tableName (${annotation.objectValue.type.name}) => ${ormAnnotation.tableName} from ${clazz.name} (${annotation.revive().namedArguments})');
   if (buildCtx == null) {
-    _log.severe('BuildContext is null');
+    log.severe('BuildContext is null');
 
     return null;
   }
@@ -175,38 +172,45 @@ Future<OrmBuildContext?> buildOrmContext(
             }
 
             var modelType = firstModelAncestor(refType) ?? refType;
+            var modelTypeElement = modelType.element;
 
-            foreign = await buildOrmContext(
-                cache,
-                modelType.element as ClassElement,
-                ConstantReader(const TypeChecker.fromRuntime(Orm)
-                    .firstAnnotationOf(modelType.element!)),
-                buildStep,
-                resolver,
-                autoSnakeCaseNames);
-
-            // Resolve throughType as well
-            if (through != null && through is InterfaceType) {
-              throughContext = await buildOrmContext(
+            if (modelTypeElement != null) {
+              foreign = await buildOrmContext(
                   cache,
-                  through.element,
-                  ConstantReader(const TypeChecker.fromRuntime(Serializable)
-                      .firstAnnotationOf(modelType.element!)),
+                  modelTypeElement as ClassElement,
+                  ConstantReader(const TypeChecker.fromRuntime(Orm)
+                      .firstAnnotationOf(modelTypeElement)),
                   buildStep,
                   resolver,
                   autoSnakeCaseNames);
+
+              // Resolve throughType as well
+              if (through != null && through is InterfaceType) {
+                throughContext = await buildOrmContext(
+                    cache,
+                    through.element,
+                    ConstantReader(const TypeChecker.fromRuntime(Serializable)
+                        .firstAnnotationOf(modelTypeElement)),
+                    buildStep,
+                    resolver,
+                    autoSnakeCaseNames);
+              }
+
+              var ormAnn = const TypeChecker.fromRuntime(Orm)
+                  .firstAnnotationOf(modelTypeElement);
+
+              if (ormAnn != null) {
+                foreignTable =
+                    ConstantReader(ormAnn).peek('tableName')?.stringValue;
+              }
+
+              if (foreign != null) {
+                foreignTable ??= pluralize(
+                    foreign.buildContext.modelClassNameRecase.snakeCase);
+              }
+            } else {
+              log.warning('Ancestor model type for [${field.name}] is null');
             }
-
-            var ormAnn = const TypeChecker.fromRuntime(Orm)
-                .firstAnnotationOf(modelType.element!);
-
-            if (ormAnn != null) {
-              foreignTable =
-                  ConstantReader(ormAnn).peek('tableName')?.stringValue;
-            }
-
-            foreignTable ??=
-                pluralize(foreign!.buildContext.modelClassNameRecase.snakeCase);
           } on StackOverflowError {
             throw UnsupportedError(
                 'There is an infinite cycle between ${clazz.name} and ${field.type.getDisplayString(withNullability: true)}. This triggered a stack overflow.');
@@ -272,8 +276,8 @@ Future<OrmBuildContext?> buildOrmContext(
         joinType: joinType,
       );
 
-      // print('Relation on ${buildCtx.originalClassName}.${field.name} => '
-      //     'foreignKey=$foreignKey, localKey=$localKey');
+      log.fine('Relation on ${buildCtx.originalClassName}.${field.name} => '
+          'foreignKey=$foreignKey, localKey=$localKey');
 
       if (relation.type == RelationshipType.belongsTo) {
         var localKey = relation.localKey;
@@ -285,9 +289,12 @@ Future<OrmBuildContext?> buildOrmContext(
             var foreignField = relation.findForeignField(ctx);
             var foreign = relation.throughContext ?? relation.foreign;
             var type = foreignField.type;
-            if (isSpecialId(foreign, foreignField)) {
-              //type = field.type.element.context.typeProvider.intType;
-              type = field.type;
+
+            if (foreign != null) {
+              if (isSpecialId(foreign, foreignField)) {
+                //type = field.type.element.context.typeProvider.intType;
+                type = field.type;
+              }
             }
             var rf = RelationFieldImpl(name, relation, type, field);
             ctx.effectiveFields.add(rf);
