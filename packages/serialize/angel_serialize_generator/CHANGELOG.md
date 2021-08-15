@@ -1,5 +1,9 @@
 # Change Log
 
+## 4.1.2
+
+* Fixed `toMap` method generator
+
 ## 4.1.1
 
 * Fixed `SerializerGenerator` to recognize nullable class

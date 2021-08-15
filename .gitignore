@@ -75,3 +75,4 @@ logs/
 .DS_Store
 server_log.txt
 ormapp/
+backup/

@@ -30,7 +30,7 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
   void generateClass(
       BuildContext ctx, LibraryBuilder file, ConstantReader annotation) {
     file.body.add(Class((clazz) {
-      log.fine('Generate Class: ${ctx.modelClassNameRecase.pascalCase}');
+      //log.fine('Generate Class: ${ctx.modelClassNameRecase.pascalCase}');
       clazz
         ..name = ctx.modelClassNameRecase.pascalCase
         ..annotations.add(refer('generatedSerializable'));
@@ -50,7 +50,8 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
 
       // Generate the fields for the class
       for (var field in ctx.fields) {
-        log.fine('Generate Field: ${field.name}');
+        //log.fine('Generate Field: ${field.name}');
+
         clazz.fields.add(Field((b) {
           b
             ..name = field.name
@@ -106,11 +107,11 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
       BuildContext ctx, ClassBuilder clazz, LibraryBuilder file) {
     clazz.constructors.add(Constructor((constructor) {
       // Add all `super` params
-      constructor.constant = (ctx.clazz.unnamedConstructor?.isConst == true ||
-              shouldBeConstant(ctx)) &&
-          ctx.fields.every((f) {
-            return f.setter == null && f is! ShimFieldImpl;
-          });
+      //constructor.constant = (ctx.clazz.unnamedConstructor?.isConst == true ||
+      //        shouldBeConstant(ctx)) &&
+      //    ctx.fields.every((f) {
+      //      return f.setter == null && f is! ShimFieldImpl;
+      //    });
 
       for (var param in ctx.constructorParameters) {
         //log.fine('Contructor Parameter: ${param.name}');
