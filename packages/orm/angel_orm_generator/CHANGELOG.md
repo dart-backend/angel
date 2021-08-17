@@ -3,7 +3,7 @@
 ## 4.1.1
 
 * Fixed `NumericSqlExpressionBuilder` to handle nullable field
-* Fixed `@belongsTo` code generation
+* Fixed `@belongsTo` and `ManyToMany` code generation
 * Fixed `copyFrom` to handle nullable relationship
 
 ## 4.1.0
