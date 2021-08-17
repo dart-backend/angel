@@ -104,15 +104,16 @@ class TypeScriptDefinitionBuilder implements Builder {
           if (!refs.contains(ref)) refs.add(ref);
         }
 
-        var ctx = await (buildContext(
+        var ctx = await buildContext(
           type.element,
           ConstantReader(
               serializableTypeChecker.firstAnnotationOf(type.element)),
           buildStep,
           buildStep.resolver,
           autoSnakeCaseNames,
-        ) as FutureOr<BuildContext>);
-        typeScriptType = ctx.modelClassNameRecase.pascalCase;
+        );
+
+        typeScriptType = ctx?.modelClassNameRecase.pascalCase ?? 'any';
       }
     }
 

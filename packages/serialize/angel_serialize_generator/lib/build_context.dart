@@ -38,7 +38,7 @@ Future<BuildContext?> buildContext(
     Resolver resolver,
     bool autoSnakeCaseNames,
     {bool heedExclude = true}) async {
-  var id = clazz.location!.components.join('-');
+  var id = clazz.location?.components.join('-');
   if (_cache.containsKey(id)) {
     return _cache[id];
   }

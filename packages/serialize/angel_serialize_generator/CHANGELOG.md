@@ -4,11 +4,12 @@
 
 * Fixed `toMap` method generation
 * Fixed `fromMape` method generation
+* Fixed `TypescriptBuilder`
 * Updated generator to add `const []` to `List` type args in the contructor
 * Updated generator to product non nullable aware code
-* Removed redudant null checking in the generated code
 * Refactored away nullable code
 * Added logging to facilitate tracing the code generation via `-verbose` flag
+* Removed redudant null checking in the generated code
 
 ## 4.1.1
 

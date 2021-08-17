@@ -218,10 +218,15 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
             ''';
           } else if (const TypeChecker.fromRuntime(Uint8List)
               .isAssignableFromType(type)) {
+            var convert =
+                (field.type.nullabilitySuffix == NullabilitySuffix.question)
+                    ? '!'
+                    : '';
+
             serializedRepresentation = '''
-            model.${field.name} == null ?
-              null
-              : base64.encode(model.${field.name})
+            model.${field.name} != null ?
+              base64.encode(model.${field.name}$convert)
+              : null
             ''';
           }
         }
@@ -261,6 +266,7 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
 
       var buf = StringBuffer();
 
+      // Required Fields
       ctx.requiredFields.forEach((key, msg) {
         if (ctx.excluded[key]?.canDeserialize == false) return;
         var name = ctx.resolveFieldName(key);
@@ -274,11 +280,13 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
       buf.writeln('return ${ctx.modelClassName}(');
       var i = 0;
 
+      // Parameters in the constructor
       for (var param in ctx.constructorParameters) {
         if (i++ > 0) buf.write(', ');
         buf.write(param.name);
       }
 
+      // Fields
       for (var field in ctx.fields) {
         var type = ctx.resolveSerializedFieldType(field.name);
 
@@ -332,19 +340,16 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
             }
             var rc = ReCase(
                 type.typeArguments[0].getDisplayString(withNullability: true));
+
             deserializedRepresentation = "map['$alias'] is Iterable"
                 " ? List.unmodifiable(((map['$alias'] as Iterable)"
                 '.whereType<Map>())'
                 '.map(${rc.pascalCase.replaceAll('?', '')}Serializer.fromMap))'
                 ' : $defaultValue';
           } else if (isMapToModelType(type)) {
-            if (defaultValue == 'null') {
-              defaultValue = '{}';
-            }
-
+            // TODO: This requires refractoring
             var rc = ReCase(
                 type.typeArguments[1].getDisplayString(withNullability: true));
-
             deserializedRepresentation = '''
                 map['$alias'] is Map
                   ? Map.unmodifiable((map['$alias'] as Map).keys.fold({}, (out, key) {
@@ -364,9 +369,14 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
                 : $defaultValue
               )
             ''';
+
+            //log.warning('Code => $deserializedRepresentation');
           } else if (const TypeChecker.fromRuntime(List)
                   .isAssignableFromType(type) &&
               type.typeArguments.length == 1) {
+            if (defaultValue == 'null') {
+              defaultValue = '[]';
+            }
             var arg = convertTypeReference(type.typeArguments[0])
                 .accept(DartEmitter(useNullSafetySyntax: true));
             deserializedRepresentation = '''
@@ -381,6 +391,10 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
                 .accept(DartEmitter(useNullSafetySyntax: true));
             var value = convertTypeReference(type.typeArguments[1])
                 .accept(DartEmitter(useNullSafetySyntax: true));
+
+            if (defaultValue == 'null') {
+              defaultValue = '{}';
+            }
             deserializedRepresentation = '''
                 map['$alias'] is Map
                   ? (map['$alias'] as Map).cast<$key, $value>()
