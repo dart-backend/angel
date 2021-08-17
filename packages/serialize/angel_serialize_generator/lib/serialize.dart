@@ -52,7 +52,7 @@ class SerializerGenerator extends GeneratorForAnnotation<Serializable> {
     var pascal = ctx.modelClassNameRecase.pascalCase.replaceAll('?', '');
     var camel = ctx.modelClassNameRecase.camelCase.replaceAll('?', '');
 
-    //log.fine('Pascal = $pascal, camel = $camel');
+    log.info('Generating ${pascal}Serializer');
 
     if (ctx.constructorParameters.isEmpty) {
       file.body.add(Code('''
@@ -189,9 +189,14 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
             if (name.startsWith('_')) name = name.substring(1);
             var rc = ReCase(name);
             var m = serializerToMap(rc, 'm');
-            serializedRepresentation = '''
-            model.${field.name}
-              ?.map((m) => $m).toList()''';
+
+            var question =
+                (field.type.nullabilitySuffix == NullabilitySuffix.question)
+                    ? '?'
+                    : '';
+            serializedRepresentation =
+                'model.${field.name}$question.map((m) => $m).toList()';
+            log.fine('serializedRepresentation => $serializedRepresentation');
           } else if (isMapToModelType(type)) {
             var rc = ReCase(
                 type.typeArguments[1].getDisplayString(withNullability: true));
@@ -201,10 +206,15 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
               ${serializerToMap(rc, 'model.${field.name}[key]')};
             })''';
           } else if (type.element.isEnum) {
+            var convert =
+                (field.type.nullabilitySuffix == NullabilitySuffix.question)
+                    ? '!'
+                    : '';
+
             serializedRepresentation = '''
-            model.${field.name} == null ?
-              null
-              : ${type.getDisplayString(withNullability: true)}.values.indexOf(model.${field.name})
+            model.${field.name} != null ?
+              ${type.getDisplayString(withNullability: false)}.values.indexOf(model.${field.name}$convert)
+              : null
             ''';
           } else if (const TypeChecker.fromRuntime(Uint8List)
               .isAssignableFromType(type)) {
@@ -280,6 +290,12 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
 
         var deserializedRepresentation =
             "map['$alias'] as ${typeToString(type)}";
+        if (type.nullabilitySuffix == NullabilitySuffix.question) {
+          deserializedRepresentation += '?';
+        }
+
+        //log.fine(
+        //    'deserializedRepresentation => $deserializedRepresentation, type => $type, nullcheck => ${type.nullabilitySuffix}');
 
         var defaultValue = 'null';
         var existingDefault = ctx.defaults[field.name];

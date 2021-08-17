@@ -2,7 +2,13 @@
 
 ## 4.1.2
 
-* Fixed `toMap` method generator
+* Fixed `toMap` method generation
+* Fixed `fromMape` method generation
+* Updated generator to add `const []` to `List` type args in the contructor
+* Updated generator to product non nullable aware code
+* Removed redudant null checking in the generated code
+* Refactored away nullable code
+* Added logging to facilitate tracing the code generation via `-verbose` flag
 
 ## 4.1.1
 
@@ -34,6 +40,7 @@
 ## 4.0.0
 
 * Migrated to support Dart SDK 2.12.x NNBD
+* Importing `Optional` package is required for the ORM model
 
 ## 3.0.0
 

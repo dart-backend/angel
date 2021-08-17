@@ -120,6 +120,7 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
           ..type = convertTypeReference(param.type)));
       }
 
+      // Generate intializers
       for (var field in ctx.fields) {
         if (!shouldBeConstant(ctx) && isListOrMapType(field.type)) {
           var typeName = const TypeChecker.fromRuntime(List)
@@ -133,9 +134,15 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
             defaultValue = dartObjectToString(existingDefault);
           }
 
-          constructor.initializers.add(Code('''
-              this.${field.name} =
+          if (field.type.nullabilitySuffix != NullabilitySuffix.question) {
+            constructor.initializers.add(Code('''
+              ${field.name} =
+                $typeName.unmodifiable(${field.name})'''));
+          } else {
+            constructor.initializers.add(Code('''
+              ${field.name} =
                 $typeName.unmodifiable(${field.name} ?? $defaultValue)'''));
+          }
         }
       }
 
@@ -152,18 +159,30 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
           var existingDefault = ctx.defaults[field.name];
 
           if (existingDefault != null) {
-            b.defaultTo = Code(dartObjectToString(existingDefault)!);
+            var d = dartObjectToString(existingDefault);
+            if (d != null) {
+              b.defaultTo = Code(d);
+            }
           }
 
+          //log.fine(
+          //    'Constructor => ${field.name} ${field.type.nullabilitySuffix}');
           if (!isListOrMapType(field.type)) {
             b.toThis = true;
+          } else if (isListType(field.type)) {
+            if (!b.toThis) {
+              b.type = convertTypeReference(field.type);
+            }
+            b.defaultTo = Code('const []');
           } else if (!b.toThis) {
             b.type = convertTypeReference(field.type);
+          } else {
+            log.fine('Contructor: ${field.name} pass through');
           }
 
-          if (ctx.requiredFields.containsKey(field.name) &&
-                  b.defaultTo == null ||
-              (field.type.nullabilitySuffix != NullabilitySuffix.question)) {
+          if ((ctx.requiredFields.containsKey(field.name) ||
+                  field.type.nullabilitySuffix != NullabilitySuffix.question) &&
+              b.defaultTo == null) {
             //b.annotations.add(CodeExpression(Code('required')));
             b.required = true;
           }

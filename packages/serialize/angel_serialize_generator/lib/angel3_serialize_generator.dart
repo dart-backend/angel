@@ -155,6 +155,16 @@ bool isModelClass(DartType? t) {
   }
 }
 
+bool isListType(DartType t) {
+  return const TypeChecker.fromRuntime(List).isAssignableFromType(t) &&
+      !const TypeChecker.fromRuntime(Uint8List).isAssignableFromType(t);
+}
+
+bool isMapType(DartType t) {
+  return const TypeChecker.fromRuntime(Map).isAssignableFromType(t) &&
+      !const TypeChecker.fromRuntime(Uint8List).isAssignableFromType(t);
+}
+
 bool isListOrMapType(DartType t) {
   return (const TypeChecker.fromRuntime(List).isAssignableFromType(t) ||
           const TypeChecker.fromRuntime(Map).isAssignableFromType(t)) &&
