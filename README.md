@@ -14,9 +14,8 @@
 
 ## About
 
-Angel3 is a fork of the original Angel framework to support NNBD in Dart SDK 2.12.x and above.
-It is a full-stack Web framework in Dart that aims to streamline development by providing many common features out-of-the-box in a consistent manner. One of the main goal is to enable developers to build both frontend
-and backend in the same language, Dart. Angel3 framework is designed as a collection of plugins that enable developers to pick and choose the parts needed for their projects. A series of starter templates are also provided for quick start and trial run with Angel3 framework.  
+Angel3 is a fork of the original Angel framework to support NNBD in Dart SDK 2.12.x and later.
+It is a full-stack Web framework in Dart that aims to streamline development by providing many common features out-of-the-box in a consistent manner. One of the main goal is to enable developers to build both frontend and backend in the same language, Dart. Angel3 framework is designed as a collection of plugins that enable developers to pick and choose the parts needed for their projects. A series of starter templates are also provided for quick start and trial run with Angel3 framework.  
 
 The availabe features in Angel3 are:
 
@@ -30,64 +29,87 @@ See all the available [`packages`](https://angel3-docs.dukefirehawk.com/packages
 
 ## Important Notes
 
-The migration of Angel Framework to Angel3 Framework is still ongoing. About 65 out of 70++ packages have been migrated and tested to be stable and working as expected. Angel3 framework need more testing to get it to production quality. Hence, the Angel3 stable packages have been published with prefix `angel3_` on `pub.dev`for developers to try out.
+The core Angel Framework migration to Angel3 Framework has completed and published under `angel3_` prefix on pub.dev. The migrated packages have passed all the test cases. The development work will now move onto the next phase which is to refactor and to improve on the features for better development and deployment experience.
 
-In order to acknowledge contributions, AUTHORS.md has been added to every Angel3 packages. This way no matter what the contributions are, be it code review, testing or submit PR, can all be recorded in this file. If you are the original author of the Angel packages, feel free to send a PR to update that file.
+The status of the code base is as follows:
 
-Branch: master
+Branch: `master`
 
-* Stable version of `angel3` branch
+* Dart version : 2.12.x and above.
+* Publish      : Yes. Refer to packages with `angel3_` prefix on [pub.dev](https://pub.dev/publishers/dukefirehawk.com/packages).
+* NNBD Support : Yes
+* Status       : Release
+* Notes        : Use this for PR
 
-Branch: angel3 (Active development)
+Branch: `angel3`
 
-* Dart version : 2.12.x and above. Use sdk: ">=2.12.0 <3.0.0" in pubspec.yml
-* Publish      : Yes. See all packages with `angel3_` prefix on [pub.dev](https://pub.dev/publishers/dukefirehawk.com/packages).
-* NNDB Support : Yes
-* Status       : Beta
-* Notes        : Basic, ORM and GraphQL templates are working. Not all packages are fully tested.
-
-Branch: sdk-2.12.x-nnbd (Active development)
-
-* Dart version : 2.12.x and above. Use sdk: ">=2.12.0 <3.0.0" in pubspec.yml
-* Publish      : No (For NNBD migration use only)
-* NNDB Support : Yes
-* Status       : Beta
-* Notes        : Basic and ORM templates are working. Not all packages are fully tested.
+* Dart version : 2.12.x and above.
+* NNBD Support : Yes
+* Status       : Development
+* Notes        : This branch is under active development. Features maybe broken from time to time.
 
 For more details, checkout [Project Status](https://github.com/dukefirehawk/angel/wiki/Project-Status)
 
 ## Installation and Setup
 
+### Create a new project by cloning from boilerplate templates
+
 1. Download and install [Dart](https://dart.dev/get-dart)
-2. Download one of the following starter projects:
+
+2. Clone one of the following starter projects:
    * [Angel3 Basic Template](https://github.com/dukefirehawk/boilerplates/tree/angel3-basic)
    * [Angel3 ORM Template](https://github.com/dukefirehawk/boilerplates/tree/angel3-orm)
    * [Angel3 Graphql Template](https://github.com/dukefirehawk/boilerplates/tree/angel3-graphql)
-3. Next, check out the [detailed documentation](https://angel3-docs.dukefirehawk.com/) to learn to flesh out your project. For the current release of Angel3, the existing documents and tutorials for Angel are still relevant and works. In the future, these resources will be migrated and updated accordingly.
 
-### Installation with Angel3 CLI
+3. Run the project in development mode (*hot-reloaded* is enabled on file changes).
 
-**Note: Still work in progress.**
+   ```bash
+   dart --observe bin/dev.dart
+   ```
 
-Install the [Angel3 CLI](https://pub.dev/packages/angel3_cli):
+4. Run the project in production mode (*hot-reloaded* is disabled).
 
-```bash
-pub global activate angel3_cli
-```
+   ```bash
+   dart bin/prod.dart
+   ```
 
-Bootstrap a project:
+5. Run as docker. Edit and build the image with the provided `Dockerfile` file.
 
-```bash
-angel3 init hello
-```
+6. Next, refer to the [developer guide](https://angel3-docs.dukefirehawk.com/) to learn more about Angel3 framework.
 
-You can even have your server run and be *hot-reloaded* on file changes:
+### Create a new project with Angel3 CLI
 
-```bash
-dart --observe bin/dev.dart
-```
+1. Download and install [Dart](https://dart.dev/get-dart)
 
-### Migrating to Angel3
+2. Install the [Angel3 CLI](https://pub.dev/packages/angel3_cli):
+
+   ```bash
+   dart pub global activate angel3_cli
+   ```
+
+3. On terminal, create a new project:
+
+   ```bash
+   angel3 init hello
+   ```
+
+4. Run the project in development mode (*hot-reloaded* is enabled on file changes).
+
+   ```bash
+   dart --observe bin/dev.dart
+   ```
+
+5. Run the project in production mode (*hot-reloaded* is disabled).
+
+   ```bash
+   dart bin/prod.dart
+   ```
+
+6. Run as docker. Edit and build the image with the provided `Dockerfile` file.
+
+7. Next, refer to the [developer guide](https://angel3-docs.dukefirehawk.com/) to learn more about Angel3 framework.
+
+### Migrating from Angel to Angel3
 
 Check out [Migrating to Angel3](https://angel3-docs.dukefirehawk.com/migration/angel-2.x.x-to-angel3/migration-guide-3)
 
