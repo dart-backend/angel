@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_static/angel_static.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_static/angel3_static.dart';
 import 'package:file/file.dart';
 import 'package:html/dom.dart' as html;
 import 'package:html/parser.dart' as html;

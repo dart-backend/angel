@@ -1,8 +1,8 @@
 import 'dart:convert';
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_framework/http.dart';
-import 'package:angel_seo/angel_seo.dart';
-import 'package:angel_static/angel_static.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_framework/http.dart';
+import 'package:angel3_seo/angel3_seo.dart';
+import 'package:angel3_static/angel3_static.dart';
 import 'package:file/local.dart';
 import 'package:http_parser/http_parser.dart';
 

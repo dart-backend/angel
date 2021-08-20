@@ -1,7 +1,7 @@
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_seo/angel_seo.dart';
-import 'package:angel_static/angel_static.dart';
-import 'package:angel_test/angel_test.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_seo/angel3_seo.dart';
+import 'package:angel3_static/angel3_static.dart';
+import 'package:angel3_test/angel3_test.dart';
 import 'package:file/file.dart';
 import 'package:file/memory.dart';
 import 'package:html/dom.dart' as html;
