@@ -1,12 +1,12 @@
 import 'dart:isolate';
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_framework/http.dart';
-import 'package:angel_sync/angel_sync.dart';
-import 'package:angel_test/angel_test.dart';
-import 'package:angel_websocket/io.dart' as client;
-import 'package:angel_websocket/server.dart';
-import 'package:pub_sub/isolate.dart' as pub_sub;
-import 'package:pub_sub/pub_sub.dart' as pub_sub;
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_framework/http.dart';
+import 'package:angel3_sync/angel3_sync.dart';
+import 'package:angel3_test/angel3_test.dart';
+import 'package:angel3_websocket/io.dart' as client;
+import 'package:angel3_websocket/server.dart';
+import 'package:angel3_pub_sub/isolate.dart' as pub_sub;
+import 'package:angel3_pub_sub/angel3_pub_sub.dart' as pub_sub;
 import 'package:test/test.dart';
 
 void main() {

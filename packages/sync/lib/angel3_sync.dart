@@ -1,6 +1,6 @@
 import 'dart:async';
-import 'package:angel_websocket/angel_websocket.dart';
-import 'package:pub_sub/pub_sub.dart' as pub_sub;
+import 'package:angel3_websocket/angel3_websocket.dart';
+import 'package:angel3_pub_sub/angel3_pub_sub.dart' as pub_sub;
 import 'package:stream_channel/stream_channel.dart';
 
 /// Synchronizes WebSockets using `package:pub_sub`.

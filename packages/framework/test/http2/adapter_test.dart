@@ -65,9 +65,9 @@ void main() {
     app.post('/upload', (req, res) async {
       await req.parseBody();
       var body = req.bodyAsMap;
-      List<UploadedFile> files = req.uploadedFiles ?? [];
+      var files = req.uploadedFiles ?? [];
 
-      UploadedFile file = files.firstWhereOrNull((f) => f.name == 'file')!;
+      var file = files.firstWhereOrNull((f) => f.name == 'file')!;
       return [
         await file.data.map((l) => l.length).reduce((a, b) => a + b),
         file.contentType.mimeType,
@@ -106,7 +106,7 @@ void main() {
 
     http2 = AngelHttp2(app, ctx, allowHttp1: true);
 
-    SecureServerSocket server = await http2.startServer();
+    var server = await http2.startServer();
     serverRoot = Uri.parse('https://127.0.0.1:${server.port}');
   });
 

@@ -23,8 +23,8 @@ RequestHandler ioc(Function handler, {Iterable<String> optional = const []}) {
   };
 }
 
-resolveInjection(requirement, InjectionRequest injection, RequestContext req,
-    ResponseContext res, bool throwOnUnresolved,
+Future resolveInjection(requirement, InjectionRequest injection,
+    RequestContext req, ResponseContext res, bool throwOnUnresolved,
     [Container? container]) async {
   var propFromApp;
   container ??= req.container ?? res.app!.container;

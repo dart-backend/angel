@@ -69,7 +69,7 @@ class TestClient extends client.BaseAngelClient {
 
   @override
   Future close() {
-    this.client!.close();
+    this.client.close();
     return server.close();
   }
 
