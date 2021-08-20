@@ -1,5 +1,10 @@
 # Change Log
 
+## 4.1.2
+
+* Updated README
+* Fixed NNBD issues
+  
 ## 4.1.1
 
 * Updated link to `Angel3` home page
