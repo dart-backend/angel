@@ -1,5 +1,9 @@
 # Change Log
 
+## 3.0.3
+
+* Upgraded from `pendantic` to `lints` linter
+
 ## 3.0.2
 
 * Fixed NNBD issues

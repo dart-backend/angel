@@ -1,6 +1,6 @@
 # Angel3 Production Runner
 
-[![version](https://img.shields.io/badge/pub-v3.0.2-brightgreen)](https://pub.dartlang.org/packages/angel3_production)
+[![version](https://img.shields.io/badge/pub-v3.0.3-brightgreen)](https://pub.dartlang.org/packages/angel3_production)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 [![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
 

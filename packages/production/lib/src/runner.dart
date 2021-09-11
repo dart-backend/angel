@@ -180,7 +180,9 @@ _  ___ |  /|  / / /_/ / _  /___  _  /___
           'https://angel3-framework.web.app\n'));
 
       if (argResults['help'] == true) {
-        stdout..writeln('Options:')..writeln(RunnerOptions.argParser.usage);
+        stdout
+          ..writeln('Options:')
+          ..writeln(RunnerOptions.argParser.usage);
         return;
       }
 
