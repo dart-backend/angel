@@ -4,6 +4,7 @@
 
 * Upgraded from `pendantic` to `lints` linter
 * Removed deprecated parameters
+* Final release. Replaced by `belatuk_html_builder` package.
 
 ## 2.0.3
 
