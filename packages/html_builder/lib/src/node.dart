@@ -15,7 +15,9 @@ class Node {
   Node(this.tagName,
       [Map<String, dynamic> attributes = const {},
       Iterable<Node> children = const []]) {
-    this..attributes.addAll(attributes)..children.addAll(children);
+    this
+      ..attributes.addAll(attributes)
+      ..children.addAll(children);
   }
 
   Node._selfClosing(this.tagName,
@@ -35,16 +37,18 @@ class Node {
 
 /// Represents a self-closing tag, i.e. `<br>`.
 class SelfClosingNode extends Node {
+  /*
   @override
   final String tagName;
 
   @override
   final Map<String, dynamic> attributes = {};
+  */
 
   @override
   List<Node> get children => List<Node>.unmodifiable([]);
 
-  SelfClosingNode(this.tagName, [Map<String, dynamic> attributes = const {}])
+  SelfClosingNode(tagName, [Map<String, dynamic> attributes = const {}])
       : super._selfClosing(tagName, attributes);
 }
 

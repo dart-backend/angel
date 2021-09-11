@@ -1,8 +1,13 @@
 # Change Log
 
+## 2.0.4
+
+* Upgraded from `pendantic` to `lints` linter
+* Removed deprecated parameters
+
 ## 2.0.3
 
-* Added example
+* Added an example
 * Updated README
 
 ## 2.0.2
