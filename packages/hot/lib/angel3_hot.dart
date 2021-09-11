@@ -10,8 +10,8 @@ import 'package:angel3_websocket/server.dart';
 import 'package:charcode/ascii.dart';
 import 'package:glob/glob.dart';
 import 'package:glob/list_local_fs.dart';
-import 'package:angel3_html_builder/elements.dart';
-import 'package:angel3_html_builder/angel3_html_builder.dart';
+import 'package:belatuk_html_builder/elements.dart';
+import 'package:belatuk_html_builder/belatuk_html_builder.dart';
 import 'package:io/ansi.dart';
 import 'package:path/path.dart' as p;
 import 'package:vm_service/vm_service.dart' as vm;
@@ -211,7 +211,7 @@ class HotReloader {
       var serverUri =
           Uri(scheme: 'http', host: server.address.address, port: server.port);
 
-      var observatoryUri;
+      Uri? observatoryUri;
       if (isHot) {
         observatoryUri = await dev.Service.getInfo().then((i) => i.serverUri!);
       }
@@ -224,6 +224,7 @@ class HotReloader {
       if (isHot) {
         stdout.write(
             'An Observatory debugger and profiler on ${Platform.operatingSystem} is available at: ');
+
         print(wrapWith('$observatoryUri', [cyan, styleUnderlined]));
       } else {
         stdout.write(

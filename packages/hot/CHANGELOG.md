@@ -1,5 +1,10 @@
 # Change Log
 
+## 4.2.0
+
+* Updated to use `belatuk_html_builder` package
+* Upgraded from `pendantic` to `lints` linter
+  
 ## 4.1.1
 
 * Fixed NNBD issues
