@@ -180,8 +180,7 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
         // Serialize model classes via `XSerializer.toMap`
         else if (isModelClass(type)) {
           var rc = ReCase(type.getDisplayString(withNullability: true));
-          serializedRepresentation =
-              '${serializerToMap(rc, 'model.${field.name}')}';
+          serializedRepresentation = serializerToMap(rc, 'model.${field.name}');
         } else if (type is InterfaceType) {
           if (isListOfModelType(type)) {
             var name =
@@ -201,8 +200,8 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
             var rc = ReCase(
                 type.typeArguments[1].getDisplayString(withNullability: true));
             serializedRepresentation =
-                '''model.${field.name}.keys?.fold({}, (map, key) {
-              return map..[key] =
+                '''model.${field.name}.keys.fold({}, (map, key) {
+              return (map as Map<String,dynamic>?)?..[key] =
               ${serializerToMap(rc, 'model.${field.name}[key]')};
             })''';
           } else if (type.element.isEnum) {
@@ -270,11 +269,19 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
       ctx.requiredFields.forEach((key, msg) {
         if (ctx.excluded[key]?.canDeserialize == false) return;
         var name = ctx.resolveFieldName(key);
-        buf.writeln('''
-        if (map['$name'] == null) {
-          throw FormatException("$msg");
+        if (msg.contains("'")) {
+          buf.writeln('''
+            if (map['$name'] == null) {
+              throw FormatException("$msg");
+            }
+          ''');
+        } else {
+          buf.writeln('''
+            if (map['$name'] == null) {
+              throw FormatException('$msg');
+            }
+          ''');
         }
-        ''');
       });
 
       buf.writeln('return ${ctx.modelClassName}(');
@@ -348,6 +355,10 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
                 ' : $defaultValue';
           } else if (isMapToModelType(type)) {
             // TODO: This requires refractoring
+            if (defaultValue == 'null') {
+              defaultValue = '{}';
+            }
+
             var rc = ReCase(
                 type.typeArguments[1].getDisplayString(withNullability: true));
             deserializedRepresentation = '''
