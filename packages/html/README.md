@@ -1,16 +1,17 @@
-# html
-[![Pub](https://img.shields.io/pub/v/angel_html.svg)](https://pub.dartlang.org/packages/angel_html)
-[![build status](https://travis-ci.org/angel-dart/html.svg)](https://travis-ci.org/angel-dart/html)
+# Angel3 HTML
 
-A plug-in that allows you to return html_builder AST's from request handlers, and have them sent as HTML automatically.
+[![version](https://img.shields.io/badge/pub-v3.0.0-brightgreen)](https://pub.dartlang.org/packages/angel3_html)
+[![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
+[![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
 
-[`package:html_builder`](https://github.com/thosakwe/html_builder) is a simple virtual DOM library
-(without diffing, you can find that
-[here](https://github.com/thosakwe/html_builder_vdom)), with a handy Dart DSL that makes it easy to build HTML
-AST's:
+[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/html/LICENSE)
+
+A plug-in that allows you to return `belatuk_html_builder` AST's from request handlers, and have them sent as HTML automatically.
+
+[`package:belatuk_html_builder`](https://pub.dev/packages/belatuk_html_builder) is a simple virtual DOM library with a handy Dart DSL that makes it easy to build HTML AST's:
 
 ```dart
-import 'package:html_builder/elements.dart';
+import 'package:belatuk_html_builder/elements.dart';
 
 Node myDom = html(lang: 'en', c: [
   head(c: [
@@ -28,19 +29,21 @@ Node myDom = html(lang: 'en', c: [
 ```
 
 This plug-in means that you can now `return` these AST's, and Angel will automatically send them to
-clients. Ultimately, the implication is that you can use `html_builder` as a substitute for a
-templating system within Dart. With [hot reloading](https://github.com/angel-dart/hot), you won't
+clients. Ultimately, the implication is that you can use `belatuk_html_builder` as a substitute for a
+templating system within Dart. With [hot reloading](https://pub.dev/packages/angel3_hot), you won't
 even need to reload your server (as it should be).
 
-# Installation
+## Installation
+
 In your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  angel_html: ^1.0.0
+  angel3_html: ^3.0.0
 ```
 
-# Usage
+## Usage
+
 The `renderHtml` function does all the magic for you.
 
 ```dart
