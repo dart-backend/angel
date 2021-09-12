@@ -3,8 +3,7 @@
 [![version](https://img.shields.io/badge/pub-v3.1.0-brightgreen)](https://pub.dev/packages/angel3_production)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 [![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
-
-[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/production/LICENSE)
+[![License](https://img.shields.io/github/license/dart-backend/belatuk-common-utilities)](https://github.com/dukefirehawk/angel/tree/angel3/packages/production/LICENSE)
 
 Helpers for concurrency, message-passing, rotating loggers, and other production functionality in Angel3 framework.
 

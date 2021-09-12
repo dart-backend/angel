@@ -3,8 +3,7 @@
 [![version](https://img.shields.io/badge/pub-v4.1.0-brightgreen)](https://pub.dev/packages/angel3_sync)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 [![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
-
-[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/sync/LICENSE)
+[![License](https://img.shields.io/github/license/dart-backend/belatuk-common-utilities)](https://github.com/dukefirehawk/angel/tree/angel3/packages/sync/LICENSE)
 
 Easily synchronize and scale WebSockets using package:belatuk_pub_sub.
 
