@@ -1,5 +1,9 @@
 # Change Log
 
+## 3.1.1
+
+* Fixed license link
+
 ## 3.1.0
 
 * Updated to use `belatuk_pub_sub` package

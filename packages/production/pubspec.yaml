@@ -1,5 +1,5 @@
 name: angel3_production
-version: 3.1.0
+version: 3.1.1
 description: Helpers for concurrency, message-passing, rotating loggers, and other production functionality in Angel3.
 homepage: https://angel3-framework.web.app
 repository: https://github.com/dukefirehawk/angel/tree/angel3/packages/production
