@@ -1,5 +1,10 @@
 # Change Log
 
+## 4.1.0
+
+* Updated to use `belatuk_pub_sub` package
+* Upgraded from `pendantic` to `lints` linter
+
 ## 4.0.0
 
 * Updated to use `angel3` packages
