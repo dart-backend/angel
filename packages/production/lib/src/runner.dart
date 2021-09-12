@@ -9,8 +9,8 @@ import 'package:args/args.dart';
 import 'package:io/ansi.dart';
 import 'package:io/io.dart';
 import 'package:logging/logging.dart';
-import 'package:angel3_pub_sub/isolate.dart' as pub_sub;
-import 'package:angel3_pub_sub/angel3_pub_sub.dart' as pub_sub;
+import 'package:belatuk_pub_sub/isolate.dart' as pub_sub;
+import 'package:belatuk_pub_sub/belatuk_pub_sub.dart' as pub_sub;
 import 'instance_info.dart';
 import 'options.dart';
 
