@@ -1,8 +1,1 @@
-include: package:pedantic/analysis_options.yaml
-analyzer:
-  strong-mode:
-    implicit-casts: false
-linter:
-  rules:
-    - unnecessary_const
-    - unnecessary_new
+include: package:lints/recommended.yaml
