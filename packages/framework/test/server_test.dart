@@ -220,5 +220,5 @@ class CustomCloseService extends Service {
 @Expose('/foo')
 class FooController extends Controller {
   @Expose('/bar')
-  bar() async => 'baz';
+  Future<String> bar() async => 'baz';
 }

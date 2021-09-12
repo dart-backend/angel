@@ -2,7 +2,6 @@ name: angel_eventsource
 version: 2.0.0
 description: Server-sent Events (SSE) plugin for Angel.
 homepage: https://github.com/angel-dart/eventsource
-author: Tobe O <thosakwe@gmail.com>
 publish_to: none
 environment:
   sdk: ">=2.10.0 <3.0.0"

@@ -31,6 +31,8 @@ AnsiCode chooseLogColor(Level level) {
   } else if (level == Level.CONFIG ||
       level == Level.FINE ||
       level == Level.FINER ||
-      level == Level.FINEST) return lightGray;
+      level == Level.FINEST) {
+    return lightGray;
+  }
   return resetAll;
 }
