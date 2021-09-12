@@ -1,5 +1,9 @@
 # Change Log
 
+## 2.1.2
+
+* Final release. Replaced by `belatuk_body_parser` package.
+
 ## 2.1.1
 
 * Fixed calling deprecated methods in unit test
