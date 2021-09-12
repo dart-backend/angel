@@ -1,5 +1,9 @@
 # Change Log
 
+## 3.0.3
+
+* Final release. Replaced by `belatuk_range_header` package.
+
 ## 3.0.2
 
 * Updated README
