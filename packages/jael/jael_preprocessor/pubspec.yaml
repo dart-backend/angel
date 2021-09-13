@@ -1,15 +1,18 @@
 name: jael3_preprocessor
-version: 4.0.1
+version: 4.1.0
 description: A pre-processor for resolving blocks and includes within Jael templates.
 homepage: https://github.com/dukefirehawk/angel/tree/angel3/packages/jael/jael_preprocessor
 environment:
   sdk: '>=2.12.0 <3.0.0'
 dependencies:
   file: ^6.1.0
-  jael3: ^4.0.0
-  angel3_symbol_table: ^2.0.0
+  jael3: ^4.1.0
+  belatuk_symbol_table: ^3.0.0
   collection: ^1.15.0
 dev_dependencies:
   angel3_code_buffer: ^2.0.0
   test: ^1.17.4
-  pedantic: ^1.11.0
+  lints: ^1.0.0
+#dependency_overrides:
+#  jael3:
+#    path: ../jael

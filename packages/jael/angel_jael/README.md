@@ -1,25 +1,23 @@
-# angel3_jael
-[![version](https://img.shields.io/badge/pub-v4.0.1-brightgreen)](https://pub.dartlang.org/packages/angel3_jael)
+# Angel3 Jael
+
+[![version](https://img.shields.io/badge/pub-v4.1.0-brightgreen)](https://pub.dev/packages/angel3_jael)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 [![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
+[![License](https://img.shields.io/github/license/dart-backend/belatuk-common-utilities)](https://github.com/dukefirehawk/angel/tree/angel3/packages/jael/angel_jael/LICENSE)
 
-[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/jael/angel_jael/LICENSE)
+[Angel 3](https://github.com/dukefirehawk/angel/tree/angel3) support for [Jael 3](https://github.com/dukefirehawk/angel/tree/angel3/packages/jael/jael).
 
+## Installation
 
-
-[Angel](https://github.com/dukefirehawk/angel/tree/angel3)
-support for
-[Jael](https://github.com/dukefirehawk/angel/tree/angel3/packages/jael/jael).
-
-# Installation
 In your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  angel3_jael: ^4.0.0
+  angel3_jael: ^4.1.0
 ```
 
-# Usage
+## Usage
+
 Just like `mustache` and other renderers, configuring Angel to use
 Jael is as simple as calling `app.configure`:
 
@@ -38,19 +36,15 @@ AngelConfigurer myPlugin(FileSystem fileSystem) {
 }
 ```
 
-`package:angel3_jael` supports caching views, to improve server performance.
-You might not want to enable this in development, so consider setting
-the flag to `app.isProduction`:
+`package:angel3_jael` supports caching views, to improve server performance. You might not want to enable this in development, so consider setting the flag to `app.isProduction`:
 
-```
+```dart
 jael(viewsDirectory, cacheViews: app.isProduction);
 ```
 
-Keep in mind that this package uses `package:file`, rather than
-`dart:io`.
+Keep in mind that this package uses `package:file`, rather than `dart:io`.
 
-The following is a basic example of a server setup that can render Jael
-templates from a directory named `views`:
+The following is a basic example of a server setup that can render Jael templates from a directory named `views`:
 
 ```dart
 import 'package:angel3_framework/angel3_framework.dart';
@@ -58,7 +52,7 @@ import 'package:angel3_jael/angel3_jael.dart';
 import 'package:file/local.dart';
 import 'package:logging/logging.dart';
 
-main() async {
+void main() async {
   var app = Angel();
   var fileSystem = const LocalFileSystem();
 
@@ -83,5 +77,4 @@ main() async {
 }
 ```
 
-To apply additional transforms to parsed documents, provide a
-set of `patch` functions, like in `package:jael3_preprocessor`.
+To apply additional transforms to parsed documents, provide a set of `patch` functions, like in `package:jael3_preprocessor`.

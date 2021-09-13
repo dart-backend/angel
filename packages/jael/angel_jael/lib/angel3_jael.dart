@@ -3,7 +3,7 @@ import 'package:angel3_code_buffer/angel3_code_buffer.dart';
 import 'package:file/file.dart';
 import 'package:jael3/jael3.dart';
 import 'package:jael3_preprocessor/jael3_preprocessor.dart';
-import 'package:angel3_symbol_table/angel3_symbol_table.dart';
+import 'package:belatuk_symbol_table/belatuk_symbol_table.dart';
 
 /// Configures an Angel server to use Jael to render templates.
 ///

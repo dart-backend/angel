@@ -1,25 +1,26 @@
-# jael3
-[![version](https://img.shields.io/badge/pub-v4.0.0-brightgreen)](https://pub.dartlang.org/packages/jael3)
+# Jael 3
+
+[![version](https://img.shields.io/badge/pub-v4.1.0-brightgreen)](https://pub.dev/packages/jael3)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 [![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
-
-[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/jael/jael/LICENSE)
+[![License](https://img.shields.io/github/license/dart-backend/belatuk-common-utilities)](https://github.com/dukefirehawk/angel/tree/angel3/packages/jael/jael/LICENSE)
 
 A simple server-side HTML templating engine for Dart.
 
 [See documentation.](https://docs.angel-dart.dev/packages/front-end/jael)
 
-# Installation
+## Installation
+
 In your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  jael3: ^4.0.0
+  jael3: ^4.1.0
 ```
 
-# API
-The core `jael3` package exports classes for parsing Jael templates,
-an AST library, and a `Renderer` class that generates HTML on-the-fly.
+## API
+
+The core `jael3` package exports classes for parsing Jael templates, an AST library, and a `Renderer` class that generates HTML on-the-fly.
 
 ```dart
 import 'package:angel3_code_buffer/code_buffer.dart';

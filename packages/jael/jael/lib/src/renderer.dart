@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:angel3_code_buffer/angel3_code_buffer.dart';
 import 'package:collection/collection.dart' show IterableExtension;
 //import 'package:source_span/source_span.dart';
-import 'package:angel3_symbol_table/angel3_symbol_table.dart';
+import 'package:belatuk_symbol_table/belatuk_symbol_table.dart';
 import 'ast/ast.dart';
 import 'text/parser.dart';
 import 'text/scanner.dart';
@@ -119,7 +119,9 @@ class Renderer {
       }
     }
 
-    buffer..write('<')..write(element.tagName.name);
+    buffer
+      ..write('<')
+      ..write(element.tagName.name);
 
     for (var attribute in element.attributes) {
       var value = attribute.value?.compute(childScope);
