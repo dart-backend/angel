@@ -3,13 +3,13 @@
 ## 4.1.3
 
 * Refactored the framework internal to use [Belatuk Common Utilities](<https://github.com/dart-backend/belatuk-common-utilities>)
-* Updated [examples] (<https://github.com/dart-backend/belatuk-examples>)
+* Updated [examples](<https://github.com/dart-backend/belatuk-examples>)
 * Updated to use `lints` linter
 
 ## 4.1.0
 
-* Updated [website] (<https://angel3-framework.wep.app>)
-* Updated [examples] (<https://github.com/dart-backend/belatuk-examples>)
+* Updated [website](<https://angel3-framework.web.app/>)
+* Updated [examples](<https://github.com/dart-backend/belatuk-examples>)
 * Fixed ORM code generator
 * Fixed Serializer code generator
 * Fixed graphQL code generator
@@ -22,7 +22,7 @@
 * Changed Dart SDK requirements for all packages to ">=2.12.0 <3.0.0" to support NNBD.
 * Migrated pretty_logging to 3.0.0 (0/0 tests passed)
 * Migrated angel_http_exception to 3.0.0 (0/0 tests passed)
-* Moved angel_cli to <https://github.com/dukefirehawk/cli> (Not migrated yet)
+* Moved angel_cli to [CLI Repository](<https://github.com/dukefirehawk/cli>) (Not migrated yet)
 * Added code_buffer and migrated to 2.0.0 (16/16 tests passed)
 * Added combinator and migrated to 2.0.0 (16/16 tests passed)
 * Migrated angel_route to 5.0.0 (35/35 tests passed)
