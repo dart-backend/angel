@@ -243,7 +243,9 @@ abstract class ResponseContext<RawResponse>
           final m = _findRoute(route.router);
 
           if (m != null) return m;
-        } else if (route.name == name) return route;
+        } else if (route.name == name) {
+          return route;
+        }
       }
 
       return null;

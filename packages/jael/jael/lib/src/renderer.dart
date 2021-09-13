@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:angel3_code_buffer/angel3_code_buffer.dart';
 import 'package:collection/collection.dart' show IterableExtension;
 //import 'package:source_span/source_span.dart';
-import 'package:angel3_symbol_table/angel3_symbol_table.dart';
+import 'package:belatuk_symbol_table/belatuk_symbol_table.dart';
 import 'ast/ast.dart';
 import 'text/parser.dart';
 import 'text/scanner.dart';
@@ -16,14 +16,18 @@ Document? parseDocument(String text,
 
   if (scanner.errors.isNotEmpty && onError != null) {
     scanner.errors.forEach(onError);
-  } else if (scanner.errors.isNotEmpty) throw scanner.errors.first;
+  } else if (scanner.errors.isNotEmpty) {
+    throw scanner.errors.first;
+  }
 
   var parser = Parser(scanner, asDSX: asDSX);
   var doc = parser.parseDocument();
 
   if (parser.errors.isNotEmpty && onError != null) {
     parser.errors.forEach(onError);
-  } else if (parser.errors.isNotEmpty) throw parser.errors.first;
+  } else if (parser.errors.isNotEmpty) {
+    throw parser.errors.first;
+  }
 
   return doc;
 }
@@ -119,7 +123,9 @@ class Renderer {
       }
     }
 
-    buffer..write('<')..write(element.tagName.name);
+    buffer
+      ..write('<')
+      ..write(element.tagName.name);
 
     for (var attribute in element.attributes) {
       var value = attribute.value?.compute(childScope);

@@ -1,6 +1,6 @@
 import 'dart:mirrors';
 import 'package:source_span/source_span.dart';
-import 'package:angel3_symbol_table/angel3_symbol_table.dart';
+import 'package:belatuk_symbol_table/belatuk_symbol_table.dart';
 import 'expression.dart';
 import 'identifier.dart';
 import 'token.dart';

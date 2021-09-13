@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:charcode/charcode.dart';
 import 'package:angel3_code_buffer/angel3_code_buffer.dart';
 import 'package:jael3/jael3.dart' as jael;
-import 'package:angel3_symbol_table/angel3_symbol_table.dart';
+import 'package:belatuk_symbol_table/belatuk_symbol_table.dart';
 
 void main() {
   while (true) {

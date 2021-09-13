@@ -1,10 +1,9 @@
 # Angel3 Production Runner
 
-[![version](https://img.shields.io/badge/pub-v3.0.2-brightgreen)](https://pub.dartlang.org/packages/angel3_production)
+[![version](https://img.shields.io/badge/pub-v3.1.1-brightgreen)](https://pub.dev/packages/angel3_production)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 [![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
-
-[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/production/LICENSE)
+[![License](https://img.shields.io/github/license/dart-backend/belatuk-common-utilities)](https://github.com/dukefirehawk/angel/tree/angel3/packages/production/LICENSE)
 
 Helpers for concurrency, message-passing, rotating loggers, and other production functionality in Angel3 framework.
 
@@ -45,7 +44,7 @@ When combined with `systemd`, deploying Angel3 applications on Linux can be very
 
 ## Message Passing
 
-The `Runner` class uses [`package:angel3_pub_sub`](https://github.com/dukefirehawk/angel/tree/angel3/packages/pub_sub) to coordinate
+The `Runner` class uses [`belatuk_pub_sub`](<https://pub.dev/packages/belatuk_pub_sub>) to coordinate
 message passing between isolates.
 
 When one isolate sends a message, all other isolates will receive the same message, except for the isolate that sent it.

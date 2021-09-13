@@ -1,13 +1,17 @@
-# angel3_pub_sub
-[![version](https://img.shields.io/badge/pub-v3.0.2-brightgreen)](https://pub.dartlang.org/packages/angel3_pub_sub)
+# Angel3 Pub Sub
+
+[![version](https://img.shields.io/badge/pub-v3.0.3-brightgreen)](https://pub.dartlang.org/packages/angel3_pub_sub)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 [![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
 
 [![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/pub_sub/LICENSE)
 
+**DEPRECATED: Replaced by [`belatuk_pub_sub`](https://pub.dartlang.org/packages/belatuk_pub_sub) package**
+
 Keep application instances in sync with a simple pub/sub API.
 
 # Installation
+
 Add `angel3_pub_sub` as a dependency in your `pubspec.yaml` file:
 
 ```yaml
@@ -18,6 +22,7 @@ dependencies:
 Then, be sure to run `pub get` in your terminal.
 
 # Usage
+
 `pub_sub` is your typical pub/sub API. However, `angel3_pub_sub` enforces authentication of every
 request. It is very possible that `angel3_pub_sub` will run on both servers and in the browser,
 or on a platform angel3_pub_sublike Flutter. Thus, there are provisions available to limit
@@ -46,7 +51,9 @@ main() async {
   server.start();
 }
 ```
+
 ### Trusted Clients
+
 You can use `package:angel3_pub_sub` without explicitly registering
 clients, *if and only if* those clients come from trusted sources.
 
@@ -63,6 +70,7 @@ pub_sub.IsolateClient(null);
 ```
 
 ### Access Control
+
 The ID's of all *untrusted* clients who will connect to the server must be known at start-up time.
 You may not register new clients after the server has started. This is mostly a security consideration;
 if it is impossible to register new clients, then malicious users cannot grant themselves additional
@@ -89,8 +97,9 @@ main() async {
 ```
 
 ## Isolates
+
 If you are just running multiple instances of a server,
-use `package:angel3_pub_sub/isolate.dart`. 
+use `package:angel3_pub_sub/isolate.dart`.
 
 You'll need one isolate to be the master. Typically this is the first isolate you create.
 
@@ -140,6 +149,7 @@ void isolateMain(List args) {
 ```
 
 ## JSON RPC 2.0
+
 If you are not running on isolates, you need to import
 `package:angel3_pub_sub/json_rpc_2.dart`. This library leverages `package:json_rpc_2` and
 `package:stream_channel` to create clients and servers that can hypothetically run on any
@@ -148,6 +158,7 @@ medium, i.e. WebSockets, or TCP Sockets.
 Check out `test/json_rpc_2_test.dart` for an example of serving `angel3_pub_sub` over TCP sockets.
 
 # Protocol
+
 `angel3_pub_sub` is built upon a simple RPC, and this package includes
 an implementation that runs via `SendPort`s and `ReceivePort`s, as
 well as one that runs on any `StreamChannel<String>`.

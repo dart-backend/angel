@@ -1,5 +1,5 @@
 name: angel3_pub_sub
-version: 3.0.2
+version: 3.0.3
 description: Keep application instances in sync with a simple pub/sub API.
 homepage: https://github.com/dukefirehawk/angel/tree/angel3/packages/pub_sub
 environment:

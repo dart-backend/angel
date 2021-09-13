@@ -1,6 +1,6 @@
 name: angel3_sync
-version: 4.0.0
-description: Easily synchronize and scale WebSockets using package:angel3_pub_sub for Angel3.
+version: 4.1.1
+description: Easily synchronize and scale WebSockets using belatuk_pub_sub in Angel3.
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dukefirehawk/angel/tree/angel3/packages/sync
 environment:
@@ -8,9 +8,9 @@ environment:
 dependencies:
   angel3_framework: ^4.1.0
   angel3_websocket: ^4.0.0
-  angel3_pub_sub: ^3.0.0
+  belatuk_pub_sub: ^4.0.0
   stream_channel: ^2.1.0
 dev_dependencies:
   angel3_test: ^4.0.0
   test: ^1.17.8
-  pedantic: ^1.11.1
+  lints: ^1.0.0

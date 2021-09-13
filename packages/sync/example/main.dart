@@ -5,8 +5,8 @@ import 'package:angel3_sync/angel3_sync.dart';
 import 'package:angel3_test/angel3_test.dart';
 import 'package:angel3_websocket/io.dart' as client;
 import 'package:angel3_websocket/server.dart';
-import 'package:angel3_pub_sub/isolate.dart' as pub_sub;
-import 'package:angel3_pub_sub/angel3_pub_sub.dart' as pub_sub;
+import 'package:belatuk_pub_sub/isolate.dart' as pub_sub;
+import 'package:belatuk_pub_sub/belatuk_pub_sub.dart' as pub_sub;
 import 'package:test/test.dart';
 
 void main() {

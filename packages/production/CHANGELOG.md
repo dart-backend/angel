@@ -1,5 +1,17 @@
 # Change Log
 
+## 3.1.1
+
+* Fixed license link
+
+## 3.1.0
+
+* Updated to use `belatuk_pub_sub` package
+
+## 3.0.3
+
+* Upgraded from `pendantic` to `lints` linter
+
 ## 3.0.2
 
 * Fixed NNBD issues

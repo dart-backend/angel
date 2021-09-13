@@ -1,5 +1,5 @@
 name: angel3_production
-version: 3.0.2
+version: 3.1.1
 description: Helpers for concurrency, message-passing, rotating loggers, and other production functionality in Angel3.
 homepage: https://angel3-framework.web.app
 repository: https://github.com/dukefirehawk/angel/tree/angel3/packages/production
@@ -7,10 +7,10 @@ environment:
   sdk: '>=2.12.0 <3.0.0'
 dependencies:
   angel3_container: ^3.0.0
-  angel3_framework: ^4.0.0
-  angel3_pub_sub: ^3.0.0
+  angel3_framework: ^4.1.0
+  belatuk_pub_sub: ^4.0.0
   args: ^2.1.0
   io: ^1.0.0
   logging: ^1.0.1
 dev_dependencies:
-  pedantic: ^1.11.0
+  lints: ^1.0.1

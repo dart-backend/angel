@@ -1,5 +1,11 @@
 # Change Log
 
+## 4.2.0
+
+* Fixed `toMap` method generation for non nullable Map
+* Fixed `fromMap` method generation for non nullable Map
+* Upgraded from `pendantic` to `lints` linter
+
 ## 4.1.2
 
 * Fixed `toMap` method generation

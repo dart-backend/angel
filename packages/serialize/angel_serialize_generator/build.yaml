@@ -31,7 +31,7 @@ builders:
 #       - "test/models/with_enum.dart"
 #   $default:
 #     dependencies:
-#       - "angel_serialize_generator:_book"
+#       - "angel3_serialize_generator:_book"
 #     sources:
 #       - "test/models/author.dart"
 #       - "test/models/game_pad.dart"

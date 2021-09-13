@@ -1,7 +1,7 @@
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_framework/http.dart';
-import 'package:angel_html/angel_html.dart';
-import 'package:html_builder/elements.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_framework/http.dart';
+import 'package:angel3_html/angel3_html.dart';
+import 'package:belatuk_html_builder/elements.dart';
 import 'package:logging/logging.dart';
 
 void main() async {

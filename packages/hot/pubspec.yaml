@@ -1,14 +1,14 @@
 name: angel3_hot
 description: Supports hot reloading/hot code push of Angel3 servers on file changes.
-version: 4.1.1
+version: 4.2.1
 homepage: https://angel3-framework.web.app/ 
 repository: https://github.com/dukefirehawk/angel/tree/angel3/packages/hot
 environment:
   sdk: '>=2.12.0 <3.0.0'
 dependencies:
-  angel3_framework: ^4.0.0
+  angel3_framework: ^4.1.0
   angel3_websocket: ^4.0.0
-  angel3_html_builder: ^2.0.0
+  belatuk_html_builder: ^3.0.0
   charcode: ^1.2.0
   glob: ^2.0.1
   io: ^1.0.0
@@ -18,4 +18,4 @@ dependencies:
 dev_dependencies:
   http: ^0.13.2
   logging: ^1.0.1
-  pedantic: ^1.11.0
+  lints: ^1.0.0

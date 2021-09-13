@@ -1,19 +1,20 @@
 # Angel3 Framework
 
-[![version](https://img.shields.io/badge/pub-v4.1.2-brightgreen)](https://pub.dev/packages/angel3_framework)
+[![version](https://img.shields.io/badge/pub-v4.1.3-brightgreen)](https://pub.dev/packages/angel3_framework)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 [![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
 
 [![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/framework/LICENSE)
 
-**Replacement of Angel Framework with major change to support NNBD**
+**Replacement of Angel Framework with major change to support NNBD.**
+
 Angel3 framework is a high-powered HTTP server with support for dependency injection, sophisticated routing, authentication, ORM, graphql etc. It is designed to keep the core minimal but extensible through a series of plugin packages. It won't dictate which features, databases or web templating engine to use. This flexibility enable Angel3 framework to grow with your application as new features can be added to handle the new use cases.
 
 This package is the core of the [Angel3](https://github.com/dukefirehawk/angel/tree/angel3) framework. To see more details, please refer to the [Developer Guide](https://angel3-docs.dukefirehawk.com).
 
-## Usage
+## Installation and Setup
 
-### Create a new project by cloning from boilerplate templates
+### (Option 1) Create a new project by cloning from boilerplate templates
 
 1. Download and install [Dart](https://dart.dev/get-dart)
 
@@ -36,7 +37,7 @@ This package is the core of the [Angel3](https://github.com/dukefirehawk/angel/t
 
 5. Run as docker. Edit and build the image with the provided `Dockerfile` file.
 
-### Create a new project with Angel3 CLI
+### (Option 2) Create a new project with Angel3 CLI
 
 1. Download and install [Dart](https://dart.dev/get-dart)
 

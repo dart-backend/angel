@@ -33,7 +33,9 @@ void main(List<String> args) async {
   try {
     var argResults = argParser.parse(args);
     if (argResults['help'] as bool) {
-      stdout..writeln('Formatter for Jael templates.')..writeln();
+      stdout
+        ..writeln('Formatter for Jael templates.')
+        ..writeln();
       printUsage(stdout);
       return;
     }
@@ -49,7 +51,9 @@ void main(List<String> args) async {
       }
     }
   } on ArgParserException catch (e) {
-    stderr..writeln(e.message)..writeln();
+    stderr
+      ..writeln(e.message)
+      ..writeln();
     printUsage(stderr);
     exitCode = 65;
   }
