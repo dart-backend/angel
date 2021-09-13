@@ -16,14 +16,18 @@ Document? parseDocument(String text,
 
   if (scanner.errors.isNotEmpty && onError != null) {
     scanner.errors.forEach(onError);
-  } else if (scanner.errors.isNotEmpty) throw scanner.errors.first;
+  } else if (scanner.errors.isNotEmpty) {
+    throw scanner.errors.first;
+  }
 
   var parser = Parser(scanner, asDSX: asDSX);
   var doc = parser.parseDocument();
 
   if (parser.errors.isNotEmpty && onError != null) {
     parser.errors.forEach(onError);
-  } else if (parser.errors.isNotEmpty) throw parser.errors.first;
+  } else if (parser.errors.isNotEmpty) {
+    throw parser.errors.first;
+  }
 
   return doc;
 }

@@ -11,7 +11,9 @@ ContextAwareMatcher predicateWithContext(
 ContextAwareMatcher wrapContextAwareMatcher(x) {
   if (x is ContextAwareMatcher) {
     return x;
-  } else if (x is Matcher) return _WrappedContextAwareMatcher(x);
+  } else if (x is Matcher) {
+    return _WrappedContextAwareMatcher(x);
+  }
   return wrapContextAwareMatcher(wrapMatcher(x));
 }
 

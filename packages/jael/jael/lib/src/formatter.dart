@@ -66,7 +66,9 @@ class JaelFormatter {
       {bool isFirst = false, bool isLast = false}) {
     if (child == null) {
       return lineLength;
-    } else if (child is Element) return _formatElement(child, lineLength);
+    } else if (child is Element) {
+      return _formatElement(child, lineLength);
+    }
     String s;
     if (child is Interpolation) {
       var b = StringBuffer('{{');
