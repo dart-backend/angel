@@ -1,13 +1,9 @@
 # Change Log
 
-## 4.1.3
+## 4.1.x
 
 * Refactored the framework internal to use [Belatuk Common Utilities](<https://github.com/dart-backend/belatuk-common-utilities>)
-* Updated [examples](<https://github.com/dart-backend/belatuk-examples>)
 * Updated to use `lints` linter
-
-## 4.1.0
-
 * Updated [website](<https://angel3-framework.web.app/>)
 * Updated [examples](<https://github.com/dart-backend/belatuk-examples>)
 * Fixed ORM code generator
