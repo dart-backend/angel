@@ -5,7 +5,9 @@
 [![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
 [![License](https://img.shields.io/github/license/dart-backend/belatuk-common-utilities)](https://github.com/dukefirehawk/angel/tree/angel3/packages/shelf/LICENSE)
 
-Shelf interop with Angel. This package lets you run `package:shelf` handlers via a custom adapter.
+**Replacement of `package:angel_shelf` with breaking changes to support NNBD.**
+
+Shelf interop with Angel3. This package lets you run `package:shelf` handlers via a custom adapter.
 
 Use the code in this repo to embed existing Angel/shelf apps into
 other Angel/shelf applications. This way, you can migrate legacy applications without
