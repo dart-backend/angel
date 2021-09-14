@@ -9,6 +9,7 @@ void main() async {
   var http = AngelHttp(app);
 
   //TODO: To be reviewed
+  /*
   app.get(
     '/',
     waterfall([
@@ -24,4 +25,5 @@ void main() async {
 
   var server = await http.startServer(InternetAddress.anyIPv4, 3000);
   print('Listening at http://${server.address.address}:${server.port}');
+  */
 }

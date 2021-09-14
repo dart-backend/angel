@@ -1,10 +1,15 @@
 import 'dart:async';
 import 'dart:io';
-import 'package:angel_framework/angel_framework.dart';
+import 'package:angel3_framework/angel3_framework.dart';
 import 'package:shelf/shelf.dart' as shelf;
 import 'package:shelf/shelf.dart';
 import 'shelf_request.dart';
 import 'shelf_response.dart';
+
+// TODO: To be reviewed
+Future<Stream<Request>> process(dynamic param1, int param2) {
+  return Future.value();
+}
 
 class AngelShelf extends Driver<shelf.Request, ShelfResponseContext?,
     Stream<shelf.Request>, ShelfRequestContext, ShelfResponseContext> {
@@ -14,7 +19,7 @@ class AngelShelf extends Driver<shelf.Request, ShelfResponseContext?,
 
   AngelShelf(Angel app, {FutureOr<shelf.Response> Function()? notFound})
       : notFound = notFound ?? (() => shelf.Response.notFound('Not Found')),
-        super(app, null, useZone: false) {
+        super(app, process, useZone: false) {
     // Inject a final handler that will keep responses open, if we are using the
     // driver as a middleware.
     app.fallback((req, res) {
@@ -24,8 +29,6 @@ class AngelShelf extends Driver<shelf.Request, ShelfResponseContext?,
       return true;
     });
   }
-
-  Future<Stream<Request>> aaa(dynamic param1, int param2) {}
 
   @override
   Future<void> close() {
@@ -112,7 +115,7 @@ class AngelShelf extends Driver<shelf.Request, ShelfResponseContext?,
       shelf.Request request, ShelfResponseContext? response,
       [ShelfRequestContext? correspondingRequest]) {
     // Return the original response.
-    return Future.value(response..correspondingRequest = correspondingRequest);
+    return Future.value(response!..correspondingRequest = correspondingRequest);
   }
 
   @override

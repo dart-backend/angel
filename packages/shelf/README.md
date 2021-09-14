@@ -1,8 +1,11 @@
-# shelf
-[![Pub](https://img.shields.io/pub/v/angel_shelf.svg)](https://pub.dartlang.org/packages/angel_shelf)
-[![build status](https://travis-ci.org/angel-dart/shelf.svg)](https://travis-ci.org/angel-dart/shelf)
+# Angel3 Shelf
 
-Shelf interop with Angel. This package lets you run `package:shelf` handlers via a custom adapter. 
+![Pub Version (including pre-releases)](https://img.shields.io/pub/v/angel3_shelf?include_prereleases)
+[![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
+[![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
+[![License](https://img.shields.io/github/license/dart-backend/belatuk-common-utilities)](https://github.com/dukefirehawk/angel/tree/angel3/packages/shelf/LICENSE)
+
+Shelf interop with Angel. This package lets you run `package:shelf` handlers via a custom adapter.
 
 Use the code in this repo to embed existing Angel/shelf apps into
 other Angel/shelf applications. This way, you can migrate legacy applications without
@@ -11,26 +14,27 @@ having to rewrite your business logic.
 This will make it easy to layer your API over a production application,
 rather than having to port code.
 
-- [Usage](#usage)
-  - [embedShelf](#embedshelf)
-    - [Communicating with Angel](#communicating-with-angel-with-embedshelf)
-  - [`AngelShelf`](#angelshelf)
+- [Angel3 Shelf](#angel3-shelf)
+  - [Usage](#usage)
+    - [embedShelf](#embedshelf)
+    - [Communicating with Angel with embedShelf](#communicating-with-angel-with-embedshelf)
+    - [AngelShelf](#angelshelf)
 
-# Usage
+## Usage
 
-## embedShelf
+### embedShelf
 
 This is a compliant `shelf` adapter that acts as an Angel request handler. You can use it as a middleware,
 or attach it to individual routes.
 
 ```dart
 import 'dart:io';
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_shelf/angel_shelf.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_shelf/angel3_shelf.dart';
 import 'package:shelf/shelf.dart' as shelf;
 import 'api/api.dart';
 
-main() async {
+void main() async {
   var app = Angel();
   var http = AngelHttp(app);
 
@@ -72,13 +76,10 @@ handleRequest(shelf.Request request) {
 ```
 
 ### AngelShelf
-Angel 2 brought about the generic `Driver` class, which is implemented
-by `AngelHttp`, `AngelHttp2`, `AngelGopher`, etc., and provides the core
-infrastructure for request handling in Angel.
 
-`AngelShelf` is an implementation that wraps shelf requests and responses in their
-Angel equivalents. Using it is as simple using as using `AngelHttp`, or any other
-driver:
+Angel 2 brought about the generic `Driver` class, which is implemented by `AngelHttp`, `AngelHttp2`, `AngelGopher`, etc., and provides the core infrastructure for request handling in Angel.
+
+`AngelShelf` is an implementation that wraps shelf requests and responses in their Angel equivalents. Using it is as simple using as using `AngelHttp`, or any other driver:
 
 ```dart
 // Create an AngelShelf driver.

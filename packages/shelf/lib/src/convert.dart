@@ -1,16 +1,16 @@
 import 'dart:async';
 import 'dart:io';
-import 'package:angel_framework/angel_framework.dart';
+import 'package:angel3_framework/angel3_framework.dart';
 import 'package:path/path.dart' as p;
 import 'package:shelf/shelf.dart' as shelf;
 import 'package:stream_channel/stream_channel.dart';
 
 /// Creates a [shelf.Request]  analogous to the input [req].
 ///
-/// The request's `context` will contain [req.container] as `angel_shelf.container`, as well as
+/// The request's `context` will contain [req.container] as `angel3_shelf.container`, as well as
 /// the provided [context], if any.
 ///
-/// The context will also have the original request available as `angel_shelf.request`.
+/// The context will also have the original request available as `angel3_shelf.request`.
 ///
 /// If you want to read the request body, you *must* set `keepRawRequestBuffers` to `true`
 /// on your application instance.
@@ -64,8 +64,8 @@ Future<shelf.Request> convertRequest(RequestContext req, ResponseContext res,
       handlerPath: handlerPath,
       url: url,
       body: req.body,
-      context: {'angel_shelf.request': req}
-        ..addAll({'angel_shelf.container': req.container!})
+      context: {'angel3_shelf.request': req}
+        ..addAll({'angel3_shelf.container': req.container!})
         ..addAll(context ?? {}),
       onHijack: onHijack);
 }

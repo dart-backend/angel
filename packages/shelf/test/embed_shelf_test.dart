@@ -1,13 +1,13 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_framework/http.dart';
-import 'package:angel_shelf/angel_shelf.dart';
-import 'package:angel_test/angel_test.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_framework/http.dart';
+import 'package:angel3_shelf/angel3_shelf.dart';
+import 'package:angel3_test/angel3_test.dart';
 import 'package:charcode/charcode.dart';
 import 'package:http/http.dart' as http;
 import 'package:logging/logging.dart';
-import 'package:pretty_logging/pretty_logging.dart';
+import 'package:angel3_pretty_logging/angel3_pretty_logging.dart';
 import 'package:shelf/shelf.dart' as shelf;
 import 'package:stream_channel/stream_channel.dart';
 import 'package:test/test.dart';
@@ -50,7 +50,7 @@ void main() {
       }
     });
 
-    var logger = Logger.detached('angel_shelf')..onRecord.listen(prettyLog);
+    var logger = Logger.detached('angel3_shelf')..onRecord.listen(prettyLog);
     var app = Angel(logger: logger);
     var httpDriver = AngelHttp(app);
     app.get('/angel', (req, res) => 'Angel');
