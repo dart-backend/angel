@@ -1,6 +1,6 @@
 import 'package:angel3_orm_test/angel3_orm_test.dart';
 import 'package:logging/logging.dart';
-import 'package:angel3_pretty_logging/angel3_pretty_logging.dart';
+import 'package:belatuk_pretty_logging/belatuk_pretty_logging.dart';
 import 'package:test/test.dart';
 import 'common.dart';
 
