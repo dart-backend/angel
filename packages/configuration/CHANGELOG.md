@@ -1,10 +1,15 @@
 # Change Log
 
+## 4.1.0
+
+* Updated to use `package:belatuk_merge_map`
+* Updated to use `package:belatuk_pretty_logging`
+* Updated linter to `package:lints`
+
 ## 4.0.1
 
 * Updated README
-* Fixed unit tests
-* All 8 unit test passed
+* All 8 unit tests passed
 
 ## 4.0.0
 

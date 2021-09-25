@@ -1,5 +1,5 @@
 import 'package:angel3_framework/angel3_framework.dart';
-import 'package:angel3_code_buffer/angel3_code_buffer.dart';
+import 'package:belatuk_code_buffer/belatuk_code_buffer.dart';
 import 'package:file/file.dart';
 import 'package:jael3/jael3.dart';
 import 'package:jael3_preprocessor/jael3_preprocessor.dart';
@@ -17,7 +17,7 @@ AngelConfigurer jael(Directory viewsDirectory,
     bool cacheViews = false,
     Iterable<Patcher>? patch,
     bool asDSX = false,
-    CodeBuffer createBuffer()?}) {
+    CodeBuffer Function()? createBuffer}) {
   var cache = <String, Document?>{};
   fileExtension ??= '.jael';
   createBuffer ??= () => CodeBuffer();

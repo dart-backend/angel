@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_configuration/angel3_configuration.dart';
-import 'package:angel3_pretty_logging/angel3_pretty_logging.dart';
+import 'package:belatuk_pretty_logging/belatuk_pretty_logging.dart';
 import 'package:file/local.dart';
 import 'package:io/ansi.dart';
 import 'package:logging/logging.dart';

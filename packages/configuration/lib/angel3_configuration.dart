@@ -5,7 +5,7 @@ import 'dart:async';
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:dotenv/dotenv.dart' as dotenv;
 import 'package:file/file.dart';
-import 'package:angel3_merge_map/angel3_merge_map.dart';
+import 'package:belatuk_merge_map/belatuk_merge_map.dart';
 import 'package:yaml/yaml.dart';
 
 Future<void> _loadYamlFile(Map map, File yamlFile, Map<String, String> env,

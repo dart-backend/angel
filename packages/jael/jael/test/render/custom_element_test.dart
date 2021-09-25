@@ -1,5 +1,5 @@
 import 'dart:math';
-import 'package:angel3_code_buffer/angel3_code_buffer.dart';
+import 'package:belatuk_code_buffer/belatuk_code_buffer.dart';
 import 'package:jael3/jael3.dart' as jael;
 import 'package:belatuk_symbol_table/belatuk_symbol_table.dart';
 import 'package:test/test.dart';

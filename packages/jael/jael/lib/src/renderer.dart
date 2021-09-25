@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'package:angel3_code_buffer/angel3_code_buffer.dart';
+import 'package:belatuk_code_buffer/belatuk_code_buffer.dart';
 import 'package:collection/collection.dart' show IterableExtension;
 //import 'package:source_span/source_span.dart';
 import 'package:belatuk_symbol_table/belatuk_symbol_table.dart';

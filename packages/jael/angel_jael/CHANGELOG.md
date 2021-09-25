@@ -1,9 +1,13 @@
 # Change Log
 
+## 4.2.0
+
+* Updated to use `package:belatuk_code_buffer`
+
 ## 4.1.0
 
-* Updated to use `belatuk_symbol_table` package
-* Upgraded from `pendantic` to `lints` linter
+* Updated to use `package:belatuk_symbol_table`
+* Updated linter to `package:lints`
 
 ## 4.0.0
 

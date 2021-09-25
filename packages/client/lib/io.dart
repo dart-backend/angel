@@ -3,7 +3,7 @@ library angel_client.cli;
 
 import 'dart:async';
 import 'package:http/http.dart' as http;
-import 'package:angel3_json_god/angel3_json_god.dart' as god;
+import 'package:belatuk_json_serializer/belatuk_json_serializer.dart' as god;
 import 'package:path/path.dart' as p;
 import 'package:logging/logging.dart';
 import 'angel3_client.dart';

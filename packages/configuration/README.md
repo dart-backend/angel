@@ -1,10 +1,9 @@
 # Angel3 Configuration Loader
 
-[![version](https://img.shields.io/badge/pub-v4.0.1-brightgreen)](https://pub.dev/packages/angel3_configuration)
+![Pub Version (including pre-releases)](https://img.shields.io/pub/v/angel3_configuration?include_prereleases)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 [![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
-
-[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/configuration/LICENSE)
+[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/master/packages/configuration/LICENSE)
 
 Automatic YAML configuration loader for [Angel3 framework](https://pub.dev/packages/angel3)
 
