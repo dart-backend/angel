@@ -8,7 +8,7 @@ environment:
 dependencies:
   analyzer: ^2.0.0
   angel3_model: ^3.0.0
-  angel3_serialize: ^4.0.0
+  angel3_serialize: ^4.1.0
   belatuk_code_buffer: ^3.0.0
   build: ^2.0.1
   build_config: ^1.0.0
