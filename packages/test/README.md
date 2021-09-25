@@ -1,24 +1,15 @@
 # Angel3 Testing Library
 
-[![version](https://img.shields.io/badge/pub-v4.0.3-brightgreen)](https://pub.dartlang.org/packages/angel3_test)
+![Pub Version (including pre-releases)](https://img.shields.io/pub/v/angel3_test?include_prereleases)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 [![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
-
-[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/test/LICENSE)
+[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/master/packages/test/LICENSE)
 
 Testing utility library for the Angel3 framework.
 
 ## TestClient
 
-The `TestClient` class is a custom `angel3_client` that sends mock requests to your server.
-This means that you will not have to bind your server to HTTP to run.
-Plus, it is an `angel3_client`, and thus supports services and other goodies.
-
-The `TestClient` also supports WebSockets. WebSockets cannot be mocked (yet!) within this library,
-so calling the `websocket()` function will also bind your server to HTTP, if it is not already listening.
-
-The return value is a `WebSockets` client instance
-(from [`package:angel3_websocket`](https://github.com/dukefirehawk/angel/tree/angel3/packages/websocket));
+The `TestClient` class is a custom `angel3_client` that sends mock requests to your server. This means that you will not have to bind your server to HTTP to run. Plus, it is an `angel3_client`, and thus supports services and other goodies. The `TestClient` also supports WebSockets. WebSockets cannot be mocked (yet!) within this library, so calling the `websocket()` function will also bind your server to HTTP, if it is not already listening. The return value is a `WebSockets` client instance (from [`package:angel3_websocket`](https://github.com/dukefirehawk/angel/tree/angel3/packages/websocket));
 
 ```dart
 var ws = await client.websocket('/ws');
@@ -30,11 +21,10 @@ ws.onData.listen(...);
 
 ## Matchers
 
-Several `Matcher`s are bundled with this package, and run on any `package:http` `Response`,
-not just those returned by Angel.
+Several `Matcher`s are bundled with this package, and run on any `package:http` `Response`, not just those returned by Angel.
 
 ```dart
-test('foo', () async {
+void test('foo', () async {
     var res = await client.get('/foo');
     expect(res, allOf([
         isJson({'foo': 'bar'}),
@@ -49,18 +39,14 @@ test('foo', () async {
     ]));
 });
 
-test('error', () async {
+void test('error', () async {
     var res = await client.get('/error');
     expect(res, isAngelHttpException());
     expect(res, isAngelHttpException(statusCode: 404, message: ..., errors: [...])) // Optional
 });
 ```
 
-`hasValidBody` is one of the most powerful `Matcher`s in this library, because it allows you to validate a JSON body against a [validation schema](https://github.com/dukefirehawk/angel/tree/angel3/packages/validate).
-
-Angel provides a comprehensive validation library that integrates tightly with the very `matcher` package that you already use for testing.
-
-[`package:angel3_validate`](https://github.com/dukefirehawk/angel/tree/angel3/packages//validate)
+`hasValidBody` is one of the most powerful `Matcher`s in this library, because it allows you to validate a JSON body against a validation schema. Angel3 provides a comprehensive [validation library](<https://github.com/dukefirehawk/angel/tree/master/packages/validate>) that integrates tightly with the `matcher` package that you already use for testing.
 
 ```dart
 test('validate response', () async {

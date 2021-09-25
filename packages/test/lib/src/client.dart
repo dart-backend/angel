@@ -106,7 +106,9 @@ class TestClient extends client.BaseAngelClient {
     if (authToken?.isNotEmpty == true) {
       rq.headers.add('authorization', 'Bearer $authToken');
     }
-    rq..cookies.addAll(cookies)..session.addAll(session);
+    rq
+      ..cookies.addAll(cookies)
+      ..session.addAll(session);
 
     await request.finalize().pipe(rq);
 
