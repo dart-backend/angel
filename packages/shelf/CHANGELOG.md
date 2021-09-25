@@ -1,5 +1,9 @@
 # Change Log
 
+## 3.0.0-dev.2
+
+* Updated to use `package:belatuk_pretty_logging`
+
 ## 3.0.0-dev.1
 
 * Migrated to support Dart SDK 2.12.x NNBD

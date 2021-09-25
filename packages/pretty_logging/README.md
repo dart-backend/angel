@@ -6,6 +6,8 @@
 
 [![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/pretty_logging/LICENSE)
 
+**DEPRECATED: Replaced by [`belatuk_pretty_logging`](https://pub.dartlang.org/packages/belatuk_pretty_logging) package**
+
 Standalone helper for colorful logging output, using pkg:io AnsiCode.
 
 ## Installation

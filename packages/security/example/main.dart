@@ -2,7 +2,7 @@ import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_framework/http.dart';
 import 'package:angel3_security/angel3_security.dart';
 import 'package:logging/logging.dart';
-import 'package:angel3_pretty_logging/angel3_pretty_logging.dart';
+import 'package:belatuk_pretty_logging/belatuk_pretty_logging.dart';
 
 void main() async {
   // Logging boilerplate.

@@ -3,7 +3,7 @@ import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_framework/http.dart';
 import 'package:angel3_shelf/angel3_shelf.dart';
 import 'package:logging/logging.dart';
-import 'package:angel3_pretty_logging/angel3_pretty_logging.dart';
+import 'package:belatuk_pretty_logging/belatuk_pretty_logging.dart';
 import 'package:shelf_static/shelf_static.dart';
 
 void main() async {

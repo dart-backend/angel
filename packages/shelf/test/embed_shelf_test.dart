@@ -7,7 +7,7 @@ import 'package:angel3_test/angel3_test.dart';
 import 'package:charcode/charcode.dart';
 import 'package:http/http.dart' as http;
 import 'package:logging/logging.dart';
-import 'package:angel3_pretty_logging/angel3_pretty_logging.dart';
+import 'package:belatuk_pretty_logging/belatuk_pretty_logging.dart';
 import 'package:shelf/shelf.dart' as shelf;
 import 'package:stream_channel/stream_channel.dart';
 import 'package:test/test.dart';
