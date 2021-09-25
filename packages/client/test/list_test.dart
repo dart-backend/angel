@@ -1,10 +1,11 @@
+import 'dart:async';
+
 import 'package:async/async.dart';
 import 'dart:io';
 import 'package:angel3_client/io.dart' as c;
 import 'package:angel3_framework/angel3_framework.dart' as s;
 import 'package:angel3_framework/http.dart' as s;
 import 'package:angel3_container/mirrors.dart';
-import 'package:pedantic/pedantic.dart';
 import 'package:test/test.dart';
 
 void main() {
