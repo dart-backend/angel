@@ -9,7 +9,7 @@ import 'package:angel3_auth/angel3_auth.dart';
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_framework/http.dart';
 import 'package:angel3_framework/http2.dart';
-import 'package:angel3_merge_map/angel3_merge_map.dart';
+import 'package:belatuk_merge_map/belatuk_merge_map.dart';
 import 'package:stream_channel/stream_channel.dart';
 import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';

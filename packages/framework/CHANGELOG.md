@@ -1,5 +1,11 @@
 # Change Log
 
+## 4.2.0
+
+* Updated to use `package:belatuk_combinator`
+* Updated to use `package:belatuk_merge_map`
+* Updated linter to `package:lints`
+
 ## 4.1.3
 
 * Updated README

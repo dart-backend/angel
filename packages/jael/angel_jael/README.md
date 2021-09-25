@@ -1,11 +1,11 @@
 # Angel3 Jael
 
-[![version](https://img.shields.io/badge/pub-v4.1.0-brightgreen)](https://pub.dev/packages/angel3_jael)
+![Pub Version (including pre-releases)](https://img.shields.io/pub/v/angel3_jael?include_prereleases)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 [![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
-[![License](https://img.shields.io/github/license/dart-backend/belatuk-common-utilities)](https://github.com/dukefirehawk/angel/tree/angel3/packages/jael/angel_jael/LICENSE)
+[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/master/packages/jael/angel_jael/LICENSE)
 
-[Angel 3](https://github.com/dukefirehawk/angel/tree/angel3) support for [Jael 3](https://github.com/dukefirehawk/angel/tree/angel3/packages/jael/jael).
+[Angel 3](https://pub.dev/packages/angel3_framework) support for [Jael 3](https://pub.dev/packages/jael3).
 
 ## Installation
 
@@ -13,7 +13,7 @@ In your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  angel3_jael: ^4.1.0
+  angel3_jael: ^4.2.0
 ```
 
 ## Usage

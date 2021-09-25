@@ -6,7 +6,7 @@ import 'dart:convert';
 import 'package:angel3_container/angel3_container.dart';
 import 'package:angel3_http_exception/angel3_http_exception.dart';
 import 'package:angel3_route/angel3_route.dart';
-import 'package:angel3_combinator/angel3_combinator.dart';
+import 'package:belatuk_combinator/belatuk_combinator.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:logging/logging.dart';
 import 'package:mime/mime.dart';

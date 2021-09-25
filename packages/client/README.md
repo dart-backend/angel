@@ -1,10 +1,9 @@
 # Angel3 Client
 
-[![version](https://img.shields.io/badge/pub-v4.0.2-brightgreen)](https://pub.dartlang.org/packages/angel3_client)
+![Pub Version (including pre-releases)](https://img.shields.io/pub/v/angel3_client?include_prereleases)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 [![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
-
-[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/client/LICENSE)
+[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/master/packages/client/LICENSE)
 
 A browser, mobile and command line based client that supports querying Angel3 backend.
 
@@ -32,7 +31,7 @@ foo() async {
 }
 ```
 
-The CLI client also supports reflection via `angel3_json_god`. There is no need to work with Maps; you can use the same class on the client and the server.
+The CLI client also supports reflection via `package:belatuk_json_serializer`. There is no need to work with Maps; you can use the same class on the client and the server.
 
 ```dart
 class Todo extends Model {

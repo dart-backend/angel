@@ -2,7 +2,7 @@ import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_framework/http.dart';
 import 'package:angel3_mongo/angel3_mongo.dart';
 import 'package:http/http.dart' as http;
-import 'package:angel3_json_god/angel3_json_god.dart' as god;
+import 'package:belatuk_json_serializer/belatuk_json_serializer.dart' as god;
 import 'package:mongo_dart/mongo_dart.dart';
 import 'package:test/test.dart';
 

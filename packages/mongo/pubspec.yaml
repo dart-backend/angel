@@ -1,15 +1,21 @@
 name: angel3_mongo
-version: 3.0.0
+version: 3.1.0
 description: MongoDB-enabled services for the Angel framework. Well-tested.
-homepage: https://github.com/dukefirehawk/angel/tree/angel3/packages/mongo
+homepage: https://angel3-framework.web.app/
+repository: https://github.com/dukefirehawk/angel/tree/master/packages/mongo
 environment:
   sdk: '>=2.12.0 <3.0.0'
 dependencies:
-  angel3_framework: ^4.0.0
-  angel3_json_god: ^4.0.0
-  angel3_merge_map: ^2.0.0
+  angel3_framework: ^4.2.0
+  belatuk_json_serializer: ^5.0.0
+  belatuk_merge_map: ^3.0.0
   mongo_dart: ^0.7.0
 dev_dependencies:
   http: ^0.13.0
-  pedantic: ^1.11.0
-  test: ^1.17.0
+  test: ^1.17.5
+  lints: ^1.0.0
+#dependency_overrides:
+#  angel3_framework:
+#    path: ../framework
+#  angel3_route:
+#    path: ../route

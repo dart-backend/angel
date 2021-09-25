@@ -3,7 +3,7 @@ import 'dart:convert';
 import 'dart:io' show stderr, Cookie;
 import 'package:angel3_http_exception/angel3_http_exception.dart';
 import 'package:angel3_route/angel3_route.dart';
-import 'package:angel3_combinator/angel3_combinator.dart';
+import 'package:belatuk_combinator/belatuk_combinator.dart';
 import 'package:logging/logging.dart';
 import 'package:stack_trace/stack_trace.dart';
 import 'package:tuple/tuple.dart';

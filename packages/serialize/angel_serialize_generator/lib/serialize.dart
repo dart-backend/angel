@@ -126,7 +126,7 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
           b
             ..name = 'model'
             ..type = TypeReference((b) => b
-              ..symbol = '$originalClassName'
+              ..symbol = originalClassName
               ..isNullable = true);
         }));
 

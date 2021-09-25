@@ -1,41 +1,35 @@
-# angel3_route
-[![version](https://img.shields.io/badge/pub-v5.0.1-brightgreen)](https://pub.dartlang.org/packages/angel3_route)
+# Angel3 Route
+
+![Pub Version (including pre-releases)](https://img.shields.io/pub/v/angel3_route?include_prereleases)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 [![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
-
-[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/route/LICENSE)
-
+[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/master/packages/route/LICENSE)
 
 A powerful, isomorphic routing library for Dart.
 
-`angel3_route` exposes a routing system that takes the shape of a tree. This tree structure
-can be easily navigated, in a fashion somewhat similar to a filesystem. The `Router` API
-is a very straightforward interface that allows for your code to take a shape similar to
-the route tree. Users of Laravel and Express will be very happy.
+`angel3_route` exposes a routing system that takes the shape of a tree. This tree structure can be easily navigated, in a fashion somewhat similar to a filesystem. The `Router` API is a very straightforward interface that allows for your code to take a shape similar to the route tree. Users of Laravel and Express will be very happy.
 
-`angel3_route` does not require the use of [Angel](https://github.com/dukefirehawk/angel),
-and has minimal dependencies. Thus, it can be used in any application, regardless of
-framework. This includes Web apps, Flutter apps, CLI apps, and smaller servers which do
-not need all the features of the Angel framework.
+`angel3_route` does not require the use of [Angel 3](https://pub.dev/packages/angel3_framework), and has minimal dependencies. Thus, it can be used in any application, regardless of framework. This includes Web apps, Flutter apps, CLI apps, and smaller servers which do not need all the features of the Angel framework.
 
-# Contents
+## Contents
 
-* [Examples](#examples)
-    * [Routing](#routing)
-    * [Tree Hierarchy and Path Resolution](#hierarchy)
-* [In the Browser](#in-the-browser)
-* [Route State](#route-state)
-* [Route Parameters](#route-parameters)
-    
-# Examples
+- [Angel3 Route](#angel3-route)
+  - [Contents](#contents)
+  - [Examples](#examples)
+    - [Routing](#routing)
+    - [Hierarchy](#hierarchy)
+  - [In the Browser](#in-the-browser)
+  - [Route State](#route-state)
+  - [Route Parameters](#route-parameters)
 
-## Routing
-If you use [Angel](https://github.com/dukefirehawk/angel), every `Angel` instance is
-a `Router` in itself.
+## Examples
+
+### Routing
+
+If you use [Angel 3](https://pub.dev/packages/angel3_framework), every `Angel` instance is a `Router` in itself.
 
 ```dart
-
-main() {
+void main() {
   final router = Router();
   
   router.get('/users', () {});
@@ -73,14 +67,12 @@ main() {
 }
 ```
 
-The default `Router` does not give any notification of routes being changed, because
-there is no inherent stream of URL's for it to listen to. This is good, because a server
-needs a lot of flexibility with which to handle requests.
+The default `Router` does not give any notification of routes being changed, because there is no inherent stream of URL's for it to listen to. This is good, because a server needs a lot of flexibility with which to handle requests.
 
-## Hierarchy
+### Hierarchy
 
 ```dart
-main() {
+void main() {
   final router = Router();
   
   router
@@ -101,20 +93,19 @@ main() {
 
 See [the tests](test/route/no_params.dart) for good examples.
 
-# In the Browser
-Supports both hashed routes and pushState. The `BrowserRouter` interface exposes
-a `Stream<RoutingResult> onRoute`, which can be listened to for changes. It will fire `"NULL"`
-whenever no route is matched.
+## In the Browser
 
-`angel3_route` will also automatically intercept `<a>` elements and redirect them to
-your routes.
+Supports both hashed routes and pushState. The `BrowserRouter` interface exposes a `Stream<RoutingResult> onRoute`, which can be listened to for changes. It will fire `"NULL"` whenever no route is matched.
+
+`angel3_route` will also automatically intercept `<a>` elements and redirect them to your routes.
 
 To prevent this for a given anchor, do any of the following:
-  * Do not provide an `href`
-  * Provide a `download` or `target` attribute on the element
-  * Set `rel="external"`
+
+* Do not provide an `href`
+* Provide a `download` or `target` attribute on the element
+* Set `rel="external"`
   
-# Route State
+## Route State
 
 ```dart
 main() {
@@ -130,12 +121,11 @@ main() {
 }
 ```
 
-For applications where you need to access a chain of handlers, consider using
-`onResolve` instead. You can see an example in `web/shared/basic.dart`.
+For applications where you need to access a chain of handlers, consider using `onResolve` instead. You can see an example in `web/shared/basic.dart`.
 
-# Route Parameters
-Routes can have parameters, as seen in the above examples.
-Use `allParams` in a `RoutingResult` to get them as a nice `Map`:
+## Route Parameters
+
+Routes can have parameters, as seen in the above examples. Use `allParams` in a `RoutingResult` to get them as a nice `Map`:
 
 ```dart
 var router = Router();

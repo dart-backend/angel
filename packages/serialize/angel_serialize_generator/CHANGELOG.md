@@ -1,10 +1,14 @@
 # Change Log
 
+## 4.3.0
+
+* Updated to use  `package:belatuk_code_buffer`
+
 ## 4.2.0
 
 * Fixed `toMap` method generation for non nullable Map
 * Fixed `fromMap` method generation for non nullable Map
-* Upgraded from `pendantic` to `lints` linter
+* Updated linter to `package:lints`
 
 ## 4.1.2
 

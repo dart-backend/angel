@@ -10,7 +10,7 @@ import 'package:analyzer/dart/element/type.dart';
 import 'package:angel3_model/angel3_model.dart';
 import 'package:angel3_serialize/angel3_serialize.dart';
 import 'package:build/build.dart';
-import 'package:angel3_code_buffer/angel3_code_buffer.dart';
+import 'package:belatuk_code_buffer/belatuk_code_buffer.dart';
 import 'package:code_builder/code_builder.dart';
 import 'package:path/path.dart' as p;
 import 'package:recase/recase.dart';

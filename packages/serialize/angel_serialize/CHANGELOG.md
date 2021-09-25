@@ -1,5 +1,10 @@
 # Change Log
 
+## 4.1.0
+
+* Updated README
+* Updated linter to `package:lints`
+
 ## 4.0.1
 
 * Updated README

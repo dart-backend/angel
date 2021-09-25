@@ -1,20 +1,20 @@
 name: angel3_client
-version: 4.0.2
+version: 4.1.0
 description: A browser, mobile and command line based client that supports querying Angel3 servers
 homepage: https://angel3-framework.web.app/
-repository: https://github.com/dukefirehawk/angel/tree/angel3/packages/client
+repository: https://github.com/dukefirehawk/angel/tree/master/packages/client
 environment:
   sdk: '>=2.12.0 <3.0.0'
 dependencies:
   angel3_http_exception: ^3.0.0
-  angel3_json_god: ^4.0.0
+  belatuk_json_serializer: ^5.0.0
   collection: ^1.15.0
   http: ^0.13.1
   meta: ^1.3.0
   path: ^1.8.0
   logging: ^1.0.0
 dev_dependencies:
-  angel3_framework: ^4.0.0
+  angel3_framework: ^4.2.0
   angel3_model: ^3.0.0
   angel3_mock_request: ^2.0.0
   angel3_container: ^3.0.0
@@ -22,5 +22,10 @@ dev_dependencies:
   async: ^2.6.1
   build_runner: ^1.12.2
   build_web_compilers: ^2.16.5
-  pedantic: ^1.11.0
-  test: ^1.17.4
+  test: ^1.17.5
+  lints: ^1.0.0
+#dependency_overrides:
+#  angel3_framework:
+#    path: ../framework
+#  angel3_route:
+#    path: ../route
