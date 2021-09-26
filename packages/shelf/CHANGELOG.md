@@ -7,7 +7,7 @@
 ## 3.0.0-dev.1
 
 * Migrated to support Dart SDK 2.12.x NNBD
-* Upgraded from `pendantic` to `lints` linter
+* Updated linter to `package:lints`
 
 ## 2.1.0
 
