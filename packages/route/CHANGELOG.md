@@ -1,5 +1,10 @@
 # Change Log
 
+## 5.2.0
+
+* Updated `package:build_runner`
+* Updated `package:build_web_compiler`
+
 ## 5.1.0
 
 * Updated to use `package:belatuk_combinator`
