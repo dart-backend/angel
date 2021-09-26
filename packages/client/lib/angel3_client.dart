@@ -19,7 +19,7 @@ typedef AngelDeserializer<T> = T? Function(dynamic x);
 
 /// Represents an Angel server that we are querying.
 abstract class Angel extends http.BaseClient {
-  final _log = Logger('Angel');
+  //final _log = Logger('Angel');
 
   /// A mutable member. When this is set, it holds a JSON Web Token
   /// that is automatically attached to every request sent.

@@ -1,5 +1,5 @@
-import 'package:angel_container/angel_container.dart';
-import 'package:angel_container_generator/angel_container_generator.dart';
+import 'package:angel3_container/angel3_container.dart';
+import 'package:angel3_container_generator/angel3_container_generator.dart';
 
 @GlobalQuantifyCapability(
     r'^dart\.core\.(Iterable|List|String|int|Object)', contained)
@@ -11,11 +11,11 @@ import 'reflector_test.reflectable.dart';
 void main() {
   initializeReflectable();
   var reflector = const GeneratedReflector();
-  Container container;
+  late Container container;
 
   setUp(() {
-    container = new Container(reflector);
-    container.registerSingleton(new Artist(name: 'Stevie Wonder'));
+    container = Container(reflector);
+    container.registerSingleton(Artist(name: 'Stevie Wonder'));
   });
 
   group('reflectClass', () {
@@ -27,7 +27,7 @@ void main() {
   });
 
   test('inject constructor parameters', () {
-    var album = container.make<Album>();
+    var album = container.make<Album>()!;
     print(album.title);
     expect(album.title, 'flowers by stevie wonder');
   });
@@ -39,16 +39,16 @@ void main() {
 void returnVoidFromAFunction(int x) {}
 
 void testReflector(Reflector reflector) {
-  var blaziken = new Pokemon('Blaziken', PokemonType.fire);
-  Container container;
+  var blaziken = Pokemon('Blaziken', PokemonType.fire);
+  late Container container;
 
   setUp(() {
-    container = new Container(reflector);
+    container = Container(reflector);
     container.registerSingleton(blaziken);
   });
 
   test('get field', () {
-    var blazikenMirror = reflector.reflectInstance(blaziken);
+    var blazikenMirror = reflector.reflectInstance(blaziken)!;
     expect(blazikenMirror.getField('type').reflectee, blaziken.type);
   });
 
@@ -93,12 +93,12 @@ void testReflector(Reflector reflector) {
   });
 
   test('constructor injects singleton', () {
-    var lower = container.make<LowerPokemon>();
+    var lower = container.make<LowerPokemon>()!;
     expect(lower.lowercaseName, blaziken.name.toLowerCase());
   });
 
   test('newInstance works', () {
-    var type = container.reflector.reflectType(Pokemon);
+    var type = container.reflector.reflectType(Pokemon)!;
     var instance =
         type.newInstance('changeName', [blaziken, 'Charizard']).reflectee
             as Pokemon;
@@ -109,7 +109,7 @@ void testReflector(Reflector reflector) {
 
   test('isAssignableTo', () {
     var pokemonType = container.reflector.reflectType(Pokemon);
-    var kantoPokemonType = container.reflector.reflectType(KantoPokemon);
+    var kantoPokemonType = container.reflector.reflectType(KantoPokemon)!;
 
     expect(kantoPokemonType.isAssignableTo(pokemonType), true);
     expect(
@@ -136,7 +136,7 @@ class Pokemon {
   Pokemon(this.name, this.type);
 
   factory Pokemon.changeName(Pokemon other, String name) {
-    return new Pokemon(name, other.type);
+    return Pokemon(name, other.type);
   }
 
   @override
@@ -153,12 +153,12 @@ enum PokemonType { water, fire, grass, ice, poison, flying }
 
 @contained
 class Artist {
-  final String name;
+  final String? name;
 
   Artist({this.name});
 
   String get lowerName {
-    return name.toLowerCase();
+    return name!.toLowerCase();
   }
 }
 
@@ -178,5 +178,5 @@ class AlbumLength {
 
   AlbumLength(this.artist, this.album);
 
-  int get totalLength => artist.name.length + album.title.length;
+  int get totalLength => artist.name!.length + album.title.length;
 }
