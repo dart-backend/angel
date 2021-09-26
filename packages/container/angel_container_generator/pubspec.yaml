@@ -3,7 +3,6 @@ version: 3.0.0-beta.1
 description: Codegen support for using pkg:reflectable with pkg:angel3_container.
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dukefirehawk/angel/tree/master/packages/container/angel_container_generator
-publish_to: none
 environment:
   sdk: '>=2.12.0 <3.0.0'
 dependencies:
