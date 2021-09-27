@@ -6,7 +6,7 @@ repository: https://github.com/dukefirehawk/angel/tree/angel3/packages/productio
 environment:
   sdk: '>=2.12.0 <3.0.0'
 dependencies:
-  angel3_container: ^3.0.0
+  angel3_container: ^3.1.0
   angel3_framework: ^4.1.0
   belatuk_pub_sub: ^4.0.0
   args: ^2.1.0
@@ -14,3 +14,6 @@ dependencies:
   logging: ^1.0.1
 dev_dependencies:
   lints: ^1.0.1
+#dependency_overrides:
+# angel3_container:
+#   path: ../container/angel_container

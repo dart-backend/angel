@@ -12,11 +12,14 @@ dependencies:
   angel3_validate: ^4.0.0
   angel3_websocket: ^4.1.0
   angel3_mock_request: ^2.0.0
-  angel3_container: ^3.0.0
+  angel3_container: ^3.1.0
   http: ^0.13.1
   matcher: ^0.12.10
   web_socket_channel: ^2.0.0
 dev_dependencies: 
   test: ^1.17.5
   lints: ^1.0.0
+#dependency_overrides:
+#  angel3_container:
+#    path: ../container/angel_container
   

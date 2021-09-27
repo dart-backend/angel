@@ -235,7 +235,7 @@ class AngelAuth<User> {
         }
       }
 
-      var user = await deserializer(token.userId as Object);
+      var user = await deserializer(token.userId);
       _apply(req, res, token, user);
       return _AuthResult(user, token);
     }
@@ -332,7 +332,7 @@ class AngelAuth<User> {
           _addProtectedCookie(res, 'token', token.serialize(_hs256));
         }
 
-        final data = await deserializer(token.userId as Object);
+        final data = await deserializer(token.userId);
         return {'data': data, 'token': token.serialize(_hs256)};
       }
     } catch (e) {
@@ -458,7 +458,7 @@ class AngelAuth<User> {
 
   /// Log a user in on-demand.
   Future login(AuthToken token, RequestContext req, ResponseContext res) async {
-    var user = await deserializer(token.userId as Object);
+    var user = await deserializer(token.userId);
     _apply(req, res, token, user);
     _onLogin.add(user);
 
@@ -468,7 +468,8 @@ class AngelAuth<User> {
   }
 
   /// Log a user in on-demand.
-  Future loginById(userId, RequestContext req, ResponseContext res) async {
+  Future loginById(
+      dynamic userId, RequestContext req, ResponseContext res) async {
     var user = await deserializer(userId as Object);
     var token =
         AuthToken(userId: userId, lifeSpan: _jwtLifeSpan, ipAddress: req.ip);

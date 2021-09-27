@@ -56,7 +56,8 @@ abstract class ReflectedType {
 
   ReflectedInstance newInstance(
       String constructorName, List positionalArguments,
-      [Map<String, dynamic>? namedArguments, List<Type>? typeArguments]);
+      [Map<String, dynamic> namedArguments = const {},
+      List<Type> typeArguments = const []]);
 
   bool isAssignableTo(ReflectedType? other);
 }
@@ -113,12 +114,13 @@ abstract class ReflectedFunction {
   final String name;
   final List<ReflectedTypeParameter> typeParameters;
   final List<ReflectedInstance> annotations;
-  final ReflectedType returnType;
+  final ReflectedType? returnType;
   final List<ReflectedParameter> parameters;
   final bool isGetter, isSetter;
 
   const ReflectedFunction(this.name, this.typeParameters, this.annotations,
-      this.returnType, this.parameters, this.isGetter, this.isSetter);
+      this.parameters, this.isGetter, this.isSetter,
+      {this.returnType});
 
   @override
   int get hashCode => hashObjects([

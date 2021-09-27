@@ -34,7 +34,7 @@ class AuthToken {
   String? ipAddress;
   late DateTime issuedAt;
   num lifeSpan;
-  var userId;
+  dynamic userId;
   Map<String, dynamic> payload = {};
 
   AuthToken(

@@ -15,7 +15,7 @@ class EmptyReflector extends Reflector {
   @override
   String? getName(Symbol symbol) {
     return _symbolNames.putIfAbsent(
-        symbol, () => symbolRegex.firstMatch(symbol.toString())!.group(1));
+        symbol, () => symbolRegex.firstMatch(symbol.toString())?.group(1));
   }
 
   @override
@@ -75,7 +75,8 @@ class _EmptyReflectedType extends ReflectedType {
   @override
   ReflectedInstance newInstance(
       String constructorName, List positionalArguments,
-      [Map<String, dynamic>? namedArguments, List<Type>? typeArguments]) {
+      [Map<String, dynamic> namedArguments = const {},
+      List<Type> typeArguments = const []]) {
     throw UnsupportedError(
         'Types reflected via an EmptyReflector cannot be instantiated.');
   }
@@ -113,10 +114,10 @@ class _EmptyReflectedFunction extends ReflectedFunction {
             '(empty)',
             const <ReflectedTypeParameter>[],
             const <ReflectedInstance>[],
-            const _EmptyReflectedType(),
             const <ReflectedParameter>[],
             false,
-            false);
+            false,
+            returnType: const _EmptyReflectedType());
 
   @override
   ReflectedInstance invoke(Invocation invocation) {
