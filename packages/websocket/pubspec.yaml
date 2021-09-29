@@ -22,7 +22,7 @@ dev_dependencies:
   angel3_model: ^3.1.0
   test: ^1.17.5
   lints: ^1.0.0
-dependency_overrides:
-  angel3_auth:
-    path: ../auth
+#dependency_overrides:
+#  angel3_auth:
+#    path: ../auth
   
