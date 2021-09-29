@@ -1,5 +1,5 @@
 name: angel3_client
-version: 4.1.0
+version: 4.2.0
 description: A browser, mobile and command line based client that supports querying Angel3 servers
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dukefirehawk/angel/tree/master/packages/client
@@ -20,8 +20,8 @@ dev_dependencies:
   angel3_container: ^3.1.0
   angel3_auth: ^4.1.0
   async: ^2.6.1
-  build_runner: ^1.12.2
-  build_web_compilers: ^2.16.5
+  build_runner: ^2.1.2
+  build_web_compilers: ^3.2.1
   test: ^1.17.5
   lints: ^1.0.0
 #dependency_overrides:
