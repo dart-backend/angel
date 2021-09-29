@@ -11,7 +11,7 @@ void main() {
       secureCookies: true,
       cookieDomain: 'SECURE',
       jwtLifeSpan: threeDays.inMilliseconds,
-      serializer: (u) => u,
+      serializer: (u) => u as String,
       deserializer: (u) => u);
 
   setUp(() => defaultCookie = Cookie('a', 'b'));

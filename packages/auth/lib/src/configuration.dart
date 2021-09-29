@@ -46,7 +46,7 @@ class ExternalAuthOptions {
   /// * `client_id`
   /// * `client_secret`
   /// * `redirect_uri`
-  factory ExternalAuthOptions.fromMap(Map map) {
+  factory ExternalAuthOptions.fromMap(Map<String, dynamic> map) {
     var clientId = map['client_id'];
     var clientSecret = map['client_secret'];
     if (clientId == null || clientSecret == null) {
@@ -55,8 +55,8 @@ class ExternalAuthOptions {
     }
 
     return ExternalAuthOptions(
-      clientId: clientId as String,
-      clientSecret: clientSecret as String,
+      clientId: clientId,
+      clientSecret: clientSecret,
       redirectUri: map['redirect_uri'],
       scopes: map['scopes'] is Iterable
           ? ((map['scopes'] as Iterable).map((x) => x.toString()))

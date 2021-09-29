@@ -40,17 +40,17 @@ class AngelWebSocket {
   final StreamController<WebSocketContext> _onDisconnect =
       StreamController<WebSocketContext>.broadcast();
 
-  final Angel? app;
+  final Angel app;
 
   /// If this is not `true`, then all client-side service parameters will be
   /// discarded, other than `params['query']`.
   final bool allowClientParams;
 
   /// An optional whitelist of allowed client origins, or [:null:].
-  final List<String>? allowedOrigins;
+  final List<String> allowedOrigins;
 
   /// An optional whitelist of allowed client protocols, or [:null:].
-  final List<String>? allowedProtocols;
+  final List<String> allowedProtocols;
 
   /// If `true`, then clients can authenticate their WebSockets by sending a valid JWT.
   final bool allowAuth;
@@ -93,8 +93,8 @@ class AngelWebSocket {
       this.synchronizationChannel,
       this.serializer,
       this.deserializer,
-      this.allowedOrigins,
-      this.allowedProtocols}) {
+      this.allowedOrigins = const [],
+      this.allowedProtocols = const []}) {
     serializer ??= json.encode;
     deserializer ??= (params) => params;
   }
@@ -161,7 +161,7 @@ class AngelWebSocket {
         if (e.service.configuration.containsKey('ws:filter')) {
           return e.service.configuration['ws:filter'](e, socket);
         } else if (e.params != null && e.params!.containsKey('ws:filter')) {
-          return e.params!['ws:filter'](e, socket);
+          return e.params?['ws:filter'](e, socket);
         } else {
           return true;
         }
@@ -175,13 +175,15 @@ class AngelWebSocket {
   Future<void> batchEvent(WebSocketEvent event,
       {Function(WebSocketContext socket)? filter, bool notify = true}) async {
     // Default implementation will just immediately fire events
-    _clients.forEach((client) async {
+    for (var client in _clients) {
       dynamic result = true;
-      if (filter != null) result = await filter(client);
+      if (filter != null) {
+        result = await filter(client);
+      }
       if (result == true) {
         client.channel.sink.add((serializer ?? json.encode)(event.toJson()));
       }
-    });
+    }
 
     if (synchronizationChannel != null && notify != false) {
       synchronizationChannel!.sink.add(event);
@@ -200,11 +202,11 @@ class AngelWebSocket {
       return null;
     }
 
-    var service = app!.findService(split[0]);
+    var service = app.findService(split[0]);
 
     if (service == null) {
       socket.sendError(AngelHttpException.notFound(
-          message: 'No service \"${split[0]}\" exists.'));
+          message: 'No service "${split[0]}" exists.'));
       return null;
     }
 
@@ -222,7 +224,7 @@ class AngelWebSocket {
 
     var params = mergeMap<String, dynamic>([
       (((deserializer ?? (params) => params)(action.params))
-          as Map<String, dynamic>?)!,
+          as Map<String, dynamic>),
       {
         'provider': Providers.websocket,
         '__requestctx': socket.request,
@@ -257,7 +259,7 @@ class AngelWebSocket {
             data: await service.remove(action.id, params));
       } else {
         socket.sendError(AngelHttpException.methodNotAllowed(
-            message: 'Method Not Allowed: \"$actionName\"'));
+            message: 'Method Not Allowed: $actionName'));
         return null;
       }
     } catch (e, st) {
@@ -278,7 +280,7 @@ class AngelWebSocket {
         AuthToken token;
 
         token = AuthToken.validate(jwt, auth.hmac);
-        var user = await auth.deserializer(token.userId as Object);
+        var user = await auth.deserializer(token.userId);
         socket.request
           ..container!.registerSingleton<AuthToken>(token)
           ..container!.registerSingleton(user, as: user.runtimeType);
@@ -359,16 +361,16 @@ class AngelWebSocket {
     // Send an error
     if (e is AngelHttpException) {
       socket.sendError(e);
-      app?.logger?.severe(e.message, e.error ?? e, e.stackTrace);
+      app.logger?.severe(e.message, e.error ?? e, e.stackTrace);
     } else if (sendErrors) {
       var err = AngelHttpException(e,
           message: e.toString(), stackTrace: st, errors: [st.toString()]);
       socket.sendError(err);
-      app?.logger?.severe(err.message, e, st);
+      app.logger?.severe(err.message, e, st);
     } else {
       var err = AngelHttpException(e);
       socket.sendError(err);
-      app?.logger?.severe(e.toString(), e, st);
+      app.logger?.severe(e.toString(), e, st);
     }
   }
 
@@ -413,7 +415,7 @@ class AngelWebSocket {
   /// Handles an incoming [WebSocketContext].
   Future<void> handleClient(WebSocketContext socket) async {
     var origin = socket.request.headers?.value('origin');
-    if (allowedOrigins != null && !allowedOrigins!.contains(origin)) {
+    if (allowedOrigins.isNotEmpty && !allowedOrigins.contains(origin)) {
       throw AngelHttpException.forbidden(
           message:
               'WebSocket connections are not allowed from the origin "$origin".');
@@ -479,8 +481,8 @@ class AngelWebSocket {
         throw AngelHttpException.badRequest(
             message: 'Missing `sec-websocket-key` header.');
       } else if (protocol != null &&
-          allowedProtocols != null &&
-          !allowedProtocols!.contains(protocol)) {
+          allowedProtocols.isNotEmpty &&
+          !allowedProtocols.contains(protocol)) {
         throw AngelHttpException.badRequest(
             message: 'Disallowed `sec-websocket-protocol` header "$protocol".');
       } else {

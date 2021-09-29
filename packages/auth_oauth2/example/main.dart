@@ -48,8 +48,8 @@ void main() async {
 
   // Set up the authenticator plugin.
   var auth = AngelAuth<User>(
-      serializer: (user) async => user.id,
-      deserializer: (id) => mappedUserService.read(id.toString()),
+      serializer: (user) async => user.id ?? '',
+      deserializer: (id) => mappedUserService.read(id),
       jwtKey: 'oauth2 example secret',
       allowCookie: false);
   await app.configure(auth.configureServer);
@@ -120,7 +120,7 @@ class User extends Model {
 
   User({this.id, this.githubId});
 
-  static User parse(Map map) =>
+  static User parse(Map<String, dynamic> map) =>
       User(id: map['id'] as String?, githubId: map['github_id'] as int?);
 
   static Map<String, dynamic> serialize(User user) => user.toJson();

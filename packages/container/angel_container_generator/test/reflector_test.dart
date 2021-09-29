@@ -57,24 +57,24 @@ void testReflector(Reflector reflector) {
     var mirror = reflector.reflectFunction(returnVoidFromAFunction);
 
     test('void return type returns dynamic', () {
-      expect(mirror.returnType, reflector.reflectType(dynamic));
+      expect(mirror?.returnType, reflector.reflectType(dynamic));
     });
 
     test('counts parameters', () {
-      expect(mirror.parameters, hasLength(1));
+      expect(mirror?.parameters, hasLength(1));
     });
 
     test('counts types parameters', () {
-      expect(mirror.typeParameters, isEmpty);
+      expect(mirror?.typeParameters, isEmpty);
     });
 
     test('correctly reflects parameter types', () {
-      var p = mirror.parameters[0];
-      expect(p.name, 'x');
-      expect(p.isRequired, true);
-      expect(p.isNamed, false);
-      expect(p.annotations, isEmpty);
-      expect(p.type, reflector.reflectType(int));
+      var p = mirror?.parameters[0];
+      expect(p?.name, 'x');
+      expect(p?.isRequired, true);
+      expect(p?.isNamed, false);
+      expect(p?.annotations, isEmpty);
+      expect(p?.type, reflector.reflectType(int));
     });
   }, skip: 'pkg:reflectable cannot reflect on closures at all (yet)');
   */

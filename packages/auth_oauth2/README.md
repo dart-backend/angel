@@ -1,10 +1,9 @@
 # Angel3 OAuth2 Handler
 
-[![version](https://img.shields.io/badge/pub-v4.0.2-brightgreen)](https://pub.dartlang.org/packages/angel3_auth_oauth2)
-[![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
+![Pub Version (including pre-releases)](https://img.shields.io/pub/v/angel3_auth_oauth2?include_prereleases)
+![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](<https://dart.dev/null-safety>)
 [![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
-
-[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/auth_oauth2/LICENSE)
+[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/master/packages/auth_oauth2/LICENSE)
 
 Angel3 library for authenticating users with remote identity providers via OAuth2, i.e. Facebook, Google, Azure AD, etc.
 

@@ -15,7 +15,7 @@ class ContainedReflectable extends Reflectable {
           newInstanceCapability,
           reflectedTypeCapability,
           typeRelationsCapability,
-          typeCapability,
+          typingCapability,
         );
 }
 
@@ -163,7 +163,8 @@ class _GeneratedReflectedType extends ReflectedType {
   @override
   ReflectedInstance newInstance(
       String constructorName, List positionalArguments,
-      [Map<String, dynamic>? namedArguments, List<Type>? typeArguments]) {
+      [Map<String, dynamic> namedArguments = const {},
+      List<Type> typeArguments = const []]) {
     throw UnsupportedError('Cannot create a new instance of $reflectedType.');
   }
 }
@@ -178,17 +179,14 @@ class _GeneratedReflectedFunction extends ReflectedFunction {
             mirror.simpleName,
             [],
             [],
-            /*           
-            !mirror.isRegularMethod
-                ? null
-                : _GeneratedReflectedType(mirror.returnType),
-*/
-            _GeneratedReflectedType(mirror.returnType),
             mirror.parameters
                 .map((p) => _convertParameter(p, reflector))
                 .toList(),
             mirror.isGetter,
-            mirror.isSetter);
+            mirror.isSetter,
+            returnType: !mirror.isRegularMethod
+                ? null
+                : _GeneratedReflectedType(mirror.returnType));
 
   @override
   List<ReflectedInstance> get annotations => mirror.metadata
@@ -247,8 +245,10 @@ ReflectedParameter _convertParameter(
     ParameterMirror mirror, Reflector reflector) {
   return ReflectedParameter(
       mirror.simpleName,
-      mirror.metadata.map(reflector.reflectInstance).toList()
-          as List<ReflectedInstance>,
+      mirror.metadata
+          .map(reflector.reflectInstance)
+          .whereType<ReflectedInstance>()
+          .toList(),
       reflector.reflectType(mirror.type.reflectedType)!,
       !mirror.isOptional,
       mirror.isNamed);

@@ -179,11 +179,9 @@ class _ReflectedClassMirror extends ReflectedClass {
 }
 
 class _ReflectedDeclarationMirror extends ReflectedDeclaration {
-  @override
-  final String name;
   final dart.MethodMirror mirror;
 
-  _ReflectedDeclarationMirror(this.name, this.mirror)
+  _ReflectedDeclarationMirror(String name, this.mirror)
       : super(name, mirror.isStatic, null);
 
   @override
@@ -217,13 +215,13 @@ class _ReflectedMethodMirror extends ReflectedFunction {
             mirror.metadata
                 .map((mirror) => _ReflectedInstanceMirror(mirror))
                 .toList(),
-            !mirror.returnType.hasReflectedType
-                ? const MirrorsReflector().reflectType(dynamic)
-                : const MirrorsReflector()
-                    .reflectType(mirror.returnType.reflectedType),
             mirror.parameters.map(_reflectParameter).toList(),
             mirror.isGetter,
-            mirror.isSetter);
+            mirror.isSetter,
+            returnType: !mirror.returnType.hasReflectedType
+                ? const MirrorsReflector().reflectType(dynamic)
+                : const MirrorsReflector()
+                    .reflectType(mirror.returnType.reflectedType));
 
   static ReflectedParameter _reflectParameter(dart.ParameterMirror mirror) {
     return ReflectedParameter(
