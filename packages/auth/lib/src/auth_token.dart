@@ -32,41 +32,35 @@ class AuthToken {
       SplayTreeMap.from({'alg': 'HS256', 'typ': 'JWT'});
 
   String? ipAddress;
-  late DateTime issuedAt;
   num lifeSpan;
-  dynamic userId;
+  String userId;
+  late DateTime issuedAt;
   Map<String, dynamic> payload = {};
 
   AuthToken(
       {this.ipAddress,
       this.lifeSpan = -1,
-      this.userId,
+      required this.userId,
       DateTime? issuedAt,
-      Map payload = const {}}) {
+      Map<String, dynamic>? payload}) {
     this.issuedAt = issuedAt ?? DateTime.now();
-    this.payload.addAll(payload.keys
-            .fold({}, ((out, k) => out?..[k.toString()] = payload[k])) ??
-        {});
-    /*
-    this.payload.addAll(payload.keys.fold(
-            {},
-            ((out, k) => out..[k.toString()] = payload[k])
-                as Map<String, dynamic>? Function(
-                    Map<String, dynamic>?, dynamic)) ??
-        {});
-    */
+    if (payload != null) {
+      this.payload.addAll(payload.keys
+              .fold({}, ((out, k) => out?..[k.toString()] = payload[k])) ??
+          {});
+    }
   }
 
   factory AuthToken.fromJson(String jsons) =>
-      AuthToken.fromMap(json.decode(jsons) as Map);
+      AuthToken.fromMap(json.decode(jsons) as Map<String, dynamic>);
 
-  factory AuthToken.fromMap(Map data) {
+  factory AuthToken.fromMap(Map<String, dynamic> data) {
     return AuthToken(
         ipAddress: data['aud'].toString(),
         lifeSpan: data['exp'] as num,
         issuedAt: DateTime.parse(data['iat'].toString()),
         userId: data['sub'],
-        payload: data['pld'] as Map);
+        payload: data['pld']);
   }
 
   factory AuthToken.parse(String jwt) {
@@ -78,7 +72,8 @@ class AuthToken {
     }
 
     var payloadString = decodeBase64(split[1]);
-    return AuthToken.fromMap(json.decode(payloadString) as Map);
+    return AuthToken.fromMap(
+        json.decode(payloadString) as Map<String, dynamic>);
   }
 
   factory AuthToken.validate(String jwt, Hmac hmac) {
@@ -100,7 +95,8 @@ class AuthToken {
           message: 'JWT payload does not match hashed version.');
     }
 
-    return AuthToken.fromMap(json.decode(payloadString) as Map);
+    return AuthToken.fromMap(
+        json.decode(payloadString) as Map<String, dynamic>);
   }
 
   String serialize(Hmac hmac) {
@@ -111,7 +107,7 @@ class AuthToken {
     return data + '.' + base64Url.encode(signature);
   }
 
-  Map toJson() {
+  Map<String, dynamic> toJson() {
     return _splayify({
       'iss': 'angel_auth',
       'aud': ipAddress,
@@ -123,7 +119,7 @@ class AuthToken {
   }
 }
 
-SplayTreeMap _splayify(Map map) {
+Map<String, dynamic> _splayify(Map<String, dynamic> map) {
   var data = {};
   map.forEach((k, v) {
     data[k] = _splay(v);
@@ -131,11 +127,11 @@ SplayTreeMap _splayify(Map map) {
   return SplayTreeMap.from(data);
 }
 
-dynamic _splay(value) {
+dynamic _splay(dynamic value) {
   if (value is Iterable) {
     return value.map(_splay).toList();
   } else if (value is Map) {
-    return _splayify(value);
+    return _splayify(value as Map<String, dynamic>);
   } else {
     return value;
   }

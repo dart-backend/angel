@@ -5,7 +5,7 @@ import 'dart:async';
 import 'package:collection/collection.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:logging/logging.dart';
+//import 'package:logging/logging.dart';
 export 'package:angel3_http_exception/angel3_http_exception.dart';
 
 /// A function that configures an [Angel] client in some way.

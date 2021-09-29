@@ -1,5 +1,11 @@
 # Change Log
 
+## 4.1.1
+
+* Changed `userId` field of `AuthToken` to String type
+* Changed `serializer` return value to String type
+* Changed `deserializer` input parameter to String type
+
 ## 4.1.0
 
 * Updated linter to `package:lints`

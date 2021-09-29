@@ -6,8 +6,8 @@ repository: https://github.com/dukefirehawk/angel/tree/angel3/packages/hot
 environment:
   sdk: '>=2.12.0 <3.0.0'
 dependencies:
-  angel3_framework: ^4.1.0
-  angel3_websocket: ^4.0.0
+  angel3_framework: ^4.2.0
+  angel3_websocket: ^4.1.0
   belatuk_html_builder: ^3.0.0
   charcode: ^1.2.0
   glob: ^2.0.1
@@ -19,3 +19,7 @@ dev_dependencies:
   http: ^0.13.2
   logging: ^1.0.1
   lints: ^1.0.0
+#dependency_overrides:
+#  angel3_websocket:
+#    path: ../websocket
+ 

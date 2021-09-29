@@ -52,10 +52,10 @@ class AngelAuth<User> {
   Map<String, AuthStrategy<User>> strategies = {};
 
   /// Serializes a user into a unique identifier associated only with one identity.
-  FutureOr Function(User) serializer;
+  FutureOr<String> Function(User) serializer;
 
   /// Deserializes a unique identifier into its associated identity. In most cases, this is a user object or model instance.
-  FutureOr<User> Function(Object) deserializer;
+  FutureOr<User> Function(String) deserializer;
 
   /// Fires the result of [deserializer] whenever a user signs in to the application.
   Stream<User> get onLogin => _onLogin.stream;
@@ -200,6 +200,7 @@ class AngelAuth<User> {
   ///   String getUsername(User user) => user.name
   /// }
   /// ```
+  /*
   @deprecated
   Future decodeJwt(RequestContext req, ResponseContext res) async {
     if (req.method == 'POST' && req.path == reviveTokenEndpoint) {
@@ -209,6 +210,7 @@ class AngelAuth<User> {
       return true;
     }
   }
+  */
 
   Future<_AuthResult<User>?> _decodeJwt(
       RequestContext req, ResponseContext res) async {
@@ -431,7 +433,7 @@ class AngelAuth<User> {
               req.accepts('application/json')) {
             var user = hasExisting
                 ? result
-                : await deserializer((await serializer(result)) as Object);
+                : await deserializer(await serializer(result));
             _onLogin.add(user);
             return {'data': user, 'token': jwt};
           }
@@ -469,8 +471,8 @@ class AngelAuth<User> {
 
   /// Log a user in on-demand.
   Future loginById(
-      dynamic userId, RequestContext req, ResponseContext res) async {
-    var user = await deserializer(userId as Object);
+      String userId, RequestContext req, ResponseContext res) async {
+    var user = await deserializer(userId);
     var token =
         AuthToken(userId: userId, lifeSpan: _jwtLifeSpan, ipAddress: req.ip);
     _apply(req, res, token, user);

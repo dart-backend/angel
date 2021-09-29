@@ -73,7 +73,7 @@ void main() {
         ?.create({'username': 'jdoe1', 'password': 'password'});
 
     auth = AngelAuth<User>(
-        serializer: (u) => u.id,
+        serializer: (u) => u.id ?? '',
         deserializer: (id) async =>
             await app.findService('users')?.read(id) as User);
     //auth.serializer = (u) => u.id;

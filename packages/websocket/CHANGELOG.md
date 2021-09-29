@@ -1,5 +1,10 @@
 # Change Log
 
+## 4.1.1
+
+* Fixed issue with type casting
+* Changed `app` parameter of `AngelWebSocket` to non-nullable
+
 ## 4.1.0
 
 * Updated to use `package:belatuk_merge_map`

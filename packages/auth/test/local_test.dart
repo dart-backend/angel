@@ -8,7 +8,7 @@ import 'package:logging/logging.dart';
 import 'package:test/test.dart';
 
 final AngelAuth<Map<String, String>> auth = AngelAuth<Map<String, String>>(
-    serializer: (user) async => 1337, deserializer: (id) async => sampleUser);
+    serializer: (user) async => '1337', deserializer: (id) async => sampleUser);
 var headers = <String, String>{'accept': 'application/json'};
 var localOpts = AngelAuthOptions<Map<String, String>>(
     failureRedirect: '/failure', successRedirect: '/success');

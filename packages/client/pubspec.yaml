@@ -25,6 +25,6 @@ dev_dependencies:
   test: ^1.17.5
   lints: ^1.0.0
 #dependency_overrides:
-#  angel3_container:
-#    path: ../container/angel_container
+#  angel3_auth:
+#    path: ../auth
  

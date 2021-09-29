@@ -18,9 +18,10 @@ Ensure you have read the [User Guide](https://angel3-docs.dukefirehawk.com/guide
 
 ```dart
 configureServer(Angel app) async {
-  var auth = AngelAuth<User>();
-  auth.serializer = ...;
-  auth.deserializer = ...;
+  var auth = AngelAuth<User>(
+    serializer: (user) => user.id ?? '',
+    deserializer: (id) => fetchAUserByIdSomehow(id)
+  );
   auth.strategies['local'] = LocalAuthStrategy(...);
   
   // POST route to handle username+password

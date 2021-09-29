@@ -6,7 +6,7 @@ import 'package:angel3_framework/http.dart';
 void main() async {
   var app = Angel();
   var auth = AngelAuth<User>(
-      serializer: (user) => user.id,
+      serializer: (user) => user.id ?? '',
       deserializer: (id) => fetchAUserByIdSomehow(id));
 
   // Middleware to decode JWT's and inject a user object...
@@ -31,7 +31,7 @@ class User {
   String? id, username, password;
 }
 
-Future<User> fetchAUserByIdSomehow(id) async {
+Future<User> fetchAUserByIdSomehow(String id) async {
   // Fetch a user somehow...
   throw UnimplementedError();
 }

@@ -9,7 +9,7 @@ import 'package:test/test.dart';
 import 'common.dart';
 
 void main() {
-  srv.Angel? app;
+  srv.Angel app;
   late srv.AngelHttp http;
   ws.WebSockets? client;
   srv.AngelWebSocket websockets;
@@ -19,16 +19,16 @@ void main() {
   setUp(() async {
     app = srv.Angel(reflector: MirrorsReflector())
       ..use('/api/todos', TodoService());
-    http = srv.AngelHttp(app!, useZone: false);
+    http = srv.AngelHttp(app, useZone: false);
 
     websockets = srv.AngelWebSocket(app)
       ..onData.listen((data) {
         print('Received by server: $data');
       });
 
-    await app!.configure(websockets.configureServer);
-    app!.all('/ws', websockets.handleRequest);
-    app!.logger = Logger('angel_auth')..onRecord.listen(print);
+    await app.configure(websockets.configureServer);
+    app.all('/ws', websockets.handleRequest);
+    app.logger = Logger('angel_auth')..onRecord.listen(print);
     server = await http.startServer();
     url = 'ws://${server!.address.address}:${server!.port}/ws';
 
@@ -51,7 +51,7 @@ void main() {
     await client!.close();
     await http.server!.close(force: true);
 
-    app = null;
+    //app = null;
     client = null;
     server = null;
     url = null;
