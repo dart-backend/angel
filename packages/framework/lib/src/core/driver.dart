@@ -292,13 +292,14 @@ abstract class Driver<
       {bool ignoreFinalizers = false}) {
     if (req == null || res == null) {
       try {
-        app.logger?.severe(null, e, st);
+        app.logger?.severe('500 Internal Server Error', e, st);
         setStatusCode(response, 500);
         writeStringToResponse(response, '500 Internal Server Error');
         closeResponse(response);
-      } finally {
-        return Future.value();
+      } catch (e) {
+        app.logger?.severe('500 Internal Server Error', e);
       }
+      return Future.value();
     }
 
     Future handleError;
@@ -327,7 +328,7 @@ abstract class Driver<
           req.container!.has<Stopwatch>()) {
         var sw = req.container!.make<Stopwatch>();
         app.logger?.info(
-            "${res.statusCode} ${req.method} ${req.uri} (${sw?.elapsedMilliseconds ?? 'unknown'} ms)");
+            "${res.statusCode} ${req.method} ${req.uri} (${sw.elapsedMilliseconds} ms)");
       }
       return req.close();
     }

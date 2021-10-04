@@ -3,6 +3,7 @@
 ## 3.1.1
 
 * Updated `_ReflectedMethodMirror` to have optional `returnType` parameter
+* Updated all the methods of `Container` class to return non nullable type
 
 ## 3.1.0
 

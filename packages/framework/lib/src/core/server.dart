@@ -288,7 +288,12 @@ class Angel extends Routable {
   dynamic findProperty(key) {
     if (configuration.containsKey(key)) return configuration[key];
 
-    return parent != null ? parent?.findProperty(key) : null;
+    //return parent != null ? parent?.findProperty(key) : null;
+    if (parent != null) {
+      return parent?.findProperty(key);
+    }
+
+    return null;
   }
 
   /// Runs several optimizations, *if* [angelEnv.isProduction] is `true`.
@@ -345,7 +350,7 @@ class Angel extends Routable {
   ///
   /// If you are on `Dart >=2.0.0`, simply call `mountController<T>()`.
   Future<T> mountController<T extends Controller>([Type? type]) {
-    var controller = container!.make<T>(type)!;
+    var controller = container!.make<T>(type);
     return configure(controller.configureServer).then((_) => controller);
   }
 

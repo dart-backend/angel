@@ -18,7 +18,7 @@ Future<void> main() async {
 
   // Register a factory that creates a truck.
   container.registerFactory<Truck>((container) {
-    return _TruckImpl(container.make<Engine>()!);
+    return _TruckImpl(container.make<Engine>());
   });
 
   // Use `make` to create an instance.
@@ -29,16 +29,16 @@ Future<void> main() async {
   print(await container.makeAsync<int>());
 
   // Asynchronous resolution also works for plain objects.
-  await container.makeAsync<Truck>()?.then((t) => t.drive());
+  await container.makeAsync<Truck>().then((t) => t.drive());
 
   // Register a named singleton.
   container.registerNamedSingleton('the_truck', truck);
 
   // Should print: 'Vroom! I have 40 horsepower in my engine.'
-  truck?.drive();
+  truck.drive();
 
   // Should print the same.
-  container.findByName<Truck>('the_truck')?.drive();
+  container.findByName<Truck>('the_truck').drive();
 
   // We can make a child container with its own factory.
   var childContainer = container.createChild();
@@ -48,10 +48,10 @@ Future<void> main() async {
   });
 
   // Make a truck with 5666 HP.
-  childContainer.make<Truck>()?.drive();
+  childContainer.make<Truck>().drive();
 
   // However, calling `make<Engine>` will return the Engine singleton we created above.
-  print(childContainer.make<Engine>()?.horsePower);
+  print(childContainer.make<Engine>().horsePower);
 }
 
 abstract class Truck {

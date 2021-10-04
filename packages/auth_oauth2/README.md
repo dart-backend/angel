@@ -1,7 +1,7 @@
 # Angel3 OAuth2 Handler
 
 ![Pub Version (including pre-releases)](https://img.shields.io/pub/v/angel3_auth_oauth2?include_prereleases)
-![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](<https://dart.dev/null-safety>)
+![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)(<https://dart.dev/null-safety>)
 [![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
 [![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/master/packages/auth_oauth2/LICENSE)
 

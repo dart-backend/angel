@@ -1,5 +1,9 @@
 # Change Log
 
+## 4.1.2
+
+* Fixed `requireAuthentication` to work correctly with null-safety type
+
 ## 4.1.1
 
 * Changed `userId` field of `AuthToken` to String type

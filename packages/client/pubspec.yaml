@@ -24,7 +24,3 @@ dev_dependencies:
   build_web_compilers: ^3.2.1
   test: ^1.17.5
   lints: ^1.0.0
-#dependency_overrides:
-#  angel3_auth:
-#    path: ../auth
- 

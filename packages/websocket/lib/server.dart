@@ -275,7 +275,7 @@ class AngelWebSocket {
         action.params?['query'] is Map &&
         action.params?['query']['jwt'] is String) {
       try {
-        var auth = socket.request.container!.make<AngelAuth>()!;
+        var auth = socket.request.container!.make<AngelAuth>();
         var jwt = action.params!['query']['jwt'] as String;
         AuthToken token;
 

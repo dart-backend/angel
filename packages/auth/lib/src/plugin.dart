@@ -125,10 +125,10 @@ class AngelAuth<User> {
           .registerLazySingleton<Future<_AuthResult<User>>>((container) async {
         var req = container.make<RequestContext>();
         var res = container.make<ResponseContext>();
-        if (req == null || res == null) {
-          _log.warning('RequestContext or responseContext is null');
-          throw AngelHttpException.forbidden();
-        }
+        //if (req == null || res == null) {
+        //  _log.warning('RequestContext or responseContext is null');
+        //  throw AngelHttpException.forbidden();
+        //}
 
         var result = await _decodeJwt(req, res);
         if (result != null) {
@@ -139,14 +139,14 @@ class AngelAuth<User> {
         }
       });
 
-      appContainer.registerLazySingleton<Future<User?>>((container) async {
+      appContainer.registerLazySingleton<Future<User>>((container) async {
         var result = await container.makeAsync<_AuthResult<User>>();
-        return result?.user;
+        return result.user;
       });
 
-      appContainer.registerLazySingleton<Future<AuthToken?>>((container) async {
+      appContainer.registerLazySingleton<Future<AuthToken>>((container) async {
         var result = await container.makeAsync<_AuthResult<User>>();
-        return result?.token;
+        return result.token;
       });
     }
 

@@ -1,5 +1,9 @@
 # Change Log
 
+## 4.1.2
+
+* Updated `package:angel3_container`
+
 ## 4.1.1
 
 * Fixed issue with type casting
@@ -7,7 +11,7 @@
 
 ## 4.1.0
 
-* Updated to use `package:belatuk_merge_map`
+* Updated `package:belatuk_merge_map`
 * Updated linter to `package:lints`
 
 ## 4.0.1

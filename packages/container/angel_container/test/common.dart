@@ -67,7 +67,7 @@ void testReflector(Reflector reflector) {
   });
 
   test('constructor injects singleton', () {
-    var lower = container.make<LowerPokemon>()!;
+    var lower = container.make<LowerPokemon>();
     expect(lower.lowercaseName, blaziken.name.toLowerCase());
   });
 

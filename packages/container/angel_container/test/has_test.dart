@@ -24,7 +24,8 @@ void main() {
   });
 
   test('has on singleton', () {
-    expect(container.has<Song>(), true);
+    var result = container.has<Song>();
+    expect(result, true);
   });
 
   test('has on factory', () {

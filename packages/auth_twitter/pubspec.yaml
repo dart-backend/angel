@@ -1,21 +1,13 @@
-name: "angel_auth_twitter"
+name: "angel3_auth_twitter"
 version: 3.0.0
-description: "package:angel_auth strategy for Twitter login. Auto-signs requests."
+description: "package:angel3_auth strategy for Twitter login. Auto-signs requests."
 homepage: "https://github.com/angel-dart/auth_twitter.git"
 publish_to: none
 environment:
   sdk: ">=2.10.0 <3.0.0"
 dependencies:
   angel_auth:
-    git: 
-      url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x
-      path: packages/auth
   angel_framework:
-    git: 
-      url: https://github.com/dukefirehawk/angel.git
-      ref: sdk-2.12.x
-      path: packages/framework
   http: ^0.13.0
   path: ^1.0.0
   twitter:
