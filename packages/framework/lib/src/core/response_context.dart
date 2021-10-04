@@ -307,7 +307,9 @@ abstract class ResponseContext<RawResponse>
 
   /// Serializes data to the response.
   Future<bool> serialize(value, {MediaType? contentType}) async {
-    if (!isOpen) throw closed();
+    if (!isOpen) {
+      throw closed();
+    }
     this.contentType = contentType ?? MediaType('application', 'json');
     var text = await serializer(value);
     if (text.isEmpty) return true;
@@ -320,7 +322,9 @@ abstract class ResponseContext<RawResponse>
   ///
   /// `HEAD` responses will not actually write data.
   Future streamFile(File file) async {
-    if (!isOpen) throw closed();
+    if (!isOpen) {
+      throw closed();
+    }
     var mimeType = app!.mimeTypeResolver.lookup(file.path);
     contentLength = await file.length();
     contentType = mimeType == null

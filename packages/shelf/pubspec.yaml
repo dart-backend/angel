@@ -21,6 +21,3 @@ dev_dependencies:
   shelf_static: ^1.0.0
   test: ^1.17.5
   lints: ^1.0.0
-#dependency_overrides:
-#  angel3_container:
-#    path: ../container/angel_container

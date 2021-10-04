@@ -10,7 +10,7 @@ void main() {
   });
 
   test('fetch by name', () {
-    expect(container.findByName<Foo>('foo')!.bar, 'baz');
+    expect(container.findByName<Foo>('foo').bar, 'baz');
   });
 
   test('cannot redefine', () {

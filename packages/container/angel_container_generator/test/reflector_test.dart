@@ -27,7 +27,7 @@ void main() {
   });
 
   test('inject constructor parameters', () {
-    var album = container.make<Album>()!;
+    var album = container.make<Album>();
     print(album.title);
     expect(album.title, 'flowers by stevie wonder');
   });
@@ -93,7 +93,7 @@ void testReflector(Reflector reflector) {
   });
 
   test('constructor injects singleton', () {
-    var lower = container.make<LowerPokemon>()!;
+    var lower = container.make<LowerPokemon>();
     expect(lower.lowercaseName, blaziken.name.toLowerCase());
   });
 

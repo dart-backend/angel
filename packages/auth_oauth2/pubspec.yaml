@@ -13,7 +13,3 @@ dependencies:
 dev_dependencies:
   logging: ^1.0.1
   lints: ^1.0.0
-#dependency_overrides:
-#  angel3_auth:
-#    path: ../auth
-    

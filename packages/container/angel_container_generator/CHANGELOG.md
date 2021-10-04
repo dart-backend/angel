@@ -1,5 +1,9 @@
 # Change Log
 
+## 3.0.1
+
+* Updated `package:angel3_container`
+
 ## 3.0.0
 
 * Fixed NNBD issues

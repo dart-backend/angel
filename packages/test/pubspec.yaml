@@ -19,7 +19,4 @@ dependencies:
 dev_dependencies: 
   test: ^1.17.5
   lints: ^1.0.0
-#dependency_overrides:
-#  angel3_websocket:
-#   path: ../websocket
   

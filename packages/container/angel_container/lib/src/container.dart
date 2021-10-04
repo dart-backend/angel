@@ -23,14 +23,19 @@ class Container {
   }
 
   /// Determines if the container has an injection of the given type.
-  bool has<T>([Type? t]) {
-    Container? search = this;
-    t ??= T == dynamic ? t : T;
+  bool has<T>([Type? type]) {
+    var t2 = T;
+    if (type != null) {
+      t2 = type;
+    } else if (T == dynamic && type == null) {
+      return false;
+    }
 
+    Container? search = this;
     while (search != null) {
-      if (search._singletons.containsKey(t)) {
+      if (search._singletons.containsKey(t2)) {
         return true;
-      } else if (search._factories.containsKey(t)) {
+      } else if (search._factories.containsKey(t2)) {
         return true;
       } else {
         search = search._parent;
@@ -59,27 +64,31 @@ class Container {
   ///
   /// It is similar to [make], but resolves an injection of either
   /// `Future<T>` or `T`.
-  Future<T>? makeAsync<T>([Type? type]) {
-    type ??= T;
+  Future<T> makeAsync<T>([Type? type]) {
+    var t2 = T;
+    if (type != null) {
+      t2 = type;
+    }
+
     Type? futureType; //.Future<T>.value(null).runtimeType;
 
     if (T == dynamic) {
       try {
-        futureType = reflector.reflectFutureOf(type).reflectedType;
+        futureType = reflector.reflectFutureOf(t2).reflectedType;
       } on UnsupportedError {
         // Ignore this.
       }
     }
 
-    if (has<T>(type)) {
-      return Future<T>.value(make(type));
+    if (has<T>(t2)) {
+      return Future<T>.value(make(t2));
     } else if (has<Future<T>>()) {
       return make<Future<T>>();
     } else if (futureType != null) {
       return make(futureType);
     } else {
       throw ReflectionException(
-          'No injection for Future<$type> or $type was found.');
+          'No injection for Future<$t2> or $t2 was found.');
     }
   }
 
@@ -87,24 +96,27 @@ class Container {
   ///
   /// In contexts where a static generic type cannot be used, use
   /// the [type] argument, instead of [T].
-  T? make<T>([Type? type]) {
-    type ??= T;
+  T make<T>([Type? type]) {
+    var t2 = T;
+    if (type != null) {
+      t2 = type;
+    }
 
     Container? search = this;
 
     while (search != null) {
-      if (search._singletons.containsKey(type)) {
+      if (search._singletons.containsKey(t2)) {
         // Find a singleton, if any.
-        return search._singletons[type] as T?;
-      } else if (search._factories.containsKey(type)) {
+        return search._singletons[t2] as T;
+      } else if (search._factories.containsKey(t2)) {
         // Find a factory, if any.
-        return search._factories[type]!(this) as T?;
+        return search._factories[t2]!(this) as T;
       } else {
         search = search._parent;
       }
     }
 
-    var reflectedType = reflector.reflectType(type);
+    var reflectedType = reflector.reflectType(t2);
     var positional = [];
     var named = <String, dynamic>{};
 
@@ -131,10 +143,10 @@ class Container {
       return reflectedType.newInstance(
           isDefault(constructor.name) ? '' : constructor.name,
           positional,
-          named, []).reflectee as T?;
+          named, []).reflectee as T;
     } else {
       throw ReflectionException(
-          '$type is not a class, and therefore cannot be instantiated.');
+          '$t2 is not a class, and therefore cannot be instantiated.');
     }
   }
 
@@ -161,13 +173,16 @@ class Container {
   /// Returns [f].
   T Function(Container) registerFactory<T>(T Function(Container) f,
       {Type? as}) {
-    as ??= T;
-
-    if (_factories.containsKey(as)) {
-      throw StateError('This container already has a factory for $as.');
+    Type t2 = T;
+    if (as != null) {
+      t2 = as;
     }
 
-    _factories[as] = f;
+    if (_factories.containsKey(t2)) {
+      throw StateError('This container already has a factory for $t2.');
+    }
+
+    _factories[t2] = f;
     return f;
   }
 
@@ -176,14 +191,19 @@ class Container {
   ///
   /// Returns [object].
   T registerSingleton<T>(T object, {Type? as}) {
-    as ??= T == dynamic ? as : T;
+    Type t2 = T;
+    if (as != null) {
+      t2 = as;
+    } else if (T == dynamic) {
+      t2 = as ?? object.runtimeType;
+    }
+    //as ??= T == dynamic ? as : T;
 
-    if (_singletons.containsKey(as ?? object.runtimeType)) {
-      throw StateError(
-          'This container already has a singleton for ${as ?? object.runtimeType}.');
+    if (_singletons.containsKey(t2)) {
+      throw StateError('This container already has a singleton for $t2.');
     }
 
-    _singletons[as ?? object.runtimeType] = object;
+    _singletons[t2] = object;
     return object;
   }
 
@@ -193,9 +213,9 @@ class Container {
   ///
   /// [findByName] is best reserved for internal logic that end users of code should
   /// not see.
-  T? findByName<T>(String name) {
+  T findByName<T>(String name) {
     if (_namedSingletons.containsKey(name)) {
-      return _namedSingletons[name] as T?;
+      return _namedSingletons[name] as T;
     } else if (_parent != null) {
       return _parent!.findByName<T>(name);
     } else {
