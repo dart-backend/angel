@@ -359,7 +359,7 @@ class HotReloader {
       scheduleMicrotask(() async {
         // Disconnect active WebSockets
         try {
-          var ws = _server!.app.container!.make<AngelWebSocket>()!;
+          var ws = _server!.app.container!.make<AngelWebSocket>();
 
           for (var client in ws.clients) {
             try {
