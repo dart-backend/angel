@@ -1,5 +1,8 @@
 # Change Log
 
+## 4.2.2
+
+* Fixed '!' operator warning
 ## 4.2.1
 
 * Fixed license link
