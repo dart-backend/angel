@@ -1,5 +1,10 @@
 # Change Log
 
+## 4.2.2
+
+* Added `Date` to response header
+* Updated `Server: Angel3` response header
+
 ## 4.2.1
 
 * Updated `package:angel3_container`

@@ -333,7 +333,13 @@ abstract class Driver<
       return req.close();
     }
 
-    if (!res.isBuffered) return res.close().then(_cleanup);
+    if (!res.isBuffered) {
+      if (res.isOpen) {
+        return res.close().then(_cleanup);
+      }
+
+      return Future.value();
+    }
 
     var finalizers = ignoreFinalizers == true
         ? Future.value()
@@ -346,10 +352,10 @@ abstract class Driver<
         setHeader(response, key, res.headers[key] ?? '');
       }
 
-      setContentLength(response, res.buffer!.length);
+      setContentLength(response, res.buffer?.length ?? 0);
       setChunkedEncoding(response, res.chunked ?? true);
 
-      List<int> outputBuffer = res.buffer!.toBytes();
+      var outputBuffer = res.buffer?.toBytes() ?? <int>[];
 
       if (res.encoders.isNotEmpty) {
         var allowedEncodings = req.headers
@@ -366,9 +372,9 @@ abstract class Driver<
 
         if (allowedEncodings != null) {
           for (var encodingName in allowedEncodings) {
-            Converter<List<int>, List<int>>? encoder;
             var key = encodingName;
 
+            Converter<List<int>, List<int>>? encoder;
             if (res.encoders.containsKey(encodingName)) {
               encoder = res.encoders[encodingName];
             } else if (encodingName == '*') {
@@ -377,7 +383,8 @@ abstract class Driver<
 
             if (encoder != null) {
               setHeader(response, 'content-encoding', key);
-              outputBuffer = res.encoders[key]!.convert(outputBuffer);
+              outputBuffer =
+                  res.encoders[key]?.convert(outputBuffer) ?? <int>[];
               setContentLength(response, outputBuffer.length);
               break;
             }

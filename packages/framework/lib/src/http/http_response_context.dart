@@ -90,6 +90,8 @@ class HttpResponseContext extends ResponseContext<HttpResponse> {
         ..cookies.addAll(cookies);
       headers.forEach(rawResponse.headers.set);
 
+      rawResponse.headers.date = DateTime.now();
+
       if (headers.containsKey('content-length')) {
         rawResponse.contentLength = int.tryParse(headers['content-length']!) ??
             rawResponse.contentLength;
