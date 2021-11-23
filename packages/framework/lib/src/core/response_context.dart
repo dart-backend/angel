@@ -22,10 +22,8 @@ final RegExp _straySlashes = RegExp(r'(^/+)|(/+$)');
 abstract class ResponseContext<RawResponse>
     implements StreamConsumer<List<int>>, StreamSink<List<int>>, StringSink {
   final Map properties = {};
-  final CaseInsensitiveMap<String> _headers = CaseInsensitiveMap<String>.from({
-    'content-type': 'text/plain',
-    'server': 'angel',
-  });
+  final CaseInsensitiveMap<String> _headers = CaseInsensitiveMap<String>.from(
+      {'content-type': 'text/plain', 'server': 'Angel3'});
 
   final log = Logger('ResponseContext');
 
@@ -112,14 +110,14 @@ abstract class ResponseContext<RawResponse>
   ///
   /// Returns `null` if the header is invalidly formatted.
   int? get contentLength {
-    return int.tryParse(headers['content-length']!);
+    return int.tryParse(headers['content-length'] ?? '-1');
   }
 
   /// Gets or sets the content length to send back to a client.
   ///
   /// If [value] is `null`, then the header will be removed.
   set contentLength(int? value) {
-    if (value == null) {
+    if (value == null || value == -1) {
       headers.remove('content-length');
     } else {
       headers['content-length'] = value.toString();

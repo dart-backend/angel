@@ -9,7 +9,7 @@
 
 Angel3 framework is a high-powered HTTP server with support for dependency injection, sophisticated routing, authentication, ORM, graphql etc. It is designed to keep the core minimal but extensible through a series of plugin packages. It won't dictate which features, databases or web templating engine to use. This flexibility enable Angel3 framework to grow with your application as new features can be added to handle the new use cases.
 
-This package is the core package of [Angel 3](https://github.com/dukefirehawk/angel). To see more details, please refer to the [Developer Guide](https://angel3-docs.dukefirehawk.com).
+This package is the core package of [Angel3](https://github.com/dukefirehawk/angel). For more information, visit us at [Angel3 Website](https://angel3-framework.web.app).
 
 ## Installation and Setup
 
