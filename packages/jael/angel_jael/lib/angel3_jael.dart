@@ -7,20 +7,27 @@ import 'package:belatuk_symbol_table/belatuk_symbol_table.dart';
 
 /// Configures an Angel server to use Jael to render templates.
 ///
-/// To enable "minified" output, you need to override the [createBuffer] function,
-/// to instantiate a [CodeBuffer] that emits no spaces or line breaks.
+/// To enable "minified" output, set minified to true
+///
+/// For custom HTML formating, you need to override the [createBuffer] parameter
+/// with a function that returns a new instance of [CodeBuffer].
 ///
 /// To apply additional transforms to parsed documents, provide a set of [patch] functions.
 AngelConfigurer jael(Directory viewsDirectory,
     {String? fileExtension,
     bool strictResolution = false,
     bool cacheViews = false,
-    Iterable<Patcher>? patch,
+    Iterable<Patcher> patch = const [],
     bool asDSX = false,
+    bool minified = false,
     CodeBuffer Function()? createBuffer}) {
   var cache = <String, Document?>{};
   fileExtension ??= '.jael';
-  createBuffer ??= () => CodeBuffer();
+  if (createBuffer == null && minified) {
+    createBuffer = () => CodeBuffer(space: '', newline: '');
+  } else {
+    createBuffer ??= () => CodeBuffer();
+  }
 
   return (Angel app) async {
     app.viewGenerator = (String name, [Map? locals]) async {
@@ -33,7 +40,7 @@ AngelConfigurer jael(Directory viewsDirectory,
         var file = viewsDirectory.childFile(name + fileExtension!);
         var contents = await file.readAsString();
         var doc = parseDocument(contents,
-            sourceUrl: file.uri, asDSX: asDSX == true, onError: errors.add)!;
+            sourceUrl: file.uri, asDSX: asDSX, onError: errors.add)!;
         processed = doc;
 
         try {
