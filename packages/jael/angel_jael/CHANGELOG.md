@@ -1,5 +1,9 @@
 # Change Log
 
+## 4.2.1
+
+* Added `minified` parameter for generating minified HTML output
+
 ## 4.2.0
 
 * Updated to use `package:belatuk_code_buffer`
