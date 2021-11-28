@@ -85,8 +85,8 @@ void main() {
             res.redirectToAction('TodoController@foo', {'foo': 'world'}));
 
     // Register as a singleton, just for the purpose of this test
-    if (!app.container!.has<TodoController>()) {
-      app.container!.registerSingleton(todoController = TodoController());
+    if (!app.container.has<TodoController>()) {
+      app.container.registerSingleton(todoController = TodoController());
     }
 
     // Using mountController<T>();
@@ -98,7 +98,7 @@ void main() {
     // Until https://github.com/angel-dart/route/issues/28 is closed,
     // this will need to be done by manually mounting the router.
     var subRouter = Router<RequestHandler>();
-    await todoController.applyRoutes(subRouter, app.container!.reflector);
+    await todoController.applyRoutes(subRouter, app.container.reflector);
     app.mount('/ctrl_group', subRouter);
 
     print(app.controllers);
@@ -165,7 +165,7 @@ void main() {
   test('named actions', () async {
     var response = await client.get(Uri.parse('$url/redirect'));
     print('Response: ${response.body}');
-    expect(response.body, equals('Hello, \"world!\"'));
+    expect(response.body, equals('Hello, "world!"'));
   });
 
   group('optional expose', () {

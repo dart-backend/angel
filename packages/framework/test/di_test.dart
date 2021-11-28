@@ -25,8 +25,8 @@ void main() {
     client = http.Client();
 
     // Inject some todos
-    app.container!.registerSingleton(Todo(text: TEXT, over: OVER));
-    app.container!.registerFactory<Future<Foo>>((container) async {
+    app.container.registerSingleton(Todo(text: TEXT, over: OVER));
+    app.container.registerFactory<Future<Foo>>((container) async {
       var req = container.make<RequestContext>();
       var text = await utf8.decoder.bind(req.body!).join();
       return Foo(text);

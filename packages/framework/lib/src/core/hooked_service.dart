@@ -76,7 +76,9 @@ class HookedService<Id, Data, T extends Service<Id, Data>>
   /// Closes any open [StreamController]s on this instance. **Internal use only**.
   @override
   Future close() {
-    _ctrl.forEach((c) => c.close());
+    for (var c in _ctrl) {
+      c.close();
+    }
     beforeIndexed._close();
     beforeRead._close();
     beforeCreated._close();
@@ -95,7 +97,7 @@ class HookedService<Id, Data, T extends Service<Id, Data>>
 
   /// Adds hooks to this instance.
   void addHooks(Angel app) {
-    var hooks = getAnnotation<Hooks>(inner, app.container!.reflector);
+    var hooks = getAnnotation<Hooks>(inner, app.container.reflector);
     var before = <HookedServiceEventListener<Id, Data, T>>[];
     var after = <HookedServiceEventListener<Id, Data, T>>[];
 
@@ -107,7 +109,7 @@ class HookedService<Id, Data, T extends Service<Id, Data>>
     void applyListeners(
         Function fn, HookedServiceEventDispatcher<Id, Data, T> dispatcher,
         [bool? isAfter]) {
-      var hooks = getAnnotation<Hooks>(fn, app.container!.reflector);
+      var hooks = getAnnotation<Hooks>(fn, app.container.reflector);
       final listeners = <HookedServiceEventListener<Id, Data, T>>[
         ...isAfter == true ? after : before
       ];
@@ -144,8 +146,8 @@ class HookedService<Id, Data, T extends Service<Id, Data>>
         });
 
   @override
-  void addRoutes([Service? s]) {
-    super.addRoutes(s ?? inner);
+  void addRoutes([Service? service]) {
+    super.addRoutes(service ?? inner);
   }
 
   /// Runs the [listener] before every service method specified.
@@ -274,26 +276,26 @@ class HookedService<Id, Data, T extends Service<Id, Data>>
   }
 
   @override
-  Future<List<Data>> index([Map<String, dynamic>? _params]) {
-    var params = _stripReq(_params);
+  Future<List<Data>> index([Map<String, dynamic>? params]) {
+    var localParams = _stripReq(params);
     return beforeIndexed
-        ._emit(HookedServiceEvent(false, _getRequest(_params),
-            _getResponse(_params), inner, HookedServiceEvent.indexed,
-            params: params))
+        ._emit(HookedServiceEvent(false, _getRequest(params),
+            _getResponse(params), inner, HookedServiceEvent.indexed,
+            params: localParams))
         .then((before) {
       if (before._canceled) {
         return afterIndexed
-            ._emit(HookedServiceEvent(true, _getRequest(_params),
-                _getResponse(_params), inner, HookedServiceEvent.indexed,
-                params: params, result: before.result))
+            ._emit(HookedServiceEvent(true, _getRequest(params),
+                _getResponse(params), inner, HookedServiceEvent.indexed,
+                params: localParams, result: before.result))
             .then((after) => after.result as List<Data>);
       }
 
-      return inner.index(params).then((result) {
+      return inner.index(localParams).then((result) {
         return afterIndexed
-            ._emit(HookedServiceEvent(true, _getRequest(_params),
-                _getResponse(_params), inner, HookedServiceEvent.indexed,
-                params: params, result: result))
+            ._emit(HookedServiceEvent(true, _getRequest(params),
+                _getResponse(params), inner, HookedServiceEvent.indexed,
+                params: localParams, result: result))
             .then((after) => after.result as List<Data>);
       });
     });
@@ -557,7 +559,9 @@ class HookedServiceEventDispatcher<Id, Data, T extends Service<Id, Data>> {
   final List<HookedServiceEventListener<Id, Data, T>> listeners = [];
 
   void _close() {
-    _ctrl.forEach((c) => c.close());
+    for (var c in _ctrl) {
+      c.close();
+    }
     listeners.clear();
   }
 

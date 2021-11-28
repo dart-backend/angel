@@ -1,5 +1,9 @@
 # Change Log
 
+## 4.3.0
+
+* Updated `container` to non nullable
+
 ## 4.2.2
 
 * Added `Date` to response header

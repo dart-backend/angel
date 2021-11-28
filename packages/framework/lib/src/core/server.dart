@@ -4,6 +4,7 @@ import 'dart:async';
 import 'dart:collection' show HashMap;
 import 'dart:convert';
 import 'package:angel3_container/angel3_container.dart';
+import 'package:angel3_container/mirrors.dart';
 import 'package:angel3_http_exception/angel3_http_exception.dart';
 import 'package:angel3_route/angel3_route.dart';
 import 'package:belatuk_combinator/belatuk_combinator.dart';
@@ -184,12 +185,12 @@ class Angel extends Routable {
   /// Loads some base dependencies into the service container.
   void bootstrapContainer() {
     if (runtimeType != Angel) {
-      container?.registerSingleton(this);
+      container.registerSingleton(this);
     }
 
-    container?.registerSingleton<Angel>(this);
-    container?.registerSingleton<Routable>(this);
-    container?.registerSingleton<Router>(this);
+    container.registerSingleton<Angel>(this);
+    container.registerSingleton<Routable>(this);
+    container.registerSingleton<Router>(this);
   }
 
   /// Shuts down the server, and closes any open [StreamController]s.
@@ -315,6 +316,7 @@ class Angel extends Routable {
   /// the execution will be faster, as the injection requirements were stored beforehand.
   Future runContained(Function handler, RequestContext req, ResponseContext res,
       [Container? container]) {
+    container ??= Container(MirrorsReflector());
     return Future.sync(() {
       if (_preContained.containsKey(handler)) {
         return handleContained(handler, _preContained[handler]!, container)(
@@ -328,10 +330,11 @@ class Angel extends Routable {
   /// Runs with DI, and *always* reflects. Prefer [runContained].
   Future runReflected(Function handler, RequestContext req, ResponseContext res,
       [Container? container]) {
-    container ??= req.container ?? res.app!.container;
+    container ??=
+        req.container ?? res.app?.container ?? Container(ThrowingReflector());
     var h = handleContained(
         handler,
-        _preContained[handler] = preInject(handler, container!.reflector),
+        _preContained[handler] = preInject(handler, container.reflector),
         container);
     return Future.sync(() => h(req, res));
     // return   closureMirror.apply(args).reflectee;
@@ -350,7 +353,7 @@ class Angel extends Routable {
   ///
   /// If you are on `Dart >=2.0.0`, simply call `mountController<T>()`.
   Future<T> mountController<T extends Controller>([Type? type]) {
-    var controller = container!.make<T>(type);
+    var controller = container.make<T>(type);
     return configure(controller.configureServer).then((_) => controller);
   }
 

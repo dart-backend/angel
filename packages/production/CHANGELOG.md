@@ -1,5 +1,9 @@
 # Change Log
 
+## 3.1.2
+
+* Fixed null safety warnings
+
 ## 3.1.1
 
 * Fixed license link

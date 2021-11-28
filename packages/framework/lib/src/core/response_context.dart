@@ -288,7 +288,7 @@ abstract class ResponseContext<RawResponse>
     }
 
     final head = controller
-        .findExpose(app!.container!.reflector)!
+        .findExpose(app!.container.reflector)!
         .path
         .toString()
         .replaceAll(_straySlashes, '');

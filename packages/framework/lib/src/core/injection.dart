@@ -12,7 +12,7 @@ RequestHandler ioc(Function handler, {Iterable<String> optional = const []}) {
     RequestHandler? contained;
 
     if (req.app?.container != null) {
-      var injection = preInject(handler, req.app!.container!.reflector);
+      var injection = preInject(handler, req.app!.container.reflector);
       //if (injection != null) {
       injection.optional.addAll(optional);
       contained = handleContained(handler, injection);
@@ -70,7 +70,7 @@ Future resolveInjection(requirement, InjectionRequest injection,
     }
   } else if (requirement is Type && requirement != dynamic) {
     try {
-      var futureType = container!.reflector.reflectFutureOf(requirement);
+      var futureType = container.reflector.reflectFutureOf(requirement);
       if (container.has(futureType.reflectedType)) {
         return await container.make(futureType.reflectedType);
       }
@@ -78,7 +78,7 @@ Future resolveInjection(requirement, InjectionRequest injection,
       // Ignore.
     }
 
-    return await container!.make(requirement);
+    return await container.make(requirement);
   } else if (throwOnUnresolved) {
     throw ArgumentError(
         '$requirement cannot be injected into a request handler.');

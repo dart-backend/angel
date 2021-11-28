@@ -15,6 +15,8 @@ import 'http_response_context.dart';
 
 final RegExp _straySlashes = RegExp(r'(^/+)|(/+$)');
 
+typedef ServerGeneratorType = Future<HttpServer> Function(dynamic, int);
+
 /// Adapts `dart:io`'s [HttpServer] to serve Angel.
 class AngelHttp extends Driver<HttpRequest, HttpResponse, HttpServer,
     HttpRequestContext, HttpResponseContext> {
@@ -27,8 +29,7 @@ class AngelHttp extends Driver<HttpRequest, HttpResponse, HttpServer,
         scheme: 'http', host: server?.address.address, port: server?.port);
   }
 
-  AngelHttp._(Angel app,
-      Future<HttpServer> Function(dynamic, int) serverGenerator, bool useZone)
+  AngelHttp._(Angel app, ServerGeneratorType serverGenerator, bool useZone)
       : super(app, serverGenerator, useZone: useZone);
 
   factory AngelHttp(Angel app, {bool useZone = true}) {
@@ -36,8 +37,7 @@ class AngelHttp extends Driver<HttpRequest, HttpResponse, HttpServer,
   }
 
   /// An instance mounted on a server started by the [serverGenerator].
-  factory AngelHttp.custom(
-      Angel app, Future<HttpServer> Function(dynamic, int) serverGenerator,
+  factory AngelHttp.custom(Angel app, ServerGeneratorType serverGenerator,
       {bool useZone = true}) {
     return AngelHttp._(app, serverGenerator, useZone);
   }
