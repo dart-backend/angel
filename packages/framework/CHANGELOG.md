@@ -3,6 +3,7 @@
 ## 4.3.0
 
 * Updated `container` to non nullable
+* Updated `angel` to non nullable
 
 ## 4.2.2
 
