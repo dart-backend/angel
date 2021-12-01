@@ -170,7 +170,7 @@ abstract class ResponseContext<RawResponse>
 
   /// Serializes JSON to the response.
   Future<bool> json(value) =>
-      this.serialize(value, contentType: MediaType('application', 'json'));
+      serialize(value, contentType: MediaType('application', 'json'));
 
   /// Returns a JSONP response.
   ///

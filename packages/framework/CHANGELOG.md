@@ -1,5 +1,9 @@
 # Change Log
 
+## 4.2.3
+
+* Fixed `res.json()` throwing bad state exception
+
 ## 4.2.2
 
 * Added `Date` to response header
