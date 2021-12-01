@@ -37,16 +37,9 @@ Branch: `master`
 
 * Dart version : 2.12.x and above.
 * Publish      : Yes. Refer to packages with `angel3_` prefix on [pub.dev](https://pub.dev/publishers/dukefirehawk.com/packages).
-* NNBD Support : Yes
-* Status       : Release
-* Notes        : Use this for PR
-
-Branch: `angel3`
-
-* Dart version : 2.12.x and above.
-* NNBD Support : Yes
-* Status       : Development
-* Notes        : This branch is under active development. Features maybe broken from time to time.
+* Null Safety  : Yes
+* Status       : Production
+* Notes        : Use this branch for all PR submission
 
 For more details, checkout [Project Status](https://github.com/dukefirehawk/angel/wiki/Project-Status)
 
