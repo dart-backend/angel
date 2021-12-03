@@ -47,7 +47,7 @@ AngelConfigurer jinja({
     );
 
     app.viewGenerator = (path, [values]) {
-      return env.getTemplate(path).render(values) as String;
+      return env.getTemplate(path).render.renderMap(values) as String;
     };
   };
 }
