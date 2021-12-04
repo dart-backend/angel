@@ -43,7 +43,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:angel3_framework/angel3_framework.dart';
-import 'package:angel3_hot/angel_hot.dart';
+import 'package:angel3_hot/angel3_hot.dart';
 import 'package:logging/logging.dart';
 import 'src/foo.dart';
 
