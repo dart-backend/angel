@@ -5,8 +5,6 @@ class Model {
   /// A unique identifier corresponding to this item.
   String? id;
 
-  String? error;
-
   /// The time at which this item was created.
   DateTime? createdAt;
 
