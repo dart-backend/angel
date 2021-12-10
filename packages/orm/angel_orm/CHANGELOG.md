@@ -1,5 +1,10 @@
 # Change Log
 
+## 4.0.2
+
+* Updated linter to `package:lints`
+* Set `createdAt` and `updatedAt` to current datetime as default
+
 ## 4.0.1
 
 * Fixed expressions parsing error
