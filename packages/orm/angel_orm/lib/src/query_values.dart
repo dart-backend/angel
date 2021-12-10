@@ -16,6 +16,19 @@ abstract class QueryValues {
 
   String compileInsert(Query query, String tableName) {
     var data = Map<String, dynamic>.from(toMap());
+    var now = DateTime.now();
+    if (data.containsKey('created_at') && data['created_at'] == null) {
+      data['created_at'] = now;
+    }
+    if (data.containsKey('createdAt') && data['createdAt'] == null) {
+      data['createdAt'] = now;
+    }
+    if (data.containsKey('updated_at') && data['updated_at'] == null) {
+      data['updated_at'] = now;
+    }
+    if (data.containsKey('updatedAt') && data['updatedAt'] == null) {
+      data['updatedAt'] = now;
+    }
     var keys = data.keys.toList();
     keys.where((k) => !query.fields.contains(k)).forEach(data.remove);
     if (data.isEmpty) {
@@ -43,6 +56,19 @@ abstract class QueryValues {
     var data = toMap();
     if (data.isEmpty) {
       return '';
+    }
+    var now = DateTime.now();
+    if (data.containsKey('created_at') && data['created_at'] == null) {
+      data.remove('created_at');
+    }
+    if (data.containsKey('createdAt') && data['createdAt'] == null) {
+      data.remove('createdAt');
+    }
+    if (data.containsKey('updated_at') && data['updated_at'] == null) {
+      data['updated_at'] = now;
+    }
+    if (data.containsKey('updatedAt') && data['updatedAt'] == null) {
+      data['updatedAt'] = now;
     }
     var b = StringBuffer('SET');
     var i = 0;
