@@ -14,19 +14,19 @@ import 'package:belatuk_symbol_table/belatuk_symbol_table.dart';
 ///
 /// To apply additional transforms to parsed documents, provide a set of [patch] functions.
 AngelConfigurer jael(Directory viewsDirectory,
-    {String? fileExtension,
+    {String fileExtension = '.jael',
     bool strictResolution = false,
-    bool cacheViews = false,
+    bool cacheViews = true,
     Iterable<Patcher> patch = const [],
     bool asDSX = false,
     bool minified = false,
     CodeBuffer Function()? createBuffer}) {
-  var cache = <String, Document?>{};
-  fileExtension ??= '.jael';
-  if (createBuffer == null && minified) {
-    createBuffer = () => CodeBuffer(space: '', newline: '');
-  } else {
-    createBuffer ??= () => CodeBuffer();
+  var cache = <String, Document>{};
+
+  var bufferFunc = createBuffer ?? () => CodeBuffer();
+
+  if (minified) {
+    bufferFunc = () => CodeBuffer(space: '', newline: '');
   }
 
   return (Angel app) async {
@@ -34,28 +34,33 @@ AngelConfigurer jael(Directory viewsDirectory,
       var errors = <JaelError>[];
       Document? processed;
 
-      if (cacheViews == true && cache.containsKey(name)) {
+      if (cacheViews && cache.containsKey(name)) {
         processed = cache[name];
       } else {
-        var file = viewsDirectory.childFile(name + fileExtension!);
+        var file = viewsDirectory.childFile(name + fileExtension);
         var contents = await file.readAsString();
         var doc = parseDocument(contents,
-            sourceUrl: file.uri, asDSX: asDSX, onError: errors.add)!;
-        processed = doc;
+            sourceUrl: file.uri, asDSX: asDSX, onError: errors.add);
+        if (doc == null) {
+          throw ArgumentError(name + fileExtension + " does not exists");
+        }
 
         try {
           processed = await (resolve(doc, viewsDirectory,
               patch: patch, onError: errors.add));
-        } catch (_) {
+        } catch (e) {
           // Ignore these errors, so that we can show syntax errors.
         }
+        if (processed == null) {
+          throw ArgumentError(name + fileExtension + " does not exists");
+        }
 
-        if (cacheViews == true) {
+        if (cacheViews) {
           cache[name] = processed;
         }
       }
 
-      var buf = createBuffer!();
+      var buf = bufferFunc();
       var scope = SymbolTable(
           values: locals?.keys.fold<Map<String, dynamic>>(<String, dynamic>{},
                   (out, k) => out..[k.toString()] = locals[k]) ??

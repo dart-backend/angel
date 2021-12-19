@@ -4,8 +4,8 @@ import 'package:args/args.dart';
 import 'package:io/ansi.dart';
 import 'package:io/io.dart';
 //import 'package:dart_language_server/dart_language_server.dart';
-import 'package:jael_language_server/jael_language_server.dart';
-import 'package:jael_language_server/src/protocol/language_server/server.dart';
+import 'package:jael3_language_server/jael3_language_server.dart';
+import 'package:jael3_language_server/src/protocol/language_server/server.dart';
 
 void main(List<String> args) async {
   var argParser = ArgParser()

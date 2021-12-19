@@ -1,5 +1,5 @@
-import 'package:jael_web/jael_web.dart';
-import 'package:jael_web/elements.dart';
+import 'package:jael3_web/jael3_web.dart';
+import 'package:jael3_web/elements.dart';
 part 'main.g.dart';
 
 @Jael(template: '''
@@ -9,6 +9,7 @@ part 'main.g.dart';
 </div>
 ''')
 class Hello extends Component with _HelloJaelTemplate {
+  @override
   DateTime get now => DateTime.now();
 }
 

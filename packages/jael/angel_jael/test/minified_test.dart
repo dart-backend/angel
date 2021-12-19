@@ -72,4 +72,21 @@ void main() {
                     .trim())
             .outerHtml);
   });
+
+  test('can render multiples', () async {
+    var response = await client.get(Uri.parse('/github/thosakwe'));
+    response = await client.get(Uri.parse('/github/thosakwe'));
+    response = await client.get(Uri.parse('/github/thosakwe'));
+    response = await client.get(Uri.parse('/github/thosakwe'));
+    response = await client.get(Uri.parse('/github/thosakwe'));
+
+    print('Body:\n${response.body}');
+    expect(
+        html.parse(response.body).outerHtml,
+        html
+            .parse(
+                '''<html><head><title>Hello</title></head><body>thosakwe</body></html>'''
+                    .trim())
+            .outerHtml);
+  });
 }

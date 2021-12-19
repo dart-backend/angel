@@ -2,9 +2,9 @@ import 'dart:async';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:build/build.dart';
 import 'package:code_builder/code_builder.dart';
-import 'package:jael/jael.dart' as jael;
-import 'package:jael_preprocessor/jael_preprocessor.dart' as jael;
-import 'package:jael_web/jael_web.dart';
+import 'package:jael3/jael3.dart' as jael;
+import 'package:jael3_preprocessor/jael3_preprocessor.dart' as jael;
+import 'package:jael3_web/jael3_web.dart';
 import 'package:path/path.dart' as p;
 import 'package:source_gen/source_gen.dart';
 import 'util.dart';
@@ -12,7 +12,7 @@ import 'util.dart';
 var _upper = RegExp(r'^[A-Z]');
 
 Builder jaelComponentBuilder(_) {
-  return SharedPartBuilder([JaelComponentGenerator()], 'jael_web_cmp');
+  return SharedPartBuilder([JaelComponentGenerator()], 'jael3_web_cmp');
 }
 
 class JaelComponentGenerator extends GeneratorForAnnotation<Jael> {
@@ -33,9 +33,9 @@ class JaelComponentGenerator extends GeneratorForAnnotation<Jael> {
         throw 'Both `template` and `templateUrl` cannot be null.';
       }
 
-      if (ann.template != null)
+      if (ann.template != null) {
         templateString = ann.template;
-      else {
+      } else {
         var dir = p.dirname(inputId.path);
         var assetId = AssetId(inputId.package, p.join(dir, ann.templateUrl));
         if (!await buildStep.canRead(assetId)) {
@@ -47,7 +47,7 @@ class JaelComponentGenerator extends GeneratorForAnnotation<Jael> {
 
       var fs = BuildFileSystem(buildStep, inputId.package);
       var errors = <jael.JaelError>[];
-      var doc = await jael.parseDocument(templateString!,
+      var doc = jael.parseDocument(templateString!,
           sourceUrl: inputId.uri, asDSX: ann.asDsx!, onError: errors.add);
       if (errors.isEmpty) {
         doc = await jael.resolve(doc!, fs.file(inputId.uri).parent,

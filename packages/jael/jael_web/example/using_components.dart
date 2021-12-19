@@ -1,4 +1,4 @@
-import 'package:jael_web/jael_web.dart';
+import 'package:jael3_web/jael3_web.dart';
 part 'using_components.g.dart';
 
 @Jael(template: '''
@@ -19,6 +19,7 @@ class MyApp extends Component with _MyAppJaelTemplate {}
 </div>
 ''')
 class LabeledInput extends Component with _LabeledInputJaelTemplate {
+  @override
   final String? name;
 
   LabeledInput({this.name});
