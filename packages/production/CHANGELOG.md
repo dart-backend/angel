@@ -1,5 +1,9 @@
 # Change Log
 
+## 3.1.2
+
+* Updated repo link
+
 ## 3.1.1
 
 * Fixed license link
