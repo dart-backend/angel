@@ -12,7 +12,7 @@ import 'util.dart';
 var _upper = RegExp(r'^[A-Z]');
 
 Builder jaelComponentBuilder(_) {
-  return SharedPartBuilder([JaelComponentGenerator()], 'jael_web_cmp');
+  return SharedPartBuilder([JaelComponentGenerator()], 'jael3_web_cmp');
 }
 
 class JaelComponentGenerator extends GeneratorForAnnotation<Jael> {
