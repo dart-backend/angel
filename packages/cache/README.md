@@ -1,16 +1,15 @@
 # Angel3 HTTP Cache
 
-[![version](https://img.shields.io/badge/pub-v4.0.2-brightgreen)](https://pub.dev/packages/angel3_cache)
+![Pub Version (including pre-releases)](https://img.shields.io/pub/v/angel3_cache?include_prereleases)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 [![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
-
-[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/cache/LICENSE)
+[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/master/packages/cache/LICENSE)
 
 A service that provides HTTP caching to the response data for [Angel3 framework](https://pub.dev/packages/angel3).
 
 ## `CacheService`
 
-A `Service` class that caches data from one service, storing it in another. An imaginable use case is storing results from MongoDB or another database in MemcacheD/Redis.
+A `Service` class that caches data from one service, storing it in another. An imaginable use case is storing results from MongoDB or another database in Memcache/Redis.
 
 ## `cacheSerializationResults`
 

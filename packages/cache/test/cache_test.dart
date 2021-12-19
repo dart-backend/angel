@@ -53,7 +53,7 @@ Future<void> main() async {
       var oldHandler = app.errorHandler;
       app.errorHandler = (e, req, res) {
         if (e.error == null) {
-          return oldHandler(e, req, res);
+          oldHandler(e, req, res);
         }
         return Zone.current
             .handleUncaughtError(e.error as Object, e.stackTrace!);
