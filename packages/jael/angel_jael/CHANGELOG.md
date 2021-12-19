@@ -1,5 +1,9 @@
 # Change Log
 
+## 4.2.2
+
+* Set default `cacheViews` to true
+
 ## 4.2.1
 
 * Added `minified` parameter for generating minified HTML output
