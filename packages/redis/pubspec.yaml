@@ -1,13 +1,14 @@
 name: angel3_redis
-version: 2.0.0
+version: 2.0.1
 description: An Angel3 service provider for Redis. Works well for caching volatile data.
-homepage: https://github.com/dukefirehawk/angel/tree/angel3/packages/redis
+homepage: https://angel3-framework.web.app/
+repository: https://github.com/dukefirehawk/angel/tree/master/packages/redis
 environment:
   sdk: '>=2.12.0 <3.0.0'
 dependencies:
-  angel3_framework: ^4.0.0
+  angel3_framework: ^4.2.0
   angel3_http_exception: ^3.0.0
   resp_client: ^1.2.0
 dev_dependencies:
   test: ^1.17.8
-  pedantic: ^1.11.1
+  lints: ^1.0.0
