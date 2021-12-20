@@ -1,5 +1,9 @@
 # Change Log
 
+## 2.0.0-beta.3
+
+* Updated linter to `package:lints`
+
 ## 2.0.0-beta.2
 
 * Fixed NNBD issues

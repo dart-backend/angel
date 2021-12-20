@@ -1,5 +1,9 @@
 # Change Log
 
+## 4.0.1
+
+* Updated linter to `package:lints`
+
 ## 4.0.0
 
 * Fixed NNBD issues

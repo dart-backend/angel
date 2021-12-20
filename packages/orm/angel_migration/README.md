@@ -1,13 +1,12 @@
 # Angel3 Migration
 
-[![version](https://img.shields.io/badge/pub-v4.0.0-brightgreen)](https://pub.dartlang.org/packages/angel3_migration)
+![Pub Version (including pre-releases)](https://img.shields.io/pub/v/angel3_migration?include_prereleases)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 [![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
-
-[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/orm/angel_migration/LICENSE)
+[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/master/packages/orm/angel_migration/LICENSE)
 
 A database migration framework built for Angel3 ORM.
 
 Supported database:
 
-* postgresql version 9, 10, 11 and 12
+* postgresql version 10, 11, 12, 13 and 14
