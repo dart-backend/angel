@@ -1,5 +1,9 @@
 # Change Log
 
+## 3.0.2
+
+* Updated linter to `package:lints`
+  
 ## 3.0.1
 
 * Fixed incorrect json data serialization

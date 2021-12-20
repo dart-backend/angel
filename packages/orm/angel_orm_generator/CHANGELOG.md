@@ -1,5 +1,9 @@
 # Change Log
 
+## 4.1.2
+
+* Updated linter to `package:lints`
+
 ## 4.1.1
 
 * Fixed `NumericSqlExpressionBuilder` to handle nullable field

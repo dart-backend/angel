@@ -1,8 +1,8 @@
 name: angel3_migration_runner
-version: 4.0.0
+version: 4.0.1
 description: Command-line based database migration runner for Angel3's ORM.
 homepage: https://angel3-framework.web.app/
-repository: https://github.com/dukefirehawk/angel/tree/angel3/packages/orm/angel_migration_runner
+repository: https://github.com/dukefirehawk/angel/tree/master/packages/orm/angel_migration_runner
 environment:
   sdk: '>=2.12.0 <3.0.0'
 dependencies:
@@ -13,5 +13,5 @@ dependencies:
   postgres: ^2.3.2
   logging: ^1.0.0
 dev_dependencies:
-  pedantic: ^1.11.0
+  lints: ^1.0.0
 

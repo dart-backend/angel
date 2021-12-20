@@ -2,11 +2,11 @@ name: angel3_orm_service
 version: 2.0.0
 description: Service implementation that wraps over Angel3 ORM Query classes.
 homepage: https://angel3-framework.web.app/
-repository: https://github.com/dukefirehawk/angel/tree/angel3/packages/orm/angel_orm_service
+repository: https://github.com/dukefirehawk/angel/tree/master/packages/orm/angel_orm_service
 environment:
   sdk: '>=2.12.0 <3.0.0'
 dependencies:
-  angel3_framework: ^4.0.0
+  angel3_framework: ^4.2.0
   angel3_orm: ^4.0.0
   postgres: ^2.4.0
   optional: ^6.0.0
@@ -16,8 +16,9 @@ dev_dependencies:
   angel3_orm_generator: ^4.0.0
   angel3_orm_postgres: ^3.0.0
   angel3_serialize: ^4.0.0
-  angel3_orm_test: 
+  #angel3_orm_test: ^3.0.0
   build_runner: ^2.0.4
   logging: ^1.0.1
-  pedantic: ^1.11.0
   test: ^1.17.7
+  lints: ^1.0.0
+
