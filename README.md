@@ -2,10 +2,9 @@
 
 [![Angel3 Framework](./logo3.png)](https://github.com/dukefirehawk/angel)
 
-[![version](https://img.shields.io/badge/pub-v4.0.0-brightgreen)](https://pub.dartlang.org/packages/framework)
+![Pub Version (including pre-releases)](https://img.shields.io/pub/v/angel3_framework?include_prereleases)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 [![Gitter](https://img.shields.io/gitter/room/nwjs/nw.js.svg)](https://gitter.im/angel_dart/discussion)
-
 [![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/LICENSE)
 
 **A polished, production-ready backend framework in Dart with NNBD support.**
@@ -105,6 +104,14 @@ For more details, checkout [Project Status](https://github.com/dukefirehawk/ange
 ### Migrating from Angel to Angel3
 
 Check out [Migrating to Angel3](https://angel3-docs.dukefirehawk.com/migration/angel-2.x.x-to-angel3/migration-guide-3)
+
+## Performance Benchmark
+
+The performance benchmark can be found at
+
+[TechEmpower Framework Benchmarks](https://tfb-status.techempower.com/)
+
+The test cases are build using standard `Angel3 ORM` template. Note that JAEL view template caching is not enabled in `Fortunes` test case and database connections pooling is not used in any of the queries test cases. These results will be used for fine-tuning the framework.
 
 ## Examples and Documentation
 

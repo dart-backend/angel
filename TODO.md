@@ -4,12 +4,11 @@
 
 * Update examples
 * Update User Guide
-* Performance testing
+* Fix bugs
 
 ## Long Term Goal
 
-* Optimise Angel3 architecture
-
-### In Progress
-
-* Migrate generic packages that has no dependencies on Angel3 to [Common Utilities Repository](<https://github.com/dart-backend/belatuk-common-utilities>). All of these packages operate under the hood with no impact to the application build on Angel3. Updating to newer version of Angel3 packages will automatically upgrade them.
+* Refactor Angel3 architecture for performance and security
+  * Better logging for error messages
+  * Improve exception and error handling
+  * Improve ORM features
