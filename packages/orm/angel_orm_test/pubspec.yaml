@@ -7,16 +7,16 @@ environment:
   sdk: '>=2.12.0 <3.0.0'
 dependencies:
   angel3_migration: ^4.0.0
-  angel3_model: ^3.0.0
+  angel3_model: ^3.1.0
   angel3_orm: ^4.0.0
-  angel3_serialize: ^4.0.0
+  angel3_serialize: ^4.1.0
   io: ^1.0.0
   test: ^1.17.4
   collection: ^1.15.0
   optional: ^6.0.0
 dev_dependencies:
-  angel3_orm_generator: ^4.0.0
-  angel3_framework: ^4.0.0
+  angel3_orm_generator: ^4.1.0
+  angel3_framework: ^4.2.0
   build_runner: ^2.0.1
   lints: ^1.0.0
 #dependency_overrides:
