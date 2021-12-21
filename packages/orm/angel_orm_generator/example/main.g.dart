@@ -82,7 +82,6 @@ class EmployeeQuery extends Query<Employee, EmployeeQueryWhere> {
     if (row.every((x) => x == null)) return null;
     var model = Employee(
         id: row[0].toString(),
-        error: (row[1] as String?),
         createdAt: (row[2] as DateTime?),
         updatedAt: (row[3] as DateTime?),
         uniqueId: (row[4] as String?),
@@ -187,7 +186,6 @@ class EmployeeQueryValues extends MapQueryValues {
 
   set salary(double? value) => values['salary'] = value.toString();
   void copyFrom(Employee model) {
-    error = model.error;
     createdAt = model.createdAt;
     updatedAt = model.updatedAt;
     uniqueId = model.uniqueId;
@@ -205,7 +203,6 @@ class EmployeeQueryValues extends MapQueryValues {
 class Employee extends _Employee {
   Employee(
       {this.id,
-      this.error,
       this.createdAt,
       this.updatedAt,
       this.uniqueId,
@@ -216,9 +213,6 @@ class Employee extends _Employee {
   /// A unique identifier corresponding to this item.
   @override
   String? id;
-
-  @override
-  String? error;
 
   /// The time at which this item was created.
   @override
@@ -251,7 +245,6 @@ class Employee extends _Employee {
       double? salary}) {
     return Employee(
         id: id ?? this.id,
-        error: error ?? this.error,
         createdAt: createdAt ?? this.createdAt,
         updatedAt: updatedAt ?? this.updatedAt,
         uniqueId: uniqueId ?? this.uniqueId,
@@ -264,7 +257,6 @@ class Employee extends _Employee {
   bool operator ==(other) {
     return other is _Employee &&
         other.id == id &&
-        other.error == error &&
         other.createdAt == createdAt &&
         other.updatedAt == updatedAt &&
         other.uniqueId == uniqueId &&
@@ -275,21 +267,13 @@ class Employee extends _Employee {
 
   @override
   int get hashCode {
-    return hashObjects([
-      id,
-      error,
-      createdAt,
-      updatedAt,
-      uniqueId,
-      firstName,
-      lastName,
-      salary
-    ]);
+    return hashObjects(
+        [id, createdAt, updatedAt, uniqueId, firstName, lastName, salary]);
   }
 
   @override
   String toString() {
-    return 'Employee(id=$id, error=$error, createdAt=$createdAt, updatedAt=$updatedAt, uniqueId=$uniqueId, firstName=$firstName, lastName=$lastName, salary=$salary)';
+    return 'Employee(id=$id, createdAt=$createdAt, updatedAt=$updatedAt, uniqueId=$uniqueId, firstName=$firstName, lastName=$lastName, salary=$salary)';
   }
 
   Map<String, dynamic> toJson() {
@@ -327,7 +311,6 @@ class EmployeeSerializer extends Codec<Employee, Map> {
   static Employee fromMap(Map map) {
     return Employee(
         id: map['id'] as String,
-        error: map['error'] as String,
         createdAt: map['created_at'] != null
             ? (map['created_at'] is DateTime
                 ? (map['created_at'] as DateTime)
@@ -347,7 +330,6 @@ class EmployeeSerializer extends Codec<Employee, Map> {
   static Map<String, dynamic> toMap(_Employee model) {
     return {
       'id': model.id,
-      'error': model.error,
       'created_at': model.createdAt?.toIso8601String(),
       'updated_at': model.updatedAt?.toIso8601String(),
       'unique_id': model.uniqueId,
