@@ -1,9 +1,0 @@
-name: inflection3
-version: 1.0.0
-description: Grammatical Inflection encoders.
-homepage: https://github.com/dukefirehawk/angel/tree/angel3/packages/inflection3
-environment:
-  sdk: '>=2.12.0 <3.0.0'
-dev_dependencies:
-  test: ^1.17.4
-  pedantic: ^1.11.0
