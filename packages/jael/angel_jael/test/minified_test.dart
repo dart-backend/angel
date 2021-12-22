@@ -46,7 +46,7 @@ void main() {
     });
 
     await app.configure(
-      jael(viewsDirectory, minified: true),
+      jael(viewsDirectory, cacheViews: true),
     );
 
     app.fallback((req, res) => throw AngelHttpException.notFound());
@@ -63,7 +63,7 @@ void main() {
 
   test('can render', () async {
     var response = await client.get(Uri.parse('/github/thosakwe'));
-    print('Body:\n${response.body}');
+    //print('Body:\n${response.body}');
     expect(
         html.parse(response.body).outerHtml,
         html
@@ -74,13 +74,15 @@ void main() {
   });
 
   test('can render multiples', () async {
-    var response = await client.get(Uri.parse('/github/thosakwe'));
-    response = await client.get(Uri.parse('/github/thosakwe'));
-    response = await client.get(Uri.parse('/github/thosakwe'));
-    response = await client.get(Uri.parse('/github/thosakwe'));
-    response = await client.get(Uri.parse('/github/thosakwe'));
+    // Load the view template and wait for it to be cached
+    var response1 = await client.get(Uri.parse('/github/thosakwe'));
 
-    print('Body:\n${response.body}');
+    for (var i = 0; i < 100; i++) {
+      client.get(Uri.parse('/github/thosakwe'));
+    }
+    var response = await client.get(Uri.parse('/github/thosakwe'));
+
+    //print('Body:\n${response.body}');
     expect(
         html.parse(response.body).outerHtml,
         html

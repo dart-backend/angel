@@ -46,7 +46,7 @@ void main() {
     });
 
     await app.configure(
-      jael(viewsDirectory),
+      jael(viewsDirectory, minified: false),
     );
 
     app.fallback((req, res) => throw AngelHttpException.notFound());

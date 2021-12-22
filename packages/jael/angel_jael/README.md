@@ -18,8 +18,7 @@ dependencies:
 
 ## Usage
 
-Just like `mustache` and other renderers, configuring Angel to use
-Jael is as simple as calling `app.configure`:
+Just like `mustache` and other renderers, configuring Angel to use Jael is as simple as calling `app.configure`:
 
 ```dart
 import 'package:angel3_framework/angel3_framework.dart';
@@ -36,10 +35,10 @@ AngelConfigurer myPlugin(FileSystem fileSystem) {
 }
 ```
 
-`package:angel3_jael` supports caching views, to improve server performance. You might not want to enable this in development, so consider setting the flag to `app.isProduction`:
+`package:angel3_jael` supports caching views and minified html output by default, to improve performance. You might want to disable them in development, so consider setting these flags to `false`:
 
 ```dart
-jael(viewsDirectory, cacheViews: app.isProduction);
+jael(viewsDirectory, cacheViews: false, minified: false);
 ```
 
 Keep in mind that this package uses `package:file`, rather than `dart:io`.
