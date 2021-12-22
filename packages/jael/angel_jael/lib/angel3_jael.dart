@@ -19,7 +19,7 @@ AngelConfigurer jael(Directory viewsDirectory,
     bool cacheViews = true,
     Iterable<Patcher> patch = const [],
     bool asDSX = false,
-    bool minified = false,
+    bool minified = true,
     CodeBuffer Function()? createBuffer}) {
   var cache = <String, Document>{};
 

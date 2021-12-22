@@ -1,8 +1,12 @@
 # Change Log
 
+## 4.2.3
+
+* Turned on generated HTML minification by default
+
 ## 4.2.2
 
-* Set default `cacheViews` to true
+* Turned on JAEL template caching by default
 
 ## 4.2.1
 
