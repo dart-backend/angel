@@ -1,5 +1,9 @@
 # Change Log
 
+## 3.0.3
+
+* Added performance test cases
+
 ## 3.0.2
 
 * Updated linter to `package:lints`

@@ -63,6 +63,8 @@ void standaloneTests(FutureOr<QueryExecutor> Function() createExecutor,
           var query = CarQuery();
           query.values
             ..make = 'Ferrari東'
+            ..createdAt = y2k
+            ..updatedAt = y2k
             ..description = 'Vroom vroom!'
             ..familyFriendly = false;
           ferrari = (await query.insert(executor)).value;
@@ -163,7 +165,7 @@ void standaloneTests(FutureOr<QueryExecutor> Function() createExecutor,
           expect(carOpt.isPresent, true);
           carOpt.ifPresent((car) {
             var car = carOpt.value;
-            print(car.toJson());
+            //print(car.toJson());
             expect(car.toJson(), cloned.toJson());
           });
         });

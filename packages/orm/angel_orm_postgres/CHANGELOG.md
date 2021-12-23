@@ -1,5 +1,9 @@
 # Change Log
 
+## 3.2.0
+
+* Updated connection pooling
+
 ## 3.1.0
 
 * Updated linter to `package:lints`
