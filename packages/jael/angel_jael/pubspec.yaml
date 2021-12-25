@@ -1,5 +1,5 @@
 name: angel3_jael
-version: 4.2.3
+version: 4.3.0
 description: Angel support for the Jael templating engine, similar to Blade or Liquid.
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dukefirehawk/angel/tree/master/packages/jael/angel_jael
@@ -13,6 +13,7 @@ dependencies:
   jael3_preprocessor: ^4.2.0
   file: ^6.0.0
   logging: ^1.0.1
+
 dev_dependencies:
   angel3_test: ^4.0.0
   html: ^0.15.0
