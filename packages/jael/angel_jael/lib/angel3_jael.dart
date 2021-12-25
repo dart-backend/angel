@@ -85,7 +85,7 @@ Future<void> jaelTemplatePreload(
     if (f.basename.endsWith(fileExtension)) {
       var name = f.basename.split(".");
       if (name.length > 1) {
-        print("View: ${name[0]}");
+        //print("View: ${name[0]}");
         Document? processed = await _loadViewTemplate(viewsDirectory, name[0]);
         if (processed != null) {
           cache[name[0]] = processed;
