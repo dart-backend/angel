@@ -1,5 +1,13 @@
 # Change Log
 
+## 4.3.1
+
+* Removed debug message
+
+## 4.3.0
+
+* Added `jaelTemplatePreload` to preload all JAEL templates into a cache
+
 ## 4.2.3
 
 * Turned on generated HTML minification by default

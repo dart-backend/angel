@@ -3,6 +3,7 @@ import 'package:angel3_jael/angel3_jael.dart';
 import 'package:angel3_test/angel3_test.dart';
 import 'package:file/memory.dart';
 import 'package:html/parser.dart' as html;
+import 'package:jael3/jael3.dart';
 import 'package:logging/logging.dart';
 import 'package:test/test.dart';
 
@@ -40,13 +41,17 @@ void main() {
 </extend>
     ''');
 
-    app.get('/github/:username', (req, res) {
+    app.get('/github/:username', (req, res) async {
       var username = req.params['username'];
       return res.render('github', {'username': username});
     });
 
+    //Preload the view template
+    var viewCache = <String, Document>{};
+    jaelTemplatePreload(viewsDirectory, viewCache);
+
     await app.configure(
-      jael(viewsDirectory, cacheViews: true),
+      jael(viewsDirectory, cache: viewCache),
     );
 
     app.fallback((req, res) => throw AngelHttpException.notFound());
@@ -73,16 +78,19 @@ void main() {
             .outerHtml);
   });
 
-  test('can render multiples', () async {
-    // Load the view template and wait for it to be cached
-    var response1 = await client.get(Uri.parse('/github/thosakwe'));
-
-    for (var i = 0; i < 100; i++) {
+  test('initial load concurreny', () async {
+    // Concurrently hit the same JAEL page
+    for (var i = 0; i < 512; i++) {
       client.get(Uri.parse('/github/thosakwe'));
     }
-    var response = await client.get(Uri.parse('/github/thosakwe'));
 
-    //print('Body:\n${response.body}');
+    Stopwatch stopwatch = Stopwatch()..start();
+    var response = await client.get(Uri.parse('/github/thosakwe'));
+    var elapsedTime = stopwatch.elapsed.inMilliseconds;
+
+    print('Latency is $elapsedTime');
+
+    print('Body:\n${response.body}');
     expect(
         html.parse(response.body).outerHtml,
         html

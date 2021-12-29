@@ -77,3 +77,23 @@ void main() async {
 ```
 
 To apply additional transforms to parsed documents, provide a set of `patch` functions, like in `package:jael3_preprocessor`.
+
+## Performance Optimization
+
+For handling large volume of initial requests, consider using `jaelTemplatePreload` to preload all the JAEL templates
+into an external cache.
+
+```dart
+
+  var templateDir = fileSystem.directory('views');
+
+  // Preload JAEL view templates into cache
+  var viewCache = <String, Document>{};
+  jaelTemplatePreload(templateDir, viewCache);
+
+  // Inject cache into JAEL renderer
+  await app.configure(
+    jael(fileSystem.directory('views'), cache: viewCache),
+  );
+
+```
