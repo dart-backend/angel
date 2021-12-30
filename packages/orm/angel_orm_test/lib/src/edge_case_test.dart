@@ -15,11 +15,11 @@ void edgeCaseTests(FutureOr<QueryExecutor> Function() createExecutor,
   tearDown(() => close!(executor));
 
   test('can create object with no id', () async {
-    var query = UnorthodoxQuery()..values.name = 'Hey';
+    var query = UnorthodoxQuery()..values.name = 'World';
     var modelOpt = await query.insert(executor);
     expect(modelOpt.isPresent, true);
     modelOpt.ifPresent((model) {
-      expect(model, Unorthodox(name: 'Hey'));
+      expect(model, Unorthodox(name: 'World'));
     });
   });
 
@@ -27,12 +27,14 @@ void edgeCaseTests(FutureOr<QueryExecutor> Function() createExecutor,
     Unorthodox? unorthodox;
 
     setUp(() async {
+      //if (unorthodox == null) {
       var query = UnorthodoxQuery()..values.name = 'Hey';
 
       var unorthodoxOpt = await query.insert(executor);
       unorthodoxOpt.ifPresent((value) {
         unorthodox = value;
       });
+      //}
     });
 
     test('belongs to', () async {
@@ -40,7 +42,7 @@ void edgeCaseTests(FutureOr<QueryExecutor> Function() createExecutor,
       var modelOpt = await query.insert(executor);
       expect(modelOpt.isPresent, true);
       modelOpt.ifPresent((model) {
-        print(model.toJson());
+        //print(model.toJson());
         expect(model.id, isNotNull); // Postgres should set this.
         expect(model.unorthodox, unorthodox);
       });
@@ -73,7 +75,7 @@ void edgeCaseTests(FutureOr<QueryExecutor> Function() createExecutor,
         var wjOpt = await query.getOne(executor);
         expect(wjOpt.isPresent, true);
         wjOpt.ifPresent((wj) {
-          print(wj.toJson());
+          //print(wj.toJson());
           expect(wj.song, girlBlue);
         });
       });
@@ -96,7 +98,7 @@ void edgeCaseTests(FutureOr<QueryExecutor> Function() createExecutor,
         var wjObj = await query.getOne(executor);
         expect(wjObj.isPresent, true);
         wjObj.ifPresent((wj) {
-          print(wj.toJson());
+          //print(wj.toJson());
           expect(wj.numbas, numbas);
         });
       });
@@ -114,8 +116,8 @@ void edgeCaseTests(FutureOr<QueryExecutor> Function() createExecutor,
         var fooOpt = await fooQuery.getOne(executor);
         expect(fooOpt.isPresent, true);
         fooOpt.ifPresent((foo) {
-          print(foo.toJson());
-          print(weirdJoin!.toJson());
+          //print(foo.toJson());
+          //print(weirdJoin!.toJson());
           expect(foo.weirdJoins![0].id, weirdJoin!.id);
         });
       });

@@ -22,10 +22,10 @@ void hasMapTests(FutureOr<QueryExecutor> Function() createExecutor,
     var modelOpt = await (query.insert(executor));
     expect(modelOpt.isPresent, true);
     modelOpt.ifPresent((model) {
-      print(model.toString());
+      //print(model.toString());
 
       var data = HasMap(value: {'foo': 'bar'}, list: ['1', 2, 3.0]);
-      print(data.toString());
+      //print(data.toString());
 
       expect(model, data);
     });
@@ -40,7 +40,7 @@ void hasMapTests(FutureOr<QueryExecutor> Function() createExecutor,
     expect(modelOpt.isPresent, true);
     if (modelOpt.isPresent) {
       var model = modelOpt.value;
-      print(model.toJson());
+      //print(model.toJson());
       query = HasMapQuery()..values.copyFrom(model);
       var result = await query.updateOne(executor);
       expect(result.isPresent, true);
@@ -83,7 +83,7 @@ void hasMapTests(FutureOr<QueryExecutor> Function() createExecutor,
 
       query.where?.list.equals(['1', 2, 3.0]);
 
-      print(query.substitutionValues);
+      //print(query.substitutionValues);
 
       var result = await query.get(executor);
       expect(result, [initialValue]);

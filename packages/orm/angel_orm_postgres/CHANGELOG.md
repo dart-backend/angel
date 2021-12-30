@@ -1,5 +1,9 @@
 # Change Log
 
+## 3.2.0
+
+* Added `package:postgres_pool` for connection pooling
+
 ## 3.1.0
 
 * Updated linter to `package:lints`

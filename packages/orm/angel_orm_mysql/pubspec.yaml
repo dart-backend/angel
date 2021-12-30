@@ -18,4 +18,9 @@ dev_dependencies:
   test: ^1.17.0
   angel3_orm_test: ^3.0.0
   lints: ^1.0.0
+dependency_overrides:
+  angel3_orm_test:
+    path: ../angel_orm_test
+  angel3_orm:
+    path: ../angel_orm
 

@@ -23,9 +23,9 @@ dependencies:
 The core `jael3` package exports classes for parsing Jael templates, an AST library, and a `Renderer` class that generates HTML on-the-fly.
 
 ```dart
-import 'package:belatuk_code_buffer/code_buffer.dart';
-import 'package:belatuk_symbol_table/symbol_table.dart';
-import 'package:jael3/jael.dart' as jael;
+import 'package:belatuk_code_buffer/belatuk_code_buffer.dart';
+import 'package:belatuk_symbol_table/belatuk_symbol_table.dart';
+import 'package:jael3/jael3.dart' as jael;
 
 void myFunction() {
     const template = '''

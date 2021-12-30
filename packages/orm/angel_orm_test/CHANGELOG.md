@@ -1,5 +1,10 @@
 # Change Log
 
+## 3.0.3
+
+* Added `performance_test` test cases
+* Update `edge_case_test` test case to support connection pooling
+
 ## 3.0.2
 
 * Updated linter to `package:lints`

@@ -3,7 +3,6 @@ import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_framework/http.dart';
 import 'package:angel3_jael/angel3_jael.dart';
 import 'package:file/local.dart';
-import 'package:jael3/jael3.dart';
 import 'package:logging/logging.dart';
 
 main() async {

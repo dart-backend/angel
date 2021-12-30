@@ -29,7 +29,7 @@ void hasManyTests(FutureOr<QueryExecutor> Function() createExecutor,
     Fruit? apple, banana;
 
     void verify(Tree tree) {
-      print(tree.fruits!.map(FruitSerializer.toMap).toList());
+      //print(tree.fruits!.map(FruitSerializer.toMap).toList());
       expect(tree.fruits, hasLength(2));
       expect(tree.fruits![0].commonName, apple!.commonName);
       expect(tree.fruits![1].commonName, banana!.commonName);

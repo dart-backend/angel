@@ -5,6 +5,6 @@
 [![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
 [![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/master/packages/orm/angel_orm_postgres/LICENSE)
 
-Postgresql support for Angel3 ORM. Supported version: 9, 10, 11 and 12.
+Postgresql support for Angel3 ORM. Supported version: 10, 11, 12, 13 and 14
 
 For documentation about the ORM, see [Developer Guide](https://angel3-docs.dukefirehawk.com/guides/orm)
