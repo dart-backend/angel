@@ -60,8 +60,8 @@ abstract class QueryBase<T> {
   Future<List<T>> get(QueryExecutor executor) async {
     var sql = compile({});
 
-    _log.fine('sql = $sql');
-    _log.fine('substitutionValues = $substitutionValues');
+    //_log.fine('sql = $sql');
+    //_log.fine('substitutionValues = $substitutionValues');
 
     return executor.query(tableName, sql, substitutionValues).then((it) {
       return deserializeList(it);

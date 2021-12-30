@@ -21,7 +21,9 @@ void manyToManyTests(FutureOr<QueryExecutor> Function() createExecutor,
     //var rows = await executor.query(null, query, {});
     var rows = await executor.query('', query, {});
     print('\n${rows.length} row(s):');
-    rows.forEach((r) => print('  * $r'));
+    for (var r in rows) {
+      print('  * $r');
+    }
     print('==================================================\n\n');
   }
 

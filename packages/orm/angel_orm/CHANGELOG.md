@@ -1,5 +1,9 @@
 # Change Log
 
+## 4.0.3
+
+* Removed debugging messages
+
 ## 4.0.2
 
 * Updated linter to `package:lints`

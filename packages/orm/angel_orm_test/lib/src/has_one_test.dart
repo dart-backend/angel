@@ -18,12 +18,12 @@ void hasOneTests(FutureOr<QueryExecutor> Function() createExecutor,
   tearDown(() => close!(executor));
 
   test('sets to null if no child', () async {
-    print(LegQuery().compile({}));
+    //print(LegQuery().compile({}));
     var query = LegQuery()..where!.id.equals(int.parse(originalLeg!.id!));
     var legOpt = await (query.getOne(executor));
     expect(legOpt.isPresent, true);
     legOpt.ifPresent((leg) {
-      print(leg.toJson());
+      //print(leg.toJson());
       expect(leg.name, originalLeg?.name);
       expect(leg.id, originalLeg?.id);
       expect(leg.foot, isNull);
@@ -82,7 +82,7 @@ void hasOneTests(FutureOr<QueryExecutor> Function() createExecutor,
     expect(footOpt.isPresent, true);
     expect(legOpt.isPresent, true);
     legOpt.ifPresent((leg) {
-      print(leg.toJson());
+      //print(leg.toJson());
       expect(leg.name, 'Right');
       expect(leg.foot, isNotNull);
       footOpt.ifPresent((foot) {
@@ -102,7 +102,7 @@ void hasOneTests(FutureOr<QueryExecutor> Function() createExecutor,
     expect(footOpt.isPresent, true);
     expect(legOpt.isPresent, true);
     legOpt.ifPresent((leg) {
-      print(leg.toJson());
+      //print(leg.toJson());
       expect(leg.name, originalLeg?.name);
       expect(leg.foot, isNotNull);
       footOpt.ifPresent((foot) {

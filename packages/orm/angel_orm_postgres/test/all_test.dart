@@ -9,6 +9,9 @@ void main() {
     ..level = Level.ALL
     ..onRecord.listen(prettyLog);
 
+  //group('performance',
+  //    () => performanceTests(pg(['performance']), close: closePg));
+
   group('postgresql', () {
     group('belongsTo',
         () => belongsToTests(pg(['author', 'book']), close: closePg));

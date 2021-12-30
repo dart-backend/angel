@@ -2,7 +2,7 @@
 
 ## 3.2.0
 
-* Updated connection pooling
+* Added `package:postgres_pool` for connection pooling
 
 ## 3.1.0
 
