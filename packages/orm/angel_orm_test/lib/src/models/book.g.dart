@@ -13,12 +13,10 @@ class BookMigration extends Migration {
       table.serial('id').primaryKey();
       table.timeStamp('created_at');
       table.timeStamp('updated_at');
-      table.varChar('name');
+      table.varChar('name', length: 255);
+      table.declare('author_id', ColumnType('int')).references('authors', 'id');
       table
-          .declare('author_id', ColumnType('serial'))
-          .references('authors', 'id');
-      table
-          .declare('partner_author_id', ColumnType('serial'))
+          .declare('partner_author_id', ColumnType('int'))
           .references('authors', 'id');
     });
   }
@@ -36,7 +34,9 @@ class AuthorMigration extends Migration {
       table.serial('id').primaryKey();
       table.timeStamp('created_at');
       table.timeStamp('updated_at');
-      table.varChar('name', length: 255).defaultsTo('Tobe Osakwe');
+      table.varChar('name', length: 255)
+        ..defaultsTo('Tobe Osakwe')
+        ..unique();
     });
   }
 
@@ -70,9 +70,9 @@ class BookQuery extends Query<Book, BookQueryWhere> {
 
   BookQueryWhere? _where;
 
-  AuthorQuery? _author;
+  late AuthorQuery _author;
 
-  AuthorQuery? _partnerAuthor;
+  late AuthorQuery _partnerAuthor;
 
   @override
   Map<String, String> get casts {
@@ -135,11 +135,11 @@ class BookQuery extends Query<Book, BookQueryWhere> {
     return parseRow(row);
   }
 
-  AuthorQuery? get author {
+  AuthorQuery get author {
     return _author;
   }
 
-  AuthorQuery? get partnerAuthor {
+  AuthorQuery get partnerAuthor {
     return _partnerAuthor;
   }
 }
@@ -193,16 +193,16 @@ class BookQueryValues extends MapQueryValues {
   }
 
   set updatedAt(DateTime? value) => values['updated_at'] = value;
-  int? get authorId {
-    return (values['author_id'] as int?);
+  int get authorId {
+    return (values['author_id'] as int);
   }
 
-  set authorId(int? value) => values['author_id'] = value;
-  int? get partnerAuthorId {
-    return (values['partner_author_id'] as int?);
+  set authorId(int value) => values['author_id'] = value;
+  int get partnerAuthorId {
+    return (values['partner_author_id'] as int);
   }
 
-  set partnerAuthorId(int? value) => values['partner_author_id'] = value;
+  set partnerAuthorId(int value) => values['partner_author_id'] = value;
   String? get name {
     return (values['name'] as String?);
   }
@@ -213,10 +213,10 @@ class BookQueryValues extends MapQueryValues {
     updatedAt = model.updatedAt;
     name = model.name;
     if (model.author != null) {
-      values['author_id'] = model.author!.id;
+      values['author_id'] = model.author?.id;
     }
     if (model.partnerAuthor != null) {
-      values['partner_author_id'] = model.partnerAuthor!.id;
+      values['partner_author_id'] = model.partnerAuthor?.id;
     }
   }
 }
@@ -267,8 +267,8 @@ class AuthorQuery extends Query<Author, AuthorQueryWhere> {
         id: row[0].toString(),
         createdAt: (row[1] as DateTime?),
         updatedAt: (row[2] as DateTime?),
-        name: (row[3]) as String?);
-    return Optional.ofNullable(model);
+        name: (row[3] as String?));
+    return Optional.of(model);
   }
 
   @override
@@ -425,7 +425,7 @@ class Author extends _Author {
   DateTime? updatedAt;
 
   @override
-  final String? name;
+  String? name;
 
   Author copyWith(
       {String? id, DateTime? createdAt, DateTime? updatedAt, String? name}) {
@@ -455,7 +455,7 @@ class Author extends _Author {
     return 'Author(id=$id, createdAt=$createdAt, updatedAt=$updatedAt, name=$name)';
   }
 
-  Map<String, dynamic>? toJson() {
+  Map<String, dynamic> toJson() {
     return AuthorSerializer.toMap(this);
   }
 }
@@ -492,12 +492,12 @@ class BookSerializer extends Codec<Book, Map> {
         id: map['id'] as String?,
         createdAt: map['created_at'] != null
             ? (map['created_at'] is DateTime
-                ? (map['created_at'] as DateTime?)
+                ? (map['created_at'] as DateTime)
                 : DateTime.parse(map['created_at'].toString()))
             : null,
         updatedAt: map['updated_at'] != null
             ? (map['updated_at'] is DateTime
-                ? (map['updated_at'] as DateTime?)
+                ? (map['updated_at'] as DateTime)
                 : DateTime.parse(map['updated_at'].toString()))
             : null,
         author: map['author'] != null
@@ -509,7 +509,10 @@ class BookSerializer extends Codec<Book, Map> {
         name: map['name'] as String?);
   }
 
-  static Map<String, dynamic> toMap(_Book model) {
+  static Map<String, dynamic> toMap(_Book? model) {
+    if (model == null) {
+      return {};
+    }
     return {
       'id': model.id,
       'created_at': model.createdAt?.toIso8601String(),
@@ -546,11 +549,11 @@ abstract class BookFields {
 
 const AuthorSerializer authorSerializer = AuthorSerializer();
 
-class AuthorEncoder extends Converter<Author, Map?> {
+class AuthorEncoder extends Converter<Author, Map> {
   const AuthorEncoder();
 
   @override
-  Map? convert(Author model) => AuthorSerializer.toMap(model);
+  Map convert(Author model) => AuthorSerializer.toMap(model);
 }
 
 class AuthorDecoder extends Converter<Map, Author> {
@@ -560,7 +563,7 @@ class AuthorDecoder extends Converter<Map, Author> {
   Author convert(Map map) => AuthorSerializer.fromMap(map);
 }
 
-class AuthorSerializer extends Codec<Author, Map?> {
+class AuthorSerializer extends Codec<Author, Map> {
   const AuthorSerializer();
 
   @override
@@ -572,20 +575,20 @@ class AuthorSerializer extends Codec<Author, Map?> {
         id: map['id'] as String?,
         createdAt: map['created_at'] != null
             ? (map['created_at'] is DateTime
-                ? (map['created_at'] as DateTime?)
+                ? (map['created_at'] as DateTime)
                 : DateTime.parse(map['created_at'].toString()))
             : null,
         updatedAt: map['updated_at'] != null
             ? (map['updated_at'] is DateTime
-                ? (map['updated_at'] as DateTime?)
+                ? (map['updated_at'] as DateTime)
                 : DateTime.parse(map['updated_at'].toString()))
             : null,
         name: map['name'] as String? ?? 'Tobe Osakwe');
   }
 
-  static Map<String, dynamic>? toMap(_Author? model) {
+  static Map<String, dynamic> toMap(_Author? model) {
     if (model == null) {
-      return null;
+      return {};
     }
     return {
       'id': model.id,

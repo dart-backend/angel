@@ -19,12 +19,12 @@ dev_dependencies:
   angel3_framework: ^4.2.0
   build_runner: ^2.0.1
   lints: ^1.0.0
-#dependency_overrides:
+dependency_overrides:
 #  angel3_migration_runner:
 #    path: ../angel_migration_runner
-#  angel3_orm:
-#    path: ../angel_orm
+  angel3_orm:
+    path: ../angel_orm
 #  angel3_migration:
 #    path: ..//angel_migration
-#  angel3_orm_generator:
-#    path: ../angel_orm_generator
+  angel3_orm_generator:
+    path: ../angel_orm_generator

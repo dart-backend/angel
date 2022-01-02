@@ -26,8 +26,8 @@ void belongsToTests(FutureOr<QueryExecutor> Function() createExecutor,
     // And a book
     var bookQuery = BookQuery();
     bookQuery.values
-      ..authorId = int.parse(jkRowling!.id!)
-      ..partnerAuthorId = int.parse(jameson!.id!)
+      ..authorId = jkRowling?.idAsInt ?? 0
+      ..partnerAuthorId = jameson?.idAsInt ?? 0
       ..name = 'Deathly Hallows';
 
     deathlyHallows = (await bookQuery.insert(executor)).value;
@@ -162,13 +162,13 @@ void belongsToTests(FutureOr<QueryExecutor> Function() createExecutor,
     // that should return correctly.
     test('returns empty on false subquery', () async {
       printSeparator('False subquery test');
-      var query = BookQuery()..author!.where!.name.equals('Billie Jean');
+      var query = BookQuery()..author.where!.name.equals('Billie Jean');
       expect(await query.get(executor), isEmpty);
     });
 
     test('returns values on true subquery', () async {
       printSeparator('True subquery test');
-      var query = BookQuery()..author!.where!.name.like('%Rowling%');
+      var query = BookQuery()..author.where!.name.like('%Rowling%');
       expect(await query.get(executor), [deathlyHallows]);
     });
   });

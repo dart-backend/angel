@@ -17,7 +17,7 @@ class OrderMigration extends Migration {
       table.timeStamp('order_date');
       table.integer('shipper_id');
       table
-          .declare('customer_id', ColumnType('serial'))
+          .declare('customer_id', ColumnType('int'))
           .references('customers', 'id');
     });
   }
@@ -64,7 +64,7 @@ class OrderQuery extends Query<Order, OrderQueryWhere> {
 
   OrderQueryWhere? _where;
 
-  CustomerQuery? _customer;
+  late CustomerQuery _customer;
 
   @override
   Map<String, String> get casts {
@@ -124,7 +124,7 @@ class OrderQuery extends Query<Order, OrderQueryWhere> {
     return parseRow(row);
   }
 
-  CustomerQuery? get customer {
+  CustomerQuery get customer {
     return _customer;
   }
 }
@@ -188,11 +188,11 @@ class OrderQueryValues extends MapQueryValues {
   }
 
   set updatedAt(DateTime? value) => values['updated_at'] = value;
-  int? get customerId {
-    return (values['customer_id'] as int?);
+  int get customerId {
+    return (values['customer_id'] as int);
   }
 
-  set customerId(int? value) => values['customer_id'] = value;
+  set customerId(int value) => values['customer_id'] = value;
   int? get employeeId {
     return (values['employee_id'] as int?);
   }
@@ -215,7 +215,7 @@ class OrderQueryValues extends MapQueryValues {
     orderDate = model.orderDate;
     shipperId = model.shipperId;
     if (model.customer != null) {
-      values['customer_id'] = model.customer!.id;
+      values['customer_id'] = model.customer?.id;
     }
   }
 }
@@ -348,16 +348,16 @@ class Order extends _Order {
   DateTime? updatedAt;
 
   @override
-  final _Customer? customer;
+  _Customer? customer;
 
   @override
-  final int? employeeId;
+  int? employeeId;
 
   @override
-  final DateTime? orderDate;
+  DateTime? orderDate;
 
   @override
-  final int? shipperId;
+  int? shipperId;
 
   Order copyWith(
       {String? id,
@@ -446,7 +446,7 @@ class Customer extends _Customer {
     return 'Customer(id=$id, createdAt=$createdAt, updatedAt=$updatedAt)';
   }
 
-  Map<String, dynamic>? toJson() {
+  Map<String, dynamic> toJson() {
     return CustomerSerializer.toMap(this);
   }
 }
@@ -483,12 +483,12 @@ class OrderSerializer extends Codec<Order, Map> {
         id: map['id'] as String?,
         createdAt: map['created_at'] != null
             ? (map['created_at'] is DateTime
-                ? (map['created_at'] as DateTime?)
+                ? (map['created_at'] as DateTime)
                 : DateTime.parse(map['created_at'].toString()))
             : null,
         updatedAt: map['updated_at'] != null
             ? (map['updated_at'] is DateTime
-                ? (map['updated_at'] as DateTime?)
+                ? (map['updated_at'] as DateTime)
                 : DateTime.parse(map['updated_at'].toString()))
             : null,
         customer: map['customer'] != null
@@ -497,13 +497,16 @@ class OrderSerializer extends Codec<Order, Map> {
         employeeId: map['employee_id'] as int?,
         orderDate: map['order_date'] != null
             ? (map['order_date'] is DateTime
-                ? (map['order_date'] as DateTime?)
+                ? (map['order_date'] as DateTime)
                 : DateTime.parse(map['order_date'].toString()))
             : null,
         shipperId: map['shipper_id'] as int?);
   }
 
-  static Map<String, dynamic> toMap(_Order model) {
+  static Map<String, dynamic> toMap(_Order? model) {
+    if (model == null) {
+      return {};
+    }
     return {
       'id': model.id,
       'created_at': model.createdAt?.toIso8601String(),
@@ -544,11 +547,11 @@ abstract class OrderFields {
 
 const CustomerSerializer customerSerializer = CustomerSerializer();
 
-class CustomerEncoder extends Converter<Customer, Map?> {
+class CustomerEncoder extends Converter<Customer, Map> {
   const CustomerEncoder();
 
   @override
-  Map? convert(Customer model) => CustomerSerializer.toMap(model);
+  Map convert(Customer model) => CustomerSerializer.toMap(model);
 }
 
 class CustomerDecoder extends Converter<Map, Customer> {
@@ -558,7 +561,7 @@ class CustomerDecoder extends Converter<Map, Customer> {
   Customer convert(Map map) => CustomerSerializer.fromMap(map);
 }
 
-class CustomerSerializer extends Codec<Customer, Map?> {
+class CustomerSerializer extends Codec<Customer, Map> {
   const CustomerSerializer();
 
   @override
@@ -570,19 +573,19 @@ class CustomerSerializer extends Codec<Customer, Map?> {
         id: map['id'] as String?,
         createdAt: map['created_at'] != null
             ? (map['created_at'] is DateTime
-                ? (map['created_at'] as DateTime?)
+                ? (map['created_at'] as DateTime)
                 : DateTime.parse(map['created_at'].toString()))
             : null,
         updatedAt: map['updated_at'] != null
             ? (map['updated_at'] is DateTime
-                ? (map['updated_at'] as DateTime?)
+                ? (map['updated_at'] as DateTime)
                 : DateTime.parse(map['updated_at'].toString()))
             : null);
   }
 
-  static Map<String, dynamic>? toMap(_Customer? model) {
+  static Map<String, dynamic> toMap(_Customer? model) {
     if (model == null) {
-      return null;
+      return {};
     }
     return {
       'id': model.id,

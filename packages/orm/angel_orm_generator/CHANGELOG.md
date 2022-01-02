@@ -1,5 +1,10 @@
 # Change Log
 
+## 4.1.3
+
+* Fixed issue #24, incorrect class casting
+* Fixed `@belongsTo` to generate correct table creation query
+  
 ## 4.1.2
 
 * Updated linter to `package:lints`

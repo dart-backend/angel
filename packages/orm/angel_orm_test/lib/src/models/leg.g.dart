@@ -13,7 +13,7 @@ class LegMigration extends Migration {
       table.serial('id').primaryKey();
       table.timeStamp('created_at');
       table.timeStamp('updated_at');
-      table.varChar('name');
+      table.varChar('name', length: 255);
     });
   }
 
@@ -31,7 +31,8 @@ class FootMigration extends Migration {
       table.timeStamp('created_at');
       table.timeStamp('updated_at');
       table.integer('leg_id');
-      table.declare('n_toes', ColumnType('decimal'));
+      table.declareColumn(
+          'n_toes', Column(type: ColumnType('decimal'), length: 255));
     });
   }
 
@@ -67,7 +68,7 @@ class LegQuery extends Query<Leg, LegQueryWhere> {
 
   LegQueryWhere? _where;
 
-  FootQuery? _foot;
+  late FootQuery _foot;
 
   @override
   Map<String, String> get casts {
@@ -117,7 +118,7 @@ class LegQuery extends Query<Leg, LegQueryWhere> {
     return parseRow(row);
   }
 
-  FootQuery? get foot {
+  FootQuery get foot {
     return _foot;
   }
 }
@@ -416,7 +417,7 @@ class Foot extends _Foot {
     return 'Foot(id=$id, createdAt=$createdAt, updatedAt=$updatedAt, legId=$legId, nToes=$nToes)';
   }
 
-  Map<String, dynamic>? toJson() {
+  Map<String, dynamic> toJson() {
     return FootSerializer.toMap(this);
   }
 }
@@ -453,12 +454,12 @@ class LegSerializer extends Codec<Leg, Map> {
         id: map['id'] as String?,
         createdAt: map['created_at'] != null
             ? (map['created_at'] is DateTime
-                ? (map['created_at'] as DateTime?)
+                ? (map['created_at'] as DateTime)
                 : DateTime.parse(map['created_at'].toString()))
             : null,
         updatedAt: map['updated_at'] != null
             ? (map['updated_at'] is DateTime
-                ? (map['updated_at'] as DateTime?)
+                ? (map['updated_at'] as DateTime)
                 : DateTime.parse(map['updated_at'].toString()))
             : null,
         foot: map['foot'] != null
@@ -467,7 +468,10 @@ class LegSerializer extends Codec<Leg, Map> {
         name: map['name'] as String?);
   }
 
-  static Map<String, dynamic> toMap(_Leg model) {
+  static Map<String, dynamic> toMap(_Leg? model) {
+    if (model == null) {
+      return {};
+    }
     return {
       'id': model.id,
       'created_at': model.createdAt?.toIso8601String(),
@@ -500,11 +504,11 @@ abstract class LegFields {
 
 const FootSerializer footSerializer = FootSerializer();
 
-class FootEncoder extends Converter<Foot, Map?> {
+class FootEncoder extends Converter<Foot, Map> {
   const FootEncoder();
 
   @override
-  Map? convert(Foot model) => FootSerializer.toMap(model);
+  Map convert(Foot model) => FootSerializer.toMap(model);
 }
 
 class FootDecoder extends Converter<Map, Foot> {
@@ -514,7 +518,7 @@ class FootDecoder extends Converter<Map, Foot> {
   Foot convert(Map map) => FootSerializer.fromMap(map);
 }
 
-class FootSerializer extends Codec<Foot, Map?> {
+class FootSerializer extends Codec<Foot, Map> {
   const FootSerializer();
 
   @override
@@ -526,21 +530,21 @@ class FootSerializer extends Codec<Foot, Map?> {
         id: map['id'] as String?,
         createdAt: map['created_at'] != null
             ? (map['created_at'] is DateTime
-                ? (map['created_at'] as DateTime?)
+                ? (map['created_at'] as DateTime)
                 : DateTime.parse(map['created_at'].toString()))
             : null,
         updatedAt: map['updated_at'] != null
             ? (map['updated_at'] is DateTime
-                ? (map['updated_at'] as DateTime?)
+                ? (map['updated_at'] as DateTime)
                 : DateTime.parse(map['updated_at'].toString()))
             : null,
         legId: map['leg_id'] as int?,
         nToes: map['n_toes'] as double?);
   }
 
-  static Map<String, dynamic>? toMap(_Foot? model) {
+  static Map<String, dynamic> toMap(_Foot? model) {
     if (model == null) {
-      return null;
+      return {};
     }
     return {
       'id': model.id,

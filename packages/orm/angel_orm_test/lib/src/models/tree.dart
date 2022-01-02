@@ -1,10 +1,8 @@
 library angel3_orm_generator.test.models.tree;
 
 import 'package:angel3_migration/angel3_migration.dart';
-import 'package:angel3_model/angel3_model.dart';
 import 'package:angel3_orm/angel3_orm.dart';
 import 'package:angel3_serialize/angel3_serialize.dart';
-import 'package:collection/collection.dart';
 import 'package:optional/optional.dart';
 
 part 'tree.g.dart';
@@ -16,7 +14,7 @@ class _Tree extends Model {
   int? rings;
 
   @hasMany
-  List<_Fruit>? fruits;
+  List<_Fruit> fruits = [];
 }
 
 @serializable

@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:logging/logging.dart';
 
 import 'query_executor.dart';
 import 'union.dart';
@@ -7,8 +6,6 @@ import 'package:optional/optional.dart';
 
 /// A base class for objects that compile to SQL queries, typically within an ORM.
 abstract class QueryBase<T> {
-  final _log = Logger('QueryBase');
-
   /// Casts to perform when querying the database.
   Map<String, String> get casts => {};
 

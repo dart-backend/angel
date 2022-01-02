@@ -3,14 +3,12 @@ import 'dart:async';
 import 'package:analyzer/dart/constant/value.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
-import 'package:angel3_model/angel3_model.dart';
 import 'package:angel3_orm/angel3_orm.dart';
 import 'package:angel3_serialize/angel3_serialize.dart';
 import 'package:angel3_serialize_generator/angel3_serialize_generator.dart';
 import 'package:angel3_serialize_generator/build_context.dart';
 import 'package:angel3_serialize_generator/context.dart';
 import 'package:build/build.dart';
-import 'package:collection/collection.dart' show IterableExtension;
 import 'package:inflection3/inflection3.dart';
 import 'package:recase/recase.dart';
 import 'package:source_gen/source_gen.dart';
@@ -105,11 +103,11 @@ Future<OrmBuildContext?> buildOrmContext(
   // Read all fields
   for (var field in buildCtx.fields) {
     // Check for column annotation...
-    Column? column;
     var element = _findElement(field);
     var columnAnnotation = columnTypeChecker.firstAnnotationOf(element);
     // print('${element.name} => $columnAnnotation');
 
+    Column? column;
     if (columnAnnotation != null) {
       column = reviveColumn(ConstantReader(columnAnnotation));
     }
@@ -281,6 +279,7 @@ Future<OrmBuildContext?> buildOrmContext(
 
       if (relation.type == RelationshipType.belongsTo) {
         var localKey = relation.localKey;
+
         if (localKey != null) {
           var name = ReCase(localKey).camelCase;
           ctx.buildContext.aliases[name] = localKey;
@@ -292,10 +291,14 @@ Future<OrmBuildContext?> buildOrmContext(
 
             if (foreign != null) {
               if (isSpecialId(foreign, foreignField)) {
-                //type = field.type.element.context.typeProvider.intType;
-                type = field.type;
+                // Use integer
+                type = field.type.element?.library?.typeProvider.intType
+                    as DartType;
+
+                //type = field.type.element?.context.typeProvider.intType;
               }
             }
+
             var rf = RelationFieldImpl(name, relation, type, field);
             ctx.effectiveFields.add(rf);
           }
@@ -389,7 +392,7 @@ Column reviveColumn(ConstantReader cr) {
 
   return Column(
     isNullable: cr.peek('isNullable')?.boolValue ?? false,
-    length: cr.peek('length')?.intValue ?? 256,
+    length: cr.peek('length')?.intValue ?? 255,
     type: columnType,
     indexType: indexType,
   );

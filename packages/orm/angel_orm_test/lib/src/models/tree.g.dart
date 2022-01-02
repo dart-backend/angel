@@ -13,7 +13,7 @@ class TreeMigration extends Migration {
       table.serial('id').primaryKey();
       table.timeStamp('created_at');
       table.timeStamp('updated_at');
-      table.declare('rings', ColumnType('smallint'));
+      table.integer('rings').unique();
     });
   }
 
@@ -31,7 +31,7 @@ class FruitMigration extends Migration {
       table.timeStamp('created_at');
       table.timeStamp('updated_at');
       table.integer('tree_id');
-      table.varChar('common_name');
+      table.varChar('common_name', length: 255);
     });
   }
 
@@ -67,7 +67,7 @@ class TreeQuery extends Query<Tree, TreeQueryWhere> {
 
   TreeQueryWhere? _where;
 
-  FruitQuery? _fruits;
+  late FruitQuery _fruits;
 
   @override
   Map<String, String> get casts {
@@ -117,7 +117,7 @@ class TreeQuery extends Query<Tree, TreeQueryWhere> {
     return parseRow(row);
   }
 
-  FruitQuery? get fruits {
+  FruitQuery get fruits {
     return _fruits;
   }
 
@@ -382,20 +382,20 @@ class Tree extends _Tree {
   int? rings;
 
   @override
-  List<_Fruit>? fruits;
+  List<_Fruit> fruits;
 
   Tree copyWith(
       {String? id,
       DateTime? createdAt,
       DateTime? updatedAt,
       int? rings,
-      List<_Fruit> fruits = const []}) {
+      List<_Fruit>? fruits}) {
     return Tree(
         id: id ?? this.id,
         createdAt: createdAt ?? this.createdAt,
         updatedAt: updatedAt ?? this.updatedAt,
         rings: rings ?? this.rings,
-        fruits: fruits);
+        fruits: fruits ?? this.fruits);
   }
 
   @override
@@ -518,12 +518,12 @@ class TreeSerializer extends Codec<Tree, Map> {
         id: map['id'] as String?,
         createdAt: map['created_at'] != null
             ? (map['created_at'] is DateTime
-                ? (map['created_at'] as DateTime?)
+                ? (map['created_at'] as DateTime)
                 : DateTime.parse(map['created_at'].toString()))
             : null,
         updatedAt: map['updated_at'] != null
             ? (map['updated_at'] is DateTime
-                ? (map['updated_at'] as DateTime?)
+                ? (map['updated_at'] as DateTime)
                 : DateTime.parse(map['updated_at'].toString()))
             : null,
         rings: map['rings'] as int?,
@@ -533,13 +533,16 @@ class TreeSerializer extends Codec<Tree, Map> {
             : []);
   }
 
-  static Map<String, dynamic> toMap(_Tree model) {
+  static Map<String, dynamic> toMap(_Tree? model) {
+    if (model == null) {
+      return {};
+    }
     return {
       'id': model.id,
       'created_at': model.createdAt?.toIso8601String(),
       'updated_at': model.updatedAt?.toIso8601String(),
       'rings': model.rings,
-      'fruits': model.fruits?.map((m) => FruitSerializer.toMap(m)).toList()
+      'fruits': model.fruits.map((m) => FruitSerializer.toMap(m)).toList()
     };
   }
 }
@@ -592,19 +595,22 @@ class FruitSerializer extends Codec<Fruit, Map> {
         id: map['id'] as String?,
         createdAt: map['created_at'] != null
             ? (map['created_at'] is DateTime
-                ? (map['created_at'] as DateTime?)
+                ? (map['created_at'] as DateTime)
                 : DateTime.parse(map['created_at'].toString()))
             : null,
         updatedAt: map['updated_at'] != null
             ? (map['updated_at'] is DateTime
-                ? (map['updated_at'] as DateTime?)
+                ? (map['updated_at'] as DateTime)
                 : DateTime.parse(map['updated_at'].toString()))
             : null,
         treeId: map['tree_id'] as int?,
         commonName: map['common_name'] as String?);
   }
 
-  static Map<String, dynamic> toMap(_Fruit model) {
+  static Map<String, dynamic> toMap(_Fruit? model) {
+    if (model == null) {
+      return {};
+    }
     return {
       'id': model.id,
       'created_at': model.createdAt?.toIso8601String(),

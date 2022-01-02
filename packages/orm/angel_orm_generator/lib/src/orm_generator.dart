@@ -192,9 +192,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
         m
           ..name = 'parseRow'
           ..static = true
-          ..returns = TypeReference((b) => b
-            ..symbol = '${rc.pascalCase}'
-            ..isNullable = true) //refer('${rc.pascalCase}?')
+          ..returns = refer('Optional<${rc.pascalCase}>')
           ..requiredParameters.add(Parameter((b) => b
             ..name = 'row'
             ..type = refer('List')))
@@ -233,8 +231,8 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
               args[field.name] = expr;
             }
 
-            b.statements
-                .add(Code('if (row.every((x) => x == null)) { return null; }'));
+            b.statements.add(Code(
+                'if (row.every((x) => x == null)) { return Optional.empty(); }'));
 
             b.addExpression(ctx.buildContext.modelClassType
                 .newInstance([], args).assignVar('model'));
@@ -270,30 +268,52 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                   .property('parseRow')
                   .call([skipToList]);
 
-              var baseClass = '${foreign.buildContext.originalClassName}';
+              //var baseClass = '${foreign.buildContext.originalClassName}';
+              //var modelClass =
+              //    foreign.buildContext.modelClassNameRecase.pascalCase;
               // Assume: baseclass starts with "_"
               //'_${foreign.buildContext.modelClassNameRecase.pascalCase}';
 
-              if (relation.type == RelationshipType.hasMany) {
-                parsed = literalList([parsed.asA(refer(baseClass))]);
-                var pp = parsed.accept(DartEmitter(useNullSafetySyntax: true));
-                parsed = CodeExpression(Code('$pp'));
-                //Code('$pp.where((x) => x != null).toList()'));
-              }
+              //if (relation.type == RelationshipType.hasMany) {
+              //  parsed = literalList([parsed.asA(refer(modelClass))]);
+              //parsed = literalList([parsed.asA(refer(baseClass))]);
+              //  var pp = parsed.accept(DartEmitter(useNullSafetySyntax: true));
+              //  parsed = CodeExpression(Code('$pp'));
+              //Code('$pp.where((x) => x != null).toList()'));
+              //}
 
-              var expr =
-                  refer('model').property('copyWith').call([], {name: parsed});
-              var block =
-                  Block((b) => b.addExpression(refer('model').assign(expr)));
+              //var expr =
+              //    refer('model').property('copyWith').call([], {name: parsed});
+              //var block =
+              //    Block((b) => b.addExpression(refer('model').assign(expr)));
+
+              var stmt = parsed.assignVar('modelOpt');
+              //var e = refer('Optional').property('ifPresent').call([]);
+
+              var val =
+                  (relation.type == RelationshipType.hasMany) ? '[m]' : 'm';
+              var code = Code('''
+                     modelOpt.ifPresent((m) {
+                      model = model.copyWith($name: $val);
+                  })
+              ''');
+
+              var block = Block((b) {
+                b.addExpression(stmt);
+                b.addExpression(CodeExpression(code));
+              });
+
               var blockStr =
                   block.accept(DartEmitter(useNullSafetySyntax: true));
+
               var ifStr = 'if (row.length > $i) { $blockStr }';
               b.statements.add(Code(ifStr));
 
               i += foreign.effectiveFields.length;
             });
 
-            b.addExpression(refer('model').returned);
+            b.addExpression(
+                refer('Optional.of').call([refer('model')]).returned);
           });
       }));
 
@@ -307,9 +327,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
             ..name = 'row'
             ..type = refer('List')))
           ..body = Block((b) {
-            b.addExpression(refer('Optional.ofNullable').call([
-              refer('parseRow').call([refer('row')])
-            ]).returned);
+            b.addExpression(refer('parseRow').call([refer('row')]).returned);
           });
       }));
 
@@ -375,18 +393,18 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                     relationForeign.buildContext.resolveFieldName(f.name));
 
                 var additionalFields = <Expression>[];
-                additionalStrs.forEach((element) {
+                for (var element in additionalStrs) {
                   if (element != null) {
                     additionalFields.add(literalString(element));
                   }
-                });
+                }
 
                 var joinArgs = <Expression>[];
-                [relation.localKey, relation.foreignKey].forEach((element) {
+                for (var element in [relation.localKey, relation.foreignKey]) {
                   if (element != null) {
                     joinArgs.add(literalString(element));
                   }
-                });
+                }
 
                 // In the case of a many-to-many, we don't generate a subquery field,
                 // as it easily leads to stack overflows.
@@ -556,10 +574,9 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                     .accept(DartEmitter(useNullSafetySyntax: true))
                     .toString()
                     .replaceAll('?', '');
-
                 merge.add('''
-                $name: $typeLiteral.from(l.$name)..addAll(model.$name)
-                ''');
+                      $name: $typeLiteral.from(l.$name ?? [])..addAll(model.$name ?? [])
+                    ''');
               }
             });
 
@@ -621,7 +638,6 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
       var initializers = <Code>[];
 
       // Add builders for each field
-
       for (var field in ctx.effectiveNormalFields) {
         String? name = field.name;
 
@@ -645,7 +661,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
           //log.fine('$name type = [$typeName]');
           builderType = TypeReference((b) => b
             ..symbol = 'NumericSqlExpressionBuilder'
-            ..types.add(refer('$typeName')));
+            ..types.add(refer(typeName)));
         } else if (type is InterfaceType && type.element.isEnum) {
           builderType = TypeReference((b) => b
             ..symbol = 'EnumSqlExpressionBuilder'
@@ -670,7 +686,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
 
           // Detect relationship
         } else if (name.endsWith('Id')) {
-          //log.fine('Relationship detected = $name');
+          log.fine('Foreign Relationship detected = $name');
           var relation = ctx.relations[name.replaceAll('Id', '')];
           if (relation != null) {
             //if (relation?.type != RelationshipType.belongsTo) {

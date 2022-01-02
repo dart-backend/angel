@@ -7,6 +7,8 @@
 
 A database migration framework built for Angel3 ORM.
 
-Supported database:
+## Supported database
 
-* postgresql version 10, 11, 12, 13 and 14
+* PostgreSQL version 10 or later
+* MySQL 8.0 or later
+* MariaBb 10.2.1 or later

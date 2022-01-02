@@ -17,6 +17,9 @@ class Column {
   /// If `true`, a SQL field will be nullable.
   final bool isNullable;
 
+  /// Specifies this column name.
+  final String name;
+
   /// Specifies the length of a `VARCHAR`.
   final int length;
 
@@ -31,7 +34,8 @@ class Column {
 
   const Column(
       {this.isNullable = true,
-      this.length = 256,
+      this.length = 255,
+      this.name = "",
       this.type = ColumnType.varChar,
       this.indexType = IndexType.none,
       this.expression});
@@ -41,7 +45,7 @@ class Column {
 }
 
 class PrimaryKey extends Column {
-  const PrimaryKey({ColumnType columnType = ColumnType.varChar})
+  const PrimaryKey({ColumnType columnType = ColumnType.serial})
       : super(type: columnType, indexType: IndexType.primaryKey);
 }
 

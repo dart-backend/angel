@@ -12,14 +12,14 @@ class Relationship {
   final String? localKey;
   final String? foreignKey;
   final String? foreignTable;
-  final bool? cascadeOnDelete;
+  final bool cascadeOnDelete;
   final JoinType? joinType;
 
   const Relationship(this.type,
       {this.localKey,
       this.foreignKey,
       this.foreignTable,
-      this.cascadeOnDelete,
+      this.cascadeOnDelete = false,
       this.joinType});
 }
 

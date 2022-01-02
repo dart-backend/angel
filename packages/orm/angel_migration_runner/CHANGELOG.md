@@ -1,5 +1,9 @@
 # Change Log
 
+## 4.1.0
+
+* Added support `MySQL` database support
+
 ## 4.0.2
 
 * Updated README

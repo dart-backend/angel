@@ -1,21 +1,22 @@
 import 'dart:async';
 import 'dart:collection';
 import 'package:angel3_migration/angel3_migration.dart';
-import 'package:postgres/postgres.dart';
 import 'package:logging/logging.dart';
+import 'package:mysql1/mysql1.dart';
 import '../runner.dart';
 import '../util.dart';
 import 'schema.dart';
 
-class PostgresMigrationRunner implements MigrationRunner {
+class MysqlMigrationRunner implements MigrationRunner {
   final _log = Logger('PostgresMigrationRunner');
 
   final Map<String, Migration> migrations = {};
-  final PostgreSQLConnection connection;
+  final ConnectionSettings settings;
   final Queue<Migration> _migrationQueue = Queue();
+  late MySqlConnection connection;
   bool _connected = false;
 
-  PostgresMigrationRunner(this.connection,
+  MysqlMigrationRunner(this.settings,
       {Iterable<Migration> migrations = const [], bool connected = false}) {
     if (migrations.isNotEmpty == true) migrations.forEach(addMigration);
     _connected = connected == true;
@@ -34,11 +35,11 @@ class PostgresMigrationRunner implements MigrationRunner {
     }
 
     if (!_connected) {
-      await connection.open();
+      connection = await MySqlConnection.connect(settings);
       _connected = true;
     }
 
-    await connection.execute('''
+    await connection.query('''
     CREATE TABLE IF NOT EXISTS "migrations" (
       id serial,
       batch integer,
@@ -65,12 +66,13 @@ class PostgresMigrationRunner implements MigrationRunner {
 
     if (toRun.isNotEmpty) {
       var r = await connection.query('SELECT MAX(batch) from migrations;');
-      var curBatch = (r[0][0] ?? 0) as int;
+      var rTmp = r.toList();
+      var curBatch = (rTmp[0][0] ?? 0) as int;
       var batch = curBatch + 1;
 
       for (var k in toRun) {
         var migration = migrations[k]!;
-        var schema = PostgresSchema();
+        var schema = MysqlSchema();
         migration.up(schema);
         _log.info('Added "$k" into "migrations" table.');
         await schema.run(connection).then((_) {
@@ -95,9 +97,10 @@ class PostgresMigrationRunner implements MigrationRunner {
   Future rollback() async {
     await _init();
 
-    PostgreSQLResult r =
-        await connection.query('SELECT MAX(batch) from migrations;');
-    var curBatch = (r[0][0] ?? 0) as int;
+    var r = await connection.query('SELECT MAX(batch) from migrations;');
+    var rTmp = r.toList();
+    var curBatch = (rTmp[0][0] ?? 0) as int;
+
     r = await connection
         .query('SELECT path from migrations WHERE batch = $curBatch;');
     var existing = r.expand((x) => x).cast<String>();
@@ -110,12 +113,12 @@ class PostgresMigrationRunner implements MigrationRunner {
     if (toRun.isNotEmpty) {
       for (var k in toRun.reversed) {
         var migration = migrations[k]!;
-        var schema = PostgresSchema();
+        var schema = MysqlSchema();
         migration.down(schema);
         _log.info('Removed "$k" from "migrations" table.');
         await schema.run(connection).then((_) {
           return connection
-              .execute('DELETE FROM migrations WHERE path = \'$k\';');
+              .query('DELETE FROM migrations WHERE path = \'$k\';');
         });
       }
     } else {
@@ -134,12 +137,12 @@ class PostgresMigrationRunner implements MigrationRunner {
     if (toRun.isNotEmpty) {
       for (var k in toRun.reversed) {
         var migration = migrations[k]!;
-        var schema = PostgresSchema();
+        var schema = MysqlSchema();
         migration.down(schema);
         _log.info('Removed "$k" from "migrations" table.');
         await schema.run(connection).then((_) {
           return connection
-              .execute('DELETE FROM migrations WHERE path = \'$k\';');
+              .query('DELETE FROM migrations WHERE path = \'$k\';');
         });
       }
     } else {

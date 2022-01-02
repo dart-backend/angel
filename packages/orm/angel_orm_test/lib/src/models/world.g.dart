@@ -10,8 +10,8 @@ class WorldMigration extends Migration {
   @override
   void up(Schema schema) {
     schema.create('world', (table) {
-      table.integer('id');
-      table.integer('randomNumber');
+      table.integer('id').primaryKey();
+      table.integer('random_number');
     });
   }
 
@@ -49,7 +49,7 @@ class WorldQuery extends Query<World, WorldQueryWhere> {
 
   @override
   List<String> get fields {
-    return const ['id', 'randomNumber'];
+    return const ['id', 'random_number'];
   }
 
   @override
@@ -62,24 +62,24 @@ class WorldQuery extends Query<World, WorldQueryWhere> {
     return WorldQueryWhere(this);
   }
 
-  static World? parseRow(List row) {
+  static Optional<World> parseRow(List row) {
     if (row.every((x) => x == null)) {
-      return null;
+      return Optional.empty();
     }
     var model = World(id: (row[0] as int?), randomNumber: (row[1] as int?));
-    return model;
+    return Optional.of(model);
   }
 
   @override
   Optional<World> deserialize(List row) {
-    return Optional.ofNullable(parseRow(row));
+    return parseRow(row);
   }
 }
 
 class WorldQueryWhere extends QueryWhere {
   WorldQueryWhere(WorldQuery query)
       : id = NumericSqlExpressionBuilder<int>(query, 'id'),
-        randomNumber = NumericSqlExpressionBuilder<int>(query, 'randomNumber');
+        randomNumber = NumericSqlExpressionBuilder<int>(query, 'random_number');
 
   final NumericSqlExpressionBuilder<int> id;
 
@@ -103,10 +103,10 @@ class WorldQueryValues extends MapQueryValues {
 
   set id(int? value) => values['id'] = value;
   int? get randomNumber {
-    return (values['randomNumber'] as int?);
+    return (values['random_number'] as int?);
   }
 
-  set randomNumber(int? value) => values['randomNumber'] = value;
+  set randomNumber(int? value) => values['random_number'] = value;
   void copyFrom(World model) {
     id = model.id;
     randomNumber = model.randomNumber;
@@ -183,14 +183,14 @@ class WorldSerializer extends Codec<World, Map> {
   WorldDecoder get decoder => const WorldDecoder();
   static World fromMap(Map map) {
     return World(
-        id: map['id'] as int?, randomNumber: map['randomNumber'] as int?);
+        id: map['id'] as int?, randomNumber: map['random_number'] as int?);
   }
 
   static Map<String, dynamic> toMap(_World? model) {
     if (model == null) {
       return {};
     }
-    return {'id': model.id, 'randomNumber': model.randomNumber};
+    return {'id': model.id, 'random_number': model.randomNumber};
   }
 }
 
@@ -199,5 +199,5 @@ abstract class WorldFields {
 
   static const String id = 'id';
 
-  static const String randomNumber = 'randomNumber';
+  static const String randomNumber = 'random_number';
 }

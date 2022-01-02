@@ -30,7 +30,7 @@ class RelationshipReader {
   final String? localKey;
   final String? foreignKey;
   final String? foreignTable;
-  final bool? cascadeOnDelete;
+  final bool cascadeOnDelete;
   final DartType? through;
   final OrmBuildContext? foreign;
   final OrmBuildContext? throughContext;
@@ -40,7 +40,7 @@ class RelationshipReader {
       {this.localKey,
       this.foreignKey,
       this.foreignTable,
-      this.cascadeOnDelete,
+      this.cascadeOnDelete = false,
       this.through,
       this.foreign,
       this.throughContext,
@@ -75,13 +75,13 @@ class RelationshipReader {
     });
   }
 
-  FieldElement findForeignField(OrmBuildContext? ctx) {
+  FieldElement findForeignField(OrmBuildContext ctx) {
     var foreign = throughContext ?? this.foreign!;
     return foreign.effectiveFields.firstWhere(
         (f) => foreign.buildContext.resolveFieldName(f.name) == foreignKey,
         orElse: () {
       throw '${foreign.buildContext.clazz.name} has no field that maps to the name "$foreignKey", '
-          'but ${ctx!.buildContext.clazz.name} has a @HasMany() relation that expects such a field.';
+          'but ${ctx.buildContext.clazz.name} has a @HasMany() relation that expects such a field.';
     });
   }
 }
