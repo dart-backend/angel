@@ -73,6 +73,7 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
 
   Method buildUpMigration(OrmBuildContext ctx, LibraryBuilder lib) {
     return Method((meth) {
+      // Check to see if clazz extends Model class
       var autoIdAndDateFields = const TypeChecker.fromRuntime(Model)
           .isAssignableFromType(ctx.buildContext.clazz.thisType);
       meth
@@ -165,7 +166,7 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
                     var colType = refer('Column');
                     var columnTypeType = refer('ColumnType');
 
-                    if (col.length == null) {
+                    if (col.length == 0) {
                       methodName = 'declare';
                       provColumn = columnTypeType.newInstance([
                         literal(col.type.name),
@@ -268,10 +269,31 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
 
                 // var field = table.property('integer').call([literal(key)]);
                 // // .references('user', 'id').onDeleteCascade()
+
+                // Check to see if foreign clazz extends Model class
+                var foreignTableType =
+                    relationship.foreign?.buildContext.clazz.thisType;
+                var foreignAautoIdAndDateFields = false;
+                if (foreignTableType != null) {
+                  foreignAautoIdAndDateFields =
+                      const TypeChecker.fromRuntime(Model)
+                          .isAssignableFromType(foreignTableType);
+                }
+
                 var columnTypeType = refer('ColumnType');
                 var key = relationship.localKey;
-                var keyType = relationship
-                    .foreign!.columns[relationship.foreignKey!]!.type.name;
+
+                // Default to `int` if foreign class extends Model with implicit 'id'
+                // as primary key
+                String? keyType;
+                if (foreignAautoIdAndDateFields != false &&
+                    relationship.foreignKey == "id") {
+                  keyType = "int";
+                } else {
+                  var foreigColumnName =
+                      relationship.foreign?.columns[relationship.foreignKey!];
+                  keyType = foreigColumnName?.type.name;
+                }
 
                 var field = table.property('declare').call([
                   literal(key),

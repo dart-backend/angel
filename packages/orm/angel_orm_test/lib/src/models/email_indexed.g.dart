@@ -10,7 +10,7 @@ class RoleMigration extends Migration {
   @override
   void up(Schema schema) {
     schema.create('roles', (table) {
-      table.declare('role', ColumnType('varchar')).primaryKey();
+      table.varChar('role', length: 255).primaryKey();
     });
   }
 
@@ -43,9 +43,9 @@ class UserMigration extends Migration {
   @override
   void up(Schema schema) {
     schema.create('users', (table) {
-      table.varChar('email').primaryKey();
-      table.varChar('name');
-      table.varChar('password');
+      table.varChar('email', length: 255).primaryKey();
+      table.varChar('name', length: 255);
+      table.varChar('password', length: 255);
     });
   }
 
@@ -75,7 +75,7 @@ class RoleQuery extends Query<Role, RoleQueryWhere> {
   @override
   final RoleQueryValues values = RoleQueryValues();
 
-  late RoleQueryWhere _where;
+  RoleQueryWhere? _where;
 
   @override
   Map<String, String> get casts {
@@ -108,12 +108,12 @@ class RoleQuery extends Query<Role, RoleQueryWhere> {
     }
     var model = Role(role: (row[0] as String?));
     if (row.length > 1) {
-      var rowDataOpt = UserQuery.parseRow(row.skip(1).take(3).toList());
-      rowDataOpt.ifPresent((m) {
+      var modelOpt = UserQuery.parseRow(row.skip(1).take(3).toList());
+      modelOpt.ifPresent((m) {
         model = model.copyWith(users: [m]);
       });
     }
-    return Optional.ofNullable(model);
+    return Optional.of(model);
   }
 
   @override
@@ -123,8 +123,8 @@ class RoleQuery extends Query<Role, RoleQueryWhere> {
 
   @override
   bool canCompile(trampoline) {
-    return (!(trampoline.contains('roles') == true &&
-        trampoline.contains('role_users') == true));
+    return (!(trampoline.contains('roles') &&
+        trampoline.contains('role_users')));
   }
 
   @override
@@ -139,7 +139,8 @@ class RoleQuery extends Query<Role, RoleQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                users: List<_User>.from(l.users)..addAll(model.users));
+                users: List<_User>.from(l.users ?? [])
+                  ..addAll(model.users ?? []));
         }
       });
     });
@@ -157,7 +158,8 @@ class RoleQuery extends Query<Role, RoleQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                users: List<_User>.from(l.users)..addAll(model.users));
+                users: List<_User>.from(l.users ?? [])
+                  ..addAll(model.users ?? []));
         }
       });
     });
@@ -175,7 +177,8 @@ class RoleQuery extends Query<Role, RoleQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                users: List<_User>.from(l.users)..addAll(model.users));
+                users: List<_User>.from(l.users ?? [])
+                  ..addAll(model.users ?? []));
         }
       });
     });
@@ -230,9 +233,9 @@ class RoleUserQuery extends Query<RoleUser, RoleUserQueryWhere> {
 
   RoleUserQueryWhere? _where;
 
-  RoleQuery? _role;
+  late RoleQuery _role;
 
-  UserQuery? _user;
+  late UserQuery _user;
 
   @override
   Map<String, String> get casts {
@@ -276,7 +279,7 @@ class RoleUserQuery extends Query<RoleUser, RoleUserQueryWhere> {
         model = model.copyWith(user: m);
       });
     }
-    return Optional.ofNullable(model);
+    return Optional.of(model);
   }
 
   @override
@@ -284,11 +287,11 @@ class RoleUserQuery extends Query<RoleUser, RoleUserQueryWhere> {
     return parseRow(row);
   }
 
-  RoleQuery? get role {
+  RoleQuery get role {
     return _role;
   }
 
-  UserQuery? get user {
+  UserQuery get user {
     return _user;
   }
 }
@@ -326,10 +329,10 @@ class RoleUserQueryValues extends MapQueryValues {
   set userEmail(String? value) => values['user_email'] = value;
   void copyFrom(RoleUser model) {
     if (model.role != null) {
-      values['role_role'] = model.role!.role;
+      values['role_role'] = model.role?.role;
     }
     if (model.user != null) {
-      values['user_email'] = model.user!.email;
+      values['user_email'] = model.user?.email;
     }
   }
 }
@@ -390,10 +393,6 @@ class UserQuery extends Query<User, UserQueryWhere> {
       modelOpt.ifPresent((m) {
         model = model.copyWith(roles: [m]);
       });
-
-//          roles: [RoleQuery.parseRow(row.skip(3).take(1).toList())]
-//              .where((x) => x != null)
-//              .toList());
     }
     return Optional.of(model);
   }
@@ -405,8 +404,8 @@ class UserQuery extends Query<User, UserQueryWhere> {
 
   @override
   bool canCompile(trampoline) {
-    return (!(trampoline.contains('users') == true &&
-        trampoline.contains('role_users') == true));
+    return (!(trampoline.contains('users') &&
+        trampoline.contains('role_users')));
   }
 
   @override
@@ -421,7 +420,8 @@ class UserQuery extends Query<User, UserQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                roles: List<_Role>.from(l.roles)..addAll(model.roles));
+                roles: List<_Role>.from(l.roles ?? [])
+                  ..addAll(model.roles ?? []));
         }
       });
     });
@@ -439,7 +439,8 @@ class UserQuery extends Query<User, UserQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                roles: List<_Role>.from(l.roles)..addAll(model.roles));
+                roles: List<_Role>.from(l.roles ?? [])
+                  ..addAll(model.roles ?? []));
         }
       });
     });
@@ -457,7 +458,8 @@ class UserQuery extends Query<User, UserQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                roles: List<_Role>.from(l.roles)..addAll(model.roles));
+                roles: List<_Role>.from(l.roles ?? [])
+                  ..addAll(model.roles ?? []));
         }
       });
     });
@@ -516,23 +518,23 @@ class UserQueryValues extends MapQueryValues {
 
 @generatedSerializable
 class Role implements _Role {
-  const Role({this.role, this.users = const []});
+  Role({this.role, this.users = const []});
 
   @override
-  final String? role;
+  String? role;
 
   @override
-  final List<_User> users;
+  List<_User> users;
 
-  Role copyWith({String? role, List<_User> users = const []}) {
-    return Role(role: role ?? this.role, users: users);
+  Role copyWith({String? role, List<_User>? users}) {
+    return Role(role: role ?? this.role, users: users ?? this.users);
   }
 
   @override
   bool operator ==(other) {
     return other is _Role &&
         other.role == role &&
-        ListEquality<_User?>(DefaultEquality<_User>())
+        ListEquality<_User>(DefaultEquality<_User>())
             .equals(other.users, users);
   }
 
@@ -553,13 +555,13 @@ class Role implements _Role {
 
 @generatedSerializable
 class RoleUser implements _RoleUser {
-  const RoleUser({this.role, this.user});
+  RoleUser({this.role, this.user});
 
   @override
-  final _Role? role;
+  _Role? role;
 
   @override
-  final _User? user;
+  _User? user;
 
   RoleUser copyWith({_Role? role, _User? user}) {
     return RoleUser(role: role ?? this.role, user: user ?? this.user);
@@ -587,19 +589,19 @@ class RoleUser implements _RoleUser {
 
 @generatedSerializable
 class User implements _User {
-  const User({this.email, this.name, this.password, this.roles = const []});
+  User({this.email, this.name, this.password, this.roles = const []});
 
   @override
-  final String? email;
+  String? email;
 
   @override
-  final String? name;
+  String? name;
 
   @override
-  final String? password;
+  String? password;
 
   @override
-  final List<_Role> roles;
+  List<_Role> roles;
 
   User copyWith(
       {String? email, String? name, String? password, List<_Role>? roles}) {
@@ -607,7 +609,7 @@ class User implements _User {
         email: email ?? this.email,
         name: name ?? this.name,
         password: password ?? this.password,
-        roles: roles ?? []);
+        roles: roles ?? this.roles);
   }
 
   @override
@@ -641,11 +643,11 @@ class User implements _User {
 
 const RoleSerializer roleSerializer = RoleSerializer();
 
-class RoleEncoder extends Converter<Role, Map?> {
+class RoleEncoder extends Converter<Role, Map> {
   const RoleEncoder();
 
   @override
-  Map? convert(Role model) => RoleSerializer.toMap(model);
+  Map convert(Role model) => RoleSerializer.toMap(model);
 }
 
 class RoleDecoder extends Converter<Map, Role> {
@@ -655,7 +657,7 @@ class RoleDecoder extends Converter<Map, Role> {
   Role convert(Map map) => RoleSerializer.fromMap(map);
 }
 
-class RoleSerializer extends Codec<Role, Map?> {
+class RoleSerializer extends Codec<Role, Map> {
   const RoleSerializer();
 
   @override
@@ -671,7 +673,10 @@ class RoleSerializer extends Codec<Role, Map?> {
             : []);
   }
 
-  static Map<String, dynamic> toMap(_Role model) {
+  static Map<String, dynamic> toMap(_Role? model) {
+    if (model == null) {
+      return {};
+    }
     return {
       'role': model.role,
       'users': model.users.map((m) => UserSerializer.toMap(m)).toList()
@@ -720,10 +725,13 @@ class RoleUserSerializer extends Codec<RoleUser, Map> {
             : null);
   }
 
-  static Map<String, dynamic> toMap(_RoleUser model) {
+  static Map<String, dynamic> toMap(_RoleUser? model) {
+    if (model == null) {
+      return {};
+    }
     return {
-      'role': (model.role != null) ? RoleSerializer.toMap(model.role!) : '',
-      'user': (model.user != null) ? UserSerializer.toMap(model.user!) : ''
+      'role': RoleSerializer.toMap(model.role),
+      'user': UserSerializer.toMap(model.user)
     };
   }
 }
@@ -738,11 +746,11 @@ abstract class RoleUserFields {
 
 const UserSerializer userSerializer = UserSerializer();
 
-class UserEncoder extends Converter<User, Map?> {
+class UserEncoder extends Converter<User, Map> {
   const UserEncoder();
 
   @override
-  Map? convert(User model) => UserSerializer.toMap(model);
+  Map convert(User model) => UserSerializer.toMap(model);
 }
 
 class UserDecoder extends Converter<Map, User> {
@@ -752,7 +760,7 @@ class UserDecoder extends Converter<Map, User> {
   User convert(Map map) => UserSerializer.fromMap(map);
 }
 
-class UserSerializer extends Codec<User, Map?> {
+class UserSerializer extends Codec<User, Map> {
   const UserSerializer();
 
   @override
@@ -770,7 +778,10 @@ class UserSerializer extends Codec<User, Map?> {
             : []);
   }
 
-  static Map<String, dynamic> toMap(_User model) {
+  static Map<String, dynamic> toMap(_User? model) {
+    if (model == null) {
+      return {};
+    }
     return {
       'email': model.email,
       'name': model.name,

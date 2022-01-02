@@ -9,4 +9,6 @@ Command-line based database migration runner for Angel3 ORM.
 
 Supported database:
 
-* postgresql version 10, 11, 12, 13 and 14
+* Postgresql version 10, 11, 12, 13 and 14
+* MySQL version 5, 6 and 7
+* Maria 10

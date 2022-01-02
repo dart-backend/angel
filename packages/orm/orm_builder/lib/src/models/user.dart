@@ -34,5 +34,5 @@ abstract class _Role extends Model {
   String? name;
 
   @ManyToMany(_RoleUser)
-  List<_User> get users;
+  List<_User>? get users;
 }

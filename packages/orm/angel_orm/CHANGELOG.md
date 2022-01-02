@@ -1,5 +1,10 @@
 # Change Log
 
+## 4.0.4
+
+* Changed default varchar size to 255
+* Changed default primary key to serial
+  
 ## 4.0.3
 
 * Removed debugging messages

@@ -1,5 +1,9 @@
 # Change Log
 
+## 4.0.2
+
+* Updated default varchar column size to 255
+  
 ## 4.0.1
 
 * Updated linter to `package:lints`

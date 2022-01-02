@@ -19,7 +19,7 @@ class MigrationColumn extends Column {
 
   MigrationColumn(ColumnType type,
       {bool isNullable = true,
-      int length = 256,
+      int length = 255,
       IndexType indexType = IndexType.standardIndex,
       defaultValue})
       : super(type: type, length: length) {

@@ -495,8 +495,7 @@ class RoleQuery extends Query<Role, RoleQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                users: List<_User>.from(l.users ?? [])
-                  ..addAll(model.users ?? []));
+                users: List<_User>.from(l.users)..addAll(model.users));
         }
       });
     });
@@ -514,8 +513,7 @@ class RoleQuery extends Query<Role, RoleQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                users: List<_User>.from(l.users ?? [])
-                  ..addAll(model.users ?? []));
+                users: List<_User>.from(l.users)..addAll(model.users));
         }
       });
     });
@@ -533,8 +531,7 @@ class RoleQuery extends Query<Role, RoleQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                users: List<_User>.from(l.users ?? [])
-                  ..addAll(model.users ?? []));
+                users: List<_User>.from(l.users)..addAll(model.users));
         }
       });
     });
@@ -723,8 +720,8 @@ class Role extends _Role {
       this.createdAt,
       this.updatedAt,
       this.name,
-      List<_User> users = const []})
-      : users = List.unmodifiable(users);
+      List<_User>? users = const []})
+      : users = List.unmodifiable(users ?? []);
 
   /// A unique identifier corresponding to this item.
   @override
@@ -742,7 +739,7 @@ class Role extends _Role {
   String? name;
 
   @override
-  List<_User> users;
+  List<_User>? users;
 
   Role copyWith(
       {String? id,
@@ -979,7 +976,7 @@ class RoleSerializer extends Codec<Role, Map> {
       'created_at': model.createdAt?.toIso8601String(),
       'updated_at': model.updatedAt?.toIso8601String(),
       'name': model.name,
-      'users': model.users.map((m) => UserSerializer.toMap(m)).toList()
+      'users': model.users?.map((m) => UserSerializer.toMap(m)).toList()
     };
   }
 }

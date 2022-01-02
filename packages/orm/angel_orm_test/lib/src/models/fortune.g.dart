@@ -10,7 +10,7 @@ class FortuneMigration extends Migration {
   @override
   void up(Schema schema) {
     schema.create('fortune', (table) {
-      table.integer('id');
+      table.integer('id').primaryKey();
       table.varChar('message', length: 2048);
     });
   }
@@ -63,17 +63,17 @@ class FortuneQuery extends Query<Fortune, FortuneQueryWhere> {
     return FortuneQueryWhere(this);
   }
 
-  static Fortune? parseRow(List row) {
+  static Optional<Fortune> parseRow(List row) {
     if (row.every((x) => x == null)) {
-      return null;
+      return Optional.empty();
     }
     var model = Fortune(id: (row[0] as int?), message: (row[1] as String?));
-    return model;
+    return Optional.of(model);
   }
 
   @override
   Optional<Fortune> deserialize(List row) {
-    return Optional.ofNullable(parseRow(row));
+    return parseRow(row);
   }
 }
 

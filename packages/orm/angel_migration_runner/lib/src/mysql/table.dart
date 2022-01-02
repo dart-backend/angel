@@ -3,7 +3,7 @@ import 'package:angel3_orm/angel3_orm.dart';
 import 'package:angel3_migration/angel3_migration.dart';
 import 'package:charcode/ascii.dart';
 
-abstract class PostgresGenerator {
+abstract class MysqlGenerator {
   static String columnType(MigrationColumn column) {
     var str = column.type.name;
     if (column.type.hasSize) {
@@ -60,7 +60,7 @@ abstract class PostgresGenerator {
   }
 }
 
-class PostgresTable extends Table {
+class MysqlTable extends Table {
   final Map<String, MigrationColumn> _columns = {};
 
   @override
@@ -77,7 +77,7 @@ class PostgresTable extends Table {
     var i = 0;
 
     _columns.forEach((name, column) {
-      var col = PostgresGenerator.compileColumn(column);
+      var col = MysqlGenerator.compileColumn(column);
       if (i++ > 0) buf.writeln(',');
 
       for (var i = 0; i < indent; i++) {
@@ -89,12 +89,12 @@ class PostgresTable extends Table {
   }
 }
 
-class PostgresAlterTable extends Table implements MutableTable {
+class MysqlAlterTable extends Table implements MutableTable {
   final Map<String, MigrationColumn> _columns = {};
   final String tableName;
   final Queue<String> _stack = Queue<String>();
 
-  PostgresAlterTable(this.tableName);
+  MysqlAlterTable(this.tableName);
 
   void compile(StringBuffer buf, int indent) {
     var i = 0;
@@ -115,7 +115,7 @@ class PostgresAlterTable extends Table implements MutableTable {
 
     i = 0;
     _columns.forEach((name, column) {
-      var col = PostgresGenerator.compileColumn(column);
+      var col = MysqlGenerator.compileColumn(column);
       if (i++ > 0) buf.writeln(',');
 
       for (var i = 0; i < indent; i++) {
@@ -149,7 +149,7 @@ class PostgresAlterTable extends Table implements MutableTable {
   @override
   void changeColumnType(String name, ColumnType type, {int length = 256}) {
     _stack.add('ALTER COLUMN "$name" TYPE ' +
-        PostgresGenerator.columnType(MigrationColumn(type, length: length)));
+        MysqlGenerator.columnType(MigrationColumn(type, length: length)));
   }
 
   @override

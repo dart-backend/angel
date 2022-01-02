@@ -7,4 +7,11 @@
 
 Mysql support for Angel3 ORM.
 
+## Supported database
+
+* MySQL 8.0 or later
+* MariaDb 10.2.1 or later
+
+**Note** ORM for MySQL requires support for `WITH` SQL Syntax
+
 For documentation about the ORM, head to the main project repo: <https://github.com/dukefirehawk/angel/tree/master/packages/orm>

@@ -13,8 +13,8 @@ class CarMigration extends Migration {
       table.serial('id').primaryKey();
       table.timeStamp('created_at');
       table.timeStamp('updated_at');
-      table.varChar('make');
-      table.varChar('description');
+      table.varChar('make', length: 255);
+      table.varChar('description', length: 255);
       table.boolean('family_friendly');
       table.timeStamp('recalled_at');
     });
@@ -309,12 +309,12 @@ class CarSerializer extends Codec<Car, Map> {
         id: map['id'] as String?,
         createdAt: map['created_at'] != null
             ? (map['created_at'] is DateTime
-                ? (map['created_at'] as DateTime?)
+                ? (map['created_at'] as DateTime)
                 : DateTime.parse(map['created_at'].toString()))
             : null,
         updatedAt: map['updated_at'] != null
             ? (map['updated_at'] is DateTime
-                ? (map['updated_at'] as DateTime?)
+                ? (map['updated_at'] as DateTime)
                 : DateTime.parse(map['updated_at'].toString()))
             : null,
         make: map['make'] as String?,
@@ -322,12 +322,15 @@ class CarSerializer extends Codec<Car, Map> {
         familyFriendly: map['family_friendly'] as bool?,
         recalledAt: map['recalled_at'] != null
             ? (map['recalled_at'] is DateTime
-                ? (map['recalled_at'] as DateTime?)
+                ? (map['recalled_at'] as DateTime)
                 : DateTime.parse(map['recalled_at'].toString()))
             : null);
   }
 
-  static Map<String, dynamic> toMap(_Car model) {
+  static Map<String, dynamic> toMap(_Car? model) {
+    if (model == null) {
+      return {};
+    }
     return {
       'id': model.id,
       'created_at': model.createdAt?.toIso8601String(),

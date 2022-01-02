@@ -26,8 +26,8 @@ void belongsToTests(FutureOr<QueryExecutor> Function() createExecutor,
     // And a book
     var bookQuery = BookQuery();
     bookQuery.values
-      ..authorId = jkRowling?.idAsInt ?? 0
-      ..partnerAuthorId = jameson?.idAsInt ?? 0
+      ..authorId = jkRowling!.idAsInt
+      ..partnerAuthorId = jameson!.idAsInt
       ..name = 'Deathly Hallows';
 
     deathlyHallows = (await bookQuery.insert(executor)).value;
@@ -74,7 +74,7 @@ void belongsToTests(FutureOr<QueryExecutor> Function() createExecutor,
     test('where clause', () async {
       var query = BookQuery()
         ..where!.name.equals('Goblet of Fire')
-        ..orWhere((w) => w.authorId.equals(int.parse(jkRowling!.id!)));
+        ..orWhere((w) => w.authorId.equals(jkRowling!.idAsInt));
       //print(query.compile({}));
 
       var books = await query.get(executor);

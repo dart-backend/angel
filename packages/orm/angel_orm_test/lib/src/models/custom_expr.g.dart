@@ -29,9 +29,9 @@ class AlphabetMigration extends Migration {
       table.serial('id').primaryKey();
       table.timeStamp('created_at');
       table.timeStamp('updated_at');
-      table.varChar('value');
+      table.varChar('value', length: 255);
       table
-          .declare('numbers_id', ColumnType('serial'))
+          .declare('numbers_id', ColumnType('int'))
           .references('numbers', 'id');
     });
   }
@@ -165,7 +165,7 @@ class AlphabetQuery extends Query<Alphabet, AlphabetQueryWhere> {
 
   AlphabetQueryWhere? _where;
 
-  NumbersQuery? _numbers;
+  late NumbersQuery _numbers;
 
   @override
   Map<String, String> get casts {
@@ -215,7 +215,7 @@ class AlphabetQuery extends Query<Alphabet, AlphabetQueryWhere> {
     return parseRow(row);
   }
 
-  NumbersQuery? get numbers {
+  NumbersQuery get numbers {
     return _numbers;
   }
 }
@@ -270,17 +270,17 @@ class AlphabetQueryValues extends MapQueryValues {
   }
 
   set value(String? value) => values['value'] = value;
-  int? get numbersId {
-    return (values['numbers_id'] as int?);
+  int get numbersId {
+    return (values['numbers_id'] as int);
   }
 
-  set numbersId(int? value) => values['numbers_id'] = value;
+  set numbersId(int value) => values['numbers_id'] = value;
   void copyFrom(Alphabet model) {
     createdAt = model.createdAt;
     updatedAt = model.updatedAt;
     value = model.value;
     if (model.numbers != null) {
-      values['numbers_id'] = model.numbers!.id;
+      values['numbers_id'] = model.numbers?.id;
     }
   }
 }
@@ -336,7 +336,7 @@ class Numbers extends _Numbers {
     return 'Numbers(id=$id, createdAt=$createdAt, updatedAt=$updatedAt, two=$two)';
   }
 
-  Map<String, dynamic>? toJson() {
+  Map<String, dynamic> toJson() {
     return NumbersSerializer.toMap(this);
   }
 }
@@ -408,11 +408,11 @@ class Alphabet extends _Alphabet {
 
 const NumbersSerializer numbersSerializer = NumbersSerializer();
 
-class NumbersEncoder extends Converter<Numbers, Map?> {
+class NumbersEncoder extends Converter<Numbers, Map> {
   const NumbersEncoder();
 
   @override
-  Map? convert(Numbers model) => NumbersSerializer.toMap(model);
+  Map convert(Numbers model) => NumbersSerializer.toMap(model);
 }
 
 class NumbersDecoder extends Converter<Map, Numbers> {
@@ -422,7 +422,7 @@ class NumbersDecoder extends Converter<Map, Numbers> {
   Numbers convert(Map map) => NumbersSerializer.fromMap(map);
 }
 
-class NumbersSerializer extends Codec<Numbers, Map?> {
+class NumbersSerializer extends Codec<Numbers, Map> {
   const NumbersSerializer();
 
   @override
@@ -434,20 +434,20 @@ class NumbersSerializer extends Codec<Numbers, Map?> {
         id: map['id'] as String?,
         createdAt: map['created_at'] != null
             ? (map['created_at'] is DateTime
-                ? (map['created_at'] as DateTime?)
+                ? (map['created_at'] as DateTime)
                 : DateTime.parse(map['created_at'].toString()))
             : null,
         updatedAt: map['updated_at'] != null
             ? (map['updated_at'] is DateTime
-                ? (map['updated_at'] as DateTime?)
+                ? (map['updated_at'] as DateTime)
                 : DateTime.parse(map['updated_at'].toString()))
             : null,
         two: map['two'] as int?);
   }
 
-  static Map<String, dynamic>? toMap(_Numbers? model) {
+  static Map<String, dynamic> toMap(_Numbers? model) {
     if (model == null) {
-      return null;
+      return {};
     }
     return {
       'id': model.id,
@@ -498,12 +498,12 @@ class AlphabetSerializer extends Codec<Alphabet, Map> {
         id: map['id'] as String?,
         createdAt: map['created_at'] != null
             ? (map['created_at'] is DateTime
-                ? (map['created_at'] as DateTime?)
+                ? (map['created_at'] as DateTime)
                 : DateTime.parse(map['created_at'].toString()))
             : null,
         updatedAt: map['updated_at'] != null
             ? (map['updated_at'] is DateTime
-                ? (map['updated_at'] as DateTime?)
+                ? (map['updated_at'] as DateTime)
                 : DateTime.parse(map['updated_at'].toString()))
             : null,
         value: map['value'] as String?,
@@ -512,7 +512,10 @@ class AlphabetSerializer extends Codec<Alphabet, Map> {
             : null);
   }
 
-  static Map<String, dynamic> toMap(_Alphabet model) {
+  static Map<String, dynamic> toMap(_Alphabet? model) {
+    if (model == null) {
+      return {};
+    }
     return {
       'id': model.id,
       'created_at': model.createdAt?.toIso8601String(),

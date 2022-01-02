@@ -4,7 +4,9 @@ abstract class Schema {
   void drop(String tableName, {bool cascade = false});
 
   void dropAll(Iterable<String> tableNames, {bool cascade = false}) {
-    tableNames.forEach((n) => drop(n, cascade: cascade));
+    for (var n in tableNames) {
+      drop(n, cascade: cascade);
+    }
   }
 
   void create(String tableName, void Function(Table table) callback);

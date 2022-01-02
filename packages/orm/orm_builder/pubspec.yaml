@@ -1,8 +1,7 @@
-name: angel3_orm_test
-version: 3.0.3
-description: Common tests for Angel3 ORM. Reference implmentation of the generated ORM files.
-homepage: https://angel3-framework.web.app/
-repository: https://github.com/dukefirehawk/angel/tree/master/packages/orm/angel_orm_test
+name: orm_builder
+version: 1.0.0
+description: ORM Builder Testing
+published_to: none
 environment:
   sdk: '>=2.12.0 <3.0.0'
 dependencies:
@@ -24,7 +23,9 @@ dependency_overrides:
 #    path: ../angel_migration_runner
   angel3_orm:
     path: ../angel_orm
-#  angel3_migration:
-#    path: ..//angel_migration
+  angel3_migration:
+    path: ../angel_migration
   angel3_orm_generator:
     path: ../angel_orm_generator
+  angel3_serialize:
+    path: ../../serialize/angel_serialize

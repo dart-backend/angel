@@ -13,7 +13,7 @@ class HasCarMigration extends Migration {
       table.serial('id').primaryKey();
       table.timeStamp('created_at');
       table.timeStamp('updated_at');
-      table.integer('type');
+      table.integer('type').defaultsTo(0);
     });
   }
 
@@ -73,7 +73,7 @@ class HasCarQuery extends Query<HasCar, HasCarQueryWhere> {
         id: row[0].toString(),
         createdAt: (row[1] as DateTime?),
         updatedAt: (row[2] as DateTime?),
-        type: row[3] == null ? null : CarType.values[(row[3] as int)]);
+        type: row[3] == null ? null : CarType?.values[(row[3] as int)]);
     return Optional.of(model);
   }
 
@@ -88,8 +88,8 @@ class HasCarQueryWhere extends QueryWhere {
       : id = NumericSqlExpressionBuilder<int>(query, 'id'),
         createdAt = DateTimeSqlExpressionBuilder(query, 'created_at'),
         updatedAt = DateTimeSqlExpressionBuilder(query, 'updated_at'),
-        type =
-            EnumSqlExpressionBuilder<CarType?>(query, 'type', (v) => v!.index);
+        type = EnumSqlExpressionBuilder<CarType?>(
+            query, 'type', (v) => v?.index as int);
 
   final NumericSqlExpressionBuilder<int> id;
 
@@ -126,8 +126,8 @@ class HasCarQueryValues extends MapQueryValues {
   }
 
   set updatedAt(DateTime? value) => values['updated_at'] = value;
-  CarType get type {
-    return CarType.values[(values['type'] as int)];
+  CarType? get type {
+    return CarType?.values[(values['type'] as int)];
   }
 
   set type(CarType? value) => values['type'] = value?.index;
@@ -159,7 +159,7 @@ class HasCar extends _HasCar {
   DateTime? updatedAt;
 
   @override
-  final CarType? type;
+  CarType? type;
 
   HasCar copyWith(
       {String? id, DateTime? createdAt, DateTime? updatedAt, CarType? type}) {
@@ -230,31 +230,30 @@ class HasCarSerializer extends Codec<HasCar, Map> {
         id: map['id'] as String?,
         createdAt: map['created_at'] != null
             ? (map['created_at'] is DateTime
-                ? (map['created_at'] as DateTime?)
+                ? (map['created_at'] as DateTime)
                 : DateTime.parse(map['created_at'].toString()))
             : null,
         updatedAt: map['updated_at'] != null
             ? (map['updated_at'] is DateTime
-                ? (map['updated_at'] as DateTime?)
+                ? (map['updated_at'] as DateTime)
                 : DateTime.parse(map['updated_at'].toString()))
             : null,
-        type: map['type'] is CarType
+        type: map['type'] is CarType?
             ? (map['type'] as CarType?)
             : (map['type'] is int
-                ? CarType.values[map['type'] as int]
+                ? CarType?.values[map['type'] as int]
                 : CarType.sedan));
   }
 
-  static Map<String, dynamic> toMap(_HasCar model) {
-    if (model.type == null) {
-      throw FormatException("Missing required field 'type' on HasCar.");
+  static Map<String, dynamic> toMap(_HasCar? model) {
+    if (model == null) {
+      return {};
     }
-
     return {
       'id': model.id,
       'created_at': model.createdAt?.toIso8601String(),
       'updated_at': model.updatedAt?.toIso8601String(),
-      'type': model.type == null ? null : CarType.values.indexOf(model.type!)
+      'type': model.type != null ? CarType.values.indexOf(model.type!) : null
     };
   }
 }
