@@ -1,5 +1,9 @@
 # Change Log
 
+## 3.0.4
+
+* Updated test cases
+
 ## 3.0.3
 
 * Added `performance_test` test cases

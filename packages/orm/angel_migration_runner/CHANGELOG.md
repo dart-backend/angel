@@ -2,7 +2,7 @@
 
 ## 4.1.0
 
-* Added support `MySQL` database support
+* Added support for `MySQL` and `MariaDB` database
 
 ## 4.0.2
 

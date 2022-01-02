@@ -1,5 +1,9 @@
 # Change Log
 
+## 3.2.1
+
+* Fixed null safety errors
+
 ## 3.2.0
 
 * Added `package:postgres_pool` for connection pooling
