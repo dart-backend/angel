@@ -133,8 +133,7 @@ class TreeQuery extends Query<Tree, TreeQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                fruits: List<_Fruit>.from(l.fruits ?? [])
-                  ..addAll(model.fruits ?? []));
+                fruits: List<_Fruit>.from(l.fruits)..addAll(model.fruits));
         }
       });
     });
@@ -152,8 +151,7 @@ class TreeQuery extends Query<Tree, TreeQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                fruits: List<_Fruit>.from(l.fruits ?? [])
-                  ..addAll(model.fruits ?? []));
+                fruits: List<_Fruit>.from(l.fruits)..addAll(model.fruits));
         }
       });
     });
@@ -171,8 +169,7 @@ class TreeQuery extends Query<Tree, TreeQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                fruits: List<_Fruit>.from(l.fruits ?? [])
-                  ..addAll(model.fruits ?? []));
+                fruits: List<_Fruit>.from(l.fruits)..addAll(model.fruits));
         }
       });
     });

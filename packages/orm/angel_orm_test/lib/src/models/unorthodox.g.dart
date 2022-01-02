@@ -321,9 +321,8 @@ class WeirdJoinQuery extends Query<WeirdJoin, WeirdJoinQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                numbas: List<_Numba>.from(l.numbas ?? [])
-                  ..addAll(model.numbas ?? []),
-                foos: List<_Foo>.from(l.foos ?? [])..addAll(model.foos ?? []));
+                numbas: List<_Numba>.from(l.numbas)..addAll(model.numbas),
+                foos: List<_Foo>.from(l.foos)..addAll(model.foos));
         }
       });
     });
@@ -341,9 +340,8 @@ class WeirdJoinQuery extends Query<WeirdJoin, WeirdJoinQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                numbas: List<_Numba>.from(l.numbas ?? [])
-                  ..addAll(model.numbas ?? []),
-                foos: List<_Foo>.from(l.foos ?? [])..addAll(model.foos ?? []));
+                numbas: List<_Numba>.from(l.numbas)..addAll(model.numbas),
+                foos: List<_Foo>.from(l.foos)..addAll(model.foos));
         }
       });
     });
@@ -361,9 +359,8 @@ class WeirdJoinQuery extends Query<WeirdJoin, WeirdJoinQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                numbas: List<_Numba>.from(l.numbas ?? [])
-                  ..addAll(model.numbas ?? []),
-                foos: List<_Foo>.from(l.foos ?? [])..addAll(model.foos ?? []));
+                numbas: List<_Numba>.from(l.numbas)..addAll(model.numbas),
+                foos: List<_Foo>.from(l.foos)..addAll(model.foos));
         }
       });
     });
@@ -696,8 +693,8 @@ class FooQuery extends Query<Foo, FooQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                weirdJoins: List<_WeirdJoin>.from(l.weirdJoins ?? [])
-                  ..addAll(model.weirdJoins ?? []));
+                weirdJoins: List<_WeirdJoin>.from(l.weirdJoins)
+                  ..addAll(model.weirdJoins));
         }
       });
     });
@@ -715,8 +712,8 @@ class FooQuery extends Query<Foo, FooQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                weirdJoins: List<_WeirdJoin>.from(l.weirdJoins ?? [])
-                  ..addAll(model.weirdJoins ?? []));
+                weirdJoins: List<_WeirdJoin>.from(l.weirdJoins)
+                  ..addAll(model.weirdJoins));
         }
       });
     });
@@ -734,8 +731,8 @@ class FooQuery extends Query<Foo, FooQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                weirdJoins: List<_WeirdJoin>.from(l.weirdJoins ?? [])
-                  ..addAll(model.weirdJoins ?? []));
+                weirdJoins: List<_WeirdJoin>.from(l.weirdJoins)
+                  ..addAll(model.weirdJoins));
         }
       });
     });

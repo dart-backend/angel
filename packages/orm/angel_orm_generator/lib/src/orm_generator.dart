@@ -575,7 +575,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                     .toString()
                     .replaceAll('?', '');
                 merge.add('''
-                      $name: $typeLiteral.from(l.$name ?? [])..addAll(model.$name ?? [])
+                      $name: $typeLiteral.from(l.$name)..addAll(model.$name)
                     ''');
               }
             });
