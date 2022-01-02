@@ -139,8 +139,7 @@ class RoleQuery extends Query<Role, RoleQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                users: List<_User>.from(l.users ?? [])
-                  ..addAll(model.users ?? []));
+                users: List<_User>.from(l.users)..addAll(model.users));
         }
       });
     });
@@ -158,8 +157,7 @@ class RoleQuery extends Query<Role, RoleQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                users: List<_User>.from(l.users ?? [])
-                  ..addAll(model.users ?? []));
+                users: List<_User>.from(l.users)..addAll(model.users));
         }
       });
     });
@@ -177,8 +175,7 @@ class RoleQuery extends Query<Role, RoleQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                users: List<_User>.from(l.users ?? [])
-                  ..addAll(model.users ?? []));
+                users: List<_User>.from(l.users)..addAll(model.users));
         }
       });
     });
@@ -420,8 +417,7 @@ class UserQuery extends Query<User, UserQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                roles: List<_Role>.from(l.roles ?? [])
-                  ..addAll(model.roles ?? []));
+                roles: List<_Role>.from(l.roles)..addAll(model.roles));
         }
       });
     });
@@ -439,8 +435,7 @@ class UserQuery extends Query<User, UserQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                roles: List<_Role>.from(l.roles ?? [])
-                  ..addAll(model.roles ?? []));
+                roles: List<_Role>.from(l.roles)..addAll(model.roles));
         }
       });
     });
@@ -458,8 +453,7 @@ class UserQuery extends Query<User, UserQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                roles: List<_Role>.from(l.roles ?? [])
-                  ..addAll(model.roles ?? []));
+                roles: List<_Role>.from(l.roles)..addAll(model.roles));
         }
       });
     });

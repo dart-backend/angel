@@ -118,7 +118,7 @@ void edgeCaseTests(FutureOr<QueryExecutor> Function() createExecutor,
         fooOpt.ifPresent((foo) {
           //print(foo.toJson());
           //print(weirdJoin!.toJson());
-          expect(foo.weirdJoins![0].id, weirdJoin!.id);
+          expect(foo.weirdJoins[0].id, weirdJoin!.id);
         });
       });
     });
