@@ -1,9 +1,9 @@
 # Angel3 Hot Reloader
 
-[![version](https://img.shields.io/badge/pub-v4.2.1-brightgreen)](https://pub.dev/packages/angel3_hot)
+![Pub Version (including pre-releases)](https://img.shields.io/pub/v/angel3_hot?include_prereleases)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 [![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
-[![License](https://img.shields.io/github/license/dart-backend/belatuk-common-utilities)](https://github.com/dukefirehawk/angel/tree/master/packages/hot/LICENSE)
+[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/master/packages/hot/LICENSE)
 
 ![Screenshot of terminal](screenshots/angel3-screenshot.png)
 
@@ -18,8 +18,8 @@ In your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  angel3_framework: ^4.1.0
-  angel3_hot: ^4.2.0
+  angel3_framework: ^4.2.0
+  angel3_hot: ^4.3.0
 ```
 
 ## Usage
@@ -49,8 +49,7 @@ import 'src/foo.dart';
 
 main() async {
   var hot = new HotReloader(createServer, [
-    new Directory('src'),
-    new Directory('src'),
+    Directory('src'),
     'main.dart',
     Uri.parse('package:angel3_hot/angel3_hot.dart')
   ]);

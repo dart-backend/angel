@@ -1,5 +1,9 @@
 # Change Log
 
+## 4.3.0
+
+* Updated to use `vm_service` 8.1.0
+
 ## 4.2.2
 
 * Fixed '!' operator warning
@@ -11,7 +15,7 @@
 ## 4.2.0
 
 * Updated to use `belatuk_html_builder` package
-* Upgraded from `pendantic` to `lints` linter
+* Upgraded to `lints` linter
   
 ## 4.1.1
 
