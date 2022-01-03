@@ -48,7 +48,7 @@ import 'package:logging/logging.dart';
 import 'src/foo.dart';
 
 main() async {
-  var hot = new HotReloader(createServer, [
+  var hot = HotReloader(createServer, [
     Directory('src'),
     'main.dart',
     Uri.parse('package:angel3_hot/angel3_hot.dart')
