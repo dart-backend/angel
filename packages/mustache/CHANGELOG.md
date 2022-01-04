@@ -1,5 +1,9 @@
 # Change Log
 
+## 3.1.0
+
+* Updated linter to `package:lints`
+
 ## 3.0.0
 
 * Migrated to support Dart SDK 2.12.x NNBD

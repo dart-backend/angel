@@ -14,4 +14,4 @@ dependencies:
   faker: ^2.0.0
 dev_dependencies:
     test: ^1.17.8
-    pedantic: ^1.11.1
+    lints: ^1.0.0

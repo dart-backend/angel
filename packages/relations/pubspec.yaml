@@ -18,4 +18,4 @@ dev_dependencies:
       ref: sdk-2.12.x_nnbd
       path: packages/seeder
   test: ^1.17.8
-  pedantic: ^1.11.1
+  lints: ^1.0.0

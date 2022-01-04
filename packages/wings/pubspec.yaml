@@ -23,7 +23,7 @@ dev_dependencies:
       ref: sdk-2.12.x_nnbd
       path: packages/static
   io: ^1.0.0
-  pedantic: ^1.11.1
+  lints: ^1.0.0
   pretty_logging:
     git: 
       url: https://github.com/dukefirehawk/angel.git

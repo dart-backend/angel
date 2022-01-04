@@ -1,10 +1,10 @@
 # Angel3 Request Validator
 
+![Pub Version (including pre-releases)](https://img.shields.io/pub/v/angel3_validate?include_prereleases)
 [![version](https://img.shields.io/badge/pub-v4.0.2-brightgreen)](https://pub.dartlang.org/packages/angel3_validate)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 [![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
-
-[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/validate/LICENSE)
+[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/master/packages/validate/LICENSE)
 
 Validation library based on the `matcher` library, with Angel3 support. Why re-invent the wheel, when you can use the same validators you already use for tests?
 
