@@ -156,7 +156,49 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                 .map((f) =>
                     literalString(ctx.buildContext.resolveFieldName(f.name)!))
                 .toList();
-            b.addExpression(literalConstList(names).returned);
+            b.addExpression(literalConstList(names).assignConst('_fields'));
+            b.addExpression(refer('_selectedFields')
+                .property('isEmpty')
+                .conditional(
+                  refer('_fields'),
+                  refer('_fields')
+                      .property('where')
+                      .call([
+                        CodeExpression(
+                            Code('(field) => _selectedFields.contains(field)'))
+                      ])
+                      .property('toList')
+                      .call([]),
+                )
+                .returned);
+          });
+      }));
+
+      // Add _selectedFields member
+      clazz.fields.add(Field((b) {
+        b
+          ..name = '_selectedFields'
+          ..type = TypeReference((t) => t
+            ..symbol = 'List'
+            ..types.add(TypeReference((b) => b..symbol = 'String')))
+          ..assignment = Code('[]');
+      }));
+
+      // Add select(List<String> fields)
+      clazz.methods.add(Method((m) {
+        m
+          ..name = 'select'
+          ..returns = refer('${rc.pascalCase}Query')
+          ..requiredParameters.add(Parameter((b) => b
+            ..name = 'selectedFields'
+            ..type = TypeReference((t) => t
+              ..symbol = 'List'
+              ..types.add(TypeReference((b) => b..symbol = 'String')))))
+          ..body = Block((b) {
+            b.addExpression(
+              refer('_selectedFields').assign(refer('selectedFields')),
+            );
+            b.addExpression(refer('this').returned);
           });
       }));
 
@@ -191,7 +233,6 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
       clazz.methods.add(Method((m) {
         m
           ..name = 'parseRow'
-          ..static = true
           ..returns = refer('Optional<${rc.pascalCase}>')
           ..requiredParameters.add(Parameter((b) => b
             ..name = 'row'
@@ -207,7 +248,8 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                 type = refer('int');
               }
 
-              var expr = (refer('row').index(literalNum(i++)));
+              literalNum(i++);
+              var expr = (refer('row').index(CodeExpression(Code('_index++'))));
               if (isSpecialId(ctx, field)) {
                 expr = expr.property('toString').call([]);
               } else if (field is RelationFieldImpl) {
@@ -227,12 +269,15 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
               } else {
                 expr = expr.asA(type);
               }
-
+              expr = refer('fields').property('contains').call([
+                literalString(ctx.buildContext.resolveFieldName(field.name)!)
+              ]).conditional(expr, refer('null'));
               args[field.name] = expr;
             }
 
             b.statements.add(Code(
                 'if (row.every((x) => x == null)) { return Optional.empty(); }'));
+            b.addExpression(refer('0').assignVar('_index'));
 
             b.addExpression(ctx.buildContext.modelClassType
                 .newInstance([], args).assignVar('model'));
