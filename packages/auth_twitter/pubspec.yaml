@@ -16,4 +16,4 @@ dependencies:
       ref: sdk-2.12.x
 dev_dependencies:
   logging: ^1.0.0
-  pedantic: ^1.11.0
+  lints: ^1.0.0

@@ -1,8 +1,8 @@
 name: angel3_paginate
-version: 3.0.1
+version: 3.1.0
 description: Platform-agnostic pagination library, with custom support for the Angel3 framework.
 homepage: https://angel3-framework.web.app/
-repository: https://github.com/dukefirehawk/angel/tree/angel3/packages/paginate
+repository: https://github.com/dukefirehawk/angel/tree/master/packages/paginate
 environment:
   sdk: '>=2.12.0 <3.0.0'
 dependencies:
@@ -11,4 +11,4 @@ dev_dependencies:
   angel3_test: ^4.0.0
   logging: ^1.0.1
   test: ^1.17.8
-  pedantic: ^1.11.1
+  lints: ^1.0.0

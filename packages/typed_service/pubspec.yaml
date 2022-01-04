@@ -25,5 +25,5 @@ dev_dependencies:
       path: packages/file_service
   file: ^6.0.0
   logging: ^1.0.0
-  pedantic: ^1.0.0
+  lints: ^1.0.0
   test: ^1.15.7

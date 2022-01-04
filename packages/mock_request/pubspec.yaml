@@ -1,13 +1,14 @@
 name: angel3_mock_request
-version: 2.0.2
+version: 2.1.0
 description: Manufacture dart:io HttpRequests, HttpResponses, HttpHeaders, etc.
-homepage: https://github.com/dukefirehawk/angel/tree/angel3/packages/mock_request
+homepage: https://angel3-framework.web.app/
+repository: https://github.com/dukefirehawk/angel/tree/master/packages/mock_request
 environment:
     sdk: '>=2.12.0 <3.0.0'
 dependencies:
   charcode: ^1.2.0
 dev_dependencies:
-  angel3_framework: ^4.0.0
+  angel3_framework: ^4.2.0
   http: ^0.13.2
   test: ^1.17.4
-  pedantic: ^1.11.0
+  lints: ^1.0.0

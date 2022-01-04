@@ -1,10 +1,10 @@
 # A Sembast Persistent Service for Angel3
 
+![Pub Version (including pre-releases)](https://img.shields.io/pub/v/angel3_sembast?include_prereleases)
 [![version](https://img.shields.io/badge/pub-v2.0.1-brightgreen)](https://pub.dartlang.org/packages/angel3_sembast)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 [![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
-
-[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/sembast/LICENSE)
+[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/master/packages/sembast/LICENSE)
 
 A plugin service that persist data to Sembast for Angel3 framework.
 
@@ -14,7 +14,7 @@ Add the following to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  angel3_sembast: ^2.0.0
+  angel3_sembast: ^2.1.0
 ```
 
 ## Usage

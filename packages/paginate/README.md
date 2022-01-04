@@ -1,12 +1,12 @@
 # Angel3 Paginate
 
+![Pub Version (including pre-releases)](https://img.shields.io/pub/v/angel3_paginate?include_prereleases)
 [![version](https://img.shields.io/badge/pub-v3.0.1-brightgreen)](https://pub.dartlang.org/packages/angel3_paginate)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 [![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
+[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/master/packages/paginate/LICENSE)
 
-[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/paginate/LICENSE)
-
-Platform-agnostic pagination library, with custom support for the [Angel3 framework](https://github.com/dukefirehawk/angel).
+Platform-agnostic pagination library, with custom support for the [Angel3](https://angel3-framework.web.app/).
 
 ## Installation
 
@@ -14,7 +14,7 @@ In your `pubspec.yaml` file:
 
 ```yaml
 dependencies:
-  angel3_paginate: ^3.0.0
+  angel3_paginate: ^3.1.0
 ```
 
 ## Usage
