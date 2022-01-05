@@ -1,5 +1,9 @@
 # Change Log
 
+## 4.0.3
+
+* Updated README
+
 ## 4.0.2
 
 * Updated default varchar column size to 255
