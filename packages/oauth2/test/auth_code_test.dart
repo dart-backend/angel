@@ -62,7 +62,7 @@ void main() {
     test('show authorization form', () async {
       var grant = createGrant();
       var url = grant.getAuthorizationUrl(redirectUri, state: 'hello');
-      var response = await testClient.client!.get(url);
+      var response = await testClient.client.get(url);
       print('Body: ${response.body}');
       expect(
           response.body,
@@ -73,7 +73,7 @@ void main() {
     test('preserves state', () async {
       var grant = createGrant();
       var url = grant.getAuthorizationUrl(redirectUri, state: 'goodbye');
-      var response = await testClient.client!.get(url);
+      var response = await testClient.client.get(url);
       print('Body: ${response.body}');
       expect(json.decode(response.body)['state'], 'goodbye');
     });
@@ -81,7 +81,7 @@ void main() {
     test('sends auth code', () async {
       var grant = createGrant();
       var url = grant.getAuthorizationUrl(redirectUri);
-      var response = await testClient.client!.get(url);
+      var response = await testClient.client.get(url);
       print('Body: ${response.body}');
       expect(
         json.decode(response.body),
@@ -95,7 +95,7 @@ void main() {
     test('exchange code for token', () async {
       var grant = createGrant();
       var url = grant.getAuthorizationUrl(redirectUri);
-      var response = await testClient.client!.get(url);
+      var response = await testClient.client.get(url);
       print('Body: ${response.body}');
 
       var authCode = json.decode(response.body)['code'].toString();
@@ -106,7 +106,7 @@ void main() {
     test('can send refresh token', () async {
       var grant = createGrant();
       var url = grant.getAuthorizationUrl(redirectUri, state: 'can_refresh');
-      var response = await testClient.client!.get(url);
+      var response = await testClient.client.get(url);
       print('Body: ${response.body}');
 
       var authCode = json.decode(response.body)['code'].toString();
@@ -152,7 +152,7 @@ class _Server extends AuthorizationServer<PseudoApplication, Map> {
     }
 
     var authCode = _uuid.v4();
-    var authCodes = req.container!.make<AuthCodes>()!;
+    var authCodes = req.container!.make<AuthCodes>();
     authCodes[authCode] = state;
 
     res.headers['content-type'] = 'application/json';
@@ -168,7 +168,7 @@ class _Server extends AuthorizationServer<PseudoApplication, Map> {
       String? redirectUri,
       RequestContext req,
       ResponseContext res) async {
-    var authCodes = req.container!.make<AuthCodes>()!;
+    var authCodes = req.container!.make<AuthCodes>();
     var state = authCodes[authCode!];
     var refreshToken = state == 'can_refresh' ? '${authCode}_refresh' : null;
     return AuthorizationTokenResponse('${authCode}_access',

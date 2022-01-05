@@ -5,6 +5,8 @@
 * Update examples
 * Update User Guide
 * Fix bugs
+  * `angel3_oauth2` failed test cases
+  * `angel3_proxy` failed test cases
 
 ## Long Term Goal
 

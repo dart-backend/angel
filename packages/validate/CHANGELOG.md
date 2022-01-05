@@ -3,6 +3,8 @@
 ## 4.1.0
 
 * Updated linter to `package:lints`
+* Updated `build_runner` to major version 2.1.0
+* Updated `build_web_compilers` to major version 3.2.0
 
 ## 4.0.2
 
