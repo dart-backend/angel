@@ -77,6 +77,8 @@ class UserQuery extends Query<User, UserQueryWhere> {
   @override
   final UserQueryValues values = UserQueryValues();
 
+  List<String> _selectedFields = [];
+
   UserQueryWhere? _where;
 
   @override
@@ -91,7 +93,7 @@ class UserQuery extends Query<User, UserQueryWhere> {
 
   @override
   List<String> get fields {
-    return const [
+    const _fields = [
       'id',
       'created_at',
       'updated_at',
@@ -99,6 +101,14 @@ class UserQuery extends Query<User, UserQueryWhere> {
       'password',
       'email'
     ];
+    return _selectedFields.isEmpty
+        ? _fields
+        : _fields.where((field) => _selectedFields.contains(field)).toList();
+  }
+
+  UserQuery select(List<String> selectedFields) {
+    _selectedFields = selectedFields;
+    return this;
   }
 
   @override
@@ -111,19 +121,19 @@ class UserQuery extends Query<User, UserQueryWhere> {
     return UserQueryWhere(this);
   }
 
-  static Optional<User> parseRow(List row) {
+  Optional<User> parseRow(List row) {
     if (row.every((x) => x == null)) {
       return Optional.empty();
     }
     var model = User(
-        id: row[0].toString(),
-        createdAt: (row[1] as DateTime?),
-        updatedAt: (row[2] as DateTime?),
-        username: (row[3] as String?),
-        password: (row[4] as String?),
-        email: (row[5] as String?));
+        id: fields.contains('id') ? row[0].toString() : null,
+        createdAt: fields.contains('created_at') ? (row[1] as DateTime?) : null,
+        updatedAt: fields.contains('updated_at') ? (row[2] as DateTime?) : null,
+        username: fields.contains('username') ? (row[3] as String?) : null,
+        password: fields.contains('password') ? (row[4] as String?) : null,
+        email: fields.contains('email') ? (row[5] as String?) : null);
     if (row.length > 6) {
-      var modelOpt = RoleQuery.parseRow(row.skip(6).take(4).toList());
+      var modelOpt = RoleQuery().parseRow(row.skip(6).take(4).toList());
       modelOpt.ifPresent((m) {
         model = model.copyWith(roles: [m]);
       });
@@ -295,6 +305,8 @@ class RoleUserQuery extends Query<RoleUser, RoleUserQueryWhere> {
   @override
   final RoleUserQueryValues values = RoleUserQueryValues();
 
+  List<String> _selectedFields = [];
+
   RoleUserQueryWhere? _where;
 
   late RoleQuery _role;
@@ -313,7 +325,15 @@ class RoleUserQuery extends Query<RoleUser, RoleUserQueryWhere> {
 
   @override
   List<String> get fields {
-    return const ['role_id', 'user_id'];
+    const _fields = ['role_id', 'user_id'];
+    return _selectedFields.isEmpty
+        ? _fields
+        : _fields.where((field) => _selectedFields.contains(field)).toList();
+  }
+
+  RoleUserQuery select(List<String> selectedFields) {
+    _selectedFields = selectedFields;
+    return this;
   }
 
   @override
@@ -326,19 +346,19 @@ class RoleUserQuery extends Query<RoleUser, RoleUserQueryWhere> {
     return RoleUserQueryWhere(this);
   }
 
-  static Optional<RoleUser> parseRow(List row) {
+  Optional<RoleUser> parseRow(List row) {
     if (row.every((x) => x == null)) {
       return Optional.empty();
     }
     var model = RoleUser();
     if (row.length > 2) {
-      var modelOpt = RoleQuery.parseRow(row.skip(2).take(4).toList());
+      var modelOpt = RoleQuery().parseRow(row.skip(2).take(4).toList());
       modelOpt.ifPresent((m) {
         model = model.copyWith(role: m);
       });
     }
     if (row.length > 6) {
-      var modelOpt = UserQuery.parseRow(row.skip(6).take(6).toList());
+      var modelOpt = UserQuery().parseRow(row.skip(6).take(6).toList());
       modelOpt.ifPresent((m) {
         model = model.copyWith(user: m);
       });
@@ -424,6 +444,8 @@ class RoleQuery extends Query<Role, RoleQueryWhere> {
   @override
   final RoleQueryValues values = RoleQueryValues();
 
+  List<String> _selectedFields = [];
+
   RoleQueryWhere? _where;
 
   @override
@@ -438,7 +460,15 @@ class RoleQuery extends Query<Role, RoleQueryWhere> {
 
   @override
   List<String> get fields {
-    return const ['id', 'created_at', 'updated_at', 'name'];
+    const _fields = ['id', 'created_at', 'updated_at', 'name'];
+    return _selectedFields.isEmpty
+        ? _fields
+        : _fields.where((field) => _selectedFields.contains(field)).toList();
+  }
+
+  RoleQuery select(List<String> selectedFields) {
+    _selectedFields = selectedFields;
+    return this;
   }
 
   @override
@@ -451,17 +481,17 @@ class RoleQuery extends Query<Role, RoleQueryWhere> {
     return RoleQueryWhere(this);
   }
 
-  static Optional<Role> parseRow(List row) {
+  Optional<Role> parseRow(List row) {
     if (row.every((x) => x == null)) {
       return Optional.empty();
     }
     var model = Role(
-        id: row[0].toString(),
-        createdAt: (row[1] as DateTime?),
-        updatedAt: (row[2] as DateTime?),
-        name: (row[3] as String?));
+        id: fields.contains('id') ? row[0].toString() : null,
+        createdAt: fields.contains('created_at') ? (row[1] as DateTime?) : null,
+        updatedAt: fields.contains('updated_at') ? (row[2] as DateTime?) : null,
+        name: fields.contains('name') ? (row[3] as String?) : null);
     if (row.length > 4) {
-      var modelOpt = UserQuery.parseRow(row.skip(4).take(6).toList());
+      var modelOpt = UserQuery().parseRow(row.skip(4).take(6).toList());
       modelOpt.ifPresent((m) {
         model = model.copyWith(users: [m]);
       });

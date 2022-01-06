@@ -248,8 +248,13 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                 type = refer('int');
               }
 
-              literalNum(i++);
-              var expr = (refer('row').index(CodeExpression(Code('_index++'))));
+              // Reverted since as `continue` for `RelationshipFieldImp` will
+              // cause `_index` requires +2 or +3 in order to map to the correct
+              // fields
+              //
+              //literalNum(i++);
+              //var expr = (refer('row').index(CodeExpression(Code('_index++'))));
+              var expr = (refer('row').index(literalNum(i++)));
               if (isSpecialId(ctx, field)) {
                 expr = expr.property('toString').call([]);
               } else if (field is RelationFieldImpl) {
@@ -277,7 +282,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
 
             b.statements.add(Code(
                 'if (row.every((x) => x == null)) { return Optional.empty(); }'));
-            b.addExpression(refer('0').assignVar('_index'));
+            //b.addExpression(refer('0').assignVar('_index'));
 
             b.addExpression(ctx.buildContext.modelClassType
                 .newInstance([], args).assignVar('model'));
@@ -310,6 +315,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
 
               var parsed = refer(
                       '${foreign.buildContext.modelClassNameRecase.pascalCase}Query')
+                  .newInstance([])
                   .property('parseRow')
                   .call([skipToList]);
 
