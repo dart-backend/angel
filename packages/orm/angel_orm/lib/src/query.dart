@@ -167,6 +167,7 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
   void _makeJoin(
       tableName,
       Set<String>? trampoline,
+      String? alias,
       JoinType type,
       String localKey,
       String foreignKey,
@@ -182,7 +183,7 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
     }
 
     var to = _compileJoin(tableName, trampoline);
-    var alias = _joinAlias(trampoline);
+    alias ??= _joinAlias(trampoline);
     if (tableName is Query) {
       for (var field in tableName.fields) {
         tableName.aliases[field] = '${alias}_$field';
@@ -199,8 +200,9 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
   void join(tableName, String localKey, String foreignKey,
       {String op = '=',
       List<String> additionalFields = const [],
-      Set<String>? trampoline}) {
-    _makeJoin(tableName, trampoline, JoinType.inner, localKey, foreignKey, op,
+      Set<String>? trampoline,
+      String? alias}) {
+    _makeJoin(tableName, trampoline, alias, JoinType.inner, localKey, foreignKey, op,
         additionalFields);
   }
 
@@ -208,8 +210,9 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
   void leftJoin(tableName, String localKey, String foreignKey,
       {String op = '=',
       List<String> additionalFields = const [],
-      Set<String>? trampoline}) {
-    _makeJoin(tableName, trampoline, JoinType.left, localKey, foreignKey, op,
+      Set<String>? trampoline,
+      String? alias}) {
+    _makeJoin(tableName, trampoline, alias, JoinType.left, localKey, foreignKey, op,
         additionalFields);
   }
 
@@ -217,8 +220,9 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
   void rightJoin(tableName, String localKey, String foreignKey,
       {String op = '=',
       List<String> additionalFields = const [],
-      Set<String>? trampoline}) {
-    _makeJoin(tableName, trampoline, JoinType.right, localKey, foreignKey, op,
+      Set<String>? trampoline,
+      String? alias}) {
+    _makeJoin(tableName, trampoline, alias, JoinType.right, localKey, foreignKey, op,
         additionalFields);
   }
 
@@ -226,8 +230,9 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
   void fullOuterJoin(tableName, String localKey, String foreignKey,
       {String op = '=',
       List<String> additionalFields = const [],
-      Set<String>? trampoline}) {
-    _makeJoin(tableName, trampoline, JoinType.full, localKey, foreignKey, op,
+      Set<String>? trampoline,
+      String? alias}) {
+    _makeJoin(tableName, trampoline, alias, JoinType.full, localKey, foreignKey, op,
         additionalFields);
   }
 
@@ -235,8 +240,9 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
   void selfJoin(tableName, String localKey, String foreignKey,
       {String op = '=',
       List<String> additionalFields = const [],
-      Set<String>? trampoline}) {
-    _makeJoin(tableName, trampoline, JoinType.self, localKey, foreignKey, op,
+      Set<String>? trampoline,
+      String? alias}) {
+    _makeJoin(tableName, trampoline, alias, JoinType.self, localKey, foreignKey, op,
         additionalFields);
   }
 
