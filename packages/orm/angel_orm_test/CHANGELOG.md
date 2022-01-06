@@ -1,5 +1,9 @@
 # Change Log
 
+## 3.0.5
+
+* Updated test cases
+
 ## 3.0.4
 
 * Updated test cases

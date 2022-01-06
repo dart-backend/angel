@@ -1,5 +1,9 @@
 # Change Log
 
+## 4.2.0
+
+* Added `select(List fields)`
+
 ## 4.1.3
 
 * Fixed issue #24, incorrect class casting
