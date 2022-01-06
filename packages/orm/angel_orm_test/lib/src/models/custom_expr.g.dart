@@ -58,6 +58,8 @@ class NumbersQuery extends Query<Numbers, NumbersQueryWhere> {
   @override
   final NumbersQueryValues values = NumbersQueryValues();
 
+  List<String> _selectedFields = [];
+
   NumbersQueryWhere? _where;
 
   @override
@@ -72,7 +74,15 @@ class NumbersQuery extends Query<Numbers, NumbersQueryWhere> {
 
   @override
   List<String> get fields {
-    return const ['id', 'created_at', 'updated_at', 'two'];
+    const _fields = ['id', 'created_at', 'updated_at', 'two'];
+    return _selectedFields.isEmpty
+        ? _fields
+        : _fields.where((field) => _selectedFields.contains(field)).toList();
+  }
+
+  NumbersQuery select(List<String> selectedFields) {
+    _selectedFields = selectedFields;
+    return this;
   }
 
   @override
@@ -85,15 +95,15 @@ class NumbersQuery extends Query<Numbers, NumbersQueryWhere> {
     return NumbersQueryWhere(this);
   }
 
-  static Optional<Numbers> parseRow(List row) {
+  Optional<Numbers> parseRow(List row) {
     if (row.every((x) => x == null)) {
       return Optional.empty();
     }
     var model = Numbers(
-        id: row[0].toString(),
-        createdAt: (row[1] as DateTime?),
-        updatedAt: (row[2] as DateTime?),
-        two: (row[3] as int?));
+        id: fields.contains('id') ? row[0].toString() : null,
+        createdAt: fields.contains('created_at') ? (row[1] as DateTime?) : null,
+        updatedAt: fields.contains('updated_at') ? (row[2] as DateTime?) : null,
+        two: fields.contains('two') ? (row[3] as int?) : null);
     return Optional.of(model);
   }
 
@@ -163,6 +173,8 @@ class AlphabetQuery extends Query<Alphabet, AlphabetQueryWhere> {
   @override
   final AlphabetQueryValues values = AlphabetQueryValues();
 
+  List<String> _selectedFields = [];
+
   AlphabetQueryWhere? _where;
 
   late NumbersQuery _numbers;
@@ -179,7 +191,15 @@ class AlphabetQuery extends Query<Alphabet, AlphabetQueryWhere> {
 
   @override
   List<String> get fields {
-    return const ['id', 'created_at', 'updated_at', 'value', 'numbers_id'];
+    const _fields = ['id', 'created_at', 'updated_at', 'value', 'numbers_id'];
+    return _selectedFields.isEmpty
+        ? _fields
+        : _fields.where((field) => _selectedFields.contains(field)).toList();
+  }
+
+  AlphabetQuery select(List<String> selectedFields) {
+    _selectedFields = selectedFields;
+    return this;
   }
 
   @override
@@ -192,17 +212,17 @@ class AlphabetQuery extends Query<Alphabet, AlphabetQueryWhere> {
     return AlphabetQueryWhere(this);
   }
 
-  static Optional<Alphabet> parseRow(List row) {
+  Optional<Alphabet> parseRow(List row) {
     if (row.every((x) => x == null)) {
       return Optional.empty();
     }
     var model = Alphabet(
-        id: row[0].toString(),
-        createdAt: (row[1] as DateTime?),
-        updatedAt: (row[2] as DateTime?),
-        value: (row[3] as String?));
+        id: fields.contains('id') ? row[0].toString() : null,
+        createdAt: fields.contains('created_at') ? (row[1] as DateTime?) : null,
+        updatedAt: fields.contains('updated_at') ? (row[2] as DateTime?) : null,
+        value: fields.contains('value') ? (row[3] as String?) : null);
     if (row.length > 5) {
-      var modelOpt = NumbersQuery.parseRow(row.skip(5).take(4).toList());
+      var modelOpt = NumbersQuery().parseRow(row.skip(5).take(4).toList());
       modelOpt.ifPresent((m) {
         model = model.copyWith(numbers: m);
       });

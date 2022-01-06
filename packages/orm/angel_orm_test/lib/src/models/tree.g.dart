@@ -65,6 +65,8 @@ class TreeQuery extends Query<Tree, TreeQueryWhere> {
   @override
   final TreeQueryValues values = TreeQueryValues();
 
+  List<String> _selectedFields = [];
+
   TreeQueryWhere? _where;
 
   late FruitQuery _fruits;
@@ -81,7 +83,15 @@ class TreeQuery extends Query<Tree, TreeQueryWhere> {
 
   @override
   List<String> get fields {
-    return const ['id', 'created_at', 'updated_at', 'rings'];
+    const _fields = ['id', 'created_at', 'updated_at', 'rings'];
+    return _selectedFields.isEmpty
+        ? _fields
+        : _fields.where((field) => _selectedFields.contains(field)).toList();
+  }
+
+  TreeQuery select(List<String> selectedFields) {
+    _selectedFields = selectedFields;
+    return this;
   }
 
   @override
@@ -94,17 +104,17 @@ class TreeQuery extends Query<Tree, TreeQueryWhere> {
     return TreeQueryWhere(this);
   }
 
-  static Optional<Tree> parseRow(List row) {
+  Optional<Tree> parseRow(List row) {
     if (row.every((x) => x == null)) {
       return Optional.empty();
     }
     var model = Tree(
-        id: row[0].toString(),
-        createdAt: (row[1] as DateTime?),
-        updatedAt: (row[2] as DateTime?),
-        rings: (row[3] as int?));
+        id: fields.contains('id') ? row[0].toString() : null,
+        createdAt: fields.contains('created_at') ? (row[1] as DateTime?) : null,
+        updatedAt: fields.contains('updated_at') ? (row[2] as DateTime?) : null,
+        rings: fields.contains('rings') ? (row[3] as int?) : null);
     if (row.length > 4) {
-      var modelOpt = FruitQuery.parseRow(row.skip(4).take(5).toList());
+      var modelOpt = FruitQuery().parseRow(row.skip(4).take(5).toList());
       modelOpt.ifPresent((m) {
         model = model.copyWith(fruits: [m]);
       });
@@ -240,6 +250,8 @@ class FruitQuery extends Query<Fruit, FruitQueryWhere> {
   @override
   final FruitQueryValues values = FruitQueryValues();
 
+  List<String> _selectedFields = [];
+
   FruitQueryWhere? _where;
 
   @override
@@ -254,7 +266,21 @@ class FruitQuery extends Query<Fruit, FruitQueryWhere> {
 
   @override
   List<String> get fields {
-    return const ['id', 'created_at', 'updated_at', 'tree_id', 'common_name'];
+    const _fields = [
+      'id',
+      'created_at',
+      'updated_at',
+      'tree_id',
+      'common_name'
+    ];
+    return _selectedFields.isEmpty
+        ? _fields
+        : _fields.where((field) => _selectedFields.contains(field)).toList();
+  }
+
+  FruitQuery select(List<String> selectedFields) {
+    _selectedFields = selectedFields;
+    return this;
   }
 
   @override
@@ -267,16 +293,17 @@ class FruitQuery extends Query<Fruit, FruitQueryWhere> {
     return FruitQueryWhere(this);
   }
 
-  static Optional<Fruit> parseRow(List row) {
+  Optional<Fruit> parseRow(List row) {
     if (row.every((x) => x == null)) {
       return Optional.empty();
     }
     var model = Fruit(
-        id: row[0].toString(),
-        createdAt: (row[1] as DateTime?),
-        updatedAt: (row[2] as DateTime?),
-        treeId: (row[3] as int?),
-        commonName: (row[4] as String?));
+        id: fields.contains('id') ? row[0].toString() : null,
+        createdAt: fields.contains('created_at') ? (row[1] as DateTime?) : null,
+        updatedAt: fields.contains('updated_at') ? (row[2] as DateTime?) : null,
+        treeId: fields.contains('tree_id') ? (row[3] as int?) : null,
+        commonName:
+            fields.contains('common_name') ? (row[4] as String?) : null);
     return Optional.of(model);
   }
 

@@ -68,6 +68,8 @@ class BookQuery extends Query<Book, BookQueryWhere> {
   @override
   final BookQueryValues values = BookQueryValues();
 
+  List<String> _selectedFields = [];
+
   BookQueryWhere? _where;
 
   late AuthorQuery _author;
@@ -86,7 +88,7 @@ class BookQuery extends Query<Book, BookQueryWhere> {
 
   @override
   List<String> get fields {
-    return const [
+    const _fields = [
       'id',
       'created_at',
       'updated_at',
@@ -94,6 +96,14 @@ class BookQuery extends Query<Book, BookQueryWhere> {
       'partner_author_id',
       'name'
     ];
+    return _selectedFields.isEmpty
+        ? _fields
+        : _fields.where((field) => _selectedFields.contains(field)).toList();
+  }
+
+  BookQuery select(List<String> selectedFields) {
+    _selectedFields = selectedFields;
+    return this;
   }
 
   @override
@@ -106,23 +116,23 @@ class BookQuery extends Query<Book, BookQueryWhere> {
     return BookQueryWhere(this);
   }
 
-  static Optional<Book> parseRow(List row) {
+  Optional<Book> parseRow(List row) {
     if (row.every((x) => x == null)) {
       return Optional.empty();
     }
     var model = Book(
-        id: row[0].toString(),
-        createdAt: (row[1] as DateTime?),
-        updatedAt: (row[2] as DateTime?),
-        name: (row[5] as String?));
+        id: fields.contains('id') ? row[0].toString() : null,
+        createdAt: fields.contains('created_at') ? (row[1] as DateTime?) : null,
+        updatedAt: fields.contains('updated_at') ? (row[2] as DateTime?) : null,
+        name: fields.contains('name') ? (row[5] as String?) : null);
     if (row.length > 6) {
-      var modelOpt = AuthorQuery.parseRow(row.skip(6).take(4).toList());
+      var modelOpt = AuthorQuery().parseRow(row.skip(6).take(4).toList());
       modelOpt.ifPresent((m) {
         model = model.copyWith(author: m);
       });
     }
     if (row.length > 10) {
-      var modelOpt = AuthorQuery.parseRow(row.skip(10).take(4).toList());
+      var modelOpt = AuthorQuery().parseRow(row.skip(10).take(4).toList());
       modelOpt.ifPresent((m) {
         model = model.copyWith(partnerAuthor: m);
       });
@@ -232,6 +242,8 @@ class AuthorQuery extends Query<Author, AuthorQueryWhere> {
   @override
   final AuthorQueryValues values = AuthorQueryValues();
 
+  List<String> _selectedFields = [];
+
   AuthorQueryWhere? _where;
 
   @override
@@ -246,7 +258,15 @@ class AuthorQuery extends Query<Author, AuthorQueryWhere> {
 
   @override
   List<String> get fields {
-    return const ['id', 'created_at', 'updated_at', 'name'];
+    const _fields = ['id', 'created_at', 'updated_at', 'name'];
+    return _selectedFields.isEmpty
+        ? _fields
+        : _fields.where((field) => _selectedFields.contains(field)).toList();
+  }
+
+  AuthorQuery select(List<String> selectedFields) {
+    _selectedFields = selectedFields;
+    return this;
   }
 
   @override
@@ -259,15 +279,15 @@ class AuthorQuery extends Query<Author, AuthorQueryWhere> {
     return AuthorQueryWhere(this);
   }
 
-  static Optional<Author> parseRow(List row) {
+  Optional<Author> parseRow(List row) {
     if (row.every((x) => x == null)) {
       return Optional.empty();
     }
     var model = Author(
-        id: row[0].toString(),
-        createdAt: (row[1] as DateTime?),
-        updatedAt: (row[2] as DateTime?),
-        name: (row[3] as String?));
+        id: fields.contains('id') ? row[0].toString() : null,
+        createdAt: fields.contains('created_at') ? (row[1] as DateTime?) : null,
+        updatedAt: fields.contains('updated_at') ? (row[2] as DateTime?) : null,
+        name: fields.contains('name') ? (row[3] as String?) : null);
     return Optional.of(model);
   }
 

@@ -66,6 +66,8 @@ class LegQuery extends Query<Leg, LegQueryWhere> {
   @override
   final LegQueryValues values = LegQueryValues();
 
+  List<String> _selectedFields = [];
+
   LegQueryWhere? _where;
 
   late FootQuery _foot;
@@ -82,7 +84,15 @@ class LegQuery extends Query<Leg, LegQueryWhere> {
 
   @override
   List<String> get fields {
-    return const ['id', 'created_at', 'updated_at', 'name'];
+    const _fields = ['id', 'created_at', 'updated_at', 'name'];
+    return _selectedFields.isEmpty
+        ? _fields
+        : _fields.where((field) => _selectedFields.contains(field)).toList();
+  }
+
+  LegQuery select(List<String> selectedFields) {
+    _selectedFields = selectedFields;
+    return this;
   }
 
   @override
@@ -95,17 +105,17 @@ class LegQuery extends Query<Leg, LegQueryWhere> {
     return LegQueryWhere(this);
   }
 
-  static Optional<Leg> parseRow(List row) {
+  Optional<Leg> parseRow(List row) {
     if (row.every((x) => x == null)) {
       return Optional.empty();
     }
     var model = Leg(
-        id: row[0].toString(),
-        createdAt: (row[1] as DateTime?),
-        updatedAt: (row[2] as DateTime?),
-        name: (row[3] as String?));
+        id: fields.contains('id') ? row[0].toString() : null,
+        createdAt: fields.contains('created_at') ? (row[1] as DateTime?) : null,
+        updatedAt: fields.contains('updated_at') ? (row[2] as DateTime?) : null,
+        name: fields.contains('name') ? (row[3] as String?) : null);
     if (row.length > 4) {
-      var modelOpt = FootQuery.parseRow(row.skip(4).take(5).toList());
+      var modelOpt = FootQuery().parseRow(row.skip(4).take(5).toList());
       modelOpt.ifPresent((m) {
         model = model.copyWith(foot: m);
       });
@@ -187,6 +197,8 @@ class FootQuery extends Query<Foot, FootQueryWhere> {
   @override
   final FootQueryValues values = FootQueryValues();
 
+  List<String> _selectedFields = [];
+
   FootQueryWhere? _where;
 
   @override
@@ -201,7 +213,15 @@ class FootQuery extends Query<Foot, FootQueryWhere> {
 
   @override
   List<String> get fields {
-    return const ['id', 'created_at', 'updated_at', 'leg_id', 'n_toes'];
+    const _fields = ['id', 'created_at', 'updated_at', 'leg_id', 'n_toes'];
+    return _selectedFields.isEmpty
+        ? _fields
+        : _fields.where((field) => _selectedFields.contains(field)).toList();
+  }
+
+  FootQuery select(List<String> selectedFields) {
+    _selectedFields = selectedFields;
+    return this;
   }
 
   @override
@@ -214,16 +234,18 @@ class FootQuery extends Query<Foot, FootQueryWhere> {
     return FootQueryWhere(this);
   }
 
-  static Optional<Foot> parseRow(List row) {
+  Optional<Foot> parseRow(List row) {
     if (row.every((x) => x == null)) {
       return Optional.empty();
     }
     var model = Foot(
-        id: row[0].toString(),
-        createdAt: (row[1] as DateTime?),
-        updatedAt: (row[2] as DateTime?),
-        legId: (row[3] as int?),
-        nToes: double.tryParse(row[4].toString()));
+        id: fields.contains('id') ? row[0].toString() : null,
+        createdAt: fields.contains('created_at') ? (row[1] as DateTime?) : null,
+        updatedAt: fields.contains('updated_at') ? (row[2] as DateTime?) : null,
+        legId: fields.contains('leg_id') ? (row[3] as int?) : null,
+        nToes: fields.contains('n_toes')
+            ? double.tryParse(row[4].toString())
+            : null);
     return Optional.of(model);
   }
 

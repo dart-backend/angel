@@ -38,6 +38,8 @@ class HasMapQuery extends Query<HasMap, HasMapQueryWhere> {
   @override
   final HasMapQueryValues values = HasMapQueryValues();
 
+  List<String> _selectedFields = [];
+
   HasMapQueryWhere? _where;
 
   @override
@@ -52,7 +54,15 @@ class HasMapQuery extends Query<HasMap, HasMapQueryWhere> {
 
   @override
   List<String> get fields {
-    return const ['value', 'list'];
+    const _fields = ['value', 'list'];
+    return _selectedFields.isEmpty
+        ? _fields
+        : _fields.where((field) => _selectedFields.contains(field)).toList();
+  }
+
+  HasMapQuery select(List<String> selectedFields) {
+    _selectedFields = selectedFields;
+    return this;
   }
 
   @override
@@ -65,13 +75,15 @@ class HasMapQuery extends Query<HasMap, HasMapQueryWhere> {
     return HasMapQueryWhere(this);
   }
 
-  static Optional<HasMap> parseRow(List row) {
+  Optional<HasMap> parseRow(List row) {
     if (row.every((x) => x == null)) {
       return Optional.empty();
     }
     var model = HasMap(
-        value: (row[0] as Map<dynamic, dynamic>?),
-        list: (row[1] as List<dynamic>?));
+        value: fields.contains('value')
+            ? (row[0] as Map<dynamic, dynamic>?)
+            : null,
+        list: fields.contains('list') ? (row[1] as List<dynamic>?) : null);
     return Optional.of(model);
   }
 
