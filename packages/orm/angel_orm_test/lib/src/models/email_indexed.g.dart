@@ -75,8 +75,6 @@ class RoleQuery extends Query<Role, RoleQueryWhere> {
   @override
   final RoleQueryValues values = RoleQueryValues();
 
-  List<String> _selectedFields = [];
-
   RoleQueryWhere? _where;
 
   @override
@@ -91,15 +89,7 @@ class RoleQuery extends Query<Role, RoleQueryWhere> {
 
   @override
   List<String> get fields {
-    const _fields = ['role'];
-    return _selectedFields.isEmpty
-        ? _fields
-        : _fields.where((field) => _selectedFields.contains(field)).toList();
-  }
-
-  RoleQuery select(List<String> selectedFields) {
-    _selectedFields = selectedFields;
-    return this;
+    return const ['role'];
   }
 
   @override
@@ -112,14 +102,13 @@ class RoleQuery extends Query<Role, RoleQueryWhere> {
     return RoleQueryWhere(this);
   }
 
-  Optional<Role> parseRow(List row) {
+  static Optional<Role> parseRow(List row) {
     if (row.every((x) => x == null)) {
       return Optional.empty();
     }
-    var model =
-        Role(role: fields.contains('role') ? (row[0] as String?) : null);
+    var model = Role(role: (row[0] as String?));
     if (row.length > 1) {
-      var modelOpt = UserQuery().parseRow(row.skip(1).take(3).toList());
+      var modelOpt = UserQuery.parseRow(row.skip(1).take(3).toList());
       modelOpt.ifPresent((m) {
         model = model.copyWith(users: [m]);
       });
@@ -239,8 +228,6 @@ class RoleUserQuery extends Query<RoleUser, RoleUserQueryWhere> {
   @override
   final RoleUserQueryValues values = RoleUserQueryValues();
 
-  List<String> _selectedFields = [];
-
   RoleUserQueryWhere? _where;
 
   late RoleQuery _role;
@@ -259,15 +246,7 @@ class RoleUserQuery extends Query<RoleUser, RoleUserQueryWhere> {
 
   @override
   List<String> get fields {
-    const _fields = ['role_role', 'user_email'];
-    return _selectedFields.isEmpty
-        ? _fields
-        : _fields.where((field) => _selectedFields.contains(field)).toList();
-  }
-
-  RoleUserQuery select(List<String> selectedFields) {
-    _selectedFields = selectedFields;
-    return this;
+    return const ['role_role', 'user_email'];
   }
 
   @override
@@ -280,19 +259,19 @@ class RoleUserQuery extends Query<RoleUser, RoleUserQueryWhere> {
     return RoleUserQueryWhere(this);
   }
 
-  Optional<RoleUser> parseRow(List row) {
+  static Optional<RoleUser> parseRow(List row) {
     if (row.every((x) => x == null)) {
       return Optional.empty();
     }
     var model = RoleUser();
     if (row.length > 2) {
-      var modelOpt = RoleQuery().parseRow(row.skip(2).take(1).toList());
+      var modelOpt = RoleQuery.parseRow(row.skip(2).take(1).toList());
       modelOpt.ifPresent((m) {
         model = model.copyWith(role: m);
       });
     }
     if (row.length > 3) {
-      var modelOpt = UserQuery().parseRow(row.skip(3).take(3).toList());
+      var modelOpt = UserQuery.parseRow(row.skip(3).take(3).toList());
       modelOpt.ifPresent((m) {
         model = model.copyWith(user: m);
       });
@@ -371,8 +350,6 @@ class UserQuery extends Query<User, UserQueryWhere> {
   @override
   final UserQueryValues values = UserQueryValues();
 
-  List<String> _selectedFields = [];
-
   UserQueryWhere? _where;
 
   @override
@@ -387,15 +364,7 @@ class UserQuery extends Query<User, UserQueryWhere> {
 
   @override
   List<String> get fields {
-    const _fields = ['email', 'name', 'password'];
-    return _selectedFields.isEmpty
-        ? _fields
-        : _fields.where((field) => _selectedFields.contains(field)).toList();
-  }
-
-  UserQuery select(List<String> selectedFields) {
-    _selectedFields = selectedFields;
-    return this;
+    return const ['email', 'name', 'password'];
   }
 
   @override
@@ -408,16 +377,16 @@ class UserQuery extends Query<User, UserQueryWhere> {
     return UserQueryWhere(this);
   }
 
-  Optional<User> parseRow(List row) {
+  static Optional<User> parseRow(List row) {
     if (row.every((x) => x == null)) {
       return Optional.empty();
     }
     var model = User(
-        email: fields.contains('email') ? (row[0] as String?) : null,
-        name: fields.contains('name') ? (row[1] as String?) : null,
-        password: fields.contains('password') ? (row[2] as String?) : null);
+        email: (row[0] as String?),
+        name: (row[1] as String?),
+        password: (row[2] as String?));
     if (row.length > 3) {
-      var modelOpt = RoleQuery().parseRow(row.skip(3).take(1).toList());
+      var modelOpt = RoleQuery.parseRow(row.skip(3).take(1).toList());
       modelOpt.ifPresent((m) {
         model = model.copyWith(roles: [m]);
       });
