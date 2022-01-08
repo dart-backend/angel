@@ -35,7 +35,7 @@ jobs:
       # Consider passing '--fatal-infos' for slightly stricter analysis.
       - name: angel3_framework; Analyze source code
         working-directory: packages/framework
-        run: dart analyze .
+        run: dart analyze
 
       - name: angel3_framework; Run tests
         working-directory: packages/framework
@@ -84,7 +84,7 @@ jobs:
       # Consider passing '--fatal-infos' for slightly stricter analysis.
       - name: angel3_orm; Analyze source code
         working-directory: packages/orm/angel_orm
-        run: dart analyze .
+        run: dart analyze
 
       # Angel3 ORM Generator
       - id: angel3_orm_generator_upgrade
@@ -99,7 +99,7 @@ jobs:
       # Consider passing '--fatal-infos' for slightly stricter analysis.
       - name: angel3_orm_generator; Analyze source code
         working-directory: packages/orm/angel_orm_generator
-        run: dart analyze .
+        run: dart analyze
 
       # Angel3 ORM Test
       - id: angel3_orm_test_upgrade
@@ -118,7 +118,7 @@ jobs:
       # Consider passing '--fatal-infos' for slightly stricter analysis.
       - name: angel3_orm_test; Analyze source code
         working-directory: packages/orm/angel_orm_test
-        run: dart analyze .
+        run: dart analyze
 
       # Angel3 ORM PostgreSQL
       - id: angel3_orm_postgres_upgrade
@@ -133,10 +133,10 @@ jobs:
       # Consider passing '--fatal-infos' for slightly stricter analysis.
       - name: angel3_orm_postgres; Analyze source code
         working-directory: packages/orm/angel_orm_postgres
-        run: dart analyze .
+        run: dart analyze
 
       - name: angel3_orm_postgres; Run tests
-        working-directory: packages/orm/angel3_orm_postgres
+        working-directory: packages/orm/angel_orm_postgres
         run: dart test
         env:
           # The hostname used to communicate with the PostgreSQL service container
@@ -146,3 +146,4 @@ jobs:
           POSTGRES_PASSWORD: postgres
           POSTGRES_USERNAME: postgres
           POSTGRES_DB: postgres
+
