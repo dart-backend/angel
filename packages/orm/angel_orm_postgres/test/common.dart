@@ -27,7 +27,8 @@ Future<void> closePg(QueryExecutor executor) async {
 }
 
 Future<PostgreSqlExecutor> connectToPostgres(Iterable<String> schemas) async {
-  var conn = PostgreSQLConnection('127.0.0.1', 5432, 'orm_test',
+  var conn = PostgreSQLConnection(
+      'localhost', 5432, Platform.environment['POSTGRES_DB'] ?? 'orm_test',
       username: Platform.environment['POSTGRES_USERNAME'] ?? 'test',
       password: Platform.environment['POSTGRES_PASSWORD'] ?? 'test123');
   await conn.open();
@@ -43,7 +44,8 @@ Future<PostgreSqlExecutor> connectToPostgres(Iterable<String> schemas) async {
 Future<PostgreSqlExecutorPool> connectToPostgresPool1(
     Iterable<String> schemas) async {
   PostgreSQLConnection connectionFactory() {
-    return PostgreSQLConnection('127.0.0.1', 5432, 'orm_test',
+    return PostgreSQLConnection(
+        'localhost', 5432, Platform.environment['POSTGRES_DB'] ?? 'orm_test',
         username: Platform.environment['POSTGRES_USERNAME'] ?? 'test',
         password: Platform.environment['POSTGRES_PASSWORD'] ?? 'test123');
   }
@@ -65,7 +67,7 @@ Future<PostgreSqlPoolExecutor> connectToPostgresPool(
     PgEndpoint(
       host: 'localhost',
       port: 5432,
-      database: 'orm_test',
+      database: Platform.environment['POSTGRES_DB'] ?? 'orm_test',
       username: Platform.environment['POSTGRES_USERNAME'] ?? 'test',
       password: Platform.environment['POSTGRES_PASSWORD'] ?? 'test123',
     ),

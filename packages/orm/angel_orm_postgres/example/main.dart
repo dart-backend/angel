@@ -7,7 +7,7 @@ void main() async {
     PgEndpoint(
       host: 'localhost',
       port: 5432,
-      database: 'orm_test',
+      database: Platform.environment['POSTGRES_DB'] ?? 'orm_test',
       username: Platform.environment['POSTGRES_USERNAME'] ?? 'test',
       password: Platform.environment['POSTGRES_PASSWORD'] ?? 'test123',
     ),
