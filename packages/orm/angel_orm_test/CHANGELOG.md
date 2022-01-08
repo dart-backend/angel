@@ -1,5 +1,9 @@
 # Change Log
 
+## 3.1.0
+
+* Added `join_test` test cases
+
 ## 3.0.5
 
 * Updated test cases

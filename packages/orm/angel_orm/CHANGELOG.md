@@ -1,5 +1,9 @@
 # Change Log
 
+## 4.0.5
+
+* Added `where.raw()`
+
 ## 4.0.4
 
 * Changed default varchar size to 255

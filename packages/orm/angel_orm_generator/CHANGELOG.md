@@ -1,5 +1,9 @@
 # Change Log
 
+## 4.3.0
+
+* Added `where.raw()`
+
 ## 4.2.0
 
 * Added `select(List fields)`

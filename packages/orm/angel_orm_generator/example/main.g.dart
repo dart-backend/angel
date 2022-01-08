@@ -91,21 +91,15 @@ class EmployeeQuery extends Query<Employee, EmployeeQueryWhere> {
     if (row.every((x) => x == null)) {
       return Optional.empty();
     }
-    var _index = 0;
     var model = Employee(
-        id: fields.contains('id') ? row[_index++].toString() : null,
-        createdAt:
-            fields.contains('created_at') ? (row[_index++] as DateTime?) : null,
-        updatedAt:
-            fields.contains('updated_at') ? (row[_index++] as DateTime?) : null,
-        uniqueId:
-            fields.contains('unique_id') ? (row[_index++] as String?) : null,
-        firstName:
-            fields.contains('first_name') ? (row[_index++] as String?) : null,
-        lastName:
-            fields.contains('last_name') ? (row[_index++] as String?) : null,
+        id: fields.contains('id') ? row[0].toString() : null,
+        createdAt: fields.contains('created_at') ? (row[1] as DateTime?) : null,
+        updatedAt: fields.contains('updated_at') ? (row[2] as DateTime?) : null,
+        uniqueId: fields.contains('unique_id') ? (row[3] as String?) : null,
+        firstName: fields.contains('first_name') ? (row[4] as String?) : null,
+        lastName: fields.contains('last_name') ? (row[5] as String?) : null,
         salary: fields.contains('salary')
-            ? double.tryParse(row[_index++].toString())
+            ? double.tryParse(row[6].toString())
             : null);
     return Optional.of(model);
   }

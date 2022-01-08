@@ -1,5 +1,10 @@
 # Change Log
 
+## 3.3.0
+
+* Updated test cases
+* Fixed test cases failing on terminaless `stdout`
+
 ## 3.2.1
 
 * Fixed null safety errors
