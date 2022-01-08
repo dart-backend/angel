@@ -19,10 +19,6 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      # Note: This workflow uses the latest stable version of the Dart SDK.
-      # You can specify other versions if desired, see documentation here:
-      # https://github.com/dart-lang/setup-dart/blob/main/README.md
-      # - uses: dart-lang/setup-dart@v1
       - uses: dart-lang/setup-dart@v1
         with:
           sdk: "2.15.1"
@@ -43,3 +39,28 @@ jobs:
       - name: framework; Run tests
         working-directory: packages/framework
         run: dart test
+
+  jobs_002:
+    name: Validate ORM packages
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: "2.15.1"
+
+      - id: angel_orm_upgrade
+        working-directory: packages/orm/angel_orm
+        run: dart pub upgrade
+
+      - name: angel_orm; Verify formatting
+        working-directory: packages/framework
+        run: dart format --output=none --set-exit-if-changed .
+
+      # Consider passing '--fatal-infos' for slightly stricter analysis.
+      - name: angel_orm; Analyze source code
+        working-directory: packages/framework
+        run: dart analyze .
+
