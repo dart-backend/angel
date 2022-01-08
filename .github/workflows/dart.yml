@@ -1,0 +1,45 @@
+# This workflow uses actions that are not certified by GitHub.
+# They are provided by a third-party and are governed by
+# separate terms of service, privacy policy, and support
+# documentation.
+
+name: Angel3 CI
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  jobs_001:
+    name: Validate framework package
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      # Note: This workflow uses the latest stable version of the Dart SDK.
+      # You can specify other versions if desired, see documentation here:
+      # https://github.com/dart-lang/setup-dart/blob/main/README.md
+      # - uses: dart-lang/setup-dart@v1
+      - uses: dart-lang/setup-dart@v1
+        with:
+          sdk: "2.15.1"
+
+      - id: framework; Upgrade packages
+        working-directory: packages/framework
+        run: dart pub upgrade
+
+      - name: framework; Verify formatting
+        working-directory: packages/framework
+        run: dart format --output=none --set-exit-if-changed .
+
+      # Consider passing '--fatal-infos' for slightly stricter analysis.
+      - name: framework; Analyze source code
+        working-directory: packages/framework
+        run: dart analyze .
+
+      - name: framework; Run tests
+        working-directory: packages/framework
+        run: dart test
