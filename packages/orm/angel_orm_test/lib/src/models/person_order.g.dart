@@ -42,6 +42,8 @@ class PersonOrderQuery extends Query<PersonOrder, PersonOrderQueryWhere> {
   @override
   final PersonOrderQueryValues values = PersonOrderQueryValues();
 
+  List<String> _selectedFields = [];
+
   PersonOrderQueryWhere? _where;
 
   @override
@@ -56,7 +58,7 @@ class PersonOrderQuery extends Query<PersonOrder, PersonOrderQueryWhere> {
 
   @override
   List<String> get fields {
-    return const [
+    const _fields = [
       'id',
       'created_at',
       'updated_at',
@@ -65,6 +67,14 @@ class PersonOrderQuery extends Query<PersonOrder, PersonOrderQueryWhere> {
       'price',
       'deleted'
     ];
+    return _selectedFields.isEmpty
+        ? _fields
+        : _fields.where((field) => _selectedFields.contains(field)).toList();
+  }
+
+  PersonOrderQuery select(List<String> selectedFields) {
+    _selectedFields = selectedFields;
+    return this;
   }
 
   @override
@@ -77,18 +87,20 @@ class PersonOrderQuery extends Query<PersonOrder, PersonOrderQueryWhere> {
     return PersonOrderQueryWhere(this);
   }
 
-  static Optional<PersonOrder> parseRow(List row) {
+  Optional<PersonOrder> parseRow(List row) {
     if (row.every((x) => x == null)) {
       return Optional.empty();
     }
     var model = PersonOrder(
-        id: row[0].toString(),
-        createdAt: (row[1] as DateTime?),
-        updatedAt: (row[2] as DateTime?),
-        personId: (row[3] as int?),
-        name: (row[4] as String?),
-        price: double.tryParse(row[5].toString()),
-        deleted: (row[6] as bool?));
+        id: fields.contains('id') ? row[0].toString() : null,
+        createdAt: fields.contains('created_at') ? (row[1] as DateTime?) : null,
+        updatedAt: fields.contains('updated_at') ? (row[2] as DateTime?) : null,
+        personId: fields.contains('person_id') ? (row[3] as int?) : null,
+        name: fields.contains('name') ? (row[4] as String?) : null,
+        price: fields.contains('price')
+            ? double.tryParse(row[5].toString())
+            : null,
+        deleted: fields.contains('deleted') ? (row[6] as bool?) : null);
     return Optional.of(model);
   }
 
@@ -194,6 +206,8 @@ class OrderWithPersonInfoQuery
   final OrderWithPersonInfoQueryValues values =
       OrderWithPersonInfoQueryValues();
 
+  List<String> _selectedFields = [];
+
   OrderWithPersonInfoQueryWhere? _where;
 
   @override
@@ -208,7 +222,7 @@ class OrderWithPersonInfoQuery
 
   @override
   List<String> get fields {
-    return const [
+    const _fields = [
       'id',
       'created_at',
       'updated_at',
@@ -218,6 +232,14 @@ class OrderWithPersonInfoQuery
       'person_name',
       'person_age'
     ];
+    return _selectedFields.isEmpty
+        ? _fields
+        : _fields.where((field) => _selectedFields.contains(field)).toList();
+  }
+
+  OrderWithPersonInfoQuery select(List<String> selectedFields) {
+    _selectedFields = selectedFields;
+    return this;
   }
 
   @override
@@ -230,19 +252,21 @@ class OrderWithPersonInfoQuery
     return OrderWithPersonInfoQueryWhere(this);
   }
 
-  static Optional<OrderWithPersonInfo> parseRow(List row) {
+  Optional<OrderWithPersonInfo> parseRow(List row) {
     if (row.every((x) => x == null)) {
       return Optional.empty();
     }
     var model = OrderWithPersonInfo(
-        id: row[0].toString(),
-        createdAt: (row[1] as DateTime?),
-        updatedAt: (row[2] as DateTime?),
-        name: (row[3] as String?),
-        price: double.tryParse(row[4].toString()),
-        deleted: (row[5] as bool?),
-        personName: (row[6] as String?),
-        personAge: (row[7] as int?));
+        id: fields.contains('id') ? row[0].toString() : null,
+        createdAt: fields.contains('created_at') ? (row[1] as DateTime?) : null,
+        updatedAt: fields.contains('updated_at') ? (row[2] as DateTime?) : null,
+        name: fields.contains('name') ? (row[3] as String?) : null,
+        price: fields.contains('price')
+            ? double.tryParse(row[4].toString())
+            : null,
+        deleted: fields.contains('deleted') ? (row[5] as bool?) : null,
+        personName: fields.contains('person_name') ? (row[6] as String?) : null,
+        personAge: fields.contains('person_age') ? (row[7] as int?) : null);
     return Optional.of(model);
   }
 

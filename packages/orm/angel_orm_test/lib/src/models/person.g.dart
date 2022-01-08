@@ -39,6 +39,8 @@ class PersonQuery extends Query<Person, PersonQueryWhere> {
   @override
   final PersonQueryValues values = PersonQueryValues();
 
+  List<String> _selectedFields = [];
+
   PersonQueryWhere? _where;
 
   @override
@@ -53,7 +55,15 @@ class PersonQuery extends Query<Person, PersonQueryWhere> {
 
   @override
   List<String> get fields {
-    return const ['id', 'created_at', 'updated_at', 'name', 'age'];
+    const _fields = ['id', 'created_at', 'updated_at', 'name', 'age'];
+    return _selectedFields.isEmpty
+        ? _fields
+        : _fields.where((field) => _selectedFields.contains(field)).toList();
+  }
+
+  PersonQuery select(List<String> selectedFields) {
+    _selectedFields = selectedFields;
+    return this;
   }
 
   @override
@@ -66,16 +76,16 @@ class PersonQuery extends Query<Person, PersonQueryWhere> {
     return PersonQueryWhere(this);
   }
 
-  static Optional<Person> parseRow(List row) {
+  Optional<Person> parseRow(List row) {
     if (row.every((x) => x == null)) {
       return Optional.empty();
     }
     var model = Person(
-        id: row[0].toString(),
-        createdAt: (row[1] as DateTime?),
-        updatedAt: (row[2] as DateTime?),
-        name: (row[3] as String?),
-        age: (row[4] as int?));
+        id: fields.contains('id') ? row[0].toString() : null,
+        createdAt: fields.contains('created_at') ? (row[1] as DateTime?) : null,
+        updatedAt: fields.contains('updated_at') ? (row[2] as DateTime?) : null,
+        name: fields.contains('name') ? (row[3] as String?) : null,
+        age: fields.contains('age') ? (row[4] as int?) : null);
     return Optional.of(model);
   }
 
@@ -163,6 +173,8 @@ class PersonWithLastOrderQuery
   final PersonWithLastOrderQueryValues values =
       PersonWithLastOrderQueryValues();
 
+  List<String> _selectedFields = [];
+
   PersonWithLastOrderQueryWhere? _where;
 
   @override
@@ -177,7 +189,15 @@ class PersonWithLastOrderQuery
 
   @override
   List<String> get fields {
-    return const ['name', 'last_order_name', 'last_order_price'];
+    const _fields = ['name', 'last_order_name', 'last_order_price'];
+    return _selectedFields.isEmpty
+        ? _fields
+        : _fields.where((field) => _selectedFields.contains(field)).toList();
+  }
+
+  PersonWithLastOrderQuery select(List<String> selectedFields) {
+    _selectedFields = selectedFields;
+    return this;
   }
 
   @override
@@ -190,14 +210,16 @@ class PersonWithLastOrderQuery
     return PersonWithLastOrderQueryWhere(this);
   }
 
-  static Optional<PersonWithLastOrder> parseRow(List row) {
+  Optional<PersonWithLastOrder> parseRow(List row) {
     if (row.every((x) => x == null)) {
       return Optional.empty();
     }
     var model = PersonWithLastOrder(
-        name: (row[0] as String?),
-        lastOrderName: (row[1] as String?),
-        lastOrderPrice: (row[2] as int?));
+        name: fields.contains('name') ? (row[0] as String?) : null,
+        lastOrderName:
+            fields.contains('last_order_name') ? (row[1] as String?) : null,
+        lastOrderPrice:
+            fields.contains('last_order_price') ? (row[2] as int?) : null);
     return Optional.of(model);
   }
 

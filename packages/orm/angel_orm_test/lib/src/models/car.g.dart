@@ -40,6 +40,8 @@ class CarQuery extends Query<Car, CarQueryWhere> {
   @override
   final CarQueryValues values = CarQueryValues();
 
+  List<String> _selectedFields = [];
+
   CarQueryWhere? _where;
 
   @override
@@ -54,7 +56,7 @@ class CarQuery extends Query<Car, CarQueryWhere> {
 
   @override
   List<String> get fields {
-    return const [
+    const _fields = [
       'id',
       'created_at',
       'updated_at',
@@ -63,6 +65,14 @@ class CarQuery extends Query<Car, CarQueryWhere> {
       'family_friendly',
       'recalled_at'
     ];
+    return _selectedFields.isEmpty
+        ? _fields
+        : _fields.where((field) => _selectedFields.contains(field)).toList();
+  }
+
+  CarQuery select(List<String> selectedFields) {
+    _selectedFields = selectedFields;
+    return this;
   }
 
   @override
@@ -75,18 +85,21 @@ class CarQuery extends Query<Car, CarQueryWhere> {
     return CarQueryWhere(this);
   }
 
-  static Optional<Car> parseRow(List row) {
+  Optional<Car> parseRow(List row) {
     if (row.every((x) => x == null)) {
       return Optional.empty();
     }
     var model = Car(
-        id: row[0].toString(),
-        createdAt: (row[1] as DateTime?),
-        updatedAt: (row[2] as DateTime?),
-        make: (row[3] as String?),
-        description: (row[4] as String?),
-        familyFriendly: (row[5] as bool?),
-        recalledAt: (row[6] as DateTime?));
+        id: fields.contains('id') ? row[0].toString() : null,
+        createdAt: fields.contains('created_at') ? (row[1] as DateTime?) : null,
+        updatedAt: fields.contains('updated_at') ? (row[2] as DateTime?) : null,
+        make: fields.contains('make') ? (row[3] as String?) : null,
+        description:
+            fields.contains('description') ? (row[4] as String?) : null,
+        familyFriendly:
+            fields.contains('family_friendly') ? (row[5] as bool?) : null,
+        recalledAt:
+            fields.contains('recalled_at') ? (row[6] as DateTime?) : null);
     return Optional.of(model);
   }
 
