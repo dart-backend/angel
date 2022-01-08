@@ -3,30 +3,6 @@
 part of 'main.dart';
 
 // **************************************************************************
-// MigrationGenerator
-// **************************************************************************
-
-class EmployeeMigration extends Migration {
-  @override
-  void up(Schema schema) {
-    schema.create('employees', (table) {
-      table.serial('id').primaryKey();
-      table.timeStamp('created_at');
-      table.timeStamp('updated_at');
-      table.varChar('first_name', length: 255);
-      table.varChar('last_name', length: 255);
-      table.declareColumn(
-          'salary', Column(type: ColumnType('decimal'), length: 255));
-    });
-  }
-
-  @override
-  void down(Schema schema) {
-    schema.drop('employees');
-  }
-}
-
-// **************************************************************************
 // OrmGenerator
 // **************************************************************************
 
