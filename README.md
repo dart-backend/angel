@@ -111,7 +111,11 @@ The performance benchmark can be found at
 
 [TechEmpower Framework Benchmarks](https://tfb-status.techempower.com/)
 
-The test cases are build using standard `Angel3 ORM` template. Note that JAEL view template caching is not enabled in `Fortunes` test case and database connections pooling is not used in any of the queries test cases. These results will be used for fine-tuning the framework.
+The test cases are build using standard `Angel3 ORM` template. This result will be used for fine-tuning Angel3 framework. The following test cases will be progressively added in the upcoming update to benchmark.
+
+1. Angel3 with MongoDB
+2. Angel3 with MySQL ORM
+3. Cached queries
 
 ## Examples and Documentation
 
@@ -120,8 +124,6 @@ Visit the [User Guide](https://angel3-docs.dukefirehawk.com/) for dozens of guid
 Examples and complete projects can be found [here](https://github.com/dukefirehawk/angel3-examples).
 
 You can also view the [Angel3 API](http://www.dartdocs.org/documentation/angel_framework/latest).
-
-There is also an [Awesome Angel :fire:](https://github.com/dukefirehawk/angel3-awesome) list.
 
 ## Contributing
 
