@@ -27,7 +27,7 @@ jobs:
         with:
           sdk: "2.15.1"
 
-      - id: framework; Upgrade packages
+      - id: framework_upgrade
         working-directory: packages/framework
         run: dart pub upgrade
 
