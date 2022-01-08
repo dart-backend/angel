@@ -23,20 +23,20 @@ jobs:
         with:
           sdk: "2.15.1"
 
-      - id: framework_upgrade
+      - id: angel3_framework_upgrade
         working-directory: packages/framework
         run: dart pub upgrade
 
-      - name: framework; Verify formatting
+      - name: angel3_framework; Verify formatting
         working-directory: packages/framework
         run: dart format --output=none --set-exit-if-changed .
 
       # Consider passing '--fatal-infos' for slightly stricter analysis.
-      - name: framework; Analyze source code
+      - name: angel3_framework; Analyze source code
         working-directory: packages/framework
         run: dart analyze .
 
-      - name: framework; Run tests
+      - name: angel3_framework; Run tests
         working-directory: packages/framework
         run: dart test
 
@@ -51,16 +51,31 @@ jobs:
         with:
           sdk: "2.15.1"
 
-      - id: angel_orm_upgrade
+      # Angel3 ORM
+      - id: angel3_orm_upgrade
         working-directory: packages/orm/angel_orm
         run: dart pub upgrade
 
-      - name: angel_orm; Verify formatting
+      - name: angel3_orm; Verify formatting
         working-directory: packages/orm/angel_orm
         run: dart format --output=none --set-exit-if-changed .
 
       # Consider passing '--fatal-infos' for slightly stricter analysis.
-      - name: angel_orm; Analyze source code
+      - name: angel3_orm; Analyze source code
         working-directory: packages/orm/angel_orm
+        run: dart analyze .
+
+      # Angel3 ORM Generator
+      - id: angel3_orm_generator_upgrade
+        working-directory: packages/orm/angel_orm_generator
+        run: dart pub upgrade
+
+      - name: angel3_generator_orm; Verify formatting
+        working-directory: packages/orm/angel_orm_generator
+        run: dart format --output=none --set-exit-if-changed .
+
+      # Consider passing '--fatal-infos' for slightly stricter analysis.
+      - name: angel3_generator_orm; Analyze source code
+        working-directory: packages/orm/angel_orm_generator
         run: dart analyze .
 
