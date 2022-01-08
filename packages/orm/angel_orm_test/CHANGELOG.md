@@ -1,5 +1,10 @@
 # Change Log
 
+## 3.1.1
+
+* Updated example
+* Updated README
+
 ## 3.1.0
 
 * Added `join_test` test cases
