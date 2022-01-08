@@ -32,7 +32,9 @@ void main() {
     app.get('/num/global', ioc((num global) => global));
 
     app.errorHandler = (e, req, res) {
-      stderr..writeln(e.error)..writeln(e.stackTrace);
+      stderr
+        ..writeln(e.error)
+        ..writeln(e.stackTrace);
     };
   });
 

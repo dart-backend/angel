@@ -69,7 +69,9 @@ void main() {
     app.get('/error', (req, res) => res.addError(StateError('wtf')));
 
     app.errorHandler = (e, req, res) async {
-      stderr..writeln(e.error)..writeln(e.stackTrace);
+      stderr
+        ..writeln(e.error)
+        ..writeln(e.stackTrace);
     };
   });
 
