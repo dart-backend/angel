@@ -7,6 +7,7 @@
 * Fix bugs
   * `angel3_oauth2` failed test cases
   * `angel3_proxy` failed test cases
+  * `angel3_orm_mysql`
 
 ## Long Term Goal
 
