@@ -56,11 +56,11 @@ jobs:
         run: dart pub upgrade
 
       - name: angel_orm; Verify formatting
-        working-directory: packages/framework
+        working-directory: packages/orm/angel_orm
         run: dart format --output=none --set-exit-if-changed .
 
       # Consider passing '--fatal-infos' for slightly stricter analysis.
       - name: angel_orm; Analyze source code
-        working-directory: packages/framework
+        working-directory: packages/orm/angel_orm
         run: dart analyze .
 
