@@ -202,8 +202,8 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
       List<String> additionalFields = const [],
       Set<String>? trampoline,
       String? alias}) {
-    _makeJoin(tableName, trampoline, alias, JoinType.inner, localKey, foreignKey, op,
-        additionalFields);
+    _makeJoin(tableName, trampoline, alias, JoinType.inner, localKey,
+        foreignKey, op, additionalFields);
   }
 
   /// Execute a `LEFT JOIN` against another table.
@@ -212,8 +212,8 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
       List<String> additionalFields = const [],
       Set<String>? trampoline,
       String? alias}) {
-    _makeJoin(tableName, trampoline, alias, JoinType.left, localKey, foreignKey, op,
-        additionalFields);
+    _makeJoin(tableName, trampoline, alias, JoinType.left, localKey, foreignKey,
+        op, additionalFields);
   }
 
   /// Execute a `RIGHT JOIN` against another table.
@@ -222,8 +222,8 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
       List<String> additionalFields = const [],
       Set<String>? trampoline,
       String? alias}) {
-    _makeJoin(tableName, trampoline, alias, JoinType.right, localKey, foreignKey, op,
-        additionalFields);
+    _makeJoin(tableName, trampoline, alias, JoinType.right, localKey,
+        foreignKey, op, additionalFields);
   }
 
   /// Execute a `FULL OUTER JOIN` against another table.
@@ -232,8 +232,8 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
       List<String> additionalFields = const [],
       Set<String>? trampoline,
       String? alias}) {
-    _makeJoin(tableName, trampoline, alias, JoinType.full, localKey, foreignKey, op,
-        additionalFields);
+    _makeJoin(tableName, trampoline, alias, JoinType.full, localKey, foreignKey,
+        op, additionalFields);
   }
 
   /// Execute a `SELF JOIN`.
@@ -242,8 +242,8 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
       List<String> additionalFields = const [],
       Set<String>? trampoline,
       String? alias}) {
-    _makeJoin(tableName, trampoline, alias, JoinType.self, localKey, foreignKey, op,
-        additionalFields);
+    _makeJoin(tableName, trampoline, alias, JoinType.self, localKey, foreignKey,
+        op, additionalFields);
   }
 
   @override
