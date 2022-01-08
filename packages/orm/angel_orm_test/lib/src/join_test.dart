@@ -74,8 +74,10 @@ void joinTests(FutureOr<QueryExecutor> Function() createExecutor,
         alias: 'P');
     query.where?.raw("P.name = '${originalPerson?.name}'");
     var orders = await query.get(executor);
-    expect(orders.every((element) =>
-    element.personName == originalPerson?.name &&
-        element.personAge == originalPerson?.age), true);
+    expect(
+        orders.every((element) =>
+            element.personName == originalPerson?.name &&
+            element.personAge == originalPerson?.age),
+        true);
   });
 }

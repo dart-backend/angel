@@ -79,3 +79,17 @@ jobs:
         working-directory: packages/orm/angel_orm_generator
         run: dart analyze .
 
+      # Angel3 ORM Test
+      - id: angel3_orm_test_upgrade
+        working-directory: packages/orm/angel_orm_test
+        run: dart pub upgrade
+
+      - name: angel3_test_orm; Verify formatting
+        working-directory: packages/orm/angel_orm_test
+        run: dart format --output=none --set-exit-if-changed .
+
+      # Consider passing '--fatal-infos' for slightly stricter analysis.
+      - name: angel3_test_orm; Analyze source code
+        working-directory: packages/orm/angel_orm_test
+        run: dart analyze .
+
