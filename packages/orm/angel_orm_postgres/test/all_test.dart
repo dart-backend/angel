@@ -31,6 +31,7 @@ void main() {
         () =>
             manyToManyTests(pg(['user', 'role', 'user_role']), close: closePg));
     group('standalone', () => standaloneTests(pg(['car']), close: closePg));
-    group('join', () => joinTests(pg(['person', 'person_order']), close: closePg));
+    group('join',
+        () => joinTests(pg(['person', 'person_order']), close: closePg));
   });
 }
