@@ -116,8 +116,6 @@ class UnorthodoxQuery extends Query<Unorthodox, UnorthodoxQueryWhere> {
   @override
   final UnorthodoxQueryValues values = UnorthodoxQueryValues();
 
-  List<String> _selectedFields = [];
-
   UnorthodoxQueryWhere? _where;
 
   @override
@@ -132,15 +130,7 @@ class UnorthodoxQuery extends Query<Unorthodox, UnorthodoxQueryWhere> {
 
   @override
   List<String> get fields {
-    const _fields = ['name'];
-    return _selectedFields.isEmpty
-        ? _fields
-        : _fields.where((field) => _selectedFields.contains(field)).toList();
-  }
-
-  UnorthodoxQuery select(List<String> selectedFields) {
-    _selectedFields = selectedFields;
-    return this;
+    return const ['name'];
   }
 
   @override
@@ -153,12 +143,11 @@ class UnorthodoxQuery extends Query<Unorthodox, UnorthodoxQueryWhere> {
     return UnorthodoxQueryWhere(this);
   }
 
-  Optional<Unorthodox> parseRow(List row) {
+  static Optional<Unorthodox> parseRow(List row) {
     if (row.every((x) => x == null)) {
       return Optional.empty();
     }
-    var model =
-        Unorthodox(name: fields.contains('name') ? (row[0] as String?) : null);
+    var model = Unorthodox(name: (row[0] as String?));
     return Optional.of(model);
   }
 
@@ -232,8 +221,6 @@ class WeirdJoinQuery extends Query<WeirdJoin, WeirdJoinQueryWhere> {
   @override
   final WeirdJoinQueryValues values = WeirdJoinQueryValues();
 
-  List<String> _selectedFields = [];
-
   WeirdJoinQueryWhere? _where;
 
   late UnorthodoxQuery _unorthodox;
@@ -254,15 +241,7 @@ class WeirdJoinQuery extends Query<WeirdJoin, WeirdJoinQueryWhere> {
 
   @override
   List<String> get fields {
-    const _fields = ['id', 'join_name'];
-    return _selectedFields.isEmpty
-        ? _fields
-        : _fields.where((field) => _selectedFields.contains(field)).toList();
-  }
-
-  WeirdJoinQuery select(List<String> selectedFields) {
-    _selectedFields = selectedFields;
-    return this;
+    return const ['id', 'join_name'];
   }
 
   @override
@@ -275,31 +254,31 @@ class WeirdJoinQuery extends Query<WeirdJoin, WeirdJoinQueryWhere> {
     return WeirdJoinQueryWhere(this);
   }
 
-  Optional<WeirdJoin> parseRow(List row) {
+  static Optional<WeirdJoin> parseRow(List row) {
     if (row.every((x) => x == null)) {
       return Optional.empty();
     }
-    var model = WeirdJoin(id: fields.contains('id') ? (row[0] as int?) : null);
+    var model = WeirdJoin(id: (row[0] as int?));
     if (row.length > 2) {
-      var modelOpt = UnorthodoxQuery().parseRow(row.skip(2).take(1).toList());
+      var modelOpt = UnorthodoxQuery.parseRow(row.skip(2).take(1).toList());
       modelOpt.ifPresent((m) {
         model = model.copyWith(unorthodox: m);
       });
     }
     if (row.length > 3) {
-      var modelOpt = SongQuery().parseRow(row.skip(3).take(5).toList());
+      var modelOpt = SongQuery.parseRow(row.skip(3).take(5).toList());
       modelOpt.ifPresent((m) {
         model = model.copyWith(song: m);
       });
     }
     if (row.length > 8) {
-      var modelOpt = NumbaQuery().parseRow(row.skip(8).take(2).toList());
+      var modelOpt = NumbaQuery.parseRow(row.skip(8).take(2).toList());
       modelOpt.ifPresent((m) {
         model = model.copyWith(numbas: [m]);
       });
     }
     if (row.length > 10) {
-      var modelOpt = FooQuery().parseRow(row.skip(10).take(1).toList());
+      var modelOpt = FooQuery.parseRow(row.skip(10).take(1).toList());
       modelOpt.ifPresent((m) {
         model = model.copyWith(foos: [m]);
       });
@@ -437,8 +416,6 @@ class SongQuery extends Query<Song, SongQueryWhere> {
   @override
   final SongQueryValues values = SongQueryValues();
 
-  List<String> _selectedFields = [];
-
   SongQueryWhere? _where;
 
   @override
@@ -453,21 +430,7 @@ class SongQuery extends Query<Song, SongQueryWhere> {
 
   @override
   List<String> get fields {
-    const _fields = [
-      'id',
-      'created_at',
-      'updated_at',
-      'weird_join_id',
-      'title'
-    ];
-    return _selectedFields.isEmpty
-        ? _fields
-        : _fields.where((field) => _selectedFields.contains(field)).toList();
-  }
-
-  SongQuery select(List<String> selectedFields) {
-    _selectedFields = selectedFields;
-    return this;
+    return const ['id', 'created_at', 'updated_at', 'weird_join_id', 'title'];
   }
 
   @override
@@ -480,16 +443,16 @@ class SongQuery extends Query<Song, SongQueryWhere> {
     return SongQueryWhere(this);
   }
 
-  Optional<Song> parseRow(List row) {
+  static Optional<Song> parseRow(List row) {
     if (row.every((x) => x == null)) {
       return Optional.empty();
     }
     var model = Song(
-        id: fields.contains('id') ? row[0].toString() : null,
-        createdAt: fields.contains('created_at') ? (row[1] as DateTime?) : null,
-        updatedAt: fields.contains('updated_at') ? (row[2] as DateTime?) : null,
-        weirdJoinId: fields.contains('weird_join_id') ? (row[3] as int?) : null,
-        title: fields.contains('title') ? (row[4] as String?) : null);
+        id: row[0].toString(),
+        createdAt: (row[1] as DateTime?),
+        updatedAt: (row[2] as DateTime?),
+        weirdJoinId: (row[3] as int?),
+        title: (row[4] as String?));
     return Optional.of(model);
   }
 
@@ -572,8 +535,6 @@ class NumbaQuery extends Query<Numba, NumbaQueryWhere> {
   @override
   final NumbaQueryValues values = NumbaQueryValues();
 
-  List<String> _selectedFields = [];
-
   NumbaQueryWhere? _where;
 
   @override
@@ -588,15 +549,7 @@ class NumbaQuery extends Query<Numba, NumbaQueryWhere> {
 
   @override
   List<String> get fields {
-    const _fields = ['i', 'parent'];
-    return _selectedFields.isEmpty
-        ? _fields
-        : _fields.where((field) => _selectedFields.contains(field)).toList();
-  }
-
-  NumbaQuery select(List<String> selectedFields) {
-    _selectedFields = selectedFields;
-    return this;
+    return const ['i', 'parent'];
   }
 
   @override
@@ -609,13 +562,11 @@ class NumbaQuery extends Query<Numba, NumbaQueryWhere> {
     return NumbaQueryWhere(this);
   }
 
-  Optional<Numba> parseRow(List row) {
+  static Optional<Numba> parseRow(List row) {
     if (row.every((x) => x == null)) {
       return Optional.empty();
     }
-    var model = Numba(
-        i: fields.contains('i') ? (row[0] as int?) : null,
-        parent: fields.contains('parent') ? (row[1] as int?) : null);
+    var model = Numba(i: (row[0] as int?), parent: (row[1] as int?));
     return Optional.of(model);
   }
 
@@ -678,8 +629,6 @@ class FooQuery extends Query<Foo, FooQueryWhere> {
   @override
   final FooQueryValues values = FooQueryValues();
 
-  List<String> _selectedFields = [];
-
   FooQueryWhere? _where;
 
   @override
@@ -694,15 +643,7 @@ class FooQuery extends Query<Foo, FooQueryWhere> {
 
   @override
   List<String> get fields {
-    const _fields = ['bar'];
-    return _selectedFields.isEmpty
-        ? _fields
-        : _fields.where((field) => _selectedFields.contains(field)).toList();
-  }
-
-  FooQuery select(List<String> selectedFields) {
-    _selectedFields = selectedFields;
-    return this;
+    return const ['bar'];
   }
 
   @override
@@ -715,13 +656,13 @@ class FooQuery extends Query<Foo, FooQueryWhere> {
     return FooQueryWhere(this);
   }
 
-  Optional<Foo> parseRow(List row) {
+  static Optional<Foo> parseRow(List row) {
     if (row.every((x) => x == null)) {
       return Optional.empty();
     }
-    var model = Foo(bar: fields.contains('bar') ? (row[0] as String?) : null);
+    var model = Foo(bar: (row[0] as String?));
     if (row.length > 1) {
-      var modelOpt = WeirdJoinQuery().parseRow(row.skip(1).take(2).toList());
+      var modelOpt = WeirdJoinQuery.parseRow(row.skip(1).take(2).toList());
       modelOpt.ifPresent((m) {
         model = model.copyWith(weirdJoins: [m]);
       });
@@ -843,8 +784,6 @@ class FooPivotQuery extends Query<FooPivot, FooPivotQueryWhere> {
   @override
   final FooPivotQueryValues values = FooPivotQueryValues();
 
-  List<String> _selectedFields = [];
-
   FooPivotQueryWhere? _where;
 
   late WeirdJoinQuery _weirdJoin;
@@ -863,15 +802,7 @@ class FooPivotQuery extends Query<FooPivot, FooPivotQueryWhere> {
 
   @override
   List<String> get fields {
-    const _fields = ['weird_join_id', 'foo_bar'];
-    return _selectedFields.isEmpty
-        ? _fields
-        : _fields.where((field) => _selectedFields.contains(field)).toList();
-  }
-
-  FooPivotQuery select(List<String> selectedFields) {
-    _selectedFields = selectedFields;
-    return this;
+    return const ['weird_join_id', 'foo_bar'];
   }
 
   @override
@@ -884,19 +815,19 @@ class FooPivotQuery extends Query<FooPivot, FooPivotQueryWhere> {
     return FooPivotQueryWhere(this);
   }
 
-  Optional<FooPivot> parseRow(List row) {
+  static Optional<FooPivot> parseRow(List row) {
     if (row.every((x) => x == null)) {
       return Optional.empty();
     }
     var model = FooPivot();
     if (row.length > 2) {
-      var modelOpt = WeirdJoinQuery().parseRow(row.skip(2).take(2).toList());
+      var modelOpt = WeirdJoinQuery.parseRow(row.skip(2).take(2).toList());
       modelOpt.ifPresent((m) {
         model = model.copyWith(weirdJoin: m);
       });
     }
     if (row.length > 4) {
-      var modelOpt = FooQuery().parseRow(row.skip(4).take(1).toList());
+      var modelOpt = FooQuery.parseRow(row.skip(4).take(1).toList());
       modelOpt.ifPresent((m) {
         model = model.copyWith(foo: m);
       });

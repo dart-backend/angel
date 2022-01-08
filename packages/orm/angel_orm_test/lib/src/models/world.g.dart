@@ -35,8 +35,6 @@ class WorldQuery extends Query<World, WorldQueryWhere> {
   @override
   final WorldQueryValues values = WorldQueryValues();
 
-  List<String> _selectedFields = [];
-
   WorldQueryWhere? _where;
 
   @override
@@ -51,15 +49,7 @@ class WorldQuery extends Query<World, WorldQueryWhere> {
 
   @override
   List<String> get fields {
-    const _fields = ['id', 'random_number'];
-    return _selectedFields.isEmpty
-        ? _fields
-        : _fields.where((field) => _selectedFields.contains(field)).toList();
-  }
-
-  WorldQuery select(List<String> selectedFields) {
-    _selectedFields = selectedFields;
-    return this;
+    return const ['id', 'random_number'];
   }
 
   @override
@@ -72,14 +62,11 @@ class WorldQuery extends Query<World, WorldQueryWhere> {
     return WorldQueryWhere(this);
   }
 
-  Optional<World> parseRow(List row) {
+  static Optional<World> parseRow(List row) {
     if (row.every((x) => x == null)) {
       return Optional.empty();
     }
-    var model = World(
-        id: fields.contains('id') ? (row[0] as int?) : null,
-        randomNumber:
-            fields.contains('random_number') ? (row[1] as int?) : null);
+    var model = World(id: (row[0] as int?), randomNumber: (row[1] as int?));
     return Optional.of(model);
   }
 

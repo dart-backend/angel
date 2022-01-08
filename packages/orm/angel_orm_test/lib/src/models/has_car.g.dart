@@ -38,8 +38,6 @@ class HasCarQuery extends Query<HasCar, HasCarQueryWhere> {
   @override
   final HasCarQueryValues values = HasCarQueryValues();
 
-  List<String> _selectedFields = [];
-
   HasCarQueryWhere? _where;
 
   @override
@@ -54,15 +52,7 @@ class HasCarQuery extends Query<HasCar, HasCarQueryWhere> {
 
   @override
   List<String> get fields {
-    const _fields = ['id', 'created_at', 'updated_at', 'type'];
-    return _selectedFields.isEmpty
-        ? _fields
-        : _fields.where((field) => _selectedFields.contains(field)).toList();
-  }
-
-  HasCarQuery select(List<String> selectedFields) {
-    _selectedFields = selectedFields;
-    return this;
+    return const ['id', 'created_at', 'updated_at', 'type'];
   }
 
   @override
@@ -75,19 +65,15 @@ class HasCarQuery extends Query<HasCar, HasCarQueryWhere> {
     return HasCarQueryWhere(this);
   }
 
-  Optional<HasCar> parseRow(List row) {
+  static Optional<HasCar> parseRow(List row) {
     if (row.every((x) => x == null)) {
       return Optional.empty();
     }
     var model = HasCar(
-        id: fields.contains('id') ? row[0].toString() : null,
-        createdAt: fields.contains('created_at') ? (row[1] as DateTime?) : null,
-        updatedAt: fields.contains('updated_at') ? (row[2] as DateTime?) : null,
-        type: fields.contains('type')
-            ? row[3] == null
-                ? null
-                : CarType?.values[(row[3] as int)]
-            : null);
+        id: row[0].toString(),
+        createdAt: (row[1] as DateTime?),
+        updatedAt: (row[2] as DateTime?),
+        type: row[3] == null ? null : CarType?.values[(row[3] as int)]);
     return Optional.of(model);
   }
 

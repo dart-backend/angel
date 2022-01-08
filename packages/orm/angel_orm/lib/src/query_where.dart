@@ -5,6 +5,7 @@ abstract class QueryWhere {
   final Set<QueryWhere> _and = {};
   final Set<QueryWhere> _not = {};
   final Set<QueryWhere> _or = {};
+  final Set<String> _raw = {};
 
   Iterable<SqlExpressionBuilder> get expressionBuilders;
 
@@ -18,6 +19,10 @@ abstract class QueryWhere {
 
   void or(QueryWhere other) {
     _or.add(other);
+  }
+
+  void raw(String whereRaw) {
+    _raw.add(whereRaw);
   }
 
   String compile({String? tableName}) {
@@ -37,6 +42,11 @@ abstract class QueryWhere {
           b.write('$key ${builder.compile()}');
         }
       }
+    }
+
+    for (var raw in _raw) {
+      if (i++ > 0) b.write(' AND ');
+      b.write(' ($raw)');
     }
 
     for (var other in _and) {

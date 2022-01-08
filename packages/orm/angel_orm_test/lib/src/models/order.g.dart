@@ -62,8 +62,6 @@ class OrderQuery extends Query<Order, OrderQueryWhere> {
   @override
   final OrderQueryValues values = OrderQueryValues();
 
-  List<String> _selectedFields = [];
-
   OrderQueryWhere? _where;
 
   late CustomerQuery _customer;
@@ -80,7 +78,7 @@ class OrderQuery extends Query<Order, OrderQueryWhere> {
 
   @override
   List<String> get fields {
-    const _fields = [
+    return const [
       'id',
       'created_at',
       'updated_at',
@@ -89,14 +87,6 @@ class OrderQuery extends Query<Order, OrderQueryWhere> {
       'order_date',
       'shipper_id'
     ];
-    return _selectedFields.isEmpty
-        ? _fields
-        : _fields.where((field) => _selectedFields.contains(field)).toList();
-  }
-
-  OrderQuery select(List<String> selectedFields) {
-    _selectedFields = selectedFields;
-    return this;
   }
 
   @override
@@ -109,19 +99,19 @@ class OrderQuery extends Query<Order, OrderQueryWhere> {
     return OrderQueryWhere(this);
   }
 
-  Optional<Order> parseRow(List row) {
+  static Optional<Order> parseRow(List row) {
     if (row.every((x) => x == null)) {
       return Optional.empty();
     }
     var model = Order(
-        id: fields.contains('id') ? row[0].toString() : null,
-        createdAt: fields.contains('created_at') ? (row[1] as DateTime?) : null,
-        updatedAt: fields.contains('updated_at') ? (row[2] as DateTime?) : null,
-        employeeId: fields.contains('employee_id') ? (row[4] as int?) : null,
-        orderDate: fields.contains('order_date') ? (row[5] as DateTime?) : null,
-        shipperId: fields.contains('shipper_id') ? (row[6] as int?) : null);
+        id: row[0].toString(),
+        createdAt: (row[1] as DateTime?),
+        updatedAt: (row[2] as DateTime?),
+        employeeId: (row[4] as int?),
+        orderDate: (row[5] as DateTime?),
+        shipperId: (row[6] as int?));
     if (row.length > 7) {
-      var modelOpt = CustomerQuery().parseRow(row.skip(7).take(3).toList());
+      var modelOpt = CustomerQuery.parseRow(row.skip(7).take(3).toList());
       modelOpt.ifPresent((m) {
         model = model.copyWith(customer: m);
       });
@@ -241,8 +231,6 @@ class CustomerQuery extends Query<Customer, CustomerQueryWhere> {
   @override
   final CustomerQueryValues values = CustomerQueryValues();
 
-  List<String> _selectedFields = [];
-
   CustomerQueryWhere? _where;
 
   @override
@@ -257,15 +245,7 @@ class CustomerQuery extends Query<Customer, CustomerQueryWhere> {
 
   @override
   List<String> get fields {
-    const _fields = ['id', 'created_at', 'updated_at'];
-    return _selectedFields.isEmpty
-        ? _fields
-        : _fields.where((field) => _selectedFields.contains(field)).toList();
-  }
-
-  CustomerQuery select(List<String> selectedFields) {
-    _selectedFields = selectedFields;
-    return this;
+    return const ['id', 'created_at', 'updated_at'];
   }
 
   @override
@@ -278,15 +258,14 @@ class CustomerQuery extends Query<Customer, CustomerQueryWhere> {
     return CustomerQueryWhere(this);
   }
 
-  Optional<Customer> parseRow(List row) {
+  static Optional<Customer> parseRow(List row) {
     if (row.every((x) => x == null)) {
       return Optional.empty();
     }
     var model = Customer(
-        id: fields.contains('id') ? row[0].toString() : null,
-        createdAt: fields.contains('created_at') ? (row[1] as DateTime?) : null,
-        updatedAt:
-            fields.contains('updated_at') ? (row[2] as DateTime?) : null);
+        id: row[0].toString(),
+        createdAt: (row[1] as DateTime?),
+        updatedAt: (row[2] as DateTime?));
     return Optional.of(model);
   }
 
