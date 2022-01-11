@@ -332,7 +332,7 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
     }
     if (_groupBy != null) b.write(' GROUP BY $_groupBy');
     var orderByClause = _orderBy.map((order) => order.compile()).join(', ');
-    if  (orderByClause?.isNotEmpty == true) {
+    if (orderByClause.isNotEmpty == true) {
       b.write(' ORDER BY $orderByClause');
     }
     if (_limit != null) b.write(' LIMIT $_limit');
