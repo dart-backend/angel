@@ -331,8 +331,9 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
       b.write(' WHERE $whereClause');
     }
     if (_groupBy != null) b.write(' GROUP BY $_groupBy');
-    for (var item in _orderBy) {
-      b.write(' ORDER BY ${item.compile()}');
+    var orderByClause = _orderBy.map(item.compile()).join(', ');
+    if  (orderByClause?.isNotEmpty == true) {
+      b.write(' ORDER BY $orderByClause');
     }
     if (_limit != null) b.write(' LIMIT $_limit');
     if (_offset != null) b.write(' OFFSET $_offset');

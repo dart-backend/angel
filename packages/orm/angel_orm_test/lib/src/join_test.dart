@@ -80,4 +80,12 @@ void joinTests(FutureOr<QueryExecutor> Function() createExecutor,
             element.personAge == originalPerson?.age),
         true);
   });
+
+  test('select orders with multi order by fields', () async {
+    var query = PersonOrderQuery();
+    query.orderBy(PersonOrderFields.personId, descending: true);
+    query.orderBy(PersonOrderFields.id, descending: true);
+    var orders = await query.get(executor);
+    expect(orders.first.personId > orders.last.personId, true);
+  });
 }
