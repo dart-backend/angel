@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math';
 
 import 'package:angel3_orm/angel3_orm.dart';
 import 'package:test/test.dart';
@@ -86,6 +85,6 @@ void joinTests(FutureOr<QueryExecutor> Function() createExecutor,
     query.orderBy(PersonOrderFields.personId, descending: true);
     query.orderBy(PersonOrderFields.id, descending: true);
     var orders = await query.get(executor);
-    expect(orders.first.personId > orders.last.personId, true);
+    expect(orders.first.personId! > orders.last.personId!, true);
   });
 }
