@@ -1,5 +1,9 @@
 # Change Log
 
+## 3.1.2
+
+* Added multiple `orderBy` test case
+
 ## 3.1.1
 
 * Updated example

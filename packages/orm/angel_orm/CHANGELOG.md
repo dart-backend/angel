@@ -1,8 +1,13 @@
 # Change Log
 
+## 4.0.6
+
+* Fixed multiple `orderBy` error
+
 ## 4.0.5
 
 * Added `where.raw()`
+* Added `select(List fields)`
 
 ## 4.0.4
 
