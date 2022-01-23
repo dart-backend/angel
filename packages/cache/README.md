@@ -26,11 +26,11 @@ void main() async {
       CacheService(
         database: AnonymousService(
           index: ([params]) {
-            print('Fetched directly from the underlying service at ${new DateTime.now()}!');
+            print('Fetched directly from the underlying service at ${DateTime.now()}!');
             return ['foo', 'bar', 'baz'];
           },
           read: (id, [params]) {
-            return {id: '$id at ${new DateTime.now()}'};
+            return {id: '$id at ${DateTime.now()}'};
           }
         ),
       ),
@@ -42,7 +42,7 @@ void main() async {
 
 A flexible response cache for Angel3.
 
-Use this to improve real and perceived response of Web applications, as well as to memoize expensive responses.
+Use this to improve real and perceived response of Web applications, as well as to memorize expensive responses.
 
 Supports the `If-Modified-Since` header, as well as storing the contents of response buffers in memory.
 

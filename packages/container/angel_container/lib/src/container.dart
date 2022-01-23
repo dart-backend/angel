@@ -23,11 +23,11 @@ class Container {
   }
 
   /// Determines if the container has an injection of the given type.
-  bool has<T>([Type? type]) {
+  bool has<T>([Type? t]) {
     var t2 = T;
-    if (type != null) {
-      t2 = type;
-    } else if (T == dynamic && type == null) {
+    if (t != null) {
+      t2 = t;
+    } else if (T == dynamic && t == null) {
       return false;
     }
 

@@ -1,5 +1,9 @@
 # Change Log
 
+## 4.2.4
+
+* Fixed issue 48. Log not working in development
+
 ## 4.2.3
 
 * Fixed `res.json()` throwing bad state exception
