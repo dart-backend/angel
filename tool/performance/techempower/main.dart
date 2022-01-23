@@ -22,7 +22,7 @@ Future<void> plaintext(var message) async {
   var url = Uri.http('localhost:3000', '/plaintext');
   var response = await http.get(url);
   if (response.statusCode == 200) {
-    print('Execution($message): success');
+    print('Execution($message): ${response.body}.');
   } else {
     print('Execution($message): error');
   }
@@ -92,10 +92,10 @@ Future<void> dbMultipleQuery(var message) async {
 }
 
 void main() async {
-  var concurrency = 100;
+  var concurrency = 6000;
 
   for (var i = 0; i < concurrency; i++) {
-    Isolate.spawn(dbUpdate, 'Instance_$i');
+    Isolate.spawn(plaintext, 'Instance_$i');
   }
 
   await Future.delayed(const Duration(seconds: 10));

@@ -22,6 +22,24 @@ jobs:
       - uses: dart-lang/setup-dart@v1
         with:
           sdk: "2.15.1"
+          
+      - id: angel3_container_upgrade
+        name: angel3_container; Upgrade depedencies
+        working-directory: packages/container/angel_container
+        run: dart pub upgrade
+
+      - name: angel3_container; Verify formatting
+        working-directory: packages/container/angel_container
+        run: dart format --output=none --set-exit-if-changed .
+
+      # Consider passing '--fatal-infos' for slightly stricter analysis.
+      - name: angel3_container; Analyze source code
+        working-directory: packages/container/angel_container
+        run: dart analyze
+
+      - name: angel3_container; Run tests
+        working-directory: packages/container/angel_container
+        run: dart test
 
       - id: angel3_framework_upgrade
         name: angel3_framework; Upgrade depedencies

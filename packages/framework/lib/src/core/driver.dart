@@ -4,7 +4,6 @@ import 'dart:io' show stderr, Cookie;
 import 'package:angel3_http_exception/angel3_http_exception.dart';
 import 'package:angel3_route/angel3_route.dart';
 import 'package:belatuk_combinator/belatuk_combinator.dart';
-import 'package:logging/logging.dart';
 import 'package:stack_trace/stack_trace.dart';
 import 'package:tuple/tuple.dart';
 import 'core.dart';
@@ -27,7 +26,7 @@ abstract class Driver<
   bool isServerInitialised = false;
 
   StreamSubscription<Request>? _sub;
-  final log = Logger('Driver');
+  //final log = Logger('Driver');
 
   /// The function used to bind this instance to a server..
   final Future<Server> Function(dynamic, int) serverGenerator;
@@ -71,7 +70,7 @@ abstract class Driver<
         return Future.value(_server);
       });
     }).catchError((error) {
-      log.severe('Failed to create server', error);
+      app.logger?.severe('Failed to create server', error);
       throw ArgumentError('[Driver]Failed to create server');
     });
   }
@@ -164,7 +163,7 @@ abstract class Driver<
             ..registerSingleton<ParseResult<RouteResult>?>(tuple.item3)
             ..registerSingleton<ParseResult?>(tuple.item3);
 
-          if (app.environment.isProduction && app.logger != null) {
+          if (!app.environment.isProduction && app.logger != null) {
             req.container?.registerSingleton<Stopwatch>(Stopwatch()..start());
           }
 
@@ -250,7 +249,7 @@ abstract class Driver<
                 // Ideally, we won't be in a position where an absolutely fatal error occurs,
                 // but if so, we'll need to log it.
                 if (app.logger != null) {
-                  app.logger?.severe(
+                  app.logger!.severe(
                       'Fatal error occurred when processing $uri.', e, trace);
                 } else {
                   stderr
@@ -323,7 +322,7 @@ abstract class Driver<
       ResponseContext res,
       {bool ignoreFinalizers = false}) {
     Future<void> _cleanup(_) {
-      if (app.environment.isProduction &&
+      if (!app.environment.isProduction &&
           app.logger != null &&
           req.container!.has<Stopwatch>()) {
         var sw = req.container!.make<Stopwatch>();
@@ -334,11 +333,10 @@ abstract class Driver<
     }
 
     if (!res.isBuffered) {
-      if (res.isOpen) {
-        return res.close().then(_cleanup);
-      }
-
-      return Future.value();
+      //if (res.isOpen) {
+      return res.close().then(_cleanup);
+      //}
+      //return Future.value();
     }
 
     var finalizers = ignoreFinalizers == true
