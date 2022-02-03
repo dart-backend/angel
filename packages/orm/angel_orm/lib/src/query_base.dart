@@ -45,11 +45,11 @@ abstract class QueryBase<T> {
   List<T> deserializeList(List<List<dynamic>> it) {
     var optResult = it.map(deserialize).toList();
     var result = <T>[];
-    optResult.forEach((element) {
+    for (var element in optResult) {
       element.ifPresent((item) {
         result.add(item);
       });
-    });
+    }
 
     return result;
   }

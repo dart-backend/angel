@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:angel3_orm/angel3_orm.dart';
 import 'package:logging/logging.dart';
 
 import 'annotations.dart';
@@ -298,7 +299,7 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
         }
         return ss;
       }));
-      _joins.forEach((j) {
+      for (var j in _joins) {
         var c = compiledJoins[j] = j.compile(trampoline);
         //if (c != null) {
         if (c != '') {
@@ -310,7 +311,7 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
             f.add('NULL');
           }
         }
-      });
+      }
     }
     if (withFields) b.write(f.join(', '));
     fromQuery ??= tableName;
@@ -354,7 +355,7 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
     if (_joins.isEmpty) {
       return executor
           .query(tableName, sql, substitutionValues,
-              fields.map(adornWithTableName).toList())
+              returningFields: fields.map(adornWithTableName).toList())
           .then((it) => deserializeList(it));
     } else {
       return executor.transaction((tx) async {
@@ -379,14 +380,23 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
     if (insertion == '') {
       throw StateError('No values have been specified for update.');
     } else {
-      // TODO: How to do this in a non-Postgres DB?
-      var returning = fields.map(adornWithTableName).join(', ');
       var sql = compile({});
-      sql = 'WITH $tableName as ($insertion RETURNING $returning) ' + sql;
+      var returningSql = sql;
+      if (executor.dialect is PostgreSQLDialect) {
+        var returning = fields.map(adornWithTableName).join(', ');
+        sql = 'WITH $tableName as ($insertion RETURNING $returning) ' + sql;
+      } else if (executor.dialect is MySQLDialect) {
+        sql = '$insertion';
+      } else {
+        _log.fine("Unsupported database dialect.");
+      }
 
-      //_log.fine("Insert Query = $sql");
+      _log.fine("Insert Query = $sql");
 
-      return executor.query(tableName, sql, substitutionValues).then((it) {
+      return executor
+          .query(tableName, sql, substitutionValues,
+              returningQuery: returningSql)
+          .then((it) {
         // Return SQL execution results
         return it.isEmpty ? Optional.empty() : deserialize(it.first);
       });

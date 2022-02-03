@@ -10,7 +10,7 @@ void main() {
     if (rec.stackTrace != null) print(rec.stackTrace);
   });
 
-  group('postgresql', () {
+  group('mysql', () {
     group('belongsTo',
         () => belongsToTests(my(['author', 'book']), close: closeMy));
     group(

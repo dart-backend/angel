@@ -17,6 +17,11 @@ class PostgreSqlPoolExecutor extends QueryExecutor {
     this.logger = logger ?? Logger('PostgreSqlPoolExecutor');
   }
 
+  final Dialect _dialect = const PostgreSQLDialect();
+
+  @override
+  Dialect get dialect => _dialect;
+
   /// The underlying connection pooling.
   PgPool get pool => _pool;
 
@@ -29,7 +34,7 @@ class PostgreSqlPoolExecutor extends QueryExecutor {
   @override
   Future<PostgreSQLResult> query(
       String tableName, String query, Map<String, dynamic> substitutionValues,
-      [List<String> returningFields = const []]) {
+      {String returningQuery = '', List<String> returningFields = const []}) {
     if (returningFields.isNotEmpty) {
       var fields = returningFields.join(', ');
       var returning = 'RETURNING $fields';
