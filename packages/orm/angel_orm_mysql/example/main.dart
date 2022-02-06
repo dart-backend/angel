@@ -22,11 +22,6 @@ void main() async {
       password: 'Test123*');
   var connection = await MySqlConnection.connect(settings);
 
-  var results = await connection.query('select name, is_complete from todos');
-  //await connection.close();
-
-  print("End");
-
   var logger = Logger('orm_mysql');
   var executor = MySqlExecutor(connection, logger: logger);
 

@@ -52,6 +52,20 @@ abstract class QueryValues {
     return b.toString();
   }
 
+  String compileInsertSelect(Query query, String tableName) {
+    var data = Map<String, dynamic>.from(toMap());
+
+    var b = StringBuffer();
+    var i = 0;
+
+    for (var entry in data.entries) {
+      if (i++ > 0) b.write(' AND ');
+      b.write('$tableName.${entry.key} = ?');
+    }
+
+    return b.toString();
+  }
+
   String compileForUpdate(Query query) {
     var data = toMap();
     if (data.isEmpty) {

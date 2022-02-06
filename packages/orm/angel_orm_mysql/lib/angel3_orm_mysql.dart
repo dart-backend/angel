@@ -90,16 +90,28 @@ class MySqlExecutor extends QueryExecutor {
 
     var params = substitutionValues.values.toList();
 
-    logger?.fine('Query: $query');
-    logger?.fine('Values: $params');
-    logger?.fine('Returning Query: $returningQuery');
+    logger?.warning('Query: $query');
+    logger?.warning('Values: $params');
+    logger?.warning('Returning Query: $returningQuery');
 
     if (returningQuery.isNotEmpty) {
       // Handle insert, update and delete
       // Retrieve back the inserted record
-      var result = await _connection.query(query, params);
-      query = '$returningQuery where id = ?';
-      params = [result.insertId];
+      if (query.startsWith("INSERT")) {
+        var result = await _connection.query(query, params);
+
+        query = returningQuery;
+        logger?.warning('Result.insertId: ${result.insertId}');
+
+        // No primary key
+        //if (result.insertId != 0) {
+        //  params = [result.insertId];
+        //}
+      } else if (query.startsWith("UPDATE")) {
+        await _connection.query(query, params);
+        query = returningQuery;
+        params = [];
+      }
     }
 
     // Handle select

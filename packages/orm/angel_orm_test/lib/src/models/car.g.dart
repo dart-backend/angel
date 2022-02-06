@@ -94,10 +94,9 @@ class CarQuery extends Query<Car, CarQueryWhere> {
         createdAt: fields.contains('created_at') ? (row[1] as DateTime?) : null,
         updatedAt: fields.contains('updated_at') ? (row[2] as DateTime?) : null,
         make: fields.contains('make') ? (row[3] as String?) : null,
-        description:
-            fields.contains('description') ? (row[4] as String?) : null,
+        description: fields.contains('description') ? mapToText(row[4]) : null,
         familyFriendly:
-            fields.contains('family_friendly') ? (row[5] as bool?) : null,
+            fields.contains('family_friendly') ? mapToBool(row[5]) : null,
         recalledAt:
             fields.contains('recalled_at') ? (row[6] as DateTime?) : null);
     return Optional.of(model);
