@@ -90,9 +90,9 @@ class MySqlExecutor extends QueryExecutor {
 
     var params = substitutionValues.values.toList();
 
-    logger?.warning('Query: $query');
-    logger?.warning('Values: $params');
-    logger?.warning('Returning Query: $returningQuery');
+    //logger?.warning('Query: $query');
+    //logger?.warning('Values: $params');
+    //logger?.warning('Returning Query: $returningQuery');
 
     if (returningQuery.isNotEmpty) {
       // Handle insert, update and delete
@@ -101,12 +101,12 @@ class MySqlExecutor extends QueryExecutor {
         var result = await _connection.query(query, params);
 
         query = returningQuery;
-        logger?.warning('Result.insertId: ${result.insertId}');
-
-        // No primary key
+        //logger?.warning('Result.insertId: ${result.insertId}');
+        // Has primary key
         //if (result.insertId != 0) {
-        //  params = [result.insertId];
-        //}
+        if (returningQuery.endsWith('.id=?')) {
+          params = [result.insertId];
+        }
       } else if (query.startsWith("UPDATE")) {
         await _connection.query(query, params);
         query = returningQuery;

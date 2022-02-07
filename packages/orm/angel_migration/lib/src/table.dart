@@ -19,8 +19,8 @@ abstract class Table {
 
   MigrationColumn date(String name) => declare(name, ColumnType.date);
 
-  @deprecated
-  MigrationColumn dateTime(String name) => timeStamp(name, timezone: true);
+  //@deprecated
+  //MigrationColumn dateTime(String name) => timeStamp(name, timezone: true);
 
   MigrationColumn timeStamp(String name, {bool timezone = false}) {
     if (timezone != true) return declare(name, ColumnType.timeStamp);

@@ -343,7 +343,7 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
   Future<List<T>> delete(QueryExecutor executor) {
     var sql = compile({}, preamble: 'DELETE', withFields: false);
 
-    //_log.fine("Delete Query = $sql");
+    //_log.warning("Delete Query = $sql");
 
     if (_joins.isEmpty) {
       return executor
@@ -379,14 +379,20 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
         var returning = fields.map(adornWithTableName).join(', ');
         sql = 'WITH $tableName as ($insertion RETURNING $returning) ' + sql;
       } else if (executor.dialect is MySQLDialect) {
-        var returningSelect = values?.compileInsertSelect(this, tableName);
-        returningSql = '$sql where $returningSelect';
+        // Default to using 'id' as primary key in model
+        if (fields.contains("id")) {
+          returningSql = '$sql where $tableName.id=?';
+        } else {
+          var returningSelect = values?.compileInsertSelect(this, tableName);
+          returningSql = '$sql where $returningSelect';
+        }
+
         sql = '$insertion';
       } else {
         throw ArgumentError("Unsupported database dialect.");
       }
 
-      _log.warning("Insert Query = $sql");
+      //_log.warning("Insert Query = $sql");
 
       return executor
           .query(tableName, sql, substitutionValues,

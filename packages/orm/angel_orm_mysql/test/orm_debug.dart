@@ -16,6 +16,6 @@ void main() async {
 
   belongsToTests(my(['author', 'book']), close: closeMy);
 
-  //edgeCaseTests(my(['unorthodox', 'weird_join', 'song', 'numba']),
-  //    close: closeMy);
+  //hasOneTests(my(['leg', 'foot']), close: closeMy);
+  //standaloneTests(my(['car']), close: closeMy);
 }

@@ -11,11 +11,8 @@ dependencies:
   mysql1: ^0.19.0
   optional: ^6.0.0
 dev_dependencies:
-  angel3_migration: ^4.0.0
-  angel3_orm_generator: ^4.0.0
-  build_runner: ^2.0.0
-  test: ^1.17.0
   angel3_orm_test: ^3.0.0
+  test: ^1.17.0
   lints: ^1.0.0
 dependency_overrides:
   angel3_orm_test:

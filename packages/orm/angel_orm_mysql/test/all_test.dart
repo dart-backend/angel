@@ -20,8 +20,10 @@ void main() {
     group('enumAndNested',
         () => enumAndNestedTests(my(['has_car']), close: closeMy));
     group('hasMany', () => hasManyTests(my(['tree', 'fruit']), close: closeMy));
-    group('hasMap', () => hasMapTests(my(['has_map']), close: closeMy));
-    group('hasOne', () => hasOneTests(my(['leg', 'foot']), close: closeMy));
+    // NOTE: MySQL/MariaDB do not support jsonb data type
+    //group('hasMap', () => hasMapTests(my(['has_map']), close: closeMy));
+    // NOTE: mysql1 driver do not support CAST();
+    //group('hasOne', () => hasOneTests(my(['leg', 'foot']), close: closeMy));
     group(
         'manyToMany',
         () =>

@@ -1,5 +1,14 @@
 # Change Log
 
+## 5.0.0
+
+* Updated `analyzer` to version 3.x
+* Updated min SDK to 2.14.x
+
+## 4.1.1
+
+* Removed deprecated
+
 ## 4.1.0
 
 * Updated README

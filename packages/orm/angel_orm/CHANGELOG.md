@@ -1,5 +1,10 @@
 # Change Log
 
+## 4.1.0
+
+* Added `MySQLDialect` to handle MySQL database specific features
+* Updated `insert` and `update` query to support database without writable CTE
+
 ## 4.0.6
 
 * Fixed multiple `orderBy` error

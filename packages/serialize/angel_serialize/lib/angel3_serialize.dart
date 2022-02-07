@@ -87,8 +87,6 @@ class Serializable {
   const Serializable(
       {this.serializers = const [Serializers.map, Serializers.json],
       this.autoSnakeCaseNames = true,
-      // ignore: deprecated_member_use_from_same_package
-      //@deprecated this.autoIdAndDateFields = true,
       this.includeAnnotations = const []});
 
   /// A list of enabled serialization modes.
@@ -98,10 +96,6 @@ class Serializable {
 
   /// Overrides the setting in `SerializerGenerator`.
   final bool autoSnakeCaseNames;
-
-  /// Overrides the setting in `JsonModelGenerator`.
-  //@deprecated
-  //final bool autoIdAndDateFields;
 
   /// A list of constant members to affix to the generated class.
   final List includeAnnotations;
@@ -130,20 +124,3 @@ abstract class Serializers {
   /// Generate a TypeScript definition file (`.d.ts`) for use on the client-side.
   static const int typescript = 2;
 }
-
-/*
-@deprecated
-class DefaultValue {
-  final value;
-
-  const DefaultValue(this.value);
-}
-
-@deprecated
-/// Prefer [SerializableField] instead.
-class Alias {
-  final String name;
-
-  const Alias(this.name);
-}
-*/
