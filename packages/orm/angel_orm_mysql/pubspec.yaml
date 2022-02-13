@@ -6,7 +6,7 @@ repository: https://github.com/dukefirehawk/angel/tree/master/packages/orm/angel
 environment:
   sdk: '>=2.12.0 <3.0.0'
 dependencies:
-  angel3_orm: ^4.0.0
+  angel3_orm: ^4.1.0
   logging: ^1.0.0
   mysql1: ^0.19.0
   optional: ^6.0.0

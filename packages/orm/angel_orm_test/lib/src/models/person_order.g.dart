@@ -48,7 +48,7 @@ class PersonOrderQuery extends Query<PersonOrder, PersonOrderQueryWhere> {
 
   @override
   Map<String, String> get casts {
-    return {'price': 'text'};
+    return {'price': 'char'};
   }
 
   @override
@@ -212,7 +212,7 @@ class OrderWithPersonInfoQuery
 
   @override
   Map<String, String> get casts {
-    return {'price': 'text'};
+    return {'price': 'char'};
   }
 
   @override
