@@ -1,5 +1,13 @@
 # Change Log
 
+## 6.0.0
+
+* Updated to min SDK 2.15.x
+
+## 5.0.0
+
+* No release. Skipped
+
 ## 4.2.4
 
 * Fixed issue 48. Log not working in development
@@ -356,7 +364,7 @@ stable, there'll be a conversion, perhaps.
 * `Routable`, and all of its subclasses, now extend `Router<RequestHandler>`, and therefore only
   take routes in the form of `FutureOr myFunc(RequestContext, ResponseContext res)`.
 * `@Middleware` now takes an `Iterable` of `RequestHandler`s.
-* `@Expose.path` now _must_ be a `String`, not just any `Pattern`.
+* `@Expose.path` now *must* be a `String`, not just any `Pattern`.
 * `@Expose.middleware` now takes `Iterable<RequestHandler>`, instead of just `List`.
 * `createDynamicHandler` was renamed to `ioc`, and is now used to run IoC-aware handlers in a
   type-safe manner.

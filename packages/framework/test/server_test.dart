@@ -5,7 +5,6 @@ import 'dart:io';
 import 'package:angel3_container/mirrors.dart';
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_framework/http.dart';
-import 'package:matcher/matcher.dart';
 import 'package:angel3_mock_request/angel3_mock_request.dart';
 
 import 'package:test/test.dart';
@@ -46,7 +45,7 @@ void main() {
     var rs = rq.response;
     var req = await http.createRequestContext(rq, rs);
     var res = await http.createResponseContext(rq, rs);
-    var e = AngelHttpException(null,
+    var e = AngelHttpException(
         statusCode: 321, message: 'Hello', errors: ['foo', 'bar']);
     await app.errorHandler(e, req, res);
     await http.sendResponse(rq, rs, req, res);

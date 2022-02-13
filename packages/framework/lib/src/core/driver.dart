@@ -185,7 +185,7 @@ abstract class Driver<
               throw AngelHttpException.badRequest(message: e.message)
                 ..stackTrace = st;
             }
-            throw AngelHttpException(e,
+            throw AngelHttpException(
                 stackTrace: st,
                 statusCode: (e is AngelHttpException) ? e.statusCode : 500,
                 message: e?.toString() ?? '500 Internal Server Error');
@@ -198,7 +198,7 @@ abstract class Driver<
             if (ee is AngelHttpException) {
               e = ee;
             } else {
-              e = AngelHttpException(ee,
+              e = AngelHttpException(
                   stackTrace: st,
                   statusCode: 500,
                   message: ee?.toString() ?? '500 Internal Server Error');
@@ -233,7 +233,7 @@ abstract class Driver<
                 } else if (error is AngelHttpException) {
                   e = error;
                 } else {
-                  e = AngelHttpException(error,
+                  e = AngelHttpException(
                       stackTrace: stackTrace, message: error.toString());
                 }
 

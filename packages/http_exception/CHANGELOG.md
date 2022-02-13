@@ -1,6 +1,19 @@
 
 # Change Log
 
+## 6.0.0
+
+* Updated to min SDK 2.15.x
+* Removed `error`
+
+## 5.0.0
+
+* Skipped release
+
+## 4.0.0
+
+* Skipped release
+
 ## 3.1.0
 
 * Upgraded to `lints` linter

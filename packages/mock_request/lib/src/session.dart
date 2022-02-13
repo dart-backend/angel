@@ -40,8 +40,8 @@ class MockHttpSession extends MapBase implements HttpSession {
   }
 
   @override
-  void forEach(void Function(dynamic, dynamic) f) {
-    _data.forEach(f);
+  void forEach(void Function(dynamic, dynamic) action) {
+    _data.forEach(action);
   }
 
   @override

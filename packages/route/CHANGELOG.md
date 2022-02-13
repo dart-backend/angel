@@ -1,5 +1,9 @@
 # Change Log
 
+## 6.0.0
+
+* Updated to min SDK 2.15.x
+
 ## 5.2.0
 
 * Updated `package:build_runner`

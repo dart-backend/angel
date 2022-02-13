@@ -26,7 +26,7 @@ A powerful, isomorphic routing library for Dart.
 
 ### Routing
 
-If you use [Angel 3](https://pub.dev/packages/angel3_framework), every `Angel` instance is a `Router` in itself.
+If you use [Angel3](https://pub.dev/packages/angel3_framework), every `Angel` instance is a `Router` in itself.
 
 ```dart
 void main() {
@@ -101,9 +101,9 @@ Supports both hashed routes and pushState. The `BrowserRouter` interface exposes
 
 To prevent this for a given anchor, do any of the following:
 
-* Do not provide an `href`
-* Provide a `download` or `target` attribute on the element
-* Set `rel="external"`
+- Do not provide an `href`
+- Provide a `download` or `target` attribute on the element
+- Set `rel="external"`
   
 ## Route State
 

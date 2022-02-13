@@ -94,8 +94,8 @@ class MockHttpHeaders extends HttpHeaders {
   }
 
   @override
-  void forEach(void Function(String name, List<String> values) f) {
-    _data.forEach(f);
+  void forEach(void Function(String name, List<String> values) action) {
+    _data.forEach(action);
   }
 
   @override
