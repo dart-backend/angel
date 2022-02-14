@@ -69,7 +69,7 @@ class TodoQuery extends Query<Todo, TodoQueryWhere> {
     if (row.every((x) => x == null)) return null;
     var model = Todo(
         id: row[0].toString(),
-        isComplete: (row[1] as bool?),
+        isComplete: (row[1] as int?) != 0,
         text: (row[2] as String?),
         createdAt: (row[3] as DateTime?),
         updatedAt: (row[4] as DateTime?));

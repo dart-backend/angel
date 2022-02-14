@@ -26,7 +26,7 @@ RequestHandler ioc(Function handler, {Iterable<String> optional = const []}) {
 Future resolveInjection(requirement, InjectionRequest injection,
     RequestContext req, ResponseContext res, bool throwOnUnresolved,
     [Container? container]) async {
-  var propFromApp;
+  dynamic propFromApp;
   container ??= req.container ?? res.app!.container;
 
   if (requirement == RequestContext) {

@@ -1,5 +1,10 @@
 # Change Log
 
+## 4.0.4
+
+* Updated README
+* Removed deprecated
+
 ## 4.0.3
 
 * Updated README

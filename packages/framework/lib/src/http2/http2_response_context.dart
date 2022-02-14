@@ -8,6 +8,7 @@ import 'http2_request_context.dart';
 class Http2ResponseContext extends ResponseContext<ServerTransportStream> {
   @override
   final Angel? app;
+
   final ServerTransportStream stream;
 
   @override

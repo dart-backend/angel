@@ -16,6 +16,11 @@ class PostgreSqlExecutor extends QueryExecutor {
     this.logger = logger ?? Logger('PostgreSqlExecutor');
   }
 
+  final Dialect _dialect = const PostgreSQLDialect();
+
+  @override
+  Dialect get dialect => _dialect;
+
   /// The underlying connection.
   PostgreSQLExecutionContext get connection => _connection;
 
@@ -31,8 +36,8 @@ class PostgreSqlExecutor extends QueryExecutor {
   @override
   Future<PostgreSQLResult> query(
       String tableName, String query, Map<String, dynamic> substitutionValues,
-      [List<String>? returningFields]) {
-    if (returningFields != null && returningFields.isNotEmpty) {
+      {String returningQuery = '', List<String> returningFields = const []}) {
+    if (returningFields.isNotEmpty) {
       var fields = returningFields.join(', ');
       var returning = 'RETURNING $fields';
       query = '$query $returning';
@@ -119,6 +124,11 @@ class PostgreSqlExecutorPool extends QueryExecutor {
     assert(size > 0, 'Connection pool cannot be empty.');
   }
 
+  final Dialect _dialect = const PostgreSQLDialect();
+
+  @override
+  Dialect get dialect => _dialect;
+
   /// Closes all connections.
   Future close() async {
     await _pool.close();
@@ -151,11 +161,11 @@ class PostgreSqlExecutorPool extends QueryExecutor {
   @override
   Future<PostgreSQLResult> query(
       String tableName, String query, Map<String, dynamic> substitutionValues,
-      [List<String>? returningFields]) {
+      {String returningQuery = '', List<String> returningFields = const []}) {
     return _pool.withResource(() async {
       var executor = await _next();
-      return executor.query(
-          tableName, query, substitutionValues, returningFields);
+      return executor.query(tableName, query, substitutionValues,
+          returningFields: returningFields);
     });
   }
 

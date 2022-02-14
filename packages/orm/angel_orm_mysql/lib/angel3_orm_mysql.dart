@@ -1,26 +1,33 @@
 import 'dart:async';
 import 'package:angel3_orm/angel3_orm.dart';
 import 'package:logging/logging.dart';
-// import 'package:pool/pool.dart';
-import 'package:galileo_sqljocky5/public/connection/connection.dart';
-import 'package:galileo_sqljocky5/sqljocky.dart';
+import 'package:mysql1/mysql1.dart';
 
 class MySqlExecutor extends QueryExecutor {
   /// An optional [Logger] to write to.
   final Logger? logger;
 
-  final Querier? _connection;
+  final MySqlConnection _connection;
 
   MySqlExecutor(this._connection, {this.logger});
 
+  final Dialect _dialect = const MySQLDialect();
+
+  @override
+  Dialect get dialect => _dialect;
+
   Future<void> close() {
+    return _connection.close();
+    /*
     if (_connection is MySqlConnection) {
       return (_connection as MySqlConnection).close();
     } else {
       return Future.value();
     }
+    */
   }
 
+  /*
   Future<Transaction> _startTransaction() {
     if (_connection is Transaction) {
       return Future.value(_connection as Transaction?);
@@ -30,7 +37,7 @@ class MySqlExecutor extends QueryExecutor {
       throw StateError('Connection must be transaction or connection');
     }
   }
-
+ 
   @override
   Future<List<List>> query(
       String tableName, String query, Map<String, dynamic> substitutionValues,
@@ -69,7 +76,64 @@ class MySqlExecutor extends QueryExecutor {
       });
     }
   }
+ */
 
+  @override
+  Future<List<List>> query(
+      String tableName, String query, Map<String, dynamic> substitutionValues,
+      {String returningQuery = '',
+      List<String> returningFields = const []}) async {
+    // Change @id -> ?
+    for (var name in substitutionValues.keys) {
+      query = query.replaceAll('@$name', '?');
+    }
+
+    var params = substitutionValues.values.toList();
+
+    //logger?.warning('Query: $query');
+    //logger?.warning('Values: $params');
+    //logger?.warning('Returning Query: $returningQuery');
+
+    if (returningQuery.isNotEmpty) {
+      // Handle insert, update and delete
+      // Retrieve back the inserted record
+      if (query.startsWith("INSERT")) {
+        var result = await _connection.query(query, params);
+
+        query = returningQuery;
+        //logger?.warning('Result.insertId: ${result.insertId}');
+        // Has primary key
+        //if (result.insertId != 0) {
+        if (returningQuery.endsWith('.id=?')) {
+          params = [result.insertId];
+        }
+      } else if (query.startsWith("UPDATE")) {
+        await _connection.query(query, params);
+        query = returningQuery;
+        params = [];
+      }
+    }
+
+    // Handle select
+    return _connection.query(query, params).then((results) {
+      return results.map((r) => r.toList()).toList();
+    });
+  }
+
+  @override
+  Future<T> transaction<T>(FutureOr<T> Function(QueryExecutor) f) async {
+    return f(this);
+    /*
+    if (_connection is! MySqlConnection) {
+      return await f(this);
+    }
+
+    await _connection.transaction((context) async {
+      var executor = MySqlExecutor(context, logger: logger);
+    });
+    */
+  }
+  /*
   @override
   Future<T> transaction<T>(FutureOr<T> Function(QueryExecutor) f) async {
     if (_connection is Transaction) {
@@ -88,4 +152,5 @@ class MySqlExecutor extends QueryExecutor {
       rethrow;
     }
   }
+  */
 }

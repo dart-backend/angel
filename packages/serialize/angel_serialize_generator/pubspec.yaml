@@ -1,12 +1,12 @@
 name: angel3_serialize_generator
-version: 4.3.0
+version: 5.0.0
 description: Angel3 model serialization generators, designed for use with Angel. Combine with angel_serialize for flexible modeling.
 homepage: https://angel3-framework.web.app/
-repository: https://github.com/dukefirehawk/angel/tree/angel3/packages/serialize/angel_serialize_generator
+repository: https://github.com/dukefirehawk/angel/tree/master/packages/serialize/angel_serialize_generator
 environment:
-  sdk: '>=2.12.0 <3.0.0'
+  sdk: '>=2.14.0 <3.0.0'
 dependencies:
-  analyzer: ^2.0.0
+  analyzer: ^3.0.0
   angel3_model: ^3.0.0
   angel3_serialize: ^4.1.0
   belatuk_code_buffer: ^3.0.0

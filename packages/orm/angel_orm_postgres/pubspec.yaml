@@ -6,7 +6,7 @@ repository: https://github.com/dukefirehawk/angel/tree/master/packages/orm/angel
 environment:
   sdk: '>=2.12.0 <3.0.0'
 dependencies:
-  angel3_orm: ^4.0.0
+  angel3_orm: ^4.1.0
   logging: ^1.0.1
   pool: ^1.5.0
   postgres: ^2.4.1
@@ -21,3 +21,5 @@ dependency_overrides:
     path: ../angel_orm_test
   angel3_orm:
     path: ../angel_orm
+  angel3_migration:
+    path: ../angel_migration

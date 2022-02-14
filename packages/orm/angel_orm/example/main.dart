@@ -26,8 +26,9 @@ class _FakeExecutor extends QueryExecutor {
 
   @override
   Future<List<List>> query(
-      String tableName, String? query, Map<String, dynamic> substitutionValues,
-      [returningFields = const []]) async {
+      String tableName, String query, Map<String, dynamic> substitutionValues,
+      {String returningQuery = '',
+      List<String> returningFields = const []}) async {
     var now = DateTime.now();
     print(
         '_FakeExecutor received query: $query and values: $substitutionValues');
@@ -40,6 +41,11 @@ class _FakeExecutor extends QueryExecutor {
   Future<T> transaction<T>(FutureOr<T> Function(QueryExecutor) f) {
     throw UnsupportedError('Transactions are not supported.');
   }
+
+  final Dialect _dialect = const PostgreSQLDialect();
+
+  @override
+  Dialect get dialect => _dialect;
 }
 
 @orm

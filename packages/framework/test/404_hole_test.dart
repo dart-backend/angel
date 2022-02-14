@@ -68,7 +68,7 @@ Future<void> hello(RequestContext req, ResponseContext res) {
     var s = Stream<List<int>>.fromIterable([bytes]);
     return s.pipe(res);
   } else {
-    return Future.value(true);
+    return Future.value();
   }
 }
 

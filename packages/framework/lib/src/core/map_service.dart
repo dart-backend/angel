@@ -58,7 +58,9 @@ class MapService extends Service<String?, Map<String, dynamic>> {
         for (var key in query!.keys) {
           if (!item.containsKey(key)) {
             return false;
-          } else if (item[key] != query[key]) return false;
+          } else if (item[key] != query[key]) {
+            return false;
+          }
         }
 
         return true;
@@ -77,11 +79,11 @@ class MapService extends Service<String?, Map<String, dynamic>> {
   @override
   Future<Map<String, dynamic>> create(Map<String, dynamic> data,
       [Map<String, dynamic>? params]) {
-    if (data is! Map) {
-      throw AngelHttpException.badRequest(
-          message:
-              'MapService does not support `create` with ${data.runtimeType}.');
-    }
+    //if (data is! Map) {
+    //  throw AngelHttpException.badRequest(
+    //      message:
+    //          'MapService does not support `create` with ${data.runtimeType}.');
+    //}
     var now = DateTime.now().toIso8601String();
     var result = Map<String, dynamic>.from(data);
 
@@ -98,11 +100,11 @@ class MapService extends Service<String?, Map<String, dynamic>> {
   @override
   Future<Map<String, dynamic>> modify(String? id, Map<String, dynamic> data,
       [Map<String, dynamic>? params]) {
-    if (data is! Map) {
-      throw AngelHttpException.badRequest(
-          message:
-              'MapService does not support `modify` with ${data.runtimeType}.');
-    }
+    //if (data is! Map) {
+    //  throw AngelHttpException.badRequest(
+    //      message:
+    //          'MapService does not support `modify` with ${data.runtimeType}.');
+    //}
     if (!items.any(_matchesId(id))) return create(data, params);
 
     return read(id).then((item) {
@@ -121,11 +123,11 @@ class MapService extends Service<String?, Map<String, dynamic>> {
   @override
   Future<Map<String, dynamic>> update(String? id, Map<String, dynamic> data,
       [Map<String, dynamic>? params]) {
-    if (data is! Map) {
-      throw AngelHttpException.badRequest(
-          message:
-              'MapService does not support `update` with ${data.runtimeType}.');
-    }
+    //if (data is! Map) {
+    //  throw AngelHttpException.badRequest(
+    //      message:
+    //          'MapService does not support `update` with ${data.runtimeType}.');
+    //}
     if (!items.any(_matchesId(id))) return create(data, params);
 
     return read(id).then((old) {

@@ -203,7 +203,7 @@ class FootQuery extends Query<Foot, FootQueryWhere> {
 
   @override
   Map<String, String> get casts {
-    return {'n_toes': 'text'};
+    return {'n_toes': 'char'};
   }
 
   @override

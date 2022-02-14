@@ -76,7 +76,9 @@ class HookedService<Id, Data, T extends Service<Id, Data>>
   /// Closes any open [StreamController]s on this instance. **Internal use only**.
   @override
   Future close() {
-    _ctrl.forEach((c) => c.close());
+    for (var c in _ctrl) {
+      c.close();
+    }
     beforeIndexed._close();
     beforeRead._close();
     beforeCreated._close();
@@ -144,8 +146,8 @@ class HookedService<Id, Data, T extends Service<Id, Data>>
         });
 
   @override
-  void addRoutes([Service? s]) {
-    super.addRoutes(s ?? inner);
+  void addRoutes([Service? service]) {
+    super.addRoutes(service ?? inner);
   }
 
   /// Runs the [listener] before every service method specified.
@@ -274,162 +276,162 @@ class HookedService<Id, Data, T extends Service<Id, Data>>
   }
 
   @override
-  Future<List<Data>> index([Map<String, dynamic>? _params]) {
-    var params = _stripReq(_params);
+  Future<List<Data>> index([Map<String, dynamic>? params]) {
+    var localParams = _stripReq(params);
     return beforeIndexed
-        ._emit(HookedServiceEvent(false, _getRequest(_params),
-            _getResponse(_params), inner, HookedServiceEvent.indexed,
-            params: params))
+        ._emit(HookedServiceEvent(false, _getRequest(params),
+            _getResponse(params), inner, HookedServiceEvent.indexed,
+            params: localParams))
         .then((before) {
       if (before._canceled) {
         return afterIndexed
-            ._emit(HookedServiceEvent(true, _getRequest(_params),
-                _getResponse(_params), inner, HookedServiceEvent.indexed,
-                params: params, result: before.result))
+            ._emit(HookedServiceEvent(true, _getRequest(params),
+                _getResponse(params), inner, HookedServiceEvent.indexed,
+                params: localParams, result: before.result))
             .then((after) => after.result as List<Data>);
       }
 
-      return inner.index(params).then((result) {
+      return inner.index(localParams).then((result) {
         return afterIndexed
-            ._emit(HookedServiceEvent(true, _getRequest(_params),
-                _getResponse(_params), inner, HookedServiceEvent.indexed,
-                params: params, result: result))
+            ._emit(HookedServiceEvent(true, _getRequest(params),
+                _getResponse(params), inner, HookedServiceEvent.indexed,
+                params: localParams, result: result))
             .then((after) => after.result as List<Data>);
       });
     });
   }
 
   @override
-  Future<Data> read(Id id, [Map<String, dynamic>? _params]) {
-    var params = _stripReq(_params);
+  Future<Data> read(Id id, [Map<String, dynamic>? params]) {
+    var localParams = _stripReq(params);
     return beforeRead
-        ._emit(HookedServiceEvent(false, _getRequest(_params),
-            _getResponse(_params), inner, HookedServiceEvent.read,
-            id: id, params: params))
+        ._emit(HookedServiceEvent(false, _getRequest(params),
+            _getResponse(params), inner, HookedServiceEvent.read,
+            id: id, params: localParams))
         .then((before) {
       if (before._canceled) {
         return afterRead
-            ._emit(HookedServiceEvent(true, _getRequest(_params),
-                _getResponse(_params), inner, HookedServiceEvent.read,
-                id: id, params: params, result: before.result))
+            ._emit(HookedServiceEvent(true, _getRequest(params),
+                _getResponse(params), inner, HookedServiceEvent.read,
+                id: id, params: localParams, result: before.result))
             .then((after) => after.result as Data);
       }
 
-      return inner.read(id, params).then((result) {
+      return inner.read(id, localParams).then((result) {
         return afterRead
-            ._emit(HookedServiceEvent(true, _getRequest(_params),
-                _getResponse(_params), inner, HookedServiceEvent.read,
-                id: id, params: params, result: result))
+            ._emit(HookedServiceEvent(true, _getRequest(params),
+                _getResponse(params), inner, HookedServiceEvent.read,
+                id: id, params: localParams, result: result))
             .then((after) => after.result as Data);
       });
     });
   }
 
   @override
-  Future<Data> create(Data data, [Map<String, dynamic>? _params]) {
-    var params = _stripReq(_params);
+  Future<Data> create(Data data, [Map<String, dynamic>? params]) {
+    var localParams = _stripReq(params);
     return beforeCreated
-        ._emit(HookedServiceEvent(false, _getRequest(_params),
-            _getResponse(_params), inner, HookedServiceEvent.created,
-            data: data, params: params))
+        ._emit(HookedServiceEvent(false, _getRequest(params),
+            _getResponse(params), inner, HookedServiceEvent.created,
+            data: data, params: localParams))
         .then((before) {
       if (before._canceled) {
         return afterCreated
-            ._emit(HookedServiceEvent(true, _getRequest(_params),
-                _getResponse(_params), inner, HookedServiceEvent.created,
-                data: before.data, params: params, result: before.result))
+            ._emit(HookedServiceEvent(true, _getRequest(params),
+                _getResponse(params), inner, HookedServiceEvent.created,
+                data: before.data, params: localParams, result: before.result))
             .then((after) => after.result as Data);
       }
 
-      return inner.create(before.data!, params).then((result) {
+      return inner.create(before.data!, localParams).then((result) {
         return afterCreated
-            ._emit(HookedServiceEvent(true, _getRequest(_params),
-                _getResponse(_params), inner, HookedServiceEvent.created,
-                data: before.data, params: params, result: result))
+            ._emit(HookedServiceEvent(true, _getRequest(params),
+                _getResponse(params), inner, HookedServiceEvent.created,
+                data: before.data, params: localParams, result: result))
             .then((after) => after.result as Data);
       });
     });
   }
 
   @override
-  Future<Data> modify(Id id, Data data, [Map<String, dynamic>? _params]) {
-    var params = _stripReq(_params);
+  Future<Data> modify(Id id, Data data, [Map<String, dynamic>? params]) {
+    var localParams = _stripReq(params);
     return beforeModified
-        ._emit(HookedServiceEvent(false, _getRequest(_params),
-            _getResponse(_params), inner, HookedServiceEvent.modified,
-            id: id, data: data, params: params))
+        ._emit(HookedServiceEvent(false, _getRequest(params),
+            _getResponse(params), inner, HookedServiceEvent.modified,
+            id: id, data: data, params: localParams))
         .then((before) {
       if (before._canceled) {
         return afterModified
-            ._emit(HookedServiceEvent(true, _getRequest(_params),
-                _getResponse(_params), inner, HookedServiceEvent.modified,
+            ._emit(HookedServiceEvent(true, _getRequest(params),
+                _getResponse(params), inner, HookedServiceEvent.modified,
                 id: id,
                 data: before.data,
-                params: params,
+                params: localParams,
                 result: before.result))
             .then((after) => after.result as Data);
       }
 
-      return inner.modify(id, before.data!, params).then((result) {
+      return inner.modify(id, before.data!, localParams).then((result) {
         return afterModified
-            ._emit(HookedServiceEvent(true, _getRequest(_params),
-                _getResponse(_params), inner, HookedServiceEvent.created,
-                id: id, data: before.data, params: params, result: result))
+            ._emit(HookedServiceEvent(true, _getRequest(params),
+                _getResponse(params), inner, HookedServiceEvent.created,
+                id: id, data: before.data, params: localParams, result: result))
             .then((after) => after.result as Data);
       });
     });
   }
 
   @override
-  Future<Data> update(Id id, Data data, [Map<String, dynamic>? _params]) {
-    var params = _stripReq(_params);
+  Future<Data> update(Id id, Data data, [Map<String, dynamic>? params]) {
+    var localParams = _stripReq(params);
     return beforeUpdated
-        ._emit(HookedServiceEvent(false, _getRequest(_params),
-            _getResponse(_params), inner, HookedServiceEvent.updated,
-            id: id, data: data, params: params))
+        ._emit(HookedServiceEvent(false, _getRequest(params),
+            _getResponse(params), inner, HookedServiceEvent.updated,
+            id: id, data: data, params: localParams))
         .then((before) {
       if (before._canceled) {
         return afterUpdated
-            ._emit(HookedServiceEvent(true, _getRequest(_params),
-                _getResponse(_params), inner, HookedServiceEvent.updated,
+            ._emit(HookedServiceEvent(true, _getRequest(params),
+                _getResponse(params), inner, HookedServiceEvent.updated,
                 id: id,
                 data: before.data,
-                params: params,
+                params: localParams,
                 result: before.result))
             .then((after) => after.result as Data);
       }
 
-      return inner.update(id, before.data!, params).then((result) {
+      return inner.update(id, before.data!, localParams).then((result) {
         return afterUpdated
-            ._emit(HookedServiceEvent(true, _getRequest(_params),
-                _getResponse(_params), inner, HookedServiceEvent.updated,
-                id: id, data: before.data, params: params, result: result))
+            ._emit(HookedServiceEvent(true, _getRequest(params),
+                _getResponse(params), inner, HookedServiceEvent.updated,
+                id: id, data: before.data, params: localParams, result: result))
             .then((after) => after.result as Data);
       });
     });
   }
 
   @override
-  Future<Data> remove(Id id, [Map<String, dynamic>? _params]) {
-    var params = _stripReq(_params);
+  Future<Data> remove(Id id, [Map<String, dynamic>? params]) {
+    var localParams = _stripReq(params);
     return beforeRemoved
-        ._emit(HookedServiceEvent(false, _getRequest(_params),
-            _getResponse(_params), inner, HookedServiceEvent.removed,
-            id: id, params: params))
+        ._emit(HookedServiceEvent(false, _getRequest(params),
+            _getResponse(params), inner, HookedServiceEvent.removed,
+            id: id, params: localParams))
         .then((before) {
       if (before._canceled) {
         return afterRemoved
-            ._emit(HookedServiceEvent(true, _getRequest(_params),
-                _getResponse(_params), inner, HookedServiceEvent.removed,
-                id: id, params: params, result: before.result))
+            ._emit(HookedServiceEvent(true, _getRequest(params),
+                _getResponse(params), inner, HookedServiceEvent.removed,
+                id: id, params: localParams, result: before.result))
             .then((after) => after.result) as Data;
       }
 
-      return inner.remove(id, params).then((result) {
+      return inner.remove(id, localParams).then((result) {
         return afterRemoved
-            ._emit(HookedServiceEvent(true, _getRequest(_params),
-                _getResponse(_params), inner, HookedServiceEvent.removed,
-                id: id, params: params, result: result))
+            ._emit(HookedServiceEvent(true, _getRequest(params),
+                _getResponse(params), inner, HookedServiceEvent.removed,
+                id: id, params: localParams, result: result))
             .then((after) => after.result as Data);
       });
     });
@@ -520,7 +522,7 @@ class HookedServiceEvent<Id, Data, T extends Service<Id, Data>> {
   Map<String, dynamic>? _params;
   final RequestContext? _request;
   final ResponseContext? _response;
-  var result;
+  dynamic result;
 
   String get eventName => _eventName;
 
@@ -557,7 +559,9 @@ class HookedServiceEventDispatcher<Id, Data, T extends Service<Id, Data>> {
   final List<HookedServiceEventListener<Id, Data, T>> listeners = [];
 
   void _close() {
-    _ctrl.forEach((c) => c.close());
+    for (var c in _ctrl) {
+      c.close();
+    }
     listeners.clear();
   }
 

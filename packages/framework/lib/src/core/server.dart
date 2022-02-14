@@ -82,8 +82,8 @@ class Angel extends Routable {
   ///
   /// This value is memoized the first time you call it, so do not change environment
   /// configuration at runtime!
-  @deprecated
-  bool get isProduction => environment.isProduction;
+  //@deprecated
+  //bool get isProduction => environment.isProduction;
 
   /// The [AngelEnvironment] in which the application is running.
   ///

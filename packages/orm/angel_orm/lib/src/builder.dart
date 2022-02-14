@@ -238,7 +238,7 @@ class StringSqlExpressionBuilder extends SqlExpressionBuilder<String> {
   void like(String pattern, {String Function(String)? sanitize}) {
     sanitize ??= (s) => pattern;
     _raw = 'LIKE \'' + sanitize('@$substitution') + '\'';
-    query.substitutionValues[substitution] = pattern;
+    //query.substitutionValues[substitution] = pattern;
     _hasValue = true;
     _value = null;
   }

@@ -45,11 +45,11 @@ abstract class QueryBase<T> {
   List<T> deserializeList(List<List<dynamic>> it) {
     var optResult = it.map(deserialize).toList();
     var result = <T>[];
-    optResult.forEach((element) {
+    for (var element in optResult) {
       element.ifPresent((item) {
         result.add(item);
       });
-    });
+    }
 
     return result;
   }
@@ -57,8 +57,8 @@ abstract class QueryBase<T> {
   Future<List<T>> get(QueryExecutor executor) async {
     var sql = compile({});
 
-    //_log.fine('sql = $sql');
-    //_log.fine('substitutionValues = $substitutionValues');
+    print('sql = $sql');
+    print('substitutionValues = $substitutionValues');
 
     return executor.query(tableName, sql, substitutionValues).then((it) {
       return deserializeList(it);

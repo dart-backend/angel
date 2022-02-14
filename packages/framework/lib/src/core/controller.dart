@@ -43,7 +43,7 @@ class Controller {
 
     var name = await applyRoutes(app, app.container!.reflector);
     app.controllers[name] = this;
-    return null;
+    //return null;
   }
 
   /// Applies the routes from this [Controller] to some [router].

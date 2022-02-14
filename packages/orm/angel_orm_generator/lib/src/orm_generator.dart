@@ -110,7 +110,8 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
               var type = ctx.columns[field.name]?.type;
               if (type == null) continue;
               if (floatTypes.contains(type)) {
-                args[name] = literalString('text');
+                //args[name] = literalString('text');
+                args[name] = literalString('char');
               }
             }
 

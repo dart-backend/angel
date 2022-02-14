@@ -77,7 +77,7 @@ void standaloneTests(FutureOr<QueryExecutor> Function() createExecutor,
 
           var sportsCars = CarQuery()..where!.familyFriendly.isFalse;
           cars = await sportsCars.get(executor!);
-          //print(cars.map((c) => c.toJson()));
+          print(cars.map((c) => c.toJson()));
 
           var car = cars.first;
           expect(car.make, ferrari!.make);

@@ -83,10 +83,10 @@ class Parameter {
   final String? query;
 
   /// Only execute the handler if the value of this parameter matches the given value.
-  final match;
+  final dynamic match;
 
   /// Specify a default value.
-  final defaultValue;
+  final dynamic defaultValue;
 
   /// If `true` (default), then an error will be thrown if this parameter is not present.
   final bool? required;
@@ -117,6 +117,8 @@ class Parameter {
     if (session?.isNotEmpty == true) {
       return StateError('Session does not contain required key "$session".');
     }
+
+    return null;
   }
 
   /// Obtains a value for this parameter from a [RequestContext].
