@@ -233,8 +233,8 @@ _  ___ |  /|  / / /_/ / _  /___  _  /___
           pub_sub.IsolateClient('client${argsWithId.id}', args.pubSubSendPort);
 
       var app = Angel(reflector: args.reflector)
-        ..container!.registerSingleton<pub_sub.Client>(client)
-        ..container!.registerSingleton(InstanceInfo(id: argsWithId.id));
+        ..container.registerSingleton<pub_sub.Client>(client)
+        ..container.registerSingleton(InstanceInfo(id: argsWithId.id));
 
       app.shutdownHooks.add((_) => client.close());
 

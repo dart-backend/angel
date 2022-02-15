@@ -3,6 +3,10 @@
 ## 6.0.0
 
 * Updated to min SDK 2.15.x
+* Updated `container` to non nullable
+* Updated `angel` to non nullable
+* Updated `logger` to non nullable
+* Refactored error handler
 
 ## 5.0.0
 

@@ -4,6 +4,7 @@ import 'dart:async';
 import 'dart:collection' show HashMap;
 import 'dart:convert';
 import 'package:angel3_container/angel3_container.dart';
+import 'package:angel3_container/mirrors.dart';
 import 'package:angel3_http_exception/angel3_http_exception.dart';
 import 'package:angel3_route/angel3_route.dart';
 import 'package:belatuk_combinator/belatuk_combinator.dart';
@@ -21,17 +22,44 @@ import 'service.dart';
 
 //final RegExp _straySlashes = RegExp(r'(^/+)|(/+$)');
 
-/// A function that configures an [Angel] server in some way.
+/// A function that configures an [Angel] server.
 typedef AngelConfigurer = FutureOr<void> Function(Angel app);
 
 /// A function that asynchronously generates a view from the given path and data.
 typedef ViewGenerator = FutureOr<String> Function(String path,
     [Map<String, dynamic>? data]);
 
+/// A function that handles error
+typedef AngelErrorHandler = dynamic Function(
+    AngelHttpException e, RequestContext req, ResponseContext res);
+
+/// The default error handler for [Angel] server
+Future<bool> _defaultErrorHandler(
+    AngelHttpException e, RequestContext req, ResponseContext res) async {
+  if (!req.accepts('text/html', strict: true) &&
+      (req.accepts('application/json') ||
+          req.accepts('application/javascript'))) {
+    await res.json(e.toJson());
+    return Future.value(false);
+  } else {
+    res.contentType = MediaType('text', 'html', {'charset': 'utf8'});
+    res.statusCode = e.statusCode;
+    res.write('<!DOCTYPE html><html><head><title>${e.message}</title>');
+    res.write('</head><body><h1>${e.message}</h1><ul>');
+
+    for (var error in e.errors) {
+      res.write('<li>$error</li>');
+    }
+
+    res.write('</ul></body></html>');
+    return Future.value(false);
+  }
+}
+
 /// A powerful real-time/REST/MVC server class.
 class Angel extends Routable {
-  static ViewGenerator noViewEngineConfigured =
-      (String view, [Map? data]) => 'No view engine has been configured yet.';
+  static Future<String> _noViewEngineConfigured(String view, [Map? data]) =>
+      Future.value('No view engine has been configured yet.');
 
   final List<Angel> _children = [];
   final Map<
@@ -114,7 +142,7 @@ class Angel extends Routable {
   /// A [Map] of application-specific data that can be accessed by any
   /// piece of code that can see this [Angel] instance.
   ///
-  /// Packages like `package:angel_configuration` populate this map
+  /// Packages like `package:angel3_configuration` populate this map
   /// for you.
   @override
   final Map configuration = {};
@@ -122,31 +150,10 @@ class Angel extends Routable {
   /// A function that renders views.
   ///
   /// Called by [ResponseContext]@`render`.
-  ViewGenerator? viewGenerator = noViewEngineConfigured;
+  ViewGenerator? viewGenerator = _noViewEngineConfigured;
 
   /// The handler currently configured to run on [AngelHttpException]s.
-  Function(AngelHttpException e, RequestContext req, ResponseContext res)
-      errorHandler =
-      (AngelHttpException e, RequestContext req, ResponseContext res) {
-    if (!req.accepts('text/html', strict: true) &&
-        (req.accepts('application/json') ||
-            req.accepts('application/javascript'))) {
-      res.json(e.toJson());
-      return;
-    }
-
-    res.contentType = MediaType('text', 'html', {'charset': 'utf8'});
-    res.statusCode = e.statusCode; // ?? 200;
-    res.write('<!DOCTYPE html><html><head><title>${e.message}</title>');
-    res.write('</head><body><h1>${e.message}</h1><ul>');
-
-    for (var error in e.errors) {
-      res.write('<li>$error</li>');
-    }
-
-    res.write('</ul></body></html>');
-    res.close();
-  };
+  AngelErrorHandler errorHandler = _defaultErrorHandler;
 
   @override
   Route<RequestHandler> addRoute(
@@ -184,12 +191,12 @@ class Angel extends Routable {
   /// Loads some base dependencies into the service container.
   void bootstrapContainer() {
     if (runtimeType != Angel) {
-      container?.registerSingleton(this);
+      container.registerSingleton(this);
     }
 
-    container?.registerSingleton<Angel>(this);
-    container?.registerSingleton<Routable>(this);
-    container?.registerSingleton<Router>(this);
+    container.registerSingleton<Angel>(this);
+    container.registerSingleton<Routable>(this);
+    container.registerSingleton<Router>(this);
   }
 
   /// Shuts down the server, and closes any open [StreamController]s.
@@ -202,7 +209,7 @@ class Angel extends Routable {
     });
 
     super.close();
-    viewGenerator = noViewEngineConfigured;
+    viewGenerator = _noViewEngineConfigured;
     _preContained.clear();
     handlerCache.clear();
     encoders.clear();
@@ -315,6 +322,7 @@ class Angel extends Routable {
   /// the execution will be faster, as the injection requirements were stored beforehand.
   Future runContained(Function handler, RequestContext req, ResponseContext res,
       [Container? container]) {
+    container ??= Container(MirrorsReflector());
     return Future.sync(() {
       if (_preContained.containsKey(handler)) {
         return handleContained(handler, _preContained[handler]!, container)(
@@ -328,10 +336,11 @@ class Angel extends Routable {
   /// Runs with DI, and *always* reflects. Prefer [runContained].
   Future runReflected(Function handler, RequestContext req, ResponseContext res,
       [Container? container]) {
-    container ??= req.container ?? res.app!.container;
+    container ??=
+        req.container ?? res.app?.container ?? Container(ThrowingReflector());
     var h = handleContained(
         handler,
-        _preContained[handler] = preInject(handler, container!.reflector),
+        _preContained[handler] = preInject(handler, container.reflector),
         container);
     return Future.sync(() => h(req, res));
     // return   closureMirror.apply(args).reflectee;
@@ -350,7 +359,7 @@ class Angel extends Routable {
   ///
   /// If you are on `Dart >=2.0.0`, simply call `mountController<T>()`.
   Future<T> mountController<T extends Controller>([Type? type]) {
-    var controller = container!.make<T>(type);
+    var controller = container.make<T>(type);
     return configure(controller.configureServer).then((_) => controller);
   }
 
@@ -392,7 +401,7 @@ class Angel extends Routable {
     }
 
     bootstrapContainer();
-    viewGenerator ??= noViewEngineConfigured;
+    viewGenerator ??= _noViewEngineConfigured;
     serializer ??= json.encode;
   }
 }

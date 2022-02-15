@@ -1,5 +1,9 @@
 # Change Log
 
+## 3.0.0-dev.3
+
+* Fixed null safety warnings
+
 ## 3.0.0-dev.2
 
 * Updated to use `package:belatuk_pretty_logging`

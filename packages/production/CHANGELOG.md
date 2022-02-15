@@ -3,6 +3,7 @@
 ## 3.1.2
 
 * Updated repo link
+* Fixed null safety warnings
 
 ## 3.1.1
 

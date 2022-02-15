@@ -106,7 +106,7 @@ class AngelShelf extends Driver<shelf.Request, ShelfResponseContext?,
     var path = request.url.path.replaceAll(_straySlashes, '');
     if (path.isEmpty) path = '/';
     var rq =
-        ShelfRequestContext(app, app.container!.createChild(), request, path);
+        ShelfRequestContext(app, app.container.createChild(), request, path);
     return Future.value(rq);
   }
 

@@ -45,7 +45,9 @@ class HookedService<Id, Data, T extends Service<Id, Data>>
 
   HookedService(this.inner) {
     // Clone app instance
-    if (inner.app != null) app = inner.app;
+    if (inner.isAppActive) {
+      app = inner.app;
+    }
   }
 
   @override
@@ -62,9 +64,9 @@ class HookedService<Id, Data, T extends Service<Id, Data>>
     return params['__responsectx'] as ResponseContext?;
   }
 
-  Map<String, dynamic>? _stripReq(Map<String, dynamic>? params) {
+  Map<String, dynamic> _stripReq(Map<String, dynamic>? params) {
     if (params == null) {
-      return params;
+      return {};
     } else {
       return params.keys
           .where((key) => key != '__requestctx' && key != '__responsectx')
@@ -97,7 +99,7 @@ class HookedService<Id, Data, T extends Service<Id, Data>>
 
   /// Adds hooks to this instance.
   void addHooks(Angel app) {
-    var hooks = getAnnotation<Hooks>(inner, app.container!.reflector);
+    var hooks = getAnnotation<Hooks>(inner, app.container.reflector);
     var before = <HookedServiceEventListener<Id, Data, T>>[];
     var after = <HookedServiceEventListener<Id, Data, T>>[];
 
@@ -109,7 +111,7 @@ class HookedService<Id, Data, T extends Service<Id, Data>>
     void applyListeners(
         Function fn, HookedServiceEventDispatcher<Id, Data, T> dispatcher,
         [bool? isAfter]) {
-      var hooks = getAnnotation<Hooks>(fn, app.container!.reflector);
+      var hooks = getAnnotation<Hooks>(fn, app.container.reflector);
       final listeners = <HookedServiceEventListener<Id, Data, T>>[
         ...isAfter == true ? after : before
       ];
@@ -512,7 +514,7 @@ class HookedServiceEvent<Id, Data, T extends Service<Id, Data>> {
   /// Resolves a service from the application.
   ///
   /// Shorthand for `e.service.app.service(...)`.
-  Service? getService(Pattern path) => service.app!.findService(path);
+  Service? getService(Pattern path) => service.app.findService(path);
 
   bool _canceled = false;
   final String _eventName;
@@ -532,7 +534,7 @@ class HookedServiceEvent<Id, Data, T extends Service<Id, Data>> {
 
   bool get isBefore => !isAfter;
 
-  Map? get params => _params;
+  Map get params => _params ?? {};
 
   RequestContext? get request => _request;
 

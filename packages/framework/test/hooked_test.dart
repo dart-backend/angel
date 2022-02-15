@@ -135,8 +135,8 @@ void main() {
       var type = e.isBefore ? 'before' : 'after';
       print('Params to $type ${e.eventName}: ${e.params}');
       expect(e.params, isMap);
-      expect(e.params?.keys, contains('provider'));
-      expect(e.params?['provider'], const IsInstanceOf<Providers>());
+      expect(e.params.keys, contains('provider'));
+      expect(e.params['provider'], const IsInstanceOf<Providers>());
     }
 
     svc
