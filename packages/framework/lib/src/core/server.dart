@@ -4,7 +4,6 @@ import 'dart:async';
 import 'dart:collection' show HashMap;
 import 'dart:convert';
 import 'package:angel3_container/angel3_container.dart';
-import 'package:angel3_container/mirrors.dart';
 import 'package:angel3_http_exception/angel3_http_exception.dart';
 import 'package:angel3_route/angel3_route.dart';
 import 'package:belatuk_combinator/belatuk_combinator.dart';
@@ -322,7 +321,7 @@ class Angel extends Routable {
   /// the execution will be faster, as the injection requirements were stored beforehand.
   Future runContained(Function handler, RequestContext req, ResponseContext res,
       [Container? container]) {
-    container ??= Container(MirrorsReflector());
+    container ??= Container(EmptyReflector());
     return Future.sync(() {
       if (_preContained.containsKey(handler)) {
         return handleContained(handler, _preContained[handler]!, container)(
@@ -337,7 +336,11 @@ class Angel extends Routable {
   Future runReflected(Function handler, RequestContext req, ResponseContext res,
       [Container? container]) {
     container ??=
-        req.container ?? res.app?.container ?? Container(ThrowingReflector());
+        req.container ?? res.app?.container ?? Container(EmptyReflector());
+
+    if (container.reflector is EmptyReflector) {
+      throw ArgumentError("No `reflector` passed");
+    }
     var h = handleContained(
         handler,
         _preContained[handler] = preInject(handler, container.reflector),

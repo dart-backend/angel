@@ -101,7 +101,9 @@ RequestHandler handleContained(Function handler, InjectionRequest injection,
   return (RequestContext req, ResponseContext res) async {
     if (injection.parameters.isNotEmpty &&
         injection.parameters.values.any((p) => p.match != null) &&
-        !suitableForInjection(req, res, injection)) return Future.value(true);
+        !suitableForInjection(req, res, injection)) {
+      return Future.value(true);
+    }
 
     var args = [];
 
@@ -167,10 +169,10 @@ InjectionRequest preInject(Function handler, Reflector reflector) {
     var name = parameter.name;
     var type = parameter.type.reflectedType;
 
-    var _Parameter = reflector.reflectType(Parameter);
+    var _parameter = reflector.reflectType(Parameter);
 
     var p = parameter.annotations
-        .firstWhereOrNull((m) => m.type.isAssignableTo(_Parameter))
+        .firstWhereOrNull((m) => m.type.isAssignableTo(_parameter))
         ?.reflectee as Parameter?;
     //print(p);
     if (p != null) {
