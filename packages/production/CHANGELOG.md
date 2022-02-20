@@ -1,5 +1,17 @@
 # Change Log
 
+## 6.0.0
+
+* Updated to min SDK 2.15.x
+
+## 5.0.0
+
+* No release. Skipped
+
+## 4.0.0
+
+* No release. Skipped
+
 ## 3.1.2
 
 * Updated repo link

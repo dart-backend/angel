@@ -240,7 +240,7 @@ _  ___ |  /|  / / /_/ / _  /___  _  /___
 
       await app.configure(args.configureServer);
 
-      app.logger ??= Logger(args.loggerName)
+      app.logger = Logger(args.loggerName)
         ..onRecord.listen((rec) => Runner.handleLogRecord(rec, args.options));
 
       AngelHttp http;
