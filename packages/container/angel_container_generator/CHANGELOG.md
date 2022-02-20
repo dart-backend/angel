@@ -1,5 +1,17 @@
 # Change Log
 
+## 6.0.0
+
+* Updated to min SDK 2.15.x
+
+## 5.0.0
+
+* Skipped release
+
+## 4.0.0
+
+* Skipped release
+
 ## 3.0.1
 
 * Updated `package:angel3_container`

@@ -46,6 +46,11 @@ RequestHandler chain(Iterable<RequestHandler> handlers) {
 class Routable extends Router<RequestHandler> {
   final Map<Pattern, Service> _services = {};
   final Map<Pattern, Service?> _serviceLookups = {};
+
+  /// A [Map] of application-specific data that can be accessed.
+  ///
+  /// Packages like `package:angel3_configuration` populate this map
+  /// for you.
   final Map configuration = {};
 
   final Container _container;

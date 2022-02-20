@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io' show stderr, Cookie;
+import 'dart:io' show Cookie;
 import 'package:angel3_http_exception/angel3_http_exception.dart';
 import 'package:angel3_route/angel3_route.dart';
 import 'package:belatuk_combinator/belatuk_combinator.dart';
@@ -20,10 +20,6 @@ abstract class Driver<
   final Angel app;
   final bool useZone;
   bool _closed = false;
-  late Server _server;
-
-  // TODO: Ugly fix
-  bool isServerInitialised = false;
 
   StreamSubscription<Request>? _sub;
   //final log = Logger('Driver');
@@ -37,14 +33,7 @@ abstract class Driver<
   Uri get uri;
 
   /// The native server running this instance.
-  Server? get server {
-    // TODO: Ugly fix
-    if (isServerInitialised) {
-      return _server;
-    } else {
-      return null;
-    }
-  }
+  Server? server;
 
   Future<Server> generateServer(address, int port) =>
       serverGenerator(address, port);
@@ -53,24 +42,21 @@ abstract class Driver<
   Future<Server> startServer([address, int port = 0]) {
     var host = address ?? '127.0.0.1';
     return generateServer(host, port).then((server) {
-      _server = server;
-
-      // TODO: Ugly fix
-      isServerInitialised = true;
+      this.server = server;
 
       return Future.wait(app.startupHooks.map(app.configure)).then((_) {
         app.optimizeForProduction();
-        _sub = server.listen((request) {
+        _sub = this.server?.listen((request) {
           var stream = createResponseStreamFromRawRequest(request);
           stream.listen((response) {
             // TODO: To be revisited
             handleRawRequest(request, response);
           });
         });
-        return Future.value(_server);
+        return Future.value(this.server!);
       });
     }).catchError((error) {
-      app.logger?.severe('Failed to create server', error);
+      app.logger.severe('Failed to create server', error);
       throw ArgumentError('[Driver]Failed to create server');
     });
   }
@@ -163,7 +149,7 @@ abstract class Driver<
             ..registerSingleton<ParseResult<RouteResult>?>(tuple.item3)
             ..registerSingleton<ParseResult?>(tuple.item3);
 
-          if (!app.environment.isProduction && app.logger != null) {
+          if (!app.environment.isProduction) {
             req.container?.registerSingleton<Stopwatch>(Stopwatch()..start());
           }
 
@@ -204,22 +190,16 @@ abstract class Driver<
                   message: ee?.toString() ?? '500 Internal Server Error');
             }
 
-            if (app.logger != null) {
-              var error = e.error ?? e;
-              var trace = Trace.from(StackTrace.current).terse;
-              app.logger?.severe(e.message, error, trace);
-            }
+            var error = e.error ?? e;
+            var trace = Trace.from(StackTrace.current).terse;
+            app.logger.severe(e.message, error, trace);
 
             return handleAngelHttpException(e, st, req, res, request, response);
           });
         } else {
           var zoneSpec = ZoneSpecification(
             print: (self, parent, zone, line) {
-              if (app.logger != null) {
-                app.logger?.info(line);
-              } else {
-                parent.print(zone, line);
-              }
+              app.logger.info(line);
             },
             handleUncaughtError: (self, parent, zone, error, stackTrace) {
               var trace = Trace.from(stackTrace).terse;
@@ -237,9 +217,7 @@ abstract class Driver<
                       stackTrace: stackTrace, message: error.toString());
                 }
 
-                if (app.logger != null) {
-                  app.logger?.severe(e.message, error, trace);
-                }
+                app.logger.severe(e.message, error, trace);
 
                 return handleAngelHttpException(
                     e, trace, req, res, request, response);
@@ -248,23 +226,15 @@ abstract class Driver<
                 closeResponse(response);
                 // Ideally, we won't be in a position where an absolutely fatal error occurs,
                 // but if so, we'll need to log it.
-                if (app.logger != null) {
-                  app.logger!.severe(
-                      'Fatal error occurred when processing $uri.', e, trace);
-                } else {
-                  stderr
-                    ..writeln('Fatal error occurred when processing '
-                        '${req.uri}:')
-                    ..writeln(e)
-                    ..writeln(trace);
-                }
+                app.logger.severe(
+                    'Fatal error occurred when processing $uri.', e, trace);
               });
             },
           );
 
           var zone = Zone.current.fork(specification: zoneSpec);
-          req.container!.registerSingleton<Zone>(zone);
-          req.container!.registerSingleton<ZoneSpecification>(zoneSpec);
+          req.container?.registerSingleton<Zone>(zone);
+          req.container?.registerSingleton<ZoneSpecification>(zoneSpec);
 
           // If a synchronous error is thrown, it's not caught by `zone.run`,
           // so use a try/catch, and recover when need be.
@@ -291,12 +261,12 @@ abstract class Driver<
       {bool ignoreFinalizers = false}) {
     if (req == null || res == null) {
       try {
-        app.logger?.severe('500 Internal Server Error', e, st);
+        app.logger.severe('500 Internal Server Error', e, st);
         setStatusCode(response, 500);
         writeStringToResponse(response, '500 Internal Server Error');
         closeResponse(response);
       } catch (e) {
-        app.logger?.severe('500 Internal Server Error', e);
+        app.logger.severe('500 Internal Server Error', e);
       }
       return Future.value();
     }
@@ -322,11 +292,9 @@ abstract class Driver<
       ResponseContext res,
       {bool ignoreFinalizers = false}) {
     Future<void> _cleanup(_) {
-      if (!app.environment.isProduction &&
-          app.logger != null &&
-          req.container!.has<Stopwatch>()) {
+      if (!app.environment.isProduction && req.container!.has<Stopwatch>()) {
         var sw = req.container!.make<Stopwatch>();
-        app.logger?.info(
+        app.logger.info(
             "${res.statusCode} ${req.method} ${req.uri} (${sw.elapsedMilliseconds} ms)");
       }
       return req.close();
