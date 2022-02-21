@@ -50,7 +50,7 @@ void main() {
 
     var oldErrorHandler = app.errorHandler;
     app.errorHandler = (e, req, res) {
-      app.logger?.severe(e.message, e, e.stackTrace ?? StackTrace.current);
+      app.logger.severe(e.message, e, e.stackTrace ?? StackTrace.current);
       return oldErrorHandler(e, req, res);
     };
 
