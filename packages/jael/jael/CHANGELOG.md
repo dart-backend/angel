@@ -1,5 +1,9 @@
 # Change Log
 
+## 5.0.0
+
+* Updated to min SDK 2.15.x
+
 ## 4.2.0
 
 * Updated to use `package:belatuk_code_buffer`

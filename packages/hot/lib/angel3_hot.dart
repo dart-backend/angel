@@ -11,7 +11,6 @@ import 'package:charcode/ascii.dart';
 import 'package:glob/glob.dart';
 import 'package:glob/list_local_fs.dart';
 import 'package:belatuk_html_builder/elements.dart';
-import 'package:belatuk_html_builder/belatuk_html_builder.dart';
 import 'package:io/ansi.dart';
 import 'package:path/path.dart' as p;
 import 'package:vm_service/vm_service.dart' as vm;
@@ -140,7 +139,7 @@ class HotReloader {
 
   void _logWarning(String msg) {
     if (_server?.app.logger != null) {
-      _server?.app.logger?.warning(msg);
+      _server?.app.logger.warning(msg);
     } else {
       print(yellow.wrap('WARNING: $msg'));
     }
@@ -148,7 +147,7 @@ class HotReloader {
 
   void _logInfo(String msg) {
     if (_server?.app.logger != null) {
-      _server?.app.logger?.info(msg);
+      _server?.app.logger.info(msg);
     } else {
       print(lightGray.wrap(msg));
     }
@@ -188,7 +187,8 @@ class HotReloader {
       if (_vmachine != null) {
         for (var isolate in _vmachine!.isolates ?? <vm.IsolateRef>[]) {
           if (isolate.id != null) {
-            await _client.setExceptionPauseMode(isolate.id!, 'None');
+            await _client.setIsolatePauseMode(isolate.id!,
+                exceptionPauseMode: 'None');
           }
         }
       }
@@ -359,7 +359,7 @@ class HotReloader {
       scheduleMicrotask(() async {
         // Disconnect active WebSockets
         try {
-          var ws = _server!.app.container!.make<AngelWebSocket>();
+          var ws = _server!.app.container.make<AngelWebSocket>();
 
           for (var client in ws.clients) {
             try {
@@ -373,7 +373,7 @@ class HotReloader {
           // await Future.forEach(
           //     _server.app.shutdownHooks, _server.app.configure);
           await _server!.app.close();
-          _server!.app.logger?.clearListeners();
+          _server!.app.logger.clearListeners();
         } catch (_) {
           // Fail silently...
         }

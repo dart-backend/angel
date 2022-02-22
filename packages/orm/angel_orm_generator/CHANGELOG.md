@@ -1,9 +1,12 @@
 # Change Log
 
+## 6.0.0
+
+* Updated to min SDK 2.15.x
+
 ## 5.0.0
 
-* Updated `analyzer` to version 3.x
-* Updated min SDK to 2.14.x
+* No release. Skipped
 
 ## 4.3.0
 
