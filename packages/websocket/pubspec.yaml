@@ -1,15 +1,15 @@
 name: angel3_websocket
-version: 4.1.2
+version: 6.0.0
 description: This library provides WebSockets support for Angel3 framework.
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dukefirehawk/angel/tree/master/packages/websocket
 environment:
-  sdk: '>=2.12.0 <3.0.0'
+  sdk: '>=2.15.0 <3.0.0'
 dependencies:
-  angel3_auth: ^4.1.0
-  angel3_client: ^4.1.0
-  angel3_framework: ^4.2.0
-  angel3_http_exception: ^3.0.0
+  angel3_auth: ^6.0.0
+  angel3_client: ^6.0.0
+  angel3_framework: ^6.0.0
+  angel3_http_exception: ^6.0.0
   belatuk_merge_map: ^3.0.0
   http: ^0.13.1
   meta: ^1.3.0
@@ -18,8 +18,24 @@ dependencies:
   collection: ^1.15.0
   logging: ^1.0.1
 dev_dependencies:
-  angel3_container: ^3.1.0
-  angel3_model: ^3.1.0
+  angel3_container: ^6.0.0
+  angel3_model: ^6.0.0
   test: ^1.17.5
   lints: ^1.0.0
-  
+dependency_overrides:
+  angel3_container:
+    path: ../container/angel_container
+  angel3_framework:
+    path: ../framework
+  angel3_http_exception:
+    path: ../http_exception
+  angel3_model:
+    path: ../model
+  angel3_route:
+    path: ../route
+  angel3_mock_request:
+    path: ../mock_request
+  angel3_auth:
+    path: ../auth 
+  angel3_client:
+    path: ../client

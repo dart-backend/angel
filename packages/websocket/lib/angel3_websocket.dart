@@ -28,16 +28,16 @@ class WebSocketEvent<Data> {
 class WebSocketAction {
   String? id;
   String? eventName;
-  var data;
-  Map<String, dynamic>? params;
+  dynamic data;
+  Map<String, dynamic> params;
 
-  WebSocketAction({this.id, this.eventName, this.data, this.params});
+  WebSocketAction({this.id, this.eventName, this.data, this.params = const {}});
 
   factory WebSocketAction.fromJson(Map data) => WebSocketAction(
       id: data['id'].toString(),
       eventName: data['eventName'].toString(),
       data: data['data'],
-      params: data['params'] as Map<String, dynamic>?);
+      params: data['params'] as Map<String, dynamic>? ?? {});
 
   Map<String, dynamic> toJson() {
     return {'id': id, 'eventName': eventName, 'data': data, 'params': params};

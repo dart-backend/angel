@@ -20,7 +20,7 @@ class WebSocketContext {
 
   final StreamController<void> _onAuthenticated = StreamController();
 
-  final StreamController<Null> _onClose = StreamController<Null>();
+  final StreamController<void> _onClose = StreamController<void>();
 
   final StreamController _onData = StreamController();
 
@@ -31,7 +31,7 @@ class WebSocketContext {
   Stream<void> get onAuthenticated => _onAuthenticated.stream;
 
   /// Fired once the underlying [WebSocket] closes.
-  Stream<Null> get onClose => _onClose.stream;
+  Stream<void> get onClose => _onClose.stream;
 
   /// Fired when any data is sent through [channel].
   Stream get onData => _onData.stream;
@@ -45,7 +45,7 @@ class WebSocketContext {
       await _onAction.close();
       await _onAuthenticated.close();
       await _onData.close();
-      _onClose.add(null);
+      //_onClose.add(null);
       await _onClose.close();
     });
   }

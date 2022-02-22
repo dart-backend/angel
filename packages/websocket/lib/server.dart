@@ -10,11 +10,11 @@ import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_framework/http.dart';
 import 'package:angel3_framework/http2.dart';
 import 'package:belatuk_merge_map/belatuk_merge_map.dart';
+import 'package:logging/logging.dart';
 import 'package:stream_channel/stream_channel.dart';
 import 'package:web_socket_channel/io.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:collection/collection.dart' show IterableExtension;
-import 'package:logging/logging.dart';
 import 'angel3_websocket.dart';
 import 'constants.dart';
 export 'angel3_websocket.dart';
@@ -27,8 +27,6 @@ typedef WebSocketResponseSerializer = String Function(dynamic data);
 
 /// Broadcasts events from [HookedService]s, and handles incoming [WebSocketAction]s.
 class AngelWebSocket {
-  final _log = Logger('AngelWebSocket');
-
   final List<WebSocketContext> _clients = <WebSocketContext>[];
   final List<String> _servicesAlreadyWired = [];
 
@@ -64,6 +62,8 @@ class AngelWebSocket {
   /// Services that have already been hooked to fire socket events.
   List<String> get servicesAlreadyWired =>
       List.unmodifiable(_servicesAlreadyWired);
+
+  Logger get _log => app.logger;
 
   /// Used to notify other nodes of an event's firing. Good for scaled applications.
   final StreamChannel<WebSocketEvent>? synchronizationChannel;
@@ -152,7 +152,7 @@ class AngelWebSocket {
   FutureOr<dynamic> Function(HookedServiceEvent<dynamic, dynamic, Service> e)
       serviceHook(String path) {
     return (HookedServiceEvent e) async {
-      if (e.params != null && e.params!['broadcast'] == false) return;
+      if (e.params['broadcast'] == false) return;
 
       var event = await transformEvent(e);
       event.eventName = '$path::${event.eventName}';
@@ -160,8 +160,8 @@ class AngelWebSocket {
       dynamic _filter(WebSocketContext socket) {
         if (e.service.configuration.containsKey('ws:filter')) {
           return e.service.configuration['ws:filter'](e, socket);
-        } else if (e.params != null && e.params!.containsKey('ws:filter')) {
-          return e.params?['ws:filter'](e, socket);
+        } else if (e.params.containsKey('ws:filter')) {
+          return e.params['ws:filter'](e, socket);
         } else {
           return true;
         }
@@ -212,11 +212,11 @@ class AngelWebSocket {
 
     var actionName = split[1];
 
-    if (action.params is! Map) action.params = <String, dynamic>{};
+    //if (action.params is! Map) action.params = <String, dynamic>{};
 
     if (allowClientParams != true) {
-      if (action.params!['query'] is Map) {
-        action.params = {'query': action.params!['query']};
+      if (action.params['query'] is Map) {
+        action.params = {'query': action.params['query']};
       } else {
         action.params = {};
       }
@@ -272,11 +272,11 @@ class AngelWebSocket {
   Future handleAuth(WebSocketAction action, WebSocketContext socket) async {
     if (allowAuth != false &&
         action.eventName == authenticateAction &&
-        action.params?['query'] is Map &&
-        action.params?['query']['jwt'] is String) {
+        action.params['query'] is Map &&
+        action.params['query']['jwt'] is String) {
       try {
         var auth = socket.request.container!.make<AngelAuth>();
-        var jwt = action.params!['query']['jwt'] as String;
+        var jwt = action.params['query']['jwt'] as String;
         AuthToken token;
 
         token = AuthToken.validate(jwt, auth.hmac);
@@ -330,7 +330,7 @@ class AngelWebSocket {
         throw AngelHttpException.badRequest();
       }
 
-      if (fromJson is Map && fromJson.containsKey('eventName')) {
+      if (fromJson.containsKey('eventName')) {
         socket._onAction.add(WebSocketAction.fromJson(fromJson));
         socket.on
             ._getStreamForEvent(fromJson['eventName'].toString())!
@@ -361,16 +361,16 @@ class AngelWebSocket {
     // Send an error
     if (e is AngelHttpException) {
       socket.sendError(e);
-      app.logger?.severe(e.message, e.error ?? e, e.stackTrace);
+      app.logger.severe(e.message, e.error ?? e, e.stackTrace);
     } else if (sendErrors) {
-      var err = AngelHttpException(e,
+      var err = AngelHttpException(
           message: e.toString(), stackTrace: st, errors: [st.toString()]);
       socket.sendError(err);
-      app.logger?.severe(err.message, e, st);
+      app.logger.severe(err.message, e, st);
     } else {
-      var err = AngelHttpException(e);
+      var err = AngelHttpException();
       socket.sendError(err);
-      app.logger?.severe(e.toString(), e, st);
+      app.logger.severe(e.toString(), e, st);
     }
   }
 
@@ -391,10 +391,10 @@ class AngelWebSocket {
 
   /// Configures an [Angel] instance to listen for WebSocket connections.
   Future configureServer(Angel app) async {
-    app.container?.registerSingleton(this);
+    app.container.registerSingleton(this);
 
     if (runtimeType != AngelWebSocket) {
-      app.container?.registerSingleton<AngelWebSocket>(this);
+      app.container.registerSingleton<AngelWebSocket>(this);
     }
 
     // Set up services
