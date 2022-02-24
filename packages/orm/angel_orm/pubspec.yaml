@@ -1,10 +1,10 @@
 name: angel3_orm
-version: 4.1.0
+version: 6.0.0
 description: Runtime support for Angel3 ORM. Includes base classes for queries.
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dukefirehawk/angel/tree/master/packages/orm/angel_orm
 environment:
-  sdk: '>=2.12.0 <3.0.0'
+  sdk: '>=2.15.0 <3.0.0'
 dependencies:
   charcode: ^1.2.0
   intl: ^0.17.0
@@ -13,9 +13,16 @@ dependencies:
   optional: ^6.0.0
   logging: ^1.0.0
 dev_dependencies:
-  angel3_model: ^3.0.0
-  angel3_serialize: ^4.1.0
-  angel3_serialize_generator: ^4.1.0
+  angel3_model: ^6.0.0
+  angel3_serialize: ^6.0.0
+  angel3_serialize_generator: ^6.0.0
   build_runner: ^2.1.1
   test: ^1.17.4
   lints: ^1.0.0
+dependency_overrides:
+  angel3_serialize:
+    path: ../../serialize/angel_serialize
+  angel3_serialize_generator:
+    path: ../../serialize/angel_serialize_generator
+  angel3_model:
+    path: ../../model
