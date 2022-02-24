@@ -21,7 +21,7 @@ In `pubspec.yaml`:
 
 ```yaml
 dependencies:
-    angel3_configuration: ^3.0.0
+    angel3_configuration: ^6.0.0
 ```
 
 ## Usage
