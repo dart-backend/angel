@@ -342,7 +342,7 @@ class CarSerializer extends Codec<Car, Map> {
 
   static Map<String, dynamic> toMap(_Car? model) {
     if (model == null) {
-      return {};
+      throw FormatException("Required field [model] cannot be null");
     }
     return {
       'id': model.id,

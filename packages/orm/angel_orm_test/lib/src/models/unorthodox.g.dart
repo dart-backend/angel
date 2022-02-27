@@ -1260,7 +1260,7 @@ class UnorthodoxSerializer extends Codec<Unorthodox, Map> {
 
   static Map<String, dynamic> toMap(_Unorthodox? model) {
     if (model == null) {
-      return {};
+      throw FormatException("Required field [model] cannot be null");
     }
     return {'name': model.name};
   }
@@ -1316,7 +1316,7 @@ class WeirdJoinSerializer extends Codec<WeirdJoin, Map> {
 
   static Map<String, dynamic> toMap(_WeirdJoin? model) {
     if (model == null) {
-      return {};
+      throw FormatException("Required field [model] cannot be null");
     }
     return {
       'id': model.id,
@@ -1390,7 +1390,7 @@ class SongSerializer extends Codec<Song, Map> {
 
   static Map<String, dynamic> toMap(_Song? model) {
     if (model == null) {
-      return {};
+      throw FormatException("Required field [model] cannot be null");
     }
     return {
       'id': model.id,
@@ -1451,7 +1451,7 @@ class NumbaSerializer extends Codec<Numba, Map> {
 
   static Map<String, dynamic> toMap(_Numba? model) {
     if (model == null) {
-      return {};
+      throw FormatException("Required field [model] cannot be null");
     }
     return {'i': model.i, 'parent': model.parent};
   }
@@ -1500,7 +1500,7 @@ class FooSerializer extends Codec<Foo, Map> {
 
   static Map<String, dynamic> toMap(_Foo? model) {
     if (model == null) {
-      return {};
+      throw FormatException("Required field [model] cannot be null");
     }
     return {
       'bar': model.bar,
@@ -1553,7 +1553,7 @@ class FooPivotSerializer extends Codec<FooPivot, Map> {
 
   static Map<String, dynamic> toMap(_FooPivot? model) {
     if (model == null) {
-      return {};
+      throw FormatException("Required field [model] cannot be null");
     }
     return {
       'weird_join': WeirdJoinSerializer.toMap(model.weirdJoin),

@@ -253,7 +253,7 @@ class HasCarSerializer extends Codec<HasCar, Map> {
                 : DateTime.parse(map['updated_at'].toString()))
             : null,
         type: map['type'] is CarType?
-            ? (map['type'] as CarType?)
+            ? (map['type'] as CarType?) ?? CarType.sedan
             : (map['type'] is int
                 ? CarType?.values[map['type'] as int]
                 : CarType.sedan));
@@ -261,7 +261,7 @@ class HasCarSerializer extends Codec<HasCar, Map> {
 
   static Map<String, dynamic> toMap(_HasCar? model) {
     if (model == null) {
-      return {};
+      throw FormatException("Required field [model] cannot be null");
     }
     return {
       'id': model.id,

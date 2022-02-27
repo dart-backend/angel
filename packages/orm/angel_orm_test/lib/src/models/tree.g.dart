@@ -559,7 +559,7 @@ class TreeSerializer extends Codec<Tree, Map> {
 
   static Map<String, dynamic> toMap(_Tree? model) {
     if (model == null) {
-      return {};
+      throw FormatException("Required field [model] cannot be null");
     }
     return {
       'id': model.id,
@@ -633,7 +633,7 @@ class FruitSerializer extends Codec<Fruit, Map> {
 
   static Map<String, dynamic> toMap(_Fruit? model) {
     if (model == null) {
-      return {};
+      throw FormatException("Required field [model] cannot be null");
     }
     return {
       'id': model.id,

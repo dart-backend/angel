@@ -211,7 +211,7 @@ class HasMapSerializer extends Codec<HasMap, Map> {
 
   static Map<String, dynamic> toMap(_HasMap? model) {
     if (model == null) {
-      return {};
+      throw FormatException("Required field [model] cannot be null");
     }
     return {'value': model.value, 'list': model.list};
   }

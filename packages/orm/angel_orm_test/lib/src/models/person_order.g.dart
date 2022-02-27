@@ -577,7 +577,7 @@ class PersonOrderSerializer extends Codec<PersonOrder, Map> {
 
   static Map<String, dynamic> toMap(_PersonOrder? model) {
     if (model == null) {
-      return {};
+      throw FormatException("Required field [model] cannot be null");
     }
     return {
       'id': model.id,
@@ -665,7 +665,7 @@ class OrderWithPersonInfoSerializer extends Codec<OrderWithPersonInfo, Map> {
 
   static Map<String, dynamic> toMap(_OrderWithPersonInfo? model) {
     if (model == null) {
-      return {};
+      throw FormatException("Required field [model] cannot be null");
     }
     return {
       'id': model.id,

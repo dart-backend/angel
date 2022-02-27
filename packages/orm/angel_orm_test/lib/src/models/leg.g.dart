@@ -492,7 +492,7 @@ class LegSerializer extends Codec<Leg, Map> {
 
   static Map<String, dynamic> toMap(_Leg? model) {
     if (model == null) {
-      return {};
+      throw FormatException("Required field [model] cannot be null");
     }
     return {
       'id': model.id,
@@ -566,7 +566,7 @@ class FootSerializer extends Codec<Foot, Map> {
 
   static Map<String, dynamic> toMap(_Foot? model) {
     if (model == null) {
-      return {};
+      throw FormatException("Required field [model] cannot be null");
     }
     return {
       'id': model.id,

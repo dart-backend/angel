@@ -197,7 +197,7 @@ class FortuneSerializer extends Codec<Fortune, Map> {
 
   static Map<String, dynamic> toMap(_Fortune? model) {
     if (model == null) {
-      return {};
+      throw FormatException("Required field [model] cannot be null");
     }
     return {'id': model.id, 'message': model.message};
   }

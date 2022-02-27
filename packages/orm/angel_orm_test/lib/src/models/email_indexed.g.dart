@@ -700,7 +700,7 @@ class RoleSerializer extends Codec<Role, Map> {
 
   static Map<String, dynamic> toMap(_Role? model) {
     if (model == null) {
-      return {};
+      throw FormatException("Required field [model] cannot be null");
     }
     return {
       'role': model.role,
@@ -752,7 +752,7 @@ class RoleUserSerializer extends Codec<RoleUser, Map> {
 
   static Map<String, dynamic> toMap(_RoleUser? model) {
     if (model == null) {
-      return {};
+      throw FormatException("Required field [model] cannot be null");
     }
     return {
       'role': RoleSerializer.toMap(model.role),
@@ -805,7 +805,7 @@ class UserSerializer extends Codec<User, Map> {
 
   static Map<String, dynamic> toMap(_User? model) {
     if (model == null) {
-      return {};
+      throw FormatException("Required field [model] cannot be null");
     }
     return {
       'email': model.email,
