@@ -215,32 +215,6 @@ Future<BuildContext?> buildContext(
     }
   }
 
-  // ShimFields are no longer used.
-  // if (const TypeChecker.fromRuntime(Model).isAssignableFromType(clazz.type)) {
-  //   if (!fieldNames.contains('id')) {
-  //     var idField = ShimFieldImpl('id', lib.context.typeProvider.stringType);
-  //     ctx.fields.insert(0, idField);
-  //     ctx.shimmed['id'] = true;
-  //   }
-
-  //   DartType dateTime;
-  //   for (var key in ['createdAt', 'updatedAt']) {
-  //     if (!fieldNames.contains(key)) {
-  //       if (dateTime == null) {
-  //         var coreLib =
-  //             await resolver.libraries.singleWhere((lib) => lib.isDartCore);
-  //         var dt = coreLib.getType('DateTime');
-  //         dateTime = dt.type;
-  //       }
-
-  //       var field = ShimFieldImpl(key, dateTime);
-  //       ctx.aliases[key] = ReCase(key).snakeCase;
-  //       ctx.fields.add(field);
-  //       ctx.shimmed[key] = true;
-  //     }
-  //   }
-  // }
-
   // Get constructor params, if any
   ctx.constructorParameters.addAll(clazz.unnamedConstructor!.parameters);
 

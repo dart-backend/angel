@@ -14,7 +14,7 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
         buildStep.resolver, true);
 
     if (ctx == null) {
-      log.severe('Invalid builder context');
+      log.fine('Invalid builder context');
       throw 'Invalid builder context';
     }
 
@@ -128,8 +128,8 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
               ? 'List'
               : 'Map';
           String? defaultValue = typeName == 'List' ? '[]' : '{}';
-          var existingDefault = ctx.defaults[field.name];
 
+          var existingDefault = ctx.defaults[field.name];
           if (existingDefault != null) {
             defaultValue = dartObjectToString(existingDefault);
           }
@@ -173,7 +173,15 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
             if (!b.toThis) {
               b.type = convertTypeReference(field.type);
             }
-            b.defaultTo = Code('const []');
+
+            // Get the default if presence
+            var existingDefault = ctx.defaults[field.name];
+            if (existingDefault != null) {
+              var defaultValue = dartObjectToString(existingDefault);
+              b.defaultTo = Code('$defaultValue');
+            } else {
+              b.defaultTo = Code('const []');
+            }
           } else if (!b.toThis) {
             b.type = convertTypeReference(field.type);
           } else {

@@ -38,7 +38,7 @@ class SerializableField {
   final String? alias;
 
   /// A default for this field.
-  final defaultValue;
+  final dynamic defaultValue;
 
   /// A custom serializer for this field.
   final Symbol? serializer;

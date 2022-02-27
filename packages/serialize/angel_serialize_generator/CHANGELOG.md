@@ -1,9 +1,14 @@
 # Change Log
 
+## 6.0.0
+
+* Updated to min SDK 2.15.x
+* Updated to `analyzer` 3.x.x
+* Fixed default value for `List` and `Enum`
+
 ## 5.0.0
 
-* Updated `analyzer` to version 3.x
-* Updated min SDK to 2.14.x
+* Skipped release
 
 ## 4.3.0
 

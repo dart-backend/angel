@@ -123,15 +123,10 @@ class AnimalSerializer extends Codec<Animal, Map> {
         genus: map['genus'] as String?, species: map['species'] as String?);
   }
 
-  static Map<String, dynamic> toMap(_Animal model) {
-    if (model.genus == null) {
-      throw FormatException("Missing required field 'genus' on Animal.");
+  static Map<String, dynamic> toMap(_Animal? model) {
+    if (model == null) {
+      throw FormatException("Required field [model] cannot be null");
     }
-
-    if (model.species == null) {
-      throw FormatException("Missing required field 'species' on Animal.");
-    }
-
     return {'genus': model.genus, 'species': model.species};
   }
 }
@@ -182,15 +177,10 @@ class BirdSerializer extends Codec<Bird, Map> {
         isSparrow: map['is_sparrow'] as bool? ?? false);
   }
 
-  static Map<String, dynamic> toMap(_Bird model) {
-    if (model.genus == null) {
-      throw FormatException("Missing required field 'genus' on Bird.");
+  static Map<String, dynamic> toMap(_Bird? model) {
+    if (model == null) {
+      throw FormatException("Required field [model] cannot be null");
     }
-
-    if (model.species == null) {
-      throw FormatException("Missing required field 'species' on Bird.");
-    }
-
     return {
       'genus': model.genus,
       'species': model.species,

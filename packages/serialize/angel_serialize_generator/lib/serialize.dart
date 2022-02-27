@@ -8,14 +8,14 @@ class SerializerGenerator extends GeneratorForAnnotation<Serializable> {
   @override
   Future<String?> generateForAnnotatedElement(
       Element element, ConstantReader annotation, BuildStep buildStep) async {
-    //log.fine('Running SerializerGenerator');
+    log.fine('Running SerializerGenerator');
 
     if (element.kind != ElementKind.CLASS) {
       throw 'Only classes can be annotated with a @Serializable() annotation.';
     }
 
     var ctx = await buildContext(element as ClassElement, annotation, buildStep,
-        buildStep.resolver, autoSnakeCaseNames != false);
+        buildStep.resolver, !autoSnakeCaseNames);
 
     if (ctx == null) {
       log.severe('Invalid builder context');
@@ -25,11 +25,13 @@ class SerializerGenerator extends GeneratorForAnnotation<Serializable> {
     var serializers = annotation.peek('serializers')?.listValue ?? [];
 
     if (serializers.isEmpty) {
+      log.severe("No Serializers");
       return null;
     }
 
     // Check if any serializer is recognized
     if (!serializers.any((s) => Serializers.all.contains(s.toIntValue()))) {
+      log.severe("No recognizable Serializers");
       return null;
     }
 
@@ -46,15 +48,17 @@ class SerializerGenerator extends GeneratorForAnnotation<Serializable> {
   /// Generate a serializer class.
   void generateClass(
       List<int> serializers, BuildContext ctx, LibraryBuilder file) {
-    //log.fine('Generate serializer class');
+    log.fine('Generate serializer class');
 
     // Generate canonical codecs, etc.
     var pascal = ctx.modelClassNameRecase.pascalCase.replaceAll('?', '');
     var camel = ctx.modelClassNameRecase.camelCase.replaceAll('?', '');
 
-    log.info('Generating ${pascal}Serializer');
+    log.fine('Generating ${pascal}Serializer');
 
     if (ctx.constructorParameters.isEmpty) {
+      log.fine("Constructor is empty");
+
       file.body.add(Code('''
 const ${pascal}Serializer ${camel}Serializer = ${pascal}Serializer();
 
@@ -201,7 +205,7 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
                 type.typeArguments[1].getDisplayString(withNullability: true));
             serializedRepresentation =
                 '''model.${field.name}.keys.fold({}, (map, key) {
-              return (map as Map<String,dynamic>?)?..[key] =
+              return (map as Map<dynamic,dynamic>?)?..[key] =
               ${serializerToMap(rc, 'model.${field.name}[key]')};
             })''';
           } else if (type.element.isEnum) {
@@ -235,7 +239,8 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
 
       buf.write('};');
       method.body = Block.of([
-        Code('if (model == null) { return {}; }'),
+        Code(
+            'if (model == null) { throw FormatException("Required field [model] cannot be null"); }'),
         Code(buf.toString()),
       ]);
     }));
@@ -305,12 +310,10 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
 
         var deserializedRepresentation =
             "map['$alias'] as ${typeToString(type)}";
+
         if (type.nullabilitySuffix == NullabilitySuffix.question) {
           deserializedRepresentation += '?';
         }
-
-        //log.fine(
-        //    'deserializedRepresentation => $deserializedRepresentation, type => $type, nullcheck => ${type.nullabilitySuffix}');
 
         var defaultValue = 'null';
         var existingDefault = ctx.defaults[field.name];
@@ -319,6 +322,10 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
           var d = dartObjectToString(existingDefault);
           if (d != null) {
             defaultValue = d;
+
+            if (!deserializedRepresentation.endsWith("?")) {
+              deserializedRepresentation += "?";
+            }
           }
           deserializedRepresentation =
               '$deserializedRepresentation ?? $defaultValue';
@@ -372,7 +379,7 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
           } else if (type.element.isEnum) {
             deserializedRepresentation = '''
             map['$alias'] is ${type.getDisplayString(withNullability: true)}
-              ? (map['$alias'] as ${type.getDisplayString(withNullability: true)})
+              ? (map['$alias'] as ${type.getDisplayString(withNullability: true)}) ?? $defaultValue
               :
               (
                 map['$alias'] is int

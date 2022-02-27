@@ -18,7 +18,7 @@ class Book extends _Book {
       this.title,
       this.description,
       this.pageCount,
-      List<double>? notModels,
+      List<double>? notModels = const [],
       this.camelCaseString})
       : notModels = List.unmodifiable(notModels ?? []);
 
@@ -110,7 +110,7 @@ class Book extends _Book {
     return 'Book(id=$id, createdAt=$createdAt, updatedAt=$updatedAt, author=$author, title=$title, description=$description, pageCount=$pageCount, notModels=$notModels, camelCaseString=$camelCaseString)';
   }
 
-  Map<String, dynamic>? toJson() {
+  Map<String, dynamic> toJson() {
     return BookSerializer.toMap(this);
   }
 }
@@ -123,11 +123,11 @@ class Author extends _Author {
       this.updatedAt,
       required this.name,
       required this.age,
-      List<_Book>? books,
+      List<_Book> books = const [],
       this.newestBook,
       this.secret,
       this.obscured})
-      : books = List.unmodifiable(books ?? []);
+      : books = List.unmodifiable(books);
 
   /// A unique identifier corresponding to this item.
   @override
@@ -142,23 +142,23 @@ class Author extends _Author {
   DateTime? updatedAt;
 
   @override
-  final String? name;
+  String? name;
 
   @override
-  final int? age;
+  int? age;
 
   @override
-  final List<_Book> books;
+  List<_Book> books;
 
   /// The newest book.
   @override
-  final _Book? newestBook;
+  _Book? newestBook;
 
   @override
-  final String? secret;
+  String? secret;
 
   @override
-  final String? obscured;
+  String? obscured;
 
   Author copyWith(
       {String? id,
@@ -225,8 +225,11 @@ class Author extends _Author {
 @generatedSerializable
 class Library extends _Library {
   Library(
-      {this.id, this.createdAt, this.updatedAt, Map<String, _Book>? collection})
-      : collection = Map.unmodifiable(collection ?? {});
+      {this.id,
+      this.createdAt,
+      this.updatedAt,
+      required Map<String, _Book> collection})
+      : collection = Map.unmodifiable(collection);
 
   /// A unique identifier corresponding to this item.
   @override
@@ -241,7 +244,7 @@ class Library extends _Library {
   DateTime? updatedAt;
 
   @override
-  final Map<String, _Book> collection;
+  Map<String, _Book> collection;
 
   Library copyWith(
       {String? id,
@@ -288,10 +291,10 @@ class Bookmark extends _Bookmark {
       {this.id,
       this.createdAt,
       this.updatedAt,
-      List<int>? history,
+      List<int> history = const [],
       required this.page,
       this.comment})
-      : history = List.unmodifiable(history ?? []),
+      : history = List.unmodifiable(history),
         super(book);
 
   /// A unique identifier corresponding to this item.
@@ -307,13 +310,13 @@ class Bookmark extends _Bookmark {
   DateTime? updatedAt;
 
   @override
-  final List<int> history;
+  List<int> history;
 
   @override
-  final int? page;
+  int? page;
 
   @override
-  final String? comment;
+  String? comment;
 
   Bookmark copyWith(_Book book,
       {String? id,
@@ -364,11 +367,11 @@ class Bookmark extends _Bookmark {
 
 const BookSerializer bookSerializer = BookSerializer();
 
-class BookEncoder extends Converter<Book, Map?> {
+class BookEncoder extends Converter<Book, Map> {
   const BookEncoder();
 
   @override
-  Map? convert(Book model) => BookSerializer.toMap(model);
+  Map convert(Book model) => BookSerializer.toMap(model);
 }
 
 class BookDecoder extends Converter<Map, Book> {
@@ -378,26 +381,24 @@ class BookDecoder extends Converter<Map, Book> {
   Book convert(Map map) => BookSerializer.fromMap(map);
 }
 
-class BookSerializer extends Codec<Book, Map?> {
+class BookSerializer extends Codec<Book, Map> {
   const BookSerializer();
 
   @override
   BookEncoder get encoder => const BookEncoder();
-
   @override
   BookDecoder get decoder => const BookDecoder();
-
   static Book fromMap(Map map) {
     return Book(
         id: map['id'] as String?,
         createdAt: map['created_at'] != null
             ? (map['created_at'] is DateTime
-                ? (map['created_at'] as DateTime?)
+                ? (map['created_at'] as DateTime)
                 : DateTime.parse(map['created_at'].toString()))
             : null,
         updatedAt: map['updated_at'] != null
             ? (map['updated_at'] is DateTime
-                ? (map['updated_at'] as DateTime?)
+                ? (map['updated_at'] as DateTime)
                 : DateTime.parse(map['updated_at'].toString()))
             : null,
         author: map['author'] as String?,
@@ -406,13 +407,13 @@ class BookSerializer extends Codec<Book, Map?> {
         pageCount: map['page_count'] as int?,
         notModels: map['not_models'] is Iterable
             ? (map['not_models'] as Iterable).cast<double>().toList()
-            : null,
+            : [],
         camelCaseString: map['camelCase'] as String?);
   }
 
-  static Map<String, dynamic>? toMap(_Book? model) {
+  static Map<String, dynamic> toMap(_Book? model) {
     if (model == null) {
-      return null;
+      throw FormatException("Required field [model] cannot be null");
     }
     return {
       'id': model.id,
@@ -481,10 +482,8 @@ class AuthorSerializer extends Codec<Author, Map> {
 
   @override
   AuthorEncoder get encoder => const AuthorEncoder();
-
   @override
   AuthorDecoder get decoder => const AuthorDecoder();
-
   static Author fromMap(Map map) {
     if (map['name'] == null) {
       throw FormatException("Missing required field 'name' on Author.");
@@ -498,12 +497,12 @@ class AuthorSerializer extends Codec<Author, Map> {
         id: map['id'] as String?,
         createdAt: map['created_at'] != null
             ? (map['created_at'] is DateTime
-                ? (map['created_at'] as DateTime?)
+                ? (map['created_at'] as DateTime)
                 : DateTime.parse(map['created_at'].toString()))
             : null,
         updatedAt: map['updated_at'] != null
             ? (map['updated_at'] is DateTime
-                ? (map['updated_at'] as DateTime?)
+                ? (map['updated_at'] as DateTime)
                 : DateTime.parse(map['updated_at'].toString()))
             : null,
         name: map['name'] as String?,
@@ -511,22 +510,17 @@ class AuthorSerializer extends Codec<Author, Map> {
         books: map['books'] is Iterable
             ? List.unmodifiable(((map['books'] as Iterable).whereType<Map>())
                 .map(BookSerializer.fromMap))
-            : null,
+            : [],
         newestBook: map['newest_book'] != null
             ? BookSerializer.fromMap(map['newest_book'] as Map)
             : null,
         obscured: map['obscured'] as String?);
   }
 
-  static Map<String, dynamic> toMap(_Author model) {
-    if (model.name == null) {
-      throw FormatException("Missing required field 'name' on Author.");
+  static Map<String, dynamic> toMap(_Author? model) {
+    if (model == null) {
+      throw FormatException("Required field [model] cannot be null");
     }
-
-    if (model.age == null) {
-      throw FormatException('Custom message for missing `age`');
-    }
-
     return {
       'id': model.id,
       'created_at': model.createdAt?.toIso8601String(),
@@ -592,21 +586,19 @@ class LibrarySerializer extends Codec<Library, Map> {
 
   @override
   LibraryEncoder get encoder => const LibraryEncoder();
-
   @override
   LibraryDecoder get decoder => const LibraryDecoder();
-
   static Library fromMap(Map map) {
     return Library(
         id: map['id'] as String?,
         createdAt: map['created_at'] != null
             ? (map['created_at'] is DateTime
-                ? (map['created_at'] as DateTime?)
+                ? (map['created_at'] as DateTime)
                 : DateTime.parse(map['created_at'].toString()))
             : null,
         updatedAt: map['updated_at'] != null
             ? (map['updated_at'] is DateTime
-                ? (map['updated_at'] as DateTime?)
+                ? (map['updated_at'] as DateTime)
                 : DateTime.parse(map['updated_at'].toString()))
             : null,
         collection: map['collection'] is Map
@@ -616,16 +608,20 @@ class LibrarySerializer extends Codec<Library, Map> {
                   ..[key] = BookSerializer.fromMap(
                       ((map['collection'] as Map)[key]) as Map);
               }))
-            : null);
+            : {});
   }
 
-  static Map<String, dynamic> toMap(_Library model) {
+  static Map<String, dynamic> toMap(_Library? model) {
+    if (model == null) {
+      throw FormatException("Required field [model] cannot be null");
+    }
     return {
       'id': model.id,
       'created_at': model.createdAt?.toIso8601String(),
       'updated_at': model.updatedAt?.toIso8601String(),
-      'collection': model.collection.keys.fold({}, (dynamic map, key) {
-        return map..[key] = BookSerializer.toMap(model.collection[key]);
+      'collection': model.collection.keys.fold({}, (map, key) {
+        return (map as Map<dynamic, dynamic>?)
+          ?..[key] = BookSerializer.toMap(model.collection[key]);
       })
     };
   }
@@ -658,26 +654,25 @@ abstract class BookmarkSerializer {
         id: map['id'] as String?,
         createdAt: map['created_at'] != null
             ? (map['created_at'] is DateTime
-                ? (map['created_at'] as DateTime?)
+                ? (map['created_at'] as DateTime)
                 : DateTime.parse(map['created_at'].toString()))
             : null,
         updatedAt: map['updated_at'] != null
             ? (map['updated_at'] is DateTime
-                ? (map['updated_at'] as DateTime?)
+                ? (map['updated_at'] as DateTime)
                 : DateTime.parse(map['updated_at'].toString()))
             : null,
         history: map['history'] is Iterable
             ? (map['history'] as Iterable).cast<int>().toList()
-            : null,
+            : [],
         page: map['page'] as int?,
         comment: map['comment'] as String?);
   }
 
-  static Map<String, dynamic> toMap(_Bookmark model) {
-    if (model.page == null) {
-      throw FormatException("Missing required field 'page' on Bookmark.");
+  static Map<String, dynamic> toMap(_Bookmark? model) {
+    if (model == null) {
+      throw FormatException("Required field [model] cannot be null");
     }
-
     return {
       'id': model.id,
       'created_at': model.createdAt?.toIso8601String(),

@@ -1,8 +1,6 @@
 library angel_serialize.test.models.book;
 
-import 'package:angel3_model/angel3_model.dart';
 import 'package:angel3_serialize/angel3_serialize.dart';
-import 'package:collection/collection.dart';
 part 'book.g.dart';
 
 @Serializable(
