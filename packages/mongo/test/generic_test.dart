@@ -39,7 +39,7 @@ void main() {
       // Delete anything before we start
       await testData.remove(<String, dynamic>{});
 
-      var service = MongoService(testData, debug: true);
+      var service = MongoService(testData);
       greetingService = HookedService(service);
       wireHooked(greetingService!);
 
