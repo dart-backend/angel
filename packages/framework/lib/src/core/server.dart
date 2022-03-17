@@ -55,13 +55,23 @@ Future<bool> _defaultErrorHandler(
   }
 }
 
+/// Default ROOT level logger
 Logger _defaultLogger() {
-  Logger logger = Logger('SERVER')
-    //..level = Level.WARNING
+  Logger logger = Logger('ROOT')
     ..onRecord.listen((rec) {
-      print(rec);
-      if (rec.error != null) print(rec.error);
-      if (rec.stackTrace != null) print(rec.stackTrace);
+      if (rec.error == null) {
+        print(rec.message);
+      }
+
+      if (rec.error != null) {
+        var err = rec.error;
+        if (err is AngelHttpException && err.statusCode != 500) return;
+        print('${rec.message} \n');
+        print(rec.error);
+        if (rec.stackTrace != null) {
+          print(rec.stackTrace);
+        }
+      }
     });
 
   return logger;
@@ -120,7 +130,17 @@ class Angel extends Routable {
   Angel? get parent => _parent;
 
   /// Outputs diagnostics and debug messages.
-  Logger logger = _defaultLogger();
+  Logger _logger = _defaultLogger();
+
+  Logger get logger => _logger;
+
+  /// Assign a custom logger.
+  /// Passing null will reset to default logger
+  set logger(Logger? log) {
+    _logger.clearListeners();
+
+    _logger = log ?? _defaultLogger();
+  }
 
   /// Plug-ins to be called right before server startup.
   ///
