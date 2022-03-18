@@ -67,7 +67,7 @@ _  ___ |  /|  / / /_/ / _  /___  _  /___
     if (record.error == null) {
       //print(code.wrap(record.message));
       print(code.wrap(
-          '$now ${record.level.name} ${record.loggerName}: ${record.message}'));
+          '$now ${record.level.name} [${record.loggerName}]: ${record.message}'));
     }
 
     if (record.error != null) {
