@@ -1,0 +1,10 @@
+name: angel3
+
+packages:
+  - packages/**
+
+ignore:
+  - "packages/auth_twitter"
+
+#scripts:
+#  analyze: melos exec -- "dart analyze ."

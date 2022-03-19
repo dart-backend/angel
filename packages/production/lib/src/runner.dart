@@ -55,7 +55,8 @@ _  ___ |  /|  / / /_/ / _  /___  _  /___
                                         
 ''';
 
-  static DateFormat _defaultDateFormat = DateFormat('yyyy-MM-dd HH:mm:ss');
+  static final DateFormat _defaultDateFormat =
+      DateFormat('yyyy-MM-dd HH:mm:ss');
 
   /// LogRecord handler
   static void handleLogRecord(LogRecord? record, RunnerOptions options) {
