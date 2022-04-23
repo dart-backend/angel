@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:isolate';
+import 'package:intl/intl.dart';
 import 'package:angel3_container/angel3_container.dart';
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_framework/http.dart';
@@ -54,21 +55,34 @@ _  ___ |  /|  / / /_/ / _  /___  _  /___
                                         
 ''';
 
+  static final DateFormat _defaultDateFormat =
+      DateFormat('yyyy-MM-dd HH:mm:ss');
+
   /// LogRecord handler
   static void handleLogRecord(LogRecord? record, RunnerOptions options) {
     if (options.quiet || record == null) return;
     var code = chooseLogColor(record.level);
 
-    if (record.error == null) print(code.wrap(record.toString()));
+    var now = _defaultDateFormat.format(DateTime.now());
+
+    if (record.error == null) {
+      //print(code.wrap(record.message));
+      print(code.wrap(
+          '$now ${record.level.name} [${record.loggerName}]: ${record.message}'));
+    }
 
     if (record.error != null) {
       var err = record.error;
       if (err is AngelHttpException && err.statusCode != 500) return;
-      print(code.wrap(record.toString() + '\n'));
-      print(code.wrap(err.toString()));
+      //print(code.wrap(record.message + '\n'));
+      print(code.wrap(
+          '$now ${record.level.name} [${record.loggerName}]: ${record.message} \n'));
+      print(code.wrap(
+          '$now ${record.level.name} [${record.loggerName}]: ${err.toString()}'));
 
       if (record.stackTrace != null) {
-        print(code.wrap(record.stackTrace.toString()));
+        print(code.wrap(
+            '$now ${record.level.name} [${record.loggerName}]: ${record.stackTrace.toString()}'));
       }
     }
   }
@@ -220,7 +234,7 @@ _  ___ |  /|  / / /_/ / _  /___  _  /___
   /// Run with main isolate
   static void isolateMain(_RunnerArgsWithId argsWithId) {
     var args = argsWithId.args;
-    hierarchicalLoggingEnabled = true;
+    hierarchicalLoggingEnabled = false;
 
     var zone = Zone.current.fork(specification: ZoneSpecification(
       print: (self, parent, zone, msg) {
@@ -233,14 +247,14 @@ _  ___ |  /|  / / /_/ / _  /___  _  /___
           pub_sub.IsolateClient('client${argsWithId.id}', args.pubSubSendPort);
 
       var app = Angel(reflector: args.reflector)
-        ..container!.registerSingleton<pub_sub.Client>(client)
-        ..container!.registerSingleton(InstanceInfo(id: argsWithId.id));
+        ..container.registerSingleton<pub_sub.Client>(client)
+        ..container.registerSingleton(InstanceInfo(id: argsWithId.id));
 
       app.shutdownHooks.add((_) => client.close());
 
       await app.configure(args.configureServer);
 
-      app.logger ??= Logger(args.loggerName)
+      app.logger = Logger(args.loggerName)
         ..onRecord.listen((rec) => Runner.handleLogRecord(rec, args.options));
 
       AngelHttp http;

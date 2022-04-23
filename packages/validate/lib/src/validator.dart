@@ -325,7 +325,9 @@ class Validator extends Matcher {
 
   /// Adds all given [rules].
   void addRules(String key, Iterable<Matcher> rules) {
-    rules.forEach((rule) => addRule(key, rule));
+    for (var rule in rules) {
+      addRule(key, rule);
+    }
   }
 
   /// Removes a [rule].
@@ -337,7 +339,9 @@ class Validator extends Matcher {
 
   /// Removes all given [rules].
   void removeRules(String key, Iterable<Matcher> rules) {
-    rules.forEach((rule) => removeRule(key, rule));
+    for (var rule in rules) {
+      removeRule(key, rule);
+    }
   }
 
   @override
@@ -367,11 +371,13 @@ class ValidationResult {
   /// This is empty if validation was successful.
   List<String> get errors => List<String>.unmodifiable(_errors);
 
-  ValidationResult withData(Map<String, dynamic> data) =>
-      ValidationResult().._data.addAll(data).._errors.addAll(_errors);
+  ValidationResult withData(Map<String, dynamic> data) => ValidationResult()
+    .._data.addAll(data)
+    .._errors.addAll(_errors);
 
-  ValidationResult withErrors(Iterable<String> errors) =>
-      ValidationResult().._data.addAll(_data).._errors.addAll(errors);
+  ValidationResult withErrors(Iterable<String> errors) => ValidationResult()
+    .._data.addAll(_data)
+    .._errors.addAll(errors);
 }
 
 /// Occurs when user-provided data is invalid.
@@ -385,7 +391,8 @@ class ValidationException extends AngelHttpException {
   final String message;
 
   ValidationException(this.message, {Iterable<String> errors = const []})
-      : super(FormatException(message),
+      : super(
+            message: message,
             statusCode: 400,
             errors: (errors).toSet().toList(),
             stackTrace: StackTrace.current) {

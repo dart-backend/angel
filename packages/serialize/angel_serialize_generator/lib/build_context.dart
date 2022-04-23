@@ -5,7 +5,6 @@ import 'package:analyzer/dart/element/type.dart';
 import 'package:analyzer/src/dart/element/element.dart';
 import 'package:angel3_serialize/angel3_serialize.dart';
 import 'package:build/build.dart';
-import 'package:meta/meta.dart';
 import 'package:path/path.dart' as p;
 import 'package:recase/recase.dart';
 import 'package:source_gen/source_gen.dart';
@@ -215,32 +214,6 @@ Future<BuildContext?> buildContext(
       ctx.fields.add(field);
     }
   }
-
-  // ShimFields are no longer used.
-  // if (const TypeChecker.fromRuntime(Model).isAssignableFromType(clazz.type)) {
-  //   if (!fieldNames.contains('id')) {
-  //     var idField = ShimFieldImpl('id', lib.context.typeProvider.stringType);
-  //     ctx.fields.insert(0, idField);
-  //     ctx.shimmed['id'] = true;
-  //   }
-
-  //   DartType dateTime;
-  //   for (var key in ['createdAt', 'updatedAt']) {
-  //     if (!fieldNames.contains(key)) {
-  //       if (dateTime == null) {
-  //         var coreLib =
-  //             await resolver.libraries.singleWhere((lib) => lib.isDartCore);
-  //         var dt = coreLib.getType('DateTime');
-  //         dateTime = dt.type;
-  //       }
-
-  //       var field = ShimFieldImpl(key, dateTime);
-  //       ctx.aliases[key] = ReCase(key).snakeCase;
-  //       ctx.fields.add(field);
-  //       ctx.shimmed[key] = true;
-  //     }
-  //   }
-  // }
 
   // Get constructor params, if any
   ctx.constructorParameters.addAll(clazz.unnamedConstructor!.parameters);

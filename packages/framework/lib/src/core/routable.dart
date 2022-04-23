@@ -46,16 +46,22 @@ RequestHandler chain(Iterable<RequestHandler> handlers) {
 class Routable extends Router<RequestHandler> {
   final Map<Pattern, Service> _services = {};
   final Map<Pattern, Service?> _serviceLookups = {};
+
+  /// A [Map] of application-specific data that can be accessed.
+  ///
+  /// Packages like `package:angel3_configuration` populate this map
+  /// for you.
   final Map configuration = {};
 
-  final Container? _container;
+  final Container _container;
 
   Routable([Reflector? reflector])
-      : _container = reflector == null ? null : Container(reflector),
+//      : _container = reflector == null ? null : Container(reflector),
+      : _container = Container(reflector ?? ThrowingReflector()),
         super();
 
   /// A [Container] used to inject dependencies.
-  Container? get container => _container;
+  Container get container => _container;
 
   void close() {
     _services.clear();
@@ -99,10 +105,10 @@ class Routable extends Router<RequestHandler> {
       {Iterable<RequestHandler> middleware = const {}}) {
     final handlers = <RequestHandler>[];
     // Merge @Middleware declaration, if any
-    var reflector = _container?.reflector;
-    if (reflector != null && reflector is! ThrowingReflector) {
+    var reflector = _container.reflector;
+    if (reflector is! ThrowingReflector) {
       var middlewareDeclaration =
-          getAnnotation<Middleware>(handler, _container?.reflector);
+          getAnnotation<Middleware>(handler, _container.reflector);
       if (middlewareDeclaration != null) {
         handlers.addAll(middlewareDeclaration.handlers);
       }

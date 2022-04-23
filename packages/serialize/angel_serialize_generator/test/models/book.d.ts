@@ -1,5 +1,5 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
-declare module 'angel_serialize_generator' {
+declare module 'angel3_serialize_generator' {
   interface Book {
     id?: string;
     created_at?: any;

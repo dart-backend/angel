@@ -1,5 +1,21 @@
 # Change Log
 
+## 6.0.0-beta.1
+
+* Updated to SDK 2.16.x
+
+## 5.0.0
+
+* Skipped release
+
+## 4.0.0
+
+* Skipped release
+
+## 3.0.0-dev.3
+
+* Fixed null safety warnings
+
 ## 3.0.0-dev.2
 
 * Updated to use `package:belatuk_pretty_logging`

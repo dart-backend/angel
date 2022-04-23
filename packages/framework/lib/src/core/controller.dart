@@ -12,7 +12,13 @@ class Controller {
   Angel? _app;
 
   /// The [Angel] application powering this controller.
-  Angel? get app => _app;
+  Angel get app {
+    if (_app == null) {
+      throw ArgumentError("Angel is not instantiated.");
+    }
+
+    return _app!;
+  }
 
   /// If `true` (default), this class will inject itself as a singleton into the [app]'s container when bootstrapped.
   final bool injectSingleton;
@@ -36,14 +42,14 @@ class Controller {
     _app = app;
 
     if (injectSingleton != false) {
-      if (!app.container!.has(runtimeType)) {
-        _app!.container!.registerSingleton(this, as: runtimeType);
+      if (!app.container.has(runtimeType)) {
+        _app!.container.registerSingleton(this, as: runtimeType);
       }
     }
 
-    var name = await applyRoutes(app, app.container!.reflector);
+    var name = await applyRoutes(app, app.container.reflector);
     app.controllers[name] = this;
-    return null;
+    //return null;
   }
 
   /// Applies the routes from this [Controller] to some [router].

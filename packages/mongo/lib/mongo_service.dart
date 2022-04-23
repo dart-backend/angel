@@ -12,12 +12,8 @@ class MongoService extends Service<String, Map<String, dynamic>> {
   /// If set to `true`, parameters in `req.query` are applied to the database query.
   final bool allowQuery;
 
-  /// No longer used. Will be removed by `2.1.0`.
-  @deprecated
-  final bool debug;
-
   MongoService(this.collection,
-      {this.allowRemoveAll = false, this.allowQuery = true, this.debug = true})
+      {this.allowRemoveAll = false, this.allowQuery = true})
       : super();
 
   SelectorBuilder? _makeQuery([Map<String, dynamic>? params_]) {
@@ -58,7 +54,7 @@ class MongoService extends Service<String, Map<String, dynamic>> {
         query?.forEach((key, v) {
           var value = v is Map<String, dynamic> ? _filterNoQuery(v) : v;
 
-          if (!_NO_QUERY.contains(key) &&
+          if (!_noQuery.contains(key) &&
               value is! RequestContext &&
               value is! ResponseContext) {
             result = result.and(where.eq(key as String, value));
@@ -94,7 +90,7 @@ class MongoService extends Service<String, Map<String, dynamic>> {
         .toList();
   }
 
-  static const String _NONCE_KEY = '__angel__mongo__nonce__key__';
+  static const String _nonceKey = '__angel__mongo__nonce__key__';
 
   @override
   Future<Map<String, dynamic>> create(Map<String, dynamic> data,
@@ -104,13 +100,13 @@ class MongoService extends Service<String, Map<String, dynamic>> {
     try {
       var nonce = (await collection.db.getNonce())['nonce'] as String?;
       var result = await (collection.findAndModify(
-          query: where.eq(_NONCE_KEY, nonce),
+          query: where.eq(_nonceKey, nonce),
           update: item,
           returnNew: true,
           upsert: true) as FutureOr<Map<String, dynamic>>);
       return _jsonify(result);
     } catch (e, st) {
-      throw AngelHttpException(e, stackTrace: st);
+      throw AngelHttpException(stackTrace: st);
     }
   }
 
@@ -179,7 +175,7 @@ class MongoService extends Service<String, Map<String, dynamic>> {
       return result;
     } catch (e, st) {
       //printDebug(e, st, 'MODIFY');
-      throw AngelHttpException(e, stackTrace: st);
+      throw AngelHttpException(stackTrace: st);
     }
   }
 
@@ -207,7 +203,7 @@ class MongoService extends Service<String, Map<String, dynamic>> {
       return result;
     } catch (e, st) {
       //printDebug(e, st, 'UPDATE');
-      throw AngelHttpException(e, stackTrace: st);
+      throw AngelHttpException(stackTrace: st);
     }
   }
 
@@ -235,7 +231,7 @@ class MongoService extends Service<String, Map<String, dynamic>> {
       return _jsonify(result);
     } catch (e, st) {
       //printDebug(e, st, 'REMOVE');
-      throw AngelHttpException(e, stackTrace: st);
+      throw AngelHttpException(stackTrace: st);
     }
   }
 }

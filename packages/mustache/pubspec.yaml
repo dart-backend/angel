@@ -1,12 +1,12 @@
 name: angel3_mustache
-version: 3.1.1
+version: 6.0.0
 description: A service that renders Mustache template into HTML view for Angel3
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dukefirehawk/angel/tree/master/packages/mustache
 environment:
-  sdk: '>=2.12.0 <3.0.0'
+  sdk: '>=2.16.0 <3.0.0'
 dependencies:
-  angel3_framework: ^4.2.0
+  angel3_framework: ^6.0.0
   file: ^6.1.2
   mustache_template: ^2.0.0
   path: ^1.8.0

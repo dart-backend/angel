@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
-import 'package:angel3_container/src/container.dart';
+import 'package:angel3_container/angel3_container.dart';
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:collection/collection.dart' show IterableExtension;
 import 'package:http2/transport.dart';
@@ -35,7 +35,7 @@ class Http2RequestContext extends RequestContext<ServerTransportStream?> {
       Map<String, MockHttpSession> sessions,
       Uuid uuid) {
     var c = Completer<Http2RequestContext>();
-    var req = Http2RequestContext._(app.container!.createChild())
+    var req = Http2RequestContext._(app.container.createChild())
       ..app = app
       .._socket = socket
       .._stream = stream;

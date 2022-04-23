@@ -1,16 +1,16 @@
 name: angel3_framework
-version: 4.2.4
+version: 6.0.0
 description: A high-powered HTTP server extensible framework with dependency injection, routing and much more.
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dukefirehawk/angel/tree/master/packages/framework
 environment:
-  sdk: '>=2.12.0 <3.0.0'
+  sdk: '>=2.16.0 <3.0.0'
 dependencies:
-  angel3_container: ^3.1.0
-  angel3_http_exception: ^3.0.0
-  angel3_model: ^3.1.0
-  angel3_route: ^5.2.0
-  angel3_mock_request: ^2.0.0
+  angel3_container: ^6.0.0
+  angel3_http_exception: ^6.0.0
+  angel3_model: ^6.0.0
+  angel3_route: ^6.0.0
+  angel3_mock_request: ^6.0.0
   belatuk_merge_map: ^3.0.0
   belatuk_combinator: ^3.0.0
   belatuk_http_server: ^2.1.0
@@ -38,3 +38,11 @@ dev_dependencies:
 dependency_overrides:
   angel3_container:
     path: ../container/angel_container
+  angel3_http_exception:
+    path: ../http_exception
+  angel3_model:
+    path: ../model
+  angel3_route:
+    path: ../route
+  angel3_mock_request:
+    path: ../mock_request

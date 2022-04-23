@@ -107,13 +107,14 @@ class AngelAuth<User> {
       throw StateError(
           'An `AngelAuth` plug-in was called without its `deserializer` being set. All authentication will fail.');
     }
-    */
+    
     if (app.container == null) {
       _log.severe('Angel3 container is null');
       throw StateError(
           'Angel.container is null. All authentication will fail.');
     }
-    var appContainer = app.container!;
+    */
+    var appContainer = app.container;
 
     appContainer.registerSingleton(this);
     if (runtimeType != AngelAuth) {

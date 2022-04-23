@@ -48,7 +48,7 @@ class EmployeeQuery extends Query<Employee, EmployeeQueryWhere> {
 
   @override
   Map<String, String> get casts {
-    return {'salary': 'text'};
+    return {'salary': 'char'};
   }
 
   @override
@@ -324,7 +324,7 @@ class EmployeeSerializer extends Codec<Employee, Map> {
 
   static Map<String, dynamic> toMap(_Employee? model) {
     if (model == null) {
-      return {};
+      throw FormatException("Required field [model] cannot be null");
     }
     return {
       'id': model.id,

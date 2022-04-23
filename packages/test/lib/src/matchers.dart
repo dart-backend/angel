@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
-import 'package:matcher/matcher.dart';
 import 'package:angel3_http_exception/angel3_http_exception.dart';
 import 'package:angel3_validate/angel3_validate.dart';
 
@@ -43,7 +42,7 @@ Matcher hasStatus(int status) => _HasStatus(status);
 Matcher hasValidBody(Validator validator) => _HasValidBody(validator);
 
 class _IsJson extends Matcher {
-  var value;
+  dynamic value;
 
   _IsJson(this.value);
 
@@ -59,7 +58,7 @@ class _IsJson extends Matcher {
 }
 
 class _HasBody extends Matcher {
-  final body;
+  final dynamic body;
 
   _HasBody(this.body);
 
@@ -83,7 +82,7 @@ class _HasBody extends Matcher {
 }
 
 class _HasContentType extends Matcher {
-  var contentType;
+  dynamic contentType;
 
   _HasContentType(this.contentType);
 
@@ -116,7 +115,7 @@ class _HasContentType extends Matcher {
 
 class _HasHeader extends Matcher {
   final String key;
-  final value;
+  final dynamic value;
 
   _HasHeader(this.key, this.value);
 

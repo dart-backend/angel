@@ -68,7 +68,20 @@ class Service<Id, Data> extends Routable {
   List<RequestHandler> get bootstrappers => [];
 
   /// The [Angel] app powering this service.
-  Angel? app;
+  Angel? _app;
+
+  Angel get app {
+    if (_app == null) {
+      throw ArgumentError("Angel is not initialized");
+    }
+    return _app!;
+  }
+
+  set app(Angel angel) {
+    _app = angel;
+  }
+
+  bool get isAppActive => _app != null;
 
   /// Closes this service, including any database connections or stream controllers.
   @override
@@ -223,12 +236,12 @@ class Service<Id, Data> extends Routable {
     var handlers = List<RequestHandler>.from(handlerss);
 
     // Add global middleware if declared on the instance itself
-    var before = getAnnotation<Middleware>(service, app!.container!.reflector);
+    var before = getAnnotation<Middleware>(service, app.container.reflector);
 
     if (before != null) handlers.addAll(before.handlers);
 
     var indexMiddleware =
-        getAnnotation<Middleware>(service.index, app!.container!.reflector);
+        getAnnotation<Middleware>(service.index, app.container.reflector);
     get('/', (req, res) {
       return index(mergeMap([
         {'query': req.queryParameters},
@@ -241,7 +254,7 @@ class Service<Id, Data> extends Routable {
     ]);
 
     var createMiddleware =
-        getAnnotation<Middleware>(service.create, app!.container!.reflector);
+        getAnnotation<Middleware>(service.create, app.container.reflector);
     post('/', (req, ResponseContext res) {
       return req.parseBody().then((_) async {
         return await create(
@@ -261,7 +274,7 @@ class Service<Id, Data> extends Routable {
     ]);
 
     var readMiddleware =
-        getAnnotation<Middleware>(service.read, app!.container!.reflector);
+        getAnnotation<Middleware>(service.read, app.container.reflector);
 
     get('/:id', (req, res) {
       return read(
@@ -277,7 +290,7 @@ class Service<Id, Data> extends Routable {
     ]);
 
     var modifyMiddleware =
-        getAnnotation<Middleware>(service.modify, app!.container!.reflector);
+        getAnnotation<Middleware>(service.modify, app.container.reflector);
 
     patch('/:id', (req, res) {
       return req.parseBody().then((_) async {
@@ -296,7 +309,7 @@ class Service<Id, Data> extends Routable {
     ]);
 
     var updateMiddleware =
-        getAnnotation<Middleware>(service.update, app!.container!.reflector);
+        getAnnotation<Middleware>(service.update, app.container.reflector);
     post('/:id', (req, res) {
       return req.parseBody().then((_) async {
         return await update(
@@ -330,7 +343,7 @@ class Service<Id, Data> extends Routable {
     ]);
 
     var removeMiddleware =
-        getAnnotation<Middleware>(service.remove, app!.container!.reflector);
+        getAnnotation<Middleware>(service.remove, app.container.reflector);
     delete('/', (req, res) {
       return remove(
           '' as Id,

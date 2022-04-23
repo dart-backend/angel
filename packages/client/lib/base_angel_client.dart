@@ -1,6 +1,4 @@
 import 'dart:async';
-import 'dart:convert' show Encoding;
-import 'package:angel3_http_exception/angel3_http_exception.dart';
 import 'dart:convert';
 import 'package:http/src/base_client.dart' as http;
 import 'package:http/src/base_request.dart' as http;
@@ -32,14 +30,14 @@ AngelHttpException failure(http.Response response,
     if (v is Map && (v['is_error'] == true) || v['isError'] == true) {
       return AngelHttpException.fromMap(v as Map);
     } else {
-      return AngelHttpException(error,
+      return AngelHttpException(
           message: message ??
               'Unhandled exception while connecting to Angel backend.',
           statusCode: response.statusCode,
           stackTrace: stack);
     }
   } catch (e, st) {
-    return AngelHttpException(error ?? e,
+    return AngelHttpException(
         message: message ??
             'Angel backend did not return JSON - an error likely occurred.',
         statusCode: response.statusCode,
@@ -63,10 +61,7 @@ abstract class BaseAngelClient extends Angel {
 
   @override
   Future<AngelAuthResult> authenticate(
-      {String? type,
-      credentials,
-      String authEndpoint = '/auth',
-      @deprecated String reviveEndpoint = '/auth/token'}) async {
+      {String? type, credentials, String authEndpoint = '/auth'}) async {
     type ??= 'token';
 
     var segments = baseUrl.pathSegments
@@ -258,10 +253,6 @@ class BaseAngelService<Id, Data> extends Service<Id, Data?> {
   BaseAngelService(this.client, this.app, baseUrl, {this.deserializer})
       : baseUrl = baseUrl is Uri ? baseUrl : Uri.parse(baseUrl.toString());
 
-  /// Use [baseUrl] instead.
-  @deprecated
-  String get basePath => baseUrl.toString();
-
   Data? deserialize(x) {
     return deserializer != null ? deserializer!(x) : x as Data?;
   }
@@ -296,12 +287,12 @@ class BaseAngelService<Id, Data> extends Service<Id, Data?> {
       var v = json.decode(response.body) as List;
       //var r = v.map(deserialize).toList();
       var r = <Data>[];
-      v.forEach((element) {
+      for (var element in v) {
         var a = deserialize(element);
         if (a != null) {
           r.add(a);
         }
-      });
+      }
       _onIndexed.add(r);
       return r;
     } catch (e, st) {

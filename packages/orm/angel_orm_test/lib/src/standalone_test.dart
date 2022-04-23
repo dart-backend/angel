@@ -77,7 +77,7 @@ void standaloneTests(FutureOr<QueryExecutor> Function() createExecutor,
 
           var sportsCars = CarQuery()..where!.familyFriendly.isFalse;
           cars = await sportsCars.get(executor!);
-          //print(cars.map((c) => c.toJson()));
+          print(cars.map((c) => c.toJson()));
 
           var car = cars.first;
           expect(car.make, ferrari!.make);
@@ -173,9 +173,9 @@ void standaloneTests(FutureOr<QueryExecutor> Function() createExecutor,
     });
 
     test('insert', () async {
-      var recalledAt = DateTime.now();
+      var recalledAt = DateTime.now().toUtc();
       var query = CarQuery();
-      var now = DateTime.now();
+      var now = DateTime.now().toUtc();
       query.values
         ..make = 'Honda'
         ..description = 'Hello'
@@ -198,7 +198,7 @@ void standaloneTests(FutureOr<QueryExecutor> Function() createExecutor,
     });
 
     test('insert car', () async {
-      var recalledAt = DateTime.now();
+      var recalledAt = DateTime.now().toUtc();
       var beetle = Car(
           make: 'Beetle',
           description: 'Herbie',

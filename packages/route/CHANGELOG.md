@@ -1,5 +1,9 @@
 # Change Log
 
+## 6.0.0
+
+* Updated to 2.16.x
+
 ## 5.2.0
 
 * Updated `package:build_runner`

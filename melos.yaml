@@ -1,0 +1,7 @@
+name: angel3
+
+packages:
+  - packages/**
+
+#scripts:
+#  analyze: melos exec -- "dart analyze ."

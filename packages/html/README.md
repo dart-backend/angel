@@ -1,10 +1,9 @@
 # Angel3 HTML
 
-[![version](https://img.shields.io/badge/pub-v3.0.0-brightgreen)](https://pub.dartlang.org/packages/angel3_html)
+![Pub Version (including pre-releases)](https://img.shields.io/pub/v/angel3_html?include_prereleases)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 [![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
-
-[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/html/LICENSE)
+[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/master/packages/html/LICENSE)
 
 A plug-in that allows you to return `belatuk_html_builder` AST's from request handlers, and have them sent as HTML automatically.
 
@@ -28,10 +27,7 @@ Node myDom = html(lang: 'en', c: [
 ]);
 ```
 
-This plug-in means that you can now `return` these AST's, and Angel will automatically send them to
-clients. Ultimately, the implication is that you can use `belatuk_html_builder` as a substitute for a
-templating system within Dart. With [hot reloading](https://pub.dev/packages/angel3_hot), you won't
-even need to reload your server (as it should be).
+This plug-in means that you can now `return` these AST's, and Angel will automatically send them to clients. Ultimately, the implication is that you can use `belatuk_html_builder` as a substitute for a templating system within Dart. With [hot reloading](https://pub.dev/packages/angel3_hot), you won't even need to reload your server (as it should be).
 
 ## Installation
 
@@ -39,7 +35,7 @@ In your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  angel3_html: ^3.0.0
+  angel3_html: ^6.0.0
 ```
 
 ## Usage
@@ -72,9 +68,7 @@ configureServer(Angel app) async {
 }
 ```
 
-By default, `renderHtml` will ignore the client's `Accept` header. However, if you pass
-`enforceAcceptHeader` as `true`, then a `406 Not Acceptable` error will be thrown if the
-client doesn't accept `*/*` or `text/html`.
+By default, `renderHtml` will ignore the client's `Accept` header. However, if you pass `enforceAcceptHeader` as `true`, then a `406 Not Acceptable` error will be thrown if the client doesn't accept `*/*` or `text/html`.
 
 ```dart
 configureServer(Angel app) async {

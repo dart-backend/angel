@@ -1,5 +1,13 @@
 # Change Log
 
+## 6.0.0
+
+* Updated to SDK 2.16.x
+
+## 5.0.0
+
+* Skipped release
+
 ## 4.3.0
 
 * Updated to use `vm_service` 8.1.0

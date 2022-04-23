@@ -9,7 +9,6 @@ import 'dart:typed_data';
 import 'package:angel3_route/angel3_route.dart';
 import 'package:file/file.dart';
 import 'package:http_parser/http_parser.dart';
-import 'package:logging/logging.dart';
 import 'package:mime/mime.dart';
 
 import 'controller.dart';
@@ -25,7 +24,7 @@ abstract class ResponseContext<RawResponse>
   final CaseInsensitiveMap<String> _headers = CaseInsensitiveMap<String>.from(
       {'content-type': 'text/plain', 'server': 'Angel3'});
 
-  final log = Logger('ResponseContext');
+  //final log = Logger('ResponseContext');
 
   Completer? _done;
   int _statusCode = 200;
@@ -287,7 +286,7 @@ abstract class ResponseContext<RawResponse>
     }
 
     final head = controller
-        .findExpose(app!.container!.reflector)!
+        .findExpose(app!.container.reflector)!
         .path
         .toString()
         .replaceAll(_straySlashes, '');
@@ -351,7 +350,7 @@ abstract class ResponseContext<RawResponse>
       if (stackTrace != null) {
         Zone.current.handleUncaughtError(error, stackTrace);
       } else {
-        log.warning('[ResponseContext] stackTrace is null');
+        app?.logger.warning('[ResponseContext] stackTrace is null');
       }
     }
   }

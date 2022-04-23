@@ -135,9 +135,7 @@ AngelConfigurer configuration(FileSystem fileSystem,
       directoryPath: directoryPath,
       overrideEnvironmentName: overrideEnvironmentName,
       envPath: envPath,
-      onWarning: app.logger == null
-          ? null
-          : (msg) => app.logger?.warning('WARNING: $msg'),
+      onWarning: (msg) => app.logger.warning('WARNING: $msg'),
     );
     app.configuration.addAll(mergeMap(
       [

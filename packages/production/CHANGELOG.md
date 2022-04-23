@@ -1,8 +1,21 @@
 # Change Log
 
+## 6.0.0
+
+* Updated to SDK 2.16.x
+
+## 5.0.0
+
+* Skipped release
+
+## 4.0.0
+
+* Skipped release
+
 ## 3.1.2
 
 * Updated repo link
+* Fixed null safety warnings
 
 ## 3.1.1
 

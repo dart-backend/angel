@@ -12,7 +12,7 @@ RequestHandler ioc(Function handler, {Iterable<String> optional = const []}) {
     RequestHandler? contained;
 
     if (req.app?.container != null) {
-      var injection = preInject(handler, req.app!.container!.reflector);
+      var injection = preInject(handler, req.app!.container.reflector);
       //if (injection != null) {
       injection.optional.addAll(optional);
       contained = handleContained(handler, injection);
@@ -26,7 +26,7 @@ RequestHandler ioc(Function handler, {Iterable<String> optional = const []}) {
 Future resolveInjection(requirement, InjectionRequest injection,
     RequestContext req, ResponseContext res, bool throwOnUnresolved,
     [Container? container]) async {
-  var propFromApp;
+  dynamic propFromApp;
   container ??= req.container ?? res.app!.container;
 
   if (requirement == RequestContext) {
@@ -70,7 +70,7 @@ Future resolveInjection(requirement, InjectionRequest injection,
     }
   } else if (requirement is Type && requirement != dynamic) {
     try {
-      var futureType = container!.reflector.reflectFutureOf(requirement);
+      var futureType = container.reflector.reflectFutureOf(requirement);
       if (container.has(futureType.reflectedType)) {
         return await container.make(futureType.reflectedType);
       }
@@ -78,7 +78,7 @@ Future resolveInjection(requirement, InjectionRequest injection,
       // Ignore.
     }
 
-    return await container!.make(requirement);
+    return await container.make(requirement);
   } else if (throwOnUnresolved) {
     throw ArgumentError(
         '$requirement cannot be injected into a request handler.');
@@ -101,7 +101,9 @@ RequestHandler handleContained(Function handler, InjectionRequest injection,
   return (RequestContext req, ResponseContext res) async {
     if (injection.parameters.isNotEmpty &&
         injection.parameters.values.any((p) => p.match != null) &&
-        !suitableForInjection(req, res, injection)) return Future.value(true);
+        !suitableForInjection(req, res, injection)) {
+      return Future.value(true);
+    }
 
     var args = [];
 
@@ -167,10 +169,10 @@ InjectionRequest preInject(Function handler, Reflector reflector) {
     var name = parameter.name;
     var type = parameter.type.reflectedType;
 
-    var _Parameter = reflector.reflectType(Parameter);
+    var _parameter = reflector.reflectType(Parameter);
 
     var p = parameter.annotations
-        .firstWhereOrNull((m) => m.type.isAssignableTo(_Parameter))
+        .firstWhereOrNull((m) => m.type.isAssignableTo(_parameter))
         ?.reflectee as Parameter?;
     //print(p);
     if (p != null) {

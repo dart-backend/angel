@@ -1,13 +1,7 @@
 import 'dart:async';
+import 'package:angel3_orm/angel3_orm.dart';
 import 'package:logging/logging.dart';
 
-import 'annotations.dart';
-import 'join_builder.dart';
-import 'order_by.dart';
-import 'query_base.dart';
-import 'query_executor.dart';
-import 'query_values.dart';
-import 'query_where.dart';
 import 'package:optional/optional.dart';
 
 /// A SQL `SELECT` query builder.
@@ -70,7 +64,7 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
       nn++;
       _names[name] = nn;
     } else {
-      _names[name] = 1;
+      _names[name] = 0; //1;
     }
     return n == 0 ? name : '$name$n';
   }
@@ -298,7 +292,7 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
         }
         return ss;
       }));
-      _joins.forEach((j) {
+      for (var j in _joins) {
         var c = compiledJoins[j] = j.compile(trampoline);
         //if (c != null) {
         if (c != '') {
@@ -310,7 +304,7 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
             f.add('NULL');
           }
         }
-      });
+      }
     }
     if (withFields) b.write(f.join(', '));
     fromQuery ??= tableName;
@@ -349,12 +343,12 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
   Future<List<T>> delete(QueryExecutor executor) {
     var sql = compile({}, preamble: 'DELETE', withFields: false);
 
-    //_log.fine("Delete Query = $sql");
+    //_log.warning("Delete Query = $sql");
 
     if (_joins.isEmpty) {
       return executor
           .query(tableName, sql, substitutionValues,
-              fields.map(adornWithTableName).toList())
+              returningFields: fields.map(adornWithTableName).toList())
           .then((it) => deserializeList(it));
     } else {
       return executor.transaction((tx) async {
@@ -379,14 +373,31 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
     if (insertion == '') {
       throw StateError('No values have been specified for update.');
     } else {
-      // TODO: How to do this in a non-Postgres DB?
-      var returning = fields.map(adornWithTableName).join(', ');
       var sql = compile({});
-      sql = 'WITH $tableName as ($insertion RETURNING $returning) ' + sql;
+      var returningSql = '';
+      if (executor.dialect is PostgreSQLDialect) {
+        var returning = fields.map(adornWithTableName).join(', ');
+        sql = 'WITH $tableName as ($insertion RETURNING $returning) ' + sql;
+      } else if (executor.dialect is MySQLDialect) {
+        // Default to using 'id' as primary key in model
+        if (fields.contains("id")) {
+          returningSql = '$sql where $tableName.id=?';
+        } else {
+          var returningSelect = values?.compileInsertSelect(this, tableName);
+          returningSql = '$sql where $returningSelect';
+        }
 
-      //_log.fine("Insert Query = $sql");
+        sql = '$insertion';
+      } else {
+        throw ArgumentError("Unsupported database dialect.");
+      }
 
-      return executor.query(tableName, sql, substitutionValues).then((it) {
+      //_log.warning("Insert Query = $sql");
+
+      return executor
+          .query(tableName, sql, substitutionValues,
+              returningQuery: returningSql)
+          .then((it) {
         // Return SQL execution results
         return it.isEmpty ? Optional.empty() : deserialize(it.first);
       });
@@ -399,24 +410,30 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
 
     if (valuesClause == '') {
       throw StateError('No values have been specified for update.');
-    } else {
-      updateSql.write(' $valuesClause');
-      var whereClause = where?.compile();
-      if (whereClause?.isNotEmpty == true) {
-        updateSql.write(' WHERE $whereClause');
-      }
-      if (_limit != null) updateSql.write(' LIMIT $_limit');
-
-      var returning = fields.map(adornWithTableName).join(', ');
-      var sql = compile({});
-      sql = 'WITH $tableName as ($updateSql RETURNING $returning) ' + sql;
-
-      //_log.fine("Update Query = $sql");
-
-      return executor
-          .query(tableName, sql, substitutionValues)
-          .then((it) => deserializeList(it));
     }
+    updateSql.write(' $valuesClause');
+    var whereClause = where?.compile();
+    if (whereClause?.isNotEmpty == true) {
+      updateSql.write(' WHERE $whereClause');
+    }
+    if (_limit != null) updateSql.write(' LIMIT $_limit');
+
+    var returning = fields.map(adornWithTableName).join(', ');
+    var sql = compile({});
+    var returningSql = '';
+    if (executor.dialect is PostgreSQLDialect) {
+      sql = 'WITH $tableName as ($updateSql RETURNING $returning) ' + sql;
+    } else if (executor.dialect is MySQLDialect) {
+      returningSql = sql;
+      sql = '$updateSql';
+    } else {
+      throw ArgumentError("Unsupported database dialect.");
+    }
+    //_log.fine("Update Query = $sql");
+
+    return executor
+        .query(tableName, sql, substitutionValues, returningQuery: returningSql)
+        .then((it) => deserializeList(it));
   }
 
   Future<Optional<T>> updateOne(QueryExecutor executor) {

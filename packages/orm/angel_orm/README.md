@@ -10,6 +10,7 @@ Runtime support for Angel3 ORM. Includes a clean, database-agnostic query builde
 ## Supported database
 
 * PostgreSQL version 10, 11, 12, 13 and 14
-* MySQL 8.0 or later
+* MariaDB 10.2.x
+* MySQL 8.0.x
 
 For documentation about the ORM, see [Developer Guide](https://angel3-docs.dukefirehawk.com/guides/orm)

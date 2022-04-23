@@ -8,16 +8,17 @@ part of 'with_enum.dart';
 
 @generatedSerializable
 class WithEnum implements _WithEnum {
-  const WithEnum({this.type = WithEnumType.b, this.finalList, this.imageBytes});
+  WithEnum(
+      {this.type = WithEnumType.b, this.finalList = const [], this.imageBytes});
 
   @override
-  final WithEnumType? type;
+  WithEnumType? type;
 
   @override
-  final List<int>? finalList;
+  List<int>? finalList;
 
   @override
-  final Uint8List? imageBytes;
+  Uint8List? imageBytes;
 
   WithEnum copyWith(
       {WithEnumType? type, List<int>? finalList, Uint8List? imageBytes}) {
@@ -80,16 +81,16 @@ class WithEnumSerializer extends Codec<WithEnum, Map> {
   WithEnumDecoder get decoder => const WithEnumDecoder();
   static WithEnum fromMap(Map map) {
     return WithEnum(
-        type: map['type'] is WithEnumType
-            ? (map['type'] as WithEnumType?)
+        type: map['type'] is WithEnumType?
+            ? (map['type'] as WithEnumType?) ?? WithEnumType.b
             : (map['type'] is int
-                ? WithEnumType.values[map['type'] as int]
+                ? WithEnumType?.values[map['type'] as int]
                 : WithEnumType.b),
         finalList: map['final_list'] is Iterable
             ? (map['final_list'] as Iterable).cast<int>().toList()
-            : null,
+            : [],
         imageBytes: map['image_bytes'] is Uint8List
-            ? (map['image_bytes'] as Uint8List?)
+            ? (map['image_bytes'] as Uint8List)
             : (map['image_bytes'] is Iterable<int>
                 ? Uint8List.fromList(
                     (map['image_bytes'] as Iterable<int>).toList())
@@ -99,13 +100,16 @@ class WithEnumSerializer extends Codec<WithEnum, Map> {
                     : null)));
   }
 
-  static Map<String, dynamic> toMap(_WithEnum model) {
+  static Map<String, dynamic> toMap(_WithEnum? model) {
+    if (model == null) {
+      throw FormatException("Required field [model] cannot be null");
+    }
     return {
       'type':
-          model.type == null ? null : WithEnumType.values.indexOf(model.type!),
+          model.type != null ? WithEnumType.values.indexOf(model.type!) : null,
       'final_list': model.finalList,
       'image_bytes':
-          model.imageBytes == null ? null : base64.encode(model.imageBytes!)
+          model.imageBytes != null ? base64.encode(model.imageBytes!) : null
     };
   }
 }

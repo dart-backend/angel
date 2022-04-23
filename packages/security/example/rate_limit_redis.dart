@@ -33,7 +33,7 @@ void configureServer(Angel app) async {
   // Basic routes.
   app
     ..get('/', (req, res) {
-      var instance = req.container!.make<InstanceInfo>()!;
+      var instance = req.container!.make<InstanceInfo>();
       res.writeln('This is instance ${instance.id}.');
     })
     ..fallback((req, res) => throw AngelHttpException.notFound());

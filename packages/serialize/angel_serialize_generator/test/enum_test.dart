@@ -3,8 +3,8 @@ import 'dart:typed_data';
 import 'package:test/test.dart';
 import 'models/with_enum.dart';
 
-const WithEnum aWithEnum = WithEnum(type: WithEnumType.a);
-const WithEnum aWithEnum2 = WithEnum(type: WithEnumType.a);
+WithEnum aWithEnum = WithEnum(type: WithEnumType.a);
+WithEnum aWithEnum2 = WithEnum(type: WithEnumType.a);
 
 void main() {
   test('enum serializes to int', () {
@@ -44,7 +44,11 @@ void main() {
   });
 
   test('const', () {
-    expect(identical(aWithEnum, aWithEnum2), true);
+    print('aWithEnum ${aWithEnum.hashCode}');
+    print('aWithEnum2 ${aWithEnum2.hashCode}');
+
+    //expect(identical(aWithEnum, aWithEnum2), true);
+    expect(aWithEnum == aWithEnum2, true);
   });
 
   test('uint8list', () {

@@ -201,7 +201,7 @@ class WorldSerializer extends Codec<World, Map> {
 
   static Map<String, dynamic> toMap(_World? model) {
     if (model == null) {
-      return {};
+      throw FormatException("Required field [model] cannot be null");
     }
     return {'id': model.id, 'random_number': model.randomNumber};
   }

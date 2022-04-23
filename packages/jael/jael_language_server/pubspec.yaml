@@ -4,14 +4,14 @@ description: Language Server Protocol implementation for the Jael templating eng
 homepage: https://github.com/angel-dart/vscode
 publish_to: none
 environment:
-  sdk: '>=2.12.0 <3.0.0'
+  sdk: '>=2.16.0 <3.0.0'
 dependencies:
   args: ^2.1.1
 #  dart_language_server: ^0.1.16
   file: ^6.1.2
   io: ^1.0.0
   jael3: ^4.2.0
-  jael3_preprocessor: ^4.2.0
+  jael3_preprocessor: ^5.0.0
   json_rpc_2: ^3.0.1
   logging: ^1.0.1
   path: ^1.8.0

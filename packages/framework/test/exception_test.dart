@@ -1,6 +1,5 @@
 import 'package:angel3_framework/angel3_framework.dart';
 import 'dart:convert';
-import 'package:matcher/matcher.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -41,9 +40,7 @@ void main() {
   });
 
   test('toString', () {
-    expect(
-        AngelHttpException(null, statusCode: 420, message: 'Blaze It')
-            .toString(),
+    expect(AngelHttpException(statusCode: 420, message: 'Blaze It').toString(),
         '420: Blaze It');
   });
 }

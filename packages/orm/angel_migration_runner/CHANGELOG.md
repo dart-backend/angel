@@ -1,5 +1,18 @@
 # Change Log
 
+## 6.0.0
+
+* Updated to SDK 2.16.x
+* Updated to use `mysql_client` package
+
+## 5.0.0
+
+* Skipped release
+
+## 4.1.2
+
+* Updated README
+
 ## 4.1.1
 
 * Updated README

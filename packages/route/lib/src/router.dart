@@ -101,7 +101,7 @@ class Router<T> {
     for (var route in routes) {
       if (route is! SymlinkRoute<T>) {
         router._routes.add(route.clone());
-      } else if (route is SymlinkRoute<T>) {
+      } else {
         final newRouter = route.router.clone();
         newMounted[route.path] = newRouter;
         final symlink = SymlinkRoute<T>(route.path, newRouter);
@@ -141,7 +141,7 @@ class Router<T> {
         indent();
         buf.write('- ');
         if (route is! SymlinkRoute) buf.write('${route.method} ');
-        buf.write('${route.path.isNotEmpty ? route.path : '/'}');
+        buf.write(route.path.isNotEmpty ? route.path : '/');
 
         if (route is SymlinkRoute<T>) {
           buf.writeln();

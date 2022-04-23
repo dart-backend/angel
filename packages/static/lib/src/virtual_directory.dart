@@ -265,10 +265,11 @@ class VirtualDirectory {
     if (!acceptable) {
       _log.severe('Mime type [$value] is not supported');
       throw AngelHttpException(
-          UnsupportedError(
-              'Client requested $value, but server wanted to send $mimeType.'),
-          statusCode: 406,
-          message: '406 Not Acceptable');
+          //UnsupportedError(
+          //    'Client requested $value, but server wanted to send $mimeType.'),
+          errors: [
+            'Client requested $value, but server wanted to send $mimeType.'
+          ], statusCode: 406, message: '406 Not Acceptable');
     }
   }
 
@@ -320,7 +321,8 @@ class VirtualDirectory {
 
         if (invalid) {
           throw AngelHttpException(
-              Exception('Semantically invalid, or unbounded range.'),
+              //Exception('Semantically invalid, or unbounded range.'),
+              errors: ['Semantically invalid, or unbounded range.'],
               statusCode: 416,
               message: 'Semantically invalid, or unbounded range.');
         }
@@ -328,14 +330,15 @@ class VirtualDirectory {
         // Ensure it's within range.
         if (item.start >= totalFileSize || item.end >= totalFileSize) {
           throw AngelHttpException(
-              Exception('Given range $item is out of bounds.'),
+              //Exception('Given range $item is out of bounds.'),
+              errors: ['Given range $item is out of bounds.'],
               statusCode: 416,
               message: 'Given range $item is out of bounds.');
         }
       }
 
       if (header.items.isEmpty) {
-        throw AngelHttpException(null,
+        throw AngelHttpException(
             statusCode: 416, message: '`Range` header may not be empty.');
       } else if (header.items.length == 1) {
         var item = header.items[0];

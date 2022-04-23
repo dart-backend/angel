@@ -1,5 +1,15 @@
 # Change Log
 
+## 6.0.0
+
+* Updated to SDK 2.16.x
+* Updated to `analyzer` 3.x.x
+* Fixed default value for `List` and `Enum`
+
+## 5.0.0
+
+* Skipped release
+
 ## 4.3.0
 
 * Updated to use  `package:belatuk_code_buffer`

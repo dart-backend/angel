@@ -1,5 +1,18 @@
 # Change Log
 
+## 6.0.0
+
+* Updated to SDK 2.16.x
+
+## 5.0.0
+
+* Skipped release
+
+## 4.1.0
+
+* Added `MySQLDialect` to handle MySQL database specific features
+* Updated `insert` and `update` query to support database without writable CTE
+
 ## 4.0.6
 
 * Fixed multiple `orderBy` error

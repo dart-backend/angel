@@ -531,7 +531,7 @@ class BookSerializer extends Codec<Book, Map> {
 
   static Map<String, dynamic> toMap(_Book? model) {
     if (model == null) {
-      return {};
+      throw FormatException("Required field [model] cannot be null");
     }
     return {
       'id': model.id,
@@ -608,7 +608,7 @@ class AuthorSerializer extends Codec<Author, Map> {
 
   static Map<String, dynamic> toMap(_Author? model) {
     if (model == null) {
-      return {};
+      throw FormatException("Required field [model] cannot be null");
     }
     return {
       'id': model.id,

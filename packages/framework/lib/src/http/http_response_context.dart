@@ -13,15 +13,15 @@ class HttpResponseContext extends ResponseContext<HttpResponse> {
   @override
   final HttpResponse rawResponse;
 
-  @override
-  Angel? app;
-
   LockableBytesBuilder? _buffer;
 
   final HttpRequestContext? _correspondingRequest;
   bool _isDetached = false, _isClosed = false, _streamInitialized = false;
 
-  HttpResponseContext(this.rawResponse, this.app, [this._correspondingRequest]);
+  HttpResponseContext(this.rawResponse, Angel? app,
+      [this._correspondingRequest]) {
+    this.app = app;
+  }
 
   @override
   HttpResponse detach() {

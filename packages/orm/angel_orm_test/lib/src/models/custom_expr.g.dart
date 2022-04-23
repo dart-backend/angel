@@ -467,7 +467,7 @@ class NumbersSerializer extends Codec<Numbers, Map> {
 
   static Map<String, dynamic> toMap(_Numbers? model) {
     if (model == null) {
-      return {};
+      throw FormatException("Required field [model] cannot be null");
     }
     return {
       'id': model.id,
@@ -534,7 +534,7 @@ class AlphabetSerializer extends Codec<Alphabet, Map> {
 
   static Map<String, dynamic> toMap(_Alphabet? model) {
     if (model == null) {
-      return {};
+      throw FormatException("Required field [model] cannot be null");
     }
     return {
       'id': model.id,

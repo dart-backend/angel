@@ -21,17 +21,66 @@ import 'service.dart';
 
 //final RegExp _straySlashes = RegExp(r'(^/+)|(/+$)');
 
-/// A function that configures an [Angel] server in some way.
+/// A function that configures an [Angel] server.
 typedef AngelConfigurer = FutureOr<void> Function(Angel app);
 
 /// A function that asynchronously generates a view from the given path and data.
 typedef ViewGenerator = FutureOr<String> Function(String path,
     [Map<String, dynamic>? data]);
 
+/// A function that handles error
+typedef AngelErrorHandler = dynamic Function(
+    AngelHttpException e, RequestContext req, ResponseContext res);
+
+/// The default error handler for [Angel] server
+Future<bool> _defaultErrorHandler(
+    AngelHttpException e, RequestContext req, ResponseContext res) async {
+  if (!req.accepts('text/html', strict: true) &&
+      (req.accepts('application/json') ||
+          req.accepts('application/javascript'))) {
+    await res.json(e.toJson());
+    return Future.value(false);
+  } else {
+    res.contentType = MediaType('text', 'html', {'charset': 'utf8'});
+    res.statusCode = e.statusCode;
+    res.write('<!DOCTYPE html><html><head><title>${e.message}</title>');
+    res.write('</head><body><h1>${e.message}</h1><ul>');
+
+    for (var error in e.errors) {
+      res.write('<li>$error</li>');
+    }
+
+    res.write('</ul></body></html>');
+    return Future.value(false);
+  }
+}
+
+/// Default ROOT level logger
+Logger _defaultLogger() {
+  Logger logger = Logger('ROOT')
+    ..onRecord.listen((rec) {
+      if (rec.error == null) {
+        print(rec.message);
+      }
+
+      if (rec.error != null) {
+        var err = rec.error;
+        if (err is AngelHttpException && err.statusCode != 500) return;
+        print('${rec.message} \n');
+        print(rec.error);
+        if (rec.stackTrace != null) {
+          print(rec.stackTrace);
+        }
+      }
+    });
+
+  return logger;
+}
+
 /// A powerful real-time/REST/MVC server class.
 class Angel extends Routable {
-  static ViewGenerator noViewEngineConfigured =
-      (String view, [Map? data]) => 'No view engine has been configured yet.';
+  static Future<String> _noViewEngineConfigured(String view, [Map? data]) =>
+      Future.value('No view engine has been configured yet.');
 
   final List<Angel> _children = [];
   final Map<
@@ -72,19 +121,6 @@ class Angel extends Routable {
   /// A set of [Controller] objects that have been loaded into the application.
   Map<Pattern, Controller> get controllers => _controllers;
 
-  /// Now *deprecated*, in favor of [AngelEnv] and [angelEnv]. Use `app.environment.isProduction`
-  /// instead.
-  ///
-  /// Indicates whether the application is running in a production environment.
-  ///
-  /// The criteria for this is the `ANGEL_ENV` environment variable being set to
-  /// `'production'`.
-  ///
-  /// This value is memoized the first time you call it, so do not change environment
-  /// configuration at runtime!
-  @deprecated
-  bool get isProduction => environment.isProduction;
-
   /// The [AngelEnvironment] in which the application is running.
   ///
   /// By default, it is automatically inferred.
@@ -94,7 +130,17 @@ class Angel extends Routable {
   Angel? get parent => _parent;
 
   /// Outputs diagnostics and debug messages.
-  Logger? logger;
+  Logger _logger = _defaultLogger();
+
+  Logger get logger => _logger;
+
+  /// Assign a custom logger.
+  /// Passing null will reset to default logger
+  set logger(Logger? log) {
+    _logger.clearListeners();
+
+    _logger = log ?? _defaultLogger();
+  }
 
   /// Plug-ins to be called right before server startup.
   ///
@@ -111,52 +157,22 @@ class Angel extends Routable {
   /// These will only not run if a response's `willCloseItself` is set to `true`.
   final List<RequestHandler> responseFinalizers = [];
 
-  /// A [Map] of application-specific data that can be accessed by any
-  /// piece of code that can see this [Angel] instance.
-  ///
-  /// Packages like `package:angel_configuration` populate this map
-  /// for you.
-  @override
-  final Map configuration = {};
-
   /// A function that renders views.
   ///
   /// Called by [ResponseContext]@`render`.
-  ViewGenerator? viewGenerator = noViewEngineConfigured;
+  ViewGenerator? viewGenerator = _noViewEngineConfigured;
 
   /// The handler currently configured to run on [AngelHttpException]s.
-  Function(AngelHttpException e, RequestContext req, ResponseContext res)
-      errorHandler =
-      (AngelHttpException e, RequestContext req, ResponseContext res) {
-    if (!req.accepts('text/html', strict: true) &&
-        (req.accepts('application/json') ||
-            req.accepts('application/javascript'))) {
-      res.json(e.toJson());
-      return;
-    }
-
-    res.contentType = MediaType('text', 'html', {'charset': 'utf8'});
-    res.statusCode = e.statusCode; // ?? 200;
-    res.write('<!DOCTYPE html><html><head><title>${e.message}</title>');
-    res.write('</head><body><h1>${e.message}</h1><ul>');
-
-    for (var error in e.errors) {
-      res.write('<li>$error</li>');
-    }
-
-    res.write('</ul></body></html>');
-    res.close();
-  };
+  AngelErrorHandler errorHandler = _defaultErrorHandler;
 
   @override
   Route<RequestHandler> addRoute(
       String method, String path, RequestHandler handler,
       {Iterable<RequestHandler> middleware = const []}) {
-    //middleware ??= [];
     if (_flattened != null) {
-      logger?.warning(
+      logger.warning(
           'WARNING: You added a route ($method $path) to the router, after it had been optimized.');
-      logger?.warning(
+      logger.warning(
           'This route will be ignored, and no requests will ever reach it.');
     }
 
@@ -167,9 +183,9 @@ class Angel extends Routable {
   SymlinkRoute<RequestHandler> mount(
       String path, Router<RequestHandler> router) {
     if (_flattened != null) {
-      logger?.warning(
+      logger.warning(
           'WARNING: You added mounted a child router ($path) on the router, after it had been optimized.');
-      logger?.warning(
+      logger.warning(
           'This route will be ignored, and no requests will ever reach it.');
     }
 
@@ -184,36 +200,35 @@ class Angel extends Routable {
   /// Loads some base dependencies into the service container.
   void bootstrapContainer() {
     if (runtimeType != Angel) {
-      container?.registerSingleton(this);
+      container.registerSingleton(this);
     }
 
-    container?.registerSingleton<Angel>(this);
-    container?.registerSingleton<Routable>(this);
-    container?.registerSingleton<Router>(this);
+    container.registerSingleton<Angel>(this);
+    container.registerSingleton<Routable>(this);
+    container.registerSingleton<Router>(this);
   }
 
   /// Shuts down the server, and closes any open [StreamController]s.
   ///
   /// The server will be **COMPLETELY DEFUNCT** after this operation!
   @override
-  Future close() {
+  Future<void> close() {
     Future.forEach(services.values, (Service service) {
       service.close();
     });
 
     super.close();
-    viewGenerator = noViewEngineConfigured;
+    viewGenerator = _noViewEngineConfigured;
     _preContained.clear();
     handlerCache.clear();
     encoders.clear();
-    //_serializer = json.encode;
     _children.clear();
-    _parent = null;
-    logger = null;
+    //_parent = null;
+    //logger = null;
+    //_flattened = null;
     startupHooks.clear();
     shutdownHooks.clear();
     responseFinalizers.clear();
-    _flattened = null;
     return Future.value();
   }
 
@@ -306,7 +321,7 @@ class Angel extends Routable {
   void optimizeForProduction({bool force = false}) {
     if (environment.isProduction || force == true) {
       _flattened ??= flatten(this);
-      logger?.info('Angel is running in production mode.');
+      logger.info('Angel is running in production mode.');
     }
   }
 
@@ -315,6 +330,7 @@ class Angel extends Routable {
   /// the execution will be faster, as the injection requirements were stored beforehand.
   Future runContained(Function handler, RequestContext req, ResponseContext res,
       [Container? container]) {
+    container ??= Container(EmptyReflector());
     return Future.sync(() {
       if (_preContained.containsKey(handler)) {
         return handleContained(handler, _preContained[handler]!, container)(
@@ -328,10 +344,15 @@ class Angel extends Routable {
   /// Runs with DI, and *always* reflects. Prefer [runContained].
   Future runReflected(Function handler, RequestContext req, ResponseContext res,
       [Container? container]) {
-    container ??= req.container ?? res.app!.container;
+    container ??=
+        req.container ?? res.app?.container ?? Container(EmptyReflector());
+
+    if (container.reflector is EmptyReflector) {
+      throw ArgumentError("No `reflector` passed");
+    }
     var h = handleContained(
         handler,
-        _preContained[handler] = preInject(handler, container!.reflector),
+        _preContained[handler] = preInject(handler, container.reflector),
         container);
     return Future.sync(() => h(req, res));
     // return   closureMirror.apply(args).reflectee;
@@ -350,7 +371,7 @@ class Angel extends Routable {
   ///
   /// If you are on `Dart >=2.0.0`, simply call `mountController<T>()`.
   Future<T> mountController<T extends Controller>([Type? type]) {
-    var controller = container!.make<T>(type);
+    var controller = container.make<T>(type);
     return configure(controller.configureServer).then((_) => controller);
   }
 
@@ -379,20 +400,25 @@ class Angel extends Routable {
       {Reflector reflector =
           const ThrowingReflector(errorMessage: _reflectionErrorMessage),
       this.environment = angelEnv,
-      this.logger,
+      Logger? logger,
       this.allowMethodOverrides = true,
       this.serializer,
       this.viewGenerator})
       : super(reflector) {
+    // Override default logger
+    if (logger != null) {
+      this.logger = logger;
+    }
+
     if (reflector is EmptyReflector || reflector is ThrowingReflector) {
       var msg =
           'No `reflector` was passed to the Angel constructor, so reflection will not be available.\n' +
               _reflectionInfo;
-      logger?.warning(msg);
+      this.logger.warning(msg);
     }
 
     bootstrapContainer();
-    viewGenerator ??= noViewEngineConfigured;
+    viewGenerator ??= _noViewEngineConfigured;
     serializer ??= json.encode;
   }
 }

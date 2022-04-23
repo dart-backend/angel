@@ -110,7 +110,8 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
               var type = ctx.columns[field.name]?.type;
               if (type == null) continue;
               if (floatTypes.contains(type)) {
-                args[name] = literalString('text');
+                //args[name] = literalString('text');
+                args[name] = literalString('char');
               }
             }
 
@@ -239,8 +240,9 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
             ..type = refer('List')))
           ..body = Block((b) {
             var i = 0;
-            var args = <String, Expression>{};
 
+            // Build the argurments for model
+            var args = <String, Expression>{};
             for (var field in ctx.effectiveFields) {
               var fType = field.type;
               Reference type = convertTypeReference(field.type);
@@ -248,14 +250,10 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                 type = refer('int');
               }
 
-              // Reverted since as `continue` for `RelationshipFieldImp` will
-              // cause `_index` requires +2 or +3 in order to map to the correct
-              // fields
-              //
-              //literalNum(i++);
-              //var expr = (refer('row').index(CodeExpression(Code('_index++'))));
+              // Generated Code: row[i]
               var expr = (refer('row').index(literalNum(i++)));
               if (isSpecialId(ctx, field)) {
+                // Generated Code: row[i].toString()
                 expr = expr.property('toString').call([]);
               } else if (field is RelationFieldImpl) {
                 continue;
@@ -271,7 +269,11 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                 var isNull = expr.equalTo(literalNull);
                 expr = isNull.conditional(literalNull,
                     type.property('values').index(expr.asA(refer('int'))));
+              } else if (fType.isDartCoreBool) {
+                // Generated Code: mapToBool(row[i])
+                expr = refer('mapToBool').call([expr]);
               } else {
+                // Generated Code: (row[i] as type?)
                 expr = expr.asA(type);
               }
               expr = refer('fields').property('contains').call([

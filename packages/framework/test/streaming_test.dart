@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io' show stderr;
 import 'dart:io';
 
 import 'package:angel3_container/mirrors.dart';
@@ -92,7 +91,7 @@ void main() {
   test('cannot write after close', () async {
     try {
       var rq = MockHttpRequest('GET', Uri.parse('/overwrite'));
-      await (rq.close());
+      await rq.close();
       await http.handleRequest(rq);
       var body = await rq.response.transform(utf8.decoder).join();
 
