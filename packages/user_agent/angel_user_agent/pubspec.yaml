@@ -1,11 +1,11 @@
 name: angel3_user_agent
-version: 3.0.0-beta.1
+version: 6.0.0-beta.1
 description: Angel3 middleware to parse and inject a User Agent object into requests.
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dukefirehawk/angel/tree/angel3/packages/user_agent/angel_user_agent
 environment:
-  sdk: '>=2.12.0 <3.0.0'
+  sdk: '>=2.16.0 <3.0.0'
 dependencies:
-  angel3_framework: ^4.1.0
+  angel3_framework: ^6.0.0
   user_agent_analyzer: ^3.0.0
   lints: ^1.0.0

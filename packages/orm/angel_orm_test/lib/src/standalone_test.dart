@@ -173,9 +173,9 @@ void standaloneTests(FutureOr<QueryExecutor> Function() createExecutor,
     });
 
     test('insert', () async {
-      var recalledAt = DateTime.now();
+      var recalledAt = DateTime.now().toUtc();
       var query = CarQuery();
-      var now = DateTime.now();
+      var now = DateTime.now().toUtc();
       query.values
         ..make = 'Honda'
         ..description = 'Hello'
@@ -198,7 +198,7 @@ void standaloneTests(FutureOr<QueryExecutor> Function() createExecutor,
     });
 
     test('insert car', () async {
-      var recalledAt = DateTime.now();
+      var recalledAt = DateTime.now().toUtc();
       var beetle = Car(
           make: 'Beetle',
           description: 'Herbie',

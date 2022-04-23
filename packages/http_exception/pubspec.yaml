@@ -4,6 +4,6 @@ description: Exception class that can be serialized to JSON and serialized to cl
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dukefirehawk/angel/tree/master/packages/http_exception
 environment:
-  sdk: '>=2.15.0 <3.0.0'
+  sdk: '>=2.16.0 <3.0.0'
 dev_dependencies:
   lints: ^1.0.0

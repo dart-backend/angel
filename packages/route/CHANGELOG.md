@@ -2,7 +2,7 @@
 
 ## 6.0.0
 
-* Updated to min SDK 2.15.x
+* Updated to 2.16.x
 
 ## 5.2.0
 

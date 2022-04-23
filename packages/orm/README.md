@@ -1,4 +1,4 @@
-# ORM
+# Angel3 ORM
 
 ![Pub Version (including pre-releases)](https://img.shields.io/pub/v/angel3_orm?include_prereleases)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
@@ -10,7 +10,7 @@ Source-generated ORM for use with the [Angel3 framework](https://github.com/duke
 Documentation for migrations can be found here:
 [ORM Migration](https://angel3-docs.dukefirehawk.com/guides/orm/migrations)
 
-- [ORM](#orm)
+- [Angel3 ORM](#angel3-orm)
   - [Usage](#usage)
   - [Models](#models)
   - [Example](#example)
@@ -27,9 +27,9 @@ You'll need these dependencies in your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  angel3_orm: ^4.0.0
+  angel3_orm: ^6.0.0
 dev_dependencies:
-  angel3_orm_generator: ^4.0.0
+  angel3_orm_generator: ^6.0.0
   build_runner: ^2.0.0
 ```
 

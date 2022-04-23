@@ -35,7 +35,7 @@ In your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  angel3_html: ^3.0.0
+  angel3_html: ^6.0.0
 ```
 
 ## Usage

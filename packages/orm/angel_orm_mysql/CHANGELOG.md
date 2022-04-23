@@ -1,26 +1,26 @@
 # Change Log
 
-## 6.0.0-beta.1
+## 6.0.0
 
-* Updated to min SDK 2.15.x
-* Upgrade to use `mysql1` driver
-* Added support for MariaDB 10.2.x
+* Updated to SDK 2.16.x
+* Added support for MariaDB 10.2.x with `mysql1` driver
+* Added support for MySQL 8.x.x with `mysql_client` driver
 
 ## 5.0.0
 
-* No release. Skipped
+* Skipped release
 
 ## 4.0.0
 
-* No release. Skipped
+* Skipped release
 
 ## 3.0.0
 
-* No release. Skipped
+* Skipped release
 
 ## 2.0.0
 
-* No release. Skipped
+* Skipped release
 
 ## 2.0.0-beta.3
 

@@ -100,7 +100,7 @@ class PersonOrderQuery extends Query<PersonOrder, PersonOrderQueryWhere> {
         price: fields.contains('price')
             ? double.tryParse(row[5].toString())
             : null,
-        deleted: fields.contains('deleted') ? (row[6] as bool?) : null);
+        deleted: fields.contains('deleted') ? mapToBool(row[6]) : null);
     return Optional.of(model);
   }
 
@@ -264,7 +264,7 @@ class OrderWithPersonInfoQuery
         price: fields.contains('price')
             ? double.tryParse(row[4].toString())
             : null,
-        deleted: fields.contains('deleted') ? (row[5] as bool?) : null,
+        deleted: fields.contains('deleted') ? mapToBool(row[5]) : null,
         personName: fields.contains('person_name') ? (row[6] as String?) : null,
         personAge: fields.contains('person_age') ? (row[7] as int?) : null);
     return Optional.of(model);

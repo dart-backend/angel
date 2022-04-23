@@ -4,7 +4,7 @@ description:  A simple server-side HTML templating engine for Dart. Comparable t
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dukefirehawk/angel/tree/master/packages/jael/jael
 environment:
-  sdk: '>=2.15.0 <3.0.0'
+  sdk: '>=2.16.0 <3.0.0'
 dependencies:
   args: ^2.0.0
   charcode: ^1.0.0

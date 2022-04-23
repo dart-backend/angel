@@ -99,7 +99,7 @@ void main() async {
         //
         // Use `confirmPopupAuthentication`, which is bundled with
         // `package:angel_auth`.
-        var user = req.container!.make<User>()!;
+        var user = req.container!.make<User>();
         res.write('Your user info: ${user.toJson()}\n\n');
         res.write('Your JWT: $jwt');
         await res.close();

@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:angel3_migration/angel3_migration.dart';
 import 'package:angel3_migration_runner/src/mysql/table.dart';
 import 'package:logging/logging.dart';
-import 'package:mysql1/mysql1.dart';
+import 'package:mysql_client/mysql_client.dart';
 
 class MysqlSchema extends Schema {
   final _log = Logger('MysqlSchema');
@@ -14,17 +14,17 @@ class MysqlSchema extends Schema {
 
   factory MysqlSchema() => MysqlSchema._(StringBuffer(), 0);
 
-  Future<int> run(MySqlConnection connection) async {
+  Future<int> run(MySQLConnection connection) async {
     //return connection.execute(compile());
-    var result = await connection.transaction((ctx) async {
+    var result = await connection.transactional((ctx) async {
       var sql = compile();
-      var result = await ctx.query(sql).catchError((e) {
+      var result = await ctx.execute(sql).catchError((e) {
         _log.severe('Failed to run query: [ $sql ]', e);
       });
-      return result.affectedRowCount;
+      return result.affectedRows.toInt();
     });
 
-    return (result is int) ? result : 0;
+    return result;
   }
 
   String compile() => _buf.toString();

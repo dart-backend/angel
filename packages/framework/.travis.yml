@@ -1,6 +1,0 @@
-language: dart
-dart:
-  - dev
-  - stable
-before_script: chmod +x ./tool/travis.sh
-script: ./tool/travis.sh

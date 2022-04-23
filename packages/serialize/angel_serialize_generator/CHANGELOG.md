@@ -2,7 +2,7 @@
 
 ## 6.0.0
 
-* Updated to min SDK 2.15.x
+* Updated to SDK 2.16.x
 * Updated to `analyzer` 3.x.x
 * Fixed default value for `List` and `Enum`
 

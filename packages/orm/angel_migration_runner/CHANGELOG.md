@@ -2,11 +2,12 @@
 
 ## 6.0.0
 
-* Updated to min SDK 2.15.x
+* Updated to SDK 2.16.x
+* Updated to use `mysql_client` package
 
 ## 5.0.0
 
-* No release. Skipped
+* Skipped release
 
 ## 4.1.2
 

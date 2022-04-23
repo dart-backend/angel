@@ -4,7 +4,7 @@ description: Runtime support for Angel3 ORM. Includes base classes for queries.
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dukefirehawk/angel/tree/master/packages/orm/angel_orm
 environment:
-  sdk: '>=2.15.0 <3.0.0'
+  sdk: '>=2.16.0 <3.0.0'
 dependencies:
   charcode: ^1.2.0
   intl: ^0.17.0

@@ -1,18 +1,18 @@
 name: angel3_oauth2
-version: 4.1.1
+version: 6.0.0
 description: A class containing handlers that can be used within Angel to build a spec-compliant OAuth 2.0 server.
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dukefirehawk/angel/tree/master/packages/oauth2
 environment:
-  sdk: '>=2.12.0 <3.0.0'
+  sdk: '>=2.16.0 <3.0.0'
 dependencies: 
-  angel3_framework: ^4.2.0
-  angel3_http_exception: ^3.0.0
+  angel3_framework: ^6.0.0
+  angel3_http_exception: ^6.0.0
   crypto: ^3.0.1
   collection: ^1.15.0
 dev_dependencies: 
-  angel3_validate: ^4.0.0
-  angel3_test: ^4.0.0
+  angel3_validate: ^6.0.0
+  angel3_test: ^6.0.0
   logging: ^1.0.1
   oauth2: ^2.0.0
   lints: ^1.0.0

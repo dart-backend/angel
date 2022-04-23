@@ -3,7 +3,7 @@ version: 2.0.0
 description: Experimental virtual DOM/SPA engine built on Jael3. Supports SSR.
 publish_to: none
 environment:
-  sdk: '>=2.15.0 <3.0.0'
+  sdk: '>=2.16.0 <3.0.0'
 dependencies:
   build: ^2.0.2
   build_config: ^1.0.0

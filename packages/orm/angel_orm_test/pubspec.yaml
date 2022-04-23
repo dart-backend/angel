@@ -4,7 +4,7 @@ description: Common tests for Angel3 ORM. Reference implmentation of the generat
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dukefirehawk/angel/tree/master/packages/orm/angel_orm_test
 environment:
-  sdk: '>=2.15.0 <3.0.0'
+  sdk: '>=2.16.0 <3.0.0'
 dependencies:
   angel3_migration: ^6.0.0
   angel3_model: ^6.0.0

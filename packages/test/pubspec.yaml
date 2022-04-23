@@ -4,7 +4,7 @@ description: Testing utility library for the Angel3 framework. Use with package:
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dukefirehawk/angel/tree/master/packages/test
 environment: 
-  sdk: '>=2.15.0 <3.0.0'
+  sdk: '>=2.16.0 <3.0.0'
 dependencies: 
   angel3_client: ^6.0.0
   angel3_framework: ^6.0.0

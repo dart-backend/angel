@@ -97,7 +97,7 @@ class CarQuery extends Query<Car, CarQueryWhere> {
         description:
             fields.contains('description') ? (row[4] as String?) : null,
         familyFriendly:
-            fields.contains('family_friendly') ? (row[5] as bool?) : null,
+            fields.contains('family_friendly') ? mapToBool(row[5]) : null,
         recalledAt:
             fields.contains('recalled_at') ? (row[6] as DateTime?) : null);
     return Optional.of(model);

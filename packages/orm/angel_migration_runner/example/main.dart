@@ -4,35 +4,40 @@ import 'package:angel3_migration_runner/postgres.dart';
 import 'package:angel3_migration_runner/mysql.dart';
 import 'package:angel3_orm/angel3_orm.dart';
 import 'package:postgres/postgres.dart';
-import 'package:mysql1/mysql1.dart';
+import 'package:mysql_client/mysql_client.dart';
 
 import 'todo.dart';
 
-var postgresqlMigrationRunner = PostgresMigrationRunner(
-  PostgreSQLConnection('127.0.0.1', 5432, 'demo',
-      username: 'demouser', password: 'demo123'),
-  migrations: [
-    UserMigration(),
-    TodoMigration(),
-    FooMigration(),
-  ],
-);
+void main(List<String> args) async {
+  var postgresqlMigrationRunner = PostgresMigrationRunner(
+    PostgreSQLConnection('localhost', 5432, 'demo',
+        username: 'demouser', password: 'demo123'),
+    migrations: [
+      UserMigration(),
+      TodoMigration(),
+      FooMigration(),
+    ],
+  );
 
-var mysqlMigrationRunner = MysqlMigrationRunner(
-  ConnectionSettings(
-      host: 'localhost',
+  var mySQLConn = await MySQLConnection.createConnection(
+      host: "localhost",
       port: 3306,
-      user: 'demouser',
-      password: 'demo123',
-      db: 'demo'),
-  migrations: [
-    UserMigration(),
-    TodoMigration(),
-    FooMigration(),
-  ],
-);
+      databaseName: "orm_test",
+      userName: "test",
+      password: "Test123*",
+      secure: false);
 
-void main(List<String> args) => runMigrations(postgresqlMigrationRunner, args);
+  var mysqlMigrationRunner = MysqlMigrationRunner(
+    mySQLConn,
+    migrations: [
+      UserMigration(),
+      TodoMigration(),
+      FooMigration(),
+    ],
+  );
+
+  runMigrations(postgresqlMigrationRunner, args);
+}
 
 class FooMigration extends Migration {
   @override

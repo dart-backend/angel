@@ -1,14 +1,14 @@
 name: angel3_shelf
-version: 3.0.0-dev.3
+version: 6.0.0-beta.1
 description: Shelf interop with Angel3. Use this to wrap existing server code.
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dukefirehawk/angel/tree/master/packages/shelf
 environment:
-  sdk: '>=2.12.0 <3.0.0'
+  sdk: '>=2.16.0 <3.0.0'
 dependencies:
-  angel3_framework: ^4.2.0
-  angel3_container: ^3.1.0
-  angel3_mock_request: ^2.0.0
+  angel3_framework: ^6.0.0
+  angel3_container: ^6.0.0
+  angel3_mock_request: ^6.0.0
   path: ^1.8.0
   shelf: ^1.1.4
   stream_channel: ^2.1.0
@@ -16,7 +16,7 @@ dependencies:
   charcode: ^1.3.0
   http: ^0.13.0
 dev_dependencies: 
-  angel3_test: ^4.1.0
+  angel3_test: ^6.0.0
   belatuk_pretty_logging: ^4.0.0
   shelf_static: ^1.0.0
   test: ^1.17.5
