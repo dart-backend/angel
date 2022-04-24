@@ -54,7 +54,7 @@ final Map<Pattern, TokenType> _expressionPatterns = {
   ',': TokenType.comma,
   '.': TokenType.dot,
   '??': TokenType.elvis,
-  '?.': TokenType.elvis_dot,
+  '?.': TokenType.elvisDot,
   //'=': TokenType.equals,
   '!': TokenType.exclamation,
   '-': TokenType.minus,

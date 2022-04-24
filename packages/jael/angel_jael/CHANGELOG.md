@@ -1,5 +1,10 @@
 # Change Log
 
+## 6.0.1
+
+* Updated `jael3`
+* Updated `jael_preprocessor`
+
 ## 6.0.0
 
 * Updated to SDK 2.16.x
