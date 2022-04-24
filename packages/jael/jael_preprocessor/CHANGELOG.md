@@ -1,5 +1,9 @@
 # Change Log
 
+## 6.0.1
+
+* Fixed `jael3` version
+
 ## 6.0.0
 
 * Updated to SDK 2.16.x

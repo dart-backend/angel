@@ -45,7 +45,9 @@ DomNode a(
           'class': className,
           'style': style,
         }),
-        []..addAll(c)..addAll(children));
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode abbr(
         {String? title,
@@ -60,7 +62,9 @@ DomNode abbr(
         'addr',
         _apply([p, props],
             {'title': title, 'id': id, 'class': className, 'style': style}),
-        []..addAll(c)..addAll(children));
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode address(
         {String? id,
@@ -73,7 +77,9 @@ DomNode address(
     h(
         'address',
         _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []..addAll(c)..addAll(children));
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode area(
         {String? alt,
@@ -121,8 +127,12 @@ DomNode article(
         @deprecated Map<String, dynamic> props: const {},
         Iterable<DomNode> c: const [],
         @deprecated Iterable<DomNode> children: const []}) =>
-    h('article', _apply([p, props], {'class': className, 'style': style}),
-        []..addAll(c)..addAll(children));
+    h(
+        'article',
+        _apply([p, props], {'class': className, 'style': style}),
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode aside(
         {String? id,
@@ -135,7 +145,9 @@ DomNode aside(
     h(
         'aside',
         _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []..addAll(c)..addAll(children));
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode audio(
         {bool? autoplay,
@@ -167,7 +179,9 @@ DomNode audio(
           'class': className,
           'style': style
         }),
-        []..addAll(c)..addAll(children));
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode b(
         {String? id,
@@ -177,8 +191,12 @@ DomNode b(
         @deprecated Map<String, dynamic> props: const {},
         Iterable<DomNode> c: const [],
         @deprecated Iterable<DomNode> children: const []}) =>
-    h('b', _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []..addAll(c)..addAll(children));
+    h(
+        'b',
+        _apply([p, props], {'id': id, 'class': className, 'style': style}),
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode base(
         {String? href,
@@ -209,8 +227,12 @@ DomNode bdi(
         @deprecated Map<String, dynamic> props: const {},
         Iterable<DomNode> c: const [],
         @deprecated Iterable<DomNode> children: const []}) =>
-    h('bdi', _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []..addAll(c)..addAll(children));
+    h(
+        'bdi',
+        _apply([p, props], {'id': id, 'class': className, 'style': style}),
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode bdo(
         {String? dir,
@@ -225,7 +247,9 @@ DomNode bdo(
         'bdo',
         _apply([p, props],
             {'dir': dir, 'id': id, 'class': className, 'style': style}),
-        []..addAll(c)..addAll(children));
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode blockquote(
         {String? cite,
@@ -240,7 +264,9 @@ DomNode blockquote(
         'blockquote',
         _apply([p, props],
             {'cite': cite, 'id': id, 'class': className, 'style': style}),
-        []..addAll(c)..addAll(children));
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode body(
         {String? id,
@@ -253,7 +279,9 @@ DomNode body(
     h(
         'body',
         _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []..addAll(c)..addAll(children));
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode br() => h('br');
 
@@ -297,7 +325,9 @@ DomNode button(
           'class': className,
           'style': style
         }),
-        []..addAll(c)..addAll(children));
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode canvas(
         {num? height,
@@ -321,7 +351,9 @@ DomNode canvas(
           'class': className,
           'style': style
         }),
-        []..addAll(c)..addAll(children));
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode cite(
         {String? id,
@@ -334,7 +366,9 @@ DomNode cite(
     h(
         'cite',
         _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []..addAll(c)..addAll(children));
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode caption(
         {String? id,
@@ -347,7 +381,9 @@ DomNode caption(
     h(
         'caption',
         _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []..addAll(c)..addAll(children));
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode code(
         {String? id,
@@ -360,7 +396,9 @@ DomNode code(
     h(
         'code',
         _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []..addAll(c)..addAll(children));
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode col(
         {num? span,
@@ -375,7 +413,9 @@ DomNode col(
         'col',
         _apply([p, props],
             {'span': span, 'id': id, 'class': className, 'style': style}),
-        []..addAll(c)..addAll(children));
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode colgroup(
         {num? span,
@@ -390,7 +430,9 @@ DomNode colgroup(
         'colgroup',
         _apply([p, props],
             {'span': span, 'id': id, 'class': className, 'style': style}),
-        []..addAll(c)..addAll(children));
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode datalist(
         {String? id,
@@ -403,7 +445,9 @@ DomNode datalist(
     h(
         'datalist',
         _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []..addAll(c)..addAll(children));
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode dd(
         {String? id,
@@ -413,8 +457,12 @@ DomNode dd(
         @deprecated Map<String, dynamic> props: const {},
         Iterable<DomNode> c: const [],
         @deprecated Iterable<DomNode> children: const []}) =>
-    h('dd', _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []..addAll(c)..addAll(children));
+    h(
+        'dd',
+        _apply([p, props], {'id': id, 'class': className, 'style': style}),
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode del(
         {String? cite,
@@ -438,7 +486,9 @@ DomNode del(
           'class': className,
           'style': style
         }),
-        []..addAll(c)..addAll(children));
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode details(
         {bool? open,
@@ -453,7 +503,9 @@ DomNode details(
         'details',
         _apply([p, props],
             {'open': open, 'id': id, 'class': className, 'style': style}),
-        []..addAll(c)..addAll(children));
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode dfn(
         {String? title,
@@ -468,7 +520,9 @@ DomNode dfn(
         'dfn',
         _apply([p, props],
             {'title': title, 'id': id, 'class': className, 'style': style}),
-        []..addAll(c)..addAll(children));
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode dialog(
         {bool? open,
@@ -483,7 +537,9 @@ DomNode dialog(
         'dialog',
         _apply([p, props],
             {'open': open, 'id': id, 'class': className, 'style': style}),
-        []..addAll(c)..addAll(children));
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode div(
         {String? id,
@@ -493,8 +549,12 @@ DomNode div(
         @deprecated Map<String, dynamic> props: const {},
         Iterable<DomNode> c: const [],
         @deprecated Iterable<DomNode> children: const []}) =>
-    h('div', _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []..addAll(c)..addAll(children));
+    h(
+        'div',
+        _apply([p, props], {'id': id, 'class': className, 'style': style}),
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode dl(
         {String? id,
@@ -504,8 +564,12 @@ DomNode dl(
         @deprecated Map<String, dynamic> props: const {},
         Iterable<DomNode> c: const [],
         @deprecated Iterable<DomNode> children: const []}) =>
-    h('dl', _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []..addAll(c)..addAll(children));
+    h(
+        'dl',
+        _apply([p, props], {'id': id, 'class': className, 'style': style}),
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode dt(
         {String? id,
@@ -515,8 +579,12 @@ DomNode dt(
         @deprecated Map<String, dynamic> props: const {},
         Iterable<DomNode> c: const [],
         @deprecated Iterable<DomNode> children: const []}) =>
-    h('dt', _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []..addAll(c)..addAll(children));
+    h(
+        'dt',
+        _apply([p, props], {'id': id, 'class': className, 'style': style}),
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode em(
         {String? id,
@@ -526,8 +594,12 @@ DomNode em(
         @deprecated Map<String, dynamic> props: const {},
         Iterable<DomNode> c: const [],
         @deprecated Iterable<DomNode> children: const []}) =>
-    h('em', _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []..addAll(c)..addAll(children));
+    h(
+        'em',
+        _apply([p, props], {'id': id, 'class': className, 'style': style}),
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode embed(
         {num? height,
@@ -578,7 +650,9 @@ DomNode fieldset(
           'class': className,
           'style': style
         }),
-        []..addAll(c)..addAll(children));
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode figcaption(
         {String? id,
@@ -591,7 +665,9 @@ DomNode figcaption(
     h(
         'figcaption',
         _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []..addAll(c)..addAll(children));
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode figure(
         {String? id,
@@ -604,7 +680,9 @@ DomNode figure(
     h(
         'figure',
         _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []..addAll(c)..addAll(children));
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode footer(
         {String? id,
@@ -617,7 +695,9 @@ DomNode footer(
     h(
         'footer',
         _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []..addAll(c)..addAll(children));
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode form(
         {String? accept,
@@ -656,7 +736,9 @@ DomNode form(
           'class': className,
           'style': style
         }),
-        []..addAll(c)..addAll(children));
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode h1(
         {String? id,
@@ -666,8 +748,12 @@ DomNode h1(
         @deprecated Map<String, dynamic> props: const {},
         Iterable<DomNode> c: const [],
         @deprecated Iterable<DomNode> children: const []}) =>
-    h('h1', _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []..addAll(c)..addAll(children));
+    h(
+        'h1',
+        _apply([p, props], {'id': id, 'class': className, 'style': style}),
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode h2(
         {String? id,
@@ -677,8 +763,12 @@ DomNode h2(
         @deprecated Map<String, dynamic> props: const {},
         Iterable<DomNode> c: const [],
         @deprecated Iterable<DomNode> children: const []}) =>
-    h('h2', _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []..addAll(c)..addAll(children));
+    h(
+        'h2',
+        _apply([p, props], {'id': id, 'class': className, 'style': style}),
+        []
+          ..addAll(c)
+          ..addAll(children));
 DomNode h3(
         {String? id,
         className,
@@ -687,8 +777,12 @@ DomNode h3(
         @deprecated Map<String, dynamic> props: const {},
         Iterable<DomNode> c: const [],
         @deprecated Iterable<DomNode> children: const []}) =>
-    h('h3', _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []..addAll(c)..addAll(children));
+    h(
+        'h3',
+        _apply([p, props], {'id': id, 'class': className, 'style': style}),
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode h4(
         {String? id,
@@ -698,8 +792,12 @@ DomNode h4(
         @deprecated Map<String, dynamic> props: const {},
         Iterable<DomNode> c: const [],
         @deprecated Iterable<DomNode> children: const []}) =>
-    h('h4', _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []..addAll(c)..addAll(children));
+    h(
+        'h4',
+        _apply([p, props], {'id': id, 'class': className, 'style': style}),
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode h5(
         {String? id,
@@ -709,8 +807,12 @@ DomNode h5(
         @deprecated Map<String, dynamic> props: const {},
         Iterable<DomNode> c: const [],
         @deprecated Iterable<DomNode> children: const []}) =>
-    h('h5', _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []..addAll(c)..addAll(children));
+    h(
+        'h5',
+        _apply([p, props], {'id': id, 'class': className, 'style': style}),
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode h6(
         {String? id,
@@ -720,8 +822,12 @@ DomNode h6(
         @deprecated Map<String, dynamic> props: const {},
         Iterable<DomNode> c: const [],
         @deprecated Iterable<DomNode> children: const []}) =>
-    h('h6', _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []..addAll(c)..addAll(children));
+    h(
+        'h6',
+        _apply([p, props], {'id': id, 'class': className, 'style': style}),
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode head(
         {String? id,
@@ -734,7 +840,9 @@ DomNode head(
     h(
         'head',
         _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []..addAll(c)..addAll(children));
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode header(
         {String? id,
@@ -747,7 +855,9 @@ DomNode header(
     h(
         'header',
         _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []..addAll(c)..addAll(children));
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode hr() => h('hr');
 
@@ -775,7 +885,9 @@ DomNode html(
           'class': className,
           'style': style
         }),
-        []..addAll(c)..addAll(children));
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode i(
         {String? id,
@@ -785,8 +897,12 @@ DomNode i(
         @deprecated Map<String, dynamic> props: const {},
         Iterable<DomNode> c: const [],
         @deprecated Iterable<DomNode> children: const []}) =>
-    h('i', _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []..addAll(c)..addAll(children));
+    h(
+        'i',
+        _apply([p, props], {'id': id, 'class': className, 'style': style}),
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode iframe(
         {num? height,
@@ -954,7 +1070,9 @@ DomNode ins(
           'class': className,
           'style': style
         }),
-        []..addAll(c)..addAll(children));
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode kbd(
         {String? id,
@@ -964,8 +1082,12 @@ DomNode kbd(
         @deprecated Map<String, dynamic> props: const {},
         Iterable<DomNode> c: const [],
         @deprecated Iterable<DomNode> children: const []}) =>
-    h('kbd', _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []..addAll(c)..addAll(children));
+    h(
+        'kbd',
+        _apply([p, props], {'id': id, 'class': className, 'style': style}),
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode keygen(
         {bool? autofocus,
@@ -997,7 +1119,9 @@ DomNode keygen(
           'class': className,
           'style': style
         }),
-        []..addAll(c)..addAll(children));
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode label(
         {String? for_,
@@ -1021,7 +1145,9 @@ DomNode label(
           'class': className,
           'style': style
         }),
-        []..addAll(c)..addAll(children));
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode legend(
         {String? id,
@@ -1034,7 +1160,9 @@ DomNode legend(
     h(
         'legend',
         _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []..addAll(c)..addAll(children));
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode li(
         {num? value,
@@ -1049,7 +1177,9 @@ DomNode li(
         'li',
         _apply([p, props],
             {'value': value, 'id': id, 'class': className, 'style': style}),
-        []..addAll(c)..addAll(children));
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode link(
         {String? crossorigin,
@@ -1095,7 +1225,9 @@ DomNode main(
     h(
         'main',
         _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []..addAll(c)..addAll(children));
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode map(
         {String? name,
@@ -1110,7 +1242,9 @@ DomNode map(
         'map',
         _apply([p, props],
             {'name': name, 'id': id, 'class': className, 'style': style}),
-        []..addAll(c)..addAll(children));
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode mark(
         {String? id,
@@ -1123,7 +1257,9 @@ DomNode mark(
     h(
         'mark',
         _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []..addAll(c)..addAll(children));
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode menu(
         {String? label,
@@ -1147,7 +1283,9 @@ DomNode menu(
           'class': className,
           'style': style
         }),
-        []..addAll(c)..addAll(children));
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode menuitem(
         {bool? checked,
@@ -1183,7 +1321,9 @@ DomNode menuitem(
           'class': className,
           'style': style
         }),
-        []..addAll(c)..addAll(children));
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode meta(
         {String? charset,
@@ -1218,8 +1358,12 @@ DomNode nav(
         @deprecated Map<String, dynamic> props: const {},
         Iterable<DomNode> c: const [],
         @deprecated Iterable<DomNode> children: const []}) =>
-    h('nav', _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []..addAll(c)..addAll(children));
+    h(
+        'nav',
+        _apply([p, props], {'id': id, 'class': className, 'style': style}),
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode noscript(
         {String? id,
@@ -1232,7 +1376,9 @@ DomNode noscript(
     h(
         'noscript',
         _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []..addAll(c)..addAll(children));
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode object(
         {String? data,
@@ -1266,7 +1412,9 @@ DomNode object(
           'class': className,
           'style': style
         }),
-        []..addAll(c)..addAll(children));
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode ol(
         {bool? reversed,
@@ -1292,7 +1440,9 @@ DomNode ol(
           'class': className,
           'style': style
         }),
-        []..addAll(c)..addAll(children));
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode optgroup(
         {bool? disabled,
@@ -1316,7 +1466,9 @@ DomNode optgroup(
           'class': className,
           'style': style
         }),
-        []..addAll(c)..addAll(children));
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode option(
         {bool? disabled,
@@ -1344,7 +1496,9 @@ DomNode option(
           'class': className,
           'style': style
         }),
-        []..addAll(c)..addAll(children));
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode output(
         {String? for_,
@@ -1370,7 +1524,9 @@ DomNode output(
           'class': className,
           'style': style
         }),
-        []..addAll(c)..addAll(children));
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode p(
         {String? id,
@@ -1380,8 +1536,12 @@ DomNode p(
         @deprecated Map<String, dynamic> props: const {},
         Iterable<DomNode> c: const [],
         @deprecated Iterable<DomNode> children: const []}) =>
-    h('p', _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []..addAll(c)..addAll(children));
+    h(
+        'p',
+        _apply([p, props], {'id': id, 'class': className, 'style': style}),
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode param(
         {String? name,
@@ -1415,7 +1575,9 @@ DomNode picture(
     h(
         'picture',
         _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []..addAll(c)..addAll(children));
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode pre(
         {String? id,
@@ -1425,8 +1587,12 @@ DomNode pre(
         @deprecated Map<String, dynamic> props: const {},
         Iterable<DomNode> c: const [],
         @deprecated Iterable<DomNode> children: const []}) =>
-    h('pre', _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []..addAll(c)..addAll(children));
+    h(
+        'pre',
+        _apply([p, props], {'id': id, 'class': className, 'style': style}),
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode progress(
         {num? max,
@@ -1450,7 +1616,9 @@ DomNode progress(
           'class': className,
           'style': style
         }),
-        []..addAll(c)..addAll(children));
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode q(
         {String? cite,
@@ -1465,7 +1633,9 @@ DomNode q(
         'q',
         _apply([p, props],
             {'cite': cite, 'id': id, 'class': className, 'style': style}),
-        []..addAll(c)..addAll(children));
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode rp(
         {String? id,
@@ -1475,8 +1645,12 @@ DomNode rp(
         @deprecated Map<String, dynamic> props: const {},
         Iterable<DomNode> c: const [],
         @deprecated Iterable<DomNode> children: const []}) =>
-    h('rp', _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []..addAll(c)..addAll(children));
+    h(
+        'rp',
+        _apply([p, props], {'id': id, 'class': className, 'style': style}),
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode rt(
         {String? id,
@@ -1486,8 +1660,12 @@ DomNode rt(
         @deprecated Map<String, dynamic> props: const {},
         Iterable<DomNode> c: const [],
         @deprecated Iterable<DomNode> children: const []}) =>
-    h('rt', _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []..addAll(c)..addAll(children));
+    h(
+        'rt',
+        _apply([p, props], {'id': id, 'class': className, 'style': style}),
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode ruby(
         {String? id,
@@ -1500,7 +1678,9 @@ DomNode ruby(
     h(
         'ruby',
         _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []..addAll(c)..addAll(children));
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode s(
         {String? id,
@@ -1510,8 +1690,12 @@ DomNode s(
         @deprecated Map<String, dynamic> props: const {},
         Iterable<DomNode> c: const [],
         @deprecated Iterable<DomNode> children: const []}) =>
-    h('s', _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []..addAll(c)..addAll(children));
+    h(
+        's',
+        _apply([p, props], {'id': id, 'class': className, 'style': style}),
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode samp(
         {String? id,
@@ -1524,7 +1708,9 @@ DomNode samp(
     h(
         'samp',
         _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []..addAll(c)..addAll(children));
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode script(
         {bool? async,
@@ -1554,7 +1740,9 @@ DomNode script(
           'class': className,
           'style': style
         }),
-        []..addAll(c)..addAll(children));
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode section(
         {String? id,
@@ -1567,7 +1755,9 @@ DomNode section(
     h(
         'section',
         _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []..addAll(c)..addAll(children));
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode select(
         {bool? autofocus,
@@ -1599,7 +1789,9 @@ DomNode select(
           'class': className,
           'style': style
         }),
-        []..addAll(c)..addAll(children));
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode small(
         {String? id,
@@ -1612,7 +1804,9 @@ DomNode small(
     h(
         'small',
         _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []..addAll(c)..addAll(children));
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode source(
         {String? src,
@@ -1652,7 +1846,9 @@ DomNode span(
     h(
         'span',
         _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []..addAll(c)..addAll(children));
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode strong(
         {String? id,
@@ -1665,7 +1861,9 @@ DomNode strong(
     h(
         'strong',
         _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []..addAll(c)..addAll(children));
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode style(
         {String? media,
@@ -1680,7 +1878,9 @@ DomNode style(
         'style',
         _apply([p, props],
             {'media': media, 'scoped': scoped, 'type': type, 'id': id}),
-        []..addAll(c)..addAll(children));
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode sub(
         {String? id,
@@ -1690,8 +1890,12 @@ DomNode sub(
         @deprecated Map<String, dynamic> props: const {},
         Iterable<DomNode> c: const [],
         @deprecated Iterable<DomNode> children: const []}) =>
-    h('sub', _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []..addAll(c)..addAll(children));
+    h(
+        'sub',
+        _apply([p, props], {'id': id, 'class': className, 'style': style}),
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode summary(
         {String? id,
@@ -1704,7 +1908,9 @@ DomNode summary(
     h(
         'summary',
         _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []..addAll(c)..addAll(children));
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode sup(
         {String? id,
@@ -1714,8 +1920,12 @@ DomNode sup(
         @deprecated Map<String, dynamic> props: const {},
         Iterable<DomNode> c: const [],
         @deprecated Iterable<DomNode> children: const []}) =>
-    h('sup', _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []..addAll(c)..addAll(children));
+    h(
+        'sup',
+        _apply([p, props], {'id': id, 'class': className, 'style': style}),
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode table(
         {bool? sortable,
@@ -1737,7 +1947,9 @@ DomNode table(
           'class': className,
           'style': style
         }),
-        []..addAll(c)..addAll(children));
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode tbody(
         {String? id,
@@ -1750,7 +1962,9 @@ DomNode tbody(
     h(
         'tbody',
         _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []..addAll(c)..addAll(children));
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode td(
         {num? colspan,
@@ -1776,7 +1990,9 @@ DomNode td(
           'class': className,
           'style': style
         }),
-        []..addAll(c)..addAll(children));
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode textarea(
         {bool? autofocus,
@@ -1820,7 +2036,9 @@ DomNode textarea(
           'class': className,
           'style': style
         }),
-        []..addAll(c)..addAll(children));
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode tfoot(
         {String? id,
@@ -1833,7 +2051,9 @@ DomNode tfoot(
     h(
         'tfoot',
         _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []..addAll(c)..addAll(children));
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode th(
         {String? abbr,
@@ -1865,7 +2085,9 @@ DomNode th(
           'class': className,
           'style': style
         }),
-        []..addAll(c)..addAll(children));
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode thead(
         {String? id,
@@ -1878,7 +2100,9 @@ DomNode thead(
     h(
         'thead',
         _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []..addAll(c)..addAll(children));
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode time(
         {String? datetime,
@@ -1900,7 +2124,9 @@ DomNode time(
           'class': className,
           'style': style
         }),
-        []..addAll(c)..addAll(children));
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode title(
         {String? id,
@@ -1913,7 +2139,9 @@ DomNode title(
     h(
         'title',
         _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []..addAll(c)..addAll(children));
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode tr(
         {String? id,
@@ -1923,8 +2151,12 @@ DomNode tr(
         @deprecated Map<String, dynamic> props: const {},
         Iterable<DomNode> c: const [],
         @deprecated Iterable<DomNode> children: const []}) =>
-    h('tr', _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []..addAll(c)..addAll(children));
+    h(
+        'tr',
+        _apply([p, props], {'id': id, 'class': className, 'style': style}),
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode track(
         {bool? default_,
@@ -1961,8 +2193,12 @@ DomNode u(
         @deprecated Map<String, dynamic> props: const {},
         Iterable<DomNode> c: const [],
         @deprecated Iterable<DomNode> children: const []}) =>
-    h('u', _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []..addAll(c)..addAll(children));
+    h(
+        'u',
+        _apply([p, props], {'id': id, 'class': className, 'style': style}),
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode ul(
         {String? id,
@@ -1972,8 +2208,12 @@ DomNode ul(
         @deprecated Map<String, dynamic> props: const {},
         Iterable<DomNode> c: const [],
         @deprecated Iterable<DomNode> children: const []}) =>
-    h('ul', _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []..addAll(c)..addAll(children));
+    h(
+        'ul',
+        _apply([p, props], {'id': id, 'class': className, 'style': style}),
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode var_(
         {String? id,
@@ -1983,8 +2223,12 @@ DomNode var_(
         @deprecated Map<String, dynamic> props: const {},
         Iterable<DomNode> c: const [],
         @deprecated Iterable<DomNode> children: const []}) =>
-    h('var', _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []..addAll(c)..addAll(children));
+    h(
+        'var',
+        _apply([p, props], {'id': id, 'class': className, 'style': style}),
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode video(
         {bool? autoplay,
@@ -2022,7 +2266,9 @@ DomNode video(
           'class': className,
           'style': style
         }),
-        []..addAll(c)..addAll(children));
+        []
+          ..addAll(c)
+          ..addAll(children));
 
 DomNode wbr(
         {String? id,
@@ -2032,5 +2278,9 @@ DomNode wbr(
         @deprecated Map<String, dynamic> props: const {},
         Iterable<DomNode> c: const [],
         @deprecated Iterable<DomNode> children: const []}) =>
-    h('wbr', _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []..addAll(c)..addAll(children));
+    h(
+        'wbr',
+        _apply([p, props], {'id': id, 'class': className, 'style': style}),
+        []
+          ..addAll(c)
+          ..addAll(children));

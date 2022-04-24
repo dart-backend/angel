@@ -13,7 +13,8 @@ class MapLiteral extends Literal {
   @override
   Map compute(scope) {
     return pairs.fold<Map>({}, (out, p) {
-      var key, value;
+      dynamic key;
+      dynamic value;
 
       if (p.colon == null) {
         if (p.key is! Identifier) {
