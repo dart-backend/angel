@@ -15,16 +15,16 @@ dependencies:
   intl: ^0.17.0
 dev_dependencies:
   lints: ^1.0.1
-dependency_overrides:
-  angel3_container:
-    path: ../container/angel_container
-  angel3_framework:
-    path: ../framework
-  angel3_http_exception:
-    path: ../http_exception
-  angel3_model:
-    path: ../model
-  angel3_route:
-    path: ../route
-  angel3_mock_request:
-    path: ../mock_request
+# dependency_overrides:
+#   angel3_container:
+#     path: ../container/angel_container
+#   angel3_framework:
+#     path: ../framework
+#   angel3_http_exception:
+#     path: ../http_exception
+#   angel3_model:
+#     path: ../model
+#   angel3_route:
+#     path: ../route
+#   angel3_mock_request:
+#     path: ../mock_request

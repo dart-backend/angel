@@ -14,8 +14,7 @@
 
 ## About
 
-Angel3 is a fork of the original Angel framework to support NNBD in Dart SDK 2.12.x and later.
-It is a full-stack Web framework in Dart that aims to streamline development by providing many common features out-of-the-box in a consistent manner. One of the main goal is to enable developers to build both frontend and backend in the same language, Dart. Angel3 framework is designed as a collection of plugins that enable developers to pick and choose the parts needed for their projects. A series of starter templates are also provided for quick start and trial run with Angel3 framework. Visit our [website](<https://angel3-framework.web.app/>) to learn more.
+Angel3 is a fork of archived Angel framework to support Dart SDK 2.12.x or later. It is a full-stack Web framework in Dart that aims to streamline development by providing many common features out-of-the-box in a consistent manner. One of the main goal is to enable developers to build both frontend and backend in the same language, Dart. Angel3 framework is designed as a collection of plugins that enable developers to pick and choose the parts needed for their projects. A series of starter templates are also provided for quick start and trial run with Angel3 framework. Visit our [website](<https://angel3-framework.web.app/>) to learn more.
 
 The availabe features in Angel3 includes:
 
@@ -35,13 +34,26 @@ The status of the code base is as follows:
 
 Branch: `master`
 
-* Dart version : 2.12.x and above.
+* Dart version : 2.16.x or later.
 * Publish      : Yes. Refer to packages with `angel3_` prefix on [pub.dev](https://pub.dev/publishers/dukefirehawk.com/packages).
 * Null Safety  : Yes
 * Status       : Production
 * Notes        : Use this branch for all PR submission
 
 For more details, checkout [Project Status](https://github.com/dukefirehawk/angel/wiki/Project-Status)
+
+## Release Notes
+
+### Release 6.0.0
+
+* Updated all `angel3_` packages to 6.0.0
+* Updated all `angel3_` packages to use SDK 2.16.x or later
+* Updated ORM to support MariaDB 10.2.x (stable) and MySQL 8.x (beta)
+* Updated code generator to use `analyzer` 3.x.x
+* Updated exception handling
+* Added default logger to generate standardised logging messages
+* Added `melos` support
+* Removed deprecated API
 
 ## Installation and Setup
 

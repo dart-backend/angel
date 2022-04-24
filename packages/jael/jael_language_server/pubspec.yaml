@@ -1,5 +1,5 @@
 name: jael3_language_server
-version: 1.0.0
+version: 6.0.0
 description: Language Server Protocol implementation for the Jael templating engine.
 homepage: https://github.com/angel-dart/vscode
 publish_to: none
@@ -10,8 +10,8 @@ dependencies:
 #  dart_language_server: ^0.1.16
   file: ^6.1.2
   io: ^1.0.0
-  jael3: ^4.2.0
-  jael3_preprocessor: ^5.0.0
+  jael3: ^6.0.0
+  jael3_preprocessor: ^6.0.0
   json_rpc_2: ^3.0.1
   logging: ^1.0.1
   path: ^1.8.0
