@@ -12,12 +12,12 @@ This package contains the SQL Executor required by Angel3 ORM to work with MySQL
 
 ## Supported database version
 
-* MySQL 8.x
 * MariaDb 10.2.x
+* MySQL 8.x
 
 **Note** MySQL below version 8.0 and MariaDB below version 10.2 are not supported as Angel3 ORM requires common table expressions (CTE).
 
-## Connecting to MySQL database 8.x.x
+## Connecting to MySQL database 8.x
 
 ```dart
     import 'package:mysql_client/mysql_client.dart';

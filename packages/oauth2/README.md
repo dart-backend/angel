@@ -20,8 +20,8 @@ In your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  angel3_framework: ^4.2.0
-  angel3_oauth2: ^4.1.0
+  angel3_framework: ^6.0.0
+  angel3_oauth2: ^6.0.0
 ```
 
 ## Usage

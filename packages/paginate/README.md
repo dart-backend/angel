@@ -13,7 +13,7 @@ In your `pubspec.yaml` file:
 
 ```yaml
 dependencies:
-  angel3_paginate: ^3.1.0
+  angel3_paginate: ^6.0.0
 ```
 
 ## Usage

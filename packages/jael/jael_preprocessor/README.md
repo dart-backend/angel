@@ -13,7 +13,7 @@ In your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  jael3_prepreprocessor: ^4.2.0
+  jael3_prepreprocessor: ^6.0.0
 ```
 
 ## Usage

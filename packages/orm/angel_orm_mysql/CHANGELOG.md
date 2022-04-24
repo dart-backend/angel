@@ -1,6 +1,6 @@
 # Change Log
 
-## 6.0.0-bata.1
+## 6.0.0-beta.1
 
 * Updated to SDK 2.16.x
 * Added support for MariaDB 10.2.x with `mysql1` driver

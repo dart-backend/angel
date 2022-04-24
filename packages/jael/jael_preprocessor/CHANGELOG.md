@@ -1,8 +1,12 @@
 # Change Log
 
-## 5.0.0
+## 6.0.0
 
 * Updated to SDK 2.16.x
+
+## 5.0.0
+
+* Skipped release
 
 ## 4.2.0
 
