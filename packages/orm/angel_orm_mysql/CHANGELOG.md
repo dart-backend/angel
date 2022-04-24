@@ -1,5 +1,9 @@
 # Change Log
 
+## 6.0.0-beta.2
+
+* Updated README
+
 ## 6.0.0-beta.1
 
 * Updated to SDK 2.16.x
