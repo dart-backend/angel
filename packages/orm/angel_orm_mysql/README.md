@@ -17,10 +17,10 @@ This package contains the SQL Executor required by Angel3 ORM to work with MySQL
 
 **Note** MySQL below version 8.0 and MariaDB below version 10.2 are not supported as Angel3 ORM requires common table expressions (CTE).
 
-## Connecting to MySQL database 8.x
+## Connecting to MariaDB database 10.2.x
 
 ```dart
-    import 'package:mysql_client/mysql_client.dart';
+    import 'package:mysql1/mysql1.dart';
 
     var settings = ConnectionSettings(
         host: 'localhost',
@@ -30,14 +30,14 @@ This package contains the SQL Executor required by Angel3 ORM to work with MySQL
         password: 'Test123*');
     var connection = await MySqlConnection.connect(settings);
 
-    var logger = Logger('orm_mysql');
+    var logger = Logger('orm_mariadb');
     var executor = MariaDbExecutor(connection, logger: logger);
 ```
 
-## Connecting to MariaDB database 10.2.x
+## Connecting to MySQL database 8.x
 
 ```dart
-    import 'package:mysql1/mysql1.dart';
+    import 'package:mysql_client/mysql_client.dart';
 
     var connection = await MySQLConnection.createConnection(
         host: "localhost",
