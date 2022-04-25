@@ -9,7 +9,7 @@ class AuthorizationException extends AngelHttpException {
       : super(
             stackTrace: stackTrace,
             message: '',
-            //error: error,
+            error: error,
             statusCode: statusCode ?? 400);
 
   @override
