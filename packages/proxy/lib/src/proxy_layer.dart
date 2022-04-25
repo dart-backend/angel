@@ -116,7 +116,7 @@ class Proxy {
           scheduleMicrotask(() => remote.pipe(local));
           return false;
         } catch (e, st) {
-          throw AngelHttpException(e,
+          throw AngelHttpException(
               message: 'Could not connect WebSocket', stackTrace: st);
         }
       }
@@ -167,7 +167,6 @@ class Proxy {
       if (recoverFromDead) return true;
 
       throw AngelHttpException(
-        e,
         stackTrace: st,
         statusCode: 504,
         message:
@@ -189,7 +188,6 @@ class Proxy {
         if (recoverFromDead) return true;
 
         throw AngelHttpException(
-          e,
           stackTrace: st,
           statusCode: 504,
           message: 'Host "$uri" returned a malformed content-type',

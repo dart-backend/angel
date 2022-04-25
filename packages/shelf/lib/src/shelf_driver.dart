@@ -6,9 +6,8 @@ import 'package:shelf/shelf.dart';
 import 'shelf_request.dart';
 import 'shelf_response.dart';
 
-// TODO: To be reviewed
 Future<Stream<Request>> process(dynamic param1, int param2) {
-  return Future.value();
+  return Future.value(Stream.empty());
 }
 
 class AngelShelf extends Driver<shelf.Request, ShelfResponseContext?,
@@ -106,7 +105,7 @@ class AngelShelf extends Driver<shelf.Request, ShelfResponseContext?,
     var path = request.url.path.replaceAll(_straySlashes, '');
     if (path.isEmpty) path = '/';
     var rq =
-        ShelfRequestContext(app, app.container!.createChild(), request, path);
+        ShelfRequestContext(app, app.container.createChild(), request, path);
     return Future.value(rq);
   }
 

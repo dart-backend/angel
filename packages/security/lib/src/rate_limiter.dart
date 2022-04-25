@@ -85,7 +85,7 @@ abstract class RateLimiter<User> {
       RateLimitingWindow<User> window, DateTime currentTime) {
     var retryAfter = window.resetTime!.difference(currentTime);
     res.headers['retry-after'] = retryAfter.inSeconds.toString();
-    throw AngelHttpException(null, message: errorMessage, statusCode: 429);
+    throw AngelHttpException(message: errorMessage, statusCode: 429);
   }
 
   /// A request middleware that returns `true` if the user has not yet

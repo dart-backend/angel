@@ -19,7 +19,7 @@ void main() {
   setUp(() async {
     app = Angel();
     app.configuration['properties'] = app.configuration;
-    app.container!.registerSingleton(AuthCodes());
+    app.container.registerSingleton(AuthCodes());
 
     var server = _Server();
 
