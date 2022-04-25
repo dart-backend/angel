@@ -12,7 +12,7 @@ class AngelHttpException implements Exception {
   /// A list of errors that occurred when this exception was thrown.
   final List<String> errors = [];
 
-  /// The cause of this exception.
+  /// The error throw by exception.
   dynamic error;
 
   /// The cause of this exception.
@@ -28,6 +28,7 @@ class AngelHttpException implements Exception {
       {this.message = '500 Internal Server Error',
       this.stackTrace,
       this.statusCode = 500,
+      this.error,
       List<String> errors = const []}) {
     this.errors.addAll(errors);
   }

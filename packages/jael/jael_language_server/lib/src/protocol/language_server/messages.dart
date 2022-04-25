@@ -248,8 +248,7 @@ class CodeActionContext {
 
   final List<Diagnostic>? diagnostics;
 
-  Map toJson() =>
-      {'diagnostics': diagnostics?.map((v) => v.toJson()).toList()};
+  Map toJson() => {'diagnostics': diagnostics?.map((v) => v.toJson()).toList()};
   @override
   int get hashCode {
     var hash = 698635161;
@@ -966,10 +965,8 @@ class Diagnostics {
 
   final String? uri;
 
-  Map toJson() => {
-        'diagnostics': diagnostics?.map((v) => v.toJson()).toList(),
-        'uri': uri
-      };
+  Map toJson() =>
+      {'diagnostics': diagnostics?.map((v) => v.toJson()).toList(), 'uri': uri};
   @override
   int get hashCode {
     var hash = 133599092;
@@ -2916,7 +2913,7 @@ int _deepHashCode(dynamic value) {
     return (value.keys
             .map((key) => _hashCombine(key.hashCode, _deepHashCode(value[key])))
             .toList(growable: false)
-              ..sort())
+          ..sort())
         .reduce(_hashCombine);
   }
   return value.hashCode;

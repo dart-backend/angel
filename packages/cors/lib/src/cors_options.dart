@@ -41,7 +41,7 @@ class CorsOptions {
   /// - `bool Function(String)` - set `origin` to a function implementing some custom logic. The function takes the request origin as the first parameter and returns a [bool].
   ///
   /// Default: `'*'`
-  final origin;
+  final dynamic origin;
 
   /// If `false`, then the [cors] handler will terminate the response after performing its logic.
   ///

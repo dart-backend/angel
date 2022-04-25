@@ -54,6 +54,7 @@ For more details, checkout [Project Status](https://github.com/dukefirehawk/ange
 * Added default logger to generate standardised logging messages
 * Added `melos` support
 * Removed deprecated API
+* [**Breaking**] `error` for `AngelHttpException` is no longer mandatory
 
 ## Installation and Setup
 

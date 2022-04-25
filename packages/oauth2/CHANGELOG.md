@@ -1,5 +1,10 @@
 # Change Log
 
+## 6.0.1
+
+* Fixed AngelHttpException error
+* [Breaking] Renamed `error` to `authError` for `AuthorizationException`
+
 ## 6.0.0
 
 * Updated to SDK 2.16.x

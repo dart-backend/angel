@@ -12,7 +12,7 @@ Future<HttpServer> startTestServer() {
   app.get('/foo/bar', (req, res) => res.write('baz'));
   app.post('/body', (RequestContext req, res) async {
     var body = await req.parseBody().then((_) => req.bodyAsMap);
-    app.logger!.info('Body: $body');
+    app.logger.info('Body: $body');
     return body;
   });
 

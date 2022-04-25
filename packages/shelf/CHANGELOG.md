@@ -1,5 +1,9 @@
 # Change Log
 
+## 6.0.0-beta.2
+
+* Fixed AngelHttpException error
+
 ## 6.0.0-beta.1
 
 * Updated to SDK 2.16.x
