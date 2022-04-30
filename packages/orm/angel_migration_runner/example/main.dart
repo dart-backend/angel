@@ -27,7 +27,7 @@ void main(List<String> args) async {
       password: "Test123*",
       secure: false);
 
-  var mysqlMigrationRunner = MysqlMigrationRunner(
+  var mysqlMigrationRunner = MySqlMigrationRunner(
     mySQLConn,
     migrations: [
       UserMigration(),

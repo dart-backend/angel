@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'package:angel3_migration/angel3_migration.dart';
 import 'package:postgres/postgres.dart';
-import 'package:angel3_migration_runner/src/postgres/table.dart';
 import 'package:logging/logging.dart';
+import 'table.dart';
 
 class PostgresSchema extends Schema {
   final _log = Logger('PostgresSchema');

@@ -1,31 +1,32 @@
 import 'dart:async';
 import 'package:angel3_migration/angel3_migration.dart';
 import 'package:logging/logging.dart';
-import 'package:mysql_client/mysql_client.dart';
+import 'package:mysql1/mysql1.dart';
 
 import 'table.dart';
 
-class MySqlSchema extends Schema {
-  final _log = Logger('MysqlSchema');
+class MariaDbSchema extends Schema {
+  final _log = Logger('MariaDbSchema');
 
   final int _indent;
   final StringBuffer _buf;
 
-  MySqlSchema._(this._buf, this._indent);
+  MariaDbSchema._(this._buf, this._indent);
 
-  factory MySqlSchema() => MySqlSchema._(StringBuffer(), 0);
+  factory MariaDbSchema() => MariaDbSchema._(StringBuffer(), 0);
 
-  Future<int> run(MySQLConnection connection) async {
-    //return connection.execute(compile());
-    var result = await connection.transactional((ctx) async {
+  Future<int> run(MySqlConnection connection) async {
+    int affectedRows = 0;
+    await connection.transaction((ctx) async {
       var sql = compile();
-      var result = await ctx.execute(sql).catchError((e) {
+      Results? result = await ctx.query(sql).catchError((e) {
         _log.severe('Failed to run query: [ $sql ]', e);
+        throw e;
       });
-      return result.affectedRows.toInt();
+      affectedRows = result?.affectedRows ?? 0;
     });
 
-    return result;
+    return affectedRows;
   }
 
   String compile() => _buf.toString();
@@ -46,9 +47,9 @@ class MySqlSchema extends Schema {
 
   @override
   void alter(String tableName, void Function(MutableTable table) callback) {
-    var tbl = MysqlAlterTable(tableName);
+    var tbl = MariaDbAlterTable(tableName);
     callback(tbl);
-    _writeln('ALTER TABLE "$tableName"');
+    _writeln('ALTER TABLE $tableName');
     tbl.compile(_buf, _indent + 1);
     _buf.write(';');
   }
@@ -56,9 +57,9 @@ class MySqlSchema extends Schema {
   void _create(
       String tableName, void Function(Table table) callback, bool ifNotExists) {
     var op = ifNotExists ? ' IF NOT EXISTS' : '';
-    var tbl = MysqlTable();
+    var tbl = MariaDbTable();
     callback(tbl);
-    _writeln('CREATE TABLE$op "$tableName" (');
+    _writeln('CREATE TABLE$op $tableName (');
     tbl.compile(_buf, _indent + 1);
     _buf.writeln();
     _writeln(');');
