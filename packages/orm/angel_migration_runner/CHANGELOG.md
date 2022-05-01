@@ -1,5 +1,10 @@
 # Change Log
 
+## 6.0.1
+
+* Added `MariaDbMigrationRunner` to support MariaDB migration with `mysql1` driver
+* Updated `MySqlMigrationRunner` to support MySQL migration with `mysql_client` driver
+
 ## 6.0.0
 
 * Updated to SDK 2.16.x

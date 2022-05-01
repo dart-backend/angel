@@ -2,20 +2,20 @@ import 'dart:async';
 import 'dart:collection';
 import 'package:angel3_migration/angel3_migration.dart';
 import 'package:logging/logging.dart';
-import 'package:mysql_client/mysql_client.dart';
+import 'package:mysql1/mysql1.dart';
 import '../runner.dart';
 import '../util.dart';
 import 'schema.dart';
 
-class MySqlMigrationRunner implements MigrationRunner {
-  final _log = Logger('MysqlMigrationRunner');
+class MariaDbMigrationRunner implements MigrationRunner {
+  final _log = Logger('MariaDbMigrationRunner');
 
   final Map<String, Migration> migrations = {};
   final Queue<Migration> _migrationQueue = Queue();
-  final MySQLConnection connection;
+  final MySqlConnection connection;
   bool _connected = false;
 
-  MySqlMigrationRunner(this.connection,
+  MariaDbMigrationRunner(this.connection,
       {Iterable<Migration> migrations = const [], bool connected = false}) {
     if (migrations.isNotEmpty == true) migrations.forEach(addMigration);
     _connected = connected == true;
@@ -37,7 +37,7 @@ class MySqlMigrationRunner implements MigrationRunner {
       _connected = true;
     }
 
-    await connection.execute('''
+    await connection.query('''
     CREATE TABLE IF NOT EXISTS migrations (
       id serial,
       batch integer,
@@ -47,15 +47,15 @@ class MySqlMigrationRunner implements MigrationRunner {
     ''').then((result) {
       _log.info('Check and create "migrations" table');
     }).catchError((e) {
-      _log.severe('Failed to create "migrations" table.');
+      _log.severe('Failed to create "migrations" table.', e);
     });
   }
 
   @override
   Future up() async {
     await _init();
-    var r = await connection.execute('SELECT path from migrations;');
-    var existing = r.rows.cast<String>(); //.expand((x) => x).cast<String>();
+    var r = await connection.query('SELECT path from migrations;');
+    var existing = r.expand((x) => x).cast<String>();
     var toRun = <String>[];
 
     migrations.forEach((k, v) {
@@ -63,30 +63,27 @@ class MySqlMigrationRunner implements MigrationRunner {
     });
 
     if (toRun.isNotEmpty) {
-      var r = await connection.execute('SELECT MAX(batch) from migrations;');
-      var rTmp = r.rows.first; //r.toList();
-      var curBatch =
-          int.tryParse(rTmp.colAt(0) ?? "0") ?? 0; //(rTmp[0][0] ?? 0) as int;
+      var r = await connection.query('SELECT MAX(batch) from migrations;');
+      var rTmp = r.toList();
+      var curBatch = int.tryParse(rTmp[0][0] ?? '0') as int;
       var batch = curBatch + 1;
 
       for (var k in toRun) {
         var migration = migrations[k]!;
-        var schema = MySqlSchema();
+        var schema = MariaDbSchema();
         migration.up(schema);
         _log.info('Added "$k" into "migrations" table.');
-        await schema.run(connection).then((_) async {
-          var result = await connection
-              .execute(
-                  "INSERT INTO MIGRATIONS (batch, path) VALUES ($batch, '$k')")
-              .catchError((e) {
-            _log.severe('Failed to insert into "migrations" table.', e);
+
+        try {
+          await schema.run(connection).then((_) async {
+            var result = await connection.query(
+                "INSERT INTO MIGRATIONS (batch, path) VALUES ($batch, '$k')");
+
+            return result.affectedRows;
           });
-
-          return result.affectedRows.toInt();
-        });
-        //return connection.execute(
-        //    'INSERT INTO MIGRATIONS (batch, path) VALUES ($batch, \'$k\');');
-
+        } catch (e) {
+          _log.severe('Failed to insert into "migrations" table.', e);
+        }
       }
     } else {
       _log.warning('Nothing to add into "migrations" table.');
@@ -97,14 +94,13 @@ class MySqlMigrationRunner implements MigrationRunner {
   Future rollback() async {
     await _init();
 
-    var r = await connection.execute('SELECT MAX(batch) from migrations;');
-    var rTmp = r.rows.first; //r.toList();
-    var curBatch =
-        int.tryParse(rTmp.colAt(0) ?? "0") ?? 0; //(rTmp[0][0] ?? 0) as int;
+    var r = await connection.query('SELECT MAX(batch) from migrations;');
+    var rTmp = r.toList();
+    var curBatch = int.tryParse(rTmp[0][0] ?? 0) as int;
 
     r = await connection
-        .execute('SELECT path from migrations WHERE batch = $curBatch;');
-    var existing = r.rows.cast<String>(); //r.expand((x) => x).cast<String>();
+        .query('SELECT path from migrations WHERE batch = $curBatch;');
+    var existing = r.expand((x) => x).cast<String>();
     var toRun = <String>[];
 
     migrations.forEach((k, v) {
@@ -114,12 +110,12 @@ class MySqlMigrationRunner implements MigrationRunner {
     if (toRun.isNotEmpty) {
       for (var k in toRun.reversed) {
         var migration = migrations[k]!;
-        var schema = MySqlSchema();
+        var schema = MariaDbSchema();
         migration.down(schema);
         _log.info('Removed "$k" from "migrations" table.');
         await schema.run(connection).then((_) {
           return connection
-              .execute('DELETE FROM migrations WHERE path = \'$k\';');
+              .query('DELETE FROM migrations WHERE path = \'$k\';');
         });
       }
     } else {
@@ -131,19 +127,19 @@ class MySqlMigrationRunner implements MigrationRunner {
   Future reset() async {
     await _init();
     var r = await connection
-        .execute('SELECT path from migrations ORDER BY batch DESC;');
-    var existing = r.rows.cast<String>(); //r.expand((x) => x).cast<String>();
+        .query('SELECT path from migrations ORDER BY batch DESC;');
+    var existing = r.expand((x) => x).cast<String>();
     var toRun = existing.where(migrations.containsKey).toList();
 
     if (toRun.isNotEmpty) {
       for (var k in toRun.reversed) {
         var migration = migrations[k]!;
-        var schema = MySqlSchema();
+        var schema = MariaDbSchema();
         migration.down(schema);
         _log.info('Removed "$k" from "migrations" table.');
         await schema.run(connection).then((_) {
           return connection
-              .execute('DELETE FROM migrations WHERE path = \'$k\';');
+              .query('DELETE FROM migrations WHERE path = \'$k\';');
         });
       }
     } else {

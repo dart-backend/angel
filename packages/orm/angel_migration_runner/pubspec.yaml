@@ -1,5 +1,5 @@
 name: angel3_migration_runner
-version: 6.0.0
+version: 6.0.1
 description: Command-line based database migration runner for Angel3's ORM.
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dukefirehawk/angel/tree/master/packages/orm/angel_migration_runner
@@ -11,7 +11,7 @@ dependencies:
   args: ^2.1.0
   charcode: ^1.2.0
   postgres: ^2.4.0
-  mysql_client: ^0.0.11
+  mysql_client: ^0.0.15
   mysql1: ^0.19.0
   logging: ^1.0.0
 dev_dependencies:

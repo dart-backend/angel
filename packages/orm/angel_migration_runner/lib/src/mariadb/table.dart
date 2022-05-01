@@ -3,7 +3,7 @@ import 'package:angel3_orm/angel3_orm.dart';
 import 'package:angel3_migration/angel3_migration.dart';
 import 'package:charcode/ascii.dart';
 
-abstract class MySqlGenerator {
+abstract class MariaDbGenerator {
   static String columnType(MigrationColumn column) {
     var str = column.type.name;
     if (column.type.hasSize) {
@@ -59,7 +59,7 @@ abstract class MySqlGenerator {
   }
 }
 
-class MysqlTable extends Table {
+class MariaDbTable extends Table {
   final Map<String, MigrationColumn> _columns = {};
 
   @override
@@ -76,7 +76,7 @@ class MysqlTable extends Table {
     var i = 0;
 
     _columns.forEach((name, column) {
-      var col = MySqlGenerator.compileColumn(column);
+      var col = MariaDbGenerator.compileColumn(column);
       if (i++ > 0) buf.writeln(',');
 
       for (var i = 0; i < indent; i++) {
@@ -88,12 +88,12 @@ class MysqlTable extends Table {
   }
 }
 
-class MysqlAlterTable extends Table implements MutableTable {
+class MariaDbAlterTable extends Table implements MutableTable {
   final Map<String, MigrationColumn> _columns = {};
   final String tableName;
   final Queue<String> _stack = Queue<String>();
 
-  MysqlAlterTable(this.tableName);
+  MariaDbAlterTable(this.tableName);
 
   void compile(StringBuffer buf, int indent) {
     var i = 0;
@@ -114,7 +114,7 @@ class MysqlAlterTable extends Table implements MutableTable {
 
     i = 0;
     _columns.forEach((name, column) {
-      var col = MySqlGenerator.compileColumn(column);
+      var col = MariaDbGenerator.compileColumn(column);
       if (i++ > 0) buf.writeln(',');
 
       for (var i = 0; i < indent; i++) {
@@ -128,7 +128,7 @@ class MysqlAlterTable extends Table implements MutableTable {
   @override
   MigrationColumn declareColumn(String name, Column column) {
     if (_columns.containsKey(name)) {
-      throw StateError('Cannot redeclare column $name.');
+      throw StateError('Cannot redeclare column "$name".');
     }
     var col = MigrationColumn.from(column);
     _columns[name] = col;
@@ -148,12 +148,12 @@ class MysqlAlterTable extends Table implements MutableTable {
   @override
   void changeColumnType(String name, ColumnType type, {int length = 256}) {
     _stack.add('ALTER COLUMN $name TYPE ' +
-        MySqlGenerator.columnType(MigrationColumn(type, length: length)));
+        MariaDbGenerator.columnType(MigrationColumn(type, length: length)));
   }
 
   @override
   void renameColumn(String name, String newName) {
-    _stack.add('RENAME COLUMN $name TO $newName');
+    _stack.add('RENAME COLUMN $name TO "$newName"');
   }
 
   @override
