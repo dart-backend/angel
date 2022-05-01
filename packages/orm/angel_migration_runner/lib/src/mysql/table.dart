@@ -53,8 +53,7 @@ abstract class MySqlGenerator {
   }
 
   static String compileReference(MigrationColumnReference ref) {
-    var buf =
-        StringBuffer('REFERENCES "${ref.foreignTable}"("${ref.foreignKey}")');
+    var buf = StringBuffer('REFERENCES ${ref.foreignTable}(${ref.foreignKey})');
     if (ref.behavior != null) buf.write(' ' + ref.behavior!);
     return buf.toString();
   }
@@ -84,7 +83,7 @@ class MysqlTable extends Table {
         buf.write('  ');
       }
 
-      buf.write('"$name" $col');
+      buf.write('$name $col');
     });
   }
 }
@@ -122,14 +121,14 @@ class MysqlAlterTable extends Table implements MutableTable {
         buf.write('  ');
       }
 
-      buf.write('ADD COLUMN "$name" $col');
+      buf.write('ADD COLUMN $name $col');
     });
   }
 
   @override
   MigrationColumn declareColumn(String name, Column column) {
     if (_columns.containsKey(name)) {
-      throw StateError('Cannot redeclare column "$name".');
+      throw StateError('Cannot redeclare column $name.');
     }
     var col = MigrationColumn.from(column);
     _columns[name] = col;
@@ -138,32 +137,32 @@ class MysqlAlterTable extends Table implements MutableTable {
 
   @override
   void dropNotNull(String name) {
-    _stack.add('ALTER COLUMN "$name" DROP NOT NULL');
+    _stack.add('ALTER COLUMN $name DROP NOT NULL');
   }
 
   @override
   void setNotNull(String name) {
-    _stack.add('ALTER COLUMN "$name" SET NOT NULL');
+    _stack.add('ALTER COLUMN $name SET NOT NULL');
   }
 
   @override
   void changeColumnType(String name, ColumnType type, {int length = 256}) {
-    _stack.add('ALTER COLUMN "$name" TYPE ' +
+    _stack.add('ALTER COLUMN $name TYPE ' +
         MySqlGenerator.columnType(MigrationColumn(type, length: length)));
   }
 
   @override
   void renameColumn(String name, String newName) {
-    _stack.add('RENAME COLUMN "$name" TO "$newName"');
+    _stack.add('RENAME COLUMN $name TO $newName');
   }
 
   @override
   void dropColumn(String name) {
-    _stack.add('DROP COLUMN "$name"');
+    _stack.add('DROP COLUMN $name');
   }
 
   @override
   void rename(String newName) {
-    _stack.add('RENAME TO "$newName"');
+    _stack.add('RENAME TO $newName');
   }
 }

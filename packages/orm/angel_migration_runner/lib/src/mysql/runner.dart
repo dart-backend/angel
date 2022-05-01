@@ -34,13 +34,11 @@ class MySqlMigrationRunner implements MigrationRunner {
     }
 
     if (!_connected) {
-      //connection = await MySQLConnection.connect(settings);
-      await connection.connect();
       _connected = true;
     }
 
     await connection.execute('''
-    CREATE TABLE IF NOT EXISTS "migrations" (
+    CREATE TABLE IF NOT EXISTS migrations (
       id serial,
       batch integer,
       path varchar(255),
@@ -76,18 +74,19 @@ class MySqlMigrationRunner implements MigrationRunner {
         var schema = MySqlSchema();
         migration.up(schema);
         _log.info('Added "$k" into "migrations" table.');
-        await schema.run(connection).then((_) {
-          return connection.transactional((ctx) async {
-            var result = await ctx.execute(
-                "INSERT INTO MIGRATIONS (batch, path) VALUES ($batch, '$k')");
-
-            return result.affectedRows;
+        await schema.run(connection).then((_) async {
+          var result = await connection
+              .execute(
+                  "INSERT INTO MIGRATIONS (batch, path) VALUES ($batch, '$k')")
+              .catchError((e) {
+            _log.severe('Failed to insert into "migrations" table.', e);
           });
-          //return connection.execute(
-          //    'INSERT INTO MIGRATIONS (batch, path) VALUES ($batch, \'$k\');');
-        }).catchError((e) {
-          _log.severe('Failed to insert into "migrations" table.');
+
+          return result.affectedRows.toInt();
         });
+        //return connection.execute(
+        //    'INSERT INTO MIGRATIONS (batch, path) VALUES ($batch, \'$k\');');
+
       }
     } else {
       _log.warning('Nothing to add into "migrations" table.');

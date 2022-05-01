@@ -17,15 +17,18 @@ class MySqlSchema extends Schema {
 
   Future<int> run(MySQLConnection connection) async {
     //return connection.execute(compile());
-    var result = await connection.transactional((ctx) async {
+    int affectedRows = 0;
+    await connection.transactional((ctx) async {
       var sql = compile();
       var result = await ctx.execute(sql).catchError((e) {
         _log.severe('Failed to run query: [ $sql ]', e);
       });
-      return result.affectedRows.toInt();
+      affectedRows = result.affectedRows.toInt();
+    }).catchError((e) {
+      _log.severe('Failed to run query in a transaction', e);
     });
 
-    return result;
+    return affectedRows;
   }
 
   String compile() => _buf.toString();
@@ -41,14 +44,14 @@ class MySqlSchema extends Schema {
   @override
   void drop(String tableName, {bool cascade = false}) {
     var c = cascade == true ? ' CASCADE' : '';
-    _writeln('DROP TABLE "$tableName"$c;');
+    _writeln('DROP TABLE $tableName$c;');
   }
 
   @override
   void alter(String tableName, void Function(MutableTable table) callback) {
     var tbl = MysqlAlterTable(tableName);
     callback(tbl);
-    _writeln('ALTER TABLE "$tableName"');
+    _writeln('ALTER TABLE $tableName');
     tbl.compile(_buf, _indent + 1);
     _buf.write(';');
   }
@@ -58,7 +61,7 @@ class MySqlSchema extends Schema {
     var op = ifNotExists ? ' IF NOT EXISTS' : '';
     var tbl = MysqlTable();
     callback(tbl);
-    _writeln('CREATE TABLE$op "$tableName" (');
+    _writeln('CREATE TABLE$op $tableName (');
     tbl.compile(_buf, _indent + 1);
     _buf.writeln();
     _writeln(');');
