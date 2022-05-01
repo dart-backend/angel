@@ -2,7 +2,8 @@
 
 ## 6.0.1
 
-* Fixed MariaDb migration
+* Added `MariaDbMigrationRunner` to support MariaDB migration with `mysql1` driver
+* Updated `MySqlMigrationRunner` to support MySQL migration with `mysql_client` driver
 
 ## 6.0.0
 
