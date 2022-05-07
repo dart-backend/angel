@@ -9,7 +9,8 @@ import 'package:postgres/postgres.dart';
 class PostgreSqlExecutor extends QueryExecutor {
   final PostgreSQLExecutionContext _connection;
 
-  /// An optional [Logger] to print information to.
+  /// An optional [Logger] to print information to. A default logger will be used
+  /// if not set
   late Logger logger;
 
   PostgreSqlExecutor(this._connection, {Logger? logger}) {

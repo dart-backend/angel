@@ -1,5 +1,10 @@
 # Change Log
 
+## 6.0.1
+
+* Fixed timestamp or date field to DateTime mapping
+* Fixed double or float field to double mapping
+
 ## 6.0.0
 
 * Updated to SDK 2.16.x

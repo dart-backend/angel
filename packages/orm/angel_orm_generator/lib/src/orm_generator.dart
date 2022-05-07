@@ -262,9 +262,10 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                     .property('decode')
                     .call([expr.asA(refer('String'))]).asA(type);
               } else if (floatTypes.contains(ctx.columns[field.name]?.type)) {
-                expr = refer('double')
-                    .property('tryParse')
-                    .call([expr.property('toString').call([])]);
+                //expr = refer('double')
+                //    .property('tryParse')
+                //    .call([expr.property('toString').call([])]);
+                expr = refer('mapToDouble').call([expr]);
               } else if (fType is InterfaceType && fType.element.isEnum) {
                 var isNull = expr.equalTo(literalNull);
                 expr = isNull.conditional(literalNull,
@@ -272,6 +273,10 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
               } else if (fType.isDartCoreBool) {
                 // Generated Code: mapToBool(row[i])
                 expr = refer('mapToBool').call([expr]);
+              } else if (fType.element?.displayName == 'DateTime') {
+                //print("fType: ${fType.element?.displayName}");
+                // Generated Code: mapToDateTime(row[i])
+                expr = refer('mapToDateTime').call([expr]);
               } else {
                 // Generated Code: (row[i] as type?)
                 expr = expr.asA(type);

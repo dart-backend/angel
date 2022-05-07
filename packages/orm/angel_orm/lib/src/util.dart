@@ -19,3 +19,27 @@ String mapToText(dynamic value) {
   }
   return value;
 }
+
+DateTime? mapToDateTime(dynamic value) {
+  if (value == null) {
+    return value;
+  }
+  if (value is String) {
+    return DateTime.tryParse(value);
+  }
+  return value;
+}
+
+double mapToDouble(dynamic value) {
+  if (value == null) {
+    return 0.0;
+  }
+  if (value is String) {
+    return double.tryParse(value) ?? 0.0;
+  }
+
+  if (value is! double) {
+    return 0.0;
+  }
+  return value;
+}

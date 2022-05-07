@@ -110,8 +110,8 @@ class TreeQuery extends Query<Tree, TreeQueryWhere> {
     }
     var model = Tree(
         id: fields.contains('id') ? row[0].toString() : null,
-        createdAt: fields.contains('created_at') ? (row[1] as DateTime?) : null,
-        updatedAt: fields.contains('updated_at') ? (row[2] as DateTime?) : null,
+        createdAt: fields.contains('created_at') ? mapToDateTime(row[1]) : null,
+        updatedAt: fields.contains('updated_at') ? mapToDateTime(row[2]) : null,
         rings: fields.contains('rings') ? (row[3] as int?) : null);
     if (row.length > 4) {
       var modelOpt = FruitQuery().parseRow(row.skip(4).take(5).toList());
@@ -299,8 +299,8 @@ class FruitQuery extends Query<Fruit, FruitQueryWhere> {
     }
     var model = Fruit(
         id: fields.contains('id') ? row[0].toString() : null,
-        createdAt: fields.contains('created_at') ? (row[1] as DateTime?) : null,
-        updatedAt: fields.contains('updated_at') ? (row[2] as DateTime?) : null,
+        createdAt: fields.contains('created_at') ? mapToDateTime(row[1]) : null,
+        updatedAt: fields.contains('updated_at') ? mapToDateTime(row[2]) : null,
         treeId: fields.contains('tree_id') ? (row[3] as int?) : null,
         commonName:
             fields.contains('common_name') ? (row[4] as String?) : null);

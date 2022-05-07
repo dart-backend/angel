@@ -115,10 +115,10 @@ class OrderQuery extends Query<Order, OrderQueryWhere> {
     }
     var model = Order(
         id: fields.contains('id') ? row[0].toString() : null,
-        createdAt: fields.contains('created_at') ? (row[1] as DateTime?) : null,
-        updatedAt: fields.contains('updated_at') ? (row[2] as DateTime?) : null,
+        createdAt: fields.contains('created_at') ? mapToDateTime(row[1]) : null,
+        updatedAt: fields.contains('updated_at') ? mapToDateTime(row[2]) : null,
         employeeId: fields.contains('employee_id') ? (row[4] as int?) : null,
-        orderDate: fields.contains('order_date') ? (row[5] as DateTime?) : null,
+        orderDate: fields.contains('order_date') ? mapToDateTime(row[5]) : null,
         shipperId: fields.contains('shipper_id') ? (row[6] as int?) : null);
     if (row.length > 7) {
       var modelOpt = CustomerQuery().parseRow(row.skip(7).take(3).toList());
@@ -284,9 +284,9 @@ class CustomerQuery extends Query<Customer, CustomerQueryWhere> {
     }
     var model = Customer(
         id: fields.contains('id') ? row[0].toString() : null,
-        createdAt: fields.contains('created_at') ? (row[1] as DateTime?) : null,
+        createdAt: fields.contains('created_at') ? mapToDateTime(row[1]) : null,
         updatedAt:
-            fields.contains('updated_at') ? (row[2] as DateTime?) : null);
+            fields.contains('updated_at') ? mapToDateTime(row[2]) : null);
     return Optional.of(model);
   }
 

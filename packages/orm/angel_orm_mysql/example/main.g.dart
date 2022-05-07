@@ -81,8 +81,8 @@ class TodoQuery extends Query<Todo, TodoQueryWhere> {
     }
     var model = Todo(
         id: fields.contains('id') ? row[0].toString() : null,
-        createdAt: fields.contains('created_at') ? (row[1] as DateTime?) : null,
-        updatedAt: fields.contains('updated_at') ? (row[2] as DateTime?) : null,
+        createdAt: fields.contains('created_at') ? mapToDateTime(row[1]) : null,
+        updatedAt: fields.contains('updated_at') ? mapToDateTime(row[2]) : null,
         isComplete: fields.contains('is_complete') ? mapToBool(row[3]) : null,
         text: fields.contains('text') ? (row[4] as String?) : null);
     return Optional.of(model);

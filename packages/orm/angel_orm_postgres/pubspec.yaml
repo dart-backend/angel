@@ -16,14 +16,14 @@ dev_dependencies:
   angel3_orm_test: ^6.0.0
   test: ^1.21.0
   lints: ^1.0.0
-# dependency_overrides:
+dependency_overrides:
 #   angel3_serialize:
 #     path: ../../serialize/angel_serialize
 #   angel3_model:
 #     path: ../../model
-#   angel3_orm_test:
-#     path: ../angel_orm_test
-#   angel3_orm:
-#     path: ../angel_orm
+   angel3_orm_test:
+     path: ../angel_orm_test
+   angel3_orm:
+     path: ../angel_orm
 #   angel3_migration:
 #     path: ../angel_migration

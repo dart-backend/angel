@@ -1,5 +1,10 @@
 # Change Log
 
+## 6.0.0-beta.3
+
+* Updated transaction for `MariaDbExecutor`
+* Updated transaction for `MySqlExecutor`
+
 ## 6.0.0-beta.2
 
 * Updated README
