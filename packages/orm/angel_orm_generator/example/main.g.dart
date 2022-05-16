@@ -93,14 +93,12 @@ class EmployeeQuery extends Query<Employee, EmployeeQueryWhere> {
     }
     var model = Employee(
         id: fields.contains('id') ? row[0].toString() : null,
-        createdAt: fields.contains('created_at') ? (row[1] as DateTime?) : null,
-        updatedAt: fields.contains('updated_at') ? (row[2] as DateTime?) : null,
+        createdAt: fields.contains('created_at') ? mapToDateTime(row[1]) : null,
+        updatedAt: fields.contains('updated_at') ? mapToDateTime(row[2]) : null,
         uniqueId: fields.contains('unique_id') ? (row[3] as String?) : null,
         firstName: fields.contains('first_name') ? (row[4] as String?) : null,
         lastName: fields.contains('last_name') ? (row[5] as String?) : null,
-        salary: fields.contains('salary')
-            ? double.tryParse(row[6].toString())
-            : null);
+        salary: fields.contains('salary') ? mapToDouble(row[6]) : null);
     return Optional.of(model);
   }
 

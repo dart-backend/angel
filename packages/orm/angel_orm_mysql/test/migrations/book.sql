@@ -1,4 +1,4 @@
-CREATE TEMPORARY TABLE books (
+CREATE TABLE IF NOT EXISTS books (
     id serial PRIMARY KEY,
     author_id int NOT NULL,
     partner_author_id int,

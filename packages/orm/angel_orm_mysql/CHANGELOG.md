@@ -1,5 +1,12 @@
 # Change Log
 
+## 6.0.0-beta.3
+
+* Fixed transaction for `MariaDbExecutor`
+* Fixed transaction for `MySqlExecutor`
+* Fixed error for non `id` primary key
+* Changed test cases to use tables instead of temporary tables to overcome limitations
+
 ## 6.0.0-beta.2
 
 * Updated README

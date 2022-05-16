@@ -61,7 +61,8 @@ void manyToManyTests(FutureOr<QueryExecutor> Function() createExecutor,
       ..username = 'thosakwe'
       ..password = 'Hahahahayoureallythoughtiwasstupidenoughtotypethishere'
       ..email = 'thosakwe AT gmail.com';
-    thosakwe = (await thosakweQuery.insert(executor)).value;
+    var result = await thosakweQuery.insert(executor);
+    thosakwe = result.value;
     print('=== THOSAKWE: ${thosakwe?.toJson()}');
 
     // Allow thosakwe to publish...

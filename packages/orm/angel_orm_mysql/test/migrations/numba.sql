@@ -1,4 +1,4 @@
-CREATE TEMPORARY TABLE numbas (
+CREATE TABLE IF NOT EXISTS numbas (
   i int NOT NULL UNIQUE,
   parent int,
   created_at TIMESTAMP,

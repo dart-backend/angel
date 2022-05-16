@@ -122,8 +122,8 @@ class BookQuery extends Query<Book, BookQueryWhere> {
     }
     var model = Book(
         id: fields.contains('id') ? row[0].toString() : null,
-        createdAt: fields.contains('created_at') ? (row[1] as DateTime?) : null,
-        updatedAt: fields.contains('updated_at') ? (row[2] as DateTime?) : null,
+        createdAt: fields.contains('created_at') ? mapToDateTime(row[1]) : null,
+        updatedAt: fields.contains('updated_at') ? mapToDateTime(row[2]) : null,
         name: fields.contains('name') ? (row[5] as String?) : null);
     if (row.length > 6) {
       var modelOpt = AuthorQuery().parseRow(row.skip(6).take(4).toList());
@@ -285,8 +285,8 @@ class AuthorQuery extends Query<Author, AuthorQueryWhere> {
     }
     var model = Author(
         id: fields.contains('id') ? row[0].toString() : null,
-        createdAt: fields.contains('created_at') ? (row[1] as DateTime?) : null,
-        updatedAt: fields.contains('updated_at') ? (row[2] as DateTime?) : null,
+        createdAt: fields.contains('created_at') ? mapToDateTime(row[1]) : null,
+        updatedAt: fields.contains('updated_at') ? mapToDateTime(row[2]) : null,
         name: fields.contains('name') ? (row[3] as String?) : null);
     return Optional.of(model);
   }

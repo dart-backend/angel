@@ -1,4 +1,4 @@
-CREATE TEMPORARY TABLE trees (
+CREATE TABLE IF NOT EXISTS trees (
   id serial,
   rings smallint UNIQUE,
   created_at timestamp,

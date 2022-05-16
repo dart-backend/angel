@@ -1,4 +1,4 @@
-CREATE TEMPORARY TABLE feet (
+CREATE TABLE IF NOT EXISTS feet (
     id serial PRIMARY KEY,
     leg_id int NOT NULL,
     n_toes int NOT NULL,

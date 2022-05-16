@@ -11,23 +11,28 @@ void main() {
   });
 
   group('mysql', () {
-    group('belongsTo',
-        () => belongsToTests(my(['author', 'book']), close: closeMy));
+    group(
+        'belongsTo',
+        () => belongsToTests(createTables(['author', 'book']),
+            close: dropTables));
     group(
         'edgeCase',
-        () => edgeCaseTests(my(['unorthodox', 'weird_join', 'song', 'numba']),
-            close: closeMy));
+        () => edgeCaseTests(
+            createTables(['unorthodox', 'weird_join', 'song', 'numba']),
+            close: dropTables));
     group('enumAndNested',
-        () => enumAndNestedTests(my(['has_car']), close: closeMy));
-    group('hasMany', () => hasManyTests(my(['tree', 'fruit']), close: closeMy));
+        () => enumAndNestedTests(createTables(['has_car']), close: dropTables));
+    group('hasMany',
+        () => hasManyTests(createTables(['tree', 'fruit']), close: dropTables));
     // NOTE: MySQL/MariaDB do not support jsonb data type
-    //group('hasMap', () => hasMapTests(my(['has_map']), close: closeMy));
+    //group('hasMap', () => hasMapTests(createTables(['has_maps']), close: dropTables));
     // NOTE: mysql1 driver do not support CAST();
-    //group('hasOne', () => hasOneTests(my(['leg', 'foot']), close: closeMy));
+    //group('hasOne', () => hasOneTests(createTables(['legs', 'feet']), close: dropTables));
     group(
         'manyToMany',
-        () =>
-            manyToManyTests(my(['user', 'role', 'user_role']), close: closeMy));
-    group('standalone', () => standaloneTests(my(['car']), close: closeMy));
+        () => manyToManyTests(createTables(['user', 'role', 'user_role']),
+            close: dropTables));
+    group('standalone',
+        () => standaloneTests(createTables(['car']), close: dropTables));
   });
 }
