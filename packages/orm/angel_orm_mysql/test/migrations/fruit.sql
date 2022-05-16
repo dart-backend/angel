@@ -1,4 +1,4 @@
-CREATE TEMPORARY TABLE fruits (
+CREATE TABLE IF NOT EXISTS fruits (
   id serial,
   tree_id int,
   common_name varchar(255),

@@ -7,7 +7,7 @@
 
 This package contains the SQL Executor required by Angel3 ORM to work with MySQL and MariaDB respectively. In order to better support the differences in MySQL and MariaDb underlying protocols, two different drives have to be used. For MariaDb 10.2.x, `mysql1` driver provides the best results, while `mysql_client` driver handles MySQL 8.x.x without issues.
 
-* MariaDbExecutor (stable)
+* MariaDbExecutor (beta)
 * MySqlExecutor (beta)
 
 ## Supported database version
@@ -51,3 +51,9 @@ This package contains the SQL Executor required by Angel3 ORM to work with MySQL
     await connection.connect(timeoutMs: 10000);
     var executor = MySqlExecutor(connection, logger: logger);
 ```
+
+## Known limitation
+
+* UTC time is not supported
+* Blob is not supported
+  

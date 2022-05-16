@@ -1,4 +1,4 @@
-CREATE TEMPORARY TABLE cars (
+CREATE TABLE IF NOT EXISTS cars (
     id serial PRIMARY KEY,
     make varchar(255) NOT NULL,
     description TEXT NOT NULL,

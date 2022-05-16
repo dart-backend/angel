@@ -1,4 +1,4 @@
-CREATE TEMPORARY TABLE songs (
+CREATE TABLE IF NOT EXISTS songs (
   id serial,
   weird_join_id int,
   title varchar(255),

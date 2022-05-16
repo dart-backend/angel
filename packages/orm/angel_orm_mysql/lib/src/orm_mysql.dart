@@ -22,6 +22,8 @@ class MySqlExecutor extends QueryExecutor {
     return _connection.close();
   }
 
+  MySQLConnection get rawConnection => _connection;
+
   /*
   Future<Transaction> _startTransaction() {
     if (_connection is Transaction) {
@@ -115,6 +117,8 @@ class MySqlExecutor extends QueryExecutor {
           query = query.replaceAll("?", ":id");
           substitutionValues.clear();
           substitutionValues['id'] = result.lastInsertID;
+        } else {
+          query = _convertSQL(query, substitutionValues);
         }
       } else if (query.startsWith("UPDATE")) {
         await _connection.execute(query, substitutionValues);
@@ -131,6 +135,17 @@ class MySqlExecutor extends QueryExecutor {
 
       return results.rows.map((r) => r.typedAssoc().values.toList()).toList();
     });
+  }
+
+  String _convertSQL(String query, Map<String, dynamic> substitutionValues) {
+    var newQuery = query;
+    for (var k in substitutionValues.keys) {
+      var fromPattern = '.$k = ?';
+      var toPattern = '.$k = :$k';
+      newQuery = newQuery.replaceFirst(fromPattern, toPattern);
+    }
+
+    return newQuery;
   }
 
   @override

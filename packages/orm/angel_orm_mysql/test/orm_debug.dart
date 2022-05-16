@@ -14,7 +14,7 @@ void main() async {
   //  if (rec.stackTrace != null) print(rec.stackTrace);
   //});
 
-  belongsToTests(my(['author', 'book']), close: closeMy);
+  belongsToTests(createTables(['author', 'book']), close: dropTables);
 
   //hasOneTests(my(['leg', 'foot']), close: closeMy);
   //standaloneTests(my(['car']), close: closeMy);

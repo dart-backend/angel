@@ -6,15 +6,47 @@ import 'package:logging/logging.dart';
 import 'package:mysql1/mysql1.dart';
 import 'package:mysql_client/mysql_client.dart';
 
-FutureOr<QueryExecutor> Function() my(Iterable<String> schemas) {
-  return () => connectToMySql(schemas);
+List tmpTables = [];
+
+FutureOr<QueryExecutor> Function() createTables(List<String> schemas) {
+  // For MySQL
+  return () => _connectToMySql(schemas);
+
+  // For MariaDB
+  // return () => _connectToMariaDb(tables);
 }
 
-Future<void> closeMy(QueryExecutor executor) =>
-    (executor as MySqlExecutor).close();
+// For MySQL
+Future<void> dropTables(QueryExecutor executor) async {
+  var sqlExecutor = (executor as MySqlExecutor);
+  for (var tableName in tmpTables.reversed) {
+    await sqlExecutor.rawConnection.execute('drop table $tableName;');
+  }
+  return sqlExecutor.close();
+}
 
-// Executor for MariaDB 10.2.x
-Future<MariaDbExecutor> connectToMariaDb(Iterable<String> schemas) async {
+// For MariaDB
+/* Future<void> dropTables(QueryExecutor executor) {
+  var sqlExecutor = (executor as MariaDbExecutor);
+  for (var tableName in tmpTables.reversed) {
+    sqlExecutor.query(tableName, 'DROP TABLE $tableName', {});
+  }
+  return sqlExecutor.close();
+} */
+
+String extractTableName(String createQuery) {
+  var start = createQuery.indexOf('EXISTS');
+  var end = createQuery.indexOf('(');
+
+  if (start == -1 || end == -1) {
+    return '';
+  }
+
+  return createQuery.substring(start + 6, end).trim();
+}
+
+// Executor for MariaDB
+Future<MariaDbExecutor> _connectToMariaDb(List<String> schemas) async {
   var settings = ConnectionSettings(
       host: 'localhost',
       port: 3306,
@@ -23,7 +55,9 @@ Future<MariaDbExecutor> connectToMariaDb(Iterable<String> schemas) async {
       password: 'Test123*');
   var connection = await MySqlConnection.connect(settings);
 
-  var logger = Logger('orm_mysql');
+  var logger = Logger('orm_mariadb');
+
+  tmpTables.clear();
 
   for (var s in schemas) {
     // MySQL driver does not support multiple sql queries
@@ -34,6 +68,11 @@ Future<MariaDbExecutor> connectToMariaDb(Iterable<String> schemas) async {
       if (q.trim().isNotEmpty) {
         //await connection.execute(q);
         await connection.query(q);
+
+        var tableName = extractTableName(q);
+        if (tableName != '') {
+          tmpTables.add(tableName);
+        }
       }
     }
   }
@@ -41,19 +80,21 @@ Future<MariaDbExecutor> connectToMariaDb(Iterable<String> schemas) async {
   return MariaDbExecutor(connection, logger: logger);
 }
 
-// Executor for MySQL 8.x.x
-Future<MySqlExecutor> connectToMySql(Iterable<String> schemas) async {
+// Executor for MySQL
+Future<MySqlExecutor> _connectToMySql(List<String> schemas) async {
   var connection = await MySQLConnection.createConnection(
-    databaseName: 'orm_test',
-    port: 3306,
-    host: "localhost",
-    userName: Platform.environment['MYSQL_USERNAME'] ?? 'test',
-    password: Platform.environment['MYSQL_PASSWORD'] ?? 'Test123*',
-  );
+      databaseName: 'orm_test',
+      port: 3306,
+      host: "localhost",
+      userName: Platform.environment['MYSQL_USERNAME'] ?? 'test',
+      password: Platform.environment['MYSQL_PASSWORD'] ?? 'Test123*',
+      secure: false);
 
-  await connection.connect();
+  await connection.connect(timeoutMs: 10000);
 
   var logger = Logger('orm_mysql');
+
+  tmpTables.clear();
 
   for (var s in schemas) {
     // MySQL driver does not support multiple sql queries
@@ -63,6 +104,11 @@ Future<MySqlExecutor> connectToMySql(Iterable<String> schemas) async {
       //print("Table: [$q]");
       if (q.trim().isNotEmpty) {
         await connection.execute(q);
+
+        var tableName = extractTableName(q);
+        if (tableName != '') {
+          tmpTables.add(tableName);
+        }
       }
     }
   }
