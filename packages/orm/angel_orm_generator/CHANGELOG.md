@@ -1,5 +1,9 @@
 # Change Log
 
+## 6.1.0
+
+* Updated to `analyzer` 4.x.x
+
 ## 6.0.1
 
 * Fixed timestamp or date field to DateTime mapping
