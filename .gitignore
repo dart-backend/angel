@@ -71,7 +71,8 @@ fabric.properties
 
 # Others
 logs/
-#.DS_Store
+.DS_Store
 server_log.txt
 ormapp/
 backup/
+

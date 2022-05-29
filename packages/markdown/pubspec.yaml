@@ -1,5 +1,5 @@
 name: angel3_markdown
-version: 6.0.0
+version: 6.1.0
 description: Angel3 Markdown view generator. Write static sites, with no build step.
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dukefirehawk/angel/tree/master/packages/markdown
@@ -8,7 +8,7 @@ environment:
 dependencies:
   angel3_framework: ^6.0.0
   file: ^6.1.2
-  markdown: ^4.0.0
+  markdown: ^5.0.0
 dev_dependencies:
   angel3_test: ^6.0.0
   lints: ^1.0.0
