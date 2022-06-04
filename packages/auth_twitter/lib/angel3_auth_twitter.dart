@@ -1,11 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:angel_auth/angel_auth.dart';
-import 'package:angel_framework/angel_framework.dart';
+import 'dart:io';
+import 'package:angel3_auth/angel3_auth.dart';
+import 'package:angel3_framework/angel3_framework.dart';
 import 'package:http/http.dart' as http;
-import 'package:oauth/oauth.dart' as oauth;
 import 'package:path/path.dart' as p;
-import 'package:twitter/twitter.dart';
+import 'package:oauth1/oauth1.dart' as oauth;
+import 'package:dart_twitter_api/twitter_api.dart';
 
 /// Authenticates users by connecting to Twitter's API.
 class TwitterStrategy<User> extends AuthStrategy<User> {
@@ -15,7 +16,7 @@ class TwitterStrategy<User> extends AuthStrategy<User> {
   /// A callback that uses Twitter to authenticate a [User].
   ///
   /// As always, return `null` if authentication fails.
-  final FutureOr<User> Function(Twitter, RequestContext, ResponseContext)
+  final FutureOr<User> Function(TwitterApi, RequestContext, ResponseContext)
       verifier;
 
   /// A callback that is triggered when an OAuth2 error occurs (i.e. the user declines to login);
@@ -25,17 +26,47 @@ class TwitterStrategy<User> extends AuthStrategy<User> {
   /// The root of Twitter's API. Defaults to `'https://api.twitter.com'`.
   final Uri baseUrl;
 
-  oauth.Client _client;
+  oauth.Client? _client;
 
   /// The underlying [oauth.Client] used to query Twitter.
-  oauth.Client get client => _client;
+  oauth.Client get client => _client!;
 
   TwitterStrategy(this.options, this.verifier, this.onError,
-      {http.BaseClient client, Uri baseUrl})
+      {http.BaseClient? client, Uri? baseUrl})
       : baseUrl = baseUrl ?? Uri.parse('https://api.twitter.com') {
-    var tokens = oauth.Tokens(
-        consumerId: options.clientId, consumerKey: options.clientSecret);
-    _client = oauth.Client(tokens, client: client);
+    // define platform (server)
+    final oauth.Platform platform = oauth.Platform(
+        '$baseUrl/oauth/request_token', // temporary credentials request
+        '$baseUrl/oauth/authorize', // resource owner authorization
+        '$baseUrl/oauth/access_token', // token credentials request
+        oauth.SignatureMethods.hmacSha1 // signature method
+        );
+
+    // define client credentials (consumer keys)
+    final oauth.ClientCredentials clientCredentials =
+        oauth.ClientCredentials(options.clientId, options.clientSecret);
+
+    // create Authorization object with client credentials and platform definition
+    final oauth.Authorization auth =
+        oauth.Authorization(clientCredentials, platform);
+
+    // request temporary credentials (request tokens)
+    auth.requestTemporaryCredentials('oob').then((res) {
+      // redirect to authorization page
+      print(
+          "Open with your browser: ${auth.getResourceOwnerAuthorizationURI(res.credentials.token)}");
+
+      // get verifier (PIN)
+      stdout.write("PIN: ");
+      String verifier = stdin.readLineSync() ?? '';
+
+      // request token credentials (access tokens)
+      return auth.requestTokenCredentials(res.credentials, verifier);
+    }).then((res) {
+      // create Client object
+      _client = oauth.Client(
+          platform.signatureMethod, clientCredentials, res.credentials);
+    });
   }
 
   /// Handle a response from Twitter.
@@ -60,7 +91,7 @@ class TwitterStrategy<User> extends AuthStrategy<User> {
 
   /// Get an access token.
   Future<Map<String, String>> getAccessToken(String token, String verifier) {
-    return _client.post(
+    return client.post(
         baseUrl.replace(path: p.join(baseUrl.path, 'oauth/access_token')),
         headers: {
           'accept': 'application/json'
@@ -75,7 +106,7 @@ class TwitterStrategy<User> extends AuthStrategy<User> {
 
   /// Get a request token.
   Future<Map<String, String>> getRequestToken() {
-    return _client.post(
+    return client.post(
         baseUrl.replace(path: p.join(baseUrl.path, 'oauth/request_token')),
         headers: {
           'accept': 'application/json'
@@ -86,8 +117,8 @@ class TwitterStrategy<User> extends AuthStrategy<User> {
   }
 
   @override
-  Future<User> authenticate(RequestContext req, ResponseContext res,
-      [AngelAuthOptions options]) async {
+  Future<User?> authenticate(RequestContext req, ResponseContext res,
+      [AngelAuthOptions? options]) async {
     try {
       if (options != null) {
         var result = await authenticateCallback(req, res, options);
@@ -107,7 +138,7 @@ class TwitterStrategy<User> extends AuthStrategy<User> {
       }
     } on TwitterAuthorizationException catch (e) {
       var result = await onError(e, req, res);
-      await req.app.executeHandler(result, req, res);
+      await req.app?.executeHandler(result, req, res);
       await res.close();
       return null;
     }
@@ -124,8 +155,13 @@ class TwitterStrategy<User> extends AuthStrategy<User> {
       var token = req.queryParameters['oauth_token'] as String;
       var verifier = req.queryParameters['oauth_verifier'] as String;
       var loginData = await getAccessToken(token, verifier);
-      var twitter = Twitter(this.options.clientId, this.options.clientSecret,
-          loginData['oauth_token'], loginData['oauth_token_secret']);
+      var twitter = TwitterApi(
+          client: TwitterClient(
+              consumerKey: this.options.clientId,
+              consumerSecret: this.options.clientSecret,
+              token: loginData['oauth_token'] ?? '',
+              secret: loginData['oauth_token_secret'] ?? ''));
+
       return await this.verifier(twitter, req, res);
     } on TwitterAuthorizationException catch (e) {
       return await onError(e, req, res);

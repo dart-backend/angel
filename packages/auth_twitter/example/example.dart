@@ -1,9 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
-import 'package:angel_auth/angel_auth.dart';
-import 'package:angel_auth_twitter/angel_auth_twitter.dart';
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_framework/http.dart';
+import 'package:angel3_auth/angel3_auth.dart';
+import 'package:angel3_auth_twitter/angel3_auth_twitter.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_framework/http.dart';
 import 'package:logging/logging.dart';
 
 class _User {
@@ -38,7 +38,7 @@ void main() async {
           'http://localhost:3000/auth/twitter/callback',
     ),
     (twit, req, res) async {
-      var response = await twit.twitterClient.get(Uri.parse(
+      var response = await twit.client.get(Uri.parse(
           'https://api.twitter.com/1.1/account/verify_credentials.json'));
       var userData = json.decode(response.body) as Map;
       return _User(userData['screen_name'] as String);
@@ -53,9 +53,7 @@ void main() async {
     },
   );
 
-  app
-    ..fallback(auth.decodeJwt)
-    ..get('/', auth.authenticate('twitter'));
+  app.get('/', auth.authenticate('twitter'));
 
   app.get(
     '/auth/twitter/callback',
@@ -74,7 +72,7 @@ void main() async {
     chain([
       requireAuthentication<_User>(),
       (req, res) {
-        var user = req.container.make<_User>();
+        var user = req.container!.make<_User>();
         res.write('Your Twitter handle is ${user.handle}');
         return false;
       },
