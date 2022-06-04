@@ -15,8 +15,7 @@ class PersonOrderMigration extends Migration {
       table.timeStamp('updated_at');
       table.integer('person_id');
       table.varChar('name', length: 255);
-      table.declareColumn(
-          'price', Column(type: ColumnType('decimal'), length: 255));
+      table.float('price');
       table.boolean('deleted');
     });
   }
@@ -141,7 +140,7 @@ class PersonOrderQueryWhere extends QueryWhere {
 class PersonOrderQueryValues extends MapQueryValues {
   @override
   Map<String, String> get casts {
-    return {'price': 'decimal'};
+    return {'price': 'double'};
   }
 
   String? get id {
@@ -170,7 +169,7 @@ class PersonOrderQueryValues extends MapQueryValues {
 
   set name(String? value) => values['name'] = value;
   double? get price {
-    return double.tryParse((values['price'] as String));
+    return double.tryParse((values['price'] as String)) ?? 0.0;
   }
 
   set price(double? value) => values['price'] = value.toString();
@@ -302,7 +301,7 @@ class OrderWithPersonInfoQueryWhere extends QueryWhere {
 class OrderWithPersonInfoQueryValues extends MapQueryValues {
   @override
   Map<String, String> get casts {
-    return {'price': 'decimal'};
+    return {'price': 'double'};
   }
 
   String? get id {
@@ -326,7 +325,7 @@ class OrderWithPersonInfoQueryValues extends MapQueryValues {
 
   set name(String? value) => values['name'] = value;
   double? get price {
-    return double.tryParse((values['price'] as String));
+    return double.tryParse((values['price'] as String)) ?? 0.0;
   }
 
   set price(double? value) => values['price'] = value.toString();

@@ -93,6 +93,7 @@ class ColumnType {
   static const ColumnType smallMoney = ColumnType('smallmoney');
   static const ColumnType float = ColumnType('float');
   static const ColumnType real = ColumnType('real');
+  static const ColumnType double = ColumnType('double');
 
   // Dates and times
   static const ColumnType dateTime = ColumnType('datetime');

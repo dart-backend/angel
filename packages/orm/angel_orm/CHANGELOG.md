@@ -1,5 +1,10 @@
 # Change Log
 
+## 6.0.2
+
+* Fixed issue #68: Support for non-nullable type
+* Upgraded to `lints` 2.x.x
+
 ## 6.0.1
 
 * Added `mapToDateTime`

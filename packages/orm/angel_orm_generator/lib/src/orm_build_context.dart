@@ -342,10 +342,10 @@ ColumnType inferColumnType(DartType type) {
     return ColumnType.int;
   }
   if (const TypeChecker.fromRuntime(double).isAssignableFromType(type)) {
-    return ColumnType.decimal;
+    return ColumnType.double;
   }
   if (const TypeChecker.fromRuntime(num).isAssignableFromType(type)) {
-    return ColumnType.numeric;
+    return ColumnType.double;
   }
   if (const TypeChecker.fromRuntime(bool).isAssignableFromType(type)) {
     return ColumnType.boolean;

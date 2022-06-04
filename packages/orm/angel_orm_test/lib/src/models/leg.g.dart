@@ -31,8 +31,7 @@ class FootMigration extends Migration {
       table.timeStamp('created_at');
       table.timeStamp('updated_at');
       table.integer('leg_id');
-      table.declareColumn(
-          'n_toes', Column(type: ColumnType('decimal'), length: 255));
+      table.float('n_toes');
     });
   }
 
@@ -280,7 +279,7 @@ class FootQueryWhere extends QueryWhere {
 class FootQueryValues extends MapQueryValues {
   @override
   Map<String, String> get casts {
-    return {'n_toes': 'decimal'};
+    return {'n_toes': 'double'};
   }
 
   String? get id {
@@ -304,7 +303,7 @@ class FootQueryValues extends MapQueryValues {
 
   set legId(int? value) => values['leg_id'] = value;
   double? get nToes {
-    return double.tryParse((values['n_toes'] as String));
+    return double.tryParse((values['n_toes'] as String)) ?? 0.0;
   }
 
   set nToes(double? value) => values['n_toes'] = value.toString();

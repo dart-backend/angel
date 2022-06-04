@@ -18,8 +18,8 @@ dev_dependencies:
   angel3_orm_generator: ^6.0.0
   angel3_framework: ^6.0.0
   build_runner: ^2.0.1
-  lints: ^1.0.0
-# dependency_overrides:
+  lints: ^2.0.0
+dependency_overrides:
   # angel3_container:
   #   path: ../../container/angel_container
   # angel3_framework:
@@ -34,11 +34,11 @@ dev_dependencies:
   #   path: ../../mock_request
   # angel3_serialize:
   #   path: ../../serialize/angel_serialize
-  # angel3_serialize_generator:
-  #   path: ../../serialize/angel_serialize_generator
-  # angel3_orm:
-  #   path: ../angel_orm
+  angel3_serialize_generator:
+     path: ../../serialize/angel_serialize_generator
+  angel3_orm:
+     path: ../angel_orm
   # angel3_migration:
   #   path: ../angel_migration
-  # angel3_orm_generator:
-  #   path: ../angel_orm_generator
+  angel3_orm_generator:
+     path: ../angel_orm_generator

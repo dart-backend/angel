@@ -1,5 +1,10 @@
 # Change Log
 
+## 6.1.1
+
+* Fixed issue #68: Support for non-nullable type
+* Upgraded to `lints` 2.x.x
+
 ## 6.1.0
 
 * Updated to `analyzer` 4.x.x

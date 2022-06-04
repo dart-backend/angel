@@ -2,7 +2,8 @@
 
 ## 6.0.1
 
-* Updated generated test cases
+* Added test cases for non nullable type
+* Upgraded to `lints` 2.x.x
 
 ## 6.0.0
 

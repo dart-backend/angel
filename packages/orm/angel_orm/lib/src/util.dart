@@ -2,6 +2,8 @@ import 'package:charcode/ascii.dart';
 
 bool isAscii(int ch) => ch >= $nul && ch <= $del;
 
+final DateTime defaultDate = DateTime.parse("1970-01-01 00:00:00");
+
 bool mapToBool(dynamic value) {
   if (value is int) {
     return value != 0;
@@ -20,12 +22,12 @@ String mapToText(dynamic value) {
   return value;
 }
 
-DateTime? mapToDateTime(dynamic value) {
+DateTime mapToDateTime(dynamic value) {
   if (value == null) {
-    return value;
+    return defaultDate;
   }
   if (value is String) {
-    return DateTime.tryParse(value);
+    return DateTime.tryParse(value) ?? defaultDate;
   }
   return value;
 }

@@ -149,6 +149,9 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
                   case ColumnType.numeric:
                     methodName = 'numeric';
                     break;
+                  case ColumnType.double:
+                    methodName = 'float';
+                    break;
                   case ColumnType.boolean:
                     methodName = 'boolean';
                     break;
