@@ -179,7 +179,7 @@ class PersonWithLastOrderQuery
 
   @override
   Map<String, String> get casts {
-    return {};
+    return {'last_order_price': 'char'};
   }
 
   @override
@@ -219,7 +219,7 @@ class PersonWithLastOrderQuery
         lastOrderName:
             fields.contains('last_order_name') ? (row[1] as String?) : null,
         lastOrderPrice:
-            fields.contains('last_order_price') ? (row[2] as int?) : null);
+            fields.contains('last_order_price') ? mapToDouble(row[2]) : null);
     return Optional.of(model);
   }
 
@@ -244,7 +244,7 @@ class PersonWithLastOrderQueryWhere extends QueryWhere {
 class PersonWithLastOrderQueryValues extends MapQueryValues {
   @override
   Map<String, String> get casts {
-    return {};
+    return {'last_order_price': 'float'};
   }
 
   String? get name {
@@ -333,10 +333,10 @@ class PersonWithLastOrder extends _PersonWithLastOrder {
   String? lastOrderName;
 
   @override
-  int? lastOrderPrice;
+  double? lastOrderPrice;
 
   PersonWithLastOrder copyWith(
-      {String? name, String? lastOrderName, int? lastOrderPrice}) {
+      {String? name, String? lastOrderName, double? lastOrderPrice}) {
     return PersonWithLastOrder(
         name: name ?? this.name,
         lastOrderName: lastOrderName ?? this.lastOrderName,
@@ -474,7 +474,7 @@ class PersonWithLastOrderSerializer extends Codec<PersonWithLastOrder, Map> {
     return PersonWithLastOrder(
         name: map['name'] as String?,
         lastOrderName: map['last_order_name'] as String?,
-        lastOrderPrice: map['last_order_price'] as int?);
+        lastOrderPrice: map['last_order_price'] as double?);
   }
 
   static Map<String, dynamic> toMap(_PersonWithLastOrder? model) {

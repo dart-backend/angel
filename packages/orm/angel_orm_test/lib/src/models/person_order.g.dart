@@ -140,7 +140,7 @@ class PersonOrderQueryWhere extends QueryWhere {
 class PersonOrderQueryValues extends MapQueryValues {
   @override
   Map<String, String> get casts {
-    return {'price': 'double'};
+    return {'price': 'float'};
   }
 
   String? get id {
@@ -301,7 +301,7 @@ class OrderWithPersonInfoQueryWhere extends QueryWhere {
 class OrderWithPersonInfoQueryValues extends MapQueryValues {
   @override
   Map<String, String> get casts {
-    return {'price': 'double'};
+    return {'price': 'float'};
   }
 
   String? get id {

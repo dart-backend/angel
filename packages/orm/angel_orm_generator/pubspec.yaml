@@ -49,6 +49,6 @@ dependency_overrides:
     path: ../../serialize/angel_serialize_generator
   angel3_orm:
     path: ../angel_orm
-#   angel3_migration:
-#     path: ../angel_migration
+  angel3_migration:
+    path: ../angel_migration
  

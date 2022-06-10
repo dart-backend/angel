@@ -1,5 +1,9 @@
 # Change Log
 
+## 6.0.2
+
+* Upgraded to `lints` 2.x.x
+
 ## 6.0.1
 
 * Added `MariaDbMigrationRunner` to support MariaDB migration with `mysql1` driver

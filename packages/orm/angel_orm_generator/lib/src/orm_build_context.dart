@@ -342,10 +342,10 @@ ColumnType inferColumnType(DartType type) {
     return ColumnType.int;
   }
   if (const TypeChecker.fromRuntime(double).isAssignableFromType(type)) {
-    return ColumnType.double;
+    return ColumnType.float;
   }
   if (const TypeChecker.fromRuntime(num).isAssignableFromType(type)) {
-    return ColumnType.double;
+    return ColumnType.float;
   }
   if (const TypeChecker.fromRuntime(bool).isAssignableFromType(type)) {
     return ColumnType.boolean;
@@ -426,7 +426,16 @@ class _ColumnType implements ColumnType {
   final String name;
 
   @override
-  final bool hasSize = false;
+  bool hasLength = false;
+
+  @override
+  bool hasPrecision = false;
+
+  @override
+  bool hasScale = false;
+
+  @override
+  bool hasTimezone = false;
 
   //_ColumnType(this.name, [this.hasSize = false]);
   _ColumnType(this.name);

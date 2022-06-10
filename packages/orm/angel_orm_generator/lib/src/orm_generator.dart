@@ -14,7 +14,6 @@ var floatTypes = [
   ColumnType.float,
   ColumnType.numeric,
   ColumnType.real,
-  ColumnType.double,
   const ColumnType('double precision'),
 ];
 
@@ -498,7 +497,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                   // , <user_fields>
                   b.write(foreignFields.isEmpty
                       ? ''
-                      : ', ' + foreignFields.join(', '));
+                      : ', ${foreignFields.join(', ')}');
                   // FROM users
                   b.write(' FROM ');
                   b.write(relationForeign.tableName);
@@ -552,9 +551,8 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                   // There'll be a private `_field`, and then a getter, named `field`,
                   // that returns the subquery object.
 
-                  var foreignQueryType = refer(relationForeign
-                          .buildContext.modelClassNameRecase.pascalCase +
-                      'Query');
+                  var foreignQueryType = refer(
+                      '${relationForeign.buildContext.modelClassNameRecase.pascalCase}Query');
 
                   clazz
                     ..fields.add(Field((b) => b

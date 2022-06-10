@@ -279,7 +279,7 @@ class FootQueryWhere extends QueryWhere {
 class FootQueryValues extends MapQueryValues {
   @override
   Map<String, String> get casts {
-    return {'n_toes': 'double'};
+    return {'n_toes': 'float'};
   }
 
   String? get id {

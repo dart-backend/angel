@@ -1,5 +1,9 @@
 # Change Log
 
+## 6.0.1
+
+* Upgraded to `lints` 2.x.x
+
 ## 6.0.0
 
 * Updated to SDK 2.16.x

@@ -135,7 +135,9 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
                 switch (col.type) {
                   case ColumnType.varChar:
                     methodName = 'varChar';
-                    named['length'] = literal(col.length);
+                    if (col.type.hasLength) {
+                      named['length'] = literal(col.length);
+                    }
                     break;
                   case ColumnType.serial:
                     methodName = 'serial';
@@ -148,9 +150,7 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
                     break;
                   case ColumnType.numeric:
                     methodName = 'numeric';
-                    break;
-                  case ColumnType.double:
-                    methodName = 'float';
+                    if (col.type.hasPrecision) {}
                     break;
                   case ColumnType.boolean:
                     methodName = 'boolean';

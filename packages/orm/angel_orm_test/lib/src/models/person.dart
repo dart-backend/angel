@@ -22,5 +22,5 @@ class _PersonWithLastOrder {
   String? lastOrderName;
 
   @Column(expression: 'po.price')
-  int? lastOrderPrice;
+  double? lastOrderPrice;
 }

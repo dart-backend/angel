@@ -164,7 +164,7 @@ class BoatQueryWhere extends QueryWhere {
 class BoatQueryValues extends MapQueryValues {
   @override
   Map<String, String> get casts {
-    return {'price': 'double'};
+    return {'price': 'float'};
   }
 
   String? get id {
