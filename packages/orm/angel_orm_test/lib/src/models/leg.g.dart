@@ -31,7 +31,7 @@ class FootMigration extends Migration {
       table.timeStamp('created_at');
       table.timeStamp('updated_at');
       table.integer('leg_id');
-      table.float('n_toes');
+      table.double('n_toes');
     });
   }
 
@@ -279,7 +279,7 @@ class FootQueryWhere extends QueryWhere {
 class FootQueryValues extends MapQueryValues {
   @override
   Map<String, String> get casts {
-    return {'n_toes': 'float'};
+    return {'n_toes': 'double precision'};
   }
 
   String? get id {

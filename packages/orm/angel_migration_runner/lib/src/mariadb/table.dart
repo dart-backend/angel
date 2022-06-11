@@ -6,7 +6,7 @@ import 'package:charcode/ascii.dart';
 abstract class MariaDbGenerator {
   static String columnType(MigrationColumn column) {
     var str = column.type.name;
-    if (column.type.hasSize) {
+    if (column.type.hasLength) {
       return '$str(${column.length})';
     } else {
       return str;

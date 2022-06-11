@@ -105,7 +105,9 @@ Future<OrmBuildContext?> buildOrmContext(
     // Check for column annotation...
     var element = _findElement(field);
     var columnAnnotation = columnTypeChecker.firstAnnotationOf(element);
-    // print('${element.name} => $columnAnnotation');
+    if (columnAnnotation != null) {
+      print('[ORM_BUILD_CONTEXT] ${element.name} => $columnAnnotation');
+    }
 
     Column? column;
     if (columnAnnotation != null) {
@@ -334,6 +336,7 @@ Future<OrmBuildContext?> buildOrmContext(
   return ctx;
 }
 
+// Detect and return the correct column type
 ColumnType inferColumnType(DartType type) {
   if (const TypeChecker.fromRuntime(String).isAssignableFromType(type)) {
     return ColumnType.varChar;
@@ -342,7 +345,7 @@ ColumnType inferColumnType(DartType type) {
     return ColumnType.int;
   }
   if (const TypeChecker.fromRuntime(double).isAssignableFromType(type)) {
-    return ColumnType.float;
+    return ColumnType.double;
   }
   if (const TypeChecker.fromRuntime(num).isAssignableFromType(type)) {
     return ColumnType.float;
@@ -401,6 +404,7 @@ Column reviveColumn(ConstantReader cr) {
 const TypeChecker relationshipTypeChecker =
     TypeChecker.fromRuntime(Relationship);
 
+// ORM builder context
 class OrmBuildContext {
   final BuildContext buildContext;
   final Orm ormAnnotation;

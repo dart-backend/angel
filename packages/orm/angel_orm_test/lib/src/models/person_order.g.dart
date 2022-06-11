@@ -15,7 +15,7 @@ class PersonOrderMigration extends Migration {
       table.timeStamp('updated_at');
       table.integer('person_id');
       table.varChar('name', length: 255);
-      table.float('price');
+      table.double('price');
       table.boolean('deleted');
     });
   }
@@ -140,7 +140,7 @@ class PersonOrderQueryWhere extends QueryWhere {
 class PersonOrderQueryValues extends MapQueryValues {
   @override
   Map<String, String> get casts {
-    return {'price': 'float'};
+    return {'price': 'double precision'};
   }
 
   String? get id {
@@ -301,7 +301,7 @@ class OrderWithPersonInfoQueryWhere extends QueryWhere {
 class OrderWithPersonInfoQueryValues extends MapQueryValues {
   @override
   Map<String, String> get casts {
-    return {'price': 'float'};
+    return {'price': 'double precision'};
   }
 
   String? get id {

@@ -32,6 +32,7 @@ class AssetMigration extends Migration {
       table.timeStamp('updated_at');
       table.varChar('description', length: 255);
       table.varChar('name', length: 255);
+      table.double('price');
     });
   }
 
@@ -191,7 +192,7 @@ class AssetQuery extends Query<Asset, AssetQueryWhere> {
 
   @override
   Map<String, String> get casts {
-    return {};
+    return {'price': 'char'};
   }
 
   @override
@@ -201,7 +202,14 @@ class AssetQuery extends Query<Asset, AssetQueryWhere> {
 
   @override
   List<String> get fields {
-    const _fields = ['id', 'created_at', 'updated_at', 'description', 'name'];
+    const _fields = [
+      'id',
+      'created_at',
+      'updated_at',
+      'description',
+      'name',
+      'price'
+    ];
     return _selectedFields.isEmpty
         ? _fields
         : _fields.where((field) => _selectedFields.contains(field)).toList();
@@ -231,9 +239,10 @@ class AssetQuery extends Query<Asset, AssetQueryWhere> {
         createdAt: fields.contains('created_at') ? mapToDateTime(row[1]) : null,
         updatedAt: fields.contains('updated_at') ? mapToDateTime(row[2]) : null,
         description: fields.contains('description') ? (row[3] as String) : '',
-        name: fields.contains('name') ? (row[4] as String) : '');
-    if (row.length > 5) {
-      var modelOpt = ItemQuery().parseRow(row.skip(5).take(4).toList());
+        name: fields.contains('name') ? (row[4] as String) : '',
+        price: fields.contains('price') ? mapToDouble(row[5]) : 0.0);
+    if (row.length > 6) {
+      var modelOpt = ItemQuery().parseRow(row.skip(6).take(4).toList());
       modelOpt.ifPresent((m) {
         model = model.copyWith(items: [m]);
       });
@@ -311,7 +320,8 @@ class AssetQueryWhere extends QueryWhere {
         createdAt = DateTimeSqlExpressionBuilder(query, 'created_at'),
         updatedAt = DateTimeSqlExpressionBuilder(query, 'updated_at'),
         description = StringSqlExpressionBuilder(query, 'description'),
-        name = StringSqlExpressionBuilder(query, 'name');
+        name = StringSqlExpressionBuilder(query, 'name'),
+        price = NumericSqlExpressionBuilder<double>(query, 'price');
 
   final NumericSqlExpressionBuilder<int> id;
 
@@ -323,16 +333,18 @@ class AssetQueryWhere extends QueryWhere {
 
   final StringSqlExpressionBuilder name;
 
+  final NumericSqlExpressionBuilder<double> price;
+
   @override
   List<SqlExpressionBuilder> get expressionBuilders {
-    return [id, createdAt, updatedAt, description, name];
+    return [id, createdAt, updatedAt, description, name, price];
   }
 }
 
 class AssetQueryValues extends MapQueryValues {
   @override
   Map<String, String> get casts {
-    return {};
+    return {'price': 'double precision'};
   }
 
   String? get id {
@@ -360,11 +372,17 @@ class AssetQueryValues extends MapQueryValues {
   }
 
   set name(String value) => values['name'] = value;
+  double get price {
+    return double.tryParse((values['price'] as String)) ?? 0.0;
+  }
+
+  set price(double value) => values['price'] = value.toString();
   void copyFrom(Asset model) {
     createdAt = model.createdAt;
     updatedAt = model.updatedAt;
     description = model.description;
     name = model.name;
+    price = model.price;
   }
 }
 
@@ -435,6 +453,7 @@ class Asset extends _Asset {
       this.updatedAt,
       required this.description,
       required this.name,
+      required this.price,
       List<_Item> items = const []})
       : items = List.unmodifiable(items);
 
@@ -457,6 +476,9 @@ class Asset extends _Asset {
   String name;
 
   @override
+  double price;
+
+  @override
   List<_Item> items;
 
   Asset copyWith(
@@ -465,6 +487,7 @@ class Asset extends _Asset {
       DateTime? updatedAt,
       String? description,
       String? name,
+      double? price,
       List<_Item>? items}) {
     return Asset(
         id: id ?? this.id,
@@ -472,6 +495,7 @@ class Asset extends _Asset {
         updatedAt: updatedAt ?? this.updatedAt,
         description: description ?? this.description,
         name: name ?? this.name,
+        price: price ?? this.price,
         items: items ?? this.items);
   }
 
@@ -483,18 +507,20 @@ class Asset extends _Asset {
         other.updatedAt == updatedAt &&
         other.description == description &&
         other.name == name &&
+        other.price == price &&
         ListEquality<_Item>(DefaultEquality<_Item>())
             .equals(other.items, items);
   }
 
   @override
   int get hashCode {
-    return hashObjects([id, createdAt, updatedAt, description, name, items]);
+    return hashObjects(
+        [id, createdAt, updatedAt, description, name, price, items]);
   }
 
   @override
   String toString() {
-    return 'Asset(id=$id, createdAt=$createdAt, updatedAt=$updatedAt, description=$description, name=$name, items=$items)';
+    return 'Asset(id=$id, createdAt=$createdAt, updatedAt=$updatedAt, description=$description, name=$name, price=$price, items=$items)';
   }
 
   Map<String, dynamic> toJson() {
@@ -613,6 +639,7 @@ class AssetSerializer extends Codec<Asset, Map> {
             : null,
         description: map['description'] as String,
         name: map['name'] as String,
+        price: map['price'] as double,
         items: map['items'] is Iterable
             ? List.unmodifiable(((map['items'] as Iterable).whereType<Map>())
                 .map(ItemSerializer.fromMap))
@@ -629,6 +656,7 @@ class AssetSerializer extends Codec<Asset, Map> {
       'updated_at': model.updatedAt?.toIso8601String(),
       'description': model.description,
       'name': model.name,
+      'price': model.price,
       'items': model.items.map((m) => ItemSerializer.toMap(m)).toList()
     };
   }
@@ -641,6 +669,7 @@ abstract class AssetFields {
     updatedAt,
     description,
     name,
+    price,
     items
   ];
 
@@ -653,6 +682,8 @@ abstract class AssetFields {
   static const String description = 'description';
 
   static const String name = 'name';
+
+  static const String price = 'price';
 
   static const String items = 'items';
 }

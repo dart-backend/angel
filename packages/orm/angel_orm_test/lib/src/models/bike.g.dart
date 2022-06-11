@@ -17,7 +17,7 @@ class BikeMigration extends Migration {
       table.varChar('description', length: 255);
       table.boolean('family_friendly');
       table.timeStamp('recalled_at');
-      table.float('price');
+      table.double('price');
       table.integer('width');
     });
   }
@@ -164,7 +164,7 @@ class BikeQueryWhere extends QueryWhere {
 class BikeQueryValues extends MapQueryValues {
   @override
   Map<String, String> get casts {
-    return {'price': 'float'};
+    return {'price': 'double precision'};
   }
 
   String? get id {

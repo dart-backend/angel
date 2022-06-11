@@ -17,7 +17,7 @@ class BoatMigration extends Migration {
       table.varChar('description', length: 255).defaultsTo('none');
       table.boolean('family_friendly').defaultsTo(false);
       table.timeStamp('recalled_at');
-      table.float('price').defaultsTo(0.0);
+      table.double('price').defaultsTo(0.0);
       table.integer('width').defaultsTo(0);
     });
   }
@@ -164,7 +164,7 @@ class BoatQueryWhere extends QueryWhere {
 class BoatQueryValues extends MapQueryValues {
   @override
   Map<String, String> get casts {
-    return {'price': 'float'};
+    return {'price': 'double precision'};
   }
 
   String? get id {

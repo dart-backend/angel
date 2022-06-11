@@ -3,6 +3,7 @@
 ## 6.0.2
 
 * Upgraded to `lints` 2.x.x
+* Fixed issue #70. Incorrectly generated SQL for `defaultsTo('Default Value')`
 
 ## 6.0.1
 

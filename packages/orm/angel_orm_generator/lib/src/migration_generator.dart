@@ -148,6 +148,9 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
                   case ColumnType.float:
                     methodName = 'float';
                     break;
+                  case ColumnType.double:
+                    methodName = 'double';
+                    break;
                   case ColumnType.numeric:
                     methodName = 'numeric';
                     if (col.type.hasPrecision) {}
@@ -233,7 +236,7 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
                 cascade.add(refer('unique').call([]));
               }
 
-              if (col.isNullable != true) {
+              if (!col.isNullable) {
                 cascade.add(refer('notNull').call([]));
               }
 

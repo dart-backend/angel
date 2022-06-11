@@ -244,7 +244,7 @@ class PersonWithLastOrderQueryWhere extends QueryWhere {
 class PersonWithLastOrderQueryValues extends MapQueryValues {
   @override
   Map<String, String> get casts {
-    return {'last_order_price': 'float'};
+    return {'last_order_price': 'double precision'};
   }
 
   String? get name {

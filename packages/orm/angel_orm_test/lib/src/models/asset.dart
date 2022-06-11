@@ -18,6 +18,9 @@ abstract class _Asset extends Model {
 
   String get name;
 
+  @Column(type: ColumnType.numeric, precision: 17, scale: 3)
+  double get price;
+
   @hasMany
   List<_Item> get items;
 }

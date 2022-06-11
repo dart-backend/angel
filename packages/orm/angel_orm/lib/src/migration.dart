@@ -129,32 +129,28 @@ class ColumnType {
   static const ColumnType char = ColumnType('char', hasLength: true);
   static const ColumnType varChar = ColumnType('varchar', hasLength: true);
   static const ColumnType varCharMax = ColumnType('varchar(max)');
-  static const ColumnType text = ColumnType('text', hasLength: true);
+  static const ColumnType text = ColumnType('text');
 
   // Unicode strings
   static const ColumnType nChar = ColumnType('nchar', hasLength: true);
   static const ColumnType nVarChar = ColumnType('nvarchar', hasLength: true);
-  static const ColumnType nVarCharMax =
-      ColumnType('nvarchar(max)', hasLength: true);
+  static const ColumnType nVarCharMax = ColumnType('nvarchar(max)');
   static const ColumnType nText = ColumnType('ntext', hasLength: true);
 
   // Binary
-  static const ColumnType binary = ColumnType('binary', hasLength: true);
-  static const ColumnType varBinary = ColumnType('varbinary', hasLength: true);
-  static const ColumnType varBinaryMax =
-      ColumnType('varbinary(max)', hasLength: true);
-  static const ColumnType image = ColumnType('image', hasLength: true);
+  static const ColumnType binary = ColumnType('binary');
+  static const ColumnType varBinary = ColumnType('varbinary');
+  static const ColumnType varBinaryMax = ColumnType('varbinary(max)');
+  static const ColumnType image = ColumnType('image');
 
   // JSON.
-  static const ColumnType json = ColumnType('json', hasLength: true);
-  static const ColumnType jsonb = ColumnType('jsonb', hasLength: true);
+  static const ColumnType json = ColumnType('json');
+  static const ColumnType jsonb = ColumnType('jsonb');
 
   // Misc.
-  static const ColumnType sqlVariant =
-      ColumnType('sql_variant', hasLength: true);
-  static const ColumnType uniqueIdentifier =
-      ColumnType('uniqueidentifier', hasLength: true);
-  static const ColumnType xml = ColumnType('xml', hasLength: true);
-  static const ColumnType cursor = ColumnType('cursor', hasLength: true);
-  static const ColumnType table = ColumnType('table', hasLength: true);
+  static const ColumnType sqlVariant = ColumnType('sql_variant');
+  static const ColumnType uniqueIdentifier = ColumnType('uniqueidentifier');
+  static const ColumnType xml = ColumnType('xml');
+  static const ColumnType cursor = ColumnType('cursor');
+  static const ColumnType table = ColumnType('table');
 }
