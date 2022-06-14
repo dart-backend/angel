@@ -105,12 +105,10 @@ Future<OrmBuildContext?> buildOrmContext(
     // Check for column annotation...
     var element = _findElement(field);
     var columnAnnotation = columnTypeChecker.firstAnnotationOf(element);
-    if (columnAnnotation != null) {
-      print('[ORM_BUILD_CONTEXT] ${element.name} => $columnAnnotation');
-    }
 
     Column? column;
     if (columnAnnotation != null) {
+      // print('[ORM_BUILD_CONTEXT] ${element.name} => $columnAnnotation');
       column = reviveColumn(ConstantReader(columnAnnotation));
     }
 
@@ -132,6 +130,7 @@ Future<OrmBuildContext?> buildOrmContext(
       length: column.length,
       indexType: column.indexType,
       type: inferColumnType(field.type),
+      defaultValue: column.defaultValue,
     );
 
     // Try to find a relationship
@@ -321,6 +320,7 @@ Future<OrmBuildContext?> buildOrmContext(
         length: column.length,
         type: column.type,
         indexType: column.indexType,
+        defaultValue: column.defaultValue,
         expression:
             ConstantReader(columnAnnotation).peek('expression')?.stringValue,
       );
@@ -396,6 +396,7 @@ Column reviveColumn(ConstantReader cr) {
   return Column(
     isNullable: cr.peek('isNullable')?.boolValue ?? false,
     length: cr.peek('length')?.intValue ?? 255,
+    defaultValue: cr.peek('defaultValue')?.objectValue,
     type: columnType,
     indexType: indexType,
   );

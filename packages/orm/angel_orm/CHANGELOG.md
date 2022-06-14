@@ -3,6 +3,7 @@
 ## 6.0.2
 
 * Fixed issue #68: Support for non-nullable type
+* Added `defaultValue` to Column
 * Upgraded to `lints` 2.x.x
 
 ## 6.0.1

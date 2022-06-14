@@ -18,7 +18,7 @@ class Column {
   final bool isNullable;
 
   /// Specifies this column name.
-  final String name;
+  final String? name;
 
   /// Specifies the length of a `VARCHAR`.
   final int length;
@@ -29,8 +29,8 @@ class Column {
   /// Specifies the scale of a `NUMERIC` or `DECIMAL`.
   final int scale;
 
-  /// Specifies the timezone of a temporal field.
-  final String timezone;
+  /// Specifies the timezone for temporal field.
+  final String? timezone;
 
   /// Explicitly defines a SQL type for this column.
   final ColumnType type;
@@ -41,16 +41,20 @@ class Column {
   /// A custom SQL expression to execute, instead of a named column.
   final String? expression;
 
+  /// Specifies the default values.
+  final dynamic defaultValue;
+
   const Column(
       {this.isNullable = true,
       this.length = 255,
       this.precision = 17,
       this.scale = 3,
-      this.name = "",
-      this.timezone = "",
+      this.name,
+      this.timezone,
       this.type = ColumnType.varChar,
       this.indexType = IndexType.none,
-      this.expression});
+      this.expression,
+      this.defaultValue});
 
   /// Returns `true` if [expression] is not `null`.
   bool get hasExpression => expression != null;
