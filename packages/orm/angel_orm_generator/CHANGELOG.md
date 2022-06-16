@@ -1,9 +1,10 @@
 # Change Log
 
-## 6.1.1
+## 6.2.0
 
 * Fixed issue #68: Support for non-nullable type
 * Upgraded to `lints` 2.x.x
+* Generate default value based on `defaultValue` in the `@Column` annotation
 
 ## 6.1.0
 
