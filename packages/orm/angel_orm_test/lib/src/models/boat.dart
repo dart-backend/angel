@@ -5,24 +5,24 @@ import 'package:optional/optional.dart';
 
 part 'boat.g.dart';
 
-@serializable
+@Serializable(serializers: Serializers.all)
 @orm
 abstract class _Boat extends Model {
-  @SerializableField(defaultValue: '')
+  @Column(defaultValue: '')
   String get make;
 
-  @SerializableField(defaultValue: 'none')
+  @Column(defaultValue: 'none')
   String get description;
 
-  @SerializableField(defaultValue: false)
+  @Column(defaultValue: false)
   bool get familyFriendly;
 
   //@SerializableField(defaultValue: '1970-01-01 00:00:00')
   DateTime get recalledAt;
 
-  @SerializableField(defaultValue: 0.0)
+  @Column(defaultValue: 0.0)
   double get price;
 
-  @SerializableField(defaultValue: 0)
+  @Column(defaultValue: 0)
   int get width;
 }

@@ -234,12 +234,12 @@ class Boat extends _Boat {
       {this.id,
       this.createdAt,
       this.updatedAt,
-      this.make = '',
-      this.description = 'none',
-      this.familyFriendly = false,
+      required this.make,
+      required this.description,
+      required this.familyFriendly,
       required this.recalledAt,
-      this.price = 0.0,
-      this.width = 0});
+      required this.price,
+      required this.width});
 
   /// A unique identifier corresponding to this item.
   @override
@@ -372,16 +372,16 @@ class BoatSerializer extends Codec<Boat, Map> {
                 ? (map['updated_at'] as DateTime)
                 : DateTime.parse(map['updated_at'].toString()))
             : null,
-        make: map['make'] as String? ?? '',
-        description: map['description'] as String? ?? 'none',
-        familyFriendly: map['family_friendly'] as bool? ?? false,
+        make: map['make'] as String,
+        description: map['description'] as String,
+        familyFriendly: map['family_friendly'] as bool,
         recalledAt: map['recalled_at'] != null
             ? (map['recalled_at'] is DateTime
                 ? (map['recalled_at'] as DateTime)
                 : DateTime.parse(map['recalled_at'].toString()))
             : DateTime.parse("1970-01-01 00:00:00"),
-        price: map['price'] as double? ?? 0.0,
-        width: map['width'] as int? ?? 0);
+        price: map['price'] as double,
+        width: map['width'] as int);
   }
 
   static Map<String, dynamic> toMap(_Boat? model) {

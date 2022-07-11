@@ -3,6 +3,7 @@
 ## 6.0.1
 
 * Upgraded to `lints` 2.x.x
+* Fixed #71. Create a new database connection and retry.
 
 ## 6.0.0
 

@@ -1,0 +1,21 @@
+version: "3.8"
+services:
+  pgdb:
+    image: postgres:latest
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - "db:/var/lib/postgresql/data"
+    networks:
+      - webnet
+
+volumes:
+  db:
+    driver: local
+
+networks:
+  webnet:
