@@ -371,7 +371,7 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
     var insertion = values?.compileInsert(this, tableName);
 
     if (insertion == '') {
-      throw StateError('No values have been specified for update.');
+      throw StateError('No values have been specified for insertion.');
     } else {
       var sql = compile({});
       var returningSql = '';

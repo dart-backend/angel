@@ -1,0 +1,20 @@
+version: "3.8"
+services:
+  mysql:
+    image: mysql:latest
+    restart: "no"
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=Qwerty
+    volumes:
+      - "mysql:/var/lib/mysql"
+    networks:
+      - webnet
+
+volumes:
+  mysql:
+    driver: local
+
+networks:
+  webnet:

@@ -10,14 +10,14 @@ List tmpTables = [];
 
 FutureOr<QueryExecutor> Function() createTables(List<String> schemas) {
   // For MySQL
-  return () => _connectToMySql(schemas);
+  //return () => _connectToMySql(schemas);
 
   // For MariaDB
-  // return () => _connectToMariaDb(tables);
+  return () => _connectToMariaDb(schemas);
 }
 
 // For MySQL
-Future<void> dropTables(QueryExecutor executor) async {
+Future<void> dropTables2(QueryExecutor executor) async {
   var sqlExecutor = (executor as MySqlExecutor);
   for (var tableName in tmpTables.reversed) {
     await sqlExecutor.rawConnection.execute('drop table $tableName;');
@@ -26,13 +26,13 @@ Future<void> dropTables(QueryExecutor executor) async {
 }
 
 // For MariaDB
-/* Future<void> dropTables(QueryExecutor executor) {
+Future<void> dropTables(QueryExecutor executor) {
   var sqlExecutor = (executor as MariaDbExecutor);
   for (var tableName in tmpTables.reversed) {
     sqlExecutor.query(tableName, 'DROP TABLE $tableName', {});
   }
   return sqlExecutor.close();
-} */
+}
 
 String extractTableName(String createQuery) {
   var start = createQuery.indexOf('EXISTS');
@@ -51,8 +51,8 @@ Future<MariaDbExecutor> _connectToMariaDb(List<String> schemas) async {
       host: 'localhost',
       port: 3306,
       db: 'orm_test',
-      user: 'Test',
-      password: 'Test123*');
+      user: 'test',
+      password: 'test123');
   var connection = await MySqlConnection.connect(settings);
 
   var logger = Logger('orm_mariadb');
@@ -87,7 +87,7 @@ Future<MySqlExecutor> _connectToMySql(List<String> schemas) async {
       port: 3306,
       host: "localhost",
       userName: Platform.environment['MYSQL_USERNAME'] ?? 'test',
-      password: Platform.environment['MYSQL_PASSWORD'] ?? 'Test123*',
+      password: Platform.environment['MYSQL_PASSWORD'] ?? 'test123',
       secure: false);
 
   await connection.connect(timeoutMs: 10000);

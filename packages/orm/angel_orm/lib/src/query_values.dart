@@ -16,7 +16,7 @@ abstract class QueryValues {
 
   String compileInsert(Query query, String tableName) {
     var data = Map<String, dynamic>.from(toMap());
-    var now = DateTime.now().toUtc();
+    var now = DateTime.now();
     if (data.containsKey('created_at') && data['created_at'] == null) {
       data['created_at'] = now;
     }
@@ -71,7 +71,7 @@ abstract class QueryValues {
     if (data.isEmpty) {
       return '';
     }
-    var now = DateTime.now().toUtc();
+    var now = DateTime.now();
     if (data.containsKey('created_at') && data['created_at'] == null) {
       data.remove('created_at');
     }

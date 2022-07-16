@@ -7,8 +7,8 @@
 
 This package contains the SQL Executor required by Angel3 ORM to work with MySQL and MariaDB respectively. In order to better support the differences in MySQL and MariaDb underlying protocols, two different drives have to be used. For MariaDb 10.2.x, `mysql1` driver provides the best results, while `mysql_client` driver handles MySQL 8.x.x without issues.
 
-* MariaDbExecutor (beta)
-* MySqlExecutor (beta)
+* MariaDbExecutor
+* MySqlExecutor
 
 ## Supported database version
 
@@ -26,8 +26,8 @@ This package contains the SQL Executor required by Angel3 ORM to work with MySQL
         host: 'localhost',
         port: 3306,
         db: 'orm_test',
-        user: 'Test',
-        password: 'Test123*');
+        user: 'test',
+        password: 'test123');
     var connection = await MySqlConnection.connect(settings);
 
     var logger = Logger('orm_mariadb');
@@ -44,7 +44,7 @@ This package contains the SQL Executor required by Angel3 ORM to work with MySQL
         port: 3306,
         databaseName: "orm_test",
         userName: "test",
-        password: "Test123*",
+        password: "test123",
         secure: false);
 
     var logger = Logger('orm_mysql');
@@ -52,8 +52,48 @@ This package contains the SQL Executor required by Angel3 ORM to work with MySQL
     var executor = MySqlExecutor(connection, logger: logger);
 ```
 
+### Issues
+
+* Blob
+* DateTime value not in UTC
+* Transaction is broken
+
+## Creating a new database in MariaDB/MySQL
+
+1. Login to MariaDB/MySQL database console with the following command.
+
+```bash
+    mysql -u root -p
+```
+
+1. Run the following commands to create a new database, `orm_test` and grant both local and remote access to user, `test`. Replace `orm_test`, `test` and `test123` with your own database name, username and password respectively.
+
+```mysql
+    create database orm_test;
+    
+    create user 'test'@'localhost' identified by 'test123';
+    grant all privileges on orm_test.* to 'test'@'localhost';
+
+    create user 'test'@'%' identified by 'test123';
+    grant all privileges on orm_test.* to 'test'@'%';
+```
+
 ## Known limitation
 
-* UTC time is not supported
+### Using `mysql1` driver on MariabDb
+
+* Blob
+* DateTime value not in UTC
+* Transaction is broken
+
+### Using `mysql1` driver on MySQL
+
 * Blob is not supported
-  
+
+### Using `mysql_client` driver on MariabDb
+
+* Blob is not supported
+
+### Using `mysql_client` driver on MySQL
+
+* Blob is not supported

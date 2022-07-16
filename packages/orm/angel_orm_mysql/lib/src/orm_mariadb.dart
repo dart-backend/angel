@@ -34,9 +34,9 @@ class MariaDbExecutor extends QueryExecutor {
 
     var params = substitutionValues.values.toList();
 
-    //logger?.warning('Query: $query');
-    //logger?.warning('Values: $params');
-    //logger?.warning('Returning Query: $returningQuery');
+    logger.warning('Query: $query');
+    logger.warning('Values: $params');
+    logger.warning('Returning Query: $returningQuery');
 
     if (returningQuery.isNotEmpty) {
       // Handle insert, update and delete
@@ -66,6 +66,7 @@ class MariaDbExecutor extends QueryExecutor {
   @override
   Future<T> transaction<T>(FutureOr<T> Function(QueryExecutor) f) async {
     T? returnValue = await _connection.transaction((ctx) async {
+      // TODO: This is broken
       var conn = ctx as MySqlConnection;
       try {
         logger.fine('Entering transaction');

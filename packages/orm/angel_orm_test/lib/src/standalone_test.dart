@@ -3,7 +3,7 @@ import 'package:angel3_orm/angel3_orm.dart';
 import 'package:test/test.dart';
 import 'models/car.dart';
 
-final DateTime y2k = DateTime.utc(2000, 1, 1);
+final DateTime y2k = DateTime(2000, 1, 1);
 
 void standaloneTests(FutureOr<QueryExecutor> Function() createExecutor,
     {FutureOr<void> Function(QueryExecutor)? close}) {
@@ -173,9 +173,9 @@ void standaloneTests(FutureOr<QueryExecutor> Function() createExecutor,
     });
 
     test('insert', () async {
-      var recalledAt = DateTime.now().toUtc();
+      var recalledAt = DateTime.now();
       var query = CarQuery();
-      var now = DateTime.now().toUtc();
+      var now = DateTime.now();
       query.values
         ..make = 'Honda'
         ..description = 'Hello'
@@ -198,7 +198,7 @@ void standaloneTests(FutureOr<QueryExecutor> Function() createExecutor,
     });
 
     test('insert car', () async {
-      var recalledAt = DateTime.now().toUtc();
+      var recalledAt = DateTime.now();
       var beetle = Car(
           make: 'Beetle',
           description: 'Herbie',

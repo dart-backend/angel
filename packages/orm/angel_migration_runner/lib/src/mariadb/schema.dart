@@ -23,7 +23,7 @@ class MariaDbSchema extends Schema {
         _log.severe('Failed to run query: [ $sql ]', e);
         throw e;
       });
-      affectedRows = result?.affectedRows ?? 0;
+      affectedRows = result.affectedRows ?? 0;
     });
 
     return affectedRows;
