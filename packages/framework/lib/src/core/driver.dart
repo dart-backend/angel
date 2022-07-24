@@ -291,14 +291,22 @@ abstract class Driver<
   Future sendResponse(Request request, Response response, RequestContext req,
       ResponseContext res,
       {bool ignoreFinalizers = false}) {
+    //app.logger.fine("Calling SendResponse");
     Future<void> _cleanup(_) {
       if (!app.environment.isProduction && req.container!.has<Stopwatch>()) {
         var sw = req.container!.make<Stopwatch>();
-        app.logger.info(
+        app.logger.fine(
             "${res.statusCode} ${req.method} ${req.uri} (${sw.elapsedMilliseconds} ms)");
       }
       return req.close();
     }
+
+    // TODO: Debugging header
+    /*
+    for (var key in res.headers.keys) {
+      app.logger.fine("Response header key: $key");
+    }
+    */
 
     if (!res.isBuffered) {
       //if (res.isOpen) {
@@ -306,6 +314,8 @@ abstract class Driver<
       //}
       //return Future.value();
     }
+
+    //app.logger.fine("Calling finalizers");
 
     var finalizers = ignoreFinalizers == true
         ? Future.value()
@@ -315,6 +325,7 @@ abstract class Driver<
       //if (res.isOpen) res.close();
 
       for (var key in res.headers.keys) {
+        app.logger.fine("Response header key: $key");
         setHeader(response, key, res.headers[key] ?? '');
       }
 

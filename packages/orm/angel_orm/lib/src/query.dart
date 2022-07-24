@@ -397,9 +397,14 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
       return executor
           .query(tableName, sql, substitutionValues,
               returningQuery: returningSql)
-          .then((it) {
+          .then((result) {
         // Return SQL execution results
-        return it.isEmpty ? Optional.empty() : deserialize(it.first);
+        //if (result.isNotEmpty) {
+        //  for (var element in result.first) {
+        //    _log.fine("value: $element");
+        //  }
+        //}
+        return result.isEmpty ? Optional.empty() : deserialize(result.first);
       });
     }
   }

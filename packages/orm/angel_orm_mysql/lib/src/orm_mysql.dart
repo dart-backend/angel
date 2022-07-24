@@ -131,7 +131,10 @@ class MySqlExecutor extends QueryExecutor {
 
     // Handle select
     return _connection.execute(query, substitutionValues).then((results) {
-      logger.warning("SELECT");
+      var tmpData = results.rows;
+      for (var element in tmpData) {
+        logger.warning("[Result] : ${element.assoc()}");
+      }
 
       return results.rows.map((r) => r.typedAssoc().values.toList()).toList();
     });

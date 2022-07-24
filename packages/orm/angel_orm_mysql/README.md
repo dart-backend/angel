@@ -5,19 +5,48 @@
 [![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
 [![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/master/packages/orm/angel_orm_mysql/LICENSE)
 
-This package contains the SQL Executor required by Angel3 ORM to work with MySQL and MariaDB respectively. In order to better support the differences in MySQL and MariaDb underlying protocols, two different drives have to be used. For MariaDb 10.2.x, `mysql1` driver provides the best results, while `mysql_client` driver handles MySQL 8.x.x without issues.
+This package contains the SQL executor required by Angel3 ORM to work with MySQL and MariaDB respectively. In order to better support both MySQL and MariaDB, two different flavors of drives have been included; `mysql_client` and `mysql1`. They are implmented as `MySqlExecutor` and `MariaDbExecutor` respectively.
 
-* MariaDbExecutor
-* MySqlExecutor
+## Supported databases
 
-## Supported database version
+* MariaDD 10.2.x or greater
+* MySQL 8.x or greater
 
-* MariaDb 10.2.x
-* MySQL 8.x
+**Note** MySQL below version 8.0 and MariaDB below version 10.2.0 are not supported as Angel3 ORM requires common table expressions (CTE) to work.
 
-**Note** MySQL below version 8.0 and MariaDB below version 10.2 are not supported as Angel3 ORM requires common table expressions (CTE).
+## MySqlExecutor
 
-## Connecting to MariaDB database 10.2.x
+This SQL executor is implemented using [`mysql_client`](https://pub.dev/packages?q=mysql_client) driver. It works with both `MySQL` 8.0+ and `MariaDB` 10.2+ database.
+
+### Connecting to MySQL or MariaDB
+
+```dart
+    import 'package:mysql_client/mysql_client.dart';
+
+    var connection = await MySQLConnection.createConnection(
+        host: "localhost",
+        port: 3306,
+        databaseName: "orm_test",
+        userName: "test",
+        password: "test123",
+        secure: true);
+
+    var logger = Logger('orm_mysql');
+    await connection.connect(timeoutMs: 10000);
+    var executor = MySqlExecutor(connection, logger: logger);
+```
+
+### Known Limitation for MySqlExecutor
+
+* `Blob` data type mapping is not support.
+* `timestamp` data type mapping is not supported. Use `datetime` instead.
+* UTC datetime is not supported.
+
+## MariaDBExecutor
+
+This SQL executor is implemented using [`mysql1`](https://pub.dev/packages?q=mysql1) driver. It only works with `MariaDB` 10.2+ database. Do not use this for `MySQL` 8.0+ database.
+
+### Connecting to MariaDB
 
 ```dart
     import 'package:mysql1/mysql1.dart';
@@ -34,31 +63,13 @@ This package contains the SQL Executor required by Angel3 ORM to work with MySQL
     var executor = MariaDbExecutor(connection, logger: logger);
 ```
 
-## Connecting to MySQL database 8.x
+### Known Limitation for MariaDBExecutor
 
-```dart
-    import 'package:mysql_client/mysql_client.dart';
+* `Blob` type mapping is not supported.
+* `timestamp` mapping is not supported. Use `datetime` instead.
+* Only UTC datetime is supported. None UTC datetime will be automatically converted into UTC datetime.
 
-    var connection = await MySQLConnection.createConnection(
-        host: "localhost",
-        port: 3306,
-        databaseName: "orm_test",
-        userName: "test",
-        password: "test123",
-        secure: false);
-
-    var logger = Logger('orm_mysql');
-    await connection.connect(timeoutMs: 10000);
-    var executor = MySqlExecutor(connection, logger: logger);
-```
-
-### Issues
-
-* Blob
-* DateTime value not in UTC
-* Transaction is broken
-
-## Creating a new database in MariaDB/MySQL
+## Creating a new database in MariaDB or MySQL
 
 1. Login to MariaDB/MySQL database console with the following command.
 
@@ -71,29 +82,27 @@ This package contains the SQL Executor required by Angel3 ORM to work with MySQL
 ```mysql
     create database orm_test;
     
+    -- Granting localhost access only
     create user 'test'@'localhost' identified by 'test123';
     grant all privileges on orm_test.* to 'test'@'localhost';
 
+    -- Granting localhost and remote access
     create user 'test'@'%' identified by 'test123';
     grant all privileges on orm_test.* to 'test'@'%';
 ```
 
-## Known limitation
+## Compatibility Matrix
 
-### Using `mysql1` driver on MariabDb
+### MariaDB 10.2+
 
-* Blob
-* DateTime value not in UTC
-* Transaction is broken
+|                 | Create |  Read  | Update | Delete |
+|-----------------|--------|--------|--------|--------|
+| MySqlExecutor   |    Y   |   Y    |    Y   |    Y   |
+| MariaDBExecutor |    Y   |   Y    |    Y   |    Y   |
 
-### Using `mysql1` driver on MySQL
+### MySQL 8.0+
 
-* Blob is not supported
-
-### Using `mysql_client` driver on MariabDb
-
-* Blob is not supported
-
-### Using `mysql_client` driver on MySQL
-
-* Blob is not supported
+|                 | Create |  Read  | Update | Delete |
+|-----------------|--------|--------|--------|--------|
+| MySqlExecutor   |    Y   |   Y    |    Y   |    Y   |
+| MariaDBExecutor |    N   |   N    |    N   |    N   |

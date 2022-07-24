@@ -10,25 +10,28 @@ List tmpTables = [];
 
 FutureOr<QueryExecutor> Function() createTables(List<String> schemas) {
   // For MySQL
-  //return () => _connectToMySql(schemas);
+  return () => _connectToMySql(schemas);
 
   // For MariaDB
-  return () => _connectToMariaDb(schemas);
+  //return () => _connectToMariaDb(schemas);
 }
 
 // For MySQL
-Future<void> dropTables2(QueryExecutor executor) async {
+Future<void> dropTables(QueryExecutor executor) async {
   var sqlExecutor = (executor as MySqlExecutor);
   for (var tableName in tmpTables.reversed) {
-    await sqlExecutor.rawConnection.execute('drop table $tableName;');
+    print('DROP TABLE $tableName');
+    await sqlExecutor.rawConnection.execute('DROP TABLE $tableName;');
   }
+
   return sqlExecutor.close();
 }
 
 // For MariaDB
-Future<void> dropTables(QueryExecutor executor) {
+Future<void> dropTables2(QueryExecutor executor) {
   var sqlExecutor = (executor as MariaDbExecutor);
   for (var tableName in tmpTables.reversed) {
+    print('DROP TABLE $tableName');
     sqlExecutor.query(tableName, 'DROP TABLE $tableName', {});
   }
   return sqlExecutor.close();
@@ -64,7 +67,7 @@ Future<MariaDbExecutor> _connectToMariaDb(List<String> schemas) async {
     var data = await File('test/migrations/$s.sql').readAsString();
     var queries = data.split(";");
     for (var q in queries) {
-      //print("Table: [$q]");
+      print("Table: [$q]");
       if (q.trim().isNotEmpty) {
         //await connection.execute(q);
         await connection.query(q);

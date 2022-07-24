@@ -18,5 +18,5 @@ Future<String> absoluteSourcePath(Type type) async {
     }
   }
 
-  return uri.toFilePath() + '#' + MirrorSystem.getName(mirror.simpleName);
+  return '${uri.toFilePath()}#${MirrorSystem.getName(mirror.simpleName)}';
 }

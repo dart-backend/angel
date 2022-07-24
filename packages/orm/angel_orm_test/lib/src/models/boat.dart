@@ -17,7 +17,7 @@ abstract class _Boat extends Model {
   @Column(defaultValue: false)
   bool get familyFriendly;
 
-  //@SerializableField(defaultValue: '1970-01-01 00:00:00')
+  //@SerializableField(defaultValue: '1970-01-01 00:00:01')
   DateTime get recalledAt;
 
   @Column(defaultValue: 0.0)

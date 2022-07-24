@@ -3,7 +3,7 @@ CREATE TABLE IF NOT EXISTS cars (
     make varchar(255) NOT NULL,
     description TEXT NOT NULL,
     family_friendly BOOLEAN NOT NULL,
-    recalled_at timestamp,
-    created_at timestamp,
-    updated_at timestamp
+    recalled_at datetime,
+    created_at datetime,
+    updated_at datetime
 );

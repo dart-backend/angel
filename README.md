@@ -63,8 +63,9 @@ For more details, checkout [Project Status](https://github.com/dukefirehawk/ange
 1. Download and install [Dart](https://dart.dev/get-dart)
 
 2. Clone one of the following starter projects:
-   * [Angel3 Basic Template](https://github.com/dukefirehawk/boilerplates/tree/angel3-basic)
-   * [Angel3 ORM Template](https://github.com/dukefirehawk/boilerplates/tree/angel3-orm)
+   * [Basic Template](https://github.com/dukefirehawk/boilerplates/tree/angel3-basic)
+   * [ORM for PostgreSQL Template](https://github.com/dukefirehawk/boilerplates/tree/angel3-orm)
+   * [ORM for MySQL Template](https://github.com/dukefirehawk/boilerplates/tree/angel3-orm-mysql)
    * [Angel3 Graphql Template](https://github.com/dukefirehawk/boilerplates/tree/angel3-graphql)
 
 3. Run the project in development mode (*hot-reloaded* is enabled on file changes).
@@ -123,12 +124,12 @@ Check out [Migrating to Angel3](https://angel3-docs.dukefirehawk.com/migration/a
 
 The performance benchmark can be found at
 
-[TechEmpower Framework Benchmarks](https://tfb-status.techempower.com/)
+[TechEmpower Framework Benchmarks Round 21](https://www.techempower.com/benchmarks/#section=data-r21&test=composite)
 
 The test cases are build using standard `Angel3 ORM` template. This result will be used for fine-tuning Angel3 framework. The following test cases will be progressively added in the upcoming update to benchmark.
 
 1. Angel3 with MongoDB
-2. Angel3 with MySQL ORM
+2. Angel3 with ORM MySQL
 3. Cached queries
 
 ## Examples and Documentation
