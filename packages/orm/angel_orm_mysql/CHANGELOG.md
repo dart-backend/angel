@@ -1,5 +1,11 @@
 # Change Log
 
+## 6.0.0
+
+* Fixed temporal data type
+* Fixed `MariaDbExcutor` transaction
+* Updated to `lints` 2.0.0
+
 ## 6.0.0-beta.3
 
 * Fixed transaction for `MariaDbExecutor`

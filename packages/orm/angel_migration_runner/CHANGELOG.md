@@ -1,9 +1,10 @@
 # Change Log
 
-## 6.0.2
+## 6.1.0
 
 * Upgraded to `lints` 2.x.x
 * Fixed issue #70. Incorrectly generated SQL for `defaultsTo('Default Value')`
+* Mapped timestamp to datetime for MySQL and MariaDB
 
 ## 6.0.1
 

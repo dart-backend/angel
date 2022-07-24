@@ -6,6 +6,10 @@ import 'package:charcode/ascii.dart';
 abstract class MySqlGenerator {
   static String columnType(MigrationColumn column) {
     var str = column.type.name;
+    // Map timestamp time to datetime
+    if (column.type == ColumnType.timeStamp) {
+      str = ColumnType.dateTime.name;
+    }
     if (column.type.hasLength) {
       return '$str(${column.length})';
     } else {

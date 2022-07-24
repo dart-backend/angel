@@ -1,9 +1,9 @@
 # Change Log
 
-## 6.0.1
+## 6.1.0
 
 * Upgraded to `lints` 2.x.x
-* Fixed #71. Create a new database connection and retry.
+* Fixed #71. Restablish broken connection automatically.
 
 ## 6.0.0
 
