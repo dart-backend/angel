@@ -42,7 +42,7 @@ class MariaDbSchema extends Schema {
   @override
   void drop(String tableName, {bool cascade = false}) {
     var c = cascade == true ? ' CASCADE' : '';
-    _writeln('DROP TABLE "$tableName"$c;');
+    _writeln('DROP TABLE $tableName$c;');
   }
 
   @override

@@ -5,6 +5,8 @@
 * Upgraded to `lints` 2.x.x
 * Fixed issue #70. Incorrectly generated SQL for `defaultsTo('Default Value')`
 * Mapped timestamp to datetime for MySQL and MariaDB
+* Fixed `MariaDbMigrationRunner` to work with MariaDB
+* Fixed `MySqlMigrationRunner` to work with MySQL and MariaDB
 
 ## 6.0.1
 
