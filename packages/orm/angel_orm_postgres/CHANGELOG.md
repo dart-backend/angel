@@ -2,7 +2,6 @@
 
 ## 6.1.0
 
-* Upgraded to `lints` 2.x.x
 * Fixed #71. Restablish broken connection automatically.
 
 ## 6.0.0

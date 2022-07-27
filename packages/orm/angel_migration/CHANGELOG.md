@@ -1,8 +1,8 @@
 # Change Log
 
-## 6.0.1
+## 6.1.0
 
-* Upgraded to `lints` 2.x.x
+* Updated temporal fields
 
 ## 6.0.0
 

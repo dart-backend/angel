@@ -9,4 +9,4 @@ dependencies:
   mysql1: ^0.20.0
   mysql_client: ^0.0.24
 dev_dependencies:
-  lints: ^2.0.0
+  lints: ^1.0.0

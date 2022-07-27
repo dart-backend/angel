@@ -1,9 +1,8 @@
 # Change Log
 
-## 6.0.1
+## 6.1.0
 
 * Added test cases for non nullable type
-* Upgraded to `lints` 2.x.x
 
 ## 6.0.0
 

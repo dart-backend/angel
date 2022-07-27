@@ -9,6 +9,6 @@ PostgreSQL support for Angel3 ORM.
 
 ## Supported database
 
-* PostgreSQL version 10 or later
+* PostgreSQL version 10 or greater
 
 For documentation about the ORM, see [Developer Guide](https://angel3-docs.dukefirehawk.com/guides/orm)

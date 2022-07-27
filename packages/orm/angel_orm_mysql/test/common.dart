@@ -91,7 +91,7 @@ Future<MySqlExecutor> _connectToMySql(List<String> schemas) async {
       host: "localhost",
       userName: Platform.environment['MYSQL_USERNAME'] ?? 'test',
       password: Platform.environment['MYSQL_PASSWORD'] ?? 'test123',
-      secure: false);
+      secure: true);
 
   await connection.connect(timeoutMs: 10000);
 
