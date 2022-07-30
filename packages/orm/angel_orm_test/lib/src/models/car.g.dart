@@ -91,15 +91,20 @@ class CarQuery extends Query<Car, CarQueryWhere> {
     }
     var model = Car(
         id: fields.contains('id') ? row[0].toString() : null,
-        createdAt: fields.contains('created_at') ? mapToDateTime(row[1]) : null,
-        updatedAt: fields.contains('updated_at') ? mapToDateTime(row[2]) : null,
+        createdAt: fields.contains('created_at')
+            ? mapToNullableDateTime(row[1])
+            : null,
+        updatedAt: fields.contains('updated_at')
+            ? mapToNullableDateTime(row[2])
+            : null,
         make: fields.contains('make') ? (row[3] as String?) : null,
         description:
             fields.contains('description') ? (row[4] as String?) : null,
         familyFriendly:
             fields.contains('family_friendly') ? mapToBool(row[5]) : null,
-        recalledAt:
-            fields.contains('recalled_at') ? mapToDateTime(row[6]) : null);
+        recalledAt: fields.contains('recalled_at')
+            ? mapToNullableDateTime(row[6])
+            : null);
     return Optional.of(model);
   }
 

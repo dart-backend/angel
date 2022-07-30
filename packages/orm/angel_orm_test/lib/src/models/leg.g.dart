@@ -110,8 +110,12 @@ class LegQuery extends Query<Leg, LegQueryWhere> {
     }
     var model = Leg(
         id: fields.contains('id') ? row[0].toString() : null,
-        createdAt: fields.contains('created_at') ? mapToDateTime(row[1]) : null,
-        updatedAt: fields.contains('updated_at') ? mapToDateTime(row[2]) : null,
+        createdAt: fields.contains('created_at')
+            ? mapToNullableDateTime(row[1])
+            : null,
+        updatedAt: fields.contains('updated_at')
+            ? mapToNullableDateTime(row[2])
+            : null,
         name: fields.contains('name') ? (row[3] as String?) : null);
     if (row.length > 4) {
       var modelOpt = FootQuery().parseRow(row.skip(4).take(5).toList());
@@ -239,8 +243,12 @@ class FootQuery extends Query<Foot, FootQueryWhere> {
     }
     var model = Foot(
         id: fields.contains('id') ? row[0].toString() : null,
-        createdAt: fields.contains('created_at') ? mapToDateTime(row[1]) : null,
-        updatedAt: fields.contains('updated_at') ? mapToDateTime(row[2]) : null,
+        createdAt: fields.contains('created_at')
+            ? mapToNullableDateTime(row[1])
+            : null,
+        updatedAt: fields.contains('updated_at')
+            ? mapToNullableDateTime(row[2])
+            : null,
         legId: fields.contains('leg_id') ? (row[3] as int?) : null,
         nToes: fields.contains('n_toes') ? mapToDouble(row[4]) : null);
     return Optional.of(model);

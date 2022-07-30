@@ -274,9 +274,12 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                 // Generated Code: mapToBool(row[i])
                 expr = refer('mapToBool').call([expr]);
               } else if (fType.element?.displayName == 'DateTime') {
-                // print("fType: ${fType.element?.displayName}");
                 // Generated Code: mapToDateTime(row[i])
-                expr = refer('mapToDateTime').call([expr]);
+                if (fType.nullabilitySuffix == NullabilitySuffix.question) {
+                  expr = refer('mapToNullableDateTime').call([expr]);
+                } else {
+                  expr = refer('mapToDateTime').call([expr]);
+                }
               } else {
                 // Generated Code: (row[i] as type?)
                 expr = expr.asA(type);

@@ -127,8 +127,12 @@ class UserQuery extends Query<User, UserQueryWhere> {
     }
     var model = User(
         id: fields.contains('id') ? row[0].toString() : null,
-        createdAt: fields.contains('created_at') ? mapToDateTime(row[1]) : null,
-        updatedAt: fields.contains('updated_at') ? mapToDateTime(row[2]) : null,
+        createdAt: fields.contains('created_at')
+            ? mapToNullableDateTime(row[1])
+            : null,
+        updatedAt: fields.contains('updated_at')
+            ? mapToNullableDateTime(row[2])
+            : null,
         username: fields.contains('username') ? (row[3] as String?) : null,
         password: fields.contains('password') ? (row[4] as String?) : null,
         email: fields.contains('email') ? (row[5] as String?) : null);
@@ -487,8 +491,12 @@ class RoleQuery extends Query<Role, RoleQueryWhere> {
     }
     var model = Role(
         id: fields.contains('id') ? row[0].toString() : null,
-        createdAt: fields.contains('created_at') ? mapToDateTime(row[1]) : null,
-        updatedAt: fields.contains('updated_at') ? mapToDateTime(row[2]) : null,
+        createdAt: fields.contains('created_at')
+            ? mapToNullableDateTime(row[1])
+            : null,
+        updatedAt: fields.contains('updated_at')
+            ? mapToNullableDateTime(row[2])
+            : null,
         name: fields.contains('name') ? (row[3] as String?) : null);
     if (row.length > 4) {
       var modelOpt = UserQuery().parseRow(row.skip(4).take(6).toList());

@@ -101,8 +101,12 @@ class NumbersQuery extends Query<Numbers, NumbersQueryWhere> {
     }
     var model = Numbers(
         id: fields.contains('id') ? row[0].toString() : null,
-        createdAt: fields.contains('created_at') ? mapToDateTime(row[1]) : null,
-        updatedAt: fields.contains('updated_at') ? mapToDateTime(row[2]) : null,
+        createdAt: fields.contains('created_at')
+            ? mapToNullableDateTime(row[1])
+            : null,
+        updatedAt: fields.contains('updated_at')
+            ? mapToNullableDateTime(row[2])
+            : null,
         two: fields.contains('two') ? (row[3] as int?) : null);
     return Optional.of(model);
   }
@@ -218,8 +222,12 @@ class AlphabetQuery extends Query<Alphabet, AlphabetQueryWhere> {
     }
     var model = Alphabet(
         id: fields.contains('id') ? row[0].toString() : null,
-        createdAt: fields.contains('created_at') ? mapToDateTime(row[1]) : null,
-        updatedAt: fields.contains('updated_at') ? mapToDateTime(row[2]) : null,
+        createdAt: fields.contains('created_at')
+            ? mapToNullableDateTime(row[1])
+            : null,
+        updatedAt: fields.contains('updated_at')
+            ? mapToNullableDateTime(row[2])
+            : null,
         value: fields.contains('value') ? (row[3] as String?) : null);
     if (row.length > 5) {
       var modelOpt = NumbersQuery().parseRow(row.skip(5).take(4).toList());

@@ -99,8 +99,12 @@ class ItemQuery extends Query<Item, ItemQueryWhere> {
     }
     var model = Item(
         id: fields.contains('id') ? row[0].toString() : null,
-        createdAt: fields.contains('created_at') ? mapToDateTime(row[1]) : null,
-        updatedAt: fields.contains('updated_at') ? mapToDateTime(row[2]) : null,
+        createdAt: fields.contains('created_at')
+            ? mapToNullableDateTime(row[1])
+            : null,
+        updatedAt: fields.contains('updated_at')
+            ? mapToNullableDateTime(row[2])
+            : null,
         description: fields.contains('description') ? (row[3] as String) : '');
     return Optional.of(model);
   }
@@ -236,8 +240,12 @@ class AssetQuery extends Query<Asset, AssetQueryWhere> {
     }
     var model = Asset(
         id: fields.contains('id') ? row[0].toString() : null,
-        createdAt: fields.contains('created_at') ? mapToDateTime(row[1]) : null,
-        updatedAt: fields.contains('updated_at') ? mapToDateTime(row[2]) : null,
+        createdAt: fields.contains('created_at')
+            ? mapToNullableDateTime(row[1])
+            : null,
+        updatedAt: fields.contains('updated_at')
+            ? mapToNullableDateTime(row[2])
+            : null,
         description: fields.contains('description') ? (row[3] as String) : '',
         name: fields.contains('name') ? (row[4] as String) : '',
         price: fields.contains('price') ? mapToDouble(row[5]) : 0.0);

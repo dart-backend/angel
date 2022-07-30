@@ -81,8 +81,12 @@ class HasCarQuery extends Query<HasCar, HasCarQueryWhere> {
     }
     var model = HasCar(
         id: fields.contains('id') ? row[0].toString() : null,
-        createdAt: fields.contains('created_at') ? mapToDateTime(row[1]) : null,
-        updatedAt: fields.contains('updated_at') ? mapToDateTime(row[2]) : null,
+        createdAt: fields.contains('created_at')
+            ? mapToNullableDateTime(row[1])
+            : null,
+        updatedAt: fields.contains('updated_at')
+            ? mapToNullableDateTime(row[2])
+            : null,
         type: fields.contains('type')
             ? row[3] == null
                 ? null

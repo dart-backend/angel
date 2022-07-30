@@ -13,8 +13,8 @@ part 'main.g.dart';
 void main() async {
   //hierarchicalLoggingEnabled = true;
 
-  await mariaDBExample();
-  //await mysqlExample();
+  //await mariaDBExample();
+  await mysqlExample();
 
   exit(0);
 }
@@ -62,7 +62,7 @@ Future<void> mysqlExample() async {
       databaseName: "orm_test",
       userName: "test",
       password: "test123",
-      secure: false);
+      secure: true);
 
   print("Connected to MySQL");
   var logger = Logger('orm_mysql');

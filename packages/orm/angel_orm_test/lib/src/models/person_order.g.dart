@@ -92,8 +92,12 @@ class PersonOrderQuery extends Query<PersonOrder, PersonOrderQueryWhere> {
     }
     var model = PersonOrder(
         id: fields.contains('id') ? row[0].toString() : null,
-        createdAt: fields.contains('created_at') ? mapToDateTime(row[1]) : null,
-        updatedAt: fields.contains('updated_at') ? mapToDateTime(row[2]) : null,
+        createdAt: fields.contains('created_at')
+            ? mapToNullableDateTime(row[1])
+            : null,
+        updatedAt: fields.contains('updated_at')
+            ? mapToNullableDateTime(row[2])
+            : null,
         personId: fields.contains('person_id') ? (row[3] as int?) : null,
         name: fields.contains('name') ? (row[4] as String?) : null,
         price: fields.contains('price') ? mapToDouble(row[5]) : null,
@@ -255,8 +259,12 @@ class OrderWithPersonInfoQuery
     }
     var model = OrderWithPersonInfo(
         id: fields.contains('id') ? row[0].toString() : null,
-        createdAt: fields.contains('created_at') ? mapToDateTime(row[1]) : null,
-        updatedAt: fields.contains('updated_at') ? mapToDateTime(row[2]) : null,
+        createdAt: fields.contains('created_at')
+            ? mapToNullableDateTime(row[1])
+            : null,
+        updatedAt: fields.contains('updated_at')
+            ? mapToNullableDateTime(row[2])
+            : null,
         name: fields.contains('name') ? (row[3] as String?) : null,
         price: fields.contains('price') ? mapToDouble(row[4]) : null,
         deleted: fields.contains('deleted') ? mapToBool(row[5]) : null,

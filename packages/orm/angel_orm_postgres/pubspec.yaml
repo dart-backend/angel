@@ -17,13 +17,13 @@ dev_dependencies:
   test: ^1.21.0
   lints: ^1.0.0
 dependency_overrides:
-#   angel3_serialize:
-#     path: ../../serialize/angel_serialize
+  angel3_serialize:
+     path: ../../serialize/angel_serialize
 #   angel3_model:
 #     path: ../../model
-   angel3_orm_test:
+  angel3_orm_test:
      path: ../angel_orm_test
-   angel3_orm:
+  angel3_orm:
      path: ../angel_orm
-   angel3_migration:
+  angel3_migration:
      path: ../angel_migration

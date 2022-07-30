@@ -22,12 +22,22 @@ String mapToText(dynamic value) {
   return value;
 }
 
+/// Helper method to convert dynamic value to DateTime.
+/// If null return January 1st, 1970 at 00:00:00 UTC as default
 DateTime mapToDateTime(dynamic value) {
   if (value == null) {
     return defaultDate;
   }
   if (value is String) {
     return DateTime.tryParse(value) ?? defaultDate;
+  }
+  return value;
+}
+
+/// Helper method to convert dynamic value to nullable DateTime
+DateTime? mapToNullableDateTime(dynamic value) {
+  if (value is String) {
+    return DateTime.tryParse(value);
   }
   return value;
 }

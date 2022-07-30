@@ -95,8 +95,12 @@ class BikeQuery extends Query<Bike, BikeQueryWhere> {
     }
     var model = Bike(
         id: fields.contains('id') ? row[0].toString() : null,
-        createdAt: fields.contains('created_at') ? mapToDateTime(row[1]) : null,
-        updatedAt: fields.contains('updated_at') ? mapToDateTime(row[2]) : null,
+        createdAt: fields.contains('created_at')
+            ? mapToNullableDateTime(row[1])
+            : null,
+        updatedAt: fields.contains('updated_at')
+            ? mapToNullableDateTime(row[2])
+            : null,
         make: fields.contains('make') ? (row[3] as String) : '',
         description: fields.contains('description') ? (row[4] as String) : '',
         familyFriendly:
