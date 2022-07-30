@@ -6,7 +6,11 @@ import 'package:charcode/ascii.dart';
 abstract class MySqlGenerator {
   static String columnType(MigrationColumn column) {
     var str = column.type.name;
-    if (column.type.hasSize) {
+    // Map timestamp time to datetime
+    if (column.type == ColumnType.timeStamp) {
+      str = ColumnType.dateTime.name;
+    }
+    if (column.type.hasLength) {
       return '$str(${column.length})';
     } else {
       return str;
@@ -46,7 +50,7 @@ abstract class MySqlGenerator {
     }
 
     for (var ref in column.externalReferences) {
-      buf.write(' ' + compileReference(ref));
+      buf.write(' ${compileReference(ref)}');
     }
 
     return buf.toString();
@@ -54,7 +58,7 @@ abstract class MySqlGenerator {
 
   static String compileReference(MigrationColumnReference ref) {
     var buf = StringBuffer('REFERENCES ${ref.foreignTable}(${ref.foreignKey})');
-    if (ref.behavior != null) buf.write(' ' + ref.behavior!);
+    if (ref.behavior != null) buf.write(' ${ref.behavior!}');
     return buf.toString();
   }
 }
@@ -147,8 +151,8 @@ class MysqlAlterTable extends Table implements MutableTable {
 
   @override
   void changeColumnType(String name, ColumnType type, {int length = 256}) {
-    _stack.add('ALTER COLUMN $name TYPE ' +
-        MySqlGenerator.columnType(MigrationColumn(type, length: length)));
+    _stack.add(
+        'ALTER COLUMN $name TYPE ${MySqlGenerator.columnType(MigrationColumn(type, length: length))}');
   }
 
   @override

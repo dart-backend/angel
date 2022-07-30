@@ -486,8 +486,12 @@ class SongQuery extends Query<Song, SongQueryWhere> {
     }
     var model = Song(
         id: fields.contains('id') ? row[0].toString() : null,
-        createdAt: fields.contains('created_at') ? mapToDateTime(row[1]) : null,
-        updatedAt: fields.contains('updated_at') ? mapToDateTime(row[2]) : null,
+        createdAt: fields.contains('created_at')
+            ? mapToNullableDateTime(row[1])
+            : null,
+        updatedAt: fields.contains('updated_at')
+            ? mapToNullableDateTime(row[2])
+            : null,
         weirdJoinId: fields.contains('weird_join_id') ? (row[3] as int?) : null,
         title: fields.contains('title') ? (row[4] as String?) : null);
     return Optional.of(model);

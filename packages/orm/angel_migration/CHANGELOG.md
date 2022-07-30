@@ -1,5 +1,9 @@
 # Change Log
 
+## 6.1.0
+
+* Updated temporal fields
+
 ## 6.0.0
 
 * Updated to SDK 2.16.x

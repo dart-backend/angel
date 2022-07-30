@@ -1,5 +1,10 @@
 # Change Log
 
+## 6.2.0
+
+* Fixed issue #68: Support for non-nullable type
+* Generate default value based on `defaultValue` in the `@Column` annotation
+
 ## 6.1.0
 
 * Updated to `analyzer` 4.x.x

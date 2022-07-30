@@ -241,7 +241,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
           ..body = Block((b) {
             var i = 0;
 
-            // Build the argurments for model
+            // Build the arguments for model
             var args = <String, Expression>{};
             for (var field in ctx.effectiveFields) {
               var fType = field.type;
@@ -274,16 +274,35 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                 // Generated Code: mapToBool(row[i])
                 expr = refer('mapToBool').call([expr]);
               } else if (fType.element?.displayName == 'DateTime') {
-                //print("fType: ${fType.element?.displayName}");
                 // Generated Code: mapToDateTime(row[i])
-                expr = refer('mapToDateTime').call([expr]);
+                if (fType.nullabilitySuffix == NullabilitySuffix.question) {
+                  expr = refer('mapToNullableDateTime').call([expr]);
+                } else {
+                  expr = refer('mapToDateTime').call([expr]);
+                }
               } else {
                 // Generated Code: (row[i] as type?)
                 expr = expr.asA(type);
               }
+
+              Expression defaultRef = refer('null');
+              if (fType.nullabilitySuffix != NullabilitySuffix.question) {
+                if (fType.isDartCoreString) {
+                  defaultRef = CodeExpression(Code('\'\''));
+                } else if (fType.isDartCoreBool) {
+                  defaultRef = CodeExpression(Code('false'));
+                } else if (fType.isDartCoreDouble) {
+                  defaultRef = CodeExpression(Code('0.0'));
+                } else if (fType.isDartCoreInt || fType.isDartCoreNum) {
+                  defaultRef = CodeExpression(Code('0'));
+                } else if (fType.element?.displayName == 'DateTime') {
+                  defaultRef = CodeExpression(
+                      Code('DateTime.parse("1970-01-01 00:00:00")'));
+                }
+              }
               expr = refer('fields').property('contains').call([
                 literalString(ctx.buildContext.resolveFieldName(field.name)!)
-              ]).conditional(expr, refer('null'));
+              ]).conditional(expr, defaultRef);
               args[field.name] = expr;
             }
 
@@ -481,7 +500,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                   // , <user_fields>
                   b.write(foreignFields.isEmpty
                       ? ''
-                      : ', ' + foreignFields.join(', '));
+                      : ', ${foreignFields.join(', ')}');
                   // FROM users
                   b.write(' FROM ');
                   b.write(relationForeign.tableName);
@@ -535,9 +554,8 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                   // There'll be a private `_field`, and then a getter, named `field`,
                   // that returns the subquery object.
 
-                  var foreignQueryType = refer(relationForeign
-                          .buildContext.modelClassNameRecase.pascalCase +
-                      'Query');
+                  var foreignQueryType = refer(
+                      '${relationForeign.buildContext.modelClassNameRecase.pascalCase}Query');
 
                   clazz
                     ..fields.add(Field((b) => b
@@ -866,7 +884,8 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
           } else if (floatTypes.contains(ctx.columns[field.name]?.type)) {
             value = refer('double')
                 .property('tryParse')
-                .call([value.asA(refer('String'))]);
+                .call([value.asA(refer('String'))]).ifNullThen(
+                    CodeExpression(Code('0.0')));
           } else {
             value = value.asA(type);
           }

@@ -13,26 +13,29 @@ FutureOr<QueryExecutor> Function() createTables(List<String> schemas) {
   return () => _connectToMySql(schemas);
 
   // For MariaDB
-  // return () => _connectToMariaDb(tables);
+  //return () => _connectToMariaDb(schemas);
 }
 
 // For MySQL
 Future<void> dropTables(QueryExecutor executor) async {
   var sqlExecutor = (executor as MySqlExecutor);
   for (var tableName in tmpTables.reversed) {
-    await sqlExecutor.rawConnection.execute('drop table $tableName;');
+    print('DROP TABLE $tableName');
+    await sqlExecutor.rawConnection.execute('DROP TABLE $tableName;');
   }
+
   return sqlExecutor.close();
 }
 
 // For MariaDB
-/* Future<void> dropTables(QueryExecutor executor) {
+Future<void> dropTables2(QueryExecutor executor) {
   var sqlExecutor = (executor as MariaDbExecutor);
   for (var tableName in tmpTables.reversed) {
+    print('DROP TABLE $tableName');
     sqlExecutor.query(tableName, 'DROP TABLE $tableName', {});
   }
   return sqlExecutor.close();
-} */
+}
 
 String extractTableName(String createQuery) {
   var start = createQuery.indexOf('EXISTS');
@@ -51,8 +54,8 @@ Future<MariaDbExecutor> _connectToMariaDb(List<String> schemas) async {
       host: 'localhost',
       port: 3306,
       db: 'orm_test',
-      user: 'Test',
-      password: 'Test123*');
+      user: 'test',
+      password: 'test123');
   var connection = await MySqlConnection.connect(settings);
 
   var logger = Logger('orm_mariadb');
@@ -64,7 +67,7 @@ Future<MariaDbExecutor> _connectToMariaDb(List<String> schemas) async {
     var data = await File('test/migrations/$s.sql').readAsString();
     var queries = data.split(";");
     for (var q in queries) {
-      //print("Table: [$q]");
+      print("Table: [$q]");
       if (q.trim().isNotEmpty) {
         //await connection.execute(q);
         await connection.query(q);
@@ -87,8 +90,8 @@ Future<MySqlExecutor> _connectToMySql(List<String> schemas) async {
       port: 3306,
       host: "localhost",
       userName: Platform.environment['MYSQL_USERNAME'] ?? 'test',
-      password: Platform.environment['MYSQL_PASSWORD'] ?? 'Test123*',
-      secure: false);
+      password: Platform.environment['MYSQL_PASSWORD'] ?? 'test123',
+      secure: true);
 
   await connection.connect(timeoutMs: 10000);
 

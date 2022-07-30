@@ -1,8 +1,8 @@
 # Change Log
 
-## 6.0.1
+## 6.1.0
 
-* Updated generated test cases
+* Added test cases for non nullable type
 
 ## 6.0.0
 

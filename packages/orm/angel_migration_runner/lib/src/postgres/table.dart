@@ -6,7 +6,7 @@ import 'package:charcode/ascii.dart';
 abstract class PostgresGenerator {
   static String columnType(MigrationColumn column) {
     var str = column.type.name;
-    if (column.type.hasSize) {
+    if (column.type.hasLength) {
       return '$str(${column.length})';
     } else {
       return str;
@@ -31,11 +31,10 @@ abstract class PostgresGenerator {
             b.writeCharCode(ch);
           }
         }
-        s = b.toString();
+        s = '\'${b.toString()}\'';
       } else {
         s = value.toString();
       }
-
       buf.write(' DEFAULT $s');
     }
 
@@ -46,7 +45,7 @@ abstract class PostgresGenerator {
     }
 
     for (var ref in column.externalReferences) {
-      buf.write(' ' + compileReference(ref));
+      buf.write(' ${compileReference(ref)}');
     }
 
     return buf.toString();
@@ -55,7 +54,7 @@ abstract class PostgresGenerator {
   static String compileReference(MigrationColumnReference ref) {
     var buf =
         StringBuffer('REFERENCES "${ref.foreignTable}"("${ref.foreignKey}")');
-    if (ref.behavior != null) buf.write(' ' + ref.behavior!);
+    if (ref.behavior != null) buf.write(' ${ref.behavior!}');
     return buf.toString();
   }
 }
@@ -147,9 +146,9 @@ class PostgresAlterTable extends Table implements MutableTable {
   }
 
   @override
-  void changeColumnType(String name, ColumnType type, {int length = 256}) {
-    _stack.add('ALTER COLUMN "$name" TYPE ' +
-        PostgresGenerator.columnType(MigrationColumn(type, length: length)));
+  void changeColumnType(String name, ColumnType type, {int length = 255}) {
+    _stack.add(
+        'ALTER COLUMN "$name" TYPE ${PostgresGenerator.columnType(MigrationColumn(type, length: length))}');
   }
 
   @override

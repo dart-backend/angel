@@ -7,7 +7,7 @@ import 'package:postgres/postgres.dart';
 
 /// A [QueryExecutor] that queries a PostgreSQL database.
 class PostgreSqlExecutor extends QueryExecutor {
-  final PostgreSQLExecutionContext _connection;
+  PostgreSQLExecutionContext _connection;
 
   /// An optional [Logger] to print information to. A default logger will be used
   /// if not set
@@ -57,7 +57,43 @@ class PostgreSqlExecutor extends QueryExecutor {
       }
     });
 
-    return _connection.query(query, substitutionValues: param);
+    return _connection
+        .query(query, substitutionValues: param)
+        .catchError((err) async {
+      logger.warning(err);
+      if (err is PostgreSQLException) {
+        // This is a hack to detect broken db connection
+        bool brokenConnection =
+            err.message?.contains("connection is not open") ?? false;
+        if (brokenConnection) {
+          if (_connection is PostgreSQLConnection) {
+            // Open a new db connection
+            var currentConnection = _connection as PostgreSQLConnection;
+            currentConnection.close();
+
+            logger.warning(
+                "A broken database connection is detected. Creating a new database connection.");
+            var conn = _createNewConnection(currentConnection);
+            await conn.open();
+            _connection = conn;
+
+            // Retry the query with the new db connection
+            return _connection.query(query, substitutionValues: param);
+          }
+        }
+      }
+      throw err;
+    });
+  }
+
+  // Create a new database connection from an existing connection
+  PostgreSQLConnection _createNewConnection(PostgreSQLConnection conn) {
+    return PostgreSQLConnection(conn.host, conn.port, conn.databaseName,
+        username: conn.username,
+        password: conn.password,
+        useSSL: conn.useSSL,
+        timeZone: conn.timeZone,
+        timeoutInSeconds: conn.timeoutInSeconds);
   }
 
   @override

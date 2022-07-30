@@ -1,0 +1,21 @@
+version: "3.8"
+services:
+  redis:
+    image: redis:latest
+    restart: "no"
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    volumes:
+      - "redis:/data"
+    networks:
+      - webnet
+
+volumes:
+  redis:
+    driver: local
+
+networks:
+  webnet:

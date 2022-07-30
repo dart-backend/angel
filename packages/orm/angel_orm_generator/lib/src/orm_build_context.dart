@@ -105,10 +105,10 @@ Future<OrmBuildContext?> buildOrmContext(
     // Check for column annotation...
     var element = _findElement(field);
     var columnAnnotation = columnTypeChecker.firstAnnotationOf(element);
-    // print('${element.name} => $columnAnnotation');
 
     Column? column;
     if (columnAnnotation != null) {
+      // print('[ORM_BUILD_CONTEXT] ${element.name} => $columnAnnotation');
       column = reviveColumn(ConstantReader(columnAnnotation));
     }
 
@@ -130,6 +130,7 @@ Future<OrmBuildContext?> buildOrmContext(
       length: column.length,
       indexType: column.indexType,
       type: inferColumnType(field.type),
+      defaultValue: column.defaultValue,
     );
 
     // Try to find a relationship
@@ -319,6 +320,7 @@ Future<OrmBuildContext?> buildOrmContext(
         length: column.length,
         type: column.type,
         indexType: column.indexType,
+        defaultValue: column.defaultValue,
         expression:
             ConstantReader(columnAnnotation).peek('expression')?.stringValue,
       );
@@ -334,6 +336,7 @@ Future<OrmBuildContext?> buildOrmContext(
   return ctx;
 }
 
+// Detect and return the correct column type
 ColumnType inferColumnType(DartType type) {
   if (const TypeChecker.fromRuntime(String).isAssignableFromType(type)) {
     return ColumnType.varChar;
@@ -342,10 +345,10 @@ ColumnType inferColumnType(DartType type) {
     return ColumnType.int;
   }
   if (const TypeChecker.fromRuntime(double).isAssignableFromType(type)) {
-    return ColumnType.decimal;
+    return ColumnType.double;
   }
   if (const TypeChecker.fromRuntime(num).isAssignableFromType(type)) {
-    return ColumnType.numeric;
+    return ColumnType.float;
   }
   if (const TypeChecker.fromRuntime(bool).isAssignableFromType(type)) {
     return ColumnType.boolean;
@@ -393,6 +396,7 @@ Column reviveColumn(ConstantReader cr) {
   return Column(
     isNullable: cr.peek('isNullable')?.boolValue ?? false,
     length: cr.peek('length')?.intValue ?? 255,
+    defaultValue: cr.peek('defaultValue')?.objectValue,
     type: columnType,
     indexType: indexType,
   );
@@ -401,6 +405,7 @@ Column reviveColumn(ConstantReader cr) {
 const TypeChecker relationshipTypeChecker =
     TypeChecker.fromRuntime(Relationship);
 
+// ORM builder context
 class OrmBuildContext {
   final BuildContext buildContext;
   final Orm ormAnnotation;
@@ -426,7 +431,16 @@ class _ColumnType implements ColumnType {
   final String name;
 
   @override
-  final bool hasSize = false;
+  bool hasLength = false;
+
+  @override
+  bool hasPrecision = false;
+
+  @override
+  bool hasScale = false;
+
+  @override
+  bool hasTimezone = false;
 
   //_ColumnType(this.name, [this.hasSize = false]);
   _ColumnType(this.name);

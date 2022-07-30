@@ -45,7 +45,7 @@ class MariaDbMigrationRunner implements MigrationRunner {
       PRIMARY KEY(id)
     );
     ''').then((result) {
-      _log.info('Check and create "migrations" table');
+      _log.fine('Check and create "migrations" table');
     }).catchError((e) {
       _log.severe('Failed to create "migrations" table.', e);
     });
@@ -54,18 +54,25 @@ class MariaDbMigrationRunner implements MigrationRunner {
   @override
   Future up() async {
     await _init();
-    var r = await connection.query('SELECT path from migrations;');
-    var existing = r.expand((x) => x).cast<String>();
-    var toRun = <String>[];
+    var result = await connection.query('SELECT path from migrations;');
 
+    var existing = <String>[];
+    if (result.isNotEmpty) {
+      existing = result.expand((x) => x).cast<String>().toList();
+    }
+
+    var toRun = <String>[];
     migrations.forEach((k, v) {
       if (!existing.contains(k)) toRun.add(k);
     });
 
     if (toRun.isNotEmpty) {
-      var r = await connection.query('SELECT MAX(batch) from migrations;');
-      var rTmp = r.toList();
-      var curBatch = int.tryParse(rTmp[0][0] ?? '0') as int;
+      var result = await connection.query('SELECT MAX(batch) from migrations;');
+      var curBatch = 0;
+      if (result.isNotEmpty) {
+        var firstRow = result.toList();
+        curBatch = int.tryParse(firstRow[0][0] ?? '0') as int;
+      }
       var batch = curBatch + 1;
 
       for (var k in toRun) {
@@ -73,11 +80,10 @@ class MariaDbMigrationRunner implements MigrationRunner {
         var schema = MariaDbSchema();
         migration.up(schema);
         _log.info('Added "$k" into "migrations" table.');
-
         try {
           await schema.run(connection).then((_) async {
             var result = await connection.query(
-                "INSERT INTO MIGRATIONS (batch, path) VALUES ($batch, '$k')");
+                "INSERT INTO migrations (batch, path) VALUES ($batch, '$k')");
 
             return result.affectedRows;
           });
@@ -94,13 +100,21 @@ class MariaDbMigrationRunner implements MigrationRunner {
   Future rollback() async {
     await _init();
 
-    var r = await connection.query('SELECT MAX(batch) from migrations;');
-    var rTmp = r.toList();
-    var curBatch = int.tryParse(rTmp[0][0] ?? 0) as int;
+    var result = await connection.query('SELECT MAX(batch) from migrations;');
 
-    r = await connection
+    var curBatch = 0;
+    if (result.isNotEmpty) {
+      var firstRow = result.toList();
+      curBatch = int.tryParse(firstRow[0][0]) as int;
+    }
+
+    result = await connection
         .query('SELECT path from migrations WHERE batch = $curBatch;');
-    var existing = r.expand((x) => x).cast<String>();
+    var existing = <String>[];
+    if (result.isNotEmpty) {
+      existing = result.expand((x) => x).cast<String>().toList();
+    }
+
     var toRun = <String>[];
 
     migrations.forEach((k, v) {
@@ -128,7 +142,11 @@ class MariaDbMigrationRunner implements MigrationRunner {
     await _init();
     var r = await connection
         .query('SELECT path from migrations ORDER BY batch DESC;');
-    var existing = r.expand((x) => x).cast<String>();
+    var existing = <String>[];
+    if (r.isNotEmpty) {
+      existing = r.expand((x) => x).cast<String>().toList();
+    }
+
     var toRun = existing.where(migrations.containsKey).toList();
 
     if (toRun.isNotEmpty) {

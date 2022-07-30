@@ -114,6 +114,7 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
     }));
   }
 
+  // Generate toMapMethod
   void generateToMapMethod(
       ClassBuilder clazz, BuildContext ctx, LibraryBuilder file) {
     var originalClassName = ctx.originalClassName;
@@ -178,7 +179,12 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
 
         // Serialize dates
         else if (dateTimeTypeChecker.isAssignableFromType(type)) {
-          serializedRepresentation = 'model.${field.name}?.toIso8601String()';
+          var question =
+              field.type.nullabilitySuffix == NullabilitySuffix.question
+                  ? "?"
+                  : "";
+          serializedRepresentation =
+              'model.${field.name}$question.toIso8601String()';
         }
 
         // Serialize model classes via `XSerializer.toMap`
@@ -246,6 +252,7 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
     }));
   }
 
+  // Generate fromMapMethod
   void generateFromMapMethod(
       ClassBuilder clazz, BuildContext ctx, LibraryBuilder file) {
     clazz.methods.add(Method((method) {
@@ -336,6 +343,13 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
           var name = MirrorSystem.getName(fieldNameDeserializer);
           deserializedRepresentation = "$name(map['$alias'])";
         } else if (dateTimeTypeChecker.isAssignableFromType(type)) {
+          if (field.type.nullabilitySuffix != NullabilitySuffix.question) {
+            if (defaultValue.toLowerCase() == 'null') {
+              defaultValue = 'DateTime.parse("1970-01-01 00:00:00")';
+            } else {
+              defaultValue = 'DateTime.parse("$defaultValue")';
+            }
+          }
           deserializedRepresentation = "map['$alias'] != null ? "
               "(map['$alias'] is DateTime ? (map['$alias'] as DateTime) : DateTime.parse(map['$alias'].toString()))"
               ' : $defaultValue';

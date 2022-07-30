@@ -371,13 +371,13 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
     var insertion = values?.compileInsert(this, tableName);
 
     if (insertion == '') {
-      throw StateError('No values have been specified for update.');
+      throw StateError('No values have been specified for insertion.');
     } else {
       var sql = compile({});
       var returningSql = '';
       if (executor.dialect is PostgreSQLDialect) {
         var returning = fields.map(adornWithTableName).join(', ');
-        sql = 'WITH $tableName as ($insertion RETURNING $returning) ' + sql;
+        sql = 'WITH $tableName as ($insertion RETURNING $returning) $sql';
       } else if (executor.dialect is MySQLDialect) {
         // Default to using 'id' as primary key in model
         if (fields.contains("id")) {
@@ -397,9 +397,14 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
       return executor
           .query(tableName, sql, substitutionValues,
               returningQuery: returningSql)
-          .then((it) {
+          .then((result) {
         // Return SQL execution results
-        return it.isEmpty ? Optional.empty() : deserialize(it.first);
+        //if (result.isNotEmpty) {
+        //  for (var element in result.first) {
+        //    _log.fine("value: $element");
+        //  }
+        //}
+        return result.isEmpty ? Optional.empty() : deserialize(result.first);
       });
     }
   }
@@ -422,7 +427,7 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
     var sql = compile({});
     var returningSql = '';
     if (executor.dialect is PostgreSQLDialect) {
-      sql = 'WITH $tableName as ($updateSql RETURNING $returning) ' + sql;
+      sql = 'WITH $tableName as ($updateSql RETURNING $returning) $sql';
     } else if (executor.dialect is MySQLDialect) {
       returningSql = sql;
       sql = '$updateSql';

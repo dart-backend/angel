@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:analyzer/dart/constant/value.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:angel3_model/angel3_model.dart';
@@ -135,7 +136,9 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
                 switch (col.type) {
                   case ColumnType.varChar:
                     methodName = 'varChar';
-                    named['length'] = literal(col.length);
+                    if (col.type.hasLength) {
+                      named['length'] = literal(col.length);
+                    }
                     break;
                   case ColumnType.serial:
                     methodName = 'serial';
@@ -146,8 +149,12 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
                   case ColumnType.float:
                     methodName = 'float';
                     break;
+                  case ColumnType.double:
+                    methodName = 'double';
+                    break;
                   case ColumnType.numeric:
                     methodName = 'numeric';
+                    if (col.type.hasPrecision) {}
                     break;
                   case ColumnType.boolean:
                     methodName = 'boolean';
@@ -192,7 +199,20 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
 
               var defaultValue = ctx.buildContext.defaults[name];
 
-              if (defaultValue != null && !defaultValue.isNull) {
+              // Handle 'defaultValue' on Column annotation
+              if (col.defaultValue != null) {
+                var defaultCode =
+                    dartObjectToString(col.defaultValue as DartObject);
+
+                if (defaultCode != null) {
+                  Expression defaultExpr = CodeExpression(
+                    Code(defaultCode),
+                  );
+                  cascade.add(refer('defaultsTo').call([defaultExpr]));
+                }
+
+                // Handle 'defaultValue' on SerializableField annotation
+              } else if (defaultValue != null && !defaultValue.isNull) {
                 var type = defaultValue.type;
                 Expression? defaultExpr;
 
@@ -213,9 +233,12 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
                     // Definitely an analyzer issue.
                   }
                 } else {
-                  defaultExpr = CodeExpression(
-                    Code(dartObjectToString(defaultValue)!),
-                  );
+                  var defaultCode = dartObjectToString(defaultValue);
+                  if (defaultCode != null) {
+                    defaultExpr = CodeExpression(
+                      Code(defaultCode),
+                    );
+                  }
                 }
 
                 if (defaultExpr != null) {
@@ -230,7 +253,7 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
                 cascade.add(refer('unique').call([]));
               }
 
-              if (col.isNullable != true) {
+              if (!col.isNullable) {
                 cascade.add(refer('notNull').call([]));
               }
 

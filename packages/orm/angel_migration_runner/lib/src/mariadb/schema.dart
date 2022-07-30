@@ -23,7 +23,7 @@ class MariaDbSchema extends Schema {
         _log.severe('Failed to run query: [ $sql ]', e);
         throw e;
       });
-      affectedRows = result?.affectedRows ?? 0;
+      affectedRows = result.affectedRows ?? 0;
     });
 
     return affectedRows;
@@ -42,7 +42,7 @@ class MariaDbSchema extends Schema {
   @override
   void drop(String tableName, {bool cascade = false}) {
     var c = cascade == true ? ' CASCADE' : '';
-    _writeln('DROP TABLE "$tableName"$c;');
+    _writeln('DROP TABLE $tableName$c;');
   }
 
   @override

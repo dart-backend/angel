@@ -18,10 +18,19 @@ class Column {
   final bool isNullable;
 
   /// Specifies this column name.
-  final String name;
+  final String? name;
 
   /// Specifies the length of a `VARCHAR`.
   final int length;
+
+  /// Specifies the precision of a `NUMERIC` or `DECIMAL`.
+  final int precision;
+
+  /// Specifies the scale of a `NUMERIC` or `DECIMAL`.
+  final int scale;
+
+  /// Specifies the timezone for temporal field.
+  final String? timezone;
 
   /// Explicitly defines a SQL type for this column.
   final ColumnType type;
@@ -32,13 +41,20 @@ class Column {
   /// A custom SQL expression to execute, instead of a named column.
   final String? expression;
 
+  /// Specifies the default values.
+  final dynamic defaultValue;
+
   const Column(
       {this.isNullable = true,
       this.length = 255,
-      this.name = "",
+      this.precision = 17,
+      this.scale = 3,
+      this.name,
+      this.timezone,
       this.type = ColumnType.varChar,
       this.indexType = IndexType.none,
-      this.expression});
+      this.expression,
+      this.defaultValue});
 
   /// Returns `true` if [expression] is not `null`.
   bool get hasExpression => expression != null;
@@ -71,9 +87,16 @@ enum IndexType {
 class ColumnType {
   /// The name of this data type.
   final String name;
-  final bool hasSize;
+  final bool hasLength;
+  final bool hasPrecision;
+  final bool hasScale;
+  final bool hasTimezone;
 
-  const ColumnType(this.name, [this.hasSize = false]);
+  const ColumnType(this.name,
+      {this.hasLength = false,
+      this.hasPrecision = false,
+      this.hasScale = false,
+      this.hasTimezone = false});
 
   static const ColumnType boolean = ColumnType('boolean');
 
@@ -87,12 +110,15 @@ class ColumnType {
   static const ColumnType smallInt = ColumnType('smallint');
   static const ColumnType tinyInt = ColumnType('tinyint');
   static const ColumnType bit = ColumnType('bit');
-  static const ColumnType decimal = ColumnType('decimal', true);
-  static const ColumnType numeric = ColumnType('numeric', true);
+  static const ColumnType decimal =
+      ColumnType('decimal', hasPrecision: true, hasScale: true);
+  static const ColumnType numeric =
+      ColumnType('numeric', hasPrecision: true, hasScale: true);
   static const ColumnType money = ColumnType('money');
   static const ColumnType smallMoney = ColumnType('smallmoney');
   static const ColumnType float = ColumnType('float');
   static const ColumnType real = ColumnType('real');
+  static const ColumnType double = ColumnType('double precision');
 
   // Dates and times
   static const ColumnType dateTime = ColumnType('datetime');
@@ -101,35 +127,34 @@ class ColumnType {
   static const ColumnType time = ColumnType('time');
   static const ColumnType timeStamp = ColumnType('timestamp');
   static const ColumnType timeStampWithTimeZone =
-      ColumnType('timestamp with time zone');
+      ColumnType('timestamptz', hasTimezone: true);
 
   // Strings
-  static const ColumnType char = ColumnType('char', true);
-  static const ColumnType varChar = ColumnType('varchar', true);
+  static const ColumnType char = ColumnType('char', hasLength: true);
+  static const ColumnType varChar = ColumnType('varchar', hasLength: true);
   static const ColumnType varCharMax = ColumnType('varchar(max)');
-  static const ColumnType text = ColumnType('text', true);
+  static const ColumnType text = ColumnType('text');
 
   // Unicode strings
-  static const ColumnType nChar = ColumnType('nchar', true);
-  static const ColumnType nVarChar = ColumnType('nvarchar', true);
-  static const ColumnType nVarCharMax = ColumnType('nvarchar(max)', true);
-  static const ColumnType nText = ColumnType('ntext', true);
+  static const ColumnType nChar = ColumnType('nchar', hasLength: true);
+  static const ColumnType nVarChar = ColumnType('nvarchar', hasLength: true);
+  static const ColumnType nVarCharMax = ColumnType('nvarchar(max)');
+  static const ColumnType nText = ColumnType('ntext', hasLength: true);
 
   // Binary
-  static const ColumnType binary = ColumnType('binary', true);
-  static const ColumnType varBinary = ColumnType('varbinary', true);
-  static const ColumnType varBinaryMax = ColumnType('varbinary(max)', true);
-  static const ColumnType image = ColumnType('image', true);
+  static const ColumnType binary = ColumnType('binary');
+  static const ColumnType varBinary = ColumnType('varbinary');
+  static const ColumnType varBinaryMax = ColumnType('varbinary(max)');
+  static const ColumnType image = ColumnType('image');
 
   // JSON.
-  static const ColumnType json = ColumnType('json', true);
-  static const ColumnType jsonb = ColumnType('jsonb', true);
+  static const ColumnType json = ColumnType('json');
+  static const ColumnType jsonb = ColumnType('jsonb');
 
   // Misc.
-  static const ColumnType sqlVariant = ColumnType('sql_variant', true);
-  static const ColumnType uniqueIdentifier =
-      ColumnType('uniqueidentifier', true);
-  static const ColumnType xml = ColumnType('xml', true);
-  static const ColumnType cursor = ColumnType('cursor', true);
-  static const ColumnType table = ColumnType('table', true);
+  static const ColumnType sqlVariant = ColumnType('sql_variant');
+  static const ColumnType uniqueIdentifier = ColumnType('uniqueidentifier');
+  static const ColumnType xml = ColumnType('xml');
+  static const ColumnType cursor = ColumnType('cursor');
+  static const ColumnType table = ColumnType('table');
 }

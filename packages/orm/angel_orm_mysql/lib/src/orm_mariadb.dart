@@ -9,6 +9,8 @@ class MariaDbExecutor extends QueryExecutor {
 
   final MySqlConnection _connection;
 
+  TransactionContext? _transactionContext;
+
   MariaDbExecutor(this._connection, {Logger? logger}) {
     this.logger = logger ?? Logger('MariaDbExecutor');
   }
@@ -33,10 +35,19 @@ class MariaDbExecutor extends QueryExecutor {
     }
 
     var params = substitutionValues.values.toList();
+    for (var i = 0; i < params.length; i++) {
+      var v = params[i];
 
-    //logger?.warning('Query: $query');
-    //logger?.warning('Values: $params');
-    //logger?.warning('Returning Query: $returningQuery');
+      if (v is DateTime) {
+        if (!v.isUtc) {
+          params[i] = v.toUtc();
+        }
+      }
+    }
+
+    logger.warning('Query: $query');
+    logger.warning('Values: $params');
+    logger.warning('Returning Query: $returningQuery');
 
     if (returningQuery.isNotEmpty) {
       // Handle insert, update and delete
@@ -66,11 +77,12 @@ class MariaDbExecutor extends QueryExecutor {
   @override
   Future<T> transaction<T>(FutureOr<T> Function(QueryExecutor) f) async {
     T? returnValue = await _connection.transaction((ctx) async {
-      var conn = ctx as MySqlConnection;
+      // TODO: To be relooked at
       try {
         logger.fine('Entering transaction');
-        var tx = MariaDbExecutor(conn, logger: logger);
-        return await f(tx);
+        //var tx = MariaDbExecutor(conn, logger: logger);
+        _transactionContext = ctx;
+        return await f(this);
       } catch (e) {
         logger.severe('Failed to run transaction', e);
         rethrow;

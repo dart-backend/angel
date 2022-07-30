@@ -1,5 +1,10 @@
 # Change Log
 
+## 6.1.0
+
+* Fixed issue #68: Support for non-nullable type
+* Added `defaultValue` to `@Column` annotation
+
 ## 6.0.1
 
 * Added `mapToDateTime`

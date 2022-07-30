@@ -3,6 +3,6 @@ CREATE TABLE IF NOT EXISTS books (
     author_id int NOT NULL,
     partner_author_id int,
     name varchar(255),
-    created_at timestamp,
-    updated_at timestamp
+    created_at datetime,
+    updated_at datetime
 );

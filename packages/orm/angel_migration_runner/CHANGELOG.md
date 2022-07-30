@@ -1,5 +1,12 @@
 # Change Log
 
+## 6.1.0
+
+* Fixed issue #70. Incorrectly generated SQL for `defaultsTo('Default Value')`
+* Mapped timestamp to datetime for MySQL and MariaDB
+* Fixed `MariaDbMigrationRunner` to work with MariaDB
+* Fixed `MySqlMigrationRunner` to work with MySQL and MariaDB
+
 ## 6.0.1
 
 * Added `MariaDbMigrationRunner` to support MariaDB migration with `mysql1` driver

@@ -2,6 +2,8 @@ import 'package:charcode/ascii.dart';
 
 bool isAscii(int ch) => ch >= $nul && ch <= $del;
 
+final DateTime defaultDate = DateTime.parse("1970-01-01 00:00:00");
+
 bool mapToBool(dynamic value) {
   if (value is int) {
     return value != 0;
@@ -20,10 +22,20 @@ String mapToText(dynamic value) {
   return value;
 }
 
-DateTime? mapToDateTime(dynamic value) {
+/// Helper method to convert dynamic value to DateTime.
+/// If null return January 1st, 1970 at 00:00:00 UTC as default
+DateTime mapToDateTime(dynamic value) {
   if (value == null) {
-    return value;
+    return defaultDate;
   }
+  if (value is String) {
+    return DateTime.tryParse(value) ?? defaultDate;
+  }
+  return value;
+}
+
+/// Helper method to convert dynamic value to nullable DateTime
+DateTime? mapToNullableDateTime(dynamic value) {
   if (value is String) {
     return DateTime.tryParse(value);
   }
