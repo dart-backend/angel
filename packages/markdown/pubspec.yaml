@@ -4,12 +4,12 @@ description: Angel3 Markdown view generator. Write static sites, with no build s
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dukefirehawk/angel/tree/master/packages/markdown
 environment:
-  sdk: '>=2.16.0 <3.0.0'
+  sdk: '>=2.17.0 <3.0.0'
 dependencies:
   angel3_framework: ^6.0.0
   file: ^6.1.2
   markdown: ^5.0.0
 dev_dependencies:
   angel3_test: ^6.0.0
-  lints: ^1.0.0
+  lints: ^2.0.0
   test: ^1.21.0

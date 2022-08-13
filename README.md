@@ -143,3 +143,7 @@ You can also view the [Angel3 API](http://www.dartdocs.org/documentation/angel_f
 ## Contributing
 
 Interested in contributing to Angel3? See the contribution guide [here](CONTRIBUTING.md).
+
+## Support
+
+If you like this project and want to support the author, you can [donate](https://paypal.me/dukefirehawk?country.x=MY&locale.x=en_US) me via paypal donations service.
