@@ -1,5 +1,10 @@
 # Change Log
 
+## 7.0.0
+
+* Updated to min SDK 2.17.x
+* Updated `markdown` to 6.0.x
+
 ## 6.1.0
 
 * Updated `markdown` to 5.x.x

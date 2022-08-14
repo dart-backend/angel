@@ -1,8 +1,13 @@
 # Change Log
 
+## 7.0.0
+
+* Updated to min SDK 2.17.x
+* Updated `vm_service` to 9.3.0
+
 ## 6.0.0
 
-* Updated to SDK 2.16.x
+* Updated to min SDK 2.16.x
 
 ## 5.0.0
 

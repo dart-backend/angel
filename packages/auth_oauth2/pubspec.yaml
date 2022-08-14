@@ -18,5 +18,13 @@ dependency_overrides:
     path: ../container/angel_container
   angel3_framework:
     path: ../framework
+  angel3_http_exception:
+    path: ../http_exception
+  angel3_model:
+    path: ../model
+  angel3_route:
+    path: ../route
+  angel3_mock_request:
+    path: ../mock_request
   angel3_auth:
     path: ../auth

@@ -8,7 +8,7 @@ environment:
 dependencies:
   angel3_framework: ^7.0.0
   belatuk_merge_map: ^4.0.0
-  dotenv: ^3.0.0
+  dotenv: ^4.0.0
   file: ^6.1.0
   yaml: ^3.1.0
 dev_dependencies:
