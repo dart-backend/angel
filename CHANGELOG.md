@@ -1,5 +1,18 @@
 # Change Log
 
+## 7.0.0
+
+* Require Dart >= 2.17
+
+## 6.0.0
+
+* Require Dart >= 2.16
+* Added ORM MySQL
+
+## 5.0.0
+
+* Skipped version
+
 ## 4.1.x
 
 * Refactored the framework internal to use [Belatuk Common Utilities](<https://github.com/dart-backend/belatuk-common-utilities>)

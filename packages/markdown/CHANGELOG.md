@@ -2,7 +2,7 @@
 
 ## 7.0.0
 
-* Updated to min SDK 2.17.x
+* Require Dart >= 2.17
 * Updated `markdown` to 6.0.x
 
 ## 6.1.0
@@ -11,7 +11,7 @@
 
 ## 6.0.0
 
-* Updated to SDK 2.16.x
+* Require Dart >= 2.16
 
 ## 5.0.0
 
@@ -23,11 +23,11 @@
 
 ## 4.0.0
 
-* Migrated to support Dart SDK 2.12.x NNBD
+* Migrated to support Dart >= 2.12 NNBD
   
 ## 3.0.0
 
-* Migrated to support Dart SDK 2.12.x non NNBD
+* Migrated to support Dart >= 2.12 Non NNBD
 
 ## 2.0.0
 

@@ -1,12 +1,16 @@
 # Change Log
 
+## 7.0.0
+
+* Require Dart >= 2.17
+
 ## 6.1.0
 
 * Added test cases for non nullable type
 
 ## 6.0.0
 
-* Updated to SDK 2.16.x
+* Require Dart >= 2.16
 
 ## 5.0.0
 
@@ -56,11 +60,11 @@
 
 ## 3.0.0-beta.1
 
-* Migrated to support Dart SDK 2.12.x NNBD
+* Migrated to support Dart >= 2.12 NNBD
 
 ## 2.0.0
 
-* Migrated to work with Dart SDK 2.12.x Non NNBD
+* Migrated to work with Dart >= 2.12 Non NNBD
 
 ## 1.0.0
 

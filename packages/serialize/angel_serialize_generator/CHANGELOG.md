@@ -1,5 +1,9 @@
 # Change Log
 
+## 7.0.0
+
+* Require Dart >= 2.17
+
 ## 6.1.1
 
 * Fixed issue #68: Support for non-nullable type
@@ -10,7 +14,7 @@
 
 ## 6.0.0
 
-* Updated to SDK 2.16.x
+* Require Dart >= 2.16
 * Updated to `analyzer` 3.x.x
 * Fixed default value for `List` and `Enum`
 
@@ -68,12 +72,12 @@
 
 ## 4.0.0
 
-* Migrated to support Dart SDK 2.12.x NNBD
+* Migrated to support Dart >= 2.12 NNBD
 * Importing `Optional` package is required for the ORM model
 
 ## 3.0.0
 
-* Migrated to work with Dart SDK 2.12.x Non NNBD
+* Migrated to work with Dart >= 2.12 Non NNBD
 
 ## 2.5.0
 

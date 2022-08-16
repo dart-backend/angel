@@ -1,12 +1,16 @@
 # Change Log
 
+## 7.0.0
+
+* Require Dart >= 2.17
+
 ## 6.0.1
 
 * Fixed AngelHttpException error
 
 ## 6.0.0
 
-* Updated to SDK 2.16.x
+* Require Dart >= 2.16
 
 ## 5.0.0
 
@@ -27,7 +31,7 @@
 
 ## 3.0.0
 
-* Migrated to support Dart SDK 2.12.x NNBD
+* Migrated to support Dart >= 2.12 NNBD
 
 ## 2.0.0-alpha.1
 
