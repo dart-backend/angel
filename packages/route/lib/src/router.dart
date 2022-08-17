@@ -86,8 +86,8 @@ class Router<T> {
   /// by the resulting router.
   ///
   /// The resulting router can be chained, too.
-  _ChainedRouter<T> chain(Iterable<T> middleware) {
-    var piped = _ChainedRouter<T>(this, middleware);
+  ChainedRouter<T> chain(Iterable<T> middleware) {
+    var piped = ChainedRouter<T>(this, middleware);
     var route = SymlinkRoute<T>('/', piped);
     _routes.add(route);
     return piped;
@@ -412,13 +412,13 @@ class Router<T> {
   }
 }
 
-class _ChainedRouter<T> extends Router<T> {
+class ChainedRouter<T> extends Router<T> {
   final List<T> _handlers = <T>[];
   Router _root;
 
-  _ChainedRouter.empty() : _root = Router();
+  ChainedRouter.empty() : _root = Router();
 
-  _ChainedRouter(this._root, Iterable<T> middleware) {
+  ChainedRouter(this._root, Iterable<T> middleware) {
     _handlers.addAll(middleware);
   }
 
@@ -434,7 +434,7 @@ class _ChainedRouter<T> extends Router<T> {
   @override
   SymlinkRoute<T> group(String path, void Function(Router<T> router) callback,
       {Iterable<T> middleware = const [], String? name}) {
-    final router = _ChainedRouter<T>(_root, [..._handlers, ...middleware]);
+    final router = ChainedRouter<T>(_root, [..._handlers, ...middleware]);
     callback(router);
     return mount(path, router)..name = name;
   }
@@ -443,7 +443,7 @@ class _ChainedRouter<T> extends Router<T> {
   Future<SymlinkRoute<T>> groupAsync(
       String path, FutureOr<void> Function(Router<T> router) callback,
       {Iterable<T> middleware = const [], String? name}) async {
-    final router = _ChainedRouter<T>(_root, [..._handlers, ...middleware]);
+    final router = ChainedRouter<T>(_root, [..._handlers, ...middleware]);
     await callback(router);
     return mount(path, router)..name = name;
   }
@@ -457,8 +457,8 @@ class _ChainedRouter<T> extends Router<T> {
   }
 
   @override
-  _ChainedRouter<T> chain(Iterable<T> middleware) {
-    final piped = _ChainedRouter<T>.empty().._root = _root;
+  ChainedRouter<T> chain(Iterable<T> middleware) {
+    final piped = ChainedRouter<T>.empty().._root = _root;
     piped._handlers.addAll([..._handlers, ...middleware]);
     var route = SymlinkRoute<T>('/', piped);
     _routes.add(route);
