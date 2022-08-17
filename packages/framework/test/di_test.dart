@@ -11,8 +11,8 @@ import 'package:test/test.dart';
 
 import 'common.dart';
 
-final String TEXT = 'make your bed';
-final String OVER = 'never';
+final String sampleText = 'make your bed';
+final String sampleOver = 'never';
 
 void main() {
   late Angel app;
@@ -25,7 +25,7 @@ void main() {
     client = http.Client();
 
     // Inject some todos
-    app.container.registerSingleton(Todo(text: TEXT, over: OVER));
+    app.container.registerSingleton(Todo(text: sampleText, over: sampleOver));
     app.container.registerFactory<Future<Foo>>((container) async {
       var req = container.make<RequestContext>();
       var text = await utf8.decoder.bind(req.body!).join();
@@ -79,13 +79,13 @@ void main() {
   test('make in route', () async {
     var response = await client.get(Uri.parse('$url/errands3'));
     var text = await json.decode(response.body) as String?;
-    expect(text, equals(TEXT));
+    expect(text, equals(sampleText));
   });
 
   test('make in controller', () async {
     var response = await client.get(Uri.parse('$url/errands4'));
     var text = await json.decode(response.body) as String?;
-    expect(text, equals(TEXT));
+    expect(text, equals(sampleText));
   });
 
   test('resolve from future in controller', () async {
@@ -103,8 +103,8 @@ void main() {
 void validateTodoSingleton(response) {
   var todo = json.decode(response.body.toString()) as Map;
   expect(todo['id'], equals(null));
-  expect(todo['text'], equals(TEXT));
-  expect(todo['over'], equals(OVER));
+  expect(todo['text'], equals(sampleText));
+  expect(todo['over'], equals(sampleOver));
 }
 
 @Expose('/errands2')

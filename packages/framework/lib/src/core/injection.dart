@@ -169,10 +169,9 @@ InjectionRequest preInject(Function handler, Reflector reflector) {
     var name = parameter.name;
     var type = parameter.type.reflectedType;
 
-    var _parameter = reflector.reflectType(Parameter);
-
     var p = parameter.annotations
-        .firstWhereOrNull((m) => m.type.isAssignableTo(_parameter))
+        .firstWhereOrNull(
+            (m) => m.type.isAssignableTo(reflector.reflectType(Parameter)))
         ?.reflectee as Parameter?;
     //print(p);
     if (p != null) {

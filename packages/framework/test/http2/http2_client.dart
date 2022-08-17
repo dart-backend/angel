@@ -24,7 +24,7 @@ class Http2Client extends BaseClient {
       Header.ascii(
           ':path',
           request.url.path +
-              (request.url.hasQuery ? ('?' + request.url.query) : '')),
+              (request.url.hasQuery ? ('?${request.url.query}') : '')),
       Header.ascii(':scheme', request.url.scheme),
     ];
 

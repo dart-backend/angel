@@ -9,7 +9,7 @@ void prettyLog(LogRecord record) {
 
   if (record.error != null) {
     var err = record.error;
-    print(code.wrap(record.toString() + '\n'));
+    print(code.wrap('$record\n'));
     print(code.wrap(err.toString()));
 
     if (record.stackTrace != null) {
