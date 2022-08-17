@@ -194,4 +194,5 @@ class CachingVirtualDirectory extends VirtualDirectory {
   }
 }
 
+// TODO: Refactor
 enum CacheAccessLevel { PUBLIC, PRIVATE }
