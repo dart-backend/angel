@@ -17,6 +17,7 @@ void main() async {
     // If authentication succeeds, return a User object.
     //
     // Otherwise, return `null`.
+    return null;
   });
 
   app.post('/auth/local', auth.authenticate('local'));
