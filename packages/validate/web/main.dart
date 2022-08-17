@@ -35,9 +35,9 @@ void main() {
 
     var formData = {};
 
-    ['firstName', 'lastName', 'age', 'familySize'].forEach((key) {
+    for (var key in ['firstName', 'lastName', 'age', 'familySize']) {
       formData[key] = (querySelector('[name="$key"]') as InputElement).value;
-    });
+    }
 
     if ($blank!.value!.isNotEmpty) formData['blank'] = $blank!.value;
 

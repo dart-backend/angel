@@ -101,18 +101,16 @@ HookedServiceEventListener validateEvent(Validator validator,
     {String errorMessage = 'Invalid data.'}) {
   return (HookedServiceEvent e) async {
     var app = e.request?.app ?? e.service.app;
-    if (app != null) {
-      var result = await asyncApplyValidator(validator, e.data as Map, app);
+    var result = await asyncApplyValidator(validator, e.data as Map, app);
 
-      if (result.errors.isNotEmpty) {
-        throw AngelHttpException.badRequest(
-            message: errorMessage, errors: result.errors);
-      }
-
-      e.data
-        ..clear()
-        ..addAll(result.data);
+    if (result.errors.isNotEmpty) {
+      throw AngelHttpException.badRequest(
+          message: errorMessage, errors: result.errors);
     }
+
+    e.data
+      ..clear()
+      ..addAll(result.data);
   };
 }
 

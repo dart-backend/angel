@@ -79,7 +79,7 @@ class Validator extends Matcher {
           requiredFields.add(fieldName);
         }
 
-        var _iterable =
+        var tmpIterable =
             schema[keys] is Iterable ? schema[keys] : [schema[keys]];
         var iterable = [];
 
@@ -91,7 +91,7 @@ class Validator extends Matcher {
           }
         }
 
-        _iterable.forEach(_addTo);
+        tmpIterable.forEach(_addTo);
 
         for (var rule in iterable) {
           if (rule is Matcher) {
@@ -271,7 +271,7 @@ class Validator extends Matcher {
       {Map<String, dynamic> defaultValues = const {},
       Map<String, dynamic> customErrorMessages = const {},
       bool overwrite = false}) {
-    var _schema = <String, dynamic>{};
+    var tmpSchema = <String, dynamic>{};
     var child = Validator.empty()
       ..defaultValues.addAll(this.defaultValues)
       ..defaultValues.addAll(defaultValues)
@@ -307,10 +307,10 @@ class Validator extends Matcher {
         if (child.rules.containsKey(fieldName)) child.rules.remove(fieldName);
       }
 
-      _schema[fieldName] = schema[key];
+      tmpSchema[fieldName] = schema[key];
     }
 
-    return child.._importSchema(_schema);
+    return child.._importSchema(tmpSchema);
   }
 
   /// Adds a [rule].
@@ -383,14 +383,14 @@ class ValidationResult {
 /// Occurs when user-provided data is invalid.
 class ValidationException extends AngelHttpException {
   /// A list of errors that resulted in the given data being marked invalid.
-  @override
-  final List<String> errors = [];
+  //@override
+  //final List<String> errors = [];
 
   /// A descriptive message describing the error.
-  @override
-  final String message;
+  //@override
+  //final String message;
 
-  ValidationException(this.message, {Iterable<String> errors = const []})
+  ValidationException(String message, {Iterable<String> errors = const []})
       : super(
             message: message,
             statusCode: 400,
