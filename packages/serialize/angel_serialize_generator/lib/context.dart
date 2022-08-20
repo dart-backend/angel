@@ -42,7 +42,7 @@ class BuildContext {
 
   final ConstantReader annotation;
 
-  final ClassElement clazz;
+  final InterfaceElement clazz;
 
   /// Any annotations to include in the generated class.
   final List<DartObject> includeAnnotations;

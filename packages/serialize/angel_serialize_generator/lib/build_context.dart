@@ -31,7 +31,7 @@ final Map<String, BuildContext> _cache = {};
 
 /// Create a [BuildContext].
 Future<BuildContext?> buildContext(
-    ClassElement clazz,
+    InterfaceElement clazz,
     ConstantReader annotation,
     BuildStep buildStep,
     Resolver resolver,
@@ -62,7 +62,7 @@ Future<BuildContext?> buildContext(
   // Crawl for classes from parent classes.
   void crawlClass(InterfaceType? t) {
     while (t != null) {
-      fields.insertAll(0, t.element.fields);
+      fields.insertAll(0, t.element2.fields);
       t.interfaces.forEach(crawlClass);
       t = t.superclass;
     }

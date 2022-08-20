@@ -77,15 +77,15 @@ class TypeScriptDefinitionBuilder implements Builder {
         }
       } else if (isModelClass(type)) {
         var sourcePath = buildStep.inputId.uri.toString();
-        var targetPath = type.element.source.uri.toString();
+        var targetPath = type.element2.source.uri.toString();
 
         if (!p.equals(sourcePath, targetPath)) {
           var relative = p.relative(targetPath, from: sourcePath);
           String? ref;
 
-          if (type.element.source.uri.scheme == 'asset') {
+          if (type.element2.source.uri.scheme == 'asset') {
             var id =
-                AssetId.resolve(Uri.parse(type.element.source.uri.toString()));
+                AssetId.resolve(Uri.parse(type.element2.source.uri.toString()));
             if (id.package != buildStep.inputId.package) {
               ref = '/// <reference types="${id.package}" />';
             }
@@ -105,9 +105,9 @@ class TypeScriptDefinitionBuilder implements Builder {
         }
 
         var ctx = await buildContext(
-          type.element,
+          type.element2,
           ConstantReader(
-              serializableTypeChecker.firstAnnotationOf(type.element)),
+              serializableTypeChecker.firstAnnotationOf(type.element2)),
           buildStep,
           buildStep.resolver,
           autoSnakeCaseNames,
