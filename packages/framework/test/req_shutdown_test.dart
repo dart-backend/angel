@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'package:angel3_container/mirrors.dart';
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_framework/http.dart';
 import 'package:http/io_client.dart' as http;
