@@ -11,8 +11,8 @@ import 'package:path/src/context.dart';
 
 /// Converts a [DartType] to a [TypeReference].
 TypeReference convertTypeReference(DartType? t) {
-  return new TypeReference((b) {
-    b..symbol = t?.getDisplayString(withNullability: false);
+  return TypeReference((b) {
+    b.symbol = t?.getDisplayString(withNullability: false);
 
     if (t is InterfaceType) {
       b.types.addAll(t.typeArguments.map(convertTypeReference));
@@ -49,6 +49,7 @@ class BuildFileSystem extends FileSystem {
 
   BuildFileSystem(this.reader, this.package);
 
+  @override
   Context get path => _path;
 
   @override
@@ -56,6 +57,7 @@ class BuildFileSystem extends FileSystem {
     return BuildSystemDirectory(this, reader, package, _path.current);
   }
 
+  @override
   set currentDirectory(value) {
     if (value is Directory) {
       _path = Context(current: value.path);
@@ -69,28 +71,30 @@ class BuildFileSystem extends FileSystem {
   @override
   Directory directory(path) {
     late String p;
-    if (path is String)
+    if (path is String) {
       p = path;
-    else if (path is Uri)
-      p = path.toString(); //p.toString();
-    else if (path is FileSystemEntity)
+    } else if (path is Uri) {
+      p = path.toString();
+    } else if (path is FileSystemEntity) {
       p = path.path;
-    else
+    } else {
       throw ArgumentError();
+    }
     return BuildSystemDirectory(this, reader, package, p);
   }
 
   @override
   File file(path) {
     late String p;
-    if (path is String)
+    if (path is String) {
       p = path;
-    else if (path is Uri)
-      p = path.toString(); // p.toString();
-    else if (path is FileSystemEntity)
+    } else if (path is Uri) {
+      p = path.toString();
+    } else if (path is FileSystemEntity) {
       p = path.path;
-    else
+    } else {
       throw ArgumentError();
+    }
     return BuildSystemFile(this, reader, package, p);
   }
 
@@ -125,13 +129,16 @@ class BuildFileSystem extends FileSystem {
 }
 
 class BuildSystemFile extends File {
+  @override
   final BuildFileSystem fileSystem;
   final AssetReader reader;
   final String package;
+  @override
   final String path;
 
   BuildSystemFile(this.fileSystem, this.reader, this.package, this.path);
 
+  @override
   Uri get uri => fileSystem.path.toUri(path);
 
   @override
@@ -147,7 +154,8 @@ class BuildSystemFile extends File {
   File copySync(String newPath) => throw _unsupported();
 
   @override
-  Future<File> create({bool recursive = false}) => throw _unsupported();
+  Future<File> create({bool exclusive = false, bool recursive = false}) =>
+      throw _unsupported();
 
   @override
   void createSync({bool recursive = false}) => throw _unsupported();
@@ -312,9 +320,11 @@ class BuildSystemFile extends File {
 }
 
 class BuildSystemDirectory extends Directory {
+  @override
   final BuildFileSystem fileSystem;
   final AssetReader reader;
   final String package;
+  @override
   final String path;
 
   BuildSystemDirectory(this.fileSystem, this.reader, this.package, this.path);
