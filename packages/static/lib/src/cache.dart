@@ -5,25 +5,13 @@ import 'package:file/file.dart';
 import 'package:logging/logging.dart';
 import 'virtual_directory.dart';
 
-/// Returns a string representation of the given [CacheAccessLevel].
-String accessLevelToString(CacheAccessLevel accessLevel) {
-  switch (accessLevel) {
-    case CacheAccessLevel.PRIVATE:
-      return 'private';
-    case CacheAccessLevel.PUBLIC:
-      return 'public';
-    default:
-      throw ArgumentError('Unrecognized cache access level: $accessLevel');
-  }
-}
-
 /// A `VirtualDirectory` that also sets `Cache-Control` headers.
 class CachingVirtualDirectory extends VirtualDirectory {
   final _log = Logger('CachingVirtualDirectory');
 
   final Map<String, String> _etags = {};
 
-  /// Either `PUBLIC` or `PRIVATE`.
+  /// Either `public` or `private`.
   final CacheAccessLevel accessLevel;
 
   /// If `true`, responses will always have `private, max-age=0` as their `Cache-Control` header.
@@ -41,7 +29,7 @@ class CachingVirtualDirectory extends VirtualDirectory {
   final int maxAge;
 
   CachingVirtualDirectory(Angel app, FileSystem fileSystem,
-      {this.accessLevel = CacheAccessLevel.PUBLIC,
+      {this.accessLevel = CacheAccessLevel.public,
       Directory? source,
       bool debug = false,
       Iterable<String> indexFileNames = const ['index.html'],
@@ -181,7 +169,7 @@ class CachingVirtualDirectory extends VirtualDirectory {
 
   void setCachedHeaders(
       DateTime modified, RequestContext req, ResponseContext res) {
-    var privacy = accessLevelToString(accessLevel);
+    var privacy = accessLevel.level;
 
     res.headers
       ..['cache-control'] = '$privacy, max-age=$maxAge'
@@ -194,5 +182,10 @@ class CachingVirtualDirectory extends VirtualDirectory {
   }
 }
 
-// TODO: Refactor
-enum CacheAccessLevel { PUBLIC, PRIVATE }
+enum CacheAccessLevel {
+  public('public'),
+  private('private');
+
+  const CacheAccessLevel(this.level);
+  final String level;
+}

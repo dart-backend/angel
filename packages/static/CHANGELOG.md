@@ -3,6 +3,8 @@
 ## 7.0.0
 
 * Require Dart >= 2.17
+* [Breaking] Updated `CacheAccessLevel` to enhanced Enum. Changed `PUBLIC` to `public` and `PRIVATE` to `private`.
+* [Breaking] Removed `accessLevelToString` as the functionality is provided by enhanced Enum
 
 ## 6.0.0
 
