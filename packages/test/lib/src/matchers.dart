@@ -91,7 +91,7 @@ class _HasContentType extends Matcher {
     var str = contentType is ContentType
         ? ((contentType as ContentType).value)
         : contentType.toString();
-    return description.add('has content type ' + str);
+    return description.add('has content type $str');
   }
 
   @override
