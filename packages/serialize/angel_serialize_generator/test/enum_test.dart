@@ -9,7 +9,9 @@ WithEnum aWithEnum2 = WithEnum(type: WithEnumType.a);
 void main() {
   test('enum serializes to int', () {
     var w = WithEnum(type: WithEnumType.b).toJson();
-    expect(w[WithEnumFields.type], WithEnumType.values.indexOf(WithEnumType.b));
+    print(w);
+    var enumType = w[WithEnumFields.type] as WithEnumType;
+    expect(enumType.index, WithEnumType.values.indexOf(WithEnumType.b));
   });
 
   test('enum serializes null if null', () {
@@ -24,9 +26,7 @@ void main() {
   });
 
   test('enum deserializes from int', () {
-    var map = {
-      WithEnumFields.type: WithEnumType.values.indexOf(WithEnumType.b)
-    };
+    var map = {WithEnumFields.type: WithEnumType.b};
     var w = WithEnumSerializer.fromMap(map);
     expect(w.type, WithEnumType.b);
   });

@@ -112,13 +112,22 @@ String? dartObjectToString(DartObject v) {
         .accept(DartEmitter(useNullSafetySyntax: true))
         .toString();
   }
-  if (type is InterfaceType && type.element2 is Enum) {
+  if (type is InterfaceType && type.element2 is EnumElement) {
     // Find the index of the enum, then find the member.
     for (var field in type.element2.fields) {
       if (field.isEnumConstant && field.isStatic) {
         var value = type.element2.getField(field.name)!.computeConstantValue();
-        if (value == v) {
-          return '${type.element2.displayName}.${field.name}';
+        if (v is Enum && value is Enum) {
+          var v2 = v as Enum;
+          var value2 = value as Enum;
+
+          if (value2.name == v2.name) {
+            return '${type.element2.displayName}.${field.name}';
+          }
+        } else {
+          if (value == v) {
+            return '${type.element2.displayName}.${field.name}';
+          }
         }
       }
     }

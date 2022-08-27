@@ -3,6 +3,8 @@
 ## 7.0.0
 
 * Require Dart >= 2.17
+* Fixed enum test cases
+* Resolved deprecated methods
 
 ## 6.1.1
 

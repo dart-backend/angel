@@ -81,11 +81,7 @@ class WithEnumSerializer extends Codec<WithEnum, Map> {
   WithEnumDecoder get decoder => const WithEnumDecoder();
   static WithEnum fromMap(Map map) {
     return WithEnum(
-        type: map['type'] is WithEnumType?
-            ? (map['type'] as WithEnumType?) ?? WithEnumType.b
-            : (map['type'] is int
-                ? WithEnumType?.values[map['type'] as int]
-                : WithEnumType.b),
+        type: map['type'] as WithEnumType? ?? WithEnumType.b,
         finalList: map['final_list'] is Iterable
             ? (map['final_list'] as Iterable).cast<int>().toList()
             : [],
@@ -105,8 +101,7 @@ class WithEnumSerializer extends Codec<WithEnum, Map> {
       throw FormatException("Required field [model] cannot be null");
     }
     return {
-      'type':
-          model.type != null ? WithEnumType.values.indexOf(model.type!) : null,
+      'type': model.type,
       'final_list': model.finalList,
       'image_bytes':
           model.imageBytes != null ? base64.encode(model.imageBytes!) : null
