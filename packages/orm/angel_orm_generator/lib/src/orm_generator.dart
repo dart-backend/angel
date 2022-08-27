@@ -299,6 +299,8 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                 } else if (fType.element2?.displayName == 'DateTime') {
                   defaultRef = CodeExpression(
                       Code('DateTime.parse("1970-01-01 00:00:00")'));
+                } else if (fType.isDartCoreList) {
+                  defaultRef = CodeExpression(Code('[]'));
                 }
               }
               expr = refer('fields').property('contains').call([
@@ -881,7 +883,9 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
               .isAssignableFromType(fType)) {
             value = refer('json')
                 .property('decode')
-                .call([value.asA(refer('String'))]).asA(refer('List'));
+                .call([value.asA(refer('String'))])
+                .property('cast')
+                .call([]);
           } else if (floatTypes.contains(ctx.columns[field.name]?.type)) {
             value = refer('double')
                 .property('tryParse')
