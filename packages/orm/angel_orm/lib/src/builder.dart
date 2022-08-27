@@ -106,12 +106,12 @@ class NumericSqlExpressionBuilder<T extends num>
   }
 
   void isIn(Iterable<T> values) {
-    _raw = 'IN (' + values.join(', ') + ')';
+    _raw = 'IN (${values.join(', ')})';
     _hasValue = true;
   }
 
   void isNotIn(Iterable<T> values) {
-    _raw = 'NOT IN (' + values.join(', ') + ')';
+    _raw = 'NOT IN (${values.join(', ')})';
     _hasValue = true;
   }
 }
@@ -173,12 +173,12 @@ class EnumSqlExpressionBuilder<T> extends SqlExpressionBuilder<T> {
   void isNotBetween(T lower, T upper) => throw _unsupported();
 
   void isIn(Iterable<T> values) {
-    _raw = 'IN (' + values.map(_getValue).join(', ') + ')';
+    _raw = 'IN (${values.map(_getValue).join(', ')})';
     _hasValue = true;
   }
 
   void isNotIn(Iterable<T> values) {
-    _raw = 'NOT IN (' + values.map(_getValue).join(', ') + ')';
+    _raw = 'NOT IN (${values.map(_getValue).join(', ')})';
     _hasValue = true;
   }
 }
@@ -237,7 +237,7 @@ class StringSqlExpressionBuilder extends SqlExpressionBuilder<String> {
   /// ```
   void like(String pattern, {String Function(String)? sanitize}) {
     sanitize ??= (s) => pattern;
-    _raw = 'LIKE \'' + sanitize('@$substitution') + '\'';
+    _raw = 'LIKE \'${sanitize('@$substitution')}\'';
     //query.substitutionValues[substitution] = pattern;
     _hasValue = true;
     _value = null;
@@ -268,13 +268,11 @@ class StringSqlExpressionBuilder extends SqlExpressionBuilder<String> {
   }
 
   String _in(Iterable<String> values) {
-    return 'IN (' +
-        values.map((v) {
-          var name = query.reserveName('${columnName}_in_value');
-          query.substitutionValues[name] = v;
-          return '@$name';
-        }).join(', ') +
-        ')';
+    return 'IN (${values.map((v) {
+      var name = query.reserveName('${columnName}_in_value');
+      query.substitutionValues[name] = v;
+      return '@$name';
+    }).join(', ')})';
   }
 
   void isIn(Iterable<String> values) {
@@ -283,7 +281,7 @@ class StringSqlExpressionBuilder extends SqlExpressionBuilder<String> {
   }
 
   void isNotIn(Iterable<String> values) {
-    _raw = 'NOT ' + _in(values);
+    _raw = 'NOT ${_in(values)}';
     _hasValue = true;
   }
 }
@@ -374,9 +372,9 @@ class DateTimeSqlExpressionBuilder extends SqlExpressionBuilder<DateTime> {
       _minute?.hasValue == true ||
       _second?.hasValue == true;
 
-  bool _change(String _op, DateTime dt, bool time) {
+  bool _change(String op, DateTime dt, bool time) {
     var dateString = time ? dateYmdHms.format(dt) : dateYmd.format(dt);
-    _raw = '$columnName $_op \'$dateString\'';
+    _raw = '$columnName $op \'$dateString\'';
     return true;
   }
 
@@ -409,15 +407,13 @@ class DateTimeSqlExpressionBuilder extends SqlExpressionBuilder<DateTime> {
   }
 
   void isIn(Iterable<DateTime> values) {
-    _raw = '$columnName IN (' +
-        values.map(dateYmdHms.format).map((s) => '$s').join(', ') +
-        ')';
+    _raw =
+        '$columnName IN (${values.map(dateYmdHms.format).map((s) => s).join(', ')})';
   }
 
   void isNotIn(Iterable<DateTime> values) {
-    _raw = '$columnName NOT IN (' +
-        values.map(dateYmdHms.format).map((s) => '$s').join(', ') +
-        ')';
+    _raw =
+        '$columnName NOT IN (${values.map(dateYmdHms.format).map((s) => s).join(', ')})';
   }
 
   void isBetween(DateTime lower, DateTime upper) {
@@ -624,7 +620,7 @@ class JsonSqlExpressionBuilderProperty {
 
     var r = builder._raw;
     if (r != null) {
-      builder._raw = r + '$nameString IS NOT NULL';
+      builder._raw = '$r$nameString IS NOT NULL';
     } else {
       builder._raw = '$nameString IS NOT NULL';
     }
@@ -637,7 +633,7 @@ class JsonSqlExpressionBuilderProperty {
 
     var r = builder._raw;
     if (r != null) {
-      builder._raw = r + '$nameString IS NULL';
+      builder._raw = '$r$nameString IS NULL';
     } else {
       builder._raw = '$nameString IS NULL';
     }

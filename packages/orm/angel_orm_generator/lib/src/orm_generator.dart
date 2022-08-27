@@ -266,14 +266,15 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                 //    .property('tryParse')
                 //    .call([expr.property('toString').call([])]);
                 expr = refer('mapToDouble').call([expr]);
-              } else if (fType is InterfaceType && fType.element.isEnum) {
+              } else if (fType is InterfaceType &&
+                  fType.element2 is EnumElement) {
                 var isNull = expr.equalTo(literalNull);
                 expr = isNull.conditional(literalNull,
                     type.property('values').index(expr.asA(refer('int'))));
               } else if (fType.isDartCoreBool) {
                 // Generated Code: mapToBool(row[i])
                 expr = refer('mapToBool').call([expr]);
-              } else if (fType.element?.displayName == 'DateTime') {
+              } else if (fType.element2?.displayName == 'DateTime') {
                 // Generated Code: mapToDateTime(row[i])
                 if (fType.nullabilitySuffix == NullabilitySuffix.question) {
                   expr = refer('mapToNullableDateTime').call([expr]);
@@ -295,7 +296,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                   defaultRef = CodeExpression(Code('0.0'));
                 } else if (fType.isDartCoreInt || fType.isDartCoreNum) {
                   defaultRef = CodeExpression(Code('0'));
-                } else if (fType.element?.displayName == 'DateTime') {
+                } else if (fType.element2?.displayName == 'DateTime') {
                   defaultRef = CodeExpression(
                       Code('DateTime.parse("1970-01-01 00:00:00")'));
                 }
@@ -738,7 +739,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
           builderType = TypeReference((b) => b
             ..symbol = 'NumericSqlExpressionBuilder'
             ..types.add(refer(typeName)));
-        } else if (type is InterfaceType && type.element.isEnum) {
+        } else if (type is InterfaceType && type.element2 is EnumElement) {
           builderType = TypeReference((b) => b
             ..symbol = 'EnumSqlExpressionBuilder'
             ..types.add(convertTypeReference(type)));
@@ -872,7 +873,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
         clazz.methods.add(Method((b) {
           var value = refer('values').index(literalString(name!));
 
-          if (fType is InterfaceType && fType.element.isEnum) {
+          if (fType is InterfaceType && fType.element2 is EnumElement) {
             var asInt = value.asA(refer('int'));
             var t = convertTypeReference(fType);
             value = t.property('values').index(asInt);
@@ -900,7 +901,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
         clazz.methods.add(Method((b) {
           Expression value = refer('value');
 
-          if (fType is InterfaceType && fType.element.isEnum) {
+          if (fType is InterfaceType && fType.element2 is EnumElement) {
             value = CodeExpression(Code('value?.index'));
           } else if (const TypeChecker.fromRuntime(List)
               .isAssignableFromType(fType)) {
