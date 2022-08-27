@@ -222,7 +222,8 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
                       ConstantReader(defaultValue).read('value').stringValue;
                   defaultExpr =
                       refer('RawSql').constInstance([literalString(value)]);
-                } else if (type is InterfaceType && type.element.isEnum) {
+                } else if (type is InterfaceType &&
+                    type.element2 is EnumElement) {
                   // Default to enum index.
                   try {
                     var index =

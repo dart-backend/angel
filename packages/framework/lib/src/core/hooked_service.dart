@@ -345,7 +345,7 @@ class HookedService<Id, Data, T extends Service<Id, Data>>
             .then((after) => after.result as Data);
       }
 
-      return inner.create(before.data!, localParams).then((result) {
+      return inner.create(before.data as Data, localParams).then((result) {
         return afterCreated
             ._emit(HookedServiceEvent(true, _getRequest(params),
                 _getResponse(params), inner, HookedServiceEvent.created,
@@ -374,7 +374,7 @@ class HookedService<Id, Data, T extends Service<Id, Data>>
             .then((after) => after.result as Data);
       }
 
-      return inner.modify(id, before.data!, localParams).then((result) {
+      return inner.modify(id, before.data as Data, localParams).then((result) {
         return afterModified
             ._emit(HookedServiceEvent(true, _getRequest(params),
                 _getResponse(params), inner, HookedServiceEvent.created,
@@ -403,7 +403,7 @@ class HookedService<Id, Data, T extends Service<Id, Data>>
             .then((after) => after.result as Data);
       }
 
-      return inner.update(id, before.data!, localParams).then((result) {
+      return inner.update(id, before.data as Data, localParams).then((result) {
         return afterUpdated
             ._emit(HookedServiceEvent(true, _getRequest(params),
                 _getResponse(params), inner, HookedServiceEvent.updated,
@@ -546,6 +546,7 @@ class HookedServiceEvent<Id, Data, T extends Service<Id, Data>> {
   HookedServiceEvent(this._isAfter, this._request, this._response, this.service,
       this._eventName,
       {Id? id, this.data, Map<String, dynamic>? params, this.result}) {
+    //_data = data;
     _id = id;
     _params = params ?? {};
   }

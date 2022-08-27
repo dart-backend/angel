@@ -39,7 +39,7 @@ class LocalAuthStrategy<User> extends AuthStrategy<User> {
   @override
   Future<User?> authenticate(RequestContext req, ResponseContext res,
       [AngelAuthOptions? options]) async {
-    var _options = options ?? AngelAuthOptions();
+    var localOptions = options ?? AngelAuthOptions();
     User? verificationResult;
 
     if (allowBasic) {
@@ -88,9 +88,9 @@ class LocalAuthStrategy<User> extends AuthStrategy<User> {
 
     if (verificationResult == null ||
         (verificationResult is Map && verificationResult.isEmpty)) {
-      if (_options.failureRedirect != null &&
-          _options.failureRedirect!.isNotEmpty) {
-        await res.redirect(_options.failureRedirect, code: 401);
+      if (localOptions.failureRedirect != null &&
+          localOptions.failureRedirect!.isNotEmpty) {
+        await res.redirect(localOptions.failureRedirect, code: 401);
         return null;
       }
 

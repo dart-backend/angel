@@ -2,7 +2,6 @@ import 'dart:async';
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_test/angel3_test.dart';
 import 'package:angel3_oauth2/angel3_oauth2.dart';
-import 'package:angel3_validate/angel3_validate.dart';
 import 'package:test/test.dart';
 import 'common.dart';
 

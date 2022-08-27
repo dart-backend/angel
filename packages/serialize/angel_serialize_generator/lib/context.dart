@@ -42,7 +42,7 @@ class BuildContext {
 
   final ConstantReader annotation;
 
-  final ClassElement clazz;
+  final InterfaceElement clazz;
 
   /// Any annotations to include in the generated class.
   final List<DartObject> includeAnnotations;
@@ -79,7 +79,13 @@ class BuildContext {
       fields.firstWhere((f) => f.name == primaryKeyName);
 
   bool get importsPackageMeta {
-    return clazz.library.imports.any((i) => i.uri == 'package:meta/meta.dart');
+    return clazz.library.libraryImports.any((element) {
+      var uri = element.uri;
+      if (uri is DirectiveUriWithLibrary) {
+        return uri.relativeUriString == 'package:meta/meta.dart';
+      }
+      return false;
+    });
   }
 
   /// Get the aliased name (if one is defined) for a field.

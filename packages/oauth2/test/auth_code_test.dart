@@ -100,7 +100,7 @@ void main() {
 
       var authCode = json.decode(response.body)['code'].toString();
       var client = await grant.handleAuthorizationCode(authCode);
-      expect(client.credentials.accessToken, authCode + '_access');
+      expect(client.credentials.accessToken, '${authCode}_access');
     });
 
     test('can send refresh token', () async {
@@ -111,9 +111,9 @@ void main() {
 
       var authCode = json.decode(response.body)['code'].toString();
       var client = await grant.handleAuthorizationCode(authCode);
-      expect(client.credentials.accessToken, authCode + '_access');
+      expect(client.credentials.accessToken, '${authCode}_access');
       expect(client.credentials.canRefresh, isTrue);
-      expect(client.credentials.refreshToken, authCode + '_refresh');
+      expect(client.credentials.refreshToken, '${authCode}_refresh');
     });
   });
 }

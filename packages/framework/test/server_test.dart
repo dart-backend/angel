@@ -127,7 +127,7 @@ void main() {
 
     group('getHandlerResult', () {
       test('return request handler', () async {
-        var handler = (req, res) => (req, res) async {
+        handler(req, res) => (req, res) async {
               return 2;
             };
         var r = await app.getHandlerResult(handler, req, res);
@@ -142,12 +142,12 @@ void main() {
 
     group('executeHandler', () {
       test('return Stream', () async {
-        var handler = (req, res) => Stream.fromIterable([2, 3]);
+        handler(req, res) => Stream.fromIterable([2, 3]);
         expect(await app.executeHandler(handler, req, res), isFalse);
       });
 
       test('end response', () async {
-        var handler = (req, ResponseContext res) => res.close();
+        handler(req, ResponseContext res) => res.close();
         expect(await app.executeHandler(handler, req, res), isFalse);
       });
     });

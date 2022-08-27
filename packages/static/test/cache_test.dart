@@ -5,7 +5,6 @@ import 'package:angel3_static/angel3_static.dart';
 import 'package:file/local.dart';
 import 'package:http/http.dart' show Client;
 import 'package:logging/logging.dart';
-import 'package:matcher/matcher.dart';
 import 'package:test/test.dart';
 
 void main() {

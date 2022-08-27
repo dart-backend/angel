@@ -86,7 +86,7 @@ class AuthToken {
 
     // var headerString = decodeBase64(split[0]);
     var payloadString = decodeBase64(split[1]);
-    var data = split[0] + '.' + split[1];
+    var data = '${split[0]}.${split[1]}';
     var signature = base64Url.encode(hmac.convert(data.codeUnits).bytes);
 
     if (signature != split[2]) {
@@ -102,9 +102,9 @@ class AuthToken {
   String serialize(Hmac hmac) {
     var headerString = base64Url.encode(json.encode(_header).codeUnits);
     var payloadString = base64Url.encode(json.encode(toJson()).codeUnits);
-    var data = headerString + '.' + payloadString;
+    var data = '$headerString.$payloadString';
     var signature = hmac.convert(data.codeUnits).bytes;
-    return data + '.' + base64Url.encode(signature);
+    return '$data.${base64Url.encode(signature)}';
   }
 
   Map<String, dynamic> toJson() {

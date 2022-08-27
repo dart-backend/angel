@@ -1,5 +1,9 @@
-# 2.0.0
-* Migrated to support Dart SDK 2.12.x NNBD
+# Change Log
 
-# 1.0.0
+## 2.0.0
+
+* Migrated to support Dart >= 2.12 NNBD
+
+## 1.0.0
+
 * Initial checkin

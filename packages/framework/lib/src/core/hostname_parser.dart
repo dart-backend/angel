@@ -12,7 +12,7 @@ class HostnameSyntaxParser {
   FormatException _formatExc(String message) {
     var span = _scanner.lastSpan ?? _scanner.emptySpan;
     return FormatException(
-        '${span.start.toolString}: $message\n' + span.highlight(color: true));
+        '${span.start.toolString}: $message\n${span.highlight(color: true)}');
   }
 
   RegExp parse() {
@@ -38,7 +38,7 @@ class HostnameSyntaxParser {
           if (_scanner.scan('.')) {
             var subPart = _parseHostnamePart(shouldThrow: false);
             while (subPart.isNotEmpty) {
-              part += '\\.' + subPart;
+              part += '\\.$subPart';
               if (_scanner.scan('.')) {
                 subPart = _parseHostnamePart(shouldThrow: false);
               } else {

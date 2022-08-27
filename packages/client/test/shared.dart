@@ -15,7 +15,7 @@ class Postcard extends Model {
 
   @override
   bool operator ==(other) {
-    if (!(other is Postcard)) return false;
+    if (other is! Postcard) return false;
 
     return id == other.id &&
         location == other.location &&

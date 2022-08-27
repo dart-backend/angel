@@ -1,5 +1,9 @@
 # Change Log
 
+## 7.0.0
+
+* Require Dart >= 2.17
+
 ## 6.0.0
 
 * Fixed temporal data type
@@ -19,7 +23,7 @@
 
 ## 6.0.0-beta.1
 
-* Updated to SDK 2.16.x
+* Require Dart >= 2.16
 * Added support for MariaDB 10.2.x with `mysql1` driver
 * Added support for MySQL 8.x.x with `mysql_client` driver
 
@@ -49,7 +53,7 @@
 
 ## 2.0.0-beta.1
 
-* Migrated to support Dart SDK 2.12.x NNBD
+* Migrated to support Dart >= 2.12 NNBD
 
 ## 1.0.0
 

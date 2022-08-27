@@ -6,7 +6,7 @@ import 'package:angel3_oauth2/angel3_oauth2.dart';
 void main() async {
   var app = Angel();
   var oauth2 = _ExampleAuthorizationServer();
-  var _rgxBearer = RegExp(r'^[Bb]earer ([^\n\s]+)$');
+  var rgxBearer = RegExp(r'^[Bb]earer ([^\n\s]+)$');
 
   app.group('/auth', (router) {
     router
@@ -17,7 +17,7 @@ void main() async {
   // Assume that all other requests must be authenticated...
   app.fallback((req, res) {
     var authToken =
-        req.headers!.value('authorization')?.replaceAll(_rgxBearer, '').trim();
+        req.headers!.value('authorization')?.replaceAll(rgxBearer, '').trim();
 
     if (authToken == null) {
       throw AngelHttpException.forbidden();

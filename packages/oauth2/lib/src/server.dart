@@ -234,7 +234,7 @@ abstract class AuthorizationServer<Client, User> {
       if (buf.isNotEmpty) buf.write('&');
       return buf
         ..write(
-          '$k=' + Uri.encodeComponent(queryParameters[k]!),
+          '$k=${Uri.encodeComponent(queryParameters[k]!)}',
         );
     }).toString();
 

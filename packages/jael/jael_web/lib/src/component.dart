@@ -9,7 +9,5 @@ abstract class Component<State> extends DomNode {
 
   void beforeDestroy() {}
 
-  void setState(State newState) {
-    // TODO:
-  }
+  void setState(State newState) {}
 }

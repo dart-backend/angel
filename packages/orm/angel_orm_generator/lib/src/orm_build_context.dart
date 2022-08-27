@@ -58,7 +58,7 @@ FieldElement? findPrimaryFieldInList(
 
 Future<OrmBuildContext?> buildOrmContext(
     Map<String, OrmBuildContext> cache,
-    ClassElement clazz,
+    InterfaceElement clazz,
     ConstantReader annotation,
     BuildStep buildStep,
     Resolver resolver,
@@ -73,7 +73,7 @@ Future<OrmBuildContext?> buildOrmContext(
               .firstAnnotationOf(clazz)) !=
       null) {
     if (clazz.supertype != null) {
-      clazz = clazz.supertype!.element;
+      clazz = clazz.supertype!.element2;
     }
   }
 
@@ -171,7 +171,7 @@ Future<OrmBuildContext?> buildOrmContext(
             }
 
             var modelType = firstModelAncestor(refType) ?? refType;
-            var modelTypeElement = modelType.element;
+            var modelTypeElement = modelType.element2;
 
             if (modelTypeElement != null) {
               foreign = await buildOrmContext(
@@ -187,7 +187,7 @@ Future<OrmBuildContext?> buildOrmContext(
               if (through != null && through is InterfaceType) {
                 throughContext = await buildOrmContext(
                     cache,
-                    through.element,
+                    through.element2,
                     ConstantReader(const TypeChecker.fromRuntime(Serializable)
                         .firstAnnotationOf(modelTypeElement)),
                     buildStep,
@@ -221,15 +221,15 @@ Future<OrmBuildContext?> buildOrmContext(
       var rcc = ReCase(field.name);
 
       String keyName(OrmBuildContext ctx, String missing) {
-        var _keyName =
+        var localKeyName =
             findPrimaryFieldInList(ctx, ctx.buildContext.fields)?.name;
         // print(
         //     'Keyname for ${buildCtx.originalClassName}.${field.name} maybe = $_keyName??');
-        if (_keyName == null) {
+        if (localKeyName == null) {
           throw '${ctx.buildContext.originalClassName} has no defined primary key, '
               'so the relation on field ${buildCtx.originalClassName}.${field.name} must define a $missing.';
         } else {
-          return _keyName;
+          return localKeyName;
         }
       }
 
@@ -252,8 +252,9 @@ Future<OrmBuildContext?> buildOrmContext(
         // Unfortunately, the analyzer library provides little to nothing
         // in the way of reading enums from source, so here's a hack.
         var joinTypeType = (joinTypeRdr.type as InterfaceType);
-        var enumFields =
-            joinTypeType.element.fields.where((f) => f.isEnumConstant).toList();
+        var enumFields = joinTypeType.element2.fields
+            .where((f) => f.isEnumConstant)
+            .toList();
 
         for (var i = 0; i < enumFields.length; i++) {
           if (enumFields[i].computeConstantValue() == joinTypeRdr) {
@@ -293,7 +294,7 @@ Future<OrmBuildContext?> buildOrmContext(
             if (foreign != null) {
               if (isSpecialId(foreign, foreignField)) {
                 // Use integer
-                type = field.type.element?.library?.typeProvider.intType
+                type = field.type.element2?.library?.typeProvider.intType
                     as DartType;
 
                 //type = field.type.element?.context.typeProvider.intType;
@@ -362,7 +363,7 @@ ColumnType inferColumnType(DartType type) {
   if (const TypeChecker.fromRuntime(List).isAssignableFromType(type)) {
     return ColumnType.jsonb;
   }
-  if (type is InterfaceType && type.element.isEnum) {
+  if (type is InterfaceType && type.element2 is EnumElement) {
     return ColumnType.int;
   }
 

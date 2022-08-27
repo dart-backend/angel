@@ -234,28 +234,27 @@ class AngelWebSocket {
 
     try {
       if (actionName == indexAction) {
-        socket.send(
-            '${split[0]}::' + indexedEvent, await service.index(params));
+        socket.send('${split[0]}::$indexedEvent', await service.index(params));
         return null;
       } else if (actionName == readAction) {
         socket.send(
-            '${split[0]}::' + readEvent, await service.read(action.id, params));
+            '${split[0]}::$readEvent', await service.read(action.id, params));
         return null;
       } else if (actionName == createAction) {
         return WebSocketEvent(
-            eventName: '${split[0]}::' + createdEvent,
+            eventName: '${split[0]}::$createdEvent',
             data: await service.create(action.data, params));
       } else if (actionName == modifyAction) {
         return WebSocketEvent(
-            eventName: '${split[0]}::' + modifiedEvent,
+            eventName: '${split[0]}::$modifiedEvent',
             data: await service.modify(action.id, action.data, params));
       } else if (actionName == updateAction) {
         return WebSocketEvent(
-            eventName: '${split[0]}::' + updatedEvent,
+            eventName: '${split[0]}::$updatedEvent',
             data: await service.update(action.id, action.data, params));
       } else if (actionName == removeAction) {
         return WebSocketEvent(
-            eventName: '${split[0]}::' + removedEvent,
+            eventName: '${split[0]}::$removedEvent',
             data: await service.remove(action.id, params));
       } else {
         socket.sendError(AngelHttpException.methodNotAllowed(

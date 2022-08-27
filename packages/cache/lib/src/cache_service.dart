@@ -120,7 +120,7 @@ class CacheService<Id, Data> extends Service<Id, Data> {
 }
 
 class _CachedItem<Data> {
-  final params;
+  final dynamic params;
   final DateTime timestamp;
   final Data? data;
 

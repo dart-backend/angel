@@ -388,7 +388,7 @@ class Angel extends Routable {
   }
 
   static const String _reflectionErrorMessage =
-      ThrowingReflector.defaultErrorMessage + ' ' + _reflectionInfo;
+      '${ThrowingReflector.defaultErrorMessage} $_reflectionInfo';
 
   static const String _reflectionInfo =
       'Features like controllers, constructor dependency injection, and `ioc` require reflection, '
@@ -412,8 +412,7 @@ class Angel extends Routable {
 
     if (reflector is EmptyReflector || reflector is ThrowingReflector) {
       var msg =
-          'No `reflector` was passed to the Angel constructor, so reflection will not be available.\n' +
-              _reflectionInfo;
+          'No `reflector` was passed to the Angel constructor, so reflection will not be available.\n$_reflectionInfo';
       this.logger.warning(msg);
     }
 

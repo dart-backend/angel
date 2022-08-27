@@ -40,7 +40,7 @@ Builder typescriptDefinitionBuilder(_) {
 /// Converts a [DartType] to a [TypeReference].
 TypeReference convertTypeReference(DartType t, {bool forceNullable = false}) {
   return TypeReference((b) {
-    b.symbol = t.element?.displayName;
+    b.symbol = t.element2?.displayName;
 
     // Generate nullable type
     if (t.nullabilitySuffix == NullabilitySuffix.question || forceNullable) {
@@ -59,7 +59,7 @@ Expression convertObject(DartObject o) {
   if (o.toIntValue() != null) return literalNum(o.toIntValue()!);
   if (o.toDoubleValue() != null) return literalNum(o.toDoubleValue()!);
   if (o.toSymbolValue() != null) {
-    return CodeExpression(Code('#' + o.toSymbolValue()!));
+    return CodeExpression(Code('#${o.toSymbolValue()!}'));
   }
   if (o.toStringValue() != null) return literalString(o.toStringValue()!);
   if (o.toTypeValue() != null) return convertTypeReference(o.toTypeValue()!);
@@ -92,37 +92,42 @@ String? dartObjectToString(DartObject v) {
     return v.toDoubleValue().toString();
   }
   if (v.toSymbolValue() != null) {
-    return '#' + v.toSymbolValue()!;
+    return '#${v.toSymbolValue()!}';
   }
   if (v.toTypeValue() != null) {
     return v.toTypeValue()!.getDisplayString(withNullability: true);
   }
   if (v.toListValue() != null) {
-    return 'const [' +
-        v.toListValue()!.map(dartObjectToString).join(', ') +
-        ']';
+    return 'const [${v.toListValue()!.map(dartObjectToString).join(', ')}]';
   }
   if (v.toMapValue() != null) {
-    return 'const {' +
-        v.toMapValue()!.entries.map((entry) {
-          var k = dartObjectToString(entry.key!);
-          var v = dartObjectToString(entry.value!);
-          return '$k: $v';
-        }).join(', ') +
-        '}';
+    return 'const {${v.toMapValue()!.entries.map((entry) {
+      var k = dartObjectToString(entry.key!);
+      var v = dartObjectToString(entry.value!);
+      return '$k: $v';
+    }).join(', ')}}';
   }
   if (v.toStringValue() != null) {
     return literalString(v.toStringValue()!)
         .accept(DartEmitter(useNullSafetySyntax: true))
         .toString();
   }
-  if (type is InterfaceType && type.element.isEnum) {
+  if (type is InterfaceType && type.element2 is EnumElement) {
     // Find the index of the enum, then find the member.
-    for (var field in type.element.fields) {
+    for (var field in type.element2.fields) {
       if (field.isEnumConstant && field.isStatic) {
-        var value = type.element.getField(field.name)!.computeConstantValue();
-        if (value == v) {
-          return '${type.element.displayName}.${field.name}';
+        var value = type.element2.getField(field.name)!.computeConstantValue();
+        if (v is Enum && value is Enum) {
+          var v2 = v as Enum;
+          var value2 = value as Enum;
+
+          if (value2.name == v2.name) {
+            return '${type.element2.displayName}.${field.name}';
+          }
+        } else {
+          if (value == v) {
+            return '${type.element2.displayName}.${field.name}';
+          }
         }
       }
     }
@@ -135,11 +140,11 @@ String? dartObjectToString(DartObject v) {
 bool isModelClass(DartType? t) {
   if (t == null) return false;
 
-  if (serializableTypeChecker.hasAnnotationOf(t.element!)) {
+  if (serializableTypeChecker.hasAnnotationOf(t.element2!)) {
     return true;
   }
 
-  if (generatedSerializableTypeChecker.hasAnnotationOf(t.element!)) {
+  if (generatedSerializableTypeChecker.hasAnnotationOf(t.element2!)) {
     return true;
   }
 
@@ -172,7 +177,7 @@ bool isListOrMapType(DartType t) {
 
 bool isEnumType(DartType t) {
   if (t is InterfaceType) {
-    return t.element.isEnum;
+    return t.element2 is Enum;
   }
 
   return false;
@@ -199,13 +204,13 @@ bool isAssignableToModel(DartType type) =>
 String? typeToString(DartType type) {
   if (type is InterfaceType) {
     if (type.typeArguments.isEmpty) {
-      return type.element.displayName;
+      return type.element2.displayName;
     }
 
-    var name = type.element.displayName;
+    var name = type.element2.displayName;
 
-    return name + '<' + type.typeArguments.map(typeToString).join(', ') + '>';
+    return '$name<${type.typeArguments.map(typeToString).join(', ')}>';
   } else {
-    return type.element?.displayName;
+    return type.element2?.displayName;
   }
 }

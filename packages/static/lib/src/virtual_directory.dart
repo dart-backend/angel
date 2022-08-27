@@ -116,7 +116,7 @@ class VirtualDirectory {
     if (_prefix.isNotEmpty) {
       // Only replace the *first* incidence
       // Resolve: https://github.com/angel-dart/angel/issues/41
-      path = path.replaceFirst(RegExp('^' + _pathify(_prefix)), '');
+      path = path.replaceFirst(RegExp('^${_pathify(_prefix)}'), '');
     }
 
     if (path.isEmpty) path = '.';
@@ -234,7 +234,7 @@ class VirtualDirectory {
         var href = stub;
 
         if (relative.isNotEmpty) {
-          href = '/' + relative + '/' + stub;
+          href = '/$relative/$stub';
         }
 
         if (entity is Directory) {
@@ -370,7 +370,7 @@ class VirtualDirectory {
                 'application/octet-stream');
         res.statusCode = 206;
         res.headers['content-length'] = len.toString();
-        res.headers['content-range'] = 'bytes ' + item.toContentRange(total);
+        res.headers['content-range'] = 'bytes ${item.toContentRange(total)}';
         await stream.cast<List<int>>().pipe(res);
         return false;
       } else {

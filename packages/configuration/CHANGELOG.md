@@ -1,8 +1,13 @@
 # Change Log
 
+## 7.0.0
+
+* Require Dart >= 2.17
+* Updated `dotenv` to 4.0.x
+
 ## 6.0.0
 
-* Updated to SDK 2.16.x
+* Require Dart >= 2.16
 
 ## 5.0.0
 
@@ -21,11 +26,11 @@
 
 ## 4.0.0
 
-* Migrated to support Dart SDK 2.12.x NNBD
+* Migrated to support Dart >= 2.12 NNBD
 
 ## 3.0.0
 
-* Migrated to work with Dart SDK 2.12.x Non NNBD
+* Migrated to work with Dart >= 2.12 Non NNBD
 
 ## 2.2.0
 

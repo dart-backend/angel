@@ -16,7 +16,7 @@ void main() {
     client = http.IOClient();
     hierarchicalLoggingEnabled = true;
 
-    logger = Logger.detached('404_hole')
+    logger = Logger.detached('http_404_hole')
       ..level = Level.ALL
       ..onRecord.listen(prettyLog);
 

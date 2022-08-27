@@ -1,22 +1,48 @@
 name: angel3_security
-version: 6.0.1
+version: 7.0.0
 description: Angel3 infrastructure for improving security, rate limiting, and more
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dukefirehawk/angel/tree/master/packages/security
 environment: 
-  sdk: '>=2.16.0 <3.0.0'
+  sdk: '>=2.17.0 <3.0.0'
 dependencies: 
-  angel3_framework: ^6.0.0
+  angel3_framework: ^7.0.0
   crypto: ^3.0.1
 dev_dependencies: 
-  angel3_auth: ^6.0.0
-  angel3_production: ^6.0.0
-  angel3_redis: ^6.0.0
-  angel3_test: ^6.0.0
-  angel3_validate: ^6.0.0
-  belatuk_pretty_logging: ^4.0.0
+  angel3_auth: ^7.0.0
+  angel3_production: ^7.0.0
+  angel3_redis: ^7.0.0
+  angel3_test: ^7.0.0
+  angel3_validate: ^7.0.0
+  belatuk_pretty_logging: ^5.0.0
   test: ^1.21.0
-  lints: ^1.0.0
-#dependency_overrides:
-#  angel3_auth:
-#    path: ../auth
+  logging: ^1.0.0
+  resp_client: ^1.2.0
+  lints: ^2.0.0
+dependency_overrides:
+  angel3_production:
+    path: ../production
+  angel3_redis:
+    path: ../redis
+  angel3_test:
+    path: ../test
+  angel3_container:
+    path: ../container/angel_container
+  angel3_framework:
+    path: ../framework
+  angel3_http_exception:
+    path: ../http_exception
+  angel3_model:
+    path: ../model
+  angel3_route:
+    path: ../route
+  angel3_mock_request:
+    path: ../mock_request
+  angel3_auth:
+    path: ../auth 
+  angel3_client:
+    path: ../client
+  angel3_websocket:
+    path: ../websocket
+  angel3_validate:
+    path: ../validate

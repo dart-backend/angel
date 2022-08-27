@@ -6,7 +6,7 @@ import 'package:angel3_framework/http.dart';
 import 'package:angel3_mock_request/angel3_mock_request.dart';
 import 'package:test/test.dart';
 
-final Uri ENDPOINT = Uri.parse('http://example.com/accept');
+final Uri endpoint = Uri.parse('http://example.com/accept');
 
 void main() {
   test('no content type', () async {
@@ -61,7 +61,7 @@ Future<RequestContext> acceptContentTypes(
     [Iterable<String> contentTypes = const []]) {
   var headerString =
       contentTypes.isEmpty ? ContentType.text : contentTypes.join(',');
-  var rq = MockHttpRequest('GET', ENDPOINT, persistentConnection: false);
+  var rq = MockHttpRequest('GET', endpoint, persistentConnection: false);
   rq.headers.set('accept', headerString);
   rq.close();
   var app = Angel(reflector: MirrorsReflector());

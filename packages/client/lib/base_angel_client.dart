@@ -1,10 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
-import 'package:http/src/base_client.dart' as http;
-import 'package:http/src/base_request.dart' as http;
-import 'package:http/src/request.dart' as http;
-import 'package:http/src/response.dart' as http;
-import 'package:http/src/streamed_response.dart' as http;
+import 'package:http/http.dart';
 import 'package:path/path.dart';
 import 'package:logging/logging.dart';
 import 'angel3_client.dart';
@@ -19,10 +15,10 @@ Map<String, String> _buildQuery(Map<String, dynamic>? params) {
   return params?.map((k, v) => MapEntry(k, v.toString())) ?? {};
 }
 
-bool _invalid(http.Response response) =>
+bool _invalid(Response response) =>
     response.statusCode < 200 || response.statusCode >= 300;
 
-AngelHttpException failure(http.Response response,
+AngelHttpException failure(Response response,
     {error, String? message, StackTrace? stack}) {
   try {
     var v = json.decode(response.body);
@@ -50,7 +46,7 @@ abstract class BaseAngelClient extends Angel {
   final StreamController<AngelAuthResult> _onAuthenticated =
       StreamController<AngelAuthResult>();
   final List<Service> _services = [];
-  final http.BaseClient client;
+  final BaseClient client;
 
   final Context _p = Context(style: Style.url);
 
@@ -71,7 +67,7 @@ abstract class BaseAngelClient extends Angel {
     //var p1 = p.joinAll(segments).replaceAll('\\', '/');
 
     var url = baseUrl.replace(path: _p.joinAll(segments));
-    http.Response response;
+    Response response;
 
     if (credentials != null) {
       response = await post(url,
@@ -121,7 +117,7 @@ abstract class BaseAngelClient extends Angel {
   }
 
   @override
-  Future<http.StreamedResponse> send(http.BaseRequest request) async {
+  Future<StreamedResponse> send(BaseRequest request) async {
     if (authToken?.isNotEmpty == true) {
       request.headers['authorization'] ??= 'Bearer $authToken';
     }
@@ -129,11 +125,10 @@ abstract class BaseAngelClient extends Angel {
   }
 
   /// Sends a non-streaming [Request] and returns a non-streaming [Response].
-  Future<http.Response> sendUnstreamed(
+  Future<Response> sendUnstreamed(
       String method, url, Map<String, String>? headers,
       [body, Encoding? encoding]) async {
-    var request =
-        http.Request(method, url is Uri ? url : Uri.parse(url.toString()));
+    var request = Request(method, url is Uri ? url : Uri.parse(url.toString()));
 
     if (headers != null) request.headers.addAll(headers);
 
@@ -153,7 +148,7 @@ abstract class BaseAngelClient extends Angel {
       }
     }
 
-    return http.Response.fromStream(await send(request));
+    return Response.fromStream(await send(request));
   }
 
   @override
@@ -173,34 +168,34 @@ abstract class BaseAngelClient extends Angel {
   }
 
   //@override
-  //Future<http.Response> delete(url, {Map<String, String> headers}) async {
+  //Future<Response> delete(url, {Map<String, String> headers}) async {
   //  return sendUnstreamed('DELETE', _join(url), headers);
   //}
 
   @override
-  Future<http.Response> get(url, {Map<String, String>? headers}) async {
+  Future<Response> get(url, {Map<String, String>? headers}) async {
     return sendUnstreamed('GET', _join(url), headers);
   }
 
   @override
-  Future<http.Response> head(url, {Map<String, String>? headers}) async {
+  Future<Response> head(url, {Map<String, String>? headers}) async {
     return sendUnstreamed('HEAD', _join(url), headers);
   }
 
   @override
-  Future<http.Response> patch(url,
+  Future<Response> patch(url,
       {body, Map<String, String>? headers, Encoding? encoding}) async {
     return sendUnstreamed('PATCH', _join(url), headers, body, encoding);
   }
 
   @override
-  Future<http.Response> post(url,
+  Future<Response> post(url,
       {body, Map<String, String>? headers, Encoding? encoding}) async {
     return sendUnstreamed('POST', _join(url), headers, body, encoding);
   }
 
   @override
-  Future<http.Response> put(url,
+  Future<Response> put(url,
       {body, Map<String, String>? headers, Encoding? encoding}) async {
     return sendUnstreamed('PUT', _join(url), headers, body, encoding);
   }
@@ -210,7 +205,7 @@ class BaseAngelService<Id, Data> extends Service<Id, Data?> {
   @override
   final BaseAngelClient app;
   final Uri baseUrl;
-  final http.BaseClient client;
+  final BaseClient client;
   final AngelDeserializer<Data>? deserializer;
 
   final Context _p = Context(style: Style.url);
@@ -262,7 +257,7 @@ class BaseAngelService<Id, Data> extends Service<Id, Data?> {
     return jsonEncode(x);
   }
 
-  Future<http.StreamedResponse> send(http.BaseRequest request) {
+  Future<StreamedResponse> send(BaseRequest request) {
     if (app.authToken != null && app.authToken!.isNotEmpty) {
       request.headers['Authorization'] = 'Bearer ${app.authToken}';
     }

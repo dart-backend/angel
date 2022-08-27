@@ -1,34 +1,34 @@
 name: angel3_orm_mysql
-version: 6.0.0
+version: 7.0.0
 description: MySQL support for Angel3 ORM. Includes functionality for querying and transactions.
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dukefirehawk/angel/tree/master/packages/orm/angel_orm_mysql
 environment:
-  sdk: '>=2.16.0 <3.0.0'
+  sdk: '>=2.17.0 <3.0.0'
 dependencies:
-  angel3_orm: ^6.0.0
+  angel3_orm: ^7.0.0
   logging: ^1.0.0
   mysql1: ^0.20.0
   mysql_client: ^0.0.24
   optional: ^6.0.0
 dev_dependencies:
-  angel3_orm_generator: ^6.0.0
-  angel3_orm_test: ^6.0.0
+  angel3_orm_generator: ^7.0.0
+  angel3_orm_test: ^7.0.0
   build_runner: ^2.0.1
   test: ^1.21.0
-  lints: ^1.0.0
-# dependency_overrides:
-#   angel3_serialize:
-#     path: ../../serialize/angel_serialize
-#   angel3_serialize_generator:
-#     path: ../../serialize/angel_serialize_generator
-#   angel3_model:
-#     path: ../../model
-  # angel3_orm_test:
-  #   path: ../angel_orm_test
-  # angel3_orm:
-  #   path: ../angel_orm
-#   angel3_orm_generator:
-#     path: ../angel_orm_generator
-  # angel3_migration:
-  #   path: ../angel_migration
+  lints: ^2.0.0
+dependency_overrides:
+  angel3_serialize:
+    path: ../../serialize/angel_serialize
+  angel3_serialize_generator:
+    path: ../../serialize/angel_serialize_generator
+  angel3_model:
+    path: ../../model
+  angel3_orm_test:
+    path: ../angel_orm_test
+  angel3_orm:
+    path: ../angel_orm
+  angel3_orm_generator:
+    path: ../angel_orm_generator
+  angel3_migration:
+    path: ../angel_migration
