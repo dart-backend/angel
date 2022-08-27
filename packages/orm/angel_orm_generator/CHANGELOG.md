@@ -3,6 +3,7 @@
 ## 7.0.0
 
 * Require Dart >= 2.17
+* Fixed issue #75: Generated Code of ORM does not compile
 
 ## 6.2.0
 
