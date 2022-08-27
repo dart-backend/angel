@@ -1,3 +1,5 @@
+// ignore_for_file: provide_deprecation_message
+
 import 'builder_node.dart';
 import 'dom_node.dart';
 
@@ -28,10 +30,10 @@ DomNode a(
         String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
     h(
         'a',
         _apply([
@@ -45,41 +47,35 @@ DomNode a(
           'class': className,
           'style': style,
         }),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        [...c, ...children]);
 
 DomNode abbr(
         {String? title,
         String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
     h(
         'addr',
         _apply([p, props],
             {'title': title, 'id': id, 'class': className, 'style': style}),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        [...c, ...children]);
 
 DomNode address(
         {String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
     h(
         'address',
         _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        [...c, ...children]);
 
 DomNode area(
         {String? alt,
@@ -96,8 +92,8 @@ DomNode area(
         String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {}}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {}}) =>
     h(
         'area',
         _apply([
@@ -123,31 +119,25 @@ DomNode area(
 DomNode article(
         {className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
-    h(
-        'article',
-        _apply([p, props], {'class': className, 'style': style}),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
+    h('article', _apply([p, props], {'class': className, 'style': style}),
+        [...c, ...children]);
 
 DomNode aside(
         {String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
     h(
         'aside',
         _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        [...c, ...children]);
 
 DomNode audio(
         {bool? autoplay,
@@ -159,10 +149,10 @@ DomNode audio(
         String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
     h(
         'audio',
         _apply([
@@ -179,24 +169,18 @@ DomNode audio(
           'class': className,
           'style': style
         }),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        [...c, ...children]);
 
 DomNode b(
         {String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
-    h(
-        'b',
-        _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
+    h('b', _apply([p, props], {'id': id, 'class': className, 'style': style}),
+        [...c, ...children]);
 
 DomNode base(
         {String? href,
@@ -204,8 +188,8 @@ DomNode base(
         String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {}}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {}}) =>
     h(
         'base',
         _apply([
@@ -223,65 +207,55 @@ DomNode bdi(
         {String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
-    h(
-        'bdi',
-        _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
+    h('bdi', _apply([p, props], {'id': id, 'class': className, 'style': style}),
+        [...c, ...children]);
 
 DomNode bdo(
         {String? dir,
         String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
     h(
         'bdo',
         _apply([p, props],
             {'dir': dir, 'id': id, 'class': className, 'style': style}),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        [...c, ...children]);
 
 DomNode blockquote(
         {String? cite,
         String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
     h(
         'blockquote',
         _apply([p, props],
             {'cite': cite, 'id': id, 'class': className, 'style': style}),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        [...c, ...children]);
 
 DomNode body(
         {String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
     h(
         'body',
         _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        [...c, ...children]);
 
 DomNode br() => h('br');
 
@@ -300,10 +274,10 @@ DomNode button(
         String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
     h(
         'button',
         _apply([
@@ -325,9 +299,7 @@ DomNode button(
           'class': className,
           'style': style
         }),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        [...c, ...children]);
 
 DomNode canvas(
         {num? height,
@@ -335,10 +307,10 @@ DomNode canvas(
         String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
     h(
         'canvas',
         _apply([
@@ -351,118 +323,100 @@ DomNode canvas(
           'class': className,
           'style': style
         }),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        [...c, ...children]);
 
 DomNode cite(
         {String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
     h(
         'cite',
         _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        [...c, ...children]);
 
 DomNode caption(
         {String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
     h(
         'caption',
         _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        [...c, ...children]);
 
 DomNode code(
         {String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
     h(
         'code',
         _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        [...c, ...children]);
 
 DomNode col(
         {num? span,
         String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
     h(
         'col',
         _apply([p, props],
             {'span': span, 'id': id, 'class': className, 'style': style}),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        [...c, ...children]);
 
 DomNode colgroup(
         {num? span,
         String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
     h(
         'colgroup',
         _apply([p, props],
             {'span': span, 'id': id, 'class': className, 'style': style}),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        [...c, ...children]);
 
 DomNode datalist(
         {String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
     h(
         'datalist',
         _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        [...c, ...children]);
 
 DomNode dd(
         {String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
-    h(
-        'dd',
-        _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
+    h('dd', _apply([p, props], {'id': id, 'class': className, 'style': style}),
+        [...c, ...children]);
 
 DomNode del(
         {String? cite,
@@ -470,10 +424,10 @@ DomNode del(
         String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
     h(
         'del',
         _apply([
@@ -486,120 +440,96 @@ DomNode del(
           'class': className,
           'style': style
         }),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        [...c, ...children]);
 
 DomNode details(
         {bool? open,
         String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
     h(
         'details',
         _apply([p, props],
             {'open': open, 'id': id, 'class': className, 'style': style}),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        [...c, ...children]);
 
 DomNode dfn(
         {String? title,
         String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
     h(
         'dfn',
         _apply([p, props],
             {'title': title, 'id': id, 'class': className, 'style': style}),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        [...c, ...children]);
 
 DomNode dialog(
         {bool? open,
         String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
     h(
         'dialog',
         _apply([p, props],
             {'open': open, 'id': id, 'class': className, 'style': style}),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        [...c, ...children]);
 
 DomNode div(
         {String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
-    h(
-        'div',
-        _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
+    h('div', _apply([p, props], {'id': id, 'class': className, 'style': style}),
+        [...c, ...children]);
 
 DomNode dl(
         {String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
-    h(
-        'dl',
-        _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
+    h('dl', _apply([p, props], {'id': id, 'class': className, 'style': style}),
+        [...c, ...children]);
 
 DomNode dt(
         {String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
-    h(
-        'dt',
-        _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
+    h('dt', _apply([p, props], {'id': id, 'class': className, 'style': style}),
+        [...c, ...children]);
 
 DomNode em(
         {String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
-    h(
-        'em',
-        _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
+    h('em', _apply([p, props], {'id': id, 'class': className, 'style': style}),
+        [...c, ...children]);
 
 DomNode embed(
         {num? height,
@@ -609,8 +539,8 @@ DomNode embed(
         String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {}}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {}}) =>
     h(
         'embed',
         _apply([
@@ -633,10 +563,10 @@ DomNode fieldset(
         String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
     h(
         'fieldset',
         _apply([
@@ -650,54 +580,46 @@ DomNode fieldset(
           'class': className,
           'style': style
         }),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        [...c, ...children]);
 
 DomNode figcaption(
         {String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
     h(
         'figcaption',
         _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        [...c, ...children]);
 
 DomNode figure(
         {String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
     h(
         'figure',
         _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        [...c, ...children]);
 
 DomNode footer(
         {String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
     h(
         'footer',
         _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        [...c, ...children]);
 
 DomNode form(
         {String? accept,
@@ -712,10 +634,10 @@ DomNode form(
         String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
     h(
         'form',
         _apply([
@@ -736,128 +658,98 @@ DomNode form(
           'class': className,
           'style': style
         }),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        [...c, ...children]);
 
 DomNode h1(
         {String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
-    h(
-        'h1',
-        _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
+    h('h1', _apply([p, props], {'id': id, 'class': className, 'style': style}),
+        [...c, ...children]);
 
 DomNode h2(
         {String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
-    h(
-        'h2',
-        _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
+    h('h2', _apply([p, props], {'id': id, 'class': className, 'style': style}),
+        [...c, ...children]);
 DomNode h3(
         {String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
-    h(
-        'h3',
-        _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
+    h('h3', _apply([p, props], {'id': id, 'class': className, 'style': style}),
+        [...c, ...children]);
 
 DomNode h4(
         {String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
-    h(
-        'h4',
-        _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
+    h('h4', _apply([p, props], {'id': id, 'class': className, 'style': style}),
+        [...c, ...children]);
 
 DomNode h5(
         {String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
-    h(
-        'h5',
-        _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
+    h('h5', _apply([p, props], {'id': id, 'class': className, 'style': style}),
+        [...c, ...children]);
 
 DomNode h6(
         {String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
-    h(
-        'h6',
-        _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
+    h('h6', _apply([p, props], {'id': id, 'class': className, 'style': style}),
+        [...c, ...children]);
 
 DomNode head(
         {String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
     h(
         'head',
         _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        [...c, ...children]);
 
 DomNode header(
         {String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
     h(
         'header',
         _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        [...c, ...children]);
 
 DomNode hr() => h('hr');
 
@@ -868,10 +760,10 @@ DomNode html(
         String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
     h(
         'html',
         _apply([
@@ -885,24 +777,18 @@ DomNode html(
           'class': className,
           'style': style
         }),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        [...c, ...children]);
 
 DomNode i(
         {String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
-    h(
-        'i',
-        _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
+    h('i', _apply([p, props], {'id': id, 'class': className, 'style': style}),
+        [...c, ...children]);
 
 DomNode iframe(
         {num? height,
@@ -914,8 +800,8 @@ DomNode iframe(
         String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {}}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {}}) =>
     h(
         'iframe',
         _apply([
@@ -947,8 +833,8 @@ DomNode img(
         String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {}}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {}}) =>
     h(
         'img',
         _apply([
@@ -1004,8 +890,8 @@ DomNode input(
         String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {}}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {}}) =>
     h(
         'input',
         _apply([
@@ -1054,10 +940,10 @@ DomNode ins(
         String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
     h(
         'ins',
         _apply([
@@ -1070,24 +956,18 @@ DomNode ins(
           'class': className,
           'style': style
         }),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        [...c, ...children]);
 
 DomNode kbd(
         {String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
-    h(
-        'kbd',
-        _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
+    h('kbd', _apply([p, props], {'id': id, 'class': className, 'style': style}),
+        [...c, ...children]);
 
 DomNode keygen(
         {bool? autofocus,
@@ -1099,10 +979,10 @@ DomNode keygen(
         String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
     h(
         'keygen',
         _apply([
@@ -1119,9 +999,7 @@ DomNode keygen(
           'class': className,
           'style': style
         }),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        [...c, ...children]);
 
 DomNode label(
         {String? for_,
@@ -1129,10 +1007,10 @@ DomNode label(
         String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
     h(
         'label',
         _apply([
@@ -1145,41 +1023,35 @@ DomNode label(
           'class': className,
           'style': style
         }),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        [...c, ...children]);
 
 DomNode legend(
         {String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
     h(
         'legend',
         _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        [...c, ...children]);
 
 DomNode li(
         {num? value,
         String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
     h(
         'li',
         _apply([p, props],
             {'value': value, 'id': id, 'class': className, 'style': style}),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        [...c, ...children]);
 
 DomNode link(
         {String? crossorigin,
@@ -1193,8 +1065,8 @@ DomNode link(
         String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {}}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {}}) =>
     h(
         'link',
         _apply([
@@ -1218,48 +1090,42 @@ DomNode main(
         {String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
     h(
         'main',
         _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        [...c, ...children]);
 
 DomNode map(
         {String? name,
         String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
     h(
         'map',
         _apply([p, props],
             {'name': name, 'id': id, 'class': className, 'style': style}),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        [...c, ...children]);
 
 DomNode mark(
         {String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
     h(
         'mark',
         _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        [...c, ...children]);
 
 DomNode menu(
         {String? label,
@@ -1267,10 +1133,10 @@ DomNode menu(
         String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
     h(
         'menu',
         _apply([
@@ -1283,9 +1149,7 @@ DomNode menu(
           'class': className,
           'style': style
         }),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        [...c, ...children]);
 
 DomNode menuitem(
         {bool? checked,
@@ -1299,10 +1163,10 @@ DomNode menuitem(
         String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
     h(
         'menuitem',
         _apply([
@@ -1321,9 +1185,7 @@ DomNode menuitem(
           'class': className,
           'style': style
         }),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        [...c, ...children]);
 
 DomNode meta(
         {String? charset,
@@ -1333,8 +1195,8 @@ DomNode meta(
         String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {}}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {}}) =>
     h(
         'meta',
         _apply([
@@ -1354,31 +1216,25 @@ DomNode nav(
         {String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
-    h(
-        'nav',
-        _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
+    h('nav', _apply([p, props], {'id': id, 'class': className, 'style': style}),
+        [...c, ...children]);
 
 DomNode noscript(
         {String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
     h(
         'noscript',
         _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        [...c, ...children]);
 
 DomNode object(
         {String? data,
@@ -1391,10 +1247,10 @@ DomNode object(
         String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
     h(
         'object',
         _apply([
@@ -1412,9 +1268,7 @@ DomNode object(
           'class': className,
           'style': style
         }),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        [...c, ...children]);
 
 DomNode ol(
         {bool? reversed,
@@ -1423,10 +1277,10 @@ DomNode ol(
         String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
     h(
         'ol',
         _apply([
@@ -1440,9 +1294,7 @@ DomNode ol(
           'class': className,
           'style': style
         }),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        [...c, ...children]);
 
 DomNode optgroup(
         {bool? disabled,
@@ -1450,10 +1302,10 @@ DomNode optgroup(
         String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
     h(
         'optgroup',
         _apply([
@@ -1466,9 +1318,7 @@ DomNode optgroup(
           'class': className,
           'style': style
         }),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        [...c, ...children]);
 
 DomNode option(
         {bool? disabled,
@@ -1478,10 +1328,10 @@ DomNode option(
         String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
     h(
         'option',
         _apply([
@@ -1496,9 +1346,7 @@ DomNode option(
           'class': className,
           'style': style
         }),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        [...c, ...children]);
 
 DomNode output(
         {String? for_,
@@ -1507,10 +1355,10 @@ DomNode output(
         String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
     h(
         'output',
         _apply([
@@ -1524,24 +1372,18 @@ DomNode output(
           'class': className,
           'style': style
         }),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        [...c, ...children]);
 
 DomNode p(
         {String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
-    h(
-        'p',
-        _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
+    h('p', _apply([p, props], {'id': id, 'class': className, 'style': style}),
+        [...c, ...children]);
 
 DomNode param(
         {String? name,
@@ -1549,8 +1391,8 @@ DomNode param(
         String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {}}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {}}) =>
     h(
         'param',
         _apply([
@@ -1568,31 +1410,25 @@ DomNode picture(
         {String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
     h(
         'picture',
         _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        [...c, ...children]);
 
 DomNode pre(
         {String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
-    h(
-        'pre',
-        _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
+    h('pre', _apply([p, props], {'id': id, 'class': className, 'style': style}),
+        [...c, ...children]);
 
 DomNode progress(
         {num? max,
@@ -1600,10 +1436,10 @@ DomNode progress(
         String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
     h(
         'progress',
         _apply([
@@ -1616,101 +1452,81 @@ DomNode progress(
           'class': className,
           'style': style
         }),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        [...c, ...children]);
 
 DomNode q(
         {String? cite,
         String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
     h(
         'q',
         _apply([p, props],
             {'cite': cite, 'id': id, 'class': className, 'style': style}),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        [...c, ...children]);
 
 DomNode rp(
         {String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
-    h(
-        'rp',
-        _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
+    h('rp', _apply([p, props], {'id': id, 'class': className, 'style': style}),
+        [...c, ...children]);
 
 DomNode rt(
         {String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
-    h(
-        'rt',
-        _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
+    h('rt', _apply([p, props], {'id': id, 'class': className, 'style': style}),
+        [...c, ...children]);
 
 DomNode ruby(
         {String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
     h(
         'ruby',
         _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        [...c, ...children]);
 
 DomNode s(
         {String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
-    h(
-        's',
-        _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
+    h('s', _apply([p, props], {'id': id, 'class': className, 'style': style}),
+        [...c, ...children]);
 
 DomNode samp(
         {String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
     h(
         'samp',
         _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        [...c, ...children]);
 
 DomNode script(
         {bool? async,
@@ -1721,10 +1537,10 @@ DomNode script(
         String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
     h(
         'script',
         _apply([
@@ -1740,24 +1556,20 @@ DomNode script(
           'class': className,
           'style': style
         }),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        [...c, ...children]);
 
 DomNode section(
         {String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
     h(
         'section',
         _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        [...c, ...children]);
 
 DomNode select(
         {bool? autofocus,
@@ -1769,10 +1581,10 @@ DomNode select(
         String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
     h(
         'select',
         _apply([
@@ -1789,24 +1601,20 @@ DomNode select(
           'class': className,
           'style': style
         }),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        [...c, ...children]);
 
 DomNode small(
         {String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
     h(
         'small',
         _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        [...c, ...children]);
 
 DomNode source(
         {String? src,
@@ -1817,8 +1625,8 @@ DomNode source(
         String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {}}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {}}) =>
     h(
         'source',
         _apply([
@@ -1839,103 +1647,87 @@ DomNode span(
         {String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
     h(
         'span',
         _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        [...c, ...children]);
 
 DomNode strong(
         {String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
     h(
         'strong',
         _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        [...c, ...children]);
 
 DomNode style(
         {String? media,
         bool? scoped,
         String? type,
         String? id,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
     h(
         'style',
         _apply([p, props],
             {'media': media, 'scoped': scoped, 'type': type, 'id': id}),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        [...c, ...children]);
 
 DomNode sub(
         {String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
-    h(
-        'sub',
-        _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
+    h('sub', _apply([p, props], {'id': id, 'class': className, 'style': style}),
+        [...c, ...children]);
 
 DomNode summary(
         {String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
     h(
         'summary',
         _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        [...c, ...children]);
 
 DomNode sup(
         {String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
-    h(
-        'sup',
-        _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
+    h('sup', _apply([p, props], {'id': id, 'class': className, 'style': style}),
+        [...c, ...children]);
 
 DomNode table(
         {bool? sortable,
         String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
     h(
         'table',
         _apply([
@@ -1947,24 +1739,20 @@ DomNode table(
           'class': className,
           'style': style
         }),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        [...c, ...children]);
 
 DomNode tbody(
         {String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
     h(
         'tbody',
         _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        [...c, ...children]);
 
 DomNode td(
         {num? colspan,
@@ -1973,10 +1761,10 @@ DomNode td(
         String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
     h(
         'td',
         _apply([
@@ -1990,9 +1778,7 @@ DomNode td(
           'class': className,
           'style': style
         }),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        [...c, ...children]);
 
 DomNode textarea(
         {bool? autofocus,
@@ -2010,10 +1796,10 @@ DomNode textarea(
         String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
     h(
         'textarea',
         _apply([
@@ -2036,24 +1822,20 @@ DomNode textarea(
           'class': className,
           'style': style
         }),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        [...c, ...children]);
 
 DomNode tfoot(
         {String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
     h(
         'tfoot',
         _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        [...c, ...children]);
 
 DomNode th(
         {String? abbr,
@@ -2065,10 +1847,10 @@ DomNode th(
         String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
     h(
         'th',
         _apply([
@@ -2085,34 +1867,30 @@ DomNode th(
           'class': className,
           'style': style
         }),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        [...c, ...children]);
 
 DomNode thead(
         {String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
     h(
         'thead',
         _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        [...c, ...children]);
 
 DomNode time(
         {String? datetime,
         String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
     h(
         'time',
         _apply([
@@ -2124,39 +1902,31 @@ DomNode time(
           'class': className,
           'style': style
         }),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        [...c, ...children]);
 
 DomNode title(
         {String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
     h(
         'title',
         _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        [...c, ...children]);
 
 DomNode tr(
         {String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
-    h(
-        'tr',
-        _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
+    h('tr', _apply([p, props], {'id': id, 'class': className, 'style': style}),
+        [...c, ...children]);
 
 DomNode track(
         {bool? default_,
@@ -2167,8 +1937,8 @@ DomNode track(
         String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {}}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {}}) =>
     h(
         'track',
         _apply([
@@ -2189,46 +1959,34 @@ DomNode u(
         {String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
-    h(
-        'u',
-        _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
+    h('u', _apply([p, props], {'id': id, 'class': className, 'style': style}),
+        [...c, ...children]);
 
 DomNode ul(
         {String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
-    h(
-        'ul',
-        _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
+    h('ul', _apply([p, props], {'id': id, 'class': className, 'style': style}),
+        [...c, ...children]);
 
 DomNode var_(
         {String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
-    h(
-        'var',
-        _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
+    h('var', _apply([p, props], {'id': id, 'class': className, 'style': style}),
+        [...c, ...children]);
 
 DomNode video(
         {bool? autoplay,
@@ -2243,10 +2001,10 @@ DomNode video(
         String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
     h(
         'video',
         _apply([
@@ -2266,21 +2024,15 @@ DomNode video(
           'class': className,
           'style': style
         }),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        [...c, ...children]);
 
 DomNode wbr(
         {String? id,
         className,
         style,
-        Map<String, dynamic> p: const {},
-        @deprecated Map<String, dynamic> props: const {},
-        Iterable<DomNode> c: const [],
-        @deprecated Iterable<DomNode> children: const []}) =>
-    h(
-        'wbr',
-        _apply([p, props], {'id': id, 'class': className, 'style': style}),
-        []
-          ..addAll(c)
-          ..addAll(children));
+        Map<String, dynamic> p = const {},
+        @deprecated Map<String, dynamic> props = const {},
+        Iterable<DomNode> c = const [],
+        @deprecated Iterable<DomNode> children = const []}) =>
+    h('wbr', _apply([p, props], {'id': id, 'class': className, 'style': style}),
+        [...c, ...children]);
