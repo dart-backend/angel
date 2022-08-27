@@ -16,6 +16,8 @@ dev_dependencies:
   angel3_validate: ^7.0.0
   belatuk_pretty_logging: ^5.0.0
   test: ^1.21.0
+  logging: ^1.0.0
+  resp_client: ^1.2.0
   lints: ^2.0.0
 dependency_overrides:
   angel3_production:

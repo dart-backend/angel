@@ -35,7 +35,7 @@ class RateLimitingWindow<User> {
 
   factory RateLimitingWindow.fromJson(Map<String, dynamic> map) {
     return RateLimitingWindow(
-        (map['user'] as User?)!,
+        (map['user'] as User),
         DateTime.parse(map['start_time'] as String),
         int.parse(map['points_consumed'] as String));
   }
