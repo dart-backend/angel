@@ -119,9 +119,9 @@ _  ___ |  /|  / / /_/ / _  /___  _  /___
     var onLogRecord = ReceivePort();
     var onExit = ReceivePort();
     var onError = ReceivePort();
-    var runnerArgs = _RunnerArgs(name, configureServer, options, reflector,
+    var runnerArgs = RunnerArgs(name, configureServer, options, reflector,
         onLogRecord.sendPort, pubSubSendPort);
-    var argsWithId = _RunnerArgsWithId(id, runnerArgs);
+    var argsWithId = RunnerArgsWithId(id, runnerArgs);
 
     Isolate.spawn(isolateMain, argsWithId,
             onExit: onExit.sendPort,
@@ -187,11 +187,8 @@ _  ___ |  /|  / / /_/ / _  /___  _  /___
         }
       }
 
-      print(darkGray.wrap(asciiArt +
-          '\n\n' +
-          'A batteries-included, full-featured, full-stack framework in Dart.' +
-          '\n\n' +
-          'https://angel3-framework.web.app\n'));
+      print(darkGray.wrap(
+          '$asciiArt\n\nA batteries-included, full-featured, full-stack framework in Dart.\n\nhttps://angel3-framework.web.app\n'));
 
       if (argResults['help'] == true) {
         stdout
@@ -232,7 +229,7 @@ _  ___ |  /|  / / /_/ / _  /___  _  /___
   }
 
   /// Run with main isolate
-  static void isolateMain(_RunnerArgsWithId argsWithId) {
+  static void isolateMain(RunnerArgsWithId argsWithId) {
     var args = argsWithId.args;
     hierarchicalLoggingEnabled = false;
 
@@ -304,14 +301,14 @@ _  ___ |  /|  / / /_/ / _  /___  _  /___
   }
 }
 
-class _RunnerArgsWithId {
+class RunnerArgsWithId {
   final int id;
-  final _RunnerArgs args;
+  final RunnerArgs args;
 
-  _RunnerArgsWithId(this.id, this.args);
+  RunnerArgsWithId(this.id, this.args);
 }
 
-class _RunnerArgs {
+class RunnerArgs {
   final String name;
 
   final AngelConfigurer configureServer;
@@ -322,7 +319,7 @@ class _RunnerArgs {
 
   final SendPort loggingSendPort, pubSubSendPort;
 
-  _RunnerArgs(this.name, this.configureServer, this.options, this.reflector,
+  RunnerArgs(this.name, this.configureServer, this.options, this.reflector,
       this.loggingSendPort, this.pubSubSendPort);
 
   String get loggerName => name;

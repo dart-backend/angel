@@ -22,7 +22,7 @@ void main() {
     testApp!.get('/empty', (req, res) => res.close());
 
     testApp!.responseFinalizers.add((req, res) async {
-      print('OUTGOING: ' + String.fromCharCodes(res.buffer!.toBytes()));
+      print('OUTGOING: ${String.fromCharCodes(res.buffer!.toBytes())}');
     });
 
     testApp!.encoders.addAll({'gzip': gzip.encoder});
@@ -44,9 +44,8 @@ void main() {
     app!.fallback(layer.handleRequest);
 
     app!.responseFinalizers.add((req, res) async {
-      print('Normal. Buf: ' +
-          String.fromCharCodes(res.buffer!.toBytes()) +
-          ', headers: ${res.headers}');
+      print(
+          'Normal. Buf: ${String.fromCharCodes(res.buffer!.toBytes())}, headers: ${res.headers}');
     });
 
     app!.encoders.addAll({'gzip': gzip.encoder});
