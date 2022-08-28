@@ -297,8 +297,8 @@ class AngelWebSocket {
   }
 
   /// Hooks a service up to have its events broadcasted.
-  dynamic hookupService(Pattern _path, HookedService service) {
-    var path = _path.toString();
+  dynamic hookupService(Pattern path, HookedService service) {
+    var localPath = path.toString();
 
     service.after(
       [
@@ -307,9 +307,9 @@ class AngelWebSocket {
         HookedServiceEvent.updated,
         HookedServiceEvent.removed
       ],
-      serviceHook(path),
+      serviceHook(localPath),
     );
-    _servicesAlreadyWired.add(path);
+    _servicesAlreadyWired.add(localPath);
   }
 
   /// Runs before firing [onConnection].

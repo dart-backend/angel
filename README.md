@@ -16,7 +16,7 @@
 
 Angel3 is a fork of archived Angel framework to support Dart SDK 2.12.x or later. It is a full-stack Web framework in Dart that aims to streamline development by providing many common features out-of-the-box in a consistent manner. One of the main goal is to enable developers to build both frontend and backend in the same language, Dart. Angel3 framework is designed as a collection of plugins that enable developers to pick and choose the parts needed for their projects. A series of starter templates are also provided for quick start and trial run with Angel3 framework. Visit our [website](<https://angel3-framework.web.app/>) to learn more.
 
-The availabe features in Angel3 includes:
+The available features in Angel3 includes:
 
 * Static File Handling
 * Basic Authentication
@@ -34,7 +34,7 @@ The status of the code base is as follows:
 
 Branch: `master`
 
-* Dart version : 2.16.x or later.
+* Dart version : 2.17.x or later.
 * Publish      : Yes. Refer to packages with `angel3_` prefix on [pub.dev](https://pub.dev/publishers/dukefirehawk.com/packages).
 * Null Safety  : Yes
 * Status       : Production
@@ -44,10 +44,17 @@ For more details, checkout [Project Status](https://github.com/dukefirehawk/ange
 
 ## Release Notes
 
+### Release 7.0.0
+
+* Updated all `angel3_` packages to require dart >= 2.17.x
+* Updated dependencies to the latest libraries
+* Fixed ORM issues
+* Fixed `dart analyze .` warnings
+
 ### Release 6.0.0
 
 * Updated all `angel3_` packages to 6.0.0
-* Updated all `angel3_` packages to use SDK 2.16.x or later
+* Updated all `angel3_` packages to require dart >= 2.16.x
 * Updated ORM to support MariaDB 10.2.x (stable) and MySQL 8.x (beta)
 * Updated code generator to use `analyzer` 3.x.x
 * Updated exception handling
@@ -126,11 +133,11 @@ The performance benchmark can be found at
 
 [TechEmpower Framework Benchmarks Round 21](https://www.techempower.com/benchmarks/#section=data-r21&test=composite)
 
-The test cases are build using standard `Angel3 ORM` template. This result will be used for fine-tuning Angel3 framework. The following test cases will be progressively added in the upcoming update to benchmark.
+The test cases are build using standard `Angel3 ORM` template. The result are used for fine-tuning Angel3 framework. The following test cases will be added in the upcoming update to the benchmark.
 
-1. Angel3 with MongoDB
-2. Angel3 with ORM MySQL
-3. Cached queries
+1. Angel3 with ORM for MySQL
+2. Cached queries
+3. Angel3 with MongoDB
 
 ## Examples and Documentation
 
@@ -146,4 +153,4 @@ Interested in contributing to Angel3? See the contribution guide [here](CONTRIBU
 
 ## Donation & Support
 
-If you like this project and want to support its development, you can make a [donation](https://paypal.me/dukefirehawk?country.x=MY&locale.x=en_US) via paypal service.
+If you like this project and interested in supporting its development, you can make a donation via [paypal](https://paypal.me/dukefirehawk?country.x=MY&locale.x=en_US) service.

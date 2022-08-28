@@ -4,7 +4,7 @@ part of angel3_websocket.server;
 /// [RequestContext] and [ResponseContext] attached.
 class WebSocketContext {
   /// Use this to listen for events.
-  _WebSocketEventTable on = _WebSocketEventTable();
+  WebSocketEventTable on = WebSocketEventTable();
 
   /// The underlying [StreamChannel].
   final StreamChannel channel;
@@ -60,7 +60,7 @@ class WebSocketContext {
   void sendError(AngelHttpException error) => send(errorEvent, error.toJson());
 }
 
-class _WebSocketEventTable {
+class WebSocketEventTable {
   final Map<String, StreamController<Map?>> _handlers = {};
 
   StreamController<Map?>? _getStreamForEvent(String eventName) {

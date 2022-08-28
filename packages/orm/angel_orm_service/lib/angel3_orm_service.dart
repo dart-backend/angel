@@ -69,7 +69,9 @@ class OrmService<Id, Data, TQuery extends Query<Data, QueryWhere>>
                 var descending = false;
                 if (value is String) {
                   descending = value == '-1';
-                } else if (value is num) descending = value.toInt() == -1;
+                } else if (value is num) {
+                  descending = value.toInt() == -1;
+                }
                 query.orderBy(key.toString(), descending: descending);
               });
             } else if (v is String) {

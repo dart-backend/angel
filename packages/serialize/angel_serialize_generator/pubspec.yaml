@@ -24,8 +24,8 @@ dev_dependencies:
   collection: ^1.15.0
   lints: ^2.0.0
   test: ^1.21.0
-dependency_overrides:
-  angel3_model:
-    path: ../../model
-  angel3_serialize:
-    path: ../angel_serialize
+# dependency_overrides:
+#   angel3_model:
+#     path: ../../model
+#   angel3_serialize:
+#     path: ../angel_serialize

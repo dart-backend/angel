@@ -4,8 +4,6 @@
 
 * Update examples
 * Update User Guide
-* Fix bugs
-  * `angel3_orm_mysql`
 
 ## Long Term Goal
 

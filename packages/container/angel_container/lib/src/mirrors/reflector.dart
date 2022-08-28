@@ -48,16 +48,16 @@ class MirrorsReflector extends Reflector {
   @override
   ReflectedType reflectFutureOf(Type type) {
     var inner = reflectType(type);
-    dart.TypeMirror _mirror;
+    dart.TypeMirror localMirror;
     if (inner is _ReflectedClassMirror) {
-      _mirror = inner.mirror;
+      localMirror = inner.mirror;
     } else if (inner is _ReflectedTypeMirror) {
-      _mirror = inner.mirror;
+      localMirror = inner.mirror;
     } else {
       throw ArgumentError('$type is not a class or type.');
     }
 
-    var future = dart.reflectType(Future, [_mirror.reflectedType]);
+    var future = dart.reflectType(Future, [localMirror.reflectedType]);
     return _ReflectedClassMirror(future as dart.ClassMirror);
   }
 

@@ -3,7 +3,7 @@ import 'dart:collection';
 import 'dart:convert';
 import 'package:angel3_client/angel3_client.dart';
 import 'package:angel3_client/base_angel_client.dart';
-import 'package:http/src/base_client.dart' as http;
+import 'package:http/http.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:web_socket_channel/status.dart' as status;
 import 'angel3_websocket.dart';
@@ -85,7 +85,7 @@ abstract class BaseWebSocketClient extends BaseAngelClient {
     }
   }
 
-  BaseWebSocketClient(http.BaseClient client, baseUrl,
+  BaseWebSocketClient(BaseClient client, baseUrl,
       {this.reconnectOnClose = true, Duration? reconnectInterval})
       : super(client, baseUrl) {
     _reconnectInterval = reconnectInterval ?? Duration(seconds: 10);

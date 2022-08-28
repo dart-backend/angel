@@ -2,7 +2,7 @@ import 'dart:io';
 import 'package:io/ansi.dart';
 
 void printSeparator(String title) {
-  var b = StringBuffer('===' + title.toUpperCase());
+  var b = StringBuffer('===${title.toUpperCase()}');
 
   int columns = 80;
   if (stdout.hasTerminal) {

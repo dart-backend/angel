@@ -16,8 +16,8 @@ dependencies:
   logging: ^1.0.0
 dev_dependencies:
   lints: ^2.0.0
-dependency_overrides:
-   angel3_orm:
-     path: ../angel_orm
-   angel3_migration:
-     path: ../angel_migration
+# dependency_overrides:
+#    angel3_orm:
+#      path: ../angel_orm
+#    angel3_migration:
+#      path: ../angel_migration

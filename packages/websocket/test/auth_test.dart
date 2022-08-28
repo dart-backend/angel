@@ -7,7 +7,7 @@ import 'package:angel3_websocket/server.dart';
 import 'package:logging/logging.dart';
 import 'package:test/test.dart';
 
-const Map<String, String> USER = {'username': 'foo', 'password': 'bar'};
+const Map<String, String> user = {'username': 'foo', 'password': 'bar'};
 
 void main() {
   Angel app;
@@ -19,12 +19,12 @@ void main() {
     app = Angel();
     http = AngelHttp(app, useZone: false);
     var auth = AngelAuth(
-        serializer: (_) async => 'baz', deserializer: (_) async => USER);
+        serializer: (_) async => 'baz', deserializer: (_) async => user);
 
     auth.strategies['local'] = LocalAuthStrategy(
       (username, password) async {
         if (username == 'foo' && password == 'bar') {
-          return USER;
+          return user;
         }
       },
     );
@@ -54,7 +54,7 @@ void main() {
   });
 
   test('auth event fires', () async {
-    var localAuth = await client.authenticate(type: 'local', credentials: USER);
+    var localAuth = await client.authenticate(type: 'local', credentials: user);
     print('JWT: ${localAuth.token}');
 
     ws.authenticateViaJwt(localAuth.token);

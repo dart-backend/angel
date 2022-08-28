@@ -9,6 +9,6 @@ dependencies:
   angel3_orm: ^7.0.0
 dev_dependencies:
   lints: ^2.0.0
-dependency_overrides:
-   angel3_orm:
-     path: ../angel_orm
+# dependency_overrides:
+#    angel3_orm:
+#      path: ../angel_orm
