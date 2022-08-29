@@ -6,8 +6,7 @@ import 'package:shelf/shelf.dart' as shelf;
 import 'shelf_request.dart';
 
 class ShelfResponseContext extends ResponseContext<ShelfResponseContext> {
-  @override
-  final Angel app;
+  final Angel angelApp;
 
   final StreamController<List<int>> _ctrl = StreamController();
   bool _isOpen = true;
@@ -15,7 +14,7 @@ class ShelfResponseContext extends ResponseContext<ShelfResponseContext> {
   final bool _wasClosedByHandler = false;
   bool _handlersAreDone = false;
 
-  ShelfResponseContext(this.app);
+  ShelfResponseContext(this.angelApp);
 
   ShelfRequestContext? _correspondingRequest;
 

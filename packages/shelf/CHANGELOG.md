@@ -1,6 +1,6 @@
 # Change Log
 
-## 7.0.0
+## 7.0.0-beta.1
 
 * Require Dart >= 2.17
 

@@ -89,7 +89,7 @@ void main() {
       print('Response: $body');
       expect(json.decode(body), {'error': 'crime'});
     } on HttpException catch (e, st) {
-      print('HTTP Exception: ' + e.message);
+      print('HTTP Exception: ${e.message}');
       print(st);
       rethrow;
     }

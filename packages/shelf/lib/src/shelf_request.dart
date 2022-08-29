@@ -6,8 +6,8 @@ import 'package:angel3_mock_request/angel3_mock_request.dart';
 import 'package:shelf/shelf.dart' as shelf;
 
 class ShelfRequestContext extends RequestContext {
-  @override
-  final Angel app;
+  final Angel angelApp;
+
   @override
   final Container container;
   @override
@@ -20,7 +20,8 @@ class ShelfRequestContext extends RequestContext {
   @override
   final MockHttpHeaders headers = MockHttpHeaders();
 
-  ShelfRequestContext(this.app, this.container, this.rawRequest, this.path) {
+  ShelfRequestContext(
+      this.angelApp, this.container, this.rawRequest, this.path) {
     rawRequest.headers.forEach(headers.add);
   }
 
@@ -53,7 +54,7 @@ class ShelfRequestContext extends RequestContext {
 
   @override
   String get method {
-    if (!app.allowMethodOverrides) {
+    if (!angelApp.allowMethodOverrides) {
       return originalMethod;
     } else {
       return headers.value('x-http-method-override')?.toUpperCase() ??
