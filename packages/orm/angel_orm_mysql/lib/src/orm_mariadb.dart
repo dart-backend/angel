@@ -45,9 +45,9 @@ class MariaDbExecutor extends QueryExecutor {
       }
     }
 
-    logger.warning('Query: $query');
-    logger.warning('Values: $params');
-    logger.warning('Returning Query: $returningQuery');
+    //logger.warning('Query: $query');
+    //logger.warning('Values: $params');
+    //logger.warning('Returning Query: $returningQuery');
 
     if (returningQuery.isNotEmpty) {
       // Handle insert, update and delete
@@ -77,17 +77,14 @@ class MariaDbExecutor extends QueryExecutor {
   @override
   Future<T> transaction<T>(FutureOr<T> Function(QueryExecutor) f) async {
     T? returnValue = await _connection.transaction((ctx) async {
-      // TODO: To be relooked at
       try {
-        logger.fine('Entering transaction');
+        //logger.fine('Entering transaction');
         //var tx = MariaDbExecutor(conn, logger: logger);
         _transactionContext = ctx;
         return await f(this);
       } catch (e) {
         logger.severe('Failed to run transaction', e);
         rethrow;
-      } finally {
-        logger.fine('Exiting transaction');
       }
     });
 

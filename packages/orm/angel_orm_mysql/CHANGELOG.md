@@ -1,5 +1,9 @@
 # Change Log
 
+## 7.0.1
+
+* Reduced debugging verbosity
+
 ## 7.0.0
 
 * Require Dart >= 2.17

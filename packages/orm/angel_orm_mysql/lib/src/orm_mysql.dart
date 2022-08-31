@@ -88,8 +88,8 @@ class MySqlExecutor extends QueryExecutor {
       var value = substitutionValues[name];
       if (value is DateTime && value.isUtc) {
         var t = value.toLocal();
-        logger.warning('Datetime deteted: $name');
-        logger.warning('Datetime: UTC -> $value, Local -> $t');
+        //logger.warning('Datetime deteted: $name');
+        //logger.warning('Datetime: UTC -> $value, Local -> $t');
 
         substitutionValues[name] = t;
       }
@@ -98,9 +98,9 @@ class MySqlExecutor extends QueryExecutor {
     //var params = substitutionValues.values.toList();
     //var params = [];
 
-    logger.warning('Query: $query');
-    logger.warning('Values: $substitutionValues');
-    //logger?.warning('Returning Query: $returningQuery');
+    //logger.warning('Query: $query');
+    //logger.warning('Values: $substitutionValues');
+    //logger.warning('Returning Query: $returningQuery');
 
     if (returningQuery.isNotEmpty) {
       // Handle insert, update and delete
@@ -108,10 +108,10 @@ class MySqlExecutor extends QueryExecutor {
       if (query.startsWith("INSERT")) {
         var result = await _connection.execute(query, substitutionValues);
 
-        logger.warning(result.lastInsertID);
+        //logger.fine(result.lastInsertID);
 
         query = returningQuery;
-        //logger?.warning('Result.insertId: ${result.insertId}');
+        //logger.fine('Result.insertId: ${result.insertId}');
         // Has primary key
         if (returningQuery.endsWith('.id=?')) {
           query = query.replaceAll("?", ":id");
@@ -126,15 +126,15 @@ class MySqlExecutor extends QueryExecutor {
       }
     }
 
-    logger.warning('Query 2: $query');
-    logger.warning('Values 2: $substitutionValues');
+    //logger.warning('Query 2: $query');
+    //logger.warning('Values 2: $substitutionValues');
 
     // Handle select
     return _connection.execute(query, substitutionValues).then((results) {
-      var tmpData = results.rows;
-      for (var element in tmpData) {
-        logger.warning("[Result] : ${element.assoc()}");
-      }
+      // var tmpData = results.rows;
+      //for (var element in tmpData) {
+      //  logger.warning("[Result] : ${element.assoc()}");
+      //}
 
       return results.rows.map((r) => r.typedAssoc().values.toList()).toList();
     });
@@ -153,18 +153,16 @@ class MySqlExecutor extends QueryExecutor {
 
   @override
   Future<T> transaction<T>(FutureOr<T> Function(QueryExecutor) f) async {
-    logger.warning("Transaction");
+    //logger.warning("Transaction");
 
     T? returnValue = await _connection.transactional((ctx) async {
       try {
-        logger.fine('Entering transaction');
+        //logger.fine('Entering transaction');
         var tx = MySqlExecutor(ctx, logger: logger);
         return await f(tx);
       } catch (e) {
         logger.severe('Failed to run transaction', e);
         rethrow;
-      } finally {
-        logger.fine('Exiting transaction');
       }
     });
 
