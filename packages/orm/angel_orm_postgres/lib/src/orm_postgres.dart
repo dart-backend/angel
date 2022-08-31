@@ -107,7 +107,7 @@ class PostgreSqlExecutor extends QueryExecutor {
 
     var txResult = await conn.transaction((ctx) async {
       try {
-        logger.fine('Entering transaction');
+        //logger.fine('Entering transaction');
         var tx = PostgreSqlExecutor(ctx, logger: logger);
         returnValue = await f(tx);
 
@@ -115,8 +115,6 @@ class PostgreSqlExecutor extends QueryExecutor {
       } catch (e) {
         ctx.cancelTransaction(reason: e.toString());
         rethrow;
-      } finally {
-        logger.fine('Exiting transaction');
       }
     });
 
@@ -176,7 +174,7 @@ class PostgreSqlExecutorPool extends QueryExecutor {
   Future _open() async {
     if (_connections.isEmpty) {
       _connections.addAll(await Future.wait(List.generate(size, (_) async {
-        logger.fine('Spawning connections...');
+        //logger.fine('Spawning connections...');
         var conn = connectionFactory();
         await conn.open();
         //return conn
