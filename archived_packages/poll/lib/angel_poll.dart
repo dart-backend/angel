@@ -109,7 +109,9 @@ class PollingService extends Service {
   @override
   Future close() async {
     _timer.cancel();
-    _subs.forEach((s) => s.cancel());
+    for (var s in _subs) {
+      s.cancel();
+    }
     await _onIndexed.close();
     await _onRead.close();
     await _onCreated.close();
@@ -124,7 +126,7 @@ class PollingService extends Service {
     return inner.index().then((data) {
       //return asPaginated == true ? data['data'] : data;
       //return asPaginated == true ? data[0] : data;
-      return data!;
+      return data;
     });
   }
 

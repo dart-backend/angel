@@ -95,9 +95,6 @@ class MySqlExecutor extends QueryExecutor {
       }
     }
 
-    //var params = substitutionValues.values.toList();
-    //var params = [];
-
     //logger.warning('Query: $query');
     //logger.warning('Values: $substitutionValues');
     //logger.warning('Returning Query: $returningQuery');

@@ -292,7 +292,7 @@ abstract class Driver<
       ResponseContext res,
       {bool ignoreFinalizers = false}) {
     //app.logger.fine("Calling SendResponse");
-    Future<void> _cleanup(_) {
+    Future<void> cleanup(_) {
       if (!app.environment.isProduction && req.container!.has<Stopwatch>()) {
         var sw = req.container!.make<Stopwatch>();
         app.logger.fine(
@@ -310,7 +310,7 @@ abstract class Driver<
 
     if (!res.isBuffered) {
       //if (res.isOpen) {
-      return res.close().then(_cleanup);
+      return res.close().then(cleanup);
       //}
       //return Future.value();
     }
@@ -372,7 +372,7 @@ abstract class Driver<
       setStatusCode(response, res.statusCode);
       addCookies(response, res.cookies);
       writeToResponse(response, outputBuffer);
-      return closeResponse(response).then(_cleanup);
+      return closeResponse(response).then(cleanup);
     });
   }
 

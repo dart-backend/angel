@@ -1,19 +1,19 @@
 ### JSON Test
-GET http://localhost:3000/json HTTP/1.1
+GET http://localhost:8080/json HTTP/1.1
 
 ### Plaintext Test
-GET http://localhost:3000/plaintext HTTP/1.1
+GET http://localhost:8080/plaintext HTTP/1.1
 
 ### Fortunes Test
-GET http://localhost:3000/fortunes HTTP/1.1
+GET http://localhost:8080/fortunes HTTP/1.1
 
 ### Db Test
-GET http://localhost:3000/db HTTP/1.1
+GET http://localhost:8080/db HTTP/1.1
 
 ### Query test
-GET http://localhost:3000/query?queries=20 HTTP/1.1
+GET http://localhost:8080/query?queries=20 HTTP/1.1
 
 ### Update Test
-GET http://localhost:3000/updates?queries=20 HTTP/1.1
+GET http://localhost:8080/updates?queries=20 HTTP/1.1
 
 
