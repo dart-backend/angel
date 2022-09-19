@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
+import 'dart:io' hide BytesBuilder;
+import 'dart:typed_data';
 import 'package:charcode/ascii.dart';
 import 'connection_info.dart';
 import 'lockable_headers.dart';
