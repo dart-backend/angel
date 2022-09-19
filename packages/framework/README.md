@@ -19,9 +19,10 @@ This package is the core package of [Angel3](https://github.com/dukefirehawk/ang
 1. Download and install [Dart](https://dart.dev/get-dart)
 
 2. Clone one of the following starter projects:
-   * [Angel3 Basic Template](https://github.com/dukefirehawk/boilerplates/tree/angel3-basic)
-   * [Angel3 ORM Template](https://github.com/dukefirehawk/boilerplates/tree/angel3-orm)
-   * [Angel3 Graphql Template](https://github.com/dukefirehawk/boilerplates/tree/angel3-graphql)
+   * [Angel3 Basic Template](https://github.com/dukefirehawk/boilerplates/tree/v7/angel3-basic)
+   * [Angel3 ORM Template](https://github.com/dukefirehawk/boilerplates/tree/v7/angel3-orm)
+   * [Angel3 ORM MySQL Template](https://github.com/dukefirehawk/boilerplates/tree/v7/angel3-orm-mysql)
+   * [Angel3 Graphql Template](https://github.com/dukefirehawk/boilerplates/tree/v7/angel3-graphql)
 
 3. Run the project in development mode (*hot-reloaded* is enabled on file changes).
 
@@ -70,3 +71,7 @@ This package is the core package of [Angel3](https://github.com/dukefirehawk/ang
 ### Migrating from Angel to Angel3
 
 Check out [Migrating to Angel3](https://angel3-docs.dukefirehawk.com/migration/angel-2.x.x-to-angel3/migration-guide-3)
+
+## Donation & Support
+
+If you like this project and interested in supporting its development, you can make a donation via [paypal](https://paypal.me/dukefirehawk?country.x=MY&locale.x=en_US) service.

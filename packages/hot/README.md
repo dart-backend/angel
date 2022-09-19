@@ -7,8 +7,7 @@
 
 ![Screenshot of terminal](screenshots/angel3-screenshot.png)
 
-Supports *hot reloading* of Angel3 servers on file changes. This is faster and more reliable than merely reactively restarting a `Process`.
-This package only works with the [Angel3 framework](https://pub.dev/packages/angel3_framework).
+Supports *hot reloading* of Angel3 servers on file changes. This is faster and more reliable than merely reactively restarting a `Process`. This package only works with the [Angel3 framework](https://pub.dev/packages/angel3_framework).
 
 **Not recommended to use in production, unless you are specifically intending for a "hot code push" in production..**
 
@@ -18,8 +17,8 @@ In your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  angel3_framework: ^6.0.0
-  angel3_hot: ^6.0.0
+  angel3_framework: ^7.0.0
+  angel3_hot: ^7.0.0
 ```
 
 ## Usage

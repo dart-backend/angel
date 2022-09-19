@@ -76,7 +76,7 @@ void main() {
 
   tearDown(() => http.close());
 
-  void _expectHelloBye(String path) async {
+  void expectHelloBye(String path) async {
     var rq = MockHttpRequest('GET', Uri.parse(path));
     await (rq.close());
     await http.handleRequest(rq);
@@ -84,9 +84,9 @@ void main() {
     expect(body, 'Hello, world!bye');
   }
 
-  test('write after addStream', () => _expectHelloBye('/write'));
+  test('write after addStream', () => expectHelloBye('/write'));
 
-  test('multiple addStream', () => _expectHelloBye('/multiple'));
+  test('multiple addStream', () => expectHelloBye('/multiple'));
 
   test('cannot write after close', () async {
     try {

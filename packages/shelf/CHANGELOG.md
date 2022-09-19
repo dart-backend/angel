@@ -1,5 +1,9 @@
 # Change Log
 
+## 7.0.0-beta.2
+
+* Fixed `BytesBuilder` warnings
+
 ## 7.0.0-beta.1
 
 * Require Dart >= 2.17

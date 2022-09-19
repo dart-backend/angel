@@ -233,10 +233,10 @@ abstract class ResponseContext<RawResponse>
   /// Redirects to the given named [Route].
   Future<void> redirectTo(String name, [Map? params, int? code]) async {
     if (!isOpen) throw closed();
-    Route? _findRoute(Router r) {
+    Route? findRoute(Router r) {
       for (var route in r.routes) {
         if (route is SymlinkRoute) {
-          final m = _findRoute(route.router);
+          final m = findRoute(route.router);
 
           if (m != null) return m;
         } else if (route.name == name) {
@@ -247,7 +247,7 @@ abstract class ResponseContext<RawResponse>
       return null;
     }
 
-    var matched = _findRoute(app!);
+    var matched = findRoute(app!);
 
     if (matched != null) {
       await redirect(
