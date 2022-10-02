@@ -9,16 +9,36 @@ part of angel_orm3.generator.models.book;
 class BookMigration extends Migration {
   @override
   void up(Schema schema) {
-    schema.create('books', (table) {
-      table.serial('id').primaryKey();
-      table.timeStamp('created_at');
-      table.timeStamp('updated_at');
-      table.varChar('name', length: 255);
-      table.declare('author_id', ColumnType('int')).references('authors', 'id');
-      table
-          .declare('partner_author_id', ColumnType('int'))
-          .references('authors', 'id');
-    });
+    schema.create(
+      'books',
+      (table) {
+        table.serial('id').primaryKey();
+        table.timeStamp('created_at');
+        table.timeStamp('updated_at');
+        table.varChar(
+          'name',
+          length: 255,
+        );
+        table
+            .declare(
+              'author_id',
+              ColumnType('int'),
+            )
+            .references(
+              'authors',
+              'id',
+            );
+        table
+            .declare(
+              'partner_author_id',
+              ColumnType('int'),
+            )
+            .references(
+              'authors',
+              'id',
+            );
+      },
+    );
   }
 
   @override
@@ -30,14 +50,20 @@ class BookMigration extends Migration {
 class AuthorMigration extends Migration {
   @override
   void up(Schema schema) {
-    schema.create('authors', (table) {
-      table.serial('id').primaryKey();
-      table.timeStamp('created_at');
-      table.timeStamp('updated_at');
-      table.varChar('name', length: 255)
-        ..defaultsTo('Tobe Osakwe')
-        ..unique();
-    });
+    schema.create(
+      'authors',
+      (table) {
+        table.serial('id').primaryKey();
+        table.timeStamp('created_at');
+        table.timeStamp('updated_at');
+        table.varChar(
+          'name',
+          length: 255,
+        )
+          ..defaultsTo('Tobe Osakwe')
+          ..unique();
+      },
+    );
   }
 
   @override
@@ -51,18 +77,43 @@ class AuthorMigration extends Migration {
 // **************************************************************************
 
 class BookQuery extends Query<Book, BookQueryWhere> {
-  BookQuery({Query? parent, Set<String>? trampoline}) : super(parent: parent) {
+  BookQuery({
+    Query? parent,
+    Set<String>? trampoline,
+  }) : super(parent: parent) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = BookQueryWhere(this);
-    join(_author = AuthorQuery(trampoline: trampoline, parent: this),
-        'author_id', 'id',
-        additionalFields: const ['id', 'created_at', 'updated_at', 'name'],
-        trampoline: trampoline);
-    join(_partnerAuthor = AuthorQuery(trampoline: trampoline, parent: this),
-        'partner_author_id', 'id',
-        additionalFields: const ['id', 'created_at', 'updated_at', 'name'],
-        trampoline: trampoline);
+    join(
+      _author = AuthorQuery(
+        trampoline: trampoline,
+        parent: this,
+      ),
+      'author_id',
+      'id',
+      additionalFields: const [
+        'id',
+        'created_at',
+        'updated_at',
+        'name',
+      ],
+      trampoline: trampoline,
+    );
+    join(
+      _partnerAuthor = AuthorQuery(
+        trampoline: trampoline,
+        parent: this,
+      ),
+      'partner_author_id',
+      'id',
+      additionalFields: const [
+        'id',
+        'created_at',
+        'updated_at',
+        'name',
+      ],
+      trampoline: trampoline,
+    );
   }
 
   @override
@@ -94,7 +145,7 @@ class BookQuery extends Query<Book, BookQueryWhere> {
       'updated_at',
       'author_id',
       'partner_author_id',
-      'name'
+      'name',
     ];
     return _selectedFields.isEmpty
         ? _fields
@@ -121,14 +172,13 @@ class BookQuery extends Query<Book, BookQueryWhere> {
       return Optional.empty();
     }
     var model = Book(
-        id: fields.contains('id') ? row[0].toString() : null,
-        createdAt: fields.contains('created_at')
-            ? mapToNullableDateTime(row[1])
-            : null,
-        updatedAt: fields.contains('updated_at')
-            ? mapToNullableDateTime(row[2])
-            : null,
-        name: fields.contains('name') ? (row[5] as String?) : null);
+      id: fields.contains('id') ? row[0].toString() : null,
+      createdAt:
+          fields.contains('created_at') ? mapToNullableDateTime(row[1]) : null,
+      updatedAt:
+          fields.contains('updated_at') ? mapToNullableDateTime(row[2]) : null,
+      name: fields.contains('name') ? (row[5] as String?) : null,
+    );
     if (row.length > 6) {
       var modelOpt = AuthorQuery().parseRow(row.skip(6).take(4).toList());
       modelOpt.ifPresent((m) {
@@ -160,13 +210,30 @@ class BookQuery extends Query<Book, BookQueryWhere> {
 
 class BookQueryWhere extends QueryWhere {
   BookQueryWhere(BookQuery query)
-      : id = NumericSqlExpressionBuilder<int>(query, 'id'),
-        createdAt = DateTimeSqlExpressionBuilder(query, 'created_at'),
-        updatedAt = DateTimeSqlExpressionBuilder(query, 'updated_at'),
-        authorId = NumericSqlExpressionBuilder<int>(query, 'author_id'),
-        partnerAuthorId =
-            NumericSqlExpressionBuilder<int>(query, 'partner_author_id'),
-        name = StringSqlExpressionBuilder(query, 'name');
+      : id = NumericSqlExpressionBuilder<int>(
+          query,
+          'id',
+        ),
+        createdAt = DateTimeSqlExpressionBuilder(
+          query,
+          'created_at',
+        ),
+        updatedAt = DateTimeSqlExpressionBuilder(
+          query,
+          'updated_at',
+        ),
+        authorId = NumericSqlExpressionBuilder<int>(
+          query,
+          'author_id',
+        ),
+        partnerAuthorId = NumericSqlExpressionBuilder<int>(
+          query,
+          'partner_author_id',
+        ),
+        name = StringSqlExpressionBuilder(
+          query,
+          'name',
+        );
 
   final NumericSqlExpressionBuilder<int> id;
 
@@ -182,7 +249,14 @@ class BookQueryWhere extends QueryWhere {
 
   @override
   List<SqlExpressionBuilder> get expressionBuilders {
-    return [id, createdAt, updatedAt, authorId, partnerAuthorId, name];
+    return [
+      id,
+      createdAt,
+      updatedAt,
+      authorId,
+      partnerAuthorId,
+      name,
+    ];
   }
 }
 
@@ -236,8 +310,10 @@ class BookQueryValues extends MapQueryValues {
 }
 
 class AuthorQuery extends Query<Author, AuthorQueryWhere> {
-  AuthorQuery({Query? parent, Set<String>? trampoline})
-      : super(parent: parent) {
+  AuthorQuery({
+    Query? parent,
+    Set<String>? trampoline,
+  }) : super(parent: parent) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = AuthorQueryWhere(this);
@@ -262,7 +338,12 @@ class AuthorQuery extends Query<Author, AuthorQueryWhere> {
 
   @override
   List<String> get fields {
-    const _fields = ['id', 'created_at', 'updated_at', 'name'];
+    const _fields = [
+      'id',
+      'created_at',
+      'updated_at',
+      'name',
+    ];
     return _selectedFields.isEmpty
         ? _fields
         : _fields.where((field) => _selectedFields.contains(field)).toList();
@@ -288,14 +369,13 @@ class AuthorQuery extends Query<Author, AuthorQueryWhere> {
       return Optional.empty();
     }
     var model = Author(
-        id: fields.contains('id') ? row[0].toString() : null,
-        createdAt: fields.contains('created_at')
-            ? mapToNullableDateTime(row[1])
-            : null,
-        updatedAt: fields.contains('updated_at')
-            ? mapToNullableDateTime(row[2])
-            : null,
-        name: fields.contains('name') ? (row[3] as String?) : null);
+      id: fields.contains('id') ? row[0].toString() : null,
+      createdAt:
+          fields.contains('created_at') ? mapToNullableDateTime(row[1]) : null,
+      updatedAt:
+          fields.contains('updated_at') ? mapToNullableDateTime(row[2]) : null,
+      name: fields.contains('name') ? (row[3] as String?) : null,
+    );
     return Optional.of(model);
   }
 
@@ -307,10 +387,22 @@ class AuthorQuery extends Query<Author, AuthorQueryWhere> {
 
 class AuthorQueryWhere extends QueryWhere {
   AuthorQueryWhere(AuthorQuery query)
-      : id = NumericSqlExpressionBuilder<int>(query, 'id'),
-        createdAt = DateTimeSqlExpressionBuilder(query, 'created_at'),
-        updatedAt = DateTimeSqlExpressionBuilder(query, 'updated_at'),
-        name = StringSqlExpressionBuilder(query, 'name');
+      : id = NumericSqlExpressionBuilder<int>(
+          query,
+          'id',
+        ),
+        createdAt = DateTimeSqlExpressionBuilder(
+          query,
+          'created_at',
+        ),
+        updatedAt = DateTimeSqlExpressionBuilder(
+          query,
+          'updated_at',
+        ),
+        name = StringSqlExpressionBuilder(
+          query,
+          'name',
+        );
 
   final NumericSqlExpressionBuilder<int> id;
 
@@ -322,7 +414,12 @@ class AuthorQueryWhere extends QueryWhere {
 
   @override
   List<SqlExpressionBuilder> get expressionBuilders {
-    return [id, createdAt, updatedAt, name];
+    return [
+      id,
+      createdAt,
+      updatedAt,
+      name,
+    ];
   }
 }
 
@@ -365,13 +462,14 @@ class AuthorQueryValues extends MapQueryValues {
 
 @generatedSerializable
 class Book extends _Book {
-  Book(
-      {this.id,
-      this.createdAt,
-      this.updatedAt,
-      this.author,
-      this.partnerAuthor,
-      this.name});
+  Book({
+    this.id,
+    this.createdAt,
+    this.updatedAt,
+    this.author,
+    this.partnerAuthor,
+    this.name,
+  });
 
   /// A unique identifier corresponding to this item.
   @override
@@ -394,13 +492,14 @@ class Book extends _Book {
   @override
   String? name;
 
-  Book copyWith(
-      {String? id,
-      DateTime? createdAt,
-      DateTime? updatedAt,
-      _Author? author,
-      _Author? partnerAuthor,
-      String? name}) {
+  Book copyWith({
+    String? id,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    _Author? author,
+    _Author? partnerAuthor,
+    String? name,
+  }) {
     return Book(
         id: id ?? this.id,
         createdAt: createdAt ?? this.createdAt,
@@ -423,7 +522,14 @@ class Book extends _Book {
 
   @override
   int get hashCode {
-    return hashObjects([id, createdAt, updatedAt, author, partnerAuthor, name]);
+    return hashObjects([
+      id,
+      createdAt,
+      updatedAt,
+      author,
+      partnerAuthor,
+      name,
+    ]);
   }
 
   @override
@@ -438,7 +544,12 @@ class Book extends _Book {
 
 @generatedSerializable
 class Author extends _Author {
-  Author({this.id, this.createdAt, this.updatedAt, this.name = 'Tobe Osakwe'});
+  Author({
+    this.id,
+    this.createdAt,
+    this.updatedAt,
+    this.name = 'Tobe Osakwe',
+  });
 
   /// A unique identifier corresponding to this item.
   @override
@@ -455,8 +566,12 @@ class Author extends _Author {
   @override
   String? name;
 
-  Author copyWith(
-      {String? id, DateTime? createdAt, DateTime? updatedAt, String? name}) {
+  Author copyWith({
+    String? id,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    String? name,
+  }) {
     return Author(
         id: id ?? this.id,
         createdAt: createdAt ?? this.createdAt,
@@ -475,7 +590,12 @@ class Author extends _Author {
 
   @override
   int get hashCode {
-    return hashObjects([id, createdAt, updatedAt, name]);
+    return hashObjects([
+      id,
+      createdAt,
+      updatedAt,
+      name,
+    ]);
   }
 
   @override
@@ -559,7 +679,7 @@ abstract class BookFields {
     updatedAt,
     author,
     partnerAuthor,
-    name
+    name,
   ];
 
   static const String id = 'id';
@@ -632,7 +752,7 @@ abstract class AuthorFields {
     id,
     createdAt,
     updatedAt,
-    name
+    name,
   ];
 
   static const String id = 'id';

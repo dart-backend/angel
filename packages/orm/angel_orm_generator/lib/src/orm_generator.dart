@@ -103,17 +103,19 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
             ..types.add(refer('String')))
           ..type = MethodType.getter
           ..body = Block((b) {
-            var args = <String?, Expression>{};
+            var args = <String, Expression>{};
 
+            /* Remove casts no numeric values
             for (var field in ctx.effectiveFields) {
               var name = ctx.buildContext.resolveFieldName(field.name);
               var type = ctx.columns[field.name]?.type;
               if (type == null) continue;
               if (floatTypes.contains(type)) {
                 //args[name] = literalString('text');
-                args[name] = literalString('char');
+                args[name!] = literalString('char');
               }
             }
+            */
 
             b.addExpression(literalMap(args).returned);
           });
@@ -857,9 +859,11 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
               if (const TypeChecker.fromRuntime(List)
                   .isAssignableFromType(fType)) {
                 args[name] = literalString(type.name);
-              } else if (floatTypes.contains(type)) {
-                args[name] = literalString(type.name);
               }
+
+              /* else if (floatTypes.contains(type)) {
+                args[name] = literalString(type.name);
+              } */
             }
 
             b.addExpression(literalMap(args).returned);
@@ -887,10 +891,14 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                 .property('cast')
                 .call([]);
           } else if (floatTypes.contains(ctx.columns[field.name]?.type)) {
-            value = refer('double')
-                .property('tryParse')
-                .call([value.asA(refer('String'))]).ifNullThen(
-                    CodeExpression(Code('0.0')));
+            // Skip using casts on double
+            value = value
+                .asA(refer('double?'))
+                .ifNullThen(CodeExpression(Code('0.0')));
+            //value = refer('double')
+            //    .property('tryParse')
+            //    .call([value.asA(refer('String'))]).ifNullThen(
+            //        CodeExpression(Code('0.0')));
           } else {
             value = value.asA(type);
           }
@@ -910,9 +918,11 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
           } else if (const TypeChecker.fromRuntime(List)
               .isAssignableFromType(fType)) {
             value = refer('json').property('encode').call([value]);
-          } else if (floatTypes.contains(ctx.columns[field.name]?.type)) {
-            value = value.property('toString').call([]);
           }
+
+          /* else if (floatTypes.contains(ctx.columns[field.name]?.type)) {
+            value = value.property('toString').call([]);
+          } */
 
           b
             ..name = field.name

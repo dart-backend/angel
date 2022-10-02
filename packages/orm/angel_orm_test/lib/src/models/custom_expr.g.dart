@@ -9,11 +9,14 @@ part of 'custom_expr.dart';
 class NumbersMigration extends Migration {
   @override
   void up(Schema schema) {
-    schema.create('numbers', (table) {
-      table.serial('id').primaryKey();
-      table.timeStamp('created_at');
-      table.timeStamp('updated_at');
-    });
+    schema.create(
+      'numbers',
+      (table) {
+        table.serial('id').primaryKey();
+        table.timeStamp('created_at');
+        table.timeStamp('updated_at');
+      },
+    );
   }
 
   @override
@@ -25,15 +28,27 @@ class NumbersMigration extends Migration {
 class AlphabetMigration extends Migration {
   @override
   void up(Schema schema) {
-    schema.create('alphabets', (table) {
-      table.serial('id').primaryKey();
-      table.timeStamp('created_at');
-      table.timeStamp('updated_at');
-      table.varChar('value', length: 255);
-      table
-          .declare('numbers_id', ColumnType('int'))
-          .references('numbers', 'id');
-    });
+    schema.create(
+      'alphabets',
+      (table) {
+        table.serial('id').primaryKey();
+        table.timeStamp('created_at');
+        table.timeStamp('updated_at');
+        table.varChar(
+          'value',
+          length: 255,
+        );
+        table
+            .declare(
+              'numbers_id',
+              ColumnType('int'),
+            )
+            .references(
+              'numbers',
+              'id',
+            );
+      },
+    );
   }
 
   @override
@@ -47,8 +62,10 @@ class AlphabetMigration extends Migration {
 // **************************************************************************
 
 class NumbersQuery extends Query<Numbers, NumbersQueryWhere> {
-  NumbersQuery({Query? parent, Set<String>? trampoline})
-      : super(parent: parent) {
+  NumbersQuery({
+    Query? parent,
+    Set<String>? trampoline,
+  }) : super(parent: parent) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     expressions['two'] = 'SELECT 2';
@@ -74,7 +91,12 @@ class NumbersQuery extends Query<Numbers, NumbersQueryWhere> {
 
   @override
   List<String> get fields {
-    const _fields = ['id', 'created_at', 'updated_at', 'two'];
+    const _fields = [
+      'id',
+      'created_at',
+      'updated_at',
+      'two',
+    ];
     return _selectedFields.isEmpty
         ? _fields
         : _fields.where((field) => _selectedFields.contains(field)).toList();
@@ -100,14 +122,13 @@ class NumbersQuery extends Query<Numbers, NumbersQueryWhere> {
       return Optional.empty();
     }
     var model = Numbers(
-        id: fields.contains('id') ? row[0].toString() : null,
-        createdAt: fields.contains('created_at')
-            ? mapToNullableDateTime(row[1])
-            : null,
-        updatedAt: fields.contains('updated_at')
-            ? mapToNullableDateTime(row[2])
-            : null,
-        two: fields.contains('two') ? (row[3] as int?) : null);
+      id: fields.contains('id') ? row[0].toString() : null,
+      createdAt:
+          fields.contains('created_at') ? mapToNullableDateTime(row[1]) : null,
+      updatedAt:
+          fields.contains('updated_at') ? mapToNullableDateTime(row[2]) : null,
+      two: fields.contains('two') ? (row[3] as int?) : null,
+    );
     return Optional.of(model);
   }
 
@@ -119,9 +140,18 @@ class NumbersQuery extends Query<Numbers, NumbersQueryWhere> {
 
 class NumbersQueryWhere extends QueryWhere {
   NumbersQueryWhere(NumbersQuery query)
-      : id = NumericSqlExpressionBuilder<int>(query, 'id'),
-        createdAt = DateTimeSqlExpressionBuilder(query, 'created_at'),
-        updatedAt = DateTimeSqlExpressionBuilder(query, 'updated_at');
+      : id = NumericSqlExpressionBuilder<int>(
+          query,
+          'id',
+        ),
+        createdAt = DateTimeSqlExpressionBuilder(
+          query,
+          'created_at',
+        ),
+        updatedAt = DateTimeSqlExpressionBuilder(
+          query,
+          'updated_at',
+        );
 
   final NumericSqlExpressionBuilder<int> id;
 
@@ -131,7 +161,11 @@ class NumbersQueryWhere extends QueryWhere {
 
   @override
   List<SqlExpressionBuilder> get expressionBuilders {
-    return [id, createdAt, updatedAt];
+    return [
+      id,
+      createdAt,
+      updatedAt,
+    ];
   }
 }
 
@@ -163,15 +197,28 @@ class NumbersQueryValues extends MapQueryValues {
 }
 
 class AlphabetQuery extends Query<Alphabet, AlphabetQueryWhere> {
-  AlphabetQuery({Query? parent, Set<String>? trampoline})
-      : super(parent: parent) {
+  AlphabetQuery({
+    Query? parent,
+    Set<String>? trampoline,
+  }) : super(parent: parent) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = AlphabetQueryWhere(this);
-    leftJoin(_numbers = NumbersQuery(trampoline: trampoline, parent: this),
-        'numbers_id', 'id',
-        additionalFields: const ['id', 'created_at', 'updated_at', 'two'],
-        trampoline: trampoline);
+    leftJoin(
+      _numbers = NumbersQuery(
+        trampoline: trampoline,
+        parent: this,
+      ),
+      'numbers_id',
+      'id',
+      additionalFields: const [
+        'id',
+        'created_at',
+        'updated_at',
+        'two',
+      ],
+      trampoline: trampoline,
+    );
   }
 
   @override
@@ -195,7 +242,13 @@ class AlphabetQuery extends Query<Alphabet, AlphabetQueryWhere> {
 
   @override
   List<String> get fields {
-    const _fields = ['id', 'created_at', 'updated_at', 'value', 'numbers_id'];
+    const _fields = [
+      'id',
+      'created_at',
+      'updated_at',
+      'value',
+      'numbers_id',
+    ];
     return _selectedFields.isEmpty
         ? _fields
         : _fields.where((field) => _selectedFields.contains(field)).toList();
@@ -221,14 +274,13 @@ class AlphabetQuery extends Query<Alphabet, AlphabetQueryWhere> {
       return Optional.empty();
     }
     var model = Alphabet(
-        id: fields.contains('id') ? row[0].toString() : null,
-        createdAt: fields.contains('created_at')
-            ? mapToNullableDateTime(row[1])
-            : null,
-        updatedAt: fields.contains('updated_at')
-            ? mapToNullableDateTime(row[2])
-            : null,
-        value: fields.contains('value') ? (row[3] as String?) : null);
+      id: fields.contains('id') ? row[0].toString() : null,
+      createdAt:
+          fields.contains('created_at') ? mapToNullableDateTime(row[1]) : null,
+      updatedAt:
+          fields.contains('updated_at') ? mapToNullableDateTime(row[2]) : null,
+      value: fields.contains('value') ? (row[3] as String?) : null,
+    );
     if (row.length > 5) {
       var modelOpt = NumbersQuery().parseRow(row.skip(5).take(4).toList());
       modelOpt.ifPresent((m) {
@@ -250,11 +302,26 @@ class AlphabetQuery extends Query<Alphabet, AlphabetQueryWhere> {
 
 class AlphabetQueryWhere extends QueryWhere {
   AlphabetQueryWhere(AlphabetQuery query)
-      : id = NumericSqlExpressionBuilder<int>(query, 'id'),
-        createdAt = DateTimeSqlExpressionBuilder(query, 'created_at'),
-        updatedAt = DateTimeSqlExpressionBuilder(query, 'updated_at'),
-        value = StringSqlExpressionBuilder(query, 'value'),
-        numbersId = NumericSqlExpressionBuilder<int>(query, 'numbers_id');
+      : id = NumericSqlExpressionBuilder<int>(
+          query,
+          'id',
+        ),
+        createdAt = DateTimeSqlExpressionBuilder(
+          query,
+          'created_at',
+        ),
+        updatedAt = DateTimeSqlExpressionBuilder(
+          query,
+          'updated_at',
+        ),
+        value = StringSqlExpressionBuilder(
+          query,
+          'value',
+        ),
+        numbersId = NumericSqlExpressionBuilder<int>(
+          query,
+          'numbers_id',
+        );
 
   final NumericSqlExpressionBuilder<int> id;
 
@@ -268,7 +335,13 @@ class AlphabetQueryWhere extends QueryWhere {
 
   @override
   List<SqlExpressionBuilder> get expressionBuilders {
-    return [id, createdAt, updatedAt, value, numbersId];
+    return [
+      id,
+      createdAt,
+      updatedAt,
+      value,
+      numbersId,
+    ];
   }
 }
 
@@ -319,7 +392,12 @@ class AlphabetQueryValues extends MapQueryValues {
 
 @generatedSerializable
 class Numbers extends _Numbers {
-  Numbers({this.id, this.createdAt, this.updatedAt, this.two});
+  Numbers({
+    this.id,
+    this.createdAt,
+    this.updatedAt,
+    this.two,
+  });
 
   /// A unique identifier corresponding to this item.
   @override
@@ -336,8 +414,12 @@ class Numbers extends _Numbers {
   @override
   int? two;
 
-  Numbers copyWith(
-      {String? id, DateTime? createdAt, DateTime? updatedAt, int? two}) {
+  Numbers copyWith({
+    String? id,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    int? two,
+  }) {
     return Numbers(
         id: id ?? this.id,
         createdAt: createdAt ?? this.createdAt,
@@ -356,7 +438,12 @@ class Numbers extends _Numbers {
 
   @override
   int get hashCode {
-    return hashObjects([id, createdAt, updatedAt, two]);
+    return hashObjects([
+      id,
+      createdAt,
+      updatedAt,
+      two,
+    ]);
   }
 
   @override
@@ -371,7 +458,13 @@ class Numbers extends _Numbers {
 
 @generatedSerializable
 class Alphabet extends _Alphabet {
-  Alphabet({this.id, this.createdAt, this.updatedAt, this.value, this.numbers});
+  Alphabet({
+    this.id,
+    this.createdAt,
+    this.updatedAt,
+    this.value,
+    this.numbers,
+  });
 
   /// A unique identifier corresponding to this item.
   @override
@@ -391,12 +484,13 @@ class Alphabet extends _Alphabet {
   @override
   _Numbers? numbers;
 
-  Alphabet copyWith(
-      {String? id,
-      DateTime? createdAt,
-      DateTime? updatedAt,
-      String? value,
-      _Numbers? numbers}) {
+  Alphabet copyWith({
+    String? id,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    String? value,
+    _Numbers? numbers,
+  }) {
     return Alphabet(
         id: id ?? this.id,
         createdAt: createdAt ?? this.createdAt,
@@ -417,7 +511,13 @@ class Alphabet extends _Alphabet {
 
   @override
   int get hashCode {
-    return hashObjects([id, createdAt, updatedAt, value, numbers]);
+    return hashObjects([
+      id,
+      createdAt,
+      updatedAt,
+      value,
+      numbers,
+    ]);
   }
 
   @override
@@ -487,7 +587,12 @@ class NumbersSerializer extends Codec<Numbers, Map> {
 }
 
 abstract class NumbersFields {
-  static const List<String> allFields = <String>[id, createdAt, updatedAt, two];
+  static const List<String> allFields = <String>[
+    id,
+    createdAt,
+    updatedAt,
+    two,
+  ];
 
   static const String id = 'id';
 
@@ -560,7 +665,7 @@ abstract class AlphabetFields {
     createdAt,
     updatedAt,
     value,
-    numbers
+    numbers,
   ];
 
   static const String id = 'id';

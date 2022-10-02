@@ -9,13 +9,19 @@ part of angel_orm3.generator.models.person;
 class PersonMigration extends Migration {
   @override
   void up(Schema schema) {
-    schema.create('persons', (table) {
-      table.serial('id').primaryKey();
-      table.timeStamp('created_at');
-      table.timeStamp('updated_at');
-      table.varChar('name', length: 255);
-      table.integer('age');
-    });
+    schema.create(
+      'persons',
+      (table) {
+        table.serial('id').primaryKey();
+        table.timeStamp('created_at');
+        table.timeStamp('updated_at');
+        table.varChar(
+          'name',
+          length: 255,
+        );
+        table.integer('age');
+      },
+    );
   }
 
   @override
@@ -29,8 +35,10 @@ class PersonMigration extends Migration {
 // **************************************************************************
 
 class PersonQuery extends Query<Person, PersonQueryWhere> {
-  PersonQuery({Query? parent, Set<String>? trampoline})
-      : super(parent: parent) {
+  PersonQuery({
+    Query? parent,
+    Set<String>? trampoline,
+  }) : super(parent: parent) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = PersonQueryWhere(this);
@@ -55,7 +63,13 @@ class PersonQuery extends Query<Person, PersonQueryWhere> {
 
   @override
   List<String> get fields {
-    const _fields = ['id', 'created_at', 'updated_at', 'name', 'age'];
+    const _fields = [
+      'id',
+      'created_at',
+      'updated_at',
+      'name',
+      'age',
+    ];
     return _selectedFields.isEmpty
         ? _fields
         : _fields.where((field) => _selectedFields.contains(field)).toList();
@@ -81,15 +95,14 @@ class PersonQuery extends Query<Person, PersonQueryWhere> {
       return Optional.empty();
     }
     var model = Person(
-        id: fields.contains('id') ? row[0].toString() : null,
-        createdAt: fields.contains('created_at')
-            ? mapToNullableDateTime(row[1])
-            : null,
-        updatedAt: fields.contains('updated_at')
-            ? mapToNullableDateTime(row[2])
-            : null,
-        name: fields.contains('name') ? (row[3] as String?) : null,
-        age: fields.contains('age') ? (row[4] as int?) : null);
+      id: fields.contains('id') ? row[0].toString() : null,
+      createdAt:
+          fields.contains('created_at') ? mapToNullableDateTime(row[1]) : null,
+      updatedAt:
+          fields.contains('updated_at') ? mapToNullableDateTime(row[2]) : null,
+      name: fields.contains('name') ? (row[3] as String?) : null,
+      age: fields.contains('age') ? (row[4] as int?) : null,
+    );
     return Optional.of(model);
   }
 
@@ -101,11 +114,26 @@ class PersonQuery extends Query<Person, PersonQueryWhere> {
 
 class PersonQueryWhere extends QueryWhere {
   PersonQueryWhere(PersonQuery query)
-      : id = NumericSqlExpressionBuilder<int>(query, 'id'),
-        createdAt = DateTimeSqlExpressionBuilder(query, 'created_at'),
-        updatedAt = DateTimeSqlExpressionBuilder(query, 'updated_at'),
-        name = StringSqlExpressionBuilder(query, 'name'),
-        age = NumericSqlExpressionBuilder<int>(query, 'age');
+      : id = NumericSqlExpressionBuilder<int>(
+          query,
+          'id',
+        ),
+        createdAt = DateTimeSqlExpressionBuilder(
+          query,
+          'created_at',
+        ),
+        updatedAt = DateTimeSqlExpressionBuilder(
+          query,
+          'updated_at',
+        ),
+        name = StringSqlExpressionBuilder(
+          query,
+          'name',
+        ),
+        age = NumericSqlExpressionBuilder<int>(
+          query,
+          'age',
+        );
 
   final NumericSqlExpressionBuilder<int> id;
 
@@ -119,7 +147,13 @@ class PersonQueryWhere extends QueryWhere {
 
   @override
   List<SqlExpressionBuilder> get expressionBuilders {
-    return [id, createdAt, updatedAt, name, age];
+    return [
+      id,
+      createdAt,
+      updatedAt,
+      name,
+      age,
+    ];
   }
 }
 
@@ -164,8 +198,10 @@ class PersonQueryValues extends MapQueryValues {
 
 class PersonWithLastOrderQuery
     extends Query<PersonWithLastOrder, PersonWithLastOrderQueryWhere> {
-  PersonWithLastOrderQuery({Query? parent, Set<String>? trampoline})
-      : super(parent: parent) {
+  PersonWithLastOrderQuery({
+    Query? parent,
+    Set<String>? trampoline,
+  }) : super(parent: parent) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     expressions['last_order_name'] = 'po.name';
@@ -183,7 +219,7 @@ class PersonWithLastOrderQuery
 
   @override
   Map<String, String> get casts {
-    return {'last_order_price': 'char'};
+    return {};
   }
 
   @override
@@ -193,7 +229,11 @@ class PersonWithLastOrderQuery
 
   @override
   List<String> get fields {
-    const _fields = ['name', 'last_order_name', 'last_order_price'];
+    const _fields = [
+      'name',
+      'last_order_name',
+      'last_order_price',
+    ];
     return _selectedFields.isEmpty
         ? _fields
         : _fields.where((field) => _selectedFields.contains(field)).toList();
@@ -219,11 +259,12 @@ class PersonWithLastOrderQuery
       return Optional.empty();
     }
     var model = PersonWithLastOrder(
-        name: fields.contains('name') ? (row[0] as String?) : null,
-        lastOrderName:
-            fields.contains('last_order_name') ? (row[1] as String?) : null,
-        lastOrderPrice:
-            fields.contains('last_order_price') ? mapToDouble(row[2]) : null);
+      name: fields.contains('name') ? (row[0] as String?) : null,
+      lastOrderName:
+          fields.contains('last_order_name') ? (row[1] as String?) : null,
+      lastOrderPrice:
+          fields.contains('last_order_price') ? mapToDouble(row[2]) : null,
+    );
     return Optional.of(model);
   }
 
@@ -235,7 +276,10 @@ class PersonWithLastOrderQuery
 
 class PersonWithLastOrderQueryWhere extends QueryWhere {
   PersonWithLastOrderQueryWhere(PersonWithLastOrderQuery query)
-      : name = StringSqlExpressionBuilder(query, 'name');
+      : name = StringSqlExpressionBuilder(
+          query,
+          'name',
+        );
 
   final StringSqlExpressionBuilder name;
 
@@ -248,7 +292,7 @@ class PersonWithLastOrderQueryWhere extends QueryWhere {
 class PersonWithLastOrderQueryValues extends MapQueryValues {
   @override
   Map<String, String> get casts {
-    return {'last_order_price': 'double precision'};
+    return {};
   }
 
   String? get name {
@@ -267,7 +311,13 @@ class PersonWithLastOrderQueryValues extends MapQueryValues {
 
 @generatedSerializable
 class Person extends _Person {
-  Person({this.id, this.createdAt, this.updatedAt, this.name, this.age});
+  Person({
+    this.id,
+    this.createdAt,
+    this.updatedAt,
+    this.name,
+    this.age,
+  });
 
   /// A unique identifier corresponding to this item.
   @override
@@ -287,12 +337,13 @@ class Person extends _Person {
   @override
   int? age;
 
-  Person copyWith(
-      {String? id,
-      DateTime? createdAt,
-      DateTime? updatedAt,
-      String? name,
-      int? age}) {
+  Person copyWith({
+    String? id,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    String? name,
+    int? age,
+  }) {
     return Person(
         id: id ?? this.id,
         createdAt: createdAt ?? this.createdAt,
@@ -313,7 +364,13 @@ class Person extends _Person {
 
   @override
   int get hashCode {
-    return hashObjects([id, createdAt, updatedAt, name, age]);
+    return hashObjects([
+      id,
+      createdAt,
+      updatedAt,
+      name,
+      age,
+    ]);
   }
 
   @override
@@ -328,7 +385,11 @@ class Person extends _Person {
 
 @generatedSerializable
 class PersonWithLastOrder extends _PersonWithLastOrder {
-  PersonWithLastOrder({this.name, this.lastOrderName, this.lastOrderPrice});
+  PersonWithLastOrder({
+    this.name,
+    this.lastOrderName,
+    this.lastOrderPrice,
+  });
 
   @override
   String? name;
@@ -339,8 +400,11 @@ class PersonWithLastOrder extends _PersonWithLastOrder {
   @override
   double? lastOrderPrice;
 
-  PersonWithLastOrder copyWith(
-      {String? name, String? lastOrderName, double? lastOrderPrice}) {
+  PersonWithLastOrder copyWith({
+    String? name,
+    String? lastOrderName,
+    double? lastOrderPrice,
+  }) {
     return PersonWithLastOrder(
         name: name ?? this.name,
         lastOrderName: lastOrderName ?? this.lastOrderName,
@@ -357,7 +421,11 @@ class PersonWithLastOrder extends _PersonWithLastOrder {
 
   @override
   int get hashCode {
-    return hashObjects([name, lastOrderName, lastOrderPrice]);
+    return hashObjects([
+      name,
+      lastOrderName,
+      lastOrderPrice,
+    ]);
   }
 
   @override
@@ -434,7 +502,7 @@ abstract class PersonFields {
     createdAt,
     updatedAt,
     name,
-    age
+    age,
   ];
 
   static const String id = 'id';
@@ -497,7 +565,7 @@ abstract class PersonWithLastOrderFields {
   static const List<String> allFields = <String>[
     name,
     lastOrderName,
-    lastOrderPrice
+    lastOrderPrice,
   ];
 
   static const String name = 'name';

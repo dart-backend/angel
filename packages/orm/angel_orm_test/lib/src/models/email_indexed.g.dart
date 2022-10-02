@@ -9,28 +9,54 @@ part of 'email_indexed.dart';
 class RoleMigration extends Migration {
   @override
   void up(Schema schema) {
-    schema.create('roles', (table) {
-      table.varChar('role', length: 255).primaryKey();
-    });
+    schema.create(
+      'roles',
+      (table) {
+        table
+            .varChar(
+              'role',
+              length: 255,
+            )
+            .primaryKey();
+      },
+    );
   }
 
   @override
   void down(Schema schema) {
-    schema.drop('roles', cascade: true);
+    schema.drop(
+      'roles',
+      cascade: true,
+    );
   }
 }
 
 class RoleUserMigration extends Migration {
   @override
   void up(Schema schema) {
-    schema.create('role_users', (table) {
-      table
-          .declare('role_role', ColumnType('varchar'))
-          .references('roles', 'role');
-      table
-          .declare('user_email', ColumnType('varchar'))
-          .references('users', 'email');
-    });
+    schema.create(
+      'role_users',
+      (table) {
+        table
+            .declare(
+              'role_role',
+              ColumnType('varchar'),
+            )
+            .references(
+              'roles',
+              'role',
+            );
+        table
+            .declare(
+              'user_email',
+              ColumnType('varchar'),
+            )
+            .references(
+              'users',
+              'email',
+            );
+      },
+    );
   }
 
   @override
@@ -42,16 +68,33 @@ class RoleUserMigration extends Migration {
 class UserMigration extends Migration {
   @override
   void up(Schema schema) {
-    schema.create('users', (table) {
-      table.varChar('email', length: 255).primaryKey();
-      table.varChar('name', length: 255);
-      table.varChar('password', length: 255);
-    });
+    schema.create(
+      'users',
+      (table) {
+        table
+            .varChar(
+              'email',
+              length: 255,
+            )
+            .primaryKey();
+        table.varChar(
+          'name',
+          length: 255,
+        );
+        table.varChar(
+          'password',
+          length: 255,
+        );
+      },
+    );
   }
 
   @override
   void down(Schema schema) {
-    schema.drop('users', cascade: true);
+    schema.drop(
+      'users',
+      cascade: true,
+    );
   }
 }
 
@@ -60,16 +103,24 @@ class UserMigration extends Migration {
 // **************************************************************************
 
 class RoleQuery extends Query<Role, RoleQueryWhere> {
-  RoleQuery({Query? parent, Set<String>? trampoline}) : super(parent: parent) {
+  RoleQuery({
+    Query? parent,
+    Set<String>? trampoline,
+  }) : super(parent: parent) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = RoleQueryWhere(this);
     leftJoin(
-        '(SELECT role_users.role_role, users.email, users.name, users.password FROM users LEFT JOIN role_users ON role_users.user_email=users.email)',
-        'role',
-        'role_role',
-        additionalFields: const ['email', 'name', 'password'],
-        trampoline: trampoline);
+      '(SELECT role_users.role_role, users.email, users.name, users.password FROM users LEFT JOIN role_users ON role_users.user_email=users.email)',
+      'role',
+      'role_role',
+      additionalFields: const [
+        'email',
+        'name',
+        'password',
+      ],
+      trampoline: trampoline,
+    );
   }
 
   @override
@@ -195,7 +246,10 @@ class RoleQuery extends Query<Role, RoleQueryWhere> {
 
 class RoleQueryWhere extends QueryWhere {
   RoleQueryWhere(RoleQuery query)
-      : role = StringSqlExpressionBuilder(query, 'role');
+      : role = StringSqlExpressionBuilder(
+          query,
+          'role',
+        );
 
   final StringSqlExpressionBuilder role;
 
@@ -222,18 +276,37 @@ class RoleQueryValues extends MapQueryValues {
 }
 
 class RoleUserQuery extends Query<RoleUser, RoleUserQueryWhere> {
-  RoleUserQuery({Query? parent, Set<String>? trampoline})
-      : super(parent: parent) {
+  RoleUserQuery({
+    Query? parent,
+    Set<String>? trampoline,
+  }) : super(parent: parent) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = RoleUserQueryWhere(this);
-    leftJoin(_role = RoleQuery(trampoline: trampoline, parent: this),
-        'role_role', 'role',
-        additionalFields: const ['role'], trampoline: trampoline);
-    leftJoin(_user = UserQuery(trampoline: trampoline, parent: this),
-        'user_email', 'email',
-        additionalFields: const ['email', 'name', 'password'],
-        trampoline: trampoline);
+    leftJoin(
+      _role = RoleQuery(
+        trampoline: trampoline,
+        parent: this,
+      ),
+      'role_role',
+      'role',
+      additionalFields: const ['role'],
+      trampoline: trampoline,
+    );
+    leftJoin(
+      _user = UserQuery(
+        trampoline: trampoline,
+        parent: this,
+      ),
+      'user_email',
+      'email',
+      additionalFields: const [
+        'email',
+        'name',
+        'password',
+      ],
+      trampoline: trampoline,
+    );
   }
 
   @override
@@ -259,7 +332,10 @@ class RoleUserQuery extends Query<RoleUser, RoleUserQueryWhere> {
 
   @override
   List<String> get fields {
-    const _fields = ['role_role', 'user_email'];
+    const _fields = [
+      'role_role',
+      'user_email',
+    ];
     return _selectedFields.isEmpty
         ? _fields
         : _fields.where((field) => _selectedFields.contains(field)).toList();
@@ -316,8 +392,14 @@ class RoleUserQuery extends Query<RoleUser, RoleUserQueryWhere> {
 
 class RoleUserQueryWhere extends QueryWhere {
   RoleUserQueryWhere(RoleUserQuery query)
-      : roleRole = StringSqlExpressionBuilder(query, 'role_role'),
-        userEmail = StringSqlExpressionBuilder(query, 'user_email');
+      : roleRole = StringSqlExpressionBuilder(
+          query,
+          'role_role',
+        ),
+        userEmail = StringSqlExpressionBuilder(
+          query,
+          'user_email',
+        );
 
   final StringSqlExpressionBuilder roleRole;
 
@@ -325,7 +407,10 @@ class RoleUserQueryWhere extends QueryWhere {
 
   @override
   List<SqlExpressionBuilder> get expressionBuilders {
-    return [roleRole, userEmail];
+    return [
+      roleRole,
+      userEmail,
+    ];
   }
 }
 
@@ -356,16 +441,20 @@ class RoleUserQueryValues extends MapQueryValues {
 }
 
 class UserQuery extends Query<User, UserQueryWhere> {
-  UserQuery({Query? parent, Set<String>? trampoline}) : super(parent: parent) {
+  UserQuery({
+    Query? parent,
+    Set<String>? trampoline,
+  }) : super(parent: parent) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = UserQueryWhere(this);
     leftJoin(
-        '(SELECT role_users.user_email, roles.role FROM roles LEFT JOIN role_users ON role_users.role_role=roles.role)',
-        'email',
-        'user_email',
-        additionalFields: const ['role'],
-        trampoline: trampoline);
+      '(SELECT role_users.user_email, roles.role FROM roles LEFT JOIN role_users ON role_users.role_role=roles.role)',
+      'email',
+      'user_email',
+      additionalFields: const ['role'],
+      trampoline: trampoline,
+    );
   }
 
   @override
@@ -387,7 +476,11 @@ class UserQuery extends Query<User, UserQueryWhere> {
 
   @override
   List<String> get fields {
-    const _fields = ['email', 'name', 'password'];
+    const _fields = [
+      'email',
+      'name',
+      'password',
+    ];
     return _selectedFields.isEmpty
         ? _fields
         : _fields.where((field) => _selectedFields.contains(field)).toList();
@@ -413,9 +506,10 @@ class UserQuery extends Query<User, UserQueryWhere> {
       return Optional.empty();
     }
     var model = User(
-        email: fields.contains('email') ? (row[0] as String?) : null,
-        name: fields.contains('name') ? (row[1] as String?) : null,
-        password: fields.contains('password') ? (row[2] as String?) : null);
+      email: fields.contains('email') ? (row[0] as String?) : null,
+      name: fields.contains('name') ? (row[1] as String?) : null,
+      password: fields.contains('password') ? (row[2] as String?) : null,
+    );
     if (row.length > 3) {
       var modelOpt = RoleQuery().parseRow(row.skip(3).take(1).toList());
       modelOpt.ifPresent((m) {
@@ -493,9 +587,18 @@ class UserQuery extends Query<User, UserQueryWhere> {
 
 class UserQueryWhere extends QueryWhere {
   UserQueryWhere(UserQuery query)
-      : email = StringSqlExpressionBuilder(query, 'email'),
-        name = StringSqlExpressionBuilder(query, 'name'),
-        password = StringSqlExpressionBuilder(query, 'password');
+      : email = StringSqlExpressionBuilder(
+          query,
+          'email',
+        ),
+        name = StringSqlExpressionBuilder(
+          query,
+          'name',
+        ),
+        password = StringSqlExpressionBuilder(
+          query,
+          'password',
+        );
 
   final StringSqlExpressionBuilder email;
 
@@ -505,7 +608,11 @@ class UserQueryWhere extends QueryWhere {
 
   @override
   List<SqlExpressionBuilder> get expressionBuilders {
-    return [email, name, password];
+    return [
+      email,
+      name,
+      password,
+    ];
   }
 }
 
@@ -543,7 +650,10 @@ class UserQueryValues extends MapQueryValues {
 
 @generatedSerializable
 class Role implements _Role {
-  Role({this.role, this.users = const []});
+  Role({
+    this.role,
+    this.users = const [],
+  });
 
   @override
   String? role;
@@ -551,7 +661,10 @@ class Role implements _Role {
   @override
   List<_User> users;
 
-  Role copyWith({String? role, List<_User>? users}) {
+  Role copyWith({
+    String? role,
+    List<_User>? users,
+  }) {
     return Role(role: role ?? this.role, users: users ?? this.users);
   }
 
@@ -565,7 +678,10 @@ class Role implements _Role {
 
   @override
   int get hashCode {
-    return hashObjects([role, users]);
+    return hashObjects([
+      role,
+      users,
+    ]);
   }
 
   @override
@@ -580,7 +696,10 @@ class Role implements _Role {
 
 @generatedSerializable
 class RoleUser implements _RoleUser {
-  RoleUser({this.role, this.user});
+  RoleUser({
+    this.role,
+    this.user,
+  });
 
   @override
   _Role? role;
@@ -588,7 +707,10 @@ class RoleUser implements _RoleUser {
   @override
   _User? user;
 
-  RoleUser copyWith({_Role? role, _User? user}) {
+  RoleUser copyWith({
+    _Role? role,
+    _User? user,
+  }) {
     return RoleUser(role: role ?? this.role, user: user ?? this.user);
   }
 
@@ -599,7 +721,10 @@ class RoleUser implements _RoleUser {
 
   @override
   int get hashCode {
-    return hashObjects([role, user]);
+    return hashObjects([
+      role,
+      user,
+    ]);
   }
 
   @override
@@ -614,7 +739,12 @@ class RoleUser implements _RoleUser {
 
 @generatedSerializable
 class User implements _User {
-  User({this.email, this.name, this.password, this.roles = const []});
+  User({
+    this.email,
+    this.name,
+    this.password,
+    this.roles = const [],
+  });
 
   @override
   String? email;
@@ -628,8 +758,12 @@ class User implements _User {
   @override
   List<_Role> roles;
 
-  User copyWith(
-      {String? email, String? name, String? password, List<_Role>? roles}) {
+  User copyWith({
+    String? email,
+    String? name,
+    String? password,
+    List<_Role>? roles,
+  }) {
     return User(
         email: email ?? this.email,
         name: name ?? this.name,
@@ -649,7 +783,12 @@ class User implements _User {
 
   @override
   int get hashCode {
-    return hashObjects([email, name, password, roles]);
+    return hashObjects([
+      email,
+      name,
+      password,
+      roles,
+    ]);
   }
 
   @override
@@ -710,7 +849,10 @@ class RoleSerializer extends Codec<Role, Map> {
 }
 
 abstract class RoleFields {
-  static const List<String> allFields = <String>[role, users];
+  static const List<String> allFields = <String>[
+    role,
+    users,
+  ];
 
   static const String role = 'role';
 
@@ -762,7 +904,10 @@ class RoleUserSerializer extends Codec<RoleUser, Map> {
 }
 
 abstract class RoleUserFields {
-  static const List<String> allFields = <String>[role, user];
+  static const List<String> allFields = <String>[
+    role,
+    user,
+  ];
 
   static const String role = 'role';
 
@@ -817,7 +962,12 @@ class UserSerializer extends Codec<User, Map> {
 }
 
 abstract class UserFields {
-  static const List<String> allFields = <String>[email, name, password, roles];
+  static const List<String> allFields = <String>[
+    email,
+    name,
+    password,
+    roles,
+  ];
 
   static const String email = 'email';
 

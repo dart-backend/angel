@@ -13,4 +13,5 @@ class _Car extends Model {
   String? description;
   bool? familyFriendly;
   DateTime? recalledAt;
+  double? price;
 }

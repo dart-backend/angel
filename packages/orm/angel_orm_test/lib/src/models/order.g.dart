@@ -9,17 +9,26 @@ part of angel3_orm_generator.test.models.order;
 class OrderMigration extends Migration {
   @override
   void up(Schema schema) {
-    schema.create('orders', (table) {
-      table.serial('id').primaryKey();
-      table.timeStamp('created_at');
-      table.timeStamp('updated_at');
-      table.integer('employee_id');
-      table.timeStamp('order_date');
-      table.integer('shipper_id');
-      table
-          .declare('customer_id', ColumnType('int'))
-          .references('customers', 'id');
-    });
+    schema.create(
+      'orders',
+      (table) {
+        table.serial('id').primaryKey();
+        table.timeStamp('created_at');
+        table.timeStamp('updated_at');
+        table.integer('employee_id');
+        table.timeStamp('order_date');
+        table.integer('shipper_id');
+        table
+            .declare(
+              'customer_id',
+              ColumnType('int'),
+            )
+            .references(
+              'customers',
+              'id',
+            );
+      },
+    );
   }
 
   @override
@@ -31,11 +40,14 @@ class OrderMigration extends Migration {
 class CustomerMigration extends Migration {
   @override
   void up(Schema schema) {
-    schema.create('customers', (table) {
-      table.serial('id').primaryKey();
-      table.timeStamp('created_at');
-      table.timeStamp('updated_at');
-    });
+    schema.create(
+      'customers',
+      (table) {
+        table.serial('id').primaryKey();
+        table.timeStamp('created_at');
+        table.timeStamp('updated_at');
+      },
+    );
   }
 
   @override
@@ -49,14 +61,27 @@ class CustomerMigration extends Migration {
 // **************************************************************************
 
 class OrderQuery extends Query<Order, OrderQueryWhere> {
-  OrderQuery({Query? parent, Set<String>? trampoline}) : super(parent: parent) {
+  OrderQuery({
+    Query? parent,
+    Set<String>? trampoline,
+  }) : super(parent: parent) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = OrderQueryWhere(this);
-    leftJoin(_customer = CustomerQuery(trampoline: trampoline, parent: this),
-        'customer_id', 'id',
-        additionalFields: const ['id', 'created_at', 'updated_at'],
-        trampoline: trampoline);
+    leftJoin(
+      _customer = CustomerQuery(
+        trampoline: trampoline,
+        parent: this,
+      ),
+      'customer_id',
+      'id',
+      additionalFields: const [
+        'id',
+        'created_at',
+        'updated_at',
+      ],
+      trampoline: trampoline,
+    );
   }
 
   @override
@@ -87,7 +112,7 @@ class OrderQuery extends Query<Order, OrderQueryWhere> {
       'customer_id',
       'employee_id',
       'order_date',
-      'shipper_id'
+      'shipper_id',
     ];
     return _selectedFields.isEmpty
         ? _fields
@@ -114,18 +139,16 @@ class OrderQuery extends Query<Order, OrderQueryWhere> {
       return Optional.empty();
     }
     var model = Order(
-        id: fields.contains('id') ? row[0].toString() : null,
-        createdAt: fields.contains('created_at')
-            ? mapToNullableDateTime(row[1])
-            : null,
-        updatedAt: fields.contains('updated_at')
-            ? mapToNullableDateTime(row[2])
-            : null,
-        employeeId: fields.contains('employee_id') ? (row[4] as int?) : null,
-        orderDate: fields.contains('order_date')
-            ? mapToNullableDateTime(row[5])
-            : null,
-        shipperId: fields.contains('shipper_id') ? (row[6] as int?) : null);
+      id: fields.contains('id') ? row[0].toString() : null,
+      createdAt:
+          fields.contains('created_at') ? mapToNullableDateTime(row[1]) : null,
+      updatedAt:
+          fields.contains('updated_at') ? mapToNullableDateTime(row[2]) : null,
+      employeeId: fields.contains('employee_id') ? (row[4] as int?) : null,
+      orderDate:
+          fields.contains('order_date') ? mapToNullableDateTime(row[5]) : null,
+      shipperId: fields.contains('shipper_id') ? (row[6] as int?) : null,
+    );
     if (row.length > 7) {
       var modelOpt = CustomerQuery().parseRow(row.skip(7).take(3).toList());
       modelOpt.ifPresent((m) {
@@ -147,13 +170,34 @@ class OrderQuery extends Query<Order, OrderQueryWhere> {
 
 class OrderQueryWhere extends QueryWhere {
   OrderQueryWhere(OrderQuery query)
-      : id = NumericSqlExpressionBuilder<int>(query, 'id'),
-        createdAt = DateTimeSqlExpressionBuilder(query, 'created_at'),
-        updatedAt = DateTimeSqlExpressionBuilder(query, 'updated_at'),
-        customerId = NumericSqlExpressionBuilder<int>(query, 'customer_id'),
-        employeeId = NumericSqlExpressionBuilder<int>(query, 'employee_id'),
-        orderDate = DateTimeSqlExpressionBuilder(query, 'order_date'),
-        shipperId = NumericSqlExpressionBuilder<int>(query, 'shipper_id');
+      : id = NumericSqlExpressionBuilder<int>(
+          query,
+          'id',
+        ),
+        createdAt = DateTimeSqlExpressionBuilder(
+          query,
+          'created_at',
+        ),
+        updatedAt = DateTimeSqlExpressionBuilder(
+          query,
+          'updated_at',
+        ),
+        customerId = NumericSqlExpressionBuilder<int>(
+          query,
+          'customer_id',
+        ),
+        employeeId = NumericSqlExpressionBuilder<int>(
+          query,
+          'employee_id',
+        ),
+        orderDate = DateTimeSqlExpressionBuilder(
+          query,
+          'order_date',
+        ),
+        shipperId = NumericSqlExpressionBuilder<int>(
+          query,
+          'shipper_id',
+        );
 
   final NumericSqlExpressionBuilder<int> id;
 
@@ -178,7 +222,7 @@ class OrderQueryWhere extends QueryWhere {
       customerId,
       employeeId,
       orderDate,
-      shipperId
+      shipperId,
     ];
   }
 }
@@ -237,8 +281,10 @@ class OrderQueryValues extends MapQueryValues {
 }
 
 class CustomerQuery extends Query<Customer, CustomerQueryWhere> {
-  CustomerQuery({Query? parent, Set<String>? trampoline})
-      : super(parent: parent) {
+  CustomerQuery({
+    Query? parent,
+    Set<String>? trampoline,
+  }) : super(parent: parent) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = CustomerQueryWhere(this);
@@ -263,7 +309,11 @@ class CustomerQuery extends Query<Customer, CustomerQueryWhere> {
 
   @override
   List<String> get fields {
-    const _fields = ['id', 'created_at', 'updated_at'];
+    const _fields = [
+      'id',
+      'created_at',
+      'updated_at',
+    ];
     return _selectedFields.isEmpty
         ? _fields
         : _fields.where((field) => _selectedFields.contains(field)).toList();
@@ -289,13 +339,12 @@ class CustomerQuery extends Query<Customer, CustomerQueryWhere> {
       return Optional.empty();
     }
     var model = Customer(
-        id: fields.contains('id') ? row[0].toString() : null,
-        createdAt: fields.contains('created_at')
-            ? mapToNullableDateTime(row[1])
-            : null,
-        updatedAt: fields.contains('updated_at')
-            ? mapToNullableDateTime(row[2])
-            : null);
+      id: fields.contains('id') ? row[0].toString() : null,
+      createdAt:
+          fields.contains('created_at') ? mapToNullableDateTime(row[1]) : null,
+      updatedAt:
+          fields.contains('updated_at') ? mapToNullableDateTime(row[2]) : null,
+    );
     return Optional.of(model);
   }
 
@@ -307,9 +356,18 @@ class CustomerQuery extends Query<Customer, CustomerQueryWhere> {
 
 class CustomerQueryWhere extends QueryWhere {
   CustomerQueryWhere(CustomerQuery query)
-      : id = NumericSqlExpressionBuilder<int>(query, 'id'),
-        createdAt = DateTimeSqlExpressionBuilder(query, 'created_at'),
-        updatedAt = DateTimeSqlExpressionBuilder(query, 'updated_at');
+      : id = NumericSqlExpressionBuilder<int>(
+          query,
+          'id',
+        ),
+        createdAt = DateTimeSqlExpressionBuilder(
+          query,
+          'created_at',
+        ),
+        updatedAt = DateTimeSqlExpressionBuilder(
+          query,
+          'updated_at',
+        );
 
   final NumericSqlExpressionBuilder<int> id;
 
@@ -319,7 +377,11 @@ class CustomerQueryWhere extends QueryWhere {
 
   @override
   List<SqlExpressionBuilder> get expressionBuilders {
-    return [id, createdAt, updatedAt];
+    return [
+      id,
+      createdAt,
+      updatedAt,
+    ];
   }
 }
 
@@ -356,14 +418,15 @@ class CustomerQueryValues extends MapQueryValues {
 
 @generatedSerializable
 class Order extends _Order {
-  Order(
-      {this.id,
-      this.createdAt,
-      this.updatedAt,
-      this.customer,
-      this.employeeId,
-      this.orderDate,
-      this.shipperId});
+  Order({
+    this.id,
+    this.createdAt,
+    this.updatedAt,
+    this.customer,
+    this.employeeId,
+    this.orderDate,
+    this.shipperId,
+  });
 
   /// A unique identifier corresponding to this item.
   @override
@@ -389,14 +452,15 @@ class Order extends _Order {
   @override
   int? shipperId;
 
-  Order copyWith(
-      {String? id,
-      DateTime? createdAt,
-      DateTime? updatedAt,
-      _Customer? customer,
-      int? employeeId,
-      DateTime? orderDate,
-      int? shipperId}) {
+  Order copyWith({
+    String? id,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    _Customer? customer,
+    int? employeeId,
+    DateTime? orderDate,
+    int? shipperId,
+  }) {
     return Order(
         id: id ?? this.id,
         createdAt: createdAt ?? this.createdAt,
@@ -421,8 +485,15 @@ class Order extends _Order {
 
   @override
   int get hashCode {
-    return hashObjects(
-        [id, createdAt, updatedAt, customer, employeeId, orderDate, shipperId]);
+    return hashObjects([
+      id,
+      createdAt,
+      updatedAt,
+      customer,
+      employeeId,
+      orderDate,
+      shipperId,
+    ]);
   }
 
   @override
@@ -437,7 +508,11 @@ class Order extends _Order {
 
 @generatedSerializable
 class Customer extends _Customer {
-  Customer({this.id, this.createdAt, this.updatedAt});
+  Customer({
+    this.id,
+    this.createdAt,
+    this.updatedAt,
+  });
 
   /// A unique identifier corresponding to this item.
   @override
@@ -451,7 +526,11 @@ class Customer extends _Customer {
   @override
   DateTime? updatedAt;
 
-  Customer copyWith({String? id, DateTime? createdAt, DateTime? updatedAt}) {
+  Customer copyWith({
+    String? id,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) {
     return Customer(
         id: id ?? this.id,
         createdAt: createdAt ?? this.createdAt,
@@ -468,7 +547,11 @@ class Customer extends _Customer {
 
   @override
   int get hashCode {
-    return hashObjects([id, createdAt, updatedAt]);
+    return hashObjects([
+      id,
+      createdAt,
+      updatedAt,
+    ]);
   }
 
   @override
@@ -557,7 +640,7 @@ abstract class OrderFields {
     customer,
     employeeId,
     orderDate,
-    shipperId
+    shipperId,
   ];
 
   static const String id = 'id';
@@ -626,7 +709,11 @@ class CustomerSerializer extends Codec<Customer, Map> {
 }
 
 abstract class CustomerFields {
-  static const List<String> allFields = <String>[id, createdAt, updatedAt];
+  static const List<String> allFields = <String>[
+    id,
+    createdAt,
+    updatedAt,
+  ];
 
   static const String id = 'id';
 
