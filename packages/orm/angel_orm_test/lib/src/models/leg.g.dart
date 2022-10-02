@@ -9,30 +9,42 @@ part of angel3_orm_generator.test.models.leg;
 class LegMigration extends Migration {
   @override
   void up(Schema schema) {
-    schema.create('legs', (table) {
-      table.serial('id').primaryKey();
-      table.timeStamp('created_at');
-      table.timeStamp('updated_at');
-      table.varChar('name', length: 255);
-    });
+    schema.create(
+      'legs',
+      (table) {
+        table.serial('id').primaryKey();
+        table.timeStamp('created_at');
+        table.timeStamp('updated_at');
+        table.varChar(
+          'name',
+          length: 255,
+        );
+      },
+    );
   }
 
   @override
   void down(Schema schema) {
-    schema.drop('legs', cascade: true);
+    schema.drop(
+      'legs',
+      cascade: true,
+    );
   }
 }
 
 class FootMigration extends Migration {
   @override
   void up(Schema schema) {
-    schema.create('feet', (table) {
-      table.serial('id').primaryKey();
-      table.timeStamp('created_at');
-      table.timeStamp('updated_at');
-      table.integer('leg_id');
-      table.double('n_toes');
-    });
+    schema.create(
+      'feet',
+      (table) {
+        table.serial('id').primaryKey();
+        table.timeStamp('created_at');
+        table.timeStamp('updated_at');
+        table.integer('leg_id');
+        table.double('n_toes');
+      },
+    );
   }
 
   @override
@@ -46,20 +58,29 @@ class FootMigration extends Migration {
 // **************************************************************************
 
 class LegQuery extends Query<Leg, LegQueryWhere> {
-  LegQuery({Query? parent, Set<String>? trampoline}) : super(parent: parent) {
+  LegQuery({
+    Query? parent,
+    Set<String>? trampoline,
+  }) : super(parent: parent) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = LegQueryWhere(this);
     leftJoin(
-        _foot = FootQuery(trampoline: trampoline, parent: this), 'id', 'leg_id',
-        additionalFields: const [
-          'id',
-          'created_at',
-          'updated_at',
-          'leg_id',
-          'n_toes'
-        ],
-        trampoline: trampoline);
+      _foot = FootQuery(
+        trampoline: trampoline,
+        parent: this,
+      ),
+      'id',
+      'leg_id',
+      additionalFields: const [
+        'id',
+        'created_at',
+        'updated_at',
+        'leg_id',
+        'n_toes',
+      ],
+      trampoline: trampoline,
+    );
   }
 
   @override
@@ -83,7 +104,12 @@ class LegQuery extends Query<Leg, LegQueryWhere> {
 
   @override
   List<String> get fields {
-    const _fields = ['id', 'created_at', 'updated_at', 'name'];
+    const _fields = [
+      'id',
+      'created_at',
+      'updated_at',
+      'name',
+    ];
     return _selectedFields.isEmpty
         ? _fields
         : _fields.where((field) => _selectedFields.contains(field)).toList();
@@ -109,14 +135,13 @@ class LegQuery extends Query<Leg, LegQueryWhere> {
       return Optional.empty();
     }
     var model = Leg(
-        id: fields.contains('id') ? row[0].toString() : null,
-        createdAt: fields.contains('created_at')
-            ? mapToNullableDateTime(row[1])
-            : null,
-        updatedAt: fields.contains('updated_at')
-            ? mapToNullableDateTime(row[2])
-            : null,
-        name: fields.contains('name') ? (row[3] as String?) : null);
+      id: fields.contains('id') ? row[0].toString() : null,
+      createdAt:
+          fields.contains('created_at') ? mapToNullableDateTime(row[1]) : null,
+      updatedAt:
+          fields.contains('updated_at') ? mapToNullableDateTime(row[2]) : null,
+      name: fields.contains('name') ? (row[3] as String?) : null,
+    );
     if (row.length > 4) {
       var modelOpt = FootQuery().parseRow(row.skip(4).take(5).toList());
       modelOpt.ifPresent((m) {
@@ -138,10 +163,22 @@ class LegQuery extends Query<Leg, LegQueryWhere> {
 
 class LegQueryWhere extends QueryWhere {
   LegQueryWhere(LegQuery query)
-      : id = NumericSqlExpressionBuilder<int>(query, 'id'),
-        createdAt = DateTimeSqlExpressionBuilder(query, 'created_at'),
-        updatedAt = DateTimeSqlExpressionBuilder(query, 'updated_at'),
-        name = StringSqlExpressionBuilder(query, 'name');
+      : id = NumericSqlExpressionBuilder<int>(
+          query,
+          'id',
+        ),
+        createdAt = DateTimeSqlExpressionBuilder(
+          query,
+          'created_at',
+        ),
+        updatedAt = DateTimeSqlExpressionBuilder(
+          query,
+          'updated_at',
+        ),
+        name = StringSqlExpressionBuilder(
+          query,
+          'name',
+        );
 
   final NumericSqlExpressionBuilder<int> id;
 
@@ -153,7 +190,12 @@ class LegQueryWhere extends QueryWhere {
 
   @override
   List<SqlExpressionBuilder> get expressionBuilders {
-    return [id, createdAt, updatedAt, name];
+    return [
+      id,
+      createdAt,
+      updatedAt,
+      name,
+    ];
   }
 }
 
@@ -191,7 +233,10 @@ class LegQueryValues extends MapQueryValues {
 }
 
 class FootQuery extends Query<Foot, FootQueryWhere> {
-  FootQuery({Query? parent, Set<String>? trampoline}) : super(parent: parent) {
+  FootQuery({
+    Query? parent,
+    Set<String>? trampoline,
+  }) : super(parent: parent) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = FootQueryWhere(this);
@@ -206,7 +251,7 @@ class FootQuery extends Query<Foot, FootQueryWhere> {
 
   @override
   Map<String, String> get casts {
-    return {'n_toes': 'char'};
+    return {};
   }
 
   @override
@@ -216,7 +261,13 @@ class FootQuery extends Query<Foot, FootQueryWhere> {
 
   @override
   List<String> get fields {
-    const _fields = ['id', 'created_at', 'updated_at', 'leg_id', 'n_toes'];
+    const _fields = [
+      'id',
+      'created_at',
+      'updated_at',
+      'leg_id',
+      'n_toes',
+    ];
     return _selectedFields.isEmpty
         ? _fields
         : _fields.where((field) => _selectedFields.contains(field)).toList();
@@ -242,15 +293,14 @@ class FootQuery extends Query<Foot, FootQueryWhere> {
       return Optional.empty();
     }
     var model = Foot(
-        id: fields.contains('id') ? row[0].toString() : null,
-        createdAt: fields.contains('created_at')
-            ? mapToNullableDateTime(row[1])
-            : null,
-        updatedAt: fields.contains('updated_at')
-            ? mapToNullableDateTime(row[2])
-            : null,
-        legId: fields.contains('leg_id') ? (row[3] as int?) : null,
-        nToes: fields.contains('n_toes') ? mapToDouble(row[4]) : null);
+      id: fields.contains('id') ? row[0].toString() : null,
+      createdAt:
+          fields.contains('created_at') ? mapToNullableDateTime(row[1]) : null,
+      updatedAt:
+          fields.contains('updated_at') ? mapToNullableDateTime(row[2]) : null,
+      legId: fields.contains('leg_id') ? (row[3] as int?) : null,
+      nToes: fields.contains('n_toes') ? mapToDouble(row[4]) : null,
+    );
     return Optional.of(model);
   }
 
@@ -262,11 +312,26 @@ class FootQuery extends Query<Foot, FootQueryWhere> {
 
 class FootQueryWhere extends QueryWhere {
   FootQueryWhere(FootQuery query)
-      : id = NumericSqlExpressionBuilder<int>(query, 'id'),
-        createdAt = DateTimeSqlExpressionBuilder(query, 'created_at'),
-        updatedAt = DateTimeSqlExpressionBuilder(query, 'updated_at'),
-        legId = NumericSqlExpressionBuilder<int>(query, 'leg_id'),
-        nToes = NumericSqlExpressionBuilder<double>(query, 'n_toes');
+      : id = NumericSqlExpressionBuilder<int>(
+          query,
+          'id',
+        ),
+        createdAt = DateTimeSqlExpressionBuilder(
+          query,
+          'created_at',
+        ),
+        updatedAt = DateTimeSqlExpressionBuilder(
+          query,
+          'updated_at',
+        ),
+        legId = NumericSqlExpressionBuilder<int>(
+          query,
+          'leg_id',
+        ),
+        nToes = NumericSqlExpressionBuilder<double>(
+          query,
+          'n_toes',
+        );
 
   final NumericSqlExpressionBuilder<int> id;
 
@@ -280,14 +345,20 @@ class FootQueryWhere extends QueryWhere {
 
   @override
   List<SqlExpressionBuilder> get expressionBuilders {
-    return [id, createdAt, updatedAt, legId, nToes];
+    return [
+      id,
+      createdAt,
+      updatedAt,
+      legId,
+      nToes,
+    ];
   }
 }
 
 class FootQueryValues extends MapQueryValues {
   @override
   Map<String, String> get casts {
-    return {'n_toes': 'double precision'};
+    return {};
   }
 
   String? get id {
@@ -311,10 +382,10 @@ class FootQueryValues extends MapQueryValues {
 
   set legId(int? value) => values['leg_id'] = value;
   double? get nToes {
-    return double.tryParse((values['n_toes'] as String)) ?? 0.0;
+    return (values['n_toes'] as double?) ?? 0.0;
   }
 
-  set nToes(double? value) => values['n_toes'] = value.toString();
+  set nToes(double? value) => values['n_toes'] = value;
   void copyFrom(Foot model) {
     createdAt = model.createdAt;
     updatedAt = model.updatedAt;
@@ -329,7 +400,13 @@ class FootQueryValues extends MapQueryValues {
 
 @generatedSerializable
 class Leg extends _Leg {
-  Leg({this.id, this.createdAt, this.updatedAt, this.foot, this.name});
+  Leg({
+    this.id,
+    this.createdAt,
+    this.updatedAt,
+    this.foot,
+    this.name,
+  });
 
   /// A unique identifier corresponding to this item.
   @override
@@ -349,12 +426,13 @@ class Leg extends _Leg {
   @override
   String? name;
 
-  Leg copyWith(
-      {String? id,
-      DateTime? createdAt,
-      DateTime? updatedAt,
-      _Foot? foot,
-      String? name}) {
+  Leg copyWith({
+    String? id,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    _Foot? foot,
+    String? name,
+  }) {
     return Leg(
         id: id ?? this.id,
         createdAt: createdAt ?? this.createdAt,
@@ -375,7 +453,13 @@ class Leg extends _Leg {
 
   @override
   int get hashCode {
-    return hashObjects([id, createdAt, updatedAt, foot, name]);
+    return hashObjects([
+      id,
+      createdAt,
+      updatedAt,
+      foot,
+      name,
+    ]);
   }
 
   @override
@@ -390,7 +474,13 @@ class Leg extends _Leg {
 
 @generatedSerializable
 class Foot extends _Foot {
-  Foot({this.id, this.createdAt, this.updatedAt, this.legId, this.nToes});
+  Foot({
+    this.id,
+    this.createdAt,
+    this.updatedAt,
+    this.legId,
+    this.nToes,
+  });
 
   /// A unique identifier corresponding to this item.
   @override
@@ -410,12 +500,13 @@ class Foot extends _Foot {
   @override
   double? nToes;
 
-  Foot copyWith(
-      {String? id,
-      DateTime? createdAt,
-      DateTime? updatedAt,
-      int? legId,
-      double? nToes}) {
+  Foot copyWith({
+    String? id,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    int? legId,
+    double? nToes,
+  }) {
     return Foot(
         id: id ?? this.id,
         createdAt: createdAt ?? this.createdAt,
@@ -436,7 +527,13 @@ class Foot extends _Foot {
 
   @override
   int get hashCode {
-    return hashObjects([id, createdAt, updatedAt, legId, nToes]);
+    return hashObjects([
+      id,
+      createdAt,
+      updatedAt,
+      legId,
+      nToes,
+    ]);
   }
 
   @override
@@ -515,7 +612,7 @@ abstract class LegFields {
     createdAt,
     updatedAt,
     foot,
-    name
+    name,
   ];
 
   static const String id = 'id';
@@ -589,7 +686,7 @@ abstract class FootFields {
     createdAt,
     updatedAt,
     legId,
-    nToes
+    nToes,
   ];
 
   static const String id = 'id';

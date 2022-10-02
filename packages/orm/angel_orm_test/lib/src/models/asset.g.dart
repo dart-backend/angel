@@ -9,12 +9,18 @@ part of 'asset.dart';
 class ItemMigration extends Migration {
   @override
   void up(Schema schema) {
-    schema.create('items', (table) {
-      table.serial('id').primaryKey();
-      table.timeStamp('created_at');
-      table.timeStamp('updated_at');
-      table.varChar('description', length: 255);
-    });
+    schema.create(
+      'items',
+      (table) {
+        table.serial('id').primaryKey();
+        table.timeStamp('created_at');
+        table.timeStamp('updated_at');
+        table.varChar(
+          'description',
+          length: 255,
+        );
+      },
+    );
   }
 
   @override
@@ -26,19 +32,31 @@ class ItemMigration extends Migration {
 class AssetMigration extends Migration {
   @override
   void up(Schema schema) {
-    schema.create('assets', (table) {
-      table.serial('id').primaryKey();
-      table.timeStamp('created_at');
-      table.timeStamp('updated_at');
-      table.varChar('description', length: 255);
-      table.varChar('name', length: 255);
-      table.double('price');
-    });
+    schema.create(
+      'assets',
+      (table) {
+        table.serial('id').primaryKey();
+        table.timeStamp('created_at');
+        table.timeStamp('updated_at');
+        table.varChar(
+          'description',
+          length: 255,
+        );
+        table.varChar(
+          'name',
+          length: 255,
+        );
+        table.double('price');
+      },
+    );
   }
 
   @override
   void down(Schema schema) {
-    schema.drop('assets', cascade: true);
+    schema.drop(
+      'assets',
+      cascade: true,
+    );
   }
 }
 
@@ -47,7 +65,10 @@ class AssetMigration extends Migration {
 // **************************************************************************
 
 class ItemQuery extends Query<Item, ItemQueryWhere> {
-  ItemQuery({Query? parent, Set<String>? trampoline}) : super(parent: parent) {
+  ItemQuery({
+    Query? parent,
+    Set<String>? trampoline,
+  }) : super(parent: parent) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = ItemQueryWhere(this);
@@ -72,7 +93,12 @@ class ItemQuery extends Query<Item, ItemQueryWhere> {
 
   @override
   List<String> get fields {
-    const _fields = ['id', 'created_at', 'updated_at', 'description'];
+    const _fields = [
+      'id',
+      'created_at',
+      'updated_at',
+      'description',
+    ];
     return _selectedFields.isEmpty
         ? _fields
         : _fields.where((field) => _selectedFields.contains(field)).toList();
@@ -98,14 +124,13 @@ class ItemQuery extends Query<Item, ItemQueryWhere> {
       return Optional.empty();
     }
     var model = Item(
-        id: fields.contains('id') ? row[0].toString() : null,
-        createdAt: fields.contains('created_at')
-            ? mapToNullableDateTime(row[1])
-            : null,
-        updatedAt: fields.contains('updated_at')
-            ? mapToNullableDateTime(row[2])
-            : null,
-        description: fields.contains('description') ? (row[3] as String) : '');
+      id: fields.contains('id') ? row[0].toString() : null,
+      createdAt:
+          fields.contains('created_at') ? mapToNullableDateTime(row[1]) : null,
+      updatedAt:
+          fields.contains('updated_at') ? mapToNullableDateTime(row[2]) : null,
+      description: fields.contains('description') ? (row[3] as String) : '',
+    );
     return Optional.of(model);
   }
 
@@ -117,10 +142,22 @@ class ItemQuery extends Query<Item, ItemQueryWhere> {
 
 class ItemQueryWhere extends QueryWhere {
   ItemQueryWhere(ItemQuery query)
-      : id = NumericSqlExpressionBuilder<int>(query, 'id'),
-        createdAt = DateTimeSqlExpressionBuilder(query, 'created_at'),
-        updatedAt = DateTimeSqlExpressionBuilder(query, 'updated_at'),
-        description = StringSqlExpressionBuilder(query, 'description');
+      : id = NumericSqlExpressionBuilder<int>(
+          query,
+          'id',
+        ),
+        createdAt = DateTimeSqlExpressionBuilder(
+          query,
+          'created_at',
+        ),
+        updatedAt = DateTimeSqlExpressionBuilder(
+          query,
+          'updated_at',
+        ),
+        description = StringSqlExpressionBuilder(
+          query,
+          'description',
+        );
 
   final NumericSqlExpressionBuilder<int> id;
 
@@ -132,7 +169,12 @@ class ItemQueryWhere extends QueryWhere {
 
   @override
   List<SqlExpressionBuilder> get expressionBuilders {
-    return [id, createdAt, updatedAt, description];
+    return [
+      id,
+      createdAt,
+      updatedAt,
+      description,
+    ];
   }
 }
 
@@ -170,19 +212,28 @@ class ItemQueryValues extends MapQueryValues {
 }
 
 class AssetQuery extends Query<Asset, AssetQueryWhere> {
-  AssetQuery({Query? parent, Set<String>? trampoline}) : super(parent: parent) {
+  AssetQuery({
+    Query? parent,
+    Set<String>? trampoline,
+  }) : super(parent: parent) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = AssetQueryWhere(this);
-    leftJoin(_items = ItemQuery(trampoline: trampoline, parent: this), 'id',
-        'asset_id',
-        additionalFields: const [
-          'id',
-          'created_at',
-          'updated_at',
-          'description'
-        ],
-        trampoline: trampoline);
+    leftJoin(
+      _items = ItemQuery(
+        trampoline: trampoline,
+        parent: this,
+      ),
+      'id',
+      'asset_id',
+      additionalFields: const [
+        'id',
+        'created_at',
+        'updated_at',
+        'description',
+      ],
+      trampoline: trampoline,
+    );
   }
 
   @override
@@ -196,7 +247,7 @@ class AssetQuery extends Query<Asset, AssetQueryWhere> {
 
   @override
   Map<String, String> get casts {
-    return {'price': 'char'};
+    return {};
   }
 
   @override
@@ -212,7 +263,7 @@ class AssetQuery extends Query<Asset, AssetQueryWhere> {
       'updated_at',
       'description',
       'name',
-      'price'
+      'price',
     ];
     return _selectedFields.isEmpty
         ? _fields
@@ -239,16 +290,15 @@ class AssetQuery extends Query<Asset, AssetQueryWhere> {
       return Optional.empty();
     }
     var model = Asset(
-        id: fields.contains('id') ? row[0].toString() : null,
-        createdAt: fields.contains('created_at')
-            ? mapToNullableDateTime(row[1])
-            : null,
-        updatedAt: fields.contains('updated_at')
-            ? mapToNullableDateTime(row[2])
-            : null,
-        description: fields.contains('description') ? (row[3] as String) : '',
-        name: fields.contains('name') ? (row[4] as String) : '',
-        price: fields.contains('price') ? mapToDouble(row[5]) : 0.0);
+      id: fields.contains('id') ? row[0].toString() : null,
+      createdAt:
+          fields.contains('created_at') ? mapToNullableDateTime(row[1]) : null,
+      updatedAt:
+          fields.contains('updated_at') ? mapToNullableDateTime(row[2]) : null,
+      description: fields.contains('description') ? (row[3] as String) : '',
+      name: fields.contains('name') ? (row[4] as String) : '',
+      price: fields.contains('price') ? mapToDouble(row[5]) : 0.0,
+    );
     if (row.length > 6) {
       var modelOpt = ItemQuery().parseRow(row.skip(6).take(4).toList());
       modelOpt.ifPresent((m) {
@@ -324,12 +374,30 @@ class AssetQuery extends Query<Asset, AssetQueryWhere> {
 
 class AssetQueryWhere extends QueryWhere {
   AssetQueryWhere(AssetQuery query)
-      : id = NumericSqlExpressionBuilder<int>(query, 'id'),
-        createdAt = DateTimeSqlExpressionBuilder(query, 'created_at'),
-        updatedAt = DateTimeSqlExpressionBuilder(query, 'updated_at'),
-        description = StringSqlExpressionBuilder(query, 'description'),
-        name = StringSqlExpressionBuilder(query, 'name'),
-        price = NumericSqlExpressionBuilder<double>(query, 'price');
+      : id = NumericSqlExpressionBuilder<int>(
+          query,
+          'id',
+        ),
+        createdAt = DateTimeSqlExpressionBuilder(
+          query,
+          'created_at',
+        ),
+        updatedAt = DateTimeSqlExpressionBuilder(
+          query,
+          'updated_at',
+        ),
+        description = StringSqlExpressionBuilder(
+          query,
+          'description',
+        ),
+        name = StringSqlExpressionBuilder(
+          query,
+          'name',
+        ),
+        price = NumericSqlExpressionBuilder<double>(
+          query,
+          'price',
+        );
 
   final NumericSqlExpressionBuilder<int> id;
 
@@ -345,14 +413,21 @@ class AssetQueryWhere extends QueryWhere {
 
   @override
   List<SqlExpressionBuilder> get expressionBuilders {
-    return [id, createdAt, updatedAt, description, name, price];
+    return [
+      id,
+      createdAt,
+      updatedAt,
+      description,
+      name,
+      price,
+    ];
   }
 }
 
 class AssetQueryValues extends MapQueryValues {
   @override
   Map<String, String> get casts {
-    return {'price': 'double precision'};
+    return {};
   }
 
   String? get id {
@@ -381,10 +456,10 @@ class AssetQueryValues extends MapQueryValues {
 
   set name(String value) => values['name'] = value;
   double get price {
-    return double.tryParse((values['price'] as String)) ?? 0.0;
+    return (values['price'] as double?) ?? 0.0;
   }
 
-  set price(double value) => values['price'] = value.toString();
+  set price(double value) => values['price'] = value;
   void copyFrom(Asset model) {
     createdAt = model.createdAt;
     updatedAt = model.updatedAt;
@@ -400,7 +475,12 @@ class AssetQueryValues extends MapQueryValues {
 
 @generatedSerializable
 class Item extends _Item {
-  Item({this.id, this.createdAt, this.updatedAt, required this.description});
+  Item({
+    this.id,
+    this.createdAt,
+    this.updatedAt,
+    required this.description,
+  });
 
   /// A unique identifier corresponding to this item.
   @override
@@ -417,11 +497,12 @@ class Item extends _Item {
   @override
   String description;
 
-  Item copyWith(
-      {String? id,
-      DateTime? createdAt,
-      DateTime? updatedAt,
-      String? description}) {
+  Item copyWith({
+    String? id,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    String? description,
+  }) {
     return Item(
         id: id ?? this.id,
         createdAt: createdAt ?? this.createdAt,
@@ -440,7 +521,12 @@ class Item extends _Item {
 
   @override
   int get hashCode {
-    return hashObjects([id, createdAt, updatedAt, description]);
+    return hashObjects([
+      id,
+      createdAt,
+      updatedAt,
+      description,
+    ]);
   }
 
   @override
@@ -455,15 +541,15 @@ class Item extends _Item {
 
 @generatedSerializable
 class Asset extends _Asset {
-  Asset(
-      {this.id,
-      this.createdAt,
-      this.updatedAt,
-      required this.description,
-      required this.name,
-      required this.price,
-      List<_Item> items = const []})
-      : items = List.unmodifiable(items);
+  Asset({
+    this.id,
+    this.createdAt,
+    this.updatedAt,
+    required this.description,
+    required this.name,
+    required this.price,
+    List<_Item> items = const [],
+  }) : items = List.unmodifiable(items);
 
   /// A unique identifier corresponding to this item.
   @override
@@ -489,14 +575,15 @@ class Asset extends _Asset {
   @override
   List<_Item> items;
 
-  Asset copyWith(
-      {String? id,
-      DateTime? createdAt,
-      DateTime? updatedAt,
-      String? description,
-      String? name,
-      double? price,
-      List<_Item>? items}) {
+  Asset copyWith({
+    String? id,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    String? description,
+    String? name,
+    double? price,
+    List<_Item>? items,
+  }) {
     return Asset(
         id: id ?? this.id,
         createdAt: createdAt ?? this.createdAt,
@@ -522,8 +609,15 @@ class Asset extends _Asset {
 
   @override
   int get hashCode {
-    return hashObjects(
-        [id, createdAt, updatedAt, description, name, price, items]);
+    return hashObjects([
+      id,
+      createdAt,
+      updatedAt,
+      description,
+      name,
+      price,
+      items,
+    ]);
   }
 
   @override
@@ -597,7 +691,7 @@ abstract class ItemFields {
     id,
     createdAt,
     updatedAt,
-    description
+    description,
   ];
 
   static const String id = 'id';
@@ -678,7 +772,7 @@ abstract class AssetFields {
     description,
     name,
     price,
-    items
+    items,
   ];
 
   static const String id = 'id';

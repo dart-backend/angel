@@ -9,10 +9,13 @@ part of 'world.dart';
 class WorldMigration extends Migration {
   @override
   void up(Schema schema) {
-    schema.create('world', (table) {
-      table.integer('id').primaryKey();
-      table.integer('random_number');
-    });
+    schema.create(
+      'world',
+      (table) {
+        table.integer('id').primaryKey();
+        table.integer('random_number');
+      },
+    );
   }
 
   @override
@@ -26,7 +29,10 @@ class WorldMigration extends Migration {
 // **************************************************************************
 
 class WorldQuery extends Query<World, WorldQueryWhere> {
-  WorldQuery({Query? parent, Set<String>? trampoline}) : super(parent: parent) {
+  WorldQuery({
+    Query? parent,
+    Set<String>? trampoline,
+  }) : super(parent: parent) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = WorldQueryWhere(this);
@@ -51,7 +57,10 @@ class WorldQuery extends Query<World, WorldQueryWhere> {
 
   @override
   List<String> get fields {
-    const _fields = ['id', 'random_number'];
+    const _fields = [
+      'id',
+      'random_number',
+    ];
     return _selectedFields.isEmpty
         ? _fields
         : _fields.where((field) => _selectedFields.contains(field)).toList();
@@ -77,9 +86,9 @@ class WorldQuery extends Query<World, WorldQueryWhere> {
       return Optional.empty();
     }
     var model = World(
-        id: fields.contains('id') ? (row[0] as int?) : null,
-        randomNumber:
-            fields.contains('random_number') ? (row[1] as int?) : null);
+      id: fields.contains('id') ? (row[0] as int?) : null,
+      randomNumber: fields.contains('random_number') ? (row[1] as int?) : null,
+    );
     return Optional.of(model);
   }
 
@@ -91,8 +100,14 @@ class WorldQuery extends Query<World, WorldQueryWhere> {
 
 class WorldQueryWhere extends QueryWhere {
   WorldQueryWhere(WorldQuery query)
-      : id = NumericSqlExpressionBuilder<int>(query, 'id'),
-        randomNumber = NumericSqlExpressionBuilder<int>(query, 'random_number');
+      : id = NumericSqlExpressionBuilder<int>(
+          query,
+          'id',
+        ),
+        randomNumber = NumericSqlExpressionBuilder<int>(
+          query,
+          'random_number',
+        );
 
   final NumericSqlExpressionBuilder<int> id;
 
@@ -100,7 +115,10 @@ class WorldQueryWhere extends QueryWhere {
 
   @override
   List<SqlExpressionBuilder> get expressionBuilders {
-    return [id, randomNumber];
+    return [
+      id,
+      randomNumber,
+    ];
   }
 }
 
@@ -132,7 +150,10 @@ class WorldQueryValues extends MapQueryValues {
 
 @generatedSerializable
 class World extends _World {
-  World({this.id, this.randomNumber});
+  World({
+    this.id,
+    this.randomNumber,
+  });
 
   @override
   int? id;
@@ -140,7 +161,10 @@ class World extends _World {
   @override
   int? randomNumber;
 
-  World copyWith({int? id, int? randomNumber}) {
+  World copyWith({
+    int? id,
+    int? randomNumber,
+  }) {
     return World(
         id: id ?? this.id, randomNumber: randomNumber ?? this.randomNumber);
   }
@@ -154,7 +178,10 @@ class World extends _World {
 
   @override
   int get hashCode {
-    return hashObjects([id, randomNumber]);
+    return hashObjects([
+      id,
+      randomNumber,
+    ]);
   }
 
   @override
@@ -208,7 +235,10 @@ class WorldSerializer extends Codec<World, Map> {
 }
 
 abstract class WorldFields {
-  static const List<String> allFields = <String>[id, randomNumber];
+  static const List<String> allFields = <String>[
+    id,
+    randomNumber,
+  ];
 
   static const String id = 'id';
 

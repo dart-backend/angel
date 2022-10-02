@@ -9,10 +9,16 @@ part of 'fortune.dart';
 class FortuneMigration extends Migration {
   @override
   void up(Schema schema) {
-    schema.create('fortune', (table) {
-      table.integer('id').primaryKey();
-      table.varChar('message', length: 2048);
-    });
+    schema.create(
+      'fortune',
+      (table) {
+        table.integer('id').primaryKey();
+        table.varChar(
+          'message',
+          length: 2048,
+        );
+      },
+    );
   }
 
   @override
@@ -26,8 +32,10 @@ class FortuneMigration extends Migration {
 // **************************************************************************
 
 class FortuneQuery extends Query<Fortune, FortuneQueryWhere> {
-  FortuneQuery({Query? parent, Set<String>? trampoline})
-      : super(parent: parent) {
+  FortuneQuery({
+    Query? parent,
+    Set<String>? trampoline,
+  }) : super(parent: parent) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = FortuneQueryWhere(this);
@@ -52,7 +60,10 @@ class FortuneQuery extends Query<Fortune, FortuneQueryWhere> {
 
   @override
   List<String> get fields {
-    const _fields = ['id', 'message'];
+    const _fields = [
+      'id',
+      'message',
+    ];
     return _selectedFields.isEmpty
         ? _fields
         : _fields.where((field) => _selectedFields.contains(field)).toList();
@@ -78,8 +89,9 @@ class FortuneQuery extends Query<Fortune, FortuneQueryWhere> {
       return Optional.empty();
     }
     var model = Fortune(
-        id: fields.contains('id') ? (row[0] as int?) : null,
-        message: fields.contains('message') ? (row[1] as String?) : null);
+      id: fields.contains('id') ? (row[0] as int?) : null,
+      message: fields.contains('message') ? (row[1] as String?) : null,
+    );
     return Optional.of(model);
   }
 
@@ -91,8 +103,14 @@ class FortuneQuery extends Query<Fortune, FortuneQueryWhere> {
 
 class FortuneQueryWhere extends QueryWhere {
   FortuneQueryWhere(FortuneQuery query)
-      : id = NumericSqlExpressionBuilder<int>(query, 'id'),
-        message = StringSqlExpressionBuilder(query, 'message');
+      : id = NumericSqlExpressionBuilder<int>(
+          query,
+          'id',
+        ),
+        message = StringSqlExpressionBuilder(
+          query,
+          'message',
+        );
 
   final NumericSqlExpressionBuilder<int> id;
 
@@ -100,7 +118,10 @@ class FortuneQueryWhere extends QueryWhere {
 
   @override
   List<SqlExpressionBuilder> get expressionBuilders {
-    return [id, message];
+    return [
+      id,
+      message,
+    ];
   }
 }
 
@@ -132,7 +153,10 @@ class FortuneQueryValues extends MapQueryValues {
 
 @generatedSerializable
 class Fortune extends _Fortune {
-  Fortune({this.id, this.message});
+  Fortune({
+    this.id,
+    this.message,
+  });
 
   @override
   int? id;
@@ -140,7 +164,10 @@ class Fortune extends _Fortune {
   @override
   String? message;
 
-  Fortune copyWith({int? id, String? message}) {
+  Fortune copyWith({
+    int? id,
+    String? message,
+  }) {
     return Fortune(id: id ?? this.id, message: message ?? this.message);
   }
 
@@ -151,7 +178,10 @@ class Fortune extends _Fortune {
 
   @override
   int get hashCode {
-    return hashObjects([id, message]);
+    return hashObjects([
+      id,
+      message,
+    ]);
   }
 
   @override
@@ -204,7 +234,10 @@ class FortuneSerializer extends Codec<Fortune, Map> {
 }
 
 abstract class FortuneFields {
-  static const List<String> allFields = <String>[id, message];
+  static const List<String> allFields = <String>[
+    id,
+    message,
+  ];
 
   static const String id = 'id';
 

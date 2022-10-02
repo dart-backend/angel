@@ -9,12 +9,25 @@ part of 'has_map.dart';
 class HasMapMigration extends Migration {
   @override
   void up(Schema schema) {
-    schema.create('has_maps', (table) {
-      table.declareColumn(
-          'value', Column(type: ColumnType('jsonb'), length: 255));
-      table.declareColumn(
-          'list', Column(type: ColumnType('jsonb'), length: 255));
-    });
+    schema.create(
+      'has_maps',
+      (table) {
+        table.declareColumn(
+          'value',
+          Column(
+            type: ColumnType('jsonb'),
+            length: 255,
+          ),
+        );
+        table.declareColumn(
+          'list',
+          Column(
+            type: ColumnType('jsonb'),
+            length: 255,
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -28,8 +41,10 @@ class HasMapMigration extends Migration {
 // **************************************************************************
 
 class HasMapQuery extends Query<HasMap, HasMapQueryWhere> {
-  HasMapQuery({Query? parent, Set<String>? trampoline})
-      : super(parent: parent) {
+  HasMapQuery({
+    Query? parent,
+    Set<String>? trampoline,
+  }) : super(parent: parent) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = HasMapQueryWhere(this);
@@ -54,7 +69,10 @@ class HasMapQuery extends Query<HasMap, HasMapQueryWhere> {
 
   @override
   List<String> get fields {
-    const _fields = ['value', 'list'];
+    const _fields = [
+      'value',
+      'list',
+    ];
     return _selectedFields.isEmpty
         ? _fields
         : _fields.where((field) => _selectedFields.contains(field)).toList();
@@ -80,10 +98,10 @@ class HasMapQuery extends Query<HasMap, HasMapQueryWhere> {
       return Optional.empty();
     }
     var model = HasMap(
-        value: fields.contains('value')
-            ? (row[0] as Map<dynamic, dynamic>?)
-            : null,
-        list: fields.contains('list') ? (row[1] as List<dynamic>?) : null);
+      value:
+          fields.contains('value') ? (row[0] as Map<dynamic, dynamic>?) : null,
+      list: fields.contains('list') ? (row[1] as List<dynamic>?) : null,
+    );
     return Optional.of(model);
   }
 
@@ -95,8 +113,14 @@ class HasMapQuery extends Query<HasMap, HasMapQueryWhere> {
 
 class HasMapQueryWhere extends QueryWhere {
   HasMapQueryWhere(HasMapQuery query)
-      : value = MapSqlExpressionBuilder(query, 'value'),
-        list = ListSqlExpressionBuilder(query, 'list');
+      : value = MapSqlExpressionBuilder(
+          query,
+          'value',
+        ),
+        list = ListSqlExpressionBuilder(
+          query,
+          'list',
+        );
 
   final MapSqlExpressionBuilder value;
 
@@ -104,7 +128,10 @@ class HasMapQueryWhere extends QueryWhere {
 
   @override
   List<SqlExpressionBuilder> get expressionBuilders {
-    return [value, list];
+    return [
+      value,
+      list,
+    ];
   }
 }
 
@@ -120,7 +147,7 @@ class HasMapQueryValues extends MapQueryValues {
 
   set value(Map<dynamic, dynamic>? value) => values['value'] = value;
   List<dynamic>? get list {
-    return (json.decode((values['list'] as String)) as List);
+    return json.decode((values['list'] as String)).cast();
   }
 
   set list(List<dynamic>? value) => values['list'] = json.encode(value);
@@ -136,7 +163,10 @@ class HasMapQueryValues extends MapQueryValues {
 
 @generatedSerializable
 class HasMap implements _HasMap {
-  HasMap({this.value, this.list = const []});
+  HasMap({
+    this.value,
+    this.list = const [],
+  });
 
   @override
   Map<dynamic, dynamic>? value;
@@ -144,7 +174,10 @@ class HasMap implements _HasMap {
   @override
   List<dynamic>? list;
 
-  HasMap copyWith({Map<dynamic, dynamic>? value, List<dynamic>? list}) {
+  HasMap copyWith({
+    Map<dynamic, dynamic>? value,
+    List<dynamic>? list,
+  }) {
     return HasMap(value: value ?? this.value, list: list ?? this.list);
   }
 
@@ -159,7 +192,10 @@ class HasMap implements _HasMap {
 
   @override
   int get hashCode {
-    return hashObjects([value, list]);
+    return hashObjects([
+      value,
+      list,
+    ]);
   }
 
   @override
@@ -218,7 +254,10 @@ class HasMapSerializer extends Codec<HasMap, Map> {
 }
 
 abstract class HasMapFields {
-  static const List<String> allFields = <String>[value, list];
+  static const List<String> allFields = <String>[
+    value,
+    list,
+  ];
 
   static const String value = 'value';
 

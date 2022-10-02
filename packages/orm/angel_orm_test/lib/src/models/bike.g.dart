@@ -9,17 +9,26 @@ part of 'bike.dart';
 class BikeMigration extends Migration {
   @override
   void up(Schema schema) {
-    schema.create('bikes', (table) {
-      table.serial('id').primaryKey();
-      table.timeStamp('created_at');
-      table.timeStamp('updated_at');
-      table.varChar('make', length: 255);
-      table.varChar('description', length: 255);
-      table.boolean('family_friendly');
-      table.timeStamp('recalled_at');
-      table.double('price');
-      table.integer('width');
-    });
+    schema.create(
+      'bikes',
+      (table) {
+        table.serial('id').primaryKey();
+        table.timeStamp('created_at');
+        table.timeStamp('updated_at');
+        table.varChar(
+          'make',
+          length: 255,
+        );
+        table.varChar(
+          'description',
+          length: 255,
+        );
+        table.boolean('family_friendly');
+        table.timeStamp('recalled_at');
+        table.double('price');
+        table.integer('width');
+      },
+    );
   }
 
   @override
@@ -33,7 +42,10 @@ class BikeMigration extends Migration {
 // **************************************************************************
 
 class BikeQuery extends Query<Bike, BikeQueryWhere> {
-  BikeQuery({Query? parent, Set<String>? trampoline}) : super(parent: parent) {
+  BikeQuery({
+    Query? parent,
+    Set<String>? trampoline,
+  }) : super(parent: parent) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = BikeQueryWhere(this);
@@ -48,7 +60,7 @@ class BikeQuery extends Query<Bike, BikeQueryWhere> {
 
   @override
   Map<String, String> get casts {
-    return {'price': 'char'};
+    return {};
   }
 
   @override
@@ -67,7 +79,7 @@ class BikeQuery extends Query<Bike, BikeQueryWhere> {
       'family_friendly',
       'recalled_at',
       'price',
-      'width'
+      'width',
     ];
     return _selectedFields.isEmpty
         ? _fields
@@ -94,22 +106,21 @@ class BikeQuery extends Query<Bike, BikeQueryWhere> {
       return Optional.empty();
     }
     var model = Bike(
-        id: fields.contains('id') ? row[0].toString() : null,
-        createdAt: fields.contains('created_at')
-            ? mapToNullableDateTime(row[1])
-            : null,
-        updatedAt: fields.contains('updated_at')
-            ? mapToNullableDateTime(row[2])
-            : null,
-        make: fields.contains('make') ? (row[3] as String) : '',
-        description: fields.contains('description') ? (row[4] as String) : '',
-        familyFriendly:
-            fields.contains('family_friendly') ? mapToBool(row[5]) : false,
-        recalledAt: fields.contains('recalled_at')
-            ? mapToDateTime(row[6])
-            : DateTime.parse("1970-01-01 00:00:00"),
-        price: fields.contains('price') ? mapToDouble(row[7]) : 0.0,
-        width: fields.contains('width') ? (row[8] as int) : 0);
+      id: fields.contains('id') ? row[0].toString() : null,
+      createdAt:
+          fields.contains('created_at') ? mapToNullableDateTime(row[1]) : null,
+      updatedAt:
+          fields.contains('updated_at') ? mapToNullableDateTime(row[2]) : null,
+      make: fields.contains('make') ? (row[3] as String) : '',
+      description: fields.contains('description') ? (row[4] as String) : '',
+      familyFriendly:
+          fields.contains('family_friendly') ? mapToBool(row[5]) : false,
+      recalledAt: fields.contains('recalled_at')
+          ? mapToDateTime(row[6])
+          : DateTime.parse("1970-01-01 00:00:00"),
+      price: fields.contains('price') ? mapToDouble(row[7]) : 0.0,
+      width: fields.contains('width') ? (row[8] as int) : 0,
+    );
     return Optional.of(model);
   }
 
@@ -121,15 +132,42 @@ class BikeQuery extends Query<Bike, BikeQueryWhere> {
 
 class BikeQueryWhere extends QueryWhere {
   BikeQueryWhere(BikeQuery query)
-      : id = NumericSqlExpressionBuilder<int>(query, 'id'),
-        createdAt = DateTimeSqlExpressionBuilder(query, 'created_at'),
-        updatedAt = DateTimeSqlExpressionBuilder(query, 'updated_at'),
-        make = StringSqlExpressionBuilder(query, 'make'),
-        description = StringSqlExpressionBuilder(query, 'description'),
-        familyFriendly = BooleanSqlExpressionBuilder(query, 'family_friendly'),
-        recalledAt = DateTimeSqlExpressionBuilder(query, 'recalled_at'),
-        price = NumericSqlExpressionBuilder<double>(query, 'price'),
-        width = NumericSqlExpressionBuilder<int>(query, 'width');
+      : id = NumericSqlExpressionBuilder<int>(
+          query,
+          'id',
+        ),
+        createdAt = DateTimeSqlExpressionBuilder(
+          query,
+          'created_at',
+        ),
+        updatedAt = DateTimeSqlExpressionBuilder(
+          query,
+          'updated_at',
+        ),
+        make = StringSqlExpressionBuilder(
+          query,
+          'make',
+        ),
+        description = StringSqlExpressionBuilder(
+          query,
+          'description',
+        ),
+        familyFriendly = BooleanSqlExpressionBuilder(
+          query,
+          'family_friendly',
+        ),
+        recalledAt = DateTimeSqlExpressionBuilder(
+          query,
+          'recalled_at',
+        ),
+        price = NumericSqlExpressionBuilder<double>(
+          query,
+          'price',
+        ),
+        width = NumericSqlExpressionBuilder<int>(
+          query,
+          'width',
+        );
 
   final NumericSqlExpressionBuilder<int> id;
 
@@ -160,7 +198,7 @@ class BikeQueryWhere extends QueryWhere {
       familyFriendly,
       recalledAt,
       price,
-      width
+      width,
     ];
   }
 }
@@ -168,7 +206,7 @@ class BikeQueryWhere extends QueryWhere {
 class BikeQueryValues extends MapQueryValues {
   @override
   Map<String, String> get casts {
-    return {'price': 'double precision'};
+    return {};
   }
 
   String? get id {
@@ -207,10 +245,10 @@ class BikeQueryValues extends MapQueryValues {
 
   set recalledAt(DateTime value) => values['recalled_at'] = value;
   double get price {
-    return double.tryParse((values['price'] as String)) ?? 0.0;
+    return (values['price'] as double?) ?? 0.0;
   }
 
-  set price(double value) => values['price'] = value.toString();
+  set price(double value) => values['price'] = value;
   int get width {
     return (values['width'] as int);
   }
@@ -234,16 +272,17 @@ class BikeQueryValues extends MapQueryValues {
 
 @generatedSerializable
 class Bike extends _Bike {
-  Bike(
-      {this.id,
-      this.createdAt,
-      this.updatedAt,
-      required this.make,
-      required this.description,
-      required this.familyFriendly,
-      required this.recalledAt,
-      required this.price,
-      required this.width});
+  Bike({
+    this.id,
+    this.createdAt,
+    this.updatedAt,
+    required this.make,
+    required this.description,
+    required this.familyFriendly,
+    required this.recalledAt,
+    required this.price,
+    required this.width,
+  });
 
   /// A unique identifier corresponding to this item.
   @override
@@ -275,16 +314,17 @@ class Bike extends _Bike {
   @override
   int width;
 
-  Bike copyWith(
-      {String? id,
-      DateTime? createdAt,
-      DateTime? updatedAt,
-      String? make,
-      String? description,
-      bool? familyFriendly,
-      DateTime? recalledAt,
-      double? price,
-      int? width}) {
+  Bike copyWith({
+    String? id,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    String? make,
+    String? description,
+    bool? familyFriendly,
+    DateTime? recalledAt,
+    double? price,
+    int? width,
+  }) {
     return Bike(
         id: id ?? this.id,
         createdAt: createdAt ?? this.createdAt,
@@ -322,7 +362,7 @@ class Bike extends _Bike {
       familyFriendly,
       recalledAt,
       price,
-      width
+      width,
     ]);
   }
 
@@ -416,7 +456,7 @@ abstract class BikeFields {
     familyFriendly,
     recalledAt,
     price,
-    width
+    width,
   ];
 
   static const String id = 'id';

@@ -9,17 +9,30 @@ part of 'boat.dart';
 class BoatMigration extends Migration {
   @override
   void up(Schema schema) {
-    schema.create('boats', (table) {
-      table.serial('id').primaryKey();
-      table.timeStamp('created_at');
-      table.timeStamp('updated_at');
-      table.varChar('make', length: 255).defaultsTo('');
-      table.varChar('description', length: 255).defaultsTo('none');
-      table.boolean('family_friendly').defaultsTo(false);
-      table.timeStamp('recalled_at');
-      table.double('price').defaultsTo(0.0);
-      table.integer('width').defaultsTo(0);
-    });
+    schema.create(
+      'boats',
+      (table) {
+        table.serial('id').primaryKey();
+        table.timeStamp('created_at');
+        table.timeStamp('updated_at');
+        table
+            .varChar(
+              'make',
+              length: 255,
+            )
+            .defaultsTo('');
+        table
+            .varChar(
+              'description',
+              length: 255,
+            )
+            .defaultsTo('none');
+        table.boolean('family_friendly').defaultsTo(false);
+        table.timeStamp('recalled_at');
+        table.double('price').defaultsTo(0.0);
+        table.integer('width').defaultsTo(0);
+      },
+    );
   }
 
   @override
@@ -33,7 +46,10 @@ class BoatMigration extends Migration {
 // **************************************************************************
 
 class BoatQuery extends Query<Boat, BoatQueryWhere> {
-  BoatQuery({Query? parent, Set<String>? trampoline}) : super(parent: parent) {
+  BoatQuery({
+    Query? parent,
+    Set<String>? trampoline,
+  }) : super(parent: parent) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = BoatQueryWhere(this);
@@ -48,7 +64,7 @@ class BoatQuery extends Query<Boat, BoatQueryWhere> {
 
   @override
   Map<String, String> get casts {
-    return {'price': 'char'};
+    return {};
   }
 
   @override
@@ -67,7 +83,7 @@ class BoatQuery extends Query<Boat, BoatQueryWhere> {
       'family_friendly',
       'recalled_at',
       'price',
-      'width'
+      'width',
     ];
     return _selectedFields.isEmpty
         ? _fields
@@ -94,22 +110,21 @@ class BoatQuery extends Query<Boat, BoatQueryWhere> {
       return Optional.empty();
     }
     var model = Boat(
-        id: fields.contains('id') ? row[0].toString() : null,
-        createdAt: fields.contains('created_at')
-            ? mapToNullableDateTime(row[1])
-            : null,
-        updatedAt: fields.contains('updated_at')
-            ? mapToNullableDateTime(row[2])
-            : null,
-        make: fields.contains('make') ? (row[3] as String) : '',
-        description: fields.contains('description') ? (row[4] as String) : '',
-        familyFriendly:
-            fields.contains('family_friendly') ? mapToBool(row[5]) : false,
-        recalledAt: fields.contains('recalled_at')
-            ? mapToDateTime(row[6])
-            : DateTime.parse("1970-01-01 00:00:00"),
-        price: fields.contains('price') ? mapToDouble(row[7]) : 0.0,
-        width: fields.contains('width') ? (row[8] as int) : 0);
+      id: fields.contains('id') ? row[0].toString() : null,
+      createdAt:
+          fields.contains('created_at') ? mapToNullableDateTime(row[1]) : null,
+      updatedAt:
+          fields.contains('updated_at') ? mapToNullableDateTime(row[2]) : null,
+      make: fields.contains('make') ? (row[3] as String) : '',
+      description: fields.contains('description') ? (row[4] as String) : '',
+      familyFriendly:
+          fields.contains('family_friendly') ? mapToBool(row[5]) : false,
+      recalledAt: fields.contains('recalled_at')
+          ? mapToDateTime(row[6])
+          : DateTime.parse("1970-01-01 00:00:00"),
+      price: fields.contains('price') ? mapToDouble(row[7]) : 0.0,
+      width: fields.contains('width') ? (row[8] as int) : 0,
+    );
     return Optional.of(model);
   }
 
@@ -121,15 +136,42 @@ class BoatQuery extends Query<Boat, BoatQueryWhere> {
 
 class BoatQueryWhere extends QueryWhere {
   BoatQueryWhere(BoatQuery query)
-      : id = NumericSqlExpressionBuilder<int>(query, 'id'),
-        createdAt = DateTimeSqlExpressionBuilder(query, 'created_at'),
-        updatedAt = DateTimeSqlExpressionBuilder(query, 'updated_at'),
-        make = StringSqlExpressionBuilder(query, 'make'),
-        description = StringSqlExpressionBuilder(query, 'description'),
-        familyFriendly = BooleanSqlExpressionBuilder(query, 'family_friendly'),
-        recalledAt = DateTimeSqlExpressionBuilder(query, 'recalled_at'),
-        price = NumericSqlExpressionBuilder<double>(query, 'price'),
-        width = NumericSqlExpressionBuilder<int>(query, 'width');
+      : id = NumericSqlExpressionBuilder<int>(
+          query,
+          'id',
+        ),
+        createdAt = DateTimeSqlExpressionBuilder(
+          query,
+          'created_at',
+        ),
+        updatedAt = DateTimeSqlExpressionBuilder(
+          query,
+          'updated_at',
+        ),
+        make = StringSqlExpressionBuilder(
+          query,
+          'make',
+        ),
+        description = StringSqlExpressionBuilder(
+          query,
+          'description',
+        ),
+        familyFriendly = BooleanSqlExpressionBuilder(
+          query,
+          'family_friendly',
+        ),
+        recalledAt = DateTimeSqlExpressionBuilder(
+          query,
+          'recalled_at',
+        ),
+        price = NumericSqlExpressionBuilder<double>(
+          query,
+          'price',
+        ),
+        width = NumericSqlExpressionBuilder<int>(
+          query,
+          'width',
+        );
 
   final NumericSqlExpressionBuilder<int> id;
 
@@ -160,7 +202,7 @@ class BoatQueryWhere extends QueryWhere {
       familyFriendly,
       recalledAt,
       price,
-      width
+      width,
     ];
   }
 }
@@ -168,7 +210,7 @@ class BoatQueryWhere extends QueryWhere {
 class BoatQueryValues extends MapQueryValues {
   @override
   Map<String, String> get casts {
-    return {'price': 'double precision'};
+    return {};
   }
 
   String? get id {
@@ -207,10 +249,10 @@ class BoatQueryValues extends MapQueryValues {
 
   set recalledAt(DateTime value) => values['recalled_at'] = value;
   double get price {
-    return double.tryParse((values['price'] as String)) ?? 0.0;
+    return (values['price'] as double?) ?? 0.0;
   }
 
-  set price(double value) => values['price'] = value.toString();
+  set price(double value) => values['price'] = value;
   int get width {
     return (values['width'] as int);
   }
@@ -234,16 +276,17 @@ class BoatQueryValues extends MapQueryValues {
 
 @generatedSerializable
 class Boat extends _Boat {
-  Boat(
-      {this.id,
-      this.createdAt,
-      this.updatedAt,
-      required this.make,
-      required this.description,
-      required this.familyFriendly,
-      required this.recalledAt,
-      required this.price,
-      required this.width});
+  Boat({
+    this.id,
+    this.createdAt,
+    this.updatedAt,
+    required this.make,
+    required this.description,
+    required this.familyFriendly,
+    required this.recalledAt,
+    required this.price,
+    required this.width,
+  });
 
   /// A unique identifier corresponding to this item.
   @override
@@ -275,16 +318,17 @@ class Boat extends _Boat {
   @override
   int width;
 
-  Boat copyWith(
-      {String? id,
-      DateTime? createdAt,
-      DateTime? updatedAt,
-      String? make,
-      String? description,
-      bool? familyFriendly,
-      DateTime? recalledAt,
-      double? price,
-      int? width}) {
+  Boat copyWith({
+    String? id,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    String? make,
+    String? description,
+    bool? familyFriendly,
+    DateTime? recalledAt,
+    double? price,
+    int? width,
+  }) {
     return Boat(
         id: id ?? this.id,
         createdAt: createdAt ?? this.createdAt,
@@ -322,7 +366,7 @@ class Boat extends _Boat {
       familyFriendly,
       recalledAt,
       price,
-      width
+      width,
     ]);
   }
 
@@ -416,7 +460,7 @@ abstract class BoatFields {
     familyFriendly,
     recalledAt,
     price,
-    width
+    width,
   ];
 
   static const String id = 'id';

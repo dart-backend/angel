@@ -1,5 +1,9 @@
 # Change Log
 
+## 7.0.1
+
+* Fixed issue #82: Removed casting for numeric fields
+
 ## 7.0.0
 
 * Require Dart >= 2.17

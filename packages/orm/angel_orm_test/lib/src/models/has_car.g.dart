@@ -9,12 +9,15 @@ part of 'has_car.dart';
 class HasCarMigration extends Migration {
   @override
   void up(Schema schema) {
-    schema.create('has_cars', (table) {
-      table.serial('id').primaryKey();
-      table.timeStamp('created_at');
-      table.timeStamp('updated_at');
-      table.integer('type').defaultsTo(0);
-    });
+    schema.create(
+      'has_cars',
+      (table) {
+        table.serial('id').primaryKey();
+        table.timeStamp('created_at');
+        table.timeStamp('updated_at');
+        table.integer('type').defaultsTo(0);
+      },
+    );
   }
 
   @override
@@ -28,8 +31,10 @@ class HasCarMigration extends Migration {
 // **************************************************************************
 
 class HasCarQuery extends Query<HasCar, HasCarQueryWhere> {
-  HasCarQuery({Query? parent, Set<String>? trampoline})
-      : super(parent: parent) {
+  HasCarQuery({
+    Query? parent,
+    Set<String>? trampoline,
+  }) : super(parent: parent) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = HasCarQueryWhere(this);
@@ -54,7 +59,12 @@ class HasCarQuery extends Query<HasCar, HasCarQueryWhere> {
 
   @override
   List<String> get fields {
-    const _fields = ['id', 'created_at', 'updated_at', 'type'];
+    const _fields = [
+      'id',
+      'created_at',
+      'updated_at',
+      'type',
+    ];
     return _selectedFields.isEmpty
         ? _fields
         : _fields.where((field) => _selectedFields.contains(field)).toList();
@@ -80,18 +90,17 @@ class HasCarQuery extends Query<HasCar, HasCarQueryWhere> {
       return Optional.empty();
     }
     var model = HasCar(
-        id: fields.contains('id') ? row[0].toString() : null,
-        createdAt: fields.contains('created_at')
-            ? mapToNullableDateTime(row[1])
-            : null,
-        updatedAt: fields.contains('updated_at')
-            ? mapToNullableDateTime(row[2])
-            : null,
-        type: fields.contains('type')
-            ? row[3] == null
-                ? null
-                : CarType.values[(row[3] as int)]
-            : null);
+      id: fields.contains('id') ? row[0].toString() : null,
+      createdAt:
+          fields.contains('created_at') ? mapToNullableDateTime(row[1]) : null,
+      updatedAt:
+          fields.contains('updated_at') ? mapToNullableDateTime(row[2]) : null,
+      type: fields.contains('type')
+          ? row[3] == null
+              ? null
+              : CarType?.values[(row[3] as int)]
+          : null,
+    );
     return Optional.of(model);
   }
 
@@ -103,11 +112,23 @@ class HasCarQuery extends Query<HasCar, HasCarQueryWhere> {
 
 class HasCarQueryWhere extends QueryWhere {
   HasCarQueryWhere(HasCarQuery query)
-      : id = NumericSqlExpressionBuilder<int>(query, 'id'),
-        createdAt = DateTimeSqlExpressionBuilder(query, 'created_at'),
-        updatedAt = DateTimeSqlExpressionBuilder(query, 'updated_at'),
+      : id = NumericSqlExpressionBuilder<int>(
+          query,
+          'id',
+        ),
+        createdAt = DateTimeSqlExpressionBuilder(
+          query,
+          'created_at',
+        ),
+        updatedAt = DateTimeSqlExpressionBuilder(
+          query,
+          'updated_at',
+        ),
         type = EnumSqlExpressionBuilder<CarType?>(
-            query, 'type', (v) => v?.index as int);
+          query,
+          'type',
+          (v) => v?.index as int,
+        );
 
   final NumericSqlExpressionBuilder<int> id;
 
@@ -119,7 +140,12 @@ class HasCarQueryWhere extends QueryWhere {
 
   @override
   List<SqlExpressionBuilder> get expressionBuilders {
-    return [id, createdAt, updatedAt, type];
+    return [
+      id,
+      createdAt,
+      updatedAt,
+      type,
+    ];
   }
 }
 
@@ -145,7 +171,7 @@ class HasCarQueryValues extends MapQueryValues {
 
   set updatedAt(DateTime? value) => values['updated_at'] = value;
   CarType? get type {
-    return CarType.values[(values['type'] as int)];
+    return CarType?.values[(values['type'] as int)];
   }
 
   set type(CarType? value) => values['type'] = value?.index;
@@ -162,7 +188,12 @@ class HasCarQueryValues extends MapQueryValues {
 
 @generatedSerializable
 class HasCar extends _HasCar {
-  HasCar({this.id, this.createdAt, this.updatedAt, this.type = CarType.sedan});
+  HasCar({
+    this.id,
+    this.createdAt,
+    this.updatedAt,
+    this.type = CarType.sedan,
+  });
 
   /// A unique identifier corresponding to this item.
   @override
@@ -179,8 +210,12 @@ class HasCar extends _HasCar {
   @override
   CarType? type;
 
-  HasCar copyWith(
-      {String? id, DateTime? createdAt, DateTime? updatedAt, CarType? type}) {
+  HasCar copyWith({
+    String? id,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    CarType? type,
+  }) {
     return HasCar(
         id: id ?? this.id,
         createdAt: createdAt ?? this.createdAt,
@@ -199,7 +234,12 @@ class HasCar extends _HasCar {
 
   @override
   int get hashCode {
-    return hashObjects([id, createdAt, updatedAt, type]);
+    return hashObjects([
+      id,
+      createdAt,
+      updatedAt,
+      type,
+    ]);
   }
 
   @override
@@ -256,11 +296,7 @@ class HasCarSerializer extends Codec<HasCar, Map> {
                 ? (map['updated_at'] as DateTime)
                 : DateTime.parse(map['updated_at'].toString()))
             : null,
-        type: map['type'] is CarType?
-            ? (map['type'] as CarType?) ?? CarType.sedan
-            : (map['type'] is int
-                ? CarType.values[map['type'] as int]
-                : CarType.sedan));
+        type: map['type'] as CarType? ?? CarType.sedan);
   }
 
   static Map<String, dynamic> toMap(_HasCar? model) {
@@ -271,7 +307,7 @@ class HasCarSerializer extends Codec<HasCar, Map> {
       'id': model.id,
       'created_at': model.createdAt?.toIso8601String(),
       'updated_at': model.updatedAt?.toIso8601String(),
-      'type': model.type != null ? CarType.values.indexOf(model.type!) : null
+      'type': model.type
     };
   }
 }
@@ -281,7 +317,7 @@ abstract class HasCarFields {
     id,
     createdAt,
     updatedAt,
-    type
+    type,
   ];
 
   static const String id = 'id';

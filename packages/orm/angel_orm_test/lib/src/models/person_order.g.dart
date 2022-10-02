@@ -9,15 +9,21 @@ part of angel3_orm_generator.test.models.person_order;
 class PersonOrderMigration extends Migration {
   @override
   void up(Schema schema) {
-    schema.create('person_orders', (table) {
-      table.serial('id').primaryKey();
-      table.timeStamp('created_at');
-      table.timeStamp('updated_at');
-      table.integer('person_id');
-      table.varChar('name', length: 255);
-      table.double('price');
-      table.boolean('deleted');
-    });
+    schema.create(
+      'person_orders',
+      (table) {
+        table.serial('id').primaryKey();
+        table.timeStamp('created_at');
+        table.timeStamp('updated_at');
+        table.integer('person_id');
+        table.varChar(
+          'name',
+          length: 255,
+        );
+        table.double('price');
+        table.boolean('deleted');
+      },
+    );
   }
 
   @override
@@ -31,8 +37,10 @@ class PersonOrderMigration extends Migration {
 // **************************************************************************
 
 class PersonOrderQuery extends Query<PersonOrder, PersonOrderQueryWhere> {
-  PersonOrderQuery({Query? parent, Set<String>? trampoline})
-      : super(parent: parent) {
+  PersonOrderQuery({
+    Query? parent,
+    Set<String>? trampoline,
+  }) : super(parent: parent) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = PersonOrderQueryWhere(this);
@@ -47,7 +55,7 @@ class PersonOrderQuery extends Query<PersonOrder, PersonOrderQueryWhere> {
 
   @override
   Map<String, String> get casts {
-    return {'price': 'char'};
+    return {};
   }
 
   @override
@@ -64,7 +72,7 @@ class PersonOrderQuery extends Query<PersonOrder, PersonOrderQueryWhere> {
       'person_id',
       'name',
       'price',
-      'deleted'
+      'deleted',
     ];
     return _selectedFields.isEmpty
         ? _fields
@@ -91,17 +99,16 @@ class PersonOrderQuery extends Query<PersonOrder, PersonOrderQueryWhere> {
       return Optional.empty();
     }
     var model = PersonOrder(
-        id: fields.contains('id') ? row[0].toString() : null,
-        createdAt: fields.contains('created_at')
-            ? mapToNullableDateTime(row[1])
-            : null,
-        updatedAt: fields.contains('updated_at')
-            ? mapToNullableDateTime(row[2])
-            : null,
-        personId: fields.contains('person_id') ? (row[3] as int?) : null,
-        name: fields.contains('name') ? (row[4] as String?) : null,
-        price: fields.contains('price') ? mapToDouble(row[5]) : null,
-        deleted: fields.contains('deleted') ? mapToBool(row[6]) : null);
+      id: fields.contains('id') ? row[0].toString() : null,
+      createdAt:
+          fields.contains('created_at') ? mapToNullableDateTime(row[1]) : null,
+      updatedAt:
+          fields.contains('updated_at') ? mapToNullableDateTime(row[2]) : null,
+      personId: fields.contains('person_id') ? (row[3] as int?) : null,
+      name: fields.contains('name') ? (row[4] as String?) : null,
+      price: fields.contains('price') ? mapToDouble(row[5]) : null,
+      deleted: fields.contains('deleted') ? mapToBool(row[6]) : null,
+    );
     return Optional.of(model);
   }
 
@@ -113,13 +120,34 @@ class PersonOrderQuery extends Query<PersonOrder, PersonOrderQueryWhere> {
 
 class PersonOrderQueryWhere extends QueryWhere {
   PersonOrderQueryWhere(PersonOrderQuery query)
-      : id = NumericSqlExpressionBuilder<int>(query, 'id'),
-        createdAt = DateTimeSqlExpressionBuilder(query, 'created_at'),
-        updatedAt = DateTimeSqlExpressionBuilder(query, 'updated_at'),
-        personId = NumericSqlExpressionBuilder<int>(query, 'person_id'),
-        name = StringSqlExpressionBuilder(query, 'name'),
-        price = NumericSqlExpressionBuilder<double>(query, 'price'),
-        deleted = BooleanSqlExpressionBuilder(query, 'deleted');
+      : id = NumericSqlExpressionBuilder<int>(
+          query,
+          'id',
+        ),
+        createdAt = DateTimeSqlExpressionBuilder(
+          query,
+          'created_at',
+        ),
+        updatedAt = DateTimeSqlExpressionBuilder(
+          query,
+          'updated_at',
+        ),
+        personId = NumericSqlExpressionBuilder<int>(
+          query,
+          'person_id',
+        ),
+        name = StringSqlExpressionBuilder(
+          query,
+          'name',
+        ),
+        price = NumericSqlExpressionBuilder<double>(
+          query,
+          'price',
+        ),
+        deleted = BooleanSqlExpressionBuilder(
+          query,
+          'deleted',
+        );
 
   final NumericSqlExpressionBuilder<int> id;
 
@@ -137,14 +165,22 @@ class PersonOrderQueryWhere extends QueryWhere {
 
   @override
   List<SqlExpressionBuilder> get expressionBuilders {
-    return [id, createdAt, updatedAt, personId, name, price, deleted];
+    return [
+      id,
+      createdAt,
+      updatedAt,
+      personId,
+      name,
+      price,
+      deleted,
+    ];
   }
 }
 
 class PersonOrderQueryValues extends MapQueryValues {
   @override
   Map<String, String> get casts {
-    return {'price': 'double precision'};
+    return {};
   }
 
   String? get id {
@@ -173,10 +209,10 @@ class PersonOrderQueryValues extends MapQueryValues {
 
   set name(String? value) => values['name'] = value;
   double? get price {
-    return double.tryParse((values['price'] as String)) ?? 0.0;
+    return (values['price'] as double?) ?? 0.0;
   }
 
-  set price(double? value) => values['price'] = value.toString();
+  set price(double? value) => values['price'] = value;
   bool? get deleted {
     return (values['deleted'] as bool?);
   }
@@ -194,8 +230,10 @@ class PersonOrderQueryValues extends MapQueryValues {
 
 class OrderWithPersonInfoQuery
     extends Query<OrderWithPersonInfo, OrderWithPersonInfoQueryWhere> {
-  OrderWithPersonInfoQuery({Query? parent, Set<String>? trampoline})
-      : super(parent: parent) {
+  OrderWithPersonInfoQuery({
+    Query? parent,
+    Set<String>? trampoline,
+  }) : super(parent: parent) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     expressions['person_name'] = 'p.name';
@@ -213,7 +251,7 @@ class OrderWithPersonInfoQuery
 
   @override
   Map<String, String> get casts {
-    return {'price': 'char'};
+    return {};
   }
 
   @override
@@ -231,7 +269,7 @@ class OrderWithPersonInfoQuery
       'price',
       'deleted',
       'person_name',
-      'person_age'
+      'person_age',
     ];
     return _selectedFields.isEmpty
         ? _fields
@@ -258,18 +296,17 @@ class OrderWithPersonInfoQuery
       return Optional.empty();
     }
     var model = OrderWithPersonInfo(
-        id: fields.contains('id') ? row[0].toString() : null,
-        createdAt: fields.contains('created_at')
-            ? mapToNullableDateTime(row[1])
-            : null,
-        updatedAt: fields.contains('updated_at')
-            ? mapToNullableDateTime(row[2])
-            : null,
-        name: fields.contains('name') ? (row[3] as String?) : null,
-        price: fields.contains('price') ? mapToDouble(row[4]) : null,
-        deleted: fields.contains('deleted') ? mapToBool(row[5]) : null,
-        personName: fields.contains('person_name') ? (row[6] as String?) : null,
-        personAge: fields.contains('person_age') ? (row[7] as int?) : null);
+      id: fields.contains('id') ? row[0].toString() : null,
+      createdAt:
+          fields.contains('created_at') ? mapToNullableDateTime(row[1]) : null,
+      updatedAt:
+          fields.contains('updated_at') ? mapToNullableDateTime(row[2]) : null,
+      name: fields.contains('name') ? (row[3] as String?) : null,
+      price: fields.contains('price') ? mapToDouble(row[4]) : null,
+      deleted: fields.contains('deleted') ? mapToBool(row[5]) : null,
+      personName: fields.contains('person_name') ? (row[6] as String?) : null,
+      personAge: fields.contains('person_age') ? (row[7] as int?) : null,
+    );
     return Optional.of(model);
   }
 
@@ -281,12 +318,30 @@ class OrderWithPersonInfoQuery
 
 class OrderWithPersonInfoQueryWhere extends QueryWhere {
   OrderWithPersonInfoQueryWhere(OrderWithPersonInfoQuery query)
-      : id = NumericSqlExpressionBuilder<int>(query, 'id'),
-        createdAt = DateTimeSqlExpressionBuilder(query, 'created_at'),
-        updatedAt = DateTimeSqlExpressionBuilder(query, 'updated_at'),
-        name = StringSqlExpressionBuilder(query, 'name'),
-        price = NumericSqlExpressionBuilder<double>(query, 'price'),
-        deleted = BooleanSqlExpressionBuilder(query, 'deleted');
+      : id = NumericSqlExpressionBuilder<int>(
+          query,
+          'id',
+        ),
+        createdAt = DateTimeSqlExpressionBuilder(
+          query,
+          'created_at',
+        ),
+        updatedAt = DateTimeSqlExpressionBuilder(
+          query,
+          'updated_at',
+        ),
+        name = StringSqlExpressionBuilder(
+          query,
+          'name',
+        ),
+        price = NumericSqlExpressionBuilder<double>(
+          query,
+          'price',
+        ),
+        deleted = BooleanSqlExpressionBuilder(
+          query,
+          'deleted',
+        );
 
   final NumericSqlExpressionBuilder<int> id;
 
@@ -302,14 +357,21 @@ class OrderWithPersonInfoQueryWhere extends QueryWhere {
 
   @override
   List<SqlExpressionBuilder> get expressionBuilders {
-    return [id, createdAt, updatedAt, name, price, deleted];
+    return [
+      id,
+      createdAt,
+      updatedAt,
+      name,
+      price,
+      deleted,
+    ];
   }
 }
 
 class OrderWithPersonInfoQueryValues extends MapQueryValues {
   @override
   Map<String, String> get casts {
-    return {'price': 'double precision'};
+    return {};
   }
 
   String? get id {
@@ -333,10 +395,10 @@ class OrderWithPersonInfoQueryValues extends MapQueryValues {
 
   set name(String? value) => values['name'] = value;
   double? get price {
-    return double.tryParse((values['price'] as String)) ?? 0.0;
+    return (values['price'] as double?) ?? 0.0;
   }
 
-  set price(double? value) => values['price'] = value.toString();
+  set price(double? value) => values['price'] = value;
   bool? get deleted {
     return (values['deleted'] as bool?);
   }
@@ -357,14 +419,15 @@ class OrderWithPersonInfoQueryValues extends MapQueryValues {
 
 @generatedSerializable
 class PersonOrder extends _PersonOrder {
-  PersonOrder(
-      {this.id,
-      this.createdAt,
-      this.updatedAt,
-      this.personId,
-      this.name,
-      this.price,
-      this.deleted});
+  PersonOrder({
+    this.id,
+    this.createdAt,
+    this.updatedAt,
+    this.personId,
+    this.name,
+    this.price,
+    this.deleted,
+  });
 
   /// A unique identifier corresponding to this item.
   @override
@@ -390,14 +453,15 @@ class PersonOrder extends _PersonOrder {
   @override
   bool? deleted;
 
-  PersonOrder copyWith(
-      {String? id,
-      DateTime? createdAt,
-      DateTime? updatedAt,
-      int? personId,
-      String? name,
-      double? price,
-      bool? deleted}) {
+  PersonOrder copyWith({
+    String? id,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    int? personId,
+    String? name,
+    double? price,
+    bool? deleted,
+  }) {
     return PersonOrder(
         id: id ?? this.id,
         createdAt: createdAt ?? this.createdAt,
@@ -422,8 +486,15 @@ class PersonOrder extends _PersonOrder {
 
   @override
   int get hashCode {
-    return hashObjects(
-        [id, createdAt, updatedAt, personId, name, price, deleted]);
+    return hashObjects([
+      id,
+      createdAt,
+      updatedAt,
+      personId,
+      name,
+      price,
+      deleted,
+    ]);
   }
 
   @override
@@ -438,15 +509,16 @@ class PersonOrder extends _PersonOrder {
 
 @generatedSerializable
 class OrderWithPersonInfo extends _OrderWithPersonInfo {
-  OrderWithPersonInfo(
-      {this.id,
-      this.createdAt,
-      this.updatedAt,
-      this.name,
-      this.price,
-      this.deleted,
-      this.personName,
-      this.personAge});
+  OrderWithPersonInfo({
+    this.id,
+    this.createdAt,
+    this.updatedAt,
+    this.name,
+    this.price,
+    this.deleted,
+    this.personName,
+    this.personAge,
+  });
 
   /// A unique identifier corresponding to this item.
   @override
@@ -475,15 +547,16 @@ class OrderWithPersonInfo extends _OrderWithPersonInfo {
   @override
   int? personAge;
 
-  OrderWithPersonInfo copyWith(
-      {String? id,
-      DateTime? createdAt,
-      DateTime? updatedAt,
-      String? name,
-      double? price,
-      bool? deleted,
-      String? personName,
-      int? personAge}) {
+  OrderWithPersonInfo copyWith({
+    String? id,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    String? name,
+    double? price,
+    bool? deleted,
+    String? personName,
+    int? personAge,
+  }) {
     return OrderWithPersonInfo(
         id: id ?? this.id,
         createdAt: createdAt ?? this.createdAt,
@@ -518,7 +591,7 @@ class OrderWithPersonInfo extends _OrderWithPersonInfo {
       price,
       deleted,
       personName,
-      personAge
+      personAge,
     ]);
   }
 
@@ -602,7 +675,7 @@ abstract class PersonOrderFields {
     personId,
     name,
     price,
-    deleted
+    deleted,
   ];
 
   static const String id = 'id';
@@ -692,7 +765,7 @@ abstract class OrderWithPersonInfoFields {
     price,
     deleted,
     personName,
-    personAge
+    personAge,
   ];
 
   static const String id = 'id';

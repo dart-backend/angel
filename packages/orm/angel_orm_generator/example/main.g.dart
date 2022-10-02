@@ -16,8 +16,7 @@ class EmployeeMigration extends Migration {
       table.varChar('unique_id', length: 255).unique();
       table.varChar('first_name', length: 255);
       table.varChar('last_name', length: 255);
-      table.declareColumn(
-          'salary', Column(type: ColumnType('decimal'), length: 255));
+      table.double('salary');
     });
   }
 
@@ -93,8 +92,12 @@ class EmployeeQuery extends Query<Employee, EmployeeQueryWhere> {
     }
     var model = Employee(
         id: fields.contains('id') ? row[0].toString() : null,
-        createdAt: fields.contains('created_at') ? mapToDateTime(row[1]) : null,
-        updatedAt: fields.contains('updated_at') ? mapToDateTime(row[2]) : null,
+        createdAt: fields.contains('created_at')
+            ? mapToNullableDateTime(row[1])
+            : null,
+        updatedAt: fields.contains('updated_at')
+            ? mapToNullableDateTime(row[2])
+            : null,
         uniqueId: fields.contains('unique_id') ? (row[3] as String?) : null,
         firstName: fields.contains('first_name') ? (row[4] as String?) : null,
         lastName: fields.contains('last_name') ? (row[5] as String?) : null,
@@ -141,7 +144,7 @@ class EmployeeQueryWhere extends QueryWhere {
 class EmployeeQueryValues extends MapQueryValues {
   @override
   Map<String, String> get casts {
-    return {'salary': 'decimal'};
+    return {'salary': 'double precision'};
   }
 
   String? get id {
@@ -175,10 +178,10 @@ class EmployeeQueryValues extends MapQueryValues {
 
   set lastName(String? value) => values['last_name'] = value;
   double? get salary {
-    return double.tryParse((values['salary'] as String));
+    return (values['salary'] as double?) ?? 0.0;
   }
 
-  set salary(double? value) => values['salary'] = value.toString();
+  set salary(double? value) => values['salary'] = value;
   void copyFrom(Employee model) {
     createdAt = model.createdAt;
     updatedAt = model.updatedAt;

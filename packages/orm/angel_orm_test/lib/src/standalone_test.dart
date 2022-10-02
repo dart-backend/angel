@@ -22,7 +22,7 @@ void standaloneTests(FutureOr<QueryExecutor> Function() createExecutor,
   test('parseRow', () {
     // 'id', 'created_at',  'updated_at', 'make', 'description', 'family_friendly', 'recalled_at'
     // var row = [0, 'Mazda', 'CX9', true, y2k, y2k, y2k];
-    var row = [0, y2k, y2k, 'Mazda', 'CX9', true, y2k];
+    var row = [0, y2k, y2k, 'Mazda', 'CX9', true, y2k, 80000.00];
     //print(row);
     var carOpt = CarQuery().deserialize(row);
     expect(carOpt.isPresent, true);
@@ -38,6 +38,7 @@ void standaloneTests(FutureOr<QueryExecutor> Function() createExecutor,
           y2k.toIso8601String(), startsWith(car.createdAt!.toIso8601String()));
       expect(
           y2k.toIso8601String(), startsWith(car.updatedAt!.toIso8601String()));
+      expect(car.price, 80000.00);
     });
   });
 
@@ -66,6 +67,7 @@ void standaloneTests(FutureOr<QueryExecutor> Function() createExecutor,
             ..createdAt = y2k
             ..updatedAt = y2k
             ..description = 'Vroom vroom!'
+            //..price = 120000.00
             ..familyFriendly = false;
           ferrari = (await query.insert(executor!)).value;
         });
