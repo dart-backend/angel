@@ -56,6 +56,7 @@ FieldElement? findPrimaryFieldInList(
   return specialId;
 }
 
+/// Create ORM Context
 Future<OrmBuildContext?> buildOrmContext(
     Map<String, OrmBuildContext> cache,
     InterfaceElement clazz,
@@ -337,7 +338,7 @@ Future<OrmBuildContext?> buildOrmContext(
   return ctx;
 }
 
-// Detect and return the correct column type
+/// Detect and return the correct column type
 ColumnType inferColumnType(DartType type) {
   if (const TypeChecker.fromRuntime(String).isAssignableFromType(type)) {
     return ColumnType.varChar;

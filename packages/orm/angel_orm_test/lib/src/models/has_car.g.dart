@@ -98,7 +98,7 @@ class HasCarQuery extends Query<HasCar, HasCarQueryWhere> {
       type: fields.contains('type')
           ? row[3] == null
               ? null
-              : CarType?.values[(row[3] as int)]
+              : CarType.values[(row[3] as int)]
           : null,
     );
     return Optional.of(model);
@@ -171,7 +171,7 @@ class HasCarQueryValues extends MapQueryValues {
 
   set updatedAt(DateTime? value) => values['updated_at'] = value;
   CarType? get type {
-    return CarType?.values[(values['type'] as int)];
+    return CarType.values[(values['type'] as int)];
   }
 
   set type(CarType? value) => values['type'] = value?.index;
