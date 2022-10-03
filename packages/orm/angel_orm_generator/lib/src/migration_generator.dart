@@ -11,6 +11,7 @@ import 'package:dart_style/dart_style.dart';
 import 'package:source_gen/source_gen.dart' hide LibraryBuilder;
 import 'orm_build_context.dart';
 
+/// Migration Builder
 Builder migrationBuilder(BuilderOptions options) {
   return SharedPartBuilder([
     MigrationGenerator(
@@ -18,6 +19,7 @@ Builder migrationBuilder(BuilderOptions options) {
   ], 'angel3_migration');
 }
 
+/// Generates `<Model>Migration.dart` from an abstract `Model` class.
 class MigrationGenerator extends GeneratorForAnnotation<Orm> {
   static final Parameter _schemaParam = Parameter((b) => b
     ..name = 'schema'
@@ -72,6 +74,7 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
     });
   }
 
+  /// Generate up() method to create tables
   Method buildUpMigration(OrmBuildContext ctx, LibraryBuilder lib) {
     return Method((meth) {
       // Check to see if clazz extends Model class
@@ -351,6 +354,7 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
     });
   }
 
+  /// Generate down() method to drop tables
   Method buildDownMigration(OrmBuildContext? ctx) {
     return Method((b) {
       b

@@ -68,6 +68,12 @@ This package is the core package of [Angel3](https://github.com/dukefirehawk/ang
 
 6. Run as docker. Edit and build the image with the provided `Dockerfile` file.
 
+## Performance Benchmark
+
+The performance benchmark can be found at
+
+[TechEmpower Framework Benchmarks Round 21](https://www.techempower.com/benchmarks/#section=data-r21&test=composite)
+
 ### Migrating from Angel to Angel3
 
 Check out [Migrating to Angel3](https://angel3-docs.dukefirehawk.com/migration/angel-2.x.x-to-angel3/migration-guide-3)

@@ -31,7 +31,7 @@ TypeReference futureOf(String type) {
     ..types.add(refer(type)));
 }
 
-/// Builder that generates `<Model>.g.dart` from an abstract `Model` class.
+/// Generate `<Model>.g.dart` from an abstract `Model` class.
 class OrmGenerator extends GeneratorForAnnotation<Orm> {
   final bool? autoSnakeCaseNames;
 
@@ -159,7 +159,9 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                 .map((f) =>
                     literalString(ctx.buildContext.resolveFieldName(f.name)!))
                 .toList();
-            b.addExpression(literalConstList(names).assignConst('_fields'));
+            //b.addExpression(literalConstList(names).assignConst('_fields'));
+            b.addExpression(
+                declareConst('_fields').assign(literalConstList(names)));
             b.addExpression(refer('_selectedFields')
                 .property('isEmpty')
                 .conditional(
@@ -315,8 +317,10 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                 'if (row.every((x) => x == null)) { return Optional.empty(); }'));
             //b.addExpression(refer('0').assignVar('_index'));
 
-            b.addExpression(ctx.buildContext.modelClassType
-                .newInstance([], args).assignVar('model'));
+            //b.addExpression(ctx.buildContext.modelClassType
+            //    .newInstance([], args).assignVar('model'));
+            b.addExpression(declareVar('model')
+                .assign(ctx.buildContext.modelClassType.newInstance([], args)));
 
             ctx.relations.forEach((name, relation) {
               if (!const [
@@ -369,7 +373,8 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
               //var block =
               //    Block((b) => b.addExpression(refer('model').assign(expr)));
 
-              var stmt = parsed.assignVar('modelOpt');
+              var stmt = declareVar('modelOpt').assign(parsed);
+              //parsed.assignVar('modelOpt');
               //var e = refer('Optional').property('ifPresent').call([]);
 
               var val =

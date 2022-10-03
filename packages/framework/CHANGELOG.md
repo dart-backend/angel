@@ -1,5 +1,9 @@
 # Change Log
 
+## 7.0.2
+
+* Added performance benchmark to README
+
 ## 7.0.1
 
 * Fixed `BytesBuilder` warnings
