@@ -157,7 +157,7 @@ class AngelWebSocket {
       var event = await transformEvent(e);
       event.eventName = '$path::${event.eventName}';
 
-      dynamic _filter(WebSocketContext socket) {
+      dynamic filter(WebSocketContext socket) {
         if (e.service.configuration.containsKey('ws:filter')) {
           return e.service.configuration['ws:filter'](e, socket);
         } else if (e.params.containsKey('ws:filter')) {
@@ -167,7 +167,7 @@ class AngelWebSocket {
         }
       }
 
-      await batchEvent(event, filter: _filter);
+      await batchEvent(event, filter: filter);
     };
   }
 

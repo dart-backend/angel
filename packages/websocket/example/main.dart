@@ -11,7 +11,7 @@ void main(List<String> args) async {
   var http = AngelHttp(app);
   var ws = AngelWebSocket(app, sendErrors: !app.environment.isProduction);
   var fs = const LocalFileSystem();
-  app.logger = Logger('angel_websocket');
+  app.logger = Logger('angel3_websocket');
 
   // This is a plug-in. It hooks all your services,
   // to automatically broadcast events.
@@ -25,6 +25,9 @@ void main(List<String> args) async {
   app.fallback((req, res) => throw AngelHttpException.notFound());
 
   ws.onConnection.listen((socket) {
+    var h = socket.request.headers;
+    print('WebSocket onConnection  $h');
+
     socket.onData.listen((x) {
       socket.send('pong', x);
     });

@@ -93,7 +93,7 @@ class HotReloader {
     response.statusCode = HttpStatus.badGateway;
     response.headers
       ..contentType = ContentType.html
-      ..set(HttpHeaders.serverHeader, 'angel_hot');
+      ..set(HttpHeaders.serverHeader, 'angel3');
 
     if (request.headers
             .value(HttpHeaders.acceptEncodingHeader)
@@ -163,11 +163,11 @@ class HotReloader {
           'You have instantiated a HotReloader without providing any filesystem paths to watch.');
     }
 
-    bool _sw(String s) {
+    bool sw(String s) {
       return Platform.executableArguments.any((ss) => ss.startsWith(s));
     }
 
-    if (!_sw('--observe') && !_sw('--enable-vm-service')) {
+    if (!sw('--observe') && !sw('--enable-vm-service')) {
       _logWarning(
           'You have instantiated a HotReloader without passing `--enable-vm-service` or `--observe` to the Dart VM. Hot reloading will be disabled.');
       isHot = false;
@@ -315,7 +315,7 @@ class HotReloader {
   }
 
   Future<void> _listenToStat(String path) async {
-    Future _listen() async {
+    Future listen() async {
       try {
         var stat = await FileStat.stat(path);
         if (stat.type == FileSystemEntityType.link) {
@@ -345,7 +345,7 @@ class HotReloader {
       }
     }
 
-    var r = await _listen();
+    var r = await listen();
 
     if (r == null) {
       _logWarning(
