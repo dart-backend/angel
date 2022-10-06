@@ -25,8 +25,8 @@ dev_dependencies:
 # dependency_overrides:
 #   angel3_container:
 #     path: ../container/angel_container
-#   angel3_framework:
-#     path: ../framework
+#    angel3_framework:
+#      path: ../framework
 #   angel3_http_exception:
 #     path: ../http_exception
 #   angel3_model:

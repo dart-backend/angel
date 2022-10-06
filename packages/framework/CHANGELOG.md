@@ -1,5 +1,9 @@
 # Change Log
 
+## 7.0.3
+
+* Fixed issue #83. Allow Http request to return null headers instead of throwing an exception.
+
 ## 7.0.2
 
 * Added performance benchmark to README

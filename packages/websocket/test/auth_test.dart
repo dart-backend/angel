@@ -26,6 +26,8 @@ void main() {
         if (username == 'foo' && password == 'bar') {
           return user;
         }
+
+        return {};
       },
     );
 

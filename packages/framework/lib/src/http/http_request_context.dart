@@ -28,8 +28,8 @@ class HttpRequestContext extends RequestContext<HttpRequest?> {
   }
 
   @override
-  HttpHeaders get headers {
-    return rawRequest!.headers;
+  HttpHeaders? get headers {
+    return rawRequest?.headers;
   }
 
   @override

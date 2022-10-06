@@ -1,5 +1,9 @@
 # Change Log
 
+## 7.0.1
+
+* Updated `server` header to `angel3`
+
 ## 7.0.0
 
 * Require Dart >= 2.17
