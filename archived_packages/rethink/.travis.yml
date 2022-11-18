@@ -1,4 +1,0 @@
-language: dart
-addons:
-  rethinkdb: '2.3'
-before_script: 'dart test/bootstrap.dart'
