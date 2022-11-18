@@ -1,5 +1,10 @@
 # Change Log
 
+## 7.1.0
+
+* Upgraded to `analyzer` 5.x.x
+* Replaced deprecated `element2` with `element`
+
 ## 7.0.2
 
 * Fixed deprecated `assignVar` and `assignConst`

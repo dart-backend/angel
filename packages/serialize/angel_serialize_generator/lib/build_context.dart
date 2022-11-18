@@ -62,7 +62,7 @@ Future<BuildContext?> buildContext(
   // Crawl for classes from parent classes.
   void crawlClass(InterfaceType? t) {
     while (t != null) {
-      fields.insertAll(0, t.element2.fields);
+      fields.insertAll(0, t.element.fields);
       t.interfaces.forEach(crawlClass);
       t = t.superclass;
     }

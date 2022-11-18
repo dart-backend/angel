@@ -1,8 +1,8 @@
 # Change Log
 
-## 7.0.1
+## 7.1.0
 
-* Upgraded dependencies
+* Upgraded to `analyzer` 5.x.x
 * Fixed deprecation
 
 ## 7.0.0

@@ -40,7 +40,7 @@ Builder typescriptDefinitionBuilder(_) {
 /// Converts a [DartType] to a [TypeReference].
 TypeReference convertTypeReference(DartType t, {bool forceNullable = false}) {
   return TypeReference((b) {
-    b.symbol = t.element2?.displayName;
+    b.symbol = t.element?.displayName;
 
     // Generate nullable type
     if (t.nullabilitySuffix == NullabilitySuffix.question || forceNullable) {
@@ -112,21 +112,21 @@ String? dartObjectToString(DartObject v) {
         .accept(DartEmitter(useNullSafetySyntax: true))
         .toString();
   }
-  if (type is InterfaceType && type.element2 is EnumElement) {
+  if (type is InterfaceType && type.element is EnumElement) {
     // Find the index of the enum, then find the member.
-    for (var field in type.element2.fields) {
+    for (var field in type.element.fields) {
       if (field.isEnumConstant && field.isStatic) {
-        var value = type.element2.getField(field.name)!.computeConstantValue();
+        var value = type.element.getField(field.name)!.computeConstantValue();
         if (v is Enum && value is Enum) {
           var v2 = v as Enum;
           var value2 = value as Enum;
 
           if (value2.name == v2.name) {
-            return '${type.element2.displayName}.${field.name}';
+            return '${type.element.displayName}.${field.name}';
           }
         } else {
           if (value == v) {
-            return '${type.element2.displayName}.${field.name}';
+            return '${type.element.displayName}.${field.name}';
           }
         }
       }
@@ -140,11 +140,11 @@ String? dartObjectToString(DartObject v) {
 bool isModelClass(DartType? t) {
   if (t == null) return false;
 
-  if (serializableTypeChecker.hasAnnotationOf(t.element2!)) {
+  if (serializableTypeChecker.hasAnnotationOf(t.element!)) {
     return true;
   }
 
-  if (generatedSerializableTypeChecker.hasAnnotationOf(t.element2!)) {
+  if (generatedSerializableTypeChecker.hasAnnotationOf(t.element!)) {
     return true;
   }
 
@@ -177,7 +177,7 @@ bool isListOrMapType(DartType t) {
 
 bool isEnumType(DartType t) {
   if (t is InterfaceType) {
-    return t.element2 is Enum;
+    return t.element is Enum;
   }
 
   return false;
@@ -204,13 +204,13 @@ bool isAssignableToModel(DartType type) =>
 String? typeToString(DartType type) {
   if (type is InterfaceType) {
     if (type.typeArguments.isEmpty) {
-      return type.element2.displayName;
+      return type.element.displayName;
     }
 
-    var name = type.element2.displayName;
+    var name = type.element.displayName;
 
     return '$name<${type.typeArguments.map(typeToString).join(', ')}>';
   } else {
-    return type.element2?.displayName;
+    return type.element?.displayName;
   }
 }
