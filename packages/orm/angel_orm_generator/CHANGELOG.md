@@ -6,7 +6,7 @@
 
 ## 7.0.1
 
-* Fixed issue #82: Fixed issue #82: Removed casting for numeric fields
+* Fixed issue #82: Removed casting for numeric fields
 
 ## 7.0.0
 

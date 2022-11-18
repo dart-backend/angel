@@ -113,12 +113,9 @@ void main() async {
 }
 
 class User extends Model {
-  @override
-  String? id;
-
   int? githubId;
 
-  User({this.id, this.githubId});
+  User({super.id, this.githubId});
 
   static User parse(Map<String, dynamic> map) =>
       User(id: map['id'] as String?, githubId: map['github_id'] as int?);
