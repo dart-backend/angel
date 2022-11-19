@@ -1,5 +1,9 @@
 # Change Log
 
+## 7.1.0
+
+* [Breaking] Require Dart >= 2.18
+
 ## 7.0.2
 
 * Fixed null safety warnings
