@@ -620,8 +620,8 @@ class LibrarySerializer extends Codec<Library, Map> {
       'created_at': model.createdAt?.toIso8601String(),
       'updated_at': model.updatedAt?.toIso8601String(),
       'collection': model.collection.keys.fold({}, (map, key) {
-        return (map as Map<dynamic, dynamic>?)
-          ?..[key] = BookSerializer.toMap(model.collection[key]);
+        return (map as Map<dynamic, dynamic>)
+          ..[key] = BookSerializer.toMap(model.collection[key]);
       })
     };
   }
