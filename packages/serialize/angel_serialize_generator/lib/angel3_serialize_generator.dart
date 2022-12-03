@@ -38,13 +38,18 @@ Builder typescriptDefinitionBuilder(_) {
 }
 
 /// Converts a [DartType] to a [TypeReference].
-TypeReference convertTypeReference(DartType t, {bool forceNullable = false}) {
+TypeReference convertTypeReference(DartType t,
+    {bool forceNullable = false, bool ignoreNullabilityCheck = false}) {
   return TypeReference((b) {
     b.symbol = t.element?.displayName;
 
     // Generate nullable type
-    if (t.nullabilitySuffix == NullabilitySuffix.question || forceNullable) {
-      b.isNullable = true;
+    if (ignoreNullabilityCheck) {
+      b.isNullable = false;
+    } else {
+      if (t.nullabilitySuffix == NullabilitySuffix.question || forceNullable) {
+        b.isNullable = true;
+      }
     }
 
     if (t is InterfaceType) {

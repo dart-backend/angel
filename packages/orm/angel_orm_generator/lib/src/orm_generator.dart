@@ -249,7 +249,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
             var args = <String, Expression>{};
             for (var field in ctx.effectiveFields) {
               var fType = field.type;
-              Reference type = convertTypeReference(field.type);
+              Reference type = convertTypeReference(fType);
               if (isSpecialId(ctx, field)) {
                 type = refer('int');
               }
@@ -272,9 +272,16 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                 expr = refer('mapToDouble').call([expr]);
               } else if (fType is InterfaceType &&
                   fType.element is EnumElement) {
+                /*
+                 * fields.contains('type') ? row[3] == null ? null : 
+                 *     EnumType.values[(row[3] as int)] : null,
+                 */
                 var isNull = expr.equalTo(literalNull);
+
+                Reference enumType =
+                    convertTypeReference(fType, ignoreNullabilityCheck: true);
                 expr = isNull.conditional(literalNull,
-                    type.property('values').index(expr.asA(refer('int'))));
+                    enumType.property('values').index(expr.asA(refer('int'))));
               } else if (fType.isDartCoreBool) {
                 // Generated Code: mapToBool(row[i])
                 expr = refer('mapToBool').call([expr]);
@@ -886,7 +893,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
 
           if (fType is InterfaceType && fType.element is EnumElement) {
             var asInt = value.asA(refer('int'));
-            var t = convertTypeReference(fType);
+            var t = convertTypeReference(fType, ignoreNullabilityCheck: true);
             value = t.property('values').index(asInt);
           } else if (const TypeChecker.fromRuntime(List)
               .isAssignableFromType(fType)) {
