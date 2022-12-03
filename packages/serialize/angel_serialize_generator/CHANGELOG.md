@@ -1,5 +1,11 @@
 # Change Log
 
+## 7.1.0
+
+* [Breaking] Require Dart >= 2.18
+* Upgraded to `analyzer` 5.x.x
+* Replaced deprecated `element2` with `element`
+
 ## 7.0.0
 
 * Require Dart >= 2.17

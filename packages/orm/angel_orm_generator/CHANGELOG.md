@@ -1,12 +1,18 @@
 # Change Log
 
+## 7.1.0
+
+* [Breaking] Require Dart >= 2.18
+* Upgraded to `analyzer` 5.x.x
+* Replaced deprecated `element2` with `element`
+
 ## 7.0.2
 
 * Fixed deprecated `assignVar` and `assignConst`
 
 ## 7.0.1
 
-* Fixed issue #82: Fixed issue #82: Removed casting for numeric fields
+* Fixed issue #82: Removed casting for numeric fields
 
 ## 7.0.0
 

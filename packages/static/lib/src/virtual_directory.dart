@@ -226,7 +226,6 @@ class VirtualDirectory {
           type = '[Link]';
           stub = p.basename(entity.path);
         } else {
-          //TODO: Handle unknown type
           _log.severe('Unknown file entity. Not a file, directory or link.');
           type = '[]';
           stub = '';

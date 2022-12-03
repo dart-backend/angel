@@ -226,7 +226,7 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
                   defaultExpr =
                       refer('RawSql').constInstance([literalString(value)]);
                 } else if (type is InterfaceType &&
-                    type.element2 is EnumElement) {
+                    type.element is EnumElement) {
                   // Default to enum index.
                   try {
                     var index =

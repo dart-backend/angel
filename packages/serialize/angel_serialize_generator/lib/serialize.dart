@@ -214,7 +214,7 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
               return (map as Map<dynamic,dynamic>?)?..[key] =
               ${serializerToMap(rc, 'model.${field.name}[key]')};
             })''';
-          } else if (type.element2 is Enum) {
+          } else if (type.element is Enum) {
             var convert =
                 (field.type.nullabilitySuffix == NullabilitySuffix.question)
                     ? '!'
@@ -390,7 +390,7 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
                     }))
                   : $defaultValue
             ''';
-          } else if (type.element2 is Enum) {
+          } else if (type.element is Enum) {
             deserializedRepresentation = '''
             map['$alias'] is ${type.getDisplayString(withNullability: true)}
               ? (map['$alias'] as ${type.getDisplayString(withNullability: true)}) ?? $defaultValue

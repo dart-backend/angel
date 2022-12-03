@@ -7,7 +7,7 @@ import 'package:analyzer/dart/element/type.dart';
 import 'package:build/build.dart';
 import 'package:code_builder/code_builder.dart';
 import 'package:file/file.dart';
-import 'package:path/src/context.dart';
+import 'package:path/path.dart';
 
 /// Converts a [DartType] to a [TypeReference].
 TypeReference convertTypeReference(DartType? t) {
@@ -21,7 +21,7 @@ TypeReference convertTypeReference(DartType? t) {
 }
 
 bool isRequiredParameter(ParameterElement e) {
-  return e.isNotOptional;
+  return e.isRequired;
 }
 
 bool isOptionalParameter(ParameterElement e) {
@@ -233,19 +233,6 @@ class BuildSystemFile extends File {
     throw UnimplementedError();
   }
 
-/*
-  @override
-  Future<List<int>> readAsBytes() {
-    var assetId = AssetId(package, path);
-    return reader.readAsBytes(assetId);
-  }
-
-  @override
-  List<int> readAsBytesSync() => throw _unsupported();
-  @override
-  Future<List<String>> readAsLines({Encoding encoding = utf8}) =>
-      throw _unsupported();
-*/
   @override
   List<String> readAsLinesSync({Encoding encoding = utf8}) =>
       throw _unsupported();

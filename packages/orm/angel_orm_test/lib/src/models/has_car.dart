@@ -3,7 +3,6 @@ import 'package:angel3_orm/angel3_orm.dart';
 import 'package:angel3_serialize/angel3_serialize.dart';
 import 'package:optional/optional.dart';
 
-// import 'car.dart';
 part 'has_car.g.dart';
 
 // Map _carToMap(Car car) => car.toJson();

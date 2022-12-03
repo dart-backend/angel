@@ -34,7 +34,6 @@ void main() {
       // propagate to app2.
       var ws = req.container!.make<AngelWebSocket>();
 
-      // TODO: body retuns void
       //var body = await req.parseBody();
       var body = {};
       await ws.batchEvent(WebSocketEvent(
