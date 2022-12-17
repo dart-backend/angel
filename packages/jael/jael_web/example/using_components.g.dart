@@ -25,11 +25,10 @@ abstract class _LabeledInputJaelTemplate implements Component<dynamic> {
         h('b', {}, [text(name.toString()), text(':')])
       ]),
       h('br', {}, []),
-      h('input', {
-        'name': name,
-        'placeholder': "Enter " + name! + "...",
-        'type': "text"
-      }, [])
+      h(
+          'input',
+          {'name': name, 'placeholder': "Enter ${name!}...", 'type': "text"},
+          [])
     ]);
   }
 }
