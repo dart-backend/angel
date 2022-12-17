@@ -2,7 +2,7 @@
 
 ## 7.1.1
 
-* Temporily fixed `analyzer` to 5.2.0 to resolve undocumented breaking changes in 5.3.1.
+* Temporily locked `analyzer` to 5.2.x to resolve undocumented breaking changes in 5.3.x.
 
 ## 7.1.0
 
