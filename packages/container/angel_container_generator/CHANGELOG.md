@@ -1,5 +1,10 @@
 # Change Log
 
+## 7.1.0
+
+* Require Dart >= 2.18
+* Upgraded `relectable` to 4.x.x
+
 ## 7.0.0
 
 * Require Dart >= 2.17

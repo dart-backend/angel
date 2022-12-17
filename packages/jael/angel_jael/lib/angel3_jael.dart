@@ -108,7 +108,7 @@ Future<Document?> _loadViewTemplate(Directory viewsDirectory, String name,
       sourceUrl: file.uri, asDSX: asDSX, onError: errors.add);
 
   if (doc == null) {
-    throw ArgumentError(file.basename + " does not exists");
+    throw ArgumentError("${file.basename} does not exists");
   }
 
   try {
@@ -118,7 +118,7 @@ Future<Document?> _loadViewTemplate(Directory viewsDirectory, String name,
     // Ignore these errors, so that we can show syntax errors.
   }
   if (processed == null) {
-    throw ArgumentError(file.basename + " does not exists");
+    throw ArgumentError("${file.basename} does not exists");
   }
   return processed;
 }

@@ -64,11 +64,7 @@ class Renderer {
             '<b>$type:</b> ${error.span.start.toolString}: ${error.message}')
         ..writeln('<br>')
         ..writeln(
-          '<span style="color: red;">' +
-              htmlEscape
-                  .convert(error.span.highlight(color: false))
-                  .replaceAll('\n', '<br>') +
-              '</span>',
+          '<span style="color: red;">${htmlEscape.convert(error.span.highlight(color: false)).replaceAll('\n', '<br>')}</span>',
         )
         ..outdent()
         ..writeln('</li>');

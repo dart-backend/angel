@@ -1,5 +1,9 @@
 # Change Log
 
+## 7.1.1
+
+* Temporily fixed `analyzer` to 5.2.0 to resolve undocumented breaking changes in 5.3.1.
+
 ## 7.1.0
 
 * [Breaking] Require Dart >= 2.18

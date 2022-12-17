@@ -2,7 +2,6 @@ import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_html/angel3_html.dart';
 import 'package:angel3_test/angel3_test.dart';
 import 'package:belatuk_html_builder/elements.dart';
-import 'package:belatuk_html_builder/belatuk_html_builder.dart';
 import 'package:test/test.dart';
 
 void main() {
