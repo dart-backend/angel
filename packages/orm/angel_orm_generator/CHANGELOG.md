@@ -1,5 +1,9 @@
 # Change Log
 
+## 7.1.2
+
+* Fixed #88 due to change in `analyzer` 5.3.x
+
 ## 7.1.1
 
 * Temporily locked `analyzer` to 5.2.x to resolve undocumented breaking changes in 5.3.x.
