@@ -456,8 +456,8 @@ class RelationFieldImpl extends ShimFieldImpl {
 
   String get originalFieldName => originalField.name;
 
-  @override
-  PropertyAccessorElement? get getter => originalField.getter;
+  //@override
+  //PropertyAccessorElement? get getter => originalField.getter;
 }
 
 InterfaceType? firstModelAncestor(DartType? type) {
