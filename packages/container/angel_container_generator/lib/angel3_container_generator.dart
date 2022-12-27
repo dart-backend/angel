@@ -8,15 +8,13 @@ const Reflectable contained = ContainedReflectable();
 class ContainedReflectable extends Reflectable {
   const ContainedReflectable()
       : super(
-          declarationsCapability,
-          instanceInvokeCapability,
-          invokingCapability,
-          metadataCapability,
-          newInstanceCapability,
-          reflectedTypeCapability,
-          typeRelationsCapability,
-          typingCapability,
-        );
+            typeAnnotationQuantifyCapability,
+            superclassQuantifyCapability,
+            instanceInvokeCapability,
+            invokingCapability,
+            newInstanceCapability,
+            reflectedTypeCapability,
+            typingCapability);
 }
 
 /// A [Reflector] instance that uses a [Reflectable] to reflect upon data.
