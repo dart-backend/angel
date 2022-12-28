@@ -8,9 +8,11 @@ const Reflectable contained = ContainedReflectable();
 class ContainedReflectable extends Reflectable {
   const ContainedReflectable()
       : super(
+            topLevelInvokeCapability,
             typeAnnotationQuantifyCapability,
             superclassQuantifyCapability,
             instanceInvokeCapability,
+            libraryCapability,
             invokingCapability,
             newInstanceCapability,
             reflectedTypeCapability,
