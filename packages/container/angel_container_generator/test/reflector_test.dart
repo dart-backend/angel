@@ -1,15 +1,12 @@
 import 'package:angel3_container/angel3_container.dart';
 import 'package:angel3_container_generator/angel3_container_generator.dart';
 
-@GlobalQuantifyCapability(
-    r'^dart\.core\.(Iterable|List|String|int|Object)', contained)
-import 'package:reflectable/reflectable.dart';
-
 import 'package:test/test.dart';
 import 'reflector_test.reflectable.dart';
 
 void main() {
   initializeReflectable();
+
   var reflector = const GeneratedReflector();
   late Container container;
 
@@ -52,7 +49,7 @@ void testReflector(Reflector reflector) {
     expect(blazikenMirror.getField('type').reflectee, blaziken.type);
   });
 
-  /*
+/*   
   group('reflectFunction', () {
     var mirror = reflector.reflectFunction(returnVoidFromAFunction);
 
@@ -76,8 +73,8 @@ void testReflector(Reflector reflector) {
       expect(p?.annotations, isEmpty);
       expect(p?.type, reflector.reflectType(int));
     });
-  }, skip: 'pkg:reflectable cannot reflect on closures at all (yet)');
-  */
+  }, skip: 'pkg:reflectable cannot reflect on closures at all (yet)'); 
+*/
 
   test('make on singleton type returns singleton', () {
     expect(container.make(Pokemon), blaziken);
@@ -112,10 +109,11 @@ void testReflector(Reflector reflector) {
     var kantoPokemonType = container.reflector.reflectType(KantoPokemon)!;
 
     expect(kantoPokemonType.isAssignableTo(pokemonType), true);
+
     expect(
-        kantoPokemonType
+        () => kantoPokemonType
             .isAssignableTo(container.reflector.reflectType(String)),
-        false);
+        throwsUnsupportedError);
   });
 }
 
@@ -153,12 +151,12 @@ enum PokemonType { water, fire, grass, ice, poison, flying }
 
 @contained
 class Artist {
-  final String? name;
+  final String name;
 
-  Artist({this.name});
+  Artist({required this.name});
 
   String get lowerName {
-    return name!.toLowerCase();
+    return name.toLowerCase();
   }
 }
 
@@ -178,5 +176,5 @@ class AlbumLength {
 
   AlbumLength(this.artist, this.album);
 
-  int get totalLength => artist.name!.length + album.title.length;
+  int get totalLength => artist.name.length + album.title.length;
 }

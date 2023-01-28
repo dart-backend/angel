@@ -97,7 +97,7 @@ class Container {
   /// In contexts where a static generic type cannot be used, use
   /// the [type] argument, instead of [T].
   T make<T>([Type? type]) {
-    var t2 = T;
+    Type t2 = T;
     if (type != null) {
       t2 = type;
     }
@@ -118,7 +118,7 @@ class Container {
 
     var reflectedType = reflector.reflectType(t2);
     var positional = [];
-    var named = <String, dynamic>{};
+    var named = <String, Object>{};
 
     if (reflectedType is ReflectedClass) {
       bool isDefault(String name) {

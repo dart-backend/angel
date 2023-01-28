@@ -1,5 +1,11 @@
 # Change Log
 
+## 7.1.0
+
+* Return -1 instead of throwing exception when id is null
+* Added `idAsString` to return id or "" if null
+* Added `AuditableModel`
+
 ## 7.0.0
 
 * Require Dart >= 2.17

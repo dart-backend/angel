@@ -1,5 +1,5 @@
 name: jael3_web
-version: 7.1.0
+version: 7.1.1
 description: Experimental virtual DOM/SPA engine built on Jael3. Supports SSR.
 publish_to: none
 environment:

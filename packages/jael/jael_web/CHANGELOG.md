@@ -1,5 +1,9 @@
 # Change Log
 
+## 7.1.1
+
+* Added `exclusive` parameter to `createSync`
+
 ## 7.1.0
 
 * Upgraded to `analyzer` 5.x.x
