@@ -158,7 +158,8 @@ class BuildSystemFile extends File {
       throw _unsupported();
 
   @override
-  void createSync({bool recursive = false}) => throw _unsupported();
+  void createSync({bool exclusive = false, bool recursive = false}) =>
+      throw _unsupported();
 
   @override
   Future<FileSystemEntity> delete({bool recursive = false}) =>
