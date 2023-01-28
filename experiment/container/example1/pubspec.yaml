@@ -2,7 +2,7 @@ name: example1
 version: 0.0.1
 description: Example 1.
 environment:
-  sdk: '>=2.17.0 <3.0.0'
+  sdk: '>=2.18.0 <3.0.0'
 dependencies:
   angel3_container: ^7.0.0
   angel3_http_exception: ^7.0.0

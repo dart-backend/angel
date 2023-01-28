@@ -12,19 +12,19 @@ class MyController extends Controller {
 }
 
 void main() async {
+  initializeReflectable();
+
   var reflector = const GeneratedReflector();
   Container container = Container(reflector);
 
   container.registerSingleton<MyController>(MyController());
 
-  initializeReflectable();
-
   var app = Angel(reflector: reflector);
 
   var http = AngelHttp(app);
 
-  await app.mountController<MyController>();
+  //await app.mountController<MyController>();
 
-  var server = await http.startServer();
+  var server = await http.startServer('localhost', 3000);
   print("Angel server listening at ${http.uri}");
 }

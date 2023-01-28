@@ -9,17 +9,19 @@ void main() async {
 
   var app = Angel(logger: Logger('example'), reflector: MirrorsReflector());
   var http = AngelHttp(app);
-  
+
   app.get("/", (req, res) => "Hello, world!");
 
   // Simple fallback to throw a 404 on unknown paths.
+  /*
   app.fallback((req, res) {
     throw AngelHttpException.notFound(
       message: 'Unknown path: "${req.uri?.path}"',
     );
   });
+  */
 
-  var server = await http.startServer('localhost', 3000);
+  await http.startServer('localhost', 3000);
 
   print("End");
 }
