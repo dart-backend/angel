@@ -20,7 +20,6 @@ void main() async {
   container.registerSingleton<MyController>(MyController());
 
   var app = Angel(reflector: reflector);
-
   var http = AngelHttp(app);
 
   //await app.mountController<MyController>();
