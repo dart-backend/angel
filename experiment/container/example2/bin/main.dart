@@ -1,12 +1,11 @@
-import 'dart:mirrors';
-import 'package:example1/src/models.dart';
+import 'package:example2/src/models.dart';
 
 void main() {
   final stopwatch = Stopwatch()..start();
 
-  var reflectedClass = reflect(Shape());
+  //var reflectedClass = reflect(Shape());
 
-  reflectedClass.invoke(#draw, []);
+  //reflectedClass.invoke(#draw, []);
 
   //reflectedClass.invoke(Symbol('draw'), []);
 
