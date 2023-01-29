@@ -1,4 +1,5 @@
 import 'dart:mirrors';
+import 'package:example1/src/models.dart';
 
 void main() {
   final stopwatch = Stopwatch()..start();
@@ -14,15 +15,23 @@ void main() {
 
   printAnnotationValue(String);
   printAnnotationValue(Shape);
+  printAnnotationValue(Square);
 }
 
 class Shape {
   void draw() => print("Draw Shape");
 }
 
+@Person('Will', 'Tom')
+class Square {
+  void greetHii() {
+    print("Hii Welcome to flutter agency");
+  }
+}
+
 void printAnnotationValue(final Type clazz) {
   final DeclarationMirror clazzDeclaration = reflectClass(clazz);
-  final ClassMirror someAnnotationMirror = reflectClass(Shape);
+  final ClassMirror someAnnotationMirror = reflectClass(Person);
   final annotationInstsanceMirror =
       clazzDeclaration.metadata.where((d) => d.type == someAnnotationMirror);
   if (annotationInstsanceMirror.isEmpty) {
@@ -30,6 +39,6 @@ void printAnnotationValue(final Type clazz) {
     return;
   }
   final someAnnotationInstance =
-      (annotationInstsanceMirror.first.reflectee as Shape);
-  print("${someAnnotationInstance.draw}");
+      (annotationInstsanceMirror.first.reflectee as Person);
+  print(someAnnotationInstance.firstName);
 }
