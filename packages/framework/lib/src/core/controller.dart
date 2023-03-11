@@ -64,13 +64,13 @@ class Controller {
     }
 
     var routable = Routable();
-    var m = router.mount(exposeDecl.path!, routable);
-    _mountPoint = m;
+    _mountPoint = router.mount(exposeDecl.path, routable);
+    //_mountPoint = m;
     var typeMirror = reflector.reflectType(runtimeType);
 
     // Pre-reflect methods
     var instanceMirror = reflector.reflectInstance(this);
-    final handlers = <RequestHandler>[...exposeDecl.middleware!, ...middleware];
+    final handlers = <RequestHandler>[...exposeDecl.middleware, ...middleware];
     final routeBuilder =
         _routeBuilder(reflector, instanceMirror, routable, handlers);
     await configureRoutes(routable);
@@ -107,7 +107,7 @@ class Controller {
             return;
           } else {
             // Otherwise, create an @Expose.
-            exposeDecl = Expose(null);
+            exposeDecl = Expose('');
           }
         }
 
@@ -115,7 +115,7 @@ class Controller {
             instanceMirror!.getField(methodName).reflectee as Function?;
         var middleware = <RequestHandler>[
           ...handlers,
-          ...exposeDecl.middleware!
+          ...exposeDecl.middleware
         ];
         var name =
             exposeDecl.as?.isNotEmpty == true ? exposeDecl.as : methodName;
@@ -127,7 +127,7 @@ class Controller {
             method.parameters[1].type.reflectedType == ResponseContext) {
           // Create a regular route
           routeMappings[name ?? ''] = routable
-              .addRoute(exposeDecl.method, exposeDecl.path ?? '',
+              .addRoute(exposeDecl.method, exposeDecl.path,
                   (RequestContext req, ResponseContext res) {
             var result = reflectedMethod!(req, res);
             return result is RequestHandler ? result(req, res) : result;
@@ -144,7 +144,7 @@ class Controller {
         // If there is no path, reverse-engineer one.
         var path = exposeDecl.path;
         var httpMethod = exposeDecl.method;
-        if (path == null) {
+        if (path == '') {
           // Try to build a route path by finding all potential
           // path segments, and then joining them.
           var parts = <String>[];

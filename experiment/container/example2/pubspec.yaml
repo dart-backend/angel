@@ -30,18 +30,20 @@ dependencies:
   tuple: ^2.0.0
   uuid: ^3.0.1
   collection: ^1.15.0
+  reflectable: ^4.0.2
 dev_dependencies:
+  build_runner: ^2.1.2
   http: ^0.13.1
   io: ^1.0.0
   test: ^1.21.0
   lints: ^2.0.0
 dependency_overrides:
   angel3_container:
-      path: ../../../packages/container/angel_container
+    path: ../../../packages/container/angel_container
   angel3_container_generator:
-      path: ../../../packages/container/angel_container_generator
-#   angel3_http_exception:
-#     path: ../http_exception
+    path: ../../../packages/container/angel_container_generator
+  angel3_framework:
+    path: ../../../packages/framework
 #   angel3_model:
 #     path: ../model
 #   angel3_route:

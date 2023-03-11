@@ -8,27 +8,38 @@
 [![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/LICENSE)
 [![melos](https://img.shields.io/badge/maintained%20with-melos-f700ff.svg?style=flat-square)](https://github.com/invertase/melos)
 
-**A polished, production-ready backend framework in Dart with NNBD support.**
+**A polished, production-ready backend framework in Dart.**
 
 -----
 
 ## About
 
-Angel3 is a fork of archived Angel framework to support Dart SDK 2.12.x or later. It is a full-stack Web framework in Dart that aims to streamline development by providing many common features out-of-the-box in a consistent manner. One of the main goal is to enable developers to build both frontend and backend in the same language, Dart. Angel3 framework is designed as a collection of plugins that enable developers to pick and choose the parts needed for their projects. A series of starter templates are also provided for quick start and trial run with Angel3 framework. Visit our [website](<https://angel3-framework.web.app/>) to learn more.
+Angel3 started life as a fork of the archived `Angel framework` to support null-safety in Dart SDK 2.12.x and beyond. It is a full-stack Web framework in Dart that aims to streamline development by providing many common features out-of-the-box in a consistent manner. One of the main goal is to enable developers to build both frontend and backend in the same language, Dart. Angel3 framework is designed as a collection of plugins that enable developers to pick and choose the parts needed for their projects. A series of starter templates are also provided for quick start and trial run with Angel3 framework. Visit our [website](<https://angel3-framework.web.app/>) for more details.
 
 The available features in Angel3 includes:
 
-* Static File Handling
-* Basic Authentication
-* PostgreSQL ORM
+* Basic and OAuth2 Authentication
+* ORM for PostgreSQL and MySQL
+* MongoDB
 * GraphQL
-* And much more...
+* Proxy and Cache
+* Static File Handling
+* Server Side Rendering
+* Websocket
 
 See all the available [`packages`](https://angel3-docs.dukefirehawk.com/packages) for more information.
 
 ## Important Notes
 
-The core Angel Framework migration to Angel3 Framework has completed and published under `angel3_` prefix on pub.dev. The migrated packages have passed all the test cases. The development work will now move onto the next phase which is to refactor and to improve on the features for better development and deployment experience.
+The development work are currently focused on:
+
+* Keeping the packages with `angel3_` prefix in sync with Dart SDK releases
+  * Remove and replace deprecated classes and methods while keeping backward compatible
+  * Refactor the code to use new language features
+* Fix and resolve reported issues
+* Performance tunning
+* Improve on existing features, unit test, user guide and examples
+* Add new features
 
 The status of the code base is as follows:
 
@@ -44,24 +55,18 @@ For more details, checkout [Project Status](https://github.com/dukefirehawk/ange
 
 ## Release Notes
 
-### Release 7.0.0
+### Release 8.0.0 (Upcoming)
 
+* Updated all `angel3_` packages to 8.0.0
+* Updated all `angel3_` packages to require dart >= 3.0.x
+
+### Release 7.0.0 (Current)
+
+* Updated all `angel3_` packages to 7.0.0
 * Updated all `angel3_` packages to require dart >= 2.17.x
 * Updated dependencies to the latest libraries
 * Fixed ORM issues
 * Fixed `dart analyze .` warnings
-
-### Release 6.0.0
-
-* Updated all `angel3_` packages to 6.0.0
-* Updated all `angel3_` packages to require dart >= 2.16.x
-* Updated ORM to support MariaDB 10.2.x (stable) and MySQL 8.x (beta)
-* Updated code generator to use `analyzer` 3.x.x
-* Updated exception handling
-* Added default logger to generate standardised logging messages
-* Added `melos` support
-* Removed deprecated API
-* [**Breaking**] `error` for `AngelHttpException` is no longer mandatory
 
 ## Installation and Setup
 

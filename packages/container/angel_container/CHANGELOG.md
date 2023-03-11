@@ -1,5 +1,9 @@
 # Change Log
 
+## 7.1.1
+
+* Moved `defaultErrorMessage` to `ContainerConst` class to resolve reflectatable issue.
+
 ## 7.1.0
 
 * Require Dart >= 2.18

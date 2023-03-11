@@ -388,7 +388,7 @@ class Angel extends Routable {
   }
 
   static const String _reflectionErrorMessage =
-      '${ThrowingReflector.defaultErrorMessage} $_reflectionInfo';
+      '${ContainerConst.defaultErrorMessage} $_reflectionInfo';
 
   static const String _reflectionInfo =
       'Features like controllers, constructor dependency injection, and `ioc` require reflection, '

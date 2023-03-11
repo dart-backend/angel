@@ -11,11 +11,11 @@ class ContainedReflectable extends Reflectable {
             topLevelInvokeCapability,
             typeAnnotationQuantifyCapability,
             superclassQuantifyCapability,
-            instanceInvokeCapability,
             libraryCapability,
             invokingCapability,
-            newInstanceCapability,
+            metadataCapability,
             reflectedTypeCapability,
+            typeCapability,
             typingCapability);
 }
 

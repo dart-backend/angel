@@ -12,9 +12,9 @@ void main() {
   print('Reflection executed in ${stopwatch.elapsed.inMilliseconds} ms');
   stopwatch.stop();
 
-  printAnnotationValue(String);
-  printAnnotationValue(Shape);
-  printAnnotationValue(Square);
+  //printAnnotationValue(String);
+  //printAnnotationValue(Shape);
+  //printAnnotationValue(Square);
 }
 
 class Shape {
@@ -27,7 +27,7 @@ class Square {
     print("Hii Welcome to flutter agency");
   }
 }
-
+/*
 void printAnnotationValue(final Type clazz) {
   final DeclarationMirror clazzDeclaration = reflectClass(clazz);
   final ClassMirror someAnnotationMirror = reflectClass(Person);
@@ -41,3 +41,4 @@ void printAnnotationValue(final Type clazz) {
       (annotationInstsanceMirror.first.reflectee as Person);
   print(someAnnotationInstance.firstName);
 }
+*/

@@ -1,3 +1,5 @@
+import 'package:angel3_container/src/container_const.dart';
+
 import 'empty/empty.dart';
 import 'reflector.dart';
 
@@ -9,12 +11,15 @@ class ThrowingReflector extends Reflector {
   /// The error message to give the end user when an [UnsupportedError] is thrown.
   final String errorMessage;
 
+  /*
   static const String defaultErrorMessage =
       'You attempted to perform a reflective action, but you are using `ThrowingReflector`, '
       'a class which disables reflection. Consider using the `MirrorsReflector` '
       'class if you need reflection.';
+  */
 
-  const ThrowingReflector({this.errorMessage = defaultErrorMessage});
+  const ThrowingReflector(
+      {this.errorMessage = ContainerConst.defaultErrorMessage});
 
   @override
   String? getName(Symbol symbol) => const EmptyReflector().getName(symbol);

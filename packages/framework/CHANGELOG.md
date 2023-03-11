@@ -1,5 +1,10 @@
 # Change Log
 
+## 7.0.4
+
+* Updated `Expose` fields to non-nullable
+* Updated `Controller` to use non-nullable field
+
 ## 7.0.3
 
 * Fixed issue #83. Allow Http request to return null headers instead of throwing an exception.
