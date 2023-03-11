@@ -18,11 +18,16 @@ Angel3 is a fork of archived Angel framework to support Dart SDK 2.12.x or later
 
 The available features in Angel3 includes:
 
-* Static File Handling
-* Basic Authentication
-* PostgreSQL ORM
+* Server-Side Rendering (Markdown, Mustache, Jinja, JAEL)
+* OAuth2 Authentication
+* WebSocket
+* HTTP/2
+* HTTP Streaming
 * GraphQL
-* And much more...
+* ORM for PostgreSQL
+* ORM for MySQL
+* MongoDB
+* Cache
 
 See all the available [`packages`](https://angel3-docs.dukefirehawk.com/packages) for more information.
 
@@ -44,20 +49,28 @@ For more details, checkout [Project Status](https://github.com/dukefirehawk/ange
 
 ## Release Notes
 
-### Release 7.0.0
+### Release 8.0.0 (Next Release)
+
+* Update all `angel3_` packages to require dart >= 3.0.x
+* Resolve issues related to generated container
+* Improve HTTP and ORM performances
+* Improve ORM for MySQL
+* Add cache support to ORM (using Redis)
+
+### Release 7.0.0 (Current Release)
 
 * Updated all `angel3_` packages to require dart >= 2.17.x
 * Updated dependencies to the latest libraries
-* Fixed ORM issues
-* Fixed `dart analyze .` warnings
+* Fix ORM issues
+* Fix `dart analyze .` warnings
 
-### Release 6.0.0
+### Release 6.0.0 (Previous Release)
 
-* Updated all `angel3_` packages to 6.0.0
-* Updated all `angel3_` packages to require dart >= 2.16.x
-* Updated ORM to support MariaDB 10.2.x (stable) and MySQL 8.x (beta)
-* Updated code generator to use `analyzer` 3.x.x
-* Updated exception handling
+* Update all `angel3_` packages to 6.0.0
+* Update all `angel3_` packages to require dart >= 2.16.x
+* Update ORM to support MariaDB 10.2.x (stable) and MySQL 8.x (beta)
+* Update code generator to use `analyzer` 3.x.x
+* Update exception handling
 * Added default logger to generate standardised logging messages
 * Added `melos` support
 * Removed deprecated API
