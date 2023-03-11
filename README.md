@@ -14,24 +14,26 @@
 
 ## About
 
-Angel3 started life as a fork of the archived `Angel framework` to support null-safety in Dart SDK 2.12.x and beyond. It is a full-stack Web framework in Dart that aims to streamline development by providing many common features out-of-the-box in a consistent manner. One of the main goal is to enable developers to build both frontend and backend in the same language, Dart. Angel3 framework is designed as a collection of plugins that enable developers to pick and choose the parts needed for their projects. A series of starter templates are also provided for quick start and trial run with Angel3 framework. Visit our [website](<https://angel3-framework.web.app/>) for more details.
+Angel3 originated from a fork of the archived Angel framework in support of Dart SDK 2.12.x or later. It is a full-stack Web framework in Dart that aims to streamline development by providing many common features out-of-the-box in a consistent manner. The codebase has been completely migrated and refactored to support null safety. One of the main goal is to enable developers to build both frontend and backend in the same language, Dart, with null safety. Angel3 is designed as a collection of plugins that enable developers to pick and choose the parts needed for their projects. A series of starter templates are also provided for quick start and trial run with Angel3. Visit our [website](<https://angel3-framework.web.app/>) to learn more.
 
 The available features in Angel3 includes:
 
-* Basic and OAuth2 Authentication
-* ORM for PostgreSQL and MySQL
-* MongoDB
+* Server-Side Rendering (Markdown, Mustache, Jinja, JAEL)
+* OAuth2 Authentication
+* WebSocket
+* HTTP/2
+* HTTP Streaming
 * GraphQL
-* Proxy and Cache
-* Static File Handling
-* Server Side Rendering
-* Websocket
+* ORM for PostgreSQL
+* ORM for MySQL
+* MongoDB
+* Cache
 
-See all the available [`packages`](https://angel3-docs.dukefirehawk.com/packages) for more information.
+See all of the available [`packages`](https://angel3-docs.dukefirehawk.com/packages) for more information.
 
 ## Important Notes
 
-The development work are currently focused on:
+Angel3 packages are published under `angel3_` prefix on pub.dev. These packages have passed all of their respective test suites before going live. The development work are currently focused on:
 
 * Keeping the packages with `angel3_` prefix in sync with Dart SDK releases
   * Remove and replace deprecated classes and methods while keeping backward compatible
@@ -41,7 +43,7 @@ The development work are currently focused on:
 * Improve on existing features, unit test, user guide and examples
 * Add new features
 
-The status of the code base is as follows:
+The status of the project is as follows:
 
 Branch: `master`
 
@@ -53,20 +55,36 @@ Branch: `master`
 
 For more details, checkout [Project Status](https://github.com/dukefirehawk/angel/wiki/Project-Status)
 
+### Next Release 8.0.0
+
+* Branch: `feature/v8`
+* Update all `angel3_` packages to require dart >= 3.0.x
+* Resolve issues related to generated container
+* Improve HTTP and ORM performance
+* Improve ORM for MySQL
+* Add cache support in ORM (using Redis)
+
 ## Release Notes
-
-### Release 8.0.0 (Upcoming)
-
-* Updated all `angel3_` packages to 8.0.0
-* Updated all `angel3_` packages to require dart >= 3.0.x
 
 ### Release 7.0.0 (Current)
 
 * Updated all `angel3_` packages to 7.0.0
 * Updated all `angel3_` packages to require dart >= 2.17.x
 * Updated dependencies to the latest libraries
-* Fixed ORM issues
-* Fixed `dart analyze .` warnings
+* Updated code generator to use `analyzer` 5.x.x
+* Fix ORM issues
+
+### Release 6.0.0 (Previous Release)
+
+* Update all `angel3_` packages to 6.0.0
+* Update all `angel3_` packages to require dart >= 2.16.x
+* Update ORM to support MariaDB 10.2.x (stable) and MySQL 8.x (beta)
+* Update code generator to use `analyzer` 3.x.x
+* Update exception handling
+* Added default logger to generate standardised logging messages
+* Added `melos` support
+* Removed deprecated API
+* [**Breaking**] `error` for `AngelHttpException` is no longer mandatory
 
 ## Installation and Setup
 
@@ -140,7 +158,7 @@ The performance benchmark can be found at
 
 The test cases are build using standard `Angel3 ORM` template. The result are used for fine-tuning Angel3 framework. The following test cases will be added in the upcoming update to the benchmark.
 
-1. Cached queries
+1. Cache
 2. Angel3 with MongoDB
 
 ## Examples and Documentation
