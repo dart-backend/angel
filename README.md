@@ -14,7 +14,7 @@
 
 ## About
 
-Angel3 is a fork of archived Angel framework to support Dart SDK 2.12.x or later. It is a full-stack Web framework in Dart that aims to streamline development by providing many common features out-of-the-box in a consistent manner. One of the main goal is to enable developers to build both frontend and backend in the same language, Dart. Angel3 framework is designed as a collection of plugins that enable developers to pick and choose the parts needed for their projects. A series of starter templates are also provided for quick start and trial run with Angel3 framework. Visit our [website](<https://angel3-framework.web.app/>) to learn more.
+Angel3 originated from a fork of the archived Angel framework in support of Dart SDK 2.12.x or later. It is a full-stack Web framework in Dart that aims to streamline development by providing many common features out-of-the-box in a consistent manner. The codebase has been completely migrated and refactored to support null safety. One of the main goal is to enable developers to build both frontend and backend in the same language, Dart, with null safety. Angel3 is designed as a collection of plugins that enable developers to pick and choose the parts needed for their projects. A series of starter templates are also provided for quick start and trial run with Angel3. Visit our [website](<https://angel3-framework.web.app/>) to learn more.
 
 The available features in Angel3 includes:
 
@@ -29,13 +29,13 @@ The available features in Angel3 includes:
 * MongoDB
 * Cache
 
-See all the available [`packages`](https://angel3-docs.dukefirehawk.com/packages) for more information.
+See all of the available [`packages`](https://angel3-docs.dukefirehawk.com/packages) for more information.
 
 ## Important Notes
 
-The core Angel Framework migration to Angel3 Framework has completed and published under `angel3_` prefix on pub.dev. The migrated packages have passed all the test cases. The development work will now move onto the next phase which is to refactor and to improve on the features for better development and deployment experience.
+Angel3 packages are published under `angel3_` prefix on pub.dev. These packages have passed all of their respective test suites before going live. The development work is ongoing in improving its features and performance for better development and deployment experience.
 
-The status of the code base is as follows:
+The status of the project is as follows:
 
 Branch: `master`
 
@@ -47,22 +47,23 @@ Branch: `master`
 
 For more details, checkout [Project Status](https://github.com/dukefirehawk/angel/wiki/Project-Status)
 
-## Release Notes
+### Next Release 8.0.0
 
-### Release 8.0.0 (Next Release)
-
+* Branch: `feature/v8`
 * Update all `angel3_` packages to require dart >= 3.0.x
 * Resolve issues related to generated container
-* Improve HTTP and ORM performances
+* Improve HTTP and ORM performance
 * Improve ORM for MySQL
-* Add cache support to ORM (using Redis)
+* Add cache support in ORM (using Redis)
+
+## Release Notes
 
 ### Release 7.0.0 (Current Release)
 
 * Updated all `angel3_` packages to require dart >= 2.17.x
 * Updated dependencies to the latest libraries
+* Updated code generator to use `analyzer` 5.x.x
 * Fix ORM issues
-* Fix `dart analyze .` warnings
 
 ### Release 6.0.0 (Previous Release)
 
@@ -148,7 +149,7 @@ The performance benchmark can be found at
 
 The test cases are build using standard `Angel3 ORM` template. The result are used for fine-tuning Angel3 framework. The following test cases will be added in the upcoming update to the benchmark.
 
-1. Cached queries
+1. Cache
 2. Angel3 with MongoDB
 
 ## Examples and Documentation
