@@ -125,12 +125,18 @@ Future<OrmBuildContext?> buildOrmContext(
         buildCtx.resolveSerializedFieldType(field.name),
       ),
     );
-
+    var isEnumField =
+        (field.type is InterfaceType && field.type.element is EnumElement);
+    var hasColumnAnnotation =
+        (columnAnnotation?.getField('type')?.hasKnownValue ?? false);
     column = Column(
       isNullable: column.isNullable,
       length: column.length,
       indexType: column.indexType,
-      type: inferColumnType(field.type),
+      // Only infer type when not set by the @Column annotation, for enums
+      type: (isEnumField && hasColumnAnnotation)
+          ? column.type
+          : inferColumnType(field.type),
       defaultValue: column.defaultValue,
     );
 

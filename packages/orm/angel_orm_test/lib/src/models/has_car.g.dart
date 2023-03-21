@@ -15,7 +15,13 @@ class HasCarMigration extends Migration {
         table.serial('id').primaryKey();
         table.timeStamp('created_at');
         table.timeStamp('updated_at');
-        table.varChar('color');
+        table.declareColumn(
+          'color',
+          Column(
+            type: ColumnType('varchar'),
+            length: 1,
+          ),
+        );
         table.integer('type').defaultsTo(0);
       },
     );
