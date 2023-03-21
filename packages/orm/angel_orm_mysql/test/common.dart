@@ -84,6 +84,8 @@ Future<MariaDbExecutor> _connectToMariaDb(List<String> schemas) async {
 }
 
 // Executor for MySQL
+//   create user 'test'@'localhost' identified by 'test123';
+//   GRANT ALL PRIVILEGES ON orm_test.* to 'test'@'localhost' WITH GRANT OPTION;
 Future<MySqlExecutor> _connectToMySql(List<String> schemas) async {
   var connection = await MySQLConnection.createConnection(
       databaseName: 'orm_test',
@@ -91,7 +93,7 @@ Future<MySqlExecutor> _connectToMySql(List<String> schemas) async {
       host: "localhost",
       userName: Platform.environment['MYSQL_USERNAME'] ?? 'test',
       password: Platform.environment['MYSQL_PASSWORD'] ?? 'test123',
-      secure: true);
+      secure: !('false' == Platform.environment['MYSQL_SECURE']));
 
   await connection.connect(timeoutMs: 10000);
 
