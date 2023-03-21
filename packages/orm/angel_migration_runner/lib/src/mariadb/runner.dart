@@ -71,7 +71,11 @@ class MariaDbMigrationRunner implements MigrationRunner {
       var curBatch = 0;
       if (result.isNotEmpty) {
         var firstRow = result.toList();
-        curBatch = int.tryParse(firstRow[0][0] ?? '0') as int;
+        var firstBatch = firstRow[0][0] ?? 0;
+        if (firstBatch is! int) {
+          int.tryParse(firstBatch) as int;
+        }
+        curBatch = firstBatch;
       }
       var batch = curBatch + 1;
 
@@ -105,7 +109,11 @@ class MariaDbMigrationRunner implements MigrationRunner {
     var curBatch = 0;
     if (result.isNotEmpty) {
       var firstRow = result.toList();
-      curBatch = int.tryParse(firstRow[0][0]) as int;
+      var firstBatch = firstRow[0][0];
+      if (firstBatch is! int) {
+        int.tryParse(firstBatch) as int;
+      }
+      curBatch = firstBatch;
     }
 
     result = await connection
