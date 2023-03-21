@@ -3,6 +3,7 @@ import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:angel3_orm/angel3_orm.dart';
+import 'package:angel3_serialize/angel3_serialize.dart';
 import 'package:angel3_serialize_generator/angel3_serialize_generator.dart';
 import 'package:build/build.dart';
 import 'package:code_builder/code_builder.dart' hide LibraryBuilder;
@@ -277,11 +278,8 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                  *     EnumType.values[(row[3] as int)] : null,
                  */
                 var isNull = expr.equalTo(literalNull);
-
-                Reference enumType =
-                    convertTypeReference(fType, ignoreNullabilityCheck: true);
-                expr = isNull.conditional(literalNull,
-                    enumType.property('values').index(expr.asA(refer('int'))));
+                final parseExpression = _deserializeEnumExpression(field, expr);
+                expr = isNull.conditional(literalNull, parseExpression);
               } else if (fType.isDartCoreBool) {
                 // Generated Code: mapToBool(row[i])
                 expr = refer('mapToBool').call([expr]);
@@ -892,9 +890,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
           var value = refer('values').index(literalString(name!));
 
           if (fType is InterfaceType && fType.element is EnumElement) {
-            var asInt = value.asA(refer('int'));
-            var t = convertTypeReference(fType, ignoreNullabilityCheck: true);
-            value = t.property('values').index(asInt);
+            value = _deserializeEnumExpression(field, value);
           } else if (const TypeChecker.fromRuntime(List)
               .isAssignableFromType(fType)) {
             value = refer('json')
@@ -926,7 +922,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
           Expression value = refer('value');
 
           if (fType is InterfaceType && fType.element is EnumElement) {
-            value = CodeExpression(Code('value?.index'));
+            value = _serializeEnumExpression(field, value);
           } else if (const TypeChecker.fromRuntime(List)
               .isAssignableFromType(fType)) {
             value = refer('json').property('encode').call([value]);
@@ -1004,5 +1000,46 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
           });
       }));
     });
+  }
+
+  /// Retrieve the [Expression] to parse a serialized enumeration field.
+  /// Takes into account the [SerializableField] properties.
+  /// Defaults to `enum.values[index as int]`
+  Expression _deserializeEnumExpression(FieldElement field, Expression expr) {
+    Reference enumType =
+        convertTypeReference(field.type, ignoreNullabilityCheck: true);
+    const TypeChecker serializableFieldTypeChecker =
+        TypeChecker.fromRuntime(SerializableField);
+    final annotation = serializableFieldTypeChecker.firstAnnotationOf(field);
+    Expression? parseExpr;
+    if (null != annotation) {
+      final deserializer = annotation.getField('deserializer')?.toSymbolValue();
+      if (null != deserializer) {
+        var type = 'int';
+        final serializesTo = annotation.getField('serializesTo')?.toTypeValue();
+        if (null != serializesTo) {
+          type = serializesTo.element!.displayName;
+        }
+        parseExpr = Reference(deserializer).expression([expr.asA(refer(type))]);
+      }
+    }
+    return parseExpr ??
+        enumType.property('values').index(expr.asA(refer('int')));
+  }
+
+  /// Retrieve the [Expression] to serialize the enumeration field.
+  /// Takes into account the [SerializableField] properties.
+  Expression _serializeEnumExpression(FieldElement field, Expression expr) {
+    const TypeChecker serializableFieldTypeChecker =
+        TypeChecker.fromRuntime(SerializableField);
+    final annotation = serializableFieldTypeChecker.firstAnnotationOf(field);
+    Expression? parseExpr;
+    if (null != annotation) {
+      final serializer = annotation.getField('serializer')?.toSymbolValue();
+      if (null != serializer) {
+        parseExpr = Reference(serializer).expression([expr]);
+      }
+    }
+    return parseExpr ?? CodeExpression(Code('value?.index'));
   }
 }
