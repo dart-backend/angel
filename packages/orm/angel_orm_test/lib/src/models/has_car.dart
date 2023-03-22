@@ -18,7 +18,9 @@ Color? codeToColor(String? code) => code == null
 String? colorToCode(Color? color) => color?.code;
 
 enum Color {
-  red('R'), green('G'), blue('B');
+  red('R'),
+  green('G'),
+  blue('B');
 
   const Color(this.code);
 
