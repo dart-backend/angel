@@ -11,6 +11,22 @@ part 'has_car.g.dart';
 
 enum CarType { sedan, suv, atv }
 
+Color? codeToColor(String? code) => code == null
+    ? null
+    : Color.values.firstWhere((color) => color.code == code);
+
+String? colorToCode(Color? color) => color?.code;
+
+enum Color {
+  red('R'),
+  green('G'),
+  blue('B');
+
+  const Color(this.code);
+
+  final String code;
+}
+
 @orm
 @serializable
 abstract class _HasCar extends Model {
@@ -21,4 +37,12 @@ abstract class _HasCar extends Model {
 
   @SerializableField(isNullable: false, defaultValue: CarType.sedan)
   CarType? get type;
+
+  @SerializableField(
+    serializesTo: String,
+    serializer: #colorToCode,
+    deserializer: #codeToColor,
+  )
+  @Column(type: ColumnType.varChar, length: 1)
+  Color? color;
 }
