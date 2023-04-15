@@ -1,5 +1,4 @@
 import '../../angel3_container.dart';
-import 'package:quiver/core.dart';
 
 final Map<Symbol, String?> _symbolNames = <Symbol, String?>{};
 
@@ -62,14 +61,6 @@ class _EmptyReflectedClass extends ReflectedClass {
   bool isAssignableTo(ReflectedType? other) {
     return other == this;
   }
-
-  @override
-  bool operator ==(other) {
-    return other is ReflectedClass && other.hashCode == hashCode;
-  }
-
-  @override
-  int get hashCode => hash2(this, " ");
 }
 
 class _EmptyReflectedType extends ReflectedType {
@@ -89,27 +80,11 @@ class _EmptyReflectedType extends ReflectedType {
   bool isAssignableTo(ReflectedType? other) {
     return other == this;
   }
-
-  @override
-  bool operator ==(other) {
-    return other is ReflectedType && other.hashCode == hashCode;
-  }
-
-  @override
-  int get hashCode => hash2(this, " ");
 }
 
 class _EmptyReflectedInstance extends ReflectedInstance {
   const _EmptyReflectedInstance()
       : super(const _EmptyReflectedType(), const _EmptyReflectedClass(), null);
-
-  @override
-  bool operator ==(other) {
-    return other is ReflectedInstance && other.hashCode == hashCode;
-  }
-
-  @override
-  int get hashCode => hash2(this, " ");
 
   @override
   ReflectedInstance getField(String name) {
