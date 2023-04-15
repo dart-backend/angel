@@ -4,6 +4,8 @@ import 'dart:mirrors' as dart;
 import '../exception.dart';
 import '../reflector.dart';
 
+import 'package:quiver/core.dart';
+
 /// A [Reflector] implementation that forwards to `dart:mirrors`.
 ///
 /// Useful on the server, where reflection is supported.
@@ -176,6 +178,9 @@ class _ReflectedClassMirror extends ReflectedClass {
   bool operator ==(other) {
     return other is _ReflectedClassMirror && other.mirror == mirror;
   }
+
+  @override
+  int get hashCode => hash2(mirror, " ");
 }
 
 class _ReflectedDeclarationMirror extends ReflectedDeclaration {

@@ -1,12 +1,10 @@
 # Change Log
 
-## 7.1.1
-
-* Moved `defaultErrorMessage` to `ContainerConst` class to resolve reflectatable issue.
-
-## 7.1.0
+## 7.1.0-beta.1
 
 * Require Dart >= 2.18
+* Moved `defaultErrorMessage` to `ContainerConst` class to resolve reflectatable issue.
+* Added `hashCode`
 
 ## 7.0.0
 

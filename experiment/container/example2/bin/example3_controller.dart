@@ -47,7 +47,7 @@ void main() async {
   //Container container = Container(reflector);
   //container.registerSingleton<SalesController>(SalesController());
 
-  // Useing GeneratedReflector
+  // Using GeneratedReflector
   initializeReflectable();
   var app = Angel(reflector: GeneratedReflector());
 

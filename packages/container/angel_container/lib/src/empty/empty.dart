@@ -1,4 +1,5 @@
 import '../../angel3_container.dart';
+import 'package:quiver/core.dart';
 
 final Map<Symbol, String?> _symbolNames = <Symbol, String?>{};
 
@@ -66,6 +67,9 @@ class _EmptyReflectedClass extends ReflectedClass {
   bool operator ==(other) {
     return other is ReflectedClass && other.hashCode == hashCode;
   }
+
+  @override
+  int get hashCode => hash2(this, " ");
 }
 
 class _EmptyReflectedType extends ReflectedType {
@@ -90,6 +94,9 @@ class _EmptyReflectedType extends ReflectedType {
   bool operator ==(other) {
     return other is ReflectedType && other.hashCode == hashCode;
   }
+
+  @override
+  int get hashCode => hash2(this, " ");
 }
 
 class _EmptyReflectedInstance extends ReflectedInstance {
@@ -100,6 +107,9 @@ class _EmptyReflectedInstance extends ReflectedInstance {
   bool operator ==(other) {
     return other is ReflectedInstance && other.hashCode == hashCode;
   }
+
+  @override
+  int get hashCode => hash2(this, " ");
 
   @override
   ReflectedInstance getField(String name) {
