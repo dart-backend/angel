@@ -5,7 +5,7 @@
 [![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
 [![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/master/packages/container/angel_container/LICENSE)
 
-An better IoC container for Angel3, ultimately allowing Angel3 to be used with or without `dart:mirrors` package.
+A better IoC container for Angel3, ultimately allowing Angel3 to be used with or without `dart:mirrors` package.
 
 ```dart
     import 'package:angel3_container/mirrors.dart';
@@ -21,13 +21,13 @@ An better IoC container for Angel3, ultimately allowing Angel3 to be used with o
     }
 
     bool process1(RequestContext req, ResponseContext res) {
-    res.write('Hello, ');
-    return true;
+        res.write('Hello, ');
+        return true;
     }
 
     bool process2(RequestContext req, ResponseContext res) {
-    res.write('From Sales, ');
-    return true;
+        res.write('From Sales, ');
+        return true;
     }
 
     void main() async {
