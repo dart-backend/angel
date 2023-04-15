@@ -5,7 +5,7 @@
 [![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
 [![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/master/packages/container/angel3_container_generator/LICENSE)
 
-An alternative container for Angel3 that uses `reflectable` instead of `dart:mirrors` for reflection.
+An alternative container for Angel3 that uses `reflectable` package instead of `dart:mirrors` for reflection. However, `reflectable` has much limited relfection capabilities when compared to `dart:mirrors`.
 
 ## Usage
 
@@ -26,6 +26,6 @@ An alternative container for Angel3 that uses `reflectable` instead of `dart:mir
 
 ## Known limitation
 
-* Reflection on functions/closures
-* Reflection on private declarations
-* Reflection on generic type
+* Reflection on functions/closures is not supported
+* Reflection on private declarations is not supported
+* Reflection on generic type is not supported
