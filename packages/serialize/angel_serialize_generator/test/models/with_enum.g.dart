@@ -8,8 +8,11 @@ part of 'with_enum.dart';
 
 @generatedSerializable
 class WithEnum implements _WithEnum {
-  WithEnum(
-      {this.type = WithEnumType.b, this.finalList = const [], this.imageBytes});
+  WithEnum({
+    this.type = WithEnumType.b,
+    this.finalList = const [],
+    this.imageBytes,
+  });
 
   @override
   WithEnumType? type;
@@ -20,8 +23,11 @@ class WithEnum implements _WithEnum {
   @override
   Uint8List? imageBytes;
 
-  WithEnum copyWith(
-      {WithEnumType? type, List<int>? finalList, Uint8List? imageBytes}) {
+  WithEnum copyWith({
+    WithEnumType? type,
+    List<int>? finalList,
+    Uint8List? imageBytes,
+  }) {
     return WithEnum(
         type: type ?? this.type,
         finalList: finalList ?? this.finalList,
@@ -39,7 +45,11 @@ class WithEnum implements _WithEnum {
 
   @override
   int get hashCode {
-    return hashObjects([type, finalList, imageBytes]);
+    return hashObjects([
+      type,
+      finalList,
+      imageBytes,
+    ]);
   }
 
   @override
@@ -110,7 +120,11 @@ class WithEnumSerializer extends Codec<WithEnum, Map> {
 }
 
 abstract class WithEnumFields {
-  static const List<String> allFields = <String>[type, finalList, imageBytes];
+  static const List<String> allFields = <String>[
+    type,
+    finalList,
+    imageBytes,
+  ];
 
   static const String type = 'type';
 

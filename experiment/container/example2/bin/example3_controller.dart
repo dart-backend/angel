@@ -30,8 +30,9 @@ class Todo extends Model {
 class FoodItem {
   final String name;
   final num price;
+  final num qty;
 
-  FoodItem(this.name, this.price);
+  FoodItem(this.name, this.price, this.qty);
 }
 
 class Order {
@@ -65,6 +66,7 @@ void main() async {
   //await app.mountController<SalesController>();
 
   var http = AngelHttp(app);
+
   var server = await http.startServer('localhost', 3000);
   print("Angel server listening at ${http.uri}");
 }

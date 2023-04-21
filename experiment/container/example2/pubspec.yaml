@@ -2,10 +2,10 @@ name: example2
 version: 0.0.1
 description: Example 2.
 environment:
-  sdk: '>=2.18.0 <3.0.0'
+  sdk: '>=2.19.0 <3.0.0'
 dependencies:
-  angel3_container: ^7.0.0
-  angel3_container_generator: ^7.0.0
+  angel3_container: ^7.1.0-beta.1
+  angel3_container_generator: ^7.1.0-beta.1
   angel3_http_exception: ^7.0.0
   angel3_framework: ^7.0.0
   angel3_model: ^7.0.0
@@ -37,13 +37,13 @@ dev_dependencies:
   io: ^1.0.0
   test: ^1.21.0
   lints: ^2.0.0
-dependency_overrides:
-  angel3_container:
-    path: ../../../packages/container/angel_container
-  angel3_container_generator:
-    path: ../../../packages/container/angel_container_generator
-  angel3_framework:
-    path: ../../../packages/framework
+# dependency_overrides:
+#   angel3_container:
+#     path: ../../../packages/container/angel_container
+#   angel3_container_generator:
+#     path: ../../../packages/container/angel_container_generator
+#   angel3_framework:
+#     path: ../../../packages/framework
 #   angel3_model:
 #     path: ../model
 #   angel3_route:

@@ -211,7 +211,7 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
                 type.typeArguments[1].getDisplayString(withNullability: true));
             serializedRepresentation =
                 '''model.${field.name}.keys.fold({}, (map, key) {
-              return (map as Map<dynamic,dynamic>?)?..[key] =
+              return map..[key] =
               ${serializerToMap(rc, 'model.${field.name}[key]')};
             })''';
           } else if (type.element is Enum) {

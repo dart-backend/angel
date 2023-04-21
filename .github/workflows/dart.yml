@@ -21,7 +21,7 @@ jobs:
 
       - uses: dart-lang/setup-dart@v1
         with:
-          sdk: "2.18.0"
+          sdk: "2.19.0"
           
       - id: angel3_container_upgrade
         name: angel3_container; Upgrade depedencies
@@ -87,7 +87,7 @@ jobs:
 
       - uses: dart-lang/setup-dart@v1
         with:
-          sdk: "2.18.0"
+          sdk: "2.19.0"
 
       # Angel3 ORM
       - id: angel3_orm_upgrade
