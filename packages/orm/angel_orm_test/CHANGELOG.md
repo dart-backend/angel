@@ -1,5 +1,9 @@
 # Change Log
 
+## 7.2.0-beta.1
+
+* [Breaking] Require Dart >= 2.19
+
 ## 7.1.0
 
 * [Breaking] Require Dart >= 2.18

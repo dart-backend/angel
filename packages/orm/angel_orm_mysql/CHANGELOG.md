@@ -1,5 +1,10 @@
 # Change Log
 
+## 7.1.0-beta.1
+
+* [Breaking] Require Dart >= 2.19
+* Added type check on "batch" column
+
 ## 7.0.1
 
 * Reduced debugging verbosity
