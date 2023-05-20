@@ -3,7 +3,7 @@ version: 1.0.0
 description: Angel3 performance testing tool
 publish_to: none
 environment:
-  sdk: '>=2.17.0 <3.0.0'
+  sdk: '>=3.0.0 <4.0.0'
 published_to: none
 dependencies:
   mysql1: ^0.20.0

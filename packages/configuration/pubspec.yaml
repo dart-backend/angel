@@ -4,7 +4,7 @@ description: Automatic YAML application configuration loader for Angel 3, with .
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dukefirehawk/angel/tree/master/packages/configuration
 environment:
-  sdk: '>=2.17.0 <3.0.0'
+  sdk: '>=3.0.0 <4.0.0'
 dependencies:
   angel3_framework: ^7.0.0
   belatuk_merge_map: ^4.0.0
