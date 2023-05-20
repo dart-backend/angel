@@ -173,6 +173,29 @@ You can also view the [Angel3 API](http://www.dartdocs.org/documentation/angel_f
 
 Interested in contributing to Angel3? See the contribution guide [here](CONTRIBUTING.md).
 
+### Development Setup
+
+1. Fork `angel` repository
+
+2. Clone the project to local and create a new branch
+
+   ```bash
+   git clone https://github.com/<your_repo_name>/angel.git
+   git checkout -b feature/<your_branch_name>
+   ```
+
+2. Download and install [Dart 3](https://dart.dev/get-dart)
+
+3. Install `melos`
+
+   ```bash
+   dart pub global activate melos
+   ```
+
+4. Run `melos dart pub "dart pub upgrade"` to update all the packages
+
+5. Make changes to the packages
+
 ## Donation & Support
 
 If you like this project and interested in supporting its development, you can make a donation via [paypal](https://paypal.me/dukefirehawk?country.x=MY&locale.x=en_US) service.
