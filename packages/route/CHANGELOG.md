@@ -1,5 +1,10 @@
 # Change Log
 
+## 8.0.0
+
+* Require Dart >= 3.0
+* Breaking: Updated `build_web_compilers` to 4.0.0  
+
 ## 7.0.0
 
 * Require Dart >= 2.17

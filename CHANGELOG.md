@@ -3,6 +3,9 @@
 ## 8.0.0
 
 * Require Dart >= 3.0
+* Upgraded: angel3_http_exception
+* Upgraded: angel3_route
+
 
 ## 7.0.0
 
