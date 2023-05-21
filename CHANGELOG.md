@@ -5,7 +5,10 @@
 * Require Dart >= 3.0
 * Upgraded: angel3_http_exception
 * Upgraded: angel3_route
-
+* Upgraded: angel3_model
+* Upgraded: angel3_container
+* Upgraded: angel3_container_generator
+* Upgraded: angel3_mock_request
 
 ## 7.0.0
 

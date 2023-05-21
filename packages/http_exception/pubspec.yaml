@@ -6,4 +6,4 @@ repository: https://github.com/dukefirehawk/angel/tree/master/packages/http_exce
 environment:
   sdk: '>=3.0.0 <4.0.0'
 dev_dependencies:
-  lints: ^2.0.0
+  lints: ^2.1.0
