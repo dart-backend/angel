@@ -1,5 +1,9 @@
 # Change Log
 
+## 8.0.0
+
+* Require Dart >= 3.0
+
 ## 7.0.4
 
 * Updated `Expose` fields to non-nullable
