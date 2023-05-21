@@ -1,9 +1,11 @@
 import 'dart:io';
 
-class MockHttpHeaders extends HttpHeaders {
+class MockHttpHeaders implements HttpHeaders {
   final Map<String, List<String>> _data = {};
   final List<String> _noFolding = [];
-  Uri? _host;
+  //Uri? _host;
+  String? _hostname;
+  int _port = 80;
 
   List<String> get doNotFold => List<String>.unmodifiable(_noFolding);
 
@@ -50,6 +52,8 @@ class MockHttpHeaders extends HttpHeaders {
 
   @override
   String? get host {
+    return _hostname;
+    /*
     if (_host != null) {
       return _host!.host;
     } else if (_data.containsKey(HttpHeaders.hostHeader)) {
@@ -58,12 +62,12 @@ class MockHttpHeaders extends HttpHeaders {
     } else {
       return null;
     }
+    */
   }
 
   @override
-  int? get port {
-    host; // Parse it
-    return _host?.port;
+  int get port {
+    return _port;
   }
 
   @override
@@ -147,5 +151,24 @@ class MockHttpHeaders extends HttpHeaders {
       b.writeln();
     });
     return b.toString();
+  }
+
+  @override
+  bool chunkedTransferEncoding = false;
+
+  @override
+  int contentLength = 0;
+
+  @override
+  bool persistentConnection = true;
+
+  @override
+  set host(String? host) {
+    _hostname = host;
+  }
+
+  @override
+  set port(int? port) {
+    _port = port ?? 80;
   }
 }
