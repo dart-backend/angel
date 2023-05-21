@@ -5,8 +5,6 @@ import 'package:angel3_framework/angel3_framework.dart';
 import '../options.dart';
 import '../strategy.dart';
 
-bool _validateString(String? str) => str != null && str.isNotEmpty;
-
 /// Determines the validity of an incoming username and password.
 // typedef FutureOr<User> LocalAuthVerifier<User>(String? username, String? password);
 typedef LocalAuthVerifier<User> = FutureOr<User?> Function(
@@ -72,22 +70,7 @@ class LocalAuthStrategy<User> extends AuthStrategy<User> {
       }
     }
 
-    if (verificationResult == null) {
-      var body = await req
-          .parseBody()
-          .then((_) => req.bodyAsMap)
-          .catchError((_) => <String, dynamic>{});
-      //if (body != null) {
-      if (_validateString(body[usernameField].toString()) &&
-          _validateString(body[passwordField].toString())) {
-        verificationResult = await verifier(
-            body[usernameField].toString(), body[passwordField].toString());
-      }
-      //}
-    }
-
-    if (verificationResult == null ||
-        (verificationResult is Map && verificationResult.isEmpty)) {
+    if (verificationResult is Map && verificationResult.isEmpty) {
       if (localOptions.failureRedirect != null &&
           localOptions.failureRedirect!.isNotEmpty) {
         await res.redirect(localOptions.failureRedirect, code: 401);

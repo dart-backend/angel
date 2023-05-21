@@ -10,8 +10,8 @@
 * Upgraded: angel3_container_generator
 * Upgraded: angel3_mock_request
 * Upgraded: angel3_framework
-* Upgraded: angel3_auth (todo)
-* Upgraded: angel3_configuration (todo)
+* Upgraded: angel3_auth
+* Upgraded: angel3_configuration
 * Upgraded: angel3_validate (todo)
 
 ## 7.0.0
