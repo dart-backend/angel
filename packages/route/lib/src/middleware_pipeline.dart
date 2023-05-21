@@ -35,7 +35,7 @@ class MiddlewarePipeline<T> {
 }
 
 /// Iterates through a [MiddlewarePipeline].
-class MiddlewarePipelineIterator<T> extends Iterator<RoutingResult<T>> {
+class MiddlewarePipelineIterator<T> implements Iterator<RoutingResult<T>> {
   final MiddlewarePipeline<T> pipeline;
   final Iterator<RoutingResult<T>> _inner;
 

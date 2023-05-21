@@ -1,5 +1,5 @@
 /// Represents an error in route configuration or navigation.
-abstract class RoutingException extends Exception {
+abstract class RoutingException implements Exception {
   factory RoutingException(String message) => _RoutingExceptionImpl(message);
 
   /// Occurs when trying to resolve the parent of a [Route] without a parent.
