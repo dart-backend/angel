@@ -1,5 +1,5 @@
 name: angel3_container
-version: 7.1.0-beta.2
+version: 8.0.0
 description: Angel3 hierarchical DI container, and pluggable backends for reflection.
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dukefirehawk/angel/tree/master/packages/container/angel_container
@@ -10,4 +10,4 @@ dependencies:
   quiver: ^3.2.0
 dev_dependencies:
   test: ^1.24.0
-  lints: ^2.0.0
+  lints: ^2.1.0
