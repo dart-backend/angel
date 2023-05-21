@@ -40,6 +40,6 @@ A better IoC container for Angel3, ultimately allowing Angel3 to be used with or
 
         var http = AngelHttp(app);
         var server = await http.startServer('localhost', 3000);
-        print("Angel server listening at ${http.uri}");
+        print("Angel3 server listening at ${http.uri}");
     }
 ```
