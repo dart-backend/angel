@@ -184,17 +184,17 @@ Interested in contributing to Angel3? See the contribution guide [here](CONTRIBU
    git checkout -b feature/<your_branch_name>
    ```
 
-2. Download and install [Dart 3](https://dart.dev/get-dart)
+3. Download and install [Dart 3](https://dart.dev/get-dart)
 
-3. Install `melos`
+4. Install `melos` 3.0
 
    ```bash
    dart pub global activate melos
    ```
 
-4. Run `melos dart pub "dart pub upgrade"` to update all the packages
+5. Run `melos exec "dart pub upgrade"` to update all the packages
 
-5. Make changes to the packages
+6. Make changes to the packages
 
 ## Donation & Support
 
