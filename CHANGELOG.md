@@ -13,6 +13,9 @@
 * Upgraded: angel3_auth (4 failed test cases)
 * Upgraded: angel3_configuration
 * Upgraded: angel3_validate
+* Upgraded: angel3_client (1 failed test cases)
+* Upgraded: angel3_websocket
+* Upgraded: angel3_test
 
 ## 7.0.0
 
