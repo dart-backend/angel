@@ -1,42 +1,42 @@
 name: angel3_test
-version: 7.0.0
+version: 8.0.0
 description: Testing utility library for the Angel3 framework. Use with package:test.
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dukefirehawk/angel/tree/master/packages/test
 environment: 
   sdk: '>=3.0.0 <4.0.0'
 dependencies: 
-  angel3_client: ^7.0.0
-  angel3_framework: ^7.0.0
-  angel3_http_exception: ^7.0.0
-  angel3_validate: ^7.0.0
-  angel3_websocket: ^7.0.0
-  angel3_mock_request: ^7.0.0
-  angel3_container: ^7.0.0
-  http: ^0.13.1
-  matcher: ^0.12.10
-  web_socket_channel: ^2.0.0
+  angel3_client: ^8.0.0
+  angel3_framework: ^8.0.0
+  angel3_http_exception: ^8.0.0
+  angel3_validate: ^8.0.0
+  angel3_websocket: ^8.0.0
+  angel3_mock_request: ^8.0.0
+  angel3_container: ^8.0.0
+  http: ^1.0.0
+  matcher: ^0.12.16
+  web_socket_channel: ^2.4.0
 dev_dependencies: 
-  test: ^1.21.0
-  lints: ^2.0.0
-# dependency_overrides:
-#   angel3_container:
-#     path: ../container/angel_container
-#   angel3_framework:
-#     path: ../framework
-#   angel3_http_exception:
-#     path: ../http_exception
-#   angel3_model:
-#     path: ../model
-#   angel3_route:
-#     path: ../route
-#   angel3_mock_request:
-#     path: ../mock_request
-#   angel3_auth:
-#     path: ../auth 
-#   angel3_client:
-#     path: ../client
-#   angel3_websocket:
-#     path: ../websocket
-#   angel3_validate:
-#     path: ../validate
+  test: ^1.24.0
+  lints: ^2.1.0
+dependency_overrides:
+  angel3_container:
+    path: ../container/angel_container
+  angel3_framework:
+    path: ../framework
+  angel3_http_exception:
+    path: ../http_exception
+  angel3_model:
+    path: ../model
+  angel3_route:
+    path: ../route
+  angel3_mock_request:
+    path: ../mock_request
+  angel3_auth:
+    path: ../auth 
+  angel3_client:
+    path: ../client
+  angel3_websocket:
+    path: ../websocket
+  angel3_validate:
+    path: ../validate

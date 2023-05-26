@@ -3,6 +3,7 @@
 ## 8.0.0
 
 * Require Dart >= 3.0
+* Upgraded `http` to 1.0.0
 
 ## 7.0.1
 
