@@ -1,47 +1,47 @@
 name: angel3_jael
-version: 7.0.0
+version: 8.0.0
 description: Angel support for the Jael templating engine, similar to Blade or Liquid.
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dukefirehawk/angel/tree/master/packages/jael/angel_jael
 environment:
   sdk: '>=3.0.0 <4.0.0'
 dependencies:
-  angel3_framework: ^7.0.0
-  jael3: ^7.0.0
-  jael3_preprocessor: ^7.0.0
-  belatuk_code_buffer: ^4.0.0
-  belatuk_symbol_table: ^4.0.0
-  file: ^6.0.0
-  logging: ^1.0.1
+  angel3_framework: ^8.0.0
+  jael3: ^8.0.0
+  jael3_preprocessor: ^8.0.0
+  belatuk_code_buffer: ^5.0.0
+  belatuk_symbol_table: ^5.0.0
+  file: ^7.0.0
+  logging: ^1.2.0
 dev_dependencies:
-  angel3_test: ^7.0.0
+  angel3_test: ^8.0.0
   html: ^0.15.0
-  test: ^1.21.0
-  lints: ^2.0.0
-# dependency_overrides:
-#   angel3_container:
-#     path: ../../container/angel_container
-#   angel3_framework:
-#     path: ../../framework
-#   angel3_http_exception:
-#     path: ../../http_exception
-#   angel3_model:
-#     path: ../../model
-#   angel3_route:
-#     path: ../../route
-#   angel3_mock_request:
-#     path: ../../mock_request
-#   angel3_auth:
-#     path: ../../auth 
-#   angel3_client:
-#     path: ../../client
-#   angel3_websocket:
-#     path: ../../websocket
-#   angel3_validate:
-#     path: ../../validate
-#   angel3_test:
-#     path: ../../test
-#   jael3:
-#     path: ../jael
-#   jael3_preprocessor:
-#     path: ../jael_preprocessor
+  test: ^1.24.0
+  lints: ^2.1.0
+dependency_overrides:
+  angel3_container:
+    path: ../../container/angel_container
+  angel3_framework:
+    path: ../../framework
+  angel3_http_exception:
+    path: ../../http_exception
+  angel3_model:
+    path: ../../model
+  angel3_route:
+    path: ../../route
+  angel3_mock_request:
+    path: ../../mock_request
+  angel3_auth:
+    path: ../../auth 
+  angel3_client:
+    path: ../../client
+  angel3_websocket:
+    path: ../../websocket
+  angel3_validate:
+    path: ../../validate
+  angel3_test:
+    path: ../../test
+  jael3:
+    path: ../jael
+  jael3_preprocessor:
+    path: ../jael_preprocessor

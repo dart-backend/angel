@@ -3,19 +3,22 @@
 ## 8.0.0
 
 * Require Dart >= 3.0
-* Upgraded: angel3_http_exception
-* Upgraded: angel3_route
-* Upgraded: angel3_model
-* Upgraded: angel3_container
-* Upgraded: angel3_container_generator
-* Upgraded: angel3_mock_request
-* Upgraded: angel3_framework
-* Upgraded: angel3_auth (4 failed test cases)
-* Upgraded: angel3_configuration
-* Upgraded: angel3_validate
-* Upgraded: angel3_client (1 failed test cases)
-* Upgraded: angel3_websocket (1 failed test cases)
-* Upgraded: angel3_test
+* Updated: angel3_http_exception
+* Updated: angel3_route
+* Updated: angel3_model
+* Updated: angel3_container
+* Updated: angel3_container_generator
+* Updated: angel3_mock_request
+* Updated: angel3_framework
+* Updated: angel3_auth (4 failed test cases)
+* Updated: angel3_configuration
+* Updated: angel3_validate
+* Updated: angel3_client (1 failed test cases)
+* Updated: angel3_websocket (1 failed test cases)
+* Updated: angel3_test
+* Updated: jael3
+* Updated: jael3_preprocessor
+* Updated: jael3_language_server
 
 ## 7.0.0
 

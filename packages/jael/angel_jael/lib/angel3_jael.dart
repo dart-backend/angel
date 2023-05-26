@@ -22,7 +22,7 @@ AngelConfigurer jael(Directory viewsDirectory,
     bool asDSX = false,
     bool minified = true,
     CodeBuffer Function()? createBuffer}) {
-  var _cache = cache ?? <String, Document>{};
+  var localCache = cache ?? <String, Document>{};
 
   var bufferFunc = createBuffer ?? () => CodeBuffer();
 
@@ -37,14 +37,14 @@ AngelConfigurer jael(Directory viewsDirectory,
 
       //var stopwatch = Stopwatch()..start();
 
-      if (cacheViews && _cache.containsKey(name)) {
-        processed = _cache[name];
+      if (cacheViews && localCache.containsKey(name)) {
+        processed = localCache[name];
       } else {
         processed = await _loadViewTemplate(viewsDirectory, name,
             fileExtension: fileExtension, asDSX: asDSX, patch: patch);
 
         if (cacheViews) {
-          _cache[name] = processed!;
+          localCache[name] = processed!;
         }
       }
       //print('Time executed: ${stopwatch.elapsed.inMilliseconds}');

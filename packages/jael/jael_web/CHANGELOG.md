@@ -1,5 +1,9 @@
 # Change Log
 
+## 8.0.0
+
+* Require Dart >= 3.0
+
 ## 7.1.1
 
 * Added `exclusive` parameter to `createSync`

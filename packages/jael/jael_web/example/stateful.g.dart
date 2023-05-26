@@ -6,7 +6,7 @@ part of 'stateful.dart';
 // JaelComponentGenerator
 // **************************************************************************
 
-abstract class _StatefulAppJaelTemplate implements Component<_AppState> {
+mixin _StatefulAppJaelTemplate implements Component<_AppState> {
   //Timer? get _timer;
   @override
   void beforeDestroy();
