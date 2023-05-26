@@ -24,6 +24,10 @@
 * Updated: angel3_production
 * Updated: angel3_hot
 * Updated: angel3_static
+* Updated: angel3_serialize
+* Updated: angel3_serialize_generator
+* Updated: angel3_orm
+* Updated: angel3_orm_generator
 
 ## 7.0.0
 

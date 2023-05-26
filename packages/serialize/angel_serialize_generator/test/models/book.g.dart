@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of angel_serialize.test.models.book;
+part of 'book.dart';
 
 // **************************************************************************
 // JsonModelGenerator
