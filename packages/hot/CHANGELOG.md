@@ -1,5 +1,10 @@
 # Change Log
 
+## 8.0.0
+
+* Require Dart >= 3.0
+* Updated `vm_service` to 11.6.0
+
 ## 7.0.1
 
 * Updated `server` header to `angel3`

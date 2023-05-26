@@ -19,6 +19,11 @@
 * Updated: jael3
 * Updated: jael3_preprocessor
 * Updated: jael3_language_server
+* Updated: angel3_jael
+* Updated: jael3_web
+* Updated: angel3_production
+* Updated: angel3_hot
+* Updated: angel3_static
 
 ## 7.0.0
 

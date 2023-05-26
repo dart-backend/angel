@@ -17,8 +17,8 @@ In your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  angel3_framework: ^7.0.0
-  angel3_hot: ^7.0.0
+  angel3_framework: ^8.0.0
+  angel3_hot: ^8.0.0
 ```
 
 ## Usage
