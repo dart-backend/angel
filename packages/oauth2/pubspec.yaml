@@ -19,6 +19,8 @@ dev_dependencies:
   test: ^1.24.0
   uuid: ^3.0.0
 dependency_overrides:
+  oauth2:
+    path: ../../../oauth2
   angel3_container:
     path: ../container/angel_container
   angel3_framework:

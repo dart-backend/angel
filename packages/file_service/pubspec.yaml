@@ -1,27 +1,27 @@
 name: angel3_file_service
-version: 7.0.0
+version: 8.0.0
 description: Angel service that persists data to a file on disk, stored as a JSON list.
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dukefirehawk/angel/tree/master/packages/file_service
 environment:
   sdk: '>=3.0.0 <4.0.0'
 dependencies:
-  angel3_framework: ^7.0.0
-  file: ^6.1.1
+  angel3_framework: ^8.0.0
+  file: ^7.0.0
   pool: ^1.5.0
 dev_dependencies:
-  test: ^1.21.0
-  lints: ^2.0.0
-# dependency_overrides:
-#   angel3_container:
-#     path: ../container/angel_container
-#   angel3_framework:
-#     path: ../framework
-#   angel3_http_exception:
-#     path: ../http_exception
-#   angel3_model:
-#     path: ../model
-#   angel3_route:
-#     path: ../route
-#   angel3_mock_request:
-#     path: ../mock_request
+  test: ^1.24.0
+  lints: ^2.1.0
+dependency_overrides:
+  angel3_container:
+    path: ../container/angel_container
+  angel3_framework:
+    path: ../framework
+  angel3_http_exception:
+    path: ../http_exception
+  angel3_model:
+    path: ../model
+  angel3_route:
+    path: ../route
+  angel3_mock_request:
+    path: ../mock_request

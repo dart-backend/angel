@@ -14,6 +14,8 @@ dev_dependencies:
   logging: ^1.2.0
   lints: ^2.1.0
 dependency_overrides:
+  oauth2:
+    path: ../../../oauth2
   angel3_container:
     path: ../container/angel_container
   angel3_framework:
