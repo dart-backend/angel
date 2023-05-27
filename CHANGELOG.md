@@ -28,6 +28,14 @@
 * Updated: angel3_serialize_generator
 * Updated: angel3_orm
 * Updated: angel3_orm_generator
+* Updated: angel3_migration
+* Updated: angel3_migration_generator
+* Updated: angel3_orm_postgresql
+* Updated: angel3_orm_mysql
+* Updated: angel3_orm_service
+* Updated: angel3_orm_test
+* Updated: angel3_orm_cache
+* Updated: angel3_orm_cors
 
 ## 7.0.0
 
