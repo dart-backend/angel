@@ -22,6 +22,7 @@ class MySqlSchema extends Schema {
       var sql = compile();
       var result = await ctx.execute(sql).catchError((e) {
         _log.severe('Failed to run query: [ $sql ]', e);
+        throw Exception(e);
       });
       affectedRows = result.affectedRows.toInt();
     }).catchError((e) {

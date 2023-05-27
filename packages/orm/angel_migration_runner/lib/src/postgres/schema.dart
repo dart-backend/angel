@@ -20,6 +20,7 @@ class PostgresSchema extends Schema {
       var sql = compile();
       var result = await ctx.query(sql).catchError((e) {
         _log.severe('Failed to run query: [ $sql ]', e);
+        throw Exception(e);
       });
       return result.affectedRowCount;
     });
