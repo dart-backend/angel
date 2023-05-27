@@ -1,28 +1,28 @@
 name: angel3_sembast
-version: 7.0.0
+version: 8.0.0
 description: A plugin service that persist data to Sembast for Angel3 framework.
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dukefirehawk/angel/tree/master/packages/sembast
 environment:
   sdk: '>=3.0.0 <4.0.0'
 dependencies:
-  angel3_framework: ^7.0.0
+  angel3_framework: ^8.0.0
   sembast: ^3.1.1
 dev_dependencies:
-  angel3_http_exception: ^7.0.0
-  logging: ^1.0.1
-  lints: ^2.0.0
-  test: ^1.21.0
-# dependency_overrides:
-#   angel3_framework:
-#     path: ../framework
-#   angel3_container:
-#     path: ../container/angel_container
-#   angel3_http_exception:
-#     path: ../http_exception
-#   angel3_model:
-#     path: ../model
-#   angel3_route:
-#     path: ../route
-#   angel3_mock_request:
-#     path: ../mock_request
+  angel3_http_exception: ^8.0.0
+  logging: ^1.2.0
+  lints: ^2.1.0
+  test: ^1.24.0
+dependency_overrides:
+  angel3_framework:
+    path: ../framework
+  angel3_container:
+    path: ../container/angel_container
+  angel3_http_exception:
+    path: ../http_exception
+  angel3_model:
+    path: ../model
+  angel3_route:
+    path: ../route
+  angel3_mock_request:
+    path: ../mock_request

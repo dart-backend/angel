@@ -39,18 +39,18 @@
 * Updated: angel3_mustache
 * Updated: angel3_proxy
 * Updated: angel3_redis
+* Updated: angel3_jinja
+* Updated: angel3_security
+* Updated: angel3_user_agent
+* Updated: angel3_seo
+* Updated: angel3_sync
+* Updated: angel3_sembast
 * Updated: angel3_oauth2 (issue: oauth2 don't support http 1.0.0)
-* Updated: angel3_markdown (issue: markdown don't support file 7.0.0)
 * Updated: angel3_auth_oauth2 (issue: oauth2 don't support http 1.0.0)
+* Updated: angel3_auth_twitter (issue: oauth2 don't support http 1.0.0)
 * Updated: angel3_mongo (issue: mongo_dart don't support http 1.0.0)
-* Updated: angel3_jinja (issue: 2 errors)
-* Updated: angel3_user_agent (todo)
-* Updated: angel3_sync (todo)
-* Updated: angel3_shelf (todo)
-* Updated: angel3_sembast (todo)
-* Updated: angel3_security (todo)
-* Updated: angel3_seo (todo)
-* Updated: angel3_auth_twitter (todo)
+* Updated: angel3_markdown (issue: markdown don't support file 7.0.0)
+* Updated: angel3_shelf (issue: 2 failed test cases)
 
 ## 7.0.0
 
