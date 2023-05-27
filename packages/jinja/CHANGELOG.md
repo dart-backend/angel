@@ -3,6 +3,7 @@
 ## 8.0.0
 
 * Require Dart >= 3.0
+* Update `jinja`  to 0.4.2
 
 ## 7.0.0
 
