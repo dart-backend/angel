@@ -173,7 +173,7 @@ class QuotationQueryValues extends MapQueryValues {
 // **************************************************************************
 
 @generatedSerializable
-class Quotation extends _Quotation {
+class Quotation implements _Quotation {
   Quotation({
     this.id,
     this.name,

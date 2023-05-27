@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of angel_orm3.generator.models.person;
+part of 'person.dart';
 
 // **************************************************************************
 // MigrationGenerator

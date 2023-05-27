@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of angel3_orm_generator.test.models.order;
+part of 'order.dart';
 
 // **************************************************************************
 // MigrationGenerator
