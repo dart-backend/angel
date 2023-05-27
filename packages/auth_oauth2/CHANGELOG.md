@@ -1,5 +1,10 @@
 # Change Log
 
+## 8.0.0
+
+* Require Dart >= 3.0
+* Issue: `oauth2` does not support `http` 1.0.0
+
 ## 7.0.1
 
 * Updated example

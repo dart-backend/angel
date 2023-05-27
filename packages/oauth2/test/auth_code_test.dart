@@ -176,7 +176,7 @@ class _Server extends AuthorizationServer<PseudoApplication, Map> {
   }
 }
 
-class AuthCodes extends MapBase<String, String> with MapMixin<String, String> {
+class AuthCodes with MapMixin<String, String> {
   var inner = <String, String>{};
 
   @override
