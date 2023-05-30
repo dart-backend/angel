@@ -7,7 +7,7 @@ environment:
   sdk: '>=3.0.0 <4.0.0'
 dependencies:
   angel3_framework: ^8.0.0
-  file: ^6.1.2
+  file: ^7.0.0
   markdown: ^7.1.0
 dev_dependencies:
   angel3_test: ^8.0.0

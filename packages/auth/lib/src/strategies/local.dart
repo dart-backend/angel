@@ -66,7 +66,8 @@ class LocalAuthStrategy<User> extends AuthStrategy<User> {
           return null;
         }
 
-        return verificationResult;
+        // Allow non-null to pass through
+        //return verificationResult;
       }
     }
 

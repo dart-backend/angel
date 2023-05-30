@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:angel3_auth/angel3_auth.dart';
+import 'package:angel3_container/mirrors.dart';
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_framework/http.dart';
 import 'dart:convert';
@@ -9,7 +10,7 @@ import 'package:test/test.dart';
 
 final AngelAuth<Map<String, String>> auth = AngelAuth<Map<String, String>>(
     serializer: (user) async => '1337', deserializer: (id) async => sampleUser);
-var headers = <String, String>{'accept': 'application/json'};
+//var headers = <String, String>{'accept': 'application/json'};
 var localOpts = AngelAuthOptions<Map<String, String>>(
     failureRedirect: '/failure', successRedirect: '/success');
 var localOpts2 =
@@ -42,7 +43,7 @@ void main() async {
 
   setUp(() async {
     client = http.Client();
-    app = Angel();
+    app = Angel(reflector: MirrorsReflector());
     angelHttp = AngelHttp(app, useZone: false);
     await app.configure(wireAuth);
     app.get('/hello', (req, res) {
@@ -88,19 +89,22 @@ void main() async {
   });
 
   test('successRedirect', () async {
-    var postData = {'username': 'username', 'password': 'password'};
+    //var postData = {'username': 'username', 'password': 'password'};
+    var encodedAuth = base64.encode(utf8.encode('username:password'));
+
     var response = await client.post(Uri.parse('$url/login'),
-        body: json.encode(postData),
-        headers: {'content-type': 'application/json'});
+        headers: {'Authorization': 'Basic $encodedAuth'});
     expect(response.statusCode, equals(302));
     expect(response.headers['location'], equals('/success'));
   });
 
   test('failureRedirect', () async {
-    var postData = {'username': 'password', 'password': 'username'};
+    //var postData = {'username': 'password', 'password': 'username'};
+    var encodedAuth = base64.encode(utf8.encode('password:username'));
+
     var response = await client.post(Uri.parse('$url/login'),
-        body: json.encode(postData),
-        headers: {'content-type': 'application/json'});
+        //body: json.encode(postData),
+        headers: {'Authorization': 'Basic $encodedAuth'});
     print('Status Code: ${response.statusCode}');
     print(response.headers);
     print(response.body);
