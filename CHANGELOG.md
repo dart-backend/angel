@@ -10,11 +10,11 @@
 * Updated: angel3_container_generator
 * Updated: angel3_mock_request
 * Updated: angel3_framework
-* Updated: angel3_auth (1 failed test cases)
+* Updated: angel3_auth (1 failed test case)
 * Updated: angel3_configuration
 * Updated: angel3_validate
-* Updated: angel3_client (1 failed test cases)
-* Updated: angel3_websocket (1 failed test cases)
+* Updated: angel3_client (1 failed test case)
+* Updated: angel3_websocket (1 failed test case)
 * Updated: angel3_test
 * Updated: jael3
 * Updated: jael3_preprocessor
@@ -45,12 +45,12 @@
 * Updated: angel3_seo
 * Updated: angel3_sync
 * Updated: angel3_sembast
-* Updated: angel3_oauth2 (issue: oauth2 don't support http 1.0.0)
-* Updated: angel3_auth_oauth2 (issue: oauth2 don't support http 1.0.0)
-* Updated: angel3_auth_twitter (issue: oauth2 don't support http 1.0.0)
+* Updated: angel3_markdown
+* Updated: angel3_auth_oauth2
+* Updated: angel3_oauth2 (5 failed test cases)
+* Updated: angel3_auth_twitter (issue: oauth1 don't support http 1.0.0)
 * Updated: angel3_mongo (issue: mongo_dart don't support http 1.0.0)
-* Updated: angel3_markdown (issue: basic_utils don't support http 1.0.0)
-* Updated: angel3_shelf (issue: 2 failed test cases)
+* Updated: angel3_shelf (2 failed test cases)
 
 ## 7.0.0
 
