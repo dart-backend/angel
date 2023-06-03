@@ -71,6 +71,14 @@ class LocalAuthStrategy<User> extends AuthStrategy<User> {
       }
     }
 
+    if (verificationResult == null) {
+      if (forceBasic) {
+        res.headers['www-authenticate'] = 'Basic realm="$realm"';
+        return null;
+      }
+      return null;
+    }
+
     if (verificationResult is Map && verificationResult.isEmpty) {
       if (localOptions.failureRedirect != null &&
           localOptions.failureRedirect!.isNotEmpty) {

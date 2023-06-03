@@ -46,6 +46,7 @@ void main() async {
     app = Angel(reflector: MirrorsReflector());
     angelHttp = AngelHttp(app, useZone: false);
     await app.configure(wireAuth);
+
     app.get('/hello', (req, res) {
       // => 'Woo auth'
       return 'Woo auth';

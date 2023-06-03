@@ -12,6 +12,6 @@ Content-Type: application/json
 Authorization: Basic password:username
 
 ### Force basic
-POST http://localhost:3000/hello HTTP/1.1
+GET http://localhost:3000/hello HTTP/1.1
 Content-Type: application/json
 Accept:application/json
