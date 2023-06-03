@@ -4,9 +4,10 @@
 
 * Require Dart >= 3.0
 * Upgraded `http` to 1.0.0
-* Fixed bug causing `successRedirect` test case to fail
-* Fixed bug causing `failureRedirect` test case to fail
-* Fixed bug causing `login` test case to fail
+* Fixed failed `successRedirect` test case
+* Fixed failed `failureRedirect` test case
+* Fixed failed `login` test case
+* Fixed failed 'force basic` test case
 * Added `example1` and `example2`
 
 ## 7.0.1
