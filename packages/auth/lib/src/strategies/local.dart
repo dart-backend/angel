@@ -66,19 +66,44 @@ class LocalAuthStrategy<User> extends AuthStrategy<User> {
           return null;
         }
 
-        // Allow non-null to pass through
+        //Allow non-null to pass through
         //return verificationResult;
+      }
+    } else {
+      var body = await req
+          .parseBody()
+          .then((_) => req.bodyAsMap)
+          .catchError((_) => <String, dynamic>{});
+      if (_validateString(body[usernameField]?.toString()) &&
+          _validateString(body[passwordField]?.toString())) {
+        verificationResult = await verifier(
+            body[usernameField]?.toString(), body[passwordField]?.toString());
       }
     }
 
-    if (verificationResult == null) {
-      if (forceBasic) {
-        res.headers['www-authenticate'] = 'Basic realm="$realm"';
-        return null;
-      }
+    // User authentication succeeded
+    if (verificationResult == true ||
+        (verificationResult is Map && verificationResult.isNotEmpty)) {
+      return verificationResult;
+    }
+
+    // Force basic if set
+    if (forceBasic) {
+      res.headers['www-authenticate'] = 'Basic realm="$realm"';
       return null;
     }
 
+    // Redirect failed authentication
+    if (localOptions.failureRedirect != null &&
+        localOptions.failureRedirect!.isNotEmpty) {
+      await res.redirect(localOptions.failureRedirect, code: 401);
+      return null;
+    }
+
+    _log.info('Not authenticated');
+    throw AngelHttpException.notAuthenticated();
+
+    /*
     if (verificationResult is Map && verificationResult.isEmpty) {
       if (localOptions.failureRedirect != null &&
           localOptions.failureRedirect!.isNotEmpty) {
@@ -99,5 +124,8 @@ class LocalAuthStrategy<User> extends AuthStrategy<User> {
       _log.info('Not authenticated');
       throw AngelHttpException.notAuthenticated();
     }
+    */
   }
+
+  bool _validateString(String? str) => str != null && str.isNotEmpty;
 }
