@@ -25,10 +25,14 @@ Future<Map<String, String>> verifier(String? username, String? password) async {
 
 Future wireAuth(Angel app) async {
   //auth.strategies['local'] = LocalAuthStrategy(verifier);
-  auth.strategies['local'] = LocalAuthStrategy(verifier, forceBasic: true, realm: 'test');
+  auth.strategies['local'] =
+      LocalAuthStrategy(verifier, forceBasic: true, realm: 'test');
   await app.configure(auth.configureServer);
 }
 
+/*
+ * Backend for local test cases
+ */
 void main() async {
   Angel app = Angel(reflector: MirrorsReflector());
   AngelHttp angelHttp = AngelHttp(app, useZone: false);

@@ -1,12 +1,17 @@
 ### Load landing page
 GET http://localhost:3000/ HTTP/1.1
 
-### Success redirect
+### login (call_back)
 POST http://localhost:3000/login HTTP/1.1
 Content-Type: application/json
 Authorization: Basic jdoe1:password
 
-### Failure redirect
+### Success redirect (local)
+POST http://localhost:3000/login HTTP/1.1
+Content-Type: application/json
+Authorization: Basic username:password
+
+### Failure redirect (local)
 POST http://localhost:3000/login HTTP/1.1
 Content-Type: application/json
 Authorization: Basic password:username

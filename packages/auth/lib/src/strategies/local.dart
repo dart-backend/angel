@@ -81,15 +81,22 @@ class LocalAuthStrategy<User> extends AuthStrategy<User> {
       }
     }
 
-    // User authentication succeeded
-    if (verificationResult == true ||
-        (verificationResult is Map && verificationResult.isNotEmpty)) {
-      return verificationResult;
+    // User authentication succeeded can return Map(one element), User(non null) or true
+    if (verificationResult != null && verificationResult != false) {
+      if (verificationResult is Map && verificationResult.isNotEmpty) {
+        return verificationResult;
+      } else if (verificationResult is! Map) {
+        return verificationResult;
+      }
     }
 
     // Force basic if set
     if (forceBasic) {
-      res.headers['www-authenticate'] = 'Basic realm="$realm"';
+      //res.headers['www-authenticate'] = 'Basic realm="$realm"';
+      res
+        ..statusCode = 401
+        ..headers['www-authenticate'] = 'Basic realm="$realm"';
+      await res.close();
       return null;
     }
 
