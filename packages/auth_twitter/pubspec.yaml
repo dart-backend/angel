@@ -6,6 +6,7 @@ repository: https://github.com/dukefirehawk/angel/tree/master/packages/auth_twit
 publish_to: none
 environment:
   sdk: ">=3.0.0 <4.0.0"
+published_to: none
 dependencies:
   angel3_auth: ^8.0.0
   angel3_framework: ^8.0.0

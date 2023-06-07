@@ -5,6 +5,7 @@ homepage: https://angel3-framework.web.app/
 repository: https://github.com/dukefirehawk/angel/tree/master/packages/oauth2
 environment:
   sdk: '>=3.0.0 <4.0.0'
+published_to: none
 dependencies: 
   angel3_framework: ^8.0.0
   angel3_http_exception: ^8.0.0
