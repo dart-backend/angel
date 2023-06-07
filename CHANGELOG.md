@@ -13,7 +13,7 @@
 * Updated: angel3_auth
 * Updated: angel3_configuration
 * Updated: angel3_validate
-* Updated: angel3_client (1 failed test case)
+* Updated: angel3_client
 * Updated: angel3_websocket (1 failed test case)
 * Updated: angel3_test
 * Updated: jael3

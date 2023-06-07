@@ -30,7 +30,7 @@ Future wireAuth(Angel app) async {
   //auth.serializer = (user) async => 1337;
   //auth.deserializer = (id) async => sampleUser;
 
-  auth.strategies['local'] = LocalAuthStrategy(verifier);
+  auth.strategies['local'] = LocalAuthStrategy(verifier, allowBasic: true);
   await app.configure(auth.configureServer);
 }
 
@@ -104,7 +104,6 @@ void main() async {
     var encodedAuth = base64.encode(utf8.encode('password:username'));
 
     var response = await client.post(Uri.parse('$url/login'),
-        //body: json.encode(postData),
         headers: {'Authorization': 'Basic $encodedAuth'});
     print('Status Code: ${response.statusCode}');
     print(response.headers);

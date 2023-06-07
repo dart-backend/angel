@@ -7,7 +7,7 @@
 * Fixed failed `successRedirect` test case
 * Fixed failed `failureRedirect` test case
 * Fixed failed `login` test case
-* Fixed failed 'force basic` test case
+* Fixed failed `force basic` test case
 * Added `example1` and `example2`
 
 ## 7.0.1

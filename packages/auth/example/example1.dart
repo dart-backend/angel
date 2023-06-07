@@ -84,7 +84,7 @@ void main() async {
         (user) => user.username == username && user.password == password);
 
     return Future.value(result);
-  });
+  }, allowBasic: true);
 
   app.post(
       '/login',

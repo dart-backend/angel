@@ -28,7 +28,7 @@ class LocalAuthStrategy<User> extends AuthStrategy<User> {
       {this.usernameField = 'username',
       this.passwordField = 'password',
       this.invalidMessage = 'Please provide a valid username and password.',
-      this.allowBasic = true,
+      this.allowBasic = false,
       this.forceBasic = false,
       this.realm = 'Authentication is required.'}) {
     _log.info('Using LocalAuthStrategy');
