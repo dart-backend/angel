@@ -11,12 +11,12 @@ void performanceTests(FutureOr<QueryExecutor> Function() createExecutor,
     {FutureOr<void> Function(QueryExecutor)? close}) {
   QueryExecutor? executor;
 
-  int _sampleSize = 1000;
+  //int _sampleSize = 1000;
 
   int concurrency = 200;
 
   // Generate a random number between 1 and 10000
-  int _genRandomId() {
+  int genRandomId() {
     var rand = Random();
     return rand.nextInt(10000) + 1;
   }
@@ -65,7 +65,7 @@ void performanceTests(FutureOr<QueryExecutor> Function() createExecutor,
     var stopwatch = Stopwatch();
     stopwatch.start();
 
-    var id = _genRandomId();
+    var id = genRandomId();
     var query = WorldQuery()..where?.id.equals(id);
     var result = await query.get(executor!);
 
@@ -79,7 +79,7 @@ void performanceTests(FutureOr<QueryExecutor> Function() createExecutor,
     var stopwatch = Stopwatch();
     stopwatch.start();
 
-    var id = _genRandomId();
+    var id = genRandomId();
     var query = WorldQuery()..where?.id.equals(id);
     var result = await query.get(executor!);
 
