@@ -392,7 +392,7 @@ abstract class ResponseContext<RawResponse>
   }
 }
 
-abstract class LockableBytesBuilder extends BytesBuilder {
+abstract class LockableBytesBuilder implements BytesBuilder {
   factory LockableBytesBuilder() {
     return _LockableBytesBuilderImpl();
   }

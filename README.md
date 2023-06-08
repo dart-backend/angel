@@ -8,7 +8,7 @@
 [![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/LICENSE)
 [![melos](https://img.shields.io/badge/maintained%20with-melos-f700ff.svg?style=flat-square)](https://github.com/invertase/melos)
 
-**A polished, production-ready backend framework in Dart with NNBD support.**
+**A polished, production-ready backend framework in Dart.**
 
 -----
 
@@ -33,7 +33,15 @@ See all of the available [`packages`](https://angel3-docs.dukefirehawk.com/packa
 
 ## Important Notes
 
-Angel3 packages are published under `angel3_` prefix on pub.dev. These packages have passed all of their respective test suites before going live. The development work is ongoing in improving its features and performance for better development and deployment experience.
+Angel3 packages are published under `angel3_` prefix on pub.dev. These packages have passed all of their respective test suites before going live. The development work are currently focused on:
+
+* Keeping the packages with `angel3_` prefix in sync with Dart SDK releases
+  * Remove and replace deprecated classes and methods while keeping backward compatible
+  * Refactor the code to use new language features
+* Fix and resolve reported issues
+* Performance tunning
+* Improve on existing features, unit test, user guide and examples
+* Add new features
 
 The status of the project is as follows:
 
@@ -58,8 +66,9 @@ For more details, checkout [Project Status](https://github.com/dukefirehawk/ange
 
 ## Release Notes
 
-### Release 7.0.0 (Current Release)
+### Release 7.0.0 (Current)
 
+* Updated all `angel3_` packages to 7.0.0
 * Updated all `angel3_` packages to require dart >= 2.17.x
 * Updated dependencies to the latest libraries
 * Updated code generator to use `analyzer` 5.x.x
@@ -163,6 +172,29 @@ You can also view the [Angel3 API](http://www.dartdocs.org/documentation/angel_f
 ## Contributing
 
 Interested in contributing to Angel3? See the contribution guide [here](CONTRIBUTING.md).
+
+### Development Setup
+
+1. Fork `angel` repository
+
+2. Clone the project to local and create a new branch
+
+   ```bash
+   git clone https://github.com/<your_repo_name>/angel.git
+   git checkout -b feature/<your_branch_name>
+   ```
+
+3. Download and install [Dart 3](https://dart.dev/get-dart)
+
+4. Install `melos` 3.0
+
+   ```bash
+   dart pub global activate melos
+   ```
+
+5. Run `melos exec "dart pub upgrade"` to update all the packages
+
+6. Make changes to the packages
 
 ## Donation & Support
 

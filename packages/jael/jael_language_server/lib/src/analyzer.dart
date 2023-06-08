@@ -7,8 +7,9 @@ class Analyzer extends Parser {
   final Logger logger;
   Analyzer(Scanner scanner, this.logger) : super(scanner);
 
-  @override
-  final errors = <JaelError>[];
+  //@override
+  //final errors = <JaelError>[];
+
   SymbolTable<JaelObject>? _scope = SymbolTable<JaelObject>();
   var allDefinitions = <Variable<JaelObject>>[];
 
@@ -135,7 +136,6 @@ class Analyzer extends Parser {
       return element;
     } finally {
       _scope = _scope!.parent;
-      return null;
     }
   }
 

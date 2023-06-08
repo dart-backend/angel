@@ -86,6 +86,7 @@ class MySqlMigrationRunner implements MigrationRunner {
                   "INSERT INTO migrations (batch, path) VALUES ($curBatch, '$k')")
               .catchError((e) {
             _log.severe('Failed to insert into "migrations" table.', e);
+            throw Exception(e);
           });
 
           return result.affectedRows.toInt();

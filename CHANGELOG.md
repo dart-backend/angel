@@ -1,5 +1,57 @@
 # Change Log
 
+## 8.0.0
+
+* Require Dart >= 3.0
+* Updated: angel3_http_exception
+* Updated: angel3_route
+* Updated: angel3_model
+* Updated: angel3_container
+* Updated: angel3_container_generator
+* Updated: angel3_mock_request
+* Updated: angel3_framework
+* Updated: angel3_auth
+* Updated: angel3_configuration
+* Updated: angel3_validate
+* Updated: angel3_client
+* Updated: angel3_websocket
+* Updated: angel3_test
+* Updated: jael3
+* Updated: jael3_preprocessor
+* Updated: jael3_language_server
+* Updated: angel3_jael
+* Updated: jael3_web
+* Updated: angel3_production
+* Updated: angel3_hot
+* Updated: angel3_static
+* Updated: angel3_serialize
+* Updated: angel3_serialize_generator
+* Updated: angel3_orm
+* Updated: angel3_orm_generator
+* Updated: angel3_migration
+* Updated: angel3_migration_generator
+* Updated: angel3_orm_postgresql
+* Updated: angel3_orm_mysql
+* Updated: angel3_orm_service
+* Updated: angel3_orm_test
+* Updated: angel3_orm_cache
+* Updated: angel3_orm_cors
+* Updated: angel3_mustache
+* Updated: angel3_proxy
+* Updated: angel3_redis
+* Updated: angel3_jinja
+* Updated: angel3_security
+* Updated: angel3_user_agent
+* Updated: angel3_seo
+* Updated: angel3_sync
+* Updated: angel3_sembast
+* Updated: angel3_markdown
+* Updated: angel3_auth_oauth2
+* Updated: angel3_oauth2 (5 failed test cases)
+* Updated: angel3_auth_twitter (issue: oauth1 don't support http 1.0.0)
+* Updated: angel3_mongo (issue: mongo_dart don't support http 1.0.0)
+* Updated: angel3_shelf (2 failed test cases)
+
 ## 7.0.0
 
 * Require Dart >= 2.17

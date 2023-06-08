@@ -7,8 +7,7 @@
 
 **Forked from `mock_request` to support NNBD**
 
-Manufacture dart:io HttpRequests, HttpResponses, HttpHeaders, etc. This makes it possible to test server-side Dart applications without
-having to ever bind to a port.
+Manufacture dart:io HttpRequests, HttpResponses, HttpHeaders, etc. This makes it possible to test server-side Dart applications without having to ever bind to a port.
 
 This package was originally designed to make testing [Angel3](https://angel3-framework.web.app/) applications smoother, but works with any Dart-based server.
 

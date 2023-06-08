@@ -1,8 +1,19 @@
 # Change Log
 
-## 7.1.0
+## 8.0.0
+
+* Require Dart >= 3.0
+
+## 7.1.0-beta.2
+
+* Require Dart >= 2.19
+* Refactored `EmptyReflector`
+
+## 7.1.0-beta.1
 
 * Require Dart >= 2.18
+* Moved `defaultErrorMessage` to `ContainerConst` class to resolve reflectatable issue.
+* Added `hashCode`
 
 ## 7.0.0
 

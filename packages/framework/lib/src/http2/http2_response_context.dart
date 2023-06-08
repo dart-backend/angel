@@ -60,10 +60,10 @@ class Http2ResponseContext extends ResponseContext<ServerTransportStream> {
   @override
   BytesBuilder? get buffer => _buffer;
 
-  @override
-  void addError(Object error, [StackTrace? stackTrace]) {
-    super.addError(error, stackTrace);
-  }
+  // @override
+  // void addError(Object error, [StackTrace? stackTrace]) {
+  //   super.addError(error, stackTrace);
+  // }
 
   @override
   void useBuffer() {

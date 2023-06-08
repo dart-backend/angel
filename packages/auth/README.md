@@ -20,7 +20,7 @@ Ensure you have read the [User Guide](https://angel3-docs.dukefirehawk.com/guide
 configureServer(Angel app) async {
   var auth = AngelAuth<User>(
     serializer: (user) => user.id ?? '',
-    deserializer: (id) => fetchAUserByIdSomehow(id)
+    deserializer: (id) => fetchAUserByIdSomehow(id
   );
   auth.strategies['local'] = LocalAuthStrategy(...);
   

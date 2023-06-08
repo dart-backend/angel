@@ -1,0 +1,9 @@
+targets:
+  $default:
+    builders:
+      reflectable:
+        generate_for:
+          #- lib/**_controller.dart
+          - bin/**_controller.dart
+        options:
+          formatted: true

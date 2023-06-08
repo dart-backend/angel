@@ -1,4 +1,4 @@
-const List<String> SQL_RESERVED_WORDS = [
+const List<String> sqlReservedWords = [
   'SELECT',
   'UPDATE',
   'INSERT',

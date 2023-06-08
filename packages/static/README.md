@@ -13,7 +13,7 @@ In `pubspec.yaml`:
 
 ```yaml
 dependencies:
-    angel3_static: ^6.0.0
+    angel3_static: ^8.0.0
 ```
 
 ## Usage

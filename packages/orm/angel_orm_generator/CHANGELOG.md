@@ -1,5 +1,14 @@
 # Change Log
 
+## 8.0.0
+
+* Require Dart >= 3.0
+
+## 7.2.0-beta.1
+
+* [Breaking] Require Dart >= 2.19
+* Use `@SerializableField` properties in `Query.parseRow`
+
 ## 7.1.2
 
 * Fixed #88 due to change in `analyzer` 5.3.x

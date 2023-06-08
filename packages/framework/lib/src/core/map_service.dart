@@ -79,11 +79,6 @@ class MapService extends Service<String?, Map<String, dynamic>> {
   @override
   Future<Map<String, dynamic>> create(Map<String, dynamic> data,
       [Map<String, dynamic>? params]) {
-    //if (data is! Map) {
-    //  throw AngelHttpException.badRequest(
-    //      message:
-    //          'MapService does not support `create` with ${data.runtimeType}.');
-    //}
     var now = DateTime.now().toIso8601String();
     var result = Map<String, dynamic>.from(data);
 

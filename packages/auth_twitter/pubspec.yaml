@@ -1,33 +1,34 @@
 name: "angel3_auth_twitter"
 description: Angel3 authentication strategy for Twitter login. Auto-signs requests.
-version: 7.0.0
+version: 8.0.0
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dukefirehawk/angel/tree/master/packages/auth_twitter
 publish_to: none
 environment:
-  sdk: ">=2.17.0 <3.0.0"
+  sdk: ">=3.0.0 <4.0.0"
+published_to: none
 dependencies:
-  angel3_auth: ^7.0.0
-  angel3_framework: ^7.0.0
-  http: ^0.13.0
+  angel3_auth: ^8.0.0
+  angel3_framework: ^8.0.0
+  http: ^1.0.0
   path: ^1.0.0
   oauth1: ^2.0.0
   dart_twitter_api: ^0.5.6+1
 dev_dependencies:
-  logging: ^1.0.0
-  lints: ^1.0.0
-# dependency_overrides:
-#   angel3_container:
-#     path: ../container/angel_container
-#   angel3_framework:
-#     path: ../framework
-#   angel3_http_exception:
-#     path: ../http_exception
-#   angel3_model:
-#     path: ../model
-#   angel3_route:
-#     path: ../route
-#   angel3_mock_request:
-#     path: ../mock_request
-#   angel3_auth:
-#     path: ../auth
+  logging: ^1.2.0
+  lints: ^2.1.0
+dependency_overrides:
+  angel3_container:
+    path: ../container/angel_container
+  angel3_framework:
+    path: ../framework
+  angel3_http_exception:
+    path: ../http_exception
+  angel3_model:
+    path: ../model
+  angel3_route:
+    path: ../route
+  angel3_mock_request:
+    path: ../mock_request
+  angel3_auth:
+    path: ../auth

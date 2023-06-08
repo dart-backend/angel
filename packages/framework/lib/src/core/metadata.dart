@@ -45,17 +45,17 @@ const NoExpose noExpose = NoExpose();
 /// ```
 class Expose {
   final String method;
-  final String? path;
-  final Iterable<RequestHandler>? middleware;
+  final String path;
+  final Iterable<RequestHandler> middleware;
   final String? as;
   final List<String> allowNull;
 
-  static const Expose get = Expose(null, method: 'GET'),
-      post = Expose(null, method: 'POST'),
-      patch = Expose(null, method: 'PATCH'),
-      put = Expose(null, method: 'PUT'),
-      delete = Expose(null, method: 'DELETE'),
-      head = Expose(null, method: 'HEAD');
+  static const Expose get = Expose('', method: 'GET'),
+      post = Expose('', method: 'POST'),
+      patch = Expose('', method: 'PATCH'),
+      put = Expose('', method: 'PUT'),
+      delete = Expose('', method: 'DELETE'),
+      head = Expose('', method: 'HEAD');
 
   const Expose(this.path,
       {this.method = 'GET',
@@ -64,8 +64,8 @@ class Expose {
       this.allowNull = const []});
 
   const Expose.method(this.method,
-      {this.middleware, this.as, this.allowNull = const []})
-      : path = null;
+      {this.middleware = const [], this.as, this.allowNull = const []})
+      : path = '';
 }
 
 /// Used to apply special dependency injections or functionality to a function parameter.
@@ -89,7 +89,7 @@ class Parameter {
   final dynamic defaultValue;
 
   /// If `true` (default), then an error will be thrown if this parameter is not present.
-  final bool? required;
+  final bool required;
 
   const Parameter(
       {this.cookie,
@@ -98,7 +98,7 @@ class Parameter {
       this.session,
       this.match,
       this.defaultValue,
-      this.required});
+      this.required = true});
 
   /// Returns an error that can be thrown when the parameter is not present.
   Object? get error {

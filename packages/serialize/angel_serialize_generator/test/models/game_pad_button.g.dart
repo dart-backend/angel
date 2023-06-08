@@ -8,7 +8,10 @@ part of 'game_pad_button.dart';
 
 @generatedSerializable
 class GamepadButton implements _GamepadButton {
-  GamepadButton({this.name, this.radius});
+  GamepadButton({
+    this.name,
+    this.radius,
+  });
 
   @override
   String? name;
@@ -16,7 +19,10 @@ class GamepadButton implements _GamepadButton {
   @override
   int? radius;
 
-  GamepadButton copyWith({String? name, int? radius}) {
+  GamepadButton copyWith({
+    String? name,
+    int? radius,
+  }) {
     return GamepadButton(
         name: name ?? this.name, radius: radius ?? this.radius);
   }
@@ -30,7 +36,10 @@ class GamepadButton implements _GamepadButton {
 
   @override
   int get hashCode {
-    return hashObjects([name, radius]);
+    return hashObjects([
+      name,
+      radius,
+    ]);
   }
 
   @override
@@ -45,10 +54,10 @@ class GamepadButton implements _GamepadButton {
 
 @generatedSerializable
 class Gamepad extends _Gamepad {
-  Gamepad(
-      {List<_GamepadButton>? buttons = const [],
-      Map<String, dynamic>? dynamicMap})
-      : buttons = List.unmodifiable(buttons ?? []),
+  Gamepad({
+    List<_GamepadButton>? buttons = const [],
+    Map<String, dynamic>? dynamicMap,
+  })  : buttons = List.unmodifiable(buttons ?? []),
         dynamicMap = Map.unmodifiable(dynamicMap ?? {});
 
   @override
@@ -57,8 +66,10 @@ class Gamepad extends _Gamepad {
   @override
   Map<String, dynamic>? dynamicMap;
 
-  Gamepad copyWith(
-      {List<_GamepadButton>? buttons, Map<String, dynamic>? dynamicMap}) {
+  Gamepad copyWith({
+    List<_GamepadButton>? buttons,
+    Map<String, dynamic>? dynamicMap,
+  }) {
     return Gamepad(
         buttons: buttons ?? this.buttons,
         dynamicMap: dynamicMap ?? this.dynamicMap);
@@ -76,7 +87,10 @@ class Gamepad extends _Gamepad {
 
   @override
   int get hashCode {
-    return hashObjects([buttons, dynamicMap]);
+    return hashObjects([
+      buttons,
+      dynamicMap,
+    ]);
   }
 
   @override
@@ -131,7 +145,10 @@ class GamepadButtonSerializer extends Codec<GamepadButton, Map> {
 }
 
 abstract class GamepadButtonFields {
-  static const List<String> allFields = <String>[name, radius];
+  static const List<String> allFields = <String>[
+    name,
+    radius,
+  ];
 
   static const String name = 'name';
 
@@ -185,7 +202,10 @@ class GamepadSerializer extends Codec<Gamepad, Map> {
 }
 
 abstract class GamepadFields {
-  static const List<String> allFields = <String>[buttons, dynamicMap];
+  static const List<String> allFields = <String>[
+    buttons,
+    dynamicMap,
+  ];
 
   static const String buttons = 'buttons';
 

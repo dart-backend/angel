@@ -8,7 +8,10 @@ part of 'subclass.dart';
 
 @generatedSerializable
 class Animal extends _Animal {
-  Animal({required this.genus, required this.species});
+  Animal({
+    required this.genus,
+    required this.species,
+  });
 
   @override
   String? genus;
@@ -16,7 +19,10 @@ class Animal extends _Animal {
   @override
   String? species;
 
-  Animal copyWith({String? genus, String? species}) {
+  Animal copyWith({
+    String? genus,
+    String? species,
+  }) {
     return Animal(genus: genus ?? this.genus, species: species ?? this.species);
   }
 
@@ -27,7 +33,10 @@ class Animal extends _Animal {
 
   @override
   int get hashCode {
-    return hashObjects([genus, species]);
+    return hashObjects([
+      genus,
+      species,
+    ]);
   }
 
   @override
@@ -42,7 +51,11 @@ class Animal extends _Animal {
 
 @generatedSerializable
 class Bird extends _Bird {
-  Bird({required this.genus, required this.species, this.isSparrow = false});
+  Bird({
+    required this.genus,
+    required this.species,
+    this.isSparrow = false,
+  });
 
   @override
   String? genus;
@@ -53,7 +66,11 @@ class Bird extends _Bird {
   @override
   bool? isSparrow;
 
-  Bird copyWith({String? genus, String? species, bool? isSparrow}) {
+  Bird copyWith({
+    String? genus,
+    String? species,
+    bool? isSparrow,
+  }) {
     return Bird(
         genus: genus ?? this.genus,
         species: species ?? this.species,
@@ -70,7 +87,11 @@ class Bird extends _Bird {
 
   @override
   int get hashCode {
-    return hashObjects([genus, species, isSparrow]);
+    return hashObjects([
+      genus,
+      species,
+      isSparrow,
+    ]);
   }
 
   @override
@@ -132,7 +153,10 @@ class AnimalSerializer extends Codec<Animal, Map> {
 }
 
 abstract class AnimalFields {
-  static const List<String> allFields = <String>[genus, species];
+  static const List<String> allFields = <String>[
+    genus,
+    species,
+  ];
 
   static const String genus = 'genus';
 
@@ -190,7 +214,11 @@ class BirdSerializer extends Codec<Bird, Map> {
 }
 
 abstract class BirdFields {
-  static const List<String> allFields = <String>[genus, species, isSparrow];
+  static const List<String> allFields = <String>[
+    genus,
+    species,
+    isSparrow,
+  ];
 
   static const String genus = 'genus';
 

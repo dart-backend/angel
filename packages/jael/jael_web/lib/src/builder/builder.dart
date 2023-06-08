@@ -60,9 +60,8 @@ class JaelComponentGenerator extends GeneratorForAnnotation<Jael> {
       }
 
       // Generate a _XJaelTemplate mixin class
-      var clazz = Class((b) {
+      var clazz = Mixin((b) {
         b
-          ..abstract = true
           ..name = '_${element.name}JaelTemplate'
           ..implements.add(convertTypeReference(element.supertype));
 

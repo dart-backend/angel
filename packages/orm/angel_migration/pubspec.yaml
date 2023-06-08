@@ -1,14 +1,14 @@
 name: angel3_migration
-version: 7.0.0
+version: 8.0.0
 description: Database migration runtime for Angel3 ORM. Use this package to define schemas.
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dukefirehawk/angel/tree/master/packages/orm/angel_migration
 environment:
-  sdk: '>=2.17.0 <3.0.0'
+  sdk: '>=3.0.0 <4.0.0'
 dependencies:
-  angel3_orm: ^7.0.0
+  angel3_orm: ^8.0.0
 dev_dependencies:
-  lints: ^2.0.0
-# dependency_overrides:
-#    angel3_orm:
-#      path: ../angel_orm
+  lints: ^2.1.0
+dependency_overrides:
+   angel3_orm:
+     path: ../angel_orm

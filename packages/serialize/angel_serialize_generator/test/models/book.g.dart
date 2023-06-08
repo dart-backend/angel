@@ -1,6 +1,6 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
 
-part of angel_serialize.test.models.book;
+part of 'book.dart';
 
 // **************************************************************************
 // JsonModelGenerator
@@ -10,17 +10,17 @@ part of angel_serialize.test.models.book;
 @pragma('hello')
 @SerializableField(alias: 'omg')
 class Book extends _Book {
-  Book(
-      {this.id,
-      this.createdAt,
-      this.updatedAt,
-      this.author,
-      this.title,
-      this.description,
-      this.pageCount,
-      List<double>? notModels = const [],
-      this.camelCaseString})
-      : notModels = List.unmodifiable(notModels ?? []);
+  Book({
+    this.id,
+    this.createdAt,
+    this.updatedAt,
+    this.author,
+    this.title,
+    this.description,
+    this.pageCount,
+    List<double>? notModels = const [],
+    this.camelCaseString,
+  }) : notModels = List.unmodifiable(notModels ?? []);
 
   /// A unique identifier corresponding to this item.
   @override
@@ -53,16 +53,17 @@ class Book extends _Book {
   @override
   String? camelCaseString;
 
-  Book copyWith(
-      {String? id,
-      DateTime? createdAt,
-      DateTime? updatedAt,
-      String? author,
-      String? title,
-      String? description,
-      int? pageCount,
-      List<double>? notModels,
-      String? camelCaseString}) {
+  Book copyWith({
+    String? id,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    String? author,
+    String? title,
+    String? description,
+    int? pageCount,
+    List<double>? notModels,
+    String? camelCaseString,
+  }) {
     return Book(
         id: id ?? this.id,
         createdAt: createdAt ?? this.createdAt,
@@ -101,7 +102,7 @@ class Book extends _Book {
       description,
       pageCount,
       notModels,
-      camelCaseString
+      camelCaseString,
     ]);
   }
 
@@ -117,17 +118,17 @@ class Book extends _Book {
 
 @generatedSerializable
 class Author extends _Author {
-  Author(
-      {this.id,
-      this.createdAt,
-      this.updatedAt,
-      required this.name,
-      required this.age,
-      List<_Book> books = const [],
-      this.newestBook,
-      this.secret,
-      this.obscured})
-      : books = List.unmodifiable(books);
+  Author({
+    this.id,
+    this.createdAt,
+    this.updatedAt,
+    required this.name,
+    required this.age,
+    List<_Book> books = const [],
+    this.newestBook,
+    this.secret,
+    this.obscured,
+  }) : books = List.unmodifiable(books);
 
   /// A unique identifier corresponding to this item.
   @override
@@ -160,16 +161,17 @@ class Author extends _Author {
   @override
   String? obscured;
 
-  Author copyWith(
-      {String? id,
-      DateTime? createdAt,
-      DateTime? updatedAt,
-      String? name,
-      int? age,
-      List<_Book>? books,
-      _Book? newestBook,
-      String? secret,
-      String? obscured}) {
+  Author copyWith({
+    String? id,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    String? name,
+    int? age,
+    List<_Book>? books,
+    _Book? newestBook,
+    String? secret,
+    String? obscured,
+  }) {
     return Author(
         id: id ?? this.id,
         createdAt: createdAt ?? this.createdAt,
@@ -208,7 +210,7 @@ class Author extends _Author {
       books,
       newestBook,
       secret,
-      obscured
+      obscured,
     ]);
   }
 
@@ -224,12 +226,12 @@ class Author extends _Author {
 
 @generatedSerializable
 class Library extends _Library {
-  Library(
-      {this.id,
-      this.createdAt,
-      this.updatedAt,
-      required Map<String, _Book> collection})
-      : collection = Map.unmodifiable(collection);
+  Library({
+    this.id,
+    this.createdAt,
+    this.updatedAt,
+    required Map<String, _Book> collection,
+  }) : collection = Map.unmodifiable(collection);
 
   /// A unique identifier corresponding to this item.
   @override
@@ -246,11 +248,12 @@ class Library extends _Library {
   @override
   Map<String, _Book> collection;
 
-  Library copyWith(
-      {String? id,
-      DateTime? createdAt,
-      DateTime? updatedAt,
-      Map<String, _Book>? collection}) {
+  Library copyWith({
+    String? id,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    Map<String, _Book>? collection,
+  }) {
     return Library(
         id: id ?? this.id,
         createdAt: createdAt ?? this.createdAt,
@@ -272,7 +275,12 @@ class Library extends _Library {
 
   @override
   int get hashCode {
-    return hashObjects([id, createdAt, updatedAt, collection]);
+    return hashObjects([
+      id,
+      createdAt,
+      updatedAt,
+      collection,
+    ]);
   }
 
   @override
@@ -287,14 +295,15 @@ class Library extends _Library {
 
 @generatedSerializable
 class Bookmark extends _Bookmark {
-  Bookmark(_Book book,
-      {this.id,
-      this.createdAt,
-      this.updatedAt,
-      List<int> history = const [],
-      required this.page,
-      this.comment})
-      : history = List.unmodifiable(history),
+  Bookmark(
+    _Book book, {
+    this.id,
+    this.createdAt,
+    this.updatedAt,
+    List<int> history = const [],
+    required this.page,
+    this.comment,
+  })  : history = List.unmodifiable(history),
         super(book);
 
   /// A unique identifier corresponding to this item.
@@ -318,13 +327,15 @@ class Bookmark extends _Bookmark {
   @override
   String? comment;
 
-  Bookmark copyWith(_Book book,
-      {String? id,
-      DateTime? createdAt,
-      DateTime? updatedAt,
-      List<int>? history,
-      int? page,
-      String? comment}) {
+  Bookmark copyWith(
+    _Book book, {
+    String? id,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    List<int>? history,
+    int? page,
+    String? comment,
+  }) {
     return Bookmark(book,
         id: id ?? this.id,
         createdAt: createdAt ?? this.createdAt,
@@ -348,7 +359,14 @@ class Bookmark extends _Bookmark {
 
   @override
   int get hashCode {
-    return hashObjects([id, createdAt, updatedAt, history, page, comment]);
+    return hashObjects([
+      id,
+      createdAt,
+      updatedAt,
+      history,
+      page,
+      comment,
+    ]);
   }
 
   @override
@@ -439,7 +457,7 @@ abstract class BookFields {
     description,
     pageCount,
     notModels,
-    camelCaseString
+    camelCaseString,
   ];
 
   static const String id = 'id';
@@ -543,7 +561,7 @@ abstract class AuthorFields {
     books,
     newestBook,
     secret,
-    obscured
+    obscured,
   ];
 
   static const String id = 'id';
@@ -620,8 +638,7 @@ class LibrarySerializer extends Codec<Library, Map> {
       'created_at': model.createdAt?.toIso8601String(),
       'updated_at': model.updatedAt?.toIso8601String(),
       'collection': model.collection.keys.fold({}, (map, key) {
-        return (map as Map<dynamic, dynamic>)
-          ..[key] = BookSerializer.toMap(model.collection[key]);
+        return map..[key] = BookSerializer.toMap(model.collection[key]);
       })
     };
   }
@@ -632,7 +649,7 @@ abstract class LibraryFields {
     id,
     createdAt,
     updatedAt,
-    collection
+    collection,
   ];
 
   static const String id = 'id';
@@ -645,7 +662,10 @@ abstract class LibraryFields {
 }
 
 abstract class BookmarkSerializer {
-  static Bookmark fromMap(Map map, _Book book) {
+  static Bookmark fromMap(
+    Map map,
+    _Book book,
+  ) {
     if (map['page'] == null) {
       throw FormatException("Missing required field 'page' on Bookmark.");
     }
@@ -691,7 +711,7 @@ abstract class BookmarkFields {
     updatedAt,
     history,
     page,
-    comment
+    comment,
   ];
 
   static const String id = 'id';

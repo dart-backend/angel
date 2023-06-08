@@ -13,7 +13,7 @@ In your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  angel3_jael: ^6.0.0
+  angel3_jael: ^8.0.0
 ```
 
 ## Usage
