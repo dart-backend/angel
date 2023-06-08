@@ -1,5 +1,5 @@
 {
-  "image": "dart:2.19",
+  "image": "dart:3.0",
   "features": {
   }
 }
