@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:angel3_orm/angel3_orm.dart';
 import 'package:angel3_orm_mysql/angel3_orm_mysql.dart';
 import 'package:logging/logging.dart';
-import 'package:mysql1/mysql1.dart';
+//import 'package:mysql1/mysql1.dart';
 import 'package:mysql_client/mysql_client.dart';
 
 List tmpTables = [];
@@ -49,7 +49,7 @@ String extractTableName(String createQuery) {
 }
 
 // Executor for MariaDB
-Future<MariaDbExecutor> _connectToMariaDb(List<String> schemas) async {
+/* Future<MariaDbExecutor> _connectToMariaDb(List<String> schemas) async {
   var settings = ConnectionSettings(
       host: 'localhost',
       port: 3306,
@@ -81,7 +81,7 @@ Future<MariaDbExecutor> _connectToMariaDb(List<String> schemas) async {
   }
 
   return MariaDbExecutor(connection, logger: logger);
-}
+} */
 
 // Executor for MySQL
 //   create user 'test'@'localhost' identified by 'test123';

@@ -23,8 +23,8 @@ dependencies:
   async: ^2.11.0
 executables:
   jael3_language_server: jael3_language_server
-dependency_overrides:
-  jael3:
-    path: ../jael
-  jael3_preprocessor:
-    path: ../jael_preprocessor
+# dependency_overrides:
+#   jael3:
+#     path: ../jael
+#   jael3_preprocessor:
+#     path: ../jael_preprocessor

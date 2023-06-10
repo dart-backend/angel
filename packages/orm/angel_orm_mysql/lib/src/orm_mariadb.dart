@@ -9,7 +9,7 @@ class MariaDbExecutor extends QueryExecutor {
 
   final MySqlConnection _connection;
 
-  TransactionContext? _transactionContext;
+  //TransactionContext? _transactionContext;
 
   MariaDbExecutor(this._connection, {Logger? logger}) {
     this.logger = logger ?? Logger('MariaDbExecutor');
@@ -78,9 +78,10 @@ class MariaDbExecutor extends QueryExecutor {
   Future<T> transaction<T>(FutureOr<T> Function(QueryExecutor) f) async {
     T? returnValue = await _connection.transaction((ctx) async {
       try {
+        // TODO: To be refactored
         //logger.fine('Entering transaction');
         //var tx = MariaDbExecutor(conn, logger: logger);
-        _transactionContext = ctx;
+        //TransactionContext transactionContext = ctx;
         return await f(this);
       } catch (e) {
         logger.severe('Failed to run transaction', e);

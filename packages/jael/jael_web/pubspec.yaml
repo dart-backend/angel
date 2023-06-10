@@ -18,8 +18,8 @@ dev_dependencies:
   build_runner: ^2.4.0
   build_web_compilers: ^4.0.0
   lints: ^2.1.0
-dependency_overrides:
-  jael3:
-    path: ../jael
-  jael3_preprocessor:
-    path: ../jael_preprocessor
+# dependency_overrides:
+#   jael3:
+#     path: ../jael
+#   jael3_preprocessor:
+#     path: ../jael_preprocessor

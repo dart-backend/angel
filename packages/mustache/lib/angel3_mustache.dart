@@ -22,11 +22,11 @@ Future Function(Angel app) mustache(Directory viewsDirectory,
   return (Angel app) async {
     app.viewGenerator = (String name, [Map? data]) async {
       //var partialsProvider;
-      var partialsProvider = (String name) {
+      partialsProvider(String name) {
         var template = cache.getPartialSync(name, app)!;
         //return render(template, data ?? {}, partial: partialsProvider);
         return viewer.Template(template, name: name);
-      };
+      }
 
       var viewTemplate = await (cache.getView(name, app));
       //return await render(viewTemplate, data ?? {}, partial: partialsProvider);

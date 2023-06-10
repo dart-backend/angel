@@ -55,18 +55,14 @@ Branch: `master`
 
 For more details, checkout [Project Status](https://github.com/dukefirehawk/angel/wiki/Project-Status)
 
-### Next Release 8.0.0
-
-* Branch: `feature/v8`
-* Update all `angel3_` packages to require dart >= 3.0.x
-* Resolve issues related to generated container
-* Improve HTTP and ORM performance
-* Improve ORM for MySQL
-* Add cache support in ORM (using Redis)
-
 ## Release Notes
 
-### Release 7.0.0 (Current)
+### Release 8.0.0 (Current)
+
+* Update all `angel3_` packages to require dart >= 3.0.x
+* Resolve issues related to generated container
+
+### Release 7.0.0
 
 * Updated all `angel3_` packages to 7.0.0
 * Updated all `angel3_` packages to require dart >= 2.17.x
@@ -85,6 +81,16 @@ For more details, checkout [Project Status](https://github.com/dukefirehawk/ange
 * Added `melos` support
 * Removed deprecated API
 * [**Breaking**] `error` for `AngelHttpException` is no longer mandatory
+
+## TODO
+
+* Improve HTTP and ORM performance
+* Improve ORM for MySQL
+* Add cache support in ORM (using Redis)
+* Upgrade and release angel3_oauth2 8.0.0 (5 failed test cases)
+* Upgrade and release angel3_auth_twitter 8.0.0 (issue: oauth1 don't support http 1.0.0)
+* Upgrade and release angel3_mongo 8.0.0 (issue: mongo_dart don't support http 1.0.0)
+* Upgrade and release angel3_shelf 8.0.0 (2 failed test cases)
 
 ## Installation and Setup
 

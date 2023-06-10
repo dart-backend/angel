@@ -1,5 +1,6 @@
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_websocket/server.dart';
+import 'package:quiver/core.dart';
 
 class Game {
   final String? playerOne, playerTwo;
@@ -19,6 +20,9 @@ class Game {
       other is Game &&
       other.playerOne == playerOne &&
       other.playerTwo == playerTwo;
+
+  @override
+  int get hashCode => hash2(playerOne, playerTwo);
 }
 
 const Game johnVsBob = Game(playerOne: 'John', playerTwo: 'Bob');

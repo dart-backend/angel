@@ -34,8 +34,8 @@
 * Updated: angel3_orm_mysql
 * Updated: angel3_orm_service
 * Updated: angel3_orm_test
-* Updated: angel3_orm_cache
-* Updated: angel3_orm_cors
+* Updated: angel3_cache
+* Updated: angel3_cors
 * Updated: angel3_mustache
 * Updated: angel3_proxy
 * Updated: angel3_redis

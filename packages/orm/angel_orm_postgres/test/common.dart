@@ -63,7 +63,7 @@ Future<PostgreSqlExecutorPool> connectToPostgresPool1(
 
 Future<PostgreSqlPoolExecutor> connectToPostgresPool(
     Iterable<String> schemas) async {
-  var _pool = PgPool(
+  var dbPool = PgPool(
     PgEndpoint(
       host: 'localhost',
       port: 5432,
@@ -83,5 +83,5 @@ Future<PostgreSqlPoolExecutor> connectToPostgresPool(
   //  }
   //});
 
-  return PostgreSqlPoolExecutor(_pool, logger: Logger.root);
+  return PostgreSqlPoolExecutor(dbPool, logger: Logger.root);
 }
