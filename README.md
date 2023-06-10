@@ -47,7 +47,7 @@ The status of the project is as follows:
 
 Branch: `master`
 
-* Dart version : 2.17.x or later.
+* Dart version : 3.0.x or later.
 * Publish      : Yes. Refer to packages with `angel3_` prefix on [pub.dev](https://pub.dev/publishers/dukefirehawk.com/packages).
 * Null Safety  : Yes
 * Status       : Production
