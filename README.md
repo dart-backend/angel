@@ -60,21 +60,22 @@ For more details, checkout [Project Status](https://github.com/dukefirehawk/ange
 ### Release 8.0.0 (Current)
 
 * Updated `angel3_` packages to require dart >= 3.0.x
+* Updated dependencies to the latest
 * Resolved issues related to generated container
 
 ### Release 7.0.0
 
 * Updated `angel3_` packages to require dart >= 2.17.x
-* Updated dependencies to the latest libraries
+* Updated dependencies to the latest
 * Updated code generator to use `analyzer` 5.x.x
-* Fix ORM issues
+* Fixed ORM issues
 
 ### Release 6.0.0
 
-* Update all `angel3_` packages to require dart >= 2.16.x
-* Update ORM to support MariaDB 10.2.x (stable) and MySQL 8.x (beta)
-* Update code generator to use `analyzer` 3.x.x
-* Update exception handling
+* Updated all `angel3_` packages to require dart >= 2.16.x
+* Updated ORM to support MariaDB 10.2.x (stable) and MySQL 8.x (beta)
+* Updated code generator to use `analyzer` 3.x.x
+* Updated exception handling
 * Added default logger to generate standardised logging messages
 * Added `melos` support
 * Removed deprecated API
