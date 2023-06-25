@@ -1,5 +1,10 @@
 # Change Log
 
+## 8.0.1
+
+* Fixed `JsonModelGenerator` from generating duplicated fields
+* Fixed `JsonModelGenerator` to priortize `id` field as the first argument
+
 ## 8.0.0
 
 * Require Dart >= 3.0

@@ -56,15 +56,36 @@ Future<BuildContext?> buildContext(
         annotation.peek('includeAnnotations')?.listValue ?? <DartObject>[],
   );
   // var lib = await resolver.libraryFor(buildStep.inputId);
-  var fieldNames = <String>[];
   var fields = <FieldElement>[];
+  var fieldNames = <String>[];
+
+  for (var field in fields) {
+    fieldNames.add(field.name);
+  }
 
   // Crawl for classes from parent classes.
   void crawlClass(InterfaceType? t) {
     while (t != null) {
-      fields.insertAll(0, t.element.fields);
+      // Check and skip fields with same name
+      var parentClassFields = <FieldElement>[];
+      for (var el in t.element.fields) {
+        if (fieldNames.contains(el.name)) {
+          continue;
+        }
+        parentClassFields.add(el);
+        fieldNames.add(el.name);
+      }
+
+      fields.insertAll(0, parentClassFields);
       t.interfaces.forEach(crawlClass);
       t = t.superclass;
+    }
+
+    // Move id field to the front if exist
+    var item = fields.firstWhereOrNull((el) => el.name == 'id');
+    if (item != null) {
+      fields.removeWhere((el) => el.name == 'id');
+      fields.insert(0, item);
     }
   }
 
@@ -79,7 +100,7 @@ Future<BuildContext?> buildContext(
     if (field.getter != null &&
         (field.setter != null || field.getter!.isAbstract)) {
       var el = field.setter == null ? field.getter! : field;
-      fieldNames.add(field.name);
+      //fieldNames.add(field.name);
 
       // Check for @SerializableField
       var fieldAnn = serializableFieldTypeChecker.firstAnnotationOf(el);
