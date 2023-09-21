@@ -1,5 +1,10 @@
 # Change Log
 
+## 8.0.0
+
+* Require Dart >= 3.0
+* Upgraded `mongo_dart` to 0.9.3
+
 ## 7.0.0
 
 * Require Dart >= 2.17
