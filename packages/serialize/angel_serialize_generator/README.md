@@ -5,6 +5,25 @@
 [![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
 [![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/master/packages/serialize/angel_serialize_generator/LICENSE)
 
-The builder for Angel3 model serialization.
+The builder for Angel3 serialization.
 
-Find documentation in the main [serialize project repo](https://github.com/dukefirehawk/angel/tree/master/packages/serialize)
+## Usage
+
+1. Create a model class in `todo.dart` and annotate it with `@serializable`
+
+    ```dart
+        import 'package:angel3_serialize/angel3_serialize.dart';
+        part 'todo.g.dart';
+
+        @serializable
+        class _Todo {
+            String? text;
+            bool? completed;
+        }
+    ```
+
+2. Run the following command to generate the associated `todo.g.dart` file for serialization.
+
+    ```bash
+        dart run build_runner build
+    ```
