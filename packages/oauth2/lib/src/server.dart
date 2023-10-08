@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'package:angel3_framework/angel3_framework.dart';
+import 'package:logging/logging.dart';
 import 'exception.dart';
 import 'pkce.dart';
 import 'response.dart';
@@ -51,6 +52,8 @@ Future<Iterable<String>> _getScopes(RequestContext req,
 
 /// An OAuth2 authorization server, which issues access tokens to third parties.
 abstract class AuthorizationServer<Client, User> {
+  static Logger logger = Logger('AuthorizationServer');
+
   const AuthorizationServer();
 
   static const String _internalServerError =

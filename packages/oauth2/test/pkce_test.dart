@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:collection';
+import 'package:angel3_container/mirrors.dart';
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_framework/http.dart';
 import 'package:angel3_oauth2/angel3_oauth2.dart';
@@ -14,7 +15,7 @@ void main() {
   late TestClient testClient;
 
   setUp(() async {
-    app = Angel();
+    app = Angel(reflector: MirrorsReflector());
     app.container.registerSingleton(AuthCodes());
 
     var server = _Server();
