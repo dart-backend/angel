@@ -27,6 +27,7 @@ void main(List<String> args) async {
       password: "Test123*",
       secure: false);
 
+  // ignore: unused_local_variable
   var mysqlMigrationRunner = MySqlMigrationRunner(
     mySQLConn,
     migrations: [

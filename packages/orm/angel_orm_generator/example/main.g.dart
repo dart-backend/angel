@@ -9,15 +9,29 @@ part of 'main.dart';
 class EmployeeMigration extends Migration {
   @override
   void up(Schema schema) {
-    schema.create('employees', (table) {
-      table.serial('id').primaryKey();
-      table.timeStamp('created_at');
-      table.timeStamp('updated_at');
-      table.varChar('unique_id', length: 255).unique();
-      table.varChar('first_name', length: 255);
-      table.varChar('last_name', length: 255);
-      table.double('salary');
-    });
+    schema.create(
+      'employees',
+      (table) {
+        table.serial('id').primaryKey();
+        table.timeStamp('created_at');
+        table.timeStamp('updated_at');
+        table
+            .varChar(
+              'unique_id',
+              length: 255,
+            )
+            .unique();
+        table.varChar(
+          'first_name',
+          length: 255,
+        );
+        table.varChar(
+          'last_name',
+          length: 255,
+        );
+        table.double('salary');
+      },
+    );
   }
 
   @override
@@ -31,8 +45,10 @@ class EmployeeMigration extends Migration {
 // **************************************************************************
 
 class EmployeeQuery extends Query<Employee, EmployeeQueryWhere> {
-  EmployeeQuery({Query? parent, Set<String>? trampoline})
-      : super(parent: parent) {
+  EmployeeQuery({
+    Query? parent,
+    Set<String>? trampoline,
+  }) : super(parent: parent) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = EmployeeQueryWhere(this);
@@ -47,7 +63,7 @@ class EmployeeQuery extends Query<Employee, EmployeeQueryWhere> {
 
   @override
   Map<String, String> get casts {
-    return {'salary': 'char'};
+    return {};
   }
 
   @override
@@ -64,7 +80,7 @@ class EmployeeQuery extends Query<Employee, EmployeeQueryWhere> {
       'unique_id',
       'first_name',
       'last_name',
-      'salary'
+      'salary',
     ];
     return _selectedFields.isEmpty
         ? _fields
@@ -91,17 +107,16 @@ class EmployeeQuery extends Query<Employee, EmployeeQueryWhere> {
       return Optional.empty();
     }
     var model = Employee(
-        id: fields.contains('id') ? row[0].toString() : null,
-        createdAt: fields.contains('created_at')
-            ? mapToNullableDateTime(row[1])
-            : null,
-        updatedAt: fields.contains('updated_at')
-            ? mapToNullableDateTime(row[2])
-            : null,
-        uniqueId: fields.contains('unique_id') ? (row[3] as String?) : null,
-        firstName: fields.contains('first_name') ? (row[4] as String?) : null,
-        lastName: fields.contains('last_name') ? (row[5] as String?) : null,
-        salary: fields.contains('salary') ? mapToDouble(row[6]) : null);
+      id: fields.contains('id') ? row[0].toString() : null,
+      createdAt:
+          fields.contains('created_at') ? mapToNullableDateTime(row[1]) : null,
+      updatedAt:
+          fields.contains('updated_at') ? mapToNullableDateTime(row[2]) : null,
+      uniqueId: fields.contains('unique_id') ? (row[3] as String?) : null,
+      firstName: fields.contains('first_name') ? (row[4] as String?) : null,
+      lastName: fields.contains('last_name') ? (row[5] as String?) : null,
+      salary: fields.contains('salary') ? mapToDouble(row[6]) : null,
+    );
     return Optional.of(model);
   }
 
@@ -113,13 +128,34 @@ class EmployeeQuery extends Query<Employee, EmployeeQueryWhere> {
 
 class EmployeeQueryWhere extends QueryWhere {
   EmployeeQueryWhere(EmployeeQuery query)
-      : id = NumericSqlExpressionBuilder<int>(query, 'id'),
-        createdAt = DateTimeSqlExpressionBuilder(query, 'created_at'),
-        updatedAt = DateTimeSqlExpressionBuilder(query, 'updated_at'),
-        uniqueId = StringSqlExpressionBuilder(query, 'unique_id'),
-        firstName = StringSqlExpressionBuilder(query, 'first_name'),
-        lastName = StringSqlExpressionBuilder(query, 'last_name'),
-        salary = NumericSqlExpressionBuilder<double>(query, 'salary');
+      : id = NumericSqlExpressionBuilder<int>(
+          query,
+          'id',
+        ),
+        createdAt = DateTimeSqlExpressionBuilder(
+          query,
+          'created_at',
+        ),
+        updatedAt = DateTimeSqlExpressionBuilder(
+          query,
+          'updated_at',
+        ),
+        uniqueId = StringSqlExpressionBuilder(
+          query,
+          'unique_id',
+        ),
+        firstName = StringSqlExpressionBuilder(
+          query,
+          'first_name',
+        ),
+        lastName = StringSqlExpressionBuilder(
+          query,
+          'last_name',
+        ),
+        salary = NumericSqlExpressionBuilder<double>(
+          query,
+          'salary',
+        );
 
   final NumericSqlExpressionBuilder<int> id;
 
@@ -137,14 +173,22 @@ class EmployeeQueryWhere extends QueryWhere {
 
   @override
   List<SqlExpressionBuilder> get expressionBuilders {
-    return [id, createdAt, updatedAt, uniqueId, firstName, lastName, salary];
+    return [
+      id,
+      createdAt,
+      updatedAt,
+      uniqueId,
+      firstName,
+      lastName,
+      salary,
+    ];
   }
 }
 
 class EmployeeQueryValues extends MapQueryValues {
   @override
   Map<String, String> get casts {
-    return {'salary': 'double precision'};
+    return {};
   }
 
   String? get id {
@@ -198,14 +242,15 @@ class EmployeeQueryValues extends MapQueryValues {
 
 @generatedSerializable
 class Employee extends _Employee {
-  Employee(
-      {this.id,
-      this.createdAt,
-      this.updatedAt,
-      this.uniqueId,
-      this.firstName,
-      this.lastName,
-      this.salary});
+  Employee({
+    this.id,
+    this.createdAt,
+    this.updatedAt,
+    this.uniqueId,
+    this.firstName,
+    this.lastName,
+    this.salary,
+  });
 
   /// A unique identifier corresponding to this item.
   @override
@@ -231,14 +276,15 @@ class Employee extends _Employee {
   @override
   double? salary;
 
-  Employee copyWith(
-      {String? id,
-      DateTime? createdAt,
-      DateTime? updatedAt,
-      String? uniqueId,
-      String? firstName,
-      String? lastName,
-      double? salary}) {
+  Employee copyWith({
+    String? id,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    String? uniqueId,
+    String? firstName,
+    String? lastName,
+    double? salary,
+  }) {
     return Employee(
         id: id ?? this.id,
         createdAt: createdAt ?? this.createdAt,
@@ -263,8 +309,15 @@ class Employee extends _Employee {
 
   @override
   int get hashCode {
-    return hashObjects(
-        [id, createdAt, updatedAt, uniqueId, firstName, lastName, salary]);
+    return hashObjects([
+      id,
+      createdAt,
+      updatedAt,
+      uniqueId,
+      firstName,
+      lastName,
+      salary,
+    ]);
   }
 
   @override
@@ -347,7 +400,7 @@ abstract class EmployeeFields {
     uniqueId,
     firstName,
     lastName,
-    salary
+    salary,
   ];
 
   static const String id = 'id';

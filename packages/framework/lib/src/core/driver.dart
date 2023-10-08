@@ -108,6 +108,8 @@ abstract class Driver<
 
   /// Handles a single request.
   Future handleRawRequest(Request request, Response response) {
+    app.logger.info('[Server] Called handleRawRequest');
+
     return createRequestContext(request, response).then((req) {
       return createResponseContext(request, response, req).then((res) {
         Future handle() {
