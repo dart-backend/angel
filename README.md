@@ -1,6 +1,6 @@
 # Angel3 Framework
 
-[![Angel3 Framework](./angel3_logo.svg)](https://github.com/dukefirehawk/angel)
+[![Angel3 Framework](./angel3_logo.png)](https://github.com/dukefirehawk/angel)
 
 ![Pub Version (including pre-releases)](https://img.shields.io/pub/v/angel3_framework?include_prereleases)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
