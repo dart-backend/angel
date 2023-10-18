@@ -1,6 +1,6 @@
 # Angel3 Framework
 
-[![Angel3 Framework](../../angel3_logo.png)](https://github.com/dukefirehawk/angel)
+[![Angel3 Framework](angel3_logo.png)](https://github.com/dukefirehawk/angel)
 
 ![Pub Version (including pre-releases)](https://img.shields.io/pub/v/angel3_framework?include_prereleases)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
@@ -8,13 +8,13 @@
 [![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/LICENSE)
 [![melos](https://img.shields.io/badge/maintained%20with-melos-f700ff.svg?style=flat-square)](https://github.com/invertase/melos)
 
-**A polished, production-ready backend framework in Dart.**
+**A production-ready dart backend framework.**
 
 -----
 
 ## About
 
-Angel3 originated from a fork of the archived Angel framework in support of Dart SDK 2.12.x or later. It is a full-stack Web framework in Dart that aims to streamline development by providing many common features out-of-the-box in a consistent manner. The codebase has been completely migrated and refactored to support null safety. One of the main goal is to enable developers to build both frontend and backend in the same language, Dart, with null safety. Angel3 is designed as a collection of plugins that enable developers to pick and choose the parts needed for their projects. A series of starter templates are also provided for quick start and trial run with Angel3. Visit our [website](<https://angel3-framework.web.app/>) to learn more.
+Angel3 originated from a fork of the archived Angel framework in support of Dart SDK 2.12.x or later. It is a full-stack backend framework in Dart that aims to streamline development by providing many common features out-of-the-box in a consistent manner. The codebase has been completely migrated and refactored to support null safety. One of the main goal is to enable developers to build both frontend and backend in dart language. Angel3 is designed as a collection of plugins that enable developers to pick and choose the parts needed for their projects. A series of starter templates are also provided for quick start and trial run with Angel3. Visit our [website](<https://angel3-framework.web.app/>) to learn more.
 
 The available features in Angel3 includes:
 
