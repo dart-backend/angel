@@ -1,5 +1,9 @@
 # Change Log
 
+## 8.1.1
+
+* Updated broken image on README.md
+
 ## 8.1.0
 
 * Updated `uuid` to 4.0.0
