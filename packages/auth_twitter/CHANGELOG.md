@@ -1,5 +1,10 @@
 # Change Log
 
+## 8.0.0
+
+* Require Dart >= 3.0
+* Updated `oauth1` to `belatuk_oauth1`
+
 ## 7.0.0
 
 * Require Dart >= 2.17
