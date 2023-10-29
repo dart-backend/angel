@@ -1,5 +1,9 @@
 # Change Log
 
+## 8.0.1
+
+* Fixed null check throwing exception
+
 ## 8.0.0
 
 * Require Dart >= 3.0
