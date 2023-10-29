@@ -1,11 +1,11 @@
-# Angel3 Testing Library
+# Angel3 Test
 
 ![Pub Version (including pre-releases)](https://img.shields.io/pub/v/angel3_test?include_prereleases)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 [![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
 [![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/master/packages/test/LICENSE)
 
-Testing utility library for the Angel3 framework.
+Testing utility library for Angel3 framework.
 
 ## TestClient
 
@@ -51,7 +51,7 @@ void test('error', () async {
 ```dart
 test('validate response', () async {
     var res = await client.get('/bar');
-    expect(res, hasValidBody(new Validator({
+    expect(res, hasValidBody(Validator({
         'foo': isBoolean,
         'bar': [isString, equals('baz')],
         'age*': [],

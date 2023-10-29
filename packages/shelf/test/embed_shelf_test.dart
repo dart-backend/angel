@@ -16,7 +16,7 @@ void main() {
   late http.Client client;
   late HttpServer server;
 
-  Uri _path(String p) {
+  Uri path(String p) {
     return Uri(
         scheme: 'http',
         host: server.address.address,
@@ -65,25 +65,25 @@ void main() {
   });
 
   test('expose angel side', () async {
-    var response = await client.get(_path('/angel'));
+    var response = await client.get(path('/angel'));
     expect(json.decode(response.body), equals('Angel'));
   });
 
   test('expose shelf side', () async {
-    var response = await client.get(_path('/foo'));
+    var response = await client.get(path('/foo'));
     expect(response, hasStatus(200));
     expect(response.body, equals('Request for "foo"'));
   });
 
   test('shelf can return arbitrary values', () async {
-    var response = await client.get(_path('/two'));
+    var response = await client.get(path('/two'));
     expect(response, isJson(2));
   });
 
   test('shelf can hijack', () async {
     try {
       var client = HttpClient();
-      var rq = await client.openUrl('GET', _path('/hijack'));
+      var rq = await client.openUrl('GET', path('/hijack'));
       var rs = await rq.close();
       var body = await rs.cast<List<int>>().transform(utf8.decoder).join();
       print('Response: $body');
@@ -96,17 +96,17 @@ void main() {
   });
 
   test('shelf can set status code', () async {
-    var response = await client.get(_path('/status'));
+    var response = await client.get(path('/status'));
     expect(response, allOf(hasStatus(304), hasHeader('foo', 'bar')));
   });
 
   test('shelf can throw error', () async {
-    var response = await client.get(_path('/error'));
+    var response = await client.get(path('/error'));
     expect(response, hasStatus(404));
   });
 
   test('throw on null', () async {
-    var response = await client.get(_path('/throw'));
+    var response = await client.get(path('/throw'));
     expect(response, hasStatus(500));
   });
 }

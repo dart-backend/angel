@@ -1,17 +1,15 @@
-# Angel3 Request Validator
+# Angel3 Validate
 
 ![Pub Version (including pre-releases)](https://img.shields.io/pub/v/angel3_validate?include_prereleases)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 [![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
 [![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/master/packages/validate/LICENSE)
 
-Validation library based on the `matcher` library, with Angel3 support. Why re-invent the wheel, when you can use the same validators you already use for tests?
-
-This library runs both on the server, and on the client. Thus, you can use the same validation rules for forms on the server, and on the frontend.
+This validator library is based on the `matcher` library and comes with build in support for Angel3 framework. It can be run on both server and client side. Thus, the same validation rules apply to forms on both backend and frontend code.
 
 For convenience's sake, this library also exports `matcher`.
 
-- [Angel3 Request Validator](#angel3-request-validator)
+- [Angel3 Validate](#angel3-validate)
   - [Examples](#examples)
     - [Creating a Validator](#creating-a-validator)
     - [Validating data](#validating-data)
@@ -25,7 +23,7 @@ For convenience's sake, this library also exports `matcher`.
     - [Extending Validators](#extending-validators)
     - [Bundled Matchers](#bundled-matchers)
     - [Nested Validators](#nested-validators)
-    - [Use with Angel](#use-with-angel)
+    - [Use with Angel3](#use-with-angel3)
 
 ## Examples
 
@@ -82,9 +80,7 @@ main() {
 
 ### Required Fields
 
-Fields are optional by default.
-
-Suffix a field name with a `'*'` to mark it as required, and to throw an error if it is not present.
+Fields are optional by default. Suffix a field name with a `'*'` to mark it as required, and to throw an error if it is not present.
 
 ```dart
 main() {
@@ -118,9 +114,7 @@ Default values can also be parameterless, *synchronous* functions that return a 
 
 ### Custom Validator Functions
 
-Creating a whole `Matcher` class is sometimes cumbersome, but if you pass a function to the constructor, it will be wrapped in a `Matcher` instance.
-
-(It simply returns the value of calling [`predicate`](https://pub.dev/documentation/matcher/latest/matcher/predicate.html).)
+Creating a whole `Matcher` class is sometimes cumbersome, but if you pass a function to the constructor, it will be wrapped in a `Matcher` instance. (It simply returns the value of calling [`predicate`](https://pub.dev/documentation/matcher/latest/matcher/predicate.html).)
 
 The function must *synchronously* return a `bool`.
 
@@ -151,8 +145,7 @@ The string `{{value}}` will be replaced inside your error message automatically.
 
 ### autoParse
 
-Oftentimes, fields that we want to validate as numbers are passed as strings.
-Calling `autoParse` will correct this before validation.
+Oftentimes, fields that we want to validate as numbers are passed as strings. Calling `autoParse` will correct this before validation.
 
 ```dart
 main() {
@@ -263,7 +256,7 @@ main() {
 }
 ```
 
-### Use with Angel
+### Use with Angel3
 
 `server.dart` exposes seven helper middleware:
 
