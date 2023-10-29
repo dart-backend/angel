@@ -162,7 +162,8 @@ class Validator extends Matcher {
         var value = input[key];
         var description = StringDescription("'$key': expected ");
 
-        for (var matcher in rules[key]!) {
+        var rulesList = rules[key] ?? [];
+        for (var matcher in rulesList) {
           if (matcher is ContextValidator) {
             if (!matcher.validate(key, input)) {
               errors.add(matcher
@@ -175,7 +176,8 @@ class Validator extends Matcher {
         }
 
         if (valid) {
-          for (var matcher in rules[key]!) {
+          var rulesList = rules[key] ?? [];
+          for (var matcher in rulesList) {
             try {
               if (matcher is Validator) {
                 var result = matcher.check(value as Map);
@@ -320,7 +322,10 @@ class Validator extends Matcher {
       return;
     }
 
-    rules[key]!.add(rule);
+    if (rules[key] == null) {
+      rules[key] = List.empty(growable: true);
+    }
+    rules[key]?.add(rule);
   }
 
   /// Adds all given [rules].
@@ -333,7 +338,7 @@ class Validator extends Matcher {
   /// Removes a [rule].
   void removeRule(String key, Matcher rule) {
     if (rules.containsKey(key)) {
-      rules[key]!.remove(rule);
+      rules[key]?.remove(rule);
     }
   }
 
