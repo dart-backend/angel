@@ -1,5 +1,11 @@
 # Change Log
 
+## 8.0.1
+
+* Added `describeMismatch` to `hasStatus`
+* Added `describeMismatch` to `hasContentType`
+* Added `describeMismatch` to `hasValidBody`
+
 ## 8.0.0
 
 * Require Dart >= 3.0

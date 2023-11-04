@@ -63,6 +63,9 @@ class Validator extends Matcher {
   /// Fields that must be present for data to be considered valid.
   final List<String> requiredFields = [];
 
+  /// Validation error messages.
+  final List<String> errorMessages = [];
+
   void _importSchema(Map<String, dynamic> schema) {
     for (var keys in schema.keys) {
       for (var key in keys.split(',').map((s) => s.trim())) {
@@ -205,7 +208,12 @@ class Validator extends Matcher {
                 }
               }
             } catch (e) {
-              errors.add(e.toString());
+              if (e is ValidationException) {
+                errors.add(e.errors.first);
+              } else {
+                errors.add(e.toString());
+              }
+
               valid = false;
               break;
             }
@@ -401,7 +409,7 @@ class ValidationException extends AngelHttpException {
             statusCode: 400,
             errors: (errors).toSet().toList(),
             stackTrace: StackTrace.current) {
-    this.errors.addAll(errors.toSet());
+    //this.errors.addAll(errors.toSet());
   }
 
   @override
