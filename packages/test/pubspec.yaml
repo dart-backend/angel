@@ -1,5 +1,5 @@
 name: angel3_test
-version: 8.0.0
+version: 8.0.1
 description: Testing utility library for the Angel3 framework. Use with package:test.
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dukefirehawk/angel/tree/master/packages/test
@@ -19,9 +19,9 @@ dependencies:
 dev_dependencies: 
   test: ^1.24.0
   lints: ^2.1.0
-# dependency_overrides:
-#   angel3_container:
-#     path: ../container/angel_container
+dependency_overrides:
+   angel3_validate:
+     path: ../validate
 #   angel3_framework:
 #     path: ../framework
 #   angel3_http_exception:

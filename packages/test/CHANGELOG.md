@@ -1,5 +1,13 @@
 # Change Log
 
+## 8.0.1
+
+* Fixed `hasStatus` mismatch message
+* Fixed `hasContentType` mismatch message
+* Fixed `hasValidBody` mismatch message
+* Fixed `hasHeader` mismatch message
+* Fixed `hasHeader` failed test case
+
 ## 8.0.0
 
 * Require Dart >= 3.0

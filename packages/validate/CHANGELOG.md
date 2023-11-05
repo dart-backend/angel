@@ -2,7 +2,7 @@
 
 ## 8.0.1
 
-* Fixed null check throwing exception
+* Fixed missing mismatch errors
 
 ## 8.0.0
 
