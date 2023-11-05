@@ -1,5 +1,9 @@
 # Change Log
 
+## 8.0.2
+
+* Fixed incorrect mismatch message handling
+
 ## 8.0.1
 
 * Fixed missing mismatch errors
