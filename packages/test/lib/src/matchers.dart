@@ -153,11 +153,10 @@ class _HasHeader extends Matcher {
         return contains(key.toLowerCase())
             .matches(item.headers.keys, matchState);
       } else {
-        if (!item.headers.containsKey(key.toLowerCase())) return false;
+        var headerKey = item.headers[key.toLowerCase()];
+        if (headerKey == null) return false;
         var v = value is Iterable ? (value as Iterable) : [value];
-        return v
-            .map((x) => x.toString())
-            .every(item.headers[key.toLowerCase()]!.split(',').contains);
+        return v.map((x) => x.toString()).every(headerKey.split(',').contains);
       }
     } else {
       return false;

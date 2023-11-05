@@ -2,9 +2,11 @@
 
 ## 8.0.1
 
-* Added `describeMismatch` to `hasStatus`
-* Added `describeMismatch` to `hasContentType`
-* Added `describeMismatch` to `hasValidBody`
+* Fixed `hasStatus` mismatch message
+* Fixed `hasContentType` mismatch message
+* Fixed `hasValidBody` mismatch message
+* Fixed `hasHeader` mismatch message
+* Fixed `hasHeader` failed test case
 
 ## 8.0.0
 
