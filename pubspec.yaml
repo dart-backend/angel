@@ -1,4 +1,4 @@
-name: graphql_dart
+name: angel
 
 environment:
   sdk: '>=2.18.0 <3.0.0'
