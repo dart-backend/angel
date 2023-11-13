@@ -99,7 +99,7 @@ void main() async {
   // Remove 'X-FRAME-OPTIONS'
   http.defaultResponseHeaders.remove('X-FRAME-OPTIONS', 'SAMEORIGIN');
 
-  // Add 'X-XSRF_TOKEN'
+  // Add 'X-XSRF-TOKEN'
   http.defaultResponseHeaders.add('X-XSRF-TOKEN',
       'a591a6d40bf420404a011733cfb7b190d62c65bf0bcda32b57b277d9ad9f146e');
 }
