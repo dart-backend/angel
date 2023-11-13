@@ -22,9 +22,6 @@ class AngelHttp extends Driver<HttpRequest, HttpResponse, HttpServer,
     HttpRequestContext, HttpResponseContext> {
   @override
   Uri get uri {
-    //if (server == null) {
-    //  throw ArgumentError("[AngelHttp] Server instance not intialised");
-    //}
     return Uri(
         scheme: 'http', host: server?.address.address, port: server?.port);
   }
@@ -38,7 +35,7 @@ class AngelHttp extends Driver<HttpRequest, HttpResponse, HttpServer,
 
   /// An instance mounted on a server started by the [serverGenerator].
   factory AngelHttp.custom(Angel app, ServerGeneratorType serverGenerator,
-      {bool useZone = true}) {
+      {bool useZone = true, Map<String, String> headers = const {}}) {
     return AngelHttp._(app, serverGenerator, useZone);
   }
 
@@ -67,15 +64,6 @@ class AngelHttp extends Driver<HttpRequest, HttpResponse, HttpServer,
     return AngelHttp.fromSecurityContext(app, serverContext, useZone: useZone);
   }
 
-  /// Use [server] instead.
-  //@deprecated
-  //HttpServer get httpServer {
-  //if (server == null) {
-  //  throw ArgumentError("[AngelHttp] Server instance not initialised");
-  //}
-  //  return server;
-  //}
-
   Future handleRequest(HttpRequest request) =>
       handleRawRequest(request, request.response);
 
@@ -86,6 +74,20 @@ class AngelHttp extends Driver<HttpRequest, HttpResponse, HttpServer,
   @override
   Future<void> close() async {
     return await super.close();
+  }
+
+  /// Remove headers from HTTP Response
+  void removeResponseHeader(Map<String, Object> headers) {
+    headers.forEach((key, value) {
+      server?.defaultResponseHeaders.remove(key, value);
+    });
+  }
+
+  /// Add headers to HTTP Response
+  void responseHeader(Map<String, Object> headers) {
+    headers.forEach((key, value) {
+      server?.defaultResponseHeaders.add(key, value);
+    });
   }
 
   @override

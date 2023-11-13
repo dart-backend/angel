@@ -9,9 +9,7 @@ Helpers for concurrency, message-passing, rotating loggers, and other production
 
 ![Screenshot](angel3-screenshot.png)
 
-This will become the de-facto way to run Angel3 applications in deployed environments, as it takes care of inter-isolate communication, respawning dead processes, and other housekeeping for you automatically.
-
-Most users will want to use the `Runner` class.
+This will become the de-facto way to run Angel3 applications in deployed environments, as it takes care of inter-isolate communication, respawning dead processes, and other housekeeping for you automatically. Most users will want to use the `Runner` class.
 
 ## `Runner`
 
@@ -45,15 +43,11 @@ When combined with `systemd`, deploying Angel3 applications on Linux can be very
 ## Message Passing
 
 The `Runner` class uses [`belatuk_pub_sub`](<https://pub.dev/packages/belatuk_pub_sub>) to coordinate
-message passing between isolates.
-
-When one isolate sends a message, all other isolates will receive the same message, except for the isolate that sent it.
-
-It is injected into your application's `Container` as `pub_sub.Client`, so you can use it as follows:
+message passing between isolates. When one isolate sends a message, all other isolates will receive the same message, except for the isolate that sent it. It is injected into your application's `Container` as `pub_sub.Client`, so you can use it as follows:
 
 ```dart
 // Use the injected `pub_sub.Client` to send messages.
-var client = app.container.make<pub_sub.Client>();
+var client = app.container.make<Client>();
 
 // We can listen for an event to perform some behavior.
 //
@@ -64,6 +58,32 @@ onGreetingChanged
     .listen((user) {
       // Do something...
     });
+```
+
+## Customising Response Header
+
+Additional parameters can be passed to the `Runner` class to:
+
+1. Remove headers from HTTP response.
+2. Add headers to HTTP response.
+
+For example, the following code snippet removes `X-FRAME-OPTIONS` and adds `X-XSRF_TOKEN` to the response header.
+
+```dart
+
+void main(List<String> args) {
+  // Remove default
+  var removeHeader = {'X-FRAME-OPTIONS': 'SAMEORIGIN'};
+  var customHeader = {
+    'X-XSRF_TOKEN':
+        'a591a6d40bf420404a011733cfb7b190d62c65bf0bcda32b57b277d9ad9f146e'
+  };
+
+  Runner('example', configureServer,
+          removeResponseHeaders: removeHeader, responseHeaders: customHeader)
+      .run(args);
+}
+
 ```
 
 ## Run-time Metadata

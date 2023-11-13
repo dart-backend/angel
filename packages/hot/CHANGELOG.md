@@ -1,5 +1,10 @@
 # Change Log
 
+## 8.1.0
+
+* Updated `vm_service` to 13.0.0
+* Added configurable HTTP response header
+
 ## 8.0.0
 
 * Require Dart >= 3.0

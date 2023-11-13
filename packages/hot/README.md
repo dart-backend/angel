@@ -9,7 +9,7 @@
 
 Supports *hot reloading* of Angel3 servers on file changes. This is faster and more reliable than merely reactively restarting a `Process`. This package only works with the [Angel3 framework](https://pub.dev/packages/angel3_framework).
 
-**Not recommended to use in production, unless you are specifically intending for a "hot code push" in production..**
+**Not recommended to use in production, unless you are specifically intending for a "hot code push" in production.**
 
 ## Installation
 
@@ -23,11 +23,7 @@ dependencies:
 
 ## Usage
 
-This package is dependent on the Dart VM service, so you *must* run Dart with the `--observe` (or `--enable-vm-service`) argument!!!
-
-Usage is fairly simple. Pass a function that creates an `Angel` server, along with a collection of paths to watch, to the `HotReloader` constructor. The rest is history!!!
-
-The recommended pattern is to only use hot-reloading in your application entry point. Create your `Angel` instance within a separate function, conventionally named `createServer`.
+This package is dependent on the Dart VM service, so you *must* run Dart with the `--observe` (or `--enable-vm-service`) argument. Usage is fairly simple. Pass a function that creates an `Angel` server, along with a collection of paths to watch, to the `HotReloader` constructor. The recommended pattern is to only use hot-reloading in your application entry point. Create your `Angel` instance within a separate function, conventionally named `createServer`.
 
 You can watch:
 
