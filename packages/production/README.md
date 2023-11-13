@@ -67,7 +67,7 @@ Additional parameters can be passed to the `Runner` class to:
 1. Remove headers from HTTP response.
 2. Add headers to HTTP response.
 
-For example, the following code snippet removes `X-FRAME-OPTIONS` and adds `X-XSRF_TOKEN` to the response header.
+For example, the following code snippet removes `X-FRAME-OPTIONS` and adds `X-XSRF-TOKEN` to the response header.
 
 ```dart
 
