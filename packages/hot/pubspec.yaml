@@ -1,5 +1,5 @@
 name: angel3_hot
-version: 8.0.0
+version: 8.1.0
 description: Supports hot reloading/hot code push of Angel3 servers on file changes.
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dukefirehawk/angel/tree/master/packages/hot
@@ -13,17 +13,17 @@ dependencies:
   glob: ^2.1.0
   io: ^1.0.0
   path: ^1.8.0
-  vm_service: ^11.6.0
+  vm_service: ^13.0.0
   watcher: ^1.0.0
+  logging: ^1.2.0
 dev_dependencies:
   http: ^1.0.0
-  logging: ^1.2.0
   lints: ^2.1.0
-# dependency_overrides:
+dependency_overrides:
 #   angel3_container:
 #     path: ../container/angel_container
-#   angel3_framework:
-#     path: ../framework
+  angel3_framework:
+    path: ../framework
 #   angel3_http_exception:
 #     path: ../http_exception
 #   angel3_model:

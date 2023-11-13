@@ -1,5 +1,9 @@
 # Change Log
 
+## 8.1.0
+
+* Added optional `responseHeaders` and `removeResponseHeaders` to `Runner`
+
 ## 8.0.0
 
 * Require Dart >= 3.0

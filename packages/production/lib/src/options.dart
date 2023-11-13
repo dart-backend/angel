@@ -32,13 +32,12 @@ class RunnerOptions {
     ..addOption('key-file', help: 'The PEM key file to read.')
     ..addOption('key-password', help: 'The PEM key file password.');
 
-  final String? hostname,
-      certificateFile,
-      keyFile,
-      certificatePassword,
-      keyPassword;
+  final String hostname;
+  final String? certificateFile, keyFile, certificatePassword, keyPassword;
   final int concurrency, port;
   final bool useZone, respawn, quiet, ssl, http2;
+  final Map<String, Object> removeResponseHeaders = {};
+  final Map<String, Object> responseHeaders = {};
 
   RunnerOptions(
       {this.hostname = '127.0.0.1',
@@ -56,26 +55,18 @@ class RunnerOptions {
 
   factory RunnerOptions.fromArgResults(ArgResults argResults) {
     return RunnerOptions(
-      hostname: argResults['address'] as String?,
+      hostname: argResults['address'] as String,
       port: int.parse(argResults['port'] as String),
       concurrency: int.parse(argResults['concurrency'] as String),
       useZone: argResults['use-zone'] as bool? ?? false,
       respawn: argResults['respawn'] as bool? ?? true,
       quiet: argResults['quiet'] as bool? ?? false,
-      certificateFile: argResults.wasParsed('certificate-file')
-          ? argResults['certificate-file'] as String?
-          : null,
-      keyFile: argResults.wasParsed('key-file')
-          ? argResults['key-file'] as String?
-          : null,
+      certificateFile: argResults['certificate-file'] as String?,
+      keyFile: argResults['key-file'] as String?,
       ssl: argResults['ssl'] as bool? ?? false,
       http2: argResults['http2'] as bool? ?? false,
-      certificatePassword: argResults.wasParsed('certificate-password')
-          ? argResults['certificate-password'] as String?
-          : null,
-      keyPassword: argResults.wasParsed('key-password')
-          ? argResults['key-password'] as String?
-          : null,
+      certificatePassword: argResults['certificate-password'] as String?,
+      keyPassword: argResults['key-password'] as String?,
     );
   }
 }

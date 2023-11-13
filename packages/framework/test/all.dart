@@ -27,6 +27,7 @@ import 'service_map_test.dart' as service_map;
 import 'services_test.dart' as services;
 import 'streaming_test.dart' as streaming;
 import 'view_generator_test.dart' as view_generator;
+//import 'response_header_test.dart' as response_header;
 import 'package:test/test.dart';
 
 /// For running with coverage
@@ -36,6 +37,7 @@ void main() {
   group('accepts', accepts.main);
   group('anonymous service', anonymous_service.main);
   group('body', body.main);
+  //group('response_header', response_header.main);
   group('controller', controller.main);
   group('detach', detach.main);
   group('di', di.main);

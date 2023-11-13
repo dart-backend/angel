@@ -12,6 +12,7 @@ import 'package:glob/glob.dart';
 import 'package:glob/list_local_fs.dart';
 import 'package:belatuk_html_builder/elements.dart';
 import 'package:io/ansi.dart';
+import 'package:logging/logging.dart';
 import 'package:path/path.dart' as p;
 import 'package:vm_service/vm_service.dart' as vm;
 import 'package:vm_service/vm_service_io.dart' as vm;
@@ -19,8 +20,6 @@ import 'package:watcher/watcher.dart';
 
 /// A utility class that watches the filesystem for changes, and starts new instances of an Angel server.
 class HotReloader {
-  late vm.VmService _client;
-  vm.IsolateRef? _mainIsolate;
   final StreamController<WatchEvent> _onChange =
       StreamController<WatchEvent>.broadcast();
   final List _paths = [];
@@ -28,8 +27,10 @@ class HotReloader {
   final Queue<HttpRequest> _requestQueue = Queue<HttpRequest>();
   late HttpServer _io;
   AngelHttp? _server;
-  Duration? _timeout;
+  late Duration _timeout;
+  late vm.VmService _client;
   vm.VM? _vmachine;
+  vm.IsolateRef? _mainIsolate;
 
   /// If `true` (default), then developers can `press 'r' to reload` the application on-the-fly.
   ///
@@ -47,7 +48,7 @@ class HotReloader {
   ///
   /// If the timeout expires, then the request will be immediately terminated with a `502 Bad Gateway` error.
   /// Default: `5s`
-  Duration? get timeout => _timeout;
+  Duration get timeout => _timeout;
 
   /// The Dart VM service host.
   ///
@@ -116,19 +117,21 @@ class HotReloader {
   Future handleRequest(HttpRequest request) async {
     if (_server != null) {
       return await _handle(request);
-    } else if (timeout == null) {
-      _requestQueue.add(request);
+      //} else if (timeout == null) {
+      //  _requestQueue.add(request);
     } else {
       _requestQueue.add(request);
-      Timer(timeout!, () {
+      Timer(timeout, () {
         if (_requestQueue.remove(request)) {
           // Send 502 response
           sendError(request, HttpStatus.badGateway, '502 Bad Gateway',
-              'Request timed out after ${timeout!.inMilliseconds}ms.');
+              'Request timed out after ${timeout.inMilliseconds}ms.');
         }
       });
     }
   }
+
+  Logger? get _appLogger => _server?.app.logger;
 
   Future<AngelHttp> _generateServer() async {
     var s = await generator();
@@ -138,23 +141,24 @@ class HotReloader {
   }
 
   void _logWarning(String msg) {
-    if (_server?.app.logger != null) {
-      _server?.app.logger.warning(msg);
+    if (_appLogger != null) {
+      _appLogger?.warning(msg);
     } else {
       print(yellow.wrap('WARNING: $msg'));
     }
   }
 
   void _logInfo(String msg) {
-    if (_server?.app.logger != null) {
-      _server?.app.logger.info(msg);
+    if (_appLogger != null) {
+      _appLogger?.info(msg);
     } else {
       print(lightGray.wrap(msg));
     }
   }
 
   /// Starts listening to requests and filesystem events.
-  Future<HttpServer> startServer([address, int? port]) async {
+  Future<HttpServer> startServer(
+      [String address = '127.0.0.1', int port = 3000]) async {
     var isHot = true;
     _server = await _generateServer();
 
@@ -185,9 +189,10 @@ class HotReloader {
       _mainIsolate ??= _vmachine?.isolates?.first;
 
       if (_vmachine != null) {
-        for (var isolate in _vmachine!.isolates ?? <vm.IsolateRef>[]) {
-          if (isolate.id != null) {
-            await _client.setIsolatePauseMode(isolate.id!,
+        for (var isolate in _vmachine?.isolates ?? <vm.IsolateRef>[]) {
+          var isolateId = isolate.id;
+          if (isolateId != null) {
+            await _client.setIsolatePauseMode(isolateId,
                 exceptionPauseMode: 'None');
           }
         }
@@ -203,7 +208,8 @@ class HotReloader {
     while (_requestQueue.isNotEmpty) {
       await _handle(_requestQueue.removeFirst());
     }
-    var server = _io = await HttpServer.bind(address ?? '127.0.0.1', port ?? 0);
+    var server = _io = await HttpServer.bind(address, port);
+    //server.defaultResponseHeaders();
     server.listen(handleRequest);
 
     // Print a Flutter-like prompt...
@@ -213,7 +219,7 @@ class HotReloader {
 
       Uri? observatoryUri;
       if (isHot) {
-        observatoryUri = await dev.Service.getInfo().then((i) => i.serverUri!);
+        observatoryUri = await dev.Service.getInfo().then((i) => i.serverUri);
       }
 
       print(styleBold.wrap(
@@ -260,7 +266,7 @@ class HotReloader {
           if (ch == $R) {
             _logInfo('Manually restarting server...\n');
             await _killServer();
-            await _server!.close();
+            await _server?.close();
             var addr = _io.address.address;
             var port = _io.port;
             await _io.close(force: true);
@@ -359,21 +365,23 @@ class HotReloader {
       scheduleMicrotask(() async {
         // Disconnect active WebSockets
         try {
-          var ws = _server!.app.container.make<AngelWebSocket>();
+          var ws = _server?.app.container.make<AngelWebSocket>();
 
-          for (var client in ws.clients) {
-            try {
-              await client.close();
-            } catch (e) {
-              _logWarning(
-                  'Couldn\'t close WebSocket from session #${client.request.session!.id}: $e');
+          if (ws != null) {
+            for (var client in ws.clients) {
+              try {
+                await client.close();
+              } catch (e) {
+                _logWarning(
+                    'Couldn\'t close WebSocket from session #${client.request.session?.id}: $e');
+              }
             }
           }
 
           // await Future.forEach(
           //     _server.app.shutdownHooks, _server.app.configure);
-          await _server!.app.close();
-          _server!.app.logger.clearListeners();
+          await _server?.app.close();
+          _server?.app.logger.clearListeners();
         } catch (_) {
           // Fail silently...
         }
@@ -387,11 +395,16 @@ class HotReloader {
     _server = null;
 
     if (hot) {
-      var report = await _client.reloadSources(_mainIsolate!.id!);
+      var mainIsolateId = _mainIsolate?.id;
+      if (mainIsolateId != null) {
+        var report = await _client.reloadSources(mainIsolateId);
 
-      if (report.success != null) {
-        _logWarning(
-            'Hot reload failed - perhaps some sources have not been generated yet.');
+        if (report.success != null) {
+          _logWarning(
+              'Hot reload failed - perhaps some sources have not been generated yet.');
+        }
+      } else {
+        _logWarning('Hot reload failed - isolate id does not exist.');
       }
     }
 

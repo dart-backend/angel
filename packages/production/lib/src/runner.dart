@@ -1,6 +1,8 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:isolate';
+import 'package:belatuk_pub_sub/belatuk_pub_sub.dart';
+import 'package:belatuk_pub_sub/isolate.dart';
 import 'package:intl/intl.dart';
 import 'package:angel3_container/angel3_container.dart';
 import 'package:angel3_framework/angel3_framework.dart';
@@ -10,8 +12,6 @@ import 'package:args/args.dart';
 import 'package:io/ansi.dart';
 import 'package:io/io.dart';
 import 'package:logging/logging.dart';
-import 'package:belatuk_pub_sub/isolate.dart' as pub_sub;
-import 'package:belatuk_pub_sub/belatuk_pub_sub.dart' as pub_sub;
 import 'instance_info.dart';
 import 'options.dart';
 
@@ -24,35 +24,21 @@ class Runner {
   final AngelConfigurer configureServer;
   final Reflector reflector;
 
+  final Map<String, Object> removeResponseHeaders;
+  final Map<String, Object> responseHeaders;
+
   Runner(this.name, this.configureServer,
-      {this.reflector = const EmptyReflector()});
+      {this.reflector = const EmptyReflector(),
+      this.removeResponseHeaders = const {},
+      this.responseHeaders = const {}});
 
-  static const String asciiArt2 = '''
-
-    ___    _   ________________   _____
-   /   |  / | / / ____/ ____/ /  |__  /
-  / /| | /  |/ / / __/ __/ / /    /_ < 
- / ___ |/ /|  / /_/ / /___/ /______/ / 
-/_/  |_/_/ |_/\\____/_____/_____/____/ 
-                                                                                                                       
-''';
-
-  static const String asciiArt = '''
+  static const String _asciiArt = '''
 
      _    _   _  ____ _____ _     _____ 
     / \\  | \\ | |/ ___| ____| |   |___ / 
    / _ \\ |  \\| | |  _|  _| | |     |_ \\ 
   / ___ \\| |\\  | |_| | |___| |___ ___) |
  /_/   \\_\\_| \\_|\\____|_____|_____|____/                                                                                 
-''';
-
-  static const String asciiArtOld = '''
-____________   ________________________ 
-___    |__  | / /_  ____/__  ____/__  / 
-__  /| |_   |/ /_  / __ __  __/  __  /  
-_  ___ |  /|  / / /_/ / _  /___  _  /___
-/_/  |_/_/ |_/  ____/  /_____/  /_____/
-                                        
 ''';
 
   static final DateFormat _defaultDateFormat =
@@ -173,11 +159,14 @@ _  ___ |  /|  / / /_/ / _  /___  _  /___
 
   /// Starts a number of isolates, running identical instances of an Angel application.
   Future run(List<String> args) async {
-    pub_sub.Server? server;
+    Server? server;
 
     try {
       var argResults = RunnerOptions.argParser.parse(args);
+
       var options = RunnerOptions.fromArgResults(argResults);
+      options.responseHeaders.addAll(responseHeaders);
+      options.removeResponseHeaders.addAll(removeResponseHeaders);
 
       if (options.ssl || options.http2) {
         if (options.certificateFile == null) {
@@ -188,7 +177,7 @@ _  ___ |  /|  / / /_/ / _  /___  _  /___
       }
 
       print(darkGray.wrap(
-          '$asciiArt\n\nA batteries-included, full-featured, full-stack framework in Dart.\n\nhttps://angel3-framework.web.app\n'));
+          '$_asciiArt\n\nA batteries-included, full-featured, full-stack framework in Dart.\n\nhttps://angel3-framework.web.app\n'));
 
       if (argResults['help'] == true) {
         stdout
@@ -199,12 +188,12 @@ _  ___ |  /|  / / /_/ / _  /___  _  /___
 
       print('Starting `$name` application...');
 
-      var adapter = pub_sub.IsolateAdapter();
-      server = pub_sub.Server([adapter]);
+      var adapter = IsolateAdapter();
+      server = Server([adapter]);
 
       // Register clients
       for (var i = 0; i < Platform.numberOfProcessors; i++) {
-        server.registerClient(pub_sub.ClientInfo('client$i'));
+        server.registerClient(ClientInfo('client$i'));
       }
 
       server.start();
@@ -240,11 +229,10 @@ _  ___ |  /|  / / /_/ / _  /___  _  /___
     ));
 
     zone.run(() async {
-      var client =
-          pub_sub.IsolateClient('client${argsWithId.id}', args.pubSubSendPort);
+      var client = IsolateClient('client${argsWithId.id}', args.pubSubSendPort);
 
       var app = Angel(reflector: args.reflector)
-        ..container.registerSingleton<pub_sub.Client>(client)
+        ..container.registerSingleton<Client>(client)
         ..container.registerSingleton(InstanceInfo(id: argsWithId.id));
 
       app.shutdownHooks.add((_) => client.close());
@@ -292,6 +280,13 @@ _  ___ |  /|  / / /_/ / _  /___  _  /___
       }
 
       await driver.startServer(args.options.hostname, args.options.port);
+
+      // Only apply the headers to AngelHttp instance
+      if (driver is AngelHttp) {
+        driver.addResponseHeader(args.options.responseHeaders);
+        driver.removeResponseHeader(args.options.removeResponseHeaders);
+      }
+
       serverUrl = driver.uri;
       if (args.options.ssl || args.options.http2) {
         serverUrl = serverUrl.replace(scheme: 'https');

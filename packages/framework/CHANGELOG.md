@@ -1,5 +1,10 @@
 # Change Log
 
+## 8.2.0
+
+* Add `addResponseHeader` to `AngelHttp` to add headers to HTTP default response
+* Add `removeResponseHeader` to `AngelHttp` to remove headers from HTTP default response
+
 ## 8.1.1
 
 * Updated broken image on README.md
