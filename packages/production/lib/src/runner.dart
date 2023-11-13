@@ -283,7 +283,7 @@ class Runner {
 
       // Only apply the headers to AngelHttp instance
       if (driver is AngelHttp) {
-        driver.responseHeader(args.options.responseHeaders);
+        driver.addResponseHeader(args.options.responseHeaders);
         driver.removeResponseHeader(args.options.removeResponseHeaders);
       }
 

@@ -2,7 +2,7 @@
 
 ## 8.2.0
 
-* Add `responseHeader` to `AngelHttp` to add headers to HTTP default response
+* Add `addResponseHeader` to `AngelHttp` to add headers to HTTP default response
 * Add `removeResponseHeader` to `AngelHttp` to remove headers from HTTP default response
 
 ## 8.1.1

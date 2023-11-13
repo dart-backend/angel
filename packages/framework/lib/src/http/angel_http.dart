@@ -84,7 +84,7 @@ class AngelHttp extends Driver<HttpRequest, HttpResponse, HttpServer,
   }
 
   /// Add headers to HTTP Response
-  void responseHeader(Map<String, Object> headers) {
+  void addResponseHeader(Map<String, Object> headers) {
     headers.forEach((key, value) {
       server?.defaultResponseHeaders.add(key, value);
     });
