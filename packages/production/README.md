@@ -72,10 +72,12 @@ For example, the following code snippet removes `X-FRAME-OPTIONS` and adds `X-XS
 ```dart
 
 void main(List<String> args) {
-  // Remove default
+  // Remove 'X-FRAME-OPTIONS'
   var removeHeader = {'X-FRAME-OPTIONS': 'SAMEORIGIN'};
+
+  // Add 'X-XSRF_TOKEN'
   var customHeader = {
-    'X-XSRF_TOKEN':
+    'X-XSRF-TOKEN':
         'a591a6d40bf420404a011733cfb7b190d62c65bf0bcda32b57b277d9ad9f146e'
   };
 
