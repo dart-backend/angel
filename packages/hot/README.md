@@ -77,3 +77,30 @@ Future<Angel> createServer() async {
   return app;
 }
 ```
+
+## Customising Response Header
+
+The following code snippet removes `X-FRAME-OPTIONS` and adds `X-XSRF-TOKEN` to the response header.
+
+```dart
+import 'dart:io';
+import 'package:angel3_hot/angel3_hot.dart';
+import 'server.dart';
+
+void main() async {
+  var hot = HotReloader(createServer, [
+    Directory('src'),
+    'server.dart',
+    // Also allowed: Platform.script,
+    Uri.parse('package:angel3_hot/angel3_hot.dart')
+  ]);
+  var http = await hot.startServer('127.0.0.1', 3000);
+
+  // Remove 'X-FRAME-OPTIONS'
+  http.defaultResponseHeaders.remove('X-FRAME-OPTIONS', 'SAMEORIGIN');
+
+  // Add 'X-XSRF_TOKEN'
+  http.defaultResponseHeaders.add('X-XSRF-TOKEN',
+      'a591a6d40bf420404a011733cfb7b190d62c65bf0bcda32b57b277d9ad9f146e');
+}
+```

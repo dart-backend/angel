@@ -3,7 +3,7 @@
 ## 8.1.0
 
 * Updated `vm_service` to 13.0.0
-* Added configurable HTTP response header
+* Updated README
 
 ## 8.0.0
 
