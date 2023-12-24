@@ -1,5 +1,5 @@
 name: angel3_hot
-version: 8.1.0
+version: 8.2.0
 description: Supports hot reloading/hot code push of Angel3 servers on file changes.
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dukefirehawk/angel/tree/master/packages/hot
@@ -7,18 +7,18 @@ environment:
   sdk: '>=3.0.0 <4.0.0'
 dependencies:
   angel3_framework: ^8.2.0
-  angel3_websocket: ^8.0.0
-  belatuk_html_builder: ^5.0.0
+  angel3_websocket: ^8.1.0
+  belatuk_html_builder: ^5.1.0
   charcode: ^1.3.0
   glob: ^2.1.0
   io: ^1.0.0
-  path: ^1.8.0
-  vm_service: ^13.0.0
+  path: ^1.9.0
+  vm_service: ^14.0.0
   watcher: ^1.0.0
   logging: ^1.2.0
 dev_dependencies:
   http: ^1.0.0
-  lints: ^2.1.0
+  lints: ^3.0.0
 #dependency_overrides:
 #   angel3_container:
 #     path: ../container/angel_container

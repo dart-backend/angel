@@ -9,8 +9,8 @@ dependencies:
   angel3_framework: ^8.0.0
   jael3: ^8.0.0
   jael3_preprocessor: ^8.0.0
-  belatuk_code_buffer: ^5.0.0
-  belatuk_symbol_table: ^5.0.0
+  belatuk_code_buffer: ^5.1.0
+  belatuk_symbol_table: ^5.1.0
   file: ^7.0.0
   logging: ^1.2.0
 dev_dependencies:
