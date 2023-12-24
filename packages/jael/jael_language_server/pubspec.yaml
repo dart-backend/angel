@@ -1,5 +1,5 @@
 name: jael3_language_server
-version: 8.0.0
+version: 8.1.0
 description: Language Server Protocol implementation for the Jael templating engine.
 homepage: https://github.com/angel-dart/vscode
 publish_to: none
@@ -18,7 +18,7 @@ dependencies:
   path: ^1.8.0
   source_span: ^1.10.0
   string_scanner: ^1.2.0
-  lints: ^2.1.0
+  lints: ^3.0.0
   stream_channel: ^2.1.0
   async: ^2.11.0
 executables:

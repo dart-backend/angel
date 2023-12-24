@@ -5,7 +5,7 @@ import 'object.dart';
 
 class Analyzer extends Parser {
   final Logger logger;
-  Analyzer(Scanner scanner, this.logger) : super(scanner);
+  Analyzer(super.scanner, this.logger);
 
   //@override
   //final errors = <JaelError>[];

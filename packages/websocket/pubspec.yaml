@@ -10,11 +10,11 @@ dependencies:
   angel3_client: ^8.0.0
   angel3_framework: ^8.0.0
   angel3_http_exception: ^8.0.0
-  belatuk_merge_map: ^5.0.0
+  belatuk_merge_map: ^5.1.0
   http: ^1.0.0
   meta: ^1.8.0
   stream_channel: ^2.1.0
-  web_socket_channel: 2.4.0
+  web_socket_channel: '>=2.1.0 <2.4.1'
   collection: ^1.17.0
   logging: ^1.1.0
 dev_dependencies:
