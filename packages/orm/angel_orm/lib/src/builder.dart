@@ -30,8 +30,7 @@ class NumericSqlExpressionBuilder<T extends num>
   String? _raw;
   T? _value;
 
-  NumericSqlExpressionBuilder(Query query, String columnName)
-      : super(query, columnName);
+  NumericSqlExpressionBuilder(super.query, super.columnName);
 
   @override
   bool get hasValue => _hasValue;
@@ -123,8 +122,7 @@ class EnumSqlExpressionBuilder<T> extends SqlExpressionBuilder<T> {
   String? _raw;
   int? _value;
 
-  EnumSqlExpressionBuilder(Query query, String columnName, this._getValue)
-      : super(query, columnName);
+  EnumSqlExpressionBuilder(super.query, super.columnName, this._getValue);
 
   @override
   bool get hasValue => _hasValue;
@@ -187,8 +185,7 @@ class StringSqlExpressionBuilder extends SqlExpressionBuilder<String> {
   bool _hasValue = false;
   String? _op = '=', _raw, _value;
 
-  StringSqlExpressionBuilder(Query query, String columnName)
-      : super(query, columnName);
+  StringSqlExpressionBuilder(super.query, super.columnName);
 
   @override
   bool get hasValue => _hasValue;
@@ -291,8 +288,7 @@ class BooleanSqlExpressionBuilder extends SqlExpressionBuilder<bool> {
   String? _op = '=', _raw;
   bool? _value;
 
-  BooleanSqlExpressionBuilder(Query query, String columnName)
-      : super(query, columnName);
+  BooleanSqlExpressionBuilder(super.query, super.columnName);
 
   @override
   bool get hasValue => _hasValue;
@@ -346,8 +342,7 @@ class DateTimeSqlExpressionBuilder extends SqlExpressionBuilder<DateTime> {
 
   String? _raw;
 
-  DateTimeSqlExpressionBuilder(Query query, String columnName)
-      : super(query, columnName);
+  DateTimeSqlExpressionBuilder(super.query, super.columnName);
 
   NumericSqlExpressionBuilder<int> get year =>
       _year ??= NumericSqlExpressionBuilder(query, 'year');
@@ -468,8 +463,7 @@ abstract class JsonSqlExpressionBuilder<T, K> extends SqlExpressionBuilder<T> {
   String? _op;
   String? _raw;
 
-  JsonSqlExpressionBuilder(Query query, String columnName)
-      : super(query, columnName);
+  JsonSqlExpressionBuilder(super.query, super.columnName);
 
   JsonSqlExpressionBuilderProperty operator [](K name) {
     var p = _property(name);
@@ -550,8 +544,7 @@ abstract class JsonSqlExpressionBuilder<T, K> extends SqlExpressionBuilder<T> {
 }
 
 class MapSqlExpressionBuilder extends JsonSqlExpressionBuilder<Map, String> {
-  MapSqlExpressionBuilder(Query query, String columnName)
-      : super(query, columnName);
+  MapSqlExpressionBuilder(super.query, super.columnName);
 
   @override
   JsonSqlExpressionBuilderProperty _property(String name) {
@@ -568,8 +561,7 @@ class MapSqlExpressionBuilder extends JsonSqlExpressionBuilder<Map, String> {
 }
 
 class ListSqlExpressionBuilder extends JsonSqlExpressionBuilder<List, int> {
-  ListSqlExpressionBuilder(Query query, String columnName)
-      : super(query, columnName);
+  ListSqlExpressionBuilder(super.query, super.columnName);
 
   @override
   List<dynamic>? _encodeValue(List<dynamic>? v) => v; //[json.encode(v)];

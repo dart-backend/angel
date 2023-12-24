@@ -29,7 +29,7 @@
 * Updated: angel3_orm
 * Updated: angel3_orm_generator
 * Updated: angel3_migration
-* Updated: angel3_migration_generator
+* Updated: angel3_migration_runner
 * Updated: angel3_orm_postgresql
 * Updated: angel3_orm_mysql
 * Updated: angel3_orm_service
