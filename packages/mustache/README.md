@@ -15,7 +15,7 @@ In `pubspec.yaml`:
 
 ```yaml
 dependencies:
-    angel3_mustache: ^6.0.0
+    angel3_mustache: ^8.0.0
 ```
 
 ## Usage

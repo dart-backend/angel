@@ -9,10 +9,7 @@ Easily synchronize and scale WebSockets using [belatuk_pub_sub](<https://pub.dev
 
 ## Usage
 
-This package exposes `PubSubSynchronizationChannel`, which can simply be dropped into any `AngelWebSocket` constructor.
-
-Once you've set that up, instances of your application will automatically fire events in-sync. That's all you have to do
-to scale a real-time application with Angel3!
+This package exposes `PubSubSynchronizationChannel`, which can simply be dropped into any `AngelWebSocket` constructor. Once you've set that up, instances of your application will automatically fire events in-sync. That's all you have to do to scale a real-time application with Angel3!
 
 ```dart
 await app.configure(AngelWebSocket(

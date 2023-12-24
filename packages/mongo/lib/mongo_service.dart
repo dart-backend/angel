@@ -1,4 +1,4 @@
-part of angel3_mongo.services;
+part of 'services.dart';
 
 /// Manipulates data from MongoDB as Maps.
 class MongoService extends Service<String, Map<String, dynamic>> {
@@ -127,13 +127,13 @@ class MongoService extends Service<String, Map<String, dynamic>> {
   @override
   Future<Map<String, dynamic>> read(String id,
       [Map<String, dynamic>? params]) async {
-    var _id = _makeId(id);
+    var localId = _makeId(id);
     var found =
-        await collection.findOne(where.id(_id).and(_makeQuery(params)!));
+        await collection.findOne(where.id(localId).and(_makeQuery(params)!));
 
     if (found == null) {
       throw AngelHttpException.notFound(
-          message: 'No record found for ID ${_id.toHexString()}');
+          message: 'No record found for ID ${localId.toHexString()}');
     }
 
     return _jsonify(found, params);

@@ -9,4 +9,4 @@
 
 * Refactor Angel3 architecture for performance and security
   * Improve ORM features
-  * Improve performances
+  * Improve HTTP performance

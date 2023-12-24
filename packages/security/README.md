@@ -7,4 +7,4 @@
 
 Angel3 middleware designed to enhance application security by patching common Web security holes.
 
-**This package is currently going through a major overhaul, for version 2.**
+**This package will undergo a major refactoring.**

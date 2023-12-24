@@ -13,7 +13,7 @@ Add the following to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  angel3_sembast: ^6.0.0
+  angel3_sembast: ^8.0.0
 ```
 
 ## Usage
@@ -28,7 +28,7 @@ This class interacts with a `Database` and `Store` (from `package:sembast`) and 
 
 You can query these services as follows:
 
-```dart
+```curl
 /path/to/service?foo=bar
 ```
 

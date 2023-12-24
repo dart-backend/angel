@@ -15,8 +15,8 @@ In your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  angel3_framework: ^6.0.0
-  angel3_markdown: ^6.0.0
+  angel3_framework: ^8.0.0
+  angel3_markdown: ^8.0.0
 ```
 
 ## Usage
@@ -33,9 +33,7 @@ configureServer(Angel app) async {
 }
 ```
 
-You can then generate HTML on-the-fly in a request handler.
-Assuming your view directory contained a file named `hello.md`, the
-following would render it as an HTML response:
+You can then generate HTML on-the-fly in a request handler. Assuming your view directory contained a file named `hello.md`, the following would render it as an HTML response:
 
 ```dart
 configureServer(Angel app) async {
@@ -48,9 +46,7 @@ you can easily override this.
 
 ## Interpolation
 
-`angel3_markdown` can interpolate the values of data from `locals` before building the Markdown.
-
-For example, with the following template `species.md`:
+`angel3_markdown` can interpolate the values of data from `locals` before building the Markdown. For example, with the following template `species.md`:
 
 ```markdown
 # Species: {{species.name}}
@@ -96,10 +92,8 @@ configureServer(Angel app) async {
 }
 ```
 
-The `template` function will have access to whatever values were passed to the renderer,
-or an empty `Map`.
+The `template` function will have access to whatever values were passed to the renderer, or an empty `Map`.
 
 ## Enhancing Markdown
 
-You can pass an `extensionSet` to add additional features to the Markdown renderer.
-By default, this plug-in configures it to enable Github-flavored Markdown.
+You can pass an `extensionSet` to add additional features to the Markdown renderer. By default, this plug-in configures it to enable Github-flavored Markdown.

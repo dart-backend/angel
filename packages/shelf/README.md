@@ -7,14 +7,7 @@
 
 **Replacement of `package:angel_shelf` with breaking changes to support NNBD.**
 
-Shelf interop with Angel3. This package lets you run `package:shelf` handlers via a custom adapter.
-
-Use the code in this repo to embed existing Angel/shelf apps into
-other Angel/shelf applications. This way, you can migrate legacy applications without
-having to rewrite your business logic.
-
-This will make it easy to layer your API over a production application,
-rather than having to port code.
+Shelf interop with Angel3. This package lets you run `package:shelf` handlers via a custom adapter. Use the code in this repo to embed existing Angel/shelf apps into other Angel/shelf applications. This way, you can migrate legacy applications without having to rewrite your business logic. This will make it easy to layer your API over a production application, rather than having to port code.
 
 - [Angel3 Shelf](#angel3-shelf)
   - [Usage](#usage)
@@ -61,7 +54,7 @@ void main() async {
 
 ### Communicating with Angel with embedShelf
 
-You can communicate with Angel:
+You can communicate with Angel3:
 
 ```dart
 handleRequest(shelf.Request request) {
@@ -79,9 +72,7 @@ handleRequest(shelf.Request request) {
 
 ### AngelShelf
 
-Angel 2 brought about the generic `Driver` class, which is implemented by `AngelHttp`, `AngelHttp2`, `AngelGopher`, etc., and provides the core infrastructure for request handling in Angel.
-
-`AngelShelf` is an implementation that wraps shelf requests and responses in their Angel equivalents. Using it is as simple using as using `AngelHttp`, or any other driver:
+Angel3 brought about the generic `Driver` class, which is implemented by `AngelHttp`, `AngelHttp2`, `AngelGopher`, etc., and provides the core infrastructure for request handling in Angel. `AngelShelf` is an implementation that wraps shelf requests and responses in their Angel equivalents. Using it is as simple using as using `AngelHttp`, or any other driver:
 
 ```dart
 // Create an AngelShelf driver.

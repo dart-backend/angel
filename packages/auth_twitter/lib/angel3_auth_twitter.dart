@@ -5,7 +5,8 @@ import 'package:angel3_auth/angel3_auth.dart';
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as p;
-import 'package:oauth1/oauth1.dart' as oauth;
+//import 'package:oauth1/oauth1.dart' as oauth;
+import 'package:belatuk_oauth1/belatuk_oauth1.dart' as oauth;
 import 'package:dart_twitter_api/twitter_api.dart';
 
 /// Authenticates users by connecting to Twitter's API.

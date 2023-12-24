@@ -5,8 +5,7 @@
 [![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
 [![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/master/packages/oauth2/LICENSE)
 
-A class containing handlers that can be used within [Angel](https://angel3-framework.web.app/) to build a spec-compliant
-OAuth 2.0 server, including PKCE support.
+A class containing handlers that can be used within [Angel](https://angel3-framework.web.app/) to build a spec-compliant OAuth 2.0 server, including PKCE support.
 
 - [Angel3 OAuth2 Server](#angel3-oauth2-server)
   - [Installation](#installation)
