@@ -116,7 +116,7 @@ class Pokemon {
 }
 
 class KantoPokemon extends Pokemon {
-  KantoPokemon(String name, PokemonType type) : super(name, type);
+  KantoPokemon(super.name, super.type);
 }
 
 enum PokemonType { water, fire, grass, ice, poison, flying }

@@ -1,4 +1,4 @@
-part of angel_framework.http.request_context;
+part of 'request_context.dart';
 
 const List<Type> _primitiveTypes = [String, int, num, double, Null];
 

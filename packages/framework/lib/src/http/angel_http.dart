@@ -26,8 +26,8 @@ class AngelHttp extends Driver<HttpRequest, HttpResponse, HttpServer,
         scheme: 'http', host: server?.address.address, port: server?.port);
   }
 
-  AngelHttp._(Angel app, ServerGeneratorType serverGenerator, bool useZone)
-      : super(app, serverGenerator, useZone: useZone);
+  AngelHttp._(super.app, super.serverGenerator, bool useZone)
+      : super(useZone: useZone);
 
   factory AngelHttp(Angel app, {bool useZone = true}) {
     return AngelHttp._(app, HttpServer.bind, useZone);

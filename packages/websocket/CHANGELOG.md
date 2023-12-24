@@ -1,5 +1,11 @@
 # Change Log
 
+## 8.1.0
+
+* Updated `lints` to 3.0.0
+* Fixed linter warnings
+* Locked `web_socket_channel` to 2.4.0 temporarily. Starting with 2.4.1, its dependency on `dart:html` has been changed to `package:web` which is still highly experimental.
+
 ## 8.0.0
 
 * Require Dart >= 3.0

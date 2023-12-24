@@ -60,7 +60,5 @@ class WebSockets extends BaseWebSocketClient {
 class IoWebSocketsService<Id, Data> extends WebSocketsService<Id, Data> {
   final Type? type;
 
-  IoWebSocketsService(
-      WebSocketChannel? socket, WebSockets app, String uri, this.type)
-      : super(socket, app, uri);
+  IoWebSocketsService(super.socket, WebSockets super.app, super.uri, this.type);
 }

@@ -141,40 +141,26 @@ class Parameter {
 
 /// Shortcut for declaring a request header [Parameter].
 class Header extends Parameter {
-  const Header(String header, {match, defaultValue, bool required = true})
-      : super(
-            header: header,
-            match: match,
-            defaultValue: defaultValue,
-            required: required);
+  const Header(String header, {super.match, super.defaultValue, super.required})
+      : super(header: header);
 }
 
 /// Shortcut for declaring a request session [Parameter].
 class Session extends Parameter {
-  const Session(String session, {match, defaultValue, bool required = true})
-      : super(
-            session: session,
-            match: match,
-            defaultValue: defaultValue,
-            required: required);
+  const Session(String session,
+      {super.match, super.defaultValue, super.required})
+      : super(session: session);
 }
 
 /// Shortcut for declaring a request query [Parameter].
 class Query extends Parameter {
-  const Query(String query, {match, defaultValue, bool required = true})
-      : super(
-            query: query,
-            match: match,
-            defaultValue: defaultValue,
-            required: required);
+  const Query(String query, {super.match, super.defaultValue, super.required})
+      : super(query: query);
 }
 
 /// Shortcut for declaring a request cookie [Parameter].
 class CookieValue extends Parameter {
-  const CookieValue(String cookie, {match, defaultValue, bool required = true})
-      : super(
-            cookie: cookie,
-            match: match,
-            defaultValue: defaultValue,
-            required: required);
+  const CookieValue(String cookie,
+      {super.match, super.defaultValue, super.required})
+      : super(cookie: cookie);
 }

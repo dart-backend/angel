@@ -5,7 +5,7 @@
 [![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
 [![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/master/packages/orm/angel_orm_mysql/LICENSE)
 
-This package contains the SQL executor required by Angel3 ORM to work with MySQL and MariaDB respectively. In order to better support both MySQL and MariaDB, two different flavors of drives have been included; `mysql_client` and `mysql1`. They are implmented as `MySqlExecutor` and `MariaDbExecutor` respectively.
+This package contains the SQL executor required by Angel3 ORM to work with MySQL or MariaDB. In order to better support both MySQL and MariaDB, two different flavors of drives have been included; `mysql_client` and `mysql1`. They are implmented as `MySqlExecutor` and `MariaDbExecutor` respectively.
 
 ## Supported databases
 
@@ -73,23 +73,23 @@ This SQL executor is implemented using [`mysql1`](https://pub.dev/packages?q=mys
 
 1. Login to MariaDB/MySQL database console with the following command.
 
-```bash
-    mysql -u root -p
-```
+    ```bash
+        mysql -u root -p
+    ```
 
-1. Run the following commands to create a new database, `orm_test` and grant both local and remote access to user, `test`. Replace `orm_test`, `test` and `test123` with your own database name, username and password respectively.
+2. Run the following commands to create a new database, `orm_test`, and grant both local and remote access to user, `test`. Replace `orm_test`, `test` and `test123` with your own database name, username and password.
 
-```mysql
-    create database orm_test;
-    
-    -- Granting localhost access only
-    create user 'test'@'localhost' identified by 'test123';
-    grant all privileges on orm_test.* to 'test'@'localhost';
+    ```mysql
+        create database orm_test;
+        
+        -- Granting localhost access only
+        create user 'test'@'localhost' identified by 'test123';
+        grant all privileges on orm_test.* to 'test'@'localhost';
 
-    -- Granting localhost and remote access
-    create user 'test'@'%' identified by 'test123';
-    grant all privileges on orm_test.* to 'test'@'%';
-```
+        -- Granting localhost and remote access
+        create user 'test'@'%' identified by 'test123';
+        grant all privileges on orm_test.* to 'test'@'%';
+    ```
 
 ## Compatibility Matrix
 

@@ -114,7 +114,6 @@ class Runner {
             onError: onError.sendPort,
             errorsAreFatal: true && false)
         .then((isolate) {})
-        //.catchError(c.completeError);
         .catchError((e) {
       c.completeError(e as Object);
       return null;
@@ -192,7 +191,8 @@ class Runner {
       server = Server([adapter]);
 
       // Register clients
-      for (var i = 0; i < Platform.numberOfProcessors; i++) {
+      // for (var i = 0; i < Platform.numberOfProcessors; i++) {
+      for (var i = 0; i < options.concurrency; i++) {
         server.registerClient(ClientInfo('client$i'));
       }
 
@@ -248,13 +248,15 @@ class Runner {
 
       if (args.options.ssl || args.options.http2) {
         securityContext = SecurityContext();
-        if (args.options.certificateFile != null) {
-          securityContext.useCertificateChain(args.options.certificateFile!,
+        var certificateFile = args.options.certificateFile;
+        if (certificateFile != null) {
+          securityContext.useCertificateChain(certificateFile,
               password: args.options.certificatePassword);
         }
 
-        if (args.options.keyFile != null) {
-          securityContext.usePrivateKey(args.options.keyFile!,
+        var keyFile = args.options.keyFile;
+        if (keyFile != null) {
+          securityContext.usePrivateKey(keyFile,
               password: args.options.keyPassword);
         }
       }

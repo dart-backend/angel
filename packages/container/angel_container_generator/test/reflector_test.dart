@@ -142,7 +142,7 @@ class Pokemon {
 
 @contained
 class KantoPokemon extends Pokemon {
-  KantoPokemon(String name, PokemonType type) : super(name, type);
+  KantoPokemon(super.name, super.type);
 }
 
 @contained

@@ -1,5 +1,5 @@
 name: angel3_websocket
-version: 8.0.0
+version: 8.1.0
 description: This library provides WebSockets support for Angel3 framework.
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dukefirehawk/angel/tree/master/packages/websocket
@@ -14,7 +14,7 @@ dependencies:
   http: ^1.0.0
   meta: ^1.8.0
   stream_channel: ^2.1.0
-  web_socket_channel: ^2.1.0
+  web_socket_channel: 2.4.0
   collection: ^1.17.0
   logging: ^1.1.0
 dev_dependencies:
@@ -22,7 +22,8 @@ dev_dependencies:
   angel3_model: ^8.0.0
   quiver: ^3.2.0
   test: ^1.24.0
-  lints: ^2.1.0
+  lints: ^3.0.0
+  file: ^7.0.0
 # dependency_overrides:
 #   angel3_container:
 #     path: ../container/angel_container

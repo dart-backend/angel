@@ -11,10 +11,9 @@ class Todo extends Model {
   bool isComplete;
 
   Todo(
-      {required String id,
+      {required String super.id,
       this.text,
       this.isComplete = false,
-      DateTime? createdAt,
-      DateTime? updatedAt})
-      : super(id: id, createdAt: createdAt, updatedAt: updatedAt);
+      super.createdAt,
+      super.updatedAt});
 }
