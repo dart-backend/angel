@@ -5,6 +5,7 @@
 * Require Dart >= 3.0
 * Updated `lints` to 3.0.0
 * Fixed linter warnings
+* Updated repository link
 
 ## 7.0.0-beta.2
 

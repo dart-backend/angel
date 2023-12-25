@@ -1,8 +1,8 @@
 name: angel3_http_exception
-version: 8.1.0
+version: 8.1.1
 description: Exception class that can be serialized to JSON and serialized to clients.
 homepage: https://angel3-framework.web.app/
-repository: https://github.com/dukefirehawk/angel/tree/master/packages/http_exception
+repository: https://github.com/dart-backend/angel/tree/master/packages/http_exception
 environment:
   sdk: '>=3.0.0 <4.0.0'
 dev_dependencies:

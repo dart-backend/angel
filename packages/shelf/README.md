@@ -3,7 +3,7 @@
 ![Pub Version (including pre-releases)](https://img.shields.io/pub/v/angel3_shelf?include_prereleases)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 [![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
-[![License](https://img.shields.io/github/license/dart-backend/belatuk-common-utilities)](https://github.com/dukefirehawk/angel/tree/master/packages/shelf/LICENSE)
+[![License](https://img.shields.io/github/license/dart-backend/belatuk-common-utilities)](https://github.com/dart-backend/angel/tree/master/packages/shelf/LICENSE)
 
 **Replacement of `package:angel_shelf` with breaking changes to support NNBD.**
 
