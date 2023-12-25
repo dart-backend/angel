@@ -1,11 +1,11 @@
 # Angel3 Framework
 
-[![Angel3 Framework](angel3_logo.png)](https://github.com/dukefirehawk/angel)
+[![Angel3 Framework](angel3_logo.png)](https://github.com/dart-backend/angel)
 
 ![Pub Version (including pre-releases)](https://img.shields.io/pub/v/angel3_framework?include_prereleases)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 [![Gitter](https://img.shields.io/gitter/room/nwjs/nw.js.svg)](https://gitter.im/angel_dart/discussion)
-[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/LICENSE)
+[![License](https://img.shields.io/github/license/dart-backend/angel)](https://github.com/dart-backend/angel/LICENSE)
 [![melos](https://img.shields.io/badge/maintained%20with-melos-f700ff.svg?style=flat-square)](https://github.com/invertase/melos)
 
 **A production-ready dart backend framework.**
@@ -53,7 +53,7 @@ Branch: `master`
 * Status       : Production
 * Notes        : Use this branch for all PR submission
 
-For more details, checkout [Project Status](https://github.com/dukefirehawk/angel/wiki/Project-Status)
+For more details, checkout [Project Status](https://github.com/dart-backend/angel/wiki/Project-Status)
 
 ## Release Notes
 
@@ -170,7 +170,7 @@ The test cases are build using standard `Angel3 ORM` template. The result are us
 
 Visit the [User Guide](https://angel3-docs.dukefirehawk.com/) for dozens of guides and resources, including video tutorials, to get up and running as quickly as possible with Angel3 framework.
 
-Examples and complete projects can be found [here](https://github.com/dukefirehawk/angel3-examples).
+Examples and complete projects can be found [here](https://github.com/dart-backend/angel3-examples).
 
 You can also view the [Angel3 API](http://www.dartdocs.org/documentation/angel_framework/latest).
 

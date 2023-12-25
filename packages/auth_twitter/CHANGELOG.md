@@ -6,6 +6,7 @@
 * Updated `oauth1` to `belatuk_oauth1`
 * Updated `lints` to 3.0.0
 * Fixed linter warnings
+* Updated repository link
 
 ## 7.0.0
 

@@ -19,7 +19,7 @@ Any help from the open-source community is always welcome and needed:
 5. Have you already helped in any way?
     - **Many thanks to the contributors and everybody that uses this project!**
 
-[tracker]: https://github.com/dukefirehawk/angel/issues
-[pull_request]: https://github.com/dukefirehawk/angel/pulls
+[tracker]: https://github.com/dart-backend/angel/issues
+[pull_request]: https://github.com/dart-backend/angel/pulls
 [doc]: https://angel3-docs.dukefirehawk.com
-[doc_repo]: https://github.com/dukefirehawk/angel3-guide/pulls
+[doc_repo]: https://github.com/dart-backend/angel3-guide/pulls

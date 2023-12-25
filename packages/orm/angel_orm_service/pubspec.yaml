@@ -1,8 +1,8 @@
 name: angel3_orm_service
-version: 8.1.0
+version: 8.1.1
 description: Service implementation that wraps over Angel3 ORM Query classes.
 homepage: https://angel3-framework.web.app/
-repository: https://github.com/dukefirehawk/angel/tree/master/packages/orm/angel_orm_service
+repository: https://github.com/dart-backend/angel/tree/master/packages/orm/angel_orm_service
 environment:
   sdk: '>=3.0.0 <4.0.0'
 dependencies:

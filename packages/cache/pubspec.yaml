@@ -1,8 +1,8 @@
 name: angel3_cache
-version: 8.1.0
+version: 8.1.1
 description: A service that provides HTTP caching to the response data for Angel3
 homepage: https://angel3-framework.web.app/
-repository: https://github.com/dukefirehawk/angel/tree/master/packages/cache
+repository: https://github.com/dart-backend/angel/tree/master/packages/cache
 environment:
   sdk: '>=3.0.0 <4.0.0'
 dependencies:

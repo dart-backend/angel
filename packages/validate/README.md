@@ -3,7 +3,7 @@
 ![Pub Version (including pre-releases)](https://img.shields.io/pub/v/angel3_validate?include_prereleases)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 [![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
-[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/master/packages/validate/LICENSE)
+[![License](https://img.shields.io/github/license/dart-backend/angel)](https://github.com/dart-backend/angel/tree/master/packages/validate/LICENSE)
 
 This validator library is based on the `matcher` library and comes with build in support for Angel3 framework. It can be run on both server and client side. Thus, the same validation rules apply to forms on both backend and frontend code.
 

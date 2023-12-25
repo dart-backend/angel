@@ -1,5 +1,9 @@
 # Change Log
 
+## 8.1.1
+
+* Updated repository link
+
 ## 8.1.0
 
 * Updated `lints` to 3.0.0
