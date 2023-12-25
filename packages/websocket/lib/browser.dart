@@ -106,7 +106,6 @@ class WebSockets extends BaseWebSocketClient {
 class BrowserWebSocketsService<Id, Data> extends WebSocketsService<Id, Data> {
   final Type? type;
 
-  BrowserWebSocketsService(WebSocketChannel? socket, WebSockets app, String uri,
-      {this.type, AngelDeserializer<Data>? deserializer})
-      : super(socket, app, uri, deserializer: deserializer);
+  BrowserWebSocketsService(super.socket, WebSockets super.app, super.uri,
+      {this.type, super.deserializer});
 }

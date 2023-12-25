@@ -20,14 +20,10 @@ class MigrationColumn extends Column {
 
   MigrationColumn(ColumnType type,
       {bool isNullable = true,
-      int length = 255,
+      super.length,
       IndexType indexType = IndexType.standardIndex,
       dynamic defaultValue})
-      : super(
-            type: type,
-            length: length,
-            isNullable: isNullable,
-            defaultValue: defaultValue) {
+      : super(type: type, isNullable: isNullable, defaultValue: defaultValue) {
     _nullable = isNullable;
     _index = indexType;
     _defaultValue = defaultValue;

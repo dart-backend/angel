@@ -1,4 +1,4 @@
-part of angel3_serialize_generator;
+part of 'angel3_serialize_generator.dart';
 
 class SerializerGenerator extends GeneratorForAnnotation<Serializable> {
   final bool autoSnakeCaseNames;

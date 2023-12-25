@@ -1,5 +1,11 @@
 # Change Log
 
+## 8.2.0
+
+* Updated `lints` to 3.0.0
+* Updated `intl` to 0.19.0
+* Fixed linter warnings
+
 ## 8.1.0
 
 * Added optional `responseHeaders` and `removeResponseHeaders` to `Runner`

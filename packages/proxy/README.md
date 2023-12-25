@@ -33,6 +33,4 @@ Also, you can map requests to a root path on the remote server:
 Proxy(baseUrl.replace(path: '/path'));
 ```
 
-Request bodies will be forwarded as well, if they are not empty. This allows things like POST requests to function.
-
-For a request body to be forwarded, the body must not have already been parsed.
+Request bodies will be forwarded as well, if they are not empty. This allows things like POST requests to function. For a request body to be forwarded, the body must not have already been parsed.

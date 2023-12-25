@@ -1,4 +1,4 @@
-part of jael.src.text.parselet;
+part of 'parselet.dart';
 
 const Map<TokenType, InfixParselet> infixParselets = {
   TokenType.lParen: CallParselet(),

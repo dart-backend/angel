@@ -1,5 +1,10 @@
 # Change Log
 
+## 8.2.0
+
+* Updated `lints` to 3.0.0
+* Fixed linter warnings
+
 ## 8.1.0
 
 * Upgraded to `analyzer` 6.2.x

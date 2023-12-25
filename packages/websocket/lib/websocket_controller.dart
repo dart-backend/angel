@@ -1,4 +1,4 @@
-part of angel3_websocket.server;
+part of 'server.dart';
 
 /// Marks a method as available to WebSockets.
 class ExposeWs {

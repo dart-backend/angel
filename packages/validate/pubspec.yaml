@@ -1,6 +1,6 @@
 name: angel3_validate
 description: Cross-platform HTTP request body validator library based on `matcher`.
-version: 8.0.2
+version: 8.1.0
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dukefirehawk/angel/tree/master/packages/validate
 environment:
@@ -14,7 +14,7 @@ dev_dependencies:
   build_runner: ^2.4.0
   build_web_compilers: ^4.0.0
   logging: ^1.2.0
-  lints: ^2.1.0
+  lints: ^3.0.0
   test: ^1.24.0
 # dependency_overrides:
 #   angel3_container:

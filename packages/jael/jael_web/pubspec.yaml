@@ -1,5 +1,5 @@
 name: jael3_web
-version: 8.1.0
+version: 8.2.0
 description: Experimental virtual DOM/SPA engine built on Jael3. Supports SSR.
 publish_to: none
 environment:
@@ -17,7 +17,7 @@ dependencies:
 dev_dependencies:
   build_runner: ^2.4.0
   build_web_compilers: ^4.0.0
-  lints: ^2.1.0
+  lints: ^3.0.0
 # dependency_overrides:
 #   jael3:
 #     path: ../jael

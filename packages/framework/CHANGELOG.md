@@ -1,5 +1,10 @@
 # Change Log
 
+## 8.3.0
+
+* Updated `lints` to 3.0.0
+* Fixed linter warnings
+
 ## 8.2.0
 
 * Add `addResponseHeader` to `AngelHttp` to add headers to HTTP default response

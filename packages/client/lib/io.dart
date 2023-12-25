@@ -48,8 +48,7 @@ class RestService<Id, Data> extends BaseAngelService<Id, Data> {
 
   final Type? type;
 
-  RestService(http.BaseClient client, BaseAngelClient app, url, this.type)
-      : super(client, app, url);
+  RestService(super.client, super.app, super.url, this.type);
 
   @override
   Data? deserialize(x) {

@@ -59,7 +59,7 @@ For more details, checkout [Project Status](https://github.com/dukefirehawk/ange
 
 ### Release 8.0.0 (Current)
 
-* Updated `angel3_` packages to require dart >= 3.0.x
+* Updated `angel3_` packages to require dart >= 3.0.0
 * Updated dependencies to the latest
 * Resolved issues related to generated container
 

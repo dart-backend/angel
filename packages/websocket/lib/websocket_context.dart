@@ -1,4 +1,4 @@
-part of angel3_websocket.server;
+part of 'server.dart';
 
 /// Represents a WebSocket session, with the original
 /// [RequestContext] and [ResponseContext] attached.

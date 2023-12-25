@@ -28,26 +28,19 @@ class CachingVirtualDirectory extends VirtualDirectory {
   /// Set this to `null` to leave no `Expires` header on responses.
   final int maxAge;
 
-  CachingVirtualDirectory(Angel app, FileSystem fileSystem,
+  CachingVirtualDirectory(super.app, super.fileSystem,
       {this.accessLevel = CacheAccessLevel.public,
-      Directory? source,
+      super.source,
       bool debug = false,
-      Iterable<String> indexFileNames = const ['index.html'],
+      super.indexFileNames,
       this.maxAge = 0,
       this.noCache = false,
       this.onlyInProduction = false,
       this.useEtags = true,
-      bool allowDirectoryListing = false,
-      bool useBuffer = false,
-      String publicPath = '/',
-      Function(File file, RequestContext req, ResponseContext res)? callback})
-      : super(app, fileSystem,
-            source: source,
-            indexFileNames: indexFileNames,
-            publicPath: publicPath,
-            callback: callback,
-            allowDirectoryListing: allowDirectoryListing,
-            useBuffer: useBuffer);
+      super.allowDirectoryListing,
+      super.useBuffer,
+      super.publicPath,
+      super.callback});
 
   @override
   Future<bool> serveFile(

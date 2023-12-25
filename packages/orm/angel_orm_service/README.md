@@ -13,7 +13,7 @@ In your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-    angel3_orm_service: ^6.0.0
+    angel3_orm_service: ^8.0.0
 ```
 
 ## Usage

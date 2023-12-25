@@ -13,9 +13,8 @@ class ServiceRateLimiter<Id> extends RateLimiter<Id> {
   final FutureOr<Id> Function(RequestContext, ResponseContext) getId;
 
   ServiceRateLimiter(
-      int maxPointsPerWindow, Duration windowDuration, this.service, this.getId,
-      {String? errorMessage})
-      : super(maxPointsPerWindow, windowDuration, errorMessage: errorMessage);
+      super.maxPointsPerWindow, super.windowDuration, this.service, this.getId,
+      {super.errorMessage});
 
   @override
   FutureOr<RateLimitingWindow<Id>> getCurrentWindow(
