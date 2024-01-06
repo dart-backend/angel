@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:angel3_orm_postgres/angel3_orm_postgres.dart';
-import 'package:postgres_pool/postgres_pool.dart';
 
 void main() async {
   var executor = PostgreSqlPoolExecutor(PgPool(

@@ -3,7 +3,7 @@ import 'dart:io';
 import 'package:angel3_orm/angel3_orm.dart';
 import 'package:angel3_orm_postgres/angel3_orm_postgres.dart';
 import 'package:logging/logging.dart';
-import 'package:postgres_pool/postgres_pool.dart';
+import 'package:postgres/postgres.dart';
 
 FutureOr<QueryExecutor> Function() pg(Iterable<String> schemas) {
   // Use single connection
@@ -19,19 +19,16 @@ FutureOr<QueryExecutor> Function() pg(Iterable<String> schemas) {
 Future<void> closePg(QueryExecutor executor) async {
   if (executor is PostgreSqlExecutor) {
     await executor.close();
-    //} else if (executor is PostgreSqlExecutorPool) {
-    //  await executor.close();
-  } else if (executor is PostgreSqlPoolExecutor) {
-    await executor.close();
   }
 }
 
 Future<PostgreSqlExecutor> connectToPostgres(Iterable<String> schemas) async {
-  var conn = PostgreSQLConnection(
-      'localhost', 5432, Platform.environment['POSTGRES_DB'] ?? 'orm_test',
+  var conn = await Connection.open(Endpoint(
+      host: 'localhost',
+      port: 5432,
+      database: Platform.environment['POSTGRES_DB'] ?? 'orm_test',
       username: Platform.environment['POSTGRES_USERNAME'] ?? 'test',
-      password: Platform.environment['POSTGRES_PASSWORD'] ?? 'test123');
-  await conn.open();
+      password: Platform.environment['POSTGRES_PASSWORD'] ?? 'test123'));
 
   // Run sql to create the tables
   for (var s in schemas) {
