@@ -2,13 +2,13 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:angel3_orm/angel3_orm.dart';
 import 'package:logging/logging.dart';
-import 'package:postgres_pool/postgres_pool.dart';
+import 'package:postgres/postgres.dart';
 
 import '../angel3_orm_postgres.dart';
 
 /// A [QueryExecutor] that uses `package:postgres_pool` for connetions pooling.
 class PostgreSqlPoolExecutor extends QueryExecutor {
-  final PgPool _pool;
+  final Pool _pool;
 
   /// An optional [Logger] to print information to.
   late Logger logger;
@@ -23,7 +23,7 @@ class PostgreSqlPoolExecutor extends QueryExecutor {
   Dialect get dialect => _dialect;
 
   /// The underlying connection pooling.
-  PgPool get pool => _pool;
+  Pool get pool => _pool;
 
   /// Closes all the connections in the pool.
   Future<dynamic> close() {
@@ -32,7 +32,7 @@ class PostgreSqlPoolExecutor extends QueryExecutor {
 
   /// Run query.
   @override
-  Future<PostgreSQLResult> query(
+  Future<Result> query(
       String tableName, String query, Map<String, dynamic> substitutionValues,
       {String returningQuery = '', List<String> returningFields = const []}) {
     if (returningFields.isNotEmpty) {
@@ -54,16 +54,16 @@ class PostgreSqlPoolExecutor extends QueryExecutor {
       }
     });
 
-    return _pool.run<PostgreSQLResult>((pgContext) async {
-      return await pgContext.query(query, substitutionValues: param);
+    return _pool.run<Result>((session) async {
+      return await session.execute(Sql.named(query), parameters: param);
     });
   }
 
   /// Run query in a transaction.
   @override
   Future<T> transaction<T>(FutureOr<T> Function(QueryExecutor) f) async {
-    return _pool.runTx((pgContext) async {
-      var exec = PostgreSqlExecutor(pgContext, logger: logger);
+    return _pool.runTx((session) async {
+      var exec = PostgreSqlExecutor(session, logger: logger);
       return await f(exec);
     });
   }

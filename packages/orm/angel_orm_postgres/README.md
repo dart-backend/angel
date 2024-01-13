@@ -12,3 +12,7 @@ PostgreSQL support for Angel3 ORM.
 * PostgreSQL version 10 or greater
 
 For documentation about the ORM, see [Developer Guide](https://angel3-docs.dukefirehawk.com/guides/orm)
+
+## Migration
+
+Posrgresql is upgraded from 2.x.x to 3.x.x in version 8.1.0.

@@ -3,9 +3,9 @@
 ## 8.1.0
 
 * Updated repository links
-* Updated `postgres` to 3.0.0
 * Updated `lints` to 3.0.0
 * Fixed linter warnings
+* [BREAKING] Updated `postgres` to 3.0.0
 
 ## 8.0.0
 
