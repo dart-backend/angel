@@ -1,5 +1,9 @@
 # Change Log
 
+## 8.2.0
+
+* [BREAKING] Updated `postgres` to 3.0.0
+
 ## 8.1.1
 
 * Updated repository link
