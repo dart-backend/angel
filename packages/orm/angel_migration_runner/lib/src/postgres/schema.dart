@@ -14,18 +14,18 @@ class PostgresSchema extends Schema {
 
   factory PostgresSchema() => PostgresSchema._(StringBuffer(), 0);
 
-  Future<int> run(PostgreSQLConnection connection) async {
+  Future<int> run(Connection connection) async {
     //return connection.execute(compile());
-    var result = await connection.transaction((ctx) async {
+    var result = await connection.runTx((ctx) async {
       var sql = compile();
-      var result = await ctx.query(sql).catchError((e) {
+      var result = await ctx.execute(sql).catchError((e) {
         _log.severe('Failed to run query: [ $sql ]', e);
         throw Exception(e);
       });
-      return result.affectedRowCount;
+      return result.affectedRows;
     });
 
-    return (result is int) ? result : 0;
+    return result;
   }
 
   String compile() => _buf.toString();

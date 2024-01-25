@@ -20,6 +20,7 @@ Future<void> closePg(QueryExecutor executor) async {
 }
 
 Future<PostgreSqlExecutor> connectToPostgres(Iterable<String> schemas) async {
+  // postgres://kfayrlbi:OAaEE39zOMLEPfH4DDgHbGNVsQtNdHu7@heffalump.db.elephantsql.com/kfayrlbi
   var conn = await Connection.open(Endpoint(
       host: 'localhost',
       port: 5432,

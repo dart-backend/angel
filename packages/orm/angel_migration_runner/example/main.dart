@@ -9,9 +9,15 @@ import 'package:mysql_client/mysql_client.dart';
 import 'todo.dart';
 
 void main(List<String> args) async {
+  Connection conn = await Connection.open(Endpoint(
+      host: 'localhost',
+      port: 5432,
+      database: 'demo',
+      username: 'demouser',
+      password: 'demo123'));
+
   var postgresqlMigrationRunner = PostgresMigrationRunner(
-    PostgreSQLConnection('localhost', 5432, 'demo',
-        username: 'demouser', password: 'demo123'),
+    conn,
     migrations: [
       UserMigration(),
       TodoMigration(),
