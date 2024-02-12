@@ -392,7 +392,7 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
         throw ArgumentError("Unsupported database dialect.");
       }
 
-      //_log.warning("Insert Query = $sql");
+      _log.fine("Insert Query = $sql");
 
       return executor
           .query(tableName, sql, substitutionValues,

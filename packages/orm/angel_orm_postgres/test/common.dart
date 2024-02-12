@@ -20,13 +20,19 @@ Future<void> closePg(QueryExecutor executor) async {
 }
 
 Future<PostgreSqlExecutor> connectToPostgres(Iterable<String> schemas) async {
-  // postgres://kfayrlbi:OAaEE39zOMLEPfH4DDgHbGNVsQtNdHu7@heffalump.db.elephantsql.com/kfayrlbi
-  var conn = await Connection.open(Endpoint(
-      host: 'localhost',
-      port: 5432,
-      database: Platform.environment['POSTGRES_DB'] ?? 'orm_test',
-      username: Platform.environment['POSTGRES_USERNAME'] ?? 'test',
-      password: Platform.environment['POSTGRES_PASSWORD'] ?? 'test123'));
+  var host = Platform.environment['POSTGRES_HOST'] ?? 'localhost';
+  var database = Platform.environment['POSTGRES_NAME'] ?? 'orm_test';
+  var username = Platform.environment['POSTGRES_USERNAME'] ?? 'test';
+  var password = Platform.environment['POSTGRES_PASSWORD'] ?? 'test123';
+
+  var conn = await Connection.open(
+      Endpoint(
+          host: host,
+          port: 5432,
+          database: database,
+          username: username,
+          password: password),
+      settings: ConnectionSettings(sslMode: SslMode.disable));
 
   // Run sql to create the tables
   for (var s in schemas) {

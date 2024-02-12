@@ -24,7 +24,11 @@ void customExprTests(FutureOr<QueryExecutor> Function() createExecutor,
     });
   });
 
-  tearDown(() => close!(executor));
+  tearDown(() {
+    if (close != null) {
+      close(executor);
+    }
+  });
 
   test('fetches correct result', () async {
     expect(numbersModel.two, 2);
