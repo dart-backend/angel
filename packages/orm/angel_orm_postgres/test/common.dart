@@ -36,7 +36,42 @@ Future<PostgreSqlExecutor> connectToPostgres(Iterable<String> schemas) async {
 
   // Run sql to create the tables
   for (var s in schemas) {
-    await conn.execute(await File('test/migrations/$s.sql').readAsString());
+    var rawQueryString = await File('test/migrations/$s.sql').readAsString();
+    print("Raw SQL Query: $rawQueryString");
+    //await conn.execute(queryString);
+
+    // Split the queries and execute them
+    var stringLen = rawQueryString.length;
+    var index = 0;
+    while (index < stringLen) {
+      index = rawQueryString.indexOf(";");
+      if (index < 0) {
+        break;
+      }
+      var query = rawQueryString.substring(0, index);
+      print("SQL Query: $query;");
+      await conn.execute("$query;");
+
+      index++;
+      if (index < stringLen) {
+        var tempString = rawQueryString.substring(index).trim();
+        rawQueryString = tempString;
+        stringLen = rawQueryString.length;
+        index = 0;
+      }
+    }
+    /*
+    var queryString = rawQueryString.replaceAll("\n", " ");
+    print("Raw Query: $queryString");
+    var queries = queryString.split(';');
+    for (var rawQuery in queries) {
+      var query = rawQuery.trim();
+      if (query.isNotEmpty) {
+        print("SQL Query: $query;");
+        await conn.execute("$query;");
+      }
+    }
+    */
   }
 
   return PostgreSqlExecutor(conn, logger: Logger.root);

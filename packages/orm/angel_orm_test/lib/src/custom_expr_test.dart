@@ -10,8 +10,11 @@ void customExprTests(FutureOr<QueryExecutor> Function() createExecutor,
 
   close ??= (_) => null;
 
+  var hasExecutor = false;
+
   setUp(() async {
     executor = await createExecutor();
+    hasExecutor = true;
 
     var now = DateTime.now();
     var nQuery = NumbersQuery();
@@ -25,7 +28,7 @@ void customExprTests(FutureOr<QueryExecutor> Function() createExecutor,
   });
 
   tearDown(() {
-    if (close != null) {
+    if (hasExecutor && close != null) {
       close(executor);
     }
   });

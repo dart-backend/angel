@@ -27,7 +27,7 @@ dependency_overrides:
      path: ../angel_orm_test
 #   angel3_orm_generator:
 #     path: ../angel_orm_generator
-#   angel3_orm:
-#      path: ../angel_orm
+   angel3_orm:
+      path: ../angel_orm
    angel3_migration:
       path: ../angel_migration
