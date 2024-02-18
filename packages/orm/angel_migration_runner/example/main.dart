@@ -1,17 +1,30 @@
+import 'dart:io';
+
 import 'package:angel3_migration/angel3_migration.dart';
 import 'package:angel3_migration_runner/angel3_migration_runner.dart';
 import 'package:angel3_migration_runner/postgres.dart';
-import 'package:angel3_migration_runner/mysql.dart';
 import 'package:angel3_orm/angel3_orm.dart';
 import 'package:postgres/postgres.dart';
-import 'package:mysql_client/mysql_client.dart';
 
 import 'todo.dart';
 
 void main(List<String> args) async {
+  var host = Platform.environment['DB_HOST'] ?? 'localhost';
+  var database = Platform.environment['DB_NAME'] ?? 'demo';
+  var username = Platform.environment['DB_USERNAME'] ?? 'demouser';
+  var password = Platform.environment['DB_PASSWORD'] ?? 'demo123';
+
+  print("$host $database $username $password");
+
+  Connection conn = await Connection.open(Endpoint(
+      host: host,
+      port: 5432,
+      database: database,
+      username: username,
+      password: password));
+
   var postgresqlMigrationRunner = PostgresMigrationRunner(
-    PostgreSQLConnection('localhost', 5432, 'demo',
-        username: 'demouser', password: 'demo123'),
+    conn,
     migrations: [
       UserMigration(),
       TodoMigration(),
@@ -19,12 +32,13 @@ void main(List<String> args) async {
     ],
   );
 
+  /*
   var mySQLConn = await MySQLConnection.createConnection(
-      host: "localhost",
+      host: host,
       port: 3306,
-      databaseName: "orm_test",
-      userName: "test",
-      password: "Test123*",
+      databaseName: database,
+      userName: username,
+      password: password,
       secure: false);
 
   // ignore: unused_local_variable
@@ -36,6 +50,7 @@ void main(List<String> args) async {
       FooMigration(),
     ],
   );
+  */
 
   runMigrations(postgresqlMigrationRunner, args);
 }

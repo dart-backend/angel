@@ -19,10 +19,15 @@ Supported database:
 
 * Use `MySqlMigrationRunner` to perform database migration for MySQL and MariaDB. This runner is using [`mysql_client`](https://pub.dev/packages?q=mysql_client) driver.
 
-* Use `MariaDbMigrationRunner` to perform database migration for MariaDB. This runner is using[`mysql1`](https://pub.dev/packages?q=mysql1) driver.
+* Use `MariaDbMigrationRunner` to perform database migration for MariaDB. This runner is using [`mysql1`](https://pub.dev/packages?q=mysql1) driver.
 
 ## Supported Operations
 
-* reset - Clear out all records in the `migrations` table and drop all the managed ORM tables.
-* up - Generate all the managed ORM tables based on the ORM models.
+* reset   - Clear out all records in the `migrations` table and drop all the ORM related tables.
+* up      - Generate all the tables based on the ORM models.
 * refresh - Run `reset` follow by `up`
+
+## To do
+
+* Update existing tables
+* Reverse engineer tables into models
