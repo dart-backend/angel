@@ -1,5 +1,9 @@
 # Change Log
 
+## 8.3.2
+
+* Updated README
+
 ## 8.3.1
 
 * Updated repository link
@@ -16,7 +20,7 @@
 
 ## 8.1.1
 
-* Updated broken image on README.md
+* Updated broken image on README
 
 ## 8.1.0
 
