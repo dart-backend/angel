@@ -21,7 +21,7 @@ Future<void> closePg(QueryExecutor executor) async {
 
 Future<PostgreSqlExecutor> connectToPostgres(Iterable<String> schemas) async {
   var host = Platform.environment['POSTGRES_HOST'] ?? 'localhost';
-  var database = Platform.environment['POSTGRES_NAME'] ?? 'orm_test';
+  var database = Platform.environment['POSTGRES_DB'] ?? 'orm_test';
   var username = Platform.environment['POSTGRES_USERNAME'] ?? 'test';
   var password = Platform.environment['POSTGRES_PASSWORD'] ?? 'test123';
 
