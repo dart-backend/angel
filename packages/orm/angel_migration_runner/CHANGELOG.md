@@ -1,15 +1,13 @@
 # Change Log
 
-## 8.2.0
-
-* [BREAKING] Updated `postgres` to 3.0.0
-
 ## 8.1.1
 
-* Updated repository link
+* Updated pubspec
 
 ## 8.1.0
 
+* [BREAKING] Updated `postgres` to 3.0.0
+* Updated repository link
 * Updated `lints` to 3.0.0
 * Fixed linter warnings
 
