@@ -4,7 +4,7 @@ description: Supports hot reloading/hot code push of Angel3 servers on file chan
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dart-backend/angel/tree/master/packages/hot
 environment:
-  sdk: '>=3.0.0 <4.0.0'
+  sdk: '>=3.3.0 <4.0.0'
 dependencies:
   angel3_framework: ^8.2.0
   angel3_websocket: ^8.1.0
@@ -18,7 +18,7 @@ dependencies:
   logging: ^1.2.0
 dev_dependencies:
   http: ^1.0.0
-  lints: ^3.0.0
+  lints: ^4.0.0
 #dependency_overrides:
 #   angel3_container:
 #     path: ../container/angel_container
