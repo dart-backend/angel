@@ -21,7 +21,7 @@ jobs:
 
       - uses: dart-lang/setup-dart@v1
         with:
-          sdk: "3.0.3"
+          sdk: "3.3.0"
           
       - id: angel3_container_upgrade
         name: angel3_container; Upgrade depedencies
