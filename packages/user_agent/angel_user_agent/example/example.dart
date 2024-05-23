@@ -6,6 +6,7 @@ import 'package:angel3_framework/http.dart';
 
 void main() async {
   var app = Angel();
+  // ignore: unused_local_variable
   var http = AngelHttp(app);
 
   //TODO: To be reviewed

@@ -4,7 +4,7 @@ description: A pre-processor for resolving blocks and includes within Jael templ
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dart-backend/angel/tree/master/packages/jael/jael_preprocessor
 environment:
-  sdk: '>=3.0.0 <4.0.0'
+  sdk: '>=3.3.0 <4.0.0'
 dependencies:
   file: ^7.0.0
   jael3: ^8.0.0
@@ -13,7 +13,7 @@ dependencies:
 dev_dependencies:
   belatuk_code_buffer: ^5.1.0
   test: ^1.24.0
-  lints: ^3.0.0
+  lints: ^4.0.0
 # dependency_overrides:
 #   jael3:
 #     path: ../jael

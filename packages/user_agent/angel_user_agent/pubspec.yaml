@@ -4,11 +4,11 @@ description: Angel3 middleware to parse and inject a User Agent object into requ
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dart-backend/angel/tree/angel3/packages/user_agent/angel_user_agent
 environment:
-  sdk: '>=3.0.0 <4.0.0'
+  sdk: '>=3.3.0 <4.0.0'
 dependencies:
   angel3_framework: ^8.0.0
   user_agent_analyzer: ^5.0.0
-  lints: ^3.0.0
+  lints: ^4.0.0
 # dependency_overrides:
 #   angel3_container:
 #     path: ../../container/angel_container

@@ -61,7 +61,7 @@ class Route<T> {
     var i = 0;
 
     if (_routeDefinition != null) {
-      for (var seg in _routeDefinition!.segments) {
+      for (var seg in _routeDefinition.segments) {
         if (i++ > 0) b.write('/');
         if (seg is ConstantSegment) {
           b.write(seg.text);

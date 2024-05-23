@@ -217,7 +217,7 @@ class Container {
     if (_namedSingletons.containsKey(name)) {
       return _namedSingletons[name] as T;
     } else if (_parent != null) {
-      return _parent!.findByName<T>(name);
+      return _parent.findByName<T>(name);
     } else {
       throw StateError(
           'This container does not have a singleton named "$name".');

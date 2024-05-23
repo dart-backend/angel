@@ -15,7 +15,7 @@ dependencies:
   dart_twitter_api: ^0.5.6+1
 dev_dependencies:
   logging: ^1.2.0
-  lints: ^3.0.0
+  lints: ^4.0.0
 dependency_overrides:
   http: ^1.0.0
 #   angel3_container:
