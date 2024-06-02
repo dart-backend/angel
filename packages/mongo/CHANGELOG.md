@@ -1,5 +1,11 @@
 # Change Log
 
+## 8.2.0
+
+* Require Dart >= 3.3
+* Upgraded `mongo_dart` to 0.10.2
+* Fixed deprecated methods
+
 ## 8.1.1
 
 * Updated repository link
