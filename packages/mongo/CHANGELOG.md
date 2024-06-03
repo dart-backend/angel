@@ -3,7 +3,8 @@
 ## 8.2.0
 
 * Require Dart >= 3.3
-* Upgraded `mongo_dart` to 0.10.2
+* Updated `mongo_dart` to 0.10.2
+* Updated `lints` to 3.0.0
 * Fixed deprecated methods
 
 ## 8.1.1

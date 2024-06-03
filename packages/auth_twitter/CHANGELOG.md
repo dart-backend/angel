@@ -2,11 +2,11 @@
 
 ## 8.0.0
 
-* Require Dart >= 3.0
+* Require Dart >= 3.3
 * Updated `oauth1` to `belatuk_oauth1`
-* Updated `lints` to 3.0.0
-* Fixed linter warnings
+* Updated `lints` to 4.0.0
 * Updated repository link
+* Fixed linter warnings
 
 ## 7.0.0
 
