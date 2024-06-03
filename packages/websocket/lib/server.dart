@@ -508,8 +508,8 @@ class AngelWebSocket {
         if (protocol != null) sink.add('Sec-WebSocket-Protocol: $protocol\r\n');
         sink.add('\r\n');
 
-        var ws = WebSocketChannel(ctrl.foreign);
-        var socket = WebSocketContext(ws, req, res);
+        //var ws = IOWebSocketChannel.connect(ctrl.foreign);
+        var socket = WebSocketContext(ctrl.foreign, req, res);
         scheduleMicrotask(() => handleClient(socket));
         return false;
       }

@@ -11,7 +11,7 @@ import 'common.dart';
 void main() {
   srv.Angel app;
   late srv.AngelHttp http;
-  ws.WebSockets? client;
+  late ws.WebSockets client;
   srv.AngelWebSocket websockets;
   HttpServer? server;
   String? url;
@@ -34,12 +34,12 @@ void main() {
     url = 'ws://${server!.address.address}:${server!.port}/ws';
 
     client = ws.WebSockets(url);
-    await client!.connect(timeout: Duration(seconds: 3));
+    await client.connect(timeout: Duration(seconds: 3));
 
     print('Connected');
 
     client
-      ?..onData.listen((data) {
+      ..onData.listen((data) {
         print('Received by client: $data');
       })
       ..onError.listen((error) {
@@ -51,18 +51,17 @@ void main() {
   });
 
   tearDown(() async {
-    await client!.close();
+    await client.close();
     await http.close();
     //app = null;
-    client = null;
     server = null;
     url = null;
   });
 
   group('controller.io', () {
     test('search', () async {
-      client!.sendAction(ws.WebSocketAction(eventName: 'search'));
-      var search = await client!.on['searched'].first;
+      client.sendAction(ws.WebSocketAction(eventName: 'search'));
+      var search = await client.on['searched'].first;
       print('Searched: ${search.data}');
       expect(Game.fromJson(search.data as Map), equals(johnVsBob));
     });

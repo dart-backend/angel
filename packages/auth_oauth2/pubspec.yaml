@@ -1,5 +1,5 @@
 name: angel3_auth_oauth2
-version: 8.1.1
+version: 8.2.0
 description: Angel3 library for authenticating users with external identity providers via OAuth2.
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dart-backend/angel/tree/master/packages/auth_oauth2

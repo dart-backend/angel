@@ -93,7 +93,7 @@ abstract class BaseWebSocketClient extends BaseAngelClient {
   Future close() async {
     on._close();
     scheduleMicrotask(() async {
-      await _socket!.sink.close(status.goingAway);
+      await _socket!.sink.close(status.normalClosure);
       await _onData.close();
       await _onAllEvents.close();
       await _onAuthenticated.close();

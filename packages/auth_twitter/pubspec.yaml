@@ -1,11 +1,11 @@
 name: "angel3_auth_twitter"
 description: Angel3 authentication strategy for Twitter login. Auto-signs requests.
-version: 8.0.1
+version: 8.0.0
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dart-backend/angel/tree/master/packages/auth_twitter
 publish_to: none
 environment:
-  sdk: ">=3.0.0 <4.0.0"
+  sdk: ">=3.3.0 <4.0.0"
 dependencies:
   angel3_auth: ^8.0.0
   angel3_framework: ^8.0.0

@@ -73,7 +73,7 @@ class MongoService extends Service<String, Map<String, dynamic>> {
     for (var key in doc.keys) {
       var value = doc[key];
       if (value is ObjectId) {
-        result[key] = value.toHexString();
+        result[key] = value.oid;
       } else if (value is! RequestContext && value is! ResponseContext) {
         result[key] = value;
       }
@@ -133,7 +133,7 @@ class MongoService extends Service<String, Map<String, dynamic>> {
 
     if (found == null) {
       throw AngelHttpException.notFound(
-          message: 'No record found for ID ${localId.toHexString()}');
+          message: 'No record found for ID ${localId.oid}');
     }
 
     return _jsonify(found, params);
@@ -171,7 +171,7 @@ class MongoService extends Service<String, Map<String, dynamic>> {
           update: result,
           returnNew: true) as FutureOr<Map<String, dynamic>>);
       result = _jsonify(modified, params);
-      result['id'] = _makeId(id).toHexString();
+      result['id'] = _makeId(id).oid;
       return result;
     } catch (e, st) {
       //printDebug(e, st, 'MODIFY');
@@ -199,7 +199,7 @@ class MongoService extends Service<String, Map<String, dynamic>> {
           returnNew: true,
           upsert: true) as FutureOr<Map<String, dynamic>>);
       result = _jsonify(updated, params);
-      result['id'] = _makeId(id).toHexString();
+      result['id'] = _makeId(id).oid;
       return result;
     } catch (e, st) {
       //printDebug(e, st, 'UPDATE');

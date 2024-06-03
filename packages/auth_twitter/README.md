@@ -5,6 +5,7 @@
 [![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
 [![License](https://img.shields.io/github/license/dart-backend/angel)](https://github.com/dart-backend/angel/tree/master/packages/auth_twitter/LICENSE)
 
+**Not ready for release**
 Angel3 authentication strategy using Twitter OAuth 1.0a.
 
 See the [example](example/example.dart);
