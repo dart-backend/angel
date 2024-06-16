@@ -8,4 +8,4 @@ Experimental virtual DOM/SPA engine built on Jael. Supports SSR.
 
 ## TODO
 
-* Builder failed to generate the class
+* Bug: Builder failed to generate the class

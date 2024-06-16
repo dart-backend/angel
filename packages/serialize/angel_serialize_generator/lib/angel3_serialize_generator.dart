@@ -100,7 +100,7 @@ String? dartObjectToString(DartObject v) {
     return '#${v.toSymbolValue()!}';
   }
   if (v.toTypeValue() != null) {
-    return v.toTypeValue()!.getDisplayString(withNullability: true);
+    return v.toTypeValue()!.getDisplayString();
   }
   if (v.toListValue() != null) {
     return 'const [${v.toListValue()!.map(dartObjectToString).join(', ')}]';
