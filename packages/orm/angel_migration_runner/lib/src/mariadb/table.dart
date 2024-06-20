@@ -153,7 +153,7 @@ class MariaDbAlterTable extends Table implements MutableTable {
   @override
   void changeColumnType(String name, ColumnType type, {int length = 256}) {
     _stack.add(
-        'ALTER COLUMN $name TYPE ${MariaDbGenerator.columnType(MigrationColumn(type, length: length))}');
+        'MODIFY $name ${MariaDbGenerator.columnType(MigrationColumn(type, length: length))}');
   }
 
   @override
