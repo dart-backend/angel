@@ -152,7 +152,7 @@ class MysqlAlterTable extends Table implements MutableTable {
   @override
   void changeColumnType(String name, ColumnType type, {int length = 256}) {
     _stack.add(
-        'ALTER COLUMN $name TYPE ${MySqlGenerator.columnType(MigrationColumn(type, length: length))}');
+        'MODIFY $name ${MySqlGenerator.columnType(MigrationColumn(type, length: length))}');
   }
 
   @override
