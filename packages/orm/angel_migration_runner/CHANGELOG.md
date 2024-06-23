@@ -1,5 +1,11 @@
 # Change Log
 
+## 8.2.0
+
+* Require Dart >= 3.3
+* Updated `lints` to 4.0.0
+* Fixed MySQL migration column change [PR #127](https://github.com/dart-backend/angel/pull/127)
+
 ## 8.1.1
 
 * Updated pubspec

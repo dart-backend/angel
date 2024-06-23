@@ -57,6 +57,11 @@ For more details, checkout [Project Status](https://github.com/dart-backend/ange
 
 ## Release Notes
 
+### Release 9.0.0 (Future)
+
+* Performance optimsation
+* Update and enhance ORM to support macro
+
 ### Release 8.0.0 (Current)
 
 * Updated `angel3_` packages to require dart >= 3.0.0
@@ -88,8 +93,8 @@ For more details, checkout [Project Status](https://github.com/dart-backend/ange
 * Add cache support in ORM (using Redis)
 * Upgrade and release angel3_oauth2 8.0.0 (5 failed test cases)
 * Upgrade and release angel3_auth_twitter 8.0.0 (issue: oauth1 don't support http 1.0.0)
-* Upgrade and release angel3_mongo 8.0.0 (issue: mongo_dart don't support http 1.0.0)
 * Upgrade and release angel3_shelf 8.0.0 (2 failed test cases)
+* Migrate and release angel3_rethink
 
 ## Installation and Setup
 
@@ -191,7 +196,7 @@ Interested in contributing to Angel3? See the contribution guide [here](CONTRIBU
 
 3. Download and install [Dart 3](https://dart.dev/get-dart)
 
-4. Install `melos` 3.0
+4. Install `melos` 6.1
 
    ```bash
    dart pub global activate melos

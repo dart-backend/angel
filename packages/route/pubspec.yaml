@@ -1,5 +1,5 @@
 name: angel3_route
-version: 8.1.1
+version: 8.2.0
 description: A powerful, isomorphic routing library for Dart. It is mainly used in the Angel3 framework, but can be used in Flutter and on the Web.
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dart-backend/angel/tree/master/packages/route

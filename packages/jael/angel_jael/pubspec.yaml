@@ -1,5 +1,5 @@
 name: angel3_jael
-version: 8.1.1
+version: 8.2.0
 description: Angel support for the Jael templating engine, similar to Blade or Liquid.
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dart-backend/angel/tree/master/packages/jael/angel_jael

@@ -1,5 +1,5 @@
 name: jael3_preprocessor
-version: 8.1.1
+version: 8.2.0
 description: A pre-processor for resolving blocks and includes within Jael templates.
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dart-backend/angel/tree/master/packages/jael/jael_preprocessor
