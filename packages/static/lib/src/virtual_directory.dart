@@ -268,7 +268,9 @@ class VirtualDirectory {
           //    'Client requested $value, but server wanted to send $mimeType.'),
           errors: [
             'Client requested $value, but server wanted to send $mimeType.'
-          ], statusCode: 406, message: '406 Not Acceptable');
+          ],
+          statusCode: 406,
+          message: '406 Not Acceptable');
     }
   }
 

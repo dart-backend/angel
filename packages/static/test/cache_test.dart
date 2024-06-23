@@ -20,7 +20,9 @@ void main() {
 
     app.fallback(
       CachingVirtualDirectory(app, const LocalFileSystem(),
-          source: testDir, maxAge: 350, onlyInProduction: false,
+          source: testDir,
+          maxAge: 350,
+          onlyInProduction: false,
           //publicPath: '/virtual',
           indexFileNames: ['index.txt']).handleRequest,
     );
