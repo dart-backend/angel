@@ -745,7 +745,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
         if (const TypeChecker.fromRuntime(int).isExactlyType(type) ||
             const TypeChecker.fromRuntime(double).isExactlyType(type) ||
             isSpecialId(ctx, field)) {
-          var typeName = type.getDisplayString(withNullability: false);
+          var typeName = type.getDisplayString();
           if (isSpecialId(ctx, field)) {
             typeName = 'int';
           }

@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 import 'package:angel3_orm/angel3_orm.dart';
 import 'package:test/test.dart';
 import 'models/user.dart';
@@ -12,6 +11,7 @@ void manyToManyTests(FutureOr<QueryExecutor> Function() createExecutor,
   User? thosakwe;
   close ??= (_) => null;
 
+  /*
   Future<void> dumpQuery(String query) async {
     if (Platform.environment.containsKey('STFU')) return;
     print('\n');
@@ -26,27 +26,10 @@ void manyToManyTests(FutureOr<QueryExecutor> Function() createExecutor,
     }
     print('==================================================\n\n');
   }
+  */
 
   setUp(() async {
     executor = await createExecutor();
-
-//     await dumpQuery("""
-// WITH roles as
-//   (INSERT INTO roles (name)
-//     VALUES ('pyt')
-//     RETURNING roles.id, roles.name, roles.created_at, roles.updated_at)
-// SELECT
-//   roles.id, roles.name, roles.created_at, roles.updated_at
-// FROM roles
-// LEFT JOIN
-//   (SELECT
-//     role_users.role_id, role_users.user_id,
-//     a0.id, a0.username, a0.password, a0.email, a0.created_at, a0.updated_at
-//     FROM role_users
-//     LEFT JOIN
-//       users a0 ON role_users.user_id=a0.id)
-//   a1 ON roles.id=a1.role_id
-//     """);
 
     var canPubQuery = RoleQuery()..values.name = 'can_pub';
     var canSubQuery = RoleQuery()..values.name = 'can_sub';

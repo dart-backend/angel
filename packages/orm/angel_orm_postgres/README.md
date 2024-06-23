@@ -15,4 +15,6 @@ For documentation about the ORM, see [Developer Guide](https://angel3-docs.dukef
 
 ## Migration
 
-Posrgresql is upgraded from 2.x.x to 3.x.x in version 8.1.0.
+### From version 7.x to 8.1.x
+
+`postgres` has been upgraded from 2.x.x to 3.x.x since version 8.1.0. This is a breaking change as `postgres` 3.x.x has majorly changed its API. Therefore when upgrading to 8.1.0 and beyond, the PostgreSQL connection settings need to be migrated. The rest should remain the same. Please see the example for the new PostgreSQL connection settings.

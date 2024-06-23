@@ -1,5 +1,5 @@
 name: angel3_orm_generator
-version: 8.3.1
+version: 8.3.2
 description: Code generators for Angel3 ORM. Generates query builder classes.
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dart-backend/angel/tree/master/packages/orm/angel_orm_generator

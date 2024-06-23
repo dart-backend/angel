@@ -8,7 +8,7 @@ environment:
 dependencies:
   angel3_framework: ^8.4.0
   angel3_orm: ^8.2.0
-  postgres: ^3.0.0
+  postgres: ^3.2.0
   optional: ^6.0.0
 dev_dependencies:
   angel3_migration: ^8.2.0
