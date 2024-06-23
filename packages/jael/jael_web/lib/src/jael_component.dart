@@ -14,6 +14,5 @@ class Jael {
 
 /// Shorthand for enabling `DSX` syntax when using a [Jael] annotation.
 class Dsx extends Jael {
-  const Dsx({String? template, String? templateUrl})
-      : super(template: template, templateUrl: templateUrl, asDsx: true);
+  const Dsx({super.template, super.templateUrl}) : super(asDsx: true);
 }

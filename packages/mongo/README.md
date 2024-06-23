@@ -44,7 +44,7 @@ void main() async {
 
 ## MongoService
 
-This class interacts with a `DbCollection` (from mongo_dart) and serializing data to and from Maps.
+This class interacts with `DbCollection` (from mongo_dart) and serializing data to and from Maps.
 
 ## Querying
 
@@ -57,9 +57,20 @@ You can query these services as follows:
 The above will query the database to find records where 'foo' equals 'bar'. The former will sort result in ascending order of creation, and so will the latter.
 
 ```dart
-    List queried = await MyService.index({r"$query": where.id(new ObjectId.fromHexString("some hex string"})));
+    List queried = await MyService.index({r"$query": where.id(ObjectId.fromHexString("some hex string"})));
 ```
 
-And, of course, you can use mongo_dart queries. Just pass it as `query` within `params`.
+And, you can use mongo_dart queries. Just pass it as `query` within `params`.
 
 See the tests for more usage examples.
+
+## **Important Notes**
+
+When running with locally installed instance of MongoDB or docker based MongoDB, the following connection string is not supported by the underlying MongoDB driver yet. Best option at the moment is to run MongoDB with the authentication off or use MongoDB Atlas.
+
+```dart
+  var db = Db('mongodb://<username>:<password>@localhost:27017/local');
+```
+
+* `<username>` is MongoDB username
+* `<password>` is MongoDB password

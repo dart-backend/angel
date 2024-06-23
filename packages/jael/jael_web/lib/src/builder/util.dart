@@ -12,7 +12,7 @@ import 'package:path/path.dart';
 /// Converts a [DartType] to a [TypeReference].
 TypeReference convertTypeReference(DartType? t) {
   return TypeReference((b) {
-    b.symbol = t?.getDisplayString(withNullability: false);
+    b.symbol = t?.getDisplayString();
 
     if (t is InterfaceType) {
       b.types.addAll(t.typeArguments.map(convertTypeReference));

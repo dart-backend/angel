@@ -189,12 +189,11 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
 
         // Serialize model classes via `XSerializer.toMap`
         else if (isModelClass(type)) {
-          var rc = ReCase(type.getDisplayString(withNullability: true));
+          var rc = ReCase(type.getDisplayString());
           serializedRepresentation = serializerToMap(rc, 'model.${field.name}');
         } else if (type is InterfaceType) {
           if (isListOfModelType(type)) {
-            var name =
-                type.typeArguments[0].getDisplayString(withNullability: true);
+            var name = type.typeArguments[0].getDisplayString();
             if (name.startsWith('_')) name = name.substring(1);
             var rc = ReCase(name);
             var m = serializerToMap(rc, 'm');
@@ -207,8 +206,7 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
                 'model.${field.name}$question.map((m) => $m).toList()';
             log.fine('serializedRepresentation => $serializedRepresentation');
           } else if (isMapToModelType(type)) {
-            var rc = ReCase(
-                type.typeArguments[1].getDisplayString(withNullability: true));
+            var rc = ReCase(type.typeArguments[1].getDisplayString());
             serializedRepresentation =
                 '''model.${field.name}.keys.fold({}, (map, key) {
               return map..[key] =
@@ -222,7 +220,7 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
 
             serializedRepresentation = '''
             model.${field.name} != null ?
-              ${type.getDisplayString(withNullability: false)}.values.indexOf(model.${field.name}$convert)
+              ${type.getDisplayString()}.values.indexOf(model.${field.name}$convert)
               : null
             ''';
           } else if (const TypeChecker.fromRuntime(Uint8List)
@@ -357,7 +355,7 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
 
         // Serialize model classes via `XSerializer.toMap`
         else if (isModelClass(type)) {
-          var rc = ReCase(type.getDisplayString(withNullability: true));
+          var rc = ReCase(type.getDisplayString());
           deserializedRepresentation = "map['$alias'] != null"
               " ? ${rc.pascalCase.replaceAll('?', '')}Serializer.fromMap(map['$alias'] as Map)"
               ' : $defaultValue';
@@ -366,8 +364,7 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
             if (defaultValue == 'null') {
               defaultValue = '[]';
             }
-            var rc = ReCase(
-                type.typeArguments[0].getDisplayString(withNullability: true));
+            var rc = ReCase(type.typeArguments[0].getDisplayString());
 
             deserializedRepresentation = "map['$alias'] is Iterable"
                 " ? List.unmodifiable(((map['$alias'] as Iterable)"
@@ -380,8 +377,7 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
               defaultValue = '{}';
             }
 
-            var rc = ReCase(
-                type.typeArguments[1].getDisplayString(withNullability: true));
+            var rc = ReCase(type.typeArguments[1].getDisplayString());
             deserializedRepresentation = '''
                 map['$alias'] is Map
                   ? Map.unmodifiable((map['$alias'] as Map).keys.fold({}, (out, key) {
@@ -392,12 +388,12 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
             ''';
           } else if (type.element is Enum) {
             deserializedRepresentation = '''
-            map['$alias'] is ${type.getDisplayString(withNullability: true)}
-              ? (map['$alias'] as ${type.getDisplayString(withNullability: true)}) ?? $defaultValue
+            map['$alias'] is ${type.getDisplayString()}
+              ? (map['$alias'] as ${type.getDisplayString()}) ?? $defaultValue
               :
               (
                 map['$alias'] is int
-                ? ${type.getDisplayString(withNullability: true)}.values[map['$alias'] as int]
+                ? ${type.getDisplayString()}.values[map['$alias'] as int]
                 : $defaultValue
               )
             ''';
