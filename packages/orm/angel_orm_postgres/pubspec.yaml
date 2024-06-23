@@ -1,5 +1,5 @@
 name: angel3_orm_postgres
-version: 8.1.0
+version: 8.2.0
 description: PostgreSQL support for Angel3 ORM. Includes functionality for querying and transactions.
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dart-backend/angel/tree/master/packages/orm/angel_orm_postgres

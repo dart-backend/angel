@@ -1,5 +1,5 @@
 name: angel3_html
-version: 8.0.0
+version: 8.1.0
 description: Support for rendering html_builder AST's as responses in Angel.
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dart-backend/angel/tree/angel3/packages/html_builder

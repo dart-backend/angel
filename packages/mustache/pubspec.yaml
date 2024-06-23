@@ -1,5 +1,5 @@
 name: angel3_mustache
-version: 8.1.1
+version: 8.2.0
 description: A service that renders Mustache template into HTML view for Angel3
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dart-backend/angel/tree/master/packages/mustache

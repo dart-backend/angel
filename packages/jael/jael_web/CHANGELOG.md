@@ -3,7 +3,7 @@
 ## 8.0.0
 
 * Require Dart >= 3.3
-* Updated `lints` to 3.0.0
+* Updated `lints` to 4.0.0
 * Updated `analyzer` to 6.2.x
 * Fixed linter warnings
 * Updated repository link

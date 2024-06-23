@@ -1,5 +1,5 @@
 name: angel3_sync
-version: 8.1.1
+version: 8.2.0
 description: Easily synchronize and scale WebSockets using belatuk_pub_sub in Angel3.
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dart-backend/angel/tree/angel3/packages/sync
