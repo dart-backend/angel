@@ -13,7 +13,7 @@ dependencies:
   optional: ^6.1.0
   logging: ^1.2.0
 dev_dependencies:
-  angel3_model: ^8.0.0
+  angel3_model: ^8.2.0
   angel3_serialize: ^8.0.0
   angel3_serialize_generator: ^8.0.0
   build_runner: ^2.4.0
