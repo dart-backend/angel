@@ -2,7 +2,8 @@
 
 ## 8.2.2
 
-* Fixed examples and test cases
+* Updated examples and test cases
+* Updated README
 
 ## 8.2.1
 
