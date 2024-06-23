@@ -3,9 +3,10 @@
 ## 8.2.0
 
 * Require Dart >= 3.3
-* Updated `mongo_dart` to 0.10.2
-* Updated `lints` to 3.0.0
-* Fixed deprecated methods
+* Updated `mongo_dart` to 0.10.3
+* Updated `lints` to 4.0.0
+* Refactored `mongo_service` class
+* Refactored test cases
 
 ## 8.1.1
 

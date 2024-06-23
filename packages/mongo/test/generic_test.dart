@@ -1,3 +1,4 @@
+import 'package:angel3_container/mirrors.dart';
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_framework/http.dart';
 import 'package:angel3_mongo/angel3_mongo.dart';
@@ -25,18 +26,19 @@ void main() {
     Angel app;
     late AngelHttp transport;
     late http.Client client;
-    var db = Db('mongodb://localhost:27017/angel_mongo');
+    var db = Db('mongodb://localhost:27017/testingDB');
+
     late DbCollection testData;
     String? url;
     late HookedService<String, Map<String, dynamic>, MongoService>
         greetingService;
 
     setUp(() async {
-      app = Angel();
+      app = Angel(reflector: MirrorsReflector());
       transport = AngelHttp(app);
       client = http.Client();
       await db.open();
-      testData = db.collection('test_data');
+      testData = db.collection('testData');
       // Delete anything before we start
       await testData.remove(<String, dynamic>{});
 
@@ -126,30 +128,30 @@ void main() {
       var response = await client.post(Uri.parse('$url/api'),
           body: god.serialize(testGreeting), headers: headers);
       expect(response.statusCode, isIn([200, 201]));
-      var created = god.deserialize(response.body) as Map;
+      var createdDoc = god.deserialize(response.body) as Map;
 
-      response = await client.patch(Uri.parse("$url/api/${created['id']}"),
+      response = await client.patch(Uri.parse("$url/api/${createdDoc['id']}"),
           body: god.serialize({'to': 'Mom'}), headers: headers);
-      var modified = god.deserialize(response.body) as Map;
+      var modifiedDoc = god.deserialize(response.body) as Map;
       expect(response.statusCode, isIn([200, 201]));
-      expect(modified['id'], equals(created['id']));
-      expect(modified['to'], equals('Mom'));
-      //expect(modified['updatedAt'], isNot(null));
+      expect(modifiedDoc['id'], equals(createdDoc['id']));
+      expect(modifiedDoc['to'], equals('Mom'));
+      expect(modifiedDoc['updatedAt'], isNot(null));
     });
 
     test('update item', () async {
       var response = await client.post(Uri.parse('$url/api'),
           body: god.serialize(testGreeting), headers: headers);
       expect(response.statusCode, isIn([200, 201]));
-      var created = god.deserialize(response.body) as Map;
+      var createdDoc = god.deserialize(response.body) as Map;
 
-      response = await client.post(Uri.parse("$url/api/${created['id']}"),
+      response = await client.post(Uri.parse("$url/api/${createdDoc['id']}"),
           body: god.serialize({'to': 'Updated'}), headers: headers);
-      var modified = god.deserialize(response.body) as Map;
+      var modifiedDoc = god.deserialize(response.body) as Map;
       expect(response.statusCode, isIn([200, 201]));
-      expect(modified['id'], equals(created['id']));
-      expect(modified['to'], equals('Updated'));
-      //expect(modified['updatedAt'], isNot(null));
+      expect(modifiedDoc['id'], equals(createdDoc['id']));
+      expect(modifiedDoc['to'], equals('Updated'));
+      expect(modifiedDoc['updatedAt'], isNot(null));
     });
 
     test('remove item', () async {
