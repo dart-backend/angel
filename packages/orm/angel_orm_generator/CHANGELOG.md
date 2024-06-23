@@ -1,5 +1,9 @@
 # Change Log
 
+## 8.3.1
+
+* Updated dependencies
+
 ## 8.3.0
 
 * Require Dart >= 3.3
