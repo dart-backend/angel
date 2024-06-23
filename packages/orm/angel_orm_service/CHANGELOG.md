@@ -1,8 +1,14 @@
 # Change Log
 
+## 8.2.2
+
+* Updated examples and test cases
+* Updated README
+
 ## 8.2.1
 
 * Updated dependencies
+* Updated `popstgres` to 3.0.0
 
 ## 8.2.0
 
