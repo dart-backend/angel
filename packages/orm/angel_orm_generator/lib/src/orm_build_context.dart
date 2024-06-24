@@ -219,7 +219,7 @@ Future<OrmBuildContext?> buildOrmContext(
             }
           } on StackOverflowError {
             throw UnsupportedError(
-                'There is an infinite cycle between ${clazz.name} and ${field.type.getDisplayString(withNullability: true)}. This triggered a stack overflow.');
+                'There is an infinite cycle between ${clazz.name} and ${field.type.getDisplayString()}. This triggered a stack overflow.');
           }
         }
       }

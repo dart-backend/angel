@@ -8,7 +8,7 @@
 ## 8.2.1
 
 * Updated dependencies
-* Updated `popstgres` to 3.0.0
+* [BREAKING] Updated `postgres` to 3.2.0
 
 ## 8.2.0
 

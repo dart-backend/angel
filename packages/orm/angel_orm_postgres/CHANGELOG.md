@@ -1,5 +1,9 @@
 # Change Log
 
+## 8.2.2
+
+* Fixed analyzer warnings
+
 ## 8.2.1
 
 * Updated dependencies

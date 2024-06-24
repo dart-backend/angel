@@ -105,14 +105,12 @@ class PostgreSqlExecutor extends QueryExecutor {
 
     var conn = _session as Connection;
 
-    return await conn.runTx((session) async {
+    return await conn.runTx((TxSession session) async {
       try {
-        //logger.fine('Entering transaction');
         var exec = PostgreSqlExecutor(session, logger: logger);
         return await f(exec);
       } catch (e) {
         session.rollback();
-        //ctx.cancelTransaction(reason: e.toString());
         logger.warning("The transation has failed due to ", e);
         rethrow;
       }

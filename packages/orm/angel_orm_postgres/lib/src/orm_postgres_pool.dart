@@ -54,7 +54,7 @@ class PostgreSqlPoolExecutor extends QueryExecutor {
       }
     });
 
-    return _pool.run<Result>((session) async {
+    return _pool.run<Result>((Session session) async {
       return await session.execute(Sql.named(query), parameters: param);
     });
   }
