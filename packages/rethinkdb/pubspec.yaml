@@ -1,0 +1,24 @@
+name: angel3_rethinkdb
+version: 8.0.0
+description: RethinkDB-enabled services for the Angel3 framework.
+publish_to: none
+environment:
+  sdk: ">=3.3.0 <4.0.0"
+homepage: https://angel3-framework.web.app/
+repository: https://github.com/dart-backend/angel/tree/master/packages/rethinkdb
+dependencies:
+  angel3_framework: ^8.4.0
+  belatuk_json_serializer: ^7.0.0
+  belatuk_rethinkdb: ^1.0.0
+  
+dev_dependencies:
+  angel3_client: ^8.0.0
+  angel3_test: ^8.0.0
+  logging: ^1.2.0
+  test: ^1.25.0
+  lints: ^4.0.0
+
+dependency_overrides:
+  belatuk_rethinkdb:
+     path: ../../../rethink_db
+  
