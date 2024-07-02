@@ -8,7 +8,7 @@ import 'package:belatuk_rethinkdb/belatuk_rethinkdb.dart';
 typedef QueryCallback = RqlQuery Function(RqlQuery query);
 
 /// Queries a single RethinkDB table or query.
-class RethinkService extends Service {
+class RethinkService extends Service<String, Map<String, dynamic>> {
   /// If set to `true`, clients can remove all items by passing a `null` `id` to `remove`.
   ///
   /// `false` by default.
@@ -136,23 +136,24 @@ class RethinkService extends Service {
 
         if (type == 'add') {
           // Create
+
           hookedService.fireEvent(
               hookedService.afterCreated,
-              HookedServiceEvent(
+              RethinkDbHookedServiceEvent(
                   true, null, null, this, HookedServiceEvent.created,
                   result: newVal));
         } else if (type == 'change') {
           // Update
           hookedService.fireEvent(
               hookedService.afterCreated,
-              HookedServiceEvent(
+              RethinkDbHookedServiceEvent(
                   true, null, null, this, HookedServiceEvent.updated,
                   result: newVal, id: oldVal['id'], data: newVal));
         } else if (type == 'remove') {
           // Remove
           hookedService.fireEvent(
               hookedService.afterCreated,
-              HookedServiceEvent(
+              RethinkDbHookedServiceEvent(
                   true, null, null, this, HookedServiceEvent.removed,
                   result: oldVal, id: oldVal['id']));
         }
@@ -161,48 +162,17 @@ class RethinkService extends Service {
     }
 
     feed.listen(onData);
-/*
-    feed.listen((Map event) {
-      var type = event['type']?.toString();
-      var newVal = event['new_val'], oldVal = event['old_val'];
-
-      if (type == 'add') {
-        // Create
-        hookedService.fireEvent(
-            hookedService.afterCreated,
-            HookedServiceEvent(
-                true, null, null, this, HookedServiceEvent.created,
-                result: newVal));
-      } else if (type == 'change') {
-        // Update
-        hookedService.fireEvent(
-            hookedService.afterCreated,
-            HookedServiceEvent(
-                true, null, null, this, HookedServiceEvent.updated,
-                result: newVal, id: oldVal['id'], data: newVal));
-      } else if (type == 'remove') {
-        // Remove
-        hookedService.fireEvent(
-            hookedService.afterCreated,
-            HookedServiceEvent(
-                true, null, null, this, HookedServiceEvent.removed,
-                result: oldVal, id: oldVal['id']));
-      }
-    });
-    */
   }
 
-  // TODO: Invalid override method
-/*
   @override
-  Future index([Map params]) async {
-    var query = buildQuery(table, params);
+  Future<List<Map<String, dynamic>>> index([Map? params]) async {
+    var query = buildQuery(table, params ?? {});
     return await _sendQuery(query);
   }
-*/
+
   @override
-  Future read(id, [Map? params]) async {
-    var query = buildQuery(table.get(id?.toString()), params ?? {});
+  Future<Map<String, dynamic>> read(String id, [Map? params]) async {
+    var query = buildQuery(table.get(id.toString()), params ?? {});
     var found = await _sendQuery(query);
     //print('Found for $id: $found');
 
@@ -214,7 +184,7 @@ class RethinkService extends Service {
   }
 
   @override
-  Future create(data, [Map? params]) async {
+  Future<Map<String, dynamic>> create(Map data, [Map? params]) async {
     if (table is! Table) throw AngelHttpException.methodNotAllowed();
 
     var d = _serialize(data);
@@ -224,7 +194,8 @@ class RethinkService extends Service {
   }
 
   @override
-  Future modify(id, data, [Map? params]) async {
+  Future<Map<String, dynamic>> modify(String id, Map data,
+      [Map? params]) async {
     var d = _serialize(data);
 
     if (d is Map && d.containsKey('id')) {
@@ -239,13 +210,14 @@ class RethinkService extends Service {
       }
     }
 
-    var query = buildQuery(table.get(id?.toString()), params ?? {}).update(d);
+    var query = buildQuery(table.get(id.toString()), params ?? {}).update(d);
     await _sendQuery(query);
     return await read(id, params);
   }
 
   @override
-  Future update(id, data, [Map? params]) async {
+  Future<Map<String, dynamic>> update(String id, Map data,
+      [Map? params]) async {
     var d = _serialize(data);
 
     if (d is Map && d.containsKey('id')) {
@@ -261,13 +233,13 @@ class RethinkService extends Service {
     }
 
     if (d is Map && !d.containsKey('id')) d['id'] = id.toString();
-    var query = buildQuery(table.get(id?.toString()), params ?? {}).replace(d);
+    var query = buildQuery(table.get(id.toString()), params ?? {}).replace(d);
     await _sendQuery(query);
     return await read(id, params);
   }
 
   @override
-  Future remove(id, [Map? params]) async {
+  Future<Map<String, dynamic>> remove(String? id, [Map? params]) async {
     if (id == null ||
         id == 'null' &&
             (allowRemoveAll == true ||
@@ -280,4 +252,11 @@ class RethinkService extends Service {
       return prior;
     }
   }
+}
+
+class RethinkDbHookedServiceEvent
+    extends HookedServiceEvent<dynamic, dynamic, RethinkService> {
+  RethinkDbHookedServiceEvent(super.isAfter, super.request, super.response,
+      super.service, super.eventName,
+      {super.id, super.data, super.params, super.result});
 }

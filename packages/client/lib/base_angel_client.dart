@@ -97,7 +97,7 @@ abstract class BaseAngelClient extends Angel {
     } on AngelHttpException {
       rethrow;
     } catch (e, st) {
-      _log.severe('Authentication failed');
+      _log.severe(st);
       throw failure(response, error: e, stack: st);
     }
   }
@@ -202,6 +202,8 @@ abstract class BaseAngelClient extends Angel {
 }
 
 class BaseAngelService<Id, Data> extends Service<Id, Data?> {
+  final _log = Logger('BaseAngelService');
+
   @override
   final BaseAngelClient app;
   final Uri baseUrl;
@@ -294,6 +296,7 @@ class BaseAngelService<Id, Data> extends Service<Id, Data?> {
       if (_onIndexed.hasListener) {
         _onIndexed.addError(e, st);
       } else {
+        _log.severe(st);
         throw failure(response, error: e, stack: st);
       }
     }
@@ -327,6 +330,7 @@ class BaseAngelService<Id, Data> extends Service<Id, Data?> {
       if (_onRead.hasListener) {
         _onRead.addError(e, st);
       } else {
+        _log.severe(st);
         throw failure(response, error: e, stack: st);
       }
     }
@@ -356,6 +360,7 @@ class BaseAngelService<Id, Data> extends Service<Id, Data?> {
       if (_onCreated.hasListener) {
         _onCreated.addError(e, st);
       } else {
+        _log.severe(st);
         throw failure(response, error: e, stack: st);
       }
     }
@@ -388,6 +393,7 @@ class BaseAngelService<Id, Data> extends Service<Id, Data?> {
       if (_onModified.hasListener) {
         _onModified.addError(e, st);
       } else {
+        _log.severe(st);
         throw failure(response, error: e, stack: st);
       }
     }
@@ -420,6 +426,7 @@ class BaseAngelService<Id, Data> extends Service<Id, Data?> {
       if (_onUpdated.hasListener) {
         _onUpdated.addError(e, st);
       } else {
+        _log.severe(st);
         throw failure(response, error: e, stack: st);
       }
     }
@@ -451,6 +458,7 @@ class BaseAngelService<Id, Data> extends Service<Id, Data?> {
       if (_onRemoved.hasListener) {
         _onRemoved.addError(e, st);
       } else {
+        _log.severe(st);
         throw failure(response, error: e, stack: st);
       }
     }

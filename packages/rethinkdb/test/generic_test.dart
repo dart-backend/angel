@@ -1,4 +1,5 @@
 import 'package:angel3_client/angel3_client.dart' as c;
+import 'package:angel3_container/mirrors.dart';
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_rethinkdb/angel3_rethinkdb.dart';
 import 'package:angel3_test/angel3_test.dart';
@@ -15,9 +16,14 @@ void main() {
 
   setUp(() async {
     r = RethinkDb();
-    var conn = await r.connect();
+    var conn = await r.connect(
+        db: 'testDB',
+        host: "localhost",
+        port: 28015,
+        user: "admin",
+        password: "");
 
-    app = Angel();
+    app = Angel(reflector: MirrorsReflector());
     app.use('/todos', RethinkService(conn, r.table('todos')));
 
     app.errorHandler = (e, req, res) async {

@@ -5,8 +5,10 @@ import 'package:mongo_dart/mongo_dart.dart';
 
 void main() async {
   var app = Angel(reflector: MirrorsReflector());
-  var db = Db('mongodb://root:example@localhost:27017/local');
+  var db = Db('mongodb://localhost:27017/testDB');
+  //var db = Db('mongodb://root:Qwerty@localhost:27017/testDB');
   await db.open();
+  //await db.authenticate("root", "Qwerty");
 
   var service = app.use('/api/users', MongoService(db.collection('users')));
 
