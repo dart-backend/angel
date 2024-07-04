@@ -27,7 +27,6 @@ void main() {
     late AngelHttp transport;
     late http.Client client;
     var db = Db('mongodb://localhost:27017/testDB');
-    //var db = Db('mongodb://root:Qwerty@localhost:27017/testDB');
 
     late DbCollection testData;
     String? url;
@@ -39,7 +38,7 @@ void main() {
       transport = AngelHttp(app);
       client = http.Client();
       await db.open();
-      //await db.authenticate("root", "Qwerty");
+      await db.authenticate("root", "Qwerty", authDb: "admin");
 
       testData = db.collection('testData');
       // Delete anything before we start
