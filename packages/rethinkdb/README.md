@@ -1,9 +1,11 @@
 # Angel3 RethinkDB
 
-[![version 1.0.7](https://img.shields.io/badge/pub-1.0.7-brightgreen.svg)](https://pub.dartlang.org/packages/angel_rethink)
-[![build status](https://travis-ci.org/angel-dart/rethink.svg?branch=master)](https://travis-ci.org/angel-dart/rethink)
+![Pub Version (including pre-releases)](https://img.shields.io/pub/v/angel3_rethinkdb?include_prereleases)
+[![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
+[![Discord](https://img.shields.io/discord/1060322353214660698)](https://discord.gg/3X6bxTUdCM)
+[![License](https://img.shields.io/github/license/dart-backend/angel)](https://github.com/dart-backend/angel/tree/master/packages/mongo/LICENSE)
 
-RethinkDB-enabled service for the Angel3 framework.
+This is RethinkDB service for Angel3 framework. RethinkDB is an open-source database for the realtime web.
 
 ## Installation
 
