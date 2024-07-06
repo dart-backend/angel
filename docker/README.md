@@ -99,6 +99,27 @@
     docker logs docker-mongo-1 -f
     ```
 
+## rethinkDB
+
+### Starting the rethinkDB container
+
+    ```bash
+    docker compose -f docker-compose-rethinkdb.yml up -d
+    ```
+
+### Stopping the rethinkDB container
+
+    ```bash
+    docker compose -f docker-compose-rethinkdb.yml stop
+    docker compose -f docker-compose-rethinkdb.yml down
+    ```
+
+### Checking the rethinkDB container log
+
+    ```bash
+    docker logs docker-rethinkdb-1 -f
+    ```
+
 ## Redis
 
 ### Starting the Redis container

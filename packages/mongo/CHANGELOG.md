@@ -1,5 +1,10 @@
 # Change Log
 
+## 8.2.1
+
+* Updated README
+* Updated example to use MongoDB authentication
+
 ## 8.2.0
 
 * Require Dart >= 3.3

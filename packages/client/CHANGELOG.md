@@ -1,5 +1,9 @@
 # Change Log
 
+## 8.2.1
+
+* Updated error handling
+
 ## 8.2.0
 
 * Require Dart >= 3.3
