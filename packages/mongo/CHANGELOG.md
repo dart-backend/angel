@@ -1,13 +1,9 @@
 # Change Log
 
-## 8.2.2
-
-* Updated README
-* Updated example with MongoDB authentication
-
 ## 8.2.1
 
 * Updated README
+* Updated example to use MongoDB authentication
 
 ## 8.2.0
 
