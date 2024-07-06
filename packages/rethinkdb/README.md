@@ -3,7 +3,7 @@
 [![version 1.0.7](https://img.shields.io/badge/pub-1.0.7-brightgreen.svg)](https://pub.dartlang.org/packages/angel_rethink)
 [![build status](https://travis-ci.org/angel-dart/rethink.svg?branch=master)](https://travis-ci.org/angel-dart/rethink)
 
-RethinkDB-enabled services for the Angel framework.
+RethinkDB-enabled service for the Angel3 framework.
 
 ## Installation
 
@@ -14,21 +14,16 @@ dependencies:
   angel3_rethink: ^8.0.0
 ```
 
-`package:rethinkdb_driver2` will be installed as well.
+`belatuk-rethinkdb` driver will be used for connecting to RethinkDB.
 
 ## Usage
 
-This library exposes one class: `RethinkService`. By default, these services will even
-listen to [changefeeds](https://www.rethinkdb.com/docs/changefeeds/ruby/) from the database,
-which makes them very suitable for WebSocket use.
-
-However, only `CREATED`, `UPDATED` and `REMOVED` events will be fired. This is technically not
-a problem, as it lowers the numbers of events you have to handle on the client side. ;)
+This library exposes one class: `RethinkService`. By default, these services will listen to [changefeeds](https://www.rethinkdb.com/docs/changefeeds/ruby/) from the database, which makes them very suitable for WebSocket use. However, only `CREATED`, `UPDATED` and `REMOVED` events will be fired. Technically not
+a problem, as it lowers the number of events that need to be handled on the client side.
 
 ## Model
 
-`Model` is class with no real functionality; however, it represents a basic document, and your services should host inherited classes.
-Other Angel service providers host `Model` as well, so you will easily be able to modify your application if you ever switch databases.
+`Model` is class with no real functionality; however, it represents a basic document, and your services should host inherited classes. Other Angel service providers host `Model` as well, so you will easily be able to modify your application if you ever switch databases.
 
 ```dart
 class User extends Model {
@@ -37,16 +32,21 @@ class User extends Model {
 }
 
 main() async {
-    var r = new RethinkDb();
-    var conn = await r.connect();
+    var r = RethinkDb();
+    var conn = await r.connect(
+        db: 'testDB',
+        host: "localhost",
+        port: 28015,
+        user: "admin",
+        password: "");
 
-    app.use('/api/users', new RethinkService(conn, r.table('users')));
+    app.use('/api/users', RethinkService(conn, r.table('users')));
     
     // Add type de/serialization if you want
-    app.use('/api/users', new TypedService<User>(new RethinkService(conn, r.table('users'))));
+    app.use('/api/users', TypedService<User>(RethinkService(conn, r.table('users'))));
 
     // You don't have to even use a table...
-    app.use('/api/pro_users', new RethinkService(conn, r.table('users').filter({'membership': 'pro'})));
+    app.use('/api/pro_users', RethinkService(conn, r.table('users').filter({'membership': 'pro'})));
     
     app.service('api/users').afterCreated.listen((event) {
         print("New user: ${event.result}");
@@ -60,17 +60,17 @@ This class interacts with a `Query` (usually a table) and serializes data to and
 
 ## RethinkTypedService<T>
 
-Does the same as above, but serializes to and from a target class using `package:json_god` and its support for reflection.
+Does the same as above, but serializes to and from a target class using `belatuk_json_serializer` and it supports reflection.
 
 ## Querying
 
 You can query these services as follows:
 
+```curl
     /path/to/service?foo=bar
+```
 
-The above will query the database to find records where 'foo' equals 'bar'.
-
-The former will sort result in ascending order of creation, and so will the latter.
+The above will query the database to find records where `foo` equals `bar`. The former will sort result in ascending order of creation, and so will the latter.
 
 You can use advanced queries:
 

@@ -66,20 +66,22 @@ See the tests for more usage examples.
 
 ## **Important Notes**
 
-When connecting to the locally installed instance of MongoDB or docker based MongoDB with authentication enabled, the following connection string is not supported by the MongoDB driver yet.
+When connecting to a locally installed instance of MongoDB or docker based MongoDB with authentication enabled, the following connection string is not supported yet.
 
 ```dart
-  var db = Db('mongodb://<username>:<password>@localhost:27017/local');
+  var db = Db('mongodb://<username>:<password>@localhost:27017/testDB');
   await db.open();
 ```
 
-Use the following instead.
+Use the following instead. By default the user access information is stored in `admin` database.
 
 ```dart
   var db = Db('mongodb://localhost:27017/testDB');
   await db.open();
   await db.authenticate("<username>", "<password>", authDb: "admin");
 ```
+
+Where
 
 * `<username>` is MongoDB username
 * `<password>` is MongoDB password

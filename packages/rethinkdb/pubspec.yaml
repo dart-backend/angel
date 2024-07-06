@@ -1,7 +1,6 @@
 name: angel3_rethinkdb
 version: 8.0.0
-description: RethinkDB-enabled services for the Angel3 framework.
-publish_to: none
+description: This is RethinkDB-enabled service for the Angel3 framework.
 environment:
   sdk: ">=3.3.0 <4.0.0"
 homepage: https://angel3-framework.web.app/
@@ -18,8 +17,4 @@ dev_dependencies:
   logging: ^1.2.0
   test: ^1.25.0
   lints: ^4.0.0
-
-dependency_overrides:
-  belatuk_rethinkdb:
-     path: ../../../rethink_db
   
