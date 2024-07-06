@@ -1,6 +1,6 @@
 name: angel3_rethinkdb
-version: 8.0.0
-description: This is RethinkDB-enabled service for the Angel3 framework.
+version: 8.0.1
+description: This is RethinkDB service for Angel3 framework. RethinkDB is an open-source database for the realtime web.
 environment:
   sdk: ">=3.3.0 <4.0.0"
 homepage: https://angel3-framework.web.app/
