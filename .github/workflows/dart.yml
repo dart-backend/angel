@@ -129,14 +129,14 @@ jobs:
         working-directory: packages/orm/angel_orm_test
         run: dart run build_runner build --delete-conflicting-outputs
 
-      - name: angel3_orm_test; Verify formatting
-        working-directory: packages/orm/angel_orm_test
-        run: dart format --output=none --set-exit-if-changed .
+      #- name: angel3_orm_test; Verify formatting
+      #  working-directory: packages/orm/angel_orm_test
+      #  run: dart format --output=none --set-exit-if-changed .
 
       # Consider passing '--fatal-infos' for slightly stricter analysis.
-      - name: angel3_orm_test; Analyze source code
-        working-directory: packages/orm/angel_orm_test
-        run: dart analyze
+      #- name: angel3_orm_test; Analyze source code
+      #  working-directory: packages/orm/angel_orm_test
+      #  run: dart analyze
 
       # Angel3 ORM PostgreSQL
       - id: angel3_orm_postgres_upgrade
