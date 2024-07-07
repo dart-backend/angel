@@ -2,7 +2,7 @@
 
 ![Pub Version (including pre-releases)](https://img.shields.io/pub/v/angel3_user_agent?include_prereleases)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
-[![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
+[![Discord](https://img.shields.io/discord/1060322353214660698)](https://discord.gg/3X6bxTUdCM)
 [![License](https://img.shields.io/github/license/dart-backend/belatuk-common-utilities)](https://github.com/dart-backend/angel/tree/angel3/packages/user_agent/angel_user_agent/LICENSE)
 
 **Replacement of `package:angel_user_agent` with breaking changes to support NNBD.**
