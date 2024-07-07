@@ -4,7 +4,7 @@
 
 ![Pub Version (including pre-releases)](https://img.shields.io/pub/v/angel3_framework?include_prereleases)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
-[![Gitter](https://img.shields.io/gitter/room/nwjs/nw.js.svg)](https://gitter.im/angel_dart/discussion)
+[![Discord](https://img.shields.io/discord/1060322353214660698)](https://discord.gg/3X6bxTUdCM)
 [![License](https://img.shields.io/github/license/dart-backend/angel)](https://github.com/dart-backend/angel/LICENSE)
 [![melos](https://img.shields.io/badge/maintained%20with-melos-f700ff.svg?style=flat-square)](https://github.com/invertase/melos)
 
@@ -18,16 +18,15 @@ Angel3 originated from a fork of the archived Angel framework in support of Dart
 
 The available features in Angel3 includes:
 
-* Server-Side Rendering (Markdown, Mustache, Jinja, JAEL)
 * OAuth2 Authentication
 * WebSocket
 * HTTP/2
 * HTTP Streaming
 * GraphQL
-* ORM for PostgreSQL
-* ORM for MySQL
-* MongoDB
-* Cache
+* Markdown, Mustache, Jinja and JAEL as Server-Side HTML Rendering
+* ORM for PostgreSQL and MySQL
+* MongoDB, Sembast and RethinkDB as storage
+* Redis as cache
 
 See all of the available [`packages`](https://angel3-docs.dukefirehawk.com/packages) for more information.
 
@@ -47,7 +46,7 @@ The status of the project is as follows:
 
 Branch: `master`
 
-* Dart version : 3.0.x or later.
+* Dart version : 3.x.x or later.
 * Publish      : Yes. Refer to packages with `angel3_` prefix on [pub.dev](https://pub.dev/publishers/dukefirehawk.com/packages).
 * Null Safety  : Yes
 * Status       : Production
@@ -60,12 +59,13 @@ For more details, checkout [Project Status](https://github.com/dart-backend/ange
 ### Release 9.0.0 (Future)
 
 * Performance optimsation
-* Update and enhance ORM to support macro
+* Update and enhance ORM with macro
 
 ### Release 8.0.0 (Current)
 
 * Updated `angel3_` packages to require dart >= 3.0.0
 * Updated dependencies to the latest
+* Updated code generator to use `analyzer` 6.x.x
 * Resolved issues related to generated container
 
 ### Release 7.0.0
@@ -92,9 +92,8 @@ For more details, checkout [Project Status](https://github.com/dart-backend/ange
 * Improve ORM for MySQL
 * Add cache support in ORM (using Redis)
 * Upgrade and release angel3_oauth2 8.0.0 (5 failed test cases)
-* Upgrade and release angel3_auth_twitter 8.0.0 (issue: oauth1 don't support http 1.0.0)
+* Upgrade and release angel3_auth_twitter 8.0.0 (Migrate to OAuth2)
 * Upgrade and release angel3_shelf 8.0.0 (2 failed test cases)
-* Migrate and release angel3_rethink
 
 ## Installation and Setup
 
@@ -164,11 +163,11 @@ Check out [Migrating to Angel3](https://angel3-docs.dukefirehawk.com/migration/a
 
 The performance benchmark can be found at
 
-[TechEmpower Framework Benchmarks Round 21](https://www.techempower.com/benchmarks/#section=data-r21&test=composite)
+[TechEmpower Framework Benchmarks](https://www.techempower.com/benchmarks/#section=data-r22&test=composite&hw=ph)
 
 The test cases are build using standard `Angel3 ORM` template. The result are used for fine-tuning Angel3 framework. The following test cases will be added in the upcoming update to the benchmark.
 
-1. Cache
+1. Cache with Redis
 2. Angel3 with MongoDB
 
 ## Examples and Documentation
@@ -178,6 +177,10 @@ Visit the [User Guide](https://angel3-docs.dukefirehawk.com/) for dozens of guid
 Examples and complete projects can be found [here](https://github.com/dart-backend/angel3-examples).
 
 You can also view the [Angel3 API](http://www.dartdocs.org/documentation/angel_framework/latest).
+
+## Community
+
+Join us on [Discord](https://discord.gg/3X6bxTUdCM).
 
 ## Contributing
 
