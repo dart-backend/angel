@@ -21,7 +21,7 @@ class MigrationColumn extends Column {
   MigrationColumn(ColumnType type,
       {bool isNullable = true,
       super.length,
-      IndexType indexType = IndexType.standardIndex,
+      IndexType indexType = IndexType.none,
       dynamic defaultValue})
       : super(type: type, isNullable: isNullable, defaultValue: defaultValue) {
     _nullable = isNullable;
