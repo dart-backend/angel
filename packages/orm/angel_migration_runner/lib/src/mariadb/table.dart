@@ -57,6 +57,14 @@ abstract class MariaDbGenerator {
     return buf.toString();
   }
 
+  static String? compileIndex(String name, MigrationColumn column) {
+    if (column.indexType == IndexType.standardIndex) {
+      return ' INDEX(`$name`)';
+    }
+
+    return null;
+  }
+
   static String compileReference(MigrationColumnReference ref) {
     var buf = StringBuffer('REFERENCES ${ref.foreignTable}(${ref.foreignKey})');
     if (ref.behavior != null) buf.write(' ${ref.behavior!}');
@@ -79,6 +87,7 @@ class MariaDbTable extends Table {
 
   void compile(StringBuffer buf, int indent) {
     var i = 0;
+    List indexBuf = [];
 
     _columns.forEach((name, column) {
       var col = MariaDbGenerator.compileColumn(column);
@@ -89,7 +98,16 @@ class MariaDbTable extends Table {
       }
 
       buf.write('$name $col');
+
+      var index = MariaDbGenerator.compileIndex(name, column);
+      if (index != null) indexBuf.add(index);
     });
+
+    if (indexBuf.isNotEmpty) {
+      for (var i = 0; i < indexBuf.length; i++) {
+        buf.write(',\n${indexBuf[$1]}');
+      }
+    }
   }
 }
 
