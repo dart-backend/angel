@@ -10,11 +10,11 @@ services:
     volumes:
       - "redis:/data"
     networks:
-      - webnet
+      - appnet
 
 volumes:
   redis:
     driver: local
 
 networks:
-  webnet:
+  appnet:

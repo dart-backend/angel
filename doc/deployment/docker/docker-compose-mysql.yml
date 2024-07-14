@@ -9,11 +9,11 @@ services:
     volumes:
       - "mysql:/var/lib/mysql"
     networks:
-      - webnet
+      - appnet
 
 volumes:
   mysql:
     driver: local
 
 networks:
-  webnet:
+  appnet:

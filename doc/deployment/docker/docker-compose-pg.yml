@@ -21,11 +21,11 @@ services:
       - PGADMIN_DEFAULT_EMAIL=admin@mydomain.com
       - PGADMIN_DEFAULT_PASSWORD=Qwerty
     networks:
-      - webnet
+      - appnet
 
 volumes:
   db:
     driver: local
 
 networks:
-  webnet:
+  appnet:

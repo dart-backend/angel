@@ -9,11 +9,11 @@ services:
     volumes:
       - "rethinkdb:/data"
     networks:
-      - webnet
+      - appnet
 
 volumes:
   rethinkdb:
     driver: local
 
 networks:
-  webnet:
+  appnet:

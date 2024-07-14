@@ -12,7 +12,7 @@ services:
     volumes:
       - "mongo:/data/db"
     networks:
-      - webnet
+      - appnet
 
   mongo-express:
     image: mongo-express
@@ -34,4 +34,4 @@ volumes:
     driver: local
 
 networks:
-  webnet:
+  appnet:
