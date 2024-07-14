@@ -1,18 +1,20 @@
-# Docker setup
+# Runing Ancillary Docker Services
+
+The required ancillary services required by the framework can be run using the compose files provided in this folder.
 
 ## PostreSQL
 
 ### Starting the PostreSQL container
 
     ```bash
-    docker compose -f docker-compose-pg.yml up -d
+    docker compose -f docker-compose-pg.yml -p pg up -d
     ```
 
 ### Stopping the PostreSQL container
 
     ```bash
-    docker compose -f docker-compose-pg.yml stop
-    docker compose -f docker-compose-pg.yml down
+    docker compose -f docker-compose-pg.yml -p pg stop
+    docker compose -f docker-compose-pg.yml -p pg down
     ```
 
 ### Checking the PostreSQL container log
@@ -41,20 +43,20 @@
 ### Starting the MariaDB container
 
     ```bash
-    docker compose -f docker-compose-mariadb.yml up -d
+    docker compose -f docker-compose-mariadb.yml -p maria up -d
     ```
 
 ### Stopping the MariaDB container
 
     ```bash
-    docker compose -f docker-compose-mariadb.yml stop
-    docker compose -f docker-compose-mariadb.yml down
+    docker compose -f docker-compose-mariadb.yml -p maria stop
+    docker compose -f docker-compose-mariadb.yml -p maria down
     ```
 
 ### Checking the MariaDB container log
 
     ```bash
-    docker logs docker-mariadb-1 -f
+    docker logs maria-mariadb-1 -f
     ```
 
 ## MySQL
@@ -62,20 +64,20 @@
 ### Starting the MySQL container
 
     ```bash
-    docker compose -f docker-compose-mysql.yml up -d
+    docker compose -f docker-compose-mysql.yml -p mysql up -d
     ```
 
 ### Stopping the MySQL container
 
     ```bash
-    docker compose -f docker-compose-mysql.yml stop
-    docker compose -f docker-compose-mysql.yml down
+    docker compose -f docker-compose-mysql.yml -p mysql stop
+    docker compose -f docker-compose-mysql.yml -p mysql down
     ```
 
 ### Checking the MySQL container log
 
     ```bash
-    docker logs docker-mysql-1 -f
+    docker logs mysql-mysql-1 -f
     ```
 
 ## MongoDB
@@ -83,20 +85,20 @@
 ### Starting the MongoDB container
 
     ```bash
-    docker compose -f docker-compose-mongo.yml up -d
+    docker compose -f docker-compose-mongo.yml -p mongo up -d
     ```
 
 ### Stopping the MongoDB container
 
     ```bash
-    docker compose -f docker-compose-mongo.yml stop
-    docker compose -f docker-compose-mongo.yml down
+    docker compose -f docker-compose-mongo.yml -p mongo stop
+    docker compose -f docker-compose-mongo.yml -p mongo down
     ```
 
 ### Checking the MongoDB container log
 
     ```bash
-    docker logs docker-mongo-1 -f
+    docker logs mongo-mongo-1 -f
     ```
 
 ## rethinkDB
@@ -104,20 +106,20 @@
 ### Starting the rethinkDB container
 
     ```bash
-    docker compose -f docker-compose-rethinkdb.yml up -d
+    docker compose -f docker-compose-rethinkdb.yml -p rethink up -d
     ```
 
 ### Stopping the rethinkDB container
 
     ```bash
-    docker compose -f docker-compose-rethinkdb.yml stop
-    docker compose -f docker-compose-rethinkdb.yml down
+    docker compose -f docker-compose-rethinkdb.yml -p rethink stop
+    docker compose -f docker-compose-rethinkdb.yml -p rethink down
     ```
 
 ### Checking the rethinkDB container log
 
     ```bash
-    docker logs docker-rethinkdb-1 -f
+    docker logs rethink-rethinkdb-1 -f
     ```
 
 ## Redis
@@ -125,18 +127,18 @@
 ### Starting the Redis container
 
     ```bash
-    docker compose -f docker-compose-redis.yml up -d
+    docker compose -f docker-compose-redis.yml -p redis up -d
     ```
 
 ### Stopping the Redis container
 
     ```bash
-    docker compose -f docker-compose-redis.yml stop
-    docker compose -f docker-compose-redis.yml down
+    docker compose -f docker-compose-redis.yml -p redis stop
+    docker compose -f docker-compose-redis.yml -p redis down
     ```
 
 ### Checking the Redis container log
 
     ```bash
-    docker logs docker-redis-1 -f
+    docker logs redis-redis-1 -f
     ```

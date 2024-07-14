@@ -9,11 +9,11 @@ services:
     volumes:
       - "mariadb:/var/lib/mysql"
     networks:
-      - webnet
+      - appnet
 
 volumes:
   mariadb:
     driver: local
 
 networks:
-  webnet:
+  appnet:

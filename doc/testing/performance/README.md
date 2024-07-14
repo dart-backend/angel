@@ -1,5 +1,7 @@
 # Performance Testing
 
+The performance test can be run with the following tools.
+
 ## WRT
 
     ```bash

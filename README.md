@@ -59,7 +59,7 @@ For more details, checkout [Project Status](https://github.com/dart-backend/ange
 ### Release 9.0.0 (Future)
 
 * Performance optimsation
-* Update and enhance ORM with macro
+* Update ORM to support macro
 
 ### Release 8.0.0 (Current)
 
@@ -161,22 +161,16 @@ Check out [Migrating to Angel3](https://angel3-docs.dukefirehawk.com/migration/a
 
 ## Performance Benchmark
 
-The performance benchmark can be found at
+The performance benchmark can be found at [TechEmpower Framework Benchmarks](https://www.techempower.com/benchmarks/#section=data-r22&test=composite&hw=ph)
 
-[TechEmpower Framework Benchmarks](https://www.techempower.com/benchmarks/#section=data-r22&test=composite&hw=ph)
-
-The test cases are build using standard `Angel3 ORM` template. The result are used for fine-tuning Angel3 framework. The following test cases will be added in the upcoming update to the benchmark.
+The test cases are build using standard `Angel3 ORM` template for PostgreSQL and MySQL database. The result are used for fine-tuning Angel3 framework with respect to other frameworks. The following test cases will be added in the upcoming update to the benchmark.
 
 1. Cache with Redis
 2. Angel3 with MongoDB
 
 ## Examples and Documentation
 
-Visit the [User Guide](https://angel3-docs.dukefirehawk.com/) for dozens of guides and resources, including video tutorials, to get up and running as quickly as possible with Angel3 framework.
-
-Examples and complete projects can be found [here](https://github.com/dart-backend/angel3-examples).
-
-You can also view the [Angel3 API](http://www.dartdocs.org/documentation/angel_framework/latest).
+Please visit our [User Guide](https://angel3-docs.dukefirehawk.com/) and [Examples](https://github.com/dart-backend/angel3-examples) for more detailed information on the available features of Angel3 framework.
 
 ## Community
 
@@ -184,7 +178,7 @@ Join us on [Discord](https://discord.gg/3X6bxTUdCM).
 
 ## Contributing
 
-Interested in contributing to Angel3? See the contribution guide [here](CONTRIBUTING.md).
+If you are interested in contributing to Angel3 framework please check out the [Contribution Guide](CONTRIBUTING.md).
 
 ### Development Setup
 
@@ -211,7 +205,7 @@ Interested in contributing to Angel3? See the contribution guide [here](CONTRIBU
 
 ## Donation & Support
 
-If you like this project and interested in supporting its development, you can make a donation using the following services.
+If you like this project and interested in supporting its development work, you are welcome to make a donation via the following links.
 
-* [![GitHub](https://img.shields.io/static/v1?label=Sponsor&message=%E2%9D%A4&logo=GitHub&color=%23fe8e86)](https://github.com/sponsors/dukefirehawk)
-* [paypal](https://paypal.me/dukefirehawk?country.x=MY&locale.x=en_US) service
+* [![GitHub Sponsor](https://img.shields.io/static/v1?label=Sponsor&message=%E2%9D%A4&logo=GitHub&color=%23fe8e86)](https://github.com/sponsors/dukefirehawk)
+* [Paypal Donation](https://paypal.me/dukefirehawk?country.x=MY&locale.x=en_US)
