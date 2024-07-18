@@ -1,0 +1,53 @@
+import 'package:angel3_migration/angel3_migration.dart';
+import 'package:angel3_orm/angel3_orm.dart';
+
+class UserMigration implements Migration {
+  @override
+  void up(Schema schema) {
+    schema.create('users', (table) {
+      table
+        ..serial('id').primaryKey()
+        ..varChar('username', length: 32).unique()
+        ..varChar('password')
+        ..boolean('account_confirmed').defaultsTo(false);
+    });
+  }
+
+  @override
+  void down(Schema schema) {
+    schema.drop('users');
+  }
+}
+
+class TodoMigration implements Migration {
+  @override
+  void up(Schema schema) {
+    schema.create('todos', (table) {
+      table
+        ..serial('id').primaryKey()
+        ..integer('user_id').references('users', 'id').onDeleteCascade()
+        ..varChar('text')
+        ..boolean('completed').defaultsTo(false);
+    });
+  }
+
+  @override
+  void down(Schema schema) {
+    schema.drop('todos');
+  }
+}
+
+class ItemMigration extends Migration {
+  @override
+  void up(Schema schema) {
+    schema.create('items', (table) {
+      table
+        ..serial('id').primaryKey()
+        ..varChar('name', length: 64)
+        ..timeStamp('created_at').defaultsTo(currentTimestamp);
+    });
+  }
+
+  @override
+  void down(Schema schema) => schema.drop('items');
+}

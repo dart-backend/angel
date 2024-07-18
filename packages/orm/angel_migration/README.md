@@ -5,15 +5,9 @@
 [![Discord](https://img.shields.io/discord/1060322353214660698)](https://discord.gg/3X6bxTUdCM)
 [![License](https://img.shields.io/github/license/dart-backend/angel)](https://github.com/dart-backend/angel/tree/master/packages/orm/angel_migration/LICENSE)
 
-A basic database migration framework built for Angel3 ORM.
+This package contains the abstract classes for implementing database migration in Angel3 framework. It is designed to work with Angel3 ORM. Please refer to the implementation in the [ORM Migration Runner](<https://pub.dev/packages/angel3_migration_runner>) package for more details.
 
-## Supported database
-
-* PostgreSQL version 10 or later
-* MariaDB 10.2.x or later
-* MySQL 8.x or later
-
-## Features
+## Supported Features
 
 * Create tables based on ORM models
 * Drop tables based on ORM models
@@ -21,4 +15,4 @@ A basic database migration framework built for Angel3 ORM.
 
 ## Limitation
 
-* Alter table/fields based on updated ORM models not supported
+* Alter table/fields based on updated ORM models is not supported

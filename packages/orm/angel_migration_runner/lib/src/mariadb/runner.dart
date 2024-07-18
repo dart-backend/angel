@@ -17,8 +17,8 @@ class MariaDbMigrationRunner implements MigrationRunner {
 
   MariaDbMigrationRunner(this.connection,
       {Iterable<Migration> migrations = const [], bool connected = false}) {
-    if (migrations.isNotEmpty == true) migrations.forEach(addMigration);
-    _connected = connected == true;
+    if (migrations.isNotEmpty) migrations.forEach(addMigration);
+    _connected = connected;
   }
 
   @override

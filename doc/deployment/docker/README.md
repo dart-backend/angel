@@ -1,6 +1,6 @@
-# Runing Ancillary Docker Services
+# Docker Services
 
-The required ancillary services required by the framework can be run using the compose files provided in this folder.
+The required applications by the framework can be run using the docker compose files provided in this folder.
 
 ## PostreSQL
 
