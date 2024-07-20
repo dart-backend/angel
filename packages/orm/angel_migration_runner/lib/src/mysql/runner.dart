@@ -42,15 +42,18 @@ class MySqlMigrationRunner implements MigrationRunner {
 
     await connection.execute('''
     CREATE TABLE IF NOT EXISTS migrations (
-      id serial,
+      id integer NOT NULL AUTO_INCREMENT,
       batch integer,
-      path varchar(255),
+      path varchar(500),
       PRIMARY KEY(id)
     );
     ''').then((result) {
+      //print(result);
       _log.info('Check and create "migrations" table');
     }).catchError((e) {
+      //print(e);
       _log.severe('Failed to create "migrations" table.');
+      throw e;
     });
   }
 
@@ -59,8 +62,9 @@ class MySqlMigrationRunner implements MigrationRunner {
     await _init();
     var result = await connection.execute('SELECT path from migrations;');
     var existing = <String>[];
-    if (result.rows.isNotEmpty) {
-      existing = result.rows.first.assoc().values.cast<String>().toList();
+    for (var item in result.rows) {
+      var rec = item.assoc().values.first ?? "";
+      existing.add(rec.replaceAll("\\", "\\\\"));
     }
     var toRun = <String>[];
 
@@ -113,8 +117,9 @@ class MySqlMigrationRunner implements MigrationRunner {
     result = await connection
         .execute('SELECT path from migrations WHERE batch = $curBatch;');
     var existing = <String>[];
-    if (result.rows.isNotEmpty) {
-      existing = result.rows.first.assoc().values.cast<String>().toList();
+    for (var item in result.rows) {
+      var rec = item.assoc().values.first ?? "";
+      existing.add(rec.replaceAll("\\", "\\\\"));
     }
     var toRun = <String>[];
 
@@ -143,11 +148,15 @@ class MySqlMigrationRunner implements MigrationRunner {
     await _init();
     var result = await connection
         .execute('SELECT path from migrations ORDER BY batch DESC;');
+
+    // "mysql_client" driver will auto convert path containing "\\" to "\".
+    // So need to revert "\" back to "\\" for the migration logic to work
     var existing = <String>[];
-    if (result.rows.isNotEmpty) {
-      var firstRow = result.rows.first;
-      existing = firstRow.assoc().values.cast<String>().toList();
+    for (var item in result.rows) {
+      var rec = item.assoc().values.first ?? "";
+      existing.add(rec.replaceAll("\\", "\\\\"));
     }
+
     var toRun = existing.where(migrations.containsKey).toList();
 
     if (toRun.isNotEmpty) {

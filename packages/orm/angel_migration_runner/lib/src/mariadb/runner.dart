@@ -40,7 +40,7 @@ class MariaDbMigrationRunner implements MigrationRunner {
 
     await connection.query('''
     CREATE TABLE IF NOT EXISTS migrations (
-      id serial,
+      id integer NOT NULL AUTO_INCREMENT,
       batch integer,
       path varchar(255),
       PRIMARY KEY(id)

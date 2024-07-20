@@ -5,7 +5,7 @@ import 'package:angel3_migration_runner/mariadb.dart';
 import 'package:mysql1/mysql1.dart';
 import 'package:test/test.dart';
 
-import 'models/todo.dart';
+import 'models/mysql_todo.dart';
 
 void main() async {
   late MySqlConnection conn;

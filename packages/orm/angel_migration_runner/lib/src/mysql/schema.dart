@@ -22,11 +22,13 @@ class MySqlSchema extends Schema {
     await connection.transactional((ctx) async {
       var sql = compile();
       var result = await ctx.execute(sql).catchError((e) {
+        print(e);
         _log.severe('Failed to run query: [ $sql ]', e);
         throw Exception(e);
       });
       affectedRows = result.affectedRows.toInt();
     }).catchError((e) {
+      print(e);
       _log.severe('Failed to run query in a transaction', e);
     });
 

@@ -45,7 +45,7 @@ class PostgresMigrationRunner implements MigrationRunner {
     CREATE TABLE IF NOT EXISTS "migrations" (
       id serial,
       batch integer,
-      path varchar,
+      path varchar(500),
       PRIMARY KEY(id)
     );
     ''').then((result) {

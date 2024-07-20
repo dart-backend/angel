@@ -11,7 +11,7 @@ This package contains the abstract classes for implementing database migration i
 
 * Create tables based on ORM models
 * Drop tables based on ORM models
-* Add new tables based ORM models
+* Add new tables based on ORM models
 
 ## Limitation
 

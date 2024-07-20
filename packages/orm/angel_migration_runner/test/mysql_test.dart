@@ -5,7 +5,7 @@ import 'package:angel3_migration_runner/mysql.dart';
 import 'package:mysql_client/mysql_client.dart';
 import 'package:test/test.dart';
 
-import 'models/todo.dart';
+import 'models/mysql_todo.dart';
 
 void main() async {
   late MySQLConnection conn;
@@ -46,6 +46,11 @@ void main() async {
     test('up', () async {
       print("Test migration up");
       await runner.up();
+    });
+
+    test('reset', () async {
+      print("Test migration reset");
+      await runner.reset();
     });
   });
 

@@ -5,7 +5,7 @@ import 'package:angel3_migration_runner/postgres.dart';
 import 'package:postgres/postgres.dart';
 import 'package:test/test.dart';
 
-import 'models/todo.dart';
+import 'models/pg_todo.dart';
 
 void main() async {
   late Connection conn;

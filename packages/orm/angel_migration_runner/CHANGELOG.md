@@ -4,9 +4,10 @@
 
 * Updated README
 * Updated examples
-* Added test cases for `PostgreSQL`
-* Added test cases for `MySQL`
-* Added test cases for `MariaDB`
+* Updated `PostgresMigrationRunner` error handling
+* Fixed `MySqlMigrationRunner` migration issues
+* Added test cases for `PostgreSQL`, `MySQL` and `MariaDB`
+* Added auto increment integer primary key suppport to MySQL and MariaDB
 
 ## 8.2.0
 
