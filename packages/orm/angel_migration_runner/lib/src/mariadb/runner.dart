@@ -7,6 +7,7 @@ import '../runner.dart';
 import '../util.dart';
 import 'schema.dart';
 
+/// A MariaDB database migration runner.
 class MariaDbMigrationRunner implements MigrationRunner {
   final _log = Logger('MariaDbMigrationRunner');
 
@@ -17,8 +18,8 @@ class MariaDbMigrationRunner implements MigrationRunner {
 
   MariaDbMigrationRunner(this.connection,
       {Iterable<Migration> migrations = const [], bool connected = false}) {
-    if (migrations.isNotEmpty == true) migrations.forEach(addMigration);
-    _connected = connected == true;
+    if (migrations.isNotEmpty) migrations.forEach(addMigration);
+    _connected = connected;
   }
 
   @override
@@ -39,7 +40,7 @@ class MariaDbMigrationRunner implements MigrationRunner {
 
     await connection.query('''
     CREATE TABLE IF NOT EXISTS migrations (
-      id serial,
+      id integer NOT NULL AUTO_INCREMENT,
       batch integer,
       path varchar(255),
       PRIMARY KEY(id)

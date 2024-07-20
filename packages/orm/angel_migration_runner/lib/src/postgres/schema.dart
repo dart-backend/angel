@@ -4,6 +4,7 @@ import 'package:postgres/postgres.dart';
 import 'package:logging/logging.dart';
 import 'table.dart';
 
+/// A PostgreSQL database schema generator
 class PostgresSchema extends Schema {
   final _log = Logger('PostgresSchema');
 

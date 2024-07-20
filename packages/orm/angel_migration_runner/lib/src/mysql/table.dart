@@ -10,6 +10,7 @@ abstract class MySqlGenerator {
     if (column.type == ColumnType.timeStamp) {
       str = ColumnType.dateTime.name;
     }
+
     if (column.type.hasLength) {
       return '$str(${column.length})';
     } else {
@@ -20,7 +21,11 @@ abstract class MySqlGenerator {
   static String compileColumn(MigrationColumn column) {
     var buf = StringBuffer(columnType(column));
 
-    if (column.isNullable == false) buf.write(' NOT NULL');
+    if (!column.isNullable) {
+      buf.write(' NOT NULL');
+    }
+
+    // Default value
     if (column.defaultValue != null) {
       String s;
       var value = column.defaultValue;
@@ -47,6 +52,12 @@ abstract class MySqlGenerator {
       buf.write(' UNIQUE');
     } else if (column.indexType == IndexType.primaryKey) {
       buf.write(' PRIMARY KEY');
+
+      // For int based primary key, apply NOT NULL
+      // and AUTO_INCREMENT
+      if (column.type == ColumnType.int) {
+        buf.write(' NOT NULL AUTO_INCREMENT');
+      }
     }
 
     for (var ref in column.externalReferences) {
@@ -104,9 +115,11 @@ class MysqlTable extends Table {
 
     if (indexBuf.isNotEmpty) {
       for (var i = 0; i < indexBuf.length; i++) {
-        buf.write(',\n${indexBuf[$1]}');
+        buf.write(',\n${indexBuf[i]}');
       }
     }
+
+    print(buf);
   }
 }
 

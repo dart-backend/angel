@@ -1,5 +1,14 @@
 # Change Log
 
+## 8.2.1
+
+* Updated README
+* Updated examples
+* Updated `PostgresMigrationRunner` error handling
+* Fixed `MySqlMigrationRunner` migration issues
+* Added test cases for `PostgreSQL`, `MySQL` and `MariaDB`
+* Added auto increment integer primary key suppport to MySQL and MariaDB
+
 ## 8.2.0
 
 * Require Dart >= 3.3

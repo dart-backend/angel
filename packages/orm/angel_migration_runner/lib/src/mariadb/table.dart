@@ -48,6 +48,12 @@ abstract class MariaDbGenerator {
       buf.write(' UNIQUE');
     } else if (column.indexType == IndexType.primaryKey) {
       buf.write(' PRIMARY KEY');
+
+      // For int based primary key, apply NOT NULL
+      // and AUTO_INCREMENT
+      if (column.type == ColumnType.int) {
+        buf.write(' NOT NULL AUTO_INCREMENT');
+      }
     }
 
     for (var ref in column.externalReferences) {
@@ -105,7 +111,7 @@ class MariaDbTable extends Table {
 
     if (indexBuf.isNotEmpty) {
       for (var i = 0; i < indexBuf.length; i++) {
-        buf.write(',\n${indexBuf[$1]}');
+        buf.write(',\n${indexBuf[i]}');
       }
     }
   }

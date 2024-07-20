@@ -5,9 +5,7 @@
 [![Discord](https://img.shields.io/discord/1060322353214660698)](https://discord.gg/3X6bxTUdCM)
 [![License](https://img.shields.io/github/license/dart-backend/angel)](https://github.com/dart-backend/angel/tree/master/packages/orm/angel_migration_runner/LICENSE)
 
-Database migration runner for Angel3 ORM.
-
-Supported database:
+This package contains the implementation of the database migration for the following databases. It is designed to work with Angel3 ORM.
 
 * PostgreSQL 10.x or greater
 * MariaDB 10.2.x or greater

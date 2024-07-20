@@ -89,7 +89,9 @@ Future<PostgreSqlPoolExecutor> connectToPostgresPool(
     )
   ],
       settings: PoolSettings(
-          maxConnectionAge: Duration(hours: 1), maxConnectionCount: 5));
+          maxConnectionAge: Duration(hours: 1),
+          maxConnectionCount: 5,
+          sslMode: SslMode.disable));
 
   // Run sql to create the tables in a transaction
   await dbPool.runTx((conn) async {
