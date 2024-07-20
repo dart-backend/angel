@@ -7,6 +7,7 @@ import '../runner.dart';
 import '../util.dart';
 import 'schema.dart';
 
+/// A MariaDB database migration runner.
 class MariaDbMigrationRunner implements MigrationRunner {
   final _log = Logger('MariaDbMigrationRunner');
 

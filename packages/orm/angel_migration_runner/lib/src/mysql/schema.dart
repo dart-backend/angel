@@ -5,6 +5,7 @@ import 'package:mysql_client/mysql_client.dart';
 
 import 'table.dart';
 
+/// A MySQL database schema generator
 class MySqlSchema extends Schema {
   final _log = Logger('MysqlSchema');
 

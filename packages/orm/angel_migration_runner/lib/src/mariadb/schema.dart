@@ -5,6 +5,7 @@ import 'package:mysql1/mysql1.dart';
 
 import 'table.dart';
 
+/// A MariaDB database schema generator
 class MariaDbSchema extends Schema {
   final _log = Logger('MariaDbSchema');
 

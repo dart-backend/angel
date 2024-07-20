@@ -10,7 +10,7 @@ services:
     volumes:
       - "db:/var/lib/postgresql/data"
     networks:
-      - webnet
+      - appnet
 
   pgadmin4:
     image: dpage/pgadmin4:latest

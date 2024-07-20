@@ -3,6 +3,7 @@
 ## 8.2.1
 
 * Updated README
+* Updated examples
 * Added test cases for `PostgreSQL`
 * Added test cases for `MySQL`
 * Added test cases for `MariaDB`

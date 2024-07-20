@@ -7,6 +7,7 @@ import '../runner.dart';
 import '../util.dart';
 import 'schema.dart';
 
+/// A PostgreSQL database migration runner
 class PostgresMigrationRunner implements MigrationRunner {
   final _log = Logger('PostgresMigrationRunner');
 
@@ -17,8 +18,10 @@ class PostgresMigrationRunner implements MigrationRunner {
 
   PostgresMigrationRunner(this.connection,
       {Iterable<Migration> migrations = const [], bool connected = false}) {
-    if (migrations.isNotEmpty == true) migrations.forEach(addMigration);
-    _connected = connected == true;
+    if (migrations.isNotEmpty) {
+      migrations.forEach(addMigration);
+    }
+    _connected = connected;
   }
 
   @override
@@ -26,17 +29,16 @@ class PostgresMigrationRunner implements MigrationRunner {
     _migrationQueue.addLast(migration);
   }
 
-  Future _init() async {
+  Future<void> _init() async {
     while (_migrationQueue.isNotEmpty) {
       var migration = _migrationQueue.removeFirst();
       var path = await absoluteSourcePath(migration.runtimeType);
       migrations.putIfAbsent(path.replaceAll('\\', '\\\\'), () => migration);
     }
 
+    _connected = connection.isOpen;
     if (!_connected) {
-      //await connection.open();
-      //Connection.open(_endpoint!, settings: _settings);
-      _connected = true;
+      throw Exception("PostgreSQL connection is not open");
     }
 
     await connection.execute('''
@@ -47,9 +49,10 @@ class PostgresMigrationRunner implements MigrationRunner {
       PRIMARY KEY(id)
     );
     ''').then((result) {
-      _log.info('Check and create "migrations" table');
+      _log.info('Created "migrations" table');
     }).catchError((e) {
       _log.severe('Failed to create "migrations" table.');
+      throw e;
     });
   }
 
@@ -73,8 +76,8 @@ class PostgresMigrationRunner implements MigrationRunner {
         var migration = migrations[k]!;
         var schema = PostgresSchema();
         migration.up(schema);
-        _log.info('Added "$k" into "migrations" table.');
-        await schema.run(connection).then((_) {
+
+        var result = await schema.run(connection).then((_) {
           return connection.runTx((ctx) async {
             var result = await ctx.execute(
                 "INSERT INTO MIGRATIONS (batch, path) VALUES ($batch, '$k')");
@@ -85,6 +88,9 @@ class PostgresMigrationRunner implements MigrationRunner {
           _log.severe('Failed to insert into "migrations" table.');
           return -1;
         });
+        if (result > 0) {
+          _log.info('Inserted "$k" into "migrations" table.');
+        }
       }
     } else {
       _log.warning('Nothing to add into "migrations" table.');

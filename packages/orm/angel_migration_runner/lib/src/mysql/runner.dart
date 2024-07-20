@@ -7,6 +7,7 @@ import '../runner.dart';
 import '../util.dart';
 import 'schema.dart';
 
+/// A MySQL database migration runner.
 class MySqlMigrationRunner implements MigrationRunner {
   final _log = Logger('MysqlMigrationRunner');
 

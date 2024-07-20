@@ -30,12 +30,12 @@ The required applications by the framework can be run using the docker compose f
     psql --username postgres
     ```
 
-### Create database, user and access
+### Create PostgreSQL database, user and grant access
 
-    ```psql
-    postgres=# create database orm_test;
-    postgres=# create user test with encrypted password 'test123';
-    postgres=# grant all privileges on database orm_test to test;
+    ```sql
+    create database orm_test;
+    create user test with encrypted password 'test123';
+    grant all privileges on database orm_test to test;
     ```
 
 ## MariaDB
@@ -59,6 +59,20 @@ The required applications by the framework can be run using the docker compose f
     docker logs maria-mariadb-1 -f
     ```
 
+### Create MariaDB database, user and grant access
+
+    ```sql
+    create database orm_test;
+    
+    -- Granting localhost access only
+    create user 'test'@'localhost' identified by 'test123';
+    grant all privileges on orm_test.* to 'test'@'localhost';
+
+    -- Granting localhost and remote access
+    create user 'test'@'%' identified by 'test123';
+    grant all privileges on orm_test.* to 'test'@'%';
+    ```
+
 ## MySQL
 
 ### Starting the MySQL container
@@ -78,6 +92,20 @@ The required applications by the framework can be run using the docker compose f
 
     ```bash
     docker logs mysql-mysql-1 -f
+    ```
+
+### Create MySQL database, user and grant access
+
+    ```sql
+    create database orm_test;
+    
+    -- Granting localhost access only
+    create user 'test'@'localhost' identified by 'test123';
+    grant all privileges on orm_test.* to 'test'@'localhost';
+
+    -- Granting localhost and remote access
+    create user 'test'@'%' identified by 'test123';
+    grant all privileges on orm_test.* to 'test'@'%';
     ```
 
 ## MongoDB
