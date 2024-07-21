@@ -37,10 +37,15 @@ void main() async {
     );
   });
 
-  group('MariaDB', () {
-    test('migrate tables', () async {
+  group('MariaDB migrate tables', () {
+    test('up', () async {
       print("Test migration up");
-      runner.up();
+      await runner.up();
+    });
+
+    test('reset', () async {
+      print("Test migration reset");
+      await runner.reset();
     });
   });
 

@@ -14,12 +14,12 @@ class MariaDbMigrationRunner implements MigrationRunner {
   final Map<String, Migration> migrations = {};
   final Queue<Migration> _migrationQueue = Queue();
   final MySqlConnection connection;
-  bool _connected = false;
+  //bool _connected = false;
 
   MariaDbMigrationRunner(this.connection,
-      {Iterable<Migration> migrations = const [], bool connected = false}) {
+      {Iterable<Migration> migrations = const [], bool connected = true}) {
     if (migrations.isNotEmpty) migrations.forEach(addMigration);
-    _connected = connected;
+    //_connected = connected;
   }
 
   @override
@@ -34,20 +34,18 @@ class MariaDbMigrationRunner implements MigrationRunner {
       migrations.putIfAbsent(path.replaceAll('\\', '\\\\'), () => migration);
     }
 
-    if (!_connected) {
-      _connected = true;
-    }
-
     await connection.query('''
     CREATE TABLE IF NOT EXISTS migrations (
       id integer NOT NULL AUTO_INCREMENT,
       batch integer,
-      path varchar(255),
+      path varchar(500),
       PRIMARY KEY(id)
     );
     ''').then((result) {
+      //print(result.affectedRows);
       _log.fine('Check and create "migrations" table');
     }).catchError((e) {
+      //print(e);
       _log.severe('Failed to create "migrations" table.', e);
     });
   }
@@ -59,7 +57,10 @@ class MariaDbMigrationRunner implements MigrationRunner {
 
     var existing = <String>[];
     if (result.isNotEmpty) {
-      existing = result.expand((x) => x).cast<String>().toList();
+      var pathList = result.expand((x) => x).cast<String>().toList();
+      for (var path in pathList) {
+        existing.add(path.replaceAll("\\", "\\\\"));
+      }
     }
 
     var toRun = <String>[];
@@ -121,7 +122,10 @@ class MariaDbMigrationRunner implements MigrationRunner {
         .query('SELECT path from migrations WHERE batch = $curBatch;');
     var existing = <String>[];
     if (result.isNotEmpty) {
-      existing = result.expand((x) => x).cast<String>().toList();
+      var pathList = result.expand((x) => x).cast<String>().toList();
+      for (var path in pathList) {
+        existing.add(path.replaceAll("\\", "\\\\"));
+      }
     }
 
     var toRun = <String>[];
@@ -153,7 +157,10 @@ class MariaDbMigrationRunner implements MigrationRunner {
         .query('SELECT path from migrations ORDER BY batch DESC;');
     var existing = <String>[];
     if (r.isNotEmpty) {
-      existing = r.expand((x) => x).cast<String>().toList();
+      var pathList = r.expand((x) => x).cast<String>().toList();
+      for (var path in pathList) {
+        existing.add(path.replaceAll("\\", "\\\\"));
+      }
     }
 
     var toRun = existing.where(migrations.containsKey).toList();
