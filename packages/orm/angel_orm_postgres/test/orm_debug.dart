@@ -1,6 +1,6 @@
-import 'package:angel3_orm_test/angel3_orm_test.dart';
 import 'package:logging/logging.dart';
 
+import 'belongs_to_test.dart';
 import 'common.dart';
 
 void main() async {

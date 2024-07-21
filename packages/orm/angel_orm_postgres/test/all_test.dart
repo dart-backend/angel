@@ -1,8 +1,17 @@
-import 'package:angel3_orm_test/angel3_orm_test.dart';
 import 'package:logging/logging.dart';
 import 'package:belatuk_pretty_logging/belatuk_pretty_logging.dart';
 import 'package:test/test.dart';
+import 'belongs_to_test.dart';
 import 'common.dart';
+import 'custom_expr_test.dart';
+import 'edge_case_test.dart';
+import 'enum_and_nested_test.dart';
+import 'has_many_test.dart';
+import 'has_map_test.dart';
+import 'has_one_test.dart';
+import 'join_test.dart';
+import 'many_to_many_test.dart';
+import 'standalone_test.dart';
 
 void main() {
   Logger.root

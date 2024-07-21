@@ -1,6 +1,6 @@
 name: angel3_orm_mysql
-version: 8.2.0
-description: MySQL support for Angel3 ORM. Includes functionality for querying and transactions.
+version: 8.3.0
+description: Angel3 ORM for MySQL and MariaDB. Includes functionality for querying and transactions.
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dart-backend/angel/tree/master/packages/orm/angel_orm_mysql
 environment:
@@ -13,7 +13,8 @@ dependencies:
   optional: ^6.1.0
 dev_dependencies:
   angel3_orm_generator: ^8.0.0
-  angel3_orm_test: ^8.0.0
+  angel3_serialize: ^8.0.0
+  angel3_migration: ^8.0.0
   build_runner: ^2.4.0
   test: ^1.24.0
   lints: ^4.0.0

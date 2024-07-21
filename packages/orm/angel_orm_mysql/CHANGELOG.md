@@ -1,5 +1,10 @@
 # Change Log
 
+## 8.3.0
+
+* Migrated test cases from `angel3_orm_test` package
+* Removed `angel3_orm_test` package dependency
+
 ## 8.2.0
 
 * Require Dart >= 3.3

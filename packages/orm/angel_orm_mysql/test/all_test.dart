@@ -1,7 +1,12 @@
-import 'package:angel3_orm_test/angel3_orm_test.dart';
 import 'package:logging/logging.dart';
 import 'package:test/test.dart';
+import 'belongs_to_test.dart';
 import 'common.dart';
+import 'edge_case_test.dart';
+import 'enum_and_nested_test.dart';
+import 'has_many_test.dart';
+import 'many_to_many_test.dart';
+import 'standalone_test.dart';
 
 void main() {
   Logger.root.onRecord.listen((rec) {
