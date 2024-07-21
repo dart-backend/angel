@@ -14,18 +14,15 @@ This package contains the implementation of the database migration for the follo
 ## Usage
 
 * Use `PostgresMigrationRunner` to perform database migration for PostgreSQL.
-
 * Use `MySqlMigrationRunner` to perform database migration for MySQL and MariaDB. This runner is using [`mysql_client`](https://pub.dev/packages?q=mysql_client) driver.
-
 * Use `MariaDbMigrationRunner` to perform database migration for MariaDB. This runner is using [`mysql1`](https://pub.dev/packages?q=mysql1) driver.
 
 ## Supported Operations
 
-* reset   - Clear out all records in the `migrations` table and drop all the ORM related tables.
 * up      - Generate all the tables based on the ORM models.
+* reset   - Clear out all records in the `migrations` table and drop all the ORM related tables.
 * refresh - Run `reset` follow by `up`
 
-## To do
+## Limitation
 
-* Update existing tables
-* Reverse engineer tables into models
+* Update schema changes is not supported
