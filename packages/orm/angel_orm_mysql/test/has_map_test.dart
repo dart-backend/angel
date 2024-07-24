@@ -1,18 +1,23 @@
-import 'dart:async';
 import 'package:angel3_orm/angel3_orm.dart';
+import 'package:belatuk_pretty_logging/belatuk_pretty_logging.dart';
+import 'package:logging/logging.dart';
 import 'package:test/test.dart';
+import 'common.dart';
 import 'models/has_map.dart';
 
-void hasMapTests(FutureOr<QueryExecutor> Function() createExecutor,
-    {FutureOr<void> Function(QueryExecutor)? close}) {
+void main() {
+  Logger.root
+    ..level = Level.ALL
+    ..onRecord.listen(prettyLog);
   late QueryExecutor executor;
-  close ??= (_) => null;
+
+  var executorFunc = createTables(['has_map']);
 
   setUp(() async {
-    executor = await createExecutor();
+    executor = await executorFunc();
   });
 
-  tearDown(() => close!(executor));
+  tearDown(() async => await dropTables(executor));
 
   test('insert', () async {
     var query = HasMapQuery();

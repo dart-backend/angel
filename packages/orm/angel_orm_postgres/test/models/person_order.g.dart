@@ -188,36 +188,43 @@ class PersonOrderQueryValues extends MapQueryValues {
   }
 
   set id(String? value) => values['id'] = value;
+
   DateTime? get createdAt {
     return (values['created_at'] as DateTime?);
   }
 
   set createdAt(DateTime? value) => values['created_at'] = value;
+
   DateTime? get updatedAt {
     return (values['updated_at'] as DateTime?);
   }
 
   set updatedAt(DateTime? value) => values['updated_at'] = value;
+
   int? get personId {
     return (values['person_id'] as int?);
   }
 
   set personId(int? value) => values['person_id'] = value;
+
   String? get name {
     return (values['name'] as String?);
   }
 
   set name(String? value) => values['name'] = value;
+
   double? get price {
     return (values['price'] as double?) ?? 0.0;
   }
 
   set price(double? value) => values['price'] = value;
+
   bool? get deleted {
     return (values['deleted'] as bool?);
   }
 
   set deleted(bool? value) => values['deleted'] = value;
+
   void copyFrom(PersonOrder model) {
     createdAt = model.createdAt;
     updatedAt = model.updatedAt;
@@ -379,31 +386,37 @@ class OrderWithPersonInfoQueryValues extends MapQueryValues {
   }
 
   set id(String? value) => values['id'] = value;
+
   DateTime? get createdAt {
     return (values['created_at'] as DateTime?);
   }
 
   set createdAt(DateTime? value) => values['created_at'] = value;
+
   DateTime? get updatedAt {
     return (values['updated_at'] as DateTime?);
   }
 
   set updatedAt(DateTime? value) => values['updated_at'] = value;
+
   String? get name {
     return (values['name'] as String?);
   }
 
   set name(String? value) => values['name'] = value;
+
   double? get price {
     return (values['price'] as double?) ?? 0.0;
   }
 
   set price(double? value) => values['price'] = value;
+
   bool? get deleted {
     return (values['deleted'] as bool?);
   }
 
   set deleted(bool? value) => values['deleted'] = value;
+
   void copyFrom(OrderWithPersonInfo model) {
     createdAt = model.createdAt;
     updatedAt = model.updatedAt;
@@ -630,8 +643,10 @@ class PersonOrderSerializer extends Codec<PersonOrder, Map> {
 
   @override
   PersonOrderEncoder get encoder => const PersonOrderEncoder();
+
   @override
   PersonOrderDecoder get decoder => const PersonOrderDecoder();
+
   static PersonOrder fromMap(Map map) {
     return PersonOrder(
         id: map['id'] as String?,
@@ -717,8 +732,10 @@ class OrderWithPersonInfoSerializer extends Codec<OrderWithPersonInfo, Map> {
 
   @override
   OrderWithPersonInfoEncoder get encoder => const OrderWithPersonInfoEncoder();
+
   @override
   OrderWithPersonInfoDecoder get decoder => const OrderWithPersonInfoDecoder();
+
   static OrderWithPersonInfo fromMap(Map map) {
     return OrderWithPersonInfo(
         id: map['id'] as String?,

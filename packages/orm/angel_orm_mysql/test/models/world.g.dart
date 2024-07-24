@@ -133,11 +133,13 @@ class WorldQueryValues extends MapQueryValues {
   }
 
   set id(int? value) => values['id'] = value;
+
   int? get randomNumber {
     return (values['random_number'] as int?);
   }
 
   set randomNumber(int? value) => values['random_number'] = value;
+
   void copyFrom(World model) {
     id = model.id;
     randomNumber = model.randomNumber;
@@ -219,8 +221,10 @@ class WorldSerializer extends Codec<World, Map> {
 
   @override
   WorldEncoder get encoder => const WorldEncoder();
+
   @override
   WorldDecoder get decoder => const WorldDecoder();
+
   static World fromMap(Map map) {
     return World(
         id: map['id'] as int?, randomNumber: map['random_number'] as int?);

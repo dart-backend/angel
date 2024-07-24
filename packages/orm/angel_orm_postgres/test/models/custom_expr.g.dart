@@ -180,16 +180,19 @@ class NumbersQueryValues extends MapQueryValues {
   }
 
   set id(String? value) => values['id'] = value;
+
   DateTime? get createdAt {
     return (values['created_at'] as DateTime?);
   }
 
   set createdAt(DateTime? value) => values['created_at'] = value;
+
   DateTime? get updatedAt {
     return (values['updated_at'] as DateTime?);
   }
 
   set updatedAt(DateTime? value) => values['updated_at'] = value;
+
   void copyFrom(Numbers model) {
     createdAt = model.createdAt;
     updatedAt = model.updatedAt;
@@ -356,26 +359,31 @@ class AlphabetQueryValues extends MapQueryValues {
   }
 
   set id(String? value) => values['id'] = value;
+
   DateTime? get createdAt {
     return (values['created_at'] as DateTime?);
   }
 
   set createdAt(DateTime? value) => values['created_at'] = value;
+
   DateTime? get updatedAt {
     return (values['updated_at'] as DateTime?);
   }
 
   set updatedAt(DateTime? value) => values['updated_at'] = value;
+
   String? get value {
     return (values['value'] as String?);
   }
 
   set value(String? value) => values['value'] = value;
+
   int get numbersId {
     return (values['numbers_id'] as int);
   }
 
   set numbersId(int value) => values['numbers_id'] = value;
+
   void copyFrom(Alphabet model) {
     createdAt = model.createdAt;
     updatedAt = model.updatedAt;
@@ -555,8 +563,10 @@ class NumbersSerializer extends Codec<Numbers, Map> {
 
   @override
   NumbersEncoder get encoder => const NumbersEncoder();
+
   @override
   NumbersDecoder get decoder => const NumbersDecoder();
+
   static Numbers fromMap(Map map) {
     return Numbers(
         id: map['id'] as String?,
@@ -624,8 +634,10 @@ class AlphabetSerializer extends Codec<Alphabet, Map> {
 
   @override
   AlphabetEncoder get encoder => const AlphabetEncoder();
+
   @override
   AlphabetDecoder get decoder => const AlphabetDecoder();
+
   static Alphabet fromMap(Map map) {
     return Alphabet(
         id: map['id'] as String?,

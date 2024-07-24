@@ -189,21 +189,25 @@ class ItemQueryValues extends MapQueryValues {
   }
 
   set id(String? value) => values['id'] = value;
+
   DateTime? get createdAt {
     return (values['created_at'] as DateTime?);
   }
 
   set createdAt(DateTime? value) => values['created_at'] = value;
+
   DateTime? get updatedAt {
     return (values['updated_at'] as DateTime?);
   }
 
   set updatedAt(DateTime? value) => values['updated_at'] = value;
+
   String get description {
     return (values['description'] as String);
   }
 
   set description(String value) => values['description'] = value;
+
   void copyFrom(Item model) {
     createdAt = model.createdAt;
     updatedAt = model.updatedAt;
@@ -435,31 +439,37 @@ class AssetQueryValues extends MapQueryValues {
   }
 
   set id(String? value) => values['id'] = value;
+
   DateTime? get createdAt {
     return (values['created_at'] as DateTime?);
   }
 
   set createdAt(DateTime? value) => values['created_at'] = value;
+
   DateTime? get updatedAt {
     return (values['updated_at'] as DateTime?);
   }
 
   set updatedAt(DateTime? value) => values['updated_at'] = value;
+
   String get description {
     return (values['description'] as String);
   }
 
   set description(String value) => values['description'] = value;
+
   String get name {
     return (values['name'] as String);
   }
 
   set name(String value) => values['name'] = value;
+
   double get price {
     return (values['price'] as double?) ?? 0.0;
   }
 
   set price(double value) => values['price'] = value;
+
   void copyFrom(Asset model) {
     createdAt = model.createdAt;
     updatedAt = model.updatedAt;
@@ -655,8 +665,10 @@ class ItemSerializer extends Codec<Item, Map> {
 
   @override
   ItemEncoder get encoder => const ItemEncoder();
+
   @override
   ItemDecoder get decoder => const ItemDecoder();
+
   static Item fromMap(Map map) {
     return Item(
         id: map['id'] as String?,
@@ -724,8 +736,10 @@ class AssetSerializer extends Codec<Asset, Map> {
 
   @override
   AssetEncoder get encoder => const AssetEncoder();
+
   @override
   AssetDecoder get decoder => const AssetDecoder();
+
   static Asset fromMap(Map map) {
     return Asset(
         id: map['id'] as String?,

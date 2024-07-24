@@ -146,11 +146,13 @@ class HasMapQueryValues extends MapQueryValues {
   }
 
   set value(Map<dynamic, dynamic>? value) => values['value'] = value;
+
   List<dynamic>? get list {
     return json.decode((values['list'] as String)).cast();
   }
 
   set list(List<dynamic>? value) => values['list'] = json.encode(value);
+
   void copyFrom(HasMap model) {
     value = model.value;
     list = model.list;
@@ -233,8 +235,10 @@ class HasMapSerializer extends Codec<HasMap, Map> {
 
   @override
   HasMapEncoder get encoder => const HasMapEncoder();
+
   @override
   HasMapDecoder get decoder => const HasMapDecoder();
+
   static HasMap fromMap(Map map) {
     return HasMap(
         value: map['value'] is Map

@@ -1,21 +1,27 @@
-import 'dart:async';
 import 'package:angel3_orm/angel3_orm.dart';
+import 'package:belatuk_pretty_logging/belatuk_pretty_logging.dart';
+import 'package:logging/logging.dart';
 import 'package:test/test.dart';
+import 'common.dart';
 import 'models/leg.dart';
 
-void hasOneTests(FutureOr<QueryExecutor> Function() createExecutor,
-    {FutureOr<void> Function(QueryExecutor)? close}) {
+void main() {
+  Logger.root
+    ..level = Level.ALL
+    ..onRecord.listen(prettyLog);
+
   late QueryExecutor executor;
   Leg? originalLeg;
-  close ??= (_) => null;
+
+  var executorFunc = pg(['leg', 'foot']);
 
   setUp(() async {
-    executor = await createExecutor();
+    executor = await executorFunc();
     var query = LegQuery()..values.name = 'Left';
     originalLeg = (await query.insert(executor)).value;
   });
 
-  tearDown(() => close!(executor));
+  tearDown(() async => await closePg(executor));
 
   test('sets to null if no child', () async {
     //print(LegQuery().compile({}));

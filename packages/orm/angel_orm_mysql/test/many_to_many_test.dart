@@ -1,15 +1,22 @@
 import 'dart:async';
 import 'package:angel3_orm/angel3_orm.dart';
+import 'package:belatuk_pretty_logging/belatuk_pretty_logging.dart';
+import 'package:logging/logging.dart';
 import 'package:test/test.dart';
+import 'common.dart';
 import 'models/user.dart';
 import 'util.dart';
 
-void manyToManyTests(FutureOr<QueryExecutor> Function() createExecutor,
-    {FutureOr<void> Function(QueryExecutor)? close}) {
+void main() {
+  Logger.root
+    ..level = Level.ALL
+    ..onRecord.listen(prettyLog);
+
   late QueryExecutor executor;
   Role? canPub, canSub;
   User? thosakwe;
-  close ??= (_) => null;
+
+  var executorFunc = createTables(['user', 'role', 'user_role']);
 
   /*
   Future<void> dumpQuery(String query) async {
@@ -29,7 +36,7 @@ void manyToManyTests(FutureOr<QueryExecutor> Function() createExecutor,
   */
 
   setUp(() async {
-    executor = await createExecutor();
+    executor = await executorFunc();
 
     var canPubQuery = RoleQuery()..values.name = 'can_pub';
     var canSubQuery = RoleQuery()..values.name = 'can_sub';
@@ -77,7 +84,7 @@ void manyToManyTests(FutureOr<QueryExecutor> Function() createExecutor,
     print('==================================================\n\n');
   });
 
-  tearDown(() => close!(executor));
+  tearDown(() async => await dropTables(executor));
 
   Future<User?> fetchThosakwe() async {
     var query = UserQuery()..where!.id.equals(int.parse(thosakwe!.id!));

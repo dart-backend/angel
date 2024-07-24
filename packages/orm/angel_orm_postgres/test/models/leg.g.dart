@@ -210,21 +210,25 @@ class LegQueryValues extends MapQueryValues {
   }
 
   set id(String? value) => values['id'] = value;
+
   DateTime? get createdAt {
     return (values['created_at'] as DateTime?);
   }
 
   set createdAt(DateTime? value) => values['created_at'] = value;
+
   DateTime? get updatedAt {
     return (values['updated_at'] as DateTime?);
   }
 
   set updatedAt(DateTime? value) => values['updated_at'] = value;
+
   String? get name {
     return (values['name'] as String?);
   }
 
   set name(String? value) => values['name'] = value;
+
   void copyFrom(Leg model) {
     createdAt = model.createdAt;
     updatedAt = model.updatedAt;
@@ -366,26 +370,31 @@ class FootQueryValues extends MapQueryValues {
   }
 
   set id(String? value) => values['id'] = value;
+
   DateTime? get createdAt {
     return (values['created_at'] as DateTime?);
   }
 
   set createdAt(DateTime? value) => values['created_at'] = value;
+
   DateTime? get updatedAt {
     return (values['updated_at'] as DateTime?);
   }
 
   set updatedAt(DateTime? value) => values['updated_at'] = value;
+
   int? get legId {
     return (values['leg_id'] as int?);
   }
 
   set legId(int? value) => values['leg_id'] = value;
+
   double? get nToes {
     return (values['n_toes'] as double?) ?? 0.0;
   }
 
   set nToes(double? value) => values['n_toes'] = value;
+
   void copyFrom(Foot model) {
     createdAt = model.createdAt;
     updatedAt = model.updatedAt;
@@ -571,8 +580,10 @@ class LegSerializer extends Codec<Leg, Map> {
 
   @override
   LegEncoder get encoder => const LegEncoder();
+
   @override
   LegDecoder get decoder => const LegDecoder();
+
   static Leg fromMap(Map map) {
     return Leg(
         id: map['id'] as String?,
@@ -647,8 +658,10 @@ class FootSerializer extends Codec<Foot, Map> {
 
   @override
   FootEncoder get encoder => const FootEncoder();
+
   @override
   FootDecoder get decoder => const FootDecoder();
+
   static Foot fromMap(Map map) {
     return Foot(
         id: map['id'] as String?,

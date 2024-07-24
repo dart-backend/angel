@@ -1,21 +1,26 @@
-import 'dart:async';
-
 import 'package:angel3_orm/angel3_orm.dart';
+import 'package:belatuk_pretty_logging/belatuk_pretty_logging.dart';
+import 'package:logging/logging.dart';
 import 'package:test/test.dart';
 
+import 'common.dart';
 import 'models/person.dart';
 import 'models/person_order.dart';
 
-void joinTests(FutureOr<QueryExecutor> Function() createExecutor,
-    {FutureOr<void> Function(QueryExecutor)? close}) {
+void main() {
+  Logger.root
+    ..level = Level.ALL
+    ..onRecord.listen(prettyLog);
+
   late QueryExecutor executor;
   Person? originalPerson;
   PersonOrder? originalOrder1;
   PersonOrder? originalOrder2;
-  close ??= (_) => null;
+
+  var executorFunc = pg(['person', 'person_order']);
 
   setUp(() async {
-    executor = await createExecutor();
+    executor = await executorFunc();
     var query = PersonQuery()
       ..values.name = 'DebuggerX'
       ..values.age = 29;
@@ -38,7 +43,7 @@ void joinTests(FutureOr<QueryExecutor> Function() createExecutor,
     originalOrder2 = (await orderQuery.insert(executor)).value;
   });
 
-  tearDown(() => close!(executor));
+  tearDown(() async => await closePg(executor));
 
   test('select person with last order info', () async {
     var orderQuery = PersonOrderQuery();

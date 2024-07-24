@@ -136,11 +136,13 @@ class FortuneQueryValues extends MapQueryValues {
   }
 
   set id(int? value) => values['id'] = value;
+
   String? get message {
     return (values['message'] as String?);
   }
 
   set message(String? value) => values['message'] = value;
+
   void copyFrom(Fortune model) {
     id = model.id;
     message = model.message;
@@ -219,8 +221,10 @@ class FortuneSerializer extends Codec<Fortune, Map> {
 
   @override
   FortuneEncoder get encoder => const FortuneEncoder();
+
   @override
   FortuneDecoder get decoder => const FortuneDecoder();
+
   static Fortune fromMap(Map map) {
     return Fortune(id: map['id'] as int?, message: map['message'] as String?);
   }

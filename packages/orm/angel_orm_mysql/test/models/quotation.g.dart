@@ -151,16 +151,19 @@ class QuotationQueryValues extends MapQueryValues {
   }
 
   set id(String? value) => values['id'] = value;
+
   String? get name {
     return (values['name'] as String?);
   }
 
   set name(String? value) => values['name'] = value;
+
   double? get price {
     return (values['price'] as double?) ?? 0.0;
   }
 
   set price(double? value) => values['price'] = value;
+
   void copyFrom(Quotation model) {
     id = model.id;
     name = model.name;
@@ -250,8 +253,10 @@ class QuotationSerializer extends Codec<Quotation, Map> {
 
   @override
   QuotationEncoder get encoder => const QuotationEncoder();
+
   @override
   QuotationDecoder get decoder => const QuotationDecoder();
+
   static Quotation fromMap(Map map) {
     return Quotation(
         id: map['id'] as String?,

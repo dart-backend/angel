@@ -1,24 +1,29 @@
-import 'dart:async';
 import 'package:angel3_orm/angel3_orm.dart';
+import 'package:belatuk_pretty_logging/belatuk_pretty_logging.dart';
+import 'package:logging/logging.dart';
 import 'package:test/test.dart';
+import 'common.dart';
 import 'models/tree.dart';
 
-void hasManyTests(FutureOr<QueryExecutor> Function() createExecutor,
-    {FutureOr<void> Function(QueryExecutor)? close}) {
+void main() {
+  Logger.root
+    ..level = Level.ALL
+    ..onRecord.listen(prettyLog);
   late QueryExecutor executor;
   Tree? appleTree;
   late int treeId;
-  close ??= (_) => null;
+
+  var executorFunc = pg(['tree', 'fruit']);
 
   setUp(() async {
     var query = TreeQuery()..values.rings = 10;
 
-    executor = await createExecutor();
+    executor = await executorFunc();
     appleTree = (await query.insert(executor)).value;
     treeId = int.parse(appleTree!.id!);
   });
 
-  tearDown(() => close!(executor));
+  tearDown(() async => await closePg(executor));
 
   test('list is empty if there is nothing', () {
     expect(appleTree!.rings, 10);

@@ -325,31 +325,37 @@ class UserQueryValues extends MapQueryValues {
   }
 
   set id(String? value) => values['id'] = value;
+
   DateTime? get createdAt {
     return (values['created_at'] as DateTime?);
   }
 
   set createdAt(DateTime? value) => values['created_at'] = value;
+
   DateTime? get updatedAt {
     return (values['updated_at'] as DateTime?);
   }
 
   set updatedAt(DateTime? value) => values['updated_at'] = value;
+
   String? get username {
     return (values['username'] as String?);
   }
 
   set username(String? value) => values['username'] = value;
+
   String? get password {
     return (values['password'] as String?);
   }
 
   set password(String? value) => values['password'] = value;
+
   String? get email {
     return (values['email'] as String?);
   }
 
   set email(String? value) => values['email'] = value;
+
   void copyFrom(User model) {
     createdAt = model.createdAt;
     updatedAt = model.updatedAt;
@@ -517,11 +523,13 @@ class RoleUserQueryValues extends MapQueryValues {
   }
 
   set roleId(int value) => values['role_id'] = value;
+
   int get userId {
     return (values['user_id'] as int);
   }
 
   set userId(int value) => values['user_id'] = value;
+
   void copyFrom(RoleUser model) {
     if (model.role != null) {
       values['role_id'] = model.role?.id;
@@ -737,21 +745,25 @@ class RoleQueryValues extends MapQueryValues {
   }
 
   set id(String? value) => values['id'] = value;
+
   DateTime? get createdAt {
     return (values['created_at'] as DateTime?);
   }
 
   set createdAt(DateTime? value) => values['created_at'] = value;
+
   DateTime? get updatedAt {
     return (values['updated_at'] as DateTime?);
   }
 
   set updatedAt(DateTime? value) => values['updated_at'] = value;
+
   String? get name {
     return (values['name'] as String?);
   }
 
   set name(String? value) => values['name'] = value;
+
   void copyFrom(Role model) {
     createdAt = model.createdAt;
     updatedAt = model.updatedAt;
@@ -997,8 +1009,10 @@ class UserSerializer extends Codec<User, Map> {
 
   @override
   UserEncoder get encoder => const UserEncoder();
+
   @override
   UserDecoder get decoder => const UserDecoder();
+
   static User fromMap(Map map) {
     return User(
         id: map['id'] as String?,
@@ -1084,8 +1098,10 @@ class RoleUserSerializer extends Codec<RoleUser, Map> {
 
   @override
   RoleUserEncoder get encoder => const RoleUserEncoder();
+
   @override
   RoleUserDecoder get decoder => const RoleUserDecoder();
+
   static RoleUser fromMap(Map map) {
     return RoleUser(
         role: map['role'] != null
@@ -1139,8 +1155,10 @@ class RoleSerializer extends Codec<Role, Map> {
 
   @override
   RoleEncoder get encoder => const RoleEncoder();
+
   @override
   RoleDecoder get decoder => const RoleDecoder();
+
   static Role fromMap(Map map) {
     return Role(
         id: map['id'] as String?,

@@ -253,6 +253,7 @@ class UnorthodoxQueryValues extends MapQueryValues {
   }
 
   set name(String? value) => values['name'] = value;
+
   void copyFrom(Unorthodox model) {
     name = model.name;
   }
@@ -511,11 +512,13 @@ class WeirdJoinQueryValues extends MapQueryValues {
   }
 
   set id(int? value) => values['id'] = value;
+
   String? get joinName {
     return (values['join_name'] as String?);
   }
 
   set joinName(String? value) => values['join_name'] = value;
+
   void copyFrom(WeirdJoin model) {
     id = model.id;
     if (model.unorthodox != null) {
@@ -658,26 +661,31 @@ class SongQueryValues extends MapQueryValues {
   }
 
   set id(String? value) => values['id'] = value;
+
   DateTime? get createdAt {
     return (values['created_at'] as DateTime?);
   }
 
   set createdAt(DateTime? value) => values['created_at'] = value;
+
   DateTime? get updatedAt {
     return (values['updated_at'] as DateTime?);
   }
 
   set updatedAt(DateTime? value) => values['updated_at'] = value;
+
   int? get weirdJoinId {
     return (values['weird_join_id'] as int?);
   }
 
   set weirdJoinId(int? value) => values['weird_join_id'] = value;
+
   String? get title {
     return (values['title'] as String?);
   }
 
   set title(String? value) => values['title'] = value;
+
   void copyFrom(Song model) {
     createdAt = model.createdAt;
     updatedAt = model.updatedAt;
@@ -791,11 +799,13 @@ class NumbaQueryValues extends MapQueryValues {
   }
 
   set i(int? value) => values['i'] = value;
+
   int? get parent {
     return (values['parent'] as int?);
   }
 
   set parent(int? value) => values['parent'] = value;
+
   void copyFrom(Numba model) {
     i = model.i;
     parent = model.parent;
@@ -971,6 +981,7 @@ class FooQueryValues extends MapQueryValues {
   }
 
   set bar(String? value) => values['bar'] = value;
+
   void copyFrom(Foo model) {
     bar = model.bar;
   }
@@ -1125,11 +1136,13 @@ class FooPivotQueryValues extends MapQueryValues {
   }
 
   set weirdJoinId(int? value) => values['weird_join_id'] = value;
+
   String? get fooBar {
     return (values['foo_bar'] as String?);
   }
 
   set fooBar(String? value) => values['foo_bar'] = value;
+
   void copyFrom(FooPivot model) {
     if (model.weirdJoin != null) {
       values['weird_join_id'] = model.weirdJoin?.id;
@@ -1481,8 +1494,10 @@ class UnorthodoxSerializer extends Codec<Unorthodox, Map> {
 
   @override
   UnorthodoxEncoder get encoder => const UnorthodoxEncoder();
+
   @override
   UnorthodoxDecoder get decoder => const UnorthodoxDecoder();
+
   static Unorthodox fromMap(Map map) {
     return Unorthodox(name: map['name'] as String?);
   }
@@ -1522,8 +1537,10 @@ class WeirdJoinSerializer extends Codec<WeirdJoin, Map> {
 
   @override
   WeirdJoinEncoder get encoder => const WeirdJoinEncoder();
+
   @override
   WeirdJoinDecoder get decoder => const WeirdJoinDecoder();
+
   static WeirdJoin fromMap(Map map) {
     return WeirdJoin(
         id: map['id'] as int?,
@@ -1598,8 +1615,10 @@ class SongSerializer extends Codec<Song, Map> {
 
   @override
   SongEncoder get encoder => const SongEncoder();
+
   @override
   SongDecoder get decoder => const SongDecoder();
+
   static Song fromMap(Map map) {
     return Song(
         id: map['id'] as String?,
@@ -1672,8 +1691,10 @@ class NumbaSerializer extends Codec<Numba, Map> {
 
   @override
   NumbaEncoder get encoder => const NumbaEncoder();
+
   @override
   NumbaDecoder get decoder => const NumbaDecoder();
+
   static Numba fromMap(Map map) {
     return Numba(i: map['i'] as int?, parent: map['parent'] as int?);
   }
@@ -1718,8 +1739,10 @@ class FooSerializer extends Codec<Foo, Map> {
 
   @override
   FooEncoder get encoder => const FooEncoder();
+
   @override
   FooDecoder get decoder => const FooDecoder();
+
   static Foo fromMap(Map map) {
     return Foo(
         bar: map['bar'] as String?,
@@ -1774,8 +1797,10 @@ class FooPivotSerializer extends Codec<FooPivot, Map> {
 
   @override
   FooPivotEncoder get encoder => const FooPivotEncoder();
+
   @override
   FooPivotDecoder get decoder => const FooPivotDecoder();
+
   static FooPivot fromMap(Map map) {
     return FooPivot(
         weirdJoin: map['weird_join'] != null

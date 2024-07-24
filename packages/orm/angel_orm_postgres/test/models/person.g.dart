@@ -168,26 +168,31 @@ class PersonQueryValues extends MapQueryValues {
   }
 
   set id(String? value) => values['id'] = value;
+
   DateTime? get createdAt {
     return (values['created_at'] as DateTime?);
   }
 
   set createdAt(DateTime? value) => values['created_at'] = value;
+
   DateTime? get updatedAt {
     return (values['updated_at'] as DateTime?);
   }
 
   set updatedAt(DateTime? value) => values['updated_at'] = value;
+
   String? get name {
     return (values['name'] as String?);
   }
 
   set name(String? value) => values['name'] = value;
+
   int? get age {
     return (values['age'] as int?);
   }
 
   set age(int? value) => values['age'] = value;
+
   void copyFrom(Person model) {
     createdAt = model.createdAt;
     updatedAt = model.updatedAt;
@@ -300,6 +305,7 @@ class PersonWithLastOrderQueryValues extends MapQueryValues {
   }
 
   set name(String? value) => values['name'] = value;
+
   void copyFrom(PersonWithLastOrder model) {
     name = model.name;
   }
@@ -463,8 +469,10 @@ class PersonSerializer extends Codec<Person, Map> {
 
   @override
   PersonEncoder get encoder => const PersonEncoder();
+
   @override
   PersonDecoder get decoder => const PersonDecoder();
+
   static Person fromMap(Map map) {
     return Person(
         id: map['id'] as String?,
@@ -540,8 +548,10 @@ class PersonWithLastOrderSerializer extends Codec<PersonWithLastOrder, Map> {
 
   @override
   PersonWithLastOrderEncoder get encoder => const PersonWithLastOrderEncoder();
+
   @override
   PersonWithLastOrderDecoder get decoder => const PersonWithLastOrderDecoder();
+
   static PersonWithLastOrder fromMap(Map map) {
     return PersonWithLastOrder(
         name: map['name'] as String?,

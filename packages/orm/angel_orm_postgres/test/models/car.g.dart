@@ -203,41 +203,49 @@ class CarQueryValues extends MapQueryValues {
   }
 
   set id(String? value) => values['id'] = value;
+
   DateTime? get createdAt {
     return (values['created_at'] as DateTime?);
   }
 
   set createdAt(DateTime? value) => values['created_at'] = value;
+
   DateTime? get updatedAt {
     return (values['updated_at'] as DateTime?);
   }
 
   set updatedAt(DateTime? value) => values['updated_at'] = value;
+
   String? get make {
     return (values['make'] as String?);
   }
 
   set make(String? value) => values['make'] = value;
+
   String? get description {
     return (values['description'] as String?);
   }
 
   set description(String? value) => values['description'] = value;
+
   bool? get familyFriendly {
     return (values['family_friendly'] as bool?);
   }
 
   set familyFriendly(bool? value) => values['family_friendly'] = value;
+
   DateTime? get recalledAt {
     return (values['recalled_at'] as DateTime?);
   }
 
   set recalledAt(DateTime? value) => values['recalled_at'] = value;
+
   double? get price {
     return (values['price'] as double?) ?? 0.0;
   }
 
   set price(double? value) => values['price'] = value;
+
   void copyFrom(Car model) {
     createdAt = model.createdAt;
     updatedAt = model.updatedAt;
@@ -376,8 +384,10 @@ class CarSerializer extends Codec<Car, Map> {
 
   @override
   CarEncoder get encoder => const CarEncoder();
+
   @override
   CarDecoder get decoder => const CarDecoder();
+
   static Car fromMap(Map map) {
     return Car(
         id: map['id'] as String?,

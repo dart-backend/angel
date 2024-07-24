@@ -271,31 +271,37 @@ class BookQueryValues extends MapQueryValues {
   }
 
   set id(String? value) => values['id'] = value;
+
   DateTime? get createdAt {
     return (values['created_at'] as DateTime?);
   }
 
   set createdAt(DateTime? value) => values['created_at'] = value;
+
   DateTime? get updatedAt {
     return (values['updated_at'] as DateTime?);
   }
 
   set updatedAt(DateTime? value) => values['updated_at'] = value;
+
   int get authorId {
     return (values['author_id'] as int);
   }
 
   set authorId(int value) => values['author_id'] = value;
+
   int get partnerAuthorId {
     return (values['partner_author_id'] as int);
   }
 
   set partnerAuthorId(int value) => values['partner_author_id'] = value;
+
   String? get name {
     return (values['name'] as String?);
   }
 
   set name(String? value) => values['name'] = value;
+
   void copyFrom(Book model) {
     createdAt = model.createdAt;
     updatedAt = model.updatedAt;
@@ -434,21 +440,25 @@ class AuthorQueryValues extends MapQueryValues {
   }
 
   set id(String? value) => values['id'] = value;
+
   DateTime? get createdAt {
     return (values['created_at'] as DateTime?);
   }
 
   set createdAt(DateTime? value) => values['created_at'] = value;
+
   DateTime? get updatedAt {
     return (values['updated_at'] as DateTime?);
   }
 
   set updatedAt(DateTime? value) => values['updated_at'] = value;
+
   String? get name {
     return (values['name'] as String?);
   }
 
   set name(String? value) => values['name'] = value;
+
   void copyFrom(Author model) {
     createdAt = model.createdAt;
     updatedAt = model.updatedAt;
@@ -633,8 +643,10 @@ class BookSerializer extends Codec<Book, Map> {
 
   @override
   BookEncoder get encoder => const BookEncoder();
+
   @override
   BookDecoder get decoder => const BookDecoder();
+
   static Book fromMap(Map map) {
     return Book(
         id: map['id'] as String?,
@@ -716,8 +728,10 @@ class AuthorSerializer extends Codec<Author, Map> {
 
   @override
   AuthorEncoder get encoder => const AuthorEncoder();
+
   @override
   AuthorDecoder get decoder => const AuthorDecoder();
+
   static Author fromMap(Map map) {
     return Author(
         id: map['id'] as String?,

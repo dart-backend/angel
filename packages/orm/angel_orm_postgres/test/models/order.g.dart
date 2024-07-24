@@ -238,36 +238,43 @@ class OrderQueryValues extends MapQueryValues {
   }
 
   set id(String? value) => values['id'] = value;
+
   DateTime? get createdAt {
     return (values['created_at'] as DateTime?);
   }
 
   set createdAt(DateTime? value) => values['created_at'] = value;
+
   DateTime? get updatedAt {
     return (values['updated_at'] as DateTime?);
   }
 
   set updatedAt(DateTime? value) => values['updated_at'] = value;
+
   int get customerId {
     return (values['customer_id'] as int);
   }
 
   set customerId(int value) => values['customer_id'] = value;
+
   int? get employeeId {
     return (values['employee_id'] as int?);
   }
 
   set employeeId(int? value) => values['employee_id'] = value;
+
   DateTime? get orderDate {
     return (values['order_date'] as DateTime?);
   }
 
   set orderDate(DateTime? value) => values['order_date'] = value;
+
   int? get shipperId {
     return (values['shipper_id'] as int?);
   }
 
   set shipperId(int? value) => values['shipper_id'] = value;
+
   void copyFrom(Order model) {
     createdAt = model.createdAt;
     updatedAt = model.updatedAt;
@@ -396,16 +403,19 @@ class CustomerQueryValues extends MapQueryValues {
   }
 
   set id(String? value) => values['id'] = value;
+
   DateTime? get createdAt {
     return (values['created_at'] as DateTime?);
   }
 
   set createdAt(DateTime? value) => values['created_at'] = value;
+
   DateTime? get updatedAt {
     return (values['updated_at'] as DateTime?);
   }
 
   set updatedAt(DateTime? value) => values['updated_at'] = value;
+
   void copyFrom(Customer model) {
     createdAt = model.createdAt;
     updatedAt = model.updatedAt;
@@ -589,8 +599,10 @@ class OrderSerializer extends Codec<Order, Map> {
 
   @override
   OrderEncoder get encoder => const OrderEncoder();
+
   @override
   OrderDecoder get decoder => const OrderDecoder();
+
   static Order fromMap(Map map) {
     return Order(
         id: map['id'] as String?,
@@ -679,8 +691,10 @@ class CustomerSerializer extends Codec<Customer, Map> {
 
   @override
   CustomerEncoder get encoder => const CustomerEncoder();
+
   @override
   CustomerDecoder get decoder => const CustomerDecoder();
+
   static Customer fromMap(Map map) {
     return Customer(
         id: map['id'] as String?,

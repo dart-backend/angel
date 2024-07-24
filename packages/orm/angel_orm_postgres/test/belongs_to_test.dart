@@ -1,20 +1,25 @@
-import 'dart:async';
 import 'package:angel3_orm/angel3_orm.dart';
+import 'package:belatuk_pretty_logging/belatuk_pretty_logging.dart';
+import 'package:logging/logging.dart';
 import 'package:test/test.dart';
+import 'common.dart';
 import 'models/book.dart';
 
 import 'util.dart';
 
-void belongsToTests(FutureOr<QueryExecutor> Function() createExecutor,
-    {FutureOr<void> Function(QueryExecutor)? close}) {
+void main() {
+  Logger.root
+    ..level = Level.ALL
+    ..onRecord.listen(prettyLog);
+
   late QueryExecutor executor;
   Author? jkRowling;
   Author? jameson;
   Book? deathlyHallows;
-  close ??= (_) => null;
+  var executorFunc = pg(['author', 'book']);
 
   setUp(() async {
-    executor = await createExecutor();
+    executor = await executorFunc();
 
     // Insert an author
     var query = AuthorQuery()..values.name = 'J.K. Rowling';
@@ -33,7 +38,7 @@ void belongsToTests(FutureOr<QueryExecutor> Function() createExecutor,
     deathlyHallows = (await bookQuery.insert(executor)).value;
   });
 
-  tearDown(() => close!(executor));
+  tearDown(() async => await closePg(executor));
 
   group('selects', () {
     test('select all', () async {

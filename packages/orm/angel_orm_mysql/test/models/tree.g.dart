@@ -264,21 +264,25 @@ class TreeQueryValues extends MapQueryValues {
   }
 
   set id(String? value) => values['id'] = value;
+
   DateTime? get createdAt {
     return (values['created_at'] as DateTime?);
   }
 
   set createdAt(DateTime? value) => values['created_at'] = value;
+
   DateTime? get updatedAt {
     return (values['updated_at'] as DateTime?);
   }
 
   set updatedAt(DateTime? value) => values['updated_at'] = value;
+
   int? get rings {
     return (values['rings'] as int?);
   }
 
   set rings(int? value) => values['rings'] = value;
+
   void copyFrom(Tree model) {
     createdAt = model.createdAt;
     updatedAt = model.updatedAt;
@@ -420,26 +424,31 @@ class FruitQueryValues extends MapQueryValues {
   }
 
   set id(String? value) => values['id'] = value;
+
   DateTime? get createdAt {
     return (values['created_at'] as DateTime?);
   }
 
   set createdAt(DateTime? value) => values['created_at'] = value;
+
   DateTime? get updatedAt {
     return (values['updated_at'] as DateTime?);
   }
 
   set updatedAt(DateTime? value) => values['updated_at'] = value;
+
   int? get treeId {
     return (values['tree_id'] as int?);
   }
 
   set treeId(int? value) => values['tree_id'] = value;
+
   String? get commonName {
     return (values['common_name'] as String?);
   }
 
   set commonName(String? value) => values['common_name'] = value;
+
   void copyFrom(Fruit model) {
     createdAt = model.createdAt;
     updatedAt = model.updatedAt;
@@ -626,8 +635,10 @@ class TreeSerializer extends Codec<Tree, Map> {
 
   @override
   TreeEncoder get encoder => const TreeEncoder();
+
   @override
   TreeDecoder get decoder => const TreeDecoder();
+
   static Tree fromMap(Map map) {
     return Tree(
         id: map['id'] as String?,
@@ -703,8 +714,10 @@ class FruitSerializer extends Codec<Fruit, Map> {
 
   @override
   FruitEncoder get encoder => const FruitEncoder();
+
   @override
   FruitDecoder get decoder => const FruitDecoder();
+
   static Fruit fromMap(Map map) {
     return Fruit(
         id: map['id'] as String?,

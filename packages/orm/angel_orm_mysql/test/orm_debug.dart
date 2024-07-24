@@ -1,9 +1,9 @@
 import 'package:logging/logging.dart';
 
 void main() async {
-  //hierarchicalLoggingEnabled = true;
+  hierarchicalLoggingEnabled = true;
   Logger.root
-    ..level = Level.INFO
+    ..level = Level.ALL
     ..onRecord.listen(print);
   //Logger.root.onRecord.listen((rec) {
   //  print(rec);
@@ -11,8 +11,5 @@ void main() async {
   //  if (rec.stackTrace != null) print(rec.stackTrace);
   //});
 
-  //belongsToTests(createTables(['author', 'book']), close: dropTables);
-
-  //hasOneTests(my(['leg', 'foot']), close: closeMy);
-  //standaloneTests(my(['car']), close: closeMy);
+  //belongsToTests(pg(['author', 'book']), close: closePg);
 }

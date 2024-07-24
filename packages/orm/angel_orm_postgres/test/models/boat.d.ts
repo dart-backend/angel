@@ -1,5 +1,5 @@
 // GENERATED CODE - DO NOT MODIFY BY HAND
-declare module 'angel3_orm_test' {
+declare module 'angel3_orm_postgres' {
   interface Boat {
     id?: string;
     created_at?: any;

@@ -1,13 +1,19 @@
-import 'dart:async';
 import 'package:angel3_orm/angel3_orm.dart';
+import 'package:belatuk_pretty_logging/belatuk_pretty_logging.dart';
+import 'package:logging/logging.dart';
 import 'package:test/test.dart';
+import 'common.dart';
 import 'models/car.dart';
 
 final DateTime y2k = DateTime(2000, 1, 1);
 
-void standaloneTests(FutureOr<QueryExecutor> Function() createExecutor,
-    {FutureOr<void> Function(QueryExecutor)? close}) {
-  close ??= (_) => null;
+void main() {
+  Logger.root
+    ..level = Level.ALL
+    ..onRecord.listen(prettyLog);
+
+  var executorFunc = pg(['car']);
+
   test('to where', () {
     var query = CarQuery();
     query.where
@@ -43,17 +49,17 @@ void standaloneTests(FutureOr<QueryExecutor> Function() createExecutor,
   });
 
   group('queries', () {
-    QueryExecutor? executor;
+    late QueryExecutor executor;
 
     setUp(() async {
-      executor = await createExecutor();
+      executor = await executorFunc();
     });
 
-    tearDown(() => close!(executor!));
+    tearDown(() async => await closePg(executor));
 
     group('selects', () {
       test('select all', () async {
-        var cars = await CarQuery().get(executor!);
+        var cars = await CarQuery().get(executor);
         expect(cars, []);
       });
 
@@ -69,16 +75,16 @@ void standaloneTests(FutureOr<QueryExecutor> Function() createExecutor,
             ..description = 'Vroom vroom!'
             //..price = 120000.00
             ..familyFriendly = false;
-          ferrari = (await query.insert(executor!)).value;
+          ferrari = (await query.insert(executor)).value;
         });
 
         test('where clause is applied', () async {
           var query = CarQuery()..where!.familyFriendly.isTrue;
-          var cars = await query.get(executor!);
+          var cars = await query.get(executor);
           expect(cars, isEmpty);
 
           var sportsCars = CarQuery()..where!.familyFriendly.isFalse;
-          cars = await sportsCars.get(executor!);
+          cars = await sportsCars.get(executor);
           print(cars.map((c) => c.toJson()));
 
           var car = cars.first;
@@ -94,7 +100,7 @@ void standaloneTests(FutureOr<QueryExecutor> Function() createExecutor,
           var query3 = CarQuery()..where?.description.equals('Submarine');
           var union = query1.union(query2).unionAll(query3);
           //print(union.compile({}));
-          var cars = await union.get(executor!);
+          var cars = await union.get(executor);
           expect(cars, hasLength(1));
         });
 
@@ -105,21 +111,21 @@ void standaloneTests(FutureOr<QueryExecutor> Function() createExecutor,
               ..familyFriendly.isTrue
               ..make.equals('Honda'));
           //print(query.compile({}));
-          var cars = await query.get(executor!);
+          var cars = await query.get(executor);
           expect(cars, hasLength(1));
         });
 
         test('limit obeyed', () async {
           var query = CarQuery()..limit(0);
           //print(query.compile({}));
-          var cars = await query.get(executor!);
+          var cars = await query.get(executor);
           expect(cars, isEmpty);
         });
 
         test('get one', () async {
           var id = int.parse(ferrari!.id!);
           var query = CarQuery()..where!.id.equals(id);
-          var carOpt = await query.getOne(executor!);
+          var carOpt = await query.getOne(executor);
           expect(carOpt.isPresent, true);
           carOpt.ifPresent((car) {
             expect(car, ferrari);
@@ -129,14 +135,14 @@ void standaloneTests(FutureOr<QueryExecutor> Function() createExecutor,
         test('delete one', () async {
           var id = int.parse(ferrari!.id!);
           var query = CarQuery()..where!.id.equals(id);
-          var carOpt = await (query.deleteOne(executor!));
+          var carOpt = await (query.deleteOne(executor));
           expect(carOpt.isPresent, true);
           carOpt.ifPresent((car) {
             var car = carOpt.value;
             expect(car.toJson(), ferrari!.toJson());
           });
 
-          var cars = await CarQuery().get(executor!);
+          var cars = await CarQuery().get(executor);
           expect(cars, isEmpty);
         });
 
@@ -146,7 +152,7 @@ void standaloneTests(FutureOr<QueryExecutor> Function() createExecutor,
             ..orWhere((w) => w.familyFriendly.isTrue);
           //print(query.compile({}, preamble: 'DELETE FROM "cars"'));
 
-          var cars = await query.delete(executor!);
+          var cars = await query.delete(executor);
           expect(cars, hasLength(1));
           expect(cars.first.toJson(), ferrari!.toJson());
         });
@@ -155,7 +161,7 @@ void standaloneTests(FutureOr<QueryExecutor> Function() createExecutor,
           var query = CarQuery()
             ..where!.id.equals(int.parse(ferrari!.id!))
             ..values.make = 'Hyundai';
-          var cars = await query.update(executor!);
+          var cars = await query.update(executor);
           expect(cars, hasLength(1));
           expect(cars.first.make, 'Hyundai');
         });
@@ -163,7 +169,7 @@ void standaloneTests(FutureOr<QueryExecutor> Function() createExecutor,
         test('update car', () async {
           var cloned = ferrari!.copyWith(make: 'Angel');
           var query = CarQuery()..values.copyFrom(cloned);
-          var carOpt = await (query.updateOne(executor!));
+          var carOpt = await (query.updateOne(executor));
           expect(carOpt.isPresent, true);
           carOpt.ifPresent((car) {
             var car = carOpt.value;
@@ -185,7 +191,7 @@ void standaloneTests(FutureOr<QueryExecutor> Function() createExecutor,
         ..recalledAt = recalledAt
         ..createdAt = now
         ..updatedAt = now;
-      var carOpt = await (query.insert(executor!));
+      var carOpt = await (query.insert(executor));
       expect(carOpt.isPresent, true);
       carOpt.ifPresent((car) {
         var car = carOpt.value;
@@ -207,7 +213,7 @@ void standaloneTests(FutureOr<QueryExecutor> Function() createExecutor,
           familyFriendly: true,
           recalledAt: recalledAt);
       var query = CarQuery()..values.copyFrom(beetle);
-      var carOpt = await (query.insert(executor!));
+      var carOpt = await (query.insert(executor));
       expect(carOpt.isPresent, true);
       carOpt.ifPresent((car) {
         //print(car.toJson());

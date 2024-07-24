@@ -1,8 +1,5 @@
 import 'package:logging/logging.dart';
 
-import 'belongs_to_test.dart';
-import 'common.dart';
-
 void main() async {
   hierarchicalLoggingEnabled = true;
   Logger.root
@@ -14,5 +11,5 @@ void main() async {
   //  if (rec.stackTrace != null) print(rec.stackTrace);
   //});
 
-  belongsToTests(pg(['author', 'book']), close: closePg);
+  //belongsToTests(pg(['author', 'book']), close: closePg);
 }

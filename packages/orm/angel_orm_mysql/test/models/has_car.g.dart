@@ -180,26 +180,31 @@ class HasCarQueryValues extends MapQueryValues {
   }
 
   set id(String? value) => values['id'] = value;
+
   DateTime? get createdAt {
     return (values['created_at'] as DateTime?);
   }
 
   set createdAt(DateTime? value) => values['created_at'] = value;
+
   DateTime? get updatedAt {
     return (values['updated_at'] as DateTime?);
   }
 
   set updatedAt(DateTime? value) => values['updated_at'] = value;
+
   Color? get color {
     return codeToColor((values['color'] as String));
   }
 
   set color(Color? value) => values['color'] = colorToCode(value);
+
   CarType? get type {
     return CarType.values[(values['type'] as int)];
   }
 
   set type(CarType? value) => values['type'] = value?.index;
+
   void copyFrom(HasCar model) {
     createdAt = model.createdAt;
     updatedAt = model.updatedAt;
@@ -311,8 +316,10 @@ class HasCarSerializer extends Codec<HasCar, Map> {
 
   @override
   HasCarEncoder get encoder => const HasCarEncoder();
+
   @override
   HasCarDecoder get decoder => const HasCarDecoder();
+
   static HasCar fromMap(Map map) {
     if (map['type'] == null) {
       throw FormatException("Missing required field 'type' on HasCar.");

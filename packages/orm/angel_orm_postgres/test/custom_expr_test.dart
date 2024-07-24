@@ -1,20 +1,20 @@
-import 'dart:async';
 import 'package:angel3_orm/angel3_orm.dart';
+import 'package:belatuk_pretty_logging/belatuk_pretty_logging.dart';
+import 'package:logging/logging.dart';
 import 'package:test/test.dart';
+import 'common.dart';
 import 'models/custom_expr.dart';
 
-void customExprTests(FutureOr<QueryExecutor> Function() createExecutor,
-    {FutureOr<void> Function(QueryExecutor)? close}) {
+void main() {
+  Logger.root
+    ..level = Level.ALL
+    ..onRecord.listen(prettyLog);
   late QueryExecutor executor;
   late Numbers numbersModel;
-
-  close ??= (_) => null;
-
-  var hasExecutor = false;
+  var executorFunc = pg(['custom_expr']);
 
   setUp(() async {
-    executor = await createExecutor();
-    hasExecutor = true;
+    executor = await executorFunc();
 
     var now = DateTime.now();
     var nQuery = NumbersQuery();
@@ -27,10 +27,8 @@ void customExprTests(FutureOr<QueryExecutor> Function() createExecutor,
     });
   });
 
-  tearDown(() {
-    if (hasExecutor && close != null) {
-      close(executor);
-    }
+  tearDown(() async {
+    await closePg(executor);
   });
 
   test('fetches correct result', () async {
