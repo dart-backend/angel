@@ -1,4 +1,5 @@
 import 'package:angel3_orm/angel3_orm.dart';
+
 import 'column.dart';
 
 abstract class Table {
@@ -49,4 +50,7 @@ abstract class MutableTable extends Table {
   void changeColumnType(String name, ColumnType type);
   void dropNotNull(String name);
   void setNotNull(String name);
+  void addIndex(String name, List<String> columns, IndexType type);
+  void dropIndex(String name);
+  void dropPrimaryIndex();
 }
