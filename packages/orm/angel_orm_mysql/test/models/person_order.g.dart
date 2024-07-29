@@ -12,7 +12,7 @@ class PersonOrderMigration extends Migration {
     schema.create(
       'person_orders',
       (table) {
-        table.serial('id').primaryKey();
+        table.integer('id').primaryKey();
         table.timeStamp('created_at');
         table.timeStamp('updated_at');
         table.integer('person_id');

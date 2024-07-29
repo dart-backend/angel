@@ -16,7 +16,8 @@ void main() {
   Role? canPub, canSub;
   User? thosakwe;
 
-  var executorFunc = createTables(['user', 'role', 'user_role']);
+  var executorFunc =
+      createTables([UserMigration(), RoleMigration(), RoleUserMigration()]);
 
   /*
   Future<void> dumpQuery(String query) async {

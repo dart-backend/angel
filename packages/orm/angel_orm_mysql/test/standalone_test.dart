@@ -12,7 +12,7 @@ void main() {
     ..level = Level.ALL
     ..onRecord.listen(prettyLog);
 
-  var executorFunc = createTables(['car']);
+  var executorFunc = createTables([CarMigration()]);
 
   test('to where', () {
     var query = CarQuery();
@@ -55,7 +55,9 @@ void main() {
       executor = await executorFunc();
     });
 
-    tearDown(() async => await dropTables(executor));
+    tearDown(() async {
+      //return await dropTables(executor);
+    });
 
     group('selects', () {
       test('select all', () async {
@@ -73,7 +75,7 @@ void main() {
             ..createdAt = y2k
             ..updatedAt = y2k
             ..description = 'Vroom vroom!'
-            //..price = 120000.00
+            ..price = 120000.00
             ..familyFriendly = false;
           ferrari = (await query.insert(executor)).value;
         });

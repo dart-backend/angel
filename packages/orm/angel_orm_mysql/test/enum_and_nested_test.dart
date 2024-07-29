@@ -11,7 +11,7 @@ void main() {
     ..onRecord.listen(prettyLog);
   late QueryExecutor executor;
 
-  var executorFunc = createTables(['has_car']);
+  var executorFunc = createTables([HasCarMigration()]);
 
   setUp(() async {
     executor = await executorFunc();

@@ -13,7 +13,7 @@ void main() {
   late QueryExecutor executor;
   Leg? originalLeg;
 
-  var executorFunc = createTables(['leg', 'foot']);
+  var executorFunc = createTables([LegMigration(), FootMigration()]);
 
   setUp(() async {
     executor = await executorFunc();

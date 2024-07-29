@@ -12,7 +12,7 @@ class NumbersMigration extends Migration {
     schema.create(
       'numbers',
       (table) {
-        table.serial('id').primaryKey();
+        table.integer('id').primaryKey();
         table.timeStamp('created_at');
         table.timeStamp('updated_at');
       },

@@ -85,6 +85,8 @@ class PostgresTable extends Table {
 
       buf.write('"$name" $col');
     });
+
+    print(buf);
   }
 }
 

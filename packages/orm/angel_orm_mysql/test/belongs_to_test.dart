@@ -16,7 +16,7 @@ void main() {
   Author? jkRowling;
   Author? jameson;
   Book? deathlyHallows;
-  var executorFunc = createTables(['author', 'book']);
+  var executorFunc = createTables([AuthorMigration(), BookMigration()]);
 
   setUp(() async {
     executor = await executorFunc();

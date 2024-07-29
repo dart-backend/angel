@@ -35,6 +35,7 @@ void main() async {
     runner = MySqlMigrationRunner(
       conn,
       migrations: [
+        CarMigration(),
         UserMigration(),
         TodoMigration(),
         ItemMigration(),

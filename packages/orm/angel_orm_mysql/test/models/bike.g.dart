@@ -12,7 +12,7 @@ class BikeMigration extends Migration {
     schema.create(
       'bikes',
       (table) {
-        table.serial('id').primaryKey();
+        table.integer('id').primaryKey();
         table.timeStamp('created_at');
         table.timeStamp('updated_at');
         table.varChar(

@@ -13,7 +13,7 @@ void main() {
   Tree? appleTree;
   late int treeId;
 
-  var executorFunc = createTables(['tree', 'fruit']);
+  var executorFunc = createTables([TreeMigration(), FruitMigration()]);
 
   setUp(() async {
     var query = TreeQuery()..values.rings = 10;

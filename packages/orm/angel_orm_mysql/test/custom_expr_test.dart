@@ -11,7 +11,7 @@ void main() {
     ..onRecord.listen(prettyLog);
   late QueryExecutor executor;
   late Numbers numbersModel;
-  var executorFunc = createTables(['custom_expr']);
+  var executorFunc = createTables([NumbersMigration(), AlphabetMigration()]);
 
   setUp(() async {
     executor = await executorFunc();

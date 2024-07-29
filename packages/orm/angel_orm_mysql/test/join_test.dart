@@ -17,7 +17,7 @@ void main() {
   PersonOrder? originalOrder1;
   PersonOrder? originalOrder2;
 
-  var executorFunc = createTables(['person', 'person_order']);
+  var executorFunc = createTables([PersonMigration(), PersonOrderMigration()]);
 
   setUp(() async {
     executor = await executorFunc();

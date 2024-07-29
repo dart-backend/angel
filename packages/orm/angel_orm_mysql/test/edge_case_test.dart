@@ -11,8 +11,12 @@ void main() {
     ..onRecord.listen(prettyLog);
   late QueryExecutor executor;
 
-  var executorFunc =
-      createTables(['unorthodox', 'weird_join', 'song', 'numba']);
+  var executorFunc = createTables([
+    UnorthodoxMigration(),
+    WeirdJoinMigration(),
+    SongMigration(),
+    NumbaMigration()
+  ]);
 
   setUp(() async {
     executor = await executorFunc();

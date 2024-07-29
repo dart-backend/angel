@@ -11,7 +11,7 @@ void main() {
     ..onRecord.listen(prettyLog);
   late QueryExecutor executor;
 
-  var executorFunc = createTables(['has_map']);
+  var executorFunc = createTables([HasMapMigration()]);
 
   setUp(() async {
     executor = await executorFunc();

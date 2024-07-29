@@ -1,5 +1,7 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:angel3_migration/angel3_migration.dart';
+import 'package:angel3_migration_runner/mysql.dart';
 import 'package:angel3_orm/angel3_orm.dart';
 import 'package:angel3_orm_mysql/angel3_orm_mysql.dart';
 import 'package:logging/logging.dart';
@@ -8,7 +10,7 @@ import 'package:mysql_client/mysql_client.dart';
 
 List tmpTables = [];
 
-FutureOr<QueryExecutor> Function() createTables(List<String> schemas) {
+FutureOr<QueryExecutor> Function() createTables(List<Migration> schemas) {
   // For MySQL
   return () => _connectToMySql(schemas);
 
@@ -86,7 +88,7 @@ String extractTableName(String createQuery) {
 // Executor for MySQL
 //   create user 'test'@'localhost' identified by 'test123';
 //   GRANT ALL PRIVILEGES ON orm_test.* to 'test'@'localhost' WITH GRANT OPTION;
-Future<MySqlExecutor> _connectToMySql(List<String> schemas) async {
+Future<MySqlExecutor> _connectToMySql(List<Migration> models) async {
   var connection = await MySQLConnection.createConnection(
       databaseName: 'orm_test',
       port: 3306,
@@ -101,6 +103,10 @@ Future<MySqlExecutor> _connectToMySql(List<String> schemas) async {
 
   tmpTables.clear();
 
+  var runner = MySqlMigrationRunner(connection, migrations: models);
+  await runner.up();
+
+  /*
   for (var s in schemas) {
     // MySQL driver does not support multiple sql queries
     var data = await File('test/migrations/$s.sql').readAsString();
@@ -117,6 +123,7 @@ Future<MySqlExecutor> _connectToMySql(List<String> schemas) async {
       }
     }
   }
+  */
 
   return MySqlExecutor(connection, logger: logger);
 }
