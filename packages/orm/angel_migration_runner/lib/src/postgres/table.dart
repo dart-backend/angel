@@ -1,6 +1,7 @@
 import 'dart:collection';
-import 'package:angel3_orm/angel3_orm.dart';
+
 import 'package:angel3_migration/angel3_migration.dart';
+import 'package:angel3_orm/angel3_orm.dart';
 import 'package:charcode/ascii.dart';
 
 abstract class PostgresGenerator {
@@ -166,5 +167,38 @@ class PostgresAlterTable extends Table implements MutableTable {
   @override
   void rename(String newName) {
     _stack.add('RENAME TO "$newName"');
+  }
+
+  @override
+  void addIndex(String name, List<String> columns, IndexType type) {
+    String indexType = '';
+
+    switch (type) {
+      case IndexType.primaryKey:
+        indexType = 'PRIMARY KEY';
+        break;
+      case IndexType.unique:
+        indexType = 'CONSTRAINT "$name" UNIQUE';
+        break;
+      case IndexType.standardIndex:
+      case IndexType.none:
+        // not working with postgres
+        return;
+    }
+
+    // mask the column names, is more safety
+    columns.map((column) => '"$column"');
+
+    _stack.add('ADD $indexType (${columns.join(',')})');
+  }
+
+  @override
+  void dropIndex(String name) {
+    _stack.add('DROP CONSTRAINT "$name"');
+  }
+
+  @override
+  void dropPrimaryIndex() {
+    _stack.add('DROP CONSTRAINT "${tableName}_pkey"');
   }
 }
