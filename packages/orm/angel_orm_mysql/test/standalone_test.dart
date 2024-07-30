@@ -1,6 +1,8 @@
+import 'package:angel3_migration_runner/angel3_migration_runner.dart';
 import 'package:angel3_orm/angel3_orm.dart';
 import 'package:belatuk_pretty_logging/belatuk_pretty_logging.dart';
 import 'package:logging/logging.dart';
+import 'package:mysql_client/mysql_client.dart';
 import 'package:test/test.dart';
 import 'common.dart';
 import 'models/car.dart';
@@ -12,7 +14,19 @@ void main() {
     ..level = Level.ALL
     ..onRecord.listen(prettyLog);
 
-  var executorFunc = createTables([CarMigration()]);
+  late MySQLConnection conn;
+  late QueryExecutor executor;
+  late MigrationRunner runner;
+
+  setUp(() async {
+    conn = await openMySqlConnection();
+    executor = await createExecutor(conn);
+    runner = await createTables(conn, [CarMigration()]);
+  });
+
+  tearDown(() async {
+    await dropTables(runner);
+  });
 
   test('to where', () {
     var query = CarQuery();
@@ -49,16 +63,6 @@ void main() {
   });
 
   group('queries', () {
-    late QueryExecutor executor;
-
-    setUp(() async {
-      executor = await executorFunc();
-    });
-
-    tearDown(() async {
-      //return await dropTables(executor);
-    });
-
     group('selects', () {
       test('select all', () async {
         var cars = await CarQuery().get(executor);

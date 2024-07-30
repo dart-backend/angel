@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'package:angel3_migration/angel3_migration.dart';
+import 'package:angel3_migration_runner/angel3_migration_runner.dart';
 import 'package:angel3_migration_runner/mysql.dart';
 import 'package:angel3_orm/angel3_orm.dart';
 import 'package:angel3_orm_mysql/angel3_orm_mysql.dart';
@@ -10,23 +11,37 @@ import 'package:mysql_client/mysql_client.dart';
 
 List tmpTables = [];
 
-FutureOr<QueryExecutor> Function() createTables(List<Migration> schemas) {
-  // For MySQL
-  return () => _connectToMySql(schemas);
+// For MySQL
+Future<MySQLConnection> openMySqlConnection() async {
+  var connection = await MySQLConnection.createConnection(
+      databaseName: 'orm_test',
+      port: 3306,
+      host: "localhost",
+      userName: Platform.environment['MYSQL_USERNAME'] ?? 'test',
+      password: Platform.environment['MYSQL_PASSWORD'] ?? 'test123',
+      secure: !('false' == Platform.environment['MYSQL_SECURE']));
 
-  // For MariaDB
-  //return () => _connectToMariaDb(schemas);
+  await connection.connect(timeoutMs: 10000);
+
+  return connection;
 }
 
-// For MySQL
-Future<void> dropTables(QueryExecutor executor) async {
-  var sqlExecutor = (executor as MySqlExecutor);
-  for (var tableName in tmpTables.reversed) {
-    print('DROP TABLE $tableName');
-    await sqlExecutor.rawConnection.execute('DROP TABLE $tableName;');
-  }
+Future<QueryExecutor> createExecutor(MySQLConnection conn) async {
+  var logger = Logger('orm_mysql');
 
-  return sqlExecutor.close();
+  return MySqlExecutor(conn, logger: logger);
+}
+
+Future<MigrationRunner> createTables(
+    MySQLConnection conn, List<Migration> models) async {
+  var runner = MySqlMigrationRunner(conn, migrations: models);
+  await runner.up();
+
+  return runner;
+}
+
+Future<void> dropTables(MigrationRunner runner) async {
+  await runner.reset();
 }
 
 // For MariaDB

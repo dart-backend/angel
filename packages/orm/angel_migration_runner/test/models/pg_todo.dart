@@ -51,3 +51,33 @@ class ItemMigration extends Migration {
   @override
   void down(Schema schema) => schema.drop('items');
 }
+
+class CarMigration extends Migration {
+  @override
+  void up(Schema schema) {
+    schema.create(
+      'cars',
+      (table) {
+        table.serial('id').primaryKey();
+        table.timeStamp('created_at');
+        table.timeStamp('updated_at');
+        table.varChar(
+          'make',
+          length: 255,
+        );
+        table.varChar(
+          'description',
+          length: 255,
+        );
+        table.boolean('family_friendly');
+        table.timeStamp('recalled_at');
+        table.double('price');
+      },
+    );
+  }
+
+  @override
+  void down(Schema schema) {
+    schema.drop('cars');
+  }
+}

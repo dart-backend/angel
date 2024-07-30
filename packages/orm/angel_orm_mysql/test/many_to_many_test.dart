@@ -1,7 +1,9 @@
 import 'dart:async';
+import 'package:angel3_migration_runner/angel3_migration_runner.dart';
 import 'package:angel3_orm/angel3_orm.dart';
 import 'package:belatuk_pretty_logging/belatuk_pretty_logging.dart';
 import 'package:logging/logging.dart';
+import 'package:mysql_client/mysql_client.dart';
 import 'package:test/test.dart';
 import 'common.dart';
 import 'models/user.dart';
@@ -12,12 +14,12 @@ void main() {
     ..level = Level.ALL
     ..onRecord.listen(prettyLog);
 
+  late MySQLConnection conn;
   late QueryExecutor executor;
+  late MigrationRunner runner;
+
   Role? canPub, canSub;
   User? thosakwe;
-
-  var executorFunc =
-      createTables([UserMigration(), RoleMigration(), RoleUserMigration()]);
 
   /*
   Future<void> dumpQuery(String query) async {
@@ -37,7 +39,10 @@ void main() {
   */
 
   setUp(() async {
-    executor = await executorFunc();
+    conn = await openMySqlConnection();
+    executor = await createExecutor(conn);
+    runner = await createTables(
+        conn, [UserMigration(), RoleMigration(), RoleUserMigration()]);
 
     var canPubQuery = RoleQuery()..values.name = 'can_pub';
     var canSubQuery = RoleQuery()..values.name = 'can_sub';
@@ -85,7 +90,7 @@ void main() {
     print('==================================================\n\n');
   });
 
-  tearDown(() async => await dropTables(executor));
+  tearDown(() async => await dropTables(runner));
 
   Future<User?> fetchThosakwe() async {
     var query = UserQuery()..where!.id.equals(int.parse(thosakwe!.id!));

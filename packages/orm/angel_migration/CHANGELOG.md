@@ -1,5 +1,9 @@
 # Change Log
 
+## 8.2.2
+
+* Added `MutableTable`
+
 ## 8.2.1
 
 * Updated README

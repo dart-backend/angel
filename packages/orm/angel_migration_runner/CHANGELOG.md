@@ -1,8 +1,12 @@
 # Change Log
 
+## 8.2.3
+
+* Added index support
+
 ## 8.2.2
 
-Fixed `MariaDbMigrationRunner` migration issues
+* Fixed `MariaDbMigrationRunner` migration issues
 
 ## 8.2.1
 

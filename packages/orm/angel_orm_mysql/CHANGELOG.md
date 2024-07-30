@@ -2,8 +2,8 @@
 
 ## 8.3.0
 
-* Migrated test cases from `angel3_orm_test` package
-* Removed `angel3_orm_test` package dependency
+* Migrated test cases from `angel3_orm_test`
+* Removed dependency on `angel3_orm_test`
 
 ## 8.2.0
 

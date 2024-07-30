@@ -1,6 +1,8 @@
+import 'package:angel3_migration_runner/angel3_migration_runner.dart';
 import 'package:angel3_orm/angel3_orm.dart';
 import 'package:belatuk_pretty_logging/belatuk_pretty_logging.dart';
 import 'package:logging/logging.dart';
+import 'package:mysql_client/mysql_client.dart';
 import 'package:test/test.dart';
 import 'common.dart';
 import 'models/tree.dart';
@@ -9,21 +11,23 @@ void main() {
   Logger.root
     ..level = Level.ALL
     ..onRecord.listen(prettyLog);
+  late MySQLConnection conn;
   late QueryExecutor executor;
+  late MigrationRunner runner;
   Tree? appleTree;
   late int treeId;
-
-  var executorFunc = createTables([TreeMigration(), FruitMigration()]);
 
   setUp(() async {
     var query = TreeQuery()..values.rings = 10;
 
-    executor = await executorFunc();
+    conn = await openMySqlConnection();
+    executor = await createExecutor(conn);
+    runner = await createTables(conn, [TreeMigration(), FruitMigration()]);
     appleTree = (await query.insert(executor)).value;
     treeId = int.parse(appleTree!.id!);
   });
 
-  tearDown(() async => await dropTables(executor));
+  tearDown(() async => await dropTables(runner));
 
   test('list is empty if there is nothing', () {
     expect(appleTree!.rings, 10);
