@@ -14,4 +14,9 @@ abstract class Schema {
   void createIfNotExists(String tableName, void Function(Table table) callback);
 
   void alter(String tableName, void Function(MutableTable table) callback);
+
+  void indexes(
+    String tableName,
+    void Function(MutableIndexes indexes) callback,
+  );
 }

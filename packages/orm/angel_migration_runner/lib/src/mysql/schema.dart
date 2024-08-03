@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:angel3_migration/angel3_migration.dart';
 import 'package:logging/logging.dart';
 import 'package:mysql_client/mysql_client.dart';
@@ -79,4 +80,12 @@ class MySqlSchema extends Schema {
   void createIfNotExists(
           String tableName, void Function(Table table) callback) =>
       _create(tableName, callback, true);
+
+  @override
+  void indexes(String tableName, void Function(MutableIndexes table) callback) {
+    var tbl = MysqlIndexes(tableName);
+    callback(tbl);
+
+    tbl.compile(_buf);
+  }
 }

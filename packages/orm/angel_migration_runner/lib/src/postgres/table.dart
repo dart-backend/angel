@@ -176,6 +176,7 @@ class PostgresAlterTable extends Table implements MutableTable {
         indexType = 'PRIMARY KEY';
         break;
       case IndexType.unique:
+        // ??
         indexType = 'CONSTRAINT "$name" UNIQUE';
         break;
       case IndexType.standardIndex:
@@ -198,5 +199,56 @@ class PostgresAlterTable extends Table implements MutableTable {
   @override
   void dropPrimaryIndex() {
     _stack.add('DROP CONSTRAINT "${tableName}_pkey"');
+  }
+}
+
+class PostgresIndexes implements MutableIndexes {
+  final String tableName;
+  final Queue<String> _stack = Queue<String>();
+
+  PostgresIndexes(this.tableName);
+
+  void compile(StringBuffer buf) {
+    while (_stack.isNotEmpty) {
+      buf.writeln(_stack.removeFirst());
+    }
+  }
+
+  @override
+  void addIndex(String name, List<String> columns, IndexType type) {
+    // mask the column names, is more safety
+    columns.map((column) => '"$column"');
+
+    switch (type) {
+      case IndexType.primaryKey:
+        _stack.add(
+          'ALTER TABLE "$tableName" ADD PRIMARY KEY (${columns.join(',')});',
+        );
+        break;
+      case IndexType.unique:
+        _stack.add(
+          'CREATE UNIQUE INDEX IF NOT EXISTS "$name" '
+          'ON "$tableName" (${columns.join(',')});',
+        );
+        break;
+      case IndexType.standardIndex:
+      case IndexType.none:
+      default:
+        _stack.add(
+          'CREATE INDEX IF NOT EXISTS "$name" '
+          'ON "$tableName" (${columns.join(',')});',
+        );
+        break;
+    }
+  }
+
+  @override
+  void dropIndex(String name) {
+    _stack.add('DROP INDEX "$name";');
+  }
+
+  @override
+  void dropPrimaryIndex() {
+    _stack.add('ALTER TABLE "$tableName" DROP CONSTRAINT "${tableName}_pkey"');
   }
 }
