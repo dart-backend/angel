@@ -43,14 +43,24 @@ abstract class Table {
   }
 }
 
-abstract class MutableTable extends Table {
+abstract class MutableTable extends Table implements MutableIndexes {
   void rename(String newName);
+
   void dropColumn(String name);
+
   void renameColumn(String name, String newName);
+
   void changeColumnType(String name, ColumnType type);
+
   void dropNotNull(String name);
+
   void setNotNull(String name);
+}
+
+abstract class MutableIndexes {
   void addIndex(String name, List<String> columns, IndexType type);
+
   void dropIndex(String name);
+
   void dropPrimaryIndex();
 }

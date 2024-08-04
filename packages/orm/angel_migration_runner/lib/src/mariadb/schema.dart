@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:angel3_migration/angel3_migration.dart';
 import 'package:logging/logging.dart';
 import 'package:mysql1/mysql1.dart';
@@ -74,4 +75,12 @@ class MariaDbSchema extends Schema {
   void createIfNotExists(
           String tableName, void Function(Table table) callback) =>
       _create(tableName, callback, true);
+
+  @override
+  void indexes(String tableName, void Function(MutableIndexes index) callback) {
+    var tbl = MariaDbIndexes(tableName);
+    callback(tbl);
+
+    tbl.compile(_buf);
+  }
 }
