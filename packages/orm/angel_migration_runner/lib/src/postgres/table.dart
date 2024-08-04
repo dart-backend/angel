@@ -176,7 +176,6 @@ class PostgresAlterTable extends Table implements MutableTable {
         indexType = 'PRIMARY KEY';
         break;
       case IndexType.unique:
-        // ??
         indexType = 'CONSTRAINT "$name" UNIQUE';
         break;
       case IndexType.standardIndex:
