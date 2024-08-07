@@ -1,5 +1,9 @@
 # Change Log
 
+## 8.3.0
+
+* Added `addIndex`, `dropIndex` and `dropPrimaryIndex`
+
 ## 8.2.1
 
 * Updated README
