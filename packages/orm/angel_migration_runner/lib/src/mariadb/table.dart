@@ -229,3 +229,53 @@ class MariaDbAlterTable extends Table implements MutableTable {
     _stack.add('DROP PRIMARY KEY');
   }
 }
+
+class MariaDbIndexes implements MutableIndexes {
+  final String tableName;
+  final Queue<String> _stack = Queue<String>();
+
+  MariaDbIndexes(this.tableName);
+
+  void compile(StringBuffer buf) {
+    while (_stack.isNotEmpty) {
+      var str = _stack.removeFirst();
+      buf.writeln(str);
+    }
+  }
+
+  @override
+  void addIndex(String name, List<String> columns, IndexType type) {
+    // mask the column names, is more safety
+    columns = columns.map((column) => '`$column`').toList();
+
+    switch (type) {
+      case IndexType.primaryKey:
+        _stack.add(
+          'ALTER TABLE `$tableName` ADD PRIMARY KEY (${columns.join(',')});',
+        );
+        break;
+      case IndexType.unique:
+        _stack.add(
+          'CREATE UNIQUE INDEX IF NOT EXISTS `$name` '
+              'ON `$tableName` (${columns.join(',')});',
+        );
+        break;
+      case IndexType.standardIndex:
+      case IndexType.none:
+        _stack.add(
+          'CREATE INDEX `$name` ON `$tableName` (${columns.join(',')});',
+        );
+        break;
+    }
+  }
+
+  @override
+  void dropIndex(String name) {
+    _stack.add('DROP INDEX IF EXISTS `$name` ON `$tableName`;');
+  }
+
+  @override
+  void dropPrimaryIndex() {
+    _stack.add('DROP INDEX `PRIMARY` ON `$tableName`;');
+  }
+}

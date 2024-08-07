@@ -1,7 +1,9 @@
 import 'dart:async';
+
 import 'package:angel3_migration/angel3_migration.dart';
-import 'package:postgres/postgres.dart';
 import 'package:logging/logging.dart';
+import 'package:postgres/postgres.dart';
+
 import 'table.dart';
 
 /// A PostgreSQL database schema generator
@@ -73,4 +75,12 @@ class PostgresSchema extends Schema {
   void createIfNotExists(
           String tableName, void Function(Table table) callback) =>
       _create(tableName, callback, true);
+
+  @override
+  void indexes(String tableName, void Function(MutableIndexes table) callback) {
+    var tbl = PostgresIndexes(tableName);
+    callback(tbl);
+
+    tbl.compile(_buf);
+  }
 }
