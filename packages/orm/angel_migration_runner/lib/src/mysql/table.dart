@@ -4,6 +4,7 @@ import 'package:angel3_migration/angel3_migration.dart';
 import 'package:angel3_orm/angel3_orm.dart';
 import 'package:charcode/ascii.dart';
 
+/// MySQL SQL query generator
 abstract class MySqlGenerator {
   static String columnType(MigrationColumn column) {
     var str = column.type.name;
@@ -46,7 +47,11 @@ abstract class MySqlGenerator {
         s = value.toString();
       }
 
-      buf.write(' DEFAULT $s');
+      if (column.type == ColumnType.varChar) {
+        buf.write(' DEFAULT \'$s\'');
+      } else {
+        buf.write(' DEFAULT $s');
+      }
     }
 
     if (column.indexType == IndexType.unique) {
@@ -120,7 +125,7 @@ class MysqlTable extends Table {
       }
     }
 
-    print(buf);
+    //print(buf);
   }
 }
 

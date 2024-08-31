@@ -1,5 +1,9 @@
 # Change Log
 
+## 8.3.1
+
+* Fixed default value issue
+
 ## 8.3.0
 
 * Added `addIndex`, `dropIndex` and `dropPrimaryIndex`

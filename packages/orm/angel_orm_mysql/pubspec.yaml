@@ -21,7 +21,7 @@ dev_dependencies:
   test: ^1.24.0
   lints: ^4.0.0
 
-# dependency_overrides:
+dependency_overrides:
 #   angel3_serialize:
 #     path: ../../serialize/angel_serialize
 #   angel3_serialize_generator:
@@ -34,5 +34,7 @@ dev_dependencies:
 #     path: ../angel_orm
 #   angel3_orm_generator:
 #     path: ../angel_orm_generator
-#   angel3_migration:
-#     path: ../angel_migration
+  angel3_migration:
+    path: ../angel_migration
+  angel3_migration_runner:
+    path: ../angel_migration_runner

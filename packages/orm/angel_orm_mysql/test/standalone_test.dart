@@ -1,7 +1,5 @@
 import 'package:angel3_migration_runner/angel3_migration_runner.dart';
 import 'package:angel3_orm/angel3_orm.dart';
-import 'package:belatuk_pretty_logging/belatuk_pretty_logging.dart';
-import 'package:logging/logging.dart';
 import 'package:mysql_client/mysql_client.dart';
 import 'package:test/test.dart';
 import 'common.dart';
@@ -10,10 +8,6 @@ import 'models/car.dart';
 final DateTime y2k = DateTime(2000, 1, 1);
 
 void main() {
-  Logger.root
-    ..level = Level.ALL
-    ..onRecord.listen(prettyLog);
-
   late MySQLConnection conn;
   late QueryExecutor executor;
   late MigrationRunner runner;
@@ -141,7 +135,7 @@ void main() {
         test('delete one', () async {
           var id = int.parse(ferrari!.id!);
           var query = CarQuery()..where!.id.equals(id);
-          var carOpt = await (query.deleteOne(executor));
+          var carOpt = await query.deleteOne(executor);
           expect(carOpt.isPresent, true);
           carOpt.ifPresent((car) {
             var car = carOpt.value;
@@ -187,7 +181,7 @@ void main() {
     });
 
     test('insert', () async {
-      var recalledAt = DateTime.now();
+      var recalledAt = DateTime.utc(2000, 1, 1, 0, 0, 0, 0, 0);
       var query = CarQuery();
       var now = DateTime.now();
       query.values
