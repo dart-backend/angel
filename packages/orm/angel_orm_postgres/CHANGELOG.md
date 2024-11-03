@@ -1,3 +1,7 @@
+## 8.3.0
+
+ - **FEAT**: Take @SerializableField properties into account when generating `Query.parseRow` (#98).
+
 # Change Log
 
 ## 8.2.2

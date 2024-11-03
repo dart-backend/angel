@@ -1,3 +1,7 @@
+## 8.0.2
+
+ - Update a dependency to the latest release.
+
 # Change Log
 
 ## 8.0.1

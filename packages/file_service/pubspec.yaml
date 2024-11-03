@@ -1,12 +1,12 @@
 name: angel3_file_service
-version: 8.2.0
+version: 8.2.1
 description: Angel service that persists data to a file on disk, stored as a JSON list.
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dart-backend/angel/tree/master/packages/file_service
 environment:
   sdk: '>=3.5.0 <4.0.0'
 dependencies:
-  angel3_framework: ^8.0.0
+  angel3_framework: ^8.4.1
   file: ^7.0.0
   pool: ^1.5.0
 dev_dependencies:

@@ -1,3 +1,7 @@
+## 8.4.1
+
+ - **FIX**: res.json() will cause 'Bad state: Cannot modify a closed response.' error.
+
 # Change Log
 
 ## 8.4.0

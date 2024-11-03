@@ -1,12 +1,12 @@
 name: angel3_sembast
-version: 8.2.0
+version: 8.2.1
 description: A plugin service that persist data to Sembast for Angel3 framework.
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dart-backend/angel/tree/master/packages/sembast
 environment:
   sdk: '>=3.5.0 <4.0.0'
 dependencies:
-  angel3_framework: ^8.0.0
+  angel3_framework: ^8.4.1
   sembast: ^3.1.1
 dev_dependencies:
   angel3_http_exception: ^8.0.0

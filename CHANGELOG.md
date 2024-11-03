@@ -1,5 +1,124 @@
 # Change Log
 
+All notable changes to this project will be documented in this file.
+See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
+
+## 2024-11-03
+
+### Changes
+
+---
+
+Packages with breaking changes:
+
+ - There are no breaking changes in this release.
+
+Packages with other changes:
+
+ - [`angel3_framework` - `v8.4.1`](#angel3_framework---v841)
+ - [`angel3_orm` - `v8.3.0`](#angel3_orm---v830)
+ - [`angel3_orm_generator` - `v8.4.0`](#angel3_orm_generator---v840)
+ - [`angel3_orm_mysql` - `v8.3.0`](#angel3_orm_mysql---v830)
+ - [`angel3_orm_postgres` - `v8.3.0`](#angel3_orm_postgres---v830)
+ - [`angel3_orm_test` - `v8.3.0`](#angel3_orm_test---v830)
+ - [`angel3_configuration` - `v8.2.1`](#angel3_configuration---v821)
+ - [`angel3_mustache` - `v8.2.1`](#angel3_mustache---v821)
+ - [`angel3_html` - `v8.1.1`](#angel3_html---v811)
+ - [`angel3_jael` - `v8.2.1`](#angel3_jael---v821)
+ - [`angel3_jinja` - `v8.3.2`](#angel3_jinja---v832)
+ - [`angel3_markdown` - `v8.2.1`](#angel3_markdown---v821)
+ - [`angel3_cache` - `v8.2.1`](#angel3_cache---v821)
+ - [`angel3_mongo` - `v8.2.2`](#angel3_mongo---v822)
+ - [`angel3_auth_oauth2` - `v8.2.1`](#angel3_auth_oauth2---v821)
+ - [`angel3_auth` - `v8.2.1`](#angel3_auth---v821)
+ - [`angel3_orm_service` - `v8.2.3`](#angel3_orm_service---v823)
+ - [`angel3_cors` - `v8.2.1`](#angel3_cors---v821)
+ - [`angel3_production` - `v8.3.1`](#angel3_production---v831)
+ - [`angel3_file_service` - `v8.2.1`](#angel3_file_service---v821)
+ - [`angel3_proxy` - `v8.2.1`](#angel3_proxy---v821)
+ - [`angel3_hot` - `v8.3.1`](#angel3_hot---v831)
+ - [`angel3_redis` - `v8.2.1`](#angel3_redis---v821)
+ - [`angel3_rethinkdb` - `v8.0.2`](#angel3_rethinkdb---v802)
+ - [`angel3_paginate` - `v8.2.1`](#angel3_paginate---v821)
+ - [`angel3_validate` - `v8.2.1`](#angel3_validate---v821)
+ - [`angel3_security` - `v8.2.1`](#angel3_security---v821)
+ - [`angel3_sembast` - `v8.2.1`](#angel3_sembast---v821)
+ - [`angel3_seo` - `v8.2.1`](#angel3_seo---v821)
+ - [`angel3_static` - `v8.2.2`](#angel3_static---v822)
+ - [`angel3_sync` - `v8.2.1`](#angel3_sync---v821)
+ - [`angel3_test` - `v8.2.2`](#angel3_test---v822)
+ - [`angel3_user_agent` - `v8.2.1`](#angel3_user_agent---v821)
+ - [`angel3_websocket` - `v8.2.1`](#angel3_websocket---v821)
+ - [`angel3_oauth2` - `v8.2.1`](#angel3_oauth2---v821)
+ - [`angel3_migration` - `v8.3.1`](#angel3_migration---v831)
+ - [`angel3_migration_runner` - `v8.3.1`](#angel3_migration_runner---v831)
+
+Packages with dependency updates only:
+
+> Packages listed below depend on other packages in this workspace that have had changes. Their versions have been incremented to bump the minimum dependency versions of the packages they depend upon in this project.
+
+ - `angel3_configuration` - `v8.2.1`
+ - `angel3_mustache` - `v8.2.1`
+ - `angel3_html` - `v8.1.1`
+ - `angel3_jael` - `v8.2.1`
+ - `angel3_jinja` - `v8.3.2`
+ - `angel3_markdown` - `v8.2.1`
+ - `angel3_cache` - `v8.2.1`
+ - `angel3_mongo` - `v8.2.2`
+ - `angel3_auth_oauth2` - `v8.2.1`
+ - `angel3_auth` - `v8.2.1`
+ - `angel3_orm_service` - `v8.2.3`
+ - `angel3_cors` - `v8.2.1`
+ - `angel3_production` - `v8.3.1`
+ - `angel3_file_service` - `v8.2.1`
+ - `angel3_proxy` - `v8.2.1`
+ - `angel3_hot` - `v8.3.1`
+ - `angel3_redis` - `v8.2.1`
+ - `angel3_rethinkdb` - `v8.0.2`
+ - `angel3_paginate` - `v8.2.1`
+ - `angel3_validate` - `v8.2.1`
+ - `angel3_security` - `v8.2.1`
+ - `angel3_sembast` - `v8.2.1`
+ - `angel3_seo` - `v8.2.1`
+ - `angel3_static` - `v8.2.2`
+ - `angel3_sync` - `v8.2.1`
+ - `angel3_test` - `v8.2.2`
+ - `angel3_user_agent` - `v8.2.1`
+ - `angel3_websocket` - `v8.2.1`
+ - `angel3_oauth2` - `v8.2.1`
+ - `angel3_migration` - `v8.3.1`
+ - `angel3_migration_runner` - `v8.3.1`
+
+---
+
+#### `angel3_framework` - `v8.4.1`
+
+ - **FIX**: res.json() will cause 'Bad state: Cannot modify a closed response.' error.
+
+#### `angel3_orm` - `v8.3.0`
+
+ - **FEAT**: createdAt + updatedAt should default to CURRENT_TIMESTAMP.
+
+#### `angel3_orm_generator` - `v8.4.0`
+
+ - **FEAT**: Take @SerializableField properties into account when generating `Migration` (#98).
+ - **FEAT**: Take @SerializableField properties into account when generating `Query.parseRow` (#98).
+
+#### `angel3_orm_mysql` - `v8.3.0`
+
+ - **FEAT**: Take @SerializableField properties into account when generating `Query.parseRow` (#98).
+
+#### `angel3_orm_postgres` - `v8.3.0`
+
+ - **FEAT**: Take @SerializableField properties into account when generating `Query.parseRow` (#98).
+
+#### `angel3_orm_test` - `v8.3.0`
+
+ - **FEAT**: Take @SerializableField properties into account when generating `Migration` (#98).
+ - **FEAT**: Take @SerializableField properties into account when generating `Query.parseRow` (#98).
+
+# Change Log
+
 ## 8.0.0
 
 * Require Dart >= 3.0

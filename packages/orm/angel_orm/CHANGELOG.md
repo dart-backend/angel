@@ -1,3 +1,7 @@
+## 8.3.0
+
+ - **FEAT**: createdAt + updatedAt should default to CURRENT_TIMESTAMP.
+
 # Change Log
 
 ## 8.2.0

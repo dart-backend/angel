@@ -1,17 +1,17 @@
 name: angel3_proxy
-version: 8.2.0
+version: 8.2.1
 description: Angel middleware to forward requests to another server (i.e. pub serve).
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dart-backend/angel/tree/master/packages/proxy
 environment:
   sdk: '>=3.5.0 <4.0.0'
 dependencies:
-  angel3_framework: ^8.0.0
+  angel3_framework: ^8.4.1
   http: ^1.0.0
   http_parser: ^4.0.0
   path: ^1.9.0
 dev_dependencies:
-  angel3_test: ^8.0.0
+  angel3_test: ^8.2.2
   angel3_mock_request: ^8.0.0
   logging: ^1.2.0
   lints: ^5.0.0
