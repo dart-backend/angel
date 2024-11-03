@@ -1,8 +1,11 @@
+# Change Log
+
 ## 8.3.0
 
- - **FEAT**: Take @SerializableField properties into account when generating `Query.parseRow` (#98).
-
-# Change Log
+* Require Dart >= 3.5
+* Updated `lints` to 5.0.0
+* Updated dependencies to the latest release
+* Take @SerializableField properties into account when generating `Query.parseRow` (#98)
 
 ## 8.2.2
 

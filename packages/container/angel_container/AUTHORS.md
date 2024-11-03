@@ -3,7 +3,7 @@ Primary Authors
 
 * __[Thomas Hii](dukefirehawk.apps@gmail.com)__
 
-    Thomas is the current maintainer of the code base. He has refactored and migrated the 
+    Thomas is the current maintainer of the code base. He has refactored and migrated the
     code base to support NNBD.
 
 * __[Tobe O](thosakwe@gmail.com)__

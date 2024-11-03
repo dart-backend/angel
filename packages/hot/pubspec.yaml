@@ -6,8 +6,8 @@ repository: https://github.com/dart-backend/angel/tree/master/packages/hot
 environment:
   sdk: '>=3.5.0 <4.0.0'
 dependencies:
-  angel3_framework: ^8.4.1
-  angel3_websocket: ^8.2.1
+  angel3_framework: ^8.4.0
+  angel3_websocket: ^8.2.0
   belatuk_html_builder: ^5.1.0
   charcode: ^1.3.0
   glob: ^2.1.0

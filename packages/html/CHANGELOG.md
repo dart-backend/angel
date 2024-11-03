@@ -1,8 +1,10 @@
-## 8.1.1
-
- - Update a dependency to the latest release.
-
 # Change Log
+
+## 8.2.0
+
+* Require Dart >= 3.5
+* Updated `lints` to 5.0.0
+* Updated dependencies to the latest release
 
 ## 8.1.0
 
@@ -30,7 +32,7 @@
 
 ## 4.0.0
 
-* No release. Skipped
+* No release Skipped
 
 ## 3.0.0
 
