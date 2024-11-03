@@ -4,7 +4,7 @@ description: A browser, mobile and command line based client that supports query
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dart-backend/angel/tree/master/packages/client
 environment:
-  sdk: '>=3.3.0 <4.0.0'
+  sdk: '>=3.5.0 <4.0.0'
 dependencies:
   angel3_http_exception: ^8.0.0
   belatuk_json_serializer: ^7.0.0
@@ -24,7 +24,7 @@ dev_dependencies:
   build_runner: ^2.4.0
   build_web_compilers: ^4.0.0
   test: ^1.24.0
-  lints: ^4.0.0
+  lints: ^5.0.0
 # dependency_overrides:
 #   angel3_container:
 #     path: ../container/angel_container

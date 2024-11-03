@@ -4,7 +4,7 @@ description: Common tests for Angel3 ORM. Reference implmentation of the generat
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dart-backend/angel/tree/master/packages/orm/angel_orm_test
 environment:
-  sdk: '>=3.3.0 <4.0.0'
+  sdk: '>=3.5.0 <4.0.0'
 dependencies:
   angel3_migration: ^8.2.0
   angel3_model: ^8.2.0
@@ -18,7 +18,7 @@ dev_dependencies:
   angel3_orm_generator: ^8.3.0
   angel3_framework: ^8.4.0
   build_runner: ^2.4.0
-  lints: ^4.0.0
+  lints: ^5.0.0
 #dependency_overrides:
 #   angel3_container:
 #     path: ../../container/angel_container
