@@ -4,7 +4,7 @@ description: A high-powered HTTP server extensible framework with dependency inj
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dart-backend/angel/tree/master/packages/framework
 environment:
-  sdk: '>=3.3.0 <4.0.0'
+  sdk: '>=3.5.0 <4.0.0'
 dependencies:
   angel3_container: ^8.0.0
   angel3_http_exception: ^8.0.0
@@ -34,7 +34,7 @@ dev_dependencies:
   http: ^1.0.0
   io: ^1.0.0
   test: ^1.24.0
-  lints: ^4.0.0
+  lints: ^5.0.0
 # dependency_overrides:
 #   angel3_container:
 #     path: ../container/angel_container

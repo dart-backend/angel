@@ -4,7 +4,7 @@ description: Angel3 model serialization generators, designed for use with Angel.
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dart-backend/angel/tree/master/packages/serialize/angel_serialize_generator
 environment:
-  sdk: '>=3.3.0 <4.0.0'
+  sdk: '>=3.5.0 <4.0.0'
 dependencies:
   analyzer: ^6.5.0
   angel3_model: ^8.2.0
@@ -22,7 +22,7 @@ dependencies:
 dev_dependencies:
   build_runner: ^2.0.1
   collection: ^1.17.0
-  lints: ^4.0.0
+  lints: ^5.0.0
   test: ^1.24.0
 # dependency_overrides:
 #   angel3_model:
