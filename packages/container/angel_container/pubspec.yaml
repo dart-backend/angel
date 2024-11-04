@@ -1,5 +1,5 @@
 name: angel3_container
-version: 8.2.0
+version: 8.3.0
 description: Angel3 hierarchical DI container, and pluggable backends for reflection.
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dart-backend/angel/tree/master/packages/container/angel_container

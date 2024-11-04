@@ -1,5 +1,9 @@
 # Change Log
 
+## 8.3.0
+
+* createdAt + updatedAt should default to CURRENT_TIMESTAMP
+
 ## 8.2.0
 
 * Require Dart >= 3.3

@@ -7,8 +7,8 @@ publish_to: none
 environment:
   sdk: ">=3.3.0 <4.0.0"
 dependencies:
-  angel3_auth: ^8.0.0
-  angel3_framework: ^8.0.0
+  angel3_auth: ^8.2.0
+  angel3_framework: ^8.4.0
   http: ^1.0.0
   path: ^1.9.0
   belatuk_oauth1: ^3.0.0
