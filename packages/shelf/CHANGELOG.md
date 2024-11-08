@@ -1,5 +1,11 @@
 # Change Log
 
+## 8.0.0-beta.2
+
+* Require Dart >= 3.5
+* Updated `lints` to 5.0.0
+* Updated dependencies to the latest release
+
 ## 8.0.0-beta.1
 
 * Require Dart >= 3.3

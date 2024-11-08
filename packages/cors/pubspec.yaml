@@ -1,16 +1,16 @@
 name: angel3_cors
-version: 8.2.0
+version: 8.3.0
 description: Angel3 CORS middleware. Ported from expressjs/cors to Angel3 framework.
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dart-backend/angel/tree/master/packages/cors
 environment:
-  sdk: '>=3.3.0 <4.0.0'
+  sdk: '>=3.5.0 <4.0.0'
 dependencies: 
-  angel3_framework: ^8.0.0
+  angel3_framework: ^8.4.0
 dev_dependencies:
-  angel3_test: ^8.0.0
+  angel3_test: ^8.2.0
   http: ^1.0.0
-  lints: ^4.0.0
+  lints: ^5.0.0
   test: ^1.24.0
 # dependency_overrides:
 #   angel3_container:

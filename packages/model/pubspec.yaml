@@ -1,9 +1,9 @@
 name: angel3_model
-version: 8.2.0
+version: 8.3.0
 description: Angel3 basic data model class, no longer with the added weight of the whole framework.
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dart-backend/angel/tree/master/packages/model
 environment:
-  sdk: '>=3.3.0 <4.0.0'
+  sdk: '>=3.5.0 <4.0.0'
 dev_dependencies:
-  lints: ^4.0.0
+  lints: ^5.0.0
