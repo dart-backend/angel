@@ -1,27 +1,25 @@
+import 'package:angel3_migration_runner/angel3_migration_runner.dart';
 import 'package:angel3_orm/angel3_orm.dart';
-import 'package:belatuk_pretty_logging/belatuk_pretty_logging.dart';
-import 'package:logging/logging.dart';
+import 'package:postgres/postgres.dart';
 import 'package:test/test.dart';
 import 'common.dart';
 import 'models/leg.dart';
 
 void main() {
-  Logger.root
-    ..level = Level.ALL
-    ..onRecord.listen(prettyLog);
-
+  late Connection conn;
   late QueryExecutor executor;
+  late MigrationRunner runner;
   Leg? originalLeg;
 
-  var executorFunc = pg(['leg', 'foot']);
-
   setUp(() async {
-    executor = await executorFunc();
+    conn = await openPgConnection();
+    executor = await createExecutor(conn);
+    runner = await createTables(conn, [LegMigration(), FootMigration()]);
     var query = LegQuery()..values.name = 'Left';
     originalLeg = (await query.insert(executor)).value;
   });
 
-  tearDown(() async => await closePg(executor));
+  tearDown(() async => await dropTables(runner));
 
   test('sets to null if no child', () async {
     //print(LegQuery().compile({}));

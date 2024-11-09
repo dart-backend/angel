@@ -1,6 +1,6 @@
+import 'package:angel3_migration_runner/angel3_migration_runner.dart';
 import 'package:angel3_orm/angel3_orm.dart';
-import 'package:belatuk_pretty_logging/belatuk_pretty_logging.dart';
-import 'package:logging/logging.dart';
+import 'package:postgres/postgres.dart';
 import 'package:test/test.dart';
 
 import 'common.dart';
@@ -8,19 +8,19 @@ import 'models/person.dart';
 import 'models/person_order.dart';
 
 void main() {
-  Logger.root
-    ..level = Level.ALL
-    ..onRecord.listen(prettyLog);
-
+  late Connection conn;
   late QueryExecutor executor;
+  late MigrationRunner runner;
+
   Person? originalPerson;
   PersonOrder? originalOrder1;
   PersonOrder? originalOrder2;
 
-  var executorFunc = pg(['person', 'person_order']);
-
   setUp(() async {
-    executor = await executorFunc();
+    conn = await openPgConnection();
+    executor = await createExecutor(conn);
+    runner =
+        await createTables(conn, [PersonMigration(), PersonOrderMigration()]);
     var query = PersonQuery()
       ..values.name = 'DebuggerX'
       ..values.age = 29;
@@ -43,7 +43,7 @@ void main() {
     originalOrder2 = (await orderQuery.insert(executor)).value;
   });
 
-  tearDown(() async => await closePg(executor));
+  tearDown(() async => await dropTables(runner));
 
   test('select person with last order info', () async {
     var orderQuery = PersonOrderQuery();

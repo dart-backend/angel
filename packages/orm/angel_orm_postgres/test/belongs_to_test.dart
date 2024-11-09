@@ -1,6 +1,6 @@
+import 'package:angel3_migration_runner/angel3_migration_runner.dart';
 import 'package:angel3_orm/angel3_orm.dart';
-import 'package:belatuk_pretty_logging/belatuk_pretty_logging.dart';
-import 'package:logging/logging.dart';
+import 'package:postgres/postgres.dart';
 import 'package:test/test.dart';
 import 'common.dart';
 import 'models/book.dart';
@@ -8,18 +8,17 @@ import 'models/book.dart';
 import 'util.dart';
 
 void main() {
-  Logger.root
-    ..level = Level.ALL
-    ..onRecord.listen(prettyLog);
-
+  late Connection conn;
   late QueryExecutor executor;
+  late MigrationRunner runner;
   Author? jkRowling;
   Author? jameson;
   Book? deathlyHallows;
-  var executorFunc = pg(['author', 'book']);
 
   setUp(() async {
-    executor = await executorFunc();
+    conn = await openPgConnection();
+    executor = await createExecutor(conn);
+    runner = await createTables(conn, [AuthorMigration(), BookMigration()]);
 
     // Insert an author
     var query = AuthorQuery()..values.name = 'J.K. Rowling';
@@ -38,7 +37,7 @@ void main() {
     deathlyHallows = (await bookQuery.insert(executor)).value;
   });
 
-  tearDown(() async => await closePg(executor));
+  tearDown(() async => await dropTables(runner));
 
   group('selects', () {
     test('select all', () async {

@@ -1,6 +1,6 @@
+import 'package:angel3_migration_runner/angel3_migration_runner.dart';
 import 'package:angel3_orm/angel3_orm.dart';
-import 'package:belatuk_pretty_logging/belatuk_pretty_logging.dart';
-import 'package:logging/logging.dart';
+import 'package:postgres/postgres.dart';
 import 'package:test/test.dart';
 import 'common.dart';
 import 'models/car.dart';
@@ -8,11 +8,19 @@ import 'models/car.dart';
 final DateTime y2k = DateTime(2000, 1, 1);
 
 void main() {
-  Logger.root
-    ..level = Level.ALL
-    ..onRecord.listen(prettyLog);
+  late Connection conn;
+  late QueryExecutor executor;
+  late MigrationRunner runner;
 
-  var executorFunc = pg(['car']);
+  setUp(() async {
+    conn = await openPgConnection();
+    executor = await createExecutor(conn);
+    runner = await createTables(conn, [CarMigration()]);
+  });
+
+  tearDown(() async {
+    await dropTables(runner);
+  });
 
   test('to where', () {
     var query = CarQuery();
@@ -49,14 +57,6 @@ void main() {
   });
 
   group('queries', () {
-    late QueryExecutor executor;
-
-    setUp(() async {
-      executor = await executorFunc();
-    });
-
-    tearDown(() async => await closePg(executor));
-
     group('selects', () {
       test('select all', () async {
         var cars = await CarQuery().get(executor);
@@ -73,7 +73,7 @@ void main() {
             ..createdAt = y2k
             ..updatedAt = y2k
             ..description = 'Vroom vroom!'
-            //..price = 120000.00
+            ..price = 120000.00
             ..familyFriendly = false;
           ferrari = (await query.insert(executor)).value;
         });
@@ -135,7 +135,7 @@ void main() {
         test('delete one', () async {
           var id = int.parse(ferrari!.id!);
           var query = CarQuery()..where!.id.equals(id);
-          var carOpt = await (query.deleteOne(executor));
+          var carOpt = await query.deleteOne(executor);
           expect(carOpt.isPresent, true);
           carOpt.ifPresent((car) {
             var car = carOpt.value;
@@ -181,7 +181,7 @@ void main() {
     });
 
     test('insert', () async {
-      var recalledAt = DateTime.now();
+      var recalledAt = DateTime.utc(2000, 1, 1, 0, 0, 0, 0, 0);
       var query = CarQuery();
       var now = DateTime.now();
       query.values

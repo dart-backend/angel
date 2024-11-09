@@ -1,24 +1,28 @@
+import 'package:angel3_migration_runner/angel3_migration_runner.dart';
 import 'package:angel3_orm/angel3_orm.dart';
-import 'package:belatuk_pretty_logging/belatuk_pretty_logging.dart';
-import 'package:logging/logging.dart';
+import 'package:postgres/postgres.dart';
 import 'package:test/test.dart';
 import 'common.dart';
 import 'models/unorthodox.dart';
 
 void main() {
-  Logger.root
-    ..level = Level.ALL
-    ..onRecord.listen(prettyLog);
+  late Connection conn;
   late QueryExecutor executor;
-
-  var executorFunc = pg(['unorthodox', 'weird_join', 'song', 'numba']);
+  late MigrationRunner runner;
 
   setUp(() async {
-    executor = await executorFunc();
+    conn = await openPgConnection();
+    executor = await createExecutor(conn);
+    runner = await createTables(conn, [
+      UnorthodoxMigration(),
+      WeirdJoinMigration(),
+      SongMigration(),
+      NumbaMigration()
+    ]);
   });
 
   tearDown(() async {
-    await closePg(executor);
+    await dropTables(runner);
   });
 
   test('can create object with no id', () async {
