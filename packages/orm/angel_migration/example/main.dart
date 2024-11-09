@@ -1,8 +1,7 @@
-/// These are straightforward migrations.
-///
-/// You will likely never have to actually write these yourself.
-library angel3_migration.example.todo;
-
+/*
+  These are straightforward migrations.
+  You will likely never have to actually write these yourself.
+*/
 import 'package:angel3_migration/angel3_migration.dart';
 
 class UserMigration implements Migration {
