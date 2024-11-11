@@ -10,14 +10,16 @@ import 'package:postgres/postgres.dart';
 
 List tmpTables = [];
 
-// For MySQL
+// For PostgreSQL
 Future<Connection> openPgConnection() async {
-  final connection = await Connection.open(Endpoint(
-      host: Platform.environment['POSTGRES_HOSTNAME'] ?? 'localhost',
-      port: 5432,
-      database: Platform.environment['POSTGRES_DB'] ?? 'orm_test',
-      username: Platform.environment['POSTGRES_USERNAME'] ?? 'test',
-      password: Platform.environment['POSTGRES_PASSWORD'] ?? 'test123'));
+  final connection = await Connection.open(
+      Endpoint(
+          host: Platform.environment['POSTGRES_HOSTNAME'] ?? 'localhost',
+          port: 5432,
+          database: Platform.environment['POSTGRES_DB'] ?? 'postgres',
+          username: Platform.environment['POSTGRES_USERNAME'] ?? 'postgres',
+          password: Platform.environment['POSTGRES_PASSWORD'] ?? 'postgres'),
+      settings: ConnectionSettings(sslMode: SslMode.disable));
 
   return connection;
 }

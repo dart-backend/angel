@@ -18,7 +18,7 @@ Future<MySQLConnection> openMySqlConnection() async {
       port: 3306,
       host: "localhost",
       userName: Platform.environment['MYSQL_USERNAME'] ?? 'test',
-      password: Platform.environment['MYSQL_PASSWORD'] ?? 'test123',
+      password: Platform.environment['MYSQL_PASSWORD'] ?? 'Test123',
       secure: !('false' == Platform.environment['MYSQL_SECURE']));
 
   await connection.connect(timeoutMs: 10000);
