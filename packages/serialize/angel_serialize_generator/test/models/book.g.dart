@@ -296,15 +296,14 @@ class Library extends _Library {
 @generatedSerializable
 class Bookmark extends _Bookmark {
   Bookmark(
-    _Book book, {
+    super.book, {
     this.id,
     this.createdAt,
     this.updatedAt,
     List<int> history = const [],
     required this.page,
     this.comment,
-  })  : history = List.unmodifiable(history),
-        super(book);
+  }) : history = List.unmodifiable(history);
 
   /// A unique identifier corresponding to this item.
   @override

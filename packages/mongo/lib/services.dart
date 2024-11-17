@@ -1,4 +1,4 @@
-library angel3_mongo.services;
+library;
 
 import 'dart:async';
 import 'package:angel3_framework/angel3_framework.dart';

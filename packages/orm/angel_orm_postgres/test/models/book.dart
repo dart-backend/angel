@@ -1,4 +1,4 @@
-library angel_orm3.generator.models.book;
+library;
 
 import 'package:angel3_migration/angel3_migration.dart';
 import 'package:angel3_orm/angel3_orm.dart';

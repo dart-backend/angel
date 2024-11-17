@@ -1,4 +1,4 @@
-library angel3_route.src.router;
+library;
 
 import 'dart:async';
 import 'package:belatuk_combinator/belatuk_combinator.dart';

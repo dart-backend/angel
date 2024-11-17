@@ -36,9 +36,9 @@ class PersonMigration extends Migration {
 
 class PersonQuery extends Query<Person, PersonQueryWhere> {
   PersonQuery({
-    Query? parent,
+    super.parent,
     Set<String>? trampoline,
-  }) : super(parent: parent) {
+  }) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = PersonQueryWhere(this);
@@ -63,7 +63,7 @@ class PersonQuery extends Query<Person, PersonQueryWhere> {
 
   @override
   List<String> get fields {
-    const _fields = [
+    const fields = [
       'id',
       'created_at',
       'updated_at',
@@ -71,8 +71,8 @@ class PersonQuery extends Query<Person, PersonQueryWhere> {
       'age',
     ];
     return _selectedFields.isEmpty
-        ? _fields
-        : _fields.where((field) => _selectedFields.contains(field)).toList();
+        ? fields
+        : fields.where((field) => _selectedFields.contains(field)).toList();
   }
 
   PersonQuery select(List<String> selectedFields) {
@@ -204,9 +204,9 @@ class PersonQueryValues extends MapQueryValues {
 class PersonWithLastOrderQuery
     extends Query<PersonWithLastOrder, PersonWithLastOrderQueryWhere> {
   PersonWithLastOrderQuery({
-    Query? parent,
+    super.parent,
     Set<String>? trampoline,
-  }) : super(parent: parent) {
+  }) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     expressions['last_order_name'] = 'po.name';
@@ -234,14 +234,14 @@ class PersonWithLastOrderQuery
 
   @override
   List<String> get fields {
-    const _fields = [
+    const fields = [
       'name',
       'last_order_name',
       'last_order_price',
     ];
     return _selectedFields.isEmpty
-        ? _fields
-        : _fields.where((field) => _selectedFields.contains(field)).toList();
+        ? fields
+        : fields.where((field) => _selectedFields.contains(field)).toList();
   }
 
   PersonWithLastOrderQuery select(List<String> selectedFields) {

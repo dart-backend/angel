@@ -1,4 +1,4 @@
-library angel_framework.test.common;
+library;
 
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:matcher/matcher.dart';

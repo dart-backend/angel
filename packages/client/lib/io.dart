@@ -1,5 +1,5 @@
 /// Command-line client library for the Angel framework.
-library angel_client.cli;
+library;
 
 import 'dart:async';
 import 'package:http/http.dart' as http;

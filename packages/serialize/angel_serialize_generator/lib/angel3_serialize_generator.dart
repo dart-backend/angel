@@ -1,4 +1,4 @@
-library angel3_serialize_generator;
+library;
 
 import 'dart:async';
 import 'dart:mirrors';

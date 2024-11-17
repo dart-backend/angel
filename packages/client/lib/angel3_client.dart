@@ -1,5 +1,5 @@
 /// Client library for the Angel framework.
-library angel3_client;
+library;
 
 import 'dart:async';
 import 'package:collection/collection.dart';

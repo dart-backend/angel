@@ -33,8 +33,7 @@ class OrmService<Id, Data, TQuery extends Query<Data, QueryWhere>>
       {this.idField = 'id',
       this.allowRemoveAll = false,
       this.allowQuery = true,
-      FutureOr<Data> Function(RequestContext, ResponseContext)? readData})
-      : super(readData: readData);
+      super.readData});
 
   SqlExpressionBuilder _findBuilder(TQuery query, String name) {
     return query.where!.expressionBuilders.firstWhere(

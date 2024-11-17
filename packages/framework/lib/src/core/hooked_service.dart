@@ -1,4 +1,4 @@
-library angel_framework.core.hooked_service;
+library;
 
 import 'dart:async';
 

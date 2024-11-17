@@ -1,5 +1,5 @@
 /// Browser WebSocket client library for the Angel framework.
-library angel3_websocket.browser;
+library;
 
 import 'dart:async';
 import 'dart:html';

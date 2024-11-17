@@ -20,6 +20,7 @@ dev_dependencies:
   test: ^1.24.0
   lints: ^5.0.0
   io: ^1.0.4
+  build_runner: ^2.4.0
 # dependency_overrides:
 #   angel3_serialize:
 #     path: ../../serialize/angel_serialize

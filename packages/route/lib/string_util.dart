@@ -1,5 +1,5 @@
 /// Helper functions to performantly transform strings, without `RegExp`.
-library angel3_route.string_util;
+library;
 
 /// Removes leading and trailing occurrences of a pattern from a string.
 String stripStray(String haystack, String needle) {

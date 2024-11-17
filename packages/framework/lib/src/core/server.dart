@@ -1,4 +1,4 @@
-library angel_framework.http.server;
+library;
 
 import 'dart:async';
 import 'dart:collection' show HashMap;

@@ -1,5 +1,5 @@
 /// A basic server that prints "Hello, world!"
-library performance.hello;
+library;
 
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_framework/http.dart';

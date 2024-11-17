@@ -1,5 +1,5 @@
 /// Server-side support for WebSockets.
-library angel3_websocket.server;
+library;
 
 import 'dart:async';
 import 'dart:convert';

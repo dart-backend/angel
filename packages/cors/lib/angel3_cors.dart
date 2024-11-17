@@ -1,5 +1,5 @@
 /// Angel CORS middleware.
-library angel3_cors;
+library;
 
 import 'dart:async';
 

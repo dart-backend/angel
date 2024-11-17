@@ -1,5 +1,5 @@
 /// Command-line WebSocket client library for the Angel framework.
-library angel3_websocket.io;
+library;
 
 import 'dart:async';
 import 'dart:io';

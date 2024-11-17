@@ -1,4 +1,4 @@
-library angel3_configuration;
+library;
 
 import 'dart:async';
 

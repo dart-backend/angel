@@ -1,4 +1,4 @@
 /// Stand-alone JWT library.
-library angel3_auth.auth_token;
+library;
 
 export 'src/auth_token.dart';

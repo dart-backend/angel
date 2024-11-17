@@ -1,4 +1,4 @@
-library angel3_container;
+library;
 
 export 'src/container.dart';
 export 'src/empty/empty.dart';

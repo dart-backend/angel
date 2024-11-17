@@ -62,9 +62,9 @@ class CustomerMigration extends Migration {
 
 class OrderQuery extends Query<Order, OrderQueryWhere> {
   OrderQuery({
-    Query? parent,
+    super.parent,
     Set<String>? trampoline,
-  }) : super(parent: parent) {
+  }) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = OrderQueryWhere(this);
@@ -105,7 +105,7 @@ class OrderQuery extends Query<Order, OrderQueryWhere> {
 
   @override
   List<String> get fields {
-    const _fields = [
+    const fields = [
       'id',
       'created_at',
       'updated_at',
@@ -115,8 +115,8 @@ class OrderQuery extends Query<Order, OrderQueryWhere> {
       'shipper_id',
     ];
     return _selectedFields.isEmpty
-        ? _fields
-        : _fields.where((field) => _selectedFields.contains(field)).toList();
+        ? fields
+        : fields.where((field) => _selectedFields.contains(field)).toList();
   }
 
   OrderQuery select(List<String> selectedFields) {
@@ -289,9 +289,9 @@ class OrderQueryValues extends MapQueryValues {
 
 class CustomerQuery extends Query<Customer, CustomerQueryWhere> {
   CustomerQuery({
-    Query? parent,
+    super.parent,
     Set<String>? trampoline,
-  }) : super(parent: parent) {
+  }) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = CustomerQueryWhere(this);
@@ -316,14 +316,14 @@ class CustomerQuery extends Query<Customer, CustomerQueryWhere> {
 
   @override
   List<String> get fields {
-    const _fields = [
+    const fields = [
       'id',
       'created_at',
       'updated_at',
     ];
     return _selectedFields.isEmpty
-        ? _fields
-        : _fields.where((field) => _selectedFields.contains(field)).toList();
+        ? fields
+        : fields.where((field) => _selectedFields.contains(field)).toList();
   }
 
   CustomerQuery select(List<String> selectedFields) {

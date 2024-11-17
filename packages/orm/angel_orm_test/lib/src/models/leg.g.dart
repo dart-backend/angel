@@ -59,9 +59,9 @@ class FootMigration extends Migration {
 
 class LegQuery extends Query<Leg, LegQueryWhere> {
   LegQuery({
-    Query? parent,
+    super.parent,
     Set<String>? trampoline,
-  }) : super(parent: parent) {
+  }) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = LegQueryWhere(this);
@@ -104,15 +104,15 @@ class LegQuery extends Query<Leg, LegQueryWhere> {
 
   @override
   List<String> get fields {
-    const _fields = [
+    const fields = [
       'id',
       'created_at',
       'updated_at',
       'name',
     ];
     return _selectedFields.isEmpty
-        ? _fields
-        : _fields.where((field) => _selectedFields.contains(field)).toList();
+        ? fields
+        : fields.where((field) => _selectedFields.contains(field)).toList();
   }
 
   LegQuery select(List<String> selectedFields) {
@@ -234,9 +234,9 @@ class LegQueryValues extends MapQueryValues {
 
 class FootQuery extends Query<Foot, FootQueryWhere> {
   FootQuery({
-    Query? parent,
+    super.parent,
     Set<String>? trampoline,
-  }) : super(parent: parent) {
+  }) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = FootQueryWhere(this);
@@ -261,7 +261,7 @@ class FootQuery extends Query<Foot, FootQueryWhere> {
 
   @override
   List<String> get fields {
-    const _fields = [
+    const fields = [
       'id',
       'created_at',
       'updated_at',
@@ -269,8 +269,8 @@ class FootQuery extends Query<Foot, FootQueryWhere> {
       'n_toes',
     ];
     return _selectedFields.isEmpty
-        ? _fields
-        : _fields.where((field) => _selectedFields.contains(field)).toList();
+        ? fields
+        : fields.where((field) => _selectedFields.contains(field)).toList();
   }
 
   FootQuery select(List<String> selectedFields) {

@@ -1,5 +1,5 @@
 /// An easily-extensible web server framework in Dart.
-library angel3_framework;
+library;
 
 export 'package:angel3_http_exception/angel3_http_exception.dart';
 export 'package:angel3_model/angel3_model.dart';
