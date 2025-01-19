@@ -245,8 +245,8 @@ Future<BuildContext?> buildContext(
 
 /// A manually-instantiated [FieldElement].
 class ShimFieldImpl extends FieldElementImpl {
-  @override
-  final DartType type;
+  //@override
+  //final DartType type;
 
-  ShimFieldImpl(String name, this.type) : super(name, -1);
+  ShimFieldImpl(String name, DartType type) : super(name, -1);
 }

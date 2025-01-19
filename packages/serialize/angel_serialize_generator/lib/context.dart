@@ -79,7 +79,7 @@ class BuildContext {
       fields.firstWhere((f) => f.name == primaryKeyName);
 
   bool get importsPackageMeta {
-    return clazz.library.libraryImports.any((element) {
+    return clazz.library.definingCompilationUnit.libraryImports.any((element) {
       var uri = element.uri;
       if (uri is DirectiveUriWithLibrary) {
         return uri.relativeUriString == 'package:meta/meta.dart';

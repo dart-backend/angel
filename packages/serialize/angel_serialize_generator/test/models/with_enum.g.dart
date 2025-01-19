@@ -87,8 +87,10 @@ class WithEnumSerializer extends Codec<WithEnum, Map> {
 
   @override
   WithEnumEncoder get encoder => const WithEnumEncoder();
+
   @override
   WithEnumDecoder get decoder => const WithEnumDecoder();
+
   static WithEnum fromMap(Map map) {
     return WithEnum(
         type: map['type'] as WithEnumType? ?? WithEnumType.b,

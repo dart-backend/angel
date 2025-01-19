@@ -65,8 +65,10 @@ class HasMapSerializer extends Codec<HasMap, Map> {
 
   @override
   HasMapEncoder get encoder => const HasMapEncoder();
+
   @override
   HasMapDecoder get decoder => const HasMapDecoder();
+
   static HasMap fromMap(Map map) {
     if (map['value'] == null) {
       throw FormatException("Missing required field 'value' on HasMap.");

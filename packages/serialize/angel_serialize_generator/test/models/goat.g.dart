@@ -76,8 +76,10 @@ class GoatSerializer extends Codec<Goat, Map> {
 
   @override
   GoatEncoder get encoder => const GoatEncoder();
+
   @override
   GoatDecoder get decoder => const GoatDecoder();
+
   static Goat fromMap(Map map) {
     return Goat(
         integer: map['integer'] as int? ?? 34,

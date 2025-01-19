@@ -129,8 +129,10 @@ class AnimalSerializer extends Codec<Animal, Map> {
 
   @override
   AnimalEncoder get encoder => const AnimalEncoder();
+
   @override
   AnimalDecoder get decoder => const AnimalDecoder();
+
   static Animal fromMap(Map map) {
     if (map['genus'] == null) {
       throw FormatException("Missing required field 'genus' on Animal.");
@@ -184,8 +186,10 @@ class BirdSerializer extends Codec<Bird, Map> {
 
   @override
   BirdEncoder get encoder => const BirdEncoder();
+
   @override
   BirdDecoder get decoder => const BirdDecoder();
+
   static Bird fromMap(Map map) {
     if (map['genus'] == null) {
       throw FormatException("Missing required field 'genus' on Bird.");
