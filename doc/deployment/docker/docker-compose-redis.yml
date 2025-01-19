@@ -7,14 +7,8 @@ services:
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
-    volumes:
-      - "redis:/data"
     networks:
       - appnet
-
-volumes:
-  redis:
-    driver: local
 
 networks:
   appnet:

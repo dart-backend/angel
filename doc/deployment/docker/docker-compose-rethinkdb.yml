@@ -6,14 +6,8 @@ services:
       - "8080:8080"
       - "28015:28015"
       - "29015:29015"
-    volumes:
-      - "rethinkdb:/data"
     networks:
       - appnet
-
-volumes:
-  rethinkdb:
-    driver: local
 
 networks:
   appnet:

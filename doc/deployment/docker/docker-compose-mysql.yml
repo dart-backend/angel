@@ -9,14 +9,14 @@ services:
       - MYSQL_DATABASE=orm_test
       - MYSQL_USER=test
       - MYSQL_PASSWORD=Test123
-    volumes:
-      - "mysql:/var/lib/mysql"
+#    volumes:
+#      - C://storage/mysql:/var/lib/mysql:ro
     networks:
       - appnet
 
-volumes:
-  mysql:
-    driver: local
+#volumes:
+#  mysql-data-external:
+#    driver: local
 
 networks:
   appnet:
