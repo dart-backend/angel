@@ -33,3 +33,9 @@ class AuditableModel extends Model {
       super.updatedAt,
       this.updatedBy});
 }
+
+/// Data type to represent no data.
+class None extends Object {}
+
+/// Canonical instance of [None]. Implies no data.
+const none = None;

@@ -5,6 +5,7 @@
 * Require Dart >= 3.5
 * Updated `lints` to 5.0.0
 * Updated dependencies to the latest release
+* Added `None`
 
 ## 8.2.0
 
