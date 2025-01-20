@@ -4,7 +4,7 @@ description: Code generators for Angel3 ORM. Generates query builder classes.
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dart-backend/angel/tree/master/packages/orm/angel_orm_generator
 environment:
-  sdk: '>=3.5.0 <4.0.0'
+  sdk: '>=3.6.0 <4.0.0'
 dependencies:
   angel3_model: ^8.2.0
   angel3_serialize: ^8.2.0
