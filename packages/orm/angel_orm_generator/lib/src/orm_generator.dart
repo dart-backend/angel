@@ -249,6 +249,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
             // Build the arguments for model
             var args = <String, Expression>{};
             for (var field in ctx.effectiveFields) {
+              print("Field: $field");
               var fType = field.type;
               Reference type = convertTypeReference(fType);
               if (isSpecialId(ctx, field)) {
@@ -745,7 +746,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
         if (const TypeChecker.fromRuntime(int).isExactlyType(type) ||
             const TypeChecker.fromRuntime(double).isExactlyType(type) ||
             isSpecialId(ctx, field)) {
-          var typeName = type.getDisplayString();
+          var typeName = type.getDisplayString().replaceAll('?', '');
           if (isSpecialId(ctx, field)) {
             typeName = 'int';
           }

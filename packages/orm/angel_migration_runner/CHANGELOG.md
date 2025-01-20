@@ -5,7 +5,8 @@
 * Require Dart >= 3.5
 * Updated `lints` to 5.0.0
 * Updated dependencies to the latest release
-* Fixed default value issue
+* [MySQL] Fixed default value issue
+* [MySQL] Fixed `@Column(indexType: IndexType.unique)`
 
 ## 8.3.0
 

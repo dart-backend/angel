@@ -57,7 +57,7 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
     var lib = generateMigrationLibrary(ctx, element, resolver, buildStep);
 
     //if (lib == null) return null;
-    return DartFormatter()
+    return DartFormatter(languageVersion: DartFormatter.latestLanguageVersion)
         .format(lib.accept(DartEmitter(useNullSafetySyntax: true)).toString());
   }
 

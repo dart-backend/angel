@@ -4,9 +4,10 @@
 
 * Require Dart >= 3.5
 * Updated `lints` to 5.0.0
+* Updated `analyzer` to 7.x
 * Updated dependencies to the latest release
-* Take @SerializableField properties into account when generating `Migration` (#98)
-* Take @SerializableField properties into account when generating `Query.parseRow` (#98)
+* Fixed issue #98: Take @SerializableField properties into account when generating `Migration`
+* Fixed issue #98: Take @SerializableField properties into account when generating `Query.parseRow`
 
 ## 8.3.2
 

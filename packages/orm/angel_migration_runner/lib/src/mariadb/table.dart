@@ -45,9 +45,7 @@ abstract class MariaDbGenerator {
       buf.write(' DEFAULT $s');
     }
 
-    if (column.indexType == IndexType.unique) {
-      buf.write(' UNIQUE');
-    } else if (column.indexType == IndexType.primaryKey) {
+    if (column.indexType == IndexType.primaryKey) {
       buf.write(' PRIMARY KEY');
 
       // For int based primary key, apply NOT NULL
@@ -67,6 +65,8 @@ abstract class MariaDbGenerator {
   static String? compileIndex(String name, MigrationColumn column) {
     if (column.indexType == IndexType.standardIndex) {
       return ' INDEX(`$name`)';
+    } else if (column.indexType == IndexType.unique) {
+      return ' UNIQUE KEY unique_$name (`$name`)';
     }
 
     return null;
@@ -257,7 +257,7 @@ class MariaDbIndexes implements MutableIndexes {
       case IndexType.unique:
         _stack.add(
           'CREATE UNIQUE INDEX IF NOT EXISTS `$name` '
-              'ON `$tableName` (${columns.join(',')});',
+          'ON `$tableName` (${columns.join(',')});',
         );
         break;
       case IndexType.standardIndex:
