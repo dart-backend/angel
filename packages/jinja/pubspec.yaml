@@ -3,7 +3,7 @@ version: 8.4.0
 description: A service that renders Jinja2 template into HTML view for Angel3. Ported from Python to Dart.
 homepage: https://github.com/dart-backend/angel/tree/master/packages/jinja
 environment:
-  sdk: '>=3.5.0 <4.0.0'
+  sdk: '>=3.6.0 <4.0.0'
 dependencies:
   angel3_framework: ^8.4.0
   jinja: ^0.6.0
