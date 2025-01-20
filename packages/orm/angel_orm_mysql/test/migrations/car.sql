@@ -5,5 +5,6 @@ CREATE TABLE IF NOT EXISTS cars (
     family_friendly BOOLEAN NOT NULL,
     recalled_at datetime,
     created_at datetime,
-    updated_at datetime
+    updated_at datetime,
+    price double
 );

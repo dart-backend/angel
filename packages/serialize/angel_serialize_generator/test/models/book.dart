@@ -1,4 +1,4 @@
-library angel_serialize.test.models.book;
+library;
 
 import 'package:angel3_serialize/angel3_serialize.dart';
 part 'book.g.dart';

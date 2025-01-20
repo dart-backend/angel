@@ -1,4 +1,4 @@
-library angel3_mustache;
+library;
 
 import 'dart:async';
 

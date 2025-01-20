@@ -2,9 +2,10 @@
 
 ## 8.5.0
 
-* Require Dart >= 3.5
+* Require Dart >= 3.6
 * Updated `lints` to 5.0.0
-* res.json() will cause 'Bad state: Cannot modify a closed response.' error.
+* Updated `mime` to 2.0.0
+* Fixed res.json() will cause 'Bad state: Cannot modify a closed response.' error.
 
 ## 8.4.0
 

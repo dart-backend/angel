@@ -30,6 +30,7 @@ void main() async {
     runner = MariaDbMigrationRunner(
       conn,
       migrations: [
+        CarMigration(),
         UserMigration(),
         TodoMigration(),
         ItemMigration(),

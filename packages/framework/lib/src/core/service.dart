@@ -1,4 +1,4 @@
-library angel_framework.http.service;
+library;
 
 import 'dart:async';
 import 'package:angel3_http_exception/angel3_http_exception.dart';

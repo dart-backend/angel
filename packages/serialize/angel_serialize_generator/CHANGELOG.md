@@ -2,9 +2,12 @@
 
 ## 8.4.0
 
-* Require Dart >= 3.5
-* Updated `lints` to 5.0.0
+* Require Dart >= 3.6
+* Updated `lints` to 5.x
+* Updated `source_gen` to 2.x
+* Updated `analyzer` to 7.x
 * Updated dependencies to the latest release
+* Updated `ShimFieldImpl`
 
 ## 8.3.1
 

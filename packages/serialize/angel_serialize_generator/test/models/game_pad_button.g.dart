@@ -129,8 +129,10 @@ class GamepadButtonSerializer extends Codec<GamepadButton, Map> {
 
   @override
   GamepadButtonEncoder get encoder => const GamepadButtonEncoder();
+
   @override
   GamepadButtonDecoder get decoder => const GamepadButtonDecoder();
+
   static GamepadButton fromMap(Map map) {
     return GamepadButton(
         name: map['name'] as String?, radius: map['radius'] as int?);
@@ -176,8 +178,10 @@ class GamepadSerializer extends Codec<Gamepad, Map> {
 
   @override
   GamepadEncoder get encoder => const GamepadEncoder();
+
   @override
   GamepadDecoder get decoder => const GamepadDecoder();
+
   static Gamepad fromMap(Map map) {
     return Gamepad(
         buttons: map['buttons'] is Iterable

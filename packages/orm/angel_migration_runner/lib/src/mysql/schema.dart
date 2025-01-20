@@ -23,13 +23,13 @@ class MySqlSchema extends Schema {
     await connection.transactional((ctx) async {
       var sql = compile();
       var result = await ctx.execute(sql).catchError((e) {
-        print(e);
+        //print(e);
         _log.severe('Failed to run query: [ $sql ]', e);
         throw Exception(e);
       });
       affectedRows = result.affectedRows.toInt();
     }).catchError((e) {
-      print(e);
+      //print(e);
       _log.severe('Failed to run query in a transaction', e);
     });
 
@@ -70,6 +70,8 @@ class MySqlSchema extends Schema {
     tbl.compile(_buf, _indent + 1);
     _buf.writeln();
     _writeln(');');
+
+    _log.fine(_buf);
   }
 
   @override

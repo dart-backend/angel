@@ -1,5 +1,5 @@
 /// Support for using `angel_validate` with the Angel Framework.
-library angel3_validate.server;
+library;
 
 import 'dart:async';
 

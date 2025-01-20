@@ -2,7 +2,7 @@
 
 ## 8.0.0-beta.2
 
-* Require Dart >= 3.5
+* Require Dart >= 3.6
 * Updated `lints` to 5.0.0
 * Updated dependencies to the latest release
 

@@ -1,5 +1,5 @@
 /// Flutter-compatible client library for the Angel framework.
-library angel_client.flutter;
+library;
 
 import 'dart:async';
 import 'package:http/http.dart' as http;

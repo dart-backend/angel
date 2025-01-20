@@ -6,14 +6,8 @@ services:
       - "3306:3306"
     environment:
       - MARIADB_ROOT_PASSWORD=Qwerty
-    volumes:
-      - "mariadb:/var/lib/mysql"
     networks:
       - appnet
-
-volumes:
-  mariadb:
-    driver: local
 
 networks:
   appnet:

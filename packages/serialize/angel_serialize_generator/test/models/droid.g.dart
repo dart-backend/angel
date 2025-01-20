@@ -112,8 +112,10 @@ class DroidSerializer extends Codec<Droid, Map> {
 
   @override
   DroidEncoder get encoder => const DroidEncoder();
+
   @override
   DroidDecoder get decoder => const DroidDecoder();
+
   static Droid fromMap(Map map) {
     return Droid(
         id: map['id'] as String?,

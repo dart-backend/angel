@@ -1,15 +1,30 @@
 import 'dart:collection';
+import 'dart:js_interop';
 
 import 'package:angel3_migration/angel3_migration.dart';
 import 'package:angel3_orm/angel3_orm.dart';
 import 'package:charcode/ascii.dart';
 
+/// MySQL SQL query generator
 abstract class MySqlGenerator {
+  static final List<String> _charColumnType = [
+    ColumnType.varChar.name,
+    ColumnType.char.name
+  ];
+
   static String columnType(MigrationColumn column) {
     var str = column.type.name;
     // Map timestamp time to datetime
     if (column.type == ColumnType.timeStamp) {
       str = ColumnType.dateTime.name;
+    }
+
+    if (_charColumnType.contains(str)) {
+      if (column.type.hasLength) {
+        return '$str(${column.length})';
+      } else {
+        return '$str(255)';
+      }
     }
 
     if (column.type.hasLength) {
@@ -46,12 +61,14 @@ abstract class MySqlGenerator {
         s = value.toString();
       }
 
-      buf.write(' DEFAULT $s');
+      if (column.type == ColumnType.varChar) {
+        buf.write(' DEFAULT \'$s\'');
+      } else {
+        buf.write(' DEFAULT $s');
+      }
     }
 
-    if (column.indexType == IndexType.unique) {
-      buf.write(' UNIQUE');
-    } else if (column.indexType == IndexType.primaryKey) {
+    if (column.indexType == IndexType.primaryKey) {
       buf.write(' PRIMARY KEY');
 
       // For int based primary key, apply NOT NULL
@@ -71,6 +88,8 @@ abstract class MySqlGenerator {
   static String? compileIndex(String name, MigrationColumn column) {
     if (column.indexType == IndexType.standardIndex) {
       return ' INDEX(`$name`)';
+    } else if (column.indexType == IndexType.unique) {
+      return ' UNIQUE KEY unique_$name (`$name`)';
     }
 
     return null;
@@ -119,8 +138,6 @@ class MysqlTable extends Table {
         buf.write(',\n${indexBuf[i]}');
       }
     }
-
-    print(buf);
   }
 }
 
@@ -264,8 +281,8 @@ class MysqlIndexes implements MutableIndexes {
           'CREATE UNIQUE INDEX `$name` ON `$tableName` (${columns.join(',')});',
         );
         break;
-      case IndexType.standardIndex:
-      case IndexType.none:
+      //case IndexType.standardIndex:
+      //case IndexType.none:
       default:
         _stack.add(
           'CREATE INDEX `$name` ON `$tableName` (${columns.join(',')});',

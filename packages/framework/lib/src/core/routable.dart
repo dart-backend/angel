@@ -1,4 +1,4 @@
-library angel_framework.http.routable;
+library;
 
 import 'dart:async';
 

@@ -4,7 +4,7 @@ description: This library provides WebSockets support for Angel3 framework.
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dart-backend/angel/tree/master/packages/websocket
 environment:
-  sdk: '>=3.5.0 <4.0.0'
+  sdk: '>=3.6.0 <4.0.0'
 dependencies:
   angel3_auth: ^8.2.0
   angel3_client: ^8.0.0

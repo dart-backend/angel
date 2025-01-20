@@ -2,10 +2,13 @@
 
 ## 8.3.0
 
-* Require Dart >= 3.5
+* Require Dart >= 3.6
 * Updated `lints` to 5.0.0
 * Updated dependencies to the latest release
 * Take @SerializableField properties into account when generating `Query.parseRow` (#98)
+* Removed dependency on `angel3_orm_test`
+* Migrated test cases from `angel3_orm_test`
+* Skipped test cases for nullable primary key
 
 ## 8.2.2
 

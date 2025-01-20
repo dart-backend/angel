@@ -9,29 +9,15 @@ part of 'main.dart';
 class EmployeeMigration extends Migration {
   @override
   void up(Schema schema) {
-    schema.create(
-      'employees',
-      (table) {
-        table.serial('id').primaryKey();
-        table.timeStamp('created_at');
-        table.timeStamp('updated_at');
-        table
-            .varChar(
-              'unique_id',
-              length: 255,
-            )
-            .unique();
-        table.varChar(
-          'first_name',
-          length: 255,
-        );
-        table.varChar(
-          'last_name',
-          length: 255,
-        );
-        table.double('salary');
-      },
-    );
+    schema.create('employees', (table) {
+      table.serial('id').primaryKey();
+      table.timeStamp('created_at');
+      table.timeStamp('updated_at');
+      table.varChar('unique_id', length: 255).unique();
+      table.varChar('first_name', length: 255);
+      table.varChar('last_name', length: 255);
+      table.double('salary');
+    });
   }
 
   @override
@@ -196,36 +182,43 @@ class EmployeeQueryValues extends MapQueryValues {
   }
 
   set id(String? value) => values['id'] = value;
+
   DateTime? get createdAt {
     return (values['created_at'] as DateTime?);
   }
 
   set createdAt(DateTime? value) => values['created_at'] = value;
+
   DateTime? get updatedAt {
     return (values['updated_at'] as DateTime?);
   }
 
   set updatedAt(DateTime? value) => values['updated_at'] = value;
+
   String? get uniqueId {
     return (values['unique_id'] as String?);
   }
 
   set uniqueId(String? value) => values['unique_id'] = value;
+
   String? get firstName {
     return (values['first_name'] as String?);
   }
 
   set firstName(String? value) => values['first_name'] = value;
+
   String? get lastName {
     return (values['last_name'] as String?);
   }
 
   set lastName(String? value) => values['last_name'] = value;
+
   double? get salary {
     return (values['salary'] as double?) ?? 0.0;
   }
 
   set salary(double? value) => values['salary'] = value;
+
   void copyFrom(Employee model) {
     createdAt = model.createdAt;
     updatedAt = model.updatedAt;
@@ -355,8 +348,10 @@ class EmployeeSerializer extends Codec<Employee, Map> {
 
   @override
   EmployeeEncoder get encoder => const EmployeeEncoder();
+
   @override
   EmployeeDecoder get decoder => const EmployeeDecoder();
+
   static Employee fromMap(Map map) {
     return Employee(
         id: map['id'] as String?,

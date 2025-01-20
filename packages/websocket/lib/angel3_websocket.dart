@@ -1,5 +1,5 @@
 /// WebSocket plugin for Angel.
-library angel3_websocket;
+library;
 
 /// A notification from the server that something has occurred.
 class WebSocketEvent<Data> {

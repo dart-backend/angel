@@ -1,3 +1,3 @@
-library angel3_proxy;
+library;
 
 export 'src/proxy_layer.dart';

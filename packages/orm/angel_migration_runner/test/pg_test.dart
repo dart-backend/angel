@@ -33,6 +33,7 @@ void main() async {
     runner = PostgresMigrationRunner(
       conn,
       migrations: [
+        CarMigration(),
         UserMigration(),
         TodoMigration(),
         ItemMigration(),

@@ -7,7 +7,7 @@ See [Conventional Commits](https://conventionalcommits.org) for commit guideline
 
 ### Changes
 
-- Require Dart >= 3.5
+- Require Dart >= 3.6
 - Updated `lints` to 5.0.0
 - Updated dependencies to the latest release
 

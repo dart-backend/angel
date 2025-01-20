@@ -9,8 +9,6 @@ services:
       MONGO_INITDB_ROOT_USERNAME: root
       MONGO_INITDB_ROOT_PASSWORD: Qwerty
       MONGO_INITDB_DATABASE: local
-    volumes:
-      - "mongo:/data/db"
     networks:
       - appnet
 
@@ -27,11 +25,7 @@ services:
       ME_CONFIG_MONGODB_URL: mongodb://root:Qwerty@mongo:27017/
       ME_CONFIG_BASICAUTH: false
     networks:
-      - webnet
-
-volumes:
-  mongo:
-    driver: local
+      - appnet
 
 networks:
   appnet:

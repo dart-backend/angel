@@ -1,36 +1,38 @@
-# Docker Services
+# Running as Container Services
 
-The required applications by the framework can be run using the docker compose files provided in this folder.
+The required applications by the framework can be run using the Docker compose files provided in this folder. Replace `nerdctl` with `docker` if using Docker.
 
-## PostreSQL
+## Installation
 
-### Starting the PostreSQL container
+### PostreSQL
+
+* Starting the PostreSQL container
 
     ```bash
-    docker compose -f docker-compose-pg.yml -p pg up -d
+    nerdctl compose -f docker-compose-pg.yml -p pg up -d
     ```
 
-### Stopping the PostreSQL container
+* Stopping the PostreSQL container
 
     ```bash
-    docker compose -f docker-compose-pg.yml -p pg stop
-    docker compose -f docker-compose-pg.yml -p pg down
+    nerdctl compose -f docker-compose-pg.yml -p pg stop
+    nerdctl compose -f docker-compose-pg.yml -p pg down
     ```
 
-### Checking the PostreSQL container log
+* Checking the PostreSQL container log
 
     ```bash
-    docker logs docker-pg-1 -f
+    nerdctl logs docker-pg-1 -f
     ```
 
-### Running psql
+* Running psql
 
     ```bash
-    docker exec -it <container id> /bin/bash
+    nerdctl exec -it <container id> /bin/bash
     psql --username postgres
     ```
 
-### Create PostgreSQL database, user and grant access
+* Create PostgreSQL database, user and grant access
 
     ```sql
     create database orm_test;
@@ -38,28 +40,28 @@ The required applications by the framework can be run using the docker compose f
     grant all privileges on database orm_test to test;
     ```
 
-## MariaDB
+### MariaDB
 
-### Starting the MariaDB container
-
-    ```bash
-    docker compose -f docker-compose-mariadb.yml -p maria up -d
-    ```
-
-### Stopping the MariaDB container
+* Starting the MariaDB container
 
     ```bash
-    docker compose -f docker-compose-mariadb.yml -p maria stop
-    docker compose -f docker-compose-mariadb.yml -p maria down
+    nerdctl compose -f docker-compose-mariadb.yml -p maria up -d
     ```
 
-### Checking the MariaDB container log
+* Stopping the MariaDB container
 
     ```bash
-    docker logs maria-mariadb-1 -f
+    nerdctl compose -f docker-compose-mariadb.yml -p maria stop
+    nerdctl compose -f docker-compose-mariadb.yml -p maria down
     ```
 
-### Create MariaDB database, user and grant access
+* Checking the MariaDB container log
+
+    ```bash
+    nerdctl logs maria-mariadb-1 -f
+    ```
+
+* Create MariaDB database, user and grant access
 
     ```sql
     create database orm_test;
@@ -73,28 +75,28 @@ The required applications by the framework can be run using the docker compose f
     grant all privileges on orm_test.* to 'test'@'%';
     ```
 
-## MySQL
+### MySQL
 
-### Starting the MySQL container
-
-    ```bash
-    docker compose -f docker-compose-mysql.yml -p mysql up -d
-    ```
-
-### Stopping the MySQL container
+* Starting the MySQL container
 
     ```bash
-    docker compose -f docker-compose-mysql.yml -p mysql stop
-    docker compose -f docker-compose-mysql.yml -p mysql down
+    nerdctl compose -f docker-compose-mysql.yml -p mysql up -d
     ```
 
-### Checking the MySQL container log
+* Stopping the MySQL container
 
     ```bash
-    docker logs mysql-mysql-1 -f
+    nerdctl compose -f docker-compose-mysql.yml -p mysql stop
+    nerdctl compose -f docker-compose-mysql.yml -p mysql down
     ```
 
-### Create MySQL database, user and grant access
+* Checking the MySQL container log
+
+    ```bash
+    nerdctl logs mysql-mysql-1 -f
+    ```
+
+* Create MySQL database, user and grant access
 
     ```sql
     create database orm_test;
@@ -108,65 +110,65 @@ The required applications by the framework can be run using the docker compose f
     grant all privileges on orm_test.* to 'test'@'%';
     ```
 
-## MongoDB
+### MongoDB
 
-### Starting the MongoDB container
+* Starting the MongoDB container
 
     ```bash
-    docker compose -f docker-compose-mongo.yml -p mongo up -d
+    nerdctl compose -f docker-compose-mongo.yml -p mongo up -d
     ```
 
-### Stopping the MongoDB container
+* Stopping the MongoDB container
 
     ```bash
-    docker compose -f docker-compose-mongo.yml -p mongo stop
-    docker compose -f docker-compose-mongo.yml -p mongo down
+    nerdctl compose -f docker-compose-mongo.yml -p mongo stop
+    nerdctl compose -f docker-compose-mongo.yml -p mongo down
     ```
 
-### Checking the MongoDB container log
+* Checking the MongoDB container log
 
     ```bash
-    docker logs mongo-mongo-1 -f
+    nerdctl logs mongo-mongo-1 -f
     ```
 
-## rethinkDB
+### rethinkDB
 
-### Starting the rethinkDB container
+* Starting the rethinkDB container
 
     ```bash
-    docker compose -f docker-compose-rethinkdb.yml -p rethink up -d
+    nerdctl compose -f docker-compose-rethinkdb.yml -p rethink up -d
     ```
 
-### Stopping the rethinkDB container
+* Stopping the rethinkDB container
 
     ```bash
-    docker compose -f docker-compose-rethinkdb.yml -p rethink stop
-    docker compose -f docker-compose-rethinkdb.yml -p rethink down
+    nerdctl compose -f docker-compose-rethinkdb.yml -p rethink stop
+    nerdctl compose -f docker-compose-rethinkdb.yml -p rethink down
     ```
 
-### Checking the rethinkDB container log
+* Checking the rethinkDB container log
 
     ```bash
-    docker logs rethink-rethinkdb-1 -f
+    nerdctl logs rethink-rethinkdb-1 -f
     ```
 
-## Redis
+### Redis
 
-### Starting the Redis container
+* Starting the Redis container
 
     ```bash
-    docker compose -f docker-compose-redis.yml -p redis up -d
+    nerdctl compose -f docker-compose-redis.yml -p redis up -d
     ```
 
-### Stopping the Redis container
+* Stopping the Redis container
 
     ```bash
-    docker compose -f docker-compose-redis.yml -p redis stop
-    docker compose -f docker-compose-redis.yml -p redis down
+    nerdctl compose -f docker-compose-redis.yml -p redis stop
+    nerdctl compose -f docker-compose-redis.yml -p redis down
     ```
 
-### Checking the Redis container log
+* Checking the Redis container log
 
     ```bash
-    docker logs redis-redis-1 -f
+    nerdctl logs redis-redis-1 -f
     ```

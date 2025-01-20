@@ -1,5 +1,5 @@
 /// Browser client library for the Angel framework.
-library angel_client.browser;
+library;
 
 import 'dart:async'
     show Future, Stream, StreamController, StreamSubscription, Timer;

@@ -1,4 +1,4 @@
-library angel_framework.http.controller;
+library;
 
 import 'dart:async';
 import 'package:angel3_container/angel3_container.dart';

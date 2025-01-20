@@ -61,8 +61,8 @@ class RelationshipReader {
         return 'fullOuterJoin';
       case JoinType.self:
         return 'selfJoin';
-      default:
-        return 'join';
+      //default:
+      //  return 'join';
     }
   }
 

@@ -1,4 +1,4 @@
-library angel_framework.http.response_context;
+library;
 
 import 'dart:async';
 import 'dart:convert';

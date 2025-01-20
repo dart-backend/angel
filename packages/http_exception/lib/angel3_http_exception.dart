@@ -1,4 +1,4 @@
-library angel3_http_exception;
+library;
 
 //import 'package:dart2_constant/convert.dart';
 import 'dart:convert';

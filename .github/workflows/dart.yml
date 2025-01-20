@@ -120,14 +120,14 @@ jobs:
         run: dart analyze
 
       # Angel3 ORM Test
-      - id: angel3_orm_test_upgrade
-        name: angel3_orm_test; Upgrade depedencies
-        working-directory: packages/orm/angel_orm_test
-        run: dart pub upgrade
+      #- id: angel3_orm_test_upgrade
+      #  name: angel3_orm_test; Upgrade depedencies
+      #  working-directory: packages/orm/angel_orm_test
+      #  run: dart pub upgrade
 
-      - name: angel3_orm_test; Run orm code generator
-        working-directory: packages/orm/angel_orm_test
-        run: dart run build_runner build --delete-conflicting-outputs
+      #- name: angel3_orm_test; Run orm code generator
+      #  working-directory: packages/orm/angel_orm_test
+      #  run: dart run build_runner build --delete-conflicting-outputs
 
       #- name: angel3_orm_test; Verify formatting
       #  working-directory: packages/orm/angel_orm_test

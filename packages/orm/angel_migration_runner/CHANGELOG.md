@@ -2,9 +2,11 @@
 
 ## 8.4.0
 
-* Require Dart >= 3.5
+* Require Dart >= 3.6
 * Updated `lints` to 5.0.0
 * Updated dependencies to the latest release
+* [MySQL] Fixed default value issue
+* [MySQL] Fixed `@Column(indexType: IndexType.unique)`
 
 ## 8.3.0
 
@@ -12,7 +14,7 @@
 
 ## 8.2.2
 
-Fixed `MariaDbMigrationRunner` migration issues
+* Fixed `MariaDbMigrationRunner` migration issues
 
 ## 8.2.1
 

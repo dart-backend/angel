@@ -404,8 +404,10 @@ class BookSerializer extends Codec<Book, Map> {
 
   @override
   BookEncoder get encoder => const BookEncoder();
+
   @override
   BookDecoder get decoder => const BookDecoder();
+
   static Book fromMap(Map map) {
     return Book(
         id: map['id'] as String?,
@@ -500,8 +502,10 @@ class AuthorSerializer extends Codec<Author, Map> {
 
   @override
   AuthorEncoder get encoder => const AuthorEncoder();
+
   @override
   AuthorDecoder get decoder => const AuthorDecoder();
+
   static Author fromMap(Map map) {
     if (map['name'] == null) {
       throw FormatException("Missing required field 'name' on Author.");
@@ -604,8 +608,10 @@ class LibrarySerializer extends Codec<Library, Map> {
 
   @override
   LibraryEncoder get encoder => const LibraryEncoder();
+
   @override
   LibraryDecoder get decoder => const LibraryDecoder();
+
   static Library fromMap(Map map) {
     return Library(
         id: map['id'] as String?,

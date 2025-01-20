@@ -1,5 +1,5 @@
 /// A basic server that prints "Hello, world!"
-library performance.hello;
+library;
 
 import 'dart:io';
 

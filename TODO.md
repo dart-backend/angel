@@ -1,5 +1,10 @@
 # Development Blueprint
 
+## TODO
+
+* Fix ORM generator issue
+* Fix MySQL ORM issue
+
 ## Short Term Goal
 
 * Update examples

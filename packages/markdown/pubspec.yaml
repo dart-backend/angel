@@ -4,7 +4,7 @@ description: Angel3 Markdown view generator. Write static sites, with no build s
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dart-backend/angel/tree/master/packages/markdown
 environment:
-  sdk: '>=3.5.0 <4.0.0'
+  sdk: '>=3.6.0 <4.0.0'
 dependencies:
   angel3_framework: ^8.4.0
   file: ^7.0.0
