@@ -181,7 +181,7 @@ void main() {
     });
 
     test('insert', () async {
-      var recalledAt = DateTime.utc(2000, 1, 1, 0, 0, 0, 0, 0);
+      var recalledAt = DateTime(2000, 1, 1, 0, 0, 0, 0, 0);
       var query = CarQuery();
       var now = DateTime.now();
       query.values
@@ -201,7 +201,7 @@ void main() {
         expect(car.familyFriendly, isTrue);
         expect(
             dateYmdHms.format(car.recalledAt!), dateYmdHms.format(recalledAt));
-        expect(car.createdAt, allOf(isNotNull, equals(car.updatedAt)));
+        expect(dateYmdHms.format(car.createdAt!), dateYmdHms.format(now));
       });
     });
 

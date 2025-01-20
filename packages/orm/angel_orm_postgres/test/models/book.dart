@@ -9,14 +9,14 @@ part 'book.g.dart';
 
 @serializable
 @orm
-class _Book extends Model {
+abstract class _Book extends Model {
   @BelongsTo(joinType: JoinType.inner)
-  _Author? author;
+  _Author? get author;
 
   @BelongsTo(localKey: 'partner_author_id', joinType: JoinType.inner)
   _Author? partnerAuthor;
 
-  String? name;
+  String? get name;
 }
 
 @serializable
@@ -26,6 +26,6 @@ abstract class _Author extends Model {
   @SerializableField(defaultValue: 'Tobe Osakwe')
   String? get name;
 
-  //@Column(name: "pub")
-  //String? publisher;
+  @Column(name: "pub")
+  String? get publisher;
 }

@@ -9,18 +9,12 @@ part of 'asset.dart';
 class ItemMigration extends Migration {
   @override
   void up(Schema schema) {
-    schema.create(
-      'items',
-      (table) {
-        table.serial('id').primaryKey();
-        table.timeStamp('created_at');
-        table.timeStamp('updated_at');
-        table.varChar(
-          'description',
-          length: 255,
-        );
-      },
-    );
+    schema.create('items', (table) {
+      table.serial('id').primaryKey();
+      table.timeStamp('created_at');
+      table.timeStamp('updated_at');
+      table.varChar('description', length: 255);
+    });
   }
 
   @override
@@ -32,31 +26,19 @@ class ItemMigration extends Migration {
 class AssetMigration extends Migration {
   @override
   void up(Schema schema) {
-    schema.create(
-      'assets',
-      (table) {
-        table.serial('id').primaryKey();
-        table.timeStamp('created_at');
-        table.timeStamp('updated_at');
-        table.varChar(
-          'description',
-          length: 255,
-        );
-        table.varChar(
-          'name',
-          length: 255,
-        );
-        table.double('price');
-      },
-    );
+    schema.create('assets', (table) {
+      table.serial('id').primaryKey();
+      table.timeStamp('created_at');
+      table.timeStamp('updated_at');
+      table.varChar('description', length: 255);
+      table.varChar('name', length: 255);
+      table.double('price');
+    });
   }
 
   @override
   void down(Schema schema) {
-    schema.drop(
-      'assets',
-      cascade: true,
-    );
+    schema.drop('assets', cascade: true);
   }
 }
 

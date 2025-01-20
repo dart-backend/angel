@@ -9,14 +9,11 @@ part of 'custom_expr.dart';
 class NumbersMigration extends Migration {
   @override
   void up(Schema schema) {
-    schema.create(
-      'numbers',
-      (table) {
-        table.serial('id').primaryKey();
-        table.timeStamp('created_at');
-        table.timeStamp('updated_at');
-      },
-    );
+    schema.create('numbers', (table) {
+      table.serial('id').primaryKey();
+      table.timeStamp('created_at');
+      table.timeStamp('updated_at');
+    });
   }
 
   @override
@@ -28,27 +25,15 @@ class NumbersMigration extends Migration {
 class AlphabetMigration extends Migration {
   @override
   void up(Schema schema) {
-    schema.create(
-      'alphabets',
-      (table) {
-        table.serial('id').primaryKey();
-        table.timeStamp('created_at');
-        table.timeStamp('updated_at');
-        table.varChar(
-          'value',
-          length: 255,
-        );
-        table
-            .declare(
-              'numbers_id',
-              ColumnType('int'),
-            )
-            .references(
-              'numbers',
-              'id',
-            );
-      },
-    );
+    schema.create('alphabets', (table) {
+      table.serial('id').primaryKey();
+      table.timeStamp('created_at');
+      table.timeStamp('updated_at');
+      table.varChar('value', length: 255);
+      table
+          .declare('numbers_id', ColumnType('int'))
+          .references('numbers', 'id');
+    });
   }
 
   @override

@@ -16,7 +16,7 @@ abstract class _Unorthodox {
 @orm
 abstract class _WeirdJoin {
   @primaryKey
-  int? get id;
+  int get id;
 
   @BelongsTo(localKey: 'join_name', foreignKey: 'name')
   _Unorthodox? get unorthodox;
@@ -43,12 +43,12 @@ abstract class _Song extends Model {
 @orm
 class _Numba implements Comparable<_Numba> {
   @primaryKey
-  int? i;
+  int i = -1;
 
   int? parent;
 
   @override
-  int compareTo(_Numba other) => i!.compareTo(other.i!);
+  int compareTo(_Numba other) => i.compareTo(other.i);
 }
 
 @serializable

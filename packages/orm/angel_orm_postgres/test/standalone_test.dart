@@ -201,7 +201,7 @@ void main() {
         expect(car.familyFriendly, isTrue);
         expect(
             dateYmdHms.format(car.recalledAt!), dateYmdHms.format(recalledAt));
-        expect(car.createdAt, allOf(isNotNull, equals(car.updatedAt)));
+        expect(dateYmdHms.format(car.createdAt!), dateYmdHms.format(now));
       });
     });
 

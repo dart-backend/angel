@@ -9,30 +9,17 @@ part of 'boat.dart';
 class BoatMigration extends Migration {
   @override
   void up(Schema schema) {
-    schema.create(
-      'boats',
-      (table) {
-        table.serial('id').primaryKey();
-        table.timeStamp('created_at');
-        table.timeStamp('updated_at');
-        table
-            .varChar(
-              'make',
-              length: 255,
-            )
-            .defaultsTo('');
-        table
-            .varChar(
-              'description',
-              length: 255,
-            )
-            .defaultsTo('none');
-        table.boolean('family_friendly').defaultsTo(false);
-        table.timeStamp('recalled_at');
-        table.double('price').defaultsTo(0.0);
-        table.integer('width').defaultsTo(0);
-      },
-    );
+    schema.create('boats', (table) {
+      table.serial('id').primaryKey();
+      table.timeStamp('created_at');
+      table.timeStamp('updated_at');
+      table.varChar('make', length: 255).defaultsTo('');
+      table.varChar('description', length: 255).defaultsTo('none');
+      table.boolean('family_friendly').defaultsTo(false);
+      table.timeStamp('recalled_at');
+      table.double('price').defaultsTo(0.0);
+      table.integer('width').defaultsTo(0);
+    });
   }
 
   @override

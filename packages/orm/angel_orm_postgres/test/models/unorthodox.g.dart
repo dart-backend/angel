@@ -9,17 +9,9 @@ part of 'unorthodox.dart';
 class UnorthodoxMigration extends Migration {
   @override
   void up(Schema schema) {
-    schema.create(
-      'unorthodoxes',
-      (table) {
-        table
-            .varChar(
-              'name',
-              length: 255,
-            )
-            .primaryKey();
-      },
-    );
+    schema.create('unorthodoxes', (table) {
+      table.varChar('name', length: 255).primaryKey();
+    });
   }
 
   @override
@@ -31,48 +23,30 @@ class UnorthodoxMigration extends Migration {
 class WeirdJoinMigration extends Migration {
   @override
   void up(Schema schema) {
-    schema.create(
-      'weird_joins',
-      (table) {
-        table.integer('id').primaryKey();
-        table
-            .declare(
-              'join_name',
-              ColumnType('varchar'),
-            )
-            .references(
-              'unorthodoxes',
-              'name',
-            );
-      },
-    );
+    schema.create('weird_joins', (table) {
+      table.integer('id').primaryKey();
+      table
+          .declare('join_name', ColumnType('varchar'))
+          .references('unorthodoxes', 'name');
+    });
   }
 
   @override
   void down(Schema schema) {
-    schema.drop(
-      'weird_joins',
-      cascade: true,
-    );
+    schema.drop('weird_joins', cascade: true);
   }
 }
 
 class SongMigration extends Migration {
   @override
   void up(Schema schema) {
-    schema.create(
-      'songs',
-      (table) {
-        table.serial('id').primaryKey();
-        table.timeStamp('created_at');
-        table.timeStamp('updated_at');
-        table.integer('weird_join_id');
-        table.varChar(
-          'title',
-          length: 255,
-        );
-      },
-    );
+    schema.create('songs', (table) {
+      table.serial('id').primaryKey();
+      table.timeStamp('created_at');
+      table.timeStamp('updated_at');
+      table.integer('weird_join_id');
+      table.varChar('title', length: 255);
+    });
   }
 
   @override
@@ -84,13 +58,10 @@ class SongMigration extends Migration {
 class NumbaMigration extends Migration {
   @override
   void up(Schema schema) {
-    schema.create(
-      'numbas',
-      (table) {
-        table.integer('i').primaryKey();
-        table.integer('parent');
-      },
-    );
+    schema.create('numbas', (table) {
+      table.integer('i').primaryKey();
+      table.integer('parent');
+    });
   }
 
   @override
@@ -102,54 +73,26 @@ class NumbaMigration extends Migration {
 class FooMigration extends Migration {
   @override
   void up(Schema schema) {
-    schema.create(
-      'foos',
-      (table) {
-        table
-            .varChar(
-              'bar',
-              length: 255,
-            )
-            .primaryKey();
-      },
-    );
+    schema.create('foos', (table) {
+      table.varChar('bar', length: 255).primaryKey();
+    });
   }
 
   @override
   void down(Schema schema) {
-    schema.drop(
-      'foos',
-      cascade: true,
-    );
+    schema.drop('foos', cascade: true);
   }
 }
 
 class FooPivotMigration extends Migration {
   @override
   void up(Schema schema) {
-    schema.create(
-      'foo_pivots',
-      (table) {
-        table
-            .declare(
-              'weird_join_id',
-              ColumnType('int'),
-            )
-            .references(
-              'weird_joins',
-              'id',
-            );
-        table
-            .declare(
-              'foo_bar',
-              ColumnType('varchar'),
-            )
-            .references(
-              'foos',
-              'bar',
-            );
-      },
-    );
+    schema.create('foo_pivots', (table) {
+      table
+          .declare('weird_join_id', ColumnType('int'))
+          .references('weird_joins', 'id');
+      table.declare('foo_bar', ColumnType('varchar')).references('foos', 'bar');
+    });
   }
 
   @override
@@ -368,7 +311,7 @@ class WeirdJoinQuery extends Query<WeirdJoin, WeirdJoinQueryWhere> {
     if (row.every((x) => x == null)) {
       return Optional.empty();
     }
-    var model = WeirdJoin(id: fields.contains('id') ? (row[0] as int?) : null);
+    var model = WeirdJoin(id: fields.contains('id') ? (row[0] as int) : 0);
     if (row.length > 2) {
       var modelOpt = UnorthodoxQuery().parseRow(row.skip(2).take(1).toList());
       modelOpt.ifPresent((m) {
@@ -507,11 +450,11 @@ class WeirdJoinQueryValues extends MapQueryValues {
     return {};
   }
 
-  int? get id {
-    return (values['id'] as int?);
+  int get id {
+    return (values['id'] as int);
   }
 
-  set id(int? value) => values['id'] = value;
+  set id(int value) => values['id'] = value;
 
   String? get joinName {
     return (values['join_name'] as String?);
@@ -752,7 +695,7 @@ class NumbaQuery extends Query<Numba, NumbaQueryWhere> {
       return Optional.empty();
     }
     var model = Numba(
-      i: fields.contains('i') ? (row[0] as int?) : null,
+      i: fields.contains('i') ? (row[0] as int) : 0,
       parent: fields.contains('parent') ? (row[1] as int?) : null,
     );
     return Optional.of(model);
@@ -794,11 +737,11 @@ class NumbaQueryValues extends MapQueryValues {
     return {};
   }
 
-  int? get i {
-    return (values['i'] as int?);
+  int get i {
+    return (values['i'] as int);
   }
 
-  set i(int? value) => values['i'] = value;
+  set i(int value) => values['i'] = value;
 
   int? get parent {
     return (values['parent'] as int?);
@@ -1131,11 +1074,11 @@ class FooPivotQueryValues extends MapQueryValues {
     return {};
   }
 
-  int? get weirdJoinId {
-    return (values['weird_join_id'] as int?);
+  int get weirdJoinId {
+    return (values['weird_join_id'] as int);
   }
 
-  set weirdJoinId(int? value) => values['weird_join_id'] = value;
+  set weirdJoinId(int value) => values['weird_join_id'] = value;
 
   String? get fooBar {
     return (values['foo_bar'] as String?);
@@ -1191,7 +1134,7 @@ class Unorthodox implements _Unorthodox {
 @generatedSerializable
 class WeirdJoin implements _WeirdJoin {
   WeirdJoin({
-    this.id,
+    required this.id,
     this.unorthodox,
     this.song,
     this.numbas = const [],
@@ -1199,7 +1142,7 @@ class WeirdJoin implements _WeirdJoin {
   });
 
   @override
-  int? id;
+  int id;
 
   @override
   _Unorthodox? unorthodox;
@@ -1337,12 +1280,12 @@ class Song extends _Song {
 @generatedSerializable
 class Numba extends _Numba {
   Numba({
-    this.i,
+    required this.i,
     this.parent,
   });
 
   @override
-  int? i;
+  int i;
 
   @override
   int? parent;
@@ -1543,7 +1486,7 @@ class WeirdJoinSerializer extends Codec<WeirdJoin, Map> {
 
   static WeirdJoin fromMap(Map map) {
     return WeirdJoin(
-        id: map['id'] as int?,
+        id: map['id'] as int,
         unorthodox: map['unorthodox'] != null
             ? UnorthodoxSerializer.fromMap(map['unorthodox'] as Map)
             : null,
@@ -1696,7 +1639,7 @@ class NumbaSerializer extends Codec<Numba, Map> {
   NumbaDecoder get decoder => const NumbaDecoder();
 
   static Numba fromMap(Map map) {
-    return Numba(i: map['i'] as int?, parent: map['parent'] as int?);
+    return Numba(i: map['i'] as int, parent: map['parent'] as int?);
   }
 
   static Map<String, dynamic> toMap(_Numba? model) {

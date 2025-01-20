@@ -9,26 +9,17 @@ part of 'bike.dart';
 class BikeMigration extends Migration {
   @override
   void up(Schema schema) {
-    schema.create(
-      'bikes',
-      (table) {
-        table.serial('id').primaryKey();
-        table.timeStamp('created_at');
-        table.timeStamp('updated_at');
-        table.varChar(
-          'make',
-          length: 255,
-        );
-        table.varChar(
-          'description',
-          length: 255,
-        );
-        table.boolean('family_friendly');
-        table.timeStamp('recalled_at');
-        table.double('price');
-        table.integer('width');
-      },
-    );
+    schema.create('bikes', (table) {
+      table.serial('id').primaryKey();
+      table.timeStamp('created_at');
+      table.timeStamp('updated_at');
+      table.varChar('make', length: 255);
+      table.varChar('description', length: 255);
+      table.boolean('family_friendly');
+      table.timeStamp('recalled_at');
+      table.double('price');
+      table.integer('width');
+    });
   }
 
   @override
