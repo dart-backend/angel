@@ -5,8 +5,9 @@
 * Require Dart >= 3.6
 * Updated `lints` to 5.0.0
 * Updated dependencies to the latest release
-* [MySQL] Fixed default value issue
-* [MySQL] Fixed `@Column(indexType: IndexType.unique)`
+* [MySQL] Fixed foreign key generation for serial primary
+* [MySQL] Fixed default value generation
+* [MySQL] Fixed `@Column(indexType: IndexType.unique)` generation
 
 ## 8.3.0
 

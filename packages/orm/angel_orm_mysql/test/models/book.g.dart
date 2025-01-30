@@ -9,36 +9,16 @@ part of 'book.dart';
 class BookMigration extends Migration {
   @override
   void up(Schema schema) {
-    schema.create(
-      'books',
-      (table) {
-        table.integer('id').primaryKey();
-        table.timeStamp('created_at');
-        table.timeStamp('updated_at');
-        table.varChar(
-          'name',
-          length: 255,
-        );
-        table
-            .declare(
-              'author_id',
-              ColumnType('int'),
-            )
-            .references(
-              'authors',
-              'id',
-            );
-        table
-            .declare(
-              'partner_author_id',
-              ColumnType('int'),
-            )
-            .references(
-              'authors',
-              'id',
-            );
-      },
-    );
+    schema.create('books', (table) {
+      table.serial('id').primaryKey();
+      table.timeStamp('created_at');
+      table.timeStamp('updated_at');
+      table.varChar('name', length: 255);
+      table.declare('author_id', ColumnType('int')).references('authors', 'id');
+      table
+          .declare('partner_author_id', ColumnType('int'))
+          .references('authors', 'id');
+    });
   }
 
   @override
@@ -50,20 +30,15 @@ class BookMigration extends Migration {
 class AuthorMigration extends Migration {
   @override
   void up(Schema schema) {
-    schema.create(
-      'authors',
-      (table) {
-        table.integer('id').primaryKey();
-        table.timeStamp('created_at');
-        table.timeStamp('updated_at');
-        table.varChar(
-          'name',
-          length: 255,
-        )
-          ..defaultsTo('Tobe Osakwe')
-          ..unique();
-      },
-    );
+    schema.create('authors', (table) {
+      table.serial('id').primaryKey();
+      table.timeStamp('created_at');
+      table.timeStamp('updated_at');
+      table.varChar('publisher', length: 255);
+      table.varChar('name', length: 255)
+        ..defaultsTo('Tobe Osakwe')
+        ..unique();
+    });
   }
 
   @override
@@ -78,9 +53,9 @@ class AuthorMigration extends Migration {
 
 class BookQuery extends Query<Book, BookQueryWhere> {
   BookQuery({
-    super.parent,
+    Query? parent,
     Set<String>? trampoline,
-  }) {
+  }) : super(parent: parent) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = BookQueryWhere(this);
@@ -95,6 +70,7 @@ class BookQuery extends Query<Book, BookQueryWhere> {
         'id',
         'created_at',
         'updated_at',
+        'publisher',
         'name',
       ],
       trampoline: trampoline,
@@ -110,6 +86,7 @@ class BookQuery extends Query<Book, BookQueryWhere> {
         'id',
         'created_at',
         'updated_at',
+        'publisher',
         'name',
       ],
       trampoline: trampoline,
@@ -139,7 +116,7 @@ class BookQuery extends Query<Book, BookQueryWhere> {
 
   @override
   List<String> get fields {
-    const fields = [
+    const _fields = [
       'id',
       'created_at',
       'updated_at',
@@ -148,8 +125,8 @@ class BookQuery extends Query<Book, BookQueryWhere> {
       'name',
     ];
     return _selectedFields.isEmpty
-        ? fields
-        : fields.where((field) => _selectedFields.contains(field)).toList();
+        ? _fields
+        : _fields.where((field) => _selectedFields.contains(field)).toList();
   }
 
   BookQuery select(List<String> selectedFields) {
@@ -180,13 +157,13 @@ class BookQuery extends Query<Book, BookQueryWhere> {
       name: fields.contains('name') ? (row[5] as String?) : null,
     );
     if (row.length > 6) {
-      var modelOpt = AuthorQuery().parseRow(row.skip(6).take(4).toList());
+      var modelOpt = AuthorQuery().parseRow(row.skip(6).take(5).toList());
       modelOpt.ifPresent((m) {
         model = model.copyWith(author: m);
       });
     }
-    if (row.length > 10) {
-      var modelOpt = AuthorQuery().parseRow(row.skip(10).take(4).toList());
+    if (row.length > 11) {
+      var modelOpt = AuthorQuery().parseRow(row.skip(11).take(5).toList());
       modelOpt.ifPresent((m) {
         model = model.copyWith(partnerAuthor: m);
       });
@@ -317,9 +294,9 @@ class BookQueryValues extends MapQueryValues {
 
 class AuthorQuery extends Query<Author, AuthorQueryWhere> {
   AuthorQuery({
-    super.parent,
+    Query? parent,
     Set<String>? trampoline,
-  }) {
+  }) : super(parent: parent) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = AuthorQueryWhere(this);
@@ -344,15 +321,16 @@ class AuthorQuery extends Query<Author, AuthorQueryWhere> {
 
   @override
   List<String> get fields {
-    const fields = [
+    const _fields = [
       'id',
       'created_at',
       'updated_at',
+      'publisher',
       'name',
     ];
     return _selectedFields.isEmpty
-        ? fields
-        : fields.where((field) => _selectedFields.contains(field)).toList();
+        ? _fields
+        : _fields.where((field) => _selectedFields.contains(field)).toList();
   }
 
   AuthorQuery select(List<String> selectedFields) {
@@ -380,7 +358,8 @@ class AuthorQuery extends Query<Author, AuthorQueryWhere> {
           fields.contains('created_at') ? mapToNullableDateTime(row[1]) : null,
       updatedAt:
           fields.contains('updated_at') ? mapToNullableDateTime(row[2]) : null,
-      name: fields.contains('name') ? (row[3] as String?) : null,
+      publisher: fields.contains('publisher') ? (row[3] as String?) : null,
+      name: fields.contains('name') ? (row[4] as String?) : null,
     );
     return Optional.of(model);
   }
@@ -405,6 +384,10 @@ class AuthorQueryWhere extends QueryWhere {
           query,
           'updated_at',
         ),
+        publisher = StringSqlExpressionBuilder(
+          query,
+          'publisher',
+        ),
         name = StringSqlExpressionBuilder(
           query,
           'name',
@@ -416,6 +399,8 @@ class AuthorQueryWhere extends QueryWhere {
 
   final DateTimeSqlExpressionBuilder updatedAt;
 
+  final StringSqlExpressionBuilder publisher;
+
   final StringSqlExpressionBuilder name;
 
   @override
@@ -424,6 +409,7 @@ class AuthorQueryWhere extends QueryWhere {
       id,
       createdAt,
       updatedAt,
+      publisher,
       name,
     ];
   }
@@ -453,6 +439,12 @@ class AuthorQueryValues extends MapQueryValues {
 
   set updatedAt(DateTime? value) => values['updated_at'] = value;
 
+  String? get publisher {
+    return (values['publisher'] as String?);
+  }
+
+  set publisher(String? value) => values['publisher'] = value;
+
   String? get name {
     return (values['name'] as String?);
   }
@@ -462,6 +454,7 @@ class AuthorQueryValues extends MapQueryValues {
   void copyFrom(Author model) {
     createdAt = model.createdAt;
     updatedAt = model.updatedAt;
+    publisher = model.publisher;
     name = model.name;
   }
 }
@@ -558,6 +551,7 @@ class Author extends _Author {
     this.id,
     this.createdAt,
     this.updatedAt,
+    this.publisher,
     this.name = 'Tobe Osakwe',
   });
 
@@ -574,18 +568,23 @@ class Author extends _Author {
   DateTime? updatedAt;
 
   @override
+  String? publisher;
+
+  @override
   String? name;
 
   Author copyWith({
     String? id,
     DateTime? createdAt,
     DateTime? updatedAt,
+    String? publisher,
     String? name,
   }) {
     return Author(
         id: id ?? this.id,
         createdAt: createdAt ?? this.createdAt,
         updatedAt: updatedAt ?? this.updatedAt,
+        publisher: publisher ?? this.publisher,
         name: name ?? this.name);
   }
 
@@ -595,6 +594,7 @@ class Author extends _Author {
         other.id == id &&
         other.createdAt == createdAt &&
         other.updatedAt == updatedAt &&
+        other.publisher == publisher &&
         other.name == name;
   }
 
@@ -604,13 +604,14 @@ class Author extends _Author {
       id,
       createdAt,
       updatedAt,
+      publisher,
       name,
     ]);
   }
 
   @override
   String toString() {
-    return 'Author(id=$id, createdAt=$createdAt, updatedAt=$updatedAt, name=$name)';
+    return 'Author(id=$id, createdAt=$createdAt, updatedAt=$updatedAt, publisher=$publisher, name=$name)';
   }
 
   Map<String, dynamic> toJson() {
@@ -745,6 +746,7 @@ class AuthorSerializer extends Codec<Author, Map> {
                 ? (map['updated_at'] as DateTime)
                 : DateTime.parse(map['updated_at'].toString()))
             : null,
+        publisher: map['publisher'] as String?,
         name: map['name'] as String? ?? 'Tobe Osakwe');
   }
 
@@ -756,6 +758,7 @@ class AuthorSerializer extends Codec<Author, Map> {
       'id': model.id,
       'created_at': model.createdAt?.toIso8601String(),
       'updated_at': model.updatedAt?.toIso8601String(),
+      'publisher': model.publisher,
       'name': model.name
     };
   }
@@ -766,6 +769,7 @@ abstract class AuthorFields {
     id,
     createdAt,
     updatedAt,
+    publisher,
     name,
   ];
 
@@ -774,6 +778,8 @@ abstract class AuthorFields {
   static const String createdAt = 'created_at';
 
   static const String updatedAt = 'updated_at';
+
+  static const String publisher = 'publisher';
 
   static const String name = 'name';
 }

@@ -9,25 +9,16 @@ part of 'has_map.dart';
 class HasMapMigration extends Migration {
   @override
   void up(Schema schema) {
-    schema.create(
-      'has_maps',
-      (table) {
-        table.declareColumn(
-          'value',
-          Column(
-            type: ColumnType('jsonb'),
-            length: 255,
-          ),
-        );
-        table.declareColumn(
-          'list',
-          Column(
-            type: ColumnType('jsonb'),
-            length: 255,
-          ),
-        );
-      },
-    );
+    schema.create('has_maps', (table) {
+      table.declareColumn(
+        'value',
+        Column(type: ColumnType('jsonb'), length: 255),
+      );
+      table.declareColumn(
+        'list',
+        Column(type: ColumnType('jsonb'), length: 255),
+      );
+    });
   }
 
   @override

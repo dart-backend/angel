@@ -9,42 +9,30 @@ part of 'tree.dart';
 class TreeMigration extends Migration {
   @override
   void up(Schema schema) {
-    schema.create(
-      'trees',
-      (table) {
-        table.integer('id').primaryKey();
-        table.timeStamp('created_at');
-        table.timeStamp('updated_at');
-        table.integer('rings').unique();
-      },
-    );
+    schema.create('trees', (table) {
+      table.serial('id').primaryKey();
+      table.timeStamp('created_at');
+      table.timeStamp('updated_at');
+      table.integer('rings').unique();
+    });
   }
 
   @override
   void down(Schema schema) {
-    schema.drop(
-      'trees',
-      cascade: true,
-    );
+    schema.drop('trees', cascade: true);
   }
 }
 
 class FruitMigration extends Migration {
   @override
   void up(Schema schema) {
-    schema.create(
-      'fruits',
-      (table) {
-        table.serial('id').primaryKey();
-        table.timeStamp('created_at');
-        table.timeStamp('updated_at');
-        table.integer('tree_id');
-        table.varChar(
-          'common_name',
-          length: 255,
-        );
-      },
-    );
+    schema.create('fruits', (table) {
+      table.serial('id').primaryKey();
+      table.timeStamp('created_at');
+      table.timeStamp('updated_at');
+      table.integer('tree_id');
+      table.varChar('common_name', length: 255);
+    });
   }
 
   @override
@@ -59,9 +47,9 @@ class FruitMigration extends Migration {
 
 class TreeQuery extends Query<Tree, TreeQueryWhere> {
   TreeQuery({
-    super.parent,
+    Query? parent,
     Set<String>? trampoline,
-  }) {
+  }) : super(parent: parent) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = TreeQueryWhere(this);
@@ -104,15 +92,15 @@ class TreeQuery extends Query<Tree, TreeQueryWhere> {
 
   @override
   List<String> get fields {
-    const fields = [
+    const _fields = [
       'id',
       'created_at',
       'updated_at',
       'rings',
     ];
     return _selectedFields.isEmpty
-        ? fields
-        : fields.where((field) => _selectedFields.contains(field)).toList();
+        ? _fields
+        : _fields.where((field) => _selectedFields.contains(field)).toList();
   }
 
   TreeQuery select(List<String> selectedFields) {
@@ -292,9 +280,9 @@ class TreeQueryValues extends MapQueryValues {
 
 class FruitQuery extends Query<Fruit, FruitQueryWhere> {
   FruitQuery({
-    super.parent,
+    Query? parent,
     Set<String>? trampoline,
-  }) {
+  }) : super(parent: parent) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = FruitQueryWhere(this);
@@ -319,7 +307,7 @@ class FruitQuery extends Query<Fruit, FruitQueryWhere> {
 
   @override
   List<String> get fields {
-    const fields = [
+    const _fields = [
       'id',
       'created_at',
       'updated_at',
@@ -327,8 +315,8 @@ class FruitQuery extends Query<Fruit, FruitQueryWhere> {
       'common_name',
     ];
     return _selectedFields.isEmpty
-        ? fields
-        : fields.where((field) => _selectedFields.contains(field)).toList();
+        ? _fields
+        : _fields.where((field) => _selectedFields.contains(field)).toList();
   }
 
   FruitQuery select(List<String> selectedFields) {

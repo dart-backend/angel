@@ -9,13 +9,10 @@ part of 'world.dart';
 class WorldMigration extends Migration {
   @override
   void up(Schema schema) {
-    schema.create(
-      'world',
-      (table) {
-        table.integer('id').primaryKey();
-        table.integer('random_number');
-      },
-    );
+    schema.create('world', (table) {
+      table.integer('id').primaryKey();
+      table.integer('random_number');
+    });
   }
 
   @override

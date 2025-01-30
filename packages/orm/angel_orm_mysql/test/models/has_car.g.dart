@@ -9,22 +9,16 @@ part of 'has_car.dart';
 class HasCarMigration extends Migration {
   @override
   void up(Schema schema) {
-    schema.create(
-      'has_cars',
-      (table) {
-        table.integer('id').primaryKey();
-        table.timeStamp('created_at');
-        table.timeStamp('updated_at');
-        table.declareColumn(
-          'color',
-          Column(
-            type: ColumnType('varchar'),
-            length: 1,
-          ),
-        );
-        table.integer('type').defaultsTo(0);
-      },
-    );
+    schema.create('has_cars', (table) {
+      table.serial('id').primaryKey();
+      table.timeStamp('created_at');
+      table.timeStamp('updated_at');
+      table.declareColumn(
+        'color',
+        Column(type: ColumnType('varchar'), length: 1),
+      );
+      table.integer('type').defaultsTo(0);
+    });
   }
 
   @override

@@ -944,7 +944,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
         }));
       }
 
-      // Add an copyFrom(model)
+      // Add model
       clazz.methods.add(Method((b) {
         b
           ..name = 'copyFrom'
@@ -964,7 +964,9 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
             for (var field in ctx.effectiveNormalFields) {
               if (field is RelationFieldImpl) {
                 var original = field.originalFieldName;
+
                 var prop = refer('model').property(original);
+
                 // Add only if present
                 var target = refer('values').index(literalString(
                     ctx.buildContext.resolveFieldName(field.name)!));
@@ -973,14 +975,14 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                     field.relationship.foreign;
                 var foreignField = field.relationship.findForeignField(ctx);
 
-                // Added null safety check
-                var parsedId = prop.property(foreignField.name);
+                // TODO: Need to add nullability check for prop
+                var parsedId = prop.nullSafeProperty(foreignField.name);
 
                 //log.fine('Foreign field => ${foreignField.name}');
-                if (foreignField.type.nullabilitySuffix ==
-                    NullabilitySuffix.question) {
-                  parsedId = prop.nullSafeProperty(foreignField.name);
-                }
+                //if (foreignField.type.nullabilitySuffix ==
+                //    NullabilitySuffix.question) {
+                //  parsedId = prop.nullSafeProperty(foreignField.name);
+                //}
 
                 if (foreign != null) {
                   if (isSpecialId(foreign, field)) {

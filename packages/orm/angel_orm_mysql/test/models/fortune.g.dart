@@ -9,16 +9,10 @@ part of 'fortune.dart';
 class FortuneMigration extends Migration {
   @override
   void up(Schema schema) {
-    schema.create(
-      'fortune',
-      (table) {
-        table.integer('id').primaryKey();
-        table.varChar(
-          'message',
-          length: 2048,
-        );
-      },
-    );
+    schema.create('fortune', (table) {
+      table.integer('id').primaryKey();
+      table.varChar('message', length: 2048);
+    });
   }
 
   @override

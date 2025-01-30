@@ -9,54 +9,28 @@ part of 'email_indexed.dart';
 class RoleMigration extends Migration {
   @override
   void up(Schema schema) {
-    schema.create(
-      'roles',
-      (table) {
-        table
-            .varChar(
-              'role',
-              length: 255,
-            )
-            .primaryKey();
-      },
-    );
+    schema.create('roles', (table) {
+      table.varChar('role', length: 255).primaryKey();
+    });
   }
 
   @override
   void down(Schema schema) {
-    schema.drop(
-      'roles',
-      cascade: true,
-    );
+    schema.drop('roles', cascade: true);
   }
 }
 
 class RoleUserMigration extends Migration {
   @override
   void up(Schema schema) {
-    schema.create(
-      'role_users',
-      (table) {
-        table
-            .declare(
-              'role_role',
-              ColumnType('varchar'),
-            )
-            .references(
-              'roles',
-              'role',
-            );
-        table
-            .declare(
-              'user_email',
-              ColumnType('varchar'),
-            )
-            .references(
-              'users',
-              'email',
-            );
-      },
-    );
+    schema.create('role_users', (table) {
+      table
+          .declare('role_role', ColumnType('varchar'))
+          .references('roles', 'role');
+      table
+          .declare('user_email', ColumnType('varchar'))
+          .references('users', 'email');
+    });
   }
 
   @override
@@ -68,33 +42,16 @@ class RoleUserMigration extends Migration {
 class UserMigration extends Migration {
   @override
   void up(Schema schema) {
-    schema.create(
-      'users',
-      (table) {
-        table
-            .varChar(
-              'email',
-              length: 255,
-            )
-            .primaryKey();
-        table.varChar(
-          'name',
-          length: 255,
-        );
-        table.varChar(
-          'password',
-          length: 255,
-        );
-      },
-    );
+    schema.create('users', (table) {
+      table.varChar('email', length: 255).primaryKey();
+      table.varChar('name', length: 255);
+      table.varChar('password', length: 255);
+    });
   }
 
   @override
   void down(Schema schema) {
-    schema.drop(
-      'users',
-      cascade: true,
-    );
+    schema.drop('users', cascade: true);
   }
 }
 

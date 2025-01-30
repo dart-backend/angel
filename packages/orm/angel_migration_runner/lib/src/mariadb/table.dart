@@ -8,6 +8,12 @@ abstract class MariaDbGenerator {
   static String columnType(MigrationColumn column) {
     var str = column.type.name;
 
+    // Handle reference key
+    if (str.toLowerCase() == ColumnType.int.name &&
+        column.externalReferences.isNotEmpty) {
+      return 'BIGINT UNSIGNED';
+    }
+
     // Map timestamp time to datetime
     if (column.type == ColumnType.timeStamp) {
       str = ColumnType.dateTime.name;

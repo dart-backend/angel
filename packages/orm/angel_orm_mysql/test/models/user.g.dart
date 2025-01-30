@@ -9,63 +9,29 @@ part of 'user.dart';
 class UserMigration extends Migration {
   @override
   void up(Schema schema) {
-    schema.create(
-      'users',
-      (table) {
-        table.integer('id').primaryKey();
-        table.timeStamp('created_at');
-        table.timeStamp('updated_at');
-        table.varChar(
-          'username',
-          length: 255,
-        );
-        table.varChar(
-          'password',
-          length: 255,
-        );
-        table.varChar(
-          'email',
-          length: 255,
-        );
-      },
-    );
+    schema.create('users', (table) {
+      table.serial('id').primaryKey();
+      table.timeStamp('created_at');
+      table.timeStamp('updated_at');
+      table.varChar('username', length: 255);
+      table.varChar('password', length: 255);
+      table.varChar('email', length: 255);
+    });
   }
 
   @override
   void down(Schema schema) {
-    schema.drop(
-      'users',
-      cascade: true,
-    );
+    schema.drop('users', cascade: true);
   }
 }
 
 class RoleUserMigration extends Migration {
   @override
   void up(Schema schema) {
-    schema.create(
-      'role_users',
-      (table) {
-        table
-            .declare(
-              'role_id',
-              ColumnType('int'),
-            )
-            .references(
-              'roles',
-              'id',
-            );
-        table
-            .declare(
-              'user_id',
-              ColumnType('int'),
-            )
-            .references(
-              'users',
-              'id',
-            );
-      },
-    );
+    schema.create('role_users', (table) {
+      table.declare('role_id', ColumnType('int')).references('roles', 'id');
+      table.declare('user_id', ColumnType('int')).references('users', 'id');
+    });
   }
 
   @override
@@ -77,26 +43,17 @@ class RoleUserMigration extends Migration {
 class RoleMigration extends Migration {
   @override
   void up(Schema schema) {
-    schema.create(
-      'roles',
-      (table) {
-        table.integer('id').primaryKey();
-        table.timeStamp('created_at');
-        table.timeStamp('updated_at');
-        table.varChar(
-          'name',
-          length: 255,
-        );
-      },
-    );
+    schema.create('roles', (table) {
+      table.serial('id').primaryKey();
+      table.timeStamp('created_at');
+      table.timeStamp('updated_at');
+      table.varChar('name', length: 255);
+    });
   }
 
   @override
   void down(Schema schema) {
-    schema.drop(
-      'roles',
-      cascade: true,
-    );
+    schema.drop('roles', cascade: true);
   }
 }
 
@@ -106,9 +63,9 @@ class RoleMigration extends Migration {
 
 class UserQuery extends Query<User, UserQueryWhere> {
   UserQuery({
-    super.parent,
+    Query? parent,
     Set<String>? trampoline,
-  }) {
+  }) : super(parent: parent) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = UserQueryWhere(this);
@@ -145,7 +102,7 @@ class UserQuery extends Query<User, UserQueryWhere> {
 
   @override
   List<String> get fields {
-    const fields = [
+    const _fields = [
       'id',
       'created_at',
       'updated_at',
@@ -154,8 +111,8 @@ class UserQuery extends Query<User, UserQueryWhere> {
       'email',
     ];
     return _selectedFields.isEmpty
-        ? fields
-        : fields.where((field) => _selectedFields.contains(field)).toList();
+        ? _fields
+        : _fields.where((field) => _selectedFields.contains(field)).toList();
   }
 
   UserQuery select(List<String> selectedFields) {
@@ -367,9 +324,9 @@ class UserQueryValues extends MapQueryValues {
 
 class RoleUserQuery extends Query<RoleUser, RoleUserQueryWhere> {
   RoleUserQuery({
-    super.parent,
+    Query? parent,
     Set<String>? trampoline,
-  }) {
+  }) : super(parent: parent) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = RoleUserQueryWhere(this);
@@ -430,13 +387,13 @@ class RoleUserQuery extends Query<RoleUser, RoleUserQueryWhere> {
 
   @override
   List<String> get fields {
-    const fields = [
+    const _fields = [
       'role_id',
       'user_id',
     ];
     return _selectedFields.isEmpty
-        ? fields
-        : fields.where((field) => _selectedFields.contains(field)).toList();
+        ? _fields
+        : _fields.where((field) => _selectedFields.contains(field)).toList();
   }
 
   RoleUserQuery select(List<String> selectedFields) {
@@ -542,9 +499,9 @@ class RoleUserQueryValues extends MapQueryValues {
 
 class RoleQuery extends Query<Role, RoleQueryWhere> {
   RoleQuery({
-    super.parent,
+    Query? parent,
     Set<String>? trampoline,
-  }) {
+  }) : super(parent: parent) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = RoleQueryWhere(this);
@@ -583,15 +540,15 @@ class RoleQuery extends Query<Role, RoleQueryWhere> {
 
   @override
   List<String> get fields {
-    const fields = [
+    const _fields = [
       'id',
       'created_at',
       'updated_at',
       'name',
     ];
     return _selectedFields.isEmpty
-        ? fields
-        : fields.where((field) => _selectedFields.contains(field)).toList();
+        ? _fields
+        : _fields.where((field) => _selectedFields.contains(field)).toList();
   }
 
   RoleQuery select(List<String> selectedFields) {

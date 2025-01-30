@@ -9,17 +9,9 @@ part of 'unorthodox.dart';
 class UnorthodoxMigration extends Migration {
   @override
   void up(Schema schema) {
-    schema.create(
-      'unorthodoxes',
-      (table) {
-        table
-            .varChar(
-              'name',
-              length: 255,
-            )
-            .primaryKey();
-      },
-    );
+    schema.create('unorthodoxes', (table) {
+      table.varChar('name', length: 255).primaryKey();
+    });
   }
 
   @override
@@ -31,48 +23,30 @@ class UnorthodoxMigration extends Migration {
 class WeirdJoinMigration extends Migration {
   @override
   void up(Schema schema) {
-    schema.create(
-      'weird_joins',
-      (table) {
-        table.integer('id').primaryKey();
-        table
-            .declare(
-              'join_name',
-              ColumnType('varchar'),
-            )
-            .references(
-              'unorthodoxes',
-              'name',
-            );
-      },
-    );
+    schema.create('weird_joins', (table) {
+      table.integer('id').primaryKey();
+      table
+          .declare('join_name', ColumnType('varchar'))
+          .references('unorthodoxes', 'name');
+    });
   }
 
   @override
   void down(Schema schema) {
-    schema.drop(
-      'weird_joins',
-      cascade: true,
-    );
+    schema.drop('weird_joins', cascade: true);
   }
 }
 
 class SongMigration extends Migration {
   @override
   void up(Schema schema) {
-    schema.create(
-      'songs',
-      (table) {
-        table.serial('id').primaryKey();
-        table.timeStamp('created_at');
-        table.timeStamp('updated_at');
-        table.integer('weird_join_id');
-        table.varChar(
-          'title',
-          length: 255,
-        );
-      },
-    );
+    schema.create('songs', (table) {
+      table.serial('id').primaryKey();
+      table.timeStamp('created_at');
+      table.timeStamp('updated_at');
+      table.integer('weird_join_id');
+      table.varChar('title', length: 255);
+    });
   }
 
   @override
@@ -84,13 +58,10 @@ class SongMigration extends Migration {
 class NumbaMigration extends Migration {
   @override
   void up(Schema schema) {
-    schema.create(
-      'numbas',
-      (table) {
-        table.integer('i').primaryKey();
-        table.integer('parent');
-      },
-    );
+    schema.create('numbas', (table) {
+      table.integer('i').primaryKey();
+      table.integer('parent');
+    });
   }
 
   @override
@@ -102,54 +73,26 @@ class NumbaMigration extends Migration {
 class FooMigration extends Migration {
   @override
   void up(Schema schema) {
-    schema.create(
-      'foos',
-      (table) {
-        table
-            .varChar(
-              'bar',
-              length: 255,
-            )
-            .primaryKey();
-      },
-    );
+    schema.create('foos', (table) {
+      table.varChar('bar', length: 255).primaryKey();
+    });
   }
 
   @override
   void down(Schema schema) {
-    schema.drop(
-      'foos',
-      cascade: true,
-    );
+    schema.drop('foos', cascade: true);
   }
 }
 
 class FooPivotMigration extends Migration {
   @override
   void up(Schema schema) {
-    schema.create(
-      'foo_pivots',
-      (table) {
-        table
-            .declare(
-              'weird_join_id',
-              ColumnType('int'),
-            )
-            .references(
-              'weird_joins',
-              'id',
-            );
-        table
-            .declare(
-              'foo_bar',
-              ColumnType('varchar'),
-            )
-            .references(
-              'foos',
-              'bar',
-            );
-      },
-    );
+    schema.create('foo_pivots', (table) {
+      table
+          .declare('weird_join_id', ColumnType('int'))
+          .references('weird_joins', 'id');
+      table.declare('foo_bar', ColumnType('varchar')).references('foos', 'bar');
+    });
   }
 
   @override

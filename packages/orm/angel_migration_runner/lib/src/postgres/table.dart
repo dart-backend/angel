@@ -232,8 +232,8 @@ class PostgresIndexes implements MutableIndexes {
           'ON "$tableName" (${columns.join(',')});',
         );
         break;
-      case IndexType.standardIndex:
-      case IndexType.none:
+      //case IndexType.standardIndex:
+      //case IndexType.none:
       default:
         _stack.add(
           'CREATE INDEX IF NOT EXISTS "$name" '

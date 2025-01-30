@@ -6,6 +6,7 @@
 * Updated `lints` to 5.0.0
 * Updated `analyzer` to 7.x
 * Updated dependencies to the latest release
+* Fixed ORM `copyFrom` nullability check error
 * Fixed issue #98: Take @SerializableField properties into account when generating `Migration`
 * Fixed issue #98: Take @SerializableField properties into account when generating `Query.parseRow`
 

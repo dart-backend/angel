@@ -3,6 +3,7 @@ import 'package:angel3_orm/angel3_orm.dart';
 import 'package:mysql_client/mysql_client.dart';
 import 'package:test/test.dart';
 import 'common.dart';
+import 'models/book.dart';
 import 'models/unorthodox.dart';
 
 void main() {
@@ -17,7 +18,11 @@ void main() {
       UnorthodoxMigration(),
       WeirdJoinMigration(),
       SongMigration(),
-      NumbaMigration()
+      NumbaMigration(),
+      AuthorMigration(),
+      FooMigration(),
+      FooPivotMigration(),
+      BookMigration()
     ]);
   });
 

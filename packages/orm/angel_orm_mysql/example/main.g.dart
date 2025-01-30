@@ -29,7 +29,10 @@ class TodoMigration extends Migration {
 // **************************************************************************
 
 class TodoQuery extends Query<Todo, TodoQueryWhere> {
-  TodoQuery({Query? parent, Set<String>? trampoline}) : super(parent: parent) {
+  TodoQuery({
+    Query? parent,
+    Set<String>? trampoline,
+  }) : super(parent: parent) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = TodoQueryWhere(this);
@@ -54,7 +57,13 @@ class TodoQuery extends Query<Todo, TodoQueryWhere> {
 
   @override
   List<String> get fields {
-    const _fields = ['id', 'created_at', 'updated_at', 'is_complete', 'text'];
+    const _fields = [
+      'id',
+      'created_at',
+      'updated_at',
+      'is_complete',
+      'text',
+    ];
     return _selectedFields.isEmpty
         ? _fields
         : _fields.where((field) => _selectedFields.contains(field)).toList();
@@ -80,11 +89,14 @@ class TodoQuery extends Query<Todo, TodoQueryWhere> {
       return Optional.empty();
     }
     var model = Todo(
-        id: fields.contains('id') ? row[0].toString() : null,
-        createdAt: fields.contains('created_at') ? mapToDateTime(row[1]) : null,
-        updatedAt: fields.contains('updated_at') ? mapToDateTime(row[2]) : null,
-        isComplete: fields.contains('is_complete') ? mapToBool(row[3]) : null,
-        text: fields.contains('text') ? (row[4] as String?) : null);
+      id: fields.contains('id') ? row[0].toString() : null,
+      createdAt:
+          fields.contains('created_at') ? mapToNullableDateTime(row[1]) : null,
+      updatedAt:
+          fields.contains('updated_at') ? mapToNullableDateTime(row[2]) : null,
+      isComplete: fields.contains('is_complete') ? mapToBool(row[3]) : null,
+      text: fields.contains('text') ? (row[4] as String?) : null,
+    );
     return Optional.of(model);
   }
 
@@ -96,11 +108,26 @@ class TodoQuery extends Query<Todo, TodoQueryWhere> {
 
 class TodoQueryWhere extends QueryWhere {
   TodoQueryWhere(TodoQuery query)
-      : id = NumericSqlExpressionBuilder<int>(query, 'id'),
-        createdAt = DateTimeSqlExpressionBuilder(query, 'created_at'),
-        updatedAt = DateTimeSqlExpressionBuilder(query, 'updated_at'),
-        isComplete = BooleanSqlExpressionBuilder(query, 'is_complete'),
-        text = StringSqlExpressionBuilder(query, 'text');
+      : id = NumericSqlExpressionBuilder<int>(
+          query,
+          'id',
+        ),
+        createdAt = DateTimeSqlExpressionBuilder(
+          query,
+          'created_at',
+        ),
+        updatedAt = DateTimeSqlExpressionBuilder(
+          query,
+          'updated_at',
+        ),
+        isComplete = BooleanSqlExpressionBuilder(
+          query,
+          'is_complete',
+        ),
+        text = StringSqlExpressionBuilder(
+          query,
+          'text',
+        );
 
   final NumericSqlExpressionBuilder<int> id;
 
@@ -114,7 +141,13 @@ class TodoQueryWhere extends QueryWhere {
 
   @override
   List<SqlExpressionBuilder> get expressionBuilders {
-    return [id, createdAt, updatedAt, isComplete, text];
+    return [
+      id,
+      createdAt,
+      updatedAt,
+      isComplete,
+      text,
+    ];
   }
 }
 
@@ -129,26 +162,31 @@ class TodoQueryValues extends MapQueryValues {
   }
 
   set id(String? value) => values['id'] = value;
+
   DateTime? get createdAt {
     return (values['created_at'] as DateTime?);
   }
 
   set createdAt(DateTime? value) => values['created_at'] = value;
+
   DateTime? get updatedAt {
     return (values['updated_at'] as DateTime?);
   }
 
   set updatedAt(DateTime? value) => values['updated_at'] = value;
+
   bool? get isComplete {
     return (values['is_complete'] as bool?);
   }
 
   set isComplete(bool? value) => values['is_complete'] = value;
+
   String? get text {
     return (values['text'] as String?);
   }
 
   set text(String? value) => values['text'] = value;
+
   void copyFrom(Todo model) {
     createdAt = model.createdAt;
     updatedAt = model.updatedAt;
@@ -163,12 +201,13 @@ class TodoQueryValues extends MapQueryValues {
 
 @generatedSerializable
 class Todo extends _Todo {
-  Todo(
-      {this.id,
-      this.createdAt,
-      this.updatedAt,
-      this.isComplete = false,
-      this.text});
+  Todo({
+    this.id,
+    this.createdAt,
+    this.updatedAt,
+    this.isComplete = false,
+    this.text,
+  });
 
   /// A unique identifier corresponding to this item.
   @override
@@ -188,12 +227,13 @@ class Todo extends _Todo {
   @override
   String? text;
 
-  Todo copyWith(
-      {String? id,
-      DateTime? createdAt,
-      DateTime? updatedAt,
-      bool? isComplete,
-      String? text}) {
+  Todo copyWith({
+    String? id,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    bool? isComplete,
+    String? text,
+  }) {
     return Todo(
         id: id ?? this.id,
         createdAt: createdAt ?? this.createdAt,
@@ -214,7 +254,13 @@ class Todo extends _Todo {
 
   @override
   int get hashCode {
-    return hashObjects([id, createdAt, updatedAt, isComplete, text]);
+    return hashObjects([
+      id,
+      createdAt,
+      updatedAt,
+      isComplete,
+      text,
+    ]);
   }
 
   @override
@@ -252,8 +298,10 @@ class TodoSerializer extends Codec<Todo, Map> {
 
   @override
   TodoEncoder get encoder => const TodoEncoder();
+
   @override
   TodoDecoder get decoder => const TodoDecoder();
+
   static Todo fromMap(Map map) {
     return Todo(
         id: map['id'] as String?,
@@ -291,7 +339,7 @@ abstract class TodoFields {
     createdAt,
     updatedAt,
     isComplete,
-    text
+    text,
   ];
 
   static const String id = 'id';
