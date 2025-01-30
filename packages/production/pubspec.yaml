@@ -15,7 +15,7 @@ dependencies:
   intl: ^0.19.0
 dev_dependencies:
   lints: ^5.0.0
-#dependency_overrides:
+# dependency_overrides:
 #   angel3_container:
 #     path: ../container/angel_container
 #  angel3_framework:
