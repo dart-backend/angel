@@ -5,7 +5,8 @@
 [![Discord](https://img.shields.io/discord/1060322353214660698)](https://discord.gg/3X6bxTUdCM)
 [![License](https://img.shields.io/github/license/dart-backend/angel)](https://github.com/dart-backend/angel/tree/master/packages/orm/angel_orm_test/LICENSE)
 
-**Deprecated as these are test cases for angel3_orm_mysql and angel3_orm_postgres** Common test cases for Angel3 ORM. Reference implmentation of generated ORM files.
+**Deprecated as these are test cases for angel3_orm_mysql and angel3_orm_postgres**
+Common test cases for Angel3 ORM. Reference implmentation of generated ORM files.
 
 ## Supported databases
 

@@ -46,7 +46,7 @@ The status of the project is as follows:
 
 Branch: `master`
 
-* Dart version : 3.x.x or later.
+* Dart version : 3.6.x or later.
 * Publish      : Yes. Refer to packages with `angel3_` prefix on [pub.dev](https://pub.dev/publishers/dukefirehawk.com/packages).
 * Null Safety  : Yes
 * Status       : Production
@@ -61,12 +61,18 @@ For more details, checkout [Project Status](https://github.com/dart-backend/ange
 * Performance optimsation
 * Update ORM to support macro
 
-### Release 8.0.0 (Current)
+### Release 8.5.0 (Current)
+
+* Updated `angel3_` packages to require dart >= 3.6.0
+* Updated dependencies to the latest
+* Updated code generator to use `analyzer` 7.x.x
+* Deprecated `angel_orm_test`
+
+### Release 8.0.0
 
 * Updated `angel3_` packages to require dart >= 3.0.0
 * Updated dependencies to the latest
 * Updated code generator to use `analyzer` 6.x.x
-* Resolved issues related to generated container
 
 ### Release 7.0.0
 
