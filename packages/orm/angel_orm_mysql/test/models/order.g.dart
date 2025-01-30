@@ -9,26 +9,17 @@ part of 'order.dart';
 class OrderMigration extends Migration {
   @override
   void up(Schema schema) {
-    schema.create(
-      'orders',
-      (table) {
-        table.serial('id').primaryKey();
-        table.timeStamp('created_at');
-        table.timeStamp('updated_at');
-        table.integer('employee_id');
-        table.timeStamp('order_date');
-        table.integer('shipper_id');
-        table
-            .declare(
-              'customer_id',
-              ColumnType('int'),
-            )
-            .references(
-              'customers',
-              'id',
-            );
-      },
-    );
+    schema.create('orders', (table) {
+      table.serial('id').primaryKey();
+      table.timeStamp('created_at');
+      table.timeStamp('updated_at');
+      table.integer('employee_id');
+      table.timeStamp('order_date');
+      table.integer('shipper_id');
+      table
+          .declare('customer_id', ColumnType('int'))
+          .references('customers', 'id');
+    });
   }
 
   @override
@@ -40,14 +31,11 @@ class OrderMigration extends Migration {
 class CustomerMigration extends Migration {
   @override
   void up(Schema schema) {
-    schema.create(
-      'customers',
-      (table) {
-        table.serial('id').primaryKey();
-        table.timeStamp('created_at');
-        table.timeStamp('updated_at');
-      },
-    );
+    schema.create('customers', (table) {
+      table.serial('id').primaryKey();
+      table.timeStamp('created_at');
+      table.timeStamp('updated_at');
+    });
   }
 
   @override
@@ -62,9 +50,9 @@ class CustomerMigration extends Migration {
 
 class OrderQuery extends Query<Order, OrderQueryWhere> {
   OrderQuery({
-    super.parent,
+    Query? parent,
     Set<String>? trampoline,
-  }) {
+  }) : super(parent: parent) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = OrderQueryWhere(this);
@@ -105,7 +93,7 @@ class OrderQuery extends Query<Order, OrderQueryWhere> {
 
   @override
   List<String> get fields {
-    const fields = [
+    const _fields = [
       'id',
       'created_at',
       'updated_at',
@@ -115,8 +103,8 @@ class OrderQuery extends Query<Order, OrderQueryWhere> {
       'shipper_id',
     ];
     return _selectedFields.isEmpty
-        ? fields
-        : fields.where((field) => _selectedFields.contains(field)).toList();
+        ? _fields
+        : _fields.where((field) => _selectedFields.contains(field)).toList();
   }
 
   OrderQuery select(List<String> selectedFields) {
@@ -289,9 +277,9 @@ class OrderQueryValues extends MapQueryValues {
 
 class CustomerQuery extends Query<Customer, CustomerQueryWhere> {
   CustomerQuery({
-    super.parent,
+    Query? parent,
     Set<String>? trampoline,
-  }) {
+  }) : super(parent: parent) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = CustomerQueryWhere(this);
@@ -316,14 +304,14 @@ class CustomerQuery extends Query<Customer, CustomerQueryWhere> {
 
   @override
   List<String> get fields {
-    const fields = [
+    const _fields = [
       'id',
       'created_at',
       'updated_at',
     ];
     return _selectedFields.isEmpty
-        ? fields
-        : fields.where((field) => _selectedFields.contains(field)).toList();
+        ? _fields
+        : _fields.where((field) => _selectedFields.contains(field)).toList();
   }
 
   CustomerQuery select(List<String> selectedFields) {

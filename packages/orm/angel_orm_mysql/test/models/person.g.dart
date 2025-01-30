@@ -9,19 +9,13 @@ part of 'person.dart';
 class PersonMigration extends Migration {
   @override
   void up(Schema schema) {
-    schema.create(
-      'persons',
-      (table) {
-        table.integer('id').primaryKey();
-        table.timeStamp('created_at');
-        table.timeStamp('updated_at');
-        table.varChar(
-          'name',
-          length: 255,
-        );
-        table.integer('age');
-      },
-    );
+    schema.create('persons', (table) {
+      table.serial('id').primaryKey();
+      table.timeStamp('created_at');
+      table.timeStamp('updated_at');
+      table.varChar('name', length: 255);
+      table.integer('age');
+    });
   }
 
   @override
@@ -36,9 +30,9 @@ class PersonMigration extends Migration {
 
 class PersonQuery extends Query<Person, PersonQueryWhere> {
   PersonQuery({
-    super.parent,
+    Query? parent,
     Set<String>? trampoline,
-  }) {
+  }) : super(parent: parent) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = PersonQueryWhere(this);
@@ -63,7 +57,7 @@ class PersonQuery extends Query<Person, PersonQueryWhere> {
 
   @override
   List<String> get fields {
-    const fields = [
+    const _fields = [
       'id',
       'created_at',
       'updated_at',
@@ -71,8 +65,8 @@ class PersonQuery extends Query<Person, PersonQueryWhere> {
       'age',
     ];
     return _selectedFields.isEmpty
-        ? fields
-        : fields.where((field) => _selectedFields.contains(field)).toList();
+        ? _fields
+        : _fields.where((field) => _selectedFields.contains(field)).toList();
   }
 
   PersonQuery select(List<String> selectedFields) {
@@ -204,9 +198,9 @@ class PersonQueryValues extends MapQueryValues {
 class PersonWithLastOrderQuery
     extends Query<PersonWithLastOrder, PersonWithLastOrderQueryWhere> {
   PersonWithLastOrderQuery({
-    super.parent,
+    Query? parent,
     Set<String>? trampoline,
-  }) {
+  }) : super(parent: parent) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     expressions['last_order_name'] = 'po.name';
@@ -234,14 +228,14 @@ class PersonWithLastOrderQuery
 
   @override
   List<String> get fields {
-    const fields = [
+    const _fields = [
       'name',
       'last_order_name',
       'last_order_price',
     ];
     return _selectedFields.isEmpty
-        ? fields
-        : fields.where((field) => _selectedFields.contains(field)).toList();
+        ? _fields
+        : _fields.where((field) => _selectedFields.contains(field)).toList();
   }
 
   PersonWithLastOrderQuery select(List<String> selectedFields) {

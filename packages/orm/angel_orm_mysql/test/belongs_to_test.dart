@@ -5,6 +5,7 @@ import 'package:test/test.dart';
 import 'common.dart';
 import 'models/book.dart';
 
+import 'models/unorthodox.dart';
 import 'util.dart';
 
 void main() {

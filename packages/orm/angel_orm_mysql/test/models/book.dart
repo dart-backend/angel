@@ -26,6 +26,6 @@ abstract class _Author extends Model {
   @SerializableField(defaultValue: 'Tobe Osakwe')
   String? get name;
 
-  //@Column(name: "pub")
-  //String? publisher;
+  @Column(name: "pub")
+  String? publisher;
 }

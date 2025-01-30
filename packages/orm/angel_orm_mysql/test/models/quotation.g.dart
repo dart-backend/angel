@@ -9,22 +9,11 @@ part of 'quotation.dart';
 class QuotationMigration extends Migration {
   @override
   void up(Schema schema) {
-    schema.create(
-      'quotations',
-      (table) {
-        table
-            .varChar(
-              'id',
-              length: 255,
-            )
-            .primaryKey();
-        table.varChar(
-          'name',
-          length: 255,
-        );
-        table.double('price');
-      },
-    );
+    schema.create('quotations', (table) {
+      table.varChar('id', length: 255).primaryKey();
+      table.varChar('name', length: 255);
+      table.double('price');
+    });
   }
 
   @override

@@ -9,42 +9,30 @@ part of 'leg.dart';
 class LegMigration extends Migration {
   @override
   void up(Schema schema) {
-    schema.create(
-      'legs',
-      (table) {
-        table.integer('id').primaryKey();
-        table.timeStamp('created_at');
-        table.timeStamp('updated_at');
-        table.varChar(
-          'name',
-          length: 255,
-        );
-      },
-    );
+    schema.create('legs', (table) {
+      table.serial('id').primaryKey();
+      table.timeStamp('created_at');
+      table.timeStamp('updated_at');
+      table.varChar('name', length: 255);
+    });
   }
 
   @override
   void down(Schema schema) {
-    schema.drop(
-      'legs',
-      cascade: true,
-    );
+    schema.drop('legs', cascade: true);
   }
 }
 
 class FootMigration extends Migration {
   @override
   void up(Schema schema) {
-    schema.create(
-      'feet',
-      (table) {
-        table.serial('id').primaryKey();
-        table.timeStamp('created_at');
-        table.timeStamp('updated_at');
-        table.integer('leg_id');
-        table.double('n_toes');
-      },
-    );
+    schema.create('feet', (table) {
+      table.serial('id').primaryKey();
+      table.timeStamp('created_at');
+      table.timeStamp('updated_at');
+      table.integer('leg_id');
+      table.double('n_toes');
+    });
   }
 
   @override
@@ -59,9 +47,9 @@ class FootMigration extends Migration {
 
 class LegQuery extends Query<Leg, LegQueryWhere> {
   LegQuery({
-    super.parent,
+    Query? parent,
     Set<String>? trampoline,
-  }) {
+  }) : super(parent: parent) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = LegQueryWhere(this);
@@ -104,15 +92,15 @@ class LegQuery extends Query<Leg, LegQueryWhere> {
 
   @override
   List<String> get fields {
-    const fields = [
+    const _fields = [
       'id',
       'created_at',
       'updated_at',
       'name',
     ];
     return _selectedFields.isEmpty
-        ? fields
-        : fields.where((field) => _selectedFields.contains(field)).toList();
+        ? _fields
+        : _fields.where((field) => _selectedFields.contains(field)).toList();
   }
 
   LegQuery select(List<String> selectedFields) {
@@ -238,9 +226,9 @@ class LegQueryValues extends MapQueryValues {
 
 class FootQuery extends Query<Foot, FootQueryWhere> {
   FootQuery({
-    super.parent,
+    Query? parent,
     Set<String>? trampoline,
-  }) {
+  }) : super(parent: parent) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = FootQueryWhere(this);
@@ -265,7 +253,7 @@ class FootQuery extends Query<Foot, FootQueryWhere> {
 
   @override
   List<String> get fields {
-    const fields = [
+    const _fields = [
       'id',
       'created_at',
       'updated_at',
@@ -273,8 +261,8 @@ class FootQuery extends Query<Foot, FootQueryWhere> {
       'n_toes',
     ];
     return _selectedFields.isEmpty
-        ? fields
-        : fields.where((field) => _selectedFields.contains(field)).toList();
+        ? _fields
+        : _fields.where((field) => _selectedFields.contains(field)).toList();
   }
 
   FootQuery select(List<String> selectedFields) {

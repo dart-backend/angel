@@ -1,5 +1,4 @@
 import 'dart:collection';
-import 'dart:js_interop';
 
 import 'package:angel3_migration/angel3_migration.dart';
 import 'package:angel3_orm/angel3_orm.dart';
@@ -14,6 +13,13 @@ abstract class MySqlGenerator {
 
   static String columnType(MigrationColumn column) {
     var str = column.type.name;
+
+    // Handle reference key
+    if (str.toLowerCase() == ColumnType.int.name &&
+        column.externalReferences.isNotEmpty) {
+      return 'BIGINT UNSIGNED';
+    }
+
     // Map timestamp time to datetime
     if (column.type == ColumnType.timeStamp) {
       str = ColumnType.dateTime.name;
