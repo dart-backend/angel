@@ -55,3 +55,13 @@ double mapToDouble(dynamic value) {
   }
   return value;
 }
+
+/*
+final showDebugPrint = true;
+
+void debugPrint(Object obj) {
+  if (showDebugPrint) {
+    print(obj);
+  }
+}
+*/

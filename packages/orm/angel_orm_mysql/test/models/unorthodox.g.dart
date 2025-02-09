@@ -59,7 +59,7 @@ class NumbaMigration extends Migration {
   @override
   void up(Schema schema) {
     schema.create('numbas', (table) {
-      table.integer('i').primaryKey();
+      table.integer('i');
       table.integer('parent');
     });
   }

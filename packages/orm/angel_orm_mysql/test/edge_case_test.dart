@@ -1,5 +1,6 @@
 import 'package:angel3_migration_runner/angel3_migration_runner.dart';
 import 'package:angel3_orm/angel3_orm.dart';
+import 'package:logging/logging.dart';
 import 'package:mysql_client/mysql_client.dart';
 import 'package:test/test.dart';
 import 'common.dart';
@@ -7,6 +8,11 @@ import 'models/book.dart';
 import 'models/unorthodox.dart';
 
 void main() {
+  Logger.root.level = Level.ALL; // defaults to Level.INFO
+  Logger.root.onRecord.listen((record) {
+    print('${record.level.name}: ${record.time}: ${record.message}');
+  });
+
   late MySQLConnection conn;
   late QueryExecutor executor;
   late MigrationRunner runner;
@@ -104,6 +110,7 @@ void main() {
             ..values.parent = weirdJoin!.id
             ..values.i = i;
           var modelObj = await query.insert(executor);
+          print("$i = $modelObj");
           expect(modelObj.isPresent, true);
           modelObj.ifPresent((model) {
             numbas.add(model);
@@ -114,8 +121,7 @@ void main() {
         var wjObj = await query.getOne(executor);
         expect(wjObj.isPresent, true);
         wjObj.ifPresent((wj) {
-          //print(wj.toJson());
-          expect(wj.numbas, numbas);
+          expect(wj.numbas, numbas.reversed);
         });
       });
 

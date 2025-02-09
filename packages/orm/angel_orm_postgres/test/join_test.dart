@@ -1,5 +1,6 @@
 import 'package:angel3_migration_runner/angel3_migration_runner.dart';
 import 'package:angel3_orm/angel3_orm.dart';
+import 'package:logging/logging.dart';
 import 'package:postgres/postgres.dart';
 import 'package:test/test.dart';
 
@@ -8,6 +9,11 @@ import 'models/person.dart';
 import 'models/person_order.dart';
 
 void main() {
+  Logger.root.level = Level.ALL; // defaults to Level.INFO
+  Logger.root.onRecord.listen((record) {
+    print('${record.level.name}: ${record.time}: ${record.message}');
+  });
+
   late Connection conn;
   late QueryExecutor executor;
   late MigrationRunner runner;
@@ -75,8 +81,8 @@ void main() {
     var query = OrderWithPersonInfoQuery();
     query.join(
         personQuery.tableName, PersonOrderFields.personId, PersonFields.id,
-        alias: 'P');
-    query.where?.raw("P.name = '${originalPerson?.name}'");
+        alias: 'p');
+    query.where?.raw("p.name = '${originalPerson?.name}'");
     var orders = await query.get(executor);
     expect(
         orders.every((element) =>

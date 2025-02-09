@@ -22,7 +22,7 @@ class MySqlSchema extends Schema {
     int affectedRows = 0;
     await connection.transactional((ctx) async {
       var sql = compile();
-      print('Query: $sql');
+      //print('Query: $sql');
       var result = await ctx.execute(sql).catchError((e) {
         print(e);
         _log.severe('Failed to run query: [ $sql ]', e);

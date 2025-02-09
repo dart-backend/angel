@@ -1,5 +1,5 @@
 name: angel3_orm_mysql
-version: 8.3.0
+version: 8.3.1
 description: MySQL support for Angel3 ORM. Includes functionality for querying and transactions.
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dart-backend/angel/tree/master/packages/orm/angel_orm_mysql
@@ -21,7 +21,7 @@ dev_dependencies:
   lints: ^5.0.0
   io: ^1.0.4
   build_runner: ^2.4.0
-# dependency_overrides:
+dependency_overrides:
 #   angel3_serialize:
 #     path: ../../serialize/angel_serialize
 #  angel3_serialize_generator:
@@ -30,11 +30,11 @@ dev_dependencies:
 #     path: ../../model
 #   angel3_orm_test:
 #     path: ../angel_orm_test
-#   angel3_orm:
-#     path: ../angel_orm
+  angel3_orm:
+    path: ../angel_orm
 #  angel3_orm_generator:
 #     path: ../angel_orm_generator
 #  angel3_migration:
 #    path: ../angel_migration
-#  angel3_migration_runner:
-#    path: ../angel_migration_runner
+  angel3_migration_runner:
+    path: ../angel_migration_runner

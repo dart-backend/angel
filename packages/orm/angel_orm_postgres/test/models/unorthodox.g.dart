@@ -59,7 +59,7 @@ class NumbaMigration extends Migration {
   @override
   void up(Schema schema) {
     schema.create('numbas', (table) {
-      table.integer('i').primaryKey();
+      table.integer('i');
       table.integer('parent');
     });
   }
@@ -695,7 +695,7 @@ class NumbaQuery extends Query<Numba, NumbaQueryWhere> {
       return Optional.empty();
     }
     var model = Numba(
-      i: fields.contains('i') ? (row[0] as int) : 0,
+      i: fields.contains('i') ? (row[0] as int?) : null,
       parent: fields.contains('parent') ? (row[1] as int?) : null,
     );
     return Optional.of(model);
@@ -737,11 +737,11 @@ class NumbaQueryValues extends MapQueryValues {
     return {};
   }
 
-  int get i {
-    return (values['i'] as int);
+  int? get i {
+    return (values['i'] as int?);
   }
 
-  set i(int value) => values['i'] = value;
+  set i(int? value) => values['i'] = value;
 
   int? get parent {
     return (values['parent'] as int?);
@@ -1280,12 +1280,12 @@ class Song extends _Song {
 @generatedSerializable
 class Numba extends _Numba {
   Numba({
-    required this.i,
+    this.i,
     this.parent,
   });
 
   @override
-  int i;
+  int? i;
 
   @override
   int? parent;
@@ -1639,7 +1639,7 @@ class NumbaSerializer extends Codec<Numba, Map> {
   NumbaDecoder get decoder => const NumbaDecoder();
 
   static Numba fromMap(Map map) {
-    return Numba(i: map['i'] as int, parent: map['parent'] as int?);
+    return Numba(i: map['i'] as int?, parent: map['parent'] as int?);
   }
 
   static Map<String, dynamic> toMap(_Numba? model) {

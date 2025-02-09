@@ -343,7 +343,7 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
   Future<List<T>> delete(QueryExecutor executor) {
     var sql = compile({}, preamble: 'DELETE', withFields: false);
 
-    //_log.warning("Delete Query = $sql");
+    //_log.fine("Delete Query = $sql");
 
     if (_joins.isEmpty) {
       return executor
@@ -393,17 +393,19 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
       }
 
       _log.fine("Insert Query = $sql");
+      _log.fine("Substritution Values = $substitutionValues");
+      _log.fine("returning Query = $returningSql");
 
       return executor
           .query(tableName, sql, substitutionValues,
               returningQuery: returningSql)
           .then((result) {
         // Return SQL execution results
-        //if (result.isNotEmpty) {
-        //  for (var element in result.first) {
-        //    _log.fine("value: $element");
-        //  }
-        //}
+        if (result.isNotEmpty) {
+          for (var element in result.first) {
+            _log.fine("value: $element");
+          }
+        }
         return result.isEmpty ? Optional.empty() : deserialize(result.first);
       });
     }

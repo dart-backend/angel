@@ -1,5 +1,10 @@
 # Change Log
 
+## 8.3.1
+
+* Updated test cases
+* Fixed deletion to return deleted records
+
 ## 8.3.0
 
 * Require Dart >= 3.6

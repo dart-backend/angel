@@ -1,5 +1,9 @@
 # Change Log
 
+## 8.4.1
+
+* [MySQL] Generated `int` primary key as `INT NOT NULL AUTO_INCREMENT`
+
 ## 8.4.0
 
 * Require Dart >= 3.6
