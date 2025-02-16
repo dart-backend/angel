@@ -11,7 +11,7 @@ final DateTime y2k = DateTime(2000, 1, 1);
 void main() {
   Logger.root.level = Level.ALL; // defaults to Level.INFO
   Logger.root.onRecord.listen((record) {
-    print('${record.level.name}: ${record.time}: ${record.message}');
+    print('${record.loggerName}: ${record.time}: ${record.message}');
   });
 
   late MySQLConnection conn;
@@ -26,6 +26,9 @@ void main() {
 
   tearDown(() async {
     await dropTables(runner);
+    if (conn.connected) {
+      await conn.close();
+    }
   });
 
   test('to where', () {
@@ -197,7 +200,7 @@ void main() {
         ..recalledAt = recalledAt
         ..createdAt = now
         ..updatedAt = now;
-      var carOpt = await (query.insert(executor));
+      var carOpt = await query.insert(executor);
       expect(carOpt.isPresent, true);
       carOpt.ifPresent((car) {
         var car = carOpt.value;

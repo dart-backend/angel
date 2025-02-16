@@ -1,5 +1,9 @@
 # Change Log
 
+## 8.4.1
+
+* Update `angel3_serialize_generator`
+
 ## 8.4.0
 
 * Require Dart >= 3.6

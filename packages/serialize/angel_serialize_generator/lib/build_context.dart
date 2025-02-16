@@ -248,7 +248,7 @@ class ShimFieldImpl extends FieldElementImpl {
   //@override
   //final DartType type;
 
-  ShimFieldImpl(String name, DartType shimFieldType) : super(name, -1) {
+  ShimFieldImpl(String name, dynamic shimFieldType) : super(name, -1) {
     type = shimFieldType;
   }
 }

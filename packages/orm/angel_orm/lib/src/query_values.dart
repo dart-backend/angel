@@ -14,21 +14,24 @@ abstract class QueryValues {
     }
   }
 
+  /// Check if a field is in the query
+  bool hasField(String fieldName) {
+    var data = Map<String, dynamic>.from(toMap());
+    var keys = data.keys.toList();
+
+    return keys.contains(fieldName);
+  }
+
   String compileInsert(Query query, String tableName) {
     var data = Map<String, dynamic>.from(toMap());
     var now = DateTime.now();
-    if (data.containsKey('created_at') && data['created_at'] == null) {
-      data['created_at'] = now;
+
+    for (var key in ['created_at', 'createdAt', 'updated_at', 'updatedAt']) {
+      if (data.containsKey(key) && data[key] == null) {
+        data[key] = now;
+      }
     }
-    if (data.containsKey('createdAt') && data['createdAt'] == null) {
-      data['createdAt'] = now;
-    }
-    if (data.containsKey('updated_at') && data['updated_at'] == null) {
-      data['updated_at'] = now;
-    }
-    if (data.containsKey('updatedAt') && data['updatedAt'] == null) {
-      data['updatedAt'] = now;
-    }
+
     var keys = data.keys.toList();
     keys.where((k) => !query.fields.contains(k)).forEach(data.remove);
     if (data.isEmpty) {

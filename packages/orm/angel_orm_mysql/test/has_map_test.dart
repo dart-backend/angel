@@ -11,7 +11,7 @@ import 'models/has_map.dart';
 void main() {
   Logger.root.level = Level.ALL; // defaults to Level.INFO
   Logger.root.onRecord.listen((record) {
-    print('${record.level.name}: ${record.time}: ${record.message}');
+    print('${record.loggerName}: ${record.time}: ${record.message}');
   });
 
   late MySQLConnection conn;
@@ -24,7 +24,12 @@ void main() {
     runner = await createTables(conn, [HasMapMigration()]);
   });
 
-  tearDown(() async => await dropTables(runner));
+  tearDown(() async {
+    await dropTables(runner);
+    if (conn.connected) {
+      await conn.close();
+    }
+  });
 
   test('insert', () async {
     var query = HasMapQuery();

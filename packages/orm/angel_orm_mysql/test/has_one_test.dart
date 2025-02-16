@@ -9,7 +9,7 @@ import 'models/leg.dart';
 void main() {
   Logger.root.level = Level.ALL; // defaults to Level.INFO
   Logger.root.onRecord.listen((record) {
-    print('${record.level.name}: ${record.time}: ${record.message}');
+    print('${record.loggerName}: ${record.time}: ${record.message}');
   });
 
   late MySQLConnection conn;
@@ -25,7 +25,12 @@ void main() {
     originalLeg = (await query.insert(executor)).value;
   });
 
-  tearDown(() async => await dropTables(runner));
+  tearDown(() async {
+    await dropTables(runner);
+    if (conn.connected) {
+      await conn.close();
+    }
+  });
 
   test('sets to null if no child', () async {
     //print(LegQuery().compile({}));

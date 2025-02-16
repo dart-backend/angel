@@ -11,7 +11,7 @@ import 'util.dart';
 void main() {
   Logger.root.level = Level.ALL; // defaults to Level.INFO
   Logger.root.onRecord.listen((record) {
-    print('${record.level.name}: ${record.time}: ${record.message}');
+    print('${record.loggerName}: ${record.time}: ${record.message}');
   });
 
   late MySQLConnection conn;
@@ -50,11 +50,14 @@ void main() {
 
     var canPubQuery = RoleQuery()..values.name = 'can_pub';
     var canSubQuery = RoleQuery()..values.name = 'can_sub';
+
     canPub = (await canPubQuery.insert(executor)).value;
-    print('=== CANPUB: ${canPub?.toJson()}');
+    print(canPub);
+    //print('=== CANPUB: ${canPub?.toJson()}');
     // await dumpQuery(canPubQuery.compile(Set()));
     canSub = (await canSubQuery.insert(executor)).value;
-    print('=== CANSUB: ${canSub?.toJson()}');
+    print(canSub);
+    //print('=== CANSUB: ${canSub?.toJson()}');
 
     var thosakweQuery = UserQuery();
     thosakweQuery.values
@@ -94,7 +97,12 @@ void main() {
     print('==================================================\n\n');
   });
 
-  tearDown(() async => await dropTables(runner));
+  tearDown(() async {
+    await dropTables(runner);
+    if (conn.connected) {
+      await conn.close();
+    }
+  });
 
   Future<User?> fetchThosakwe() async {
     var query = UserQuery()..where!.id.equals(int.parse(thosakwe!.id!));

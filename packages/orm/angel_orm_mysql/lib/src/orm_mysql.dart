@@ -95,9 +95,9 @@ class MySqlExecutor extends QueryExecutor {
       }
     }
 
-    _logger.fine('Query: $query');
-    _logger.fine('Values: $substitutionValues');
-    _logger.fine('Returning Query: $returningQuery');
+    //_logger.fine('Query: $query');
+    //_logger.fine('Values: $substitutionValues');
+    //_logger.fine('Returning Query: $returningQuery');
 
     if (returningQuery.isNotEmpty) {
       // Handle insert, update and delete
@@ -128,7 +128,7 @@ class MySqlExecutor extends QueryExecutor {
     List<List<dynamic>> deletedResults = [];
     if (isDeleteQuery) {
       var selectQuery = query.replaceFirst("DELETE", "SELECT *");
-      _logger.fine('Select query for delete: $selectQuery');
+      //_logger.fine('Select query for delete: $selectQuery');
 
       deletedResults = await _connection
           .execute(selectQuery, substitutionValues)
@@ -145,7 +145,8 @@ class MySqlExecutor extends QueryExecutor {
       if (isDeleteQuery) {
         return deletedResults;
       } else {
-        return results.rows.map((r) => r.typedAssoc().values.toList()).toList();
+        //return results.rows.map((r) => r.typedAssoc().values.toList()).toList();
+        return parseSQLResult(results);
       }
     });
   }
@@ -160,6 +161,58 @@ class MySqlExecutor extends QueryExecutor {
 
     return newQuery;
   }
+
+  List<List<dynamic>> parseSQLResult(IResultSet res) {
+    var colTypes = res.cols.map((col) => col.type).toList();
+
+    var mappedResult = <List>[];
+    for (var row in res.rows) {
+      List<dynamic> retResult = [];
+      for (var i = 0; i < row.numOfColumns; i++) {
+        var val = row.typedColAt(i);
+
+        //retResult.add(colTypes[i].convertStringValueToProvidedType(val));
+        retResult.add(val);
+      }
+      mappedResult.add(retResult);
+    }
+
+    return mappedResult;
+  }
+
+  /*
+  Map<String, dynamic> parseSQLNamedResult(IResultSet res) {
+    var colNames = [];
+    var columns = [];
+    var prefix = "1__";
+    for (var c in res.cols) {
+      if (colNames.contains(c.name)) {
+        // If collumn name is duplicated, add "1_" as prefix
+        var tmpColName = "$prefix${c.name}";
+        while (colNames.contains(tmpColName)) {
+          tmpColName = "$prefix$tmpColName";
+        }
+        columns.add((name: tmpColName, type: c.type));
+        colNames.add(tmpColName);
+      } else {
+        columns.add((name: c.name, type: c.type));
+        colNames.add(c.name);
+      }
+    }
+
+    var row = res.rows.first;
+
+    Map<String, dynamic> retResult = {};
+    for (var i = 0; i < row.numOfColumns; i++) {
+      var val = row.typedColAt(i);
+      var colName = columns[i].name;
+
+      retResult[colName] = val;
+    }
+
+    return retResult;
+  }
+  */
 
   @override
   Future<T> transaction<T>(FutureOr<T> Function(QueryExecutor) f) async {

@@ -1,5 +1,9 @@
 # Change Log
 
+## 8.4.1
+
+* Fixed `ShimFieldImpl` due to change of `type` from `DartType` to `TypeImpl`
+
 ## 8.4.0
 
 * Require Dart >= 3.6

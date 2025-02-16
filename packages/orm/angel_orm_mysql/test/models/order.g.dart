@@ -132,10 +132,10 @@ class OrderQuery extends Query<Order, OrderQueryWhere> {
           fields.contains('created_at') ? mapToNullableDateTime(row[1]) : null,
       updatedAt:
           fields.contains('updated_at') ? mapToNullableDateTime(row[2]) : null,
-      employeeId: fields.contains('employee_id') ? (row[4] as int?) : null,
+      employeeId: fields.contains('employee_id') ? mapToInt(row[4]) : null,
       orderDate:
           fields.contains('order_date') ? mapToNullableDateTime(row[5]) : null,
-      shipperId: fields.contains('shipper_id') ? (row[6] as int?) : null,
+      shipperId: fields.contains('shipper_id') ? mapToInt(row[6]) : null,
     );
     if (row.length > 7) {
       var modelOpt = CustomerQuery().parseRow(row.skip(7).take(3).toList());

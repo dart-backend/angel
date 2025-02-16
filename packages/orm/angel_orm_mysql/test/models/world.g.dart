@@ -83,8 +83,8 @@ class WorldQuery extends Query<World, WorldQueryWhere> {
       return Optional.empty();
     }
     var model = World(
-      id: fields.contains('id') ? (row[0] as int?) : null,
-      randomNumber: fields.contains('random_number') ? (row[1] as int?) : null,
+      id: fields.contains('id') ? mapToInt(row[0]) : null,
+      randomNumber: fields.contains('random_number') ? mapToInt(row[1]) : null,
     );
     return Optional.of(model);
   }

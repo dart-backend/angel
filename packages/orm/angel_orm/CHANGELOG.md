@@ -1,8 +1,12 @@
 # Change Log
 
+## 8.3.1
+
+* Added support for string to bool conversion in the query results
+
 ## 8.3.0
 
-* createdAt + updatedAt should default to CURRENT_TIMESTAMP
+* Set `createdAt` and `updatedAt` default to CURRENT_TIMESTAMP
 
 ## 8.2.0
 
