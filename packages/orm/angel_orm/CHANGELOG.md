@@ -1,5 +1,9 @@
 # Change Log
 
+## 8.3.2
+
+* Updated `intl` to 0.20.0
+
 ## 8.3.1
 
 * Added support for string to bool conversion in the query results
