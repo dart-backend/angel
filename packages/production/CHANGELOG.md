@@ -1,5 +1,9 @@
 # Change Log
 
+## 8.4.1
+
+* Updated `intl` to 0.20.0
+
 ## 8.4.0
 
 * Require Dart >= 3.6
