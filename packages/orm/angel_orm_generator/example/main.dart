@@ -25,6 +25,7 @@ class _FakeExecutor extends QueryExecutor {
     String? query,
     Map<String, dynamic> substitutionValues, {
     String returningQuery = '',
+    String resultQuery = '',
     List<String> returningFields = const [],
   }) async {
     var now = DateTime.now();

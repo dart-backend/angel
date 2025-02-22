@@ -7,29 +7,32 @@ environment:
   sdk: '>=3.6.0 <4.0.0'
 dependencies:
   angel3_orm: ^8.2.0
+  io: ^1.0.5
   logging: ^1.2.0
+  optional: ^6.1.0+1
   pool: ^1.5.0
   postgres: ^3.2.0
 dev_dependencies:
   belatuk_pretty_logging: ^6.1.0
+  angel3_serialize: ^8.0.0
   angel3_orm_generator: ^8.2.0
   angel3_migration: ^8.0.0
   angel3_migration_runner: ^8.0.0
   test: ^1.24.0
   lints: ^5.0.0
   build_runner: ^2.4.0
-dependency_overrides:
+#dependency_overrides:
 #   angel3_serialize:
 #      path: ../../serialize/angel_serialize
-  angel3_serialize_generator:
-    path: ../../serialize/angel_serialize_generator
+#  angel3_serialize_generator:
+#    path: ../../serialize/angel_serialize_generator
 #   angel3_model:
 #     path: ../../model
-  angel3_orm_generator:
-    path: ../angel_orm_generator
-  angel3_orm:
-    path: ../angel_orm
+#  angel3_orm_generator:
+#    path: ../angel_orm_generator
+#  angel3_orm:
+#    path: ../angel_orm
 #   angel3_migration:
 #      path: ../angel_migration
-  angel3_migration_runner:
-    path: ../angel_migration_runner
+#  angel3_migration_runner:
+#    path: ../angel_migration_runner
