@@ -1,11 +1,17 @@
 import 'package:angel3_migration_runner/angel3_migration_runner.dart';
 import 'package:angel3_orm/angel3_orm.dart';
+import 'package:logging/logging.dart';
 import 'package:mysql_client/mysql_client.dart';
 import 'package:test/test.dart';
 import 'common.dart';
 import 'models/tree.dart';
 
 void main() {
+  Logger.root.level = Level.ALL; // defaults to Level.INFO
+  Logger.root.onRecord.listen((record) {
+    print('${record.loggerName}: ${record.time}: ${record.message}');
+  });
+
   late MySQLConnection conn;
   late QueryExecutor executor;
   late MigrationRunner runner;
@@ -22,7 +28,12 @@ void main() {
     treeId = int.parse(appleTree!.id!);
   });
 
-  tearDown(() async => await dropTables(runner));
+  tearDown(() async {
+    await dropTables(runner);
+    if (conn.connected) {
+      await conn.close();
+    }
+  });
 
   test('list is empty if there is nothing', () {
     expect(appleTree!.rings, 10);

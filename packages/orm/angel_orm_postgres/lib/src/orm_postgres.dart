@@ -43,15 +43,18 @@ class PostgreSqlExecutor extends QueryExecutor {
   @override
   Future<Result> query(
       String tableName, String query, Map<String, dynamic> substitutionValues,
-      {String returningQuery = '', List<String> returningFields = const []}) {
-    if (returningFields.isNotEmpty) {
-      var fields = returningFields.join(', ');
-      var returning = 'RETURNING $fields';
-      query = '$query $returning';
-    }
+      {String returningQuery = '',
+      String resultQuery = '',
+      List<String> returningFields = const []}) {
+    //if (returningFields.isNotEmpty) {
+    //  var fields = returningFields.join(', ');
+    //  var returning = 'SELECT $fields from $tableName';
+    //  query = '$query $returning';
+    //}
 
     logger.fine('Query: $query');
     logger.fine('Values: $substitutionValues');
+    logger.fine('Returning Query: $returningQuery');
 
     // Convert List into String
     var param = <String, dynamic>{};

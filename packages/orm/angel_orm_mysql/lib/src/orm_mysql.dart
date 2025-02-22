@@ -5,12 +5,12 @@ import 'package:mysql_client/mysql_client.dart';
 
 class MySqlExecutor extends QueryExecutor {
   /// An optional [Logger] to write to. A default logger will be used if not set
-  late Logger logger;
+  late Logger _logger;
 
   final MySQLConnection _connection;
 
   MySqlExecutor(this._connection, {Logger? logger}) {
-    this.logger = logger ?? Logger('MySqlExecutor');
+    _logger = logger ?? Logger('MySqlExecutor');
   }
 
   final Dialect _dialect = const MySQLDialect();
@@ -79,6 +79,7 @@ class MySqlExecutor extends QueryExecutor {
   Future<List<List>> query(
       String tableName, String query, Map<String, dynamic> substitutionValues,
       {String returningQuery = '',
+      String resultQuery = '',
       List<String> returningFields = const []}) async {
     // Change @id -> ?
     for (var name in substitutionValues.keys) {
@@ -88,16 +89,16 @@ class MySqlExecutor extends QueryExecutor {
       var value = substitutionValues[name];
       if (value is DateTime && value.isUtc) {
         var t = value.toLocal();
-        //logger.warning('Datetime deteted: $name');
-        //logger.warning('Datetime: UTC -> $value, Local -> $t');
+        //_logger.fine('Datetime deteted: $name');
+        //_logger.fine('Datetime: UTC -> $value, Local -> $t');
 
         substitutionValues[name] = t;
       }
     }
 
-    //logger.warning('Query: $query');
-    //logger.warning('Values: $substitutionValues');
-    //logger.warning('Returning Query: $returningQuery');
+    //_logger.fine('Query: $query');
+    //_logger.fine('Values: $substitutionValues');
+    //_logger.fine('Returning Query: $returningQuery');
 
     if (returningQuery.isNotEmpty) {
       // Handle insert, update and delete
@@ -123,17 +124,31 @@ class MySqlExecutor extends QueryExecutor {
       }
     }
 
-    //logger.warning('Query 2: $query');
-    //logger.warning('Values 2: $substitutionValues');
+    // Select the deleted records prior to being delete
+    var isDeleteQuery = query.startsWith("DELETE");
+    List<List<dynamic>> deletedResults = [];
+    if (isDeleteQuery) {
+      var selectQuery = query.replaceFirst("DELETE", "SELECT *");
+      //_logger.fine('Select query for delete: $selectQuery');
+
+      deletedResults = await _connection
+          .execute(selectQuery, substitutionValues)
+          .then((results) {
+        return results.rows.map((r) => r.typedAssoc().values.toList()).toList();
+      });
+    }
+
+    //_logger.fine('Query 2: $query');
+    //_logger.fine('Values 2: $substitutionValues');
 
     // Handle select
     return _connection.execute(query, substitutionValues).then((results) {
-      // var tmpData = results.rows;
-      //for (var element in tmpData) {
-      //  logger.warning("[Result] : ${element.assoc()}");
-      //}
-
-      return results.rows.map((r) => r.typedAssoc().values.toList()).toList();
+      if (isDeleteQuery) {
+        return deletedResults;
+      } else {
+        //return results.rows.map((r) => r.typedAssoc().values.toList()).toList();
+        return parseSQLResult(results);
+      }
     });
   }
 
@@ -148,6 +163,58 @@ class MySqlExecutor extends QueryExecutor {
     return newQuery;
   }
 
+  List<List<dynamic>> parseSQLResult(IResultSet res) {
+    //var colTypes = res.cols.map((col) => col.type).toList();
+
+    var mappedResult = <List>[];
+    for (var row in res.rows) {
+      List<dynamic> retResult = [];
+      for (var i = 0; i < row.numOfColumns; i++) {
+        var val = row.typedColAt(i);
+
+        //retResult.add(colTypes[i].convertStringValueToProvidedType(val));
+        retResult.add(val);
+      }
+      mappedResult.add(retResult);
+    }
+
+    return mappedResult;
+  }
+
+  /*
+  Map<String, dynamic> parseSQLNamedResult(IResultSet res) {
+    var colNames = [];
+    var columns = [];
+    var prefix = "1__";
+    for (var c in res.cols) {
+      if (colNames.contains(c.name)) {
+        // If collumn name is duplicated, add "1_" as prefix
+        var tmpColName = "$prefix${c.name}";
+        while (colNames.contains(tmpColName)) {
+          tmpColName = "$prefix$tmpColName";
+        }
+        columns.add((name: tmpColName, type: c.type));
+        colNames.add(tmpColName);
+      } else {
+        columns.add((name: c.name, type: c.type));
+        colNames.add(c.name);
+      }
+    }
+
+    var row = res.rows.first;
+
+    Map<String, dynamic> retResult = {};
+    for (var i = 0; i < row.numOfColumns; i++) {
+      var val = row.typedColAt(i);
+      var colName = columns[i].name;
+
+      retResult[colName] = val;
+    }
+
+    return retResult;
+  }
+  */
+
   @override
   Future<T> transaction<T>(FutureOr<T> Function(QueryExecutor) f) async {
     //logger.warning("Transaction");
@@ -155,10 +222,10 @@ class MySqlExecutor extends QueryExecutor {
     T? returnValue = await _connection.transactional((ctx) async {
       try {
         //logger.fine('Entering transaction');
-        var tx = MySqlExecutor(ctx, logger: logger);
+        var tx = MySqlExecutor(ctx, logger: _logger);
         return await f(tx);
       } catch (e) {
-        logger.severe('Failed to run transaction', e);
+        _logger.severe('Failed to run transaction', e);
         rethrow;
       }
     });

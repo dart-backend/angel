@@ -110,7 +110,7 @@ class BoatQuery extends Query<Boat, BoatQueryWhere> {
           ? mapToDateTime(row[6])
           : DateTime.parse("1970-01-01 00:00:00"),
       price: fields.contains('price') ? mapToDouble(row[7]) : 0.0,
-      width: fields.contains('width') ? (row[8] as int) : 0,
+      width: fields.contains('width') ? mapToInt(row[8]) : 0,
     );
     return Optional.of(model);
   }

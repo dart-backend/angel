@@ -22,15 +22,13 @@ class MySqlSchema extends Schema {
     int affectedRows = 0;
     await connection.transactional((ctx) async {
       var sql = compile();
-      print('Query: $sql');
+      //print('Query: $sql');
       var result = await ctx.execute(sql).catchError((e) {
-        print(e);
         _log.severe('Failed to run query: [ $sql ]', e);
         throw Exception(e);
       });
       affectedRows = result.affectedRows.toInt();
     }).catchError((e) {
-      print(e);
       _log.severe('Failed to run query in a transaction', e);
     });
 
@@ -72,7 +70,7 @@ class MySqlSchema extends Schema {
     _buf.writeln();
     _writeln(');');
 
-    _log.fine(_buf);
+    //_log.fine(_buf);
   }
 
   @override

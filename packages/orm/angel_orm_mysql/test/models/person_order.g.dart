@@ -98,7 +98,7 @@ class PersonOrderQuery extends Query<PersonOrder, PersonOrderQueryWhere> {
           fields.contains('created_at') ? mapToNullableDateTime(row[1]) : null,
       updatedAt:
           fields.contains('updated_at') ? mapToNullableDateTime(row[2]) : null,
-      personId: fields.contains('person_id') ? (row[3] as int?) : null,
+      personId: fields.contains('person_id') ? mapToInt(row[3]) : null,
       name: fields.contains('name') ? (row[4] as String?) : null,
       price: fields.contains('price') ? mapToDouble(row[5]) : null,
       deleted: fields.contains('deleted') ? mapToBool(row[6]) : null,
@@ -306,7 +306,7 @@ class OrderWithPersonInfoQuery
       price: fields.contains('price') ? mapToDouble(row[4]) : null,
       deleted: fields.contains('deleted') ? mapToBool(row[5]) : null,
       personName: fields.contains('person_name') ? (row[6] as String?) : null,
-      personAge: fields.contains('person_age') ? (row[7] as int?) : null,
+      personAge: fields.contains('person_age') ? mapToInt(row[7]) : null,
     );
     return Optional.of(model);
   }

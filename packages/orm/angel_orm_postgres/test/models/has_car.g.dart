@@ -105,7 +105,7 @@ class HasCarQuery extends Query<HasCar, HasCarQueryWhere> {
       type: fields.contains('type')
           ? row[4] == null
               ? null
-              : CarType.values[(row[4] as int)]
+              : CarType.values[mapToInt(row[4])]
           : null,
     );
     return Optional.of(model);
@@ -194,7 +194,7 @@ class HasCarQueryValues extends MapQueryValues {
   set color(Color? value) => values['color'] = colorToCode(value);
 
   CarType? get type {
-    return CarType.values[(values['type'] as int)];
+    return CarType.values[mapToInt(values['type'])];
   }
 
   set type(CarType? value) => values['type'] = value?.index;

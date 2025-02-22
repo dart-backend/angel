@@ -3,6 +3,7 @@ import 'dart:collection';
 import 'package:angel3_migration/angel3_migration.dart';
 import 'package:angel3_orm/angel3_orm.dart';
 import 'package:charcode/ascii.dart';
+import 'package:logging/logging.dart';
 
 abstract class PostgresGenerator {
   static String columnType(MigrationColumn column) {
@@ -61,6 +62,8 @@ abstract class PostgresGenerator {
 }
 
 class PostgresTable extends Table {
+  final _log = Logger('PostgresTable');
+
   final Map<String, MigrationColumn> _columns = {};
 
   @override
@@ -87,7 +90,7 @@ class PostgresTable extends Table {
       buf.write('"$name" $col');
     });
 
-    //print(buf);
+    _log.fine(buf);
   }
 }
 

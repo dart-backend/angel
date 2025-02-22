@@ -59,7 +59,7 @@ class NumbaMigration extends Migration {
   @override
   void up(Schema schema) {
     schema.create('numbas', (table) {
-      table.integer('i').primaryKey();
+      table.integer('i');
       table.integer('parent');
     });
   }
@@ -311,7 +311,7 @@ class WeirdJoinQuery extends Query<WeirdJoin, WeirdJoinQueryWhere> {
     if (row.every((x) => x == null)) {
       return Optional.empty();
     }
-    var model = WeirdJoin(id: fields.contains('id') ? (row[0] as int) : 0);
+    var model = WeirdJoin(id: fields.contains('id') ? mapToInt(row[0]) : 0);
     if (row.length > 2) {
       var modelOpt = UnorthodoxQuery().parseRow(row.skip(2).take(1).toList());
       modelOpt.ifPresent((m) {
@@ -536,7 +536,7 @@ class SongQuery extends Query<Song, SongQueryWhere> {
           fields.contains('created_at') ? mapToNullableDateTime(row[1]) : null,
       updatedAt:
           fields.contains('updated_at') ? mapToNullableDateTime(row[2]) : null,
-      weirdJoinId: fields.contains('weird_join_id') ? (row[3] as int?) : null,
+      weirdJoinId: fields.contains('weird_join_id') ? mapToInt(row[3]) : null,
       title: fields.contains('title') ? (row[4] as String?) : null,
     );
     return Optional.of(model);
@@ -695,8 +695,8 @@ class NumbaQuery extends Query<Numba, NumbaQueryWhere> {
       return Optional.empty();
     }
     var model = Numba(
-      i: fields.contains('i') ? (row[0] as int) : 0,
-      parent: fields.contains('parent') ? (row[1] as int?) : null,
+      i: fields.contains('i') ? mapToInt(row[0]) : null,
+      parent: fields.contains('parent') ? mapToInt(row[1]) : null,
     );
     return Optional.of(model);
   }
@@ -737,11 +737,11 @@ class NumbaQueryValues extends MapQueryValues {
     return {};
   }
 
-  int get i {
-    return (values['i'] as int);
+  int? get i {
+    return (values['i'] as int?);
   }
 
-  set i(int value) => values['i'] = value;
+  set i(int? value) => values['i'] = value;
 
   int? get parent {
     return (values['parent'] as int?);
@@ -1280,12 +1280,12 @@ class Song extends _Song {
 @generatedSerializable
 class Numba extends _Numba {
   Numba({
-    required this.i,
+    this.i,
     this.parent,
   });
 
   @override
-  int i;
+  int? i;
 
   @override
   int? parent;
@@ -1639,7 +1639,7 @@ class NumbaSerializer extends Codec<Numba, Map> {
   NumbaDecoder get decoder => const NumbaDecoder();
 
   static Numba fromMap(Map map) {
-    return Numba(i: map['i'] as int, parent: map['parent'] as int?);
+    return Numba(i: map['i'] as int?, parent: map['parent'] as int?);
   }
 
   static Map<String, dynamic> toMap(_Numba? model) {

@@ -42,13 +42,14 @@ abstract class _Song extends Model {
 @serializable
 @orm
 class _Numba implements Comparable<_Numba> {
-  @primaryKey
-  int i = -1;
+  //@primaryKey
+  //int i = -1;
+  int? i;
 
   int? parent;
 
   @override
-  int compareTo(_Numba other) => i.compareTo(other.i);
+  int compareTo(_Numba other) => i!.compareTo(other.i!);
 }
 
 @serializable

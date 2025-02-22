@@ -1,5 +1,9 @@
 # Change Log
 
+## 8.4.1
+
+* Fixed `ShimFieldImpl` due to breaking changes in `analyzer` 7.3.0
+
 ## 8.4.0
 
 * Require Dart >= 3.6

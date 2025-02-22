@@ -9,6 +9,10 @@ bool mapToBool(dynamic value) {
     return value != 0;
   }
 
+  if (value is String) {
+    return value != "0";
+  }
+
   return value != null ? value as bool : false;
 }
 
@@ -42,6 +46,7 @@ DateTime? mapToNullableDateTime(dynamic value) {
   return value;
 }
 
+/// Helper method to convert dynamic value to nullable double
 double mapToDouble(dynamic value) {
   if (value == null) {
     return 0.0;
@@ -55,3 +60,28 @@ double mapToDouble(dynamic value) {
   }
   return value;
 }
+
+/// Helper method to convert dynamic value to nullable double
+int mapToInt(dynamic value) {
+  if (value == null) {
+    return 0;
+  }
+  if (value is String) {
+    return int.tryParse(value) ?? 0;
+  }
+
+  if (value is! int) {
+    return 0;
+  }
+  return value;
+}
+
+/*
+final showDebugPrint = true;
+
+void debugPrint(Object obj) {
+  if (showDebugPrint) {
+    print(obj);
+  }
+}
+*/

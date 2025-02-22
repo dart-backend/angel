@@ -306,7 +306,9 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
         }
       }
     }
-    if (withFields) b.write(f.join(', '));
+    if (withFields) {
+      b.write(f.join(', '));
+    }
     fromQuery ??= tableName;
     b.write(' FROM $fromQuery');
 
@@ -343,7 +345,14 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
   Future<List<T>> delete(QueryExecutor executor) {
     var sql = compile({}, preamble: 'DELETE', withFields: false);
 
-    //_log.warning("Delete Query = $sql");
+    if (executor.dialect is PostgreSQLDialect) {
+      var returning = fields.map(adornWithTableName).join(', ');
+      var selectSQL = compile({});
+      sql = 'WITH $tableName as ($sql RETURNING $returning) $selectSQL';
+    }
+
+    _log.fine("Delete Query = $sql");
+    _log.fine("Substritution Values = $substitutionValues");
 
     if (_joins.isEmpty) {
       return executor
@@ -354,7 +363,7 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
       return executor.transaction((tx) async {
         // TODO: Can this be done with just *one* query?
         var existing = await get(tx);
-        //var sql = compile(preamble: 'SELECT $tableName.id', withFields: false);
+
         return tx
             .query(tableName, sql, substitutionValues)
             .then((_) => existing);
@@ -373,37 +382,41 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
     if (insertion == '') {
       throw StateError('No values have been specified for insertion.');
     } else {
-      var sql = compile({});
       var returningSql = '';
+      var sql = '$insertion';
       if (executor.dialect is PostgreSQLDialect) {
         var returning = fields.map(adornWithTableName).join(', ');
-        sql = 'WITH $tableName as ($insertion RETURNING $returning) $sql';
+        var selectSQL = compile({});
+        sql = 'WITH $tableName as ($insertion RETURNING $returning) $selectSQL';
+        //sql = 'WITH $tableName as ($insertion RETURNING $returning)';
       } else if (executor.dialect is MySQLDialect) {
         // Default to using 'id' as primary key in model
         if (fields.contains("id")) {
-          returningSql = '$sql where $tableName.id=?';
+          var selectSQL = compile({});
+
+          var hasPrimaryField = values?.hasField('id') ?? false;
+          if (hasPrimaryField) {
+            returningSql = '$selectSQL where $tableName.id=?';
+          } else {
+            returningSql = '$selectSQL order by $tableName.id desc limit 1';
+          }
         } else {
           var returningSelect = values?.compileInsertSelect(this, tableName);
-          returningSql = '$sql where $returningSelect';
+          var selectSQL = compile({});
+          returningSql = '$selectSQL where $returningSelect';
         }
-
-        sql = '$insertion';
       } else {
         throw ArgumentError("Unsupported database dialect.");
       }
 
       _log.fine("Insert Query = $sql");
+      _log.fine("Substritution Values = $substitutionValues");
 
       return executor
           .query(tableName, sql, substitutionValues,
-              returningQuery: returningSql)
+              returningFields: fields, returningQuery: returningSql)
           .then((result) {
-        // Return SQL execution results
-        //if (result.isNotEmpty) {
-        //  for (var element in result.first) {
-        //    _log.fine("value: $element");
-        //  }
-        //}
+        //_log.fine("Result Values: $result");
         return result.isEmpty ? Optional.empty() : deserialize(result.first);
       });
     }
@@ -435,6 +448,9 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
       throw ArgumentError("Unsupported database dialect.");
     }
     //_log.fine("Update Query = $sql");
+
+    _log.fine("Update Query = $sql");
+    _log.fine("Substritution Values = $substitutionValues");
 
     return executor
         .query(tableName, sql, substitutionValues, returningQuery: returningSql)

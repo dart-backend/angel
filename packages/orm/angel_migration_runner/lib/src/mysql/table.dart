@@ -3,6 +3,7 @@ import 'dart:collection';
 import 'package:angel3_migration/angel3_migration.dart';
 import 'package:angel3_orm/angel3_orm.dart';
 import 'package:charcode/ascii.dart';
+import 'package:logging/logging.dart';
 
 /// MySQL SQL query generator
 abstract class MySqlGenerator {
@@ -14,10 +15,19 @@ abstract class MySqlGenerator {
   static String columnType(MigrationColumn column) {
     var str = column.type.name;
 
-    // Handle reference key
-    if (str.toLowerCase() == ColumnType.int.name &&
-        column.externalReferences.isNotEmpty) {
-      return 'BIGINT UNSIGNED';
+    /*
+    // Handle reference key to serial
+    if (str.toLowerCase() == ColumnType.int.name) {
+      if (column.externalReferences.isNotEmpty) {
+
+        return 'BIGINT UNSIGNED';
+      }
+    }
+    */
+
+    // Map serial to int
+    if (str.toLowerCase() == ColumnType.serial.name) {
+      return ColumnType.int.name;
     }
 
     // Map timestamp time to datetime
@@ -79,7 +89,7 @@ abstract class MySqlGenerator {
 
       // For int based primary key, apply NOT NULL
       // and AUTO_INCREMENT
-      if (column.type == ColumnType.int) {
+      if (column.type == ColumnType.int || column.type == ColumnType.serial) {
         buf.write(' NOT NULL AUTO_INCREMENT');
       }
     }
@@ -109,6 +119,8 @@ abstract class MySqlGenerator {
 }
 
 class MysqlTable extends Table {
+  final _log = Logger('MysqlTable');
+
   final Map<String, MigrationColumn> _columns = {};
 
   @override
@@ -144,6 +156,8 @@ class MysqlTable extends Table {
         buf.write(',\n${indexBuf[i]}');
       }
     }
+
+    _log.fine(buf);
   }
 }
 

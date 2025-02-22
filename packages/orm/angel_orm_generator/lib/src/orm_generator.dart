@@ -249,8 +249,12 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
             // Build the arguments for model
             var args = <String, Expression>{};
             for (var field in ctx.effectiveFields) {
-              print("Field: $field");
               var fType = field.type;
+
+              //if (field.name == "type") {
+              //  print("=== Here 1 fType = $fType ");
+              //}
+
               Reference type = convertTypeReference(fType);
               if (isSpecialId(ctx, field)) {
                 type = refer('int');
@@ -260,8 +264,11 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
               var expr = (refer('row').index(literalNum(i++)));
               if (isSpecialId(ctx, field)) {
                 // Generated Code: row[i].toString()
+
                 expr = expr.property('toString').call([]);
               } else if (field is RelationFieldImpl) {
+                // Skip fields with relationship
+
                 continue;
               } else if (ctx.columns[field.name]?.type == ColumnType.json) {
                 expr = refer('json')
@@ -278,9 +285,16 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                  * fields.contains('type') ? row[3] == null ? null : 
                  *     EnumType.values[(row[3] as int)] : null,
                  */
+
+                //if (field.name == "type") {
+                print("=== Process enum ${field.name}");
+                //}
+
                 var isNull = expr.equalTo(literalNull);
                 final parseExpression = _deserializeEnumExpression(field, expr);
                 expr = isNull.conditional(literalNull, parseExpression);
+              } else if (fType.isDartCoreInt) {
+                expr = refer('mapToInt').call([expr]);
               } else if (fType.isDartCoreBool) {
                 // Generated Code: mapToBool(row[i])
                 expr = refer('mapToBool').call([expr]);
@@ -1026,8 +1040,15 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
         parseExpr = Reference(deserializer).expression([expr.asA(refer(type))]);
       }
     }
-    return parseExpr ??
-        enumType.property('values').index(expr.asA(refer('int')));
+
+    //return parseExpr ??
+    //    enumType.property('values').index(expr.asA(refer('int')));
+
+    if (parseExpr != null) {
+      return parseExpr;
+    }
+
+    return enumType.property('values').index(refer('mapToInt').call([expr]));
   }
 
   /// Retrieve the [Expression] to serialize the enumeration field.

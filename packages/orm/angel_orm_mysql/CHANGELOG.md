@@ -1,5 +1,12 @@
 # Change Log
 
+## 8.3.1
+
+* Updated test cases
+* Updated deletion to return deleted record(s)
+* Fixed select and insert query returning incorrect data when the joined tables have same field names
+* Fixed issues due to breaking changes in `analyzer` 7.3.0
+
 ## 8.3.0
 
 * Require Dart >= 3.6
