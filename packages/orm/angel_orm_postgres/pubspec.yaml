@@ -7,11 +7,14 @@ environment:
   sdk: '>=3.6.0 <4.0.0'
 dependencies:
   angel3_orm: ^8.2.0
+  io: ^1.0.5
   logging: ^1.2.0
+  optional: ^6.1.0+1
   pool: ^1.5.0
   postgres: ^3.2.0
 dev_dependencies:
   belatuk_pretty_logging: ^6.1.0
+  angel3_serialize: ^8.0.0
   angel3_orm_generator: ^8.2.0
   angel3_migration: ^8.0.0
   angel3_migration_runner: ^8.0.0
