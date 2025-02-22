@@ -9,7 +9,7 @@ import 'models/unorthodox.dart';
 void main() {
   Logger.root.level = Level.ALL; // defaults to Level.INFO
   Logger.root.onRecord.listen((record) {
-    print('${record.level.name}: ${record.time}: ${record.message}');
+    print('${record.loggerName}: ${record.time}: ${record.message}');
   });
 
   late Connection conn;
@@ -31,6 +31,9 @@ void main() {
 
   tearDown(() async {
     await dropTables(runner);
+    if (conn.isOpen) {
+      await conn.close();
+    }
   });
 
   test('can create object with no id', () async {

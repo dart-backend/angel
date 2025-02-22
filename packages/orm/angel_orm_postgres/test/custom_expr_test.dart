@@ -15,7 +15,7 @@ void main() {
   setUp(() async {
     Logger.root.level = Level.ALL; // defaults to Level.INFO
     Logger.root.onRecord.listen((record) {
-      print('${record.level.name}: ${record.time}: ${record.message}');
+      print('${record.loggerName}: ${record.time}: ${record.message}');
     });
 
     conn = await openPgConnection();
@@ -36,6 +36,9 @@ void main() {
 
   tearDown(() async {
     await dropTables(runner);
+    if (conn.isOpen) {
+      await conn.close();
+    }
   });
 
   test('fetches correct result', () async {

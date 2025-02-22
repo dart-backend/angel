@@ -11,7 +11,7 @@ import 'util.dart';
 void main() {
   Logger.root.level = Level.ALL; // defaults to Level.INFO
   Logger.root.onRecord.listen((record) {
-    print('${record.level.name}: ${record.time}: ${record.message}');
+    print('${record.loggerName}: ${record.time}: ${record.message}');
   });
 
   late Connection conn;
@@ -90,7 +90,12 @@ void main() {
     print('==================================================\n\n');
   });
 
-  tearDown(() async => await dropTables(runner));
+  tearDown(() async {
+    await dropTables(runner);
+    if (conn.isOpen) {
+      await conn.close();
+    }
+  });
 
   Future<User?> fetchThosakwe() async {
     var query = UserQuery()..where!.id.equals(int.parse(thosakwe!.id!));

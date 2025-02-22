@@ -11,7 +11,7 @@ import 'models/person_order.dart';
 void main() {
   Logger.root.level = Level.ALL; // defaults to Level.INFO
   Logger.root.onRecord.listen((record) {
-    print('${record.level.name}: ${record.time}: ${record.message}');
+    print('${record.loggerName}: ${record.time}: ${record.message}');
   });
 
   late Connection conn;
@@ -49,7 +49,12 @@ void main() {
     originalOrder2 = (await orderQuery.insert(executor)).value;
   });
 
-  tearDown(() async => await dropTables(runner));
+  tearDown(() async {
+    await dropTables(runner);
+    if (conn.isOpen) {
+      await conn.close();
+    }
+  });
 
   test('select person with last order info', () async {
     var orderQuery = PersonOrderQuery();

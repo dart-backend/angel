@@ -95,7 +95,7 @@ class PersonQuery extends Query<Person, PersonQueryWhere> {
       updatedAt:
           fields.contains('updated_at') ? mapToNullableDateTime(row[2]) : null,
       name: fields.contains('name') ? (row[3] as String?) : null,
-      age: fields.contains('age') ? (row[4] as int?) : null,
+      age: fields.contains('age') ? mapToInt(row[4]) : null,
     );
     return Optional.of(model);
   }

@@ -3,6 +3,7 @@
 ## 8.3.1
 
 * Updated test cases
+* Fixed issues due to breaking changes in `analyzer` 7.3.0
 
 ## 8.3.0
 

@@ -290,7 +290,7 @@ class FootQuery extends Query<Foot, FootQueryWhere> {
           fields.contains('created_at') ? mapToNullableDateTime(row[1]) : null,
       updatedAt:
           fields.contains('updated_at') ? mapToNullableDateTime(row[2]) : null,
-      legId: fields.contains('leg_id') ? (row[3] as int?) : null,
+      legId: fields.contains('leg_id') ? mapToInt(row[3]) : null,
       nToes: fields.contains('n_toes') ? mapToDouble(row[4]) : null,
     );
     return Optional.of(model);

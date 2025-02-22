@@ -3,6 +3,7 @@ import 'dart:collection';
 import 'package:angel3_migration/angel3_migration.dart';
 import 'package:angel3_orm/angel3_orm.dart';
 import 'package:charcode/ascii.dart';
+import 'package:logging/logging.dart';
 
 /// MySQL SQL query generator
 abstract class MySqlGenerator {
@@ -118,6 +119,8 @@ abstract class MySqlGenerator {
 }
 
 class MysqlTable extends Table {
+  final _log = Logger('MysqlTable');
+
   final Map<String, MigrationColumn> _columns = {};
 
   @override
@@ -153,6 +156,8 @@ class MysqlTable extends Table {
         buf.write(',\n${indexBuf[i]}');
       }
     }
+
+    _log.fine(buf);
   }
 }
 

@@ -345,7 +345,14 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
   Future<List<T>> delete(QueryExecutor executor) {
     var sql = compile({}, preamble: 'DELETE', withFields: false);
 
-    //_log.fine("Delete Query = $sql");
+    if (executor.dialect is PostgreSQLDialect) {
+      var returning = fields.map(adornWithTableName).join(', ');
+      var selectSQL = compile({});
+      sql = 'WITH $tableName as ($sql RETURNING $returning) $selectSQL';
+    }
+
+    _log.fine("Delete Query = $sql");
+    _log.fine("Substritution Values = $substitutionValues");
 
     if (_joins.isEmpty) {
       return executor
@@ -356,7 +363,7 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
       return executor.transaction((tx) async {
         // TODO: Can this be done with just *one* query?
         var existing = await get(tx);
-        //var sql = compile(preamble: 'SELECT $tableName.id', withFields: false);
+
         return tx
             .query(tableName, sql, substitutionValues)
             .then((_) => existing);
@@ -381,6 +388,7 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
         var returning = fields.map(adornWithTableName).join(', ');
         var selectSQL = compile({});
         sql = 'WITH $tableName as ($insertion RETURNING $returning) $selectSQL';
+        //sql = 'WITH $tableName as ($insertion RETURNING $returning)';
       } else if (executor.dialect is MySQLDialect) {
         // Default to using 'id' as primary key in model
         if (fields.contains("id")) {
@@ -401,9 +409,8 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
         throw ArgumentError("Unsupported database dialect.");
       }
 
-      //_log.fine("Insert Query = $sql");
-      //_log.fine("Substritution Values = $substitutionValues");
-      //_log.fine("returning Query = $returningSql");
+      _log.fine("Insert Query = $sql");
+      _log.fine("Substritution Values = $substitutionValues");
 
       return executor
           .query(tableName, sql, substitutionValues,
@@ -441,6 +448,9 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
       throw ArgumentError("Unsupported database dialect.");
     }
     //_log.fine("Update Query = $sql");
+
+    _log.fine("Update Query = $sql");
+    _log.fine("Substritution Values = $substitutionValues");
 
     return executor
         .query(tableName, sql, substitutionValues, returningQuery: returningSql)

@@ -112,7 +112,7 @@ class NumbersQuery extends Query<Numbers, NumbersQueryWhere> {
           fields.contains('created_at') ? mapToNullableDateTime(row[1]) : null,
       updatedAt:
           fields.contains('updated_at') ? mapToNullableDateTime(row[2]) : null,
-      two: fields.contains('two') ? (row[3] as int?) : null,
+      two: fields.contains('two') ? mapToInt(row[3]) : null,
     );
     return Optional.of(model);
   }

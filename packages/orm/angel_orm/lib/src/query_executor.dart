@@ -16,6 +16,7 @@ abstract class QueryExecutor {
     String query,
     Map<String, dynamic> substitutionValues, {
     String returningQuery = '',
+    String resultQuery = '',
     List<String> returningFields = const [],
   });
 

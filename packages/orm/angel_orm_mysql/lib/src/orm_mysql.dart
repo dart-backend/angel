@@ -79,6 +79,7 @@ class MySqlExecutor extends QueryExecutor {
   Future<List<List>> query(
       String tableName, String query, Map<String, dynamic> substitutionValues,
       {String returningQuery = '',
+      String resultQuery = '',
       List<String> returningFields = const []}) async {
     // Change @id -> ?
     for (var name in substitutionValues.keys) {
@@ -163,7 +164,7 @@ class MySqlExecutor extends QueryExecutor {
   }
 
   List<List<dynamic>> parseSQLResult(IResultSet res) {
-    var colTypes = res.cols.map((col) => col.type).toList();
+    //var colTypes = res.cols.map((col) => col.type).toList();
 
     var mappedResult = <List>[];
     for (var row in res.rows) {

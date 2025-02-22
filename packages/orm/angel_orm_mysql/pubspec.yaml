@@ -28,8 +28,6 @@ dependency_overrides:
     path: ../../serialize/angel_serialize_generator
 #   angel3_model:
 #     path: ../../model
-#   angel3_orm_test:
-#     path: ../angel_orm_test
   angel3_orm:
     path: ../angel_orm
   angel3_orm_generator:

@@ -83,7 +83,7 @@ class FortuneQuery extends Query<Fortune, FortuneQueryWhere> {
       return Optional.empty();
     }
     var model = Fortune(
-      id: fields.contains('id') ? (row[0] as int?) : null,
+      id: fields.contains('id') ? mapToInt(row[0]) : null,
       message: fields.contains('message') ? (row[1] as String?) : null,
     );
     return Optional.of(model);

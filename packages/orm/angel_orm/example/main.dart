@@ -27,6 +27,7 @@ class _FakeExecutor extends QueryExecutor {
   Future<List<List>> query(
       String tableName, String query, Map<String, dynamic> substitutionValues,
       {String returningQuery = '',
+      String resultQuery = '',
       List<String> returningFields = const []}) async {
     var now = DateTime.now();
     print(
