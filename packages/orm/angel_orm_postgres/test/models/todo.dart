@@ -6,48 +6,87 @@ import 'package:optional/optional.dart';
 part 'todo.g.dart';
 
 @serializable
-@Orm(tableName: 'user_acc', generateMigrations: false)
+@Orm(tableName: 'user_acc', generateMigrations: true)
 abstract class _User {
-  @Column(type: ColumnType.int, length: 11, indexType: IndexType.primaryKey)
+  @Column(type: ColumnType.serial, indexType: IndexType.primaryKey)
+  @PrimaryKey()
   int get id;
 
   @Column(type: ColumnType.varChar, length: 255)
   String get name;
 
-  @HasMany(localKey: 'id', foreignKey: 'user_acc_id')
+  // Not supported
+  @HasMany(localKey: 'id', foreignKey: 'user_id')
   List<_UserTodo> get todos;
+
+  @HasMany(localKey: 'id', foreignKey: 'user_id')
+  List<_UserAddress> get address;
 }
 
-@Orm(tableName: 'user_todo', generateMigrations: false)
+@Orm(tableName: 'user_addr', generateMigrations: true)
+@serializable
+abstract class _UserAddress {
+  @Column(
+      type: ColumnType.serial,
+      indexType: IndexType.primaryKey,
+      isNullable: false)
+  int get id;
+
+  @Column(type: ColumnType.int, isNullable: false)
+  int get userId;
+
+  @Column(type: ColumnType.varChar, length: 255, isNullable: false)
+  String get address;
+}
+
+@Orm(tableName: 'user_todo', generateMigrations: true)
 @serializable
 abstract class _UserTodo {
   @Column(
-    type: ColumnType.int,
-    indexType: IndexType.primaryKey,
-    length: 11,
-    isNullable: false,
-  )
+      type: ColumnType.serial,
+      indexType: IndexType.primaryKey,
+      isNullable: false)
   int get id;
 
-  @Column(type: ColumnType.int, length: 11, isNullable: false, defaultValue: 0)
+  @Column(type: ColumnType.int, isNullable: false)
   int get userId;
 
   @Column(type: ColumnType.varChar, length: 255, isNullable: false)
   String get title;
 
-  @HasMany(localKey: 'id', foreignKey: 'todo_id')
-  List<_TodoValue> get todoValues;
+  //@HasMany(localKey: 'id', foreignKey: 'todo_value_id')
+  //List<_TodoValue> get todoValues;
+
+  //@HasMany(localKey: 'id', foreignKey: 'todo_note_id')
+  //List<_TodoNote> get todoNotes;
 }
 
-@Orm(tableName: 'todo_value', generateMigrations: false)
+@Orm(tableName: 'todo_value', generateMigrations: true)
 @serializable
 abstract class _TodoValue {
-  @Column(type: ColumnType.int, length: 11, indexType: IndexType.primaryKey)
+  @Column(type: ColumnType.serial, indexType: IndexType.primaryKey)
   int get id;
 
   @Column(type: ColumnType.varChar, length: 255)
   String get value;
 
-  @Column(type: ColumnType.int, length: 11)
+  @Column(type: ColumnType.int)
   int get todoId;
+
+  String? get description;
+}
+
+@Orm(tableName: 'todo_note', generateMigrations: true)
+@serializable
+abstract class _TodoNote {
+  @Column(type: ColumnType.serial, indexType: IndexType.primaryKey)
+  int get id;
+
+  @Column(type: ColumnType.varChar, length: 255)
+  String get note;
+
+  @Column(type: ColumnType.int)
+  int get todoId;
+
+  String? get description;
 }

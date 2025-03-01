@@ -14,6 +14,74 @@ This package contains the SQL executor required by Angel3 ORM to work with MySQL
 
 **Note** MySQL below version 8.0 and MariaDB below version 10.2.0 are not supported as Angel3 ORM requires common table expressions (CTE) to work.
 
+## Usage
+
+1. Create a model, i.e. `car.dart`
+
+   ```dart
+    import 'package:angel3_migration/angel3_migration.dart';
+    import 'package:angel3_orm/angel3_orm.dart';
+    import 'package:angel3_serialize/angel3_serialize.dart';
+    import 'package:optional/optional.dart';
+    
+    part 'car.g.dart';
+
+    @serializable
+    @orm
+    class _Car extends Model {
+        String? make;
+        String? description;
+        bool? familyFriendly;
+        DateTime? recalledAt;
+        double? price;
+    }
+   ```
+
+2. Run the following command to generate the required `.g.dart` file for the model.
+
+    ```bash
+    dart run build_runner build
+    ```
+
+3. Write the query program. i.e. `CarPersistence.dart`
+
+    ```dart
+    import 'package:angel3_migration_runner/angel3_migration_runner.dart';
+    import 'package:angel3_orm/angel3_orm.dart';
+    import 'package:logging/logging.dart';
+    import 'package:mysql_client/mysql_client.dart';
+    import 'models/car.dart';
+
+    void main() async {
+    
+        // Setup the connections
+        var conn = await MySQLConnection.createConnection(
+            databaseName: 'orm_test',
+            port: 3306,
+            host: "localhost",
+            userName: 'test',
+            password: 'Test123',
+            secure: true);
+        await conn.connect(timeoutMs: 10000);
+
+        var executor = MySqlExecutor(conn);
+
+        // Create the `Car` table
+        var runner = MysqlMigrationRunner(conn, migrations: [CarMigration()]);
+        await runner.up();
+
+        var query = CarQuery();
+        query.values
+            ..make = 'Ferrari'
+            ..description = 'Vroom vroom!'
+            ..price = 1200000.00
+            ..familyFriendly = false;
+        
+        // insert a new record into the `Car` table
+        var ferrari = (await query.insert(executor)).value;
+    }
+    ```
+
 ## MySqlExecutor
 
 This SQL executor is implemented using [`mysql_client`](https://pub.dev/packages?q=mysql_client) driver. It works with both `MySQL` 8.0+ and `MariaDB` 10.2+ database.
@@ -68,28 +136,6 @@ This SQL executor is implemented using [`mysql1`](https://pub.dev/packages?q=mys
 * `Blob` type mapping is not supported.
 * `timestamp` mapping is not supported. Use `datetime` instead.
 * Only UTC datetime is supported. None UTC datetime will be automatically converted into UTC datetime.
-
-## Creating a new database in MariaDB or MySQL
-
-1. Login to MariaDB/MySQL database console with the following command.
-
-    ```bash
-        mysql -u root -p
-    ```
-
-2. Run the following commands to create a new database, `orm_test`, and grant both local and remote access to user, `test`. Replace `orm_test`, `test` and `test123` with your own database name, username and password.
-
-    ```mysql
-        create database orm_test;
-        
-        -- Granting localhost access only
-        create user 'test'@'localhost' identified by 'test123';
-        grant all privileges on orm_test.* to 'test'@'localhost';
-
-        -- Granting localhost and remote access
-        create user 'test'@'%' identified by 'test123';
-        grant all privileges on orm_test.* to 'test'@'%';
-    ```
 
 ## Compatibility Matrix
 

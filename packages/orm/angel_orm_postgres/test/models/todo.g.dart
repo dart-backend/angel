@@ -3,6 +3,95 @@
 part of 'todo.dart';
 
 // **************************************************************************
+// MigrationGenerator
+// **************************************************************************
+
+class UserMigration extends Migration {
+  @override
+  void up(Schema schema) {
+    schema.create('user_acc', (table) {
+      table.serial('id').primaryKey();
+      table.varChar('name', length: 255);
+    });
+  }
+
+  @override
+  void down(Schema schema) {
+    schema.drop('user_acc', cascade: true);
+  }
+}
+
+class UserAddressMigration extends Migration {
+  @override
+  void up(Schema schema) {
+    schema.create('user_addr', (table) {
+      table.serial('id')
+        ..primaryKey()
+        ..notNull();
+      table.integer('user_id').notNull();
+      table.varChar('address', length: 255).notNull();
+    });
+  }
+
+  @override
+  void down(Schema schema) {
+    schema.drop('user_addr');
+  }
+}
+
+class UserTodoMigration extends Migration {
+  @override
+  void up(Schema schema) {
+    schema.create('user_todo', (table) {
+      table.serial('id')
+        ..primaryKey()
+        ..notNull();
+      table.integer('user_id').notNull();
+      table.varChar('title', length: 255).notNull();
+    });
+  }
+
+  @override
+  void down(Schema schema) {
+    schema.drop('user_todo');
+  }
+}
+
+class TodoValueMigration extends Migration {
+  @override
+  void up(Schema schema) {
+    schema.create('todo_value', (table) {
+      table.serial('id').primaryKey();
+      table.varChar('value', length: 255);
+      table.integer('todo_id');
+      table.varChar('description', length: 255);
+    });
+  }
+
+  @override
+  void down(Schema schema) {
+    schema.drop('todo_value');
+  }
+}
+
+class TodoNoteMigration extends Migration {
+  @override
+  void up(Schema schema) {
+    schema.create('todo_note', (table) {
+      table.serial('id').primaryKey();
+      table.varChar('note', length: 255);
+      table.integer('todo_id');
+      table.varChar('description', length: 255);
+    });
+  }
+
+  @override
+  void down(Schema schema) {
+    schema.drop('todo_note');
+  }
+}
+
+// **************************************************************************
 // OrmGenerator
 // **************************************************************************
 
@@ -20,11 +109,25 @@ class UserQuery extends Query<User, UserQueryWhere> {
         parent: this,
       ),
       'id',
-      'user_acc_id',
+      'user_id',
       additionalFields: const [
         'id',
         'user_id',
         'title',
+      ],
+      trampoline: trampoline,
+    );
+    leftJoin(
+      _address = UserAddressQuery(
+        trampoline: trampoline,
+        parent: this,
+      ),
+      'id',
+      'user_id',
+      additionalFields: const [
+        'id',
+        'user_id',
+        'address',
       ],
       trampoline: trampoline,
     );
@@ -38,6 +141,8 @@ class UserQuery extends Query<User, UserQueryWhere> {
   UserQueryWhere? _where;
 
   late UserTodoQuery _todos;
+
+  late UserAddressQuery _address;
 
   @override
   Map<String, String> get casts {
@@ -89,6 +194,12 @@ class UserQuery extends Query<User, UserQueryWhere> {
         model = model.copyWith(todos: [m]);
       });
     }
+    if (row.length > 5) {
+      var modelOpt = UserAddressQuery().parseRow(row.skip(5).take(3).toList());
+      modelOpt.ifPresent((m) {
+        model = model.copyWith(address: [m]);
+      });
+    }
     return Optional.of(model);
   }
 
@@ -99,6 +210,10 @@ class UserQuery extends Query<User, UserQueryWhere> {
 
   UserTodoQuery get todos {
     return _todos;
+  }
+
+  UserAddressQuery get address {
+    return _address;
   }
 
   @override
@@ -113,7 +228,9 @@ class UserQuery extends Query<User, UserQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                todos: List<_UserTodo>.from(l.todos)..addAll(model.todos));
+                todos: List<_UserTodo>.from(l.todos)..addAll(model.todos),
+                address: List<_UserAddress>.from(l.address)
+                  ..addAll(model.address));
         }
       });
     });
@@ -131,7 +248,9 @@ class UserQuery extends Query<User, UserQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                todos: List<_UserTodo>.from(l.todos)..addAll(model.todos));
+                todos: List<_UserTodo>.from(l.todos)..addAll(model.todos),
+                address: List<_UserAddress>.from(l.address)
+                  ..addAll(model.address));
         }
       });
     });
@@ -149,7 +268,9 @@ class UserQuery extends Query<User, UserQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                todos: List<_UserTodo>.from(l.todos)..addAll(model.todos));
+                todos: List<_UserTodo>.from(l.todos)..addAll(model.todos),
+                address: List<_UserAddress>.from(l.address)
+                  ..addAll(model.address));
         }
       });
     });
@@ -204,6 +325,140 @@ class UserQueryValues extends MapQueryValues {
   }
 }
 
+class UserAddressQuery extends Query<UserAddress, UserAddressQueryWhere> {
+  UserAddressQuery({
+    Query? parent,
+    Set<String>? trampoline,
+  }) : super(parent: parent) {
+    trampoline ??= <String>{};
+    trampoline.add(tableName);
+    _where = UserAddressQueryWhere(this);
+  }
+
+  @override
+  final UserAddressQueryValues values = UserAddressQueryValues();
+
+  List<String> _selectedFields = [];
+
+  UserAddressQueryWhere? _where;
+
+  @override
+  Map<String, String> get casts {
+    return {};
+  }
+
+  @override
+  String get tableName {
+    return 'user_addr';
+  }
+
+  @override
+  List<String> get fields {
+    const _fields = [
+      'id',
+      'user_id',
+      'address',
+    ];
+    return _selectedFields.isEmpty
+        ? _fields
+        : _fields.where((field) => _selectedFields.contains(field)).toList();
+  }
+
+  UserAddressQuery select(List<String> selectedFields) {
+    _selectedFields = selectedFields;
+    return this;
+  }
+
+  @override
+  UserAddressQueryWhere? get where {
+    return _where;
+  }
+
+  @override
+  UserAddressQueryWhere newWhereClause() {
+    return UserAddressQueryWhere(this);
+  }
+
+  Optional<UserAddress> parseRow(List row) {
+    if (row.every((x) => x == null)) {
+      return Optional.empty();
+    }
+    var model = UserAddress(
+      id: fields.contains('id') ? mapToInt(row[0]) : 0,
+      userId: fields.contains('user_id') ? mapToInt(row[1]) : 0,
+      address: fields.contains('address') ? (row[2] as String) : '',
+    );
+    return Optional.of(model);
+  }
+
+  @override
+  Optional<UserAddress> deserialize(List row) {
+    return parseRow(row);
+  }
+}
+
+class UserAddressQueryWhere extends QueryWhere {
+  UserAddressQueryWhere(UserAddressQuery query)
+      : id = NumericSqlExpressionBuilder<int>(
+          query,
+          'id',
+        ),
+        userId = NumericSqlExpressionBuilder<int>(
+          query,
+          'user_id',
+        ),
+        address = StringSqlExpressionBuilder(
+          query,
+          'address',
+        );
+
+  final NumericSqlExpressionBuilder<int> id;
+
+  final NumericSqlExpressionBuilder<int> userId;
+
+  final StringSqlExpressionBuilder address;
+
+  @override
+  List<SqlExpressionBuilder> get expressionBuilders {
+    return [
+      id,
+      userId,
+      address,
+    ];
+  }
+}
+
+class UserAddressQueryValues extends MapQueryValues {
+  @override
+  Map<String, String> get casts {
+    return {};
+  }
+
+  int get id {
+    return (values['id'] as int);
+  }
+
+  set id(int value) => values['id'] = value;
+
+  int get userId {
+    return (values['user_id'] as int);
+  }
+
+  set userId(int value) => values['user_id'] = value;
+
+  String get address {
+    return (values['address'] as String);
+  }
+
+  set address(String value) => values['address'] = value;
+
+  void copyFrom(UserAddress model) {
+    id = model.id;
+    userId = model.userId;
+    address = model.address;
+  }
+}
+
 class UserTodoQuery extends Query<UserTodo, UserTodoQueryWhere> {
   UserTodoQuery({
     Query? parent,
@@ -212,20 +467,6 @@ class UserTodoQuery extends Query<UserTodo, UserTodoQueryWhere> {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = UserTodoQueryWhere(this);
-    leftJoin(
-      _todoValues = TodoValueQuery(
-        trampoline: trampoline,
-        parent: this,
-      ),
-      'id',
-      'todo_id',
-      additionalFields: const [
-        'id',
-        'value',
-        'todo_id',
-      ],
-      trampoline: trampoline,
-    );
   }
 
   @override
@@ -234,8 +475,6 @@ class UserTodoQuery extends Query<UserTodo, UserTodoQueryWhere> {
   List<String> _selectedFields = [];
 
   UserTodoQueryWhere? _where;
-
-  late TodoValueQuery _todoValues;
 
   @override
   Map<String, String> get casts {
@@ -283,79 +522,12 @@ class UserTodoQuery extends Query<UserTodo, UserTodoQueryWhere> {
       userId: fields.contains('user_id') ? mapToInt(row[1]) : 0,
       title: fields.contains('title') ? (row[2] as String) : '',
     );
-    if (row.length > 3) {
-      var modelOpt = TodoValueQuery().parseRow(row.skip(3).take(3).toList());
-      modelOpt.ifPresent((m) {
-        model = model.copyWith(todoValues: [m]);
-      });
-    }
     return Optional.of(model);
   }
 
   @override
   Optional<UserTodo> deserialize(List row) {
     return parseRow(row);
-  }
-
-  TodoValueQuery get todoValues {
-    return _todoValues;
-  }
-
-  @override
-  Future<List<UserTodo>> get(QueryExecutor executor) {
-    return super.get(executor).then((result) {
-      return result.fold<List<UserTodo>>([], (out, model) {
-        var idx = out.indexWhere((m) => m.id == model.id);
-
-        if (idx == -1) {
-          return out..add(model);
-        } else {
-          var l = out[idx];
-          return out
-            ..[idx] = l.copyWith(
-                todoValues: List<_TodoValue>.from(l.todoValues)
-                  ..addAll(model.todoValues));
-        }
-      });
-    });
-  }
-
-  @override
-  Future<List<UserTodo>> update(QueryExecutor executor) {
-    return super.update(executor).then((result) {
-      return result.fold<List<UserTodo>>([], (out, model) {
-        var idx = out.indexWhere((m) => m.id == model.id);
-
-        if (idx == -1) {
-          return out..add(model);
-        } else {
-          var l = out[idx];
-          return out
-            ..[idx] = l.copyWith(
-                todoValues: List<_TodoValue>.from(l.todoValues)
-                  ..addAll(model.todoValues));
-        }
-      });
-    });
-  }
-
-  @override
-  Future<List<UserTodo>> delete(QueryExecutor executor) {
-    return super.delete(executor).then((result) {
-      return result.fold<List<UserTodo>>([], (out, model) {
-        var idx = out.indexWhere((m) => m.id == model.id);
-
-        if (idx == -1) {
-          return out..add(model);
-        } else {
-          var l = out[idx];
-          return out
-            ..[idx] = l.copyWith(
-                todoValues: List<_TodoValue>.from(l.todoValues)
-                  ..addAll(model.todoValues));
-        }
-      });
-    });
   }
 }
 
@@ -454,6 +626,7 @@ class TodoValueQuery extends Query<TodoValue, TodoValueQueryWhere> {
       'id',
       'value',
       'todo_id',
+      'description',
     ];
     return _selectedFields.isEmpty
         ? _fields
@@ -483,6 +656,7 @@ class TodoValueQuery extends Query<TodoValue, TodoValueQueryWhere> {
       id: fields.contains('id') ? mapToInt(row[0]) : 0,
       value: fields.contains('value') ? (row[1] as String) : '',
       todoId: fields.contains('todo_id') ? mapToInt(row[2]) : 0,
+      description: fields.contains('description') ? (row[3] as String?) : null,
     );
     return Optional.of(model);
   }
@@ -506,6 +680,10 @@ class TodoValueQueryWhere extends QueryWhere {
         todoId = NumericSqlExpressionBuilder<int>(
           query,
           'todo_id',
+        ),
+        description = StringSqlExpressionBuilder(
+          query,
+          'description',
         );
 
   final NumericSqlExpressionBuilder<int> id;
@@ -514,12 +692,15 @@ class TodoValueQueryWhere extends QueryWhere {
 
   final NumericSqlExpressionBuilder<int> todoId;
 
+  final StringSqlExpressionBuilder description;
+
   @override
   List<SqlExpressionBuilder> get expressionBuilders {
     return [
       id,
       value,
       todoId,
+      description,
     ];
   }
 }
@@ -548,10 +729,167 @@ class TodoValueQueryValues extends MapQueryValues {
 
   set todoId(int value) => values['todo_id'] = value;
 
+  String? get description {
+    return (values['description'] as String?);
+  }
+
+  set description(String? value) => values['description'] = value;
+
   void copyFrom(TodoValue model) {
     id = model.id;
     value = model.value;
     todoId = model.todoId;
+    description = model.description;
+  }
+}
+
+class TodoNoteQuery extends Query<TodoNote, TodoNoteQueryWhere> {
+  TodoNoteQuery({
+    Query? parent,
+    Set<String>? trampoline,
+  }) : super(parent: parent) {
+    trampoline ??= <String>{};
+    trampoline.add(tableName);
+    _where = TodoNoteQueryWhere(this);
+  }
+
+  @override
+  final TodoNoteQueryValues values = TodoNoteQueryValues();
+
+  List<String> _selectedFields = [];
+
+  TodoNoteQueryWhere? _where;
+
+  @override
+  Map<String, String> get casts {
+    return {};
+  }
+
+  @override
+  String get tableName {
+    return 'todo_note';
+  }
+
+  @override
+  List<String> get fields {
+    const _fields = [
+      'id',
+      'note',
+      'todo_id',
+      'description',
+    ];
+    return _selectedFields.isEmpty
+        ? _fields
+        : _fields.where((field) => _selectedFields.contains(field)).toList();
+  }
+
+  TodoNoteQuery select(List<String> selectedFields) {
+    _selectedFields = selectedFields;
+    return this;
+  }
+
+  @override
+  TodoNoteQueryWhere? get where {
+    return _where;
+  }
+
+  @override
+  TodoNoteQueryWhere newWhereClause() {
+    return TodoNoteQueryWhere(this);
+  }
+
+  Optional<TodoNote> parseRow(List row) {
+    if (row.every((x) => x == null)) {
+      return Optional.empty();
+    }
+    var model = TodoNote(
+      id: fields.contains('id') ? mapToInt(row[0]) : 0,
+      note: fields.contains('note') ? (row[1] as String) : '',
+      todoId: fields.contains('todo_id') ? mapToInt(row[2]) : 0,
+      description: fields.contains('description') ? (row[3] as String?) : null,
+    );
+    return Optional.of(model);
+  }
+
+  @override
+  Optional<TodoNote> deserialize(List row) {
+    return parseRow(row);
+  }
+}
+
+class TodoNoteQueryWhere extends QueryWhere {
+  TodoNoteQueryWhere(TodoNoteQuery query)
+      : id = NumericSqlExpressionBuilder<int>(
+          query,
+          'id',
+        ),
+        note = StringSqlExpressionBuilder(
+          query,
+          'note',
+        ),
+        todoId = NumericSqlExpressionBuilder<int>(
+          query,
+          'todo_id',
+        ),
+        description = StringSqlExpressionBuilder(
+          query,
+          'description',
+        );
+
+  final NumericSqlExpressionBuilder<int> id;
+
+  final StringSqlExpressionBuilder note;
+
+  final NumericSqlExpressionBuilder<int> todoId;
+
+  final StringSqlExpressionBuilder description;
+
+  @override
+  List<SqlExpressionBuilder> get expressionBuilders {
+    return [
+      id,
+      note,
+      todoId,
+      description,
+    ];
+  }
+}
+
+class TodoNoteQueryValues extends MapQueryValues {
+  @override
+  Map<String, String> get casts {
+    return {};
+  }
+
+  int get id {
+    return (values['id'] as int);
+  }
+
+  set id(int value) => values['id'] = value;
+
+  String get note {
+    return (values['note'] as String);
+  }
+
+  set note(String value) => values['note'] = value;
+
+  int get todoId {
+    return (values['todo_id'] as int);
+  }
+
+  set todoId(int value) => values['todo_id'] = value;
+
+  String? get description {
+    return (values['description'] as String?);
+  }
+
+  set description(String? value) => values['description'] = value;
+
+  void copyFrom(TodoNote model) {
+    id = model.id;
+    note = model.note;
+    todoId = model.todoId;
+    description = model.description;
   }
 }
 
@@ -565,6 +903,7 @@ class User implements _User {
     required this.id,
     required this.name,
     this.todos = const [],
+    this.address = const [],
   });
 
   @override
@@ -576,13 +915,20 @@ class User implements _User {
   @override
   List<_UserTodo> todos;
 
+  @override
+  List<_UserAddress> address;
+
   User copyWith({
     int? id,
     String? name,
     List<_UserTodo>? todos,
+    List<_UserAddress>? address,
   }) {
     return User(
-        id: id ?? this.id, name: name ?? this.name, todos: todos ?? this.todos);
+        id: id ?? this.id,
+        name: name ?? this.name,
+        todos: todos ?? this.todos,
+        address: address ?? this.address);
   }
 
   @override
@@ -591,7 +937,9 @@ class User implements _User {
         other.id == id &&
         other.name == name &&
         ListEquality<_UserTodo>(DefaultEquality<_UserTodo>())
-            .equals(other.todos, todos);
+            .equals(other.todos, todos) &&
+        ListEquality<_UserAddress>(DefaultEquality<_UserAddress>())
+            .equals(other.address, address);
   }
 
   @override
@@ -600,16 +948,72 @@ class User implements _User {
       id,
       name,
       todos,
+      address,
     ]);
   }
 
   @override
   String toString() {
-    return 'User(id=$id, name=$name, todos=$todos)';
+    return 'User(id=$id, name=$name, todos=$todos, address=$address)';
   }
 
   Map<String, dynamic> toJson() {
     return UserSerializer.toMap(this);
+  }
+}
+
+@generatedSerializable
+class UserAddress implements _UserAddress {
+  UserAddress({
+    required this.id,
+    required this.userId,
+    required this.address,
+  });
+
+  @override
+  int id;
+
+  @override
+  int userId;
+
+  @override
+  String address;
+
+  UserAddress copyWith({
+    int? id,
+    int? userId,
+    String? address,
+  }) {
+    return UserAddress(
+        id: id ?? this.id,
+        userId: userId ?? this.userId,
+        address: address ?? this.address);
+  }
+
+  @override
+  bool operator ==(other) {
+    return other is _UserAddress &&
+        other.id == id &&
+        other.userId == userId &&
+        other.address == address;
+  }
+
+  @override
+  int get hashCode {
+    return hashObjects([
+      id,
+      userId,
+      address,
+    ]);
+  }
+
+  @override
+  String toString() {
+    return 'UserAddress(id=$id, userId=$userId, address=$address)';
+  }
+
+  Map<String, dynamic> toJson() {
+    return UserAddressSerializer.toMap(this);
   }
 }
 
@@ -619,7 +1023,6 @@ class UserTodo implements _UserTodo {
     required this.id,
     required this.userId,
     required this.title,
-    this.todoValues = const [],
   });
 
   @override
@@ -631,20 +1034,15 @@ class UserTodo implements _UserTodo {
   @override
   String title;
 
-  @override
-  List<_TodoValue> todoValues;
-
   UserTodo copyWith({
     int? id,
     int? userId,
     String? title,
-    List<_TodoValue>? todoValues,
   }) {
     return UserTodo(
         id: id ?? this.id,
         userId: userId ?? this.userId,
-        title: title ?? this.title,
-        todoValues: todoValues ?? this.todoValues);
+        title: title ?? this.title);
   }
 
   @override
@@ -652,9 +1050,7 @@ class UserTodo implements _UserTodo {
     return other is _UserTodo &&
         other.id == id &&
         other.userId == userId &&
-        other.title == title &&
-        ListEquality<_TodoValue>(DefaultEquality<_TodoValue>())
-            .equals(other.todoValues, todoValues);
+        other.title == title;
   }
 
   @override
@@ -663,13 +1059,12 @@ class UserTodo implements _UserTodo {
       id,
       userId,
       title,
-      todoValues,
     ]);
   }
 
   @override
   String toString() {
-    return 'UserTodo(id=$id, userId=$userId, title=$title, todoValues=$todoValues)';
+    return 'UserTodo(id=$id, userId=$userId, title=$title)';
   }
 
   Map<String, dynamic> toJson() {
@@ -683,6 +1078,7 @@ class TodoValue implements _TodoValue {
     required this.id,
     required this.value,
     required this.todoId,
+    this.description,
   });
 
   @override
@@ -694,15 +1090,20 @@ class TodoValue implements _TodoValue {
   @override
   int todoId;
 
+  @override
+  String? description;
+
   TodoValue copyWith({
     int? id,
     String? value,
     int? todoId,
+    String? description,
   }) {
     return TodoValue(
         id: id ?? this.id,
         value: value ?? this.value,
-        todoId: todoId ?? this.todoId);
+        todoId: todoId ?? this.todoId,
+        description: description ?? this.description);
   }
 
   @override
@@ -710,7 +1111,8 @@ class TodoValue implements _TodoValue {
     return other is _TodoValue &&
         other.id == id &&
         other.value == value &&
-        other.todoId == todoId;
+        other.todoId == todoId &&
+        other.description == description;
   }
 
   @override
@@ -719,16 +1121,80 @@ class TodoValue implements _TodoValue {
       id,
       value,
       todoId,
+      description,
     ]);
   }
 
   @override
   String toString() {
-    return 'TodoValue(id=$id, value=$value, todoId=$todoId)';
+    return 'TodoValue(id=$id, value=$value, todoId=$todoId, description=$description)';
   }
 
   Map<String, dynamic> toJson() {
     return TodoValueSerializer.toMap(this);
+  }
+}
+
+@generatedSerializable
+class TodoNote implements _TodoNote {
+  TodoNote({
+    required this.id,
+    required this.note,
+    required this.todoId,
+    this.description,
+  });
+
+  @override
+  int id;
+
+  @override
+  String note;
+
+  @override
+  int todoId;
+
+  @override
+  String? description;
+
+  TodoNote copyWith({
+    int? id,
+    String? note,
+    int? todoId,
+    String? description,
+  }) {
+    return TodoNote(
+        id: id ?? this.id,
+        note: note ?? this.note,
+        todoId: todoId ?? this.todoId,
+        description: description ?? this.description);
+  }
+
+  @override
+  bool operator ==(other) {
+    return other is _TodoNote &&
+        other.id == id &&
+        other.note == note &&
+        other.todoId == todoId &&
+        other.description == description;
+  }
+
+  @override
+  int get hashCode {
+    return hashObjects([
+      id,
+      note,
+      todoId,
+      description,
+    ]);
+  }
+
+  @override
+  String toString() {
+    return 'TodoNote(id=$id, note=$note, todoId=$todoId, description=$description)';
+  }
+
+  Map<String, dynamic> toJson() {
+    return TodoNoteSerializer.toMap(this);
   }
 }
 
@@ -768,6 +1234,10 @@ class UserSerializer extends Codec<User, Map> {
         todos: map['todos'] is Iterable
             ? List.unmodifiable(((map['todos'] as Iterable).whereType<Map>())
                 .map(UserTodoSerializer.fromMap))
+            : [],
+        address: map['address'] is Iterable
+            ? List.unmodifiable(((map['address'] as Iterable).whereType<Map>())
+                .map(UserAddressSerializer.fromMap))
             : []);
   }
 
@@ -778,7 +1248,9 @@ class UserSerializer extends Codec<User, Map> {
     return {
       'id': model.id,
       'name': model.name,
-      'todos': model.todos.map((m) => UserTodoSerializer.toMap(m)).toList()
+      'todos': model.todos.map((m) => UserTodoSerializer.toMap(m)).toList(),
+      'address':
+          model.address.map((m) => UserAddressSerializer.toMap(m)).toList()
     };
   }
 }
@@ -788,6 +1260,7 @@ abstract class UserFields {
     id,
     name,
     todos,
+    address,
   ];
 
   static const String id = 'id';
@@ -795,6 +1268,62 @@ abstract class UserFields {
   static const String name = 'name';
 
   static const String todos = 'todos';
+
+  static const String address = 'address';
+}
+
+const UserAddressSerializer userAddressSerializer = UserAddressSerializer();
+
+class UserAddressEncoder extends Converter<UserAddress, Map> {
+  const UserAddressEncoder();
+
+  @override
+  Map convert(UserAddress model) => UserAddressSerializer.toMap(model);
+}
+
+class UserAddressDecoder extends Converter<Map, UserAddress> {
+  const UserAddressDecoder();
+
+  @override
+  UserAddress convert(Map map) => UserAddressSerializer.fromMap(map);
+}
+
+class UserAddressSerializer extends Codec<UserAddress, Map> {
+  const UserAddressSerializer();
+
+  @override
+  UserAddressEncoder get encoder => const UserAddressEncoder();
+
+  @override
+  UserAddressDecoder get decoder => const UserAddressDecoder();
+
+  static UserAddress fromMap(Map map) {
+    return UserAddress(
+        id: map['id'] as int,
+        userId: map['user_id'] as int,
+        address: map['address'] as String);
+  }
+
+  static Map<String, dynamic> toMap(_UserAddress? model) {
+    if (model == null) {
+      throw FormatException("Required field [model] cannot be null");
+    }
+    return {'id': model.id, 'user_id': model.userId, 'address': model.address};
+  }
+}
+
+abstract class UserAddressFields {
+  static const List<String> allFields = <String>[
+    id,
+    userId,
+    address,
+  ];
+
+  static const String id = 'id';
+
+  static const String userId = 'user_id';
+
+  static const String address = 'address';
 }
 
 const UserTodoSerializer userTodoSerializer = UserTodoSerializer();
@@ -826,25 +1355,14 @@ class UserTodoSerializer extends Codec<UserTodo, Map> {
     return UserTodo(
         id: map['id'] as int,
         userId: map['user_id'] as int,
-        title: map['title'] as String,
-        todoValues: map['todo_values'] is Iterable
-            ? List.unmodifiable(
-                ((map['todo_values'] as Iterable).whereType<Map>())
-                    .map(TodoValueSerializer.fromMap))
-            : []);
+        title: map['title'] as String);
   }
 
   static Map<String, dynamic> toMap(_UserTodo? model) {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }
-    return {
-      'id': model.id,
-      'user_id': model.userId,
-      'title': model.title,
-      'todo_values':
-          model.todoValues.map((m) => TodoValueSerializer.toMap(m)).toList()
-    };
+    return {'id': model.id, 'user_id': model.userId, 'title': model.title};
   }
 }
 
@@ -853,7 +1371,6 @@ abstract class UserTodoFields {
     id,
     userId,
     title,
-    todoValues,
   ];
 
   static const String id = 'id';
@@ -861,8 +1378,6 @@ abstract class UserTodoFields {
   static const String userId = 'user_id';
 
   static const String title = 'title';
-
-  static const String todoValues = 'todo_values';
 }
 
 const TodoValueSerializer todoValueSerializer = TodoValueSerializer();
@@ -894,14 +1409,20 @@ class TodoValueSerializer extends Codec<TodoValue, Map> {
     return TodoValue(
         id: map['id'] as int,
         value: map['value'] as String,
-        todoId: map['todo_id'] as int);
+        todoId: map['todo_id'] as int,
+        description: map['description'] as String?);
   }
 
   static Map<String, dynamic> toMap(_TodoValue? model) {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }
-    return {'id': model.id, 'value': model.value, 'todo_id': model.todoId};
+    return {
+      'id': model.id,
+      'value': model.value,
+      'todo_id': model.todoId,
+      'description': model.description
+    };
   }
 }
 
@@ -910,6 +1431,7 @@ abstract class TodoValueFields {
     id,
     value,
     todoId,
+    description,
   ];
 
   static const String id = 'id';
@@ -917,4 +1439,69 @@ abstract class TodoValueFields {
   static const String value = 'value';
 
   static const String todoId = 'todo_id';
+
+  static const String description = 'description';
+}
+
+const TodoNoteSerializer todoNoteSerializer = TodoNoteSerializer();
+
+class TodoNoteEncoder extends Converter<TodoNote, Map> {
+  const TodoNoteEncoder();
+
+  @override
+  Map convert(TodoNote model) => TodoNoteSerializer.toMap(model);
+}
+
+class TodoNoteDecoder extends Converter<Map, TodoNote> {
+  const TodoNoteDecoder();
+
+  @override
+  TodoNote convert(Map map) => TodoNoteSerializer.fromMap(map);
+}
+
+class TodoNoteSerializer extends Codec<TodoNote, Map> {
+  const TodoNoteSerializer();
+
+  @override
+  TodoNoteEncoder get encoder => const TodoNoteEncoder();
+
+  @override
+  TodoNoteDecoder get decoder => const TodoNoteDecoder();
+
+  static TodoNote fromMap(Map map) {
+    return TodoNote(
+        id: map['id'] as int,
+        note: map['note'] as String,
+        todoId: map['todo_id'] as int,
+        description: map['description'] as String?);
+  }
+
+  static Map<String, dynamic> toMap(_TodoNote? model) {
+    if (model == null) {
+      throw FormatException("Required field [model] cannot be null");
+    }
+    return {
+      'id': model.id,
+      'note': model.note,
+      'todo_id': model.todoId,
+      'description': model.description
+    };
+  }
+}
+
+abstract class TodoNoteFields {
+  static const List<String> allFields = <String>[
+    id,
+    note,
+    todoId,
+    description,
+  ];
+
+  static const String id = 'id';
+
+  static const String note = 'note';
+
+  static const String todoId = 'todo_id';
+
+  static const String description = 'description';
 }
