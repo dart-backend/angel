@@ -2,9 +2,9 @@
 library;
 
 import 'dart:async';
-import 'dart:html';
 import 'package:angel3_client/angel3_client.dart';
 import 'package:http/browser_client.dart' as http;
+import 'package:web/web.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:web_socket_channel/html.dart';
 import 'base_websocket_client.dart';
@@ -37,23 +37,27 @@ class WebSockets extends BaseWebSocketClient {
     var ctrl = StreamController<String>();
     var wnd = window.open(url, 'angel_client_auth_popup');
 
-    Timer t;
-    StreamSubscription<Event>? sub;
-    t = Timer.periodic(Duration(milliseconds: 500), (timer) {
+    //Timer t;
+    //StreamSubscription<Event>? sub;
+    Timer.periodic(Duration(milliseconds: 500), (timer) {
       if (!ctrl.isClosed) {
-        if (wnd.closed == true) {
+        if (wnd != null && wnd.closed) {
           ctrl.addError(AngelHttpException.notAuthenticated(
               message:
                   errorMessage ?? 'Authentication via popup window failed.'));
           ctrl.close();
           timer.cancel();
-          sub?.cancel();
+          //sub?.cancel();
         }
       } else {
         timer.cancel();
       }
     });
 
+    // TODO: This need to be fixed
+    EventListener? callback;
+    window.addEventListener(eventName, callback);
+    /*
     sub = window.on[eventName].listen((e) {
       if (!ctrl.isClosed) {
         ctrl.add((e as CustomEvent).detail.toString());
@@ -62,6 +66,7 @@ class WebSockets extends BaseWebSocketClient {
         sub?.cancel();
       }
     });
+    */
 
     return ctrl.stream;
   }

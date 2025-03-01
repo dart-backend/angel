@@ -1,5 +1,5 @@
-import 'dart:html';
 import 'package:angel3_websocket/browser.dart';
+import 'package:web/web.dart';
 
 /// Dummy app to ensure client works with DDC.
 void main() {

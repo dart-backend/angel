@@ -1,6 +1,6 @@
 import 'dart:async' show Stream, StreamController;
-import 'dart:html';
 import 'package:path/path.dart' as p;
+import 'package:web/web.dart';
 
 import 'angel3_route.dart';
 
@@ -72,20 +72,24 @@ abstract class _BrowserRouterImpl<T> extends Router<T>
       all(path, handler, middleware: middleware);
 
   void prepareAnchors() {
-    final anchors = window.document
-        .querySelectorAll('a')
-        .cast<AnchorElement>(); //:not([dynamic])');
+    final anchors = window.document.querySelectorAll('a');
 
-    for (final $a in anchors) {
-      if ($a.attributes.containsKey('href') &&
-          $a.attributes.containsKey('download') &&
-          $a.attributes.containsKey('target') &&
-          $a.attributes['rel'] != 'external') {
-        $a.onClick.listen((e) {
-          e.preventDefault();
-          _goTo($a.attributes['href']!);
-          //go($a.attributes['href'].split('/').where((str) => str.isNotEmpty));
-        });
+    //.cast<HTMLAnchorElement>(); //:not([dynamic])');
+
+    // TODO: Relook at this
+    for (var i = 0; i < anchors.length; i++) {
+      var $a = anchors.item(i);
+      if ($a != null) {
+        if ($a.attributes.containsKey('href') &&
+            $a.attributes.containsKey('download') &&
+            $a.attributes.containsKey('target') &&
+            $a.attributes['rel'] != 'external') {
+          $a.onClick.listen((e) {
+            e.preventDefault();
+            _goTo($a.attributes['href']!);
+            //go($a.attributes['href'].split('/').where((str) => str.isNotEmpty));
+          });
+        }
       }
 
       $a.attributes['dynamic'] = 'true';
@@ -158,7 +162,7 @@ class _PushStateRouter<T> extends _BrowserRouterImpl<T> {
   late String _basePath;
 
   _PushStateRouter({required bool listen}) : super(listen: listen) {
-    var $base = window.document.querySelector('base[href]') as BaseElement;
+    var $base = window.document.querySelector('base[href]') as HTMLBaseElement;
 
     if ($base.href.isNotEmpty != true) {
       throw StateError(

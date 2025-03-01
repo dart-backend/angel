@@ -1,5 +1,10 @@
 # Change Log
 
+## 8.4.0
+
+* Replaced deprecated `dart:html` with `package:web`
+* Refactored the code to use `package:web`
+
 ## 8.3.0
 
 * Require Dart >= 3.6
