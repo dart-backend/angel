@@ -103,6 +103,7 @@ String extractTableName(String createQuery) {
 // Executor for MySQL
 //   create user 'test'@'localhost' identified by 'test123';
 //   GRANT ALL PRIVILEGES ON orm_test.* to 'test'@'localhost' WITH GRANT OPTION;
+/*
 Future<MySqlExecutor> _connectToMySql(List<Migration> models) async {
   var connection = await MySQLConnection.createConnection(
       databaseName: 'orm_test',
@@ -142,3 +143,4 @@ Future<MySqlExecutor> _connectToMySql(List<Migration> models) async {
 
   return MySqlExecutor(connection, logger: logger);
 }
+*/
