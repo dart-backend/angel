@@ -1,6 +1,9 @@
 import 'dart:async' show Stream, StreamController;
-import 'package:path/path.dart' as p;
+import 'dart:js_interop';
+import 'dart:js_interop_unsafe';
+//import 'dart:html';
 import 'package:web/web.dart';
+import 'package:path/path.dart' as p;
 
 import 'angel3_route.dart';
 
@@ -80,19 +83,30 @@ abstract class _BrowserRouterImpl<T> extends Router<T>
     for (var i = 0; i < anchors.length; i++) {
       var $a = anchors.item(i);
       if ($a != null) {
-        if ($a.attributes.containsKey('href') &&
-            $a.attributes.containsKey('download') &&
-            $a.attributes.containsKey('target') &&
-            $a.attributes['rel'] != 'external') {
+        if ($a.has('href') &&
+            $a.has('download') &&
+            $a.has('target') &&
+            $a.getProperty('rel'.toJS).dartify().toString() != 'external') {
+          void callback(Event event) async {
+            event.preventDefault();
+            _goTo($a.getProperty('href'.toJS).dartify().toString());
+          }
+
+          EventListener clickListener = callback as EventListener;
+          $a.addEventListener("click", clickListener);
+          /*
           $a.onClick.listen((e) {
             e.preventDefault();
-            _goTo($a.attributes['href']!);
+            _goTo($a.getProperty('href'.toJS).dartify().toString());
+            //_goTo($a.attributes['href']!);
             //go($a.attributes['href'].split('/').where((str) => str.isNotEmpty));
           });
+          */
         }
       }
 
-      $a.attributes['dynamic'] = 'true';
+      $a?.setProperty('dynamic'.toJS, 'true'.toJS);
+      //$a.attributes['dynamic'] = 'true';
     }
   }
 
@@ -106,6 +120,10 @@ abstract class _BrowserRouterImpl<T> extends Router<T>
     _listening = true;
     _listen();
   }
+}
+
+class EventCallback {
+  void handleEvent(Event event) {}
 }
 
 class _HashRouter<T> extends _BrowserRouterImpl<T> {
@@ -153,7 +171,11 @@ class _HashRouter<T> extends _BrowserRouterImpl<T> {
 
   @override
   void _listen() {
-    window.onHashChange.listen(handleHash);
+    // TODO: Need to relook at this logic
+    EventListener clickListener = handleHash as EventListener;
+
+    //window.onhashchange?.listen(handleHash);
+    window.addEventListener('hash', clickListener);
     handleHash();
   }
 }
@@ -190,8 +212,8 @@ class _PushStateRouter<T> extends _BrowserRouterImpl<T> {
     if (thisPath.isEmpty) {
       thisPath = route.path;
     }
-    window.history
-        .pushState({'path': route.path, 'params': {}}, thisPath, relativeUri);
+    window.history.pushState(
+        {'path': route.path, 'params': {}}.toJSBox, thisPath, relativeUri);
     _onResolve.add(resolved);
     _onRoute.add(_current = route);
     //}

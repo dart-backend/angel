@@ -2,8 +2,10 @@
 
 ## TODO
 
-* Fix ORM generator issue
-* Fix MySQL ORM issue
+* Fix `route/lib/browser.dart`
+* Fix `route/web/shared/basic.dart`
+* Fix `client/lib/browser.dart`
+* Fix `websocket/lib/browser.dart`
 
 ## Short Term Goal
 
