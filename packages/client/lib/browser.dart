@@ -58,7 +58,17 @@ class Rest extends BaseAngelClient {
     });
 
     // TODO: This need to be relooked at
-    EventListener? callback;
+    void eventCallback(Event ev) {
+      var e = ev as CustomEvent;
+      if (!ctrl.isClosed) {
+        ctrl.add(e.detail.toString());
+        //t.cancel();
+        ctrl.close();
+        //sub!.cancel();
+      }
+    }
+
+    EventListener? callback = eventCallback as EventListener;
     window.addEventListener(eventName, callback);
 
     /*
