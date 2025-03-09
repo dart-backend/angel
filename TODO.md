@@ -2,10 +2,7 @@
 
 ## TODO
 
-* Fix `route/lib/browser.dart`
-* Fix `route/web/shared/basic.dart`
-* Fix `client/lib/browser.dart`
-* Fix `websocket/lib/browser.dart`
+* Fix report issues
 
 ## Short Term Goal
 
