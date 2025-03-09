@@ -59,7 +59,7 @@ For more details, checkout [Project Status](https://github.com/dart-backend/ange
 ### Release 9.0.0 (Future)
 
 * Performance optimsation
-* Update ORM to support macro
+* Update ORM to support more databases
 
 ### Release 8.5.0 (Current)
 
@@ -67,6 +67,7 @@ For more details, checkout [Project Status](https://github.com/dart-backend/ange
 * Updated dependencies to the latest
 * Updated code generator to use `analyzer` 7.x.x
 * Deprecated `angel_orm_test`
+* Migrated `dart:html` to `package:web`
 
 ### Release 8.0.0
 
