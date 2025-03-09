@@ -2,7 +2,7 @@
 
 ## 8.4.0
 
-* Replaced deprecated `dart:html` with `package:web`
+* Removed deprecated `dart:html`
 * Refactored the code to use `package:web`
 
 ## 8.3.0

@@ -1,7 +1,6 @@
 import 'dart:async' show Stream, StreamController;
 import 'dart:js_interop';
 import 'dart:js_interop_unsafe';
-//import 'dart:html';
 import 'package:web/web.dart';
 import 'package:path/path.dart' as p;
 
@@ -78,26 +77,30 @@ abstract class _BrowserRouterImpl<T> extends Router<T>
     final anchors = window.document.querySelectorAll('a');
 
     //.cast<HTMLAnchorElement>(); //:not([dynamic])');
-
-    // TODO: Relook at this
     for (var i = 0; i < anchors.length; i++) {
       var $a = anchors.item(i);
       if ($a != null) {
         if ($a.has('href') &&
             $a.has('download') &&
             $a.has('target') &&
-            $a.getProperty('rel'.toJS).dartify().toString() != 'external') {
-          void callback(Event event) async {
-            event.preventDefault();
-            _goTo($a.getProperty('href'.toJS).dartify().toString());
-          }
-
-          EventListener clickListener = callback as EventListener;
-          $a.addEventListener("click", clickListener);
-          /*
+            $a.getProperty('rel'.toJS).dartify() != 'external') {
+          $a.addEventListener(
+              "click",
+              (event) {
+                event.preventDefault();
+                _goTo($a.getProperty('href'.toJS).dartify().toString());
+                /*
+                go($a
+                    .getProperty('href'.toJS)
+                    .dartify()
+                    .toString()
+                    .split('/')
+                    .where((str) => str.isNotEmpty));
+                    */
+              }.toJS);
+          /* With dart:html
           $a.onClick.listen((e) {
             e.preventDefault();
-            _goTo($a.getProperty('href'.toJS).dartify().toString());
             //_goTo($a.attributes['href']!);
             //go($a.attributes['href'].split('/').where((str) => str.isNotEmpty));
           });
@@ -171,11 +174,13 @@ class _HashRouter<T> extends _BrowserRouterImpl<T> {
 
   @override
   void _listen() {
-    // TODO: Need to relook at this logic
-    EventListener clickListener = handleHash as EventListener;
-
+    window.addEventListener(
+        'hash',
+        (e) {
+          handleHash(e);
+        }.toJS);
+    // With dart:html
     //window.onhashchange?.listen(handleHash);
-    window.addEventListener('hash', clickListener);
     handleHash();
   }
 }

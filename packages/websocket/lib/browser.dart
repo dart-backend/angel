@@ -2,6 +2,7 @@
 library;
 
 import 'dart:async';
+import 'dart:js_interop';
 import 'package:angel3_client/angel3_client.dart';
 import 'package:http/browser_client.dart' as http;
 import 'package:web/web.dart';
@@ -55,9 +56,19 @@ class WebSockets extends BaseWebSocketClient {
     });
 
     // TODO: This need to be fixed
-    EventListener? callback;
-    window.addEventListener(eventName, callback);
-    /*
+    EventListener? sub;
+    window.addEventListener(
+        eventName,
+        (e) {
+          if (!ctrl.isClosed) {
+            ctrl.add((e as CustomEvent).detail.toString());
+            //t.cancel();
+            ctrl.close();
+            //sub?.cancel();
+            window.removeEventListener(eventName, sub);
+          }
+        }.toJS);
+    /* With dart:html
     sub = window.on[eventName].listen((e) {
       if (!ctrl.isClosed) {
         ctrl.add((e as CustomEvent).detail.toString());

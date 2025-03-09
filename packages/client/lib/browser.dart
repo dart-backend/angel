@@ -2,6 +2,7 @@
 library;
 
 import 'dart:async' show Future, Stream, StreamController, Timer;
+import 'dart:js_interop';
 import 'package:web/web.dart';
 import 'dart:convert';
 import 'package:http/browser_client.dart' as http;
@@ -57,21 +58,21 @@ class Rest extends BaseAngelClient {
       }
     });
 
-    // TODO: This need to be relooked at
-    void eventCallback(Event ev) {
-      var e = ev as CustomEvent;
-      if (!ctrl.isClosed) {
-        ctrl.add(e.detail.toString());
-        //t.cancel();
-        ctrl.close();
-        //sub!.cancel();
-      }
-    }
+    EventListener? sub;
+    window.addEventListener(
+        eventName,
+        sub = (ev) {
+          var e = ev as CustomEvent;
+          if (!ctrl.isClosed) {
+            ctrl.add(e.detail.toString());
+            //t.cancel();
+            ctrl.close();
+            //sub!.cancel();
+            window.removeEventListener(eventName, sub);
+          }
+        }.toJS);
 
-    EventListener? callback = eventCallback as EventListener;
-    window.addEventListener(eventName, callback);
-
-    /*
+    /* With dart:html
     sub = window.on[eventName].listen((Event ev) {
       var e = ev as CustomEvent;
       if (!ctrl.isClosed) {
