@@ -9,7 +9,7 @@ import 'models/car.dart';
 final DateTime y2k = DateTime(2000, 1, 1);
 
 void main() {
-  Logger.root.level = Level.ALL; // defaults to Level.INFO
+  Logger.root.level = Level.INFO; // defaults to Level.INFO
   Logger.root.onRecord.listen((record) {
     print('${record.loggerName}: ${record.time}: ${record.message}');
   });

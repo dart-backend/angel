@@ -7,7 +7,7 @@ import 'common.dart';
 import 'models/has_map.dart';
 
 void main() {
-  Logger.root.level = Level.ALL; // defaults to Level.INFO
+  Logger.root.level = Level.INFO; // defaults to Level.INFO
   Logger.root.onRecord.listen((record) {
     print('${record.loggerName}: ${record.time}: ${record.message}');
   });
