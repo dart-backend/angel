@@ -2,6 +2,10 @@
 
 ## 8.4.0
 
+* Updated `vm_service` to 15.0.0
+
+## 8.3.1
+
 * Require Dart >= 3.6
 * Updated `lints` to 5.0.0
 * Updated dependencies to the latest release
