@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io' show stderr;
 import 'dart:io';
 
 import 'package:angel3_container/mirrors.dart';
@@ -69,13 +68,15 @@ void main() {
     app.get('/error', (req, res) => res.addError(StateError('wtf')));
 
     app.errorHandler = (e, req, res) async {
-      stderr..writeln(e.error)..writeln(e.stackTrace);
+      stderr
+        ..writeln(e.error)
+        ..writeln(e.stackTrace);
     };
   });
 
   tearDown(() => http.close());
 
-  void _expectHelloBye(String path) async {
+  void expectHelloBye(String path) async {
     var rq = MockHttpRequest('GET', Uri.parse(path));
     await (rq.close());
     await http.handleRequest(rq);
@@ -83,14 +84,14 @@ void main() {
     expect(body, 'Hello, world!bye');
   }
 
-  test('write after addStream', () => _expectHelloBye('/write'));
+  test('write after addStream', () => expectHelloBye('/write'));
 
-  test('multiple addStream', () => _expectHelloBye('/multiple'));
+  test('multiple addStream', () => expectHelloBye('/multiple'));
 
   test('cannot write after close', () async {
     try {
       var rq = MockHttpRequest('GET', Uri.parse('/overwrite'));
-      await (rq.close());
+      await rq.close();
       await http.handleRequest(rq);
       var body = await rq.response.transform(utf8.decoder).join();
 

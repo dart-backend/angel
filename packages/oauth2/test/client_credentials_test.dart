@@ -32,7 +32,7 @@ void main() {
     var response = await client.post(
       Uri.parse('oauth2/token'),
       headers: {
-        'Authorization': 'Basic ' + base64Url.encode('foo:bar'.codeUnits),
+        'Authorization': 'Basic ${base64Url.encode('foo:bar'.codeUnits)}',
       },
       body: {
         'grant_type': 'client_credentials',
@@ -60,7 +60,7 @@ void main() {
     var response = await client.post(
       Uri.parse('/oauth2/token'),
       headers: {
-        'Authorization': 'Basic ' + base64Url.encode('fooa:bar'.codeUnits),
+        'Authorization': 'Basic ${base64Url.encode('fooa:bar'.codeUnits)}',
       },
       body: {
         'grant_type': 'client_credentials',
@@ -75,7 +75,7 @@ void main() {
     var response = await client.post(
       Uri.parse('/oauth2/token'),
       headers: {
-        'Authorization': 'Basic ' + base64Url.encode('foo:bara'.codeUnits),
+        'Authorization': 'Basic ${base64Url.encode('foo:bara'.codeUnits)}',
       },
       body: {
         'grant_type': 'client_credentials',

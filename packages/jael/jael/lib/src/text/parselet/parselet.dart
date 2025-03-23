@@ -1,4 +1,4 @@
-library jael.src.text.parselet;
+library;
 
 import '../../ast/ast.dart';
 import '../parser.dart';

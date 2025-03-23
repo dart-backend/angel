@@ -1,13 +1,7 @@
 import 'dart:async';
+import 'package:angel3_orm/angel3_orm.dart';
 import 'package:logging/logging.dart';
 
-import 'annotations.dart';
-import 'join_builder.dart';
-import 'order_by.dart';
-import 'query_base.dart';
-import 'query_executor.dart';
-import 'query_values.dart';
-import 'query_where.dart';
 import 'package:optional/optional.dart';
 
 /// A SQL `SELECT` query builder.
@@ -70,7 +64,7 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
       nn++;
       _names[name] = nn;
     } else {
-      _names[name] = 1;
+      _names[name] = 0; //1;
     }
     return n == 0 ? name : '$name$n';
   }
@@ -167,6 +161,7 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
   void _makeJoin(
       tableName,
       Set<String>? trampoline,
+      String? alias,
       JoinType type,
       String localKey,
       String foreignKey,
@@ -182,7 +177,7 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
     }
 
     var to = _compileJoin(tableName, trampoline);
-    var alias = _joinAlias(trampoline);
+    alias ??= _joinAlias(trampoline);
     if (tableName is Query) {
       for (var field in tableName.fields) {
         tableName.aliases[field] = '${alias}_$field';
@@ -199,45 +194,50 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
   void join(tableName, String localKey, String foreignKey,
       {String op = '=',
       List<String> additionalFields = const [],
-      Set<String>? trampoline}) {
-    _makeJoin(tableName, trampoline, JoinType.inner, localKey, foreignKey, op,
-        additionalFields);
+      Set<String>? trampoline,
+      String? alias}) {
+    _makeJoin(tableName, trampoline, alias, JoinType.inner, localKey,
+        foreignKey, op, additionalFields);
   }
 
   /// Execute a `LEFT JOIN` against another table.
   void leftJoin(tableName, String localKey, String foreignKey,
       {String op = '=',
       List<String> additionalFields = const [],
-      Set<String>? trampoline}) {
-    _makeJoin(tableName, trampoline, JoinType.left, localKey, foreignKey, op,
-        additionalFields);
+      Set<String>? trampoline,
+      String? alias}) {
+    _makeJoin(tableName, trampoline, alias, JoinType.left, localKey, foreignKey,
+        op, additionalFields);
   }
 
   /// Execute a `RIGHT JOIN` against another table.
   void rightJoin(tableName, String localKey, String foreignKey,
       {String op = '=',
       List<String> additionalFields = const [],
-      Set<String>? trampoline}) {
-    _makeJoin(tableName, trampoline, JoinType.right, localKey, foreignKey, op,
-        additionalFields);
+      Set<String>? trampoline,
+      String? alias}) {
+    _makeJoin(tableName, trampoline, alias, JoinType.right, localKey,
+        foreignKey, op, additionalFields);
   }
 
   /// Execute a `FULL OUTER JOIN` against another table.
   void fullOuterJoin(tableName, String localKey, String foreignKey,
       {String op = '=',
       List<String> additionalFields = const [],
-      Set<String>? trampoline}) {
-    _makeJoin(tableName, trampoline, JoinType.full, localKey, foreignKey, op,
-        additionalFields);
+      Set<String>? trampoline,
+      String? alias}) {
+    _makeJoin(tableName, trampoline, alias, JoinType.full, localKey, foreignKey,
+        op, additionalFields);
   }
 
   /// Execute a `SELF JOIN`.
   void selfJoin(tableName, String localKey, String foreignKey,
       {String op = '=',
       List<String> additionalFields = const [],
-      Set<String>? trampoline}) {
-    _makeJoin(tableName, trampoline, JoinType.self, localKey, foreignKey, op,
-        additionalFields);
+      Set<String>? trampoline,
+      String? alias}) {
+    _makeJoin(tableName, trampoline, alias, JoinType.self, localKey, foreignKey,
+        op, additionalFields);
   }
 
   @override
@@ -292,7 +292,7 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
         }
         return ss;
       }));
-      _joins.forEach((j) {
+      for (var j in _joins) {
         var c = compiledJoins[j] = j.compile(trampoline);
         //if (c != null) {
         if (c != '') {
@@ -304,9 +304,11 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
             f.add('NULL');
           }
         }
-      });
+      }
     }
-    if (withFields) b.write(f.join(', '));
+    if (withFields) {
+      b.write(f.join(', '));
+    }
     fromQuery ??= tableName;
     b.write(' FROM $fromQuery');
 
@@ -325,8 +327,9 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
       b.write(' WHERE $whereClause');
     }
     if (_groupBy != null) b.write(' GROUP BY $_groupBy');
-    for (var item in _orderBy) {
-      b.write(' ORDER BY ${item.compile()}');
+    var orderByClause = _orderBy.map((order) => order.compile()).join(', ');
+    if (orderByClause.isNotEmpty) {
+      b.write(' ORDER BY $orderByClause');
     }
     if (_limit != null) b.write(' LIMIT $_limit');
     if (_offset != null) b.write(' OFFSET $_offset');
@@ -342,16 +345,25 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
   Future<List<T>> delete(QueryExecutor executor) {
     var sql = compile({}, preamble: 'DELETE', withFields: false);
 
+    if (executor.dialect is PostgreSQLDialect) {
+      var returning = fields.map(adornWithTableName).join(', ');
+      var selectSQL = compile({});
+      sql = 'WITH $tableName as ($sql RETURNING $returning) $selectSQL';
+    }
+
+    _log.fine("Delete Query = $sql");
+    _log.fine("Substritution Values = $substitutionValues");
+
     if (_joins.isEmpty) {
       return executor
           .query(tableName, sql, substitutionValues,
-              fields.map(adornWithTableName).toList())
+              returningFields: fields.map(adornWithTableName).toList())
           .then((it) => deserializeList(it));
     } else {
       return executor.transaction((tx) async {
         // TODO: Can this be done with just *one* query?
         var existing = await get(tx);
-        //var sql = compile(preamble: 'SELECT $tableName.id', withFields: false);
+
         return tx
             .query(tableName, sql, substitutionValues)
             .then((_) => existing);
@@ -368,16 +380,44 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
     var insertion = values?.compileInsert(this, tableName);
 
     if (insertion == '') {
-      throw StateError('No values have been specified for update.');
+      throw StateError('No values have been specified for insertion.');
     } else {
-      // TODO: How to do this in a non-Postgres DB?
-      var returning = fields.map(adornWithTableName).join(', ');
-      var sql = compile({});
-      sql = 'WITH $tableName as ($insertion RETURNING $returning) ' + sql;
+      var returningSql = '';
+      var sql = '$insertion';
+      if (executor.dialect is PostgreSQLDialect) {
+        var returning = fields.map(adornWithTableName).join(', ');
+        var selectSQL = compile({});
+        sql = 'WITH $tableName as ($insertion RETURNING $returning) $selectSQL';
+        //sql = 'WITH $tableName as ($insertion RETURNING $returning)';
+      } else if (executor.dialect is MySQLDialect) {
+        // Default to using 'id' as primary key in model
+        if (fields.contains("id")) {
+          var selectSQL = compile({});
 
-      return executor.query(tableName, sql, substitutionValues).then((it) {
-        // Return SQL execution results
-        return it.isEmpty ? Optional.empty() : deserialize(it.first);
+          var hasPrimaryField = values?.hasField('id') ?? false;
+          if (hasPrimaryField) {
+            returningSql = '$selectSQL where $tableName.id=?';
+          } else {
+            returningSql = '$selectSQL order by $tableName.id desc limit 1';
+          }
+        } else {
+          var returningSelect = values?.compileInsertSelect(this, tableName);
+          var selectSQL = compile({});
+          returningSql = '$selectSQL where $returningSelect';
+        }
+      } else {
+        throw ArgumentError("Unsupported database dialect.");
+      }
+
+      _log.fine("Insert Query = $sql");
+      _log.fine("Substritution Values = $substitutionValues");
+
+      return executor
+          .query(tableName, sql, substitutionValues,
+              returningFields: fields, returningQuery: returningSql)
+          .then((result) {
+        //_log.fine("Result Values: $result");
+        return result.isEmpty ? Optional.empty() : deserialize(result.first);
       });
     }
   }
@@ -388,22 +428,33 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
 
     if (valuesClause == '') {
       throw StateError('No values have been specified for update.');
-    } else {
-      updateSql.write(' $valuesClause');
-      var whereClause = where?.compile();
-      if (whereClause?.isNotEmpty == true) {
-        updateSql.write(' WHERE $whereClause');
-      }
-      if (_limit != null) updateSql.write(' LIMIT $_limit');
-
-      var returning = fields.map(adornWithTableName).join(', ');
-      var sql = compile({});
-      sql = 'WITH $tableName as ($updateSql RETURNING $returning) ' + sql;
-
-      return executor
-          .query(tableName, sql, substitutionValues)
-          .then((it) => deserializeList(it));
     }
+    updateSql.write(' $valuesClause');
+    var whereClause = where?.compile();
+    if (whereClause?.isNotEmpty == true) {
+      updateSql.write(' WHERE $whereClause');
+    }
+    if (_limit != null) updateSql.write(' LIMIT $_limit');
+
+    var returning = fields.map(adornWithTableName).join(', ');
+    var sql = compile({});
+    var returningSql = '';
+    if (executor.dialect is PostgreSQLDialect) {
+      sql = 'WITH $tableName as ($updateSql RETURNING $returning) $sql';
+    } else if (executor.dialect is MySQLDialect) {
+      returningSql = sql;
+      sql = '$updateSql';
+    } else {
+      throw ArgumentError("Unsupported database dialect.");
+    }
+    //_log.fine("Update Query = $sql");
+
+    _log.fine("Update Query = $sql");
+    _log.fine("Substritution Values = $substitutionValues");
+
+    return executor
+        .query(tableName, sql, substitutionValues, returningQuery: returningSql)
+        .then((it) => deserializeList(it));
   }
 
   Future<Optional<T>> updateOne(QueryExecutor executor) {

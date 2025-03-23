@@ -4,10 +4,10 @@ import 'router.dart';
 class MiddlewarePipeline<T> {
   /// All the possible routes that matched the given path.
   final Iterable<RoutingResult<T>> routingResults;
-  final List<T?> _handlers = [];
+  final List<T> _handlers = [];
 
   /// An ordered list of every handler delegated to handle this request.
-  List<T?> get handlers {
+  List<T> get handlers {
     /*
     if (_handlers != null) return _handlers;
     final handlers = <T>[];
@@ -35,7 +35,7 @@ class MiddlewarePipeline<T> {
 }
 
 /// Iterates through a [MiddlewarePipeline].
-class MiddlewarePipelineIterator<T> extends Iterator<RoutingResult<T>> {
+class MiddlewarePipelineIterator<T> implements Iterator<RoutingResult<T>> {
   final MiddlewarePipeline<T> pipeline;
   final Iterator<RoutingResult<T>> _inner;
 

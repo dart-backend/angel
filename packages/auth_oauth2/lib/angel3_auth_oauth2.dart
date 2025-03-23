@@ -1,4 +1,4 @@
-library angel3_auth_oauth2;
+library;
 
 import 'dart:async';
 import 'package:angel3_auth/angel3_auth.dart';

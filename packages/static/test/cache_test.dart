@@ -5,7 +5,6 @@ import 'package:angel3_static/angel3_static.dart';
 import 'package:file/local.dart';
 import 'package:http/http.dart' show Client;
 import 'package:logging/logging.dart';
-import 'package:matcher/matcher.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -21,7 +20,9 @@ void main() {
 
     app.fallback(
       CachingVirtualDirectory(app, const LocalFileSystem(),
-          source: testDir, maxAge: 350, onlyInProduction: false,
+          source: testDir,
+          maxAge: 350,
+          onlyInProduction: false,
           //publicPath: '/virtual',
           indexFileNames: ['index.txt']).handleRequest,
     );

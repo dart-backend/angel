@@ -1,8 +1,8 @@
 import 'dart:async';
+import 'package:angel3_container/mirrors.dart';
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_test/angel3_test.dart';
 import 'package:angel3_oauth2/angel3_oauth2.dart';
-import 'package:angel3_validate/angel3_validate.dart';
 import 'package:logging/logging.dart';
 import 'package:test/test.dart';
 import 'common.dart';
@@ -11,7 +11,7 @@ void main() {
   late TestClient client;
 
   setUp(() async {
-    var app = Angel();
+    var app = Angel(reflector: MirrorsReflector());
     var oauth2 = _AuthorizationServer();
 
     app.group('/oauth2', (router) {
@@ -20,7 +20,8 @@ void main() {
         ..post('/token', oauth2.tokenEndpoint);
     });
 
-    app.logger = Logger('angel_oauth2')
+    //app.logger.level = Level.ALL;
+    app.logger = Logger("oauth2")
       ..onRecord.listen((rec) {
         print(rec);
         if (rec.error != null) print(rec.error);
@@ -114,7 +115,8 @@ void main() {
         'device_code': 'brute',
       });
 
-      print(response.body);
+      print("[Client] ${response.headers}");
+      print("[Client] ${response.body}");
       expect(
           response,
           allOf(
@@ -131,6 +133,8 @@ void main() {
 
 class _AuthorizationServer
     extends AuthorizationServer<PseudoApplication, PseudoUser> {
+  var logger = Logger('AuthorizationServer');
+
   @override
   PseudoApplication? findClient(String? clientId) {
     return clientId == pseudoApplication.id ? pseudoApplication : null;
@@ -160,7 +164,13 @@ class _AuthorizationServer
       String state,
       RequestContext req,
       ResponseContext res) {
+    print("[Server] exchangeDeviceCodeForToken");
+    print("[Server] $deviceCode");
+    print("[Server] $client");
+
     if (deviceCode == 'brute') {
+      print("[Server] Throws AuthorizationException");
+
       throw AuthorizationException(ErrorResponse(
           ErrorResponse.slowDown,
           'Ho, brother! Ho, whoa, whoa, whoa now! You got too much dip on your chip!',

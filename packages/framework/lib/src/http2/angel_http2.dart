@@ -80,7 +80,7 @@ class AngelHttp2 extends Driver<Socket, ServerTransportStream,
 
   @override
   Future<void> close() async {
-    await _artificial!.close();
+    await _artificial?.close();
     await _http.close();
     return await super.close();
   }
@@ -211,7 +211,7 @@ class _AngelHttp2ServerSocket extends Stream<SecureSocket>
       },
       onDone: _ctrl.close,
       onError: (e, st) {
-        driver.app.logger!.warning(
+        driver.app.logger.warning(
             'HTTP/2 incoming connection failure: ', e, st as StackTrace);
       },
     );

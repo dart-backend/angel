@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:io/ansi.dart';
-import '404_hole_test.dart' as hole404;
+import 'http_404_hole_test.dart' as hole404;
 import 'accepts_test.dart' as accepts;
 import 'anonymous_service_test.dart' as anonymous_service;
 import 'body_test.dart' as body;
@@ -27,15 +27,17 @@ import 'service_map_test.dart' as service_map;
 import 'services_test.dart' as services;
 import 'streaming_test.dart' as streaming;
 import 'view_generator_test.dart' as view_generator;
+//import 'response_header_test.dart' as response_header;
 import 'package:test/test.dart';
 
 /// For running with coverage
 void main() {
   print(cyan.wrap('Running tests on ${Platform.version}'));
-  group('404_hole', hole404.main);
+  group('http_404_hole', hole404.main);
   group('accepts', accepts.main);
   group('anonymous service', anonymous_service.main);
   group('body', body.main);
+  //group('response_header', response_header.main);
   group('controller', controller.main);
   group('detach', detach.main);
   group('di', di.main);

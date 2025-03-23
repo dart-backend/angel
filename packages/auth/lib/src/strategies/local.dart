@@ -5,8 +5,6 @@ import 'package:angel3_framework/angel3_framework.dart';
 import '../options.dart';
 import '../strategy.dart';
 
-bool _validateString(String? str) => str != null && str.isNotEmpty;
-
 /// Determines the validity of an incoming username and password.
 // typedef FutureOr<User> LocalAuthVerifier<User>(String? username, String? password);
 typedef LocalAuthVerifier<User> = FutureOr<User?> Function(
@@ -30,7 +28,7 @@ class LocalAuthStrategy<User> extends AuthStrategy<User> {
       {this.usernameField = 'username',
       this.passwordField = 'password',
       this.invalidMessage = 'Please provide a valid username and password.',
-      this.allowBasic = true,
+      this.allowBasic = false,
       this.forceBasic = false,
       this.realm = 'Authentication is required.'}) {
     _log.info('Using LocalAuthStrategy');
@@ -39,7 +37,7 @@ class LocalAuthStrategy<User> extends AuthStrategy<User> {
   @override
   Future<User?> authenticate(RequestContext req, ResponseContext res,
       [AngelAuthOptions? options]) async {
-    var _options = options ?? AngelAuthOptions();
+    var localOptions = options ?? AngelAuthOptions();
     User? verificationResult;
 
     if (allowBasic) {
@@ -68,29 +66,55 @@ class LocalAuthStrategy<User> extends AuthStrategy<User> {
           return null;
         }
 
-        return verificationResult;
+        //Allow non-null to pass through
+        //return verificationResult;
       }
-    }
-
-    if (verificationResult == null) {
+    } else {
       var body = await req
           .parseBody()
           .then((_) => req.bodyAsMap)
           .catchError((_) => <String, dynamic>{});
-      //if (body != null) {
-      if (_validateString(body[usernameField].toString()) &&
-          _validateString(body[passwordField].toString())) {
+      if (_validateString(body[usernameField]?.toString()) &&
+          _validateString(body[passwordField]?.toString())) {
         verificationResult = await verifier(
-            body[usernameField].toString(), body[passwordField].toString());
+            body[usernameField]?.toString(), body[passwordField]?.toString());
       }
-      //}
     }
 
-    if (verificationResult == null ||
-        (verificationResult is Map && verificationResult.isEmpty)) {
-      if (_options.failureRedirect != null &&
-          _options.failureRedirect!.isNotEmpty) {
-        await res.redirect(_options.failureRedirect, code: 401);
+    // User authentication succeeded can return Map(one element), User(non null) or true
+    if (verificationResult != null && verificationResult != false) {
+      if (verificationResult is Map && verificationResult.isNotEmpty) {
+        return verificationResult;
+      } else if (verificationResult is! Map) {
+        return verificationResult;
+      }
+    }
+
+    // Force basic if set
+    if (forceBasic) {
+      //res.headers['www-authenticate'] = 'Basic realm="$realm"';
+      res
+        ..statusCode = 401
+        ..headers['www-authenticate'] = 'Basic realm="$realm"';
+      await res.close();
+      return null;
+    }
+
+    // Redirect failed authentication
+    if (localOptions.failureRedirect != null &&
+        localOptions.failureRedirect!.isNotEmpty) {
+      await res.redirect(localOptions.failureRedirect, code: 401);
+      return null;
+    }
+
+    _log.info('Not authenticated');
+    throw AngelHttpException.notAuthenticated();
+
+    /*
+    if (verificationResult is Map && verificationResult.isEmpty) {
+      if (localOptions.failureRedirect != null &&
+          localOptions.failureRedirect!.isNotEmpty) {
+        await res.redirect(localOptions.failureRedirect, code: 401);
         return null;
       }
 
@@ -107,5 +131,8 @@ class LocalAuthStrategy<User> extends AuthStrategy<User> {
       _log.info('Not authenticated');
       throw AngelHttpException.notAuthenticated();
     }
+    */
   }
+
+  bool _validateString(String? str) => str != null && str.isNotEmpty;
 }

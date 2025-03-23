@@ -2,8 +2,8 @@
 
 ![Pub Version (including pre-releases)](https://img.shields.io/pub/v/angel3_mongo?include_prereleases)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
-[![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
-[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/master/packages/mongo/LICENSE)
+[![Discord](https://img.shields.io/discord/1060322353214660698)](https://discord.gg/3X6bxTUdCM)
+[![License](https://img.shields.io/github/license/dart-backend/angel)](https://github.com/dart-backend/angel/tree/master/packages/mongo/LICENSE)
 
 MongoDB-enabled services for the Angel3 framework.
 
@@ -13,7 +13,7 @@ Add the following to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  angel3_mongo: ^3.1.0
+  angel3_mongo: ^8.0.0
 ```
 
 ## Usage
@@ -22,8 +22,7 @@ This library exposes one main class: `MongoService`.
 
 ## Model
 
-`Model` is class with no real functionality; however, it represents a basic document, and your services should host inherited classes.
-Other Angel service providers host `Model` as well, so you will easily be able to modify your application if you ever switch databases.
+`Model` is class with no real functionality; however, it represents a basic document, and your services should host inherited classes. Other Angel service providers host `Model` as well, so you will easily be able to modify your application if you ever switch databases.
 
 ```dart
 class User extends Model {
@@ -45,24 +44,44 @@ void main() async {
 
 ## MongoService
 
-This class interacts with a `DbCollection` (from mongo_dart) and serializing data to and from Maps.
+This class interacts with `DbCollection` (from mongo_dart) and serializing data to and from Maps.
 
 ## Querying
 
 You can query these services as follows:
 
-```bash
+```curl
     /path/to/service?foo=bar
 ```
 
-The above will query the database to find records where 'foo' equals 'bar'.
-
-The former will sort result in ascending order of creation, and so will the latter.
+The above will query the database to find records where 'foo' equals 'bar'. The former will sort result in ascending order of creation, and so will the latter.
 
 ```dart
-    List queried = await MyService.index({r"$query": where.id(new ObjectId.fromHexString("some hex string"})));
+    List queried = await MyService.index({r"$query": where.id(ObjectId.fromHexString("some hex string"})));
 ```
 
-And, of course, you can use mongo_dart queries. Just pass it as `query` within `params`.
+And, you can use mongo_dart queries. Just pass it as `query` within `params`.
 
 See the tests for more usage examples.
+
+## **Important Notes**
+
+When connecting to a locally installed instance of MongoDB or docker based MongoDB with authentication enabled, the following connection string is not supported yet.
+
+```dart
+  var db = Db('mongodb://<username>:<password>@localhost:27017/testDB');
+  await db.open();
+```
+
+Use the following instead. By default the user access information is stored in `admin` database.
+
+```dart
+  var db = Db('mongodb://localhost:27017/testDB');
+  await db.open();
+  await db.authenticate("<username>", "<password>", authDb: "admin");
+```
+
+Where
+
+* `<username>` is MongoDB username
+* `<password>` is MongoDB password

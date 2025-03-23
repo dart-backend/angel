@@ -16,7 +16,7 @@ class User extends Model {
 
   User({this.username, this.password});
 
-  static User parse(Map map) {
+  static User parse(Map<String, dynamic> map) {
     return User(
       username: map['username'] as String?,
       password: map['password'] as String?,
@@ -41,6 +41,7 @@ void main() {
   http.Client? client;
   HttpServer server;
   String? url;
+  String? encodedAuth;
 
   setUp(() async {
     hierarchicalLoggingEnabled = true;
@@ -50,11 +51,11 @@ void main() {
 
     var oldErrorHandler = app.errorHandler;
     app.errorHandler = (e, req, res) {
-      app.logger?.severe(e.message, e, e.stackTrace ?? StackTrace.current);
+      app.logger.severe(e.message, e, e.stackTrace ?? StackTrace.current);
       return oldErrorHandler(e, req, res);
     };
 
-    app.logger = Logger('angel_auth')
+    app.logger = Logger('angel3_auth')
       ..level = Level.FINEST
       ..onRecord.listen((rec) {
         print(rec);
@@ -86,13 +87,13 @@ void main() {
       var users = await app
           .findService('users')
           ?.index()
-          .then((it) => it.map<User>((m) => User.parse(m as Map)).toList());
+          .then((it) => it.map<User>((m) => User.parse(m)).toList());
 
       var result = users?.firstWhereOrNull(
           (user) => user.username == username && user.password == password);
 
       return Future.value(result);
-    });
+    }, allowBasic: true);
 
     app.post(
         '/login',
@@ -116,6 +117,8 @@ void main() {
       auth.authenticate('local'),
     );
 
+    encodedAuth = base64.encode(utf8.encode('jdoe1:password'));
+
     client = http.Client();
     server = await angelHttp.startServer();
     url = 'http://${server.address.address}:${server.port}';
@@ -131,7 +134,7 @@ void main() {
 
   test('login', () async {
     final response = await client!.post(Uri.parse('$url/login'),
-        body: {'username': 'jdoe1', 'password': 'password'});
+        headers: {'Authorization': 'Basic $encodedAuth'});
     print('Response: ${response.body}');
     expect(response.body, equals('Hello!'));
   },

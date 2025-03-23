@@ -1,6 +1,4 @@
 import 'dart:async';
-import 'request_context.dart';
-import 'response_context.dart';
 import 'service.dart';
 
 /// An easy helper class to create one-off services without having to create an entire class.
@@ -22,8 +20,7 @@ class AnonymousService<Id, Data> extends Service<Id, Data> {
       FutureOr<Data> Function(Id id, Data data, [Map<String, dynamic>? params])?
           update,
       FutureOr<Data> Function(Id id, [Map<String, dynamic>? params])? remove,
-      FutureOr<Data> Function(RequestContext, ResponseContext)? readData})
-      : super(readData: readData) {
+      super.readData}) {
     _index = index;
     _read = read;
     _create = create;

@@ -1,4 +1,4 @@
-part of jael.src.text.parselet;
+part of 'parselet.dart';
 
 const Map<TokenType, PrefixParselet> prefixParselets = {
   TokenType.exclamation: NotParselet(),

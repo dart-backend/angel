@@ -1,6 +1,9 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:isolate';
+import 'package:belatuk_pub_sub/belatuk_pub_sub.dart';
+import 'package:belatuk_pub_sub/isolate.dart';
+import 'package:intl/intl.dart';
 import 'package:angel3_container/angel3_container.dart';
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_framework/http.dart';
@@ -9,8 +12,6 @@ import 'package:args/args.dart';
 import 'package:io/ansi.dart';
 import 'package:io/io.dart';
 import 'package:logging/logging.dart';
-import 'package:belatuk_pub_sub/isolate.dart' as pub_sub;
-import 'package:belatuk_pub_sub/belatuk_pub_sub.dart' as pub_sub;
 import 'instance_info.dart';
 import 'options.dart';
 
@@ -23,20 +24,15 @@ class Runner {
   final AngelConfigurer configureServer;
   final Reflector reflector;
 
+  final Map<String, Object> removeResponseHeaders;
+  final Map<String, Object> responseHeaders;
+
   Runner(this.name, this.configureServer,
-      {this.reflector = const EmptyReflector()});
+      {this.reflector = const EmptyReflector(),
+      this.removeResponseHeaders = const {},
+      this.responseHeaders = const {}});
 
-  static const String asciiArt2 = '''
-
-    ___    _   ________________   _____
-   /   |  / | / / ____/ ____/ /  |__  /
-  / /| | /  |/ / / __/ __/ / /    /_ < 
- / ___ |/ /|  / /_/ / /___/ /______/ / 
-/_/  |_/_/ |_/\\____/_____/_____/____/ 
-                                                                                                                       
-''';
-
-  static const String asciiArt = '''
+  static const String _asciiArt = '''
 
      _    _   _  ____ _____ _     _____ 
     / \\  | \\ | |/ ___| ____| |   |___ / 
@@ -45,30 +41,34 @@ class Runner {
  /_/   \\_\\_| \\_|\\____|_____|_____|____/                                                                                 
 ''';
 
-  static const String asciiArtOld = '''
-____________   ________________________ 
-___    |__  | / /_  ____/__  ____/__  / 
-__  /| |_   |/ /_  / __ __  __/  __  /  
-_  ___ |  /|  / / /_/ / _  /___  _  /___
-/_/  |_/_/ |_/  \____/  /_____/  /_____/
-                                        
-''';
+  static final DateFormat _defaultDateFormat =
+      DateFormat('yyyy-MM-dd HH:mm:ss');
 
   /// LogRecord handler
   static void handleLogRecord(LogRecord? record, RunnerOptions options) {
     if (options.quiet || record == null) return;
     var code = chooseLogColor(record.level);
 
-    if (record.error == null) print(code.wrap(record.toString()));
+    var now = _defaultDateFormat.format(DateTime.now());
+
+    if (record.error == null) {
+      //print(code.wrap(record.message));
+      print(code.wrap(
+          '$now ${record.level.name} [${record.loggerName}]: ${record.message}'));
+    }
 
     if (record.error != null) {
       var err = record.error;
       if (err is AngelHttpException && err.statusCode != 500) return;
-      print(code.wrap(record.toString() + '\n'));
-      print(code.wrap(err.toString()));
+      //print(code.wrap(record.message + '\n'));
+      print(code.wrap(
+          '$now ${record.level.name} [${record.loggerName}]: ${record.message} \n'));
+      print(code.wrap(
+          '$now ${record.level.name} [${record.loggerName}]: ${err.toString()}'));
 
       if (record.stackTrace != null) {
-        print(code.wrap(record.stackTrace.toString()));
+        print(code.wrap(
+            '$now ${record.level.name} [${record.loggerName}]: ${record.stackTrace.toString()}'));
       }
     }
   }
@@ -105,16 +105,15 @@ _  ___ |  /|  / / /_/ / _  /___  _  /___
     var onLogRecord = ReceivePort();
     var onExit = ReceivePort();
     var onError = ReceivePort();
-    var runnerArgs = _RunnerArgs(name, configureServer, options, reflector,
+    var runnerArgs = RunnerArgs(name, configureServer, options, reflector,
         onLogRecord.sendPort, pubSubSendPort);
-    var argsWithId = _RunnerArgsWithId(id, runnerArgs);
+    var argsWithId = RunnerArgsWithId(id, runnerArgs);
 
     Isolate.spawn(isolateMain, argsWithId,
             onExit: onExit.sendPort,
             onError: onError.sendPort,
             errorsAreFatal: true && false)
         .then((isolate) {})
-        //.catchError(c.completeError);
         .catchError((e) {
       c.completeError(e as Object);
       return null;
@@ -159,11 +158,14 @@ _  ___ |  /|  / / /_/ / _  /___  _  /___
 
   /// Starts a number of isolates, running identical instances of an Angel application.
   Future run(List<String> args) async {
-    pub_sub.Server? server;
+    Server? server;
 
     try {
       var argResults = RunnerOptions.argParser.parse(args);
+
       var options = RunnerOptions.fromArgResults(argResults);
+      options.responseHeaders.addAll(responseHeaders);
+      options.removeResponseHeaders.addAll(removeResponseHeaders);
 
       if (options.ssl || options.http2) {
         if (options.certificateFile == null) {
@@ -173,11 +175,8 @@ _  ___ |  /|  / / /_/ / _  /___  _  /___
         }
       }
 
-      print(darkGray.wrap(asciiArt +
-          '\n\n' +
-          'A batteries-included, full-featured, full-stack framework in Dart.' +
-          '\n\n' +
-          'https://angel3-framework.web.app\n'));
+      print(darkGray.wrap(
+          '$_asciiArt\n\nA batteries-included, full-featured, full-stack framework in Dart.\n\nhttps://angel3-framework.web.app\n'));
 
       if (argResults['help'] == true) {
         stdout
@@ -188,12 +187,13 @@ _  ___ |  /|  / / /_/ / _  /___  _  /___
 
       print('Starting `$name` application...');
 
-      var adapter = pub_sub.IsolateAdapter();
-      server = pub_sub.Server([adapter]);
+      var adapter = IsolateAdapter();
+      server = Server([adapter]);
 
       // Register clients
-      for (var i = 0; i < Platform.numberOfProcessors; i++) {
-        server.registerClient(pub_sub.ClientInfo('client$i'));
+      // for (var i = 0; i < Platform.numberOfProcessors; i++) {
+      for (var i = 0; i < options.concurrency; i++) {
+        server.registerClient(ClientInfo('client$i'));
       }
 
       server.start();
@@ -218,9 +218,9 @@ _  ___ |  /|  / / /_/ / _  /___  _  /___
   }
 
   /// Run with main isolate
-  static void isolateMain(_RunnerArgsWithId argsWithId) {
+  static void isolateMain(RunnerArgsWithId argsWithId) {
     var args = argsWithId.args;
-    hierarchicalLoggingEnabled = true;
+    hierarchicalLoggingEnabled = false;
 
     var zone = Zone.current.fork(specification: ZoneSpecification(
       print: (self, parent, zone, msg) {
@@ -229,18 +229,17 @@ _  ___ |  /|  / / /_/ / _  /___  _  /___
     ));
 
     zone.run(() async {
-      var client =
-          pub_sub.IsolateClient('client${argsWithId.id}', args.pubSubSendPort);
+      var client = IsolateClient('client${argsWithId.id}', args.pubSubSendPort);
 
       var app = Angel(reflector: args.reflector)
-        ..container!.registerSingleton<pub_sub.Client>(client)
-        ..container!.registerSingleton(InstanceInfo(id: argsWithId.id));
+        ..container.registerSingleton<Client>(client)
+        ..container.registerSingleton(InstanceInfo(id: argsWithId.id));
 
       app.shutdownHooks.add((_) => client.close());
 
       await app.configure(args.configureServer);
 
-      app.logger ??= Logger(args.loggerName)
+      app.logger = Logger(args.loggerName)
         ..onRecord.listen((rec) => Runner.handleLogRecord(rec, args.options));
 
       AngelHttp http;
@@ -249,13 +248,15 @@ _  ___ |  /|  / / /_/ / _  /___  _  /___
 
       if (args.options.ssl || args.options.http2) {
         securityContext = SecurityContext();
-        if (args.options.certificateFile != null) {
-          securityContext.useCertificateChain(args.options.certificateFile!,
+        var certificateFile = args.options.certificateFile;
+        if (certificateFile != null) {
+          securityContext.useCertificateChain(certificateFile,
               password: args.options.certificatePassword);
         }
 
-        if (args.options.keyFile != null) {
-          securityContext.usePrivateKey(args.options.keyFile!,
+        var keyFile = args.options.keyFile;
+        if (keyFile != null) {
+          securityContext.usePrivateKey(keyFile,
               password: args.options.keyPassword);
         }
       }
@@ -281,6 +282,13 @@ _  ___ |  /|  / / /_/ / _  /___  _  /___
       }
 
       await driver.startServer(args.options.hostname, args.options.port);
+
+      // Only apply the headers to AngelHttp instance
+      if (driver is AngelHttp) {
+        driver.addResponseHeader(args.options.responseHeaders);
+        driver.removeResponseHeader(args.options.removeResponseHeaders);
+      }
+
       serverUrl = driver.uri;
       if (args.options.ssl || args.options.http2) {
         serverUrl = serverUrl.replace(scheme: 'https');
@@ -290,14 +298,14 @@ _  ___ |  /|  / / /_/ / _  /___  _  /___
   }
 }
 
-class _RunnerArgsWithId {
+class RunnerArgsWithId {
   final int id;
-  final _RunnerArgs args;
+  final RunnerArgs args;
 
-  _RunnerArgsWithId(this.id, this.args);
+  RunnerArgsWithId(this.id, this.args);
 }
 
-class _RunnerArgs {
+class RunnerArgs {
   final String name;
 
   final AngelConfigurer configureServer;
@@ -308,7 +316,7 @@ class _RunnerArgs {
 
   final SendPort loggingSendPort, pubSubSendPort;
 
-  _RunnerArgs(this.name, this.configureServer, this.options, this.reflector,
+  RunnerArgs(this.name, this.configureServer, this.options, this.reflector,
       this.loggingSendPort, this.pubSubSendPort);
 
   String get loggerName => name;

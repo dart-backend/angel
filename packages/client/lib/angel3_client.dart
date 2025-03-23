@@ -1,5 +1,5 @@
 /// Client library for the Angel framework.
-library angel3_client;
+library;
 
 import 'dart:async';
 import 'package:collection/collection.dart';
@@ -33,10 +33,6 @@ abstract class Angel extends http.BaseClient {
   Angel(baseUrl)
       : baseUrl = baseUrl is Uri ? baseUrl : Uri.parse(baseUrl.toString());
 
-  /// Prefer to use [baseUrl] instead.
-  @deprecated
-  String get basePath => baseUrl.toString();
-
   /// Fired whenever a WebSocket is successfully authenticated.
   Stream<AngelAuthResult> get onAuthenticated;
 
@@ -48,10 +44,7 @@ abstract class Angel extends http.BaseClient {
   ///
   /// The given [credentials] are sent to server as-is; the request body is sent as JSON.
   Future<AngelAuthResult> authenticate(
-      {required String type,
-      credentials,
-      String authEndpoint = '/auth',
-      @deprecated String reviveEndpoint = '/auth/token'});
+      {required String type, credentials, String authEndpoint = '/auth'});
 
   /// Shorthand for authenticating via a JWT string.
   Future<AngelAuthResult> reviveJwt(String token,
@@ -87,7 +80,7 @@ abstract class Angel extends http.BaseClient {
   /// You can pass a custom [deserializer], which is typically necessary in cases where
   /// `dart:mirrors` does not exist.
   Service<Id, Data> service<Id, Data>(String path,
-      {@deprecated Type? type, AngelDeserializer<Data>? deserializer});
+      {AngelDeserializer<Data>? deserializer});
 
   //@override
   //Future<http.Response> delete(url, {Map<String, String> headers});

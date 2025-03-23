@@ -7,3 +7,5 @@ export 'src/has_map_test.dart';
 export 'src/has_one_test.dart';
 export 'src/many_to_many_test.dart';
 export 'src/standalone_test.dart';
+export 'src/performance_test.dart';
+export 'src/join_test.dart';

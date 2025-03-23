@@ -1,4 +1,4 @@
-part of angel3_websocket.server;
+part of 'server.dart';
 
 /// Marks a method as available to WebSockets.
 class ExposeWs {
@@ -38,7 +38,7 @@ class WebSocketController extends Controller {
 
   @override
   Future configureServer(Angel app) async {
-    if (findExpose(app.container!.reflector) != null) {
+    if (findExpose(app.container.reflector) != null) {
       await super.configureServer(app);
     }
 

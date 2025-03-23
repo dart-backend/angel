@@ -1,17 +1,16 @@
-# ORM
+# Angel3 ORM
 
-[![version](https://img.shields.io/badge/pub-v4.0.0-brightgreen)](https://pub.dartlang.org/packages/angel3_orm)
+![Pub Version (including pre-releases)](https://img.shields.io/pub/v/angel3_orm?include_prereleases)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
-[![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
+[![Discord](https://img.shields.io/discord/1060322353214660698)](https://discord.gg/3X6bxTUdCM)
+[![License](https://img.shields.io/github/license/dart-backend/angel)](https://github.com/dart-backend/angel/tree/master/packages/orm/LICENSE)
 
-[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/orm/LICENSE)
-
-Source-generated ORM for use with the [Angel3 framework](https://github.com/dukefirehawk/angel). Now you can combine the power and flexibility of Angel3 with a strongly-typed ORM.
+Source-generated ORM for use with the [Angel3 framework](https://github.com/dart-backend/angel). Now you can combine the power and flexibility of Angel3 with a strongly-typed ORM.
 
 Documentation for migrations can be found here:
 [ORM Migration](https://angel3-docs.dukefirehawk.com/guides/orm/migrations)
 
-- [ORM](#orm)
+- [Angel3 ORM](#angel3-orm)
   - [Usage](#usage)
   - [Models](#models)
   - [Example](#example)
@@ -28,9 +27,9 @@ You'll need these dependencies in your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  angel3_orm: ^4.0.0
+  angel3_orm: ^8.0.0
 dev_dependencies:
-  angel3_orm_generator: ^4.0.0
+  angel3_orm_generator: ^8.0.0
   build_runner: ^2.0.0
 ```
 

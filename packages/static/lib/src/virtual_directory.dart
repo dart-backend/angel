@@ -116,7 +116,7 @@ class VirtualDirectory {
     if (_prefix.isNotEmpty) {
       // Only replace the *first* incidence
       // Resolve: https://github.com/angel-dart/angel/issues/41
-      path = path.replaceFirst(RegExp('^' + _pathify(_prefix)), '');
+      path = path.replaceFirst(RegExp('^${_pathify(_prefix)}'), '');
     }
 
     if (path.isEmpty) path = '.';
@@ -226,7 +226,6 @@ class VirtualDirectory {
           type = '[Link]';
           stub = p.basename(entity.path);
         } else {
-          //TODO: Handle unknown type
           _log.severe('Unknown file entity. Not a file, directory or link.');
           type = '[]';
           stub = '';
@@ -234,7 +233,7 @@ class VirtualDirectory {
         var href = stub;
 
         if (relative.isNotEmpty) {
-          href = '/' + relative + '/' + stub;
+          href = '/$relative/$stub';
         }
 
         if (entity is Directory) {
@@ -265,8 +264,11 @@ class VirtualDirectory {
     if (!acceptable) {
       _log.severe('Mime type [$value] is not supported');
       throw AngelHttpException(
-          UnsupportedError(
-              'Client requested $value, but server wanted to send $mimeType.'),
+          //UnsupportedError(
+          //    'Client requested $value, but server wanted to send $mimeType.'),
+          errors: [
+            'Client requested $value, but server wanted to send $mimeType.'
+          ],
           statusCode: 406,
           message: '406 Not Acceptable');
     }
@@ -320,7 +322,8 @@ class VirtualDirectory {
 
         if (invalid) {
           throw AngelHttpException(
-              Exception('Semantically invalid, or unbounded range.'),
+              //Exception('Semantically invalid, or unbounded range.'),
+              errors: ['Semantically invalid, or unbounded range.'],
               statusCode: 416,
               message: 'Semantically invalid, or unbounded range.');
         }
@@ -328,14 +331,15 @@ class VirtualDirectory {
         // Ensure it's within range.
         if (item.start >= totalFileSize || item.end >= totalFileSize) {
           throw AngelHttpException(
-              Exception('Given range $item is out of bounds.'),
+              //Exception('Given range $item is out of bounds.'),
+              errors: ['Given range $item is out of bounds.'],
               statusCode: 416,
               message: 'Given range $item is out of bounds.');
         }
       }
 
       if (header.items.isEmpty) {
-        throw AngelHttpException(null,
+        throw AngelHttpException(
             statusCode: 416, message: '`Range` header may not be empty.');
       } else if (header.items.length == 1) {
         var item = header.items[0];
@@ -367,7 +371,7 @@ class VirtualDirectory {
                 'application/octet-stream');
         res.statusCode = 206;
         res.headers['content-length'] = len.toString();
-        res.headers['content-range'] = 'bytes ' + item.toContentRange(total);
+        res.headers['content-range'] = 'bytes ${item.toContentRange(total)}';
         await stream.cast<List<int>>().pipe(res);
         return false;
       } else {

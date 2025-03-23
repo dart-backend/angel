@@ -1,5 +1,120 @@
 # Change Log
 
+## 8.4.1
+
+* Update `angel3_serialize_generator`
+
+## 8.4.0
+
+* Require Dart >= 3.6
+* Updated `lints` to 5.0.0
+* Updated `analyzer` to 7.x
+* Updated dependencies to the latest release
+* Fixed ORM `copyFrom` nullability check error
+* Fixed issue #98: Take @SerializableField properties into account when generating `Migration`
+* Fixed issue #98: Take @SerializableField properties into account when generating `Query.parseRow`
+
+## 8.3.2
+
+* Fixed analyzer warnings
+
+## 8.3.1
+
+* Updated dependencies
+
+## 8.3.0
+
+* Require Dart >= 3.3
+* Updated `lints` to 4.0.0
+
+## 8.2.1
+
+* Updated repository link
+
+## 8.2.0
+
+* Updated `lints` to 3.0.0
+* Fixed linter warnings
+
+## 8.1.0
+
+* Upgraded to `analyzer` 6.2.x
+
+## 8.0.0
+
+* Require Dart >= 3.0
+
+## 7.2.0-beta.1
+
+* [Breaking] Require Dart >= 2.19
+* Use `@SerializableField` properties in `Query.parseRow`
+
+## 7.1.2
+
+* Fixed #88 due to change in `analyzer` 5.3.x
+
+## 7.1.1
+
+* Temporily locked `analyzer` to 5.2.x to resolve undocumented breaking changes in 5.3.x.
+
+## 7.1.0
+
+* [Breaking] Require Dart >= 2.18
+* Upgraded to `analyzer` 5.x.x
+* Replaced deprecated `element2` with `element`
+
+## 7.0.2
+
+* Fixed deprecated `assignVar` and `assignConst`
+
+## 7.0.1
+
+* Fixed issue #82: Removed casting for numeric fields
+
+## 7.0.0
+
+* Require Dart >= 2.17
+* Fixed issue #75: Generated Code of ORM does not compile
+
+## 6.2.0
+
+* Fixed issue #68: Support for non-nullable type
+* Generate default value based on `defaultValue` in the `@Column` annotation
+
+## 6.1.0
+
+* Updated to `analyzer` 4.x.x
+
+## 6.0.1
+
+* Fixed timestamp or date field to DateTime mapping
+* Fixed double or float field to double mapping
+
+## 6.0.0
+
+* Require Dart >= 2.16
+
+## 5.0.0
+
+* Skipped release
+
+## 4.3.0
+
+* Added `where.raw()`
+
+## 4.2.0
+
+* Added `select(List fields)`
+
+## 4.1.3
+
+* Fixed issue #24, incorrect class casting
+* Fixed `@belongsTo` to generate correct table creation query
+  
+## 4.1.2
+
+* Updated linter to `package:lints`
+
 ## 4.1.1
 
 * Fixed `NumericSqlExpressionBuilder` to handle nullable field
@@ -46,11 +161,11 @@
 
 ## 4.0.0-beta.1
 
-* Migrated to support Dart SDK 2.12.x NNBD
+* Migrated to support Dart >= 2.12 NNBD
 
 ## 3.0.0
 
-* Migrated to work with Dart SDK 2.12.x Non NNBD
+* Migrated to work with Dart >= 2.12 Non NNBD
 
 ## 2.1.0-beta.2
 

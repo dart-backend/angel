@@ -1,5 +1,92 @@
 # Change Log
 
+## 8.3.2
+
+* Updated `intl` to 0.20.0
+
+## 8.3.1
+
+* Added support for string to bool conversion in the query results
+
+## 8.3.0
+
+* Set `createdAt` and `updatedAt` default to CURRENT_TIMESTAMP
+
+## 8.2.0
+
+* Require Dart >= 3.3
+* Updated `lints` to 4.0.0
+
+## 8.1.1
+
+* Updated repository link
+
+## 8.1.0
+
+* Updated `lints` to 3.0.0
+* Fixed linter warnings
+
+## 8.0.0
+
+* Require Dart >= 3.0
+
+## 7.1.0
+
+* Require Dart >= 2.18
+
+## 7.0.1
+
+* Reduced debugging verbosity
+
+## 7.0.0
+
+* Require Dart >= 2.17
+
+## 6.1.0
+
+* Fixed issue #68: Support for non-nullable type
+* Added `defaultValue` to `@Column` annotation
+
+## 6.0.1
+
+* Added `mapToDateTime`
+
+## 6.0.0
+
+* Require Dart >= 2.16
+
+## 5.0.0
+
+* Skipped release
+
+## 4.1.0
+
+* Added `MySQLDialect` to handle MySQL database specific features
+* Updated `insert` and `update` query to support database without writable CTE
+
+## 4.0.6
+
+* Fixed multiple `orderBy` error
+
+## 4.0.5
+
+* Added `where.raw()`
+* Added `select(List fields)`
+
+## 4.0.4
+
+* Changed default varchar size to 255
+* Changed default primary key to serial
+  
+## 4.0.3
+
+* Removed debugging messages
+
+## 4.0.2
+
+* Updated linter to `package:lints`
+* Set `createdAt` and `updatedAt` to current datetime as default
+
 ## 4.0.1
 
 * Fixed expressions parsing error
@@ -25,11 +112,11 @@
 
 ## 4.0.0-beta.1
 
-* Migrated to support Dart SDK 2.12.x NNBD
+* Migrated to support Dart >= 2.12 NNBD
 
 ## 3.0.0
 
-* Migrated to work with Dart SDK 2.12.x Non NNBD
+* Migrated to work with Dart >= 2.12 Non NNBD
 
 ## 2.1.0-beta.3
 

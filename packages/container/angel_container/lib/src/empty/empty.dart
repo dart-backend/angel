@@ -61,11 +61,6 @@ class _EmptyReflectedClass extends ReflectedClass {
   bool isAssignableTo(ReflectedType? other) {
     return other == this;
   }
-
-  @override
-  bool operator ==(other) {
-    return other is ReflectedClass && other.hashCode == hashCode;
-  }
 }
 
 class _EmptyReflectedType extends ReflectedType {
@@ -85,21 +80,11 @@ class _EmptyReflectedType extends ReflectedType {
   bool isAssignableTo(ReflectedType? other) {
     return other == this;
   }
-
-  @override
-  bool operator ==(other) {
-    return other is ReflectedType && other.hashCode == hashCode;
-  }
 }
 
 class _EmptyReflectedInstance extends ReflectedInstance {
   const _EmptyReflectedInstance()
       : super(const _EmptyReflectedType(), const _EmptyReflectedClass(), null);
-
-  @override
-  bool operator ==(other) {
-    return other is ReflectedInstance && other.hashCode == hashCode;
-  }
 
   @override
   ReflectedInstance getField(String name) {

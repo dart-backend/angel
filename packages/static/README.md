@@ -2,8 +2,8 @@
 
 [![version](https://img.shields.io/badge/pub-v4.1.0-brightgreen)](https://pub.dev/packages/angel3_static)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
-[![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
-[![License](https://img.shields.io/github/license/dart-backend/belatuk-common-utilities)](https://github.com/dukefirehawk/angel/tree/angel3/packages/static/LICENSE)
+[![Discord](https://img.shields.io/discord/1060322353214660698)](https://discord.gg/3X6bxTUdCM)
+[![License](https://img.shields.io/github/license/dart-backend/belatuk-common-utilities)](https://github.com/dart-backend/angel/tree/angel3/packages/static/LICENSE)
 
 This library provides a virtual directory to serve static files such as html, css and js for [Angel3 framework](https://pub.dev/packages/angel3). It can also handle `Range` requests, making it suitable for media streaming, i.e. music, video, etc.*
 
@@ -13,7 +13,7 @@ In `pubspec.yaml`:
 
 ```yaml
 dependencies:
-    angel3_static: ^4.0.0
+    angel3_static: ^8.0.0
 ```
 
 ## Usage

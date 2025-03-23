@@ -1,27 +1,54 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:angel3_migration/angel3_migration.dart';
+import 'package:angel3_migration_runner/angel3_migration_runner.dart';
+import 'package:angel3_migration_runner/postgres.dart';
 import 'package:angel3_orm/angel3_orm.dart';
 import 'package:angel3_orm_postgres/angel3_orm_postgres.dart';
 import 'package:logging/logging.dart';
 import 'package:postgres/postgres.dart';
 
-FutureOr<QueryExecutor> Function() pg(Iterable<String> schemas) {
-  return () => connectToPostgres(schemas);
+List tmpTables = [];
+
+// For PostgreSQL
+Future<Connection> openPgConnection() async {
+  final connection = await Connection.open(
+      Endpoint(
+          host: Platform.environment['POSTGRES_HOSTNAME'] ?? 'localhost',
+          port: 5432,
+          database: Platform.environment['POSTGRES_DB'] ?? 'postgres',
+          username: Platform.environment['POSTGRES_USERNAME'] ?? 'postgres',
+          password: Platform.environment['POSTGRES_PASSWORD'] ?? 'postgres'),
+      settings: ConnectionSettings(sslMode: SslMode.disable));
+
+  return connection;
 }
 
-Future<void> closePg(QueryExecutor executor) =>
-    (executor as PostgreSqlExecutor).close();
+Future<QueryExecutor> createExecutor(Connection conn) async {
+  var logger = Logger('orm_postgres');
 
-Future<PostgreSqlExecutor> connectToPostgres(Iterable<String> schemas) async {
-  var conn = PostgreSQLConnection('127.0.0.1', 5432, 'orm_test',
-      username: Platform.environment['POSTGRES_USERNAME'] ?? 'test',
-      password: Platform.environment['POSTGRES_PASSWORD'] ?? 'test123');
-  await conn.open();
+  return PostgreSqlExecutor(conn, logger: logger);
+}
 
-  // Run sql to create the tables
-  for (var s in schemas) {
-    await conn.execute(await File('test/migrations/$s.sql').readAsString());
+Future<MigrationRunner> createTables(
+    Connection conn, List<Migration> models) async {
+  var runner = PostgresMigrationRunner(conn, migrations: models);
+  await runner.up();
+
+  return runner;
+}
+
+Future<void> dropTables(MigrationRunner runner) async {
+  await runner.reset();
+}
+
+String extractTableName(String createQuery) {
+  var start = createQuery.indexOf('EXISTS');
+  var end = createQuery.indexOf('(');
+
+  if (start == -1 || end == -1) {
+    return '';
   }
 
-  return PostgreSqlExecutor(conn, logger: Logger.root);
+  return createQuery.substring(start + 6, end).trim();
 }

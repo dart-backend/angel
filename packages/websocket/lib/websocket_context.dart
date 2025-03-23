@@ -1,10 +1,10 @@
-part of angel3_websocket.server;
+part of 'server.dart';
 
 /// Represents a WebSocket session, with the original
 /// [RequestContext] and [ResponseContext] attached.
 class WebSocketContext {
   /// Use this to listen for events.
-  _WebSocketEventTable on = _WebSocketEventTable();
+  WebSocketEventTable on = WebSocketEventTable();
 
   /// The underlying [StreamChannel].
   final StreamChannel channel;
@@ -20,7 +20,7 @@ class WebSocketContext {
 
   final StreamController<void> _onAuthenticated = StreamController();
 
-  final StreamController<Null> _onClose = StreamController<Null>();
+  final StreamController<void> _onClose = StreamController<void>();
 
   final StreamController _onData = StreamController();
 
@@ -31,7 +31,7 @@ class WebSocketContext {
   Stream<void> get onAuthenticated => _onAuthenticated.stream;
 
   /// Fired once the underlying [WebSocket] closes.
-  Stream<Null> get onClose => _onClose.stream;
+  Stream<void> get onClose => _onClose.stream;
 
   /// Fired when any data is sent through [channel].
   Stream get onData => _onData.stream;
@@ -45,7 +45,7 @@ class WebSocketContext {
       await _onAction.close();
       await _onAuthenticated.close();
       await _onData.close();
-      _onClose.add(null);
+      //_onClose.add(null);
       await _onClose.close();
     });
   }
@@ -60,7 +60,7 @@ class WebSocketContext {
   void sendError(AngelHttpException error) => send(errorEvent, error.toJson());
 }
 
-class _WebSocketEventTable {
+class WebSocketEventTable {
   final Map<String, StreamController<Map?>> _handlers = {};
 
   StreamController<Map?>? _getStreamForEvent(String eventName) {

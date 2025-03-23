@@ -50,6 +50,7 @@ class _RefreshCommand extends Command {
 
   @override
   String get name => 'refresh';
+
   @override
   String get description =>
       'Resets the database, and then re-runs all migrations.';
@@ -67,8 +68,9 @@ class _RollbackCommand extends Command {
 
   @override
   String get name => 'rollback';
+
   @override
-  String get description => 'Undoes the last batch of migrations.';
+  String get description => 'Undo the last batch of migrations.';
 
   final MigrationRunner migrationRunner;
 

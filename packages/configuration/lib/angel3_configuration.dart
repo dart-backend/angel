@@ -1,15 +1,15 @@
-library angel3_configuration;
+library;
 
 import 'dart:async';
 
 import 'package:angel3_framework/angel3_framework.dart';
-import 'package:dotenv/dotenv.dart' as dotenv;
+import 'package:dotenv/dotenv.dart';
 import 'package:file/file.dart';
 import 'package:belatuk_merge_map/belatuk_merge_map.dart';
 import 'package:yaml/yaml.dart';
 
-Future<void> _loadYamlFile(Map map, File yamlFile, Map<String, String> env,
-    void Function(String msg) warn) async {
+Future<void> _loadYamlFile(
+    Map map, File yamlFile, DotEnv env, void Function(String msg) warn) async {
   if (await yamlFile.exists()) {
     var config = loadYaml(await yamlFile.readAsString());
 
@@ -58,12 +58,11 @@ Future<void> _loadYamlFile(Map map, File yamlFile, Map<String, String> env,
   }
 }
 
-Object? _applyEnv(
-    var v, Map<String, String> env, void Function(String msg) warn) {
+Object? _applyEnv(var v, DotEnv env, void Function(String msg) warn) {
   if (v is String) {
     if (v.startsWith(r'$') && v.length > 1) {
       var key = v.substring(1);
-      if (env.containsKey(key)) {
+      if (env.isDefined(key)) {
         return env[key];
       } else {
         warn(
@@ -92,11 +91,11 @@ Future<Map> loadStandaloneConfiguration(FileSystem fileSystem,
     String? envPath,
     void Function(String message)? onWarning}) async {
   var sourceDirectory = fileSystem.directory(directoryPath);
-  var env = dotenv.env;
+  var env = DotEnv(includePlatformEnvironment: true);
   var envFile = sourceDirectory.childFile(envPath ?? '.env');
 
   if (await envFile.exists()) {
-    dotenv.load(envFile.absolute.uri.toFilePath());
+    env.load([envFile.absolute.uri.toFilePath()]);
   }
 
   var environmentName = env['ANGEL_ENV'] ?? 'development';
@@ -135,9 +134,7 @@ AngelConfigurer configuration(FileSystem fileSystem,
       directoryPath: directoryPath,
       overrideEnvironmentName: overrideEnvironmentName,
       envPath: envPath,
-      onWarning: app.logger == null
-          ? null
-          : (msg) => app.logger?.warning('WARNING: $msg'),
+      onWarning: (msg) => app.logger.warning('WARNING: $msg'),
     );
     app.configuration.addAll(mergeMap(
       [

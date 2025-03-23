@@ -31,7 +31,7 @@ class HostnameRouter {
   HostnameRouter(
       {Map<Pattern, Angel> apps = const {},
       Map<Pattern, FutureOr<Angel> Function()> creators = const {}}) {
-    Map<Pattern, V> _parseMap<V>(Map<Pattern, V> map) {
+    Map<Pattern, V> parseMap<V>(Map<Pattern, V> map) {
       return map.map((p, c) {
         Pattern pp;
 
@@ -45,8 +45,8 @@ class HostnameRouter {
       });
     }
 
-    apps = _parseMap(apps);
-    creators = _parseMap(creators);
+    apps = parseMap(apps);
+    creators = parseMap(creators);
     var patterns = apps.keys.followedBy(creators.keys).toSet().toList();
     _apps.addAll(apps);
     _creators.addAll(creators);

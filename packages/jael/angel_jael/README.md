@@ -2,8 +2,8 @@
 
 ![Pub Version (including pre-releases)](https://img.shields.io/pub/v/angel3_jael?include_prereleases)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
-[![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
-[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/master/packages/jael/angel_jael/LICENSE)
+[![Discord](https://img.shields.io/discord/1060322353214660698)](https://discord.gg/3X6bxTUdCM)
+[![License](https://img.shields.io/github/license/dart-backend/angel)](https://github.com/dart-backend/angel/tree/master/packages/jael/angel_jael/LICENSE)
 
 [Angel 3](https://pub.dev/packages/angel3_framework) support for [Jael 3](https://pub.dev/packages/jael3).
 
@@ -13,13 +13,12 @@ In your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  angel3_jael: ^4.2.0
+  angel3_jael: ^8.0.0
 ```
 
 ## Usage
 
-Just like `mustache` and other renderers, configuring Angel to use
-Jael is as simple as calling `app.configure`:
+Just like `mustache` and other renderers, configuring Angel to use Jael is as simple as calling `app.configure`:
 
 ```dart
 import 'package:angel3_framework/angel3_framework.dart';
@@ -36,10 +35,10 @@ AngelConfigurer myPlugin(FileSystem fileSystem) {
 }
 ```
 
-`package:angel3_jael` supports caching views, to improve server performance. You might not want to enable this in development, so consider setting the flag to `app.isProduction`:
+`package:angel3_jael` supports caching views and minified html output by default, to improve performance. You might want to disable them in development, so consider setting these flags to `false`:
 
 ```dart
-jael(viewsDirectory, cacheViews: app.isProduction);
+jael(viewsDirectory, cacheViews: false, minified: false);
 ```
 
 Keep in mind that this package uses `package:file`, rather than `dart:io`.
@@ -78,3 +77,23 @@ void main() async {
 ```
 
 To apply additional transforms to parsed documents, provide a set of `patch` functions, like in `package:jael3_preprocessor`.
+
+## Performance Optimization
+
+For handling large volume of initial requests, consider using `jaelTemplatePreload` to preload all the JAEL templates
+into an external cache.
+
+```dart
+
+  var templateDir = fileSystem.directory('views');
+
+  // Preload JAEL view templates into cache
+  var viewCache = <String, Document>{};
+  jaelTemplatePreload(templateDir, viewCache);
+
+  // Inject cache into JAEL renderer
+  await app.configure(
+    jael(fileSystem.directory('views'), cache: viewCache),
+  );
+
+```

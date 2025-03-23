@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
 import 'package:http/http.dart' as http;
-import 'package:matcher/matcher.dart';
 import 'package:angel3_http_exception/angel3_http_exception.dart';
 import 'package:angel3_validate/angel3_validate.dart';
 
@@ -42,8 +41,10 @@ Matcher hasStatus(int status) => _HasStatus(status);
 /// Expects a response to have a JSON body that is a `Map` and satisfies the given [validator] schema.
 Matcher hasValidBody(Validator validator) => _HasValidBody(validator);
 
+String notHttpResponse = "expected http.Response but got none\n";
+
 class _IsJson extends Matcher {
-  var value;
+  dynamic value;
 
   _IsJson(this.value);
 
@@ -59,7 +60,7 @@ class _IsJson extends Matcher {
 }
 
 class _HasBody extends Matcher {
-  final body;
+  final dynamic body;
 
   _HasBody(this.body);
 
@@ -83,7 +84,7 @@ class _HasBody extends Matcher {
 }
 
 class _HasContentType extends Matcher {
-  var contentType;
+  dynamic contentType;
 
   _HasContentType(this.contentType);
 
@@ -92,31 +93,47 @@ class _HasContentType extends Matcher {
     var str = contentType is ContentType
         ? ((contentType as ContentType).value)
         : contentType.toString();
-    return description.add('has content type ' + str);
+    return description.add('has content type $str');
   }
 
   @override
   bool matches(item, Map matchState) {
     if (item is http.Response) {
-      if (!item.headers.containsKey('content-type')) return false;
+      //if (!item.headers.containsKey('content-type')) return false;
+
+      var headerContentType = item.headers['content-type'];
+      if (headerContentType == null) return false;
 
       if (contentType is ContentType) {
-        var compare = ContentType.parse(item.headers['content-type']!);
+        var compare = ContentType.parse(headerContentType);
         return equals(contentType.mimeType)
             .matches(compare.mimeType, matchState);
       } else {
         return equals(contentType.toString())
-            .matches(item.headers['content-type'], matchState);
+            .matches(headerContentType, matchState);
       }
-    } else {
-      return false;
     }
+
+    return false;
+  }
+
+  @override
+  Description describeMismatch(Object? item, Description mismatchDescription,
+      Map matchState, bool verbose) {
+    if (item is http.Response) {
+      var headerContentType = item.headers['content-type'] ?? 'none';
+      mismatchDescription
+          .add("expected '$contentType' but got '$headerContentType'\n");
+    } else {
+      mismatchDescription.add(notHttpResponse);
+    }
+    return mismatchDescription;
   }
 }
 
 class _HasHeader extends Matcher {
   final String key;
-  final value;
+  final dynamic value;
 
   _HasHeader(this.key, this.value);
 
@@ -136,15 +153,25 @@ class _HasHeader extends Matcher {
         return contains(key.toLowerCase())
             .matches(item.headers.keys, matchState);
       } else {
-        if (!item.headers.containsKey(key.toLowerCase())) return false;
+        var headerKey = item.headers[key.toLowerCase()];
+        if (headerKey == null) return false;
         var v = value is Iterable ? (value as Iterable) : [value];
-        return v
-            .map((x) => x.toString())
-            .every(item.headers[key.toLowerCase()]!.split(',').contains);
+        return v.map((x) => x.toString()).every(headerKey.split(',').contains);
       }
     } else {
       return false;
     }
+  }
+
+  @override
+  Description describeMismatch(Object? item, Description mismatchDescription,
+      Map matchState, bool verbose) {
+    if (item is http.Response) {
+      mismatchDescription.add("expected '$key' but got none\n");
+    } else {
+      mismatchDescription.add(notHttpResponse);
+    }
+    return mismatchDescription;
   }
 }
 
@@ -162,10 +189,23 @@ class _HasStatus extends Matcher {
   bool matches(item, Map matchState) =>
       item is http.Response &&
       equals(status).matches(item.statusCode, matchState);
+
+  @override
+  Description describeMismatch(Object? item, Description mismatchDescription,
+      Map matchState, bool verbose) {
+    if (item is http.Response) {
+      mismatchDescription.add('expected $status but got ${item.statusCode}\n');
+    } else {
+      mismatchDescription.add(notHttpResponse);
+    }
+    return mismatchDescription;
+  }
 }
 
 class _HasValidBody extends Matcher {
   final Validator validator;
+
+  final _errors = <String>[];
 
   _HasValidBody(this.validator);
 
@@ -177,11 +217,32 @@ class _HasValidBody extends Matcher {
   bool matches(item, Map matchState) {
     if (item is http.Response) {
       final jsons = json.decode(item.body);
-      if (jsons is! Map) return false;
-      return validator.matches(jsons, matchState);
-    } else {
-      return false;
+      if (jsons is Map) {
+        try {
+          return validator.matches(jsons, matchState);
+        } catch (e) {
+          _errors.addAll((e as ValidationException).errors);
+        }
+      }
     }
+    return false;
+  }
+
+  @override
+  Description describeMismatch(Object? item, Description mismatchDescription,
+      Map matchState, bool verbose) {
+    if (item is http.Response) {
+      if (_errors.isEmpty) {
+        mismatchDescription.add("expected JSON but got invalid JSON\n");
+      } else {
+        for (var err in _errors) {
+          mismatchDescription.add("$err\n");
+        }
+      }
+    } else {
+      mismatchDescription.add(notHttpResponse);
+    }
+    return mismatchDescription;
   }
 }
 

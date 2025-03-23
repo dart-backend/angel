@@ -1,10 +1,9 @@
 /// Browser WebSocket client library for the Angel framework.
-library angel3_websocket.browser;
+library;
 
 import 'dart:async';
 import 'dart:html';
 import 'package:angel3_client/angel3_client.dart';
-import 'package:angel3_http_exception/angel3_http_exception.dart';
 import 'package:http/browser_client.dart' as http;
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:web_socket_channel/html.dart';
@@ -107,7 +106,6 @@ class WebSockets extends BaseWebSocketClient {
 class BrowserWebSocketsService<Id, Data> extends WebSocketsService<Id, Data> {
   final Type? type;
 
-  BrowserWebSocketsService(WebSocketChannel? socket, WebSockets app, String uri,
-      {this.type, AngelDeserializer<Data>? deserializer})
-      : super(socket, app, uri, deserializer: deserializer);
+  BrowserWebSocketsService(super.socket, WebSockets super.app, super.uri,
+      {this.type, super.deserializer});
 }

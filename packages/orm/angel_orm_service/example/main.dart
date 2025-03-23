@@ -11,7 +11,7 @@ void main() async {
   var app = Angel(logger: Logger.detached('orm_service'));
   var http = AngelHttp(app);
   var executor = await connect();
-  app.logger!.onRecord.listen((rec) {
+  app.logger.onRecord.listen((rec) {
     print(rec);
     if (rec.error != null) print(rec.error);
     if (rec.stackTrace != null) print(rec.stackTrace);

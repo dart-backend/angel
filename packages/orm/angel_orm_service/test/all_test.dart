@@ -14,16 +14,19 @@ void main() {
   late Service<int?, Pokemon> pokemonService;
 
   setUp(() async {
-    var conn = PostgreSQLConnection('localhost', 5432, 'angel_orm_service_test',
+    var conn = await Connection.open(Endpoint(
+        host: 'localhost',
+        port: 5432,
+        database: 'angel_orm_service_test',
         username: Platform.environment['POSTGRES_USERNAME'] ?? 'postgres',
-        password: Platform.environment['POSTGRES_PASSWORD'] ?? 'password');
+        password: Platform.environment['POSTGRES_PASSWORD'] ?? 'password'));
     hierarchicalLoggingEnabled = true;
     logger = Logger.detached('orm_service');
     logger.level = Level.ALL;
     if (Platform.environment['log'] == '1') logger.onRecord.listen(print);
     executor = PostgreSqlExecutor(conn, logger: logger);
-    await conn.open();
-    await conn.query('''
+
+    await conn.execute('''
     CREATE TEMPORARY TABLE pokemons (
       id serial,
       species varchar,

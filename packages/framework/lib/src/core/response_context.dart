@@ -1,4 +1,4 @@
-library angel_framework.http.response_context;
+library;
 
 import 'dart:async';
 import 'dart:convert';
@@ -9,7 +9,6 @@ import 'dart:typed_data';
 import 'package:angel3_route/angel3_route.dart';
 import 'package:file/file.dart';
 import 'package:http_parser/http_parser.dart';
-import 'package:logging/logging.dart';
 import 'package:mime/mime.dart';
 
 import 'controller.dart';
@@ -22,12 +21,10 @@ final RegExp _straySlashes = RegExp(r'(^/+)|(/+$)');
 abstract class ResponseContext<RawResponse>
     implements StreamConsumer<List<int>>, StreamSink<List<int>>, StringSink {
   final Map properties = {};
-  final CaseInsensitiveMap<String> _headers = CaseInsensitiveMap<String>.from({
-    'content-type': 'text/plain',
-    'server': 'angel',
-  });
+  final CaseInsensitiveMap<String> _headers = CaseInsensitiveMap<String>.from(
+      {'content-type': 'text/plain', 'server': 'Angel3'});
 
-  final log = Logger('ResponseContext');
+  //final log = Logger('ResponseContext');
 
   Completer? _done;
   int _statusCode = 200;
@@ -112,14 +109,14 @@ abstract class ResponseContext<RawResponse>
   ///
   /// Returns `null` if the header is invalidly formatted.
   int? get contentLength {
-    return int.tryParse(headers['content-length']!);
+    return int.tryParse(headers['content-length'] ?? '-1');
   }
 
   /// Gets or sets the content length to send back to a client.
   ///
   /// If [value] is `null`, then the header will be removed.
   set contentLength(int? value) {
-    if (value == null) {
+    if (value == null || value == -1) {
       headers.remove('content-length');
     } else {
       headers['content-length'] = value.toString();
@@ -171,9 +168,8 @@ abstract class ResponseContext<RawResponse>
   }
 
   /// Serializes JSON to the response.
-  void json(value) => this
-    ..contentType = MediaType('application', 'json')
-    ..serialize(value);
+  Future<bool> json(value) =>
+      serialize(value, contentType: MediaType('application', 'json'));
 
   /// Returns a JSONP response.
   ///
@@ -237,10 +233,10 @@ abstract class ResponseContext<RawResponse>
   /// Redirects to the given named [Route].
   Future<void> redirectTo(String name, [Map? params, int? code]) async {
     if (!isOpen) throw closed();
-    Route? _findRoute(Router r) {
+    Route? findRoute(Router r) {
       for (var route in r.routes) {
         if (route is SymlinkRoute) {
-          final m = _findRoute(route.router);
+          final m = findRoute(route.router);
 
           if (m != null) return m;
         } else if (route.name == name) {
@@ -251,7 +247,7 @@ abstract class ResponseContext<RawResponse>
       return null;
     }
 
-    var matched = _findRoute(app!);
+    var matched = findRoute(app!);
 
     if (matched != null) {
       await redirect(
@@ -290,7 +286,7 @@ abstract class ResponseContext<RawResponse>
     }
 
     final head = controller
-        .findExpose(app!.container!.reflector)!
+        .findExpose(app!.container.reflector)!
         .path
         .toString()
         .replaceAll(_straySlashes, '');
@@ -354,7 +350,7 @@ abstract class ResponseContext<RawResponse>
       if (stackTrace != null) {
         Zone.current.handleUncaughtError(error, stackTrace);
       } else {
-        log.warning('[ResponseContext] stackTrace is null');
+        app?.logger.warning('[ResponseContext] stackTrace is null');
       }
     }
   }
@@ -396,7 +392,7 @@ abstract class ResponseContext<RawResponse>
   }
 }
 
-abstract class LockableBytesBuilder extends BytesBuilder {
+abstract class LockableBytesBuilder implements BytesBuilder {
   factory LockableBytesBuilder() {
     return _LockableBytesBuilderImpl();
   }

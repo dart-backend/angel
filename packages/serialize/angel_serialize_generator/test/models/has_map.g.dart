@@ -8,10 +8,10 @@ part of 'has_map.dart';
 
 @generatedSerializable
 class HasMap implements _HasMap {
-  const HasMap({required this.value});
+  HasMap({required this.value});
 
   @override
-  final Map<dynamic, dynamic>? value;
+  Map<dynamic, dynamic>? value;
 
   HasMap copyWith({Map<dynamic, dynamic>? value}) {
     return HasMap(value: value ?? this.value);
@@ -65,8 +65,10 @@ class HasMapSerializer extends Codec<HasMap, Map> {
 
   @override
   HasMapEncoder get encoder => const HasMapEncoder();
+
   @override
   HasMapDecoder get decoder => const HasMapDecoder();
+
   static HasMap fromMap(Map map) {
     if (map['value'] == null) {
       throw FormatException("Missing required field 'value' on HasMap.");
@@ -75,11 +77,10 @@ class HasMapSerializer extends Codec<HasMap, Map> {
     return HasMap(value: _fromString(map['value']));
   }
 
-  static Map<String, dynamic> toMap(_HasMap model) {
-    if (model.value == null) {
-      throw FormatException("Missing required field 'value' on HasMap.");
+  static Map<String, dynamic> toMap(_HasMap? model) {
+    if (model == null) {
+      throw FormatException("Required field [model] cannot be null");
     }
-
     return {'value': _toString(model.value)};
   }
 }

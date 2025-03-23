@@ -1,5 +1,6 @@
 import 'dart:async';
-import 'dart:io';
+import 'dart:io' hide BytesBuilder;
+import 'dart:typed_data';
 import 'dart:convert';
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_framework/http.dart';
@@ -116,7 +117,7 @@ class Proxy {
           scheduleMicrotask(() => remote.pipe(local));
           return false;
         } catch (e, st) {
-          throw AngelHttpException(e,
+          throw AngelHttpException(
               message: 'Could not connect WebSocket', stackTrace: st);
         }
       }
@@ -167,7 +168,6 @@ class Proxy {
       if (recoverFromDead) return true;
 
       throw AngelHttpException(
-        e,
         stackTrace: st,
         statusCode: 504,
         message:
@@ -189,7 +189,6 @@ class Proxy {
         if (recoverFromDead) return true;
 
         throw AngelHttpException(
-          e,
           stackTrace: st,
           statusCode: 504,
           message: 'Host "$uri" returned a malformed content-type',

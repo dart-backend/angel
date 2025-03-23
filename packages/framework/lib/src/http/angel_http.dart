@@ -15,30 +15,27 @@ import 'http_response_context.dart';
 
 final RegExp _straySlashes = RegExp(r'(^/+)|(/+$)');
 
+typedef ServerGeneratorType = Future<HttpServer> Function(dynamic, int);
+
 /// Adapts `dart:io`'s [HttpServer] to serve Angel.
 class AngelHttp extends Driver<HttpRequest, HttpResponse, HttpServer,
     HttpRequestContext, HttpResponseContext> {
   @override
   Uri get uri {
-    //if (server == null) {
-    //  throw ArgumentError("[AngelHttp] Server instance not intialised");
-    //}
     return Uri(
         scheme: 'http', host: server?.address.address, port: server?.port);
   }
 
-  AngelHttp._(Angel app,
-      Future<HttpServer> Function(dynamic, int) serverGenerator, bool useZone)
-      : super(app, serverGenerator, useZone: useZone);
+  AngelHttp._(super.app, super.serverGenerator, bool useZone)
+      : super(useZone: useZone);
 
   factory AngelHttp(Angel app, {bool useZone = true}) {
     return AngelHttp._(app, HttpServer.bind, useZone);
   }
 
   /// An instance mounted on a server started by the [serverGenerator].
-  factory AngelHttp.custom(
-      Angel app, Future<HttpServer> Function(dynamic, int) serverGenerator,
-      {bool useZone = true}) {
+  factory AngelHttp.custom(Angel app, ServerGeneratorType serverGenerator,
+      {bool useZone = true, Map<String, String> headers = const {}}) {
     return AngelHttp._(app, serverGenerator, useZone);
   }
 
@@ -67,15 +64,6 @@ class AngelHttp extends Driver<HttpRequest, HttpResponse, HttpServer,
     return AngelHttp.fromSecurityContext(app, serverContext, useZone: useZone);
   }
 
-  /// Use [server] instead.
-  //@deprecated
-  //HttpServer get httpServer {
-  //if (server == null) {
-  //  throw ArgumentError("[AngelHttp] Server instance not initialised");
-  //}
-  //  return server;
-  //}
-
   Future handleRequest(HttpRequest request) =>
       handleRawRequest(request, request.response);
 
@@ -86,6 +74,20 @@ class AngelHttp extends Driver<HttpRequest, HttpResponse, HttpServer,
   @override
   Future<void> close() async {
     return await super.close();
+  }
+
+  /// Remove headers from HTTP Response
+  void removeResponseHeader(Map<String, Object> headers) {
+    headers.forEach((key, value) {
+      server?.defaultResponseHeaders.remove(key, value);
+    });
+  }
+
+  /// Add headers to HTTP Response
+  void addResponseHeader(Map<String, Object> headers) {
+    headers.forEach((key, value) {
+      server?.defaultResponseHeaders.add(key, value);
+    });
   }
 
   @override
@@ -103,15 +105,10 @@ class AngelHttp extends Driver<HttpRequest, HttpResponse, HttpServer,
   Future<HttpResponseContext> createResponseContext(
       HttpRequest request, HttpResponse response,
       [HttpRequestContext? correspondingRequest]) {
-    // TODO: Refactored to overcome NNBD migration error
     var context = HttpResponseContext(response, app, correspondingRequest);
     context.serializer = (app.serializer ?? json.encode);
     context.encoders.addAll(app.encoders);
     return Future<HttpResponseContext>.value(context);
-//    return Future<HttpResponseContext>.value(
-//        HttpResponseContext(response, app, correspondingRequest)
-//          ..serializer = (app.serializer ?? json.encode)
-//          ..encoders.addAll(app.encoders ?? {}));
   }
 
   @override

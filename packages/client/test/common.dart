@@ -9,8 +9,10 @@ Future<String> read(Stream<List<int>> stream) =>
     stream.transform(utf8.decoder).join();
 
 class MockAngel extends BaseAngelClient {
+  final SpecClient specClient = SpecClient();
+
   @override
-  final SpecClient client = SpecClient();
+  get client => specClient;
 
   MockAngel() : super(SpecClient(), 'http://localhost:3000');
 

@@ -1,15 +1,24 @@
 import 'dart:async';
 
+import '../angel3_orm.dart';
+
 /// An abstract interface that performs queries.
 ///
 /// This class should be implemented.
 abstract class QueryExecutor {
   const QueryExecutor();
 
+  Dialect get dialect;
+
   /// Executes a single query.
   Future<List<List>> query(
-      String tableName, String query, Map<String, dynamic> substitutionValues,
-      [List<String> returningFields = const []]);
+    String tableName,
+    String query,
+    Map<String, dynamic> substitutionValues, {
+    String returningQuery = '',
+    String resultQuery = '',
+    List<String> returningFields = const [],
+  });
 
   /// Enters a database transaction, performing the actions within,
   /// and returning the results of [f].

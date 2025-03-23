@@ -1,4 +1,4 @@
-part of angel3_route.src.router;
+part of 'router.dart';
 
 /// Represents a virtual location within an application.
 class Route<T> {
@@ -61,7 +61,7 @@ class Route<T> {
     var i = 0;
 
     if (_routeDefinition != null) {
-      for (var seg in _routeDefinition!.segments) {
+      for (var seg in _routeDefinition.segments) {
         if (i++ > 0) b.write('/');
         if (seg is ConstantSegment) {
           b.write(seg.text);

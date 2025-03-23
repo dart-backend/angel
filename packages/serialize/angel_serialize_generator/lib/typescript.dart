@@ -1,4 +1,4 @@
-part of angel3_serialize_generator;
+part of 'angel3_serialize_generator.dart';
 
 class TypeScriptDefinitionBuilder implements Builder {
   final bool autoSnakeCaseNames;

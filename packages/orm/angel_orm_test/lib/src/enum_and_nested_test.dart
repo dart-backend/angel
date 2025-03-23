@@ -13,11 +13,14 @@ void enumAndNestedTests(FutureOr<QueryExecutor> Function() createExecutor,
   });
 
   test('insert', () async {
-    var query = HasCarQuery()..values.type = CarType.sedan;
+    var query = HasCarQuery()
+      ..values.type = CarType.sedan
+      ..values.color = Color.red;
     var resultOpt = await (query.insert(executor));
     expect(resultOpt.isPresent, true);
     resultOpt.ifPresent((result) {
       expect(result.type, CarType.sedan);
+      expect(result.color, Color.red);
     });
   });
 

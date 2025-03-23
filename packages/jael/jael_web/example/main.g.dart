@@ -6,7 +6,7 @@ part of 'main.dart';
 // JaelComponentGenerator
 // **************************************************************************
 
-abstract class _HelloJaelTemplate implements Component<dynamic> {
+mixin _HelloJaelTemplate implements Component<dynamic> {
   DateTime get now;
   @override
   DomNode render() {

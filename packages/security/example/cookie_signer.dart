@@ -38,7 +38,7 @@ void main() async {
   // here we will use it to log invalid cookies.
   app.get('/cookies', (req, res) {
     var verifiedCookies = signer.readCookies(req, onInvalidCookie: (cookie) {
-      app.logger!.warning('Invalid cookie: $cookie');
+      app.logger.warning('Invalid cookie: $cookie');
     });
     res.writeln('${verifiedCookies.length} verified cookie(s)');
     res.writeln('${req.cookies.length} total unverified cookie(s)');

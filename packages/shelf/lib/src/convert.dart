@@ -48,7 +48,7 @@ Future<shelf.Request> convertRequest(RequestContext req, ResponseContext res,
       hijack(ctrl.foreign);
     } catch (e, st) {
       app?.logger
-          ?.severe('An error occurred while hijacking a shelf request', e, st);
+          .severe('An error occurred while hijacking a shelf request', e, st);
     }
   };
 

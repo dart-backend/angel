@@ -1,5 +1,5 @@
 /// Command-line client library for the Angel framework.
-library angel_client.cli;
+library;
 
 import 'dart:async';
 import 'package:http/http.dart' as http;
@@ -48,8 +48,7 @@ class RestService<Id, Data> extends BaseAngelService<Id, Data> {
 
   final Type? type;
 
-  RestService(http.BaseClient client, BaseAngelClient app, url, this.type)
-      : super(client, app, url);
+  RestService(super.client, super.app, super.url, this.type);
 
   @override
   Data? deserialize(x) {

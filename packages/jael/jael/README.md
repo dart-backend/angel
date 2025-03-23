@@ -2,8 +2,8 @@
 
 ![Pub Version (including pre-releases)](https://img.shields.io/pub/v/jael3?include_prereleases)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
-[![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
-[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/master/packages/jael/jael/LICENSE)
+[![Discord](https://img.shields.io/discord/1060322353214660698)](https://discord.gg/3X6bxTUdCM)
+[![License](https://img.shields.io/github/license/dart-backend/angel)](https://github.com/dart-backend/angel/tree/master/packages/jael/jael/LICENSE)
 
 A simple server-side HTML templating engine for Dart.
 
@@ -15,7 +15,7 @@ In your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  jael3: ^4.2.0
+  jael3: ^8.0.0
 ```
 
 ## API
@@ -23,9 +23,9 @@ dependencies:
 The core `jael3` package exports classes for parsing Jael templates, an AST library, and a `Renderer` class that generates HTML on-the-fly.
 
 ```dart
-import 'package:belatuk_code_buffer/code_buffer.dart';
-import 'package:belatuk_symbol_table/symbol_table.dart';
-import 'package:jael3/jael.dart' as jael;
+import 'package:belatuk_code_buffer/belatuk_code_buffer.dart';
+import 'package:belatuk_symbol_table/belatuk_symbol_table.dart';
+import 'package:jael3/jael3.dart' as jael;
 
 void myFunction() {
     const template = '''

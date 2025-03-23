@@ -5,7 +5,7 @@ import 'package:angel3_framework/http.dart';
 import 'package:logging/logging.dart';
 import 'package:test/test.dart';
 
-const Map<String, String> USER = {'username': 'foo', 'password': 'bar'};
+const Map<String, String> user = {'username': 'foo', 'password': 'bar'};
 var localOpts = AngelAuthOptions<Map<String, String>>(canRespondWithJson: true);
 
 void main() {
@@ -17,12 +17,12 @@ void main() {
     app = Angel();
     http = AngelHttp(app, useZone: false);
     var auth = AngelAuth(
-        serializer: (_) async => 'baz', deserializer: (_) async => USER);
+        serializer: (_) async => 'baz', deserializer: (_) async => user);
 
     auth.strategies['local'] = LocalAuthStrategy(
       (username, password) async {
         if (username == 'foo' && password == 'bar') {
-          return USER;
+          return user;
         }
 
         return {};
@@ -50,10 +50,10 @@ void main() {
   });
 
   test('auth event fires', () async {
-    var localAuth = await client.authenticate(type: 'local', credentials: USER);
+    var localAuth = await client.authenticate(type: 'local', credentials: user);
     print('JWT: ${localAuth.token}');
     print('Data: ${localAuth.data}');
 
-    expect(localAuth.data, USER);
+    expect(localAuth.data, user);
   });
 }

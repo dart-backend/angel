@@ -1,12 +1,11 @@
-# Mustache Template Renderer for Angel3
+# Mustache View Template for Angel3
 
-[![version](https://img.shields.io/badge/pub-v3.0.0-brightgreen)](https://pub.dartlang.org/packages/angel3_mustache)
+![Pub Version (including pre-releases)](https://img.shields.io/pub/v/angel3_mustache?include_prereleases)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
-[![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
+[![Discord](https://img.shields.io/discord/1060322353214660698)](https://discord.gg/3X6bxTUdCM)
+[![License](https://img.shields.io/github/license/dart-backend/angel)](https://github.com/dart-backend/angel/tree/master/packages/mustache/LICENSE)
 
-[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/mustache/LICENSE)
-
-A service that renders Mustache template into HTML view for [Angel3](https://github.com/dukefirehawk/angel) framework.
+A service that renders Mustache template into HTML view for [Angel3](https://angel3-framework.web.app/) framework.
 
 Thanks so much @c4wrd for his help with bringing this project to life!
 
@@ -16,7 +15,7 @@ In `pubspec.yaml`:
 
 ```yaml
 dependencies:
-    angel3_mustache: ^3.0.0
+    angel3_mustache: ^8.0.0
 ```
 
 ## Usage

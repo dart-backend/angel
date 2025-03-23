@@ -1,4 +1,5 @@
 import 'package:angel3_model/angel3_model.dart';
+import 'package:quiver/core.dart';
 
 class Postcard extends Model {
   String? location;
@@ -15,7 +16,7 @@ class Postcard extends Model {
 
   @override
   bool operator ==(other) {
-    if (!(other is Postcard)) return false;
+    if (other is! Postcard) return false;
 
     return id == other.id &&
         location == other.location &&
@@ -25,4 +26,7 @@ class Postcard extends Model {
   Map toJson() {
     return {'id': id, 'location': location, 'message': message};
   }
+
+  @override
+  int get hashCode => hash2(id, location);
 }

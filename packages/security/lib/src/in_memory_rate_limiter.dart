@@ -11,9 +11,8 @@ class InMemoryRateLimiter<User> extends RateLimiter<User> {
   final _cache = <User, RateLimitingWindow<User>>{};
 
   InMemoryRateLimiter(
-      int maxPointsPerWindow, Duration windowDuration, this.getUser,
-      {String? errorMessage})
-      : super(maxPointsPerWindow, windowDuration, errorMessage: errorMessage);
+      super.maxPointsPerWindow, super.windowDuration, this.getUser,
+      {super.errorMessage});
 
   @override
   FutureOr<RateLimitingWindow<User>> getCurrentWindow(

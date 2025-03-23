@@ -1,8 +1,8 @@
-part of jael.src.text.parselet;
+part of 'parselet.dart';
 
 const Map<TokenType, InfixParselet> infixParselets = {
   TokenType.lParen: CallParselet(),
-  TokenType.elvis_dot: MemberParselet(),
+  TokenType.elvisDot: MemberParselet(),
   TokenType.dot: MemberParselet(),
   TokenType.lBracket: IndexerParselet(),
   TokenType.asterisk: BinaryParselet(14),

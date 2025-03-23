@@ -1,4 +1,4 @@
-library angel_framework.http.metadata;
+library;
 
 import 'package:angel3_http_exception/angel3_http_exception.dart';
 
@@ -45,17 +45,17 @@ const NoExpose noExpose = NoExpose();
 /// ```
 class Expose {
   final String method;
-  final String? path;
-  final Iterable<RequestHandler>? middleware;
+  final String path;
+  final Iterable<RequestHandler> middleware;
   final String? as;
   final List<String> allowNull;
 
-  static const Expose get = Expose(null, method: 'GET'),
-      post = Expose(null, method: 'POST'),
-      patch = Expose(null, method: 'PATCH'),
-      put = Expose(null, method: 'PUT'),
-      delete = Expose(null, method: 'DELETE'),
-      head = Expose(null, method: 'HEAD');
+  static const Expose get = Expose('', method: 'GET'),
+      post = Expose('', method: 'POST'),
+      patch = Expose('', method: 'PATCH'),
+      put = Expose('', method: 'PUT'),
+      delete = Expose('', method: 'DELETE'),
+      head = Expose('', method: 'HEAD');
 
   const Expose(this.path,
       {this.method = 'GET',
@@ -64,8 +64,8 @@ class Expose {
       this.allowNull = const []});
 
   const Expose.method(this.method,
-      {this.middleware, this.as, this.allowNull = const []})
-      : path = null;
+      {this.middleware = const [], this.as, this.allowNull = const []})
+      : path = '';
 }
 
 /// Used to apply special dependency injections or functionality to a function parameter.
@@ -83,13 +83,13 @@ class Parameter {
   final String? query;
 
   /// Only execute the handler if the value of this parameter matches the given value.
-  final match;
+  final dynamic match;
 
   /// Specify a default value.
-  final defaultValue;
+  final dynamic defaultValue;
 
   /// If `true` (default), then an error will be thrown if this parameter is not present.
-  final bool? required;
+  final bool required;
 
   const Parameter(
       {this.cookie,
@@ -98,7 +98,7 @@ class Parameter {
       this.session,
       this.match,
       this.defaultValue,
-      this.required});
+      this.required = true});
 
   /// Returns an error that can be thrown when the parameter is not present.
   Object? get error {
@@ -117,6 +117,8 @@ class Parameter {
     if (session?.isNotEmpty == true) {
       return StateError('Session does not contain required key "$session".');
     }
+
+    return null;
   }
 
   /// Obtains a value for this parameter from a [RequestContext].
@@ -139,40 +141,26 @@ class Parameter {
 
 /// Shortcut for declaring a request header [Parameter].
 class Header extends Parameter {
-  const Header(String header, {match, defaultValue, bool required = true})
-      : super(
-            header: header,
-            match: match,
-            defaultValue: defaultValue,
-            required: required);
+  const Header(String header, {super.match, super.defaultValue, super.required})
+      : super(header: header);
 }
 
 /// Shortcut for declaring a request session [Parameter].
 class Session extends Parameter {
-  const Session(String session, {match, defaultValue, bool required = true})
-      : super(
-            session: session,
-            match: match,
-            defaultValue: defaultValue,
-            required: required);
+  const Session(String session,
+      {super.match, super.defaultValue, super.required})
+      : super(session: session);
 }
 
 /// Shortcut for declaring a request query [Parameter].
 class Query extends Parameter {
-  const Query(String query, {match, defaultValue, bool required = true})
-      : super(
-            query: query,
-            match: match,
-            defaultValue: defaultValue,
-            required: required);
+  const Query(String query, {super.match, super.defaultValue, super.required})
+      : super(query: query);
 }
 
 /// Shortcut for declaring a request cookie [Parameter].
 class CookieValue extends Parameter {
-  const CookieValue(String cookie, {match, defaultValue, bool required = true})
-      : super(
-            cookie: cookie,
-            match: match,
-            defaultValue: defaultValue,
-            required: required);
+  const CookieValue(String cookie,
+      {super.match, super.defaultValue, super.required})
+      : super(cookie: cookie);
 }

@@ -63,6 +63,9 @@ class Validator extends Matcher {
   /// Fields that must be present for data to be considered valid.
   final List<String> requiredFields = [];
 
+  /// Validation error messages.
+  final List<String> errorMessages = [];
+
   void _importSchema(Map<String, dynamic> schema) {
     for (var keys in schema.keys) {
       for (var key in keys.split(',').map((s) => s.trim())) {
@@ -79,19 +82,19 @@ class Validator extends Matcher {
           requiredFields.add(fieldName);
         }
 
-        var _iterable =
+        var tmpIterable =
             schema[keys] is Iterable ? schema[keys] : [schema[keys]];
         var iterable = [];
 
-        void _addTo(x) {
+        void addTo(x) {
           if (x is Iterable) {
-            x.forEach(_addTo);
+            x.forEach(addTo);
           } else {
             iterable.add(x);
           }
         }
 
-        _iterable.forEach(_addTo);
+        tmpIterable.forEach(addTo);
 
         for (var rule in iterable) {
           if (rule is Matcher) {
@@ -162,7 +165,8 @@ class Validator extends Matcher {
         var value = input[key];
         var description = StringDescription("'$key': expected ");
 
-        for (var matcher in rules[key]!) {
+        var rulesList = rules[key] ?? [];
+        for (var matcher in rulesList) {
           if (matcher is ContextValidator) {
             if (!matcher.validate(key, input)) {
               errors.add(matcher
@@ -175,7 +179,8 @@ class Validator extends Matcher {
         }
 
         if (valid) {
-          for (var matcher in rules[key]!) {
+          var rulesList = rules[key] ?? [];
+          for (var matcher in rulesList) {
             try {
               if (matcher is Validator) {
                 var result = matcher.check(value as Map);
@@ -203,7 +208,12 @@ class Validator extends Matcher {
                 }
               }
             } catch (e) {
-              errors.add(e.toString());
+              if (e is ValidationException) {
+                errors.add(e.errors.first);
+              } else {
+                errors.add(e.toString());
+              }
+
               valid = false;
               break;
             }
@@ -271,7 +281,7 @@ class Validator extends Matcher {
       {Map<String, dynamic> defaultValues = const {},
       Map<String, dynamic> customErrorMessages = const {},
       bool overwrite = false}) {
-    var _schema = <String, dynamic>{};
+    var tmpSchema = <String, dynamic>{};
     var child = Validator.empty()
       ..defaultValues.addAll(this.defaultValues)
       ..defaultValues.addAll(defaultValues)
@@ -307,10 +317,10 @@ class Validator extends Matcher {
         if (child.rules.containsKey(fieldName)) child.rules.remove(fieldName);
       }
 
-      _schema[fieldName] = schema[key];
+      tmpSchema[fieldName] = schema[key];
     }
 
-    return child.._importSchema(_schema);
+    return child.._importSchema(tmpSchema);
   }
 
   /// Adds a [rule].
@@ -320,24 +330,31 @@ class Validator extends Matcher {
       return;
     }
 
-    rules[key]!.add(rule);
+    if (rules[key] == null) {
+      rules[key] = List.empty(growable: true);
+    }
+    rules[key]?.add(rule);
   }
 
   /// Adds all given [rules].
   void addRules(String key, Iterable<Matcher> rules) {
-    rules.forEach((rule) => addRule(key, rule));
+    for (var rule in rules) {
+      addRule(key, rule);
+    }
   }
 
   /// Removes a [rule].
   void removeRule(String key, Matcher rule) {
     if (rules.containsKey(key)) {
-      rules[key]!.remove(rule);
+      rules[key]?.remove(rule);
     }
   }
 
   /// Removes all given [rules].
   void removeRules(String key, Iterable<Matcher> rules) {
-    rules.forEach((rule) => removeRule(key, rule));
+    for (var rule in rules) {
+      removeRule(key, rule);
+    }
   }
 
   @override
@@ -367,29 +384,32 @@ class ValidationResult {
   /// This is empty if validation was successful.
   List<String> get errors => List<String>.unmodifiable(_errors);
 
-  ValidationResult withData(Map<String, dynamic> data) =>
-      ValidationResult().._data.addAll(data).._errors.addAll(_errors);
+  ValidationResult withData(Map<String, dynamic> data) => ValidationResult()
+    .._data.addAll(data)
+    .._errors.addAll(_errors);
 
-  ValidationResult withErrors(Iterable<String> errors) =>
-      ValidationResult().._data.addAll(_data).._errors.addAll(errors);
+  ValidationResult withErrors(Iterable<String> errors) => ValidationResult()
+    .._data.addAll(_data)
+    .._errors.addAll(errors);
 }
 
 /// Occurs when user-provided data is invalid.
 class ValidationException extends AngelHttpException {
   /// A list of errors that resulted in the given data being marked invalid.
-  @override
-  final List<String> errors = [];
+  //@override
+  //final List<String> errors = [];
 
   /// A descriptive message describing the error.
-  @override
-  final String message;
+  //@override
+  //final String message;
 
-  ValidationException(this.message, {Iterable<String> errors = const []})
-      : super(FormatException(message),
+  ValidationException(String message, {Iterable<String> errors = const []})
+      : super(
+            message: message,
             statusCode: 400,
             errors: (errors).toSet().toList(),
             stackTrace: StackTrace.current) {
-    this.errors.addAll(errors.toSet());
+    //this.errors.addAll(errors.toSet());
   }
 
   @override

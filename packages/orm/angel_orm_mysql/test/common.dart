@@ -1,29 +1,144 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:angel3_migration/angel3_migration.dart';
+import 'package:angel3_migration_runner/angel3_migration_runner.dart';
+import 'package:angel3_migration_runner/mysql.dart';
 import 'package:angel3_orm/angel3_orm.dart';
 import 'package:angel3_orm_mysql/angel3_orm_mysql.dart';
 import 'package:logging/logging.dart';
-import 'package:galileo_sqljocky5/sqljocky.dart';
+//import 'package:mysql1/mysql1.dart';
+import 'package:mysql_client/mysql_client.dart';
 
-FutureOr<QueryExecutor> Function() my(Iterable<String> schemas) {
-  return () => connectToMySql(schemas);
+List tmpTables = [];
+
+// For MySQL
+Future<MySQLConnection> openMySqlConnection() async {
+  var connection = await MySQLConnection.createConnection(
+      databaseName: 'orm_test',
+      port: 3306,
+      host: "localhost",
+      userName: Platform.environment['MYSQL_USERNAME'] ?? 'test',
+      password: Platform.environment['MYSQL_PASSWORD'] ?? 'Test123',
+      secure: !('false' == Platform.environment['MYSQL_SECURE']));
+
+  await connection.connect(timeoutMs: 10000);
+
+  return connection;
 }
 
-Future<void> closeMy(QueryExecutor executor) =>
-    (executor as MySqlExecutor).close();
+Future<QueryExecutor> createExecutor(MySQLConnection conn) async {
+  var logger = Logger('orm_mysql');
 
-Future<MySqlExecutor> connectToMySql(Iterable<String> schemas) async {
+  return MySqlExecutor(conn, logger: logger);
+}
+
+Future<MigrationRunner> createTables(
+    MySQLConnection conn, List<Migration> models) async {
+  var runner = MySqlMigrationRunner(conn, migrations: models);
+  await runner.up();
+
+  return runner;
+}
+
+Future<void> dropTables(MigrationRunner runner) async {
+  await runner.reset();
+}
+
+// For MariaDB
+Future<void> dropTables2(QueryExecutor executor) {
+  var sqlExecutor = (executor as MariaDbExecutor);
+  for (var tableName in tmpTables.reversed) {
+    print('DROP TABLE $tableName');
+    sqlExecutor.query(tableName, 'DROP TABLE $tableName', {});
+  }
+  return sqlExecutor.close();
+}
+
+String extractTableName(String createQuery) {
+  var start = createQuery.indexOf('EXISTS');
+  var end = createQuery.indexOf('(');
+
+  if (start == -1 || end == -1) {
+    return '';
+  }
+
+  return createQuery.substring(start + 6, end).trim();
+}
+
+// Executor for MariaDB
+/* Future<MariaDbExecutor> _connectToMariaDb(List<String> schemas) async {
   var settings = ConnectionSettings(
-      db: 'angel_orm_test',
-      user: Platform.environment['MYSQL_USERNAME'] ?? 'angel_orm_test',
-      password: Platform.environment['MYSQL_PASSWORD'] ?? 'angel_orm_test');
+      host: 'localhost',
+      port: 3306,
+      db: 'orm_test',
+      user: 'test',
+      password: 'test123');
   var connection = await MySqlConnection.connect(settings);
-  var logger = Logger('angel_orm_mysql');
+
+  var logger = Logger('orm_mariadb');
+
+  tmpTables.clear();
 
   for (var s in schemas) {
-    await connection
-        .execute(await File('test/migrations/$s.sql').readAsString());
+    // MySQL driver does not support multiple sql queries
+    var data = await File('test/migrations/$s.sql').readAsString();
+    var queries = data.split(";");
+    for (var q in queries) {
+      print("Table: [$q]");
+      if (q.trim().isNotEmpty) {
+        //await connection.execute(q);
+        await connection.query(q);
+
+        var tableName = extractTableName(q);
+        if (tableName != '') {
+          tmpTables.add(tableName);
+        }
+      }
+    }
   }
+
+  return MariaDbExecutor(connection, logger: logger);
+} */
+
+// Executor for MySQL
+//   create user 'test'@'localhost' identified by 'test123';
+//   GRANT ALL PRIVILEGES ON orm_test.* to 'test'@'localhost' WITH GRANT OPTION;
+Future<MySqlExecutor> _connectToMySql(List<Migration> models) async {
+  var connection = await MySQLConnection.createConnection(
+      databaseName: 'orm_test',
+      port: 3306,
+      host: "localhost",
+      userName: Platform.environment['MYSQL_USERNAME'] ?? 'test',
+      password: Platform.environment['MYSQL_PASSWORD'] ?? 'test123',
+      secure: !('false' == Platform.environment['MYSQL_SECURE']));
+
+  await connection.connect(timeoutMs: 10000);
+
+  var logger = Logger('orm_mysql');
+
+  tmpTables.clear();
+
+  var runner = MySqlMigrationRunner(connection, migrations: models);
+  await runner.up();
+
+  /*
+  for (var s in schemas) {
+    // MySQL driver does not support multiple sql queries
+    var data = await File('test/migrations/$s.sql').readAsString();
+    var queries = data.split(";");
+    for (var q in queries) {
+      //print("Table: [$q]");
+      if (q.trim().isNotEmpty) {
+        await connection.execute(q);
+
+        var tableName = extractTableName(q);
+        if (tableName != '') {
+          tmpTables.add(tableName);
+        }
+      }
+    }
+  }
+  */
 
   return MySqlExecutor(connection, logger: logger);
 }

@@ -1,23 +1,17 @@
 # File Service for Angel3
 
-[![version](https://img.shields.io/badge/pub-v4.0.2-brightgreen)](https://pub.dartlang.org/packages/angel3_file_service)
+![Pub Version (including pre-releases)](https://img.shields.io/pub/v/angel3_file_service?include_prereleases)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
-[![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
+[![Discord](https://img.shields.io/discord/1060322353214660698)](https://discord.gg/3X6bxTUdCM)
+[![License](https://img.shields.io/github/license/dart-backend/angel)](https://github.com/dart-backend/angel/tree/master/packages/file_service/LICENSE)
 
-[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/file_service/LICENSE)
-
-Angel service that persists data to a file on disk, stored as a JSON list. It uses a simple
-mutex to prevent race conditions, and caches contents in memory until changes
-are made.
+Angel service that persists data to a file on disk, stored as a JSON list. It uses a simple mutex to prevent race conditions, and caches contents in memory until changes are made.
 
 The file will be created on read/write, if it does not already exist.
 
-This package is useful in development, as it prevents you from having to install
-an external database to run your server.
+This package is useful in development, as it prevents you from having to install an external database to run your server.
 
-When running a multi-threaded server, there is no guarantee that file operations
-will be mutually excluded. Thus, try to only use this one a single-threaded server
-if possible, or one with very low load.
+When running a multi-threaded server, there is no guarantee that file operations will be mutually excluded. Thus, try to only use this one a single-threaded server if possible, or one with very low load.
 
 While not necessarily *slow*, this package makes no promises about performance.
 
@@ -28,7 +22,7 @@ configureServer(Angel app) async {
   // Just like a normal service
   app.use(
     '/api/todos',
-    new JsonFileService(
+    JsonFileService(
       const LocalFileSystem().file('todos_db.json')
     ),
   );

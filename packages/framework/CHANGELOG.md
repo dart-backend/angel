@@ -1,5 +1,94 @@
 # Change Log
 
+## 8.5.0
+
+* Require Dart >= 3.6
+* Updated `lints` to 5.0.0
+* Updated `mime` to 2.0.0
+* Fixed res.json() will cause 'Bad state: Cannot modify a closed response.' error.
+
+## 8.4.0
+
+* Require Dart >= 3.3
+* Updated `lints` to 4.0.0
+
+## 8.3.2
+
+* Updated README
+
+## 8.3.1
+
+* Updated repository link
+
+## 8.3.0
+
+* Updated `lints` to 3.0.0
+* Fixed linter warnings
+
+## 8.2.0
+
+* Add `addResponseHeader` to `AngelHttp` to add headers to HTTP default response
+* Add `removeResponseHeader` to `AngelHttp` to remove headers from HTTP default response
+
+## 8.1.1
+
+* Updated broken image on README
+
+## 8.1.0
+
+* Updated `uuid` to 4.0.0
+
+## 8.0.0
+
+* Require Dart >= 3.0
+* Updated `http` to 1.0.0
+
+## 7.0.4
+
+* Updated `Expose` fields to non-nullable
+* Updated `Controller` to use non-nullable field
+
+## 7.0.3
+
+* Fixed issue #83. Allow Http request to return null headers instead of throwing an exception.
+
+## 7.0.2
+
+* Added performance benchmark to README
+
+## 7.0.1
+
+* Fixed `BytesBuilder` warnings
+
+## 7.0.0
+
+* Require Dart >= 2.17
+
+## 6.0.0
+
+* Require Dart >= 2.16
+* Updated `container` to non nullable
+* Updated `angel` to non nullable
+* Updated `logger` to non nullable
+* Refactored error handler
+
+## 5.0.0
+
+* Skipped release
+
+## 4.2.4
+
+* Fixed issue 48. Log not working in development
+
+## 4.2.3
+
+* Fixed `res.json()` throwing bad state exception
+
+## 4.2.2
+
+* Added `Date` to response header
+* Updated `Server: Angel3` response header
+
 ## 4.2.1
 
 * Updated `package:angel3_container`
@@ -48,11 +137,11 @@
 
 ## 4.0.0
 
-* Migrated to support Dart SDK 2.12.x NNBD
+* Migrated to support Dart >= 2.12 NNBD
 
 ## 3.0.0
 
-* Migrated to work with Dart SDK 2.12.x Non NNBD
+* Migrated to work with Dart >= 2.12 Non NNBD
 
 ## 2.1.1
 
@@ -343,7 +432,7 @@ stable, there'll be a conversion, perhaps.
 * `Routable`, and all of its subclasses, now extend `Router<RequestHandler>`, and therefore only
   take routes in the form of `FutureOr myFunc(RequestContext, ResponseContext res)`.
 * `@Middleware` now takes an `Iterable` of `RequestHandler`s.
-* `@Expose.path` now _must_ be a `String`, not just any `Pattern`.
+* `@Expose.path` now *must* be a `String`, not just any `Pattern`.
 * `@Expose.middleware` now takes `Iterable<RequestHandler>`, instead of just `List`.
 * `createDynamicHandler` was renamed to `ioc`, and is now used to run IoC-aware handlers in a
   type-safe manner.

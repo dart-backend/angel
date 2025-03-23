@@ -1,5 +1,4 @@
 import 'package:angel3_serialize/angel3_serialize.dart';
-import 'package:collection/collection.dart';
 part 'goat.g.dart';
 
 @serializable

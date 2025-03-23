@@ -12,6 +12,7 @@
       "js": []
     },
     "editor.codeActionsOnSave": {
-      "source.fixAll.markdownlint": true
-  }
+      "source.fixAll.markdownlint": "explicit"
+    },
+  "cmake.configureOnOpen": false
 }

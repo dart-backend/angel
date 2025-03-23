@@ -69,10 +69,6 @@ final Matcher isUrl = predicate(
     (dynamic value) => value is String && _url.hasMatch(value),
     'a valid url, starting with http:// or https://');
 
-/// Use [isUrl] instead.
-@deprecated
-final Matcher isurl = isUrl;
-
 /// Enforces a minimum length on a string.
 Matcher minLength(int length) => predicate(
     (dynamic value) => value is String && value.length >= length,

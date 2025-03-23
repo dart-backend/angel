@@ -1,4 +1,4 @@
-part of angel3_route.src.router;
+part of 'router.dart';
 
 class RouteGrammar {
   static const String notSlashRgx = r'([^/]+)';

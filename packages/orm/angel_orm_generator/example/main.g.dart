@@ -11,13 +11,12 @@ class EmployeeMigration extends Migration {
   void up(Schema schema) {
     schema.create('employees', (table) {
       table.serial('id').primaryKey();
-      table.varChar('error', length: 256);
       table.timeStamp('created_at');
       table.timeStamp('updated_at');
-      table.varChar('unique_id', length: 256).unique();
-      table.varChar('first_name', length: 256);
-      table.varChar('last_name', length: 256);
-      table.declareColumn('salary', Column(type: ColumnType('decimal')));
+      table.varChar('unique_id', length: 255).unique();
+      table.varChar('first_name', length: 255);
+      table.varChar('last_name', length: 255);
+      table.double('salary');
     });
   }
 
@@ -32,8 +31,10 @@ class EmployeeMigration extends Migration {
 // **************************************************************************
 
 class EmployeeQuery extends Query<Employee, EmployeeQueryWhere> {
-  EmployeeQuery({Query? parent, Set<String>? trampoline})
-      : super(parent: parent) {
+  EmployeeQuery({
+    Query? parent,
+    Set<String>? trampoline,
+  }) : super(parent: parent) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = EmployeeQueryWhere(this);
@@ -42,11 +43,13 @@ class EmployeeQuery extends Query<Employee, EmployeeQueryWhere> {
   @override
   final EmployeeQueryValues values = EmployeeQueryValues();
 
+  List<String> _selectedFields = [];
+
   EmployeeQueryWhere? _where;
 
   @override
   Map<String, String> get casts {
-    return {'salary': 'text'};
+    return {};
   }
 
   @override
@@ -56,16 +59,23 @@ class EmployeeQuery extends Query<Employee, EmployeeQueryWhere> {
 
   @override
   List<String> get fields {
-    return const [
+    const _fields = [
       'id',
-      'error',
       'created_at',
       'updated_at',
       'unique_id',
       'first_name',
       'last_name',
-      'salary'
+      'salary',
     ];
+    return _selectedFields.isEmpty
+        ? _fields
+        : _fields.where((field) => _selectedFields.contains(field)).toList();
+  }
+
+  EmployeeQuery select(List<String> selectedFields) {
+    _selectedFields = selectedFields;
+    return this;
   }
 
   @override
@@ -78,40 +88,62 @@ class EmployeeQuery extends Query<Employee, EmployeeQueryWhere> {
     return EmployeeQueryWhere(this);
   }
 
-  static Employee? parseRow(List row) {
-    if (row.every((x) => x == null)) return null;
+  Optional<Employee> parseRow(List row) {
+    if (row.every((x) => x == null)) {
+      return Optional.empty();
+    }
     var model = Employee(
-        id: row[0].toString(),
-        error: (row[1] as String?),
-        createdAt: (row[2] as DateTime?),
-        updatedAt: (row[3] as DateTime?),
-        uniqueId: (row[4] as String?),
-        firstName: (row[5] as String?),
-        lastName: (row[6] as String?),
-        salary: double.tryParse(row[7].toString()));
-    return model;
+      id: fields.contains('id') ? row[0].toString() : null,
+      createdAt:
+          fields.contains('created_at') ? mapToNullableDateTime(row[1]) : null,
+      updatedAt:
+          fields.contains('updated_at') ? mapToNullableDateTime(row[2]) : null,
+      uniqueId: fields.contains('unique_id') ? (row[3] as String?) : null,
+      firstName: fields.contains('first_name') ? (row[4] as String?) : null,
+      lastName: fields.contains('last_name') ? (row[5] as String?) : null,
+      salary: fields.contains('salary') ? mapToDouble(row[6]) : null,
+    );
+    return Optional.of(model);
   }
 
   @override
   Optional<Employee> deserialize(List row) {
-    return Optional.ofNullable(parseRow(row));
+    return parseRow(row);
   }
 }
 
 class EmployeeQueryWhere extends QueryWhere {
   EmployeeQueryWhere(EmployeeQuery query)
-      : id = NumericSqlExpressionBuilder<int>(query, 'id'),
-        error = StringSqlExpressionBuilder(query, 'error'),
-        createdAt = DateTimeSqlExpressionBuilder(query, 'created_at'),
-        updatedAt = DateTimeSqlExpressionBuilder(query, 'updated_at'),
-        uniqueId = StringSqlExpressionBuilder(query, 'unique_id'),
-        firstName = StringSqlExpressionBuilder(query, 'first_name'),
-        lastName = StringSqlExpressionBuilder(query, 'last_name'),
-        salary = NumericSqlExpressionBuilder<double>(query, 'salary');
+      : id = NumericSqlExpressionBuilder<int>(
+          query,
+          'id',
+        ),
+        createdAt = DateTimeSqlExpressionBuilder(
+          query,
+          'created_at',
+        ),
+        updatedAt = DateTimeSqlExpressionBuilder(
+          query,
+          'updated_at',
+        ),
+        uniqueId = StringSqlExpressionBuilder(
+          query,
+          'unique_id',
+        ),
+        firstName = StringSqlExpressionBuilder(
+          query,
+          'first_name',
+        ),
+        lastName = StringSqlExpressionBuilder(
+          query,
+          'last_name',
+        ),
+        salary = NumericSqlExpressionBuilder<double>(
+          query,
+          'salary',
+        );
 
   final NumericSqlExpressionBuilder<int> id;
-
-  final StringSqlExpressionBuilder error;
 
   final DateTimeSqlExpressionBuilder createdAt;
 
@@ -129,13 +161,12 @@ class EmployeeQueryWhere extends QueryWhere {
   List<SqlExpressionBuilder> get expressionBuilders {
     return [
       id,
-      error,
       createdAt,
       updatedAt,
       uniqueId,
       firstName,
       lastName,
-      salary
+      salary,
     ];
   }
 }
@@ -143,7 +174,7 @@ class EmployeeQueryWhere extends QueryWhere {
 class EmployeeQueryValues extends MapQueryValues {
   @override
   Map<String, String> get casts {
-    return {'salary': 'decimal'};
+    return {};
   }
 
   String? get id {
@@ -151,43 +182,44 @@ class EmployeeQueryValues extends MapQueryValues {
   }
 
   set id(String? value) => values['id'] = value;
-  String? get error {
-    return (values['error'] as String?);
-  }
 
-  set error(String? value) => values['error'] = value;
   DateTime? get createdAt {
     return (values['created_at'] as DateTime?);
   }
 
   set createdAt(DateTime? value) => values['created_at'] = value;
+
   DateTime? get updatedAt {
     return (values['updated_at'] as DateTime?);
   }
 
   set updatedAt(DateTime? value) => values['updated_at'] = value;
+
   String? get uniqueId {
     return (values['unique_id'] as String?);
   }
 
   set uniqueId(String? value) => values['unique_id'] = value;
+
   String? get firstName {
     return (values['first_name'] as String?);
   }
 
   set firstName(String? value) => values['first_name'] = value;
+
   String? get lastName {
     return (values['last_name'] as String?);
   }
 
   set lastName(String? value) => values['last_name'] = value;
+
   double? get salary {
-    return double.tryParse((values['salary'] as String));
+    return (values['salary'] as double?) ?? 0.0;
   }
 
-  set salary(double? value) => values['salary'] = value.toString();
+  set salary(double? value) => values['salary'] = value;
+
   void copyFrom(Employee model) {
-    error = model.error;
     createdAt = model.createdAt;
     updatedAt = model.updatedAt;
     uniqueId = model.uniqueId;
@@ -203,22 +235,19 @@ class EmployeeQueryValues extends MapQueryValues {
 
 @generatedSerializable
 class Employee extends _Employee {
-  Employee(
-      {this.id,
-      this.error,
-      this.createdAt,
-      this.updatedAt,
-      this.uniqueId,
-      this.firstName,
-      this.lastName,
-      this.salary});
+  Employee({
+    this.id,
+    this.createdAt,
+    this.updatedAt,
+    this.uniqueId,
+    this.firstName,
+    this.lastName,
+    this.salary,
+  });
 
   /// A unique identifier corresponding to this item.
   @override
   String? id;
-
-  @override
-  String? error;
 
   /// The time at which this item was created.
   @override
@@ -240,18 +269,17 @@ class Employee extends _Employee {
   @override
   double? salary;
 
-  Employee copyWith(
-      {String? id,
-      String? error,
-      DateTime? createdAt,
-      DateTime? updatedAt,
-      String? uniqueId,
-      String? firstName,
-      String? lastName,
-      double? salary}) {
+  Employee copyWith({
+    String? id,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    String? uniqueId,
+    String? firstName,
+    String? lastName,
+    double? salary,
+  }) {
     return Employee(
         id: id ?? this.id,
-        error: error ?? this.error,
         createdAt: createdAt ?? this.createdAt,
         updatedAt: updatedAt ?? this.updatedAt,
         uniqueId: uniqueId ?? this.uniqueId,
@@ -264,7 +292,6 @@ class Employee extends _Employee {
   bool operator ==(other) {
     return other is _Employee &&
         other.id == id &&
-        other.error == error &&
         other.createdAt == createdAt &&
         other.updatedAt == updatedAt &&
         other.uniqueId == uniqueId &&
@@ -277,19 +304,18 @@ class Employee extends _Employee {
   int get hashCode {
     return hashObjects([
       id,
-      error,
       createdAt,
       updatedAt,
       uniqueId,
       firstName,
       lastName,
-      salary
+      salary,
     ]);
   }
 
   @override
   String toString() {
-    return 'Employee(id=$id, error=$error, createdAt=$createdAt, updatedAt=$updatedAt, uniqueId=$uniqueId, firstName=$firstName, lastName=$lastName, salary=$salary)';
+    return 'Employee(id=$id, createdAt=$createdAt, updatedAt=$updatedAt, uniqueId=$uniqueId, firstName=$firstName, lastName=$lastName, salary=$salary)';
   }
 
   Map<String, dynamic> toJson() {
@@ -322,12 +348,13 @@ class EmployeeSerializer extends Codec<Employee, Map> {
 
   @override
   EmployeeEncoder get encoder => const EmployeeEncoder();
+
   @override
   EmployeeDecoder get decoder => const EmployeeDecoder();
+
   static Employee fromMap(Map map) {
     return Employee(
-        id: map['id'] as String,
-        error: map['error'] as String,
+        id: map['id'] as String?,
         createdAt: map['created_at'] != null
             ? (map['created_at'] is DateTime
                 ? (map['created_at'] as DateTime)
@@ -338,16 +365,18 @@ class EmployeeSerializer extends Codec<Employee, Map> {
                 ? (map['updated_at'] as DateTime)
                 : DateTime.parse(map['updated_at'].toString()))
             : null,
-        uniqueId: map['unique_id'] as String,
-        firstName: map['first_name'] as String,
-        lastName: map['last_name'] as String,
-        salary: map['salary'] as double);
+        uniqueId: map['unique_id'] as String?,
+        firstName: map['first_name'] as String?,
+        lastName: map['last_name'] as String?,
+        salary: map['salary'] as double?);
   }
 
-  static Map<String, dynamic> toMap(_Employee model) {
+  static Map<String, dynamic> toMap(_Employee? model) {
+    if (model == null) {
+      throw FormatException("Required field [model] cannot be null");
+    }
     return {
       'id': model.id,
-      'error': model.error,
       'created_at': model.createdAt?.toIso8601String(),
       'updated_at': model.updatedAt?.toIso8601String(),
       'unique_id': model.uniqueId,
@@ -361,18 +390,15 @@ class EmployeeSerializer extends Codec<Employee, Map> {
 abstract class EmployeeFields {
   static const List<String> allFields = <String>[
     id,
-    error,
     createdAt,
     updatedAt,
     uniqueId,
     firstName,
     lastName,
-    salary
+    salary,
   ];
 
   static const String id = 'id';
-
-  static const String error = 'error';
 
   static const String createdAt = 'created_at';
 

@@ -5,7 +5,6 @@ import 'dart:io';
 import 'package:angel3_container/mirrors.dart';
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_framework/http.dart';
-import 'package:matcher/matcher.dart';
 import 'package:angel3_mock_request/angel3_mock_request.dart';
 
 import 'package:test/test.dart';
@@ -46,7 +45,7 @@ void main() {
     var rs = rq.response;
     var req = await http.createRequestContext(rq, rs);
     var res = await http.createResponseContext(rq, rs);
-    var e = AngelHttpException(null,
+    var e = AngelHttpException(
         statusCode: 321, message: 'Hello', errors: ['foo', 'bar']);
     await app.errorHandler(e, req, res);
     await http.sendResponse(rq, rs, req, res);
@@ -128,7 +127,7 @@ void main() {
 
     group('getHandlerResult', () {
       test('return request handler', () async {
-        var handler = (req, res) => (req, res) async {
+        handler(req, res) => (req, res) async {
               return 2;
             };
         var r = await app.getHandlerResult(handler, req, res);
@@ -143,12 +142,12 @@ void main() {
 
     group('executeHandler', () {
       test('return Stream', () async {
-        var handler = (req, res) => Stream.fromIterable([2, 3]);
+        handler(req, res) => Stream.fromIterable([2, 3]);
         expect(await app.executeHandler(handler, req, res), isFalse);
       });
 
       test('end response', () async {
-        var handler = (req, ResponseContext res) => res.close();
+        handler(req, ResponseContext res) => res.close();
         expect(await app.executeHandler(handler, req, res), isFalse);
       });
     });

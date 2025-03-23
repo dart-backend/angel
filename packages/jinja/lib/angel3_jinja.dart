@@ -1,5 +1,6 @@
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:jinja/jinja.dart';
+import 'package:jinja/loaders.dart';
 
 /// Configures an Angel server to use Jinja2 to render templates.
 ///
@@ -28,7 +29,7 @@ AngelConfigurer jinja({
     createLoader ??= () {
       return FileSystemLoader(
         extensions: ext,
-        path: path,
+        paths: [path],
         followLinks: followLinks,
       );
     };
@@ -47,7 +48,7 @@ AngelConfigurer jinja({
     );
 
     app.viewGenerator = (path, [values]) {
-      return env.getTemplate(path).render(values) as String;
+      return env.getTemplate(path).render(values);
     };
   };
 }

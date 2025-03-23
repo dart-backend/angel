@@ -3,8 +3,6 @@ import 'dart:collection';
 import 'dart:convert';
 import 'package:angel3_client/angel3_client.dart';
 import 'package:angel3_client/base_angel_client.dart';
-import 'package:angel3_http_exception/angel3_http_exception.dart';
-import 'package:http/src/base_client.dart' as http;
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:web_socket_channel/status.dart' as status;
 import 'angel3_websocket.dart';
@@ -86,9 +84,8 @@ abstract class BaseWebSocketClient extends BaseAngelClient {
     }
   }
 
-  BaseWebSocketClient(http.BaseClient client, baseUrl,
-      {this.reconnectOnClose = true, Duration? reconnectInterval})
-      : super(client, baseUrl) {
+  BaseWebSocketClient(super.client, super.baseUrl,
+      {this.reconnectOnClose = true, Duration? reconnectInterval}) {
     _reconnectInterval = reconnectInterval ?? Duration(seconds: 10);
   }
 
@@ -96,7 +93,7 @@ abstract class BaseWebSocketClient extends BaseAngelClient {
   Future close() async {
     on._close();
     scheduleMicrotask(() async {
-      await _socket!.sink.close(status.goingAway);
+      await _socket!.sink.close(status.normalClosure);
       await _onData.close();
       await _onAllEvents.close();
       await _onAuthenticated.close();
@@ -219,7 +216,7 @@ abstract class BaseWebSocketClient extends BaseAngelClient {
           _socket = null;
           if (reconnectOnClose == true) {
             Timer.periodic(reconnectInterval!, (Timer timer) async {
-              var result;
+              WebSocketChannel? result;
 
               try {
                 result = await connect(timeout: reconnectInterval);
@@ -434,10 +431,6 @@ class WebSocketsService<Id, Data> extends Service<Id, Data?> {
         params: params ?? {}));
     return null;
   }
-
-  /// No longer necessary.
-  @deprecated
-  Service unwrap() => this;
 }
 
 /// Contains a dynamic Map of [WebSocketEvent] streams.
@@ -461,6 +454,8 @@ class WebSocketExtraneousEventHandler {
   }
 
   void _close() {
-    _events.values.forEach((s) => s.close());
+    for (var s in _events.values) {
+      s.close();
+    }
   }
 }

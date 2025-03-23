@@ -7,48 +7,50 @@ import 'package:belatuk_symbol_table/belatuk_symbol_table.dart';
 
 /// Configures an Angel server to use Jael to render templates.
 ///
-/// To enable "minified" output, you need to override the [createBuffer] function,
-/// to instantiate a [CodeBuffer] that emits no spaces or line breaks.
+/// To enable "minified" output, set minified to true
+///
+/// For custom HTML formating, you need to override the [createBuffer] parameter
+/// with a function that returns a new instance of [CodeBuffer].
 ///
 /// To apply additional transforms to parsed documents, provide a set of [patch] functions.
 AngelConfigurer jael(Directory viewsDirectory,
-    {String? fileExtension,
+    {String fileExtension = '.jael',
     bool strictResolution = false,
-    bool cacheViews = false,
-    Iterable<Patcher>? patch,
+    bool cacheViews = true,
+    Map<String, Document>? cache,
+    Iterable<Patcher> patch = const [],
     bool asDSX = false,
+    bool minified = true,
     CodeBuffer Function()? createBuffer}) {
-  var cache = <String, Document?>{};
-  fileExtension ??= '.jael';
-  createBuffer ??= () => CodeBuffer();
+  var localCache = cache ?? <String, Document>{};
+
+  var bufferFunc = createBuffer ?? () => CodeBuffer();
+
+  if (minified) {
+    bufferFunc = () => CodeBuffer(space: '', newline: '');
+  }
 
   return (Angel app) async {
     app.viewGenerator = (String name, [Map? locals]) async {
       var errors = <JaelError>[];
       Document? processed;
 
-      if (cacheViews == true && cache.containsKey(name)) {
-        processed = cache[name];
+      //var stopwatch = Stopwatch()..start();
+
+      if (cacheViews && localCache.containsKey(name)) {
+        processed = localCache[name];
       } else {
-        var file = viewsDirectory.childFile(name + fileExtension!);
-        var contents = await file.readAsString();
-        var doc = parseDocument(contents,
-            sourceUrl: file.uri, asDSX: asDSX == true, onError: errors.add)!;
-        processed = doc;
+        processed = await _loadViewTemplate(viewsDirectory, name,
+            fileExtension: fileExtension, asDSX: asDSX, patch: patch);
 
-        try {
-          processed = await (resolve(doc, viewsDirectory,
-              patch: patch, onError: errors.add));
-        } catch (_) {
-          // Ignore these errors, so that we can show syntax errors.
-        }
-
-        if (cacheViews == true) {
-          cache[name] = processed;
+        if (cacheViews) {
+          localCache[name] = processed!;
         }
       }
+      //print('Time executed: ${stopwatch.elapsed.inMilliseconds}');
+      //stopwatch.stop();
 
-      var buf = createBuffer!();
+      var buf = bufferFunc();
       var scope = SymbolTable(
           values: locals?.keys.fold<Map<String, dynamic>>(<String, dynamic>{},
                   (out, k) => out..[k.toString()] = locals[k]) ??
@@ -57,7 +59,7 @@ AngelConfigurer jael(Directory viewsDirectory,
       if (errors.isEmpty) {
         try {
           const Renderer().render(processed!, buf, scope,
-              strictResolution: strictResolution == true);
+              strictResolution: strictResolution);
           return buf.toString();
         } on JaelError catch (e) {
           errors.add(e);
@@ -68,4 +70,55 @@ AngelConfigurer jael(Directory viewsDirectory,
       return buf.toString();
     };
   };
+}
+
+/// Preload all of Jael templates into a cache
+///
+///
+/// To apply additional transforms to parsed documents, provide a set of [patch] functions.
+Future<void> jaelTemplatePreload(
+    Directory viewsDirectory, Map<String, Document> cache,
+    {String fileExtension = '.jael',
+    bool asDSX = false,
+    Iterable<Patcher> patch = const []}) async {
+  await viewsDirectory.list(recursive: true).forEach((f) async {
+    if (f.basename.endsWith(fileExtension)) {
+      var name = f.basename.split(".");
+      if (name.length > 1) {
+        //print("View: ${name[0]}");
+        Document? processed = await _loadViewTemplate(viewsDirectory, name[0]);
+        if (processed != null) {
+          cache[name[0]] = processed;
+        }
+      }
+    }
+  });
+}
+
+Future<Document?> _loadViewTemplate(Directory viewsDirectory, String name,
+    {String fileExtension = '.jael',
+    bool asDSX = false,
+    Iterable<Patcher> patch = const []}) async {
+  var errors = <JaelError>[];
+  Document? processed;
+
+  var file = viewsDirectory.childFile(name + fileExtension);
+  var contents = await file.readAsString();
+  var doc = parseDocument(contents,
+      sourceUrl: file.uri, asDSX: asDSX, onError: errors.add);
+
+  if (doc == null) {
+    throw ArgumentError("${file.basename} does not exists");
+  }
+
+  try {
+    processed =
+        await (resolve(doc, viewsDirectory, patch: patch, onError: errors.add));
+  } catch (e) {
+    // Ignore these errors, so that we can show syntax errors.
+  }
+  if (processed == null) {
+    throw ArgumentError("${file.basename} does not exists");
+  }
+  return processed;
 }

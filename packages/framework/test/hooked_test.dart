@@ -105,9 +105,9 @@ void main() {
   test('metadata', () async {
     final service = HookedService(IncrementService())..addHooks(app);
     expect(service.inner, isNot(const IsInstanceOf<MapService>()));
-    IncrementService.TIMES = 0;
+    IncrementService.times = 0;
     await service.index();
-    expect(IncrementService.TIMES, equals(2));
+    expect(IncrementService.times, equals(2));
   });
 
   test('inject request + response', () async {
@@ -135,8 +135,8 @@ void main() {
       var type = e.isBefore ? 'before' : 'after';
       print('Params to $type ${e.eventName}: ${e.params}');
       expect(e.params, isMap);
-      expect(e.params?.keys, contains('provider'));
-      expect(e.params?['provider'], const IsInstanceOf<Providers>());
+      expect(e.params.keys, contains('provider'));
+      expect(e.params['provider'], const IsInstanceOf<Providers>());
     }
 
     svc

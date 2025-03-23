@@ -1,5 +1,105 @@
 # Change Log
 
+## 8.4.1
+
+* [MySQL] Generated `int` primary key as `INT NOT NULL AUTO_INCREMENT`
+
+## 8.4.0
+
+* Require Dart >= 3.6
+* Updated `lints` to 5.0.0
+* Updated dependencies to the latest release
+* [MySQL] Fixed foreign key generation for serial primary
+* [MySQL] Fixed default value generation
+* [MySQL] Fixed `@Column(indexType: IndexType.unique)` generation
+
+## 8.3.0
+
+* Added `addIndex`, `dropIndex` and `dropPrimaryIndex`
+
+## 8.2.2
+
+* Fixed `MariaDbMigrationRunner` migration issues
+
+## 8.2.1
+
+* Updated README
+* Updated examples
+* Updated `PostgresMigrationRunner` error handling
+* Fixed `MySqlMigrationRunner` migration issues
+* Added test cases for `PostgreSQL`, `MySQL` and `MariaDB`
+* Added auto increment integer primary key suppport to MySQL and MariaDB
+
+## 8.2.0
+
+* Require Dart >= 3.3
+* Updated `lints` to 4.0.0
+* Fixed MySQL migration column change [PR #127](https://github.com/dart-backend/angel/pull/127)
+
+## 8.1.1
+
+* Updated pubspec
+
+## 8.1.0
+
+* [BREAKING] Updated `postgres` to 3.0.0
+* Updated repository link
+* Updated `lints` to 3.0.0
+* Fixed linter warnings
+
+## 8.0.0
+
+* Require Dart >= 3.0
+
+## 7.1.0
+
+* Require Dart >= 2.18
+
+## 7.0.0
+
+* Require Dart >= 2.17
+
+## 6.1.0
+
+* Fixed issue #70. Incorrectly generated SQL for `defaultsTo('Default Value')`
+* Mapped timestamp to datetime for MySQL and MariaDB
+* Fixed `MariaDbMigrationRunner` to work with MariaDB
+* Fixed `MySqlMigrationRunner` to work with MySQL and MariaDB
+
+## 6.0.1
+
+* Added `MariaDbMigrationRunner` to support MariaDB migration with `mysql1` driver
+* Updated `MySqlMigrationRunner` to support MySQL migration with `mysql_client` driver
+
+## 6.0.0
+
+* Require Dart >= 2.16
+* Updated to use `mysql_client` package
+
+## 5.0.0
+
+* Skipped release
+
+## 4.1.2
+
+* Updated README
+
+## 4.1.1
+
+* Updated README
+
+## 4.1.0
+
+* Added support for `MySQL` and `MariaDB` database
+
+## 4.0.2
+
+* Updated README
+
+## 4.0.1
+
+* Updated linter to `package:lints`
+
 ## 4.0.0
 
 * Fixed NNBD issues
@@ -23,11 +123,11 @@
 
 ## 4.0.0-beta.1
 
-* Migrated to support Dart SDK 2.12.x NNBD
+* Migrated to support Dart >= 2.12 NNBD
 
 ## 3.0.0
 
-* Migrated to work with Dart SDK 2.12.x Non NNBD
+* Migrated to work with Dart >= 2.12 Non NNBD
 
 ## 2.0.0
 

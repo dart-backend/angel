@@ -1,5 +1,4 @@
 import 'package:angel3_migration/angel3_migration.dart';
-import 'package:angel3_model/angel3_model.dart';
 import 'package:angel3_orm/angel3_orm.dart';
 import 'package:angel3_serialize/angel3_serialize.dart';
 import 'package:optional/optional.dart';
@@ -26,10 +25,10 @@ abstract class _WeirdJoin {
   _Song? get song;
 
   @HasMany(foreignKey: 'parent')
-  List<_Numba?>? get numbas;
+  List<_Numba> get numbas;
 
   @ManyToMany(_FooPivot)
-  List<_Foo?>? get foos;
+  List<_Foo> get foos;
 }
 
 @serializable
@@ -59,7 +58,7 @@ abstract class _Foo {
   String? get bar;
 
   @ManyToMany(_FooPivot)
-  List<_WeirdJoin?>? get weirdJoins;
+  List<_WeirdJoin> get weirdJoins;
 }
 
 @serializable

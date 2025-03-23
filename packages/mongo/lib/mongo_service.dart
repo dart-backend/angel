@@ -1,4 +1,4 @@
-part of angel3_mongo.services;
+part of 'services.dart';
 
 /// Manipulates data from MongoDB as Maps.
 class MongoService extends Service<String, Map<String, dynamic>> {
@@ -12,12 +12,8 @@ class MongoService extends Service<String, Map<String, dynamic>> {
   /// If set to `true`, parameters in `req.query` are applied to the database query.
   final bool allowQuery;
 
-  /// No longer used. Will be removed by `2.1.0`.
-  @deprecated
-  final bool debug;
-
   MongoService(this.collection,
-      {this.allowRemoveAll = false, this.allowQuery = true, this.debug = true})
+      {this.allowRemoveAll = false, this.allowQuery = true})
       : super();
 
   SelectorBuilder? _makeQuery([Map<String, dynamic>? params_]) {
@@ -58,7 +54,7 @@ class MongoService extends Service<String, Map<String, dynamic>> {
         query?.forEach((key, v) {
           var value = v is Map<String, dynamic> ? _filterNoQuery(v) : v;
 
-          if (!_NO_QUERY.contains(key) &&
+          if (!_noQuery.contains(key) &&
               value is! RequestContext &&
               value is! ResponseContext) {
             result = result.and(where.eq(key as String, value));
@@ -77,7 +73,7 @@ class MongoService extends Service<String, Map<String, dynamic>> {
     for (var key in doc.keys) {
       var value = doc[key];
       if (value is ObjectId) {
-        result[key] = value.toHexString();
+        result[key] = value.oid;
       } else if (value is! RequestContext && value is! ResponseContext) {
         result[key] = value;
       }
@@ -94,7 +90,8 @@ class MongoService extends Service<String, Map<String, dynamic>> {
         .toList();
   }
 
-  static const String _NONCE_KEY = '__angel__mongo__nonce__key__';
+  // Deprecated:
+  //static const String _nonceKey = '__angel__mongo__nonce__key__';
 
   @override
   Future<Map<String, dynamic>> create(Map<String, dynamic> data,
@@ -102,15 +99,21 @@ class MongoService extends Service<String, Map<String, dynamic>> {
     var item = _removeSensitive(data);
 
     try {
-      var nonce = (await collection.db.getNonce())['nonce'] as String?;
-      var result = await (collection.findAndModify(
-          query: where.eq(_NONCE_KEY, nonce),
-          update: item,
-          returnNew: true,
-          upsert: true) as FutureOr<Map<String, dynamic>>);
-      return _jsonify(result);
+      if (params == null || params.isEmpty) {
+        var result = await collection.insertOne(data);
+        return _jsonify(result.document ?? {});
+      } else {
+        // Deprecated:
+        // var nonce = (await collection.db.getNonce())['nonce'] as String?;
+        var result = await collection.findAndModify(
+            query: _makeQuery(params),
+            update: item,
+            returnNew: true,
+            upsert: true);
+        return _jsonify(result ?? {});
+      }
     } catch (e, st) {
-      throw AngelHttpException(e, stackTrace: st);
+      throw AngelHttpException(stackTrace: st);
     }
   }
 
@@ -131,13 +134,13 @@ class MongoService extends Service<String, Map<String, dynamic>> {
   @override
   Future<Map<String, dynamic>> read(String id,
       [Map<String, dynamic>? params]) async {
-    var _id = _makeId(id);
+    var localId = _makeId(id);
     var found =
-        await collection.findOne(where.id(_id).and(_makeQuery(params)!));
+        await collection.findOne(where.id(localId).and(_makeQuery(params)!));
 
     if (found == null) {
       throw AngelHttpException.notFound(
-          message: 'No record found for ID ${_id.toHexString()}');
+          message: 'No record found for ID ${localId.oid}');
     }
 
     return _jsonify(found, params);
@@ -154,10 +157,10 @@ class MongoService extends Service<String, Map<String, dynamic>> {
   @override
   Future<Map<String, dynamic>> modify(String id, data,
       [Map<String, dynamic>? params]) async {
-    Map<String, dynamic> target;
+    Map<String, dynamic> currentDoc;
 
     try {
-      target = await read(id, params);
+      currentDoc = await read(id, params);
     } on AngelHttpException catch (e) {
       if (e.statusCode == 404) {
         return await create(data, params);
@@ -166,48 +169,40 @@ class MongoService extends Service<String, Map<String, dynamic>> {
       }
     }
 
-    var result = mergeMap([target, _removeSensitive(data)]);
-    //result['updatedAt'] = new DateTime.now().toIso8601String();
+    var updatedDoc = mergeMap([currentDoc, _removeSensitive(data)]);
+    updatedDoc['updatedAt'] = DateTime.now().toIso8601String();
 
     try {
-      var modified = await (collection.findAndModify(
-          query: where.id(_makeId(id)),
-          update: result,
-          returnNew: true) as FutureOr<Map<String, dynamic>>);
-      result = _jsonify(modified, params);
-      result['id'] = _makeId(id).toHexString();
+      var modified = await collection.findAndModify(
+          query: where.id(_makeId(id)), update: updatedDoc, returnNew: true);
+      var result = _jsonify(modified ?? {}, params);
+      result['id'] = _makeId(id).oid;
       return result;
     } catch (e, st) {
       //printDebug(e, st, 'MODIFY');
-      throw AngelHttpException(e, stackTrace: st);
+      throw AngelHttpException(stackTrace: st);
     }
   }
 
   @override
   Future<Map<String, dynamic>> update(String id, Map<String, dynamic> data,
       [Map<String, dynamic>? params]) async {
-    var result = _removeSensitive(data);
-    result['_id'] = _makeId(id);
-    /*result['createdAt'] =
-        target is Map ? target['createdAt'] : target.createdAt;
+    var updatedDoc = _removeSensitive(data);
 
-    if (result['createdAt'] is DateTime)
-      result['createdAt'] = result['createdAt'].toIso8601String();
-
-    result['updatedAt'] = new DateTime.now().toIso8601String();*/
+    updatedDoc['updatedAt'] = DateTime.now().toIso8601String();
 
     try {
-      var updated = await (collection.findAndModify(
+      var updated = await collection.findAndModify(
           query: where.id(_makeId(id)),
-          update: result,
+          update: updatedDoc,
           returnNew: true,
-          upsert: true) as FutureOr<Map<String, dynamic>>);
-      result = _jsonify(updated, params);
-      result['id'] = _makeId(id).toHexString();
+          upsert: true);
+      var result = _jsonify(updated ?? {}, params);
+      result['id'] = _makeId(id).oid;
       return result;
     } catch (e, st) {
       //printDebug(e, st, 'UPDATE');
-      throw AngelHttpException(e, stackTrace: st);
+      throw AngelHttpException(stackTrace: st);
     }
   }
 
@@ -229,13 +224,12 @@ class MongoService extends Service<String, Map<String, dynamic>> {
     // var result = await read(id, params);
 
     try {
-      var result = await (collection.findAndModify(
-          query: where.id(_makeId(id)),
-          remove: true) as FutureOr<Map<String, dynamic>>);
-      return _jsonify(result);
+      var result = await collection.findAndModify(
+          query: where.id(_makeId(id)), remove: true);
+      return _jsonify(result ?? {});
     } catch (e, st) {
       //printDebug(e, st, 'REMOVE');
-      throw AngelHttpException(e, stackTrace: st);
+      throw AngelHttpException(stackTrace: st);
     }
   }
 }

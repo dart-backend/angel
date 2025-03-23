@@ -2,8 +2,8 @@
 
 ![Pub Version (including pre-releases)](https://img.shields.io/pub/v/angel3_route?include_prereleases)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
-[![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
-[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/master/packages/route/LICENSE)
+[![Discord](https://img.shields.io/discord/1060322353214660698)](https://discord.gg/3X6bxTUdCM)
+[![License](https://img.shields.io/github/license/dart-backend/angel)](https://github.com/dart-backend/angel/tree/master/packages/route/LICENSE)
 
 A powerful, isomorphic routing library for Dart.
 
@@ -26,7 +26,7 @@ A powerful, isomorphic routing library for Dart.
 
 ### Routing
 
-If you use [Angel 3](https://pub.dev/packages/angel3_framework), every `Angel` instance is a `Router` in itself.
+If you use [Angel3](https://pub.dev/packages/angel3_framework), every `Angel` instance is a `Router` in itself.
 
 ```dart
 void main() {
@@ -101,9 +101,9 @@ Supports both hashed routes and pushState. The `BrowserRouter` interface exposes
 
 To prevent this for a given anchor, do any of the following:
 
-* Do not provide an `href`
-* Provide a `download` or `target` attribute on the element
-* Set `rel="external"`
+- Do not provide an `href`
+- Provide a `download` or `target` attribute on the element
+- Set `rel="external"`
   
 ## Route State
 

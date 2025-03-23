@@ -1,19 +1,44 @@
 name: angel3_seo
-version: 4.0.0
+version: 8.3.0
 description: Helper infrastructure for building SEO-friendly Web backends in Angel3.
 homepage: https://angel3-framework.web.app/
-repository: https://github.com/dukefirehawk/angel/tree/angel3/packages/seo
+repository: https://github.com/dart-backend/angel/tree/angel3/packages/seo
 environment:
-  sdk: '>=2.12.0 <3.0.0'
+  sdk: '>=3.6.0 <4.0.0'
 dependencies:
-  angel3_framework: ^4.1.0
-  angel3_static: ^4.0.0
-  file: ^6.1.2
+  angel3_framework: ^8.4.0
+  angel3_static: ^8.2.0
+  file: ^7.0.0
   html: ^0.15.0
   http_parser: ^4.0.0
-  path: ^1.8.0
+  path: ^1.9.0
 dev_dependencies:
-  angel3_test: ^4.0.0
-  logging: ^1.0.1
-  test: ^1.17.8
-  pedantic: ^1.11.1
+  angel3_test: ^8.2.0
+  logging: ^1.2.0
+  test: ^1.24.0
+  lints: ^5.0.0
+# dependency_overrides:
+#   angel3_static:
+#     path: ../static
+#   angel3_websocket:
+#     path: ../websocket
+#   angel3_container:
+#     path: ../container/angel_container
+#   angel3_framework:
+#     path: ../framework
+#   angel3_http_exception:
+#     path: ../http_exception
+#   angel3_model:
+#     path: ../model
+#   angel3_route:
+#     path: ../route
+#   angel3_mock_request:
+#     path: ../mock_request
+#   angel3_auth:
+#     path: ../auth 
+#   angel3_client:
+#     path: ../client
+#   angel3_test:
+#     path: ../test
+#   angel3_validate:
+#     path: ../validate

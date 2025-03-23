@@ -8,7 +8,10 @@ part of 'subclass.dart';
 
 @generatedSerializable
 class Animal extends _Animal {
-  Animal({required this.genus, required this.species});
+  Animal({
+    required this.genus,
+    required this.species,
+  });
 
   @override
   String? genus;
@@ -16,7 +19,10 @@ class Animal extends _Animal {
   @override
   String? species;
 
-  Animal copyWith({String? genus, String? species}) {
+  Animal copyWith({
+    String? genus,
+    String? species,
+  }) {
     return Animal(genus: genus ?? this.genus, species: species ?? this.species);
   }
 
@@ -27,7 +33,10 @@ class Animal extends _Animal {
 
   @override
   int get hashCode {
-    return hashObjects([genus, species]);
+    return hashObjects([
+      genus,
+      species,
+    ]);
   }
 
   @override
@@ -42,7 +51,11 @@ class Animal extends _Animal {
 
 @generatedSerializable
 class Bird extends _Bird {
-  Bird({required this.genus, required this.species, this.isSparrow = false});
+  Bird({
+    required this.genus,
+    required this.species,
+    this.isSparrow = false,
+  });
 
   @override
   String? genus;
@@ -53,7 +66,11 @@ class Bird extends _Bird {
   @override
   bool? isSparrow;
 
-  Bird copyWith({String? genus, String? species, bool? isSparrow}) {
+  Bird copyWith({
+    String? genus,
+    String? species,
+    bool? isSparrow,
+  }) {
     return Bird(
         genus: genus ?? this.genus,
         species: species ?? this.species,
@@ -70,7 +87,11 @@ class Bird extends _Bird {
 
   @override
   int get hashCode {
-    return hashObjects([genus, species, isSparrow]);
+    return hashObjects([
+      genus,
+      species,
+      isSparrow,
+    ]);
   }
 
   @override
@@ -108,8 +129,10 @@ class AnimalSerializer extends Codec<Animal, Map> {
 
   @override
   AnimalEncoder get encoder => const AnimalEncoder();
+
   @override
   AnimalDecoder get decoder => const AnimalDecoder();
+
   static Animal fromMap(Map map) {
     if (map['genus'] == null) {
       throw FormatException("Missing required field 'genus' on Animal.");
@@ -123,21 +146,19 @@ class AnimalSerializer extends Codec<Animal, Map> {
         genus: map['genus'] as String?, species: map['species'] as String?);
   }
 
-  static Map<String, dynamic> toMap(_Animal model) {
-    if (model.genus == null) {
-      throw FormatException("Missing required field 'genus' on Animal.");
+  static Map<String, dynamic> toMap(_Animal? model) {
+    if (model == null) {
+      throw FormatException("Required field [model] cannot be null");
     }
-
-    if (model.species == null) {
-      throw FormatException("Missing required field 'species' on Animal.");
-    }
-
     return {'genus': model.genus, 'species': model.species};
   }
 }
 
 abstract class AnimalFields {
-  static const List<String> allFields = <String>[genus, species];
+  static const List<String> allFields = <String>[
+    genus,
+    species,
+  ];
 
   static const String genus = 'genus';
 
@@ -165,8 +186,10 @@ class BirdSerializer extends Codec<Bird, Map> {
 
   @override
   BirdEncoder get encoder => const BirdEncoder();
+
   @override
   BirdDecoder get decoder => const BirdDecoder();
+
   static Bird fromMap(Map map) {
     if (map['genus'] == null) {
       throw FormatException("Missing required field 'genus' on Bird.");
@@ -182,15 +205,10 @@ class BirdSerializer extends Codec<Bird, Map> {
         isSparrow: map['is_sparrow'] as bool? ?? false);
   }
 
-  static Map<String, dynamic> toMap(_Bird model) {
-    if (model.genus == null) {
-      throw FormatException("Missing required field 'genus' on Bird.");
+  static Map<String, dynamic> toMap(_Bird? model) {
+    if (model == null) {
+      throw FormatException("Required field [model] cannot be null");
     }
-
-    if (model.species == null) {
-      throw FormatException("Missing required field 'species' on Bird.");
-    }
-
     return {
       'genus': model.genus,
       'species': model.species,
@@ -200,7 +218,11 @@ class BirdSerializer extends Codec<Bird, Map> {
 }
 
 abstract class BirdFields {
-  static const List<String> allFields = <String>[genus, species, isSparrow];
+  static const List<String> allFields = <String>[
+    genus,
+    species,
+    isSparrow,
+  ];
 
   static const String genus = 'genus';
 

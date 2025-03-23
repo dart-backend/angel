@@ -26,8 +26,8 @@ void belongsToTests(FutureOr<QueryExecutor> Function() createExecutor,
     // And a book
     var bookQuery = BookQuery();
     bookQuery.values
-      ..authorId = int.parse(jkRowling!.id!)
-      ..partnerAuthorId = int.parse(jameson!.id!)
+      ..authorId = jkRowling?.idAsInt ?? 0
+      ..partnerAuthorId = jameson?.idAsInt ?? 0
       ..name = 'Deathly Hallows';
 
     deathlyHallows = (await bookQuery.insert(executor)).value;
@@ -42,12 +42,12 @@ void belongsToTests(FutureOr<QueryExecutor> Function() createExecutor,
       expect(books, hasLength(1));
 
       var book = books.first;
-      print(book.toJson());
+      //print(book.toJson());
       expect(book.id, deathlyHallows!.id);
       expect(book.name, deathlyHallows!.name);
 
       var author = book.author!;
-      print(AuthorSerializer.toMap(author));
+      //print(AuthorSerializer.toMap(author));
       expect(author.id, jkRowling!.id);
       expect(author.name, jkRowling!.name);
     });
@@ -55,17 +55,17 @@ void belongsToTests(FutureOr<QueryExecutor> Function() createExecutor,
     test('select one', () async {
       var query = BookQuery();
       query.where!.id.equals(int.parse(deathlyHallows!.id!));
-      print(query.compile({}));
+      //print(query.compile({}));
 
       var bookOpt = await query.getOne(executor);
       expect(bookOpt.isPresent, true);
       bookOpt.ifPresent((book) {
-        print(book.toJson());
+        //print(book.toJson());
         expect(book.id, deathlyHallows!.id);
         expect(book.name, deathlyHallows!.name);
 
         var author = book.author!;
-        print(AuthorSerializer.toMap(author));
+        //print(AuthorSerializer.toMap(author));
         expect(author.id, jkRowling!.id);
         expect(author.name, jkRowling!.name);
       });
@@ -75,18 +75,18 @@ void belongsToTests(FutureOr<QueryExecutor> Function() createExecutor,
       var query = BookQuery()
         ..where!.name.equals('Goblet of Fire')
         ..orWhere((w) => w.authorId.equals(int.parse(jkRowling!.id!)));
-      print(query.compile({}));
+      //print(query.compile({}));
 
       var books = await query.get(executor);
       expect(books, hasLength(1));
 
       var book = books.first;
-      print(book.toJson());
+      //print(book.toJson());
       expect(book.id, deathlyHallows!.id);
       expect(book.name, deathlyHallows!.name);
 
       var author = book.author!;
-      print(AuthorSerializer.toMap(author));
+      //print(AuthorSerializer.toMap(author));
       expect(author.id, jkRowling!.id);
       expect(author.name, jkRowling!.name);
     });
@@ -99,18 +99,18 @@ void belongsToTests(FutureOr<QueryExecutor> Function() createExecutor,
       query1
         ..union(query2)
         ..unionAll(query3);
-      print(query1.compile({}));
+      //print(query1.compile({}));
 
       var books = await query1.get(executor);
       expect(books, hasLength(1));
 
       var book = books.first;
-      print(book.toJson());
+      //print(book.toJson());
       expect(book.id, deathlyHallows!.id);
       expect(book.name, deathlyHallows!.name);
 
       var author = book.author!;
-      print(AuthorSerializer.toMap(author));
+      //print(AuthorSerializer.toMap(author));
       expect(author.id, jkRowling!.id);
       expect(author.name, jkRowling!.name);
     });
@@ -129,9 +129,9 @@ void belongsToTests(FutureOr<QueryExecutor> Function() createExecutor,
   });
 
   test('delete stream', () async {
-    printSeparator('Delete stream test');
+    //printSeparator('Delete stream test');
     var query = BookQuery()..where!.name.equals(deathlyHallows!.name!);
-    print(query.compile({}, preamble: 'DELETE', withFields: false));
+    //print(query.compile({}, preamble: 'DELETE', withFields: false));
     var books = await query.delete(executor);
     expect(books, hasLength(1));
 
@@ -149,7 +149,7 @@ void belongsToTests(FutureOr<QueryExecutor> Function() createExecutor,
     var bookOpt = await (query.updateOne(executor));
     expect(bookOpt.isPresent, true);
     bookOpt.ifPresent((book) {
-      print(book.toJson());
+      //print(book.toJson());
       expect(book.name, cloned.name);
       expect(book.author, isNotNull);
       expect(book.author!.name, jkRowling!.name);
@@ -162,13 +162,13 @@ void belongsToTests(FutureOr<QueryExecutor> Function() createExecutor,
     // that should return correctly.
     test('returns empty on false subquery', () async {
       printSeparator('False subquery test');
-      var query = BookQuery()..author!.where!.name.equals('Billie Jean');
+      var query = BookQuery()..author.where!.name.equals('Billie Jean');
       expect(await query.get(executor), isEmpty);
     });
 
     test('returns values on true subquery', () async {
       printSeparator('True subquery test');
-      var query = BookQuery()..author!.where!.name.like('%Rowling%');
+      var query = BookQuery()..author.where!.name.like('%Rowling%');
       expect(await query.get(executor), [deathlyHallows]);
     });
   });

@@ -1,4 +1,4 @@
-part of angel3_serialize_generator;
+part of 'angel3_serialize_generator.dart';
 
 class SerializerGenerator extends GeneratorForAnnotation<Serializable> {
   final bool autoSnakeCaseNames;
@@ -8,14 +8,14 @@ class SerializerGenerator extends GeneratorForAnnotation<Serializable> {
   @override
   Future<String?> generateForAnnotatedElement(
       Element element, ConstantReader annotation, BuildStep buildStep) async {
-    //log.fine('Running SerializerGenerator');
+    log.fine('Running SerializerGenerator');
 
     if (element.kind != ElementKind.CLASS) {
       throw 'Only classes can be annotated with a @Serializable() annotation.';
     }
 
     var ctx = await buildContext(element as ClassElement, annotation, buildStep,
-        buildStep.resolver, autoSnakeCaseNames != false);
+        buildStep.resolver, !autoSnakeCaseNames);
 
     if (ctx == null) {
       log.severe('Invalid builder context');
@@ -25,11 +25,13 @@ class SerializerGenerator extends GeneratorForAnnotation<Serializable> {
     var serializers = annotation.peek('serializers')?.listValue ?? [];
 
     if (serializers.isEmpty) {
+      log.severe("No Serializers");
       return null;
     }
 
     // Check if any serializer is recognized
     if (!serializers.any((s) => Serializers.all.contains(s.toIntValue()))) {
+      log.severe("No recognizable Serializers");
       return null;
     }
 
@@ -46,15 +48,17 @@ class SerializerGenerator extends GeneratorForAnnotation<Serializable> {
   /// Generate a serializer class.
   void generateClass(
       List<int> serializers, BuildContext ctx, LibraryBuilder file) {
-    //log.fine('Generate serializer class');
+    log.fine('Generate serializer class');
 
     // Generate canonical codecs, etc.
     var pascal = ctx.modelClassNameRecase.pascalCase.replaceAll('?', '');
     var camel = ctx.modelClassNameRecase.camelCase.replaceAll('?', '');
 
-    log.info('Generating ${pascal}Serializer');
+    log.fine('Generating ${pascal}Serializer');
 
     if (ctx.constructorParameters.isEmpty) {
+      log.fine("Constructor is empty");
+
       file.body.add(Code('''
 const ${pascal}Serializer ${camel}Serializer = ${pascal}Serializer();
 
@@ -110,6 +114,7 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
     }));
   }
 
+  // Generate toMapMethod
   void generateToMapMethod(
       ClassBuilder clazz, BuildContext ctx, LibraryBuilder file) {
     var originalClassName = ctx.originalClassName;
@@ -174,17 +179,21 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
 
         // Serialize dates
         else if (dateTimeTypeChecker.isAssignableFromType(type)) {
-          serializedRepresentation = 'model.${field.name}?.toIso8601String()';
+          var question =
+              field.type.nullabilitySuffix == NullabilitySuffix.question
+                  ? "?"
+                  : "";
+          serializedRepresentation =
+              'model.${field.name}$question.toIso8601String()';
         }
 
         // Serialize model classes via `XSerializer.toMap`
         else if (isModelClass(type)) {
-          var rc = ReCase(type.getDisplayString(withNullability: true));
+          var rc = ReCase(type.getDisplayString());
           serializedRepresentation = serializerToMap(rc, 'model.${field.name}');
         } else if (type is InterfaceType) {
           if (isListOfModelType(type)) {
-            var name =
-                type.typeArguments[0].getDisplayString(withNullability: true);
+            var name = type.typeArguments[0].getDisplayString();
             if (name.startsWith('_')) name = name.substring(1);
             var rc = ReCase(name);
             var m = serializerToMap(rc, 'm');
@@ -197,14 +206,13 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
                 'model.${field.name}$question.map((m) => $m).toList()';
             log.fine('serializedRepresentation => $serializedRepresentation');
           } else if (isMapToModelType(type)) {
-            var rc = ReCase(
-                type.typeArguments[1].getDisplayString(withNullability: true));
+            var rc = ReCase(type.typeArguments[1].getDisplayString());
             serializedRepresentation =
                 '''model.${field.name}.keys.fold({}, (map, key) {
-              return (map as Map<String,dynamic>?)?..[key] =
+              return map..[key] =
               ${serializerToMap(rc, 'model.${field.name}[key]')};
             })''';
-          } else if (type.element.isEnum) {
+          } else if (type.element is Enum) {
             var convert =
                 (field.type.nullabilitySuffix == NullabilitySuffix.question)
                     ? '!'
@@ -212,7 +220,7 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
 
             serializedRepresentation = '''
             model.${field.name} != null ?
-              ${type.getDisplayString(withNullability: false)}.values.indexOf(model.${field.name}$convert)
+              ${type.getDisplayString()}.values.indexOf(model.${field.name}$convert)
               : null
             ''';
           } else if (const TypeChecker.fromRuntime(Uint8List)
@@ -235,12 +243,14 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
 
       buf.write('};');
       method.body = Block.of([
-        Code('if (model == null) { return {}; }'),
+        Code(
+            'if (model == null) { throw FormatException("Required field [model] cannot be null"); }'),
         Code(buf.toString()),
       ]);
     }));
   }
 
+  // Generate fromMapMethod
   void generateFromMapMethod(
       ClassBuilder clazz, BuildContext ctx, LibraryBuilder file) {
     clazz.methods.add(Method((method) {
@@ -305,12 +315,10 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
 
         var deserializedRepresentation =
             "map['$alias'] as ${typeToString(type)}";
+
         if (type.nullabilitySuffix == NullabilitySuffix.question) {
           deserializedRepresentation += '?';
         }
-
-        //log.fine(
-        //    'deserializedRepresentation => $deserializedRepresentation, type => $type, nullcheck => ${type.nullabilitySuffix}');
 
         var defaultValue = 'null';
         var existingDefault = ctx.defaults[field.name];
@@ -319,6 +327,10 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
           var d = dartObjectToString(existingDefault);
           if (d != null) {
             defaultValue = d;
+
+            if (!deserializedRepresentation.endsWith("?")) {
+              deserializedRepresentation += "?";
+            }
           }
           deserializedRepresentation =
               '$deserializedRepresentation ?? $defaultValue';
@@ -329,6 +341,13 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
           var name = MirrorSystem.getName(fieldNameDeserializer);
           deserializedRepresentation = "$name(map['$alias'])";
         } else if (dateTimeTypeChecker.isAssignableFromType(type)) {
+          if (field.type.nullabilitySuffix != NullabilitySuffix.question) {
+            if (defaultValue.toLowerCase() == 'null') {
+              defaultValue = 'DateTime.parse("1970-01-01 00:00:00")';
+            } else {
+              defaultValue = 'DateTime.parse("$defaultValue")';
+            }
+          }
           deserializedRepresentation = "map['$alias'] != null ? "
               "(map['$alias'] is DateTime ? (map['$alias'] as DateTime) : DateTime.parse(map['$alias'].toString()))"
               ' : $defaultValue';
@@ -336,7 +355,7 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
 
         // Serialize model classes via `XSerializer.toMap`
         else if (isModelClass(type)) {
-          var rc = ReCase(type.getDisplayString(withNullability: true));
+          var rc = ReCase(type.getDisplayString());
           deserializedRepresentation = "map['$alias'] != null"
               " ? ${rc.pascalCase.replaceAll('?', '')}Serializer.fromMap(map['$alias'] as Map)"
               ' : $defaultValue';
@@ -345,8 +364,7 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
             if (defaultValue == 'null') {
               defaultValue = '[]';
             }
-            var rc = ReCase(
-                type.typeArguments[0].getDisplayString(withNullability: true));
+            var rc = ReCase(type.typeArguments[0].getDisplayString());
 
             deserializedRepresentation = "map['$alias'] is Iterable"
                 " ? List.unmodifiable(((map['$alias'] as Iterable)"
@@ -359,8 +377,7 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
               defaultValue = '{}';
             }
 
-            var rc = ReCase(
-                type.typeArguments[1].getDisplayString(withNullability: true));
+            var rc = ReCase(type.typeArguments[1].getDisplayString());
             deserializedRepresentation = '''
                 map['$alias'] is Map
                   ? Map.unmodifiable((map['$alias'] as Map).keys.fold({}, (out, key) {
@@ -369,14 +386,14 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
                     }))
                   : $defaultValue
             ''';
-          } else if (type.element.isEnum) {
+          } else if (type.element is Enum) {
             deserializedRepresentation = '''
-            map['$alias'] is ${type.getDisplayString(withNullability: true)}
-              ? (map['$alias'] as ${type.getDisplayString(withNullability: true)})
+            map['$alias'] is ${type.getDisplayString()}
+              ? (map['$alias'] as ${type.getDisplayString()}) ?? $defaultValue
               :
               (
                 map['$alias'] is int
-                ? ${type.getDisplayString(withNullability: true)}.values[map['$alias'] as int]
+                ? ${type.getDisplayString()}.values[map['$alias'] as int]
                 : $defaultValue
               )
             ''';

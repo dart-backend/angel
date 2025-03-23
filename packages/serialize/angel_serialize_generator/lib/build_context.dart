@@ -2,10 +2,10 @@ import 'dart:async';
 import 'package:analyzer/dart/constant/value.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
+// ignore: implementation_imports
 import 'package:analyzer/src/dart/element/element.dart';
 import 'package:angel3_serialize/angel3_serialize.dart';
 import 'package:build/build.dart';
-import 'package:meta/meta.dart';
 import 'package:path/path.dart' as p;
 import 'package:recase/recase.dart';
 import 'package:source_gen/source_gen.dart';
@@ -32,7 +32,7 @@ final Map<String, BuildContext> _cache = {};
 
 /// Create a [BuildContext].
 Future<BuildContext?> buildContext(
-    ClassElement clazz,
+    InterfaceElement clazz,
     ConstantReader annotation,
     BuildStep buildStep,
     Resolver resolver,
@@ -57,15 +57,36 @@ Future<BuildContext?> buildContext(
         annotation.peek('includeAnnotations')?.listValue ?? <DartObject>[],
   );
   // var lib = await resolver.libraryFor(buildStep.inputId);
-  var fieldNames = <String>[];
   var fields = <FieldElement>[];
+  var fieldNames = <String>[];
+
+  for (var field in fields) {
+    fieldNames.add(field.name);
+  }
 
   // Crawl for classes from parent classes.
   void crawlClass(InterfaceType? t) {
     while (t != null) {
-      fields.insertAll(0, t.element.fields);
+      // Check and skip fields with same name
+      var parentClassFields = <FieldElement>[];
+      for (var el in t.element.fields) {
+        if (fieldNames.contains(el.name)) {
+          continue;
+        }
+        parentClassFields.add(el);
+        fieldNames.add(el.name);
+      }
+
+      fields.insertAll(0, parentClassFields);
       t.interfaces.forEach(crawlClass);
       t = t.superclass;
+    }
+
+    // Move id field to the front if exist
+    var item = fields.firstWhereOrNull((el) => el.name == 'id');
+    if (item != null) {
+      fields.removeWhere((el) => el.name == 'id');
+      fields.insert(0, item);
     }
   }
 
@@ -80,7 +101,7 @@ Future<BuildContext?> buildContext(
     if (field.getter != null &&
         (field.setter != null || field.getter!.isAbstract)) {
       var el = field.setter == null ? field.getter! : field;
-      fieldNames.add(field.name);
+      //fieldNames.add(field.name);
 
       // Check for @SerializableField
       var fieldAnn = serializableFieldTypeChecker.firstAnnotationOf(el);
@@ -216,32 +237,6 @@ Future<BuildContext?> buildContext(
     }
   }
 
-  // ShimFields are no longer used.
-  // if (const TypeChecker.fromRuntime(Model).isAssignableFromType(clazz.type)) {
-  //   if (!fieldNames.contains('id')) {
-  //     var idField = ShimFieldImpl('id', lib.context.typeProvider.stringType);
-  //     ctx.fields.insert(0, idField);
-  //     ctx.shimmed['id'] = true;
-  //   }
-
-  //   DartType dateTime;
-  //   for (var key in ['createdAt', 'updatedAt']) {
-  //     if (!fieldNames.contains(key)) {
-  //       if (dateTime == null) {
-  //         var coreLib =
-  //             await resolver.libraries.singleWhere((lib) => lib.isDartCore);
-  //         var dt = coreLib.getType('DateTime');
-  //         dateTime = dt.type;
-  //       }
-
-  //       var field = ShimFieldImpl(key, dateTime);
-  //       ctx.aliases[key] = ReCase(key).snakeCase;
-  //       ctx.fields.add(field);
-  //       ctx.shimmed[key] = true;
-  //     }
-  //   }
-  // }
-
   // Get constructor params, if any
   ctx.constructorParameters.addAll(clazz.unnamedConstructor!.parameters);
 
@@ -250,8 +245,10 @@ Future<BuildContext?> buildContext(
 
 /// A manually-instantiated [FieldElement].
 class ShimFieldImpl extends FieldElementImpl {
-  @override
-  final DartType type;
+  //@override
+  //final DartType type;
 
-  ShimFieldImpl(String name, this.type) : super(name, -1);
+  ShimFieldImpl(String name, dynamic shimFieldType) : super(name, -1) {
+    type = shimFieldType;
+  }
 }

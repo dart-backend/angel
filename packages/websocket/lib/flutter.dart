@@ -1,5 +1,5 @@
 /// Flutter-compatible WebSocket client library for the Angel framework.
-library angel_websocket.flutter;
+library;
 
 import 'dart:async';
 import 'dart:io';

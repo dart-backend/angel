@@ -1,7 +1,7 @@
-CREATE TEMPORARY TABLE "numbas" (
-  "i" int,
-  "parent" int references weird_joins(id),
-  created_at TIMESTAMP,
-  updated_at TIMESTAMP,
+CREATE TABLE IF NOT EXISTS numbas (
+  i int NOT NULL UNIQUE,
+  parent int,
+  created_at datetime,
+  updated_at datetime,
   PRIMARY KEY(i)
 );

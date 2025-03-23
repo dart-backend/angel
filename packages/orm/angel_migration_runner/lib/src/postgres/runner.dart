@@ -7,18 +7,21 @@ import '../runner.dart';
 import '../util.dart';
 import 'schema.dart';
 
+/// A PostgreSQL database migration runner
 class PostgresMigrationRunner implements MigrationRunner {
   final _log = Logger('PostgresMigrationRunner');
 
   final Map<String, Migration> migrations = {};
-  final PostgreSQLConnection connection;
+  final Connection connection;
   final Queue<Migration> _migrationQueue = Queue();
   bool _connected = false;
 
   PostgresMigrationRunner(this.connection,
       {Iterable<Migration> migrations = const [], bool connected = false}) {
-    if (migrations.isNotEmpty == true) migrations.forEach(addMigration);
-    _connected = connected == true;
+    if (migrations.isNotEmpty) {
+      migrations.forEach(addMigration);
+    }
+    _connected = connected;
   }
 
   @override
@@ -26,36 +29,37 @@ class PostgresMigrationRunner implements MigrationRunner {
     _migrationQueue.addLast(migration);
   }
 
-  Future _init() async {
+  Future<void> _init() async {
     while (_migrationQueue.isNotEmpty) {
       var migration = _migrationQueue.removeFirst();
       var path = await absoluteSourcePath(migration.runtimeType);
       migrations.putIfAbsent(path.replaceAll('\\', '\\\\'), () => migration);
     }
 
+    _connected = connection.isOpen;
     if (!_connected) {
-      await connection.open();
-      _connected = true;
+      throw Exception("PostgreSQL connection is not open");
     }
 
     await connection.execute('''
     CREATE TABLE IF NOT EXISTS "migrations" (
       id serial,
       batch integer,
-      path varchar,
+      path varchar(500),
       PRIMARY KEY(id)
     );
     ''').then((result) {
-      _log.info('Check and create "migrations" table');
+      _log.info('Created "migrations" table');
     }).catchError((e) {
       _log.severe('Failed to create "migrations" table.');
+      throw e;
     });
   }
 
   @override
   Future up() async {
     await _init();
-    var r = await connection.query('SELECT path from migrations;');
+    var r = await connection.execute('SELECT path from migrations;');
     var existing = r.expand((x) => x).cast<String>();
     var toRun = <String>[];
 
@@ -64,7 +68,7 @@ class PostgresMigrationRunner implements MigrationRunner {
     });
 
     if (toRun.isNotEmpty) {
-      var r = await connection.query('SELECT MAX(batch) from migrations;');
+      var r = await connection.execute('SELECT MAX(batch) from migrations;');
       var curBatch = (r[0][0] ?? 0) as int;
       var batch = curBatch + 1;
 
@@ -72,19 +76,21 @@ class PostgresMigrationRunner implements MigrationRunner {
         var migration = migrations[k]!;
         var schema = PostgresSchema();
         migration.up(schema);
-        _log.info('Added "$k" into "migrations" table.');
-        await schema.run(connection).then((_) {
-          return connection.transaction((ctx) async {
-            var result = await ctx.query(
-                "INSERT INTO MIGRATIONS (batch, path) VALUES ($batch, \'$k\')");
 
-            return result.affectedRowCount;
+        var result = await schema.run(connection).then((_) {
+          return connection.runTx((ctx) async {
+            var result = await ctx.execute(
+                "INSERT INTO MIGRATIONS (batch, path) VALUES ($batch, '$k')");
+
+            return result.affectedRows;
           });
-          //return connection.execute(
-          //    'INSERT INTO MIGRATIONS (batch, path) VALUES ($batch, \'$k\');');
         }).catchError((e) {
           _log.severe('Failed to insert into "migrations" table.');
+          return -1;
         });
+        if (result > 0) {
+          _log.info('Inserted "$k" into "migrations" table.');
+        }
       }
     } else {
       _log.warning('Nothing to add into "migrations" table.');
@@ -95,10 +101,10 @@ class PostgresMigrationRunner implements MigrationRunner {
   Future rollback() async {
     await _init();
 
-    var r = await connection.query('SELECT MAX(batch) from migrations;');
+    Result r = await connection.execute('SELECT MAX(batch) from migrations;');
     var curBatch = (r[0][0] ?? 0) as int;
     r = await connection
-        .query('SELECT path from migrations WHERE batch = $curBatch;');
+        .execute('SELECT path from migrations WHERE batch = $curBatch;');
     var existing = r.expand((x) => x).cast<String>();
     var toRun = <String>[];
 
@@ -126,7 +132,7 @@ class PostgresMigrationRunner implements MigrationRunner {
   Future reset() async {
     await _init();
     var r = await connection
-        .query('SELECT path from migrations ORDER BY batch DESC;');
+        .execute('SELECT path from migrations ORDER BY batch DESC;');
     var existing = r.expand((x) => x).cast<String>();
     var toRun = existing.where(migrations.containsKey).toList();
 

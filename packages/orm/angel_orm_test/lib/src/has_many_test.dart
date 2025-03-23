@@ -29,10 +29,10 @@ void hasManyTests(FutureOr<QueryExecutor> Function() createExecutor,
     Fruit? apple, banana;
 
     void verify(Tree tree) {
-      print(tree.fruits!.map(FruitSerializer.toMap).toList());
+      //print(tree.fruits!.map(FruitSerializer.toMap).toList());
       expect(tree.fruits, hasLength(2));
-      expect(tree.fruits![0].commonName, apple!.commonName);
-      expect(tree.fruits![1].commonName, banana!.commonName);
+      expect(tree.fruits[0].commonName, apple!.commonName);
+      expect(tree.fruits[1].commonName, banana!.commonName);
     }
 
     setUp(() async {
@@ -86,7 +86,7 @@ void hasManyTests(FutureOr<QueryExecutor> Function() createExecutor,
     test('returns empty on false subquery', () async {
       var tq = TreeQuery()
         ..where!.id.equals(treeId)
-        ..fruits!.where!.commonName.equals('Kiwi');
+        ..fruits.where!.commonName.equals('Kiwi');
       var treeOpt = await (tq.getOne(executor));
       expect(treeOpt.isPresent, true);
       treeOpt.ifPresent((tree) {

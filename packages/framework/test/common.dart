@@ -1,4 +1,4 @@
-library angel_framework.test.common;
+library;
 
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:matcher/matcher.dart';
@@ -29,12 +29,12 @@ class BookService extends Service {
 }
 
 void incrementTodoTimes(e) {
-  IncrementService.TIMES++;
+  IncrementService.times++;
 }
 
 @Hooks(before: [incrementTodoTimes])
 class IncrementService extends Service {
-  static int TIMES = 0;
+  static int times = 0;
 
   @override
   @Hooks(after: [incrementTodoTimes])

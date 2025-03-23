@@ -24,12 +24,12 @@ class HttpRequestContext extends RequestContext<HttpRequest?> {
 
   @override
   List<Cookie> get cookies {
-    return rawRequest!.cookies;
+    return rawRequest?.cookies ?? [];
   }
 
   @override
-  HttpHeaders get headers {
-    return rawRequest!.headers;
+  HttpHeaders? get headers {
+    return rawRequest?.headers;
   }
 
   @override
@@ -51,7 +51,7 @@ class HttpRequestContext extends RequestContext<HttpRequest?> {
 
   @override
   String get originalMethod {
-    return rawRequest!.method;
+    return rawRequest?.method ?? '';
   }
 
   @override
@@ -61,23 +61,24 @@ class HttpRequestContext extends RequestContext<HttpRequest?> {
 
   @override
   InternetAddress get remoteAddress {
-    return rawRequest!.connectionInfo!.remoteAddress;
+    return rawRequest?.connectionInfo?.remoteAddress ??
+        InternetAddress("127.0.0.1");
   }
 
   @override
-  HttpSession get session {
-    return rawRequest!.session;
+  HttpSession? get session {
+    return rawRequest?.session;
   }
 
   @override
   Uri get uri {
-    return rawRequest!.uri;
+    return rawRequest?.uri ?? Uri();
   }
 
   /// Magically transforms an [HttpRequest] into a [RequestContext].
   static Future<HttpRequestContext> from(
       HttpRequest request, Angel app, String path) {
-    var ctx = HttpRequestContext().._container = app.container!.createChild();
+    var ctx = HttpRequestContext().._container = app.container.createChild();
 
     var override = request.method;
 
@@ -92,35 +93,6 @@ class HttpRequestContext extends RequestContext<HttpRequest?> {
         ? MediaType('text', 'plain')
         : MediaType.parse(request.headers.contentType.toString());
     ctx._override = override;
-
-    /*
-    // Faster way to get path
-    List<int> _path = [];
-
-    // Go up until we reach a ?
-    for (int ch in request.uri.toString().codeUnits) {
-      if (ch != $question)
-        _path.add(ch);
-      else
-        break;
-    }
-
-    // Remove trailing slashes
-    int lastSlash = -1;
-
-    for (int i = _path.length - 1; i >= 0; i--) {
-      if (_path[i] == $slash)
-        lastSlash = i;
-      else
-        break;
-    }
-
-    if (lastSlash > -1)
-      ctx._path = String.fromCharCodes(_path.take(lastSlash));
-    else
-      ctx._path = String.fromCharCodes(_path);
-      */
-
     ctx._path = path;
     ctx._io = request;
 

@@ -1,32 +1,34 @@
-# angel3_oauth2
-[![version](https://img.shields.io/badge/pub-v4.0.0-brightgreen)](https://pub.dartlang.org/packages/angel3_oauth2)
+# Angel3 OAuth2 Server
+
+![Pub Version (including pre-releases)](https://img.shields.io/pub/v/angel3_oauth2?include_prereleases)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
-[![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
+[![Discord](https://img.shields.io/discord/1060322353214660698)](https://discord.gg/3X6bxTUdCM)
+[![License](https://img.shields.io/github/license/dart-backend/angel)](https://github.com/dart-backend/angel/tree/master/packages/oauth2/LICENSE)
 
-[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/oauth2/LICENSE)
+A class containing handlers that can be used within [Angel](https://angel3-framework.web.app/) to build a spec-compliant OAuth 2.0 server, including PKCE support.
 
-A class containing handlers that can be used within
-[Angel](https://angel-dart.github.io/) to build a spec-compliant
-OAuth 2.0 server, including PKCE support.
+- [Angel3 OAuth2 Server](#angel3-oauth2-server)
+  - [Installation](#installation)
+  - [Usage](#usage)
+  - [Other Grants](#other-grants)
+  - [PKCE](#pkce)
 
-* [Installation](#installation)
-* [Usage](#usage)
-  * [Other Grants](#other-grants)
-  * [PKCE](#pkce)
+## Installation
 
-# Installation
 In your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  angel3_framework: ^4.0.0
-  angel3_oauth2: ^4.0.0
+  angel3_framework: ^8.0.0
+  angel3_oauth2: ^8.0.0
 ```
 
-# Usage
+## Usage
+
 Your server needs to have definitions of at least two types:
-* One model that represents a third-party application (client) trying to access a user's profile.
-* One that represents a user logged into the application.
+
+- One model that represents a third-party application (client) trying to access a user's profile.
+- One that represents a user logged into the application.
 
 Define a server class as such:
 
@@ -36,9 +38,7 @@ import 'package:angel3_oauth2/angel3_oauth2.dart' as oauth2;
 class MyServer extends oauth2.AuthorizationServer<Client, User> {}
 ```
 
-Then, implement the `findClient` and `verifyClient` to ensure that the
-server class can not only identify a client application via a `client_id`,
-but that it can also verify its identity via a `client_secret`.
+Then, implement the `findClient` and `verifyClient` to ensure that the server class can not only identify a client application via a `client_id`, but that it can also verify its identity via a `client_secret`.
 
 ```dart
 class _Server extends AuthorizationServer<PseudoApplication, Map> {
@@ -57,8 +57,7 @@ class _Server extends AuthorizationServer<PseudoApplication, Map> {
 }
 ```
 
-Next, write some logic to be executed whenever a user visits the
-authorization endpoint. In many cases, you will want to show a dialog:
+Next, write some logic to be executed whenever a user visits the authorization endpoint. In many cases, you will want to show a dialog:
 
 ```dart
 @override
@@ -73,8 +72,7 @@ Future requestAuthorizationCode(
 }
 ```
 
-Now, write logic that exchanges an authorization code for an access token,
-and optionally, a refresh token.
+Now, write logic that exchanges an authorization code for an access token, and optionally, a refresh token.
 
 ```dart
 @override
@@ -102,27 +100,25 @@ void pseudoCode() {
 The `authorizationEndpoint` and `tokenEndpoint` handle all OAuth2 grant types.
 
 ## Other Grants
-By default, all OAuth2 grant methods will throw a `405 Method Not Allowed` error.
-To support any specific grant type, all you need to do is implement the method.
-The following are available, not including authorization code grant support (mentioned above):
-* `implicitGrant`
-* `resourceOwnerPasswordCredentialsGrant`
-* `clientCredentialsGrant`
-* `deviceCodeGrant`
 
-Read the [OAuth2 specification](https://tools.ietf.org/html/rfc6749)
-for in-depth information on each grant type.
+By default, all OAuth2 grant methods will throw a `405 Method Not Allowed` error. To support any specific grant type, all you need to do is implement the method. The following are available, not including authorization code grant support (mentioned above):
+
+- `implicitGrant`
+- `resourceOwnerPasswordCredentialsGrant`
+- `clientCredentialsGrant`
+- `deviceCodeGrant`
+
+Read the [OAuth2 specification](https://tools.ietf.org/html/rfc6749) for in-depth information on each grant type.
 
 ## PKCE
+
 In some cases, you will be using OAuth2 on a mobile device, or on some other
 public client, where the client cannot have a client
 secret.
 
-In such a case, you may consider using
-[PKCE](https://tools.ietf.org/html/rfc7636).
+In such a case, you may consider using [PKCE](https://tools.ietf.org/html/rfc7636).
 
-Both the `authorizationEndpoint` and `tokenEndpoint`
-inject a `Pkce` factory into the request, so it
+Both the `authorizationEndpoint` and `tokenEndpoint` inject a `Pkce` factory into the request, so it
 can be used as follows:
 
 ```dart

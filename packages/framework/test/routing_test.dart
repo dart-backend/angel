@@ -47,8 +47,8 @@ void main() {
     nested = Angel(reflector: MirrorsReflector());
     todos = Angel(reflector: MirrorsReflector());
 
-    [app, nested, todos].forEach((Angel? app) {
-      app?.logger = Logger('routing_test')
+    for (var app in [app, nested, todos]) {
+      app.logger = Logger('routing_test')
         ..onRecord.listen((rec) {
           if (rec.error != null) {
             stdout
@@ -57,7 +57,7 @@ void main() {
               ..writeln(cyan.wrap(rec.stackTrace.toString()));
           }
         });
-    });
+    }
 
     todos.get('/action/:action', (req, res) => res.json(req.params));
 

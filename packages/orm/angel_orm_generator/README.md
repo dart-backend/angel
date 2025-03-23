@@ -1,10 +1,9 @@
 # Angel3 ORM Generator
 
-[![version](https://img.shields.io/badge/pub-v4.1.1-brightgreen)](https://pub.dartlang.org/packages/angel3_orm_generator)
+![Pub Version (including pre-releases)](https://img.shields.io/pub/v/angel3_orm_generator?include_prereleases)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
-[![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
-
-[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/orm/angel3_orm_generator/LICENSE)
+[![Discord](https://img.shields.io/discord/1060322353214660698)](https://discord.gg/3X6bxTUdCM)
+[![License](https://img.shields.io/github/license/dart-backend/angel)](https://github.com/dart-backend/angel/tree/master/packages/orm/angel3_orm_generator/LICENSE)
 
 Source code generators for Angel3 ORM. This package can generate:
 
@@ -20,3 +19,9 @@ Run the following command to generate the required `.g.dart` files for Angel3 OR
 ```bash
     dart run build_runner build
 ```
+
+## Supported database
+
+* PostgreSQL version 10 or later
+* MariaDB 10.2.x
+* MySQL 8.x

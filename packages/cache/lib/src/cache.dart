@@ -7,7 +7,7 @@ import 'package:logging/logging.dart';
 /// A flexible response cache for Angel.
 ///
 /// Use this to improve real and perceived response of Web applications,
-/// as well as to memoize expensive responses.
+/// as well as to memorize expensive responses.
 class ResponseCache {
   /// A set of [Patterns] for which responses will be cached.
   ///

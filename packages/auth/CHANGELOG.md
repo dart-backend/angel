@@ -1,5 +1,50 @@
 # Change Log
 
+## 8.3.0
+
+* Require Dart >= 3.6
+* Updated `lints` to 5.0.0
+* Updated dependencies to the latest release
+
+## 8.2.0
+
+* Require Dart >= 3.3
+* Updated `lints` to 4.0.0
+
+## 8.1.1
+
+* Updated repository link
+
+## 8.1.0
+
+* Updated `lints` to 3.0.0
+
+## 8.0.0
+
+* Require Dart >= 3.0
+* Upgraded `http` to 1.0.0
+* Fixed failed `successRedirect` test case
+* Fixed failed `failureRedirect` test case
+* Fixed failed `login` test case
+* Fixed failed `force basic` test case
+* Added `example1` and `example2`
+
+## 7.0.1
+
+* Fixed linter warnings
+
+## 7.0.0
+
+* Require Dart >= 2.17
+
+## 6.0.0
+
+* Require Dart >= 2.16
+
+## 5.0.0
+
+* Skipped release
+
 ## 4.1.2
 
 * Fixed `requireAuthentication` to work correctly with null-safety type
@@ -39,11 +84,11 @@
 
 ## 4.0.0
 
-* Migrated to support Dart SDK 2.12.x NNBD
+* Migrated to support Dart >= 2.12 NNBD
 
 ## 3.0.0
 
-* Migrated to work with Dart SDK 2.12.x Non NNBD
+* Migrated to work with Dart >= 2.12 Non NNBD
 
 ## 2.1.5+1
 

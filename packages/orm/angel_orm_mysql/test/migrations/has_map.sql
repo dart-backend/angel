@@ -1,7 +1,7 @@
-CREATE TEMPORARY TABLE "has_maps" (
+CREATE TABLE IF NOT EXISTS has_maps (
     id serial PRIMARY KEY,
     value jsonb not null,
     list jsonb not null,
-    created_at timestamp,
-    updated_at timestamp
+    created_at datetime,
+    updated_at datetime
 );

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:analyzer/dart/constant/value.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:angel3_model/angel3_model.dart';
@@ -10,6 +11,7 @@ import 'package:dart_style/dart_style.dart';
 import 'package:source_gen/source_gen.dart' hide LibraryBuilder;
 import 'orm_build_context.dart';
 
+/// Migration Builder
 Builder migrationBuilder(BuilderOptions options) {
   return SharedPartBuilder([
     MigrationGenerator(
@@ -17,6 +19,7 @@ Builder migrationBuilder(BuilderOptions options) {
   ], 'angel3_migration');
 }
 
+/// Generates `<Model>Migration.dart` from an abstract `Model` class.
 class MigrationGenerator extends GeneratorForAnnotation<Orm> {
   static final Parameter _schemaParam = Parameter((b) => b
     ..name = 'schema'
@@ -54,7 +57,7 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
     var lib = generateMigrationLibrary(ctx, element, resolver, buildStep);
 
     //if (lib == null) return null;
-    return DartFormatter()
+    return DartFormatter(languageVersion: DartFormatter.latestLanguageVersion)
         .format(lib.accept(DartEmitter(useNullSafetySyntax: true)).toString());
   }
 
@@ -71,8 +74,10 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
     });
   }
 
+  /// Generate up() method to create tables
   Method buildUpMigration(OrmBuildContext ctx, LibraryBuilder lib) {
     return Method((meth) {
+      // Check to see if clazz extends Model class
       var autoIdAndDateFields = const TypeChecker.fromRuntime(Model)
           .isAssignableFromType(ctx.buildContext.clazz.thisType);
       meth
@@ -134,7 +139,9 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
                 switch (col.type) {
                   case ColumnType.varChar:
                     methodName = 'varChar';
-                    named['length'] = literal(col.length);
+                    if (col.type.hasLength) {
+                      named['length'] = literal(col.length);
+                    }
                     break;
                   case ColumnType.serial:
                     methodName = 'serial';
@@ -145,8 +152,12 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
                   case ColumnType.float:
                     methodName = 'float';
                     break;
+                  case ColumnType.double:
+                    methodName = 'double';
+                    break;
                   case ColumnType.numeric:
                     methodName = 'numeric';
+                    if (col.type.hasPrecision) {}
                     break;
                   case ColumnType.boolean:
                     methodName = 'boolean';
@@ -165,7 +176,7 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
                     var colType = refer('Column');
                     var columnTypeType = refer('ColumnType');
 
-                    if (col.length == null) {
+                    if (col.length == 0) {
                       methodName = 'declare';
                       provColumn = columnTypeType.newInstance([
                         literal(col.type.name),
@@ -191,7 +202,20 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
 
               var defaultValue = ctx.buildContext.defaults[name];
 
-              if (defaultValue != null && !defaultValue.isNull) {
+              // Handle 'defaultValue' on Column annotation
+              if (col.defaultValue != null) {
+                var defaultCode =
+                    dartObjectToString(col.defaultValue as DartObject);
+
+                if (defaultCode != null) {
+                  Expression defaultExpr = CodeExpression(
+                    Code(defaultCode),
+                  );
+                  cascade.add(refer('defaultsTo').call([defaultExpr]));
+                }
+
+                // Handle 'defaultValue' on SerializableField annotation
+              } else if (defaultValue != null && !defaultValue.isNull) {
                 var type = defaultValue.type;
                 Expression? defaultExpr;
 
@@ -201,7 +225,8 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
                       ConstantReader(defaultValue).read('value').stringValue;
                   defaultExpr =
                       refer('RawSql').constInstance([literalString(value)]);
-                } else if (type is InterfaceType && type.element.isEnum) {
+                } else if (type is InterfaceType &&
+                    type.element is EnumElement) {
                   // Default to enum index.
                   try {
                     var index =
@@ -212,9 +237,12 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
                     // Definitely an analyzer issue.
                   }
                 } else {
-                  defaultExpr = CodeExpression(
-                    Code(dartObjectToString(defaultValue)!),
-                  );
+                  var defaultCode = dartObjectToString(defaultValue);
+                  if (defaultCode != null) {
+                    defaultExpr = CodeExpression(
+                      Code(defaultCode),
+                    );
+                  }
                 }
 
                 if (defaultExpr != null) {
@@ -229,7 +257,7 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
                 cascade.add(refer('unique').call([]));
               }
 
-              if (col.isNullable != true) {
+              if (!col.isNullable) {
                 cascade.add(refer('notNull').call([]));
               }
 
@@ -268,10 +296,31 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
 
                 // var field = table.property('integer').call([literal(key)]);
                 // // .references('user', 'id').onDeleteCascade()
+
+                // Check to see if foreign clazz extends Model class
+                var foreignTableType =
+                    relationship.foreign?.buildContext.clazz.thisType;
+                var foreignAautoIdAndDateFields = false;
+                if (foreignTableType != null) {
+                  foreignAautoIdAndDateFields =
+                      const TypeChecker.fromRuntime(Model)
+                          .isAssignableFromType(foreignTableType);
+                }
+
                 var columnTypeType = refer('ColumnType');
                 var key = relationship.localKey;
-                var keyType = relationship
-                    .foreign!.columns[relationship.foreignKey!]!.type.name;
+
+                // Default to `int` if foreign class extends Model with implicit 'id'
+                // as primary key
+                String? keyType;
+                if (foreignAautoIdAndDateFields != false &&
+                    relationship.foreignKey == "id") {
+                  keyType = "int";
+                } else {
+                  var foreigColumnName =
+                      relationship.foreign?.columns[relationship.foreignKey!];
+                  keyType = foreigColumnName?.type.name;
+                }
 
                 var field = table.property('declare').call([
                   literal(key),
@@ -305,6 +354,7 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
     });
   }
 
+  /// Generate down() method to drop tables
   Method buildDownMigration(OrmBuildContext? ctx) {
     return Method((b) {
       b

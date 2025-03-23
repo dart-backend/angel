@@ -1,4 +1,4 @@
-library angel_framework.http.controller;
+library;
 
 import 'dart:async';
 import 'package:angel3_container/angel3_container.dart';
@@ -12,7 +12,13 @@ class Controller {
   Angel? _app;
 
   /// The [Angel] application powering this controller.
-  Angel? get app => _app;
+  Angel get app {
+    if (_app == null) {
+      throw ArgumentError("Angel is not instantiated.");
+    }
+
+    return _app!;
+  }
 
   /// If `true` (default), this class will inject itself as a singleton into the [app]'s container when bootstrapped.
   final bool injectSingleton;
@@ -36,14 +42,14 @@ class Controller {
     _app = app;
 
     if (injectSingleton != false) {
-      if (!app.container!.has(runtimeType)) {
-        _app!.container!.registerSingleton(this, as: runtimeType);
+      if (!app.container.has(runtimeType)) {
+        _app!.container.registerSingleton(this, as: runtimeType);
       }
     }
 
-    var name = await applyRoutes(app, app.container!.reflector);
+    var name = await applyRoutes(app, app.container.reflector);
     app.controllers[name] = this;
-    return null;
+    //return null;
   }
 
   /// Applies the routes from this [Controller] to some [router].
@@ -58,13 +64,13 @@ class Controller {
     }
 
     var routable = Routable();
-    var m = router.mount(exposeDecl.path!, routable);
-    _mountPoint = m;
+    _mountPoint = router.mount(exposeDecl.path, routable);
+    //_mountPoint = m;
     var typeMirror = reflector.reflectType(runtimeType);
 
     // Pre-reflect methods
     var instanceMirror = reflector.reflectInstance(this);
-    final handlers = <RequestHandler>[...exposeDecl.middleware!, ...middleware];
+    final handlers = <RequestHandler>[...exposeDecl.middleware, ...middleware];
     final routeBuilder =
         _routeBuilder(reflector, instanceMirror, routable, handlers);
     await configureRoutes(routable);
@@ -101,7 +107,7 @@ class Controller {
             return;
           } else {
             // Otherwise, create an @Expose.
-            exposeDecl = Expose(null);
+            exposeDecl = Expose('');
           }
         }
 
@@ -109,7 +115,7 @@ class Controller {
             instanceMirror!.getField(methodName).reflectee as Function?;
         var middleware = <RequestHandler>[
           ...handlers,
-          ...exposeDecl.middleware!
+          ...exposeDecl.middleware
         ];
         var name =
             exposeDecl.as?.isNotEmpty == true ? exposeDecl.as : methodName;
@@ -121,7 +127,7 @@ class Controller {
             method.parameters[1].type.reflectedType == ResponseContext) {
           // Create a regular route
           routeMappings[name ?? ''] = routable
-              .addRoute(exposeDecl.method, exposeDecl.path ?? '',
+              .addRoute(exposeDecl.method, exposeDecl.path,
                   (RequestContext req, ResponseContext res) {
             var result = reflectedMethod!(req, res);
             return result is RequestHandler ? result(req, res) : result;
@@ -138,7 +144,7 @@ class Controller {
         // If there is no path, reverse-engineer one.
         var path = exposeDecl.path;
         var httpMethod = exposeDecl.method;
-        if (path == null) {
+        if (path == '') {
           // Try to build a route path by finding all potential
           // path segments, and then joining them.
           var parts = <String>[];

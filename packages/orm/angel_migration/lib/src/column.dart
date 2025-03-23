@@ -12,6 +12,7 @@ class MigrationColumn extends Column {
   @override
   IndexType get indexType => _index;
 
+  @override
   dynamic get defaultValue => _defaultValue;
 
   List<MigrationColumnReference> get externalReferences =>
@@ -19,10 +20,10 @@ class MigrationColumn extends Column {
 
   MigrationColumn(ColumnType type,
       {bool isNullable = true,
-      int length = 256,
-      IndexType indexType = IndexType.standardIndex,
-      defaultValue})
-      : super(type: type, length: length) {
+      super.length,
+      IndexType indexType = IndexType.none,
+      dynamic defaultValue})
+      : super(type: type, isNullable: isNullable, defaultValue: defaultValue) {
     _nullable = isNullable;
     _index = indexType;
     _defaultValue = defaultValue;

@@ -1,15 +1,17 @@
 import 'dart:collection';
-import 'package:angel3_orm/angel3_orm.dart';
+
 import 'package:angel3_migration/angel3_migration.dart';
+import 'package:angel3_orm/angel3_orm.dart';
 import 'package:charcode/ascii.dart';
+import 'package:logging/logging.dart';
 
 abstract class PostgresGenerator {
   static String columnType(MigrationColumn column) {
     var str = column.type.name;
-    if (column.type.hasSize) {
+    if (column.type.hasLength) {
       return '$str(${column.length})';
     } else {
-      return '$str';
+      return str;
     }
   }
 
@@ -31,11 +33,10 @@ abstract class PostgresGenerator {
             b.writeCharCode(ch);
           }
         }
-        s = b.toString();
+        s = '\'${b.toString()}\'';
       } else {
         s = value.toString();
       }
-
       buf.write(' DEFAULT $s');
     }
 
@@ -46,7 +47,7 @@ abstract class PostgresGenerator {
     }
 
     for (var ref in column.externalReferences) {
-      buf.write(' ' + compileReference(ref));
+      buf.write(' ${compileReference(ref)}');
     }
 
     return buf.toString();
@@ -55,12 +56,14 @@ abstract class PostgresGenerator {
   static String compileReference(MigrationColumnReference ref) {
     var buf =
         StringBuffer('REFERENCES "${ref.foreignTable}"("${ref.foreignKey}")');
-    if (ref.behavior != null) buf.write(' ' + ref.behavior!);
+    if (ref.behavior != null) buf.write(' ${ref.behavior!}');
     return buf.toString();
   }
 }
 
 class PostgresTable extends Table {
+  final _log = Logger('PostgresTable');
+
   final Map<String, MigrationColumn> _columns = {};
 
   @override
@@ -86,6 +89,8 @@ class PostgresTable extends Table {
 
       buf.write('"$name" $col');
     });
+
+    _log.fine(buf);
   }
 }
 
@@ -147,9 +152,9 @@ class PostgresAlterTable extends Table implements MutableTable {
   }
 
   @override
-  void changeColumnType(String name, ColumnType type, {int length = 256}) {
-    _stack.add('ALTER COLUMN "$name" TYPE ' +
-        PostgresGenerator.columnType(MigrationColumn(type, length: length)));
+  void changeColumnType(String name, ColumnType type, {int length = 255}) {
+    _stack.add(
+        'ALTER COLUMN "$name" TYPE ${PostgresGenerator.columnType(MigrationColumn(type, length: length))}');
   }
 
   @override
@@ -165,5 +170,89 @@ class PostgresAlterTable extends Table implements MutableTable {
   @override
   void rename(String newName) {
     _stack.add('RENAME TO "$newName"');
+  }
+
+  @override
+  void addIndex(String name, List<String> columns, IndexType type) {
+    String indexType = '';
+
+    switch (type) {
+      case IndexType.primaryKey:
+        indexType = 'PRIMARY KEY';
+        break;
+      case IndexType.unique:
+        indexType = 'CONSTRAINT "$name" UNIQUE';
+        break;
+      case IndexType.standardIndex:
+      case IndexType.none:
+        // not working with postgres
+        return;
+    }
+
+    // mask the column names, is more safety
+    columns.map((column) => '"$column"');
+
+    _stack.add('ADD $indexType (${columns.join(',')})');
+  }
+
+  @override
+  void dropIndex(String name) {
+    _stack.add('DROP CONSTRAINT "$name"');
+  }
+
+  @override
+  void dropPrimaryIndex() {
+    _stack.add('DROP CONSTRAINT "${tableName}_pkey"');
+  }
+}
+
+class PostgresIndexes implements MutableIndexes {
+  final String tableName;
+  final Queue<String> _stack = Queue<String>();
+
+  PostgresIndexes(this.tableName);
+
+  void compile(StringBuffer buf) {
+    while (_stack.isNotEmpty) {
+      buf.writeln(_stack.removeFirst());
+    }
+  }
+
+  @override
+  void addIndex(String name, List<String> columns, IndexType type) {
+    // mask the column names, is more safety
+    columns.map((column) => '"$column"');
+
+    switch (type) {
+      case IndexType.primaryKey:
+        _stack.add(
+          'ALTER TABLE "$tableName" ADD PRIMARY KEY (${columns.join(',')});',
+        );
+        break;
+      case IndexType.unique:
+        _stack.add(
+          'CREATE UNIQUE INDEX IF NOT EXISTS "$name" '
+          'ON "$tableName" (${columns.join(',')});',
+        );
+        break;
+      //case IndexType.standardIndex:
+      //case IndexType.none:
+      default:
+        _stack.add(
+          'CREATE INDEX IF NOT EXISTS "$name" '
+          'ON "$tableName" (${columns.join(',')});',
+        );
+        break;
+    }
+  }
+
+  @override
+  void dropIndex(String name) {
+    _stack.add('DROP INDEX "$name";');
+  }
+
+  @override
+  void dropPrimaryIndex() {
+    _stack.add('ALTER TABLE "$tableName" DROP CONSTRAINT "${tableName}_pkey"');
   }
 }

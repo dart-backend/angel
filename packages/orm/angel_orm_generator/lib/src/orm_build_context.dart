@@ -3,14 +3,12 @@ import 'dart:async';
 import 'package:analyzer/dart/constant/value.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
-import 'package:angel3_model/angel3_model.dart';
 import 'package:angel3_orm/angel3_orm.dart';
 import 'package:angel3_serialize/angel3_serialize.dart';
 import 'package:angel3_serialize_generator/angel3_serialize_generator.dart';
 import 'package:angel3_serialize_generator/build_context.dart';
 import 'package:angel3_serialize_generator/context.dart';
 import 'package:build/build.dart';
-import 'package:collection/collection.dart' show IterableExtension;
 import 'package:inflection3/inflection3.dart';
 import 'package:recase/recase.dart';
 import 'package:source_gen/source_gen.dart';
@@ -58,9 +56,10 @@ FieldElement? findPrimaryFieldInList(
   return specialId;
 }
 
+/// Create ORM Context
 Future<OrmBuildContext?> buildOrmContext(
     Map<String, OrmBuildContext> cache,
-    ClassElement clazz,
+    InterfaceElement clazz,
     ConstantReader annotation,
     BuildStep buildStep,
     Resolver resolver,
@@ -105,12 +104,12 @@ Future<OrmBuildContext?> buildOrmContext(
   // Read all fields
   for (var field in buildCtx.fields) {
     // Check for column annotation...
-    Column? column;
     var element = _findElement(field);
     var columnAnnotation = columnTypeChecker.firstAnnotationOf(element);
-    // print('${element.name} => $columnAnnotation');
 
+    Column? column;
     if (columnAnnotation != null) {
+      // print('[ORM_BUILD_CONTEXT] ${element.name} => $columnAnnotation');
       column = reviveColumn(ConstantReader(columnAnnotation));
     }
 
@@ -126,12 +125,19 @@ Future<OrmBuildContext?> buildOrmContext(
         buildCtx.resolveSerializedFieldType(field.name),
       ),
     );
-
+    var isEnumField =
+        (field.type is InterfaceType && field.type.element is EnumElement);
+    var hasColumnAnnotation =
+        (columnAnnotation?.getField('type')?.hasKnownValue ?? false);
     column = Column(
       isNullable: column.isNullable,
       length: column.length,
       indexType: column.indexType,
-      type: inferColumnType(field.type),
+      // Only infer type when not set by the @Column annotation, for enums
+      type: (isEnumField && hasColumnAnnotation)
+          ? column.type
+          : inferColumnType(field.type),
+      defaultValue: column.defaultValue,
     );
 
     // Try to find a relationship
@@ -213,7 +219,7 @@ Future<OrmBuildContext?> buildOrmContext(
             }
           } on StackOverflowError {
             throw UnsupportedError(
-                'There is an infinite cycle between ${clazz.name} and ${field.type.getDisplayString(withNullability: true)}. This triggered a stack overflow.');
+                'There is an infinite cycle between ${clazz.name} and ${field.type.getDisplayString()}. This triggered a stack overflow.');
           }
         }
       }
@@ -222,15 +228,15 @@ Future<OrmBuildContext?> buildOrmContext(
       var rcc = ReCase(field.name);
 
       String keyName(OrmBuildContext ctx, String missing) {
-        var _keyName =
+        var localKeyName =
             findPrimaryFieldInList(ctx, ctx.buildContext.fields)?.name;
         // print(
         //     'Keyname for ${buildCtx.originalClassName}.${field.name} maybe = $_keyName??');
-        if (_keyName == null) {
+        if (localKeyName == null) {
           throw '${ctx.buildContext.originalClassName} has no defined primary key, '
               'so the relation on field ${buildCtx.originalClassName}.${field.name} must define a $missing.';
         } else {
-          return _keyName;
+          return localKeyName;
         }
       }
 
@@ -281,6 +287,7 @@ Future<OrmBuildContext?> buildOrmContext(
 
       if (relation.type == RelationshipType.belongsTo) {
         var localKey = relation.localKey;
+
         if (localKey != null) {
           var name = ReCase(localKey).camelCase;
           ctx.buildContext.aliases[name] = localKey;
@@ -292,10 +299,14 @@ Future<OrmBuildContext?> buildOrmContext(
 
             if (foreign != null) {
               if (isSpecialId(foreign, foreignField)) {
-                //type = field.type.element.context.typeProvider.intType;
-                type = field.type;
+                // Use integer
+                type = field.type.element?.library?.typeProvider.intType
+                    as DartType;
+
+                //type = field.type.element?.context.typeProvider.intType;
               }
             }
+
             var rf = RelationFieldImpl(name, relation, type, field);
             ctx.effectiveFields.add(rf);
           }
@@ -316,6 +327,7 @@ Future<OrmBuildContext?> buildOrmContext(
         length: column.length,
         type: column.type,
         indexType: column.indexType,
+        defaultValue: column.defaultValue,
         expression:
             ConstantReader(columnAnnotation).peek('expression')?.stringValue,
       );
@@ -331,6 +343,7 @@ Future<OrmBuildContext?> buildOrmContext(
   return ctx;
 }
 
+/// Detect and return the correct column type
 ColumnType inferColumnType(DartType type) {
   if (const TypeChecker.fromRuntime(String).isAssignableFromType(type)) {
     return ColumnType.varChar;
@@ -339,10 +352,10 @@ ColumnType inferColumnType(DartType type) {
     return ColumnType.int;
   }
   if (const TypeChecker.fromRuntime(double).isAssignableFromType(type)) {
-    return ColumnType.decimal;
+    return ColumnType.double;
   }
   if (const TypeChecker.fromRuntime(num).isAssignableFromType(type)) {
-    return ColumnType.numeric;
+    return ColumnType.float;
   }
   if (const TypeChecker.fromRuntime(bool).isAssignableFromType(type)) {
     return ColumnType.boolean;
@@ -356,7 +369,7 @@ ColumnType inferColumnType(DartType type) {
   if (const TypeChecker.fromRuntime(List).isAssignableFromType(type)) {
     return ColumnType.jsonb;
   }
-  if (type is InterfaceType && type.element.isEnum) {
+  if (type is InterfaceType && type.element is EnumElement) {
     return ColumnType.int;
   }
 
@@ -389,7 +402,8 @@ Column reviveColumn(ConstantReader cr) {
 
   return Column(
     isNullable: cr.peek('isNullable')?.boolValue ?? false,
-    length: cr.peek('length')?.intValue ?? 256,
+    length: cr.peek('length')?.intValue ?? 255,
+    defaultValue: cr.peek('defaultValue')?.objectValue,
     type: columnType,
     indexType: indexType,
   );
@@ -398,6 +412,7 @@ Column reviveColumn(ConstantReader cr) {
 const TypeChecker relationshipTypeChecker =
     TypeChecker.fromRuntime(Relationship);
 
+// ORM builder context
 class OrmBuildContext {
   final BuildContext buildContext;
   final Orm ormAnnotation;
@@ -423,9 +438,19 @@ class _ColumnType implements ColumnType {
   final String name;
 
   @override
-  final bool hasSize;
+  bool hasLength = false;
 
-  _ColumnType(this.name, [this.hasSize = false]);
+  @override
+  bool hasPrecision = false;
+
+  @override
+  bool hasScale = false;
+
+  @override
+  bool hasTimezone = false;
+
+  //_ColumnType(this.name, [this.hasSize = false]);
+  _ColumnType(this.name);
 }
 
 class RelationFieldImpl extends ShimFieldImpl {
@@ -437,8 +462,8 @@ class RelationFieldImpl extends ShimFieldImpl {
 
   String get originalFieldName => originalField.name;
 
-  @override
-  PropertyAccessorElement? get getter => originalField.getter;
+  //@override
+  //PropertyAccessorElement? get getter => originalField.getter;
 }
 
 InterfaceType? firstModelAncestor(DartType? type) {

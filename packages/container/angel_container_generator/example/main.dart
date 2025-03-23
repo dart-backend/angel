@@ -5,8 +5,7 @@ import 'package:angel3_container_generator/angel3_container_generator.dart';
 
 Future<void> main() async {
   // Create a container instance.
-  var reflector = const GeneratedReflector();
-  Container container = Container(reflector);
+  Container container = Container(GeneratedReflector());
 
   // Register a singleton.
   container.registerSingleton<Engine>(Engine(40));

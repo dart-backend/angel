@@ -1,15 +1,29 @@
 name: angel3_mustache
-version: 3.0.0
+version: 8.3.0
 description: A service that renders Mustache template into HTML view for Angel3
-homepage: https://github.com/dukefirehawk/angel/tree/angel3/packages/mustache
+homepage: https://angel3-framework.web.app/
+repository: https://github.com/dart-backend/angel/tree/master/packages/mustache
 environment:
-  sdk: '>=2.12.0 <3.0.0'
+  sdk: '>=3.6.0 <4.0.0'
 dependencies:
-  angel3_framework: ^4.0.0
-  file: ^6.1.2
+  angel3_framework: ^8.4.0
+  file: ^7.0.0
   mustache_template: ^2.0.0
   path: ^1.8.0
 dev_dependencies:
-  http: ^0.13.3
-  test: ^1.17.8
-  pedantic: ^1.11.1
+  http: ^1.0.0
+  test: ^1.24.0
+  lints: ^5.0.0
+# dependency_overrides:
+#   angel3_container:
+#     path: ../container/angel_container
+#   angel3_framework:
+#     path: ../framework
+#   angel3_http_exception:
+#     path: ../http_exception
+#   angel3_model:
+#     path: ../model
+#   angel3_route:
+#     path: ../route
+#   angel3_mock_request:
+#     path: ../mock_request

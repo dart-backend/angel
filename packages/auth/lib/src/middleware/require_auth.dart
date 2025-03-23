@@ -25,7 +25,7 @@ RequestHandler forceBasicAuth<User>({String? realm}) {
 RequestHandler requireAuthentication<User>() {
   return (RequestContext req, ResponseContext res,
       {bool throwError = true}) async {
-    bool _reject(ResponseContext res) {
+    bool reject(ResponseContext res) {
       if (throwError) {
         res.statusCode = 403;
         throw AngelHttpException.forbidden();
@@ -42,10 +42,10 @@ RequestHandler requireAuthentication<User>() {
         await reqContainer.makeAsync<User>();
         return true;
       } else {
-        return _reject(res);
+        return reject(res);
       }
     } else {
-      return _reject(res);
+      return reject(res);
     }
   };
 }

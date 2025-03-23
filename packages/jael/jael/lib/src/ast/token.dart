@@ -49,7 +49,7 @@ enum TokenType {
   plus,
   minus,
   elvis,
-  elvis_dot,
+  elvisDot,
   lte,
   gte,
   equ,

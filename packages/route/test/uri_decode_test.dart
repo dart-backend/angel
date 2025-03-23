@@ -6,7 +6,7 @@ void main() {
     var router = Router()..get('/a/:a/b/:b', '');
 
     var encoded =
-        '/a/' + Uri.encodeComponent('<<<') + '/b/' + Uri.encodeComponent('???');
+        '/a/${Uri.encodeComponent('<<<')}/b/${Uri.encodeComponent('???')}';
     print(encoded);
     var result = router.resolveAbsolute(encoded).first;
     print(result.allParams);

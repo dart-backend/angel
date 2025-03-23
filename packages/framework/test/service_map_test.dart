@@ -1,5 +1,6 @@
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:test/test.dart';
+import 'package:quiver/core.dart';
 
 void main() {
   MapService inner;
@@ -77,4 +78,7 @@ class Todo {
 
   @override
   String toString() => '$id:$text($complete)';
+
+  @override
+  int get hashCode => hash2(text.hashCode, complete.hashCode);
 }

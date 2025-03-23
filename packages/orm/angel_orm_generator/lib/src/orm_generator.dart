@@ -3,6 +3,7 @@ import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:angel3_orm/angel3_orm.dart';
+import 'package:angel3_serialize/angel3_serialize.dart';
 import 'package:angel3_serialize_generator/angel3_serialize_generator.dart';
 import 'package:build/build.dart';
 import 'package:code_builder/code_builder.dart' hide LibraryBuilder;
@@ -31,7 +32,7 @@ TypeReference futureOf(String type) {
     ..types.add(refer(type)));
 }
 
-/// Builder that generates `<Model>.g.dart` from an abstract `Model` class.
+/// Generate `<Model>.g.dart` from an abstract `Model` class.
 class OrmGenerator extends GeneratorForAnnotation<Orm> {
   final bool? autoSnakeCaseNames;
 
@@ -103,16 +104,19 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
             ..types.add(refer('String')))
           ..type = MethodType.getter
           ..body = Block((b) {
-            var args = <String?, Expression>{};
+            var args = <String, Expression>{};
 
+            /* Remove casts no numeric values
             for (var field in ctx.effectiveFields) {
               var name = ctx.buildContext.resolveFieldName(field.name);
               var type = ctx.columns[field.name]?.type;
               if (type == null) continue;
               if (floatTypes.contains(type)) {
-                args[name] = literalString('text');
+                //args[name] = literalString('text');
+                args[name!] = literalString('char');
               }
             }
+            */
 
             b.addExpression(literalMap(args).returned);
           });
@@ -156,7 +160,51 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                 .map((f) =>
                     literalString(ctx.buildContext.resolveFieldName(f.name)!))
                 .toList();
-            b.addExpression(literalConstList(names).returned);
+            //b.addExpression(literalConstList(names).assignConst('_fields'));
+            b.addExpression(
+                declareConst('_fields').assign(literalConstList(names)));
+            b.addExpression(refer('_selectedFields')
+                .property('isEmpty')
+                .conditional(
+                  refer('_fields'),
+                  refer('_fields')
+                      .property('where')
+                      .call([
+                        CodeExpression(
+                            Code('(field) => _selectedFields.contains(field)'))
+                      ])
+                      .property('toList')
+                      .call([]),
+                )
+                .returned);
+          });
+      }));
+
+      // Add _selectedFields member
+      clazz.fields.add(Field((b) {
+        b
+          ..name = '_selectedFields'
+          ..type = TypeReference((t) => t
+            ..symbol = 'List'
+            ..types.add(TypeReference((b) => b..symbol = 'String')))
+          ..assignment = Code('[]');
+      }));
+
+      // Add select(List<String> fields)
+      clazz.methods.add(Method((m) {
+        m
+          ..name = 'select'
+          ..returns = refer('${rc.pascalCase}Query')
+          ..requiredParameters.add(Parameter((b) => b
+            ..name = 'selectedFields'
+            ..type = TypeReference((t) => t
+              ..symbol = 'List'
+              ..types.add(TypeReference((b) => b..symbol = 'String')))))
+          ..body = Block((b) {
+            b.addExpression(
+              refer('_selectedFields').assign(refer('selectedFields')),
+            );
+            b.addExpression(refer('this').returned);
           });
       }));
 
@@ -191,53 +239,108 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
       clazz.methods.add(Method((m) {
         m
           ..name = 'parseRow'
-          ..static = true
-          ..returns = TypeReference((b) => b
-            ..symbol = '${rc.pascalCase}'
-            ..isNullable = true) //refer('${rc.pascalCase}?')
+          ..returns = refer('Optional<${rc.pascalCase}>')
           ..requiredParameters.add(Parameter((b) => b
             ..name = 'row'
             ..type = refer('List')))
           ..body = Block((b) {
             var i = 0;
-            var args = <String, Expression>{};
 
+            // Build the arguments for model
+            var args = <String, Expression>{};
             for (var field in ctx.effectiveFields) {
               var fType = field.type;
-              Reference type = convertTypeReference(field.type);
+
+              //if (field.name == "type") {
+              //  print("=== Here 1 fType = $fType ");
+              //}
+
+              Reference type = convertTypeReference(fType);
               if (isSpecialId(ctx, field)) {
                 type = refer('int');
               }
 
+              // Generated Code: row[i]
               var expr = (refer('row').index(literalNum(i++)));
               if (isSpecialId(ctx, field)) {
+                // Generated Code: row[i].toString()
+
                 expr = expr.property('toString').call([]);
               } else if (field is RelationFieldImpl) {
+                // Skip fields with relationship
+
                 continue;
               } else if (ctx.columns[field.name]?.type == ColumnType.json) {
                 expr = refer('json')
                     .property('decode')
                     .call([expr.asA(refer('String'))]).asA(type);
               } else if (floatTypes.contains(ctx.columns[field.name]?.type)) {
-                expr = refer('double')
-                    .property('tryParse')
-                    .call([expr.property('toString').call([])]);
-              } else if (fType is InterfaceType && fType.element.isEnum) {
+                //expr = refer('double')
+                //    .property('tryParse')
+                //    .call([expr.property('toString').call([])]);
+                expr = refer('mapToDouble').call([expr]);
+              } else if (fType is InterfaceType &&
+                  fType.element is EnumElement) {
+                /*
+                 * fields.contains('type') ? row[3] == null ? null : 
+                 *     EnumType.values[(row[3] as int)] : null,
+                 */
+
+                //if (field.name == "type") {
+                print("=== Process enum ${field.name}");
+                //}
+
                 var isNull = expr.equalTo(literalNull);
-                expr = isNull.conditional(literalNull,
-                    type.property('values').index(expr.asA(refer('int'))));
+                final parseExpression = _deserializeEnumExpression(field, expr);
+                expr = isNull.conditional(literalNull, parseExpression);
+              } else if (fType.isDartCoreInt) {
+                expr = refer('mapToInt').call([expr]);
+              } else if (fType.isDartCoreBool) {
+                // Generated Code: mapToBool(row[i])
+                expr = refer('mapToBool').call([expr]);
+              } else if (fType.element?.displayName == 'DateTime') {
+                // Generated Code: mapToDateTime(row[i])
+                if (fType.nullabilitySuffix == NullabilitySuffix.question) {
+                  expr = refer('mapToNullableDateTime').call([expr]);
+                } else {
+                  expr = refer('mapToDateTime').call([expr]);
+                }
               } else {
+                // Generated Code: (row[i] as type?)
                 expr = expr.asA(type);
               }
 
+              Expression defaultRef = refer('null');
+              if (fType.nullabilitySuffix != NullabilitySuffix.question) {
+                if (fType.isDartCoreString) {
+                  defaultRef = CodeExpression(Code('\'\''));
+                } else if (fType.isDartCoreBool) {
+                  defaultRef = CodeExpression(Code('false'));
+                } else if (fType.isDartCoreDouble) {
+                  defaultRef = CodeExpression(Code('0.0'));
+                } else if (fType.isDartCoreInt || fType.isDartCoreNum) {
+                  defaultRef = CodeExpression(Code('0'));
+                } else if (fType.element?.displayName == 'DateTime') {
+                  defaultRef = CodeExpression(
+                      Code('DateTime.parse("1970-01-01 00:00:00")'));
+                } else if (fType.isDartCoreList) {
+                  defaultRef = CodeExpression(Code('[]'));
+                }
+              }
+              expr = refer('fields').property('contains').call([
+                literalString(ctx.buildContext.resolveFieldName(field.name)!)
+              ]).conditional(expr, defaultRef);
               args[field.name] = expr;
             }
 
-            b.statements
-                .add(Code('if (row.every((x) => x == null)) { return null; }'));
+            b.statements.add(Code(
+                'if (row.every((x) => x == null)) { return Optional.empty(); }'));
+            //b.addExpression(refer('0').assignVar('_index'));
 
-            b.addExpression(ctx.buildContext.modelClassType
-                .newInstance([], args).assignVar('model'));
+            //b.addExpression(ctx.buildContext.modelClassType
+            //    .newInstance([], args).assignVar('model'));
+            b.addExpression(declareVar('model')
+                .assign(ctx.buildContext.modelClassType.newInstance([], args)));
 
             ctx.relations.forEach((name, relation) {
               if (!const [
@@ -267,33 +370,57 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
 
               var parsed = refer(
                       '${foreign.buildContext.modelClassNameRecase.pascalCase}Query')
+                  .newInstance([])
                   .property('parseRow')
                   .call([skipToList]);
 
-              var baseClass = '${foreign.buildContext.originalClassName}';
+              //var baseClass = '${foreign.buildContext.originalClassName}';
+              //var modelClass =
+              //    foreign.buildContext.modelClassNameRecase.pascalCase;
               // Assume: baseclass starts with "_"
               //'_${foreign.buildContext.modelClassNameRecase.pascalCase}';
 
-              if (relation.type == RelationshipType.hasMany) {
-                parsed = literalList([parsed.asA(refer(baseClass))]);
-                var pp = parsed.accept(DartEmitter(useNullSafetySyntax: true));
-                parsed = CodeExpression(Code('$pp'));
-                //Code('$pp.where((x) => x != null).toList()'));
-              }
+              //if (relation.type == RelationshipType.hasMany) {
+              //  parsed = literalList([parsed.asA(refer(modelClass))]);
+              //parsed = literalList([parsed.asA(refer(baseClass))]);
+              //  var pp = parsed.accept(DartEmitter(useNullSafetySyntax: true));
+              //  parsed = CodeExpression(Code('$pp'));
+              //Code('$pp.where((x) => x != null).toList()'));
+              //}
 
-              var expr =
-                  refer('model').property('copyWith').call([], {name: parsed});
-              var block =
-                  Block((b) => b.addExpression(refer('model').assign(expr)));
+              //var expr =
+              //    refer('model').property('copyWith').call([], {name: parsed});
+              //var block =
+              //    Block((b) => b.addExpression(refer('model').assign(expr)));
+
+              var stmt = declareVar('modelOpt').assign(parsed);
+              //parsed.assignVar('modelOpt');
+              //var e = refer('Optional').property('ifPresent').call([]);
+
+              var val =
+                  (relation.type == RelationshipType.hasMany) ? '[m]' : 'm';
+              var code = Code('''
+                     modelOpt.ifPresent((m) {
+                      model = model.copyWith($name: $val);
+                  })
+              ''');
+
+              var block = Block((b) {
+                b.addExpression(stmt);
+                b.addExpression(CodeExpression(code));
+              });
+
               var blockStr =
                   block.accept(DartEmitter(useNullSafetySyntax: true));
+
               var ifStr = 'if (row.length > $i) { $blockStr }';
               b.statements.add(Code(ifStr));
 
               i += foreign.effectiveFields.length;
             });
 
-            b.addExpression(refer('model').returned);
+            b.addExpression(
+                refer('Optional.of').call([refer('model')]).returned);
           });
       }));
 
@@ -307,9 +434,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
             ..name = 'row'
             ..type = refer('List')))
           ..body = Block((b) {
-            b.addExpression(refer('Optional.ofNullable').call([
-              refer('parseRow').call([refer('row')])
-            ]).returned);
+            b.addExpression(refer('parseRow').call([refer('row')]).returned);
           });
       }));
 
@@ -375,18 +500,18 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                     relationForeign.buildContext.resolveFieldName(f.name));
 
                 var additionalFields = <Expression>[];
-                additionalStrs.forEach((element) {
+                for (var element in additionalStrs) {
                   if (element != null) {
                     additionalFields.add(literalString(element));
                   }
-                });
+                }
 
                 var joinArgs = <Expression>[];
-                [relation.localKey, relation.foreignKey].forEach((element) {
+                for (var element in [relation.localKey, relation.foreignKey]) {
                   if (element != null) {
                     joinArgs.add(literalString(element));
                   }
-                });
+                }
 
                 // In the case of a many-to-many, we don't generate a subquery field,
                 // as it easily leads to stack overflows.
@@ -405,7 +530,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                   // , <user_fields>
                   b.write(foreignFields.isEmpty
                       ? ''
-                      : ', ' + foreignFields.join(', '));
+                      : ', ${foreignFields.join(', ')}');
                   // FROM users
                   b.write(' FROM ');
                   b.write(relationForeign.tableName);
@@ -459,9 +584,8 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                   // There'll be a private `_field`, and then a getter, named `field`,
                   // that returns the subquery object.
 
-                  var foreignQueryType = refer(relationForeign
-                          .buildContext.modelClassNameRecase.pascalCase +
-                      'Query');
+                  var foreignQueryType = refer(
+                      '${relationForeign.buildContext.modelClassNameRecase.pascalCase}Query');
 
                   clazz
                     ..fields.add(Field((b) => b
@@ -556,10 +680,9 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                     .accept(DartEmitter(useNullSafetySyntax: true))
                     .toString()
                     .replaceAll('?', '');
-
                 merge.add('''
-                $name: $typeLiteral.from(l.$name)..addAll(model.$name)
-                ''');
+                      $name: $typeLiteral.from(l.$name)..addAll(model.$name)
+                    ''');
               }
             });
 
@@ -621,7 +744,6 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
       var initializers = <Code>[];
 
       // Add builders for each field
-
       for (var field in ctx.effectiveNormalFields) {
         String? name = field.name;
 
@@ -638,15 +760,15 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
         if (const TypeChecker.fromRuntime(int).isExactlyType(type) ||
             const TypeChecker.fromRuntime(double).isExactlyType(type) ||
             isSpecialId(ctx, field)) {
-          var typeName = type.getDisplayString(withNullability: false);
+          var typeName = type.getDisplayString().replaceAll('?', '');
           if (isSpecialId(ctx, field)) {
             typeName = 'int';
           }
           //log.fine('$name type = [$typeName]');
           builderType = TypeReference((b) => b
             ..symbol = 'NumericSqlExpressionBuilder'
-            ..types.add(refer('$typeName')));
-        } else if (type is InterfaceType && type.element.isEnum) {
+            ..types.add(refer(typeName)));
+        } else if (type is InterfaceType && type.element is EnumElement) {
           builderType = TypeReference((b) => b
             ..symbol = 'EnumSqlExpressionBuilder'
             ..types.add(convertTypeReference(type)));
@@ -670,7 +792,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
 
           // Detect relationship
         } else if (name.endsWith('Id')) {
-          //log.fine('Relationship detected = $name');
+          log.fine('Foreign Relationship detected = $name');
           var relation = ctx.relations[name.replaceAll('Id', '')];
           if (relation != null) {
             //if (relation?.type != RelationshipType.belongsTo) {
@@ -762,9 +884,11 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
               if (const TypeChecker.fromRuntime(List)
                   .isAssignableFromType(fType)) {
                 args[name] = literalString(type.name);
-              } else if (floatTypes.contains(type)) {
-                args[name] = literalString(type.name);
               }
+
+              /* else if (floatTypes.contains(type)) {
+                args[name] = literalString(type.name);
+              } */
             }
 
             b.addExpression(literalMap(args).returned);
@@ -780,19 +904,24 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
         clazz.methods.add(Method((b) {
           var value = refer('values').index(literalString(name!));
 
-          if (fType is InterfaceType && fType.element.isEnum) {
-            var asInt = value.asA(refer('int'));
-            var t = convertTypeReference(fType);
-            value = t.property('values').index(asInt);
+          if (fType is InterfaceType && fType.element is EnumElement) {
+            value = _deserializeEnumExpression(field, value);
           } else if (const TypeChecker.fromRuntime(List)
               .isAssignableFromType(fType)) {
             value = refer('json')
                 .property('decode')
-                .call([value.asA(refer('String'))]).asA(refer('List'));
+                .call([value.asA(refer('String'))])
+                .property('cast')
+                .call([]);
           } else if (floatTypes.contains(ctx.columns[field.name]?.type)) {
-            value = refer('double')
-                .property('tryParse')
-                .call([value.asA(refer('String'))]);
+            // Skip using casts on double
+            value = value
+                .asA(refer('double?'))
+                .ifNullThen(CodeExpression(Code('0.0')));
+            //value = refer('double')
+            //    .property('tryParse')
+            //    .call([value.asA(refer('String'))]).ifNullThen(
+            //        CodeExpression(Code('0.0')));
           } else {
             value = value.asA(type);
           }
@@ -807,14 +936,16 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
         clazz.methods.add(Method((b) {
           Expression value = refer('value');
 
-          if (fType is InterfaceType && fType.element.isEnum) {
-            value = CodeExpression(Code('value?.index'));
+          if (fType is InterfaceType && fType.element is EnumElement) {
+            value = _serializeEnumExpression(field, value);
           } else if (const TypeChecker.fromRuntime(List)
               .isAssignableFromType(fType)) {
             value = refer('json').property('encode').call([value]);
-          } else if (floatTypes.contains(ctx.columns[field.name]?.type)) {
-            value = value.property('toString').call([]);
           }
+
+          /* else if (floatTypes.contains(ctx.columns[field.name]?.type)) {
+            value = value.property('toString').call([]);
+          } */
 
           b
             ..name = field.name
@@ -827,7 +958,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
         }));
       }
 
-      // Add an copyFrom(model)
+      // Add model
       clazz.methods.add(Method((b) {
         b
           ..name = 'copyFrom'
@@ -847,7 +978,9 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
             for (var field in ctx.effectiveNormalFields) {
               if (field is RelationFieldImpl) {
                 var original = field.originalFieldName;
+
                 var prop = refer('model').property(original);
+
                 // Add only if present
                 var target = refer('values').index(literalString(
                     ctx.buildContext.resolveFieldName(field.name)!));
@@ -856,14 +989,14 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                     field.relationship.foreign;
                 var foreignField = field.relationship.findForeignField(ctx);
 
-                // Added null safety check
-                var parsedId = prop.property(foreignField.name);
+                // TODO: Need to add nullability check for prop
+                var parsedId = prop.nullSafeProperty(foreignField.name);
 
                 //log.fine('Foreign field => ${foreignField.name}');
-                if (foreignField.type.nullabilitySuffix ==
-                    NullabilitySuffix.question) {
-                  parsedId = prop.nullSafeProperty(foreignField.name);
-                }
+                //if (foreignField.type.nullabilitySuffix ==
+                //    NullabilitySuffix.question) {
+                //  parsedId = prop.nullSafeProperty(foreignField.name);
+                //}
 
                 if (foreign != null) {
                   if (isSpecialId(foreign, field)) {
@@ -884,5 +1017,53 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
           });
       }));
     });
+  }
+
+  /// Retrieve the [Expression] to parse a serialized enumeration field.
+  /// Takes into account the [SerializableField] properties.
+  /// Defaults to `enum.values[index as int]`
+  Expression _deserializeEnumExpression(FieldElement field, Expression expr) {
+    Reference enumType =
+        convertTypeReference(field.type, ignoreNullabilityCheck: true);
+    const TypeChecker serializableFieldTypeChecker =
+        TypeChecker.fromRuntime(SerializableField);
+    final annotation = serializableFieldTypeChecker.firstAnnotationOf(field);
+    Expression? parseExpr;
+    if (null != annotation) {
+      final deserializer = annotation.getField('deserializer')?.toSymbolValue();
+      if (null != deserializer) {
+        var type = 'int';
+        final serializesTo = annotation.getField('serializesTo')?.toTypeValue();
+        if (null != serializesTo) {
+          type = serializesTo.element!.displayName;
+        }
+        parseExpr = Reference(deserializer).expression([expr.asA(refer(type))]);
+      }
+    }
+
+    //return parseExpr ??
+    //    enumType.property('values').index(expr.asA(refer('int')));
+
+    if (parseExpr != null) {
+      return parseExpr;
+    }
+
+    return enumType.property('values').index(refer('mapToInt').call([expr]));
+  }
+
+  /// Retrieve the [Expression] to serialize the enumeration field.
+  /// Takes into account the [SerializableField] properties.
+  Expression _serializeEnumExpression(FieldElement field, Expression expr) {
+    const TypeChecker serializableFieldTypeChecker =
+        TypeChecker.fromRuntime(SerializableField);
+    final annotation = serializableFieldTypeChecker.firstAnnotationOf(field);
+    Expression? parseExpr;
+    if (null != annotation) {
+      final serializer = annotation.getField('serializer')?.toSymbolValue();
+      if (null != serializer) {
+        parseExpr = Reference(serializer).expression([expr]);
+      }
+    }
+    return parseExpr ?? CodeExpression(Code('value?.index'));
   }
 }

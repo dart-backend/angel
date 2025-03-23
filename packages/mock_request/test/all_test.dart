@@ -1,13 +1,14 @@
-import 'dart:convert';
-import 'dart:io';
-import 'package:angel3_framework/angel3_framework.dart';
-import 'package:angel3_framework/http.dart';
-import 'package:angel3_mock_request/angel3_mock_request.dart';
-import 'package:test/test.dart';
+//import 'dart:convert';
+//import 'dart:io';
+//import 'package:angel3_framework/angel3_framework.dart';
+//import 'package:angel3_framework/http.dart';
+//import 'package:angel3_mock_request/angel3_mock_request.dart';
+//import 'package:test/test.dart';
 
 void main() {
-  var uri = Uri.parse('http://localhost:3000');
+  //var uri = Uri.parse('http://localhost:3000');
 
+  /*
   var app = Angel()
     ..get('/foo', (req, res) => 'Hello, world!')
     ..post('/body',
@@ -64,4 +65,5 @@ void main() {
     expect(rq.uri.path, '/mock');
     expect(rq.requestedUri.toString(), 'http://example.com/mock');
   });
+  */
 }

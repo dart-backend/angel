@@ -4,6 +4,8 @@ import 'dart:mirrors' as dart;
 import '../exception.dart';
 import '../reflector.dart';
 
+import 'package:quiver/core.dart';
+
 /// A [Reflector] implementation that forwards to `dart:mirrors`.
 ///
 /// Useful on the server, where reflection is supported.
@@ -48,16 +50,16 @@ class MirrorsReflector extends Reflector {
   @override
   ReflectedType reflectFutureOf(Type type) {
     var inner = reflectType(type);
-    dart.TypeMirror _mirror;
+    dart.TypeMirror localMirror;
     if (inner is _ReflectedClassMirror) {
-      _mirror = inner.mirror;
+      localMirror = inner.mirror;
     } else if (inner is _ReflectedTypeMirror) {
-      _mirror = inner.mirror;
+      localMirror = inner.mirror;
     } else {
       throw ArgumentError('$type is not a class or type.');
     }
 
-    var future = dart.reflectType(Future, [_mirror.reflectedType]);
+    var future = dart.reflectType(Future, [localMirror.reflectedType]);
     return _ReflectedClassMirror(future as dart.ClassMirror);
   }
 
@@ -176,6 +178,9 @@ class _ReflectedClassMirror extends ReflectedClass {
   bool operator ==(other) {
     return other is _ReflectedClassMirror && other.mirror == mirror;
   }
+
+  @override
+  int get hashCode => hash2(mirror, " ");
 }
 
 class _ReflectedDeclarationMirror extends ReflectedDeclaration {

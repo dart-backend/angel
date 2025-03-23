@@ -5,9 +5,8 @@ class AuthorizationException extends AngelHttpException {
   final ErrorResponse errorResponse;
 
   AuthorizationException(this.errorResponse,
-      {StackTrace? stackTrace, int? statusCode, error})
-      : super(error ?? errorResponse,
-            stackTrace: stackTrace, message: '', statusCode: statusCode ?? 400);
+      {super.stackTrace, int? statusCode, super.error})
+      : super(message: '', statusCode: statusCode ?? 400);
 
   @override
   Map toJson() {

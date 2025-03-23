@@ -5,7 +5,7 @@ import 'package:angel3_framework/http.dart';
 import 'package:angel3_mock_request/angel3_mock_request.dart';
 import 'package:test/test.dart';
 
-final Uri ENDPOINT = Uri.parse('http://example.com');
+final Uri endpoint = Uri.parse('http://example.com');
 
 void main() {
   test('single extension', () async {
@@ -25,7 +25,7 @@ void main() {
 }
 
 Future<RequestContext> makeRequest(String path) {
-  var rq = MockHttpRequest('GET', ENDPOINT.replace(path: path))..close();
+  var rq = MockHttpRequest('GET', endpoint.replace(path: path))..close();
   var app = Angel(reflector: MirrorsReflector());
   var http = AngelHttp(app);
   return http.createRequestContext(rq, rq.response);

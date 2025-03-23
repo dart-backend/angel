@@ -1,13 +1,12 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
+import 'dart:io' hide BytesBuilder;
+import 'dart:typed_data';
 import 'package:angel3_framework/angel3_framework.dart' hide Header;
 import 'package:http2/transport.dart';
 import 'http2_request_context.dart';
 
 class Http2ResponseContext extends ResponseContext<ServerTransportStream> {
-  @override
-  final Angel? app;
   final ServerTransportStream stream;
 
   @override
@@ -24,8 +23,9 @@ class Http2ResponseContext extends ResponseContext<ServerTransportStream> {
 
   Uri? _targetUri;
 
-  Http2ResponseContext(this.app, this.stream, this._req) {
-    _targetUri = _req!.uri;
+  Http2ResponseContext(Angel? app, this.stream, this._req) {
+    this.app = app;
+    _targetUri = _req?.uri;
   }
 
   final List<Http2ResponseContext> _pushes = [];
@@ -60,10 +60,10 @@ class Http2ResponseContext extends ResponseContext<ServerTransportStream> {
   @override
   BytesBuilder? get buffer => _buffer;
 
-  @override
-  void addError(Object error, [StackTrace? stackTrace]) {
-    super.addError(error, stackTrace);
-  }
+  // @override
+  // void addError(Object error, [StackTrace? stackTrace]) {
+  //   super.addError(error, stackTrace);
+  // }
 
   @override
   void useBuffer() {

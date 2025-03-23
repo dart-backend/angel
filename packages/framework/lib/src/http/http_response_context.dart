@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
-
+import 'dart:io' hide BytesBuilder;
+import 'dart:typed_data' show BytesBuilder;
 import 'package:http_parser/http_parser.dart';
 
 import '../core/core.dart';
@@ -13,15 +13,15 @@ class HttpResponseContext extends ResponseContext<HttpResponse> {
   @override
   final HttpResponse rawResponse;
 
-  @override
-  Angel? app;
-
   LockableBytesBuilder? _buffer;
 
   final HttpRequestContext? _correspondingRequest;
   bool _isDetached = false, _isClosed = false, _streamInitialized = false;
 
-  HttpResponseContext(this.rawResponse, this.app, [this._correspondingRequest]);
+  HttpResponseContext(this.rawResponse, Angel? app,
+      [this._correspondingRequest]) {
+    this.app = app;
+  }
 
   @override
   HttpResponse detach() {
@@ -89,6 +89,8 @@ class HttpResponseContext extends ResponseContext<HttpResponse> {
         ..statusCode = statusCode
         ..cookies.addAll(cookies);
       headers.forEach(rawResponse.headers.set);
+
+      rawResponse.headers.date = DateTime.now();
 
       if (headers.containsKey('content-length')) {
         rawResponse.contentLength = int.tryParse(headers['content-length']!) ??

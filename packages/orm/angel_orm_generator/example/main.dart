@@ -1,8 +1,6 @@
 import 'dart:async';
 import 'package:angel3_migration/angel3_migration.dart';
-import 'package:angel3_model/angel3_model.dart';
 import 'package:angel3_orm/angel3_orm.dart';
-import 'package:angel3_orm/src/query.dart';
 import 'package:angel3_serialize/angel3_serialize.dart';
 import 'package:optional/optional.dart';
 part 'main.g.dart';
@@ -23,8 +21,13 @@ class _FakeExecutor extends QueryExecutor {
 
   @override
   Future<List<List>> query(
-      String tableName, String? query, Map<String, dynamic> substitutionValues,
-      [returningFields = const []]) async {
+    String tableName,
+    String? query,
+    Map<String, dynamic> substitutionValues, {
+    String returningQuery = '',
+    String resultQuery = '',
+    List<String> returningFields = const [],
+  }) async {
     var now = DateTime.now();
     print(
         '_FakeExecutor received query: $query and values: $substitutionValues');
@@ -37,6 +40,10 @@ class _FakeExecutor extends QueryExecutor {
   Future<T> transaction<T>(FutureOr<T> Function(QueryExecutor) f) {
     throw UnsupportedError('Transactions are not supported.');
   }
+
+  @override
+  // TODO: implement dialect
+  Dialect get dialect => PostgreSQLDialect();
 }
 
 @orm

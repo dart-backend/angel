@@ -23,11 +23,11 @@ class Container {
   }
 
   /// Determines if the container has an injection of the given type.
-  bool has<T>([Type? type]) {
+  bool has<T>([Type? t]) {
     var t2 = T;
-    if (type != null) {
-      t2 = type;
-    } else if (T == dynamic && type == null) {
+    if (t != null) {
+      t2 = t;
+    } else if (T == dynamic && t == null) {
       return false;
     }
 
@@ -97,7 +97,7 @@ class Container {
   /// In contexts where a static generic type cannot be used, use
   /// the [type] argument, instead of [T].
   T make<T>([Type? type]) {
-    var t2 = T;
+    Type t2 = T;
     if (type != null) {
       t2 = type;
     }
@@ -118,7 +118,7 @@ class Container {
 
     var reflectedType = reflector.reflectType(t2);
     var positional = [];
-    var named = <String, dynamic>{};
+    var named = <String, Object>{};
 
     if (reflectedType is ReflectedClass) {
       bool isDefault(String name) {
@@ -217,7 +217,7 @@ class Container {
     if (_namedSingletons.containsKey(name)) {
       return _namedSingletons[name] as T;
     } else if (_parent != null) {
-      return _parent!.findByName<T>(name);
+      return _parent.findByName<T>(name);
     } else {
       throw StateError(
           'This container does not have a singleton named "$name".');

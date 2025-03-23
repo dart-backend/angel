@@ -31,30 +31,30 @@ void main() {
 
   group('serialization', () {
     test('serialization sets proper fields', () {
-      expect(serializedDeathlyHallows!['id'], deathlyHallows.id);
+      expect(serializedDeathlyHallows['id'], deathlyHallows.id);
       expect(serializedDeathlyHallows['author'], deathlyHallows.author);
       expect(
           serializedDeathlyHallows['description'], deathlyHallows.description);
       expect(serializedDeathlyHallows['page_count'], deathlyHallows.pageCount);
       expect(serializedDeathlyHallows['created_at'], isNull);
       expect(serializedDeathlyHallows['updated_at'],
-          deathlyHallows.updatedAt!.toIso8601String());
+          deathlyHallows.updatedAt?.toIso8601String());
     });
 
     test('can be mutated', () {
       var b = deathlyHallows.copyWith();
       b.author = 'Hey';
       expect(b.author, 'Hey');
-      expect(b.toJson()![BookFields.author], 'Hey');
+      expect(b.toJson()[BookFields.author], 'Hey');
     });
 
     test('heeds @Alias', () {
-      expect(serializedDeathlyHallows!['page_count'], deathlyHallows.pageCount);
+      expect(serializedDeathlyHallows['page_count'], deathlyHallows.pageCount);
       expect(serializedDeathlyHallows.keys, isNot(contains('pageCount')));
     });
 
     test('standard list', () {
-      expect(serializedDeathlyHallows!['not_models'], deathlyHallows.notModels);
+      expect(serializedDeathlyHallows['not_models'], deathlyHallows.notModels);
     });
 
     test('heeds @exclude', () {
@@ -112,7 +112,7 @@ void main() {
 
   group('deserialization', () {
     test('deserialization sets proper fields', () {
-      var book = BookSerializer.fromMap(deathlyHallowsMap!);
+      var book = BookSerializer.fromMap(deathlyHallowsMap);
       expect(book.id, deathlyHallows.id);
       expect(book.author, deathlyHallows.author);
       expect(book.description, deathlyHallows.description);

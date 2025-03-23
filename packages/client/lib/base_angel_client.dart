@@ -1,12 +1,6 @@
 import 'dart:async';
-import 'dart:convert' show Encoding;
-import 'package:angel3_http_exception/angel3_http_exception.dart';
 import 'dart:convert';
-import 'package:http/src/base_client.dart' as http;
-import 'package:http/src/base_request.dart' as http;
-import 'package:http/src/request.dart' as http;
-import 'package:http/src/response.dart' as http;
-import 'package:http/src/streamed_response.dart' as http;
+import 'package:http/http.dart';
 import 'package:path/path.dart';
 import 'package:logging/logging.dart';
 import 'angel3_client.dart';
@@ -21,10 +15,10 @@ Map<String, String> _buildQuery(Map<String, dynamic>? params) {
   return params?.map((k, v) => MapEntry(k, v.toString())) ?? {};
 }
 
-bool _invalid(http.Response response) =>
+bool _invalid(Response response) =>
     response.statusCode < 200 || response.statusCode >= 300;
 
-AngelHttpException failure(http.Response response,
+AngelHttpException failure(Response response,
     {error, String? message, StackTrace? stack}) {
   try {
     var v = json.decode(response.body);
@@ -32,14 +26,14 @@ AngelHttpException failure(http.Response response,
     if (v is Map && (v['is_error'] == true) || v['isError'] == true) {
       return AngelHttpException.fromMap(v as Map);
     } else {
-      return AngelHttpException(error,
+      return AngelHttpException(
           message: message ??
               'Unhandled exception while connecting to Angel backend.',
           statusCode: response.statusCode,
           stackTrace: stack);
     }
   } catch (e, st) {
-    return AngelHttpException(error ?? e,
+    return AngelHttpException(
         message: message ??
             'Angel backend did not return JSON - an error likely occurred.',
         statusCode: response.statusCode,
@@ -52,7 +46,7 @@ abstract class BaseAngelClient extends Angel {
   final StreamController<AngelAuthResult> _onAuthenticated =
       StreamController<AngelAuthResult>();
   final List<Service> _services = [];
-  final http.BaseClient client;
+  final BaseClient client;
 
   final Context _p = Context(style: Style.url);
 
@@ -63,10 +57,7 @@ abstract class BaseAngelClient extends Angel {
 
   @override
   Future<AngelAuthResult> authenticate(
-      {String? type,
-      credentials,
-      String authEndpoint = '/auth',
-      @deprecated String reviveEndpoint = '/auth/token'}) async {
+      {String? type, credentials, String authEndpoint = '/auth'}) async {
     type ??= 'token';
 
     var segments = baseUrl.pathSegments
@@ -76,7 +67,7 @@ abstract class BaseAngelClient extends Angel {
     //var p1 = p.joinAll(segments).replaceAll('\\', '/');
 
     var url = baseUrl.replace(path: _p.joinAll(segments));
-    http.Response response;
+    Response response;
 
     if (credentials != null) {
       response = await post(url,
@@ -106,7 +97,7 @@ abstract class BaseAngelClient extends Angel {
     } on AngelHttpException {
       rethrow;
     } catch (e, st) {
-      _log.severe('Authentication failed');
+      _log.severe(st);
       throw failure(response, error: e, stack: st);
     }
   }
@@ -126,7 +117,7 @@ abstract class BaseAngelClient extends Angel {
   }
 
   @override
-  Future<http.StreamedResponse> send(http.BaseRequest request) async {
+  Future<StreamedResponse> send(BaseRequest request) async {
     if (authToken?.isNotEmpty == true) {
       request.headers['authorization'] ??= 'Bearer $authToken';
     }
@@ -134,11 +125,10 @@ abstract class BaseAngelClient extends Angel {
   }
 
   /// Sends a non-streaming [Request] and returns a non-streaming [Response].
-  Future<http.Response> sendUnstreamed(
+  Future<Response> sendUnstreamed(
       String method, url, Map<String, String>? headers,
       [body, Encoding? encoding]) async {
-    var request =
-        http.Request(method, url is Uri ? url : Uri.parse(url.toString()));
+    var request = Request(method, url is Uri ? url : Uri.parse(url.toString()));
 
     if (headers != null) request.headers.addAll(headers);
 
@@ -158,7 +148,7 @@ abstract class BaseAngelClient extends Angel {
       }
     }
 
-    return http.Response.fromStream(await send(request));
+    return Response.fromStream(await send(request));
   }
 
   @override
@@ -178,44 +168,46 @@ abstract class BaseAngelClient extends Angel {
   }
 
   //@override
-  //Future<http.Response> delete(url, {Map<String, String> headers}) async {
+  //Future<Response> delete(url, {Map<String, String> headers}) async {
   //  return sendUnstreamed('DELETE', _join(url), headers);
   //}
 
   @override
-  Future<http.Response> get(url, {Map<String, String>? headers}) async {
+  Future<Response> get(url, {Map<String, String>? headers}) async {
     return sendUnstreamed('GET', _join(url), headers);
   }
 
   @override
-  Future<http.Response> head(url, {Map<String, String>? headers}) async {
+  Future<Response> head(url, {Map<String, String>? headers}) async {
     return sendUnstreamed('HEAD', _join(url), headers);
   }
 
   @override
-  Future<http.Response> patch(url,
+  Future<Response> patch(url,
       {body, Map<String, String>? headers, Encoding? encoding}) async {
     return sendUnstreamed('PATCH', _join(url), headers, body, encoding);
   }
 
   @override
-  Future<http.Response> post(url,
+  Future<Response> post(url,
       {body, Map<String, String>? headers, Encoding? encoding}) async {
     return sendUnstreamed('POST', _join(url), headers, body, encoding);
   }
 
   @override
-  Future<http.Response> put(url,
+  Future<Response> put(url,
       {body, Map<String, String>? headers, Encoding? encoding}) async {
     return sendUnstreamed('PUT', _join(url), headers, body, encoding);
   }
 }
 
 class BaseAngelService<Id, Data> extends Service<Id, Data?> {
+  final _log = Logger('BaseAngelService');
+
   @override
   final BaseAngelClient app;
   final Uri baseUrl;
-  final http.BaseClient client;
+  final BaseClient client;
   final AngelDeserializer<Data>? deserializer;
 
   final Context _p = Context(style: Style.url);
@@ -258,10 +250,6 @@ class BaseAngelService<Id, Data> extends Service<Id, Data?> {
   BaseAngelService(this.client, this.app, baseUrl, {this.deserializer})
       : baseUrl = baseUrl is Uri ? baseUrl : Uri.parse(baseUrl.toString());
 
-  /// Use [baseUrl] instead.
-  @deprecated
-  String get basePath => baseUrl.toString();
-
   Data? deserialize(x) {
     return deserializer != null ? deserializer!(x) : x as Data?;
   }
@@ -271,7 +259,7 @@ class BaseAngelService<Id, Data> extends Service<Id, Data?> {
     return jsonEncode(x);
   }
 
-  Future<http.StreamedResponse> send(http.BaseRequest request) {
+  Future<StreamedResponse> send(BaseRequest request) {
     if (app.authToken != null && app.authToken!.isNotEmpty) {
       request.headers['Authorization'] = 'Bearer ${app.authToken}';
     }
@@ -296,18 +284,19 @@ class BaseAngelService<Id, Data> extends Service<Id, Data?> {
       var v = json.decode(response.body) as List;
       //var r = v.map(deserialize).toList();
       var r = <Data>[];
-      v.forEach((element) {
+      for (var element in v) {
         var a = deserialize(element);
         if (a != null) {
           r.add(a);
         }
-      });
+      }
       _onIndexed.add(r);
       return r;
     } catch (e, st) {
       if (_onIndexed.hasListener) {
         _onIndexed.addError(e, st);
       } else {
+        _log.severe(st);
         throw failure(response, error: e, stack: st);
       }
     }
@@ -341,6 +330,7 @@ class BaseAngelService<Id, Data> extends Service<Id, Data?> {
       if (_onRead.hasListener) {
         _onRead.addError(e, st);
       } else {
+        _log.severe(st);
         throw failure(response, error: e, stack: st);
       }
     }
@@ -370,6 +360,7 @@ class BaseAngelService<Id, Data> extends Service<Id, Data?> {
       if (_onCreated.hasListener) {
         _onCreated.addError(e, st);
       } else {
+        _log.severe(st);
         throw failure(response, error: e, stack: st);
       }
     }
@@ -402,6 +393,7 @@ class BaseAngelService<Id, Data> extends Service<Id, Data?> {
       if (_onModified.hasListener) {
         _onModified.addError(e, st);
       } else {
+        _log.severe(st);
         throw failure(response, error: e, stack: st);
       }
     }
@@ -434,6 +426,7 @@ class BaseAngelService<Id, Data> extends Service<Id, Data?> {
       if (_onUpdated.hasListener) {
         _onUpdated.addError(e, st);
       } else {
+        _log.severe(st);
         throw failure(response, error: e, stack: st);
       }
     }
@@ -465,6 +458,7 @@ class BaseAngelService<Id, Data> extends Service<Id, Data?> {
       if (_onRemoved.hasListener) {
         _onRemoved.addError(e, st);
       } else {
+        _log.severe(st);
         throw failure(response, error: e, stack: st);
       }
     }

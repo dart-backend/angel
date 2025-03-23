@@ -2,13 +2,12 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'package:angel3_client/base_angel_client.dart' as client;
-import 'package:angel3_client/io.dart' as client;
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_framework/http.dart';
 import 'package:angel3_websocket/io.dart' as client;
 import 'package:http/http.dart' as http hide StreamedResponse;
+import 'package:http/http.dart';
 import 'package:http/io_client.dart' as http;
-import 'package:http/src/streamed_response.dart';
 import 'package:angel3_mock_request/angel3_mock_request.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:web_socket_channel/io.dart';
@@ -56,9 +55,6 @@ class TestClient extends client.BaseAngelClient {
 
   /// The server instance to mock.
   final Angel server;
-
-  @override
-  String? authToken;
 
   late AngelHttp _http;
 
@@ -149,7 +145,7 @@ class TestClient extends client.BaseAngelClient {
         reasonPhrase: rs.reasonPhrase);
   }
 
-  @override
+  //@override
   late String basePath;
 
   @override

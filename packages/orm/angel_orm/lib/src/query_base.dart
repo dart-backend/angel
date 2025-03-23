@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:logging/logging.dart';
 
 import 'query_executor.dart';
@@ -48,11 +49,11 @@ abstract class QueryBase<T> {
   List<T> deserializeList(List<List<dynamic>> it) {
     var optResult = it.map(deserialize).toList();
     var result = <T>[];
-    optResult.forEach((element) {
+    for (var element in optResult) {
       element.ifPresent((item) {
         result.add(item);
       });
-    });
+    }
 
     return result;
   }
@@ -61,7 +62,7 @@ abstract class QueryBase<T> {
     var sql = compile({});
 
     _log.fine('sql = $sql');
-    _log.fine('substitutionValues = $substitutionValues');
+    _log.fine('values = $substitutionValues');
 
     return executor.query(tableName, sql, substitutionValues).then((it) {
       return deserializeList(it);

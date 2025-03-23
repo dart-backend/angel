@@ -1,16 +1,15 @@
 # Angel3 HTTP Cache
 
-[![version](https://img.shields.io/badge/pub-v4.0.2-brightgreen)](https://pub.dev/packages/angel3_cache)
+![Pub Version (including pre-releases)](https://img.shields.io/pub/v/angel3_cache?include_prereleases)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
-[![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
-
-[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/angel3/packages/cache/LICENSE)
+[![Discord](https://img.shields.io/discord/1060322353214660698)](https://discord.gg/3X6bxTUdCM)
+[![License](https://img.shields.io/github/license/dart-backend/angel)](https://github.com/dart-backend/angel/tree/master/packages/cache/LICENSE)
 
 A service that provides HTTP caching to the response data for [Angel3 framework](https://pub.dev/packages/angel3).
 
 ## `CacheService`
 
-A `Service` class that caches data from one service, storing it in another. An imaginable use case is storing results from MongoDB or another database in MemcacheD/Redis.
+A `Service` class that caches data from one service, storing it in another. An imaginable use case is storing results from MongoDB or another database in Memcache/Redis.
 
 ## `cacheSerializationResults`
 
@@ -27,11 +26,11 @@ void main() async {
       CacheService(
         database: AnonymousService(
           index: ([params]) {
-            print('Fetched directly from the underlying service at ${new DateTime.now()}!');
+            print('Fetched directly from the underlying service at ${DateTime.now()}!');
             return ['foo', 'bar', 'baz'];
           },
           read: (id, [params]) {
-            return {id: '$id at ${new DateTime.now()}'};
+            return {id: '$id at ${DateTime.now()}'};
           }
         ),
       ),
@@ -43,7 +42,7 @@ void main() async {
 
 A flexible response cache for Angel3.
 
-Use this to improve real and perceived response of Web applications, as well as to memoize expensive responses.
+Use this to improve real and perceived response of Web applications, as well as to memorize expensive responses.
 
 Supports the `If-Modified-Since` header, as well as storing the contents of response buffers in memory.
 

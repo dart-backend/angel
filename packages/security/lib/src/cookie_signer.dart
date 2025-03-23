@@ -92,7 +92,9 @@ class CookieSigner {
   ///
   /// See [createSignedCookie].
   void writeCookies(ResponseContext res, Iterable<Cookie> cookies) {
-    cookies.forEach((c) => writeCookie(res, c));
+    for (var c in cookies) {
+      writeCookie(res, c);
+    }
   }
 
   /// Returns a new cookie, replacing the value of an input
@@ -104,7 +106,7 @@ class CookieSigner {
   /// Where `sig` is the cookie's value, signed with the [hmac].
   Cookie createSignedCookie(Cookie cookie) {
     return cookieWithNewValue(
-        cookie, cookie.value + '.' + computeCookieSignature(cookie.value));
+        cookie, '${cookie.value}.${computeCookieSignature(cookie.value)}');
   }
 
   /// Returns a new [Cookie] that is the same as the input

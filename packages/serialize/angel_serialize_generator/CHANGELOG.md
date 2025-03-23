@@ -1,5 +1,84 @@
 # Change Log
 
+## 8.4.1
+
+* Fixed `ShimFieldImpl` due to breaking changes in `analyzer` 7.3.0
+
+## 8.4.0
+
+* Require Dart >= 3.6
+* Updated `lints` to 5.x
+* Updated `source_gen` to 2.x
+* Updated `analyzer` to 7.x
+* Updated dependencies to the latest release
+* Updated `ShimFieldImpl`
+
+## 8.3.1
+
+* Updated dependencies
+
+## 8.3.0
+
+* Require Dart >= 3.3
+* Updated `lints` to 4.0.0
+
+## 8.2.1
+
+* Updated repository link
+
+## 8.2.0
+
+* Updated `lints` to 3.0.0
+* Fixed linter warnings
+
+## 8.1.0
+
+* Upgraded to `analyzer` 6.2.x
+
+## 8.0.1
+
+* Fixed `JsonModelGenerator` from generating duplicated fields
+* Fixed `JsonModelGenerator` to priortize `id` field as the first argument
+
+## 8.0.0
+
+* Require Dart >= 3.0
+
+## 7.2.0-beta.1
+
+* Require Dart >= 2.19
+* Fixed `topMap` incorrect return
+
+## 7.1.0
+
+* Require Dart >= 2.18
+* Upgraded to `analyzer` 5.x.x
+* Replaced deprecated `element2` with `element`
+
+## 7.0.0
+
+* Require Dart >= 2.17
+* Fixed enum test cases
+* Resolved deprecated methods
+
+## 6.1.1
+
+* Fixed issue #68: Support for non-nullable type
+
+## 6.1.0
+
+* Updated to `analyzer` 4.x.x
+
+## 6.0.0
+
+* Require Dart >= 2.16
+* Updated to `analyzer` 3.x.x
+* Fixed default value for `List` and `Enum`
+
+## 5.0.0
+
+* Skipped release
+
 ## 4.3.0
 
 * Updated to use  `package:belatuk_code_buffer`
@@ -50,12 +129,12 @@
 
 ## 4.0.0
 
-* Migrated to support Dart SDK 2.12.x NNBD
+* Migrated to support Dart >= 2.12 NNBD
 * Importing `Optional` package is required for the ORM model
 
 ## 3.0.0
 
-* Migrated to work with Dart SDK 2.12.x Non NNBD
+* Migrated to work with Dart >= 2.12 Non NNBD
 
 ## 2.5.0
 

@@ -1,10 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io' show stderr, Cookie;
+import 'dart:io' show Cookie;
 import 'package:angel3_http_exception/angel3_http_exception.dart';
 import 'package:angel3_route/angel3_route.dart';
 import 'package:belatuk_combinator/belatuk_combinator.dart';
-import 'package:logging/logging.dart';
 import 'package:stack_trace/stack_trace.dart';
 import 'package:tuple/tuple.dart';
 import 'core.dart';
@@ -21,13 +20,9 @@ abstract class Driver<
   final Angel app;
   final bool useZone;
   bool _closed = false;
-  late Server _server;
-
-  // TODO: Ugly fix
-  bool isServerInitialised = false;
 
   StreamSubscription<Request>? _sub;
-  final log = Logger('Driver');
+  //final log = Logger('Driver');
 
   /// The function used to bind this instance to a server..
   final Future<Server> Function(dynamic, int) serverGenerator;
@@ -38,14 +33,7 @@ abstract class Driver<
   Uri get uri;
 
   /// The native server running this instance.
-  Server? get server {
-    // TODO: Ugly fix
-    if (isServerInitialised) {
-      return _server;
-    } else {
-      return null;
-    }
-  }
+  Server? server;
 
   Future<Server> generateServer(address, int port) =>
       serverGenerator(address, port);
@@ -54,24 +42,21 @@ abstract class Driver<
   Future<Server> startServer([address, int port = 0]) {
     var host = address ?? '127.0.0.1';
     return generateServer(host, port).then((server) {
-      _server = server;
-
-      // TODO: Ugly fix
-      isServerInitialised = true;
+      this.server = server;
 
       return Future.wait(app.startupHooks.map(app.configure)).then((_) {
         app.optimizeForProduction();
-        _sub = server.listen((request) {
+        _sub = this.server?.listen((request) {
           var stream = createResponseStreamFromRawRequest(request);
           stream.listen((response) {
             // TODO: To be revisited
             handleRawRequest(request, response);
           });
         });
-        return Future.value(_server);
+        return Future.value(this.server!);
       });
     }).catchError((error) {
-      log.severe('Failed to create server', error);
+      app.logger.severe('Failed to create server', error);
       throw ArgumentError('[Driver]Failed to create server');
     });
   }
@@ -123,6 +108,8 @@ abstract class Driver<
 
   /// Handles a single request.
   Future handleRawRequest(Request request, Response response) {
+    app.logger.info('[Server] Called handleRawRequest');
+
     return createRequestContext(request, response).then((req) {
       return createResponseContext(request, response, req).then((res) {
         Future handle() {
@@ -164,7 +151,7 @@ abstract class Driver<
             ..registerSingleton<ParseResult<RouteResult>?>(tuple.item3)
             ..registerSingleton<ParseResult?>(tuple.item3);
 
-          if (app.environment.isProduction && app.logger != null) {
+          if (!app.environment.isProduction) {
             req.container?.registerSingleton<Stopwatch>(Stopwatch()..start());
           }
 
@@ -186,7 +173,7 @@ abstract class Driver<
               throw AngelHttpException.badRequest(message: e.message)
                 ..stackTrace = st;
             }
-            throw AngelHttpException(e,
+            throw AngelHttpException(
                 stackTrace: st,
                 statusCode: (e is AngelHttpException) ? e.statusCode : 500,
                 message: e?.toString() ?? '500 Internal Server Error');
@@ -199,28 +186,22 @@ abstract class Driver<
             if (ee is AngelHttpException) {
               e = ee;
             } else {
-              e = AngelHttpException(ee,
+              e = AngelHttpException(
                   stackTrace: st,
                   statusCode: 500,
                   message: ee?.toString() ?? '500 Internal Server Error');
             }
 
-            if (app.logger != null) {
-              var error = e.error ?? e;
-              var trace = Trace.from(StackTrace.current).terse;
-              app.logger?.severe(e.message, error, trace);
-            }
+            var error = e.error ?? e;
+            var trace = Trace.from(StackTrace.current).terse;
+            app.logger.severe(e.message, error, trace);
 
             return handleAngelHttpException(e, st, req, res, request, response);
           });
         } else {
           var zoneSpec = ZoneSpecification(
             print: (self, parent, zone, line) {
-              if (app.logger != null) {
-                app.logger?.info(line);
-              } else {
-                parent.print(zone, line);
-              }
+              app.logger.info(line);
             },
             handleUncaughtError: (self, parent, zone, error, stackTrace) {
               var trace = Trace.from(stackTrace).terse;
@@ -234,13 +215,11 @@ abstract class Driver<
                 } else if (error is AngelHttpException) {
                   e = error;
                 } else {
-                  e = AngelHttpException(error,
+                  e = AngelHttpException(
                       stackTrace: stackTrace, message: error.toString());
                 }
 
-                if (app.logger != null) {
-                  app.logger?.severe(e.message, error, trace);
-                }
+                app.logger.severe(e.message, error, trace);
 
                 return handleAngelHttpException(
                     e, trace, req, res, request, response);
@@ -249,23 +228,15 @@ abstract class Driver<
                 closeResponse(response);
                 // Ideally, we won't be in a position where an absolutely fatal error occurs,
                 // but if so, we'll need to log it.
-                if (app.logger != null) {
-                  app.logger?.severe(
-                      'Fatal error occurred when processing $uri.', e, trace);
-                } else {
-                  stderr
-                    ..writeln('Fatal error occurred when processing '
-                        '${req.uri}:')
-                    ..writeln(e)
-                    ..writeln(trace);
-                }
+                app.logger.severe(
+                    'Fatal error occurred when processing $uri.', e, trace);
               });
             },
           );
 
           var zone = Zone.current.fork(specification: zoneSpec);
-          req.container!.registerSingleton<Zone>(zone);
-          req.container!.registerSingleton<ZoneSpecification>(zoneSpec);
+          req.container?.registerSingleton<Zone>(zone);
+          req.container?.registerSingleton<ZoneSpecification>(zoneSpec);
 
           // If a synchronous error is thrown, it's not caught by `zone.run`,
           // so use a try/catch, and recover when need be.
@@ -292,12 +263,12 @@ abstract class Driver<
       {bool ignoreFinalizers = false}) {
     if (req == null || res == null) {
       try {
-        app.logger?.severe('500 Internal Server Error', e, st);
+        app.logger.severe('500 Internal Server Error', e, st);
         setStatusCode(response, 500);
         writeStringToResponse(response, '500 Internal Server Error');
         closeResponse(response);
       } catch (e) {
-        app.logger?.severe('500 Internal Server Error', e);
+        app.logger.severe('500 Internal Server Error', e);
       }
       return Future.value();
     }
@@ -322,18 +293,31 @@ abstract class Driver<
   Future sendResponse(Request request, Response response, RequestContext req,
       ResponseContext res,
       {bool ignoreFinalizers = false}) {
-    Future<void> _cleanup(_) {
-      if (app.environment.isProduction &&
-          app.logger != null &&
-          req.container!.has<Stopwatch>()) {
+    //app.logger.fine("Calling SendResponse");
+    Future<void> cleanup(_) {
+      if (!app.environment.isProduction && req.container!.has<Stopwatch>()) {
         var sw = req.container!.make<Stopwatch>();
-        app.logger?.info(
+        app.logger.fine(
             "${res.statusCode} ${req.method} ${req.uri} (${sw.elapsedMilliseconds} ms)");
       }
       return req.close();
     }
 
-    if (!res.isBuffered) return res.close().then(_cleanup);
+    // TODO: Debugging header
+    /*
+    for (var key in res.headers.keys) {
+      app.logger.fine("Response header key: $key");
+    }
+    */
+
+    if (!res.isBuffered) {
+      //if (res.isOpen) {
+      return res.close().then(cleanup);
+      //}
+      //return Future.value();
+    }
+
+    //app.logger.fine("Calling finalizers");
 
     var finalizers = ignoreFinalizers == true
         ? Future.value()
@@ -343,13 +327,14 @@ abstract class Driver<
       //if (res.isOpen) res.close();
 
       for (var key in res.headers.keys) {
+        app.logger.fine("Response header key: $key");
         setHeader(response, key, res.headers[key] ?? '');
       }
 
-      setContentLength(response, res.buffer!.length);
+      setContentLength(response, res.buffer?.length ?? 0);
       setChunkedEncoding(response, res.chunked ?? true);
 
-      List<int> outputBuffer = res.buffer!.toBytes();
+      var outputBuffer = res.buffer?.toBytes() ?? <int>[];
 
       if (res.encoders.isNotEmpty) {
         var allowedEncodings = req.headers
@@ -366,9 +351,9 @@ abstract class Driver<
 
         if (allowedEncodings != null) {
           for (var encodingName in allowedEncodings) {
-            Converter<List<int>, List<int>>? encoder;
             var key = encodingName;
 
+            Converter<List<int>, List<int>>? encoder;
             if (res.encoders.containsKey(encodingName)) {
               encoder = res.encoders[encodingName];
             } else if (encodingName == '*') {
@@ -377,7 +362,8 @@ abstract class Driver<
 
             if (encoder != null) {
               setHeader(response, 'content-encoding', key);
-              outputBuffer = res.encoders[key]!.convert(outputBuffer);
+              outputBuffer =
+                  res.encoders[key]?.convert(outputBuffer) ?? <int>[];
               setContentLength(response, outputBuffer.length);
               break;
             }
@@ -388,7 +374,7 @@ abstract class Driver<
       setStatusCode(response, res.statusCode);
       addCookies(response, res.cookies);
       writeToResponse(response, outputBuffer);
-      return closeResponse(response).then(_cleanup);
+      return closeResponse(response).then(cleanup);
     });
   }
 

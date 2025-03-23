@@ -1,4 +1,4 @@
-library angel3_serialize_generator;
+library;
 
 import 'dart:async';
 import 'dart:mirrors';
@@ -7,7 +7,6 @@ import 'package:analyzer/dart/constant/value.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/element/type.dart';
-import 'package:angel3_model/angel3_model.dart';
 import 'package:angel3_serialize/angel3_serialize.dart';
 import 'package:build/build.dart';
 import 'package:belatuk_code_buffer/belatuk_code_buffer.dart';
@@ -39,13 +38,18 @@ Builder typescriptDefinitionBuilder(_) {
 }
 
 /// Converts a [DartType] to a [TypeReference].
-TypeReference convertTypeReference(DartType t, {bool forceNullable = false}) {
+TypeReference convertTypeReference(DartType t,
+    {bool forceNullable = false, bool ignoreNullabilityCheck = false}) {
   return TypeReference((b) {
     b.symbol = t.element?.displayName;
 
     // Generate nullable type
-    if (t.nullabilitySuffix == NullabilitySuffix.question || forceNullable) {
-      b.isNullable = true;
+    if (ignoreNullabilityCheck) {
+      b.isNullable = false;
+    } else {
+      if (t.nullabilitySuffix == NullabilitySuffix.question || forceNullable) {
+        b.isNullable = true;
+      }
     }
 
     if (t is InterfaceType) {
@@ -60,7 +64,7 @@ Expression convertObject(DartObject o) {
   if (o.toIntValue() != null) return literalNum(o.toIntValue()!);
   if (o.toDoubleValue() != null) return literalNum(o.toDoubleValue()!);
   if (o.toSymbolValue() != null) {
-    return CodeExpression(Code('#' + o.toSymbolValue()!));
+    return CodeExpression(Code('#${o.toSymbolValue()!}'));
   }
   if (o.toStringValue() != null) return literalString(o.toStringValue()!);
   if (o.toTypeValue() != null) return convertTypeReference(o.toTypeValue()!);
@@ -93,37 +97,42 @@ String? dartObjectToString(DartObject v) {
     return v.toDoubleValue().toString();
   }
   if (v.toSymbolValue() != null) {
-    return '#' + v.toSymbolValue()!;
+    return '#${v.toSymbolValue()!}';
   }
   if (v.toTypeValue() != null) {
-    return v.toTypeValue()!.getDisplayString(withNullability: true);
+    return v.toTypeValue()!.getDisplayString();
   }
   if (v.toListValue() != null) {
-    return 'const [' +
-        v.toListValue()!.map(dartObjectToString).join(', ') +
-        ']';
+    return 'const [${v.toListValue()!.map(dartObjectToString).join(', ')}]';
   }
   if (v.toMapValue() != null) {
-    return 'const {' +
-        v.toMapValue()!.entries.map((entry) {
-          var k = dartObjectToString(entry.key!);
-          var v = dartObjectToString(entry.value!);
-          return '$k: $v';
-        }).join(', ') +
-        '}';
+    return 'const {${v.toMapValue()!.entries.map((entry) {
+      var k = dartObjectToString(entry.key!);
+      var v = dartObjectToString(entry.value!);
+      return '$k: $v';
+    }).join(', ')}}';
   }
   if (v.toStringValue() != null) {
     return literalString(v.toStringValue()!)
         .accept(DartEmitter(useNullSafetySyntax: true))
         .toString();
   }
-  if (type is InterfaceType && type.element.isEnum) {
+  if (type is InterfaceType && type.element is EnumElement) {
     // Find the index of the enum, then find the member.
     for (var field in type.element.fields) {
       if (field.isEnumConstant && field.isStatic) {
         var value = type.element.getField(field.name)!.computeConstantValue();
-        if (value == v) {
-          return '${type.element.displayName}.${field.name}';
+        if (v is Enum && value is Enum) {
+          var v2 = v as Enum;
+          var value2 = value as Enum;
+
+          if (value2.name == v2.name) {
+            return '${type.element.displayName}.${field.name}';
+          }
+        } else {
+          if (value == v) {
+            return '${type.element.displayName}.${field.name}';
+          }
         }
       }
     }
@@ -173,7 +182,7 @@ bool isListOrMapType(DartType t) {
 
 bool isEnumType(DartType t) {
   if (t is InterfaceType) {
-    return t.element.isEnum;
+    return t.element is Enum;
   }
 
   return false;
@@ -205,7 +214,7 @@ String? typeToString(DartType type) {
 
     var name = type.element.displayName;
 
-    return name + '<' + type.typeArguments.map(typeToString).join(', ') + '>';
+    return '$name<${type.typeArguments.map(typeToString).join(', ')}>';
   } else {
     return type.element?.displayName;
   }

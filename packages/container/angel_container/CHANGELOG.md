@@ -1,5 +1,57 @@
 # Change Log
 
+## 8.3.0
+
+* Require Dart >= 3.6
+* Updated `lints` to 5.0.0
+* Updated dependencies to the latest release
+
+## 8.2.0
+
+* Require Dart >= 3.3
+* Updated `lints` to 4.0.0
+
+## 8.1.1
+
+* Updated repository link
+
+## 8.1.0
+
+* Updated `lints` to 3.0.0
+* Fixed analyser warnings
+
+## 8.0.0
+
+* Require Dart >= 3.0
+
+## 7.1.0-beta.2
+
+* Require Dart >= 2.19
+* Refactored `EmptyReflector`
+
+## 7.1.0-beta.1
+
+* Require Dart >= 2.18
+* Moved `defaultErrorMessage` to `ContainerConst` class to resolve reflectatable issue.
+* Added `hashCode`
+
+## 7.0.0
+
+* Require Dart >= 2.17
+
+## 6.0.0
+
+* Require Dart >= 2.16
+* Removed `error`
+
+## 5.0.0
+
+* Skipped release
+
+## 4.0.0
+
+* Skipped release
+  
 ## 3.1.1
 
 * Updated `_ReflectedMethodMirror` to have optional `returnType` parameter
@@ -19,11 +71,11 @@
 
 ## 3.0.0
 
-* Migrated to support Dart SDK 2.12.x NNBD
+* Migrated to support Dart >= 2.12 NNBD
 
 ## 2.0.0
 
-* Migrated to work with Dart SDK 2.12.x Non NNBD
+* Migrated to work with Dart >= 2.12 Non NNBD
 
 ## 1.1.0
 

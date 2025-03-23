@@ -2,8 +2,8 @@
 
 ![Pub Version (including pre-releases)](https://img.shields.io/pub/v/angel3_auth?include_prereleases)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
-[![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
-[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/master/packages/auth/LICENSE)
+[![Discord](https://img.shields.io/discord/1060322353214660698)](https://discord.gg/3X6bxTUdCM)
+[![License](https://img.shields.io/github/license/dart-backend/angel)](https://github.com/dart-backend/angel/tree/master/packages/auth/LICENSE)
 
 A complete authentication plugin for Angel3. Inspired by Passport. More details in the [User Guide](https://angel3-docs.dukefirehawk.com/guides/authentication).
 
@@ -20,7 +20,7 @@ Ensure you have read the [User Guide](https://angel3-docs.dukefirehawk.com/guide
 configureServer(Angel app) async {
   var auth = AngelAuth<User>(
     serializer: (user) => user.id ?? '',
-    deserializer: (id) => fetchAUserByIdSomehow(id)
+    deserializer: (id) => fetchAUserByIdSomehow(id
   );
   auth.strategies['local'] = LocalAuthStrategy(...);
   

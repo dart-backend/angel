@@ -1,15 +1,16 @@
 # Angel3 Framework
 
+[![Angel3 Framework](../../angel3_logo.png)](https://github.com/dart-backend/angel)
+
 ![Pub Version (including pre-releases)](https://img.shields.io/pub/v/angel3_framework?include_prereleases)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
-[![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
-[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/master/packages/framework/LICENSE)
-
-**Replacement of Angel Framework with major change to support NNBD.**
+[![Discord](https://img.shields.io/discord/1060322353214660698)](https://discord.gg/3X6bxTUdCM)
+[![License](https://img.shields.io/github/license/dart-backend/angel)](https://github.com/dart-backend/angel/tree/master/packages/framework/LICENSE)
+[![melos](https://img.shields.io/badge/maintained%20with-melos-f700ff.svg?style=flat-square)](https://github.com/invertase/melos)
 
 Angel3 framework is a high-powered HTTP server with support for dependency injection, sophisticated routing, authentication, ORM, graphql etc. It is designed to keep the core minimal but extensible through a series of plugin packages. It won't dictate which features, databases or web templating engine to use. This flexibility enable Angel3 framework to grow with your application as new features can be added to handle the new use cases.
 
-This package is the core package of [Angel 3](https://github.com/dukefirehawk/angel). To see more details, please refer to the [Developer Guide](https://angel3-docs.dukefirehawk.com).
+This package is the core package of [Angel3](https://github.com/dart-backend/angel). For more information, visit us at [Angel3 Website](https://angel3-framework.web.app).
 
 ## Installation and Setup
 
@@ -18,9 +19,10 @@ This package is the core package of [Angel 3](https://github.com/dukefirehawk/an
 1. Download and install [Dart](https://dart.dev/get-dart)
 
 2. Clone one of the following starter projects:
-   * [Angel3 Basic Template](https://github.com/dukefirehawk/boilerplates/tree/angel3-basic)
-   * [Angel3 ORM Template](https://github.com/dukefirehawk/boilerplates/tree/angel3-orm)
-   * [Angel3 Graphql Template](https://github.com/dukefirehawk/boilerplates/tree/angel3-graphql)
+   * [Angel3 Basic Template](https://github.com/dukefirehawk/boilerplates/tree/v7/angel3-basic)
+   * [Angel3 ORM Template](https://github.com/dukefirehawk/boilerplates/tree/v7/angel3-orm)
+   * [Angel3 ORM MySQL Template](https://github.com/dukefirehawk/boilerplates/tree/v7/angel3-orm-mysql)
+   * [Angel3 Graphql Template](https://github.com/dukefirehawk/boilerplates/tree/v7/angel3-graphql)
 
 3. Run the project in development mode (*hot-reloaded* is enabled on file changes).
 
@@ -66,6 +68,19 @@ This package is the core package of [Angel 3](https://github.com/dukefirehawk/an
 
 6. Run as docker. Edit and build the image with the provided `Dockerfile` file.
 
+## Performance Benchmark
+
+The performance benchmark can be found at
+
+[TechEmpower Framework Benchmarks Round 21](https://www.techempower.com/benchmarks/#section=data-r21&test=composite)
+
 ### Migrating from Angel to Angel3
 
 Check out [Migrating to Angel3](https://angel3-docs.dukefirehawk.com/migration/angel-2.x.x-to-angel3/migration-guide-3)
+
+## Donation & Support
+
+If you like this project and interested in supporting its development, you can make a donation using the following services:
+
+* [![GitHub](https://img.shields.io/static/v1?label=Sponsor&message=%E2%9D%A4&logo=GitHub&color=%23fe8e86)](https://github.com/sponsors/dukefirehawk)
+* [paypal](https://paypal.me/dukefirehawk?country.x=MY&locale.x=en_US) service

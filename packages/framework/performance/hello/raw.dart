@@ -1,9 +1,9 @@
 /// A basic server that prints "Hello, world!"
-library performance.hello;
+library;
 
 import 'dart:io';
 
-Future<Null> main() {
+Future<void> main() {
   return HttpServer.bind('127.0.0.1', 3000, shared: true).then((server) {
     print('Listening at http://${server.address.address}:${server.port}');
 

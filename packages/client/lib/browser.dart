@@ -1,5 +1,5 @@
 /// Browser client library for the Angel framework.
-library angel_client.browser;
+library;
 
 import 'dart:async'
     show Future, Stream, StreamController, StreamSubscription, Timer;
@@ -17,10 +17,7 @@ class Rest extends BaseAngelClient {
 
   @override
   Future<AngelAuthResult> authenticate(
-      {String? type,
-      credentials,
-      String authEndpoint = '/auth',
-      @deprecated String reviveEndpoint = '/auth/token'}) async {
+      {String? type, credentials, String authEndpoint = '/auth'}) async {
     if (type == null || type == 'token') {
       if (!window.localStorage.containsKey('token')) {
         throw Exception(

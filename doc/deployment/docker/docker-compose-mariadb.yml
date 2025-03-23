@@ -1,0 +1,13 @@
+services:
+  mariadb:
+    image: mariadb:latest
+    restart: "no"
+    ports:
+      - "3306:3306"
+    environment:
+      - MARIADB_ROOT_PASSWORD=Qwerty
+    networks:
+      - appnet
+
+networks:
+  appnet:

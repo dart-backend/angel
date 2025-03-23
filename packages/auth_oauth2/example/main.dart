@@ -99,7 +99,7 @@ void main() async {
         //
         // Use `confirmPopupAuthentication`, which is bundled with
         // `package:angel_auth`.
-        var user = req.container!.make<User>()!;
+        var user = req.container!.make<User>();
         res.write('Your user info: ${user.toJson()}\n\n');
         res.write('Your JWT: $jwt');
         await res.close();
@@ -113,12 +113,9 @@ void main() async {
 }
 
 class User extends Model {
-  @override
-  String? id;
-
   int? githubId;
 
-  User({this.id, this.githubId});
+  User({super.id, this.githubId});
 
   static User parse(Map<String, dynamic> map) =>
       User(id: map['id'] as String?, githubId: map['github_id'] as int?);

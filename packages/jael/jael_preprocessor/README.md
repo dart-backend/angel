@@ -2,8 +2,8 @@
 
 ![Pub Version (including pre-releases)](https://img.shields.io/pub/v/jael3_preprocessor?include_prereleases)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
-[![Gitter](https://img.shields.io/gitter/room/angel_dart/discussion)](https://gitter.im/angel_dart/discussion)
-[![License](https://img.shields.io/github/license/dukefirehawk/angel)](https://github.com/dukefirehawk/angel/tree/master/packages/jael/jael_preprocessor/LICENSE)
+[![Discord](https://img.shields.io/discord/1060322353214660698)](https://discord.gg/3X6bxTUdCM)
+[![License](https://img.shields.io/github/license/dart-backend/angel)](https://github.com/dart-backend/angel/tree/master/packages/jael/jael_preprocessor/LICENSE)
 
 A pre-processor for resolving blocks and includes within [Jael 3](https://pub.dev/packages/jael3) templates.
 
@@ -13,7 +13,7 @@ In your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  jael3_prepreprocessor: ^4.2.0
+  jael3_prepreprocessor: ^8.0.0
 ```
 
 ## Usage

@@ -1,9 +1,12 @@
 import 'dart:async';
-import 'package:angel3_migration/angel3_migration.dart';
-import 'package:postgres/postgres.dart';
-import 'package:angel3_migration_runner/src/postgres/table.dart';
-import 'package:logging/logging.dart';
 
+import 'package:angel3_migration/angel3_migration.dart';
+import 'package:logging/logging.dart';
+import 'package:postgres/postgres.dart';
+
+import 'table.dart';
+
+/// A PostgreSQL database schema generator
 class PostgresSchema extends Schema {
   final _log = Logger('PostgresSchema');
 
@@ -14,17 +17,18 @@ class PostgresSchema extends Schema {
 
   factory PostgresSchema() => PostgresSchema._(StringBuffer(), 0);
 
-  Future<int> run(PostgreSQLConnection connection) async {
+  Future<int> run(Connection connection) async {
     //return connection.execute(compile());
-    var result = await connection.transaction((ctx) async {
+    var result = await connection.runTx((ctx) async {
       var sql = compile();
-      var result = await ctx.query(sql).catchError((e) {
+      var result = await ctx.execute(sql).catchError((e) {
         _log.severe('Failed to run query: [ $sql ]', e);
+        throw Exception(e);
       });
-      return result.affectedRowCount;
+      return result.affectedRows;
     });
 
-    return (result is int) ? result : 0;
+    return result;
   }
 
   String compile() => _buf.toString();
@@ -71,4 +75,12 @@ class PostgresSchema extends Schema {
   void createIfNotExists(
           String tableName, void Function(Table table) callback) =>
       _create(tableName, callback, true);
+
+  @override
+  void indexes(String tableName, void Function(MutableIndexes table) callback) {
+    var tbl = PostgresIndexes(tableName);
+    callback(tbl);
+
+    tbl.compile(_buf);
+  }
 }

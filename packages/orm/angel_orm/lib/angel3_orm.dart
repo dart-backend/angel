@@ -13,3 +13,4 @@ export 'src/query.dart';
 export 'src/relations.dart';
 export 'src/union.dart';
 export 'src/util.dart';
+export 'src/dialect/dialect.dart';

@@ -3,7 +3,9 @@ import 'package:angel3_migration_runner/postgres.dart';
 import 'connect.dart';
 import 'todo.dart';
 
-Future main(List<String> args) {
+Future main(List<String> args) async {
+  final conn = await dbConnection();
+
   var runner = PostgresMigrationRunner(conn, migrations: [
     TodoMigration(),
   ]);

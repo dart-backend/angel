@@ -2,12 +2,12 @@ import 'package:angel3_paginate/angel3_paginate.dart';
 import 'package:test/test.dart';
 
 // Count-down from 100, then 101 at the end...
-final List<int> DATA = List<int>.generate(100, (i) => 100 - i)..add(101);
+final List<int> data = List<int>.generate(100, (i) => 100 - i)..add(101);
 
 void main() {
   group('cache', () {
-    var cached = Paginator<int>(DATA),
-        uncached = Paginator<int>(DATA, useCache: false);
+    var cached = Paginator<int>(data),
+        uncached = Paginator<int>(data, useCache: false);
 
     test('always cache current', () {
       expect(cached.current, cached.current);
@@ -34,7 +34,7 @@ void main() {
   });
 
   test('default state', () {
-    var paginator = Paginator<int>(DATA);
+    var paginator = Paginator<int>(data);
     expect(paginator.index, 0);
     expect(paginator.pageNumber, 1);
     expect(paginator.itemsPerPage, 5);
@@ -51,56 +51,56 @@ void main() {
 
   group('paginate', () {
     test('first page', () {
-      var paginator = Paginator<int>(DATA);
+      var paginator = Paginator<int>(data);
       expect(paginator.pageNumber, 1);
       var r = paginator.current!;
       print(r.toJson());
-      expect(r.total, DATA.length);
+      expect(r.total, data.length);
       expect(r.itemsPerPage, 5);
       expect(r.previousPage, -1);
       expect(r.currentPage, 1);
       expect(r.nextPage, 2);
       expect(r.startIndex, 0);
       expect(r.endIndex, 4);
-      expect(r.data, DATA.skip(r.startIndex!).take(r.itemsPerPage!).toList());
+      expect(r.data, data.skip(r.startIndex!).take(r.itemsPerPage!).toList());
     });
   });
 
   test('third page', () {
-    var paginator = Paginator<int>(DATA)..goToPage(3);
+    var paginator = Paginator<int>(data)..goToPage(3);
     expect(paginator.pageNumber, 3);
     var r = paginator.current!;
     print(r.toJson());
-    expect(r.total, DATA.length);
+    expect(r.total, data.length);
     expect(r.itemsPerPage, 5);
     expect(r.previousPage, 2);
     expect(r.currentPage, 3);
     expect(r.nextPage, 4);
     expect(r.startIndex, 10);
     expect(r.endIndex, 14);
-    expect(r.data, DATA.skip(r.startIndex!).take(r.itemsPerPage!).toList());
+    expect(r.data, data.skip(r.startIndex!).take(r.itemsPerPage!).toList());
 
     paginator.back();
     expect(paginator.pageNumber, 2);
   });
 
   test('last page', () {
-    var paginator = Paginator<int>(DATA);
+    var paginator = Paginator<int>(data);
     paginator.goToPage(paginator.lastPageNumber);
     var r = paginator.current!;
-    expect(r.total, DATA.length);
+    expect(r.total, data.length);
     expect(r.itemsPerPage, 5);
     expect(r.previousPage, paginator.lastPageNumber - 1);
     expect(r.currentPage, paginator.lastPageNumber);
     expect(r.nextPage, -1);
     expect(r.startIndex, (paginator.lastPageNumber - 1) * 5);
     expect(r.endIndex, r.startIndex);
-    expect(r.data, [DATA.last]);
-    expect(r.data, DATA.skip(r.startIndex!).take(r.itemsPerPage!).toList());
+    expect(r.data, [data.last]);
+    expect(r.data, data.skip(r.startIndex!).take(r.itemsPerPage!).toList());
   });
 
   test('dump pages', () {
-    var paginator = Paginator<int>(DATA);
+    var paginator = Paginator<int>(data);
     print('${paginator.lastPageNumber} page(s) of data:');
 
     do {

@@ -32,9 +32,8 @@ void main() {
     app1.post('/message', (req, res) async {
       // Manually broadcast. Even though app1 has no clients, it *should*
       // propagate to app2.
-      var ws = req.container!.make<AngelWebSocket>()!;
+      var ws = req.container!.make<AngelWebSocket>();
 
-      // TODO: body retuns void
       //var body = await req.parseBody();
       var body = {};
       await ws.batchEvent(WebSocketEvent(

@@ -6,7 +6,7 @@ part of 'using_components.dart';
 // JaelComponentGenerator
 // **************************************************************************
 
-abstract class _MyAppJaelTemplate implements Component<dynamic> {
+mixin _MyAppJaelTemplate implements Component<dynamic> {
   @override
   DomNode render() {
     return h('div', {}, [
@@ -16,7 +16,7 @@ abstract class _MyAppJaelTemplate implements Component<dynamic> {
   }
 }
 
-abstract class _LabeledInputJaelTemplate implements Component<dynamic> {
+mixin _LabeledInputJaelTemplate implements Component<dynamic> {
   String? get name;
   @override
   DomNode render() {
@@ -25,11 +25,10 @@ abstract class _LabeledInputJaelTemplate implements Component<dynamic> {
         h('b', {}, [text(name.toString()), text(':')])
       ]),
       h('br', {}, []),
-      h('input', {
-        'name': name,
-        'placeholder': "Enter " + name! + "...",
-        'type': "text"
-      }, [])
+      h(
+          'input',
+          {'name': name, 'placeholder': "Enter ${name!}...", 'type': "text"},
+          [])
     ]);
   }
 }

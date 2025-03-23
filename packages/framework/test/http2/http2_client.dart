@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io';
+import 'dart:io' hide BytesBuilder;
+import 'dart:typed_data';
 import 'package:http/http.dart';
 import 'package:http2/transport.dart';
 
@@ -24,7 +25,7 @@ class Http2Client extends BaseClient {
       Header.ascii(
           ':path',
           request.url.path +
-              (request.url.hasQuery ? ('?' + request.url.query) : '')),
+              (request.url.hasQuery ? ('?${request.url.query}') : '')),
       Header.ascii(':scheme', request.url.scheme),
     ];
 

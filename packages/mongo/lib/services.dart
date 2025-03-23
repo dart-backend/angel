@@ -1,4 +1,4 @@
-library angel3_mongo.services;
+library;
 
 import 'dart:async';
 import 'package:angel3_framework/angel3_framework.dart';
@@ -37,15 +37,17 @@ Map<String, dynamic> _removeSensitive(Map<String, dynamic> data) {
       .fold({}, (map, key) => map..[key] = data[key]);
 }
 
-const List<String> _NO_QUERY = ['__requestctx', '__responsectx'];
+const List<String> _noQuery = ['__requestctx', '__responsectx'];
 
 Map<String, dynamic> _filterNoQuery(Map<String, dynamic> data) {
   return data.keys.fold({}, (map, key) {
     var value = data[key];
 
-    if (_NO_QUERY.contains(key) ||
+    if (_noQuery.contains(key) ||
         value is RequestContext ||
-        value is ResponseContext) return map;
+        value is ResponseContext) {
+      return map;
+    }
     if (key is! Map) return map..[key] = value;
     return map..[key] = _filterNoQuery(value as Map<String, dynamic>);
   });

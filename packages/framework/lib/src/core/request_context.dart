@@ -1,15 +1,10 @@
-library angel_framework.http.request_context;
+library;
 
 import 'dart:async';
 import 'dart:convert';
+import 'dart:typed_data' show BytesBuilder;
 import 'dart:io'
-    show
-        BytesBuilder,
-        Cookie,
-        HeaderValue,
-        HttpHeaders,
-        HttpSession,
-        InternetAddress;
+    show Cookie, HeaderValue, HttpHeaders, HttpSession, InternetAddress;
 
 import 'package:angel3_container/angel3_container.dart';
 import 'package:http_parser/http_parser.dart';

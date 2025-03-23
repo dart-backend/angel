@@ -8,7 +8,10 @@ part of 'main.dart';
 
 @generatedSerializable
 class Todo extends _Todo {
-  Todo({this.text, this.completed});
+  Todo({
+    this.text,
+    this.completed,
+  });
 
   @override
   String? text;
@@ -16,7 +19,10 @@ class Todo extends _Todo {
   @override
   bool? completed;
 
-  Todo copyWith({String? text, bool? completed}) {
+  Todo copyWith({
+    String? text,
+    bool? completed,
+  }) {
     return Todo(
         text: text ?? this.text, completed: completed ?? this.completed);
   }
@@ -28,7 +34,10 @@ class Todo extends _Todo {
 
   @override
   int get hashCode {
-    return hashObjects([text, completed]);
+    return hashObjects([
+      text,
+      completed,
+    ]);
   }
 
   @override
@@ -75,13 +84,19 @@ class TodoSerializer extends Codec<Todo, Map> {
         text: map['text'] as String?, completed: map['completed'] as bool?);
   }
 
-  static Map<String, dynamic> toMap(_Todo model) {
+  static Map<String, dynamic> toMap(_Todo? model) {
+    if (model == null) {
+      throw FormatException("Required field [model] cannot be null");
+    }
     return {'text': model.text, 'completed': model.completed};
   }
 }
 
 abstract class TodoFields {
-  static const List<String> allFields = <String>[text, completed];
+  static const List<String> allFields = <String>[
+    text,
+    completed,
+  ];
 
   static const String text = 'text';
 

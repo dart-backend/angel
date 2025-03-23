@@ -1,4 +1,4 @@
-library angel3_route.src.router;
+library;
 
 import 'dart:async';
 import 'package:belatuk_combinator/belatuk_combinator.dart';
@@ -86,8 +86,8 @@ class Router<T> {
   /// by the resulting router.
   ///
   /// The resulting router can be chained, too.
-  _ChainedRouter<T> chain(Iterable<T> middleware) {
-    var piped = _ChainedRouter<T>(this, middleware);
+  ChainedRouter<T> chain(Iterable<T> middleware) {
+    var piped = ChainedRouter<T>(this, middleware);
     var route = SymlinkRoute<T>('/', piped);
     _routes.add(route);
     return piped;
@@ -101,7 +101,7 @@ class Router<T> {
     for (var route in routes) {
       if (route is! SymlinkRoute<T>) {
         router._routes.add(route.clone());
-      } else if (route is SymlinkRoute<T>) {
+      } else {
         final newRouter = route.router.clone();
         newMounted[route.path] = newRouter;
         final symlink = SymlinkRoute<T>(route.path, newRouter);
@@ -141,7 +141,7 @@ class Router<T> {
         indent();
         buf.write('- ');
         if (route is! SymlinkRoute) buf.write('${route.method} ');
-        buf.write('${route.path.isNotEmpty ? route.path : '/'}');
+        buf.write(route.path.isNotEmpty ? route.path : '/');
 
         if (route is SymlinkRoute<T>) {
           buf.writeln();
@@ -412,13 +412,13 @@ class Router<T> {
   }
 }
 
-class _ChainedRouter<T> extends Router<T> {
+class ChainedRouter<T> extends Router<T> {
   final List<T> _handlers = <T>[];
   Router _root;
 
-  _ChainedRouter.empty() : _root = Router();
+  ChainedRouter.empty() : _root = Router();
 
-  _ChainedRouter(this._root, Iterable<T> middleware) {
+  ChainedRouter(this._root, Iterable<T> middleware) {
     _handlers.addAll(middleware);
   }
 
@@ -434,7 +434,7 @@ class _ChainedRouter<T> extends Router<T> {
   @override
   SymlinkRoute<T> group(String path, void Function(Router<T> router) callback,
       {Iterable<T> middleware = const [], String? name}) {
-    final router = _ChainedRouter<T>(_root, [..._handlers, ...middleware]);
+    final router = ChainedRouter<T>(_root, [..._handlers, ...middleware]);
     callback(router);
     return mount(path, router)..name = name;
   }
@@ -443,7 +443,7 @@ class _ChainedRouter<T> extends Router<T> {
   Future<SymlinkRoute<T>> groupAsync(
       String path, FutureOr<void> Function(Router<T> router) callback,
       {Iterable<T> middleware = const [], String? name}) async {
-    final router = _ChainedRouter<T>(_root, [..._handlers, ...middleware]);
+    final router = ChainedRouter<T>(_root, [..._handlers, ...middleware]);
     await callback(router);
     return mount(path, router)..name = name;
   }
@@ -457,8 +457,8 @@ class _ChainedRouter<T> extends Router<T> {
   }
 
   @override
-  _ChainedRouter<T> chain(Iterable<T> middleware) {
-    final piped = _ChainedRouter<T>.empty().._root = _root;
+  ChainedRouter<T> chain(Iterable<T> middleware) {
+    final piped = ChainedRouter<T>.empty().._root = _root;
     piped._handlers.addAll([..._handlers, ...middleware]);
     var route = SymlinkRoute<T>('/', piped);
     _routes.add(route);
