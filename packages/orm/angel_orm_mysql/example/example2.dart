@@ -1,6 +1,5 @@
 import 'package:logging/logging.dart';
 import 'package:mysql_client/mysql_client.dart';
-import 'package:mysql_client/mysql_protocol.dart';
 
 void main() async {
   Logger.root.level = Level.ALL; // defaults to Level.INFO
@@ -42,7 +41,7 @@ void main() async {
 
   //logger.fine(rowResult.assoc());
   //logger.fine(rowResult.typedAssoc());
-
+  /*
   Map<String, dynamic> parseSQLNamedResult(IResultSet res) {
     var colNames = [];
     var columns = [];
@@ -77,7 +76,7 @@ void main() async {
 
     return retResult;
   }
-
+  */
   List<List<dynamic>> parseSQLResult(IResultSet res) {
     var colTypes = res.cols.map((col) => col.type).toList();
 

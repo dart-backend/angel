@@ -1,5 +1,5 @@
 name: angel3_websocket
-version: 8.3.0
+version: 8.4.0
 description: This library provides WebSockets support for Angel3 framework.
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dart-backend/angel/tree/master/packages/websocket
@@ -13,6 +13,7 @@ dependencies:
   belatuk_merge_map: ^5.1.0
   http: ^1.0.0
   meta: ^1.8.0
+  web: ^1.1.0
   stream_channel: ^2.1.0
   web_socket_channel: ^3.0.0
   collection: ^1.17.0

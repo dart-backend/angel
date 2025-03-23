@@ -4,7 +4,7 @@ import 'package:test/test.dart';
 import 'models/has_car.dart';
 
 void main() async {
-  Logger.root.level = Level.ALL; // defaults to Level.INFO
+  Logger.root.level = Level.INFO; // defaults to Level.INFO
   Logger.root.onRecord.listen((record) {
     print('${record.loggerName}: ${record.time}: ${record.message}');
   });

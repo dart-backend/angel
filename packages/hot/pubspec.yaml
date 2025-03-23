@@ -1,5 +1,5 @@
 name: angel3_hot
-version: 8.3.1
+version: 8.4.0
 description: Supports hot reloading/hot code push of Angel3 servers on file changes.
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dart-backend/angel/tree/master/packages/hot
@@ -13,7 +13,7 @@ dependencies:
   glob: ^2.1.0
   io: ^1.0.0
   path: ^1.9.0
-  vm_service: ^14.0.0
+  vm_service: ^15.0.0
   watcher: ^1.0.0
   logging: ^1.2.0
 dev_dependencies:

@@ -11,7 +11,11 @@ import 'package:mysql_client/mysql_client.dart';
 
 List tmpTables = [];
 
-// For MySQL
+// MySQL and MariaDB has some differences in the ordering of the results
+// Update this according to either 'mysql' or 'mariadb'
+const TARGET_TEST_DATABASE = 'mariadb';
+
+// For MySQL/MariaDB using `mysql_client` driver
 Future<MySQLConnection> openMySqlConnection() async {
   var connection = await MySQLConnection.createConnection(
       databaseName: 'orm_test',
@@ -65,8 +69,8 @@ String extractTableName(String createQuery) {
   return createQuery.substring(start + 6, end).trim();
 }
 
-// Executor for MariaDB
-/* Future<MariaDbExecutor> _connectToMariaDb(List<String> schemas) async {
+// Executor for MySQL/MariaDB using `mysql1` driver
+/* Future<MariaDbExecutor> _connectToMysqlDb(List<String> schemas) async {
   var settings = ConnectionSettings(
       host: 'localhost',
       port: 3306,
@@ -97,9 +101,11 @@ String extractTableName(String createQuery) {
     }
   }
 
-  return MariaDbExecutor(connection, logger: logger);
-} */
+  return MysqlDbExecutor(connection, logger: logger);
+} 
+*/
 
+/*
 // Executor for MySQL
 //   create user 'test'@'localhost' identified by 'test123';
 //   GRANT ALL PRIVILEGES ON orm_test.* to 'test'@'localhost' WITH GRANT OPTION;
@@ -121,7 +127,6 @@ Future<MySqlExecutor> _connectToMySql(List<Migration> models) async {
   var runner = MySqlMigrationRunner(connection, migrations: models);
   await runner.up();
 
-  /*
   for (var s in schemas) {
     // MySQL driver does not support multiple sql queries
     var data = await File('test/migrations/$s.sql').readAsString();
@@ -138,7 +143,7 @@ Future<MySqlExecutor> _connectToMySql(List<Migration> models) async {
       }
     }
   }
-  */
 
   return MySqlExecutor(connection, logger: logger);
 }
+*/

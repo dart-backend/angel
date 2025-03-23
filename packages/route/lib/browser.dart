@@ -1,5 +1,7 @@
 import 'dart:async' show Stream, StreamController;
-import 'dart:html';
+import 'dart:js_interop';
+import 'dart:js_interop_unsafe';
+import 'package:web/web.dart';
 import 'package:path/path.dart' as p;
 
 import 'angel3_route.dart';
@@ -72,23 +74,42 @@ abstract class _BrowserRouterImpl<T> extends Router<T>
       all(path, handler, middleware: middleware);
 
   void prepareAnchors() {
-    final anchors = window.document
-        .querySelectorAll('a')
-        .cast<AnchorElement>(); //:not([dynamic])');
+    final anchors = window.document.querySelectorAll('a');
 
-    for (final $a in anchors) {
-      if ($a.attributes.containsKey('href') &&
-          $a.attributes.containsKey('download') &&
-          $a.attributes.containsKey('target') &&
-          $a.attributes['rel'] != 'external') {
-        $a.onClick.listen((e) {
-          e.preventDefault();
-          _goTo($a.attributes['href']!);
-          //go($a.attributes['href'].split('/').where((str) => str.isNotEmpty));
-        });
+    //.cast<HTMLAnchorElement>(); //:not([dynamic])');
+    for (var i = 0; i < anchors.length; i++) {
+      var $a = anchors.item(i);
+      if ($a != null) {
+        if ($a.has('href') &&
+            $a.has('download') &&
+            $a.has('target') &&
+            $a.getProperty('rel'.toJS).dartify() != 'external') {
+          $a.addEventListener(
+              "click",
+              (event) {
+                event.preventDefault();
+                _goTo($a.getProperty('href'.toJS).dartify().toString());
+                /*
+                go($a
+                    .getProperty('href'.toJS)
+                    .dartify()
+                    .toString()
+                    .split('/')
+                    .where((str) => str.isNotEmpty));
+                    */
+              }.toJS);
+          /* With dart:html
+          $a.onClick.listen((e) {
+            e.preventDefault();
+            //_goTo($a.attributes['href']!);
+            //go($a.attributes['href'].split('/').where((str) => str.isNotEmpty));
+          });
+          */
+        }
       }
 
-      $a.attributes['dynamic'] = 'true';
+      $a?.setProperty('dynamic'.toJS, 'true'.toJS);
+      //$a.attributes['dynamic'] = 'true';
     }
   }
 
@@ -102,6 +123,10 @@ abstract class _BrowserRouterImpl<T> extends Router<T>
     _listening = true;
     _listen();
   }
+}
+
+class EventCallback {
+  void handleEvent(Event event) {}
 }
 
 class _HashRouter<T> extends _BrowserRouterImpl<T> {
@@ -149,7 +174,13 @@ class _HashRouter<T> extends _BrowserRouterImpl<T> {
 
   @override
   void _listen() {
-    window.onHashChange.listen(handleHash);
+    window.addEventListener(
+        'hash',
+        (e) {
+          handleHash(e);
+        }.toJS);
+    // With dart:html
+    //window.onhashchange?.listen(handleHash);
     handleHash();
   }
 }
@@ -158,7 +189,7 @@ class _PushStateRouter<T> extends _BrowserRouterImpl<T> {
   late String _basePath;
 
   _PushStateRouter({required bool listen}) : super(listen: listen) {
-    var $base = window.document.querySelector('base[href]') as BaseElement;
+    var $base = window.document.querySelector('base[href]') as HTMLBaseElement;
 
     if ($base.href.isNotEmpty != true) {
       throw StateError(
@@ -186,8 +217,8 @@ class _PushStateRouter<T> extends _BrowserRouterImpl<T> {
     if (thisPath.isEmpty) {
       thisPath = route.path;
     }
-    window.history
-        .pushState({'path': route.path, 'params': {}}, thisPath, relativeUri);
+    window.history.pushState(
+        {'path': route.path, 'params': {}}.toJSBox, thisPath, relativeUri);
     _onResolve.add(resolved);
     _onRoute.add(_current = route);
     //}
