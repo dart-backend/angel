@@ -68,7 +68,7 @@ void main() {
       expect(modelOpt.isPresent, true);
       modelOpt.ifPresent((model) {
         //print(model.toJson());
-        expect(model.id, isNotNull); // Postgres should set this.
+        expect(model.id, isNotNull);
         expect(model.unorthodox, unorthodox);
       });
     });
@@ -124,7 +124,11 @@ void main() {
         var wjObj = await query.getOne(executor);
         expect(wjObj.isPresent, true);
         wjObj.ifPresent((wj) {
-          expect(wj.numbas, numbas.reversed);
+          if (TARGET_TEST_DATABASE == 'mysql') {
+            expect(wj.numbas, numbas.reversed);
+          } else {
+            expect(wj.numbas, numbas);
+          }
         });
       });
 

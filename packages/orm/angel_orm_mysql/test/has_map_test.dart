@@ -1,4 +1,5 @@
 @Skip("Jsonb data type is not supported")
+library;
 
 import 'package:angel3_migration_runner/angel3_migration_runner.dart';
 import 'package:angel3_orm/angel3_orm.dart';

@@ -35,10 +35,10 @@ See all of the available [`packages`](https://angel3-docs.dukefirehawk.com/packa
 Angel3 packages are published under `angel3_` prefix on pub.dev. These packages have passed all of their respective test suites before going live. The development work are currently focused on:
 
 * Keeping the packages with `angel3_` prefix in sync with Dart SDK releases
-  * Remove and replace deprecated classes and methods while keeping backward compatible
+  * Remove and replace deprecated classes and methods while keeping it backward compatible
   * Refactor the code to use new language features
 * Fix and resolve reported issues
-* Performance tunning
+* Performance optimization
 * Improve on existing features, unit test, user guide and examples
 * Add new features
 
