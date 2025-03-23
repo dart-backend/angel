@@ -42,77 +42,54 @@ Angel3 packages are published under `angel3_` prefix on pub.dev. These packages 
 * Improve on existing features, unit test, user guide and examples
 * Add new features
 
-The status of the project is as follows:
+## Status
+
+### Latest Release Notes (Version: 8.5.0)
+
+* Updated `angel3_` packages to require dart >= 3.6.0
+* Updated dependencies to the latest
+* Updated code generator to use `analyzer` 7.x.x
+* Deprecated `angel3_orm_test`
+* Fixed various issues for `ORM for MySQL`.
+* Migrated `dart:html` to `package:web`
+
+### Latest development work
 
 Branch: `master`
 
 * Dart version : 3.6.x or later.
-* Publish      : Yes. Refer to packages with `angel3_` prefix on [pub.dev](https://pub.dev/publishers/dukefirehawk.com/packages).
-* Null Safety  : Yes
+* Publish      : Refer to all packages with`angel3_` prefix on [pub.dev](https://pub.dev/publishers/dukefirehawk.com/packages).
 * Status       : Production
 * Notes        : Use this branch for all PR submission
 
 For more details, checkout [Project Status](https://github.com/dart-backend/angel/wiki/Project-Status)
 
-## Release Notes
+### Archieved development work
 
-### Release 9.0.0 (Future)
+Starting with release 8.5.0. All subsequence releases published to `pub.dev` will be available on a separate branch. The branch name will adopt the following naming conventions; `release/"published date"` For example: `release/2025_02` branch is for release on Feb 2025 to `pub.dev`.
+
+### What is in the pipeline?
 
 * Performance optimsation
-* Update ORM to support more databases
-
-### Release 8.5.0 (Current)
-
-* Updated `angel3_` packages to require dart >= 3.6.0
-* Updated dependencies to the latest
-* Updated code generator to use `analyzer` 7.x.x
-* Deprecated `angel_orm_test`
-* Migrated `dart:html` to `package:web`
-
-### Release 8.0.0
-
-* Updated `angel3_` packages to require dart >= 3.0.0
-* Updated dependencies to the latest
-* Updated code generator to use `analyzer` 6.x.x
-
-### Release 7.0.0
-
-* Updated `angel3_` packages to require dart >= 2.17.x
-* Updated dependencies to the latest
-* Updated code generator to use `analyzer` 5.x.x
-* Fixed ORM issues
-
-### Release 6.0.0
-
-* Updated all `angel3_` packages to require dart >= 2.16.x
-* Updated ORM to support MariaDB 10.2.x (stable) and MySQL 8.x (beta)
-* Updated code generator to use `analyzer` 3.x.x
-* Updated exception handling
-* Added default logger to generate standardised logging messages
-* Added `melos` support
-* Removed deprecated API
-* [**Breaking**] `error` for `AngelHttpException` is no longer mandatory
-
-## TODO
-
-* Improve HTTP and ORM performance
-* Improve ORM for MySQL
-* Add cache support in ORM (using Redis)
-* Upgrade and release angel3_oauth2 8.0.0 (5 failed test cases)
-* Upgrade and release angel3_auth_twitter 8.0.0 (Migrate to OAuth2)
-* Upgrade and release angel3_shelf 8.0.0 (2 failed test cases)
+* Meet security standard compliance such as SOC 2, FIPS etc
+* Support Cloud services integration
+* Upgrade ORM to support
+  * SQLite and other RDBMS
+  * Multi tenant
+  * ORM Reverse engineering
+* ngdart integration
 
 ## Installation and Setup
 
-### Create a new project by cloning from boilerplate templates
+### (Option 1) Create a new project by cloning from boilerplate templates
 
-1. Download and install [Dart](https://dart.dev/get-dart)
+1. Download and install [Dart](https://dart.dev/get-dart). Minimum 3.6.0.
 
 2. Clone one of the following starter projects:
-   * [Angel3 Basic Template](https://github.com/dukefirehawk/boilerplates/tree/v7/angel3-basic)
-   * [Angel3 ORM Template](https://github.com/dukefirehawk/boilerplates/tree/v7/angel3-orm)
-   * [Angel3 ORM MySQL Template](https://github.com/dukefirehawk/boilerplates/tree/v7/angel3-orm-mysql)
-   * [Angel3 Graphql Template](https://github.com/dukefirehawk/boilerplates/tree/v7/angel3-graphql)
+   * [Angel3 Basic Template](https://github.com/dukefirehawk/boilerplates/tree/angel3-basic)
+   * [Angel3 ORM Template](https://github.com/dukefirehawk/boilerplates/tree/angel3-orm)
+   * [Angel3 ORM MySQL Template](https://github.com/dukefirehawk/boilerplates/tree/angel3-orm-mysql)
+   * [Angel3 Graphql Template](https://github.com/dukefirehawk/boilerplates/tree/angel3-graphql)
 
 3. Run the project in development mode (*hot-reloaded* is enabled on file changes).
 
@@ -130,7 +107,7 @@ For more details, checkout [Project Status](https://github.com/dart-backend/ange
 
 6. Next, refer to the [developer guide](https://angel3-docs.dukefirehawk.com/) to learn more about Angel3 framework.
 
-### Create a new project with Angel3 CLI
+### (Option 2) Create a new project with Angel3 CLI
 
 1. Download and install [Dart](https://dart.dev/get-dart)
 
@@ -162,22 +139,22 @@ For more details, checkout [Project Status](https://github.com/dart-backend/ange
 
 7. Next, refer to the [developer guide](https://angel3-docs.dukefirehawk.com/) to learn more about Angel3 framework.
 
-### Migrating from Angel to Angel3
-
-Check out [Migrating to Angel3](https://angel3-docs.dukefirehawk.com/migration/angel-2.x.x-to-angel3/migration-guide-3)
-
 ## Performance Benchmark
 
-The performance benchmark can be found at [TechEmpower Framework Benchmarks](https://www.techempower.com/benchmarks/#section=data-r22&test=composite&hw=ph)
+The performance benchmark can be found at [TechEmpower Framework Benchmarks](https://www.techempower.com/benchmarks/#section=data-r23&test=composite&hw=ph)
 
-The test cases are build using standard `Angel3 ORM` template for PostgreSQL and MySQL database. The result are used for fine-tuning Angel3 framework with respect to other frameworks. The following test cases will be added in the upcoming update to the benchmark.
+The test cases are build using standard `Angel3 ORM` template for PostgreSQL and MySQL databases. The result are used for fine-tuning Angel3 framework with respect to other frameworks. The following test cases will be added in the subsequent update to the benchmark.
 
 1. Cache with Redis
 2. Angel3 with MongoDB
 
-## Examples and Documentation
+## Documentation
 
-Please visit our [User Guide](https://angel3-docs.dukefirehawk.com/) and [Examples](https://github.com/dart-backend/angel3-examples) for more detailed information on the available features of Angel3 framework.
+Please visit our [User Guide](https://angel3-docs.dukefirehawk.com/) for more detailed information on the available features of Angel3 framework.
+
+## Examples
+
+Take various applications under [Examples](https://github.com/dart-backend/angel3-examples) for a spin to get a feel of what Angel3 framework can do.
 
 ## Community
 
@@ -200,7 +177,7 @@ If you are interested in contributing to Angel3 framework please check out the [
 
 3. Download and install [Dart 3](https://dart.dev/get-dart)
 
-4. Install `melos` 6.1
+4. Install `melos`
 
    ```bash
    dart pub global activate melos
