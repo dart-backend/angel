@@ -12,16 +12,3 @@ dependencies:
 dev_dependencies:
   test: ^1.24.0
   lints: ^5.0.0
-# dependency_overrides:
-#   angel3_framework:
-#     path: ../framework
-#   angel3_container:
-#     path: ../container/angel_container
-#   angel3_http_exception:
-#     path: ../http_exception
-#   angel3_model:
-#     path: ../model
-#   angel3_route:
-#     path: ../route
-#   angel3_mock_request:
-#     path: ../mock_request
