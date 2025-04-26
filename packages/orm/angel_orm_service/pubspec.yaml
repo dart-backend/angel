@@ -20,32 +20,4 @@ dev_dependencies:
   logging: ^1.2.0
   test: ^1.24.0
   lints: ^5.0.0
-# dependency_overrides:
-#   angel3_container:
-#     path: ../../container/angel_container
-#   angel3_framework:
-#     path: ../../framework
-#   angel3_http_exception:
-#     path: ../../http_exception
-#   angel3_model:
-#     path: ../../model
-#   angel3_route:
-#     path: ../../route
-#   angel3_mock_request:
-#     path: ../../mock_request
-#   angel3_serialize:
-#     path: ../../serialize/angel_serialize
-#   angel3_serialize_generator:
-#     path: ../../serialize/angel_serialize_generator
-#   angel3_orm_test:
-#     path: ../angel_orm_test
-#   angel3_orm:
-#     path: ../angel_orm
-#   angel3_orm_generator:
-#     path: ../angel_orm_generator
-#   angel3_orm_postgres:
-#     path: ../angel_orm_postgres
-#   angel3_migration:
-#     path: ../angel_migration
-#   angel3_migration_runner:
-#     path: ../angel_migration_runner
+
