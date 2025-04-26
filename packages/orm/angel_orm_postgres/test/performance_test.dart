@@ -1,21 +1,30 @@
 // ignore: library_annotations
-@Skip('Only used for debugging issues')
+//@Skip('Only used for debugging issues')
 
 import 'dart:async';
 import 'dart:math';
 
+import 'package:angel3_migration_runner/angel3_migration_runner.dart';
 import 'package:angel3_orm/angel3_orm.dart';
+import 'package:logging/logging.dart';
+import 'package:postgres/postgres.dart';
 import 'package:test/test.dart';
 
+import 'common.dart';
 import 'models/fortune.dart';
 import 'models/world.dart';
 
-void performanceTests(FutureOr<QueryExecutor> Function() createExecutor,
-    {FutureOr<void> Function(QueryExecutor)? close}) {
-  QueryExecutor? executor;
+void main() async {
+  Logger.root.level = Level.ALL;
+  Logger.root.onRecord.listen((record) {
+    print('${record.loggerName}: ${record.time}: ${record.message}');
+  });
+
+  late Connection conn;
+  late QueryExecutor executor;
+  late MigrationRunner runner;
 
   //int _sampleSize = 1000;
-
   int concurrency = 200;
 
   // Generate a random number between 1 and 10000
@@ -24,9 +33,23 @@ void performanceTests(FutureOr<QueryExecutor> Function() createExecutor,
     return rand.nextInt(10000) + 1;
   }
 
+  List<int> generateIds(int maxCount) {
+    var result = <int>[];
+
+    while (result.length < maxCount) {
+      var id = genRandomId();
+      if (!result.contains(id)) {
+        result.add(id);
+      }
+    }
+
+    return result;
+  }
+
   setUp(() async {
-    print("Run setup");
-    executor = await createExecutor();
+    conn = await openPgConnection();
+    executor = await createExecutor(conn);
+    runner = await createTables(conn, []);
 
     /*
     for (var i = 0; i < _sampleSize; i++) {
@@ -43,7 +66,12 @@ void performanceTests(FutureOr<QueryExecutor> Function() createExecutor,
     */
   });
 
-  tearDown(() => close!(executor!));
+  tearDown(() async {
+    await dropTables(runner);
+    if (conn.isOpen) {
+      await conn.close();
+    }
+  });
 
   test('select all concurrency', () async {
     var stopwatch = Stopwatch();
@@ -62,7 +90,7 @@ void performanceTests(FutureOr<QueryExecutor> Function() createExecutor,
     stopwatch.stop();
 
     expect(result, isNotNull);
-  });
+  }, skip: "Not relevant");
 
   test('select one concurrency', () async {
     var stopwatch = Stopwatch();
@@ -76,7 +104,7 @@ void performanceTests(FutureOr<QueryExecutor> Function() createExecutor,
     stopwatch.stop();
 
     expect(result, isNotNull);
-  });
+  }, skip: "Not relevant");
 
   test('update concurrency', () async {
     var stopwatch = Stopwatch();
@@ -90,5 +118,26 @@ void performanceTests(FutureOr<QueryExecutor> Function() createExecutor,
     stopwatch.stop();
 
     expect(result, isNotNull);
+  }, skip: "Not relevant");
+
+  test('update one', () async {
+    var queryLimit = 2;
+    var listOfIds = generateIds(queryLimit);
+
+    var result = <World>[];
+    for (var id in listOfIds) {
+      print("=== Process $id ====");
+      var query = WorldQuery();
+      //query.where?.id.equals(id);
+      //var optWorld = await query.getOne(executor);
+      //print("getOne => $optWorld");
+
+      query
+        ..where?.id.equals(id)
+        ..values.randomnumber = genRandomId();
+      var updatedRec = await query.updateOne(executor);
+      print("Update: $updatedRec");
+      result.add(updatedRec.value);
+    }
   });
 }

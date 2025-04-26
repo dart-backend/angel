@@ -12,5 +12,5 @@ abstract class _World {
   int? id;
 
   @Column()
-  int? randomNumber;
+  int? randomnumber;
 }
