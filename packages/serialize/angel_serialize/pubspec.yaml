@@ -12,7 +12,4 @@ dependencies:
   quiver: ^3.2.0
 dev_dependencies:
   lints: ^5.0.0
-# dependency_overrides:
-#   angel3_model:
-#     path: ../../model
   

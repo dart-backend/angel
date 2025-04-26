@@ -1,0 +1,20 @@
+# melos_managed_dependency_overrides
+dependency_overrides:
+  angel3_validate:
+    path: ../validate
+  angel3_framework:
+    path: ../framework
+  angel3_http_exception:
+    path: ../http_exception
+  angel3_model:
+    path: ../model
+  angel3_route:
+    path: ../route
+  angel3_mock_request:
+    path: ../mock_request
+  angel3_auth:
+    path: ../auth 
+  angel3_client:
+    path: ../client
+  angel3_websocket:
+    path: ../websocket

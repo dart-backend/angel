@@ -17,8 +17,3 @@ dependencies:
 dev_dependencies:
   lints: ^5.0.0
   test: ^1.25.0
-# dependency_overrides:
-#    angel3_orm:
-#      path: ../angel_orm
-#    angel3_migration:
-#      path: ../angel_migration
