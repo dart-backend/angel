@@ -1,7 +1,6 @@
 // ignore: library_annotations
 //@Skip('Only used for debugging issues')
 
-import 'dart:async';
 import 'dart:math';
 
 import 'package:angel3_migration_runner/angel3_migration_runner.dart';
@@ -79,12 +78,12 @@ void main() async {
 
     // Fire and forget
     for (var i = 0; i < concurrency; i++) {
-      FortuneQuery().get(executor!);
+      FortuneQuery().get(executor);
     }
 
     print("Loop time elapsed: ${stopwatch.elapsed.inMilliseconds}");
 
-    var result = await FortuneQuery().get(executor!);
+    var result = await FortuneQuery().get(executor);
 
     print("Final Time elapsed: ${stopwatch.elapsed.inMilliseconds}");
     stopwatch.stop();
@@ -98,7 +97,7 @@ void main() async {
 
     var id = genRandomId();
     var query = WorldQuery()..where?.id.equals(id);
-    var result = await query.get(executor!);
+    var result = await query.get(executor);
 
     print("Time elapsed: ${stopwatch.elapsed.inMilliseconds}");
     stopwatch.stop();
@@ -112,7 +111,7 @@ void main() async {
 
     var id = genRandomId();
     var query = WorldQuery()..where?.id.equals(id);
-    var result = await query.get(executor!);
+    var result = await query.get(executor);
 
     print("Time elapsed: ${stopwatch.elapsed.inMilliseconds}");
     stopwatch.stop();

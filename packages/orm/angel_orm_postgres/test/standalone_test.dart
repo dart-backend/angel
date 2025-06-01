@@ -1,6 +1,3 @@
-// ignore: library_annotations
-@Skip('Temporarily skip until concurrency issues in test cases are resolved')
-
 import 'package:angel3_migration_runner/angel3_migration_runner.dart';
 import 'package:angel3_orm/angel3_orm.dart';
 import 'package:logging/logging.dart';
@@ -32,40 +29,6 @@ void main() {
     if (conn.isOpen) {
       await conn.close();
     }
-  });
-
-  test('to where', () {
-    var query = CarQuery();
-    query.where
-      ?..familyFriendly.isTrue
-      ..recalledAt.lessThanOrEqualTo(y2k, includeTime: false);
-    var whereClause = query.where?.compile(tableName: 'cars');
-    //print('Where clause: $whereClause');
-    expect(whereClause,
-        'cars.family_friendly = TRUE AND cars.recalled_at <= \'2000-01-01\'');
-  });
-
-  test('parseRow', () {
-    // 'id', 'created_at',  'updated_at', 'make', 'description', 'family_friendly', 'recalled_at'
-    // var row = [0, 'Mazda', 'CX9', true, y2k, y2k, y2k];
-    var row = [0, y2k, y2k, 'Mazda', 'CX9', true, y2k, 80000.00];
-    //print(row);
-    var carOpt = CarQuery().deserialize(row);
-    expect(carOpt.isPresent, true);
-    carOpt.ifPresent((car) {
-      //print(car.toJson());
-      expect(car.id, '0');
-      expect(car.make, 'Mazda');
-      expect(car.description, 'CX9');
-      expect(car.familyFriendly, true);
-      expect(
-          y2k.toIso8601String(), startsWith(car.recalledAt!.toIso8601String()));
-      expect(
-          y2k.toIso8601String(), startsWith(car.createdAt!.toIso8601String()));
-      expect(
-          y2k.toIso8601String(), startsWith(car.updatedAt!.toIso8601String()));
-      expect(car.price, 80000.00);
-    });
   });
 
   group('queries', () {
@@ -234,6 +197,39 @@ void main() {
         expect(car.familyFriendly, beetle.familyFriendly);
         expect(dateYmdHms.format(car.recalledAt!),
             dateYmdHms.format(beetle.recalledAt!));
+      });
+    });
+    test('to where', () {
+      var query = CarQuery();
+      query.where
+        ?..familyFriendly.isTrue
+        ..recalledAt.lessThanOrEqualTo(y2k, includeTime: false);
+      var whereClause = query.where?.compile(tableName: 'cars');
+      //print('Where clause: $whereClause');
+      expect(whereClause,
+          'cars.family_friendly = TRUE AND cars.recalled_at <= \'2000-01-01\'');
+    });
+
+    test('parseRow', () {
+      // 'id', 'created_at',  'updated_at', 'make', 'description', 'family_friendly', 'recalled_at'
+      // var row = [0, 'Mazda', 'CX9', true, y2k, y2k, y2k];
+      var row = [0, y2k, y2k, 'Mazda', 'CX9', true, y2k, 80000.00];
+      //print(row);
+      var carOpt = CarQuery().deserialize(row);
+      expect(carOpt.isPresent, true);
+      carOpt.ifPresent((car) {
+        //print(car.toJson());
+        expect(car.id, '0');
+        expect(car.make, 'Mazda');
+        expect(car.description, 'CX9');
+        expect(car.familyFriendly, true);
+        expect(y2k.toIso8601String(),
+            startsWith(car.recalledAt!.toIso8601String()));
+        expect(y2k.toIso8601String(),
+            startsWith(car.createdAt!.toIso8601String()));
+        expect(y2k.toIso8601String(),
+            startsWith(car.updatedAt!.toIso8601String()));
+        expect(car.price, 80000.00);
       });
     });
   });

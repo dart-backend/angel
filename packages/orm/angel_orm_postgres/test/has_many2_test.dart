@@ -1,3 +1,6 @@
+// ignore: library_annotations
+@Skip('Temporarily skip until issue 143 is fixed')
+
 import 'package:angel3_migration_runner/angel3_migration_runner.dart';
 import 'package:angel3_orm/angel3_orm.dart';
 import 'package:logging/logging.dart';
