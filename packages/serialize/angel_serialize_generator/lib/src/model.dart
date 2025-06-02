@@ -1,4 +1,4 @@
-part of 'angel3_serialize_generator.dart';
+part of 'serialize_generator.dart';
 
 class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
   const JsonModelGenerator();

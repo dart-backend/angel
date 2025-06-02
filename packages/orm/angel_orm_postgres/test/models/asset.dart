@@ -7,13 +7,13 @@ part 'asset.g.dart';
 
 @serializable
 @orm
-abstract class _Item extends Model {
+abstract class AbstractItem extends Model {
   String get description;
 }
 
 @serializable
 @orm
-abstract class _Asset extends Model {
+abstract class AbstractAsset extends Model {
   String get description;
 
   String get name;
@@ -22,5 +22,5 @@ abstract class _Asset extends Model {
   double get price;
 
   @hasMany
-  List<_Item> get items;
+  List<AbstractItem> get items;
 }

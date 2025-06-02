@@ -6,8 +6,6 @@ import 'package:analyzer/dart/element/type.dart';
 import 'package:angel3_orm/angel3_orm.dart';
 import 'package:angel3_serialize/angel3_serialize.dart';
 import 'package:angel3_serialize_generator/angel3_serialize_generator.dart';
-import 'package:angel3_serialize_generator/build_context.dart';
-import 'package:angel3_serialize_generator/context.dart';
 import 'package:build/build.dart';
 import 'package:inflection3/inflection3.dart';
 import 'package:recase/recase.dart';

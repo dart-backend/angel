@@ -107,9 +107,9 @@ class FooPivotMigration extends Migration {
 
 class UnorthodoxQuery extends Query<Unorthodox, UnorthodoxQueryWhere> {
   UnorthodoxQuery({
-    Query? parent,
+    super.parent,
     Set<String>? trampoline,
-  }) : super(parent: parent) {
+  }) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = UnorthodoxQueryWhere(this);
@@ -134,10 +134,12 @@ class UnorthodoxQuery extends Query<Unorthodox, UnorthodoxQueryWhere> {
 
   @override
   List<String> get fields {
-    const _fields = ['name'];
+    const localFields = ['name'];
     return _selectedFields.isEmpty
-        ? _fields
-        : _fields.where((field) => _selectedFields.contains(field)).toList();
+        ? localFields
+        : localFields
+            .where((field) => _selectedFields.contains(field))
+            .toList();
   }
 
   UnorthodoxQuery select(List<String> selectedFields) {
@@ -204,9 +206,9 @@ class UnorthodoxQueryValues extends MapQueryValues {
 
 class WeirdJoinQuery extends Query<WeirdJoin, WeirdJoinQueryWhere> {
   WeirdJoinQuery({
-    Query? parent,
+    super.parent,
     Set<String>? trampoline,
-  }) : super(parent: parent) {
+  }) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = WeirdJoinQueryWhere(this);
@@ -283,13 +285,15 @@ class WeirdJoinQuery extends Query<WeirdJoin, WeirdJoinQueryWhere> {
 
   @override
   List<String> get fields {
-    const _fields = [
+    const localFields = [
       'id',
       'join_name',
     ];
     return _selectedFields.isEmpty
-        ? _fields
-        : _fields.where((field) => _selectedFields.contains(field)).toList();
+        ? localFields
+        : localFields
+            .where((field) => _selectedFields.contains(field))
+            .toList();
   }
 
   WeirdJoinQuery select(List<String> selectedFields) {
@@ -472,9 +476,9 @@ class WeirdJoinQueryValues extends MapQueryValues {
 
 class SongQuery extends Query<Song, SongQueryWhere> {
   SongQuery({
-    Query? parent,
+    super.parent,
     Set<String>? trampoline,
-  }) : super(parent: parent) {
+  }) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = SongQueryWhere(this);
@@ -499,7 +503,7 @@ class SongQuery extends Query<Song, SongQueryWhere> {
 
   @override
   List<String> get fields {
-    const _fields = [
+    const localFields = [
       'id',
       'created_at',
       'updated_at',
@@ -507,8 +511,10 @@ class SongQuery extends Query<Song, SongQueryWhere> {
       'title',
     ];
     return _selectedFields.isEmpty
-        ? _fields
-        : _fields.where((field) => _selectedFields.contains(field)).toList();
+        ? localFields
+        : localFields
+            .where((field) => _selectedFields.contains(field))
+            .toList();
   }
 
   SongQuery select(List<String> selectedFields) {
@@ -639,9 +645,9 @@ class SongQueryValues extends MapQueryValues {
 
 class NumbaQuery extends Query<Numba, NumbaQueryWhere> {
   NumbaQuery({
-    Query? parent,
+    super.parent,
     Set<String>? trampoline,
-  }) : super(parent: parent) {
+  }) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = NumbaQueryWhere(this);
@@ -666,13 +672,15 @@ class NumbaQuery extends Query<Numba, NumbaQueryWhere> {
 
   @override
   List<String> get fields {
-    const _fields = [
+    const localFields = [
       'i',
       'parent',
     ];
     return _selectedFields.isEmpty
-        ? _fields
-        : _fields.where((field) => _selectedFields.contains(field)).toList();
+        ? localFields
+        : localFields
+            .where((field) => _selectedFields.contains(field))
+            .toList();
   }
 
   NumbaQuery select(List<String> selectedFields) {
@@ -757,9 +765,9 @@ class NumbaQueryValues extends MapQueryValues {
 
 class FooQuery extends Query<Foo, FooQueryWhere> {
   FooQuery({
-    Query? parent,
+    super.parent,
     Set<String>? trampoline,
-  }) : super(parent: parent) {
+  }) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = FooQueryWhere(this);
@@ -794,10 +802,12 @@ class FooQuery extends Query<Foo, FooQueryWhere> {
 
   @override
   List<String> get fields {
-    const _fields = ['bar'];
+    const localFields = ['bar'];
     return _selectedFields.isEmpty
-        ? _fields
-        : _fields.where((field) => _selectedFields.contains(field)).toList();
+        ? localFields
+        : localFields
+            .where((field) => _selectedFields.contains(field))
+            .toList();
   }
 
   FooQuery select(List<String> selectedFields) {
@@ -932,9 +942,9 @@ class FooQueryValues extends MapQueryValues {
 
 class FooPivotQuery extends Query<FooPivot, FooPivotQueryWhere> {
   FooPivotQuery({
-    Query? parent,
+    super.parent,
     Set<String>? trampoline,
-  }) : super(parent: parent) {
+  }) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = FooPivotQueryWhere(this);
@@ -986,13 +996,15 @@ class FooPivotQuery extends Query<FooPivot, FooPivotQueryWhere> {
 
   @override
   List<String> get fields {
-    const _fields = [
+    const localFields = [
       'weird_join_id',
       'foo_bar',
     ];
     return _selectedFields.isEmpty
-        ? _fields
-        : _fields.where((field) => _selectedFields.contains(field)).toList();
+        ? localFields
+        : localFields
+            .where((field) => _selectedFields.contains(field))
+            .toList();
   }
 
   FooPivotQuery select(List<String> selectedFields) {

@@ -28,9 +28,9 @@ class QuotationMigration extends Migration {
 
 class QuotationQuery extends Query<Quotation, QuotationQueryWhere> {
   QuotationQuery({
-    Query? parent,
+    super.parent,
     Set<String>? trampoline,
-  }) : super(parent: parent) {
+  }) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = QuotationQueryWhere(this);
@@ -55,14 +55,16 @@ class QuotationQuery extends Query<Quotation, QuotationQueryWhere> {
 
   @override
   List<String> get fields {
-    const _fields = [
+    const localFields = [
       'id',
       'name',
       'price',
     ];
     return _selectedFields.isEmpty
-        ? _fields
-        : _fields.where((field) => _selectedFields.contains(field)).toList();
+        ? localFields
+        : localFields
+            .where((field) => _selectedFields.contains(field))
+            .toList();
   }
 
   QuotationQuery select(List<String> selectedFields) {

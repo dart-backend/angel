@@ -47,9 +47,9 @@ class FruitMigration extends Migration {
 
 class TreeQuery extends Query<Tree, TreeQueryWhere> {
   TreeQuery({
-    Query? parent,
+    super.parent,
     Set<String>? trampoline,
-  }) : super(parent: parent) {
+  }) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = TreeQueryWhere(this);
@@ -92,15 +92,17 @@ class TreeQuery extends Query<Tree, TreeQueryWhere> {
 
   @override
   List<String> get fields {
-    const _fields = [
+    const localFields = [
       'id',
       'created_at',
       'updated_at',
       'rings',
     ];
     return _selectedFields.isEmpty
-        ? _fields
-        : _fields.where((field) => _selectedFields.contains(field)).toList();
+        ? localFields
+        : localFields
+            .where((field) => _selectedFields.contains(field))
+            .toList();
   }
 
   TreeQuery select(List<String> selectedFields) {
@@ -280,9 +282,9 @@ class TreeQueryValues extends MapQueryValues {
 
 class FruitQuery extends Query<Fruit, FruitQueryWhere> {
   FruitQuery({
-    Query? parent,
+    super.parent,
     Set<String>? trampoline,
-  }) : super(parent: parent) {
+  }) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = FruitQueryWhere(this);
@@ -307,7 +309,7 @@ class FruitQuery extends Query<Fruit, FruitQueryWhere> {
 
   @override
   List<String> get fields {
-    const _fields = [
+    const localFields = [
       'id',
       'created_at',
       'updated_at',
@@ -315,8 +317,10 @@ class FruitQuery extends Query<Fruit, FruitQueryWhere> {
       'common_name',
     ];
     return _selectedFields.isEmpty
-        ? _fields
-        : _fields.where((field) => _selectedFields.contains(field)).toList();
+        ? localFields
+        : localFields
+            .where((field) => _selectedFields.contains(field))
+            .toList();
   }
 
   FruitQuery select(List<String> selectedFields) {

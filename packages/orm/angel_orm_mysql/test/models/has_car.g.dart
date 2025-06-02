@@ -33,9 +33,9 @@ class HasCarMigration extends Migration {
 
 class HasCarQuery extends Query<HasCar, HasCarQueryWhere> {
   HasCarQuery({
-    Query? parent,
+    super.parent,
     Set<String>? trampoline,
-  }) : super(parent: parent) {
+  }) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = HasCarQueryWhere(this);
@@ -60,7 +60,7 @@ class HasCarQuery extends Query<HasCar, HasCarQueryWhere> {
 
   @override
   List<String> get fields {
-    const _fields = [
+    const localFields = [
       'id',
       'created_at',
       'updated_at',
@@ -68,8 +68,10 @@ class HasCarQuery extends Query<HasCar, HasCarQueryWhere> {
       'type',
     ];
     return _selectedFields.isEmpty
-        ? _fields
-        : _fields.where((field) => _selectedFields.contains(field)).toList();
+        ? localFields
+        : localFields
+            .where((field) => _selectedFields.contains(field))
+            .toList();
   }
 
   HasCarQuery select(List<String> selectedFields) {

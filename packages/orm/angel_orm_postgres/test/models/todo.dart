@@ -54,11 +54,11 @@ abstract class _UserTodo {
   @Column(type: ColumnType.varChar, length: 255, isNullable: false)
   String get title;
 
-  //@HasMany(localKey: 'id', foreignKey: 'todo_value_id')
-  //List<_TodoValue> get todoValues;
+  @HasMany(localKey: 'id', foreignKey: 'todo_value_id')
+  List<_TodoValue> get todoValues;
 
-  //@HasMany(localKey: 'id', foreignKey: 'todo_note_id')
-  //List<_TodoNote> get todoNotes;
+  @HasMany(localKey: 'id', foreignKey: 'todo_note_id')
+  List<_TodoNote> get todoNotes;
 }
 
 @Orm(tableName: 'todo_value', generateMigrations: true)

@@ -53,9 +53,9 @@ class AuthorMigration extends Migration {
 
 class BookQuery extends Query<Book, BookQueryWhere> {
   BookQuery({
-    Query? parent,
+    super.parent,
     Set<String>? trampoline,
-  }) : super(parent: parent) {
+  }) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = BookQueryWhere(this);
@@ -116,7 +116,7 @@ class BookQuery extends Query<Book, BookQueryWhere> {
 
   @override
   List<String> get fields {
-    const _fields = [
+    const localFields = [
       'id',
       'created_at',
       'updated_at',
@@ -125,8 +125,10 @@ class BookQuery extends Query<Book, BookQueryWhere> {
       'name',
     ];
     return _selectedFields.isEmpty
-        ? _fields
-        : _fields.where((field) => _selectedFields.contains(field)).toList();
+        ? localFields
+        : localFields
+            .where((field) => _selectedFields.contains(field))
+            .toList();
   }
 
   BookQuery select(List<String> selectedFields) {
@@ -294,9 +296,9 @@ class BookQueryValues extends MapQueryValues {
 
 class AuthorQuery extends Query<Author, AuthorQueryWhere> {
   AuthorQuery({
-    Query? parent,
+    super.parent,
     Set<String>? trampoline,
-  }) : super(parent: parent) {
+  }) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = AuthorQueryWhere(this);
@@ -321,7 +323,7 @@ class AuthorQuery extends Query<Author, AuthorQueryWhere> {
 
   @override
   List<String> get fields {
-    const _fields = [
+    const localFields = [
       'id',
       'created_at',
       'updated_at',
@@ -329,8 +331,10 @@ class AuthorQuery extends Query<Author, AuthorQueryWhere> {
       'name',
     ];
     return _selectedFields.isEmpty
-        ? _fields
-        : _fields.where((field) => _selectedFields.contains(field)).toList();
+        ? localFields
+        : localFields
+            .where((field) => _selectedFields.contains(field))
+            .toList();
   }
 
   AuthorQuery select(List<String> selectedFields) {

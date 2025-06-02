@@ -33,9 +33,9 @@ class HasMapMigration extends Migration {
 
 class HasMapQuery extends Query<HasMap, HasMapQueryWhere> {
   HasMapQuery({
-    Query? parent,
+    super.parent,
     Set<String>? trampoline,
-  }) : super(parent: parent) {
+  }) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = HasMapQueryWhere(this);
@@ -60,13 +60,15 @@ class HasMapQuery extends Query<HasMap, HasMapQueryWhere> {
 
   @override
   List<String> get fields {
-    const _fields = [
+    const localFields = [
       'value',
       'list',
     ];
     return _selectedFields.isEmpty
-        ? _fields
-        : _fields.where((field) => _selectedFields.contains(field)).toList();
+        ? localFields
+        : localFields
+            .where((field) => _selectedFields.contains(field))
+            .toList();
   }
 
   HasMapQuery select(List<String> selectedFields) {

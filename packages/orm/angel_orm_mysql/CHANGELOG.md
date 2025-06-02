@@ -1,5 +1,9 @@
 # Change Log
 
+## 8.3.2
+
+* Updated test cases
+
 ## 8.3.1
 
 * Updated test cases

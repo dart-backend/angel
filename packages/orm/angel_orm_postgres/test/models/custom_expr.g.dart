@@ -48,9 +48,9 @@ class AlphabetMigration extends Migration {
 
 class NumbersQuery extends Query<Numbers, NumbersQueryWhere> {
   NumbersQuery({
-    Query? parent,
+    super.parent,
     Set<String>? trampoline,
-  }) : super(parent: parent) {
+  }) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     expressions['two'] = 'SELECT 2';
@@ -76,15 +76,17 @@ class NumbersQuery extends Query<Numbers, NumbersQueryWhere> {
 
   @override
   List<String> get fields {
-    const _fields = [
+    const localFields = [
       'id',
       'created_at',
       'updated_at',
       'two',
     ];
     return _selectedFields.isEmpty
-        ? _fields
-        : _fields.where((field) => _selectedFields.contains(field)).toList();
+        ? localFields
+        : localFields
+            .where((field) => _selectedFields.contains(field))
+            .toList();
   }
 
   NumbersQuery select(List<String> selectedFields) {
@@ -186,9 +188,9 @@ class NumbersQueryValues extends MapQueryValues {
 
 class AlphabetQuery extends Query<Alphabet, AlphabetQueryWhere> {
   AlphabetQuery({
-    Query? parent,
+    super.parent,
     Set<String>? trampoline,
-  }) : super(parent: parent) {
+  }) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = AlphabetQueryWhere(this);
@@ -230,7 +232,7 @@ class AlphabetQuery extends Query<Alphabet, AlphabetQueryWhere> {
 
   @override
   List<String> get fields {
-    const _fields = [
+    const localFields = [
       'id',
       'created_at',
       'updated_at',
@@ -238,8 +240,10 @@ class AlphabetQuery extends Query<Alphabet, AlphabetQueryWhere> {
       'numbers_id',
     ];
     return _selectedFields.isEmpty
-        ? _fields
-        : _fields.where((field) => _selectedFields.contains(field)).toList();
+        ? localFields
+        : localFields
+            .where((field) => _selectedFields.contains(field))
+            .toList();
   }
 
   AlphabetQuery select(List<String> selectedFields) {

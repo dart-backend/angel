@@ -27,9 +27,9 @@ class WorldMigration extends Migration {
 
 class WorldQuery extends Query<World, WorldQueryWhere> {
   WorldQuery({
-    Query? parent,
+    super.parent,
     Set<String>? trampoline,
-  }) : super(parent: parent) {
+  }) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = WorldQueryWhere(this);
@@ -54,13 +54,15 @@ class WorldQuery extends Query<World, WorldQueryWhere> {
 
   @override
   List<String> get fields {
-    const _fields = [
+    const localFields = [
       'id',
       'random_number',
     ];
     return _selectedFields.isEmpty
-        ? _fields
-        : _fields.where((field) => _selectedFields.contains(field)).toList();
+        ? localFields
+        : localFields
+            .where((field) => _selectedFields.contains(field))
+            .toList();
   }
 
   WorldQuery select(List<String> selectedFields) {

@@ -6,6 +6,22 @@ import 'package:code_builder/code_builder.dart';
 import 'package:recase/recase.dart';
 import 'package:source_gen/source_gen.dart';
 
+/// Support prefix for base serializable classes.
+final List<String> modelPrefix = ['_', 'Abstract'];
+
+/// Get the concrete model class name
+String? getGeneratedModelClassName(String? clazz) {
+  if (clazz != null) {
+    // Check the supported prefix
+    for (var prefix in modelPrefix) {
+      if (clazz.startsWith(prefix)) {
+        return clazz.substring(prefix.length);
+      }
+    }
+  }
+  return clazz;
+}
+
 /// A base context for building serializable classes.
 class BuildContext {
   ReCase? _modelClassNameRecase;
@@ -58,9 +74,7 @@ class BuildContext {
       this.includeAnnotations = const <DartObject>[]});
 
   /// The name of the generated class.
-  String? get modelClassName => originalClassName?.startsWith('_') == true
-      ? originalClassName?.substring(1)
-      : originalClassName;
+  String? get modelClassName => getGeneratedModelClassName(originalClassName);
 
   /// A [ReCase] instance reflecting on the [modelClassName].
   ReCase get modelClassNameRecase {

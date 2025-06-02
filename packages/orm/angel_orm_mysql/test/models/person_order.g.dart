@@ -32,9 +32,9 @@ class PersonOrderMigration extends Migration {
 
 class PersonOrderQuery extends Query<PersonOrder, PersonOrderQueryWhere> {
   PersonOrderQuery({
-    Query? parent,
+    super.parent,
     Set<String>? trampoline,
-  }) : super(parent: parent) {
+  }) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = PersonOrderQueryWhere(this);
@@ -59,7 +59,7 @@ class PersonOrderQuery extends Query<PersonOrder, PersonOrderQueryWhere> {
 
   @override
   List<String> get fields {
-    const _fields = [
+    const localFields = [
       'id',
       'created_at',
       'updated_at',
@@ -69,8 +69,10 @@ class PersonOrderQuery extends Query<PersonOrder, PersonOrderQueryWhere> {
       'deleted',
     ];
     return _selectedFields.isEmpty
-        ? _fields
-        : _fields.where((field) => _selectedFields.contains(field)).toList();
+        ? localFields
+        : localFields
+            .where((field) => _selectedFields.contains(field))
+            .toList();
   }
 
   PersonOrderQuery select(List<String> selectedFields) {
@@ -232,9 +234,9 @@ class PersonOrderQueryValues extends MapQueryValues {
 class OrderWithPersonInfoQuery
     extends Query<OrderWithPersonInfo, OrderWithPersonInfoQueryWhere> {
   OrderWithPersonInfoQuery({
-    Query? parent,
+    super.parent,
     Set<String>? trampoline,
-  }) : super(parent: parent) {
+  }) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     expressions['person_name'] = 'p.name';
@@ -262,7 +264,7 @@ class OrderWithPersonInfoQuery
 
   @override
   List<String> get fields {
-    const _fields = [
+    const localFields = [
       'id',
       'created_at',
       'updated_at',
@@ -273,8 +275,10 @@ class OrderWithPersonInfoQuery
       'person_age',
     ];
     return _selectedFields.isEmpty
-        ? _fields
-        : _fields.where((field) => _selectedFields.contains(field)).toList();
+        ? localFields
+        : localFields
+            .where((field) => _selectedFields.contains(field))
+            .toList();
   }
 
   OrderWithPersonInfoQuery select(List<String> selectedFields) {

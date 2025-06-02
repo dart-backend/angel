@@ -34,9 +34,9 @@ class BoatMigration extends Migration {
 
 class BoatQuery extends Query<Boat, BoatQueryWhere> {
   BoatQuery({
-    Query? parent,
+    super.parent,
     Set<String>? trampoline,
-  }) : super(parent: parent) {
+  }) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = BoatQueryWhere(this);
@@ -61,7 +61,7 @@ class BoatQuery extends Query<Boat, BoatQueryWhere> {
 
   @override
   List<String> get fields {
-    const _fields = [
+    const localFields = [
       'id',
       'created_at',
       'updated_at',
@@ -73,8 +73,10 @@ class BoatQuery extends Query<Boat, BoatQueryWhere> {
       'width',
     ];
     return _selectedFields.isEmpty
-        ? _fields
-        : _fields.where((field) => _selectedFields.contains(field)).toList();
+        ? localFields
+        : localFields
+            .where((field) => _selectedFields.contains(field))
+            .toList();
   }
 
   BoatQuery select(List<String> selectedFields) {

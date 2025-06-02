@@ -48,9 +48,9 @@ class AssetMigration extends Migration {
 
 class ItemQuery extends Query<Item, ItemQueryWhere> {
   ItemQuery({
-    Query? parent,
+    super.parent,
     Set<String>? trampoline,
-  }) : super(parent: parent) {
+  }) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = ItemQueryWhere(this);
@@ -75,15 +75,17 @@ class ItemQuery extends Query<Item, ItemQueryWhere> {
 
   @override
   List<String> get fields {
-    const _fields = [
+    const localFields = [
       'id',
       'created_at',
       'updated_at',
       'description',
     ];
     return _selectedFields.isEmpty
-        ? _fields
-        : _fields.where((field) => _selectedFields.contains(field)).toList();
+        ? localFields
+        : localFields
+            .where((field) => _selectedFields.contains(field))
+            .toList();
   }
 
   ItemQuery select(List<String> selectedFields) {
@@ -199,9 +201,9 @@ class ItemQueryValues extends MapQueryValues {
 
 class AssetQuery extends Query<Asset, AssetQueryWhere> {
   AssetQuery({
-    Query? parent,
+    super.parent,
     Set<String>? trampoline,
-  }) : super(parent: parent) {
+  }) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = AssetQueryWhere(this);
@@ -243,7 +245,7 @@ class AssetQuery extends Query<Asset, AssetQueryWhere> {
 
   @override
   List<String> get fields {
-    const _fields = [
+    const localFields = [
       'id',
       'created_at',
       'updated_at',
@@ -252,8 +254,10 @@ class AssetQuery extends Query<Asset, AssetQueryWhere> {
       'price',
     ];
     return _selectedFields.isEmpty
-        ? _fields
-        : _fields.where((field) => _selectedFields.contains(field)).toList();
+        ? localFields
+        : localFields
+            .where((field) => _selectedFields.contains(field))
+            .toList();
   }
 
   AssetQuery select(List<String> selectedFields) {

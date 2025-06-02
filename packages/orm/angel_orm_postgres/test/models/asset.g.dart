@@ -9,7 +9,7 @@ part of 'asset.dart';
 class ItemMigration extends Migration {
   @override
   void up(Schema schema) {
-    schema.create('items', (table) {
+    schema.create('abstract_items', (table) {
       table.serial('id').primaryKey();
       table.timeStamp('created_at');
       table.timeStamp('updated_at');
@@ -19,14 +19,14 @@ class ItemMigration extends Migration {
 
   @override
   void down(Schema schema) {
-    schema.drop('items');
+    schema.drop('abstract_items');
   }
 }
 
 class AssetMigration extends Migration {
   @override
   void up(Schema schema) {
-    schema.create('assets', (table) {
+    schema.create('abstract_assets', (table) {
       table.serial('id').primaryKey();
       table.timeStamp('created_at');
       table.timeStamp('updated_at');
@@ -38,7 +38,7 @@ class AssetMigration extends Migration {
 
   @override
   void down(Schema schema) {
-    schema.drop('assets', cascade: true);
+    schema.drop('abstract_assets', cascade: true);
   }
 }
 
@@ -48,9 +48,9 @@ class AssetMigration extends Migration {
 
 class ItemQuery extends Query<Item, ItemQueryWhere> {
   ItemQuery({
-    Query? parent,
+    super.parent,
     Set<String>? trampoline,
-  }) : super(parent: parent) {
+  }) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = ItemQueryWhere(this);
@@ -70,20 +70,22 @@ class ItemQuery extends Query<Item, ItemQueryWhere> {
 
   @override
   String get tableName {
-    return 'items';
+    return 'abstract_items';
   }
 
   @override
   List<String> get fields {
-    const _fields = [
+    const localFields = [
       'id',
       'created_at',
       'updated_at',
       'description',
     ];
     return _selectedFields.isEmpty
-        ? _fields
-        : _fields.where((field) => _selectedFields.contains(field)).toList();
+        ? localFields
+        : localFields
+            .where((field) => _selectedFields.contains(field))
+            .toList();
   }
 
   ItemQuery select(List<String> selectedFields) {
@@ -199,9 +201,9 @@ class ItemQueryValues extends MapQueryValues {
 
 class AssetQuery extends Query<Asset, AssetQueryWhere> {
   AssetQuery({
-    Query? parent,
+    super.parent,
     Set<String>? trampoline,
-  }) : super(parent: parent) {
+  }) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = AssetQueryWhere(this);
@@ -238,12 +240,12 @@ class AssetQuery extends Query<Asset, AssetQueryWhere> {
 
   @override
   String get tableName {
-    return 'assets';
+    return 'abstract_assets';
   }
 
   @override
   List<String> get fields {
-    const _fields = [
+    const localFields = [
       'id',
       'created_at',
       'updated_at',
@@ -252,8 +254,10 @@ class AssetQuery extends Query<Asset, AssetQueryWhere> {
       'price',
     ];
     return _selectedFields.isEmpty
-        ? _fields
-        : _fields.where((field) => _selectedFields.contains(field)).toList();
+        ? localFields
+        : localFields
+            .where((field) => _selectedFields.contains(field))
+            .toList();
   }
 
   AssetQuery select(List<String> selectedFields) {
@@ -315,7 +319,7 @@ class AssetQuery extends Query<Asset, AssetQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                items: List<_Item>.from(l.items)..addAll(model.items));
+                items: List<AbstractItem>.from(l.items)..addAll(model.items));
         }
       });
     });
@@ -333,7 +337,7 @@ class AssetQuery extends Query<Asset, AssetQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                items: List<_Item>.from(l.items)..addAll(model.items));
+                items: List<AbstractItem>.from(l.items)..addAll(model.items));
         }
       });
     });
@@ -351,7 +355,7 @@ class AssetQuery extends Query<Asset, AssetQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                items: List<_Item>.from(l.items)..addAll(model.items));
+                items: List<AbstractItem>.from(l.items)..addAll(model.items));
         }
       });
     });
@@ -466,7 +470,7 @@ class AssetQueryValues extends MapQueryValues {
 // **************************************************************************
 
 @generatedSerializable
-class Item extends _Item {
+class Item extends AbstractItem {
   Item({
     this.id,
     this.createdAt,
@@ -504,7 +508,7 @@ class Item extends _Item {
 
   @override
   bool operator ==(other) {
-    return other is _Item &&
+    return other is AbstractItem &&
         other.id == id &&
         other.createdAt == createdAt &&
         other.updatedAt == updatedAt &&
@@ -532,7 +536,7 @@ class Item extends _Item {
 }
 
 @generatedSerializable
-class Asset extends _Asset {
+class Asset extends AbstractAsset {
   Asset({
     this.id,
     this.createdAt,
@@ -540,7 +544,7 @@ class Asset extends _Asset {
     required this.description,
     required this.name,
     required this.price,
-    List<_Item> items = const [],
+    List<AbstractItem> items = const [],
   }) : items = List.unmodifiable(items);
 
   /// A unique identifier corresponding to this item.
@@ -565,7 +569,7 @@ class Asset extends _Asset {
   double price;
 
   @override
-  List<_Item> items;
+  List<AbstractItem> items;
 
   Asset copyWith({
     String? id,
@@ -574,7 +578,7 @@ class Asset extends _Asset {
     String? description,
     String? name,
     double? price,
-    List<_Item>? items,
+    List<AbstractItem>? items,
   }) {
     return Asset(
         id: id ?? this.id,
@@ -588,14 +592,14 @@ class Asset extends _Asset {
 
   @override
   bool operator ==(other) {
-    return other is _Asset &&
+    return other is AbstractAsset &&
         other.id == id &&
         other.createdAt == createdAt &&
         other.updatedAt == updatedAt &&
         other.description == description &&
         other.name == name &&
         other.price == price &&
-        ListEquality<_Item>(DefaultEquality<_Item>())
+        ListEquality<AbstractItem>(DefaultEquality<AbstractItem>())
             .equals(other.items, items);
   }
 
@@ -667,7 +671,7 @@ class ItemSerializer extends Codec<Item, Map> {
         description: map['description'] as String);
   }
 
-  static Map<String, dynamic> toMap(_Item? model) {
+  static Map<String, dynamic> toMap(AbstractItem? model) {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }
@@ -744,7 +748,7 @@ class AssetSerializer extends Codec<Asset, Map> {
             : []);
   }
 
-  static Map<String, dynamic> toMap(_Asset? model) {
+  static Map<String, dynamic> toMap(AbstractAsset? model) {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }

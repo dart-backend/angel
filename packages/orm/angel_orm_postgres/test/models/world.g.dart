@@ -10,7 +10,7 @@ class WorldMigration extends Migration {
   @override
   void up(Schema schema) {
     schema.create('world', (table) {
-      table.integer('id');
+      table.integer('id').primaryKey();
       table.integer('randomnumber');
     });
   }
@@ -27,9 +27,9 @@ class WorldMigration extends Migration {
 
 class WorldQuery extends Query<World, WorldQueryWhere> {
   WorldQuery({
-    Query? parent,
+    super.parent,
     Set<String>? trampoline,
-  }) : super(parent: parent) {
+  }) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = WorldQueryWhere(this);
@@ -54,13 +54,15 @@ class WorldQuery extends Query<World, WorldQueryWhere> {
 
   @override
   List<String> get fields {
-    const _fields = [
+    const localFields = [
       'id',
       'randomnumber',
     ];
     return _selectedFields.isEmpty
-        ? _fields
-        : _fields.where((field) => _selectedFields.contains(field)).toList();
+        ? localFields
+        : localFields
+            .where((field) => _selectedFields.contains(field))
+            .toList();
   }
 
   WorldQuery select(List<String> selectedFields) {
@@ -148,7 +150,7 @@ class WorldQueryValues extends MapQueryValues {
 // **************************************************************************
 
 @generatedSerializable
-class World extends _World {
+class World extends AbstractWorld {
   World({
     this.id,
     this.randomnumber,
@@ -170,7 +172,7 @@ class World extends _World {
 
   @override
   bool operator ==(other) {
-    return other is _World &&
+    return other is AbstractWorld &&
         other.id == id &&
         other.randomnumber == randomnumber;
   }
@@ -227,7 +229,7 @@ class WorldSerializer extends Codec<World, Map> {
         id: map['id'] as int?, randomnumber: map['randomnumber'] as int?);
   }
 
-  static Map<String, dynamic> toMap(_World? model) {
+  static Map<String, dynamic> toMap(AbstractWorld? model) {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }

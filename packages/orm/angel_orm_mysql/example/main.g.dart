@@ -30,9 +30,9 @@ class TodoMigration extends Migration {
 
 class TodoQuery extends Query<Todo, TodoQueryWhere> {
   TodoQuery({
-    Query? parent,
+    super.parent,
     Set<String>? trampoline,
-  }) : super(parent: parent) {
+  }) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = TodoQueryWhere(this);
@@ -57,7 +57,7 @@ class TodoQuery extends Query<Todo, TodoQueryWhere> {
 
   @override
   List<String> get fields {
-    const _fields = [
+    const localFields = [
       'id',
       'created_at',
       'updated_at',
@@ -65,8 +65,10 @@ class TodoQuery extends Query<Todo, TodoQueryWhere> {
       'text',
     ];
     return _selectedFields.isEmpty
-        ? _fields
-        : _fields.where((field) => _selectedFields.contains(field)).toList();
+        ? localFields
+        : localFields
+            .where((field) => _selectedFields.contains(field))
+            .toList();
   }
 
   TodoQuery select(List<String> selectedFields) {

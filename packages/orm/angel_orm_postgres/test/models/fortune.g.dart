@@ -27,9 +27,9 @@ class FortuneMigration extends Migration {
 
 class FortuneQuery extends Query<Fortune, FortuneQueryWhere> {
   FortuneQuery({
-    Query? parent,
+    super.parent,
     Set<String>? trampoline,
-  }) : super(parent: parent) {
+  }) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = FortuneQueryWhere(this);
@@ -54,13 +54,15 @@ class FortuneQuery extends Query<Fortune, FortuneQueryWhere> {
 
   @override
   List<String> get fields {
-    const _fields = [
+    const localFields = [
       'id',
       'message',
     ];
     return _selectedFields.isEmpty
-        ? _fields
-        : _fields.where((field) => _selectedFields.contains(field)).toList();
+        ? localFields
+        : localFields
+            .where((field) => _selectedFields.contains(field))
+            .toList();
   }
 
   FortuneQuery select(List<String> selectedFields) {

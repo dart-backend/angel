@@ -160,14 +160,13 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                 .map((f) =>
                     literalString(ctx.buildContext.resolveFieldName(f.name)!))
                 .toList();
-            //b.addExpression(literalConstList(names).assignConst('_fields'));
             b.addExpression(
-                declareConst('_fields').assign(literalConstList(names)));
+                declareConst('localFields').assign(literalConstList(names)));
             b.addExpression(refer('_selectedFields')
                 .property('isEmpty')
                 .conditional(
-                  refer('_fields'),
-                  refer('_fields')
+                  refer('localFields'),
+                  refer('localFields')
                       .property('where')
                       .call([
                         CodeExpression(
@@ -444,15 +443,11 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
           ..optionalParameters.add(Parameter((b) => b
             ..named = true
             ..name = 'parent'
-            ..type = refer('Query?')))
+            ..toSuper = true))
           ..optionalParameters.add(Parameter((b) => b
             ..named = true
             ..name = 'trampoline'
             ..type = refer('Set<String>?')))
-          //TypeReference((b) => b
-          //..symbol = 'Set'
-          //..types.add(refer('String')))))
-          ..initializers.add(Code('super(parent: parent)'))
           ..body = Block((b) {
             b.statements.addAll([
               Code('trampoline ??= <String>{};'),

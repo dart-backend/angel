@@ -7,7 +7,7 @@ part 'world.g.dart';
 
 @serializable
 @Orm(tableName: 'world')
-abstract class _World {
+abstract class AbstractWorld {
   @primaryKey
   int? id;
 
