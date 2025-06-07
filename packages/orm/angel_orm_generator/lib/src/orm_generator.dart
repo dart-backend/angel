@@ -141,7 +141,9 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
           ..annotations.add(refer('override'))
           ..type = MethodType.getter
           ..body = Block((b) {
-            b.addExpression(literalString(ctx.tableName!).returned);
+            b.addExpression(
+                literalString(getGeneratedModelClassName(ctx.tableName!))
+                    .returned);
           });
       }));
 

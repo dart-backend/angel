@@ -5,6 +5,7 @@ import 'dart:mirrors';
 import 'dart:typed_data';
 import 'package:analyzer/dart/constant/value.dart';
 import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/element2.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:angel3_serialize/angel3_serialize.dart';
@@ -41,7 +42,7 @@ Builder typescriptDefinitionBuilder(_) {
 TypeReference convertTypeReference(DartType t,
     {bool forceNullable = false, bool ignoreNullabilityCheck = false}) {
   return TypeReference((b) {
-    b.symbol = t.element?.displayName;
+    b.symbol = t.element3?.displayName;
 
     // Generate nullable type
     if (ignoreNullabilityCheck) {
@@ -117,7 +118,7 @@ String? dartObjectToString(DartObject v) {
         .accept(DartEmitter(useNullSafetySyntax: true))
         .toString();
   }
-  if (type is InterfaceType && type.element is EnumElement) {
+  if (type is InterfaceType && type.element3 is EnumElement2) {
     // Find the index of the enum, then find the member.
     for (var field in type.element.fields) {
       if (field.isEnumConstant && field.isStatic) {
@@ -127,11 +128,11 @@ String? dartObjectToString(DartObject v) {
           var value2 = value as Enum;
 
           if (value2.name == v2.name) {
-            return '${type.element.displayName}.${field.name}';
+            return '${type.element3.displayName}.${field.name}';
           }
         } else {
           if (value == v) {
-            return '${type.element.displayName}.${field.name}';
+            return '${type.element3.displayName}.${field.name}';
           }
         }
       }
@@ -182,7 +183,7 @@ bool isListOrMapType(DartType t) {
 
 bool isEnumType(DartType t) {
   if (t is InterfaceType) {
-    return t.element is Enum;
+    return t.element3 is Enum;
   }
 
   return false;
@@ -209,13 +210,13 @@ bool isAssignableToModel(DartType type) =>
 String? typeToString(DartType type) {
   if (type is InterfaceType) {
     if (type.typeArguments.isEmpty) {
-      return type.element.displayName;
+      return type.element3.displayName;
     }
 
-    var name = type.element.displayName;
+    var name = type.element3.displayName;
 
     return '$name<${type.typeArguments.map(typeToString).join(', ')}>';
   } else {
-    return type.element?.displayName;
+    return type.element3?.displayName;
   }
 }
