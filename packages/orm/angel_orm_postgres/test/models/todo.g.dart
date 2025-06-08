@@ -230,8 +230,8 @@ class UserQuery extends Query<User, UserQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                todos: List<_UserTodo>.from(l.todos)..addAll(model.todos),
-                address: List<_UserAddress>.from(l.address)
+                todos: List<UserTodoEntity>.from(l.todos)..addAll(model.todos),
+                address: List<UserAddressEntity>.from(l.address)
                   ..addAll(model.address));
         }
       });
@@ -250,8 +250,8 @@ class UserQuery extends Query<User, UserQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                todos: List<_UserTodo>.from(l.todos)..addAll(model.todos),
-                address: List<_UserAddress>.from(l.address)
+                todos: List<UserTodoEntity>.from(l.todos)..addAll(model.todos),
+                address: List<UserAddressEntity>.from(l.address)
                   ..addAll(model.address));
         }
       });
@@ -270,8 +270,8 @@ class UserQuery extends Query<User, UserQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                todos: List<_UserTodo>.from(l.todos)..addAll(model.todos),
-                address: List<_UserAddress>.from(l.address)
+                todos: List<UserTodoEntity>.from(l.todos)..addAll(model.todos),
+                address: List<UserAddressEntity>.from(l.address)
                   ..addAll(model.address));
         }
       });
@@ -602,9 +602,9 @@ class UserTodoQuery extends Query<UserTodo, UserTodoQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                todoValues: List<_TodoValue>.from(l.todoValues)
+                todoValues: List<TodoValueEntity>.from(l.todoValues)
                   ..addAll(model.todoValues),
-                todoNotes: List<_TodoNote>.from(l.todoNotes)
+                todoNotes: List<TodoNoteEntity>.from(l.todoNotes)
                   ..addAll(model.todoNotes));
         }
       });
@@ -623,9 +623,9 @@ class UserTodoQuery extends Query<UserTodo, UserTodoQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                todoValues: List<_TodoValue>.from(l.todoValues)
+                todoValues: List<TodoValueEntity>.from(l.todoValues)
                   ..addAll(model.todoValues),
-                todoNotes: List<_TodoNote>.from(l.todoNotes)
+                todoNotes: List<TodoNoteEntity>.from(l.todoNotes)
                   ..addAll(model.todoNotes));
         }
       });
@@ -644,9 +644,9 @@ class UserTodoQuery extends Query<UserTodo, UserTodoQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                todoValues: List<_TodoValue>.from(l.todoValues)
+                todoValues: List<TodoValueEntity>.from(l.todoValues)
                   ..addAll(model.todoValues),
-                todoNotes: List<_TodoNote>.from(l.todoNotes)
+                todoNotes: List<TodoNoteEntity>.from(l.todoNotes)
                   ..addAll(model.todoNotes));
         }
       });
@@ -1025,7 +1025,7 @@ class TodoNoteQueryValues extends MapQueryValues {
 // **************************************************************************
 
 @generatedSerializable
-class User implements _User {
+class User implements UserEntity {
   User({
     required this.id,
     required this.name,
@@ -1040,16 +1040,16 @@ class User implements _User {
   String name;
 
   @override
-  List<_UserTodo> todos;
+  List<UserTodoEntity> todos;
 
   @override
-  List<_UserAddress> address;
+  List<UserAddressEntity> address;
 
   User copyWith({
     int? id,
     String? name,
-    List<_UserTodo>? todos,
-    List<_UserAddress>? address,
+    List<UserTodoEntity>? todos,
+    List<UserAddressEntity>? address,
   }) {
     return User(
         id: id ?? this.id,
@@ -1060,12 +1060,12 @@ class User implements _User {
 
   @override
   bool operator ==(other) {
-    return other is _User &&
+    return other is UserEntity &&
         other.id == id &&
         other.name == name &&
-        ListEquality<_UserTodo>(DefaultEquality<_UserTodo>())
+        ListEquality<UserTodoEntity>(DefaultEquality<UserTodoEntity>())
             .equals(other.todos, todos) &&
-        ListEquality<_UserAddress>(DefaultEquality<_UserAddress>())
+        ListEquality<UserAddressEntity>(DefaultEquality<UserAddressEntity>())
             .equals(other.address, address);
   }
 
@@ -1090,7 +1090,7 @@ class User implements _User {
 }
 
 @generatedSerializable
-class UserAddress implements _UserAddress {
+class UserAddress implements UserAddressEntity {
   UserAddress({
     required this.id,
     required this.userId,
@@ -1119,7 +1119,7 @@ class UserAddress implements _UserAddress {
 
   @override
   bool operator ==(other) {
-    return other is _UserAddress &&
+    return other is UserAddressEntity &&
         other.id == id &&
         other.userId == userId &&
         other.address == address;
@@ -1145,7 +1145,7 @@ class UserAddress implements _UserAddress {
 }
 
 @generatedSerializable
-class UserTodo implements _UserTodo {
+class UserTodo implements UserTodoEntity {
   UserTodo({
     required this.id,
     required this.userId,
@@ -1164,17 +1164,17 @@ class UserTodo implements _UserTodo {
   String title;
 
   @override
-  List<_TodoValue> todoValues;
+  List<TodoValueEntity> todoValues;
 
   @override
-  List<_TodoNote> todoNotes;
+  List<TodoNoteEntity> todoNotes;
 
   UserTodo copyWith({
     int? id,
     int? userId,
     String? title,
-    List<_TodoValue>? todoValues,
-    List<_TodoNote>? todoNotes,
+    List<TodoValueEntity>? todoValues,
+    List<TodoNoteEntity>? todoNotes,
   }) {
     return UserTodo(
         id: id ?? this.id,
@@ -1186,13 +1186,13 @@ class UserTodo implements _UserTodo {
 
   @override
   bool operator ==(other) {
-    return other is _UserTodo &&
+    return other is UserTodoEntity &&
         other.id == id &&
         other.userId == userId &&
         other.title == title &&
-        ListEquality<_TodoValue>(DefaultEquality<_TodoValue>())
+        ListEquality<TodoValueEntity>(DefaultEquality<TodoValueEntity>())
             .equals(other.todoValues, todoValues) &&
-        ListEquality<_TodoNote>(DefaultEquality<_TodoNote>())
+        ListEquality<TodoNoteEntity>(DefaultEquality<TodoNoteEntity>())
             .equals(other.todoNotes, todoNotes);
   }
 
@@ -1218,7 +1218,7 @@ class UserTodo implements _UserTodo {
 }
 
 @generatedSerializable
-class TodoValue implements _TodoValue {
+class TodoValue implements TodoValueEntity {
   TodoValue({
     required this.id,
     required this.value,
@@ -1253,7 +1253,7 @@ class TodoValue implements _TodoValue {
 
   @override
   bool operator ==(other) {
-    return other is _TodoValue &&
+    return other is TodoValueEntity &&
         other.id == id &&
         other.value == value &&
         other.todoId == todoId &&
@@ -1281,7 +1281,7 @@ class TodoValue implements _TodoValue {
 }
 
 @generatedSerializable
-class TodoNote implements _TodoNote {
+class TodoNote implements TodoNoteEntity {
   TodoNote({
     required this.id,
     required this.note,
@@ -1316,7 +1316,7 @@ class TodoNote implements _TodoNote {
 
   @override
   bool operator ==(other) {
-    return other is _TodoNote &&
+    return other is TodoNoteEntity &&
         other.id == id &&
         other.note == note &&
         other.todoId == todoId &&
@@ -1386,7 +1386,7 @@ class UserSerializer extends Codec<User, Map> {
             : []);
   }
 
-  static Map<String, dynamic> toMap(_User? model) {
+  static Map<String, dynamic> toMap(UserEntity? model) {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }
@@ -1449,7 +1449,7 @@ class UserAddressSerializer extends Codec<UserAddress, Map> {
         address: map['address'] as String);
   }
 
-  static Map<String, dynamic> toMap(_UserAddress? model) {
+  static Map<String, dynamic> toMap(UserAddressEntity? model) {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }
@@ -1513,7 +1513,7 @@ class UserTodoSerializer extends Codec<UserTodo, Map> {
             : []);
   }
 
-  static Map<String, dynamic> toMap(_UserTodo? model) {
+  static Map<String, dynamic> toMap(UserTodoEntity? model) {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }
@@ -1582,7 +1582,7 @@ class TodoValueSerializer extends Codec<TodoValue, Map> {
         description: map['description'] as String?);
   }
 
-  static Map<String, dynamic> toMap(_TodoValue? model) {
+  static Map<String, dynamic> toMap(TodoValueEntity? model) {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }
@@ -1645,7 +1645,7 @@ class TodoNoteSerializer extends Codec<TodoNote, Map> {
         description: map['description'] as String?);
   }
 
-  static Map<String, dynamic> toMap(_TodoNote? model) {
+  static Map<String, dynamic> toMap(TodoNoteEntity? model) {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }

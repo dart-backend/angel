@@ -9,7 +9,7 @@ part of 'asset.dart';
 class ItemMigration extends Migration {
   @override
   void up(Schema schema) {
-    schema.create('abstract_items', (table) {
+    schema.create('items', (table) {
       table.serial('id').primaryKey();
       table.timeStamp('created_at');
       table.timeStamp('updated_at');
@@ -19,14 +19,14 @@ class ItemMigration extends Migration {
 
   @override
   void down(Schema schema) {
-    schema.drop('abstract_items');
+    schema.drop('items');
   }
 }
 
 class AssetMigration extends Migration {
   @override
   void up(Schema schema) {
-    schema.create('abstract_assets', (table) {
+    schema.create('assets', (table) {
       table.serial('id').primaryKey();
       table.timeStamp('created_at');
       table.timeStamp('updated_at');
@@ -38,7 +38,7 @@ class AssetMigration extends Migration {
 
   @override
   void down(Schema schema) {
-    schema.drop('abstract_assets', cascade: true);
+    schema.drop('assets', cascade: true);
   }
 }
 
@@ -70,7 +70,7 @@ class ItemQuery extends Query<Item, ItemQueryWhere> {
 
   @override
   String get tableName {
-    return 'abstract_items';
+    return 'items';
   }
 
   @override
@@ -240,7 +240,7 @@ class AssetQuery extends Query<Asset, AssetQueryWhere> {
 
   @override
   String get tableName {
-    return 'abstract_assets';
+    return 'assets';
   }
 
   @override
@@ -319,7 +319,7 @@ class AssetQuery extends Query<Asset, AssetQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                items: List<AbstractItem>.from(l.items)..addAll(model.items));
+                items: List<ItemEntity>.from(l.items)..addAll(model.items));
         }
       });
     });
@@ -337,7 +337,7 @@ class AssetQuery extends Query<Asset, AssetQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                items: List<AbstractItem>.from(l.items)..addAll(model.items));
+                items: List<ItemEntity>.from(l.items)..addAll(model.items));
         }
       });
     });
@@ -355,7 +355,7 @@ class AssetQuery extends Query<Asset, AssetQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                items: List<AbstractItem>.from(l.items)..addAll(model.items));
+                items: List<ItemEntity>.from(l.items)..addAll(model.items));
         }
       });
     });
@@ -470,7 +470,7 @@ class AssetQueryValues extends MapQueryValues {
 // **************************************************************************
 
 @generatedSerializable
-class Item extends AbstractItem {
+class Item extends ItemEntity {
   Item({
     this.id,
     this.createdAt,
@@ -508,7 +508,7 @@ class Item extends AbstractItem {
 
   @override
   bool operator ==(other) {
-    return other is AbstractItem &&
+    return other is ItemEntity &&
         other.id == id &&
         other.createdAt == createdAt &&
         other.updatedAt == updatedAt &&
@@ -536,7 +536,7 @@ class Item extends AbstractItem {
 }
 
 @generatedSerializable
-class Asset extends AbstractAsset {
+class Asset extends AssetEntity {
   Asset({
     this.id,
     this.createdAt,
@@ -544,7 +544,7 @@ class Asset extends AbstractAsset {
     required this.description,
     required this.name,
     required this.price,
-    List<AbstractItem> items = const [],
+    List<ItemEntity> items = const [],
   }) : items = List.unmodifiable(items);
 
   /// A unique identifier corresponding to this item.
@@ -569,7 +569,7 @@ class Asset extends AbstractAsset {
   double price;
 
   @override
-  List<AbstractItem> items;
+  List<ItemEntity> items;
 
   Asset copyWith({
     String? id,
@@ -578,7 +578,7 @@ class Asset extends AbstractAsset {
     String? description,
     String? name,
     double? price,
-    List<AbstractItem>? items,
+    List<ItemEntity>? items,
   }) {
     return Asset(
         id: id ?? this.id,
@@ -592,14 +592,14 @@ class Asset extends AbstractAsset {
 
   @override
   bool operator ==(other) {
-    return other is AbstractAsset &&
+    return other is AssetEntity &&
         other.id == id &&
         other.createdAt == createdAt &&
         other.updatedAt == updatedAt &&
         other.description == description &&
         other.name == name &&
         other.price == price &&
-        ListEquality<AbstractItem>(DefaultEquality<AbstractItem>())
+        ListEquality<ItemEntity>(DefaultEquality<ItemEntity>())
             .equals(other.items, items);
   }
 
@@ -671,7 +671,7 @@ class ItemSerializer extends Codec<Item, Map> {
         description: map['description'] as String);
   }
 
-  static Map<String, dynamic> toMap(AbstractItem? model) {
+  static Map<String, dynamic> toMap(ItemEntity? model) {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }
@@ -748,7 +748,7 @@ class AssetSerializer extends Codec<Asset, Map> {
             : []);
   }
 
-  static Map<String, dynamic> toMap(AbstractAsset? model) {
+  static Map<String, dynamic> toMap(AssetEntity? model) {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }

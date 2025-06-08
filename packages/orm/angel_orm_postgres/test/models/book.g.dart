@@ -468,7 +468,7 @@ class AuthorQueryValues extends MapQueryValues {
 // **************************************************************************
 
 @generatedSerializable
-class Book extends _Book {
+class Book extends EntityBook {
   Book({
     this.id,
     this.createdAt,
@@ -491,10 +491,10 @@ class Book extends _Book {
   DateTime? updatedAt;
 
   @override
-  _Author? partnerAuthor;
+  EntityAuthor? partnerAuthor;
 
   @override
-  _Author? author;
+  EntityAuthor? author;
 
   @override
   String? name;
@@ -503,8 +503,8 @@ class Book extends _Book {
     String? id,
     DateTime? createdAt,
     DateTime? updatedAt,
-    _Author? partnerAuthor,
-    _Author? author,
+    EntityAuthor? partnerAuthor,
+    EntityAuthor? author,
     String? name,
   }) {
     return Book(
@@ -518,7 +518,7 @@ class Book extends _Book {
 
   @override
   bool operator ==(other) {
-    return other is _Book &&
+    return other is EntityBook &&
         other.id == id &&
         other.createdAt == createdAt &&
         other.updatedAt == updatedAt &&
@@ -550,7 +550,7 @@ class Book extends _Book {
 }
 
 @generatedSerializable
-class Author extends _Author {
+class Author extends EntityAuthor {
   Author({
     this.id,
     this.createdAt,
@@ -594,7 +594,7 @@ class Author extends _Author {
 
   @override
   bool operator ==(other) {
-    return other is _Author &&
+    return other is EntityAuthor &&
         other.id == id &&
         other.createdAt == createdAt &&
         other.updatedAt == updatedAt &&
@@ -674,7 +674,7 @@ class BookSerializer extends Codec<Book, Map> {
         name: map['name'] as String?);
   }
 
-  static Map<String, dynamic> toMap(_Book? model) {
+  static Map<String, dynamic> toMap(EntityBook? model) {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }
@@ -754,7 +754,7 @@ class AuthorSerializer extends Codec<Author, Map> {
         publisher: map['publisher'] as String?);
   }
 
-  static Map<String, dynamic> toMap(_Author? model) {
+  static Map<String, dynamic> toMap(EntityAuthor? model) {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }

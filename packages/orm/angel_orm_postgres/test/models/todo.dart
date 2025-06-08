@@ -7,7 +7,7 @@ part 'todo.g.dart';
 
 @serializable
 @Orm(tableName: 'user_acc', generateMigrations: true)
-abstract class _User {
+abstract class UserEntity {
   @Column(type: ColumnType.serial, indexType: IndexType.primaryKey)
   @PrimaryKey()
   int get id;
@@ -17,15 +17,15 @@ abstract class _User {
 
   // Not supported
   @HasMany(localKey: 'id', foreignKey: 'user_id')
-  List<_UserTodo> get todos;
+  List<UserTodoEntity> get todos;
 
   @HasMany(localKey: 'id', foreignKey: 'user_id')
-  List<_UserAddress> get address;
+  List<UserAddressEntity> get address;
 }
 
 @Orm(tableName: 'user_addr', generateMigrations: true)
 @serializable
-abstract class _UserAddress {
+abstract class UserAddressEntity {
   @Column(
       type: ColumnType.serial,
       indexType: IndexType.primaryKey,
@@ -41,7 +41,7 @@ abstract class _UserAddress {
 
 @Orm(tableName: 'user_todo', generateMigrations: true)
 @serializable
-abstract class _UserTodo {
+abstract class UserTodoEntity {
   @Column(
       type: ColumnType.serial,
       indexType: IndexType.primaryKey,
@@ -55,15 +55,15 @@ abstract class _UserTodo {
   String get title;
 
   @HasMany(localKey: 'id', foreignKey: 'todo_value_id')
-  List<_TodoValue> get todoValues;
+  List<TodoValueEntity> get todoValues;
 
   @HasMany(localKey: 'id', foreignKey: 'todo_note_id')
-  List<_TodoNote> get todoNotes;
+  List<TodoNoteEntity> get todoNotes;
 }
 
 @Orm(tableName: 'todo_value', generateMigrations: true)
 @serializable
-abstract class _TodoValue {
+abstract class TodoValueEntity {
   @Column(type: ColumnType.serial, indexType: IndexType.primaryKey)
   int get id;
 
@@ -78,7 +78,7 @@ abstract class _TodoValue {
 
 @Orm(tableName: 'todo_note', generateMigrations: true)
 @serializable
-abstract class _TodoNote {
+abstract class TodoNoteEntity {
   @Column(type: ColumnType.serial, indexType: IndexType.primaryKey)
   int get id;
 

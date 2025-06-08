@@ -1,8 +1,9 @@
 # Change Log
 
-## 8.3.2
+## 8.4.0
 
-* Updated test cases
+* Added support for `<Class>Entity` and `Entity<Class>` as data model
+* Migrated data modesl in test cases from `_<Class>` to  `<Class>Entity`
 
 ## 8.3.1
 

@@ -2,7 +2,7 @@
 
 ## 8.5.0
 
-* Added support for `Abstract<Model>` as base entity model
+* Added support for `Entity<Class>` and `<Class>Entity` as data model
 
 ## 8.4.1
 

@@ -150,7 +150,7 @@ class WorldQueryValues extends MapQueryValues {
 // **************************************************************************
 
 @generatedSerializable
-class World extends AbstractWorld {
+class World extends WorldEntity {
   World({
     this.id,
     this.randomnumber,
@@ -172,7 +172,7 @@ class World extends AbstractWorld {
 
   @override
   bool operator ==(other) {
-    return other is AbstractWorld &&
+    return other is WorldEntity &&
         other.id == id &&
         other.randomnumber == randomnumber;
   }
@@ -229,7 +229,7 @@ class WorldSerializer extends Codec<World, Map> {
         id: map['id'] as int?, randomnumber: map['randomnumber'] as int?);
   }
 
-  static Map<String, dynamic> toMap(AbstractWorld? model) {
+  static Map<String, dynamic> toMap(WorldEntity? model) {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }

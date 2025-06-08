@@ -255,7 +255,7 @@ class CarQueryValues extends MapQueryValues {
 // **************************************************************************
 
 @generatedSerializable
-class Car extends _Car {
+class Car extends CarEntity {
   Car({
     this.id,
     this.createdAt,
@@ -317,7 +317,7 @@ class Car extends _Car {
 
   @override
   bool operator ==(other) {
-    return other is _Car &&
+    return other is CarEntity &&
         other.id == id &&
         other.createdAt == createdAt &&
         other.updatedAt == updatedAt &&
@@ -405,7 +405,7 @@ class CarSerializer extends Codec<Car, Map> {
         price: map['price'] as double?);
   }
 
-  static Map<String, dynamic> toMap(_Car? model) {
+  static Map<String, dynamic> toMap(CarEntity? model) {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }

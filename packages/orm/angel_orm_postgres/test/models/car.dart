@@ -6,7 +6,7 @@ part 'car.g.dart';
 
 @serializable
 @orm
-class _Car extends Model {
+class CarEntity extends Model {
   String? make;
   String? description;
   bool? familyFriendly;

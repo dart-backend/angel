@@ -9,7 +9,7 @@ part 'person_order.g.dart';
 
 @orm
 @serializable
-abstract class _PersonOrder extends Model {
+abstract class PersonOrderEntity extends Model {
   int? get personId;
 
   String? get name;
@@ -21,7 +21,7 @@ abstract class _PersonOrder extends Model {
 
 @serializable
 @Orm(tableName: 'person_orders', generateMigrations: false)
-abstract class _OrderWithPersonInfo extends Model {
+abstract class OrderWithPersonInfoEntity extends Model {
   String? get name;
 
   double? get price;

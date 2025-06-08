@@ -5,13 +5,13 @@
 [![Discord](https://img.shields.io/discord/1060322353214660698)](https://discord.gg/3X6bxTUdCM)
 [![License](https://img.shields.io/github/license/dart-backend/angel)](https://github.com/dart-backend/angel/tree/master/packages/orm/angel_orm_postgres/LICENSE)
 
-Angel3 ORM for PostgreSQL database for PostgreSQL 10 or greater.
+Angel3 ORM for working with PostgreSQL database 12 or later.
 
 For documentation about the ORM, see [Developer Guide](https://angel3-docs.dukefirehawk.com/guides/orm)
 
 ## Migrating to 8.1.0 and above
 
-`postgres` has been upgraded from 2.x.x to 3.x.x since version 8.1.0. This is a breaking change as `postgres` 3.x.x has majorly changed its API. Therefore when upgrading to 8.1.0 and beyond, the PostgreSQL connection settings need to be migrated. The rest should remain the same. Please see the example for the new PostgreSQL connection settings.
+`postgres` has been upgraded from 2.x.x to 3.x.x since version 8.1.0. This is a breaking change as `postgres` 3.x.x has revamped its API. Therefore when upgrading to 8.1.0 and beyond, the PostgreSQL connection settings need to be migrated. The rest should remain the same. Please see the example for the new PostgreSQL connection settings.
 
 ## Usage
 
@@ -27,7 +27,7 @@ For documentation about the ORM, see [Developer Guide](https://angel3-docs.dukef
 
     @serializable
     @orm
-    class _Car extends Model {
+    class CarEntity extends Model {
         String? make;
         String? description;
         bool? familyFriendly;
@@ -76,7 +76,7 @@ For documentation about the ORM, see [Developer Guide](https://angel3-docs.dukef
             ..price = 1200000.00
             ..familyFriendly = false;
         
-        // insert a new record into the `Car` table
+        // insert a new record into the `cars` table
         var ferrari = (await query.insert(executor)).value;
     }
     ```

@@ -8,14 +8,14 @@ part 'person.g.dart';
 
 @serializable
 @Orm(tableName: 'persons')
-class _Person extends Model {
+class PersonEntity extends Model {
   String? name;
   int? age;
 }
 
 @serializable
 @Orm(tableName: 'persons', generateMigrations: false)
-class _PersonWithLastOrder {
+class PersonWithLastOrderEntity {
   String? name;
 
   @Column(expression: 'po.name')

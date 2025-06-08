@@ -5,12 +5,12 @@
 [![Discord](https://img.shields.io/discord/1060322353214660698)](https://discord.gg/3X6bxTUdCM)
 [![License](https://img.shields.io/github/license/dart-backend/angel)](https://github.com/dart-backend/angel/tree/master/packages/orm/angel_orm_mysql/LICENSE)
 
-This package contains the SQL executor required by Angel3 ORM to work with MySQL or MariaDB. In order to better support both MySQL and MariaDB, two different flavors of drives have been included; `mysql_client` and `mysql1`. They are implmented as `MySqlExecutor` and `MariaDbExecutor` respectively.
+This package contains the SQL executor required by Angel3 ORM to work with MySQL or MariaDB databases. In order to better support both MySQL and MariaDB, two different flavors of drives have been included; `mysql_client` and `mysql1`. They are implmented as `MySqlExecutor` and `MariaDbExecutor` respectively.
 
 ## Supported databases
 
-* MariaDD 10.2.x or greater
-* MySQL 8.x or greater
+* MariaDD 10.2.x or later
+* MySQL 8.x or later
 
 **Note** MySQL below version 8.0 and MariaDB below version 10.2.0 are not supported as Angel3 ORM requires common table expressions (CTE) to work.
 
@@ -28,7 +28,7 @@ This package contains the SQL executor required by Angel3 ORM to work with MySQL
 
     @serializable
     @orm
-    class _Car extends Model {
+    class CarEntity extends Model {
         String? make;
         String? description;
         bool? familyFriendly;
@@ -77,7 +77,7 @@ This package contains the SQL executor required by Angel3 ORM to work with MySQL
             ..price = 1200000.00
             ..familyFriendly = false;
         
-        // insert a new record into the `Car` table
+        // insert a new record into the `cars` table
         var ferrari = (await query.insert(executor)).value;
     }
     ```

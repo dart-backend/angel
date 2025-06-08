@@ -429,7 +429,7 @@ class OrderWithPersonInfoQueryValues extends MapQueryValues {
 // **************************************************************************
 
 @generatedSerializable
-class PersonOrder extends _PersonOrder {
+class PersonOrder extends PersonOrderEntity {
   PersonOrder({
     this.id,
     this.createdAt,
@@ -485,7 +485,7 @@ class PersonOrder extends _PersonOrder {
 
   @override
   bool operator ==(other) {
-    return other is _PersonOrder &&
+    return other is PersonOrderEntity &&
         other.id == id &&
         other.createdAt == createdAt &&
         other.updatedAt == updatedAt &&
@@ -519,7 +519,7 @@ class PersonOrder extends _PersonOrder {
 }
 
 @generatedSerializable
-class OrderWithPersonInfo extends _OrderWithPersonInfo {
+class OrderWithPersonInfo extends OrderWithPersonInfoEntity {
   OrderWithPersonInfo({
     this.id,
     this.createdAt,
@@ -581,7 +581,7 @@ class OrderWithPersonInfo extends _OrderWithPersonInfo {
 
   @override
   bool operator ==(other) {
-    return other is _OrderWithPersonInfo &&
+    return other is OrderWithPersonInfoEntity &&
         other.id == id &&
         other.createdAt == createdAt &&
         other.updatedAt == updatedAt &&
@@ -664,7 +664,7 @@ class PersonOrderSerializer extends Codec<PersonOrder, Map> {
         deleted: map['deleted'] as bool?);
   }
 
-  static Map<String, dynamic> toMap(_PersonOrder? model) {
+  static Map<String, dynamic> toMap(PersonOrderEntity? model) {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }
@@ -754,7 +754,7 @@ class OrderWithPersonInfoSerializer extends Codec<OrderWithPersonInfo, Map> {
         personAge: map['person_age'] as int?);
   }
 
-  static Map<String, dynamic> toMap(_OrderWithPersonInfo? model) {
+  static Map<String, dynamic> toMap(OrderWithPersonInfoEntity? model) {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }

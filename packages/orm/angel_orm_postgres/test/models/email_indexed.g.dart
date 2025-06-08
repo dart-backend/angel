@@ -160,7 +160,7 @@ class RoleQuery extends Query<Role, RoleQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                users: List<_User>.from(l.users)..addAll(model.users));
+                users: List<UserEntity>.from(l.users)..addAll(model.users));
         }
       });
     });
@@ -178,7 +178,7 @@ class RoleQuery extends Query<Role, RoleQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                users: List<_User>.from(l.users)..addAll(model.users));
+                users: List<UserEntity>.from(l.users)..addAll(model.users));
         }
       });
     });
@@ -196,7 +196,7 @@ class RoleQuery extends Query<Role, RoleQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                users: List<_User>.from(l.users)..addAll(model.users));
+                users: List<UserEntity>.from(l.users)..addAll(model.users));
         }
       });
     });
@@ -508,7 +508,7 @@ class UserQuery extends Query<User, UserQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                roles: List<_Role>.from(l.roles)..addAll(model.roles));
+                roles: List<RoleEntity>.from(l.roles)..addAll(model.roles));
         }
       });
     });
@@ -526,7 +526,7 @@ class UserQuery extends Query<User, UserQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                roles: List<_Role>.from(l.roles)..addAll(model.roles));
+                roles: List<RoleEntity>.from(l.roles)..addAll(model.roles));
         }
       });
     });
@@ -544,7 +544,7 @@ class UserQuery extends Query<User, UserQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                roles: List<_Role>.from(l.roles)..addAll(model.roles));
+                roles: List<RoleEntity>.from(l.roles)..addAll(model.roles));
         }
       });
     });
@@ -618,7 +618,7 @@ class UserQueryValues extends MapQueryValues {
 // **************************************************************************
 
 @generatedSerializable
-class Role implements _Role {
+class Role implements RoleEntity {
   Role({
     this.role,
     this.users = const [],
@@ -628,20 +628,20 @@ class Role implements _Role {
   String? role;
 
   @override
-  List<_User> users;
+  List<UserEntity> users;
 
   Role copyWith({
     String? role,
-    List<_User>? users,
+    List<UserEntity>? users,
   }) {
     return Role(role: role ?? this.role, users: users ?? this.users);
   }
 
   @override
   bool operator ==(other) {
-    return other is _Role &&
+    return other is RoleEntity &&
         other.role == role &&
-        ListEquality<_User>(DefaultEquality<_User>())
+        ListEquality<UserEntity>(DefaultEquality<UserEntity>())
             .equals(other.users, users);
   }
 
@@ -664,28 +664,28 @@ class Role implements _Role {
 }
 
 @generatedSerializable
-class RoleUser implements _RoleUser {
+class RoleUser implements RoleUserEntity {
   RoleUser({
     this.role,
     this.user,
   });
 
   @override
-  _Role? role;
+  RoleEntity? role;
 
   @override
-  _User? user;
+  UserEntity? user;
 
   RoleUser copyWith({
-    _Role? role,
-    _User? user,
+    RoleEntity? role,
+    UserEntity? user,
   }) {
     return RoleUser(role: role ?? this.role, user: user ?? this.user);
   }
 
   @override
   bool operator ==(other) {
-    return other is _RoleUser && other.role == role && other.user == user;
+    return other is RoleUserEntity && other.role == role && other.user == user;
   }
 
   @override
@@ -707,7 +707,7 @@ class RoleUser implements _RoleUser {
 }
 
 @generatedSerializable
-class User implements _User {
+class User implements UserEntity {
   User({
     this.email,
     this.name,
@@ -725,13 +725,13 @@ class User implements _User {
   String? password;
 
   @override
-  List<_Role> roles;
+  List<RoleEntity> roles;
 
   User copyWith({
     String? email,
     String? name,
     String? password,
-    List<_Role>? roles,
+    List<RoleEntity>? roles,
   }) {
     return User(
         email: email ?? this.email,
@@ -742,11 +742,11 @@ class User implements _User {
 
   @override
   bool operator ==(other) {
-    return other is _User &&
+    return other is UserEntity &&
         other.email == email &&
         other.name == name &&
         other.password == password &&
-        ListEquality<_Role>(DefaultEquality<_Role>())
+        ListEquality<RoleEntity>(DefaultEquality<RoleEntity>())
             .equals(other.roles, roles);
   }
 
@@ -808,7 +808,7 @@ class RoleSerializer extends Codec<Role, Map> {
             : []);
   }
 
-  static Map<String, dynamic> toMap(_Role? model) {
+  static Map<String, dynamic> toMap(RoleEntity? model) {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }
@@ -865,7 +865,7 @@ class RoleUserSerializer extends Codec<RoleUser, Map> {
             : null);
   }
 
-  static Map<String, dynamic> toMap(_RoleUser? model) {
+  static Map<String, dynamic> toMap(RoleUserEntity? model) {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }
@@ -923,7 +923,7 @@ class UserSerializer extends Codec<User, Map> {
             : []);
   }
 
-  static Map<String, dynamic> toMap(_User? model) {
+  static Map<String, dynamic> toMap(UserEntity? model) {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }

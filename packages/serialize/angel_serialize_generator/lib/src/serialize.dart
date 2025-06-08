@@ -169,8 +169,9 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
           //   return '($value)?.toJson()';
           // }
 
-          var genClass = getGeneratedModelClassName(rc.pascalCase);
-          return '${genClass.replaceAll('?', '')}Serializer.toMap($value)';
+          var genClass =
+              getGeneratedModelClassName(rc.pascalCase.replaceAll('?', ''));
+          return '${genClass}Serializer.toMap($value)';
         }
 
         var fieldNameSerializer = ctx.fieldInfo[field.name]?.serializer;
@@ -360,9 +361,10 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
         else if (isModelClass(type)) {
           var rc = ReCase(type.getDisplayString());
 
-          var genClass = getGeneratedModelClassName(rc.pascalCase);
+          var genClass =
+              getGeneratedModelClassName(rc.pascalCase.replaceAll('?', ''));
           deserializedRepresentation = "map['$alias'] != null"
-              " ? ${genClass.replaceAll('?', '')}Serializer.fromMap(map['$alias'] as Map)"
+              " ? ${genClass}Serializer.fromMap(map['$alias'] as Map)"
               ' : $defaultValue';
         } else if (type is InterfaceType) {
           if (isListOfModelType(type)) {
@@ -371,12 +373,13 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
             }
             var rc = ReCase(type.typeArguments[0].getDisplayString());
 
-            var genClass = getGeneratedModelClassName(rc.pascalCase);
+            var genClass =
+                getGeneratedModelClassName(rc.pascalCase.replaceAll('?', ''));
 
             deserializedRepresentation = "map['$alias'] is Iterable"
                 " ? List.unmodifiable(((map['$alias'] as Iterable)"
                 '.whereType<Map>())'
-                '.map(${genClass.replaceAll('?', '')}Serializer.fromMap))'
+                '.map(${genClass}Serializer.fromMap))'
                 ' : $defaultValue';
           } else if (isMapToModelType(type)) {
             // TODO: This requires refractoring
@@ -385,11 +388,12 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
             }
 
             var rc = ReCase(type.typeArguments[1].getDisplayString());
-            var genClass = getGeneratedModelClassName(rc.pascalCase);
+            var genClass =
+                getGeneratedModelClassName(rc.pascalCase.replaceAll('?', ''));
             deserializedRepresentation = '''
                 map['$alias'] is Map
                   ? Map.unmodifiable((map['$alias'] as Map).keys.fold({}, (out, key) {
-                       return out..[key] = ${genClass.replaceAll('?', '')}Serializer
+                       return out..[key] = ${genClass}Serializer
                         .fromMap(((map['$alias'] as Map)[key]) as Map);
                     }))
                   : $defaultValue

@@ -7,33 +7,33 @@ part 'unorthodox.g.dart';
 
 @serializable
 @orm
-abstract class _Unorthodox {
+abstract class UnorthodoxEntity {
   @Column(indexType: IndexType.primaryKey)
   String? get name;
 }
 
 @serializable
 @orm
-abstract class _WeirdJoin {
+abstract class WeirdJoinEntity {
   @primaryKey
   int get id;
 
   @BelongsTo(localKey: 'join_name', foreignKey: 'name')
-  _Unorthodox? get unorthodox;
+  UnorthodoxEntity? get unorthodox;
 
   @hasOne
-  _Song? get song;
+  SongEntity? get song;
 
   @HasMany(foreignKey: 'parent')
-  List<_Numba> get numbas;
+  List<NumbaEntity> get numbas;
 
-  @ManyToMany(_FooPivot)
-  List<_Foo> get foos;
+  @ManyToMany(FooPivotEntity)
+  List<FooEntity> get foos;
 }
 
 @serializable
 @orm
-abstract class _Song extends Model {
+abstract class SongEntity extends Model {
   int? get weirdJoinId;
 
   String? get title;
@@ -41,7 +41,7 @@ abstract class _Song extends Model {
 
 @serializable
 @orm
-class _Numba implements Comparable<_Numba> {
+class NumbaEntity implements Comparable<NumbaEntity> {
   //@primaryKey
   //int i = -1;
   int? i;
@@ -49,25 +49,25 @@ class _Numba implements Comparable<_Numba> {
   int? parent;
 
   @override
-  int compareTo(_Numba other) => i!.compareTo(other.i!);
+  int compareTo(NumbaEntity other) => i!.compareTo(other.i!);
 }
 
 @serializable
 @orm
-abstract class _Foo {
+abstract class FooEntity {
   @primaryKey
   String? get bar;
 
-  @ManyToMany(_FooPivot)
-  List<_WeirdJoin> get weirdJoins;
+  @ManyToMany(FooPivotEntity)
+  List<WeirdJoinEntity> get weirdJoins;
 }
 
 @serializable
 @orm
-abstract class _FooPivot {
+abstract class FooPivotEntity {
   @belongsTo
-  _WeirdJoin? get weirdJoin;
+  WeirdJoinEntity? get weirdJoin;
 
   @belongsTo
-  _Foo? get foo;
+  FooEntity? get foo;
 }
