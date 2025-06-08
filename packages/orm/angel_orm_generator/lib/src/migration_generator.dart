@@ -351,7 +351,7 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
 
       meth.body = Block((b) {
         b.addExpression(_schema.property('create').call([
-          literal(getGeneratedModelClassName(ctx.tableName!)),
+          literal(ctx.tableName),
           closure.closure,
         ]));
       });
@@ -376,9 +376,9 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
             named['cascade'] = literalTrue;
           }
 
-          b.addExpression(_schema.property('drop').call(
-              [literalString(getGeneratedModelClassName(ctx.tableName!))],
-              named));
+          b.addExpression(_schema
+              .property('drop')
+              .call([literalString(ctx.tableName)], named));
         });
     });
   }

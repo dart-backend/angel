@@ -7,7 +7,7 @@ import 'package:recase/recase.dart';
 import 'package:source_gen/source_gen.dart';
 
 /// Support prefix for base serializable classes.
-final List<String> modelPrefix = ['_', 'abstract_', 'abstract'];
+final List<String> modelPrefix = ['_', 'abstract'];
 
 /// Get the concrete model class name
 String getGeneratedModelClassName(String clazz) {
