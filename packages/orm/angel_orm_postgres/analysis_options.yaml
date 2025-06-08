@@ -1,1 +1,4 @@
 include: package:lints/recommended.yaml
+linter:
+  rules:
+    overridden_fields: false

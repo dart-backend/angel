@@ -56,6 +56,7 @@ void main() {
         ..userId = userId
         ..title = 'Office';
       var userTodo = (await userTodoQuery.insert(executor)).value;
+      print(userTodo);
 
       /*
       var todoValueQuery = TodoValueQuery();
@@ -96,6 +97,7 @@ void main() {
         ..userId = userId
         ..address = 'Office Address';
       var userAddress = (await userAddressQuery.insert(executor)).value;
+      print(userAddress);
     });
 
     test('can fetch children', () async {
