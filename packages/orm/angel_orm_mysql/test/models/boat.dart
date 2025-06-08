@@ -7,7 +7,7 @@ part 'boat.g.dart';
 
 @Serializable(serializers: Serializers.all)
 @orm
-abstract class _Boat extends Model {
+abstract class BoatEntity extends Model {
   @Column(defaultValue: '')
   String get make;
 

@@ -3,7 +3,7 @@
 ## 8.4.0
 
 * Added support for `<Class>Entity` and `Entity<Class>` as data model
-* Updated test cases
+* Updated test cases to use `<Class>Entity` as data model
 
 ## 8.3.1
 

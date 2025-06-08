@@ -7,16 +7,16 @@ part 'custom_expr.g.dart';
 
 @serializable
 @orm
-class _Numbers extends Model {
+class NumberEntity extends Model {
   @Column(expression: 'SELECT 2')
   int? two;
 }
 
 @serializable
 @orm
-class _Alphabet extends Model {
+class AlphabetEntity extends Model {
   String? value;
 
   @belongsTo
-  _Numbers? numbers;
+  NumberEntity? numbers;
 }

@@ -150,7 +150,7 @@ class FortuneQueryValues extends MapQueryValues {
 // **************************************************************************
 
 @generatedSerializable
-class Fortune extends _Fortune {
+class Fortune extends FortuneEntity {
   Fortune({
     this.id,
     this.message,
@@ -171,7 +171,7 @@ class Fortune extends _Fortune {
 
   @override
   bool operator ==(other) {
-    return other is _Fortune && other.id == id && other.message == message;
+    return other is FortuneEntity && other.id == id && other.message == message;
   }
 
   @override
@@ -225,7 +225,7 @@ class FortuneSerializer extends Codec<Fortune, Map> {
     return Fortune(id: map['id'] as int?, message: map['message'] as String?);
   }
 
-  static Map<String, dynamic> toMap(_Fortune? model) {
+  static Map<String, dynamic> toMap(FortuneEntity? model) {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }

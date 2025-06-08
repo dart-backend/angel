@@ -162,7 +162,7 @@ class TreeQuery extends Query<Tree, TreeQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                fruits: List<_Fruit>.from(l.fruits)..addAll(model.fruits));
+                fruits: List<FruitEntity>.from(l.fruits)..addAll(model.fruits));
         }
       });
     });
@@ -180,7 +180,7 @@ class TreeQuery extends Query<Tree, TreeQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                fruits: List<_Fruit>.from(l.fruits)..addAll(model.fruits));
+                fruits: List<FruitEntity>.from(l.fruits)..addAll(model.fruits));
         }
       });
     });
@@ -198,7 +198,7 @@ class TreeQuery extends Query<Tree, TreeQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                fruits: List<_Fruit>.from(l.fruits)..addAll(model.fruits));
+                fruits: List<FruitEntity>.from(l.fruits)..addAll(model.fruits));
         }
       });
     });
@@ -454,13 +454,13 @@ class FruitQueryValues extends MapQueryValues {
 // **************************************************************************
 
 @generatedSerializable
-class Tree extends _Tree {
+class Tree extends TreeEntity {
   Tree({
     this.id,
     this.createdAt,
     this.updatedAt,
     this.rings,
-    List<_Fruit> fruits = const [],
+    List<FruitEntity> fruits = const [],
   }) : fruits = List.unmodifiable(fruits);
 
   /// A unique identifier corresponding to this item.
@@ -479,14 +479,14 @@ class Tree extends _Tree {
   int? rings;
 
   @override
-  List<_Fruit> fruits;
+  List<FruitEntity> fruits;
 
   Tree copyWith({
     String? id,
     DateTime? createdAt,
     DateTime? updatedAt,
     int? rings,
-    List<_Fruit>? fruits,
+    List<FruitEntity>? fruits,
   }) {
     return Tree(
         id: id ?? this.id,
@@ -498,12 +498,12 @@ class Tree extends _Tree {
 
   @override
   bool operator ==(other) {
-    return other is _Tree &&
+    return other is TreeEntity &&
         other.id == id &&
         other.createdAt == createdAt &&
         other.updatedAt == updatedAt &&
         other.rings == rings &&
-        ListEquality<_Fruit>(DefaultEquality<_Fruit>())
+        ListEquality<FruitEntity>(DefaultEquality<FruitEntity>())
             .equals(other.fruits, fruits);
   }
 
@@ -529,7 +529,7 @@ class Tree extends _Tree {
 }
 
 @generatedSerializable
-class Fruit extends _Fruit {
+class Fruit extends FruitEntity {
   Fruit({
     this.id,
     this.createdAt,
@@ -573,7 +573,7 @@ class Fruit extends _Fruit {
 
   @override
   bool operator ==(other) {
-    return other is _Fruit &&
+    return other is FruitEntity &&
         other.id == id &&
         other.createdAt == createdAt &&
         other.updatedAt == updatedAt &&
@@ -651,7 +651,7 @@ class TreeSerializer extends Codec<Tree, Map> {
             : []);
   }
 
-  static Map<String, dynamic> toMap(_Tree? model) {
+  static Map<String, dynamic> toMap(TreeEntity? model) {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }
@@ -727,7 +727,7 @@ class FruitSerializer extends Codec<Fruit, Map> {
         commonName: map['common_name'] as String?);
   }
 
-  static Map<String, dynamic> toMap(_Fruit? model) {
+  static Map<String, dynamic> toMap(FruitEntity? model) {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }

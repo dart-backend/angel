@@ -6,7 +6,7 @@ part of 'custom_expr.dart';
 // MigrationGenerator
 // **************************************************************************
 
-class NumbersMigration extends Migration {
+class NumberMigration extends Migration {
   @override
   void up(Schema schema) {
     schema.create('numbers', (table) {
@@ -46,23 +46,23 @@ class AlphabetMigration extends Migration {
 // OrmGenerator
 // **************************************************************************
 
-class NumbersQuery extends Query<Numbers, NumbersQueryWhere> {
-  NumbersQuery({
+class NumberQuery extends Query<Number, NumberQueryWhere> {
+  NumberQuery({
     super.parent,
     Set<String>? trampoline,
   }) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     expressions['two'] = 'SELECT 2';
-    _where = NumbersQueryWhere(this);
+    _where = NumberQueryWhere(this);
   }
 
   @override
-  final NumbersQueryValues values = NumbersQueryValues();
+  final NumberQueryValues values = NumberQueryValues();
 
   List<String> _selectedFields = [];
 
-  NumbersQueryWhere? _where;
+  NumberQueryWhere? _where;
 
   @override
   Map<String, String> get casts {
@@ -89,26 +89,26 @@ class NumbersQuery extends Query<Numbers, NumbersQueryWhere> {
             .toList();
   }
 
-  NumbersQuery select(List<String> selectedFields) {
+  NumberQuery select(List<String> selectedFields) {
     _selectedFields = selectedFields;
     return this;
   }
 
   @override
-  NumbersQueryWhere? get where {
+  NumberQueryWhere? get where {
     return _where;
   }
 
   @override
-  NumbersQueryWhere newWhereClause() {
-    return NumbersQueryWhere(this);
+  NumberQueryWhere newWhereClause() {
+    return NumberQueryWhere(this);
   }
 
-  Optional<Numbers> parseRow(List row) {
+  Optional<Number> parseRow(List row) {
     if (row.every((x) => x == null)) {
       return Optional.empty();
     }
-    var model = Numbers(
+    var model = Number(
       id: fields.contains('id') ? row[0].toString() : null,
       createdAt:
           fields.contains('created_at') ? mapToNullableDateTime(row[1]) : null,
@@ -120,13 +120,13 @@ class NumbersQuery extends Query<Numbers, NumbersQueryWhere> {
   }
 
   @override
-  Optional<Numbers> deserialize(List row) {
+  Optional<Number> deserialize(List row) {
     return parseRow(row);
   }
 }
 
-class NumbersQueryWhere extends QueryWhere {
-  NumbersQueryWhere(NumbersQuery query)
+class NumberQueryWhere extends QueryWhere {
+  NumberQueryWhere(NumberQuery query)
       : id = NumericSqlExpressionBuilder<int>(
           query,
           'id',
@@ -156,7 +156,7 @@ class NumbersQueryWhere extends QueryWhere {
   }
 }
 
-class NumbersQueryValues extends MapQueryValues {
+class NumberQueryValues extends MapQueryValues {
   @override
   Map<String, String> get casts {
     return {};
@@ -180,7 +180,7 @@ class NumbersQueryValues extends MapQueryValues {
 
   set updatedAt(DateTime? value) => values['updated_at'] = value;
 
-  void copyFrom(Numbers model) {
+  void copyFrom(Number model) {
     createdAt = model.createdAt;
     updatedAt = model.updatedAt;
   }
@@ -195,7 +195,7 @@ class AlphabetQuery extends Query<Alphabet, AlphabetQueryWhere> {
     trampoline.add(tableName);
     _where = AlphabetQueryWhere(this);
     leftJoin(
-      _numbers = NumbersQuery(
+      _numbers = NumberQuery(
         trampoline: trampoline,
         parent: this,
       ),
@@ -218,7 +218,7 @@ class AlphabetQuery extends Query<Alphabet, AlphabetQueryWhere> {
 
   AlphabetQueryWhere? _where;
 
-  late NumbersQuery _numbers;
+  late NumberQuery _numbers;
 
   @override
   Map<String, String> get casts {
@@ -274,7 +274,7 @@ class AlphabetQuery extends Query<Alphabet, AlphabetQueryWhere> {
       value: fields.contains('value') ? (row[3] as String?) : null,
     );
     if (row.length > 5) {
-      var modelOpt = NumbersQuery().parseRow(row.skip(5).take(4).toList());
+      var modelOpt = NumberQuery().parseRow(row.skip(5).take(4).toList());
       modelOpt.ifPresent((m) {
         model = model.copyWith(numbers: m);
       });
@@ -287,7 +287,7 @@ class AlphabetQuery extends Query<Alphabet, AlphabetQueryWhere> {
     return parseRow(row);
   }
 
-  NumbersQuery get numbers {
+  NumberQuery get numbers {
     return _numbers;
   }
 }
@@ -388,8 +388,8 @@ class AlphabetQueryValues extends MapQueryValues {
 // **************************************************************************
 
 @generatedSerializable
-class Numbers extends _Numbers {
-  Numbers({
+class Number extends NumberEntity {
+  Number({
     this.id,
     this.createdAt,
     this.updatedAt,
@@ -411,13 +411,13 @@ class Numbers extends _Numbers {
   @override
   int? two;
 
-  Numbers copyWith({
+  Number copyWith({
     String? id,
     DateTime? createdAt,
     DateTime? updatedAt,
     int? two,
   }) {
-    return Numbers(
+    return Number(
         id: id ?? this.id,
         createdAt: createdAt ?? this.createdAt,
         updatedAt: updatedAt ?? this.updatedAt,
@@ -426,7 +426,7 @@ class Numbers extends _Numbers {
 
   @override
   bool operator ==(other) {
-    return other is _Numbers &&
+    return other is NumberEntity &&
         other.id == id &&
         other.createdAt == createdAt &&
         other.updatedAt == updatedAt &&
@@ -445,16 +445,16 @@ class Numbers extends _Numbers {
 
   @override
   String toString() {
-    return 'Numbers(id=$id, createdAt=$createdAt, updatedAt=$updatedAt, two=$two)';
+    return 'Number(id=$id, createdAt=$createdAt, updatedAt=$updatedAt, two=$two)';
   }
 
   Map<String, dynamic> toJson() {
-    return NumbersSerializer.toMap(this);
+    return NumberSerializer.toMap(this);
   }
 }
 
 @generatedSerializable
-class Alphabet extends _Alphabet {
+class Alphabet extends AlphabetEntity {
   Alphabet({
     this.id,
     this.createdAt,
@@ -479,14 +479,14 @@ class Alphabet extends _Alphabet {
   String? value;
 
   @override
-  _Numbers? numbers;
+  NumberEntity? numbers;
 
   Alphabet copyWith({
     String? id,
     DateTime? createdAt,
     DateTime? updatedAt,
     String? value,
-    _Numbers? numbers,
+    NumberEntity? numbers,
   }) {
     return Alphabet(
         id: id ?? this.id,
@@ -498,7 +498,7 @@ class Alphabet extends _Alphabet {
 
   @override
   bool operator ==(other) {
-    return other is _Alphabet &&
+    return other is AlphabetEntity &&
         other.id == id &&
         other.createdAt == createdAt &&
         other.updatedAt == updatedAt &&
@@ -531,33 +531,33 @@ class Alphabet extends _Alphabet {
 // SerializerGenerator
 // **************************************************************************
 
-const NumbersSerializer numbersSerializer = NumbersSerializer();
+const NumberSerializer numberSerializer = NumberSerializer();
 
-class NumbersEncoder extends Converter<Numbers, Map> {
-  const NumbersEncoder();
+class NumberEncoder extends Converter<Number, Map> {
+  const NumberEncoder();
 
   @override
-  Map convert(Numbers model) => NumbersSerializer.toMap(model);
+  Map convert(Number model) => NumberSerializer.toMap(model);
 }
 
-class NumbersDecoder extends Converter<Map, Numbers> {
-  const NumbersDecoder();
+class NumberDecoder extends Converter<Map, Number> {
+  const NumberDecoder();
 
   @override
-  Numbers convert(Map map) => NumbersSerializer.fromMap(map);
+  Number convert(Map map) => NumberSerializer.fromMap(map);
 }
 
-class NumbersSerializer extends Codec<Numbers, Map> {
-  const NumbersSerializer();
+class NumberSerializer extends Codec<Number, Map> {
+  const NumberSerializer();
 
   @override
-  NumbersEncoder get encoder => const NumbersEncoder();
+  NumberEncoder get encoder => const NumberEncoder();
 
   @override
-  NumbersDecoder get decoder => const NumbersDecoder();
+  NumberDecoder get decoder => const NumberDecoder();
 
-  static Numbers fromMap(Map map) {
-    return Numbers(
+  static Number fromMap(Map map) {
+    return Number(
         id: map['id'] as String?,
         createdAt: map['created_at'] != null
             ? (map['created_at'] is DateTime
@@ -572,7 +572,7 @@ class NumbersSerializer extends Codec<Numbers, Map> {
         two: map['two'] as int?);
   }
 
-  static Map<String, dynamic> toMap(_Numbers? model) {
+  static Map<String, dynamic> toMap(NumberEntity? model) {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }
@@ -585,7 +585,7 @@ class NumbersSerializer extends Codec<Numbers, Map> {
   }
 }
 
-abstract class NumbersFields {
+abstract class NumberFields {
   static const List<String> allFields = <String>[
     id,
     createdAt,
@@ -642,11 +642,11 @@ class AlphabetSerializer extends Codec<Alphabet, Map> {
             : null,
         value: map['value'] as String?,
         numbers: map['numbers'] != null
-            ? NumbersSerializer.fromMap(map['numbers'] as Map)
+            ? NumberSerializer.fromMap(map['numbers'] as Map)
             : null);
   }
 
-  static Map<String, dynamic> toMap(_Alphabet? model) {
+  static Map<String, dynamic> toMap(AlphabetEntity? model) {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }
@@ -655,7 +655,7 @@ class AlphabetSerializer extends Codec<Alphabet, Map> {
       'created_at': model.createdAt?.toIso8601String(),
       'updated_at': model.updatedAt?.toIso8601String(),
       'value': model.value,
-      'numbers': NumbersSerializer.toMap(model.numbers)
+      'numbers': NumberSerializer.toMap(model.numbers)
     };
   }
 }

@@ -419,7 +419,7 @@ class CustomerQueryValues extends MapQueryValues {
 // **************************************************************************
 
 @generatedSerializable
-class Order extends _Order {
+class Order extends EntityOrder {
   Order({
     this.id,
     this.createdAt,
@@ -443,7 +443,7 @@ class Order extends _Order {
   DateTime? updatedAt;
 
   @override
-  _Customer? customer;
+  EntityCustomer? customer;
 
   @override
   int? employeeId;
@@ -458,7 +458,7 @@ class Order extends _Order {
     String? id,
     DateTime? createdAt,
     DateTime? updatedAt,
-    _Customer? customer,
+    EntityCustomer? customer,
     int? employeeId,
     DateTime? orderDate,
     int? shipperId,
@@ -475,7 +475,7 @@ class Order extends _Order {
 
   @override
   bool operator ==(other) {
-    return other is _Order &&
+    return other is EntityOrder &&
         other.id == id &&
         other.createdAt == createdAt &&
         other.updatedAt == updatedAt &&
@@ -509,7 +509,7 @@ class Order extends _Order {
 }
 
 @generatedSerializable
-class Customer extends _Customer {
+class Customer extends EntityCustomer {
   Customer({
     this.id,
     this.createdAt,
@@ -541,7 +541,7 @@ class Customer extends _Customer {
 
   @override
   bool operator ==(other) {
-    return other is _Customer &&
+    return other is EntityCustomer &&
         other.id == id &&
         other.createdAt == createdAt &&
         other.updatedAt == updatedAt;
@@ -620,7 +620,7 @@ class OrderSerializer extends Codec<Order, Map> {
         shipperId: map['shipper_id'] as int?);
   }
 
-  static Map<String, dynamic> toMap(_Order? model) {
+  static Map<String, dynamic> toMap(EntityOrder? model) {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }
@@ -702,7 +702,7 @@ class CustomerSerializer extends Codec<Customer, Map> {
             : null);
   }
 
-  static Map<String, dynamic> toMap(_Customer? model) {
+  static Map<String, dynamic> toMap(EntityCustomer? model) {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }

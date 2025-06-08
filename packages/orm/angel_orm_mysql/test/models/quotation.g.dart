@@ -167,7 +167,7 @@ class QuotationQueryValues extends MapQueryValues {
 // **************************************************************************
 
 @generatedSerializable
-class Quotation implements _Quotation {
+class Quotation implements QuotationEntity {
   Quotation({
     this.id,
     this.name,
@@ -194,7 +194,7 @@ class Quotation implements _Quotation {
 
   @override
   bool operator ==(other) {
-    return other is _Quotation &&
+    return other is QuotationEntity &&
         other.id == id &&
         other.name == name &&
         other.price == price;
@@ -255,7 +255,7 @@ class QuotationSerializer extends Codec<Quotation, Map> {
         price: map['price'] as double?);
   }
 
-  static Map<String, dynamic> toMap(_Quotation? model) {
+  static Map<String, dynamic> toMap(QuotationEntity? model) {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }

@@ -1,5 +1,3 @@
-library;
-
 import 'package:angel3_migration/angel3_migration.dart';
 import 'package:angel3_orm/angel3_orm.dart';
 import 'package:angel3_serialize/angel3_serialize.dart';
@@ -9,30 +7,30 @@ part 'user.g.dart';
 
 @serializable
 @orm
-abstract class _User extends Model {
+abstract class UserEntity extends Model {
   String? get username;
   String? get password;
   String? get email;
 
-  @ManyToMany(_RoleUser)
-  List<_Role> get roles;
+  @ManyToMany(RoleUserEntity)
+  List<RoleEntity> get roles;
 }
 
 @serializable
 @orm
-abstract class _RoleUser {
+abstract class RoleUserEntity {
   @belongsTo
-  _Role? get role;
+  RoleEntity? get role;
 
   @belongsTo
-  _User? get user;
+  UserEntity? get user;
 }
 
 @serializable
 @orm
-abstract class _Role extends Model {
+abstract class RoleEntity extends Model {
   String? name;
 
-  @ManyToMany(_RoleUser)
-  List<_User> get users;
+  @ManyToMany(RoleUserEntity)
+  List<UserEntity> get users;
 }

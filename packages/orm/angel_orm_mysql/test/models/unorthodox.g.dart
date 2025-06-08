@@ -315,7 +315,7 @@ class WeirdJoinQuery extends Query<WeirdJoin, WeirdJoinQueryWhere> {
     if (row.every((x) => x == null)) {
       return Optional.empty();
     }
-    var model = WeirdJoin(id: fields.contains('id') ? mapToInt(row[0]) : null);
+    var model = WeirdJoin(id: fields.contains('id') ? mapToInt(row[0]) : 0);
     if (row.length > 2) {
       var modelOpt = UnorthodoxQuery().parseRow(row.skip(2).take(1).toList());
       modelOpt.ifPresent((m) {
@@ -378,8 +378,8 @@ class WeirdJoinQuery extends Query<WeirdJoin, WeirdJoinQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                numbas: List<_Numba>.from(l.numbas)..addAll(model.numbas),
-                foos: List<_Foo>.from(l.foos)..addAll(model.foos));
+                numbas: List<NumbaEntity>.from(l.numbas)..addAll(model.numbas),
+                foos: List<FooEntity>.from(l.foos)..addAll(model.foos));
         }
       });
     });
@@ -397,8 +397,8 @@ class WeirdJoinQuery extends Query<WeirdJoin, WeirdJoinQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                numbas: List<_Numba>.from(l.numbas)..addAll(model.numbas),
-                foos: List<_Foo>.from(l.foos)..addAll(model.foos));
+                numbas: List<NumbaEntity>.from(l.numbas)..addAll(model.numbas),
+                foos: List<FooEntity>.from(l.foos)..addAll(model.foos));
         }
       });
     });
@@ -416,8 +416,8 @@ class WeirdJoinQuery extends Query<WeirdJoin, WeirdJoinQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                numbas: List<_Numba>.from(l.numbas)..addAll(model.numbas),
-                foos: List<_Foo>.from(l.foos)..addAll(model.foos));
+                numbas: List<NumbaEntity>.from(l.numbas)..addAll(model.numbas),
+                foos: List<FooEntity>.from(l.foos)..addAll(model.foos));
         }
       });
     });
@@ -454,11 +454,11 @@ class WeirdJoinQueryValues extends MapQueryValues {
     return {};
   }
 
-  int? get id {
-    return (values['id'] as int?);
+  int get id {
+    return (values['id'] as int);
   }
 
-  set id(int? value) => values['id'] = value;
+  set id(int value) => values['id'] = value;
 
   String? get joinName {
     return (values['join_name'] as String?);
@@ -862,7 +862,7 @@ class FooQuery extends Query<Foo, FooQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                weirdJoins: List<_WeirdJoin>.from(l.weirdJoins)
+                weirdJoins: List<WeirdJoinEntity>.from(l.weirdJoins)
                   ..addAll(model.weirdJoins));
         }
       });
@@ -881,7 +881,7 @@ class FooQuery extends Query<Foo, FooQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                weirdJoins: List<_WeirdJoin>.from(l.weirdJoins)
+                weirdJoins: List<WeirdJoinEntity>.from(l.weirdJoins)
                   ..addAll(model.weirdJoins));
         }
       });
@@ -900,7 +900,7 @@ class FooQuery extends Query<Foo, FooQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                weirdJoins: List<_WeirdJoin>.from(l.weirdJoins)
+                weirdJoins: List<WeirdJoinEntity>.from(l.weirdJoins)
                   ..addAll(model.weirdJoins));
         }
       });
@@ -1086,11 +1086,11 @@ class FooPivotQueryValues extends MapQueryValues {
     return {};
   }
 
-  int? get weirdJoinId {
-    return (values['weird_join_id'] as int?);
+  int get weirdJoinId {
+    return (values['weird_join_id'] as int);
   }
 
-  set weirdJoinId(int? value) => values['weird_join_id'] = value;
+  set weirdJoinId(int value) => values['weird_join_id'] = value;
 
   String? get fooBar {
     return (values['foo_bar'] as String?);
@@ -1113,7 +1113,7 @@ class FooPivotQueryValues extends MapQueryValues {
 // **************************************************************************
 
 @generatedSerializable
-class Unorthodox implements _Unorthodox {
+class Unorthodox implements UnorthodoxEntity {
   Unorthodox({this.name});
 
   @override
@@ -1125,7 +1125,7 @@ class Unorthodox implements _Unorthodox {
 
   @override
   bool operator ==(other) {
-    return other is _Unorthodox && other.name == name;
+    return other is UnorthodoxEntity && other.name == name;
   }
 
   @override
@@ -1144,9 +1144,9 @@ class Unorthodox implements _Unorthodox {
 }
 
 @generatedSerializable
-class WeirdJoin implements _WeirdJoin {
+class WeirdJoin implements WeirdJoinEntity {
   WeirdJoin({
-    this.id,
+    required this.id,
     this.unorthodox,
     this.song,
     this.numbas = const [],
@@ -1154,26 +1154,26 @@ class WeirdJoin implements _WeirdJoin {
   });
 
   @override
-  int? id;
+  int id;
 
   @override
-  _Unorthodox? unorthodox;
+  UnorthodoxEntity? unorthodox;
 
   @override
-  _Song? song;
+  SongEntity? song;
 
   @override
-  List<_Numba> numbas;
+  List<NumbaEntity> numbas;
 
   @override
-  List<_Foo> foos;
+  List<FooEntity> foos;
 
   WeirdJoin copyWith({
     int? id,
-    _Unorthodox? unorthodox,
-    _Song? song,
-    List<_Numba>? numbas,
-    List<_Foo>? foos,
+    UnorthodoxEntity? unorthodox,
+    SongEntity? song,
+    List<NumbaEntity>? numbas,
+    List<FooEntity>? foos,
   }) {
     return WeirdJoin(
         id: id ?? this.id,
@@ -1185,13 +1185,14 @@ class WeirdJoin implements _WeirdJoin {
 
   @override
   bool operator ==(other) {
-    return other is _WeirdJoin &&
+    return other is WeirdJoinEntity &&
         other.id == id &&
         other.unorthodox == unorthodox &&
         other.song == song &&
-        ListEquality<_Numba>(DefaultEquality<_Numba>())
+        ListEquality<NumbaEntity>(DefaultEquality<NumbaEntity>())
             .equals(other.numbas, numbas) &&
-        ListEquality<_Foo>(DefaultEquality<_Foo>()).equals(other.foos, foos);
+        ListEquality<FooEntity>(DefaultEquality<FooEntity>())
+            .equals(other.foos, foos);
   }
 
   @override
@@ -1216,7 +1217,7 @@ class WeirdJoin implements _WeirdJoin {
 }
 
 @generatedSerializable
-class Song extends _Song {
+class Song extends SongEntity {
   Song({
     this.id,
     this.createdAt,
@@ -1260,7 +1261,7 @@ class Song extends _Song {
 
   @override
   bool operator ==(other) {
-    return other is _Song &&
+    return other is SongEntity &&
         other.id == id &&
         other.createdAt == createdAt &&
         other.updatedAt == updatedAt &&
@@ -1290,7 +1291,7 @@ class Song extends _Song {
 }
 
 @generatedSerializable
-class Numba extends _Numba {
+class Numba extends NumbaEntity {
   Numba({
     this.i,
     this.parent,
@@ -1311,7 +1312,7 @@ class Numba extends _Numba {
 
   @override
   bool operator ==(other) {
-    return other is _Numba && other.i == i && other.parent == parent;
+    return other is NumbaEntity && other.i == i && other.parent == parent;
   }
 
   @override
@@ -1333,7 +1334,7 @@ class Numba extends _Numba {
 }
 
 @generatedSerializable
-class Foo implements _Foo {
+class Foo implements FooEntity {
   Foo({
     this.bar,
     this.weirdJoins = const [],
@@ -1343,20 +1344,20 @@ class Foo implements _Foo {
   String? bar;
 
   @override
-  List<_WeirdJoin> weirdJoins;
+  List<WeirdJoinEntity> weirdJoins;
 
   Foo copyWith({
     String? bar,
-    List<_WeirdJoin>? weirdJoins,
+    List<WeirdJoinEntity>? weirdJoins,
   }) {
     return Foo(bar: bar ?? this.bar, weirdJoins: weirdJoins ?? this.weirdJoins);
   }
 
   @override
   bool operator ==(other) {
-    return other is _Foo &&
+    return other is FooEntity &&
         other.bar == bar &&
-        ListEquality<_WeirdJoin>(DefaultEquality<_WeirdJoin>())
+        ListEquality<WeirdJoinEntity>(DefaultEquality<WeirdJoinEntity>())
             .equals(other.weirdJoins, weirdJoins);
   }
 
@@ -1379,21 +1380,21 @@ class Foo implements _Foo {
 }
 
 @generatedSerializable
-class FooPivot implements _FooPivot {
+class FooPivot implements FooPivotEntity {
   FooPivot({
     this.weirdJoin,
     this.foo,
   });
 
   @override
-  _WeirdJoin? weirdJoin;
+  WeirdJoinEntity? weirdJoin;
 
   @override
-  _Foo? foo;
+  FooEntity? foo;
 
   FooPivot copyWith({
-    _WeirdJoin? weirdJoin,
-    _Foo? foo,
+    WeirdJoinEntity? weirdJoin,
+    FooEntity? foo,
   }) {
     return FooPivot(
         weirdJoin: weirdJoin ?? this.weirdJoin, foo: foo ?? this.foo);
@@ -1401,7 +1402,7 @@ class FooPivot implements _FooPivot {
 
   @override
   bool operator ==(other) {
-    return other is _FooPivot &&
+    return other is FooPivotEntity &&
         other.weirdJoin == weirdJoin &&
         other.foo == foo;
   }
@@ -1457,7 +1458,7 @@ class UnorthodoxSerializer extends Codec<Unorthodox, Map> {
     return Unorthodox(name: map['name'] as String?);
   }
 
-  static Map<String, dynamic> toMap(_Unorthodox? model) {
+  static Map<String, dynamic> toMap(UnorthodoxEntity? model) {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }
@@ -1498,7 +1499,7 @@ class WeirdJoinSerializer extends Codec<WeirdJoin, Map> {
 
   static WeirdJoin fromMap(Map map) {
     return WeirdJoin(
-        id: map['id'] as int?,
+        id: map['id'] as int,
         unorthodox: map['unorthodox'] != null
             ? UnorthodoxSerializer.fromMap(map['unorthodox'] as Map)
             : null,
@@ -1515,7 +1516,7 @@ class WeirdJoinSerializer extends Codec<WeirdJoin, Map> {
             : []);
   }
 
-  static Map<String, dynamic> toMap(_WeirdJoin? model) {
+  static Map<String, dynamic> toMap(WeirdJoinEntity? model) {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }
@@ -1591,7 +1592,7 @@ class SongSerializer extends Codec<Song, Map> {
         title: map['title'] as String?);
   }
 
-  static Map<String, dynamic> toMap(_Song? model) {
+  static Map<String, dynamic> toMap(SongEntity? model) {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }
@@ -1654,7 +1655,7 @@ class NumbaSerializer extends Codec<Numba, Map> {
     return Numba(i: map['i'] as int?, parent: map['parent'] as int?);
   }
 
-  static Map<String, dynamic> toMap(_Numba? model) {
+  static Map<String, dynamic> toMap(NumbaEntity? model) {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }
@@ -1708,7 +1709,7 @@ class FooSerializer extends Codec<Foo, Map> {
             : []);
   }
 
-  static Map<String, dynamic> toMap(_Foo? model) {
+  static Map<String, dynamic> toMap(FooEntity? model) {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }
@@ -1766,7 +1767,7 @@ class FooPivotSerializer extends Codec<FooPivot, Map> {
             : null);
   }
 
-  static Map<String, dynamic> toMap(_FooPivot? model) {
+  static Map<String, dynamic> toMap(FooPivotEntity? model) {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }

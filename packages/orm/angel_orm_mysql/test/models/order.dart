@@ -9,9 +9,9 @@ part 'order.g.dart';
 
 @orm
 @serializable
-abstract class _Order extends Model {
+abstract class EntityOrder extends Model {
   @belongsTo
-  _Customer? get customer;
+  EntityCustomer? get customer;
 
   int? get employeeId;
 
@@ -22,4 +22,4 @@ abstract class _Order extends Model {
 
 @orm
 @serializable
-class _Customer extends Model {}
+class EntityCustomer extends Model {}

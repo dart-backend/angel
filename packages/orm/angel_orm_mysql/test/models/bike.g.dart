@@ -273,7 +273,7 @@ class BikeQueryValues extends MapQueryValues {
 // **************************************************************************
 
 @generatedSerializable
-class Bike extends _Bike {
+class Bike extends EntityBike {
   Bike({
     this.id,
     this.createdAt,
@@ -341,7 +341,7 @@ class Bike extends _Bike {
 
   @override
   bool operator ==(other) {
-    return other is _Bike &&
+    return other is EntityBike &&
         other.id == id &&
         other.createdAt == createdAt &&
         other.updatedAt == updatedAt &&
@@ -432,7 +432,7 @@ class BikeSerializer extends Codec<Bike, Map> {
         width: map['width'] as int);
   }
 
-  static Map<String, dynamic> toMap(_Bike? model) {
+  static Map<String, dynamic> toMap(EntityBike? model) {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }

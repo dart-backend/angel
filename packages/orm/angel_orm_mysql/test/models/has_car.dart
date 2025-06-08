@@ -29,7 +29,7 @@ enum Color {
 
 @orm
 @serializable
-abstract class _HasCar extends Model {
+abstract class HasCarEntity extends Model {
   // TODO: Do this without explicit serializers
   // @SerializableField(
   //     serializesTo: Map, serializer: #_carToMap, deserializer: #_carFromMap)

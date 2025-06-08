@@ -319,7 +319,7 @@ class AssetQuery extends Query<Asset, AssetQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                items: List<_Item>.from(l.items)..addAll(model.items));
+                items: List<ItemEntity>.from(l.items)..addAll(model.items));
         }
       });
     });
@@ -337,7 +337,7 @@ class AssetQuery extends Query<Asset, AssetQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                items: List<_Item>.from(l.items)..addAll(model.items));
+                items: List<ItemEntity>.from(l.items)..addAll(model.items));
         }
       });
     });
@@ -355,7 +355,7 @@ class AssetQuery extends Query<Asset, AssetQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                items: List<_Item>.from(l.items)..addAll(model.items));
+                items: List<ItemEntity>.from(l.items)..addAll(model.items));
         }
       });
     });
@@ -470,7 +470,7 @@ class AssetQueryValues extends MapQueryValues {
 // **************************************************************************
 
 @generatedSerializable
-class Item extends _Item {
+class Item extends ItemEntity {
   Item({
     this.id,
     this.createdAt,
@@ -508,7 +508,7 @@ class Item extends _Item {
 
   @override
   bool operator ==(other) {
-    return other is _Item &&
+    return other is ItemEntity &&
         other.id == id &&
         other.createdAt == createdAt &&
         other.updatedAt == updatedAt &&
@@ -536,7 +536,7 @@ class Item extends _Item {
 }
 
 @generatedSerializable
-class Asset extends _Asset {
+class Asset extends AssetEntity {
   Asset({
     this.id,
     this.createdAt,
@@ -544,7 +544,7 @@ class Asset extends _Asset {
     required this.description,
     required this.name,
     required this.price,
-    List<_Item> items = const [],
+    List<ItemEntity> items = const [],
   }) : items = List.unmodifiable(items);
 
   /// A unique identifier corresponding to this item.
@@ -569,7 +569,7 @@ class Asset extends _Asset {
   double price;
 
   @override
-  List<_Item> items;
+  List<ItemEntity> items;
 
   Asset copyWith({
     String? id,
@@ -578,7 +578,7 @@ class Asset extends _Asset {
     String? description,
     String? name,
     double? price,
-    List<_Item>? items,
+    List<ItemEntity>? items,
   }) {
     return Asset(
         id: id ?? this.id,
@@ -592,14 +592,14 @@ class Asset extends _Asset {
 
   @override
   bool operator ==(other) {
-    return other is _Asset &&
+    return other is AssetEntity &&
         other.id == id &&
         other.createdAt == createdAt &&
         other.updatedAt == updatedAt &&
         other.description == description &&
         other.name == name &&
         other.price == price &&
-        ListEquality<_Item>(DefaultEquality<_Item>())
+        ListEquality<ItemEntity>(DefaultEquality<ItemEntity>())
             .equals(other.items, items);
   }
 
@@ -671,7 +671,7 @@ class ItemSerializer extends Codec<Item, Map> {
         description: map['description'] as String);
   }
 
-  static Map<String, dynamic> toMap(_Item? model) {
+  static Map<String, dynamic> toMap(ItemEntity? model) {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }
@@ -748,7 +748,7 @@ class AssetSerializer extends Codec<Asset, Map> {
             : []);
   }
 
-  static Map<String, dynamic> toMap(_Asset? model) {
+  static Map<String, dynamic> toMap(AssetEntity? model) {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }

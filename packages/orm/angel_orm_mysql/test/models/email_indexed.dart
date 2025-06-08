@@ -9,33 +9,33 @@ part 'email_indexed.g.dart';
 
 @serializable
 @orm
-abstract class _Role {
+abstract class RoleEntity {
   @PrimaryKey(columnType: ColumnType.varChar)
   String? get role;
 
-  @ManyToMany(_RoleUser)
-  List<_User> get users;
+  @ManyToMany(RoleUserEntity)
+  List<UserEntity> get users;
 }
 
 @serializable
 @orm
-abstract class _RoleUser {
+abstract class RoleUserEntity {
   @belongsTo
-  _Role? get role;
+  RoleEntity? get role;
 
   @belongsTo
-  _User? get user;
+  UserEntity? get user;
 }
 
 @serializable
 @orm
-abstract class _User {
+abstract class UserEntity {
   // @PrimaryKey(columnType: ColumnType.varChar)
   @primaryKey
   String? get email;
   String? get name;
   String? get password;
 
-  @ManyToMany(_RoleUser)
-  List<_Role> get roles;
+  @ManyToMany(RoleUserEntity)
+  List<RoleEntity> get roles;
 }

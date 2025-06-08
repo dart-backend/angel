@@ -273,7 +273,7 @@ class BoatQueryValues extends MapQueryValues {
 // **************************************************************************
 
 @generatedSerializable
-class Boat extends _Boat {
+class Boat extends BoatEntity {
   Boat({
     this.id,
     this.createdAt,
@@ -341,7 +341,7 @@ class Boat extends _Boat {
 
   @override
   bool operator ==(other) {
-    return other is _Boat &&
+    return other is BoatEntity &&
         other.id == id &&
         other.createdAt == createdAt &&
         other.updatedAt == updatedAt &&
@@ -432,7 +432,7 @@ class BoatSerializer extends Codec<Boat, Map> {
         width: map['width'] as int);
   }
 
-  static Map<String, dynamic> toMap(_Boat? model) {
+  static Map<String, dynamic> toMap(BoatEntity? model) {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }

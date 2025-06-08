@@ -1,5 +1,3 @@
-library;
-
 import 'package:angel3_migration/angel3_migration.dart';
 import 'package:angel3_orm/angel3_orm.dart';
 import 'package:angel3_serialize/angel3_serialize.dart';
@@ -9,16 +7,16 @@ part 'leg.g.dart';
 
 @serializable
 @orm
-class _Leg extends Model {
+class LegEntity extends Model {
   @hasOne
-  _Foot? foot;
+  FootEntity? foot;
 
   String? name;
 }
 
 @serializable
 @Orm(tableName: 'feet')
-class _Foot extends Model {
+class FootEntity extends Model {
   int? legId;
 
   double? nToes;
