@@ -1,9 +1,10 @@
 # Change Log
 
-## 8.4.2
+## 8.5.0
 
 * Updated initializer `super(parent: parent)` to `super.parent` in the generated `<Model>Query`
 * Updated `_fields` to `localFields` in generated `<Model>Query`
+* Added support for `<Class>Entity` and `Entity<Class>` as data model
 
 ## 8.4.1
 
