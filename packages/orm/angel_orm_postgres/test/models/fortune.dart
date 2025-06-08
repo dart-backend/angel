@@ -7,7 +7,7 @@ part 'fortune.g.dart';
 
 @serializable
 @Orm(tableName: 'fortune')
-abstract class _Fortune {
+abstract class FortuneEntity {
   @primaryKey
   int? id;
 

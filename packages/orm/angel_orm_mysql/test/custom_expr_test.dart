@@ -15,16 +15,15 @@ void main() {
   late MySQLConnection conn;
   late QueryExecutor executor;
   late MigrationRunner runner;
-  late Numbers numbersModel;
+  late Number numbersModel;
 
   setUp(() async {
     conn = await openMySqlConnection();
     executor = await createExecutor(conn);
-    runner =
-        await createTables(conn, [NumbersMigration(), AlphabetMigration()]);
+    runner = await createTables(conn, [NumberMigration(), AlphabetMigration()]);
 
     var now = DateTime.now();
-    var nQuery = NumbersQuery();
+    var nQuery = NumberQuery();
     nQuery.values
       ..createdAt = now
       ..updatedAt = now;

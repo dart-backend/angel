@@ -1,4 +1,4 @@
-part of 'angel3_serialize_generator.dart';
+part of 'serialize_generator.dart';
 
 class SerializerGenerator extends GeneratorForAnnotation<Serializable> {
   final bool autoSnakeCaseNames;
@@ -168,7 +168,10 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
           // if (rc.pascalCase == ctx.modelClassName) {
           //   return '($value)?.toJson()';
           // }
-          return '${rc.pascalCase.replaceAll('?', '')}Serializer.toMap($value)';
+
+          var genClass =
+              getGeneratedModelClassName(rc.pascalCase.replaceAll('?', ''));
+          return '${genClass}Serializer.toMap($value)';
         }
 
         var fieldNameSerializer = ctx.fieldInfo[field.name]?.serializer;
@@ -194,7 +197,8 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
         } else if (type is InterfaceType) {
           if (isListOfModelType(type)) {
             var name = type.typeArguments[0].getDisplayString();
-            if (name.startsWith('_')) name = name.substring(1);
+            name = getGeneratedModelClassName(name);
+
             var rc = ReCase(name);
             var m = serializerToMap(rc, 'm');
 
@@ -356,8 +360,11 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
         // Serialize model classes via `XSerializer.toMap`
         else if (isModelClass(type)) {
           var rc = ReCase(type.getDisplayString());
+
+          var genClass =
+              getGeneratedModelClassName(rc.pascalCase.replaceAll('?', ''));
           deserializedRepresentation = "map['$alias'] != null"
-              " ? ${rc.pascalCase.replaceAll('?', '')}Serializer.fromMap(map['$alias'] as Map)"
+              " ? ${genClass}Serializer.fromMap(map['$alias'] as Map)"
               ' : $defaultValue';
         } else if (type is InterfaceType) {
           if (isListOfModelType(type)) {
@@ -366,10 +373,13 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
             }
             var rc = ReCase(type.typeArguments[0].getDisplayString());
 
+            var genClass =
+                getGeneratedModelClassName(rc.pascalCase.replaceAll('?', ''));
+
             deserializedRepresentation = "map['$alias'] is Iterable"
                 " ? List.unmodifiable(((map['$alias'] as Iterable)"
                 '.whereType<Map>())'
-                '.map(${rc.pascalCase.replaceAll('?', '')}Serializer.fromMap))'
+                '.map(${genClass}Serializer.fromMap))'
                 ' : $defaultValue';
           } else if (isMapToModelType(type)) {
             // TODO: This requires refractoring
@@ -378,10 +388,12 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
             }
 
             var rc = ReCase(type.typeArguments[1].getDisplayString());
+            var genClass =
+                getGeneratedModelClassName(rc.pascalCase.replaceAll('?', ''));
             deserializedRepresentation = '''
                 map['$alias'] is Map
                   ? Map.unmodifiable((map['$alias'] as Map).keys.fold({}, (out, key) {
-                       return out..[key] = ${rc.pascalCase.replaceAll('?', '')}Serializer
+                       return out..[key] = ${genClass}Serializer
                         .fromMap(((map['$alias'] as Map)[key]) as Map);
                     }))
                   : $defaultValue

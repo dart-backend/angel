@@ -5,10 +5,10 @@
 [![Discord](https://img.shields.io/discord/1060322353214660698)](https://discord.gg/3X6bxTUdCM)
 [![License](https://img.shields.io/github/license/dart-backend/angel)](https://github.com/dart-backend/angel/tree/master/packages/orm/angel3_orm_generator/LICENSE)
 
-Source code generators for Angel3 ORM. This package can generate:
+The builder for generating the following code for Angel3 ORM:
 
-* A strongly-typed ORM
-* SQL migration scripts
+* A strongly-typed ORM classes
+* SQL migration classes
 
 For documentation about the ORM, see [Developer Guide](https://angel3-docs.dukefirehawk.com/guides/orm)
 
@@ -23,5 +23,5 @@ Run the following command to generate the required `.g.dart` files for Angel3 OR
 ## Supported database
 
 * PostgreSQL version 10 or later
-* MariaDB 10.2.x
-* MySQL 8.x
+* MariaDB 10.2.x or later
+* MySQL 8.x or later

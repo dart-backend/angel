@@ -7,7 +7,7 @@ part 'quotation.g.dart';
 
 @serializable
 @orm
-abstract class _Quotation {
+abstract class QuotationEntity {
   @PrimaryKey(columnType: ColumnType.varChar)
   String? get id;
 

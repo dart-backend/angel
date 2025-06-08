@@ -10,7 +10,7 @@ part 'has_map.g.dart';
 
 @orm
 @serializable
-abstract class _HasMap {
+abstract class HasMapEntity {
   Map? get value;
 
   List? get list;

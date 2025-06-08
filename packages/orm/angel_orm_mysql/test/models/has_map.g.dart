@@ -33,9 +33,9 @@ class HasMapMigration extends Migration {
 
 class HasMapQuery extends Query<HasMap, HasMapQueryWhere> {
   HasMapQuery({
-    Query? parent,
+    super.parent,
     Set<String>? trampoline,
-  }) : super(parent: parent) {
+  }) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = HasMapQueryWhere(this);
@@ -60,13 +60,15 @@ class HasMapQuery extends Query<HasMap, HasMapQueryWhere> {
 
   @override
   List<String> get fields {
-    const _fields = [
+    const localFields = [
       'value',
       'list',
     ];
     return _selectedFields.isEmpty
-        ? _fields
-        : _fields.where((field) => _selectedFields.contains(field)).toList();
+        ? localFields
+        : localFields
+            .where((field) => _selectedFields.contains(field))
+            .toList();
   }
 
   HasMapQuery select(List<String> selectedFields) {
@@ -155,7 +157,7 @@ class HasMapQueryValues extends MapQueryValues {
 // **************************************************************************
 
 @generatedSerializable
-class HasMap implements _HasMap {
+class HasMap implements HasMapEntity {
   HasMap({
     this.value,
     this.list = const [],
@@ -176,7 +178,7 @@ class HasMap implements _HasMap {
 
   @override
   bool operator ==(other) {
-    return other is _HasMap &&
+    return other is HasMapEntity &&
         MapEquality<dynamic, dynamic>(
                 keys: DefaultEquality(), values: DefaultEquality())
             .equals(other.value, value) &&
@@ -240,7 +242,7 @@ class HasMapSerializer extends Codec<HasMap, Map> {
             : []);
   }
 
-  static Map<String, dynamic> toMap(_HasMap? model) {
+  static Map<String, dynamic> toMap(HasMapEntity? model) {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }

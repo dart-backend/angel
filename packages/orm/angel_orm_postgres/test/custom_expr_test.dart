@@ -10,7 +10,7 @@ void main() {
   late Connection conn;
   late QueryExecutor executor;
   late MigrationRunner runner;
-  late Numbers numbersModel;
+  late Number numberModel;
 
   setUp(() async {
     Logger.root.level = Level.INFO; // defaults to Level.INFO
@@ -20,17 +20,16 @@ void main() {
 
     conn = await openPgConnection();
     executor = await createExecutor(conn);
-    runner =
-        await createTables(conn, [NumbersMigration(), AlphabetMigration()]);
+    runner = await createTables(conn, [NumberMigration(), AlphabetMigration()]);
 
     var now = DateTime.now();
-    var nQuery = NumbersQuery();
+    var nQuery = NumberQuery();
     nQuery.values
       ..createdAt = now
       ..updatedAt = now;
     var numbersModelOpt = await nQuery.insert(executor);
     numbersModelOpt.ifPresent((v) {
-      numbersModel = v;
+      numberModel = v;
     });
   });
 
@@ -42,20 +41,20 @@ void main() {
   });
 
   test('fetches correct result', () async {
-    expect(numbersModel.two, 2);
+    expect(numberModel.two, 2);
   });
 
   test('in relation', () async {
     var abcQuery = AlphabetQuery();
     abcQuery.values
       ..value = 'abc'
-      ..numbersId = numbersModel.idAsInt
-      ..createdAt = numbersModel.createdAt
-      ..updatedAt = numbersModel.updatedAt;
+      ..numbersId = numberModel.idAsInt
+      ..createdAt = numberModel.createdAt
+      ..updatedAt = numberModel.updatedAt;
     var abcOpt = await (abcQuery.insert(executor));
     expect(abcOpt.isPresent, true);
     abcOpt.ifPresent((abc) {
-      expect(abc.numbers, numbersModel);
+      expect(abc.numbers, numberModel);
       expect(abc.numbers?.two, 2);
       expect(abc.value, 'abc');
     });

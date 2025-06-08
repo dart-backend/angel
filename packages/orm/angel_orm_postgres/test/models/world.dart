@@ -7,10 +7,10 @@ part 'world.g.dart';
 
 @serializable
 @Orm(tableName: 'world')
-abstract class _World {
+abstract class WorldEntity {
   @primaryKey
   int? id;
 
   @Column()
-  int? randomNumber;
+  int? randomnumber;
 }

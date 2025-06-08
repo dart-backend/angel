@@ -5,7 +5,7 @@
 [![Discord](https://img.shields.io/discord/1060322353214660698)](https://discord.gg/3X6bxTUdCM)
 [![License](https://img.shields.io/github/license/dart-backend/angel)](https://github.com/dart-backend/angel/tree/master/packages/model/LICENSE)
 
-The basic data models for Angel3 framework.
+The basic data models for ORM used in Angel3 framework.
 
 ```dart
 import 'package:angel3_model/angel3_model.dart';

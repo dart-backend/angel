@@ -1,5 +1,10 @@
 # Change Log
 
+## 8.4.2
+
+* Updated initializer `super(parent: parent)` to `super.parent` in the generated `<Model>Query`
+* Updated `_fields` to `localFields` in generated `<Model>Query`
+
 ## 8.4.1
 
 * Update `angel3_serialize_generator`

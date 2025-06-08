@@ -1,6 +1,6 @@
 // ignore: library_annotations
-@Skip(
-    'Temporary skipped due to intermitent failure caused by concurrent table creation and deletion ')
+//@Skip(
+//    'Temporary skipped due to intermitent failure caused by concurrent table creation and deletion ')
 
 import 'package:angel3_migration_runner/angel3_migration_runner.dart';
 import 'package:angel3_orm/angel3_orm.dart';

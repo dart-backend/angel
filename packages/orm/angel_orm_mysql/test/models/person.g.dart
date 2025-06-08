@@ -30,9 +30,9 @@ class PersonMigration extends Migration {
 
 class PersonQuery extends Query<Person, PersonQueryWhere> {
   PersonQuery({
-    Query? parent,
+    super.parent,
     Set<String>? trampoline,
-  }) : super(parent: parent) {
+  }) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = PersonQueryWhere(this);
@@ -57,7 +57,7 @@ class PersonQuery extends Query<Person, PersonQueryWhere> {
 
   @override
   List<String> get fields {
-    const _fields = [
+    const localFields = [
       'id',
       'created_at',
       'updated_at',
@@ -65,8 +65,10 @@ class PersonQuery extends Query<Person, PersonQueryWhere> {
       'age',
     ];
     return _selectedFields.isEmpty
-        ? _fields
-        : _fields.where((field) => _selectedFields.contains(field)).toList();
+        ? localFields
+        : localFields
+            .where((field) => _selectedFields.contains(field))
+            .toList();
   }
 
   PersonQuery select(List<String> selectedFields) {
@@ -198,9 +200,9 @@ class PersonQueryValues extends MapQueryValues {
 class PersonWithLastOrderQuery
     extends Query<PersonWithLastOrder, PersonWithLastOrderQueryWhere> {
   PersonWithLastOrderQuery({
-    Query? parent,
+    super.parent,
     Set<String>? trampoline,
-  }) : super(parent: parent) {
+  }) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     expressions['last_order_name'] = 'po.name';
@@ -228,14 +230,16 @@ class PersonWithLastOrderQuery
 
   @override
   List<String> get fields {
-    const _fields = [
+    const localFields = [
       'name',
       'last_order_name',
       'last_order_price',
     ];
     return _selectedFields.isEmpty
-        ? _fields
-        : _fields.where((field) => _selectedFields.contains(field)).toList();
+        ? localFields
+        : localFields
+            .where((field) => _selectedFields.contains(field))
+            .toList();
   }
 
   PersonWithLastOrderQuery select(List<String> selectedFields) {
@@ -310,7 +314,7 @@ class PersonWithLastOrderQueryValues extends MapQueryValues {
 // **************************************************************************
 
 @generatedSerializable
-class Person extends _Person {
+class Person extends PersonEntity {
   Person({
     this.id,
     this.createdAt,
@@ -354,7 +358,7 @@ class Person extends _Person {
 
   @override
   bool operator ==(other) {
-    return other is _Person &&
+    return other is PersonEntity &&
         other.id == id &&
         other.createdAt == createdAt &&
         other.updatedAt == updatedAt &&
@@ -384,7 +388,7 @@ class Person extends _Person {
 }
 
 @generatedSerializable
-class PersonWithLastOrder extends _PersonWithLastOrder {
+class PersonWithLastOrder extends PersonWithLastOrderEntity {
   PersonWithLastOrder({
     this.name,
     this.lastOrderName,
@@ -413,7 +417,7 @@ class PersonWithLastOrder extends _PersonWithLastOrder {
 
   @override
   bool operator ==(other) {
-    return other is _PersonWithLastOrder &&
+    return other is PersonWithLastOrderEntity &&
         other.name == name &&
         other.lastOrderName == lastOrderName &&
         other.lastOrderPrice == lastOrderPrice;
@@ -484,7 +488,7 @@ class PersonSerializer extends Codec<Person, Map> {
         age: map['age'] as int?);
   }
 
-  static Map<String, dynamic> toMap(_Person? model) {
+  static Map<String, dynamic> toMap(PersonEntity? model) {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }
@@ -553,7 +557,7 @@ class PersonWithLastOrderSerializer extends Codec<PersonWithLastOrder, Map> {
         lastOrderPrice: map['last_order_price'] as double?);
   }
 
-  static Map<String, dynamic> toMap(_PersonWithLastOrder? model) {
+  static Map<String, dynamic> toMap(PersonWithLastOrderEntity? model) {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }

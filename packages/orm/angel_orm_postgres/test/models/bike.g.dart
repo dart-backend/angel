@@ -34,9 +34,9 @@ class BikeMigration extends Migration {
 
 class BikeQuery extends Query<Bike, BikeQueryWhere> {
   BikeQuery({
-    Query? parent,
+    super.parent,
     Set<String>? trampoline,
-  }) : super(parent: parent) {
+  }) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = BikeQueryWhere(this);
@@ -61,7 +61,7 @@ class BikeQuery extends Query<Bike, BikeQueryWhere> {
 
   @override
   List<String> get fields {
-    const _fields = [
+    const localFields = [
       'id',
       'created_at',
       'updated_at',
@@ -73,8 +73,10 @@ class BikeQuery extends Query<Bike, BikeQueryWhere> {
       'width',
     ];
     return _selectedFields.isEmpty
-        ? _fields
-        : _fields.where((field) => _selectedFields.contains(field)).toList();
+        ? localFields
+        : localFields
+            .where((field) => _selectedFields.contains(field))
+            .toList();
   }
 
   BikeQuery select(List<String> selectedFields) {
@@ -271,7 +273,7 @@ class BikeQueryValues extends MapQueryValues {
 // **************************************************************************
 
 @generatedSerializable
-class Bike extends _Bike {
+class Bike extends EntityBike {
   Bike({
     this.id,
     this.createdAt,
@@ -339,7 +341,7 @@ class Bike extends _Bike {
 
   @override
   bool operator ==(other) {
-    return other is _Bike &&
+    return other is EntityBike &&
         other.id == id &&
         other.createdAt == createdAt &&
         other.updatedAt == updatedAt &&
@@ -430,7 +432,7 @@ class BikeSerializer extends Codec<Bike, Map> {
         width: map['width'] as int);
   }
 
-  static Map<String, dynamic> toMap(_Bike? model) {
+  static Map<String, dynamic> toMap(EntityBike? model) {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }

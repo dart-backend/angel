@@ -7,7 +7,7 @@ part 'bike.g.dart';
 
 @serializable
 @orm
-abstract class _Bike extends Model {
+abstract class EntityBike extends Model {
   String get make;
 
   String get description;

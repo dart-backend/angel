@@ -6,8 +6,6 @@ import 'package:analyzer/dart/element/type.dart';
 import 'package:angel3_orm/angel3_orm.dart';
 import 'package:angel3_serialize/angel3_serialize.dart';
 import 'package:angel3_serialize_generator/angel3_serialize_generator.dart';
-import 'package:angel3_serialize_generator/build_context.dart';
-import 'package:angel3_serialize_generator/context.dart';
 import 'package:build/build.dart';
 import 'package:inflection3/inflection3.dart';
 import 'package:recase/recase.dart';
@@ -86,19 +84,22 @@ Future<OrmBuildContext?> buildOrmContext(
       clazz, annotation, buildStep, resolver, autoSnakeCaseNames!,
       heedExclude: heedExclude);
   var ormAnnotation = reviveORMAnnotation(annotation);
-  // print(
-  //     'tableName (${annotation.objectValue.type.name}) => ${ormAnnotation.tableName} from ${clazz.name} (${annotation.revive().namedArguments})');
+  //print(
+  //     'tableName (${annotation.objectValue.type?.getDisplayString() ?? ''}) => ${ormAnnotation.tableName} from ${clazz.name} (${annotation.revive().namedArguments})');
   if (buildCtx == null) {
     log.severe('BuildContext is null');
 
     return null;
   }
+
+  // TODO: ORM Context Builder
   var ctx = OrmBuildContext(
       buildCtx,
       ormAnnotation,
       (ormAnnotation.tableName?.isNotEmpty == true)
-          ? ormAnnotation.tableName
-          : pluralize(ReCase(clazz.name).snakeCase));
+          ? ormAnnotation.tableName!
+          : pluralize(
+              ReCase(getGeneratedModelClassName(clazz.name)).snakeCase));
   cache[id] = ctx;
 
   // Read all fields
@@ -416,7 +417,7 @@ const TypeChecker relationshipTypeChecker =
 class OrmBuildContext {
   final BuildContext buildContext;
   final Orm ormAnnotation;
-  final String? tableName;
+  final String tableName;
 
   final Map<String, Column> columns = {};
   final List<FieldElement> effectiveFields = [];

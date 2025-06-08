@@ -1,5 +1,9 @@
 # Change Log
 
+## 8.5.0
+
+* Added support for `Entity<Class>` and `<Class>Entity` as data model
+
 ## 8.4.1
 
 * Fixed `ShimFieldImpl` due to breaking changes in `analyzer` 7.3.0

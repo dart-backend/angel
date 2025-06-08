@@ -47,9 +47,9 @@ class FootMigration extends Migration {
 
 class LegQuery extends Query<Leg, LegQueryWhere> {
   LegQuery({
-    Query? parent,
+    super.parent,
     Set<String>? trampoline,
-  }) : super(parent: parent) {
+  }) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = LegQueryWhere(this);
@@ -92,15 +92,17 @@ class LegQuery extends Query<Leg, LegQueryWhere> {
 
   @override
   List<String> get fields {
-    const _fields = [
+    const localFields = [
       'id',
       'created_at',
       'updated_at',
       'name',
     ];
     return _selectedFields.isEmpty
-        ? _fields
-        : _fields.where((field) => _selectedFields.contains(field)).toList();
+        ? localFields
+        : localFields
+            .where((field) => _selectedFields.contains(field))
+            .toList();
   }
 
   LegQuery select(List<String> selectedFields) {
@@ -226,9 +228,9 @@ class LegQueryValues extends MapQueryValues {
 
 class FootQuery extends Query<Foot, FootQueryWhere> {
   FootQuery({
-    Query? parent,
+    super.parent,
     Set<String>? trampoline,
-  }) : super(parent: parent) {
+  }) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = FootQueryWhere(this);
@@ -253,7 +255,7 @@ class FootQuery extends Query<Foot, FootQueryWhere> {
 
   @override
   List<String> get fields {
-    const _fields = [
+    const localFields = [
       'id',
       'created_at',
       'updated_at',
@@ -261,8 +263,10 @@ class FootQuery extends Query<Foot, FootQueryWhere> {
       'n_toes',
     ];
     return _selectedFields.isEmpty
-        ? _fields
-        : _fields.where((field) => _selectedFields.contains(field)).toList();
+        ? localFields
+        : localFields
+            .where((field) => _selectedFields.contains(field))
+            .toList();
   }
 
   FootQuery select(List<String> selectedFields) {
@@ -396,7 +400,7 @@ class FootQueryValues extends MapQueryValues {
 // **************************************************************************
 
 @generatedSerializable
-class Leg extends _Leg {
+class Leg extends LegEntity {
   Leg({
     this.id,
     this.createdAt,
@@ -418,7 +422,7 @@ class Leg extends _Leg {
   DateTime? updatedAt;
 
   @override
-  _Foot? foot;
+  FootEntity? foot;
 
   @override
   String? name;
@@ -427,7 +431,7 @@ class Leg extends _Leg {
     String? id,
     DateTime? createdAt,
     DateTime? updatedAt,
-    _Foot? foot,
+    FootEntity? foot,
     String? name,
   }) {
     return Leg(
@@ -440,7 +444,7 @@ class Leg extends _Leg {
 
   @override
   bool operator ==(other) {
-    return other is _Leg &&
+    return other is LegEntity &&
         other.id == id &&
         other.createdAt == createdAt &&
         other.updatedAt == updatedAt &&
@@ -470,7 +474,7 @@ class Leg extends _Leg {
 }
 
 @generatedSerializable
-class Foot extends _Foot {
+class Foot extends FootEntity {
   Foot({
     this.id,
     this.createdAt,
@@ -514,7 +518,7 @@ class Foot extends _Foot {
 
   @override
   bool operator ==(other) {
-    return other is _Foot &&
+    return other is FootEntity &&
         other.id == id &&
         other.createdAt == createdAt &&
         other.updatedAt == updatedAt &&
@@ -591,7 +595,7 @@ class LegSerializer extends Codec<Leg, Map> {
         name: map['name'] as String?);
   }
 
-  static Map<String, dynamic> toMap(_Leg? model) {
+  static Map<String, dynamic> toMap(LegEntity? model) {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }
@@ -667,7 +671,7 @@ class FootSerializer extends Codec<Foot, Map> {
         nToes: map['n_toes'] as double?);
   }
 
-  static Map<String, dynamic> toMap(_Foot? model) {
+  static Map<String, dynamic> toMap(FootEntity? model) {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }

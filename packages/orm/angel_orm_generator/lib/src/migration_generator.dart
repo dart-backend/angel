@@ -8,6 +8,7 @@ import 'package:angel3_serialize_generator/angel3_serialize_generator.dart';
 import 'package:build/build.dart';
 import 'package:code_builder/code_builder.dart';
 import 'package:dart_style/dart_style.dart';
+import 'package:logging/logging.dart';
 import 'package:source_gen/source_gen.dart' hide LibraryBuilder;
 import 'orm_build_context.dart';
 
@@ -21,6 +22,8 @@ Builder migrationBuilder(BuilderOptions options) {
 
 /// Generates `<Model>Migration.dart` from an abstract `Model` class.
 class MigrationGenerator extends GeneratorForAnnotation<Orm> {
+  final _logger = Logger('MigrationGenerator');
+
   static final Parameter _schemaParam = Parameter((b) => b
     ..name = 'schema'
     ..type = refer('Schema'));
@@ -29,7 +32,7 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
   /// If `true` (default), then field names will automatically be (de)serialized as snake_case.
   final bool autoSnakeCaseNames;
 
-  const MigrationGenerator({this.autoSnakeCaseNames = true});
+  MigrationGenerator({this.autoSnakeCaseNames = true});
 
   @override
   Future<String?> generateForAnnotatedElement(
@@ -123,7 +126,7 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
                 if (key != null) {
                   dup.add(key);
                 } else {
-                  print('Skip: key is null');
+                  _logger.fine('Skip: key is null');
                 }
               }
 
@@ -232,7 +235,8 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
                     var index =
                         ConstantReader(defaultValue).read('index').intValue;
                     defaultExpr = literalNum(index);
-                  } catch (_) {
+                  } catch (error) {
+                    _logger.warning(error);
                     // Extremely weird error occurs here: `Not an instance of int`.
                     // Definitely an analyzer issue.
                   }
@@ -374,7 +378,7 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
 
           b.addExpression(_schema
               .property('drop')
-              .call([literalString(ctx.tableName!)], named));
+              .call([literalString(ctx.tableName)], named));
         });
     });
   }

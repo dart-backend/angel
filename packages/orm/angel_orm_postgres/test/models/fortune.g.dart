@@ -27,9 +27,9 @@ class FortuneMigration extends Migration {
 
 class FortuneQuery extends Query<Fortune, FortuneQueryWhere> {
   FortuneQuery({
-    Query? parent,
+    super.parent,
     Set<String>? trampoline,
-  }) : super(parent: parent) {
+  }) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = FortuneQueryWhere(this);
@@ -54,13 +54,15 @@ class FortuneQuery extends Query<Fortune, FortuneQueryWhere> {
 
   @override
   List<String> get fields {
-    const _fields = [
+    const localFields = [
       'id',
       'message',
     ];
     return _selectedFields.isEmpty
-        ? _fields
-        : _fields.where((field) => _selectedFields.contains(field)).toList();
+        ? localFields
+        : localFields
+            .where((field) => _selectedFields.contains(field))
+            .toList();
   }
 
   FortuneQuery select(List<String> selectedFields) {
@@ -148,7 +150,7 @@ class FortuneQueryValues extends MapQueryValues {
 // **************************************************************************
 
 @generatedSerializable
-class Fortune extends _Fortune {
+class Fortune extends FortuneEntity {
   Fortune({
     this.id,
     this.message,
@@ -169,7 +171,7 @@ class Fortune extends _Fortune {
 
   @override
   bool operator ==(other) {
-    return other is _Fortune && other.id == id && other.message == message;
+    return other is FortuneEntity && other.id == id && other.message == message;
   }
 
   @override
@@ -223,7 +225,7 @@ class FortuneSerializer extends Codec<Fortune, Map> {
     return Fortune(id: map['id'] as int?, message: map['message'] as String?);
   }
 
-  static Map<String, dynamic> toMap(_Fortune? model) {
+  static Map<String, dynamic> toMap(FortuneEntity? model) {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }

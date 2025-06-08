@@ -6,6 +6,28 @@ import 'package:code_builder/code_builder.dart';
 import 'package:recase/recase.dart';
 import 'package:source_gen/source_gen.dart';
 
+/// Support prefix for base serializable classes.
+final List<String> modelPrefix = ['_', 'entity'];
+final List<String> modelSuffix = ['entity'];
+
+/// Get the generated model class name
+String getGeneratedModelClassName(String clazz) {
+  // Check the supported prefix
+  for (var prefix in modelPrefix) {
+    if (clazz.toLowerCase().startsWith(prefix)) {
+      return clazz.substring(prefix.length);
+    }
+  }
+
+  for (var suffix in modelSuffix) {
+    if (clazz.toLowerCase().endsWith(suffix)) {
+      return clazz.substring(0, clazz.length - suffix.length);
+    }
+  }
+
+  return clazz;
+}
+
 /// A base context for building serializable classes.
 class BuildContext {
   ReCase? _modelClassNameRecase;
@@ -58,16 +80,16 @@ class BuildContext {
       this.includeAnnotations = const <DartObject>[]});
 
   /// The name of the generated class.
-  String? get modelClassName => originalClassName?.startsWith('_') == true
-      ? originalClassName?.substring(1)
-      : originalClassName;
+  String? get modelClassName => getGeneratedModelClassName(originalClassName!);
 
   /// A [ReCase] instance reflecting on the [modelClassName].
   ReCase get modelClassNameRecase {
     if (modelClassName == null) {
       throw ArgumentError('Model class cannot be null');
     }
-    _modelClassNameRecase ??= ReCase(modelClassName!);
+
+    _modelClassNameRecase ??=
+        ReCase(getGeneratedModelClassName(modelClassName!));
     return _modelClassNameRecase!;
   }
 

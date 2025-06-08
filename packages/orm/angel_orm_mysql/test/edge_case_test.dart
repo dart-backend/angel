@@ -96,7 +96,7 @@ void main() {
       });
 
       test('has one', () async {
-        var query = WeirdJoinQuery()..where!.id.equals(weirdJoin!.id!);
+        var query = WeirdJoinQuery()..where!.id.equals(weirdJoin!.id);
         var wjOpt = await query.getOne(executor);
         expect(wjOpt.isPresent, true);
         wjOpt.ifPresent((wj) {
@@ -120,7 +120,7 @@ void main() {
           });
         }
 
-        var query = WeirdJoinQuery()..where!.id.equals(weirdJoin!.id!);
+        var query = WeirdJoinQuery()..where!.id.equals(weirdJoin!.id);
         var wjObj = await query.getOne(executor);
         expect(wjObj.isPresent, true);
         wjObj.ifPresent((wj) {

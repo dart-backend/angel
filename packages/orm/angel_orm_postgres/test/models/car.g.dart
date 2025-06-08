@@ -33,9 +33,9 @@ class CarMigration extends Migration {
 
 class CarQuery extends Query<Car, CarQueryWhere> {
   CarQuery({
-    Query? parent,
+    super.parent,
     Set<String>? trampoline,
-  }) : super(parent: parent) {
+  }) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = CarQueryWhere(this);
@@ -60,7 +60,7 @@ class CarQuery extends Query<Car, CarQueryWhere> {
 
   @override
   List<String> get fields {
-    const _fields = [
+    const localFields = [
       'id',
       'created_at',
       'updated_at',
@@ -71,8 +71,10 @@ class CarQuery extends Query<Car, CarQueryWhere> {
       'price',
     ];
     return _selectedFields.isEmpty
-        ? _fields
-        : _fields.where((field) => _selectedFields.contains(field)).toList();
+        ? localFields
+        : localFields
+            .where((field) => _selectedFields.contains(field))
+            .toList();
   }
 
   CarQuery select(List<String> selectedFields) {
@@ -253,7 +255,7 @@ class CarQueryValues extends MapQueryValues {
 // **************************************************************************
 
 @generatedSerializable
-class Car extends _Car {
+class Car extends CarEntity {
   Car({
     this.id,
     this.createdAt,
@@ -315,7 +317,7 @@ class Car extends _Car {
 
   @override
   bool operator ==(other) {
-    return other is _Car &&
+    return other is CarEntity &&
         other.id == id &&
         other.createdAt == createdAt &&
         other.updatedAt == updatedAt &&
@@ -403,7 +405,7 @@ class CarSerializer extends Codec<Car, Map> {
         price: map['price'] as double?);
   }
 
-  static Map<String, dynamic> toMap(_Car? model) {
+  static Map<String, dynamic> toMap(CarEntity? model) {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }
