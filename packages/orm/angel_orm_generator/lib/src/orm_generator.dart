@@ -559,7 +559,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
 
                   // ON role_users.user_id=users.id)
                   b.write(' ON ');
-                  b.write('${relation.throughContext!.tableName}');
+                  b.write(relation.throughContext!.tableName);
                   b.write('.');
                   b.write(throughRelation?.localKey);
                   b.write('=');

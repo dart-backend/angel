@@ -4,12 +4,12 @@ description: Static annotations powering Angel3 model serialization. Combine wit
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dart-backend/angel/tree/master/packages/serialize/angel_serialize
 environment:
-  sdk: '>=3.6.0 <4.0.0'
+  sdk: '>=3.8.0 <4.0.0'
 dependencies:
   angel3_model: ^8.0.0
   collection: ^1.17.0
   meta: ^1.9.0
   quiver: ^3.2.0
 dev_dependencies:
-  lints: ^5.0.0
+  lints: ^6.0.0
   

@@ -4,7 +4,7 @@ description: Support for rendering html_builder AST's as responses in Angel.
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dart-backend/angel/tree/angel3/packages/html_builder
 environment:
-  sdk: '>=3.6.0 <4.0.0'
+  sdk: '>=3.8.0 <4.0.0'
 dependencies:
   angel3_framework: ^8.4.0
   belatuk_html_builder: ^5.0.0
@@ -13,5 +13,5 @@ dev_dependencies:
   html: ^0.15.0
   logging: ^1.0.1
   test: ^1.21.0
-  lints: ^5.0.0
+  lints: ^6.0.0
 

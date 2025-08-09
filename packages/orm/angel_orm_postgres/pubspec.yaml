@@ -4,7 +4,7 @@ description: PostgreSQL support for Angel3 ORM. Includes functionality for query
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dart-backend/angel/tree/master/packages/orm/angel_orm_postgres
 environment:
-  sdk: '>=3.6.0 <4.0.0'
+  sdk: '>=3.8.0 <4.0.0'
 dependencies:
   angel3_orm: ^8.2.0
   io: ^1.0.5
@@ -19,5 +19,5 @@ dev_dependencies:
   angel3_migration: ^8.0.0
   angel3_migration_runner: ^8.0.0
   test: ^1.24.0
-  lints: ^5.0.0
+  lints: ^6.0.0
   build_runner: ^2.4.0
