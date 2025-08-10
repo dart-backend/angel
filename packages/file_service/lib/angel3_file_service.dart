@@ -125,7 +125,7 @@ class JsonFileService extends Service<String, Map<String, dynamic>> {
   }
 }
 
-dynamic _safeForJson(x) {
+dynamic _safeForJson(dynamic x) {
   if (x is DateTime) {
     return x.toIso8601String();
   } else if (x is Map) {
@@ -146,7 +146,7 @@ Map _jsonify(Map map) {
 Map<String, dynamic> _jsonifyToSD(Map<String, dynamic> map) =>
     _jsonify(map).cast<String, dynamic>();
 
-dynamic _revive(x) {
+dynamic _revive(dynamic x) {
   if (x is Map) {
     return x.keys.fold<Map<String, dynamic>>(
       {},
