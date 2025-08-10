@@ -1,5 +1,5 @@
 name: angel3_container_generator
-version: 8.3.0
+version: 8.4.0
 description: Codegen support for using pkg:reflectable with pkg:angel3_container.
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dart-backend/angel/tree/master/packages/container/angel_container_generator

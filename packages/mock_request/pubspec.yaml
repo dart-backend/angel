@@ -1,5 +1,5 @@
 name: angel3_mock_request
-version: 8.3.0
+version: 8.4.0
 description: Manufacture dart:io HttpRequests, HttpResponses, HttpHeaders, etc.
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dart-backend/angel/tree/master/packages/mock_request

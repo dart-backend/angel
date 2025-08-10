@@ -57,7 +57,7 @@ Angel3 packages are published under `angel3_` prefix on pub.dev. These packages 
 
 Branch: `master`
 
-* Dart version : 3.6.x or later.
+* Dart version : 3.8.0 or later.
 * Publish      : Refer to all packages with`angel3_` prefix on [pub.dev](https://pub.dev/publishers/dukefirehawk.com/packages).
 * Status       : Production
 * Notes        : Use this branch for all PR submission

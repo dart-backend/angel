@@ -1,5 +1,5 @@
 name: angel3_seo
-version: 8.3.0
+version: 8.4.0
 description: Helper infrastructure for building SEO-friendly Web backends in Angel3.
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dart-backend/angel/tree/angel3/packages/seo

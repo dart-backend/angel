@@ -1,5 +1,5 @@
 name: angel3_paginate
-version: 8.3.0
+version: 8.4.0
 description: Platform-agnostic pagination library, with custom support for the Angel3 framework.
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dart-backend/angel/tree/master/packages/paginate

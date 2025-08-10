@@ -1,5 +1,5 @@
 name: angel3_user_agent
-version: 8.3.0
+version: 8.4.0
 description: Angel3 middleware to parse and inject a User Agent object into requests.
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dart-backend/angel/tree/angel3/packages/user_agent/angel_user_agent
