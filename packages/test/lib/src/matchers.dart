@@ -19,10 +19,10 @@ Matcher isAngelHttpException({
 
 /// Expects a given response, when parsed as JSON,
 /// to equal a desired value.
-Matcher isJson(value) => _IsJson(value);
+Matcher isJson(dynamic value) => _IsJson(value);
 
 /// Expects a response to have the given content type, whether a `String` or [ContentType].
-Matcher hasContentType(contentType) => _HasContentType(contentType);
+Matcher hasContentType(dynamic contentType) => _HasContentType(contentType);
 
 /// Expects a response to have the given body.
 ///
@@ -31,7 +31,7 @@ Matcher hasContentType(contentType) => _HasContentType(contentType);
 ///
 /// If value is a `List<int>`, then it will be matched against `res.bodyBytes`.
 /// Otherwise, the string value will be matched against `res.body`.
-Matcher hasBody([value]) => _HasBody(value ?? true);
+Matcher hasBody([dynamic value]) => _HasBody(value ?? true);
 
 /// Expects a response to have a header named [key] which contains [value]. [value] can be a `String`, or a List of `String`s.
 ///
