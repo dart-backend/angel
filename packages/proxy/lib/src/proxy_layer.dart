@@ -32,7 +32,7 @@ class Proxy {
   final Duration? timeout;
 
   Proxy(
-    baseUrl, {
+    Object baseUrl, {
     http.Client? httpClient,
     this.publicPath = '/',
     this.recoverFromDead = true,
