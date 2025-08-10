@@ -44,7 +44,7 @@ class AngelShelf
 
   @override
   Future<Stream<shelf.Request>> Function(dynamic, int) get serverGenerator =>
-      (_, __) async => incomingRequests.stream;
+      (_, _) async => incomingRequests.stream;
 
   static UnsupportedError _unsupported() => UnsupportedError(
     'AngelShelf cannot mount a standalone server, or return a URI.',
