@@ -1,5 +1,7 @@
 # TODO
 
+* `angel3_container_generator` upgrade blocked by `reflectable`
+* `source_gen` blocks upgrading `analyzer` to 8.x.x
 * Improve HTTP and ORM performance
 * Add cache support in ORM (using Redis)
 * Upgrade and release angel3_oauth2 8.0.0 (5 failed test cases)

@@ -125,8 +125,8 @@ DomNode area({
 );
 
 DomNode article({
-  className,
-  style,
+  dynamic className,
+  dynamic style,
   Map<String, dynamic> p = const {},
   @deprecated Map<String, dynamic> props = const {},
   Iterable<DomNode> c = const [],

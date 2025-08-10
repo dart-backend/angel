@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/element2.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:build/build.dart';
 import 'package:code_builder/code_builder.dart';
@@ -20,18 +20,18 @@ TypeReference convertTypeReference(DartType? t) {
   });
 }
 
-bool isRequiredParameter(ParameterElement e) {
+bool isRequiredParameter(FormalParameterElement e) {
   return e.isRequired;
 }
 
-bool isOptionalParameter(ParameterElement e) {
+bool isOptionalParameter(FormalParameterElement e) {
   return e.isOptional;
 }
 
-Parameter convertParameter(ParameterElement e) {
+Parameter convertParameter(FormalParameterElement e) {
   return Parameter((b) {
     b
-      ..name = e.name
+      ..name = e.name3 ?? ''
       ..type = convertTypeReference(e.type)
       ..named = e.isNamed
       ..defaultTo = e.defaultValueCode == null
