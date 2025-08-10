@@ -555,7 +555,7 @@ class MapSqlExpressionBuilder extends JsonSqlExpressionBuilder<Map, String> {
     this[key].isNotNull;
   }
 
-  void containsPair(key, value) {
+  void containsPair(dynamic key, dynamic value) {
     contains({key: value});
   }
 }

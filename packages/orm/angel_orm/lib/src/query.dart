@@ -140,7 +140,7 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
     }
   }
 
-  String Function() _compileJoin(tableName, Set<String> trampoline) {
+  String Function() _compileJoin(Object tableName, Set<String> trampoline) {
     if (tableName is String) {
       return () => tableName;
     } else if (tableName is Query) {
@@ -163,7 +163,7 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
   }
 
   void _makeJoin(
-    tableName,
+    Object tableName,
     Set<String>? trampoline,
     String? alias,
     JoinType type,
@@ -205,7 +205,7 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
 
   /// Execute an `INNER JOIN` against another table.
   void join(
-    tableName,
+    String tableName,
     String localKey,
     String foreignKey, {
     String op = '=',
@@ -227,7 +227,7 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
 
   /// Execute a `LEFT JOIN` against another table.
   void leftJoin(
-    tableName,
+    String tableName,
     String localKey,
     String foreignKey, {
     String op = '=',
@@ -249,7 +249,7 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
 
   /// Execute a `RIGHT JOIN` against another table.
   void rightJoin(
-    tableName,
+    String tableName,
     String localKey,
     String foreignKey, {
     String op = '=',
@@ -271,7 +271,7 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
 
   /// Execute a `FULL OUTER JOIN` against another table.
   void fullOuterJoin(
-    tableName,
+    String tableName,
     String localKey,
     String foreignKey, {
     String op = '=',
@@ -293,7 +293,7 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
 
   /// Execute a `SELF JOIN`.
   void selfJoin(
-    tableName,
+    String tableName,
     String localKey,
     String foreignKey, {
     String op = '=',
