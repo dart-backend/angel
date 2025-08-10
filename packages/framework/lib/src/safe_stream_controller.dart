@@ -12,7 +12,7 @@ abstract class SafeCtrl<T> {
 
   void add(T event);
 
-  void addError(error, [StackTrace? stackTrace]);
+  void addError(Error error, [StackTrace? stackTrace]);
 
   Future close();
 

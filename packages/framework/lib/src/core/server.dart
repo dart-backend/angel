@@ -286,7 +286,11 @@ class Angel extends Routable {
     }
   }
 
-  Future getHandlerResult(handler, RequestContext req, ResponseContext res) {
+  Future getHandlerResult(
+    dynamic handler,
+    RequestContext req,
+    ResponseContext res,
+  ) {
     if (handler is RequestHandler) {
       var result = handler(req, res);
       return getHandlerResult(result, req, res);
@@ -310,7 +314,7 @@ class Angel extends Routable {
 
   /// Runs some [handler]. Returns `true` if request execution should continue.
   Future<bool> executeHandler(
-    handler,
+    dynamic handler,
     RequestContext req,
     ResponseContext res,
   ) {
@@ -328,7 +332,7 @@ class Angel extends Routable {
   }
 
   /// Attempts to find a property by the given name within this application.
-  dynamic findProperty(key) {
+  dynamic findProperty(dynamic key) {
     if (configuration.containsKey(key)) return configuration[key];
 
     //return parent != null ? parent?.findProperty(key) : null;

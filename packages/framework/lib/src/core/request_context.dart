@@ -170,7 +170,7 @@ abstract class RequestContext<RawRequest> {
   /// This setter allows you to explicitly set the request body **exactly once**.
   ///
   /// Use this if the format of the body is not natively parsed by Angel.
-  set bodyAsObject(value) {
+  set bodyAsObject(Object? value) {
     if (_bodyObject != null) {
       throw StateError(
         'The request body has already been parsed/set, and cannot be overwritten.',
@@ -212,7 +212,7 @@ abstract class RequestContext<RawRequest> {
   /// [contentType] can be either of the following:
   /// * A [ContentType], in which case the `Accept` header will be compared against its `mimeType` property.
   /// * Any other Dart value, in which case the `Accept` header will be compared against the result of a `toString()` call.
-  bool accepts(contentType, {bool strict = false}) {
+  bool accepts(Object? contentType, {bool strict = false}) {
     var contentTypeString = contentType is MediaType
         ? contentType.mimeType
         : contentType?.toString();

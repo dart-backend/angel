@@ -47,7 +47,7 @@ void main() {
 
     app.all('/method', (req, res) => req.method);
 
-    app.get('/json', (_, __) => {'foo': 'bar'});
+    app.get('/json', (_, _) => {'foo': 'bar'});
 
     app.get('/stream', (req, res) => jfkStream().pipe(res));
 
@@ -103,7 +103,7 @@ void main() {
       ..setAlpnProtocols(['h2'], true);
 
     // Create an HTTP client that trusts our server.
-    h1c = IOClient(HttpClient()..badCertificateCallback = (_, __, ___) => true);
+    h1c = IOClient(HttpClient()..badCertificateCallback = (_, _, _) => true);
 
     http2 = AngelHttp2(app, ctx, allowHttp1: true);
 

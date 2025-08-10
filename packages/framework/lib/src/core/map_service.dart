@@ -35,12 +35,12 @@ class MapService extends Service<String?, Map<String, dynamic>> {
   String get updatedAtKey =>
       autoSnakeCaseNames == false ? 'updatedAt' : 'updated_at';
 
-  bool Function(Map<String, dynamic>) _matchesId(id) {
+  bool Function(Map<String, dynamic>) _matchesId(Object? id) {
     return (Map<String, dynamic> item) {
       if (item['id'] == null) {
         return false;
       } else if (autoIdAndDateFields != false) {
-        return item['id'] == id?.toString();
+        return item['id'] == id.toString();
       } else {
         return item['id'] == id;
       }

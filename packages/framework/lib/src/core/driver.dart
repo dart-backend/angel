@@ -36,11 +36,11 @@ abstract class Driver<
   /// The native server running this instance.
   Server? server;
 
-  Future<Server> generateServer(address, int port) =>
+  Future<Server> generateServer(Object? address, int port) =>
       serverGenerator(address, port);
 
   /// Starts, and returns the server.
-  Future<Server> startServer([address, int port = 0]) {
+  Future<Server> startServer([Object? address, int port = 0]) {
     var host = address ?? '127.0.0.1';
     return generateServer(host, port)
         .then((server) {

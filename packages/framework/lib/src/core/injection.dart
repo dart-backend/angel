@@ -24,7 +24,7 @@ RequestHandler ioc(Function handler, {Iterable<String> optional = const []}) {
 }
 
 Future resolveInjection(
-  requirement,
+  Object requirement,
   InjectionRequest injection,
   RequestContext req,
   ResponseContext res,

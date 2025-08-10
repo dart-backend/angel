@@ -213,7 +213,7 @@ class Service<Id, Data> extends Routable {
   /// The single type argument, [T], is used to determine how to parse the [id].
   ///
   /// For example, `parseId<bool>` attempts to parse the value as a [bool].
-  static T parseId<T>(id) {
+  static T parseId<T>(Object? id) {
     if (id == null || id == 'null') {
       return 'null' as T;
       //throw ArgumentError("[Service] Null is not supported");

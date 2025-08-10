@@ -691,7 +691,7 @@ class HookedServiceEvent<Id, Data, T extends Service<Id, Data>> {
   ];
 
   /// Use this to end processing of an event.
-  void cancel([result]) {
+  void cancel([Object? result]) {
     _canceled = true;
     this.result = result ?? this.result;
   }

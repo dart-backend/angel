@@ -25,7 +25,7 @@ class BookService extends Service {
   }
 }
 
-void incrementTodoTimes(e) {
+void incrementTodoTimes(dynamic e) {
   IncrementService.times++;
 }
 

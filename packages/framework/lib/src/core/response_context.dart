@@ -170,14 +170,14 @@ abstract class ResponseContext<RawResponse>
   }
 
   /// Serializes JSON to the response.
-  Future<bool> json(value) =>
+  Future<bool> json(Object? value) =>
       serialize(value, contentType: MediaType('application', 'json'));
 
   /// Returns a JSONP response.
   ///
   /// You can override the [contentType] sent; by default it is `application/javascript`.
   Future<void> jsonp(
-    value, {
+    Object value, {
     String callbackName = 'callback',
     MediaType? contentType,
   }) {
@@ -210,7 +210,7 @@ abstract class ResponseContext<RawResponse>
   /// based on the provided params.
   ///
   /// See [Router]#navigate for more. :)
-  Future<void> redirect(url, {bool absolute = true, int? code}) {
+  Future<void> redirect(Object? url, {bool absolute = true, int? code}) {
     if (!isOpen) throw closed();
     headers
       ..['content-type'] = 'text/html'
@@ -317,7 +317,7 @@ abstract class ResponseContext<RawResponse>
   }
 
   /// Serializes data to the response.
-  Future<bool> serialize(value, {MediaType? contentType}) async {
+  Future<bool> serialize(Object? value, {MediaType? contentType}) async {
     if (!isOpen) {
       throw closed();
     }

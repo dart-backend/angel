@@ -7,6 +7,7 @@ import 'package:angel3_container/mirrors.dart';
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:http/http.dart' as http;
 import 'package:angel3_mock_request/angel3_mock_request.dart';
+import 'package:http/http.dart';
 import 'package:test/test.dart';
 
 import 'common.dart';
@@ -105,7 +106,7 @@ void main() {
   });
 }
 
-void validateTodoSingleton(response) {
+void validateTodoSingleton(Response response) {
   var todo = json.decode(response.body.toString()) as Map;
   expect(todo['id'], equals(null));
   expect(todo['text'], equals(sampleText));

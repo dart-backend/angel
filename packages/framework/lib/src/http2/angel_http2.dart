@@ -11,7 +11,7 @@ import 'package:uuid/uuid.dart';
 
 /// Boots a shared server instance. Use this if launching multiple isolates.
 Future<SecureServerSocket> startSharedHttp2(
-  address,
+  Object? address,
   int port,
   SecurityContext ctx,
 ) {
@@ -97,7 +97,10 @@ class AngelHttp2
   Stream<HttpRequest> get onHttp1 => _onHttp1.stream;
 
   @override
-  Future<SecureServerSocket> generateServer([address, int? port]) async {
+  Future<SecureServerSocket> generateServer([
+    Object? address,
+    int? port,
+  ]) async {
     var s = await serverGenerator(address ?? '127.0.0.1', port ?? 0);
     return _artificial = _AngelHttp2ServerSocket(s, this);
   }
