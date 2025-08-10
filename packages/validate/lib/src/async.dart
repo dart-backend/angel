@@ -42,7 +42,7 @@ AngelMatcher matchWithAngelNullary(
 /// Returns an [AngelMatcher] that represents [x].
 ///
 /// If [x] is an [AngelMatcher], then it is returned, unmodified.
-AngelMatcher wrapAngelMatcher(x) {
+AngelMatcher wrapAngelMatcher(Object x) {
   if (x is AngelMatcher) return x;
   if (x is ContextAwareMatcher) return _WrappedAngelMatcher(x);
   return wrapAngelMatcher(wrapContextAwareMatcher(x));
@@ -81,7 +81,7 @@ AngelMatcher idExistsInService(
 /// An asynchronous [Matcher] that runs in the context of an [Angel] app.
 abstract class AngelMatcher extends ContextAwareMatcher {
   Future<bool> matchesWithAngel(
-    item,
+    Object item,
     String key,
     Map context,
     Map matchState,
@@ -133,7 +133,7 @@ class _MatchWithAngel extends AngelMatcher {
     Map matchState,
     Angel app,
   ) {
-    return Future.sync(() => f(item as Object, context, app)).then((result) {
+    return Future.sync(() => f(item, context, app)).then((result) {
       return result.matches(item, matchState);
     });
   }
@@ -157,7 +157,7 @@ class _PredicateWithAngel extends AngelMatcher {
     Map matchState,
     Angel app,
   ) {
-    return Future<bool>.sync(() => predicate(key, item as Object, app));
+    return Future<bool>.sync(() => predicate(key, item, app));
   }
 }
 

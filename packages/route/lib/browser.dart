@@ -230,7 +230,7 @@ class _PushStateRouter<T> extends _BrowserRouterImpl<T> {
     //}
   }
 
-  void handleState(state) {
+  void handleState(Object? state) {
     if (state is Map && state.containsKey('path')) {
       var path = state['path'].toString();
       final resolved = resolveAbsolute(path).first;

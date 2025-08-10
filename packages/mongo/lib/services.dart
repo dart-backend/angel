@@ -16,7 +16,7 @@ Map<String, dynamic> _transformId(Map<String, dynamic> doc) {
   return result;
 }
 
-ObjectId _makeId(dynamic id) {
+ObjectId _makeId(Object id) {
   try {
     return (id is ObjectId) ? id : ObjectId.fromHexString(id.toString());
   } catch (e) {

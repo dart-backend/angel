@@ -1,10 +1,12 @@
-import 'dart:html';
+//import 'dart:html';
+import 'dart:js_interop';
 
+import 'package:web/web.dart';
 import 'package:angel3_validate/angel3_validate.dart';
 
-final $errors = querySelector('#errors') as UListElement?;
-final $form = querySelector('#form') as FormElement?;
-final $blank = querySelector('[name="blank"]') as InputElement?;
+final $errors = document.querySelector('#errors') as HTMLUListElement?;
+final $form = document.querySelector('#form') as HTMLFormElement?;
+final $blank = document.querySelector('[name="blank"]') as HTMLInputElement?;
 
 final Validator formSchema = Validator(
   {
@@ -33,15 +35,17 @@ final Validator formSchema = Validator(
 void main() {
   $form!.onSubmit.listen((e) {
     e.preventDefault();
-    $errors!.children.clear();
+    //$errors!.removeChild(child)
+    $errors!.remove();
 
     var formData = {};
 
     for (var key in ['firstName', 'lastName', 'age', 'familySize']) {
-      formData[key] = (querySelector('[name="$key"]') as InputElement).value;
+      formData[key] =
+          (document.querySelector('[name="$key"]') as HTMLInputElement).value;
     }
 
-    if ($blank!.value!.isNotEmpty) formData['blank'] = $blank!.value;
+    if ($blank!.value.isNotEmpty) formData['blank'] = $blank!.value;
 
     print('Form data: $formData');
 
@@ -60,15 +64,15 @@ void main() {
           success('Number of People in Family: ${passportInfo["familySize"]}'),
         );
     } on ValidationException catch (e) {
-      $errors!.children.addAll(
+      $errors!.children.add(
         e.errors.map((error) {
-          return LIElement()..text = error;
-        }),
+          return HTMLLIElement()..textContent = error;
+        }).jsify(),
       );
     }
   });
 }
 
-LIElement success(String str) => LIElement()
-  ..classes.add('success')
-  ..text = str;
+HTMLLIElement success(String str) => HTMLLIElement()
+  ..classList.add('success')
+  ..textContent = str;
