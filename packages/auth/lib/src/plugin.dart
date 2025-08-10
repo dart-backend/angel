@@ -370,7 +370,7 @@ class AngelAuth<User> {
   /// or a `401 Not Authenticated` is thrown, if it is the last one.
   ///
   /// Any other result is considered an authenticated user, and terminates the loop.
-  RequestHandler authenticate(type, [AngelAuthOptions<User>? opt]) {
+  RequestHandler authenticate(Object type, [AngelAuthOptions<User>? opt]) {
     return (RequestContext req, ResponseContext res) async {
       var authOption = opt ?? AngelAuthOptions<User>();
 
