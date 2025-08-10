@@ -23,18 +23,20 @@ void main() {
 
     test('params', () {
       expect(
-          navigate([
-            'user/:id',
-            {'id': 1337}
-          ]),
-          equals('/user/1337'));
+        navigate([
+          'user/:id',
+          {'id': 1337},
+        ]),
+        equals('/user/1337'),
+      );
 
       expect(
-          navigate([
-            'full_name',
-            {'first': 'John', 'last': 'Smith'}
-          ]),
-          equals('/first/John/last/Smith'));
+        navigate([
+          'full_name',
+          {'first': 'John', 'last': 'Smith'},
+        ]),
+        equals('/first/John/last/Smith'),
+      );
     });
 
     test('root', () {

@@ -1,5 +1,8 @@
-const PseudoApplication pseudoApplication =
-    PseudoApplication('foo', 'bar', 'http://foo.bar/baz');
+const PseudoApplication pseudoApplication = PseudoApplication(
+  'foo',
+  'bar',
+  'http://foo.bar/baz',
+);
 
 class PseudoApplication {
   final String id, secret, redirectUri;

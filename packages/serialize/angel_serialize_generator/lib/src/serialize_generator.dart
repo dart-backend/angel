@@ -30,8 +30,9 @@ Builder jsonModelBuilder(_) {
 }
 
 Builder serializerBuilder(_) {
-  return SharedPartBuilder(
-      const [SerializerGenerator()], 'angel3_serialize_serializer');
+  return SharedPartBuilder(const [
+    SerializerGenerator(),
+  ], 'angel3_serialize_serializer');
 }
 
 Builder typescriptDefinitionBuilder(_) {
@@ -39,8 +40,11 @@ Builder typescriptDefinitionBuilder(_) {
 }
 
 /// Converts a [DartType] to a [TypeReference].
-TypeReference convertTypeReference(DartType t,
-    {bool forceNullable = false, bool ignoreNullabilityCheck = false}) {
+TypeReference convertTypeReference(
+  DartType t, {
+  bool forceNullable = false,
+  bool ignoreNullabilityCheck = false,
+}) {
   return TypeReference((b) {
     b.symbol = t.element3?.displayName;
 
@@ -73,16 +77,20 @@ Expression convertObject(DartObject o) {
     return literalList(o.toListValue()!.map(convertObject));
   }
   if (o.toMapValue() != null) {
-    return literalMap(o
-        .toMapValue()!
-        .map((k, v) => MapEntry(convertObject(k!), convertObject(v!))));
+    return literalMap(
+      o.toMapValue()!.map(
+        (k, v) => MapEntry(convertObject(k!), convertObject(v!)),
+      ),
+    );
   }
 
   var rev = ConstantReader(o).revive();
   Expression target = convertTypeReference(o.type!);
   target = rev.accessor.isEmpty ? target : target.property(rev.accessor);
-  return target.call(rev.positionalArguments.map(convertObject),
-      rev.namedArguments.map((k, v) => MapEntry(k, convertObject(v))));
+  return target.call(
+    rev.positionalArguments.map(convertObject),
+    rev.namedArguments.map((k, v) => MapEntry(k, convertObject(v))),
+  );
 }
 
 String? dartObjectToString(DartObject v) {
@@ -114,9 +122,9 @@ String? dartObjectToString(DartObject v) {
     }).join(', ')}}';
   }
   if (v.toStringValue() != null) {
-    return literalString(v.toStringValue()!)
-        .accept(DartEmitter(useNullSafetySyntax: true))
-        .toString();
+    return literalString(
+      v.toStringValue()!,
+    ).accept(DartEmitter(useNullSafetySyntax: true)).toString();
   }
   if (type is InterfaceType && type.element3 is EnumElement2) {
     // Find the index of the enum, then find the member.

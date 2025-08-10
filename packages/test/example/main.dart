@@ -13,20 +13,23 @@ void main() {
     app = Angel()
       ..get('/hello', (req, res) => 'Hello')
       ..get(
-          '/error',
-          (req, res) => throw AngelHttpException.forbidden(message: 'Test')
-            ..errors.addAll(['foo', 'bar']))
+        '/error',
+        (req, res) =>
+            throw AngelHttpException.forbidden(message: 'Test')
+              ..errors.addAll(['foo', 'bar']),
+      )
       ..get('/body', (req, res) {
         res
           ..write('OK')
           ..close();
       })
       ..get(
-          '/valid',
-          (req, res) => {
-                'michael': 'jackson',
-                'billie': {'jean': 'hee-hee', 'is_my_lover': false}
-              })
+        '/valid',
+        (req, res) => {
+          'michael': 'jackson',
+          'billie': {'jean': 'hee-hee', 'is_my_lover': false},
+        },
+      )
       ..post('/hello', (req, res) async {
         var body = await req.parseBody().then((_) => req.bodyAsMap);
         return {'bar': body['foo']};
@@ -38,12 +41,14 @@ void main() {
         await res.close();
       })
       ..use(
-          '/foo',
-          AnonymousService(
-              index: ([params]) async => [
-                    {'michael': 'jackson'}
-                  ],
-              create: (dynamic data, [params]) async => {'foo': 'bar'}));
+        '/foo',
+        AnonymousService(
+          index: ([params]) async => [
+            {'michael': 'jackson'},
+          ],
+          create: (dynamic data, [params]) async => {'foo': 'bar'},
+        ),
+      );
 
     var ws = AngelWebSocket(app);
     await app.configure(ws.configureServer);
@@ -66,8 +71,10 @@ void main() {
       });
 
       test('post', () async {
-        final response =
-            await client.post(Uri.parse('/hello'), body: {'foo': 'baz'});
+        final response = await client.post(
+          Uri.parse('/hello'),
+          body: {'foo': 'baz'},
+        );
         expect(response, allOf(hasStatus(200), isJson({'bar': 'baz'})));
       });
     });
@@ -77,9 +84,13 @@ void main() {
       print(res.body);
       expect(res, isAngelHttpException());
       expect(
-          res,
-          isAngelHttpException(
-              statusCode: 403, message: 'Test', errors: ['foo', 'bar']));
+        res,
+        isAngelHttpException(
+          statusCode: 403,
+          message: 'Test',
+          errors: ['foo', 'bar'],
+        ),
+      );
     });
 
     test('hasBody', () async {
@@ -99,14 +110,17 @@ void main() {
       var res = await client.get(Uri.parse('/valid'));
       expect(res, hasContentType('application/json'));
       expect(
-          res,
-          hasValidBody(Validator({
+        res,
+        hasValidBody(
+          Validator({
             'michael*': [isString, isNotEmpty, equals('jackson')],
             'billie': Validator({
               'jean': [isString, isNotEmpty],
-              'is_my_lover': [isBool, isFalse]
-            })
-          })));
+              'is_my_lover': [isBool, isFalse],
+            }),
+          }),
+        ),
+      );
     });
 
     test('gzip decode', () async {
@@ -120,7 +134,7 @@ void main() {
         var foo = client.service('foo');
         var result = await foo.index();
         expect(result, [
-          {'michael': 'jackson'}
+          {'michael': 'jackson'},
         ]);
       });
 

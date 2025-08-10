@@ -13,11 +13,7 @@ void main() async {
 
   // You can wrap a [VirtualDirectory]
   var vDir = inlineAssetsFromVirtualDirectory(
-    VirtualDirectory(
-      app,
-      fs,
-      source: fs.directory('web'),
-    ),
+    VirtualDirectory(app, fs, source: fs.directory('web')),
   );
 
   app.fallback(vDir.handleRequest);

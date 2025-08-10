@@ -68,11 +68,12 @@ class TodoQuery extends Query<Todo, TodoQueryWhere> {
   static Todo? parseRow(List row) {
     if (row.every((x) => x == null)) return null;
     var model = Todo(
-        id: row[0].toString(),
-        isComplete: (row[1] as bool?),
-        text: (row[2] as String?),
-        createdAt: (row[3] as DateTime?),
-        updatedAt: (row[4] as DateTime?));
+      id: row[0].toString(),
+      isComplete: (row[1] as bool?),
+      text: (row[2] as String?),
+      createdAt: (row[3] as DateTime?),
+      updatedAt: (row[4] as DateTime?),
+    );
     return model;
   }
 
@@ -84,11 +85,11 @@ class TodoQuery extends Query<Todo, TodoQueryWhere> {
 
 class TodoQueryWhere extends QueryWhere {
   TodoQueryWhere(TodoQuery query)
-      : id = NumericSqlExpressionBuilder<int>(query, 'id'),
-        isComplete = BooleanSqlExpressionBuilder(query, 'is_complete'),
-        text = StringSqlExpressionBuilder(query, 'text'),
-        createdAt = DateTimeSqlExpressionBuilder(query, 'created_at'),
-        updatedAt = DateTimeSqlExpressionBuilder(query, 'updated_at');
+    : id = NumericSqlExpressionBuilder<int>(query, 'id'),
+      isComplete = BooleanSqlExpressionBuilder(query, 'is_complete'),
+      text = StringSqlExpressionBuilder(query, 'text'),
+      createdAt = DateTimeSqlExpressionBuilder(query, 'created_at'),
+      updatedAt = DateTimeSqlExpressionBuilder(query, 'updated_at');
 
   final NumericSqlExpressionBuilder<int> id;
 
@@ -151,12 +152,13 @@ class TodoQueryValues extends MapQueryValues {
 
 @generatedSerializable
 class Todo extends _Todo {
-  Todo(
-      {this.id,
-      this.isComplete = false,
-      required this.text,
-      this.createdAt,
-      this.updatedAt});
+  Todo({
+    this.id,
+    this.isComplete = false,
+    required this.text,
+    this.createdAt,
+    this.updatedAt,
+  });
 
   @override
   final String? id;
@@ -173,18 +175,20 @@ class Todo extends _Todo {
   @override
   final DateTime? updatedAt;
 
-  Todo copyWith(
-      {String? id,
-      bool? isComplete,
-      String? text,
-      DateTime? createdAt,
-      DateTime? updatedAt}) {
+  Todo copyWith({
+    String? id,
+    bool? isComplete,
+    String? text,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) {
     return Todo(
-        id: id ?? this.id,
-        isComplete: isComplete ?? this.isComplete,
-        text: text ?? this.text,
-        createdAt: createdAt ?? this.createdAt,
-        updatedAt: updatedAt ?? this.updatedAt);
+      id: id ?? this.id,
+      isComplete: isComplete ?? this.isComplete,
+      text: text ?? this.text,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
   }
 
   @override
@@ -245,19 +249,20 @@ class TodoSerializer extends Codec<Todo, Map> {
     }
 
     return Todo(
-        id: map['id'] as String?,
-        isComplete: map['is_complete'] as bool? ?? false,
-        text: map['text'] as String?,
-        createdAt: map['created_at'] != null
-            ? (map['created_at'] is DateTime
+      id: map['id'] as String?,
+      isComplete: map['is_complete'] as bool? ?? false,
+      text: map['text'] as String?,
+      createdAt: map['created_at'] != null
+          ? (map['created_at'] is DateTime
                 ? (map['created_at'] as DateTime?)
                 : DateTime.parse(map['created_at'].toString()))
-            : null,
-        updatedAt: map['updated_at'] != null
-            ? (map['updated_at'] is DateTime
+          : null,
+      updatedAt: map['updated_at'] != null
+          ? (map['updated_at'] is DateTime
                 ? (map['updated_at'] as DateTime?)
                 : DateTime.parse(map['updated_at'].toString()))
-            : null);
+          : null,
+    );
   }
 
   static Map<String, dynamic> toMap(_Todo model) {
@@ -270,7 +275,7 @@ class TodoSerializer extends Codec<Todo, Map> {
       'is_complete': model.isComplete,
       'text': model.text,
       'created_at': model.createdAt?.toIso8601String(),
-      'updated_at': model.updatedAt?.toIso8601String()
+      'updated_at': model.updatedAt?.toIso8601String(),
     };
   }
 }
@@ -281,7 +286,7 @@ abstract class TodoFields {
     isComplete,
     text,
     createdAt,
-    updatedAt
+    updatedAt,
   ];
 
   static const String id = 'id';

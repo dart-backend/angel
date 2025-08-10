@@ -19,25 +19,29 @@ const TypeChecker dateTimeTypeChecker = TypeChecker.fromRuntime(DateTime);
 // ignore: deprecated_member_use
 const TypeChecker excludeTypeChecker = TypeChecker.fromRuntime(Exclude);
 
-const TypeChecker serializableFieldTypeChecker =
-    TypeChecker.fromRuntime(SerializableField);
+const TypeChecker serializableFieldTypeChecker = TypeChecker.fromRuntime(
+  SerializableField,
+);
 
-const TypeChecker serializableTypeChecker =
-    TypeChecker.fromRuntime(Serializable);
+const TypeChecker serializableTypeChecker = TypeChecker.fromRuntime(
+  Serializable,
+);
 
-const TypeChecker generatedSerializableTypeChecker =
-    TypeChecker.fromRuntime(GeneratedSerializable);
+const TypeChecker generatedSerializableTypeChecker = TypeChecker.fromRuntime(
+  GeneratedSerializable,
+);
 
 final Map<String, BuildContext> _cache = {};
 
 /// Create a [BuildContext].
 Future<BuildContext?> buildContext(
-    InterfaceElement clazz,
-    ConstantReader annotation,
-    BuildStep buildStep,
-    Resolver resolver,
-    bool autoSnakeCaseNames,
-    {bool heedExclude = true}) async {
+  InterfaceElement clazz,
+  ConstantReader annotation,
+  BuildStep buildStep,
+  Resolver resolver,
+  bool autoSnakeCaseNames, {
+  bool heedExclude = true,
+}) async {
   var id = clazz.location?.components.join('-');
   if (_cache.containsKey(id)) {
     return _cache[id];
@@ -120,7 +124,8 @@ Future<BuildContext?> buildContext(
         }
 
         if (sField.isNullable == false) {
-          var reason = sField.errorMessage ??
+          var reason =
+              sField.errorMessage ??
               "Missing required field '${ctx.resolveFieldName(field.name)}' on ${ctx.modelClassName}.";
           ctx.requiredFields[field.name] = reason;
         }
@@ -202,14 +207,17 @@ Future<BuildContext?> buildContext(
         */
 
         // Check for @required
-        var required =
-            const TypeChecker.fromRuntime(Required).firstAnnotationOf(el);
+        var required = const TypeChecker.fromRuntime(
+          Required,
+        ).firstAnnotationOf(el);
 
         if (required != null) {
           log.warning(
-              'Using @required on fields (like ${clazz.name}.${field.name}) is now deprecated; use @SerializableField(isNullable: false) instead.');
+            'Using @required on fields (like ${clazz.name}.${field.name}) is now deprecated; use @SerializableField(isNullable: false) instead.',
+          );
           var cr = ConstantReader(required);
-          var reason = cr.peek('reason')?.stringValue ??
+          var reason =
+              cr.peek('reason')?.stringValue ??
               "Missing required field '${ctx.resolveFieldName(field.name)}' on ${ctx.modelClassName}.";
           ctx.requiredFields[field.name] = reason;
           foundNone = false;

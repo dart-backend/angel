@@ -25,16 +25,23 @@ import 'service.dart';
 typedef AngelConfigurer = FutureOr<void> Function(Angel app);
 
 /// A function that asynchronously generates a view from the given path and data.
-typedef ViewGenerator = FutureOr<String> Function(String path,
-    [Map<String, dynamic>? data]);
+typedef ViewGenerator =
+    FutureOr<String> Function(String path, [Map<String, dynamic>? data]);
 
 /// A function that handles error
-typedef AngelErrorHandler = dynamic Function(
-    AngelHttpException e, RequestContext req, ResponseContext res);
+typedef AngelErrorHandler =
+    dynamic Function(
+      AngelHttpException e,
+      RequestContext req,
+      ResponseContext res,
+    );
 
 /// The default error handler for [Angel] server
 Future<bool> _defaultErrorHandler(
-    AngelHttpException e, RequestContext req, ResponseContext res) async {
+  AngelHttpException e,
+  RequestContext req,
+  ResponseContext res,
+) async {
   if (!req.accepts('text/html', strict: true) &&
       (req.accepts('application/json') ||
           req.accepts('application/javascript'))) {
@@ -84,9 +91,15 @@ class Angel extends Routable {
 
   final List<Angel> _children = [];
   final Map<
-      String,
-      Tuple4<List, Map<String, dynamic>, ParseResult<RouteResult>,
-          MiddlewarePipeline>> handlerCache = HashMap();
+    String,
+    Tuple4<
+      List,
+      Map<String, dynamic>,
+      ParseResult<RouteResult>,
+      MiddlewarePipeline
+    >
+  >
+  handlerCache = HashMap();
 
   Router<RequestHandler>? _flattened;
   Angel? _parent;
@@ -167,13 +180,18 @@ class Angel extends Routable {
 
   @override
   Route<RequestHandler> addRoute(
-      String method, String path, RequestHandler handler,
-      {Iterable<RequestHandler> middleware = const []}) {
+    String method,
+    String path,
+    RequestHandler handler, {
+    Iterable<RequestHandler> middleware = const [],
+  }) {
     if (_flattened != null) {
       logger.warning(
-          'WARNING: You added a route ($method $path) to the router, after it had been optimized.');
+        'WARNING: You added a route ($method $path) to the router, after it had been optimized.',
+      );
       logger.warning(
-          'This route will be ignored, and no requests will ever reach it.');
+        'This route will be ignored, and no requests will ever reach it.',
+      );
     }
 
     return super.addRoute(method, path, handler, middleware: middleware);
@@ -181,12 +199,16 @@ class Angel extends Routable {
 
   @override
   SymlinkRoute<RequestHandler> mount(
-      String path, Router<RequestHandler> router) {
+    String path,
+    Router<RequestHandler> router,
+  ) {
     if (_flattened != null) {
       logger.warning(
-          'WARNING: You added mounted a child router ($path) on the router, after it had been optimized.');
+        'WARNING: You added mounted a child router ($path) on the router, after it had been optimized.',
+      );
       logger.warning(
-          'This route will be ignored, and no requests will ever reach it.');
+        'This route will be ignored, and no requests will ever reach it.',
+      );
     }
 
     if (router is Angel) {
@@ -233,31 +255,34 @@ class Angel extends Routable {
   }
 
   @override
-  void dumpTree(
-      {Function(String tree)? callback,
-      String header = 'Dumping route tree:',
-      String tab = '  ',
-      bool showMatchers = false}) {
+  void dumpTree({
+    Function(String tree)? callback,
+    String header = 'Dumping route tree:',
+    String tab = '  ',
+    bool showMatchers = false,
+  }) {
     if (environment.isProduction) {
       _flattened ??= flatten(this);
 
       _flattened!.dumpTree(
-          callback: callback,
-          header: header.isNotEmpty == true
-              ? header
-              : (environment.isProduction
+        callback: callback,
+        header: header.isNotEmpty == true
+            ? header
+            : (environment.isProduction
                   ? 'Dumping flattened route tree:'
                   : 'Dumping route tree:'),
-          tab: tab);
+        tab: tab,
+      );
     } else {
       super.dumpTree(
-          callback: callback,
-          header: header.isNotEmpty == true
-              ? header
-              : (environment.isProduction
+        callback: callback,
+        header: header.isNotEmpty == true
+            ? header
+            : (environment.isProduction
                   ? 'Dumping flattened route tree:'
                   : 'Dumping route tree:'),
-          tab: tab);
+        tab: tab,
+      );
     }
   }
 
@@ -285,7 +310,10 @@ class Angel extends Routable {
 
   /// Runs some [handler]. Returns `true` if request execution should continue.
   Future<bool> executeHandler(
-      handler, RequestContext req, ResponseContext res) {
+    handler,
+    RequestContext req,
+    ResponseContext res,
+  ) {
     return getHandlerResult(handler, req, res).then((result) {
       if (result == null) {
         return false;
@@ -328,13 +356,19 @@ class Angel extends Routable {
   /// Run a function after injecting from service container.
   /// If this function has been reflected before, then
   /// the execution will be faster, as the injection requirements were stored beforehand.
-  Future runContained(Function handler, RequestContext req, ResponseContext res,
-      [Container? container]) {
+  Future runContained(
+    Function handler,
+    RequestContext req,
+    ResponseContext res, [
+    Container? container,
+  ]) {
     container ??= Container(EmptyReflector());
     return Future.sync(() {
       if (_preContained.containsKey(handler)) {
         return handleContained(handler, _preContained[handler]!, container)(
-            req, res);
+          req,
+          res,
+        );
       }
 
       return runReflected(handler, req, res, container);
@@ -342,8 +376,12 @@ class Angel extends Routable {
   }
 
   /// Runs with DI, and *always* reflects. Prefer [runContained].
-  Future runReflected(Function handler, RequestContext req, ResponseContext res,
-      [Container? container]) {
+  Future runReflected(
+    Function handler,
+    RequestContext req,
+    ResponseContext res, [
+    Container? container,
+  ]) {
     container ??=
         req.container ?? res.app?.container ?? Container(EmptyReflector());
 
@@ -351,9 +389,10 @@ class Angel extends Routable {
       throw ArgumentError("No `reflector` passed");
     }
     var h = handleContained(
-        handler,
-        _preContained[handler] = preInject(handler, container.reflector),
-        container);
+      handler,
+      _preContained[handler] = preInject(handler, container.reflector),
+      container,
+    );
     return Future.sync(() => h(req, res));
     // return   closureMirror.apply(args).reflectee;
   }
@@ -382,7 +421,9 @@ class Angel extends Routable {
 
   @override
   HookedService<Id, Data, T> use<Id, Data, T extends Service<Id, Data>>(
-      String path, T service) {
+    String path,
+    T service,
+  ) {
     service.app = this;
     return super.use(path, service)..app = this;
   }
@@ -396,15 +437,16 @@ class Angel extends Routable {
       'For more, see the documentation:\n'
       'https://docs.angel-dart.dev/guides/dependency-injection#enabling-dart-mirrors-or-other-reflection';
 
-  Angel(
-      {Reflector reflector =
-          const ThrowingReflector(errorMessage: _reflectionErrorMessage),
-      this.environment = angelEnv,
-      Logger? logger,
-      this.allowMethodOverrides = true,
-      this.serializer,
-      this.viewGenerator})
-      : super(reflector) {
+  Angel({
+    Reflector reflector = const ThrowingReflector(
+      errorMessage: _reflectionErrorMessage,
+    ),
+    this.environment = angelEnv,
+    Logger? logger,
+    this.allowMethodOverrides = true,
+    this.serializer,
+    this.viewGenerator,
+  }) : super(reflector) {
     // Override default logger
     if (logger != null) {
       this.logger = logger;

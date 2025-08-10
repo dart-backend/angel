@@ -27,10 +27,7 @@ class QuotationMigration extends Migration {
 // **************************************************************************
 
 class QuotationQuery extends Query<Quotation, QuotationQueryWhere> {
-  QuotationQuery({
-    super.parent,
-    Set<String>? trampoline,
-  }) {
+  QuotationQuery({super.parent, Set<String>? trampoline}) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = QuotationQueryWhere(this);
@@ -55,16 +52,12 @@ class QuotationQuery extends Query<Quotation, QuotationQueryWhere> {
 
   @override
   List<String> get fields {
-    const localFields = [
-      'id',
-      'name',
-      'price',
-    ];
+    const localFields = ['id', 'name', 'price'];
     return _selectedFields.isEmpty
         ? localFields
         : localFields
-            .where((field) => _selectedFields.contains(field))
-            .toList();
+              .where((field) => _selectedFields.contains(field))
+              .toList();
   }
 
   QuotationQuery select(List<String> selectedFields) {
@@ -102,18 +95,9 @@ class QuotationQuery extends Query<Quotation, QuotationQueryWhere> {
 
 class QuotationQueryWhere extends QueryWhere {
   QuotationQueryWhere(QuotationQuery query)
-      : id = StringSqlExpressionBuilder(
-          query,
-          'id',
-        ),
-        name = StringSqlExpressionBuilder(
-          query,
-          'name',
-        ),
-        price = NumericSqlExpressionBuilder<double>(
-          query,
-          'price',
-        );
+    : id = StringSqlExpressionBuilder(query, 'id'),
+      name = StringSqlExpressionBuilder(query, 'name'),
+      price = NumericSqlExpressionBuilder<double>(query, 'price');
 
   final StringSqlExpressionBuilder id;
 
@@ -123,11 +107,7 @@ class QuotationQueryWhere extends QueryWhere {
 
   @override
   List<SqlExpressionBuilder> get expressionBuilders {
-    return [
-      id,
-      name,
-      price,
-    ];
+    return [id, name, price];
   }
 }
 
@@ -168,11 +148,7 @@ class QuotationQueryValues extends MapQueryValues {
 
 @generatedSerializable
 class Quotation implements QuotationEntity {
-  Quotation({
-    this.id,
-    this.name,
-    this.price,
-  });
+  Quotation({this.id, this.name, this.price});
 
   @override
   String? id;
@@ -183,13 +159,12 @@ class Quotation implements QuotationEntity {
   @override
   double? price;
 
-  Quotation copyWith({
-    String? id,
-    String? name,
-    double? price,
-  }) {
+  Quotation copyWith({String? id, String? name, double? price}) {
     return Quotation(
-        id: id ?? this.id, name: name ?? this.name, price: price ?? this.price);
+      id: id ?? this.id,
+      name: name ?? this.name,
+      price: price ?? this.price,
+    );
   }
 
   @override
@@ -202,11 +177,7 @@ class Quotation implements QuotationEntity {
 
   @override
   int get hashCode {
-    return hashObjects([
-      id,
-      name,
-      price,
-    ]);
+    return hashObjects([id, name, price]);
   }
 
   @override
@@ -250,9 +221,10 @@ class QuotationSerializer extends Codec<Quotation, Map> {
 
   static Quotation fromMap(Map map) {
     return Quotation(
-        id: map['id'] as String?,
-        name: map['name'] as String?,
-        price: map['price'] as double?);
+      id: map['id'] as String?,
+      name: map['name'] as String?,
+      price: map['price'] as double?,
+    );
   }
 
   static Map<String, dynamic> toMap(QuotationEntity? model) {
@@ -264,11 +236,7 @@ class QuotationSerializer extends Codec<Quotation, Map> {
 }
 
 abstract class QuotationFields {
-  static const List<String> allFields = <String>[
-    id,
-    name,
-    price,
-  ];
+  static const List<String> allFields = <String>[id, name, price];
 
   static const String id = 'id';
 

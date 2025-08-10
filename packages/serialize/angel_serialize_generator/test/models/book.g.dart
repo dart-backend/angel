@@ -65,15 +65,16 @@ class Book extends _Book {
     String? camelCaseString,
   }) {
     return Book(
-        id: id ?? this.id,
-        createdAt: createdAt ?? this.createdAt,
-        updatedAt: updatedAt ?? this.updatedAt,
-        author: author ?? this.author,
-        title: title ?? this.title,
-        description: description ?? this.description,
-        pageCount: pageCount ?? this.pageCount,
-        notModels: notModels ?? this.notModels,
-        camelCaseString: camelCaseString ?? this.camelCaseString);
+      id: id ?? this.id,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      author: author ?? this.author,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      pageCount: pageCount ?? this.pageCount,
+      notModels: notModels ?? this.notModels,
+      camelCaseString: camelCaseString ?? this.camelCaseString,
+    );
   }
 
   @override
@@ -86,8 +87,9 @@ class Book extends _Book {
         other.title == title &&
         other.description == description &&
         other.pageCount == pageCount &&
-        ListEquality<double>(DefaultEquality<double>())
-            .equals(other.notModels, notModels) &&
+        ListEquality<double>(
+          DefaultEquality<double>(),
+        ).equals(other.notModels, notModels) &&
         other.camelCaseString == camelCaseString;
   }
 
@@ -173,15 +175,16 @@ class Author extends _Author {
     String? obscured,
   }) {
     return Author(
-        id: id ?? this.id,
-        createdAt: createdAt ?? this.createdAt,
-        updatedAt: updatedAt ?? this.updatedAt,
-        name: name ?? this.name,
-        age: age ?? this.age,
-        books: books ?? this.books,
-        newestBook: newestBook ?? this.newestBook,
-        secret: secret ?? this.secret,
-        obscured: obscured ?? this.obscured);
+      id: id ?? this.id,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      name: name ?? this.name,
+      age: age ?? this.age,
+      books: books ?? this.books,
+      newestBook: newestBook ?? this.newestBook,
+      secret: secret ?? this.secret,
+      obscured: obscured ?? this.obscured,
+    );
   }
 
   @override
@@ -192,8 +195,9 @@ class Author extends _Author {
         other.updatedAt == updatedAt &&
         other.name == name &&
         other.age == age &&
-        ListEquality<_Book>(DefaultEquality<_Book>())
-            .equals(other.books, books) &&
+        ListEquality<_Book>(
+          DefaultEquality<_Book>(),
+        ).equals(other.books, books) &&
         other.newestBook == newestBook &&
         other.secret == secret &&
         other.obscured == obscured;
@@ -255,10 +259,11 @@ class Library extends _Library {
     Map<String, _Book>? collection,
   }) {
     return Library(
-        id: id ?? this.id,
-        createdAt: createdAt ?? this.createdAt,
-        updatedAt: updatedAt ?? this.updatedAt,
-        collection: collection ?? this.collection);
+      id: id ?? this.id,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      collection: collection ?? this.collection,
+    );
   }
 
   @override
@@ -268,19 +273,14 @@ class Library extends _Library {
         other.createdAt == createdAt &&
         other.updatedAt == updatedAt &&
         MapEquality<String, _Book>(
-                keys: DefaultEquality<String>(),
-                values: DefaultEquality<_Book>())
-            .equals(other.collection, collection);
+          keys: DefaultEquality<String>(),
+          values: DefaultEquality<_Book>(),
+        ).equals(other.collection, collection);
   }
 
   @override
   int get hashCode {
-    return hashObjects([
-      id,
-      createdAt,
-      updatedAt,
-      collection,
-    ]);
+    return hashObjects([id, createdAt, updatedAt, collection]);
   }
 
   @override
@@ -303,8 +303,8 @@ class Bookmark extends _Bookmark {
     List<int> history = const [],
     required this.page,
     this.comment,
-  })  : history = List.unmodifiable(history),
-        super(book);
+  }) : history = List.unmodifiable(history),
+       super(book);
 
   /// A unique identifier corresponding to this item.
   @override
@@ -336,13 +336,15 @@ class Bookmark extends _Bookmark {
     int? page,
     String? comment,
   }) {
-    return Bookmark(book,
-        id: id ?? this.id,
-        createdAt: createdAt ?? this.createdAt,
-        updatedAt: updatedAt ?? this.updatedAt,
-        history: history ?? this.history,
-        page: page ?? this.page,
-        comment: comment ?? this.comment);
+    return Bookmark(
+      book,
+      id: id ?? this.id,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      history: history ?? this.history,
+      page: page ?? this.page,
+      comment: comment ?? this.comment,
+    );
   }
 
   @override
@@ -351,22 +353,16 @@ class Bookmark extends _Bookmark {
         other.id == id &&
         other.createdAt == createdAt &&
         other.updatedAt == updatedAt &&
-        ListEquality<int>(DefaultEquality<int>())
-            .equals(other.history, history) &&
+        ListEquality<int>(
+          DefaultEquality<int>(),
+        ).equals(other.history, history) &&
         other.page == page &&
         other.comment == comment;
   }
 
   @override
   int get hashCode {
-    return hashObjects([
-      id,
-      createdAt,
-      updatedAt,
-      history,
-      page,
-      comment,
-    ]);
+    return hashObjects([id, createdAt, updatedAt, history, page, comment]);
   }
 
   @override
@@ -410,25 +406,26 @@ class BookSerializer extends Codec<Book, Map> {
 
   static Book fromMap(Map map) {
     return Book(
-        id: map['id'] as String?,
-        createdAt: map['created_at'] != null
-            ? (map['created_at'] is DateTime
+      id: map['id'] as String?,
+      createdAt: map['created_at'] != null
+          ? (map['created_at'] is DateTime
                 ? (map['created_at'] as DateTime)
                 : DateTime.parse(map['created_at'].toString()))
-            : null,
-        updatedAt: map['updated_at'] != null
-            ? (map['updated_at'] is DateTime
+          : null,
+      updatedAt: map['updated_at'] != null
+          ? (map['updated_at'] is DateTime
                 ? (map['updated_at'] as DateTime)
                 : DateTime.parse(map['updated_at'].toString()))
-            : null,
-        author: map['author'] as String?,
-        title: map['title'] as String?,
-        description: map['description'] as String?,
-        pageCount: map['page_count'] as int?,
-        notModels: map['not_models'] is Iterable
-            ? (map['not_models'] as Iterable).cast<double>().toList()
-            : [],
-        camelCaseString: map['camelCase'] as String?);
+          : null,
+      author: map['author'] as String?,
+      title: map['title'] as String?,
+      description: map['description'] as String?,
+      pageCount: map['page_count'] as int?,
+      notModels: map['not_models'] is Iterable
+          ? (map['not_models'] as Iterable).cast<double>().toList()
+          : [],
+      camelCaseString: map['camelCase'] as String?,
+    );
   }
 
   static Map<String, dynamic> toMap(_Book? model) {
@@ -444,7 +441,7 @@ class BookSerializer extends Codec<Book, Map> {
       'description': model.description,
       'page_count': model.pageCount,
       'not_models': model.notModels,
-      'camelCase': model.camelCaseString
+      'camelCase': model.camelCaseString,
     };
   }
 }
@@ -516,27 +513,31 @@ class AuthorSerializer extends Codec<Author, Map> {
     }
 
     return Author(
-        id: map['id'] as String?,
-        createdAt: map['created_at'] != null
-            ? (map['created_at'] is DateTime
+      id: map['id'] as String?,
+      createdAt: map['created_at'] != null
+          ? (map['created_at'] is DateTime
                 ? (map['created_at'] as DateTime)
                 : DateTime.parse(map['created_at'].toString()))
-            : null,
-        updatedAt: map['updated_at'] != null
-            ? (map['updated_at'] is DateTime
+          : null,
+      updatedAt: map['updated_at'] != null
+          ? (map['updated_at'] is DateTime
                 ? (map['updated_at'] as DateTime)
                 : DateTime.parse(map['updated_at'].toString()))
-            : null,
-        name: map['name'] as String?,
-        age: map['age'] as int?,
-        books: map['books'] is Iterable
-            ? List.unmodifiable(((map['books'] as Iterable).whereType<Map>())
-                .map(BookSerializer.fromMap))
-            : [],
-        newestBook: map['newest_book'] != null
-            ? BookSerializer.fromMap(map['newest_book'] as Map)
-            : null,
-        obscured: map['obscured'] as String?);
+          : null,
+      name: map['name'] as String?,
+      age: map['age'] as int?,
+      books: map['books'] is Iterable
+          ? List.unmodifiable(
+              ((map['books'] as Iterable).whereType<Map>()).map(
+                BookSerializer.fromMap,
+              ),
+            )
+          : [],
+      newestBook: map['newest_book'] != null
+          ? BookSerializer.fromMap(map['newest_book'] as Map)
+          : null,
+      obscured: map['obscured'] as String?,
+    );
   }
 
   static Map<String, dynamic> toMap(_Author? model) {
@@ -550,7 +551,7 @@ class AuthorSerializer extends Codec<Author, Map> {
       'name': model.name,
       'age': model.age,
       'books': model.books.map((m) => BookSerializer.toMap(m)).toList(),
-      'newest_book': BookSerializer.toMap(model.newestBook)
+      'newest_book': BookSerializer.toMap(model.newestBook),
     };
   }
 }
@@ -614,25 +615,28 @@ class LibrarySerializer extends Codec<Library, Map> {
 
   static Library fromMap(Map map) {
     return Library(
-        id: map['id'] as String?,
-        createdAt: map['created_at'] != null
-            ? (map['created_at'] is DateTime
+      id: map['id'] as String?,
+      createdAt: map['created_at'] != null
+          ? (map['created_at'] is DateTime
                 ? (map['created_at'] as DateTime)
                 : DateTime.parse(map['created_at'].toString()))
-            : null,
-        updatedAt: map['updated_at'] != null
-            ? (map['updated_at'] is DateTime
+          : null,
+      updatedAt: map['updated_at'] != null
+          ? (map['updated_at'] is DateTime
                 ? (map['updated_at'] as DateTime)
                 : DateTime.parse(map['updated_at'].toString()))
-            : null,
-        collection: map['collection'] is Map
-            ? Map.unmodifiable(
-                (map['collection'] as Map).keys.fold({}, (out, key) {
+          : null,
+      collection: map['collection'] is Map
+          ? Map.unmodifiable(
+              (map['collection'] as Map).keys.fold({}, (out, key) {
                 return out
                   ..[key] = BookSerializer.fromMap(
-                      ((map['collection'] as Map)[key]) as Map);
-              }))
-            : {});
+                    ((map['collection'] as Map)[key]) as Map,
+                  );
+              }),
+            )
+          : {},
+    );
   }
 
   static Map<String, dynamic> toMap(_Library? model) {
@@ -645,7 +649,7 @@ class LibrarySerializer extends Codec<Library, Map> {
       'updated_at': model.updatedAt?.toIso8601String(),
       'collection': model.collection.keys.fold({}, (map, key) {
         return map..[key] = BookSerializer.toMap(model.collection[key]);
-      })
+      }),
     };
   }
 }
@@ -668,31 +672,30 @@ abstract class LibraryFields {
 }
 
 abstract class BookmarkSerializer {
-  static Bookmark fromMap(
-    Map map,
-    _Book book,
-  ) {
+  static Bookmark fromMap(Map map, _Book book) {
     if (map['page'] == null) {
       throw FormatException("Missing required field 'page' on Bookmark.");
     }
 
-    return Bookmark(book,
-        id: map['id'] as String?,
-        createdAt: map['created_at'] != null
-            ? (map['created_at'] is DateTime
+    return Bookmark(
+      book,
+      id: map['id'] as String?,
+      createdAt: map['created_at'] != null
+          ? (map['created_at'] is DateTime
                 ? (map['created_at'] as DateTime)
                 : DateTime.parse(map['created_at'].toString()))
-            : null,
-        updatedAt: map['updated_at'] != null
-            ? (map['updated_at'] is DateTime
+          : null,
+      updatedAt: map['updated_at'] != null
+          ? (map['updated_at'] is DateTime
                 ? (map['updated_at'] as DateTime)
                 : DateTime.parse(map['updated_at'].toString()))
-            : null,
-        history: map['history'] is Iterable
-            ? (map['history'] as Iterable).cast<int>().toList()
-            : [],
-        page: map['page'] as int?,
-        comment: map['comment'] as String?);
+          : null,
+      history: map['history'] is Iterable
+          ? (map['history'] as Iterable).cast<int>().toList()
+          : [],
+      page: map['page'] as int?,
+      comment: map['comment'] as String?,
+    );
   }
 
   static Map<String, dynamic> toMap(_Bookmark? model) {
@@ -705,7 +708,7 @@ abstract class BookmarkSerializer {
       'updated_at': model.updatedAt?.toIso8601String(),
       'history': model.history,
       'page': model.page,
-      'comment': model.comment
+      'comment': model.comment,
     };
   }
 }

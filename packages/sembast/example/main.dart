@@ -15,7 +15,10 @@ void main() async {
 
   var http = AngelHttp(app);
   var server = await http.startServer('127.0.0.1', 3000);
-  var uri =
-      Uri(scheme: 'http', host: server.address.address, port: server.port);
+  var uri = Uri(
+    scheme: 'http',
+    host: server.address.address,
+    port: server.port,
+  );
   print('angel_sembast example listening at $uri');
 }

@@ -69,6 +69,7 @@ class MockHttpSession extends MapBase implements HttpSession {
   @override
   set onTimeout(void Function() callback) {
     print(
-        'An onTimeout callback was set on a MockHttpSession, which will do nothing.');
+      'An onTimeout callback was set on a MockHttpSession, which will do nothing.',
+    );
   }
 }

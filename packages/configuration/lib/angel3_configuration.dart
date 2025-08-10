@@ -9,13 +9,18 @@ import 'package:belatuk_merge_map/belatuk_merge_map.dart';
 import 'package:yaml/yaml.dart';
 
 Future<void> _loadYamlFile(
-    Map map, File yamlFile, DotEnv env, void Function(String msg) warn) async {
+  Map map,
+  File yamlFile,
+  DotEnv env,
+  void Function(String msg) warn,
+) async {
   if (await yamlFile.exists()) {
     var config = loadYaml(await yamlFile.readAsString());
 
     if (config is! Map) {
       warn(
-          'The configuration at "${yamlFile.absolute.path}" is not a Map. Refusing to load it.');
+        'The configuration at "${yamlFile.absolute.path}" is not a Map. Refusing to load it.',
+      );
       return;
     }
 
@@ -36,7 +41,8 @@ Future<void> _loadYamlFile(
           var includeFile = yamlFile.fileSystem.file(includeFilePath);
           if (!await includeFile.exists()) {
             warn(
-                'Included configuration file "$includeFilePath" does not exist.');
+              'Included configuration file "$includeFilePath" does not exist.',
+            );
           } else {
             await _loadYamlFile(out, includeFile, env, warn);
           }
@@ -48,13 +54,7 @@ Future<void> _loadYamlFile(
       out[key] = _applyEnv(configMap[key], env, warn);
     }
 
-    map.addAll(mergeMap(
-      [
-        map,
-        out,
-      ],
-      acceptNull: true,
-    ));
+    map.addAll(mergeMap([map, out], acceptNull: true));
   }
 }
 
@@ -66,7 +66,8 @@ Object? _applyEnv(var v, DotEnv env, void Function(String msg) warn) {
         return env[key];
       } else {
         warn(
-            'Your configuration calls for loading the value of "$key" from the system environment, but it is not defined. Defaulting to `null`.');
+          'Your configuration calls for loading the value of "$key" from the system environment, but it is not defined. Defaulting to `null`.',
+        );
         return null;
       }
     } else {
@@ -75,8 +76,10 @@ Object? _applyEnv(var v, DotEnv env, void Function(String msg) warn) {
   } else if (v is Iterable) {
     return v.map((x) => _applyEnv(x, env, warn)).toList();
   } else if (v is Map) {
-    return v.keys
-        .fold<Map>({}, (out, k) => out..[k] = _applyEnv(v[k], env, warn));
+    return v.keys.fold<Map>(
+      {},
+      (out, k) => out..[k] = _applyEnv(v[k], env, warn),
+    );
   } else {
     return v;
   }
@@ -85,11 +88,13 @@ Object? _applyEnv(var v, DotEnv env, void Function(String msg) warn) {
 /// Loads [configuration], and returns a [Map].
 ///
 /// You can override [onWarning]; otherwise, configuration errors will throw.
-Future<Map> loadStandaloneConfiguration(FileSystem fileSystem,
-    {String directoryPath = './config',
-    String? overrideEnvironmentName,
-    String? envPath,
-    void Function(String message)? onWarning}) async {
+Future<Map> loadStandaloneConfiguration(
+  FileSystem fileSystem, {
+  String directoryPath = './config',
+  String? overrideEnvironmentName,
+  String? envPath,
+  void Function(String message)? onWarning,
+}) async {
   var sourceDirectory = fileSystem.directory(directoryPath);
   var env = DotEnv(includePlatformEnvironment: true);
   var envFile = sourceDirectory.childFile(envPath ?? '.env');
@@ -124,10 +129,12 @@ Future<Map> loadStandaloneConfiguration(FileSystem fileSystem,
 /// load from a [overrideEnvironmentName].
 ///
 /// You can also specify a custom [envPath] to load system configuration from.
-AngelConfigurer configuration(FileSystem fileSystem,
-    {String directoryPath = './config',
-    String? overrideEnvironmentName,
-    String? envPath}) {
+AngelConfigurer configuration(
+  FileSystem fileSystem, {
+  String directoryPath = './config',
+  String? overrideEnvironmentName,
+  String? envPath,
+}) {
   return (Angel app) async {
     var config = await loadStandaloneConfiguration(
       fileSystem,
@@ -136,12 +143,8 @@ AngelConfigurer configuration(FileSystem fileSystem,
       envPath: envPath,
       onWarning: (msg) => app.logger.warning('WARNING: $msg'),
     );
-    app.configuration.addAll(mergeMap(
-      [
-        app.configuration,
-        config,
-      ],
-      acceptNull: true,
-    ));
+    app.configuration.addAll(
+      mergeMap([app.configuration, config], acceptNull: true),
+    );
   };
 }

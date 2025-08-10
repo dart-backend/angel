@@ -6,8 +6,9 @@ import 'package:file/local.dart';
 import 'package:logging/logging.dart';
 import 'package:test/test.dart';
 
-final Directory swaggerUiDistDir =
-    const LocalFileSystem().directory('test/node_modules/swagger-ui-dist');
+final Directory swaggerUiDistDir = const LocalFileSystem().directory(
+  'test/node_modules/swagger-ui-dist',
+);
 
 void main() async {
   late TestClient client;
@@ -27,9 +28,12 @@ void main() async {
     app.logger = Logger('angel')..onRecord.listen(print);
 
     app.fallback(
-      VirtualDirectory(app, const LocalFileSystem(),
-              source: swaggerUiDistDir, publicPath: 'swagger/')
-          .handleRequest,
+      VirtualDirectory(
+        app,
+        const LocalFileSystem(),
+        source: swaggerUiDistDir,
+        publicPath: 'swagger/',
+      ).handleRequest,
     );
 
     app.dumpTree();

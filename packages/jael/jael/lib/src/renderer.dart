@@ -8,8 +8,12 @@ import 'text/parser.dart';
 import 'text/scanner.dart';
 
 /// Parses a Jael document.
-Document? parseDocument(String text,
-    {sourceUrl, bool asDSX = false, void Function(JaelError error)? onError}) {
+Document? parseDocument(
+  String text, {
+  sourceUrl,
+  bool asDSX = false,
+  void Function(JaelError error)? onError,
+}) {
   var scanner = scan(text, sourceUrl: sourceUrl, asDSX: asDSX);
 
   //scanner.tokens.forEach(print);
@@ -55,13 +59,15 @@ class Renderer {
       ..indent();
 
     for (var error in errors) {
-      var type =
-          error.severity == JaelErrorSeverity.warning ? 'warning' : 'error';
+      var type = error.severity == JaelErrorSeverity.warning
+          ? 'warning'
+          : 'error';
       buf
         ..writeln('<li>')
         ..indent()
         ..writeln(
-            '<b>$type:</b> ${error.span.start.toolString}: ${error.message}')
+          '<b>$type:</b> ${error.span.start.toolString}: ${error.message}',
+        )
         ..writeln('<br>')
         ..writeln(
           '<span style="color: red;">${htmlEscape.convert(error.span.highlight(color: false)).replaceAll('\n', '<br>')}</span>',
@@ -81,17 +87,29 @@ class Renderer {
   ///
   /// If [strictResolution] is `false` (default: `true`), then undefined identifiers will return `null`
   /// instead of throwing.
-  void render(Document document, CodeBuffer buffer, SymbolTable scope,
-      {bool strictResolution = true}) {
+  void render(
+    Document document,
+    CodeBuffer buffer,
+    SymbolTable scope, {
+    bool strictResolution = true,
+  }) {
     scope.create('!strict!', value: strictResolution != false);
 
     if (document.doctype != null) buffer.writeln(document.doctype!.span.text);
     renderElement(
-        document.root, buffer, scope, document.doctype?.public == null);
+      document.root,
+      buffer,
+      scope,
+      document.doctype?.public == null,
+    );
   }
 
   void renderElement(
-      Element element, CodeBuffer buffer, SymbolTable scope, bool html5) {
+    Element element,
+    CodeBuffer buffer,
+    SymbolTable scope,
+    bool html5,
+  ) {
     var childScope = scope.createChild();
 
     if (element.attributes.any((a) => a.name == 'for-each')) {
@@ -110,8 +128,9 @@ class Renderer {
       registerCustomElement(element, buffer, childScope, html5);
       return;
     } else {
-      var customElementValue =
-          scope.resolve(customElementName(element.tagName.name))?.value;
+      var customElementValue = scope
+          .resolve(customElementName(element.tagName.name))
+          ?.value;
 
       if (customElementValue is Element) {
         renderCustomElement(element, buffer, childScope, html5);
@@ -166,8 +185,15 @@ class Renderer {
 
       for (var i = 0; i < element.children.length; i++) {
         var child = element.children.elementAt(i);
-        renderElementChild(element, child, buffer, childScope, html5, i,
-            element.children.length);
+        renderElementChild(
+          element,
+          child,
+          buffer,
+          childScope,
+          html5,
+          i,
+          element.children.length,
+        );
       }
 
       buffer.writeln();
@@ -177,34 +203,47 @@ class Renderer {
   }
 
   void renderForeach(
-      Element element, CodeBuffer buffer, SymbolTable scope, bool html5) {
+    Element element,
+    CodeBuffer buffer,
+    SymbolTable scope,
+    bool html5,
+  ) {
     var attribute = element.attributes.singleWhere((a) => a.name == 'for-each');
     if (attribute.value == null) return;
 
-    var asAttribute =
-        element.attributes.firstWhereOrNull((a) => a.name == 'as');
-    var indexAsAttribute =
-        element.attributes.firstWhereOrNull((a) => a.name == 'index-as');
+    var asAttribute = element.attributes.firstWhereOrNull(
+      (a) => a.name == 'as',
+    );
+    var indexAsAttribute = element.attributes.firstWhereOrNull(
+      (a) => a.name == 'index-as',
+    );
     var alias = asAttribute?.value?.compute(scope)?.toString() ?? 'item';
     var indexAs = indexAsAttribute?.value?.compute(scope)?.toString() ?? 'i';
     var otherAttributes = element.attributes.where(
-        (a) => a.name != 'for-each' && a.name != 'as' && a.name != 'index-as');
+      (a) => a.name != 'for-each' && a.name != 'as' && a.name != 'index-as',
+    );
     late Element strippedElement;
 
     if (element is SelfClosingElement) {
-      strippedElement = SelfClosingElement(element.lt, element.tagName,
-          otherAttributes, element.slash, element.gt);
+      strippedElement = SelfClosingElement(
+        element.lt,
+        element.tagName,
+        otherAttributes,
+        element.slash,
+        element.gt,
+      );
     } else if (element is RegularElement) {
       strippedElement = RegularElement(
-          element.lt,
-          element.tagName,
-          otherAttributes,
-          element.gt,
-          element.children,
-          element.lt2,
-          element.slash,
-          element.tagName2,
-          element.gt2);
+        element.lt,
+        element.tagName,
+        otherAttributes,
+        element.gt,
+        element.children,
+        element.lt2,
+        element.slash,
+        element.tagName2,
+        element.gt2,
+      );
     }
 
     var i = 0;
@@ -215,7 +254,11 @@ class Renderer {
   }
 
   void renderIf(
-      Element element, CodeBuffer buffer, SymbolTable scope, bool html5) {
+    Element element,
+    CodeBuffer buffer,
+    SymbolTable scope,
+    bool html5,
+  ) {
     var attribute = element.attributes.singleWhere((a) => a.name == 'if');
 
     var vv = attribute.value!.compute(scope);
@@ -232,48 +275,72 @@ class Renderer {
     late Element strippedElement;
 
     if (element is SelfClosingElement) {
-      strippedElement = SelfClosingElement(element.lt, element.tagName,
-          otherAttributes, element.slash, element.gt);
+      strippedElement = SelfClosingElement(
+        element.lt,
+        element.tagName,
+        otherAttributes,
+        element.slash,
+        element.gt,
+      );
     } else if (element is RegularElement) {
       strippedElement = RegularElement(
-          element.lt,
-          element.tagName,
-          otherAttributes,
-          element.gt,
-          element.children,
-          element.lt2,
-          element.slash,
-          element.tagName2,
-          element.gt2);
+        element.lt,
+        element.tagName,
+        otherAttributes,
+        element.gt,
+        element.children,
+        element.lt2,
+        element.slash,
+        element.tagName2,
+        element.gt2,
+      );
     }
 
     renderElement(strippedElement, buffer, scope, html5);
   }
 
   void renderDeclare(
-      Element element, CodeBuffer buffer, SymbolTable scope, bool html5) {
+    Element element,
+    CodeBuffer buffer,
+    SymbolTable scope,
+    bool html5,
+  ) {
     for (var attribute in element.attributes) {
-      scope.create(attribute.name,
-          value: attribute.value?.compute(scope), constant: true);
+      scope.create(
+        attribute.name,
+        value: attribute.value?.compute(scope),
+        constant: true,
+      );
     }
 
     for (var i = 0; i < element.children.length; i++) {
       var child = element.children.elementAt(i);
       renderElementChild(
-          element, child, buffer, scope, html5, i, element.children.length);
+        element,
+        child,
+        buffer,
+        scope,
+        html5,
+        i,
+        element.children.length,
+      );
     }
   }
 
   void renderSwitch(
-      Element element, CodeBuffer buffer, SymbolTable scope, bool html5) {
+    Element element,
+    CodeBuffer buffer,
+    SymbolTable scope,
+    bool html5,
+  ) {
     var value = element.attributes
         .firstWhereOrNull((a) => a.name == 'value')
         ?.value
         ?.compute(scope);
 
-    var cases = element.children
-        .whereType<Element>()
-        .where((c) => c.tagName.name == 'case');
+    var cases = element.children.whereType<Element>().where(
+      (c) => c.tagName.name == 'case',
+    );
 
     for (var child in cases) {
       var comparison = child.attributes
@@ -284,26 +351,50 @@ class Renderer {
         for (var i = 0; i < child.children.length; i++) {
           var c = child.children.elementAt(i);
           renderElementChild(
-              element, c, buffer, scope, html5, i, child.children.length);
+            element,
+            c,
+            buffer,
+            scope,
+            html5,
+            i,
+            child.children.length,
+          );
         }
 
         return;
       }
     }
 
-    var defaultCase = element.children.firstWhereOrNull(
-        (c) => c is Element && c.tagName.name == 'default') as Element?;
+    var defaultCase =
+        element.children.firstWhereOrNull(
+              (c) => c is Element && c.tagName.name == 'default',
+            )
+            as Element?;
     if (defaultCase != null) {
       for (var i = 0; i < defaultCase.children.length; i++) {
         var child = defaultCase.children.elementAt(i);
-        renderElementChild(element, child, buffer, scope, html5, i,
-            defaultCase.children.length);
+        renderElementChild(
+          element,
+          child,
+          buffer,
+          scope,
+          html5,
+          i,
+          defaultCase.children.length,
+        );
       }
     }
   }
 
-  void renderElementChild(Element parent, ElementChild child, CodeBuffer buffer,
-      SymbolTable scope, bool html5, int index, int total) {
+  void renderElementChild(
+    Element parent,
+    ElementChild child,
+    CodeBuffer buffer,
+    SymbolTable scope,
+    bool html5,
+    int index,
+    int total,
+  ) {
     if (child is Text && parent.tagName.name != 'textarea') {
       if (index == 0) {
         buffer.write(child.span.text.trimLeft());
@@ -331,19 +422,27 @@ class Renderer {
   static String customElementName(String name) => 'elements@$name';
 
   void registerCustomElement(
-      Element element, CodeBuffer buffer, SymbolTable scope, bool html5) {
+    Element element,
+    CodeBuffer buffer,
+    SymbolTable scope,
+    bool html5,
+  ) {
     if (element is! RegularElement) {
-      throw JaelError(JaelErrorSeverity.error,
-          'Custom elements cannot be self-closing.', element.span);
+      throw JaelError(
+        JaelErrorSeverity.error,
+        'Custom elements cannot be self-closing.',
+        element.span,
+      );
     }
 
     var name = element.getAttribute('name')?.value?.compute(scope)?.toString();
 
     if (name == null) {
       throw JaelError(
-          JaelErrorSeverity.error,
-          "Attribute 'name' is required when registering a custom element.",
-          element.tagName.span);
+        JaelErrorSeverity.error,
+        "Attribute 'name' is required when registering a custom element.",
+        element.tagName.span,
+      );
     }
 
     try {
@@ -351,23 +450,32 @@ class Renderer {
       p.create(customElementName(name), value: element, constant: true);
     } on StateError {
       throw JaelError(
-          JaelErrorSeverity.error,
-          "Cannot re-define element '$name' in this scope.",
-          element.getAttribute('name')!.span);
+        JaelErrorSeverity.error,
+        "Cannot re-define element '$name' in this scope.",
+        element.getAttribute('name')!.span,
+      );
     }
   }
 
   void renderCustomElement(
-      Element element, CodeBuffer buffer, SymbolTable scope, bool html5) {
-    var template = scope.resolve(customElementName(element.tagName.name))!.value
-        as RegularElement?;
+    Element element,
+    CodeBuffer buffer,
+    SymbolTable scope,
+    bool html5,
+  ) {
+    var template =
+        scope.resolve(customElementName(element.tagName.name))!.value
+            as RegularElement?;
     var renderAs = element.getAttribute('as')?.value?.compute(scope);
     var attrs = element.attributes.where((a) => a.name != 'as');
 
     for (var attribute in attrs) {
       if (attribute.name.startsWith('@')) {
-        scope.create(attribute.name.substring(1),
-            value: attribute.value?.compute(scope), constant: true);
+        scope.create(
+          attribute.name.substring(1),
+          value: attribute.value?.compute(scope),
+          constant: true,
+        );
       }
     }
 
@@ -375,22 +483,31 @@ class Renderer {
       for (var i = 0; i < template!.children.length; i++) {
         var child = template.children.elementAt(i);
         renderElementChild(
-            element, child, buffer, scope, html5, i, element.children.length);
+          element,
+          child,
+          buffer,
+          scope,
+          html5,
+          i,
+          element.children.length,
+        );
       }
     } else {
       var tagName = renderAs?.toString() ?? 'div';
 
       var syntheticElement = RegularElement(
-          template!.lt,
-          SyntheticIdentifier(tagName),
-          element.attributes
-              .where((a) => a.name != 'as' && !a.name.startsWith('@')),
-          template.gt,
-          template.children,
-          template.lt2,
-          template.slash,
-          SyntheticIdentifier(tagName),
-          template.gt2);
+        template!.lt,
+        SyntheticIdentifier(tagName),
+        element.attributes.where(
+          (a) => a.name != 'as' && !a.name.startsWith('@'),
+        ),
+        template.gt,
+        template.children,
+        template.lt2,
+        template.slash,
+        SyntheticIdentifier(tagName),
+        template.gt2,
+      );
 
       renderElement(syntheticElement, buffer, scope, html5);
     }

@@ -25,20 +25,25 @@ class _SingleSafeCtrl<T> implements SafeCtrl<T> {
   _InitCallback? _initializer;
 
   _SingleSafeCtrl() {
-    _stream = StreamController<T>(onListen: () {
-      _hasListener = true;
+    _stream = StreamController<T>(
+      onListen: () {
+        _hasListener = true;
 
-      if (!_initialized && _initializer != null) {
-        _initializer!();
-        _initialized = true;
-      }
-    }, onPause: () {
-      _hasListener = false;
-    }, onResume: () {
-      _hasListener = true;
-    }, onCancel: () {
-      _hasListener = false;
-    });
+        if (!_initialized && _initializer != null) {
+          _initializer!();
+          _initialized = true;
+        }
+      },
+      onPause: () {
+        _hasListener = false;
+      },
+      onResume: () {
+        _hasListener = true;
+      },
+      onCancel: () {
+        _hasListener = false;
+      },
+    );
   }
 
   @override
@@ -79,16 +84,19 @@ class _BroadcastSafeCtrl<T> implements SafeCtrl<T> {
   _InitCallback? _initializer;
 
   _BroadcastSafeCtrl() {
-    _stream = StreamController<T>.broadcast(onListen: () {
-      _listeners++;
+    _stream = StreamController<T>.broadcast(
+      onListen: () {
+        _listeners++;
 
-      if (!_initialized && _initializer != null) {
-        _initializer!();
-        _initialized = true;
-      }
-    }, onCancel: () {
-      _listeners--;
-    });
+        if (!_initialized && _initializer != null) {
+          _initializer!();
+          _initialized = true;
+        }
+      },
+      onCancel: () {
+        _listeners--;
+      },
+    );
   }
 
   @override

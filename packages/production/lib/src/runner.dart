@@ -27,10 +27,13 @@ class Runner {
   final Map<String, Object> removeResponseHeaders;
   final Map<String, Object> responseHeaders;
 
-  Runner(this.name, this.configureServer,
-      {this.reflector = const EmptyReflector(),
-      this.removeResponseHeaders = const {},
-      this.responseHeaders = const {}});
+  Runner(
+    this.name,
+    this.configureServer, {
+    this.reflector = const EmptyReflector(),
+    this.removeResponseHeaders = const {},
+    this.responseHeaders = const {},
+  });
 
   static const String _asciiArt = '''
 
@@ -41,8 +44,9 @@ class Runner {
  /_/   \\_\\_| \\_|\\____|_____|_____|____/                                                                                 
 ''';
 
-  static final DateFormat _defaultDateFormat =
-      DateFormat('yyyy-MM-dd HH:mm:ss');
+  static final DateFormat _defaultDateFormat = DateFormat(
+    'yyyy-MM-dd HH:mm:ss',
+  );
 
   /// LogRecord handler
   static void handleLogRecord(LogRecord? record, RunnerOptions options) {
@@ -53,22 +57,34 @@ class Runner {
 
     if (record.error == null) {
       //print(code.wrap(record.message));
-      print(code.wrap(
-          '$now ${record.level.name} [${record.loggerName}]: ${record.message}'));
+      print(
+        code.wrap(
+          '$now ${record.level.name} [${record.loggerName}]: ${record.message}',
+        ),
+      );
     }
 
     if (record.error != null) {
       var err = record.error;
       if (err is AngelHttpException && err.statusCode != 500) return;
       //print(code.wrap(record.message + '\n'));
-      print(code.wrap(
-          '$now ${record.level.name} [${record.loggerName}]: ${record.message} \n'));
-      print(code.wrap(
-          '$now ${record.level.name} [${record.loggerName}]: ${err.toString()}'));
+      print(
+        code.wrap(
+          '$now ${record.level.name} [${record.loggerName}]: ${record.message} \n',
+        ),
+      );
+      print(
+        code.wrap(
+          '$now ${record.level.name} [${record.loggerName}]: ${err.toString()}',
+        ),
+      );
 
       if (record.stackTrace != null) {
-        print(code.wrap(
-            '$now ${record.level.name} [${record.loggerName}]: ${record.stackTrace.toString()}'));
+        print(
+          code.wrap(
+            '$now ${record.level.name} [${record.loggerName}]: ${record.stackTrace.toString()}',
+          ),
+        );
       }
     }
   }
@@ -101,20 +117,31 @@ class Runner {
   }
 
   Future _spawnIsolate(
-      int id, Completer c, RunnerOptions options, SendPort pubSubSendPort) {
+    int id,
+    Completer c,
+    RunnerOptions options,
+    SendPort pubSubSendPort,
+  ) {
     var onLogRecord = ReceivePort();
     var onExit = ReceivePort();
     var onError = ReceivePort();
-    var runnerArgs = RunnerArgs(name, configureServer, options, reflector,
-        onLogRecord.sendPort, pubSubSendPort);
+    var runnerArgs = RunnerArgs(
+      name,
+      configureServer,
+      options,
+      reflector,
+      onLogRecord.sendPort,
+      pubSubSendPort,
+    );
     var argsWithId = RunnerArgsWithId(id, runnerArgs);
 
-    Isolate.spawn(isolateMain, argsWithId,
-            onExit: onExit.sendPort,
-            onError: onError.sendPort,
-            errorsAreFatal: true && false)
-        .then((isolate) {})
-        .catchError((e) {
+    Isolate.spawn(
+      isolateMain,
+      argsWithId,
+      onExit: onExit.sendPort,
+      onError: onError.sendPort,
+      errorsAreFatal: true && false,
+    ).then((isolate) {}).catchError((e) {
       c.completeError(e as Object);
       return null;
     });
@@ -126,24 +153,27 @@ class Runner {
         dynamic e = msg[0];
         var st = StackTrace.fromString(msg[1].toString());
         handleLogRecord(
-            LogRecord(
-                Level.SEVERE, 'Fatal error', runnerArgs.loggerName, e, st),
-            options);
+          LogRecord(Level.SEVERE, 'Fatal error', runnerArgs.loggerName, e, st),
+          options,
+        );
       } else {
         handleLogRecord(
-            LogRecord(Level.SEVERE, 'Fatal error', runnerArgs.loggerName, msg),
-            options);
+          LogRecord(Level.SEVERE, 'Fatal error', runnerArgs.loggerName, msg),
+          options,
+        );
       }
     });
 
     onExit.listen((_) {
       if (options.respawn) {
         handleLogRecord(
-            LogRecord(
-                Level.WARNING,
-                'Instance #$id at ${DateTime.now()} crashed. Respawning immediately...',
-                runnerArgs.loggerName),
-            options);
+          LogRecord(
+            Level.WARNING,
+            'Instance #$id at ${DateTime.now()} crashed. Respawning immediately...',
+            runnerArgs.loggerName,
+          ),
+          options,
+        );
         _spawnIsolate(id, c, options, pubSubSendPort);
       } else {
         c.complete();
@@ -175,8 +205,11 @@ class Runner {
         }
       }
 
-      print(darkGray.wrap(
-          '$_asciiArt\n\nA batteries-included, full-featured, full-stack framework in Dart.\n\nhttps://angel3-framework.web.app\n'));
+      print(
+        darkGray.wrap(
+          '$_asciiArt\n\nA batteries-included, full-featured, full-stack framework in Dart.\n\nhttps://angel3-framework.web.app\n',
+        ),
+      );
 
       if (argResults['help'] == true) {
         stdout
@@ -198,8 +231,12 @@ class Runner {
 
       server.start();
 
-      await Future.wait(List.generate(options.concurrency,
-          (id) => spawnIsolate(id, options, adapter.receivePort.sendPort)));
+      await Future.wait(
+        List.generate(
+          options.concurrency,
+          (id) => spawnIsolate(id, options, adapter.receivePort.sendPort),
+        ),
+      );
     } on ArgParserException catch (e) {
       stderr
         ..writeln(red.wrap(e.message))
@@ -222,11 +259,15 @@ class Runner {
     var args = argsWithId.args;
     hierarchicalLoggingEnabled = false;
 
-    var zone = Zone.current.fork(specification: ZoneSpecification(
-      print: (self, parent, zone, msg) {
-        args.loggingSendPort.send(LogRecord(Level.INFO, msg, args.loggerName));
-      },
-    ));
+    var zone = Zone.current.fork(
+      specification: ZoneSpecification(
+        print: (self, parent, zone, msg) {
+          args.loggingSendPort.send(
+            LogRecord(Level.INFO, msg, args.loggerName),
+          );
+        },
+      ),
+    );
 
     zone.run(() async {
       var client = IsolateClient('client${argsWithId.id}', args.pubSubSendPort);
@@ -250,31 +291,45 @@ class Runner {
         securityContext = SecurityContext();
         var certificateFile = args.options.certificateFile;
         if (certificateFile != null) {
-          securityContext.useCertificateChain(certificateFile,
-              password: args.options.certificatePassword);
+          securityContext.useCertificateChain(
+            certificateFile,
+            password: args.options.certificatePassword,
+          );
         }
 
         var keyFile = args.options.keyFile;
         if (keyFile != null) {
-          securityContext.usePrivateKey(keyFile,
-              password: args.options.keyPassword);
+          securityContext.usePrivateKey(
+            keyFile,
+            password: args.options.keyPassword,
+          );
         }
       }
 
       if (args.options.ssl) {
-        http = AngelHttp.custom(app, startSharedSecure(securityContext),
-            useZone: args.options.useZone);
+        http = AngelHttp.custom(
+          app,
+          startSharedSecure(securityContext),
+          useZone: args.options.useZone,
+        );
       } else {
-        http =
-            AngelHttp.custom(app, startShared, useZone: args.options.useZone);
+        http = AngelHttp.custom(
+          app,
+          startShared,
+          useZone: args.options.useZone,
+        );
       }
 
       Driver driver;
 
       if (args.options.http2) {
         securityContext.setAlpnProtocols(['h2'], true);
-        var http2 = AngelHttp2.custom(app, securityContext, startSharedHttp2,
-            useZone: args.options.useZone);
+        var http2 = AngelHttp2.custom(
+          app,
+          securityContext,
+          startSharedHttp2,
+          useZone: args.options.useZone,
+        );
         http2.onHttp1.listen(http.handleRequest);
         driver = http2;
       } else {
@@ -316,8 +371,14 @@ class RunnerArgs {
 
   final SendPort loggingSendPort, pubSubSendPort;
 
-  RunnerArgs(this.name, this.configureServer, this.options, this.reflector,
-      this.loggingSendPort, this.pubSubSendPort);
+  RunnerArgs(
+    this.name,
+    this.configureServer,
+    this.options,
+    this.reflector,
+    this.loggingSendPort,
+    this.pubSubSendPort,
+  );
 
   String get loggerName => name;
 }

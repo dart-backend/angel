@@ -44,17 +44,18 @@ class Column {
   /// Specifies the default values.
   final dynamic defaultValue;
 
-  const Column(
-      {this.isNullable = true,
-      this.length = 255,
-      this.precision = 17,
-      this.scale = 3,
-      this.name,
-      this.timezone,
-      this.type = ColumnType.varChar,
-      this.indexType = IndexType.none,
-      this.expression,
-      this.defaultValue});
+  const Column({
+    this.isNullable = true,
+    this.length = 255,
+    this.precision = 17,
+    this.scale = 3,
+    this.name,
+    this.timezone,
+    this.type = ColumnType.varChar,
+    this.indexType = IndexType.none,
+    this.expression,
+    this.defaultValue,
+  });
 
   /// Returns `true` if [expression] is not `null`.
   bool get hasExpression => expression != null;
@@ -62,7 +63,7 @@ class Column {
 
 class PrimaryKey extends Column {
   const PrimaryKey({ColumnType columnType = ColumnType.serial})
-      : super(type: columnType, indexType: IndexType.primaryKey);
+    : super(type: columnType, indexType: IndexType.primaryKey);
 }
 
 const Column primaryKey = PrimaryKey();
@@ -78,7 +79,7 @@ enum IndexType {
   primaryKey,
 
   /// A *unique* index.
-  unique
+  unique,
 }
 
 /// Maps to SQL data types.
@@ -92,11 +93,13 @@ class ColumnType {
   final bool hasScale;
   final bool hasTimezone;
 
-  const ColumnType(this.name,
-      {this.hasLength = false,
-      this.hasPrecision = false,
-      this.hasScale = false,
-      this.hasTimezone = false});
+  const ColumnType(
+    this.name, {
+    this.hasLength = false,
+    this.hasPrecision = false,
+    this.hasScale = false,
+    this.hasTimezone = false,
+  });
 
   static const ColumnType boolean = ColumnType('boolean');
 
@@ -110,10 +113,16 @@ class ColumnType {
   static const ColumnType smallInt = ColumnType('smallint');
   static const ColumnType tinyInt = ColumnType('tinyint');
   static const ColumnType bit = ColumnType('bit');
-  static const ColumnType decimal =
-      ColumnType('decimal', hasPrecision: true, hasScale: true);
-  static const ColumnType numeric =
-      ColumnType('numeric', hasPrecision: true, hasScale: true);
+  static const ColumnType decimal = ColumnType(
+    'decimal',
+    hasPrecision: true,
+    hasScale: true,
+  );
+  static const ColumnType numeric = ColumnType(
+    'numeric',
+    hasPrecision: true,
+    hasScale: true,
+  );
   static const ColumnType money = ColumnType('money');
   static const ColumnType smallMoney = ColumnType('smallmoney');
   static const ColumnType float = ColumnType('float');
@@ -126,8 +135,10 @@ class ColumnType {
   static const ColumnType date = ColumnType('date');
   static const ColumnType time = ColumnType('time');
   static const ColumnType timeStamp = ColumnType('timestamp');
-  static const ColumnType timeStampWithTimeZone =
-      ColumnType('timestamptz', hasTimezone: true);
+  static const ColumnType timeStampWithTimeZone = ColumnType(
+    'timestamptz',
+    hasTimezone: true,
+  );
 
   // Strings
   static const ColumnType char = ColumnType('char', hasLength: true);

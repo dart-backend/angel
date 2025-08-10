@@ -21,8 +21,9 @@ class HasMap implements _HasMap {
   bool operator ==(other) {
     return other is _HasMap &&
         MapEquality<dynamic, dynamic>(
-                keys: DefaultEquality(), values: DefaultEquality())
-            .equals(other.value, value);
+          keys: DefaultEquality(),
+          values: DefaultEquality(),
+        ).equals(other.value, value);
   }
 
   @override

@@ -46,18 +46,12 @@ class FruitMigration extends Migration {
 // **************************************************************************
 
 class TreeQuery extends Query<Tree, TreeQueryWhere> {
-  TreeQuery({
-    super.parent,
-    Set<String>? trampoline,
-  }) {
+  TreeQuery({super.parent, Set<String>? trampoline}) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = TreeQueryWhere(this);
     leftJoin(
-      _fruits = FruitQuery(
-        trampoline: trampoline,
-        parent: this,
-      ),
+      _fruits = FruitQuery(trampoline: trampoline, parent: this),
       'id',
       'tree_id',
       additionalFields: const [
@@ -92,17 +86,12 @@ class TreeQuery extends Query<Tree, TreeQueryWhere> {
 
   @override
   List<String> get fields {
-    const localFields = [
-      'id',
-      'created_at',
-      'updated_at',
-      'rings',
-    ];
+    const localFields = ['id', 'created_at', 'updated_at', 'rings'];
     return _selectedFields.isEmpty
         ? localFields
         : localFields
-            .where((field) => _selectedFields.contains(field))
-            .toList();
+              .where((field) => _selectedFields.contains(field))
+              .toList();
   }
 
   TreeQuery select(List<String> selectedFields) {
@@ -126,10 +115,12 @@ class TreeQuery extends Query<Tree, TreeQueryWhere> {
     }
     var model = Tree(
       id: fields.contains('id') ? row[0].toString() : null,
-      createdAt:
-          fields.contains('created_at') ? mapToNullableDateTime(row[1]) : null,
-      updatedAt:
-          fields.contains('updated_at') ? mapToNullableDateTime(row[2]) : null,
+      createdAt: fields.contains('created_at')
+          ? mapToNullableDateTime(row[1])
+          : null,
+      updatedAt: fields.contains('updated_at')
+          ? mapToNullableDateTime(row[2])
+          : null,
       rings: fields.contains('rings') ? mapToInt(row[3]) : null,
     );
     if (row.length > 4) {
@@ -162,7 +153,8 @@ class TreeQuery extends Query<Tree, TreeQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                fruits: List<FruitEntity>.from(l.fruits)..addAll(model.fruits));
+              fruits: List<FruitEntity>.from(l.fruits)..addAll(model.fruits),
+            );
         }
       });
     });
@@ -180,7 +172,8 @@ class TreeQuery extends Query<Tree, TreeQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                fruits: List<FruitEntity>.from(l.fruits)..addAll(model.fruits));
+              fruits: List<FruitEntity>.from(l.fruits)..addAll(model.fruits),
+            );
         }
       });
     });
@@ -198,7 +191,8 @@ class TreeQuery extends Query<Tree, TreeQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                fruits: List<FruitEntity>.from(l.fruits)..addAll(model.fruits));
+              fruits: List<FruitEntity>.from(l.fruits)..addAll(model.fruits),
+            );
         }
       });
     });
@@ -207,22 +201,10 @@ class TreeQuery extends Query<Tree, TreeQueryWhere> {
 
 class TreeQueryWhere extends QueryWhere {
   TreeQueryWhere(TreeQuery query)
-      : id = NumericSqlExpressionBuilder<int>(
-          query,
-          'id',
-        ),
-        createdAt = DateTimeSqlExpressionBuilder(
-          query,
-          'created_at',
-        ),
-        updatedAt = DateTimeSqlExpressionBuilder(
-          query,
-          'updated_at',
-        ),
-        rings = NumericSqlExpressionBuilder<int>(
-          query,
-          'rings',
-        );
+    : id = NumericSqlExpressionBuilder<int>(query, 'id'),
+      createdAt = DateTimeSqlExpressionBuilder(query, 'created_at'),
+      updatedAt = DateTimeSqlExpressionBuilder(query, 'updated_at'),
+      rings = NumericSqlExpressionBuilder<int>(query, 'rings');
 
   final NumericSqlExpressionBuilder<int> id;
 
@@ -234,12 +216,7 @@ class TreeQueryWhere extends QueryWhere {
 
   @override
   List<SqlExpressionBuilder> get expressionBuilders {
-    return [
-      id,
-      createdAt,
-      updatedAt,
-      rings,
-    ];
+    return [id, createdAt, updatedAt, rings];
   }
 }
 
@@ -281,10 +258,7 @@ class TreeQueryValues extends MapQueryValues {
 }
 
 class FruitQuery extends Query<Fruit, FruitQueryWhere> {
-  FruitQuery({
-    super.parent,
-    Set<String>? trampoline,
-  }) {
+  FruitQuery({super.parent, Set<String>? trampoline}) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = FruitQueryWhere(this);
@@ -319,8 +293,8 @@ class FruitQuery extends Query<Fruit, FruitQueryWhere> {
     return _selectedFields.isEmpty
         ? localFields
         : localFields
-            .where((field) => _selectedFields.contains(field))
-            .toList();
+              .where((field) => _selectedFields.contains(field))
+              .toList();
   }
 
   FruitQuery select(List<String> selectedFields) {
@@ -344,10 +318,12 @@ class FruitQuery extends Query<Fruit, FruitQueryWhere> {
     }
     var model = Fruit(
       id: fields.contains('id') ? row[0].toString() : null,
-      createdAt:
-          fields.contains('created_at') ? mapToNullableDateTime(row[1]) : null,
-      updatedAt:
-          fields.contains('updated_at') ? mapToNullableDateTime(row[2]) : null,
+      createdAt: fields.contains('created_at')
+          ? mapToNullableDateTime(row[1])
+          : null,
+      updatedAt: fields.contains('updated_at')
+          ? mapToNullableDateTime(row[2])
+          : null,
       treeId: fields.contains('tree_id') ? mapToInt(row[3]) : null,
       commonName: fields.contains('common_name') ? (row[4] as String?) : null,
     );
@@ -362,26 +338,11 @@ class FruitQuery extends Query<Fruit, FruitQueryWhere> {
 
 class FruitQueryWhere extends QueryWhere {
   FruitQueryWhere(FruitQuery query)
-      : id = NumericSqlExpressionBuilder<int>(
-          query,
-          'id',
-        ),
-        createdAt = DateTimeSqlExpressionBuilder(
-          query,
-          'created_at',
-        ),
-        updatedAt = DateTimeSqlExpressionBuilder(
-          query,
-          'updated_at',
-        ),
-        treeId = NumericSqlExpressionBuilder<int>(
-          query,
-          'tree_id',
-        ),
-        commonName = StringSqlExpressionBuilder(
-          query,
-          'common_name',
-        );
+    : id = NumericSqlExpressionBuilder<int>(query, 'id'),
+      createdAt = DateTimeSqlExpressionBuilder(query, 'created_at'),
+      updatedAt = DateTimeSqlExpressionBuilder(query, 'updated_at'),
+      treeId = NumericSqlExpressionBuilder<int>(query, 'tree_id'),
+      commonName = StringSqlExpressionBuilder(query, 'common_name');
 
   final NumericSqlExpressionBuilder<int> id;
 
@@ -395,13 +356,7 @@ class FruitQueryWhere extends QueryWhere {
 
   @override
   List<SqlExpressionBuilder> get expressionBuilders {
-    return [
-      id,
-      createdAt,
-      updatedAt,
-      treeId,
-      commonName,
-    ];
+    return [id, createdAt, updatedAt, treeId, commonName];
   }
 }
 
@@ -489,11 +444,12 @@ class Tree extends TreeEntity {
     List<FruitEntity>? fruits,
   }) {
     return Tree(
-        id: id ?? this.id,
-        createdAt: createdAt ?? this.createdAt,
-        updatedAt: updatedAt ?? this.updatedAt,
-        rings: rings ?? this.rings,
-        fruits: fruits ?? this.fruits);
+      id: id ?? this.id,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      rings: rings ?? this.rings,
+      fruits: fruits ?? this.fruits,
+    );
   }
 
   @override
@@ -503,19 +459,14 @@ class Tree extends TreeEntity {
         other.createdAt == createdAt &&
         other.updatedAt == updatedAt &&
         other.rings == rings &&
-        ListEquality<FruitEntity>(DefaultEquality<FruitEntity>())
-            .equals(other.fruits, fruits);
+        ListEquality<FruitEntity>(
+          DefaultEquality<FruitEntity>(),
+        ).equals(other.fruits, fruits);
   }
 
   @override
   int get hashCode {
-    return hashObjects([
-      id,
-      createdAt,
-      updatedAt,
-      rings,
-      fruits,
-    ]);
+    return hashObjects([id, createdAt, updatedAt, rings, fruits]);
   }
 
   @override
@@ -564,11 +515,12 @@ class Fruit extends FruitEntity {
     String? commonName,
   }) {
     return Fruit(
-        id: id ?? this.id,
-        createdAt: createdAt ?? this.createdAt,
-        updatedAt: updatedAt ?? this.updatedAt,
-        treeId: treeId ?? this.treeId,
-        commonName: commonName ?? this.commonName);
+      id: id ?? this.id,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      treeId: treeId ?? this.treeId,
+      commonName: commonName ?? this.commonName,
+    );
   }
 
   @override
@@ -583,13 +535,7 @@ class Fruit extends FruitEntity {
 
   @override
   int get hashCode {
-    return hashObjects([
-      id,
-      createdAt,
-      updatedAt,
-      treeId,
-      commonName,
-    ]);
+    return hashObjects([id, createdAt, updatedAt, treeId, commonName]);
   }
 
   @override
@@ -633,22 +579,26 @@ class TreeSerializer extends Codec<Tree, Map> {
 
   static Tree fromMap(Map map) {
     return Tree(
-        id: map['id'] as String?,
-        createdAt: map['created_at'] != null
-            ? (map['created_at'] is DateTime
+      id: map['id'] as String?,
+      createdAt: map['created_at'] != null
+          ? (map['created_at'] is DateTime
                 ? (map['created_at'] as DateTime)
                 : DateTime.parse(map['created_at'].toString()))
-            : null,
-        updatedAt: map['updated_at'] != null
-            ? (map['updated_at'] is DateTime
+          : null,
+      updatedAt: map['updated_at'] != null
+          ? (map['updated_at'] is DateTime
                 ? (map['updated_at'] as DateTime)
                 : DateTime.parse(map['updated_at'].toString()))
-            : null,
-        rings: map['rings'] as int?,
-        fruits: map['fruits'] is Iterable
-            ? List.unmodifiable(((map['fruits'] as Iterable).whereType<Map>())
-                .map(FruitSerializer.fromMap))
-            : []);
+          : null,
+      rings: map['rings'] as int?,
+      fruits: map['fruits'] is Iterable
+          ? List.unmodifiable(
+              ((map['fruits'] as Iterable).whereType<Map>()).map(
+                FruitSerializer.fromMap,
+              ),
+            )
+          : [],
+    );
   }
 
   static Map<String, dynamic> toMap(TreeEntity? model) {
@@ -660,7 +610,7 @@ class TreeSerializer extends Codec<Tree, Map> {
       'created_at': model.createdAt?.toIso8601String(),
       'updated_at': model.updatedAt?.toIso8601String(),
       'rings': model.rings,
-      'fruits': model.fruits.map((m) => FruitSerializer.toMap(m)).toList()
+      'fruits': model.fruits.map((m) => FruitSerializer.toMap(m)).toList(),
     };
   }
 }
@@ -712,19 +662,20 @@ class FruitSerializer extends Codec<Fruit, Map> {
 
   static Fruit fromMap(Map map) {
     return Fruit(
-        id: map['id'] as String?,
-        createdAt: map['created_at'] != null
-            ? (map['created_at'] is DateTime
+      id: map['id'] as String?,
+      createdAt: map['created_at'] != null
+          ? (map['created_at'] is DateTime
                 ? (map['created_at'] as DateTime)
                 : DateTime.parse(map['created_at'].toString()))
-            : null,
-        updatedAt: map['updated_at'] != null
-            ? (map['updated_at'] is DateTime
+          : null,
+      updatedAt: map['updated_at'] != null
+          ? (map['updated_at'] is DateTime
                 ? (map['updated_at'] as DateTime)
                 : DateTime.parse(map['updated_at'].toString()))
-            : null,
-        treeId: map['tree_id'] as int?,
-        commonName: map['common_name'] as String?);
+          : null,
+      treeId: map['tree_id'] as int?,
+      commonName: map['common_name'] as String?,
+    );
   }
 
   static Map<String, dynamic> toMap(FruitEntity? model) {
@@ -736,7 +687,7 @@ class FruitSerializer extends Codec<Fruit, Map> {
       'created_at': model.createdAt?.toIso8601String(),
       'updated_at': model.updatedAt?.toIso8601String(),
       'tree_id': model.treeId,
-      'common_name': model.commonName
+      'common_name': model.commonName,
     };
   }
 }

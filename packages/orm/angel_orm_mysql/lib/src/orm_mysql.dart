@@ -77,10 +77,13 @@ class MySqlExecutor extends QueryExecutor {
 
   @override
   Future<List<List>> query(
-      String tableName, String query, Map<String, dynamic> substitutionValues,
-      {String returningQuery = '',
-      String resultQuery = '',
-      List<String> returningFields = const []}) async {
+    String tableName,
+    String query,
+    Map<String, dynamic> substitutionValues, {
+    String returningQuery = '',
+    String resultQuery = '',
+    List<String> returningFields = const [],
+  }) async {
     // Change @id -> ?
     for (var name in substitutionValues.keys) {
       query = query.replaceAll('@$name', ':$name');
@@ -134,8 +137,10 @@ class MySqlExecutor extends QueryExecutor {
       deletedResults = await _connection
           .execute(selectQuery, substitutionValues)
           .then((results) {
-        return results.rows.map((r) => r.typedAssoc().values.toList()).toList();
-      });
+            return results.rows
+                .map((r) => r.typedAssoc().values.toList())
+                .toList();
+          });
     }
 
     //_logger.fine('Query 2: $query');
@@ -232,6 +237,7 @@ class MySqlExecutor extends QueryExecutor {
 
     return returnValue!;
   }
+
   /*
   @override
   Future<T> transaction<T>(FutureOr<T> Function(QueryExecutor) f) async {

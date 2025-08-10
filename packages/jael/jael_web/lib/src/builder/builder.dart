@@ -18,7 +18,10 @@ Builder jaelComponentBuilder(_) {
 class JaelComponentGenerator extends GeneratorForAnnotation<Jael> {
   @override
   Future<String> generateForAnnotatedElement(
-      Element element, ConstantReader annotation, BuildStep buildStep) async {
+    Element element,
+    ConstantReader annotation,
+    BuildStep buildStep,
+  ) async {
     if (element is ClassElement) {
       // Load the template
       String? templateString;
@@ -47,11 +50,18 @@ class JaelComponentGenerator extends GeneratorForAnnotation<Jael> {
 
       var fs = BuildFileSystem(buildStep, inputId.package);
       var errors = <jael.JaelError>[];
-      var doc = jael.parseDocument(templateString!,
-          sourceUrl: inputId.uri, asDSX: ann.asDsx!, onError: errors.add);
+      var doc = jael.parseDocument(
+        templateString!,
+        sourceUrl: inputId.uri,
+        asDSX: ann.asDsx!,
+        onError: errors.add,
+      );
       if (errors.isEmpty) {
-        doc = await jael.resolve(doc!, fs.file(inputId.uri).parent,
-            onError: errors.add);
+        doc = await jael.resolve(
+          doc!,
+          fs.file(inputId.uri).parent,
+          onError: errors.add,
+        );
       }
 
       if (errors.isNotEmpty) {
@@ -67,40 +77,50 @@ class JaelComponentGenerator extends GeneratorForAnnotation<Jael> {
 
         // Add fields corresponding to each of the class's fields.
         for (var field in element.fields) {
-          b.methods.add(Method((b) {
-            b
-              ..name = field.name
-              ..type = MethodType.getter
-              ..returns = convertTypeReference(field.type);
-          }));
+          b.methods.add(
+            Method((b) {
+              b
+                ..name = field.name
+                ..type = MethodType.getter
+                ..returns = convertTypeReference(field.type);
+            }),
+          );
         }
 
         // ... And methods too.
         for (var method in element.methods) {
-          b.methods.add(Method((b) {
-            b
-              ..name = method.name
-              ..returns = convertTypeReference(method.returnType)
-              ..requiredParameters.addAll(method.parameters
-                  .where(isRequiredParameter)
-                  .map(convertParameter))
-              ..optionalParameters.addAll(method.parameters
-                  .where(isOptionalParameter)
-                  .map(convertParameter));
-          }));
+          b.methods.add(
+            Method((b) {
+              b
+                ..name = method.name
+                ..returns = convertTypeReference(method.returnType)
+                ..requiredParameters.addAll(
+                  method.parameters
+                      .where(isRequiredParameter)
+                      .map(convertParameter),
+                )
+                ..optionalParameters.addAll(
+                  method.parameters
+                      .where(isOptionalParameter)
+                      .map(convertParameter),
+                );
+            }),
+          );
         }
 
         // Add a render() stub
-        b.methods.add(Method((b) {
-          b
-            ..name = 'render'
-            ..returns = refer('DomNode')
-            ..annotations.add(refer('override'))
-            ..body = Block((b) {
-              var result = compileElementChild(doc!.root);
-              b.addExpression(result.returned);
-            });
-        }));
+        b.methods.add(
+          Method((b) {
+            b
+              ..name = 'render'
+              ..returns = refer('DomNode')
+              ..annotations.add(refer('override'))
+              ..body = Block((b) {
+                var result = compileElementChild(doc!.root);
+                b.addExpression(result.returned);
+              });
+          }),
+        );
       });
 
       return clazz.accept(DartEmitter()).toString();

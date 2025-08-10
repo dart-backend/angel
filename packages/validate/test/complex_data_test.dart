@@ -7,16 +7,17 @@ void main() {
     'item_no': isString,
     'item_name': isString,
     'quantity': isInt,
-    'description?': isString
+    'description?': isString,
   });
 
-  final Validator orderSchema = Validator({
-    'id': [isInt, isPositive],
-    'order_no': isString,
-    'order_items*': [isList, everyElement(orderItemSchema)]
-  }, defaultValues: {
-    'order_items': []
-  });
+  final Validator orderSchema = Validator(
+    {
+      'id': [isInt, isPositive],
+      'order_no': isString,
+      'order_items*': [isList, everyElement(orderItemSchema)],
+    },
+    defaultValues: {'order_items': []},
+  );
 
   group('json data', () {
     test('validate with child element', () {
@@ -24,13 +25,13 @@ void main() {
         'id': 1,
         'item_no': 'a1',
         'item_name': 'Apple',
-        'quantity': 1
+        'quantity': 1,
       };
 
       var formData = {
         'id': 1,
         'order_no': '2',
-        'order_items': [orderItem]
+        'order_items': [orderItem],
       };
       var result = orderSchema.check(formData);
 
@@ -50,13 +51,13 @@ void main() {
         'item_no': 'a1',
         'item_name': 'Apple',
         'quantity': 1,
-        'description': 1
+        'description': 1,
       };
 
       var formData = {
         'id': 1,
         'order_no': '2',
-        'order_items': [orderItem]
+        'order_items': [orderItem],
       };
       var result = orderSchema.check(formData);
 

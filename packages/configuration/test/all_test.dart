@@ -15,10 +15,9 @@ Future<void> main() async {
   var app = Angel(logger: Logger('angel_configuration'));
   var fileSystem = const LocalFileSystem();
 
-  await app.configure(configuration(
-    fileSystem,
-    directoryPath: './test/config',
-  ));
+  await app.configure(
+    configuration(fileSystem, directoryPath: './test/config'),
+  );
 
   test('standalone', () async {
     var config = await loadStandaloneConfiguration(
@@ -37,7 +36,7 @@ Future<void> main() async {
       'merge': {'map': true, 'hello': 'world'},
       'set_via': 'default',
       'hello': 'world',
-      'foo': {'version': 'bar'}
+      'foo': {'version': 'bar'},
     });
   });
 
@@ -65,15 +64,25 @@ Future<void> main() async {
   });
 
   test('can override ANGEL_ENV', () async {
-    await app.configure(configuration(fileSystem,
-        directoryPath: './test/config', overrideEnvironmentName: 'override'));
+    await app.configure(
+      configuration(
+        fileSystem,
+        directoryPath: './test/config',
+        overrideEnvironmentName: 'override',
+      ),
+    );
     expect(app.configuration['hello'], equals('goodbye'));
     expect(app.configuration['foo']['version'], equals('baz'));
   });
 
   test('merges configuration', () async {
-    await app.configure(configuration(fileSystem,
-        directoryPath: './test/config', overrideEnvironmentName: 'override'));
+    await app.configure(
+      configuration(
+        fileSystem,
+        directoryPath: './test/config',
+        overrideEnvironmentName: 'override',
+      ),
+    );
     expect(app.configuration['merge'], {'map': true, 'hello': 'goodbye'});
   });
 }

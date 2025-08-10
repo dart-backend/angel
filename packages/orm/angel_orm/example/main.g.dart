@@ -8,7 +8,7 @@ part of 'main.dart';
 
 class EmployeeQuery extends Query<Employee, EmployeeQueryWhere> {
   EmployeeQuery({Query? parent, Set<String>? trampoline})
-      : super(parent: parent) {
+    : super(parent: parent) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = EmployeeQueryWhere(this);
@@ -37,7 +37,7 @@ class EmployeeQuery extends Query<Employee, EmployeeQueryWhere> {
       'updated_at',
       'first_name',
       'last_name',
-      'salary'
+      'salary',
     ];
   }
 
@@ -56,12 +56,13 @@ class EmployeeQuery extends Query<Employee, EmployeeQueryWhere> {
       return Optional.empty();
     }
     var model = Employee(
-        id: row[0].toString(),
-        createdAt: (row[1] as DateTime?),
-        updatedAt: (row[2] as DateTime?),
-        firstName: (row[3] as String?),
-        lastName: (row[4] as String?),
-        salary: double.tryParse(row[5].toString()));
+      id: row[0].toString(),
+      createdAt: (row[1] as DateTime?),
+      updatedAt: (row[2] as DateTime?),
+      firstName: (row[3] as String?),
+      lastName: (row[4] as String?),
+      salary: double.tryParse(row[5].toString()),
+    );
     return Optional.of(model);
   }
 
@@ -73,12 +74,12 @@ class EmployeeQuery extends Query<Employee, EmployeeQueryWhere> {
 
 class EmployeeQueryWhere extends QueryWhere {
   EmployeeQueryWhere(EmployeeQuery query)
-      : id = NumericSqlExpressionBuilder<int>(query, 'id'),
-        createdAt = DateTimeSqlExpressionBuilder(query, 'created_at'),
-        updatedAt = DateTimeSqlExpressionBuilder(query, 'updated_at'),
-        firstName = StringSqlExpressionBuilder(query, 'first_name'),
-        lastName = StringSqlExpressionBuilder(query, 'last_name'),
-        salary = NumericSqlExpressionBuilder<double>(query, 'salary');
+    : id = NumericSqlExpressionBuilder<int>(query, 'id'),
+      createdAt = DateTimeSqlExpressionBuilder(query, 'created_at'),
+      updatedAt = DateTimeSqlExpressionBuilder(query, 'updated_at'),
+      firstName = StringSqlExpressionBuilder(query, 'first_name'),
+      lastName = StringSqlExpressionBuilder(query, 'last_name'),
+      salary = NumericSqlExpressionBuilder<double>(query, 'salary');
 
   final NumericSqlExpressionBuilder<int> id;
 
@@ -149,13 +150,14 @@ class EmployeeQueryValues extends MapQueryValues {
 
 @generatedSerializable
 class Employee extends _Employee {
-  Employee(
-      {this.id,
-      this.createdAt,
-      this.updatedAt,
-      this.firstName,
-      this.lastName,
-      this.salary});
+  Employee({
+    this.id,
+    this.createdAt,
+    this.updatedAt,
+    this.firstName,
+    this.lastName,
+    this.salary,
+  });
 
   /// A unique identifier corresponding to this item.
   @override
@@ -178,20 +180,22 @@ class Employee extends _Employee {
   @override
   double? salary;
 
-  Employee copyWith(
-      {String? id,
-      DateTime? createdAt,
-      DateTime? updatedAt,
-      String? firstName,
-      String? lastName,
-      double? salary}) {
+  Employee copyWith({
+    String? id,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    String? firstName,
+    String? lastName,
+    double? salary,
+  }) {
     return Employee(
-        id: id ?? this.id,
-        createdAt: createdAt ?? this.createdAt,
-        updatedAt: updatedAt ?? this.updatedAt,
-        firstName: firstName ?? this.firstName,
-        lastName: lastName ?? this.lastName,
-        salary: salary ?? this.salary);
+      id: id ?? this.id,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      firstName: firstName ?? this.firstName,
+      lastName: lastName ?? this.lastName,
+      salary: salary ?? this.salary,
+    );
   }
 
   @override
@@ -249,20 +253,21 @@ class EmployeeSerializer extends Codec<Employee, Map> {
   EmployeeDecoder get decoder => const EmployeeDecoder();
   static Employee fromMap(Map map) {
     return Employee(
-        id: map['id'] as String?,
-        createdAt: map['created_at'] != null
-            ? (map['created_at'] is DateTime
+      id: map['id'] as String?,
+      createdAt: map['created_at'] != null
+          ? (map['created_at'] is DateTime
                 ? (map['created_at'] as DateTime)
                 : DateTime.parse(map['created_at'].toString()))
-            : null,
-        updatedAt: map['updated_at'] != null
-            ? (map['updated_at'] is DateTime
+          : null,
+      updatedAt: map['updated_at'] != null
+          ? (map['updated_at'] is DateTime
                 ? (map['updated_at'] as DateTime)
                 : DateTime.parse(map['updated_at'].toString()))
-            : null,
-        firstName: map['first_name'] as String?,
-        lastName: map['last_name'] as String?,
-        salary: map['salary'] as double?);
+          : null,
+      firstName: map['first_name'] as String?,
+      lastName: map['last_name'] as String?,
+      salary: map['salary'] as double?,
+    );
   }
 
   static Map<String, dynamic> toMap(_Employee? model) {
@@ -275,7 +280,7 @@ class EmployeeSerializer extends Codec<Employee, Map> {
       'updated_at': model.updatedAt?.toIso8601String(),
       'first_name': model.firstName,
       'last_name': model.lastName,
-      'salary': model.salary
+      'salary': model.salary,
     };
   }
 }
@@ -287,7 +292,7 @@ abstract class EmployeeFields {
     updatedAt,
     firstName,
     lastName,
-    salary
+    salary,
   ];
 
   static const String id = 'id';

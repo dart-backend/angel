@@ -54,7 +54,9 @@ class Controller {
 
   /// Applies the routes from this [Controller] to some [router].
   Future<String> applyRoutes(
-      Router<RequestHandler> router, Reflector reflector) async {
+    Router<RequestHandler> router,
+    Reflector reflector,
+  ) async {
     // Load global expose decl
     var classMirror = reflector.reflectClass(runtimeType)!;
     var exposeDecl = findExpose(reflector);
@@ -71,23 +73,29 @@ class Controller {
     // Pre-reflect methods
     var instanceMirror = reflector.reflectInstance(this);
     final handlers = <RequestHandler>[...exposeDecl.middleware, ...middleware];
-    final routeBuilder =
-        _routeBuilder(reflector, instanceMirror, routable, handlers);
+    final routeBuilder = _routeBuilder(
+      reflector,
+      instanceMirror,
+      routable,
+      handlers,
+    );
     await configureRoutes(routable);
     classMirror.declarations.forEach(routeBuilder);
 
     // Return the name.
-    var result =
-        exposeDecl.as?.isNotEmpty == true ? exposeDecl.as : typeMirror!.name;
+    var result = exposeDecl.as?.isNotEmpty == true
+        ? exposeDecl.as
+        : typeMirror!.name;
 
     return Future.value(result);
   }
 
   void Function(ReflectedDeclaration) _routeBuilder(
-      Reflector reflector,
-      ReflectedInstance? instanceMirror,
-      Routable routable,
-      Iterable<RequestHandler> handlers) {
+    Reflector reflector,
+    ReflectedInstance? instanceMirror,
+    Routable routable,
+    Iterable<RequestHandler> handlers,
+  ) {
     return (ReflectedDeclaration decl) {
       var methodName = decl.name;
 
@@ -97,9 +105,11 @@ class Controller {
           methodName != 'call' &&
           methodName != 'equals' &&
           methodName != '==') {
-        var exposeDecl = decl.function!.annotations
-            .map((m) => m.reflectee)
-            .firstWhere((r) => r is Expose, orElse: () => null) as Expose?;
+        var exposeDecl =
+            decl.function!.annotations
+                    .map((m) => m.reflectee)
+                    .firstWhere((r) => r is Expose, orElse: () => null)
+                as Expose?;
 
         if (exposeDecl == null) {
           // If this has a @noExpose, return null.
@@ -115,10 +125,11 @@ class Controller {
             instanceMirror!.getField(methodName).reflectee as Function?;
         var middleware = <RequestHandler>[
           ...handlers,
-          ...exposeDecl.middleware
+          ...exposeDecl.middleware,
         ];
-        var name =
-            exposeDecl.as?.isNotEmpty == true ? exposeDecl.as : methodName;
+        var name = exposeDecl.as?.isNotEmpty == true
+            ? exposeDecl.as
+            : methodName;
 
         // Check if normal
         var method = decl.function!;
@@ -126,12 +137,15 @@ class Controller {
             method.parameters[0].type.reflectedType == RequestContext &&
             method.parameters[1].type.reflectedType == ResponseContext) {
           // Create a regular route
-          routeMappings[name ?? ''] = routable
-              .addRoute(exposeDecl.method, exposeDecl.path,
-                  (RequestContext req, ResponseContext res) {
-            var result = reflectedMethod!(req, res);
-            return result is RequestHandler ? result(req, res) : result;
-          }, middleware: middleware);
+          routeMappings[name ?? ''] = routable.addRoute(
+            exposeDecl.method,
+            exposeDecl.path,
+            (RequestContext req, ResponseContext res) {
+              var result = reflectedMethod!(req, res);
+              return result is RequestHandler ? result(req, res) : result;
+            },
+            middleware: middleware,
+          );
           return;
         }
 
@@ -154,9 +168,9 @@ class Controller {
           var methodMatch = _methods.firstMatch(method.name);
           if (methodMatch != null) {
             var rest = method.name.replaceAll(_methods, '');
-            var restPath = ReCase(rest.isEmpty ? 'index' : rest)
-                .snakeCase
-                .replaceAll(_rgxMultipleUnderscores, '_');
+            var restPath = ReCase(
+              rest.isEmpty ? 'index' : rest,
+            ).snakeCase.replaceAll(_rgxMultipleUnderscores, '_');
             httpMethod = methodMatch[1]!.toUpperCase();
 
             if (['index', 'by_id'].contains(restPath)) {
@@ -172,9 +186,11 @@ class Controller {
             if (method.name == 'index') {
               parts.add('/');
             } else {
-              parts.add(ReCase(method.name)
-                  .snakeCase
-                  .replaceAll(_rgxMultipleUnderscores, '_'));
+              parts.add(
+                ReCase(
+                  method.name,
+                ).snakeCase.replaceAll(_rgxMultipleUnderscores, '_'),
+              );
             }
           }
 
@@ -200,8 +216,11 @@ class Controller {
         }
 
         routeMappings[name ?? ''] = routable.addRoute(
-            httpMethod, path, handleContained(reflectedMethod, injection),
-            middleware: middleware);
+          httpMethod,
+          path,
+          handleContained(reflectedMethod, injection),
+          middleware: middleware,
+        );
       }
     };
   }
@@ -225,18 +244,21 @@ class Controller {
   /// If [concreteOnly] is `false`, then if there is no actual
   /// [Expose], one will be automatically created.
   Expose? findExpose(Reflector reflector, {bool concreteOnly = false}) {
-    var existing = reflector
-        .reflectClass(runtimeType)!
-        .annotations
-        .map((m) => m.reflectee)
-        .firstWhere((r) => r is Expose, orElse: () => null) as Expose?;
+    var existing =
+        reflector
+                .reflectClass(runtimeType)!
+                .annotations
+                .map((m) => m.reflectee)
+                .firstWhere((r) => r is Expose, orElse: () => null)
+            as Expose?;
     return existing ??
         (concreteOnly
             ? null
-            : Expose(ReCase(runtimeType.toString())
-                .snakeCase
-                .replaceAll('_controller', '')
-                .replaceAll('_ctrl', '')
-                .replaceAll(_rgxMultipleUnderscores, '_')));
+            : Expose(
+                ReCase(runtimeType.toString()).snakeCase
+                    .replaceAll('_controller', '')
+                    .replaceAll('_ctrl', '')
+                    .replaceAll(_rgxMultipleUnderscores, '_'),
+              ));
   }
 }

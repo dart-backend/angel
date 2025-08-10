@@ -16,8 +16,11 @@ class MariaDbMigrationRunner implements MigrationRunner {
   final MySqlConnection connection;
   //bool _connected = false;
 
-  MariaDbMigrationRunner(this.connection,
-      {Iterable<Migration> migrations = const [], bool connected = true}) {
+  MariaDbMigrationRunner(
+    this.connection, {
+    Iterable<Migration> migrations = const [],
+    bool connected = true,
+  }) {
     if (migrations.isNotEmpty) migrations.forEach(addMigration);
     //_connected = connected;
   }
@@ -34,20 +37,23 @@ class MariaDbMigrationRunner implements MigrationRunner {
       migrations.putIfAbsent(path.replaceAll('\\', '\\\\'), () => migration);
     }
 
-    await connection.query('''
+    await connection
+        .query('''
     CREATE TABLE IF NOT EXISTS migrations (
       id integer NOT NULL AUTO_INCREMENT,
       batch integer,
       path varchar(500),
       PRIMARY KEY(id)
     );
-    ''').then((result) {
-      //print(result.affectedRows);
-      _log.fine('Check and create "migrations" table');
-    }).catchError((e) {
-      //print(e);
-      _log.severe('Failed to create "migrations" table.', e);
-    });
+    ''')
+        .then((result) {
+          //print(result.affectedRows);
+          _log.fine('Check and create "migrations" table');
+        })
+        .catchError((e) {
+          //print(e);
+          _log.severe('Failed to create "migrations" table.', e);
+        });
   }
 
   @override
@@ -89,7 +95,8 @@ class MariaDbMigrationRunner implements MigrationRunner {
         try {
           await schema.run(connection).then((_) async {
             var result = await connection.query(
-                "INSERT INTO migrations (batch, path) VALUES ($batch, '$k')");
+              "INSERT INTO migrations (batch, path) VALUES ($batch, '$k')",
+            );
 
             return result.affectedRows;
           });
@@ -118,8 +125,9 @@ class MariaDbMigrationRunner implements MigrationRunner {
       curBatch = firstBatch;
     }
 
-    result = await connection
-        .query('SELECT path from migrations WHERE batch = $curBatch;');
+    result = await connection.query(
+      'SELECT path from migrations WHERE batch = $curBatch;',
+    );
     var existing = <String>[];
     if (result.isNotEmpty) {
       var pathList = result.expand((x) => x).cast<String>().toList();
@@ -141,8 +149,9 @@ class MariaDbMigrationRunner implements MigrationRunner {
         migration.down(schema);
         _log.info('Removed "$k" from "migrations" table.');
         await schema.run(connection).then((_) {
-          return connection
-              .query('DELETE FROM migrations WHERE path = \'$k\';');
+          return connection.query(
+            'DELETE FROM migrations WHERE path = \'$k\';',
+          );
         });
       }
     } else {
@@ -153,8 +162,9 @@ class MariaDbMigrationRunner implements MigrationRunner {
   @override
   Future reset() async {
     await _init();
-    var r = await connection
-        .query('SELECT path from migrations ORDER BY batch DESC;');
+    var r = await connection.query(
+      'SELECT path from migrations ORDER BY batch DESC;',
+    );
     var existing = <String>[];
     if (r.isNotEmpty) {
       var pathList = r.expand((x) => x).cast<String>().toList();
@@ -172,8 +182,9 @@ class MariaDbMigrationRunner implements MigrationRunner {
         migration.down(schema);
         _log.info('Removed "$k" from "migrations" table.');
         await schema.run(connection).then((_) {
-          return connection
-              .query('DELETE FROM migrations WHERE path = \'$k\';');
+          return connection.query(
+            'DELETE FROM migrations WHERE path = \'$k\';',
+          );
         });
       }
     } else {

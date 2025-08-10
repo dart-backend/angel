@@ -11,11 +11,14 @@ void main() async {
   http = AngelHttp(app);
 
   app.fallback(
-    CachingVirtualDirectory(app, const LocalFileSystem(),
-        source: testDir,
-        maxAge: 350,
-        onlyInProduction: false,
-        indexFileNames: ['index.txt']).handleRequest,
+    CachingVirtualDirectory(
+      app,
+      const LocalFileSystem(),
+      source: testDir,
+      maxAge: 350,
+      onlyInProduction: false,
+      indexFileNames: ['index.txt'],
+    ).handleRequest,
   );
 
   app.get('*', (req, res) => 'Fallback');

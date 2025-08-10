@@ -8,17 +8,18 @@ class TypeScriptDefinitionBuilder implements Builder {
   @override
   Map<String, List<String>> get buildExtensions {
     return {
-      '.dart': ['.d.ts']
+      '.dart': ['.d.ts'],
     };
   }
 
   Future<String> compileToTypeScriptType(
-      BuildContext? ctx,
-      String fieldName,
-      DartType type,
-      List<String> refs,
-      List<CodeBuffer> ext,
-      BuildStep buildStep) async {
+    BuildContext? ctx,
+    String fieldName,
+    DartType type,
+    List<String> refs,
+    List<CodeBuffer> ext,
+    BuildStep buildStep,
+  ) async {
     var typeScriptType = 'any';
 
     var types = const {
@@ -37,15 +38,34 @@ class TypeScriptDefinitionBuilder implements Builder {
     if (type is InterfaceType) {
       if (isListOfModelType(type)) {
         var arg = await compileToTypeScriptType(
-            ctx, fieldName, type.typeArguments[0], refs, ext, buildStep);
+          ctx,
+          fieldName,
+          type.typeArguments[0],
+          refs,
+          ext,
+          buildStep,
+        );
         typeScriptType = '$arg[]';
-      } else if (const TypeChecker.fromRuntime(Map)
-              .isAssignableFromType(type) &&
+      } else if (const TypeChecker.fromRuntime(
+            Map,
+          ).isAssignableFromType(type) &&
           type.typeArguments.length == 2) {
         var key = await compileToTypeScriptType(
-            ctx, fieldName, type.typeArguments[0], refs, ext, buildStep);
+          ctx,
+          fieldName,
+          type.typeArguments[0],
+          refs,
+          ext,
+          buildStep,
+        );
         var value = await compileToTypeScriptType(
-            ctx, fieldName, type.typeArguments[1], refs, ext, buildStep);
+          ctx,
+          fieldName,
+          type.typeArguments[1],
+          refs,
+          ext,
+          buildStep,
+        );
         //var modelType = type.typeArguments[1];
         /*var innerCtx = await buildContext(
         modelType.element,
@@ -60,19 +80,28 @@ class TypeScriptDefinitionBuilder implements Builder {
         typeScriptType =
             ctx!.modelClassNameRecase.pascalCase + ReCase(fieldName).pascalCase;
 
-        ext.add(CodeBuffer()
-          ..writeln('interface $typeScriptType {')
-          ..indent()
-          ..writeln('[key: $key]: $value;')
-          ..outdent()
-          ..writeln('}'));
-      } else if (const TypeChecker.fromRuntime(List)
-          .isAssignableFromType(type)) {
+        ext.add(
+          CodeBuffer()
+            ..writeln('interface $typeScriptType {')
+            ..indent()
+            ..writeln('[key: $key]: $value;')
+            ..outdent()
+            ..writeln('}'),
+        );
+      } else if (const TypeChecker.fromRuntime(
+        List,
+      ).isAssignableFromType(type)) {
         if (type.typeArguments.isEmpty) {
           typeScriptType = 'any[]';
         } else {
           var arg = await compileToTypeScriptType(
-              ctx, fieldName, type.typeArguments[0], refs, ext, buildStep);
+            ctx,
+            fieldName,
+            type.typeArguments[0],
+            refs,
+            ext,
+            buildStep,
+          );
           typeScriptType = '$arg[]';
         }
       } else if (isModelClass(type)) {
@@ -84,8 +113,9 @@ class TypeScriptDefinitionBuilder implements Builder {
           String? ref;
 
           if (type.element.source.uri.scheme == 'asset') {
-            var id =
-                AssetId.resolve(Uri.parse(type.element.source.uri.toString()));
+            var id = AssetId.resolve(
+              Uri.parse(type.element.source.uri.toString()),
+            );
             if (id.package != buildStep.inputId.package) {
               ref = '/// <reference types="${id.package}" />';
             }
@@ -96,8 +126,10 @@ class TypeScriptDefinitionBuilder implements Builder {
             //     ? p.basename(targetPath)
             //     : p.relative(targetPath, from: sourcePath);
             var parent = p.dirname(relative);
-            var filename =
-                p.setExtension(p.basenameWithoutExtension(relative), '.d.ts');
+            var filename = p.setExtension(
+              p.basenameWithoutExtension(relative),
+              '.d.ts',
+            );
             relative = p.joinAll(p.split(parent).toList()..add(filename));
             ref = '/// <reference path="$relative" />';
           }
@@ -107,7 +139,8 @@ class TypeScriptDefinitionBuilder implements Builder {
         var ctx = await buildContext(
           type.element,
           ConstantReader(
-              serializableTypeChecker.firstAnnotationOf(type.element)),
+            serializableTypeChecker.firstAnnotationOf(type.element),
+          ),
           buildStep,
           buildStep.resolver,
           autoSnakeCaseNames,
@@ -157,12 +190,15 @@ class TypeScriptDefinitionBuilder implements Builder {
         continue;
       }
 
-      contexts.add(await buildContext(
+      contexts.add(
+        await buildContext(
           element.element as ClassElement,
           element.annotation,
           buildStep,
           buildStep.resolver,
-          autoSnakeCaseNames != false));
+          autoSnakeCaseNames != false,
+        ),
+      );
     }
 
     if (contexts.isEmpty) return;
@@ -193,8 +229,14 @@ class TypeScriptDefinitionBuilder implements Builder {
         if (ctx.excluded[field.name]?.canSerialize == false) continue;
 
         var alias = ctx.resolveFieldName(field.name);
-        var typeScriptType = await compileToTypeScriptType(ctx, field.name,
-            ctx.resolveSerializedFieldType(field.name), refs, ext, buildStep);
+        var typeScriptType = await compileToTypeScriptType(
+          ctx,
+          field.name,
+          ctx.resolveSerializedFieldType(field.name),
+          refs,
+          ext,
+          buildStep,
+        );
 
         // foo: string;
         if (!ctx.requiredFields.containsKey(field.name)) {

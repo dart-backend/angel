@@ -22,18 +22,21 @@ class PubSubSynchronizationChannel extends StreamChannelMixin<WebSocketEvent> {
           .catchError(_ctrl.local.sink.addError);
     });
 
-    client.subscribe(eventName).then((sub) {
-      _subscription = sub
-        ..listen((data) {
-          // Incoming is a Map
-          if (data is Map) {
-            var e = WebSocketEvent.fromJson(data);
-            _ctrl.local.sink.add(e);
-          }
-        }, onError: _ctrl.local.sink.addError);
-    }).catchError((error) {
-      _ctrl.local.sink.addError(error as Object);
-    });
+    client
+        .subscribe(eventName)
+        .then((sub) {
+          _subscription = sub
+            ..listen((data) {
+              // Incoming is a Map
+              if (data is Map) {
+                var e = WebSocketEvent.fromJson(data);
+                _ctrl.local.sink.add(e);
+              }
+            }, onError: _ctrl.local.sink.addError);
+        })
+        .catchError((error) {
+          _ctrl.local.sink.addError(error as Object);
+        });
   }
 
   @override

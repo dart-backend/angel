@@ -19,8 +19,9 @@ class RedisService extends Service<String, Map<String, dynamic>> {
   String? _applyPrefix(String? id) => prefix == null ? id : '$prefix:$id';
 
   @override
-  Future<List<Map<String, dynamic>>> index(
-      [Map<String, dynamic>? params]) async {
+  Future<List<Map<String, dynamic>>> index([
+    Map<String, dynamic>? params,
+  ]) async {
     var result =
         //await respCommands.client.writeArrayOfBulk(['KEYS', _applyPrefix('*')]);
         await respCommands.tier1.tier0.execute(['KEYS', _applyPrefix('*')]);
@@ -31,8 +32,10 @@ class RedisService extends Service<String, Map<String, dynamic>> {
 
     if (result.isArray) {
       return (result as List<RespType>)
-          .map<Map<String, dynamic>>((RespType s) =>
-              json.decode(s.payload as String) as Map<String, dynamic>)
+          .map<Map<String, dynamic>>(
+            (RespType s) =>
+                json.decode(s.payload as String) as Map<String, dynamic>,
+          )
           .toList();
     } else {
       // TODO: To be reviewed for handling none array objects
@@ -41,8 +44,10 @@ class RedisService extends Service<String, Map<String, dynamic>> {
   }
 
   @override
-  Future<Map<String, dynamic>> read(String id,
-      [Map<String, dynamic>? params]) async {
+  Future<Map<String, dynamic>> read(
+    String id, [
+    Map<String, dynamic>? params,
+  ]) async {
     var value = await respCommands.get(_applyPrefix(id)!);
 
     if (value == null) {
@@ -53,14 +58,18 @@ class RedisService extends Service<String, Map<String, dynamic>> {
   }
 
   @override
-  Future<Map<String, dynamic>> create(Map<String, dynamic>? data,
-      [Map<String, dynamic>? params]) async {
+  Future<Map<String, dynamic>> create(
+    Map<String, dynamic>? data, [
+    Map<String, dynamic>? params,
+  ]) async {
     String? id;
     if (data!['id'] != null) {
       id = data['id'] as String?;
     } else {
-      var keyVar = await respCommands.tier1.tier0
-          .execute(['INCR', _applyPrefix('angel_redis:id')]);
+      var keyVar = await respCommands.tier1.tier0.execute([
+        'INCR',
+        _applyPrefix('angel_redis:id'),
+      ]);
       id = keyVar.payload.toString();
       data = Map<String, dynamic>.from(data)..['id'] = id;
     }
@@ -70,24 +79,32 @@ class RedisService extends Service<String, Map<String, dynamic>> {
   }
 
   @override
-  Future<Map<String, dynamic>> modify(String id, Map<String, dynamic>? data,
-      [Map<String, dynamic>? params]) async {
+  Future<Map<String, dynamic>> modify(
+    String id,
+    Map<String, dynamic>? data, [
+    Map<String, dynamic>? params,
+  ]) async {
     var input = await (read(id));
     input.addAll(data!);
     return await update(id, input, params);
   }
 
   @override
-  Future<Map<String, dynamic>> update(String id, Map<String, dynamic>? data,
-      [Map<String, dynamic>? params]) async {
+  Future<Map<String, dynamic>> update(
+    String id,
+    Map<String, dynamic>? data, [
+    Map<String, dynamic>? params,
+  ]) async {
     data = Map<String, dynamic>.from(data!)..['id'] = id;
     await respCommands.set(_applyPrefix(id)!, json.encode(data));
     return data;
   }
 
   @override
-  Future<Map<String, dynamic>> remove(String id,
-      [Map<String, dynamic>? params]) async {
+  Future<Map<String, dynamic>> remove(
+    String id, [
+    Map<String, dynamic>? params,
+  ]) async {
     var client = respCommands.tier1.tier0;
     await client.execute(['MULTI']);
     await client.execute(['GET', _applyPrefix(id)]);

@@ -17,8 +17,10 @@ class MockAngel extends BaseAngelClient {
   MockAngel() : super(SpecClient(), 'http://localhost:3000');
 
   @override
-  Stream<String> authenticateViaPopup(String url,
-      {String eventName = 'token'}) {
+  Stream<String> authenticateViaPopup(
+    String url, {
+    String eventName = 'token',
+  }) {
     throw UnsupportedError('Nope');
   }
 }
@@ -30,26 +32,31 @@ class SpecClient extends http.BaseClient {
 
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) {
-    _spec = Spec(request, request.method, request.url.path, request.headers,
-        request.contentLength);
+    _spec = Spec(
+      request,
+      request.method,
+      request.url.path,
+      request.headers,
+      request.contentLength,
+    );
     dynamic data = {'text': 'Clean your room!', 'completed': true};
 
     if (request.url.path.contains('auth')) {
       data = {
         'token': '<jwt>',
-        'data': {'username': 'password'}
+        'data': {'username': 'password'},
       };
     } else if (request.url.path == '/api/todos' && request.method == 'GET') {
       data = [data];
     }
 
-    return Future<http.StreamedResponse>.value(http.StreamedResponse(
-      Stream<List<int>>.fromIterable([utf8.encode(json.encode(data))]),
-      200,
-      headers: {
-        'content-type': 'application/json',
-      },
-    ));
+    return Future<http.StreamedResponse>.value(
+      http.StreamedResponse(
+        Stream<List<int>>.fromIterable([utf8.encode(json.encode(data))]),
+        200,
+        headers: {'content-type': 'application/json'},
+      ),
+    );
   }
 }
 

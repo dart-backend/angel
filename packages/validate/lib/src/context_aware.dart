@@ -2,8 +2,9 @@ import 'package:matcher/matcher.dart';
 
 /// Returns a [ContextAwareMatcher] for the given predicate.
 ContextAwareMatcher predicateWithContext(
-    bool Function(Object, String, Map, Map) f,
-    [String description = 'satisfies function']) {
+  bool Function(Object, String, Map, Map) f, [
+  String description = 'satisfies function',
+]) {
   return _PredicateWithContext(f, description);
 }
 

@@ -65,12 +65,15 @@ void main() {
     test('rejects invalid redirectUri', () {
       expect(
         () => ExternalAuthOptions(
-            clientId: 'foo', clientSecret: 'bar', redirectUri: 24.5),
+          clientId: 'foo',
+          clientSecret: 'bar',
+          redirectUri: 24.5,
+        ),
         throwsArgumentError,
       );
     });
 
-/* Deprecated as clientId and clientSecret cannot be null
+    /* Deprecated as clientId and clientSecret cannot be null
     test('ensures id not null', () {
       expect(
         () => ExternalAuthOptions(
@@ -138,27 +141,21 @@ void main() {
 
   group('toJson()', () {
     test('obscures secret', () {
-      expect(
-        options.toJson(),
-        {
-          'client_id': 'foo',
-          'client_secret': '<redacted>',
-          'redirect_uri': 'http://example.com',
-          'scopes': [],
-        },
-      );
+      expect(options.toJson(), {
+        'client_id': 'foo',
+        'client_secret': '<redacted>',
+        'redirect_uri': 'http://example.com',
+        'scopes': [],
+      });
     });
 
     test('produces correct map', () {
-      expect(
-        options.toJson(obscureSecret: false),
-        {
-          'client_id': 'foo',
-          'client_secret': 'bar',
-          'redirect_uri': 'http://example.com',
-          'scopes': [],
-        },
-      );
+      expect(options.toJson(obscureSecret: false), {
+        'client_id': 'foo',
+        'client_secret': 'bar',
+        'redirect_uri': 'http://example.com',
+        'scopes': [],
+      });
     });
   });
 }

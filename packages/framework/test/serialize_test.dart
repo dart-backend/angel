@@ -17,8 +17,9 @@ void main() {
     app = Angel(reflector: MirrorsReflector())
       ..get('/foo', ioc(() => {'hello': 'world'}))
       ..get('/bar', (req, res) async {
-        await res.serialize({'hello': 'world'},
-            contentType: MediaType('text', 'html'));
+        await res.serialize({
+          'hello': 'world',
+        }, contentType: MediaType('text', 'html'));
       });
     client = http.Client();
 

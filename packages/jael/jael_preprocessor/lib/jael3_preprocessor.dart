@@ -6,23 +6,38 @@ import 'package:jael3/jael3.dart';
 import 'package:belatuk_symbol_table/belatuk_symbol_table.dart';
 
 /// Modifies a Jael document.
-typedef Patcher = FutureOr<Document>? Function(Document? document,
-    Directory currentDirectory, void Function(JaelError error)? onError);
+typedef Patcher =
+    FutureOr<Document>? Function(
+      Document? document,
+      Directory currentDirectory,
+      void Function(JaelError error)? onError,
+    );
 
 /// Expands all `block[name]` tags within the template, replacing them with the correct content.
 ///
 /// To apply additional patches to resolved documents, provide a set of [patch]
 /// functions.
-Future<Document?> resolve(Document document, Directory currentDirectory,
-    {void Function(JaelError error)? onError, Iterable<Patcher>? patch}) async {
+Future<Document?> resolve(
+  Document document,
+  Directory currentDirectory, {
+  void Function(JaelError error)? onError,
+  Iterable<Patcher>? patch,
+}) async {
   onError ?? (e) => throw e;
 
   // Resolve all includes...
-  var includesResolved =
-      await resolveIncludes(document, currentDirectory, onError);
+  var includesResolved = await resolveIncludes(
+    document,
+    currentDirectory,
+    onError,
+  );
 
   var patched = await applyInheritance(
-      includesResolved, currentDirectory, onError, patch);
+    includesResolved,
+    currentDirectory,
+    onError,
+    patch,
+  );
 
   if (patch?.isNotEmpty != true) {
     return patched;
@@ -37,31 +52,45 @@ Future<Document?> resolve(Document document, Directory currentDirectory,
 
 /// Folds any `extend` declarations.
 Future<Document?> applyInheritance(
-    Document? document,
-    Directory currentDirectory,
-    void Function(JaelError error)? onError,
-    Iterable<Patcher>? patch) async {
+  Document? document,
+  Directory currentDirectory,
+  void Function(JaelError error)? onError,
+  Iterable<Patcher>? patch,
+) async {
   if (document == null) {
     return null;
   }
   if (document.root.tagName.name != 'extend') {
     // This is not an inherited template, so just fill in the existing blocks.
-    var root =
-        replaceChildrenOfElement(document.root, {}, onError, true, false);
+    var root = replaceChildrenOfElement(
+      document.root,
+      {},
+      onError,
+      true,
+      false,
+    );
     return Document(document.doctype, root);
   }
 
   var element = document.root;
   var attr = element.attributes.firstWhereOrNull((a) => a.name == 'src');
   if (attr == null) {
-    onError!(JaelError(JaelErrorSeverity.warning,
-        'Missing "src" attribute in "extend" tag.', element.tagName.span));
+    onError!(
+      JaelError(
+        JaelErrorSeverity.warning,
+        'Missing "src" attribute in "extend" tag.',
+        element.tagName.span,
+      ),
+    );
     return null;
   } else if (attr.value is! StringLiteral) {
-    onError!(JaelError(
+    onError!(
+      JaelError(
         JaelErrorSeverity.warning,
         'The "src" attribute in an "extend" tag must be a string literal.',
-        element.tagName.span));
+        element.tagName.span,
+      ),
+    );
     return null;
   } else {
     // In theory, there exists:
@@ -81,23 +110,42 @@ Future<Document?> applyInheritance(
       return hierarchy!.rootDocument;
     }
 
-    Element setOut(Element out, Map<String?, RegularElement> definedOverrides,
-        bool anyTemplatesRemain) {
+    Element setOut(
+      Element out,
+      Map<String?, RegularElement> definedOverrides,
+      bool anyTemplatesRemain,
+    ) {
       var children = <ElementChild>[];
 
       // Replace matching blocks, etc.
       for (var c in out.children) {
         if (c is Element) {
-          children.addAll(replaceBlocks(
-              c, definedOverrides, onError, false, anyTemplatesRemain));
+          children.addAll(
+            replaceBlocks(
+              c,
+              definedOverrides,
+              onError,
+              false,
+              anyTemplatesRemain,
+            ),
+          );
         } else {
           children.add(c);
         }
       }
 
       var root = hierarchy!.root as RegularElement;
-      return RegularElement(root.lt, root.tagName, root.attributes, root.gt,
-          children, root.lt2, root.slash, root.tagName2, root.gt2);
+      return RegularElement(
+        root.lt,
+        root.tagName,
+        root.attributes,
+        root.gt,
+        children,
+        root.lt2,
+        root.slash,
+        root.tagName2,
+        root.gt2,
+      );
     }
 
     // Loop through all extends, filling in blocks.
@@ -105,8 +153,11 @@ Future<Document?> applyInheritance(
       var tmpl = hierarchy.extendsTemplates.removeFirst();
       var definedOverrides = findBlockOverrides(tmpl, onError);
       //if (definedOverrides == null) break;
-      out =
-          setOut(out!, definedOverrides, hierarchy.extendsTemplates.isNotEmpty);
+      out = setOut(
+        out!,
+        definedOverrides,
+        hierarchy.extendsTemplates.isNotEmpty,
+      );
     }
 
     // Lastly, just default-fill any remaining blocks.
@@ -119,15 +170,19 @@ Future<Document?> applyInheritance(
 }
 
 Map<String, RegularElement> findBlockOverrides(
-    Element tmpl, void Function(JaelError e)? onError) {
+  Element tmpl,
+  void Function(JaelError e)? onError,
+) {
   var out = <String, RegularElement>{};
 
   for (var child in tmpl.children) {
     if (child is RegularElement && child.tagName.name == 'block') {
-      var name = child.attributes
-          .firstWhereOrNull((a) => a.name == 'name')
-          ?.value
-          ?.compute(SymbolTable()) as String?;
+      var name =
+          child.attributes
+                  .firstWhereOrNull((a) => a.name == 'name')
+                  ?.value
+                  ?.compute(SymbolTable())
+              as String?;
       if (name != null && name.trim().isNotEmpty == true) {
         out[name] = child;
       }
@@ -138,8 +193,11 @@ Map<String, RegularElement> findBlockOverrides(
 }
 
 /// Resolves the document hierarchy at a given node in the tree.
-Future<DocumentHierarchy?> resolveHierarchy(Document document,
-    Directory currentDirectory, void Function(JaelError e)? onError) async {
+Future<DocumentHierarchy?> resolveHierarchy(
+  Document document,
+  Directory currentDirectory,
+  void Function(JaelError e)? onError,
+) async {
   var extendsTemplates = Queue<Element>();
   String? parent;
 
@@ -148,13 +206,17 @@ Future<DocumentHierarchy?> resolveHierarchy(Document document,
     try {
       extendsTemplates.addFirst(doc.root);
       var file = currentDirectory.childFile(parent!);
-      var parsed = parseDocument(await file.readAsString(),
-          sourceUrl: file.uri, onError: onError)!;
+      var parsed = parseDocument(
+        await file.readAsString(),
+        sourceUrl: file.uri,
+        onError: onError,
+      )!;
 
       doc = await resolveIncludes(parsed, currentDirectory, onError);
     } on FileSystemException catch (e) {
       onError!(
-          JaelError(JaelErrorSeverity.error, e.message, document.root.span));
+        JaelError(JaelErrorSeverity.error, e.message, document.root.span),
+      );
       return null;
     }
   }
@@ -175,20 +237,24 @@ class DocumentHierarchy {
 }
 
 Iterable<ElementChild> replaceBlocks(
-    Element element,
-    Map<String?, RegularElement> definedOverrides,
-    void Function(JaelError e)? onError,
-    bool replaceWithDefault,
-    bool anyTemplatesRemain) {
+  Element element,
+  Map<String?, RegularElement> definedOverrides,
+  void Function(JaelError e)? onError,
+  bool replaceWithDefault,
+  bool anyTemplatesRemain,
+) {
   if (element.tagName.name == 'block') {
     var nameAttr = element.attributes.firstWhereOrNull((a) => a.name == 'name');
     var name = nameAttr?.value?.compute(SymbolTable());
 
     if (name?.trim()?.isNotEmpty != true) {
-      onError!(JaelError(
+      onError!(
+        JaelError(
           JaelErrorSeverity.warning,
           'This <block> has no `name` attribute, and will be outputted as-is.',
-          element.span));
+          element.span,
+        ),
+      );
       return [element];
     } else if (!definedOverrides.containsKey(name)) {
       if (element is RegularElement) {
@@ -197,20 +263,26 @@ Iterable<ElementChild> replaceBlocks(
           // be resolved. Keep it alive.
 
           // We can't get rid of the block itself, but it may have blocks as children...
-          var inner = allChildrenOfRegularElement(element, definedOverrides,
-              onError, replaceWithDefault, anyTemplatesRemain);
+          var inner = allChildrenOfRegularElement(
+            element,
+            definedOverrides,
+            onError,
+            replaceWithDefault,
+            anyTemplatesRemain,
+          );
 
           return [
             RegularElement(
-                element.lt,
-                element.tagName,
-                element.attributes,
-                element.gt,
-                inner,
-                element.lt2,
-                element.slash,
-                element.tagName2,
-                element.gt2)
+              element.lt,
+              element.tagName,
+              element.attributes,
+              element.gt,
+              inner,
+              element.lt2,
+              element.slash,
+              element.tagName2,
+              element.gt2,
+            ),
           ];
         } else {
           // Otherwise, just return the default contents.
@@ -220,57 +292,96 @@ Iterable<ElementChild> replaceBlocks(
         return [element];
       }
     } else {
-      return allChildrenOfRegularElement(definedOverrides[name]!,
-          definedOverrides, onError, replaceWithDefault, anyTemplatesRemain);
+      return allChildrenOfRegularElement(
+        definedOverrides[name]!,
+        definedOverrides,
+        onError,
+        replaceWithDefault,
+        anyTemplatesRemain,
+      );
     }
   } else if (element is SelfClosingElement) {
     return [element];
   } else {
     return [
-      replaceChildrenOfRegularElement(element as RegularElement,
-          definedOverrides, onError, replaceWithDefault, anyTemplatesRemain)
+      replaceChildrenOfRegularElement(
+        element as RegularElement,
+        definedOverrides,
+        onError,
+        replaceWithDefault,
+        anyTemplatesRemain,
+      ),
     ];
   }
 }
 
 Element replaceChildrenOfElement(
-    Element el,
-    Map<String, RegularElement> definedOverrides,
-    void Function(JaelError e)? onError,
-    bool replaceWithDefault,
-    bool anyTemplatesRemain) {
+  Element el,
+  Map<String, RegularElement> definedOverrides,
+  void Function(JaelError e)? onError,
+  bool replaceWithDefault,
+  bool anyTemplatesRemain,
+) {
   if (el is RegularElement) {
     return replaceChildrenOfRegularElement(
-        el, definedOverrides, onError, replaceWithDefault, anyTemplatesRemain);
+      el,
+      definedOverrides,
+      onError,
+      replaceWithDefault,
+      anyTemplatesRemain,
+    );
   } else {
     return el;
   }
 }
 
 RegularElement replaceChildrenOfRegularElement(
-    RegularElement el,
-    Map<String?, RegularElement> definedOverrides,
-    void Function(JaelError e)? onError,
-    bool replaceWithDefault,
-    bool anyTemplatesRemain) {
+  RegularElement el,
+  Map<String?, RegularElement> definedOverrides,
+  void Function(JaelError e)? onError,
+  bool replaceWithDefault,
+  bool anyTemplatesRemain,
+) {
   var children = allChildrenOfRegularElement(
-      el, definedOverrides, onError, replaceWithDefault, anyTemplatesRemain);
-  return RegularElement(el.lt, el.tagName, el.attributes, el.gt, children,
-      el.lt2, el.slash, el.tagName2, el.gt2);
+    el,
+    definedOverrides,
+    onError,
+    replaceWithDefault,
+    anyTemplatesRemain,
+  );
+  return RegularElement(
+    el.lt,
+    el.tagName,
+    el.attributes,
+    el.gt,
+    children,
+    el.lt2,
+    el.slash,
+    el.tagName2,
+    el.gt2,
+  );
 }
 
 List<ElementChild> allChildrenOfRegularElement(
-    RegularElement el,
-    Map<String?, RegularElement> definedOverrides,
-    void Function(JaelError e)? onError,
-    bool replaceWithDefault,
-    bool anyTemplatesRemain) {
+  RegularElement el,
+  Map<String?, RegularElement> definedOverrides,
+  void Function(JaelError e)? onError,
+  bool replaceWithDefault,
+  bool anyTemplatesRemain,
+) {
   var children = <ElementChild>[];
 
   for (var c in el.children) {
     if (c is Element) {
-      children.addAll(replaceBlocks(c, definedOverrides, onError,
-          replaceWithDefault, anyTemplatesRemain));
+      children.addAll(
+        replaceBlocks(
+          c,
+          definedOverrides,
+          onError,
+          replaceWithDefault,
+          anyTemplatesRemain,
+        ),
+      );
     } else {
       children.add(c);
     }
@@ -286,14 +397,22 @@ String? getParent(Document document, void Function(JaelError error)? onError) {
 
   var attr = element.attributes.firstWhereOrNull((a) => a.name == 'src');
   if (attr == null) {
-    onError!(JaelError(JaelErrorSeverity.warning,
-        'Missing "src" attribute in "extend" tag.', element.tagName.span));
+    onError!(
+      JaelError(
+        JaelErrorSeverity.warning,
+        'Missing "src" attribute in "extend" tag.',
+        element.tagName.span,
+      ),
+    );
     return null;
   } else if (attr.value is! StringLiteral) {
-    onError!(JaelError(
+    onError!(
+      JaelError(
         JaelErrorSeverity.warning,
         'The "src" attribute in an "extend" tag must be a string literal.',
-        element.tagName.span));
+        element.tagName.span,
+      ),
+    );
     return null;
   } else {
     return (attr.value as StringLiteral).value;
@@ -301,13 +420,19 @@ String? getParent(Document document, void Function(JaelError error)? onError) {
 }
 
 /// Expands all `include[src]` tags within the template, and fills in the content of referenced files.
-Future<Document?> resolveIncludes(Document? document,
-    Directory currentDirectory, void Function(JaelError error)? onError) async {
+Future<Document?> resolveIncludes(
+  Document? document,
+  Directory currentDirectory,
+  void Function(JaelError error)? onError,
+) async {
   if (document == null) {
     return null;
   }
-  var rootElement =
-      await _expandIncludes(document.root, currentDirectory, onError);
+  var rootElement = await _expandIncludes(
+    document.root,
+    currentDirectory,
+    onError,
+  );
   if (rootElement != null) {
     return Document(document.doctype, rootElement);
   } else {
@@ -315,8 +440,11 @@ Future<Document?> resolveIncludes(Document? document,
   }
 }
 
-Future<Element?> _expandIncludes(Element element, Directory currentDirectory,
-    void Function(JaelError error)? onError) async {
+Future<Element?> _expandIncludes(
+  Element element,
+  Directory currentDirectory,
+  void Function(JaelError error)? onError,
+) async {
   if (element.tagName.name != 'include') {
     if (element is SelfClosingElement) {
       return element;
@@ -325,8 +453,11 @@ Future<Element?> _expandIncludes(Element element, Directory currentDirectory,
 
       for (var child in element.children) {
         if (child is Element) {
-          var includeElement =
-              await _expandIncludes(child, currentDirectory, onError);
+          var includeElement = await _expandIncludes(
+            child,
+            currentDirectory,
+            onError,
+          );
           if (includeElement != null) {
             expanded.add(includeElement);
           }
@@ -336,41 +467,54 @@ Future<Element?> _expandIncludes(Element element, Directory currentDirectory,
       }
 
       return RegularElement(
-          element.lt,
-          element.tagName,
-          element.attributes,
-          element.gt,
-          expanded,
-          element.lt2,
-          element.slash,
-          element.tagName2,
-          element.gt2);
+        element.lt,
+        element.tagName,
+        element.attributes,
+        element.gt,
+        expanded,
+        element.lt2,
+        element.slash,
+        element.tagName2,
+        element.gt2,
+      );
     } else {
       throw UnsupportedError(
-          'Unsupported element type: ${element.runtimeType}');
+        'Unsupported element type: ${element.runtimeType}',
+      );
     }
   }
 
   var attr = element.attributes.firstWhereOrNull((a) => a.name == 'src');
   if (attr == null) {
-    onError!(JaelError(JaelErrorSeverity.warning,
-        'Missing "src" attribute in "include" tag.', element.tagName.span));
+    onError!(
+      JaelError(
+        JaelErrorSeverity.warning,
+        'Missing "src" attribute in "include" tag.',
+        element.tagName.span,
+      ),
+    );
     return null;
   } else if (attr.value is! StringLiteral) {
-    onError!(JaelError(
+    onError!(
+      JaelError(
         JaelErrorSeverity.warning,
         'The "src" attribute in an "include" tag must be a string literal.',
-        element.tagName.span));
+        element.tagName.span,
+      ),
+    );
     return null;
   } else {
     var src = (attr.value as StringLiteral).value;
-    var file =
-        currentDirectory.fileSystem.file(currentDirectory.uri.resolve(src));
+    var file = currentDirectory.fileSystem.file(
+      currentDirectory.uri.resolve(src),
+    );
     var contents = await file.readAsString();
     var doc = parseDocument(contents, sourceUrl: file.uri, onError: onError)!;
     var processed = await (resolve(
-        doc, currentDirectory.fileSystem.directory(file.dirname),
-        onError: onError));
+      doc,
+      currentDirectory.fileSystem.directory(file.dirname),
+      onError: onError,
+    ));
     if (processed == null) {
       return null;
     }

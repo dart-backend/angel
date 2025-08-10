@@ -31,7 +31,7 @@ abstract class Angel extends http.BaseClient {
   final Uri baseUrl;
 
   Angel(baseUrl)
-      : baseUrl = baseUrl is Uri ? baseUrl : Uri.parse(baseUrl.toString());
+    : baseUrl = baseUrl is Uri ? baseUrl : Uri.parse(baseUrl.toString());
 
   /// Fired whenever a WebSocket is successfully authenticated.
   Stream<AngelAuthResult> get onAuthenticated;
@@ -43,16 +43,22 @@ abstract class Angel extends http.BaseClient {
   /// The [type] is appended to the [authEndpoint], ex. `local` becomes `/auth/local`.
   ///
   /// The given [credentials] are sent to server as-is; the request body is sent as JSON.
-  Future<AngelAuthResult> authenticate(
-      {required String type, credentials, String authEndpoint = '/auth'});
+  Future<AngelAuthResult> authenticate({
+    required String type,
+    credentials,
+    String authEndpoint = '/auth',
+  });
 
   /// Shorthand for authenticating via a JWT string.
-  Future<AngelAuthResult> reviveJwt(String token,
-      {String authEndpoint = '/auth'}) {
+  Future<AngelAuthResult> reviveJwt(
+    String token, {
+    String authEndpoint = '/auth',
+  }) {
     return authenticate(
-        type: 'token',
-        credentials: {'token': token},
-        authEndpoint: authEndpoint);
+      type: 'token',
+      credentials: {'token': token},
+      authEndpoint: authEndpoint,
+    );
   }
 
   /// Opens the [url] in a new window, and  returns a [Stream] that will fire a JWT on successful authentication.
@@ -79,8 +85,10 @@ abstract class Angel extends http.BaseClient {
   ///
   /// You can pass a custom [deserializer], which is typically necessary in cases where
   /// `dart:mirrors` does not exist.
-  Service<Id, Data> service<Id, Data>(String path,
-      {AngelDeserializer<Data>? deserializer});
+  Service<Id, Data> service<Id, Data>(
+    String path, {
+    AngelDeserializer<Data>? deserializer,
+  });
 
   //@override
   //Future<http.Response> delete(url, {Map<String, String> headers});
@@ -92,16 +100,28 @@ abstract class Angel extends http.BaseClient {
   Future<http.Response> head(url, {Map<String, String>? headers});
 
   @override
-  Future<http.Response> patch(url,
-      {body, Map<String, String>? headers, Encoding? encoding});
+  Future<http.Response> patch(
+    url, {
+    body,
+    Map<String, String>? headers,
+    Encoding? encoding,
+  });
 
   @override
-  Future<http.Response> post(url,
-      {body, Map<String, String>? headers, Encoding? encoding});
+  Future<http.Response> post(
+    url, {
+    body,
+    Map<String, String>? headers,
+    Encoding? encoding,
+  });
 
   @override
-  Future<http.Response> put(url,
-      {body, Map<String, String>? headers, Encoding? encoding});
+  Future<http.Response> put(
+    url, {
+    body,
+    Map<String, String>? headers,
+    Encoding? encoding,
+  });
 }
 
 /// Represents the result of authentication with an Angel server.
@@ -131,10 +151,12 @@ class AngelAuthResult {
 
     if (result.token == null) {
       throw FormatException(
-          'The required "token" field was not present in the given data.');
+        'The required "token" field was not present in the given data.',
+      );
     } else if (data!['data'] is! Map) {
       throw FormatException(
-          'The required "data" field in the given data was not a map; instead, it was ${data['data']}.');
+        'The required "data" field in the given data was not a map; instead, it was ${data['data']}.',
+      );
     }
 
     return result;
@@ -283,29 +305,34 @@ class ServiceList<Id, Data> extends DelegatingList<Data> {
   final List<StreamSubscription> _subs = [];
 
   ServiceList(this.service, {this.idField = 'id', Equality<Data>? equality})
-      : super([]) {
+    : super([]) {
     _equality = equality;
     _equality ??= EqualityBy<Data, Id?>((map) {
       if (map is Map) {
         return map[idField] as Id?;
       } else {
         throw UnsupportedError(
-            'ServiceList only knows how to find the id from a Map object. Provide a custom `Equality` in your call to the constructor.');
+          'ServiceList only knows how to find the id from a Map object. Provide a custom `Equality` in your call to the constructor.',
+        );
       }
     });
     // Index
-    _subs.add(service.onIndexed.where(_notNull).listen((data) {
-      this
-        ..clear()
-        ..addAll(data);
-      _onChange.add(this);
-    }));
+    _subs.add(
+      service.onIndexed.where(_notNull).listen((data) {
+        this
+          ..clear()
+          ..addAll(data);
+        _onChange.add(this);
+      }),
+    );
 
     // Created
-    _subs.add(service.onCreated.where(_notNull).listen((item) {
-      add(item);
-      _onChange.add(this);
-    }));
+    _subs.add(
+      service.onCreated.where(_notNull).listen((item) {
+        add(item);
+        _onChange.add(this);
+      }),
+    );
 
     // Modified/Updated
     void handleModified(Data item) {
@@ -330,10 +357,12 @@ class ServiceList<Id, Data> extends DelegatingList<Data> {
     ]);
 
     // Removed
-    _subs.add(service.onRemoved.where(_notNull).listen((item) {
-      removeWhere((x) => _equality!.equals(item, x));
-      _onChange.add(this);
-    }));
+    _subs.add(
+      service.onRemoved.where(_notNull).listen((item) {
+        removeWhere((x) => _equality!.equals(item, x));
+        _onChange.add(this);
+      }),
+    );
   }
 
   static bool _notNull(x) => x != null;

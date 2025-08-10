@@ -11,9 +11,9 @@ class Route<T> {
   Parser<RouteResult>? _parser;
 
   Route(this.path, {required this.method, required this.handlers})
-      : _routeDefinition = RouteGrammar.routeDefinition
-            .parse(SpanScanner(path.replaceAll(_straySlashes, '')))
-            .value {
+    : _routeDefinition = RouteGrammar.routeDefinition
+          .parse(SpanScanner(path.replaceAll(_straySlashes, '')))
+          .value {
     if (_routeDefinition?.segments.isNotEmpty != true) {
       _parser = match('').map((r) => RouteResult({}));
     }
@@ -38,8 +38,11 @@ class Route<T> {
   factory Route.join(Route<T> a, Route<T> b) {
     var start = a.path.replaceAll(_straySlashes, '');
     var end = b.path.replaceAll(_straySlashes, '');
-    return Route('$start/$end'.replaceAll(_straySlashes, ''),
-        method: b.method, handlers: b.handlers);
+    return Route(
+      '$start/$end'.replaceAll(_straySlashes, ''),
+      method: b.method,
+      handlers: b.handlers,
+    );
   }
 
   //List<T> get handlers => _handlers;

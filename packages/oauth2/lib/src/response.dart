@@ -12,8 +12,12 @@ class AuthorizationTokenResponse {
   /// Optional, if identical to the scope requested by the client; otherwise, required.
   final Iterable<String>? scope;
 
-  const AuthorizationTokenResponse(this.accessToken,
-      {this.refreshToken, this.expiresIn, this.scope});
+  const AuthorizationTokenResponse(
+    this.accessToken, {
+    this.refreshToken,
+    this.expiresIn,
+    this.scope,
+  });
 
   Map<String, dynamic> toJson() {
     var map = <String, dynamic>{'access_token': accessToken};
@@ -51,8 +55,13 @@ class DeviceCodeResponse {
   final int expiresIn;
 
   const DeviceCodeResponse(
-      this.deviceCode, this.userCode, this.verificationUri, this.expiresIn,
-      {this.verificationUriComplete, this.interval});
+    this.deviceCode,
+    this.userCode,
+    this.verificationUri,
+    this.expiresIn, {
+    this.verificationUriComplete,
+    this.interval,
+  });
 
   Map<String, dynamic> toJson() {
     var out = <String, dynamic>{

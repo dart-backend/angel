@@ -28,8 +28,10 @@ String decodeBase64(String str) {
 class AuthToken {
   static final _log = Logger('AuthToken');
 
-  final SplayTreeMap<String, String> _header =
-      SplayTreeMap.from({'alg': 'HS256', 'typ': 'JWT'});
+  final SplayTreeMap<String, String> _header = SplayTreeMap.from({
+    'alg': 'HS256',
+    'typ': 'JWT',
+  });
 
   String? ipAddress;
   num lifeSpan;
@@ -37,17 +39,22 @@ class AuthToken {
   late DateTime issuedAt;
   Map<String, dynamic> payload = {};
 
-  AuthToken(
-      {this.ipAddress,
-      this.lifeSpan = -1,
-      required this.userId,
-      DateTime? issuedAt,
-      Map<String, dynamic>? payload}) {
+  AuthToken({
+    this.ipAddress,
+    this.lifeSpan = -1,
+    required this.userId,
+    DateTime? issuedAt,
+    Map<String, dynamic>? payload,
+  }) {
     this.issuedAt = issuedAt ?? DateTime.now();
     if (payload != null) {
-      this.payload.addAll(payload.keys
-              .fold({}, ((out, k) => out?..[k.toString()] = payload[k])) ??
-          {});
+      this.payload.addAll(
+        payload.keys.fold(
+              {},
+              ((out, k) => out?..[k.toString()] = payload[k]),
+            ) ??
+            {},
+      );
     }
   }
 
@@ -56,11 +63,12 @@ class AuthToken {
 
   factory AuthToken.fromMap(Map<String, dynamic> data) {
     return AuthToken(
-        ipAddress: data['aud'].toString(),
-        lifeSpan: data['exp'] as num,
-        issuedAt: DateTime.parse(data['iat'].toString()),
-        userId: data['sub'],
-        payload: data['pld']);
+      ipAddress: data['aud'].toString(),
+      lifeSpan: data['exp'] as num,
+      issuedAt: DateTime.parse(data['iat'].toString()),
+      userId: data['sub'],
+      payload: data['pld'],
+    );
   }
 
   factory AuthToken.parse(String jwt) {
@@ -73,7 +81,8 @@ class AuthToken {
 
     var payloadString = decodeBase64(split[1]);
     return AuthToken.fromMap(
-        json.decode(payloadString) as Map<String, dynamic>);
+      json.decode(payloadString) as Map<String, dynamic>,
+    );
   }
 
   factory AuthToken.validate(String jwt, Hmac hmac) {
@@ -92,11 +101,13 @@ class AuthToken {
     if (signature != split[2]) {
       _log.warning('JWT payload does not match hashed version');
       throw AngelHttpException.notAuthenticated(
-          message: 'JWT payload does not match hashed version.');
+        message: 'JWT payload does not match hashed version.',
+      );
     }
 
     return AuthToken.fromMap(
-        json.decode(payloadString) as Map<String, dynamic>);
+      json.decode(payloadString) as Map<String, dynamic>,
+    );
   }
 
   String serialize(Hmac hmac) {
@@ -114,7 +125,7 @@ class AuthToken {
       'exp': lifeSpan,
       'iat': issuedAt.toIso8601String(),
       'sub': userId,
-      'pld': _splayify(payload)
+      'pld': _splayify(payload),
     });
   }
 }

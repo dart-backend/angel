@@ -72,7 +72,7 @@ void main() {
       return [
         await file.data.map((l) => l.length).reduce((a, b) => a + b),
         file.contentType.mimeType,
-        body
+        body,
       ];
     });
 
@@ -133,16 +133,20 @@ void main() {
 
   group('gzip', () {
     test('buffered response', () async {
-      var response = await client
-          .get(serverRoot, headers: {'accept-encoding': 'gzip, deflate, br'});
+      var response = await client.get(
+        serverRoot,
+        headers: {'accept-encoding': 'gzip, deflate, br'},
+      );
       expect(response.headers['content-encoding'], 'gzip');
       var decoded = gzip.decode(response.bodyBytes);
       expect(utf8.decode(decoded), 'Hello world');
     });
 
     test('streamed response', () async {
-      var response = await client.get(serverRoot.replace(path: '/stream'),
-          headers: {'accept-encoding': 'gzip'});
+      var response = await client.get(
+        serverRoot.replace(path: '/stream'),
+        headers: {'accept-encoding': 'gzip'},
+      );
       expect(response.headers['content-encoding'], 'gzip');
       //print(response.body);
       var decoded = gzip.decode(response.bodyBytes);
@@ -151,8 +155,10 @@ void main() {
   });
 
   test('query uri decoded', () async {
-    var uri =
-        serverRoot.replace(path: '/query', queryParameters: {'foo!': 'bar?'});
+    var uri = serverRoot.replace(
+      path: '/query',
+      queryParameters: {'foo!': 'bar?'},
+    );
     var response = await client.get(uri);
     print('Sent $uri');
     expect(response.body, json.encode({'foo!': 'bar?'}));
@@ -171,8 +177,10 @@ void main() {
   test('json response', () async {
     var response = await client.get(serverRoot.replace(path: '/json'));
     expect(response.body, json.encode({'foo': 'bar'}));
-    expect(ContentType.parse(response.headers['content-type']!).mimeType,
-        ContentType.json.mimeType);
+    expect(
+      ContentType.parse(response.headers['content-type']!).mimeType,
+      ContentType.json.mimeType,
+    );
   });
 
   test('status sent', () async {
@@ -221,9 +229,9 @@ void main() {
 
     var pushA = pushes[0], pushB = pushes[1];
 
-    String getPath(TransportStreamPush p) => ascii.decode(p.requestHeaders
-        .firstWhere((h) => ascii.decode(h.name) == ':path')
-        .value);
+    String getPath(TransportStreamPush p) => ascii.decode(
+      p.requestHeaders.firstWhere((h) => ascii.decode(h.name) == ':path').value,
+    );
 
     /*
     Future<String> getBody(ClientTransportStream stream) async {
@@ -262,7 +270,7 @@ void main() {
         serverRoot.replace(path: '/body'),
         headers: {
           'accept': 'application/json',
-          'content-type': 'application/x-www-form-urlencoded'
+          'content-type': 'application/x-www-form-urlencoded',
         },
         body: 'foo=bar',
       );
@@ -270,35 +278,45 @@ void main() {
     });
 
     test('json body parsed', () async {
-      var response = await client.post(serverRoot.replace(path: '/body'),
-          headers: {
-            'accept': 'application/json',
-            'content-type': 'application/json'
-          },
-          body: json.encode({'foo': 'bar'}));
+      var response = await client.post(
+        serverRoot.replace(path: '/body'),
+        headers: {
+          'accept': 'application/json',
+          'content-type': 'application/json',
+        },
+        body: json.encode({'foo': 'bar'}),
+      );
       expect(response.body, json.encode({'foo': 'bar'}));
     });
 
     test('multipart body parsed', () async {
-      var rq =
-          http.MultipartRequest('POST', serverRoot.replace(path: '/upload'));
+      var rq = http.MultipartRequest(
+        'POST',
+        serverRoot.replace(path: '/upload'),
+      );
       rq.headers.addAll({'accept': 'application/json'});
 
       rq.fields['foo'] = 'bar';
-      rq.files.add(http.MultipartFile(
-          'file', Stream.fromIterable([utf8.encode('hello world')]), 11,
-          contentType: MediaType('angel', 'framework')));
+      rq.files.add(
+        http.MultipartFile(
+          'file',
+          Stream.fromIterable([utf8.encode('hello world')]),
+          11,
+          contentType: MediaType('angel', 'framework'),
+        ),
+      );
 
       var response = await client.send(rq);
       var responseBody = await response.stream.transform(utf8.decoder).join();
 
       expect(
-          responseBody,
-          json.encode([
-            11,
-            'angel/framework',
-            {'foo': 'bar'}
-          ]));
+        responseBody,
+        json.encode([
+          11,
+          'angel/framework',
+          {'foo': 'bar'},
+        ]),
+      );
     });
   });
 }

@@ -8,33 +8,36 @@ import 'context_aware.dart';
 ///
 /// Analogous to the synchronous [predicate] matcher.
 AngelMatcher predicateWithAngel(
-        FutureOr<bool> Function(String, Object, Angel) f,
-        [String description = 'satisfies function']) =>
-    _PredicateWithAngel(f, description);
+  FutureOr<bool> Function(String, Object, Angel) f, [
+  String description = 'satisfies function',
+]) => _PredicateWithAngel(f, description);
 
 /// Returns an [AngelMatcher] that applies an asynchronously-created [Matcher]
 /// to the input.
 ///
 /// Use this to match values against configuration, injections, etc.
-AngelMatcher matchWithAngel(FutureOr<Matcher> Function(Object, Map, Angel) f,
-        [String description = 'satisfies asynchronously created matcher']) =>
-    _MatchWithAngel(f, description);
+AngelMatcher matchWithAngel(
+  FutureOr<Matcher> Function(Object, Map, Angel) f, [
+  String description = 'satisfies asynchronously created matcher',
+]) => _MatchWithAngel(f, description);
 
 /// Calls [matchWithAngel] without the initial parameter.
 AngelMatcher matchWithAngelBinary(
-        FutureOr<Matcher> Function(Map context, Angel) f,
-        [String description = 'satisfies asynchronously created matcher']) =>
-    matchWithAngel((_, context, app) => f(context, app));
+  FutureOr<Matcher> Function(Map context, Angel) f, [
+  String description = 'satisfies asynchronously created matcher',
+]) => matchWithAngel((_, context, app) => f(context, app));
 
 /// Calls [matchWithAngel] without the initial two parameters.
-AngelMatcher matchWithAngelUnary(FutureOr<Matcher> Function(Angel) f,
-        [String description = 'satisfies asynchronously created matcher']) =>
-    matchWithAngelBinary((_, app) => f(app));
+AngelMatcher matchWithAngelUnary(
+  FutureOr<Matcher> Function(Angel) f, [
+  String description = 'satisfies asynchronously created matcher',
+]) => matchWithAngelBinary((_, app) => f(app));
 
 /// Calls [matchWithAngel] without any parameters.
-AngelMatcher matchWithAngelNullary(FutureOr<Matcher> Function() f,
-        [String description = 'satisfies asynchronously created matcher']) =>
-    matchWithAngelUnary((_) => f());
+AngelMatcher matchWithAngelNullary(
+  FutureOr<Matcher> Function() f, [
+  String description = 'satisfies asynchronously created matcher',
+]) => matchWithAngelUnary((_) => f());
 
 /// Returns an [AngelMatcher] that represents [x].
 ///
@@ -46,37 +49,44 @@ AngelMatcher wrapAngelMatcher(x) {
 }
 
 /// Returns an [AngelMatcher] that asynchronously resolves a [feature], builds a [matcher], and executes it.
-AngelMatcher matchAsync(FutureOr<Matcher> Function(String, Object) matcher,
-    FutureOr Function() feature,
-    [String description = 'satisfies asynchronously created matcher']) {
+AngelMatcher matchAsync(
+  FutureOr<Matcher> Function(String, Object) matcher,
+  FutureOr Function() feature, [
+  String description = 'satisfies asynchronously created matcher',
+]) {
   return _MatchAsync(matcher, feature, description);
 }
 
 /// Returns an [AngelMatcher] that verifies that an item with the given [idField]
 /// exists in the service at [servicePath], without throwing a `404` or returning `null`.
-AngelMatcher idExistsInService(String servicePath,
-    {String idField = 'id', String? description}) {
-  return predicateWithAngel(
-    (key, item, app) async {
-      try {
-        var result = await app.findService(servicePath)?.read(item);
-        return result != null;
-      } on AngelHttpException catch (e) {
-        if (e.statusCode == 404) {
-          return false;
-        } else {
-          rethrow;
-        }
+AngelMatcher idExistsInService(
+  String servicePath, {
+  String idField = 'id',
+  String? description,
+}) {
+  return predicateWithAngel((key, item, app) async {
+    try {
+      var result = await app.findService(servicePath)?.read(item);
+      return result != null;
+    } on AngelHttpException catch (e) {
+      if (e.statusCode == 404) {
+        return false;
+      } else {
+        rethrow;
       }
-    },
-    description ?? 'exists in service $servicePath',
-  );
+    }
+  }, description ?? 'exists in service $servicePath');
 }
 
 /// An asynchronous [Matcher] that runs in the context of an [Angel] app.
 abstract class AngelMatcher extends ContextAwareMatcher {
   Future<bool> matchesWithAngel(
-      item, String key, Map context, Map matchState, Angel app);
+    item,
+    String key,
+    Map context,
+    Map matchState,
+    Angel app,
+  );
 
   @override
   bool matchesWithContext(item, String key, Map context, Map matchState) {
@@ -95,7 +105,12 @@ class _WrappedAngelMatcher extends AngelMatcher {
 
   @override
   Future<bool> matchesWithAngel(
-      item, String key, Map context, Map matchState, Angel app) async {
+    item,
+    String key,
+    Map context,
+    Map matchState,
+    Angel app,
+  ) async {
     return matcher.matchesWithContext(item, key, context, matchState);
   }
 }
@@ -112,7 +127,12 @@ class _MatchWithAngel extends AngelMatcher {
 
   @override
   Future<bool> matchesWithAngel(
-      item, String key, Map context, Map matchState, Angel app) {
+    item,
+    String key,
+    Map context,
+    Map matchState,
+    Angel app,
+  ) {
     return Future.sync(() => f(item as Object, context, app)).then((result) {
       return result.matches(item, matchState);
     });
@@ -131,7 +151,12 @@ class _PredicateWithAngel extends AngelMatcher {
 
   @override
   Future<bool> matchesWithAngel(
-      item, String key, Map context, Map matchState, Angel app) {
+    item,
+    String key,
+    Map context,
+    Map matchState,
+    Angel app,
+  ) {
     return Future<bool>.sync(() => predicate(key, item as Object, app));
   }
 }
@@ -149,7 +174,12 @@ class _MatchAsync extends AngelMatcher {
 
   @override
   Future<bool> matchesWithAngel(
-      item, String key, Map context, Map matchState, Angel app) async {
+    item,
+    String key,
+    Map context,
+    Map matchState,
+    Angel app,
+  ) async {
     var f = await feature();
     var m = await matcher(key, f as Object);
     var c = wrapAngelMatcher(m);

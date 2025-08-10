@@ -46,12 +46,13 @@ class Droid extends _Droid {
     num? age,
   }) {
     return Droid(
-        id: id ?? this.id,
-        createdAt: createdAt ?? this.createdAt,
-        updatedAt: updatedAt ?? this.updatedAt,
-        name: name ?? this.name,
-        position: position ?? this.position,
-        age: age ?? this.age);
+      id: id ?? this.id,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      name: name ?? this.name,
+      position: position ?? this.position,
+      age: age ?? this.age,
+    );
   }
 
   @override
@@ -67,14 +68,7 @@ class Droid extends _Droid {
 
   @override
   int get hashCode {
-    return hashObjects([
-      id,
-      createdAt,
-      updatedAt,
-      name,
-      position,
-      age,
-    ]);
+    return hashObjects([id, createdAt, updatedAt, name, position, age]);
   }
 
   @override
@@ -118,20 +112,21 @@ class DroidSerializer extends Codec<Droid, Map> {
 
   static Droid fromMap(Map map) {
     return Droid(
-        id: map['id'] as String?,
-        createdAt: map['created_at'] != null
-            ? (map['created_at'] is DateTime
+      id: map['id'] as String?,
+      createdAt: map['created_at'] != null
+          ? (map['created_at'] is DateTime
                 ? (map['created_at'] as DateTime)
                 : DateTime.parse(map['created_at'].toString()))
-            : null,
-        updatedAt: map['updated_at'] != null
-            ? (map['updated_at'] is DateTime
+          : null,
+      updatedAt: map['updated_at'] != null
+          ? (map['updated_at'] is DateTime
                 ? (map['updated_at'] as DateTime)
                 : DateTime.parse(map['updated_at'].toString()))
-            : null,
-        name: map['name'] as String?,
-        position: map['position'] as String,
-        age: map['age'] as num);
+          : null,
+      name: map['name'] as String?,
+      position: map['position'] as String,
+      age: map['age'] as num,
+    );
   }
 
   static Map<String, dynamic> toMap(_Droid? model) {
@@ -144,7 +139,7 @@ class DroidSerializer extends Codec<Droid, Map> {
       'updated_at': model.updatedAt?.toIso8601String(),
       'name': model.name,
       'position': model.position,
-      'age': model.age
+      'age': model.age,
     };
   }
 }

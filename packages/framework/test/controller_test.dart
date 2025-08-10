@@ -17,7 +17,10 @@ class TodoController extends Controller {
 
   @Expose('/:id', middleware: [bar])
   Future<Todo> fetchTodo(
-      String id, RequestContext req, ResponseContext res) async {
+    String id,
+    RequestContext req,
+    ResponseContext res,
+  ) async {
     expect(req, isNotNull);
     expect(res, isNotNull);
     return todos[int.parse(id)];
@@ -25,7 +28,9 @@ class TodoController extends Controller {
 
   @Expose('/namedRoute/:foo', as: 'foo')
   Future<String> someRandomRoute(
-      RequestContext req, ResponseContext res) async {
+    RequestContext req,
+    ResponseContext res,
+  ) async {
     return "${req.params['foo']}!";
   }
 }
@@ -80,9 +85,10 @@ void main() {
   setUp(() async {
     app = Angel(reflector: MirrorsReflector());
     app.get(
-        '/redirect',
-        (req, res) async =>
-            res.redirectToAction('TodoController@foo', {'foo': 'world'}));
+      '/redirect',
+      (req, res) async =>
+          res.redirectToAction('TodoController@foo', {'foo': 'world'}),
+    );
 
     // Register as a singleton, just for the purpose of this test
     if (!app.container.has<TodoController>()) {
@@ -120,10 +126,11 @@ void main() {
   test('create dynamic handler', () async {
     var app = Angel(reflector: MirrorsReflector());
     app.get(
-        '/foo',
-        ioc(({String? bar}) {
-          return 2;
-        }, optional: ['bar']));
+      '/foo',
+      ioc(({String? bar}) {
+        return 2;
+      }, optional: ['bar']),
+    );
     var rq = MockHttpRequest('GET', Uri(path: 'foo'));
     await AngelHttp(app).handleRequest(rq);
     var body = await utf8.decoder.bind(rq.response).join();
@@ -175,8 +182,13 @@ void main() {
 
     test('mounts correct routes', () {
       print(noExposeCtrl.routeMappings.keys);
-      expect(noExposeCtrl.routeMappings.keys.toList(),
-          ['getIndex', 'timesTwo', 'repeatName', 'someColor', 'three']);
+      expect(noExposeCtrl.routeMappings.keys.toList(), [
+        'getIndex',
+        'timesTwo',
+        'repeatName',
+        'someColor',
+        'three',
+      ]);
     });
 
     test('mounts correct methods', () {

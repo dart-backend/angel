@@ -23,9 +23,14 @@ RequestHandler ioc(Function handler, {Iterable<String> optional = const []}) {
   };
 }
 
-Future resolveInjection(requirement, InjectionRequest injection,
-    RequestContext req, ResponseContext res, bool throwOnUnresolved,
-    [Container? container]) async {
+Future resolveInjection(
+  requirement,
+  InjectionRequest injection,
+  RequestContext req,
+  ResponseContext res,
+  bool throwOnUnresolved, [
+  Container? container,
+]) async {
   dynamic propFromApp;
   container ??= req.container ?? res.app!.container;
 
@@ -51,7 +56,8 @@ Future resolveInjection(requirement, InjectionRequest injection,
       return null;
     } else if (throwOnUnresolved) {
       throw ArgumentError(
-          "Cannot resolve parameter '$requirement' within handler.");
+        "Cannot resolve parameter '$requirement' within handler.",
+      );
     }
   } else if (requirement is List &&
       requirement.length == 2 &&
@@ -63,10 +69,22 @@ Future resolveInjection(requirement, InjectionRequest injection,
         req.app!.configuration.containsKey(key) ||
         _primitiveTypes.contains(type)) {
       return await resolveInjection(
-          key, injection, req, res, throwOnUnresolved, container);
+        key,
+        injection,
+        req,
+        res,
+        throwOnUnresolved,
+        container,
+      );
     } else {
       return await resolveInjection(
-          type, injection, req, res, throwOnUnresolved, container);
+        type,
+        injection,
+        req,
+        res,
+        throwOnUnresolved,
+        container,
+      );
     }
   } else if (requirement is Type && requirement != dynamic) {
     try {
@@ -81,13 +99,17 @@ Future resolveInjection(requirement, InjectionRequest injection,
     return await container.make(requirement);
   } else if (throwOnUnresolved) {
     throw ArgumentError(
-        '$requirement cannot be injected into a request handler.');
+      '$requirement cannot be injected into a request handler.',
+    );
   }
 }
 
 /// Checks if an [InjectionRequest] can be sufficiently executed within the current request/response context.
 bool suitableForInjection(
-    RequestContext req, ResponseContext res, InjectionRequest injection) {
+  RequestContext req,
+  ResponseContext res,
+  InjectionRequest injection,
+) {
   return injection.parameters.values.any((p) {
     if (p.match == null) return false;
     var value = p.getValue(req);
@@ -96,8 +118,11 @@ bool suitableForInjection(
 }
 
 /// Handles a request with a DI-enabled handler.
-RequestHandler handleContained(Function handler, InjectionRequest injection,
-    [Container? container]) {
+RequestHandler handleContained(
+  Function handler,
+  InjectionRequest injection, [
+  Container? container,
+]) {
   return (RequestContext req, ResponseContext res) async {
     if (injection.parameters.isNotEmpty &&
         injection.parameters.values.any((p) => p.match != null) &&
@@ -116,7 +141,13 @@ RequestHandler handleContained(Function handler, InjectionRequest injection,
     for (var entry in injection.named.entries) {
       var name = Symbol(entry.key);
       named[name] = await resolveInjection(
-          [entry.key, entry.value], injection, req, res, false, container);
+        [entry.key, entry.value],
+        injection,
+        req,
+        res,
+        false,
+        container,
+      );
     }
 
     return Function.apply(handler, args, named);
@@ -143,17 +174,18 @@ class InjectionRequest {
   /// Extended parameter definitions.
   final Map<String, Parameter> parameters;
 
-  const InjectionRequest.constant(
-      {this.named = const {},
-      this.required = const [],
-      this.optional = const [],
-      this.parameters = const {}});
+  const InjectionRequest.constant({
+    this.named = const {},
+    this.required = const [],
+    this.optional = const [],
+    this.parameters = const {},
+  });
 
   InjectionRequest()
-      : named = {},
-        required = [],
-        optional = [],
-        parameters = {};
+    : named = {},
+      required = [],
+      optional = [],
+      parameters = {};
 }
 
 /// Predetermines what needs to be injected for a handler to run.
@@ -169,10 +201,14 @@ InjectionRequest preInject(Function handler, Reflector reflector) {
     var name = parameter.name;
     var type = parameter.type.reflectedType;
 
-    var p = parameter.annotations
-        .firstWhereOrNull(
-            (m) => m.type.isAssignableTo(reflector.reflectType(Parameter)))
-        ?.reflectee as Parameter?;
+    var p =
+        parameter.annotations
+                .firstWhereOrNull(
+                  (m) =>
+                      m.type.isAssignableTo(reflector.reflectType(Parameter)),
+                )
+                ?.reflectee
+            as Parameter?;
     //print(p);
     if (p != null) {
       injection.parameters[name] = Parameter(

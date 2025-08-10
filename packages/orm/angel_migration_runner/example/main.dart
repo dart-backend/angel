@@ -27,21 +27,19 @@ void postgresqlMigration(List<String> args) async {
   print("$host $database $username $password");
 
   Connection conn = await Connection.open(
-      Endpoint(
-          host: host,
-          port: 5432,
-          database: database,
-          username: username,
-          password: password),
-      settings: ConnectionSettings(sslMode: SslMode.disable));
+    Endpoint(
+      host: host,
+      port: 5432,
+      database: database,
+      username: username,
+      password: password,
+    ),
+    settings: ConnectionSettings(sslMode: SslMode.disable),
+  );
 
   var runner = PostgresMigrationRunner(
     conn,
-    migrations: [
-      UserMigration(),
-      TodoMigration(),
-      FooMigration(),
-    ],
+    migrations: [UserMigration(), TodoMigration(), FooMigration()],
   );
 
   runMigrations(runner, args);
@@ -54,21 +52,18 @@ void mysqlMigration(List<String> args) async {
   var password = Platform.environment['MYSQL_PASSWORD'] ?? 'test123';
 
   var mySQLConn = await MySQLConnection.createConnection(
-      host: host,
-      port: 3306,
-      databaseName: database,
-      userName: username,
-      password: password,
-      secure: true);
+    host: host,
+    port: 3306,
+    databaseName: database,
+    userName: username,
+    password: password,
+    secure: true,
+  );
 
   // ignore: unused_local_variable
   var runner = MySqlMigrationRunner(
     mySQLConn,
-    migrations: [
-      UserMigration(),
-      TodoMigration(),
-      FooMigration(),
-    ],
+    migrations: [UserMigration(), TodoMigration(), FooMigration()],
   );
 
   runMigrations(runner, args);

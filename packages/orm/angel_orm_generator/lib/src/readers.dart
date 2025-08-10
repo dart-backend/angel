@@ -9,8 +9,9 @@ const TypeChecker columnTypeChecker = TypeChecker.fromRuntime(Column);
 
 Orm reviveORMAnnotation(ConstantReader reader) {
   return Orm(
-      tableName: reader.peek('tableName')?.stringValue,
-      generateMigrations: reader.peek('generateMigrations')?.boolValue ?? true);
+    tableName: reader.peek('tableName')?.stringValue,
+    generateMigrations: reader.peek('generateMigrations')?.boolValue ?? true,
+  );
 }
 
 class ColumnReader {
@@ -36,15 +37,17 @@ class RelationshipReader {
   final OrmBuildContext? throughContext;
   final JoinType? joinType;
 
-  const RelationshipReader(this.type,
-      {this.localKey,
-      this.foreignKey,
-      this.foreignTable,
-      this.cascadeOnDelete = false,
-      this.through,
-      this.foreign,
-      this.throughContext,
-      this.joinType});
+  const RelationshipReader(
+    this.type, {
+    this.localKey,
+    this.foreignKey,
+    this.foreignTable,
+    this.cascadeOnDelete = false,
+    this.through,
+    this.foreign,
+    this.throughContext,
+    this.joinType,
+  });
 
   bool get isManyToMany =>
       type == RelationshipType.hasMany && throughContext != null;
@@ -68,20 +71,22 @@ class RelationshipReader {
 
   FieldElement findLocalField(OrmBuildContext ctx) {
     return ctx.effectiveFields.firstWhere(
-        (f) => ctx.buildContext.resolveFieldName(f.name) == localKey,
-        orElse: () {
-      throw '${ctx.buildContext.clazz.name} has no field that maps to the name "$localKey", '
-          'but it has a @HasMany() relation that expects such a field.';
-    });
+      (f) => ctx.buildContext.resolveFieldName(f.name) == localKey,
+      orElse: () {
+        throw '${ctx.buildContext.clazz.name} has no field that maps to the name "$localKey", '
+            'but it has a @HasMany() relation that expects such a field.';
+      },
+    );
   }
 
   FieldElement findForeignField(OrmBuildContext ctx) {
     var foreign = throughContext ?? this.foreign!;
     return foreign.effectiveFields.firstWhere(
-        (f) => foreign.buildContext.resolveFieldName(f.name) == foreignKey,
-        orElse: () {
-      throw '${foreign.buildContext.clazz.name} has no field that maps to the name "$foreignKey", '
-          'but ${ctx.buildContext.clazz.name} has a @HasMany() relation that expects such a field.';
-    });
+      (f) => foreign.buildContext.resolveFieldName(f.name) == foreignKey,
+      orElse: () {
+        throw '${foreign.buildContext.clazz.name} has no field that maps to the name "$foreignKey", '
+            'but ${ctx.buildContext.clazz.name} has a @HasMany() relation that expects such a field.';
+      },
+    );
   }
 }

@@ -28,7 +28,7 @@ const List<String> _sensitiveFieldNames = [
   'id',
   '_id',
   'createdAt',
-  'updatedAt'
+  'updatedAt',
 ];
 
 Map<String, dynamic> _removeSensitive(Map<String, dynamic> data) {

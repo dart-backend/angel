@@ -13,12 +13,19 @@ class ServiceRateLimiter<Id> extends RateLimiter<Id> {
   final FutureOr<Id> Function(RequestContext, ResponseContext) getId;
 
   ServiceRateLimiter(
-      super.maxPointsPerWindow, super.windowDuration, this.service, this.getId,
-      {super.errorMessage});
+    super.maxPointsPerWindow,
+    super.windowDuration,
+    this.service,
+    this.getId, {
+    super.errorMessage,
+  });
 
   @override
   FutureOr<RateLimitingWindow<Id>> getCurrentWindow(
-      RequestContext req, ResponseContext res, DateTime currentTime) async {
+    RequestContext req,
+    ResponseContext res,
+    DateTime currentTime,
+  ) async {
     var id = await getId(req, res);
     try {
       var data = await service.read(id);
@@ -40,8 +47,12 @@ class ServiceRateLimiter<Id> extends RateLimiter<Id> {
   }
 
   @override
-  FutureOr<void> updateCurrentWindow(RequestContext req, ResponseContext res,
-      RateLimitingWindow<Id> window, DateTime currentTime) async {
+  FutureOr<void> updateCurrentWindow(
+    RequestContext req,
+    ResponseContext res,
+    RateLimitingWindow<Id> window,
+    DateTime currentTime,
+  ) async {
     await service.update(window.user, window.toJson());
   }
 }

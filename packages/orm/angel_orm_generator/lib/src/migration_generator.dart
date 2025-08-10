@@ -16,7 +16,8 @@ import 'orm_build_context.dart';
 Builder migrationBuilder(BuilderOptions options) {
   return SharedPartBuilder([
     MigrationGenerator(
-        autoSnakeCaseNames: options.config['auto_snake_case_names'] != false)
+      autoSnakeCaseNames: options.config['auto_snake_case_names'] != false,
+    ),
   ], 'angel3_migration');
 }
 
@@ -24,9 +25,11 @@ Builder migrationBuilder(BuilderOptions options) {
 class MigrationGenerator extends GeneratorForAnnotation<Orm> {
   final _logger = Logger('MigrationGenerator');
 
-  static final Parameter _schemaParam = Parameter((b) => b
-    ..name = 'schema'
-    ..type = refer('Schema'));
+  static final Parameter _schemaParam = Parameter(
+    (b) => b
+      ..name = 'schema'
+      ..type = refer('Schema'),
+  );
   static final Reference _schema = refer('schema');
 
   /// If `true` (default), then field names will automatically be (de)serialized as snake_case.
@@ -36,7 +39,10 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
 
   @override
   Future<String?> generateForAnnotatedElement(
-      Element element, ConstantReader annotation, BuildStep buildStep) async {
+    Element element,
+    ConstantReader annotation,
+    BuildStep buildStep,
+  ) async {
     if (element is! ClassElement) {
       throw 'Only classes can be annotated with @ORM().';
     }
@@ -49,8 +55,14 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
     }
 
     var resolver = buildStep.resolver;
-    var ctx = await buildOrmContext({}, element, annotation, buildStep,
-        resolver, autoSnakeCaseNames != false);
+    var ctx = await buildOrmContext(
+      {},
+      element,
+      annotation,
+      buildStep,
+      resolver,
+      autoSnakeCaseNames != false,
+    );
 
     if (ctx == null) {
       throw 'Invalid ORM build context';
@@ -60,20 +72,29 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
     var lib = generateMigrationLibrary(ctx, element, resolver, buildStep);
 
     //if (lib == null) return null;
-    return DartFormatter(languageVersion: DartFormatter.latestLanguageVersion)
-        .format(lib.accept(DartEmitter(useNullSafetySyntax: true)).toString());
+    return DartFormatter(
+      languageVersion: DartFormatter.latestLanguageVersion,
+    ).format(lib.accept(DartEmitter(useNullSafetySyntax: true)).toString());
   }
 
-  Library generateMigrationLibrary(OrmBuildContext ctx, ClassElement element,
-      Resolver resolver, BuildStep buildStep) {
+  Library generateMigrationLibrary(
+    OrmBuildContext ctx,
+    ClassElement element,
+    Resolver resolver,
+    BuildStep buildStep,
+  ) {
     return Library((lib) {
-      lib.body.add(Class((clazz) {
-        clazz
-          ..name = '${ctx.buildContext.modelClassName}Migration'
-          ..extend = refer('Migration')
-          ..methods
-              .addAll([buildUpMigration(ctx, lib), buildDownMigration(ctx)]);
-      }));
+      lib.body.add(
+        Class((clazz) {
+          clazz
+            ..name = '${ctx.buildContext.modelClassName}Migration'
+            ..extend = refer('Migration')
+            ..methods.addAll([
+              buildUpMigration(ctx, lib),
+              buildDownMigration(ctx),
+            ]);
+        }),
+      );
     });
   }
 
@@ -81,8 +102,9 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
   Method buildUpMigration(OrmBuildContext ctx, LibraryBuilder lib) {
     return Method((meth) {
       // Check to see if clazz extends Model class
-      var autoIdAndDateFields = const TypeChecker.fromRuntime(Model)
-          .isAssignableFromType(ctx.buildContext.clazz.thisType);
+      var autoIdAndDateFields = const TypeChecker.fromRuntime(
+        Model,
+      ).isAssignableFromType(ctx.buildContext.clazz.thisType);
       meth
         ..name = 'up'
         ..returns = refer('void')
@@ -207,13 +229,12 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
 
               // Handle 'defaultValue' on Column annotation
               if (col.defaultValue != null) {
-                var defaultCode =
-                    dartObjectToString(col.defaultValue as DartObject);
+                var defaultCode = dartObjectToString(
+                  col.defaultValue as DartObject,
+                );
 
                 if (defaultCode != null) {
-                  Expression defaultExpr = CodeExpression(
-                    Code(defaultCode),
-                  );
+                  Expression defaultExpr = CodeExpression(Code(defaultCode));
                   cascade.add(refer('defaultsTo').call([defaultExpr]));
                 }
 
@@ -222,18 +243,22 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
                 var type = defaultValue.type;
                 Expression? defaultExpr;
 
-                if (const TypeChecker.fromRuntime(RawSql)
-                    .isAssignableFromType(defaultValue.type!)) {
-                  var value =
-                      ConstantReader(defaultValue).read('value').stringValue;
-                  defaultExpr =
-                      refer('RawSql').constInstance([literalString(value)]);
+                if (const TypeChecker.fromRuntime(
+                  RawSql,
+                ).isAssignableFromType(defaultValue.type!)) {
+                  var value = ConstantReader(
+                    defaultValue,
+                  ).read('value').stringValue;
+                  defaultExpr = refer(
+                    'RawSql',
+                  ).constInstance([literalString(value)]);
                 } else if (type is InterfaceType &&
                     type.element is EnumElement) {
                   // Default to enum index.
                   try {
-                    var index =
-                        ConstantReader(defaultValue).read('index').intValue;
+                    var index = ConstantReader(
+                      defaultValue,
+                    ).read('index').intValue;
                     defaultExpr = literalNum(index);
                   } catch (error) {
                     _logger.warning(error);
@@ -243,9 +268,7 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
                 } else {
                   var defaultCode = dartObjectToString(defaultValue);
                   if (defaultCode != null) {
-                    defaultExpr = CodeExpression(
-                      Code(defaultCode),
-                    );
+                    defaultExpr = CodeExpression(Code(defaultCode));
                   }
                 }
 
@@ -268,20 +291,23 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
               if (cascade.isNotEmpty) {
                 var b = StringBuffer()
                   ..writeln(
-                      field.accept(DartEmitter(useNullSafetySyntax: true)));
+                    field.accept(DartEmitter(useNullSafetySyntax: true)),
+                  );
 
                 if (cascade.length == 1) {
                   var ex = cascade[0];
                   b
                     ..write('.')
                     ..writeln(
-                        ex.accept(DartEmitter(useNullSafetySyntax: true)));
+                      ex.accept(DartEmitter(useNullSafetySyntax: true)),
+                    );
                 } else {
                   for (var ex in cascade) {
                     b
                       ..write('..')
                       ..writeln(
-                          ex.accept(DartEmitter(useNullSafetySyntax: true)));
+                        ex.accept(DartEmitter(useNullSafetySyntax: true)),
+                      );
                   }
                 }
 
@@ -306,9 +332,9 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
                     relationship.foreign?.buildContext.clazz.thisType;
                 var foreignAautoIdAndDateFields = false;
                 if (foreignTableType != null) {
-                  foreignAautoIdAndDateFields =
-                      const TypeChecker.fromRuntime(Model)
-                          .isAssignableFromType(foreignTableType);
+                  foreignAautoIdAndDateFields = const TypeChecker.fromRuntime(
+                    Model,
+                  ).isAssignableFromType(foreignTableType);
                 }
 
                 var columnTypeType = refer('ColumnType');
@@ -328,9 +354,7 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
 
                 var field = table.property('declare').call([
                   literal(key),
-                  columnTypeType.newInstance([
-                    literal(keyType),
-                  ])
+                  columnTypeType.newInstance([literal(keyType)]),
                 ]);
 
                 var ref = field.property('references').call([
@@ -339,8 +363,10 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
                 ]);
 
                 if (relationship.cascadeOnDelete != false &&
-                    const [RelationshipType.hasOne, RelationshipType.belongsTo]
-                        .contains(relationship.type)) {
+                    const [
+                      RelationshipType.hasOne,
+                      RelationshipType.belongsTo,
+                    ].contains(relationship.type)) {
                   ref = ref.property('onDeleteCascade').call([]);
                 }
                 closureBody.addExpression(ref);
@@ -350,10 +376,12 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
       });
 
       meth.body = Block((b) {
-        b.addExpression(_schema.property('create').call([
-          literal(ctx.tableName),
-          closure.closure,
-        ]));
+        b.addExpression(
+          _schema.property('create').call([
+            literal(ctx.tableName),
+            closure.closure,
+          ]),
+        );
       });
     });
   }
@@ -369,16 +397,20 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
         ..body = Block((b) {
           var named = <String, Expression>{};
 
-          if (ctx!.relations.values.any((r) =>
-              r.type == RelationshipType.hasOne ||
-              r.type == RelationshipType.hasMany ||
-              r.isManyToMany)) {
+          if (ctx!.relations.values.any(
+            (r) =>
+                r.type == RelationshipType.hasOne ||
+                r.type == RelationshipType.hasMany ||
+                r.isManyToMany,
+          )) {
             named['cascade'] = literalTrue;
           }
 
-          b.addExpression(_schema
-              .property('drop')
-              .call([literalString(ctx.tableName)], named));
+          b.addExpression(
+            _schema.property('drop').call([
+              literalString(ctx.tableName),
+            ], named),
+          );
         });
     });
   }

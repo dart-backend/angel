@@ -16,8 +16,11 @@ class PostgresMigrationRunner implements MigrationRunner {
   final Queue<Migration> _migrationQueue = Queue();
   bool _connected = false;
 
-  PostgresMigrationRunner(this.connection,
-      {Iterable<Migration> migrations = const [], bool connected = false}) {
+  PostgresMigrationRunner(
+    this.connection, {
+    Iterable<Migration> migrations = const [],
+    bool connected = false,
+  }) {
     if (migrations.isNotEmpty) {
       migrations.forEach(addMigration);
     }
@@ -41,19 +44,22 @@ class PostgresMigrationRunner implements MigrationRunner {
       throw Exception("PostgreSQL connection is not open");
     }
 
-    await connection.execute('''
+    await connection
+        .execute('''
     CREATE TABLE IF NOT EXISTS "migrations" (
       id serial,
       batch integer,
       path varchar(500),
       PRIMARY KEY(id)
     );
-    ''').then((result) {
-      _log.info('Created "migrations" table');
-    }).catchError((e) {
-      _log.severe('Failed to create "migrations" table.');
-      throw e;
-    });
+    ''')
+        .then((result) {
+          _log.info('Created "migrations" table');
+        })
+        .catchError((e) {
+          _log.severe('Failed to create "migrations" table.');
+          throw e;
+        });
   }
 
   @override
@@ -77,17 +83,21 @@ class PostgresMigrationRunner implements MigrationRunner {
         var schema = PostgresSchema();
         migration.up(schema);
 
-        var result = await schema.run(connection).then((_) {
-          return connection.runTx((ctx) async {
-            var result = await ctx.execute(
-                "INSERT INTO MIGRATIONS (batch, path) VALUES ($batch, '$k')");
+        var result = await schema
+            .run(connection)
+            .then((_) {
+              return connection.runTx((ctx) async {
+                var result = await ctx.execute(
+                  "INSERT INTO MIGRATIONS (batch, path) VALUES ($batch, '$k')",
+                );
 
-            return result.affectedRows;
-          });
-        }).catchError((e) {
-          _log.severe('Failed to insert into "migrations" table.');
-          return -1;
-        });
+                return result.affectedRows;
+              });
+            })
+            .catchError((e) {
+              _log.severe('Failed to insert into "migrations" table.');
+              return -1;
+            });
         if (result > 0) {
           _log.info('Inserted "$k" into "migrations" table.');
         }
@@ -103,8 +113,9 @@ class PostgresMigrationRunner implements MigrationRunner {
 
     Result r = await connection.execute('SELECT MAX(batch) from migrations;');
     var curBatch = (r[0][0] ?? 0) as int;
-    r = await connection
-        .execute('SELECT path from migrations WHERE batch = $curBatch;');
+    r = await connection.execute(
+      'SELECT path from migrations WHERE batch = $curBatch;',
+    );
     var existing = r.expand((x) => x).cast<String>();
     var toRun = <String>[];
 
@@ -119,8 +130,9 @@ class PostgresMigrationRunner implements MigrationRunner {
         migration.down(schema);
         _log.info('Removed "$k" from "migrations" table.');
         await schema.run(connection).then((_) {
-          return connection
-              .execute('DELETE FROM migrations WHERE path = \'$k\';');
+          return connection.execute(
+            'DELETE FROM migrations WHERE path = \'$k\';',
+          );
         });
       }
     } else {
@@ -131,8 +143,9 @@ class PostgresMigrationRunner implements MigrationRunner {
   @override
   Future reset() async {
     await _init();
-    var r = await connection
-        .execute('SELECT path from migrations ORDER BY batch DESC;');
+    var r = await connection.execute(
+      'SELECT path from migrations ORDER BY batch DESC;',
+    );
     var existing = r.expand((x) => x).cast<String>();
     var toRun = existing.where(migrations.containsKey).toList();
 
@@ -143,8 +156,9 @@ class PostgresMigrationRunner implements MigrationRunner {
         migration.down(schema);
         _log.info('Removed "$k" from "migrations" table.');
         await schema.run(connection).then((_) {
-          return connection
-              .execute('DELETE FROM migrations WHERE path = \'$k\';');
+          return connection.execute(
+            'DELETE FROM migrations WHERE path = \'$k\';',
+          );
         });
       }
     } else {

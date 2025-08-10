@@ -27,9 +27,10 @@ abstract class UserEntity {
 @serializable
 abstract class UserAddressEntity {
   @Column(
-      type: ColumnType.serial,
-      indexType: IndexType.primaryKey,
-      isNullable: false)
+    type: ColumnType.serial,
+    indexType: IndexType.primaryKey,
+    isNullable: false,
+  )
   int get id;
 
   @Column(type: ColumnType.int, isNullable: false)
@@ -43,9 +44,10 @@ abstract class UserAddressEntity {
 @serializable
 abstract class UserTodoEntity {
   @Column(
-      type: ColumnType.serial,
-      indexType: IndexType.primaryKey,
-      isNullable: false)
+    type: ColumnType.serial,
+    indexType: IndexType.primaryKey,
+    isNullable: false,
+  )
   int get id;
 
   @Column(type: ColumnType.int, isNullable: false)

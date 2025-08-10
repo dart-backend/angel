@@ -29,10 +29,7 @@ class PersonMigration extends Migration {
 // **************************************************************************
 
 class PersonQuery extends Query<Person, PersonQueryWhere> {
-  PersonQuery({
-    super.parent,
-    Set<String>? trampoline,
-  }) {
+  PersonQuery({super.parent, Set<String>? trampoline}) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = PersonQueryWhere(this);
@@ -57,18 +54,12 @@ class PersonQuery extends Query<Person, PersonQueryWhere> {
 
   @override
   List<String> get fields {
-    const localFields = [
-      'id',
-      'created_at',
-      'updated_at',
-      'name',
-      'age',
-    ];
+    const localFields = ['id', 'created_at', 'updated_at', 'name', 'age'];
     return _selectedFields.isEmpty
         ? localFields
         : localFields
-            .where((field) => _selectedFields.contains(field))
-            .toList();
+              .where((field) => _selectedFields.contains(field))
+              .toList();
   }
 
   PersonQuery select(List<String> selectedFields) {
@@ -92,10 +83,12 @@ class PersonQuery extends Query<Person, PersonQueryWhere> {
     }
     var model = Person(
       id: fields.contains('id') ? row[0].toString() : null,
-      createdAt:
-          fields.contains('created_at') ? mapToNullableDateTime(row[1]) : null,
-      updatedAt:
-          fields.contains('updated_at') ? mapToNullableDateTime(row[2]) : null,
+      createdAt: fields.contains('created_at')
+          ? mapToNullableDateTime(row[1])
+          : null,
+      updatedAt: fields.contains('updated_at')
+          ? mapToNullableDateTime(row[2])
+          : null,
       name: fields.contains('name') ? (row[3] as String?) : null,
       age: fields.contains('age') ? mapToInt(row[4]) : null,
     );
@@ -110,26 +103,11 @@ class PersonQuery extends Query<Person, PersonQueryWhere> {
 
 class PersonQueryWhere extends QueryWhere {
   PersonQueryWhere(PersonQuery query)
-      : id = NumericSqlExpressionBuilder<int>(
-          query,
-          'id',
-        ),
-        createdAt = DateTimeSqlExpressionBuilder(
-          query,
-          'created_at',
-        ),
-        updatedAt = DateTimeSqlExpressionBuilder(
-          query,
-          'updated_at',
-        ),
-        name = StringSqlExpressionBuilder(
-          query,
-          'name',
-        ),
-        age = NumericSqlExpressionBuilder<int>(
-          query,
-          'age',
-        );
+    : id = NumericSqlExpressionBuilder<int>(query, 'id'),
+      createdAt = DateTimeSqlExpressionBuilder(query, 'created_at'),
+      updatedAt = DateTimeSqlExpressionBuilder(query, 'updated_at'),
+      name = StringSqlExpressionBuilder(query, 'name'),
+      age = NumericSqlExpressionBuilder<int>(query, 'age');
 
   final NumericSqlExpressionBuilder<int> id;
 
@@ -143,13 +121,7 @@ class PersonQueryWhere extends QueryWhere {
 
   @override
   List<SqlExpressionBuilder> get expressionBuilders {
-    return [
-      id,
-      createdAt,
-      updatedAt,
-      name,
-      age,
-    ];
+    return [id, createdAt, updatedAt, name, age];
   }
 }
 
@@ -199,10 +171,7 @@ class PersonQueryValues extends MapQueryValues {
 
 class PersonWithLastOrderQuery
     extends Query<PersonWithLastOrder, PersonWithLastOrderQueryWhere> {
-  PersonWithLastOrderQuery({
-    super.parent,
-    Set<String>? trampoline,
-  }) {
+  PersonWithLastOrderQuery({super.parent, Set<String>? trampoline}) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     expressions['last_order_name'] = 'po.name';
@@ -230,16 +199,12 @@ class PersonWithLastOrderQuery
 
   @override
   List<String> get fields {
-    const localFields = [
-      'name',
-      'last_order_name',
-      'last_order_price',
-    ];
+    const localFields = ['name', 'last_order_name', 'last_order_price'];
     return _selectedFields.isEmpty
         ? localFields
         : localFields
-            .where((field) => _selectedFields.contains(field))
-            .toList();
+              .where((field) => _selectedFields.contains(field))
+              .toList();
   }
 
   PersonWithLastOrderQuery select(List<String> selectedFields) {
@@ -263,10 +228,12 @@ class PersonWithLastOrderQuery
     }
     var model = PersonWithLastOrder(
       name: fields.contains('name') ? (row[0] as String?) : null,
-      lastOrderName:
-          fields.contains('last_order_name') ? (row[1] as String?) : null,
-      lastOrderPrice:
-          fields.contains('last_order_price') ? mapToDouble(row[2]) : null,
+      lastOrderName: fields.contains('last_order_name')
+          ? (row[1] as String?)
+          : null,
+      lastOrderPrice: fields.contains('last_order_price')
+          ? mapToDouble(row[2])
+          : null,
     );
     return Optional.of(model);
   }
@@ -279,10 +246,7 @@ class PersonWithLastOrderQuery
 
 class PersonWithLastOrderQueryWhere extends QueryWhere {
   PersonWithLastOrderQueryWhere(PersonWithLastOrderQuery query)
-      : name = StringSqlExpressionBuilder(
-          query,
-          'name',
-        );
+    : name = StringSqlExpressionBuilder(query, 'name');
 
   final StringSqlExpressionBuilder name;
 
@@ -315,13 +279,7 @@ class PersonWithLastOrderQueryValues extends MapQueryValues {
 
 @generatedSerializable
 class Person extends PersonEntity {
-  Person({
-    this.id,
-    this.createdAt,
-    this.updatedAt,
-    this.name,
-    this.age,
-  });
+  Person({this.id, this.createdAt, this.updatedAt, this.name, this.age});
 
   /// A unique identifier corresponding to this item.
   @override
@@ -349,11 +307,12 @@ class Person extends PersonEntity {
     int? age,
   }) {
     return Person(
-        id: id ?? this.id,
-        createdAt: createdAt ?? this.createdAt,
-        updatedAt: updatedAt ?? this.updatedAt,
-        name: name ?? this.name,
-        age: age ?? this.age);
+      id: id ?? this.id,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      name: name ?? this.name,
+      age: age ?? this.age,
+    );
   }
 
   @override
@@ -368,13 +327,7 @@ class Person extends PersonEntity {
 
   @override
   int get hashCode {
-    return hashObjects([
-      id,
-      createdAt,
-      updatedAt,
-      name,
-      age,
-    ]);
+    return hashObjects([id, createdAt, updatedAt, name, age]);
   }
 
   @override
@@ -389,11 +342,7 @@ class Person extends PersonEntity {
 
 @generatedSerializable
 class PersonWithLastOrder extends PersonWithLastOrderEntity {
-  PersonWithLastOrder({
-    this.name,
-    this.lastOrderName,
-    this.lastOrderPrice,
-  });
+  PersonWithLastOrder({this.name, this.lastOrderName, this.lastOrderPrice});
 
   @override
   String? name;
@@ -410,9 +359,10 @@ class PersonWithLastOrder extends PersonWithLastOrderEntity {
     double? lastOrderPrice,
   }) {
     return PersonWithLastOrder(
-        name: name ?? this.name,
-        lastOrderName: lastOrderName ?? this.lastOrderName,
-        lastOrderPrice: lastOrderPrice ?? this.lastOrderPrice);
+      name: name ?? this.name,
+      lastOrderName: lastOrderName ?? this.lastOrderName,
+      lastOrderPrice: lastOrderPrice ?? this.lastOrderPrice,
+    );
   }
 
   @override
@@ -425,11 +375,7 @@ class PersonWithLastOrder extends PersonWithLastOrderEntity {
 
   @override
   int get hashCode {
-    return hashObjects([
-      name,
-      lastOrderName,
-      lastOrderPrice,
-    ]);
+    return hashObjects([name, lastOrderName, lastOrderPrice]);
   }
 
   @override
@@ -473,19 +419,20 @@ class PersonSerializer extends Codec<Person, Map> {
 
   static Person fromMap(Map map) {
     return Person(
-        id: map['id'] as String?,
-        createdAt: map['created_at'] != null
-            ? (map['created_at'] is DateTime
+      id: map['id'] as String?,
+      createdAt: map['created_at'] != null
+          ? (map['created_at'] is DateTime
                 ? (map['created_at'] as DateTime)
                 : DateTime.parse(map['created_at'].toString()))
-            : null,
-        updatedAt: map['updated_at'] != null
-            ? (map['updated_at'] is DateTime
+          : null,
+      updatedAt: map['updated_at'] != null
+          ? (map['updated_at'] is DateTime
                 ? (map['updated_at'] as DateTime)
                 : DateTime.parse(map['updated_at'].toString()))
-            : null,
-        name: map['name'] as String?,
-        age: map['age'] as int?);
+          : null,
+      name: map['name'] as String?,
+      age: map['age'] as int?,
+    );
   }
 
   static Map<String, dynamic> toMap(PersonEntity? model) {
@@ -497,7 +444,7 @@ class PersonSerializer extends Codec<Person, Map> {
       'created_at': model.createdAt?.toIso8601String(),
       'updated_at': model.updatedAt?.toIso8601String(),
       'name': model.name,
-      'age': model.age
+      'age': model.age,
     };
   }
 }
@@ -552,9 +499,10 @@ class PersonWithLastOrderSerializer extends Codec<PersonWithLastOrder, Map> {
 
   static PersonWithLastOrder fromMap(Map map) {
     return PersonWithLastOrder(
-        name: map['name'] as String?,
-        lastOrderName: map['last_order_name'] as String?,
-        lastOrderPrice: map['last_order_price'] as double?);
+      name: map['name'] as String?,
+      lastOrderName: map['last_order_name'] as String?,
+      lastOrderPrice: map['last_order_price'] as double?,
+    );
   }
 
   static Map<String, dynamic> toMap(PersonWithLastOrderEntity? model) {
@@ -564,7 +512,7 @@ class PersonWithLastOrderSerializer extends Codec<PersonWithLastOrder, Map> {
     return {
       'name': model.name,
       'last_order_name': model.lastOrderName,
-      'last_order_price': model.lastOrderPrice
+      'last_order_price': model.lastOrderPrice,
     };
   }
 }

@@ -30,8 +30,9 @@ void main() {
     app.errorHandler = (e, req, res) async {
       if (req.accepts('text/html', strict: true)) {
         if (e.statusCode == 404 && req.accepts('text/html', strict: true)) {
-          await res
-              .render('error', {'message': 'No file exists at ${req.uri}.'});
+          await res.render('error', {
+            'message': 'No file exists at ${req.uri}.',
+          });
         } else {
           await res.render('error', {'message': e.message});
         }
@@ -74,7 +75,9 @@ Future<void> hello(RequestContext req, ResponseContext res) {
 
 /// 404
 void throw404(RequestContext req, ResponseContext res) {
-  Zone.current
-      .handleUncaughtError('This 404 should not occur.', StackTrace.current);
+  Zone.current.handleUncaughtError(
+    'This 404 should not occur.',
+    StackTrace.current,
+  );
   throw AngelHttpException.notFound();
 }

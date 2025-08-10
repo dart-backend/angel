@@ -14,12 +14,15 @@ void main() {
   late Service<int?, Pokemon> pokemonService;
 
   setUp(() async {
-    var conn = await Connection.open(Endpoint(
+    var conn = await Connection.open(
+      Endpoint(
         host: 'localhost',
         port: 5432,
         database: 'angel_orm_service_test',
         username: Platform.environment['POSTGRES_USERNAME'] ?? 'postgres',
-        password: Platform.environment['POSTGRES_PASSWORD'] ?? 'password'));
+        password: Platform.environment['POSTGRES_PASSWORD'] ?? 'password',
+      ),
+    );
     hierarchicalLoggingEnabled = true;
     logger = Logger.detached('orm_service');
     logger.level = Level.ALL;
@@ -49,11 +52,14 @@ void main() {
   });
 
   test('create', () async {
-    var blaziken = await pokemonService.create(Pokemon(
+    var blaziken = await pokemonService.create(
+      Pokemon(
         species: 'Blaziken',
         level: 100,
         type1: PokemonType.fire,
-        type2: PokemonType.fighting));
+        type2: PokemonType.fighting,
+      ),
+    );
     print(blaziken);
     expect(blaziken.id, isNotNull);
     expect(blaziken.species, 'Blaziken');
@@ -67,17 +73,18 @@ void main() {
     late Pokemon pikachu;
 
     setUp(() async {
-      giratina = await pokemonService.create(Pokemon(
+      giratina = await pokemonService.create(
+        Pokemon(
           species: 'Giratina',
           name: 'My First Legendary',
           level: 54,
           type1: PokemonType.ghost,
-          type2: PokemonType.dragon));
-      pikachu = await pokemonService.create(Pokemon(
-        species: 'Pikachu',
-        level: 100,
-        type1: PokemonType.electric,
-      ));
+          type2: PokemonType.dragon,
+        ),
+      );
+      pikachu = await pokemonService.create(
+        Pokemon(species: 'Pikachu', level: 100, type1: PokemonType.electric),
+      );
     });
 
     group('index', () {
@@ -111,44 +118,49 @@ void main() {
       group(r'$sort', () {
         test('by name', () async {
           expect(
-              await pokemonService.index({
-                'query': {r'$sort': 'level'}
-              }),
-              [giratina, pikachu]);
+            await pokemonService.index({
+              'query': {r'$sort': 'level'},
+            }),
+            [giratina, pikachu],
+          );
         });
 
         test('map number', () async {
           expect(
-              await pokemonService.index({
-                'query': {
-                  r'$sort': {'type1': -1}
-                }
-              }),
-              [giratina, pikachu]);
+            await pokemonService.index({
+              'query': {
+                r'$sort': {'type1': -1},
+              },
+            }),
+            [giratina, pikachu],
+          );
           expect(
-              await pokemonService.index({
-                'query': {
-                  r'$sort': {'type1': 100}
-                }
-              }),
-              [pikachu, giratina]);
+            await pokemonService.index({
+              'query': {
+                r'$sort': {'type1': 100},
+              },
+            }),
+            [pikachu, giratina],
+          );
         });
 
         test('map string', () async {
           expect(
-              await pokemonService.index({
-                'query': {
-                  r'$sort': {'type1': '-1'}
-                }
-              }),
-              [giratina, pikachu]);
+            await pokemonService.index({
+              'query': {
+                r'$sort': {'type1': '-1'},
+              },
+            }),
+            [giratina, pikachu],
+          );
           expect(
-              await pokemonService.index({
-                'query': {
-                  r'$sort': {'type1': 'foo'}
-                }
-              }),
-              [pikachu, giratina]);
+            await pokemonService.index({
+              'query': {
+                r'$sort': {'type1': 'foo'},
+              },
+            }),
+            [pikachu, giratina],
+          );
         });
       });
     });
@@ -156,28 +168,32 @@ void main() {
     group('findOne', () {
       test('default', () async {
         expect(
-            await pokemonService.findOne({
-              'query': {PokemonFields.name: giratina.name}
-            }),
-            giratina);
+          await pokemonService.findOne({
+            'query': {PokemonFields.name: giratina.name},
+          }),
+          giratina,
+        );
         expect(
-            await pokemonService.findOne({
-              'query': {PokemonFields.level: pikachu.level}
-            }),
-            pikachu);
+          await pokemonService.findOne({
+            'query': {PokemonFields.level: pikachu.level},
+          }),
+          pikachu,
+        );
         expect(
-            () => pokemonService.findOne({
-                  'query': {PokemonFields.level: pikachu.level! * 3}
-                }),
-            throwsA(TypeMatcher<AngelHttpException>()));
+          () => pokemonService.findOne({
+            'query': {PokemonFields.level: pikachu.level! * 3},
+          }),
+          throwsA(TypeMatcher<AngelHttpException>()),
+        );
       });
 
       test('nonexistent throws 404', () {
         expect(
-            () => pokemonService.findOne({
-                  'query': {PokemonFields.type1: PokemonType.poison}
-                }),
-            throwsA(TypeMatcher<AngelHttpException>()));
+          () => pokemonService.findOne({
+            'query': {PokemonFields.type1: PokemonType.poison},
+          }),
+          throwsA(TypeMatcher<AngelHttpException>()),
+        );
       });
     });
 
@@ -188,16 +204,22 @@ void main() {
       });
 
       test('nonexistent throws 404', () {
-        expect(() => pokemonService.read(999),
-            throwsA(TypeMatcher<AngelHttpException>()));
+        expect(
+          () => pokemonService.read(999),
+          throwsA(TypeMatcher<AngelHttpException>()),
+        );
       });
     });
 
     test('readMany', () async {
-      expect(pokemonService.readMany([giratina.idAsInt, pikachu.idAsInt]),
-          completion([giratina, pikachu]));
       expect(
-          pokemonService.readMany([giratina.idAsInt]), completion([giratina]));
+        pokemonService.readMany([giratina.idAsInt, pikachu.idAsInt]),
+        completion([giratina, pikachu]),
+      );
+      expect(
+        pokemonService.readMany([giratina.idAsInt]),
+        completion([giratina]),
+      );
       expect(pokemonService.readMany([pikachu.idAsInt]), completion([pikachu]));
       expect(() => pokemonService.readMany([]), throwsArgumentError);
     });
@@ -205,15 +227,19 @@ void main() {
     group('update', () {
       test('default', () async {
         expect(
-            await pokemonService.update(
-                giratina.idAsInt, giratina.copyWith(name: 'Hello')),
-            giratina.copyWith(name: 'Hello'));
+          await pokemonService.update(
+            giratina.idAsInt,
+            giratina.copyWith(name: 'Hello'),
+          ),
+          giratina.copyWith(name: 'Hello'),
+        );
       });
 
       test('nonexistent throws 404', () {
         expect(
-            () => pokemonService.update(999, giratina.copyWith(name: 'Hello')),
-            throwsA(TypeMatcher<AngelHttpException>()));
+          () => pokemonService.update(999, giratina.copyWith(name: 'Hello')),
+          throwsA(TypeMatcher<AngelHttpException>()),
+        );
       });
     });
 
@@ -224,13 +250,17 @@ void main() {
       });
 
       test('nonexistent throws 404', () {
-        expect(() => pokemonService.remove(999),
-            throwsA(TypeMatcher<AngelHttpException>()));
+        expect(
+          () => pokemonService.remove(999),
+          throwsA(TypeMatcher<AngelHttpException>()),
+        );
       });
 
       test('cannot remove all unless explicitly set', () async {
-        expect(() => pokemonService.remove(null, {'provider': Providers.rest}),
-            throwsA(TypeMatcher<AngelHttpException>()));
+        expect(
+          () => pokemonService.remove(null, {'provider': Providers.rest}),
+          throwsA(TypeMatcher<AngelHttpException>()),
+        );
       });
     });
   });

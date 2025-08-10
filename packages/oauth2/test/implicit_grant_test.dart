@@ -30,17 +30,21 @@ void main() {
   test('authenticate via implicit grant', () async {
     var response = await client.get(
       Uri.parse(
-          '/oauth2/authorize?response_type=token&client_id=foo&redirect_uri=http://foo.com&state=bar'),
+        '/oauth2/authorize?response_type=token&client_id=foo&redirect_uri=http://foo.com&state=bar',
+      ),
     );
 
     print('Headers: ${response.headers}');
     expect(
-        response,
-        allOf(
-          hasStatus(302),
-          hasHeader('location',
-              'http://foo.com#access_token=foo&token_type=bearer&state=bar'),
-        ));
+      response,
+      allOf(
+        hasStatus(302),
+        hasHeader(
+          'location',
+          'http://foo.com#access_token=foo&token_type=bearer&state=bar',
+        ),
+      ),
+    );
   });
 }
 
@@ -53,19 +57,22 @@ class _AuthorizationServer
 
   @override
   Future<bool> verifyClient(
-      PseudoApplication client, String? clientSecret) async {
+    PseudoApplication client,
+    String? clientSecret,
+  ) async {
     return client.secret == clientSecret;
   }
 
   @override
   Future<void> requestAuthorizationCode(
-      PseudoApplication client,
-      String? redirectUri,
-      Iterable<String> scopes,
-      String state,
-      RequestContext req,
-      ResponseContext res,
-      bool implicit) async {
+    PseudoApplication client,
+    String? redirectUri,
+    Iterable<String> scopes,
+    String state,
+    RequestContext req,
+    ResponseContext res,
+    bool implicit,
+  ) async {
     var tok = AuthorizationTokenResponse('foo');
     var uri = completeImplicitGrant(tok, Uri.parse(redirectUri!), state: state);
     return res.redirect(uri);

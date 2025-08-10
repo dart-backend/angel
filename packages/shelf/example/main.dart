@@ -15,8 +15,11 @@ void main() async {
   var http = AngelHttp(app);
 
   // `shelf` request handler
-  var shelfHandler = createStaticHandler('.',
-      defaultDocument: 'index.html', listDirectories: true);
+  var shelfHandler = createStaticHandler(
+    '.',
+    defaultDocument: 'index.html',
+    listDirectories: true,
+  );
 
   // Use `embedShelf` to adapt a `shelf` handler for use within Angel.
   var wrappedHandler = embedShelf(shelfHandler);

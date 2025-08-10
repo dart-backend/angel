@@ -18,12 +18,13 @@ const TARGET_TEST_DATABASE = 'mariadb';
 // For MySQL/MariaDB using `mysql_client` driver
 Future<MySQLConnection> openMySqlConnection() async {
   var connection = await MySQLConnection.createConnection(
-      databaseName: 'orm_test',
-      port: 3306,
-      host: "localhost",
-      userName: Platform.environment['MYSQL_USERNAME'] ?? 'test',
-      password: Platform.environment['MYSQL_PASSWORD'] ?? 'Test123',
-      secure: !('false' == Platform.environment['MYSQL_SECURE']));
+    databaseName: 'orm_test',
+    port: 3306,
+    host: "localhost",
+    userName: Platform.environment['MYSQL_USERNAME'] ?? 'test',
+    password: Platform.environment['MYSQL_PASSWORD'] ?? 'Test123',
+    secure: !('false' == Platform.environment['MYSQL_SECURE']),
+  );
 
   await connection.connect(timeoutMs: 10000);
 
@@ -37,7 +38,9 @@ Future<QueryExecutor> createExecutor(MySQLConnection conn) async {
 }
 
 Future<MigrationRunner> createTables(
-    MySQLConnection conn, List<Migration> models) async {
+  MySQLConnection conn,
+  List<Migration> models,
+) async {
   var runner = MySqlMigrationRunner(conn, migrations: models);
   await runner.up();
 

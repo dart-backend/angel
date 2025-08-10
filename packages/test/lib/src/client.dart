@@ -22,10 +22,12 @@ const Map<String, String> _writeHeaders = const {
 final Uuid _uuid =  Uuid();*/
 
 /// Shorthand for bootstrapping a [TestClient].
-Future<TestClient> connectTo(Angel app,
-    {Map? initialSession,
-    bool autoDecodeGzip = true,
-    bool useZone = false}) async {
+Future<TestClient> connectTo(
+  Angel app, {
+  Map? initialSession,
+  bool autoDecodeGzip = true,
+  bool useZone = false,
+}) async {
   print('Load configuration');
   if (!app.environment.isProduction) {
     app.configuration.putIfAbsent('testMode', () => true);
@@ -35,9 +37,11 @@ Future<TestClient> connectTo(Angel app,
     print('Load plugins');
     await plugin(app);
   }
-  return TestClient(app,
-      autoDecodeGzip: autoDecodeGzip != false, useZone: useZone)
-    ..session.addAll(initialSession ?? {});
+  return TestClient(
+    app,
+    autoDecodeGzip: autoDecodeGzip != false,
+    useZone: useZone,
+  )..session.addAll(initialSession ?? {});
 }
 
 /// An `angel_client` that sends mock requests to a server, rather than actual HTTP transactions.
@@ -59,7 +63,7 @@ class TestClient extends client.BaseAngelClient {
   late AngelHttp _http;
 
   TestClient(this.server, {this.autoDecodeGzip = true, bool useZone = false})
-      : super(http.IOClient(), '/') {
+    : super(http.IOClient(), '/') {
     _http = AngelHttp(server, useZone: useZone);
   }
 
@@ -71,8 +75,10 @@ class TestClient extends client.BaseAngelClient {
 
   /// Opens a WebSockets connection to the server. This will automatically bind the server
   /// over HTTP, if it is not already listening. Unfortunately, WebSockets cannot be mocked (yet!).
-  Future<client.WebSockets> websocket(
-      {String path = '/ws', Duration? timeout}) async {
+  Future<client.WebSockets> websocket({
+    String path = '/ws',
+    Duration? timeout,
+  }) async {
     if (_http.server == null) await _http.startServer();
     var url = _http.uri.replace(scheme: 'ws', path: path);
     var ws = _MockWebSockets(this, url.toString());
@@ -134,25 +140,30 @@ class TestClient extends client.BaseAngelClient {
     //  keepAliveState = false;
     //}
 
-    return StreamedResponse(stream, rs.statusCode,
-        contentLength: rs.contentLength,
-        isRedirect: rs.headers['location'] != null,
-        headers: extractedHeaders,
-        persistentConnection:
-            rq.headers.value('connection')?.toLowerCase().trim() ==
-                'keep-alive',
-        //|| keepAliveState,
-        reasonPhrase: rs.reasonPhrase);
+    return StreamedResponse(
+      stream,
+      rs.statusCode,
+      contentLength: rs.contentLength,
+      isRedirect: rs.headers['location'] != null,
+      headers: extractedHeaders,
+      persistentConnection:
+          rq.headers.value('connection')?.toLowerCase().trim() == 'keep-alive',
+      //|| keepAliveState,
+      reasonPhrase: rs.reasonPhrase,
+    );
   }
 
   //@override
   late String basePath;
 
   @override
-  Stream<String> authenticateViaPopup(String url,
-      {String eventName = 'token'}) {
+  Stream<String> authenticateViaPopup(
+    String url, {
+    String eventName = 'token',
+  }) {
     throw UnsupportedError(
-        'MockClient does not support authentication via popup.');
+      'MockClient does not support authentication via popup.',
+    );
   }
 
   @override
@@ -160,11 +171,16 @@ class TestClient extends client.BaseAngelClient {
       Future.sync(() => configurer(this));
 
   @override
-  client.Service<Id, Data> service<Id, Data>(String path,
-      {Type? type, client.AngelDeserializer<Data>? deserializer}) {
+  client.Service<Id, Data> service<Id, Data>(
+    String path, {
+    Type? type,
+    client.AngelDeserializer<Data>? deserializer,
+  }) {
     var uri = path.toString().replaceAll(_straySlashes, '');
-    return _services.putIfAbsent(uri,
-            () => _MockService<Id, Data>(this, uri, deserializer: deserializer))
+    return _services.putIfAbsent(
+          uri,
+          () => _MockService<Id, Data>(this, uri, deserializer: deserializer),
+        )
         as client.Service<Id, Data>;
   }
 }
@@ -172,9 +188,11 @@ class TestClient extends client.BaseAngelClient {
 class _MockService<Id, Data> extends client.BaseAngelService<Id, Data> {
   final TestClient _app;
 
-  _MockService(this._app, String basePath,
-      {client.AngelDeserializer<Data>? deserializer})
-      : super(_app, _app, basePath, deserializer: deserializer);
+  _MockService(
+    this._app,
+    String basePath, {
+    client.AngelDeserializer<Data>? deserializer,
+  }) : super(_app, _app, basePath, deserializer: deserializer);
 
   @override
   Future<StreamedResponse> send(http.BaseRequest request) {

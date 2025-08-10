@@ -9,12 +9,17 @@ import 'package:logging/logging.dart';
 import 'package:test/test.dart';
 
 final AngelAuth<Map<String, String>> auth = AngelAuth<Map<String, String>>(
-    serializer: (user) async => '1337', deserializer: (id) async => sampleUser);
+  serializer: (user) async => '1337',
+  deserializer: (id) async => sampleUser,
+);
 //var headers = <String, String>{'accept': 'application/json'};
 var localOpts = AngelAuthOptions<Map<String, String>>(
-    failureRedirect: '/failure', successRedirect: '/success');
-var localOpts2 =
-    AngelAuthOptions<Map<String, String>>(canRespondWithJson: false);
+  failureRedirect: '/failure',
+  successRedirect: '/success',
+);
+var localOpts2 = AngelAuthOptions<Map<String, String>>(
+  canRespondWithJson: false,
+);
 
 Map<String, String> sampleUser = {'hello': 'world'};
 
@@ -51,17 +56,23 @@ void main() async {
       // => 'Woo auth'
       return 'Woo auth';
     }, middleware: [auth.authenticate('local', localOpts2)]);
-    app.post('/login', (req, res) => 'This should not be shown',
-        middleware: [auth.authenticate('local', localOpts)]);
-    app.get('/success', (req, res) => 'yep', middleware: [
-      requireAuthentication<Map<String, String>>(),
-    ]);
+    app.post(
+      '/login',
+      (req, res) => 'This should not be shown',
+      middleware: [auth.authenticate('local', localOpts)],
+    );
+    app.get(
+      '/success',
+      (req, res) => 'yep',
+      middleware: [requireAuthentication<Map<String, String>>()],
+    );
     app.get('/failure', (req, res) => 'nope');
 
     app.logger = Logger('local_test')
       ..onRecord.listen((rec) {
         print(
-            '${rec.time}: ${rec.level.name}: ${rec.loggerName}: ${rec.message}');
+          '${rec.time}: ${rec.level.name}: ${rec.loggerName}: ${rec.message}',
+        );
 
         if (rec.error != null) {
           print(rec.error);
@@ -83,8 +94,10 @@ void main() async {
   });
 
   test('can use "auth" as middleware', () async {
-    var response = await client.get(Uri.parse('$url/success'),
-        headers: {'Accept': 'application/json'});
+    var response = await client.get(
+      Uri.parse('$url/success'),
+      headers: {'Accept': 'application/json'},
+    );
     print(response.body);
     expect(response.statusCode, equals(403));
   });
@@ -93,8 +106,10 @@ void main() async {
     //var postData = {'username': 'username', 'password': 'password'};
     var encodedAuth = base64.encode(utf8.encode('username:password'));
 
-    var response = await client.post(Uri.parse('$url/login'),
-        headers: {'Authorization': 'Basic $encodedAuth'});
+    var response = await client.post(
+      Uri.parse('$url/login'),
+      headers: {'Authorization': 'Basic $encodedAuth'},
+    );
     expect(response.statusCode, equals(302));
     expect(response.headers['location'], equals('/success'));
   });
@@ -103,8 +118,10 @@ void main() async {
     //var postData = {'username': 'password', 'password': 'username'};
     var encodedAuth = base64.encode(utf8.encode('password:username'));
 
-    var response = await client.post(Uri.parse('$url/login'),
-        headers: {'Authorization': 'Basic $encodedAuth'});
+    var response = await client.post(
+      Uri.parse('$url/login'),
+      headers: {'Authorization': 'Basic $encodedAuth'},
+    );
     print('Status Code: ${response.statusCode}');
     print(response.headers);
     print(response.body);
@@ -123,8 +140,10 @@ void main() async {
   //test('allow basic', () async {
   test('basic auth with authorization', () async {
     var authString = base64.encode('username:password'.runes.toList());
-    var response = await client.get(Uri.parse('$url/hello'),
-        headers: {'authorization': 'Basic $authString'});
+    var response = await client.get(
+      Uri.parse('$url/hello'),
+      headers: {'authorization': 'Basic $authString'},
+    );
     print(response.statusCode);
     print(response.body);
     expect(response.body, equals('"Woo auth"'));
@@ -137,12 +156,18 @@ void main() async {
 
   test('force basic', () async {
     auth.strategies.clear();
-    auth.strategies['local'] =
-        LocalAuthStrategy(verifier, forceBasic: true, realm: 'test');
-    var response = await client.get(Uri.parse('$url/hello'), headers: {
-      'accept': 'application/json',
-      'content-type': 'application/json'
-    });
+    auth.strategies['local'] = LocalAuthStrategy(
+      verifier,
+      forceBasic: true,
+      realm: 'test',
+    );
+    var response = await client.get(
+      Uri.parse('$url/hello'),
+      headers: {
+        'accept': 'application/json',
+        'content-type': 'application/json',
+      },
+    );
     print('Header = ${response.headers}');
     print('Body <${response.body}>');
     var head = response.headers['www-authenticate'];

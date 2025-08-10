@@ -29,10 +29,7 @@ class TodoMigration extends Migration {
 // **************************************************************************
 
 class TodoQuery extends Query<Todo, TodoQueryWhere> {
-  TodoQuery({
-    super.parent,
-    Set<String>? trampoline,
-  }) {
+  TodoQuery({super.parent, Set<String>? trampoline}) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = TodoQueryWhere(this);
@@ -67,8 +64,8 @@ class TodoQuery extends Query<Todo, TodoQueryWhere> {
     return _selectedFields.isEmpty
         ? localFields
         : localFields
-            .where((field) => _selectedFields.contains(field))
-            .toList();
+              .where((field) => _selectedFields.contains(field))
+              .toList();
   }
 
   TodoQuery select(List<String> selectedFields) {
@@ -92,10 +89,12 @@ class TodoQuery extends Query<Todo, TodoQueryWhere> {
     }
     var model = Todo(
       id: fields.contains('id') ? row[0].toString() : null,
-      createdAt:
-          fields.contains('created_at') ? mapToNullableDateTime(row[1]) : null,
-      updatedAt:
-          fields.contains('updated_at') ? mapToNullableDateTime(row[2]) : null,
+      createdAt: fields.contains('created_at')
+          ? mapToNullableDateTime(row[1])
+          : null,
+      updatedAt: fields.contains('updated_at')
+          ? mapToNullableDateTime(row[2])
+          : null,
       isComplete: fields.contains('is_complete') ? mapToBool(row[3]) : null,
       text: fields.contains('text') ? (row[4] as String?) : null,
     );
@@ -110,26 +109,11 @@ class TodoQuery extends Query<Todo, TodoQueryWhere> {
 
 class TodoQueryWhere extends QueryWhere {
   TodoQueryWhere(TodoQuery query)
-      : id = NumericSqlExpressionBuilder<int>(
-          query,
-          'id',
-        ),
-        createdAt = DateTimeSqlExpressionBuilder(
-          query,
-          'created_at',
-        ),
-        updatedAt = DateTimeSqlExpressionBuilder(
-          query,
-          'updated_at',
-        ),
-        isComplete = BooleanSqlExpressionBuilder(
-          query,
-          'is_complete',
-        ),
-        text = StringSqlExpressionBuilder(
-          query,
-          'text',
-        );
+    : id = NumericSqlExpressionBuilder<int>(query, 'id'),
+      createdAt = DateTimeSqlExpressionBuilder(query, 'created_at'),
+      updatedAt = DateTimeSqlExpressionBuilder(query, 'updated_at'),
+      isComplete = BooleanSqlExpressionBuilder(query, 'is_complete'),
+      text = StringSqlExpressionBuilder(query, 'text');
 
   final NumericSqlExpressionBuilder<int> id;
 
@@ -143,13 +127,7 @@ class TodoQueryWhere extends QueryWhere {
 
   @override
   List<SqlExpressionBuilder> get expressionBuilders {
-    return [
-      id,
-      createdAt,
-      updatedAt,
-      isComplete,
-      text,
-    ];
+    return [id, createdAt, updatedAt, isComplete, text];
   }
 }
 
@@ -237,11 +215,12 @@ class Todo extends _Todo {
     String? text,
   }) {
     return Todo(
-        id: id ?? this.id,
-        createdAt: createdAt ?? this.createdAt,
-        updatedAt: updatedAt ?? this.updatedAt,
-        isComplete: isComplete ?? this.isComplete,
-        text: text ?? this.text);
+      id: id ?? this.id,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      isComplete: isComplete ?? this.isComplete,
+      text: text ?? this.text,
+    );
   }
 
   @override
@@ -256,13 +235,7 @@ class Todo extends _Todo {
 
   @override
   int get hashCode {
-    return hashObjects([
-      id,
-      createdAt,
-      updatedAt,
-      isComplete,
-      text,
-    ]);
+    return hashObjects([id, createdAt, updatedAt, isComplete, text]);
   }
 
   @override
@@ -306,19 +279,20 @@ class TodoSerializer extends Codec<Todo, Map> {
 
   static Todo fromMap(Map map) {
     return Todo(
-        id: map['id'] as String?,
-        createdAt: map['created_at'] != null
-            ? (map['created_at'] is DateTime
+      id: map['id'] as String?,
+      createdAt: map['created_at'] != null
+          ? (map['created_at'] is DateTime
                 ? (map['created_at'] as DateTime)
                 : DateTime.parse(map['created_at'].toString()))
-            : null,
-        updatedAt: map['updated_at'] != null
-            ? (map['updated_at'] is DateTime
+          : null,
+      updatedAt: map['updated_at'] != null
+          ? (map['updated_at'] is DateTime
                 ? (map['updated_at'] as DateTime)
                 : DateTime.parse(map['updated_at'].toString()))
-            : null,
-        isComplete: map['is_complete'] as bool? ?? false,
-        text: map['text'] as String?);
+          : null,
+      isComplete: map['is_complete'] as bool? ?? false,
+      text: map['text'] as String?,
+    );
   }
 
   static Map<String, dynamic> toMap(_Todo? model) {
@@ -330,7 +304,7 @@ class TodoSerializer extends Codec<Todo, Map> {
       'created_at': model.createdAt?.toIso8601String(),
       'updated_at': model.updatedAt?.toIso8601String(),
       'is_complete': model.isComplete,
-      'text': model.text
+      'text': model.text,
     };
   }
 }

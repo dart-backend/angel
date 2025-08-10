@@ -82,9 +82,11 @@ void main() {
         test('or clause', () async {
           var query = CarQuery()
             ..where!.make.like('Fer%')
-            ..orWhere((where) => where
-              ..familyFriendly.isTrue
-              ..make.equals('Honda'));
+            ..orWhere(
+              (where) => where
+                ..familyFriendly.isTrue
+                ..make.equals('Honda'),
+            );
           //print(query.compile({}));
           var cars = await query.get(executor);
           expect(cars, hasLength(1));
@@ -186,10 +188,11 @@ void main() {
     test('insert car', () async {
       var recalledAt = DateTime.now();
       var beetle = Car(
-          make: 'Beetle',
-          description: 'Herbie',
-          familyFriendly: true,
-          recalledAt: recalledAt);
+        make: 'Beetle',
+        description: 'Herbie',
+        familyFriendly: true,
+        recalledAt: recalledAt,
+      );
       var query = CarQuery()..values.copyFrom(beetle);
       var carOpt = await (query.insert(executor));
       expect(carOpt.isPresent, true);
@@ -213,8 +216,10 @@ void main() {
         ..recalledAt.lessThanOrEqualTo(y2k, includeTime: false);
       var whereClause = query.where?.compile(tableName: 'cars');
       //print('Where clause: $whereClause');
-      expect(whereClause,
-          'cars.family_friendly = TRUE AND cars.recalled_at <= \'2000-01-01\'');
+      expect(
+        whereClause,
+        'cars.family_friendly = TRUE AND cars.recalled_at <= \'2000-01-01\'',
+      );
     });
 
     test('parseRow', () {
@@ -230,12 +235,18 @@ void main() {
         expect(car.make, 'Mazda');
         expect(car.description, 'CX9');
         expect(car.familyFriendly, true);
-        expect(y2k.toIso8601String(),
-            startsWith(car.recalledAt!.toIso8601String()));
-        expect(y2k.toIso8601String(),
-            startsWith(car.createdAt!.toIso8601String()));
-        expect(y2k.toIso8601String(),
-            startsWith(car.updatedAt!.toIso8601String()));
+        expect(
+          y2k.toIso8601String(),
+          startsWith(car.recalledAt!.toIso8601String()),
+        );
+        expect(
+          y2k.toIso8601String(),
+          startsWith(car.createdAt!.toIso8601String()),
+        );
+        expect(
+          y2k.toIso8601String(),
+          startsWith(car.updatedAt!.toIso8601String()),
+        );
         expect(car.price, 80000.00);
       });
     });

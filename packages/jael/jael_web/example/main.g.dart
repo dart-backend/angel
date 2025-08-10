@@ -12,7 +12,7 @@ mixin _HelloJaelTemplate implements Component<dynamic> {
   DomNode render() {
     return h('div', {}, [
       h('h1', {}, [text('Hello, Jael!')]),
-      h('i', {}, [text('Current time: '), text(now.toString())])
+      h('i', {}, [text('Current time: '), text(now.toString())]),
     ]);
   }
 }

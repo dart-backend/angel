@@ -61,7 +61,7 @@ class Service<Id, Data> extends Routable {
     r'$limit',
     r'$sort',
     'page',
-    'token'
+    'token',
   ];
 
   /// Handlers that must run to ensure this service's functionality.
@@ -88,15 +88,17 @@ class Service<Id, Data> extends Routable {
   void close() {}
 
   /// An optional [readData] function can be passed to handle non-map/non-json bodies.
-  Service(
-      {FutureOr<Data> Function(RequestContext, ResponseContext)? readData}) {
+  Service({
+    FutureOr<Data> Function(RequestContext, ResponseContext)? readData,
+  }) {
     _readData = readData;
 
     _readData ??= (req, res) {
       if (req.bodyAsObject is! Data) {
         throw AngelHttpException.badRequest(
-            message:
-                'Invalid request body. Expected $Data; found ${req.bodyAsObject} instead.');
+          message:
+              'Invalid request body. Expected $Data; found ${req.bodyAsObject} instead.',
+        );
       } else {
         return req.bodyAsObject as Data;
       }
@@ -118,9 +120,10 @@ class Service<Id, Data> extends Routable {
   /// If the result is a non-empty [Iterable], [findOne] will return `it.first`, where `it` is the aforementioned [Iterable].
   ///
   /// A custom [errorMessage] may be provided.
-  Future<Data> findOne(
-      [Map<String, dynamic>? params,
-      String errorMessage = 'No record was found matching the given query.']) {
+  Future<Data> findOne([
+    Map<String, dynamic>? params,
+    String errorMessage = 'No record was found matching the given query.',
+  ]) {
     return index(params).then((result) {
       if (result.isEmpty) {
         throw AngelHttpException.notFound(message: errorMessage);
@@ -172,8 +175,11 @@ class Service<Id, Data> extends Routable {
   /// using two converter functions.
   ///
   /// Handy utility for handling data in a type-safe manner.
-  Service<Id, U> map<U>(U Function(Data) encoder, Data Function(U) decoder,
-      {FutureOr<U> Function(RequestContext, ResponseContext)? readData}) {
+  Service<Id, U> map<U>(
+    U Function(Data) encoder,
+    Data Function(U) decoder, {
+    FutureOr<U> Function(RequestContext, ResponseContext)? readData,
+  }) {
     readData ??= (req, res) async {
       var inner = await this.readData!(req, res)!;
       return encoder(inner);
@@ -240,135 +246,188 @@ class Service<Id, Data> extends Routable {
 
     if (before != null) handlers.addAll(before.handlers);
 
-    var indexMiddleware =
-        getAnnotation<Middleware>(service.index, app.container.reflector);
-    get('/', (req, res) {
-      return index(mergeMap([
-        {'query': req.queryParameters},
-        restProvider,
-        req.serviceParams
-      ]));
-    }, middleware: [
-      ...handlers,
-      ...(indexMiddleware == null) ? [] : indexMiddleware.handlers.toList()
-    ]);
+    var indexMiddleware = getAnnotation<Middleware>(
+      service.index,
+      app.container.reflector,
+    );
+    get(
+      '/',
+      (req, res) {
+        return index(
+          mergeMap([
+            {'query': req.queryParameters},
+            restProvider,
+            req.serviceParams,
+          ]),
+        );
+      },
+      middleware: [
+        ...handlers,
+        ...(indexMiddleware == null) ? [] : indexMiddleware.handlers.toList(),
+      ],
+    );
 
-    var createMiddleware =
-        getAnnotation<Middleware>(service.create, app.container.reflector);
-    post('/', (req, ResponseContext res) {
-      return req.parseBody().then((_) async {
-        return await create(
+    var createMiddleware = getAnnotation<Middleware>(
+      service.create,
+      app.container.reflector,
+    );
+    post(
+      '/',
+      (req, ResponseContext res) {
+        return req.parseBody().then((_) async {
+          return await create(
             (await readData!(req, res))!,
             mergeMap([
               {'query': req.queryParameters},
               restProvider,
-              req.serviceParams
-            ])).then((r) {
-          res.statusCode = 201;
-          return r;
+              req.serviceParams,
+            ]),
+          ).then((r) {
+            res.statusCode = 201;
+            return r;
+          });
         });
-      });
-    }, middleware: [
-      ...handlers,
-      ...(createMiddleware == null) ? [] : createMiddleware.handlers.toList()
-    ]);
+      },
+      middleware: [
+        ...handlers,
+        ...(createMiddleware == null) ? [] : createMiddleware.handlers.toList(),
+      ],
+    );
 
-    var readMiddleware =
-        getAnnotation<Middleware>(service.read, app.container.reflector);
+    var readMiddleware = getAnnotation<Middleware>(
+      service.read,
+      app.container.reflector,
+    );
 
-    get('/:id', (req, res) {
-      return read(
+    get(
+      '/:id',
+      (req, res) {
+        return read(
           parseId<Id>(req.params['id']),
           mergeMap([
             {'query': req.queryParameters},
             restProvider,
-            req.serviceParams
-          ]));
-    }, middleware: [
-      ...handlers,
-      ...(readMiddleware == null) ? [] : readMiddleware.handlers.toList()
-    ]);
+            req.serviceParams,
+          ]),
+        );
+      },
+      middleware: [
+        ...handlers,
+        ...(readMiddleware == null) ? [] : readMiddleware.handlers.toList(),
+      ],
+    );
 
-    var modifyMiddleware =
-        getAnnotation<Middleware>(service.modify, app.container.reflector);
+    var modifyMiddleware = getAnnotation<Middleware>(
+      service.modify,
+      app.container.reflector,
+    );
 
-    patch('/:id', (req, res) {
-      return req.parseBody().then((_) async {
-        return await modify(
+    patch(
+      '/:id',
+      (req, res) {
+        return req.parseBody().then((_) async {
+          return await modify(
             parseId<Id>(req.params['id']),
             (await readData!(req, res))!,
             mergeMap([
               {'query': req.queryParameters},
               restProvider,
-              req.serviceParams
-            ]));
-      });
-    }, middleware: [
-      ...handlers,
-      ...(modifyMiddleware == null) ? [] : modifyMiddleware.handlers.toList()
-    ]);
+              req.serviceParams,
+            ]),
+          );
+        });
+      },
+      middleware: [
+        ...handlers,
+        ...(modifyMiddleware == null) ? [] : modifyMiddleware.handlers.toList(),
+      ],
+    );
 
-    var updateMiddleware =
-        getAnnotation<Middleware>(service.update, app.container.reflector);
-    post('/:id', (req, res) {
-      return req.parseBody().then((_) async {
-        return await update(
+    var updateMiddleware = getAnnotation<Middleware>(
+      service.update,
+      app.container.reflector,
+    );
+    post(
+      '/:id',
+      (req, res) {
+        return req.parseBody().then((_) async {
+          return await update(
             parseId<Id>(req.params['id']),
             (await readData!(req, res))!,
             mergeMap([
               {'query': req.queryParameters},
               restProvider,
-              req.serviceParams
-            ]));
-      });
-    }, middleware: [
-      ...handlers,
-      ...(updateMiddleware == null) ? [] : updateMiddleware.handlers.toList()
-    ]);
+              req.serviceParams,
+            ]),
+          );
+        });
+      },
+      middleware: [
+        ...handlers,
+        ...(updateMiddleware == null) ? [] : updateMiddleware.handlers.toList(),
+      ],
+    );
 
-    put('/:id', (req, res) {
-      return req.parseBody().then((_) async {
-        return await update(
+    put(
+      '/:id',
+      (req, res) {
+        return req.parseBody().then((_) async {
+          return await update(
             parseId<Id>(req.params['id']),
             (await readData!(req, res))!,
             mergeMap([
               {'query': req.queryParameters},
               restProvider,
-              req.serviceParams
-            ]));
-      });
-    }, middleware: [
-      ...handlers,
-      ...(updateMiddleware == null) ? [] : updateMiddleware.handlers.toList()
-    ]);
+              req.serviceParams,
+            ]),
+          );
+        });
+      },
+      middleware: [
+        ...handlers,
+        ...(updateMiddleware == null) ? [] : updateMiddleware.handlers.toList(),
+      ],
+    );
 
-    var removeMiddleware =
-        getAnnotation<Middleware>(service.remove, app.container.reflector);
-    delete('/', (req, res) {
-      return remove(
+    var removeMiddleware = getAnnotation<Middleware>(
+      service.remove,
+      app.container.reflector,
+    );
+    delete(
+      '/',
+      (req, res) {
+        return remove(
           '' as Id,
           mergeMap([
             {'query': req.queryParameters},
             restProvider,
-            req.serviceParams
-          ]));
-    }, middleware: [
-      ...handlers,
-      ...(removeMiddleware == null) ? [] : removeMiddleware.handlers.toList()
-    ]);
+            req.serviceParams,
+          ]),
+        );
+      },
+      middleware: [
+        ...handlers,
+        ...(removeMiddleware == null) ? [] : removeMiddleware.handlers.toList(),
+      ],
+    );
 
-    delete('/:id', (req, res) {
-      return remove(
+    delete(
+      '/:id',
+      (req, res) {
+        return remove(
           parseId<Id>(req.params['id']),
           mergeMap([
             {'query': req.queryParameters},
             restProvider,
-            req.serviceParams
-          ]));
-    }, middleware: [
-      ...handlers,
-      ...(removeMiddleware == null) ? [] : removeMiddleware.handlers.toList()
-    ]);
+            req.serviceParams,
+          ]),
+        );
+      },
+      middleware: [
+        ...handlers,
+        ...(removeMiddleware == null) ? [] : removeMiddleware.handlers.toList(),
+      ],
+    );
 
     // REST compliance
     put('/', (req, res) => throw AngelHttpException.notFound());

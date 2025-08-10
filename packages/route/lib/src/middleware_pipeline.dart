@@ -31,7 +31,7 @@ class MiddlewarePipeline<T> {
   }
 
   MiddlewarePipeline(Iterable<RoutingResult<T>> routingResults)
-      : routingResults = routingResults.toList();
+    : routingResults = routingResults.toList();
 }
 
 /// Iterates through a [MiddlewarePipeline].
@@ -40,7 +40,7 @@ class MiddlewarePipelineIterator<T> implements Iterator<RoutingResult<T>> {
   final Iterator<RoutingResult<T>> _inner;
 
   MiddlewarePipelineIterator(this.pipeline)
-      : _inner = pipeline.routingResults.iterator;
+    : _inner = pipeline.routingResults.iterator;
 
   @override
   RoutingResult<T> get current => _inner.current;

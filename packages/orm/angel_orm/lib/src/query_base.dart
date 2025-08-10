@@ -29,7 +29,8 @@ abstract class QueryBase<T> {
   List<String> get fields;
 
   /// A String of all [fields], joined by a comma (`,`).
-  String get fieldSet => fields.map((k) {
+  String get fieldSet => fields
+      .map((k) {
         var cast = casts[k];
         if (!aliases.containsKey(k)) {
           return cast == null ? k : 'CAST ($k AS $cast)';
@@ -37,12 +38,15 @@ abstract class QueryBase<T> {
           var inner = cast == null ? k : '(CAST ($k AS $cast))';
           return '$inner AS ${aliases[k]}';
         }
-      }).join(', ');
+      })
+      .join(', ');
 
-  String compile(Set<String> trampoline,
-      {bool includeTableName = false,
-      String preamble = '',
-      bool withFields = true});
+  String compile(
+    Set<String> trampoline, {
+    bool includeTableName = false,
+    String preamble = '',
+    bool withFields = true,
+  });
 
   Optional<T> deserialize(List row);
 
@@ -72,7 +76,8 @@ abstract class QueryBase<T> {
   Future<Optional<T>> getOne(QueryExecutor executor) {
     //return get(executor).then((it) => it.isEmpty ?  : it.first);
     return get(executor).then(
-        (it) => it.isEmpty ? Optional.empty() : Optional.ofNullable(it.first));
+      (it) => it.isEmpty ? Optional.empty() : Optional.ofNullable(it.first),
+    );
   }
 
   Union<T> union(QueryBase<T> other) {

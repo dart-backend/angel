@@ -17,17 +17,17 @@ void main() {
     app = Angel();
     http = AngelHttp(app, useZone: false);
     var auth = AngelAuth(
-        serializer: (_) async => 'baz', deserializer: (_) async => user);
-
-    auth.strategies['local'] = LocalAuthStrategy(
-      (username, password) async {
-        if (username == 'foo' && password == 'bar') {
-          return user;
-        }
-
-        return {};
-      },
+      serializer: (_) async => 'baz',
+      deserializer: (_) async => user,
     );
+
+    auth.strategies['local'] = LocalAuthStrategy((username, password) async {
+      if (username == 'foo' && password == 'bar') {
+        return user;
+      }
+
+      return {};
+    });
 
     app.post('/auth/local', auth.authenticate('local', localOpts));
 
@@ -36,7 +36,8 @@ void main() {
     app.logger = Logger('auth_test')
       ..onRecord.listen((rec) {
         print(
-            '${rec.time}: ${rec.level.name}: ${rec.loggerName}: ${rec.message}');
+          '${rec.time}: ${rec.level.name}: ${rec.loggerName}: ${rec.message}',
+        );
       });
 
     var server = await http.startServer();

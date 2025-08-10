@@ -13,7 +13,9 @@ import 'common.dart';
 
 @Middleware([interceptor])
 Future<String> testMiddlewareMetadata(
-    RequestContext req, ResponseContext res) async {
+  RequestContext req,
+  ResponseContext res,
+) async {
   return 'This should not be shown.';
 }
 
@@ -72,19 +74,25 @@ void main() {
 
     app.mount('/nes', nested);
     app.get('/meta', testMiddlewareMetadata);
-    app.get('/intercepted', (req, res) => 'This should not be shown',
-        middleware: [interceptor]);
+    app.get(
+      '/intercepted',
+      (req, res) => 'This should not be shown',
+      middleware: [interceptor],
+    );
     app.get('/hello', (req, res) => 'world');
     app.get('/name/:first/last/:last', (req, res) => req.params);
     app.post(
-        '/lambda',
-        (RequestContext req, res) =>
-            req.parseBody().then((_) => req.bodyAsMap));
+      '/lambda',
+      (RequestContext req, res) => req.parseBody().then((_) => req.bodyAsMap),
+    );
     app.mount('/todos/:id', todos);
     app
-        .get('/greet/:name',
-            (RequestContext req, res) async => "Hello ${req.params['name']}")
-        .name = 'Named routes';
+            .get(
+              '/greet/:name',
+              (RequestContext req, res) async => "Hello ${req.params['name']}",
+            )
+            .name =
+        'Named routes';
     app.get('/named', (req, ResponseContext res) async {
       await res.redirectTo('Named routes', {'name': 'tests'});
     });
@@ -105,8 +113,10 @@ void main() {
       };
     }
 
-    app.chain([write('a')]).chain([write('b'), write('c')]).get(
-        '/chained', (req, res) => res.close());
+    app
+        .chain([write('a')])
+        .chain([write('b'), write('c')])
+        .get('/chained', (req, res) => res.close());
 
     app.fallback((req, res) => 'MJ');
 
@@ -169,8 +179,11 @@ void main() {
   test('Can serialize function result as JSON', () async {
     Map headers = <String, String>{'Content-Type': 'application/json'};
     var postData = json.encode({'it': 'works'});
-    var response = await client.post(Uri.parse('$url/lambda'),
-        headers: headers as Map<String, String>, body: postData);
+    var response = await client.post(
+      Uri.parse('$url/lambda'),
+      headers: headers as Map<String, String>,
+      body: postData,
+    );
     print('Response: ${response.body}');
     expect(json.decode(response.body)['it'], equals('works'));
   });
@@ -197,8 +210,9 @@ void main() {
   });
 
   test('Match routes, even with query params', () async {
-    var response = await client
-        .get(Uri.parse('$url/log?foo=bar&bar=baz&baz.foo=bar&baz.bar=foo'));
+    var response = await client.get(
+      Uri.parse('$url/log?foo=bar&bar=baz&baz.foo=bar&baz.bar=foo'),
+    );
     print(response.body);
     expect(json.decode(response.body), equals('Logged'));
 

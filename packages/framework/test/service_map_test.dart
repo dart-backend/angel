@@ -12,14 +12,9 @@ void main() {
   });
 
   test('create', () async {
-    var result = await mapped.create(
-      Todo(text: 'hello', complete: false),
-    );
+    var result = await mapped.create(Todo(text: 'hello', complete: false));
     print(result);
-    expect(
-      result,
-      Todo(text: 'hello', complete: false),
-    );
+    expect(result, Todo(text: 'hello', complete: false));
   });
 
   group('after create', () {
@@ -63,9 +58,10 @@ class Todo {
 
   static Todo fromMap(Map<String, dynamic> json) {
     return Todo(
-        id: json['id'] as String?,
-        text: json['text'] as String?,
-        complete: json['complete'] as bool?);
+      id: json['id'] as String?,
+      text: json['text'] as String?,
+      complete: json['complete'] as bool?,
+    );
   }
 
   static Map<String, dynamic> toMap(Todo model) {

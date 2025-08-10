@@ -23,11 +23,6 @@ void main() {
     print('Response #1: $body1');
     print('Response #2: $body2');
     print('Response #3: $body3');
-    expect(
-        body1,
-        allOf(
-          isNot(body2),
-          equals(body3),
-        ));
+    expect(body1, allOf(isNot(body2), equals(body3)));
   });
 }

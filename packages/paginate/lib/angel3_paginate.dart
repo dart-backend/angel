@@ -53,15 +53,16 @@ class Paginator<T> {
     it = it.take(itemsPerPage);
     var last = _lastPage();
     // print('cur: $_page, last: $last');
-    return _PaginationResultImpl(it,
-        currentPage: _page + 1,
-        previousPage: _page <= 0 ? -1 : _page,
-        nextPage: _page >= last - 1 ? -1 : _page + 2,
-        startIndex: it.isEmpty ? -1 : offset,
-        endIndex: offset + it.length - 1,
-        itemsPerPage:
-            itemsPerPage < _items.length ? itemsPerPage : _items.length,
-        total: len);
+    return _PaginationResultImpl(
+      it,
+      currentPage: _page + 1,
+      previousPage: _page <= 0 ? -1 : _page,
+      nextPage: _page >= last - 1 ? -1 : _page + 2,
+      startIndex: it.isEmpty ? -1 : offset,
+      endIndex: offset + it.length - 1,
+      itemsPerPage: itemsPerPage < _items.length ? itemsPerPage : _items.length,
+      total: len,
+    );
   }
 
   PaginationResult<T> _getPage() {
@@ -113,14 +114,16 @@ class Paginator<T> {
 /// Stores the result of a pagination.
 abstract class PaginationResult<T> {
   factory PaginationResult.fromMap(Map<String, dynamic> map) =>
-      _PaginationResultImpl((map['data'] as List).cast<T>(),
-          currentPage: map['current_page'] as int?,
-          endIndex: map['end_index'] as int?,
-          itemsPerPage: map['items_per_page'] as int?,
-          nextPage: map['next_page'] as int?,
-          previousPage: map['previous_page'] as int?,
-          startIndex: map['start_index'] as int?,
-          total: map['total'] as int?);
+      _PaginationResultImpl(
+        (map['data'] as List).cast<T>(),
+        currentPage: map['current_page'] as int?,
+        endIndex: map['end_index'] as int?,
+        itemsPerPage: map['items_per_page'] as int?,
+        nextPage: map['next_page'] as int?,
+        previousPage: map['previous_page'] as int?,
+        startIndex: map['start_index'] as int?,
+        total: map['total'] as int?,
+      );
 
   Iterable<T> get data;
 
@@ -148,14 +151,16 @@ class _PaginationResultImpl<T> implements PaginationResult<T> {
   @override
   final int? currentPage;
 
-  _PaginationResultImpl(this._data,
-      {this.currentPage,
-      this.endIndex,
-      this.itemsPerPage,
-      this.nextPage,
-      this.previousPage,
-      this.startIndex,
-      this.total});
+  _PaginationResultImpl(
+    this._data, {
+    this.currentPage,
+    this.endIndex,
+    this.itemsPerPage,
+    this.nextPage,
+    this.previousPage,
+    this.startIndex,
+    this.total,
+  });
 
   @override
   Iterable<T> get data => _cachedData ?? (_cachedData = List<T>.from(_data));
@@ -188,7 +193,7 @@ class _PaginationResultImpl<T> implements PaginationResult<T> {
       'next_page': nextPage,
       'start_index': startIndex,
       'end_index': endIndex,
-      'data': data
+      'data': data,
     };
   }
 }

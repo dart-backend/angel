@@ -24,12 +24,13 @@ class AngelHttpException implements Exception {
   /// An HTTP status code this exception will throw.
   int statusCode;
 
-  AngelHttpException(
-      {this.message = '500 Internal Server Error',
-      this.stackTrace,
-      this.statusCode = 500,
-      this.error,
-      List<String> errors = const []}) {
+  AngelHttpException({
+    this.message = '500 Internal Server Error',
+    this.stackTrace,
+    this.statusCode = 500,
+    this.error,
+    List<String> errors = const [],
+  }) {
     this.errors.addAll(errors);
   }
 
@@ -38,7 +39,7 @@ class AngelHttpException implements Exception {
       'is_error': true,
       'status_code': statusCode,
       'message': message,
-      'errors': errors
+      'errors': errors,
     };
   }
 
@@ -64,20 +65,20 @@ class AngelHttpException implements Exception {
 
   /// Throws a 400 Bad Request error, including an optional arrray of (validation?)
   /// errors you specify.
-  factory AngelHttpException.badRequest(
-          {String message = '400 Bad Request',
-          List<String> errors = const []}) =>
-      AngelHttpException(message: message, errors: errors, statusCode: 400);
+  factory AngelHttpException.badRequest({
+    String message = '400 Bad Request',
+    List<String> errors = const [],
+  }) => AngelHttpException(message: message, errors: errors, statusCode: 400);
 
   /// Throws a 401 Not Authenticated error.
-  factory AngelHttpException.notAuthenticated(
-          {String message = '401 Not Authenticated'}) =>
-      AngelHttpException(message: message, statusCode: 401);
+  factory AngelHttpException.notAuthenticated({
+    String message = '401 Not Authenticated',
+  }) => AngelHttpException(message: message, statusCode: 401);
 
   /// Throws a 402 Payment Required error.
-  factory AngelHttpException.paymentRequired(
-          {String message = '402 Payment Required'}) =>
-      AngelHttpException(message: message, statusCode: 402);
+  factory AngelHttpException.paymentRequired({
+    String message = '402 Payment Required',
+  }) => AngelHttpException(message: message, statusCode: 402);
 
   /// Throws a 403 Forbidden error.
   factory AngelHttpException.forbidden({String message = '403 Forbidden'}) =>
@@ -88,14 +89,14 @@ class AngelHttpException implements Exception {
       AngelHttpException(message: message, statusCode: 404);
 
   /// Throws a 405 Method Not Allowed error.
-  factory AngelHttpException.methodNotAllowed(
-          {String message = '405 Method Not Allowed'}) =>
-      AngelHttpException(message: message, statusCode: 405);
+  factory AngelHttpException.methodNotAllowed({
+    String message = '405 Method Not Allowed',
+  }) => AngelHttpException(message: message, statusCode: 405);
 
   /// Throws a 406 Not Acceptable error.
-  factory AngelHttpException.notAcceptable(
-          {String message = '406 Not Acceptable'}) =>
-      AngelHttpException(message: message, statusCode: 406);
+  factory AngelHttpException.notAcceptable({
+    String message = '406 Not Acceptable',
+  }) => AngelHttpException(message: message, statusCode: 406);
 
   /// Throws a 408 Timeout error.
   factory AngelHttpException.methodTimeout({String message = '408 Timeout'}) =>
@@ -106,17 +107,17 @@ class AngelHttpException implements Exception {
       AngelHttpException(message: message, statusCode: 409);
 
   /// Throws a 422 Not Processable error.
-  factory AngelHttpException.notProcessable(
-          {String message = '422 Not Processable'}) =>
-      AngelHttpException(message: message, statusCode: 422);
+  factory AngelHttpException.notProcessable({
+    String message = '422 Not Processable',
+  }) => AngelHttpException(message: message, statusCode: 422);
 
   /// Throws a 501 Not Implemented error.
-  factory AngelHttpException.notImplemented(
-          {String message = '501 Not Implemented'}) =>
-      AngelHttpException(message: message, statusCode: 501);
+  factory AngelHttpException.notImplemented({
+    String message = '501 Not Implemented',
+  }) => AngelHttpException(message: message, statusCode: 501);
 
   /// Throws a 503 Unavailable error.
-  factory AngelHttpException.unavailable(
-          {String message = '503 Unavailable'}) =>
-      AngelHttpException(message: message, statusCode: 503);
+  factory AngelHttpException.unavailable({
+    String message = '503 Unavailable',
+  }) => AngelHttpException(message: message, statusCode: 503);
 }

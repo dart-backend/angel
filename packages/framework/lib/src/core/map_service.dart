@@ -22,12 +22,12 @@ class MapService extends Service<String?, Map<String, dynamic>> {
 
   final List<Map<String, dynamic>> items = [];
 
-  MapService(
-      {this.allowRemoveAll = false,
-      this.allowQuery = true,
-      this.autoIdAndDateFields = true,
-      this.autoSnakeCaseNames = true})
-      : super();
+  MapService({
+    this.allowRemoveAll = false,
+    this.allowQuery = true,
+    this.autoIdAndDateFields = true,
+    this.autoSnakeCaseNames = true,
+  }) : super();
 
   String get createdAtKey =>
       autoSnakeCaseNames == false ? 'createdAt' : 'created_at';
@@ -54,31 +54,42 @@ class MapService extends Service<String?, Map<String, dynamic>> {
     } else {
       var query = params['query'] as Map?;
 
-      return Future.value(items.where((item) {
-        for (var key in query!.keys) {
-          if (!item.containsKey(key)) {
-            return false;
-          } else if (item[key] != query[key]) {
-            return false;
+      return Future.value(
+        items.where((item) {
+          for (var key in query!.keys) {
+            if (!item.containsKey(key)) {
+              return false;
+            } else if (item[key] != query[key]) {
+              return false;
+            }
           }
-        }
 
-        return true;
-      }).toList());
+          return true;
+        }).toList(),
+      );
     }
   }
 
   @override
-  Future<Map<String, dynamic>> read(String? id,
-      [Map<String, dynamic>? params]) {
-    return Future.value(items.firstWhere(_matchesId(id),
+  Future<Map<String, dynamic>> read(
+    String? id, [
+    Map<String, dynamic>? params,
+  ]) {
+    return Future.value(
+      items.firstWhere(
+        _matchesId(id),
         orElse: (() => throw AngelHttpException.notFound(
-            message: 'No record found for ID $id'))));
+          message: 'No record found for ID $id',
+        )),
+      ),
+    );
   }
 
   @override
-  Future<Map<String, dynamic>> create(Map<String, dynamic> data,
-      [Map<String, dynamic>? params]) {
+  Future<Map<String, dynamic>> create(
+    Map<String, dynamic> data, [
+    Map<String, dynamic>? params,
+  ]) {
     var now = DateTime.now().toIso8601String();
     var result = Map<String, dynamic>.from(data);
 
@@ -93,8 +104,11 @@ class MapService extends Service<String?, Map<String, dynamic>> {
   }
 
   @override
-  Future<Map<String, dynamic>> modify(String? id, Map<String, dynamic> data,
-      [Map<String, dynamic>? params]) {
+  Future<Map<String, dynamic>> modify(
+    String? id,
+    Map<String, dynamic> data, [
+    Map<String, dynamic>? params,
+  ]) {
     //if (data is! Map) {
     //  throw AngelHttpException.badRequest(
     //      message:
@@ -116,8 +130,11 @@ class MapService extends Service<String?, Map<String, dynamic>> {
   }
 
   @override
-  Future<Map<String, dynamic>> update(String? id, Map<String, dynamic> data,
-      [Map<String, dynamic>? params]) {
+  Future<Map<String, dynamic>> update(
+    String? id,
+    Map<String, dynamic> data, [
+    Map<String, dynamic>? params,
+  ]) {
     //if (data is! Map) {
     //  throw AngelHttpException.badRequest(
     //      message:
@@ -128,7 +145,8 @@ class MapService extends Service<String?, Map<String, dynamic>> {
     return read(id).then((old) {
       if (!items.remove(old)) {
         throw AngelHttpException.notFound(
-            message: 'No record found for ID $id');
+          message: 'No record found for ID $id',
+        );
       }
 
       var result = Map<String, dynamic>.from(data);
@@ -146,14 +164,17 @@ class MapService extends Service<String?, Map<String, dynamic>> {
   }
 
   @override
-  Future<Map<String, dynamic>> remove(String? id,
-      [Map<String, dynamic>? params]) {
+  Future<Map<String, dynamic>> remove(
+    String? id, [
+    Map<String, dynamic>? params,
+  ]) {
     if (id == null || id == 'null') {
       // Remove everything...
       if (!(allowRemoveAll == true ||
           params?.containsKey('provider') != true)) {
         throw AngelHttpException.forbidden(
-            message: 'Clients are not allowed to delete all items.');
+          message: 'Clients are not allowed to delete all items.',
+        );
       } else {
         items.clear();
         return Future.value({});
@@ -165,7 +186,8 @@ class MapService extends Service<String?, Map<String, dynamic>> {
         return result;
       } else {
         throw AngelHttpException.notFound(
-            message: 'No record found for ID $id');
+          message: 'No record found for ID $id',
+        );
       }
     });
   }

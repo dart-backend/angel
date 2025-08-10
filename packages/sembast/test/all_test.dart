@@ -45,8 +45,10 @@ void main() async {
     var input = await service.create({'bar': 'baz', 'yes': 'no'});
     var id = input['id'] as String;
     var output = await service.modify(id, {'bar': 'quux'});
-    expect(SplayTreeMap.from(output),
-        SplayTreeMap.from({'id': id, 'bar': 'quux', 'yes': 'no'}));
+    expect(
+      SplayTreeMap.from(output),
+      SplayTreeMap.from({'id': id, 'bar': 'quux', 'yes': 'no'}),
+    );
     expect(await service.read(id), output);
   });
 
@@ -76,20 +78,32 @@ void main() async {
   });
 
   test('cannot remove all unless explicitly set', () async {
-    expect(() => service.remove(null, {'provider': Providers.rest}),
-        throwsA(const TypeMatcher<AngelHttpException>()));
     expect(
-        () => service.remove(null, {'provider': Providers.rest}),
-        throwsA(predicate(
-            (dynamic x) => x is AngelHttpException && x.statusCode == 403,
-            'throws forbidden')));
-    expect(() => service.remove('null', {'provider': Providers.rest}),
-        throwsA(const TypeMatcher<AngelHttpException>()));
+      () => service.remove(null, {'provider': Providers.rest}),
+      throwsA(const TypeMatcher<AngelHttpException>()),
+    );
     expect(
-        () => service.remove('null', {'provider': Providers.rest}),
-        throwsA(predicate(
-            (dynamic x) => x is AngelHttpException && x.statusCode == 403,
-            'throws forbidden')));
+      () => service.remove(null, {'provider': Providers.rest}),
+      throwsA(
+        predicate(
+          (dynamic x) => x is AngelHttpException && x.statusCode == 403,
+          'throws forbidden',
+        ),
+      ),
+    );
+    expect(
+      () => service.remove('null', {'provider': Providers.rest}),
+      throwsA(const TypeMatcher<AngelHttpException>()),
+    );
+    expect(
+      () => service.remove('null', {'provider': Providers.rest}),
+      throwsA(
+        predicate(
+          (dynamic x) => x is AngelHttpException && x.statusCode == 403,
+          'throws forbidden',
+        ),
+      ),
+    );
   });
 
   test('can remove all on server side', () async {
@@ -107,7 +121,9 @@ void main() async {
   });
 
   test('remove nonexistent', () async {
-    expect(() => service.remove('440'),
-        throwsA(const TypeMatcher<AngelHttpException>()));
+    expect(
+      () => service.remove('440'),
+      throwsA(const TypeMatcher<AngelHttpException>()),
+    );
   });
 }

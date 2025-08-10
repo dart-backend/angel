@@ -8,11 +8,12 @@ const Duration threeDays = Duration(days: 3);
 void main() {
   late Cookie defaultCookie;
   var auth = AngelAuth(
-      secureCookies: true,
-      cookieDomain: 'SECURE',
-      jwtLifeSpan: threeDays.inMilliseconds,
-      serializer: (u) => u,
-      deserializer: (u) => u);
+    secureCookies: true,
+    cookieDomain: 'SECURE',
+    jwtLifeSpan: threeDays.inMilliseconds,
+    serializer: (u) => u,
+    deserializer: (u) => u,
+  );
 
   setUp(() => defaultCookie = Cookie('a', 'b'));
 

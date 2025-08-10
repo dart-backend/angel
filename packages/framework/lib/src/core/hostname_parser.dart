@@ -7,12 +7,13 @@ class HostnameSyntaxParser {
   final _safe = RegExp(r'[0-9a-zA-Z-_:]+');
 
   HostnameSyntaxParser(String hostname)
-      : _scanner = SpanScanner(hostname, sourceUrl: hostname);
+    : _scanner = SpanScanner(hostname, sourceUrl: hostname);
 
   FormatException _formatExc(String message) {
     var span = _scanner.lastSpan ?? _scanner.emptySpan;
     return FormatException(
-        '${span.start.toolString}: $message\n${span.highlight(color: true)}');
+      '${span.start.toolString}: $message\n${span.highlight(color: true)}',
+    );
   }
 
   RegExp parse() {

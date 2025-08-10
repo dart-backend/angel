@@ -4,9 +4,12 @@ import 'package:angel3_http_exception/angel3_http_exception.dart';
 class AuthorizationException extends AngelHttpException {
   final ErrorResponse errorResponse;
 
-  AuthorizationException(this.errorResponse,
-      {super.stackTrace, int? statusCode, super.error})
-      : super(message: '', statusCode: statusCode ?? 400);
+  AuthorizationException(
+    this.errorResponse, {
+    super.stackTrace,
+    int? statusCode,
+    super.error,
+  }) : super(message: '', statusCode: statusCode ?? 400);
 
   @override
   Map toJson() {

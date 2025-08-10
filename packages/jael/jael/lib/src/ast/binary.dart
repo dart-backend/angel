@@ -38,7 +38,8 @@ class BinaryExpression extends Expression {
         return l ?? r;
       default:
         throw UnsupportedError(
-            'Unsupported binary operator: "${operator.span.text}".');
+          'Unsupported binary operator: "${operator.span.text}".',
+        );
     }
   }
 

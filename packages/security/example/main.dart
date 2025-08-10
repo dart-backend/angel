@@ -16,8 +16,11 @@ void main() async {
   // queries per 30 seconds.
   //
   // In this case, we rate limit users by IP address.
-  var rateLimiter =
-      InMemoryRateLimiter(5, Duration(seconds: 30), (req, res) => req.ip);
+  var rateLimiter = InMemoryRateLimiter(
+    5,
+    Duration(seconds: 30),
+    (req, res) => req.ip,
+  );
 
   // `RateLimiter.handleRequest` is a middleware, and can be used anywhere
   // a middleware can be used. In this case, we apply the rate limiter to

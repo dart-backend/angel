@@ -7,7 +7,7 @@ export 'package:quiver/core.dart' show hashObjects;
 /// Excludes a field from being excluded.
 class Exclude extends SerializableField {
   const Exclude({super.canDeserialize, super.canSerialize})
-      : super(exclude: true);
+    : super(exclude: true);
 }
 
 /// No longer necessary, as this is the default.
@@ -66,25 +66,27 @@ class SerializableField {
   /// specify `serializesTo: String`.
   final Type? serializesTo;
 
-  const SerializableField(
-      {this.alias,
-      this.defaultValue,
-      this.serializer,
-      this.deserializer,
-      this.errorMessage,
-      this.isNullable = true,
-      this.exclude = false,
-      this.canDeserialize = false,
-      this.canSerialize = false,
-      this.serializesTo});
+  const SerializableField({
+    this.alias,
+    this.defaultValue,
+    this.serializer,
+    this.deserializer,
+    this.errorMessage,
+    this.isNullable = true,
+    this.exclude = false,
+    this.canDeserialize = false,
+    this.canSerialize = false,
+    this.serializesTo,
+  });
 }
 
 /// Marks a class as eligible for serialization.
 class Serializable {
-  const Serializable(
-      {this.serializers = const [Serializers.map, Serializers.json],
-      this.autoSnakeCaseNames = true,
-      this.includeAnnotations = const []});
+  const Serializable({
+    this.serializers = const [Serializers.map, Serializers.json],
+    this.autoSnakeCaseNames = true,
+    this.includeAnnotations = const [],
+  });
 
   /// A list of enabled serialization modes.
   ///

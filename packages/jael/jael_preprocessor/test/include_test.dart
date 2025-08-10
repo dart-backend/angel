@@ -24,18 +24,24 @@ void main() {
 
   test('includes are expanded', () async {
     var file = fileSystem.file('c.jl');
-    var original = jael.parseDocument(await file.readAsString(),
-        sourceUrl: file.uri, onError: (e) => throw e)!;
-    var processed = await jael.resolveIncludes(original,
-        fileSystem.directory(fileSystem.currentDirectory), (e) => throw e);
+    var original = jael.parseDocument(
+      await file.readAsString(),
+      sourceUrl: file.uri,
+      onError: (e) => throw e,
+    )!;
+    var processed = await jael.resolveIncludes(
+      original,
+      fileSystem.directory(fileSystem.currentDirectory),
+      (e) => throw e,
+    );
     var buf = CodeBuffer();
     var scope = SymbolTable();
     const jael.Renderer().render(processed!, buf, scope);
     print(buf);
 
     expect(
-        buf.toString(),
-        '''
+      buf.toString(),
+      '''
 <u>
   <i>
     <b>
@@ -44,6 +50,7 @@ void main() {
   </i>
 </u>
 '''
-            .trim());
+          .trim(),
+    );
   });
 }

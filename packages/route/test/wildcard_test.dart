@@ -18,8 +18,9 @@ void main() {
   });
 
   test('match if segments before', () {
-    var result =
-        router.resolveAbsolute('/isnt/she/fierce%20harmonica%solo').first;
+    var result = router
+        .resolveAbsolute('/isnt/she/fierce%20harmonica%solo')
+        .first;
     expect(result.handlers, ['lovely']);
   });
 

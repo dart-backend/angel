@@ -45,7 +45,7 @@ void main() {
       UserMigration(),
       RoleMigration(),
       RoleUserMigration(),
-      RoleUserMigration()
+      RoleUserMigration(),
     ]);
 
     var canPubQuery = RoleQuery()..values.name = 'can_pub';

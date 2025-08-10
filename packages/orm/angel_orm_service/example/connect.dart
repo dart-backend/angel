@@ -4,12 +4,15 @@ import 'package:angel3_orm_postgres/angel3_orm_postgres.dart';
 import 'package:postgres/postgres.dart';
 
 Future<Connection> dbConnection() async {
-  return Connection.open(Endpoint(
+  return Connection.open(
+    Endpoint(
       host: 'localhost',
       port: 5432,
       database: 'angel_orm_service_test',
       username: Platform.environment['POSTGRES_USERNAME'] ?? 'postgres',
-      password: Platform.environment['POSTGRES_PASSWORD'] ?? 'password'));
+      password: Platform.environment['POSTGRES_PASSWORD'] ?? 'password',
+    ),
+  );
 }
 
 Future<PostgreSqlExecutor> connect() async {

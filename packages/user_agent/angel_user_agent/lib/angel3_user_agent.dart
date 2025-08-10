@@ -11,7 +11,8 @@ bool parseUserAgent(RequestContext req, ResponseContext res) {
 
     if (agentString?.trim().isNotEmpty != true) {
       throw AngelHttpException.badRequest(
-          message: 'User-Agent header is required.');
+        message: 'User-Agent header is required.',
+      );
     } else if (agentString != null) {
       var userAgent = UserAgent(agentString);
       container.registerSingleton<UserAgent>(userAgent);

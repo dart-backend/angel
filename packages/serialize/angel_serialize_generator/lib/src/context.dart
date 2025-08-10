@@ -72,12 +72,15 @@ class BuildContext {
   /// The name of the field that identifies data of this model type.
   String primaryKeyName = 'id';
 
-  BuildContext(this.annotation, this.clazz,
-      {this.originalClassName,
-      this.sourceFilename,
-      this.autoSnakeCaseNames = true,
-      this.autoIdAndDateFields = true,
-      this.includeAnnotations = const <DartObject>[]});
+  BuildContext(
+    this.annotation,
+    this.clazz, {
+    this.originalClassName,
+    this.sourceFilename,
+    this.autoSnakeCaseNames = true,
+    this.autoIdAndDateFields = true,
+    this.includeAnnotations = const <DartObject>[],
+  });
 
   /// The name of the generated class.
   String? get modelClassName => getGeneratedModelClassName(originalClassName!);
@@ -88,8 +91,9 @@ class BuildContext {
       throw ArgumentError('Model class cannot be null');
     }
 
-    _modelClassNameRecase ??=
-        ReCase(getGeneratedModelClassName(modelClassName!));
+    _modelClassNameRecase ??= ReCase(
+      getGeneratedModelClassName(modelClassName!),
+    );
     return _modelClassNameRecase!;
   }
 
@@ -132,15 +136,16 @@ class SerializableFieldMirror {
   final bool exclude;
   final DartType? serializesTo;
 
-  SerializableFieldMirror(
-      {this.alias,
-      this.defaultValue,
-      this.serializer,
-      this.deserializer,
-      this.errorMessage,
-      this.isNullable = false,
-      this.canDeserialize = true,
-      this.canSerialize = true,
-      this.exclude = false,
-      this.serializesTo});
+  SerializableFieldMirror({
+    this.alias,
+    this.defaultValue,
+    this.serializer,
+    this.deserializer,
+    this.errorMessage,
+    this.isNullable = false,
+    this.canDeserialize = true,
+    this.canSerialize = true,
+    this.exclude = false,
+    this.serializesTo,
+  });
 }

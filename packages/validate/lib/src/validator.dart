@@ -82,8 +82,9 @@ class Validator extends Matcher {
           requiredFields.add(fieldName);
         }
 
-        var tmpIterable =
-            schema[keys] is Iterable ? schema[keys] : [schema[keys]];
+        var tmpIterable = schema[keys] is Iterable
+            ? schema[keys]
+            : [schema[keys]];
         var iterable = [];
 
         void addTo(x) {
@@ -111,9 +112,11 @@ class Validator extends Matcher {
 
   Validator.empty();
 
-  Validator(Map<String, dynamic> schema,
-      {Map<String, dynamic> defaultValues = const {},
-      Map<String, dynamic> customErrorMessages = const {}}) {
+  Validator(
+    Map<String, dynamic> schema, {
+    Map<String, dynamic> defaultValues = const {},
+    Map<String, dynamic> customErrorMessages = const {},
+  }) {
     this.defaultValues.addAll(defaultValues);
     this.customErrorMessages.addAll(customErrorMessages);
     _importSchema(schema);
@@ -169,10 +172,9 @@ class Validator extends Matcher {
         for (var matcher in rulesList) {
           if (matcher is ContextValidator) {
             if (!matcher.validate(key, input)) {
-              errors.add(matcher
-                  .errorMessage(description, key, input)
-                  .toString()
-                  .trim());
+              errors.add(
+                matcher.errorMessage(description, key, input).toString().trim(),
+              );
               valid = false;
             }
           }
@@ -259,8 +261,10 @@ class Validator extends Matcher {
   /// Validates input data, and throws an error if it is invalid.
   ///
   /// Otherwise, the filtered data is returned.
-  Map<String, dynamic> enforce(Map inputData,
-      {String errorMessage = 'Invalid data.'}) {
+  Map<String, dynamic> enforce(
+    Map inputData, {
+    String errorMessage = 'Invalid data.',
+  }) {
     var result = check(inputData);
 
     if (result._errors.isNotEmpty) {
@@ -277,10 +281,12 @@ class Validator extends Matcher {
       enforce(autoParse(inputData, fields));
 
   /// Creates a copy with additional validation rules.
-  Validator extend(Map<String, dynamic> schema,
-      {Map<String, dynamic> defaultValues = const {},
-      Map<String, dynamic> customErrorMessages = const {},
-      bool overwrite = false}) {
+  Validator extend(
+    Map<String, dynamic> schema, {
+    Map<String, dynamic> defaultValues = const {},
+    Map<String, dynamic> customErrorMessages = const {},
+    bool overwrite = false,
+  }) {
     var tmpSchema = <String, dynamic>{};
     var child = Validator.empty()
       ..defaultValues.addAll(this.defaultValues)
@@ -404,11 +410,12 @@ class ValidationException extends AngelHttpException {
   //final String message;
 
   ValidationException(String message, {Iterable<String> errors = const []})
-      : super(
-            message: message,
-            statusCode: 400,
-            errors: (errors).toSet().toList(),
-            stackTrace: StackTrace.current) {
+    : super(
+        message: message,
+        statusCode: 400,
+        errors: (errors).toSet().toList(),
+        stackTrace: StackTrace.current,
+      ) {
     //this.errors.addAll(errors.toSet());
   }
 
@@ -424,7 +431,7 @@ class ValidationException extends AngelHttpException {
 
     var messages = [
       '${errors.length} validation errors:\n',
-      ...errors.map((error) => '* $error')
+      ...errors.map((error) => '* $error'),
     ];
 
     return messages.join('\n');

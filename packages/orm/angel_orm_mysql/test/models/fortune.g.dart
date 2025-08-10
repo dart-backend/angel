@@ -26,10 +26,7 @@ class FortuneMigration extends Migration {
 // **************************************************************************
 
 class FortuneQuery extends Query<Fortune, FortuneQueryWhere> {
-  FortuneQuery({
-    super.parent,
-    Set<String>? trampoline,
-  }) {
+  FortuneQuery({super.parent, Set<String>? trampoline}) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = FortuneQueryWhere(this);
@@ -54,15 +51,12 @@ class FortuneQuery extends Query<Fortune, FortuneQueryWhere> {
 
   @override
   List<String> get fields {
-    const localFields = [
-      'id',
-      'message',
-    ];
+    const localFields = ['id', 'message'];
     return _selectedFields.isEmpty
         ? localFields
         : localFields
-            .where((field) => _selectedFields.contains(field))
-            .toList();
+              .where((field) => _selectedFields.contains(field))
+              .toList();
   }
 
   FortuneQuery select(List<String> selectedFields) {
@@ -99,14 +93,8 @@ class FortuneQuery extends Query<Fortune, FortuneQueryWhere> {
 
 class FortuneQueryWhere extends QueryWhere {
   FortuneQueryWhere(FortuneQuery query)
-      : id = NumericSqlExpressionBuilder<int>(
-          query,
-          'id',
-        ),
-        message = StringSqlExpressionBuilder(
-          query,
-          'message',
-        );
+    : id = NumericSqlExpressionBuilder<int>(query, 'id'),
+      message = StringSqlExpressionBuilder(query, 'message');
 
   final NumericSqlExpressionBuilder<int> id;
 
@@ -114,10 +102,7 @@ class FortuneQueryWhere extends QueryWhere {
 
   @override
   List<SqlExpressionBuilder> get expressionBuilders {
-    return [
-      id,
-      message,
-    ];
+    return [id, message];
   }
 }
 
@@ -151,10 +136,7 @@ class FortuneQueryValues extends MapQueryValues {
 
 @generatedSerializable
 class Fortune extends FortuneEntity {
-  Fortune({
-    this.id,
-    this.message,
-  });
+  Fortune({this.id, this.message});
 
   @override
   int? id;
@@ -162,10 +144,7 @@ class Fortune extends FortuneEntity {
   @override
   String? message;
 
-  Fortune copyWith({
-    int? id,
-    String? message,
-  }) {
+  Fortune copyWith({int? id, String? message}) {
     return Fortune(id: id ?? this.id, message: message ?? this.message);
   }
 
@@ -176,10 +155,7 @@ class Fortune extends FortuneEntity {
 
   @override
   int get hashCode {
-    return hashObjects([
-      id,
-      message,
-    ]);
+    return hashObjects([id, message]);
   }
 
   @override
@@ -234,10 +210,7 @@ class FortuneSerializer extends Codec<Fortune, Map> {
 }
 
 abstract class FortuneFields {
-  static const List<String> allFields = <String>[
-    id,
-    message,
-  ];
+  static const List<String> allFields = <String>[id, message];
 
   static const String id = 'id';
 

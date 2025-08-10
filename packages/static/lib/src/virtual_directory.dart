@@ -57,13 +57,16 @@ class VirtualDirectory {
   /// If not, the response buffer will be used instead.
   final bool useBuffer;
 
-  VirtualDirectory(this.app, this.fileSystem,
-      {Directory? source,
-      this.indexFileNames = const ['index.html'],
-      this.publicPath = '/',
-      this.callback,
-      this.allowDirectoryListing = false,
-      this.useBuffer = false}) {
+  VirtualDirectory(
+    this.app,
+    this.fileSystem, {
+    Directory? source,
+    this.indexFileNames = const ['index.html'],
+    this.publicPath = '/',
+    this.callback,
+    this.allowDirectoryListing = false,
+    this.useBuffer = false,
+  }) {
     _prefix = publicPath.replaceAll(_straySlashes, '');
     if (source != null) {
       _source = source;
@@ -112,7 +115,10 @@ class VirtualDirectory {
 
   /// Writes the file at the given virtual [path] to a response.
   Future<bool> servePath(
-      String path, RequestContext req, ResponseContext res) async {
+    String path,
+    RequestContext req,
+    ResponseContext res,
+  ) async {
     if (_prefix.isNotEmpty) {
       // Only replace the *first* incidence
       // Resolve: https://github.com/angel-dart/angel/issues/41
@@ -133,11 +139,13 @@ class VirtualDirectory {
     if (absolute.contains('\\') && fileSystem.path.separator == '/') {
       absolute = absolute.replaceAll('\\', '/');
       _log.warning(
-          'Incompatible file system type is used. Changed file separator from "\\" to "/".');
+        'Incompatible file system type is used. Changed file separator from "\\" to "/".',
+      );
     } else if (absolute.contains('/') && fileSystem.path.separator == '\\') {
       absolute = absolute.replaceAll('/', '\\');
       _log.warning(
-          'Incompatible file system type. Changed file separator from "/" to "\\".');
+        'Incompatible file system type. Changed file separator from "/" to "\\".',
+      );
     }
 
     var stat = await fileSystem.stat(absolute);
@@ -145,11 +153,21 @@ class VirtualDirectory {
   }
 
   /// Writes the file at the path given by the [stat] to a response.
-  Future<bool> serveStat(String absolute, String relative, FileStat stat,
-      RequestContext req, ResponseContext res) async {
+  Future<bool> serveStat(
+    String absolute,
+    String relative,
+    FileStat stat,
+    RequestContext req,
+    ResponseContext res,
+  ) async {
     if (stat.type == FileSystemEntityType.directory) {
       return await serveDirectory(
-          fileSystem.directory(absolute), relative, stat, req, res);
+        fileSystem.directory(absolute),
+        relative,
+        stat,
+        req,
+        res,
+      );
     } else if (stat.type == FileSystemEntityType.file) {
       return await serveFile(fileSystem.file(absolute), stat, req, res);
     } else if (stat.type == FileSystemEntityType.link) {
@@ -161,11 +179,17 @@ class VirtualDirectory {
   }
 
   /// Serves the index file of a [directory], if it exists.
-  Future<bool> serveDirectory(Directory directory, String relative,
-      FileStat stat, RequestContext req, ResponseContext res) async {
+  Future<bool> serveDirectory(
+    Directory directory,
+    String relative,
+    FileStat stat,
+    RequestContext req,
+    ResponseContext res,
+  ) async {
     for (var indexFileName in indexFileNames) {
-      final index =
-          fileSystem.file(directory.absolute.uri.resolve(indexFileName));
+      final index = fileSystem.file(
+        directory.absolute.uri.resolve(indexFileName),
+      );
       if (await index.exists()) {
         return await serveFile(index, stat, req, res);
       }
@@ -177,7 +201,8 @@ class VirtualDirectory {
         ..write('<!DOCTYPE html>')
         ..write('<html>')
         ..write(
-            '<head><meta name="viewport" content="width=device-width,initial-scale=1">')
+          '<head><meta name="viewport" content="width=device-width,initial-scale=1">',
+        )
         ..write('<style>ul { list-style-type: none; }</style>')
         ..write('</head><body>');
 
@@ -257,34 +282,41 @@ class VirtualDirectory {
 
   void _ensureContentTypeAllowed(String mimeType, RequestContext req) {
     var value = req.headers?.value('accept');
-    var acceptable = value == null ||
+    var acceptable =
+        value == null ||
         value.isNotEmpty != true ||
         (mimeType.isNotEmpty == true && value.contains(mimeType) == true) ||
         value.contains('*/*') == true;
     if (!acceptable) {
       _log.severe('Mime type [$value] is not supported');
       throw AngelHttpException(
-          //UnsupportedError(
-          //    'Client requested $value, but server wanted to send $mimeType.'),
-          errors: [
-            'Client requested $value, but server wanted to send $mimeType.'
-          ],
-          statusCode: 406,
-          message: '406 Not Acceptable');
+        //UnsupportedError(
+        //    'Client requested $value, but server wanted to send $mimeType.'),
+        errors: [
+          'Client requested $value, but server wanted to send $mimeType.',
+        ],
+        statusCode: 406,
+        message: '406 Not Acceptable',
+      );
     }
   }
 
   /// Writes the contents of a file to a response.
   Future<bool> serveFile(
-      File file, FileStat stat, RequestContext req, ResponseContext res) async {
+    File file,
+    FileStat stat,
+    RequestContext req,
+    ResponseContext res,
+  ) async {
     res.headers['accept-ranges'] = 'bytes';
 
     if (callback != null) {
       return await req.app?.executeHandler(
-              (RequestContext req, ResponseContext res) =>
-                  callback!(file, req, res),
-              req,
-              res) ??
+            (RequestContext req, ResponseContext res) =>
+                callback!(file, req, res),
+            req,
+            res,
+          ) ??
           true;
     }
 
@@ -322,25 +354,29 @@ class VirtualDirectory {
 
         if (invalid) {
           throw AngelHttpException(
-              //Exception('Semantically invalid, or unbounded range.'),
-              errors: ['Semantically invalid, or unbounded range.'],
-              statusCode: 416,
-              message: 'Semantically invalid, or unbounded range.');
+            //Exception('Semantically invalid, or unbounded range.'),
+            errors: ['Semantically invalid, or unbounded range.'],
+            statusCode: 416,
+            message: 'Semantically invalid, or unbounded range.',
+          );
         }
 
         // Ensure it's within range.
         if (item.start >= totalFileSize || item.end >= totalFileSize) {
           throw AngelHttpException(
-              //Exception('Given range $item is out of bounds.'),
-              errors: ['Given range $item is out of bounds.'],
-              statusCode: 416,
-              message: 'Given range $item is out of bounds.');
+            //Exception('Given range $item is out of bounds.'),
+            errors: ['Given range $item is out of bounds.'],
+            statusCode: 416,
+            message: 'Given range $item is out of bounds.',
+          );
         }
       }
 
       if (header.items.isEmpty) {
         throw AngelHttpException(
-            statusCode: 416, message: '`Range` header may not be empty.');
+          statusCode: 416,
+          message: '`Range` header may not be empty.',
+        );
       } else if (header.items.length == 1) {
         var item = header.items[0];
         Stream<List<int>> stream;
@@ -367,8 +403,8 @@ class VirtualDirectory {
         }
 
         res.contentType = MediaType.parse(
-            app.mimeTypeResolver.lookup(file.path) ??
-                'application/octet-stream');
+          app.mimeTypeResolver.lookup(file.path) ?? 'application/octet-stream',
+        );
         res.statusCode = 206;
         res.headers['content-length'] = len.toString();
         res.headers['content-range'] = 'bytes ${item.toContentRange(total)}';
@@ -376,15 +412,17 @@ class VirtualDirectory {
         return false;
       } else {
         var transformer = RangeHeaderTransformer(
-            header,
-            app.mimeTypeResolver.lookup(file.path) ??
-                'application/octet-stream',
-            await file.length());
+          header,
+          app.mimeTypeResolver.lookup(file.path) ?? 'application/octet-stream',
+          await file.length(),
+        );
         res.statusCode = 206;
-        res.headers['content-length'] =
-            transformer.computeContentLength(totalFileSize).toString();
-        res.contentType = MediaType(
-            'multipart', 'byteranges', {'boundary': transformer.boundary});
+        res.headers['content-length'] = transformer
+            .computeContentLength(totalFileSize)
+            .toString();
+        res.contentType = MediaType('multipart', 'byteranges', {
+          'boundary': transformer.boundary,
+        });
         await file
             .openRead()
             .cast<List<int>>()

@@ -10,7 +10,7 @@ import 'common.dart';
 void main() {
   Map headers = <String, String>{
     'Accept': 'application/json',
-    'Content-Type': 'application/json'
+    'Content-Type': 'application/json',
   };
 
   late Angel app;
@@ -25,8 +25,9 @@ void main() {
     app.use('/todos', MapService());
     app.use('/books', BookService());
 
-    todoService = app.findHookedService<MapService>('todos')
-        as HookedService<dynamic, dynamic, Service>;
+    todoService =
+        app.findHookedService<MapService>('todos')
+            as HookedService<dynamic, dynamic, Service>;
 
     todoService.beforeAllStream().listen((e) {
       print('Fired ${e.eventName}! Data: ${e.data}; Params: ${e.params}');
@@ -70,9 +71,11 @@ void main() {
         event.cancel({'this_hook': 'should never run'});
       });
 
-    var response = await client.post(Uri.parse('$url/todos'),
-        body: json.encode({'arbitrary': 'data'}),
-        headers: headers as Map<String, String>);
+    var response = await client.post(
+      Uri.parse('$url/todos'),
+      body: json.encode({'arbitrary': 'data'}),
+      headers: headers as Map<String, String>,
+    );
     print(response.body);
     var result = json.decode(response.body) as Map;
     expect(result['hello'], equals('hooked world'));
@@ -83,7 +86,7 @@ void main() {
       ..listen((HookedServiceEvent event) async {
         // Hooks can be Futures ;)
         event.cancel([
-          {'angel': 'framework'}
+          {'angel': 'framework'},
         ]);
       })
       ..listen((HookedServiceEvent event) {
@@ -111,8 +114,9 @@ void main() {
   });
 
   test('inject request + response', () async {
-    var books = app.findService('books')
-        as HookedService<dynamic, dynamic, Service<dynamic, dynamic>>;
+    var books =
+        app.findService('books')
+            as HookedService<dynamic, dynamic, Service<dynamic, dynamic>>;
 
     books.beforeIndexed.listen((e) {
       expect([e.request, e.response], everyElement(isNotNull));

@@ -17,11 +17,16 @@ final RegExp _straySlashes = RegExp(r'(^/)|(/+$)');
 class WebSockets extends BaseWebSocketClient {
   final List<BrowserWebSocketsService> _services = [];
 
-  WebSockets(baseUrl,
-      {bool reconnectOnClose = true, Duration? reconnectInterval})
-      : super(http.BrowserClient(), baseUrl,
-            reconnectOnClose: reconnectOnClose,
-            reconnectInterval: reconnectInterval);
+  WebSockets(
+    baseUrl, {
+    bool reconnectOnClose = true,
+    Duration? reconnectInterval,
+  }) : super(
+         http.BrowserClient(),
+         baseUrl,
+         reconnectOnClose: reconnectOnClose,
+         reconnectInterval: reconnectInterval,
+       );
 
   @override
   Future close() {
@@ -33,8 +38,11 @@ class WebSockets extends BaseWebSocketClient {
   }
 
   @override
-  Stream<String> authenticateViaPopup(String url,
-      {String eventName = 'token', String? errorMessage}) {
+  Stream<String> authenticateViaPopup(
+    String url, {
+    String eventName = 'token',
+    String? errorMessage,
+  }) {
     var ctrl = StreamController<String>();
     var wnd = window.open(url, 'angel_client_auth_popup');
 
@@ -43,9 +51,12 @@ class WebSockets extends BaseWebSocketClient {
     Timer.periodic(Duration(milliseconds: 500), (timer) {
       if (!ctrl.isClosed) {
         if (wnd != null && wnd.closed) {
-          ctrl.addError(AngelHttpException.notAuthenticated(
+          ctrl.addError(
+            AngelHttpException.notAuthenticated(
               message:
-                  errorMessage ?? 'Authentication via popup window failed.'));
+                  errorMessage ?? 'Authentication via popup window failed.',
+            ),
+          );
           ctrl.close();
           timer.cancel();
           //sub?.cancel();
@@ -58,16 +69,17 @@ class WebSockets extends BaseWebSocketClient {
     // TODO: This need to be fixed
     EventListener? sub;
     window.addEventListener(
-        eventName,
-        (e) {
-          if (!ctrl.isClosed) {
-            ctrl.add((e as CustomEvent).detail.toString());
-            //t.cancel();
-            ctrl.close();
-            //sub?.cancel();
-            window.removeEventListener(eventName, sub);
-          }
-        }.toJS);
+      eventName,
+      (e) {
+        if (!ctrl.isClosed) {
+          ctrl.add((e as CustomEvent).detail.toString());
+          //t.cancel();
+          ctrl.close();
+          //sub?.cancel();
+          window.removeEventListener(eventName, sub);
+        }
+      }.toJS,
+    );
     /* With dart:html
     sub = window.on[eventName].listen((e) {
       if (!ctrl.isClosed) {
@@ -88,8 +100,9 @@ class WebSockets extends BaseWebSocketClient {
 
     if (authToken?.isNotEmpty == true) {
       url = url.replace(
-          queryParameters: Map<String, String?>.from(url.queryParameters)
-            ..['token'] = authToken);
+        queryParameters: Map<String, String?>.from(url.queryParameters)
+          ..['token'] = authToken,
+      );
     }
 
     var socket = WebSocket(url.toString());
@@ -111,17 +124,30 @@ class WebSockets extends BaseWebSocketClient {
   }
 
   @override
-  Service<Id, Data> service<Id, Data>(String path,
-      {Type? type, AngelDeserializer<Data>? deserializer}) {
+  Service<Id, Data> service<Id, Data>(
+    String path, {
+    Type? type,
+    AngelDeserializer<Data>? deserializer,
+  }) {
     var uri = path.replaceAll(_straySlashes, '');
-    return BrowserWebSocketsService<Id, Data>(socket, this, uri,
-        deserializer: deserializer) as Service<Id, Data>;
+    return BrowserWebSocketsService<Id, Data>(
+          socket,
+          this,
+          uri,
+          deserializer: deserializer,
+        )
+        as Service<Id, Data>;
   }
 }
 
 class BrowserWebSocketsService<Id, Data> extends WebSocketsService<Id, Data> {
   final Type? type;
 
-  BrowserWebSocketsService(super.socket, WebSockets super.app, super.uri,
-      {this.type, super.deserializer});
+  BrowserWebSocketsService(
+    super.socket,
+    WebSockets super.app,
+    super.uri, {
+    this.type,
+    super.deserializer,
+  });
 }

@@ -18,8 +18,11 @@ class HttpResponseContext extends ResponseContext<HttpResponse> {
   final HttpRequestContext? _correspondingRequest;
   bool _isDetached = false, _isClosed = false, _streamInitialized = false;
 
-  HttpResponseContext(this.rawResponse, Angel? app,
-      [this._correspondingRequest]) {
+  HttpResponseContext(
+    this.rawResponse,
+    Angel? app, [
+    this._correspondingRequest,
+  ]) {
     this.app = app;
   }
 
@@ -65,19 +68,22 @@ class HttpResponseContext extends ResponseContext<HttpResponse> {
         .map((s) => s.trim())
         .where((s) => s.isNotEmpty)
         .map((str) {
-      // Ignore quality specifications in accept-encoding
-      // ex. gzip;q=0.8
-      if (!str.contains(';')) return str;
-      return str.split(';')[0];
-    });
+          // Ignore quality specifications in accept-encoding
+          // ex. gzip;q=0.8
+          if (!str.contains(';')) return str;
+          return str.split(';')[0];
+        });
   }
 
   @override
   set contentType(MediaType value) {
     super.contentType = value;
     if (!_streamInitialized) {
-      rawResponse.headers.contentType =
-          ContentType(value.type, value.subtype, parameters: value.parameters);
+      rawResponse.headers.contentType = ContentType(
+        value.type,
+        value.subtype,
+        parameters: value.parameters,
+      );
     }
   }
 
@@ -93,14 +99,17 @@ class HttpResponseContext extends ResponseContext<HttpResponse> {
       rawResponse.headers.date = DateTime.now();
 
       if (headers.containsKey('content-length')) {
-        rawResponse.contentLength = int.tryParse(headers['content-length']!) ??
+        rawResponse.contentLength =
+            int.tryParse(headers['content-length']!) ??
             rawResponse.contentLength;
       }
 
       rawResponse.headers.contentType = ContentType(
-          contentType.type, contentType.subtype,
-          charset: contentType.parameters['charset'],
-          parameters: contentType.parameters);
+        contentType.type,
+        contentType.subtype,
+        charset: contentType.parameters['charset'],
+        parameters: contentType.parameters,
+      );
 
       if (encoders.isNotEmpty && correspondingRequest != null) {
         if (_allowedEncodings != null) {

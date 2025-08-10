@@ -13,10 +13,7 @@ class User extends Model {
   User({this.username, this.password});
 
   static User parse(Map<String, dynamic> map) {
-    return User(
-      username: map['username'],
-      password: map['password'],
-    );
+    return User(username: map['username'], password: map['password']);
   }
 
   Map<String, dynamic> toJson() {
@@ -25,7 +22,7 @@ class User extends Model {
       'username': username,
       'password': password,
       'created_at': createdAt?.toIso8601String(),
-      'updated_at': updatedAt?.toIso8601String()
+      'updated_at': updatedAt?.toIso8601String(),
     };
   }
 }
@@ -60,14 +57,16 @@ void main() async {
       }
     });
 
-  await app
-      .findService('users')
-      ?.create({'username': 'jdoe1', 'password': 'password'});
+  await app.findService('users')?.create({
+    'username': 'jdoe1',
+    'password': 'password',
+  });
 
   var auth = AngelAuth<User>(
-      serializer: (u) => u.id ?? '',
-      deserializer: (id) async =>
-          await app.findService('users')?.read(id) as User);
+    serializer: (u) => u.id ?? '',
+    deserializer: (id) async =>
+        await app.findService('users')?.read(id) as User,
+  );
   //auth.serializer = (u) => u.id;
   //auth.deserializer =
   //    (id) async => await app.findService('users')!.read(id) as User;
@@ -81,33 +80,40 @@ void main() async {
         .then((it) => it.map<User>((m) => User.parse(m)).toList());
 
     var result = users?.firstWhereOrNull(
-        (user) => user.username == username && user.password == password);
+      (user) => user.username == username && user.password == password,
+    );
 
     return Future.value(result);
   }, allowBasic: true);
 
   app.post(
-      '/login',
-      auth.authenticate('local', AngelAuthOptions(callback: (req, res, token) {
-        res
-          ..write('Hello!')
-          ..close();
-      })));
+    '/login',
+    auth.authenticate(
+      'local',
+      AngelAuthOptions(
+        callback: (req, res, token) {
+          res
+            ..write('Hello!')
+            ..close();
+        },
+      ),
+    ),
+  );
 
   app.get('/', (req, res) => res.write("Hello"));
 
-  app.chain([
-    (req, res) {
-      if (!req.container!.has<User>()) {
-        req.container!.registerSingleton<User>(
-            User(username: req.params['name']?.toString()));
-      }
-      return true;
-    }
-  ]).post(
-    '/existing/:name',
-    auth.authenticate('local'),
-  );
+  app
+      .chain([
+        (req, res) {
+          if (!req.container!.has<User>()) {
+            req.container!.registerSingleton<User>(
+              User(username: req.params['name']?.toString()),
+            );
+          }
+          return true;
+        },
+      ])
+      .post('/existing/:name', auth.authenticate('local'));
 
   await angelHttp.startServer('127.0.0.1', 3000);
 }

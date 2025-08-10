@@ -32,10 +32,7 @@ class HasMapMigration extends Migration {
 // **************************************************************************
 
 class HasMapQuery extends Query<HasMap, HasMapQueryWhere> {
-  HasMapQuery({
-    super.parent,
-    Set<String>? trampoline,
-  }) {
+  HasMapQuery({super.parent, Set<String>? trampoline}) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = HasMapQueryWhere(this);
@@ -60,15 +57,12 @@ class HasMapQuery extends Query<HasMap, HasMapQueryWhere> {
 
   @override
   List<String> get fields {
-    const localFields = [
-      'value',
-      'list',
-    ];
+    const localFields = ['value', 'list'];
     return _selectedFields.isEmpty
         ? localFields
         : localFields
-            .where((field) => _selectedFields.contains(field))
-            .toList();
+              .where((field) => _selectedFields.contains(field))
+              .toList();
   }
 
   HasMapQuery select(List<String> selectedFields) {
@@ -91,8 +85,9 @@ class HasMapQuery extends Query<HasMap, HasMapQueryWhere> {
       return Optional.empty();
     }
     var model = HasMap(
-      value:
-          fields.contains('value') ? (row[0] as Map<dynamic, dynamic>?) : null,
+      value: fields.contains('value')
+          ? (row[0] as Map<dynamic, dynamic>?)
+          : null,
       list: fields.contains('list') ? (row[1] as List<dynamic>?) : null,
     );
     return Optional.of(model);
@@ -106,14 +101,8 @@ class HasMapQuery extends Query<HasMap, HasMapQueryWhere> {
 
 class HasMapQueryWhere extends QueryWhere {
   HasMapQueryWhere(HasMapQuery query)
-      : value = MapSqlExpressionBuilder(
-          query,
-          'value',
-        ),
-        list = ListSqlExpressionBuilder(
-          query,
-          'list',
-        );
+    : value = MapSqlExpressionBuilder(query, 'value'),
+      list = ListSqlExpressionBuilder(query, 'list');
 
   final MapSqlExpressionBuilder value;
 
@@ -121,10 +110,7 @@ class HasMapQueryWhere extends QueryWhere {
 
   @override
   List<SqlExpressionBuilder> get expressionBuilders {
-    return [
-      value,
-      list,
-    ];
+    return [value, list];
   }
 }
 
@@ -158,10 +144,7 @@ class HasMapQueryValues extends MapQueryValues {
 
 @generatedSerializable
 class HasMap implements HasMapEntity {
-  HasMap({
-    this.value,
-    this.list = const [],
-  });
+  HasMap({this.value, this.list = const []});
 
   @override
   Map<dynamic, dynamic>? value;
@@ -169,10 +152,7 @@ class HasMap implements HasMapEntity {
   @override
   List<dynamic>? list;
 
-  HasMap copyWith({
-    Map<dynamic, dynamic>? value,
-    List<dynamic>? list,
-  }) {
+  HasMap copyWith({Map<dynamic, dynamic>? value, List<dynamic>? list}) {
     return HasMap(value: value ?? this.value, list: list ?? this.list);
   }
 
@@ -180,17 +160,15 @@ class HasMap implements HasMapEntity {
   bool operator ==(other) {
     return other is HasMapEntity &&
         MapEquality<dynamic, dynamic>(
-                keys: DefaultEquality(), values: DefaultEquality())
-            .equals(other.value, value) &&
+          keys: DefaultEquality(),
+          values: DefaultEquality(),
+        ).equals(other.value, value) &&
         ListEquality<dynamic>(DefaultEquality()).equals(other.list, list);
   }
 
   @override
   int get hashCode {
-    return hashObjects([
-      value,
-      list,
-    ]);
+    return hashObjects([value, list]);
   }
 
   @override
@@ -234,12 +212,13 @@ class HasMapSerializer extends Codec<HasMap, Map> {
 
   static HasMap fromMap(Map map) {
     return HasMap(
-        value: map['value'] is Map
-            ? (map['value'] as Map).cast<dynamic, dynamic>()
-            : {},
-        list: map['list'] is Iterable
-            ? (map['list'] as Iterable).cast<dynamic>().toList()
-            : []);
+      value: map['value'] is Map
+          ? (map['value'] as Map).cast<dynamic, dynamic>()
+          : {},
+      list: map['list'] is Iterable
+          ? (map['list'] as Iterable).cast<dynamic>().toList()
+          : [],
+    );
   }
 
   static Map<String, dynamic> toMap(HasMapEntity? model) {
@@ -251,10 +230,7 @@ class HasMapSerializer extends Codec<HasMap, Map> {
 }
 
 abstract class HasMapFields {
-  static const List<String> allFields = <String>[
-    value,
-    list,
-  ];
+  static const List<String> allFields = <String>[value, list];
 
   static const String value = 'value';
 

@@ -5,30 +5,48 @@ import 'package:test/test.dart';
 void main() {
   test('named constructors', () {
     expect(
-        AngelHttpException.badRequest(), isException(400, '400 Bad Request'));
-    expect(AngelHttpException.notAuthenticated(),
-        isException(401, '401 Not Authenticated'));
-    expect(AngelHttpException.paymentRequired(),
-        isException(402, '402 Payment Required'));
+      AngelHttpException.badRequest(),
+      isException(400, '400 Bad Request'),
+    );
+    expect(
+      AngelHttpException.notAuthenticated(),
+      isException(401, '401 Not Authenticated'),
+    );
+    expect(
+      AngelHttpException.paymentRequired(),
+      isException(402, '402 Payment Required'),
+    );
     expect(AngelHttpException.forbidden(), isException(403, '403 Forbidden'));
     expect(AngelHttpException.notFound(), isException(404, '404 Not Found'));
-    expect(AngelHttpException.methodNotAllowed(),
-        isException(405, '405 Method Not Allowed'));
-    expect(AngelHttpException.notAcceptable(),
-        isException(406, '406 Not Acceptable'));
+    expect(
+      AngelHttpException.methodNotAllowed(),
+      isException(405, '405 Method Not Allowed'),
+    );
+    expect(
+      AngelHttpException.notAcceptable(),
+      isException(406, '406 Not Acceptable'),
+    );
     expect(AngelHttpException.methodTimeout(), isException(408, '408 Timeout'));
     expect(AngelHttpException.conflict(), isException(409, '409 Conflict'));
-    expect(AngelHttpException.notProcessable(),
-        isException(422, '422 Not Processable'));
-    expect(AngelHttpException.notImplemented(),
-        isException(501, '501 Not Implemented'));
     expect(
-        AngelHttpException.unavailable(), isException(503, '503 Unavailable'));
+      AngelHttpException.notProcessable(),
+      isException(422, '422 Not Processable'),
+    );
+    expect(
+      AngelHttpException.notImplemented(),
+      isException(501, '501 Not Implemented'),
+    );
+    expect(
+      AngelHttpException.unavailable(),
+      isException(503, '503 Unavailable'),
+    );
   });
 
   test('fromMap', () {
-    expect(AngelHttpException.fromMap({'status_code': -1, 'message': 'ok'}),
-        isException(-1, 'ok'));
+    expect(
+      AngelHttpException.fromMap({'status_code': -1, 'message': 'ok'}),
+      isException(-1, 'ok'),
+    );
   });
 
   test('toMap = toJson', () {
@@ -40,8 +58,10 @@ void main() {
   });
 
   test('toString', () {
-    expect(AngelHttpException(statusCode: 420, message: 'Blaze It').toString(),
-        '420: Blaze It');
+    expect(
+      AngelHttpException(statusCode: 420, message: 'Blaze It').toString(),
+      '420: Blaze It',
+    );
   });
 }
 

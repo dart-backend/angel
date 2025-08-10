@@ -25,9 +25,11 @@ abstract class RateLimiter<User> {
   /// [rejectRequest].
   final String errorMessage;
 
-  RateLimiter(this.maxPointsPerWindow, this.windowDuration,
-      {String? errorMessage})
-      : errorMessage = errorMessage ?? 'Rate limit exceeded.';
+  RateLimiter(
+    this.maxPointsPerWindow,
+    this.windowDuration, {
+    String? errorMessage,
+  }) : errorMessage = errorMessage ?? 'Rate limit exceeded.';
 
   /// Computes the current window in which the user is acting.
   ///
@@ -35,12 +37,19 @@ abstract class RateLimiter<User> {
   /// then you would return a window containing the current hour,
   /// and the number of requests the user has sent in the past hour.
   FutureOr<RateLimitingWindow<User>> getCurrentWindow(
-      RequestContext req, ResponseContext res, DateTime currentTime);
+    RequestContext req,
+    ResponseContext res,
+    DateTime currentTime,
+  );
 
   /// Updates the underlying store with information about the new
   /// [window] that the user is operating in.
-  FutureOr<void> updateCurrentWindow(RequestContext req, ResponseContext res,
-      RateLimitingWindow<User> window, DateTime currentTime);
+  FutureOr<void> updateCurrentWindow(
+    RequestContext req,
+    ResponseContext res,
+    RateLimitingWindow<User> window,
+    DateTime currentTime,
+  );
 
   /// Computes the amount of points that a given request will cost. This amount
   /// is then added to the amount of points that the user has already consumed
@@ -48,8 +57,11 @@ abstract class RateLimiter<User> {
   ///
   /// The default behavior is to return `1`, which signifies that all requests
   /// carry the same weight.
-  FutureOr<int> getEndpointCost(RequestContext req, ResponseContext res,
-      RateLimitingWindow<User> window) {
+  FutureOr<int> getEndpointCost(
+    RequestContext req,
+    ResponseContext res,
+    RateLimitingWindow<User> window,
+  ) {
     return Future<int>.value(1);
   }
 
@@ -62,13 +74,16 @@ abstract class RateLimiter<User> {
   /// before the rate limit is reached for the current window.
   /// * `X-RateLimit-Reset`: The Unix timestamp, at which the window will
   /// reset.
-  FutureOr<void> sendWindowInformation(RequestContext req, ResponseContext res,
-      RateLimitingWindow<User> window) {
+  FutureOr<void> sendWindowInformation(
+    RequestContext req,
+    ResponseContext res,
+    RateLimitingWindow<User> window,
+  ) {
     res.headers.addAll({
       'x-ratelimit-limit': window.pointLimit.toString(),
       'x-ratelimit-remaining': window.remainingPoints.toString(),
-      'x-ratelimit-reset':
-          (window.resetTime!.millisecondsSinceEpoch ~/ 1000).toString(),
+      'x-ratelimit-reset': (window.resetTime!.millisecondsSinceEpoch ~/ 1000)
+          .toString(),
     });
   }
 
@@ -81,8 +96,12 @@ abstract class RateLimiter<User> {
   /// header, and then returning `false`.
   ///
   /// Whatever is returned here will be returned in [handleRequest].
-  FutureOr<Object> rejectRequest(RequestContext req, ResponseContext res,
-      RateLimitingWindow<User> window, DateTime currentTime) {
+  FutureOr<Object> rejectRequest(
+    RequestContext req,
+    ResponseContext res,
+    RateLimitingWindow<User> window,
+    DateTime currentTime,
+  ) {
     var retryAfter = window.resetTime!.difference(currentTime);
     res.headers['retry-after'] = retryAfter.inSeconds.toString();
     throw AngelHttpException(message: errorMessage, statusCode: 429);
@@ -123,7 +142,6 @@ abstract class RateLimiter<User> {
       await updateCurrentWindow(req, res, newWindow, now);
       await sendWindowInformation(req, res, newWindow);
     }
-
     // If we are still within the previous window, check if the user has
     // exceeded the rate limit.
     //

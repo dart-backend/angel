@@ -8,7 +8,7 @@ import 'package:test/test.dart';
 final List<Map<String, String>> mjAlbums = [
   {'billie': 'jean'},
   {'off': 'the_wall'},
-  {'michael': 'jackson'}
+  {'michael': 'jackson'},
 ];
 
 void main() {
@@ -36,12 +36,16 @@ void main() {
   tearDown(() => client.close());
 
   test('limit exceeds size of collection', () async {
-    var response = await client.get(Uri(
+    var response = await client.get(
+      Uri(
         path: '/api/songs',
-        queryParameters: {r'$limit': (mjAlbums.length + 1).toString()}));
+        queryParameters: {r'$limit': (mjAlbums.length + 1).toString()},
+      ),
+    );
 
     var page = PaginationResult<Map<String, dynamic>>.fromMap(
-        json.decode(response.body) as Map<String, dynamic>);
+      json.decode(response.body) as Map<String, dynamic>,
+    );
 
     print('page: ${page.toJson()}');
 

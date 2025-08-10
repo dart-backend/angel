@@ -65,9 +65,11 @@ void main() {
       var response = await testClient.client.get(url);
       print('Body: ${response.body}');
       expect(
-          response.body,
-          json.encode(
-              'Hello ${pseudoApplication.id}:${pseudoApplication.secret}'));
+        response.body,
+        json.encode(
+          'Hello ${pseudoApplication.id}:${pseudoApplication.secret}',
+        ),
+      );
     });
 
     test('preserves state', () async {
@@ -128,23 +130,33 @@ class _Server extends AuthorizationServer<PseudoApplication, Map> {
 
   @override
   Future<bool> verifyClient(
-      PseudoApplication client, String? clientSecret) async {
+    PseudoApplication client,
+    String? clientSecret,
+  ) async {
     return client.secret == clientSecret;
   }
 
   @override
   Future requestAuthorizationCode(
-      PseudoApplication client,
-      String? redirectUri,
-      Iterable<String> scopes,
-      String state,
-      RequestContext req,
-      ResponseContext res,
-      bool implicit) async {
+    PseudoApplication client,
+    String? redirectUri,
+    Iterable<String> scopes,
+    String state,
+    RequestContext req,
+    ResponseContext res,
+    bool implicit,
+  ) async {
     if (implicit) {
       // Throw the default error on an implicit grant attempt.
       return super.requestAuthorizationCode(
-          client, redirectUri, scopes, state, req, res, implicit);
+        client,
+        redirectUri,
+        scopes,
+        state,
+        req,
+        res,
+        implicit,
+      );
     }
 
     if (state == 'hello') {
@@ -163,16 +175,19 @@ class _Server extends AuthorizationServer<PseudoApplication, Map> {
 
   @override
   Future<AuthorizationTokenResponse> exchangeAuthorizationCodeForToken(
-      PseudoApplication? client,
-      String? authCode,
-      String? redirectUri,
-      RequestContext req,
-      ResponseContext res) async {
+    PseudoApplication? client,
+    String? authCode,
+    String? redirectUri,
+    RequestContext req,
+    ResponseContext res,
+  ) async {
     var authCodes = req.container!.make<AuthCodes>();
     var state = authCodes[authCode!];
     var refreshToken = state == 'can_refresh' ? '${authCode}_refresh' : null;
-    return AuthorizationTokenResponse('${authCode}_access',
-        refreshToken: refreshToken);
+    return AuthorizationTokenResponse(
+      '${authCode}_access',
+      refreshToken: refreshToken,
+    );
   }
 }
 

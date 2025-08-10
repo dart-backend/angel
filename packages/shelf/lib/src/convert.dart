@@ -14,8 +14,12 @@ import 'package:stream_channel/stream_channel.dart';
 ///
 /// If you want to read the request body, you *must* set `keepRawRequestBuffers` to `true`
 /// on your application instance.
-Future<shelf.Request> convertRequest(RequestContext req, ResponseContext res,
-    {String? handlerPath, Map<String, Object>? context}) async {
+Future<shelf.Request> convertRequest(
+  RequestContext req,
+  ResponseContext res, {
+  String? handlerPath,
+  Map<String, Object>? context,
+}) async {
   var app = req.app;
   var headers = <String, String>{};
   req.headers!.forEach((k, v) {
@@ -39,16 +43,22 @@ Future<shelf.Request> convertRequest(RequestContext req, ResponseContext res,
       print('b');
       var ctrl = StreamChannelController<List<int>>();
       if (req.hasParsedBody) {
-        req.body!.listen(ctrl.local.sink.add,
-            onError: ctrl.local.sink.addError, onDone: ctrl.local.sink.close);
+        req.body!.listen(
+          ctrl.local.sink.add,
+          onError: ctrl.local.sink.addError,
+          onDone: ctrl.local.sink.close,
+        );
       } else {
         await ctrl.local.sink.close();
       }
       scheduleMicrotask(() => ctrl.local.stream.pipe(res));
       hijack(ctrl.foreign);
     } catch (e, st) {
-      app?.logger
-          .severe('An error occurred while hijacking a shelf request', e, st);
+      app?.logger.severe(
+        'An error occurred while hijacking a shelf request',
+        e,
+        st,
+      );
     }
   };
 
@@ -58,16 +68,19 @@ Future<shelf.Request> convertRequest(RequestContext req, ResponseContext res,
     url = url.replace(path: url.path.substring(1));
   }
 
-  return shelf.Request(req.method, requestedUri,
-      protocolVersion: protocolVersion,
-      headers: headers,
-      handlerPath: handlerPath,
-      url: url,
-      body: req.body,
-      context: {'angel3_shelf.request': req}
-        ..addAll({'angel3_shelf.container': req.container!})
-        ..addAll(context ?? {}),
-      onHijack: onHijack);
+  return shelf.Request(
+    req.method,
+    requestedUri,
+    protocolVersion: protocolVersion,
+    headers: headers,
+    handlerPath: handlerPath,
+    url: url,
+    body: req.body,
+    context: {'angel3_shelf.request': req}
+      ..addAll({'angel3_shelf.container': req.container!})
+      ..addAll(context ?? {}),
+    onHijack: onHijack,
+  );
 }
 
 /// Applies the state of the [shelfResponse] into the [angelResponse].
@@ -77,7 +90,9 @@ Future<shelf.Request> convertRequest(RequestContext req, ResponseContext res,
 /// In addition, the response's context will be available in `angelResponse.properties`
 /// as `shelf_context`.
 Future mergeShelfResponse(
-    shelf.Response shelfResponse, ResponseContext angelResponse) {
+  shelf.Response shelfResponse,
+  ResponseContext angelResponse,
+) {
   angelResponse.headers.addAll(shelfResponse.headers);
   angelResponse.statusCode = shelfResponse.statusCode;
   angelResponse.properties['shelf_context'] = shelfResponse.context;

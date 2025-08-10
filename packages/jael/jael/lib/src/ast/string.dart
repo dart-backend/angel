@@ -53,8 +53,11 @@ class StringLiteral extends Literal {
               buf.writeCharCode(next);
           }
         } else {
-          throw JaelError(JaelErrorSeverity.error,
-              'Unexpected "\\" in string literal.', string.span);
+          throw JaelError(
+            JaelErrorSeverity.error,
+            'Unexpected "\\" in string literal.',
+            string.span,
+          );
         }
       } else {
         buf.writeCharCode(ch);

@@ -8,10 +8,7 @@ part of 'goat.dart';
 
 @generatedSerializable
 class Goat implements _Goat {
-  Goat({
-    this.integer = 34,
-    this.list = const [34, 35],
-  });
+  Goat({this.integer = 34, this.list = const [34, 35]});
 
   @override
   int integer;
@@ -19,10 +16,7 @@ class Goat implements _Goat {
   @override
   List<int> list;
 
-  Goat copyWith({
-    int? integer,
-    List<int>? list,
-  }) {
+  Goat copyWith({int? integer, List<int>? list}) {
     return Goat(integer: integer ?? this.integer, list: list ?? this.list);
   }
 
@@ -35,10 +29,7 @@ class Goat implements _Goat {
 
   @override
   int get hashCode {
-    return hashObjects([
-      integer,
-      list,
-    ]);
+    return hashObjects([integer, list]);
   }
 
   @override
@@ -82,10 +73,11 @@ class GoatSerializer extends Codec<Goat, Map> {
 
   static Goat fromMap(Map map) {
     return Goat(
-        integer: map['integer'] as int? ?? 34,
-        list: map['list'] is Iterable
-            ? (map['list'] as Iterable).cast<int>().toList()
-            : const [34, 35]);
+      integer: map['integer'] as int? ?? 34,
+      list: map['list'] is Iterable
+          ? (map['list'] as Iterable).cast<int>().toList()
+          : const [34, 35],
+    );
   }
 
   static Map<String, dynamic> toMap(_Goat? model) {
@@ -97,10 +89,7 @@ class GoatSerializer extends Codec<Goat, Map> {
 }
 
 abstract class GoatFields {
-  static const List<String> allFields = <String>[
-    integer,
-    list,
-  ];
+  static const List<String> allFields = <String>[integer, list];
 
   static const String integer = 'integer';
 

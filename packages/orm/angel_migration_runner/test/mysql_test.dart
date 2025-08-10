@@ -23,12 +23,13 @@ void main() async {
     print("$host $database $username $password");
 
     conn = await MySQLConnection.createConnection(
-        databaseName: database,
-        port: 3306,
-        host: host,
-        userName: username,
-        password: password,
-        secure: true);
+      databaseName: database,
+      port: 3306,
+      host: host,
+      userName: username,
+      password: password,
+      secure: true,
+    );
 
     await conn.connect();
 

@@ -7,16 +7,16 @@ import 'common.dart';
 
 void main() async {
   var app = Angel()
-    ..encoders.addAll({
-      'gzip': gzip.encoder,
-      'deflate': zlib.encoder,
-    });
+    ..encoders.addAll({'gzip': gzip.encoder, 'deflate': zlib.encoder});
   app.logger = Logger('angel')..onRecord.listen(dumpError);
 
   app.get('/', (req, res) => 'Hello HTTP/2!!!');
 
-  app.fallback((req, res) => throw AngelHttpException.notFound(
-      message: 'No file exists at ${req.uri}'));
+  app.fallback(
+    (req, res) => throw AngelHttpException.notFound(
+      message: 'No file exists at ${req.uri}',
+    ),
+  );
 
   var ctx = SecurityContext()
     ..useCertificateChain('dev.pem')

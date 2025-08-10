@@ -12,11 +12,15 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
   ///
   /// As always, return `null` if authentication fails.
   final FutureOr<User> Function(oauth2.Client, RequestContext, ResponseContext)
-      verifier;
+  verifier;
 
   /// A callback that is triggered when an OAuth2 error occurs (i.e. the user declines to login);
   final FutureOr<dynamic> Function(
-      oauth2.AuthorizationException, RequestContext, ResponseContext) onError;
+    oauth2.AuthorizationException,
+    RequestContext,
+    ResponseContext,
+  )
+  onError;
 
   /// The options defining how to connect to the third-party.
   final ExternalAuthOptions options;
@@ -35,19 +39,31 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
 
   Uri? _redirect;
 
-  OAuth2Strategy(this.options, this.authorizationEndpoint, this.tokenEndpoint,
-      this.verifier, this.onError,
-      {this.getParameters, this.delimiter = ' '});
+  OAuth2Strategy(
+    this.options,
+    this.authorizationEndpoint,
+    this.tokenEndpoint,
+    this.verifier,
+    this.onError, {
+    this.getParameters,
+    this.delimiter = ' ',
+  });
 
   oauth2.AuthorizationCodeGrant _createGrant() => oauth2.AuthorizationCodeGrant(
-      options.clientId, authorizationEndpoint, tokenEndpoint,
-      secret: options.clientSecret,
-      delimiter: delimiter,
-      getParameters: getParameters);
+    options.clientId,
+    authorizationEndpoint,
+    tokenEndpoint,
+    secret: options.clientSecret,
+    delimiter: delimiter,
+    getParameters: getParameters,
+  );
 
   @override
-  FutureOr<User?> authenticate(RequestContext req, ResponseContext res,
-      [AngelAuthOptions<User>? options]) async {
+  FutureOr<User?> authenticate(
+    RequestContext req,
+    ResponseContext res, [
+    AngelAuthOptions<User>? options,
+  ]) async {
     if (options != null) {
       var result = await authenticateCallback(req, res, options);
       if (result is User) {
@@ -70,15 +86,21 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
   }
 
   /// The endpoint that is invoked by the third-party after successful authentication.
-  Future<dynamic> authenticateCallback(RequestContext req, ResponseContext res,
-      [AngelAuthOptions? options]) async {
+  Future<dynamic> authenticateCallback(
+    RequestContext req,
+    ResponseContext res, [
+    AngelAuthOptions? options,
+  ]) async {
     var grant = _createGrant();
-    grant.getAuthorizationUrl(this.options.redirectUri,
-        scopes: this.options.scopes);
+    grant.getAuthorizationUrl(
+      this.options.redirectUri,
+      scopes: this.options.scopes,
+    );
 
     try {
-      var client =
-          await grant.handleAuthorizationResponse(req.uri!.queryParameters);
+      var client = await grant.handleAuthorizationResponse(
+        req.uri!.queryParameters,
+      );
       return await verifier(client, req, res);
     } on oauth2.AuthorizationException catch (e) {
       return await onError(e, req, res);

@@ -95,30 +95,35 @@ class _AuthorizationServer
 
   @override
   Future<bool> verifyClient(
-      PseudoApplication client, String? clientSecret) async {
+    PseudoApplication client,
+    String? clientSecret,
+  ) async {
     return client.secret == clientSecret;
   }
 
   @override
   Future<AuthorizationTokenResponse> refreshAuthorizationToken(
-      PseudoApplication? client,
-      String? refreshToken,
-      Iterable<String> scopes,
-      RequestContext req,
-      ResponseContext res) async {
+    PseudoApplication? client,
+    String? refreshToken,
+    Iterable<String> scopes,
+    RequestContext req,
+    ResponseContext res,
+  ) async {
     return AuthorizationTokenResponse('baz', refreshToken: 'bar');
   }
 
   @override
   Future<AuthorizationTokenResponse> resourceOwnerPasswordCredentialsGrant(
-      PseudoApplication? client,
-      String? username,
-      String? password,
-      Iterable<String> scopes,
-      RequestContext req,
-      ResponseContext res) async {
+    PseudoApplication? client,
+    String? username,
+    String? password,
+    Iterable<String> scopes,
+    RequestContext req,
+    ResponseContext res,
+  ) async {
     var user = pseudoUsers.firstWhereOrNull(
-        (u) => u.username == username && u.password == password);
+      (u) => u.username == username && u.password == password,
+    );
 
     if (user == null) {
       var body = await req.parseBody().then((_) => req.bodyAsMap);

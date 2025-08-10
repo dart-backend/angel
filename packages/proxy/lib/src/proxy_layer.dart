@@ -38,11 +38,12 @@ class Proxy {
     this.recoverFromDead = true,
     this.recoverFrom404 = true,
     this.timeout,
-  })  : baseUrl = baseUrl is Uri ? baseUrl : Uri.parse(baseUrl.toString()),
-        httpClient = httpClient ?? http.Client() {
+  }) : baseUrl = baseUrl is Uri ? baseUrl : Uri.parse(baseUrl.toString()),
+       httpClient = httpClient ?? http.Client() {
     if (!this.baseUrl.hasScheme || !this.baseUrl.hasAuthority) {
       throw ArgumentError(
-          'Invalid `baseUrl`. URI must have both a scheme and authority.');
+        'Invalid `baseUrl`. URI must have both a scheme and authority.',
+      );
     }
     /*
     if (recoverFromDead == null) {
@@ -98,7 +99,10 @@ class Proxy {
 
   /// Proxies a request to the given path on the remote server.
   Future<bool> servePath(
-      String path, RequestContext req, ResponseContext res) async {
+    String path,
+    RequestContext req,
+    ResponseContext res,
+  ) async {
     http.StreamedResponse rs;
 
     var uri = baseUrl.replace(path: _p.join(baseUrl.path, path));
@@ -118,7 +122,9 @@ class Proxy {
           return false;
         } catch (e, st) {
           throw AngelHttpException(
-              message: 'Could not connect WebSocket', stackTrace: st);
+            message: 'Could not connect WebSocket',
+            stackTrace: st,
+          );
         }
       }
 
@@ -136,8 +142,9 @@ class Proxy {
           headers[name] = values.join(',');
         });
 
-        headers[HttpHeaders.cookieHeader] =
-            req.cookies.map<String>((c) => '${c.name}=${c.value}').join('; ');
+        headers[HttpHeaders.cookieHeader] = req.cookies
+            .map<String>((c) => '${c.name}=${c.value}')
+            .join('; ');
 
         List<int>? body;
 
@@ -201,15 +208,18 @@ class Proxy {
     /// if [http.Client] does not provide us with a content length
     /// OR [http.Client] is about to decode the response (bytecount returned by [http.Response].stream != known length)
     /// then we can not provide a value downstream => set to '-1' for 'unspecified length'
-    var isContentLengthUnknown = rs.contentLength == null ||
+    var isContentLengthUnknown =
+        rs.contentLength == null ||
         rs.headers[HttpHeaders.contentEncodingHeader]?.isNotEmpty == true ||
         rs.headers[HttpHeaders.transferEncodingHeader]?.isNotEmpty == true;
 
     var proxiedHeaders = Map<String, String>.from(rs.headers)
       ..remove(
-          HttpHeaders.contentEncodingHeader) // drop, http.Client has decoded
+        HttpHeaders.contentEncodingHeader,
+      ) // drop, http.Client has decoded
       ..remove(
-          HttpHeaders.transferEncodingHeader) // drop, http.Client has decoded
+        HttpHeaders.transferEncodingHeader,
+      ) // drop, http.Client has decoded
       ..[HttpHeaders.contentLengthHeader] =
           "${isContentLengthUnknown ? '-1' : rs.contentLength}";
 

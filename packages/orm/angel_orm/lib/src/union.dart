@@ -13,7 +13,7 @@ class Union<T> extends QueryBase<T> {
   final String tableName;
 
   Union(this.left, this.right, {this.all = false, String? tableName})
-      : tableName = tableName ?? left.tableName {
+    : tableName = tableName ?? left.tableName {
     substitutionValues
       ..addAll(left.substitutionValues)
       ..addAll(right.substitutionValues);
@@ -26,10 +26,12 @@ class Union<T> extends QueryBase<T> {
   Optional<T> deserialize(List row) => left.deserialize(row);
 
   @override
-  String compile(Set<String> trampoline,
-      {bool includeTableName = false,
-      String? preamble,
-      bool withFields = true}) {
+  String compile(
+    Set<String> trampoline, {
+    bool includeTableName = false,
+    String? preamble,
+    bool withFields = true,
+  }) {
     var selector = all == true ? 'UNION ALL' : 'UNION';
     var t1 = Set<String>.from(trampoline);
     var t2 = Set<String>.from(trampoline);

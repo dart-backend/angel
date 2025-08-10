@@ -82,7 +82,9 @@ abstract class RequestContext<RawRequest> {
         _contentType = MediaType.parse(headers!.contentType.toString());
       } catch (e) {
         _log.warning(
-            'Invalid media type [${headers!.contentType.toString()}]', e);
+          'Invalid media type [${headers!.contentType.toString()}]',
+          e,
+        );
       }
     }
     return _contentType;
@@ -171,7 +173,8 @@ abstract class RequestContext<RawRequest> {
   set bodyAsObject(value) {
     if (_bodyObject != null) {
       throw StateError(
-          'The request body has already been parsed/set, and cannot be overwritten.');
+        'The request body has already been parsed/set, and cannot be overwritten.',
+      );
     } else {
       if (value is List) _bodyList = value;
       if (value is Map<String, dynamic>) _bodyFields = value;
@@ -218,7 +221,8 @@ abstract class RequestContext<RawRequest> {
     if (contentTypeString == null) {
       _log.severe('RequestContext.accepts is null');
       throw ArgumentError(
-          'RequestContext.accepts expects the `contentType` parameter to NOT be null.');
+        'RequestContext.accepts expects the `contentType` parameter to NOT be null.',
+      );
     }
 
     _acceptHeaderCache ??= headers?.value('accept');
@@ -236,8 +240,10 @@ abstract class RequestContext<RawRequest> {
   bool get acceptsAll => _acceptsAllCache ??= accepts('*/*');
 
   /// Shorthand for deserializing [bodyAsMap], using some transformer function [f].
-  Future<T> deserializeBody<T>(FutureOr<T> Function(Map?) f,
-      {Encoding encoding = utf8}) async {
+  Future<T> deserializeBody<T>(
+    FutureOr<T> Function(Map?) f, {
+    Encoding encoding = utf8,
+  }) async {
     await parseBody(encoding: encoding);
     return await f(bodyAsMap);
   }
@@ -260,8 +266,10 @@ abstract class RequestContext<RawRequest> {
       if (contentType.type == 'application' && contentType.subtype == 'json') {
         _uploadedFiles = [];
 
-        var parsed = (_bodyObject =
-            await encoding.decoder.bind(contentBody).join().then(json.decode));
+        var parsed = (_bodyObject = await encoding.decoder
+            .bind(contentBody)
+            .join()
+            .then(json.decode));
 
         if (parsed is Map) {
           _bodyFields = Map<String, dynamic>.from(parsed);
@@ -281,8 +289,12 @@ abstract class RequestContext<RawRequest> {
           contentType.parameters.containsKey('boundary')) {
         var boundary = contentType.parameters['boundary'] ?? '';
         var transformer = MimeMultipartTransformer(boundary);
-        var parts = transformer.bind(contentBody).map((part) =>
-            HttpMultipartFormData.parse(part, defaultEncoding: encoding));
+        var parts = transformer
+            .bind(contentBody)
+            .map(
+              (part) =>
+                  HttpMultipartFormData.parse(part, defaultEncoding: encoding),
+            );
         _bodyFields = {};
         _uploadedFiles = [];
 
@@ -353,7 +365,9 @@ class UploadedFile {
         _contentType = MediaType.parse(formData.contentType.toString());
       } catch (e) {
         log.warning(
-            'Invalue media type [${formData.contentType.toString()}]', e);
+          'Invalue media type [${formData.contentType.toString()}]',
+          e,
+        );
       }
     }
 

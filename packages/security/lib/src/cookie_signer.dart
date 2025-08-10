@@ -15,7 +15,7 @@ class CookieSigner {
   /// Creates an [hmac] from an array of [keyBytes] and a
   /// [hash] (defaults to [sha256]).
   CookieSigner(List<int> keyBytes, {Hash? hash})
-      : hmac = Hmac(hash ?? sha256, keyBytes);
+    : hmac = Hmac(hash ?? sha256, keyBytes);
 
   CookieSigner.fromHmac(this.hmac);
 
@@ -32,8 +32,10 @@ class CookieSigner {
   ///
   /// If an [onInvalidCookie] callback is passed, then it will
   /// be invoked for each unsigned or improperly-signed cookie.
-  List<Cookie> readCookies(RequestContext req,
-      {void Function(Cookie)? onInvalidCookie}) {
+  List<Cookie> readCookies(
+    RequestContext req, {
+    void Function(Cookie)? onInvalidCookie,
+  }) {
     return req.cookies.fold([], (out, cookie) {
       var data = getCookiePayloadAndSignature(cookie.value);
       if (data == null || (data[1] != computeCookieSignature(data[0]))) {
@@ -106,7 +108,9 @@ class CookieSigner {
   /// Where `sig` is the cookie's value, signed with the [hmac].
   Cookie createSignedCookie(Cookie cookie) {
     return cookieWithNewValue(
-        cookie, '${cookie.value}.${computeCookieSignature(cookie.value)}');
+      cookie,
+      '${cookie.value}.${computeCookieSignature(cookie.value)}',
+    );
   }
 
   /// Returns a new [Cookie] that is the same as the input

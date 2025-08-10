@@ -8,9 +8,10 @@ String _toString(Map? v) => json.encode(v);
 @serializable
 abstract class _HasMap {
   @SerializableField(
-      serializer: #_toString,
-      deserializer: #_fromString,
-      isNullable: false,
-      serializesTo: String)
+    serializer: #_toString,
+    deserializer: #_fromString,
+    isNullable: false,
+    serializesTo: String,
+  )
   Map? get value;
 }

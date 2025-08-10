@@ -18,8 +18,11 @@ class Rest extends BaseAngelClient {
   Rest(String path) : super(http.Client() as http.BaseClient, path);
 
   @override
-  Service<Id, Data> service<Id, Data>(String path,
-      {Type? type, AngelDeserializer? deserializer}) {
+  Service<Id, Data> service<Id, Data>(
+    String path, {
+    Type? type,
+    AngelDeserializer? deserializer,
+  }) {
     var url = baseUrl.replace(path: p.join(baseUrl.path, path));
     var s = RestService<Id, Data>(client, this, url, type);
     _services.add(s);
@@ -27,10 +30,13 @@ class Rest extends BaseAngelClient {
   }
 
   @override
-  Stream<String> authenticateViaPopup(String url,
-      {String eventName = 'token'}) {
+  Stream<String> authenticateViaPopup(
+    String url, {
+    String eventName = 'token',
+  }) {
     throw UnimplementedError(
-        'Opening popup windows is not supported in the `dart:io` client.');
+      'Opening popup windows is not supported in the `dart:io` client.',
+    );
   }
 
   @override

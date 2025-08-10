@@ -19,17 +19,23 @@ void main() {
     app.logger = Logger('angel')..onRecord.listen(print);
 
     app.fallback(
-      VirtualDirectory(app, const LocalFileSystem(),
-          source: testDir,
-          publicPath: '/virtual',
-          indexFileNames: ['index.txt']).handleRequest,
+      VirtualDirectory(
+        app,
+        const LocalFileSystem(),
+        source: testDir,
+        publicPath: '/virtual',
+        indexFileNames: ['index.txt'],
+      ).handleRequest,
     );
 
     app.fallback(
-      VirtualDirectory(app, const LocalFileSystem(),
-          source: testDir,
-          useBuffer: true,
-          indexFileNames: ['index.php', 'index.txt']).handleRequest,
+      VirtualDirectory(
+        app,
+        const LocalFileSystem(),
+        source: testDir,
+        useBuffer: true,
+        indexFileNames: ['index.php', 'index.txt'],
+      ).handleRequest,
     );
 
     app.fallback((req, res) => 'Fallback');
@@ -72,10 +78,13 @@ void main() {
   });
 
   test('chrome accept', () async {
-    var response = await client.get(Uri.parse('$url/virtual'), headers: {
-      'accept':
-          'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8'
-    });
+    var response = await client.get(
+      Uri.parse('$url/virtual'),
+      headers: {
+        'accept':
+            'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+      },
+    );
     expect(response.body, equals('index!'));
   });
 }

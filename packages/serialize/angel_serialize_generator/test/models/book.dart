@@ -30,7 +30,9 @@ abstract class _Author extends Model {
   String get customMethod => 'hey!';
 
   @SerializableField(
-      isNullable: false, errorMessage: 'Custom message for missing `age`')
+    isNullable: false,
+    errorMessage: 'Custom message for missing `age`',
+  )
   int? get age;
 
   List<_Book> get books;

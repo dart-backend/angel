@@ -16,7 +16,8 @@ void main() async {
 
   // Create a cookie signer. Uses an SHA256 Hmac by default.
   var signer = CookieSigner.fromStringKey(
-      'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ab');
+    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789ab',
+  );
 
   // When a user visits /getid, give them a (signed) uniqid cookie.
   // When they visit /cookies, print their verified cookies.
@@ -37,9 +38,12 @@ void main() async {
   // The [onInvalidCookie] callback is optional, but
   // here we will use it to log invalid cookies.
   app.get('/cookies', (req, res) {
-    var verifiedCookies = signer.readCookies(req, onInvalidCookie: (cookie) {
-      app.logger.warning('Invalid cookie: $cookie');
-    });
+    var verifiedCookies = signer.readCookies(
+      req,
+      onInvalidCookie: (cookie) {
+        app.logger.warning('Invalid cookie: $cookie');
+      },
+    );
     res.writeln('${verifiedCookies.length} verified cookie(s)');
     res.writeln('${req.cookies.length} total unverified cookie(s)');
     for (var cookie in verifiedCookies) {
@@ -48,8 +52,11 @@ void main() async {
   });
 
   // 404 otherwise.
-  app.fallback((req, res) => throw AngelHttpException.notFound(
-      message: 'The only valid endpoints are /getid and /cookies.'));
+  app.fallback(
+    (req, res) => throw AngelHttpException.notFound(
+      message: 'The only valid endpoints are /getid and /cookies.',
+    ),
+  );
 
   // Start the server.
   await http.startServer('127.0.0.1', 3000);

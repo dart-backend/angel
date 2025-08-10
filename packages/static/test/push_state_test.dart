@@ -25,11 +25,7 @@ void main() {
 
     app = Angel();
 
-    var vDir = VirtualDirectory(
-      app,
-      fileSystem,
-      source: webDir,
-    );
+    var vDir = VirtualDirectory(app, fileSystem, source: webDir);
 
     app
       ..fallback(vDir.handleRequest)
@@ -37,13 +33,11 @@ void main() {
       ..fallback((req, res) => 'Fallback');
 
     app.logger = Logger('push_state')
-      ..onRecord.listen(
-        (rec) {
-          print(rec);
-          if (rec.error != null) print(rec.error);
-          if (rec.stackTrace != null) print(rec.stackTrace);
-        },
-      );
+      ..onRecord.listen((rec) {
+        print(rec);
+        if (rec.error != null) print(rec.error);
+        if (rec.stackTrace != null) print(rec.stackTrace);
+      });
 
     client = await connectTo(app);
   });

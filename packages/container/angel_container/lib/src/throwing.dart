@@ -18,8 +18,9 @@ class ThrowingReflector extends Reflector {
       'class if you need reflection.';
   */
 
-  const ThrowingReflector(
-      {this.errorMessage = ContainerConst.defaultErrorMessage});
+  const ThrowingReflector({
+    this.errorMessage = ContainerConst.defaultErrorMessage,
+  });
 
   @override
   String? getName(Symbol symbol) => const EmptyReflector().getName(symbol);

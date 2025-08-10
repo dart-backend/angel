@@ -40,7 +40,9 @@ void main() async {
 
   await http.startServer('127.0.0.1', 3000);
   print('Listening at ${http.uri}');
-  print('See what happens when you visit http://localhost:3000 instead '
-      'of http://127.0.0.1:3000. Then, try '
-      'http://api.localhost:3000.');
+  print(
+    'See what happens when you visit http://localhost:3000 instead '
+    'of http://127.0.0.1:3000. Then, try '
+    'http://api.localhost:3000.',
+  );
 }

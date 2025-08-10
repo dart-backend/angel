@@ -9,7 +9,7 @@ import 'package:logging/logging.dart';
 abstract class MySqlGenerator {
   static final List<String> _charColumnType = [
     ColumnType.varChar.name,
-    ColumnType.char.name
+    ColumnType.char.name,
   ];
 
   static String columnType(MigrationColumn column) {
@@ -221,7 +221,8 @@ class MysqlAlterTable extends Table implements MutableTable {
   @override
   void changeColumnType(String name, ColumnType type, {int length = 256}) {
     _stack.add(
-        'MODIFY $name ${MySqlGenerator.columnType(MigrationColumn(type, length: length))}');
+      'MODIFY $name ${MySqlGenerator.columnType(MigrationColumn(type, length: length))}',
+    );
   }
 
   @override

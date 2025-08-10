@@ -30,9 +30,10 @@ class _FakeExecutor extends QueryExecutor {
   }) async {
     var now = DateTime.now();
     print(
-        '_FakeExecutor received query: $query and values: $substitutionValues');
+      '_FakeExecutor received query: $query and values: $substitutionValues',
+    );
     return [
-      [1, 'Rich', 'Person', 100000.0, now, now]
+      [1, 'Rich', 'Person', 100000.0, now, now],
     ];
   }
 

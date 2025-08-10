@@ -47,10 +47,7 @@ class AssetMigration extends Migration {
 // **************************************************************************
 
 class ItemQuery extends Query<Item, ItemQueryWhere> {
-  ItemQuery({
-    super.parent,
-    Set<String>? trampoline,
-  }) {
+  ItemQuery({super.parent, Set<String>? trampoline}) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = ItemQueryWhere(this);
@@ -75,17 +72,12 @@ class ItemQuery extends Query<Item, ItemQueryWhere> {
 
   @override
   List<String> get fields {
-    const localFields = [
-      'id',
-      'created_at',
-      'updated_at',
-      'description',
-    ];
+    const localFields = ['id', 'created_at', 'updated_at', 'description'];
     return _selectedFields.isEmpty
         ? localFields
         : localFields
-            .where((field) => _selectedFields.contains(field))
-            .toList();
+              .where((field) => _selectedFields.contains(field))
+              .toList();
   }
 
   ItemQuery select(List<String> selectedFields) {
@@ -109,10 +101,12 @@ class ItemQuery extends Query<Item, ItemQueryWhere> {
     }
     var model = Item(
       id: fields.contains('id') ? row[0].toString() : null,
-      createdAt:
-          fields.contains('created_at') ? mapToNullableDateTime(row[1]) : null,
-      updatedAt:
-          fields.contains('updated_at') ? mapToNullableDateTime(row[2]) : null,
+      createdAt: fields.contains('created_at')
+          ? mapToNullableDateTime(row[1])
+          : null,
+      updatedAt: fields.contains('updated_at')
+          ? mapToNullableDateTime(row[2])
+          : null,
       description: fields.contains('description') ? (row[3] as String) : '',
     );
     return Optional.of(model);
@@ -126,22 +120,10 @@ class ItemQuery extends Query<Item, ItemQueryWhere> {
 
 class ItemQueryWhere extends QueryWhere {
   ItemQueryWhere(ItemQuery query)
-      : id = NumericSqlExpressionBuilder<int>(
-          query,
-          'id',
-        ),
-        createdAt = DateTimeSqlExpressionBuilder(
-          query,
-          'created_at',
-        ),
-        updatedAt = DateTimeSqlExpressionBuilder(
-          query,
-          'updated_at',
-        ),
-        description = StringSqlExpressionBuilder(
-          query,
-          'description',
-        );
+    : id = NumericSqlExpressionBuilder<int>(query, 'id'),
+      createdAt = DateTimeSqlExpressionBuilder(query, 'created_at'),
+      updatedAt = DateTimeSqlExpressionBuilder(query, 'updated_at'),
+      description = StringSqlExpressionBuilder(query, 'description');
 
   final NumericSqlExpressionBuilder<int> id;
 
@@ -153,12 +135,7 @@ class ItemQueryWhere extends QueryWhere {
 
   @override
   List<SqlExpressionBuilder> get expressionBuilders {
-    return [
-      id,
-      createdAt,
-      updatedAt,
-      description,
-    ];
+    return [id, createdAt, updatedAt, description];
   }
 }
 
@@ -200,26 +177,15 @@ class ItemQueryValues extends MapQueryValues {
 }
 
 class AssetQuery extends Query<Asset, AssetQueryWhere> {
-  AssetQuery({
-    super.parent,
-    Set<String>? trampoline,
-  }) {
+  AssetQuery({super.parent, Set<String>? trampoline}) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = AssetQueryWhere(this);
     leftJoin(
-      _items = ItemQuery(
-        trampoline: trampoline,
-        parent: this,
-      ),
+      _items = ItemQuery(trampoline: trampoline, parent: this),
       'id',
       'asset_id',
-      additionalFields: const [
-        'id',
-        'created_at',
-        'updated_at',
-        'description',
-      ],
+      additionalFields: const ['id', 'created_at', 'updated_at', 'description'],
       trampoline: trampoline,
     );
   }
@@ -256,8 +222,8 @@ class AssetQuery extends Query<Asset, AssetQueryWhere> {
     return _selectedFields.isEmpty
         ? localFields
         : localFields
-            .where((field) => _selectedFields.contains(field))
-            .toList();
+              .where((field) => _selectedFields.contains(field))
+              .toList();
   }
 
   AssetQuery select(List<String> selectedFields) {
@@ -281,10 +247,12 @@ class AssetQuery extends Query<Asset, AssetQueryWhere> {
     }
     var model = Asset(
       id: fields.contains('id') ? row[0].toString() : null,
-      createdAt:
-          fields.contains('created_at') ? mapToNullableDateTime(row[1]) : null,
-      updatedAt:
-          fields.contains('updated_at') ? mapToNullableDateTime(row[2]) : null,
+      createdAt: fields.contains('created_at')
+          ? mapToNullableDateTime(row[1])
+          : null,
+      updatedAt: fields.contains('updated_at')
+          ? mapToNullableDateTime(row[2])
+          : null,
       description: fields.contains('description') ? (row[3] as String) : '',
       name: fields.contains('name') ? (row[4] as String) : '',
       price: fields.contains('price') ? mapToDouble(row[5]) : 0.0,
@@ -319,7 +287,8 @@ class AssetQuery extends Query<Asset, AssetQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                items: List<ItemEntity>.from(l.items)..addAll(model.items));
+              items: List<ItemEntity>.from(l.items)..addAll(model.items),
+            );
         }
       });
     });
@@ -337,7 +306,8 @@ class AssetQuery extends Query<Asset, AssetQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                items: List<ItemEntity>.from(l.items)..addAll(model.items));
+              items: List<ItemEntity>.from(l.items)..addAll(model.items),
+            );
         }
       });
     });
@@ -355,7 +325,8 @@ class AssetQuery extends Query<Asset, AssetQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                items: List<ItemEntity>.from(l.items)..addAll(model.items));
+              items: List<ItemEntity>.from(l.items)..addAll(model.items),
+            );
         }
       });
     });
@@ -364,30 +335,12 @@ class AssetQuery extends Query<Asset, AssetQueryWhere> {
 
 class AssetQueryWhere extends QueryWhere {
   AssetQueryWhere(AssetQuery query)
-      : id = NumericSqlExpressionBuilder<int>(
-          query,
-          'id',
-        ),
-        createdAt = DateTimeSqlExpressionBuilder(
-          query,
-          'created_at',
-        ),
-        updatedAt = DateTimeSqlExpressionBuilder(
-          query,
-          'updated_at',
-        ),
-        description = StringSqlExpressionBuilder(
-          query,
-          'description',
-        ),
-        name = StringSqlExpressionBuilder(
-          query,
-          'name',
-        ),
-        price = NumericSqlExpressionBuilder<double>(
-          query,
-          'price',
-        );
+    : id = NumericSqlExpressionBuilder<int>(query, 'id'),
+      createdAt = DateTimeSqlExpressionBuilder(query, 'created_at'),
+      updatedAt = DateTimeSqlExpressionBuilder(query, 'updated_at'),
+      description = StringSqlExpressionBuilder(query, 'description'),
+      name = StringSqlExpressionBuilder(query, 'name'),
+      price = NumericSqlExpressionBuilder<double>(query, 'price');
 
   final NumericSqlExpressionBuilder<int> id;
 
@@ -403,14 +356,7 @@ class AssetQueryWhere extends QueryWhere {
 
   @override
   List<SqlExpressionBuilder> get expressionBuilders {
-    return [
-      id,
-      createdAt,
-      updatedAt,
-      description,
-      name,
-      price,
-    ];
+    return [id, createdAt, updatedAt, description, name, price];
   }
 }
 
@@ -471,12 +417,7 @@ class AssetQueryValues extends MapQueryValues {
 
 @generatedSerializable
 class Item extends ItemEntity {
-  Item({
-    this.id,
-    this.createdAt,
-    this.updatedAt,
-    required this.description,
-  });
+  Item({this.id, this.createdAt, this.updatedAt, required this.description});
 
   /// A unique identifier corresponding to this item.
   @override
@@ -500,10 +441,11 @@ class Item extends ItemEntity {
     String? description,
   }) {
     return Item(
-        id: id ?? this.id,
-        createdAt: createdAt ?? this.createdAt,
-        updatedAt: updatedAt ?? this.updatedAt,
-        description: description ?? this.description);
+      id: id ?? this.id,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      description: description ?? this.description,
+    );
   }
 
   @override
@@ -517,12 +459,7 @@ class Item extends ItemEntity {
 
   @override
   int get hashCode {
-    return hashObjects([
-      id,
-      createdAt,
-      updatedAt,
-      description,
-    ]);
+    return hashObjects([id, createdAt, updatedAt, description]);
   }
 
   @override
@@ -581,13 +518,14 @@ class Asset extends AssetEntity {
     List<ItemEntity>? items,
   }) {
     return Asset(
-        id: id ?? this.id,
-        createdAt: createdAt ?? this.createdAt,
-        updatedAt: updatedAt ?? this.updatedAt,
-        description: description ?? this.description,
-        name: name ?? this.name,
-        price: price ?? this.price,
-        items: items ?? this.items);
+      id: id ?? this.id,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      description: description ?? this.description,
+      name: name ?? this.name,
+      price: price ?? this.price,
+      items: items ?? this.items,
+    );
   }
 
   @override
@@ -599,8 +537,9 @@ class Asset extends AssetEntity {
         other.description == description &&
         other.name == name &&
         other.price == price &&
-        ListEquality<ItemEntity>(DefaultEquality<ItemEntity>())
-            .equals(other.items, items);
+        ListEquality<ItemEntity>(
+          DefaultEquality<ItemEntity>(),
+        ).equals(other.items, items);
   }
 
   @override
@@ -657,18 +596,19 @@ class ItemSerializer extends Codec<Item, Map> {
 
   static Item fromMap(Map map) {
     return Item(
-        id: map['id'] as String?,
-        createdAt: map['created_at'] != null
-            ? (map['created_at'] is DateTime
+      id: map['id'] as String?,
+      createdAt: map['created_at'] != null
+          ? (map['created_at'] is DateTime
                 ? (map['created_at'] as DateTime)
                 : DateTime.parse(map['created_at'].toString()))
-            : null,
-        updatedAt: map['updated_at'] != null
-            ? (map['updated_at'] is DateTime
+          : null,
+      updatedAt: map['updated_at'] != null
+          ? (map['updated_at'] is DateTime
                 ? (map['updated_at'] as DateTime)
                 : DateTime.parse(map['updated_at'].toString()))
-            : null,
-        description: map['description'] as String);
+          : null,
+      description: map['description'] as String,
+    );
   }
 
   static Map<String, dynamic> toMap(ItemEntity? model) {
@@ -679,7 +619,7 @@ class ItemSerializer extends Codec<Item, Map> {
       'id': model.id,
       'created_at': model.createdAt?.toIso8601String(),
       'updated_at': model.updatedAt?.toIso8601String(),
-      'description': model.description
+      'description': model.description,
     };
   }
 }
@@ -728,24 +668,28 @@ class AssetSerializer extends Codec<Asset, Map> {
 
   static Asset fromMap(Map map) {
     return Asset(
-        id: map['id'] as String?,
-        createdAt: map['created_at'] != null
-            ? (map['created_at'] is DateTime
+      id: map['id'] as String?,
+      createdAt: map['created_at'] != null
+          ? (map['created_at'] is DateTime
                 ? (map['created_at'] as DateTime)
                 : DateTime.parse(map['created_at'].toString()))
-            : null,
-        updatedAt: map['updated_at'] != null
-            ? (map['updated_at'] is DateTime
+          : null,
+      updatedAt: map['updated_at'] != null
+          ? (map['updated_at'] is DateTime
                 ? (map['updated_at'] as DateTime)
                 : DateTime.parse(map['updated_at'].toString()))
-            : null,
-        description: map['description'] as String,
-        name: map['name'] as String,
-        price: map['price'] as double,
-        items: map['items'] is Iterable
-            ? List.unmodifiable(((map['items'] as Iterable).whereType<Map>())
-                .map(ItemSerializer.fromMap))
-            : []);
+          : null,
+      description: map['description'] as String,
+      name: map['name'] as String,
+      price: map['price'] as double,
+      items: map['items'] is Iterable
+          ? List.unmodifiable(
+              ((map['items'] as Iterable).whereType<Map>()).map(
+                ItemSerializer.fromMap,
+              ),
+            )
+          : [],
+    );
   }
 
   static Map<String, dynamic> toMap(AssetEntity? model) {
@@ -759,7 +703,7 @@ class AssetSerializer extends Codec<Asset, Map> {
       'description': model.description,
       'name': model.name,
       'price': model.price,
-      'items': model.items.map((m) => ItemSerializer.toMap(m)).toList()
+      'items': model.items.map((m) => ItemSerializer.toMap(m)).toList(),
     };
   }
 }

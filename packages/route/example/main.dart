@@ -46,9 +46,9 @@ SomeQuery someQuery(id) => SomeQuery();
 
 class SomeQuery {
   List<SomeQueryReview> get reviews => [
-        SomeQueryReview('fake'),
-        SomeQueryReview('data'),
-      ];
+    SomeQueryReview('fake'),
+    SomeQueryReview('data'),
+  ];
 }
 
 class SomeQueryReview {

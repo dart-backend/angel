@@ -20,11 +20,12 @@ void main() async {
     var password = Platform.environment['MYSQL_PASSWORD'] ?? 'test123';
 
     var settings = ConnectionSettings(
-        host: host,
-        port: 3306,
-        db: database,
-        user: username,
-        password: password);
+      host: host,
+      port: 3306,
+      db: database,
+      user: username,
+      password: password,
+    );
     conn = await MySqlConnection.connect(settings);
 
     runner = MariaDbMigrationRunner(

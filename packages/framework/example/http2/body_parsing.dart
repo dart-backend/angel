@@ -15,8 +15,9 @@ void main() async {
     });
 
   var publicDir = Directory('example/public');
-  var indexHtml =
-      const LocalFileSystem().file(publicDir.uri.resolve('body_parsing.html'));
+  var indexHtml = const LocalFileSystem().file(
+    publicDir.uri.resolve('body_parsing.html'),
+  );
 
   app.get('/', (req, res) => res.streamFile(indexHtml));
 
@@ -30,9 +31,10 @@ void main() async {
     ctx.setAlpnProtocols(['h2'], true);
   } catch (e, st) {
     app.logger.severe(
-        'Cannot set ALPN protocol on server to `h2`. The server will only serve HTTP/1.x.',
-        e,
-        st);
+      'Cannot set ALPN protocol on server to `h2`. The server will only serve HTTP/1.x.',
+      e,
+      st,
+    );
   }
 
   var http1 = AngelHttp(app);

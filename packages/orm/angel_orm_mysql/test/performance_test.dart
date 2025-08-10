@@ -1,6 +1,5 @@
 // ignore: library_annotations
 @Skip('Only used for debugging issues')
-
 import 'dart:async';
 import 'dart:math';
 
@@ -10,8 +9,10 @@ import 'package:test/test.dart';
 import 'models/fortune.dart';
 import 'models/world.dart';
 
-void performanceTests(FutureOr<QueryExecutor> Function() createExecutor,
-    {FutureOr<void> Function(QueryExecutor)? close}) {
+void performanceTests(
+  FutureOr<QueryExecutor> Function() createExecutor, {
+  FutureOr<void> Function(QueryExecutor)? close,
+}) {
   QueryExecutor? executor;
 
   //int _sampleSize = 1000;

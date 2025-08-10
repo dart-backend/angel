@@ -16,9 +16,11 @@ Future<Angel> createServer() async {
   // Create a new server, and install the Markdown renderer.
   var app = Angel();
   var fs = LocalFileSystem();
-  await app
-      .configure(markdown(fs.directory('views'), template: (content, locals) {
-    return '''
+  await app.configure(
+    markdown(
+      fs.directory('views'),
+      template: (content, locals) {
+        return '''
 <!DOCTYPE html>
 <html>
   <head>
@@ -39,7 +41,9 @@ Future<Angel> createServer() async {
   </body>
 </html>
     ''';
-  }));
+      },
+    ),
+  );
 
   // Compile a landing page
   app.get('/', (req, res) => res.render('hello', {'title': 'Welcome'}));

@@ -28,7 +28,8 @@ bool _isOriginAllowed(String? origin, [allowedOrigin]) {
 /// On-the-fly configures the [cors] handler. Use this when the context of the surrounding request
 /// is necessary to decide how to handle an incoming request.
 Future<bool> Function(RequestContext, ResponseContext) dynamicCors(
-    FutureOr<CorsOptions> Function(RequestContext, ResponseContext) f) {
+  FutureOr<CorsOptions> Function(RequestContext, ResponseContext) f,
+) {
   return (req, res) async {
     var opts = await f(req, res);
     var handler = cors(opts);
@@ -37,8 +38,9 @@ Future<bool> Function(RequestContext, ResponseContext) dynamicCors(
 }
 
 /// Applies the given [CorsOptions].
-Future<bool> Function(RequestContext, ResponseContext) cors(
-    [CorsOptions? options]) {
+Future<bool> Function(RequestContext, ResponseContext) cors([
+  CorsOptions? options,
+]) {
   options ??= CorsOptions();
 
   return (req, res) async {
@@ -49,17 +51,19 @@ Future<bool> Function(RequestContext, ResponseContext) cors(
 
     // access-control-allow-headers
     if (req.method == 'OPTIONS' && options.allowedHeaders.isNotEmpty) {
-      res.headers['access-control-allow-headers'] =
-          options.allowedHeaders.join(',');
+      res.headers['access-control-allow-headers'] = options.allowedHeaders.join(
+        ',',
+      );
     } else if (req.headers!['access-control-request-headers'] != null) {
-      res.headers['access-control-allow-headers'] =
-          req.headers!.value('access-control-request-headers')!;
+      res.headers['access-control-allow-headers'] = req.headers!.value(
+        'access-control-request-headers',
+      )!;
     }
 
     // access-control-expose-headers
     if (options.exposedHeaders.isNotEmpty) {
-      res.headers['access-control-expose-headers'] =
-          options.exposedHeaders.join(',');
+      res.headers['access-control-expose-headers'] = options.exposedHeaders
+          .join(',');
     }
 
     // access-control-allow-methods
@@ -80,11 +84,14 @@ Future<bool> Function(RequestContext, ResponseContext) cors(
         ..headers['access-control-allow-origin'] = options.origin as String
         ..headers['vary'] = 'origin';
     } else {
-      var isAllowed =
-          _isOriginAllowed(req.headers!.value('origin'), options.origin);
+      var isAllowed = _isOriginAllowed(
+        req.headers!.value('origin'),
+        options.origin,
+      );
 
-      res.headers['access-control-allow-origin'] =
-          isAllowed ? req.headers!.value('origin')! : false.toString();
+      res.headers['access-control-allow-origin'] = isAllowed
+          ? req.headers!.value('origin')!
+          : false.toString();
 
       if (isAllowed) {
         res.headers['vary'] = 'origin';

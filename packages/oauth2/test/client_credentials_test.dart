@@ -34,9 +34,7 @@ void main() {
       headers: {
         'Authorization': 'Basic ${base64Url.encode('foo:bar'.codeUnits)}',
       },
-      body: {
-        'grant_type': 'client_credentials',
-      },
+      body: {'grant_type': 'client_credentials'},
     );
 
     print('Response: ${response.body}');
@@ -62,9 +60,7 @@ void main() {
       headers: {
         'Authorization': 'Basic ${base64Url.encode('fooa:bar'.codeUnits)}',
       },
-      body: {
-        'grant_type': 'client_credentials',
-      },
+      body: {'grant_type': 'client_credentials'},
     );
 
     print('Response: ${response.body}');
@@ -77,9 +73,7 @@ void main() {
       headers: {
         'Authorization': 'Basic ${base64Url.encode('foo:bara'.codeUnits)}',
       },
-      body: {
-        'grant_type': 'client_credentials',
-      },
+      body: {'grant_type': 'client_credentials'},
     );
 
     print('Response: ${response.body}');
@@ -96,15 +90,18 @@ class _AuthorizationServer
 
   @override
   Future<bool> verifyClient(
-      PseudoApplication client, String? clientSecret) async {
+    PseudoApplication client,
+    String? clientSecret,
+  ) async {
     return client.secret == clientSecret;
   }
 
   @override
   Future<AuthorizationTokenResponse> clientCredentialsGrant(
-      PseudoApplication? client,
-      RequestContext req,
-      ResponseContext res) async {
+    PseudoApplication? client,
+    RequestContext req,
+    ResponseContext res,
+  ) async {
     return AuthorizationTokenResponse('foo');
   }
 }

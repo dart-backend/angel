@@ -19,7 +19,7 @@ AngelConfigurer markdown(
   String? extension,
   ExtensionSet? extensionSet,
   FutureOr<String> Function(String content, Map<String, dynamic> locals)?
-      template,
+  template,
 }) {
   extension ??= '.md';
   extensionSet ??= ExtensionSet.gitHubWeb;
@@ -27,7 +27,8 @@ AngelConfigurer markdown(
   return (Angel app) async {
     app.viewGenerator = (String name, [Map<String, dynamic>? locals]) async {
       var file = viewsDirectory.childFile(
-          viewsDirectory.fileSystem.path.setExtension(name, extension!));
+        viewsDirectory.fileSystem.path.setExtension(name, extension!),
+      );
       var contents = await file.readAsString();
 
       contents = contents.replaceAllMapped(_braces, (m) {
@@ -43,7 +44,8 @@ AngelConfigurer markdown(
 
           if (locals?.containsKey(root) != true) {
             throw UnimplementedError(
-                'Expected a local named "$root", but none was provided. Expression text: "$text"');
+              'Expected a local named "$root", but none was provided. Expression text: "$text"',
+            );
           }
 
           return _resolveDotNotation(split, locals![root]).toString();

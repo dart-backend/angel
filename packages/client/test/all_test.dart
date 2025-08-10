@@ -7,13 +7,18 @@ void main() {
   var todoService = app.service('api/todos');
 
   test('sets method,body,headers,path', () async {
-    await app.post(Uri.parse('/post'),
-        headers: {'method': 'post'}, body: 'post');
+    await app.post(
+      Uri.parse('/post'),
+      headers: {'method': 'post'},
+      body: 'post',
+    );
     expect((app.client as SpecClient).spec!.method, 'POST');
     expect((app.client as SpecClient).spec!.path, '/post');
     expect((app.client as SpecClient).spec!.headers['method'], 'post');
-    expect(await read((app.client as SpecClient).spec!.request.finalize()),
-        'post');
+    expect(
+      await read((app.client as SpecClient).spec!.request.finalize()),
+      'post',
+    );
   });
 
   group('service methods', () {
@@ -32,31 +37,43 @@ void main() {
     test('create', () async {
       await todoService.create({});
       expect((app.client as SpecClient).spec!.method, 'POST');
-      expect((app.client as SpecClient).spec!.headers['content-type'],
-          startsWith('application/json'));
+      expect(
+        (app.client as SpecClient).spec!.headers['content-type'],
+        startsWith('application/json'),
+      );
       expect((app.client as SpecClient).spec!.path, '/api/todos');
-      expect(await read((app.client as SpecClient).spec!.request.finalize()),
-          '{}');
+      expect(
+        await read((app.client as SpecClient).spec!.request.finalize()),
+        '{}',
+      );
     });
 
     test('modify', () async {
       await todoService.modify('sleep', {});
       expect((app.client as SpecClient).spec!.method, 'PATCH');
-      expect((app.client as SpecClient).spec!.headers['content-type'],
-          startsWith('application/json'));
+      expect(
+        (app.client as SpecClient).spec!.headers['content-type'],
+        startsWith('application/json'),
+      );
       expect((app.client as SpecClient).spec!.path, '/api/todos/sleep');
-      expect(await read((app.client as SpecClient).spec!.request.finalize()),
-          '{}');
+      expect(
+        await read((app.client as SpecClient).spec!.request.finalize()),
+        '{}',
+      );
     });
 
     test('update', () async {
       await todoService.update('sleep', {});
       expect((app.client as SpecClient).spec!.method, 'POST');
-      expect((app.client as SpecClient).spec!.headers['content-type'],
-          startsWith('application/json'));
+      expect(
+        (app.client as SpecClient).spec!.headers['content-type'],
+        startsWith('application/json'),
+      );
       expect((app.client as SpecClient).spec!.path, '/api/todos/sleep');
-      expect(await read((app.client as SpecClient).spec!.request.finalize()),
-          '{}');
+      expect(
+        await read((app.client as SpecClient).spec!.request.finalize()),
+        '{}',
+      );
     });
 
     test('remove', () async {
@@ -78,8 +95,10 @@ void main() {
     });
 
     test('credentials send right body', () async {
-      await app
-          .authenticate(type: 'local', credentials: {'username': 'password'});
+      await app.authenticate(
+        type: 'local',
+        credentials: {'username': 'password'},
+      );
       print((app.client as SpecClient).spec?.headers);
       expect(
         await read((app.client as SpecClient).spec!.request.finalize()),

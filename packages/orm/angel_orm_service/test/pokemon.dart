@@ -13,7 +13,7 @@ enum PokemonType {
   dark,
   fighting,
   electric,
-  ghost
+  ghost,
 }
 
 @serializable

@@ -29,27 +29,25 @@ class WithEnum implements _WithEnum {
     Uint8List? imageBytes,
   }) {
     return WithEnum(
-        type: type ?? this.type,
-        finalList: finalList ?? this.finalList,
-        imageBytes: imageBytes ?? this.imageBytes);
+      type: type ?? this.type,
+      finalList: finalList ?? this.finalList,
+      imageBytes: imageBytes ?? this.imageBytes,
+    );
   }
 
   @override
   bool operator ==(other) {
     return other is _WithEnum &&
         other.type == type &&
-        ListEquality<int>(DefaultEquality<int>())
-            .equals(other.finalList, finalList) &&
+        ListEquality<int>(
+          DefaultEquality<int>(),
+        ).equals(other.finalList, finalList) &&
         ListEquality().equals(other.imageBytes, imageBytes);
   }
 
   @override
   int get hashCode {
-    return hashObjects([
-      type,
-      finalList,
-      imageBytes,
-    ]);
+    return hashObjects([type, finalList, imageBytes]);
   }
 
   @override
@@ -93,19 +91,22 @@ class WithEnumSerializer extends Codec<WithEnum, Map> {
 
   static WithEnum fromMap(Map map) {
     return WithEnum(
-        type: map['type'] as WithEnumType? ?? WithEnumType.b,
-        finalList: map['final_list'] is Iterable
-            ? (map['final_list'] as Iterable).cast<int>().toList()
-            : [],
-        imageBytes: map['image_bytes'] is Uint8List
-            ? (map['image_bytes'] as Uint8List)
-            : (map['image_bytes'] is Iterable<int>
+      type: map['type'] as WithEnumType? ?? WithEnumType.b,
+      finalList: map['final_list'] is Iterable
+          ? (map['final_list'] as Iterable).cast<int>().toList()
+          : [],
+      imageBytes: map['image_bytes'] is Uint8List
+          ? (map['image_bytes'] as Uint8List)
+          : (map['image_bytes'] is Iterable<int>
                 ? Uint8List.fromList(
-                    (map['image_bytes'] as Iterable<int>).toList())
+                    (map['image_bytes'] as Iterable<int>).toList(),
+                  )
                 : (map['image_bytes'] is String
-                    ? Uint8List.fromList(
-                        base64.decode(map['image_bytes'] as String))
-                    : null)));
+                      ? Uint8List.fromList(
+                          base64.decode(map['image_bytes'] as String),
+                        )
+                      : null)),
+    );
   }
 
   static Map<String, dynamic> toMap(_WithEnum? model) {
@@ -115,18 +116,15 @@ class WithEnumSerializer extends Codec<WithEnum, Map> {
     return {
       'type': model.type,
       'final_list': model.finalList,
-      'image_bytes':
-          model.imageBytes != null ? base64.encode(model.imageBytes!) : null
+      'image_bytes': model.imageBytes != null
+          ? base64.encode(model.imageBytes!)
+          : null,
     };
   }
 }
 
 abstract class WithEnumFields {
-  static const List<String> allFields = <String>[
-    type,
-    finalList,
-    imageBytes,
-  ];
+  static const List<String> allFields = <String>[type, finalList, imageBytes];
 
   static const String type = 'type';
 

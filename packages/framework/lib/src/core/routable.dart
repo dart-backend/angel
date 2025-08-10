@@ -15,8 +15,11 @@ import 'service.dart';
 final RegExp _straySlashes = RegExp(r'(^/+)|(/+$)');
 
 /// A function that receives an incoming [RequestContext] and responds to it.
-typedef RequestHandler = FutureOr<dynamic> Function(
-    RequestContext<dynamic> req, ResponseContext<dynamic> res);
+typedef RequestHandler =
+    FutureOr<dynamic> Function(
+      RequestContext<dynamic> req,
+      ResponseContext<dynamic> res,
+    );
 
 /// Sequentially runs a list of [handlers] of middleware, and returns early if any does not
 /// return `true`. Works well with [Router].chain.
@@ -31,9 +34,11 @@ RequestHandler chain(Iterable<RequestHandler> handlers) {
         runPipeline = () => Future.sync(() => handler(req, res));
       } else {
         var current = runPipeline;
-        runPipeline = () => current().then((result) => !res.isOpen
-            ? Future.value(result)
-            : req.app!.executeHandler(handler, req, res));
+        runPipeline = () => current().then(
+          (result) => !res.isOpen
+              ? Future.value(result)
+              : req.app!.executeHandler(handler, req, res),
+        );
       }
     }
 
@@ -56,9 +61,9 @@ class Routable extends Router<RequestHandler> {
   final Container _container;
 
   Routable([Reflector? reflector])
-//      : _container = reflector == null ? null : Container(reflector),
-      : _container = Container(reflector ?? ThrowingReflector()),
-        super();
+    //      : _container = reflector == null ? null : Container(reflector),
+    : _container = Container(reflector ?? ThrowingReflector()),
+      super();
 
   /// A [Container] used to inject dependencies.
   Container get container => _container;
@@ -83,9 +88,10 @@ class Routable extends Router<RequestHandler> {
   /// Retrieves the service assigned to the given path.
   T? findService<T extends Service>(Pattern path) {
     return _serviceLookups.putIfAbsent(path, () {
-      return _services[path] ??
-          _services[path.toString().replaceAll(_straySlashes, '')];
-    }) as T?;
+          return _services[path] ??
+              _services[path.toString().replaceAll(_straySlashes, '')];
+        })
+        as T?;
   }
 
   /// Shorthand for finding a [Service] in a statically-typed manner.
@@ -95,20 +101,26 @@ class Routable extends Router<RequestHandler> {
 
   /// Shorthand for finding a [HookedService] in a statically-typed manner.
   HookedService<dynamic, dynamic, T>? findHookedService<T extends Service>(
-      Pattern path) {
+    Pattern path,
+  ) {
     return findService(path) as HookedService<dynamic, dynamic, T>?;
   }
 
   @override
   Route<RequestHandler> addRoute(
-      String method, String path, RequestHandler handler,
-      {Iterable<RequestHandler> middleware = const {}}) {
+    String method,
+    String path,
+    RequestHandler handler, {
+    Iterable<RequestHandler> middleware = const {},
+  }) {
     final handlers = <RequestHandler>[];
     // Merge @Middleware declaration, if any
     var reflector = _container.reflector;
     if (reflector is! ThrowingReflector) {
-      var middlewareDeclaration =
-          getAnnotation<Middleware>(handler, _container.reflector);
+      var middlewareDeclaration = getAnnotation<Middleware>(
+        handler,
+        _container.reflector,
+      );
       if (middlewareDeclaration != null) {
         handlers.addAll(middlewareDeclaration.handlers);
       }
@@ -118,8 +130,12 @@ class Routable extends Router<RequestHandler> {
     handlerSequence.addAll(middleware);
     handlerSequence.addAll(handlers);
 
-    return super.addRoute(method, path.toString(), handler,
-        middleware: handlerSequence);
+    return super.addRoute(
+      method,
+      path.toString(),
+      handler,
+      middleware: handlerSequence,
+    );
   }
 
   /// Mounts a [service] at the given [path].
@@ -127,7 +143,9 @@ class Routable extends Router<RequestHandler> {
   /// Returns a [HookedService] that can be used to hook into
   /// events dispatched by this service.
   HookedService<Id, Data, T> use<Id, Data, T extends Service<Id, Data>>(
-      String path, T service) {
+    String path,
+    T service,
+  ) {
     var hooked = HookedService<Id, Data, T>(service);
     _services[path.toString().trim().replaceAll(RegExp(r'(^/+)|(/+$)'), '')] =
         hooked;

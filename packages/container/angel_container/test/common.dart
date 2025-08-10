@@ -87,9 +87,9 @@ void testReflector(Reflector reflector) {
 
     expect(kantoPokemonType.isAssignableTo(pokemonType), true);
     expect(
-        kantoPokemonType
-            .isAssignableTo(container.reflector.reflectType(String)),
-        false);
+      kantoPokemonType.isAssignableTo(container.reflector.reflectType(String)),
+      false,
+    );
   });
 }
 

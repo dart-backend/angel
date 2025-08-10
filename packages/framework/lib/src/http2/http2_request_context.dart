@@ -29,11 +29,12 @@ class Http2RequestContext extends RequestContext<ServerTransportStream?> {
   Stream<List<int>> get body => _body.stream;
 
   static Future<Http2RequestContext> from(
-      ServerTransportStream stream,
-      Socket socket,
-      Angel app,
-      Map<String, MockHttpSession> sessions,
-      Uuid uuid) {
+    ServerTransportStream stream,
+    Socket socket,
+    Angel app,
+    Map<String, MockHttpSession> sessions,
+    Uuid uuid,
+  ) {
     var c = Completer<Http2RequestContext>();
     var req = Http2RequestContext._(app.container.createChild())
       ..app = app
@@ -42,8 +43,11 @@ class Http2RequestContext extends RequestContext<ServerTransportStream?> {
 
     var headers = req._headers = MockHttpHeaders();
     // String scheme = 'https', host = socket.address.address, path = '';
-    var uri =
-        Uri(scheme: 'https', host: socket.address.address, port: socket.port);
+    var uri = Uri(
+      scheme: 'https',
+      host: socket.address.address,
+      port: socket.port,
+    );
     var cookies = <Cookie>[];
 
     void finalize() {
@@ -67,62 +71,67 @@ class Http2RequestContext extends RequestContext<ServerTransportStream?> {
       if (inUri.hasPort) uri = uri.replace(port: inUri.port);
     }
 
-    stream.incomingMessages.listen((msg) {
-      if (msg is DataStreamMessage) {
-        finalize();
-        req._body.add(msg.bytes);
-      } else if (msg is HeadersStreamMessage) {
-        for (var header in msg.headers) {
-          var name = ascii.decode(header.name).toLowerCase();
-          var value = Uri.decodeComponent(ascii.decode(header.value));
+    stream.incomingMessages.listen(
+      (msg) {
+        if (msg is DataStreamMessage) {
+          finalize();
+          req._body.add(msg.bytes);
+        } else if (msg is HeadersStreamMessage) {
+          for (var header in msg.headers) {
+            var name = ascii.decode(header.name).toLowerCase();
+            var value = Uri.decodeComponent(ascii.decode(header.value));
 
-          switch (name) {
-            case ':method':
-              req._method = value;
-              break;
-            case ':path':
-              var inUri = Uri.parse(value);
-              uri = uri.replace(path: inUri.path);
-              if (inUri.hasQuery) uri = uri.replace(query: inUri.query);
-              var path = uri.path.replaceAll(_straySlashes, '');
-              req._path = path;
-              if (path.isEmpty) req._path = '/';
-              break;
-            case ':scheme':
-              uri = uri.replace(scheme: value);
-              break;
-            case ':authority':
-              parseHost(value);
-              break;
-            case 'cookie':
-              var cookieStrings = value.split(';').map((s) => s.trim());
-
-              for (var cookieString in cookieStrings) {
-                try {
-                  cookies.add(Cookie.fromSetCookieValue(cookieString));
-                } catch (_) {
-                  // Ignore malformed cookies, and just don't add them to the container.
-                }
-              }
-              break;
-            default:
-              var name = ascii.decode(header.name).toLowerCase();
-
-              if (name == 'host') {
+            switch (name) {
+              case ':method':
+                req._method = value;
+                break;
+              case ':path':
+                var inUri = Uri.parse(value);
+                uri = uri.replace(path: inUri.path);
+                if (inUri.hasQuery) uri = uri.replace(query: inUri.query);
+                var path = uri.path.replaceAll(_straySlashes, '');
+                req._path = path;
+                if (path.isEmpty) req._path = '/';
+                break;
+              case ':scheme':
+                uri = uri.replace(scheme: value);
+                break;
+              case ':authority':
                 parseHost(value);
-              }
+                break;
+              case 'cookie':
+                var cookieStrings = value.split(';').map((s) => s.trim());
 
-              headers.add(name, value.split(_comma));
-              break;
+                for (var cookieString in cookieStrings) {
+                  try {
+                    cookies.add(Cookie.fromSetCookieValue(cookieString));
+                  } catch (_) {
+                    // Ignore malformed cookies, and just don't add them to the container.
+                  }
+                }
+                break;
+              default:
+                var name = ascii.decode(header.name).toLowerCase();
+
+                if (name == 'host') {
+                  parseHost(value);
+                }
+
+                headers.add(name, value.split(_comma));
+                break;
+            }
           }
-        }
 
-        if (msg.endStream) finalize();
-      }
-    }, onDone: () {
-      finalize();
-      req._body.close();
-    }, cancelOnError: true, onError: c.completeError);
+          if (msg.endStream) finalize();
+        }
+      },
+      onDone: () {
+        finalize();
+        req._body.close();
+      },
+      cancelOnError: true,
+      onError: c.completeError,
+    );
 
     // Apply session
     var dartSessId = cookies.firstWhereOrNull((c) => c.name == 'DARTSESSID');

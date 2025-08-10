@@ -12,8 +12,12 @@ Future<HttpServer> startShared(address, int port) =>
     HttpServer.bind(address ?? '127.0.0.1', port, shared: true);
 
 Future<HttpServer> Function(dynamic, int) startSharedSecure(
-    SecurityContext securityContext) {
+  SecurityContext securityContext,
+) {
   return (address, int port) => HttpServer.bindSecure(
-      address ?? '127.0.0.1', port, securityContext,
-      shared: true);
+    address ?? '127.0.0.1',
+    port,
+    securityContext,
+    shared: true,
+  );
 }

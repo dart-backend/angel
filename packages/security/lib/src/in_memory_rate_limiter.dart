@@ -11,19 +11,29 @@ class InMemoryRateLimiter<User> extends RateLimiter<User> {
   final _cache = <User, RateLimitingWindow<User>>{};
 
   InMemoryRateLimiter(
-      super.maxPointsPerWindow, super.windowDuration, this.getUser,
-      {super.errorMessage});
+    super.maxPointsPerWindow,
+    super.windowDuration,
+    this.getUser, {
+    super.errorMessage,
+  });
 
   @override
   FutureOr<RateLimitingWindow<User>> getCurrentWindow(
-      RequestContext req, ResponseContext res, DateTime currentTime) async {
+    RequestContext req,
+    ResponseContext res,
+    DateTime currentTime,
+  ) async {
     var user = await getUser(req, res);
     return _cache[user] ??= RateLimitingWindow(user, currentTime, 0);
   }
 
   @override
-  FutureOr<void> updateCurrentWindow(RequestContext req, ResponseContext res,
-      RateLimitingWindow<User> window, DateTime currentTime) {
+  FutureOr<void> updateCurrentWindow(
+    RequestContext req,
+    ResponseContext res,
+    RateLimitingWindow<User> window,
+    DateTime currentTime,
+  ) {
     _cache[window.user] = window;
   }
 }

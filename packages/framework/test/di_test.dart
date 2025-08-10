@@ -34,9 +34,12 @@ void main() {
 
     app.get('/errands', ioc((Todo singleton) => singleton));
     app.get(
-        '/errands3',
-        ioc(({required Errand singleton, Todo? foo, RequestContext? req}) =>
-            singleton.text));
+      '/errands3',
+      ioc(
+        ({required Errand singleton, Todo? foo, RequestContext? req}) =>
+            singleton.text,
+      ),
+    );
     app.post('/async', ioc((Foo foo) => {'baz': foo.bar}));
     await app.configure(SingletonController().configureServer);
     await app.configure(ErrandController().configureServer);
@@ -89,8 +92,10 @@ void main() {
   });
 
   test('resolve from future in controller', () async {
-    var response =
-        await client.post(Uri.parse('$url/errands4/async'), body: 'hey');
+    var response = await client.post(
+      Uri.parse('$url/errands4/async'),
+      body: 'hey',
+    );
     expect(response.body, json.encode({'bar': 'hey'}));
   });
 

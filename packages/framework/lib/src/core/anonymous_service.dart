@@ -10,17 +10,17 @@ class AnonymousService<Id, Data> extends Service<Id, Data> {
   FutureOr<Data> Function(Data, [Map<String, dynamic>?])? _create;
   FutureOr<Data> Function(Id, Data, [Map<String, dynamic>?])? _modify, _update;
 
-  AnonymousService(
-      {FutureOr<List<Data>> Function([Map<String, dynamic>? params])? index,
-      FutureOr<Data> Function(Id id, [Map<String, dynamic>? params])? read,
-      FutureOr<Data> Function(Data data, [Map<String, dynamic>? params])?
-          create,
-      FutureOr<Data> Function(Id id, Data data, [Map<String, dynamic>? params])?
-          modify,
-      FutureOr<Data> Function(Id id, Data data, [Map<String, dynamic>? params])?
-          update,
-      FutureOr<Data> Function(Id id, [Map<String, dynamic>? params])? remove,
-      super.readData}) {
+  AnonymousService({
+    FutureOr<List<Data>> Function([Map<String, dynamic>? params])? index,
+    FutureOr<Data> Function(Id id, [Map<String, dynamic>? params])? read,
+    FutureOr<Data> Function(Data data, [Map<String, dynamic>? params])? create,
+    FutureOr<Data> Function(Id id, Data data, [Map<String, dynamic>? params])?
+    modify,
+    FutureOr<Data> Function(Id id, Data data, [Map<String, dynamic>? params])?
+    update,
+    FutureOr<Data> Function(Id id, [Map<String, dynamic>? params])? remove,
+    super.readData,
+  }) {
     _index = index;
     _read = read;
     _create = create;
@@ -35,27 +35,32 @@ class AnonymousService<Id, Data> extends Service<Id, Data> {
 
   @override
   Future<Data> read(Id id, [Map<String, dynamic>? params]) => Future.sync(
-      () => _read != null ? _read!(id, params) : super.read(id, params));
+    () => _read != null ? _read!(id, params) : super.read(id, params),
+  );
 
   @override
-  Future<Data> create(Data data, [Map<String, dynamic>? params]) =>
-      Future.sync(() => _create != null
-          ? _create!(data, params)
-          : super.create(data, params));
+  Future<Data> create(Data data, [Map<String, dynamic>? params]) => Future.sync(
+    () => _create != null ? _create!(data, params) : super.create(data, params),
+  );
 
   @override
   Future<Data> modify(Id id, Data data, [Map<String, dynamic>? params]) =>
-      Future.sync(() => _modify != null
-          ? _modify!(id, data, params)
-          : super.modify(id, data, params));
+      Future.sync(
+        () => _modify != null
+            ? _modify!(id, data, params)
+            : super.modify(id, data, params),
+      );
 
   @override
   Future<Data> update(Id id, Data data, [Map<String, dynamic>? params]) =>
-      Future.sync(() => _update != null
-          ? _update!(id, data, params)
-          : super.update(id, data, params));
+      Future.sync(
+        () => _update != null
+            ? _update!(id, data, params)
+            : super.update(id, data, params),
+      );
 
   @override
   Future<Data> remove(Id id, [Map<String, dynamic>? params]) => Future.sync(
-      () => _remove != null ? _remove!(id, params) : super.remove(id, params));
+    () => _remove != null ? _remove!(id, params) : super.remove(id, params),
+  );
 }

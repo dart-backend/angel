@@ -20,17 +20,19 @@ class MySqlSchema extends Schema {
   Future<int> run(MySQLConnection connection) async {
     //return connection.execute(compile());
     int affectedRows = 0;
-    await connection.transactional((ctx) async {
-      var sql = compile();
-      //print('Query: $sql');
-      var result = await ctx.execute(sql).catchError((e) {
-        _log.severe('Failed to run query: [ $sql ]', e);
-        throw Exception(e);
-      });
-      affectedRows = result.affectedRows.toInt();
-    }).catchError((e) {
-      _log.severe('Failed to run query in a transaction', e);
-    });
+    await connection
+        .transactional((ctx) async {
+          var sql = compile();
+          //print('Query: $sql');
+          var result = await ctx.execute(sql).catchError((e) {
+            _log.severe('Failed to run query: [ $sql ]', e);
+            throw Exception(e);
+          });
+          affectedRows = result.affectedRows.toInt();
+        })
+        .catchError((e) {
+          _log.severe('Failed to run query in a transaction', e);
+        });
 
     return affectedRows;
   }
@@ -61,7 +63,10 @@ class MySqlSchema extends Schema {
   }
 
   void _create(
-      String tableName, void Function(Table table) callback, bool ifNotExists) {
+    String tableName,
+    void Function(Table table) callback,
+    bool ifNotExists,
+  ) {
     var op = ifNotExists ? ' IF NOT EXISTS' : '';
     var tbl = MysqlTable();
     callback(tbl);
@@ -79,8 +84,9 @@ class MySqlSchema extends Schema {
 
   @override
   void createIfNotExists(
-          String tableName, void Function(Table table) callback) =>
-      _create(tableName, callback, true);
+    String tableName,
+    void Function(Table table) callback,
+  ) => _create(tableName, callback, true);
 
   @override
   void indexes(String tableName, void Function(MutableIndexes table) callback) {

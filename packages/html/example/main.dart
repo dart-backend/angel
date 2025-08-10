@@ -17,11 +17,15 @@ void main() async {
   app.fallback(renderHtml());
 
   app.get('/html', (req, res) {
-    return html(c: [
-      head(c: [
-        title(c: [text('ok')])
-      ])
-    ]);
+    return html(
+      c: [
+        head(
+          c: [
+            title(c: [text('ok')]),
+          ],
+        ),
+      ],
+    );
   });
 
   app.get(

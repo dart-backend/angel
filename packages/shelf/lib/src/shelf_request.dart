@@ -21,7 +21,11 @@ class ShelfRequestContext extends RequestContext {
   final MockHttpHeaders headers = MockHttpHeaders();
 
   ShelfRequestContext(
-      this.angelApp, this.container, this.rawRequest, this.path) {
+    this.angelApp,
+    this.container,
+    this.rawRequest,
+    this.path,
+  ) {
     rawRequest.headers.forEach(headers.add);
   }
 

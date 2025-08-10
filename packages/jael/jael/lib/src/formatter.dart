@@ -62,8 +62,12 @@ class JaelFormatter {
     return _buffer.toString().trim();
   }
 
-  int _formatChild(ElementChild? child, int lineLength,
-      {bool isFirst = false, bool isLast = false}) {
+  int _formatChild(
+    ElementChild? child,
+    int lineLength, {
+    bool isFirst = false,
+    bool isLast = false,
+  }) {
     if (child == null) {
       return lineLength;
     } else if (child is Element) {
@@ -113,7 +117,8 @@ class JaelFormatter {
     _buffer.write(header);
 
     // If the line will be less than maxLineLength characters, write all attrs.
-    var ll = lineLength +
+    var ll =
+        lineLength +
         (element is SelfClosingElement ? 2 : 1) +
         header.length +
         attrLen;
@@ -152,9 +157,12 @@ class JaelFormatter {
       if (lll == _spaceLength && c is! Element) {
         _applySpacing();
       }
-      lll = _formatChild(c, lineLength + lll,
-          isFirst: i == 1 || last is Element,
-          isLast: i == element.children.length);
+      lll = _formatChild(
+        c,
+        lineLength + lll,
+        isFirst: i == 1 || last is Element,
+        isLast: i == element.children.length,
+      );
       if (i++ == element.children.length && c is! Element) {
         _buffer.writeln();
       }
