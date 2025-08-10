@@ -1,7 +1,6 @@
 export 'dart:convert' show json, Codec, Converter;
 export 'package:angel3_model/angel3_model.dart';
 export 'package:collection/collection.dart';
-export 'package:meta/meta.dart' show required, Required;
 export 'package:quiver/core.dart' show hashObjects;
 
 /// Excludes a field from being excluded.
@@ -21,7 +20,7 @@ const Exclude exclude = Exclude();
 
 /// Shorthand for [SerializableField].
 class DefaultsTo extends SerializableField {
-  const DefaultsTo(value) : super(defaultValue: value);
+  const DefaultsTo(dynamic value) : super(defaultValue: value);
 }
 
 /// Shorthand for [SerializableField].

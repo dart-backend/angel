@@ -207,10 +207,12 @@ Future<BuildContext?> buildContext(
         */
 
         // Check for @required
-        var required = const TypeChecker.fromRuntime(
-          Required,
-        ).firstAnnotationOf(el);
 
+        //var required = const TypeChecker.fromRuntime(
+        //  Required,
+        //).firstAnnotationOf(el);
+
+        /*
         if (required != null) {
           log.warning(
             'Using @required on fields (like ${clazz.name}.${field.name}) is now deprecated; use @SerializableField(isNullable: false) instead.',
@@ -222,6 +224,7 @@ Future<BuildContext?> buildContext(
           ctx.requiredFields[field.name] = reason;
           foundNone = false;
         }
+        */
 
         if (foundNone) {
           var f = SerializableField();
