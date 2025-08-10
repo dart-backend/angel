@@ -207,31 +207,31 @@ class StdIOLanguageServer {
   }
 }
 
-TextDocumentItem _documentItem(params) =>
+TextDocumentItem _documentItem(dynamic params) =>
     TextDocumentItem.fromJson(params['textDocument'].value as Map);
 
-VersionedTextDocumentIdentifier _versionedDocument(params) =>
+VersionedTextDocumentIdentifier _versionedDocument(dynamic params) =>
     VersionedTextDocumentIdentifier.fromJson(
       params['textDocument'].value as Map,
     );
 
-TextDocumentIdentifier _document(params) =>
+TextDocumentIdentifier _document(dynamic params) =>
     TextDocumentIdentifier.fromJson(params['textDocument'].value as Map);
 
-Range _range(params) => Range.fromJson(params['range'].value as Map);
+Range _range(dynamic params) => Range.fromJson(params['range'].value as Map);
 
-Position _position(params) =>
+Position _position(dynamic params) =>
     Position.fromJson(params['position'].value as Map);
 
-CodeActionContext _codeActionContext(params) =>
+CodeActionContext _codeActionContext(dynamic params) =>
     CodeActionContext.fromJson(params['context'].value as Map);
 
-ReferenceContext _referenceContext(params) =>
+ReferenceContext _referenceContext(dynamic params) =>
     ReferenceContext.fromJson(params['context'].value as Map);
 
-List<TextDocumentContentChangeEvent> _contentChanges(params) =>
+List<TextDocumentContentChangeEvent> _contentChanges(dynamic params) =>
     (params['contentChanges'].value as Iterable)
         .map((change) => TextDocumentContentChangeEvent.fromJson(change as Map))
         .toList();
 
-String? _query(params) => params['query'].value as String?;
+String? _query(dynamic params) => params['query'].value as String?;
