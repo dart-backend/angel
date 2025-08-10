@@ -18,7 +18,7 @@ class WebSockets extends BaseWebSocketClient {
   final List<IoWebSocketsService> _services = [];
 
   WebSockets(
-    baseUrl, {
+    String baseUrl, {
     bool reconnectOnClose = true,
     Duration? reconnectInterval,
   }) : super(

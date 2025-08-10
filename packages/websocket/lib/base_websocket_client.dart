@@ -247,7 +247,7 @@ abstract class BaseWebSocketClient extends BaseAngelClient {
   }
 
   /// Serializes data to JSON.
-  dynamic serialize(x) => json.encode(x);
+  dynamic serialize(dynamic x) => json.encode(x);
 
   /// Sends the given [action] on the [socket].
   void sendAction(WebSocketAction action) {
@@ -341,8 +341,8 @@ class WebSocketsService<Id, Data> extends Service<Id, Data?> {
   dynamic serialize(WebSocketAction action) => json.encode(action);
 
   /// Deserializes data from a [WebSocketEvent].
-  Data? deserialize(x) {
-    return deserializer != null ? deserializer!(x) : x as Data?;
+  Data? deserialize(dynamic x) {
+    return deserializer != null ? deserializer!(x) : x;
   }
 
   /// Deserializes the contents of an [event].

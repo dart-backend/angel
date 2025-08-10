@@ -17,7 +17,7 @@ class WebSockets extends BaseWebSocketClient {
   final List<WebSocketsService> _services = [];
 
   WebSockets(
-    baseUrl, {
+    String baseUrl, {
     bool reconnectOnClose = true,
     Duration? reconnectInterval,
   }) : super(

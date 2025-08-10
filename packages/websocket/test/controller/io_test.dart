@@ -14,7 +14,7 @@ void main() {
   late ws.WebSockets client;
   srv.AngelWebSocket websockets;
   HttpServer? server;
-  String? url;
+  late String url;
 
   setUp(() async {
     app = srv.Angel(reflector: const MirrorsReflector());
@@ -31,7 +31,7 @@ void main() {
     app.logger = Logger('angel_auth')..onRecord.listen(print);
 
     server = await http.startServer();
-    url = 'ws://${server!.address.address}:${server!.port}/ws';
+    url = 'ws://${server!.address.address}:${server?.port}/ws';
 
     client = ws.WebSockets(url);
     await client.connect(timeout: Duration(seconds: 3));
@@ -54,8 +54,8 @@ void main() {
     await client.close();
     await http.close();
     //app = null;
-    server = null;
-    url = null;
+    //server = null;
+    //url = null;
   });
 
   group('controller.io', () {

@@ -18,7 +18,7 @@ class WebSockets extends BaseWebSocketClient {
   final List<BrowserWebSocketsService> _services = [];
 
   WebSockets(
-    baseUrl, {
+    String baseUrl, {
     bool reconnectOnClose = true,
     Duration? reconnectInterval,
   }) : super(
@@ -114,9 +114,11 @@ class WebSockets extends BaseWebSocketClient {
           return completer.complete(HtmlWebSocketChannel(socket));
         }
       })
-      ..onError.listen((e) {
+      ..onError.listen((Event e) {
         if (!completer.isCompleted) {
-          return completer.completeError(e is ErrorEvent ? e.error! : e);
+          return completer.completeError(
+            e.isA<ErrorEvent>() ? (e as ErrorEvent).message : e,
+          );
         }
       });
 

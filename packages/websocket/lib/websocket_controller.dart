@@ -39,7 +39,7 @@ class WebSocketController extends Controller {
   dynamic onAction(WebSocketAction action, WebSocketContext socket) async {}
 
   /// Fired on arbitrary incoming data.
-  dynamic onData(data, WebSocketContext socket) {}
+  dynamic onData(dynamic data, WebSocketContext socket) {}
 
   @override
   Future configureServer(Angel app) async {

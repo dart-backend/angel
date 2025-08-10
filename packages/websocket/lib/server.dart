@@ -375,7 +375,7 @@ class AngelWebSocket {
     }
   }
 
-  void catchError(e, StackTrace st, WebSocketContext socket) {
+  void catchError(Object e, StackTrace st, WebSocketContext socket) {
     // Send an error
     if (e is AngelHttpException) {
       socket.sendError(e);
