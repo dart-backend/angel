@@ -205,7 +205,7 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
 
   /// Execute an `INNER JOIN` against another table.
   void join(
-    String tableName,
+    Object tableName,
     String localKey,
     String foreignKey, {
     String op = '=',
@@ -227,7 +227,7 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
 
   /// Execute a `LEFT JOIN` against another table.
   void leftJoin(
-    String tableName,
+    Object tableName,
     String localKey,
     String foreignKey, {
     String op = '=',
@@ -249,7 +249,7 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
 
   /// Execute a `RIGHT JOIN` against another table.
   void rightJoin(
-    String tableName,
+    Object tableName,
     String localKey,
     String foreignKey, {
     String op = '=',
@@ -271,7 +271,7 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
 
   /// Execute a `FULL OUTER JOIN` against another table.
   void fullOuterJoin(
-    String tableName,
+    Object tableName,
     String localKey,
     String foreignKey, {
     String op = '=',
@@ -293,7 +293,7 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
 
   /// Execute a `SELF JOIN`.
   void selfJoin(
-    String tableName,
+    Object tableName,
     String localKey,
     String foreignKey, {
     String op = '=',
