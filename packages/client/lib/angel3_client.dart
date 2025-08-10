@@ -30,7 +30,7 @@ abstract class Angel extends http.BaseClient {
   /// The root URL at which the target server.
   final Uri baseUrl;
 
-  Angel(baseUrl)
+  Angel(dynamic baseUrl)
     : baseUrl = baseUrl is Uri ? baseUrl : Uri.parse(baseUrl.toString());
 
   /// Fired whenever a WebSocket is successfully authenticated.
@@ -365,7 +365,7 @@ class ServiceList<Id, Data> extends DelegatingList<Data> {
     );
   }
 
-  static bool _notNull(x) => x != null;
+  static bool _notNull(dynamic x) => x != null;
 
   /// Fires whenever the underlying [service] fires a change event.
   Stream<ServiceList<Id, Data>> get onChange => _onChange.stream;

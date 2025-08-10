@@ -190,7 +190,7 @@ abstract class BaseAngelClient extends Angel {
     return s as Service<Id, Data>;
   }
 
-  Uri _join(url) {
+  Uri _join(dynamic url) {
     var u = url is Uri ? url : Uri.parse(url.toString());
     if (u.hasScheme || u.hasAuthority) return u;
     return u.replace(path: _p.join(baseUrl.path, u.path));
@@ -291,11 +291,11 @@ class BaseAngelService<Id, Data> extends Service<Id, Data?> {
   BaseAngelService(this.client, this.app, baseUrl, {this.deserializer})
     : baseUrl = baseUrl is Uri ? baseUrl : Uri.parse(baseUrl.toString());
 
-  Data? deserialize(x) {
+  Data? deserialize(dynamic x) {
     return deserializer != null ? deserializer!(x) : x as Data?;
   }
 
-  String makeBody(x) {
+  String makeBody(dynamic x) {
     //return json.encode(x);
     return jsonEncode(x);
   }
