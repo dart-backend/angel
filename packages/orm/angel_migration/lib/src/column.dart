@@ -41,7 +41,7 @@ class MigrationColumn extends Column {
 
   MigrationColumn notNull() => this.._nullable = false;
 
-  MigrationColumn defaultsTo(value) => this.._defaultValue = value;
+  MigrationColumn defaultsTo(dynamic value) => this.._defaultValue = value;
 
   MigrationColumn unique() => this.._index = IndexType.unique;
 
