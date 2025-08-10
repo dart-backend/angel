@@ -58,7 +58,7 @@ Future<void> _loadYamlFile(
   }
 }
 
-Object? _applyEnv(var v, DotEnv env, void Function(String msg) warn) {
+Object? _applyEnv(Object v, DotEnv env, void Function(String msg) warn) {
   if (v is String) {
     if (v.startsWith(r'$') && v.length > 1) {
       var key = v.substring(1);
