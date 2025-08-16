@@ -7,7 +7,7 @@ class SerializerGenerator extends GeneratorForAnnotation<Serializable> {
 
   @override
   Future<String?> generateForAnnotatedElement(
-    Element element,
+    Element2 element,
     ConstantReader annotation,
     BuildStep buildStep,
   ) async {
@@ -18,7 +18,7 @@ class SerializerGenerator extends GeneratorForAnnotation<Serializable> {
     }
 
     var ctx = await buildContext(
-      element as ClassElement,
+      element as ClassElement2,
       annotation,
       buildStep,
       buildStep.resolver,
@@ -189,16 +189,16 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
 
         // Add named parameters
         for (var field in ctx.fields) {
-          var type = ctx.resolveSerializedFieldType(field.name);
+          var type = ctx.resolveSerializedFieldType(field.name3 ?? '');
 
           // Skip excluded fields
-          if (ctx.excluded[field.name]?.canSerialize == false) continue;
+          if (ctx.excluded[field.name3]?.canSerialize == false) continue;
 
-          var alias = ctx.resolveFieldName(field.name);
+          var alias = ctx.resolveFieldName(field.name3 ?? '');
 
           if (i++ > 0) buf.write(', ');
 
-          var serializedRepresentation = 'model.${field.name}';
+          var serializedRepresentation = 'model.${field.name3}';
 
           String serializerToMap(ReCase rc, String value) {
             // if (rc.pascalCase == ctx.modelClassName) {
@@ -211,10 +211,10 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
             return '${genClass}Serializer.toMap($value)';
           }
 
-          var fieldNameSerializer = ctx.fieldInfo[field.name]?.serializer;
+          var fieldNameSerializer = ctx.fieldInfo[field.name3]?.serializer;
           if (fieldNameSerializer != null) {
             var name = MirrorSystem.getName(fieldNameSerializer);
-            serializedRepresentation = '$name(model.${field.name})';
+            serializedRepresentation = '$name(model.${field.name3})';
           }
           // Serialize dates
           else if (dateTimeTypeChecker.isAssignableFromType(type)) {
@@ -223,14 +223,14 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
                 ? "?"
                 : "";
             serializedRepresentation =
-                'model.${field.name}$question.toIso8601String()';
+                'model.${field.name3}$question.toIso8601String()';
           }
           // Serialize model classes via `XSerializer.toMap`
           else if (isModelClass(type)) {
             var rc = ReCase(type.getDisplayString());
             serializedRepresentation = serializerToMap(
               rc,
-              'model.${field.name}',
+              'model.${field.name3}',
             );
           } else if (type is InterfaceType) {
             if (isListOfModelType(type)) {
@@ -245,16 +245,16 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
                   ? '?'
                   : '';
               serializedRepresentation =
-                  'model.${field.name}$question.map((m) => $m).toList()';
+                  'model.${field.name3}$question.map((m) => $m).toList()';
               log.fine('serializedRepresentation => $serializedRepresentation');
             } else if (isMapToModelType(type)) {
               var rc = ReCase(type.typeArguments[1].getDisplayString());
               serializedRepresentation =
-                  '''model.${field.name}.keys.fold({}, (map, key) {
+                  '''model.${field.name3}.keys.fold({}, (map, key) {
               return map..[key] =
-              ${serializerToMap(rc, 'model.${field.name}[key]')};
+              ${serializerToMap(rc, 'model.${field.name3}[key]')};
             })''';
-            } else if (type.element is Enum) {
+            } else if (type.element3 is Enum) {
               var convert =
                   (field.type.nullabilitySuffix == NullabilitySuffix.question)
                   ? '!'
@@ -262,8 +262,8 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
 
               serializedRepresentation =
                   '''
-            model.${field.name} != null ?
-              ${type.getDisplayString()}.values.indexOf(model.${field.name}$convert)
+            model.${field.name3} != null ?
+              ${type.getDisplayString()}.values.indexOf(model.${field.name3}$convert)
               : null
             ''';
             } else if (const TypeChecker.fromRuntime(
@@ -276,8 +276,8 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
 
               serializedRepresentation =
                   '''
-            model.${field.name} != null ?
-              base64.encode(model.${field.name}$convert)
+            model.${field.name3} != null ?
+              base64.encode(model.${field.name3}$convert)
               : null
             ''';
             }
@@ -323,7 +323,7 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
             method.requiredParameters.add(
               Parameter(
                 (b) => b
-                  ..name = param.name
+                  ..name = param.name3 ?? ''
                   ..type = convertTypeReference(param.type),
               ),
             );
@@ -357,16 +357,16 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
         // Parameters in the constructor
         for (var param in ctx.constructorParameters) {
           if (i++ > 0) buf.write(', ');
-          buf.write(param.name);
+          buf.write(param.name3);
         }
 
         // Fields
         for (var field in ctx.fields) {
-          var type = ctx.resolveSerializedFieldType(field.name);
+          var type = ctx.resolveSerializedFieldType(field.name3 ?? '');
 
-          if (ctx.excluded[field.name]?.canDeserialize == false) continue;
+          if (ctx.excluded[field.name3]?.canDeserialize == false) continue;
 
-          var alias = ctx.resolveFieldName(field.name);
+          var alias = ctx.resolveFieldName(field.name3 ?? '');
 
           if (i++ > 0) buf.write(', ');
 
@@ -378,7 +378,7 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
           }
 
           var defaultValue = 'null';
-          var existingDefault = ctx.defaults[field.name];
+          var existingDefault = ctx.defaults[field.name3];
 
           if (existingDefault != null) {
             var d = dartObjectToString(existingDefault);
@@ -393,7 +393,7 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
                 '$deserializedRepresentation ?? $defaultValue';
           }
 
-          var fieldNameDeserializer = ctx.fieldInfo[field.name]?.deserializer;
+          var fieldNameDeserializer = ctx.fieldInfo[field.name3]?.deserializer;
           if (fieldNameDeserializer != null) {
             var name = MirrorSystem.getName(fieldNameDeserializer);
             deserializedRepresentation = "$name(map['$alias'])";
@@ -457,7 +457,7 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
                     }))
                   : $defaultValue
             ''';
-            } else if (type.element is Enum) {
+            } else if (type.element3 is Enum) {
               deserializedRepresentation =
                   '''
             map['$alias'] is ${type.getDisplayString()}
@@ -529,7 +529,7 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
             }
           }
 
-          buf.write('${field.name}: $deserializedRepresentation');
+          buf.write('${field.name3}: $deserializedRepresentation');
         }
 
         buf.write(');');
@@ -559,7 +559,7 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
               )
               ..name = 'allFields'
               ..assignment = literalConstList(
-                ctx.fields.map((f) => refer(f.name)).toList(),
+                ctx.fields.map((f) => refer(f.name3 ?? '')).toList(),
                 refer('String'),
               ).code;
           }),
@@ -572,8 +572,10 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
                 ..static = true
                 ..modifier = FieldModifier.constant
                 ..type = Reference('String')
-                ..name = field.name
-                ..assignment = Code("'${ctx.resolveFieldName(field.name)}'");
+                ..name = field.name3
+                ..assignment = Code(
+                  "'${ctx.resolveFieldName(field.name3 ?? '')}'",
+                );
             }),
           );
         }

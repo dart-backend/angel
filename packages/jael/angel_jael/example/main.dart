@@ -5,7 +5,7 @@ import 'package:angel3_jael/angel3_jael.dart';
 import 'package:file/local.dart';
 import 'package:logging/logging.dart';
 
-main() async {
+void main() async {
   var app = Angel();
   var http = AngelHttp(app);
   var fileSystem = const LocalFileSystem();

@@ -4,7 +4,6 @@ import 'dart:async';
 import 'dart:mirrors';
 import 'dart:typed_data';
 import 'package:analyzer/dart/constant/value.dart';
-import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/element2.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/element/type.dart';
@@ -128,19 +127,21 @@ String? dartObjectToString(DartObject v) {
   }
   if (type is InterfaceType && type.element3 is EnumElement2) {
     // Find the index of the enum, then find the member.
-    for (var field in type.element.fields) {
+    for (var field in type.element3.fields2) {
       if (field.isEnumConstant && field.isStatic) {
-        var value = type.element.getField(field.name)!.computeConstantValue();
+        var value = type.element3
+            .getField2(field.name3!)!
+            .computeConstantValue();
         if (v is Enum && value is Enum) {
           var v2 = v as Enum;
           var value2 = value as Enum;
 
           if (value2.name == v2.name) {
-            return '${type.element3.displayName}.${field.name}';
+            return '${type.element3.displayName}.${field.name3}';
           }
         } else {
           if (value == v) {
-            return '${type.element3.displayName}.${field.name}';
+            return '${type.element3.displayName}.${field.name3}';
           }
         }
       }
@@ -154,11 +155,11 @@ String? dartObjectToString(DartObject v) {
 bool isModelClass(DartType? t) {
   if (t == null) return false;
 
-  if (serializableTypeChecker.hasAnnotationOf(t.element!)) {
+  if (serializableTypeChecker.hasAnnotationOf(t.element3!)) {
     return true;
   }
 
-  if (generatedSerializableTypeChecker.hasAnnotationOf(t.element!)) {
+  if (generatedSerializableTypeChecker.hasAnnotationOf(t.element3!)) {
     return true;
   }
 

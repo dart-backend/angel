@@ -106,15 +106,15 @@ class TypeScriptDefinitionBuilder implements Builder {
         }
       } else if (isModelClass(type)) {
         var sourcePath = buildStep.inputId.uri.toString();
-        var targetPath = type.element.source.uri.toString();
+        var targetPath = type.element3.library2.uri.toString();
 
         if (!p.equals(sourcePath, targetPath)) {
           var relative = p.relative(targetPath, from: sourcePath);
           String? ref;
 
-          if (type.element.source.uri.scheme == 'asset') {
+          if (type.element3.library2.uri.scheme == 'asset') {
             var id = AssetId.resolve(
-              Uri.parse(type.element.source.uri.toString()),
+              Uri.parse(type.element3.library2.uri.toString()),
             );
             if (id.package != buildStep.inputId.package) {
               ref = '/// <reference types="${id.package}" />';
@@ -137,9 +137,9 @@ class TypeScriptDefinitionBuilder implements Builder {
         }
 
         var ctx = await buildContext(
-          type.element,
+          type.element3,
           ConstantReader(
-            serializableTypeChecker.firstAnnotationOf(type.element),
+            serializableTypeChecker.firstAnnotationOf(type.element3),
           ),
           buildStep,
           buildStep.resolver,
@@ -192,7 +192,7 @@ class TypeScriptDefinitionBuilder implements Builder {
 
       contexts.add(
         await buildContext(
-          element.element as ClassElement,
+          element.element as ClassElement2,
           element.annotation,
           buildStep,
           buildStep.resolver,
@@ -226,20 +226,20 @@ class TypeScriptDefinitionBuilder implements Builder {
 
       for (var field in ctx.fields) {
         // Skip excluded fields
-        if (ctx.excluded[field.name]?.canSerialize == false) continue;
+        if (ctx.excluded[field.name3]?.canSerialize == false) continue;
 
-        var alias = ctx.resolveFieldName(field.name);
+        var alias = ctx.resolveFieldName(field.name3!);
         var typeScriptType = await compileToTypeScriptType(
           ctx,
-          field.name,
-          ctx.resolveSerializedFieldType(field.name),
+          field.name3!,
+          ctx.resolveSerializedFieldType(field.name3!),
           refs,
           ext,
           buildStep,
         );
 
         // foo: string;
-        if (!ctx.requiredFields.containsKey(field.name)) {
+        if (!ctx.requiredFields.containsKey(field.name3)) {
           if (alias != null) {
             alias += '?';
           }

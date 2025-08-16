@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:analyzer/dart/constant/value.dart';
-import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/element2.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:angel3_model/angel3_model.dart';
 import 'package:angel3_orm/angel3_orm.dart';
@@ -39,11 +39,11 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
 
   @override
   Future<String?> generateForAnnotatedElement(
-    Element element,
+    Element2 element,
     ConstantReader annotation,
     BuildStep buildStep,
   ) async {
-    if (element is! ClassElement) {
+    if (element is! ClassElement2) {
       throw 'Only classes can be annotated with @ORM().';
     }
 
@@ -79,7 +79,7 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
 
   Library generateMigrationLibrary(
     OrmBuildContext ctx,
-    ClassElement element,
+    ClassElement2 element,
     Resolver resolver,
     BuildStep buildStep,
   ) {
@@ -253,7 +253,7 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
                     'RawSql',
                   ).constInstance([literalString(value)]);
                 } else if (type is InterfaceType &&
-                    type.element is EnumElement) {
+                    type.element3 is EnumElement2) {
                   // Default to enum index.
                   try {
                     var index = ConstantReader(

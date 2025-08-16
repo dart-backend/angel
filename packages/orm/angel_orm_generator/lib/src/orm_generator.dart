@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/element2.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:angel3_orm/angel3_orm.dart';
@@ -43,11 +43,11 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
 
   @override
   Future<String> generateForAnnotatedElement(
-    Element element,
+    Element2 element,
     ConstantReader annotation,
     BuildStep buildStep,
   ) async {
-    if (element is ClassElement) {
+    if (element is ClassElement2) {
       var ctx = await buildOrmContext(
         {},
         element,
@@ -181,7 +181,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
               var names = ctx.effectiveFields
                   .map(
                     (f) => literalString(
-                      ctx.buildContext.resolveFieldName(f.name)!,
+                      ctx.buildContext.resolveFieldName(f.displayName)!,
                     ),
                   )
                   .toList();
@@ -327,25 +327,27 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                   // Skip fields with relationship
 
                   continue;
-                } else if (ctx.columns[field.name]?.type == ColumnType.json) {
+                } else if (ctx.columns[field.name3]?.type == ColumnType.json) {
                   expr = refer('json')
                       .property('decode')
                       .call([expr.asA(refer('String'))])
                       .asA(type);
-                } else if (floatTypes.contains(ctx.columns[field.name]?.type)) {
+                } else if (floatTypes.contains(
+                  ctx.columns[field.name3]?.type,
+                )) {
                   //expr = refer('double')
                   //    .property('tryParse')
                   //    .call([expr.property('toString').call([])]);
                   expr = refer('mapToDouble').call([expr]);
                 } else if (fType is InterfaceType &&
-                    fType.element is EnumElement) {
+                    fType.element3 is EnumElement2) {
                   /*
                  * fields.contains('type') ? row[3] == null ? null : 
                  *     EnumType.values[(row[3] as int)] : null,
                  */
 
                   //if (field.name == "type") {
-                  print("=== Process enum ${field.name}");
+                  print("=== Process enum ${field.name3}");
                   //}
 
                   var isNull = expr.equalTo(literalNull);
@@ -359,7 +361,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                 } else if (fType.isDartCoreBool) {
                   // Generated Code: mapToBool(row[i])
                   expr = refer('mapToBool').call([expr]);
-                } else if (fType.element?.displayName == 'DateTime') {
+                } else if (fType.element3?.displayName == 'DateTime') {
                   // Generated Code: mapToDateTime(row[i])
                   if (fType.nullabilitySuffix == NullabilitySuffix.question) {
                     expr = refer('mapToNullableDateTime').call([expr]);
@@ -381,7 +383,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                     defaultRef = CodeExpression(Code('0.0'));
                   } else if (fType.isDartCoreInt || fType.isDartCoreNum) {
                     defaultRef = CodeExpression(Code('0'));
-                  } else if (fType.element?.displayName == 'DateTime') {
+                  } else if (fType.element3?.displayName == 'DateTime') {
                     defaultRef = CodeExpression(
                       Code('DateTime.parse("1970-01-01 00:00:00")'),
                     );
@@ -393,11 +395,11 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                     .property('contains')
                     .call([
                       literalString(
-                        ctx.buildContext.resolveFieldName(field.name)!,
+                        ctx.buildContext.resolveFieldName(field.displayName)!,
                       ),
                     ])
                     .conditional(expr, defaultRef);
-                args[field.name] = expr;
+                args[field.displayName] = expr;
               }
 
               b.statements.add(
@@ -587,8 +589,9 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                   //    '$fieldName relation.throughContext => ${relation.throughContext?.tableName} relation.foreign => ${relation.foreign?.tableName}');
                   // If this is a many-to-many, add the fields from the other object.
                   var additionalStrs = relationForeign.effectiveFields.map(
-                    (f) =>
-                        relationForeign.buildContext.resolveFieldName(f.name),
+                    (f) => relationForeign.buildContext.resolveFieldName(
+                      f.displayName,
+                    ),
                   );
 
                   var additionalFields = <Expression>[];
@@ -809,7 +812,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                 if (relation.type == RelationshipType.hasMany) {
                   // This is only allowed with lists.
                   var field = ctx.buildContext.fields.firstWhere(
-                    (f) => f.name == name,
+                    (f) => f.name3 == name,
                   );
 
                   var typeLiteral = convertTypeReference(field.type)
@@ -827,7 +830,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
               var keyName = findPrimaryFieldInList(
                 ctx,
                 ctx.buildContext.fields,
-              )?.name;
+              )?.name3;
 
               if (keyName == null) {
                 throw '${ctx.buildContext.originalClassName} has no defined primary key.\n'
@@ -876,7 +879,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
             ..type = MethodType.getter
             ..body = Block((b) {
               var references = ctx.effectiveNormalFields.map(
-                (f) => refer(f.name),
+                (f) => refer(f.displayName),
               );
               b.addExpression(literalList(references).returned);
             });
@@ -887,14 +890,14 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
 
       // Add builders for each field
       for (var field in ctx.effectiveNormalFields) {
-        String? name = field.name;
+        String? name = field.name3;
 
         var args = <Expression>[];
         DartType type;
         Reference builderType;
 
         try {
-          type = ctx.buildContext.resolveSerializedFieldType(field.name);
+          type = ctx.buildContext.resolveSerializedFieldType(field.displayName);
         } on StateError {
           type = field.type;
         }
@@ -912,7 +915,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
               ..symbol = 'NumericSqlExpressionBuilder'
               ..types.add(refer(typeName)),
           );
-        } else if (type is InterfaceType && type.element is EnumElement) {
+        } else if (type is InterfaceType && type.element3 is EnumElement2) {
           builderType = TypeReference(
             (b) => b
               ..symbol = 'EnumSqlExpressionBuilder'
@@ -941,7 +944,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
           builderType = refer('ListSqlExpressionBuilder');
 
           // Detect relationship
-        } else if (name.endsWith('Id')) {
+        } else if (name!.endsWith('Id')) {
           log.fine('Foreign Relationship detected = $name');
           var relation = ctx.relations[name.replaceAll('Id', '')];
           if (relation != null) {
@@ -957,13 +960,13 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
             //}
           } else {
             log.warning(
-              'Cannot generate ORM code for field ${field.name} of type ${field.type}',
+              'Cannot generate ORM code for field ${field.name3} of type ${field.type}',
             );
             continue;
           }
         } else {
           log.warning(
-            'Cannot generate ORM code for field ${field.name} of type ${field.type}',
+            'Cannot generate ORM code for field ${field.name3} of type ${field.type}',
           );
           //ctx.relations.forEach((key, value) {
           //  log.fine('key: $key, value: $value');
@@ -982,11 +985,11 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
               ..modifier = FieldModifier.final$
               ..type = builderType;
 
-            var literal = ctx.buildContext.resolveFieldName(field.name);
+            var literal = ctx.buildContext.resolveFieldName(field.displayName);
             if (literal != null) {
               //log.fine('Literal = ${field.name}  $literal');
               initializers.add(
-                refer(field.name)
+                refer(field.displayName)
                     .assign(
                       builderType.newInstance(
                         [
@@ -998,7 +1001,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                     .code,
               );
             } else {
-              log.warning('Literal ${field.name} is null');
+              log.warning('Literal ${field.name3} is null');
             }
           }),
         );
@@ -1045,8 +1048,8 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
 
               for (var field in ctx.effectiveFields) {
                 var fType = field.type;
-                var name = ctx.buildContext.resolveFieldName(field.name);
-                var type = ctx.columns[field.name]?.type;
+                var name = ctx.buildContext.resolveFieldName(field.displayName);
+                var type = ctx.columns[field.name3]?.type;
                 if (type == null) continue;
                 if (const TypeChecker.fromRuntime(
                   List,
@@ -1067,14 +1070,14 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
       // Each field generates a getter and setter
       for (var field in ctx.effectiveNormalFields) {
         var fType = field.type;
-        var name = ctx.buildContext.resolveFieldName(field.name);
+        var name = ctx.buildContext.resolveFieldName(field.displayName);
         var type = convertTypeReference(field.type);
 
         clazz.methods.add(
           Method((b) {
             var value = refer('values').index(literalString(name!));
 
-            if (fType is InterfaceType && fType.element is EnumElement) {
+            if (fType is InterfaceType && fType.element3 is EnumElement2) {
               value = _deserializeEnumExpression(field, value);
             } else if (const TypeChecker.fromRuntime(
               List,
@@ -1084,7 +1087,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                   .call([value.asA(refer('String'))])
                   .property('cast')
                   .call([]);
-            } else if (floatTypes.contains(ctx.columns[field.name]?.type)) {
+            } else if (floatTypes.contains(ctx.columns[field.name3]?.type)) {
               // Skip using casts on double
               value = value
                   .asA(refer('double?'))
@@ -1098,7 +1101,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
             }
 
             b
-              ..name = field.name
+              ..name = field.name3
               ..type = MethodType.getter
               ..returns = type
               ..body = Block((b) => b.addExpression(value.returned));
@@ -1109,7 +1112,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
           Method((b) {
             Expression value = refer('value');
 
-            if (fType is InterfaceType && fType.element is EnumElement) {
+            if (fType is InterfaceType && fType.element3 is EnumElement2) {
               value = _serializeEnumExpression(field, value);
             } else if (const TypeChecker.fromRuntime(
               List,
@@ -1122,7 +1125,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
           } */
 
             b
-              ..name = field.name
+              ..name = field.name3
               ..type = MethodType.setter
               ..requiredParameters.add(
                 Parameter(
@@ -1157,7 +1160,9 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                   continue;
                 }
                 b.addExpression(
-                  refer(field.name).assign(refer('model').property(field.name)),
+                  refer(
+                    field.displayName,
+                  ).assign(refer('model').property(field.displayName)),
                 );
               }
 
@@ -1170,7 +1175,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                   // Add only if present
                   var target = refer('values').index(
                     literalString(
-                      ctx.buildContext.resolveFieldName(field.name)!,
+                      ctx.buildContext.resolveFieldName(field.displayName)!,
                     ),
                   );
 
@@ -1180,7 +1185,9 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                   var foreignField = field.relationship.findForeignField(ctx);
 
                   // TODO: Need to add nullability check for prop
-                  var parsedId = prop.nullSafeProperty(foreignField.name);
+                  var parsedId = prop.nullSafeProperty(
+                    foreignField.displayName,
+                  );
 
                   //log.fine('Foreign field => ${foreignField.name}');
                   //if (foreignField.type.nullabilitySuffix ==
@@ -1215,7 +1222,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
   /// Retrieve the [Expression] to parse a serialized enumeration field.
   /// Takes into account the [SerializableField] properties.
   /// Defaults to `enum.values[index as int]`
-  Expression _deserializeEnumExpression(FieldElement field, Expression expr) {
+  Expression _deserializeEnumExpression(FieldElement2 field, Expression expr) {
     Reference enumType = convertTypeReference(
       field.type,
       ignoreNullabilityCheck: true,
@@ -1231,7 +1238,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
         var type = 'int';
         final serializesTo = annotation.getField('serializesTo')?.toTypeValue();
         if (null != serializesTo) {
-          type = serializesTo.element!.displayName;
+          type = serializesTo.element3!.displayName;
         }
         parseExpr = Reference(deserializer).expression([expr.asA(refer(type))]);
       }
@@ -1249,7 +1256,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
 
   /// Retrieve the [Expression] to serialize the enumeration field.
   /// Takes into account the [SerializableField] properties.
-  Expression _serializeEnumExpression(FieldElement field, Expression expr) {
+  Expression _serializeEnumExpression(FieldElement2 field, Expression expr) {
     const TypeChecker serializableFieldTypeChecker = TypeChecker.fromRuntime(
       SerializableField,
     );

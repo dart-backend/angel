@@ -5,7 +5,7 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
 
   @override
   Future<String> generateForAnnotatedElement(
-    Element element,
+    Element2 element,
     ConstantReader annotation,
     BuildStep buildStep,
   ) async {
@@ -14,7 +14,7 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
     }
 
     var ctx = await buildContext(
-      element as ClassElement,
+      element as ClassElement2,
       annotation,
       buildStep,
       buildStep.resolver,
@@ -67,7 +67,7 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
           clazz.fields.add(
             Field((b) {
               b
-                ..name = field.name
+                ..name = field.name3
                 //..modifier = FieldModifier.final$
                 //..annotations.add(CodeExpression(Code('override')))
                 ..annotations.add(refer('override'))
@@ -80,10 +80,12 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
               //  b.modifier = FieldModifier.final$;
               //}
 
-              for (var el in [field.getter, field]) {
-                //if (el?.documentationComment != null) {
-                b.docs.addAll(el?.documentationComment?.split('\n') ?? []);
-                //}
+              for (var el in [field.getter2, field]) {
+                if (el is FieldElement2) {
+                  b.docs.addAll(el.documentationComment?.split('\n') ?? []);
+                } else if (el is GetterElement) {
+                  b.docs.addAll(el.documentationComment?.split('\n') ?? []);
+                }
               }
             }),
           );
@@ -115,8 +117,9 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
   bool shouldBeConstant(BuildContext ctx) {
     // Check if all fields are without a getter
     return !isAssignableToModel(ctx.clazz.thisType) &&
-        ctx.clazz.fields.every(
-          (f) => f.getter?.isAbstract != false && f.setter?.isAbstract != false,
+        ctx.clazz.fields2.every(
+          (f) =>
+              f.getter2?.isAbstract != false && f.setter2?.isAbstract != false,
         );
   }
 
@@ -140,7 +143,7 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
           constructor.requiredParameters.add(
             Parameter(
               (b) => b
-                ..name = param.name
+                ..name = param.name3!
                 ..type = convertTypeReference(param.type),
             ),
           );
@@ -157,7 +160,7 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
                 : 'Map';
             String? defaultValue = typeName == 'List' ? '[]' : '{}';
 
-            var existingDefault = ctx.defaults[field.name];
+            var existingDefault = ctx.defaults[field.name3];
             if (existingDefault != null) {
               defaultValue = dartObjectToString(existingDefault);
             }
@@ -165,14 +168,14 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
             if (field.type.nullabilitySuffix != NullabilitySuffix.question) {
               constructor.initializers.add(
                 Code('''
-              ${field.name} =
-                $typeName.unmodifiable(${field.name})'''),
+              ${field.name3} =
+                $typeName.unmodifiable(${field.name3})'''),
               );
             } else {
               constructor.initializers.add(
                 Code('''
-              ${field.name} =
-                $typeName.unmodifiable(${field.name} ?? $defaultValue)'''),
+              ${field.name3} =
+                $typeName.unmodifiable(${field.name3} ?? $defaultValue)'''),
               );
             }
           }
@@ -186,10 +189,10 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
             Parameter((b) {
               b
                 ..toThis = shouldBeConstant(ctx)
-                ..name = field.name
+                ..name = field.name3!
                 ..named = true;
 
-              var existingDefault = ctx.defaults[field.name];
+              var existingDefault = ctx.defaults[field.name3];
 
               if (existingDefault != null) {
                 var d = dartObjectToString(existingDefault);
@@ -208,7 +211,7 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
                 }
 
                 // Get the default if presence
-                var existingDefault = ctx.defaults[field.name];
+                var existingDefault = ctx.defaults[field.name3];
                 if (existingDefault != null) {
                   var defaultValue = dartObjectToString(existingDefault);
                   b.defaultTo = Code('$defaultValue');
@@ -218,10 +221,10 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
               } else if (!b.toThis) {
                 b.type = convertTypeReference(field.type);
               } else {
-                log.fine('Contructor: ${field.name} pass through');
+                log.fine('Contructor: ${field.name3} pass through');
               }
 
-              if ((ctx.requiredFields.containsKey(field.name) ||
+              if ((ctx.requiredFields.containsKey(field.name3) ||
                       field.type.nullabilitySuffix !=
                           NullabilitySuffix.question) &&
                   b.defaultTo == null) {
@@ -234,10 +237,10 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
 
         if (ctx.constructorParameters.isNotEmpty) {
           if (!shouldBeConstant(ctx) ||
-              ctx.clazz.unnamedConstructor?.isConst == true) {
+              ctx.clazz.unnamedConstructor2?.isConst == true) {
             constructor.initializers.add(
               Code(
-                'super(${ctx.constructorParameters.map((p) => p.name).join(',')})',
+                'super(${ctx.constructorParameters.map((p) => p.name3).join(',')})',
               ),
             );
           }
@@ -264,7 +267,7 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
             method.requiredParameters.add(
               Parameter(
                 (b) => b
-                  ..name = param.name
+                  ..name = param.name3!
                   ..type = convertTypeReference(param.type),
               ),
             );
@@ -275,7 +278,7 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
         var i = 0;
         for (var param in ctx.constructorParameters) {
           if (i++ > 0) buf.write(', ');
-          buf.write(param.name);
+          buf.write(param.name3);
         }
 
         // Add named parameters
@@ -283,14 +286,14 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
           method.optionalParameters.add(
             Parameter((b) {
               b
-                ..name = field.name
+                ..name = field.name3!
                 ..named = true
                 ..type = convertTypeReference(field.type, forceNullable: true);
             }),
           );
 
           if (i++ > 0) buf.write(', ');
-          buf.write('${field.name}: ${field.name} ?? this.${field.name}');
+          buf.write('${field.name3}: ${field.name3} ?? this.${field.name3}');
         }
 
         buf.write(');');
@@ -304,7 +307,7 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
       if (const TypeChecker.fromRuntime(List).isAssignableFromType(type)) {
         if (type.typeArguments.length == 1) {
           var eq = generateEquality(type.typeArguments[0]);
-          return 'ListEquality<${type.typeArguments[0].element!.name}>($eq)';
+          return 'ListEquality<${type.typeArguments[0].element3!.name3}>($eq)';
         } else {
           return 'ListEquality()';
         }
@@ -314,20 +317,20 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
         if (type.typeArguments.length == 2) {
           var keq = generateEquality(type.typeArguments[0]),
               veq = generateEquality(type.typeArguments[1]);
-          return 'MapEquality<${type.typeArguments[0].element!.name}, ${type.typeArguments[1].element!.name}>(keys: $keq, values: $veq)';
+          return 'MapEquality<${type.typeArguments[0].element3!.name3}, ${type.typeArguments[1].element3!.name3}>(keys: $keq, values: $veq)';
         } else {
           return 'MapEquality()';
         }
       }
 
-      return nullable ? null : 'DefaultEquality<${type.element.name}>()';
+      return nullable ? null : 'DefaultEquality<${type.element3.name3}>()';
     } else {
       return 'DefaultEquality()';
     }
   }
 
   static String Function(String, String) generateComparator(DartType type) {
-    if (type is! InterfaceType || type.element.displayName == 'dynamic') {
+    if (type is! InterfaceType || type.element3.displayName == 'dynamic') {
       return (a, b) => '$a == $b';
     }
     var eq = generateEquality(type, true);
@@ -344,7 +347,7 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
           ..returns = refer('int')
           ..annotations.add(refer('override'))
           ..body = refer('hashObjects')
-              .call([literalList(ctx!.fields.map((f) => refer(f.name)))])
+              .call([literalList(ctx!.fields.map((f) => refer(f.name3 ?? '')))])
               .returned
               .statement;
       }),
@@ -363,7 +366,7 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
             var i = 0;
             for (var field in ctx.fields) {
               if (i++ > 0) buf.write(', ');
-              buf.write('${field.name}=\$${field.name}');
+              buf.write('${field.name3}=\$${field.name3}');
             }
             buf.write(')\'');
             b.addExpression(CodeExpression(Code(buf.toString())).returned);
@@ -389,7 +392,7 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
 
         buf.addAll(
           ctx.fields.map((f) {
-            return generateComparator(f.type)('other.${f.name}', f.name);
+            return generateComparator(f.type)('other.${f.name3}', f.name3!);
           }),
         );
 
