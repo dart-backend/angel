@@ -9,4 +9,6 @@ abstract class _Droid extends Model implements Character {
   String get position;
 
   num get age;
+
+  String get description;
 }

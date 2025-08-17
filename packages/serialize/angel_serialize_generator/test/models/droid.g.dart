@@ -15,6 +15,7 @@ class Droid extends _Droid {
     this.name,
     required this.position,
     required this.age,
+    required this.description,
   });
 
   @override
@@ -37,6 +38,9 @@ class Droid extends _Droid {
   @override
   num age;
 
+  @override
+  String description;
+
   Droid copyWith({
     String? id,
     DateTime? createdAt,
@@ -44,6 +48,7 @@ class Droid extends _Droid {
     String? name,
     String? position,
     num? age,
+    String? description,
   }) {
     return Droid(
       id: id ?? this.id,
@@ -52,6 +57,7 @@ class Droid extends _Droid {
       name: name ?? this.name,
       position: position ?? this.position,
       age: age ?? this.age,
+      description: description ?? this.description,
     );
   }
 
@@ -63,17 +69,26 @@ class Droid extends _Droid {
         other.updatedAt == updatedAt &&
         other.name == name &&
         other.position == position &&
-        other.age == age;
+        other.age == age &&
+        other.description == description;
   }
 
   @override
   int get hashCode {
-    return hashObjects([id, createdAt, updatedAt, name, position, age]);
+    return hashObjects([
+      id,
+      createdAt,
+      updatedAt,
+      name,
+      position,
+      age,
+      description,
+    ]);
   }
 
   @override
   String toString() {
-    return 'Droid(id=$id, createdAt=$createdAt, updatedAt=$updatedAt, name=$name, position=$position, age=$age)';
+    return 'Droid(id=$id, createdAt=$createdAt, updatedAt=$updatedAt, name=$name, position=$position, age=$age, description=$description)';
   }
 
   Map<String, dynamic> toJson() {
@@ -126,6 +141,7 @@ class DroidSerializer extends Codec<Droid, Map> {
       name: map['name'] as String?,
       position: map['position'] as String,
       age: map['age'] as num,
+      description: map['description'] as String,
     );
   }
 
@@ -140,6 +156,7 @@ class DroidSerializer extends Codec<Droid, Map> {
       'name': model.name,
       'position': model.position,
       'age': model.age,
+      'description': model.description,
     };
   }
 }
@@ -152,6 +169,7 @@ abstract class DroidFields {
     name,
     position,
     age,
+    description,
   ];
 
   static const String id = 'id';
@@ -165,4 +183,6 @@ abstract class DroidFields {
   static const String position = 'position';
 
   static const String age = 'age';
+
+  static const String description = 'description';
 }

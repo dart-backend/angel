@@ -43,7 +43,10 @@ Future<BuildContext?> buildContext(
   bool autoSnakeCaseNames, {
   bool heedExclude = true,
 }) async {
-  var id = clazz.location.components.join('-');
+  // var id = clazz.location.components.join('-');
+  var id = "${clazz.library2.baseElement}-${clazz.displayName}";
+  //print("==> id=[$id]");
+
   if (_cache.containsKey(id)) {
     return _cache[id];
   }
