@@ -81,7 +81,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
     });
   }
 
-  /// Generate <Model>Query class
+  /// Generate "Model"Query class
   Class buildQueryClass(OrmBuildContext ctx) {
     return Class((clazz) {
       var rc = ctx.buildContext.modelClassNameRecase;
@@ -858,7 +858,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
     });
   }
 
-  /// Generate <Model>QueryWhere class
+  /// Generate "Model"QueryWhere class
   Class buildWhereClass(OrmBuildContext ctx) {
     return Class((clazz) {
       var rc = ctx.buildContext.modelClassNameRecase;
@@ -1024,7 +1024,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
     });
   }
 
-  /// Generate <Model>QueryValues class
+  /// Generate "Model"QueryValues class
   Class buildValuesClass(OrmBuildContext ctx) {
     return Class((clazz) {
       var rc = ctx.buildContext.modelClassNameRecase;

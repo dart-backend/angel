@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:analyzer/dart/constant/value.dart';
-import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/element2.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:angel3_orm/angel3_orm.dart';
@@ -81,7 +80,8 @@ Future<OrmBuildContext?> buildOrmContext(
     }
   }
 
-  var id = clazz.location?.components.join('-') ?? '';
+  //var id = clazz.location?.components.join('-') ?? '';
+  var id = "${clazz.library2.baseElement}-${clazz.displayName}";
   if (cache.containsKey(id)) {
     return cache[id];
   }
@@ -346,7 +346,7 @@ Future<OrmBuildContext?> buildOrmContext(
             }
 
             var rf = RelationFieldImpl(name, relation, type, field);
-            ctx.effectiveFields.add(rf);
+            ctx.effectiveFields.add(rf.element);
           }
         }
       }
