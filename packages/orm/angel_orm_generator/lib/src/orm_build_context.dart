@@ -35,7 +35,7 @@ FieldElement2? findPrimaryFieldInList(
   Iterable<FieldElement2> fields,
 ) {
   for (var field_ in fields) {
-    var field = field_ is RelationFieldImpl ? field_.originalField : field_;
+    var field = field_ is RelationFieldImpl ? field_.baseElement : field_;
     var element = _findElement(field);
     // print(
     //     'Searching in ${ctx.buildContext.originalClassName}=>${field?.name} (${field.runtimeType})');
