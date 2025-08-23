@@ -9,7 +9,7 @@ part of 'book.dart';
 @generatedSerializable
 @pragma('hello')
 @SerializableField(alias: 'omg')
-class Book extends _Book {
+class Book extends BookEntity {
   Book({
     this.id,
     this.createdAt,
@@ -79,7 +79,7 @@ class Book extends _Book {
 
   @override
   bool operator ==(other) {
-    return other is _Book &&
+    return other is BookEntity &&
         other.id == id &&
         other.createdAt == createdAt &&
         other.updatedAt == updatedAt &&
@@ -119,14 +119,14 @@ class Book extends _Book {
 }
 
 @generatedSerializable
-class Author extends _Author {
+class Author extends AuthorEntity {
   Author({
     this.id,
     this.createdAt,
     this.updatedAt,
     required this.name,
     required this.age,
-    List<_Book> books = const [],
+    List<BookEntity> books = const [],
     this.newestBook,
     this.secret,
     this.obscured,
@@ -151,11 +151,11 @@ class Author extends _Author {
   int? age;
 
   @override
-  List<_Book> books;
+  List<BookEntity> books;
 
   /// The newest book.
   @override
-  _Book? newestBook;
+  BookEntity? newestBook;
 
   @override
   String? secret;
@@ -169,8 +169,8 @@ class Author extends _Author {
     DateTime? updatedAt,
     String? name,
     int? age,
-    List<_Book>? books,
-    _Book? newestBook,
+    List<BookEntity>? books,
+    BookEntity? newestBook,
     String? secret,
     String? obscured,
   }) {
@@ -189,14 +189,14 @@ class Author extends _Author {
 
   @override
   bool operator ==(other) {
-    return other is _Author &&
+    return other is AuthorEntity &&
         other.id == id &&
         other.createdAt == createdAt &&
         other.updatedAt == updatedAt &&
         other.name == name &&
         other.age == age &&
-        ListEquality<_Book>(
-          DefaultEquality<_Book>(),
+        ListEquality<BookEntity>(
+          DefaultEquality<BookEntity>(),
         ).equals(other.books, books) &&
         other.newestBook == newestBook &&
         other.secret == secret &&
@@ -229,12 +229,12 @@ class Author extends _Author {
 }
 
 @generatedSerializable
-class Library extends _Library {
+class Library extends LibraryEntity {
   Library({
     this.id,
     this.createdAt,
     this.updatedAt,
-    required Map<String, _Book> collection,
+    required Map<String, BookEntity> collection,
   }) : collection = Map.unmodifiable(collection);
 
   /// A unique identifier corresponding to this item.
@@ -250,13 +250,13 @@ class Library extends _Library {
   DateTime? updatedAt;
 
   @override
-  Map<String, _Book> collection;
+  Map<String, BookEntity> collection;
 
   Library copyWith({
     String? id,
     DateTime? createdAt,
     DateTime? updatedAt,
-    Map<String, _Book>? collection,
+    Map<String, BookEntity>? collection,
   }) {
     return Library(
       id: id ?? this.id,
@@ -268,13 +268,13 @@ class Library extends _Library {
 
   @override
   bool operator ==(other) {
-    return other is _Library &&
+    return other is LibraryEntity &&
         other.id == id &&
         other.createdAt == createdAt &&
         other.updatedAt == updatedAt &&
-        MapEquality<String, _Book>(
+        MapEquality<String, BookEntity>(
           keys: DefaultEquality<String>(),
-          values: DefaultEquality<_Book>(),
+          values: DefaultEquality<BookEntity>(),
         ).equals(other.collection, collection);
   }
 
@@ -294,9 +294,9 @@ class Library extends _Library {
 }
 
 @generatedSerializable
-class Bookmark extends _Bookmark {
+class Bookmark extends BookmarkEntity {
   Bookmark(
-    _Book book, {
+    BookEntity book, {
     this.id,
     this.createdAt,
     this.updatedAt,
@@ -328,7 +328,7 @@ class Bookmark extends _Bookmark {
   String? comment;
 
   Bookmark copyWith(
-    _Book book, {
+    BookEntity book, {
     String? id,
     DateTime? createdAt,
     DateTime? updatedAt,
@@ -349,7 +349,7 @@ class Bookmark extends _Bookmark {
 
   @override
   bool operator ==(other) {
-    return other is _Bookmark &&
+    return other is BookmarkEntity &&
         other.id == id &&
         other.createdAt == createdAt &&
         other.updatedAt == updatedAt &&
@@ -428,7 +428,7 @@ class BookSerializer extends Codec<Book, Map> {
     );
   }
 
-  static Map<String, dynamic> toMap(_Book? model) {
+  static Map<String, dynamic> toMap(BookEntity? model) {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }
@@ -540,7 +540,7 @@ class AuthorSerializer extends Codec<Author, Map> {
     );
   }
 
-  static Map<String, dynamic> toMap(_Author? model) {
+  static Map<String, dynamic> toMap(AuthorEntity? model) {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }
@@ -639,7 +639,7 @@ class LibrarySerializer extends Codec<Library, Map> {
     );
   }
 
-  static Map<String, dynamic> toMap(_Library? model) {
+  static Map<String, dynamic> toMap(LibraryEntity? model) {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }
@@ -672,7 +672,7 @@ abstract class LibraryFields {
 }
 
 abstract class BookmarkSerializer {
-  static Bookmark fromMap(Map map, _Book book) {
+  static Bookmark fromMap(Map map, BookEntity book) {
     if (map['page'] == null) {
       throw FormatException("Missing required field 'page' on Bookmark.");
     }
@@ -698,7 +698,7 @@ abstract class BookmarkSerializer {
     );
   }
 
-  static Map<String, dynamic> toMap(_Bookmark? model) {
+  static Map<String, dynamic> toMap(BookmarkEntity? model) {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }

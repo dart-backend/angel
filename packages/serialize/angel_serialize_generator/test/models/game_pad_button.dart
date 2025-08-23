@@ -2,14 +2,14 @@ import 'package:angel3_serialize/angel3_serialize.dart';
 part 'game_pad_button.g.dart';
 
 @serializable
-abstract class _GamepadButton {
+abstract class GamepadButtonEntity {
   String? get name;
   int? get radius;
 }
 
 @serializable
-class _Gamepad {
-  List<_GamepadButton>? buttons;
+class GamepadEntity {
+  List<GamepadButtonEntity>? buttons;
 
   Map<String, dynamic>? dynamicMap;
 

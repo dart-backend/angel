@@ -5,7 +5,7 @@ import 'character.dart';
 part 'droid.g.dart';
 
 @serializable
-abstract class _Droid extends Model implements Character {
+abstract class DroidEntity extends Model implements Character {
   String get position;
 
   num get age;

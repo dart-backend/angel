@@ -7,7 +7,7 @@ part of 'subclass.dart';
 // **************************************************************************
 
 @generatedSerializable
-class Animal extends _Animal {
+class Animal extends AnimalEntity {
   Animal({required this.genus, required this.species});
 
   @override
@@ -22,7 +22,9 @@ class Animal extends _Animal {
 
   @override
   bool operator ==(other) {
-    return other is _Animal && other.genus == genus && other.species == species;
+    return other is AnimalEntity &&
+        other.genus == genus &&
+        other.species == species;
   }
 
   @override
@@ -41,7 +43,7 @@ class Animal extends _Animal {
 }
 
 @generatedSerializable
-class Bird extends _Bird {
+class Bird extends BirdEntity {
   Bird({required this.genus, required this.species, this.isSparrow = false});
 
   @override
@@ -63,7 +65,7 @@ class Bird extends _Bird {
 
   @override
   bool operator ==(other) {
-    return other is _Bird &&
+    return other is BirdEntity &&
         other.genus == genus &&
         other.species == species &&
         other.isSparrow == isSparrow;
@@ -128,7 +130,7 @@ class AnimalSerializer extends Codec<Animal, Map> {
     );
   }
 
-  static Map<String, dynamic> toMap(_Animal? model) {
+  static Map<String, dynamic> toMap(AnimalEntity? model) {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }
@@ -185,7 +187,7 @@ class BirdSerializer extends Codec<Bird, Map> {
     );
   }
 
-  static Map<String, dynamic> toMap(_Bird? model) {
+  static Map<String, dynamic> toMap(BirdEntity? model) {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }

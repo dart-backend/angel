@@ -7,7 +7,7 @@ part of 'droid.dart';
 // **************************************************************************
 
 @generatedSerializable
-class Droid extends _Droid {
+class Droid extends DroidEntity {
   Droid({
     this.id,
     this.createdAt,
@@ -63,7 +63,7 @@ class Droid extends _Droid {
 
   @override
   bool operator ==(other) {
-    return other is _Droid &&
+    return other is DroidEntity &&
         other.id == id &&
         other.createdAt == createdAt &&
         other.updatedAt == updatedAt &&
@@ -145,7 +145,7 @@ class DroidSerializer extends Codec<Droid, Map> {
     );
   }
 
-  static Map<String, dynamic> toMap(_Droid? model) {
+  static Map<String, dynamic> toMap(DroidEntity? model) {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }

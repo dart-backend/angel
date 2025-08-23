@@ -6,7 +6,7 @@ Map? _fromString(v) => json.decode(v.toString()) as Map?;
 String _toString(Map? v) => json.encode(v);
 
 @serializable
-abstract class _HasMap {
+abstract class HasMapEntity {
   @SerializableField(
     serializer: #_toString,
     deserializer: #_fromString,

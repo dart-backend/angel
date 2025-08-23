@@ -7,7 +7,7 @@ part of 'goat.dart';
 // **************************************************************************
 
 @generatedSerializable
-class Goat implements _Goat {
+class Goat implements GoatEntity {
   Goat({this.integer = 34, this.list = const [34, 35]});
 
   @override
@@ -22,7 +22,7 @@ class Goat implements _Goat {
 
   @override
   bool operator ==(other) {
-    return other is _Goat &&
+    return other is GoatEntity &&
         other.integer == integer &&
         ListEquality<int>(DefaultEquality<int>()).equals(other.list, list);
   }
@@ -80,7 +80,7 @@ class GoatSerializer extends Codec<Goat, Map> {
     );
   }
 
-  static Map<String, dynamic> toMap(_Goat? model) {
+  static Map<String, dynamic> toMap(GoatEntity? model) {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }

@@ -7,7 +7,7 @@ part of 'has_map.dart';
 // **************************************************************************
 
 @generatedSerializable
-class HasMap implements _HasMap {
+class HasMap implements HasMapEntity {
   HasMap({required this.value});
 
   @override
@@ -19,7 +19,7 @@ class HasMap implements _HasMap {
 
   @override
   bool operator ==(other) {
-    return other is _HasMap &&
+    return other is HasMapEntity &&
         MapEquality<dynamic, dynamic>(
           keys: DefaultEquality(),
           values: DefaultEquality(),
@@ -78,7 +78,7 @@ class HasMapSerializer extends Codec<HasMap, Map> {
     return HasMap(value: _fromString(map['value']));
   }
 
-  static Map<String, dynamic> toMap(_HasMap? model) {
+  static Map<String, dynamic> toMap(HasMapEntity? model) {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }

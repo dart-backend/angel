@@ -124,7 +124,7 @@ void main() {
         var wjObj = await query.getOne(executor);
         expect(wjObj.isPresent, true);
         wjObj.ifPresent((wj) {
-          if (TARGET_TEST_DATABASE == 'mysql') {
+          if (targetTestDatabase == 'mysql') {
             expect(wj.numbas, numbas.reversed);
           } else {
             expect(wj.numbas, numbas);

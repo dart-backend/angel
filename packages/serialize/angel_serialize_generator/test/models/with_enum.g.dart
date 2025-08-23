@@ -7,7 +7,7 @@ part of 'with_enum.dart';
 // **************************************************************************
 
 @generatedSerializable
-class WithEnum implements _WithEnum {
+class WithEnum implements WithEnumEntity {
   WithEnum({
     this.type = WithEnumType.b,
     this.finalList = const [],
@@ -37,7 +37,7 @@ class WithEnum implements _WithEnum {
 
   @override
   bool operator ==(other) {
-    return other is _WithEnum &&
+    return other is WithEnumEntity &&
         other.type == type &&
         ListEquality<int>(
           DefaultEquality<int>(),
@@ -109,7 +109,7 @@ class WithEnumSerializer extends Codec<WithEnum, Map> {
     );
   }
 
-  static Map<String, dynamic> toMap(_WithEnum? model) {
+  static Map<String, dynamic> toMap(WithEnumEntity? model) {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }

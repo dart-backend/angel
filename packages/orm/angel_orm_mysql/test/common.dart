@@ -13,7 +13,7 @@ List tmpTables = [];
 
 // MySQL and MariaDB has some differences in the ordering of the results
 // Update this according to either 'mysql' or 'mariadb'
-const TARGET_TEST_DATABASE = 'mariadb';
+const targetTestDatabase = 'mariadb';
 
 // For MySQL/MariaDB using `mysql_client` driver
 Future<MySQLConnection> openMySqlConnection() async {
