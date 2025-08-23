@@ -1168,12 +1168,9 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
 
               for (var field in ctx.effectiveNormalFields) {
                 if (field is RelationFieldImpl) {
-                  // FIXME: Field Name
-                  //var original = field.originalFieldName;
-                  //var prop = refer('model').property(original.displayName);
-
-                  var original = field.baseElement;
-                  var prop = refer('model').property(original.displayName);
+                  var customField = field as RelationFieldImpl;
+                  var original = customField.originalFieldName;
+                  var prop = refer('model').property(original);
 
                   // Add only if present
                   var target = refer('values').index(
@@ -1182,13 +1179,12 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                     ),
                   );
 
-                  // FIXME: foreign = OrmBuildContext
-                  //var foreign =
-                  //    field.relationship.throughContext ??
-                  //    field.relationship.foreign;
-                  //var foreignField = field.relationship.findForeignField(ctx);
-                  var foreign = field.baseElement;
-                  var foreignField = field.firstFragment.element;
+                  var foreign =
+                      customField.relationship.throughContext ??
+                      customField.relationship.foreign;
+                  var foreignField = customField.relationship.findForeignField(
+                    ctx,
+                  );
 
                   var parsedId = prop.nullSafeProperty(
                     foreignField.displayName,
