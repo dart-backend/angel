@@ -16,7 +16,7 @@ This package contains the SQL executor required by Angel3 ORM to work with MySQL
 
 ## Usage
 
-1. Create a model, i.e. `car.dart`
+1. Create a model with `Entity` suffix, i.e. `CarEntity` in a `car.dart`
 
    ```dart
     import 'package:angel3_migration/angel3_migration.dart';

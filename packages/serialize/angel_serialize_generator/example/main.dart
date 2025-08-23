@@ -3,7 +3,7 @@ import 'package:angel3_serialize/angel3_serialize.dart';
 part 'main.g.dart';
 
 @serializable
-class _Todo {
+class TodoEntity {
   String? text;
   bool? completed;
 }

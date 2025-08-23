@@ -88,7 +88,7 @@ Future<void> mysqlExample() async {
 
 @serializable
 @orm
-abstract class _Todo extends Model {
+abstract class TodoEntity extends Model {
   String? get text;
 
   @DefaultsTo(false)

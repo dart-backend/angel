@@ -180,7 +180,7 @@ class TodoQueryValues extends MapQueryValues {
 // **************************************************************************
 
 @generatedSerializable
-class Todo extends _Todo {
+class Todo extends TodoEntity {
   Todo({
     this.id,
     this.createdAt,
@@ -225,7 +225,7 @@ class Todo extends _Todo {
 
   @override
   bool operator ==(other) {
-    return other is _Todo &&
+    return other is TodoEntity &&
         other.id == id &&
         other.createdAt == createdAt &&
         other.updatedAt == updatedAt &&
@@ -295,7 +295,7 @@ class TodoSerializer extends Codec<Todo, Map> {
     );
   }
 
-  static Map<String, dynamic> toMap(_Todo? model) {
+  static Map<String, dynamic> toMap(TodoEntity? model) {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }

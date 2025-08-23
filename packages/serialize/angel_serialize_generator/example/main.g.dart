@@ -7,7 +7,7 @@ part of 'main.dart';
 // **************************************************************************
 
 @generatedSerializable
-class Todo extends _Todo {
+class Todo extends TodoEntity {
   Todo({this.text, this.completed});
 
   @override
@@ -25,7 +25,9 @@ class Todo extends _Todo {
 
   @override
   bool operator ==(other) {
-    return other is _Todo && other.text == text && other.completed == completed;
+    return other is TodoEntity &&
+        other.text == text &&
+        other.completed == completed;
   }
 
   @override
@@ -79,7 +81,7 @@ class TodoSerializer extends Codec<Todo, Map> {
     );
   }
 
-  static Map<String, dynamic> toMap(_Todo? model) {
+  static Map<String, dynamic> toMap(TodoEntity? model) {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }
