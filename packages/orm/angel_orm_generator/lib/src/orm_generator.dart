@@ -306,6 +306,14 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
               // Build the arguments for model
               var args = <String, Expression>{};
               for (var field in ctx.effectiveFields) {
+                if (field.name3 == null) {
+                  log.warning(
+                    'ParseRow skip field ${field.name3} of type ${field.type}',
+                  );
+                  continue;
+                }
+                var fieldName = field.name3!;
+
                 var fType = field.type;
 
                 //if (field.name == "type") {
@@ -323,7 +331,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                   // Generated Code: row[i].toString()
 
                   expr = expr.property('toString').call([]);
-                } else if (field is RelationFieldImpl) {
+                } else if (field is RelationFieldImpl2) {
                   // Skip fields with relationship
 
                   continue;
@@ -332,9 +340,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                       .property('decode')
                       .call([expr.asA(refer('String'))])
                       .asA(type);
-                } else if (floatTypes.contains(
-                  ctx.columns[field.name3]?.type,
-                )) {
+                } else if (floatTypes.contains(ctx.columns[fieldName]?.type)) {
                   //expr = refer('double')
                   //    .property('tryParse')
                   //    .call([expr.property('toString').call([])]);
@@ -347,7 +353,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                  */
 
                   //if (field.name == "type") {
-                  print("=== Process enum ${field.name3}");
+                  print("=== Process enum $fieldName");
                   //}
 
                   var isNull = expr.equalTo(literalNull);
@@ -361,7 +367,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                 } else if (fType.isDartCoreBool) {
                   // Generated Code: mapToBool(row[i])
                   expr = refer('mapToBool').call([expr]);
-                } else if (fType.element3?.displayName == 'DateTime') {
+                } else if (fType.element3?.name3 == 'DateTime') {
                   // Generated Code: mapToDateTime(row[i])
                   if (fType.nullabilitySuffix == NullabilitySuffix.question) {
                     expr = refer('mapToNullableDateTime').call([expr]);
@@ -383,7 +389,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                     defaultRef = CodeExpression(Code('0.0'));
                   } else if (fType.isDartCoreInt || fType.isDartCoreNum) {
                     defaultRef = CodeExpression(Code('0'));
-                  } else if (fType.element3?.displayName == 'DateTime') {
+                  } else if (fType.element3?.name3 == 'DateTime') {
                     defaultRef = CodeExpression(
                       Code('DateTime.parse("1970-01-01 00:00:00")'),
                     );
@@ -395,11 +401,11 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                     .property('contains')
                     .call([
                       literalString(
-                        ctx.buildContext.resolveFieldName(field.displayName)!,
+                        ctx.buildContext.resolveFieldName(fieldName)!,
                       ),
                     ])
                     .conditional(expr, defaultRef);
-                args[field.displayName] = expr;
+                args[fieldName] = expr;
               }
 
               b.statements.add(
@@ -890,14 +896,20 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
 
       // Add builders for each field
       for (var field in ctx.effectiveNormalFields) {
-        String? name = field.name3;
+        if (field.name3 == null) {
+          log.warning(
+            'Cannot generate ORM code for field ${field.name3} of type ${field.type}',
+          );
+          continue;
+        }
+        String name = field.name3!;
 
         var args = <Expression>[];
         DartType type;
         Reference builderType;
 
         try {
-          type = ctx.buildContext.resolveSerializedFieldType(field.displayName);
+          type = ctx.buildContext.resolveSerializedFieldType(name);
         } on StateError {
           type = field.type;
         }
@@ -976,6 +988,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
           continue;
         }
 
+        // FIXME: Crashed here.
         clazz.fields.add(
           Field((b) {
             //log.fine('Field: $name, BuilderType: $builderType');
@@ -1156,7 +1169,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
             )
             ..body = Block((b) {
               for (var field in ctx.effectiveNormalFields) {
-                if (isSpecialId(ctx, field) || field is RelationFieldImpl) {
+                if (isSpecialId(ctx, field) || field is RelationFieldImpl2) {
                   continue;
                 }
                 b.addExpression(
@@ -1167,8 +1180,10 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
               }
 
               for (var field in ctx.effectiveNormalFields) {
-                if (field is RelationFieldImpl) {
-                  var customField = field as RelationFieldImpl;
+                print("=== Field: ${field.displayName}");
+                if (field is RelationFieldImpl2) {
+                  print("=== RelationFieldImpl2: ${field.displayName}");
+                  var customField = field;
                   var original = customField.originalFieldName;
                   var prop = refer('model').property(original);
 
@@ -1180,14 +1195,14 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                   );
 
                   var foreign =
-                      customField.relationship.throughContext ??
-                      customField.relationship.foreign;
-                  var foreignField = customField.relationship.findForeignField(
+                      customField.throughContext ??
+                      customField.relationship?.foreign;
+                  var foreignField = customField.relationship?.findForeignField(
                     ctx,
                   );
 
                   var parsedId = prop.nullSafeProperty(
-                    foreignField.displayName,
+                    foreignField?.displayName ?? '',
                   );
 
                   //log.fine('Foreign field => ${foreignField.name}');

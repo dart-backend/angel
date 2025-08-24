@@ -19,7 +19,7 @@ bool isHasRelation(Relationship r) =>
 bool isSpecialId(OrmBuildContext ctx, FieldElement2 field) {
   return
   // field is ShimFieldImpl &&
-  field is! RelationFieldImpl &&
+  field is! RelationFieldImpl2 &&
       (field.name3 == 'id' &&
           const TypeChecker.fromRuntime(
             Model,
@@ -35,10 +35,11 @@ FieldElement2? findPrimaryFieldInList(
   Iterable<FieldElement2> fields,
 ) {
   for (var field_ in fields) {
-    var field = field_ is RelationFieldImpl ? field_.baseElement : field_;
+    var field = field_ is RelationFieldImpl2 ? field_.baseElement : field_;
     var element = _findElement(field);
     // print(
     //     'Searching in ${ctx.buildContext.originalClassName}=>${field?.name} (${field.runtimeType})');
+
     // Check for column annotation...
     var columnAnnotation = columnTypeChecker.firstAnnotationOf(element);
 
@@ -345,8 +346,11 @@ Future<OrmBuildContext?> buildOrmContext(
               }
             }
 
-            var rf = RelationFieldImpl(name, relation, type, field);
-            ctx.effectiveFields.add(rf.element);
+            // FIXME: Broken FieldElement2
+            var rf = RelationFieldImpl2(
+              RelationFieldImpl(name, relation, type, field),
+            );
+            ctx.effectiveFields.add(rf);
           }
         }
       }
@@ -512,6 +516,32 @@ class RelationFieldImpl extends ShimFieldImpl {
 
   //@override
   //PropertyAccessorElement? get getter => originalField.getter;
+}
+
+class RelationFieldImpl2 extends ShimFieldImpl2 {
+  RelationFieldImpl2(super.firstFragment);
+
+  String get originalFieldName => firstFragment.displayName;
+
+  RelationshipReader? get relationship {
+    if (firstFragment is RelationFieldImpl) {
+      var element = firstFragment as RelationFieldImpl;
+
+      return element.relationship;
+    }
+
+    return null;
+  }
+
+  FieldElement2? get originalField {
+    if (firstFragment is RelationFieldImpl) {
+      var element = firstFragment as RelationFieldImpl;
+
+      return element.originalField;
+    }
+
+    return null;
+  }
 }
 
 InterfaceType? firstModelAncestor(DartType? type) {

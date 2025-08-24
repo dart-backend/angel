@@ -1,10 +1,10 @@
 import 'dart:async';
 import 'package:analyzer/dart/constant/value.dart';
 import 'package:analyzer/dart/element/element2.dart';
-
-import 'package:analyzer/dart/element/type.dart';
 // ignore: implementation_imports
 import 'package:analyzer/src/dart/element/element.dart';
+
+import 'package:analyzer/dart/element/type.dart';
 import 'package:angel3_serialize/angel3_serialize.dart';
 import 'package:build/build.dart';
 import 'package:path/path.dart' as p;
@@ -258,7 +258,7 @@ Future<BuildContext?> buildContext(
   return ctx;
 }
 
-/// A manually-instantiated [FieldElement2].
+/// A manually-instantiated [FieldElement].
 class ShimFieldImpl extends FieldElementImpl {
   //@override
   //final DartType type;
@@ -266,4 +266,9 @@ class ShimFieldImpl extends FieldElementImpl {
   ShimFieldImpl(String name, dynamic shimFieldType) : super(name, -1) {
     type = shimFieldType;
   }
+}
+
+/// A manually-instantiated [FieldElement2].
+class ShimFieldImpl2 extends FieldElementImpl2 {
+  ShimFieldImpl2(super.firstFragment);
 }
