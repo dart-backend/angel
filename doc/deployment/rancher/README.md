@@ -1,4 +1,4 @@
-# Running as Container Services using Docker
+# Running as Container Services using Rancher
 
 The required applications by the framework can be run using the Docker compose files provided in this folder.
 
@@ -9,26 +9,26 @@ The required applications by the framework can be run using the Docker compose f
 * Starting the PostreSQL container
 
     ```bash
-    docker compose -f docker-compose-pg.yml -p pg up -d
+    nerdctl compose -f rancher-compose-pg.yml -p pg up -d
     ```
 
 * Stopping the PostreSQL container
 
     ```bash
-    docker compose -f docker-compose-pg.yml -p pg stop
-    docker compose -f docker-compose-pg.yml -p pg down
+    nerdctl compose -f rancher-compose-pg.yml -p pg stop
+    nerdctl compose -f rancher-compose-pg.yml -p pg down
     ```
 
 * Checking the PostreSQL container log
 
     ```bash
-    docker logs docker-pg-1 -f
+    nerdctl logs rancher-pg-1 -f
     ```
 
 * Running psql
 
     ```bash
-    docker exec -it <container id> /bin/bash
+    nerdctl exec -it <container id> /bin/bash
     psql --username postgres
     ```
 
@@ -45,20 +45,20 @@ The required applications by the framework can be run using the Docker compose f
 * Starting the MariaDB container
 
     ```bash
-    docker compose -f docker-compose-mariadb.yml -p maria up -d
+    nerdctl compose -f rancher-compose-mariadb.yml -p maria up -d
     ```
 
 * Stopping the MariaDB container
 
     ```bash
-    docker compose -f docker-compose-mariadb.yml -p maria stop
-    docker compose -f docker-compose-mariadb.yml -p maria down
+    nerdctl compose -f rancher-compose-mariadb.yml -p maria stop
+    nerdctl compose -f rancher-compose-mariadb.yml -p maria down
     ```
 
 * Checking the MariaDB container log
 
     ```bash
-    docker logs maria-mariadb-1 -f
+    nerdctl logs maria-mariadb-1 -f
     ```
 
 * Create MariaDB database, user and grant access
@@ -80,20 +80,20 @@ The required applications by the framework can be run using the Docker compose f
 * Starting the MySQL container
 
     ```bash
-    docker compose -f docker-compose-mysql.yml -p mysql up -d
+    nerdctl compose -f rancher-compose-mysql.yml -p mysql up -d
     ```
 
 * Stopping the MySQL container
 
     ```bash
-    docker compose -f docker-compose-mysql.yml -p mysql stop
-    docker compose -f docker-compose-mysql.yml -p mysql down
+    nerdctl compose -f rancher-compose-mysql.yml -p mysql stop
+    nerdctl compose -f rancher-compose-mysql.yml -p mysql down
     ```
 
 * Checking the MySQL container log
 
     ```bash
-    docker logs mysql-mysql-1 -f
+    nerdctl logs mysql-mysql-1 -f
     ```
 
 * Create MySQL database, user and grant access
@@ -115,20 +115,20 @@ The required applications by the framework can be run using the Docker compose f
 * Starting the MongoDB container
 
     ```bash
-    docker compose -f docker-compose-mongo.yml -p mongo up -d
+    nerdctl compose -f rancher-compose-mongo.yml -p mongo up -d
     ```
 
 * Stopping the MongoDB container
 
     ```bash
-    docker compose -f docker-compose-mongo.yml -p mongo stop
-    docker compose -f docker-compose-mongo.yml -p mongo down
+    nerdctl compose -f rancher-compose-mongo.yml -p mongo stop
+    nerdctl compose -f rancher-compose-mongo.yml -p mongo down
     ```
 
 * Checking the MongoDB container log
 
     ```bash
-    docker logs mongo-mongo-1 -f
+    nerdctl logs mongo-mongo-1 -f
     ```
 
 ### rethinkDB
@@ -136,20 +136,20 @@ The required applications by the framework can be run using the Docker compose f
 * Starting the rethinkDB container
 
     ```bash
-    docker compose -f docker-compose-rethinkdb.yml -p rethink up -d
+    nerdctl compose -f rancher-compose-rethinkdb.yml -p rethink up -d
     ```
 
 * Stopping the rethinkDB container
 
     ```bash
-    docker compose -f docker-compose-rethinkdb.yml -p rethink stop
-    docker compose -f docker-compose-rethinkdb.yml -p rethink down
+    nerdctl compose -f rancher-compose-rethinkdb.yml -p rethink stop
+    nerdctl compose -f rancher-compose-rethinkdb.yml -p rethink down
     ```
 
 * Checking the rethinkDB container log
 
     ```bash
-    docker logs rethink-rethinkdb-1 -f
+    nerdctl logs rethink-rethinkdb-1 -f
     ```
 
 ### Redis
@@ -157,18 +157,18 @@ The required applications by the framework can be run using the Docker compose f
 * Starting the Redis container
 
     ```bash
-    docker compose -f docker-compose-redis.yml -p redis up -d
+    nerdctl compose -f rancher-compose-redis.yml -p redis up -d
     ```
 
 * Stopping the Redis container
 
     ```bash
-    docker compose -f docker-compose-redis.yml -p redis stop
-    docker compose -f docker-compose-redis.yml -p redis down
+    nerdctl compose -f rancher-compose-redis.yml -p redis stop
+    nerdctl compose -f rancher-compose-redis.yml -p redis down
     ```
 
 * Checking the Redis container log
 
     ```bash
-    docker logs redis-redis-1 -f
+    nerdctl logs redis-redis-1 -f
     ```

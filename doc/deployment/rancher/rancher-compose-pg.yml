@@ -1,0 +1,25 @@
+services:
+  pgdb:
+    image: postgres:latest
+    restart: "no"
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    networks:
+      - appnet
+
+  pgadmin4:
+    image: dpage/pgadmin4:latest
+    restart: "no"
+    ports:
+      - "5050:80"
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@mydomain.com
+      - PGADMIN_DEFAULT_PASSWORD=Qwerty
+    networks:
+      - appnet
+
+networks:
+  appnet:
