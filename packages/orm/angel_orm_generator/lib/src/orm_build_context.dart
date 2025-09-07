@@ -2,6 +2,10 @@ import 'dart:async';
 
 import 'package:analyzer/dart/constant/value.dart';
 import 'package:analyzer/dart/element/element2.dart';
+
+// ignore: implementation_imports
+import 'package:analyzer/src/dart/element/element.dart';
+
 import 'package:analyzer/dart/element/type.dart';
 import 'package:angel3_orm/angel3_orm.dart';
 import 'package:angel3_serialize/angel3_serialize.dart';
@@ -19,8 +23,8 @@ bool isHasRelation(Relationship r) =>
 bool isSpecialId(OrmBuildContext ctx, FieldElement2 field) {
   return
   // field is ShimFieldImpl &&
-  field is! RelationFieldImpl2 &&
-      (field.name3 == 'id' &&
+  field is! RelationFieldImpl &&
+      (field.displayName == 'id' &&
           const TypeChecker.fromRuntime(
             Model,
           ).isAssignableFromType(ctx.buildContext.clazz.thisType));
@@ -35,7 +39,7 @@ FieldElement2? findPrimaryFieldInList(
   Iterable<FieldElement2> fields,
 ) {
   for (var field_ in fields) {
-    var field = field_ is RelationFieldImpl2 ? field_.baseElement : field_;
+    var field = field_ is RelationFieldImpl ? field_.baseElement : field_;
     var element = _findElement(field);
     // print(
     //     'Searching in ${ctx.buildContext.originalClassName}=>${field?.name} (${field.runtimeType})');
@@ -182,7 +186,7 @@ Future<OrmBuildContext?> buildOrmContext(
             isModelClass(field.type);
         if (!canUse) {
           throw UnsupportedError(
-            'Cannot apply relationship to field "${field.name3}" - ${field.type} is not assignable to Model.',
+            'Cannot apply relationship to field "${field.displayName}" - ${field.type} is not assignable to Model.',
           );
         } else {
           try {
@@ -245,11 +249,13 @@ Future<OrmBuildContext?> buildOrmContext(
                 );
               }
             } else {
-              log.warning('Ancestor model type for [${field.name3}] is null');
+              log.warning(
+                'Ancestor model type for [${field.displayName}] is null',
+              );
             }
           } on StackOverflowError {
             throw UnsupportedError(
-              'There is an infinite cycle between ${clazz.name3} and ${field.type.getDisplayString()}. This triggered a stack overflow.',
+              'There is an infinite cycle between ${clazz.displayName} and ${field.type.getDisplayString()}. This triggered a stack overflow.',
             );
           }
         }
@@ -262,12 +268,12 @@ Future<OrmBuildContext?> buildOrmContext(
         var localKeyName = findPrimaryFieldInList(
           ctx,
           ctx.buildContext.fields,
-        )?.name3;
+        )?.displayName;
         // print(
         //     'Keyname for ${buildCtx.originalClassName}.${field.name} maybe = $_keyName??');
         if (localKeyName == null) {
           throw '${ctx.buildContext.originalClassName} has no defined primary key, '
-              'so the relation on field ${buildCtx.originalClassName}.${field.name3} must define a $missing.';
+              'so the relation on field ${buildCtx.originalClassName}.${field.displayName} must define a $missing.';
         } else {
           return localKeyName;
         }
@@ -319,7 +325,7 @@ Future<OrmBuildContext?> buildOrmContext(
       );
 
       log.fine(
-        'Relation on ${buildCtx.originalClassName}.${field.name3} => '
+        'Relation on ${buildCtx.originalClassName}.${field.displayName} => '
         'foreignKey=$foreignKey, localKey=$localKey',
       );
 
@@ -330,7 +336,9 @@ Future<OrmBuildContext?> buildOrmContext(
           var name = ReCase(localKey).camelCase;
           ctx.buildContext.aliases[name] = localKey;
 
-          if (!ctx.effectiveFields.any((f) => f.name3 == field.name3)) {
+          if (!ctx.effectiveFields.any(
+            (f) => f.displayName == field.displayName,
+          )) {
             var foreignField = relation.findForeignField(ctx);
             var foreign = relation.throughContext ?? relation.foreign;
             var type = foreignField.type;
@@ -347,10 +355,13 @@ Future<OrmBuildContext?> buildOrmContext(
             }
 
             // FIXME: Broken FieldElement2
-            var rf = RelationFieldImpl2(
-              RelationFieldImpl(name, relation, type, field),
-            );
-            ctx.effectiveFields.add(rf);
+
+            print("===  Create RelationFieldImpl for $name ====");
+            var rf = RelationFieldImpl(name, relation, type, field);
+            //var rf = RelationFieldImpl2(
+            //  RelationFieldImpl(name, relation, type, field),
+            //);
+            ctx.effectiveFields.add(rf.element);
           }
         }
       }
@@ -377,7 +388,7 @@ Future<OrmBuildContext?> buildOrmContext(
 
       ctx.columns[field.displayName] = column;
 
-      if (!ctx.effectiveFields.any((f) => f.name3 == field.name3)) {
+      if (!ctx.effectiveFields.any((f) => f.displayName == field.displayName)) {
         ctx.effectiveFields.add(field);
       }
     }
@@ -474,7 +485,7 @@ class OrmBuildContext {
   OrmBuildContext(this.buildContext, this.ormAnnotation, this.tableName);
 
   bool isNotCustomExprField(FieldElement2 field) {
-    var col = columns[field.name3];
+    var col = columns[field.displayName];
     return col?.hasExpression != true;
   }
 
@@ -505,14 +516,23 @@ class _ColumnType implements ColumnType {
 class RelationFieldImpl extends ShimFieldImpl {
   final FieldElement2 originalField;
   final RelationshipReader relationship;
+  final String relationName;
   RelationFieldImpl(
-    String name,
+    this.relationName,
     this.relationship,
     DartType type,
     this.originalField,
-  ) : super(name, type);
+  ) : super(relationName, type);
 
   String get originalFieldName => originalField.displayName;
+
+  @override
+  String get displayName => relationName;
+
+  @override
+  FieldElementImpl2 get element {
+    return RelationFieldImpl2(this);
+  }
 
   //@override
   //PropertyAccessorElement? get getter => originalField.getter;
@@ -521,7 +541,11 @@ class RelationFieldImpl extends ShimFieldImpl {
 class RelationFieldImpl2 extends ShimFieldImpl2 {
   RelationFieldImpl2(super.firstFragment);
 
-  String get originalFieldName => firstFragment.displayName;
+  String get originalFieldName =>
+      (firstFragment as RelationFieldImpl).originalFieldName;
+
+  @override
+  String get displayName => firstFragment.displayName;
 
   RelationshipReader? get relationship {
     if (firstFragment is RelationFieldImpl) {

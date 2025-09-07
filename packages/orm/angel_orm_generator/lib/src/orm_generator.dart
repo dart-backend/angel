@@ -306,19 +306,9 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
               // Build the arguments for model
               var args = <String, Expression>{};
               for (var field in ctx.effectiveFields) {
-                if (field.name3 == null) {
-                  log.warning(
-                    'ParseRow skip field ${field.name3} of type ${field.type}',
-                  );
-                  continue;
-                }
-                var fieldName = field.name3!;
+                var fieldName = field.displayName;
 
                 var fType = field.type;
-
-                //if (field.name == "type") {
-                //  print("=== Here 1 fType = $fType ");
-                //}
 
                 Reference type = convertTypeReference(fType);
                 if (isSpecialId(ctx, field)) {
@@ -335,7 +325,8 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                   // Skip fields with relationship
 
                   continue;
-                } else if (ctx.columns[field.name3]?.type == ColumnType.json) {
+                } else if (ctx.columns[field.displayName]?.type ==
+                    ColumnType.json) {
                   expr = refer('json')
                       .property('decode')
                       .call([expr.asA(refer('String'))])
@@ -367,7 +358,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                 } else if (fType.isDartCoreBool) {
                   // Generated Code: mapToBool(row[i])
                   expr = refer('mapToBool').call([expr]);
-                } else if (fType.element3?.name3 == 'DateTime') {
+                } else if (fType.element3?.displayName == 'DateTime') {
                   // Generated Code: mapToDateTime(row[i])
                   if (fType.nullabilitySuffix == NullabilitySuffix.question) {
                     expr = refer('mapToNullableDateTime').call([expr]);
@@ -389,7 +380,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                     defaultRef = CodeExpression(Code('0.0'));
                   } else if (fType.isDartCoreInt || fType.isDartCoreNum) {
                     defaultRef = CodeExpression(Code('0'));
-                  } else if (fType.element3?.name3 == 'DateTime') {
+                  } else if (fType.element3?.displayName == 'DateTime') {
                     defaultRef = CodeExpression(
                       Code('DateTime.parse("1970-01-01 00:00:00")'),
                     );
@@ -818,7 +809,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                 if (relation.type == RelationshipType.hasMany) {
                   // This is only allowed with lists.
                   var field = ctx.buildContext.fields.firstWhere(
-                    (f) => f.name3 == name,
+                    (f) => f.displayName == name,
                   );
 
                   var typeLiteral = convertTypeReference(field.type)
@@ -836,7 +827,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
               var keyName = findPrimaryFieldInList(
                 ctx,
                 ctx.buildContext.fields,
-              )?.name3;
+              )?.displayName;
 
               if (keyName == null) {
                 throw '${ctx.buildContext.originalClassName} has no defined primary key.\n'
@@ -896,13 +887,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
 
       // Add builders for each field
       for (var field in ctx.effectiveNormalFields) {
-        if (field.name3 == null) {
-          log.warning(
-            'Cannot generate ORM code for field ${field.name3} of type ${field.type}',
-          );
-          continue;
-        }
-        String name = field.name3!;
+        String name = field.displayName;
 
         var args = <Expression>[];
         DartType type;
@@ -956,7 +941,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
           builderType = refer('ListSqlExpressionBuilder');
 
           // Detect relationship
-        } else if (name!.endsWith('Id')) {
+        } else if (name.endsWith('Id')) {
           log.fine('Foreign Relationship detected = $name');
           var relation = ctx.relations[name.replaceAll('Id', '')];
           if (relation != null) {
@@ -972,13 +957,13 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
             //}
           } else {
             log.warning(
-              'Cannot generate ORM code for field ${field.name3} of type ${field.type}',
+              'Cannot generate ORM code for field ${field.displayName} of type ${field.type}',
             );
             continue;
           }
         } else {
           log.warning(
-            'Cannot generate ORM code for field ${field.name3} of type ${field.type}',
+            'Cannot generate ORM code for field ${field.displayName} of type ${field.type}',
           );
           //ctx.relations.forEach((key, value) {
           //  log.fine('key: $key, value: $value');
@@ -1014,7 +999,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                     .code,
               );
             } else {
-              log.warning('Literal ${field.name3} is null');
+              log.warning('Literal ${field.displayName} is null');
             }
           }),
         );
@@ -1062,7 +1047,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
               for (var field in ctx.effectiveFields) {
                 var fType = field.type;
                 var name = ctx.buildContext.resolveFieldName(field.displayName);
-                var type = ctx.columns[field.name3]?.type;
+                var type = ctx.columns[field.displayName]?.type;
                 if (type == null) continue;
                 if (const TypeChecker.fromRuntime(
                   List,
@@ -1100,7 +1085,9 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                   .call([value.asA(refer('String'))])
                   .property('cast')
                   .call([]);
-            } else if (floatTypes.contains(ctx.columns[field.name3]?.type)) {
+            } else if (floatTypes.contains(
+              ctx.columns[field.displayName]?.type,
+            )) {
               // Skip using casts on double
               value = value
                   .asA(refer('double?'))
@@ -1114,7 +1101,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
             }
 
             b
-              ..name = field.name3
+              ..name = field.displayName
               ..type = MethodType.getter
               ..returns = type
               ..body = Block((b) => b.addExpression(value.returned));
@@ -1138,7 +1125,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
           } */
 
             b
-              ..name = field.name3
+              ..name = field.displayName
               ..type = MethodType.setter
               ..requiredParameters.add(
                 Parameter(
@@ -1195,7 +1182,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                   );
 
                   var foreign =
-                      customField.throughContext ??
+                      customField.relationship?.throughContext ??
                       customField.relationship?.foreign;
                   var foreignField = customField.relationship?.findForeignField(
                     ctx,

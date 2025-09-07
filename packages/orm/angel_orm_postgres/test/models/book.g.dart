@@ -48,6 +48,365 @@ class AuthorMigration extends Migration {
 }
 
 // **************************************************************************
+// OrmGenerator
+// **************************************************************************
+
+class BookQuery extends Query<Book, BookQueryWhere> {
+  BookQuery({super.parent, Set<String>? trampoline}) {
+    trampoline ??= <String>{};
+    trampoline.add(tableName);
+    _where = BookQueryWhere(this);
+    join(
+      _partnerAuthor = AuthorQuery(trampoline: trampoline, parent: this),
+      'partner_author_id',
+      'id',
+      additionalFields: const [
+        'id',
+        'created_at',
+        'updated_at',
+        'name',
+        'publisher',
+      ],
+      trampoline: trampoline,
+    );
+    join(
+      _author = AuthorQuery(trampoline: trampoline, parent: this),
+      'author_id',
+      'id',
+      additionalFields: const [
+        'id',
+        'created_at',
+        'updated_at',
+        'name',
+        'publisher',
+      ],
+      trampoline: trampoline,
+    );
+  }
+
+  @override
+  final BookQueryValues values = BookQueryValues();
+
+  List<String> _selectedFields = [];
+
+  BookQueryWhere? _where;
+
+  late AuthorQuery _partnerAuthor;
+
+  late AuthorQuery _author;
+
+  @override
+  Map<String, String> get casts {
+    return {};
+  }
+
+  @override
+  String get tableName {
+    return 'books';
+  }
+
+  @override
+  List<String> get fields {
+    const localFields = [
+      'id',
+      'created_at',
+      'updated_at',
+      'partner_author_id',
+      'author_id',
+      'name',
+    ];
+    return _selectedFields.isEmpty
+        ? localFields
+        : localFields
+              .where((field) => _selectedFields.contains(field))
+              .toList();
+  }
+
+  BookQuery select(List<String> selectedFields) {
+    _selectedFields = selectedFields;
+    return this;
+  }
+
+  @override
+  BookQueryWhere? get where {
+    return _where;
+  }
+
+  @override
+  BookQueryWhere newWhereClause() {
+    return BookQueryWhere(this);
+  }
+
+  Optional<Book> parseRow(List row) {
+    if (row.every((x) => x == null)) {
+      return Optional.empty();
+    }
+    var model = Book(
+      id: fields.contains('id') ? row[0].toString() : null,
+      createdAt: fields.contains('created_at')
+          ? mapToNullableDateTime(row[1])
+          : null,
+      updatedAt: fields.contains('updated_at')
+          ? mapToNullableDateTime(row[2])
+          : null,
+      name: fields.contains('name') ? (row[5] as String?) : null,
+    );
+    if (row.length > 6) {
+      var modelOpt = AuthorQuery().parseRow(row.skip(6).take(5).toList());
+      modelOpt.ifPresent((m) {
+        model = model.copyWith(partnerAuthor: m);
+      });
+    }
+    if (row.length > 11) {
+      var modelOpt = AuthorQuery().parseRow(row.skip(11).take(5).toList());
+      modelOpt.ifPresent((m) {
+        model = model.copyWith(author: m);
+      });
+    }
+    return Optional.of(model);
+  }
+
+  @override
+  Optional<Book> deserialize(List row) {
+    return parseRow(row);
+  }
+
+  AuthorQuery get partnerAuthor {
+    return _partnerAuthor;
+  }
+
+  AuthorQuery get author {
+    return _author;
+  }
+}
+
+class BookQueryWhere extends QueryWhere {
+  BookQueryWhere(BookQuery query)
+    : id = NumericSqlExpressionBuilder<int>(query, 'id'),
+      createdAt = DateTimeSqlExpressionBuilder(query, 'created_at'),
+      updatedAt = DateTimeSqlExpressionBuilder(query, 'updated_at'),
+      partnerAuthorId = NumericSqlExpressionBuilder<int>(
+        query,
+        'partner_author_id',
+      ),
+      authorId = NumericSqlExpressionBuilder<int>(query, 'author_id'),
+      name = StringSqlExpressionBuilder(query, 'name');
+
+  final NumericSqlExpressionBuilder<int> id;
+
+  final DateTimeSqlExpressionBuilder createdAt;
+
+  final DateTimeSqlExpressionBuilder updatedAt;
+
+  final NumericSqlExpressionBuilder<int> partnerAuthorId;
+
+  final NumericSqlExpressionBuilder<int> authorId;
+
+  final StringSqlExpressionBuilder name;
+
+  @override
+  List<SqlExpressionBuilder> get expressionBuilders {
+    return [id, createdAt, updatedAt, partnerAuthorId, authorId, name];
+  }
+}
+
+class BookQueryValues extends MapQueryValues {
+  @override
+  Map<String, String> get casts {
+    return {};
+  }
+
+  String? get id {
+    return (values['id'] as String?);
+  }
+
+  set id(String? value) => values['id'] = value;
+
+  DateTime? get createdAt {
+    return (values['created_at'] as DateTime?);
+  }
+
+  set createdAt(DateTime? value) => values['created_at'] = value;
+
+  DateTime? get updatedAt {
+    return (values['updated_at'] as DateTime?);
+  }
+
+  set updatedAt(DateTime? value) => values['updated_at'] = value;
+
+  int get partnerAuthorId {
+    return (values['partner_author_id'] as int);
+  }
+
+  set partnerAuthorId(int value) => values['partner_author_id'] = value;
+
+  int get authorId {
+    return (values['author_id'] as int);
+  }
+
+  set authorId(int value) => values['author_id'] = value;
+
+  String? get name {
+    return (values['name'] as String?);
+  }
+
+  set name(String? value) => values['name'] = value;
+
+  void copyFrom(Book model) {
+    createdAt = model.createdAt;
+    updatedAt = model.updatedAt;
+    name = model.name;
+    if (model.partnerAuthor != null) {
+      values['partner_author_id'] = model.partnerAuthor?.id;
+    }
+    if (model.author != null) {
+      values['author_id'] = model.author?.id;
+    }
+  }
+}
+
+class AuthorQuery extends Query<Author, AuthorQueryWhere> {
+  AuthorQuery({super.parent, Set<String>? trampoline}) {
+    trampoline ??= <String>{};
+    trampoline.add(tableName);
+    _where = AuthorQueryWhere(this);
+  }
+
+  @override
+  final AuthorQueryValues values = AuthorQueryValues();
+
+  List<String> _selectedFields = [];
+
+  AuthorQueryWhere? _where;
+
+  @override
+  Map<String, String> get casts {
+    return {};
+  }
+
+  @override
+  String get tableName {
+    return 'authors';
+  }
+
+  @override
+  List<String> get fields {
+    const localFields = ['id', 'created_at', 'updated_at', 'name', 'publisher'];
+    return _selectedFields.isEmpty
+        ? localFields
+        : localFields
+              .where((field) => _selectedFields.contains(field))
+              .toList();
+  }
+
+  AuthorQuery select(List<String> selectedFields) {
+    _selectedFields = selectedFields;
+    return this;
+  }
+
+  @override
+  AuthorQueryWhere? get where {
+    return _where;
+  }
+
+  @override
+  AuthorQueryWhere newWhereClause() {
+    return AuthorQueryWhere(this);
+  }
+
+  Optional<Author> parseRow(List row) {
+    if (row.every((x) => x == null)) {
+      return Optional.empty();
+    }
+    var model = Author(
+      id: fields.contains('id') ? row[0].toString() : null,
+      createdAt: fields.contains('created_at')
+          ? mapToNullableDateTime(row[1])
+          : null,
+      updatedAt: fields.contains('updated_at')
+          ? mapToNullableDateTime(row[2])
+          : null,
+      name: fields.contains('name') ? (row[3] as String?) : null,
+      publisher: fields.contains('publisher') ? (row[4] as String?) : null,
+    );
+    return Optional.of(model);
+  }
+
+  @override
+  Optional<Author> deserialize(List row) {
+    return parseRow(row);
+  }
+}
+
+class AuthorQueryWhere extends QueryWhere {
+  AuthorQueryWhere(AuthorQuery query)
+    : id = NumericSqlExpressionBuilder<int>(query, 'id'),
+      createdAt = DateTimeSqlExpressionBuilder(query, 'created_at'),
+      updatedAt = DateTimeSqlExpressionBuilder(query, 'updated_at'),
+      name = StringSqlExpressionBuilder(query, 'name'),
+      publisher = StringSqlExpressionBuilder(query, 'publisher');
+
+  final NumericSqlExpressionBuilder<int> id;
+
+  final DateTimeSqlExpressionBuilder createdAt;
+
+  final DateTimeSqlExpressionBuilder updatedAt;
+
+  final StringSqlExpressionBuilder name;
+
+  final StringSqlExpressionBuilder publisher;
+
+  @override
+  List<SqlExpressionBuilder> get expressionBuilders {
+    return [id, createdAt, updatedAt, name, publisher];
+  }
+}
+
+class AuthorQueryValues extends MapQueryValues {
+  @override
+  Map<String, String> get casts {
+    return {};
+  }
+
+  String? get id {
+    return (values['id'] as String?);
+  }
+
+  set id(String? value) => values['id'] = value;
+
+  DateTime? get createdAt {
+    return (values['created_at'] as DateTime?);
+  }
+
+  set createdAt(DateTime? value) => values['created_at'] = value;
+
+  DateTime? get updatedAt {
+    return (values['updated_at'] as DateTime?);
+  }
+
+  set updatedAt(DateTime? value) => values['updated_at'] = value;
+
+  String? get name {
+    return (values['name'] as String?);
+  }
+
+  set name(String? value) => values['name'] = value;
+
+  String? get publisher {
+    return (values['publisher'] as String?);
+  }
+
+  set publisher(String? value) => values['publisher'] = value;
+
+  void copyFrom(Author model) {
+    createdAt = model.createdAt;
+    updatedAt = model.updatedAt;
+    name = model.name;
+    publisher = model.publisher;
+  }
+}
+
+// **************************************************************************
 // JsonModelGenerator
 // **************************************************************************
 

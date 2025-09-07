@@ -73,7 +73,7 @@ class RelationshipReader {
     return ctx.effectiveFields.firstWhere(
       (f) => ctx.buildContext.resolveFieldName(f.displayName) == localKey,
       orElse: () {
-        throw '${ctx.buildContext.clazz.name3} has no field that maps to the name "$localKey", '
+        throw '${ctx.buildContext.clazz.displayName} has no field that maps to the name "$localKey", '
             'but it has a @HasMany() relation that expects such a field.';
       },
     );
@@ -84,8 +84,8 @@ class RelationshipReader {
     return foreign.effectiveFields.firstWhere(
       (f) => foreign.buildContext.resolveFieldName(f.displayName) == foreignKey,
       orElse: () {
-        throw '${foreign.buildContext.clazz.name3} has no field that maps to the name "$foreignKey", '
-            'but ${ctx.buildContext.clazz.name3} has a @HasMany() relation that expects such a field.';
+        throw '${foreign.buildContext.clazz.displayName} has no field that maps to the name "$foreignKey", '
+            'but ${ctx.buildContext.clazz.displayName} has a @HasMany() relation that expects such a field.';
       },
     );
   }

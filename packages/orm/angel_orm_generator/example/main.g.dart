@@ -31,8 +31,7 @@ class EmployeeMigration extends Migration {
 // **************************************************************************
 
 class EmployeeQuery extends Query<Employee, EmployeeQueryWhere> {
-  EmployeeQuery({Query? parent, Set<String>? trampoline})
-    : super(parent: parent) {
+  EmployeeQuery({super.parent, Set<String>? trampoline}) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = EmployeeQueryWhere(this);
@@ -57,7 +56,7 @@ class EmployeeQuery extends Query<Employee, EmployeeQueryWhere> {
 
   @override
   List<String> get fields {
-    const _fields = [
+    const localFields = [
       'id',
       'created_at',
       'updated_at',
@@ -67,8 +66,10 @@ class EmployeeQuery extends Query<Employee, EmployeeQueryWhere> {
       'salary',
     ];
     return _selectedFields.isEmpty
-        ? _fields
-        : _fields.where((field) => _selectedFields.contains(field)).toList();
+        ? localFields
+        : localFields
+              .where((field) => _selectedFields.contains(field))
+              .toList();
   }
 
   EmployeeQuery select(List<String> selectedFields) {

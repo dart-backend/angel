@@ -43,6 +43,298 @@ class AlphabetMigration extends Migration {
 }
 
 // **************************************************************************
+// OrmGenerator
+// **************************************************************************
+
+class NumberQuery extends Query<Number, NumberQueryWhere> {
+  NumberQuery({super.parent, Set<String>? trampoline}) {
+    trampoline ??= <String>{};
+    trampoline.add(tableName);
+    expressions['two'] = 'SELECT 2';
+    _where = NumberQueryWhere(this);
+  }
+
+  @override
+  final NumberQueryValues values = NumberQueryValues();
+
+  List<String> _selectedFields = [];
+
+  NumberQueryWhere? _where;
+
+  @override
+  Map<String, String> get casts {
+    return {};
+  }
+
+  @override
+  String get tableName {
+    return 'numbers';
+  }
+
+  @override
+  List<String> get fields {
+    const localFields = ['id', 'created_at', 'updated_at', 'two'];
+    return _selectedFields.isEmpty
+        ? localFields
+        : localFields
+              .where((field) => _selectedFields.contains(field))
+              .toList();
+  }
+
+  NumberQuery select(List<String> selectedFields) {
+    _selectedFields = selectedFields;
+    return this;
+  }
+
+  @override
+  NumberQueryWhere? get where {
+    return _where;
+  }
+
+  @override
+  NumberQueryWhere newWhereClause() {
+    return NumberQueryWhere(this);
+  }
+
+  Optional<Number> parseRow(List row) {
+    if (row.every((x) => x == null)) {
+      return Optional.empty();
+    }
+    var model = Number(
+      id: fields.contains('id') ? row[0].toString() : null,
+      createdAt: fields.contains('created_at')
+          ? mapToNullableDateTime(row[1])
+          : null,
+      updatedAt: fields.contains('updated_at')
+          ? mapToNullableDateTime(row[2])
+          : null,
+      two: fields.contains('two') ? mapToInt(row[3]) : null,
+    );
+    return Optional.of(model);
+  }
+
+  @override
+  Optional<Number> deserialize(List row) {
+    return parseRow(row);
+  }
+}
+
+class NumberQueryWhere extends QueryWhere {
+  NumberQueryWhere(NumberQuery query)
+    : id = NumericSqlExpressionBuilder<int>(query, 'id'),
+      createdAt = DateTimeSqlExpressionBuilder(query, 'created_at'),
+      updatedAt = DateTimeSqlExpressionBuilder(query, 'updated_at');
+
+  final NumericSqlExpressionBuilder<int> id;
+
+  final DateTimeSqlExpressionBuilder createdAt;
+
+  final DateTimeSqlExpressionBuilder updatedAt;
+
+  @override
+  List<SqlExpressionBuilder> get expressionBuilders {
+    return [id, createdAt, updatedAt];
+  }
+}
+
+class NumberQueryValues extends MapQueryValues {
+  @override
+  Map<String, String> get casts {
+    return {};
+  }
+
+  String? get id {
+    return (values['id'] as String?);
+  }
+
+  set id(String? value) => values['id'] = value;
+
+  DateTime? get createdAt {
+    return (values['created_at'] as DateTime?);
+  }
+
+  set createdAt(DateTime? value) => values['created_at'] = value;
+
+  DateTime? get updatedAt {
+    return (values['updated_at'] as DateTime?);
+  }
+
+  set updatedAt(DateTime? value) => values['updated_at'] = value;
+
+  void copyFrom(Number model) {
+    createdAt = model.createdAt;
+    updatedAt = model.updatedAt;
+  }
+}
+
+class AlphabetQuery extends Query<Alphabet, AlphabetQueryWhere> {
+  AlphabetQuery({super.parent, Set<String>? trampoline}) {
+    trampoline ??= <String>{};
+    trampoline.add(tableName);
+    _where = AlphabetQueryWhere(this);
+    leftJoin(
+      _numbers = NumberQuery(trampoline: trampoline, parent: this),
+      'numbers_id',
+      'id',
+      additionalFields: const ['id', 'created_at', 'updated_at', 'two'],
+      trampoline: trampoline,
+    );
+  }
+
+  @override
+  final AlphabetQueryValues values = AlphabetQueryValues();
+
+  List<String> _selectedFields = [];
+
+  AlphabetQueryWhere? _where;
+
+  late NumberQuery _numbers;
+
+  @override
+  Map<String, String> get casts {
+    return {};
+  }
+
+  @override
+  String get tableName {
+    return 'alphabets';
+  }
+
+  @override
+  List<String> get fields {
+    const localFields = [
+      'id',
+      'created_at',
+      'updated_at',
+      'value',
+      'numbers_id',
+    ];
+    return _selectedFields.isEmpty
+        ? localFields
+        : localFields
+              .where((field) => _selectedFields.contains(field))
+              .toList();
+  }
+
+  AlphabetQuery select(List<String> selectedFields) {
+    _selectedFields = selectedFields;
+    return this;
+  }
+
+  @override
+  AlphabetQueryWhere? get where {
+    return _where;
+  }
+
+  @override
+  AlphabetQueryWhere newWhereClause() {
+    return AlphabetQueryWhere(this);
+  }
+
+  Optional<Alphabet> parseRow(List row) {
+    if (row.every((x) => x == null)) {
+      return Optional.empty();
+    }
+    var model = Alphabet(
+      id: fields.contains('id') ? row[0].toString() : null,
+      createdAt: fields.contains('created_at')
+          ? mapToNullableDateTime(row[1])
+          : null,
+      updatedAt: fields.contains('updated_at')
+          ? mapToNullableDateTime(row[2])
+          : null,
+      value: fields.contains('value') ? (row[3] as String?) : null,
+    );
+    if (row.length > 5) {
+      var modelOpt = NumberQuery().parseRow(row.skip(5).take(4).toList());
+      modelOpt.ifPresent((m) {
+        model = model.copyWith(numbers: m);
+      });
+    }
+    return Optional.of(model);
+  }
+
+  @override
+  Optional<Alphabet> deserialize(List row) {
+    return parseRow(row);
+  }
+
+  NumberQuery get numbers {
+    return _numbers;
+  }
+}
+
+class AlphabetQueryWhere extends QueryWhere {
+  AlphabetQueryWhere(AlphabetQuery query)
+    : id = NumericSqlExpressionBuilder<int>(query, 'id'),
+      createdAt = DateTimeSqlExpressionBuilder(query, 'created_at'),
+      updatedAt = DateTimeSqlExpressionBuilder(query, 'updated_at'),
+      value = StringSqlExpressionBuilder(query, 'value'),
+      numbersId = NumericSqlExpressionBuilder<int>(query, 'numbers_id');
+
+  final NumericSqlExpressionBuilder<int> id;
+
+  final DateTimeSqlExpressionBuilder createdAt;
+
+  final DateTimeSqlExpressionBuilder updatedAt;
+
+  final StringSqlExpressionBuilder value;
+
+  final NumericSqlExpressionBuilder<int> numbersId;
+
+  @override
+  List<SqlExpressionBuilder> get expressionBuilders {
+    return [id, createdAt, updatedAt, value, numbersId];
+  }
+}
+
+class AlphabetQueryValues extends MapQueryValues {
+  @override
+  Map<String, String> get casts {
+    return {};
+  }
+
+  String? get id {
+    return (values['id'] as String?);
+  }
+
+  set id(String? value) => values['id'] = value;
+
+  DateTime? get createdAt {
+    return (values['created_at'] as DateTime?);
+  }
+
+  set createdAt(DateTime? value) => values['created_at'] = value;
+
+  DateTime? get updatedAt {
+    return (values['updated_at'] as DateTime?);
+  }
+
+  set updatedAt(DateTime? value) => values['updated_at'] = value;
+
+  String? get value {
+    return (values['value'] as String?);
+  }
+
+  set value(String? value) => values['value'] = value;
+
+  int get numbersId {
+    return (values['numbers_id'] as int);
+  }
+
+  set numbersId(int value) => values['numbers_id'] = value;
+
+  void copyFrom(Alphabet model) {
+    createdAt = model.createdAt;
+    updatedAt = model.updatedAt;
+    value = model.value;
+    if (model.numbers != null) {
+      values['numbers_id'] = model.numbers?.id;
+    }
+  }
+}
+
+// **************************************************************************
 // JsonModelGenerator
 // **************************************************************************
 
