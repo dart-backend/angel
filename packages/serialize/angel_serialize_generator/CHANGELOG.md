@@ -5,7 +5,8 @@
 * Require Dart >= 3.8
 * Updated `lints` to 6.0.0
 * Updated dependencies to the latest release
-* Changed `_` prefix in the models to `Entity` suffix. `_` prefix is still maintained for backward compatibility.
+* Updated `analyzer` to 7.7.x
+* Added `ShimFieldImpl2` due to breaking changes in `analyzer` 7.7.x
 
 ## 8.5.0
 
