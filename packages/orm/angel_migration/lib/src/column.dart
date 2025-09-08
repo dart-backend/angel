@@ -18,12 +18,13 @@ class MigrationColumn extends Column {
   List<MigrationColumnReference> get externalReferences =>
       List<MigrationColumnReference>.unmodifiable(_references);
 
-  MigrationColumn(ColumnType type,
-      {bool isNullable = true,
-      super.length,
-      IndexType indexType = IndexType.none,
-      dynamic defaultValue})
-      : super(type: type, isNullable: isNullable, defaultValue: defaultValue) {
+  MigrationColumn(
+    ColumnType type, {
+    bool isNullable = true,
+    super.length,
+    IndexType indexType = IndexType.none,
+    dynamic defaultValue,
+  }) : super(type: type, isNullable: isNullable, defaultValue: defaultValue) {
     _nullable = isNullable;
     _index = indexType;
     _defaultValue = defaultValue;
@@ -31,14 +32,16 @@ class MigrationColumn extends Column {
 
   factory MigrationColumn.from(Column column) => column is MigrationColumn
       ? column
-      : MigrationColumn(column.type,
+      : MigrationColumn(
+          column.type,
           isNullable: column.isNullable,
           length: column.length,
-          indexType: column.indexType);
+          indexType: column.indexType,
+        );
 
   MigrationColumn notNull() => this.._nullable = false;
 
-  MigrationColumn defaultsTo(value) => this.._defaultValue = value;
+  MigrationColumn defaultsTo(Object? value) => this.._defaultValue = value;
 
   MigrationColumn unique() => this.._index = IndexType.unique;
 

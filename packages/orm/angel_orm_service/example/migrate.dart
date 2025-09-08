@@ -6,8 +6,6 @@ import 'todo.dart';
 Future main(List<String> args) async {
   final conn = await dbConnection();
 
-  var runner = PostgresMigrationRunner(conn, migrations: [
-    TodoMigration(),
-  ]);
+  var runner = PostgresMigrationRunner(conn, migrations: [TodoMigration()]);
   return runMigrations(runner, args);
 }

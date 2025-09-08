@@ -53,7 +53,8 @@ class WebSocketContext {
   /// Sends an arbitrary [WebSocketEvent];
   void send(String eventName, data) {
     channel.sink.add(
-        json.encode(WebSocketEvent(eventName: eventName, data: data).toJson()));
+      json.encode(WebSocketEvent(eventName: eventName, data: data).toJson()),
+    );
   }
 
   /// Sends an error event.

@@ -16,8 +16,10 @@ void main() async {
 
   // Assume that all other requests must be authenticated...
   app.fallback((req, res) {
-    var authToken =
-        req.headers!.value('authorization')?.replaceAll(rgxBearer, '').trim();
+    var authToken = req.headers!
+        .value('authorization')
+        ?.replaceAll(rgxBearer, '')
+        .trim();
 
     if (authToken == null) {
       throw AngelHttpException.forbidden();
@@ -51,24 +53,26 @@ class _ExampleAuthorizationServer
 
   @override
   FutureOr requestAuthorizationCode(
-      ThirdPartyApp client,
-      String? redirectUri,
-      Iterable<String> scopes,
-      String state,
-      RequestContext req,
-      ResponseContext res,
-      bool implicit) {
+    ThirdPartyApp client,
+    String? redirectUri,
+    Iterable<String> scopes,
+    String state,
+    RequestContext req,
+    ResponseContext res,
+    bool implicit,
+  ) {
     // TODO: In many cases, here you will render a view displaying to the user which scopes are being requested.
     throw UnimplementedError();
   }
 
   @override
   FutureOr<AuthorizationTokenResponse> exchangeAuthorizationCodeForToken(
-      ThirdPartyApp? client,
-      String? authCode,
-      String? redirectUri,
-      RequestContext req,
-      ResponseContext res) {
+    ThirdPartyApp? client,
+    String? authCode,
+    String? redirectUri,
+    RequestContext req,
+    ResponseContext res,
+  ) {
     // TODO: Here, you'll convert the auth code into a full-fledged token.
     // You might have the auth code stored in a database somewhere.
     throw UnimplementedError();

@@ -37,12 +37,11 @@ class Router<T> {
   List<Route<T>> get routes {
     return _routes.fold<List<Route<T>>>([], (out, route) {
       if (route is SymlinkRoute<T>) {
-        var childRoutes =
-            route.router.routes.fold<List<Route<T>>>([], (out, r) {
-          return out
-            ..add(
-              route.path.isEmpty ? r : Route.join(route, r),
-            );
+        var childRoutes = route.router.routes.fold<List<Route<T>>>([], (
+          out,
+          r,
+        ) {
+          return out..add(route.path.isEmpty ? r : Route.join(route, r));
         });
 
         return out..addAll(childRoutes);
@@ -64,8 +63,12 @@ class Router<T> {
   /// Adds a route that responds to the given path
   /// for requests with the given method (case-insensitive).
   /// Provide '*' as the method to respond to all methods.
-  Route<T> addRoute(String method, String path, T handler,
-      {Iterable<T> middleware = const []}) {
+  Route<T> addRoute(
+    String method,
+    String path,
+    T handler, {
+    Iterable<T> middleware = const [],
+  }) {
     if (_useCache == true) {
       throw StateError('Cannot add routes after caching is enabled.');
     }
@@ -114,10 +117,11 @@ class Router<T> {
 
   /// Creates a visual representation of the route hierarchy and
   /// passes it to a callback. If none is provided, `print` is called.
-  void dumpTree(
-      {Function(String tree)? callback,
-      String header = 'Dumping route tree:',
-      String tab = '  '}) {
+  void dumpTree({
+    Function(String tree)? callback,
+    String header = 'Dumping route tree:',
+    String tab = '  ',
+  }) {
     final buf = StringBuffer();
     var tabs = 0;
 
@@ -164,8 +168,12 @@ class Router<T> {
   ///
   /// Returns the created route.
   /// You can also register middleware within the router.
-  SymlinkRoute<T> group(String path, void Function(Router<T> router) callback,
-      {Iterable<T> middleware = const [], String name = ''}) {
+  SymlinkRoute<T> group(
+    String path,
+    void Function(Router<T> router) callback, {
+    Iterable<T> middleware = const [],
+    String name = '',
+  }) {
     final router = Router<T>().._middleware.addAll(middleware);
     callback(router);
     return mount(path, router)..name = name;
@@ -173,8 +181,11 @@ class Router<T> {
 
   /// Asynchronous equivalent of [group].
   Future<SymlinkRoute<T>> groupAsync(
-      String path, FutureOr<void> Function(Router<T> router) callback,
-      {Iterable<T> middleware = const [], String name = ''}) async {
+    String path,
+    FutureOr<void> Function(Router<T> router) callback, {
+    Iterable<T> middleware = const [],
+    String name = '',
+  }) async {
     final router = Router<T>().._middleware.addAll(middleware);
     await callback(router);
     return mount(path, router)..name = name;
@@ -259,21 +270,24 @@ class Router<T> {
 
         if (!resolved) {
           throw RoutingException(
-              'Cannot resolve route for link param "$param".');
+            'Cannot resolve route for link param "$param".',
+          );
         }
       } else if (param is Route) {
         segments.add(param.path.replaceAll(_straySlashes, ''));
       } else if (param is Map<String, dynamic>) {
         if (lastRoute == null) {
           throw RoutingException(
-              'Maps in link params must be preceded by a Route or String.');
+            'Maps in link params must be preceded by a Route or String.',
+          );
         } else {
           segments.removeLast();
           segments.add(lastRoute.makeUri(param).replaceAll(_straySlashes, ''));
         }
       } else {
         throw RoutingException(
-            'Link param $param is not Route, String, or Map<String, dynamic>.');
+          'Link param $param is not Route, String, or Map<String, dynamic>.',
+        );
       }
     }
 
@@ -284,10 +298,16 @@ class Router<T> {
 
   /// Finds the first [Route] that matches the given path,
   /// with the given method.
-  bool resolve(String absolute, String relative, List<RoutingResult<T?>> out,
-      {String method = 'GET', bool strip = true}) {
-    final cleanRelative =
-        strip == false ? relative : stripStraySlashes(relative);
+  bool resolve(
+    String absolute,
+    String relative,
+    List<RoutingResult<T?>> out, {
+    String method = 'GET',
+    bool strip = true,
+  }) {
+    final cleanRelative = strip == false
+        ? relative
+        : stripStraySlashes(relative);
     var scanner = SpanScanner(cleanRelative);
 
     bool crawl(Router<T> r) {
@@ -313,11 +333,12 @@ class Router<T> {
               var tailResult = parseResult.value?.tail ?? '';
               //print(tailResult);
               var result = RoutingResult<T>(
-                  parseResult: parseResult,
-                  params: parseResult.value!.params,
-                  shallowRoute: route,
-                  shallowRouter: this,
-                  tail: tailResult + scanner.rest);
+                parseResult: parseResult,
+                params: parseResult.value!.params,
+                shallowRoute: route,
+                shallowRouter: this,
+                tail: tailResult + scanner.rest,
+              );
               out.add(result);
               success = true;
             }
@@ -334,24 +355,36 @@ class Router<T> {
 
   /// Returns the result of [resolve] with [path] passed as
   /// both `absolute` and `relative`.
-  Iterable<RoutingResult<T>> resolveAbsolute(String path,
-          {String method = 'GET', bool strip = true}) =>
-      resolveAll(path, path, method: method, strip: strip);
+  Iterable<RoutingResult<T>> resolveAbsolute(
+    String path, {
+    String method = 'GET',
+    bool strip = true,
+  }) => resolveAll(path, path, method: method, strip: strip);
 
   /// Finds every possible [Route] that matches the given path,
   /// with the given method.
-  Iterable<RoutingResult<T>> resolveAll(String absolute, String relative,
-      {String method = 'GET', bool strip = true}) {
+  Iterable<RoutingResult<T>> resolveAll(
+    String absolute,
+    String relative, {
+    String method = 'GET',
+    bool strip = true,
+  }) {
     if (_useCache == true) {
-      return _cache.putIfAbsent('$method$absolute',
-          () => _resolveAll(absolute, relative, method: method, strip: strip));
+      return _cache.putIfAbsent(
+        '$method$absolute',
+        () => _resolveAll(absolute, relative, method: method, strip: strip),
+      );
     }
 
     return _resolveAll(absolute, relative, method: method, strip: strip);
   }
 
-  Iterable<RoutingResult<T>> _resolveAll(String absolute, String relative,
-      {String method = 'GET', bool strip = true}) {
+  Iterable<RoutingResult<T>> _resolveAll(
+    String absolute,
+    String relative, {
+    String method = 'GET',
+    bool strip = true,
+  }) {
     var results = <RoutingResult<T>>[];
     resolve(absolute, relative, results, method: method, strip: strip);
 
@@ -391,8 +424,11 @@ class Router<T> {
   }
 
   /// Adds a route that responds to a OPTIONS request.
-  Route<T> options(String path, T handler,
-      {Iterable<T> middleware = const {}}) {
+  Route<T> options(
+    String path,
+    T handler, {
+    Iterable<T> middleware = const {},
+  }) {
     return addRoute('OPTIONS', path, handler, middleware: middleware);
   }
 
@@ -423,17 +459,29 @@ class ChainedRouter<T> extends Router<T> {
   }
 
   @override
-  Route<T> addRoute(String method, String path, handler,
-      {Iterable<T> middleware = const []}) {
-    var route = super.addRoute(method, path, handler,
-        middleware: [..._handlers, ...middleware]);
+  Route<T> addRoute(
+    String method,
+    String path,
+    handler, {
+    Iterable<T> middleware = const [],
+  }) {
+    var route = super.addRoute(
+      method,
+      path,
+      handler,
+      middleware: [..._handlers, ...middleware],
+    );
     //_root._routes.add(route);
     return route;
   }
 
   @override
-  SymlinkRoute<T> group(String path, void Function(Router<T> router) callback,
-      {Iterable<T> middleware = const [], String? name}) {
+  SymlinkRoute<T> group(
+    String path,
+    void Function(Router<T> router) callback, {
+    Iterable<T> middleware = const [],
+    String? name,
+  }) {
     final router = ChainedRouter<T>(_root, [..._handlers, ...middleware]);
     callback(router);
     return mount(path, router)..name = name;
@@ -441,8 +489,11 @@ class ChainedRouter<T> extends Router<T> {
 
   @override
   Future<SymlinkRoute<T>> groupAsync(
-      String path, FutureOr<void> Function(Router<T> router) callback,
-      {Iterable<T> middleware = const [], String? name}) async {
+    String path,
+    FutureOr<void> Function(Router<T> router) callback, {
+    Iterable<T> middleware = const [],
+    String? name,
+  }) async {
     final router = ChainedRouter<T>(_root, [..._handlers, ...middleware]);
     await callback(router);
     return mount(path, router)..name = name;
@@ -478,14 +529,20 @@ Router<T> flatten<T>(Router<T> router) {
       for (var route in child.routes) {
         var path = route.path.replaceAll(_straySlashes, '');
         var joined = '$base/$path'.replaceAll(_straySlashes, '');
-        flattened.addRoute(route.method, joined.replaceAll(_straySlashes, ''),
-            route.handlers.last,
-            middleware:
-                route.handlers.take(route.handlers.length - 1).toList());
+        flattened.addRoute(
+          route.method,
+          joined.replaceAll(_straySlashes, ''),
+          route.handlers.last,
+          middleware: route.handlers.take(route.handlers.length - 1).toList(),
+        );
       }
     } else {
-      flattened.addRoute(route.method, route.path, route.handlers.last,
-          middleware: route.handlers.take(route.handlers.length - 1).toList());
+      flattened.addRoute(
+        route.method,
+        route.path,
+        route.handlers.last,
+        middleware: route.handlers.take(route.handlers.length - 1).toList(),
+      );
     }
   }
 

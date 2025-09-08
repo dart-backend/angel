@@ -17,17 +17,25 @@ final RegExp _straySlashes = RegExp(r'(^/)|(/+$)');
 class WebSockets extends BaseWebSocketClient {
   final List<IoWebSocketsService> _services = [];
 
-  WebSockets(baseUrl,
-      {bool reconnectOnClose = true, Duration? reconnectInterval})
-      : super(http.IOClient(), baseUrl,
-            reconnectOnClose: reconnectOnClose,
-            reconnectInterval: reconnectInterval);
+  WebSockets(
+    String baseUrl, {
+    bool reconnectOnClose = true,
+    Duration? reconnectInterval,
+  }) : super(
+         http.IOClient(),
+         baseUrl,
+         reconnectOnClose: reconnectOnClose,
+         reconnectInterval: reconnectInterval,
+       );
 
   @override
-  Stream<String> authenticateViaPopup(String url,
-      {String eventName = 'token'}) {
+  Stream<String> authenticateViaPopup(
+    String url, {
+    String eventName = 'token',
+  }) {
     throw UnimplementedError(
-        'Opening popup windows is not supported in the `dart:io` client.');
+      'Opening popup windows is not supported in the `dart:io` client.',
+    );
   }
 
   @override
@@ -41,16 +49,21 @@ class WebSockets extends BaseWebSocketClient {
 
   @override
   Future<WebSocketChannel> getConnectedWebSocket() async {
-    var socket = await WebSocket.connect(websocketUri.toString(),
-        headers: authToken?.isNotEmpty == true
-            ? {'Authorization': 'Bearer $authToken'}
-            : {});
+    var socket = await WebSocket.connect(
+      websocketUri.toString(),
+      headers: authToken?.isNotEmpty == true
+          ? {'Authorization': 'Bearer $authToken'}
+          : {},
+    );
     return IOWebSocketChannel(socket);
   }
 
   @override
-  Service<Id, Data> service<Id, Data>(String path,
-      {Type? type, AngelDeserializer<Data>? deserializer}) {
+  Service<Id, Data> service<Id, Data>(
+    String path, {
+    Type? type,
+    AngelDeserializer<Data>? deserializer,
+  }) {
     var uri = path.replaceAll(_straySlashes, '');
     return IoWebSocketsService<Id, Data>(socket, this, uri, type)
         as Service<Id, Data>;

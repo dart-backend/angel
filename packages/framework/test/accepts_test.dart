@@ -57,10 +57,12 @@ void main() {
   });
 }
 
-Future<RequestContext> acceptContentTypes(
-    [Iterable<String> contentTypes = const []]) {
-  var headerString =
-      contentTypes.isEmpty ? ContentType.text : contentTypes.join(',');
+Future<RequestContext> acceptContentTypes([
+  Iterable<String> contentTypes = const [],
+]) {
+  var headerString = contentTypes.isEmpty
+      ? ContentType.text
+      : contentTypes.join(',');
   var rq = MockHttpRequest('GET', endpoint, persistentConnection: false);
   rq.headers.set('accept', headerString);
   rq.close();

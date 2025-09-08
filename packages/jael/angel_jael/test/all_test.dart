@@ -45,9 +45,7 @@ void main() {
       return res.render('github', {'username': username});
     });
 
-    await app.configure(
-      jael(viewsDirectory, minified: false),
-    );
+    await app.configure(jael(viewsDirectory, minified: false));
 
     app.fallback((req, res) => throw AngelHttpException.notFound());
 
@@ -65,9 +63,10 @@ void main() {
     var response = await client.get(Uri.parse('/github/thosakwe'));
     print('Body:\n${response.body}');
     expect(
-        html.parse(response.body).outerHtml,
-        html
-            .parse('''
+      html.parse(response.body).outerHtml,
+      html
+          .parse(
+            '''
 <html>
   <head>
     <title>
@@ -78,7 +77,9 @@ void main() {
     thosakwe
   </body>
 </html>'''
-                .trim())
-            .outerHtml);
+                .trim(),
+          )
+          .outerHtml,
+    );
   });
 }

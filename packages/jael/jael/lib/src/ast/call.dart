@@ -11,15 +11,24 @@ class Call extends Expression {
   final List<Expression> arguments;
   final List<NamedArgument> namedArguments;
 
-  Call(this.target, this.lParen, this.rParen, this.arguments,
-      this.namedArguments);
+  Call(
+    this.target,
+    this.lParen,
+    this.rParen,
+    this.arguments,
+    this.namedArguments,
+  );
 
   @override
   FileSpan get span {
     return arguments
         .fold<FileSpan?>(target.span, (out, a) => out!.expand(a.span))!
-        .expand(namedArguments.fold<FileSpan?>(
-            lParen.span, (out, a) => out!.expand(a.span))!)
+        .expand(
+          namedArguments.fold<FileSpan?>(
+            lParen.span,
+            (out, a) => out!.expand(a.span),
+          )!,
+        )
         .expand(rParen.span);
   }
 

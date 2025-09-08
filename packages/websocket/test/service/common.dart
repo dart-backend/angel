@@ -16,9 +16,9 @@ class TodoService extends MapService {
   TodoService() : super() {
     configuration['ws:filter'] =
         (HookedServiceEvent e, WebSocketContext socket) {
-      print('Hello, service filter world!');
-      return true;
-    };
+          print('Hello, service filter world!');
+          return true;
+        };
   }
 }
 

@@ -42,13 +42,13 @@ void main() {
   });
 }
 
-SomeQuery someQuery(id) => SomeQuery();
+SomeQuery someQuery(String id) => SomeQuery();
 
 class SomeQuery {
   List<SomeQueryReview> get reviews => [
-        SomeQueryReview('fake'),
-        SomeQueryReview('data'),
-      ];
+    SomeQueryReview('fake'),
+    SomeQueryReview('data'),
+  ];
 }
 
 class SomeQueryReview {

@@ -10,13 +10,17 @@ void main() {
   var app = Angel();
   var http = AngelHttp(app);
 
-  Future<RequestContext> request(
-      {bool asJson = true,
-      bool parse = true,
-      Map<String, dynamic>? bodyFields,
-      List? bodyList}) async {
-    var rq =
-        MockHttpRequest('POST', Uri(path: '/'), persistentConnection: false);
+  Future<RequestContext> request({
+    bool asJson = true,
+    bool parse = true,
+    Map<String, dynamic>? bodyFields,
+    List? bodyList,
+  }) async {
+    var rq = MockHttpRequest(
+      'POST',
+      Uri(path: '/'),
+      persistentConnection: false,
+    );
 
     if (bodyFields != null) {
       if (asJson) {
@@ -34,8 +38,10 @@ void main() {
         }
 
         rq
-          ..headers.contentType =
-              ContentType('application', 'x-www-form-urlencoded')
+          ..headers.contentType = ContentType(
+            'application',
+            'x-www-form-urlencoded',
+          )
           ..write(json.encode(b.toString()));
       }
     } else if (bodyList != null) {
@@ -64,7 +70,9 @@ void main() {
 
   test('deserializeBody', () async {
     var req = await request(
-        asJson: true, bodyFields: {'text': 'Hey', 'complete': false});
+      asJson: true,
+      bodyFields: {'text': 'Hey', 'complete': false},
+    );
     var todo = await req.deserializeBody(Todo.fromMap);
     expect(todo.text, 'Hey');
     expect(todo.completed, false);
@@ -72,7 +80,9 @@ void main() {
 
   test('decodeBody', () async {
     var req = await request(
-        asJson: true, bodyFields: {'text': 'Hey', 'complete': false});
+      asJson: true,
+      bodyFields: {'text': 'Hey', 'complete': false},
+    );
     var todo = await req.decodeBody(TodoCodec());
     expect(todo.text, 'Hey');
     expect(todo.completed, false);
@@ -102,16 +112,17 @@ void main() {
   test('can set body list exactly once', () async {
     var req = await request(parse: false);
     req.bodyAsList = [
-      {'hey': 'yes'}
+      {'hey': 'yes'},
     ];
     expect(req.bodyAsList, [
-      {'hey': 'yes'}
+      {'hey': 'yes'},
     ]);
     expect(
-        () => req.bodyAsList = [
-              {'hm': 'ok'}
-            ],
-        throwsStateError);
+      () => req.bodyAsList = [
+        {'hm': 'ok'},
+      ],
+      throwsStateError,
+    );
   });
 }
 

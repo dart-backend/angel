@@ -26,8 +26,10 @@ void main() {
     app = Angel();
     http = AngelHttp(app, useZone: false);
 
-    app.chain([validate(echoSchema)]).post('/echo',
-        (RequestContext req, res) async {
+    app.chain([validate(echoSchema)]).post('/echo', (
+      RequestContext req,
+      res,
+    ) async {
       await req.parseBody();
       res.write('Hello, ${req.bodyAsMap['message']}!');
     });

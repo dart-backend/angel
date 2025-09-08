@@ -555,7 +555,7 @@ class MapSqlExpressionBuilder extends JsonSqlExpressionBuilder<Map, String> {
     this[key].isNotNull;
   }
 
-  void containsPair(key, value) {
+  void containsPair(dynamic key, dynamic value) {
     contains({key: value});
   }
 }
@@ -591,7 +591,8 @@ class JsonSqlExpressionBuilderProperty {
       return _typed as T?;
     } else if (_typed != null) {
       throw StateError(
-          '$nameString is already typed as $_typed, and cannot be changed.');
+        '$nameString is already typed as $_typed, and cannot be changed.',
+      );
     } else {
       _typed = value()
         ?.._cast = 'text'
@@ -645,12 +646,14 @@ class JsonSqlExpressionBuilderProperty {
 
   NumericSqlExpressionBuilder<double>? get asDouble {
     return _set(
-        () => NumericSqlExpressionBuilder<double>(builder.query, nameString));
+      () => NumericSqlExpressionBuilder<double>(builder.query, nameString),
+    );
   }
 
   NumericSqlExpressionBuilder<int>? get asInt {
     return _set(
-        () => NumericSqlExpressionBuilder<int>(builder.query, nameString));
+      () => NumericSqlExpressionBuilder<int>(builder.query, nameString),
+    );
   }
 
   MapSqlExpressionBuilder? get asMap {

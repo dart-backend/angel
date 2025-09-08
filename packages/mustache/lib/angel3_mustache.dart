@@ -9,13 +9,20 @@ import 'package:path/path.dart' as p;
 import 'src/cache.dart';
 import 'src/mustache_context.dart';
 
-Future Function(Angel app) mustache(Directory viewsDirectory,
-    {String fileExtension = '.mustache', String partialsPath = './partials'}) {
-  var partialsDirectory = viewsDirectory.fileSystem
-      .directory(p.join(p.fromUri(viewsDirectory.uri), partialsPath));
+Future Function(Angel app) mustache(
+  Directory viewsDirectory, {
+  String fileExtension = '.mustache',
+  String partialsPath = './partials',
+}) {
+  var partialsDirectory = viewsDirectory.fileSystem.directory(
+    p.join(p.fromUri(viewsDirectory.uri), partialsPath),
+  );
 
-  var context =
-      MustacheContext(viewsDirectory, partialsDirectory, fileExtension);
+  var context = MustacheContext(
+    viewsDirectory,
+    partialsDirectory,
+    fileExtension,
+  );
 
   var cache = MustacheViewCache(context);
 
@@ -30,8 +37,10 @@ Future Function(Angel app) mustache(Directory viewsDirectory,
 
       var viewTemplate = await (cache.getView(name, app));
       //return await render(viewTemplate, data ?? {}, partial: partialsProvider);
-      var t = viewer.Template(viewTemplate ?? '',
-          partialResolver: partialsProvider);
+      var t = viewer.Template(
+        viewTemplate ?? '',
+        partialResolver: partialsProvider,
+      );
       return t.renderString(data ?? {});
     };
   };

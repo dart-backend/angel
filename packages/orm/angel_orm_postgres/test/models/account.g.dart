@@ -30,18 +30,12 @@ class AccountMigration extends Migration {
 // **************************************************************************
 
 class AccountQuery extends Query<Account, AccountQueryWhere> {
-  AccountQuery({
-    super.parent,
-    Set<String>? trampoline,
-  }) {
+  AccountQuery({super.parent, Set<String>? trampoline}) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = AccountQueryWhere(this);
     leftJoin(
-      _assets = AssetQuery(
-        trampoline: trampoline,
-        parent: this,
-      ),
+      _assets = AssetQuery(trampoline: trampoline, parent: this),
       'id',
       'account_id',
       additionalFields: const [
@@ -88,8 +82,8 @@ class AccountQuery extends Query<Account, AccountQueryWhere> {
     return _selectedFields.isEmpty
         ? localFields
         : localFields
-            .where((field) => _selectedFields.contains(field))
-            .toList();
+              .where((field) => _selectedFields.contains(field))
+              .toList();
   }
 
   AccountQuery select(List<String> selectedFields) {
@@ -113,10 +107,12 @@ class AccountQuery extends Query<Account, AccountQueryWhere> {
     }
     var model = Account(
       id: fields.contains('id') ? row[0].toString() : null,
-      createdAt:
-          fields.contains('created_at') ? mapToNullableDateTime(row[1]) : null,
-      updatedAt:
-          fields.contains('updated_at') ? mapToNullableDateTime(row[2]) : null,
+      createdAt: fields.contains('created_at')
+          ? mapToNullableDateTime(row[1])
+          : null,
+      updatedAt: fields.contains('updated_at')
+          ? mapToNullableDateTime(row[2])
+          : null,
       description: fields.contains('description') ? (row[3] as String) : '',
       name: fields.contains('name') ? (row[4] as String) : '',
       price: fields.contains('price') ? mapToDouble(row[5]) : 0.0,
@@ -151,7 +147,8 @@ class AccountQuery extends Query<Account, AccountQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                assets: List<AssetEntity>.from(l.assets)..addAll(model.assets));
+              assets: List<AssetEntity>.from(l.assets)..addAll(model.assets),
+            );
         }
       });
     });
@@ -169,7 +166,8 @@ class AccountQuery extends Query<Account, AccountQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                assets: List<AssetEntity>.from(l.assets)..addAll(model.assets));
+              assets: List<AssetEntity>.from(l.assets)..addAll(model.assets),
+            );
         }
       });
     });
@@ -187,7 +185,8 @@ class AccountQuery extends Query<Account, AccountQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                assets: List<AssetEntity>.from(l.assets)..addAll(model.assets));
+              assets: List<AssetEntity>.from(l.assets)..addAll(model.assets),
+            );
         }
       });
     });
@@ -196,30 +195,12 @@ class AccountQuery extends Query<Account, AccountQueryWhere> {
 
 class AccountQueryWhere extends QueryWhere {
   AccountQueryWhere(AccountQuery query)
-      : id = NumericSqlExpressionBuilder<int>(
-          query,
-          'id',
-        ),
-        createdAt = DateTimeSqlExpressionBuilder(
-          query,
-          'created_at',
-        ),
-        updatedAt = DateTimeSqlExpressionBuilder(
-          query,
-          'updated_at',
-        ),
-        description = StringSqlExpressionBuilder(
-          query,
-          'description',
-        ),
-        name = StringSqlExpressionBuilder(
-          query,
-          'name',
-        ),
-        price = NumericSqlExpressionBuilder<double>(
-          query,
-          'price',
-        );
+    : id = NumericSqlExpressionBuilder<int>(query, 'id'),
+      createdAt = DateTimeSqlExpressionBuilder(query, 'created_at'),
+      updatedAt = DateTimeSqlExpressionBuilder(query, 'updated_at'),
+      description = StringSqlExpressionBuilder(query, 'description'),
+      name = StringSqlExpressionBuilder(query, 'name'),
+      price = NumericSqlExpressionBuilder<double>(query, 'price');
 
   final NumericSqlExpressionBuilder<int> id;
 
@@ -235,14 +216,7 @@ class AccountQueryWhere extends QueryWhere {
 
   @override
   List<SqlExpressionBuilder> get expressionBuilders {
-    return [
-      id,
-      createdAt,
-      updatedAt,
-      description,
-      name,
-      price,
-    ];
+    return [id, createdAt, updatedAt, description, name, price];
   }
 }
 
@@ -347,13 +321,14 @@ class Account extends AccountEntity {
     List<AssetEntity>? assets,
   }) {
     return Account(
-        id: id ?? this.id,
-        createdAt: createdAt ?? this.createdAt,
-        updatedAt: updatedAt ?? this.updatedAt,
-        description: description ?? this.description,
-        name: name ?? this.name,
-        price: price ?? this.price,
-        assets: assets ?? this.assets);
+      id: id ?? this.id,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      description: description ?? this.description,
+      name: name ?? this.name,
+      price: price ?? this.price,
+      assets: assets ?? this.assets,
+    );
   }
 
   @override
@@ -365,8 +340,9 @@ class Account extends AccountEntity {
         other.description == description &&
         other.name == name &&
         other.price == price &&
-        ListEquality<AssetEntity>(DefaultEquality<AssetEntity>())
-            .equals(other.assets, assets);
+        ListEquality<AssetEntity>(
+          DefaultEquality<AssetEntity>(),
+        ).equals(other.assets, assets);
   }
 
   @override
@@ -423,24 +399,28 @@ class AccountSerializer extends Codec<Account, Map> {
 
   static Account fromMap(Map map) {
     return Account(
-        id: map['id'] as String?,
-        createdAt: map['created_at'] != null
-            ? (map['created_at'] is DateTime
+      id: map['id'] as String?,
+      createdAt: map['created_at'] != null
+          ? (map['created_at'] is DateTime
                 ? (map['created_at'] as DateTime)
                 : DateTime.parse(map['created_at'].toString()))
-            : null,
-        updatedAt: map['updated_at'] != null
-            ? (map['updated_at'] is DateTime
+          : null,
+      updatedAt: map['updated_at'] != null
+          ? (map['updated_at'] is DateTime
                 ? (map['updated_at'] as DateTime)
                 : DateTime.parse(map['updated_at'].toString()))
-            : null,
-        description: map['description'] as String,
-        name: map['name'] as String,
-        price: map['price'] as double,
-        assets: map['assets'] is Iterable
-            ? List.unmodifiable(((map['assets'] as Iterable).whereType<Map>())
-                .map(AssetSerializer.fromMap))
-            : []);
+          : null,
+      description: map['description'] as String,
+      name: map['name'] as String,
+      price: map['price'] as double,
+      assets: map['assets'] is Iterable
+          ? List.unmodifiable(
+              ((map['assets'] as Iterable).whereType<Map>()).map(
+                AssetSerializer.fromMap,
+              ),
+            )
+          : [],
+    );
   }
 
   static Map<String, dynamic> toMap(AccountEntity? model) {
@@ -454,7 +434,7 @@ class AccountSerializer extends Codec<Account, Map> {
       'description': model.description,
       'name': model.name,
       'price': model.price,
-      'assets': model.assets.map((m) => AssetSerializer.toMap(m)).toList()
+      'assets': model.assets.map((m) => AssetSerializer.toMap(m)).toList(),
     };
   }
 }

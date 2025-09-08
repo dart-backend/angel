@@ -25,11 +25,12 @@ Future<void> mariaDBExample() async {
     ..onRecord.listen(print);
 
   var settings = ConnectionSettings(
-      host: 'localhost',
-      port: 3306,
-      db: 'orm_test',
-      user: 'test',
-      password: 'test123');
+    host: 'localhost',
+    port: 3306,
+    db: 'orm_test',
+    user: 'test',
+    password: 'test123',
+  );
   var connection = await MySqlConnection.connect(settings);
 
   print("Connected to MariaDb");
@@ -57,12 +58,13 @@ Future<void> mysqlExample() async {
     ..onRecord.listen(print);
 
   var connection = await MySQLConnection.createConnection(
-      host: "localhost",
-      port: 3306,
-      databaseName: "orm_test",
-      userName: "test",
-      password: "test123",
-      secure: true);
+    host: "localhost",
+    port: 3306,
+    databaseName: "orm_test",
+    userName: "test",
+    password: "test123",
+    secure: true,
+  );
 
   print("Connected to MySQL");
   var logger = Logger('orm_mysql');
@@ -86,7 +88,7 @@ Future<void> mysqlExample() async {
 
 @serializable
 @orm
-abstract class _Todo extends Model {
+abstract class TodoEntity extends Model {
   String? get text;
 
   @DefaultsTo(false)

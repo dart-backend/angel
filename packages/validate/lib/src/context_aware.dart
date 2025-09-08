@@ -2,13 +2,14 @@ import 'package:matcher/matcher.dart';
 
 /// Returns a [ContextAwareMatcher] for the given predicate.
 ContextAwareMatcher predicateWithContext(
-    bool Function(Object, String, Map, Map) f,
-    [String description = 'satisfies function']) {
+  bool Function(Object, String, Map, Map) f, [
+  String description = 'satisfies function',
+]) {
   return _PredicateWithContext(f, description);
 }
 
 /// Wraps [x] in a [ContextAwareMatcher].
-ContextAwareMatcher wrapContextAwareMatcher(x) {
+ContextAwareMatcher wrapContextAwareMatcher(Object x) {
   if (x is ContextAwareMatcher) {
     return x;
   } else if (x is Matcher) {
@@ -19,7 +20,7 @@ ContextAwareMatcher wrapContextAwareMatcher(x) {
 
 /// A special [Matcher] that is aware of the context in which it is being executed.
 abstract class ContextAwareMatcher extends Matcher {
-  bool matchesWithContext(item, String key, Map context, Map matchState);
+  bool matchesWithContext(Object item, String key, Map context, Map matchState);
 
   @override
   bool matches(item, Map matchState) => true;
@@ -50,5 +51,5 @@ class _PredicateWithContext extends ContextAwareMatcher {
 
   @override
   bool matchesWithContext(item, String key, Map context, Map matchState) =>
-      f(item as Object, key, context, matchState);
+      f(item, key, context, matchState);
 }

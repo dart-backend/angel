@@ -1,25 +1,25 @@
 name: angel3_orm_generator
-version: 8.5.0
+version: 8.6.0
 description: Code generators for Angel3 ORM. Generates query builder classes.
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dart-backend/angel/tree/master/packages/orm/angel_orm_generator
 environment:
-  sdk: '>=3.6.0 <4.0.0'
+  sdk: '>=3.8.0 <4.0.0'
 dependencies:
   angel3_model: ^8.2.0
   angel3_serialize: ^8.2.0
   angel3_orm: ^8.2.0
   angel3_serialize_generator: ^8.4.0
-  analyzer: ^7.2.0
+  analyzer: ^7.7.0
   inflection3: ^0.5.3+2
-  build: ^2.4.0
+  build: ^3.0.0
   build_config: ^1.1.0
   code_builder: ^4.4.0
   dart_style: ^3.0.0
   meta: ^1.9.0
   path: ^1.8.0
   recase: ^4.1.0
-  source_gen: ^2.0.0
+  source_gen: ^3.0.0
   collection: ^1.17.0
   logging: ^1.2.0
   optional: ^6.0.0
@@ -28,6 +28,6 @@ dev_dependencies:
   angel3_migration: ^8.3.0
   build_runner: ^2.4.0
   test: ^1.24.0
-  lints: ^5.0.0
+  lints: ^6.0.0
 
  

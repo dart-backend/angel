@@ -49,9 +49,10 @@ void main() {
   });
 
   test('mixed', () {
-    var tokens = scan('<ul number=1 + 2>three{{four > five.six}}</ul>',
-            sourceUrl: 'test.jael')
-        .tokens;
+    var tokens = scan(
+      '<ul number=1 + 2>three{{four > five.six}}</ul>',
+      sourceUrl: 'test.jael',
+    ).tokens;
     tokens.forEach(print);
 
     expect(tokens, hasLength(20));
@@ -97,7 +98,9 @@ void main() {
     expect(tokens[4], isToken(TokenType.string));
     expect(tokens[5], isToken(TokenType.gt));
     expect(
-        tokens[6], isToken(TokenType.text, "\n  window.alert('a string');\n"));
+      tokens[6],
+      isToken(TokenType.text, "\n  window.alert('a string');\n"),
+    );
     expect(tokens[7], isToken(TokenType.lt));
     expect(tokens[8], isToken(TokenType.slash));
     expect(tokens[9], isToken(TokenType.id, 'script'));

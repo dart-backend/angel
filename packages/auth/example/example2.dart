@@ -8,12 +8,17 @@ import 'package:logging/logging.dart';
 final Map<String, String> sampleUser = {'hello': 'world'};
 
 final AngelAuth<Map<String, String>> auth = AngelAuth<Map<String, String>>(
-    serializer: (user) async => '1337', deserializer: (id) async => sampleUser);
+  serializer: (user) async => '1337',
+  deserializer: (id) async => sampleUser,
+);
 //var headers = <String, String>{'accept': 'application/json'};
 var localOpts = AngelAuthOptions<Map<String, String>>(
-    failureRedirect: '/failure', successRedirect: '/success');
-var localOpts2 =
-    AngelAuthOptions<Map<String, String>>(canRespondWithJson: false);
+  failureRedirect: '/failure',
+  successRedirect: '/success',
+);
+var localOpts2 = AngelAuthOptions<Map<String, String>>(
+  canRespondWithJson: false,
+);
 
 Future<Map<String, String>> verifier(String? username, String? password) async {
   if (username == 'username' && password == 'password') {
@@ -25,8 +30,11 @@ Future<Map<String, String>> verifier(String? username, String? password) async {
 
 Future wireAuth(Angel app) async {
   //auth.strategies['local'] = LocalAuthStrategy(verifier);
-  auth.strategies['local'] =
-      LocalAuthStrategy(verifier, forceBasic: true, realm: 'test');
+  auth.strategies['local'] = LocalAuthStrategy(
+    verifier,
+    forceBasic: true,
+    realm: 'test',
+  );
   await app.configure(auth.configureServer);
 }
 
@@ -43,19 +51,25 @@ void main() async {
     return 'Woo auth';
   }, middleware: [auth.authenticate('local', localOpts2)]);
 
-  app.post('/login', (req, res) => 'This should not be shown',
-      middleware: [auth.authenticate('local', localOpts)]);
+  app.post(
+    '/login',
+    (req, res) => 'This should not be shown',
+    middleware: [auth.authenticate('local', localOpts)],
+  );
 
-  app.get('/success', (req, res) => 'yep', middleware: [
-    requireAuthentication<Map<String, String>>(),
-  ]);
+  app.get(
+    '/success',
+    (req, res) => 'yep',
+    middleware: [requireAuthentication<Map<String, String>>()],
+  );
 
   app.get('/failure', (req, res) => 'nope');
 
   app.logger = Logger('local_test')
     ..onRecord.listen((rec) {
       print(
-          '${rec.time}: ${rec.level.name}: ${rec.loggerName}: ${rec.message}');
+        '${rec.time}: ${rec.level.name}: ${rec.loggerName}: ${rec.message}',
+      );
 
       if (rec.error != null) {
         print(rec.error);

@@ -1,7 +1,11 @@
 import 'dart:async';
 
 import 'package:analyzer/dart/constant/value.dart';
-import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/element2.dart';
+
+// ignore: implementation_imports
+import 'package:analyzer/src/dart/element/element.dart';
+
 import 'package:analyzer/dart/element/type.dart';
 import 'package:angel3_orm/angel3_orm.dart';
 import 'package:angel3_serialize/angel3_serialize.dart';
@@ -16,26 +20,30 @@ import 'readers.dart';
 bool isHasRelation(Relationship r) =>
     r.type == RelationshipType.hasOne || r.type == RelationshipType.hasMany;
 
-bool isSpecialId(OrmBuildContext ctx, FieldElement field) {
+bool isSpecialId(OrmBuildContext ctx, FieldElement2 field) {
   return
-      // field is ShimFieldImpl &&
-      field is! RelationFieldImpl &&
-          (field.name == 'id' &&
-              const TypeChecker.fromRuntime(Model)
-                  .isAssignableFromType(ctx.buildContext.clazz.thisType));
+  // field is ShimFieldImpl &&
+  field is! RelationFieldImpl &&
+      (field.displayName == 'id' &&
+          const TypeChecker.fromRuntime(
+            Model,
+          ).isAssignableFromType(ctx.buildContext.clazz.thisType));
 }
 
-Element _findElement(FieldElement field) {
-  return (field.setter == null ? field.getter : field) ?? field;
+Element2 _findElement(FieldElement2 field) {
+  return (field.setter2 == null ? field.getter2 : field) ?? field;
 }
 
-FieldElement? findPrimaryFieldInList(
-    OrmBuildContext ctx, Iterable<FieldElement> fields) {
+FieldElement2? findPrimaryFieldInList(
+  OrmBuildContext ctx,
+  Iterable<FieldElement2> fields,
+) {
   for (var field_ in fields) {
-    var field = field_ is RelationFieldImpl ? field_.originalField : field_;
+    var field = field_ is RelationFieldImpl ? field_.baseElement : field_;
     var element = _findElement(field);
     // print(
     //     'Searching in ${ctx.buildContext.originalClassName}=>${field?.name} (${field.runtimeType})');
+
     // Check for column annotation...
     var columnAnnotation = columnTypeChecker.firstAnnotationOf(element);
 
@@ -56,33 +64,40 @@ FieldElement? findPrimaryFieldInList(
 
 /// Create ORM Context
 Future<OrmBuildContext?> buildOrmContext(
-    Map<String, OrmBuildContext> cache,
-    InterfaceElement clazz,
-    ConstantReader annotation,
-    BuildStep buildStep,
-    Resolver resolver,
-    bool? autoSnakeCaseNames,
-    {bool heedExclude = true}) async {
+  Map<String, OrmBuildContext> cache,
+  InterfaceElement2 clazz,
+  ConstantReader annotation,
+  BuildStep buildStep,
+  Resolver resolver,
+  bool? autoSnakeCaseNames, {
+  bool heedExclude = true,
+}) async {
   // Check for @generatedSerializable
   // ignore: unused_local_variable
   DartObject? generatedSerializable;
 
-  while ((generatedSerializable =
-          const TypeChecker.fromRuntime(GeneratedSerializable)
-              .firstAnnotationOf(clazz)) !=
+  while ((generatedSerializable = const TypeChecker.fromRuntime(
+        GeneratedSerializable,
+      ).firstAnnotationOf(clazz)) !=
       null) {
     if (clazz.supertype != null) {
-      clazz = clazz.supertype!.element;
+      clazz = clazz.supertype!.element3;
     }
   }
 
-  var id = clazz.location?.components.join('-') ?? '';
+  //var id = clazz.location?.components.join('-') ?? '';
+  var id = "${clazz.library2.baseElement}-${clazz.displayName}";
   if (cache.containsKey(id)) {
     return cache[id];
   }
   var buildCtx = await buildContext(
-      clazz, annotation, buildStep, resolver, autoSnakeCaseNames!,
-      heedExclude: heedExclude);
+    clazz,
+    annotation,
+    buildStep,
+    resolver,
+    autoSnakeCaseNames!,
+    heedExclude: heedExclude,
+  );
   var ormAnnotation = reviveORMAnnotation(annotation);
   //print(
   //     'tableName (${annotation.objectValue.type?.getDisplayString() ?? ''}) => ${ormAnnotation.tableName} from ${clazz.name} (${annotation.revive().namedArguments})');
@@ -94,12 +109,14 @@ Future<OrmBuildContext?> buildOrmContext(
 
   // TODO: ORM Context Builder
   var ctx = OrmBuildContext(
-      buildCtx,
-      ormAnnotation,
-      (ormAnnotation.tableName?.isNotEmpty == true)
-          ? ormAnnotation.tableName!
-          : pluralize(
-              ReCase(getGeneratedModelClassName(clazz.name)).snakeCase));
+    buildCtx,
+    ormAnnotation,
+    (ormAnnotation.tableName?.isNotEmpty == true)
+        ? ormAnnotation.tableName!
+        : pluralize(
+            ReCase(getGeneratedModelClassName(clazz.displayName)).snakeCase,
+          ),
+  );
   cache[id] = ctx;
 
   // Read all fields
@@ -118,16 +135,18 @@ Future<OrmBuildContext?> buildOrmContext(
       // This is only for PostgreSQL, so implementations without a `serial` type
       // must handle it accordingly, of course.
       column = const Column(
-          type: ColumnType.serial, indexType: IndexType.primaryKey);
+        type: ColumnType.serial,
+        indexType: IndexType.primaryKey,
+      );
     }
 
     column ??= Column(
       type: inferColumnType(
-        buildCtx.resolveSerializedFieldType(field.name),
+        buildCtx.resolveSerializedFieldType(field.displayName),
       ),
     );
     var isEnumField =
-        (field.type is InterfaceType && field.type.element is EnumElement);
+        (field.type is InterfaceType && field.type.element3 is EnumElement2);
     var hasColumnAnnotation =
         (columnAnnotation?.getField('type')?.hasKnownValue ?? false);
     column = Column(
@@ -161,95 +180,116 @@ Future<OrmBuildContext?> buildOrmContext(
         // if (!isModelClass(field.type) &&
         //     !(field.type is InterfaceType &&
         //         isListOfModelType(field.type as InterfaceType))) {
-        var canUse = (field.type is InterfaceType &&
+        var canUse =
+            (field.type is InterfaceType &&
                 isListOfModelType(field.type as InterfaceType)) ||
             isModelClass(field.type);
         if (!canUse) {
           throw UnsupportedError(
-              'Cannot apply relationship to field "${field.name}" - ${field.type} is not assignable to Model.');
+            'Cannot apply relationship to field "${field.displayName}" - ${field.type} is not assignable to Model.',
+          );
         } else {
           try {
             var refType = field.type;
 
             if (refType is InterfaceType &&
-                const TypeChecker.fromRuntime(List)
-                    .isAssignableFromType(refType) &&
+                const TypeChecker.fromRuntime(
+                  List,
+                ).isAssignableFromType(refType) &&
                 refType.typeArguments.length == 1) {
               refType = refType.typeArguments[0];
             }
 
             var modelType = firstModelAncestor(refType) ?? refType;
-            var modelTypeElement = modelType.element;
+            var modelTypeElement = modelType.element3;
 
             if (modelTypeElement != null) {
               foreign = await buildOrmContext(
-                  cache,
-                  modelTypeElement as ClassElement,
-                  ConstantReader(const TypeChecker.fromRuntime(Orm)
-                      .firstAnnotationOf(modelTypeElement)),
-                  buildStep,
-                  resolver,
-                  autoSnakeCaseNames);
+                cache,
+                modelTypeElement as ClassElement2,
+                ConstantReader(
+                  const TypeChecker.fromRuntime(
+                    Orm,
+                  ).firstAnnotationOf(modelTypeElement),
+                ),
+                buildStep,
+                resolver,
+                autoSnakeCaseNames,
+              );
 
               // Resolve throughType as well
               if (through != null && through is InterfaceType) {
                 throughContext = await buildOrmContext(
-                    cache,
-                    through.element,
-                    ConstantReader(const TypeChecker.fromRuntime(Serializable)
-                        .firstAnnotationOf(modelTypeElement)),
-                    buildStep,
-                    resolver,
-                    autoSnakeCaseNames);
+                  cache,
+                  through.element3,
+                  ConstantReader(
+                    const TypeChecker.fromRuntime(
+                      Serializable,
+                    ).firstAnnotationOf(modelTypeElement),
+                  ),
+                  buildStep,
+                  resolver,
+                  autoSnakeCaseNames,
+                );
               }
 
-              var ormAnn = const TypeChecker.fromRuntime(Orm)
-                  .firstAnnotationOf(modelTypeElement);
+              var ormAnn = const TypeChecker.fromRuntime(
+                Orm,
+              ).firstAnnotationOf(modelTypeElement);
 
               if (ormAnn != null) {
-                foreignTable =
-                    ConstantReader(ormAnn).peek('tableName')?.stringValue;
+                foreignTable = ConstantReader(
+                  ormAnn,
+                ).peek('tableName')?.stringValue;
               }
 
               if (foreign != null) {
                 foreignTable ??= pluralize(
-                    foreign.buildContext.modelClassNameRecase.snakeCase);
+                  foreign.buildContext.modelClassNameRecase.snakeCase,
+                );
               }
             } else {
-              log.warning('Ancestor model type for [${field.name}] is null');
+              log.warning(
+                'Ancestor model type for [${field.displayName}] is null',
+              );
             }
           } on StackOverflowError {
             throw UnsupportedError(
-                'There is an infinite cycle between ${clazz.name} and ${field.type.getDisplayString()}. This triggered a stack overflow.');
+              'There is an infinite cycle between ${clazz.displayName} and ${field.type.getDisplayString()}. This triggered a stack overflow.',
+            );
           }
         }
       }
 
       // Fill in missing keys
-      var rcc = ReCase(field.name);
+      var rcc = ReCase(field.displayName);
 
       String keyName(OrmBuildContext ctx, String missing) {
-        var localKeyName =
-            findPrimaryFieldInList(ctx, ctx.buildContext.fields)?.name;
+        var localKeyName = findPrimaryFieldInList(
+          ctx,
+          ctx.buildContext.fields,
+        )?.displayName;
         // print(
         //     'Keyname for ${buildCtx.originalClassName}.${field.name} maybe = $_keyName??');
         if (localKeyName == null) {
           throw '${ctx.buildContext.originalClassName} has no defined primary key, '
-              'so the relation on field ${buildCtx.originalClassName}.${field.name} must define a $missing.';
+              'so the relation on field ${buildCtx.originalClassName}.${field.displayName} must define a $missing.';
         } else {
           return localKeyName;
         }
       }
 
       if (type == RelationshipType.hasOne || type == RelationshipType.hasMany) {
-        localKey ??=
-            ctx.buildContext.resolveFieldName(keyName(ctx, 'local key'));
+        localKey ??= ctx.buildContext.resolveFieldName(
+          keyName(ctx, 'local key'),
+        );
         // print(
         //     'Local key on ${buildCtx.originalClassName}.${field.name} defaulted to $localKey');
         foreignKey ??= '${rc.snakeCase}_$localKey';
       } else if (type == RelationshipType.belongsTo) {
-        foreignKey ??=
-            ctx.buildContext.resolveFieldName(keyName(foreign!, 'foreign key'));
+        foreignKey ??= ctx.buildContext.resolveFieldName(
+          keyName(foreign!, 'foreign key'),
+        );
         localKey ??= '${rcc.snakeCase}_$foreignKey';
       }
 
@@ -260,8 +300,9 @@ Future<OrmBuildContext?> buildOrmContext(
         // Unfortunately, the analyzer library provides little to nothing
         // in the way of reading enums from source, so here's a hack.
         var joinTypeType = (joinTypeRdr.type as InterfaceType);
-        var enumFields =
-            joinTypeType.element.fields.where((f) => f.isEnumConstant).toList();
+        var enumFields = joinTypeType.element3.fields2
+            .where((f) => f.isEnumConstant)
+            .toList();
 
         for (var i = 0; i < enumFields.length; i++) {
           if (enumFields[i].computeConstantValue() == joinTypeRdr) {
@@ -283,8 +324,10 @@ Future<OrmBuildContext?> buildOrmContext(
         joinType: joinType,
       );
 
-      log.fine('Relation on ${buildCtx.originalClassName}.${field.name} => '
-          'foreignKey=$foreignKey, localKey=$localKey');
+      log.fine(
+        'Relation on ${buildCtx.originalClassName}.${field.displayName} => '
+        'foreignKey=$foreignKey, localKey=$localKey',
+      );
 
       if (relation.type == RelationshipType.belongsTo) {
         var localKey = relation.localKey;
@@ -293,7 +336,9 @@ Future<OrmBuildContext?> buildOrmContext(
           var name = ReCase(localKey).camelCase;
           ctx.buildContext.aliases[name] = localKey;
 
-          if (!ctx.effectiveFields.any((f) => f.name == field.name)) {
+          if (!ctx.effectiveFields.any(
+            (f) => f.displayName == field.displayName,
+          )) {
             var foreignField = relation.findForeignField(ctx);
             var foreign = relation.throughContext ?? relation.foreign;
             var type = foreignField.type;
@@ -301,20 +346,27 @@ Future<OrmBuildContext?> buildOrmContext(
             if (foreign != null) {
               if (isSpecialId(foreign, foreignField)) {
                 // Use integer
-                type = field.type.element?.library?.typeProvider.intType
-                    as DartType;
+                type =
+                    field.type.element3?.library2?.typeProvider.intType
+                        as DartType;
 
                 //type = field.type.element?.context.typeProvider.intType;
               }
             }
 
+            // FIXME: Broken FieldElement2
+
+            print("===  Create RelationFieldImpl for $name ====");
             var rf = RelationFieldImpl(name, relation, type, field);
-            ctx.effectiveFields.add(rf);
+            //var rf = RelationFieldImpl2(
+            //  RelationFieldImpl(name, relation, type, field),
+            //);
+            ctx.effectiveFields.add(rf.element);
           }
         }
       }
 
-      ctx.relations[field.name] = relation;
+      ctx.relations[field.displayName] = relation;
     } else {
       /*
       if (column.type == null) {
@@ -329,13 +381,14 @@ Future<OrmBuildContext?> buildOrmContext(
         type: column.type,
         indexType: column.indexType,
         defaultValue: column.defaultValue,
-        expression:
-            ConstantReader(columnAnnotation).peek('expression')?.stringValue,
+        expression: ConstantReader(
+          columnAnnotation,
+        ).peek('expression')?.stringValue,
       );
 
-      ctx.columns[field.name] = column;
+      ctx.columns[field.displayName] = column;
 
-      if (!ctx.effectiveFields.any((f) => f.name == field.name)) {
+      if (!ctx.effectiveFields.any((f) => f.displayName == field.displayName)) {
         ctx.effectiveFields.add(field);
       }
     }
@@ -370,7 +423,7 @@ ColumnType inferColumnType(DartType type) {
   if (const TypeChecker.fromRuntime(List).isAssignableFromType(type)) {
     return ColumnType.jsonb;
   }
-  if (type is InterfaceType && type.element is EnumElement) {
+  if (type is InterfaceType && type.element3 is EnumElement2) {
     return ColumnType.int;
   }
 
@@ -384,13 +437,18 @@ Column reviveColumn(ConstantReader cr) {
   var indexTypeObj = cr.peek('indexType')?.objectValue;
   indexTypeObj ??= cr.revive().namedArguments['indexType'];
 
-  var columnObj =
-      cr.peek('type')?.objectValue.getField('name')?.toStringValue();
-  var indexType = IndexType.values[
-      indexTypeObj?.getField('index')?.toIntValue() ?? IndexType.none.index];
+  var columnObj = cr
+      .peek('type')
+      ?.objectValue
+      .getField('name')
+      ?.toStringValue();
+  var indexType =
+      IndexType.values[indexTypeObj?.getField('index')?.toIntValue() ??
+          IndexType.none.index];
 
-  if (const TypeChecker.fromRuntime(PrimaryKey)
-      .isAssignableFromType(cr.objectValue.type!)) {
+  if (const TypeChecker.fromRuntime(
+    PrimaryKey,
+  ).isAssignableFromType(cr.objectValue.type!)) {
     indexType = IndexType.primaryKey;
   }
 
@@ -410,8 +468,9 @@ Column reviveColumn(ConstantReader cr) {
   );
 }
 
-const TypeChecker relationshipTypeChecker =
-    TypeChecker.fromRuntime(Relationship);
+const TypeChecker relationshipTypeChecker = TypeChecker.fromRuntime(
+  Relationship,
+);
 
 // ORM builder context
 class OrmBuildContext {
@@ -420,17 +479,17 @@ class OrmBuildContext {
   final String tableName;
 
   final Map<String, Column> columns = {};
-  final List<FieldElement> effectiveFields = [];
+  final List<FieldElement2> effectiveFields = [];
   final Map<String, RelationshipReader> relations = {};
 
   OrmBuildContext(this.buildContext, this.ormAnnotation, this.tableName);
 
-  bool isNotCustomExprField(FieldElement field) {
-    var col = columns[field.name];
+  bool isNotCustomExprField(FieldElement2 field) {
+    var col = columns[field.displayName];
     return col?.hasExpression != true;
   }
 
-  Iterable<FieldElement> get effectiveNormalFields =>
+  Iterable<FieldElement2> get effectiveNormalFields =>
       effectiveFields.where(isNotCustomExprField);
 }
 
@@ -455,16 +514,58 @@ class _ColumnType implements ColumnType {
 }
 
 class RelationFieldImpl extends ShimFieldImpl {
-  final FieldElement originalField;
+  final FieldElement2 originalField;
   final RelationshipReader relationship;
+  final String relationName;
   RelationFieldImpl(
-      String name, this.relationship, DartType type, this.originalField)
-      : super(name, type);
+    this.relationName,
+    this.relationship,
+    DartType type,
+    this.originalField,
+  ) : super(relationName, type);
 
-  String get originalFieldName => originalField.name;
+  String get originalFieldName => originalField.displayName;
+
+  @override
+  String get displayName => relationName;
+
+  @override
+  FieldElementImpl2 get element {
+    return RelationFieldImpl2(this);
+  }
 
   //@override
   //PropertyAccessorElement? get getter => originalField.getter;
+}
+
+class RelationFieldImpl2 extends ShimFieldImpl2 {
+  RelationFieldImpl2(super.firstFragment);
+
+  String get originalFieldName =>
+      (firstFragment as RelationFieldImpl).originalFieldName;
+
+  @override
+  String get displayName => firstFragment.displayName;
+
+  RelationshipReader? get relationship {
+    if (firstFragment is RelationFieldImpl) {
+      var element = firstFragment as RelationFieldImpl;
+
+      return element.relationship;
+    }
+
+    return null;
+  }
+
+  FieldElement2? get originalField {
+    if (firstFragment is RelationFieldImpl) {
+      var element = firstFragment as RelationFieldImpl;
+
+      return element.originalField;
+    }
+
+    return null;
+  }
 }
 
 InterfaceType? firstModelAncestor(DartType? type) {

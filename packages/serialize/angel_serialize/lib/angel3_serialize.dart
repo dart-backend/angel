@@ -1,13 +1,12 @@
 export 'dart:convert' show json, Codec, Converter;
 export 'package:angel3_model/angel3_model.dart';
 export 'package:collection/collection.dart';
-export 'package:meta/meta.dart' show required, Required;
 export 'package:quiver/core.dart' show hashObjects;
 
 /// Excludes a field from being excluded.
 class Exclude extends SerializableField {
   const Exclude({super.canDeserialize, super.canSerialize})
-      : super(exclude: true);
+    : super(exclude: true);
 }
 
 /// No longer necessary, as this is the default.
@@ -21,7 +20,7 @@ const Exclude exclude = Exclude();
 
 /// Shorthand for [SerializableField].
 class DefaultsTo extends SerializableField {
-  const DefaultsTo(value) : super(defaultValue: value);
+  const DefaultsTo(dynamic value) : super(defaultValue: value);
 }
 
 /// Shorthand for [SerializableField].
@@ -66,25 +65,27 @@ class SerializableField {
   /// specify `serializesTo: String`.
   final Type? serializesTo;
 
-  const SerializableField(
-      {this.alias,
-      this.defaultValue,
-      this.serializer,
-      this.deserializer,
-      this.errorMessage,
-      this.isNullable = true,
-      this.exclude = false,
-      this.canDeserialize = false,
-      this.canSerialize = false,
-      this.serializesTo});
+  const SerializableField({
+    this.alias,
+    this.defaultValue,
+    this.serializer,
+    this.deserializer,
+    this.errorMessage,
+    this.isNullable = true,
+    this.exclude = false,
+    this.canDeserialize = false,
+    this.canSerialize = false,
+    this.serializesTo,
+  });
 }
 
 /// Marks a class as eligible for serialization.
 class Serializable {
-  const Serializable(
-      {this.serializers = const [Serializers.map, Serializers.json],
-      this.autoSnakeCaseNames = true,
-      this.includeAnnotations = const []});
+  const Serializable({
+    this.serializers = const [Serializers.map, Serializers.json],
+    this.autoSnakeCaseNames = true,
+    this.includeAnnotations = const [],
+  });
 
   /// A list of enabled serialization modes.
   ///

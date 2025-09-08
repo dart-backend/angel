@@ -28,26 +28,23 @@ void main() {
     expect(await service.index(), [
       {'id': '0', 'foo': 'bar'},
       {'id': '1', 'foo': 'baz'},
-      {'id': '2', 'foo': 'quux'}
+      {'id': '2', 'foo': 'quux'},
     ]);
   });
 
   test('index with query', () async {
     expect(
       await service.index({
-        'query': {'foo': 'bar'}
+        'query': {'foo': 'bar'},
       }),
       [
-        {'id': '0', 'foo': 'bar'}
+        {'id': '0', 'foo': 'bar'},
       ],
     );
   });
 
   test('read', () async {
-    expect(
-      await service.read('2'),
-      {'id': '2', 'foo': 'quux'},
-    );
+    expect(await service.read('2'), {'id': '2', 'foo': 'quux'});
   });
 
   test('modify', () async {
@@ -65,7 +62,7 @@ void main() {
     await service.remove('2');
     expect(await service.index(), [
       {'id': '0', 'foo': 'bar'},
-      {'id': '1', 'foo': 'baz'}
+      {'id': '1', 'foo': 'baz'},
     ]);
   });
 }

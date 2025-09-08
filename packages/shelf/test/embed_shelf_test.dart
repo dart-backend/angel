@@ -19,10 +19,11 @@ void main() {
 
   Uri path(String p) {
     return Uri(
-        scheme: 'http',
-        host: server.address.address,
-        port: server.port,
-        path: p);
+      scheme: 'http',
+      host: server.address.address,
+      port: server.port,
+      path: p,
+    );
   }
 
   setUp(() async {

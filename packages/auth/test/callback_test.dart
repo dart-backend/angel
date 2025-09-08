@@ -29,7 +29,7 @@ class User extends Model {
       'username': username,
       'password': password,
       'created_at': createdAt?.toIso8601String(),
-      'updated_at': updatedAt?.toIso8601String()
+      'updated_at': updatedAt?.toIso8601String(),
     };
   }
 }
@@ -69,14 +69,16 @@ void main() {
         }
       });
 
-    await app
-        .findService('users')
-        ?.create({'username': 'jdoe1', 'password': 'password'});
+    await app.findService('users')?.create({
+      'username': 'jdoe1',
+      'password': 'password',
+    });
 
     auth = AngelAuth<User>(
-        serializer: (u) => u.id ?? '',
-        deserializer: (id) async =>
-            await app.findService('users')?.read(id) as User);
+      serializer: (u) => u.id ?? '',
+      deserializer: (id) async =>
+          await app.findService('users')?.read(id) as User,
+    );
     //auth.serializer = (u) => u.id;
     //auth.deserializer =
     //    (id) async => await app.findService('users')!.read(id) as User;
@@ -90,32 +92,38 @@ void main() {
           .then((it) => it.map<User>((m) => User.parse(m)).toList());
 
       var result = users?.firstWhereOrNull(
-          (user) => user.username == username && user.password == password);
+        (user) => user.username == username && user.password == password,
+      );
 
       return Future.value(result);
     }, allowBasic: true);
 
     app.post(
-        '/login',
-        auth.authenticate('local',
-            AngelAuthOptions(callback: (req, res, token) {
-          res
-            ..write('Hello!')
-            ..close();
-        })));
-
-    app.chain([
-      (req, res) {
-        if (!req.container!.has<User>()) {
-          req.container!.registerSingleton<User>(
-              User(username: req.params['name']?.toString()));
-        }
-        return true;
-      }
-    ]).post(
-      '/existing/:name',
-      auth.authenticate('local'),
+      '/login',
+      auth.authenticate(
+        'local',
+        AngelAuthOptions(
+          callback: (req, res, token) {
+            res
+              ..write('Hello!')
+              ..close();
+          },
+        ),
+      ),
     );
+
+    app
+        .chain([
+          (req, res) {
+            if (!req.container!.has<User>()) {
+              req.container!.registerSingleton<User>(
+                User(username: req.params['name']?.toString()),
+              );
+            }
+            return true;
+          },
+        ])
+        .post('/existing/:name', auth.authenticate('local'));
 
     encodedAuth = base64.encode(utf8.encode('jdoe1:password'));
 
@@ -132,20 +140,27 @@ void main() {
     url = null;
   });
 
-  test('login', () async {
-    final response = await client!.post(Uri.parse('$url/login'),
-        headers: {'Authorization': 'Basic $encodedAuth'});
-    print('Response: ${response.body}');
-    expect(response.body, equals('Hello!'));
-  },
-      skip: Platform.version.contains('2.0.0-dev')
-          ? 'Blocked on https://github.com/dart-lang/sdk/issues/33594'
-          : null);
+  test(
+    'login',
+    () async {
+      final response = await client!.post(
+        Uri.parse('$url/login'),
+        headers: {'Authorization': 'Basic $encodedAuth'},
+      );
+      print('Response: ${response.body}');
+      expect(response.body, equals('Hello!'));
+    },
+    skip: Platform.version.contains('2.0.0-dev')
+        ? 'Blocked on https://github.com/dart-lang/sdk/issues/33594'
+        : null,
+  );
 
   test('preserve existing user', () async {
-    final response = await client!.post(Uri.parse('$url/existing/foo'),
-        body: {'username': 'jdoe1', 'password': 'password'},
-        headers: {'accept': 'application/json'});
+    final response = await client!.post(
+      Uri.parse('$url/existing/foo'),
+      body: {'username': 'jdoe1', 'password': 'password'},
+      headers: {'accept': 'application/json'},
+    );
     print('Response: ${response.body}');
     print(response.headers);
     expect(json.decode(response.body)['data']['username'], equals('foo'));

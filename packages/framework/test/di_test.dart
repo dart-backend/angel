@@ -7,6 +7,7 @@ import 'package:angel3_container/mirrors.dart';
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:http/http.dart' as http;
 import 'package:angel3_mock_request/angel3_mock_request.dart';
+import 'package:http/http.dart';
 import 'package:test/test.dart';
 
 import 'common.dart';
@@ -34,9 +35,12 @@ void main() {
 
     app.get('/errands', ioc((Todo singleton) => singleton));
     app.get(
-        '/errands3',
-        ioc(({required Errand singleton, Todo? foo, RequestContext? req}) =>
-            singleton.text));
+      '/errands3',
+      ioc(
+        ({required Errand singleton, Todo? foo, RequestContext? req}) =>
+            singleton.text,
+      ),
+    );
     app.post('/async', ioc((Foo foo) => {'baz': foo.bar}));
     await app.configure(SingletonController().configureServer);
     await app.configure(ErrandController().configureServer);
@@ -89,8 +93,10 @@ void main() {
   });
 
   test('resolve from future in controller', () async {
-    var response =
-        await client.post(Uri.parse('$url/errands4/async'), body: 'hey');
+    var response = await client.post(
+      Uri.parse('$url/errands4/async'),
+      body: 'hey',
+    );
     expect(response.body, json.encode({'bar': 'hey'}));
   });
 
@@ -100,7 +106,7 @@ void main() {
   });
 }
 
-void validateTodoSingleton(response) {
+void validateTodoSingleton(Response response) {
   var todo = json.decode(response.body.toString()) as Map;
   expect(todo['id'], equals(null));
   expect(todo['text'], equals(sampleText));

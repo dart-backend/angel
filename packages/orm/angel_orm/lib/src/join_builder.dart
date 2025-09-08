@@ -13,11 +13,17 @@ class JoinBuilder {
   final String Function() to;
   final List<String> additionalFields;
 
-  JoinBuilder(this.type, this.from, this.to, this.key, this.value,
-      {this.op = '=',
-      this.alias,
-      this.additionalFields = const [],
-      this.aliasAllFields = false}) {
+  JoinBuilder(
+    this.type,
+    this.from,
+    this.to,
+    this.key,
+    this.value, {
+    this.op = '=',
+    this.alias,
+    this.additionalFields = const [],
+    this.aliasAllFields = false,
+  }) {
     //assert(to != null,
     //    'computation of this join threw an error, and returned null.');
   }

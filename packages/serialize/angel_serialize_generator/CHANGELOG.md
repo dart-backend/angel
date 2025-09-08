@@ -1,5 +1,13 @@
 # Change Log
 
+## 8.6.0
+
+* Require Dart >= 3.8
+* Updated `lints` to 6.0.0
+* Updated dependencies to the latest release
+* Updated `analyzer` to 7.7.x
+* Added `ShimFieldImpl2` due to breaking changes in `analyzer` 7.7.x
+
 ## 8.5.0
 
 * Added support for `Entity<Class>` and `<Class>Entity` as data model

@@ -9,14 +9,14 @@ The builder for generating JSON serialization code for Angel3 framework.
 
 ## Usage
 
-1. Create a model class in `todo.dart` and annotate it with `@serializable`
+1. Create a model class in `todo.dart` and annotate it with `@serializable` and append `Entity` suffix to the class name.
 
     ```dart
         import 'package:angel3_serialize/angel3_serialize.dart';
         part 'todo.g.dart';
 
         @serializable
-        class _Todo {
+        class TodoEntity {
             String? text;
             bool? completed;
         }

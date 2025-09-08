@@ -25,8 +25,10 @@ void main() {
   setUp(() async {
     conn = await openMySqlConnection();
     executor = await createExecutor(conn);
-    runner =
-        await createTables(conn, [PersonMigration(), PersonOrderMigration()]);
+    runner = await createTables(conn, [
+      PersonMigration(),
+      PersonOrderMigration(),
+    ]);
     var query = PersonQuery()
       ..values.name = 'DebuggerX'
       ..values.age = 29;
@@ -60,8 +62,11 @@ void main() {
     var orderQuery = PersonOrderQuery();
     var query = PersonWithLastOrderQuery();
     query.join(
-        orderQuery.tableName, PersonFields.id, PersonOrderFields.personId,
-        alias: 'po');
+      orderQuery.tableName,
+      PersonFields.id,
+      PersonOrderFields.personId,
+      alias: 'po',
+    );
     query.where?.name.equals(originalPerson!.name!);
     query.orderBy('po.id', descending: true);
     var personWithOrderInfo = await query.getOne(executor);
@@ -72,8 +77,11 @@ void main() {
     var orderQuery = PersonOrderQuery();
     var query = PersonWithLastOrderQuery();
     query.join(
-        orderQuery.tableName, PersonFields.id, PersonOrderFields.personId,
-        alias: 'po');
+      orderQuery.tableName,
+      PersonFields.id,
+      PersonOrderFields.personId,
+      alias: 'po',
+    );
     query.where?.name.equals(originalPerson!.name!);
     query.orderBy('po.id', descending: true);
     query.where?.raw('po.deleted = false');
@@ -85,15 +93,21 @@ void main() {
     var personQuery = PersonQuery();
     var query = OrderWithPersonInfoQuery();
     query.join(
-        personQuery.tableName, PersonOrderFields.personId, PersonFields.id,
-        alias: 'p');
+      personQuery.tableName,
+      PersonOrderFields.personId,
+      PersonFields.id,
+      alias: 'p',
+    );
     query.where?.raw("p.name = '${originalPerson?.name}'");
     var orders = await query.get(executor);
     expect(
-        orders.every((element) =>
+      orders.every(
+        (element) =>
             element.personName == originalPerson?.name &&
-            element.personAge == originalPerson?.age),
-        true);
+            element.personAge == originalPerson?.age,
+      ),
+      true,
+    );
   });
 
   test('select orders with multi order by fields', () async {

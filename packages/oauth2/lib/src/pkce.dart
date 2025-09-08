@@ -12,8 +12,10 @@ class Pkce {
   final String? codeChallenge;
 
   Pkce(this.codeChallengeMethod, this.codeChallenge) {
-    assert(codeChallengeMethod == 'plain' || codeChallengeMethod == 's256',
-        "The `code_challenge_method` parameter must be either 'plain' or 's256'.");
+    assert(
+      codeChallengeMethod == 'plain' || codeChallengeMethod == 's256',
+      "The `code_challenge_method` parameter must be either 'plain' or 's256'.",
+    );
   }
 
   /// Attempts to parse a [codeChallenge] and [codeChallengeMethod] from a [Map].
@@ -23,15 +25,23 @@ class Pkce {
         data['code_challenge_method']?.toString() ?? 'plain';
 
     if (codeChallengeMethod != 'plain' && codeChallengeMethod != 's256') {
-      throw AuthorizationException(ErrorResponse(
+      throw AuthorizationException(
+        ErrorResponse(
           ErrorResponse.invalidRequest,
           "The `code_challenge_method` parameter must be either 'plain' or 's256'.",
           state,
-          uri: uri));
+          uri: uri,
+        ),
+      );
     } else if (codeChallenge?.isNotEmpty != true) {
-      throw AuthorizationException(ErrorResponse(ErrorResponse.invalidRequest,
-          'Missing `code_challenge` parameter.', state,
-          uri: uri));
+      throw AuthorizationException(
+        ErrorResponse(
+          ErrorResponse.invalidRequest,
+          'Missing `code_challenge` parameter.',
+          state,
+          uri: uri,
+        ),
+      );
     }
 
     return Pkce(codeChallengeMethod, codeChallenge);
@@ -48,17 +58,21 @@ class Pkce {
     String foreignChallenge;
 
     if (isS256) {
-      foreignChallenge =
-          base64Url.encode(sha256.convert(ascii.encode(codeVerifier)).bytes);
+      foreignChallenge = base64Url.encode(
+        sha256.convert(ascii.encode(codeVerifier)).bytes,
+      );
     } else {
       foreignChallenge = codeVerifier;
     }
 
     if (foreignChallenge != codeChallenge) {
       throw AuthorizationException(
-        ErrorResponse(ErrorResponse.invalidGrant,
-            'The given `code_verifier` parameter is invalid.', state,
-            uri: uri),
+        ErrorResponse(
+          ErrorResponse.invalidGrant,
+          'The given `code_verifier` parameter is invalid.',
+          state,
+          uri: uri,
+        ),
       );
     }
   }
@@ -67,7 +81,7 @@ class Pkce {
   Map<String, dynamic> toJson() {
     return {
       'code_challenge': codeChallenge,
-      'code_challenge_method': codeChallengeMethod
+      'code_challenge_method': codeChallengeMethod,
     };
   }
 }

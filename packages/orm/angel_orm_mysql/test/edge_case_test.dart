@@ -28,7 +28,7 @@ void main() {
       AuthorMigration(),
       FooMigration(),
       FooPivotMigration(),
-      BookMigration()
+      BookMigration(),
     ]);
   });
 
@@ -124,7 +124,7 @@ void main() {
         var wjObj = await query.getOne(executor);
         expect(wjObj.isPresent, true);
         wjObj.ifPresent((wj) {
-          if (TARGET_TEST_DATABASE == 'mysql') {
+          if (targetTestDatabase == 'mysql') {
             expect(wj.numbas, numbas.reversed);
           } else {
             expect(wj.numbas, numbas);
@@ -134,8 +134,9 @@ void main() {
 
       test('many to many', () async {
         var fooQuery = FooQuery()..values.bar = 'baz';
-        var fooBar =
-            await fooQuery.insert(executor).then((foo) => foo.value.bar);
+        var fooBar = await fooQuery
+            .insert(executor)
+            .then((foo) => foo.value.bar);
         var pivotQuery = FooPivotQuery()
           ..values.weirdJoinId = weirdJoin!.id
           ..values.fooBar = fooBar;

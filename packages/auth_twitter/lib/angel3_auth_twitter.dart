@@ -5,19 +5,18 @@ import 'package:angel3_auth/angel3_auth.dart';
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as p;
-//import 'package:oauth1/oauth1.dart' as oauth;
 import 'package:belatuk_oauth1/belatuk_oauth1.dart' as oauth;
 import 'package:dart_twitter_api/twitter_api.dart';
 
 /// Authenticates users by connecting to Twitter's API.
-class TwitterStrategy<User> extends AuthStrategy<User> {
+class TwitterStrategy<TUser> extends AuthStrategy<TUser> {
   /// The options defining how to connect to the third-party.
   final ExternalAuthOptions options;
 
-  /// A callback that uses Twitter to authenticate a [User].
+  /// A callback that uses Twitter to authenticate a [TUser].
   ///
   /// As always, return `null` if authentication fails.
-  final FutureOr<User> Function(TwitterApi, RequestContext, ResponseContext)
+  final FutureOr<TUser> Function(TwitterApi, RequestContext, ResponseContext)
       verifier;
 
   /// A callback that is triggered when an OAuth2 error occurs (i.e. the user declines to login);
@@ -118,12 +117,12 @@ class TwitterStrategy<User> extends AuthStrategy<User> {
   }
 
   @override
-  Future<User?> authenticate(RequestContext req, ResponseContext res,
+  Future<TUser?> authenticate(RequestContext req, ResponseContext res,
       [AngelAuthOptions? options]) async {
     try {
       if (options != null) {
         var result = await authenticateCallback(req, res, options);
-        if (result is User) {
+        if (result is TUser) {
           return result;
         } else {
           return null;

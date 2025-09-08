@@ -8,7 +8,7 @@ import 'angel3_client.dart';
 const Map<String, String> _readHeaders = {'Accept': 'application/json'};
 const Map<String, String> _writeHeaders = {
   'Accept': 'application/json',
-  'Content-Type': 'application/json'
+  'Content-Type': 'application/json',
 };
 
 Map<String, String> _buildQuery(Map<String, dynamic>? params) {
@@ -18,8 +18,12 @@ Map<String, String> _buildQuery(Map<String, dynamic>? params) {
 bool _invalid(Response response) =>
     response.statusCode < 200 || response.statusCode >= 300;
 
-AngelHttpException failure(Response response,
-    {error, String? message, StackTrace? stack}) {
+AngelHttpException failure(
+  Response response, {
+  error,
+  String? message,
+  StackTrace? stack,
+}) {
   try {
     var v = json.decode(response.body);
 
@@ -27,17 +31,20 @@ AngelHttpException failure(Response response,
       return AngelHttpException.fromMap(v as Map);
     } else {
       return AngelHttpException(
-          message: message ??
-              'Unhandled exception while connecting to Angel backend.',
-          statusCode: response.statusCode,
-          stackTrace: stack);
+        message:
+            message ?? 'Unhandled exception while connecting to Angel backend.',
+        statusCode: response.statusCode,
+        stackTrace: stack,
+      );
     }
   } catch (e, st) {
     return AngelHttpException(
-        message: message ??
-            'Angel backend did not return JSON - an error likely occurred.',
-        statusCode: response.statusCode,
-        stackTrace: stack ?? st);
+      message:
+          message ??
+          'Angel backend did not return JSON - an error likely occurred.',
+      statusCode: response.statusCode,
+      stackTrace: stack ?? st,
+    );
   }
 }
 
@@ -56,8 +63,11 @@ abstract class BaseAngelClient extends Angel {
   BaseAngelClient(this.client, baseUrl) : super(baseUrl);
 
   @override
-  Future<AngelAuthResult> authenticate(
-      {String? type, credentials, String authEndpoint = '/auth'}) async {
+  Future<AngelAuthResult> authenticate({
+    String? type,
+    credentials,
+    String authEndpoint = '/auth',
+  }) async {
     type ??= 'token';
 
     var segments = baseUrl.pathSegments
@@ -70,8 +80,11 @@ abstract class BaseAngelClient extends Angel {
     Response response;
 
     if (credentials != null) {
-      response = await post(url,
-          body: json.encode(credentials), headers: _writeHeaders);
+      response = await post(
+        url,
+        body: json.encode(credentials),
+        headers: _writeHeaders,
+      );
     } else {
       response = await post(url, headers: _writeHeaders);
     }
@@ -88,7 +101,8 @@ abstract class BaseAngelClient extends Angel {
 
       if (v is! Map || !v.containsKey('data') || !v.containsKey('token')) {
         throw AngelHttpException.notAuthenticated(
-            message: "Auth endpoint '$url' did not return a proper response.");
+          message: "Auth endpoint '$url' did not return a proper response.",
+        );
       }
 
       var r = AngelAuthResult.fromMap(v);
@@ -126,8 +140,12 @@ abstract class BaseAngelClient extends Angel {
 
   /// Sends a non-streaming [Request] and returns a non-streaming [Response].
   Future<Response> sendUnstreamed(
-      String method, url, Map<String, String>? headers,
-      [body, Encoding? encoding]) async {
+    String method,
+    url,
+    Map<String, String>? headers, [
+    body,
+    Encoding? encoding,
+  ]) async {
     var request = Request(method, url is Uri ? url : Uri.parse(url.toString()));
 
     if (headers != null) request.headers.addAll(headers);
@@ -139,12 +157,16 @@ abstract class BaseAngelClient extends Angel {
       } else if (body is List<int>) {
         request.bodyBytes = List<int>.from(body);
       } else if (body is Map<String, dynamic>) {
-        request.bodyFields =
-            body.map((k, v) => MapEntry(k, v is String ? v : v.toString()));
+        request.bodyFields = body.map(
+          (k, v) => MapEntry(k, v is String ? v : v.toString()),
+        );
       } else {
         _log.severe('Body is not a String, List<int>, or Map<String, String>');
-        throw ArgumentError.value(body, 'body',
-            'must be a String, List<int>, or Map<String, String>.');
+        throw ArgumentError.value(
+          body,
+          'body',
+          'must be a String, List<int>, or Map<String, String>.',
+        );
       }
     }
 
@@ -152,16 +174,23 @@ abstract class BaseAngelClient extends Angel {
   }
 
   @override
-  Service<Id, Data> service<Id, Data>(String path,
-      {Type? type, AngelDeserializer<Data>? deserializer}) {
+  Service<Id, Data> service<Id, Data>(
+    String path, {
+    Type? type,
+    AngelDeserializer<Data>? deserializer,
+  }) {
     var url = baseUrl.replace(path: _p.join(baseUrl.path, path));
-    var s = BaseAngelService<Id, Data>(client, this, url,
-        deserializer: deserializer);
+    var s = BaseAngelService<Id, Data>(
+      client,
+      this,
+      url,
+      deserializer: deserializer,
+    );
     _services.add(s);
     return s as Service<Id, Data>;
   }
 
-  Uri _join(url) {
+  Uri _join(dynamic url) {
     var u = url is Uri ? url : Uri.parse(url.toString());
     if (u.hasScheme || u.hasAuthority) return u;
     return u.replace(path: _p.join(baseUrl.path, u.path));
@@ -183,20 +212,32 @@ abstract class BaseAngelClient extends Angel {
   }
 
   @override
-  Future<Response> patch(url,
-      {body, Map<String, String>? headers, Encoding? encoding}) async {
+  Future<Response> patch(
+    url, {
+    body,
+    Map<String, String>? headers,
+    Encoding? encoding,
+  }) async {
     return sendUnstreamed('PATCH', _join(url), headers, body, encoding);
   }
 
   @override
-  Future<Response> post(url,
-      {body, Map<String, String>? headers, Encoding? encoding}) async {
+  Future<Response> post(
+    url, {
+    body,
+    Map<String, String>? headers,
+    Encoding? encoding,
+  }) async {
     return sendUnstreamed('POST', _join(url), headers, body, encoding);
   }
 
   @override
-  Future<Response> put(url,
-      {body, Map<String, String>? headers, Encoding? encoding}) async {
+  Future<Response> put(
+    url, {
+    body,
+    Map<String, String>? headers,
+    Encoding? encoding,
+  }) async {
     return sendUnstreamed('PUT', _join(url), headers, body, encoding);
   }
 }
@@ -248,13 +289,13 @@ class BaseAngelService<Id, Data> extends Service<Id, Data?> {
   }
 
   BaseAngelService(this.client, this.app, baseUrl, {this.deserializer})
-      : baseUrl = baseUrl is Uri ? baseUrl : Uri.parse(baseUrl.toString());
+    : baseUrl = baseUrl is Uri ? baseUrl : Uri.parse(baseUrl.toString());
 
-  Data? deserialize(x) {
+  Data? deserialize(dynamic x) {
     return deserializer != null ? deserializer!(x) : x as Data?;
   }
 
-  String makeBody(x) {
+  String makeBody(dynamic x) {
     //return json.encode(x);
     return jsonEncode(x);
   }
@@ -309,8 +350,9 @@ class BaseAngelService<Id, Data> extends Service<Id, Data?> {
     var pa = _p.join(baseUrl.path, id.toString());
     print(pa);
     var url = baseUrl.replace(
-        path: _p.join(baseUrl.path, id.toString()),
-        queryParameters: _buildQuery(params));
+      path: _p.join(baseUrl.path, id.toString()),
+      queryParameters: _buildQuery(params),
+    );
 
     var response = await app.sendUnstreamed('GET', url, _readHeaders);
 
@@ -341,8 +383,12 @@ class BaseAngelService<Id, Data> extends Service<Id, Data?> {
   @override
   Future<Data?> create(data, [Map<String, dynamic>? params]) async {
     var url = baseUrl.replace(queryParameters: _buildQuery(params));
-    var response =
-        await app.sendUnstreamed('POST', url, _writeHeaders, makeBody(data));
+    var response = await app.sendUnstreamed(
+      'POST',
+      url,
+      _writeHeaders,
+      makeBody(data),
+    );
 
     try {
       if (_invalid(response)) {
@@ -371,11 +417,16 @@ class BaseAngelService<Id, Data> extends Service<Id, Data?> {
   @override
   Future<Data?> modify(id, data, [Map<String, dynamic>? params]) async {
     var url = baseUrl.replace(
-        path: _p.join(baseUrl.path, id.toString()),
-        queryParameters: _buildQuery(params));
+      path: _p.join(baseUrl.path, id.toString()),
+      queryParameters: _buildQuery(params),
+    );
 
-    var response =
-        await app.sendUnstreamed('PATCH', url, _writeHeaders, makeBody(data));
+    var response = await app.sendUnstreamed(
+      'PATCH',
+      url,
+      _writeHeaders,
+      makeBody(data),
+    );
 
     try {
       if (_invalid(response)) {
@@ -404,11 +455,16 @@ class BaseAngelService<Id, Data> extends Service<Id, Data?> {
   @override
   Future<Data?> update(id, data, [Map<String, dynamic>? params]) async {
     var url = baseUrl.replace(
-        path: _p.join(baseUrl.path, id.toString()),
-        queryParameters: _buildQuery(params));
+      path: _p.join(baseUrl.path, id.toString()),
+      queryParameters: _buildQuery(params),
+    );
 
-    var response =
-        await app.sendUnstreamed('POST', url, _writeHeaders, makeBody(data));
+    var response = await app.sendUnstreamed(
+      'POST',
+      url,
+      _writeHeaders,
+      makeBody(data),
+    );
 
     try {
       if (_invalid(response)) {
@@ -437,8 +493,9 @@ class BaseAngelService<Id, Data> extends Service<Id, Data?> {
   @override
   Future<Data?> remove(id, [Map<String, dynamic>? params]) async {
     var url = baseUrl.replace(
-        path: _p.join(baseUrl.path, id.toString()),
-        queryParameters: _buildQuery(params));
+      path: _p.join(baseUrl.path, id.toString()),
+      queryParameters: _buildQuery(params),
+    );
 
     var response = await app.sendUnstreamed('DELETE', url, _readHeaders);
 

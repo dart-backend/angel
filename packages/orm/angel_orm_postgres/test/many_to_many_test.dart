@@ -41,8 +41,11 @@ void main() {
   setUp(() async {
     conn = await openPgConnection();
     executor = await createExecutor(conn);
-    runner = await createTables(
-        conn, [UserMigration(), RoleMigration(), RoleUserMigration()]);
+    runner = await createTables(conn, [
+      UserMigration(),
+      RoleMigration(),
+      RoleUserMigration(),
+    ]);
 
     var canPubQuery = RoleQuery()..values.name = 'can_pub';
     var canSubQuery = RoleQuery()..values.name = 'can_sub';

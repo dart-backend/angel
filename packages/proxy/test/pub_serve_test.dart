@@ -45,7 +45,8 @@ void main() {
 
     app!.responseFinalizers.add((req, res) async {
       print(
-          'Normal. Buf: ${String.fromCharCodes(res.buffer!.toBytes())}, headers: ${res.headers}');
+        'Normal. Buf: ${String.fromCharCodes(res.buffer!.toBytes())}, headers: ${res.headers}',
+      );
     });
 
     app!.encoders.addAll({'gzip': gzip.encoder});

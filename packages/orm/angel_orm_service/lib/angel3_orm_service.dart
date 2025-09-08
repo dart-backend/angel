@@ -29,17 +29,22 @@ class OrmService<Id, Data, TQuery extends Query<Data, QueryWhere>>
   ///
   /// Note that you won't need to call `RequestContext.parseBody`, as by the time
   /// `readData` is invoked, the body will have already been parsed.
-  OrmService(this.executor, this.queryCreator,
-      {this.idField = 'id',
-      this.allowRemoveAll = false,
-      this.allowQuery = true,
-      super.readData});
+  OrmService(
+    this.executor,
+    this.queryCreator, {
+    this.idField = 'id',
+    this.allowRemoveAll = false,
+    this.allowQuery = true,
+    super.readData,
+  });
 
   SqlExpressionBuilder _findBuilder(TQuery query, String name) {
     return query.where!.expressionBuilders.firstWhere(
-        (b) => b.columnName == name,
-        orElse: (() => throw ArgumentError(
-            '${query.where.runtimeType} has no expression builder for a column named "$name".')));
+      (b) => b.columnName == name,
+      orElse: (() => throw ArgumentError(
+        '${query.where.runtimeType} has no expression builder for a column named "$name".',
+      )),
+    );
   }
 
   void _apply(TQuery query, String name, dynamic value) {
@@ -48,7 +53,8 @@ class OrmService<Id, Data, TQuery extends Query<Data, QueryWhere>>
       (builder as dynamic).equals(value);
     } on NoSuchMethodError {
       throw UnsupportedError(
-          '${builder.runtimeType} has no `equals` method, so it cannot be given a value from the dynamic query parameter "$name".');
+        '${builder.runtimeType} has no `equals` method, so it cannot be given a value from the dynamic query parameter "$name".',
+      );
     }
   }
 
@@ -87,8 +93,10 @@ class OrmService<Id, Data, TQuery extends Query<Data, QueryWhere>>
   }
 
   @override
-  Future<List<Data>> readMany(List<Id> ids,
-      [Map<String, dynamic>? params]) async {
+  Future<List<Data>> readMany(
+    List<Id> ids, [
+    Map<String, dynamic>? params,
+  ]) async {
     if (ids.isEmpty) {
       throw ArgumentError.value(ids, 'ids', 'cannot be empty');
     }
@@ -100,7 +108,8 @@ class OrmService<Id, Data, TQuery extends Query<Data, QueryWhere>>
       (builder as dynamic).isIn(ids);
     } on NoSuchMethodError {
       throw UnsupportedError(
-          '${builder.runtimeType} `$idField` has no `isIn` method, and therefore does not support `readMany`.');
+        '${builder.runtimeType} `$idField` has no `isIn` method, and therefore does not support `readMany`.',
+      );
     }
 
     await _applyQuery(query, params);
@@ -125,10 +134,10 @@ class OrmService<Id, Data, TQuery extends Query<Data, QueryWhere>>
   }
 
   @override
-  Future<Data> findOne(
-      [Map<String, dynamic>? params,
-      String errorMessage =
-          'No record was found matching the given query.']) async {
+  Future<Data> findOne([
+    Map<String, dynamic>? params,
+    String errorMessage = 'No record was found matching the given query.',
+  ]) async {
     var query = await queryCreator();
     await _applyQuery(query, params);
     var result = await query.getOne(executor);
@@ -144,7 +153,8 @@ class OrmService<Id, Data, TQuery extends Query<Data, QueryWhere>>
       (query.values as dynamic).copyFrom(data);
     } on NoSuchMethodError {
       throw UnsupportedError(
-          '${query.values.runtimeType} has no `copyFrom` method, but OrmService requires this for insertions.');
+        '${query.values.runtimeType} has no `copyFrom` method, but OrmService requires this for insertions.',
+      );
     }
 
     var result = await query.insert(executor);
@@ -167,7 +177,8 @@ class OrmService<Id, Data, TQuery extends Query<Data, QueryWhere>>
       (query.values as dynamic).copyFrom(data);
     } on NoSuchMethodError {
       throw UnsupportedError(
-          '${query.values.runtimeType} has no `copyFrom` method, but OrmService requires this for updates.');
+        '${query.values.runtimeType} has no `copyFrom` method, but OrmService requires this for updates.',
+      );
     }
 
     var result = await query.updateOne(executor);
@@ -184,7 +195,8 @@ class OrmService<Id, Data, TQuery extends Query<Data, QueryWhere>>
       if (!(allowRemoveAll == true ||
           params?.containsKey('provider') != true)) {
         throw AngelHttpException.forbidden(
-            message: 'Clients are not allowed to delete all items.');
+          message: 'Clients are not allowed to delete all items.',
+        );
       }
     } else {
       _apply(query, idField, id);

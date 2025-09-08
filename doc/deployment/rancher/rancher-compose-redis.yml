@@ -1,0 +1,14 @@
+services:
+  redis:
+    image: redis:latest
+    restart: "no"
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    networks:
+      - appnet
+
+networks:
+  appnet:

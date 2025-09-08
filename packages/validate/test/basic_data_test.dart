@@ -1,17 +1,20 @@
 import 'package:angel3_validate/angel3_validate.dart';
 import 'package:test/test.dart';
 
-final Validator emailSchema =
-    Validator({'to': isEmail}, customErrorMessages: {'to': 'Hello, world!'});
+final Validator emailSchema = Validator(
+  {'to': isEmail},
+  customErrorMessages: {'to': 'Hello, world!'},
+);
 
-final Validator todoSchema = Validator({
-  'id': [isInt, isPositive],
-  'text*': isString,
-  'completed*': isBool,
-  'foo,bar': [isTrue]
-}, defaultValues: {
-  'completed': false
-});
+final Validator todoSchema = Validator(
+  {
+    'id': [isInt, isPositive],
+    'text*': isString,
+    'completed*': isBool,
+    'foo,bar': [isTrue],
+  },
+  defaultValues: {'completed': false},
+);
 
 void main() {
   test('custom error message', () {
@@ -24,13 +27,18 @@ void main() {
 
   test('requireField', () => expect(requireField('foo'), 'foo*'));
 
-  test('requireFields',
-      () => expect(requireFields(['foo', 'bar']), 'foo*, bar*'));
+  test(
+    'requireFields',
+    () => expect(requireFields(['foo', 'bar']), 'foo*, bar*'),
+  );
 
   test('todo', () {
     expect(() {
-      todoSchema
-          .enforce({'id': 'fool', 'text': 'Hello, world!', 'completed': 4});
+      todoSchema.enforce({
+        'id': 'fool',
+        'text': 'Hello, world!',
+        'completed': 4,
+      });
     }, throwsA(isA<ValidationException>()));
   });
 
@@ -42,7 +50,9 @@ void main() {
 
   test('comma in schema', () {
     expect(todoSchema.rules.keys, allOf(contains('foo'), contains('bar')));
-    expect([todoSchema.rules['foo']!.first, todoSchema.rules['bar']!.first],
-        everyElement(predicate((dynamic x) => x == isTrue)));
+    expect([
+      todoSchema.rules['foo']!.first,
+      todoSchema.rules['bar']!.first,
+    ], everyElement(predicate((dynamic x) => x == isTrue)));
   });
 }

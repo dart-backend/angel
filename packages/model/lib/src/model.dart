@@ -26,12 +26,13 @@ class AuditableModel extends Model {
   /// The user who updated the record last time.
   String? updatedBy;
 
-  AuditableModel(
-      {super.id,
-      super.createdAt,
-      this.createdBy,
-      super.updatedAt,
-      this.updatedBy});
+  AuditableModel({
+    super.id,
+    super.createdAt,
+    this.createdBy,
+    super.updatedAt,
+    this.updatedBy,
+  });
 }
 
 /// Data type to represent no data.

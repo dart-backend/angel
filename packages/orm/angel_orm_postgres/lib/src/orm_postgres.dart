@@ -23,8 +23,12 @@ class PostgreSqlExecutor extends QueryExecutor {
   /// The underlying database session.
   Session get session => _session;
 
-  PostgreSqlExecutor(this._session,
-      {Endpoint? endpoint, ConnectionSettings? settings, Logger? logger}) {
+  PostgreSqlExecutor(
+    this._session, {
+    Endpoint? endpoint,
+    ConnectionSettings? settings,
+    Logger? logger,
+  }) {
     this.logger = logger ?? Logger('PostgreSqlExecutor');
 
     _settings = settings;
@@ -42,10 +46,13 @@ class PostgreSqlExecutor extends QueryExecutor {
 
   @override
   Future<Result> query(
-      String tableName, String query, Map<String, dynamic> substitutionValues,
-      {String returningQuery = '',
-      String resultQuery = '',
-      List<String> returningFields = const []}) {
+    String tableName,
+    String query,
+    Map<String, dynamic> substitutionValues, {
+    String returningQuery = '',
+    String resultQuery = '',
+    List<String> returningFields = const [],
+  }) {
     //if (returningFields.isNotEmpty) {
     //  var fields = returningFields.join(', ');
     //  var returning = 'SELECT $fields from $tableName';
@@ -66,9 +73,9 @@ class PostgreSqlExecutor extends QueryExecutor {
       }
     });
 
-    return _session
-        .execute(Sql.named(query), parameters: param)
-        .catchError((err) async {
+    return _session.execute(Sql.named(query), parameters: param).catchError((
+      err,
+    ) async {
       logger.warning(err);
       if (err is PgException) {
         // This is a hack to detect broken db connection
@@ -79,7 +86,8 @@ class PostgreSqlExecutor extends QueryExecutor {
             (_session as Connection).close();
 
             logger.warning(
-                "A broken database connection is detected. Creating a new database connection.");
+              "A broken database connection is detected. Creating a new database connection.",
+            );
             _session = await _createNewSession();
 
             // Retry the query with the new db connection
@@ -108,17 +116,19 @@ class PostgreSqlExecutor extends QueryExecutor {
 
     var conn = _session as Connection;
 
-    return await conn.runTx((TxSession session) async {
-      try {
-        var exec = PostgreSqlExecutor(session, logger: logger);
-        return await f(exec);
-      } catch (e) {
-        session.rollback();
-        logger.warning("The transation has failed due to ", e);
-        rethrow;
-      }
-    }).onError((error, stackTrace) {
-      throw StateError('The transaction was cancelled.');
-    });
+    return await conn
+        .runTx((TxSession session) async {
+          try {
+            var exec = PostgreSqlExecutor(session, logger: logger);
+            return await f(exec);
+          } catch (e) {
+            session.rollback();
+            logger.warning("The transation has failed due to ", e);
+            rethrow;
+          }
+        })
+        .onError((error, stackTrace) {
+          throw StateError('The transaction was cancelled.');
+        });
   }
 }

@@ -11,7 +11,7 @@ mixin _MyAppJaelTemplate implements Component<dynamic> {
   DomNode render() {
     return h('div', {}, [
       h('h1', {}, [text('Welcome to my app')]),
-      LabeledInput(name: "username")
+      LabeledInput(name: "username"),
     ]);
   }
 }
@@ -22,13 +22,14 @@ mixin _LabeledInputJaelTemplate implements Component<dynamic> {
   DomNode render() {
     return h('div', {}, [
       h('label', {}, [
-        h('b', {}, [text(name.toString()), text(':')])
+        h('b', {}, [text(name.toString()), text(':')]),
       ]),
       h('br', {}, []),
-      h(
-          'input',
-          {'name': name, 'placeholder': "Enter ${name!}...", 'type': "text"},
-          [])
+      h('input', {
+        'name': name,
+        'placeholder': "Enter ${name!}...",
+        'type': "text",
+      }, []),
     ]);
   }
 }

@@ -5,19 +5,17 @@ import 'package:angel3_jael/angel3_jael.dart';
 import 'package:file/local.dart';
 import 'package:logging/logging.dart';
 
-main() async {
+void main() async {
   var app = Angel();
   var http = AngelHttp(app);
   var fileSystem = const LocalFileSystem();
 
-  await app.configure(
-    jael(fileSystem.directory('views')),
-  );
+  await app.configure(jael(fileSystem.directory('views')));
 
   app.get(
-      '/',
-      (req, res) =>
-          res.render('index', {'title': 'Sample App', 'message': null}));
+    '/',
+    (req, res) => res.render('index', {'title': 'Sample App', 'message': null}),
+  );
 
   app.post('/', (req, res) async {
     var body = await req.parseBody().then((_) => req.bodyAsMap);

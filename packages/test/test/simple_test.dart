@@ -16,20 +16,23 @@ void main() {
       ..get('/hello', (req, res) => 'Hello')
       ..get('/user_info', (req, res) => {'u': req.uri?.userInfo})
       ..get(
-          '/error',
-          (req, res) => throw AngelHttpException.forbidden(message: 'Test')
-            ..errors.addAll(['foo', 'bar']))
+        '/error',
+        (req, res) =>
+            throw AngelHttpException.forbidden(message: 'Test')
+              ..errors.addAll(['foo', 'bar']),
+      )
       ..get('/body', (req, res) {
         res
           ..write('OK')
           ..close();
       })
       ..get(
-          '/valid',
-          (req, res) => {
-                'michael': 'jackson',
-                'billie': {'jean': 'hee-hee', 'is_my_lover': false}
-              })
+        '/valid',
+        (req, res) => {
+          'michael': 'jackson',
+          'billie': {'jean': 'hee-hee', 'is_my_lover': false},
+        },
+      )
       ..post('/hello', (req, res) async {
         var body = await req.parseBody().then((_) => req.bodyAsMap);
         return {'bar': body['foo']};
@@ -41,13 +44,14 @@ void main() {
         await res.close();
       })
       ..use(
-          '/foo',
-          AnonymousService<String, Map<String, dynamic>>(
-              index: ([params]) async => [
-                    <String, dynamic>{'michael': 'jackson'}
-                  ],
-              create: (data, [params]) async =>
-                  <String, dynamic>{'foo': 'bar'}));
+        '/foo',
+        AnonymousService<String, Map<String, dynamic>>(
+          index: ([params]) async => [
+            <String, dynamic>{'michael': 'jackson'},
+          ],
+          create: (data, [params]) async => <String, dynamic>{'foo': 'bar'},
+        ),
+      );
 
     var ws = AngelWebSocket(app);
     await app.configure(ws.configureServer);
@@ -70,8 +74,10 @@ void main() {
       });
 
       test('post', () async {
-        final response =
-            await client.post(Uri.parse('/hello'), body: {'foo': 'baz'});
+        final response = await client.post(
+          Uri.parse('/hello'),
+          body: {'foo': 'baz'},
+        );
         expect(response, allOf(hasStatus(200), isJson({'bar': 'baz'})));
       });
     });
@@ -81,9 +87,13 @@ void main() {
       print(res.body);
       expect(res, isAngelHttpException());
       expect(
-          res,
-          isAngelHttpException(
-              statusCode: 403, message: 'Test', errors: ['foo', 'bar']));
+        res,
+        isAngelHttpException(
+          statusCode: 403,
+          message: 'Test',
+          errors: ['foo', 'bar'],
+        ),
+      );
     }, skip: 'This is a bug to be fixed, skip for now');
 
     test('userInfo from Uri', () async {
@@ -98,9 +108,12 @@ void main() {
     test('userInfo from Basic auth header', () async {
       var url = Uri(path: '/user_info');
       print('URL: $url');
-      var res = await client.get(url, headers: {
-        'authorization': 'Basic ${base64Url.encode(utf8.encode('foo:bar'))}'
-      });
+      var res = await client.get(
+        url,
+        headers: {
+          'authorization': 'Basic ${base64Url.encode(utf8.encode('foo:bar'))}',
+        },
+      );
       print(res.body);
       var m = json.decode(res.body) as Map;
       expect(m, {'u': 'foo:bar'});
@@ -125,14 +138,17 @@ void main() {
       expect(res, hasContentType('application/json'));
       expect(res, hasContentType(ContentType('application', 'json')));
       expect(
-          res,
-          hasValidBody(Validator({
+        res,
+        hasValidBody(
+          Validator({
             'michael*': [isString, isNotEmpty, equals('jackson')],
             'billie': Validator({
               'jean': [isString, isNotEmpty],
-              'is_my_lover': [isBool, isFalse]
-            })
-          })));
+              'is_my_lover': [isBool, isFalse],
+            }),
+          }),
+        ),
+      );
     });
 
     test('gzip decode', () async {
@@ -147,7 +163,7 @@ void main() {
         var foo = client.service('foo');
         var result = await foo.index();
         expect(result, [
-          <String, dynamic>{'michael': 'jackson'}
+          <String, dynamic>{'michael': 'jackson'},
         ]);
       });
 
@@ -163,8 +179,10 @@ void main() {
       var foo = ws.service('foo');
       foo.create(<String, dynamic>{});
       var result = await foo.onCreated.first;
-      expect(result is Map ? result : result.data,
-          equals(<String, dynamic>{'foo': 'bar'}));
+      expect(
+        result is Map ? result : result.data,
+        equals(<String, dynamic>{'foo': 'bar'}),
+      );
     });
   });
 }

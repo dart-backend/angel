@@ -11,7 +11,8 @@ void main() {
   Logger.root.level = Level.ALL;
   Logger.root.onRecord.listen((record) {
     print(
-        '${record.time} ${record.level.name.padLeft(6, ' ')} [${record.loggerName}] : ${record.message}');
+      '${record.time} ${record.level.name.padLeft(6, ' ')} [${record.loggerName}] : ${record.message}',
+    );
     if (record.error != null) print(record.error);
     if (record.stackTrace != null) print(record.stackTrace);
   });
@@ -54,28 +55,37 @@ class _AuthorizationServer
 
   @override
   Future<bool> verifyClient(
-      PseudoApplication client, String? clientSecret) async {
+    PseudoApplication client,
+    String? clientSecret,
+  ) async {
     return client.secret == clientSecret;
   }
 
   @override
-  FutureOr<DeviceCodeResponse> requestDeviceCode(PseudoApplication client,
-      Iterable<String> scopes, RequestContext req, ResponseContext res) {
+  FutureOr<DeviceCodeResponse> requestDeviceCode(
+    PseudoApplication client,
+    Iterable<String> scopes,
+    RequestContext req,
+    ResponseContext res,
+  ) {
     return DeviceCodeResponse(
-        'foo',
-        'bar',
-        Uri.parse('https://regiostech.com')
-            .replace(queryParameters: {'scopes': scopes.join(',')}),
-        3600);
+      'foo',
+      'bar',
+      Uri.parse(
+        'https://regiostech.com',
+      ).replace(queryParameters: {'scopes': scopes.join(',')}),
+      3600,
+    );
   }
 
   @override
   FutureOr<AuthorizationTokenResponse> exchangeDeviceCodeForToken(
-      PseudoApplication client,
-      String? deviceCode,
-      String state,
-      RequestContext req,
-      ResponseContext res) {
+    PseudoApplication client,
+    String? deviceCode,
+    String state,
+    RequestContext req,
+    ResponseContext res,
+  ) {
     print("[Server] exchangeDeviceCodeForToken");
     print("[Server] $deviceCode");
     print("[Server] $client");
@@ -83,10 +93,13 @@ class _AuthorizationServer
     if (deviceCode == 'brute') {
       print("[Server] Throws AuthorizationException");
 
-      throw AuthorizationException(ErrorResponse(
+      throw AuthorizationException(
+        ErrorResponse(
           ErrorResponse.slowDown,
           'Ho, brother! Ho, whoa, whoa, whoa now! You got too much dip on your chip!',
-          state));
+          state,
+        ),
+      );
     }
 
     return AuthorizationTokenResponse('foo');

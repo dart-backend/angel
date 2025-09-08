@@ -1,0 +1,24 @@
+services:
+  mariadb:
+    image: docker.io/mariadb:latest
+    restart: "no"
+    ports:
+      - "3306:3306"
+    environment:
+      - MARIADB_ROOT_PASSWORD=Qwerty
+      - MARIADB_DATABASE=orm_test
+      - MARIADB_USER=test
+      - MARIADB_PASSWORD=Test123
+    networks:
+      - appnet
+
+  adminer:
+    image: docker.io/adminer:latest
+    restart: "no"
+    ports:
+      - 8080:8080
+    networks:
+      - appnet
+     
+networks:
+  appnet:

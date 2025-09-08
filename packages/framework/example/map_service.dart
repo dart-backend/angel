@@ -8,10 +8,7 @@ void main() async {
   Logger.root.onRecord.listen(print);
 
   // Create our server.
-  var app = Angel(
-    logger: Logger('angel'),
-    reflector: MirrorsReflector(),
-  );
+  var app = Angel(logger: Logger('angel'), reflector: MirrorsReflector());
 
   // Create a RESTful service that manages an in-memory collection.
   app.use('/api/todos', MapService());

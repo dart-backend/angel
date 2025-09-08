@@ -19,9 +19,7 @@ void main() {
   setUp(() async {
     var adapter = pub_sub.IsolateAdapter();
 
-    server = pub_sub.Server([
-      adapter,
-    ])
+    server = pub_sub.Server([adapter])
       ..registerClient(const pub_sub.ClientInfo('angel_sync1'))
       ..registerClient(const pub_sub.ClientInfo('angel_sync2'))
       ..start();
@@ -37,10 +35,9 @@ void main() {
       // TODO: body is void
       //var body = await req.parseBody();
       var body = {};
-      await ws.batchEvent(WebSocketEvent(
-        eventName: 'message',
-        data: body['message'],
-      ));
+      await ws.batchEvent(
+        WebSocketEvent(eventName: 'message', data: body['message']),
+      );
       return 'Sent: ${body['message']}';
     });
 
@@ -67,8 +64,10 @@ void main() {
 
     var http = AngelHttp(app2);
     await http.startServer();
-    var wsPath =
-        http.uri.replace(scheme: 'ws', path: '/ws').removeFragment().toString();
+    var wsPath = http.uri
+        .replace(scheme: 'ws', path: '/ws')
+        .removeFragment()
+        .toString();
     print(wsPath);
     app2Client = client.WebSockets(wsPath);
     await app2Client.connect();
@@ -92,8 +91,10 @@ void main() {
     // broadcast by app2 as well.
 
     var stream = app2Client.on['message'];
-    var response = await app1Client
-        .post(Uri.parse('/message'), body: {'message': 'Hello, world!'});
+    var response = await app1Client.post(
+      Uri.parse('/message'),
+      body: {'message': 'Hello, world!'},
+    );
     print('app1 response: ${response.body}');
 
     var msg = await stream.first.timeout(const Duration(seconds: 5));

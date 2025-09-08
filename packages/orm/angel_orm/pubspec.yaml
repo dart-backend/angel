@@ -1,10 +1,10 @@
 name: angel3_orm
-version: 8.3.2
+version: 8.4.0
 description: Runtime support for Angel3 ORM. Includes base classes for queries.
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dart-backend/angel/tree/master/packages/orm/angel_orm
 environment:
-  sdk: '>=3.6.0 <4.0.0'
+  sdk: '>=3.8.0 <4.0.0'
 dependencies:
   charcode: ^1.3.0
   intl: ^0.20.0
@@ -18,4 +18,4 @@ dev_dependencies:
   angel3_serialize_generator: ^8.0.0
   build_runner: ^2.4.0
   test: ^1.24.0
-  lints: ^5.0.0
+  lints: ^6.0.0

@@ -5,14 +5,17 @@ import 'package:stream_channel/stream_channel.dart';
 import 'package:async/async.dart';
 
 StreamChannel<String> lspChannel(
-    Stream<List<int>> stream, StreamSink<List<int>> sink) {
+  Stream<List<int>> stream,
+  StreamSink<List<int>> sink,
+) {
   final parser = _Parser(stream);
   final outSink = StreamSinkTransformer.fromHandlers(
-      handleData: _serialize,
-      handleDone: (sink) {
-        sink.close();
-        parser.close();
-      }).bind(sink);
+    handleData: _serialize,
+    handleDone: (sink) {
+      sink.close();
+      parser.close();
+    },
+  ).bind(sink);
   return StreamChannel.withGuarantees(parser.stream, outSink);
 }
 
@@ -36,10 +39,14 @@ class _Parser {
   late StreamSubscription _subscription;
 
   _Parser(Stream<List<int>> stream) {
-    _subscription =
-        stream.expand((bytes) => bytes).listen(_handleByte, onDone: () {
-      _streamCtl.close();
-    });
+    _subscription = stream
+        .expand((bytes) => bytes)
+        .listen(
+          _handleByte,
+          onDone: () {
+            _streamCtl.close();
+          },
+        );
   }
 
   Future<void> close() => _subscription.cancel();
@@ -64,8 +71,9 @@ class _Parser {
   int _parseContentLength() {
     final asString = ascii.decode(_buffer);
     final headers = asString.split('\r\n');
-    final lengthHeader =
-        headers.firstWhere((h) => h.startsWith('Content-Length'));
+    final lengthHeader = headers.firstWhere(
+      (h) => h.startsWith('Content-Length'),
+    );
     final length = lengthHeader.split(':').last.trim();
     return int.parse(length);
   }

@@ -15,10 +15,7 @@ Future<Angel> createServer() async {
 
   app.fallback((req, res) => throw AngelHttpException.notFound());
 
-  app.encoders.addAll({
-    'gzip': gzip.encoder,
-    'deflate': zlib.encoder,
-  });
+  app.encoders.addAll({'gzip': gzip.encoder, 'deflate': zlib.encoder});
 
   app.logger = Logger.detached('angel')
     ..onRecord.listen((rec) {

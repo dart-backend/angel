@@ -20,8 +20,13 @@ class Analyzer extends Parser {
 
   bool ensureAttributeIsPresent(Element element, String name) {
     if (element.getAttribute(name)?.value == null) {
-      addError(JaelError(JaelErrorSeverity.error,
-          'Missing required attribute `$name`.', element.span));
+      addError(
+        JaelError(
+          JaelErrorSeverity.error,
+          'Missing required attribute `$name`.',
+          element.span,
+        ),
+      );
       return false;
     }
     return true;
@@ -36,9 +41,10 @@ class Analyzer extends Parser {
     var a = element.getAttribute(name);
     if (a?.value is! StringLiteral || a?.value == null) {
       var e = JaelError(
-          JaelErrorSeverity.warning,
-          '`$name` attribute should be a constant string literal.',
-          a?.span ?? element.tagName.span);
+        JaelErrorSeverity.warning,
+        '`$name` attribute should be a constant string literal.',
+        a?.span ?? element.tagName.span,
+      );
       addError(e);
       return false;
     }
@@ -67,22 +73,35 @@ class Analyzer extends Parser {
         if (asAttr != null) {
           if (ensureAttributeIsConstantString(element, 'as')) {
             var asName = asAttr.string!.value;
-            _scope!.create(asName,
-                value: JaelVariable(asName, asAttr.span), constant: true);
+            _scope!.create(
+              asName,
+              value: JaelVariable(asName, asAttr.span),
+              constant: true,
+            );
           }
         }
 
         if (forEach.value != null) {
-          addError(JaelError(JaelErrorSeverity.error,
-              'Missing value for `for-each` directive.', forEach.span));
+          addError(
+            JaelError(
+              JaelErrorSeverity.error,
+              'Missing value for `for-each` directive.',
+              forEach.span,
+            ),
+          );
         }
       }
 
       var iff = element.getAttribute('if');
       if (iff != null) {
         if (iff.value != null) {
-          addError(JaelError(JaelErrorSeverity.error,
-              'Missing value for `iff` directive.', iff.span));
+          addError(
+            JaelError(
+              JaelErrorSeverity.error,
+              'Missing value for `iff` directive.',
+              iff.span,
+            ),
+          );
         }
       }
 
@@ -96,14 +115,19 @@ class Analyzer extends Parser {
           //logger.info('Found <case> at ${element.span.start.toolString}');
         } else if (element.tagName.name == 'declare') {
           if (element.attributes.isEmpty) {
-            addError(JaelError(
+            addError(
+              JaelError(
                 JaelErrorSeverity.warning,
                 '`declare` directive does not define any new symbols.',
-                element.tagName.span));
+                element.tagName.span,
+              ),
+            );
           } else {
             for (var attr in element.attributes) {
-              _scope!
-                  .create(attr.name, value: JaelVariable(attr.name, attr.span));
+              _scope!.create(
+                attr.name,
+                value: JaelVariable(attr.name, attr.span),
+              );
             }
           }
         } else if (element.tagName.name == 'element') {
@@ -113,13 +137,20 @@ class Analyzer extends Parser {
             //logger.info(
             //    'Found custom element $name at ${element.span.start.toolString}');
             try {
-              var symbol = parentScope!.create(name,
-                  value: JaelCustomElement(name, element.tagName.span),
-                  constant: true);
+              var symbol = parentScope!.create(
+                name,
+                value: JaelCustomElement(name, element.tagName.span),
+                constant: true,
+              );
               allDefinitions.add(symbol);
             } on StateError catch (e) {
-              addError(JaelError(
-                  JaelErrorSeverity.error, e.message, element.tagName.span));
+              addError(
+                JaelError(
+                  JaelErrorSeverity.error,
+                  e.message,
+                  element.tagName.span,
+                ),
+              );
             }
           }
         } else if (element.tagName.name == 'extend') {

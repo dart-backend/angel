@@ -20,23 +20,39 @@ class ExternalAuthOptions {
   final Set<String> scopes;
 
   ExternalAuthOptions._(
-      this.clientId, this.clientSecret, this.redirectUri, this.scopes);
+    this.clientId,
+    this.clientSecret,
+    this.redirectUri,
+    this.scopes,
+  );
 
-  factory ExternalAuthOptions(
-      {required String clientId,
-      required String clientSecret,
-      required redirectUri,
-      Iterable<String> scopes = const []}) {
+  factory ExternalAuthOptions({
+    required String clientId,
+    required String clientSecret,
+    required redirectUri,
+    Iterable<String> scopes = const [],
+  }) {
     if (redirectUri is String) {
       return ExternalAuthOptions._(
-          clientId, clientSecret, Uri.parse(redirectUri), scopes.toSet());
+        clientId,
+        clientSecret,
+        Uri.parse(redirectUri),
+        scopes.toSet(),
+      );
     } else if (redirectUri is Uri) {
       return ExternalAuthOptions._(
-          clientId, clientSecret, redirectUri, scopes.toSet());
+        clientId,
+        clientSecret,
+        redirectUri,
+        scopes.toSet(),
+      );
     } else {
       _log.severe('RedirectUri is not valid');
       throw ArgumentError.value(
-          redirectUri, 'redirectUri', 'must be a String or Uri');
+        redirectUri,
+        'redirectUri',
+        'must be a String or Uri',
+      );
     }
   }
 
@@ -76,11 +92,12 @@ class ExternalAuthOptions {
       const SetEquality<String>().equals(other.scopes, scopes);
 
   /// Creates a copy of this object, with the specified changes.
-  ExternalAuthOptions copyWith(
-      {String? clientId,
-      String? clientSecret,
-      redirectUri,
-      Iterable<String> scopes = const []}) {
+  ExternalAuthOptions copyWith({
+    String? clientId,
+    String? clientSecret,
+    redirectUri,
+    Iterable<String> scopes = const [],
+  }) {
     return ExternalAuthOptions(
       clientId: clientId ?? this.clientId,
       clientSecret: clientSecret ?? this.clientSecret,
@@ -121,8 +138,10 @@ class ExternalAuthOptions {
     if (!obscureSecret) {
       secret = clientSecret;
     } else {
-      var codeUnits =
-          List<int>.filled(asteriskCount ?? clientSecret.length, $asterisk);
+      var codeUnits = List<int>.filled(
+        asteriskCount ?? clientSecret.length,
+        $asterisk,
+      );
       secret = String.fromCharCodes(codeUnits);
     }
 

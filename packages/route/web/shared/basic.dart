@@ -19,8 +19,9 @@ void basic(BrowserRouter router) {
         ulList.item(i - 1)?.remove();
       }
 
-      var newList = result.allHandlers
-          .map((handler) => HTMLLIElement()..textContent = handler.toString());
+      var newList = result.allHandlers.map(
+        (handler) => HTMLLIElement()..textContent = handler.toString(),
+      );
 
       for (var rec in newList) {
         $ul.add(rec);

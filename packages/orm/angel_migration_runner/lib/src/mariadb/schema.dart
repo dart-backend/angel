@@ -57,7 +57,10 @@ class MariaDbSchema extends Schema {
   }
 
   void _create(
-      String tableName, void Function(Table table) callback, bool ifNotExists) {
+    String tableName,
+    void Function(Table table) callback,
+    bool ifNotExists,
+  ) {
     var op = ifNotExists ? ' IF NOT EXISTS' : '';
     var tbl = MariaDbTable();
     callback(tbl);
@@ -73,8 +76,9 @@ class MariaDbSchema extends Schema {
 
   @override
   void createIfNotExists(
-          String tableName, void Function(Table table) callback) =>
-      _create(tableName, callback, true);
+    String tableName,
+    void Function(Table table) callback,
+  ) => _create(tableName, callback, true);
 
   @override
   void indexes(String tableName, void Function(MutableIndexes index) callback) {

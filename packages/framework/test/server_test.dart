@@ -46,7 +46,10 @@ void main() {
     var req = await http.createRequestContext(rq, rs);
     var res = await http.createResponseContext(rq, rs);
     var e = AngelHttpException(
-        statusCode: 321, message: 'Hello', errors: ['foo', 'bar']);
+      statusCode: 321,
+      message: 'Hello',
+      errors: ['foo', 'bar'],
+    );
     await app.errorHandler(e, req, res);
     await http.sendResponse(rq, rs, req, res);
     expect(
@@ -113,8 +116,9 @@ void main() {
   group('handler results', () {
     var app = Angel(reflector: MirrorsReflector());
     var http = AngelHttp(app);
-    app.responseFinalizers
-        .add((req, res) => throw AngelHttpException.forbidden());
+    app.responseFinalizers.add(
+      (req, res) => throw AngelHttpException.forbidden(),
+    );
     late RequestContext req;
     late ResponseContext res;
 
@@ -128,8 +132,8 @@ void main() {
     group('getHandlerResult', () {
       test('return request handler', () async {
         handler(req, res) => (req, res) async {
-              return 2;
-            };
+          return 2;
+        };
         var r = await app.getHandlerResult(handler, req, res);
         expect(r, 2);
       });

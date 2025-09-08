@@ -2,7 +2,7 @@ import 'package:angel3_serialize/angel3_serialize.dart';
 part 'subclass.g.dart';
 
 @serializable
-class _Animal {
+class AnimalEntity {
   @notNull
   String? genus;
   @notNull
@@ -10,7 +10,7 @@ class _Animal {
 }
 
 @serializable
-class _Bird extends _Animal {
+class BirdEntity extends AnimalEntity {
   @DefaultsTo(false)
   bool? isSparrow;
 }

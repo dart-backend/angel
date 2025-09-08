@@ -20,8 +20,13 @@ class NotParselet implements PrefixParselet {
     var expression = parser.parseExpression(0);
 
     if (expression == null) {
-      parser.errors.add(JaelError(JaelErrorSeverity.error,
-          'Missing expression after "!" in negation expression.', token.span));
+      parser.errors.add(
+        JaelError(
+          JaelErrorSeverity.error,
+          'Missing expression after "!" in negation expression.',
+          token.span,
+        ),
+      );
     }
 
     return Negation(token, expression!);
@@ -36,18 +41,24 @@ class NewParselet implements PrefixParselet {
     var call = parser.parseExpression(0);
 
     if (call == null) {
-      parser.errors.add(JaelError(
+      parser.errors.add(
+        JaelError(
           JaelErrorSeverity.error,
           '"new" must precede a call expression. Nothing was found.',
-          call!.span));
+          call!.span,
+        ),
+      );
       return null;
     } else if (call is Call) {
       return NewExpression(token, call);
     } else {
-      parser.errors.add(JaelError(
+      parser.errors.add(
+        JaelError(
           JaelErrorSeverity.error,
           '"new" must precede a call expression, not a(n) ${call.runtimeType}.',
-          call.span));
+          call.span,
+        ),
+      );
       return null;
     }
   }
@@ -93,8 +104,13 @@ class ArrayParselet implements PrefixParselet {
     if (!parser.next(TokenType.rBracket)) {
       var lastSpan = items.isEmpty ? null : items.last.span;
       lastSpan ??= token.span;
-      parser.errors.add(JaelError(JaelErrorSeverity.error,
-          'Missing "]" to terminate array literal.', lastSpan));
+      parser.errors.add(
+        JaelError(
+          JaelErrorSeverity.error,
+          'Missing "]" to terminate array literal.',
+          lastSpan,
+        ),
+      );
       return null;
     }
 
@@ -119,8 +135,13 @@ class MapParselet implements PrefixParselet {
 
     if (!parser.next(TokenType.rCurly)) {
       var lastSpan = pairs.isEmpty ? token.span : pairs.last.span;
-      parser.errors.add(JaelError(
-          JaelErrorSeverity.error, 'Missing "}" in map literal.', lastSpan));
+      parser.errors.add(
+        JaelError(
+          JaelErrorSeverity.error,
+          'Missing "}" in map literal.',
+          lastSpan,
+        ),
+      );
       return null;
     }
 
@@ -143,14 +164,20 @@ class ParenthesisParselet implements PrefixParselet {
     var expression = parser.parseExpression(0);
 
     if (expression == null) {
-      parser.errors.add(JaelError(JaelErrorSeverity.error,
-          'Missing expression after "(".', token!.span));
+      parser.errors.add(
+        JaelError(
+          JaelErrorSeverity.error,
+          'Missing expression after "(".',
+          token!.span,
+        ),
+      );
       return null;
     }
 
     if (!parser.next(TokenType.rParen)) {
       parser.errors.add(
-          JaelError(JaelErrorSeverity.error, 'Missing ")".', expression.span));
+        JaelError(JaelErrorSeverity.error, 'Missing ")".', expression.span),
+      );
       return null;
     }
 

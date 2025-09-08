@@ -8,8 +8,9 @@ class Game {
   const Game({this.playerOne, this.playerTwo});
 
   factory Game.fromJson(Map data) => Game(
-      playerOne: data['playerOne'].toString(),
-      playerTwo: data['playerTwo'].toString());
+    playerOne: data['playerOne'].toString(),
+    playerTwo: data['playerTwo'].toString(),
+  );
 
   Map<String, dynamic> toJson() {
     return {'playerOne': playerOne, 'playerTwo': playerTwo};

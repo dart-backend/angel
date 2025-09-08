@@ -21,8 +21,10 @@ final RegExp _straySlashes = RegExp(r'(^/+)|(/+$)');
 abstract class ResponseContext<RawResponse>
     implements StreamConsumer<List<int>>, StreamSink<List<int>>, StringSink {
   final Map properties = {};
-  final CaseInsensitiveMap<String> _headers = CaseInsensitiveMap<String>.from(
-      {'content-type': 'text/plain', 'server': 'Angel3'});
+  final CaseInsensitiveMap<String> _headers = CaseInsensitiveMap<String>.from({
+    'content-type': 'text/plain',
+    'server': 'Angel3',
+  });
 
   //final log = Logger('ResponseContext');
 
@@ -168,14 +170,17 @@ abstract class ResponseContext<RawResponse>
   }
 
   /// Serializes JSON to the response.
-  Future<bool> json(value) =>
+  Future<bool> json(Object? value) =>
       serialize(value, contentType: MediaType('application', 'json'));
 
   /// Returns a JSONP response.
   ///
   /// You can override the [contentType] sent; by default it is `application/javascript`.
-  Future<void> jsonp(value,
-      {String callbackName = 'callback', MediaType? contentType}) {
+  Future<void> jsonp(
+    Object value, {
+    String callbackName = 'callback',
+    MediaType? contentType,
+  }) {
     if (!isOpen) throw closed();
     this.contentType = contentType ?? MediaType('application', 'javascript');
     write('$callbackName(${serializer(value)})');
@@ -186,10 +191,13 @@ abstract class ResponseContext<RawResponse>
   Future<void> render(String view, [Map<String, dynamic>? data]) {
     if (!isOpen) throw closed();
     contentType = MediaType('text', 'html', {'charset': 'utf-8'});
-    return Future<String>.sync(() => app!.viewGenerator!(
+    return Future<String>.sync(
+      () => app!.viewGenerator!(
         view,
         Map<String, dynamic>.from(renderParams)
-          ..addAll(data ?? <String, dynamic>{}))).then((content) {
+          ..addAll(data ?? <String, dynamic>{}),
+      ),
+    ).then((content) {
       write(content);
       return close();
     });
@@ -202,7 +210,7 @@ abstract class ResponseContext<RawResponse>
   /// based on the provided params.
   ///
   /// See [Router]#navigate for more. :)
-  Future<void> redirect(url, {bool absolute = true, int? code}) {
+  Future<void> redirect(Object? url, {bool absolute = true, int? code}) {
     if (!isOpen) throw closed();
     headers
       ..['content-type'] = 'text/html'
@@ -251,10 +259,13 @@ abstract class ResponseContext<RawResponse>
 
     if (matched != null) {
       await redirect(
-          matched.makeUri(params!.keys.fold<Map<String, dynamic>>({}, (out, k) {
+        matched.makeUri(
+          params!.keys.fold<Map<String, dynamic>>({}, (out, k) {
             return out..[k.toString()] = params[k];
-          })),
-          code: code);
+          }),
+        ),
+        code: code,
+      );
       return;
     }
 
@@ -269,7 +280,8 @@ abstract class ResponseContext<RawResponse>
 
     if (split.length < 2) {
       throw Exception(
-          "Controller redirects must take the form of 'Controller@action'. You gave: $action");
+        "Controller redirects must take the form of 'Controller@action'. You gave: $action",
+      );
     }
 
     var controller = app!.controllers[split[0].replaceAll(_straySlashes, '')];
@@ -282,7 +294,8 @@ abstract class ResponseContext<RawResponse>
 
     if (matched == null) {
       throw Exception(
-          "Controller '${split[0]}' does not contain any action named '${split[1]}'");
+        "Controller '${split[0]}' does not contain any action named '${split[1]}'",
+      );
     }
 
     final head = controller
@@ -293,16 +306,18 @@ abstract class ResponseContext<RawResponse>
     var tail = '';
     if (params != null) {
       tail = matched
-          .makeUri(params.keys.fold<Map<String, dynamic>>({}, (out, k) {
-            return out..[k.toString()] = params[k];
-          }))
+          .makeUri(
+            params.keys.fold<Map<String, dynamic>>({}, (out, k) {
+              return out..[k.toString()] = params[k];
+            }),
+          )
           .replaceAll(_straySlashes, '');
     }
     return redirect('$head/$tail'.replaceAll(_straySlashes, ''), code: code);
   }
 
   /// Serializes data to the response.
-  Future<bool> serialize(value, {MediaType? contentType}) async {
+  Future<bool> serialize(Object? value, {MediaType? contentType}) async {
     if (!isOpen) {
       throw closed();
     }

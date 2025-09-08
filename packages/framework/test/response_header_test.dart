@@ -43,16 +43,17 @@ void main() {
   test('Add Response Header', () async {
     http.addResponseHeader({
       'X-XSRF_TOKEN':
-          'a591a6d40bf420404a011733cfb7b190d62c65bf0bcda32b57b277d9ad9f146e'
+          'a591a6d40bf420404a011733cfb7b190d62c65bf0bcda32b57b277d9ad9f146e',
     });
 
     var request = await client.get('localhost', 3000, '/api/v1/user/list');
     HttpClientResponse response = await request.close();
     //print(response.headers);
     expect(
-        response.headers['X-XSRF_TOKEN'],
-        equals([
-          'a591a6d40bf420404a011733cfb7b190d62c65bf0bcda32b57b277d9ad9f146e'
-        ]));
+      response.headers['X-XSRF_TOKEN'],
+      equals([
+        'a591a6d40bf420404a011733cfb7b190d62c65bf0bcda32b57b277d9ad9f146e',
+      ]),
+    );
   }, skip: true);
 }

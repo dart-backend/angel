@@ -1,0 +1,13 @@
+services:
+  rethinkdb:
+    image: docker.io/rethinkdb:latest
+    restart: "no"
+    ports:
+      - "8080:8080"
+      - "28015:28015"
+      - "29015:29015"
+    networks:
+      - appnet
+
+networks:
+  appnet:

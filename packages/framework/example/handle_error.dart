@@ -16,7 +16,8 @@ void main() async {
     ..encoders.addAll({'gzip': gzip.encoder});
 
   app.fallback(
-      (req, res) => Future.error('Throwing just because I feel like!'));
+    (req, res) => Future.error('Throwing just because I feel like!'),
+  );
 
   var http = AngelHttp(app);
   HttpServer? server = await http.startServer('127.0.0.1', 3000);

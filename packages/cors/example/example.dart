@@ -14,7 +14,7 @@ Future configureServer(Angel app) async {
       cors(),
       (req, res) {
         // Request handling logic here...
-      }
+      },
     ]),
   );
 
@@ -25,13 +25,16 @@ Future configureServer(Angel app) async {
 
   // Of course, you can configure CORS.
   // The following is just a subset of the available options;
-  app.fallback(cors(
-    CorsOptions(
-      origin: 'https://pub.dartlang.org', successStatus: 200, // default 204
-      allowedHeaders: ['POST'],
-      preflightContinue: false, // default false
+  app.fallback(
+    cors(
+      CorsOptions(
+        origin: 'https://pub.dartlang.org',
+        successStatus: 200, // default 204
+        allowedHeaders: ['POST'],
+        preflightContinue: false, // default false
+      ),
     ),
-  ));
+  );
 
   // You can specify the origin in different ways:
   CorsOptions(origin: 'https://pub.dartlang.org');
@@ -40,12 +43,14 @@ Future configureServer(Angel app) async {
   CorsOptions(origin: (String s) => s.length == 4);
 
   // Lastly, you can dynamically configure CORS:
-  app.fallback(dynamicCors((req, res) {
-    return CorsOptions(
-      origin: [
-        req.headers!.value('origin') ?? 'https://pub.dartlang.org',
-        RegExp(r'\.com$'),
-      ],
-    );
-  }));
+  app.fallback(
+    dynamicCors((req, res) {
+      return CorsOptions(
+        origin: [
+          req.headers!.value('origin') ?? 'https://pub.dartlang.org',
+          RegExp(r'\.com$'),
+        ],
+      );
+    }),
+  );
 }

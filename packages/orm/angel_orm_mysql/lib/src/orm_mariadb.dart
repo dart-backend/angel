@@ -26,10 +26,13 @@ class MariaDbExecutor extends QueryExecutor {
 
   @override
   Future<List<List>> query(
-      String tableName, String query, Map<String, dynamic> substitutionValues,
-      {String returningQuery = '',
-      String resultQuery = '',
-      List<String> returningFields = const []}) async {
+    String tableName,
+    String query,
+    Map<String, dynamic> substitutionValues, {
+    String returningQuery = '',
+    String resultQuery = '',
+    List<String> returningFields = const [],
+  }) async {
     // Change @id -> ?
     for (var name in substitutionValues.keys) {
       query = query.replaceAll('@$name', '?');

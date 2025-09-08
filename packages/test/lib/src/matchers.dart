@@ -7,19 +7,22 @@ import 'package:angel3_validate/angel3_validate.dart';
 /// Expects a response to be a JSON representation of an `AngelHttpException`.
 ///
 /// You can optionally check for a matching [message], [statusCode] and [errors].
-Matcher isAngelHttpException(
-        {String? message,
-        int? statusCode,
-        Iterable<String> errors = const []}) =>
-    _IsAngelHttpException(
-        message: message, statusCode: statusCode, errors: errors);
+Matcher isAngelHttpException({
+  String? message,
+  int? statusCode,
+  Iterable<String> errors = const [],
+}) => _IsAngelHttpException(
+  message: message,
+  statusCode: statusCode,
+  errors: errors,
+);
 
 /// Expects a given response, when parsed as JSON,
 /// to equal a desired value.
-Matcher isJson(value) => _IsJson(value);
+Matcher isJson(dynamic value) => _IsJson(value);
 
 /// Expects a response to have the given content type, whether a `String` or [ContentType].
-Matcher hasContentType(contentType) => _HasContentType(contentType);
+Matcher hasContentType(dynamic contentType) => _HasContentType(contentType);
 
 /// Expects a response to have the given body.
 ///
@@ -28,7 +31,7 @@ Matcher hasContentType(contentType) => _HasContentType(contentType);
 ///
 /// If value is a `List<int>`, then it will be matched against `res.bodyBytes`.
 /// Otherwise, the string value will be matched against `res.body`.
-Matcher hasBody([value]) => _HasBody(value ?? true);
+Matcher hasBody([dynamic value]) => _HasBody(value ?? true);
 
 /// Expects a response to have a header named [key] which contains [value]. [value] can be a `String`, or a List of `String`s.
 ///
@@ -106,11 +109,13 @@ class _HasContentType extends Matcher {
 
       if (contentType is ContentType) {
         var compare = ContentType.parse(headerContentType);
-        return equals(contentType.mimeType)
-            .matches(compare.mimeType, matchState);
+        return equals(
+          contentType.mimeType,
+        ).matches(compare.mimeType, matchState);
       } else {
-        return equals(contentType.toString())
-            .matches(headerContentType, matchState);
+        return equals(
+          contentType.toString(),
+        ).matches(headerContentType, matchState);
       }
     }
 
@@ -118,12 +123,17 @@ class _HasContentType extends Matcher {
   }
 
   @override
-  Description describeMismatch(Object? item, Description mismatchDescription,
-      Map matchState, bool verbose) {
+  Description describeMismatch(
+    Object? item,
+    Description mismatchDescription,
+    Map matchState,
+    bool verbose,
+  ) {
     if (item is http.Response) {
       var headerContentType = item.headers['content-type'] ?? 'none';
-      mismatchDescription
-          .add("expected '$contentType' but got '$headerContentType'\n");
+      mismatchDescription.add(
+        "expected '$contentType' but got '$headerContentType'\n",
+      );
     } else {
       mismatchDescription.add(notHttpResponse);
     }
@@ -150,8 +160,9 @@ class _HasHeader extends Matcher {
   bool matches(item, Map matchState) {
     if (item is http.Response) {
       if (value == true) {
-        return contains(key.toLowerCase())
-            .matches(item.headers.keys, matchState);
+        return contains(
+          key.toLowerCase(),
+        ).matches(item.headers.keys, matchState);
       } else {
         var headerKey = item.headers[key.toLowerCase()];
         if (headerKey == null) return false;
@@ -164,8 +175,12 @@ class _HasHeader extends Matcher {
   }
 
   @override
-  Description describeMismatch(Object? item, Description mismatchDescription,
-      Map matchState, bool verbose) {
+  Description describeMismatch(
+    Object? item,
+    Description mismatchDescription,
+    Map matchState,
+    bool verbose,
+  ) {
     if (item is http.Response) {
       mismatchDescription.add("expected '$key' but got none\n");
     } else {
@@ -191,8 +206,12 @@ class _HasStatus extends Matcher {
       equals(status).matches(item.statusCode, matchState);
 
   @override
-  Description describeMismatch(Object? item, Description mismatchDescription,
-      Map matchState, bool verbose) {
+  Description describeMismatch(
+    Object? item,
+    Description mismatchDescription,
+    Map matchState,
+    bool verbose,
+  ) {
     if (item is http.Response) {
       mismatchDescription.add('expected $status but got ${item.statusCode}\n');
     } else {
@@ -229,8 +248,12 @@ class _HasValidBody extends Matcher {
   }
 
   @override
-  Description describeMismatch(Object? item, Description mismatchDescription,
-      Map matchState, bool verbose) {
+  Description describeMismatch(
+    Object? item,
+    Description mismatchDescription,
+    Map matchState,
+    bool verbose,
+  ) {
     if (item is http.Response) {
       if (_errors.isEmpty) {
         mismatchDescription.add("expected JSON but got invalid JSON\n");
@@ -251,8 +274,11 @@ class _IsAngelHttpException extends Matcher {
   int? statusCode;
   final List<String> errors = [];
 
-  _IsAngelHttpException(
-      {this.message, this.statusCode, Iterable<String> errors = const []}) {
+  _IsAngelHttpException({
+    this.message,
+    this.statusCode,
+    Iterable<String> errors = const [],
+  }) {
     this.errors.addAll(errors);
   }
 
@@ -314,7 +340,8 @@ class _IsAngelHttpException extends Matcher {
 
           if (errors.isNotEmpty) {
             if (!errors.every(
-                (err) => contains(err).matches(exc.errors, matchState))) {
+              (err) => contains(err).matches(exc.errors, matchState),
+            )) {
               return false;
             }
           }

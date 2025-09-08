@@ -21,12 +21,12 @@ void main() {
 
     try {
       document = jael.parseDocument(template, sourceUrl: 'test.jael');
-      scope = SymbolTable<dynamic>(values: {
-        'csrf_token': 'foo',
-        'profile': {
-          'avatar': 'thosakwe.png',
-        }
-      });
+      scope = SymbolTable<dynamic>(
+        values: {
+          'csrf_token': 'foo',
+          'profile': {'avatar': 'thosakwe.png'},
+        },
+      );
     } on jael.JaelError catch (e) {
       print(e);
       print(e.stackTrace);
@@ -37,8 +37,8 @@ void main() {
     print(buf);
 
     expect(
-        buf.toString(),
-        '''
+      buf.toString(),
+      '''
 <html>
   <body>
     <h1>
@@ -49,7 +49,8 @@ void main() {
   </body>
 </html>
     '''
-            .trim());
+          .trim(),
+    );
   });
 
   test('interpolation', () {
@@ -67,16 +68,16 @@ void main() {
     var buf = CodeBuffer();
     //jael.scan(template, sourceUrl: 'test.jael').tokens.forEach(print);
     var document = jael.parseDocument(template, sourceUrl: 'test.jael')!;
-    var scope = SymbolTable<dynamic>(values: {
-      'pokemon': const _Pokemon('Darkrai', 'Dark'),
-    });
+    var scope = SymbolTable<dynamic>(
+      values: {'pokemon': const _Pokemon('Darkrai', 'Dark')},
+    );
 
     const jael.Renderer().render(document, buf, scope);
     print(buf);
 
     expect(
-        buf.toString().replaceAll('\n', '').replaceAll(' ', '').trim(),
-        '''
+      buf.toString().replaceAll('\n', '').replaceAll(' ', '').trim(),
+      '''
 <!doctype HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
 <html>
   <body>
@@ -88,9 +89,10 @@ void main() {
   </body>
 </html>
     '''
-            .replaceAll('\n', '')
-            .replaceAll(' ', '')
-            .trim());
+          .replaceAll('\n', '')
+          .replaceAll(' ', '')
+          .trim(),
+    );
   });
 
   test('for loop', () {
@@ -107,16 +109,14 @@ void main() {
 
     var buf = CodeBuffer();
     var document = jael.parseDocument(template, sourceUrl: 'test.jael')!;
-    var scope = SymbolTable<dynamic>(values: {
-      'starters': _starters,
-    });
+    var scope = SymbolTable<dynamic>(values: {'starters': _starters});
 
     const jael.Renderer().render(document, buf, scope);
     print(buf);
 
     expect(
-        buf.toString(),
-        '''
+      buf.toString(),
+      '''
 <html>
   <body>
     <h1>
@@ -136,7 +136,8 @@ void main() {
   </body>
 </html>
     '''
-            .trim());
+          .trim(),
+    );
   });
 
   test('conditional', () {
@@ -152,16 +153,14 @@ void main() {
 
     var buf = CodeBuffer();
     var document = jael.parseDocument(template, sourceUrl: 'test.jael')!;
-    var scope = SymbolTable<dynamic>(values: {
-      'starters': _starters,
-    });
+    var scope = SymbolTable<dynamic>(values: {'starters': _starters});
 
     const jael.Renderer().render(document, buf, scope);
     print(buf);
 
     expect(
-        buf.toString(),
-        '''
+      buf.toString(),
+      '''
 <html>
   <body>
     <h1>
@@ -173,7 +172,8 @@ void main() {
   </body>
 </html>  
     '''
-            .trim());
+          .trim(),
+    );
   });
 
   test('declare', () {
@@ -204,8 +204,8 @@ void main() {
     print(buf);
 
     expect(
-        buf.toString(),
-        '''
+      buf.toString(),
+      '''
 <div>
   <ul>
     <li>
@@ -231,7 +231,8 @@ void main() {
   </ul>
 </div>
 '''
-            .trim());
+          .trim(),
+    );
   });
 
   test('unescaped attr/interp', () {
@@ -250,16 +251,17 @@ void main() {
     print(buf);
 
     expect(
-        buf.toString().replaceAll('\n', '').replaceAll(' ', '').trim(),
-        '''
+      buf.toString().replaceAll('\n', '').replaceAll(' ', '').trim(),
+      '''
 <div>
   <img src="<SCARY XSS>">
   <MORE SCARY XSS>
 </div>
 '''
-            .replaceAll('\n', '')
-            .replaceAll(' ', '')
-            .trim());
+          .replaceAll('\n', '')
+          .replaceAll(' ', '')
+          .trim(),
+    );
   });
 
   test('quoted attribute name', () {
@@ -275,12 +277,13 @@ void main() {
     print(buf);
 
     expect(
-        buf.toString(),
-        '''
+      buf.toString(),
+      '''
 <button (click)="myEventHandler(\$event)">
 </button>
 '''
-            .trim());
+          .trim(),
+    );
   });
 
   test('switch', () {
@@ -300,9 +303,9 @@ void main() {
 
     var buf = CodeBuffer();
     var document = jael.parseDocument(template, sourceUrl: 'test.jael')!;
-    var scope = SymbolTable<dynamic>(values: {
-      'account': _Account(isDisabled: true),
-    });
+    var scope = SymbolTable<dynamic>(
+      values: {'account': _Account(isDisabled: true)},
+    );
 
     const jael.Renderer().render(document, buf, scope);
     print(buf);
@@ -327,9 +330,9 @@ void main() {
 
     var buf = CodeBuffer();
     var document = jael.parseDocument(template, sourceUrl: 'test.jael')!;
-    var scope = SymbolTable<dynamic>(values: {
-      'account': _Account(isDisabled: null),
-    });
+    var scope = SymbolTable<dynamic>(
+      values: {'account': _Account(isDisabled: null)},
+    );
 
     const jael.Renderer().render(document, buf, scope);
     print(buf);

@@ -14,7 +14,7 @@ void main() {
   ws.WebSockets? client;
   srv.AngelWebSocket websockets;
   HttpServer? server;
-  String? url;
+  late String url;
 
   setUp(() async {
     app = srv.Angel(reflector: MirrorsReflector())
@@ -54,7 +54,7 @@ void main() {
     //app = null;
     client = null;
     server = null;
-    url = null;
+    //url = null;
     //exit(0);
   });
 

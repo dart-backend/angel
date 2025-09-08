@@ -6,8 +6,9 @@ import 'package:angel3_auth_oauth2/angel3_auth_oauth2.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:logging/logging.dart';
 
-var authorizationEndpoint =
-    Uri.parse('http://github.com/login/oauth/authorize');
+var authorizationEndpoint = Uri.parse(
+  'http://github.com/login/oauth/authorize',
+);
 
 var tokenEndpoint = Uri.parse('https://github.com/login/oauth/access_token');
 
@@ -28,7 +29,8 @@ Map<String, dynamic> parseParamsFromGithub(MediaType contentType, String body) {
   }
 
   throw FormatException(
-      'Invalid content-type $contentType; expected application/x-www-form-urlencoded or application/json.');
+    'Invalid content-type $contentType; expected application/x-www-form-urlencoded or application/json.',
+  );
 }
 
 void main() async {
@@ -48,10 +50,11 @@ void main() async {
 
   // Set up the authenticator plugin.
   var auth = AngelAuth<User>(
-      serializer: (user) async => user.id ?? '',
-      deserializer: (id) => mappedUserService.read(id),
-      jwtKey: 'oauth2 example secret',
-      allowCookie: false);
+    serializer: (user) async => user.id ?? '',
+    deserializer: (id) => mappedUserService.read(id),
+    jwtKey: 'oauth2 example secret',
+    allowCookie: false,
+  );
   await app.configure(auth.configureServer);
 
   /// Create an instance of the strategy class.
@@ -67,7 +70,7 @@ void main() async {
       var id = ghUser['id'] as int?;
 
       var matchingUsers = await mappedUserService.index({
-        'query': {'github_id': id}
+        'query': {'github_id': id},
       });
 
       if (matchingUsers.isNotEmpty) {
@@ -92,18 +95,23 @@ void main() async {
   // Mount some routes
   app.get('/auth/github', auth.authenticate('github'));
   app.get(
-      '/auth/github/callback',
-      auth.authenticate('github',
-          AngelAuthOptions(callback: (req, res, jwt) async {
-        // In real-life, you might include a pop-up callback script.
-        //
-        // Use `confirmPopupAuthentication`, which is bundled with
-        // `package:angel_auth`.
-        var user = req.container!.make<User>();
-        res.write('Your user info: ${user.toJson()}\n\n');
-        res.write('Your JWT: $jwt');
-        await res.close();
-      })));
+    '/auth/github/callback',
+    auth.authenticate(
+      'github',
+      AngelAuthOptions(
+        callback: (req, res, jwt) async {
+          // In real-life, you might include a pop-up callback script.
+          //
+          // Use `confirmPopupAuthentication`, which is bundled with
+          // `package:angel_auth`.
+          var user = req.container!.make<User>();
+          res.write('Your user info: ${user.toJson()}\n\n');
+          res.write('Your JWT: $jwt');
+          await res.close();
+        },
+      ),
+    ),
+  );
 
   // Start listening.
   await http.startServer('127.0.0.1', 3000);

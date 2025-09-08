@@ -33,10 +33,7 @@ class BikeMigration extends Migration {
 // **************************************************************************
 
 class BikeQuery extends Query<Bike, BikeQueryWhere> {
-  BikeQuery({
-    super.parent,
-    Set<String>? trampoline,
-  }) {
+  BikeQuery({super.parent, Set<String>? trampoline}) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = BikeQueryWhere(this);
@@ -75,8 +72,8 @@ class BikeQuery extends Query<Bike, BikeQueryWhere> {
     return _selectedFields.isEmpty
         ? localFields
         : localFields
-            .where((field) => _selectedFields.contains(field))
-            .toList();
+              .where((field) => _selectedFields.contains(field))
+              .toList();
   }
 
   BikeQuery select(List<String> selectedFields) {
@@ -100,14 +97,17 @@ class BikeQuery extends Query<Bike, BikeQueryWhere> {
     }
     var model = Bike(
       id: fields.contains('id') ? row[0].toString() : null,
-      createdAt:
-          fields.contains('created_at') ? mapToNullableDateTime(row[1]) : null,
-      updatedAt:
-          fields.contains('updated_at') ? mapToNullableDateTime(row[2]) : null,
+      createdAt: fields.contains('created_at')
+          ? mapToNullableDateTime(row[1])
+          : null,
+      updatedAt: fields.contains('updated_at')
+          ? mapToNullableDateTime(row[2])
+          : null,
       make: fields.contains('make') ? (row[3] as String) : '',
       description: fields.contains('description') ? (row[4] as String) : '',
-      familyFriendly:
-          fields.contains('family_friendly') ? mapToBool(row[5]) : false,
+      familyFriendly: fields.contains('family_friendly')
+          ? mapToBool(row[5])
+          : false,
       recalledAt: fields.contains('recalled_at')
           ? mapToDateTime(row[6])
           : DateTime.parse("1970-01-01 00:00:00"),
@@ -125,42 +125,15 @@ class BikeQuery extends Query<Bike, BikeQueryWhere> {
 
 class BikeQueryWhere extends QueryWhere {
   BikeQueryWhere(BikeQuery query)
-      : id = NumericSqlExpressionBuilder<int>(
-          query,
-          'id',
-        ),
-        createdAt = DateTimeSqlExpressionBuilder(
-          query,
-          'created_at',
-        ),
-        updatedAt = DateTimeSqlExpressionBuilder(
-          query,
-          'updated_at',
-        ),
-        make = StringSqlExpressionBuilder(
-          query,
-          'make',
-        ),
-        description = StringSqlExpressionBuilder(
-          query,
-          'description',
-        ),
-        familyFriendly = BooleanSqlExpressionBuilder(
-          query,
-          'family_friendly',
-        ),
-        recalledAt = DateTimeSqlExpressionBuilder(
-          query,
-          'recalled_at',
-        ),
-        price = NumericSqlExpressionBuilder<double>(
-          query,
-          'price',
-        ),
-        width = NumericSqlExpressionBuilder<int>(
-          query,
-          'width',
-        );
+    : id = NumericSqlExpressionBuilder<int>(query, 'id'),
+      createdAt = DateTimeSqlExpressionBuilder(query, 'created_at'),
+      updatedAt = DateTimeSqlExpressionBuilder(query, 'updated_at'),
+      make = StringSqlExpressionBuilder(query, 'make'),
+      description = StringSqlExpressionBuilder(query, 'description'),
+      familyFriendly = BooleanSqlExpressionBuilder(query, 'family_friendly'),
+      recalledAt = DateTimeSqlExpressionBuilder(query, 'recalled_at'),
+      price = NumericSqlExpressionBuilder<double>(query, 'price'),
+      width = NumericSqlExpressionBuilder<int>(query, 'width');
 
   final NumericSqlExpressionBuilder<int> id;
 
@@ -328,15 +301,16 @@ class Bike extends EntityBike {
     int? width,
   }) {
     return Bike(
-        id: id ?? this.id,
-        createdAt: createdAt ?? this.createdAt,
-        updatedAt: updatedAt ?? this.updatedAt,
-        make: make ?? this.make,
-        description: description ?? this.description,
-        familyFriendly: familyFriendly ?? this.familyFriendly,
-        recalledAt: recalledAt ?? this.recalledAt,
-        price: price ?? this.price,
-        width: width ?? this.width);
+      id: id ?? this.id,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      make: make ?? this.make,
+      description: description ?? this.description,
+      familyFriendly: familyFriendly ?? this.familyFriendly,
+      recalledAt: recalledAt ?? this.recalledAt,
+      price: price ?? this.price,
+      width: width ?? this.width,
+    );
   }
 
   @override
@@ -409,27 +383,28 @@ class BikeSerializer extends Codec<Bike, Map> {
 
   static Bike fromMap(Map map) {
     return Bike(
-        id: map['id'] as String?,
-        createdAt: map['created_at'] != null
-            ? (map['created_at'] is DateTime
+      id: map['id'] as String?,
+      createdAt: map['created_at'] != null
+          ? (map['created_at'] is DateTime
                 ? (map['created_at'] as DateTime)
                 : DateTime.parse(map['created_at'].toString()))
-            : null,
-        updatedAt: map['updated_at'] != null
-            ? (map['updated_at'] is DateTime
+          : null,
+      updatedAt: map['updated_at'] != null
+          ? (map['updated_at'] is DateTime
                 ? (map['updated_at'] as DateTime)
                 : DateTime.parse(map['updated_at'].toString()))
-            : null,
-        make: map['make'] as String,
-        description: map['description'] as String,
-        familyFriendly: map['family_friendly'] as bool,
-        recalledAt: map['recalled_at'] != null
-            ? (map['recalled_at'] is DateTime
+          : null,
+      make: map['make'] as String,
+      description: map['description'] as String,
+      familyFriendly: map['family_friendly'] as bool,
+      recalledAt: map['recalled_at'] != null
+          ? (map['recalled_at'] is DateTime
                 ? (map['recalled_at'] as DateTime)
                 : DateTime.parse(map['recalled_at'].toString()))
-            : DateTime.parse("1970-01-01 00:00:00"),
-        price: map['price'] as double,
-        width: map['width'] as int);
+          : DateTime.parse("1970-01-01 00:00:00"),
+      price: map['price'] as double,
+      width: map['width'] as int,
+    );
   }
 
   static Map<String, dynamic> toMap(EntityBike? model) {
@@ -445,7 +420,7 @@ class BikeSerializer extends Codec<Bike, Map> {
       'family_friendly': model.familyFriendly,
       'recalled_at': model.recalledAt.toIso8601String(),
       'price': model.price,
-      'width': model.width
+      'width': model.width,
     };
   }
 }

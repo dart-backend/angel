@@ -21,12 +21,7 @@ void main() {
 
   setUp(() {
     app = Angel(reflector: MirrorsReflector());
-    app.encoders.addAll(
-      {
-        'deflate': zlib.encoder,
-        'gzip': gzip.encoder,
-      },
-    );
+    app.encoders.addAll({'deflate': zlib.encoder, 'gzip': gzip.encoder});
 
     app.get('/hello', (req, res) {
       res

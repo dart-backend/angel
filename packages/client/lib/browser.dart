@@ -15,13 +15,17 @@ class Rest extends BaseAngelClient {
   Rest(String basePath) : super(http.BrowserClient(), basePath);
 
   @override
-  Future<AngelAuthResult> authenticate(
-      {String? type, credentials, String authEndpoint = '/auth'}) async {
+  Future<AngelAuthResult> authenticate({
+    String? type,
+    credentials,
+    String authEndpoint = '/auth',
+  }) async {
     if (type == null || type == 'token') {
       var storedToken = window.localStorage.getItem('token');
       if (storedToken == null) {
         throw Exception(
-            'Cannot revive token from localStorage - there is none.');
+          'Cannot revive token from localStorage - there is none.',
+        );
       }
 
       var token = json.decode(storedToken);
@@ -29,15 +33,21 @@ class Rest extends BaseAngelClient {
     }
 
     final result = await super.authenticate(
-        type: type, credentials: credentials, authEndpoint: authEndpoint);
+      type: type,
+      credentials: credentials,
+      authEndpoint: authEndpoint,
+    );
     window.localStorage.setItem('token', json.encode(authToken = result.token));
     window.localStorage.setItem('user', json.encode(result.data));
     return result;
   }
 
   @override
-  Stream<String> authenticateViaPopup(String url,
-      {String eventName = 'token', String? errorMessage}) {
+  Stream<String> authenticateViaPopup(
+    String url, {
+    String eventName = 'token',
+    String? errorMessage,
+  }) {
     var ctrl = StreamController<String>();
     var wnd = window.open(url, 'angel_client_auth_popup');
 
@@ -46,9 +56,12 @@ class Rest extends BaseAngelClient {
     Timer.periodic(Duration(milliseconds: 500), (timer) {
       if (!ctrl.isClosed) {
         if (wnd != null && wnd.closed) {
-          ctrl.addError(AngelHttpException.notAuthenticated(
+          ctrl.addError(
+            AngelHttpException.notAuthenticated(
               message:
-                  errorMessage ?? 'Authentication via popup window failed.'));
+                  errorMessage ?? 'Authentication via popup window failed.',
+            ),
+          );
           ctrl.close();
           timer.cancel();
           //sub?.cancel();
@@ -60,17 +73,18 @@ class Rest extends BaseAngelClient {
 
     EventListener? sub;
     window.addEventListener(
-        eventName,
-        sub = (ev) {
-          var e = ev as CustomEvent;
-          if (!ctrl.isClosed) {
-            ctrl.add(e.detail.toString());
-            //t.cancel();
-            ctrl.close();
-            //sub!.cancel();
-            window.removeEventListener(eventName, sub);
-          }
-        }.toJS);
+      eventName,
+      sub = (ev) {
+        var e = ev as CustomEvent;
+        if (!ctrl.isClosed) {
+          ctrl.add(e.detail.toString());
+          //t.cancel();
+          ctrl.close();
+          //sub!.cancel();
+          window.removeEventListener(eventName, sub);
+        }
+      }.toJS,
+    );
 
     /* With dart:html
     sub = window.on[eventName].listen((Event ev) {

@@ -15,7 +15,7 @@ For documentation about the ORM, see [Developer Guide](https://angel3-docs.dukef
 
 ## Usage
 
-1. Create a model, i.e. `car.dart`
+1. Create a model with `Entity` suffix, i.e. `CarEntity` in car.dart`
 
    ```dart
     import 'package:angel3_migration/angel3_migration.dart';

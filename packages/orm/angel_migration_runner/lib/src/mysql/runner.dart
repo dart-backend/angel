@@ -16,8 +16,11 @@ class MySqlMigrationRunner implements MigrationRunner {
   final MySQLConnection connection;
   bool _connected = false;
 
-  MySqlMigrationRunner(this.connection,
-      {Iterable<Migration> migrations = const [], bool connected = false}) {
+  MySqlMigrationRunner(
+    this.connection, {
+    Iterable<Migration> migrations = const [],
+    bool connected = false,
+  }) {
     if (migrations.isNotEmpty) {
       migrations.forEach(addMigration);
     }
@@ -40,21 +43,24 @@ class MySqlMigrationRunner implements MigrationRunner {
       _connected = true;
     }
 
-    await connection.execute('''
+    await connection
+        .execute('''
     CREATE TABLE IF NOT EXISTS migrations (
       id integer NOT NULL AUTO_INCREMENT,
       batch integer,
       path varchar(500),
       PRIMARY KEY(id)
     );
-    ''').then((result) {
-      //print(result);
-      _log.info('Check and create "migrations" table');
-    }).catchError((e) {
-      //print(e);
-      _log.severe('Failed to create "migrations" table.');
-      throw e;
-    });
+    ''')
+        .then((result) {
+          //print(result);
+          _log.info('Check and create "migrations" table');
+        })
+        .catchError((e) {
+          //print(e);
+          _log.severe('Failed to create "migrations" table.');
+          throw e;
+        });
   }
 
   @override
@@ -73,8 +79,9 @@ class MySqlMigrationRunner implements MigrationRunner {
     });
 
     if (toRun.isNotEmpty) {
-      var result =
-          await connection.execute('SELECT MAX(batch) from migrations;');
+      var result = await connection.execute(
+        'SELECT MAX(batch) from migrations;',
+      );
       var curBatch = 0;
       if (result.rows.isNotEmpty) {
         var firstRow = result.rows.first;
@@ -90,11 +97,12 @@ class MySqlMigrationRunner implements MigrationRunner {
         await schema.run(connection).then((_) async {
           var result = await connection
               .execute(
-                  "INSERT INTO migrations (batch, path) VALUES ($curBatch, '$k')")
+                "INSERT INTO migrations (batch, path) VALUES ($curBatch, '$k')",
+              )
               .catchError((e) {
-            _log.severe('Failed to insert into "migrations" table.', e);
-            throw Exception(e);
-          });
+                _log.severe('Failed to insert into "migrations" table.', e);
+                throw Exception(e);
+              });
 
           return result.affectedRows.toInt();
         });
@@ -114,8 +122,9 @@ class MySqlMigrationRunner implements MigrationRunner {
       var firstRow = result.rows.first;
       curBatch = int.tryParse(firstRow.colAt(0) ?? "0") ?? 0;
     }
-    result = await connection
-        .execute('SELECT path from migrations WHERE batch = $curBatch;');
+    result = await connection.execute(
+      'SELECT path from migrations WHERE batch = $curBatch;',
+    );
     var existing = <String>[];
     for (var item in result.rows) {
       var rec = item.assoc().values.first ?? "";
@@ -134,8 +143,9 @@ class MySqlMigrationRunner implements MigrationRunner {
         migration.down(schema);
         _log.info('Removed "$k" from "migrations" table.');
         await schema.run(connection).then((_) {
-          return connection
-              .execute('DELETE FROM migrations WHERE path = \'$k\';');
+          return connection.execute(
+            'DELETE FROM migrations WHERE path = \'$k\';',
+          );
         });
       }
     } else {
@@ -146,8 +156,9 @@ class MySqlMigrationRunner implements MigrationRunner {
   @override
   Future reset() async {
     await _init();
-    var result = await connection
-        .execute('SELECT path from migrations ORDER BY batch DESC;');
+    var result = await connection.execute(
+      'SELECT path from migrations ORDER BY batch DESC;',
+    );
 
     // "mysql_client" driver will auto convert path containing "\\" to "\".
     // So need to revert "\" back to "\\" for the migration logic to work
@@ -166,8 +177,9 @@ class MySqlMigrationRunner implements MigrationRunner {
         migration.down(schema);
         _log.info('Removed "$k" from "migrations" table.');
         await schema.run(connection).then((_) {
-          return connection
-              .execute('DELETE FROM migrations WHERE path = \'$k\';');
+          return connection.execute(
+            'DELETE FROM migrations WHERE path = \'$k\';',
+          );
         });
       }
     } else {

@@ -18,10 +18,13 @@ void main() async {
   });
 
   test('throws if view is not found', () {
-    expect(Future(() async {
-      var fails = await angel.viewGenerator!('fail', {'this_should': 'fail'});
-      print(fails);
-    }), throwsA(isA<FileSystemException>()));
+    expect(
+      Future(() async {
+        var fails = await angel.viewGenerator!('fail', {'this_should': 'fail'});
+        print(fails);
+      }),
+      throwsA(isA<FileSystemException>()),
+    );
   });
 
   test('partials', () async {

@@ -28,23 +28,30 @@ class CachingVirtualDirectory extends VirtualDirectory {
   /// Set this to `null` to leave no `Expires` header on responses.
   final int maxAge;
 
-  CachingVirtualDirectory(super.app, super.fileSystem,
-      {this.accessLevel = CacheAccessLevel.public,
-      super.source,
-      bool debug = false,
-      super.indexFileNames,
-      this.maxAge = 0,
-      this.noCache = false,
-      this.onlyInProduction = false,
-      this.useEtags = true,
-      super.allowDirectoryListing,
-      super.useBuffer,
-      super.publicPath,
-      super.callback});
+  CachingVirtualDirectory(
+    super.app,
+    super.fileSystem, {
+    this.accessLevel = CacheAccessLevel.public,
+    super.source,
+    bool debug = false,
+    super.indexFileNames,
+    this.maxAge = 0,
+    this.noCache = false,
+    this.onlyInProduction = false,
+    this.useEtags = true,
+    super.allowDirectoryListing,
+    super.useBuffer,
+    super.publicPath,
+    super.callback,
+  });
 
   @override
   Future<bool> serveFile(
-      File file, FileStat stat, RequestContext req, ResponseContext res) {
+    File file,
+    FileStat stat,
+    RequestContext req,
+    ResponseContext res,
+  ) {
     res.headers['accept-ranges'] = 'bytes';
 
     if (onlyInProduction == true && req.app?.environment.isProduction != true) {
@@ -60,7 +67,8 @@ class CachingVirtualDirectory extends VirtualDirectory {
     var shouldNotCache = noCache == true;
 
     if (!shouldNotCache) {
-      shouldNotCache = reqHeaders.value('cache-control') == 'no-cache' ||
+      shouldNotCache =
+          reqHeaders.value('cache-control') == 'no-cache' ||
           reqHeaders.value('pragma') == 'no-cache';
     }
 
@@ -106,10 +114,12 @@ class CachingVirtualDirectory extends VirtualDirectory {
           }
         } catch (_) {
           _log.severe(
-              'Invalid date for ${ifRange ? 'if-range' : 'if-not-modified-since'} header.');
+            'Invalid date for ${ifRange ? 'if-range' : 'if-not-modified-since'} header.',
+          );
           throw AngelHttpException.badRequest(
-              message:
-                  'Invalid date for ${ifRange ? 'if-range' : 'if-not-modified-since'} header.');
+            message:
+                'Invalid date for ${ifRange ? 'if-range' : 'if-not-modified-since'} header.',
+          );
         }
       }
 
@@ -131,7 +141,8 @@ class CachingVirtualDirectory extends VirtualDirectory {
             if (etag == '*') {
               hasBeenModified = true;
             } else {
-              hasBeenModified = !_etags.containsKey(file.absolute.path) ||
+              hasBeenModified =
+                  !_etags.containsKey(file.absolute.path) ||
                   _etags[file.absolute.path] != etag;
             }
           }
@@ -150,8 +161,9 @@ class CachingVirtualDirectory extends VirtualDirectory {
 
       return file.lastModified().then((stamp) {
         if (useEtags) {
-          res.headers['ETag'] = _etags[file.absolute.path] =
-              stamp.millisecondsSinceEpoch.toString();
+          res.headers['ETag'] = _etags[file.absolute.path] = stamp
+              .millisecondsSinceEpoch
+              .toString();
         }
 
         setCachedHeaders(stat.modified, req, res);
@@ -161,7 +173,10 @@ class CachingVirtualDirectory extends VirtualDirectory {
   }
 
   void setCachedHeaders(
-      DateTime modified, RequestContext req, ResponseContext res) {
+    DateTime modified,
+    RequestContext req,
+    ResponseContext res,
+  ) {
     var privacy = accessLevel.level;
 
     res.headers

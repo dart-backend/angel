@@ -44,20 +44,21 @@ void main() async {
 
   // In case we can't connect to dartlang.org, show an error.
   app.fallback(
-      (req, res) => res.write('Couldn\'t connect to Pub or dartlang.'));
+    (req, res) => res.write('Couldn\'t connect to Pub or dartlang.'),
+  );
 
   app.logger = Logger('angel')
-    ..onRecord.listen(
-      (rec) {
-        print(rec);
-        if (rec.error != null) print(rec.error);
-        if (rec.stackTrace != null) print(rec.stackTrace);
-      },
-    );
+    ..onRecord.listen((rec) {
+      print(rec);
+      if (rec.error != null) print(rec.error);
+      if (rec.stackTrace != null) print(rec.stackTrace);
+    });
 
-  var server =
-      await AngelHttp(app).startServer(InternetAddress.loopbackIPv4, 8080);
+  var server = await AngelHttp(
+    app,
+  ).startServer(InternetAddress.loopbackIPv4, 8080);
   print('Listening at http://${server.address.address}:${server.port}');
   print(
-      'Check this out! http://${server.address.address}:${server.port}/pub/packages/angel_framework');
+    'Check this out! http://${server.address.address}:${server.port}/pub/packages/angel_framework',
+  );
 }

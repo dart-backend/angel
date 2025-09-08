@@ -7,9 +7,11 @@ abstract class BuilderNode extends DomNode {
   void destroy<T>(DomBuilderElement<T> el);
 }
 
-DomNode h(String tagName,
-    [Map<String, dynamic> props = const {},
-    Iterable<DomNode> children = const []]) {
+DomNode h(
+  String tagName, [
+  Map<String, dynamic> props = const {},
+  Iterable<DomNode> children = const [],
+]) {
   return _H(tagName, props, children);
 }
 

@@ -15,7 +15,9 @@ class EmptyReflector extends Reflector {
   @override
   String? getName(Symbol symbol) {
     return _symbolNames.putIfAbsent(
-        symbol, () => symbolRegex.firstMatch(symbol.toString())?.group(1));
+      symbol,
+      () => symbolRegex.firstMatch(symbol.toString())?.group(1),
+    );
   }
 
   @override
@@ -41,20 +43,25 @@ class EmptyReflector extends Reflector {
 
 class _EmptyReflectedClass extends ReflectedClass {
   const _EmptyReflectedClass()
-      : super(
-            '(empty)',
-            const <ReflectedTypeParameter>[],
-            const <ReflectedInstance>[],
-            const <ReflectedFunction>[],
-            const <ReflectedDeclaration>[],
-            Object);
+    : super(
+        '(empty)',
+        const <ReflectedTypeParameter>[],
+        const <ReflectedInstance>[],
+        const <ReflectedFunction>[],
+        const <ReflectedDeclaration>[],
+        Object,
+      );
 
   @override
   ReflectedInstance newInstance(
-      String constructorName, List positionalArguments,
-      [Map<String, dynamic>? namedArguments, List<Type>? typeArguments]) {
+    String constructorName,
+    List positionalArguments, [
+    Map<String, dynamic>? namedArguments,
+    List<Type>? typeArguments,
+  ]) {
     throw UnsupportedError(
-        'Classes reflected via an EmptyReflector cannot be instantiated.');
+      'Classes reflected via an EmptyReflector cannot be instantiated.',
+    );
   }
 
   @override
@@ -65,15 +72,18 @@ class _EmptyReflectedClass extends ReflectedClass {
 
 class _EmptyReflectedType extends ReflectedType {
   const _EmptyReflectedType()
-      : super('(empty)', const <ReflectedTypeParameter>[], Object);
+    : super('(empty)', const <ReflectedTypeParameter>[], Object);
 
   @override
   ReflectedInstance newInstance(
-      String constructorName, List positionalArguments,
-      [Map<String, dynamic> namedArguments = const {},
-      List<Type> typeArguments = const []]) {
+    String constructorName,
+    List positionalArguments, [
+    Map<String, dynamic> namedArguments = const {},
+    List<Type> typeArguments = const [],
+  ]) {
     throw UnsupportedError(
-        'Types reflected via an EmptyReflector cannot be instantiated.');
+      'Types reflected via an EmptyReflector cannot be instantiated.',
+    );
   }
 
   @override
@@ -84,29 +94,32 @@ class _EmptyReflectedType extends ReflectedType {
 
 class _EmptyReflectedInstance extends ReflectedInstance {
   const _EmptyReflectedInstance()
-      : super(const _EmptyReflectedType(), const _EmptyReflectedClass(), null);
+    : super(const _EmptyReflectedType(), const _EmptyReflectedClass(), null);
 
   @override
   ReflectedInstance getField(String name) {
     throw UnsupportedError(
-        'Instances reflected via an EmptyReflector cannot call getField().');
+      'Instances reflected via an EmptyReflector cannot call getField().',
+    );
   }
 }
 
 class _EmptyReflectedFunction extends ReflectedFunction {
   const _EmptyReflectedFunction()
-      : super(
-            '(empty)',
-            const <ReflectedTypeParameter>[],
-            const <ReflectedInstance>[],
-            const <ReflectedParameter>[],
-            false,
-            false,
-            returnType: const _EmptyReflectedType());
+    : super(
+        '(empty)',
+        const <ReflectedTypeParameter>[],
+        const <ReflectedInstance>[],
+        const <ReflectedParameter>[],
+        false,
+        false,
+        returnType: const _EmptyReflectedType(),
+      );
 
   @override
   ReflectedInstance invoke(Invocation invocation) {
     throw UnsupportedError(
-        'Instances reflected via an EmptyReflector cannot call invoke().');
+      'Instances reflected via an EmptyReflector cannot call invoke().',
+    );
   }
 }

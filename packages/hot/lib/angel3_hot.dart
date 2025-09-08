@@ -64,11 +64,14 @@ class HotReloader {
   ///
   /// [paths] can contain [FileSystemEntity], [Uri], [String] and [Glob] only.
   /// URI's can be `package:` URI's as well.
-  HotReloader(this.generator, Iterable paths,
-      {Duration? timeout,
-      this.vmServiceHost = 'localhost',
-      this.vmServicePort = 8181,
-      this.enableHotkeys = true}) {
+  HotReloader(
+    this.generator,
+    Iterable paths, {
+    Duration? timeout,
+    this.vmServiceHost = 'localhost',
+    this.vmServicePort = 8181,
+    this.enableHotkeys = true,
+  }) {
     _timeout = timeout ?? Duration(seconds: 5);
     _paths.addAll(paths);
   }
@@ -79,16 +82,26 @@ class HotReloader {
   }
 
   void sendError(HttpRequest request, int status, String title_, e) {
-    var doc = html(lang: 'en', c: [
-      head(c: [
-        meta(name: 'viewport', content: 'width=device-width, initial-scale=1'),
-        title(c: [text(title_)])
-      ]),
-      body(c: [
-        h1(c: [text(title_)]),
-        i(c: [text(e.toString())])
-      ])
-    ]);
+    var doc = html(
+      lang: 'en',
+      c: [
+        head(
+          c: [
+            meta(
+              name: 'viewport',
+              content: 'width=device-width, initial-scale=1',
+            ),
+            title(c: [text(title_)]),
+          ],
+        ),
+        body(
+          c: [
+            h1(c: [text(title_)]),
+            i(c: [text(e.toString())]),
+          ],
+        ),
+      ],
+    );
 
     var response = request.response;
     response.statusCode = HttpStatus.badGateway;
@@ -124,8 +137,12 @@ class HotReloader {
       Timer(timeout, () {
         if (_requestQueue.remove(request)) {
           // Send 502 response
-          sendError(request, HttpStatus.badGateway, '502 Bad Gateway',
-              'Request timed out after ${timeout.inMilliseconds}ms.');
+          sendError(
+            request,
+            HttpStatus.badGateway,
+            '502 Bad Gateway',
+            'Request timed out after ${timeout.inMilliseconds}ms.',
+          );
         }
       });
     }
@@ -157,14 +174,17 @@ class HotReloader {
   }
 
   /// Starts listening to requests and filesystem events.
-  Future<HttpServer> startServer(
-      [String address = '127.0.0.1', int port = 3000]) async {
+  Future<HttpServer> startServer([
+    String address = '127.0.0.1',
+    int port = 3000,
+  ]) async {
     var isHot = true;
     _server = await _generateServer();
 
     if (_paths.isNotEmpty != true) {
       _logWarning(
-          'You have instantiated a HotReloader without providing any filesystem paths to watch.');
+        'You have instantiated a HotReloader without providing any filesystem paths to watch.',
+      );
     }
 
     bool sw(String s) {
@@ -173,7 +193,8 @@ class HotReloader {
 
     if (!sw('--observe') && !sw('--enable-vm-service')) {
       _logWarning(
-          'You have instantiated a HotReloader without passing `--enable-vm-service` or `--observe` to the Dart VM. Hot reloading will be disabled.');
+        'You have instantiated a HotReloader without passing `--enable-vm-service` or `--observe` to the Dart VM. Hot reloading will be disabled.',
+      );
       isHot = false;
     } else {
       var info = await dev.Service.getInfo();
@@ -192,8 +213,10 @@ class HotReloader {
         for (var isolate in _vmachine?.isolates ?? <vm.IsolateRef>[]) {
           var isolateId = isolate.id;
           if (isolateId != null) {
-            await _client.setIsolatePauseMode(isolateId,
-                exceptionPauseMode: 'None');
+            await _client.setIsolatePauseMode(
+              isolateId,
+              exceptionPauseMode: 'None',
+            );
           }
         }
       }
@@ -202,8 +225,8 @@ class HotReloader {
     }
 
     _onChange.stream
-        //.transform( _Debounce( Duration(seconds: 1)))
-        .listen(_handleWatchEvent);
+    //.transform( _Debounce( Duration(seconds: 1)))
+    .listen(_handleWatchEvent);
 
     while (_requestQueue.isNotEmpty) {
       await _handle(_requestQueue.removeFirst());
@@ -214,34 +237,46 @@ class HotReloader {
 
     // Print a Flutter-like prompt...
     if (enableHotkeys) {
-      var serverUri =
-          Uri(scheme: 'http', host: server.address.address, port: server.port);
+      var serverUri = Uri(
+        scheme: 'http',
+        host: server.address.address,
+        port: server.port,
+      );
 
       Uri? observatoryUri;
       if (isHot) {
         observatoryUri = await dev.Service.getInfo().then((i) => i.serverUri);
       }
 
-      print(styleBold.wrap(
-          '\n🔥  To hot reload changes while running, press "r". To hot restart (and rebuild state), press "R".'));
+      print(
+        styleBold.wrap(
+          '\n🔥  To hot reload changes while running, press "r". To hot restart (and rebuild state), press "R".',
+        ),
+      );
       stdout.write('Your server is listening at: ');
       print(wrapWith('$serverUri', [cyan, styleUnderlined]));
 
       if (isHot) {
         stdout.write(
-            'An Observatory debugger and profiler on ${Platform.operatingSystem} is available at: ');
+          'An Observatory debugger and profiler on ${Platform.operatingSystem} is available at: ',
+        );
 
         print(wrapWith('$observatoryUri', [cyan, styleUnderlined]));
       } else {
         stdout.write(
-            'The observatory debugger and profiler are not available.\n');
+          'The observatory debugger and profiler are not available.\n',
+        );
       }
       print(
-          'For a more detailed help message, press "h". To quit, press "q".\n');
+        'For a more detailed help message, press "h". To quit, press "q".\n',
+      );
 
       if (_paths.isNotEmpty) {
-        print(darkGray.wrap(
-            'Changes to the following path(s) will also trigger a hot reload:'));
+        print(
+          darkGray.wrap(
+            'Changes to the following path(s) will also trigger a hot reload:',
+          ),
+        );
 
         for (var p in _paths) {
           print(darkGray.wrap('  * $p'));
@@ -261,7 +296,9 @@ class HotReloader {
         sub = stdin.expand((l) => l).listen((ch) async {
           if (ch == $r) {
             _handleWatchEvent(
-                WatchEvent(ChangeType.MODIFY, '[manual-reload]'), isHot);
+              WatchEvent(ChangeType.MODIFY, '[manual-reload]'),
+              isHot,
+            );
           }
           if (ch == $R) {
             _logInfo('Manually restarting server...\n');
@@ -278,9 +315,11 @@ class HotReloader {
             exit(0);
           } else if (ch == $h) {
             print(
-                'Press "r" to hot reload the Dart VM, and restart the active server.');
+              'Press "r" to hot reload the Dart VM, and restart the active server.',
+            );
             print(
-                'Press "R" to restart the server, WITHOUT a hot reload of the VM.');
+              'Press "R" to restart the server, WITHOUT a hot reload of the VM.',
+            );
             print('Press "q" to quit the server.');
             print('Press "h" to display this help information.');
             stdout.writeln();
@@ -315,7 +354,8 @@ class HotReloader {
         }
       } else {
         throw ArgumentError(
-            'Hot reload paths must be a FileSystemEntity, a Uri, a String or a Glob. You provided: $path');
+          'Hot reload paths must be a FileSystemEntity, a Uri, a String or a Glob. You provided: $path',
+        );
       }
     }
   }
@@ -340,9 +380,12 @@ class HotReloader {
 
         var watcher = Watcher(path);
 
-        watcher.events.listen(_onChange.add, onError: (e) {
-          _logWarning('Could not listen to file changes at $path: $e');
-        });
+        watcher.events.listen(
+          _onChange.add,
+          onError: (e) {
+            _logWarning('Could not listen to file changes at $path: $e');
+          },
+        );
 
         // print('Listening for file changes at ${path}...');
         return true;
@@ -355,7 +398,8 @@ class HotReloader {
 
     if (r == null) {
       _logWarning(
-          'Unable to watch path "$path" from working directory "${Directory.current.path}". Please ensure that it exists.');
+        'Unable to watch path "$path" from working directory "${Directory.current.path}". Please ensure that it exists.',
+      );
     }
   }
 
@@ -373,7 +417,8 @@ class HotReloader {
                 await client.close();
               } catch (e) {
                 _logWarning(
-                    'Couldn\'t close WebSocket from session #${client.request.session?.id}: $e');
+                  'Couldn\'t close WebSocket from session #${client.request.session?.id}: $e',
+                );
               }
             }
           }
@@ -401,7 +446,8 @@ class HotReloader {
 
         if (report.success != null) {
           _logWarning(
-              'Hot reload failed - perhaps some sources have not been generated yet.');
+            'Hot reload failed - perhaps some sources have not been generated yet.',
+          );
         }
       } else {
         _logWarning('Hot reload failed - isolate id does not exist.');

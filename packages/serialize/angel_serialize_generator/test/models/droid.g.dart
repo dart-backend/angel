@@ -7,7 +7,7 @@ part of 'droid.dart';
 // **************************************************************************
 
 @generatedSerializable
-class Droid extends _Droid {
+class Droid extends DroidEntity {
   Droid({
     this.id,
     this.createdAt,
@@ -15,6 +15,7 @@ class Droid extends _Droid {
     this.name,
     required this.position,
     required this.age,
+    required this.description,
   });
 
   @override
@@ -37,6 +38,9 @@ class Droid extends _Droid {
   @override
   num age;
 
+  @override
+  String description;
+
   Droid copyWith({
     String? id,
     DateTime? createdAt,
@@ -44,25 +48,29 @@ class Droid extends _Droid {
     String? name,
     String? position,
     num? age,
+    String? description,
   }) {
     return Droid(
-        id: id ?? this.id,
-        createdAt: createdAt ?? this.createdAt,
-        updatedAt: updatedAt ?? this.updatedAt,
-        name: name ?? this.name,
-        position: position ?? this.position,
-        age: age ?? this.age);
+      id: id ?? this.id,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      name: name ?? this.name,
+      position: position ?? this.position,
+      age: age ?? this.age,
+      description: description ?? this.description,
+    );
   }
 
   @override
   bool operator ==(other) {
-    return other is _Droid &&
+    return other is DroidEntity &&
         other.id == id &&
         other.createdAt == createdAt &&
         other.updatedAt == updatedAt &&
         other.name == name &&
         other.position == position &&
-        other.age == age;
+        other.age == age &&
+        other.description == description;
   }
 
   @override
@@ -74,12 +82,13 @@ class Droid extends _Droid {
       name,
       position,
       age,
+      description,
     ]);
   }
 
   @override
   String toString() {
-    return 'Droid(id=$id, createdAt=$createdAt, updatedAt=$updatedAt, name=$name, position=$position, age=$age)';
+    return 'Droid(id=$id, createdAt=$createdAt, updatedAt=$updatedAt, name=$name, position=$position, age=$age, description=$description)';
   }
 
   Map<String, dynamic> toJson() {
@@ -118,23 +127,25 @@ class DroidSerializer extends Codec<Droid, Map> {
 
   static Droid fromMap(Map map) {
     return Droid(
-        id: map['id'] as String?,
-        createdAt: map['created_at'] != null
-            ? (map['created_at'] is DateTime
+      id: map['id'] as String?,
+      createdAt: map['created_at'] != null
+          ? (map['created_at'] is DateTime
                 ? (map['created_at'] as DateTime)
                 : DateTime.parse(map['created_at'].toString()))
-            : null,
-        updatedAt: map['updated_at'] != null
-            ? (map['updated_at'] is DateTime
+          : null,
+      updatedAt: map['updated_at'] != null
+          ? (map['updated_at'] is DateTime
                 ? (map['updated_at'] as DateTime)
                 : DateTime.parse(map['updated_at'].toString()))
-            : null,
-        name: map['name'] as String?,
-        position: map['position'] as String,
-        age: map['age'] as num);
+          : null,
+      name: map['name'] as String?,
+      position: map['position'] as String,
+      age: map['age'] as num,
+      description: map['description'] as String,
+    );
   }
 
-  static Map<String, dynamic> toMap(_Droid? model) {
+  static Map<String, dynamic> toMap(DroidEntity? model) {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }
@@ -144,7 +155,8 @@ class DroidSerializer extends Codec<Droid, Map> {
       'updated_at': model.updatedAt?.toIso8601String(),
       'name': model.name,
       'position': model.position,
-      'age': model.age
+      'age': model.age,
+      'description': model.description,
     };
   }
 }
@@ -157,6 +169,7 @@ abstract class DroidFields {
     name,
     position,
     age,
+    description,
   ];
 
   static const String id = 'id';
@@ -170,4 +183,6 @@ abstract class DroidFields {
   static const String position = 'position';
 
   static const String age = 'age';
+
+  static const String description = 'description';
 }

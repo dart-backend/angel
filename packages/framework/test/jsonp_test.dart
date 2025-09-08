@@ -12,13 +12,16 @@ void main() {
 
   app.get('/default', (req, res) => res.jsonp({'foo': 'bar'}));
 
-  app.get('/callback',
-      (req, res) => res.jsonp({'foo': 'bar'}, callbackName: 'doIt'));
+  app.get(
+    '/callback',
+    (req, res) => res.jsonp({'foo': 'bar'}, callbackName: 'doIt'),
+  );
 
   app.get(
-      '/contentType',
-      (req, res) =>
-          res.jsonp({'foo': 'bar'}, contentType: MediaType('foo', 'bar')));
+    '/contentType',
+    (req, res) =>
+        res.jsonp({'foo': 'bar'}, contentType: MediaType('foo', 'bar')),
+  );
 
   Future<MediaType> getContentType(String path) async {
     var rq = MockHttpRequest('GET', Uri(path: '/$path'));

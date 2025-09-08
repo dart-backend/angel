@@ -26,8 +26,7 @@ abstract class BaseWebSocketClient extends BaseAngelClient {
   final StreamController<Map<String, WebSocketEvent>> _onServiceEvent =
       StreamController<Map<String, WebSocketEvent>>.broadcast();
   final StreamController<WebSocketChannelException>
-      _onWebSocketChannelException =
-      StreamController<WebSocketChannelException>();
+  _onWebSocketChannelException = StreamController<WebSocketChannelException>();
 
   /// Use this to handle events that are not standard.
   final WebSocketExtraneousEventHandler on = WebSocketExtraneousEventHandler();
@@ -84,8 +83,12 @@ abstract class BaseWebSocketClient extends BaseAngelClient {
     }
   }
 
-  BaseWebSocketClient(super.client, super.baseUrl,
-      {this.reconnectOnClose = true, Duration? reconnectInterval}) {
+  BaseWebSocketClient(
+    super.client,
+    super.baseUrl, {
+    this.reconnectOnClose = true,
+    Duration? reconnectInterval,
+  }) {
     _reconnectInterval = reconnectInterval ?? Duration(seconds: 10);
   }
 
@@ -112,35 +115,40 @@ abstract class BaseWebSocketClient extends BaseAngelClient {
       timer = Timer(timeout, () {
         if (!c.isCompleted) {
           if (timer.isActive) timer.cancel();
-          c.completeError(TimeoutException(
+          c.completeError(
+            TimeoutException(
               'WebSocket connection exceeded timeout of ${timeout.inMilliseconds} ms',
-              timeout));
+              timeout,
+            ),
+          );
         }
       });
 
       scheduleMicrotask(() {
-        getConnectedWebSocket().then((socket) {
-          if (!c.isCompleted) {
-            if (timer.isActive) timer.cancel();
+        getConnectedWebSocket()
+            .then((socket) {
+              if (!c.isCompleted) {
+                if (timer.isActive) timer.cancel();
 
-            while (_queue.isNotEmpty) {
-              var action = _queue.removeFirst();
-              socket.sink.add(serialize(action));
-            }
+                while (_queue.isNotEmpty) {
+                  var action = _queue.removeFirst();
+                  socket.sink.add(serialize(action));
+                }
 
-            c.complete(socket);
-          }
-        }).catchError((e, StackTrace st) {
-          if (!c.isCompleted) {
-            if (timer.isActive) {
-              timer.cancel();
-            }
+                c.complete(socket);
+              }
+            })
+            .catchError((e, StackTrace st) {
+              if (!c.isCompleted) {
+                if (timer.isActive) {
+                  timer.cancel();
+                }
 
-            // TODO: Re-evaluate this error
-            var obj = 'Error';
-            c.completeError(obj, st);
-          }
-        });
+                // TODO: Re-evaluate this error
+                var obj = 'Error';
+                c.completeError(obj, st);
+              }
+            });
       });
 
       return await c.future.then((socket) {
@@ -162,76 +170,84 @@ abstract class BaseWebSocketClient extends BaseAngelClient {
   Future<WebSocketChannel> getConnectedWebSocket();
 
   @override
-  Service<Id, Data> service<Id, Data>(String path,
-      {Type? type, AngelDeserializer<Data>? deserializer}) {
+  Service<Id, Data> service<Id, Data>(
+    String path, {
+    Type? type,
+    AngelDeserializer<Data>? deserializer,
+  }) {
     var uri = path.toString().replaceAll(_straySlashes, '');
-    var wsService = WebSocketsService<Id, Data>(socket, this, uri,
-        deserializer: deserializer);
+    var wsService = WebSocketsService<Id, Data>(
+      socket,
+      this,
+      uri,
+      deserializer: deserializer,
+    );
     return wsService as Service<Id, Data>;
   }
 
   /// Starts listening for data.
   void listen() {
     _socket?.stream.listen(
-        (data) {
-          _onData.add(data);
+      (data) {
+        _onData.add(data);
 
-          if (data is WebSocketChannelException) {
-            _onWebSocketChannelException.add(data);
-          } else if (data is String) {
-            var jsons = json.decode(data);
+        if (data is WebSocketChannelException) {
+          _onWebSocketChannelException.add(data);
+        } else if (data is String) {
+          var jsons = json.decode(data);
 
-            if (jsons is Map) {
-              var event = WebSocketEvent.fromJson(jsons);
+          if (jsons is Map) {
+            var event = WebSocketEvent.fromJson(jsons);
 
-              if (event.eventName?.isNotEmpty == true) {
-                _onAllEvents.add(event);
-                on._getStream(event.eventName)!.add(event);
-              }
+            if (event.eventName?.isNotEmpty == true) {
+              _onAllEvents.add(event);
+              on._getStream(event.eventName)!.add(event);
+            }
 
-              if (event.eventName == errorEvent) {
-                var error =
-                    AngelHttpException.fromMap((event.data ?? {}) as Map);
-                _onError.add(error);
-              } else if (event.eventName == authenticatedEvent) {
-                var authResult = AngelAuthResult.fromMap(event.data as Map?);
-                _onAuthenticated.add(authResult);
-              } else if (event.eventName?.isNotEmpty == true) {
-                var split = event.eventName!
-                    .split('::')
-                    .where((str) => str.isNotEmpty)
-                    .toList();
+            if (event.eventName == errorEvent) {
+              var error = AngelHttpException.fromMap((event.data ?? {}) as Map);
+              _onError.add(error);
+            } else if (event.eventName == authenticatedEvent) {
+              var authResult = AngelAuthResult.fromMap(event.data as Map?);
+              _onAuthenticated.add(authResult);
+            } else if (event.eventName?.isNotEmpty == true) {
+              var split = event.eventName!
+                  .split('::')
+                  .where((str) => str.isNotEmpty)
+                  .toList();
 
-                if (split.length >= 2) {
-                  var serviceName = split[0], eventName = split[1];
-                  _onServiceEvent
-                      .add({serviceName: event..eventName = eventName});
-                }
+              if (split.length >= 2) {
+                var serviceName = split[0], eventName = split[1];
+                _onServiceEvent.add({
+                  serviceName: event..eventName = eventName,
+                });
               }
             }
           }
-        },
-        cancelOnError: true,
-        onDone: () {
-          _socket = null;
-          if (reconnectOnClose == true) {
-            Timer.periodic(reconnectInterval!, (Timer timer) async {
-              WebSocketChannel? result;
+        }
+      },
+      cancelOnError: true,
+      onDone: () {
+        _socket = null;
+        if (reconnectOnClose == true) {
+          Timer.periodic(reconnectInterval!, (Timer timer) async {
+            WebSocketChannel? result;
 
-              try {
-                result = await connect(timeout: reconnectInterval);
-              } catch (e) {
-                //
-              }
+            try {
+              result = await connect(timeout: reconnectInterval);
+            } catch (e) {
+              //
+            }
 
-              if (result != null) timer.cancel();
-            });
-          }
-        });
+            if (result != null) timer.cancel();
+          });
+        }
+      },
+    );
   }
 
   /// Serializes data to JSON.
-  dynamic serialize(x) => json.encode(x);
+  dynamic serialize(dynamic x) => json.encode(x);
 
   /// Sends the given [action] on the [socket].
   void sendAction(WebSocketAction action) {
@@ -244,12 +260,14 @@ abstract class BaseWebSocketClient extends BaseAngelClient {
 
   /// Attempts to authenticate a WebSocket, using a valid JWT.
   void authenticateViaJwt(String? jwt) {
-    sendAction(WebSocketAction(
-      eventName: authenticateAction,
-      params: {
-        'query': {'jwt': jwt}
-      },
-    ));
+    sendAction(
+      WebSocketAction(
+        eventName: authenticateAction,
+        params: {
+          'query': {'jwt': jwt},
+        },
+      ),
+    );
   }
 }
 
@@ -323,14 +341,16 @@ class WebSocketsService<Id, Data> extends Service<Id, Data?> {
   dynamic serialize(WebSocketAction action) => json.encode(action);
 
   /// Deserializes data from a [WebSocketEvent].
-  Data? deserialize(x) {
-    return deserializer != null ? deserializer!(x) : x as Data?;
+  Data? deserialize(dynamic x) {
+    return deserializer != null ? deserializer!(x) : x;
   }
 
   /// Deserializes the contents of an [event].
   WebSocketEvent<Data> transformEvent(WebSocketEvent event) {
     return WebSocketEvent(
-        eventName: event.eventName, data: deserialize(event.data));
+      eventName: event.eventName,
+      data: deserialize(event.data),
+    );
   }
 
   /// Starts listening for events.
@@ -344,8 +364,9 @@ class WebSocketsService<Id, Data> extends Service<Id, Data?> {
         if (event.eventName == indexedEvent) {
           var d = event.data;
           var transformed = WebSocketEvent(
-              eventName: event.eventName,
-              data: d is Iterable ? d.map(deserialize).toList() : null);
+            eventName: event.eventName,
+            data: d is Iterable ? d.map(deserialize).toList() : null,
+          );
           if (transformed.data != null) {
             _onIndexed.add(transformed.data!);
           }
@@ -382,53 +403,71 @@ class WebSocketsService<Id, Data> extends Service<Id, Data?> {
 
   @override
   Future<List<Data>?> index([Map<String, dynamic>? params]) async {
-    app.sendAction(WebSocketAction(
-        eventName: '$path::$indexAction', params: params ?? {}));
+    app.sendAction(
+      WebSocketAction(eventName: '$path::$indexAction', params: params ?? {}),
+    );
     return null;
   }
 
   @override
   Future<Data?> read(id, [Map<String, dynamic>? params]) async {
-    app.sendAction(WebSocketAction(
+    app.sendAction(
+      WebSocketAction(
         eventName: '$path::$readAction',
         id: id.toString(),
-        params: params ?? {}));
+        params: params ?? {},
+      ),
+    );
     return null;
   }
 
   @override
   Future<Data?> create(data, [Map<String, dynamic>? params]) async {
-    app.sendAction(WebSocketAction(
-        eventName: '$path::$createAction', data: data, params: params ?? {}));
+    app.sendAction(
+      WebSocketAction(
+        eventName: '$path::$createAction',
+        data: data,
+        params: params ?? {},
+      ),
+    );
     return null;
   }
 
   @override
   Future<Data?> modify(id, data, [Map<String, dynamic>? params]) async {
-    app.sendAction(WebSocketAction(
+    app.sendAction(
+      WebSocketAction(
         eventName: '$path::$modifyAction',
         id: id.toString(),
         data: data,
-        params: params ?? {}));
+        params: params ?? {},
+      ),
+    );
     return null;
   }
 
   @override
   Future<Data?> update(id, data, [Map<String, dynamic>? params]) async {
-    app.sendAction(WebSocketAction(
+    app.sendAction(
+      WebSocketAction(
         eventName: '$path::$updateAction',
         id: id.toString(),
         data: data,
-        params: params ?? {}));
+        params: params ?? {},
+      ),
+    );
     return null;
   }
 
   @override
   Future<Data?> remove(id, [Map<String, dynamic>? params]) async {
-    app.sendAction(WebSocketAction(
+    app.sendAction(
+      WebSocketAction(
         eventName: '$path::$removeAction',
         id: id.toString(),
-        params: params ?? {}));
+        params: params ?? {},
+      ),
+    );
     return null;
   }
 }

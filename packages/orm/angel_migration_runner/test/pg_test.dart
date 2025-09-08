@@ -22,13 +22,15 @@ void main() async {
     //print("$host $database $username $password");
 
     conn = await Connection.open(
-        Endpoint(
-            host: host,
-            port: 5432,
-            database: database,
-            username: username,
-            password: password),
-        settings: ConnectionSettings(sslMode: SslMode.disable));
+      Endpoint(
+        host: host,
+        port: 5432,
+        database: database,
+        username: username,
+        password: password,
+      ),
+      settings: ConnectionSettings(sslMode: SslMode.disable),
+    );
 
     runner = PostgresMigrationRunner(
       conn,

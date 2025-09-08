@@ -45,8 +45,11 @@ VirtualDirectory inlineAssetsFromVirtualDirectory(VirtualDirectory vDir) =>
 ///
 /// Powers both [inlineAssets] and [inlineAssetsFromVirtualDirectory].
 Future inlineAssetsIntoDocument(
-    html.Document doc, Directory? assetDirectory) async {
-  var linksWithRel = doc.head
+  html.Document doc,
+  Directory? assetDirectory,
+) async {
+  var linksWithRel =
+      doc.head
           ?.getElementsByTagName('link')
           .where((link) => link.attributes['rel'] == 'stylesheet') ??
       <html.Element>[];
@@ -94,16 +97,23 @@ class _InlineAssets extends VirtualDirectory {
   final VirtualDirectory inner;
 
   _InlineAssets(this.inner)
-      : super(inner.app, inner.fileSystem,
-            source: inner.source,
-            indexFileNames: inner.indexFileNames,
-            publicPath: inner.publicPath,
-            callback: inner.callback,
-            allowDirectoryListing: inner.allowDirectoryListing);
+    : super(
+        inner.app,
+        inner.fileSystem,
+        source: inner.source,
+        indexFileNames: inner.indexFileNames,
+        publicPath: inner.publicPath,
+        callback: inner.callback,
+        allowDirectoryListing: inner.allowDirectoryListing,
+      );
 
   @override
   Future<bool> serveFile(
-      File file, FileStat stat, RequestContext req, ResponseContext res) async {
+    File file,
+    FileStat stat,
+    RequestContext req,
+    ResponseContext res,
+  ) async {
     if (p.extension(file.path) == '.html') {
       var contents = await file.readAsString();
       var doc = html.parse(contents, sourceUrl: file.uri.toString());

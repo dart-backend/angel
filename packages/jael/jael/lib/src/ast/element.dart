@@ -57,12 +57,19 @@ class SelfClosingElement extends Element {
   Iterable<ElementChild> get children => [];
 
   SelfClosingElement(
-      this.lt, this.tagName, this.attributes, this.slash, this.gt);
+    this.lt,
+    this.tagName,
+    this.attributes,
+    this.slash,
+    this.gt,
+  );
 
   @override
   FileSpan get span {
     var start = attributes.fold<FileSpan>(
-        lt.span.expand(tagName.span), (out, a) => out.expand(a.span));
+      lt.span.expand(tagName.span),
+      (out, a) => out.expand(a.span),
+    );
     return slash != null
         ? start.expand(slash!.span).expand(gt.span)
         : start.expand(gt.span);
@@ -81,14 +88,25 @@ class RegularElement extends Element {
   @override
   final Iterable<ElementChild> children;
 
-  RegularElement(this.lt, this.tagName, this.attributes, this.gt, this.children,
-      this.lt2, this.slash, this.tagName2, this.gt2);
+  RegularElement(
+    this.lt,
+    this.tagName,
+    this.attributes,
+    this.gt,
+    this.children,
+    this.lt2,
+    this.slash,
+    this.tagName2,
+    this.gt2,
+  );
 
   @override
   FileSpan get span {
     var openingTag = attributes
         .fold<FileSpan>(
-            lt.span.expand(tagName.span), (out, a) => out.expand(a.span))
+          lt.span.expand(tagName.span),
+          (out, a) => out.expand(a.span),
+        )
         .expand(gt.span);
 
     if (gt2 == null) return openingTag;

@@ -39,7 +39,9 @@ abstract class Table {
   MigrationColumn varChar(String name, {int? length}) {
     if (length == null) return declare(name, ColumnType.varChar);
     return declareColumn(
-        name, Column(type: ColumnType.varChar, length: length));
+      name,
+      Column(type: ColumnType.varChar, length: length),
+    );
   }
 }
 

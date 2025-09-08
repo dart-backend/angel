@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data';
 
-import 'package:analyzer/dart/element/element.dart';
+import 'package:analyzer/dart/element/element2.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:build/build.dart';
 import 'package:code_builder/code_builder.dart';
@@ -20,22 +20,23 @@ TypeReference convertTypeReference(DartType? t) {
   });
 }
 
-bool isRequiredParameter(ParameterElement e) {
+bool isRequiredParameter(FormalParameterElement e) {
   return e.isRequired;
 }
 
-bool isOptionalParameter(ParameterElement e) {
+bool isOptionalParameter(FormalParameterElement e) {
   return e.isOptional;
 }
 
-Parameter convertParameter(ParameterElement e) {
+Parameter convertParameter(FormalParameterElement e) {
   return Parameter((b) {
     b
-      ..name = e.name
+      ..name = e.name3 ?? ''
       ..type = convertTypeReference(e.type)
       ..named = e.isNamed
-      ..defaultTo =
-          e.defaultValueCode == null ? null : Code(e.defaultValueCode!);
+      ..defaultTo = e.defaultValueCode == null
+          ? null
+          : Code(e.defaultValueCode!);
   });
 }
 
@@ -208,13 +209,18 @@ class BuildSystemFile extends File {
       throw _unsupported();
 
   @override
-  IOSink openWrite(
-          {FileMode mode = FileMode.write, Encoding encoding = utf8}) =>
-      throw _unsupported();
+  IOSink openWrite({
+    FileMode mode = FileMode.write,
+    Encoding encoding = utf8,
+  }) => throw _unsupported();
 
   @override
   Directory get parent => BuildSystemDirectory(
-      fileSystem, reader, package, fileSystem.path.dirname(path));
+    fileSystem,
+    reader,
+    package,
+    fileSystem.path.dirname(path),
+  );
 
   @override
   Future<Uint8List> readAsBytes() {
@@ -278,33 +284,40 @@ class BuildSystemFile extends File {
   FileStat statSync() => throw _unsupported();
 
   @override
-  Stream<FileSystemEvent> watch(
-          {int events = FileSystemEvent.all, bool recursive = false}) =>
-      throw _unsupported();
+  Stream<FileSystemEvent> watch({
+    int events = FileSystemEvent.all,
+    bool recursive = false,
+  }) => throw _unsupported();
 
   @override
-  Future<File> writeAsBytes(List<int> bytes,
-          {FileMode mode = FileMode.write, bool flush = false}) =>
-      throw _unsupported();
+  Future<File> writeAsBytes(
+    List<int> bytes, {
+    FileMode mode = FileMode.write,
+    bool flush = false,
+  }) => throw _unsupported();
 
   @override
-  void writeAsBytesSync(List<int> bytes,
-          {FileMode mode = FileMode.write, bool flush = false}) =>
-      throw _unsupported();
+  void writeAsBytesSync(
+    List<int> bytes, {
+    FileMode mode = FileMode.write,
+    bool flush = false,
+  }) => throw _unsupported();
 
   @override
-  Future<File> writeAsString(String contents,
-          {FileMode mode = FileMode.write,
-          Encoding encoding = utf8,
-          bool flush = false}) =>
-      throw _unsupported();
+  Future<File> writeAsString(
+    String contents, {
+    FileMode mode = FileMode.write,
+    Encoding encoding = utf8,
+    bool flush = false,
+  }) => throw _unsupported();
 
   @override
-  void writeAsStringSync(String contents,
-          {FileMode mode = FileMode.write,
-          Encoding encoding = utf8,
-          bool flush = false}) =>
-      throw _unsupported();
+  void writeAsStringSync(
+    String contents, {
+    FileMode mode = FileMode.write,
+    Encoding encoding = utf8,
+    bool flush = false,
+  }) => throw _unsupported();
 }
 
 class BuildSystemDirectory extends Directory {
@@ -326,13 +339,21 @@ class BuildSystemDirectory extends Directory {
   @override
   Directory childDirectory(String basename) {
     return BuildSystemDirectory(
-        fileSystem, reader, package, fileSystem.path.join(path, basename));
+      fileSystem,
+      reader,
+      package,
+      fileSystem.path.join(path, basename),
+    );
   }
 
   @override
   File childFile(String basename) {
     return BuildSystemFile(
-        fileSystem, reader, package, fileSystem.path.join(path, basename));
+      fileSystem,
+      reader,
+      package,
+      fileSystem.path.join(path, basename),
+    );
   }
 
   @override
@@ -370,19 +391,25 @@ class BuildSystemDirectory extends Directory {
   bool get isAbsolute => true;
 
   @override
-  Stream<FileSystemEntity> list(
-          {bool recursive = false, bool followLinks = true}) =>
-      throw _unsupported();
+  Stream<FileSystemEntity> list({
+    bool recursive = false,
+    bool followLinks = true,
+  }) => throw _unsupported();
 
   @override
-  List<FileSystemEntity> listSync(
-          {bool recursive = false, bool followLinks = true}) =>
-      throw _unsupported();
+  List<FileSystemEntity> listSync({
+    bool recursive = false,
+    bool followLinks = true,
+  }) => throw _unsupported();
 
   @override
   Directory get parent {
     return BuildSystemDirectory(
-        fileSystem, reader, package, fileSystem.path.dirname(path));
+      fileSystem,
+      reader,
+      package,
+      fileSystem.path.dirname(path),
+    );
   }
 
   @override
@@ -407,7 +434,8 @@ class BuildSystemDirectory extends Directory {
   Uri get uri => fileSystem.path.toUri(path);
 
   @override
-  Stream<FileSystemEvent> watch(
-          {int events = FileSystemEvent.all, bool recursive = false}) =>
-      throw _unsupported();
+  Stream<FileSystemEvent> watch({
+    int events = FileSystemEvent.all,
+    bool recursive = false,
+  }) => throw _unsupported();
 }

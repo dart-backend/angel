@@ -13,15 +13,17 @@ import 'package:belatuk_symbol_table/belatuk_symbol_table.dart';
 /// with a function that returns a new instance of [CodeBuffer].
 ///
 /// To apply additional transforms to parsed documents, provide a set of [patch] functions.
-AngelConfigurer jael(Directory viewsDirectory,
-    {String fileExtension = '.jael',
-    bool strictResolution = false,
-    bool cacheViews = true,
-    Map<String, Document>? cache,
-    Iterable<Patcher> patch = const [],
-    bool asDSX = false,
-    bool minified = true,
-    CodeBuffer Function()? createBuffer}) {
+AngelConfigurer jael(
+  Directory viewsDirectory, {
+  String fileExtension = '.jael',
+  bool strictResolution = false,
+  bool cacheViews = true,
+  Map<String, Document>? cache,
+  Iterable<Patcher> patch = const [],
+  bool asDSX = false,
+  bool minified = true,
+  CodeBuffer Function()? createBuffer,
+}) {
   var localCache = cache ?? <String, Document>{};
 
   var bufferFunc = createBuffer ?? () => CodeBuffer();
@@ -40,8 +42,13 @@ AngelConfigurer jael(Directory viewsDirectory,
       if (cacheViews && localCache.containsKey(name)) {
         processed = localCache[name];
       } else {
-        processed = await _loadViewTemplate(viewsDirectory, name,
-            fileExtension: fileExtension, asDSX: asDSX, patch: patch);
+        processed = await _loadViewTemplate(
+          viewsDirectory,
+          name,
+          fileExtension: fileExtension,
+          asDSX: asDSX,
+          patch: patch,
+        );
 
         if (cacheViews) {
           localCache[name] = processed!;
@@ -52,14 +59,22 @@ AngelConfigurer jael(Directory viewsDirectory,
 
       var buf = bufferFunc();
       var scope = SymbolTable(
-          values: locals?.keys.fold<Map<String, dynamic>>(<String, dynamic>{},
-                  (out, k) => out..[k.toString()] = locals[k]) ??
-              <String, dynamic>{});
+        values:
+            locals?.keys.fold<Map<String, dynamic>>(
+              <String, dynamic>{},
+              (out, k) => out..[k.toString()] = locals[k],
+            ) ??
+            <String, dynamic>{},
+      );
 
       if (errors.isEmpty) {
         try {
-          const Renderer().render(processed!, buf, scope,
-              strictResolution: strictResolution);
+          const Renderer().render(
+            processed!,
+            buf,
+            scope,
+            strictResolution: strictResolution,
+          );
           return buf.toString();
         } on JaelError catch (e) {
           errors.add(e);
@@ -77,10 +92,12 @@ AngelConfigurer jael(Directory viewsDirectory,
 ///
 /// To apply additional transforms to parsed documents, provide a set of [patch] functions.
 Future<void> jaelTemplatePreload(
-    Directory viewsDirectory, Map<String, Document> cache,
-    {String fileExtension = '.jael',
-    bool asDSX = false,
-    Iterable<Patcher> patch = const []}) async {
+  Directory viewsDirectory,
+  Map<String, Document> cache, {
+  String fileExtension = '.jael',
+  bool asDSX = false,
+  Iterable<Patcher> patch = const [],
+}) async {
   await viewsDirectory.list(recursive: true).forEach((f) async {
     if (f.basename.endsWith(fileExtension)) {
       var name = f.basename.split(".");
@@ -95,25 +112,36 @@ Future<void> jaelTemplatePreload(
   });
 }
 
-Future<Document?> _loadViewTemplate(Directory viewsDirectory, String name,
-    {String fileExtension = '.jael',
-    bool asDSX = false,
-    Iterable<Patcher> patch = const []}) async {
+Future<Document?> _loadViewTemplate(
+  Directory viewsDirectory,
+  String name, {
+  String fileExtension = '.jael',
+  bool asDSX = false,
+  Iterable<Patcher> patch = const [],
+}) async {
   var errors = <JaelError>[];
   Document? processed;
 
   var file = viewsDirectory.childFile(name + fileExtension);
   var contents = await file.readAsString();
-  var doc = parseDocument(contents,
-      sourceUrl: file.uri, asDSX: asDSX, onError: errors.add);
+  var doc = parseDocument(
+    contents,
+    sourceUrl: file.uri,
+    asDSX: asDSX,
+    onError: errors.add,
+  );
 
   if (doc == null) {
     throw ArgumentError("${file.basename} does not exists");
   }
 
   try {
-    processed =
-        await (resolve(doc, viewsDirectory, patch: patch, onError: errors.add));
+    processed = await (resolve(
+      doc,
+      viewsDirectory,
+      patch: patch,
+      onError: errors.add,
+    ));
   } catch (e) {
     // Ignore these errors, so that we can show syntax errors.
   }

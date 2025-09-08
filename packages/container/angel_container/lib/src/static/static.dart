@@ -9,17 +9,19 @@ class StaticReflector extends Reflector {
   final Map<Function, ReflectedFunction> functions;
   final Map<Object, ReflectedInstance> instances;
 
-  const StaticReflector(
-      {this.names = const {},
-      this.types = const {},
-      this.functions = const {},
-      this.instances = const {}});
+  const StaticReflector({
+    this.names = const {},
+    this.types = const {},
+    this.functions = const {},
+    this.instances = const {},
+  });
 
   @override
   String? getName(Symbol symbol) {
     if (!names.containsKey(symbol)) {
       throw ArgumentError(
-          'The value of $symbol is unknown - it was not generated.');
+        'The value of $symbol is unknown - it was not generated.',
+      );
     }
 
     return names[symbol];
@@ -33,7 +35,8 @@ class StaticReflector extends Reflector {
   ReflectedFunction? reflectFunction(Function function) {
     if (!functions.containsKey(function)) {
       throw ArgumentError(
-          'There is no reflection information available about $function.');
+        'There is no reflection information available about $function.',
+      );
     }
 
     return functions[function];
@@ -43,7 +46,8 @@ class StaticReflector extends Reflector {
   ReflectedInstance? reflectInstance(Object object) {
     if (!instances.containsKey(object)) {
       throw ArgumentError(
-          'There is no reflection information available about $object.');
+        'There is no reflection information available about $object.',
+      );
     }
 
     return instances[object];
@@ -53,7 +57,8 @@ class StaticReflector extends Reflector {
   ReflectedType? reflectType(Type type) {
     if (!types.containsKey(type)) {
       throw ArgumentError(
-          'There is no reflection information available about $type.');
+        'There is no reflection information available about $type.',
+      );
     }
 
     return types[type];

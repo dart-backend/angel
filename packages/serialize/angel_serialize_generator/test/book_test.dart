@@ -5,22 +5,24 @@ const String deathlyHallowsIsbn = '0-545-01022-5';
 
 void main() {
   var deathlyHallows = Book(
-      id: '0',
-      author: 'J.K. Rowling',
-      title: 'Harry Potter and the Deathly Hallows',
-      description: 'The 7th book.',
-      pageCount: 759,
-      notModels: [1.0, 3.0],
-      updatedAt: DateTime.now());
+    id: '0',
+    author: 'J.K. Rowling',
+    title: 'Harry Potter and the Deathly Hallows',
+    description: 'The 7th book.',
+    pageCount: 759,
+    notModels: [1.0, 3.0],
+    updatedAt: DateTime.now(),
+  );
   var serializedDeathlyHallows = deathlyHallows.toJson();
   print('Deathly Hallows: $deathlyHallows');
 
   var jkRowling = Author(
-      id: '1',
-      name: 'J.K. Rowling',
-      age: 51,
-      books: [deathlyHallows],
-      newestBook: deathlyHallows);
+    id: '1',
+    name: 'J.K. Rowling',
+    age: 51,
+    books: [deathlyHallows],
+    newestBook: deathlyHallows,
+  );
   var serializedJkRowling = authorSerializer.encode(jkRowling);
   var deathlyHallowsMap = bookSerializer.encode(deathlyHallows);
   print('J.K. Rowling: $jkRowling');
@@ -34,11 +36,15 @@ void main() {
       expect(serializedDeathlyHallows['id'], deathlyHallows.id);
       expect(serializedDeathlyHallows['author'], deathlyHallows.author);
       expect(
-          serializedDeathlyHallows['description'], deathlyHallows.description);
+        serializedDeathlyHallows['description'],
+        deathlyHallows.description,
+      );
       expect(serializedDeathlyHallows['page_count'], deathlyHallows.pageCount);
       expect(serializedDeathlyHallows['created_at'], isNull);
-      expect(serializedDeathlyHallows['updated_at'],
-          deathlyHallows.updatedAt?.toIso8601String());
+      expect(
+        serializedDeathlyHallows['updated_at'],
+        deathlyHallows.updatedAt?.toIso8601String(),
+      );
     });
 
     test('can be mutated', () {
@@ -80,8 +86,9 @@ void main() {
     });
 
     test('map with @serializable class as second key is serialized', () {
-      expect(serializedLibrary['collection'],
-          {deathlyHallowsIsbn: deathlyHallowsMap});
+      expect(serializedLibrary['collection'], {
+        deathlyHallowsIsbn: deathlyHallowsMap,
+      });
     });
   });
 

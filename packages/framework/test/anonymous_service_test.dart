@@ -4,12 +4,13 @@ import 'package:test/test.dart';
 void main() {
   test('custom methods', () async {
     var svc = AnonymousService<String?, String?>(
-        index: ([p]) async => ['index'],
-        read: (id, [p]) async => 'read',
-        create: (data, [p]) async => 'create',
-        modify: (id, data, [p]) async => 'modify',
-        update: (id, data, [p]) async => 'update',
-        remove: (id, [p]) async => 'remove');
+      index: ([p]) async => ['index'],
+      read: (id, [p]) async => 'read',
+      create: (data, [p]) async => 'create',
+      modify: (id, data, [p]) async => 'modify',
+      update: (id, data, [p]) async => 'update',
+      remove: (id, [p]) async => 'remove',
+    );
     expect(await svc.index(), ['index']);
     expect(await svc.read(null), 'read');
     expect(await svc.create(null), 'create');

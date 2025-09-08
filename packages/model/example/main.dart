@@ -10,10 +10,11 @@ class Todo extends Model {
 
   bool isComplete;
 
-  Todo(
-      {required String super.id,
-      this.text,
-      this.isComplete = false,
-      super.createdAt,
-      super.updatedAt});
+  Todo({
+    required String super.id,
+    this.text,
+    this.isComplete = false,
+    super.createdAt,
+    super.updatedAt,
+  });
 }

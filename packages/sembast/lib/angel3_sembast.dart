@@ -14,10 +14,13 @@ class SembastService extends Service<String, Map<String, dynamic>> {
   /// If set to `true`, parameters in `req.query` are applied to the database query.
   final bool allowQuery;
 
-  SembastService(this.database,
-      {String? store, this.allowRemoveAll = false, this.allowQuery = true})
-      : store = intMapStoreFactory.store(store),
-        super();
+  SembastService(
+    this.database, {
+    String? store,
+    this.allowRemoveAll = false,
+    this.allowQuery = true,
+  }) : store = intMapStoreFactory.store(store),
+       super();
 
   Finder? _makeQuery([Map<String, dynamic>? params]) {
     params = Map<String, dynamic>.from(params ?? {});
@@ -75,12 +78,14 @@ class SembastService extends Service<String, Map<String, dynamic>> {
       Map<String, dynamic>.from(data)..['id'] = id;
 
   @override
-  Future<Map<String, dynamic>> findOne(
-      [Map<String, dynamic>? params,
-      String errorMessage =
-          'No record was found matching the given query.']) async {
-    var result =
-        (await store.findFirst(database, finder: _makeQuery(params)))?.value;
+  Future<Map<String, dynamic>> findOne([
+    Map<String, dynamic>? params,
+    String errorMessage = 'No record was found matching the given query.',
+  ]) async {
+    var result = (await store.findFirst(
+      database,
+      finder: _makeQuery(params),
+    ))?.value;
     if (result == null) {
       return {};
     }
@@ -89,8 +94,9 @@ class SembastService extends Service<String, Map<String, dynamic>> {
   }
 
   @override
-  Future<List<Map<String, dynamic>>> index(
-      [Map<String, dynamic>? params]) async {
+  Future<List<Map<String, dynamic>>> index([
+    Map<String, dynamic>? params,
+  ]) async {
     var records = await store.find(database, finder: _makeQuery(params));
     return records
         //.where((r) => r.value != null)
@@ -99,8 +105,10 @@ class SembastService extends Service<String, Map<String, dynamic>> {
   }
 
   @override
-  Future<Map<String, dynamic>> read(String id,
-      [Map<String, dynamic>? params]) async {
+  Future<Map<String, dynamic>> read(
+    String id, [
+    Map<String, dynamic>? params,
+  ]) async {
     var record = await store.record(int.parse(id)).getSnapshot(database);
 
     if (record == null) {
@@ -111,8 +119,10 @@ class SembastService extends Service<String, Map<String, dynamic>> {
   }
 
   @override
-  Future<Map<String, dynamic>> create(Map<String, dynamic> data,
-      [Map<String, dynamic>? params]) async {
+  Future<Map<String, dynamic>> create(
+    Map<String, dynamic> data, [
+    Map<String, dynamic>? params,
+  ]) async {
     return await database.transaction((txn) async {
       var key = await store.add(txn, data);
       var id = key.toString();
@@ -121,8 +131,11 @@ class SembastService extends Service<String, Map<String, dynamic>> {
   }
 
   @override
-  Future<Map<String, dynamic>> modify(String id, Map<String, dynamic> data,
-      [Map<String, dynamic>? params]) async {
+  Future<Map<String, dynamic>> modify(
+    String id,
+    Map<String, dynamic> data, [
+    Map<String, dynamic>? params,
+  ]) async {
     return await database.transaction((txn) async {
       var record = store.record(int.parse(id));
       data = await record.put(txn, data, merge: true);
@@ -131,8 +144,11 @@ class SembastService extends Service<String, Map<String, dynamic>> {
   }
 
   @override
-  Future<Map<String, dynamic>> update(String id, Map<String, dynamic> data,
-      [Map<String, dynamic>? params]) async {
+  Future<Map<String, dynamic>> update(
+    String id,
+    Map<String, dynamic> data, [
+    Map<String, dynamic>? params,
+  ]) async {
     return await database.transaction((txn) async {
       var record = store.record(int.parse(id));
       data = await record.put(txn, data);
@@ -141,14 +157,17 @@ class SembastService extends Service<String, Map<String, dynamic>> {
   }
 
   @override
-  Future<Map<String, dynamic>> remove(String? id,
-      [Map<String, dynamic>? params]) async {
+  Future<Map<String, dynamic>> remove(
+    String? id, [
+    Map<String, dynamic>? params,
+  ]) async {
     if (id == null || id == 'null') {
       // Remove everything...
       if (!(allowRemoveAll == true ||
           params?.containsKey('provider') != true)) {
         throw AngelHttpException.forbidden(
-            message: 'Clients are not allowed to delete all items.');
+          message: 'Clients are not allowed to delete all items.',
+        );
       } else {
         await store.delete(database);
         return {};
@@ -161,7 +180,8 @@ class SembastService extends Service<String, Map<String, dynamic>> {
 
       if (snapshot == null) {
         throw AngelHttpException.notFound(
-            message: 'No record found for ID $id');
+          message: 'No record found for ID $id',
+        );
       } else {
         await record.delete(txn);
       }

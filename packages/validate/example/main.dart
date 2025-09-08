@@ -4,7 +4,7 @@ void main() {
   var bio = Validator({
     'age*': [isInt, greaterThanOrEqualTo(0)],
     'birthYear*': isInt,
-    'countryOfOrigin': isString
+    'countryOfOrigin': isString,
   });
 
   var book = Validator({
@@ -13,15 +13,16 @@ void main() {
       isNum,
       (year) {
         return year <= DateTime.now().year;
-      }
-    ]
+      },
+    ],
   });
 
   // ignore: unused_local_variable
-  var author = Validator({
-    'bio*': bio,
-    'books*': [isList, everyElement(book)]
-  }, defaultValues: {
-    'books': []
-  });
+  var author = Validator(
+    {
+      'bio*': bio,
+      'books*': [isList, everyElement(book)],
+    },
+    defaultValues: {'books': []},
+  );
 }

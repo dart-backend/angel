@@ -14,7 +14,7 @@ class Todo extends Model {
 void main() {
   Map headers = <String, String>{
     'Accept': 'application/json',
-    'Content-Type': 'application/json'
+    'Content-Type': 'application/json',
   };
   late Angel app;
   late MapService service;
@@ -50,8 +50,11 @@ void main() {
 
     test('can create data', () async {
       var postData = json.encode({'text': 'Hello, world!'});
-      var response = await client.post(Uri.parse('$url/todos'),
-          headers: headers as Map<String, String>, body: postData);
+      var response = await client.post(
+        Uri.parse('$url/todos'),
+        headers: headers as Map<String, String>,
+        body: postData,
+      );
       expect(response.statusCode, 201);
       var jsons = json.decode(response.body);
       print(jsons);
@@ -60,8 +63,11 @@ void main() {
 
     test('can fetch data', () async {
       var postData = json.encode({'text': 'Hello, world!'});
-      await client.post(Uri.parse('$url/todos'),
-          headers: headers as Map<String, String>, body: postData);
+      await client.post(
+        Uri.parse('$url/todos'),
+        headers: headers as Map<String, String>,
+        body: postData,
+      );
       var response = await client.get(Uri.parse('$url/todos/0'));
       expect(response.statusCode, 200);
       var jsons = json.decode(response.body);
@@ -71,12 +77,18 @@ void main() {
 
     test('can modify data', () async {
       var postData = json.encode({'text': 'Hello, world!'});
-      await client.post(Uri.parse('$url/todos'),
-          headers: headers as Map<String, String>, body: postData);
+      await client.post(
+        Uri.parse('$url/todos'),
+        headers: headers as Map<String, String>,
+        body: postData,
+      );
       postData = json.encode({'text': 'modified'});
 
-      var response = await client.patch(Uri.parse('$url/todos/0'),
-          headers: headers, body: postData);
+      var response = await client.patch(
+        Uri.parse('$url/todos/0'),
+        headers: headers,
+        body: postData,
+      );
       expect(response.statusCode, 200);
       var jsons = json.decode(response.body);
       print(jsons);
@@ -85,12 +97,18 @@ void main() {
 
     test('can overwrite data', () async {
       var postData = json.encode({'text': 'Hello, world!'});
-      await client.post(Uri.parse('$url/todos'),
-          headers: headers as Map<String, String>, body: postData);
+      await client.post(
+        Uri.parse('$url/todos'),
+        headers: headers as Map<String, String>,
+        body: postData,
+      );
       postData = json.encode({'over': 'write'});
 
-      var response = await client.post(Uri.parse('$url/todos/0'),
-          headers: headers, body: postData);
+      var response = await client.post(
+        Uri.parse('$url/todos/0'),
+        headers: headers,
+        body: postData,
+      );
       expect(response.statusCode, 200);
       var jsons = json.decode(response.body);
       print(jsons);
@@ -102,7 +120,7 @@ void main() {
       var items = <Map>[
         await service.create({'foo': 'bar'}),
         await service.create({'bar': 'baz'}),
-        await service.create({'baz': 'quux'})
+        await service.create({'baz': 'quux'}),
       ];
 
       var ids = items.map((m) => m['id'] as String?).toList();
@@ -112,11 +130,15 @@ void main() {
     test('can delete data', () async {
       var postData = json.encode({'text': 'Hello, world!'});
       var created = await client
-          .post(Uri.parse('$url/todos'),
-              headers: headers as Map<String, String>, body: postData)
+          .post(
+            Uri.parse('$url/todos'),
+            headers: headers as Map<String, String>,
+            body: postData,
+          )
           .then((r) => json.decode(r.body));
-      var response =
-          await client.delete(Uri.parse("$url/todos/${created['id']}"));
+      var response = await client.delete(
+        Uri.parse("$url/todos/${created['id']}"),
+      );
       expect(response.statusCode, 200);
       var json_ = json.decode(response.body);
       print(json_);

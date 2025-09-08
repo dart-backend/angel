@@ -6,8 +6,9 @@ class MockHttpConnectionInfo implements HttpConnectionInfo {
   @override
   final int localPort, remotePort;
 
-  MockHttpConnectionInfo(
-      {required this.remoteAddress,
-      this.localPort = 8080,
-      this.remotePort = 80});
+  MockHttpConnectionInfo({
+    required this.remoteAddress,
+    this.localPort = 8080,
+    this.remotePort = 80,
+  });
 }

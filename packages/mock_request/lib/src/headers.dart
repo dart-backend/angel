@@ -43,12 +43,14 @@ class MockHttpHeaders implements HttpHeaders {
   @override
   DateTime get ifModifiedSince =>
       _data.containsKey(HttpHeaders.ifModifiedSinceHeader)
-          ? HttpDate.parse(_data[HttpHeaders.ifModifiedSinceHeader]!.join(','))
-          : DateTime.now();
+      ? HttpDate.parse(_data[HttpHeaders.ifModifiedSinceHeader]!.join(','))
+      : DateTime.now();
 
   @override
-  set ifModifiedSince(DateTime? value) => set(HttpHeaders.ifModifiedSinceHeader,
-      HttpDate.format(value ?? DateTime.now()));
+  set ifModifiedSince(DateTime? value) => set(
+    HttpHeaders.ifModifiedSinceHeader,
+    HttpDate.format(value ?? DateTime.now()),
+  );
 
   @override
   String? get host {

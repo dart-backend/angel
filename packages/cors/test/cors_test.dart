@@ -12,44 +12,44 @@ void main() {
   setUp(() async {
     app = Angel()
       ..options('/credentials', cors(CorsOptions(credentials: true)))
-      ..options('/credentials_d',
-          dynamicCors((req, res) => CorsOptions(credentials: true)))
       ..options(
-          '/headers', cors(CorsOptions(exposedHeaders: ['x-foo', 'x-bar'])))
+        '/credentials_d',
+        dynamicCors((req, res) => CorsOptions(credentials: true)),
+      )
+      ..options(
+        '/headers',
+        cors(CorsOptions(exposedHeaders: ['x-foo', 'x-bar'])),
+      )
       ..options('/max_age', cors(CorsOptions(maxAge: 250)))
       ..options('/methods', cors(CorsOptions(methods: ['GET', 'POST'])))
       ..get(
-          '/originl',
-          chain([
-            cors(CorsOptions(
-              origin: ['foo.bar', 'baz.quux'],
-            )),
-            (req, res) => req.headers!['origin']
-          ]))
+        '/originl',
+        chain([
+          cors(CorsOptions(origin: ['foo.bar', 'baz.quux'])),
+          (req, res) => req.headers!['origin'],
+        ]),
+      )
       ..get(
-          '/origins',
-          chain([
-            cors(CorsOptions(
-              origin: 'foo.bar',
-            )),
-            (req, res) => req.headers!['origin']
-          ]))
+        '/origins',
+        chain([
+          cors(CorsOptions(origin: 'foo.bar')),
+          (req, res) => req.headers!['origin'],
+        ]),
+      )
       ..get(
-          '/originr',
-          chain([
-            cors(CorsOptions(
-              origin: RegExp(r'^foo\.[^x]+$'),
-            )),
-            (req, res) => req.headers!['origin']
-          ]))
+        '/originr',
+        chain([
+          cors(CorsOptions(origin: RegExp(r'^foo\.[^x]+$'))),
+          (req, res) => req.headers!['origin'],
+        ]),
+      )
       ..get(
-          '/originp',
-          chain([
-            cors(CorsOptions(
-              origin: (String s) => s.endsWith('.bar'),
-            )),
-            (req, res) => req.headers!['origin']
-          ]))
+        '/originp',
+        chain([
+          cors(CorsOptions(origin: (String s) => s.endsWith('.bar'))),
+          (req, res) => req.headers!['origin'],
+        ]),
+      )
       ..options('/status', cors(CorsOptions(successStatus: 418)))
       ..fallback(cors(CorsOptions()))
       ..post('/', (req, res) async {
@@ -99,8 +99,10 @@ void main() {
   });
 
   test('dynamicCors.credentials', () async {
-    var rq =
-        http.Request('OPTIONS', server.uri.replace(path: '/credentials_d'));
+    var rq = http.Request(
+      'OPTIONS',
+      server.uri.replace(path: '/credentials_d'),
+    );
     var response = await client!.send(rq).then(http.Response.fromStream);
     expect(response.headers['access-control-allow-credentials'], 'true');
   });
@@ -118,39 +120,51 @@ void main() {
   });
 
   test('invalid origin', () async {
-    var response = await client!.get(server.uri.replace(path: '/originl'),
-        headers: {'origin': 'foreign'});
+    var response = await client!.get(
+      server.uri.replace(path: '/originl'),
+      headers: {'origin': 'foreign'},
+    );
     expect(response.headers['access-control-allow-origin'], 'false');
   });
 
   test('list origin', () async {
-    var response = await client!.get(server.uri.replace(path: '/originl'),
-        headers: {'origin': 'foo.bar'});
+    var response = await client!.get(
+      server.uri.replace(path: '/originl'),
+      headers: {'origin': 'foo.bar'},
+    );
     expect(response.headers['access-control-allow-origin'], 'foo.bar');
     expect(response.headers['vary'], 'origin');
-    response = await client!.get(server.uri.replace(path: '/originl'),
-        headers: {'origin': 'baz.quux'});
+    response = await client!.get(
+      server.uri.replace(path: '/originl'),
+      headers: {'origin': 'baz.quux'},
+    );
     expect(response.headers['access-control-allow-origin'], 'baz.quux');
     expect(response.headers['vary'], 'origin');
   });
 
   test('string origin', () async {
-    var response = await client!.get(server.uri.replace(path: '/origins'),
-        headers: {'origin': 'foo.bar'});
+    var response = await client!.get(
+      server.uri.replace(path: '/origins'),
+      headers: {'origin': 'foo.bar'},
+    );
     expect(response.headers['access-control-allow-origin'], 'foo.bar');
     expect(response.headers['vary'], 'origin');
   });
 
   test('regex origin', () async {
-    var response = await client!.get(server.uri.replace(path: '/originr'),
-        headers: {'origin': 'foo.bar'});
+    var response = await client!.get(
+      server.uri.replace(path: '/originr'),
+      headers: {'origin': 'foo.bar'},
+    );
     expect(response.headers['access-control-allow-origin'], 'foo.bar');
     expect(response.headers['vary'], 'origin');
   });
 
   test('predicate origin', () async {
-    var response = await client!.get(server.uri.replace(path: '/originp'),
-        headers: {'origin': 'foo.bar'});
+    var response = await client!.get(
+      server.uri.replace(path: '/originp'),
+      headers: {'origin': 'foo.bar'},
+    );
     expect(response.headers['access-control-allow-origin'], 'foo.bar');
     expect(response.headers['vary'], 'origin');
   });
@@ -164,8 +178,10 @@ void main() {
   });
 
   test('mirror headers', () async {
-    final response = await client!
-        .post(server.uri, headers: {'access-control-request-headers': 'foo'});
+    final response = await client!.post(
+      server.uri,
+      headers: {'access-control-request-headers': 'foo'},
+    );
     expect(response.statusCode, equals(200));
     print('Response: ${response.body}');
     print('Headers: ${response.headers}');

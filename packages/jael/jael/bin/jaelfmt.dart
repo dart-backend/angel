@@ -5,29 +5,46 @@ import 'package:args/args.dart';
 import 'package:jael3/jael3.dart';
 
 var argParser = ArgParser()
-  ..addOption('line-length',
-      abbr: 'l',
-      help: 'The maximum length of a single line. Longer lines will wrap.',
-      defaultsTo: '80')
-  ..addOption('stdin-name',
-      help: 'The filename to print when an error occurs in standard input.',
-      defaultsTo: '<stdin>')
-  ..addOption('tab-size',
-      help: 'The number of spaces to output where a TAB would be inserted.',
-      defaultsTo: '2')
-  ..addFlag('dry-run',
-      abbr: 'n',
-      help:
-          'Print the names of files that would be changed, without actually overwriting them.',
-      negatable: false)
-  ..addFlag('help',
-      abbr: 'h', help: 'Print this usage information.', negatable: false)
-  ..addFlag('insert-spaces',
-      help: 'Insert spaces instead of TAB character.', defaultsTo: true)
-  ..addFlag('overwrite',
-      abbr: 'w',
-      help: 'Overwrite input files with formatted output.',
-      negatable: false);
+  ..addOption(
+    'line-length',
+    abbr: 'l',
+    help: 'The maximum length of a single line. Longer lines will wrap.',
+    defaultsTo: '80',
+  )
+  ..addOption(
+    'stdin-name',
+    help: 'The filename to print when an error occurs in standard input.',
+    defaultsTo: '<stdin>',
+  )
+  ..addOption(
+    'tab-size',
+    help: 'The number of spaces to output where a TAB would be inserted.',
+    defaultsTo: '2',
+  )
+  ..addFlag(
+    'dry-run',
+    abbr: 'n',
+    help:
+        'Print the names of files that would be changed, without actually overwriting them.',
+    negatable: false,
+  )
+  ..addFlag(
+    'help',
+    abbr: 'h',
+    help: 'Print this usage information.',
+    negatable: false,
+  )
+  ..addFlag(
+    'insert-spaces',
+    help: 'Insert spaces instead of TAB character.',
+    defaultsTo: true,
+  )
+  ..addFlag(
+    'overwrite',
+    abbr: 'w',
+    help: 'Overwrite input files with formatted output.',
+    negatable: false,
+  );
 
 void main(List<String> args) async {
   try {
@@ -42,8 +59,11 @@ void main(List<String> args) async {
 
     if (argResults.rest.isEmpty) {
       var text = await stdin.transform(utf8.decoder).join();
-      var result =
-          format(argResults['stdin-name'] as String?, text, argResults);
+      var result = format(
+        argResults['stdin-name'] as String?,
+        text,
+        argResults,
+      );
       if (result != null) print(result);
     } else {
       for (var arg in argResults.rest) {
@@ -73,7 +93,10 @@ Future<void> formatPath(String path, ArgResults argResults) async {
 }
 
 Future<void> formatStat(
-    FileStat stat, String path, ArgResults argResults) async {
+  FileStat stat,
+  String path,
+  ArgResults argResults,
+) async {
   switch (stat.type) {
     case FileSystemEntityType.directory:
       await for (var entity in Directory(path).list()) {
@@ -114,15 +137,20 @@ Future<void> formatFile(File file, ArgResults argResults) async {
 
 String? format(String? filename, String content, ArgResults argResults) {
   var errored = false;
-  var doc = parseDocument(content, sourceUrl: filename, onError: (e) {
-    stderr.writeln(e);
-    errored = true;
-  });
+  var doc = parseDocument(
+    content,
+    sourceUrl: filename,
+    onError: (e) {
+      stderr.writeln(e);
+      errored = true;
+    },
+  );
   if (errored) return null;
   var fmt = JaelFormatter(
-      int.parse(argResults['tab-size'] as String),
-      argResults['insert-spaces'] as bool?,
-      int.parse(argResults['line-length'] as String));
+    int.parse(argResults['tab-size'] as String),
+    argResults['insert-spaces'] as bool?,
+    int.parse(argResults['line-length'] as String),
+  );
 
   if (doc == null) {
     return null;

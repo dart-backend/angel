@@ -25,15 +25,19 @@ class _FakeExecutor extends QueryExecutor {
 
   @override
   Future<List<List>> query(
-      String tableName, String query, Map<String, dynamic> substitutionValues,
-      {String returningQuery = '',
-      String resultQuery = '',
-      List<String> returningFields = const []}) async {
+    String tableName,
+    String query,
+    Map<String, dynamic> substitutionValues, {
+    String returningQuery = '',
+    String resultQuery = '',
+    List<String> returningFields = const [],
+  }) async {
     var now = DateTime.now();
     print(
-        '_FakeExecutor received query: $query and values: $substitutionValues');
+      '_FakeExecutor received query: $query and values: $substitutionValues',
+    );
     return [
-      [1, now, now, 'Rich', 'Person', 100000.0]
+      [1, now, now, 'Rich', 'Person', 100000.0],
     ];
   }
 

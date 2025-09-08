@@ -12,24 +12,31 @@ import 'package:test/test.dart';
 
 void main() {
   group('inlineAssets', () {
-    group('buffer', inlineAssetsTests((app, dir) {
-      app.get('/', (req, res) async {
-        var indexHtml = dir.childFile('index.html');
-        var contents = await indexHtml.readAsBytes();
-        res
-          ..useBuffer()
-          ..contentType = MediaType.parse('text/html; charset=utf-8')
-          ..buffer!.add(contents);
-      });
+    group(
+      'buffer',
+      inlineAssetsTests((app, dir) {
+        app.get('/', (req, res) async {
+          var indexHtml = dir.childFile('index.html');
+          var contents = await indexHtml.readAsBytes();
+          res
+            ..useBuffer()
+            ..contentType = MediaType.parse('text/html; charset=utf-8')
+            ..buffer!.add(contents);
+        });
 
-      app.responseFinalizers.add(inlineAssets(dir));
-    }));
+        app.responseFinalizers.add(inlineAssets(dir));
+      }),
+    );
 
-    group('virtual_directory', inlineAssetsTests((app, dir) {
-      var vDir = inlineAssetsFromVirtualDirectory(
-          VirtualDirectory(app, dir.fileSystem, source: dir));
-      app.fallback(vDir.handleRequest);
-    }));
+    group(
+      'virtual_directory',
+      inlineAssetsTests((app, dir) {
+        var vDir = inlineAssetsFromVirtualDirectory(
+          VirtualDirectory(app, dir.fileSystem, source: dir),
+        );
+        app.fallback(vDir.handleRequest);
+      }),
+    );
   });
 }
 
@@ -66,8 +73,10 @@ void Function() inlineAssetsTests(InlineAssetTest f) {
       late html.Document doc;
 
       setUp(() async {
-        var res =
-            await client.get(Uri.parse('/'), headers: {'accept': 'text/html'});
+        var res = await client.get(
+          Uri.parse('/'),
+          headers: {'accept': 'text/html'},
+        );
         print(res.body);
         doc = html.parse(res.body);
       });
@@ -152,5 +161,5 @@ var contents = <String, String>{
 }''',
   'site.js': '''window.addEventListener('load', function() {
   console.log('Hello, inline world!');
-});'''
+});''',
 };

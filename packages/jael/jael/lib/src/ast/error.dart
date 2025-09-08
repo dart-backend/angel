@@ -14,7 +14,4 @@ class JaelError extends Error {
   }
 }
 
-enum JaelErrorSeverity {
-  warning,
-  error,
-}
+enum JaelErrorSeverity { warning, error }

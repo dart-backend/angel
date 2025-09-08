@@ -73,18 +73,18 @@ class _ReflectedTypeParameter extends ReflectedTypeParameter {
   final dart.TypeVariableMirror mirror;
 
   _ReflectedTypeParameter(this.mirror)
-      : super(dart.MirrorSystem.getName(mirror.simpleName));
+    : super(dart.MirrorSystem.getName(mirror.simpleName));
 }
 
 class _ReflectedTypeMirror extends ReflectedType {
   final dart.TypeMirror mirror;
 
   _ReflectedTypeMirror(this.mirror)
-      : super(
-          dart.MirrorSystem.getName(mirror.simpleName),
-          mirror.typeVariables.map((m) => _ReflectedTypeParameter(m)).toList(),
-          mirror.reflectedType,
-        );
+    : super(
+        dart.MirrorSystem.getName(mirror.simpleName),
+        mirror.typeVariables.map((m) => _ReflectedTypeParameter(m)).toList(),
+        mirror.reflectedType,
+      );
 
   @override
   bool isAssignableTo(ReflectedType? other) {
@@ -99,10 +99,14 @@ class _ReflectedTypeMirror extends ReflectedType {
 
   @override
   ReflectedInstance newInstance(
-      String constructorName, List positionalArguments,
-      [Map<String, dynamic>? namedArguments, List<Type>? typeArguments]) {
+    String constructorName,
+    List positionalArguments, [
+    Map<String, dynamic>? namedArguments,
+    List<Type>? typeArguments,
+  ]) {
     throw ReflectionException(
-        '$name is not a class, and therefore cannot be instantiated.');
+      '$name is not a class, and therefore cannot be instantiated.',
+    );
   }
 }
 
@@ -110,14 +114,14 @@ class _ReflectedClassMirror extends ReflectedClass {
   final dart.ClassMirror mirror;
 
   _ReflectedClassMirror(this.mirror)
-      : super(
-          dart.MirrorSystem.getName(mirror.simpleName),
-          mirror.typeVariables.map((m) => _ReflectedTypeParameter(m)).toList(),
-          [],
-          [],
-          _declarationsOf(mirror),
-          mirror.reflectedType,
-        );
+    : super(
+        dart.MirrorSystem.getName(mirror.simpleName),
+        mirror.typeVariables.map((m) => _ReflectedTypeParameter(m)).toList(),
+        [],
+        [],
+        _declarationsOf(mirror),
+        mirror.reflectedType,
+      );
 
   static List<ReflectedFunction> _constructorsOf(dart.ClassMirror mirror) {
     var out = <ReflectedFunction>[];
@@ -141,7 +145,8 @@ class _ReflectedClassMirror extends ReflectedClass {
 
       if (value is dart.MethodMirror && !value.isConstructor) {
         out.add(
-            _ReflectedDeclarationMirror(dart.MirrorSystem.getName(key), value));
+          _ReflectedDeclarationMirror(dart.MirrorSystem.getName(key), value),
+        );
       }
     }
 
@@ -168,10 +173,14 @@ class _ReflectedClassMirror extends ReflectedClass {
 
   @override
   ReflectedInstance newInstance(
-      String constructorName, List positionalArguments,
-      [Map<String, dynamic>? namedArguments, List<Type>? typeArguments]) {
+    String constructorName,
+    List positionalArguments, [
+    Map<String, dynamic>? namedArguments,
+    List<Type>? typeArguments,
+  ]) {
     return _ReflectedInstanceMirror(
-        mirror.newInstance(Symbol(constructorName), positionalArguments));
+      mirror.newInstance(Symbol(constructorName), positionalArguments),
+    );
   }
 
   @override
@@ -187,7 +196,7 @@ class _ReflectedDeclarationMirror extends ReflectedDeclaration {
   final dart.MethodMirror mirror;
 
   _ReflectedDeclarationMirror(String name, this.mirror)
-      : super(name, mirror.isStatic, null);
+    : super(name, mirror.isStatic, null);
 
   @override
   bool get isStatic => mirror.isStatic;
@@ -200,8 +209,11 @@ class _ReflectedInstanceMirror extends ReflectedInstance {
   final dart.InstanceMirror mirror;
 
   _ReflectedInstanceMirror(this.mirror)
-      : super(_ReflectedClassMirror(mirror.type),
-            _ReflectedClassMirror(mirror.type), mirror.reflectee);
+    : super(
+        _ReflectedClassMirror(mirror.type),
+        _ReflectedClassMirror(mirror.type),
+        mirror.reflectee,
+      );
 
   @override
   ReflectedInstance getField(String name) {
@@ -214,39 +226,48 @@ class _ReflectedMethodMirror extends ReflectedFunction {
   final dart.ClosureMirror? closureMirror;
 
   _ReflectedMethodMirror(this.mirror, [this.closureMirror])
-      : super(
-            dart.MirrorSystem.getName(mirror.simpleName),
-            <ReflectedTypeParameter>[],
-            mirror.metadata
-                .map((mirror) => _ReflectedInstanceMirror(mirror))
-                .toList(),
-            mirror.parameters.map(_reflectParameter).toList(),
-            mirror.isGetter,
-            mirror.isSetter,
-            returnType: !mirror.returnType.hasReflectedType
-                ? const MirrorsReflector().reflectType(dynamic)
-                : const MirrorsReflector()
-                    .reflectType(mirror.returnType.reflectedType));
-
-  static ReflectedParameter _reflectParameter(dart.ParameterMirror mirror) {
-    return ReflectedParameter(
+    : super(
         dart.MirrorSystem.getName(mirror.simpleName),
+        <ReflectedTypeParameter>[],
         mirror.metadata
             .map((mirror) => _ReflectedInstanceMirror(mirror))
             .toList(),
-        const MirrorsReflector().reflectType(mirror.type.reflectedType),
-        !mirror.isOptional,
-        mirror.isNamed);
+        mirror.parameters.map(_reflectParameter).toList(),
+        mirror.isGetter,
+        mirror.isSetter,
+        returnType: !mirror.returnType.hasReflectedType
+            ? const MirrorsReflector().reflectType(dynamic)
+            : const MirrorsReflector().reflectType(
+                mirror.returnType.reflectedType,
+              ),
+      );
+
+  static ReflectedParameter _reflectParameter(dart.ParameterMirror mirror) {
+    return ReflectedParameter(
+      dart.MirrorSystem.getName(mirror.simpleName),
+      mirror.metadata
+          .map((mirror) => _ReflectedInstanceMirror(mirror))
+          .toList(),
+      const MirrorsReflector().reflectType(mirror.type.reflectedType),
+      !mirror.isOptional,
+      mirror.isNamed,
+    );
   }
 
   @override
   ReflectedInstance invoke(Invocation invocation) {
     if (closureMirror == null) {
       throw StateError(
-          'This object was reflected without a ClosureMirror, and therefore cannot be directly invoked.');
+        'This object was reflected without a ClosureMirror, and therefore cannot be directly invoked.',
+      );
     }
 
-    return _ReflectedInstanceMirror(closureMirror!.invoke(invocation.memberName,
-        invocation.positionalArguments, invocation.namedArguments));
+    return _ReflectedInstanceMirror(
+      closureMirror!.invoke(
+        invocation.memberName,
+        invocation.positionalArguments,
+        invocation.namedArguments,
+      ),
+    );
   }
 }

@@ -11,8 +11,10 @@ void main() async {
 
   setUp(() async {
     connection = await connectSocket('localhost');
-    service = RedisService(RespCommandsTier2(RespClient(connection)),
-        prefix: 'angel_redis_test');
+    service = RedisService(
+      RespCommandsTier2(RespClient(connection)),
+      prefix: 'angel_redis_test',
+    );
   });
 
   tearDown(() => connection.close());
@@ -73,7 +75,9 @@ void main() async {
   });
 
   test('remove nonexistent', () async {
-    expect(() => service.remove('definitely_does_not_exist'),
-        throwsA(const TypeMatcher<AngelHttpException>()));
+    expect(
+      () => service.remove('definitely_does_not_exist'),
+      throwsA(const TypeMatcher<AngelHttpException>()),
+    );
   });
 }

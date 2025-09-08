@@ -97,7 +97,7 @@ class RethinkService extends Service<String, Map<String, dynamic>> {
     }
   }
 
-  dynamic _serialize(data) {
+  dynamic _serialize(dynamic data) {
     if (data is Map) {
       return data;
     } else if (data is Iterable) {
@@ -107,7 +107,7 @@ class RethinkService extends Service<String, Map<String, dynamic>> {
     }
   }
 
-  dynamic _squeeze(data) {
+  dynamic _squeeze(dynamic data) {
     if (data is Map) {
       return data.keys.fold<Map>({}, (map, k) => map..[k.toString()] = data[k]);
     } else if (data is Iterable) {

@@ -7,12 +7,7 @@ import 'package:path/path.dart' as p;
 void main() async {
   var app = Angel();
   var http = AngelHttp(app);
-  var viewsDir = p.join(
-    p.dirname(
-      p.fromUri(Platform.script),
-    ),
-    'views',
-  );
+  var viewsDir = p.join(p.dirname(p.fromUri(Platform.script)), 'views');
 
   // Enable Jinja2 views
   await app.configure(jinja(path: viewsDir));

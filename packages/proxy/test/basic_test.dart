@@ -23,9 +23,10 @@ void main() {
 
     var proxy1 = Proxy(
       Uri(
-          scheme: 'http',
-          host: testServer.address.address,
-          port: testServer.port),
+        scheme: 'http',
+        host: testServer.address.address,
+        port: testServer.port,
+      ),
       publicPath: '/proxy',
     );
 
@@ -78,9 +79,11 @@ void main() {
   });
 
   test('original buffer', () async {
-    var response = await client.post(Uri.parse('$url/proxy/body'),
-        body: json.encode({'foo': 'bar'}),
-        headers: {'content-type': 'application/json'});
+    var response = await client.post(
+      Uri.parse('$url/proxy/body'),
+      body: json.encode({'foo': 'bar'}),
+      headers: {'content-type': 'application/json'},
+    );
     print('Response: ${response.body}');
     expect(response.body, isNotEmpty);
     expect(response.body, isNot('intercept empty'));

@@ -11,13 +11,23 @@ import 'package:uuid/uuid.dart';
 
 /// Boots a shared server instance. Use this if launching multiple isolates.
 Future<SecureServerSocket> startSharedHttp2(
-    address, int port, SecurityContext ctx) {
+  Object? address,
+  int port,
+  SecurityContext ctx,
+) {
   return SecureServerSocket.bind(address, port, ctx, shared: true);
 }
 
 /// Adapts `package:http2`'s [ServerTransportConnection] to serve Angel.
-class AngelHttp2 extends Driver<Socket, ServerTransportStream,
-    SecureServerSocket, Http2RequestContext, Http2ResponseContext> {
+class AngelHttp2
+    extends
+        Driver<
+          Socket,
+          ServerTransportStream,
+          SecureServerSocket,
+          Http2RequestContext,
+          Http2ResponseContext
+        > {
   final ServerSettings? settings;
   late AngelHttp _http;
   final StreamController<HttpRequest> _onHttp1 = StreamController();
@@ -28,52 +38,69 @@ class AngelHttp2 extends Driver<Socket, ServerTransportStream,
   SecureServerSocket? get socket => _artificial;
 
   AngelHttp2._(
-      Angel app,
-      Future<SecureServerSocket> Function(dynamic, int) serverGenerator,
-      bool useZone,
-      bool allowHttp1,
-      this.settings)
-      : super(
-          app,
-          serverGenerator,
-          useZone: useZone,
-        ) {
+    Angel app,
+    Future<SecureServerSocket> Function(dynamic, int) serverGenerator,
+    bool useZone,
+    bool allowHttp1,
+    this.settings,
+  ) : super(app, serverGenerator, useZone: useZone) {
     if (allowHttp1) {
       _http = AngelHttp(app, useZone: useZone);
       onHttp1.listen(_http.handleRequest);
     }
   }
 
-  factory AngelHttp2(Angel app, SecurityContext securityContext,
-      {bool useZone = true,
-      bool allowHttp1 = false,
-      ServerSettings? settings}) {
-    return AngelHttp2.custom(app, securityContext, SecureServerSocket.bind,
-        allowHttp1: allowHttp1, settings: settings);
+  factory AngelHttp2(
+    Angel app,
+    SecurityContext securityContext, {
+    bool useZone = true,
+    bool allowHttp1 = false,
+    ServerSettings? settings,
+  }) {
+    return AngelHttp2.custom(
+      app,
+      securityContext,
+      SecureServerSocket.bind,
+      allowHttp1: allowHttp1,
+      settings: settings,
+    );
   }
 
   factory AngelHttp2.custom(
-      Angel app,
+    Angel app,
+    SecurityContext ctx,
+    Future<SecureServerSocket> Function(
+      InternetAddress? address,
+      int port,
       SecurityContext ctx,
-      Future<SecureServerSocket> Function(
-              InternetAddress? address, int port, SecurityContext ctx)
-          serverGenerator,
-      {bool useZone = true,
-      bool allowHttp1 = false,
-      ServerSettings? settings}) {
-    return AngelHttp2._(app, (address, port) {
-      var addr = address is InternetAddress
-          ? address
-          : InternetAddress(address.toString());
-      return Future.sync(() => serverGenerator(addr, port, ctx));
-    }, useZone, allowHttp1, settings);
+    )
+    serverGenerator, {
+    bool useZone = true,
+    bool allowHttp1 = false,
+    ServerSettings? settings,
+  }) {
+    return AngelHttp2._(
+      app,
+      (address, port) {
+        var addr = address is InternetAddress
+            ? address
+            : InternetAddress(address.toString());
+        return Future.sync(() => serverGenerator(addr, port, ctx));
+      },
+      useZone,
+      allowHttp1,
+      settings,
+    );
   }
 
   /// Fires when an HTTP/1.x request is received.
   Stream<HttpRequest> get onHttp1 => _onHttp1.stream;
 
   @override
-  Future<SecureServerSocket> generateServer([address, int? port]) async {
+  Future<SecureServerSocket> generateServer([
+    Object? address,
+    int? port,
+  ]) async {
     var s = await serverGenerator(address ?? '127.0.0.1', port ?? 0);
     return _artificial = _AngelHttp2ServerSocket(s, this);
   }
@@ -87,8 +114,9 @@ class AngelHttp2 extends Driver<Socket, ServerTransportStream,
 
   @override
   void addCookies(ServerTransportStream response, Iterable<Cookie> cookies) {
-    var headers =
-        cookies.map((cookie) => Header.ascii('set-cookie', cookie.toString()));
+    var headers = cookies.map(
+      (cookie) => Header.ascii('set-cookie', cookie.toString()),
+    );
     response.sendHeaders(headers.toList());
   }
 
@@ -100,23 +128,30 @@ class AngelHttp2 extends Driver<Socket, ServerTransportStream,
 
   @override
   Future<Http2RequestContext> createRequestContext(
-      Socket request, ServerTransportStream response) {
+    Socket request,
+    ServerTransportStream response,
+  ) {
     return Http2RequestContext.from(response, request, app, _sessions, _uuid);
   }
 
   @override
   Future<Http2ResponseContext> createResponseContext(
-      Socket request, ServerTransportStream response,
-      [Http2RequestContext? correspondingRequest]) async {
+    Socket request,
+    ServerTransportStream response, [
+    Http2RequestContext? correspondingRequest,
+  ]) async {
     return Http2ResponseContext(app, response, correspondingRequest)
       ..encoders.addAll(app.encoders);
   }
 
   @override
   Stream<ServerTransportStream> createResponseStreamFromRawRequest(
-      Socket request) {
-    var connection =
-        ServerTransportConnection.viaSocket(request, settings: settings);
+    Socket request,
+  ) {
+    var connection = ServerTransportConnection.viaSocket(
+      request,
+      settings: settings,
+    );
     return connection.incomingStreams;
   }
 
@@ -142,9 +177,10 @@ class AngelHttp2 extends Driver<Socket, ServerTransportStream,
 
   @override
   Uri get uri => Uri(
-      scheme: 'https',
-      host: server?.address.address,
-      port: server?.port != 443 ? server?.port : null);
+    scheme: 'https',
+    host: server?.address.address,
+    port: server?.port != 443 ? server?.port : null,
+  );
 
   @override
   void writeStringToResponse(ServerTransportStream response, String value) {
@@ -176,10 +212,18 @@ class _FakeServerSocket extends Stream<Socket> implements ServerSocket {
   int get port => angel.port;
 
   @override
-  StreamSubscription<Socket> listen(void Function(Socket event)? onData,
-      {Function? onError, void Function()? onDone, bool? cancelOnError}) {
-    return _ctrl.stream.listen(onData,
-        cancelOnError: cancelOnError, onError: onError, onDone: onDone);
+  StreamSubscription<Socket> listen(
+    void Function(Socket event)? onData, {
+    Function? onError,
+    void Function()? onDone,
+    bool? cancelOnError,
+  }) {
+    return _ctrl.stream.listen(
+      onData,
+      cancelOnError: cancelOnError,
+      onError: onError,
+      onDone: onDone,
+    );
   }
 }
 
@@ -206,13 +250,17 @@ class _AngelHttp2ServerSocket extends Stream<SecureSocket>
         } else {
           socket.destroy();
           throw Exception(
-              'AngelHttp2 does not support ${socket.selectedProtocol} as an ALPN protocol.');
+            'AngelHttp2 does not support ${socket.selectedProtocol} as an ALPN protocol.',
+          );
         }
       },
       onDone: _ctrl.close,
       onError: (e, st) {
         driver.app.logger.warning(
-            'HTTP/2 incoming connection failure: ', e, st as StackTrace);
+          'HTTP/2 incoming connection failure: ',
+          e,
+          st as StackTrace,
+        );
       },
     );
   }
@@ -233,11 +281,16 @@ class _AngelHttp2ServerSocket extends Stream<SecureSocket>
 
   @override
   StreamSubscription<SecureSocket> listen(
-      void Function(SecureSocket event)? onData,
-      {Function? onError,
-      void Function()? onDone,
-      bool? cancelOnError}) {
-    return _ctrl.stream.listen(onData,
-        cancelOnError: cancelOnError, onError: onError, onDone: onDone);
+    void Function(SecureSocket event)? onData, {
+    Function? onError,
+    void Function()? onDone,
+    bool? cancelOnError,
+  }) {
+    return _ctrl.stream.listen(
+      onData,
+      cancelOnError: cancelOnError,
+      onError: onError,
+      onDone: onDone,
+    );
   }
 }

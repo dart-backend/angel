@@ -19,12 +19,15 @@ void main() {
     http = AngelHttp(app);
 
     app.fallback(
-      CachingVirtualDirectory(app, const LocalFileSystem(),
-          source: testDir,
-          maxAge: 350,
-          onlyInProduction: false,
-          //publicPath: '/virtual',
-          indexFileNames: ['index.txt']).handleRequest,
+      CachingVirtualDirectory(
+        app,
+        const LocalFileSystem(),
+        source: testDir,
+        maxAge: 350,
+        onlyInProduction: false,
+        //publicPath: '/virtual',
+        indexFileNames: ['index.txt'],
+      ).handleRequest,
     );
 
     app.get('*', (req, res) => 'Fallback');
@@ -55,23 +58,37 @@ void main() {
 
     expect(response.statusCode, equals(200));
     expect(
-        ['etag', 'cache-control', 'expires', 'last-modified'],
-        everyElement(predicate(
-            response.headers.containsKey, 'contained in response headers')));
+      ['etag', 'cache-control', 'expires', 'last-modified'],
+      everyElement(
+        predicate(
+          response.headers.containsKey,
+          'contained in response headers',
+        ),
+      ),
+    );
   });
 
   test('if-modified-since', () async {
-    var response = await client.get(Uri.parse(url), headers: {
-      'if-modified-since':
-          HttpDate.format(DateTime.now().add(Duration(days: 365)))
-    });
+    var response = await client.get(
+      Uri.parse(url),
+      headers: {
+        'if-modified-since': HttpDate.format(
+          DateTime.now().add(Duration(days: 365)),
+        ),
+      },
+    );
 
     print('Response status: ${response.statusCode}');
 
     expect(response.statusCode, equals(304));
     expect(
-        ['cache-control', 'expires', 'last-modified'],
-        everyElement(predicate(
-            response.headers.containsKey, 'contained in response headers')));
+      ['cache-control', 'expires', 'last-modified'],
+      everyElement(
+        predicate(
+          response.headers.containsKey,
+          'contained in response headers',
+        ),
+      ),
+    );
   });
 }

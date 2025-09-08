@@ -66,10 +66,11 @@ class AngelAuth<User> {
   /// The [Hmac] being used to encode JWT's.
   Hmac get hmac => _hs256;
 
-  String _randomString(
-      {int length = 32,
-      String validChars =
-          'ABCDEFHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_'}) {
+  String _randomString({
+    int length = 32,
+    String validChars =
+        'ABCDEFHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789_',
+  }) {
     var chars = <int>[];
     while (chars.length < length) {
       chars.add(_random.nextInt(validChars.length));
@@ -78,19 +79,19 @@ class AngelAuth<User> {
   }
 
   /// `jwtLifeSpan` - should be in *milliseconds*.
-  AngelAuth(
-      {String? jwtKey,
-      required this.serializer,
-      required this.deserializer,
-      num jwtLifeSpan = -1,
-      this.allowCookie = true,
-      this.allowTokenInQuery = true,
-      this.enforceIp = true,
-      this.cookieDomain,
-      this.cookiePath = '/',
-      this.secureCookies = true,
-      this.reviveTokenEndpoint = '/auth/token'})
-      : super() {
+  AngelAuth({
+    String? jwtKey,
+    required this.serializer,
+    required this.deserializer,
+    num jwtLifeSpan = -1,
+    this.allowCookie = true,
+    this.allowTokenInQuery = true,
+    this.enforceIp = true,
+    this.cookieDomain,
+    this.cookiePath = '/',
+    this.secureCookies = true,
+    this.reviveTokenEndpoint = '/auth/token',
+  }) : super() {
     _hs256 = Hmac(sha256, (jwtKey ?? _randomString()).codeUnits);
     _jwtLifeSpan = jwtLifeSpan.toInt();
   }
@@ -122,8 +123,9 @@ class AngelAuth<User> {
     }
 
     if (!appContainer.has<_AuthResult<User>>()) {
-      appContainer
-          .registerLazySingleton<Future<_AuthResult<User>>>((container) async {
+      appContainer.registerLazySingleton<Future<_AuthResult<User>>>((
+        container,
+      ) async {
         var req = container.make<RequestContext>();
         var res = container.make<ResponseContext>();
         //if (req == null || res == null) {
@@ -159,11 +161,16 @@ class AngelAuth<User> {
   }
 
   void _apply(
-      RequestContext req, ResponseContext res, AuthToken token, User user) {
+    RequestContext req,
+    ResponseContext res,
+    AuthToken token,
+    User user,
+  ) {
     if (req.container == null) {
       _log.severe('RequestContext.container is null');
       throw StateError(
-          'RequestContext.container is not set. All authentication will fail.');
+        'RequestContext.container is not set. All authentication will fail.',
+      );
     }
 
     var reqContainer = req.container!;
@@ -214,7 +221,9 @@ class AngelAuth<User> {
   */
 
   Future<_AuthResult<User>?> _decodeJwt(
-      RequestContext req, ResponseContext res) async {
+    RequestContext req,
+    ResponseContext res,
+  ) async {
     var jwt = getJwt(req);
 
     if (jwt != null) {
@@ -224,13 +233,15 @@ class AngelAuth<User> {
         if (req.ip != token.ipAddress) {
           _log.warning('JWT cannot be accessed from this IP address');
           throw AngelHttpException.forbidden(
-              message: 'JWT cannot be accessed from this IP address.');
+            message: 'JWT cannot be accessed from this IP address.',
+          );
         }
       }
 
       if (token.lifeSpan > -1) {
-        var expiry =
-            token.issuedAt.add(Duration(milliseconds: token.lifeSpan.toInt()));
+        var expiry = token.issuedAt.add(
+          Duration(milliseconds: token.lifeSpan.toInt()),
+        );
 
         if (!expiry.isAfter(DateTime.now())) {
           _log.warning('Expired JWT');
@@ -297,7 +308,9 @@ class AngelAuth<User> {
 
   /// Attempts to revive an expired (or still alive) JWT.
   Future<Map<String, dynamic>> _reviveJwt(
-      RequestContext req, ResponseContext res) async {
+    RequestContext req,
+    ResponseContext res,
+  ) async {
     try {
       var jwt = getJwt(req);
 
@@ -315,13 +328,15 @@ class AngelAuth<User> {
           if (req.ip != token.ipAddress) {
             _log.warning('WT cannot be accessed from this IP address');
             throw AngelHttpException.forbidden(
-                message: 'JWT cannot be accessed from this IP address.');
+              message: 'JWT cannot be accessed from this IP address.',
+            );
           }
         }
 
         if (token.lifeSpan > -1) {
-          var expiry = token.issuedAt
-              .add(Duration(milliseconds: token.lifeSpan.toInt()));
+          var expiry = token.issuedAt.add(
+            Duration(milliseconds: token.lifeSpan.toInt()),
+          );
 
           if (!expiry.isAfter(DateTime.now())) {
             //print(
@@ -355,7 +370,7 @@ class AngelAuth<User> {
   /// or a `401 Not Authenticated` is thrown, if it is the last one.
   ///
   /// Any other result is considered an authenticated user, and terminates the loop.
-  RequestHandler authenticate(type, [AngelAuthOptions<User>? opt]) {
+  RequestHandler authenticate(Object type, [AngelAuthOptions<User>? opt]) {
     return (RequestContext req, ResponseContext res) async {
       var authOption = opt ?? AngelAuthOptions<User>();
 
@@ -402,7 +417,10 @@ class AngelAuth<User> {
 
           // Create JWT
           var token = AuthToken(
-              userId: userId, lifeSpan: _jwtLifeSpan, ipAddress: req.ip);
+            userId: userId,
+            lifeSpan: _jwtLifeSpan,
+            ipAddress: req.ip,
+          );
           var jwt = token.serialize(_hs256);
 
           if (authOption.tokenCallback != null) {
@@ -472,10 +490,16 @@ class AngelAuth<User> {
 
   /// Log a user in on-demand.
   Future loginById(
-      String userId, RequestContext req, ResponseContext res) async {
+    String userId,
+    RequestContext req,
+    ResponseContext res,
+  ) async {
     var user = await deserializer(userId);
-    var token =
-        AuthToken(userId: userId, lifeSpan: _jwtLifeSpan, ipAddress: req.ip);
+    var token = AuthToken(
+      userId: userId,
+      lifeSpan: _jwtLifeSpan,
+      ipAddress: req.ip,
+    );
     _apply(req, res, token, user);
     _onLogin.add(user);
 

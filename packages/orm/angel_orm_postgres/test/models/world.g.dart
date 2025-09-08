@@ -26,10 +26,7 @@ class WorldMigration extends Migration {
 // **************************************************************************
 
 class WorldQuery extends Query<World, WorldQueryWhere> {
-  WorldQuery({
-    super.parent,
-    Set<String>? trampoline,
-  }) {
+  WorldQuery({super.parent, Set<String>? trampoline}) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = WorldQueryWhere(this);
@@ -54,15 +51,12 @@ class WorldQuery extends Query<World, WorldQueryWhere> {
 
   @override
   List<String> get fields {
-    const localFields = [
-      'id',
-      'randomnumber',
-    ];
+    const localFields = ['id', 'randomnumber'];
     return _selectedFields.isEmpty
         ? localFields
         : localFields
-            .where((field) => _selectedFields.contains(field))
-            .toList();
+              .where((field) => _selectedFields.contains(field))
+              .toList();
   }
 
   WorldQuery select(List<String> selectedFields) {
@@ -99,14 +93,8 @@ class WorldQuery extends Query<World, WorldQueryWhere> {
 
 class WorldQueryWhere extends QueryWhere {
   WorldQueryWhere(WorldQuery query)
-      : id = NumericSqlExpressionBuilder<int>(
-          query,
-          'id',
-        ),
-        randomnumber = NumericSqlExpressionBuilder<int>(
-          query,
-          'randomnumber',
-        );
+    : id = NumericSqlExpressionBuilder<int>(query, 'id'),
+      randomnumber = NumericSqlExpressionBuilder<int>(query, 'randomnumber');
 
   final NumericSqlExpressionBuilder<int> id;
 
@@ -114,10 +102,7 @@ class WorldQueryWhere extends QueryWhere {
 
   @override
   List<SqlExpressionBuilder> get expressionBuilders {
-    return [
-      id,
-      randomnumber,
-    ];
+    return [id, randomnumber];
   }
 }
 
@@ -151,10 +136,7 @@ class WorldQueryValues extends MapQueryValues {
 
 @generatedSerializable
 class World extends WorldEntity {
-  World({
-    this.id,
-    this.randomnumber,
-  });
+  World({this.id, this.randomnumber});
 
   @override
   int? id;
@@ -162,12 +144,11 @@ class World extends WorldEntity {
   @override
   int? randomnumber;
 
-  World copyWith({
-    int? id,
-    int? randomnumber,
-  }) {
+  World copyWith({int? id, int? randomnumber}) {
     return World(
-        id: id ?? this.id, randomnumber: randomnumber ?? this.randomnumber);
+      id: id ?? this.id,
+      randomnumber: randomnumber ?? this.randomnumber,
+    );
   }
 
   @override
@@ -179,10 +160,7 @@ class World extends WorldEntity {
 
   @override
   int get hashCode {
-    return hashObjects([
-      id,
-      randomnumber,
-    ]);
+    return hashObjects([id, randomnumber]);
   }
 
   @override
@@ -226,7 +204,9 @@ class WorldSerializer extends Codec<World, Map> {
 
   static World fromMap(Map map) {
     return World(
-        id: map['id'] as int?, randomnumber: map['randomnumber'] as int?);
+      id: map['id'] as int?,
+      randomnumber: map['randomnumber'] as int?,
+    );
   }
 
   static Map<String, dynamic> toMap(WorldEntity? model) {
@@ -238,10 +218,7 @@ class WorldSerializer extends Codec<World, Map> {
 }
 
 abstract class WorldFields {
-  static const List<String> allFields = <String>[
-    id,
-    randomnumber,
-  ];
+  static const List<String> allFields = <String>[id, randomnumber];
 
   static const String id = 'id';
 

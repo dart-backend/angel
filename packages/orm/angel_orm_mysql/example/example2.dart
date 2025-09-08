@@ -9,18 +9,20 @@ void main() async {
   var logger = Logger('mysql');
 
   var connection = await MySQLConnection.createConnection(
-      host: "localhost",
-      port: 3306,
-      databaseName: "orm_test",
-      userName: "test",
-      password: "Test123",
-      secure: true);
+    host: "localhost",
+    port: 3306,
+    databaseName: "orm_test",
+    userName: "test",
+    password: "Test123",
+    secure: true,
+  );
 
   await connection.connect(timeoutMs: 10000);
   logger.fine("Connected to MySQL");
 
   var result = await connection.execute(
-      "SELECT id, created_at, updated_at, make, description, family_friendly, recalled_at, price FROM cars order by cars.id desc limit 1");
+    "SELECT id, created_at, updated_at, make, description, family_friendly, recalled_at, price FROM cars order by cars.id desc limit 1",
+  );
 
   /*
   // Not working

@@ -55,11 +55,11 @@ class ShelfResponseContext extends ResponseContext<ShelfResponseContext> {
         .map((s) => s.trim())
         .where((s) => s.isNotEmpty)
         .map((str) {
-      // Ignore quality specifications in accept-encoding
-      // ex. gzip;q=0.8
-      if (!str.contains(';')) return str;
-      return str.split(';')[0];
-    });
+          // Ignore quality specifications in accept-encoding
+          // ex. gzip;q=0.8
+          if (!str.contains(';')) return str;
+          return str.split(';')[0];
+        });
   }
 
   @override

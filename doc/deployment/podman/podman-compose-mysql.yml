@@ -1,0 +1,22 @@
+services:
+  mysql:
+    image: docker.io/mysql:latest
+    restart: "no"
+    ports:
+      - "3306:3306"
+    environment:
+      - MYSQL_ROOT_PASSWORD=Qwerty
+      - MYSQL_DATABASE=orm_test
+      - MYSQL_USER=test
+      - MYSQL_PASSWORD=Test123
+#    volumes:
+#      - C://storage/mysql:/var/lib/mysql:ro
+    networks:
+      - appnet
+
+#volumes:
+#  mysql-data-external:
+#    driver: local
+
+networks:
+  appnet:

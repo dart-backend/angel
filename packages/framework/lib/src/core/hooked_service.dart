@@ -71,7 +71,9 @@ class HookedService<Id, Data, T extends Service<Id, Data>>
       return params.keys
           .where((key) => key != '__requestctx' && key != '__responsectx')
           .fold<Map<String, dynamic>>(
-              {}, (map, key) => map..[key] = params[key]);
+            {},
+            (map, key) => map..[key] = params[key],
+          );
     }
   }
 
@@ -109,11 +111,13 @@ class HookedService<Id, Data, T extends Service<Id, Data>>
     }
 
     void applyListeners(
-        Function fn, HookedServiceEventDispatcher<Id, Data, T> dispatcher,
-        [bool? isAfter]) {
+      Function fn,
+      HookedServiceEventDispatcher<Id, Data, T> dispatcher, [
+      bool? isAfter,
+    ]) {
       var hooks = getAnnotation<Hooks>(fn, app.container.reflector);
       final listeners = <HookedServiceEventListener<Id, Data, T>>[
-        ...isAfter == true ? after : before
+        ...isAfter == true ? after : before,
       ];
 
       if (hooks != null) {
@@ -153,51 +157,63 @@ class HookedService<Id, Data, T extends Service<Id, Data>>
   }
 
   /// Runs the [listener] before every service method specified.
-  void before(Iterable<String> eventNames,
-      HookedServiceEventListener<Id, Data, T> listener) {
-    eventNames.map((name) {
-      switch (name) {
-        case HookedServiceEvent.indexed:
-          return beforeIndexed;
-        case HookedServiceEvent.read:
-          return beforeRead;
-        case HookedServiceEvent.created:
-          return beforeCreated;
-        case HookedServiceEvent.modified:
-          return beforeModified;
-        case HookedServiceEvent.updated:
-          return beforeUpdated;
-        case HookedServiceEvent.removed:
-          return beforeRemoved;
-        default:
-          throw ArgumentError('Invalid service method: $name');
-      }
-    }).forEach((HookedServiceEventDispatcher<Id, Data, T> dispatcher) =>
-        dispatcher.listen(listener));
+  void before(
+    Iterable<String> eventNames,
+    HookedServiceEventListener<Id, Data, T> listener,
+  ) {
+    eventNames
+        .map((name) {
+          switch (name) {
+            case HookedServiceEvent.indexed:
+              return beforeIndexed;
+            case HookedServiceEvent.read:
+              return beforeRead;
+            case HookedServiceEvent.created:
+              return beforeCreated;
+            case HookedServiceEvent.modified:
+              return beforeModified;
+            case HookedServiceEvent.updated:
+              return beforeUpdated;
+            case HookedServiceEvent.removed:
+              return beforeRemoved;
+            default:
+              throw ArgumentError('Invalid service method: $name');
+          }
+        })
+        .forEach(
+          (HookedServiceEventDispatcher<Id, Data, T> dispatcher) =>
+              dispatcher.listen(listener),
+        );
   }
 
   /// Runs the [listener] after every service method specified.
-  void after(Iterable<String> eventNames,
-      HookedServiceEventListener<Id, Data, T> listener) {
-    eventNames.map((name) {
-      switch (name) {
-        case HookedServiceEvent.indexed:
-          return afterIndexed;
-        case HookedServiceEvent.read:
-          return afterRead;
-        case HookedServiceEvent.created:
-          return afterCreated;
-        case HookedServiceEvent.modified:
-          return afterModified;
-        case HookedServiceEvent.updated:
-          return afterUpdated;
-        case HookedServiceEvent.removed:
-          return afterRemoved;
-        default:
-          throw ArgumentError('Invalid service method: $name');
-      }
-    }).forEach((HookedServiceEventDispatcher<Id, Data, T> dispatcher) =>
-        dispatcher.listen(listener));
+  void after(
+    Iterable<String> eventNames,
+    HookedServiceEventListener<Id, Data, T> listener,
+  ) {
+    eventNames
+        .map((name) {
+          switch (name) {
+            case HookedServiceEvent.indexed:
+              return afterIndexed;
+            case HookedServiceEvent.read:
+              return afterRead;
+            case HookedServiceEvent.created:
+              return afterCreated;
+            case HookedServiceEvent.modified:
+              return afterModified;
+            case HookedServiceEvent.updated:
+              return afterUpdated;
+            case HookedServiceEvent.removed:
+              return afterRemoved;
+            default:
+              throw ArgumentError('Invalid service method: $name');
+          }
+        })
+        .forEach(
+          (HookedServiceEventDispatcher<Id, Data, T> dispatcher) =>
+              dispatcher.listen(listener),
+        );
   }
 
   /// Runs the [listener] before every service method.
@@ -250,7 +266,8 @@ class HookedService<Id, Data, T extends Service<Id, Data>>
   /// that events coming out of this [Stream] will see changes you make within the [Stream]
   /// callback.
   Stream<HookedServiceEvent<Id, Data, T>> beforeStream(
-      Iterable<String> eventNames) {
+    Iterable<String> eventNames,
+  ) {
     var ctrl = StreamController<HookedServiceEvent<Id, Data, T>>();
     _ctrl.add(ctrl);
     before(eventNames, ctrl.add);
@@ -263,7 +280,8 @@ class HookedService<Id, Data, T extends Service<Id, Data>>
   /// that events coming out of this [Stream] will see changes you make within the [Stream]
   /// callback.
   Stream<HookedServiceEvent<Id, Data, T>> afterStream(
-      Iterable<String> eventNames) {
+    Iterable<String> eventNames,
+  ) {
     var ctrl = StreamController<HookedServiceEvent<Id, Data, T>>();
     _ctrl.add(ctrl);
     after(eventNames, ctrl.add);
@@ -281,168 +299,329 @@ class HookedService<Id, Data, T extends Service<Id, Data>>
   Future<List<Data>> index([Map<String, dynamic>? params]) {
     var localParams = _stripReq(params);
     return beforeIndexed
-        ._emit(HookedServiceEvent(false, _getRequest(params),
-            _getResponse(params), inner, HookedServiceEvent.indexed,
-            params: localParams))
+        ._emit(
+          HookedServiceEvent(
+            false,
+            _getRequest(params),
+            _getResponse(params),
+            inner,
+            HookedServiceEvent.indexed,
+            params: localParams,
+          ),
+        )
         .then((before) {
-      if (before._canceled) {
-        return afterIndexed
-            ._emit(HookedServiceEvent(true, _getRequest(params),
-                _getResponse(params), inner, HookedServiceEvent.indexed,
-                params: localParams, result: before.result))
-            .then((after) => after.result as List<Data>);
-      }
+          if (before._canceled) {
+            return afterIndexed
+                ._emit(
+                  HookedServiceEvent(
+                    true,
+                    _getRequest(params),
+                    _getResponse(params),
+                    inner,
+                    HookedServiceEvent.indexed,
+                    params: localParams,
+                    result: before.result,
+                  ),
+                )
+                .then((after) => after.result as List<Data>);
+          }
 
-      return inner.index(localParams).then((result) {
-        return afterIndexed
-            ._emit(HookedServiceEvent(true, _getRequest(params),
-                _getResponse(params), inner, HookedServiceEvent.indexed,
-                params: localParams, result: result))
-            .then((after) => after.result as List<Data>);
-      });
-    });
+          return inner.index(localParams).then((result) {
+            return afterIndexed
+                ._emit(
+                  HookedServiceEvent(
+                    true,
+                    _getRequest(params),
+                    _getResponse(params),
+                    inner,
+                    HookedServiceEvent.indexed,
+                    params: localParams,
+                    result: result,
+                  ),
+                )
+                .then((after) => after.result as List<Data>);
+          });
+        });
   }
 
   @override
   Future<Data> read(Id id, [Map<String, dynamic>? params]) {
     var localParams = _stripReq(params);
     return beforeRead
-        ._emit(HookedServiceEvent(false, _getRequest(params),
-            _getResponse(params), inner, HookedServiceEvent.read,
-            id: id, params: localParams))
+        ._emit(
+          HookedServiceEvent(
+            false,
+            _getRequest(params),
+            _getResponse(params),
+            inner,
+            HookedServiceEvent.read,
+            id: id,
+            params: localParams,
+          ),
+        )
         .then((before) {
-      if (before._canceled) {
-        return afterRead
-            ._emit(HookedServiceEvent(true, _getRequest(params),
-                _getResponse(params), inner, HookedServiceEvent.read,
-                id: id, params: localParams, result: before.result))
-            .then((after) => after.result as Data);
-      }
+          if (before._canceled) {
+            return afterRead
+                ._emit(
+                  HookedServiceEvent(
+                    true,
+                    _getRequest(params),
+                    _getResponse(params),
+                    inner,
+                    HookedServiceEvent.read,
+                    id: id,
+                    params: localParams,
+                    result: before.result,
+                  ),
+                )
+                .then((after) => after.result as Data);
+          }
 
-      return inner.read(id, localParams).then((result) {
-        return afterRead
-            ._emit(HookedServiceEvent(true, _getRequest(params),
-                _getResponse(params), inner, HookedServiceEvent.read,
-                id: id, params: localParams, result: result))
-            .then((after) => after.result as Data);
-      });
-    });
+          return inner.read(id, localParams).then((result) {
+            return afterRead
+                ._emit(
+                  HookedServiceEvent(
+                    true,
+                    _getRequest(params),
+                    _getResponse(params),
+                    inner,
+                    HookedServiceEvent.read,
+                    id: id,
+                    params: localParams,
+                    result: result,
+                  ),
+                )
+                .then((after) => after.result as Data);
+          });
+        });
   }
 
   @override
   Future<Data> create(Data data, [Map<String, dynamic>? params]) {
     var localParams = _stripReq(params);
     return beforeCreated
-        ._emit(HookedServiceEvent(false, _getRequest(params),
-            _getResponse(params), inner, HookedServiceEvent.created,
-            data: data, params: localParams))
+        ._emit(
+          HookedServiceEvent(
+            false,
+            _getRequest(params),
+            _getResponse(params),
+            inner,
+            HookedServiceEvent.created,
+            data: data,
+            params: localParams,
+          ),
+        )
         .then((before) {
-      if (before._canceled) {
-        return afterCreated
-            ._emit(HookedServiceEvent(true, _getRequest(params),
-                _getResponse(params), inner, HookedServiceEvent.created,
-                data: before.data, params: localParams, result: before.result))
-            .then((after) => after.result as Data);
-      }
+          if (before._canceled) {
+            return afterCreated
+                ._emit(
+                  HookedServiceEvent(
+                    true,
+                    _getRequest(params),
+                    _getResponse(params),
+                    inner,
+                    HookedServiceEvent.created,
+                    data: before.data,
+                    params: localParams,
+                    result: before.result,
+                  ),
+                )
+                .then((after) => after.result as Data);
+          }
 
-      return inner.create(before.data as Data, localParams).then((result) {
-        return afterCreated
-            ._emit(HookedServiceEvent(true, _getRequest(params),
-                _getResponse(params), inner, HookedServiceEvent.created,
-                data: before.data, params: localParams, result: result))
-            .then((after) => after.result as Data);
-      });
-    });
+          return inner.create(before.data as Data, localParams).then((result) {
+            return afterCreated
+                ._emit(
+                  HookedServiceEvent(
+                    true,
+                    _getRequest(params),
+                    _getResponse(params),
+                    inner,
+                    HookedServiceEvent.created,
+                    data: before.data,
+                    params: localParams,
+                    result: result,
+                  ),
+                )
+                .then((after) => after.result as Data);
+          });
+        });
   }
 
   @override
   Future<Data> modify(Id id, Data data, [Map<String, dynamic>? params]) {
     var localParams = _stripReq(params);
     return beforeModified
-        ._emit(HookedServiceEvent(false, _getRequest(params),
-            _getResponse(params), inner, HookedServiceEvent.modified,
-            id: id, data: data, params: localParams))
+        ._emit(
+          HookedServiceEvent(
+            false,
+            _getRequest(params),
+            _getResponse(params),
+            inner,
+            HookedServiceEvent.modified,
+            id: id,
+            data: data,
+            params: localParams,
+          ),
+        )
         .then((before) {
-      if (before._canceled) {
-        return afterModified
-            ._emit(HookedServiceEvent(true, _getRequest(params),
-                _getResponse(params), inner, HookedServiceEvent.modified,
-                id: id,
-                data: before.data,
-                params: localParams,
-                result: before.result))
-            .then((after) => after.result as Data);
-      }
+          if (before._canceled) {
+            return afterModified
+                ._emit(
+                  HookedServiceEvent(
+                    true,
+                    _getRequest(params),
+                    _getResponse(params),
+                    inner,
+                    HookedServiceEvent.modified,
+                    id: id,
+                    data: before.data,
+                    params: localParams,
+                    result: before.result,
+                  ),
+                )
+                .then((after) => after.result as Data);
+          }
 
-      return inner.modify(id, before.data as Data, localParams).then((result) {
-        return afterModified
-            ._emit(HookedServiceEvent(true, _getRequest(params),
-                _getResponse(params), inner, HookedServiceEvent.created,
-                id: id, data: before.data, params: localParams, result: result))
-            .then((after) => after.result as Data);
-      });
-    });
+          return inner.modify(id, before.data as Data, localParams).then((
+            result,
+          ) {
+            return afterModified
+                ._emit(
+                  HookedServiceEvent(
+                    true,
+                    _getRequest(params),
+                    _getResponse(params),
+                    inner,
+                    HookedServiceEvent.created,
+                    id: id,
+                    data: before.data,
+                    params: localParams,
+                    result: result,
+                  ),
+                )
+                .then((after) => after.result as Data);
+          });
+        });
   }
 
   @override
   Future<Data> update(Id id, Data data, [Map<String, dynamic>? params]) {
     var localParams = _stripReq(params);
     return beforeUpdated
-        ._emit(HookedServiceEvent(false, _getRequest(params),
-            _getResponse(params), inner, HookedServiceEvent.updated,
-            id: id, data: data, params: localParams))
+        ._emit(
+          HookedServiceEvent(
+            false,
+            _getRequest(params),
+            _getResponse(params),
+            inner,
+            HookedServiceEvent.updated,
+            id: id,
+            data: data,
+            params: localParams,
+          ),
+        )
         .then((before) {
-      if (before._canceled) {
-        return afterUpdated
-            ._emit(HookedServiceEvent(true, _getRequest(params),
-                _getResponse(params), inner, HookedServiceEvent.updated,
-                id: id,
-                data: before.data,
-                params: localParams,
-                result: before.result))
-            .then((after) => after.result as Data);
-      }
+          if (before._canceled) {
+            return afterUpdated
+                ._emit(
+                  HookedServiceEvent(
+                    true,
+                    _getRequest(params),
+                    _getResponse(params),
+                    inner,
+                    HookedServiceEvent.updated,
+                    id: id,
+                    data: before.data,
+                    params: localParams,
+                    result: before.result,
+                  ),
+                )
+                .then((after) => after.result as Data);
+          }
 
-      return inner.update(id, before.data as Data, localParams).then((result) {
-        return afterUpdated
-            ._emit(HookedServiceEvent(true, _getRequest(params),
-                _getResponse(params), inner, HookedServiceEvent.updated,
-                id: id, data: before.data, params: localParams, result: result))
-            .then((after) => after.result as Data);
-      });
-    });
+          return inner.update(id, before.data as Data, localParams).then((
+            result,
+          ) {
+            return afterUpdated
+                ._emit(
+                  HookedServiceEvent(
+                    true,
+                    _getRequest(params),
+                    _getResponse(params),
+                    inner,
+                    HookedServiceEvent.updated,
+                    id: id,
+                    data: before.data,
+                    params: localParams,
+                    result: result,
+                  ),
+                )
+                .then((after) => after.result as Data);
+          });
+        });
   }
 
   @override
   Future<Data> remove(Id id, [Map<String, dynamic>? params]) {
     var localParams = _stripReq(params);
     return beforeRemoved
-        ._emit(HookedServiceEvent(false, _getRequest(params),
-            _getResponse(params), inner, HookedServiceEvent.removed,
-            id: id, params: localParams))
+        ._emit(
+          HookedServiceEvent(
+            false,
+            _getRequest(params),
+            _getResponse(params),
+            inner,
+            HookedServiceEvent.removed,
+            id: id,
+            params: localParams,
+          ),
+        )
         .then((before) {
-      if (before._canceled) {
-        return afterRemoved
-            ._emit(HookedServiceEvent(true, _getRequest(params),
-                _getResponse(params), inner, HookedServiceEvent.removed,
-                id: id, params: localParams, result: before.result))
-            .then((after) => after.result) as Data;
-      }
+          if (before._canceled) {
+            return afterRemoved
+                    ._emit(
+                      HookedServiceEvent(
+                        true,
+                        _getRequest(params),
+                        _getResponse(params),
+                        inner,
+                        HookedServiceEvent.removed,
+                        id: id,
+                        params: localParams,
+                        result: before.result,
+                      ),
+                    )
+                    .then((after) => after.result)
+                as Data;
+          }
 
-      return inner.remove(id, localParams).then((result) {
-        return afterRemoved
-            ._emit(HookedServiceEvent(true, _getRequest(params),
-                _getResponse(params), inner, HookedServiceEvent.removed,
-                id: id, params: localParams, result: result))
-            .then((after) => after.result as Data);
-      });
-    });
+          return inner.remove(id, localParams).then((result) {
+            return afterRemoved
+                ._emit(
+                  HookedServiceEvent(
+                    true,
+                    _getRequest(params),
+                    _getResponse(params),
+                    inner,
+                    HookedServiceEvent.removed,
+                    id: id,
+                    params: localParams,
+                    result: result,
+                  ),
+                )
+                .then((after) => after.result as Data);
+          });
+        });
   }
 
   /// Fires an `after` event. This will not be propagated to clients,
   /// but will be broadcasted to WebSockets, etc.
-  Future<HookedServiceEvent<Id, Data, T>> fire(String eventName, result,
-      [HookedServiceEventListener<Id, Data, T>? callback]) {
+  Future<HookedServiceEvent<Id, Data, T>> fire(
+    String eventName,
+    result, [
+    HookedServiceEventListener<Id, Data, T>? callback,
+  ]) {
     HookedServiceEventDispatcher<Id, Data, T> dispatcher;
 
     switch (eventName) {
@@ -468,16 +647,22 @@ class HookedService<Id, Data, T extends Service<Id, Data>>
         throw ArgumentError("Invalid service event name: '$eventName'");
     }
 
-    var ev =
-        HookedServiceEvent<Id, Data, T>(true, null, null, inner, eventName);
+    var ev = HookedServiceEvent<Id, Data, T>(
+      true,
+      null,
+      null,
+      inner,
+      eventName,
+    );
     return fireEvent(dispatcher, ev, callback);
   }
 
   /// Sends an arbitrary event down the hook chain.
   Future<HookedServiceEvent<Id, Data, T>> fireEvent(
-      HookedServiceEventDispatcher<Id, Data, T> dispatcher,
-      HookedServiceEvent<Id, Data, T> event,
-      [HookedServiceEventListener<Id, Data, T>? callback]) {
+    HookedServiceEventDispatcher<Id, Data, T> dispatcher,
+    HookedServiceEvent<Id, Data, T> event, [
+    HookedServiceEventListener<Id, Data, T>? callback,
+  ]) {
     Future? f;
     if (callback != null && event._canceled != true) {
       f = Future.sync(() => callback(event));
@@ -502,11 +687,11 @@ class HookedServiceEvent<Id, Data, T extends Service<Id, Data>> {
     created,
     modified,
     updated,
-    removed
+    removed,
   ];
 
   /// Use this to end processing of an event.
-  void cancel([result]) {
+  void cancel([Object? result]) {
     _canceled = true;
     this.result = result ?? this.result;
   }
@@ -543,9 +728,17 @@ class HookedServiceEvent<Id, Data, T extends Service<Id, Data>> {
   /// The inner service whose method was hooked.
   T service;
 
-  HookedServiceEvent(this._isAfter, this._request, this._response, this.service,
-      this._eventName,
-      {Id? id, this.data, Map<String, dynamic>? params, this.result}) {
+  HookedServiceEvent(
+    this._isAfter,
+    this._request,
+    this._response,
+    this.service,
+    this._eventName, {
+    Id? id,
+    this.data,
+    Map<String, dynamic>? params,
+    this.result,
+  }) {
     //_data = data;
     _id = id;
     _params = params ?? {};
@@ -553,8 +746,8 @@ class HookedServiceEvent<Id, Data, T extends Service<Id, Data>> {
 }
 
 /// Triggered on a hooked service event.
-typedef HookedServiceEventListener<Id, Data, T extends Service<Id, Data>>
-    = FutureOr<dynamic> Function(HookedServiceEvent<Id, Data, T> event);
+typedef HookedServiceEventListener<Id, Data, T extends Service<Id, Data>> =
+    FutureOr<dynamic> Function(HookedServiceEvent<Id, Data, T> event);
 
 /// Can be listened to, but events may be canceled.
 class HookedServiceEventDispatcher<Id, Data, T extends Service<Id, Data>> {
@@ -570,7 +763,8 @@ class HookedServiceEventDispatcher<Id, Data, T extends Service<Id, Data>> {
 
   /// Fires an event, and returns it once it is either canceled, or all listeners have run.
   Future<HookedServiceEvent<Id, Data, T>> _emit(
-      HookedServiceEvent<Id, Data, T> event) {
+    HookedServiceEvent<Id, Data, T> event,
+  ) {
     if (event._canceled == true || listeners.isEmpty) {
       return Future.value(event);
     }

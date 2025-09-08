@@ -23,8 +23,11 @@ RequestHandler forceBasicAuth<User>({String? realm}) {
 
 /// Restricts access to a resource via authentication.
 RequestHandler requireAuthentication<User>() {
-  return (RequestContext req, ResponseContext res,
-      {bool throwError = true}) async {
+  return (
+    RequestContext req,
+    ResponseContext res, {
+    bool throwError = true,
+  }) async {
     bool reject(ResponseContext res) {
       if (throwError) {
         res.statusCode = 403;

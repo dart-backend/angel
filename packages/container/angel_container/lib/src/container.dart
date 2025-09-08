@@ -88,7 +88,8 @@ class Container {
       return make(futureType);
     } else {
       throw ReflectionException(
-          'No injection for Future<$t2> or $t2 was found.');
+        'No injection for Future<$t2> or $t2 was found.',
+      );
     }
   }
 
@@ -126,9 +127,11 @@ class Container {
       }
 
       var constructor = reflectedType.constructors.firstWhere(
-          (c) => isDefault(c.name),
-          orElse: (() => throw ReflectionException(
-              '${reflectedType.name} has no default constructor, and therefore cannot be instantiated.')));
+        (c) => isDefault(c.name),
+        orElse: (() => throw ReflectionException(
+          '${reflectedType.name} has no default constructor, and therefore cannot be instantiated.',
+        )),
+      );
 
       for (var param in constructor.parameters) {
         var value = make(param.type.reflectedType);
@@ -140,13 +143,19 @@ class Container {
         }
       }
 
-      return reflectedType.newInstance(
-          isDefault(constructor.name) ? '' : constructor.name,
-          positional,
-          named, []).reflectee as T;
+      return reflectedType
+              .newInstance(
+                isDefault(constructor.name) ? '' : constructor.name,
+                positional,
+                named,
+                [],
+              )
+              .reflectee
+          as T;
     } else {
       throw ReflectionException(
-          '$t2 is not a class, and therefore cannot be instantiated.');
+        '$t2 is not a class, and therefore cannot be instantiated.',
+      );
     }
   }
 
@@ -155,24 +164,25 @@ class Container {
   /// In many cases, you might prefer this to [registerFactory].
   ///
   /// Returns [f].
-  T Function(Container) registerLazySingleton<T>(T Function(Container) f,
-      {Type? as}) {
-    return registerFactory<T>(
-      (container) {
-        var r = f(container);
-        container.registerSingleton<T>(r, as: as);
-        return r;
-      },
-      as: as,
-    );
+  T Function(Container) registerLazySingleton<T>(
+    T Function(Container) f, {
+    Type? as,
+  }) {
+    return registerFactory<T>((container) {
+      var r = f(container);
+      container.registerSingleton<T>(r, as: as);
+      return r;
+    }, as: as);
   }
 
   /// Registers a factory. Any attempt to resolve the
   /// type within *this* container will return the result of [f].
   ///
   /// Returns [f].
-  T Function(Container) registerFactory<T>(T Function(Container) f,
-      {Type? as}) {
+  T Function(Container) registerFactory<T>(
+    T Function(Container) f, {
+    Type? as,
+  }) {
     Type t2 = T;
     if (as != null) {
       t2 = as;
@@ -220,7 +230,8 @@ class Container {
       return _parent.findByName<T>(name);
     } else {
       throw StateError(
-          'This container does not have a singleton named "$name".');
+        'This container does not have a singleton named "$name".',
+      );
     }
   }
 

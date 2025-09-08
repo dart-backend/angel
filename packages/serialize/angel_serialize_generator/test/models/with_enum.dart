@@ -4,7 +4,7 @@ import 'package:angel3_serialize/angel3_serialize.dart';
 part 'with_enum.g.dart';
 
 @serializable
-abstract class _WithEnum {
+abstract class WithEnumEntity {
   @DefaultsTo(WithEnumType.b)
   WithEnumType? get type;
 

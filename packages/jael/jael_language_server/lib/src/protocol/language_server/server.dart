@@ -38,10 +38,11 @@ class StdIOLanguageServer {
     peer
       ..registerMethod('initialize', (params) async {
         final serverCapabilities = await _server.initialize(
-            params['processId'].valueOr(0) as int?,
-            params['rootUri'].valueOr('') as String?,
-            ClientCapabilities.fromJson(params['capabilities'].value as Map),
-            params['trace'].valueOr('off') as String?);
+          params['processId'].valueOr(0) as int?,
+          params['rootUri'].valueOr('') as String?,
+          ClientCapabilities.fromJson(params['capabilities'].value as Map),
+          params['trace'].valueOr('off') as String?,
+        );
         _isInitialized = true;
         return {'capabilities': serverCapabilities.toJson()};
       })
@@ -73,7 +74,9 @@ class StdIOLanguageServer {
     });
     _registerNotification(peer, 'textDocument/didChange', (params) {
       _server.textDocumentDidChange(
-          _versionedDocument(params), _contentChanges(params));
+        _versionedDocument(params),
+        _contentChanges(params),
+      );
     });
     _registerNotification(peer, 'textDocument/didClose', (params) {
       _server.textDocumentDidClose(_document(params));
@@ -82,120 +85,153 @@ class StdIOLanguageServer {
 
   void _notifications(Peer peer) {
     _server
-      ..diagnostics.map((d) => d.toJson()).forEach((diagnostics) =>
-          peer.sendNotification('textDocument/publishDiagnostics', diagnostics))
+      ..diagnostics
+          .map((d) => d.toJson())
+          .forEach(
+            (diagnostics) => peer.sendNotification(
+              'textDocument/publishDiagnostics',
+              diagnostics,
+            ),
+          )
       ..workspaceEdits.map((e) => e.toJson()).forEach((edit) {
         // Ignore response?
         peer.sendRequest('workspace/applyEdit', edit);
       })
-      ..logMessages.map((e) => e.toJson()).forEach(
-          (message) => peer.sendNotification('window/logMessage', message))
-      ..showMessages!.map((e) => e.toJson()).forEach(
-          (message) => peer.sendNotification('window/showMessage', message));
+      ..logMessages
+          .map((e) => e.toJson())
+          .forEach(
+            (message) => peer.sendNotification('window/logMessage', message),
+          )
+      ..showMessages!
+          .map((e) => e.toJson())
+          .forEach(
+            (message) => peer.sendNotification('window/showMessage', message),
+          );
   }
 
   void _completionMethods(Peer peer) {
     _registerRequest(
-        peer,
-        'textDocument/completion',
-        (params) => _server
-            .textDocumentCompletion(_document(params), _position(params))
-            .then((r) => r.toJson()));
+      peer,
+      'textDocument/completion',
+      (params) => _server
+          .textDocumentCompletion(_document(params), _position(params))
+          .then((r) => r.toJson()),
+    );
   }
 
   void _referenceMethods(Peer peer) {
     _registerRequest(
-        peer,
-        'textDocument/definition',
-        (params) => _server
-            .textDocumentDefinition(_document(params), _position(params))
-            .then((r) => r?.toJson()));
+      peer,
+      'textDocument/definition',
+      (params) => _server
+          .textDocumentDefinition(_document(params), _position(params))
+          .then((r) => r?.toJson()),
+    );
     _registerRequest(
-        peer,
-        'textDocument/hover',
-        (params) => _server
-            .textDocumentHover(_document(params), _position(params))
-            .then((r) => r?.toJson()));
+      peer,
+      'textDocument/hover',
+      (params) => _server
+          .textDocumentHover(_document(params), _position(params))
+          .then((r) => r?.toJson()),
+    );
     _registerRequest(
-        peer,
-        'textDocument/references',
-        (params) => _server
-            .textDocumentReferences(
-                _document(params), _position(params), _referenceContext(params))
-            .then((r) => r.map((e) => e.toJson()).toList()));
+      peer,
+      'textDocument/references',
+      (params) => _server
+          .textDocumentReferences(
+            _document(params),
+            _position(params),
+            _referenceContext(params),
+          )
+          .then((r) => r.map((e) => e.toJson()).toList()),
+    );
     _registerRequest(
-        peer,
-        'textDocument/implementation',
-        (params) => _server
-            .textDocumentImplementation(_document(params), _position(params))
-            .then((r) => r.map((e) => e.toJson()).toList()));
+      peer,
+      'textDocument/implementation',
+      (params) => _server
+          .textDocumentImplementation(_document(params), _position(params))
+          .then((r) => r.map((e) => e.toJson()).toList()),
+    );
     _registerRequest(
-        peer,
-        'textDocument/documentHighlight',
-        (params) => _server
-            .textDocumentHighlight(_document(params), _position(params))
-            .then((r) => r.map((e) => e.toJson()).toList()));
+      peer,
+      'textDocument/documentHighlight',
+      (params) => _server
+          .textDocumentHighlight(_document(params), _position(params))
+          .then((r) => r.map((e) => e.toJson()).toList()),
+    );
     _registerRequest(
-        peer,
-        'textDocument/documentSymbol',
-        (params) => _server
-            .textDocumentSymbols(_document(params))
-            .then((r) => r.map((e) => e.toJson()).toList()));
+      peer,
+      'textDocument/documentSymbol',
+      (params) => _server
+          .textDocumentSymbols(_document(params))
+          .then((r) => r.map((e) => e.toJson()).toList()),
+    );
     _registerRequest(
-        peer,
-        'workspace/symbol',
-        (params) => _server
-            .workspaceSymbol(_query(params))
-            .then((r) => r.map((e) => e.toJson()).toList()));
+      peer,
+      'workspace/symbol',
+      (params) => _server
+          .workspaceSymbol(_query(params))
+          .then((r) => r.map((e) => e.toJson()).toList()),
+    );
   }
 
   void _codeActionMethods(Peer peer) {
     _registerRequest(
-        peer,
-        'textDocument/codeAction',
-        (params) => _server
-            .textDocumentCodeAction(
-                _document(params), _range(params), _codeActionContext(params))
-            .then((r) => r.map((e) => e.toJson()).toList()));
+      peer,
+      'textDocument/codeAction',
+      (params) => _server
+          .textDocumentCodeAction(
+            _document(params),
+            _range(params),
+            _codeActionContext(params),
+          )
+          .then((r) => r.map((e) => e.toJson()).toList()),
+    );
     _registerRequest(
-        peer,
-        'workspace/executeCommand',
-        (params) => _server.workspaceExecuteCommand(
-            params['command'].value as String?,
-            params['arguments']?.value as List?));
+      peer,
+      'workspace/executeCommand',
+      (params) => _server.workspaceExecuteCommand(
+        params['command'].value as String?,
+        params['arguments']?.value as List?,
+      ),
+    );
     _registerRequest(
-        peer,
-        'textDocument/rename',
-        (params) async => (await _server.textDocumentRename(_document(params),
-                _position(params), params['newName'].value as String?))!
-            .toJson());
+      peer,
+      'textDocument/rename',
+      (params) async => (await _server.textDocumentRename(
+        _document(params),
+        _position(params),
+        params['newName'].value as String?,
+      ))!.toJson(),
+    );
   }
 }
 
-TextDocumentItem _documentItem(params) =>
+TextDocumentItem _documentItem(dynamic params) =>
     TextDocumentItem.fromJson(params['textDocument'].value as Map);
 
-VersionedTextDocumentIdentifier _versionedDocument(params) =>
+VersionedTextDocumentIdentifier _versionedDocument(dynamic params) =>
     VersionedTextDocumentIdentifier.fromJson(
-        params['textDocument'].value as Map);
+      params['textDocument'].value as Map,
+    );
 
-TextDocumentIdentifier _document(params) =>
+TextDocumentIdentifier _document(dynamic params) =>
     TextDocumentIdentifier.fromJson(params['textDocument'].value as Map);
 
-Range _range(params) => Range.fromJson(params['range'].value as Map);
+Range _range(dynamic params) => Range.fromJson(params['range'].value as Map);
 
-Position _position(params) =>
+Position _position(dynamic params) =>
     Position.fromJson(params['position'].value as Map);
 
-CodeActionContext _codeActionContext(params) =>
+CodeActionContext _codeActionContext(dynamic params) =>
     CodeActionContext.fromJson(params['context'].value as Map);
 
-ReferenceContext _referenceContext(params) =>
+ReferenceContext _referenceContext(dynamic params) =>
     ReferenceContext.fromJson(params['context'].value as Map);
 
-List<TextDocumentContentChangeEvent> _contentChanges(params) =>
+List<TextDocumentContentChangeEvent> _contentChanges(dynamic params) =>
     (params['contentChanges'].value as Iterable)
         .map((change) => TextDocumentContentChangeEvent.fromJson(change as Map))
         .toList();
 
-String? _query(params) => params['query'].value as String?;
+String? _query(dynamic params) => params['query'].value as String?;

@@ -4,7 +4,7 @@ import 'package:angel3_framework/angel3_framework.dart';
 ///
 /// [provider] can be a String, a [Provider], or an Iterable.
 /// If [provider] is `null`, any provider will be blocked.
-HookedServiceEventListener doNotBroadcast([provider]) {
+HookedServiceEventListener doNotBroadcast([Object? provider]) {
   return (HookedServiceEvent e) {
     if (e.params.containsKey('provider')) {
       var eParam = e.params;

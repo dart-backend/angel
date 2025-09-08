@@ -10,10 +10,7 @@ class Todo extends Model {
   Todo({this.text, this.over});
 
   Map<String, dynamic> toJson() {
-    return {
-      'text': text,
-      'over': over,
-    };
+    return {'text': text, 'over': over};
   }
 }
 
@@ -23,12 +20,12 @@ class BookService extends Service {
     print('Book params: $params');
 
     return [
-      {'foo': 'bar'}
+      {'foo': 'bar'},
     ];
   }
 }
 
-void incrementTodoTimes(e) {
+void incrementTodoTimes(dynamic e) {
   IncrementService.times++;
 }
 
@@ -46,7 +43,11 @@ class IsInstanceOf<T> implements Matcher {
 
   @override
   Description describeMismatch(
-      item, Description mismatchDescription, Map matchState, bool verbose) {
+    item,
+    Description mismatchDescription,
+    Map matchState,
+    bool verbose,
+  ) {
     return mismatchDescription.add('$item is not an instance of $T');
   }
 

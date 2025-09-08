@@ -22,7 +22,7 @@ const List<String> actions = <String>[
   createAction,
   modifyAction,
   updateAction,
-  removeAction
+  removeAction,
 ];
 
 /// The standard Angel service events.
@@ -32,5 +32,5 @@ const List<String> events = <String>[
   createdEvent,
   modifiedEvent,
   updatedEvent,
-  removedEvent
+  removedEvent,
 ];

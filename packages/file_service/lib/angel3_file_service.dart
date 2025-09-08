@@ -11,19 +11,25 @@ class JsonFileService extends Service<String, Map<String, dynamic>> {
   late MapService _store;
   final File file;
 
-  JsonFileService(this.file,
-      {bool allowRemoveAll = false,
-      bool allowQuery = true,
-      MapService? store}) {
-    _store = store ??
+  JsonFileService(
+    this.file, {
+    bool allowRemoveAll = false,
+    bool allowQuery = true,
+    MapService? store,
+  }) {
+    _store =
+        store ??
         MapService(
-            allowRemoveAll: allowRemoveAll == true,
-            allowQuery: allowQuery != false);
+          allowRemoveAll: allowRemoveAll == true,
+          allowQuery: allowQuery != false,
+        );
   }
 
   Map<String, dynamic> _coerceStringDynamic(Map m) {
     return m.keys.fold<Map<String, dynamic>>(
-        <String, dynamic>{}, (out, k) => out..[k.toString()] = m[k]);
+      <String, dynamic>{},
+      (out, k) => out..[k.toString()] = m[k],
+    );
   }
 
   Future _load() {
@@ -41,16 +47,18 @@ class JsonFileService extends Service<String, Map<String, dynamic>> {
 
         var list = json.decode(contents) as Iterable;
         _store.items.clear(); // Clear exist in-memory copy
-        _store.items.addAll(list.map((x) =>
-            _coerceStringDynamic(_revive(x) as Map))); // Insert all new entries
+        _store.items.addAll(
+          list.map((x) => _coerceStringDynamic(_revive(x) as Map)),
+        ); // Insert all new entries
       }
     });
   }
 
   Future<File> _save() {
     return _mutex.withResource(() {
-      return file
-          .writeAsString(json.encode(_store.items.map(_jsonify).toList()));
+      return file.writeAsString(
+        json.encode(_store.items.map(_jsonify).toList()),
+      );
     });
   }
 
@@ -60,19 +68,21 @@ class JsonFileService extends Service<String, Map<String, dynamic>> {
   }
 
   @override
-  Future<List<Map<String, dynamic>>> index(
-          [Map<String, dynamic>? params]) async =>
-      _load()
-          .then((_) => _store.index(params))
-          .then((it) => it.map(_jsonifyToSD).toList());
+  Future<List<Map<String, dynamic>>> index([
+    Map<String, dynamic>? params,
+  ]) async => _load()
+      .then((_) => _store.index(params))
+      .then((it) => it.map(_jsonifyToSD).toList());
 
   @override
   Future<Map<String, dynamic>> read(id, [Map<String, dynamic>? params]) =>
       _load().then((_) => _store.read(id, params)).then(_jsonifyToSD);
 
   @override
-  Future<Map<String, dynamic>> create(data,
-      [Map<String, dynamic>? params]) async {
+  Future<Map<String, dynamic>> create(
+    data, [
+    Map<String, dynamic>? params,
+  ]) async {
     await _load();
     var created = await _store.create(data, params).then(_jsonifyToSD);
     await _save();
@@ -80,8 +90,10 @@ class JsonFileService extends Service<String, Map<String, dynamic>> {
   }
 
   @override
-  Future<Map<String, dynamic>> remove(id,
-      [Map<String, dynamic>? params]) async {
+  Future<Map<String, dynamic>> remove(
+    id, [
+    Map<String, dynamic>? params,
+  ]) async {
     await _load();
     var r = await _store.remove(id, params).then(_jsonifyToSD);
     await _save();
@@ -89,8 +101,11 @@ class JsonFileService extends Service<String, Map<String, dynamic>> {
   }
 
   @override
-  Future<Map<String, dynamic>> update(id, data,
-      [Map<String, dynamic>? params]) async {
+  Future<Map<String, dynamic>> update(
+    id,
+    data, [
+    Map<String, dynamic>? params,
+  ]) async {
     await _load();
     var r = await _store.update(id, data, params).then(_jsonifyToSD);
     await _save();
@@ -98,8 +113,11 @@ class JsonFileService extends Service<String, Map<String, dynamic>> {
   }
 
   @override
-  Future<Map<String, dynamic>> modify(id, data,
-      [Map<String, dynamic>? params]) async {
+  Future<Map<String, dynamic>> modify(
+    id,
+    data, [
+    Map<String, dynamic>? params,
+  ]) async {
     await _load();
     var r = await _store.update(id, data, params).then(_jsonifyToSD);
     await _save();
@@ -107,7 +125,7 @@ class JsonFileService extends Service<String, Map<String, dynamic>> {
   }
 }
 
-dynamic _safeForJson(x) {
+dynamic _safeForJson(dynamic x) {
   if (x is DateTime) {
     return x.toIso8601String();
   } else if (x is Map) {
@@ -128,10 +146,12 @@ Map _jsonify(Map map) {
 Map<String, dynamic> _jsonifyToSD(Map<String, dynamic> map) =>
     _jsonify(map).cast<String, dynamic>();
 
-dynamic _revive(x) {
+dynamic _revive(dynamic x) {
   if (x is Map) {
     return x.keys.fold<Map<String, dynamic>>(
-        {}, (out, k) => out..[k.toString()] = _revive(x[k]));
+      {},
+      (out, k) => out..[k.toString()] = _revive(x[k]),
+    );
   } else if (x is Iterable) {
     return x.map(_revive).toList();
   } else if (x is String) {

@@ -20,14 +20,15 @@ void main() {
     app.get('/string/:string', ioc((String string) => string));
 
     app.get(
-        '/num/parsed/:num',
-        chain([
-          (req, res) {
-            req.params['n'] = num.parse(req.params['num'].toString());
-            return true;
-          },
-          ioc((num n) => n),
-        ]));
+      '/num/parsed/:num',
+      chain([
+        (req, res) {
+          req.params['n'] = num.parse(req.params['num'].toString());
+          return true;
+        },
+        ioc((num n) => n),
+      ]),
+    );
 
     app.get('/num/global', ioc((num global) => global));
 
@@ -69,7 +70,9 @@ void main() {
     await rq.close();
     var req = await http.createRequestContext(rq, rq.response);
     var res = await http.createResponseContext(rq, rq.response, req);
-    expect(() => app.runContained((num unparsed) => unparsed, req, res),
-        throwsA(isA<ArgumentError>()));
+    expect(
+      () => app.runContained((num unparsed) => unparsed, req, res),
+      throwsA(isA<ArgumentError>()),
+    );
   });
 }

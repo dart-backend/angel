@@ -85,11 +85,11 @@ abstract class _BrowserRouterImpl<T> extends Router<T>
             $a.has('target') &&
             $a.getProperty('rel'.toJS).dartify() != 'external') {
           $a.addEventListener(
-              "click",
-              (event) {
-                event.preventDefault();
-                _goTo($a.getProperty('href'.toJS).dartify().toString());
-                /*
+            "click",
+            (event) {
+              event.preventDefault();
+              _goTo($a.getProperty('href'.toJS).dartify().toString());
+              /*
                 go($a
                     .getProperty('href'.toJS)
                     .dartify()
@@ -97,7 +97,8 @@ abstract class _BrowserRouterImpl<T> extends Router<T>
                     .split('/')
                     .where((str) => str.isNotEmpty));
                     */
-              }.toJS);
+            }.toJS,
+          );
           /* With dart:html
           $a.onClick.listen((e) {
             e.preventDefault();
@@ -175,10 +176,11 @@ class _HashRouter<T> extends _BrowserRouterImpl<T> {
   @override
   void _listen() {
     window.addEventListener(
-        'hash',
-        (e) {
-          handleHash(e);
-        }.toJS);
+      'hash',
+      (e) {
+        handleHash(e);
+      }.toJS,
+    );
     // With dart:html
     //window.onhashchange?.listen(handleHash);
     handleHash();
@@ -193,7 +195,8 @@ class _PushStateRouter<T> extends _BrowserRouterImpl<T> {
 
     if ($base.href.isNotEmpty != true) {
       throw StateError(
-          'You must have a <base href="<base-url-here>"> element present in your document to run the push state router.');
+        'You must have a <base href="<base-url-here>"> element present in your document to run the push state router.',
+      );
     }
     _basePath = $base.href.replaceAll(_straySlashes, '');
     if (listen) this.listen();
@@ -218,13 +221,16 @@ class _PushStateRouter<T> extends _BrowserRouterImpl<T> {
       thisPath = route.path;
     }
     window.history.pushState(
-        {'path': route.path, 'params': {}}.toJSBox, thisPath, relativeUri);
+      {'path': route.path, 'params': {}}.toJSBox,
+      thisPath,
+      relativeUri,
+    );
     _onResolve.add(resolved);
     _onRoute.add(_current = route);
     //}
   }
 
-  void handleState(state) {
+  void handleState(Object? state) {
     if (state is Map && state.containsKey('path')) {
       var path = state['path'].toString();
       final resolved = resolveAbsolute(path).first;

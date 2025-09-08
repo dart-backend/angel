@@ -5,12 +5,15 @@ import '../ast/ast.dart';
 
 final RegExp _whitespace = RegExp(r'[ \n\r\t]+');
 
-final RegExp _id =
-    RegExp(r'@?(([A-Za-z][A-Za-z0-9_]*-)*([A-Za-z][A-Za-z0-9_]*))');
+final RegExp _id = RegExp(
+  r'@?(([A-Za-z][A-Za-z0-9_]*-)*([A-Za-z][A-Za-z0-9_]*))',
+);
 final RegExp _string1 = RegExp(
-    r"'((\\(['\\/bfnrt]|(u[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F])))|([^'\\]))*'");
+  r"'((\\(['\\/bfnrt]|(u[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F])))|([^'\\]))*'",
+);
 final RegExp _string2 = RegExp(
-    r'"((\\(["\\/bfnrt]|(u[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F])))|([^"\\]))*"');
+  r'"((\\(["\\/bfnrt]|(u[0-9a-fA-F][0-9a-fA-F][0-9a-fA-F][0-9a-fA-F])))|([^"\\]))*"',
+);
 
 Scanner scan(String text, {sourceUrl, bool asDSX = false}) =>
     _Scanner(text, sourceUrl)..scan(asDSX: asDSX);
@@ -24,7 +27,7 @@ abstract class Scanner {
 final RegExp _htmlComment = RegExp(r'<!--[^$]*-->');
 
 final Map<Pattern, TokenType> _expressionPatterns = {
-//final Map<Pattern, TokenType> _htmlPatterns = {
+  //final Map<Pattern, TokenType> _htmlPatterns = {
   '{{': TokenType.lDoubleCurly,
   '{{-': TokenType.lDoubleCurly,
 
@@ -40,9 +43,9 @@ final Map<Pattern, TokenType> _expressionPatterns = {
   _string1: TokenType.string,
   _string2: TokenType.string,
   _id: TokenType.id,
-//};
+  //};
 
-//final Map<Pattern, TokenType> _expressionPatterns = {
+  //final Map<Pattern, TokenType> _expressionPatterns = {
   '}}': TokenType.rDoubleCurly,
 
   // Keywords
@@ -190,8 +193,9 @@ class _Scanner implements Scanner {
           _expressionPatterns.forEach((pattern, type) {
             if (_scanner.matches(pattern)) {
               if (_scanner.lastSpan != null) {
-                potential
-                    .add(Token(type, _scanner.lastSpan!, _scanner.lastMatch));
+                potential.add(
+                  Token(type, _scanner.lastSpan!, _scanner.lastMatch),
+                );
               } else {
                 // TODO: To be relooked
               }

@@ -16,7 +16,7 @@ Map<String, dynamic> _transformId(Map<String, dynamic> doc) {
   return result;
 }
 
-ObjectId _makeId(id) {
+ObjectId _makeId(Object id) {
   try {
     return (id is ObjectId) ? id : ObjectId.fromHexString(id.toString());
   } catch (e) {
@@ -28,7 +28,7 @@ const List<String> _sensitiveFieldNames = [
   'id',
   '_id',
   'createdAt',
-  'updatedAt'
+  'updatedAt',
 ];
 
 Map<String, dynamic> _removeSensitive(Map<String, dynamic> data) {

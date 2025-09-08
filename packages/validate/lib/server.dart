@@ -51,8 +51,10 @@ RequestHandler filterQuery(Iterable<String> only) {
 
 /// Validates the data in `req.bodyAsMap`, and sets the body to
 /// filtered data before continuing the response.
-RequestHandler validate(Validator validator,
-    {String errorMessage = 'Invalid data.'}) {
+RequestHandler validate(
+  Validator validator, {
+  String errorMessage = 'Invalid data.',
+}) {
   return (RequestContext req, res) async {
     await req.parseBody();
     var app = req.app;
@@ -61,7 +63,9 @@ RequestHandler validate(Validator validator,
 
       if (result.errors.isNotEmpty) {
         throw AngelHttpException.badRequest(
-            message: errorMessage, errors: result.errors);
+          message: errorMessage,
+          errors: result.errors,
+        );
       }
 
       req.bodyAsMap
@@ -74,17 +78,24 @@ RequestHandler validate(Validator validator,
 
 /// Validates the data in `req.queryParameters`, and sets the query to
 /// filtered data before continuing the response.
-RequestHandler validateQuery(Validator validator,
-    {String errorMessage = 'Invalid data.'}) {
+RequestHandler validateQuery(
+  Validator validator, {
+  String errorMessage = 'Invalid data.',
+}) {
   return (RequestContext req, res) async {
     var app = req.app;
     if (app != null) {
-      var result =
-          await asyncApplyValidator(validator, req.queryParameters, app);
+      var result = await asyncApplyValidator(
+        validator,
+        req.queryParameters,
+        app,
+      );
 
       if (result.errors.isNotEmpty) {
         throw AngelHttpException.badRequest(
-            message: errorMessage, errors: result.errors);
+          message: errorMessage,
+          errors: result.errors,
+        );
       }
 
       req.queryParameters
@@ -97,15 +108,19 @@ RequestHandler validateQuery(Validator validator,
 
 /// Validates the data in `e.data`, and sets the data to
 /// filtered data before continuing the service event.
-HookedServiceEventListener validateEvent(Validator validator,
-    {String errorMessage = 'Invalid data.'}) {
+HookedServiceEventListener validateEvent(
+  Validator validator, {
+  String errorMessage = 'Invalid data.',
+}) {
   return (HookedServiceEvent e) async {
     var app = e.request?.app ?? e.service.app;
     var result = await asyncApplyValidator(validator, e.data as Map, app);
 
     if (result.errors.isNotEmpty) {
       throw AngelHttpException.badRequest(
-          message: errorMessage, errors: result.errors);
+        message: errorMessage,
+        errors: result.errors,
+      );
     }
 
     e.data
@@ -116,7 +131,10 @@ HookedServiceEventListener validateEvent(Validator validator,
 
 /// Asynchronously apply a [validator], running any [AngelMatcher]s.
 Future<ValidationResult> asyncApplyValidator(
-    Validator validator, Map data, Angel app) async {
+  Validator validator,
+  Map data,
+  Angel app,
+) async {
   var result = validator.check(data);
   if (result.errors.isNotEmpty) return result;
 

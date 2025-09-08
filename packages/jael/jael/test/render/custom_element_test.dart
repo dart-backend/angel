@@ -19,15 +19,16 @@ void main() {
     print(html);
 
     expect(
-        html,
-        '''
+      html,
+      '''
 <div>
   <div>
     The square root of 16 is 4.
   </div>
 </div>
     '''
-            .trim());
+          .trim(),
+    );
   });
 
   test('render into explicit tag name', () {
@@ -44,15 +45,16 @@ void main() {
     print(html);
 
     expect(
-        html,
-        '''
+      html,
+      '''
 <div>
   <span>
     The square root of 16 is 4.
   </span>
 </div>
     '''
-            .trim());
+          .trim(),
+    );
   });
 
   test('pass attributes', () {
@@ -69,15 +71,16 @@ void main() {
     print(html);
 
     expect(
-        html,
-        '''
+      html,
+      '''
 <div>
   <div foo="bar" baz="quux">
     The square root of 16 is 4.
   </div>
 </div>
     '''
-            .trim());
+          .trim(),
+    );
   });
 
   test('render without tag name', () {
@@ -94,14 +97,15 @@ void main() {
     print(html);
 
     expect(
-        html,
-        '''
+      html,
+      '''
 <div>
   The square root of 16 is 4.
       
 </div>
     '''
-            .trim());
+          .trim(),
+    );
   });
 }
 

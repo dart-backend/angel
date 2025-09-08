@@ -35,7 +35,9 @@ class MustacheViewCache {
       return viewTemplate;
     } else {
       throw FileSystemException(
-          'View "$viewName" was not found.', viewFile.path);
+        'View "$viewName" was not found.',
+        viewFile.path,
+      );
     }
   }
 
@@ -56,7 +58,9 @@ class MustacheViewCache {
       return partialTemplate;
     } else {
       throw FileSystemException(
-          'View "$partialName" was not found.', partialFile.path);
+        'View "$partialName" was not found.',
+        partialFile.path,
+      );
     }
   }
 }

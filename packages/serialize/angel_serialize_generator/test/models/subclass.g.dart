@@ -7,11 +7,8 @@ part of 'subclass.dart';
 // **************************************************************************
 
 @generatedSerializable
-class Animal extends _Animal {
-  Animal({
-    required this.genus,
-    required this.species,
-  });
+class Animal extends AnimalEntity {
+  Animal({required this.genus, required this.species});
 
   @override
   String? genus;
@@ -19,24 +16,20 @@ class Animal extends _Animal {
   @override
   String? species;
 
-  Animal copyWith({
-    String? genus,
-    String? species,
-  }) {
+  Animal copyWith({String? genus, String? species}) {
     return Animal(genus: genus ?? this.genus, species: species ?? this.species);
   }
 
   @override
   bool operator ==(other) {
-    return other is _Animal && other.genus == genus && other.species == species;
+    return other is AnimalEntity &&
+        other.genus == genus &&
+        other.species == species;
   }
 
   @override
   int get hashCode {
-    return hashObjects([
-      genus,
-      species,
-    ]);
+    return hashObjects([genus, species]);
   }
 
   @override
@@ -50,12 +43,8 @@ class Animal extends _Animal {
 }
 
 @generatedSerializable
-class Bird extends _Bird {
-  Bird({
-    required this.genus,
-    required this.species,
-    this.isSparrow = false,
-  });
+class Bird extends BirdEntity {
+  Bird({required this.genus, required this.species, this.isSparrow = false});
 
   @override
   String? genus;
@@ -66,20 +55,17 @@ class Bird extends _Bird {
   @override
   bool? isSparrow;
 
-  Bird copyWith({
-    String? genus,
-    String? species,
-    bool? isSparrow,
-  }) {
+  Bird copyWith({String? genus, String? species, bool? isSparrow}) {
     return Bird(
-        genus: genus ?? this.genus,
-        species: species ?? this.species,
-        isSparrow: isSparrow ?? this.isSparrow);
+      genus: genus ?? this.genus,
+      species: species ?? this.species,
+      isSparrow: isSparrow ?? this.isSparrow,
+    );
   }
 
   @override
   bool operator ==(other) {
-    return other is _Bird &&
+    return other is BirdEntity &&
         other.genus == genus &&
         other.species == species &&
         other.isSparrow == isSparrow;
@@ -87,11 +73,7 @@ class Bird extends _Bird {
 
   @override
   int get hashCode {
-    return hashObjects([
-      genus,
-      species,
-      isSparrow,
-    ]);
+    return hashObjects([genus, species, isSparrow]);
   }
 
   @override
@@ -143,10 +125,12 @@ class AnimalSerializer extends Codec<Animal, Map> {
     }
 
     return Animal(
-        genus: map['genus'] as String?, species: map['species'] as String?);
+      genus: map['genus'] as String?,
+      species: map['species'] as String?,
+    );
   }
 
-  static Map<String, dynamic> toMap(_Animal? model) {
+  static Map<String, dynamic> toMap(AnimalEntity? model) {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }
@@ -155,10 +139,7 @@ class AnimalSerializer extends Codec<Animal, Map> {
 }
 
 abstract class AnimalFields {
-  static const List<String> allFields = <String>[
-    genus,
-    species,
-  ];
+  static const List<String> allFields = <String>[genus, species];
 
   static const String genus = 'genus';
 
@@ -200,29 +181,26 @@ class BirdSerializer extends Codec<Bird, Map> {
     }
 
     return Bird(
-        genus: map['genus'] as String?,
-        species: map['species'] as String?,
-        isSparrow: map['is_sparrow'] as bool? ?? false);
+      genus: map['genus'] as String?,
+      species: map['species'] as String?,
+      isSparrow: map['is_sparrow'] as bool? ?? false,
+    );
   }
 
-  static Map<String, dynamic> toMap(_Bird? model) {
+  static Map<String, dynamic> toMap(BirdEntity? model) {
     if (model == null) {
       throw FormatException("Required field [model] cannot be null");
     }
     return {
       'genus': model.genus,
       'species': model.species,
-      'is_sparrow': model.isSparrow
+      'is_sparrow': model.isSparrow,
     };
   }
 }
 
 abstract class BirdFields {
-  static const List<String> allFields = <String>[
-    genus,
-    species,
-    isSparrow,
-  ];
+  static const List<String> allFields = <String>[genus, species, isSparrow];
 
   static const String genus = 'genus';
 

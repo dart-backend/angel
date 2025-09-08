@@ -18,9 +18,9 @@ Future configureServer(Angel app) async {
   //
   // Here, we use message passing to synchronize some common state.
   var onGreetingChanged = await client.subscribe('greeting_changed');
-  onGreetingChanged
-      .cast<String>()
-      .listen((newGreeting) => greeting = newGreeting);
+  onGreetingChanged.cast<String>().listen(
+    (newGreeting) => greeting = newGreeting,
+  );
 
   // Add some routes...
   app.get('/', (req, res) => 'Hello, production world!');

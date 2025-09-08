@@ -7,7 +7,12 @@ class Conditional extends Expression {
   final Token question, colon;
 
   Conditional(
-      this.condition, this.question, this.ifTrue, this.colon, this.ifFalse);
+    this.condition,
+    this.question,
+    this.ifTrue,
+    this.colon,
+    this.ifFalse,
+  );
 
   @override
   FileSpan get span {

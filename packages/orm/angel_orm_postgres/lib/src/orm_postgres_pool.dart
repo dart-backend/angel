@@ -33,10 +33,13 @@ class PostgreSqlPoolExecutor extends QueryExecutor {
   /// Run query.
   @override
   Future<Result> query(
-      String tableName, String query, Map<String, dynamic> substitutionValues,
-      {String returningQuery = '',
-      String resultQuery = '',
-      List<String> returningFields = const []}) {
+    String tableName,
+    String query,
+    Map<String, dynamic> substitutionValues, {
+    String returningQuery = '',
+    String resultQuery = '',
+    List<String> returningFields = const [],
+  }) {
     if (returningFields.isNotEmpty) {
       var fields = returningFields.join(', ');
       var returning = 'RETURNING $fields';

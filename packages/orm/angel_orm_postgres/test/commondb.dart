@@ -26,13 +26,15 @@ Future<PostgreSqlExecutor> connectToPostgres(Iterable<String> schemas) async {
   var password = Platform.environment['POSTGRES_PASSWORD'] ?? 'test123';
 
   var conn = await Connection.open(
-      Endpoint(
-          host: host,
-          port: 5432,
-          database: database,
-          username: username,
-          password: password),
-      settings: ConnectionSettings(sslMode: SslMode.disable));
+    Endpoint(
+      host: host,
+      port: 5432,
+      database: database,
+      username: username,
+      password: password,
+    ),
+    settings: ConnectionSettings(sslMode: SslMode.disable),
+  );
 
   // Run sql to create the tables
   for (var s in schemas) {
@@ -78,20 +80,24 @@ Future<PostgreSqlExecutor> connectToPostgres(Iterable<String> schemas) async {
 }
 
 Future<PostgreSqlPoolExecutor> connectToPostgresPool(
-    Iterable<String> schemas) async {
-  var dbPool = Pool.withEndpoints([
-    Endpoint(
-      host: 'localhost',
-      port: 5432,
-      database: Platform.environment['POSTGRES_DB'] ?? 'orm_test',
-      username: Platform.environment['POSTGRES_USERNAME'] ?? 'test',
-      password: Platform.environment['POSTGRES_PASSWORD'] ?? 'test123',
-    )
-  ],
-      settings: PoolSettings(
-          maxConnectionAge: Duration(hours: 1),
-          maxConnectionCount: 5,
-          sslMode: SslMode.disable));
+  Iterable<String> schemas,
+) async {
+  var dbPool = Pool.withEndpoints(
+    [
+      Endpoint(
+        host: 'localhost',
+        port: 5432,
+        database: Platform.environment['POSTGRES_DB'] ?? 'orm_test',
+        username: Platform.environment['POSTGRES_USERNAME'] ?? 'test',
+        password: Platform.environment['POSTGRES_PASSWORD'] ?? 'test123',
+      ),
+    ],
+    settings: PoolSettings(
+      maxConnectionAge: Duration(hours: 1),
+      maxConnectionCount: 5,
+      sslMode: SslMode.disable,
+    ),
+  );
 
   // Run sql to create the tables in a transaction
   await dbPool.runTx((conn) async {

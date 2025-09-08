@@ -25,7 +25,7 @@ void main() {
       SongMigration(),
       NumbaMigration(),
       FooMigration(),
-      FooPivotMigration()
+      FooPivotMigration(),
     ]);
   });
 
@@ -127,8 +127,9 @@ void main() {
 
       test('many to many', () async {
         var fooQuery = FooQuery()..values.bar = 'baz';
-        var fooBar =
-            await fooQuery.insert(executor).then((foo) => foo.value.bar);
+        var fooBar = await fooQuery
+            .insert(executor)
+            .then((foo) => foo.value.bar);
         var pivotQuery = FooPivotQuery()
           ..values.weirdJoinId = weirdJoin!.id
           ..values.fooBar = fooBar;

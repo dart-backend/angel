@@ -10,7 +10,7 @@ part 'book.g.dart';
     SerializableField(alias: 'omg'),
   ],
 )
-abstract class _Book extends Model {
+abstract class BookEntity extends Model {
   String? author, title, description;
 
   /// The number of pages the book has.
@@ -23,20 +23,22 @@ abstract class _Book extends Model {
 }
 
 @Serializable(serializers: Serializers.all)
-abstract class _Author extends Model {
+abstract class AuthorEntity extends Model {
   @SerializableField(isNullable: false)
   String? get name;
 
   String get customMethod => 'hey!';
 
   @SerializableField(
-      isNullable: false, errorMessage: 'Custom message for missing `age`')
+    isNullable: false,
+    errorMessage: 'Custom message for missing `age`',
+  )
   int? get age;
 
-  List<_Book> get books;
+  List<BookEntity> get books;
 
   /// The newest book.
-  _Book? get newestBook;
+  BookEntity? get newestBook;
 
   @SerializableField(exclude: true, isNullable: true)
   String? get secret;
@@ -46,14 +48,14 @@ abstract class _Author extends Model {
 }
 
 @Serializable(serializers: Serializers.all)
-abstract class _Library extends Model {
-  Map<String, _Book> get collection;
+abstract class LibraryEntity extends Model {
+  Map<String, BookEntity> get collection;
 }
 
 @Serializable(serializers: Serializers.all)
-abstract class _Bookmark extends Model {
+abstract class BookmarkEntity extends Model {
   @SerializableField(exclude: true)
-  final _Book book;
+  final BookEntity book;
 
   List<int> get history;
 
@@ -62,5 +64,5 @@ abstract class _Bookmark extends Model {
 
   String? get comment;
 
-  _Bookmark(this.book);
+  BookmarkEntity(this.book);
 }

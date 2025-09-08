@@ -15,11 +15,12 @@ void main() {
     expect(foo.getAttribute('yes'), isNotNull);
     expect(foo.getAttribute('bar')?.value?.compute(null), 'baz');
     expect(
-        foo
-            .getAttribute('yes')
-            ?.value
-            ?.compute(SymbolTable(values: {'no': 'maybe'})),
-        'maybe');
+      foo
+          .getAttribute('yes')
+          ?.value
+          ?.compute(SymbolTable(values: {'no': 'maybe'})),
+      'maybe',
+    );
   });
 
   test('children', () {
@@ -38,6 +39,10 @@ void main() {
 }
 
 Document? parseDSX(String text) {
-  return parseDocument(text,
-      sourceUrl: 'test.dsx', asDSX: true, onError: (e) => throw e);
+  return parseDocument(
+    text,
+    sourceUrl: 'test.dsx',
+    asDSX: true,
+    onError: (e) => throw e,
+  );
 }

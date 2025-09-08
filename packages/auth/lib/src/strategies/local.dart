@@ -7,8 +7,8 @@ import '../strategy.dart';
 
 /// Determines the validity of an incoming username and password.
 // typedef FutureOr<User> LocalAuthVerifier<User>(String? username, String? password);
-typedef LocalAuthVerifier<User> = FutureOr<User?> Function(
-    String? username, String? password);
+typedef LocalAuthVerifier<User> =
+    FutureOr<User?> Function(String? username, String? password);
 
 class LocalAuthStrategy<User> extends AuthStrategy<User> {
   final _log = Logger('LocalAuthStrategy');
@@ -24,19 +24,24 @@ class LocalAuthStrategy<User> extends AuthStrategy<User> {
   final bool forceBasic;
   String realm;
 
-  LocalAuthStrategy(this.verifier,
-      {this.usernameField = 'username',
-      this.passwordField = 'password',
-      this.invalidMessage = 'Please provide a valid username and password.',
-      this.allowBasic = false,
-      this.forceBasic = false,
-      this.realm = 'Authentication is required.'}) {
+  LocalAuthStrategy(
+    this.verifier, {
+    this.usernameField = 'username',
+    this.passwordField = 'password',
+    this.invalidMessage = 'Please provide a valid username and password.',
+    this.allowBasic = false,
+    this.forceBasic = false,
+    this.realm = 'Authentication is required.',
+  }) {
     _log.info('Using LocalAuthStrategy');
   }
 
   @override
-  Future<User?> authenticate(RequestContext req, ResponseContext res,
-      [AngelAuthOptions? options]) async {
+  Future<User?> authenticate(
+    RequestContext req,
+    ResponseContext res, [
+    AngelAuthOptions? options,
+  ]) async {
     var localOptions = options ?? AngelAuthOptions();
     User? verificationResult;
 
@@ -51,8 +56,10 @@ class LocalAuthStrategy<User> extends AuthStrategy<User> {
         var authString = String.fromCharCodes(base64.decode(base64AuthString));
         if (_rgxUsrPass.hasMatch(authString)) {
           Match usrPassMatch = _rgxUsrPass.firstMatch(authString)!;
-          verificationResult =
-              await verifier(usrPassMatch.group(1), usrPassMatch.group(2));
+          verificationResult = await verifier(
+            usrPassMatch.group(1),
+            usrPassMatch.group(2),
+          );
         } else {
           _log.warning('Bad request: $invalidMessage');
           throw AngelHttpException.badRequest(errors: [invalidMessage]);
@@ -77,7 +84,9 @@ class LocalAuthStrategy<User> extends AuthStrategy<User> {
       if (_validateString(body[usernameField]?.toString()) &&
           _validateString(body[passwordField]?.toString())) {
         verificationResult = await verifier(
-            body[usernameField]?.toString(), body[passwordField]?.toString());
+          body[usernameField]?.toString(),
+          body[passwordField]?.toString(),
+        );
       }
     }
 

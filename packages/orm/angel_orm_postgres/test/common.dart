@@ -13,13 +13,15 @@ List tmpTables = [];
 // For PostgreSQL
 Future<Connection> openPgConnection() async {
   final connection = await Connection.open(
-      Endpoint(
-          host: Platform.environment['POSTGRES_HOSTNAME'] ?? 'localhost',
-          port: 5432,
-          database: Platform.environment['POSTGRES_DB'] ?? 'postgres',
-          username: Platform.environment['POSTGRES_USERNAME'] ?? 'postgres',
-          password: Platform.environment['POSTGRES_PASSWORD'] ?? 'postgres'),
-      settings: ConnectionSettings(sslMode: SslMode.disable));
+    Endpoint(
+      host: Platform.environment['POSTGRES_HOSTNAME'] ?? 'localhost',
+      port: 5432,
+      database: Platform.environment['POSTGRES_DB'] ?? 'postgres',
+      username: Platform.environment['POSTGRES_USERNAME'] ?? 'postgres',
+      password: Platform.environment['POSTGRES_PASSWORD'] ?? 'postgres',
+    ),
+    settings: ConnectionSettings(sslMode: SslMode.disable),
+  );
 
   return connection;
 }
@@ -31,7 +33,9 @@ Future<QueryExecutor> createExecutor(Connection conn) async {
 }
 
 Future<MigrationRunner> createTables(
-    Connection conn, List<Migration> models) async {
+  Connection conn,
+  List<Migration> models,
+) async {
   var runner = PostgresMigrationRunner(conn, migrations: models);
   await runner.up();
 

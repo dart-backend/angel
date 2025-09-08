@@ -54,8 +54,9 @@ abstract class PostgresGenerator {
   }
 
   static String compileReference(MigrationColumnReference ref) {
-    var buf =
-        StringBuffer('REFERENCES "${ref.foreignTable}"("${ref.foreignKey}")');
+    var buf = StringBuffer(
+      'REFERENCES "${ref.foreignTable}"("${ref.foreignKey}")',
+    );
     if (ref.behavior != null) buf.write(' ${ref.behavior!}');
     return buf.toString();
   }
@@ -154,7 +155,8 @@ class PostgresAlterTable extends Table implements MutableTable {
   @override
   void changeColumnType(String name, ColumnType type, {int length = 255}) {
     _stack.add(
-        'ALTER COLUMN "$name" TYPE ${PostgresGenerator.columnType(MigrationColumn(type, length: length))}');
+      'ALTER COLUMN "$name" TYPE ${PostgresGenerator.columnType(MigrationColumn(type, length: length))}',
+    );
   }
 
   @override

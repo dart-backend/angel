@@ -17,19 +17,21 @@ class MockHttpResponse extends Stream<List<int>> implements HttpResponse {
   final List<Cookie> cookies = [];
 
   @override
-  HttpConnectionInfo connectionInfo =
-      MockHttpConnectionInfo(remoteAddress: InternetAddress.anyIPv4);
+  HttpConnectionInfo connectionInfo = MockHttpConnectionInfo(
+    remoteAddress: InternetAddress.anyIPv4,
+  );
 
   /// [copyBuffer] corresponds to `copy` on the [BytesBuilder] constructor.
-  MockHttpResponse(
-      {bool copyBuffer = true,
-      required this.statusCode,
-      required this.reasonPhrase,
-      required this.contentLength,
-      this.deadline,
-      required this.encoding,
-      required this.persistentConnection,
-      bool? bufferOutput}) {
+  MockHttpResponse({
+    bool copyBuffer = true,
+    required this.statusCode,
+    required this.reasonPhrase,
+    required this.contentLength,
+    this.deadline,
+    required this.encoding,
+    required this.persistentConnection,
+    bool? bufferOutput,
+  }) {
     _buf = BytesBuilder(copy: copyBuffer != false);
     _bufferOutput = bufferOutput != false;
     statusCode = 200;
@@ -115,8 +117,10 @@ class MockHttpResponse extends Stream<List<int>> implements HttpResponse {
   }
 
   @override
-  Future redirect(Uri location,
-      {int status = HttpStatus.movedTemporarily}) async {
+  Future redirect(
+    Uri location, {
+    int status = HttpStatus.movedTemporarily,
+  }) async {
     statusCode = status;
   }
 
@@ -142,10 +146,15 @@ class MockHttpResponse extends Stream<List<int>> implements HttpResponse {
   }
 
   @override
-  StreamSubscription<List<int>> listen(void Function(List<int> event)? onData,
-          {Function? onError, void Function()? onDone, bool? cancelOnError}) =>
-      _stream.stream.listen(onData,
-          onError: onError,
-          onDone: onDone,
-          cancelOnError: cancelOnError == true);
+  StreamSubscription<List<int>> listen(
+    void Function(List<int> event)? onData, {
+    Function? onError,
+    void Function()? onDone,
+    bool? cancelOnError,
+  }) => _stream.stream.listen(
+    onData,
+    onError: onError,
+    onDone: onDone,
+    cancelOnError: cancelOnError == true,
+  );
 }

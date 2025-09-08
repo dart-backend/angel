@@ -28,9 +28,10 @@ class HostnameRouter {
   final Map<Pattern, FutureOr<Angel> Function()> _creators = {};
   final List<Pattern> _patterns = [];
 
-  HostnameRouter(
-      {Map<Pattern, Angel> apps = const {},
-      Map<Pattern, FutureOr<Angel> Function()> creators = const {}}) {
+  HostnameRouter({
+    Map<Pattern, Angel> apps = const {},
+    Map<Pattern, FutureOr<Angel> Function()> creators = const {},
+  }) {
     Map<Pattern, V> parseMap<V>(Map<Pattern, V> map) {
       return map.map((p, c) {
         Pattern pp;
@@ -55,22 +56,24 @@ class HostnameRouter {
   }
 
   factory HostnameRouter.configure(
-      Map<Pattern, FutureOr<void> Function(Angel)> configurers,
-      {Reflector reflector = const EmptyReflector(),
-      AngelEnvironment environment = angelEnv,
-      Logger? logger,
-      bool allowMethodOverrides = true,
-      FutureOr<String> Function(dynamic)? serializer,
-      ViewGenerator? viewGenerator}) {
+    Map<Pattern, FutureOr<void> Function(Angel)> configurers, {
+    Reflector reflector = const EmptyReflector(),
+    AngelEnvironment environment = angelEnv,
+    Logger? logger,
+    bool allowMethodOverrides = true,
+    FutureOr<String> Function(dynamic)? serializer,
+    ViewGenerator? viewGenerator,
+  }) {
     var creators = configurers.map((p, c) {
       return MapEntry(p, () async {
         var app = Angel(
-            reflector: reflector,
-            environment: environment,
-            logger: logger,
-            allowMethodOverrides: allowMethodOverrides,
-            serializer: serializer,
-            viewGenerator: viewGenerator);
+          reflector: reflector,
+          environment: environment,
+          logger: logger,
+          allowMethodOverrides: allowMethodOverrides,
+          serializer: serializer,
+          viewGenerator: viewGenerator,
+        );
         await app.configure(c);
         return app;
       });

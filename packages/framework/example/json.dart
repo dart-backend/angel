@@ -32,14 +32,17 @@ void main() async {
 
 void serverMain(_) async {
   var app = Angel();
-  var http =
-      AngelHttp.custom(app, startShared, useZone: false); // Run a cluster
+  var http = AngelHttp.custom(
+    app,
+    startShared,
+    useZone: false,
+  ); // Run a cluster
 
   app.get('/', (req, res) {
     return res.serialize({
       'foo': 'bar',
       'one': [2, 'three'],
-      'bar': {'baz': 'quux'}
+      'bar': {'baz': 'quux'},
     });
   });
 

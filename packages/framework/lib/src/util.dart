@@ -12,7 +12,7 @@ T? matchingAnnotation<T>(List<ReflectedInstance> metadata) {
   return null;
 }
 
-T? getAnnotation<T>(obj, Reflector? reflector) {
+T? getAnnotation<T>(Object obj, Reflector? reflector) {
   if (reflector == null) {
     return null;
   } else {

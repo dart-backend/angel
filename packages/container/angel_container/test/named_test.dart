@@ -14,8 +14,10 @@ void main() {
   });
 
   test('cannot redefine', () {
-    expect(() => container.registerNamedSingleton('foo', Foo(bar: 'quux')),
-        throwsStateError);
+    expect(
+      () => container.registerNamedSingleton('foo', Foo(bar: 'quux')),
+      throwsStateError,
+    );
   });
 
   test('throws on unknown name', () {

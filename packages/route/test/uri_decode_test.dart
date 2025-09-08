@@ -10,9 +10,6 @@ void main() {
     print(encoded);
     var result = router.resolveAbsolute(encoded).first;
     print(result.allParams);
-    expect(result.allParams, {
-      'a': '<<<',
-      'b': '???',
-    });
+    expect(result.allParams, {'a': '<<<', 'b': '???'});
   });
 }

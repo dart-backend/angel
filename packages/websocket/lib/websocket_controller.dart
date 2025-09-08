@@ -18,10 +18,15 @@ class WebSocketController extends Controller {
   WebSocketController(this.ws) : super();
 
   /// Sends an event to all clients.
-  void broadcast(String eventName, data,
-      {Function(WebSocketContext socket)? filter}) {
-    ws.batchEvent(WebSocketEvent(eventName: eventName, data: data),
-        filter: filter);
+  void broadcast(
+    String eventName,
+    data, {
+    Function(WebSocketContext socket)? filter,
+  }) {
+    ws.batchEvent(
+      WebSocketEvent(eventName: eventName, data: data),
+      filter: filter,
+    );
   }
 
   /// Fired on new connections.
@@ -34,7 +39,7 @@ class WebSocketController extends Controller {
   dynamic onAction(WebSocketAction action, WebSocketContext socket) async {}
 
   /// Fired on arbitrary incoming data.
-  dynamic onData(data, WebSocketContext socket) {}
+  dynamic onData(dynamic data, WebSocketContext socket) {}
 
   @override
   Future configureServer(Angel app) async {
@@ -46,8 +51,9 @@ class WebSocketController extends Controller {
     var classMirror = reflectClass(runtimeType);
     classMirror.instanceMembers.forEach((sym, mirror) {
       if (mirror.isRegularMethod) {
-        var exposeMirror = mirror.metadata
-            .firstWhereOrNull((mirror) => mirror.reflectee is ExposeWs);
+        var exposeMirror = mirror.metadata.firstWhereOrNull(
+          (mirror) => mirror.reflectee is ExposeWs,
+        );
 
         if (exposeMirror != null) {
           var exposeWs = exposeMirror.reflectee as ExposeWs;
@@ -77,7 +83,11 @@ class WebSocketController extends Controller {
             var methodMirror = _handlers[action.eventName!]!;
             var fn = instanceMirror.getField(methodMirror.simpleName).reflectee;
             return app.runContained(
-                fn as Function, socket.request, socket.response, container);
+              fn as Function,
+              socket.request,
+              socket.response,
+              container,
+            );
           }
         } catch (e, st) {
           ws.catchError(e, st, socket);

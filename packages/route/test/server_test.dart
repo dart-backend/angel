@@ -5,7 +5,7 @@ import 'package:http/http.dart' as http;
 import 'package:test/test.dart';
 
 const List<Map<String, String>> people = [
-  {'name': 'John Smith'}
+  {'name': 'John Smith'},
 ];
 
 void main() {
@@ -83,8 +83,10 @@ void main() {
       final res = req.response;
 
       // Easy middleware pipeline
-      final results =
-          router.resolveAbsolute(req.uri.toString(), method: req.method);
+      final results = router.resolveAbsolute(
+        req.uri.toString(),
+        method: req.method,
+      );
       final pipeline = MiddlewarePipeline(results);
 
       if (pipeline.handlers.isEmpty) {
@@ -151,8 +153,9 @@ void main() {
   group('mount', () {
     group('path', () {
       test('top-level', () async {
-        final res =
-            await client!.post(Uri.parse('$url/beatles/spinal_clacker'));
+        final res = await client!.post(
+          Uri.parse('$url/beatles/spinal_clacker'),
+        );
         print('Response: ${res.body}');
         expect(res.body, equals('come together'));
       });
@@ -164,16 +167,18 @@ void main() {
       });
 
       test('fallback', () async {
-        final res =
-            await client!.patch(Uri.parse('$url/beatles/spanil_clakcer'));
+        final res = await client!.patch(
+          Uri.parse('$url/beatles/spanil_clakcer'),
+        );
         print('Response: ${res.body}');
         expect(res.body, equals('together'));
       });
     });
 
     test('deep nested', () async {
-      final res =
-          await client!.get(Uri.parse('$url/beatles/big/yellow/submarine'));
+      final res = await client!.get(
+        Uri.parse('$url/beatles/big/yellow/submarine'),
+      );
       print('Response: ${res.body}');
       expect(res.body, equals('we all live in a'));
     });
@@ -183,9 +188,9 @@ void main() {
 
   group('404', () {
     dynamic expect404(r) => r.then((res) {
-          print('Response (${res.statusCode}): ${res.body}');
-          expect(res.statusCode, equals(404));
-        });
+      print('Response (${res.statusCode}): ${res.body}');
+      expect(res.statusCode, equals(404));
+    });
 
     test('path', () async {
       await expect404(client!.get(Uri.parse('$url/foo')));
@@ -199,7 +204,8 @@ void main() {
       await expect404(client!.patch(Uri.parse('$url/people')));
       await expect404(client!.post(Uri.parse('$url/people/0')));
       await expect404(
-          client!.delete(Uri.parse('$url/beatles2/spinal_clacker')));
+        client!.delete(Uri.parse('$url/beatles2/spinal_clacker')),
+      );
     });
   });
 }

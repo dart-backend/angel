@@ -7,8 +7,10 @@ import 'package:belatuk_html_builder/belatuk_html_builder.dart';
 /// You can provide a custom [renderer]. The default renders minified HTML5 pages.
 ///
 /// Set [enforceAcceptHeader] to `true` to throw a `406 Not Acceptable` if the client doesn't accept HTML responses.
-RequestHandler renderHtml(
-    {StringRenderer? renderer, bool? enforceAcceptHeader}) {
+RequestHandler renderHtml({
+  StringRenderer? renderer,
+  bool? enforceAcceptHeader,
+}) {
   renderer ??= StringRenderer(pretty: false, html5: true);
 
   return (RequestContext req, ResponseContext res) {

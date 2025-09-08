@@ -9,8 +9,12 @@ import 'package:jael3_language_server/src/protocol/language_server/server.dart';
 
 void main(List<String> args) async {
   var argParser = ArgParser()
-    ..addFlag('help',
-        abbr: 'h', negatable: false, help: 'Print this help information.')
+    ..addFlag(
+      'help',
+      abbr: 'h',
+      negatable: false,
+      help: 'Print this help information.',
+    )
     ..addOption('log-file', help: 'A path to which to write a log file.');
 
   void printUsage() {

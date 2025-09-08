@@ -37,7 +37,7 @@ void main() {
     unawaited(list.service.create({'foo': 'bar'}));
     await list.onChange.first;
     expect(list, [
-      {'foo': 'bar'}
+      {'foo': 'bar'},
     ]);
   });
 
@@ -48,7 +48,7 @@ void main() {
     await list.service.update(1, {'id': 1, 'bar': 'baz'});
     await queue.next;
     expect(list, [
-      {'id': 1, 'bar': 'baz'}
+      {'id': 1, 'bar': 'baz'},
     ]);
   });
 

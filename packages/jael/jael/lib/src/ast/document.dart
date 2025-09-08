@@ -42,8 +42,15 @@ class Doctype extends AstNode {
   final Identifier? public;
   final StringLiteral? name, url;
 
-  Doctype(this.lt, this.doctype, this.html, this.public, this.name, this.url,
-      this.gt);
+  Doctype(
+    this.lt,
+    this.doctype,
+    this.html,
+    this.public,
+    this.name,
+    this.url,
+    this.gt,
+  );
 
   @override
   FileSpan get span {

@@ -8,24 +8,18 @@ void main() async {
   //Logger.root.onRecord.listen(prettyLog);
 
   // Create our server.
-  var app = Angel(
-    logger: Logger('angel'),
-    reflector: MirrorsReflector(),
-  );
+  var app = Angel(logger: Logger('angel'), reflector: MirrorsReflector());
 
   // Index route. Returns JSON.
   app.get('/', (req, res) => 'Welcome to Angel!');
 
   // Accepts a URL like /greet/foo or /greet/bob.
-  app.get(
-    '/greet/:name',
-    (req, res) {
-      var name = req.params['name'];
-      res
-        ..write('Hello, $name!')
-        ..close();
-    },
-  );
+  app.get('/greet/:name', (req, res) {
+    var name = req.params['name'];
+    res
+      ..write('Hello, $name!')
+      ..close();
+  });
 
   // Pattern matching - only call this handler if the query value of `name` equals 'emoji'.
   app.get(
@@ -34,10 +28,7 @@ void main() async {
   );
 
   // Handle any other query value of `name`.
-  app.get(
-    '/greet',
-    ioc((@Query('name') String name) => 'Hello, $name!'),
-  );
+  app.get('/greet', ioc((@Query('name') String name) => 'Hello, $name!'));
 
   // Simple fallback to throw a 404 on unknown paths.
   app.fallback((req, res) {

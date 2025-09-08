@@ -74,9 +74,7 @@ class Http2ResponseContext extends ResponseContext<ServerTransportStream> {
   bool _openStream() {
     if (_isPush || _streamInitialized) return false;
 
-    var headers = <Header>[
-      Header.ascii(':status', statusCode.toString()),
-    ];
+    var headers = <Header>[Header.ascii(':status', statusCode.toString())];
 
     if (encoders.isNotEmpty && correspondingRequest != null) {
       if (_allowedEncodings != null) {
@@ -124,11 +122,11 @@ class Http2ResponseContext extends ResponseContext<ServerTransportStream> {
         .map((s) => s.trim())
         .where((s) => s.isNotEmpty)
         .map((str) {
-      // Ignore quality specifications in accept-encoding
-      // ex. gzip;q=0.8
-      if (!str.contains(';')) return str;
-      return str.split(';')[0];
-    });
+          // Ignore quality specifications in accept-encoding
+          // ex. gzip;q=0.8
+          if (!str.contains(';')) return str;
+          return str.split(';')[0];
+        });
   }
 
   @override
@@ -208,8 +206,11 @@ class Http2ResponseContext extends ResponseContext<ServerTransportStream> {
   }
 
   /// Pushes a resource to the client.
-  Http2ResponseContext push(String path,
-      {Map<String, String> headers = const {}, String method = 'GET'}) {
+  Http2ResponseContext push(
+    String path, {
+    Map<String, String> headers = const {},
+    String method = 'GET',
+  }) {
     var targetUri = _req!.uri!.replace(path: path);
 
     var h = <Header>[

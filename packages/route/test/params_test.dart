@@ -35,11 +35,16 @@ void main() {
     //test('root', () => expectParams('/book/1337', {'id': '1337'}));
     test('path', () => expectParams('/book/1337/reviews', {'id': '1337'}));
     test(
-        'two params',
-        () => expectParams(
-            '/book/1337/readers/foo', {'id': '1337', 'readerId': 'foo'}));
+      'two params',
+      () => expectParams('/book/1337/readers/foo', {
+        'id': '1337',
+        'readerId': 'foo',
+      }),
+    );
   });
 
-  test('mount',
-      () => expectParams('/color/chartreuse/shades', {'name': 'chartreuse'}));
+  test(
+    'mount',
+    () => expectParams('/color/chartreuse/shades', {'name': 'chartreuse'}),
+  );
 }

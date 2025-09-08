@@ -48,22 +48,23 @@ class CorsOptions {
   /// Default: `false`
   final bool preflightContinue;
 
-  CorsOptions(
-      {Iterable<String> allowedHeaders = const [],
-      this.credentials = false,
-      this.maxAge,
-      Iterable<String> methods = const [
-        'GET',
-        'HEAD',
-        'PUT',
-        'PATCH',
-        'POST',
-        'DELETE'
-      ],
-      this.origin = '*',
-      this.successStatus = 204,
-      this.preflightContinue = false,
-      Iterable<String> exposedHeaders = const []}) {
+  CorsOptions({
+    Iterable<String> allowedHeaders = const [],
+    this.credentials = false,
+    this.maxAge,
+    Iterable<String> methods = const [
+      'GET',
+      'HEAD',
+      'PUT',
+      'PATCH',
+      'POST',
+      'DELETE',
+    ],
+    this.origin = '*',
+    this.successStatus = 204,
+    this.preflightContinue = false,
+    Iterable<String> exposedHeaders = const [],
+  }) {
     this.allowedHeaders.addAll(allowedHeaders);
 
     this.methods.addAll(methods);

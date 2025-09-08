@@ -83,13 +83,14 @@ class RoutingResult<T> {
     return params;
   }
 
-  RoutingResult(
-      {required this.parseResult,
-      Map<String, dynamic> params = const {},
-      this.nested = const Iterable.empty(),
-      required this.shallowRoute,
-      required this.shallowRouter,
-      required this.tail}) {
+  RoutingResult({
+    required this.parseResult,
+    Map<String, dynamic> params = const {},
+    this.nested = const Iterable.empty(),
+    required this.shallowRoute,
+    required this.shallowRouter,
+    required this.tail,
+  }) {
     this.params.addAll(params);
   }
 }

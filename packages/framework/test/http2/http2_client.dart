@@ -8,7 +8,8 @@ import 'package:http2/transport.dart';
 /// Simple HTTP/2 client
 class Http2Client extends BaseClient {
   static Future<ClientTransportStream> convertRequestToStream(
-      BaseRequest request) async {
+    BaseRequest request,
+  ) async {
     // Connect a socket
     var socket = await SecureSocket.connect(
       request.url.host,
@@ -23,15 +24,17 @@ class Http2Client extends BaseClient {
       Header.ascii(':authority', request.url.authority),
       Header.ascii(':method', request.method),
       Header.ascii(
-          ':path',
-          request.url.path +
-              (request.url.hasQuery ? ('?${request.url.query}') : '')),
+        ':path',
+        request.url.path +
+            (request.url.hasQuery ? ('?${request.url.query}') : ''),
+      ),
       Header.ascii(':scheme', request.url.scheme),
     ];
 
-    var bb = await request
-        .finalize()
-        .fold<BytesBuilder>(BytesBuilder(), (out, list) => out..add(list));
+    var bb = await request.finalize().fold<BytesBuilder>(
+      BytesBuilder(),
+      (out, list) => out..add(list),
+    );
     var body = bb.takeBytes();
 
     if (body.isNotEmpty) {
@@ -54,8 +57,11 @@ class Http2Client extends BaseClient {
   }
 
   /// Returns `true` if the response stream was closed.
-  static Future<bool> readResponse(ClientTransportStream stream,
-      Map<String, String> headers, BytesBuilder body) {
+  static Future<bool> readResponse(
+    ClientTransportStream stream,
+    Map<String, String> headers,
+    BytesBuilder body,
+  ) {
     var c = Completer<bool>();
     var closed = false;
 

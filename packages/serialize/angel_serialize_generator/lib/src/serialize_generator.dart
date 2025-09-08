@@ -4,7 +4,6 @@ import 'dart:async';
 import 'dart:mirrors';
 import 'dart:typed_data';
 import 'package:analyzer/dart/constant/value.dart';
-import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/element2.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/element/type.dart';
@@ -30,8 +29,9 @@ Builder jsonModelBuilder(_) {
 }
 
 Builder serializerBuilder(_) {
-  return SharedPartBuilder(
-      const [SerializerGenerator()], 'angel3_serialize_serializer');
+  return SharedPartBuilder(const [
+    SerializerGenerator(),
+  ], 'angel3_serialize_serializer');
 }
 
 Builder typescriptDefinitionBuilder(_) {
@@ -39,8 +39,11 @@ Builder typescriptDefinitionBuilder(_) {
 }
 
 /// Converts a [DartType] to a [TypeReference].
-TypeReference convertTypeReference(DartType t,
-    {bool forceNullable = false, bool ignoreNullabilityCheck = false}) {
+TypeReference convertTypeReference(
+  DartType t, {
+  bool forceNullable = false,
+  bool ignoreNullabilityCheck = false,
+}) {
   return TypeReference((b) {
     b.symbol = t.element3?.displayName;
 
@@ -73,16 +76,20 @@ Expression convertObject(DartObject o) {
     return literalList(o.toListValue()!.map(convertObject));
   }
   if (o.toMapValue() != null) {
-    return literalMap(o
-        .toMapValue()!
-        .map((k, v) => MapEntry(convertObject(k!), convertObject(v!))));
+    return literalMap(
+      o.toMapValue()!.map(
+        (k, v) => MapEntry(convertObject(k!), convertObject(v!)),
+      ),
+    );
   }
 
   var rev = ConstantReader(o).revive();
   Expression target = convertTypeReference(o.type!);
   target = rev.accessor.isEmpty ? target : target.property(rev.accessor);
-  return target.call(rev.positionalArguments.map(convertObject),
-      rev.namedArguments.map((k, v) => MapEntry(k, convertObject(v))));
+  return target.call(
+    rev.positionalArguments.map(convertObject),
+    rev.namedArguments.map((k, v) => MapEntry(k, convertObject(v))),
+  );
 }
 
 String? dartObjectToString(DartObject v) {
@@ -114,25 +121,27 @@ String? dartObjectToString(DartObject v) {
     }).join(', ')}}';
   }
   if (v.toStringValue() != null) {
-    return literalString(v.toStringValue()!)
-        .accept(DartEmitter(useNullSafetySyntax: true))
-        .toString();
+    return literalString(
+      v.toStringValue()!,
+    ).accept(DartEmitter(useNullSafetySyntax: true)).toString();
   }
   if (type is InterfaceType && type.element3 is EnumElement2) {
     // Find the index of the enum, then find the member.
-    for (var field in type.element.fields) {
+    for (var field in type.element3.fields2) {
       if (field.isEnumConstant && field.isStatic) {
-        var value = type.element.getField(field.name)!.computeConstantValue();
+        var value = type.element3
+            .getField2(field.name3!)!
+            .computeConstantValue();
         if (v is Enum && value is Enum) {
           var v2 = v as Enum;
           var value2 = value as Enum;
 
           if (value2.name == v2.name) {
-            return '${type.element3.displayName}.${field.name}';
+            return '${type.element3.displayName}.${field.name3}';
           }
         } else {
           if (value == v) {
-            return '${type.element3.displayName}.${field.name}';
+            return '${type.element3.displayName}.${field.name3}';
           }
         }
       }
@@ -146,11 +155,11 @@ String? dartObjectToString(DartObject v) {
 bool isModelClass(DartType? t) {
   if (t == null) return false;
 
-  if (serializableTypeChecker.hasAnnotationOf(t.element!)) {
+  if (serializableTypeChecker.hasAnnotationOf(t.element3!)) {
     return true;
   }
 
-  if (generatedSerializableTypeChecker.hasAnnotationOf(t.element!)) {
+  if (generatedSerializableTypeChecker.hasAnnotationOf(t.element3!)) {
     return true;
   }
 

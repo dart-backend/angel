@@ -24,9 +24,12 @@ void main() async {
     return false;
   });
 
-  app.get('/hello', ioc((@Query('name') String name) {
-    return {'hello': name};
-  }));
+  app.get(
+    '/hello',
+    ioc((@Query('name') String name) {
+      return {'hello': name};
+    }),
+  );
 
   // Next, create an AngelShelf driver.
   //
@@ -42,8 +45,13 @@ void main() async {
   // You can also embed Angel as a middleware...
   var mwHandler = shelf.Pipeline()
       .addMiddleware(angelShelf.middleware)
-      .addHandler(createStaticHandler('.',
-          defaultDocument: 'index.html', listDirectories: true));
+      .addHandler(
+        createStaticHandler(
+          '.',
+          defaultDocument: 'index.html',
+          listDirectories: true,
+        ),
+      );
 
   // Run the servers.
   await shelf_io.serve(mwHandler, InternetAddress.loopbackIPv4, 8080);

@@ -3,8 +3,9 @@ import 'package:test/test.dart';
 import 'common.dart';
 
 void main() {
-  var throwsAnAngelHttpException =
-      throwsA(const IsInstanceOf<AngelHttpException>());
+  var throwsAnAngelHttpException = throwsA(
+    const IsInstanceOf<AngelHttpException>(),
+  );
 
   /*
   test('throw 404 on null', () {

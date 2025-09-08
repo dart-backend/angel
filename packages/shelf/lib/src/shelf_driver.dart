@@ -10,15 +10,22 @@ Future<Stream<Request>> process(dynamic param1, int param2) {
   return Future.value(Stream.empty());
 }
 
-class AngelShelf extends Driver<shelf.Request, ShelfResponseContext?,
-    Stream<shelf.Request>, ShelfRequestContext, ShelfResponseContext> {
+class AngelShelf
+    extends
+        Driver<
+          shelf.Request,
+          ShelfResponseContext?,
+          Stream<shelf.Request>,
+          ShelfRequestContext,
+          ShelfResponseContext
+        > {
   final StreamController<shelf.Request> incomingRequests = StreamController();
 
   final FutureOr<shelf.Response> Function()? notFound;
 
   AngelShelf(Angel app, {FutureOr<shelf.Response> Function()? notFound})
-      : notFound = notFound ?? (() => shelf.Response.notFound('Not Found')),
-        super(app, process, useZone: false) {
+    : notFound = notFound ?? (() => shelf.Response.notFound('Not Found')),
+      super(app, process, useZone: false) {
     // Inject a final handler that will keep responses open, if we are using the
     // driver as a middleware.
     app.fallback((req, res) {
@@ -37,10 +44,11 @@ class AngelShelf extends Driver<shelf.Request, ShelfResponseContext?,
 
   @override
   Future<Stream<shelf.Request>> Function(dynamic, int) get serverGenerator =>
-      (_, __) async => incomingRequests.stream;
+      (_, _) async => incomingRequests.stream;
 
   static UnsupportedError _unsupported() => UnsupportedError(
-      'AngelShelf cannot mount a standalone server, or return a URI.');
+    'AngelShelf cannot mount a standalone server, or return a URI.',
+  );
 
   Future<shelf.Response> handler(shelf.Request request) async {
     var response = ShelfResponseContext(app);
@@ -71,15 +79,23 @@ class AngelShelf extends Driver<shelf.Request, ShelfResponseContext?,
 
   @override
   Future<shelf.Response> handleAngelHttpException(
-      AngelHttpException e,
-      StackTrace st,
-      RequestContext? req,
-      ResponseContext? res,
-      shelf.Request request,
-      ShelfResponseContext? response,
-      {bool ignoreFinalizers = false}) async {
-    await super.handleAngelHttpException(e, st, req, res, request, response,
-        ignoreFinalizers: ignoreFinalizers);
+    AngelHttpException e,
+    StackTrace st,
+    RequestContext? req,
+    ResponseContext? res,
+    shelf.Request request,
+    ShelfResponseContext? response, {
+    bool ignoreFinalizers = false,
+  }) async {
+    await super.handleAngelHttpException(
+      e,
+      st,
+      req,
+      res,
+      request,
+      response,
+      ignoreFinalizers: ignoreFinalizers,
+    );
     return response!.shelfResponse;
   }
 
@@ -101,25 +117,34 @@ class AngelShelf extends Driver<shelf.Request, ShelfResponseContext?,
 
   @override
   Future<ShelfRequestContext> createRequestContext(
-      shelf.Request request, ShelfResponseContext? response) {
+    shelf.Request request,
+    ShelfResponseContext? response,
+  ) {
     var path = request.url.path.replaceAll(_straySlashes, '');
     if (path.isEmpty) path = '/';
-    var rq =
-        ShelfRequestContext(app, app.container.createChild(), request, path);
+    var rq = ShelfRequestContext(
+      app,
+      app.container.createChild(),
+      request,
+      path,
+    );
     return Future.value(rq);
   }
 
   @override
   Future<ShelfResponseContext> createResponseContext(
-      shelf.Request request, ShelfResponseContext? response,
-      [ShelfRequestContext? correspondingRequest]) {
+    shelf.Request request,
+    ShelfResponseContext? response, [
+    ShelfRequestContext? correspondingRequest,
+  ]) {
     // Return the original response.
     return Future.value(response!..correspondingRequest = correspondingRequest);
   }
 
   @override
   Stream<ShelfResponseContext?> createResponseStreamFromRawRequest(
-      shelf.Request request) {
+    shelf.Request request,
+  ) {
     return Stream.fromIterable([null]);
   }
 

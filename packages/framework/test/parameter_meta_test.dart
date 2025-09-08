@@ -31,33 +31,54 @@ void parameterMetaTests() {
     app = Angel(reflector: MirrorsReflector());
     http = AngelHttp(app);
 
-    app.get('/cookie', ioc((@CookieValue('token') String jwt) {
-      return jwt;
-    }));
+    app.get(
+      '/cookie',
+      ioc((@CookieValue('token') String jwt) {
+        return jwt;
+      }),
+    );
 
-    app.get('/header', ioc((@Header('x-foo') String header) {
-      return header;
-    }));
+    app.get(
+      '/header',
+      ioc((@Header('x-foo') String header) {
+        return header;
+      }),
+    );
 
-    app.get('/query', ioc((@Query('q') String query) {
-      return query;
-    }));
+    app.get(
+      '/query',
+      ioc((@Query('q') String query) {
+        return query;
+      }),
+    );
 
-    app.get('/session', ioc((@Session('foo') String foo) {
-      return foo;
-    }));
+    app.get(
+      '/session',
+      ioc((@Session('foo') String foo) {
+        return foo;
+      }),
+    );
 
-    app.get('/match', ioc((@Query('mode', match: 'pos') String mode) {
-      return 'YES $mode';
-    }));
+    app.get(
+      '/match',
+      ioc((@Query('mode', match: 'pos') String mode) {
+        return 'YES $mode';
+      }),
+    );
 
-    app.get('/match', ioc((@Query('mode', match: 'neg') String mode) {
-      return 'NO $mode';
-    }));
+    app.get(
+      '/match',
+      ioc((@Query('mode', match: 'neg') String mode) {
+        return 'NO $mode';
+      }),
+    );
 
-    app.get('/match', ioc((@Query('mode') String mode) {
-      return 'DEFAULT $mode';
-    }));
+    app.get(
+      '/match',
+      ioc((@Query('mode') String mode) {
+        return 'DEFAULT $mode';
+      }),
+    );
 
     app.logger = Logger('parameter_meta_test')
       ..onRecord.listen((rec) {

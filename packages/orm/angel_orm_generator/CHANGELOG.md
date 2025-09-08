@@ -1,5 +1,13 @@
 # Change Log
 
+## 8.6.0
+
+* Require Dart >= 3.8
+* Updated `lints` to 6.0.0
+* Updated dependencies to the latest release
+* Updated `analyzer` to 7.7.x
+* Added `FelationFieldImpl2` due to changes in `analyzer` 7.7.x
+
 ## 8.5.0
 
 * Updated initializer `super(parent: parent)` to `super.parent` in the generated `<Model>Query`

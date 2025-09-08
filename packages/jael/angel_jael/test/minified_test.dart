@@ -50,9 +50,7 @@ void main() {
     var viewCache = <String, Document>{};
     jaelTemplatePreload(viewsDirectory, viewCache);
 
-    await app.configure(
-      jael(viewsDirectory, cache: viewCache),
-    );
+    await app.configure(jael(viewsDirectory, cache: viewCache));
 
     app.fallback((req, res) => throw AngelHttpException.notFound());
 
@@ -70,12 +68,14 @@ void main() {
     var response = await client.get(Uri.parse('/github/thosakwe'));
     //print('Body:\n${response.body}');
     expect(
-        html.parse(response.body).outerHtml,
-        html
-            .parse(
-                '''<html><head><title>Hello</title></head><body>thosakwe</body></html>'''
-                    .trim())
-            .outerHtml);
+      html.parse(response.body).outerHtml,
+      html
+          .parse(
+            '''<html><head><title>Hello</title></head><body>thosakwe</body></html>'''
+                .trim(),
+          )
+          .outerHtml,
+    );
   });
 
   test('initial load concurreny', () async {
@@ -92,11 +92,13 @@ void main() {
 
     print('Body:\n${response.body}');
     expect(
-        html.parse(response.body).outerHtml,
-        html
-            .parse(
-                '''<html><head><title>Hello</title></head><body>thosakwe</body></html>'''
-                    .trim())
-            .outerHtml);
+      html.parse(response.body).outerHtml,
+      html
+          .parse(
+            '''<html><head><title>Hello</title></head><body>thosakwe</body></html>'''
+                .trim(),
+          )
+          .outerHtml,
+    );
   });
 }

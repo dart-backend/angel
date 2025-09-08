@@ -72,7 +72,8 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
   /// Makes a [Where] clause.
   Where newWhereClause() {
     throw UnsupportedError(
-        'This instance does not support creating WHERE clauses.');
+      'This instance does not support creating WHERE clauses.',
+    );
   }
 
   /// Determines whether this query can be compiled.
@@ -139,7 +140,7 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
     }
   }
 
-  String Function() _compileJoin(tableName, Set<String> trampoline) {
+  String Function() _compileJoin(Object tableName, Set<String> trampoline) {
     if (tableName is String) {
       return () => tableName;
     } else if (tableName is Query) {
@@ -154,19 +155,23 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
     } else {
       _log.severe('$tableName must be a String or Query');
       throw ArgumentError.value(
-          tableName, 'tableName', 'must be a String or Query');
+        tableName,
+        'tableName',
+        'must be a String or Query',
+      );
     }
   }
 
   void _makeJoin(
-      tableName,
-      Set<String>? trampoline,
-      String? alias,
-      JoinType type,
-      String localKey,
-      String foreignKey,
-      String op,
-      List<String> additionalFields) {
+    Object tableName,
+    Set<String>? trampoline,
+    String? alias,
+    JoinType type,
+    String localKey,
+    String foreignKey,
+    String op,
+    List<String> additionalFields,
+  ) {
     trampoline ??= <String>{};
 
     // Pivot tables guard against ambiguous fields by excluding tables
@@ -183,69 +188,139 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
         tableName.aliases[field] = '${alias}_$field';
       }
     }
-    _joins.add(JoinBuilder(type, this, to, localKey, foreignKey,
+    _joins.add(
+      JoinBuilder(
+        type,
+        this,
+        to,
+        localKey,
+        foreignKey,
         op: op,
         alias: alias,
         additionalFields: additionalFields,
-        aliasAllFields: tableName is Query));
+        aliasAllFields: tableName is Query,
+      ),
+    );
   }
 
   /// Execute an `INNER JOIN` against another table.
-  void join(tableName, String localKey, String foreignKey,
-      {String op = '=',
-      List<String> additionalFields = const [],
-      Set<String>? trampoline,
-      String? alias}) {
-    _makeJoin(tableName, trampoline, alias, JoinType.inner, localKey,
-        foreignKey, op, additionalFields);
+  void join(
+    Object tableName,
+    String localKey,
+    String foreignKey, {
+    String op = '=',
+    List<String> additionalFields = const [],
+    Set<String>? trampoline,
+    String? alias,
+  }) {
+    _makeJoin(
+      tableName,
+      trampoline,
+      alias,
+      JoinType.inner,
+      localKey,
+      foreignKey,
+      op,
+      additionalFields,
+    );
   }
 
   /// Execute a `LEFT JOIN` against another table.
-  void leftJoin(tableName, String localKey, String foreignKey,
-      {String op = '=',
-      List<String> additionalFields = const [],
-      Set<String>? trampoline,
-      String? alias}) {
-    _makeJoin(tableName, trampoline, alias, JoinType.left, localKey, foreignKey,
-        op, additionalFields);
+  void leftJoin(
+    Object tableName,
+    String localKey,
+    String foreignKey, {
+    String op = '=',
+    List<String> additionalFields = const [],
+    Set<String>? trampoline,
+    String? alias,
+  }) {
+    _makeJoin(
+      tableName,
+      trampoline,
+      alias,
+      JoinType.left,
+      localKey,
+      foreignKey,
+      op,
+      additionalFields,
+    );
   }
 
   /// Execute a `RIGHT JOIN` against another table.
-  void rightJoin(tableName, String localKey, String foreignKey,
-      {String op = '=',
-      List<String> additionalFields = const [],
-      Set<String>? trampoline,
-      String? alias}) {
-    _makeJoin(tableName, trampoline, alias, JoinType.right, localKey,
-        foreignKey, op, additionalFields);
+  void rightJoin(
+    Object tableName,
+    String localKey,
+    String foreignKey, {
+    String op = '=',
+    List<String> additionalFields = const [],
+    Set<String>? trampoline,
+    String? alias,
+  }) {
+    _makeJoin(
+      tableName,
+      trampoline,
+      alias,
+      JoinType.right,
+      localKey,
+      foreignKey,
+      op,
+      additionalFields,
+    );
   }
 
   /// Execute a `FULL OUTER JOIN` against another table.
-  void fullOuterJoin(tableName, String localKey, String foreignKey,
-      {String op = '=',
-      List<String> additionalFields = const [],
-      Set<String>? trampoline,
-      String? alias}) {
-    _makeJoin(tableName, trampoline, alias, JoinType.full, localKey, foreignKey,
-        op, additionalFields);
+  void fullOuterJoin(
+    Object tableName,
+    String localKey,
+    String foreignKey, {
+    String op = '=',
+    List<String> additionalFields = const [],
+    Set<String>? trampoline,
+    String? alias,
+  }) {
+    _makeJoin(
+      tableName,
+      trampoline,
+      alias,
+      JoinType.full,
+      localKey,
+      foreignKey,
+      op,
+      additionalFields,
+    );
   }
 
   /// Execute a `SELF JOIN`.
-  void selfJoin(tableName, String localKey, String foreignKey,
-      {String op = '=',
-      List<String> additionalFields = const [],
-      Set<String>? trampoline,
-      String? alias}) {
-    _makeJoin(tableName, trampoline, alias, JoinType.self, localKey, foreignKey,
-        op, additionalFields);
+  void selfJoin(
+    Object tableName,
+    String localKey,
+    String foreignKey, {
+    String op = '=',
+    List<String> additionalFields = const [],
+    Set<String>? trampoline,
+    String? alias,
+  }) {
+    _makeJoin(
+      tableName,
+      trampoline,
+      alias,
+      JoinType.self,
+      localKey,
+      foreignKey,
+      op,
+      additionalFields,
+    );
   }
 
   @override
-  String compile(Set<String> trampoline,
-      {bool includeTableName = false,
-      String? preamble,
-      bool withFields = true,
-      String? fromQuery}) {
+  String compile(
+    Set<String> trampoline, {
+    bool includeTableName = false,
+    String? preamble,
+    bool withFields = true,
+    String? fromQuery,
+  }) {
     // One table MAY appear multiple times in a query.
     if (!canCompile(trampoline)) {
       //return null;
@@ -264,34 +339,36 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
     if (fields.isEmpty) {
       f = ['*'];
     } else {
-      f = List<String>.from(fields.map((s) {
-        String? ss = includeTableName ? '$tableName.$s' : s;
-        if (expressions.containsKey(s)) {
-          ss = '( ${expressions[s]} )';
-          //ss = expressions[s];
-        }
-        var cast = casts[s];
-        if (cast != null) ss = 'CAST ($ss AS $cast)';
-        if (aliases.containsKey(s)) {
-          if (cast != null) {
-            ss = '($ss) AS ${aliases[s]}';
-          } else {
-            ss = '$ss AS ${aliases[s]}';
-          }
+      f = List<String>.from(
+        fields.map((s) {
+          String? ss = includeTableName ? '$tableName.$s' : s;
           if (expressions.containsKey(s)) {
-            // ss = '($ss)';
+            ss = '( ${expressions[s]} )';
+            //ss = expressions[s];
           }
-        } else if (expressions.containsKey(s)) {
-          if (cast != null) {
-            ss = '($ss) AS $s';
-            // ss = '(($ss) AS $s)';
-          } else {
-            ss = '$ss AS $s';
-            // ss = '($ss AS $s)';
+          var cast = casts[s];
+          if (cast != null) ss = 'CAST ($ss AS $cast)';
+          if (aliases.containsKey(s)) {
+            if (cast != null) {
+              ss = '($ss) AS ${aliases[s]}';
+            } else {
+              ss = '$ss AS ${aliases[s]}';
+            }
+            if (expressions.containsKey(s)) {
+              // ss = '($ss)';
+            }
+          } else if (expressions.containsKey(s)) {
+            if (cast != null) {
+              ss = '($ss) AS $s';
+              // ss = '(($ss) AS $s)';
+            } else {
+              ss = '$ss AS $s';
+              // ss = '($ss AS $s)';
+            }
           }
-        }
-        return ss;
-      }));
+          return ss;
+        }),
+      );
       for (var j in _joins) {
         var c = compiledJoins[j] = j.compile(trampoline);
         //if (c != null) {
@@ -321,8 +398,9 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
       }
     }
 
-    var whereClause =
-        where?.compile(tableName: includeTableName ? tableName : null);
+    var whereClause = where?.compile(
+      tableName: includeTableName ? tableName : null,
+    );
     if (whereClause?.isNotEmpty == true) {
       b.write(' WHERE $whereClause');
     }
@@ -356,8 +434,12 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
 
     if (_joins.isEmpty) {
       return executor
-          .query(tableName, sql, substitutionValues,
-              returningFields: fields.map(adornWithTableName).toList())
+          .query(
+            tableName,
+            sql,
+            substitutionValues,
+            returningFields: fields.map(adornWithTableName).toList(),
+          )
           .then((it) => deserializeList(it));
     } else {
       return executor.transaction((tx) async {
@@ -372,8 +454,10 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
   }
 
   Future<Optional<T>> deleteOne(QueryExecutor executor) {
-    return delete(executor).then((it) =>
-        it.isEmpty == true ? Optional.empty() : Optional.ofNullable(it.first));
+    return delete(executor).then(
+      (it) =>
+          it.isEmpty == true ? Optional.empty() : Optional.ofNullable(it.first),
+    );
   }
 
   Future<Optional<T>> insert(QueryExecutor executor) {
@@ -413,12 +497,19 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
       _log.fine("Substritution Values = $substitutionValues");
 
       return executor
-          .query(tableName, sql, substitutionValues,
-              returningFields: fields, returningQuery: returningSql)
+          .query(
+            tableName,
+            sql,
+            substitutionValues,
+            returningFields: fields,
+            returningQuery: returningSql,
+          )
           .then((result) {
-        //_log.fine("Result Values: $result");
-        return result.isEmpty ? Optional.empty() : deserialize(result.first);
-      });
+            //_log.fine("Result Values: $result");
+            return result.isEmpty
+                ? Optional.empty()
+                : deserialize(result.first);
+          });
     }
   }
 
@@ -459,6 +550,7 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
 
   Future<Optional<T>> updateOne(QueryExecutor executor) {
     return update(executor).then(
-        (it) => it.isEmpty ? Optional.empty() : Optional.ofNullable(it.first));
+      (it) => it.isEmpty ? Optional.empty() : Optional.ofNullable(it.first),
+    );
   }
 }

@@ -1,6 +1,8 @@
 abstract class DomBuilder<T> {
   DomBuilderElement<T> append(
-      String tagName, void Function(DomBuilderElement<T>) f);
+    String tagName,
+    void Function(DomBuilderElement<T>) f,
+  );
 
   void text(String value);
 }

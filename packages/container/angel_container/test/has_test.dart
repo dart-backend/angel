@@ -9,10 +9,7 @@ void main() {
       ..registerSingleton<Song>(Song(title: 'I Wish'))
       ..registerNamedSingleton('foo', 1)
       ..registerFactory<Artist>((container) {
-        return Artist(
-          name: 'Stevie Wonder',
-          song: container.make<Song>(),
-        );
+        return Artist(name: 'Stevie Wonder', song: container.make<Song>());
       });
   });
 

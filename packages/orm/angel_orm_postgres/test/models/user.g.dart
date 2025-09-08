@@ -62,10 +62,7 @@ class RoleMigration extends Migration {
 // **************************************************************************
 
 class UserQuery extends Query<User, UserQueryWhere> {
-  UserQuery({
-    super.parent,
-    Set<String>? trampoline,
-  }) {
+  UserQuery({super.parent, Set<String>? trampoline}) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = UserQueryWhere(this);
@@ -73,12 +70,7 @@ class UserQuery extends Query<User, UserQueryWhere> {
       '(SELECT role_users.user_id, roles.id, roles.created_at, roles.updated_at, roles.name FROM roles LEFT JOIN role_users ON role_users.role_id=roles.id)',
       'id',
       'user_id',
-      additionalFields: const [
-        'id',
-        'created_at',
-        'updated_at',
-        'name',
-      ],
+      additionalFields: const ['id', 'created_at', 'updated_at', 'name'],
       trampoline: trampoline,
     );
   }
@@ -113,8 +105,8 @@ class UserQuery extends Query<User, UserQueryWhere> {
     return _selectedFields.isEmpty
         ? localFields
         : localFields
-            .where((field) => _selectedFields.contains(field))
-            .toList();
+              .where((field) => _selectedFields.contains(field))
+              .toList();
   }
 
   UserQuery select(List<String> selectedFields) {
@@ -138,10 +130,12 @@ class UserQuery extends Query<User, UserQueryWhere> {
     }
     var model = User(
       id: fields.contains('id') ? row[0].toString() : null,
-      createdAt:
-          fields.contains('created_at') ? mapToNullableDateTime(row[1]) : null,
-      updatedAt:
-          fields.contains('updated_at') ? mapToNullableDateTime(row[2]) : null,
+      createdAt: fields.contains('created_at')
+          ? mapToNullableDateTime(row[1])
+          : null,
+      updatedAt: fields.contains('updated_at')
+          ? mapToNullableDateTime(row[2])
+          : null,
       username: fields.contains('username') ? (row[3] as String?) : null,
       password: fields.contains('password') ? (row[4] as String?) : null,
       email: fields.contains('email') ? (row[5] as String?) : null,
@@ -178,7 +172,8 @@ class UserQuery extends Query<User, UserQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                roles: List<RoleEntity>.from(l.roles)..addAll(model.roles));
+              roles: List<RoleEntity>.from(l.roles)..addAll(model.roles),
+            );
         }
       });
     });
@@ -196,7 +191,8 @@ class UserQuery extends Query<User, UserQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                roles: List<RoleEntity>.from(l.roles)..addAll(model.roles));
+              roles: List<RoleEntity>.from(l.roles)..addAll(model.roles),
+            );
         }
       });
     });
@@ -214,7 +210,8 @@ class UserQuery extends Query<User, UserQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                roles: List<RoleEntity>.from(l.roles)..addAll(model.roles));
+              roles: List<RoleEntity>.from(l.roles)..addAll(model.roles),
+            );
         }
       });
     });
@@ -223,30 +220,12 @@ class UserQuery extends Query<User, UserQueryWhere> {
 
 class UserQueryWhere extends QueryWhere {
   UserQueryWhere(UserQuery query)
-      : id = NumericSqlExpressionBuilder<int>(
-          query,
-          'id',
-        ),
-        createdAt = DateTimeSqlExpressionBuilder(
-          query,
-          'created_at',
-        ),
-        updatedAt = DateTimeSqlExpressionBuilder(
-          query,
-          'updated_at',
-        ),
-        username = StringSqlExpressionBuilder(
-          query,
-          'username',
-        ),
-        password = StringSqlExpressionBuilder(
-          query,
-          'password',
-        ),
-        email = StringSqlExpressionBuilder(
-          query,
-          'email',
-        );
+    : id = NumericSqlExpressionBuilder<int>(query, 'id'),
+      createdAt = DateTimeSqlExpressionBuilder(query, 'created_at'),
+      updatedAt = DateTimeSqlExpressionBuilder(query, 'updated_at'),
+      username = StringSqlExpressionBuilder(query, 'username'),
+      password = StringSqlExpressionBuilder(query, 'password'),
+      email = StringSqlExpressionBuilder(query, 'email');
 
   final NumericSqlExpressionBuilder<int> id;
 
@@ -262,14 +241,7 @@ class UserQueryWhere extends QueryWhere {
 
   @override
   List<SqlExpressionBuilder> get expressionBuilders {
-    return [
-      id,
-      createdAt,
-      updatedAt,
-      username,
-      password,
-      email,
-    ];
+    return [id, createdAt, updatedAt, username, password, email];
   }
 }
 
@@ -325,33 +297,19 @@ class UserQueryValues extends MapQueryValues {
 }
 
 class RoleUserQuery extends Query<RoleUser, RoleUserQueryWhere> {
-  RoleUserQuery({
-    super.parent,
-    Set<String>? trampoline,
-  }) {
+  RoleUserQuery({super.parent, Set<String>? trampoline}) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = RoleUserQueryWhere(this);
     leftJoin(
-      _role = RoleQuery(
-        trampoline: trampoline,
-        parent: this,
-      ),
+      _role = RoleQuery(trampoline: trampoline, parent: this),
       'role_id',
       'id',
-      additionalFields: const [
-        'id',
-        'created_at',
-        'updated_at',
-        'name',
-      ],
+      additionalFields: const ['id', 'created_at', 'updated_at', 'name'],
       trampoline: trampoline,
     );
     leftJoin(
-      _user = UserQuery(
-        trampoline: trampoline,
-        parent: this,
-      ),
+      _user = UserQuery(trampoline: trampoline, parent: this),
       'user_id',
       'id',
       additionalFields: const [
@@ -389,15 +347,12 @@ class RoleUserQuery extends Query<RoleUser, RoleUserQueryWhere> {
 
   @override
   List<String> get fields {
-    const localFields = [
-      'role_id',
-      'user_id',
-    ];
+    const localFields = ['role_id', 'user_id'];
     return _selectedFields.isEmpty
         ? localFields
         : localFields
-            .where((field) => _selectedFields.contains(field))
-            .toList();
+              .where((field) => _selectedFields.contains(field))
+              .toList();
   }
 
   RoleUserQuery select(List<String> selectedFields) {
@@ -451,14 +406,8 @@ class RoleUserQuery extends Query<RoleUser, RoleUserQueryWhere> {
 
 class RoleUserQueryWhere extends QueryWhere {
   RoleUserQueryWhere(RoleUserQuery query)
-      : roleId = NumericSqlExpressionBuilder<int>(
-          query,
-          'role_id',
-        ),
-        userId = NumericSqlExpressionBuilder<int>(
-          query,
-          'user_id',
-        );
+    : roleId = NumericSqlExpressionBuilder<int>(query, 'role_id'),
+      userId = NumericSqlExpressionBuilder<int>(query, 'user_id');
 
   final NumericSqlExpressionBuilder<int> roleId;
 
@@ -466,10 +415,7 @@ class RoleUserQueryWhere extends QueryWhere {
 
   @override
   List<SqlExpressionBuilder> get expressionBuilders {
-    return [
-      roleId,
-      userId,
-    ];
+    return [roleId, userId];
   }
 }
 
@@ -502,10 +448,7 @@ class RoleUserQueryValues extends MapQueryValues {
 }
 
 class RoleQuery extends Query<Role, RoleQueryWhere> {
-  RoleQuery({
-    super.parent,
-    Set<String>? trampoline,
-  }) {
+  RoleQuery({super.parent, Set<String>? trampoline}) {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = RoleQueryWhere(this);
@@ -544,17 +487,12 @@ class RoleQuery extends Query<Role, RoleQueryWhere> {
 
   @override
   List<String> get fields {
-    const localFields = [
-      'id',
-      'created_at',
-      'updated_at',
-      'name',
-    ];
+    const localFields = ['id', 'created_at', 'updated_at', 'name'];
     return _selectedFields.isEmpty
         ? localFields
         : localFields
-            .where((field) => _selectedFields.contains(field))
-            .toList();
+              .where((field) => _selectedFields.contains(field))
+              .toList();
   }
 
   RoleQuery select(List<String> selectedFields) {
@@ -578,10 +516,12 @@ class RoleQuery extends Query<Role, RoleQueryWhere> {
     }
     var model = Role(
       id: fields.contains('id') ? row[0].toString() : null,
-      createdAt:
-          fields.contains('created_at') ? mapToNullableDateTime(row[1]) : null,
-      updatedAt:
-          fields.contains('updated_at') ? mapToNullableDateTime(row[2]) : null,
+      createdAt: fields.contains('created_at')
+          ? mapToNullableDateTime(row[1])
+          : null,
+      updatedAt: fields.contains('updated_at')
+          ? mapToNullableDateTime(row[2])
+          : null,
       name: fields.contains('name') ? (row[3] as String?) : null,
     );
     if (row.length > 4) {
@@ -616,7 +556,8 @@ class RoleQuery extends Query<Role, RoleQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                users: List<UserEntity>.from(l.users)..addAll(model.users));
+              users: List<UserEntity>.from(l.users)..addAll(model.users),
+            );
         }
       });
     });
@@ -634,7 +575,8 @@ class RoleQuery extends Query<Role, RoleQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                users: List<UserEntity>.from(l.users)..addAll(model.users));
+              users: List<UserEntity>.from(l.users)..addAll(model.users),
+            );
         }
       });
     });
@@ -652,7 +594,8 @@ class RoleQuery extends Query<Role, RoleQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-                users: List<UserEntity>.from(l.users)..addAll(model.users));
+              users: List<UserEntity>.from(l.users)..addAll(model.users),
+            );
         }
       });
     });
@@ -661,22 +604,10 @@ class RoleQuery extends Query<Role, RoleQueryWhere> {
 
 class RoleQueryWhere extends QueryWhere {
   RoleQueryWhere(RoleQuery query)
-      : id = NumericSqlExpressionBuilder<int>(
-          query,
-          'id',
-        ),
-        createdAt = DateTimeSqlExpressionBuilder(
-          query,
-          'created_at',
-        ),
-        updatedAt = DateTimeSqlExpressionBuilder(
-          query,
-          'updated_at',
-        ),
-        name = StringSqlExpressionBuilder(
-          query,
-          'name',
-        );
+    : id = NumericSqlExpressionBuilder<int>(query, 'id'),
+      createdAt = DateTimeSqlExpressionBuilder(query, 'created_at'),
+      updatedAt = DateTimeSqlExpressionBuilder(query, 'updated_at'),
+      name = StringSqlExpressionBuilder(query, 'name');
 
   final NumericSqlExpressionBuilder<int> id;
 
@@ -688,12 +619,7 @@ class RoleQueryWhere extends QueryWhere {
 
   @override
   List<SqlExpressionBuilder> get expressionBuilders {
-    return [
-      id,
-      createdAt,
-      updatedAt,
-      name,
-    ];
+    return [id, createdAt, updatedAt, name];
   }
 }
 
@@ -784,13 +710,14 @@ class User extends UserEntity {
     List<RoleEntity>? roles,
   }) {
     return User(
-        id: id ?? this.id,
-        createdAt: createdAt ?? this.createdAt,
-        updatedAt: updatedAt ?? this.updatedAt,
-        username: username ?? this.username,
-        password: password ?? this.password,
-        email: email ?? this.email,
-        roles: roles ?? this.roles);
+      id: id ?? this.id,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      username: username ?? this.username,
+      password: password ?? this.password,
+      email: email ?? this.email,
+      roles: roles ?? this.roles,
+    );
   }
 
   @override
@@ -802,8 +729,9 @@ class User extends UserEntity {
         other.username == username &&
         other.password == password &&
         other.email == email &&
-        ListEquality<RoleEntity>(DefaultEquality<RoleEntity>())
-            .equals(other.roles, roles);
+        ListEquality<RoleEntity>(
+          DefaultEquality<RoleEntity>(),
+        ).equals(other.roles, roles);
   }
 
   @override
@@ -831,10 +759,7 @@ class User extends UserEntity {
 
 @generatedSerializable
 class RoleUser implements RoleUserEntity {
-  RoleUser({
-    this.role,
-    this.user,
-  });
+  RoleUser({this.role, this.user});
 
   @override
   RoleEntity? role;
@@ -842,10 +767,7 @@ class RoleUser implements RoleUserEntity {
   @override
   UserEntity? user;
 
-  RoleUser copyWith({
-    RoleEntity? role,
-    UserEntity? user,
-  }) {
+  RoleUser copyWith({RoleEntity? role, UserEntity? user}) {
     return RoleUser(role: role ?? this.role, user: user ?? this.user);
   }
 
@@ -856,10 +778,7 @@ class RoleUser implements RoleUserEntity {
 
   @override
   int get hashCode {
-    return hashObjects([
-      role,
-      user,
-    ]);
+    return hashObjects([role, user]);
   }
 
   @override
@@ -908,11 +827,12 @@ class Role extends RoleEntity {
     List<UserEntity>? users,
   }) {
     return Role(
-        id: id ?? this.id,
-        createdAt: createdAt ?? this.createdAt,
-        updatedAt: updatedAt ?? this.updatedAt,
-        name: name ?? this.name,
-        users: users ?? this.users);
+      id: id ?? this.id,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      name: name ?? this.name,
+      users: users ?? this.users,
+    );
   }
 
   @override
@@ -922,19 +842,14 @@ class Role extends RoleEntity {
         other.createdAt == createdAt &&
         other.updatedAt == updatedAt &&
         other.name == name &&
-        ListEquality<UserEntity>(DefaultEquality<UserEntity>())
-            .equals(other.users, users);
+        ListEquality<UserEntity>(
+          DefaultEquality<UserEntity>(),
+        ).equals(other.users, users);
   }
 
   @override
   int get hashCode {
-    return hashObjects([
-      id,
-      createdAt,
-      updatedAt,
-      name,
-      users,
-    ]);
+    return hashObjects([id, createdAt, updatedAt, name, users]);
   }
 
   @override
@@ -978,24 +893,28 @@ class UserSerializer extends Codec<User, Map> {
 
   static User fromMap(Map map) {
     return User(
-        id: map['id'] as String?,
-        createdAt: map['created_at'] != null
-            ? (map['created_at'] is DateTime
+      id: map['id'] as String?,
+      createdAt: map['created_at'] != null
+          ? (map['created_at'] is DateTime
                 ? (map['created_at'] as DateTime)
                 : DateTime.parse(map['created_at'].toString()))
-            : null,
-        updatedAt: map['updated_at'] != null
-            ? (map['updated_at'] is DateTime
+          : null,
+      updatedAt: map['updated_at'] != null
+          ? (map['updated_at'] is DateTime
                 ? (map['updated_at'] as DateTime)
                 : DateTime.parse(map['updated_at'].toString()))
-            : null,
-        username: map['username'] as String?,
-        password: map['password'] as String?,
-        email: map['email'] as String?,
-        roles: map['roles'] is Iterable
-            ? List.unmodifiable(((map['roles'] as Iterable).whereType<Map>())
-                .map(RoleSerializer.fromMap))
-            : []);
+          : null,
+      username: map['username'] as String?,
+      password: map['password'] as String?,
+      email: map['email'] as String?,
+      roles: map['roles'] is Iterable
+          ? List.unmodifiable(
+              ((map['roles'] as Iterable).whereType<Map>()).map(
+                RoleSerializer.fromMap,
+              ),
+            )
+          : [],
+    );
   }
 
   static Map<String, dynamic> toMap(UserEntity? model) {
@@ -1009,7 +928,7 @@ class UserSerializer extends Codec<User, Map> {
       'username': model.username,
       'password': model.password,
       'email': model.email,
-      'roles': model.roles.map((m) => RoleSerializer.toMap(m)).toList()
+      'roles': model.roles.map((m) => RoleSerializer.toMap(m)).toList(),
     };
   }
 }
@@ -1067,12 +986,13 @@ class RoleUserSerializer extends Codec<RoleUser, Map> {
 
   static RoleUser fromMap(Map map) {
     return RoleUser(
-        role: map['role'] != null
-            ? RoleSerializer.fromMap(map['role'] as Map)
-            : null,
-        user: map['user'] != null
-            ? UserSerializer.fromMap(map['user'] as Map)
-            : null);
+      role: map['role'] != null
+          ? RoleSerializer.fromMap(map['role'] as Map)
+          : null,
+      user: map['user'] != null
+          ? UserSerializer.fromMap(map['user'] as Map)
+          : null,
+    );
   }
 
   static Map<String, dynamic> toMap(RoleUserEntity? model) {
@@ -1081,16 +1001,13 @@ class RoleUserSerializer extends Codec<RoleUser, Map> {
     }
     return {
       'role': RoleSerializer.toMap(model.role),
-      'user': UserSerializer.toMap(model.user)
+      'user': UserSerializer.toMap(model.user),
     };
   }
 }
 
 abstract class RoleUserFields {
-  static const List<String> allFields = <String>[
-    role,
-    user,
-  ];
+  static const List<String> allFields = <String>[role, user];
 
   static const String role = 'role';
 
@@ -1124,22 +1041,26 @@ class RoleSerializer extends Codec<Role, Map> {
 
   static Role fromMap(Map map) {
     return Role(
-        id: map['id'] as String?,
-        createdAt: map['created_at'] != null
-            ? (map['created_at'] is DateTime
+      id: map['id'] as String?,
+      createdAt: map['created_at'] != null
+          ? (map['created_at'] is DateTime
                 ? (map['created_at'] as DateTime)
                 : DateTime.parse(map['created_at'].toString()))
-            : null,
-        updatedAt: map['updated_at'] != null
-            ? (map['updated_at'] is DateTime
+          : null,
+      updatedAt: map['updated_at'] != null
+          ? (map['updated_at'] is DateTime
                 ? (map['updated_at'] as DateTime)
                 : DateTime.parse(map['updated_at'].toString()))
-            : null,
-        name: map['name'] as String?,
-        users: map['users'] is Iterable
-            ? List.unmodifiable(((map['users'] as Iterable).whereType<Map>())
-                .map(UserSerializer.fromMap))
-            : []);
+          : null,
+      name: map['name'] as String?,
+      users: map['users'] is Iterable
+          ? List.unmodifiable(
+              ((map['users'] as Iterable).whereType<Map>()).map(
+                UserSerializer.fromMap,
+              ),
+            )
+          : [],
+    );
   }
 
   static Map<String, dynamic> toMap(RoleEntity? model) {
@@ -1151,7 +1072,7 @@ class RoleSerializer extends Codec<Role, Map> {
       'created_at': model.createdAt?.toIso8601String(),
       'updated_at': model.updatedAt?.toIso8601String(),
       'name': model.name,
-      'users': model.users.map((m) => UserSerializer.toMap(m)).toList()
+      'users': model.users.map((m) => UserSerializer.toMap(m)).toList(),
     };
   }
 }

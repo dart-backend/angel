@@ -77,7 +77,10 @@ class HttpRequestContext extends RequestContext<HttpRequest?> {
 
   /// Magically transforms an [HttpRequest] into a [RequestContext].
   static Future<HttpRequestContext> from(
-      HttpRequest request, Angel app, String path) {
+    HttpRequest request,
+    Angel app,
+    String path,
+  ) {
     var ctx = HttpRequestContext().._container = app.container.createChild();
 
     var override = request.method;
@@ -85,7 +88,7 @@ class HttpRequestContext extends RequestContext<HttpRequest?> {
     if (app.allowMethodOverrides == true) {
       override =
           request.headers.value('x-http-method-override')?.toUpperCase() ??
-              request.method;
+          request.method;
     }
 
     ctx.app = app;
