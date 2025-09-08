@@ -1,6 +1,6 @@
 services:
   pgdb:
-    image: postgres:latest
+    image: docker.io/postgres:latest
     restart: "no"
     ports:
       - "5432:5432"
@@ -11,7 +11,7 @@ services:
       - appnet
 
   pgadmin4:
-    image: dpage/pgadmin4:latest
+    image: docker.io/dpage/pgadmin4:latest
     restart: "no"
     ports:
       - "5050:80"

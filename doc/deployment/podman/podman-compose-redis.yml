@@ -1,6 +1,6 @@
 services:
   redis:
-    image: redis:latest
+    image: docker.io/redis:latest
     restart: "no"
     ports:
       - "5432:5432"

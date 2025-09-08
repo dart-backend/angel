@@ -1,7 +1,7 @@
 services:
 
   mongo:
-    image: mongo:latest
+    image: docker.io/mongo:latest
     restart: no
     ports:
       - 27017:27017
@@ -13,7 +13,7 @@ services:
       - appnet
 
   mongo-express:
-    image: mongo-express:latest
+    image: docker.io/mongo-express:latest
     restart: no
     depends_on:
       - mongo

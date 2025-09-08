@@ -1,6 +1,6 @@
 services:
   mysql:
-    image: mysql:latest
+    image: docker.io/mysql:latest
     restart: "no"
     ports:
       - "3306:3306"

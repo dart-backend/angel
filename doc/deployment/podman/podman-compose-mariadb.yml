@@ -1,6 +1,6 @@
 services:
   mariadb:
-    image: mariadb:latest
+    image: docker.io/mariadb:latest
     restart: "no"
     ports:
       - "3306:3306"
@@ -13,7 +13,7 @@ services:
       - appnet
 
   adminer:
-    image: adminer:latest
+    image: docker.io/adminer:latest
     restart: "no"
     ports:
       - 8080:8080

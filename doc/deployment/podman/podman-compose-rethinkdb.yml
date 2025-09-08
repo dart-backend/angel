@@ -1,6 +1,6 @@
 services:
   rethinkdb:
-    image: rethinkdb:latest
+    image: docker.io/rethinkdb:latest
     restart: "no"
     ports:
       - "8080:8080"
