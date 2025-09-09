@@ -44,13 +44,12 @@ Angel3 packages are published under `angel3_` prefix on pub.dev. These packages 
 
 ## Status
 
-### Latest Release Notes (Version: 8.5.0)
+### Latest Release Notes (Version: 8.6.0)
 
-* Updated `angel3_` packages to require dart >= 3.6.0
+* Updated `angel3_` packages to require dart >= 3.8.0
 * Updated dependencies to the latest
-* Updated code generator to use `analyzer` 7.x.x
+* Updated code generator to use `analyzer` 7.7.x
 * Deprecated `angel3_orm_test`
-* Fixed various issues for `ORM for MySQL`.
 * Migrated `dart:html` to `package:web`
 
 ### Latest development work
@@ -64,9 +63,9 @@ Branch: `master`
 
 For more details, checkout [Project Status](https://github.com/dart-backend/angel/wiki/Project-Status)
 
-### Archieved development work
+### Archieved releases
 
-Starting with release 8.5.0. All subsequence releases published to `pub.dev` will be available on a separate branch. The branch name will adopt the following naming conventions; `release/"published date"` For example: `release/2025_02` branch is for release on Feb 2025 to `pub.dev`.
+Starting with release 8.5.0. All subsequence releases published to `pub.dev` will be available on a release branch. The branch name will adopt the following naming conventions, `release/<published date>`. For example: `release/2025_02` branch is for release on Feb 2025 to `pub.dev`.
 
 ### What is in the pipeline?
 
@@ -76,14 +75,13 @@ Starting with release 8.5.0. All subsequence releases published to `pub.dev` wil
 * Upgrade ORM to support
   * SQLite and other RDBMS
   * Multi tenant
-  * ORM Reverse engineering
-* ngdart integration
+  * ORM reverse engineering
 
 ## Installation and Setup
 
 ### (Option 1) Create a new project by cloning from boilerplate templates
 
-1. Download and install [Dart](https://dart.dev/get-dart). Minimum 3.6.0.
+1. Download and install [Dart](https://dart.dev/get-dart). Minimum 3.8.0.
 
 2. Clone one of the following starter projects:
    * [Angel3 Basic Template](https://github.com/dukefirehawk/boilerplates/tree/angel3-basic)
@@ -177,7 +175,7 @@ If you are interested in contributing to Angel3 framework please check out the [
 
 3. Download and install [Dart 3](https://dart.dev/get-dart)
 
-4. Install `melos`
+4. Install `melos` 6.3.3 (Note: 7.x.x support is in the pipeline)
 
    ```bash
    dart pub global activate melos
