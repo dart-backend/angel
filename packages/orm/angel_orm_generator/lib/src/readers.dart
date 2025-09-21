@@ -5,7 +5,7 @@ import 'package:angel3_orm/angel3_orm.dart';
 import 'package:source_gen/source_gen.dart';
 import 'orm_build_context.dart';
 
-const TypeChecker columnTypeChecker = TypeChecker.fromRuntime(Column);
+const TypeChecker columnTypeChecker = TypeChecker.typeNamed(Column);
 
 Orm reviveORMAnnotation(ConstantReader reader) {
   return Orm(

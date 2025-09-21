@@ -1,5 +1,9 @@
 # Change Log
 
+## 8.6.1
+
+* Updated `TypeChecker.fromRuntime()` to `TypeChecker.typeNamed()`
+
 ## 8.6.0
 
 * Require Dart >= 3.8

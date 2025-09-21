@@ -153,7 +153,7 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
         for (var field in ctx.fields) {
           if (!shouldBeConstant(ctx) && isListOrMapType(field.type)) {
             var typeName =
-                const TypeChecker.fromRuntime(
+                const TypeChecker.typeNamed(
                   List,
                 ).isAssignableFromType(field.type)
                 ? 'List'
@@ -304,16 +304,14 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
 
   static String? generateEquality(DartType type, [bool nullable = false]) {
     if (type is InterfaceType) {
-      if (const TypeChecker.fromRuntime(List).isAssignableFromType(type)) {
+      if (const TypeChecker.typeNamed(List).isAssignableFromType(type)) {
         if (type.typeArguments.length == 1) {
           var eq = generateEquality(type.typeArguments[0]);
           return 'ListEquality<${type.typeArguments[0].element3!.name3}>($eq)';
         } else {
           return 'ListEquality()';
         }
-      } else if (const TypeChecker.fromRuntime(
-        Map,
-      ).isAssignableFromType(type)) {
+      } else if (const TypeChecker.typeNamed(Map).isAssignableFromType(type)) {
         if (type.typeArguments.length == 2) {
           var keq = generateEquality(type.typeArguments[0]),
               veq = generateEquality(type.typeArguments[1]);

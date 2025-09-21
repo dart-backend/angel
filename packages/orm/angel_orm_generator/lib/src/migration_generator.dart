@@ -102,7 +102,8 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
   Method buildUpMigration(OrmBuildContext ctx, LibraryBuilder lib) {
     return Method((meth) {
       // Check to see if clazz extends Model class
-      var autoIdAndDateFields = const TypeChecker.fromRuntime(
+
+      var autoIdAndDateFields = const TypeChecker.typeNamed(
         Model,
       ).isAssignableFromType(ctx.buildContext.clazz.thisType);
       meth
@@ -243,7 +244,7 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
                 var type = defaultValue.type;
                 Expression? defaultExpr;
 
-                if (const TypeChecker.fromRuntime(
+                if (const TypeChecker.typeNamed(
                   RawSql,
                 ).isAssignableFromType(defaultValue.type!)) {
                   var value = ConstantReader(
@@ -332,7 +333,7 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
                     relationship.foreign?.buildContext.clazz.thisType;
                 var foreignAautoIdAndDateFields = false;
                 if (foreignTableType != null) {
-                  foreignAautoIdAndDateFields = const TypeChecker.fromRuntime(
+                  foreignAautoIdAndDateFields = const TypeChecker.typeNamed(
                     Model,
                   ).isAssignableFromType(foreignTableType);
                 }

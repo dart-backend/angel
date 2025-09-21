@@ -45,7 +45,7 @@ packages:
   - packages/rethinkdb
   - packages/sembast
   - packages/orm/angel_migration
-  - packages/orm/angel_migration_generator
+  - packages/orm/angel_migration_runner
   - packages/orm/angel_orm
   - packages/orm/angel_orm_generator
   - packages/orm/angel_orm_postgres
