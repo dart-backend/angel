@@ -25,7 +25,7 @@ bool isSpecialId(OrmBuildContext ctx, FieldElement2 field) {
   // field is ShimFieldImpl &&
   field is! RelationFieldImpl &&
       (field.displayName == 'id' &&
-          const TypeChecker.fromRuntime(
+          const TypeChecker.typeNamed(
             Model,
           ).isAssignableFromType(ctx.buildContext.clazz.thisType));
 }
@@ -76,7 +76,7 @@ Future<OrmBuildContext?> buildOrmContext(
   // ignore: unused_local_variable
   DartObject? generatedSerializable;
 
-  while ((generatedSerializable = const TypeChecker.fromRuntime(
+  while ((generatedSerializable = const TypeChecker.typeNamed(
         GeneratedSerializable,
       ).firstAnnotationOf(clazz)) !=
       null) {
@@ -193,7 +193,7 @@ Future<OrmBuildContext?> buildOrmContext(
             var refType = field.type;
 
             if (refType is InterfaceType &&
-                const TypeChecker.fromRuntime(
+                const TypeChecker.typeNamed(
                   List,
                 ).isAssignableFromType(refType) &&
                 refType.typeArguments.length == 1) {
@@ -208,7 +208,7 @@ Future<OrmBuildContext?> buildOrmContext(
                 cache,
                 modelTypeElement as ClassElement2,
                 ConstantReader(
-                  const TypeChecker.fromRuntime(
+                  const TypeChecker.typeNamed(
                     Orm,
                   ).firstAnnotationOf(modelTypeElement),
                 ),
@@ -223,7 +223,7 @@ Future<OrmBuildContext?> buildOrmContext(
                   cache,
                   through.element3,
                   ConstantReader(
-                    const TypeChecker.fromRuntime(
+                    const TypeChecker.typeNamed(
                       Serializable,
                     ).firstAnnotationOf(modelTypeElement),
                   ),
@@ -233,7 +233,7 @@ Future<OrmBuildContext?> buildOrmContext(
                 );
               }
 
-              var ormAnn = const TypeChecker.fromRuntime(
+              var ormAnn = const TypeChecker.typeNamed(
                 Orm,
               ).firstAnnotationOf(modelTypeElement);
 
@@ -399,28 +399,28 @@ Future<OrmBuildContext?> buildOrmContext(
 
 /// Detect and return the correct column type
 ColumnType inferColumnType(DartType type) {
-  if (const TypeChecker.fromRuntime(String).isAssignableFromType(type)) {
+  if (const TypeChecker.typeNamed(String).isAssignableFromType(type)) {
     return ColumnType.varChar;
   }
-  if (const TypeChecker.fromRuntime(int).isAssignableFromType(type)) {
+  if (const TypeChecker.typeNamed(int).isAssignableFromType(type)) {
     return ColumnType.int;
   }
-  if (const TypeChecker.fromRuntime(double).isAssignableFromType(type)) {
+  if (const TypeChecker.typeNamed(double).isAssignableFromType(type)) {
     return ColumnType.double;
   }
-  if (const TypeChecker.fromRuntime(num).isAssignableFromType(type)) {
+  if (const TypeChecker.typeNamed(num).isAssignableFromType(type)) {
     return ColumnType.float;
   }
-  if (const TypeChecker.fromRuntime(bool).isAssignableFromType(type)) {
+  if (const TypeChecker.typeNamed(bool).isAssignableFromType(type)) {
     return ColumnType.boolean;
   }
-  if (const TypeChecker.fromRuntime(DateTime).isAssignableFromType(type)) {
+  if (const TypeChecker.typeNamed(DateTime).isAssignableFromType(type)) {
     return ColumnType.timeStamp;
   }
-  if (const TypeChecker.fromRuntime(Map).isAssignableFromType(type)) {
+  if (const TypeChecker.typeNamed(Map).isAssignableFromType(type)) {
     return ColumnType.jsonb;
   }
-  if (const TypeChecker.fromRuntime(List).isAssignableFromType(type)) {
+  if (const TypeChecker.typeNamed(List).isAssignableFromType(type)) {
     return ColumnType.jsonb;
   }
   if (type is InterfaceType && type.element3 is EnumElement2) {
@@ -446,7 +446,7 @@ Column reviveColumn(ConstantReader cr) {
       IndexType.values[indexTypeObj?.getField('index')?.toIntValue() ??
           IndexType.none.index];
 
-  if (const TypeChecker.fromRuntime(
+  if (const TypeChecker.typeNamed(
     PrimaryKey,
   ).isAssignableFromType(cr.objectValue.type!)) {
     indexType = IndexType.primaryKey;
@@ -468,9 +468,7 @@ Column reviveColumn(ConstantReader cr) {
   );
 }
 
-const TypeChecker relationshipTypeChecker = TypeChecker.fromRuntime(
-  Relationship,
-);
+const TypeChecker relationshipTypeChecker = TypeChecker.typeNamed(Relationship);
 
 // ORM builder context
 class OrmBuildContext {
@@ -571,7 +569,7 @@ class RelationFieldImpl2 extends ShimFieldImpl2 {
 InterfaceType? firstModelAncestor(DartType? type) {
   if (type is InterfaceType) {
     if (type.superclass != null &&
-        const TypeChecker.fromRuntime(Model).isExactlyType(type.superclass!)) {
+        const TypeChecker.typeNamed(Model).isExactlyType(type.superclass!)) {
       return type;
     } else {
       return type.superclass == null

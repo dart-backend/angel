@@ -30,7 +30,7 @@ class TypeScriptDefinitionBuilder implements Builder {
     };
 
     types.forEach((t, tsType) {
-      if (TypeChecker.fromRuntime(t).isAssignableFromType(type)) {
+      if (TypeChecker.typeNamed(t).isAssignableFromType(type)) {
         typeScriptType = tsType;
       }
     });
@@ -46,9 +46,7 @@ class TypeScriptDefinitionBuilder implements Builder {
           buildStep,
         );
         typeScriptType = '$arg[]';
-      } else if (const TypeChecker.fromRuntime(
-            Map,
-          ).isAssignableFromType(type) &&
+      } else if (const TypeChecker.typeNamed(Map).isAssignableFromType(type) &&
           type.typeArguments.length == 2) {
         var key = await compileToTypeScriptType(
           ctx,
@@ -88,9 +86,7 @@ class TypeScriptDefinitionBuilder implements Builder {
             ..outdent()
             ..writeln('}'),
         );
-      } else if (const TypeChecker.fromRuntime(
-        List,
-      ).isAssignableFromType(type)) {
+      } else if (const TypeChecker.typeNamed(List).isAssignableFromType(type)) {
         if (type.typeArguments.isEmpty) {
           typeScriptType = 'any[]';
         } else {
@@ -168,7 +164,7 @@ class TypeScriptDefinitionBuilder implements Builder {
 
     try {
       elements = lib
-          .annotatedWith(const TypeChecker.fromRuntime(Serializable))
+          .annotatedWith(const TypeChecker.typeNamed(Serializable))
           .toList();
     } catch (_) {
       // Ignore error in source_gen/build_runner that has no explanation

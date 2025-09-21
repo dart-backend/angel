@@ -15,20 +15,18 @@ import 'context.dart';
 // ignore: deprecated_member_use
 //const TypeChecker aliasTypeChecker = TypeChecker.fromRuntime(Alias);
 
-const TypeChecker dateTimeTypeChecker = TypeChecker.fromRuntime(DateTime);
+const TypeChecker dateTimeTypeChecker = TypeChecker.typeNamed(DateTime);
 
 // ignore: deprecated_member_use
-const TypeChecker excludeTypeChecker = TypeChecker.fromRuntime(Exclude);
+const TypeChecker excludeTypeChecker = TypeChecker.typeNamed(Exclude);
 
-const TypeChecker serializableFieldTypeChecker = TypeChecker.fromRuntime(
+const TypeChecker serializableFieldTypeChecker = TypeChecker.typeNamed(
   SerializableField,
 );
 
-const TypeChecker serializableTypeChecker = TypeChecker.fromRuntime(
-  Serializable,
-);
+const TypeChecker serializableTypeChecker = TypeChecker.typeNamed(Serializable);
 
-const TypeChecker generatedSerializableTypeChecker = TypeChecker.fromRuntime(
+const TypeChecker generatedSerializableTypeChecker = TypeChecker.typeNamed(
   GeneratedSerializable,
 );
 

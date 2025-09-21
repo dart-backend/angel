@@ -151,7 +151,7 @@ String? dartObjectToString(DartObject v) {
   throw ArgumentError(v.toString());
 }
 
-/// Determines if a type supports `package:angel_serialize`.
+/// Determines if a type supports `package:angel3_serialize`.
 bool isModelClass(DartType? t) {
   if (t == null) return false;
 
@@ -163,7 +163,9 @@ bool isModelClass(DartType? t) {
     return true;
   }
 
-  if (const TypeChecker.fromRuntime(Model).isAssignableFromType(t)) {
+  // TODO: Changing to typeName() will cause an exception in source_gen
+  DartType? d = t;
+  if (TypeChecker.fromRuntime(Model).isAssignableFromType(d)) {
     return true;
   }
 
@@ -175,19 +177,19 @@ bool isModelClass(DartType? t) {
 }
 
 bool isListType(DartType t) {
-  return const TypeChecker.fromRuntime(List).isAssignableFromType(t) &&
-      !const TypeChecker.fromRuntime(Uint8List).isAssignableFromType(t);
+  return const TypeChecker.typeNamed(List).isAssignableFromType(t) &&
+      !const TypeChecker.typeNamed(Uint8List).isAssignableFromType(t);
 }
 
 bool isMapType(DartType t) {
-  return const TypeChecker.fromRuntime(Map).isAssignableFromType(t) &&
-      !const TypeChecker.fromRuntime(Uint8List).isAssignableFromType(t);
+  return const TypeChecker.typeNamed(Map).isAssignableFromType(t) &&
+      !const TypeChecker.typeNamed(Uint8List).isAssignableFromType(t);
 }
 
 bool isListOrMapType(DartType t) {
-  return (const TypeChecker.fromRuntime(List).isAssignableFromType(t) ||
-          const TypeChecker.fromRuntime(Map).isAssignableFromType(t)) &&
-      !const TypeChecker.fromRuntime(Uint8List).isAssignableFromType(t);
+  return (const TypeChecker.typeNamed(List).isAssignableFromType(t) ||
+          const TypeChecker.typeNamed(Map).isAssignableFromType(t)) &&
+      !const TypeChecker.typeNamed(Uint8List).isAssignableFromType(t);
 }
 
 bool isEnumType(DartType t) {
@@ -200,20 +202,20 @@ bool isEnumType(DartType t) {
 
 /// Determines if a [DartType] is a `List` with the first type argument being a `Model`.
 bool isListOfModelType(InterfaceType t) {
-  return const TypeChecker.fromRuntime(List).isAssignableFromType(t) &&
+  return const TypeChecker.typeNamed(List).isAssignableFromType(t) &&
       t.typeArguments.length == 1 &&
       isModelClass(t.typeArguments[0]);
 }
 
 /// Determines if a [DartType] is a `Map` with the second type argument being a `Model`.
 bool isMapToModelType(InterfaceType t) {
-  return const TypeChecker.fromRuntime(Map).isAssignableFromType(t) &&
+  return const TypeChecker.typeNamed(Map).isAssignableFromType(t) &&
       t.typeArguments.length == 2 &&
       isModelClass(t.typeArguments[1]);
 }
 
 bool isAssignableToModel(DartType type) =>
-    const TypeChecker.fromRuntime(Model).isAssignableFromType(type);
+    const TypeChecker.typeNamed(Model).isAssignableFromType(type);
 
 /// Compute a [String] representation of a [type].
 String? typeToString(DartType type) {

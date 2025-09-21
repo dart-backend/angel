@@ -899,8 +899,8 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
           type = field.type;
         }
 
-        if (const TypeChecker.fromRuntime(int).isExactlyType(type) ||
-            const TypeChecker.fromRuntime(double).isExactlyType(type) ||
+        if (const TypeChecker.typeNamed(int).isExactlyType(type) ||
+            const TypeChecker.typeNamed(double).isExactlyType(type) ||
             isSpecialId(ctx, field)) {
           var typeName = type.getDisplayString().replaceAll('?', '');
           if (isSpecialId(ctx, field)) {
@@ -923,19 +923,17 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
               ? '?'
               : '';
           args.add(CodeExpression(Code('(v) => v$question.index as int')));
-        } else if (const TypeChecker.fromRuntime(String).isExactlyType(type)) {
+        } else if (const TypeChecker.typeNamed(String).isExactlyType(type)) {
           builderType = refer('StringSqlExpressionBuilder');
-        } else if (const TypeChecker.fromRuntime(bool).isExactlyType(type)) {
+        } else if (const TypeChecker.typeNamed(bool).isExactlyType(type)) {
           builderType = refer('BooleanSqlExpressionBuilder');
-        } else if (const TypeChecker.fromRuntime(
-          DateTime,
-        ).isExactlyType(type)) {
+        } else if (const TypeChecker.typeNamed(DateTime).isExactlyType(type)) {
           builderType = refer('DateTimeSqlExpressionBuilder');
-        } else if (const TypeChecker.fromRuntime(
+        } else if (const TypeChecker.typeNamed(
           Map,
         ).isAssignableFromType(type)) {
           builderType = refer('MapSqlExpressionBuilder');
-        } else if (const TypeChecker.fromRuntime(
+        } else if (const TypeChecker.typeNamed(
           List,
         ).isAssignableFromType(type)) {
           builderType = refer('ListSqlExpressionBuilder');
@@ -1049,7 +1047,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                 var name = ctx.buildContext.resolveFieldName(field.displayName);
                 var type = ctx.columns[field.displayName]?.type;
                 if (type == null) continue;
-                if (const TypeChecker.fromRuntime(
+                if (const TypeChecker.typeNamed(
                   List,
                 ).isAssignableFromType(fType)) {
                   args[name] = literalString(type.name);
@@ -1077,7 +1075,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
 
             if (fType is InterfaceType && fType.element3 is EnumElement2) {
               value = _deserializeEnumExpression(field, value);
-            } else if (const TypeChecker.fromRuntime(
+            } else if (const TypeChecker.typeNamed(
               List,
             ).isAssignableFromType(fType)) {
               value = refer('json')
@@ -1114,7 +1112,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
 
             if (fType is InterfaceType && fType.element3 is EnumElement2) {
               value = _serializeEnumExpression(field, value);
-            } else if (const TypeChecker.fromRuntime(
+            } else if (const TypeChecker.typeNamed(
               List,
             ).isAssignableFromType(fType)) {
               value = refer('json').property('encode').call([value]);
@@ -1167,9 +1165,9 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
               }
 
               for (var field in ctx.effectiveNormalFields) {
-                print("=== Field: ${field.displayName}");
+                //print("=== Field: ${field.displayName}");
                 if (field is RelationFieldImpl2) {
-                  print("=== RelationFieldImpl2: ${field.displayName}");
+                  //print("=== RelationFieldImpl2: ${field.displayName}");
                   var customField = field;
                   var original = customField.originalFieldName;
                   var prop = refer('model').property(original);
@@ -1230,7 +1228,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
       field.type,
       ignoreNullabilityCheck: true,
     );
-    const TypeChecker serializableFieldTypeChecker = TypeChecker.fromRuntime(
+    const TypeChecker serializableFieldTypeChecker = TypeChecker.typeNamed(
       SerializableField,
     );
     final annotation = serializableFieldTypeChecker.firstAnnotationOf(field);
@@ -1260,7 +1258,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
   /// Retrieve the [Expression] to serialize the enumeration field.
   /// Takes into account the [SerializableField] properties.
   Expression _serializeEnumExpression(FieldElement2 field, Expression expr) {
-    const TypeChecker serializableFieldTypeChecker = TypeChecker.fromRuntime(
+    const TypeChecker serializableFieldTypeChecker = TypeChecker.typeNamed(
       SerializableField,
     );
     final annotation = serializableFieldTypeChecker.firstAnnotationOf(field);

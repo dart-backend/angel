@@ -266,7 +266,7 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
               ${type.getDisplayString()}.values.indexOf(model.${field.name3}$convert)
               : null
             ''';
-            } else if (const TypeChecker.fromRuntime(
+            } else if (const TypeChecker.typeNamed(
               Uint8List,
             ).isAssignableFromType(type)) {
               var convert =
@@ -471,7 +471,7 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
             ''';
 
               //log.warning('Code => $deserializedRepresentation');
-            } else if (const TypeChecker.fromRuntime(
+            } else if (const TypeChecker.typeNamed(
                   List,
                 ).isAssignableFromType(type) &&
                 type.typeArguments.length == 1) {
@@ -487,7 +487,7 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
                   ? (map['$alias'] as Iterable).cast<$arg>().toList()
                   : $defaultValue
                 ''';
-            } else if (const TypeChecker.fromRuntime(
+            } else if (const TypeChecker.typeNamed(
                   Map,
                 ).isAssignableFromType(type) &&
                 type.typeArguments.length == 2) {
@@ -507,7 +507,7 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
                   ? (map['$alias'] as Map).cast<$key, $value>()
                   : $defaultValue
                 ''';
-            } else if (const TypeChecker.fromRuntime(
+            } else if (const TypeChecker.typeNamed(
               Uint8List,
             ).isAssignableFromType(type)) {
               deserializedRepresentation =
