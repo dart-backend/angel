@@ -1,8 +1,0 @@
-# melos_managed_dependency_overrides
-dependency_overrides:
-  angel3_serialize:
-    path: ../../serialize/angel_serialize
-  angel3_serialize_generator:
-    path: ../../serialize/angel_serialize_generator
-  angel3_model:
-    path: ../../model

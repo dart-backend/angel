@@ -3,8 +3,9 @@ version: 8.5.0
 description: A browser, mobile and command line based client that supports querying Angel3 servers
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dart-backend/angel/tree/master/packages/client
+resolution: workspace
 environment:
-  sdk: '>=3.8.0 <4.0.0'
+  sdk: '>=3.9.0 <4.0.0'
 dependencies:
   angel3_http_exception: ^8.0.0
   belatuk_json_serializer: ^7.0.0
