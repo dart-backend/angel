@@ -4,7 +4,7 @@ import 'dart:async';
 import 'dart:mirrors';
 import 'dart:typed_data';
 import 'package:analyzer/dart/constant/value.dart';
-import 'package:analyzer/dart/element/element2.dart';
+import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:angel3_serialize/angel3_serialize.dart';
@@ -45,7 +45,7 @@ TypeReference convertTypeReference(
   bool ignoreNullabilityCheck = false,
 }) {
   return TypeReference((b) {
-    b.symbol = t.element3?.displayName;
+    b.symbol = t.element?.displayName;
 
     // Generate nullable type
     if (ignoreNullabilityCheck) {
@@ -125,23 +125,21 @@ String? dartObjectToString(DartObject v) {
       v.toStringValue()!,
     ).accept(DartEmitter(useNullSafetySyntax: true)).toString();
   }
-  if (type is InterfaceType && type.element3 is EnumElement2) {
+  if (type is InterfaceType && type.element is EnumElement) {
     // Find the index of the enum, then find the member.
-    for (var field in type.element3.fields2) {
+    for (var field in type.element.fields) {
       if (field.isEnumConstant && field.isStatic) {
-        var value = type.element3
-            .getField2(field.name3!)!
-            .computeConstantValue();
+        var value = type.element.getField(field.name!)!.computeConstantValue();
         if (v is Enum && value is Enum) {
           var v2 = v as Enum;
           var value2 = value as Enum;
 
           if (value2.name == v2.name) {
-            return '${type.element3.displayName}.${field.name3}';
+            return '${type.element.displayName}.${field.name}';
           }
         } else {
           if (value == v) {
-            return '${type.element3.displayName}.${field.name3}';
+            return '${type.element.displayName}.${field.name}';
           }
         }
       }
@@ -155,17 +153,21 @@ String? dartObjectToString(DartObject v) {
 bool isModelClass(DartType? t) {
   if (t == null) return false;
 
-  if (serializableTypeChecker.hasAnnotationOf(t.element3!)) {
+  if (serializableTypeChecker.hasAnnotationOf(t.element!)) {
     return true;
   }
 
-  if (generatedSerializableTypeChecker.hasAnnotationOf(t.element3!)) {
+  if (generatedSerializableTypeChecker.hasAnnotationOf(t.element!)) {
     return true;
   }
 
-  // TODO: Changing to typeName() will cause an exception in source_gen
-  DartType? d = t;
-  if (TypeChecker.fromRuntime(Model).isAssignableFromType(d)) {
+  // TODO: Changing to typeNamed() will cause an exception in source_gen
+  DartType d = t;
+
+  if (TypeChecker.typeNamed(
+    Model,
+    inPackage: 'angel3_serialize',
+  ).isAssignableFromType(d)) {
     return true;
   }
 
@@ -194,7 +196,7 @@ bool isListOrMapType(DartType t) {
 
 bool isEnumType(DartType t) {
   if (t is InterfaceType) {
-    return t.element3 is Enum;
+    return t.element is Enum;
   }
 
   return false;
@@ -221,13 +223,13 @@ bool isAssignableToModel(DartType type) =>
 String? typeToString(DartType type) {
   if (type is InterfaceType) {
     if (type.typeArguments.isEmpty) {
-      return type.element3.displayName;
+      return type.element.displayName;
     }
 
-    var name = type.element3.displayName;
+    var name = type.element.displayName;
 
     return '$name<${type.typeArguments.map(typeToString).join(', ')}>';
   } else {
-    return type.element3?.displayName;
+    return type.element?.displayName;
   }
 }
