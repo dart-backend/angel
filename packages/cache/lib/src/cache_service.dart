@@ -25,18 +25,20 @@ class CacheService<Id, Data> extends Service<Id, Data> {
   final Map<Id, _CachedItem<Data>> _cache = {};
   _CachedItem<List<Data>>? _indexed;
 
-  CacheService(
-      {required this.database,
-      required this.cache,
-      this.timeout = const Duration(minutes: 10),
-      this.ignoreParams = false});
+  CacheService({
+    required this.database,
+    required this.cache,
+    this.timeout = const Duration(minutes: 10),
+    this.ignoreParams = false,
+  });
 
   Future<T> _getCached<T>(
-      Map<String, dynamic> params,
-      _CachedItem? Function() get,
-      FutureOr<T> Function() getFresh,
-      FutureOr<T> Function() getCached,
-      FutureOr<T> Function(T data, DateTime now) save) async {
+    Map<String, dynamic> params,
+    _CachedItem? Function() get,
+    FutureOr<T> Function() getFresh,
+    FutureOr<T> Function() getCached,
+    FutureOr<T> Function(T data, DateTime now) save,
+  ) async {
     var cached = get();
     var now = DateTime.now().toUtc();
 
@@ -46,10 +48,13 @@ class CacheService<Id, Data> extends Service<Id, Data> {
 
       if (!expired) {
         // Read from the cache if necessary
-        var queryEqual = ignoreParams == true ||
+        var queryEqual =
+            ignoreParams == true ||
             (cached.params != null &&
                 const MapEquality().equals(
-                    params['query'] as Map, cached.params['query'] as Map));
+                  params['query'] as Map,
+                  cached.params['query'] as Map,
+                ));
         if (queryEqual) {
           return await getCached();
         }

@@ -2,10 +2,11 @@
 
 ## 8.0.0
 
-* Require Dart >= 3.8
+* Require Dart >= 3.9
 * Updated `lints` to 6.0.0
-* Updated `analyzer` to 7.x
-* Updated `source_gen` to 2.0.0
+* Updated `analyzer` to 8.4.x
+* Updated `build` to 4.0.x
+* Updated `source_gen` to 4.0.0
 * Fixed linter warnings
 * Updated repository link
 

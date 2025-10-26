@@ -6,17 +6,16 @@ void main() async {
   var app = Angel();
 
   // Cache a glob
-  var cache = ResponseCache()
-    ..patterns.addAll([
-      RegExp('^/?\\w+\\.txt'),
-    ]);
+  var cache = ResponseCache()..patterns.addAll([RegExp('^/?\\w+\\.txt')]);
 
   // Handle `if-modified-since` header, and also send cached content
   app.fallback(cache.handleRequest);
 
   // A simple handler that returns a different result every time.
   app.get(
-      '/date.txt', (req, res) => res.write(DateTime.now().toIso8601String()));
+    '/date.txt',
+    (req, res) => res.write(DateTime.now().toIso8601String()),
+  );
 
   // Support purging the cache.
   app.addRoute('PURGE', '*', (req, res) {

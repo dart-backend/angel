@@ -6,8 +6,8 @@ resolution: workspace
 environment:
   sdk: '>=3.9.0 <4.0.0'
 dependencies:
-  analyzer: ^8.2.0
-  build: ^3.0.1
+  analyzer: ^8.4.0
+  build: ^4.0.0
   build_config: ^1.0.0
   code_builder: ^4.0.0
   file: ^7.0.0

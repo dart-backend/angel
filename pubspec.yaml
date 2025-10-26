@@ -58,7 +58,7 @@ workspace:
   - packages/shelf
 
 dependencies:
-  melos: ^7.1.0
+  melos: ^7.3.0
 
 melos:
 

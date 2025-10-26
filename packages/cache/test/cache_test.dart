@@ -12,7 +12,8 @@ Future<void> main() async {
   Logger.root.level = Level.ALL;
   Logger.root.onRecord.listen((record) {
     print(
-        '${record.time}: ${record.level.name}: ${record.loggerName}: ${record.message}');
+      '${record.time}: ${record.level.name}: ${record.loggerName}: ${record.message}',
+    );
   });
 
   group('no timeout', () {
@@ -55,8 +56,10 @@ Future<void> main() async {
         if (e.error == null) {
           oldHandler(e, req, res);
         }
-        return Zone.current
-            .handleUncaughtError(e.error as Object, e.stackTrace!);
+        return Zone.current.handleUncaughtError(
+          e.error as Object,
+          e.stackTrace!,
+        );
       };
 
       client = await connectTo(app);
@@ -106,8 +109,9 @@ Future<void> main() async {
     test('sends 304 on if-modified-since', () async {
       lastModified ??= DateTime.now();
       var headers = {
-        'if-modified-since':
-            HttpDate.format(lastModified!.add(const Duration(days: 1)))
+        'if-modified-since': HttpDate.format(
+          lastModified!.add(const Duration(days: 1)),
+        ),
       };
       var response = await client.get(Uri.parse('/date.txt'), headers: headers);
       print('Sending headers: $headers');
@@ -120,10 +124,14 @@ Future<void> main() async {
 
     test('last-modified in the past', () async {
       lastModified ??= DateTime.now();
-      var response = await client.get(Uri.parse('/date.txt'), headers: {
-        'if-modified-since':
-            HttpDate.format(lastModified!.subtract(const Duration(days: 10)))
-      });
+      var response = await client.get(
+        Uri.parse('/date.txt'),
+        headers: {
+          'if-modified-since': HttpDate.format(
+            lastModified!.subtract(const Duration(days: 10)),
+          ),
+        },
+      );
       print('Response: ${response.body}');
       expect(response.statusCode, 200);
       expect(response.body, isNot(response1.body));

@@ -1,5 +1,5 @@
 import 'package:analyzer/dart/constant/value.dart';
-import 'package:analyzer/dart/element/element2.dart';
+import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:angel3_orm/angel3_orm.dart';
 import 'package:source_gen/source_gen.dart';
@@ -69,7 +69,7 @@ class RelationshipReader {
     }
   }
 
-  FieldElement2 findLocalField(OrmBuildContext ctx) {
+  FieldElement findLocalField(OrmBuildContext ctx) {
     return ctx.effectiveFields.firstWhere(
       (f) => ctx.buildContext.resolveFieldName(f.displayName) == localKey,
       orElse: () {
@@ -79,7 +79,7 @@ class RelationshipReader {
     );
   }
 
-  FieldElement2 findForeignField(OrmBuildContext ctx) {
+  FieldElement findForeignField(OrmBuildContext ctx) {
     var foreign = throughContext ?? this.foreign!;
     return foreign.effectiveFields.firstWhere(
       (f) => foreign.buildContext.resolveFieldName(f.displayName) == foreignKey,
