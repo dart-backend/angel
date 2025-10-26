@@ -344,7 +344,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                  */
 
                   //if (field.name == "type") {
-                  print("=== Process enum $fieldName");
+                  //print("=== Process enum $fieldName");
                   //}
 
                   var isNull = expr.equalTo(literalNull);

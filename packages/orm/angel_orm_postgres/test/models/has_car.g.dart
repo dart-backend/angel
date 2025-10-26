@@ -13,11 +13,11 @@ class HasCarMigration extends Migration {
       table.serial('id').primaryKey();
       table.timeStamp('created_at');
       table.timeStamp('updated_at');
+      table.integer('type').defaultsTo(0);
       table.declareColumn(
         'color',
         Column(type: ColumnType('varchar'), length: 1),
       );
-      table.integer('type').defaultsTo(0);
     });
   }
 
@@ -57,7 +57,7 @@ class HasCarQuery extends Query<HasCar, HasCarQueryWhere> {
 
   @override
   List<String> get fields {
-    const localFields = ['id', 'created_at', 'updated_at', 'color', 'type'];
+    const localFields = ['id', 'created_at', 'updated_at', 'type', 'color'];
     return _selectedFields.isEmpty
         ? localFields
         : localFields
@@ -92,15 +92,15 @@ class HasCarQuery extends Query<HasCar, HasCarQueryWhere> {
       updatedAt: fields.contains('updated_at')
           ? mapToNullableDateTime(row[2])
           : null,
-      color: fields.contains('color')
+      type: fields.contains('type')
           ? row[3] == null
                 ? null
-                : codeToColor((row[3] as String))
+                : CarType.values[mapToInt(row[3])]
           : null,
-      type: fields.contains('type')
+      color: fields.contains('color')
           ? row[4] == null
                 ? null
-                : CarType.values[mapToInt(row[4])]
+                : codeToColor((row[4] as String))
           : null,
     );
     return Optional.of(model);
@@ -117,12 +117,12 @@ class HasCarQueryWhere extends QueryWhere {
     : id = NumericSqlExpressionBuilder<int>(query, 'id'),
       createdAt = DateTimeSqlExpressionBuilder(query, 'created_at'),
       updatedAt = DateTimeSqlExpressionBuilder(query, 'updated_at'),
-      color = StringSqlExpressionBuilder(query, 'color'),
       type = EnumSqlExpressionBuilder<CarType?>(
         query,
         'type',
         (v) => v?.index as int,
-      );
+      ),
+      color = StringSqlExpressionBuilder(query, 'color');
 
   final NumericSqlExpressionBuilder<int> id;
 
@@ -130,13 +130,13 @@ class HasCarQueryWhere extends QueryWhere {
 
   final DateTimeSqlExpressionBuilder updatedAt;
 
-  final StringSqlExpressionBuilder color;
-
   final EnumSqlExpressionBuilder<CarType?> type;
+
+  final StringSqlExpressionBuilder color;
 
   @override
   List<SqlExpressionBuilder> get expressionBuilders {
-    return [id, createdAt, updatedAt, color, type];
+    return [id, createdAt, updatedAt, type, color];
   }
 }
 
@@ -164,23 +164,23 @@ class HasCarQueryValues extends MapQueryValues {
 
   set updatedAt(DateTime? value) => values['updated_at'] = value;
 
-  Color? get color {
-    return codeToColor((values['color'] as String));
-  }
-
-  set color(Color? value) => values['color'] = colorToCode(value);
-
   CarType? get type {
     return CarType.values[mapToInt(values['type'])];
   }
 
   set type(CarType? value) => values['type'] = value?.index;
 
+  Color? get color {
+    return codeToColor((values['color'] as String));
+  }
+
+  set color(Color? value) => values['color'] = colorToCode(value);
+
   void copyFrom(HasCar model) {
     createdAt = model.createdAt;
     updatedAt = model.updatedAt;
-    color = model.color;
     type = model.type;
+    color = model.color;
   }
 }
 
@@ -194,8 +194,8 @@ class HasCar extends HasCarEntity {
     this.id,
     this.createdAt,
     this.updatedAt,
-    this.color,
     this.type = CarType.sedan,
+    this.color,
   });
 
   /// A unique identifier corresponding to this item.
@@ -211,24 +211,24 @@ class HasCar extends HasCarEntity {
   DateTime? updatedAt;
 
   @override
-  Color? color;
+  CarType? type;
 
   @override
-  CarType? type;
+  Color? color;
 
   HasCar copyWith({
     String? id,
     DateTime? createdAt,
     DateTime? updatedAt,
-    Color? color,
     CarType? type,
+    Color? color,
   }) {
     return HasCar(
       id: id ?? this.id,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
-      color: color ?? this.color,
       type: type ?? this.type,
+      color: color ?? this.color,
     );
   }
 
@@ -238,18 +238,18 @@ class HasCar extends HasCarEntity {
         other.id == id &&
         other.createdAt == createdAt &&
         other.updatedAt == updatedAt &&
-        other.color == color &&
-        other.type == type;
+        other.type == type &&
+        other.color == color;
   }
 
   @override
   int get hashCode {
-    return hashObjects([id, createdAt, updatedAt, color, type]);
+    return hashObjects([id, createdAt, updatedAt, type, color]);
   }
 
   @override
   String toString() {
-    return 'HasCar(id=$id, createdAt=$createdAt, updatedAt=$updatedAt, color=$color, type=$type)';
+    return 'HasCar(id=$id, createdAt=$createdAt, updatedAt=$updatedAt, type=$type, color=$color)';
   }
 
   Map<String, dynamic> toJson() {
@@ -303,8 +303,8 @@ class HasCarSerializer extends Codec<HasCar, Map> {
                 ? (map['updated_at'] as DateTime)
                 : DateTime.parse(map['updated_at'].toString()))
           : null,
-      color: codeToColor(map['color']),
       type: map['type'] as CarType? ?? CarType.sedan,
+      color: codeToColor(map['color']),
     );
   }
 
@@ -316,8 +316,8 @@ class HasCarSerializer extends Codec<HasCar, Map> {
       'id': model.id,
       'created_at': model.createdAt?.toIso8601String(),
       'updated_at': model.updatedAt?.toIso8601String(),
-      'color': colorToCode(model.color),
       'type': model.type,
+      'color': colorToCode(model.color),
     };
   }
 }
@@ -327,8 +327,8 @@ abstract class HasCarFields {
     id,
     createdAt,
     updatedAt,
-    color,
     type,
+    color,
   ];
 
   static const String id = 'id';
@@ -337,7 +337,7 @@ abstract class HasCarFields {
 
   static const String updatedAt = 'updated_at';
 
-  static const String color = 'color';
-
   static const String type = 'type';
+
+  static const String color = 'color';
 }

@@ -14,10 +14,10 @@ class BookMigration extends Migration {
       table.timeStamp('created_at');
       table.timeStamp('updated_at');
       table.varChar('name', length: 255);
+      table.declare('author_id', ColumnType('int')).references('authors', 'id');
       table
           .declare('partner_author_id', ColumnType('int'))
           .references('authors', 'id');
-      table.declare('author_id', ColumnType('int')).references('authors', 'id');
     });
   }
 
@@ -57,8 +57,8 @@ class BookQuery extends Query<Book, BookQueryWhere> {
     trampoline.add(tableName);
     _where = BookQueryWhere(this);
     join(
-      _partnerAuthor = AuthorQuery(trampoline: trampoline, parent: this),
-      'partner_author_id',
+      _author = AuthorQuery(trampoline: trampoline, parent: this),
+      'author_id',
       'id',
       additionalFields: const [
         'id',
@@ -70,8 +70,8 @@ class BookQuery extends Query<Book, BookQueryWhere> {
       trampoline: trampoline,
     );
     join(
-      _author = AuthorQuery(trampoline: trampoline, parent: this),
-      'author_id',
+      _partnerAuthor = AuthorQuery(trampoline: trampoline, parent: this),
+      'partner_author_id',
       'id',
       additionalFields: const [
         'id',
@@ -91,9 +91,9 @@ class BookQuery extends Query<Book, BookQueryWhere> {
 
   BookQueryWhere? _where;
 
-  late AuthorQuery _partnerAuthor;
-
   late AuthorQuery _author;
+
+  late AuthorQuery _partnerAuthor;
 
   @override
   Map<String, String> get casts {
@@ -111,8 +111,8 @@ class BookQuery extends Query<Book, BookQueryWhere> {
       'id',
       'created_at',
       'updated_at',
-      'partner_author_id',
       'author_id',
+      'partner_author_id',
       'name',
     ];
     return _selectedFields.isEmpty
@@ -154,13 +154,13 @@ class BookQuery extends Query<Book, BookQueryWhere> {
     if (row.length > 6) {
       var modelOpt = AuthorQuery().parseRow(row.skip(6).take(5).toList());
       modelOpt.ifPresent((m) {
-        model = model.copyWith(partnerAuthor: m);
+        model = model.copyWith(author: m);
       });
     }
     if (row.length > 11) {
       var modelOpt = AuthorQuery().parseRow(row.skip(11).take(5).toList());
       modelOpt.ifPresent((m) {
-        model = model.copyWith(author: m);
+        model = model.copyWith(partnerAuthor: m);
       });
     }
     return Optional.of(model);
@@ -171,12 +171,12 @@ class BookQuery extends Query<Book, BookQueryWhere> {
     return parseRow(row);
   }
 
-  AuthorQuery get partnerAuthor {
-    return _partnerAuthor;
-  }
-
   AuthorQuery get author {
     return _author;
+  }
+
+  AuthorQuery get partnerAuthor {
+    return _partnerAuthor;
   }
 }
 
@@ -185,11 +185,11 @@ class BookQueryWhere extends QueryWhere {
     : id = NumericSqlExpressionBuilder<int>(query, 'id'),
       createdAt = DateTimeSqlExpressionBuilder(query, 'created_at'),
       updatedAt = DateTimeSqlExpressionBuilder(query, 'updated_at'),
+      authorId = NumericSqlExpressionBuilder<int>(query, 'author_id'),
       partnerAuthorId = NumericSqlExpressionBuilder<int>(
         query,
         'partner_author_id',
       ),
-      authorId = NumericSqlExpressionBuilder<int>(query, 'author_id'),
       name = StringSqlExpressionBuilder(query, 'name');
 
   final NumericSqlExpressionBuilder<int> id;
@@ -198,15 +198,15 @@ class BookQueryWhere extends QueryWhere {
 
   final DateTimeSqlExpressionBuilder updatedAt;
 
-  final NumericSqlExpressionBuilder<int> partnerAuthorId;
-
   final NumericSqlExpressionBuilder<int> authorId;
+
+  final NumericSqlExpressionBuilder<int> partnerAuthorId;
 
   final StringSqlExpressionBuilder name;
 
   @override
   List<SqlExpressionBuilder> get expressionBuilders {
-    return [id, createdAt, updatedAt, partnerAuthorId, authorId, name];
+    return [id, createdAt, updatedAt, authorId, partnerAuthorId, name];
   }
 }
 
@@ -234,17 +234,17 @@ class BookQueryValues extends MapQueryValues {
 
   set updatedAt(DateTime? value) => values['updated_at'] = value;
 
-  int get partnerAuthorId {
-    return (values['partner_author_id'] as int);
-  }
-
-  set partnerAuthorId(int value) => values['partner_author_id'] = value;
-
   int get authorId {
     return (values['author_id'] as int);
   }
 
   set authorId(int value) => values['author_id'] = value;
+
+  int get partnerAuthorId {
+    return (values['partner_author_id'] as int);
+  }
+
+  set partnerAuthorId(int value) => values['partner_author_id'] = value;
 
   String? get name {
     return (values['name'] as String?);
@@ -256,11 +256,11 @@ class BookQueryValues extends MapQueryValues {
     createdAt = model.createdAt;
     updatedAt = model.updatedAt;
     name = model.name;
-    if (model.partnerAuthor != null) {
-      values['partner_author_id'] = model.partnerAuthor?.id;
-    }
     if (model.author != null) {
       values['author_id'] = model.author?.id;
+    }
+    if (model.partnerAuthor != null) {
+      values['partner_author_id'] = model.partnerAuthor?.id;
     }
   }
 }
@@ -416,8 +416,8 @@ class Book extends EntityBook {
     this.id,
     this.createdAt,
     this.updatedAt,
-    this.partnerAuthor,
     this.author,
+    this.partnerAuthor,
     this.name,
   });
 
@@ -434,10 +434,10 @@ class Book extends EntityBook {
   DateTime? updatedAt;
 
   @override
-  EntityAuthor? partnerAuthor;
+  EntityAuthor? author;
 
   @override
-  EntityAuthor? author;
+  EntityAuthor? partnerAuthor;
 
   @override
   String? name;
@@ -446,16 +446,16 @@ class Book extends EntityBook {
     String? id,
     DateTime? createdAt,
     DateTime? updatedAt,
-    EntityAuthor? partnerAuthor,
     EntityAuthor? author,
+    EntityAuthor? partnerAuthor,
     String? name,
   }) {
     return Book(
       id: id ?? this.id,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
-      partnerAuthor: partnerAuthor ?? this.partnerAuthor,
       author: author ?? this.author,
+      partnerAuthor: partnerAuthor ?? this.partnerAuthor,
       name: name ?? this.name,
     );
   }
@@ -466,19 +466,19 @@ class Book extends EntityBook {
         other.id == id &&
         other.createdAt == createdAt &&
         other.updatedAt == updatedAt &&
-        other.partnerAuthor == partnerAuthor &&
         other.author == author &&
+        other.partnerAuthor == partnerAuthor &&
         other.name == name;
   }
 
   @override
   int get hashCode {
-    return hashObjects([id, createdAt, updatedAt, partnerAuthor, author, name]);
+    return hashObjects([id, createdAt, updatedAt, author, partnerAuthor, name]);
   }
 
   @override
   String toString() {
-    return 'Book(id=$id, createdAt=$createdAt, updatedAt=$updatedAt, partnerAuthor=$partnerAuthor, author=$author, name=$name)';
+    return 'Book(id=$id, createdAt=$createdAt, updatedAt=$updatedAt, author=$author, partnerAuthor=$partnerAuthor, name=$name)';
   }
 
   Map<String, dynamic> toJson() {
@@ -597,11 +597,11 @@ class BookSerializer extends Codec<Book, Map> {
                 ? (map['updated_at'] as DateTime)
                 : DateTime.parse(map['updated_at'].toString()))
           : null,
-      partnerAuthor: map['partner_author'] != null
-          ? AuthorSerializer.fromMap(map['partner_author'] as Map)
-          : null,
       author: map['author'] != null
           ? AuthorSerializer.fromMap(map['author'] as Map)
+          : null,
+      partnerAuthor: map['partner_author'] != null
+          ? AuthorSerializer.fromMap(map['partner_author'] as Map)
           : null,
       name: map['name'] as String?,
     );
@@ -615,8 +615,8 @@ class BookSerializer extends Codec<Book, Map> {
       'id': model.id,
       'created_at': model.createdAt?.toIso8601String(),
       'updated_at': model.updatedAt?.toIso8601String(),
-      'partner_author': AuthorSerializer.toMap(model.partnerAuthor),
       'author': AuthorSerializer.toMap(model.author),
+      'partner_author': AuthorSerializer.toMap(model.partnerAuthor),
       'name': model.name,
     };
   }
@@ -627,8 +627,8 @@ abstract class BookFields {
     id,
     createdAt,
     updatedAt,
-    partnerAuthor,
     author,
+    partnerAuthor,
     name,
   ];
 
@@ -638,9 +638,9 @@ abstract class BookFields {
 
   static const String updatedAt = 'updated_at';
 
-  static const String partnerAuthor = 'partner_author';
-
   static const String author = 'author';
+
+  static const String partnerAuthor = 'partner_author';
 
   static const String name = 'name';
 }
