@@ -25,9 +25,10 @@ class ResponseCache {
 
   final log = Logger('ResponseCache');
 
-  ResponseCache(
-      {this.timeout = const Duration(minutes: 10),
-      this.ignoreQueryAndFragment = false});
+  ResponseCache({
+    this.timeout = const Duration(minutes: 10),
+    this.ignoreQueryAndFragment = false,
+  });
 
   /// Closes all internal write-locks, and closes the cache.
   Future close() async {
@@ -60,8 +61,9 @@ class ResponseCache {
           if (response != null &&
               response.timestamp.compareTo(modifiedSince) <= 0) {
             // If the cache timeout has been met, don't send the cached response.
-            var timeDiff =
-                DateTime.now().toUtc().difference(response.timestamp);
+            var timeDiff = DateTime.now().toUtc().difference(
+              response.timestamp,
+            );
 
             //log.info(
             //    'Time Diff: ${timeDiff.inMilliseconds} >=  ${timeout.inMilliseconds}');
@@ -133,7 +135,9 @@ class ResponseCache {
 
   /// A response finalizer that saves responses to the cache.
   Future<bool> responseFinalizer(
-      RequestContext req, ResponseContext res) async {
+    RequestContext req,
+    ResponseContext res,
+  ) async {
     if (res.statusCode == 304) {
       return true;
     }
@@ -170,7 +174,10 @@ class ResponseCache {
         await writeLock.withResource(() {
           if (res.buffer != null) {
             _cache[reqPath] = _CachedResponse(
-                Map.from(res.headers), res.buffer!.toBytes(), now);
+              Map.from(res.headers),
+              res.buffer!.toBytes(),
+              now,
+            );
           }
         });
 
@@ -182,7 +189,10 @@ class ResponseCache {
   }
 
   void _setCachedHeaders(
-      DateTime modified, RequestContext req, ResponseContext res) {
+    DateTime modified,
+    RequestContext req,
+    ResponseContext res,
+  ) {
     var privacy = 'public';
 
     res.headers

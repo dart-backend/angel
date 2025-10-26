@@ -1,5 +1,5 @@
 import 'package:analyzer/dart/constant/value.dart';
-import 'package:analyzer/dart/element/element2.dart';
+import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:angel3_serialize/angel3_serialize.dart';
 import 'package:code_builder/code_builder.dart';
@@ -58,13 +58,13 @@ class BuildContext {
   final String? originalClassName, sourceFilename;
 
   /// The fields declared on the original class.
-  final List<FieldElement2> fields = [];
+  final List<FieldElement> fields = [];
 
   final List<FormalParameterElement> constructorParameters = [];
 
   final ConstantReader annotation;
 
-  final InterfaceElement2 clazz;
+  final InterfaceElement clazz;
 
   /// Any annotations to include in the generated class.
   final List<DartObject> includeAnnotations;
@@ -100,12 +100,12 @@ class BuildContext {
   TypeReference get modelClassType =>
       _modelClassType ??= TypeReference((b) => b.symbol = modelClassName);
 
-  /// The [FieldElement2] pointing to the primary key.
-  FieldElement2 get primaryKeyField =>
-      fields.firstWhere((f) => f.name3 == primaryKeyName);
+  /// The [FieldElement] pointing to the primary key.
+  FieldElement get primaryKeyField =>
+      fields.firstWhere((f) => f.name == primaryKeyName);
 
   bool get importsPackageMeta {
-    return clazz.library2.firstFragment.libraryImports2.any((element) {
+    return clazz.library.firstFragment.libraryImports.any((element) {
       var uri = element.uri;
       if (uri is DirectiveUriWithLibrary) {
         return uri.relativeUriString == 'package:meta/meta.dart';
@@ -121,7 +121,7 @@ class BuildContext {
   /// Finds the type that the field [name] should serialize to.
   DartType resolveSerializedFieldType(String name) {
     return fieldInfo[name]?.serializesTo ??
-        fields.firstWhere((f) => f.name3 == name).type;
+        fields.firstWhere((f) => f.name == name).type;
   }
 }
 

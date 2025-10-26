@@ -3,8 +3,9 @@ version: 8.5.0
 description: A powerful, isomorphic routing library for Dart. It is mainly used in the Angel3 framework, but can be used in Flutter and on the Web.
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dart-backend/angel/tree/master/packages/route
+resolution: workspace
 environment:
-  sdk: '>=3.8.0 <4.0.0'
+  sdk: '>=3.9.0 <4.0.0'
 dependencies:
   belatuk_combinator: ^5.1.0
   string_scanner: ^1.2.0

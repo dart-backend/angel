@@ -17,11 +17,12 @@ void main() {
   setUp(() async {
     r = RethinkDb();
     var conn = await r.connect(
-        db: 'testDB',
-        host: "localhost",
-        port: 28015,
-        user: "admin",
-        password: "");
+      db: 'testDB',
+      host: "localhost",
+      port: 28015,
+      user: "admin",
+      password: "",
+    );
 
     app = Angel(reflector: MirrorsReflector());
     app.use('/todos', RethinkService(conn, r.table('todos')));

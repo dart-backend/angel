@@ -24,7 +24,7 @@ The available features in Angel3 includes:
 * HTTP Streaming
 * GraphQL
 * Markdown, Mustache, Jinja and JAEL as Server-Side HTML Rendering
-* ORM for PostgreSQL and MySQL
+* ORM support for PostgreSQL and MySQL
 * MongoDB, Sembast and RethinkDB as storage
 * Redis as cache
 
@@ -46,42 +46,39 @@ Angel3 packages are published under `angel3_` prefix on pub.dev. These packages 
 
 ### Latest Release Notes (Version: 8.6.0)
 
-* Updated `angel3_` packages to require dart >= 3.8.0
-* Updated dependencies to the latest
-* Updated code generator to use `analyzer` 7.7.x
-* Deprecated `angel3_orm_test`
-* Migrated `dart:html` to `package:web`
+* Updated `angel3_` packages to require dart >= 3.9.0
+* Updated to `melos:7.3`
+* Updated code generator to use `analyzer` 8.4.x
+* Removed `angel3_orm_test`
 
 ### Latest development work
 
 Branch: `master`
 
-* Dart version : 3.8.0 or later.
+* Dart version : 3.9.0 or later.
 * Publish      : Refer to all packages with`angel3_` prefix on [pub.dev](https://pub.dev/publishers/dukefirehawk.com/packages).
 * Status       : Production
 * Notes        : Use this branch for all PR submission
 
-For more details, checkout [Project Status](https://github.com/dart-backend/angel/wiki/Project-Status)
-
 ### Archieved releases
 
-Starting with release 8.5.0. All subsequence releases published to `pub.dev` will be available on a release branch. The branch name will adopt the following naming conventions, `release/<published date>`. For example: `release/2025_02` branch is for release on Feb 2025 to `pub.dev`.
+Starting with release 8.5.0. All subsequence releases published to `pub.dev` will be available on a release branch. The branch name will adopt the following naming conventions, `release/<version>`. For example: `release/8.5` branch is for release version 8.5 on `pub.dev`.
 
 ### What is in the pipeline?
 
+* Remove the use of Mirror
 * Performance optimsation
-* Meet security standard compliance such as SOC 2, FIPS etc
-* Support Cloud services integration
+* Support OIDC and SAML2 authentication
 * Upgrade ORM to support
-  * SQLite and other RDBMS
+  * SQLite
   * Multi tenant
-  * ORM reverse engineering
+  * Reverse Engineering
 
 ## Installation and Setup
 
 ### (Option 1) Create a new project by cloning from boilerplate templates
 
-1. Download and install [Dart](https://dart.dev/get-dart). Minimum 3.8.0.
+1. Download and install [Dart](https://dart.dev/get-dart). Minimum 3.9.0.
 
 2. Clone one of the following starter projects:
    * [Angel3 Basic Template](https://github.com/dukefirehawk/boilerplates/tree/angel3-basic)
@@ -175,7 +172,7 @@ If you are interested in contributing to Angel3 framework please check out the [
 
 3. Download and install [Dart 3](https://dart.dev/get-dart)
 
-4. Install `melos` 6.3.3 (Note: 7.x.x support is in the pipeline)
+4. Install `melos:7.3`
 
    ```bash
    dart pub global activate melos

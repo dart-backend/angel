@@ -5,14 +5,15 @@ void main() async {
   var r = RethinkDb();
   await r
       .connect(
-          db: 'testDB',
-          host: "localhost",
-          port: 28015,
-          user: "admin",
-          password: "")
+        db: 'testDB',
+        host: "localhost",
+        port: 28015,
+        user: "admin",
+        password: "",
+      )
       .then((conn) {
-    r.tableCreate('todos').run(conn);
-    print('Done');
-    exit(0);
-  });
+        r.tableCreate('todos').run(conn);
+        print('Done');
+        exit(0);
+      });
 }

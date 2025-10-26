@@ -6,10 +6,10 @@ import 'package:angel3_framework/angel3_framework.dart';
 /// This can improve the performance of sending objects that are complex to serialize.
 ///
 /// You can pass a [shouldCache] callback to determine which values should be cached.
-RequestHandler cacheSerializationResults(
-    {Duration? timeout,
-    FutureOr<bool> Function(RequestContext, ResponseContext, Object)?
-        shouldCache}) {
+RequestHandler cacheSerializationResults({
+  Duration? timeout,
+  FutureOr<bool> Function(RequestContext, ResponseContext, Object)? shouldCache,
+}) {
   return (RequestContext req, ResponseContext res) async {
     var oldSerializer = res.serializer;
 

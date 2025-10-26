@@ -8,14 +8,19 @@ void main() async {
   app.use(
     '/api/todos',
     CacheService(
-        cache: MapService(),
-        database: AnonymousService(index: ([params]) {
+      cache: MapService(),
+      database: AnonymousService(
+        index: ([params]) {
           print(
-              'Fetched directly from the underlying service at ${DateTime.now()}!');
+            'Fetched directly from the underlying service at ${DateTime.now()}!',
+          );
           return ['foo', 'bar', 'baz'];
-        }, read: (dynamic id, [params]) {
+        },
+        read: (dynamic id, [params]) {
           return {id: '$id at ${DateTime.now()}'};
-        })),
+        },
+      ),
+    ),
   );
 
   var http = AngelHttp(app);

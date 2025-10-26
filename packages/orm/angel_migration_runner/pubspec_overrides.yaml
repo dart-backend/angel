@@ -1,6 +1,0 @@
-# melos_managed_dependency_overrides
-dependency_overrides:
-   angel3_orm:
-     path: ../angel_orm
-   angel3_migration:
-     path: ../angel_migration

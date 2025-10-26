@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:analyzer/dart/element/element2.dart';
+import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/element/type.dart';
 import 'package:angel3_orm/angel3_orm.dart';
@@ -43,11 +43,11 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
 
   @override
   Future<String> generateForAnnotatedElement(
-    Element2 element,
+    Element element,
     ConstantReader annotation,
     BuildStep buildStep,
   ) async {
-    if (element is ClassElement2) {
+    if (element is ClassElement) {
       var ctx = await buildOrmContext(
         {},
         element,
@@ -321,7 +321,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                   // Generated Code: row[i].toString()
 
                   expr = expr.property('toString').call([]);
-                } else if (field is RelationFieldImpl2) {
+                } else if (field is RelationFieldImpl) {
                   // Skip fields with relationship
 
                   continue;
@@ -337,14 +337,14 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                   //    .call([expr.property('toString').call([])]);
                   expr = refer('mapToDouble').call([expr]);
                 } else if (fType is InterfaceType &&
-                    fType.element3 is EnumElement2) {
+                    fType.element is EnumElement) {
                   /*
                  * fields.contains('type') ? row[3] == null ? null : 
                  *     EnumType.values[(row[3] as int)] : null,
                  */
 
                   //if (field.name == "type") {
-                  print("=== Process enum $fieldName");
+                  //print("=== Process enum $fieldName");
                   //}
 
                   var isNull = expr.equalTo(literalNull);
@@ -358,7 +358,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                 } else if (fType.isDartCoreBool) {
                   // Generated Code: mapToBool(row[i])
                   expr = refer('mapToBool').call([expr]);
-                } else if (fType.element3?.displayName == 'DateTime') {
+                } else if (fType.element?.displayName == 'DateTime') {
                   // Generated Code: mapToDateTime(row[i])
                   if (fType.nullabilitySuffix == NullabilitySuffix.question) {
                     expr = refer('mapToNullableDateTime').call([expr]);
@@ -380,7 +380,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                     defaultRef = CodeExpression(Code('0.0'));
                   } else if (fType.isDartCoreInt || fType.isDartCoreNum) {
                     defaultRef = CodeExpression(Code('0'));
-                  } else if (fType.element3?.displayName == 'DateTime') {
+                  } else if (fType.element?.displayName == 'DateTime') {
                     defaultRef = CodeExpression(
                       Code('DateTime.parse("1970-01-01 00:00:00")'),
                     );
@@ -912,7 +912,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
               ..symbol = 'NumericSqlExpressionBuilder'
               ..types.add(refer(typeName)),
           );
-        } else if (type is InterfaceType && type.element3 is EnumElement2) {
+        } else if (type is InterfaceType && type.element is EnumElement) {
           builderType = TypeReference(
             (b) => b
               ..symbol = 'EnumSqlExpressionBuilder'
@@ -1073,7 +1073,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
           Method((b) {
             var value = refer('values').index(literalString(name!));
 
-            if (fType is InterfaceType && fType.element3 is EnumElement2) {
+            if (fType is InterfaceType && fType.element is EnumElement) {
               value = _deserializeEnumExpression(field, value);
             } else if (const TypeChecker.typeNamed(
               List,
@@ -1110,7 +1110,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
           Method((b) {
             Expression value = refer('value');
 
-            if (fType is InterfaceType && fType.element3 is EnumElement2) {
+            if (fType is InterfaceType && fType.element is EnumElement) {
               value = _serializeEnumExpression(field, value);
             } else if (const TypeChecker.typeNamed(
               List,
@@ -1154,7 +1154,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
             )
             ..body = Block((b) {
               for (var field in ctx.effectiveNormalFields) {
-                if (isSpecialId(ctx, field) || field is RelationFieldImpl2) {
+                if (isSpecialId(ctx, field) || field is RelationFieldImpl) {
                   continue;
                 }
                 b.addExpression(
@@ -1166,7 +1166,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
 
               for (var field in ctx.effectiveNormalFields) {
                 //print("=== Field: ${field.displayName}");
-                if (field is RelationFieldImpl2) {
+                if (field is RelationFieldImpl) {
                   //print("=== RelationFieldImpl2: ${field.displayName}");
                   var customField = field;
                   var original = customField.originalFieldName;
@@ -1180,14 +1180,14 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                   );
 
                   var foreign =
-                      customField.relationship?.throughContext ??
-                      customField.relationship?.foreign;
-                  var foreignField = customField.relationship?.findForeignField(
+                      customField.relationship.throughContext ??
+                      customField.relationship.foreign;
+                  var foreignField = customField.relationship.findForeignField(
                     ctx,
                   );
 
                   var parsedId = prop.nullSafeProperty(
-                    foreignField?.displayName ?? '',
+                    foreignField.displayName,
                   );
 
                   //log.fine('Foreign field => ${foreignField.name}');
@@ -1223,7 +1223,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
   /// Retrieve the [Expression] to parse a serialized enumeration field.
   /// Takes into account the [SerializableField] properties.
   /// Defaults to `enum.values[index as int]`
-  Expression _deserializeEnumExpression(FieldElement2 field, Expression expr) {
+  Expression _deserializeEnumExpression(FieldElement field, Expression expr) {
     Reference enumType = convertTypeReference(
       field.type,
       ignoreNullabilityCheck: true,
@@ -1239,7 +1239,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
         var type = 'int';
         final serializesTo = annotation.getField('serializesTo')?.toTypeValue();
         if (null != serializesTo) {
-          type = serializesTo.element3!.displayName;
+          type = serializesTo.element!.displayName;
         }
         parseExpr = Reference(deserializer).expression([expr.asA(refer(type))]);
       }
@@ -1257,7 +1257,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
 
   /// Retrieve the [Expression] to serialize the enumeration field.
   /// Takes into account the [SerializableField] properties.
-  Expression _serializeEnumExpression(FieldElement2 field, Expression expr) {
+  Expression _serializeEnumExpression(FieldElement field, Expression expr) {
     const TypeChecker serializableFieldTypeChecker = TypeChecker.typeNamed(
       SerializableField,
     );

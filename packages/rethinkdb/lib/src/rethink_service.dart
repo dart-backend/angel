@@ -32,12 +32,14 @@ class RethinkService extends Service<String, Map<String, dynamic>> {
   /// However, a table is the most common usecase.
   final RqlQuery table;
 
-  RethinkService(this.connection, this.table,
-      {this.allowRemoveAll = false,
-      this.allowQuery = true,
-      this.debug = false,
-      this.listenForChanges = true})
-      : super();
+  RethinkService(
+    this.connection,
+    this.table, {
+    this.allowRemoveAll = false,
+    this.allowQuery = true,
+    this.debug = false,
+    this.listenForChanges = true,
+  }) : super();
 
   RqlQuery buildQuery(RqlQuery initialQuery, Map params) {
     params['broadcast'] = params.containsKey('broadcast')
@@ -138,24 +140,45 @@ class RethinkService extends Service<String, Map<String, dynamic>> {
           // Create
 
           hookedService.fireEvent(
-              hookedService.afterCreated,
-              RethinkDbHookedServiceEvent(
-                  true, null, null, this, HookedServiceEvent.created,
-                  result: newVal));
+            hookedService.afterCreated,
+            RethinkDbHookedServiceEvent(
+              true,
+              null,
+              null,
+              this,
+              HookedServiceEvent.created,
+              result: newVal,
+            ),
+          );
         } else if (type == 'change') {
           // Update
           hookedService.fireEvent(
-              hookedService.afterCreated,
-              RethinkDbHookedServiceEvent(
-                  true, null, null, this, HookedServiceEvent.updated,
-                  result: newVal, id: oldVal['id'], data: newVal));
+            hookedService.afterCreated,
+            RethinkDbHookedServiceEvent(
+              true,
+              null,
+              null,
+              this,
+              HookedServiceEvent.updated,
+              result: newVal,
+              id: oldVal['id'],
+              data: newVal,
+            ),
+          );
         } else if (type == 'remove') {
           // Remove
           hookedService.fireEvent(
-              hookedService.afterCreated,
-              RethinkDbHookedServiceEvent(
-                  true, null, null, this, HookedServiceEvent.removed,
-                  result: oldVal, id: oldVal['id']));
+            hookedService.afterCreated,
+            RethinkDbHookedServiceEvent(
+              true,
+              null,
+              null,
+              this,
+              HookedServiceEvent.removed,
+              result: oldVal,
+              id: oldVal['id'],
+            ),
+          );
         }
       }
       return Future.value();
@@ -194,8 +217,11 @@ class RethinkService extends Service<String, Map<String, dynamic>> {
   }
 
   @override
-  Future<Map<String, dynamic>> modify(String id, Map data,
-      [Map? params]) async {
+  Future<Map<String, dynamic>> modify(
+    String id,
+    Map data, [
+    Map? params,
+  ]) async {
     var d = _serialize(data);
 
     if (d is Map && d.containsKey('id')) {
@@ -216,8 +242,11 @@ class RethinkService extends Service<String, Map<String, dynamic>> {
   }
 
   @override
-  Future<Map<String, dynamic>> update(String id, Map data,
-      [Map? params]) async {
+  Future<Map<String, dynamic>> update(
+    String id,
+    Map data, [
+    Map? params,
+  ]) async {
     var d = _serialize(data);
 
     if (d is Map && d.containsKey('id')) {
@@ -256,7 +285,15 @@ class RethinkService extends Service<String, Map<String, dynamic>> {
 
 class RethinkDbHookedServiceEvent
     extends HookedServiceEvent<dynamic, dynamic, RethinkService> {
-  RethinkDbHookedServiceEvent(super.isAfter, super.request, super.response,
-      super.service, super.eventName,
-      {super.id, super.data, super.params, super.result});
+  RethinkDbHookedServiceEvent(
+    super.isAfter,
+    super.request,
+    super.response,
+    super.service,
+    super.eventName, {
+    super.id,
+    super.data,
+    super.params,
+    super.result,
+  });
 }

@@ -6,11 +6,12 @@ import 'package:logging/logging.dart';
 void main() async {
   RethinkDb r = RethinkDb();
   var conn = await r.connect(
-      db: 'testDB',
-      host: "localhost",
-      port: 28015,
-      user: "admin",
-      password: "");
+    db: 'testDB',
+    host: "localhost",
+    port: 28015,
+    user: "admin",
+    password: "",
+  );
 
   Angel app = Angel();
   app.use('/todos', RethinkService(conn, r.table('todos')));

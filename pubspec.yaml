@@ -1,7 +1,64 @@
-name: angel
+name: angel3
 
+publish_to: none
 environment:
-  sdk: '>=3.8.0 <4.0.0'
+  sdk: '>=3.9.0 <4.0.0'
+
+workspace:
+  - packages/http_exception
+  - packages/route
+  - packages/model
+  - packages/serialize/angel_serialize
+  - packages/serialize/angel_serialize_generator
+  - packages/container/angel_container
+#  - packages/container/angel_container_generator
+  - packages/mock_request
+  - packages/framework
+  - packages/user_agent/angel_user_agent
+  - packages/validate
+  - packages/redis
+  - packages/cache
+  - packages/configuration
+  - packages/cors
+  - packages/auth
+  - packages/auth_oauth2
+#  - packages/auth_twitter
+  - packages/file_service
+  - packages/html
+  - packages/client
+  - packages/websocket
+  - packages/hot
+  - packages/production
+  - packages/test
+  - packages/sync
+  - packages/oauth2
+  - packages/security
+  - packages/proxy
+  - packages/paginate
+  - packages/static
+  - packages/jael/jael
+  - packages/jael/jael_preprocessor
+  - packages/jael/angel_jael
+  - packages/jael/jael_language_server
+  - packages/jael/jael_web
+  - packages/jinja
+  - packages/markdown
+  - packages/mustache
+  - packages/seo
+  - packages/mongo
+  - packages/rethinkdb
+  - packages/sembast
+  - packages/orm/angel_migration
+  - packages/orm/angel_migration_runner
+  - packages/orm/angel_orm
+  - packages/orm/angel_orm_generator
+  - packages/orm/angel_orm_postgres
+  - packages/orm/angel_orm_mysql
+  - packages/orm/angel_orm_service
+  - packages/shelf
 
 dependencies:
-  melos: ^6.3.0
+  melos: ^7.3.0
+
+melos:
+

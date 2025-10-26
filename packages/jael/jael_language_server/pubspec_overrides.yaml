@@ -1,6 +1,0 @@
-# melos_managed_dependency_overrides
-dependency_overrides:
-  jael3:
-    path: ../jael
-  jael3_preprocessor:
-    path: ../jael_preprocessor

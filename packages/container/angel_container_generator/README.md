@@ -26,7 +26,7 @@ An alternative container for Angel3 that uses `reflectable` package instead of `
 
 ## Known limitation
 
-* `analyser` 6.x is not supported due to `reflectable`
+* `analyser` 8.x is not supported due to `reflectable`
 * Reflection on functions/closures is not supported
 * Reflection on private declarations is not supported
 * Reflection on generic type is not supported
