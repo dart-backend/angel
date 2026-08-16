@@ -1,5 +1,5 @@
 name: angel3_jinja
-version: 9.0.0
+version: 9.1.0
 description: A service that renders Jinja2 template into HTML view for Angel3. Ported from Python to Dart.
 homepage: https://github.com/dart-backend/angel/tree/master/packages/jinja
 resolution: workspace

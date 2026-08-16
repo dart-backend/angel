@@ -1,5 +1,5 @@
 name: angel3_rethinkdb
-version: 9.0.0
+version: 9.1.0
 description: This is RethinkDB service for Angel3 framework. RethinkDB is an open-source database for the realtime web.
 resolution: workspace
 environment:

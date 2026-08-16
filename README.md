@@ -79,15 +79,14 @@ Angel3 packages are published under `angel3_` prefix on pub.dev. These packages 
 
 ## Status
 
-### Release Notes (version: 9.0.0)
+### Release Notes (version: 9.1.0)
 
-* Updated `angel3_` packages to Require Dart >= 3.12.0
-* Updated to `melos:8.1
-* Updated code generator to use `analyzer` 13.0.x
+* Updated `angel3_` packages to Require Dart >= 3.13.0
+* Updated code geneator to use `analyzer` 14.x.x
 
 Branch: `master`
 
-* Dart version : 3.12.0 or later.
+* Dart version : 3.13.0 or later.
 * Publish      : Refer to all packages with`angel3_` prefix on [pub.dev](https://pub.dev/publishers/dukefirehawk.com/packages).
 * Status       : Production
 * Notes        : Use this branch for all PR submission

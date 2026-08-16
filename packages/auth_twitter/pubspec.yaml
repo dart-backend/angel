@@ -1,6 +1,6 @@
 name: "angel3_auth_twitter"
 description: Angel3 authentication strategy for Twitter login. Auto-signs requests.
-version: 9.0.0
+version: 9.1.0
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dart-backend/angel/tree/master/packages/auth_twitter
 publish_to: none
