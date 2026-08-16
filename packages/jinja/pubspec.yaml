@@ -4,7 +4,7 @@ description: A service that renders Jinja2 template into HTML view for Angel3. P
 homepage: https://github.com/dart-backend/angel/tree/master/packages/jinja
 resolution: workspace
 environment:
-  sdk: '>=3.12.0 <4.0.0'
+  sdk: '>=3.13.0 <4.0.0'
 dependencies:
   angel3_framework: ^9.0.0
   jinja: ^0.6.0

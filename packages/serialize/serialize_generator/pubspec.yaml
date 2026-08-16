@@ -7,7 +7,7 @@ resolution: workspace
 environment:
   sdk: ">=3.11.0 <4.0.0"
 dependencies:
-  analyzer: ^13.0.0
+  analyzer: ^14.0.0
   angel3_model: ^9.0.0
   angel3_serialize: ^9.0.0
   belatuk_code_buffer: ^5.2.0

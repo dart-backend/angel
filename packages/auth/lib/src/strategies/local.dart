@@ -1,14 +1,18 @@
 import 'dart:async';
 import 'dart:convert';
+
 import 'package:logging/logging.dart';
 import 'package:angel3_framework/angel3_framework.dart';
+
 import '../options.dart';
 import '../strategy.dart';
 
 /// Determines the validity of an incoming username and password.
 // typedef FutureOr<User> LocalAuthVerifier<User>(String? username, String? password);
-typedef LocalAuthVerifier<User> =
-    FutureOr<User?> Function(String? username, String? password);
+typedef LocalAuthVerifier<User> = FutureOr<User?> Function(
+  String? username,
+  String? password,
+);
 
 class LocalAuthStrategy<User> extends AuthStrategy<User> {
   final _log = Logger('LocalAuthStrategy');

@@ -11,7 +11,7 @@ dependencies:
   angel3_serialize: ^9.0.0
   angel3_orm: ^9.0.0
   angel3_serialize_generator: ^9.0.0
-  analyzer: ^13.0.0
+  analyzer: ^14.0.0
   inflection3: ^0.5.3+2
   build: ^4.0.0
   build_config: ^1.1.0

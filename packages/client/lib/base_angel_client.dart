@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'dart:convert';
+
 import 'package:http/http.dart';
 import 'package:path/path.dart';
 import 'package:logging/logging.dart';
+
 import 'angel3_client.dart';
 
 const Map<String, String> _readHeaders = {'Accept': 'application/json'};

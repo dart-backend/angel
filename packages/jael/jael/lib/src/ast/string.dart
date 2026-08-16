@@ -1,6 +1,7 @@
 import 'package:charcode/charcode.dart';
 import 'package:source_span/source_span.dart';
 import 'package:belatuk_symbol_table/belatuk_symbol_table.dart';
+
 import '../ast/ast.dart';
 
 class StringLiteral extends Literal {

@@ -3,9 +3,8 @@ part of 'router.dart';
 class RouteGrammar {
   static const String notSlashRgx = r'([^/]+)';
   //static final RegExp rgx = RegExp(r'\((.+)\)');
-  static final Parser<String> notSlash = match<String>(
-    RegExp(notSlashRgx),
-  ).value((r) => r.span?.text ?? '');
+  static final Parser<String> notSlash = match<String>(RegExp(notSlashRgx))
+      .value((r) => r.span?.text ?? '');
 
   static final Parser<Match> regExp = match<Match>(
     RegExp(r'\(([^\n)]+)\)([^/]+)?'),
@@ -88,9 +87,8 @@ class RouteGrammar {
   static final Parser<ConstantSegment> constantSegment = notSlash
       .map<ConstantSegment>((r) => ConstantSegment(r.value));
 
-  static final Parser<SlashSegment> slashSegment = match(
-    SlashSegment.rgx,
-  ).map((_) => SlashSegment());
+  static final Parser<SlashSegment> slashSegment = match(SlashSegment.rgx)
+      .map((_) => SlashSegment());
 
   static final Parser<RouteSegment> routeSegment = any([
     //slashSegment,

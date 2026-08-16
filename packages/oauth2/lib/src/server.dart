@@ -1,18 +1,19 @@
 import 'dart:async';
 import 'dart:convert';
+
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:logging/logging.dart';
+
 import 'exception.dart';
 import 'pkce.dart';
 import 'response.dart';
 import 'token_type.dart';
 
 /// A request handler that performs an arbitrary authorization token grant.
-typedef ExtensionGrant =
-    FutureOr<AuthorizationTokenResponse> Function(
-      RequestContext req,
-      ResponseContext res,
-    );
+typedef ExtensionGrant = FutureOr<AuthorizationTokenResponse> Function(
+  RequestContext req,
+  ResponseContext res,
+);
 
 Future<String?> _getParam(
   RequestContext req,

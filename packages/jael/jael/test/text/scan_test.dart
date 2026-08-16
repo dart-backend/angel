@@ -1,6 +1,7 @@
 import 'package:jael3/src/ast/token.dart';
 import 'package:jael3/src/text/scanner.dart';
 import 'package:test/test.dart';
+
 import 'common.dart';
 
 void main() {

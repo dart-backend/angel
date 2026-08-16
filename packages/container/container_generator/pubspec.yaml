@@ -6,7 +6,7 @@ repository: https://github.com/dart-backend/angel/tree/master/packages/container
 resolution: workspace
 
 environment:
-  sdk: '>=3.12.0 <4.0.0'
+  sdk: '>=3.13.0 <4.0.0'
 dependencies:
   angel3_container: ^9.0.0
   reflectable: ^5.0.0

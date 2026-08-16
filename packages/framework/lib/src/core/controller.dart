@@ -1,10 +1,12 @@
 library;
 
 import 'dart:async';
+
 import 'package:angel3_container/angel3_container.dart';
 import 'package:angel3_route/angel3_route.dart';
 import 'package:meta/meta.dart';
 import 'package:recase/recase.dart';
+
 import '../core/core.dart';
 
 /// Supports grouping routes with shared functionality.
@@ -168,9 +170,8 @@ class Controller {
           var methodMatch = _methods.firstMatch(method.name);
           if (methodMatch != null) {
             var rest = method.name.replaceAll(_methods, '');
-            var restPath = ReCase(
-              rest.isEmpty ? 'index' : rest,
-            ).snakeCase.replaceAll(_rgxMultipleUnderscores, '_');
+            var restPath = ReCase(rest.isEmpty ? 'index' : rest).snakeCase
+                .replaceAll(_rgxMultipleUnderscores, '_');
             httpMethod = methodMatch[1]!.toUpperCase();
 
             if (['index', 'by_id'].contains(restPath)) {
@@ -187,9 +188,8 @@ class Controller {
               parts.add('/');
             } else {
               parts.add(
-                ReCase(
-                  method.name,
-                ).snakeCase.replaceAll(_rgxMultipleUnderscores, '_'),
+                ReCase(method.name).snakeCase
+                    .replaceAll(_rgxMultipleUnderscores, '_'),
               );
             }
           }

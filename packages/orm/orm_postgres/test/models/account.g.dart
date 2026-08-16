@@ -340,9 +340,8 @@ class Account extends AccountEntity {
         other.description == description &&
         other.name == name &&
         other.price == price &&
-        ListEquality<AssetEntity>(
-          DefaultEquality<AssetEntity>(),
-        ).equals(other.assets, assets);
+        ListEquality<AssetEntity>(DefaultEquality<AssetEntity>())
+            .equals(other.assets, assets);
   }
 
   @override

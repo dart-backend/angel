@@ -1,4 +1,5 @@
 import 'dart:io';
+
 import 'package:io/ansi.dart';
 
 void printSeparator(String title) {

@@ -1,8 +1,10 @@
 import 'dart:convert';
+
 import 'package:belatuk_code_buffer/belatuk_code_buffer.dart';
 import 'package:collection/collection.dart' show IterableExtension;
 //import 'package:source_span/source_span.dart';
 import 'package:belatuk_symbol_table/belatuk_symbol_table.dart';
+
 import 'ast/ast.dart';
 import 'text/parser.dart';
 import 'text/scanner.dart';
@@ -365,11 +367,9 @@ class Renderer {
       }
     }
 
-    var defaultCase =
-        element.children.firstWhereOrNull(
-              (c) => c is Element && c.tagName.name == 'default',
-            )
-            as Element?;
+    var defaultCase = element.children.firstWhereOrNull(
+      (c) => c is Element && c.tagName.name == 'default',
+    ) as Element?;
     if (defaultCase != null) {
       for (var i = 0; i < defaultCase.children.length; i++) {
         var child = defaultCase.children.elementAt(i);

@@ -587,9 +587,8 @@ class Role implements RoleEntity {
   bool operator ==(other) {
     return other is RoleEntity &&
         other.role == role &&
-        ListEquality<UserEntity>(
-          DefaultEquality<UserEntity>(),
-        ).equals(other.users, users);
+        ListEquality<UserEntity>(DefaultEquality<UserEntity>())
+            .equals(other.users, users);
   }
 
   @override
@@ -677,9 +676,8 @@ class User implements UserEntity {
         other.email == email &&
         other.name == name &&
         other.password == password &&
-        ListEquality<RoleEntity>(
-          DefaultEquality<RoleEntity>(),
-        ).equals(other.roles, roles);
+        ListEquality<RoleEntity>(DefaultEquality<RoleEntity>())
+            .equals(other.roles, roles);
   }
 
   @override

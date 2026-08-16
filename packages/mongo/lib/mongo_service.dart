@@ -90,9 +90,9 @@ class MongoService extends Service<String, Map<String, dynamic>> {
   Future<List<Map<String, dynamic>>> index([
     Map<String, dynamic>? params,
   ]) async {
-    return await (collection.find(
-      _makeQuery(params),
-    )).map((x) => _jsonify(x, params)).toList();
+    return await (collection.find(_makeQuery(params)))
+        .map((x) => _jsonify(x, params))
+        .toList();
   }
 
   // Deprecated:
