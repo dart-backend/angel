@@ -20,16 +20,8 @@ export 'angel3_websocket.dart';
 class WebSockets extends BaseWebSocketClient {
   final List<WebSocketsService> _services = [];
 
-  WebSockets(
-    String baseUrl, {
-    bool reconnectOnClose = true,
-    Duration? reconnectInterval,
-  }) : super(
-         http.IOClient(),
-         baseUrl,
-         reconnectOnClose: reconnectOnClose,
-         reconnectInterval: reconnectInterval,
-       );
+  WebSockets(String baseUrl, {super.reconnectOnClose, super.reconnectInterval})
+    : super(http.IOClient(), baseUrl);
 
   @override
   Stream<String> authenticateViaPopup(
