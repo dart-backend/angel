@@ -204,7 +204,7 @@ abstract class Driver<
                   statusCode: (e is AngelHttpException) ? e.statusCode : 500,
                   message: e?.toString() ?? '500 Internal Server Error',
                 );
-              }, test: (e) => e is AngelHttpException)
+              }, test: (e) => e is! AngelHttpException)
               .catchError((ee, StackTrace st) {
                 //print(">>>> Framework error: $ee");
                 //var t = (st).runtimeType;
