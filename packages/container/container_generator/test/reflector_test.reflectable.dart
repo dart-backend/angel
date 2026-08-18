@@ -3,6 +3,7 @@
 
 import 'dart:core';
 import 'dart:math' as prefix8;
+
 import 'package:angel3_container/angel3_container.dart' as prefix7;
 import 'package:angel3_container_generator/angel3_container_generator.dart'
     as prefix0;
@@ -11,6 +12,7 @@ import 'package:reflectable/mirrors.dart' as prefix5;
 import 'package:reflectable/reflectable.dart' as prefix2;
 import 'package:reflectable/src/reflectable_base.dart' as prefix4;
 import 'package:reflectable/src/reflectable_builder_based.dart' as prefix3;
+
 import 'reflector_test.dart' as prefix1;
 
 // ignore_for_file: camel_case_types

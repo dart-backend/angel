@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+
 import 'package:args/args.dart';
 import 'package:jael3/jael3.dart';
 
@@ -24,8 +25,7 @@ var argParser = ArgParser()
   ..addFlag(
     'dry-run',
     abbr: 'n',
-    help:
-        'Print the names of files that would be changed, without actually overwriting them.',
+    help: 'Print the names of files that would be changed, without actually overwriting them.',
     negatable: false,
   )
   ..addFlag(

@@ -1,6 +1,8 @@
 import 'dart:convert';
+
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:http_parser/http_parser.dart';
+
 import 'options.dart';
 
 /// Displays a default callback page to confirm authentication via popups.

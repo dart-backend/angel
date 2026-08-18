@@ -1,6 +1,7 @@
 import 'package:angel3_container/angel3_container.dart';
 import 'package:angel3_container_generator/angel3_container_generator.dart';
 import 'package:test/test.dart';
+
 import 'reflector_test.reflectable.dart';
 
 void main() {
@@ -49,34 +50,30 @@ void testReflector(Reflector reflector) {
     expect(blazikenMirror.getField('type').reflectee, blaziken.type);
   });
 
-  group(
-    'reflectFunction',
-    () {
-      var mirror = reflector.reflectFunction(returnVoidFromAFunction);
+  group('reflectFunction', () {
+    var mirror = reflector.reflectFunction(returnVoidFromAFunction);
 
-      test('void return type returns dynamic', () {
-        expect(mirror?.returnType, reflector.reflectType(dynamic));
-      });
+    test('void return type returns dynamic', () {
+      expect(mirror?.returnType, reflector.reflectType(dynamic));
+    });
 
-      test('counts parameters', () {
-        expect(mirror?.parameters, hasLength(1));
-      });
+    test('counts parameters', () {
+      expect(mirror?.parameters, hasLength(1));
+    });
 
-      test('counts types parameters', () {
-        expect(mirror?.typeParameters, isEmpty);
-      });
+    test('counts types parameters', () {
+      expect(mirror?.typeParameters, isEmpty);
+    });
 
-      test('correctly reflects parameter types', () {
-        var p = mirror?.parameters[0];
-        expect(p?.name, 'x');
-        expect(p?.isRequired, true);
-        expect(p?.isNamed, false);
-        expect(p?.annotations, isEmpty);
-        expect(p?.type, reflector.reflectType(int));
-      });
-    },
-    skip: 'pkg:reflectable cannot reflect on closures at all (yet)',
-  );
+    test('correctly reflects parameter types', () {
+      var p = mirror?.parameters[0];
+      expect(p?.name, 'x');
+      expect(p?.isRequired, true);
+      expect(p?.isNamed, false);
+      expect(p?.annotations, isEmpty);
+      expect(p?.type, reflector.reflectType(int));
+    });
+  }, skip: 'pkg:reflectable cannot reflect on closures at all (yet)');
 
   test('make on singleton type returns singleton', () {
     expect(container.make(Pokemon), blaziken);

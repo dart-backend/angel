@@ -27,8 +27,7 @@ final Validator formSchema = Validator(
         return 'Age must be a positive integer. Unless you are a monster...';
       }
     },
-    'blank':
-        "I told you to leave that field blank, but instead you typed '{{value}}'...",
+    'blank': "I told you to leave that field blank, but instead you typed '{{value}}'...",
   },
 );
 

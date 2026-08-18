@@ -4,6 +4,7 @@ library;
 import 'dart:async';
 
 import 'package:angel3_framework/angel3_framework.dart';
+
 import 'src/cors_options.dart';
 export 'src/cors_options.dart';
 
@@ -103,6 +104,6 @@ Future<bool> Function(RequestContext, ResponseContext) cors([
     res.statusCode = options.successStatus;
     res.contentLength = 0;
     await res.close();
-    return options.preflightContinue;
+    return options?.preflightContinue ?? true;
   };
 }

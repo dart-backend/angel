@@ -1,4 +1,5 @@
 import 'dart:collection';
+
 import 'package:string_scanner/string_scanner.dart';
 
 /// Parses a string into a [RegExp] that is matched against hostnames.

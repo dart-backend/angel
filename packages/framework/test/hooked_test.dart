@@ -1,10 +1,12 @@
 import 'dart:convert';
 import 'dart:io';
+
 import 'package:angel3_container/mirrors.dart';
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_framework/http.dart';
 import 'package:http/http.dart' as http;
 import 'package:test/test.dart';
+
 import 'common.dart';
 
 void main() {
@@ -25,9 +27,9 @@ void main() {
     app.use('/todos', MapService());
     app.use('/books', BookService());
 
-    todoService =
-        app.findHookedService<MapService>('todos')
-            as HookedService<dynamic, dynamic, Service>;
+    todoService = app.findHookedService<MapService>(
+      'todos',
+    ) as HookedService<dynamic, dynamic, Service>;
 
     todoService.beforeAllStream().listen((e) {
       print('Fired ${e.eventName}! Data: ${e.data}; Params: ${e.params}');
@@ -114,9 +116,9 @@ void main() {
   });
 
   test('inject request + response', () async {
-    var books =
-        app.findService('books')
-            as HookedService<dynamic, dynamic, Service<dynamic, dynamic>>;
+    var books = app.findService(
+      'books',
+    ) as HookedService<dynamic, dynamic, Service<dynamic, dynamic>>;
 
     books.beforeIndexed.listen((e) {
       expect([e.request, e.response], everyElement(isNotNull));

@@ -1,5 +1,6 @@
 import 'package:collection/collection.dart' show IterableExtension;
 import 'package:source_span/source_span.dart';
+
 import 'ast_node.dart';
 import 'attribute.dart';
 import 'identifier.dart';

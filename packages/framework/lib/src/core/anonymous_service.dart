@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'service.dart';
 
 /// An easy helper class to create one-off services without having to create an entire class.

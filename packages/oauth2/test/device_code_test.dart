@@ -1,10 +1,12 @@
 import 'dart:async';
+
 import 'package:angel3_container/mirrors.dart';
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_test/angel3_test.dart';
 import 'package:angel3_oauth2/angel3_oauth2.dart';
 import 'package:logging/logging.dart';
 import 'package:test/test.dart';
+
 import 'common.dart';
 
 void main() {
@@ -80,9 +82,9 @@ void main() {
           isJson({
             'device_code': 'foo',
             'user_code': 'bar',
-            'verification_uri': Uri.parse(
-              'https://regiostech.com',
-            ).replace(queryParameters: {'scopes': 'bar,baz,quux'}).toString(),
+            'verification_uri': Uri.parse('https://regiostech.com')
+                .replace(queryParameters: {'scopes': 'bar,baz,quux'})
+                .toString(),
             'expires_in': 3600,
           }),
         ),
@@ -135,8 +137,7 @@ void main() {
           hasStatus(400),
           isJson({
             'error': 'slow_down',
-            'error_description':
-                'Ho, brother! Ho, whoa, whoa, whoa now! You got too much dip on your chip!',
+            'error_description': 'Ho, brother! Ho, whoa, whoa, whoa now! You got too much dip on your chip!',
           }),
         ),
       );
@@ -171,9 +172,8 @@ class _AuthorizationServer
     return DeviceCodeResponse(
       'foo',
       'bar',
-      Uri.parse(
-        'https://regiostech.com',
-      ).replace(queryParameters: {'scopes': scopes.join(',')}),
+      Uri.parse('https://regiostech.com')
+          .replace(queryParameters: {'scopes': scopes.join(',')}),
       3600,
     );
   }

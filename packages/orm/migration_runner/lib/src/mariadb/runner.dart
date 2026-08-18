@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'dart:collection';
+
 import 'package:angel3_migration/angel3_migration.dart';
 import 'package:logging/logging.dart';
 import 'package:mysql1/mysql1.dart';
+
 import '../runner.dart';
 import '../util.dart';
 import 'schema.dart';

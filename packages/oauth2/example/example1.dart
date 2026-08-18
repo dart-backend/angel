@@ -71,9 +71,8 @@ class _AuthorizationServer
     return DeviceCodeResponse(
       'foo',
       'bar',
-      Uri.parse(
-        'https://regiostech.com',
-      ).replace(queryParameters: {'scopes': scopes.join(',')}),
+      Uri.parse('https://regiostech.com')
+          .replace(queryParameters: {'scopes': scopes.join(',')}),
       3600,
     );
   }

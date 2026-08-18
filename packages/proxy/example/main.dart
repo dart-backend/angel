@@ -1,4 +1,5 @@
 import 'dart:io';
+
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_framework/http.dart';
 import 'package:angel3_proxy/angel3_proxy.dart';
@@ -54,9 +55,8 @@ void main() async {
       if (rec.stackTrace != null) print(rec.stackTrace);
     });
 
-  var server = await AngelHttp(
-    app,
-  ).startServer(InternetAddress.loopbackIPv4, 8080);
+  var server = await AngelHttp(app)
+      .startServer(InternetAddress.loopbackIPv4, 8080);
   print('Listening at http://${server.address.address}:${server.port}');
   print(
     'Check this out! http://${server.address.address}:${server.port}/pub/packages/angel_framework',

@@ -1,4 +1,5 @@
 import 'query_base.dart';
+
 import 'package:optional/optional.dart';
 
 /// Represents the `UNION` of two subqueries.

@@ -81,8 +81,7 @@ void main() {
     var response = await client.get(
       Uri.parse('$url/virtual'),
       headers: {
-        'accept':
-            'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
       },
     );
     expect(response.body, equals('index!'));

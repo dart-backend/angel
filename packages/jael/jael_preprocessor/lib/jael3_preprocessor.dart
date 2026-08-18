@@ -1,17 +1,17 @@
 import 'dart:async';
 import 'dart:collection';
+
 import 'package:collection/collection.dart' show IterableExtension;
 import 'package:file/file.dart';
 import 'package:jael3/jael3.dart';
 import 'package:belatuk_symbol_table/belatuk_symbol_table.dart';
 
 /// Modifies a Jael document.
-typedef Patcher =
-    FutureOr<Document>? Function(
-      Document? document,
-      Directory currentDirectory,
-      void Function(JaelError error)? onError,
-    );
+typedef Patcher = FutureOr<Document>? Function(
+  Document? document,
+  Directory currentDirectory,
+  void Function(JaelError error)? onError,
+);
 
 /// Expands all `block[name]` tags within the template, replacing them with the correct content.
 ///

@@ -15,11 +15,10 @@ import 'service.dart';
 final RegExp _straySlashes = RegExp(r'(^/+)|(/+$)');
 
 /// A function that receives an incoming [RequestContext] and responds to it.
-typedef RequestHandler =
-    FutureOr<dynamic> Function(
-      RequestContext<dynamic> req,
-      ResponseContext<dynamic> res,
-    );
+typedef RequestHandler = FutureOr<dynamic> Function(
+  RequestContext<dynamic> req,
+  ResponseContext<dynamic> res,
+);
 
 /// Sequentially runs a list of [handlers] of middleware, and returns early if any does not
 /// return `true`. Works well with [Router].chain.
@@ -88,10 +87,9 @@ class Routable extends Router<RequestHandler> {
   /// Retrieves the service assigned to the given path.
   T? findService<T extends Service>(Pattern path) {
     return _serviceLookups.putIfAbsent(path, () {
-          return _services[path] ??
-              _services[path.toString().replaceAll(_straySlashes, '')];
-        })
-        as T?;
+      return _services[path] ??
+          _services[path.toString().replaceAll(_straySlashes, '')];
+    }) as T?;
   }
 
   /// Shorthand for finding a [Service] in a statically-typed manner.

@@ -1,6 +1,7 @@
 import 'package:jael3/jael3.dart';
 import 'package:logging/logging.dart';
 import 'package:belatuk_symbol_table/belatuk_symbol_table.dart';
+
 import 'object.dart';
 
 class Analyzer extends Parser {

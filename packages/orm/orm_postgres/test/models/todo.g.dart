@@ -935,12 +935,10 @@ class User implements UserEntity {
     return other is UserEntity &&
         other.id == id &&
         other.name == name &&
-        ListEquality<UserTodoEntity>(
-          DefaultEquality<UserTodoEntity>(),
-        ).equals(other.todos, todos) &&
-        ListEquality<UserAddressEntity>(
-          DefaultEquality<UserAddressEntity>(),
-        ).equals(other.address, address);
+        ListEquality<UserTodoEntity>(DefaultEquality<UserTodoEntity>())
+            .equals(other.todos, todos) &&
+        ListEquality<UserAddressEntity>(DefaultEquality<UserAddressEntity>())
+            .equals(other.address, address);
   }
 
   @override
@@ -1049,12 +1047,10 @@ class UserTodo implements UserTodoEntity {
         other.id == id &&
         other.userId == userId &&
         other.title == title &&
-        ListEquality<TodoValueEntity>(
-          DefaultEquality<TodoValueEntity>(),
-        ).equals(other.todoValues, todoValues) &&
-        ListEquality<TodoNoteEntity>(
-          DefaultEquality<TodoNoteEntity>(),
-        ).equals(other.todoNotes, todoNotes);
+        ListEquality<TodoValueEntity>(DefaultEquality<TodoValueEntity>())
+            .equals(other.todoValues, todoValues) &&
+        ListEquality<TodoNoteEntity>(DefaultEquality<TodoNoteEntity>())
+            .equals(other.todoNotes, todoNotes);
   }
 
   @override

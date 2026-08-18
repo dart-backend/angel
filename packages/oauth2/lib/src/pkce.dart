@@ -1,5 +1,7 @@
 import 'dart:convert';
+
 import 'package:crypto/crypto.dart';
+
 import 'exception.dart';
 
 /// A class that facilitates verification of challenges for

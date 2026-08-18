@@ -1,6 +1,8 @@
 import 'dart:collection';
+
 import 'package:charcode/ascii.dart';
 import 'package:string_scanner/string_scanner.dart';
+
 import '../ast/ast.dart';
 
 final RegExp _whitespace = RegExp(r'[ \n\r\t]+');

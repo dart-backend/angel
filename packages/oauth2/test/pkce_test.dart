@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:collection';
+
 import 'package:angel3_container/mirrors.dart';
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_framework/http.dart';
@@ -7,6 +8,7 @@ import 'package:angel3_oauth2/angel3_oauth2.dart';
 import 'package:angel3_test/angel3_test.dart';
 import 'package:logging/logging.dart';
 import 'package:test/test.dart';
+
 import 'common.dart';
 
 void main() {
@@ -121,8 +123,7 @@ void main() {
           hasStatus(400),
           isJson({
             'error': 'invalid_request',
-            'error_description':
-                "The `code_challenge_method` parameter must be either 'plain' or 's256'.",
+            'error_description': "The `code_challenge_method` parameter must be either 'plain' or 's256'.",
           }),
         ),
       );

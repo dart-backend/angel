@@ -82,9 +82,10 @@ void main() {
 
       response = await client.get(Uri.parse('$url/api'));
       expect(response.statusCode, isIn([200, 201]));
-      var users =
-          god.deserialize(response.body, outputType: <Map>[].runtimeType)
-              as List<Map>;
+      var users = god.deserialize(
+        response.body,
+        outputType: <Map>[].runtimeType,
+      ) as List<Map>;
       expect(users.length, equals(1));
     });
 
@@ -205,9 +206,10 @@ void main() {
 
       var response = await client.get(Uri.parse('$url/api?to=world'));
       print(response.body);
-      var queried =
-          god.deserialize(response.body, outputType: <Map>[].runtimeType)
-              as List<Map>;
+      var queried = god.deserialize(
+        response.body,
+        outputType: <Map>[].runtimeType,
+      ) as List<Map>;
       expect(queried.length, equals(1));
       expect(queried[0].keys.length, equals(2));
       expect(queried[0]['id'], equals(world['id']));

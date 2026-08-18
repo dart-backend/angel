@@ -729,9 +729,8 @@ class User extends UserEntity {
         other.username == username &&
         other.password == password &&
         other.email == email &&
-        ListEquality<RoleEntity>(
-          DefaultEquality<RoleEntity>(),
-        ).equals(other.roles, roles);
+        ListEquality<RoleEntity>(DefaultEquality<RoleEntity>())
+            .equals(other.roles, roles);
   }
 
   @override
@@ -842,9 +841,8 @@ class Role extends RoleEntity {
         other.createdAt == createdAt &&
         other.updatedAt == updatedAt &&
         other.name == name &&
-        ListEquality<UserEntity>(
-          DefaultEquality<UserEntity>(),
-        ).equals(other.users, users);
+        ListEquality<UserEntity>(DefaultEquality<UserEntity>())
+            .equals(other.users, users);
   }
 
   @override

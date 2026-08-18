@@ -3,12 +3,16 @@ library;
 
 import 'dart:async';
 import 'dart:io';
+
 import 'package:angel3_client/angel3_client.dart';
 import 'package:http/io_client.dart' as http;
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:web_socket_channel/io.dart';
+
 import 'base_websocket_client.dart';
+
 export 'package:angel3_client/angel3_client.dart';
+
 export 'angel3_websocket.dart';
 
 final RegExp _straySlashes = RegExp(r'(^/)|(/+$)');
@@ -17,16 +21,8 @@ final RegExp _straySlashes = RegExp(r'(^/)|(/+$)');
 class WebSockets extends BaseWebSocketClient {
   final List<IoWebSocketsService> _services = [];
 
-  WebSockets(
-    String baseUrl, {
-    bool reconnectOnClose = true,
-    Duration? reconnectInterval,
-  }) : super(
-         http.IOClient(),
-         baseUrl,
-         reconnectOnClose: reconnectOnClose,
-         reconnectInterval: reconnectInterval,
-       );
+  WebSockets(String baseUrl, {super.reconnectOnClose, super.reconnectInterval})
+    : super(http.IOClient(), baseUrl);
 
   @override
   Stream<String> authenticateViaPopup(

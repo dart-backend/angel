@@ -459,9 +459,8 @@ class Tree extends TreeEntity {
         other.createdAt == createdAt &&
         other.updatedAt == updatedAt &&
         other.rings == rings &&
-        ListEquality<FruitEntity>(
-          DefaultEquality<FruitEntity>(),
-        ).equals(other.fruits, fruits);
+        ListEquality<FruitEntity>(DefaultEquality<FruitEntity>())
+            .equals(other.fruits, fruits);
   }
 
   @override

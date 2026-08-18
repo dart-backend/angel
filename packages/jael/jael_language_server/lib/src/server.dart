@@ -1,4 +1,5 @@
 import 'dart:async';
+
 //import 'package:dart_language_server/src/protocol/language_server/interface.dart';
 //import 'package:dart_language_server/src/protocol/language_server/messages.dart';
 import 'package:file/file.dart';
@@ -11,6 +12,7 @@ import 'package:path/path.dart' as p;
 import 'package:source_span/source_span.dart';
 import 'package:string_scanner/string_scanner.dart';
 import 'package:belatuk_symbol_table/belatuk_symbol_table.dart';
+
 import 'analyzer.dart';
 import 'object.dart';
 import 'protocol/language_server/interface.dart';

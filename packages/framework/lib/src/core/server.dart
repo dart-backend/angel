@@ -3,6 +3,7 @@ library;
 import 'dart:async';
 import 'dart:collection' show HashMap;
 import 'dart:convert';
+
 import 'package:angel3_container/angel3_container.dart';
 import 'package:angel3_http_exception/angel3_http_exception.dart';
 import 'package:angel3_route/angel3_route.dart';
@@ -11,6 +12,7 @@ import 'package:http_parser/http_parser.dart';
 import 'package:logging/logging.dart';
 import 'package:mime/mime.dart';
 import 'package:tuple/tuple.dart';
+
 import 'controller.dart';
 import 'env.dart';
 import 'hooked_service.dart';
@@ -25,16 +27,17 @@ import 'service.dart';
 typedef AngelConfigurer = FutureOr<void> Function(Angel app);
 
 /// A function that asynchronously generates a view from the given path and data.
-typedef ViewGenerator =
-    FutureOr<String> Function(String path, [Map<String, dynamic>? data]);
+typedef ViewGenerator = FutureOr<String> Function(
+  String path, [
+  Map<String, dynamic>? data,
+]);
 
 /// A function that handles error
-typedef AngelErrorHandler =
-    dynamic Function(
-      AngelHttpException e,
-      RequestContext req,
-      ResponseContext res,
-    );
+typedef AngelErrorHandler = dynamic Function(
+  AngelHttpException e,
+  RequestContext req,
+  ResponseContext res,
+);
 
 /// The default error handler for [Angel] server
 Future<bool> _defaultErrorHandler(

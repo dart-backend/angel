@@ -1,4 +1,5 @@
 import 'dart:io';
+
 import 'package:belatuk_rethinkdb/belatuk_rethinkdb.dart';
 
 void main() async {

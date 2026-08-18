@@ -3,11 +3,13 @@ library;
 
 import 'dart:async';
 import 'dart:js_interop';
+
 import 'package:angel3_client/angel3_client.dart';
 import 'package:http/browser_client.dart' as http;
 import 'package:web/web.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:web_socket_channel/html.dart';
+
 import 'base_websocket_client.dart';
 export 'angel3_websocket.dart';
 
@@ -17,16 +19,8 @@ final RegExp _straySlashes = RegExp(r'(^/)|(/+$)');
 class WebSockets extends BaseWebSocketClient {
   final List<BrowserWebSocketsService> _services = [];
 
-  WebSockets(
-    String baseUrl, {
-    bool reconnectOnClose = true,
-    Duration? reconnectInterval,
-  }) : super(
-         http.BrowserClient(),
-         baseUrl,
-         reconnectOnClose: reconnectOnClose,
-         reconnectInterval: reconnectInterval,
-       );
+  WebSockets(String baseUrl, {super.reconnectOnClose, super.reconnectInterval})
+    : super(http.BrowserClient(), baseUrl);
 
   @override
   Future close() {
@@ -133,12 +127,11 @@ class WebSockets extends BaseWebSocketClient {
   }) {
     var uri = path.replaceAll(_straySlashes, '');
     return BrowserWebSocketsService<Id, Data>(
-          socket,
-          this,
-          uri,
-          deserializer: deserializer,
-        )
-        as Service<Id, Data>;
+      socket,
+      this,
+      uri,
+      deserializer: deserializer,
+    ) as Service<Id, Data>;
   }
 }
 

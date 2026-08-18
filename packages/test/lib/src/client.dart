@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+
 import 'package:angel3_client/base_angel_client.dart' as client;
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_framework/http.dart';
@@ -11,6 +12,7 @@ import 'package:http/io_client.dart' as http;
 import 'package:angel3_mock_request/angel3_mock_request.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:web_socket_channel/io.dart';
+
 //import 'package:uuid/uuid.dart';
 
 final RegExp _straySlashes = RegExp(r'(^/)|(/+$)');
@@ -178,10 +180,9 @@ class TestClient extends client.BaseAngelClient {
   }) {
     var uri = path.toString().replaceAll(_straySlashes, '');
     return _services.putIfAbsent(
-          uri,
-          () => _MockService<Id, Data>(this, uri, deserializer: deserializer),
-        )
-        as client.Service<Id, Data>;
+      uri,
+      () => _MockService<Id, Data>(this, uri, deserializer: deserializer),
+    ) as client.Service<Id, Data>;
   }
 }
 

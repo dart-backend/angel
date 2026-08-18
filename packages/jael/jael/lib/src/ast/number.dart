@@ -1,5 +1,7 @@
 import 'dart:math' as math;
+
 import 'package:source_span/source_span.dart';
+
 import 'expression.dart';
 import 'token.dart';
 

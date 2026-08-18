@@ -6,6 +6,7 @@ import 'package:angel3_test/angel3_test.dart';
 import 'package:logging/logging.dart';
 import 'package:belatuk_rethinkdb/belatuk_rethinkdb.dart';
 import 'package:test/test.dart';
+
 import 'common.dart';
 
 void main() {

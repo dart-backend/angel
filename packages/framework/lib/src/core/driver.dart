@@ -1,11 +1,13 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io' show Cookie;
+
 import 'package:angel3_http_exception/angel3_http_exception.dart';
 import 'package:angel3_route/angel3_route.dart';
 import 'package:belatuk_combinator/belatuk_combinator.dart';
 import 'package:stack_trace/stack_trace.dart';
 import 'package:tuple/tuple.dart';
+
 import 'core.dart';
 
 /// Base driver class for Angel implementations.
@@ -75,9 +77,9 @@ abstract class Driver<
     _sub?.cancel();
 
     return app.close().then(
-      (_) => Future.wait(
-        app.shutdownHooks.map(app.configure),
-      ).then((_) => Future.value()),
+      (_) =>
+          Future.wait(app.shutdownHooks.map(app.configure))
+              .then((_) => Future.value()),
     );
     /*
     return app.close().then((_) =>
@@ -202,7 +204,7 @@ abstract class Driver<
                   statusCode: (e is AngelHttpException) ? e.statusCode : 500,
                   message: e?.toString() ?? '500 Internal Server Error',
                 );
-              }, test: (e) => e is AngelHttpException)
+              }, test: (e) => e is! AngelHttpException)
               .catchError((ee, StackTrace st) {
                 //print(">>>> Framework error: $ee");
                 //var t = (st).runtimeType;

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+
 import 'package:http/http.dart' as http;
 import 'package:angel3_http_exception/angel3_http_exception.dart';
 import 'package:angel3_validate/angel3_validate.dart';
@@ -109,13 +110,11 @@ class _HasContentType extends Matcher {
 
       if (contentType is ContentType) {
         var compare = ContentType.parse(headerContentType);
-        return equals(
-          contentType.mimeType,
-        ).matches(compare.mimeType, matchState);
+        return equals(contentType.mimeType)
+            .matches(compare.mimeType, matchState);
       } else {
-        return equals(
-          contentType.toString(),
-        ).matches(headerContentType, matchState);
+        return equals(contentType.toString())
+            .matches(headerContentType, matchState);
       }
     }
 
@@ -160,9 +159,8 @@ class _HasHeader extends Matcher {
   bool matches(item, Map matchState) {
     if (item is http.Response) {
       if (value == true) {
-        return contains(
-          key.toLowerCase(),
-        ).matches(item.headers.keys, matchState);
+        return contains(key.toLowerCase())
+            .matches(item.headers.keys, matchState);
       } else {
         var headerKey = item.headers[key.toLowerCase()];
         if (headerKey == null) return false;

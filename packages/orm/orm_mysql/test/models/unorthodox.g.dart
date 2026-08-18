@@ -1094,12 +1094,10 @@ class WeirdJoin implements WeirdJoinEntity {
         other.id == id &&
         other.unorthodox == unorthodox &&
         other.song == song &&
-        ListEquality<NumbaEntity>(
-          DefaultEquality<NumbaEntity>(),
-        ).equals(other.numbas, numbas) &&
-        ListEquality<FooEntity>(
-          DefaultEquality<FooEntity>(),
-        ).equals(other.foos, foos);
+        ListEquality<NumbaEntity>(DefaultEquality<NumbaEntity>())
+            .equals(other.numbas, numbas) &&
+        ListEquality<FooEntity>(DefaultEquality<FooEntity>())
+            .equals(other.foos, foos);
   }
 
   @override
@@ -1232,9 +1230,8 @@ class Foo implements FooEntity {
   bool operator ==(other) {
     return other is FooEntity &&
         other.bar == bar &&
-        ListEquality<WeirdJoinEntity>(
-          DefaultEquality<WeirdJoinEntity>(),
-        ).equals(other.weirdJoins, weirdJoins);
+        ListEquality<WeirdJoinEntity>(DefaultEquality<WeirdJoinEntity>())
+            .equals(other.weirdJoins, weirdJoins);
   }
 
   @override

@@ -29,9 +29,8 @@ void main() {
     app.encoders.addAll({'deflate': zlib.encoder, 'gzip': gzip.encoder});
 
     app.get('/hello', (req, res) {
-      return Stream<List<int>>.fromIterable([
-        'Hello, world!'.codeUnits,
-      ]).pipe(res);
+      return Stream<List<int>>.fromIterable(['Hello, world!'.codeUnits])
+          .pipe(res);
     });
 
     app.get('/write', (req, res) async {
@@ -52,13 +51,13 @@ void main() {
 
     app.get('/overwrite', (req, res) async {
       res.statusCode = 32;
-      await Stream<List<int>>.fromIterable([
-        'Hello, world!'.codeUnits,
-      ]).pipe(res);
+      await Stream<List<int>>.fromIterable(['Hello, world!'.codeUnits])
+          .pipe(res);
 
-      var f = Stream<List<int>>.fromIterable([
-        'Hello, world!'.codeUnits,
-      ]).pipe(res).then((_) => false).catchError((_) => true);
+      var f = Stream<List<int>>.fromIterable(['Hello, world!'.codeUnits])
+          .pipe(res)
+          .then((_) => false)
+          .catchError((_) => true);
 
       expect(f, completion(true));
     });

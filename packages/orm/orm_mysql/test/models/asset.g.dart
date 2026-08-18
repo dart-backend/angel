@@ -537,9 +537,8 @@ class Asset extends AssetEntity {
         other.description == description &&
         other.name == name &&
         other.price == price &&
-        ListEquality<ItemEntity>(
-          DefaultEquality<ItemEntity>(),
-        ).equals(other.items, items);
+        ListEquality<ItemEntity>(DefaultEquality<ItemEntity>())
+            .equals(other.items, items);
   }
 
   @override
