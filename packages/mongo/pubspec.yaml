@@ -2,7 +2,9 @@ name: angel3_mongo
 version: 9.1.0
 description: This is MongoDB-enabled service for the Angel3 framework.
 homepage: https://angel3-framework.web.app/
-repository: https://github.com/dart-backend/angel/tree/master/packages/mongo
+repository: https://github.com/dart-backend/angel/
+issue_tracker: https://github.com/dart-backend/angel/issues
+
 resolution: workspace
 environment:
   sdk: '>=3.13.0 <4.0.0'

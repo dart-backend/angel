@@ -2,7 +2,9 @@ name: angel3_orm_mysql
 version: 9.1.0
 description: MySQL support for Angel3 ORM. Includes functionality for querying and transactions.
 homepage: https://angel3-framework.web.app/
-repository: https://github.com/dart-backend/angel/tree/master/packages/orm/orm_mysql
+repository: https://github.com/dart-backend/angel/
+issue_tracker: https://github.com/dart-backend/angel/issues
+
 resolution: workspace
 environment:
   sdk: '>=3.13.0 <4.0.0'

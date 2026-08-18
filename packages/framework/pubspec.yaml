@@ -2,7 +2,9 @@ name: angel3_framework
 version: 9.1.0
 description: A high-powered HTTP server extensible framework with dependency injection, routing and much more.
 homepage: https://angel3-framework.web.app/
-repository: https://github.com/dart-backend/angel/tree/master/packages/framework
+repository: https://github.com/dart-backend/angel/
+issue_tracker: https://github.com/dart-backend/angel/issues
+
 resolution: workspace
 environment:
   sdk: '>=3.13.0 <4.0.0'

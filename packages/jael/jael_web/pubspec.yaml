@@ -1,6 +1,10 @@
 name: jael3_web
 version: 9.1.0
 description: Experimental virtual DOM/SPA engine built on Jael3. Supports SSR.
+homepage: https://angel3-framework.web.app/
+repository: https://github.com/dart-backend/angel/
+issue_tracker: https://github.com/dart-backend/angel/
+
 publish_to: none
 resolution: workspace
 environment:
