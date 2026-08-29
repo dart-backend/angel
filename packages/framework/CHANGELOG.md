@@ -1,5 +1,9 @@
 # Change Log
 
+## 9.1.1
+
+* Updated README with new links to templates
+
 ## 9.1.0
 
 * Require Dart >= 3.13
