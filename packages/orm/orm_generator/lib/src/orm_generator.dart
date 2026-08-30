@@ -1241,7 +1241,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
         if (null != serializesTo) {
           type = serializesTo.element!.displayName;
         }
-        parseExpr = Reference(deserializer).expression([expr.asA(refer(type))]);
+        parseExpr = Reference(deserializer).call([expr.asA(refer(type))]);
       }
     }
 
@@ -1266,7 +1266,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
     if (null != annotation) {
       final serializer = annotation.getField('serializer')?.toSymbolValue();
       if (null != serializer) {
-        parseExpr = Reference(serializer).expression([expr]);
+        parseExpr = Reference(serializer).call([expr]);
       }
     }
     return parseExpr ?? CodeExpression(Code('value?.index'));
