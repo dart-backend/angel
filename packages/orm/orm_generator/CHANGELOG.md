@@ -1,5 +1,9 @@
 # Change Log
 
+## 9.1.1
+
+* Fix analyzer warnings and errors
+
 ## 9.1.0
 
 * Require Dart >= 3.13

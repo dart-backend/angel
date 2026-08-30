@@ -19,10 +19,11 @@ This package is the core package of [Angel3](https://github.com/dart-backend/ang
 1. Download and install [Dart](https://dart.dev/get-dart)
 
 2. Clone one of the following starter projects:
-   * [Angel3 Basic Template](https://github.com/dukefirehawk/boilerplates/tree/v7/angel3-basic)
-   * [Angel3 ORM Template](https://github.com/dukefirehawk/boilerplates/tree/v7/angel3-orm)
-   * [Angel3 ORM MySQL Template](https://github.com/dukefirehawk/boilerplates/tree/v7/angel3-orm-mysql)
-   * [Angel3 Graphql Template](https://github.com/dukefirehawk/boilerplates/tree/v7/angel3-graphql)
+
+   * [Angel3 Basic Template](https://github.com/dart-backend/boilerplates/tree/master/templates/basic)
+   * [Angel3 PostgreSQL ORM Template](https://github.com/dart-backend/boilerplates/tree/master/templates/basic_postgres_orm)
+   * [Angel3 MySQL ORM Template](https://github.com/dart-backend/boilerplates/tree/master/templates/basic_mysql_orm)
+   * [Angel3 GraphQL Template](https://github.com/dart-backend/boilerplates/tree/master/templates/basic_graphql)
 
 3. Run the project in development mode (*hot-reloaded* is enabled on file changes).
 
