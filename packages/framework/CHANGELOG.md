@@ -1,7 +1,12 @@
 # Change Log
 
-## 9.1.2
+## 9.2.0
 
+* feat: Services, hooked services and `@Middleware` lookups now work without reflection; annotations are ignored when no reflector is configured instead of throwing
+* feat: Added `Controller(expose: ...)` to set the mount path without an `@Expose` annotation; without reflection, controllers apply the routes from `configureRoutes`
+* feat: Added `ioc(..., injection: InjectionRequest)` for dependency injection without reflecting on the handler
+* feat: Added `example/no_mirrors.dart`, an app that compiles with `dart compile exe`
+* refactor: The "no reflector" startup message is now logged at `info` instead of `warning`
 * refactor: When nothing matches, the driver now returns 404 instead of 500
 * refactor: With no container passed, it now falls back to the request's container
 * fix: An empty JSON array (`[]`) in the POST request body,no longer returns a 500 errer

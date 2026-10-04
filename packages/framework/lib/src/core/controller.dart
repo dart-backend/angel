@@ -8,6 +8,7 @@ import 'package:meta/meta.dart';
 import 'package:recase/recase.dart';
 
 import '../core/core.dart';
+import '../util.dart';
 
 /// Supports grouping routes with shared functionality.
 class Controller {
@@ -36,7 +37,15 @@ class Controller {
   /// The route at which this controller is mounted on the server.
   SymlinkRoute<RequestHandler>? get mountPoint => _mountPoint;
 
-  Controller({this.injectSingleton = true});
+  /// Mount path, name and middleware for this controller, used in place of a
+  /// class-level `@Expose` annotation.
+  ///
+  /// Set this when reflection is disabled (e.g. AOT-compiled apps), since
+  /// annotations cannot be read then. Without it, the path is derived from
+  /// the class name, which is unreliable once code is obfuscated.
+  final Expose? expose;
+
+  Controller({this.injectSingleton = true, this.expose});
 
   /// Applies routes, DI, and other configuration to an [app].
   @mustCallSuper
@@ -55,12 +64,14 @@ class Controller {
   }
 
   /// Applies the routes from this [Controller] to some [router].
+  ///
+  /// When reflection is disabled (see [canReflect]), only the routes added in
+  /// [configureRoutes] are applied; `@Expose` methods are not discovered.
   Future<String> applyRoutes(
     Router<RequestHandler> router,
     Reflector reflector,
   ) async {
     // Load global expose decl
-    var classMirror = reflector.reflectClass(runtimeType)!;
     var exposeDecl = findExpose(reflector);
 
     if (exposeDecl == null) {
@@ -69,27 +80,27 @@ class Controller {
 
     var routable = Routable();
     _mountPoint = router.mount(exposeDecl.path, routable);
-    //_mountPoint = m;
-    var typeMirror = reflector.reflectType(runtimeType);
-
-    // Pre-reflect methods
-    var instanceMirror = reflector.reflectInstance(this);
-    final handlers = <RequestHandler>[...exposeDecl.middleware, ...middleware];
-    final routeBuilder = _routeBuilder(
-      reflector,
-      instanceMirror,
-      routable,
-      handlers,
-    );
     await configureRoutes(routable);
-    classMirror.declarations.forEach(routeBuilder);
+
+    String name;
+    if (canReflect(reflector)) {
+      // Pre-reflect methods
+      var classMirror = reflector.reflectClass(runtimeType)!;
+      var instanceMirror = reflector.reflectInstance(this);
+      final handlers = <RequestHandler>[
+        ...exposeDecl.middleware,
+        ...middleware,
+      ];
+      classMirror.declarations.forEach(
+        _routeBuilder(reflector, instanceMirror, routable, handlers),
+      );
+      name = reflector.reflectType(runtimeType)!.name;
+    } else {
+      name = runtimeType.toString();
+    }
 
     // Return the name.
-    var result = exposeDecl.as?.isNotEmpty == true
-        ? exposeDecl.as
-        : typeMirror!.name;
-
-    return Future.value(result);
+    return exposeDecl.as?.isNotEmpty == true ? exposeDecl.as! : name;
   }
 
   void Function(ReflectedDeclaration) _routeBuilder(
@@ -241,16 +252,22 @@ class Controller {
 
   /// Finds the [Expose] declaration for this class.
   ///
+  /// The [expose] field takes precedence over a class-level `@Expose`
+  /// annotation, which is only read when reflection is enabled.
+  ///
   /// If [concreteOnly] is `false`, then if there is no actual
   /// [Expose], one will be automatically created.
   Expose? findExpose(Reflector reflector, {bool concreteOnly = false}) {
     var existing =
-        reflector
-                .reflectClass(runtimeType)!
-                .annotations
-                .map((m) => m.reflectee)
-                .firstWhere((r) => r is Expose, orElse: () => null)
-            as Expose?;
+        expose ??
+        (canReflect(reflector)
+            ? reflector
+                      .reflectClass(runtimeType)!
+                      .annotations
+                      .map((m) => m.reflectee)
+                      .firstWhere((r) => r is Expose, orElse: () => null)
+                  as Expose?
+            : null);
     return existing ??
         (concreteOnly
             ? null

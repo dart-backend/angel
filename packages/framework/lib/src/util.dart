@@ -12,8 +12,17 @@ T? matchingAnnotation<T>(List<ReflectedInstance> metadata) {
   return null;
 }
 
+/// Returns `true` if [reflector] can perform reflection.
+///
+/// [ThrowingReflector] (the default for `Angel()`) means reflection is
+/// disabled, e.g. in AOT-compiled apps where `dart:mirrors` is unavailable.
+bool canReflect(Reflector? reflector) =>
+    reflector != null && reflector is! ThrowingReflector;
+
+/// Reads the [T] annotation on [obj], or returns `null` when reflection is
+/// disabled (see [canReflect]), so annotations are simply ignored.
 T? getAnnotation<T>(Object obj, Reflector? reflector) {
-  if (reflector == null) {
+  if (reflector == null || !canReflect(reflector)) {
     return null;
   } else {
     if (obj is Function) {

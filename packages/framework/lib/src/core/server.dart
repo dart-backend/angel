@@ -442,8 +442,9 @@ class Angel extends Routable {
       '${ContainerConst.defaultErrorMessage} $_reflectionInfo';
 
   static const String _reflectionInfo =
-      'Features like controllers, constructor dependency injection, and `ioc` require reflection, '
-      'and will not work without it.\n\n'
+      'Without reflection, `@Expose` controller methods, `@Middleware`/`@Hooks` annotations, '
+      'automatic constructor injection, and `ioc` without an explicit `injection:` are unavailable. '
+      'Routes, services, `Controller.configureRoutes` and container-registered types still work.\n\n'
       'For more, see the documentation:\n'
       'https://docs.angel-dart.dev/guides/dependency-injection#enabling-dart-mirrors-or-other-reflection';
 
@@ -465,7 +466,9 @@ class Angel extends Routable {
     if (reflector is EmptyReflector || reflector is ThrowingReflector) {
       var msg =
           'No `reflector` was passed to the Angel constructor, so reflection will not be available.\n$_reflectionInfo';
-      this.logger.warning(msg);
+      // Running without reflection is supported (and required for AOT), so
+      // this is informational rather than a warning.
+      this.logger.info(msg);
     }
 
     bootstrapContainer();

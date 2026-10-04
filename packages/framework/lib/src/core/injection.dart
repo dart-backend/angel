@@ -7,7 +7,37 @@ const List<Type> _primitiveTypes = [String, int, num, double, Null];
 /// Use this to instantly create a request handler for a DI-enabled method.
 ///
 /// Calling [ioc] also auto-serializes the result of a [handler].
-RequestHandler ioc(Function handler, {Iterable<String> optional = const []}) {
+///
+/// Pass [injection] to describe the [handler]'s parameters explicitly instead
+/// of reflecting on it. This works without reflection (e.g. in AOT-compiled
+/// apps), as long as every required type is registered in the container:
+///
+/// ```dart
+/// app.get('/todo', ioc(
+///   (Todo todo) => todo,
+///   injection: InjectionRequest.constant(required: [Todo]),
+/// ));
+/// ```
+RequestHandler ioc(
+  Function handler, {
+  Iterable<String> optional = const [],
+  InjectionRequest? injection,
+}) {
+  if (injection != null) {
+    var explicit = injection;
+    if (optional.isNotEmpty) {
+      // Copy, since a const InjectionRequest has unmodifiable lists.
+      explicit = InjectionRequest.constant(
+        named: injection.named,
+        required: injection.required,
+        optional: [...injection.optional, ...optional],
+        parameters: injection.parameters,
+      );
+    }
+    var contained = handleContained(handler, explicit);
+    return (req, res) => req.app!.executeHandler(contained, req, res);
+  }
+
   return (req, res) {
     RequestHandler? contained;
 
