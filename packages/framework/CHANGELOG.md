@@ -13,6 +13,10 @@
 * fix: `_http` is now nullable and only closed if it was created.
 * fix: The default error handler now HTML-escapes the exception message and errors (XSS)
 * fix: `res.redirect()` now escapes the URL in the HTML fallback page and no longer emits `javascript:`, `vbscript:` or `data:` URLs there (XSS)
+* fix: `MapService` no longer reuses an existing id after an item is removed
+* fix: `HookedService.afterAllStream()` now emits after-events instead of before-events
+* fix: A missing `@CookieValue` now uses its `defaultValue` or returns 400, instead of a 500 error
+* fix: `DELETE /` on a service now requests "remove all" (id `'null'`), subject to `allowRemoveAll`; services with non-String ids return 405 instead of a 500 error
 
 ## 9.1.1
 

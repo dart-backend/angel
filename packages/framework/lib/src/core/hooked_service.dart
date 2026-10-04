@@ -256,7 +256,7 @@ class HookedService<Id, Data, T extends Service<Id, Data>>
   Stream<HookedServiceEvent<Id, Data, T>> afterAllStream() {
     var ctrl = StreamController<HookedServiceEvent<Id, Data, T>>();
     _ctrl.add(ctrl);
-    before(HookedServiceEvent.all, ctrl.add);
+    after(HookedServiceEvent.all, ctrl.add);
     return ctrl.stream;
   }
 

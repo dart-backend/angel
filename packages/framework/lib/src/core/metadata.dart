@@ -133,7 +133,10 @@ class Parameter {
   /// Obtains a value for this parameter from a [RequestContext].
   dynamic getValue(RequestContext req) {
     if (cookie?.isNotEmpty == true) {
-      return req.cookies.firstWhere((c) => c.name == cookie).value;
+      for (var c in req.cookies) {
+        if (c.name == cookie) return c.value;
+      }
+      return defaultValue;
     }
     if (header?.isNotEmpty == true) {
       return req.headers?.value(header ?? '') ?? defaultValue;

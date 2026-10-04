@@ -22,6 +22,8 @@ class MapService extends Service<String?, Map<String, dynamic>> {
 
   final List<Map<String, dynamic>> items = [];
 
+  int _idCounter = 0;
+
   MapService({
     this.allowRemoveAll = false,
     this.allowQuery = true,
@@ -34,6 +36,16 @@ class MapService extends Service<String?, Map<String, dynamic>> {
 
   String get updatedAtKey =>
       autoSnakeCaseNames == false ? 'updatedAt' : 'updated_at';
+
+  /// Returns an id not used by any item, even after removals or when
+  /// [items] has been populated directly.
+  String _nextId() {
+    String id;
+    do {
+      id = (_idCounter++).toString();
+    } while (items.any(_matchesId(id)));
+    return id;
+  }
 
   bool Function(Map<String, dynamic>) _matchesId(Object? id) {
     return (Map<String, dynamic> item) {
@@ -95,7 +107,7 @@ class MapService extends Service<String?, Map<String, dynamic>> {
 
     if (autoIdAndDateFields == true) {
       result
-        ..['id'] = items.length.toString()
+        ..['id'] = _nextId()
         ..[autoSnakeCaseNames == false ? 'createdAt' : 'created_at'] = now
         ..[autoSnakeCaseNames == false ? 'updatedAt' : 'updated_at'] = now;
     }

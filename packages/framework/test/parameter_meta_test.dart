@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io' show Cookie;
 
 import 'package:angel3_container/mirrors.dart';
 import 'package:angel3_framework/angel3_framework.dart';
@@ -110,6 +111,28 @@ void parameterMetaTests() {
     print('Body: $body');
     expect(rs.statusCode, 200);
     expect(body, json.encode('bar'));
+  });
+
+  test('injects cookie or throws 400', () async {
+    // Missing cookie
+    var rq = MockHttpRequest('GET', Uri.parse('/cookie'));
+    await rq.close();
+    var rs = rq.response;
+    unawaited(http.handleRequest(rq));
+
+    await printResponse(rs);
+    expect(rs.statusCode, 400);
+
+    // Valid request
+    rq = MockHttpRequest('GET', Uri.parse('/cookie'))
+      ..cookies.add(Cookie('token', 'abc'));
+    await rq.close();
+    rs = rq.response;
+    unawaited(http.handleRequest(rq));
+
+    var body = await readResponse(rs);
+    expect(rs.statusCode, 200);
+    expect(body, json.encode('abc'));
   });
 
   test('injects session or throws', () async {

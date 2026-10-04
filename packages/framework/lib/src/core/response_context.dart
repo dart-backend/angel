@@ -250,9 +250,7 @@ abstract class ResponseContext<RawResponse>
   /// Browsers ignore whitespace and control characters inside a scheme
   /// (e.g. `java\tscript:`), so those are stripped before comparing.
   static bool _isScriptUrl(String url) {
-    var normalized = url
-        .replaceAll(RegExp(r'[\x00-\x20]'), '')
-        .toLowerCase();
+    var normalized = url.replaceAll(RegExp(r'[\x00-\x20]'), '').toLowerCase();
     return normalized.startsWith('javascript:') ||
         normalized.startsWith('vbscript:') ||
         normalized.startsWith('data:');
