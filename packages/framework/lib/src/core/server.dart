@@ -193,9 +193,14 @@ class Angel extends Routable {
   /// If the server is never [close]d, they will never be called.
   final List<AngelConfigurer> shutdownHooks = [];
 
-  /// Always run before responses are sent.
+  /// Run once per response, before it is sent.
   ///
-  /// These will only not run if a response's `willCloseItself` is set to `true`.
+  /// On buffered responses (see `ResponseContext.useBuffer`) they run after
+  /// the handler, and can read or rewrite `res.buffer`. On unbuffered
+  /// responses (the default) they run just before headers are sent: they can
+  /// change headers, status and cookies, but see no body, so a finalizer that
+  /// needs the body should check `res.isBuffered`. They do not run on
+  /// detached responses. See `ResponseContext.runFinalizers`.
   final List<RequestHandler> responseFinalizers = [];
 
   /// A function that renders views.

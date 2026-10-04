@@ -219,6 +219,34 @@ void main() {
     });
   });
 
+  test('response finalizers run on unbuffered responses', () async {
+    var finalized = Angel()
+      ..get('/', (req, res) async {
+        res
+          ..write('a')
+          ..write('b');
+        await res.close();
+      })
+      ..responseFinalizers.add((req, res) async {
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+        res.headers['x-finalized'] = 'yes';
+      });
+    var ctx = SecurityContext()
+      ..useCertificateChain('dev.pem')
+      ..usePrivateKey('dev.key', password: 'dartdart')
+      ..setAlpnProtocols(['h2'], true);
+    var h2 = AngelHttp2(finalized, ctx);
+    var server = await h2.startServer();
+
+    var response = await client.get(
+      Uri.parse('https://127.0.0.1:${server.port}/'),
+    );
+    expect(response.headers['x-finalized'], 'yes');
+    expect(response.body, 'ab');
+
+    await h2.close();
+  });
+
   test('close without allowHttp1', () async {
     var ctx = SecurityContext()
       ..useCertificateChain('dev.pem')

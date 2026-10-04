@@ -122,10 +122,78 @@ class HttpResponseContext extends ResponseContext<HttpResponse> {
     return false;
   }
 
+  /// Writes made while response finalizers run, sent once headers go out.
+  final List<List<int>> _queued = [];
+  Future<void>? _finalizing;
+  Object? _finalizerError;
+  StackTrace? _finalizerStackTrace;
+
+  /// Sends status and headers, first running response finalizers (if any)
+  /// so they can still change them. Writes made meanwhile are queued.
+  ///
+  /// If a finalizer fails, nothing is sent, so the error handler can still
+  /// produce a response.
+  Future<void> _commit() {
+    if (_streamInitialized) return Future.value();
+    var running = _finalizing;
+    if (running != null) return running;
+    if (!hasPendingFinalizers) {
+      _openStream();
+      _flushQueued();
+      return Future.value();
+    }
+
+    return _finalizing = runFinalizers().then(
+      (_) {
+        _finalizing = null;
+        _openStream();
+        _flushQueued();
+      },
+      onError: (Object e, StackTrace st) {
+        _finalizing = null;
+        _queued.clear();
+        Error.throwWithStackTrace(e, st);
+      },
+    );
+  }
+
+  /// Like [_commit], but rethrows a finalizer failure that happened during
+  /// an earlier [add] (which cannot report errors itself), once.
+  Future<void> _commitOrThrow() async {
+    var error = _finalizerError;
+    if (error != null) {
+      _finalizerError = null;
+      Error.throwWithStackTrace(error, _finalizerStackTrace!);
+    }
+    try {
+      await _commit();
+    } catch (_) {
+      // Reported here, so do not report it again later.
+      _finalizerError = null;
+      rethrow;
+    }
+  }
+
+  void _write(List<int> data) {
+    var sink = _encoderSink;
+    if (sink != null) {
+      sink.add(data);
+    } else {
+      rawResponse.add(data);
+    }
+  }
+
+  void _flushQueued() {
+    for (var data in _queued) {
+      _write(data);
+    }
+    _queued.clear();
+  }
+
   @override
   Future addStream(Stream<List<int>> stream) async {
     if (_isClosed && isBuffered) throw ResponseContext.closed();
-    _openStream();
+    await _commitOrThrow();
 
     var sink = _encoderSink;
     if (sink == null) return rawResponse.addStream(stream);
@@ -144,12 +212,18 @@ class HttpResponseContext extends ResponseContext<HttpResponse> {
       throw ResponseContext.closed();
     } else if (!isBuffered) {
       if (!_isClosed) {
-        _openStream();
-        var sink = _encoderSink;
-        if (sink != null) {
-          sink.add(data);
+        if (_streamInitialized) {
+          _write(data);
+        } else if (_finalizing != null || hasPendingFinalizers) {
+          // Headers wait for the finalizers; send this data after them.
+          _queued.add(data);
+          _commit().catchError((Object e, StackTrace st) {
+            _finalizerError ??= e;
+            _finalizerStackTrace ??= st;
+          });
         } else {
-          rawResponse.add(data);
+          _openStream();
+          _write(data);
         }
       }
     } else {
@@ -158,12 +232,20 @@ class HttpResponseContext extends ResponseContext<HttpResponse> {
   }
 
   @override
-  Future close() {
+  Future close() async {
     if (!_isDetached) {
       if (!_isClosed) {
         if (!isBuffered) {
+          // Finalizer failures propagate, leaving the response open for the
+          // error handler.
+          if (_finalizing != null ||
+              hasPendingFinalizers ||
+              _finalizerError != null) {
+            await _commitOrThrow();
+          }
           try {
             _openStream();
+            _flushQueued();
             // Flushes the compression trailer, if any.
             _encoderSink?.close();
             // Observe the result: an unhandled failure here (e.g. the
@@ -182,9 +264,8 @@ class HttpResponseContext extends ResponseContext<HttpResponse> {
         _isClosed = true;
       }
 
-      super.close();
+      await super.close();
     }
-    return Future.value();
   }
 }
 

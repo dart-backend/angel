@@ -46,6 +46,36 @@ abstract class ResponseContext<RawResponse>
   /// At most one encoder will ever be used to convert data.
   final Map<String, Converter<List<int>, List<int>>> encoders = {};
 
+  bool _finalizersStarted = false;
+
+  /// Whether [Angel.responseFinalizers] have yet to run for this response.
+  bool get hasPendingFinalizers =>
+      !_finalizersStarted &&
+      correspondingRequest != null &&
+      (app?.responseFinalizers.isNotEmpty ?? false);
+
+  /// Runs [Angel.responseFinalizers] for this response, at most once.
+  ///
+  /// Buffered responses run them once the handler is done, so they can read
+  /// and rewrite [buffer]. Unbuffered responses run them just before headers
+  /// are sent: finalizers can still change [headers], [statusCode] and
+  /// [cookies], but no body has been written yet. Finalizers that need the
+  /// body should check [isBuffered]. They must not call [close].
+  Future<void> runFinalizers([RequestContext? request]) async {
+    var req = request ?? correspondingRequest;
+    var finalizers = app?.responseFinalizers;
+    if (_finalizersStarted ||
+        req == null ||
+        finalizers == null ||
+        finalizers.isEmpty) {
+      return;
+    }
+    _finalizersStarted = true;
+    for (var finalizer in List.of(finalizers)) {
+      await finalizer(req, this);
+    }
+  }
+
   ({String name, Converter<List<int>, List<int>> encoder})? _selectedEncoder;
   bool _encoderSelected = false;
 
@@ -136,8 +166,7 @@ abstract class ResponseContext<RawResponse>
 
   /// Returns `true` if the response is still available for processing by Angel.
   ///
-  /// If it is `false`, then Angel will stop executing handlers, and will only run
-  /// response finalizers if the response [isBuffered].
+  /// If it is `false`, then Angel will stop executing handlers.
   bool get isOpen;
 
   /// Returns `true` if response data is being written to a buffer, rather than to the underlying stream.

@@ -435,7 +435,7 @@ abstract class Driver<
 
     var finalizers = ignoreFinalizers == true
         ? Future.value()
-        : Future.forEach(app.responseFinalizers, (dynamic f) => f(req, res));
+        : res.runFinalizers(req);
 
     return finalizers.then((_) {
       //if (res.isOpen) res.close();

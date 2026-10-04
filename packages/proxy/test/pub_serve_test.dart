@@ -23,7 +23,9 @@ void main() {
     testApp!.get('/empty', (req, res) => res.close());
 
     testApp!.responseFinalizers.add((req, res) async {
-      print('OUTGOING: ${String.fromCharCodes(res.buffer!.toBytes())}');
+      if (res.isBuffered) {
+        print('OUTGOING: ${String.fromCharCodes(res.buffer!.toBytes())}');
+      }
     });
 
     testApp!.encoders.addAll({'gzip': gzip.encoder});

@@ -16,6 +16,7 @@ import 'extension_test.dart' as extension_test;
 import 'find_one_test.dart' as find_one;
 import 'general_test.dart' as general;
 import 'compression_test.dart' as compression;
+import 'finalizers_test.dart' as finalizers;
 import 'hooked_test.dart' as hooked;
 import 'hostname_router_test.dart' as hostname_router;
 import 'limits_test.dart' as limits;
@@ -55,6 +56,7 @@ void main() {
   group('extension', extension_test.main);
   group('find_one', find_one.main);
   group('general', general.main);
+  group('finalizers', finalizers.main);
   group('hooked', hooked.main);
   group('hostname_router', hostname_router.main);
   group('limits', limits.main);
