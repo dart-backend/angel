@@ -41,48 +41,69 @@ abstract class Driver<
       serverGenerator(address, port);
 
   /// Starts, and returns the server.
-  Future<Server> startServer([Object? address, int port = 0]) {
+  ///
+  /// If binding fails (e.g. the port is in use), the original error is
+  /// rethrown. If a startup hook fails, the bound server is closed again, so
+  /// it does not keep holding the port, and the hook's error is rethrown.
+  Future<Server> startServer([Object? address, int port = 0]) async {
     var host = address ?? '127.0.0.1';
-    return generateServer(host, port)
-        .then((server) {
-          this.server = server;
 
-          return Future.wait(app.startupHooks.map(app.configure)).then((_) {
-            app.optimizeForProduction();
-            _sub = this.server?.listen((request) {
-              var stream = createResponseStreamFromRawRequest(request);
-              // Errors here happen outside the per-request error zone (e.g. a
-              // malformed request that cannot become a RequestContext, or a
-              // broken HTTP/2 connection). Left unhandled they would
-              // terminate the whole server, so log them and drop the request.
-              stream.listen(
-                (response) {
-                  handleRawRequest(request, response).catchError((
-                    Object e,
-                    StackTrace st,
-                  ) {
-                    app.logger.warning('Failed to handle request', e, st);
-                    try {
-                      setStatusCode(response, 400);
-                      closeResponse(response);
-                    } catch (_) {
-                      // The response may already be unusable.
-                    }
-                  });
-                },
-                onError: (Object e, StackTrace st) {
-                  app.logger.warning('Connection error', e, st);
-                },
-              );
-            });
-            return Future.value(this.server!);
+    Server server;
+    try {
+      server = await generateServer(host, port);
+    } catch (e, st) {
+      app.logger.severe('Failed to create server on $host:$port', e, st);
+      rethrow;
+    }
+    this.server = server;
+
+    try {
+      await Future.wait(app.startupHooks.map(app.configure));
+    } catch (e, st) {
+      app.logger.severe('A startup hook failed; closing the server', e, st);
+      this.server = null;
+      try {
+        await closeServer(server);
+      } catch (_) {
+        // Already failing; the hook's error is the one to report.
+      }
+      rethrow;
+    }
+
+    app.optimizeForProduction();
+    _sub = server.listen((request) {
+      var stream = createResponseStreamFromRawRequest(request);
+      // Errors here happen outside the per-request error zone (e.g. a
+      // malformed request that cannot become a RequestContext, or a
+      // broken HTTP/2 connection). Left unhandled they would
+      // terminate the whole server, so log them and drop the request.
+      stream.listen(
+        (response) {
+          handleRawRequest(request, response).catchError((
+            Object e,
+            StackTrace st,
+          ) {
+            app.logger.warning('Failed to handle request', e, st);
+            try {
+              setStatusCode(response, 400);
+              closeResponse(response);
+            } catch (_) {
+              // The response may already be unusable.
+            }
           });
-        })
-        .catchError((error) {
-          app.logger.severe('Failed to create server', error);
-          throw ArgumentError('[Driver]Failed to create server');
-        });
+        },
+        onError: (Object e, StackTrace st) {
+          app.logger.warning('Connection error', e, st);
+        },
+      );
+    });
+    return server;
   }
+
+  /// Closes a [server] created by [generateServer] that never started
+  /// serving (see [startServer]). Drivers whose server can be closed should
+  /// override this; the default does nothing.
+  Future<void> closeServer(Server server) async {}
 
   /// Shuts down the underlying server.
   Future<void> close() {

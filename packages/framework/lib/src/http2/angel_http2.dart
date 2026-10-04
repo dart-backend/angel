@@ -141,6 +141,11 @@ class AngelHttp2
   }
 
   @override
+  Future<void> closeServer(SecureServerSocket server) async {
+    await server.close();
+  }
+
+  @override
   Future closeResponse(ServerTransportStream response) {
     response.terminate();
     return Future.value();

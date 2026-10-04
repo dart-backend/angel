@@ -9,6 +9,7 @@
 * feat: Added max size to the content body and rejects larger body with 413 error. The default limit is 10 MB
 * feat: Finalizers now run at most once per response
 * feat: Added max route cache size (default 1024); the production route cache now evicts least recently used entries.
+* feat: Added `ResponseContext.attachmentDisposition()` and `Driver.closeServer()`
 * fix: An empty JSON array (`[]`) in the POST request body no longer causing a 500 errer
 * fix: `_http` is now nullable and only closed if it was created.
 * fix: The default error handler now HTML-escapes the exception message and errors (XSS)
@@ -35,6 +36,8 @@
 * fix: The `no reflector` startup message is now logged at `info` instead of `warning` as it is not longer a mandatory requirement to use Angel3
 * fix: When nothing matches, the driver now returns 404 instead of 500
 * fix: The application and default logger now prints their record only once. Creating an app with a custom logger, or setting `app.logger`, no longer removes the application's own `Logger.root` listeners
+* fix: `res.download()` no longer sends the file's server path as the download name, encodes any filename safely (RFC 6266), uses `application/octet-stream` for unknown types instead of crashing, reads the file asynchronously, and returns 404 for a missing file. `res.streamFile()` also returns 404 for a missing file instead of an error that revealed its path
+* fix: `startServer` now rethrows the original error (e.g. a `SocketException` when the port is in use) instead of a generic `ArgumentError`, and closes the bound server if a startup hook fails
 * refactor: With no container passed, it now falls back to the request's container
 * refactor: Resolved various issues with `MapService`
 * refactor: Consolidated multiple copies of the encoder selection logic

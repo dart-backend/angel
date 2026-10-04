@@ -9,6 +9,7 @@ import 'body_test.dart' as body;
 import 'controller_test.dart' as controller;
 import 'detach_test.dart' as detach;
 import 'di_test.dart' as di;
+import 'download_test.dart' as download;
 import 'encoders_buffer_test.dart' as encoders_buffer;
 import 'env_test.dart' as env;
 import 'exception_test.dart' as exception;
@@ -54,6 +55,7 @@ void main() {
   group('controller', controller.main);
   group('detach', detach.main);
   group('di', di.main);
+  group('download', download.main);
   group('encoders_buffer', encoders_buffer.main);
   group('env', env.main);
   group('exception', exception.main);

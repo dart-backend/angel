@@ -254,20 +254,59 @@ abstract class ResponseContext<RawResponse>
   static StateError closed() => StateError('Cannot modify a closed response.');
 
   /// Sends a download as a response.
+  ///
+  /// The client sees [filename], or else the file's base name; never its
+  /// path on the server. A missing file is a 404. `HEAD` requests get the
+  /// headers only.
   Future<void> download(File file, {String? filename}) async {
     if (!isOpen) throw closed();
+    if (!await file.exists()) throw AngelHttpException.notFound();
 
-    headers['Content-Disposition'] =
-        'attachment; filename="${filename ?? file.path}"';
-    contentType = MediaType.parse(lookupMimeType(file.path)!);
-    headers['content-length'] = file.lengthSync().toString();
+    headers['content-disposition'] = attachmentDisposition(
+      filename ?? file.basename,
+    );
+    contentType = _fileContentType(file);
+    contentLength = await file.length();
 
-    if (!isBuffered) {
-      await file.openRead().cast<List<int>>().pipe(this);
-    } else {
-      buffer!.add(file.readAsBytesSync());
-      await close();
+    if (correspondingRequest?.method != 'HEAD') {
+      if (!isBuffered) {
+        await addStream(file.openRead());
+      } else {
+        buffer!.add(await file.readAsBytes());
+      }
     }
+    await close();
+  }
+
+  /// Builds an `attachment` Content-Disposition header value for [filename]
+  /// (RFC 6266), safe for any name: a quoted ASCII fallback, plus a
+  /// UTF-8 `filename*` parameter when the name needs one.
+  static String attachmentDisposition(String filename) {
+    var fallback = StringBuffer();
+    for (var c in filename.runes) {
+      var printable = c >= 0x20 && c < 0x7f && c != 0x22 && c != 0x5c;
+      fallback.write(printable ? String.fromCharCode(c) : '_');
+    }
+
+    var header = 'attachment; filename="$fallback"';
+    if (fallback.toString() != filename) {
+      // RFC 8187 attr-chars: encodeComponent also leaves ' ( ) * as-is.
+      var encoded = Uri.encodeComponent(filename)
+          .replaceAll("'", '%27')
+          .replaceAll('(', '%28')
+          .replaceAll(')', '%29')
+          .replaceAll('*', '%2A');
+      header += "; filename*=UTF-8''$encoded";
+    }
+    return header;
+  }
+
+  MediaType _fileContentType(File file) {
+    var mimeType =
+        app?.mimeTypeResolver.lookup(file.path) ?? lookupMimeType(file.path);
+    return mimeType == null
+        ? MediaType('application', 'octet-stream')
+        : MediaType.parse(mimeType);
   }
 
   /// Prevents more data from being written to the response, and locks it entire from further editing.
@@ -466,11 +505,10 @@ abstract class ResponseContext<RawResponse>
     if (!isOpen) {
       throw closed();
     }
-    var mimeType = app!.mimeTypeResolver.lookup(file.path);
+    // A 404 rather than a file system error, whose message names the path.
+    if (!await file.exists()) throw AngelHttpException.notFound();
     contentLength = await file.length();
-    contentType = mimeType == null
-        ? MediaType('application', 'octet-stream')
-        : MediaType.parse(mimeType);
+    contentType = _fileContentType(file);
 
     if (correspondingRequest!.method != 'HEAD') {
       return addStream(file.openRead().cast<List<int>>()).then((_) => close());

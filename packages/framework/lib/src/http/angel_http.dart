@@ -115,6 +115,9 @@ class AngelHttp
   }
 
   @override
+  Future<void> closeServer(HttpServer server) => server.close(force: true);
+
+  @override
   Future closeResponse(HttpResponse response) => response.close();
 
   @override
