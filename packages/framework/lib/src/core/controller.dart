@@ -176,8 +176,8 @@ class Controller {
           // path segments, and then joining them.
           var parts = <String>[];
 
-          // If the name starts with get/post/patch, etc., then that
-          // should be the path.
+          // If the name starts with get/post/put/patch/delete/head, then
+          // that is the HTTP method and the rest is the path.
           var methodMatch = _methods.firstMatch(method.name);
           if (methodMatch != null) {
             var rest = method.name.replaceAll(_methods, '');
@@ -247,7 +247,11 @@ class Controller {
   /// ```
   FutureOr<void> configureRoutes(Routable routable) {}
 
-  static final RegExp _methods = RegExp(r'^(get|post|patch|delete)');
+  /// An HTTP verb at the start of a method name, as a whole word: `putUser`
+  /// and `put` match, but `posts`, `getter` and `headers` do not.
+  static final RegExp _methods = RegExp(
+    r'^(get|post|put|patch|delete|head)(?=[A-Z0-9_]|$)',
+  );
   static final RegExp _rgxMultipleUnderscores = RegExp(r'__+');
 
   /// Finds the [Expose] declaration for this class.

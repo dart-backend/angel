@@ -31,7 +31,8 @@ abstract class RequestContext<RawRequest> {
 
   final List<FutureOr<void> Function()> shutdownHooks = [];
 
-  String? _acceptHeaderCache, _extensionCache;
+  String? _extensionCache;
+  List<String>? _acceptRanges;
   bool? _acceptsAllCache;
   Map<String, dynamic>? _queryParameters;
   Object? _bodyObject;
@@ -212,12 +213,16 @@ abstract class RequestContext<RawRequest> {
   /// Returns `true` if the client's `Accept` header indicates that the given [contentType] is considered a valid response.
   ///
   /// You cannot provide a `null` [contentType].
-  /// If the `Accept` header's value is `*/*`, this method will always return `true`.
-  /// To ignore the wildcard (`*/*`), pass [strict] as `true`.
+  /// Without an `Accept` header, every type is accepted. Otherwise
+  /// [contentType] must match one of the header's media ranges: exactly,
+  /// through a type wildcard (`text/*` accepts `text/html`), or through
+  /// `*/*`. Ranges with `q=0` (explicitly unacceptable) never match.
+  /// To ignore the `*/*` wildcard, pass [strict] as `true`.
   ///
   /// [contentType] can be either of the following:
-  /// * A [ContentType], in which case the `Accept` header will be compared against its `mimeType` property.
-  /// * Any other Dart value, in which case the `Accept` header will be compared against the result of a `toString()` call.
+  /// * A [MediaType], whose `mimeType` is used.
+  /// * Any other Dart value, whose `toString()` is used (parameters such as
+  ///   `; charset=utf-8` are ignored).
   bool accepts(Object? contentType, {bool strict = false}) {
     var contentTypeString = contentType is MediaType
         ? contentType.mimeType
@@ -231,15 +236,54 @@ abstract class RequestContext<RawRequest> {
       );
     }
 
-    _acceptHeaderCache ??= headers?.value('accept');
+    var accepted = _acceptedRanges;
+    if (accepted == null) return true;
 
-    if (_acceptHeaderCache == null) {
-      return true;
-    } else if (strict != true && _acceptHeaderCache!.contains('*/*')) {
-      return true;
-    } else {
-      return _acceptHeaderCache!.contains(contentTypeString);
+    var wanted = contentTypeString.split(';').first.trim().toLowerCase();
+    if (wanted == '*/*') return !strict && accepted.contains('*/*');
+
+    var slash = wanted.indexOf('/');
+    var type = slash == -1 ? wanted : wanted.substring(0, slash);
+
+    for (var range in accepted) {
+      if (range == '*/*') {
+        if (!strict) return true;
+      } else if (range == wanted) {
+        return true;
+      } else if (range.endsWith('/*') &&
+          range.substring(0, range.length - 2) == type) {
+        return true;
+      }
     }
+    return false;
+  }
+
+  /// The media ranges of the `Accept` header, lowercased and without
+  /// parameters, excluding those with `q=0`; `null` without the header.
+  List<String>? get _acceptedRanges {
+    var cached = _acceptRanges;
+    if (cached != null) return cached;
+
+    var values = headers?['accept'];
+    if (values == null || values.isEmpty) return null;
+
+    return _acceptRanges = [
+      for (var item in values.join(',').split(',')) ?_parseAcceptRange(item),
+    ];
+  }
+
+  static final RegExp _qZero = RegExp(r'^q=0(\.0*)?$');
+
+  static String? _parseAcceptRange(String item) {
+    var parts = item.split(';');
+    var range = parts.first.trim().toLowerCase();
+    if (range.isEmpty) return null;
+    for (var param in parts.skip(1)) {
+      if (_qZero.hasMatch(param.replaceAll(' ', '').toLowerCase())) {
+        return null;
+      }
+    }
+    return range;
   }
 
   /// Returns as `true` if the client's `Accept` header indicates that it will accept any response content type.
@@ -358,7 +402,7 @@ abstract class RequestContext<RawRequest> {
     if (!_closed) {
       _closed = true;
       _acceptsAllCache = null;
-      _acceptHeaderCache = null;
+      _acceptRanges = null;
       serviceParams.clear();
       params.clear();
       await Future.forEach(shutdownHooks, (dynamic hook) => hook());

@@ -7,6 +7,7 @@ import 'package:belatuk_combinator/belatuk_combinator.dart';
 import 'package:stack_trace/stack_trace.dart';
 import 'package:tuple/tuple.dart';
 
+import '../util.dart';
 import 'core.dart';
 
 /// Base driver class for Angel implementations.
@@ -158,8 +159,6 @@ abstract class Driver<
 
   /// Handles a single request.
   Future handleRawRequest(Request request, Response response) {
-    app.logger.info('[Server] Called handleRawRequest');
-
     return createRequestContext(request, response).then((req) {
       return createResponseContext(request, response, req).then((res) {
         Future handle() {
@@ -174,11 +173,7 @@ abstract class Driver<
           >
           resolveTuple() {
             var r = app.optimizedRouter;
-            var resolved = r.resolveAbsolute(
-              path,
-              method: req.method,
-              strip: false,
-            );
+            var resolved = resolveRequest(r, path, req.method, strip: false);
             if (resolved.isEmpty) {
               throw AngelHttpException.notFound();
             }
@@ -497,7 +492,8 @@ abstract class Driver<
 
       setStatusCode(response, res.statusCode);
       addCookies(response, res.cookies);
-      writeToResponse(response, outputBuffer);
+      // HEAD responses carry headers only.
+      if (req.method != 'HEAD') writeToResponse(response, outputBuffer);
       return closeResponse(response).then(cleanup);
     });
   }

@@ -20,6 +20,7 @@ import 'compression_test.dart' as compression;
 import 'finalizers_test.dart' as finalizers;
 import 'hooked_test.dart' as hooked;
 import 'hostname_router_test.dart' as hostname_router;
+import 'http_semantics_test.dart' as http_semantics;
 import 'limits_test.dart' as limits;
 import 'logger_test.dart' as logger;
 import 'map_service_test.dart' as map_service;
@@ -65,6 +66,7 @@ void main() {
   group('finalizers', finalizers.main);
   group('hooked', hooked.main);
   group('hostname_router', hostname_router.main);
+  group('http_semantics', http_semantics.main);
   group('limits', limits.main);
   group('logger', logger.main);
   group('map_service', map_service.main);

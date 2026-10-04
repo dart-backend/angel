@@ -84,9 +84,12 @@ class Http2ResponseContext extends ResponseContext<ServerTransportStream> {
       // uncompressed size, so it must not accompany a compressed body.
       this.headers.remove('content-length');
       this.headers['content-encoding'] = encoding.name;
-      _encoderSink = encoding.encoder.startChunkedConversion(
-        _StreamDataSink(stream),
-      );
+      // A HEAD response has no body, so it gets no compressed framing.
+      if (!_omitBody) {
+        _encoderSink = encoding.encoder.startChunkedConversion(
+          _StreamDataSink(stream),
+        );
+      }
     }
 
     // Add all normal headers
@@ -164,7 +167,12 @@ class Http2ResponseContext extends ResponseContext<ServerTransportStream> {
     }
   }
 
+  /// A `HEAD` response carries the headers of the `GET` response but no body
+  /// (RFC 9110); unlike dart:io, package:http2 does not drop it for us.
+  bool get _omitBody => _req?.method == 'HEAD';
+
   void _write(List<int> data) {
+    if (_omitBody) return;
     var sink = _encoderSink;
     if (sink != null) {
       sink.add(data);

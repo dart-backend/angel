@@ -4,6 +4,7 @@ import 'package:angel3_container/angel3_container.dart';
 import 'package:angel3_route/angel3_route.dart';
 import 'package:logging/logging.dart';
 
+import '../util.dart';
 import 'env.dart';
 import 'hostname_parser.dart';
 import 'request_context.dart';
@@ -130,7 +131,7 @@ class HostnameRouter {
         var app = await _appFor(pattern);
 
         var r = app.optimizedRouter;
-        var resolved = r.resolveAbsolute(req.path, method: req.method);
+        var resolved = resolveRequest(r, req.path, req.method);
         for (var result in resolved) {
           req.params.addAll(result.allParams);
         }
