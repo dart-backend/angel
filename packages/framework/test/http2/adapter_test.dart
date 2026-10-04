@@ -224,6 +224,27 @@ void main() {
     });
   });
 
+  group('HEAD', () {
+    for (var encoding in ['identity', 'gzip']) {
+      test(
+        'is answered by the GET handler without a body ($encoding)',
+        () async {
+          var response = await client.head(
+            serverRoot,
+            headers: {'accept-encoding': encoding},
+          );
+          expect(response.statusCode, 200);
+          expect(response.bodyBytes, isEmpty);
+        },
+      );
+    }
+
+    test('still 404s when no GET route matches', () async {
+      var response = await client.head(serverRoot.replace(path: '/nowhere'));
+      expect(response.statusCode, 404);
+    });
+  });
+
   test('an invalid response header fails with a 500', () async {
     var response = await client.get(
       serverRoot.replace(path: '/bad-header'),
