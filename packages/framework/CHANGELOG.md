@@ -10,6 +10,7 @@
 * feat: Added `Angel.maxBodySize` and `RequestContext.maxBodySize`; `parseBody()` rejects larger bodies with 413. **Behaviour change:** the default limit is 10 MB (`Angel.defaultMaxBodySize`); set `app.maxBodySize = null` for no limit, or raise `req.maxBodySize` in middleware for upload routes
 * feat: Added `ResponseContext.runFinalizers()` and `hasPendingFinalizers`; finalizers now run at most once per response
 * feat: Added `Angel.maxHandlerCacheSize` (default 1024); the production route cache now evicts least recently used entries instead of growing with every distinct request path
+* feat: Added `ResponseContext.isValidHeaderName()`, `isValidHeaderValue()` and `validateHeaders()`
 * fix: An empty JSON array (`[]`) in the POST request body, no longer returns a 500 errer
 * fix: `_http` is now nullable and only closed if it was created.
 * fix: The default error handler now HTML-escapes the exception message and errors (XSS)
@@ -34,6 +35,8 @@
 * fix: HTTP/2 server pushes are no longer compressed without a `content-encoding` header
 * fix: A failure while closing an HTTP/1.1 response is now logged instead of terminating the server
 * fix: `responseFinalizers` now run on unbuffered responses (the default) too, just before headers are sent, so they can set headers, status and cookies. They still run after the handler, with the full body, on buffered responses. **Behaviour change:** finalizers that read `res.buffer` should check `res.isBuffered`
+* fix: An invalid response header (e.g. a non-ASCII value) now fails with a clear 500 naming the header, thrown where the header is set, on both transports. Previously HTTP/1.1 answered 400 with an empty body and HTTP/2 reset the stream
+* fix: The HTTP/2 `DARTSESSID` session cookie is now `Secure` and `HttpOnly`
 * refactor: The "no reflector" startup message is now logged at `info` instead of `warning`
 * refactor: When nothing matches, the driver now returns 404 instead of 500
 * refactor: With no container passed, it now falls back to the request's container

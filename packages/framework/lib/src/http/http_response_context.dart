@@ -82,6 +82,7 @@ class HttpResponseContext extends ResponseContext<HttpResponse> {
     if (!_streamInitialized) {
       // If this is the first stream added to this response,
       // then add headers, status code, etc.
+      validateHeaders();
       var encoding = selectedEncoder;
       if (encoding != null) {
         // A Content-Length set beforehand (e.g. by streamFile) describes the

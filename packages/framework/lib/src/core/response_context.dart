@@ -6,6 +6,7 @@ import 'dart:convert' as c show json;
 import 'dart:io' show BytesBuilder, Cookie;
 import 'dart:typed_data';
 
+import 'package:angel3_http_exception/angel3_http_exception.dart';
 import 'package:angel3_route/angel3_route.dart';
 import 'package:file/file.dart';
 import 'package:http_parser/http_parser.dart';
@@ -17,12 +18,13 @@ import 'server.dart' show Angel;
 
 final RegExp _straySlashes = RegExp(r'(^/+)|(/+$)');
 final RegExp _qZero = RegExp(r'^q=0(\.0*)?$');
+final RegExp _headerToken = RegExp(r"^[!#$%&'*+\-.^_`|~0-9A-Za-z]+$");
 
 /// A convenience wrapper around an outgoing HTTP request.
 abstract class ResponseContext<RawResponse>
     implements StreamConsumer<List<int>>, StreamSink<List<int>>, StringSink {
   final Map properties = {};
-  final CaseInsensitiveMap<String> _headers = CaseInsensitiveMap<String>.from({
+  final CaseInsensitiveMap<String> _headers = _ValidatingHeaders.from({
     'content-type': 'text/plain',
     'server': 'Angel3',
   });
@@ -45,6 +47,39 @@ abstract class ResponseContext<RawResponse>
   ///
   /// At most one encoder will ever be used to convert data.
   final Map<String, Converter<List<int>, List<int>>> encoders = {};
+
+  /// Whether [name] is a valid HTTP header name (an RFC 9110 token).
+  static bool isValidHeaderName(String name) =>
+      name.isNotEmpty && _headerToken.hasMatch(name);
+
+  /// Whether [value] can be sent as an HTTP header value: visible ASCII,
+  /// space and tab, the same rule `dart:io` enforces.
+  static bool isValidHeaderValue(String value) {
+    for (var c in value.codeUnits) {
+      if (c != 0x09 && (c < 0x20 || c > 0x7e)) return false;
+    }
+    return true;
+  }
+
+  /// Throws a 500 [AngelHttpException] naming any of [headers] that cannot
+  /// be sent, after removing them so that the error response can be.
+  ///
+  /// Called before headers are sent, so an invalid header set by the app
+  /// fails the same clear way on every transport.
+  void validateHeaders() {
+    var invalid = [
+      for (var name in headers.keys)
+        if (!isValidHeaderName(name) || !isValidHeaderValue(headers[name]!))
+          name,
+    ];
+    if (invalid.isEmpty) return;
+    invalid.forEach(headers.remove);
+    throw AngelHttpException(
+      message:
+          'Invalid response header ${invalid.map((n) => '"$n"').join(', ')}: '
+          'names must be tokens and values visible ASCII.',
+    );
+  }
 
   bool _finalizersStarted = false;
 
@@ -562,5 +597,26 @@ class _LockableBytesBuilderImpl implements LockableBytesBuilder {
   @override
   Uint8List toBytes() {
     return _buf.toBytes();
+  }
+}
+
+/// Response headers that reject a name or value which cannot be sent, at the
+/// point the app sets it, so the error surfaces in the handler rather than
+/// once output starts. [ResponseContext.validateHeaders] backs this up for
+/// map methods that bypass `[]=`.
+class _ValidatingHeaders extends CaseInsensitiveMap<String> {
+  _ValidatingHeaders.from(super.other) : super.from();
+
+  @override
+  void operator []=(String key, String value) {
+    if (!ResponseContext.isValidHeaderName(key) ||
+        !ResponseContext.isValidHeaderValue(value)) {
+      throw AngelHttpException(
+        message:
+            'Invalid response header "$key": names must be tokens and '
+            'values visible ASCII.',
+      );
+    }
+    super[key] = value;
   }
 }

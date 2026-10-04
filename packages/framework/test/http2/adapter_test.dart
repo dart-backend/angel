@@ -106,6 +106,11 @@ void main() {
 
     app.get('/session', (req, res) => req.session!.id);
 
+    app.get('/bad-header', (req, res) {
+      res.headers['x-name'] = 'café';
+      return 'body';
+    });
+
     app.get('/writes', (req, res) async {
       res
         ..write('Hello, ')
@@ -217,6 +222,26 @@ void main() {
 
       await shortLived.close();
     });
+  });
+
+  test('an invalid response header fails with a 500', () async {
+    var response = await client.get(
+      serverRoot.replace(path: '/bad-header'),
+      headers: {'accept': 'application/json'},
+    );
+    expect(response.statusCode, 500);
+    expect(
+      json.decode(response.body)['message'],
+      contains('Invalid response header'),
+    );
+  });
+
+  test('the session cookie is Secure and HttpOnly', () async {
+    var response = await client.get(serverRoot);
+    var cookie = response.headers['set-cookie']!;
+    expect(cookie, startsWith('DARTSESSID='));
+    expect(cookie, contains('Secure'));
+    expect(cookie, contains('HttpOnly'));
   });
 
   test('response finalizers run on unbuffered responses', () async {

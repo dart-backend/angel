@@ -32,7 +32,6 @@ void main() {
   });
 
   setUp(() async {
-
     app = Angel()
       ..encoders['gzip'] = gzip.encoder
       ..encoders['deflate'] = zlib.encoder

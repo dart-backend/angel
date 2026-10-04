@@ -440,6 +440,7 @@ abstract class Driver<
     return finalizers.then((_) {
       //if (res.isOpen) res.close();
 
+      res.validateHeaders();
       for (var key in res.headers.keys) {
         app.logger.fine("Response header key: $key");
         setHeader(response, key, res.headers[key] ?? '');

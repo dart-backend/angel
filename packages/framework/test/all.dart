@@ -27,6 +27,7 @@ import 'precontained_test.dart' as precontained;
 import 'primitives_test.dart' as primitives;
 import 'repeat_request_test.dart' as repeat_request;
 import 'req_shutdown_test.dart' as req_shutdown;
+import 'response_headers_test.dart' as response_headers;
 import 'routing_test.dart' as routing;
 import 'serialize_test.dart' as serialize;
 import 'server_test.dart' as server;
@@ -67,6 +68,7 @@ void main() {
   group('primitives', primitives.main);
   group('repeat_request', repeat_request.main);
   group('req_shutdown', req_shutdown.main);
+  group('response_headers', response_headers.main);
   group('routing', routing.main);
   group('serialize', serialize.main);
   group('server', server.main);

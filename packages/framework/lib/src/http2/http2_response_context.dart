@@ -74,6 +74,7 @@ class Http2ResponseContext extends ResponseContext<ServerTransportStream> {
   /// Write headers, status, etc. to the underlying [stream].
   bool _openStream() {
     if (_isPush || _streamInitialized) return false;
+    validateHeaders();
 
     var headers = <Header>[Header.ascii(':status', statusCode.toString())];
 
@@ -93,8 +94,13 @@ class Http2ResponseContext extends ResponseContext<ServerTransportStream> {
       headers.add(Header.ascii(key.toLowerCase(), this.headers[key]!));
     }
 
-    // Persist session ID
-    cookies.add(Cookie('DARTSESSID', _req!.session!.id));
+    // Persist session ID. HTTP/2 here always runs over TLS, so the cookie
+    // is Secure; HttpOnly keeps it from page scripts.
+    cookies.add(
+      Cookie('DARTSESSID', _req!.session!.id)
+        ..secure = true
+        ..httpOnly = true,
+    );
 
     // Send all cookies
     for (var cookie in cookies) {
@@ -240,7 +246,12 @@ class Http2ResponseContext extends ResponseContext<ServerTransportStream> {
     ];
 
     for (var key in headers.keys) {
-      h.add(Header.ascii(key, headers[key]!));
+      var value = headers[key]!;
+      if (!ResponseContext.isValidHeaderName(key) ||
+          !ResponseContext.isValidHeaderValue(value)) {
+        throw ArgumentError.value(key, 'headers', 'Invalid push header');
+      }
+      h.add(Header.ascii(key.toLowerCase(), value));
     }
 
     var s = stream.push(h);
