@@ -3,6 +3,13 @@
 ## 9.2.0
 
 * fix: `CacheService.read` now stores a cache miss with `cache.update`, under the requested id.
+* fix: `ResponseCache` now stores only responses that are safe to share: status 200, no cookies, and not marked `Cache-Control: no-store` or `private`. Requests with an `Authorization` header bypass the cache. Responses that are not cached no longer get `Cache-Control: public` headers
+* fix: `ResponseCache` memory is now bounded by `maxEntries` (default 1024), evicting expired then least recently used entries; previously every distinct URL (including query strings) added an entry and a lock that were never removed
+* fix: `CacheService` writes now update (`modify`, `update`) or evict (`remove`) the entry in the shared `cache` service, so other instances using the same cache no longer serve stale or deleted records
+* fix: `CacheService.update` now calls `database.update` instead of `database.modify`
+* fix: `CacheService.read` no longer throws on params without a `query`, uses the cache for reads without params, and falls back to the database when the cache is unavailable
+* feat: Added `ResponseCache(maxEntries: ...)`
+* chore: Removed the unused `pool` dependency
 
 ## 9.1.0
 

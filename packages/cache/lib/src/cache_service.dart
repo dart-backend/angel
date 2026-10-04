@@ -48,16 +48,21 @@ class CacheService<Id, Data> extends Service<Id, Data> {
       var expired = now.difference(cached.timestamp) >= timeout;
 
       if (!expired) {
-        // Read from the cache if necessary
+        // Read from the cache if the query matches. A missing query (e.g.
+        // a server-side call without params) matches another missing one.
         var queryEqual =
             ignoreParams == true ||
-            (cached.params != null &&
-                const MapEquality().equals(
-                  params['query'] as Map,
-                  cached.params['query'] as Map,
-                ));
+            const DeepCollectionEquality().equals(
+              params['query'],
+              (cached.params as Map?)?['query'],
+            );
         if (queryEqual) {
-          return await getCached();
+          try {
+            return await getCached();
+          } catch (_) {
+            // The cache no longer has the item (e.g. another instance
+            // evicted it after a write) or is unavailable: use the database.
+          }
         }
       }
     }
@@ -65,7 +70,11 @@ class CacheService<Id, Data> extends Service<Id, Data> {
     // If we haven't fetched from the cache by this point,
     // let's fetch from the database.
     var data = await getFresh();
-    await save(data, now);
+    try {
+      await save(data, now);
+    } catch (_) {
+      // A failing cache must not fail the read; the data is still valid.
+    }
     return data;
   }
 
@@ -77,7 +86,7 @@ class CacheService<Id, Data> extends Service<Id, Data> {
       () => database.index(params),
       () => _indexed?.data ?? [],
       (data, now) async {
-        _indexed = _CachedItem(params, now, data);
+        _indexed = _CachedItem(params ?? const {}, now, data);
         return data;
       },
     );
@@ -91,7 +100,7 @@ class CacheService<Id, Data> extends Service<Id, Data> {
       () => database.read(id, params),
       () => cache.read(id),
       (data, now) async {
-        _cache[id] = _CachedItem(params, now, data);
+        _cache[id] = _CachedItem(params ?? const {}, now, data);
         // update() stores the item under [id] even if the cache lacks it;
         // modify() (PATCH) does not create missing items.
         return await cache.update(id, data);
@@ -106,24 +115,51 @@ class CacheService<Id, Data> extends Service<Id, Data> {
   }
 
   @override
-  Future<Data> modify(Id id, Data data, [Map<String, dynamic>? params]) {
+  Future<Data> modify(Id id, Data data, [Map<String, dynamic>? params]) async {
     _indexed = null;
     _cache.remove(id);
-    return database.modify(id, data, params);
+    var result = await database.modify(id, data, params);
+    await _writeThrough(id, result);
+    return result;
   }
 
   @override
-  Future<Data> update(Id id, Data data, [Map<String, dynamic>? params]) {
+  Future<Data> update(Id id, Data data, [Map<String, dynamic>? params]) async {
     _indexed = null;
     _cache.remove(id);
-    return database.modify(id, data, params);
+    var result = await database.update(id, data, params);
+    await _writeThrough(id, result);
+    return result;
   }
 
   @override
-  Future<Data> remove(Id id, [Map<String, dynamic>? params]) {
+  Future<Data> remove(Id id, [Map<String, dynamic>? params]) async {
     _indexed = null;
     _cache.remove(id);
-    return database.remove(id, params);
+    var result = await database.remove(id, params);
+    await _evict(id);
+    return result;
+  }
+
+  /// Stores the database's new version of [id] in the shared [cache], so
+  /// that other instances using the same cache do not serve the old one.
+  Future<void> _writeThrough(Id id, Data data) async {
+    try {
+      await cache.update(id, data);
+    } catch (_) {
+      // If the cache cannot store it, at least do not leave the old version.
+      await _evict(id);
+    }
+  }
+
+  /// Removes [id] from the shared [cache], ignoring a missing entry or an
+  /// unavailable cache (reads fall back to the database).
+  Future<void> _evict(Id id) async {
+    try {
+      await cache.remove(id);
+    } catch (_) {
+      // Nothing cached, or the cache is unavailable.
+    }
   }
 }
 

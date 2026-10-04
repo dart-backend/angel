@@ -9,10 +9,9 @@ resolution: workspace
 environment:
   sdk: '>=3.13.0 <4.0.0'
 dependencies:
-  angel3_framework: ^9.0.0
+  angel3_framework: ^9.2.0
   collection: ^1.17.0
   meta: ^1.9.0
-  pool: ^1.5.0
   logging: ^1.2.0
 dev_dependencies:
   angel3_test: ^9.0.0
