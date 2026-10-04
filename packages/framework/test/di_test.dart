@@ -73,6 +73,25 @@ void main() {
     expect(text, json.encode('Hey!'));
   });
 
+  test('runContained without container uses request container', () async {
+    var app = Angel(reflector: MirrorsReflector());
+    app.container.registerSingleton(Todo(text: 'Hey!'));
+    String handler(Todo t) => t.text!;
+
+    app.get('/', (req, res) => app.runContained(handler, req, res));
+
+    // The second request takes the cached (pre-contained) injection path.
+    for (var i = 0; i < 2; i++) {
+      var rq = MockHttpRequest('GET', Uri(path: '/'));
+      await rq.close();
+      var rs = rq.response;
+      await AngelHttp(app).handleRequest(rq);
+      var text = await rs.transform(utf8.decoder).join();
+      expect(rs.statusCode, 200);
+      expect(text, json.encode('Hey!'));
+    }
+  });
+
   test('singleton in route', () async {
     validateTodoSingleton(await client.get(Uri.parse('$url/errands')));
   });

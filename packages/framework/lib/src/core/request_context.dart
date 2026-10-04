@@ -142,9 +142,7 @@ abstract class RequestContext<RawRequest> {
   List? get bodyAsList {
     if (!hasParsedBody) {
       throw StateError('The request body has not been parsed yet.');
-      // TODO: Relook at this
-      //} else if (_bodyList == null) {
-    } else if (_bodyList.isEmpty) {
+    } else if (_bodyObject is! List) {
       throw StateError('The request body, $_bodyObject, is not a List.');
     }
 

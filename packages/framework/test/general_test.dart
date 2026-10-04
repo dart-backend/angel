@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:angel3_container/mirrors.dart';
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_framework/http.dart';
+import 'package:angel3_mock_request/angel3_mock_request.dart';
 
 import 'dart:convert';
 
@@ -37,5 +38,17 @@ void main() {
     );
     print('Response: ${response.body}');
     expect(json.decode(response.body), equals({'hello': 'world'}));
+  });
+
+  test('unmatched route without fallback returns 404', () async {
+    var app = Angel()..get('/foo', (req, res) => 'foo');
+    var rq = MockHttpRequest('GET', Uri(path: '/bar'))
+      ..headers.set('accept', 'application/json');
+    await rq.close();
+    await AngelHttp(app).handleRequest(rq);
+    var rs = rq.response;
+    var body = await rs.transform(utf8.decoder).join();
+    expect(rs.statusCode, 404);
+    expect(json.decode(body)['status_code'], 404);
   });
 }

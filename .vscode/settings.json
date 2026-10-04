@@ -14,5 +14,6 @@
     "editor.codeActionsOnSave": {
       "source.fixAll.markdownlint": "explicit"
     },
-  "cmake.configureOnOpen": false
+  "cmake.configureOnOpen": false,
+  "robotcode.disableExtension": true
 }

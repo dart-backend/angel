@@ -1,5 +1,12 @@
 # Change Log
 
+## 9.1.2
+
+* refactor: when no fallback route is registered, returns 404 instad of 500
+* refactor: Calling `Angel.runContained` without a container will now fall back to the request container
+* fix: `RequestContext.bodyAsList` no longer return 500 on an empty JSON array (`[]`) in the POST request body
+* fix: `AngelHttp2.close()` no longer throws `LateInitializationError` when `allowHttp1` is `false`
+
 ## 9.1.1
 
 * Updated README with new links to templates

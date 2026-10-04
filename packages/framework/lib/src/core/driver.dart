@@ -140,6 +140,9 @@ abstract class Driver<
               method: req.method,
               strip: false,
             );
+            if (resolved.isEmpty) {
+              throw AngelHttpException.notFound();
+            }
             var pipeline = MiddlewarePipeline<RequestHandler>(resolved);
             return Tuple4(
               pipeline.handlers,
@@ -147,7 +150,6 @@ abstract class Driver<
                 <String, dynamic>{},
                 (out, r) => out..addAll(r.allParams),
               ),
-              //(resolved.isEmpty ? null : resolved.first.parseResult),
               resolved.first.parseResult,
               pipeline,
             );

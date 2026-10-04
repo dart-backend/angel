@@ -123,6 +123,16 @@ void main() {
     expect(response.body, 'Hello world');
   });
 
+  test('close without allowHttp1', () async {
+    var ctx = SecurityContext()
+      ..useCertificateChain('dev.pem')
+      ..usePrivateKey('dev.key', password: 'dartdart')
+      ..setAlpnProtocols(['h2'], true);
+    var h2Only = AngelHttp2(Angel(), ctx);
+    await h2Only.startServer();
+    await expectLater(h2Only.close(), completes);
+  });
+
   test('allowHttp1', () async {
     var response = await h1c.get(serverRoot);
     expect(response.body, 'Hello world');

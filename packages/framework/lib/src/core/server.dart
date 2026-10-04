@@ -369,7 +369,8 @@ class Angel extends Routable {
     ResponseContext res, [
     Container? container,
   ]) {
-    container ??= Container(EmptyReflector());
+    // A null container falls back to `req.container` (see [resolveInjection]
+    // and [runReflected]), which carries the app's reflector and singletons.
     return Future.sync(() {
       if (_preContained.containsKey(handler)) {
         return handleContained(handler, _preContained[handler]!, container)(

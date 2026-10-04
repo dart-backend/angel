@@ -32,7 +32,7 @@ class AngelHttp2
           Http2ResponseContext
         > {
   final ServerSettings? settings;
-  late AngelHttp _http;
+  AngelHttp? _http;
   final StreamController<HttpRequest> _onHttp1 = StreamController();
   final Map<String, MockHttpSession> _sessions = {};
   final Uuid _uuid = Uuid();
@@ -48,8 +48,8 @@ class AngelHttp2
     this.settings,
   ) : super(app, serverGenerator, useZone: useZone) {
     if (allowHttp1) {
-      _http = AngelHttp(app, useZone: useZone);
-      onHttp1.listen(_http.handleRequest);
+      final http = _http = AngelHttp(app, useZone: useZone);
+      onHttp1.listen(http.handleRequest);
     }
   }
 
@@ -111,7 +111,7 @@ class AngelHttp2
   @override
   Future<void> close() async {
     await _artificial?.close();
-    await _http.close();
+    await _http?.close();
     return await super.close();
   }
 
