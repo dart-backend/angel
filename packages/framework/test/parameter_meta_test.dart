@@ -94,8 +94,7 @@ void parameterMetaTests() {
     var rq = MockHttpRequest('GET', Uri.parse('/header'));
     await rq.close();
     var rs = rq.response;
-    //TODO: Using await will hang. To be resolved.
-    http.handleRequest(rq);
+    await http.handleRequest(rq);
 
     await printResponse(rs);
     expect(rs.statusCode, 400);
@@ -118,7 +117,7 @@ void parameterMetaTests() {
     var rq = MockHttpRequest('GET', Uri.parse('/cookie'));
     await rq.close();
     var rs = rq.response;
-    unawaited(http.handleRequest(rq));
+    await http.handleRequest(rq);
 
     await printResponse(rs);
     expect(rs.statusCode, 400);
@@ -128,7 +127,7 @@ void parameterMetaTests() {
       ..cookies.add(Cookie('token', 'abc'));
     await rq.close();
     rs = rq.response;
-    unawaited(http.handleRequest(rq));
+    await http.handleRequest(rq);
 
     var body = await readResponse(rs);
     expect(rs.statusCode, 200);

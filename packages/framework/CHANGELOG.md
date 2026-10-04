@@ -37,6 +37,7 @@
 * fix: `responseFinalizers` now run on unbuffered responses (the default) too, just before headers are sent, so they can set headers, status and cookies. They still run after the handler, with the full body, on buffered responses. **Behaviour change:** finalizers that read `res.buffer` should check `res.isBuffered`
 * fix: An invalid response header (e.g. a non-ASCII value) now fails with a clear 500 naming the header, thrown where the header is set, on both transports. Previously HTTP/1.1 answered 400 with an empty body and HTTP/2 reset the stream
 * fix: The HTTP/2 `DARTSESSID` session cookie is now `Secure` and `HttpOnly`
+* fix: The future returned by `handleRequest`/`handleRawRequest` now completes after the error response is sent when a handler throws (with `useZone: true`, the default), instead of never completing
 * refactor: The "no reflector" startup message is now logged at `info` instead of `warning`
 * refactor: When nothing matches, the driver now returns 404 instead of 500
 * refactor: With no container passed, it now falls back to the request's container

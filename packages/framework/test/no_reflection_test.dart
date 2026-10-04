@@ -34,9 +34,7 @@ void main() {
         ..write(json.encode(body));
     }
     await rq.close();
-    // Wait on the response rather than handleRequest: when a handler throws,
-    // the zone-based error path sends the 500 but never completes that future.
-    unawaited(http.handleRequest(rq));
+    await http.handleRequest(rq);
     var text = await rq.response.transform(utf8.decoder).join();
     return (rq.response.statusCode, text.isEmpty ? null : json.decode(text));
   }

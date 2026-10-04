@@ -36,9 +36,7 @@ void main() {
         ..write(body);
       if (declaredLength != null) rq.headers.contentLength = declaredLength;
       await rq.close();
-      // When a handler throws, handleRequest never completes; wait on the
-      // response instead.
-      unawaited(http.handleRequest(rq));
+      await http.handleRequest(rq);
       await rq.response.drain<void>();
       return rq.response.statusCode;
     }
@@ -124,7 +122,7 @@ void main() {
     Future<String> get(String path) async {
       var rq = MockHttpRequest('GET', Uri(path: path));
       await rq.close();
-      unawaited(http.handleRequest(rq));
+      await http.handleRequest(rq);
       return await rq.response.transform(utf8.decoder).join();
     }
 

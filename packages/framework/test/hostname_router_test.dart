@@ -39,7 +39,7 @@ void main() {
   Future<String> get(String path, {required String host}) async {
     var rq = MockHttpRequest('GET', Uri(path: path))..headers.set('host', host);
     await rq.close();
-    unawaited(http.handleRequest(rq));
+    await http.handleRequest(rq);
     return json.decode(await rq.response.transform(utf8.decoder).join())
         as String;
   }

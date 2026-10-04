@@ -254,6 +254,15 @@ abstract class Driver<
                 );
               });
         } else {
+          // Completed explicitly once the request is done: an error inside
+          // the request's error zone never reaches listeners outside it, so
+          // a future returned from the zone would never complete whenever a
+          // handler throws.
+          var done = Completer<void>();
+          void finish() {
+            if (!done.isCompleted) done.complete();
+          }
+
           var zoneSpec = ZoneSpecification(
             print: (self, parent, zone, line) {
               app.logger.info(line);
@@ -263,40 +272,42 @@ abstract class Driver<
 
               // TODO: To be revisited
               Future(() {
-                AngelHttpException e;
+                    AngelHttpException e;
 
-                if (error is FormatException) {
-                  e = AngelHttpException.badRequest(message: error.message);
-                } else if (error is AngelHttpException) {
-                  e = error;
-                } else {
-                  e = AngelHttpException(
-                    stackTrace: stackTrace,
-                    message: error.toString(),
-                  );
-                }
+                    if (error is FormatException) {
+                      e = AngelHttpException.badRequest(message: error.message);
+                    } else if (error is AngelHttpException) {
+                      e = error;
+                    } else {
+                      e = AngelHttpException(
+                        stackTrace: stackTrace,
+                        message: error.toString(),
+                      );
+                    }
 
-                app.logger.severe(e.message, error, trace);
+                    app.logger.severe(e.message, error, trace);
 
-                return handleAngelHttpException(
-                  e,
-                  trace,
-                  req,
-                  res,
-                  request,
-                  response,
-                );
-              }).catchError((e, StackTrace st) {
-                var trace = Trace.from(st).terse;
-                closeResponse(response);
-                // Ideally, we won't be in a position where an absolutely fatal error occurs,
-                // but if so, we'll need to log it.
-                app.logger.severe(
-                  'Fatal error occurred when processing $uri.',
-                  e,
-                  trace,
-                );
-              });
+                    return handleAngelHttpException(
+                      e,
+                      trace,
+                      req,
+                      res,
+                      request,
+                      response,
+                    );
+                  })
+                  .catchError((e, StackTrace st) {
+                    var trace = Trace.from(st).terse;
+                    closeResponse(response);
+                    // Ideally, we won't be in a position where an absolutely fatal error occurs,
+                    // but if so, we'll need to log it.
+                    app.logger.severe(
+                      'Fatal error occurred when processing $uri.',
+                      e,
+                      trace,
+                    );
+                  })
+                  .whenComplete(finish);
             },
           );
 
@@ -308,11 +319,13 @@ abstract class Driver<
           // so use a try/catch, and recover when need be.
 
           try {
-            return zone.run(handle);
+            // On failure the error goes to handleUncaughtError, which
+            // finishes once the error response has been sent.
+            zone.run(() => handle().then((_) => finish()));
           } catch (e, st) {
             zone.handleUncaughtError(e, st);
-            return Future.value();
           }
+          return done.future;
         }
       });
     });
