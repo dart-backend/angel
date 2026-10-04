@@ -92,7 +92,9 @@ class CacheService<Id, Data> extends Service<Id, Data> {
       () => cache.read(id),
       (data, now) async {
         _cache[id] = _CachedItem(params, now, data);
-        return await cache.modify(id, data);
+        // update() stores the item under [id] even if the cache lacks it;
+        // modify() (PATCH) does not create missing items.
+        return await cache.update(id, data);
       },
     );
   }

@@ -1,5 +1,9 @@
 # Change Log
 
+## 9.2.0
+
+* fix: `CacheService.read` now stores a cache miss with `cache.update`, under the requested id.
+
 ## 9.1.0
 
 * Require Dart >= 3.13
