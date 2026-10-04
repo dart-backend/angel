@@ -35,8 +35,19 @@ class AngelHttp2
   AngelHttp? _http;
   final StreamController<HttpRequest> _onHttp1 = StreamController();
   final Map<String, MockHttpSession> _sessions = {};
+  final Map<String, DateTime> _sessionLastSeen = {};
+  DateTime _lastSessionPrune = DateTime.now();
   final Uuid _uuid = Uuid();
   _AngelHttp2ServerSocket? _artificial;
+
+  /// How long a session may go unused before it is discarded.
+  ///
+  /// Expired sessions are pruned periodically (at least every minute, or
+  /// every [sessionTimeout] if shorter), so the session store does not grow
+  /// without bound. Defaults to 20 minutes, like `dart:io`'s `HttpServer`.
+  final Duration sessionTimeout;
+
+  static const Duration _maxPruneInterval = Duration(minutes: 1);
 
   SecureServerSocket? get socket => _artificial;
 
@@ -46,6 +57,7 @@ class AngelHttp2
     bool useZone,
     bool allowHttp1,
     this.settings,
+    this.sessionTimeout,
   ) : super(app, serverGenerator, useZone: useZone) {
     if (allowHttp1) {
       final http = _http = AngelHttp(app, useZone: useZone);
@@ -59,13 +71,16 @@ class AngelHttp2
     bool useZone = true,
     bool allowHttp1 = false,
     ServerSettings? settings,
+    Duration sessionTimeout = const Duration(minutes: 20),
   }) {
     return AngelHttp2.custom(
       app,
       securityContext,
       SecureServerSocket.bind,
+      useZone: useZone,
       allowHttp1: allowHttp1,
       settings: settings,
+      sessionTimeout: sessionTimeout,
     );
   }
 
@@ -81,6 +96,7 @@ class AngelHttp2
     bool useZone = true,
     bool allowHttp1 = false,
     ServerSettings? settings,
+    Duration sessionTimeout = const Duration(minutes: 20),
   }) {
     return AngelHttp2._(
       app,
@@ -93,6 +109,7 @@ class AngelHttp2
       useZone,
       allowHttp1,
       settings,
+      sessionTimeout,
     );
   }
 
@@ -133,8 +150,34 @@ class AngelHttp2
   Future<Http2RequestContext> createRequestContext(
     Socket request,
     ServerTransportStream response,
-  ) {
-    return Http2RequestContext.from(response, request, app, _sessions, _uuid);
+  ) async {
+    _pruneSessions();
+    var req = await Http2RequestContext.from(
+      response,
+      request,
+      app,
+      _sessions,
+      _uuid,
+    );
+    var sessionId = req.session?.id;
+    if (sessionId != null) _sessionLastSeen[sessionId] = DateTime.now();
+    return req;
+  }
+
+  /// Discards sessions unused for longer than [sessionTimeout].
+  void _pruneSessions() {
+    var now = DateTime.now();
+    var interval = sessionTimeout < _maxPruneInterval
+        ? sessionTimeout
+        : _maxPruneInterval;
+    if (now.difference(_lastSessionPrune) < interval) return;
+    _lastSessionPrune = now;
+
+    _sessionLastSeen.removeWhere((id, lastSeen) {
+      var expired = now.difference(lastSeen) > sessionTimeout;
+      if (expired) _sessions.remove(id);
+      return expired;
+    });
   }
 
   @override

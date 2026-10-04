@@ -6,10 +6,11 @@
 * feat: Added `Controller(expose: ...)` to set the mount path without an `@Expose` annotation; without reflection, controllers apply the routes from `configureRoutes`
 * feat: Added `ioc(..., injection: InjectionRequest)` for dependency injection without reflecting on the handler
 * feat: Added `example/no_mirrors.dart`, an app that compiles with `dart compile exe`
+* feat: Added `AngelHttp2(sessionTimeout: ...)`; idle HTTP/2 sessions are now discarded (default 20 minutes) instead of being kept forever
 * refactor: The "no reflector" startup message is now logged at `info` instead of `warning`
 * refactor: When nothing matches, the driver now returns 404 instead of 500
 * refactor: With no container passed, it now falls back to the request's container
-* fix: An empty JSON array (`[]`) in the POST request body,no longer returns a 500 errer
+* fix: An empty JSON array (`[]`) in the POST request body, no longer returns a 500 errer
 * fix: `_http` is now nullable and only closed if it was created.
 * fix: The default error handler now HTML-escapes the exception message and errors (XSS)
 * fix: `res.redirect()` now escapes the URL in the HTML fallback page and no longer emits `javascript:`, `vbscript:` or `data:` URLs there (XSS)
@@ -17,6 +18,12 @@
 * fix: `HookedService.afterAllStream()` now emits after-events instead of before-events
 * fix: A missing `@CookieValue` now uses its `defaultValue` or returns 400, instead of a 500 error
 * fix: `DELETE /` on a service now requests "remove all" (id `'null'`), subject to `allowRemoveAll`; services with non-String ids return 405 instead of a 500 error
+* fix: An HTTP/2 request with a malformed header value (e.g. a bare `%`) no longer crashes the server process
+* fix: HTTP/2 header values are no longer percent-decoded or split on commas
+* fix: `req.hostname` over HTTP/2 now comes from the `:authority` header instead of always being `localhost`
+* fix: HTTP/2 sessions are now reused across requests via the `DARTSESSID` cookie; unknown session ids get a new session instead of being adopted
+* fix: Errors raised while creating a request context, or on an HTTP/2 connection, are now logged instead of terminating the server
+* fix: `AngelHttp2(...)` now passes its `useZone` argument through
 
 ## 9.1.1
 

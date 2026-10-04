@@ -99,6 +99,12 @@ void main() {
       return req.queryParameters;
     });
 
+    app.get('/echo-header', (req, res) => req.headers!.value('x-test'));
+
+    app.get('/hostname', (req, res) => req.hostname);
+
+    app.get('/session', (req, res) => req.session!.id);
+
     var ctx = SecurityContext()
       ..useCertificateChain('dev.pem')
       ..usePrivateKey('dev.key', password: 'dartdart')
@@ -121,6 +127,82 @@ void main() {
   test('buffered response', () async {
     var response = await client.get(serverRoot);
     expect(response.body, 'Hello world');
+  });
+
+  group('headers', () {
+    // A bare '%' used to throw outside the error zone and kill the server.
+    for (var value in ['100%', 'a%20b', 'x, y', '%zz']) {
+      test('passes "$value" through unchanged', () async {
+        var response = await client.get(
+          serverRoot.replace(path: '/echo-header'),
+          headers: {'x-test': value},
+        );
+        expect(response.statusCode, 200);
+        expect(response.body, json.encode(value));
+      });
+    }
+
+    test('server keeps serving after a malformed header', () async {
+      await client.get(
+        serverRoot.replace(path: '/echo-header'),
+        headers: {'x-test': '100%'},
+      );
+      var response = await client.get(serverRoot);
+      expect(response.body, 'Hello world');
+    });
+
+    test('hostname comes from :authority', () async {
+      var response = await client.get(serverRoot.replace(path: '/hostname'));
+      expect(json.decode(response.body), serverRoot.authority);
+    });
+  });
+
+  group('sessions', () {
+    Future<String> sessionId({String? cookie}) async {
+      var response = await client.get(
+        serverRoot.replace(path: '/session'),
+        headers: {'cookie': ?cookie},
+      );
+      return json.decode(response.body) as String;
+    }
+
+    test('are reused when the client sends DARTSESSID', () async {
+      var first = await sessionId();
+      var second = await sessionId(cookie: 'DARTSESSID=$first');
+      expect(second, first);
+    });
+
+    test('do not adopt an unknown client-chosen id', () async {
+      var id = await sessionId(cookie: 'DARTSESSID=attacker-chosen');
+      expect(id, isNot('attacker-chosen'));
+    });
+
+    test('expire after sessionTimeout', () async {
+      var shortApp = Angel()..get('/session', (req, res) => req.session!.id);
+      var ctx = SecurityContext()
+        ..useCertificateChain('dev.pem')
+        ..usePrivateKey('dev.key', password: 'dartdart')
+        ..setAlpnProtocols(['h2'], true);
+      var shortLived = AngelHttp2(
+        shortApp,
+        ctx,
+        sessionTimeout: const Duration(milliseconds: 100),
+      );
+      var server = await shortLived.startServer();
+      var url = Uri.parse('https://127.0.0.1:${server.port}/session');
+
+      Future<String> get({String? cookie}) async => json.decode(
+        (await client.get(url, headers: {'cookie': ?cookie})).body,
+      ) as String;
+
+      var first = await get();
+      expect(await get(cookie: 'DARTSESSID=$first'), first);
+
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+      expect(await get(cookie: 'DARTSESSID=$first'), isNot(first));
+
+      await shortLived.close();
+    });
   });
 
   test('close without allowHttp1', () async {

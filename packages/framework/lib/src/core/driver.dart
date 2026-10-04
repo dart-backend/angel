@@ -52,10 +52,29 @@ abstract class Driver<
             app.optimizeForProduction();
             _sub = this.server?.listen((request) {
               var stream = createResponseStreamFromRawRequest(request);
-              stream.listen((response) {
-                // TODO: To be revisited
-                handleRawRequest(request, response);
-              });
+              // Errors here happen outside the per-request error zone (e.g. a
+              // malformed request that cannot become a RequestContext, or a
+              // broken HTTP/2 connection). Left unhandled they would
+              // terminate the whole server, so log them and drop the request.
+              stream.listen(
+                (response) {
+                  handleRawRequest(request, response).catchError((
+                    Object e,
+                    StackTrace st,
+                  ) {
+                    app.logger.warning('Failed to handle request', e, st);
+                    try {
+                      setStatusCode(response, 400);
+                      closeResponse(response);
+                    } catch (_) {
+                      // The response may already be unusable.
+                    }
+                  });
+                },
+                onError: (Object e, StackTrace st) {
+                  app.logger.warning('Connection error', e, st);
+                },
+              );
             });
             return Future.value(this.server!);
           });
