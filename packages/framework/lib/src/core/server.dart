@@ -66,6 +66,16 @@ Future<bool> _defaultErrorHandler(
   }
 }
 
+/// Name of the logger used by apps that are not given one.
+const String _defaultLoggerName = 'ROOT';
+
+/// The single listener that prints the default logger's records.
+///
+/// Shared by every app in the process: one listener per app printed each
+/// line once per app. It is reinstalled if something clears the root
+/// logger's listeners.
+StreamSubscription<LogRecord>? _defaultPrinter;
+
 /// Default ROOT level logger
 Logger _defaultLogger() {
   // Print through the root zone: request zones redirect `print` to
@@ -74,24 +84,28 @@ Logger _defaultLogger() {
   // logger while it is still emitting ("Cannot fire new event").
   void print(Object? line) => Zone.root.print('$line');
 
-  Logger logger = Logger('ROOT')
-    ..onRecord.listen((rec) {
-      if (rec.error == null) {
-        print(rec.message);
-      }
-
-      if (rec.error != null) {
-        var err = rec.error;
-        if (err is AngelHttpException && err.statusCode != 500) return;
-        print('${rec.message} \n');
-        print(rec.error);
-        if (rec.stackTrace != null) {
-          print(rec.stackTrace);
+  // Listen on the root logger, which receives this logger's records whether
+  // or not hierarchical logging is enabled, but print only this logger's
+  // records: not those of every other library in the process.
+  _defaultPrinter ??= Logger.root.onRecord
+      .where((rec) => rec.loggerName == _defaultLoggerName)
+      .listen((rec) {
+        if (rec.error == null) {
+          print(rec.message);
         }
-      }
-    });
 
-  return logger;
+        if (rec.error != null) {
+          var err = rec.error;
+          if (err is AngelHttpException && err.statusCode != 500) return;
+          print('${rec.message} \n');
+          print(rec.error);
+          if (rec.stackTrace != null) {
+            print(rec.stackTrace);
+          }
+        }
+      }, onDone: () => _defaultPrinter = null);
+
+  return Logger(_defaultLoggerName);
 }
 
 /// A powerful real-time/REST/MVC server class.
@@ -177,9 +191,12 @@ class Angel extends Routable {
 
   /// Assign a custom logger.
   /// Passing null will reset to default logger
+  ///
+  /// Listeners are left alone: the default logger's printer is shared by all
+  /// apps, and `clearListeners()` on a non-root logger clears the *root*
+  /// logger's listeners (unless hierarchical logging is enabled), which
+  /// would silently remove the application's own log handlers.
   set logger(Logger? log) {
-    _logger.clearListeners();
-
     _logger = log ?? _defaultLogger();
   }
 

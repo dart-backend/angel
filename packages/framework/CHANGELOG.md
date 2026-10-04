@@ -34,6 +34,7 @@
 * fix: The future returned by `handleRequest`/`handleRawRequest` now completes after the error response is sent when a handler throws an error, instead of never completing
 * fix: The `no reflector` startup message is now logged at `info` instead of `warning` as it is not longer a mandatory requirement to use Angel3
 * fix: When nothing matches, the driver now returns 404 instead of 500
+* fix: The application and default logger now prints their record only once. Creating an app with a custom logger, or setting `app.logger`, no longer removes the application's own `Logger.root` listeners
 * refactor: With no container passed, it now falls back to the request's container
 * refactor: Resolved various issues with `MapService`
 * refactor: Consolidated multiple copies of the encoder selection logic

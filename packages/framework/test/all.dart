@@ -20,6 +20,7 @@ import 'finalizers_test.dart' as finalizers;
 import 'hooked_test.dart' as hooked;
 import 'hostname_router_test.dart' as hostname_router;
 import 'limits_test.dart' as limits;
+import 'logger_test.dart' as logger;
 import 'map_service_test.dart' as map_service;
 import 'no_reflection_test.dart' as no_reflection;
 import 'parameter_meta_test.dart' as parameter_meta;
@@ -63,6 +64,7 @@ void main() {
   group('hooked', hooked.main);
   group('hostname_router', hostname_router.main);
   group('limits', limits.main);
+  group('logger', logger.main);
   group('map_service', map_service.main);
   group('no_reflection', no_reflection.main);
   group('parameter_meta', parameter_meta.main);
