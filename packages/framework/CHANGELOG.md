@@ -9,9 +9,6 @@
 * feat: Added `AngelHttp2(sessionTimeout: ...)`; idle HTTP/2 sessions are now discarded (default 20 minutes) instead of being kept forever
 * feat: Added `Angel.maxBodySize` and `RequestContext.maxBodySize`; `parseBody()` rejects larger bodies with 413. **Behaviour change:** the default limit is 10 MB (`Angel.defaultMaxBodySize`); set `app.maxBodySize = null` for no limit, or raise `req.maxBodySize` in middleware for upload routes
 * feat: Added `Angel.maxHandlerCacheSize` (default 1024); the production route cache now evicts least recently used entries instead of growing with every distinct request path
-* refactor: The "no reflector" startup message is now logged at `info` instead of `warning`
-* refactor: When nothing matches, the driver now returns 404 instead of 500
-* refactor: With no container passed, it now falls back to the request's container
 * fix: An empty JSON array (`[]`) in the POST request body, no longer returns a 500 errer
 * fix: `_http` is now nullable and only closed if it was created.
 * fix: The default error handler now HTML-escapes the exception message and errors (XSS)
@@ -30,6 +27,15 @@
 * fix: `HostnameRouter` now passes route parameters (e.g. `:id`) to the sub-app's handlers
 * fix: `HostnameRouter` creates each lazily-built app once, even when several requests arrive before creation finishes
 * fix: Creating an `Angel` inside a request (e.g. via `HostnameRouter.configure`) no longer makes the default logger throw "Cannot fire new event"
+* fix: `res.streamFile()` with a response encoder (e.g. gzip) no longer sends the uncompressed `Content-Length`, which crashed the server process; this also affects `angel3_static`
+* fix: Unbuffered responses with several `write()` calls are now compressed as one gzip/deflate stream instead of one per write
+* fix: Response encoders now skip encodings the client marks `q=0` in `Accept-Encoding`
+* fix: HTTP/2 server pushes are no longer compressed without a `content-encoding` header
+* fix: A failure while closing an HTTP/1.1 response is now logged instead of terminating the server
+* refactor: The "no reflector" startup message is now logged at `info` instead of `warning`
+* refactor: When nothing matches, the driver now returns 404 instead of 500
+* refactor: With no container passed, it now falls back to the request's container
+* refactor: Added `ResponseContext.selectedEncoder` and `ResponseContext.selectEncoder()`, replacing four copies of the encoder selection logic
 
 ## 9.1.1
 

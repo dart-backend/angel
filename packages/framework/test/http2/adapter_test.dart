@@ -11,6 +11,7 @@ import 'package:http/src/multipart_file.dart' as http;
 import 'package:http/src/multipart_request.dart' as http;
 import 'package:http/io_client.dart';
 import 'package:http2/transport.dart';
+import 'package:file/local.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:logging/logging.dart';
 import 'package:test/test.dart';
@@ -104,6 +105,19 @@ void main() {
     app.get('/hostname', (req, res) => req.hostname);
 
     app.get('/session', (req, res) => req.session!.id);
+
+    app.get('/writes', (req, res) async {
+      res
+        ..write('Hello, ')
+        ..write('world!');
+      await res.close();
+    });
+
+    app.get(
+      '/file',
+      (req, res) =>
+          res.streamFile(const LocalFileSystem().file('pubspec.yaml')),
+    );
 
     var ctx = SecurityContext()
       ..useCertificateChain('dev.pem')
@@ -245,6 +259,36 @@ void main() {
       //print(response.body);
       var decoded = gzip.decode(response.bodyBytes);
       expect(utf8.decode(decoded), jfk);
+    });
+
+    test('multiple writes produce one gzip stream', () async {
+      var response = await client.get(
+        serverRoot.replace(path: '/writes'),
+        headers: {'accept-encoding': 'gzip'},
+      );
+      expect(response.headers['content-encoding'], 'gzip');
+      var bytes = response.bodyBytes;
+      var members = 0;
+      for (var i = 0; i + 2 < bytes.length; i++) {
+        if (bytes[i] == 0x1f && bytes[i + 1] == 0x8b && bytes[i + 2] == 8) {
+          members++;
+        }
+      }
+      expect(members, 1);
+      expect(utf8.decode(gzip.decode(bytes)), 'Hello, world!');
+    });
+
+    test('streamFile sends no stale Content-Length', () async {
+      var response = await client.get(
+        serverRoot.replace(path: '/file'),
+        headers: {'accept-encoding': 'gzip'},
+      );
+      expect(response.headers['content-encoding'], 'gzip');
+      expect(response.headers['content-length'], isNull);
+      expect(
+        utf8.decode(gzip.decode(response.bodyBytes)),
+        File('pubspec.yaml').readAsStringSync(),
+      );
     });
   });
 

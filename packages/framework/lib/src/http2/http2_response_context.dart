@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io' hide BytesBuilder;
 import 'dart:typed_data';
 
@@ -78,24 +77,15 @@ class Http2ResponseContext extends ResponseContext<ServerTransportStream> {
 
     var headers = <Header>[Header.ascii(':status', statusCode.toString())];
 
-    if (encoders.isNotEmpty && correspondingRequest != null) {
-      if (_allowedEncodings != null) {
-        for (var encodingName in _allowedEncodings!) {
-          Converter<List<int>, List<int>>? encoder;
-          var key = encodingName;
-
-          if (encoders.containsKey(encodingName)) {
-            encoder = encoders[encodingName];
-          } else if (encodingName == '*') {
-            encoder = encoders[key = encoders.keys.first];
-          }
-
-          if (encoder != null) {
-            this.headers['content-encoding'] = key;
-            break;
-          }
-        }
-      }
+    var encoding = selectedEncoder;
+    if (encoding != null) {
+      // A Content-Length set beforehand (e.g. by streamFile) describes the
+      // uncompressed size, so it must not accompany a compressed body.
+      this.headers.remove('content-length');
+      this.headers['content-encoding'] = encoding.name;
+      _encoderSink = encoding.encoder.startChunkedConversion(
+        _StreamDataSink(stream),
+      );
     }
 
     // Add all normal headers
@@ -115,50 +105,14 @@ class Http2ResponseContext extends ResponseContext<ServerTransportStream> {
     return _streamInitialized = true;
   }
 
-  Iterable<String>? __allowedEncodings;
-
-  Iterable<String>? get _allowedEncodings {
-    return __allowedEncodings ??= correspondingRequest?.headers
-        ?.value('accept-encoding')
-        ?.split(',')
-        .map((s) => s.trim())
-        .where((s) => s.isNotEmpty)
-        .map((str) {
-          // Ignore quality specifications in accept-encoding
-          // ex. gzip;q=0.8
-          if (!str.contains(';')) return str;
-          return str.split(';')[0];
-        });
-  }
+  /// Compresses unbuffered output as one stream (see `HttpResponseContext`).
+  Sink<List<int>>? _encoderSink;
 
   @override
-  Future addStream(Stream<List<int>> stream) {
+  Future addStream(Stream<List<int>> stream) async {
     if (!isOpen && isBuffered) throw ResponseContext.closed();
     _openStream();
-
-    var output = stream;
-
-    if (encoders.isNotEmpty && correspondingRequest != null) {
-      if (_allowedEncodings != null) {
-        for (var encodingName in _allowedEncodings!) {
-          Converter<List<int>, List<int>>? encoder;
-          var key = encodingName;
-
-          if (encoders.containsKey(encodingName)) {
-            encoder = encoders[encodingName];
-          } else if (encodingName == '*') {
-            encoder = encoders[key = encoders.keys.first];
-          }
-
-          if (encoder != null) {
-            output = encoders[key]!.bind(output);
-            break;
-          }
-        }
-      }
-    }
-
-    return output.forEach(this.stream.sendData);
+    await stream.forEach(add);
   }
 
   @override
@@ -169,27 +123,12 @@ class Http2ResponseContext extends ResponseContext<ServerTransportStream> {
       _openStream();
 
       if (!_isClosed) {
-        if (encoders.isNotEmpty && correspondingRequest != null) {
-          if (_allowedEncodings != null) {
-            for (var encodingName in _allowedEncodings!) {
-              Converter<List<int>, List<int>>? encoder;
-              var key = encodingName;
-
-              if (encoders.containsKey(encodingName)) {
-                encoder = encoders[encodingName];
-              } else if (encodingName == '*') {
-                encoder = encoders[key = encoders.keys.first];
-              }
-
-              if (encoder != null) {
-                data = encoders[key]!.convert(data);
-                break;
-              }
-            }
-          }
+        var sink = _encoderSink;
+        if (sink != null) {
+          sink.add(data);
+        } else {
+          stream.sendData(data);
         }
-
-        stream.sendData(data);
       }
     } else {
       buffer!.add(data);
@@ -200,6 +139,8 @@ class Http2ResponseContext extends ResponseContext<ServerTransportStream> {
   Future close() async {
     if (!_isDetached && !_isClosed && !isBuffered) {
       _openStream();
+      // Flushes the compression trailer, if any.
+      _encoderSink?.close();
       await stream.outgoingMessages.close();
     }
 
@@ -233,4 +174,17 @@ class Http2ResponseContext extends ResponseContext<ServerTransportStream> {
     _pushes.add(r);
     return r;
   }
+}
+
+/// Writes encoder output to an HTTP/2 stream as DATA frames.
+class _StreamDataSink implements Sink<List<int>> {
+  final ServerTransportStream stream;
+
+  _StreamDataSink(this.stream);
+
+  @override
+  void add(List<int> data) => stream.sendData(data);
+
+  @override
+  void close() {}
 }

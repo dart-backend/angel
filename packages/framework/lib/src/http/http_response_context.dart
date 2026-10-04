@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io' hide BytesBuilder;
 import 'dart:typed_data' show BytesBuilder;
 
@@ -60,22 +59,6 @@ class HttpResponseContext extends ResponseContext<HttpResponse> {
     _buffer = LockableBytesBuilder();
   }
 
-  Iterable<String>? __allowedEncodings;
-
-  Iterable<String>? get _allowedEncodings {
-    return __allowedEncodings ??= correspondingRequest?.headers
-        ?.value('accept-encoding')
-        ?.split(',')
-        .map((s) => s.trim())
-        .where((s) => s.isNotEmpty)
-        .map((str) {
-          // Ignore quality specifications in accept-encoding
-          // ex. gzip;q=0.8
-          if (!str.contains(';')) return str;
-          return str.split(';')[0];
-        });
-  }
-
   @override
   set contentType(MediaType value) {
     super.contentType = value;
@@ -88,10 +71,26 @@ class HttpResponseContext extends ResponseContext<HttpResponse> {
     }
   }
 
+  /// Compresses unbuffered output as one stream, created when output starts.
+  ///
+  /// A single chunked conversion is used for the whole response: encoding
+  /// each write separately would emit several concatenated gzip members,
+  /// which many clients do not decode past the first.
+  Sink<List<int>>? _encoderSink;
+
   bool _openStream() {
     if (!_streamInitialized) {
       // If this is the first stream added to this response,
       // then add headers, status code, etc.
+      var encoding = selectedEncoder;
+      if (encoding != null) {
+        // A Content-Length set beforehand (e.g. by streamFile) describes the
+        // uncompressed size; sending it with a compressed body makes dart:io
+        // fail the response. Send the body chunked instead.
+        headers.remove('content-length');
+        headers['content-encoding'] = encoding.name;
+      }
+
       rawResponse
         ..statusCode = statusCode
         ..cookies.addAll(cookies);
@@ -99,7 +98,12 @@ class HttpResponseContext extends ResponseContext<HttpResponse> {
 
       rawResponse.headers.date = DateTime.now();
 
-      if (headers.containsKey('content-length')) {
+      if (encoding != null) {
+        rawResponse.contentLength = -1;
+        _encoderSink = encoding.encoder.startChunkedConversion(
+          _HttpResponseSink(rawResponse),
+        );
+      } else if (headers.containsKey('content-length')) {
         rawResponse.contentLength =
             int.tryParse(headers['content-length']!) ??
             rawResponse.contentLength;
@@ -112,27 +116,6 @@ class HttpResponseContext extends ResponseContext<HttpResponse> {
         parameters: contentType.parameters,
       );
 
-      if (encoders.isNotEmpty && correspondingRequest != null) {
-        if (_allowedEncodings != null) {
-          for (var encodingName in _allowedEncodings!) {
-            Converter<List<int>, List<int>>? encoder;
-            var key = encodingName;
-
-            if (encoders.containsKey(encodingName)) {
-              encoder = encoders[encodingName];
-            } else if (encodingName == '*') {
-              encoder = encoders[key = encoders.keys.first];
-            }
-
-            if (encoder != null) {
-              rawResponse.headers.set('content-encoding', key);
-              break;
-            }
-          }
-        }
-      }
-
-      //_isClosed = true;
       return _streamInitialized = true;
     }
 
@@ -140,33 +123,19 @@ class HttpResponseContext extends ResponseContext<HttpResponse> {
   }
 
   @override
-  Future addStream(Stream<List<int>> stream) {
+  Future addStream(Stream<List<int>> stream) async {
     if (_isClosed && isBuffered) throw ResponseContext.closed();
     _openStream();
 
-    var output = stream;
+    var sink = _encoderSink;
+    if (sink == null) return rawResponse.addStream(stream);
 
-    if (encoders.isNotEmpty && correspondingRequest != null) {
-      if (_allowedEncodings != null) {
-        for (var encodingName in _allowedEncodings!) {
-          Converter<List<int>, List<int>>? encoder;
-          var key = encodingName;
-
-          if (encoders.containsKey(encodingName)) {
-            encoder = encoders[encodingName];
-          } else if (encodingName == '*') {
-            encoder = encoders[key = encoders.keys.first];
-          }
-
-          if (encoder != null) {
-            output = encoders[key]!.bind(output);
-            break;
-          }
-        }
-      }
+    // Feed the shared encoder, flushing after each chunk so a slow client
+    // applies backpressure instead of the whole stream being buffered.
+    await for (var chunk in stream) {
+      sink.add(chunk);
+      await rawResponse.flush();
     }
-
-    return rawResponse.addStream(output);
   }
 
   @override
@@ -176,28 +145,12 @@ class HttpResponseContext extends ResponseContext<HttpResponse> {
     } else if (!isBuffered) {
       if (!_isClosed) {
         _openStream();
-
-        if (encoders.isNotEmpty && correspondingRequest != null) {
-          if (_allowedEncodings != null) {
-            for (var encodingName in _allowedEncodings!) {
-              Converter<List<int>, List<int>>? encoder;
-              var key = encodingName;
-
-              if (encoders.containsKey(encodingName)) {
-                encoder = encoders[encodingName];
-              } else if (encodingName == '*') {
-                encoder = encoders[key = encoders.keys.first];
-              }
-
-              if (encoder != null) {
-                data = encoders[key]!.convert(data);
-                break;
-              }
-            }
-          }
+        var sink = _encoderSink;
+        if (sink != null) {
+          sink.add(data);
+        } else {
+          rawResponse.add(data);
         }
-
-        rawResponse.add(data);
       }
     } else {
       buffer!.add(data);
@@ -211,7 +164,13 @@ class HttpResponseContext extends ResponseContext<HttpResponse> {
         if (!isBuffered) {
           try {
             _openStream();
-            rawResponse.close();
+            // Flushes the compression trailer, if any.
+            _encoderSink?.close();
+            // Observe the result: an unhandled failure here (e.g. the
+            // connection dropped) would otherwise terminate the server.
+            rawResponse.close().catchError((Object e, StackTrace st) {
+              app?.logger.warning('Failed to send response', e, st);
+            });
           } catch (_) {
             // This only seems to occur on `MockHttpRequest`, but
             // this try/catch prevents a crash.
@@ -227,4 +186,17 @@ class HttpResponseContext extends ResponseContext<HttpResponse> {
     }
     return Future.value();
   }
+}
+
+/// Writes encoder output straight to an [HttpResponse].
+class _HttpResponseSink implements Sink<List<int>> {
+  final HttpResponse response;
+
+  _HttpResponseSink(this.response);
+
+  @override
+  void add(List<int> data) => response.add(data);
+
+  @override
+  void close() {}
 }

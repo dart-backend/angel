@@ -15,6 +15,7 @@ import 'exception_test.dart' as exception;
 import 'extension_test.dart' as extension_test;
 import 'find_one_test.dart' as find_one;
 import 'general_test.dart' as general;
+import 'compression_test.dart' as compression;
 import 'hooked_test.dart' as hooked;
 import 'hostname_router_test.dart' as hostname_router;
 import 'limits_test.dart' as limits;
@@ -44,6 +45,7 @@ void main() {
   group('anonymous service', anonymous_service.main);
   group('body', body.main);
   //group('response_header', response_header.main);
+  group('compression', compression.main);
   group('controller', controller.main);
   group('detach', detach.main);
   group('di', di.main);

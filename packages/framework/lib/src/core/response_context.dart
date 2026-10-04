@@ -16,6 +16,7 @@ import 'request_context.dart';
 import 'server.dart' show Angel;
 
 final RegExp _straySlashes = RegExp(r'(^/+)|(/+$)');
+final RegExp _qZero = RegExp(r'^q=0(\.0*)?$');
 
 /// A convenience wrapper around an outgoing HTTP request.
 abstract class ResponseContext<RawResponse>
@@ -44,6 +45,53 @@ abstract class ResponseContext<RawResponse>
   ///
   /// At most one encoder will ever be used to convert data.
   final Map<String, Converter<List<int>, List<int>>> encoders = {};
+
+  ({String name, Converter<List<int>, List<int>> encoder})? _selectedEncoder;
+  bool _encoderSelected = false;
+
+  /// The encoder from [encoders] to apply to this response, chosen by the
+  /// request's `Accept-Encoding` header, or `null` for none.
+  ///
+  /// Chosen once, on first access (normally when output starts), so handlers
+  /// can still change [encoders] before writing.
+  ({String name, Converter<List<int>, List<int>> encoder})?
+  get selectedEncoder {
+    if (!_encoderSelected) {
+      _encoderSelected = true;
+      _selectedEncoder = selectEncoder(
+        encoders,
+        correspondingRequest?.headers?.value('accept-encoding'),
+      );
+    }
+    return _selectedEncoder;
+  }
+
+  /// Picks the first encoder in [encoders] named by [acceptEncoding], in the
+  /// client's order. `*` picks any encoder; entries with `q=0` are skipped.
+  static ({String name, Converter<List<int>, List<int>> encoder})?
+  selectEncoder(
+    Map<String, Converter<List<int>, List<int>>> encoders,
+    String? acceptEncoding,
+  ) {
+    if (encoders.isEmpty || acceptEncoding == null) return null;
+
+    for (var item in acceptEncoding.split(',')) {
+      var parts = item.split(';');
+      var name = parts.first.trim();
+      if (name.isEmpty) continue;
+
+      var rejected = parts
+          .skip(1)
+          .any((p) => _qZero.hasMatch(p.replaceAll(' ', '')));
+      if (rejected) continue;
+
+      if (name == '*') name = encoders.keys.first;
+      var encoder = encoders[name];
+      if (encoder != null) return (name: name, encoder: encoder);
+    }
+
+    return null;
+  }
 
   /// A [Map] of data to inject when `res.render` is called.
   ///

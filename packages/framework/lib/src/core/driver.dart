@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io' show Cookie;
 
 import 'package:angel3_http_exception/angel3_http_exception.dart';
@@ -451,39 +450,14 @@ abstract class Driver<
 
       var outputBuffer = res.buffer?.toBytes() ?? <int>[];
 
-      if (res.encoders.isNotEmpty) {
-        var allowedEncodings = req.headers
-            ?.value('accept-encoding')
-            ?.split(',')
-            .map((s) => s.trim())
-            .where((s) => s.isNotEmpty)
-            .map((str) {
-              // Ignore quality specifications in accept-encoding
-              // ex. gzip;q=0.8
-              if (!str.contains(';')) return str;
-              return str.split(';')[0];
-            });
-
-        if (allowedEncodings != null) {
-          for (var encodingName in allowedEncodings) {
-            var key = encodingName;
-
-            Converter<List<int>, List<int>>? encoder;
-            if (res.encoders.containsKey(encodingName)) {
-              encoder = res.encoders[encodingName];
-            } else if (encodingName == '*') {
-              encoder = res.encoders[key = res.encoders.keys.first];
-            }
-
-            if (encoder != null) {
-              setHeader(response, 'content-encoding', key);
-              outputBuffer =
-                  res.encoders[key]?.convert(outputBuffer) ?? <int>[];
-              setContentLength(response, outputBuffer.length);
-              break;
-            }
-          }
-        }
+      var encoding = ResponseContext.selectEncoder(
+        res.encoders,
+        req.headers?.value('accept-encoding'),
+      );
+      if (encoding != null) {
+        setHeader(response, 'content-encoding', encoding.name);
+        outputBuffer = encoding.encoder.convert(outputBuffer);
+        setContentLength(response, outputBuffer.length);
       }
 
       setStatusCode(response, res.statusCode);
