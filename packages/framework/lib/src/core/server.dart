@@ -1,7 +1,6 @@
 library;
 
 import 'dart:async';
-import 'dart:collection' show HashMap;
 import 'dart:convert';
 
 import 'package:angel3_container/angel3_container.dart';
@@ -95,6 +94,12 @@ class Angel extends Routable {
       Future.value('No view engine has been configured yet.');
 
   final List<Angel> _children = [];
+
+  /// Resolved routes cached in production, keyed by method and request path.
+  ///
+  /// Holds at most [maxHandlerCacheSize] entries, evicting the least
+  /// recently used, so requests for many distinct paths cannot grow it
+  /// without bound.
   final Map<
     String,
     Tuple4<
@@ -104,7 +109,19 @@ class Angel extends Routable {
       MiddlewarePipeline
     >
   >
-  handlerCache = HashMap();
+  handlerCache = {};
+
+  /// The maximum number of entries in [handlerCache]; `0` disables caching.
+  int maxHandlerCacheSize = 1024;
+
+  /// The default for [maxBodySize]: 10 MB.
+  static const int defaultMaxBodySize = 10 * 1024 * 1024;
+
+  /// The largest request body, in bytes, that `RequestContext.parseBody`
+  /// will read; `null` means unlimited. Larger bodies get a 413 response.
+  ///
+  /// Raise it for a single route by setting `req.maxBodySize` in middleware.
+  int? maxBodySize = defaultMaxBodySize;
 
   Router<RequestHandler>? _flattened;
   Angel? _parent;

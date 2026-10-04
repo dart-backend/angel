@@ -176,7 +176,7 @@ abstract class Driver<
 
           var cacheKey = req.method + path;
           var tuple = app.environment.isProduction
-              ? app.handlerCache.putIfAbsent(cacheKey, resolveTuple)
+              ? _cachedResolve(cacheKey, resolveTuple)
               : resolveTuple();
           var line = tuple.item4 as MiddlewarePipeline<RequestHandler>;
           var it = MiddlewarePipelineIterator<RequestHandler>(line);
@@ -317,6 +317,40 @@ abstract class Driver<
         }
       });
     });
+  }
+
+  /// Looks up [key] in [Angel.handlerCache], resolving and caching on a miss.
+  ///
+  /// The cache is LRU-bounded by [Angel.maxHandlerCacheSize]: keys are request
+  /// paths, so without a bound, distinct paths (e.g. `/users/1`, `/users/2`)
+  /// would grow it indefinitely.
+  Tuple4<
+    List,
+    Map<String, dynamic>,
+    ParseResult<RouteResult>,
+    MiddlewarePipeline
+  >
+  _cachedResolve(
+    String key,
+    Tuple4<
+      List,
+      Map<String, dynamic>,
+      ParseResult<RouteResult>,
+      MiddlewarePipeline
+    >
+    Function()
+    resolve,
+  ) {
+    var cache = app.handlerCache;
+    var max = app.maxHandlerCacheSize;
+    if (max <= 0) return resolve();
+
+    // Re-inserting moves the entry to the end, keeping eviction LRU.
+    var tuple = cache.remove(key) ?? resolve();
+    while (cache.length >= max) {
+      cache.remove(cache.keys.first);
+    }
+    return cache[key] = tuple;
   }
 
   /// Handles an [AngelHttpException].

@@ -7,6 +7,8 @@
 * feat: Added `ioc(..., injection: InjectionRequest)` for dependency injection without reflecting on the handler
 * feat: Added `example/no_mirrors.dart`, an app that compiles with `dart compile exe`
 * feat: Added `AngelHttp2(sessionTimeout: ...)`; idle HTTP/2 sessions are now discarded (default 20 minutes) instead of being kept forever
+* feat: Added `Angel.maxBodySize` and `RequestContext.maxBodySize`; `parseBody()` rejects larger bodies with 413. **Behaviour change:** the default limit is 10 MB (`Angel.defaultMaxBodySize`); set `app.maxBodySize = null` for no limit, or raise `req.maxBodySize` in middleware for upload routes
+* feat: Added `Angel.maxHandlerCacheSize` (default 1024); the production route cache now evicts least recently used entries instead of growing with every distinct request path
 * refactor: The "no reflector" startup message is now logged at `info` instead of `warning`
 * refactor: When nothing matches, the driver now returns 404 instead of 500
 * refactor: With no container passed, it now falls back to the request's container

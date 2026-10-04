@@ -7,6 +7,7 @@ import 'dart:io'
     show Cookie, HeaderValue, HttpHeaders, HttpSession, InternetAddress;
 
 import 'package:angel3_container/angel3_container.dart';
+import 'package:angel3_http_exception/angel3_http_exception.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:belatuk_http_server/belatuk_http_server.dart';
 import 'package:meta/meta.dart';
@@ -48,6 +49,13 @@ abstract class RequestContext<RawRequest> {
 
   /// The [Angel] instance that is responding to this request.
   Angel? app;
+
+  /// The largest request body, in bytes, that [parseBody] will read;
+  /// `null` means unlimited. Larger bodies are rejected with a 413 error.
+  ///
+  /// Defaults to [Angel.maxBodySize]. Middleware can raise it for a single
+  /// route (e.g. a file upload) by setting it before the body is parsed.
+  late int? maxBodySize = app?.maxBodySize;
 
   /// Any cookies sent with this request.
   List<Cookie> get cookies => <Cookie>[];
@@ -251,6 +259,9 @@ abstract class RequestContext<RawRequest> {
       deserializeBody(codec.decode, encoding: encoding);
 
   /// Manually parses the request body, if it has not already been parsed.
+  ///
+  /// Throws a 413 [AngelHttpException] if the body is larger than
+  /// [maxBodySize].
   Future<void> parseBody({Encoding encoding = utf8}) async {
     //if (contentType == null) {
     //  throw FormatException('Missing "content-type" header.');
@@ -260,6 +271,14 @@ abstract class RequestContext<RawRequest> {
       _hasParsedBody = true;
 
       var contentBody = body ?? Stream.empty();
+      var limit = maxBodySize;
+      if (limit != null) {
+        // Reject early when the client declares an oversized body, and
+        // also count the bytes, since Content-Length may be absent or wrong.
+        var declared = headers?.contentLength ?? -1;
+        if (declared > limit) throw _bodyTooLarge(limit);
+        contentBody = _limitBody(contentBody, limit);
+      }
 
       if (contentType.type == 'application' && contentType.subtype == 'json') {
         _uploadedFiles = [];
@@ -313,6 +332,23 @@ abstract class RequestContext<RawRequest> {
         _bodyFields = {};
         _uploadedFiles = [];
       }
+    }
+  }
+
+  static AngelHttpException _bodyTooLarge(int limit) => AngelHttpException(
+    statusCode: 413,
+    message: 'Request body exceeds the limit of $limit bytes.',
+  );
+
+  static Stream<List<int>> _limitBody(
+    Stream<List<int>> body,
+    int limit,
+  ) async* {
+    var total = 0;
+    await for (var chunk in body) {
+      total += chunk.length;
+      if (total > limit) throw _bodyTooLarge(limit);
+      yield chunk;
     }
   }
 
