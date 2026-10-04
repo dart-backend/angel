@@ -68,6 +68,12 @@ Future<bool> _defaultErrorHandler(
 
 /// Default ROOT level logger
 Logger _defaultLogger() {
+  // Print through the root zone: request zones redirect `print` to
+  // `app.logger`, so an app created inside a request (e.g. lazily by a
+  // HostnameRouter) would otherwise feed its log output back into the
+  // logger while it is still emitting ("Cannot fire new event").
+  void print(Object? line) => Zone.root.print('$line');
+
   Logger logger = Logger('ROOT')
     ..onRecord.listen((rec) {
       if (rec.error == null) {

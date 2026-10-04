@@ -26,6 +26,10 @@
 * fix: HTTP/2 sessions are now reused across requests via the `DARTSESSID` cookie; unknown session ids get a new session instead of being adopted
 * fix: Errors raised while creating a request context, or on an HTTP/2 connection, are now logged instead of terminating the server
 * fix: `AngelHttp2(...)` now passes its `useZone` argument through
+* fix: `HostnameRouter` now matches hosts that include a port (e.g. `api.example.com:8080` matches `api.example.com`); patterns that name a port still match exactly
+* fix: `HostnameRouter` now passes route parameters (e.g. `:id`) to the sub-app's handlers
+* fix: `HostnameRouter` creates each lazily-built app once, even when several requests arrive before creation finishes
+* fix: Creating an `Angel` inside a request (e.g. via `HostnameRouter.configure`) no longer makes the default logger throw "Cannot fire new event"
 
 ## 9.1.1
 

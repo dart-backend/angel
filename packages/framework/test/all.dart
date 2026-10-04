@@ -16,6 +16,7 @@ import 'extension_test.dart' as extension_test;
 import 'find_one_test.dart' as find_one;
 import 'general_test.dart' as general;
 import 'hooked_test.dart' as hooked;
+import 'hostname_router_test.dart' as hostname_router;
 import 'limits_test.dart' as limits;
 import 'no_reflection_test.dart' as no_reflection;
 import 'parameter_meta_test.dart' as parameter_meta;
@@ -53,6 +54,7 @@ void main() {
   group('find_one', find_one.main);
   group('general', general.main);
   group('hooked', hooked.main);
+  group('hostname_router', hostname_router.main);
   group('limits', limits.main);
   group('no_reflection', no_reflection.main);
   group('parameter_meta', parameter_meta.main);
