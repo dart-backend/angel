@@ -53,11 +53,13 @@ Future<bool> _defaultErrorHandler(
   } else {
     res.contentType = MediaType('text', 'html', {'charset': 'utf8'});
     res.statusCode = e.statusCode;
-    res.write('<!DOCTYPE html><html><head><title>${e.message}</title>');
-    res.write('</head><body><h1>${e.message}</h1><ul>');
+    // Messages may echo user input (e.g. a FormatException), so escape them.
+    var message = htmlEscape.convert(e.message);
+    res.write('<!DOCTYPE html><html><head><title>$message</title>');
+    res.write('</head><body><h1>$message</h1><ul>');
 
     for (var error in e.errors) {
-      res.write('<li>$error</li>');
+      res.write('<li>${htmlEscape.convert(error)}</li>');
     }
 
     res.write('</ul></body></html>');

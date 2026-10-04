@@ -2,10 +2,12 @@
 
 ## 9.1.2
 
-* refactor: when no fallback route is registered, returns 404 instad of 500
-* refactor: Calling `Angel.runContained` without a container will now fall back to the request container
-* fix: `RequestContext.bodyAsList` no longer return 500 on an empty JSON array (`[]`) in the POST request body
-* fix: `AngelHttp2.close()` no longer throws `LateInitializationError` when `allowHttp1` is `false`
+* refactor: When nothing matches, the driver now returns 404 instead of 500
+* refactor: With no container passed, it now falls back to the request's container
+* fix: An empty JSON array (`[]`) in the POST request body,no longer returns a 500 errer
+* fix: `_http` is now nullable and only closed if it was created.
+* fix: The default error handler now HTML-escapes the exception message and errors (XSS)
+* fix: `res.redirect()` now escapes the URL in the HTML fallback page and no longer emits `javascript:`, `vbscript:` or `data:` URLs there (XSS)
 
 ## 9.1.1
 

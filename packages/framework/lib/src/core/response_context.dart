@@ -212,30 +212,50 @@ abstract class ResponseContext<RawResponse>
   /// See [Router]#navigate for more. :)
   Future<void> redirect(Object? url, {bool absolute = true, int? code}) {
     if (!isOpen) throw closed();
+    var location = (url is String || url is Uri)
+        ? url.toString()
+        : app!.navigate(url as Iterable, absolute: absolute);
     headers
       ..['content-type'] = 'text/html'
-      ..['location'] = (url is String || url is Uri)
-          ? url.toString()
-          : app!.navigate(url as Iterable, absolute: absolute);
+      ..['location'] = location;
     statusCode = code ?? 302;
+
+    // The fallback page below is HTML, so the URL must be escaped for each
+    // context it appears in, and script-capable schemes must never be emitted.
+    var bodyUrl = _isScriptUrl(location) ? '' : location;
+    var attrUrl = const HtmlEscape(HtmlEscapeMode.attribute).convert(bodyUrl);
+    var jsUrl = c.json.encode(bodyUrl).replaceAll('<', r'\u003c');
     write('''
     <!DOCTYPE html>
     <html>
       <head>
         <title>Redirecting...</title>
-        <meta http-equiv="refresh" content="0; url=$url">
+        <meta http-equiv="refresh" content="0; url=$attrUrl">
       </head>
       <body>
         <h1>Currently redirecting you...</h1>
         <br />
-        Click <a href="$url">here</a> if you are not automatically redirected...
+        Click <a href="$attrUrl">here</a> if you are not automatically redirected...
         <script>
-          window.location = "$url";
+          window.location = $jsUrl;
         </script>
       </body>
     </html>
     ''');
     return close();
+  }
+
+  /// Returns `true` if [url] uses a scheme that executes script when navigated to.
+  ///
+  /// Browsers ignore whitespace and control characters inside a scheme
+  /// (e.g. `java\tscript:`), so those are stripped before comparing.
+  static bool _isScriptUrl(String url) {
+    var normalized = url
+        .replaceAll(RegExp(r'[\x00-\x20]'), '')
+        .toLowerCase();
+    return normalized.startsWith('javascript:') ||
+        normalized.startsWith('vbscript:') ||
+        normalized.startsWith('data:');
   }
 
   /// Redirects to the given named [Route].
