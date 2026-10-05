@@ -151,5 +151,52 @@ void main() {
       var response = await client.delete(Uri.parse('$url/todos/null'));
       expect(response.statusCode, 403);
     });
+
+    test(
+      'DELETE / requests remove all, which is forbidden by default',
+      () async {
+        var response = await client.delete(Uri.parse('$url/todos'));
+        expect(response.statusCode, 403);
+      },
+    );
+
+    test('does not reuse ids after removal', () async {
+      Future<String> create(String text) async {
+        var response = await client.post(
+          Uri.parse('$url/todos'),
+          headers: headers as Map<String, String>,
+          body: json.encode({'text': text}),
+        );
+        return json.decode(response.body)['id'] as String;
+      }
+
+      var first = await create('a');
+      var second = await create('b');
+      await client.delete(Uri.parse('$url/todos/$first'));
+      var third = await create('c');
+
+      expect(third, isNot(second));
+      expect(
+        service.items.map((i) => i['id']),
+        unorderedEquals([second, third]),
+      );
+    });
+
+    test('skips ids already present in items', () async {
+      service.items.add({'id': '0', 'text': 'seeded'});
+      var created = await service.create({'text': 'new'});
+      expect(created['id'], isNot('0'));
+    });
+  });
+
+  test('DELETE / is not allowed for non-String ids', () async {
+    app.use(
+      '/numbers',
+      AnonymousService<int, Map<String, dynamic>>(
+        remove: (id, [params]) async => {'removed': id},
+      ),
+    );
+    var response = await client.delete(Uri.parse('$url/numbers'));
+    expect(response.statusCode, 405);
   });
 }

@@ -69,6 +69,16 @@ void main() {
     expect(req.bodyAsList, ['foo', 'bar']);
   });
 
+  test('parses empty json lists', () async {
+    var req = await request(bodyList: []);
+    expect(req.bodyAsList, isEmpty);
+  });
+
+  test('bodyAsList throws when body is not a list', () async {
+    var req = await request(bodyFields: {'hello': 'world'});
+    expect(() => req.bodyAsList, throwsStateError);
+  });
+
   test('deserializeBody', () async {
     var req = await request(
       asJson: true,

@@ -1,5 +1,21 @@
 # Change Log
 
+## 9.2.0
+
+* fix: `CacheService.read` now stores a cache miss with `cache.update`, under the requested id.
+* fix: `ResponseCache` now stores only responses that are safe to share: status 200, no cookies, and not marked `Cache-Control: no-store` or `private`. Requests with an `Authorization` header bypass the cache. Responses that are not cached no longer get `Cache-Control: public` headers
+* fix: `ResponseCache` memory is now bounded by `maxEntries` (default 1024), evicting expired then least recently used entries; previously every distinct URL (including query strings) added an entry and a lock that were never removed
+* fix: `CacheService` writes now update (`modify`, `update`) or evict (`remove`) the entry in the shared `cache` service, so other instances using the same cache no longer serve stale or deleted records
+* fix: `CacheService.update` now calls `database.update` instead of `database.modify`
+* fix: `CacheService.read` no longer throws on params without a `query`, uses the cache for reads without params, and falls back to the database when the cache is unavailable
+* fix: `ResponseCache` now caches normal responses: `handleRequest` buffers the response on a cache miss, so handlers no longer need `res.useBuffer()` (previously only buffered responses were cached, so most never were)
+* fix: `ResponseCache` now answers `304 Not Modified` (no body) when the client's copy is current, instead of resending the full body with 200. A client sending back the exact `Last-Modified` value is recognized (dates are compared in whole seconds), and one with an older copy gets the cached response instead of bypassing the cache
+* fix: `cacheSerializationResults` now works: results are cached per object instance across requests, `shouldCache` is consulted, `timeout` is honoured, a result is reused only for the same serializer, and async serializers are supported
+* test: Made `cache_test.dart` deterministic and corrected two assertions that expected the old behaviour
+* feat: Added `ResponseCache(maxEntries: ...)`
+* chore: Removed the unused `pool` and `meta` dependencies, and the unused `glob` dev dependency
+* docs: Updated the README
+
 ## 9.1.0
 
 * Require Dart >= 3.13

@@ -5,7 +5,7 @@ import 'package:angel3_framework/http.dart';
 void main() async {
   var app = Angel();
 
-  // Cache a glob
+  // Cache .txt files
   var cache = ResponseCache()..patterns.addAll([RegExp('^/?\\w+\\.txt')]);
 
   // Handle `if-modified-since` header, and also send cached content

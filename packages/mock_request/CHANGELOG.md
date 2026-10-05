@@ -1,5 +1,9 @@
 # Change Log
 
+## 9.2.0
+
+* fix: `MockHttpHeaders.date`, `expires` and `ifModifiedSince` now return `null` when the header is absent, as in `dart:io`, instead of the current time (which made every mock request look like a conditional request)
+
 ## 9.1.0
 
 * Require Dart >= 3.13

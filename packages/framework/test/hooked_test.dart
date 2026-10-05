@@ -134,6 +134,17 @@ void main() {
     expect(result[0], equals({'foo': 'bar'}));
   });
 
+  test('beforeAllStream and afterAllStream emit the right phase', () async {
+    var svc = HookedService(AnonymousService(index: ([p]) async => []));
+    var phases = <String>[];
+    svc.beforeAllStream().listen((e) => phases.add('before:${e.isBefore}'));
+    svc.afterAllStream().listen((e) => phases.add('after:${e.isAfter}'));
+
+    await svc.index();
+    await Future<void>.delayed(Duration.zero);
+    expect(phases, ['before:true', 'after:true']);
+  });
+
   test('contains provider in before and after', () async {
     var svc = HookedService(AnonymousService(index: ([p]) async => []));
 

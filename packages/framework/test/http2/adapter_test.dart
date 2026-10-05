@@ -11,6 +11,7 @@ import 'package:http/src/multipart_file.dart' as http;
 import 'package:http/src/multipart_request.dart' as http;
 import 'package:http/io_client.dart';
 import 'package:http2/transport.dart';
+import 'package:file/local.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:logging/logging.dart';
 import 'package:test/test.dart';
@@ -99,6 +100,30 @@ void main() {
       return req.queryParameters;
     });
 
+    app.get('/echo-header', (req, res) => req.headers!.value('x-test'));
+
+    app.get('/hostname', (req, res) => req.hostname);
+
+    app.get('/session', (req, res) => req.session!.id);
+
+    app.get('/bad-header', (req, res) {
+      res.headers['x-name'] = 'café';
+      return 'body';
+    });
+
+    app.get('/writes', (req, res) async {
+      res
+        ..write('Hello, ')
+        ..write('world!');
+      await res.close();
+    });
+
+    app.get(
+      '/file',
+      (req, res) =>
+          res.streamFile(const LocalFileSystem().file('pubspec.yaml')),
+    );
+
     var ctx = SecurityContext()
       ..useCertificateChain('dev.pem')
       ..usePrivateKey('dev.key', password: 'dartdart')
@@ -121,6 +146,161 @@ void main() {
   test('buffered response', () async {
     var response = await client.get(serverRoot);
     expect(response.body, 'Hello world');
+  });
+
+  group('headers', () {
+    // A bare '%' used to throw outside the error zone and kill the server.
+    for (var value in ['100%', 'a%20b', 'x, y', '%zz']) {
+      test('passes "$value" through unchanged', () async {
+        var response = await client.get(
+          serverRoot.replace(path: '/echo-header'),
+          headers: {'x-test': value},
+        );
+        expect(response.statusCode, 200);
+        expect(response.body, json.encode(value));
+      });
+    }
+
+    test('server keeps serving after a malformed header', () async {
+      await client.get(
+        serverRoot.replace(path: '/echo-header'),
+        headers: {'x-test': '100%'},
+      );
+      var response = await client.get(serverRoot);
+      expect(response.body, 'Hello world');
+    });
+
+    test('hostname comes from :authority', () async {
+      var response = await client.get(serverRoot.replace(path: '/hostname'));
+      expect(json.decode(response.body), serverRoot.authority);
+    });
+  });
+
+  group('sessions', () {
+    Future<String> sessionId({String? cookie}) async {
+      var response = await client.get(
+        serverRoot.replace(path: '/session'),
+        headers: {'cookie': ?cookie},
+      );
+      return json.decode(response.body) as String;
+    }
+
+    test('are reused when the client sends DARTSESSID', () async {
+      var first = await sessionId();
+      var second = await sessionId(cookie: 'DARTSESSID=$first');
+      expect(second, first);
+    });
+
+    test('do not adopt an unknown client-chosen id', () async {
+      var id = await sessionId(cookie: 'DARTSESSID=attacker-chosen');
+      expect(id, isNot('attacker-chosen'));
+    });
+
+    test('expire after sessionTimeout', () async {
+      var shortApp = Angel()..get('/session', (req, res) => req.session!.id);
+      var ctx = SecurityContext()
+        ..useCertificateChain('dev.pem')
+        ..usePrivateKey('dev.key', password: 'dartdart')
+        ..setAlpnProtocols(['h2'], true);
+      var shortLived = AngelHttp2(
+        shortApp,
+        ctx,
+        sessionTimeout: const Duration(milliseconds: 100),
+      );
+      var server = await shortLived.startServer();
+      var url = Uri.parse('https://127.0.0.1:${server.port}/session');
+
+      Future<String> get({String? cookie}) async => json.decode(
+        (await client.get(url, headers: {'cookie': ?cookie})).body,
+      ) as String;
+
+      var first = await get();
+      expect(await get(cookie: 'DARTSESSID=$first'), first);
+
+      await Future<void>.delayed(const Duration(milliseconds: 300));
+      expect(await get(cookie: 'DARTSESSID=$first'), isNot(first));
+
+      await shortLived.close();
+    });
+  });
+
+  group('HEAD', () {
+    for (var encoding in ['identity', 'gzip']) {
+      test(
+        'is answered by the GET handler without a body ($encoding)',
+        () async {
+          var response = await client.head(
+            serverRoot,
+            headers: {'accept-encoding': encoding},
+          );
+          expect(response.statusCode, 200);
+          expect(response.bodyBytes, isEmpty);
+        },
+      );
+    }
+
+    test('still 404s when no GET route matches', () async {
+      var response = await client.head(serverRoot.replace(path: '/nowhere'));
+      expect(response.statusCode, 404);
+    });
+  });
+
+  test('an invalid response header fails with a 500', () async {
+    var response = await client.get(
+      serverRoot.replace(path: '/bad-header'),
+      headers: {'accept': 'application/json'},
+    );
+    expect(response.statusCode, 500);
+    expect(
+      json.decode(response.body)['message'],
+      contains('Invalid response header'),
+    );
+  });
+
+  test('the session cookie is Secure and HttpOnly', () async {
+    var response = await client.get(serverRoot);
+    var cookie = response.headers['set-cookie']!;
+    expect(cookie, startsWith('DARTSESSID='));
+    expect(cookie, contains('Secure'));
+    expect(cookie, contains('HttpOnly'));
+  });
+
+  test('response finalizers run on unbuffered responses', () async {
+    var finalized = Angel()
+      ..get('/', (req, res) async {
+        res
+          ..write('a')
+          ..write('b');
+        await res.close();
+      })
+      ..responseFinalizers.add((req, res) async {
+        await Future<void>.delayed(const Duration(milliseconds: 10));
+        res.headers['x-finalized'] = 'yes';
+      });
+    var ctx = SecurityContext()
+      ..useCertificateChain('dev.pem')
+      ..usePrivateKey('dev.key', password: 'dartdart')
+      ..setAlpnProtocols(['h2'], true);
+    var h2 = AngelHttp2(finalized, ctx);
+    var server = await h2.startServer();
+
+    var response = await client.get(
+      Uri.parse('https://127.0.0.1:${server.port}/'),
+    );
+    expect(response.headers['x-finalized'], 'yes');
+    expect(response.body, 'ab');
+
+    await h2.close();
+  });
+
+  test('close without allowHttp1', () async {
+    var ctx = SecurityContext()
+      ..useCertificateChain('dev.pem')
+      ..usePrivateKey('dev.key', password: 'dartdart')
+      ..setAlpnProtocols(['h2'], true);
+    var h2Only = AngelHttp2(Angel(), ctx);
+    await h2Only.startServer();
+    await expectLater(h2Only.close(), completes);
   });
 
   test('allowHttp1', () async {
@@ -153,6 +333,36 @@ void main() {
       //print(response.body);
       var decoded = gzip.decode(response.bodyBytes);
       expect(utf8.decode(decoded), jfk);
+    });
+
+    test('multiple writes produce one gzip stream', () async {
+      var response = await client.get(
+        serverRoot.replace(path: '/writes'),
+        headers: {'accept-encoding': 'gzip'},
+      );
+      expect(response.headers['content-encoding'], 'gzip');
+      var bytes = response.bodyBytes;
+      var members = 0;
+      for (var i = 0; i + 2 < bytes.length; i++) {
+        if (bytes[i] == 0x1f && bytes[i + 1] == 0x8b && bytes[i + 2] == 8) {
+          members++;
+        }
+      }
+      expect(members, 1);
+      expect(utf8.decode(gzip.decode(bytes)), 'Hello, world!');
+    });
+
+    test('streamFile sends no stale Content-Length', () async {
+      var response = await client.get(
+        serverRoot.replace(path: '/file'),
+        headers: {'accept-encoding': 'gzip'},
+      );
+      expect(response.headers['content-encoding'], 'gzip');
+      expect(response.headers['content-length'], isNull);
+      expect(
+        utf8.decode(gzip.decode(response.bodyBytes)),
+        File('pubspec.yaml').readAsStringSync(),
+      );
     });
   });
 

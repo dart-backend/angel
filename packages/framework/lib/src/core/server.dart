@@ -1,7 +1,6 @@
 library;
 
 import 'dart:async';
-import 'dart:collection' show HashMap;
 import 'dart:convert';
 
 import 'package:angel3_container/angel3_container.dart';
@@ -53,11 +52,13 @@ Future<bool> _defaultErrorHandler(
   } else {
     res.contentType = MediaType('text', 'html', {'charset': 'utf8'});
     res.statusCode = e.statusCode;
-    res.write('<!DOCTYPE html><html><head><title>${e.message}</title>');
-    res.write('</head><body><h1>${e.message}</h1><ul>');
+    // Messages may echo user input (e.g. a FormatException), so escape them.
+    var message = htmlEscape.convert(e.message);
+    res.write('<!DOCTYPE html><html><head><title>$message</title>');
+    res.write('</head><body><h1>$message</h1><ul>');
 
     for (var error in e.errors) {
-      res.write('<li>$error</li>');
+      res.write('<li>${htmlEscape.convert(error)}</li>');
     }
 
     res.write('</ul></body></html>');
@@ -65,26 +66,46 @@ Future<bool> _defaultErrorHandler(
   }
 }
 
+/// Name of the logger used by apps that are not given one.
+const String _defaultLoggerName = 'ROOT';
+
+/// The single listener that prints the default logger's records.
+///
+/// Shared by every app in the process: one listener per app printed each
+/// line once per app. It is reinstalled if something clears the root
+/// logger's listeners.
+StreamSubscription<LogRecord>? _defaultPrinter;
+
 /// Default ROOT level logger
 Logger _defaultLogger() {
-  Logger logger = Logger('ROOT')
-    ..onRecord.listen((rec) {
-      if (rec.error == null) {
-        print(rec.message);
-      }
+  // Print through the root zone: request zones redirect `print` to
+  // `app.logger`, so an app created inside a request (e.g. lazily by a
+  // HostnameRouter) would otherwise feed its log output back into the
+  // logger while it is still emitting ("Cannot fire new event").
+  void print(Object? line) => Zone.root.print('$line');
 
-      if (rec.error != null) {
-        var err = rec.error;
-        if (err is AngelHttpException && err.statusCode != 500) return;
-        print('${rec.message} \n');
-        print(rec.error);
-        if (rec.stackTrace != null) {
-          print(rec.stackTrace);
+  // Listen on the root logger, which receives this logger's records whether
+  // or not hierarchical logging is enabled, but print only this logger's
+  // records: not those of every other library in the process.
+  _defaultPrinter ??= Logger.root.onRecord
+      .where((rec) => rec.loggerName == _defaultLoggerName)
+      .listen((rec) {
+        if (rec.error == null) {
+          print(rec.message);
         }
-      }
-    });
 
-  return logger;
+        if (rec.error != null) {
+          var err = rec.error;
+          if (err is AngelHttpException && err.statusCode != 500) return;
+          print('${rec.message} \n');
+          print(rec.error);
+          if (rec.stackTrace != null) {
+            print(rec.stackTrace);
+          }
+        }
+      }, onDone: () => _defaultPrinter = null);
+
+  return Logger(_defaultLoggerName);
 }
 
 /// A powerful real-time/REST/MVC server class.
@@ -93,6 +114,12 @@ class Angel extends Routable {
       Future.value('No view engine has been configured yet.');
 
   final List<Angel> _children = [];
+
+  /// Resolved routes cached in production, keyed by method and request path.
+  ///
+  /// Holds at most [maxHandlerCacheSize] entries, evicting the least
+  /// recently used, so requests for many distinct paths cannot grow it
+  /// without bound.
   final Map<
     String,
     Tuple4<
@@ -102,7 +129,19 @@ class Angel extends Routable {
       MiddlewarePipeline
     >
   >
-  handlerCache = HashMap();
+  handlerCache = {};
+
+  /// The maximum number of entries in [handlerCache]; `0` disables caching.
+  int maxHandlerCacheSize = 1024;
+
+  /// The default for [maxBodySize]: 10 MB.
+  static const int defaultMaxBodySize = 10 * 1024 * 1024;
+
+  /// The largest request body, in bytes, that `RequestContext.parseBody`
+  /// will read; `null` means unlimited. Larger bodies get a 413 response.
+  ///
+  /// Raise it for a single route by setting `req.maxBodySize` in middleware.
+  int? maxBodySize = defaultMaxBodySize;
 
   Router<RequestHandler>? _flattened;
   Angel? _parent;
@@ -152,9 +191,12 @@ class Angel extends Routable {
 
   /// Assign a custom logger.
   /// Passing null will reset to default logger
+  ///
+  /// Listeners are left alone: the default logger's printer is shared by all
+  /// apps, and `clearListeners()` on a non-root logger clears the *root*
+  /// logger's listeners (unless hierarchical logging is enabled), which
+  /// would silently remove the application's own log handlers.
   set logger(Logger? log) {
-    _logger.clearListeners();
-
     _logger = log ?? _defaultLogger();
   }
 
@@ -168,9 +210,14 @@ class Angel extends Routable {
   /// If the server is never [close]d, they will never be called.
   final List<AngelConfigurer> shutdownHooks = [];
 
-  /// Always run before responses are sent.
+  /// Run once per response, before it is sent.
   ///
-  /// These will only not run if a response's `willCloseItself` is set to `true`.
+  /// On buffered responses (see `ResponseContext.useBuffer`) they run after
+  /// the handler, and can read or rewrite `res.buffer`. On unbuffered
+  /// responses (the default) they run just before headers are sent: they can
+  /// change headers, status and cookies, but see no body, so a finalizer that
+  /// needs the body should check `res.isBuffered`. They do not run on
+  /// detached responses. See `ResponseContext.runFinalizers`.
   final List<RequestHandler> responseFinalizers = [];
 
   /// A function that renders views.
@@ -369,7 +416,8 @@ class Angel extends Routable {
     ResponseContext res, [
     Container? container,
   ]) {
-    container ??= Container(EmptyReflector());
+    // A null container falls back to `req.container` (see [resolveInjection]
+    // and [runReflected]), which carries the app's reflector and singletons.
     return Future.sync(() {
       if (_preContained.containsKey(handler)) {
         return handleContained(handler, _preContained[handler]!, container)(
@@ -439,8 +487,9 @@ class Angel extends Routable {
       '${ContainerConst.defaultErrorMessage} $_reflectionInfo';
 
   static const String _reflectionInfo =
-      'Features like controllers, constructor dependency injection, and `ioc` require reflection, '
-      'and will not work without it.\n\n'
+      'Without reflection, `@Expose` controller methods, `@Middleware`/`@Hooks` annotations, '
+      'automatic constructor injection, and `ioc` without an explicit `injection:` are unavailable. '
+      'Routes, services, `Controller.configureRoutes` and container-registered types still work.\n\n'
       'For more, see the documentation:\n'
       'https://docs.angel-dart.dev/guides/dependency-injection#enabling-dart-mirrors-or-other-reflection';
 
@@ -462,7 +511,9 @@ class Angel extends Routable {
     if (reflector is EmptyReflector || reflector is ThrowingReflector) {
       var msg =
           'No `reflector` was passed to the Angel constructor, so reflection will not be available.\n$_reflectionInfo';
-      this.logger.warning(msg);
+      // Running without reflection is supported (and required for AOT), so
+      // this is informational rather than a warning.
+      this.logger.info(msg);
     }
 
     bootstrapContainer();

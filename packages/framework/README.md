@@ -69,6 +69,52 @@ This package is the core package of [Angel3](https://github.com/dart-backend/ang
 
 6. Run as docker. Edit and build the image with the provided `Dockerfile` file.
 
+## Running without `dart:mirrors` (AOT)
+
+`dart compile exe` and Flutter do not support `dart:mirrors`. Create the app without a `reflector` and it runs with reflection disabled:
+
+```dart
+var app = Angel(); // no MirrorsReflector
+
+app.container.registerSingleton(Greeter());   // register what you inject
+app.use('/api/todos', MapService());           // services and hooks work as usual
+
+// Inject with an explicit InjectionRequest instead of reflecting on the closure.
+app.get('/greet/:name', ioc(
+  (Greeter greeter, String name) => greeter.greet(name),
+  injection: InjectionRequest.constant(required: [Greeter, ['name', String]]),
+));
+
+// Controllers take their mount path from `expose` and add routes in `configureRoutes`.
+class HealthController extends Controller {
+  HealthController() : super(expose: const Expose('/health'));
+
+  @override
+  void configureRoutes(Routable routable) =>
+      routable.get('/', (req, res) => {'status': 'ok'});
+}
+```
+
+Without reflection, these features are unavailable: `@Expose` on controller methods, the `@Middleware` and `@Hooks` annotations (they are ignored), automatic constructor injection in `container.make`, and `ioc` without `injection:`. See [example/no_mirrors.dart](example/no_mirrors.dart) for a complete app.
+
+## Request limits
+
+`req.parseBody()` (also used by services) reads at most `app.maxBodySize` bytes, 10 MB by default, and answers larger requests with `413 Payload Too Large`:
+
+```dart
+var app = Angel()..maxBodySize = 1024 * 1024; // 1 MB for the whole app
+
+// Allow larger bodies on one route by raising the limit before parsing.
+app.post('/upload', uploadHandler, middleware: [
+  (req, res) {
+    req.maxBodySize = 100 * 1024 * 1024; // 100 MB
+    return true;
+  },
+]);
+```
+
+Set `app.maxBodySize = null` to remove the limit. In production, resolved routes are cached per request path; the cache holds at most `app.maxHandlerCacheSize` entries (1024 by default, `0` disables it).
+
 ## Performance Benchmark
 
 The performance benchmark can be found at

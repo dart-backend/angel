@@ -3,13 +3,12 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:angel3_container/angel3_container.dart';
-import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_framework/angel3_framework.dart' hide Header;
 import 'package:collection/collection.dart' show IterableExtension;
 import 'package:http2/transport.dart';
 import 'package:angel3_mock_request/angel3_mock_request.dart';
 import 'package:uuid/uuid.dart';
 
-final RegExp _comma = RegExp(r',\s*');
 final RegExp _straySlashes = RegExp(r'(^/+)|(/+$)');
 
 class Http2RequestContext extends RequestContext<ServerTransportStream?> {
@@ -52,78 +51,110 @@ class Http2RequestContext extends RequestContext<ServerTransportStream?> {
     var cookies = <Cookie>[];
 
     void finalize() {
+      if (c.isCompleted) return;
       req
         .._cookies = List.unmodifiable(cookies)
         .._uri = uri;
-      if (!c.isCompleted) c.complete(req);
+
+      // Apply the session only now that the cookie headers have been read.
+      // An unknown id gets a fresh session rather than adopting the
+      // client-chosen id, which would allow session fixation.
+      var sessionId = cookies
+          .firstWhereOrNull((c) => c.name == 'DARTSESSID')
+          ?.value;
+      var session = sessionId == null ? null : sessions[sessionId];
+      if (session == null) {
+        var id = uuid.v4();
+        session = sessions[id] = MockHttpSession(id: id);
+      }
+      req._session = session;
+
+      c.complete(req);
+    }
+
+    void fail(Object error, StackTrace stackTrace) {
+      if (!c.isCompleted) {
+        c.completeError(error, stackTrace);
+      } else if (!req._body.isClosed) {
+        req._body.addError(error, stackTrace);
+      }
     }
 
     void parseHost(String value) {
-      var inUri = Uri.tryParse(value);
-      if (inUri == null) return;
-      // if (uri == null || uri.scheme == 'localhost') return;
-
-      if (inUri.hasScheme) uri = uri.replace(scheme: inUri.scheme);
-
-      if (inUri.hasAuthority) {
-        uri = uri.replace(host: inUri.host, userInfo: inUri.userInfo);
-      }
-
+      // Parse as an authority ("host[:port]"), not as a full URI, where
+      // "example.com:8443" would be read as a scheme.
+      var inUri = Uri.tryParse('//$value');
+      if (inUri == null || inUri.host.isEmpty) return;
+      uri = uri.replace(host: inUri.host);
       if (inUri.hasPort) uri = uri.replace(port: inUri.port);
+    }
+
+    void handleHeader(Header header) {
+      // Header bytes come straight from the client: decode them without
+      // throwing (Latin-1 accepts every byte, matching dart:io), and do not
+      // percent-decode or comma-split values, which would corrupt them.
+      var name = latin1.decode(header.name).toLowerCase();
+      var value = latin1.decode(header.value);
+
+      switch (name) {
+        case ':method':
+          req._method = value;
+          break;
+        case ':path':
+          var inUri = Uri.tryParse(value);
+          if (inUri == null) {
+            throw AngelHttpException.badRequest(message: 'Invalid :path.');
+          }
+          uri = uri.replace(path: inUri.path);
+          if (inUri.hasQuery) uri = uri.replace(query: inUri.query);
+          var path = uri.path.replaceAll(_straySlashes, '');
+          req._path = path;
+          if (path.isEmpty) req._path = '/';
+          break;
+        case ':scheme':
+          uri = uri.replace(scheme: value);
+          break;
+        case ':authority':
+          // HTTP/2 clients send :authority instead of Host.
+          parseHost(value);
+          if (headers.value('host') == null) headers.set('host', value);
+          break;
+        case 'cookie':
+          var cookieStrings = value.split(';').map((s) => s.trim());
+
+          for (var cookieString in cookieStrings) {
+            try {
+              cookies.add(Cookie.fromSetCookieValue(cookieString));
+            } catch (_) {
+              // Ignore malformed cookies, and just don't add them to the container.
+            }
+          }
+          break;
+        case 'host':
+          parseHost(value);
+          headers.set('host', value);
+          break;
+        default:
+          headers.add(name, value);
+          break;
+      }
     }
 
     stream.incomingMessages.listen(
       (msg) {
-        if (msg is DataStreamMessage) {
-          finalize();
-          req._body.add(msg.bytes);
-        } else if (msg is HeadersStreamMessage) {
-          for (var header in msg.headers) {
-            var name = ascii.decode(header.name).toLowerCase();
-            var value = Uri.decodeComponent(ascii.decode(header.value));
-
-            switch (name) {
-              case ':method':
-                req._method = value;
-                break;
-              case ':path':
-                var inUri = Uri.parse(value);
-                uri = uri.replace(path: inUri.path);
-                if (inUri.hasQuery) uri = uri.replace(query: inUri.query);
-                var path = uri.path.replaceAll(_straySlashes, '');
-                req._path = path;
-                if (path.isEmpty) req._path = '/';
-                break;
-              case ':scheme':
-                uri = uri.replace(scheme: value);
-                break;
-              case ':authority':
-                parseHost(value);
-                break;
-              case 'cookie':
-                var cookieStrings = value.split(';').map((s) => s.trim());
-
-                for (var cookieString in cookieStrings) {
-                  try {
-                    cookies.add(Cookie.fromSetCookieValue(cookieString));
-                  } catch (_) {
-                    // Ignore malformed cookies, and just don't add them to the container.
-                  }
-                }
-                break;
-              default:
-                var name = ascii.decode(header.name).toLowerCase();
-
-                if (name == 'host') {
-                  parseHost(value);
-                }
-
-                headers.add(name, value.split(_comma));
-                break;
-            }
+        // Nothing may throw out of this listener: it runs outside the
+        // request's error zone, so an exception here would be unhandled
+        // and terminate the whole server.
+        try {
+          if (msg is DataStreamMessage) {
+            finalize();
+            req._body.add(msg.bytes);
+          } else if (msg is HeadersStreamMessage) {
+            msg.headers.forEach(handleHeader);
+            if (msg.endStream) finalize();
           }
-
-          if (msg.endStream) finalize();
+        } catch (e, st) {
+          fail(e, st);
         }
       },
       onDone: () {
@@ -131,17 +162,7 @@ class Http2RequestContext extends RequestContext<ServerTransportStream?> {
         req._body.close();
       },
       cancelOnError: true,
-      onError: c.completeError,
-    );
-
-    // Apply session
-    var dartSessId = cookies.firstWhereOrNull((c) => c.name == 'DARTSESSID');
-
-    dartSessId ??= Cookie('DARTSESSID', uuid.v4());
-
-    req._session = sessions.putIfAbsent(
-      dartSessId.value,
-      () => MockHttpSession(id: dartSessId!.value),
+      onError: fail,
     );
 
     return c.future;

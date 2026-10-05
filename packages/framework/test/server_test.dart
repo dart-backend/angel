@@ -63,6 +63,58 @@ void main() {
     expect(body, contains('<li>bar</li>'));
   });
 
+  test('default error handler escapes HTML', () async {
+    var app = Angel(reflector: MirrorsReflector());
+    var http = AngelHttp(app);
+    var rq = MockHttpRequest('GET', $foo);
+    await (rq.close());
+    var rs = rq.response;
+    var req = await http.createRequestContext(rq, rs);
+    var res = await http.createResponseContext(rq, rs);
+    var e = AngelHttpException(
+      message: '<script>alert(1)</script>',
+      errors: ['<img src=x onerror=alert(2)>'],
+    );
+    await app.errorHandler(e, req, res);
+    await http.sendResponse(rq, rs, req, res);
+    var body = await rs.transform(utf8.decoder).join();
+    expect(body, isNot(contains('<script>')));
+    expect(body, isNot(contains('<img')));
+    expect(body, contains('&lt;script&gt;'));
+  });
+
+  group('redirect', () {
+    Future<(MockHttpResponse, String)> redirect(String url) async {
+      var app = Angel()..get('/', (req, res) => res.redirect(url));
+      var rq = MockHttpRequest('GET', Uri(path: '/'));
+      await rq.close();
+      await AngelHttp(app).handleRequest(rq);
+      var body = await rq.response.transform(utf8.decoder).join();
+      return (rq.response, body);
+    }
+
+    test('sets location header and status', () async {
+      var (rs, body) = await redirect('/next?a=1&b=2');
+      expect(rs.statusCode, 302);
+      expect(rs.headers.value('location'), '/next?a=1&b=2');
+      expect(body, contains('href="/next?a=1&amp;b=2"'));
+    });
+
+    test('escapes URL in HTML body', () async {
+      var (rs, body) = await redirect('/x"><script>alert(1)</script>');
+      expect(rs.headers.value('location'), '/x"><script>alert(1)</script>');
+      expect(body, isNot(contains('"><script>')));
+      expect(body, isNot(contains('</script>"')));
+    });
+
+    test('does not emit script URLs in HTML body', () async {
+      for (var url in ['javascript:alert(1)', ' JaVa\tScRiPt:alert(1)']) {
+        var (_, body) = await redirect(url);
+        expect(body.toLowerCase(), isNot(contains('script:')));
+      }
+    });
+  });
+
   test('plug-ins run on startup', () async {
     var app = Angel(reflector: MirrorsReflector());
     app.startupHooks.add((app) => app.configuration['two'] = 2);

@@ -61,7 +61,7 @@ class Routable extends Router<RequestHandler> {
 
   Routable([Reflector? reflector])
     //      : _container = reflector == null ? null : Container(reflector),
-    : _container = Container(reflector ?? ThrowingReflector()),
+    : _container = Container(reflector ?? const ThrowingReflector()),
       super();
 
   /// A [Container] used to inject dependencies.
@@ -113,15 +113,12 @@ class Routable extends Router<RequestHandler> {
   }) {
     final handlers = <RequestHandler>[];
     // Merge @Middleware declaration, if any
-    var reflector = _container.reflector;
-    if (reflector is! ThrowingReflector) {
-      var middlewareDeclaration = getAnnotation<Middleware>(
-        handler,
-        _container.reflector,
-      );
-      if (middlewareDeclaration != null) {
-        handlers.addAll(middlewareDeclaration.handlers);
-      }
+    var middlewareDeclaration = getAnnotation<Middleware>(
+      handler,
+      _container.reflector,
+    );
+    if (middlewareDeclaration != null) {
+      handlers.addAll(middlewareDeclaration.handlers);
     }
 
     final handlerSequence = <RequestHandler>[];

@@ -234,6 +234,8 @@ class Service<Id, Data> extends Routable {
     }
   }
 
+  bool _acceptsId(Object? id) => id is Id;
+
   /// Generates RESTful routes pointing to this class's methods.
   void addRoutes([Service? service]) {
     _addRoutesInner(service ?? this, bootstrappers);
@@ -398,8 +400,14 @@ class Service<Id, Data> extends Routable {
     delete(
       '/',
       (req, res) {
+        // "Remove all" is requested with the id 'null' (see [parseId]), which
+        // only String ids can carry. Check the wrapped [service]: a
+        // HookedService created by `app.use` usually has a `dynamic` Id.
+        if (!service._acceptsId('null')) {
+          throw AngelHttpException.methodNotAllowed();
+        }
         return remove(
-          '' as Id,
+          'null' as Id,
           mergeMap([
             {'query': req.queryParameters},
             restProvider,

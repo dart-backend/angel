@@ -7,6 +7,7 @@ import 'dart:io'
     show Cookie, HeaderValue, HttpHeaders, HttpSession, InternetAddress;
 
 import 'package:angel3_container/angel3_container.dart';
+import 'package:angel3_http_exception/angel3_http_exception.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:belatuk_http_server/belatuk_http_server.dart';
 import 'package:meta/meta.dart';
@@ -30,7 +31,8 @@ abstract class RequestContext<RawRequest> {
 
   final List<FutureOr<void> Function()> shutdownHooks = [];
 
-  String? _acceptHeaderCache, _extensionCache;
+  String? _extensionCache;
+  List<String>? _acceptRanges;
   bool? _acceptsAllCache;
   Map<String, dynamic>? _queryParameters;
   Object? _bodyObject;
@@ -48,6 +50,13 @@ abstract class RequestContext<RawRequest> {
 
   /// The [Angel] instance that is responding to this request.
   Angel? app;
+
+  /// The largest request body, in bytes, that [parseBody] will read;
+  /// `null` means unlimited. Larger bodies are rejected with a 413 error.
+  ///
+  /// Defaults to [Angel.maxBodySize]. Middleware can raise it for a single
+  /// route (e.g. a file upload) by setting it before the body is parsed.
+  late int? maxBodySize = app?.maxBodySize;
 
   /// Any cookies sent with this request.
   List<Cookie> get cookies => <Cookie>[];
@@ -142,9 +151,7 @@ abstract class RequestContext<RawRequest> {
   List? get bodyAsList {
     if (!hasParsedBody) {
       throw StateError('The request body has not been parsed yet.');
-      // TODO: Relook at this
-      //} else if (_bodyList == null) {
-    } else if (_bodyList.isEmpty) {
+    } else if (_bodyObject is! List) {
       throw StateError('The request body, $_bodyObject, is not a List.');
     }
 
@@ -206,12 +213,16 @@ abstract class RequestContext<RawRequest> {
   /// Returns `true` if the client's `Accept` header indicates that the given [contentType] is considered a valid response.
   ///
   /// You cannot provide a `null` [contentType].
-  /// If the `Accept` header's value is `*/*`, this method will always return `true`.
-  /// To ignore the wildcard (`*/*`), pass [strict] as `true`.
+  /// Without an `Accept` header, every type is accepted. Otherwise
+  /// [contentType] must match one of the header's media ranges: exactly,
+  /// through a type wildcard (`text/*` accepts `text/html`), or through
+  /// `*/*`. Ranges with `q=0` (explicitly unacceptable) never match.
+  /// To ignore the `*/*` wildcard, pass [strict] as `true`.
   ///
   /// [contentType] can be either of the following:
-  /// * A [ContentType], in which case the `Accept` header will be compared against its `mimeType` property.
-  /// * Any other Dart value, in which case the `Accept` header will be compared against the result of a `toString()` call.
+  /// * A [MediaType], whose `mimeType` is used.
+  /// * Any other Dart value, whose `toString()` is used (parameters such as
+  ///   `; charset=utf-8` are ignored).
   bool accepts(Object? contentType, {bool strict = false}) {
     var contentTypeString = contentType is MediaType
         ? contentType.mimeType
@@ -225,15 +236,54 @@ abstract class RequestContext<RawRequest> {
       );
     }
 
-    _acceptHeaderCache ??= headers?.value('accept');
+    var accepted = _acceptedRanges;
+    if (accepted == null) return true;
 
-    if (_acceptHeaderCache == null) {
-      return true;
-    } else if (strict != true && _acceptHeaderCache!.contains('*/*')) {
-      return true;
-    } else {
-      return _acceptHeaderCache!.contains(contentTypeString);
+    var wanted = contentTypeString.split(';').first.trim().toLowerCase();
+    if (wanted == '*/*') return !strict && accepted.contains('*/*');
+
+    var slash = wanted.indexOf('/');
+    var type = slash == -1 ? wanted : wanted.substring(0, slash);
+
+    for (var range in accepted) {
+      if (range == '*/*') {
+        if (!strict) return true;
+      } else if (range == wanted) {
+        return true;
+      } else if (range.endsWith('/*') &&
+          range.substring(0, range.length - 2) == type) {
+        return true;
+      }
     }
+    return false;
+  }
+
+  /// The media ranges of the `Accept` header, lowercased and without
+  /// parameters, excluding those with `q=0`; `null` without the header.
+  List<String>? get _acceptedRanges {
+    var cached = _acceptRanges;
+    if (cached != null) return cached;
+
+    var values = headers?['accept'];
+    if (values == null || values.isEmpty) return null;
+
+    return _acceptRanges = [
+      for (var item in values.join(',').split(',')) ?_parseAcceptRange(item),
+    ];
+  }
+
+  static final RegExp _qZero = RegExp(r'^q=0(\.0*)?$');
+
+  static String? _parseAcceptRange(String item) {
+    var parts = item.split(';');
+    var range = parts.first.trim().toLowerCase();
+    if (range.isEmpty) return null;
+    for (var param in parts.skip(1)) {
+      if (_qZero.hasMatch(param.replaceAll(' ', '').toLowerCase())) {
+        return null;
+      }
+    }
+    return range;
   }
 
   /// Returns as `true` if the client's `Accept` header indicates that it will accept any response content type.
@@ -253,6 +303,9 @@ abstract class RequestContext<RawRequest> {
       deserializeBody(codec.decode, encoding: encoding);
 
   /// Manually parses the request body, if it has not already been parsed.
+  ///
+  /// Throws a 413 [AngelHttpException] if the body is larger than
+  /// [maxBodySize].
   Future<void> parseBody({Encoding encoding = utf8}) async {
     //if (contentType == null) {
     //  throw FormatException('Missing "content-type" header.');
@@ -262,6 +315,14 @@ abstract class RequestContext<RawRequest> {
       _hasParsedBody = true;
 
       var contentBody = body ?? Stream.empty();
+      var limit = maxBodySize;
+      if (limit != null) {
+        // Reject early when the client declares an oversized body, and
+        // also count the bytes, since Content-Length may be absent or wrong.
+        var declared = headers?.contentLength ?? -1;
+        if (declared > limit) throw _bodyTooLarge(limit);
+        contentBody = _limitBody(contentBody, limit);
+      }
 
       if (contentType.type == 'application' && contentType.subtype == 'json') {
         _uploadedFiles = [];
@@ -318,13 +379,30 @@ abstract class RequestContext<RawRequest> {
     }
   }
 
+  static AngelHttpException _bodyTooLarge(int limit) => AngelHttpException(
+    statusCode: 413,
+    message: 'Request body exceeds the limit of $limit bytes.',
+  );
+
+  static Stream<List<int>> _limitBody(
+    Stream<List<int>> body,
+    int limit,
+  ) async* {
+    var total = 0;
+    await for (var chunk in body) {
+      total += chunk.length;
+      if (total > limit) throw _bodyTooLarge(limit);
+      yield chunk;
+    }
+  }
+
   /// Disposes of all resources.
   @mustCallSuper
   Future<void> close() async {
     if (!_closed) {
       _closed = true;
       _acceptsAllCache = null;
-      _acceptHeaderCache = null;
+      _acceptRanges = null;
       serviceParams.clear();
       params.clear();
       await Future.forEach(shutdownHooks, (dynamic hook) => hook());

@@ -6,6 +6,7 @@ import 'dart:convert' as c show json;
 import 'dart:io' show BytesBuilder, Cookie;
 import 'dart:typed_data';
 
+import 'package:angel3_http_exception/angel3_http_exception.dart';
 import 'package:angel3_route/angel3_route.dart';
 import 'package:file/file.dart';
 import 'package:http_parser/http_parser.dart';
@@ -16,12 +17,14 @@ import 'request_context.dart';
 import 'server.dart' show Angel;
 
 final RegExp _straySlashes = RegExp(r'(^/+)|(/+$)');
+final RegExp _qZero = RegExp(r'^q=0(\.0*)?$');
+final RegExp _headerToken = RegExp(r"^[!#$%&'*+\-.^_`|~0-9A-Za-z]+$");
 
 /// A convenience wrapper around an outgoing HTTP request.
 abstract class ResponseContext<RawResponse>
     implements StreamConsumer<List<int>>, StreamSink<List<int>>, StringSink {
   final Map properties = {};
-  final CaseInsensitiveMap<String> _headers = CaseInsensitiveMap<String>.from({
+  final CaseInsensitiveMap<String> _headers = _ValidatingHeaders.from({
     'content-type': 'text/plain',
     'server': 'Angel3',
   });
@@ -44,6 +47,116 @@ abstract class ResponseContext<RawResponse>
   ///
   /// At most one encoder will ever be used to convert data.
   final Map<String, Converter<List<int>, List<int>>> encoders = {};
+
+  /// Whether [name] is a valid HTTP header name (an RFC 9110 token).
+  static bool isValidHeaderName(String name) =>
+      name.isNotEmpty && _headerToken.hasMatch(name);
+
+  /// Whether [value] can be sent as an HTTP header value: visible ASCII,
+  /// space and tab, the same rule `dart:io` enforces.
+  static bool isValidHeaderValue(String value) {
+    for (var c in value.codeUnits) {
+      if (c != 0x09 && (c < 0x20 || c > 0x7e)) return false;
+    }
+    return true;
+  }
+
+  /// Throws a 500 [AngelHttpException] naming any of [headers] that cannot
+  /// be sent, after removing them so that the error response can be.
+  ///
+  /// Called before headers are sent, so an invalid header set by the app
+  /// fails the same clear way on every transport.
+  void validateHeaders() {
+    var invalid = [
+      for (var name in headers.keys)
+        if (!isValidHeaderName(name) || !isValidHeaderValue(headers[name]!))
+          name,
+    ];
+    if (invalid.isEmpty) return;
+    invalid.forEach(headers.remove);
+    throw AngelHttpException(
+      message:
+          'Invalid response header ${invalid.map((n) => '"$n"').join(', ')}: '
+          'names must be tokens and values visible ASCII.',
+    );
+  }
+
+  bool _finalizersStarted = false;
+
+  /// Whether [Angel.responseFinalizers] have yet to run for this response.
+  bool get hasPendingFinalizers =>
+      !_finalizersStarted &&
+      correspondingRequest != null &&
+      (app?.responseFinalizers.isNotEmpty ?? false);
+
+  /// Runs [Angel.responseFinalizers] for this response, at most once.
+  ///
+  /// Buffered responses run them once the handler is done, so they can read
+  /// and rewrite [buffer]. Unbuffered responses run them just before headers
+  /// are sent: finalizers can still change [headers], [statusCode] and
+  /// [cookies], but no body has been written yet. Finalizers that need the
+  /// body should check [isBuffered]. They must not call [close].
+  Future<void> runFinalizers([RequestContext? request]) async {
+    var req = request ?? correspondingRequest;
+    var finalizers = app?.responseFinalizers;
+    if (_finalizersStarted ||
+        req == null ||
+        finalizers == null ||
+        finalizers.isEmpty) {
+      return;
+    }
+    _finalizersStarted = true;
+    for (var finalizer in List.of(finalizers)) {
+      await finalizer(req, this);
+    }
+  }
+
+  ({String name, Converter<List<int>, List<int>> encoder})? _selectedEncoder;
+  bool _encoderSelected = false;
+
+  /// The encoder from [encoders] to apply to this response, chosen by the
+  /// request's `Accept-Encoding` header, or `null` for none.
+  ///
+  /// Chosen once, on first access (normally when output starts), so handlers
+  /// can still change [encoders] before writing.
+  ({String name, Converter<List<int>, List<int>> encoder})?
+  get selectedEncoder {
+    if (!_encoderSelected) {
+      _encoderSelected = true;
+      _selectedEncoder = selectEncoder(
+        encoders,
+        correspondingRequest?.headers?.value('accept-encoding'),
+      );
+    }
+    return _selectedEncoder;
+  }
+
+  /// Picks the first encoder in [encoders] named by [acceptEncoding], in the
+  /// client's order. `*` picks any encoder; entries with `q=0` are skipped.
+  static ({String name, Converter<List<int>, List<int>> encoder})?
+  selectEncoder(
+    Map<String, Converter<List<int>, List<int>>> encoders,
+    String? acceptEncoding,
+  ) {
+    if (encoders.isEmpty || acceptEncoding == null) return null;
+
+    for (var item in acceptEncoding.split(',')) {
+      var parts = item.split(';');
+      var name = parts.first.trim();
+      if (name.isEmpty) continue;
+
+      var rejected = parts
+          .skip(1)
+          .any((p) => _qZero.hasMatch(p.replaceAll(' ', '')));
+      if (rejected) continue;
+
+      if (name == '*') name = encoders.keys.first;
+      var encoder = encoders[name];
+      if (encoder != null) return (name: name, encoder: encoder);
+    }
+
+    return null;
+  }
 
   /// A [Map] of data to inject when `res.render` is called.
   ///
@@ -88,8 +201,7 @@ abstract class ResponseContext<RawResponse>
 
   /// Returns `true` if the response is still available for processing by Angel.
   ///
-  /// If it is `false`, then Angel will stop executing handlers, and will only run
-  /// response finalizers if the response [isBuffered].
+  /// If it is `false`, then Angel will stop executing handlers.
   bool get isOpen;
 
   /// Returns `true` if response data is being written to a buffer, rather than to the underlying stream.
@@ -142,20 +254,59 @@ abstract class ResponseContext<RawResponse>
   static StateError closed() => StateError('Cannot modify a closed response.');
 
   /// Sends a download as a response.
+  ///
+  /// The client sees [filename], or else the file's base name; never its
+  /// path on the server. A missing file is a 404. `HEAD` requests get the
+  /// headers only.
   Future<void> download(File file, {String? filename}) async {
     if (!isOpen) throw closed();
+    if (!await file.exists()) throw AngelHttpException.notFound();
 
-    headers['Content-Disposition'] =
-        'attachment; filename="${filename ?? file.path}"';
-    contentType = MediaType.parse(lookupMimeType(file.path)!);
-    headers['content-length'] = file.lengthSync().toString();
+    headers['content-disposition'] = attachmentDisposition(
+      filename ?? file.basename,
+    );
+    contentType = _fileContentType(file);
+    contentLength = await file.length();
 
-    if (!isBuffered) {
-      await file.openRead().cast<List<int>>().pipe(this);
-    } else {
-      buffer!.add(file.readAsBytesSync());
-      await close();
+    if (correspondingRequest?.method != 'HEAD') {
+      if (!isBuffered) {
+        await addStream(file.openRead());
+      } else {
+        buffer!.add(await file.readAsBytes());
+      }
     }
+    await close();
+  }
+
+  /// Builds an `attachment` Content-Disposition header value for [filename]
+  /// (RFC 6266), safe for any name: a quoted ASCII fallback, plus a
+  /// UTF-8 `filename*` parameter when the name needs one.
+  static String attachmentDisposition(String filename) {
+    var fallback = StringBuffer();
+    for (var c in filename.runes) {
+      var printable = c >= 0x20 && c < 0x7f && c != 0x22 && c != 0x5c;
+      fallback.write(printable ? String.fromCharCode(c) : '_');
+    }
+
+    var header = 'attachment; filename="$fallback"';
+    if (fallback.toString() != filename) {
+      // RFC 8187 attr-chars: encodeComponent also leaves ' ( ) * as-is.
+      var encoded = Uri.encodeComponent(filename)
+          .replaceAll("'", '%27')
+          .replaceAll('(', '%28')
+          .replaceAll(')', '%29')
+          .replaceAll('*', '%2A');
+      header += "; filename*=UTF-8''$encoded";
+    }
+    return header;
+  }
+
+  MediaType _fileContentType(File file) {
+    var mimeType =
+        app?.mimeTypeResolver.lookup(file.path) ?? lookupMimeType(file.path);
+    return mimeType == null
+        ? MediaType('application', 'octet-stream')
+        : MediaType.parse(mimeType);
   }
 
   /// Prevents more data from being written to the response, and locks it entire from further editing.
@@ -212,30 +363,48 @@ abstract class ResponseContext<RawResponse>
   /// See [Router]#navigate for more. :)
   Future<void> redirect(Object? url, {bool absolute = true, int? code}) {
     if (!isOpen) throw closed();
+    var location = (url is String || url is Uri)
+        ? url.toString()
+        : app!.navigate(url as Iterable, absolute: absolute);
     headers
       ..['content-type'] = 'text/html'
-      ..['location'] = (url is String || url is Uri)
-          ? url.toString()
-          : app!.navigate(url as Iterable, absolute: absolute);
+      ..['location'] = location;
     statusCode = code ?? 302;
+
+    // The fallback page below is HTML, so the URL must be escaped for each
+    // context it appears in, and script-capable schemes must never be emitted.
+    var bodyUrl = _isScriptUrl(location) ? '' : location;
+    var attrUrl = const HtmlEscape(HtmlEscapeMode.attribute).convert(bodyUrl);
+    var jsUrl = c.json.encode(bodyUrl).replaceAll('<', r'\u003c');
     write('''
     <!DOCTYPE html>
     <html>
       <head>
         <title>Redirecting...</title>
-        <meta http-equiv="refresh" content="0; url=$url">
+        <meta http-equiv="refresh" content="0; url=$attrUrl">
       </head>
       <body>
         <h1>Currently redirecting you...</h1>
         <br />
-        Click <a href="$url">here</a> if you are not automatically redirected...
+        Click <a href="$attrUrl">here</a> if you are not automatically redirected...
         <script>
-          window.location = "$url";
+          window.location = $jsUrl;
         </script>
       </body>
     </html>
     ''');
     return close();
+  }
+
+  /// Returns `true` if [url] uses a scheme that executes script when navigated to.
+  ///
+  /// Browsers ignore whitespace and control characters inside a scheme
+  /// (e.g. `java\tscript:`), so those are stripped before comparing.
+  static bool _isScriptUrl(String url) {
+    var normalized = url.replaceAll(RegExp(r'[\x00-\x20]'), '').toLowerCase();
+    return normalized.startsWith('javascript:') ||
+        normalized.startsWith('vbscript:') ||
+        normalized.startsWith('data:');
   }
 
   /// Redirects to the given named [Route].
@@ -336,11 +505,10 @@ abstract class ResponseContext<RawResponse>
     if (!isOpen) {
       throw closed();
     }
-    var mimeType = app!.mimeTypeResolver.lookup(file.path);
+    // A 404 rather than a file system error, whose message names the path.
+    if (!await file.exists()) throw AngelHttpException.notFound();
     contentLength = await file.length();
-    contentType = mimeType == null
-        ? MediaType('application', 'octet-stream')
-        : MediaType.parse(mimeType);
+    contentType = _fileContentType(file);
 
     if (correspondingRequest!.method != 'HEAD') {
       return addStream(file.openRead().cast<List<int>>()).then((_) => close());
@@ -467,5 +635,26 @@ class _LockableBytesBuilderImpl implements LockableBytesBuilder {
   @override
   Uint8List toBytes() {
     return _buf.toBytes();
+  }
+}
+
+/// Response headers that reject a name or value which cannot be sent, at the
+/// point the app sets it, so the error surfaces in the handler rather than
+/// once output starts. [ResponseContext.validateHeaders] backs this up for
+/// map methods that bypass `[]=`.
+class _ValidatingHeaders extends CaseInsensitiveMap<String> {
+  _ValidatingHeaders.from(super.other) : super.from();
+
+  @override
+  void operator []=(String key, String value) {
+    if (!ResponseContext.isValidHeaderName(key) ||
+        !ResponseContext.isValidHeaderValue(value)) {
+      throw AngelHttpException(
+        message:
+            'Invalid response header "$key": names must be tokens and '
+            'values visible ASCII.',
+      );
+    }
+    super[key] = value;
   }
 }

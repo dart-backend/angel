@@ -1,7 +1,7 @@
 import 'package:angel3_serialize/angel3_serialize.dart';
 part 'has_map.g.dart';
 
-Map? _fromString(v) => json.decode(v.toString()) as Map?;
+Map? _fromString(dynamic v) => json.decode(v.toString()) as Map?;
 
 String _toString(Map? v) => json.encode(v);
 

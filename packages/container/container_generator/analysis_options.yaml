@@ -1,1 +1,9 @@
 include: package:lints/recommended.yaml
+
+analyzer:
+  exclude:
+    - '**/*.g.dart'
+  errors:
+    overridden_fields: ignore
+    no_leading_underscores_for_local_identifiers: ignore
+

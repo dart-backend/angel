@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io' show Cookie;
 
 import 'package:angel3_http_exception/angel3_http_exception.dart';
@@ -8,6 +7,7 @@ import 'package:belatuk_combinator/belatuk_combinator.dart';
 import 'package:stack_trace/stack_trace.dart';
 import 'package:tuple/tuple.dart';
 
+import '../util.dart';
 import 'core.dart';
 
 /// Base driver class for Angel implementations.
@@ -42,29 +42,69 @@ abstract class Driver<
       serverGenerator(address, port);
 
   /// Starts, and returns the server.
-  Future<Server> startServer([Object? address, int port = 0]) {
+  ///
+  /// If binding fails (e.g. the port is in use), the original error is
+  /// rethrown. If a startup hook fails, the bound server is closed again, so
+  /// it does not keep holding the port, and the hook's error is rethrown.
+  Future<Server> startServer([Object? address, int port = 0]) async {
     var host = address ?? '127.0.0.1';
-    return generateServer(host, port)
-        .then((server) {
-          this.server = server;
 
-          return Future.wait(app.startupHooks.map(app.configure)).then((_) {
-            app.optimizeForProduction();
-            _sub = this.server?.listen((request) {
-              var stream = createResponseStreamFromRawRequest(request);
-              stream.listen((response) {
-                // TODO: To be revisited
-                handleRawRequest(request, response);
-              });
-            });
-            return Future.value(this.server!);
+    Server server;
+    try {
+      server = await generateServer(host, port);
+    } catch (e, st) {
+      app.logger.severe('Failed to create server on $host:$port', e, st);
+      rethrow;
+    }
+    this.server = server;
+
+    try {
+      await Future.wait(app.startupHooks.map(app.configure));
+    } catch (e, st) {
+      app.logger.severe('A startup hook failed; closing the server', e, st);
+      this.server = null;
+      try {
+        await closeServer(server);
+      } catch (_) {
+        // Already failing; the hook's error is the one to report.
+      }
+      rethrow;
+    }
+
+    app.optimizeForProduction();
+    _sub = server.listen((request) {
+      var stream = createResponseStreamFromRawRequest(request);
+      // Errors here happen outside the per-request error zone (e.g. a
+      // malformed request that cannot become a RequestContext, or a
+      // broken HTTP/2 connection). Left unhandled they would
+      // terminate the whole server, so log them and drop the request.
+      stream.listen(
+        (response) {
+          handleRawRequest(request, response).catchError((
+            Object e,
+            StackTrace st,
+          ) {
+            app.logger.warning('Failed to handle request', e, st);
+            try {
+              setStatusCode(response, 400);
+              closeResponse(response);
+            } catch (_) {
+              // The response may already be unusable.
+            }
           });
-        })
-        .catchError((error) {
-          app.logger.severe('Failed to create server', error);
-          throw ArgumentError('[Driver]Failed to create server');
-        });
+        },
+        onError: (Object e, StackTrace st) {
+          app.logger.warning('Connection error', e, st);
+        },
+      );
+    });
+    return server;
   }
+
+  /// Closes a [server] created by [generateServer] that never started
+  /// serving (see [startServer]). Drivers whose server can be closed should
+  /// override this; the default does nothing.
+  Future<void> closeServer(Server server) async {}
 
   /// Shuts down the underlying server.
   Future<void> close() {
@@ -119,8 +159,6 @@ abstract class Driver<
 
   /// Handles a single request.
   Future handleRawRequest(Request request, Response response) {
-    app.logger.info('[Server] Called handleRawRequest');
-
     return createRequestContext(request, response).then((req) {
       return createResponseContext(request, response, req).then((res) {
         Future handle() {
@@ -135,11 +173,10 @@ abstract class Driver<
           >
           resolveTuple() {
             var r = app.optimizedRouter;
-            var resolved = r.resolveAbsolute(
-              path,
-              method: req.method,
-              strip: false,
-            );
+            var resolved = resolveRequest(r, path, req.method, strip: false);
+            if (resolved.isEmpty) {
+              throw AngelHttpException.notFound();
+            }
             var pipeline = MiddlewarePipeline<RequestHandler>(resolved);
             return Tuple4(
               pipeline.handlers,
@@ -147,7 +184,6 @@ abstract class Driver<
                 <String, dynamic>{},
                 (out, r) => out..addAll(r.allParams),
               ),
-              //(resolved.isEmpty ? null : resolved.first.parseResult),
               resolved.first.parseResult,
               pipeline,
             );
@@ -155,7 +191,7 @@ abstract class Driver<
 
           var cacheKey = req.method + path;
           var tuple = app.environment.isProduction
-              ? app.handlerCache.putIfAbsent(cacheKey, resolveTuple)
+              ? _cachedResolve(cacheKey, resolveTuple)
               : resolveTuple();
           var line = tuple.item4 as MiddlewarePipeline<RequestHandler>;
           var it = MiddlewarePipelineIterator<RequestHandler>(line);
@@ -234,6 +270,15 @@ abstract class Driver<
                 );
               });
         } else {
+          // Completed explicitly once the request is done: an error inside
+          // the request's error zone never reaches listeners outside it, so
+          // a future returned from the zone would never complete whenever a
+          // handler throws.
+          var done = Completer<void>();
+          void finish() {
+            if (!done.isCompleted) done.complete();
+          }
+
           var zoneSpec = ZoneSpecification(
             print: (self, parent, zone, line) {
               app.logger.info(line);
@@ -243,40 +288,42 @@ abstract class Driver<
 
               // TODO: To be revisited
               Future(() {
-                AngelHttpException e;
+                    AngelHttpException e;
 
-                if (error is FormatException) {
-                  e = AngelHttpException.badRequest(message: error.message);
-                } else if (error is AngelHttpException) {
-                  e = error;
-                } else {
-                  e = AngelHttpException(
-                    stackTrace: stackTrace,
-                    message: error.toString(),
-                  );
-                }
+                    if (error is FormatException) {
+                      e = AngelHttpException.badRequest(message: error.message);
+                    } else if (error is AngelHttpException) {
+                      e = error;
+                    } else {
+                      e = AngelHttpException(
+                        stackTrace: stackTrace,
+                        message: error.toString(),
+                      );
+                    }
 
-                app.logger.severe(e.message, error, trace);
+                    app.logger.severe(e.message, error, trace);
 
-                return handleAngelHttpException(
-                  e,
-                  trace,
-                  req,
-                  res,
-                  request,
-                  response,
-                );
-              }).catchError((e, StackTrace st) {
-                var trace = Trace.from(st).terse;
-                closeResponse(response);
-                // Ideally, we won't be in a position where an absolutely fatal error occurs,
-                // but if so, we'll need to log it.
-                app.logger.severe(
-                  'Fatal error occurred when processing $uri.',
-                  e,
-                  trace,
-                );
-              });
+                    return handleAngelHttpException(
+                      e,
+                      trace,
+                      req,
+                      res,
+                      request,
+                      response,
+                    );
+                  })
+                  .catchError((e, StackTrace st) {
+                    var trace = Trace.from(st).terse;
+                    closeResponse(response);
+                    // Ideally, we won't be in a position where an absolutely fatal error occurs,
+                    // but if so, we'll need to log it.
+                    app.logger.severe(
+                      'Fatal error occurred when processing $uri.',
+                      e,
+                      trace,
+                    );
+                  })
+                  .whenComplete(finish);
             },
           );
 
@@ -288,14 +335,50 @@ abstract class Driver<
           // so use a try/catch, and recover when need be.
 
           try {
-            return zone.run(handle);
+            // On failure the error goes to handleUncaughtError, which
+            // finishes once the error response has been sent.
+            zone.run(() => handle().then((_) => finish()));
           } catch (e, st) {
             zone.handleUncaughtError(e, st);
-            return Future.value();
           }
+          return done.future;
         }
       });
     });
+  }
+
+  /// Looks up [key] in [Angel.handlerCache], resolving and caching on a miss.
+  ///
+  /// The cache is LRU-bounded by [Angel.maxHandlerCacheSize]: keys are request
+  /// paths, so without a bound, distinct paths (e.g. `/users/1`, `/users/2`)
+  /// would grow it indefinitely.
+  Tuple4<
+    List,
+    Map<String, dynamic>,
+    ParseResult<RouteResult>,
+    MiddlewarePipeline
+  >
+  _cachedResolve(
+    String key,
+    Tuple4<
+      List,
+      Map<String, dynamic>,
+      ParseResult<RouteResult>,
+      MiddlewarePipeline
+    >
+    Function()
+    resolve,
+  ) {
+    var cache = app.handlerCache;
+    var max = app.maxHandlerCacheSize;
+    if (max <= 0) return resolve();
+
+    // Re-inserting moves the entry to the end, keeping eviction LRU.
+    var tuple = cache.remove(key) ?? resolve();
+    while (cache.length >= max) {
+      cache.remove(cache.keys.first);
+    }
+    return cache[key] = tuple;
   }
 
   /// Handles an [AngelHttpException].
@@ -381,11 +464,12 @@ abstract class Driver<
 
     var finalizers = ignoreFinalizers == true
         ? Future.value()
-        : Future.forEach(app.responseFinalizers, (dynamic f) => f(req, res));
+        : res.runFinalizers(req);
 
     return finalizers.then((_) {
       //if (res.isOpen) res.close();
 
+      res.validateHeaders();
       for (var key in res.headers.keys) {
         app.logger.fine("Response header key: $key");
         setHeader(response, key, res.headers[key] ?? '');
@@ -396,44 +480,20 @@ abstract class Driver<
 
       var outputBuffer = res.buffer?.toBytes() ?? <int>[];
 
-      if (res.encoders.isNotEmpty) {
-        var allowedEncodings = req.headers
-            ?.value('accept-encoding')
-            ?.split(',')
-            .map((s) => s.trim())
-            .where((s) => s.isNotEmpty)
-            .map((str) {
-              // Ignore quality specifications in accept-encoding
-              // ex. gzip;q=0.8
-              if (!str.contains(';')) return str;
-              return str.split(';')[0];
-            });
-
-        if (allowedEncodings != null) {
-          for (var encodingName in allowedEncodings) {
-            var key = encodingName;
-
-            Converter<List<int>, List<int>>? encoder;
-            if (res.encoders.containsKey(encodingName)) {
-              encoder = res.encoders[encodingName];
-            } else if (encodingName == '*') {
-              encoder = res.encoders[key = res.encoders.keys.first];
-            }
-
-            if (encoder != null) {
-              setHeader(response, 'content-encoding', key);
-              outputBuffer =
-                  res.encoders[key]?.convert(outputBuffer) ?? <int>[];
-              setContentLength(response, outputBuffer.length);
-              break;
-            }
-          }
-        }
+      var encoding = ResponseContext.selectEncoder(
+        res.encoders,
+        req.headers?.value('accept-encoding'),
+      );
+      if (encoding != null) {
+        setHeader(response, 'content-encoding', encoding.name);
+        outputBuffer = encoding.encoder.convert(outputBuffer);
+        setContentLength(response, outputBuffer.length);
       }
 
       setStatusCode(response, res.statusCode);
       addCookies(response, res.cookies);
-      writeToResponse(response, outputBuffer);
+      // HEAD responses carry headers only.
+      if (req.method != 'HEAD') writeToResponse(response, outputBuffer);
       return closeResponse(response).then(cleanup);
     });
   }

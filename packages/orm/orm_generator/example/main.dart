@@ -55,7 +55,7 @@ abstract class EmployeeEntity extends Model {
   String? get lastName;
 
   @Column(indexType: IndexType.unique)
-  String? uniqueId;
+  abstract String? uniqueId;
 
   double? get salary;
 }

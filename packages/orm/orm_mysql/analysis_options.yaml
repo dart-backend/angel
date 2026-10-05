@@ -1,4 +1,11 @@
 include: package:lints/recommended.yaml
-linter:
-  rules:
-    overridden_fields: false
+
+analyzer:
+  exclude:
+    - '**/*.g.dart'
+  errors:
+    overridden_fields: ignore
+
+#linter:
+#  rules:
+#    overridden_fields: false
