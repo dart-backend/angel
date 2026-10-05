@@ -15,7 +15,14 @@ A `Service` class that caches data from one service, storing it in another. An i
 
 A middleware that enables the caching of response serialization.
 
-This can improve the performance of sending objects that are complex to serialize. You can pass a [shouldCache] callback to determine which values should be cached.
+This can improve the performance of sending objects that are complex to serialize and are returned again and again, such as a precomputed list. Results are cached per object instance across requests (held weakly, so objects can still be garbage-collected). Pass a `shouldCache` callback to decide which values may be cached, and a `timeout` for objects that can change:
+
+```dart
+app.fallback(cacheSerializationResults(
+  timeout: const Duration(minutes: 5),
+  shouldCache: (req, res, value) => value is List,
+));
+```
 
 ```dart
 void main() async {
