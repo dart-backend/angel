@@ -13,7 +13,8 @@
 * fix: `cacheSerializationResults` now works: results are cached per object instance across requests, `shouldCache` is consulted, `timeout` is honoured, a result is reused only for the same serializer, and async serializers are supported
 * test: Made `cache_test.dart` deterministic and corrected two assertions that expected the old behaviour
 * feat: Added `ResponseCache(maxEntries: ...)`
-* chore: Removed the unused `pool` dependency
+* chore: Removed the unused `pool` and `meta` dependencies, and the unused `glob` dev dependency
+* docs: Updated the README
 
 ## 9.1.0
 

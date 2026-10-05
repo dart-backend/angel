@@ -5,7 +5,6 @@ import 'package:angel3_cache/angel3_cache.dart';
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_test/angel3_test.dart';
 import 'package:http/http.dart' as http;
-//import 'package:glob/glob.dart';
 import 'package:test/test.dart';
 import 'package:logging/logging.dart';
 
@@ -27,11 +26,7 @@ Future<void> main() async {
 
     setUp(() async {
       var app = Angel();
-      var cache = ResponseCache()
-        ..patterns.addAll([
-          //Glob('/*.txt'), // Requires to create folders and files for testing
-          RegExp('^/?\\w+\\.txt'),
-        ]);
+      var cache = ResponseCache()..patterns.addAll([RegExp('^/?\\w+\\.txt')]);
 
       app.fallback(cache.handleRequest);
 
@@ -142,6 +137,4 @@ Future<void> main() async {
       expect(response.body, response1.body);
     });
   });
-
-  group('with timeout', () {});
 }
