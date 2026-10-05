@@ -21,6 +21,9 @@ Future<void> main() async {
     late TestClient client;
     DateTime? lastModified;
     late http.Response response1, response2;
+    // Makes every generated body distinct: DateTime.now() alone can repeat
+    // within one clock tick, which made the invalidate test flaky.
+    var generated = 0;
 
     setUp(() async {
       var app = Angel();
@@ -33,7 +36,7 @@ Future<void> main() async {
       app.fallback(cache.handleRequest);
 
       app.get('/date.txt', (req, res) {
-        var data = DateTime.now().toIso8601String();
+        var data = '${++generated} ${DateTime.now().toIso8601String()}';
         print('Res data: $data');
         res
           ..useBuffer()
@@ -119,8 +122,8 @@ Future<void> main() async {
       print('Response status: ${response.statusCode})');
       print('Response headers: ${response.headers}');
       print('Response body: ${response.body}');
-      //expect(response.statusCode, 304);
-      expect(response.statusCode, 200);
+      expect(response.statusCode, 304);
+      expect(response.body, isEmpty);
     });
 
     test('last-modified in the past', () async {
@@ -134,8 +137,9 @@ Future<void> main() async {
         },
       );
       print('Response: ${response.body}');
+      // Modified since then: the fresh cached copy is served.
       expect(response.statusCode, 200);
-      expect(response.body, isNot(response1.body));
+      expect(response.body, response1.body);
     });
   });
 

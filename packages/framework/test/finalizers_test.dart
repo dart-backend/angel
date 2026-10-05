@@ -34,6 +34,10 @@ void main() {
         res
           ..useBuffer()
           ..write('original');
+      })
+      ..get('/buffered-file', (req, res) {
+        res.useBuffer();
+        return res.streamFile(const LocalFileSystem().file('pubspec.yaml'));
       });
     http = AngelHttp(app);
     await http.startServer('127.0.0.1', 0);
@@ -120,6 +124,18 @@ void main() {
       await get('/buffered');
       expect(seen, 'original');
       expect(runs, 1);
+    });
+
+    test('see streamed output (e.g. streamFile) in the buffer', () async {
+      String? seen;
+      app.responseFinalizers.add((req, res) {
+        seen = utf8.decode(res.buffer!.toBytes());
+      });
+      var (rs, body) = await get('/buffered-file');
+      var file = File('pubspec.yaml').readAsStringSync();
+      expect(rs.statusCode, 200);
+      expect(seen, file);
+      expect(body, file);
     });
 
     test('can rewrite the body', () async {

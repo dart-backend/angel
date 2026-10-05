@@ -52,7 +52,9 @@ class ResponseCache {
 
   /// A middleware that handles requests with an `If-Modified-Since` header.
   ///
-  /// This prevents the server from even having to access the cache, and plays very well with static assets.
+  /// If the cached response has not changed since that time, it answers
+  /// `304 Not Modified` with no body, so the client reuses its copy.
+  /// Returns `false` when it has answered.
   Future<bool> ifModifiedSince(RequestContext req, ResponseContext res) async {
     if (!_isCacheableRequest(req)) return true;
 
@@ -62,14 +64,25 @@ class ResponseCache {
     var reqPath = _getEffectivePath(req);
     if (!_matches(reqPath)) return true;
 
+    // Compared in whole seconds, as sent in Last-Modified, so a client
+    // sending back that exact value is recognized as up to date.
     var response = _lookup(reqPath, DateTime.now().toUtc());
-    if (response != null && response.timestamp.compareTo(modifiedSince) <= 0) {
-      await _send(response, req, res);
-      return false;
+    if (response == null || response.lastModified.isAfter(modifiedSince)) {
+      return true;
     }
 
-    return true;
+    _setCachedHeaders(response.lastModified, req, res);
+    res.statusCode = 304;
+    await res.close();
+    return false;
   }
+
+  /// [time] without its fractional second, as HTTP dates have.
+  static DateTime _wholeSeconds(DateTime time) =>
+      DateTime.fromMillisecondsSinceEpoch(
+        time.millisecondsSinceEpoch ~/ 1000 * 1000,
+        isUtc: true,
+      );
 
   String _getEffectivePath(RequestContext req) {
     if (req.uri == null) {
@@ -128,7 +141,7 @@ class ResponseCache {
     RequestContext req,
     ResponseContext res,
   ) async {
-    _setCachedHeaders(response.timestamp, req, res);
+    _setCachedHeaders(response.lastModified, req, res);
     res
       ..statusCode = response.statusCode
       ..headers.addAll(response.headers)
@@ -137,28 +150,34 @@ class ResponseCache {
   }
 
   /// Serves content from the cache, if applicable.
+  ///
+  /// Answers `304 Not Modified` when the client's copy is current (see
+  /// [ifModifiedSince]), otherwise serves a fresh cached response. On a
+  /// cache miss it buffers the response, so that [responseFinalizer] can
+  /// store it without the handler calling `useBuffer()`.
   Future<bool> handleRequest(RequestContext req, ResponseContext res) async {
     if (!await ifModifiedSince(req, res)) return false;
     if (!_isCacheableRequest(req)) return true;
     if (!res.isOpen) return true;
 
-    // If `if-modified-since` is present, this check has already been performed.
-    if (req.headers?.ifModifiedSince != null) return true;
-
     var reqPath = _getEffectivePath(req);
     if (!_matches(reqPath)) return true;
 
     var response = _lookup(reqPath, DateTime.now().toUtc());
-    if (response == null) return true;
+    if (response != null) {
+      await _send(response, req, res);
+      return false;
+    }
 
-    await _send(response, req, res);
-    return false;
+    if (maxEntries > 0 && !res.isBuffered) res.useBuffer();
+    return true;
   }
 
   /// A response finalizer that saves responses to the cache.
   ///
-  /// Only buffered responses (see `ResponseContext.useBuffer`) can be stored.
-  /// Cache headers are added only to responses that are safe to cache.
+  /// Only buffered responses can be stored; [handleRequest] buffers responses
+  /// for matching paths. Cache headers are added only to responses that are
+  /// safe to cache.
   Future<bool> responseFinalizer(
     RequestContext req,
     ResponseContext res,
@@ -186,7 +205,7 @@ class ResponseCache {
       );
     }
 
-    _setCachedHeaders(now, req, res);
+    _setCachedHeaders(_wholeSeconds(now), req, res);
     return true;
   }
 
@@ -210,7 +229,13 @@ class _CachedResponse {
   final int statusCode;
   final Map<String, String> headers;
   final List<int> body;
+
+  /// When the response was stored; used for expiry.
   final DateTime timestamp;
 
-  _CachedResponse(this.statusCode, this.headers, this.body, this.timestamp);
+  /// [timestamp] in whole seconds, as sent in `Last-Modified`.
+  final DateTime lastModified;
+
+  _CachedResponse(this.statusCode, this.headers, this.body, this.timestamp)
+    : lastModified = ResponseCache._wholeSeconds(timestamp);
 }

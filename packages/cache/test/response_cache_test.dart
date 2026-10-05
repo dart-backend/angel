@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:angel3_cache/angel3_cache.dart';
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_framework/http.dart';
+import 'package:file/local.dart';
 import 'package:test/test.dart';
 
 /// A server with a [ResponseCache] in front of handlers that count calls.
@@ -189,5 +190,105 @@ void main() {
     expect(b2, isNot(b1));
     expect(b3, b2);
     expect(h.calls['/page'], 2);
+  });
+
+  group('without useBuffer()', () {
+    test('caches a normal (unbuffered) response', () async {
+      await setUpHarness();
+      h.app.get('/plain', (req, res) => 'plain:${h.count('/plain')}');
+      await h.start();
+
+      var (_, b1, _) = await h.get('/plain');
+      var (_, b2, _) = await h.get('/plain');
+      expect(b2, b1);
+      expect(h.calls['/plain'], 1);
+    });
+
+    test('caches a streamed file with its full body', () async {
+      await setUpHarness();
+      h.app.get('/file', (req, res) {
+        h.count('/file');
+        return res.streamFile(const LocalFileSystem().file('pubspec.yaml'));
+      });
+      await h.start();
+
+      var file = File('pubspec.yaml').readAsStringSync();
+      var (_, b1, _) = await h.get('/file');
+      var (s2, b2, _) = await h.get('/file');
+      expect(b1, file);
+      expect((s2, b2), (200, file));
+      expect(h.calls['/file'], 1);
+    });
+  });
+
+  group('If-Modified-Since', () {
+    late String lastModified;
+
+    setUp(() async {
+      await setUpHarness();
+      h.buffered('/page');
+      h.app.get('/uncached', (req, res) => 'u:${h.count('/uncached')}');
+      h.cache.patterns
+        ..clear()
+        ..add(RegExp(r'^/page'));
+      await h.start();
+      var (_, _, headers) = await h.get('/page');
+      lastModified = headers.value('last-modified')!;
+    });
+
+    test('the exact Last-Modified value gets a 304 without a body', () async {
+      var (status, body, headers) = await h.get(
+        '/page',
+        headers: {'if-modified-since': lastModified},
+      );
+      expect(status, 304);
+      expect(body, isEmpty);
+      expect(headers.value('last-modified'), lastModified);
+      expect(headers.value('cache-control'), startsWith('public'));
+      expect(h.calls['/page'], 1);
+    });
+
+    test('a later date gets a 304', () async {
+      var (status, _, _) = await h.get(
+        '/page',
+        headers: {
+          'if-modified-since': HttpDate.format(
+            DateTime.now().add(const Duration(days: 1)),
+          ),
+        },
+      );
+      expect(status, 304);
+    });
+
+    test('an earlier date gets the cached 200 response', () async {
+      var (status, body, _) = await h.get(
+        '/page',
+        headers: {
+          'if-modified-since': HttpDate.format(
+            HttpDate.parse(lastModified).subtract(const Duration(days: 1)),
+          ),
+        },
+      );
+      expect(status, 200);
+      expect(body, '/page:1');
+      expect(h.calls['/page'], 1, reason: 'served from the cache');
+    });
+
+    test('is ignored for requests with Authorization', () async {
+      var (status, body, _) = await h.get(
+        '/page',
+        headers: {'if-modified-since': lastModified, 'authorization': 'x'},
+      );
+      expect(status, 200);
+      expect(body, '/page:2');
+    });
+
+    test('is ignored for paths that are not cached', () async {
+      var (status, _, _) = await h.get(
+        '/uncached',
+        headers: {'if-modified-since': lastModified},
+      );
+      expect(status, 200);
+    });
   });
 }

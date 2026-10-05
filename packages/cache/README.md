@@ -46,7 +46,7 @@ Use this to improve real and perceived response of Web applications, as well as 
 
 Supports the `If-Modified-Since` header, as well as storing the contents of response buffers in memory.
 
-Only responses that are safe to share are stored: buffered (`res.useBuffer()`) responses with status 200 that set no cookies and are not marked `Cache-Control: no-store` or `private`. Requests carrying an `Authorization` header bypass the cache entirely. At most `maxEntries` responses (1024 by default) are kept; when full, expired entries are dropped first, then the least recently used.
+`handleRequest` buffers responses for matching paths, so handlers need no changes. Clients whose copy is still current get `304 Not Modified`. Only responses that are safe to share are stored: status 200, no cookies, and not marked `Cache-Control: no-store` or `private`. Requests carrying an `Authorization` header bypass the cache entirely. At most `maxEntries` responses (1024 by default) are kept; when full, expired entries are dropped first, then the least recently used.
 
 To initialize a simple cache:
 

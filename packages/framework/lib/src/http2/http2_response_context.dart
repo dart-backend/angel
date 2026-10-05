@@ -191,7 +191,9 @@ class Http2ResponseContext extends ResponseContext<ServerTransportStream> {
   @override
   Future addStream(Stream<List<int>> stream) async {
     if (!isOpen && isBuffered) throw ResponseContext.closed();
-    await _commitOrThrow();
+    // A buffered response is sent as a whole by the driver, so do not send
+    // headers now; add() appends to the buffer.
+    if (!isBuffered) await _commitOrThrow();
     await stream.forEach(add);
   }
 

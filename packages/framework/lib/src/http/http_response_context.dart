@@ -194,6 +194,12 @@ class HttpResponseContext extends ResponseContext<HttpResponse> {
   @override
   Future addStream(Stream<List<int>> stream) async {
     if (_isClosed && isBuffered) throw ResponseContext.closed();
+    if (isBuffered) {
+      // A buffered response is sent as a whole by the driver; writing the
+      // stream to the socket here would leave the buffer empty.
+      await stream.forEach(buffer!.add);
+      return;
+    }
     await _commitOrThrow();
 
     var sink = _encoderSink;

@@ -22,29 +22,32 @@ class MockHttpHeaders implements HttpHeaders {
   set contentType(ContentType? value) =>
       set(HttpHeaders.contentTypeHeader, value?.value ?? ContentType.html);
 
+  // Absent headers are null, as in dart:io; not the current time.
   @override
-  DateTime get date => _data.containsKey(HttpHeaders.dateHeader)
+  DateTime? get date => _data.containsKey(HttpHeaders.dateHeader)
       ? HttpDate.parse(_data[HttpHeaders.dateHeader]!.join(','))
-      : DateTime.now();
+      : null;
 
   @override
   set date(DateTime? value) =>
       set(HttpHeaders.dateHeader, HttpDate.format(value ?? DateTime.now()));
 
+  // Absent headers are null, as in dart:io; not the current time.
   @override
-  DateTime get expires => _data.containsKey(HttpHeaders.expiresHeader)
+  DateTime? get expires => _data.containsKey(HttpHeaders.expiresHeader)
       ? HttpDate.parse(_data[HttpHeaders.expiresHeader]!.join(','))
-      : DateTime.now();
+      : null;
 
   @override
   set expires(DateTime? value) =>
       set(HttpHeaders.expiresHeader, HttpDate.format(value ?? DateTime.now()));
 
+  // Absent headers are null, as in dart:io; not the current time.
   @override
-  DateTime get ifModifiedSince =>
+  DateTime? get ifModifiedSince =>
       _data.containsKey(HttpHeaders.ifModifiedSinceHeader)
       ? HttpDate.parse(_data[HttpHeaders.ifModifiedSinceHeader]!.join(','))
-      : DateTime.now();
+      : null;
 
   @override
   set ifModifiedSince(DateTime? value) => set(

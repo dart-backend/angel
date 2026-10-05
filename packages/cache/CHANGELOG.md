@@ -8,6 +8,9 @@
 * fix: `CacheService` writes now update (`modify`, `update`) or evict (`remove`) the entry in the shared `cache` service, so other instances using the same cache no longer serve stale or deleted records
 * fix: `CacheService.update` now calls `database.update` instead of `database.modify`
 * fix: `CacheService.read` no longer throws on params without a `query`, uses the cache for reads without params, and falls back to the database when the cache is unavailable
+* fix: `ResponseCache` now caches normal responses: `handleRequest` buffers the response on a cache miss, so handlers no longer need `res.useBuffer()` (previously only buffered responses were cached, so most never were)
+* fix: `ResponseCache` now answers `304 Not Modified` (no body) when the client's copy is current, instead of resending the full body with 200. A client sending back the exact `Last-Modified` value is recognized (dates are compared in whole seconds), and one with an older copy gets the cached response instead of bypassing the cache
+* test: Made `cache_test.dart` deterministic and corrected two assertions that expected the old behaviour
 * feat: Added `ResponseCache(maxEntries: ...)`
 * chore: Removed the unused `pool` dependency
 
