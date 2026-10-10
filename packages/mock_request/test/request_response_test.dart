@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
@@ -47,6 +48,41 @@ void main() {
       rq.write('é');
       await rq.close();
       expect(await bytesOf(rq), utf8.encode('é'));
+    });
+  });
+
+  group('MockHttpRequest as a sink', () {
+    MockHttpRequest request() => MockHttpRequest('POST', Uri(path: '/'));
+
+    test('close can be called twice', () async {
+      var rq = request()..write('a');
+      await rq.close();
+      await rq.close();
+      expect(await bytesOf(rq), utf8.encode('a'));
+    });
+
+    test('writes fail while addStream is running', () async {
+      var rq = request();
+      var source = StreamController<List<int>>();
+      var added = rq.addStream(source.stream);
+      expect(() => rq.add([1]), throwsStateError);
+      expect(() => rq.addStream(Stream.empty()), throwsStateError);
+      expect(rq.flush, throwsStateError);
+      expect(rq.close, throwsStateError);
+      source.add([1, 2]);
+      await source.close();
+      await added;
+      await rq.close();
+      expect(await bytesOf(rq), [1, 2]);
+    });
+
+    test('addStream completes with the source error', () async {
+      var rq = request();
+      await expectLater(
+        rq.addStream(Stream.error(StateError('boom'))),
+        throwsStateError,
+      );
+      rq.add([1]); // No longer bound.
     });
   });
 

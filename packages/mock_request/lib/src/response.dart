@@ -12,6 +12,7 @@ class MockHttpResponse extends Stream<List<int>> implements HttpResponse {
   BytesBuilder _buf = BytesBuilder();
   bool _bufferOutput = true;
   final Completer _done = Completer();
+  bool _isBound = false;
   final LockableMockHttpHeaders _headers = LockableMockHttpHeaders();
   final StreamController<List<int>> _stream = StreamController<List<int>>();
 
@@ -73,43 +74,68 @@ class MockHttpResponse extends Stream<List<int>> implements HttpResponse {
   @override
   Future get done => _done.future;
 
+  // Like dart:io's IOSink: closed and bound sinks reject writes.
+  void _checkWritable() {
+    if (_isBound) {
+      throw StateError('MockHttpResponse is bound to a stream.');
+    } else if (_done.isCompleted) {
+      throw StateError('Cannot add to closed MockHttpResponse.');
+    }
+  }
+
   @override
   void add(List<int> data) {
-    if (_done.isCompleted) {
-      throw StateError('Cannot add to closed MockHttpResponse.');
+    _checkWritable();
+    _add(data);
+  }
+
+  void _add(List<int> data) {
+    _headers.lock();
+    if (_bufferOutput == true) {
+      _buf.add(data);
     } else {
-      _headers.lock();
-      if (_bufferOutput == true) {
-        _buf.add(data);
-      } else {
-        _stream.add(data);
-      }
+      _stream.add(data);
     }
   }
 
   @override
   void addError(error, [StackTrace? stackTrace]) {
-    if (_done.isCompleted) {
-      throw StateError('Cannot add to closed MockHttpResponse.');
-    } else {
-      _stream.addError(error, stackTrace);
-    }
+    _checkWritable();
+    _stream.addError(error, stackTrace);
   }
 
+  /// Completes with the first error from [stream], which then stops adding.
   @override
   Future addStream(Stream<List<int>> stream) {
+    _checkWritable();
+    _isBound = true;
     var c = Completer();
-    stream.listen(add, onError: addError, onDone: c.complete);
+    stream.listen(
+      _add,
+      onError: (Object error, StackTrace stackTrace) {
+        _isBound = false;
+        c.completeError(error, stackTrace);
+      },
+      onDone: () {
+        _isBound = false;
+        c.complete();
+      },
+      cancelOnError: true,
+    );
     return c.future;
   }
 
+  /// Can be called more than once; later calls return [done].
   @override
-  Future close() async {
-    _headers.lock();
-    await flush();
-    scheduleMicrotask(_stream.close);
-    _done.complete();
-    //return await _done.future;
+  Future close() {
+    if (_isBound) throw StateError('MockHttpResponse is bound to a stream.');
+    if (!_done.isCompleted) {
+      _headers.lock();
+      _stream.add(_buf.takeBytes());
+      scheduleMicrotask(_stream.close);
+      _done.complete();
+    }
+    return done;
   }
 
   @override
@@ -118,8 +144,10 @@ class MockHttpResponse extends Stream<List<int>> implements HttpResponse {
   }
 
   @override
-  Future flush() async {
-    _stream.add(_buf.takeBytes());
+  Future flush() {
+    if (_isBound) throw StateError('MockHttpResponse is bound to a stream.');
+    if (!_done.isCompleted) _stream.add(_buf.takeBytes());
+    return Future.value();
   }
 
   @override
