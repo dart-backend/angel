@@ -30,7 +30,7 @@ class MockHttpRequest
 
   @override
   MockHttpResponse response = MockHttpResponse(
-    contentLength: 0,
+    contentLength: -1,
     encoding: utf8,
     persistentConnection: false,
     reasonPhrase: '',
@@ -140,10 +140,17 @@ class MockHttpRequest
     _stream.add(_buf.takeBytes());
   }
 
-  /// Writes [obj] as UTF-8.
+  /// The encoding [write] uses: the charset in the `content-type` header,
+  /// or UTF-8 when it names none or one [Encoding] does not know.
+  Encoding get encoding {
+    var charset = headers.contentType?.charset;
+    return (charset == null ? null : Encoding.getByName(charset)) ?? utf8;
+  }
+
+  /// Writes [obj] with [encoding].
   @override
   void write(Object? obj) {
-    if (obj != null) add(utf8.encode(obj.toString()));
+    if (obj != null) add(encoding.encode(obj.toString()));
   }
 
   @override

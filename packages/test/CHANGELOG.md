@@ -1,5 +1,9 @@
 # Change Log
 
+## 9.2.0
+
+* fix: `TestClient` responses now report the `contentLength` the handler set, or `null` when none was set (a streamed body), instead of always `0`
+
 ## 9.1.1
 
 * Fix analyzer warnings and errors

@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:angel3_mock_request/angel3_mock_request.dart';
 import 'package:test/test.dart';
@@ -31,6 +32,22 @@ void main() {
       await rq.close();
       expect(rq.contentLength, 7);
     });
+
+    test('write uses the content-type charset', () async {
+      var rq = MockHttpRequest('POST', Uri(path: '/'));
+      rq.headers.contentType = ContentType('text', 'plain', charset: 'latin1');
+      rq.write('é');
+      await rq.close();
+      expect(await bytesOf(rq), [0xE9]);
+    });
+
+    test('write falls back to UTF-8 for an unknown charset', () async {
+      var rq = MockHttpRequest('POST', Uri(path: '/'));
+      rq.headers.set('content-type', 'text/plain; charset=x-unknown');
+      rq.write('é');
+      await rq.close();
+      expect(await bytesOf(rq), utf8.encode('é'));
+    });
   });
 
   group('MockHttpResponse', () {
@@ -57,6 +74,18 @@ void main() {
       var latin = response(encoding: latin1)..write('é');
       await latin.close();
       expect(await bytesOf(latin), [0xE9]);
+    });
+
+    test('contentLength is headers.contentLength', () {
+      var rs = response();
+      rs.headers.contentLength = 5;
+      expect(rs.contentLength, 5);
+      rs.contentLength = 7;
+      expect(rs.headers.contentLength, 7);
+    });
+
+    test('write throws for a character its encoding cannot represent', () {
+      expect(() => response(encoding: latin1).write('☺'), throwsArgumentError);
     });
   });
 }

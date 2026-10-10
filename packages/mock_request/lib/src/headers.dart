@@ -19,8 +19,10 @@ class MockHttpHeaders implements HttpHeaders {
   }
 
   @override
-  set contentType(ContentType? value) =>
-      set(HttpHeaders.contentTypeHeader, value?.value ?? ContentType.html);
+  set contentType(ContentType? value) => set(
+    HttpHeaders.contentTypeHeader,
+    (value ?? ContentType.html).toString(),
+  );
 
   // Absent headers are null, as in dart:io; not the current time.
   @override

@@ -2,7 +2,10 @@
 
 ## 9.2.0
 
-* fix: `MockHttpRequest.write`, `writeAll`, `writeln` and `writeCharCode` now write UTF-8, and `MockHttpResponse`'s use its `encoding`, instead of writing each UTF-16 code unit as one byte (which corrupted any character outside Latin-1)
+* fix: `MockHttpRequest.write`, `writeAll`, `writeln` and `writeCharCode` now write in the charset of the request's `content-type` header (UTF-8 if it has none), and `MockHttpResponse`'s use its `encoding`, instead of writing each UTF-16 code unit as one byte (which corrupted any character outside Latin-1)
+* fix: **Breaking** `MockHttpRequest.write`, `MockHttpResponse.write` and the methods that use them now throw `ArgumentError` for a character their encoding cannot represent (such as `'☺'` with `latin1`), as `dart:io` does, instead of silently truncating it
+* fix: `MockHttpHeaders.contentType = ...` now keeps the charset and other parameters, as in `dart:io`, instead of storing only the MIME type
+* fix: `MockHttpResponse.contentLength` is now backed by `headers.contentLength`, as in `dart:io`, instead of being a separate field that ignored `headers.contentLength = ...`; `MockHttpRequest`'s default response now starts at `-1` (no length set) instead of `0`
 * fix: `MockHttpRequest.contentLength` now counts each byte once, instead of twice
 * fix: `MockHttpResponse` now keeps the `statusCode` passed to its constructor, instead of always using 200
 * fix: `MockHttpHeaders.date`, `expires` and `ifModifiedSince` now return `null` when the header is absent, as in `dart:io`, instead of the current time (which made every mock request look like a conditional request)

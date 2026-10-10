@@ -145,7 +145,8 @@ class TestClient extends client.BaseAngelClient {
     return StreamedResponse(
       stream,
       rs.statusCode,
-      contentLength: rs.contentLength,
+      // -1 means no length was set, as in dart:io.
+      contentLength: rs.contentLength < 0 ? null : rs.contentLength,
       isRedirect: rs.headers['location'] != null,
       headers: extractedHeaders,
       persistentConnection:
@@ -189,11 +190,8 @@ class TestClient extends client.BaseAngelClient {
 class _MockService<Id, Data> extends client.BaseAngelService<Id, Data> {
   final TestClient _app;
 
-  _MockService(
-    this._app,
-    String basePath, {
-    super.deserializer,
-  }) : super(_app, _app, basePath);
+  _MockService(this._app, String basePath, {super.deserializer})
+    : super(_app, _app, basePath);
 
   @override
   Future<StreamedResponse> send(http.BaseRequest request) {

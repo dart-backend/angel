@@ -13,7 +13,7 @@ dependencies:
   angel3_http_exception: ^9.0.0
   angel3_model: ^9.0.0
   angel3_route: ^9.2.0
-  angel3_mock_request: ^9.0.0
+  angel3_mock_request: ^9.2.0
   belatuk_merge_map: ^5.1.0
   belatuk_combinator: ^5.1.0
   belatuk_http_server: ^4.1.0

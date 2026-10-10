@@ -28,7 +28,7 @@ class MockHttpResponse extends Stream<List<int>> implements HttpResponse {
     bool copyBuffer = true,
     required this.statusCode,
     required this.reasonPhrase,
-    required this.contentLength,
+    required int contentLength,
     this.deadline,
     required this.encoding,
     required this.persistentConnection,
@@ -36,6 +36,7 @@ class MockHttpResponse extends Stream<List<int>> implements HttpResponse {
   }) {
     _buf = BytesBuilder(copy: copyBuffer != false);
     _bufferOutput = bufferOutput != false;
+    _headers.contentLength = contentLength;
   }
 
   @override
@@ -44,8 +45,12 @@ class MockHttpResponse extends Stream<List<int>> implements HttpResponse {
   @override
   set bufferOutput(bool value) {}
 
+  // Backed by headers.contentLength, as in dart:io.
   @override
-  int contentLength;
+  int get contentLength => _headers.contentLength;
+
+  @override
+  set contentLength(int value) => _headers.contentLength = value;
 
   @override
   Duration? deadline;
