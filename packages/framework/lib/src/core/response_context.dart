@@ -16,9 +16,9 @@ import 'package:mime/mime.dart';
 import 'controller.dart';
 import 'request_context.dart';
 import 'server.dart' show Angel;
+import 'quality_list.dart';
 
 final RegExp _straySlashes = RegExp(r'(^/+)|(/+$)');
-final RegExp _qZero = RegExp(r'^q=0(\.0*)?$');
 final RegExp _headerToken = RegExp(r"^[!#$%&'*+\-.^_`|~0-9A-Za-z]+$");
 
 /// A convenience wrapper around an outgoing HTTP request.
@@ -166,20 +166,7 @@ abstract class ResponseContext<RawResponse>
   ) {
     if (encoders.isEmpty || acceptEncoding == null) return null;
 
-    var accepted = <String>[], rejected = <String>{};
-    for (var item in acceptEncoding.split(',')) {
-      var parts = item.split(';');
-      var name = parts.first.trim().toLowerCase();
-      if (name.isEmpty) continue;
-      var isRejected = parts
-          .skip(1)
-          .any((p) => _qZero.hasMatch(p.replaceAll(' ', '')));
-      if (isRejected) {
-        rejected.add(name);
-      } else {
-        accepted.add(name);
-      }
-    }
+    var (:accepted, :rejected) = parseQualityList(acceptEncoding);
 
     for (var name in accepted) {
       var key = name == '*'

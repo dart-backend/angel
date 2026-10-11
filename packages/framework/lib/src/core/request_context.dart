@@ -26,6 +26,7 @@ import 'metadata.dart';
 import 'response_context.dart';
 import 'routable.dart';
 import 'server.dart' show Angel;
+import 'quality_list.dart';
 
 part 'injection.dart';
 
@@ -280,20 +281,7 @@ abstract class RequestContext<RawRequest> {
     var values = headers?['accept'];
     if (values == null || values.isEmpty) return null;
 
-    var accepted = <String>[], rejected = <String>{};
-    for (var item in values.join(',').split(',')) {
-      var parts = item.split(';');
-      var range = parts.first.trim().toLowerCase();
-      if (range.isEmpty) continue;
-      var isRejected = parts
-          .skip(1)
-          .any((p) => _qZero.hasMatch(p.replaceAll(' ', '').toLowerCase()));
-      if (isRejected) {
-        rejected.add(range);
-      } else {
-        accepted.add(range);
-      }
-    }
+    var (:accepted, :rejected) = parseQualityList(values.join(','));
     _rejectedRanges = rejected;
     return _acceptRanges = accepted;
   }
@@ -301,8 +289,6 @@ abstract class RequestContext<RawRequest> {
   /// The ranges of the `Accept` header rejected with `q=0`; set with
   /// [_acceptedRanges].
   Set<String>? _rejectedRanges;
-
-  static final RegExp _qZero = RegExp(r'^q=0(\.0*)?$');
 
   /// Returns as `true` if the client's `Accept` header indicates that it will accept any response content type.
   bool get acceptsAll => _acceptsAllCache ??= accepts('*/*');

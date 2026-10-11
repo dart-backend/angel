@@ -112,12 +112,29 @@ void main() {
     expect(req.accepts('text/html'), isTrue);
   });
 
+  test('q=0 on a variant with parameters does not reject the type', () async {
+    var req = await acceptContentTypes(['text/html;level=1;q=0', 'text/html']);
+    expect(req.accepts('text/html'), isTrue);
+  });
+
+  test('Q=0 rejects too, as parameter names ignore case', () async {
+    var req = await acceptContentTypes(['text/html;Q=0', '*/*']);
+    expect(req.accepts('text/html'), isFalse);
+  });
+
   group('selectEncoder', () {
     final encoders = {'gzip': gzip.encoder, 'deflate': zlib.encoder};
 
     test('* does not pick an encoding rejected with q=0', () {
       expect(
         ResponseContext.selectEncoder(encoders, 'gzip;q=0, *')?.name,
+        'deflate',
+      );
+    });
+
+    test('Q=0 rejects too, as parameter names ignore case', () {
+      expect(
+        ResponseContext.selectEncoder(encoders, 'gzip;Q=0, deflate')?.name,
         'deflate',
       );
     });

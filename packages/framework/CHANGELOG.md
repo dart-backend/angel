@@ -2,6 +2,8 @@
 
 ## 9.3.0
 
+* fix: Response compression now treats `Accept-Encoding: gzip;Q=0` (capital `Q`) as rejecting gzip, as parameter names ignore case; it used to compress with gzip anyway
+* fix: `RequestContext.accepts` no longer rejects a type because a variant of it with other parameters has `q=0`; `text/html;level=1;q=0, text/html` now accepts `text/html`
 * fix: A buffered HTTP/2 response now sets the `DARTSESSID` cookie for a session first created by a response finalizer; the cookie used to be added before the finalizers ran, so such a session was lost
 * fix: An HTTP/2 request that fails before reaching a handler (e.g. no `:path`) no longer holds back the rest of its body with the stream paused, which stalled the stream's flow control until the connection closed
 * fix: An optional or named handler parameter is left unresolved only when its type cannot be constructed (no usable constructor, or an abstract class); an error thrown while constructing it now fails the request instead of being swallowed
