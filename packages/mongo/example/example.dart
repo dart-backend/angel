@@ -4,6 +4,8 @@ import 'package:angel3_mongo/angel3_mongo.dart';
 import 'package:mongo_dart/mongo_dart.dart';
 
 void main() async {
+  // MirrorsReflector comes from angel3_container_mirrors, which must be in
+  // your own dependencies. MongoService itself does not need reflection.
   var app = Angel(reflector: MirrorsReflector());
   var db = Db('mongodb://localhost:27017/testDB');
   await db.open();

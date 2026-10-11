@@ -11,13 +11,12 @@ environment:
 
 dependencies:
   angel3_framework: ^10.0.0
-  angel3_container: ^10.0.0
-  belatuk_json_serializer: ^7.1.0
   belatuk_merge_map: ^5.1.0
   mongo_dart: ^0.10.3
 
 dev_dependencies:
   angel3_container_mirrors: ^10.0.0
+  belatuk_json_serializer: ^7.1.0
   http: ^1.0.0
   test: ^1.24.0
   lints: ^6.0.0
