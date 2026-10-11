@@ -2,6 +2,10 @@
 
 ## 10.0.0
 
+* feat: Added `Driver.supportsChunkedEncoding(request)` (true by default; false for HTTP/1.0 requests in `AngelHttp`). Chunked encoding is only asked for when it is supported, and `AngelHttp.setChunkedEncoding` now ignores only the HTTP/1.0 case instead of every `HttpException`
+* fix: An HTTP/2 session first created after the response headers were sent now logs a warning, as its `DARTSESSID` cookie can no longer reach the client, and is not kept in the session store; read `req.session` before writing the body
+* fix: A hostname pattern with an empty label after `*.` (e.g. `*..example.com`) is now rejected, and an empty alternative between two `|`s is reported as such
+* fix: `Service.parseId` now throws `FormatException` for an id it cannot convert to a type other than `String`, `int`, `double`, `num` or `bool` (e.g. a path segment for a service with `DateTime` ids), so the request is a 400 instead of a 500 from a `TypeError`
 * fix: A multipart body cut off before its closing boundary is now a 400; the request used to hang for good, waiting for the last part to end
 * fix: A multipart part with a malformed `Content-Disposition` is now a 400 instead of a 500
 * fix: `MapService.update` no longer adds `created_at: null` to a record that had no created-at field, as `modify` already did
@@ -41,7 +45,7 @@
 * fix: `@Header`, `@Query`, `@CookieValue` and `@Session` parameters of any type (not only `String` and numbers) now read their value, instead of being made by the container
 * fix: Optional positional and named DI parameters whose type is not registered in the container, and cannot be constructed (e.g. an abstract class), now receive `null`, instead of failing the request
 * fix: Controllers with getters, setters, static or private methods can now be mounted; those members are no longer treated as routes. Declarations without a function (e.g. fields listed by a reflector) are skipped too
-* fix: `MapService` now returns copies of its records, so changing a result (e.g. removing a field in an after hook) no longer changes the stored record
+* fix: `MapService` now returns copies of its records, so changing a result (e.g. removing a field in an after hook) no longer changes the stored record. The copies are one level deep: nested maps and lists are shared
 * fix: Concurrent `modify`, `update` and `remove` calls on the same `MapService` record no longer fail with a 404
 * fix: `MapService.modify` no longer lets the data change `id` or `created_at` when `autoIdAndDateFields` is on; previously a PATCH could give two records the same id
 * fix: `MapService.update` with `autoIdAndDateFields` off now keeps the record's id when the data has none, instead of making the record unreachable

@@ -30,4 +30,13 @@ void main() {
     expect(Service.parseId<bool>(false), false);
     expect(() => Service.parseId<bool>('hmm'), throwsFormatException);
   });
+
+  test('passes through a value of another Id type', () {
+    var date = DateTime(2026);
+    expect(Service.parseId<DateTime>(date), same(date));
+  });
+
+  test('throws FormatException for a value it cannot turn into the type', () {
+    expect(() => Service.parseId<DateTime>('abc'), throwsFormatException);
+  });
 }

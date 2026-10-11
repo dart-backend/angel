@@ -102,7 +102,10 @@ class Http2ResponseContext extends ResponseContext<ServerTransportStream> {
     }
 
     // A pushed response belongs to the request that pushed it.
-    if (!_isPush) addSessionCookie();
+    if (!_isPush) {
+      addSessionCookie();
+      _req?.markHeadersSent();
+    }
 
     // Send all cookies
     for (var cookie in cookies) {

@@ -125,6 +125,10 @@ abstract class Driver<
 
   void setChunkedEncoding(Response response, bool value);
 
+  /// Whether the client of [request] can receive a chunked response; HTTP/1.0
+  /// clients cannot, so a driver for them overrides this.
+  bool supportsChunkedEncoding(Request request) => true;
+
   void setStatusCode(Response response, int value);
 
   void addCookies(Response response, Iterable<Cookie> cookies);
@@ -483,7 +487,10 @@ abstract class Driver<
       setContentLength(response, res.buffer?.length ?? 0);
       // The length is known, so Content-Length is used unless chunked
       // encoding is asked for (HTTP/1.0 clients do not support it).
-      setChunkedEncoding(response, res.chunked ?? false);
+      setChunkedEncoding(
+        response,
+        (res.chunked ?? false) && supportsChunkedEncoding(request),
+      );
 
       var outputBuffer = res.buffer?.toBytes() ?? <int>[];
 

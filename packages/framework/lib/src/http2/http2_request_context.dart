@@ -8,6 +8,7 @@ import 'package:collection/collection.dart' show IterableExtension;
 import 'package:http2/transport.dart';
 import 'package:angel3_mock_request/angel3_mock_request.dart';
 import 'package:uuid/uuid.dart';
+import 'package:meta/meta.dart';
 
 final RegExp _straySlashes = RegExp(r'(^/+)|(/+$)');
 
@@ -22,7 +23,7 @@ class Http2RequestContext extends RequestContext<ServerTransportStream?> {
   ServerTransportStream? _stream;
   Uri? _uri;
   HttpSession? _session;
-  HttpSession Function()? _createSession;
+  HttpSession Function({bool store})? _createSession;
   void Function()? _onClose;
 
   Http2RequestContext._(this.container);
@@ -74,10 +75,13 @@ class Http2RequestContext extends RequestContext<ServerTransportStream?> {
       // A new session is only created once `session` is read, like dart:io:
       // creating one per cookie-less request would let any client fill the
       // session store until the sessions expire.
-      req._createSession = () {
+      req._createSession = ({bool store = true}) {
         var id = uuid.v4();
-        var session = sessions[id] = MockHttpSession(id: id);
-        onSessionCreated?.call(session);
+        var session = MockHttpSession(id: id);
+        if (store) {
+          sessions[id] = session;
+          onSessionCreated?.call(session);
+        }
         return session;
       };
 
@@ -251,8 +255,31 @@ class Http2RequestContext extends RequestContext<ServerTransportStream?> {
 
   /// The user's HTTP session, created on first access if the client did not
   /// send the id of an existing one.
+  ///
+  /// A new session's id reaches the client in a `DARTSESSID` cookie, which
+  /// can only go out with the response headers: read this before an
+  /// unbuffered response starts its body, or the session is lost.
   @override
-  HttpSession? get session => _session ??= _createSession?.call();
+  HttpSession? get session {
+    if (_session == null && _createSession != null && _headersSent) {
+      app?.logger.warning(
+        'A session was created after the response headers were sent, so the '
+        'client will not get its DARTSESSID cookie. Read req.session before '
+        'writing the response body.',
+      );
+      // Usable for the rest of this request, but not kept: no client can
+      // send its id back, so storing it would only fill the session store.
+      return _session = _createSession!(store: false);
+    }
+    return _session ??= _createSession?.call();
+  }
+
+  bool _headersSent = false;
+
+  /// Called when the response's headers are sent (or, for a buffered
+  /// response, once its session cookie has been decided).
+  @internal
+  void markHeadersSent() => _headersSent = true;
 
   /// Whether this request has a session, without creating one.
   bool get hasSession => _session != null;

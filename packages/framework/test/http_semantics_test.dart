@@ -182,4 +182,29 @@ void main() {
     expect(text.toLowerCase(), contains('content-length: 8'));
     expect(text, endsWith('\r\n\r\nbuffered'));
   });
+
+  test('chunked responses fall back to Content-Length for HTTP/1.0', () async {
+    var app = Angel()
+      ..get('/', (req, res) {
+        res
+          ..useBuffer()
+          ..chunked = true
+          ..write('buffered');
+        return res.close();
+      });
+    var http = AngelHttp(app);
+    await http.startServer('127.0.0.1', 0);
+    addTearDown(http.close);
+
+    var socket = await Socket.connect('127.0.0.1', http.uri.port);
+    socket.write('GET / HTTP/1.0\r\n\r\n');
+    var bytes = <int>[];
+    await socket.listen(bytes.addAll).asFuture<void>();
+    socket.destroy();
+
+    var text = latin1.decode(bytes);
+    expect(text, startsWith('HTTP/1.0 200'));
+    expect(text.toLowerCase(), contains('content-length: 8'));
+    expect(text.toLowerCase(), isNot(contains('transfer-encoding')));
+  });
 }

@@ -239,8 +239,12 @@ class Service<Id, Data> extends Routable {
       return double.parse(id.toString()) as T;
     } else if (_isType<T, num>()) {
       return num.parse(id.toString()) as T;
-    } else {
+    } else if (id is T) {
       return id as T;
+    } else {
+      // E.g. a path segment for a service whose ids are not strings or
+      // numbers: a bad request (400), like the other types, not a TypeError.
+      throw FormatException('Invalid ID "$id".');
     }
   }
 
