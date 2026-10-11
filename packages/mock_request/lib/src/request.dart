@@ -67,7 +67,8 @@ class MockHttpRequest
   }
 
   /// The `content-length` header, as in dart:io. [close] sets it to the
-  /// number of bytes written, unless it was set already.
+  /// number of bytes written, unless it was set already, nothing was
+  /// written, or the headers ask for chunked encoding.
   @override
   int get contentLength => _headers.contentLength;
 
@@ -152,11 +153,11 @@ class MockHttpRequest
   Future close() {
     if (_isBound) throw StateError('MockHttpRequest is bound to a stream.');
     if (!_done.isCompleted) {
-      // As a client sends it; the headers lock once the body is written.
-      if (_headers.value(HttpHeaders.contentLengthHeader) == null) {
-        _headers
-          ..unlock()
-          ..contentLength = _bytesWritten;
+      // As a client sends it: only for a body, and not with chunked encoding.
+      if (_bytesWritten > 0 &&
+          !_headers.chunkedTransferEncoding &&
+          _headers.value(HttpHeaders.contentLengthHeader) == null) {
+        setLockedContentLength(_headers, _bytesWritten);
       }
       _headers.lock();
       _stream.add(_buf.takeBytes());

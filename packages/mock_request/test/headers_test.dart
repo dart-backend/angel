@@ -71,13 +71,36 @@ void main() {
 
     test('rejects values that are not digits, as in dart:io', () {
       var headers = MockHttpRequest('GET', Uri.parse('/')).headers;
-      for (var bad in ['', '-3', '5,5', 'abc', '99999999999999999999']) {
+      for (var bad in ['', '-3', '5,5', 'abc', -3, null, 1.5]) {
         expect(
-          () => headers.set(HttpHeaders.contentLengthHeader, bad),
+          () => headers.set(HttpHeaders.contentLengthHeader, [bad]),
           throwsA(isA<HttpException>()),
-          reason: bad,
+          reason: '$bad',
         );
       }
+    });
+
+    test('rejects 16 or more significant digits, as in dart:io', () {
+      var headers = MockHttpRequest('GET', Uri.parse('/')).headers
+        ..set(HttpHeaders.contentLengthHeader, '000999999999999999');
+      expect(headers.contentLength, 999999999999999);
+      expect(
+        () => headers.set(HttpHeaders.contentLengthHeader, '1000000000000000'),
+        throwsA(
+          isA<HttpException>().having(
+            (e) => e.message,
+            'message',
+            'Content-Length too large',
+          ),
+        ),
+      );
+    });
+
+    test('set with no values removes it', () {
+      var headers = MockHttpRequest('GET', Uri.parse('/')).headers
+        ..contentLength = 5
+        ..set(HttpHeaders.contentLengthHeader, <String>[]);
+      expect(headers.contentLength, -1);
     });
 
     test('cannot be set once the headers are locked', () {

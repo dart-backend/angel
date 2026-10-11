@@ -139,6 +139,7 @@ class MockHttpHeaders implements HttpHeaders {
   @override
   void set(String name, Object value, {bool preserveHeaderCase = false}) {
     if (name.toLowerCase() == HttpHeaders.contentLengthHeader) {
+      _data.remove(HttpHeaders.contentLengthHeader);
       return _setContentLength(value);
     }
     var lower = preserveHeaderCase ? name : name.toLowerCase();
@@ -151,23 +152,29 @@ class MockHttpHeaders implements HttpHeaders {
     }
   }
 
-  // As in dart:io: content-length holds one value, which must be digits; a
-  // later value replaces an earlier one.
-  void _setContentLength(Object value) {
+  // As in dart:io: content-length holds one value of digits, and a later value
+  // replaces an earlier one.
+  void _setContentLength(Object? value) {
     if (value is Iterable) {
       for (var v in value) {
-        _setContentLength(v as Object);
+        _setContentLength(v);
       }
       return;
     }
-    var text = value.toString();
-    var length = text.codeUnits.every((c) => c >= $0 && c <= $9)
-        ? int.tryParse(text)
-        : null;
-    if (length == null) {
+    var text = switch (value) {
+      int() => '$value',
+      String() => value,
+      _ => throw HttpException(
+        'Unexpected type for header named ${HttpHeaders.contentLengthHeader}',
+      ),
+    };
+    if (text.isEmpty || text.codeUnits.any((c) => c < $0 || c > $9)) {
       throw HttpException('Content-Length must contain only digits');
     }
-    _data[HttpHeaders.contentLengthHeader] = [length.toString()];
+    if (text.replaceFirst(RegExp('^0+'), '').length >= 16) {
+      throw HttpException('Content-Length too large');
+    }
+    _data[HttpHeaders.contentLengthHeader] = [int.parse(text).toString()];
   }
 
   @override

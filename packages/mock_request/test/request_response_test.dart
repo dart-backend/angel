@@ -35,6 +35,20 @@ void main() {
       expect(rq.headers.contentLength, 7);
     });
 
+    test('close sets no content-length without a body', () async {
+      var rq = MockHttpRequest('GET', Uri(path: '/'));
+      await rq.close();
+      expect(rq.contentLength, -1);
+    });
+
+    test('close sets no content-length with chunked encoding', () async {
+      var rq = MockHttpRequest('POST', Uri(path: '/'))
+        ..headers.chunkedTransferEncoding = true
+        ..write('hello');
+      await rq.close();
+      expect(rq.contentLength, -1);
+    });
+
     test('close keeps a content-length that was set', () async {
       var rq = MockHttpRequest('POST', Uri(path: '/'))
         ..headers.contentLength = 2

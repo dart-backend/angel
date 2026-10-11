@@ -11,10 +11,6 @@ class LockableMockHttpHeaders extends MockHttpHeaders {
     _locked = true;
   }
 
-  void unlock() {
-    _locked = false;
-  }
-
   @override
   void add(String name, Object value, {bool preserveHeaderCase = false}) {
     if (_locked) {
@@ -67,5 +63,17 @@ class LockableMockHttpHeaders extends MockHttpHeaders {
     } else {
       super.set(name, value, preserveHeaderCase: preserveHeaderCase);
     }
+  }
+}
+
+/// Sets the content-length of [headers] even when they are locked, for
+/// `MockHttpRequest.close`. Hidden from the package's exports.
+void setLockedContentLength(LockableMockHttpHeaders headers, int length) {
+  var locked = headers._locked;
+  headers._locked = false;
+  try {
+    headers.contentLength = length;
+  } finally {
+    headers._locked = locked;
   }
 }
