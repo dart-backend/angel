@@ -12,6 +12,7 @@ workspace:
   - packages/serialize/serialize_generator
   - packages/container/container
   - packages/container/container_generator
+  - packages/container/container_mirrors
   - packages/mock_request
   - packages/framework
   - packages/user_agent/user_agent

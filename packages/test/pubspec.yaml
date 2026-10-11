@@ -19,6 +19,7 @@ dependencies:
   http: ^1.0.0
   matcher: ^0.12.0
   web_socket_channel: ^3.0.0
-dev_dependencies: 
+dev_dependencies:
+  angel3_container_mirrors: ^10.0.0
   test: ^1.24.0
   lints: ^6.0.0

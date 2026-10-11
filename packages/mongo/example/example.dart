@@ -1,4 +1,4 @@
-import 'package:angel3_container/mirrors.dart';
+import 'package:angel3_container_mirrors/angel3_container_mirrors.dart';
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_mongo/angel3_mongo.dart';
 import 'package:mongo_dart/mongo_dart.dart';

@@ -2,6 +2,7 @@
 
 ## 10.0.0
 
+* **Breaking:** removed `package:angel3_container/mirrors.dart`. `MirrorsReflector` is now in the new `angel3_container_mirrors` package (`package:angel3_container_mirrors/angel3_container_mirrors.dart`), so `angel3_container` no longer depends on `dart:mirrors`
 * Added `ReflectedParameter.hasDefaultValue`, set by `MirrorsReflector`
 * Fixed `Container.make` with `MirrorsReflector` ignoring named constructor parameters: required ones failed with `NoSuchMethodError`, and optional ones were left `null`
 * `Container.make` now leaves out an optional named parameter whose type is not registered and cannot be constructed (e.g. `{String? prefix}`), instead of failing

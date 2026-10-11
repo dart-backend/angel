@@ -1,8 +1,7 @@
 import 'dart:async';
 import 'dart:mirrors' as dart;
 
-import '../exception.dart';
-import '../reflector.dart';
+import 'package:angel3_container/angel3_container.dart';
 
 import 'package:quiver/core.dart';
 

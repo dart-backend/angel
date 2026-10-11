@@ -18,6 +18,7 @@ dependencies:
   quiver: ^3.2.0
   logging: ^1.2.0
 dev_dependencies:
+  angel3_container_mirrors: ^10.0.0
   angel3_container: ^10.0.0
   http: ^1.0.0
   io: ^1.0.0
