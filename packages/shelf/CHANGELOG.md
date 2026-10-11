@@ -1,6 +1,10 @@
 # Change Log
 
-## 9.1.0
+## 9.0.0-beta-3
+
+* fix: A request with a malformed `Content-Length` header no longer fails with an `HttpException` (a 500); the header is dropped, and the body is still counted against `maxBodySize`
+
+## 9.0.0-beta-2
 
 * Require Dart >= 3.13
 

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:charcode/ascii.dart';
@@ -128,6 +129,8 @@ class MockHttpHeaders implements HttpHeaders {
       } else {
         _data[lower]!.remove(value.toString());
       }
+      // As in dart:io, a header with no values left is gone.
+      if (_data[lower]!.isEmpty) _data.remove(lower);
     }
   }
 
@@ -139,8 +142,7 @@ class MockHttpHeaders implements HttpHeaders {
   @override
   void set(String name, Object value, {bool preserveHeaderCase = false}) {
     if (name.toLowerCase() == HttpHeaders.contentLengthHeader) {
-      _data.remove(HttpHeaders.contentLengthHeader);
-      return _setContentLength(value);
+      return _setContentLength(value, replace: true);
     }
     var lower = preserveHeaderCase ? name : name.toLowerCase();
     _data.remove(lower);
@@ -153,14 +155,18 @@ class MockHttpHeaders implements HttpHeaders {
   }
 
   // As in dart:io: content-length holds one value of digits, and a later value
-  // replaces an earlier one.
-  void _setContentLength(Object? value) {
-    if (value is Iterable) {
-      for (var v in value) {
-        _setContentLength(v);
-      }
-      return;
+  // replaces an earlier one. All values are checked before any is stored.
+  void _setContentLength(Object? value, {bool replace = false}) {
+    var values = value is Iterable ? value.toList() : [value];
+    var lengths = values.map(_parseContentLength).toList();
+    if (lengths.isNotEmpty) {
+      _data[HttpHeaders.contentLengthHeader] = ['${lengths.last}'];
+    } else if (replace) {
+      _data.remove(HttpHeaders.contentLengthHeader);
     }
+  }
+
+  static int _parseContentLength(Object? value) {
     var text = switch (value) {
       int() => '$value',
       String() => value,
@@ -171,10 +177,14 @@ class MockHttpHeaders implements HttpHeaders {
     if (text.isEmpty || text.codeUnits.any((c) => c < $0 || c > $9)) {
       throw HttpException('Content-Length must contain only digits');
     }
-    if (text.replaceFirst(RegExp('^0+'), '').length >= 16) {
+    var leadingZeros = 0;
+    while (leadingZeros < text.length - 1 && text[leadingZeros] == '0') {
+      leadingZeros++;
+    }
+    if (text.length - leadingZeros >= 16) {
       throw HttpException('Content-Length too large');
     }
-    _data[HttpHeaders.contentLengthHeader] = [int.parse(text).toString()];
+    return int.parse(text);
   }
 
   @override
@@ -216,4 +226,11 @@ class MockHttpHeaders implements HttpHeaders {
   set port(int? port) {
     _port = port ?? 80;
   }
+}
+
+/// The [Encoding] named by the charset in the content-type header of
+/// [headers], or null. Hidden from the package's exports.
+Encoding? charsetEncoding(HttpHeaders headers) {
+  var charset = headers.contentType?.charset;
+  return charset == null ? null : Encoding.getByName(charset);
 }

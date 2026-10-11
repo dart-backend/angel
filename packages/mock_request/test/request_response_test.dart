@@ -22,7 +22,7 @@ void main() {
       expect(
         utf8.decode(await bytesOf(rq)),
         '$text'
-        'a-é☺!\r\n',
+        'a-é☺!\n',
       );
     });
 
@@ -33,6 +33,23 @@ void main() {
       await rq.close();
       expect(rq.contentLength, 7);
       expect(rq.headers.contentLength, 7);
+    });
+
+    test('write(null) and writeln(null) write "null", as in dart:io', () async {
+      var rq = MockHttpRequest('POST', Uri(path: '/'))
+        ..write(null)
+        ..writeln(null)
+        ..writeln();
+      await rq.close();
+      expect(utf8.decode(await bytesOf(rq)), 'nullnull\n\n');
+    });
+
+    test('an empty write does not lock the headers', () {
+      var rq = MockHttpRequest('POST', Uri(path: '/'))
+        ..write('')
+        ..writeAll(<String>[]);
+      rq.headers.set('x-foo', 'bar');
+      expect(rq.headers.value('x-foo'), 'bar');
     });
 
     test('close sets no content-length without a body', () async {
@@ -108,6 +125,46 @@ void main() {
       rq.add([1]); // No longer bound.
     });
 
+    test('emits no empty chunks', () async {
+      var empty = request();
+      await empty.close();
+      expect(await empty.isEmpty, isTrue);
+
+      var flushed = request()..add([1]);
+      await flushed.flush();
+      await flushed.flush();
+      await flushed.close();
+      expect(await flushed.single, [1]);
+    });
+
+    test('firstWhere without orElse throws StateError on no match', () async {
+      var rq = request()..add([1]);
+      await rq.close();
+      expect(rq.firstWhere((_) => false), throwsStateError);
+    });
+
+    test('addError comes after the bytes added before it', () async {
+      var rq = request()..add([1]);
+      rq.addError(StateError('boom'));
+      await rq.close();
+      var events = <Object>[];
+      var done = Completer<void>();
+      rq.listen(events.add, onError: events.add, onDone: done.complete);
+      await done.future;
+      expect(events, [
+        [1],
+        isStateError,
+      ]);
+    });
+
+    test('a stream that finishes during listen does not stay bound', () async {
+      var rq = request();
+      await rq.addStream(_DoneDuringListen());
+      rq.add([1]);
+      await rq.close();
+      expect(await bytesOf(rq), [1]);
+    });
+
     test('a stream that cannot be listened to does not bind', () async {
       var rq = request();
       var source = StreamController<List<int>>();
@@ -124,10 +181,14 @@ void main() {
         MockHttpResponse(
           statusCode: statusCode,
           reasonPhrase: '',
-          contentLength: 0,
           encoding: encoding ?? utf8,
           persistentConnection: false,
         );
+
+    test('has no content-length unless one is given', () {
+      expect(response().contentLength, -1);
+      expect(response().headers.value('content-length'), isNull);
+    });
 
     test('keeps the statusCode it is given', () {
       expect(response(statusCode: 404).statusCode, 404);
@@ -162,6 +223,28 @@ void main() {
       expect(await bytesOf(rs), [0xE9]);
     });
 
+    test(
+      'write keeps the encoding of the first write, as in dart:io',
+      () async {
+        var rs = response(encoding: latin1)..write('é');
+        rs.encoding = utf8;
+        expect(rs.encoding, latin1); // What the writes use.
+        rs.write('é');
+        await rs.close();
+        expect(await bytesOf(rs), [0xE9, 0xE9]);
+      },
+    );
+
+    test('encoding follows changes to the content-type header', () {
+      var rs = response()
+        ..headers.contentType = ContentType('text', 'plain', charset: 'latin1');
+      expect(rs.encoding, latin1);
+      rs.headers.contentType = ContentType('text', 'plain', charset: 'utf-8');
+      expect(rs.encoding, utf8);
+      rs.headers.contentType = null;
+      expect(rs.encoding, utf8); // The constructor's.
+    });
+
     test('write uses its encoding without a content-type charset', () async {
       var rs = response(encoding: latin1);
       rs.headers.set('content-type', 'text/plain');
@@ -170,8 +253,30 @@ void main() {
       expect(rs.encoding, latin1);
     });
 
+    test('a stream that finishes during listen does not stay bound', () async {
+      var rs = response();
+      await rs.addStream(_DoneDuringListen());
+      rs.add([1]);
+      await rs.close();
+      expect(await bytesOf(rs), [1]);
+    });
+
     test('write throws for a character its encoding cannot represent', () {
       expect(() => response(encoding: latin1).write('☺'), throwsArgumentError);
     });
   });
+}
+
+/// Calls onDone before listen returns, as a misbehaving stream might.
+class _DoneDuringListen extends Stream<List<int>> {
+  @override
+  StreamSubscription<List<int>> listen(
+    void Function(List<int> event)? onData, {
+    Function? onError,
+    void Function()? onDone,
+    bool? cancelOnError,
+  }) {
+    onDone?.call();
+    return const Stream<List<int>>.empty().listen(null);
+  }
 }

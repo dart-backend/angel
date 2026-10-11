@@ -96,6 +96,16 @@ void main() {
       );
     });
 
+    test('a bad value changes nothing', () {
+      var headers = MockHttpRequest('GET', Uri.parse('/')).headers
+        ..contentLength = 5;
+      expect(
+        () => headers.set(HttpHeaders.contentLengthHeader, ['10', 'x']),
+        throwsA(isA<HttpException>()),
+      );
+      expect(headers.contentLength, 5);
+    });
+
     test('set with no values removes it', () {
       var headers = MockHttpRequest('GET', Uri.parse('/')).headers
         ..contentLength = 5
@@ -124,5 +134,13 @@ void main() {
       headers.contentType = null;
       expect(headers.value(HttpHeaders.contentTypeHeader), isNull);
     });
+  });
+
+  test('removing the last value removes the header, as in dart:io', () {
+    var headers = MockHttpRequest('GET', Uri.parse('/')).headers
+      ..set('x-foo', 'a')
+      ..remove('x-foo', 'a');
+    expect(headers.value('x-foo'), isNull);
+    expect(headers['x-foo'], isNull);
   });
 }

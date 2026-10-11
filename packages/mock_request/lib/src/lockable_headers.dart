@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'headers.dart';
 
 /// Headers that can be locked to editing, i.e. after a request body has been written.
@@ -10,6 +12,10 @@ class LockableMockHttpHeaders extends MockHttpHeaders {
   void lock() {
     _locked = true;
   }
+
+  // Writes through MockHttpHeaders.set, past the lock checks here.
+  void _setContentLengthUnlocked(int length) =>
+      super.set(HttpHeaders.contentLengthHeader, length);
 
   @override
   void add(String name, Object value, {bool preserveHeaderCase = false}) {
@@ -67,13 +73,6 @@ class LockableMockHttpHeaders extends MockHttpHeaders {
 }
 
 /// Sets the content-length of [headers] even when they are locked, for
-/// `MockHttpRequest.close`. Hidden from the package's exports.
-void setLockedContentLength(LockableMockHttpHeaders headers, int length) {
-  var locked = headers._locked;
-  headers._locked = false;
-  try {
-    headers.contentLength = length;
-  } finally {
-    headers._locked = locked;
-  }
-}
+/// `MockHttpRequest.close`. Not exported from the package.
+void setLockedContentLength(LockableMockHttpHeaders headers, int length) =>
+    headers._setContentLengthUnlocked(length);

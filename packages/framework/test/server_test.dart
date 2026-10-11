@@ -296,6 +296,9 @@ void main() {
       await rq.response.toList();
       expect(rq.response.statusCode, 403);
       expect(rq.response.headers.contentType?.mimeType, 'text/html');
+      // A charset name dart:io knows; 'utf8' is not one.
+      var charset = rq.response.headers.contentType?.charset;
+      expect(Encoding.getByName(charset), utf8);
     });
   });
 }

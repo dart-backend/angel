@@ -269,6 +269,14 @@ void main() {
     expect(status, '400');
   });
 
+  test('a malformed content-length is a 400', () async {
+    var (status, _) = await rawRequest([
+      ...requestHeaders('POST', '/trailers'),
+      Header.ascii('content-length', 'abc'),
+    ], body: utf8.encode('{}'));
+    expect(status, '400');
+  });
+
   group('request bodies', () {
     final big = List<int>.filled(1024 * 1024, 120);
 
