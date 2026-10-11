@@ -1,5 +1,9 @@
 # Change Log
 
+## 9.2.0
+
+* fix: `none` is now an instance of `None` (`const None()`), as documented, instead of the `None` type itself, so `none is None` is true. `None` now has a `const` constructor
+
 ## 9.1.0
 
 * Require Dart >= 3.13
