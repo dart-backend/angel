@@ -1,6 +1,6 @@
 # Change Log
 
-## 9.2.0
+## 10.0.0
 
 * Added `ReflectedParameter.hasDefaultValue`, set by `MirrorsReflector`
 * Fixed `Container.make` with `MirrorsReflector` ignoring named constructor parameters: required ones failed with `NoSuchMethodError`, and optional ones were left `null`

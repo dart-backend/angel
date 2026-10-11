@@ -1,6 +1,6 @@
 # Change Log
 
-## 9.2.0
+## 10.0.0
 
 * fix: `MockHttpRequest.write`, `writeAll`, `writeln` and `writeCharCode` now write in the charset of the request's `content-type` header (UTF-8 if it has none), and `MockHttpResponse`'s use the charset of its `content-type` header (its `encoding` if it has none), instead of writing each UTF-16 code unit as one byte (which corrupted any character outside Latin-1)
 * fix: **Breaking** `MockHttpRequest.write`, `MockHttpResponse.write` and the methods that use them now throw `ArgumentError` for a character their encoding cannot represent (such as `'☺'` with `latin1`), as `dart:io` does, instead of silently truncating it
@@ -24,7 +24,11 @@
 * fix: `MockHttpRequest.close` and `MockHttpResponse.close` can be called more than once and return `done`, as in `dart:io`, instead of throwing `Bad state: Future already completed`
 * fix: while `addStream` is running on a `MockHttpRequest` or `MockHttpResponse`, `add`, `addError`, `write`, `flush`, `close` and `addStream` now throw `StateError`, as in `dart:io`, instead of letting `close` cut the stream short; `addStream` now completes with the source stream's first error and stops, instead of completing normally
 * fix: `MockHttpResponse` now keeps the `statusCode` passed to its constructor, instead of always using 200
-* fix: `MockHttpHeaders.date`, `expires` and `ifModifiedSince` now return `null` when the header is absent, as in `dart:io`, instead of the current time (which made every mock request look like a conditional request); setting them to `null` now removes the header instead of setting the current time
+* fix: Setting `MockHttpHeaders.date`, `expires` or `ifModifiedSince` to `null` now removes the header, as in `dart:io`, instead of setting the current time
+
+## 9.2.0
+
+* fix: `MockHttpHeaders.date`, `expires` and `ifModifiedSince` now return `null` when the header is absent, as in `dart:io`, instead of the current time (which made every mock request look like a conditional request)
 
 ## 9.1.0
 

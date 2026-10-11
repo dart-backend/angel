@@ -1,7 +1,7 @@
 
 # Change Log
 
-## 9.2.0
+## 10.0.0
 
 * fix: `AngelHttpException.fromMap` now accepts a status code sent as digits (`"404"`) or a whole double (`404.0`), instead of throwing `TypeError`. Only codes from 100 to 599 are used, `status_code` falling back to `statusCode`; anything else (including `-1`, `"0x194"` and `404.9`) becomes 500
 * feat: `AngelHttpException.fromMap` and `fromJson` take an optional `fallbackStatusCode`, used instead of 500 when the map has no valid status code (and itself replaced by 500 if it is not one)

@@ -1,5 +1,9 @@
 # Change Log
 
+## 10.0.0
+
+* Released with the other Angel3 packages at 10.0.0
+
 ## 9.2.0
 
 * fix: `ResponseCache` now sends `Content-Length` with a cached response, which it previously streamed without a length

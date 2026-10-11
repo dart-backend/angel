@@ -1,6 +1,6 @@
 # Change Log
 
-## 9.3.0
+## 10.0.0
 
 * fix: A multipart body cut off before its closing boundary is now a 400; the request used to hang for good, waiting for the last part to end
 * fix: A multipart part with a malformed `Content-Disposition` is now a 400 instead of a 500

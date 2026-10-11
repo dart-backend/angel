@@ -1,6 +1,6 @@
 # Change Log
 
-## 9.2.0
+## 10.0.0
 
 * `ReflectedParameter.hasDefaultValue` is now set (with `contained`, or any `Reflectable` that has a `DeclarationsCapability`), so DI keeps the default of an unresolved parameter, as with `MirrorsReflector`
 * Fixed `GeneratedReflector.getName` returning `"name")` instead of `name`

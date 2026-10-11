@@ -1,5 +1,5 @@
 name: angel3_orm_service
-version: 9.1.0
+version: 10.0.0
 description: Service implementation that wraps over Angel3 ORM Query classes.
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dart-backend/angel/
@@ -9,16 +9,16 @@ resolution: workspace
 environment:
   sdk: '>=3.13.0 <4.0.0'
 dependencies:
-  angel3_framework: ^9.0.0
-  angel3_orm: ^9.0.0
+  angel3_framework: ^10.0.0
+  angel3_orm: ^10.0.0
   postgres: ^3.2.0
   optional: ^6.0.0
 dev_dependencies:
-  angel3_migration: ^9.0.0
-  angel3_migration_runner: ^9.0.0
-  angel3_orm_generator: ^9.0.0
-  angel3_orm_postgres: ^9.0.0
-  angel3_serialize: ^9.0.0
+  angel3_migration: ^10.0.0
+  angel3_migration_runner: ^10.0.0
+  angel3_orm_generator: ^10.0.0
+  angel3_orm_postgres: ^10.0.0
+  angel3_serialize: ^10.0.0
   build_runner: ^2.4.0
   logging: ^1.2.0
   test: ^1.24.0
