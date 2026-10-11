@@ -1,6 +1,5 @@
 library;
 
-//import 'package:dart2_constant/convert.dart';
 import 'dart:convert';
 
 /// Exception class that can be serialized to JSON and serialized to clients.
@@ -24,8 +23,10 @@ class AngelHttpException implements Exception {
   /// An HTTP status code this exception will throw.
   int statusCode;
 
+  static const _defaultMessage = '500 Internal Server Error';
+
   AngelHttpException({
-    this.message = '500 Internal Server Error',
+    this.message = _defaultMessage,
     this.stackTrace,
     this.statusCode = 500,
     this.error,
@@ -39,7 +40,8 @@ class AngelHttpException implements Exception {
       'is_error': true,
       'status_code': statusCode,
       'message': message,
-      'errors': errors,
+      // A copy, so changing the map does not change this exception.
+      'errors': List.of(errors),
     };
   }
 
@@ -50,18 +52,57 @@ class AngelHttpException implements Exception {
     return '$statusCode: $message';
   }
 
-  factory AngelHttpException.fromMap(Map data) {
+  /// Uses [fallbackStatusCode] when [data] has no valid status code, e.g.
+  /// the status of the HTTP response it came from; 500 if that is not valid
+  /// either.
+  factory AngelHttpException.fromMap(Map data, {int fallbackStatusCode = 500}) {
+    var statusCode =
+        _parseStatusCode(data['status_code']) ??
+        _parseStatusCode(data['statusCode']) ??
+        _parseStatusCode(fallbackStatusCode) ??
+        500;
     return AngelHttpException(
-      statusCode: (data['status_code'] ?? data['statusCode'] ?? 500) as int,
-      message: data['message']?.toString() ?? 'Internal Server Error',
+      statusCode: statusCode,
+      // Without a message, one that matches the status code.
+      message:
+          data['message']?.toString() ??
+          (statusCode == 500 ? _defaultMessage : '$statusCode'),
       errors: data['errors'] is Iterable
           ? ((data['errors'] as Iterable).map((x) => x.toString()).toList())
           : <String>[],
     );
   }
 
-  factory AngelHttpException.fromJson(String str) =>
-      AngelHttpException.fromMap(json.decode(str) as Map);
+  static final _digits = RegExp(r'^\d+$');
+
+  // A status code from 100 to 599, sent as an int, a whole double (`404.0`)
+  // or digits (`"404"`); anything else is null.
+  static int? _parseStatusCode(Object? value) {
+    var code = switch (value) {
+      int() => value,
+      double() when value.isFinite && value == value.roundToDouble() =>
+        value.toInt(),
+      String() when _digits.hasMatch(value) => int.tryParse(value),
+      _ => null,
+    };
+    return code != null && code >= 100 && code <= 599 ? code : null;
+  }
+
+  /// Like [AngelHttpException.fromMap]. Throws a [FormatException] if [str]
+  /// is not a JSON object.
+  factory AngelHttpException.fromJson(
+    String str, {
+    int fallbackStatusCode = 500,
+  }) {
+    var data = json.decode(str);
+    if (data is! Map) {
+      throw FormatException('Expected a JSON object', str);
+    }
+    return AngelHttpException.fromMap(
+      data,
+      fallbackStatusCode: fallbackStatusCode,
+    );
+  }
 
   /// Throws a 400 Bad Request error, including an optional arrray of (validation?)
   /// errors you specify.

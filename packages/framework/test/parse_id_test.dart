@@ -28,6 +28,6 @@ void main() {
     expect(Service.parseId<bool>(true), true);
     expect(Service.parseId<bool>('false'), false);
     expect(Service.parseId<bool>(false), false);
-    expect(Service.parseId<bool>('hmm'), false);
+    expect(() => Service.parseId<bool>('hmm'), throwsFormatException);
   });
 }

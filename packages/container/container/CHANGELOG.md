@@ -1,5 +1,12 @@
 # Change Log
 
+## 10.0.0
+
+* Added `ReflectedParameter.hasDefaultValue`, set by `MirrorsReflector`
+* Fixed `Container.make` with `MirrorsReflector` ignoring named constructor parameters: required ones failed with `NoSuchMethodError`, and optional ones were left `null`
+* `Container.make` now leaves out an optional named parameter whose type is not registered and cannot be constructed (e.g. `{String? prefix}`), instead of failing
+* Fixed `Container.make` failing for constructor parameters with a default value (e.g. `[int retries = 3]`) when nothing is registered for their type; they now keep their default. **Behaviour change:** an optional positional parameter whose type is not registered is now left out (`null` or its default), instead of being constructed by reflection
+
 ## 9.1.0
 
 * Require Dart >= 3.13

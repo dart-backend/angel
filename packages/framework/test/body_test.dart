@@ -99,6 +99,49 @@ void main() {
     expect(todo.completed, false);
   });
 
+  Future<RequestContext> rawRequest(String contentType, String body) async {
+    var rq = MockHttpRequest('POST', Uri(path: '/'))
+      ..headers.set('content-type', contentType)
+      ..write(body);
+    await rq.close();
+    return http.createRequestContext(rq, rq.response);
+  }
+
+  test('a parseBody call made during another waits for it', () async {
+    var req = await request(parse: false, bodyFields: {'a': 1});
+    var first = req.parseBody();
+    await req.parseBody();
+    expect(req.bodyAsMap, {'a': 1});
+    await first;
+  });
+
+  test('a failed parse fails later parseBody calls too', () async {
+    var req = await rawRequest('application/json', '{bad');
+    await expectLater(req.parseBody(), throwsFormatException);
+    await expectLater(req.parseBody(), throwsFormatException);
+    expect(req.hasParsedBody, isFalse);
+  });
+
+  test('uploads with a text Content-Type are files', () async {
+    var req = await rawRequest(
+      'multipart/form-data; boundary=XYZ',
+      '--XYZ\r\n'
+          'Content-Disposition: form-data; name="file"; filename="data.csv"\r\n'
+          'Content-Type: text/csv\r\n\r\n'
+          'a,b\r\n'
+          '--XYZ\r\n'
+          'Content-Disposition: form-data; name="field"\r\n\r\n'
+          'value\r\n'
+          '--XYZ--\r\n',
+    );
+    await req.parseBody();
+    expect(req.bodyAsMap, {'field': 'value'});
+    var file = req.uploadedFiles!.single;
+    expect(file.filename, 'data.csv');
+    expect(file.contentType.mimeType, 'text/csv');
+    expect(utf8.decode(await file.readAsBytes()), 'a,b');
+  });
+
   test('throws when body has not been parsed', () async {
     var req = await request(parse: false);
     expect(() => req.bodyAsObject, throwsStateError);
@@ -133,6 +176,58 @@ void main() {
         {'hm': 'ok'},
       ],
       throwsStateError,
+    );
+  });
+
+  test('a malformed form body is a 400', () async {
+    var req = await rawRequest('application/x-www-form-urlencoded', 'a=%zz');
+    await expectLater(
+      req.parseBody(),
+      throwsA(
+        isA<AngelHttpException>().having((e) => e.statusCode, 'status', 400),
+      ),
+    );
+  });
+
+  for (var (name, body) in [
+    (
+      'a malformed Content-Disposition',
+      '--XYZ\r\n'
+          'Content-Disposition: form-data; name="a\r\n\r\n'
+          'value\r\n'
+          '--XYZ--\r\n',
+    ),
+    (
+      'a body cut off before its closing boundary',
+      '--XYZ\r\n'
+          'Content-Disposition: form-data; name="a"\r\n\r\n'
+          'value',
+    ),
+  ]) {
+    test('a multipart body with $name is a 400', () async {
+      var req = await rawRequest('multipart/form-data; boundary=XYZ', body);
+      await expectLater(
+        req.parseBody(),
+        throwsA(
+          isA<AngelHttpException>().having((e) => e.statusCode, 'status', 400),
+        ),
+      );
+    });
+  }
+
+  test('a multipart part without Content-Disposition is a 400', () async {
+    var req = await rawRequest(
+      'multipart/form-data; boundary=XYZ',
+      '--XYZ\r\n'
+          'Content-Type: text/plain\r\n\r\n'
+          'value\r\n'
+          '--XYZ--\r\n',
+    );
+    await expectLater(
+      req.parseBody(),
+      throwsA(
+        isA<AngelHttpException>().having((e) => e.statusCode, 'status', 400),
+      ),
     );
   });
 }

@@ -208,7 +208,8 @@ class Proxy {
 
     /// if [http.Client] does not provide us with a content length
     /// OR [http.Client] is about to decode the response (bytecount returned by [http.Response].stream != known length)
-    /// then we can not provide a value downstream => set to '-1' for 'unspecified length'
+    /// then we can not provide a value downstream => send no content-length
+    /// ('-1' is not a valid value; dart:io throws on it)
     var isContentLengthUnknown =
         rs.contentLength == null ||
         rs.headers[HttpHeaders.contentEncodingHeader]?.isNotEmpty == true ||
@@ -221,8 +222,10 @@ class Proxy {
       ..remove(
         HttpHeaders.transferEncodingHeader,
       ) // drop, http.Client has decoded
-      ..[HttpHeaders.contentLengthHeader] =
-          "${isContentLengthUnknown ? '-1' : rs.contentLength}";
+      ..remove(HttpHeaders.contentLengthHeader);
+    if (!isContentLengthUnknown) {
+      proxiedHeaders[HttpHeaders.contentLengthHeader] = '${rs.contentLength}';
+    }
 
     res
       ..contentType = mediaType

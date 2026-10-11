@@ -179,7 +179,10 @@ class _ReflectedClassMirror extends ReflectedClass {
     List<Type>? typeArguments,
   ]) {
     return _ReflectedInstanceMirror(
-      mirror.newInstance(Symbol(constructorName), positionalArguments),
+      mirror.newInstance(Symbol(constructorName), positionalArguments, {
+        for (var entry in (namedArguments ?? {}).entries)
+          Symbol(entry.key): entry.value,
+      }),
     );
   }
 
@@ -251,6 +254,7 @@ class _ReflectedMethodMirror extends ReflectedFunction {
       const MirrorsReflector().reflectType(mirror.type.reflectedType),
       !mirror.isOptional,
       mirror.isNamed,
+      hasDefaultValue: mirror.hasDefaultValue,
     );
   }
 

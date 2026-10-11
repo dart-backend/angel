@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import 'package:angel3_framework/angel3_framework.dart' hide Header;
 import 'package:http2/transport.dart';
+import 'package:meta/meta.dart';
 
 import 'http2_request_context.dart';
 
@@ -23,6 +24,9 @@ class Http2ResponseContext extends ResponseContext<ServerTransportStream> {
       _isPush = false;
 
   Uri? _targetUri;
+
+  /// The method of a pushed request; see [push].
+  String? _pushMethod;
 
   Http2ResponseContext(Angel? app, this.stream, this._req) {
     this.app = app;
@@ -73,7 +77,7 @@ class Http2ResponseContext extends ResponseContext<ServerTransportStream> {
 
   /// Write headers, status, etc. to the underlying [stream].
   bool _openStream() {
-    if (_isPush || _streamInitialized) return false;
+    if (_streamInitialized) return false;
     validateHeaders();
 
     var headers = <Header>[Header.ascii(':status', statusCode.toString())];
@@ -97,13 +101,8 @@ class Http2ResponseContext extends ResponseContext<ServerTransportStream> {
       headers.add(Header.ascii(key.toLowerCase(), this.headers[key]!));
     }
 
-    // Persist session ID. HTTP/2 here always runs over TLS, so the cookie
-    // is Secure; HttpOnly keeps it from page scripts.
-    cookies.add(
-      Cookie('DARTSESSID', _req!.session!.id)
-        ..secure = true
-        ..httpOnly = true,
-    );
+    // A pushed response belongs to the request that pushed it.
+    if (!_isPush) addSessionCookie();
 
     // Send all cookies
     for (var cookie in cookies) {
@@ -112,6 +111,21 @@ class Http2ResponseContext extends ResponseContext<ServerTransportStream> {
 
     stream.sendHeaders(headers);
     return _streamInitialized = true;
+  }
+
+  /// Adds the session ID cookie, if the request has a session and it has not
+  /// been added yet. HTTP/2 here always runs over TLS, so the cookie is
+  /// Secure; HttpOnly keeps it from page scripts.
+  @internal
+  void addSessionCookie() {
+    var req = _req;
+    if (req == null || !req.hasSession) return;
+    if (cookies.any((c) => c.name == 'DARTSESSID')) return;
+    cookies.add(
+      Cookie('DARTSESSID', req.session!.id)
+        ..secure = true
+        ..httpOnly = true,
+    );
   }
 
   /// Compresses unbuffered output as one stream (see `HttpResponseContext`).
@@ -129,7 +143,7 @@ class Http2ResponseContext extends ResponseContext<ServerTransportStream> {
   /// Sends status and headers after running response finalizers (if any);
   /// see `HttpResponseContext`. On a finalizer failure nothing is sent.
   Future<void> _commit() {
-    if (_streamInitialized || _isPush) return Future.value();
+    if (_streamInitialized) return Future.value();
     var running = _finalizing;
     if (running != null) return running;
     if (!_needsFinalizers) {
@@ -169,7 +183,7 @@ class Http2ResponseContext extends ResponseContext<ServerTransportStream> {
 
   /// A `HEAD` response carries the headers of the `GET` response but no body
   /// (RFC 9110); unlike dart:io, package:http2 does not drop it for us.
-  bool get _omitBody => _req?.method == 'HEAD';
+  bool get _omitBody => (_isPush ? _pushMethod : _req?.method) == 'HEAD';
 
   void _write(List<int> data) {
     if (_omitBody) return;
@@ -267,6 +281,7 @@ class Http2ResponseContext extends ResponseContext<ServerTransportStream> {
     var s = stream.push(h);
     var r = Http2ResponseContext(app, s, _req)
       .._isPush = true
+      .._pushMethod = method
       .._targetUri = targetUri;
     _pushes.add(r);
     return r;

@@ -179,17 +179,28 @@ class ReflectedParameter {
   final bool isRequired;
   final bool isNamed;
 
+  /// Whether the parameter declares a default value. `false` when the
+  /// reflector cannot tell.
+  final bool hasDefaultValue;
+
   const ReflectedParameter(
     this.name,
     this.annotations,
     this.type,
     this.isRequired,
-    this.isNamed,
-  );
+    this.isNamed, {
+    this.hasDefaultValue = false,
+  });
 
   @override
-  int get hashCode =>
-      hashObjects([name, annotations, type, isRequired, isNamed]);
+  int get hashCode => hashObjects([
+    name,
+    annotations,
+    type,
+    isRequired,
+    isNamed,
+    hasDefaultValue,
+  ]);
 
   @override
   bool operator ==(other) =>
@@ -201,7 +212,8 @@ class ReflectedParameter {
       ) &&
       other.type == type &&
       other.isRequired == isRequired &&
-      other.isNamed == isNamed;
+      other.isNamed == isNamed &&
+      other.hasDefaultValue == hasDefaultValue;
 }
 
 class ReflectedTypeParameter {

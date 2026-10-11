@@ -29,6 +29,7 @@ RequestHandler ioc(
       // Copy, since a const InjectionRequest has unmodifiable lists.
       explicit = InjectionRequest.constant(
         named: injection.named,
+        namedWithDefaults: injection.namedWithDefaults,
         required: injection.required,
         optional: [...injection.optional, ...optional],
         parameters: injection.parameters,
@@ -95,7 +96,8 @@ Future resolveInjection(
       requirement.last is Type) {
     var key = requirement.first;
     var type = requirement.last;
-    if (req.params.containsKey(key) ||
+    if (injection.parameters.containsKey(key) ||
+        req.params.containsKey(key) ||
         req.app!.configuration.containsKey(key) ||
         _primitiveTypes.contains(type)) {
       return await resolveInjection(
@@ -106,6 +108,30 @@ Future resolveInjection(
         throwOnUnresolved,
         container,
       );
+    } else if ((!throwOnUnresolved || injection.optional.contains(key)) &&
+        !container.has(type)) {
+      // An optional (or named) parameter of a type nothing is registered
+      // for: construct one if possible, but leave it unresolved otherwise
+      // (e.g. an abstract class) instead of failing the request.
+      try {
+        return await resolveInjection(
+          type,
+          injection,
+          req,
+          res,
+          throwOnUnresolved,
+          container,
+        );
+      } on ReflectionException {
+        // Only "cannot be constructed"; an error thrown while constructing
+        // it is a real failure, and must reach the client as one.
+        return null;
+      } on Error catch (e) {
+        // dart:mirrors reports an abstract class with a private error type,
+        // so it can only be recognised by its message.
+        if ('$e'.startsWith('Cannot instantiate abstract class')) return null;
+        rethrow;
+      }
     } else {
       return await resolveInjection(
         type,
@@ -169,8 +195,7 @@ RequestHandler handleContained(
     }
 
     for (var entry in injection.named.entries) {
-      var name = Symbol(entry.key);
-      named[name] = await resolveInjection(
+      var value = await resolveInjection(
         [entry.key, entry.value],
         injection,
         req,
@@ -178,6 +203,11 @@ RequestHandler handleContained(
         false,
         container,
       );
+      // Leave unresolved parameters with a default out, so it applies; others
+      // (e.g. `required String? q`) are passed null.
+      if (value != null || !injection.namedWithDefaults.contains(entry.key)) {
+        named[Symbol(entry.key)] = value;
+      }
     }
 
     return Function.apply(handler, args, named);
@@ -195,6 +225,17 @@ class InjectionRequest {
   /// Optional, typed data that can be passed to a DI-enabled method.
   final Map<String, Type> named;
 
+  /// The names in [named] of parameters with a default value, which are left
+  /// out (so the default applies) when they cannot be resolved, instead of
+  /// being passed `null`.
+  ///
+  /// [preInject] fills this from the reflector (`MirrorsReflector` reports
+  /// default values; some reflectors cannot). When writing an
+  /// [InjectionRequest] by hand, list such parameters here, e.g.
+  /// `named: {'page': int}, namedWithDefaults: {'page'}` for
+  /// `({int page = 1})`.
+  final Set<String> namedWithDefaults;
+
   /// A list of the arguments required for a DI-enabled method to run.
   final List required;
 
@@ -206,6 +247,7 @@ class InjectionRequest {
 
   const InjectionRequest.constant({
     this.named = const {},
+    this.namedWithDefaults = const {},
     this.required = const [],
     this.optional = const [],
     this.parameters = const {},
@@ -213,6 +255,7 @@ class InjectionRequest {
 
   InjectionRequest()
     : named = {},
+      namedWithDefaults = {},
       required = [],
       optional = [],
       parameters = {};
@@ -268,6 +311,7 @@ InjectionRequest preInject(Function handler, Reflector reflector) {
       }
     } else {
       injection.named[name] = type;
+      if (parameter.hasDefaultValue) injection.namedWithDefaults.add(name);
     }
   }
   return injection;

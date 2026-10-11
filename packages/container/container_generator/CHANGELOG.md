@@ -1,5 +1,14 @@
 # Change Log
 
+## 10.0.0
+
+* `ReflectedParameter.hasDefaultValue` is now set (with `contained`, or any `Reflectable` that has a `DeclarationsCapability`), so DI keeps the default of an unresolved parameter, as with `MirrorsReflector`
+* Fixed `GeneratedReflector.getName` returning `"name")` instead of `name`
+* Fixed `ReflectedFunction.invoke` always failing: it threw when a closure was available, and failed with a null error when one was not
+* `ReflectedClass.declarations` now lists only methods (including getters and setters), like `MirrorsReflector`; fields (with no function) and constructors are no longer included
+* `ReflectedInstance.getField` now returns values that `reflectable` cannot reflect (e.g. `null` or a method tear-off), instead of throwing
+* Parameters whose type `reflectable` cannot reflect are now described by their `Type`, instead of making the whole function fail to reflect
+
 ## 9.1.0
 
 * Require Dart >= 3.13

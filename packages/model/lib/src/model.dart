@@ -12,7 +12,7 @@ class Model {
   Model({this.id, this.createdAt, this.updatedAt});
 
   /// Returns the [id], parsed as an [int].
-  int get idAsInt => id != null ? int.tryParse(id ?? "-1") ?? -1 : -1;
+  int get idAsInt => int.tryParse(id ?? "") ?? -1;
 
   /// Returns the [id] or "" if null.
   String get idAsString => id ?? "";
@@ -35,8 +35,20 @@ class AuditableModel extends Model {
   });
 }
 
-/// Data type to represent no data.
-class None extends Object {}
+/// Data type to represent no data. Final, so equality stays symmetric.
+final class None {
+  const None();
+
+  // Every None means the same thing, const or not.
+  @override
+  bool operator ==(Object other) => other is None;
+
+  @override
+  int get hashCode => 0;
+
+  @override
+  String toString() => 'None';
+}
 
 /// Canonical instance of [None]. Implies no data.
-const none = None;
+const none = None();

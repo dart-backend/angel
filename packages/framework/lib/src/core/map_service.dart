@@ -47,6 +47,15 @@ class MapService extends Service<String?, Map<String, dynamic>> {
     return id;
   }
 
+  /// The index in [items] of the record with [id]; throws a 404 if none.
+  int _indexOf(String? id) {
+    var idx = items.indexWhere(_matchesId(id));
+    if (idx < 0) {
+      throw AngelHttpException.notFound(message: 'No record found for ID $id');
+    }
+    return idx;
+  }
+
   bool Function(Map<String, dynamic>) _matchesId(Object? id) {
     return (Map<String, dynamic> item) {
       if (item['id'] == null) {
@@ -54,7 +63,9 @@ class MapService extends Service<String?, Map<String, dynamic>> {
       } else if (autoIdAndDateFields != false) {
         return item['id'] == id.toString();
       } else {
-        return item['id'] == id;
+        // Ids arrive as strings over REST, so `'1'` also matches `1`.
+        return item['id'] == id ||
+            (id != null && item['id'].toString() == id.toString());
       }
     };
   }
@@ -72,6 +83,9 @@ class MapService extends Service<String?, Map<String, dynamic>> {
   ///
   /// When [allowQuery] is `false`, the query (including its `$sort` and
   /// `$limit`) is ignored.
+  ///
+  /// Like every method here, this returns copies of the stored records, so
+  /// changing a result (e.g. in a hook) does not change [items].
   @override
   Future<List<Map<String, dynamic>>> index([Map<String, dynamic>? params]) {
     var query = allowQuery != false && params?['query'] is Map
@@ -96,7 +110,7 @@ class MapService extends Service<String?, Map<String, dynamic>> {
       result = result.sublist(0, limit);
     }
 
-    return Future.value(result);
+    return Future.value([for (var item in result) Map.of(item)]);
   }
 
   static bool _valueMatches(Object? value, Object? expected) {
@@ -128,11 +142,7 @@ class MapService extends Service<String?, Map<String, dynamic>> {
       fields.add((sort.toString(), false));
     }
 
-    int compare(Object? a, Object? b) {
-      if (a == null || b == null) {
-        // Missing values sort last.
-        return a == null ? (b == null ? 0 : 1) : -1;
-      }
+    int compare(Object a, Object b) {
       if (a is Comparable && a.runtimeType == b.runtimeType) {
         return a.compareTo(b);
       }
@@ -144,7 +154,13 @@ class MapService extends Service<String?, Map<String, dynamic>> {
     var indexed = items.indexed.toList();
     indexed.sort((x, y) {
       for (var (field, descending) in fields) {
-        var c = compare(x.$2[field], y.$2[field]);
+        var a = x.$2[field], b = y.$2[field];
+        if (a == null || b == null) {
+          // Missing values sort last, in either direction.
+          if (a == null && b == null) continue;
+          return a == null ? 1 : -1;
+        }
+        var c = compare(a, b);
         if (c != 0) return descending ? -c : c;
       }
       return x.$1.compareTo(y.$1);
@@ -161,14 +177,7 @@ class MapService extends Service<String?, Map<String, dynamic>> {
   ]) {
     // Future.sync, so a missing id fails the returned future rather than
     // throwing synchronously.
-    return Future.sync(
-      () => items.firstWhere(
-        _matchesId(id),
-        orElse: (() => throw AngelHttpException.notFound(
-          message: 'No record found for ID $id',
-        )),
-      ),
-    );
+    return Future.sync(() => Map.of(items[_indexOf(id)]));
   }
 
   @override
@@ -182,12 +191,15 @@ class MapService extends Service<String?, Map<String, dynamic>> {
     if (autoIdAndDateFields == true) {
       result
         ..['id'] = _nextId()
-        ..[autoSnakeCaseNames == false ? 'createdAt' : 'created_at'] = now
-        ..[autoSnakeCaseNames == false ? 'updatedAt' : 'updated_at'] = now;
+        ..[createdAtKey] = now
+        ..[updatedAtKey] = now;
     }
     items.add(result);
-    return Future.value(result);
+    return Future.value(Map.of(result));
   }
+
+  // modify, update and remove find and change a record in one synchronous
+  // step, so concurrent writes to the same record cannot interleave.
 
   @override
   Future<Map<String, dynamic>> modify(
@@ -200,21 +212,22 @@ class MapService extends Service<String?, Map<String, dynamic>> {
     //      message:
     //          'MapService does not support `modify` with ${data.runtimeType}.');
     //}
-    // A missing id is a 404 (via read): patching cannot create a record.
-    return read(id).then((item) {
-      var idx = items.indexOf(item);
-      if (idx < 0) {
-        throw AngelHttpException.notFound(
-          message: 'No record found for ID $id',
-        );
-      }
+    // A missing id is a 404: patching cannot create a record.
+    return Future.sync(() {
+      var idx = _indexOf(id);
+      var item = items[idx];
       var result = Map<String, dynamic>.from(item)..addAll(data);
 
       if (autoIdAndDateFields == true) {
-        result[autoSnakeCaseNames == false ? 'updatedAt' : 'updated_at'] =
-            DateTime.now().toIso8601String();
+        // The service manages these, so a patch cannot change them.
+        result['id'] = item['id'];
+        if (item.containsKey(createdAtKey)) {
+          result[createdAtKey] = item[createdAtKey];
+        }
+        result[updatedAtKey] = DateTime.now().toIso8601String();
       }
-      return Future.value(items[idx] = result);
+      items[idx] = result;
+      return Map.of(result);
     });
   }
 
@@ -229,26 +242,26 @@ class MapService extends Service<String?, Map<String, dynamic>> {
     //      message:
     //          'MapService does not support `update` with ${data.runtimeType}.');
     //}
-    if (!items.any(_matchesId(id))) return Future.value(_insertAt(id, data));
+    return Future.sync(() {
+      var idx = items.indexWhere(_matchesId(id));
+      if (idx < 0) return Map.of(_insertAt(id, data));
 
-    return read(id).then((old) {
-      if (!items.remove(old)) {
-        throw AngelHttpException.notFound(
-          message: 'No record found for ID $id',
-        );
-      }
-
+      var old = items[idx];
       var result = Map<String, dynamic>.from(data);
       if (autoIdAndDateFields == true) {
-        result
-          ..['id'] = id?.toString()
-          ..[autoSnakeCaseNames == false ? 'createdAt' : 'created_at'] =
-              old[autoSnakeCaseNames == false ? 'createdAt' : 'created_at']
-          ..[autoSnakeCaseNames == false ? 'updatedAt' : 'updated_at'] =
-              DateTime.now().toIso8601String();
+        result['id'] = id?.toString();
+        // As in modify: only a created-at the record has.
+        if (old.containsKey(createdAtKey)) {
+          result[createdAtKey] = old[createdAtKey];
+        }
+        result[updatedAtKey] = DateTime.now().toIso8601String();
+      } else {
+        // Keep the record findable by the id it was replaced at.
+        result.putIfAbsent('id', () => old['id']);
       }
-      items.add(result);
-      return Future.value(result);
+      // In place, as modify does, so the order of records is kept.
+      items[idx] = result;
+      return Map.of(result);
     });
   }
 
@@ -292,14 +305,6 @@ class MapService extends Service<String?, Map<String, dynamic>> {
       }
     }
 
-    return read(id, params).then((result) {
-      if (items.remove(result)) {
-        return result;
-      } else {
-        throw AngelHttpException.notFound(
-          message: 'No record found for ID $id',
-        );
-      }
-    });
+    return Future.sync(() => items.removeAt(_indexOf(id)));
   }
 }

@@ -1,5 +1,70 @@
 # Change Log
 
+## 10.0.0
+
+* fix: A multipart body cut off before its closing boundary is now a 400; the request used to hang for good, waiting for the last part to end
+* fix: A multipart part with a malformed `Content-Disposition` is now a 400 instead of a 500
+* fix: `MapService.update` no longer adds `created_at: null` to a record that had no created-at field, as `modify` already did
+* fix: `q=0` written after a tab (e.g. `gzip;\tq=0`) now rejects that encoding or media type, like one written after a space
+* fix: A hostname pattern with a trailing dot (the FQDN form, `example.com.`) matches the hostname without it again, as it did before `|` patterns were rewritten
+* fix: Response compression now treats `Accept-Encoding: gzip;Q=0` (capital `Q`) as rejecting gzip, as parameter names ignore case; it used to compress with gzip anyway
+* fix: `RequestContext.accepts` no longer rejects a type because a variant of it with other parameters has `q=0`; `text/html;level=1;q=0, text/html` now accepts `text/html`
+* fix: A buffered HTTP/2 response now sets the `DARTSESSID` cookie for a session first created by a response finalizer; the cookie used to be added before the finalizers ran, so such a session was lost
+* fix: An HTTP/2 request that fails before reaching a handler (e.g. no `:path`) no longer holds back the rest of its body with the stream paused, which stalled the stream's flow control until the connection closed
+* fix: An optional or named handler parameter is left unresolved only when its type cannot be constructed (no usable constructor, or an abstract class); an error thrown while constructing it now fails the request instead of being swallowed
+* fix: `MapService.update` (`PUT`) now replaces the record in place, as `modify` (`PATCH`) does, instead of moving it to the end of `items`, so the order of records is kept
+* fix: The default error page now labels its UTF-8 body `charset=utf-8` instead of `charset=utf8`, which is not a registered charset name, so Dart clients such as `package:http` decoded the page as Latin-1
+* fix: A typed route parameter (e.g. `/n/int:id`) given text that is not a number no longer matches the route (404, or the next matching route), instead of failing with 400 error.
+* fix: Middleware passed to `app.group(...)` now runs; previously it was ignored, so a group guarded by middleware (e.g. authentication) was served without it.
+* fix: HTTP/2 sessions are now created only when `req.session` is first read, instead of for every request without a `DARTSESSID` cookie, which let any client fill the session store. **Behaviour change:** responses that never use the session no longer set a `DARTSESSID` cookie
+* feat: Added `Http2RequestContext.hasSession` to check for a session without creating one
+* fix: `ResponseContext.done` now completes when the response is closed (or with the first error passed to `addError`), instead of never completing
+* fix: `res.redirectTo()` without `params` no longer fails with a null check error
+* fix: Services with non-String ids (e.g. `int`) mounted with `app.use` now receive parsed ids; previously every REST request by id failed with a 500 error. An id of `null` or one that cannot be parsed now returns 400
+* fix: `Service.parseId` now parses nullable types (e.g. `int?`) like their non-nullable form, and throws a `FormatException` for a `null` id when the type cannot hold `'null'`, instead of a `TypeError`
+* fix: An HTTP/1.1 response with an invalid header that bypasses validation (e.g. via `headers.putIfAbsent`) and no body now fails with 500 error, instead of never being sent
+* fix: An HTTP/1 request that cannot become a `RequestContext` (e.g. repeated `X-HTTP-Method-Override` headers) now returns 400 error, instead of terminating the server process. This also applies to `AngelHttp.handleRequest` on a server created outside of `startServer`
+* fix: An HTTP/1 request with an invalid `Content-Type` (e.g. `foo`) is now treated as `text/plain`, instead of terminating the server process
+* feat: Added `Driver.handleRawRequestSafely`, which answers 400 when a request fails before it reaches the app
+* fix: HTTP/2 buffered responses (`res.useBuffer()`) are now sent with their status, headers and body, instead of the stream being reset with no response.
+* fix: HTTP/2 error fallbacks (e.g. the 400 for a request that cannot be handled) now send their status, instead of resetting the stream
+* fix: HTTP/2 server pushes now send their status and headers; previously a pushed response had a body but no headers
+* fix: With `allowHttp1: false` (and no `onHttp1` listener), `AngelHttp2` now closes HTTP/1 connections, instead of leaving them hanging and keeping them in memory
+* fix: `app.shutdownHooks` now run when the server is closed, before services are closed; previously they never ran. Services are closed even if a hook fails, and the hook's error is then rethrown from `close()`
+* fix: Subclasses of `Angel` (e.g. `BaseAngelClient`) can now be constructed, instead of throwing `StateError: This container already has a singleton for Angel`. The app is registered in the container under its own type and as `Angel`
+* fix: After-modify hook listeners now receive a `modified` event, instead of `created`; WebSocket clients were sent `::created` for every modify
+* fix: `HookedService.fire` now passes its `result` to listeners, instead of `null`
+* fix: Canceling a `remove` in a before hook on a typed `HookedService` now returns the cancel result, instead of failing with a `TypeError`
+* fix: Buffered HTTP/1 responses now work for HTTP/1.0 clients (e.g. nginx's default `proxy_pass`), instead of failing. **Behaviour change:** buffered responses are now sent with `Content-Length` instead of chunked encoding, unless `res.chunked` is set to `true`
+* fix: Named parameters of DI handlers (`ioc`, controllers) that have a default value and cannot be resolved are now left out, so the default applies, instead of being passed `null` (which failed with a `TypeError` for non-nullable parameters). Other unresolved named parameters (e.g. `required String? q`) are still passed `null`. This needs to know which parameters have defaults: `MirrorsReflector` reports it, as does `GeneratedReflector` with `contained`; for an `InjectionRequest` written by hand, list them in `namedWithDefaults`. Otherwise unresolved named parameters are passed `null`, as before
+* feat: Added `InjectionRequest.namedWithDefaults`, the named parameters left out when they cannot be resolved
+* fix: `@Header`, `@Query`, `@CookieValue` and `@Session` parameters of any type (not only `String` and numbers) now read their value, instead of being made by the container
+* fix: Optional positional and named DI parameters whose type is not registered in the container, and cannot be constructed (e.g. an abstract class), now receive `null`, instead of failing the request
+* fix: Controllers with getters, setters, static or private methods can now be mounted; those members are no longer treated as routes. Declarations without a function (e.g. fields listed by a reflector) are skipped too
+* fix: `MapService` now returns copies of its records, so changing a result (e.g. removing a field in an after hook) no longer changes the stored record
+* fix: Concurrent `modify`, `update` and `remove` calls on the same `MapService` record no longer fail with a 404
+* fix: `MapService.modify` no longer lets the data change `id` or `created_at` when `autoIdAndDateFields` is on; previously a PATCH could give two records the same id
+* fix: `MapService.update` with `autoIdAndDateFields` off now keeps the record's id when the data has none, instead of making the record unreachable
+* fix: A `parseBody` call made while the body is being parsed now waits for that parse, instead of returning before the body is available. After a failed parse, later calls fail with the same error, instead of succeeding with an empty body; `hasParsedBody` is `true` only once parsing has succeeded
+* fix: Multipart uploads with a filename and a text `Content-Type` (e.g. `text/csv`, `application/json`) are now in `uploadedFiles` with their original bytes, instead of being decoded into `bodyAsMap`
+* feat: Added `UploadedFile(formData, contentType: ...)` to report a `Content-Type` other than the part's
+* fix: `MapService` with `autoIdAndDateFields` off now matches non-string ids by their string form, so a record with `id: 1` is found by `'1'` (as REST requests send it)
+* fix: `res.jsonp` now rejects a callback name that is not a plain (optionally dotted) identifier with 400 error, instead of writing it into the script, and awaits an async `serializer`
+* fix: Responses from an app with `encoders` now send `Vary: Accept-Encoding`. A body that already has a `content-encoding` header (e.g. a precompressed file) is no longer compressed again, and 204 and 304 responses are no longer compressed
+* fix: `chain` now stops at a handler that does not return `true`, like a route's own handlers, instead of running the remaining handlers. **Behaviour change:** a handler in a `chain` that returns nothing now ends the chain
+* fix: Hostname patterns with `|` (e.g. `example.com|api.example.com`) now match any of the whole hostnames, instead of throwing a `FormatException`
+* fix: `findService` now finds a service mounted after an earlier lookup of the same path failed
+* fix: `Service.parseId<bool>` now throws a `FormatException` (400 over REST) for ids other than `true` and `false`, instead of returning `false`. **Behaviour change**
+* fix: When a before hook cancels a call without a result, `HookedService.index` now returns an empty list, and other methods of a service whose `Data` is not nullable throw a `StateError` explaining the problem, instead of a `TypeError`. A canceled `index` may return a list of any element type
+* fix: `MapService` now sorts missing values last for descending `$sort` too
+* fix: `res.writeCharCode` now writes the character as UTF-8, instead of a single (truncated) byte
+* fix: A malformed `application/x-www-form-urlencoded` body (e.g. invalid percent-encoding) or a multipart part without `Content-Disposition` is now a 400 error, instead of 500
+* fix: `req.accepts` now honours a type or `type/*` rejected with `q=0` when a wildcard is also present (e.g. `text/html;q=0, */*`). `ResponseContext.selectEncoder` matches encodings case-insensitively, and `*` no longer picks an encoding rejected with `q=0`
+* fix: HTTP/2 request bodies are now read only as fast as the handler consumes them (using HTTP/2 flow control), so an unread or slowly read body is no longer buffered in memory. A body the handler does not read is discarded once the request is closed
+* fix: HTTP/2 trailers no longer change the request's path, host or headers, and a request without `:method` or `:path` is now a 400 error
+* fix: HTTP/2 responses now use `app.serializer`, like HTTP/1
+* fix: `AngelHttp.uri` now uses `https` for servers created with `AngelHttp.secure` or `AngelHttp.fromSecurityContext`
+
 ## 9.2.0
 
 * feat: Services, hooked services and `@Middleware` lookups now work without reflection; annotations are ignored when no reflector is configured instead of throwing an errror. This enabled support for `dart compile exe` to be used to build applications without reflection.

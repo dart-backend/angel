@@ -32,9 +32,10 @@ void main() {
     }) async {
       var rq = MockHttpRequest('POST', Uri(path: path))
         ..headers.set('accept', 'application/json')
-        ..headers.set('content-type', contentType)
-        ..write(body);
+        ..headers.set('content-type', contentType);
+      // Headers lock once the body is written.
       if (declaredLength != null) rq.headers.contentLength = declaredLength;
+      rq.write(body);
       await rq.close();
       await http.handleRequest(rq);
       await rq.response.drain<void>();

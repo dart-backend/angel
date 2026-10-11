@@ -40,6 +40,12 @@ class AngelHttp2
   final Uuid _uuid = Uuid();
   _AngelHttp2ServerSocket? _artificial;
 
+  /// The status, headers and cookies the driver sets on a stream (for a
+  /// buffered response, or an error fallback). HTTP/2 needs them in one
+  /// HEADERS frame that starts with `:status`, so they are collected here and
+  /// sent before the first DATA frame, or on [closeResponse].
+  final Expando<_PendingHeaders> _pending = Expando();
+
   /// How long a session may go unused before it is discarded.
   ///
   /// Expired sessions are pruned periodically (at least every minute, or
@@ -132,12 +138,12 @@ class AngelHttp2
     return await super.close();
   }
 
+  _PendingHeaders _pendingFor(ServerTransportStream response) =>
+      _pending[response] ??= _PendingHeaders();
+
   @override
   void addCookies(ServerTransportStream response, Iterable<Cookie> cookies) {
-    var headers = cookies.map(
-      (cookie) => Header.ascii('set-cookie', cookie.toString()),
-    );
-    response.sendHeaders(headers.toList());
+    _pendingFor(response).cookies.addAll(cookies);
   }
 
   @override
@@ -145,10 +151,55 @@ class AngelHttp2
     await server.close();
   }
 
+  /// Ends a stream the driver wrote to (see [_pending]). A stream it never
+  /// wrote to is reset instead, since no valid response can be sent on it.
   @override
   Future closeResponse(ServerTransportStream response) {
-    response.terminate();
+    var pending = _pending[response];
+    if (pending == null) {
+      response.terminate();
+    } else if (!pending.closed) {
+      pending.closed = true;
+      if (pending.sent) {
+        return response.outgoingMessages.close();
+      }
+      pending.sent = true;
+      response.sendHeaders(pending.toHeaders(), endStream: true);
+    }
     return Future.value();
+  }
+
+  @override
+  Future sendResponse(
+    Socket request,
+    ServerTransportStream response,
+    RequestContext req,
+    ResponseContext res, {
+    bool ignoreFinalizers = false,
+  }) {
+    // An unbuffered Http2ResponseContext adds this itself when it sends its
+    // headers; a buffered one is sent by the driver. The cookie goes on after
+    // the response finalizers, which may be the first to read `req.session`.
+    if (!res.isBuffered || res is! Http2ResponseContext) {
+      return super.sendResponse(
+        request,
+        response,
+        req,
+        res,
+        ignoreFinalizers: ignoreFinalizers,
+      );
+    }
+    var finalizers = ignoreFinalizers ? Future.value() : res.runFinalizers(req);
+    return finalizers.then((_) {
+      res.addSessionCookie();
+      return super.sendResponse(
+        request,
+        response,
+        req,
+        res,
+        ignoreFinalizers: true,
+      );
+    });
   }
 
   @override
@@ -163,9 +214,11 @@ class AngelHttp2
       app,
       _sessions,
       _uuid,
+      onSessionCreated: (session) =>
+          _sessionLastSeen[session.id] = DateTime.now(),
     );
-    var sessionId = req.session?.id;
-    if (sessionId != null) _sessionLastSeen[sessionId] = DateTime.now();
+    // Reading `req.session` here would create a session for every request.
+    if (req.hasSession) _sessionLastSeen[req.session!.id] = DateTime.now();
     return req;
   }
 
@@ -192,6 +245,7 @@ class AngelHttp2
     Http2RequestContext? correspondingRequest,
   ]) async {
     return Http2ResponseContext(app, response, correspondingRequest)
+      ..serializer = (app.serializer ?? json.encode)
       ..encoders.addAll(app.encoders);
   }
 
@@ -218,12 +272,13 @@ class AngelHttp2
 
   @override
   void setHeader(ServerTransportStream response, String key, String? value) {
-    response.sendHeaders([Header.ascii(key, value!)]);
+    // HTTP/2 header names must be lowercase.
+    _pendingFor(response).headers[key.toLowerCase()] = value!;
   }
 
   @override
   void setStatusCode(ServerTransportStream response, int value) {
-    response.sendHeaders([Header.ascii(':status', value.toString())]);
+    _pendingFor(response).statusCode = value;
   }
 
   @override
@@ -240,8 +295,26 @@ class AngelHttp2
 
   @override
   void writeToResponse(ServerTransportStream response, List<int> data) {
+    var pending = _pendingFor(response);
+    if (!pending.sent) {
+      pending.sent = true;
+      response.sendHeaders(pending.toHeaders());
+    }
     response.sendData(data);
   }
+}
+
+class _PendingHeaders {
+  int statusCode = 200;
+  final Map<String, String> headers = {};
+  final List<Cookie> cookies = [];
+  bool sent = false, closed = false;
+
+  List<Header> toHeaders() => [
+    Header.ascii(':status', statusCode.toString()),
+    for (var entry in headers.entries) Header.ascii(entry.key, entry.value),
+    for (var cookie in cookies) Header.ascii('set-cookie', cookie.toString()),
+  ];
 }
 
 class _FakeServerSocket extends Stream<Socket> implements ServerSocket {
@@ -294,7 +367,13 @@ class _AngelHttp2ServerSocket extends Stream<SecureSocket>
         if (socket.selectedProtocol == null ||
             socket.selectedProtocol == 'http/1.0' ||
             socket.selectedProtocol == 'http/1.1') {
-          _fake._ctrl.add(socket);
+          // Without allowHttp1 (or a listener on onHttp1), nothing would
+          // ever answer the connection, and it would be buffered forever.
+          if (driver._onHttp1.hasListener) {
+            _fake._ctrl.add(socket);
+          } else {
+            socket.destroy();
+          }
         } else if (socket.selectedProtocol == 'h2' ||
             socket.selectedProtocol == 'h2-14') {
           _ctrl.add(socket);

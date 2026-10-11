@@ -29,6 +29,55 @@ void main() {
     expect(album.title, 'flowers by stevie wonder');
   });
 
+  test('getName returns the symbol name', () {
+    expect(reflector.getName(#lowerName), 'lowerName');
+  });
+
+  test('declarations are methods, each with a function', () {
+    var declarations = reflector.reflectClass(Artist).declarations;
+    expect(declarations.map((d) => d.name), contains('lowerName'));
+    expect(declarations.map((d) => d.name), isNot(contains('name')));
+    for (var d in declarations) {
+      expect(d.function, isNotNull, reason: d.name);
+    }
+  });
+
+  test('reflects constructor parameter types', () {
+    var constructor = reflector
+        .reflectClass(Pokemon)
+        .constructors
+        .firstWhere((c) => c.name.isEmpty || c.name == 'Pokemon');
+    var name = constructor.parameters.first;
+    expect(name.name, 'name');
+    expect(name.type.reflectedType, String);
+  });
+
+  group('getField', () {
+    var blaziken = Pokemon('Blaziken', PokemonType.fire);
+
+    test('returns values it cannot reflect', () {
+      var field = reflector.reflectInstance(blaziken).getField('name');
+      expect(field.reflectee, 'Blaziken');
+    });
+
+    test('returns method tear-offs', () {
+      var field = reflector.reflectInstance(blaziken).getField('toString');
+      expect((field.reflectee as Function)(), blaziken.toString());
+    });
+  });
+
+  test('reports which parameters have a default value', () {
+    var constructor = reflector.reflectClass(WithDefaults).constructors.single;
+    expect(
+      {for (var p in constructor.parameters) p.name: p.hasDefaultValue},
+      {'artist': false, 'count': true},
+    );
+  });
+
+  test('make keeps the default of an unregistered parameter', () {
+    expect(container.make<WithDefaults>().count, 1);
+  });
+
   // Skip as pkg:reflectable cannot reflect on closures at all (yet)
   //testReflector(reflector);
 }
@@ -176,4 +225,12 @@ class AlbumLength {
   AlbumLength(this.artist, this.album);
 
   int get totalLength => artist.name.length + album.title.length;
+}
+
+@contained
+class WithDefaults {
+  final Artist artist;
+  final int count;
+
+  WithDefaults(this.artist, {this.count = 1});
 }

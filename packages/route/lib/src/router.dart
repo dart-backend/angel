@@ -23,6 +23,7 @@ final RegExp _straySlashes = RegExp(r'(^/+)|(/+$)');
 /// An abstraction over complex [Route] trees. Use this instead of the raw API. :)
 class Router<T> {
   final Map<String, Iterable<RoutingResult<T>>> _cache = {};
+  int _maxCacheSize = 1024;
 
   //final List<_ChainedRouter> _chained = [];
   final List<T> _middleware = [];
@@ -35,17 +36,25 @@ class Router<T> {
   Map<Pattern, Router<T>> get mounted =>
       Map<Pattern, Router<T>>.unmodifiable(_mounted);
 
+  /// All routes, with those of mounted routers joined to their mount path.
+  ///
+  /// The middleware of the link to a mounted router (see
+  /// [SymlinkRoute.middleware]) and the router's own (e.g. from [group]) are
+  /// prepended to the handlers of each of its routes, since only this
+  /// router's [middleware] is applied separately when resolving.
   List<Route<T>> get routes {
     return _routes.fold<List<Route<T>>>([], (out, route) {
       if (route is SymlinkRoute<T>) {
-        var childRoutes = route.router.routes.fold<List<Route<T>>>([], (
-          out,
-          r,
-        ) {
-          return out..add(route.path.isEmpty ? r : Route.join(route, r));
-        });
-
-        return out..addAll(childRoutes);
+        var middleware = [...route.middleware, ...route.router._middleware];
+        for (var r in route.router.routes) {
+          var joined = route.path.isEmpty ? r : Route.join(route, r);
+          out.add(
+            middleware.isEmpty
+                ? joined
+                : joined._withHandlers([...middleware, ...joined.handlers]),
+          );
+        }
+        return out;
       } else {
         return out..add(route);
       }
@@ -57,9 +66,18 @@ class Router<T> {
   Router();
 
   /// Enables the use of a cache to eliminate the overhead of consecutive resolutions of the same path.
-  void enableCache() {
+  ///
+  /// The cache holds at most [maxSize] results, evicting the least recently
+  /// used: its keys are request paths, so without a bound, distinct paths
+  /// (e.g. `/users/1`, `/users/2`) would grow it indefinitely. A [maxSize]
+  /// of 0 or less disables caching.
+  void enableCache({int maxSize = 1024}) {
     _useCache = true;
+    _maxCacheSize = maxSize;
   }
+
+  /// The number of resolutions currently cached (see [enableCache]).
+  int get cacheLength => _cache.length;
 
   /// Adds a route that responds to the given path
   /// for requests with the given method (case-insensitive).
@@ -248,7 +266,7 @@ class Router<T> {
           var scanner = SpanScanner(param.replaceAll(_straySlashes, ''));
           for (var route in search.routes) {
             var pos = scanner.position;
-            var parseResult = route.parser?.parse(scanner);
+            var parseResult = _tryParse(route.parser, scanner);
             if (parseResult != null) {
               if (parseResult.successful && scanner.isDone) {
                 segments.add(route.path.replaceAll(_straySlashes, ''));
@@ -319,8 +337,7 @@ class Router<T> {
 
         if (route is SymlinkRoute<T>) {
           if (route.parser != null) {
-            var pp = route.parser!;
-            if (pp.parse(scanner).successful) {
+            if (_tryParse(route.parser, scanner)?.successful == true) {
               var s = crawl(route.router);
               if (s) success = true;
             }
@@ -328,7 +345,7 @@ class Router<T> {
 
           scanner.position = pos;
         } else if (route.method == '*' || route.method == method) {
-          var parseResult = route.parser?.parse(scanner);
+          var parseResult = _tryParse(route.parser, scanner);
           if (parseResult != null) {
             if (parseResult.successful && scanner.isDone) {
               var tailResult = parseResult.value?.tail ?? '';
@@ -354,6 +371,19 @@ class Router<T> {
     return crawl(this);
   }
 
+  /// Parses with [parser], treating a path whose parameters cannot be read
+  /// (see [_NoMatch]) as no match.
+  static ParseResult<RouteResult>? _tryParse(
+    Parser<RouteResult>? parser,
+    SpanScanner scanner,
+  ) {
+    try {
+      return parser?.parse(scanner);
+    } on _NoMatch {
+      return null;
+    }
+  }
+
   /// Returns the result of [resolve] with [path] passed as
   /// both `absolute` and `relative`.
   Iterable<RoutingResult<T>> resolveAbsolute(
@@ -370,11 +400,16 @@ class Router<T> {
     String method = 'GET',
     bool strip = true,
   }) {
-    if (_useCache == true) {
-      return _cache.putIfAbsent(
-        '$method$absolute',
-        () => _resolveAll(absolute, relative, method: method, strip: strip),
-      );
+    if (_useCache && _maxCacheSize > 0) {
+      var key = '$method\u0000$strip\u0000$absolute\u0000$relative';
+      // Re-inserting moves the entry to the end, keeping eviction LRU.
+      var results =
+          _cache.remove(key) ??
+          _resolveAll(absolute, relative, method: method, strip: strip);
+      while (_cache.length >= _maxCacheSize) {
+        _cache.remove(_cache.keys.first);
+      }
+      return _cache[key] = results;
     }
 
     return _resolveAll(absolute, relative, method: method, strip: strip);
@@ -395,12 +430,12 @@ class Router<T> {
   }
 
   /// Incorporates another [Router]'s routes into this one's.
-  SymlinkRoute<T> mount(String path, Router<T> router) {
-    final route = SymlinkRoute<T>(path, router);
-    _mounted[route.path] = router;
-    _routes.add(route);
-    //route._head = RegExp(route.matcher.pattern.replaceAll(_rgxEnd, ''));
+  SymlinkRoute<T> mount(String path, Router<T> router) =>
+      _mount(SymlinkRoute<T>(path, router));
 
+  SymlinkRoute<T> _mount(SymlinkRoute<T> route) {
+    _mounted[route.path] = route.router;
+    _routes.add(route);
     return route;
   }
 
@@ -485,7 +520,8 @@ class ChainedRouter<T> extends Router<T> {
   }) {
     final router = ChainedRouter<T>(_root, [..._handlers, ...middleware]);
     callback(router);
-    return mount(path, router)..name = name;
+    // Its routes already include the chained handlers.
+    return super.mount(path, router)..name = name;
   }
 
   @override
@@ -497,16 +533,15 @@ class ChainedRouter<T> extends Router<T> {
   }) async {
     final router = ChainedRouter<T>(_root, [..._handlers, ...middleware]);
     await callback(router);
-    return mount(path, router)..name = name;
+    // Its routes already include the chained handlers.
+    return super.mount(path, router)..name = name;
   }
 
+  /// Mounts [router] with the chained handlers running before its routes,
+  /// at this mount only: [router] itself is not changed.
   @override
-  SymlinkRoute<T> mount(String path, Router<T> router) {
-    final route = super.mount(path, router);
-    route.router._middleware.insertAll(0, _handlers);
-    //_root._routes.add(route);
-    return route;
-  }
+  SymlinkRoute<T> mount(String path, Router<T> router) =>
+      _mount(SymlinkRoute<T>(path, router, middleware: _handlers));
 
   @override
   ChainedRouter<T> chain(Iterable<T> middleware) {

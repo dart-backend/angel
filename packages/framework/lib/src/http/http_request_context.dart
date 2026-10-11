@@ -92,9 +92,19 @@ class HttpRequestContext extends RequestContext<HttpRequest?> {
     }
 
     ctx.app = app;
-    ctx._contentType = request.headers.contentType == null
-        ? MediaType('text', 'plain')
-        : MediaType.parse(request.headers.contentType.toString());
+    if (request.headers.contentType != null) {
+      try {
+        ctx._contentType = MediaType.parse(
+          request.headers.contentType.toString(),
+        );
+      } on FormatException catch (e) {
+        // Keep the text/plain default, as RequestContext.contentType does.
+        app.logger.warning(
+          'Invalid media type [${request.headers.contentType}]',
+          e,
+        );
+      }
+    }
     ctx._override = override;
     ctx._path = path;
     ctx._io = request;

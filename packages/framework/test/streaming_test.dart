@@ -113,4 +113,21 @@ void main() {
   });
 
   encodingTests(() => app);
+
+  for (var buffered in [false, true]) {
+    test('writeCharCode encodes as UTF-8 (buffered: $buffered)', () async {
+      var app = Angel()
+        ..get('/', (req, res) {
+          if (buffered) res.useBuffer();
+          res
+            ..writeCharCode(0x263A)
+            ..writeCharCode(0x41);
+          return res.close();
+        });
+      var rq = MockHttpRequest('GET', Uri(path: '/'));
+      await rq.close();
+      await AngelHttp(app).handleRequest(rq);
+      expect(await rq.response.transform(utf8.decoder).join(), '☺A');
+    });
+  }
 }

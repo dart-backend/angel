@@ -27,9 +27,8 @@ class GeneratedReflector extends Reflector {
   const GeneratedReflector([this.reflectable = contained]);
 
   @override
-  String getName(Symbol symbol) {
-    return symbol.toString().substring(7);
-  }
+  String getName(Symbol symbol) =>
+      const EmptyReflector().getName(symbol) ?? symbol.toString();
 
   @override
   ReflectedClass reflectClass(Type clazz) {
@@ -61,6 +60,20 @@ class GeneratedReflector extends Reflector {
     }
   }
 
+  /// Reflects [value], or wraps it if [reflectable] cannot reflect it (e.g.
+  /// `null`, or a method tear-off).
+  ReflectedInstance _reflectValue(Object? value) =>
+      value != null && reflectable.canReflect(value)
+      ? _GeneratedReflectedInstance(reflectable.reflect(value), this)
+      : _ValueReflectedInstance(value);
+
+  /// Like [reflectType], but describes a type [reflectable] cannot reflect
+  /// (e.g. a parameter's type) instead of throwing.
+  ReflectedType _reflectTypeOrDescribe(Type type) =>
+      reflectable.canReflectType(type)
+      ? reflectType(type)
+      : _ValueReflectedClass(type);
+
   @override
   ReflectedType reflectType(Type type) {
     if (!reflectable.canReflectType(type)) {
@@ -89,11 +102,8 @@ class _GeneratedReflectedInstance extends ReflectedInstance {
   ReflectedType get type => clazz;
 
   @override
-  ReflectedInstance getField(String name) {
-    var result = mirror.invokeGetter(name)!;
-    var instance = reflector.reflectable.reflect(result);
-    return _GeneratedReflectedInstance(instance, reflector);
-  }
+  ReflectedInstance getField(String name) =>
+      reflector._reflectValue(mirror.invokeGetter(name));
 }
 
 class _GeneratedReflectedClass extends ReflectedClass {
@@ -207,12 +217,15 @@ class _GeneratedReflectedFunction extends ReflectedFunction {
 
   @override
   ReflectedInstance invoke(Invocation invocation) {
-    if (closure != null) {
+    var closure = this.closure;
+    if (closure == null) {
       throw UnsupportedError('Only closures can be invoked directly.');
-    } else {
-      var result = closure!.delegate(invocation)!;
-      return reflector.reflectInstance(result)!;
     }
+    var result = closure.delegate(invocation);
+    var reflector = this.reflector;
+    return reflector is GeneratedReflector
+        ? reflector._reflectValue(result)
+        : reflector.reflectInstance(result!)!;
   }
 }
 
@@ -238,11 +251,9 @@ List<ReflectedDeclaration> _declarationsOf(
   return map.entries.fold<List<ReflectedDeclaration>>([], (out, entry) {
     var v = entry.value;
 
-    if (v is VariableMirror) {
-      var decl = ReflectedDeclaration(v.simpleName, v.isStatic, null);
-      return out..add(decl);
-    }
-    if (v is MethodMirror) {
+    // Like MirrorsReflector: methods (including getters and setters) only,
+    // so every declaration has a function.
+    if (v is MethodMirror && !v.isConstructor) {
       var decl = ReflectedDeclaration(
         v.simpleName,
         v.isStatic,
@@ -269,8 +280,57 @@ ReflectedParameter _convertParameter(
         .map(reflector.reflectInstance)
         .whereType<ReflectedInstance>()
         .toList(),
-    reflector.reflectType(mirror.type.reflectedType)!,
+    reflector is GeneratedReflector
+        ? reflector._reflectTypeOrDescribe(mirror.type.reflectedType)
+        : reflector.reflectType(mirror.type.reflectedType)!,
     !mirror.isOptional,
     mirror.isNamed,
+    hasDefaultValue: _hasDefaultValue(mirror),
   );
+}
+
+/// Whether [mirror] declares a default value; `false` if the [Reflectable]
+/// lacks the `DeclarationsCapability` needed to tell (`contained` has it).
+bool _hasDefaultValue(ParameterMirror mirror) {
+  try {
+    return mirror.hasDefaultValue;
+  } on NoSuchCapabilityError {
+    return false;
+  }
+}
+
+/// A type [reflectable] cannot reflect: only the [Type] itself is known.
+class _ValueReflectedClass extends ReflectedClass {
+  const _ValueReflectedClass(Type type)
+    : super('$type', const [], const [], const [], const [], type);
+
+  @override
+  bool isAssignableTo(ReflectedType? other) =>
+      other?.reflectedType == reflectedType;
+
+  @override
+  ReflectedInstance newInstance(
+    String constructorName,
+    List positionalArguments, [
+    Map<String, dynamic> namedArguments = const {},
+    List<Type> typeArguments = const [],
+  ]) {
+    throw UnsupportedError('Cannot create a new instance of $reflectedType.');
+  }
+}
+
+/// A value [reflectable] cannot reflect: only the value and its runtime type
+/// are known.
+class _ValueReflectedInstance extends ReflectedInstance {
+  _ValueReflectedInstance(Object? value)
+    : super(
+        _ValueReflectedClass(value.runtimeType),
+        _ValueReflectedClass(value.runtimeType),
+        value,
+      );
+
+  @override
+  ReflectedInstance getField(String name) {
+    throw UnsupportedError('Cannot reflect on fields of $reflectee.');
+  }
 }

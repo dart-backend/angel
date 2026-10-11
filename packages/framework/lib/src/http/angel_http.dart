@@ -5,6 +5,7 @@ import 'dart:io'
         Cookie,
         HttpRequest,
         HttpResponse,
+        HttpException,
         HttpServer,
         Platform,
         SecurityContext;
@@ -32,14 +33,20 @@ class AngelHttp
   @override
   Uri get uri {
     return Uri(
-      scheme: 'http',
+      scheme: _secure ? 'https' : 'http',
       host: server?.address.address,
       port: server?.port,
     );
   }
 
-  AngelHttp._(super.app, super.serverGenerator, bool useZone)
-    : super(useZone: useZone);
+  final bool _secure;
+
+  AngelHttp._(
+    super.app,
+    super.serverGenerator,
+    bool useZone, [
+    this._secure = false,
+  ]) : super(useZone: useZone);
 
   factory AngelHttp(Angel app, {bool useZone = true}) {
     return AngelHttp._(app, HttpServer.bind, useZone);
@@ -60,9 +67,14 @@ class AngelHttp
     SecurityContext context, {
     bool useZone = true,
   }) {
-    return AngelHttp._(app, (address, int port) {
-      return HttpServer.bindSecure(address, port, context);
-    }, useZone);
+    return AngelHttp._(
+      app,
+      (address, int port) {
+        return HttpServer.bindSecure(address, port, context);
+      },
+      useZone,
+      true,
+    );
   }
 
   /// Creates an HTTPS server.
@@ -88,8 +100,10 @@ class AngelHttp
     return AngelHttp.fromSecurityContext(app, serverContext, useZone: useZone);
   }
 
+  /// Handles [request], for use with a server created outside of
+  /// [startServer]. Requests that cannot be handled get `400 Bad Request`.
   Future handleRequest(HttpRequest request) =>
-      handleRawRequest(request, request.response);
+      handleRawRequestSafely(request, request.response);
 
   @override
   void addCookies(HttpResponse response, Iterable<Cookie> cookies) =>
@@ -148,8 +162,13 @@ class AngelHttp
   ) => Stream.fromIterable([request.response]);
 
   @override
-  void setChunkedEncoding(HttpResponse response, bool value) =>
+  void setChunkedEncoding(HttpResponse response, bool value) {
+    try {
       response.headers.chunkedTransferEncoding = value;
+    } on HttpException {
+      // HTTP/1.0 has no chunked encoding; Content-Length is sent instead.
+    }
+  }
 
   @override
   void setContentLength(HttpResponse response, int length) =>

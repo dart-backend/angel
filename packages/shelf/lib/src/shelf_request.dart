@@ -27,7 +27,15 @@ class ShelfRequestContext extends RequestContext {
     this.rawRequest,
     this.path,
   ) {
-    rawRequest.headers.forEach(headers.add);
+    rawRequest.headers.forEach((name, value) {
+      try {
+        headers.add(name, value);
+      } on HttpException {
+        // A malformed content-length: shelf reads the body itself, and the
+        // body is still counted against maxBodySize, so drop the header
+        // rather than fail the request.
+      }
+    });
   }
 
   @override

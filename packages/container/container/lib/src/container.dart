@@ -120,7 +120,7 @@ class Container {
 
     var reflectedType = reflector.reflectType(t2);
     var positional = [];
-    var named = <String, Object>{};
+    var named = <String, dynamic>{};
 
     if (reflectedType is ReflectedClass) {
       bool isDefault(String name) {
@@ -134,9 +134,33 @@ class Container {
         )),
       );
 
+      // Once an optional positional parameter is left out, the ones after it
+      // cannot be passed either.
+      var positionalOmitted = false;
       for (var param in constructor.parameters) {
-        var value = make(param.type.reflectedType);
+        var type = param.type.reflectedType;
+        // A parameter with a default (an optional positional one defaults to
+        // null) keeps it unless something is registered for its type.
+        var canOmit =
+            param.hasDefaultValue || (!param.isNamed && !param.isRequired);
+        if (!param.isNamed && positionalOmitted) continue;
+        if (canOmit && !has(type)) {
+          if (!param.isNamed) positionalOmitted = true;
+          continue;
+        }
 
+        if (param.isNamed && !param.isRequired && !has(type)) {
+          // Reflectors may not tell `{Logger? log}` from `{required Dep dep}`:
+          // construct the value if possible, and leave it out otherwise.
+          try {
+            named[param.name] = make(type);
+          } catch (_) {
+            // Left out; a required parameter then fails in newInstance.
+          }
+          continue;
+        }
+
+        var value = make(type);
         if (param.isNamed) {
           named[param.name] = value;
         } else {
@@ -161,6 +185,12 @@ class Container {
   }
 
   /// Shorthand for registering a factory that injects a singleton when it runs.
+  ///
+  /// The singleton belongs to the container that resolves it: [f] runs with
+  /// that container, and its result is registered there. A child container
+  /// (e.g. one per request) therefore gets its own instance, which lets [f]
+  /// depend on what that child provides, such as the current request.
+  /// Register a plain [registerSingleton] for one instance shared everywhere.
   ///
   /// In many cases, you might prefer this to [registerFactory].
   ///

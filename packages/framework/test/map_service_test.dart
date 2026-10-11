@@ -85,6 +85,14 @@ void main() {
       expect(texts(result), ['b', 'c', 'a', 'no rank']);
     });
 
+    test(r'sorts missing values last when descending too', () async {
+      await service.create({'text': 'no rank'});
+      var result = await service.index({
+        r'$sort': {'rank': -1},
+      });
+      expect(texts(result), ['a', 'b', 'c', 'no rank']);
+    });
+
     test(r'combines filter, $sort and $limit', () async {
       var result = await service.index({
         'query': {'done': 'false', r'$sort': 'text', r'$limit': '1'},
@@ -136,6 +144,67 @@ void main() {
     });
   });
 
+  group('returned records', () {
+    test('are copies of the stored records', () async {
+      (await service.read('0'))['text'] = 'changed';
+      (await service.index()).first['text'] = 'changed';
+      (await service.create({'text': 'd'}))['text'] = 'changed';
+      (await service.modify('1', {}))['text'] = 'changed';
+      (await service.update('2', {'text': 'c'}))['text'] = 'changed';
+      expect(texts(service.items), isNot(contains('changed')));
+    });
+  });
+
+  group('concurrent writes to one record', () {
+    test('all succeed with modify', () async {
+      await Future.wait([
+        service.modify('0', {'x': 1}),
+        service.modify('0', {'y': 2}),
+      ]);
+      var record = await service.read('0');
+      expect(record['x'], 1);
+      expect(record['y'], 2);
+    });
+
+    test('all succeed with update', () async {
+      await Future.wait([
+        service.update('0', {'text': 'x'}),
+        service.update('0', {'text': 'y'}),
+      ]);
+      expect(service.items, hasLength(3));
+      expect((await service.read('0'))['text'], 'y');
+    });
+  });
+
+  group('modify (PATCH) ids', () {
+    test('cannot change the id or created_at', () async {
+      var before = await service.read('0');
+      var result = await service.modify('0', {'id': '1', 'created_at': 'then'});
+      expect(result['id'], '0');
+      expect(result['created_at'], before['created_at']);
+      expect(service.items.where((i) => i['id'] == '1'), hasLength(1));
+    });
+  });
+
+  group('ids without auto ids', () {
+    test('match by their string form', () async {
+      var plain = MapService(autoIdAndDateFields: false);
+      await plain.create({'id': 1, 'text': 'a'});
+      expect((await plain.read('1'))['text'], 'a');
+      expect((await plain.modify('1', {'text': 'b'}))['text'], 'b');
+      expect((await plain.remove('1'))['text'], 'b');
+    });
+  });
+
+  group('update (PUT) without auto ids', () {
+    test('keeps the record findable', () async {
+      var plain = MapService(autoIdAndDateFields: false);
+      await plain.update('1', {'id': '1', 'text': 'a'});
+      await plain.update('1', {'text': 'b'});
+      expect((await plain.read('1'))['text'], 'b');
+    });
+  });
+
   group('modify (PATCH)', () {
     test('a missing id is a 404 and creates nothing', () async {
       await expectLater(
@@ -155,6 +224,12 @@ void main() {
   });
 
   group('update (PUT)', () {
+    test('keeps the record in its place', () async {
+      var a = service.items.firstWhere((i) => i['text'] == 'a');
+      await service.update(a['id'], {'text': 'A', 'done': true, 'rank': 3});
+      expect(texts(await service.index()), ['b', 'A', 'c']);
+    });
+
     test('a missing id creates the record at that id', () async {
       var result = await service.update('custom', {'text': 'z'});
       expect(result['id'], 'custom');
@@ -166,6 +241,13 @@ void main() {
       await service.update('3', {'text': 'taken'});
       var created = await service.create({'text': 'next'});
       expect(created['id'], isNot('3'));
+    });
+
+    test('adds no created_at the record did not have', () async {
+      service.items.add({'id': 'raw', 'text': 'r'});
+      var result = await service.update('raw', {'text': 's'});
+      expect(result.containsKey('created_at'), isFalse);
+      expect(result['updated_at'], isNotNull);
     });
 
     test('keeps the client id when autoIdAndDateFields is off', () async {

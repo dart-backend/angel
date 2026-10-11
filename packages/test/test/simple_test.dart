@@ -6,6 +6,7 @@ import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_test/angel3_test.dart';
 import 'package:angel3_validate/angel3_validate.dart';
 import 'package:angel3_websocket/server.dart';
+import 'package:http/http.dart' as http;
 import 'package:test/test.dart';
 
 void main() {
@@ -15,6 +16,10 @@ void main() {
   setUp(() async {
     app = Angel(reflector: MirrorsReflector())
       ..get('/hello', (req, res) => 'Hello')
+      ..get('/buffered', (req, res) {
+        res.useBuffer();
+        return 'Hello';
+      })
       ..get('/user_info', (req, res) => {'u': req.uri?.userInfo})
       ..get(
         '/error',
@@ -22,6 +27,10 @@ void main() {
             throw AngelHttpException.forbidden(message: 'Test')
               ..errors.addAll(['foo', 'bar']),
       )
+      ..get('/bare-error', (req, res) {
+        res.statusCode = 404;
+        return {'is_error': true};
+      })
       ..get('/body', (req, res) {
         res
           ..write('OK')
@@ -95,7 +104,22 @@ void main() {
           errors: ['foo', 'bar'],
         ),
       );
-    }, skip: 'This is a bug to be fixed, skip for now');
+    });
+
+    test('contentLength is the buffered body length', () async {
+      var res = await client.send(http.Request('GET', Uri.parse('/buffered')));
+      expect(res.contentLength, (await res.stream.toBytes()).length);
+    });
+
+    test('contentLength is null when the body is streamed', () async {
+      var res = await client.send(http.Request('GET', Uri.parse('/hello')));
+      expect(res.contentLength, isNull);
+    });
+
+    test('isAngelHttpException uses the HTTP status as a fallback', () async {
+      var res = await client.get(Uri.parse('/bare-error'));
+      expect(res, isAngelHttpException(statusCode: 404));
+    });
 
     test('userInfo from Uri', () async {
       var url = Uri(userInfo: 'foo:bar', path: '/user_info');

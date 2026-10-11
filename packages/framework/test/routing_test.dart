@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:angel3_container/mirrors.dart';
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_framework/http.dart';
+import 'package:angel3_mock_request/angel3_mock_request.dart';
 import 'package:http/http.dart' as http;
 import 'package:io/ansi.dart';
 import 'package:logging/logging.dart';
@@ -95,6 +96,10 @@ void main() {
         'Named routes';
     app.get('/named', (req, ResponseContext res) async {
       await res.redirectTo('Named routes', {'name': 'tests'});
+    });
+    app.get('/hello-route', (req, res) => 'hello').name = 'Hello route';
+    app.get('/named-no-params', (req, ResponseContext res) async {
+      await res.redirectTo('Hello route');
     });
     app.get('/log', (RequestContext req, res) async {
       print('Query: ${req.queryParameters}');
@@ -209,6 +214,11 @@ void main() {
     expect(json.decode(response.body), equals('Hello tests'));
   });
 
+  test('Redirect to a named route without params', () async {
+    var response = await client.get(Uri.parse('$url/named-no-params'));
+    expect(json.decode(response.body), equals('hello'));
+  });
+
   test('Match routes, even with query params', () async {
     var response = await client.get(
       Uri.parse('$url/log?foo=bar&bar=baz&baz.foo=bar&baz.bar=foo'),
@@ -233,5 +243,62 @@ void main() {
     response = await client.patch(Uri.parse('$url/method'));
     print(response.body);
     expect(response.body, '"MJ"');
+  });
+
+  test('chain stops at a handler that returns false', () async {
+    var app = Angel()
+      ..get(
+        '/',
+        chain([
+          (req, res) => true,
+          (req, res) => false,
+          (req, res) => res.write('should not run'),
+        ]),
+      )
+      ..fallback((req, res) => 'fallback');
+    var rq = MockHttpRequest('GET', Uri(path: '/'));
+    await rq.close();
+    await AngelHttp(app).handleRequest(rq);
+    var body = await rq.response.transform(utf8.decoder).join();
+    expect(body, isNot(contains('should not run')));
+  });
+
+  test('findService finds a service mounted after an earlier miss', () {
+    var app = Angel();
+    expect(app.findService('later'), isNull);
+    var service = MapService();
+    app.use('/later', service);
+    expect(app.findService('later'), isNotNull);
+  });
+
+  for (var production in [false, true]) {
+    test('group middleware runs (production: $production)', () async {
+      var app = Angel(
+        environment: AngelEnvironment(
+          production ? 'production' : 'development',
+        ),
+      );
+      app.group(
+        '/admin',
+        (router) => router.get('/secret', (req, res) => 'secret'),
+        middleware: [(req, res) => throw AngelHttpException.forbidden()],
+      );
+      app.optimizeForProduction();
+      var rq = MockHttpRequest('GET', Uri(path: '/admin/secret'));
+      await rq.close();
+      await AngelHttp(app).handleRequest(rq);
+      var body = await rq.response.transform(utf8.decoder).join();
+      expect(rq.response.statusCode, 403);
+      expect(body, isNot(contains('secret')));
+    });
+  }
+
+  test('a typed path parameter that is not a number is a 404', () async {
+    var app = Angel()..get('/n/int:id', (req, res) => req.params['id']);
+    var rq = MockHttpRequest('GET', Uri(path: '/n/abc'));
+    await rq.close();
+    await AngelHttp(app).handleRequest(rq);
+    await rq.response.drain<void>();
+    expect(rq.response.statusCode, 404);
   });
 }

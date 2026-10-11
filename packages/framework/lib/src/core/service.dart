@@ -215,24 +215,44 @@ class Service<Id, Data> extends Routable {
   /// The single type argument, [T], is used to determine how to parse the [id].
   ///
   /// For example, `parseId<bool>` attempts to parse the value as a [bool].
+  /// Nullable types (e.g. `int?`) are parsed like their non-nullable form.
+  ///
+  /// A `null` (or `'null'`) id becomes `'null'`, which only types that accept
+  /// a [String] can hold; for others, and for ids that cannot be parsed as
+  /// [T], a [FormatException] is thrown (a 400 response over REST).
   static T parseId<T>(Object? id) {
     if (id == null || id == 'null') {
-      return 'null' as T;
-      //throw ArgumentError("[Service] Null is not supported");
-    } else if (T == String) {
+      if ('null' is T) return 'null' as T;
+      throw FormatException('Invalid ID "null".');
+    } else if (_isType<T, String>()) {
       return id.toString() as T;
-    } else if (T == int) {
+    } else if (_isType<T, int>()) {
       return int.parse(id.toString()) as T;
-    } else if (T == bool) {
-      return (id == true || id.toString() == 'true') as T;
-    } else if (T == double) {
+    } else if (_isType<T, bool>()) {
+      if (id is bool) return id as T;
+      return switch (id.toString()) {
+        'true' => true,
+        'false' => false,
+        _ => throw FormatException('Invalid ID "$id".'),
+      } as T;
+    } else if (_isType<T, double>()) {
       return double.parse(id.toString()) as T;
-    } else if (T == num) {
+    } else if (_isType<T, num>()) {
       return num.parse(id.toString()) as T;
     } else {
       return id as T;
     }
   }
+
+  /// Whether [T] is [S] or `S?`.
+  static bool _isType<T, S>() => <S>[] is List<T> && <T>[] is List<S?>;
+
+  /// [parseId] with this service's own [Id] type.
+  ///
+  /// Routes use this rather than their own type argument: a [HookedService]
+  /// created by `app.use` usually has a `dynamic` Id, which would pass the
+  /// raw path segment (a [String]) to a service with, say, `int` ids.
+  Id _parseId(Object? id) => parseId<Id>(id);
 
   bool _acceptsId(Object? id) => id is Id;
 
@@ -307,7 +327,7 @@ class Service<Id, Data> extends Routable {
       '/:id',
       (req, res) {
         return read(
-          parseId<Id>(req.params['id']),
+          service._parseId(req.params['id']),
           mergeMap([
             {'query': req.queryParameters},
             restProvider,
@@ -331,7 +351,7 @@ class Service<Id, Data> extends Routable {
       (req, res) {
         return req.parseBody().then((_) async {
           return await modify(
-            parseId<Id>(req.params['id']),
+            service._parseId(req.params['id']),
             (await readData!(req, res))!,
             mergeMap([
               {'query': req.queryParameters},
@@ -356,7 +376,7 @@ class Service<Id, Data> extends Routable {
       (req, res) {
         return req.parseBody().then((_) async {
           return await update(
-            parseId<Id>(req.params['id']),
+            service._parseId(req.params['id']),
             (await readData!(req, res))!,
             mergeMap([
               {'query': req.queryParameters},
@@ -377,7 +397,7 @@ class Service<Id, Data> extends Routable {
       (req, res) {
         return req.parseBody().then((_) async {
           return await update(
-            parseId<Id>(req.params['id']),
+            service._parseId(req.params['id']),
             (await readData!(req, res))!,
             mergeMap([
               {'query': req.queryParameters},
@@ -425,7 +445,7 @@ class Service<Id, Data> extends Routable {
       '/:id',
       (req, res) {
         return remove(
-          parseId<Id>(req.params['id']),
+          service._parseId(req.params['id']),
           mergeMap([
             {'query': req.queryParameters},
             restProvider,

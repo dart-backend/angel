@@ -31,6 +31,44 @@ void main() {
     });
   });
 
+  test('subclasses of Angel can be constructed', () {
+    var app = _MyApp();
+    expect(app.container.make<_MyApp>(), same(app));
+    expect(app.container.make<Angel>(), same(app));
+  });
+
+  test('shutdown hooks run on close, before services close', () async {
+    var app = Angel(reflector: MirrorsReflector());
+    var events = <String>[];
+    app.use('/todos', _ClosingService(events));
+    app.shutdownHooks.add((app) => events.add('hook'));
+    var http = AngelHttp(app);
+    await http.startServer();
+    await http.close();
+    expect(events, ['hook', 'service closed']);
+  });
+
+  test('uri is https for a secure server', () async {
+    var ctx = SecurityContext()
+      ..useCertificateChain('dev.pem')
+      ..usePrivateKey('dev.key', password: 'dartdart');
+    var http = AngelHttp.fromSecurityContext(Angel(), ctx);
+    await http.startServer('127.0.0.1', 0);
+    addTearDown(http.close);
+    expect(http.uri.scheme, 'https');
+  });
+
+  test('services still close when a shutdown hook fails', () async {
+    var app = Angel(reflector: MirrorsReflector());
+    var events = <String>[];
+    app.use('/todos', _ClosingService(events));
+    app.shutdownHooks.add((app) => throw StateError('hook failed'));
+    var http = AngelHttp(app);
+    await http.startServer();
+    await expectLater(http.close(), throwsStateError);
+    expect(events, ['service closed']);
+  });
+
   test('custom server generator', () {
     var app = Angel(reflector: MirrorsReflector());
     var http = AngelHttp.custom(app, HttpServer.bind);
@@ -258,6 +296,9 @@ void main() {
       await rq.response.toList();
       expect(rq.response.statusCode, 403);
       expect(rq.response.headers.contentType?.mimeType, 'text/html');
+      // A charset name dart:io knows; 'utf8' is not one.
+      var charset = rq.response.headers.contentType?.charset;
+      expect(Encoding.getByName(charset), utf8);
     });
   });
 }
@@ -270,6 +311,18 @@ class CustomCloseService extends Service {
     value = 3;
     super.close();
   }
+}
+
+class _MyApp extends Angel {
+  _MyApp() : super(reflector: MirrorsReflector());
+}
+
+class _ClosingService extends Service {
+  final List<String> events;
+  _ClosingService(this.events);
+
+  @override
+  Future<void> close() async => events.add('service closed');
 }
 
 @Expose('/foo')

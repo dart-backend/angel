@@ -3,17 +3,14 @@ import 'dart:convert';
 import 'dart:io' hide BytesBuilder;
 import 'dart:typed_data';
 
-import 'package:charcode/ascii.dart';
-
+import 'body_sink.dart';
 import 'connection_info.dart';
+import 'headers.dart';
 import 'lockable_headers.dart';
 
 class MockHttpResponse extends Stream<List<int>> implements HttpResponse {
-  BytesBuilder _buf = BytesBuilder();
-  bool _bufferOutput = true;
-  final Completer _done = Completer();
+  late final MockBodySink _body;
   final LockableMockHttpHeaders _headers = LockableMockHttpHeaders();
-  final StreamController<List<int>> _stream = StreamController<List<int>>();
 
   @override
   final List<Cookie> cookies = [];
@@ -28,25 +25,34 @@ class MockHttpResponse extends Stream<List<int>> implements HttpResponse {
     bool copyBuffer = true,
     required this.statusCode,
     required this.reasonPhrase,
-    required this.contentLength,
+    int contentLength = -1,
     this.deadline,
-    required this.encoding,
+    required this._encoding,
     required this.persistentConnection,
     bool? bufferOutput,
   }) {
-    _buf = BytesBuilder(copy: copyBuffer != false);
-    _bufferOutput = bufferOutput != false;
-    statusCode = 200;
+    _body = MockBodySink(
+      'MockHttpResponse',
+      _headers,
+      () => encoding,
+      copy: copyBuffer,
+      bufferOutput: bufferOutput != false,
+    );
+    _headers.contentLength = contentLength;
   }
 
   @override
-  bool get bufferOutput => _bufferOutput;
+  bool get bufferOutput => _body.bufferOutput;
 
   @override
-  set bufferOutput(bool value) {}
+  set bufferOutput(bool value) => _body.bufferOutput = value;
+
+  // Backed by headers.contentLength, as in dart:io.
+  @override
+  int get contentLength => _headers.contentLength;
 
   @override
-  int contentLength;
+  set contentLength(int value) => _headers.contentLength = value;
 
   @override
   Duration? deadline;
@@ -60,53 +66,38 @@ class MockHttpResponse extends Stream<List<int>> implements HttpResponse {
   @override
   int statusCode;
 
+  Encoding _encoding;
+
+  /// The encoding kept from the first write, as in dart:io; before that, the
+  /// charset in the `content-type` header, or else the encoding given to the
+  /// constructor or set here.
   @override
-  Encoding encoding;
+  Encoding get encoding =>
+      _body.writeEncoding ?? charsetEncoding(headers) ?? _encoding;
+
+  @override
+  set encoding(Encoding value) => _encoding = value;
 
   @override
   HttpHeaders get headers => _headers;
 
   @override
-  Future get done => _done.future;
+  Future get done => _body.done;
 
   @override
-  void add(List<int> data) {
-    if (_done.isCompleted) {
-      throw StateError('Cannot add to closed MockHttpResponse.');
-    } else {
-      _headers.lock();
-      if (_bufferOutput == true) {
-        _buf.add(data);
-      } else {
-        _stream.add(data);
-      }
-    }
-  }
+  void add(List<int> data) => _body.add(data);
 
   @override
-  void addError(error, [StackTrace? stackTrace]) {
-    if (_done.isCompleted) {
-      throw StateError('Cannot add to closed MockHttpResponse.');
-    } else {
-      _stream.addError(error, stackTrace);
-    }
-  }
+  void addError(error, [StackTrace? stackTrace]) =>
+      _body.addError(error, stackTrace);
 
+  /// Completes with the first error from [stream], which then stops adding.
   @override
-  Future addStream(Stream<List<int>> stream) {
-    var c = Completer();
-    stream.listen(add, onError: addError, onDone: c.complete);
-    return c.future;
-  }
+  Future addStream(Stream<List<int>> stream) => _body.addStream(stream);
 
+  /// Can be called more than once; later calls return [done].
   @override
-  Future close() async {
-    _headers.lock();
-    await flush();
-    scheduleMicrotask(_stream.close);
-    _done.complete();
-    //return await _done.future;
-  }
+  Future close() => _body.close();
 
   @override
   Future<Socket> detachSocket({bool writeHeaders = true}) {
@@ -114,9 +105,7 @@ class MockHttpResponse extends Stream<List<int>> implements HttpResponse {
   }
 
   @override
-  Future flush() async {
-    _stream.add(_buf.takeBytes());
-  }
+  Future flush() => _body.flush();
 
   @override
   Future redirect(
@@ -126,26 +115,19 @@ class MockHttpResponse extends Stream<List<int>> implements HttpResponse {
     statusCode = status;
   }
 
+  /// Writes [obj] with [encoding], as it was at the first write.
   @override
-  void write(Object? obj) {
-    obj?.toString().codeUnits.forEach(writeCharCode);
-  }
+  void write(Object? obj) => _body.write(obj);
 
   @override
-  void writeAll(Iterable objects, [String separator = '']) {
-    write(objects.join(separator));
-  }
+  void writeAll(Iterable objects, [String separator = '']) =>
+      _body.writeAll(objects, separator);
 
   @override
-  void writeCharCode(int charCode) {
-    add([charCode]);
-  }
+  void writeCharCode(int charCode) => _body.writeCharCode(charCode);
 
   @override
-  void writeln([Object? obj = '']) {
-    write(obj ?? '');
-    add([$cr, $lf]);
-  }
+  void writeln([Object? obj = '']) => _body.writeln(obj);
 
   @override
   StreamSubscription<List<int>> listen(
@@ -153,7 +135,7 @@ class MockHttpResponse extends Stream<List<int>> implements HttpResponse {
     Function? onError,
     void Function()? onDone,
     bool? cancelOnError,
-  }) => _stream.stream.listen(
+  }) => _body.stream.listen(
     onData,
     onError: onError,
     onDone: onDone,

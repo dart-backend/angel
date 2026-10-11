@@ -250,6 +250,10 @@ class HttpResponseContext extends ResponseContext<HttpResponse> {
               _finalizerError != null) {
             await _commitOrThrow();
           }
+          // Outside the try below: an invalid header must fail the response
+          // (leaving it open for the error handler), not be swallowed with
+          // the raw response never closed, which leaves the client waiting.
+          if (!_streamInitialized) validateHeaders();
           try {
             _openStream();
             _flushQueued();

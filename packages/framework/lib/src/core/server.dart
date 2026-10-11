@@ -50,7 +50,7 @@ Future<bool> _defaultErrorHandler(
     await res.json(e.toJson());
     return Future.value(false);
   } else {
-    res.contentType = MediaType('text', 'html', {'charset': 'utf8'});
+    res.contentType = MediaType('text', 'html', {'charset': 'utf-8'});
     res.statusCode = e.statusCode;
     // Messages may echo user input (e.g. a FormatException), so escape them.
     var message = htmlEscape.convert(e.message);
@@ -272,7 +272,8 @@ class Angel extends Routable {
   /// Loads some base dependencies into the service container.
   void bootstrapContainer() {
     if (runtimeType != Angel) {
-      container.registerSingleton(this);
+      // Without `as`, this would register under Angel (the static type).
+      container.registerSingleton(this, as: runtimeType);
     }
 
     container.registerSingleton<Angel>(this);

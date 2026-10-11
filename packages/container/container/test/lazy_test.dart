@@ -9,6 +9,17 @@ void main() {
     var first = container.make<Dummy>();
     expect(container.make<Dummy>(), first);
   });
+
+  test('gives each child container its own instance, made with it', () {
+    var root = Container(const EmptyReflector())
+      ..registerLazySingleton<Dummy>((c) => Dummy('${c.isRoot}'));
+
+    var child = root.createChild();
+    var first = child.make<Dummy>();
+    expect(first.s, 'false');
+    expect(child.make<Dummy>(), same(first));
+    expect(root.createChild().make<Dummy>(), isNot(same(first)));
+  });
 }
 
 class Dummy {

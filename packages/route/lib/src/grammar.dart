@@ -1,20 +1,42 @@
 part of 'router.dart';
 
+/// Thrown while parsing a path whose parameter cannot be read (invalid
+/// percent-encoding, or not a number for a typed parameter). The route then
+/// does not match, rather than failing the whole resolution.
+class _NoMatch implements Exception {
+  const _NoMatch();
+}
+
+String _decode(String s) {
+  try {
+    return Uri.decodeComponent(s);
+  } on ArgumentError {
+    throw const _NoMatch();
+  } on FormatException {
+    // e.g. `%FF`, which is not UTF-8
+    throw const _NoMatch();
+  }
+}
+
 class RouteGrammar {
   static const String notSlashRgx = r'([^/]+)';
   //static final RegExp rgx = RegExp(r'\((.+)\)');
   static final Parser<String> notSlash = match<String>(RegExp(notSlashRgx))
       .value((r) => r.span?.text ?? '');
 
+  /// An inline RegExp in parentheses, which may itself contain groups
+  /// (nested up to two levels), followed by optional literal text.
   static final Parser<Match> regExp = match<Match>(
-    RegExp(r'\(([^\n)]+)\)([^/]+)?'),
+    RegExp(r'\(((?:[^()\n]|\((?:[^()\n]|\([^()\n]*\))*\))+)\)([^/]+)?'),
   ).value((r) => r.scanner.lastMatch!);
 
+  /// A parameter name, with optional literal text before and after it. The
+  /// text after it stops before a `?` (optional) or `(` (RegExp).
   static final Parser<Match> parameterName = match<Match>(
     RegExp(
       '$notSlashRgx?'
       r':([A-Za-z0-9_]+)'
-      r'([^(/\n])?',
+      r'([^(/\n?]+)?',
     ),
   ).value((r) => r.scanner.lastMatch!);
 
@@ -32,22 +54,19 @@ class RouteGrammar {
           rgxMatch = r2 as Match?;
         }
 
-        var pre = match[1] ?? '';
-        var post = match[3] ?? '';
-        RegExp? rgx;
+        // Text around the parameter is literal. The value is always group 1.
+        var pre = RegExp.escape(match[1] ?? '');
+        var post = RegExp.escape(match[3] ?? '');
+        String? inner;
 
         if (rgxMatch != null) {
-          rgx = RegExp('(${rgxMatch[1]})');
-          post = (rgxMatch[2] ?? '') + post;
+          inner = rgxMatch[1];
+          post = RegExp.escape(rgxMatch[2] ?? '') + post;
         }
 
-        if (pre.isNotEmpty || post.isNotEmpty) {
-          if (rgx != null) {
-            var pattern = pre + rgx.pattern + post;
-            rgx = RegExp(pattern);
-          } else {
-            rgx = RegExp('$pre$notSlashRgx$post');
-          }
+        RegExp? rgx;
+        if (inner != null || pre.isNotEmpty || post.isNotEmpty) {
+          rgx = RegExp('$pre(${inner ?? '[^/]+'})$post');
         }
 
         // TODO: relook at this later
@@ -124,6 +143,9 @@ class RouteDefinition {
       var isLast = i == segments.length - 1;
       if (out == null) {
         out = s.compile(isLast);
+      } else if (s is OptionalSegment) {
+        // Its leading slash is optional too.
+        out = s.compileNext(out, isLast);
       } else {
         out = s.compileNext(
           out.then(match('/')).index(0).cast<RouteResult>(),
@@ -240,24 +262,22 @@ class OptionalSegment extends ParameterSegment {
 
   @override
   Parser<RouteResult> compile(bool isLast) {
-    return super.compile(isLast).opt();
+    return super.compile(isLast).opt().map((r) => r.value ?? RouteResult({}));
   }
 
+  /// Unlike other segments, [p] does not include the slash before this one,
+  /// since that is optional too.
   @override
   Parser<RouteResult> compileNext(Parser<RouteResult> p, bool isLast) {
-    return p.then(_compile().opt()).map((r) {
-      // Return an empty RouteResult if null
-      if (r.value == null) {
-        return RouteResult({});
-      }
-
-      var v = r.value!;
-
-      if (v[1] == null) {
-        return v[0] as RouteResult;
-      }
-      return (v[0] as RouteResult)
-        ..addAll({name: Uri.decodeComponent(v as String)});
+    // An absent value is `false` rather than null, which `chain` would
+    // replace with the string 'NULL', indistinguishable from a real value.
+    var present = match('/').then(_compile()).index(1);
+    var absent = match<bool>('').map((_) => false);
+    return p.then(any<dynamic>([present, absent])).map((r) {
+      var result = r.value![0] as RouteResult;
+      var value = r.value![1];
+      if (value is String) result.addAll({name: _decode(value)});
+      return result;
     });
   }
 }
@@ -278,16 +298,7 @@ class ParameterSegment extends RouteSegment {
 
   Parser<String> _compile() {
     if (regExp != null) {
-      return match<String>(regExp!).value((r) {
-        var result = r.scanner.lastMatch;
-        if (result != null) {
-          // TODO: Invalid method
-          //return r.scanner.lastMatch![1];
-          return result.toString();
-        } else {
-          return '';
-        }
-      });
+      return match<String>(regExp!).value((r) => r.scanner.lastMatch?[1] ?? '');
     } else {
       return RouteGrammar.notSlash;
     }
@@ -295,16 +306,14 @@ class ParameterSegment extends RouteSegment {
 
   @override
   Parser<RouteResult> compile(bool isLast) {
-    return _compile().map(
-      (r) => RouteResult({name: Uri.decodeComponent(r.value!)}),
-    );
+    return _compile().map((r) => RouteResult({name: _decode(r.value!)}));
   }
 
   @override
   Parser<RouteResult> compileNext(Parser<RouteResult> p, bool isLast) {
     return p.then(_compile()).map((r) {
       return (r.value![0] as RouteResult)
-        ..addAll({name: Uri.decodeComponent(r.value![1] as String)});
+        ..addAll({name: _decode(r.value![1] as String)});
     });
   }
 }
@@ -316,31 +325,26 @@ class ParsedParameterSegment extends RouteSegment {
   ParsedParameterSegment(this.type, this.parameter);
 
   num getValue(String s) {
-    switch (type) {
-      case 'int':
-        return int.parse(s);
-      case 'double':
-        return double.parse(s);
-      default:
-        return num.parse(s);
-    }
+    var value = switch (type) {
+      'int' => int.tryParse(s),
+      'double' => double.tryParse(s),
+      _ => num.tryParse(s),
+    };
+    return value ?? (throw const _NoMatch());
   }
 
   @override
   Parser<RouteResult> compile(bool isLast) {
     return parameter._compile().map(
-      (r) => RouteResult({
-        parameter.name: getValue(Uri.decodeComponent(r.span!.text)),
-      }),
+      (r) => RouteResult({parameter.name: getValue(_decode(r.value!))}),
     );
   }
 
   @override
   Parser<RouteResult> compileNext(Parser<RouteResult> p, bool isLast) {
     return p.then(parameter._compile()).map((r) {
-      return (r.value![0] as RouteResult)..addAll({
-        parameter.name: getValue(Uri.decodeComponent(r.value![1] as String)),
-      });
+      return (r.value![0] as RouteResult)
+        ..addAll({parameter.name: getValue(_decode(r.value![1] as String))});
     });
   }
 }
