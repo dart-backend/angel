@@ -11,6 +11,10 @@ class LockableMockHttpHeaders extends MockHttpHeaders {
     _locked = true;
   }
 
+  void unlock() {
+    _locked = false;
+  }
+
   @override
   void add(String name, Object value, {bool preserveHeaderCase = false}) {
     if (_locked) {

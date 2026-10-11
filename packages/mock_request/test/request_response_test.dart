@@ -32,6 +32,15 @@ void main() {
         ..write('é');
       await rq.close();
       expect(rq.contentLength, 7);
+      expect(rq.headers.contentLength, 7);
+    });
+
+    test('close keeps a content-length that was set', () async {
+      var rq = MockHttpRequest('POST', Uri(path: '/'))
+        ..headers.contentLength = 2
+        ..write('hello');
+      await rq.close();
+      expect(rq.contentLength, 2);
     });
 
     test('write uses the content-type charset', () async {
@@ -84,6 +93,16 @@ void main() {
       );
       rq.add([1]); // No longer bound.
     });
+
+    test('a stream that cannot be listened to does not bind', () async {
+      var rq = request();
+      var source = StreamController<List<int>>();
+      source.stream.listen((_) {});
+      expect(() => rq.addStream(source.stream), throwsStateError);
+      rq.add([1]);
+      await rq.close();
+      expect(await bytesOf(rq), [1]);
+    });
   });
 
   group('MockHttpResponse', () {
@@ -118,6 +137,23 @@ void main() {
       expect(rs.contentLength, 5);
       rs.contentLength = 7;
       expect(rs.headers.contentLength, 7);
+    });
+
+    test('write uses the content-type charset over its encoding', () async {
+      var rs = response();
+      rs.headers.contentType = ContentType('text', 'plain', charset: 'latin1');
+      rs.write('é');
+      await rs.close();
+      expect(rs.encoding, latin1);
+      expect(await bytesOf(rs), [0xE9]);
+    });
+
+    test('write uses its encoding without a content-type charset', () async {
+      var rs = response(encoding: latin1);
+      rs.headers.set('content-type', 'text/plain');
+      expect(rs.encoding, latin1);
+      rs.headers.set('content-type', 'text/plain; charset=x-unknown');
+      expect(rs.encoding, latin1);
     });
 
     test('write throws for a character its encoding cannot represent', () {

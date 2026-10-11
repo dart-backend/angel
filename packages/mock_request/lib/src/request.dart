@@ -12,7 +12,7 @@ import 'session.dart';
 
 class MockHttpRequest
     implements HttpRequest, StreamSink<List<int>>, StringSink {
-  int _contentLength = 0;
+  int _bytesWritten = 0;
   late BytesBuilder _buf;
   final Completer _done = Completer();
   bool _isBound = false;
@@ -66,8 +66,10 @@ class MockHttpRequest
     this.protocolVersion = protocolVersion ?? '1.1';
   }
 
+  /// The `content-length` header, as in dart:io. [close] sets it to the
+  /// number of bytes written, unless it was set already.
   @override
-  int get contentLength => _contentLength;
+  int get contentLength => _headers.contentLength;
 
   @override
   HttpHeaders get headers => _headers;
@@ -113,7 +115,7 @@ class MockHttpRequest
 
   void _add(List<int> data) {
     _headers.lock();
-    _contentLength += data.length;
+    _bytesWritten += data.length;
     _buf.add(data);
   }
 
@@ -127,7 +129,6 @@ class MockHttpRequest
   @override
   Future addStream(Stream<List<int>> stream) {
     _checkWritable();
-    _isBound = true;
     var c = Completer();
     stream.listen(
       _add,
@@ -141,6 +142,8 @@ class MockHttpRequest
       },
       cancelOnError: true,
     );
+    // Only once listen has not thrown, so a bad stream cannot leave it bound.
+    _isBound = true;
     return c.future;
   }
 
@@ -149,6 +152,12 @@ class MockHttpRequest
   Future close() {
     if (_isBound) throw StateError('MockHttpRequest is bound to a stream.');
     if (!_done.isCompleted) {
+      // As a client sends it; the headers lock once the body is written.
+      if (_headers.value(HttpHeaders.contentLengthHeader) == null) {
+        _headers
+          ..unlock()
+          ..contentLength = _bytesWritten;
+      }
       _headers.lock();
       _stream.add(_buf.takeBytes());
       scheduleMicrotask(_stream.close);

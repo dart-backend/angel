@@ -2,6 +2,7 @@
 
 ## 9.2.0
 
+* fix: `ResponseCache` now sends `Content-Length` with a cached response, which it previously streamed without a length
 * fix: `CacheService.read` now stores a cache miss with `cache.update`, under the requested id.
 * fix: `ResponseCache` now stores only responses that are safe to share: status 200, no cookies, and not marked `Cache-Control: no-store` or `private`. Requests with an `Authorization` header bypass the cache. Responses that are not cached no longer get `Cache-Control: public` headers
 * fix: `ResponseCache` memory is now bounded by `maxEntries` (default 1024), evicting expired then least recently used entries; previously every distinct URL (including query strings) added an entry and a lock that were never removed

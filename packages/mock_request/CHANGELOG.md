@@ -2,15 +2,18 @@
 
 ## 9.2.0
 
-* fix: `MockHttpRequest.write`, `writeAll`, `writeln` and `writeCharCode` now write in the charset of the request's `content-type` header (UTF-8 if it has none), and `MockHttpResponse`'s use its `encoding`, instead of writing each UTF-16 code unit as one byte (which corrupted any character outside Latin-1)
+* fix: `MockHttpRequest.write`, `writeAll`, `writeln` and `writeCharCode` now write in the charset of the request's `content-type` header (UTF-8 if it has none), and `MockHttpResponse`'s use the charset of its `content-type` header (its `encoding` if it has none), instead of writing each UTF-16 code unit as one byte (which corrupted any character outside Latin-1)
 * fix: **Breaking** `MockHttpRequest.write`, `MockHttpResponse.write` and the methods that use them now throw `ArgumentError` for a character their encoding cannot represent (such as `'☺'` with `latin1`), as `dart:io` does, instead of silently truncating it
-* fix: `MockHttpHeaders.contentType = ...` now keeps the charset and other parameters, as in `dart:io`, instead of storing only the MIME type
+* fix: `MockHttpHeaders.contentType` now behaves as in `dart:io`: it is `null` when the header is absent instead of `text/html; charset=utf-8`, setting `null` removes the header instead of setting `text/html`, and setting a value keeps its charset and other parameters instead of storing only the MIME type
+* fix: `MockHttpHeaders.contentLength` is now backed by the `content-length` header, as in `dart:io`: it is `-1` when absent (previously `0`), setting it to `-1` removes the header, and setting it after the headers are locked throws `StateError`
+* fix: `MockHttpHeaders` now treats `content-length` as `dart:io` does: it holds one value, a later `add` or `set` replaces it, and a value that is not all digits throws `HttpException`
+* fix: `MockHttpRequest.contentLength` is now its `content-length` header, as in `dart:io`; `close` sets that header to the number of bytes written unless it was already set. Previously it was a separate byte count that could disagree with the header
 * fix: `MockHttpResponse.contentLength` is now backed by `headers.contentLength`, as in `dart:io`, instead of being a separate field that ignored `headers.contentLength = ...`; `MockHttpRequest`'s default response now starts at `-1` (no length set) instead of `0`
 * fix: `MockHttpRequest.close` and `MockHttpResponse.close` can be called more than once and return `done`, as in `dart:io`, instead of throwing `Bad state: Future already completed`
 * fix: while `addStream` is running on a `MockHttpRequest` or `MockHttpResponse`, `add`, `addError`, `write`, `flush`, `close` and `addStream` now throw `StateError`, as in `dart:io`, instead of letting `close` cut the stream short; `addStream` now completes with the source stream's first error and stops, instead of completing normally
 * fix: `MockHttpRequest.contentLength` now counts each byte once, instead of twice
 * fix: `MockHttpResponse` now keeps the `statusCode` passed to its constructor, instead of always using 200
-* fix: `MockHttpHeaders.date`, `expires` and `ifModifiedSince` now return `null` when the header is absent, as in `dart:io`, instead of the current time (which made every mock request look like a conditional request)
+* fix: `MockHttpHeaders.date`, `expires` and `ifModifiedSince` now return `null` when the header is absent, as in `dart:io`, instead of the current time (which made every mock request look like a conditional request); setting them to `null` now removes the header instead of setting the current time
 
 ## 9.1.0
 

@@ -145,6 +145,8 @@ class ResponseCache {
     res
       ..statusCode = response.statusCode
       ..headers.addAll(response.headers)
+      // Streamed, so the length is not set unless given here.
+      ..contentLength = response.body.length
       ..add(response.body);
     await res.close();
   }

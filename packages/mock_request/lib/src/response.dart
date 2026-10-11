@@ -31,7 +31,7 @@ class MockHttpResponse extends Stream<List<int>> implements HttpResponse {
     required this.reasonPhrase,
     required int contentLength,
     this.deadline,
-    required this.encoding,
+    required this._encoding,
     required this.persistentConnection,
     bool? bufferOutput,
   }) {
@@ -65,8 +65,18 @@ class MockHttpResponse extends Stream<List<int>> implements HttpResponse {
   @override
   int statusCode;
 
+  Encoding _encoding;
+
+  /// The charset in the `content-type` header, as in dart:io, or else the
+  /// encoding given to the constructor or set here.
   @override
-  Encoding encoding;
+  Encoding get encoding {
+    var charset = headers.contentType?.charset;
+    return (charset == null ? null : Encoding.getByName(charset)) ?? _encoding;
+  }
+
+  @override
+  set encoding(Encoding value) => _encoding = value;
 
   @override
   HttpHeaders get headers => _headers;
@@ -108,7 +118,6 @@ class MockHttpResponse extends Stream<List<int>> implements HttpResponse {
   @override
   Future addStream(Stream<List<int>> stream) {
     _checkWritable();
-    _isBound = true;
     var c = Completer();
     stream.listen(
       _add,
@@ -122,6 +131,8 @@ class MockHttpResponse extends Stream<List<int>> implements HttpResponse {
       },
       cancelOnError: true,
     );
+    // Only once listen has not thrown, so a bad stream cannot leave it bound.
+    _isBound = true;
     return c.future;
   }
 
