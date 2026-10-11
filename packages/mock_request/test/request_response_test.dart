@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:angel3_mock_request/angel3_mock_request.dart';
 import 'package:test/test.dart';
@@ -277,6 +278,26 @@ void main() {
       rs.add([1]);
       await rs.close();
       expect(await bytesOf(rs), [1]);
+    });
+
+    test('an empty add does not lock the headers', () {
+      var rs = response()..add(<int>[]);
+      rs.headers.contentType = ContentType.json;
+      expect(rs.headers.contentType?.mimeType, 'application/json');
+    });
+
+    test('without buffering, added bytes are copied', () async {
+      var rs = response()..bufferOutput = false;
+      var chunks = <List<int>>[];
+      rs.listen(chunks.add);
+      var bytes = Uint8List.fromList([1, 2, 3]);
+      rs.add(bytes);
+      bytes[0] = 9;
+      await Future<void>.delayed(Duration.zero);
+      expect(chunks, [
+        [1, 2, 3],
+      ]);
+      await rs.close();
     });
 
     test('bufferOutput can be turned off before writing', () async {

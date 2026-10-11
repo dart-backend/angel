@@ -85,7 +85,8 @@ class MockHttpHeaders implements HttpHeaders {
     if (name.toLowerCase() == HttpHeaders.contentLengthHeader) {
       return _setContentLength(value);
     }
-    var lower = preserveHeaderCase ? name : name.toLowerCase();
+    // Stored lowercase, as in dart:io, so lookups find it.
+    var lower = name.toLowerCase();
 
     if (_data.containsKey(lower)) {
       if (value is Iterable) {
@@ -145,7 +146,8 @@ class MockHttpHeaders implements HttpHeaders {
     if (name.toLowerCase() == HttpHeaders.contentLengthHeader) {
       return _setContentLength(value, replace: true);
     }
-    var lower = preserveHeaderCase ? name : name.toLowerCase();
+    // Stored lowercase, as in dart:io, so lookups find it.
+    var lower = name.toLowerCase();
     _data.remove(lower);
 
     if (value is Iterable) {
@@ -164,7 +166,7 @@ class MockHttpHeaders implements HttpHeaders {
     if (lengths.isNotEmpty) {
       _data[HttpHeaders.contentLengthHeader] = ['${lengths.last}'];
       var encodings = _data[HttpHeaders.transferEncodingHeader];
-      encodings?.remove('chunked');
+      encodings?.removeWhere((e) => e == 'chunked');
       if (encodings?.isEmpty ?? false) {
         _data.remove(HttpHeaders.transferEncodingHeader);
       }

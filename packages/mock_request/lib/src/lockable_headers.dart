@@ -6,8 +6,14 @@ import 'headers.dart';
 class LockableMockHttpHeaders extends MockHttpHeaders {
   bool _locked = false;
 
-  StateError _stateError() =>
-      StateError('Cannot modify headers after they have been write-locked.');
+  // Every change to the headers goes through this, as in dart:io.
+  void _checkLocked() {
+    if (_locked) {
+      throw StateError(
+        'Cannot modify headers after they have been write-locked.',
+      );
+    }
+  }
 
   void lock() {
     _locked = true;
@@ -19,74 +25,55 @@ class LockableMockHttpHeaders extends MockHttpHeaders {
 
   @override
   void add(String name, Object value, {bool preserveHeaderCase = false}) {
-    if (_locked) {
-      throw _stateError();
-    } else {
-      super.add(name, value, preserveHeaderCase: preserveHeaderCase);
-    }
+    _checkLocked();
+    super.add(name, value, preserveHeaderCase: preserveHeaderCase);
   }
 
   @override
   void clear() {
-    if (_locked) {
-      throw _stateError();
-    } else {
-      super.clear();
-    }
+    _checkLocked();
+    super.clear();
   }
 
   @override
   void noFolding(String name) {
-    if (_locked) {
-      throw _stateError();
-    } else {
-      super.noFolding(name);
-    }
+    _checkLocked();
+    super.noFolding(name);
   }
 
   @override
   void remove(String name, Object value) {
-    if (_locked) {
-      throw _stateError();
-    } else {
-      super.remove(name, value);
-    }
+    _checkLocked();
+    super.remove(name, value);
   }
 
   @override
   void removeAll(String name) {
-    if (_locked) {
-      throw _stateError();
-    } else {
-      super.removeAll(name);
-    }
+    _checkLocked();
+    super.removeAll(name);
   }
 
   @override
   void set(String name, Object value, {bool preserveHeaderCase = false}) {
-    if (_locked) {
-      throw _stateError();
-    } else {
-      super.set(name, value, preserveHeaderCase: preserveHeaderCase);
-    }
+    _checkLocked();
+    super.set(name, value, preserveHeaderCase: preserveHeaderCase);
   }
 
-  // Like the header writes above, as in dart:io.
   @override
   set persistentConnection(bool value) {
-    if (_locked) throw _stateError();
+    _checkLocked();
     super.persistentConnection = value;
   }
 
   @override
   set host(String? host) {
-    if (_locked) throw _stateError();
+    _checkLocked();
     super.host = host;
   }
 
   @override
   set port(int? port) {
-    if (_locked) throw _stateError();
+    _checkLocked();
     super.port = port;
   }
 }

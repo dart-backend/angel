@@ -12,6 +12,7 @@ class MockBodySink {
   final LockableMockHttpHeaders _headers;
   final Encoding Function() _encoding;
   final BytesBuilder _buf;
+  final bool _copy;
   final Completer _done = Completer();
   final StreamController<Uint8List> _controller = StreamController();
   Encoding? _writeEncoding;
@@ -41,6 +42,7 @@ class MockBodySink {
     this._bufferOutput = true,
   }) : _name = name,
        _encoding = encoding,
+       _copy = copy,
        _buf = BytesBuilder(copy: copy);
 
   int get bytesWritten => _bytesWritten;
@@ -67,12 +69,18 @@ class MockBodySink {
   }
 
   void _add(List<int> data) {
+    // An empty add writes nothing, so the headers stay unlocked.
+    if (data.isEmpty) return;
     _headers.lock();
     _bytesWritten += data.length;
     if (_bufferOutput) {
       _buf.add(data);
     } else {
-      _controller.add(data is Uint8List ? data : Uint8List.fromList(data));
+      // Copied like the buffer would, so later changes by the caller do not
+      // reach listeners.
+      _controller.add(
+        _copy || data is! Uint8List ? Uint8List.fromList(data) : data,
+      );
     }
   }
 

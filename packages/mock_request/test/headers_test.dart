@@ -190,4 +190,28 @@ void main() {
     expect(() => headers.host = 'example.com', throwsStateError);
     expect(() => headers.port = 8080, throwsStateError);
   });
+
+  test('preserveHeaderCase still stores the name lowercase, as in dart:io', () {
+    var headers = MockHttpRequest('GET', Uri.parse('/')).headers
+      ..set('x-a', '1')
+      ..set('X-A', '2', preserveHeaderCase: true)
+      ..set(
+        'Content-Type',
+        'text/plain; charset=latin1',
+        preserveHeaderCase: true,
+      );
+    expect(headers['x-a'], ['2']);
+    expect(headers.contentType?.charset, 'latin1');
+    var names = <String>[];
+    headers.forEach((name, _) => names.add(name));
+    expect(names, ['x-a', 'content-type']);
+  });
+
+  test('a content-length removes every chunked value', () {
+    var headers = MockHttpRequest('GET', Uri.parse('/')).headers
+      ..add('transfer-encoding', ['chunked', 'chunked'])
+      ..contentLength = 5;
+    expect(headers.chunkedTransferEncoding, isFalse);
+    expect(headers.contentLength, 5);
+  });
 }
