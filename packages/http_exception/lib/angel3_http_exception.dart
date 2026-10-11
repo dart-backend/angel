@@ -23,8 +23,10 @@ class AngelHttpException implements Exception {
   /// An HTTP status code this exception will throw.
   int statusCode;
 
+  static const _defaultMessage = '500 Internal Server Error';
+
   AngelHttpException({
-    this.message = '500 Internal Server Error',
+    this.message = _defaultMessage,
     this.stackTrace,
     this.statusCode = 500,
     this.error,
@@ -50,24 +52,35 @@ class AngelHttpException implements Exception {
     return '$statusCode: $message';
   }
 
-  factory AngelHttpException.fromMap(Map data) {
+  /// Uses [fallbackStatusCode] when [data] has no valid status code, e.g.
+  /// the status of the HTTP response it came from.
+  factory AngelHttpException.fromMap(Map data, {int fallbackStatusCode = 500}) {
     return AngelHttpException(
-      statusCode: _parseStatusCode(data['status_code'] ?? data['statusCode']),
-      message: data['message']?.toString() ?? '500 Internal Server Error',
+      statusCode:
+          _parseStatusCode(data['status_code']) ??
+          _parseStatusCode(data['statusCode']) ??
+          fallbackStatusCode,
+      message: data['message']?.toString() ?? _defaultMessage,
       errors: data['errors'] is Iterable
           ? ((data['errors'] as Iterable).map((x) => x.toString()).toList())
           : <String>[],
     );
   }
 
-  // A status code sent as text (`"404"`) or a double (`404.0`) is accepted;
-  // anything else is a 500.
-  static int _parseStatusCode(Object? value) => switch (value) {
-    int() => value,
-    num() => value.toInt(),
-    String() => int.tryParse(value) ?? 500,
-    _ => 500,
-  };
+  static final _digits = RegExp(r'^\d+$');
+
+  // A status code from 100 to 599, sent as an int, a whole double (`404.0`)
+  // or digits (`"404"`); anything else is null.
+  static int? _parseStatusCode(Object? value) {
+    var code = switch (value) {
+      int() => value,
+      double() when value.isFinite && value == value.roundToDouble() =>
+        value.toInt(),
+      String() when _digits.hasMatch(value) => int.tryParse(value),
+      _ => null,
+    };
+    return code != null && code >= 100 && code <= 599 ? code : null;
+  }
 
   /// Throws a [FormatException] if [str] is not a JSON object.
   factory AngelHttpException.fromJson(String str) {

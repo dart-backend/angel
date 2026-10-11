@@ -46,9 +46,11 @@ void main() {
 
   test('fromMap', () {
     expect(
-      AngelHttpException.fromMap({'status_code': -1, 'message': 'ok'}),
-      isException(-1, 'ok'),
+      AngelHttpException.fromMap({'status_code': 418, 'message': 'ok'}),
+      isException(418, 'ok'),
     );
+    // Not an HTTP status code.
+    expect(AngelHttpException.fromMap({'status_code': -1}).statusCode, 500);
   });
 
   test('toMap = toJson', () {

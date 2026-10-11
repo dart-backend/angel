@@ -1,9 +1,10 @@
 
 # Change Log
 
-## 9.1.1
+## 9.2.0
 
-* fix: `AngelHttpException.fromMap` now accepts a status code sent as text (`"404"`) or a double (`404.0`), instead of throwing `TypeError`; anything else becomes 500
+* fix: `AngelHttpException.fromMap` now accepts a status code sent as digits (`"404"`) or a whole double (`404.0`), instead of throwing `TypeError`. Only codes from 100 to 599 are used, `status_code` falling back to `statusCode`; anything else (including `-1`, `"0x194"` and `404.9`) becomes 500
+* feat: `AngelHttpException.fromMap` takes an optional `fallbackStatusCode`, used instead of 500 when the map has no valid status code
 * fix: `AngelHttpException.fromMap` now defaults the message to `500 Internal Server Error`, the same as the constructor, instead of `Internal Server Error`
 * fix: `AngelHttpException.fromJson` now throws `FormatException` for JSON that is not an object, instead of `TypeError`
 * fix: `AngelHttpException.toJson` now returns a copy of `errors`, so changing the map no longer changes the exception

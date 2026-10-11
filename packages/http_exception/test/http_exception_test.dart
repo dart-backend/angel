@@ -16,6 +16,47 @@ void main() {
       expect(AngelHttpException.fromMap({'status_code': 'x'}).statusCode, 500);
     });
 
+    test('falls back to 500 for anything that is not a status code', () {
+      for (var bad in [
+        double.nan,
+        double.infinity,
+        404.9,
+        '0x194',
+        '-1',
+        '99999',
+        99,
+        600,
+        true,
+      ]) {
+        expect(
+          AngelHttpException.fromMap({'status_code': bad}).statusCode,
+          500,
+          reason: '$bad',
+        );
+      }
+    });
+
+    test('tries statusCode when status_code is not valid', () {
+      expect(
+        AngelHttpException.fromMap({'status_code': 'abc', 'statusCode': 404})
+            .statusCode,
+        404,
+      );
+    });
+
+    test('uses fallbackStatusCode when there is no valid status code', () {
+      expect(
+        AngelHttpException.fromMap({}, fallbackStatusCode: 404).statusCode,
+        404,
+      );
+      expect(
+        AngelHttpException.fromMap({
+          'status_code': 403,
+        }, fallbackStatusCode: 404).statusCode,
+        403,
+      );
+    });
+
     test('defaults to the same message as the constructor', () {
       expect(
         AngelHttpException.fromMap({}).message,

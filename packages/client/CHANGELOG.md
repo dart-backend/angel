@@ -3,6 +3,7 @@
 ## 9.2.0
 
 * fix: A response body that is JSON but not an object no longer replaces the server's error with a generic one; an operator-precedence mistake read `isError` from it before checking that it was a map
+* fix: An error response without a valid status code in its body now reports the response's HTTP status, instead of 500
 
 ## 9.1.0
 

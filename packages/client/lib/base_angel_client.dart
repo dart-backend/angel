@@ -30,7 +30,10 @@ AngelHttpException failure(
     var v = json.decode(response.body);
 
     if (v is Map && (v['is_error'] == true || v['isError'] == true)) {
-      return AngelHttpException.fromMap(v);
+      return AngelHttpException.fromMap(
+        v,
+        fallbackStatusCode: response.statusCode,
+      );
     } else {
       return AngelHttpException(
         message:
