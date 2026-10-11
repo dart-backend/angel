@@ -42,7 +42,60 @@ void main() {
       expect(made.retries, 3);
       expect(made.dep, isNull);
     });
+
+    test('leaves out an optional named parameter of its own type', () {
+      var node = container.make<Node>();
+      expect(node.next, isNull);
+    });
+
+    test('rejects a required circular dependency', () {
+      expect(
+        () => container.make<CycleA>(),
+        throwsA(isA<ReflectionException>()),
+      );
+    });
+
+    test('leaves out an optional named parameter of an abstract type', () {
+      expect(container.make<NamedAbstract>().shape, isNull);
+    });
+
+    test("does not hide errors thrown by a dependency's constructor", () {
+      expect(() => container.make<NamedFailing>(), throwsA(isA<StateError>()));
+    });
   });
+}
+
+class Node {
+  final Node? next;
+  Node({this.next});
+}
+
+class CycleA {
+  final CycleB b;
+  CycleA(this.b);
+}
+
+class CycleB {
+  final CycleA a;
+  CycleB(this.a);
+}
+
+abstract class Shape {}
+
+class NamedAbstract {
+  final Shape? shape;
+  NamedAbstract({this.shape});
+}
+
+class Failing {
+  Failing() {
+    throw StateError('missing config');
+  }
+}
+
+class NamedFailing {
+  final Failing? failing;
+  NamedFailing({this.failing});
 }
 
 class Dep {}

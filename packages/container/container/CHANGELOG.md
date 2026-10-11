@@ -6,6 +6,10 @@
 * Fixed `Container.make` with `MirrorsReflector` ignoring named constructor parameters: required ones failed with `NoSuchMethodError`, and optional ones were left `null`
 * `Container.make` now leaves out an optional named parameter whose type is not registered and cannot be constructed (e.g. `{String? prefix}`), instead of failing
 * Fixed `Container.make` failing for constructor parameters with a default value (e.g. `[int retries = 3]`) when nothing is registered for their type; they now keep their default. **Behaviour change:** an optional positional parameter whose type is not registered is now left out (`null` or its default), instead of being constructed by reflection
+* `Container.make` leaves out an optional named parameter only when its type cannot be constructed (no reflection data, no default constructor, abstract or circular); errors thrown by a constructor or factory are no longer swallowed
+* `Container.make` now throws a `ReflectionException` for a circular dependency, instead of overflowing the stack, and leaves out an optional named parameter of the type being made (e.g. `Node({Node? next})`)
+* Fixed `registerLazySingleton`: once the container it was registered on had made an instance, child containers got that instance instead of their own
+* `registerLazySingleton` now returns `f`, as documented, instead of the factory wrapping it
 
 ## 9.1.0
 
