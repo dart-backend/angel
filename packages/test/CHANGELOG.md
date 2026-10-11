@@ -2,6 +2,7 @@
 
 ## 9.2.0
 
+* fix: `isAngelHttpException()` now recognises error responses written by `AngelHttpException.toJson`, which use the key `is_error`; it only checked `isError`, so it never matched
 * fix: `TestClient` responses now report the `contentLength` the handler set, or `null` when none was set (a streamed body), instead of always `0`
 
 ## 9.1.1

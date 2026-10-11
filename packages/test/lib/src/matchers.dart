@@ -315,7 +315,9 @@ class _IsAngelHttpException extends Matcher {
     if (item is http.Response) {
       final jsons = json.decode(item.body);
 
-      if (jsons is Map && jsons['isError'] == true) {
+      // AngelHttpException.toJson writes is_error; isError is the old key.
+      if (jsons is Map &&
+          (jsons['is_error'] == true || jsons['isError'] == true)) {
         var exc = AngelHttpException.fromMap(jsons);
         print(exc.toJson());
 

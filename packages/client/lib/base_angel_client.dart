@@ -29,8 +29,8 @@ AngelHttpException failure(
   try {
     var v = json.decode(response.body);
 
-    if (v is Map && (v['is_error'] == true) || v['isError'] == true) {
-      return AngelHttpException.fromMap(v as Map);
+    if (v is Map && (v['is_error'] == true || v['isError'] == true)) {
+      return AngelHttpException.fromMap(v);
     } else {
       return AngelHttpException(
         message:

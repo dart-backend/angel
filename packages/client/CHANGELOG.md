@@ -1,5 +1,9 @@
 # Change Log
 
+## 9.2.0
+
+* fix: A response body that is JSON but not an object no longer replaces the server's error with a generic one; an operator-precedence mistake read `isError` from it before checking that it was a map
+
 ## 9.1.0
 
 * Require Dart >= 3.13

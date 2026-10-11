@@ -1,6 +1,5 @@
 library;
 
-//import 'package:dart2_constant/convert.dart';
 import 'dart:convert';
 
 /// Exception class that can be serialized to JSON and serialized to clients.
@@ -39,7 +38,8 @@ class AngelHttpException implements Exception {
       'is_error': true,
       'status_code': statusCode,
       'message': message,
-      'errors': errors,
+      // A copy, so changing the map does not change this exception.
+      'errors': List.of(errors),
     };
   }
 
@@ -52,16 +52,31 @@ class AngelHttpException implements Exception {
 
   factory AngelHttpException.fromMap(Map data) {
     return AngelHttpException(
-      statusCode: (data['status_code'] ?? data['statusCode'] ?? 500) as int,
-      message: data['message']?.toString() ?? 'Internal Server Error',
+      statusCode: _parseStatusCode(data['status_code'] ?? data['statusCode']),
+      message: data['message']?.toString() ?? '500 Internal Server Error',
       errors: data['errors'] is Iterable
           ? ((data['errors'] as Iterable).map((x) => x.toString()).toList())
           : <String>[],
     );
   }
 
-  factory AngelHttpException.fromJson(String str) =>
-      AngelHttpException.fromMap(json.decode(str) as Map);
+  // A status code sent as text (`"404"`) or a double (`404.0`) is accepted;
+  // anything else is a 500.
+  static int _parseStatusCode(Object? value) => switch (value) {
+    int() => value,
+    num() => value.toInt(),
+    String() => int.tryParse(value) ?? 500,
+    _ => 500,
+  };
+
+  /// Throws a [FormatException] if [str] is not a JSON object.
+  factory AngelHttpException.fromJson(String str) {
+    var data = json.decode(str);
+    if (data is! Map) {
+      throw FormatException('Expected a JSON object', str);
+    }
+    return AngelHttpException.fromMap(data);
+  }
 
   /// Throws a 400 Bad Request error, including an optional arrray of (validation?)
   /// errors you specify.

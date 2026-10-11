@@ -1,6 +1,13 @@
 
 # Change Log
 
+## 9.1.1
+
+* fix: `AngelHttpException.fromMap` now accepts a status code sent as text (`"404"`) or a double (`404.0`), instead of throwing `TypeError`; anything else becomes 500
+* fix: `AngelHttpException.fromMap` now defaults the message to `500 Internal Server Error`, the same as the constructor, instead of `Internal Server Error`
+* fix: `AngelHttpException.fromJson` now throws `FormatException` for JSON that is not an object, instead of `TypeError`
+* fix: `AngelHttpException.toJson` now returns a copy of `errors`, so changing the map no longer changes the exception
+
 ## 9.1.0
 
 * Require Dart >= 3.13

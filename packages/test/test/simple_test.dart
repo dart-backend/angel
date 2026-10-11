@@ -100,7 +100,7 @@ void main() {
           errors: ['foo', 'bar'],
         ),
       );
-    }, skip: 'This is a bug to be fixed, skip for now');
+    });
 
     test('contentLength is the buffered body length', () async {
       var res = await client.send(http.Request('GET', Uri.parse('/buffered')));
