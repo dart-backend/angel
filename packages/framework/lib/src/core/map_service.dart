@@ -191,8 +191,8 @@ class MapService extends Service<String?, Map<String, dynamic>> {
     if (autoIdAndDateFields == true) {
       result
         ..['id'] = _nextId()
-        ..[autoSnakeCaseNames == false ? 'createdAt' : 'created_at'] = now
-        ..[autoSnakeCaseNames == false ? 'updatedAt' : 'updated_at'] = now;
+        ..[createdAtKey] = now
+        ..[updatedAtKey] = now;
     }
     items.add(result);
     return Future.value(Map.of(result));
