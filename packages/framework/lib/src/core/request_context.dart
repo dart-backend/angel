@@ -367,38 +367,50 @@ abstract class RequestContext<RawRequest> {
       _bodyFields = {};
       _uploadedFiles = [];
 
-      await for (var mime in transformer.bind(contentBody)) {
-        // A part with a filename is a file, even with a text Content-Type
-        // (e.g. text/csv), so keep its bytes rather than decoding them.
-        var isFile = _isFilePart(mime);
-        HttpMultipartFormData part;
-        try {
-          part = HttpMultipartFormData.parse(
-            isFile ? _BinaryPart(mime) : mime,
-            defaultEncoding: encoding,
-          );
-        } on HttpException catch (e) {
-          // e.g. a part without Content-Disposition
-          throw AngelHttpException.badRequest(
-            message: 'Invalid multipart body: ${e.message}',
-          );
-        }
-        if (part.isBinary) {
-          _uploadedFiles.add(
-            UploadedFile(
-              part,
-              contentType: isFile ? mime.headers['content-type'] : null,
-            ),
-          );
-        } else if (part.isText &&
-            part.contentDisposition.parameters.containsKey('name')) {
-          // If there is no name, then don't parse it.
-          var key = part.contentDisposition.parameters['name'];
-          if (key != null) {
-            var value = await part.join();
-            _bodyFields[key] = value;
+      // Text values are read here but awaited after the loop: awaiting one
+      // inside it would hang on a truncated body, whose error arrives on the
+      // stream of parts while the part being read never ends.
+      var values = <(String, Future<String>)>[];
+      try {
+        await for (var mime in transformer.bind(contentBody)) {
+          // A part with a filename is a file, even with a text Content-Type
+          // (e.g. text/csv), so keep its bytes rather than decoding them.
+          bool isFile;
+          HttpMultipartFormData part;
+          try {
+            isFile = _isFilePart(mime);
+            part = HttpMultipartFormData.parse(
+              isFile ? _BinaryPart(mime) : mime,
+              defaultEncoding: encoding,
+            );
+          } on HttpException catch (e) {
+            // e.g. a part without, or with a malformed, Content-Disposition
+            throw AngelHttpException.badRequest(
+              message: 'Invalid multipart body: ${e.message}',
+            );
+          }
+          if (part.isBinary) {
+            _uploadedFiles.add(
+              UploadedFile(
+                part,
+                contentType: isFile ? mime.headers['content-type'] : null,
+              ),
+            );
+          } else if (part.isText &&
+              part.contentDisposition.parameters.containsKey('name')) {
+            // If there is no name, then don't parse it.
+            var key = part.contentDisposition.parameters['name'];
+            if (key != null) values.add((key, part.join()));
           }
         }
+      } on MimeMultipartException catch (e) {
+        // e.g. a body cut off before its closing boundary
+        throw AngelHttpException.badRequest(
+          message: 'Invalid multipart body: ${e.message}',
+        );
+      }
+      for (var (key, value) in values) {
+        _bodyFields[key] = await value;
       }
     } else {
       _bodyFields = {};

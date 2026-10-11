@@ -189,6 +189,32 @@ void main() {
     );
   });
 
+  for (var (name, body) in [
+    (
+      'a malformed Content-Disposition',
+      '--XYZ\r\n'
+          'Content-Disposition: form-data; name="a\r\n\r\n'
+          'value\r\n'
+          '--XYZ--\r\n',
+    ),
+    (
+      'a body cut off before its closing boundary',
+      '--XYZ\r\n'
+          'Content-Disposition: form-data; name="a"\r\n\r\n'
+          'value',
+    ),
+  ]) {
+    test('a multipart body with $name is a 400', () async {
+      var req = await rawRequest('multipart/form-data; boundary=XYZ', body);
+      await expectLater(
+        req.parseBody(),
+        throwsA(
+          isA<AngelHttpException>().having((e) => e.statusCode, 'status', 400),
+        ),
+      );
+    });
+  }
+
   test('a multipart part without Content-Disposition is a 400', () async {
     var req = await rawRequest(
       'multipart/form-data; boundary=XYZ',

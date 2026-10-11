@@ -100,6 +100,9 @@ void main() {
         ['x.example.com', 'example.org'],
         ['x.org'],
       ),
+      // A trailing dot (FQDN form) is ignored.
+      ('example.com.', ['example.com'], ['example.com.x']),
+      ('a.com.|b.com', ['a.com', 'b.com'], ['a.comb.com']),
     ]) {
       test(pattern, () {
         var regex = HostnameSyntaxParser(pattern).parse();

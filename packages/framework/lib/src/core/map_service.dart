@@ -249,10 +249,12 @@ class MapService extends Service<String?, Map<String, dynamic>> {
       var old = items[idx];
       var result = Map<String, dynamic>.from(data);
       if (autoIdAndDateFields == true) {
-        result
-          ..['id'] = id?.toString()
-          ..[createdAtKey] = old[createdAtKey]
-          ..[updatedAtKey] = DateTime.now().toIso8601String();
+        result['id'] = id?.toString();
+        // As in modify: only a created-at the record has.
+        if (old.containsKey(createdAtKey)) {
+          result[createdAtKey] = old[createdAtKey];
+        }
+        result[updatedAtKey] = DateTime.now().toIso8601String();
       } else {
         // Keep the record findable by the id it was replaced at.
         result.putIfAbsent('id', () => old['id']);

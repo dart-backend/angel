@@ -202,13 +202,14 @@ class Http2RequestContext extends RequestContext<ServerTransportStream?> {
         try {
           if (msg is DataStreamMessage) {
             finalize();
-            if (!req._body.isClosed && req._body.hasListener) {
+            if (!req._body.isClosed) {
+              // Kept even while waiting, so no body bytes are ever lost.
               req._body.add(msg.bytes);
-            } else if (!req._body.isClosed && !waitingForReader) {
-              // Wait for the handler to read the body (or close the request).
-              req._body.add(msg.bytes);
-              waitingForReader = true;
-              sub.pause();
+              if (!req._body.hasListener && !waitingForReader) {
+                // Wait for the handler to read the body (or close the request).
+                waitingForReader = true;
+                sub.pause();
+              }
             }
           } else if (msg is HeadersStreamMessage) {
             if (c.isCompleted) {

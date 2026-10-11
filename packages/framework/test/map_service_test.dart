@@ -243,6 +243,13 @@ void main() {
       expect(created['id'], isNot('3'));
     });
 
+    test('adds no created_at the record did not have', () async {
+      service.items.add({'id': 'raw', 'text': 'r'});
+      var result = await service.update('raw', {'text': 's'});
+      expect(result.containsKey('created_at'), isFalse);
+      expect(result['updated_at'], isNotNull);
+    });
+
     test('keeps the client id when autoIdAndDateFields is off', () async {
       var plain = MapService(autoIdAndDateFields: false);
       var kept = await plain.update('1', {'id': 1, 'text': 'z'});

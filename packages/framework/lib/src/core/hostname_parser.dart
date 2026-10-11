@@ -35,7 +35,10 @@ class HostnameSyntaxParser {
     var b = StringBuffer();
     while (!_scanner.isDone && !_scanner.matches('|')) {
       b.write(_parseHostnamePart());
-      if (_scanner.scan('.')) b.write('\\.');
+      // A trailing dot (the FQDN form, `example.com.`) is ignored.
+      if (_scanner.scan('.') && !_scanner.isDone && !_scanner.matches('|')) {
+        b.write('\\.');
+      }
     }
     if (b.isEmpty) {
       throw _formatExc(
@@ -47,7 +50,7 @@ class HostnameSyntaxParser {
     return b.toString();
   }
 
-  String _parseHostnamePart({bool shouldThrow = true}) {
+  String _parseHostnamePart() {
     if (_scanner.scan('*.')) {
       return r'([^$.]+\.)?';
     } else if (_scanner.scan('*')) {
@@ -56,7 +59,7 @@ class HostnameSyntaxParser {
       return r'[^$]+';
     } else if (_scanner.scan(_safe)) {
       return _scanner.lastMatch?[0] ?? '';
-    } else if (!_scanner.isDone && shouldThrow) {
+    } else if (!_scanner.isDone) {
       var s = String.fromCharCode(_scanner.peekChar()!);
       throw _formatExc('Unexpected character "$s".');
     } else {

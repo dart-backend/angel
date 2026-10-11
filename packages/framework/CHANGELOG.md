@@ -2,6 +2,11 @@
 
 ## 9.3.0
 
+* fix: A multipart body cut off before its closing boundary is now a 400; the request used to hang for good, waiting for the last part to end
+* fix: A multipart part with a malformed `Content-Disposition` is now a 400 instead of a 500
+* fix: `MapService.update` no longer adds `created_at: null` to a record that had no created-at field, as `modify` already did
+* fix: `q=0` written after a tab (e.g. `gzip;\tq=0`) now rejects that encoding or media type, like one written after a space
+* fix: A hostname pattern with a trailing dot (the FQDN form, `example.com.`) matches the hostname without it again, as it did before `|` patterns were rewritten
 * fix: Response compression now treats `Accept-Encoding: gzip;Q=0` (capital `Q`) as rejecting gzip, as parameter names ignore case; it used to compress with gzip anyway
 * fix: `RequestContext.accepts` no longer rejects a type because a variant of it with other parameters has `q=0`; `text/html;level=1;q=0, text/html` now accepts `text/html`
 * fix: A buffered HTTP/2 response now sets the `DARTSESSID` cookie for a session first created by a response finalizer; the cookie used to be added before the finalizers ran, so such a session was lost

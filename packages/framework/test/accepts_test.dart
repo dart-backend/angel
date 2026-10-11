@@ -132,6 +132,13 @@ void main() {
       );
     });
 
+    test('q=0 after a tab rejects too', () {
+      expect(
+        ResponseContext.selectEncoder(encoders, 'gzip;\tq=0, deflate')?.name,
+        'deflate',
+      );
+    });
+
     test('Q=0 rejects too, as parameter names ignore case', () {
       expect(
         ResponseContext.selectEncoder(encoders, 'gzip;Q=0, deflate')?.name,

@@ -1,4 +1,5 @@
 final RegExp _qZero = RegExp(r'^q=0(\.0*)?$');
+final RegExp _whitespace = RegExp(r'\s');
 
 /// Splits an `Accept`-style header (comma-separated items with `;`
 /// parameters, such as `Accept` or `Accept-Encoding`) into the items it
@@ -18,7 +19,7 @@ final RegExp _qZero = RegExp(r'^q=0(\.0*)?$');
     if (name.isEmpty) continue;
     var params = parts
         .skip(1)
-        .map((p) => p.replaceAll(' ', '').toLowerCase())
+        .map((p) => p.replaceAll(_whitespace, '').toLowerCase())
         .where((p) => p.isNotEmpty)
         .toList();
     if (!params.any(_qZero.hasMatch)) {
