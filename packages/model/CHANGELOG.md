@@ -2,7 +2,8 @@
 
 ## 9.2.0
 
-* fix: `none` is now an instance of `None` (`const None()`), as documented, instead of the `None` type itself, so `none is None` is true. `None` now has a `const` constructor, every `None` is equal to `none`, and `none` still prints as `None`
+* **Breaking:** `none` is now an instance of `None` (`const None()`), as documented, instead of the `None` type itself, so `none is None` is true. Code that used `none` as a type must change: compare types with `None` (`T == None`, `x.runtimeType == None`) or test values with `x is None`, since `T == none` now always returns false
+* **Breaking:** `None` is now a `final class` with a `const` constructor. Every `None` is equal to `none`, and `none` still prints as `None`. Because `None` overrides `==`, `none` can no longer be used in constant sets or as a constant map key
 
 ## 9.1.0
 

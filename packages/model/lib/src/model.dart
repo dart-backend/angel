@@ -35,8 +35,8 @@ class AuditableModel extends Model {
   });
 }
 
-/// Data type to represent no data.
-class None {
+/// Data type to represent no data. Final, so equality stays symmetric.
+final class None {
   const None();
 
   // Every None means the same thing, const or not.
@@ -44,7 +44,7 @@ class None {
   bool operator ==(Object other) => other is None;
 
   @override
-  int get hashCode => (None).hashCode;
+  int get hashCode => 0;
 
   @override
   String toString() => 'None';
