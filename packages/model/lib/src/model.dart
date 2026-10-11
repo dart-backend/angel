@@ -38,6 +38,16 @@ class AuditableModel extends Model {
 /// Data type to represent no data.
 class None {
   const None();
+
+  // Every None means the same thing, const or not.
+  @override
+  bool operator ==(Object other) => other is None;
+
+  @override
+  int get hashCode => (None).hashCode;
+
+  @override
+  String toString() => 'None';
 }
 
 /// Canonical instance of [None]. Implies no data.

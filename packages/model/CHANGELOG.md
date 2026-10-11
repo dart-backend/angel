@@ -2,7 +2,7 @@
 
 ## 9.2.0
 
-* fix: `none` is now an instance of `None` (`const None()`), as documented, instead of the `None` type itself, so `none is None` is true. `None` now has a `const` constructor
+* fix: `none` is now an instance of `None` (`const None()`), as documented, instead of the `None` type itself, so `none is None` is true. `None` now has a `const` constructor, every `None` is equal to `none`, and `none` still prints as `None`
 
 ## 9.1.0
 

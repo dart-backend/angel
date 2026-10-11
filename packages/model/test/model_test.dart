@@ -5,6 +5,10 @@ void main() {
   test('none is the canonical None', () {
     expect(none, isA<None>());
     expect(identical(none, const None()), isTrue);
+    // ignore: prefer_const_constructors
+    expect(None(), none);
+    expect(None().hashCode, none.hashCode);
+    expect('$none', 'None');
   });
 
   test('idAsInt parses the id, or is -1', () {
