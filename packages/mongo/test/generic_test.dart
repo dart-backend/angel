@@ -1,4 +1,3 @@
-import 'package:angel3_container_mirrors/angel3_container_mirrors.dart';
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_framework/http.dart';
 import 'package:angel3_mongo/angel3_mongo.dart';
@@ -34,7 +33,7 @@ void main() {
     greetingService;
 
     setUp(() async {
-      app = Angel(reflector: MirrorsReflector());
+      app = Angel();
       transport = AngelHttp(app);
       client = http.Client();
       await db.open();

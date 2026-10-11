@@ -3,7 +3,7 @@
 ## 10.0.0
 
 * Released with the other Angel3 packages at 10.0.0
-* `MirrorsReflector` moved from `package:angel3_container/mirrors.dart` to the `angel3_container_mirrors` package; add it to your dependencies if your app uses it. `MongoService` does not need reflection
+* `MongoService` does not need reflection: the example and tests now create the app without a reflector, so they no longer use `MirrorsReflector` (which moved from `package:angel3_container/mirrors.dart` to the `angel3_container_mirrors` package)
 * Removed the unused `angel3_container` dependency, and moved `belatuk_json_serializer`, used only by the tests, to `dev_dependencies`
 
 ## 9.1.0
