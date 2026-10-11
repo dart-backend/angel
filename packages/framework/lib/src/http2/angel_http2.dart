@@ -178,15 +178,28 @@ class AngelHttp2
     bool ignoreFinalizers = false,
   }) {
     // An unbuffered Http2ResponseContext adds this itself when it sends its
-    // headers; a buffered one is sent by the driver.
-    if (res.isBuffered && res is Http2ResponseContext) res.addSessionCookie();
-    return super.sendResponse(
-      request,
-      response,
-      req,
-      res,
-      ignoreFinalizers: ignoreFinalizers,
-    );
+    // headers; a buffered one is sent by the driver. The cookie goes on after
+    // the response finalizers, which may be the first to read `req.session`.
+    if (!res.isBuffered || res is! Http2ResponseContext) {
+      return super.sendResponse(
+        request,
+        response,
+        req,
+        res,
+        ignoreFinalizers: ignoreFinalizers,
+      );
+    }
+    var finalizers = ignoreFinalizers ? Future.value() : res.runFinalizers(req);
+    return finalizers.then((_) {
+      res.addSessionCookie();
+      return super.sendResponse(
+        request,
+        response,
+        req,
+        res,
+        ignoreFinalizers: true,
+      );
+    });
   }
 
   @override

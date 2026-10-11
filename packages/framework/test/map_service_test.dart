@@ -224,6 +224,12 @@ void main() {
   });
 
   group('update (PUT)', () {
+    test('keeps the record in its place', () async {
+      var a = service.items.firstWhere((i) => i['text'] == 'a');
+      await service.update(a['id'], {'text': 'A', 'done': true, 'rank': 3});
+      expect(texts(await service.index()), ['b', 'A', 'c']);
+    });
+
     test('a missing id creates the record at that id', () async {
       var result = await service.update('custom', {'text': 'z'});
       expect(result['id'], 'custom');

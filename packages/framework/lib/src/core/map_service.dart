@@ -246,7 +246,7 @@ class MapService extends Service<String?, Map<String, dynamic>> {
       var idx = items.indexWhere(_matchesId(id));
       if (idx < 0) return Map.of(_insertAt(id, data));
 
-      var old = items.removeAt(idx);
+      var old = items[idx];
       var result = Map<String, dynamic>.from(data);
       if (autoIdAndDateFields == true) {
         result
@@ -257,7 +257,8 @@ class MapService extends Service<String?, Map<String, dynamic>> {
         // Keep the record findable by the id it was replaced at.
         result.putIfAbsent('id', () => old['id']);
       }
-      items.add(result);
+      // In place, as modify does, so the order of records is kept.
+      items[idx] = result;
       return Map.of(result);
     });
   }

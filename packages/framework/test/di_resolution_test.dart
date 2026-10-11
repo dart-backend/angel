@@ -59,6 +59,12 @@ void main() {
       expect(await get('/'), (200, '"null"'));
     });
 
+    test('fails when making an optional parameter throws', () async {
+      app.get('/', ioc((RequestContext req, [_Failing? f]) => '$f'));
+      var (status, _) = await get('/');
+      expect(status, 500);
+    });
+
     test('still makes an optional parameter that can be made', () async {
       app.container.registerSingleton<_Abstract>(_Impl());
       app.get('/', ioc((RequestContext req, [_Abstract? a]) => '$a'));
@@ -99,4 +105,10 @@ class _MixedController extends Controller {
   static String helper() => 'static';
 
   String _hidden() => _value;
+}
+
+class _Failing {
+  _Failing() {
+    throw StateError('cannot connect');
+  }
 }

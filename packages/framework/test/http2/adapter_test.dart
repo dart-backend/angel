@@ -124,6 +124,20 @@ void main() {
       return res.close();
     });
 
+    app.get('/finalizer-session', (req, res) {
+      res
+        ..useBuffer()
+        ..write('ok');
+      return res.close();
+    });
+    app.responseFinalizers.add((req, res) {
+      // The first to read the session, after the handler.
+      if (req.uri?.path == '/finalizer-session') {
+        res.headers['x-session'] = req.session!.id;
+      }
+      return true;
+    });
+
     app.get('/param/:name', (req, res) => req.params);
 
     app.get('/query', (req, res) {
@@ -363,6 +377,16 @@ void main() {
         response.bodyBytes.length.toString(),
       );
       expect(utf8.decode(gzip.decode(response.bodyBytes)), 'buffered body');
+    });
+
+    test('sets the cookie for a session a finalizer created', () async {
+      var response = await client.get(
+        serverRoot.replace(path: '/finalizer-session'),
+      );
+      expect(
+        response.headers['set-cookie'],
+        'DARTSESSID=${response.headers['x-session']}; Secure; HttpOnly',
+      );
     });
 
     test('sets the session cookie', () async {

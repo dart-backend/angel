@@ -84,14 +84,6 @@ class Http2RequestContext extends RequestContext<ServerTransportStream?> {
       c.complete(req);
     }
 
-    void fail(Object error, StackTrace stackTrace) {
-      if (!c.isCompleted) {
-        c.completeError(error, stackTrace);
-      } else if (!req._body.isClosed) {
-        req._body.addError(error, stackTrace);
-      }
-    }
-
     void parseHost(String value) {
       // Parse as an authority ("host[:port]"), not as a full URI, where
       // "example.com:8443" would be read as a scheme.
@@ -189,6 +181,18 @@ class Http2RequestContext extends RequestContext<ServerTransportStream?> {
       }
       ..onResume = readerResumed
       ..onCancel = stopReading;
+
+    void fail(Object error, StackTrace stackTrace) {
+      if (!c.isCompleted) {
+        c.completeError(error, stackTrace);
+        // No request context will read or close the body, so discard the
+        // rest of it; holding it back would stall the stream's flow control.
+        req._body.close();
+        stopReading();
+      } else if (!req._body.isClosed) {
+        req._body.addError(error, stackTrace);
+      }
+    }
 
     sub = stream.incomingMessages.listen(
       (msg) {

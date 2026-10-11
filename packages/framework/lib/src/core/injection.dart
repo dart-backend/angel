@@ -122,8 +122,15 @@ Future resolveInjection(
           throwOnUnresolved,
           container,
         );
-      } catch (_) {
+      } on ReflectionException {
+        // Only "cannot be constructed"; an error thrown while constructing
+        // it is a real failure, and must reach the client as one.
         return null;
+      } on Error catch (e) {
+        // dart:mirrors reports an abstract class with a private error type,
+        // so it can only be recognised by its message.
+        if ('$e'.startsWith('Cannot instantiate abstract class')) return null;
+        rethrow;
       }
     } else {
       return await resolveInjection(
