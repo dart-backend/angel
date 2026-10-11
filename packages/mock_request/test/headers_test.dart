@@ -178,6 +178,14 @@ void main() {
       expect(h.contentLength, -1);
     });
 
+    test('turning it off removes every chunked value', () {
+      var h = headers()
+        ..add('transfer-encoding', ['chunked', 'chunked'])
+        ..chunkedTransferEncoding = false;
+      expect(h.chunkedTransferEncoding, isFalse);
+      expect(h.value(HttpHeaders.transferEncodingHeader), isNull);
+    });
+
     test('cannot be changed once the headers are locked', () {
       var rq = MockHttpRequest('POST', Uri(path: '/'))..add([1]);
       expect(() => rq.headers.chunkedTransferEncoding = true, throwsStateError);

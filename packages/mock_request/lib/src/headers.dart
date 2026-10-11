@@ -224,7 +224,10 @@ class MockHttpHeaders implements HttpHeaders {
     if (value) {
       add(HttpHeaders.transferEncodingHeader, 'chunked');
     } else {
-      remove(HttpHeaders.transferEncodingHeader, 'chunked');
+      // remove takes one value at a time, and add may have stored it twice.
+      while (chunkedTransferEncoding) {
+        remove(HttpHeaders.transferEncodingHeader, 'chunked');
+      }
     }
   }
 

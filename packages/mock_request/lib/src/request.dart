@@ -126,7 +126,6 @@ class MockHttpRequest extends Stream<Uint8List>
   @override
   Future get done => _body.done;
 
-  // @override
   Future flush() => _body.flush();
 
   /// The encoding [write] uses: the one it kept from the first write, or else
