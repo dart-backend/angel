@@ -55,6 +55,18 @@ void main() {
         }, fallbackStatusCode: 404).statusCode,
         403,
       );
+      expect(
+        AngelHttpException.fromMap({}, fallbackStatusCode: -1).statusCode,
+        500,
+      );
+      expect(
+        AngelHttpException.fromJson('{}', fallbackStatusCode: 404).statusCode,
+        404,
+      );
+    });
+
+    test('without a message, uses one that matches the status code', () {
+      expect('${AngelHttpException.fromMap({'status_code': 404})}', '404: 404');
     });
 
     test('defaults to the same message as the constructor', () {

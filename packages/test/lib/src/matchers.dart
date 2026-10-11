@@ -318,7 +318,10 @@ class _IsAngelHttpException extends Matcher {
       // AngelHttpException.toJson writes is_error; isError is the old key.
       if (jsons is Map &&
           (jsons['is_error'] == true || jsons['isError'] == true)) {
-        var exc = AngelHttpException.fromMap(jsons);
+        var exc = AngelHttpException.fromMap(
+          jsons,
+          fallbackStatusCode: item.statusCode,
+        );
         print(exc.toJson());
 
         if (message?.isNotEmpty != true &&

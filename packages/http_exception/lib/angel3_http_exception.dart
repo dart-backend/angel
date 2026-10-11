@@ -53,14 +53,20 @@ class AngelHttpException implements Exception {
   }
 
   /// Uses [fallbackStatusCode] when [data] has no valid status code, e.g.
-  /// the status of the HTTP response it came from.
+  /// the status of the HTTP response it came from; 500 if that is not valid
+  /// either.
   factory AngelHttpException.fromMap(Map data, {int fallbackStatusCode = 500}) {
+    var statusCode =
+        _parseStatusCode(data['status_code']) ??
+        _parseStatusCode(data['statusCode']) ??
+        _parseStatusCode(fallbackStatusCode) ??
+        500;
     return AngelHttpException(
-      statusCode:
-          _parseStatusCode(data['status_code']) ??
-          _parseStatusCode(data['statusCode']) ??
-          fallbackStatusCode,
-      message: data['message']?.toString() ?? _defaultMessage,
+      statusCode: statusCode,
+      // Without a message, one that matches the status code.
+      message:
+          data['message']?.toString() ??
+          (statusCode == 500 ? _defaultMessage : '$statusCode'),
       errors: data['errors'] is Iterable
           ? ((data['errors'] as Iterable).map((x) => x.toString()).toList())
           : <String>[],
@@ -82,13 +88,20 @@ class AngelHttpException implements Exception {
     return code != null && code >= 100 && code <= 599 ? code : null;
   }
 
-  /// Throws a [FormatException] if [str] is not a JSON object.
-  factory AngelHttpException.fromJson(String str) {
+  /// Like [AngelHttpException.fromMap]. Throws a [FormatException] if [str]
+  /// is not a JSON object.
+  factory AngelHttpException.fromJson(
+    String str, {
+    int fallbackStatusCode = 500,
+  }) {
     var data = json.decode(str);
     if (data is! Map) {
       throw FormatException('Expected a JSON object', str);
     }
-    return AngelHttpException.fromMap(data);
+    return AngelHttpException.fromMap(
+      data,
+      fallbackStatusCode: fallbackStatusCode,
+    );
   }
 
   /// Throws a 400 Bad Request error, including an optional arrray of (validation?)
