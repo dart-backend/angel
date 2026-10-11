@@ -100,6 +100,7 @@ class MockHttpHeaders implements HttpHeaders {
         _data[lower] = [value.toString()];
       }
     }
+    if (lower == HttpHeaders.transferEncodingHeader) _onTransferEncoding();
   }
 
   @override
@@ -152,6 +153,7 @@ class MockHttpHeaders implements HttpHeaders {
     } else {
       _data[lower] = [value.toString()];
     }
+    if (lower == HttpHeaders.transferEncodingHeader) _onTransferEncoding();
   }
 
   // As in dart:io: content-length holds one value of digits, and a later value
@@ -161,12 +163,19 @@ class MockHttpHeaders implements HttpHeaders {
     var lengths = values.map(_parseContentLength).toList();
     if (lengths.isNotEmpty) {
       _data[HttpHeaders.contentLengthHeader] = ['${lengths.last}'];
+      var encodings = _data[HttpHeaders.transferEncodingHeader];
+      encodings?.remove('chunked');
+      if (encodings?.isEmpty ?? false) {
+        _data.remove(HttpHeaders.transferEncodingHeader);
+      }
     } else if (replace) {
       _data.remove(HttpHeaders.contentLengthHeader);
     }
   }
 
   static int _parseContentLength(Object? value) {
+    // As in dart:io, the size limit is only for text.
+    if (value is int && value >= 0) return value;
     var text = switch (value) {
       int() => '$value',
       String() => value,
@@ -201,8 +210,26 @@ class MockHttpHeaders implements HttpHeaders {
     return b.toString();
   }
 
+  // Backed by the transfer-encoding header, as in dart:io: turning it on
+  // removes content-length, and setting a content-length turns it off.
   @override
-  bool chunkedTransferEncoding = false;
+  bool get chunkedTransferEncoding =>
+      _data[HttpHeaders.transferEncodingHeader]?.contains('chunked') ?? false;
+
+  @override
+  set chunkedTransferEncoding(bool value) {
+    if (value == chunkedTransferEncoding) return;
+    if (value) {
+      add(HttpHeaders.transferEncodingHeader, 'chunked');
+    } else {
+      remove(HttpHeaders.transferEncodingHeader, 'chunked');
+    }
+  }
+
+  // After transfer-encoding was added to or set.
+  void _onTransferEncoding() {
+    if (chunkedTransferEncoding) _data.remove(HttpHeaders.contentLengthHeader);
+  }
 
   // Backed by the content-length header, as in dart:io; -1 when it is absent.
   @override

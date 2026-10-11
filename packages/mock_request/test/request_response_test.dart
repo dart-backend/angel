@@ -58,6 +58,14 @@ void main() {
       expect(rq.contentLength, -1);
     });
 
+    test('close sets no content-length with a chunked header', () async {
+      var rq = MockHttpRequest('POST', Uri(path: '/'))
+        ..headers.set('transfer-encoding', 'chunked')
+        ..write('hello');
+      await rq.close();
+      expect(rq.contentLength, -1);
+    });
+
     test('close sets no content-length with chunked encoding', () async {
       var rq = MockHttpRequest('POST', Uri(path: '/'))
         ..headers.chunkedTransferEncoding = true
@@ -235,6 +243,16 @@ void main() {
       },
     );
 
+    test('a failed first write does not keep its encoding', () async {
+      var rs = response()
+        ..headers.contentType = ContentType('text', 'plain', charset: 'latin1');
+      expect(() => rs.write('☺'), throwsArgumentError);
+      rs.headers.contentType = ContentType('text', 'plain', charset: 'utf-8');
+      rs.write('☺');
+      await rs.close();
+      expect(utf8.decode(await bytesOf(rs)), '☺');
+    });
+
     test('encoding follows changes to the content-type header', () {
       var rs = response()
         ..headers.contentType = ContentType('text', 'plain', charset: 'latin1');
@@ -259,6 +277,19 @@ void main() {
       rs.add([1]);
       await rs.close();
       expect(await bytesOf(rs), [1]);
+    });
+
+    test('bufferOutput can be turned off before writing', () async {
+      var rs = response()..bufferOutput = false;
+      var chunks = <List<int>>[];
+      rs.listen(chunks.add);
+      rs.add([1]);
+      await Future<void>.delayed(Duration.zero);
+      expect(chunks, [
+        [1],
+      ]); // Before close.
+      expect(() => rs.bufferOutput = true, throwsStateError);
+      await rs.close();
     });
 
     test('write throws for a character its encoding cannot represent', () {

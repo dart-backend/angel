@@ -18,8 +18,18 @@ class MockBodySink {
   bool _isBound = false;
   int _bytesWritten = 0;
 
+  bool _bufferOutput;
+
   /// Whether [add] holds bytes until [flush] or [close], or sends them on.
-  final bool bufferOutput;
+  bool get bufferOutput => _bufferOutput;
+
+  /// As in dart:io, it can only change before anything is written.
+  set bufferOutput(bool value) {
+    if (_bytesWritten > 0 || _done.isCompleted) {
+      throw StateError('Header already sent');
+    }
+    _bufferOutput = value;
+  }
 
   /// [name] is used in error messages. [encoding] gives the encoding for the
   /// first [write]; [copy] corresponds to `copy` on [BytesBuilder].
@@ -28,7 +38,7 @@ class MockBodySink {
     this._headers,
     Encoding Function() encoding, {
     bool copy = true,
-    this.bufferOutput = true,
+    this._bufferOutput = true,
   }) : _name = name,
        _encoding = encoding,
        _buf = BytesBuilder(copy: copy);
@@ -59,7 +69,7 @@ class MockBodySink {
   void _add(List<int> data) {
     _headers.lock();
     _bytesWritten += data.length;
-    if (bufferOutput) {
+    if (_bufferOutput) {
       _buf.add(data);
     } else {
       _controller.add(data is Uint8List ? data : Uint8List.fromList(data));
@@ -128,7 +138,11 @@ class MockBodySink {
     // As in dart:io: null writes 'null', and an empty string adds nothing,
     // so the headers stay unlocked.
     var text = '$obj';
-    if (text.isNotEmpty) add((_writeEncoding ??= _encoding()).encode(text));
+    if (text.isEmpty) return;
+    var encoding = _writeEncoding ?? _encoding();
+    add(encoding.encode(text));
+    // Kept only once a write succeeds; a failed one leaves it open.
+    _writeEncoding ??= encoding;
   }
 
   void writeAll(Iterable objects, [String separator = '']) {

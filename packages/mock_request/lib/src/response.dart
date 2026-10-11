@@ -45,7 +45,7 @@ class MockHttpResponse extends Stream<List<int>> implements HttpResponse {
   bool get bufferOutput => _body.bufferOutput;
 
   @override
-  set bufferOutput(bool value) {}
+  set bufferOutput(bool value) => _body.bufferOutput = value;
 
   // Backed by headers.contentLength, as in dart:io.
   @override

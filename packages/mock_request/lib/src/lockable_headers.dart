@@ -70,6 +70,25 @@ class LockableMockHttpHeaders extends MockHttpHeaders {
       super.set(name, value, preserveHeaderCase: preserveHeaderCase);
     }
   }
+
+  // Like the header writes above, as in dart:io.
+  @override
+  set persistentConnection(bool value) {
+    if (_locked) throw _stateError();
+    super.persistentConnection = value;
+  }
+
+  @override
+  set host(String? host) {
+    if (_locked) throw _stateError();
+    super.host = host;
+  }
+
+  @override
+  set port(int? port) {
+    if (_locked) throw _stateError();
+    super.port = port;
+  }
 }
 
 /// Sets the content-length of [headers] even when they are locked, for

@@ -106,6 +106,12 @@ void main() {
       expect(headers.contentLength, 5);
     });
 
+    test('takes any non-negative int, as in dart:io', () {
+      var headers = MockHttpRequest('GET', Uri.parse('/')).headers
+        ..contentLength = 1 << 60;
+      expect(headers.contentLength, 1 << 60);
+    });
+
     test('set with no values removes it', () {
       var headers = MockHttpRequest('GET', Uri.parse('/')).headers
         ..contentLength = 5
@@ -142,5 +148,46 @@ void main() {
       ..remove('x-foo', 'a');
     expect(headers.value('x-foo'), isNull);
     expect(headers['x-foo'], isNull);
+  });
+
+  group('chunkedTransferEncoding', () {
+    MockHttpHeaders headers() =>
+        MockHttpRequest('GET', Uri.parse('/')).headers as MockHttpHeaders;
+
+    test('turning it on removes content-length, as in dart:io', () {
+      var h = headers()
+        ..contentLength = 5
+        ..chunkedTransferEncoding = true;
+      expect(h.contentLength, -1);
+      expect(h.value(HttpHeaders.transferEncodingHeader), 'chunked');
+    });
+
+    test('setting a content-length turns it off', () {
+      var h = headers()
+        ..chunkedTransferEncoding = true
+        ..contentLength = 5;
+      expect(h.chunkedTransferEncoding, isFalse);
+      expect(h.value(HttpHeaders.transferEncodingHeader), isNull);
+    });
+
+    test('follows the transfer-encoding header', () {
+      var h = headers()
+        ..contentLength = 5
+        ..set(HttpHeaders.transferEncodingHeader, 'chunked');
+      expect(h.chunkedTransferEncoding, isTrue);
+      expect(h.contentLength, -1);
+    });
+
+    test('cannot be changed once the headers are locked', () {
+      var rq = MockHttpRequest('POST', Uri(path: '/'))..add([1]);
+      expect(() => rq.headers.chunkedTransferEncoding = true, throwsStateError);
+    });
+  });
+
+  test('connection settings cannot change once locked, as in dart:io', () {
+    var headers = (MockHttpRequest('POST', Uri(path: '/'))..add([1])).headers;
+    expect(() => headers.persistentConnection = false, throwsStateError);
+    expect(() => headers.host = 'example.com', throwsStateError);
+    expect(() => headers.port = 8080, throwsStateError);
   });
 }
