@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:angel3_container_mirrors/angel3_container_mirrors.dart';
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_framework/http.dart';
 import 'package:angel3_shelf/angel3_shelf.dart';
@@ -54,7 +53,7 @@ void main() {
     });
 
     var logger = Logger.detached('angel3_shelf')..onRecord.listen(prettyLog);
-    var app = Angel(logger: logger, reflector: MirrorsReflector());
+    var app = Angel(logger: logger);
     var httpDriver = AngelHttp(app);
     app.get('/angel', (req, res) => 'Angel');
     app.fallback(embedShelf(handler, throwOnNullResponse: true));

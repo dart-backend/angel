@@ -3,6 +3,7 @@
 ## 10.0.0-beta-1
 
 * fix: A request with a malformed `Content-Length` header no longer fails with an `HttpException` (a 500); the header is dropped, and the body is still counted against `maxBodySize`
+* test: The tests no longer use `MirrorsReflector`; the example still does, for its `ioc` handler
 
 ## 9.1.0-beta-4
 

@@ -2,7 +2,8 @@
 
 ## 10.0.0
 
-* Released with the other Angel3 packages at 10.0.0
+* test: The service tests no longer use `MirrorsReflector`; the controller tests still do, as `WebSocketController` finds its `@ExposeWs` actions by reflection
+* chore: Released with the other Angel3 packages at 10.0.0
 
 ## 9.1.0
 

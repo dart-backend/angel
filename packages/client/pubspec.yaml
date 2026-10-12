@@ -18,7 +18,6 @@ dependencies:
   path: ^1.8.0
   logging: ^1.1.0
 dev_dependencies:
-  angel3_container_mirrors: ^10.0.0
   angel3_framework: ^10.0.0
   angel3_model: ^10.0.0
   angel3_mock_request: ^10.0.0

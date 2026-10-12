@@ -1,5 +1,4 @@
 import 'package:angel3_auth/angel3_auth.dart';
-import 'package:angel3_container_mirrors/angel3_container_mirrors.dart';
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_framework/http.dart';
 import 'package:collection/collection.dart' show IterableExtension;
@@ -33,7 +32,7 @@ class User extends Model {
 void main() async {
   hierarchicalLoggingEnabled = true;
 
-  Angel app = Angel(reflector: MirrorsReflector());
+  Angel app = Angel();
   AngelHttp angelHttp = AngelHttp(app);
   app.use('/users', MapService());
 
