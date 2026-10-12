@@ -32,28 +32,27 @@ class MongoService extends Service<String, Map<String, dynamic>> {
 
     for (var key in params.keys) {
       if ((key == r'$sort' || key == r'$query') && useQuery) {
-        if (params[key] is Map) {
-          // If they send a map, then we'll sort by every key in the map
-
-          for (var fieldName in params[key].keys.where((x) => x is String)) {
-            var sorter = params[key][fieldName];
-            if (sorter is num && fieldName is String) {
-              result = result.sortBy(fieldName, descending: sorter == -1);
-            } else if (sorter is String && fieldName is String) {
-              result = result.sortBy(fieldName, descending: sorter == '-1');
-            } else if (sorter is SelectorBuilder) {
-              result = result.and(sorter);
-            }
+        result = _sort(result, params[key]);
+      } else if (key == r'$limit' && useQuery) {
+        result = _limit(result, params[key]);
+      } else if (key == 'query' && useQuery && params[key] is Map) {
+        var query = params[key] as Map;
+        query.forEach((key, v) {
+          // In a query string, `$sort` and `$limit` sort and limit; the
+          // other special keys (e.g. an auth `token`) are not filters.
+          if (key == r'$sort') {
+            result = _sort(result, v);
+            return;
+          } else if (key == r'$limit') {
+            result = _limit(result, v);
+            return;
+          } else if (Service.specialQueryKeys.contains(key)) {
+            return;
           }
-        } else if (params[key] is String && key == r'$sort') {
-          // If they send just a string, then we'll sort
-          // by that, ascending
-          result = result.sortBy(params[key] as String);
-        }
-      } else if (key == 'query' && useQuery) {
-        var query = params[key] as Map?;
-        query?.forEach((key, v) {
-          var value = v is Map<String, dynamic> ? _filterNoQuery(v) : v;
+
+          var value = v is Map
+              ? _filterNoQuery(Map<String, dynamic>.from(v))
+              : v;
 
           if (!_noQuery.contains(key) &&
               value is! RequestContext &&
@@ -65,6 +64,44 @@ class MongoService extends Service<String, Map<String, dynamic>> {
     }
 
     return result;
+  }
+
+  /// Applies a `$sort`: a map of field names to `1` (ascending) or `-1`
+  /// (descending), or, as a query string sends it, field names separated by
+  /// commas, each descending if it starts with `-` (`?$sort=-createdAt,to`).
+  static SelectorBuilder _sort(SelectorBuilder result, Object? sort) {
+    if (sort is Map) {
+      for (var fieldName in sort.keys.whereType<String>()) {
+        var sorter = sort[fieldName];
+        if (sorter is num) {
+          result = result.sortBy(fieldName, descending: sorter == -1);
+        } else if (sorter is String) {
+          result = result.sortBy(fieldName, descending: sorter == '-1');
+        } else if (sorter is SelectorBuilder) {
+          result = result.and(sorter);
+        }
+      }
+    } else if (sort is String) {
+      for (var field in sort.split(',').map((f) => f.trim())) {
+        var descending = field.startsWith('-');
+        if (descending) field = field.substring(1);
+        if (field.isNotEmpty) {
+          result = result.sortBy(field, descending: descending);
+        }
+      }
+    }
+    return result;
+  }
+
+  /// Applies a `$limit`, a non-negative count; anything else is a 400.
+  static SelectorBuilder _limit(SelectorBuilder result, Object? limit) {
+    var n = limit is int ? limit : int.tryParse(limit?.toString() ?? '');
+    if (n == null || n < 0) {
+      throw AngelHttpException.badRequest(
+        message: r'$limit must be a non-negative integer.',
+      );
+    }
+    return result.limit(n);
   }
 
   Map<String, dynamic> _jsonify(

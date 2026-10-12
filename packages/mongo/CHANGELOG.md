@@ -5,6 +5,7 @@
 * fix!: `modify` of a missing id is now a 404. It used to create a document instead, which over REST could overwrite another one
 * fix!: `remove` of a missing id is now a 404, instead of a 200 with `{"id": null}`. `remove('null')` removes the documents matching the query
 * feat: `create` now sets `createdAt` and `updatedAt`, and `update` keeps `createdAt`
+* feat: Clients can sort and limit with `$sort` and `$limit` in the query string, e.g. `?$sort=-createdAt,to&$limit=10`. They were used as filters, so the query matched nothing
 * fix: `create` now always inserts a new document. With any params, as every REST request has, it upserted on a query matching every document, so each `POST` after the first replaced an existing document
 * fix: `create` no longer stores a client-set `_id`, `id`, `createdAt` or `updatedAt`
 * fix: `readMany` now returns only the given ids, instead of every document
@@ -12,6 +13,7 @@
 * fix: A malformed id in `update` or `remove` is now a 400, instead of a 500
 * fix: Request-context keys are now removed from query maps nested more than one level deep
 * fix: `modify` no longer stores an `id` field in the document, and removes one stored by older versions
+* fix: The query-string keys the framework reserves (`page`, `token`) are no longer used as filters
 * docs: `MongoService` does not need reflection: the example and tests now create the app without a reflector, so they no longer use `MirrorsReflector` (which moved from `package:angel3_container/mirrors.dart` to the `angel3_container_mirrors` package)
 * docs: The example now starts a server, and the README example compiles
 * test: The tests use the server in `MONGO_HOST` (default `localhost`)

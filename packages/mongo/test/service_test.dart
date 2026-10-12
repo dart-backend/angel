@@ -1,6 +1,9 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_framework/http.dart';
+import 'package:http/http.dart' as http;
 import 'package:angel3_mongo/angel3_mongo.dart';
 import 'package:mongo_dart/mongo_dart.dart';
 import 'package:test/test.dart';
@@ -66,6 +69,68 @@ void main() {
       var created = await service.create({'to': 'a'});
       expect(DateTime.parse(created['createdAt'] as String), isA<DateTime>());
       expect(created['updatedAt'], created['createdAt']);
+    });
+  });
+
+  group('query string', () {
+    Future<List<String?>> titles(Map<String, dynamic> query) async => [
+      for (var d in await service.index(rest(query))) d['to'] as String?,
+    ];
+
+    setUp(() async {
+      for (var (to, rank) in [('b', 1), ('a', 2), ('c', 1)]) {
+        await service.create({'to': to, 'rank': rank});
+      }
+    });
+
+    test(r'$sort sorts ascending by a field', () async {
+      expect(await titles({r'$sort': 'to'}), ['a', 'b', 'c']);
+    });
+
+    test(r'$sort sorts descending by a field starting with -', () async {
+      expect(await titles({r'$sort': '-to'}), ['c', 'b', 'a']);
+    });
+
+    test(r'$sort takes several fields', () async {
+      expect(await titles({r'$sort': 'rank,-to'}), ['c', 'b', 'a']);
+    });
+
+    test(r'$sort combines with filters', () async {
+      expect(await titles({r'$sort': '-to', 'rank': 1}), ['c', 'b']);
+    });
+
+    test(r'$limit limits the results', () async {
+      expect(await titles({r'$sort': 'to', r'$limit': '2'}), ['a', 'b']);
+    });
+
+    test(r'a malformed $limit is a 400', () {
+      expect(() => titles({r'$limit': 'x'}), throwsStatus(400));
+    });
+
+    test('special keys such as token are not filters', () async {
+      expect(await titles({'token': 'abc', 'page': '1'}), hasLength(3));
+    });
+
+    test(r'allowQuery: false ignores a client $sort', () async {
+      service = MongoService(collection, allowQuery: false);
+      expect(
+        await titles({r'$sort': '-to', r'$limit': '1'}),
+        unorderedEquals(['a', 'b', 'c']),
+      );
+    });
+
+    test(r'$sort works over HTTP', () async {
+      var app = Angel()..use('/api', service);
+      var transport = AngelHttp(app);
+      await transport.startServer('127.0.0.1', 0);
+      addTearDown(transport.close);
+
+      var response = await http.get(
+        transport.uri.replace(path: '/api', query: r'$sort=-to&$limit=2'),
+        headers: {'accept': 'application/json'},
+      );
+      var body = json.decode(response.body) as List;
+      expect(body.map((d) => d['to']), ['c', 'b']);
     });
   });
 

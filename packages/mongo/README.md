@@ -54,7 +54,12 @@ You can query these services as follows:
     /path/to/service?foo=bar
 ```
 
-The above will query the database to find records where `foo` equals `bar`. Pass `allowQuery: false` to ignore queries from clients.
+The above will query the database to find records where `foo` equals `bar`. Two keys are not filters:
+
+* `$sort` sorts by one or more fields, separated by commas; a field starting with `-` sorts descending. For example, `?$sort=-createdAt` lists the newest first, and `?$sort=rank,-to` sorts by `rank`, then by `to` descending.
+* `$limit` returns at most that many records, e.g. `?$sort=-createdAt&$limit=10`.
+
+The other keys the framework reserves (`page` and `token`) are ignored. Pass `allowQuery: false` to ignore all of this in queries from clients.
 
 On the server, you can also pass a mongo_dart query as `query`, and sort with `$sort`:
 
