@@ -2,15 +2,15 @@
 
 ## 10.0.0
 
-* **Breaking:** removed `package:angel3_container/mirrors.dart`. `MirrorsReflector` is now in the new `angel3_container_mirrors` package (`package:angel3_container_mirrors/angel3_container_mirrors.dart`), so `angel3_container` no longer depends on `dart:mirrors`
-* Added `ReflectedParameter.hasDefaultValue`, set by `MirrorsReflector`
-* Fixed `Container.make` with `MirrorsReflector` ignoring named constructor parameters: required ones failed with `NoSuchMethodError`, and optional ones were left `null`
-* `Container.make` now leaves out an optional named parameter whose type is not registered and cannot be constructed (e.g. `{String? prefix}`), instead of failing
-* Fixed `Container.make` failing for constructor parameters with a default value (e.g. `[int retries = 3]`) when nothing is registered for their type; they now keep their default. **Behaviour change:** an optional positional parameter whose type is not registered is now left out (`null` or its default), instead of being constructed by reflection
-* `Container.make` leaves out an optional named parameter only when its type cannot be constructed (no reflection data, no default constructor, abstract or circular); errors thrown by a constructor or factory are no longer swallowed
-* `Container.make` now throws a `ReflectionException` for a circular dependency, instead of overflowing the stack, and leaves out an optional named parameter of the type being made (e.g. `Node({Node? next})`)
-* Fixed `registerLazySingleton`: once the container it was registered on had made an instance, child containers got that instance instead of their own
-* `registerLazySingleton` now returns `f`, as documented, instead of the factory wrapping it
+* fix!: `Container.make` no longer fails for constructor parameters with a default value (e.g. `[int retries = 3]`) when nothing is registered for their type; they now keep their default. An optional positional parameter whose type is not registered is now left out (`null` or its default), instead of being constructed by reflection
+* refactor!: Removed `package:angel3_container/mirrors.dart`. `MirrorsReflector` is now in the new `angel3_container_mirrors` package (`package:angel3_container_mirrors/angel3_container_mirrors.dart`), so `angel3_container` no longer depends on `dart:mirrors`
+* feat: Added `ReflectedParameter.hasDefaultValue`, set by `MirrorsReflector`
+* fix: `Container.make` with `MirrorsReflector` no longer ignores named constructor parameters: required ones failed with `NoSuchMethodError`, and optional ones were left `null`
+* fix: `Container.make` now leaves out an optional named parameter whose type is not registered and cannot be constructed (e.g. `{String? prefix}`), instead of failing
+* fix: `Container.make` leaves out an optional named parameter only when its type cannot be constructed (no reflection data, no default constructor, abstract or circular); errors thrown by a constructor or factory are no longer swallowed
+* fix: `Container.make` now throws a `ReflectionException` for a circular dependency, instead of overflowing the stack, and leaves out an optional named parameter of the type being made (e.g. `Node({Node? next})`)
+* fix: Child containers now get their own `registerLazySingleton` instance, even after the container it was registered on has made one; they used to get that container's instance
+* fix: `registerLazySingleton` now returns `f`, as documented, instead of the factory wrapping it
 
 ## 9.1.0
 
