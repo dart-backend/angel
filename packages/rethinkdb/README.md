@@ -3,7 +3,7 @@
 ![Pub Version (including pre-releases)](https://img.shields.io/pub/v/angel3_rethinkdb?include_prereleases)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 [![Discord](https://img.shields.io/discord/1060322353214660698)](https://discord.gg/3X6bxTUdCM)
-[![License](https://img.shields.io/github/license/dart-backend/angel)](https://github.com/dart-backend/angel/tree/master/packages/mongo/LICENSE)
+[![License](https://img.shields.io/github/license/dart-backend/angel)](https://github.com/dart-backend/angel/tree/master/packages/rethinkdb/LICENSE)
 
 This is RethinkDB service for Angel3 framework. RethinkDB is an open-source database for the realtime web.
 
@@ -13,56 +13,46 @@ Add the following to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  angel3_rethink: ^9.0.0
+  angel3_rethinkdb: ^10.0.0
 ```
 
 `belatuk-rethinkdb` driver will be used for connecting to RethinkDB.
 
 ## Usage
 
-This library exposes one class: `RethinkService`. By default, these services will listen to [changefeeds](https://www.rethinkdb.com/docs/changefeeds/ruby/) from the database, which makes them very suitable for WebSocket use. However, only `CREATED`, `UPDATED` and `REMOVED` events will be fired. Technically not
-a problem, as it lowers the number of events that need to be handled on the client side.
+This library exposes one class: `RethinkService`. It interacts with a query (usually a table) and serializes data to and from Maps. It does not need reflection, so an app using it can be created without a `reflector` and compiled with `dart compile exe`.
 
-## Model
-
-`Model` is class with no real functionality; however, it represents a basic document, and your services should host inherited classes. Other Angel service providers host `Model` as well, so you will easily be able to modify your application if you ever switch databases.
+By default, these services listen to [changefeeds](https://rethinkdb.com/docs/changefeeds/) from the database, which makes them very suitable for WebSocket use. A change made to the table by anyone fires `afterCreated`, `afterUpdated` or `afterRemoved` on the `HookedService` the service is mounted as. Pass `listenForChanges: false` to turn this off.
 
 ```dart
-class User extends Model {
-  String username;
-  String password;
-}
+void main() async {
+  var r = RethinkDb();
+  var conn = await r.connect(
+    db: 'testDB',
+    host: "localhost",
+    port: 28015,
+    user: "admin",
+    password: "",
+  );
 
-main() async {
-    var r = RethinkDb();
-    var conn = await r.connect(
-        db: 'testDB',
-        host: "localhost",
-        port: 28015,
-        user: "admin",
-        password: "");
+  var app = Angel();
+  app.use('/api/users', RethinkService(conn, r.table('users')));
 
-    app.use('/api/users', RethinkService(conn, r.table('users')));
-    
-    // Add type de/serialization if you want
-    app.use('/api/users', TypedService<User>(RethinkService(conn, r.table('users'))));
+  // You don't have to even use a table...
+  app.use(
+    '/api/pro_users',
+    RethinkService(conn, r.table('users').filter({'membership': 'pro'})),
+  );
 
-    // You don't have to even use a table...
-    app.use('/api/pro_users', RethinkService(conn, r.table('users').filter({'membership': 'pro'})));
-    
-    app.service('api/users').afterCreated.listen((event) {
-        print("New user: ${event.result}");
-    });
+  app.findHookedService('api/users')!.afterCreated.listen((event) {
+    print("New user: ${event.result}");
+  });
 }
 ```
 
-## RethinkService
+Wrap the service in a `TypedService` from `angel3_framework` to serialize to and from a class.
 
-This class interacts with a `Query` (usually a table) and serializes data to and from Maps.
-
-## RethinkTypedService<T>
-
-Does the same as above, but serializes to and from a target class using `belatuk_json_serializer` and it supports reflection.
+`read`, `modify`, `update` and `remove` act on the record whose id is in the path; an `id` in the body cannot change it. `update` of a missing id creates the record, and `modify` of one is a 404. A write that RethinkDB rejects is a 409 for a duplicate id, and a 400 otherwise.
 
 ## Querying
 
@@ -86,6 +76,8 @@ service.index({'query': (table) => table.getAll('foo')});
 // Or, a Map, which will be transformed into a `filter` query:
 service.index({'query': {'foo': 'bar', 'baz': 'quux'}});
 ```
+
+The query applies to `index`, and to `remove` with a `null` id, which removes every matching record (clients may only do that if `allowRemoveAll` is `true`). It is ignored by `read`, `modify`, `update` and `remove` of one record, so it cannot make them reach other records.
 
 You can also apply sorting by adding a `reql` parameter on the server-side.
 
