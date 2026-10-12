@@ -18,33 +18,33 @@ dependencies:
 
 ## Usage
 
-This library exposes one main class: `MongoService`.
-
-## Model
-
-`Model` is class with no real functionality; however, it represents a basic document, and your services should host inherited classes. Other Angel service providers host `Model` as well, so you will easily be able to modify your application if you ever switch databases.
+This library exposes one main class: `MongoService`. It interacts with a `DbCollection` (from mongo_dart) and serializes data to and from Maps. It does not need reflection, so an app using it can be created without a `reflector` and compiled with `dart compile exe`.
 
 ```dart
-class User extends Model {
-  String username;
-  String password;
-}
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_framework/http.dart';
+import 'package:angel3_mongo/angel3_mongo.dart';
+import 'package:mongo_dart/mongo_dart.dart';
 
 void main() async {
-    var db = Db('mongodb://localhost:27017/local');
-    await db.open();
-    
-    var service = app.use('/api/users', MongoService(db.collection("users")));
-    
-    service.afterCreated.listen((event) {
-        print("New user: ${event.result}");
-    });
+  var db = Db('mongodb://localhost:27017/testDB');
+  await db.open();
+  await db.authenticate("<username>", "<password>", authDb: "admin");
+
+  var app = Angel();
+  var service = app.use('/api/users', MongoService(db.collection('users')));
+
+  service.afterCreated.listen((event) {
+    print("New user: ${event.result}");
+  });
+
+  await AngelHttp(app).startServer('127.0.0.1', 3000);
 }
 ```
 
-## MongoService
+Wrap the service in a `TypedService` from `angel3_framework` to serialize to and from a class.
 
-This class interacts with `DbCollection` (from mongo_dart) and serializing data to and from Maps.
+The service manages each document's id and its `createdAt` and `updatedAt` timestamps, so clients cannot set them. Ids are MongoDB `ObjectId`s, sent to clients as hex strings in `id`; a malformed id is a 400 and a missing one a 404. `modify` merges the data into the document, and `update` replaces it, creating it if missing.
 
 ## Querying
 
@@ -54,13 +54,14 @@ You can query these services as follows:
     /path/to/service?foo=bar
 ```
 
-The above will query the database to find records where 'foo' equals 'bar'. The former will sort result in ascending order of creation, and so will the latter.
+The above will query the database to find records where `foo` equals `bar`. Pass `allowQuery: false` to ignore queries from clients.
+
+On the server, you can also pass a mongo_dart query as `query`, and sort with `$sort`:
 
 ```dart
-    List queried = await MyService.index({r"$query": where.id(ObjectId.fromHexString("some hex string"})));
+var queried = await service.index({'query': where.eq('foo', 'bar')});
+var newestFirst = await service.index({r'$sort': {'createdAt': -1}});
 ```
-
-And, you can use mongo_dart queries. Just pass it as `query` within `params`.
 
 See the tests for more usage examples.
 

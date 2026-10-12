@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_framework/http.dart';
 import 'package:angel3_mongo/angel3_mongo.dart';
@@ -5,6 +7,9 @@ import 'package:http/http.dart' as http;
 import 'package:belatuk_json_serializer/belatuk_json_serializer.dart' as god;
 import 'package:mongo_dart/mongo_dart.dart';
 import 'package:test/test.dart';
+
+/// The MongoDB server the tests use: `MONGO_HOST`, or `localhost`.
+final String mongoHost = Platform.environment['MONGO_HOST'] ?? 'localhost';
 
 final headers = {
   'accept': 'application/json',
@@ -25,7 +30,7 @@ void main() {
     Angel app;
     late AngelHttp transport;
     late http.Client client;
-    var db = Db('mongodb://localhost:27017/testDB');
+    var db = Db('mongodb://$mongoHost:27017/testDB');
 
     late DbCollection testData;
     String? url;
@@ -210,10 +215,13 @@ void main() {
         outputType: <Map>[].runtimeType,
       ) as List<Map>;
       expect(queried.length, equals(1));
-      expect(queried[0].keys.length, equals(2));
+      expect(
+        queried[0].keys,
+        unorderedEquals(['id', 'to', 'createdAt', 'updatedAt']),
+      );
       expect(queried[0]['id'], equals(world['id']));
       expect(queried[0]['to'], equals(world['to']));
-      //expect(queried[0]["createdAt"], equals(world["createdAt"]));
+      expect(queried[0]['createdAt'], equals(world['createdAt']));
 
       /*response = await client.get(Uri.parse("$url/api?\$sort.createdAt=-1"));
       print(response.body);
