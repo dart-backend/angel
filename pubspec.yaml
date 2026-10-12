@@ -62,4 +62,7 @@ dependencies:
   melos: ^8.1.0
 
 melos:
-
+  ide:
+    # Do not generate IntelliJ module files (melos_*.iml).
+    intellij:
+      enabled: false
