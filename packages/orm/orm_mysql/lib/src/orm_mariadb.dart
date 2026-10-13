@@ -34,12 +34,16 @@ class MariaDbExecutor extends QueryExecutor {
     String resultQuery = '',
     List<String> returningFields = const [],
   }) async {
-    // Change @id -> ?
-    for (var name in substitutionValues.keys) {
-      query = query.replaceAll('@$name', '?');
-    }
-
-    var params = substitutionValues.values.toList();
+    // Change @id -> ?, with the values in the order their placeholders
+    // appear. Matching whole names keeps `@name` from replacing part of
+    // `@name1`.
+    var params = <dynamic>[];
+    query = query.replaceAllMapped(RegExp(r'@(\w+)'), (m) {
+      var name = m[1]!;
+      if (!substitutionValues.containsKey(name)) return m[0]!;
+      params.add(substitutionValues[name]);
+      return '?';
+    });
     for (var i = 0; i < params.length; i++) {
       var v = params[i];
 

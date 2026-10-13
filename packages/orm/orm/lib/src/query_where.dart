@@ -37,10 +37,7 @@ abstract class QueryWhere {
       if (builder is JsonSqlExpressionBuilder) {
         conditions.add(builder.compileFor(key));
       } else if (builder is DateTimeSqlExpressionBuilder) {
-        conditions.add(
-          '${tableName == null ? '' : '$tableName.'}'
-          '${builder.compile()}',
-        );
+        conditions.add(builder.compileFor(key) ?? '');
       } else {
         conditions.add('$key ${builder.compile()}');
       }

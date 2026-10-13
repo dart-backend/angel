@@ -343,7 +343,8 @@ class DateTimeSqlExpressionBuilder extends SqlExpressionBuilder<DateTime> {
       _minute,
       _second;
 
-  String? _raw;
+  /// A predicate for the column it is given, when one was set directly.
+  String Function(String column)? _raw;
 
   DateTimeSqlExpressionBuilder(super.query, super.columnName);
 
@@ -362,7 +363,7 @@ class DateTimeSqlExpressionBuilder extends SqlExpressionBuilder<DateTime> {
 
   @override
   bool get hasValue =>
-      _raw?.isNotEmpty == true ||
+      _raw != null ||
       _year?.hasValue == true ||
       _month?.hasValue == true ||
       _day?.hasValue == true ||
@@ -372,7 +373,7 @@ class DateTimeSqlExpressionBuilder extends SqlExpressionBuilder<DateTime> {
 
   bool _change(String op, DateTime dt, bool time) {
     var dateString = time ? dateYmdHms.format(dt) : dateYmd.format(dt);
-    _raw = '$columnName $op \'$dateString\'';
+    _raw = (column) => "$column $op '$dateString'";
     return true;
   }
 
@@ -405,11 +406,13 @@ class DateTimeSqlExpressionBuilder extends SqlExpressionBuilder<DateTime> {
   }
 
   void isIn(Iterable<DateTime> values) {
-    _raw = '$columnName IN (${_quoted(values)})';
+    var quoted = _quoted(values);
+    _raw = (column) => '$column IN ($quoted)';
   }
 
   void isNotIn(Iterable<DateTime> values) {
-    _raw = '$columnName NOT IN (${_quoted(values)})';
+    var quoted = _quoted(values);
+    _raw = (column) => '$column NOT IN ($quoted)';
   }
 
   static String _quoted(Iterable<DateTime> values) =>
@@ -417,45 +420,48 @@ class DateTimeSqlExpressionBuilder extends SqlExpressionBuilder<DateTime> {
 
   void isBetween(DateTime lower, DateTime upper) {
     var l = dateYmdHms.format(lower), u = dateYmdHms.format(upper);
-    _raw = "$columnName BETWEEN '$l' and '$u'";
+    _raw = (column) => "$column BETWEEN '$l' and '$u'";
   }
 
   void isNotBetween(DateTime lower, DateTime upper) {
     var l = dateYmdHms.format(lower), u = dateYmdHms.format(upper);
-    _raw = "$columnName NOT BETWEEN '$l' and '$u'";
+    _raw = (column) => "$column NOT BETWEEN '$l' and '$u'";
   }
 
   void get isNull {
-    _raw = '$columnName IS NULL';
+    _raw = (column) => '$column IS NULL';
   }
 
   void get isNotNull {
-    _raw = '$columnName IS NOT NULL';
+    _raw = (column) => '$column IS NOT NULL';
   }
 
+  /// The predicates on this column, each with the column name, joined with
+  /// `AND`.
   @override
-  String? compile() {
-    if (_raw?.isNotEmpty == true) return _raw;
-    var parts = <String>[];
-    if (year.hasValue == true) {
-      parts.add('YEAR($columnName) ${year.compile()}');
-    }
-    if (month.hasValue == true) {
-      parts.add('MONTH($columnName) ${month.compile()}');
-    }
-    if (day.hasValue == true) {
-      parts.add('DAY($columnName) ${day.compile()}');
-    }
-    if (hour.hasValue == true) {
-      parts.add('HOUR($columnName) ${hour.compile()}');
-    }
-    if (minute.hasValue == true) {
-      parts.add('MINUTE($columnName) ${minute.compile()}');
-    }
-    if (second.hasValue == true) {
-      parts.add('SECOND($columnName) ${second.compile()}');
-    }
+  String? compile() => compileFor(columnName);
 
+  /// Like [compile], with [column] (e.g. `table.column`) as the column name.
+  ///
+  /// The parts of a date ([year], [month], ...) use the standard
+  /// `EXTRACT(... FROM column)`, which PostgreSQL and MySQL/MariaDB both
+  /// support; the second is rounded down, as PostgreSQL's has a fraction.
+  String? compileFor(String column) {
+    var raw = _raw;
+    if (raw != null) return raw(column);
+    var parts = <String>[
+      for (var (field, builder) in [
+        ('YEAR', _year),
+        ('MONTH', _month),
+        ('DAY', _day),
+        ('HOUR', _hour),
+        ('MINUTE', _minute),
+      ])
+        if (builder != null && builder.hasValue)
+          'EXTRACT($field FROM $column) ${builder.compile()}',
+      if (_second case var second? when second.hasValue)
+        'FLOOR(EXTRACT(SECOND FROM $column)) ${second.compile()}',
+    ];
     return parts.isEmpty ? null : parts.join(' AND ');
   }
 }

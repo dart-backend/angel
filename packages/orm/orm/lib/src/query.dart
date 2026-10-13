@@ -321,6 +321,23 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
     String? preamble,
     bool withFields = true,
     String? fromQuery,
+  }) => _compile(
+    trampoline,
+    includeTableName: includeTableName,
+    preamble: preamble,
+    withFields: withFields,
+    fromQuery: fromQuery,
+  );
+
+  /// [compile], with [rowsWhere] in place of the conditions set on the
+  /// query, when given: the WHERE clause, and LIMIT and OFFSET.
+  String _compile(
+    Set<String> trampoline, {
+    bool includeTableName = false,
+    String? preamble,
+    bool withFields = true,
+    String? fromQuery,
+    String? rowsWhere,
   }) {
     // One table MAY appear multiple times in a query.
     if (!canCompile(trampoline)) {
@@ -399,9 +416,9 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
       }
     }
 
-    var whereClause = where?.compile(
-      tableName: includeTableName ? tableName : null,
-    );
+    var whereClause =
+        rowsWhere ??
+        where?.compile(tableName: includeTableName ? tableName : null);
     if (whereClause?.isNotEmpty == true) {
       b.write(' WHERE $whereClause');
     }
@@ -410,8 +427,10 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
     if (orderByClause.isNotEmpty) {
       b.write(' ORDER BY $orderByClause');
     }
-    if (_limit != null) b.write(' LIMIT $_limit');
-    if (_offset != null) b.write(' OFFSET $_offset');
+    if (rowsWhere == null) {
+      if (_limit != null) b.write(' LIMIT $_limit');
+      if (_offset != null) b.write(' OFFSET $_offset');
+    }
     return b.toString();
   }
 
@@ -514,39 +533,89 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
     }
   }
 
+  /// Updates the rows that match [where] (at most [limit] of them, after
+  /// [offset]) with [values], and returns them as updated.
   Future<List<T>> update(QueryExecutor executor) async {
-    var updateSql = StringBuffer('UPDATE $tableName ');
     var valuesClause = values?.compileForUpdate(this);
-
-    if (valuesClause == '') {
+    if (valuesClause == null || valuesClause == '') {
       throw StateError('No values have been specified for update.');
     }
-    updateSql.write(' $valuesClause');
-    var whereClause = where?.compile();
-    if (whereClause?.isNotEmpty == true) {
-      updateSql.write(' WHERE $whereClause');
-    }
-    if (_limit != null) updateSql.write(' LIMIT $_limit');
+    var whereClause = where?.compile() ?? '';
+    var conditions = whereClause.isEmpty ? '' : ' WHERE $whereClause';
+    var limits = [
+      if (_limit != null) ' LIMIT $_limit',
+      if (_offset != null) ' OFFSET $_offset',
+    ].join();
 
-    var returning = fields.map(adornWithTableName).join(', ');
-    var sql = compile({});
-    var returningSql = '';
     if (executor.dialect is PostgreSQLDialect) {
-      sql = 'WITH $tableName as ($updateSql RETURNING $returning) $sql';
-    } else if (executor.dialect is MySQLDialect) {
-      returningSql = sql;
-      sql = '$updateSql';
-    } else {
+      // PostgreSQL has no UPDATE ... LIMIT: the rows are picked by ctid.
+      var rows = limits.isEmpty
+          ? conditions
+          : ' WHERE ctid IN (SELECT ctid FROM $tableName$conditions$limits)';
+      var returning = fields.map(adornWithTableName).join(', ');
+      // The updated rows, as RETURNING gives them: not filtered by the
+      // conditions again, which their new values may no longer match.
+      var select = _compile({}, rowsWhere: '');
+      var sql =
+          'WITH $tableName as (UPDATE $tableName $valuesClause$rows '
+          'RETURNING $returning) $select';
+      _log.fine("Update Query = $sql");
+      _log.fine("Substitution Values = $substitutionValues");
+      return deserializeList(
+        await executor.query(tableName, sql, substitutionValues),
+      );
+    }
+
+    if (executor.dialect is! MySQLDialect) {
       throw ArgumentError("Unsupported database dialect.");
     }
-    //_log.fine("Update Query = $sql");
 
+    if (!fields.contains('id')) {
+      // Without a primary key, the updated rows are selected again by the
+      // conditions, which their new values may no longer match.
+      var sql = 'UPDATE $tableName $valuesClause$conditions$limits';
+      _log.fine("Update Query = $sql");
+      return deserializeList(
+        await executor.query(
+          tableName,
+          sql,
+          substitutionValues,
+          returningQuery: compile({}),
+        ),
+      );
+    }
+
+    // MySQL has no RETURNING: find the rows first, then update and select
+    // exactly those, by id.
+    var found = await executor.query(
+      tableName,
+      'SELECT id FROM $tableName$conditions$limits',
+      substitutionValues,
+    );
+    if (found.isEmpty) return [];
+    var ids = [
+      for (var row in found)
+        if (row.first is int) '${row.first}' else '@${_bindId(row.first)}',
+    ].join(', ');
+
+    var sql = 'UPDATE $tableName $valuesClause WHERE id IN ($ids)';
     _log.fine("Update Query = $sql");
-    _log.fine("Substritution Values = $substitutionValues");
+    _log.fine("Substitution Values = $substitutionValues");
+    await executor.query(tableName, sql, substitutionValues);
+    return deserializeList(
+      await executor.query(
+        tableName,
+        _compile({}, rowsWhere: '${adornWithTableName('id')} IN ($ids)'),
+        substitutionValues,
+      ),
+    );
+  }
 
-    return executor
-        .query(tableName, sql, substitutionValues, returningQuery: returningSql)
-        .then((it) => deserializeList(it));
+  /// Binds a primary key that is not an int (e.g. a UUID) as a parameter.
+  String _bindId(Object? id) {
+    var name = reserveName('id');
+    substitutionValues[name] = id;
+    return name;
   }
 
   Future<Optional<T>> updateOne(QueryExecutor executor) {

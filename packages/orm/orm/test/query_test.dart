@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:angel3_orm/angel3_orm.dart';
 import 'package:test/test.dart';
 
@@ -11,6 +13,37 @@ class _JsonWhere extends QueryWhere {
 
   @override
   List<SqlExpressionBuilder> get expressionBuilders => [data];
+}
+
+/// Records the queries it is given; answers a `SELECT id` with [ids].
+class _RecordingExecutor extends QueryExecutor {
+  _RecordingExecutor(this.dialect, {this.ids = const []});
+
+  @override
+  final Dialect dialect;
+  final List<int> ids;
+  final queries = <String>[];
+
+  @override
+  Future<List<List>> query(
+    String tableName,
+    String query,
+    Map<String, dynamic> substitutionValues, {
+    String returningQuery = '',
+    String resultQuery = '',
+    List<String> returningFields = const [],
+  }) async {
+    queries.add(query);
+    return query.startsWith('SELECT id ')
+        ? [
+            for (var id in ids) [id],
+          ]
+        : [];
+  }
+
+  @override
+  Future<T> transaction<T>(FutureOr<T> Function(QueryExecutor) f) async =>
+      f(this);
 }
 
 class _Text {
@@ -54,6 +87,20 @@ void main() {
       expect(query.reserveName('name1'), 'name1');
       expect(query.reserveName('name'), 'name');
       expect(query.reserveName('name'), 'name2');
+    });
+
+    test('values compiled again reuse their parameter', () {
+      // E.g. one query inserted twice, with a new value the second time.
+      query.values.firstName = 'a';
+      query.values.compileInsert(query, 'employees');
+      query.values.firstName = 'b';
+      var sql = query.values.compileInsert(query, 'employees');
+      expect(sql, contains('@first_name'));
+      expect(
+        query.substitutionValues.keys.where((k) => k.startsWith('first')),
+        ['first_name'],
+      );
+      expect(query.substitutionValues['first_name'], 'b');
     });
 
     test('two values for the same column get separate parameters', () {
@@ -192,6 +239,100 @@ void main() {
         query.compile({}),
         contains('WHERE id = 1 OR (first_name = @first_name)'),
       );
+    });
+  });
+
+  group('DateTime parts', () {
+    test('use EXTRACT, which PostgreSQL and MySQL both support', () {
+      query.where!.createdAt
+        ..year.equals(2020)
+        ..month.equals(3)
+        ..second.equals(5);
+      expect(
+        query.where!.compile(),
+        'EXTRACT(YEAR FROM created_at) = 2020 AND '
+        'EXTRACT(MONTH FROM created_at) = 3 AND '
+        'FLOOR(EXTRACT(SECOND FROM created_at)) = 5',
+      );
+    });
+
+    test('every part, and a direct predicate, gets the table name', () {
+      query.where!.createdAt
+        ..year.equals(2020)
+        ..day.equals(1);
+      query.where!.updatedAt.isNull;
+      expect(
+        query.where!.compile(tableName: 'e'),
+        'EXTRACT(YEAR FROM e.created_at) = 2020 AND '
+        'EXTRACT(DAY FROM e.created_at) = 1 AND e.updated_at IS NULL',
+      );
+    });
+  });
+
+  group('update', () {
+    setUp(() {
+      query.where!.lastName.equals('old');
+      query.values.lastName = 'new';
+    });
+
+    group('on PostgreSQL', () {
+      late _RecordingExecutor executor;
+
+      setUp(() => executor = _RecordingExecutor(const PostgreSQLDialect()));
+
+      test('returns the updated rows without filtering them again', () async {
+        await query.update(executor);
+        var sql = executor.queries.single;
+        expect(
+          sql,
+          startsWith(
+            'WITH employees as (UPDATE employees SET last_name=@last_name1 '
+            'WHERE last_name = @last_name RETURNING ',
+          ),
+        );
+        var select = sql.substring(sql.indexOf(') SELECT ') + 2);
+        expect(select, isNot(contains('WHERE')));
+      });
+
+      test('picks the rows of a limit by ctid', () async {
+        query.limit(2);
+        await query.update(executor);
+        var sql = executor.queries.single;
+        expect(
+          sql,
+          contains(
+            'WHERE ctid IN (SELECT ctid FROM employees '
+            'WHERE last_name = @last_name LIMIT 2) RETURNING ',
+          ),
+        );
+        var select = sql.substring(sql.indexOf(') SELECT ') + 2);
+        expect(select, isNot(contains('LIMIT')));
+      });
+    });
+
+    group('on MySQL', () {
+      test('updates and returns exactly the matching rows, by id', () async {
+        var executor = _RecordingExecutor(const MySQLDialect(), ids: [3, 7]);
+        query.limit(2);
+        await query.update(executor);
+        expect(executor.queries, hasLength(3));
+        expect(
+          executor.queries[0],
+          'SELECT id FROM employees WHERE last_name = @last_name LIMIT 2',
+        );
+        expect(
+          executor.queries[1],
+          'UPDATE employees SET last_name=@last_name1 WHERE id IN (3, 7)',
+        );
+        expect(executor.queries[2], endsWith(' WHERE employees.id IN (3, 7)'));
+        expect(executor.queries[2], isNot(contains('last_name = @')));
+      });
+
+      test('updates nothing when no row matches', () async {
+        var executor = _RecordingExecutor(const MySQLDialect());
+        expect(await query.update(executor), isEmpty);
+        expect(executor.queries, hasLength(1));
+      });
     });
   });
 }

@@ -3,6 +3,8 @@
 ## 10.0.0
 
 * Released with the other Angel3 packages at 10.0.0
+* fix: `MariaDbExecutor` replaces each `@name` placeholder whole, and passes the values in the order the placeholders appear. A placeholder that starts with another's name (`@name1` and `@name`) was partly replaced, and the values were passed in the order they were set, which need not match the SQL
+* test: `performance_test.dart` has a `main`, so the test runner can load (and skip) it
 
 ## 9.1.0
 

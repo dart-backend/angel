@@ -1,7 +1,21 @@
 import 'query.dart';
 
 abstract class QueryValues {
+  // The parameter name reserved for each column, in [_namesQuery]; reused when
+  // the values are compiled again (e.g. a query inserted twice), so a value
+  // replaces the previous one instead of leaving it as an unused parameter.
+  final Map<String, String> _names = {};
+  Query? _namesQuery;
+
   Map<String, String> get casts => {};
+
+  String _nameFor(Query query, String column) {
+    if (!identical(query, _namesQuery)) {
+      _names.clear();
+      _namesQuery = query;
+    }
+    return _names[column] ??= query.reserveName(column);
+  }
 
   Map<String, dynamic> toMap();
 
@@ -44,7 +58,7 @@ abstract class QueryValues {
     for (var entry in data.entries) {
       if (i++ > 0) b.write(', ');
 
-      var name = query.reserveName(entry.key);
+      var name = _nameFor(query, entry.key);
 
       var s = applyCast(entry.key, '@$name');
       query.substitutionValues[name] = entry.value;
@@ -96,7 +110,7 @@ abstract class QueryValues {
       b.write(entry.key);
       b.write('=');
 
-      var name = query.reserveName(entry.key);
+      var name = _nameFor(query, entry.key);
       var s = applyCast(entry.key, '@$name');
       query.substitutionValues[name] = entry.value;
       b.write(s);
