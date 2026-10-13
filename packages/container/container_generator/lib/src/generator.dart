@@ -1,4 +1,5 @@
 import 'package:analyzer/dart/ast/ast.dart';
+import 'package:analyzer/dart/ast/visitor.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/element/type.dart';
@@ -7,9 +8,13 @@ import 'package:build/build.dart';
 import 'package:path/path.dart' as p;
 import 'package:source_gen/source_gen.dart';
 
-/// Generates, for a library with `@injectable` classes, one [ReflectionData]
-/// variable describing how to construct them, named after the file (e.g.
-/// `servicesReflection` for `services.dart`).
+/// Generates, for a library with `@injectable` classes or top-level
+/// functions, one [ReflectionData] variable describing them, named after the
+/// file (e.g. `servicesReflection` for `services.dart`).
+///
+/// For a class, that is how to construct it, its annotations, and its public
+/// instance methods (with their parameters and annotations, and how to read
+/// them from an instance); for a function, its parameters and annotations.
 ///
 /// The generated code calls each class's unnamed constructor without
 /// `dart:mirrors`: directly, or with `Function.apply` and symbol literals when
@@ -22,26 +27,46 @@ class StaticReflectionGenerator extends Generator {
 
   @override
   Future<String?> generate(LibraryReader library, BuildStep buildStep) async {
-    var classes = [
-      for (var annotated in library.annotatedWith(_injectable))
-        _checkClass(annotated.element),
-    ];
-    if (classes.isEmpty) return null;
+    var classes = <ClassElement>[];
+    var functions = <TopLevelFunctionElement>[];
+    for (var annotated in library.annotatedWith(_injectable)) {
+      switch (_check(annotated.element)) {
+        case ClassElement clazz:
+          classes.add(clazz);
+        case TopLevelFunctionElement function:
+          functions.add(function);
+      }
+    }
+    if (classes.isEmpty && functions.isEmpty) return null;
 
     var out = StringBuffer()
       ..writeln(
-        '/// How to construct the `@injectable` classes of this library; pass '
-        'it to [StaticReflector.combine].',
+        '/// How to construct, and reflect upon, the `@injectable` classes and '
+        'functions of this library; pass it to [StaticReflector.combine].',
       )
       ..writeln(
         'final ${reflectionVariableName(buildStep.inputId.path)} = '
-        'ReflectionData(types: {',
+        'ReflectionData(',
       );
-    for (var clazz in classes) {
-      out.writeln('  ${clazz.name}: ${await _describe(clazz, buildStep)},');
+    if (classes.isNotEmpty) {
+      out.writeln('types: {');
+      for (var clazz in classes) {
+        out.writeln('  ${clazz.name}: ${await _describe(clazz, buildStep)},');
+      }
+      out.writeln('},');
+    }
+    if (functions.isNotEmpty) {
+      out.writeln('functions: {');
+      for (var function in functions) {
+        out.writeln(
+          '  ${function.name}: '
+          '${await _function(function, function.formalParameters, buildStep)},',
+        );
+      }
+      out.writeln('},');
     }
     out
-      ..writeln('});')
+      ..writeln(');')
       ..writeln()
       ..writeln('Type _\$typeOf<T>() => T;');
     if (out.toString().contains('_\$named(')) {
@@ -57,10 +82,19 @@ class StaticReflectionGenerator extends Generator {
     return out.toString();
   }
 
-  ClassElement _checkClass(Element element) {
+  Element _check(Element element) {
+    if (element is TopLevelFunctionElement) {
+      if (element.typeParameters.isNotEmpty) {
+        throw InvalidGenerationSourceError(
+          '@injectable does not support generic functions.',
+          element: element,
+        );
+      }
+      return element;
+    }
     if (element is! ClassElement) {
       throw InvalidGenerationSourceError(
-        '@injectable can only be applied to classes.',
+        '@injectable can only be applied to classes and top-level functions.',
         element: element,
       );
     }
@@ -83,15 +117,53 @@ class StaticReflectionGenerator extends Generator {
 
   Future<String> _describe(ClassElement clazz, BuildStep buildStep) async {
     var name = clazz.name!;
+    var fields = <String>["'${_escape(name)}'", name];
+
     var constructor = clazz.unnamedConstructor;
-    if (constructor == null ||
-        constructor.isPrivate ||
-        (clazz.isAbstract && !constructor.isFactory)) {
-      // Described, but cannot be constructed.
-      return "StaticReflectedClass('${_escape(name)}', $name)";
+    // An abstract class without a factory constructor cannot be constructed.
+    if (constructor != null &&
+        !constructor.isPrivate &&
+        !(clazz.isAbstract && !constructor.isFactory)) {
+      fields
+        ..add(
+          'parameters: '
+          '${await _parameters(constructor.formalParameters, buildStep)}',
+        )
+        ..add('create: (p, n) => ${_create(name, constructor)}');
     }
 
-    var parameters = <String>[];
+    var annotations = await _annotations(clazz, buildStep);
+    if (annotations != '[]') fields.add('annotations: $annotations');
+
+    // The public instance methods declared in the class, which e.g. `@Expose`
+    // controllers route to.
+    var methods = [
+      for (var method in clazz.methods)
+        if (!method.isStatic && !method.isPrivate && !method.isOperator) method,
+    ];
+    if (methods.isNotEmpty) {
+      var described = [
+        for (var method in methods)
+          await _function(method, method.formalParameters, buildStep),
+      ];
+      var cases = [
+        for (var method in methods)
+          "'${_escape(method.name!)}' => (o as $name).${method.name}",
+      ];
+      fields
+        ..add('methods: [${described.join(', ')}]')
+        ..add(
+          'getMember: (o, name) => switch (name) '
+          '{${cases.join(', ')}, _ => null}',
+        );
+    }
+
+    return 'StaticReflectedClass(${fields.join(', ')})';
+  }
+
+  /// A call to [constructor] of the class [name] with the arguments the
+  /// container passes: `p` (positional) and `n` (named).
+  String _create(String name, ConstructorElement constructor) {
     var positional = <String>[];
     var named = <String>[];
     var symbols = <String>[];
@@ -99,17 +171,9 @@ class StaticReflectionGenerator extends Generator {
     for (var parameter in constructor.formalParameters) {
       var paramName = parameter.name!;
       var key = "'${_escape(paramName)}'";
-      var type = await _typeSource(parameter, buildStep);
-      var isRequired =
-          parameter.isRequiredPositional || parameter.isRequiredNamed;
-      parameters.add(
-        'ReflectedParameter($key, const [], '
-        "StaticReflectedType('${_escape(type)}', _\$typeOf<$type>()), "
-        '$isRequired, ${parameter.isNamed}, '
-        'hasDefaultValue: ${parameter.hasDefaultValue})',
-      );
-
-      if (!isRequired) hasOptional = true;
+      if (!(parameter.isRequiredPositional || parameter.isRequiredNamed)) {
+        hasOptional = true;
+      }
       if (parameter.isNamed) {
         named.add('$paramName: n[$key]');
         symbols.add('$key: #$paramName');
@@ -124,14 +188,89 @@ class StaticReflectionGenerator extends Generator {
     // (including one inherited by a `super.` parameter). Symbol literals,
     // unlike `Symbol('name')`, are renamed with the code when it is
     // obfuscated.
-    var create = hasOptional
+    return hasOptional
         ? 'Function.apply($name.new, p'
               '${symbols.isEmpty ? '' : ', _\$named(n, const {${symbols.join(', ')}})'})'
         : '$name(${[...positional, ...named].join(', ')})';
+  }
 
-    return "StaticReflectedClass('${_escape(name)}', $name, "
-        'parameters: [${parameters.join(', ')}], '
-        'create: (p, n) => $create)';
+  /// A `StaticReflectedFunction` describing [function].
+  Future<String> _function(
+    Element function,
+    List<FormalParameterElement> parameters,
+    BuildStep buildStep,
+  ) async {
+    var annotations = await _annotations(function, buildStep);
+    return "StaticReflectedFunction('${_escape(function.name!)}', "
+        '${await _parameters(parameters, buildStep)}'
+        '${annotations == '[]' ? '' : ', annotations: $annotations'})';
+  }
+
+  Future<String> _parameters(
+    List<FormalParameterElement> parameters,
+    BuildStep buildStep,
+  ) async {
+    var described = <String>[];
+    for (var parameter in parameters) {
+      var type = await _typeSource(parameter, buildStep);
+      var annotations = await _annotations(parameter, buildStep);
+      described.add(
+        "StaticReflectedParameter('${_escape(parameter.name!)}', "
+        "StaticReflectedType('${_escape(type)}', _\$typeOf<$type>()), "
+        'isRequired: '
+        '${parameter.isRequiredPositional || parameter.isRequiredNamed}, '
+        'isNamed: ${parameter.isNamed}, '
+        'hasDefaultValue: ${parameter.hasDefaultValue}'
+        '${annotations == '[]' ? '' : ', annotations: $annotations'})',
+      );
+    }
+    return '[${described.join(', ')}]';
+  }
+
+  /// [element]'s annotations (except `@override`), as a list of expressions
+  /// that are valid in the generated part: a static member of a class that
+  /// an annotation names without its class is qualified with it.
+  Future<String> _annotations(Element element, BuildStep buildStep) async {
+    var node = await buildStep.resolver.astNodeFor(
+      element.firstFragment,
+      resolve: true,
+    );
+    var metadata = switch (node) {
+      AnnotatedNode(:var metadata) => metadata,
+      _ => const <Annotation>[],
+    };
+    var expressions = <String>[];
+    for (var annotation in metadata) {
+      var source = _qualifiedSource(annotation);
+      if (source == 'override') continue;
+      expressions.add(source);
+    }
+    return '[${expressions.join(', ')}]';
+  }
+
+  /// The annotation as an expression: its constant, or a `const` constructor
+  /// call.
+  static String _qualifiedSource(Annotation annotation) {
+    // Without the leading `@`.
+    var source = _qualifyStatics(
+      annotation,
+      annotation.toSource(),
+    ).substring(1);
+    return annotation.arguments == null ? source : 'const $source';
+  }
+
+  /// [source] (the source of [node]) with every static class member it names
+  /// without its class (as is allowed inside the class) qualified with it.
+  static String _qualifyStatics(AstNode node, String source) {
+    var finder = _StaticReferences();
+    node.accept(finder);
+    var result = source;
+    // From the end, so the offsets of earlier references stay valid.
+    for (var (offset, qualifier) in finder.references.reversed) {
+      var at = offset - node.offset;
+      result = '${result.substring(0, at)}$qualifier.${result.substring(at)}';
+    }
+    return result;
   }
 
   /// The parameter's type, without a trailing `?`, as written in the source
@@ -283,4 +422,32 @@ String reflectionVariableName(String path) {
   var start = camel.codeUnitAt(0);
   if (start >= 0x30 && start <= 0x39) camel = '\$$camel';
   return '${camel}Reflection';
+}
+
+/// Finds the static class members a node names without their class, with the
+/// class name to qualify each with.
+class _StaticReferences extends RecursiveAstVisitor<void> {
+  final references = <(int, String)>[];
+
+  @override
+  void visitSimpleIdentifier(SimpleIdentifier node) {
+    var element = node.element;
+    var enclosing = element?.enclosingElement;
+    var isStatic = switch (element) {
+      ExecutableElement(:var isStatic) => isStatic,
+      FieldElement(:var isStatic) => isStatic,
+      _ => false,
+    };
+    var parent = node.parent;
+    var isQualified =
+        (parent is PrefixedIdentifier && parent.identifier == node) ||
+        (parent is PropertyAccess && parent.propertyName == node) ||
+        (parent is MethodInvocation &&
+            parent.methodName == node &&
+            parent.target != null);
+    if (isStatic && enclosing is InterfaceElement && !isQualified) {
+      references.add((node.offset, enclosing.name!));
+    }
+    super.visitSimpleIdentifier(node);
+  }
 }

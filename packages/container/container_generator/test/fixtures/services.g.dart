@@ -6,64 +6,61 @@ part of 'services.dart';
 // StaticReflectionGenerator
 // **************************************************************************
 
-/// How to construct the `@injectable` classes of this library; pass it to [StaticReflector.combine].
+/// How to construct, and reflect upon, the `@injectable` classes and functions of this library; pass it to [StaticReflector.combine].
 final servicesReflection = ReflectionData(
   types: {
     Config: StaticReflectedClass(
       'Config',
       Config,
       parameters: [
-        ReflectedParameter(
+        StaticReflectedParameter(
           'name',
-          const [],
           StaticReflectedType('String', _$typeOf<String>()),
-          false,
-          false,
+          isRequired: false,
+          isNamed: false,
           hasDefaultValue: true,
         ),
       ],
       create: (p, n) => Function.apply(Config.new, p),
+      annotations: [injectable],
     ),
     Logger: StaticReflectedClass(
       'Logger',
       Logger,
       parameters: [],
       create: (p, n) => Logger(),
+      annotations: [injectable],
     ),
     Greeter: StaticReflectedClass(
       'Greeter',
       Greeter,
       parameters: [
-        ReflectedParameter(
+        StaticReflectedParameter(
           'config',
-          const [],
           StaticReflectedType('Config', _$typeOf<Config>()),
-          true,
-          false,
+          isRequired: true,
+          isNamed: false,
           hasDefaultValue: false,
         ),
-        ReflectedParameter(
+        StaticReflectedParameter(
           'log',
-          const [],
           StaticReflectedType('Logger', _$typeOf<Logger>()),
-          false,
-          true,
+          isRequired: false,
+          isNamed: true,
           hasDefaultValue: false,
         ),
-        ReflectedParameter(
+        StaticReflectedParameter(
           'retries',
-          const [],
           StaticReflectedType('int', _$typeOf<int>()),
-          false,
-          true,
+          isRequired: false,
+          isNamed: true,
           hasDefaultValue: true,
         ),
-        ReflectedParameter(
+        StaticReflectedParameter(
           'queue',
-          const [],
           StaticReflectedType('col.Queue<int>', _$typeOf<col.Queue<int>>()),
-          false,
-          true,
+          isRequired: false,
+          isNamed: true,
           hasDefaultValue: false,
         ),
       ],
@@ -72,69 +69,72 @@ final servicesReflection = ReflectionData(
         p,
         _$named(n, const {'log': #log, 'retries': #retries, 'queue': #queue}),
       ),
+      annotations: [injectable],
     ),
     Mailer: StaticReflectedClass(
       'Mailer',
       Mailer,
       parameters: [
-        ReflectedParameter(
+        StaticReflectedParameter(
           'config',
-          const [],
           StaticReflectedType('Config', _$typeOf<Config>()),
-          true,
-          true,
+          isRequired: true,
+          isNamed: true,
           hasDefaultValue: false,
         ),
       ],
       create: (p, n) => Mailer(config: n['config']),
+      annotations: [injectable],
     ),
     Clock: StaticReflectedClass(
       'Clock',
       Clock,
       parameters: [],
       create: (p, n) => Clock(),
+      annotations: [injectable],
+      methods: [StaticReflectedFunction('now', [])],
+      getMember: (o, name) => switch (name) {
+        'now' => (o as Clock).now,
+        _ => null,
+      },
     ),
-    Shape: StaticReflectedClass('Shape', Shape),
+    Shape: StaticReflectedClass('Shape', Shape, annotations: [injectable]),
     Callbacks: StaticReflectedClass(
       'Callbacks',
       Callbacks,
       parameters: [
-        ReflectedParameter(
+        StaticReflectedParameter(
           'onQueue',
-          const [],
           StaticReflectedType(
             'void Function(col.Queue<int>)',
             _$typeOf<void Function(col.Queue<int>)>(),
           ),
-          false,
-          true,
+          isRequired: false,
+          isNamed: true,
           hasDefaultValue: false,
         ),
-        ReflectedParameter(
+        StaticReflectedParameter(
           'pair',
-          const [],
           StaticReflectedType(
             '(int, {String s})',
             _$typeOf<(int, {String s})>(),
           ),
-          false,
-          true,
+          isRequired: false,
+          isNamed: true,
           hasDefaultValue: false,
         ),
-        ReflectedParameter(
+        StaticReflectedParameter(
           'single',
-          const [],
           StaticReflectedType('(int,)', _$typeOf<(int,)>()),
-          false,
-          true,
+          isRequired: false,
+          isNamed: true,
           hasDefaultValue: false,
         ),
-        ReflectedParameter(
+        StaticReflectedParameter(
           'handler',
-          const [],
           StaticReflectedType('Handler', _$typeOf<Handler>()),
-          false,
-          true,
+          isRequired: false,
+          isNamed: true,
           hasDefaultValue: false,
         ),
       ],
@@ -148,80 +148,80 @@ final servicesReflection = ReflectionData(
           'handler': #handler,
         }),
       ),
+      annotations: [injectable],
     ),
     Pay$Pal: StaticReflectedClass(
       'Pay\$Pal',
       Pay$Pal,
       parameters: [
-        ReflectedParameter(
+        StaticReflectedParameter(
           'a\$b',
-          const [],
           StaticReflectedType('int', _$typeOf<int>()),
-          false,
-          true,
+          isRequired: false,
+          isNamed: true,
           hasDefaultValue: true,
         ),
       ],
       create: (p, n) =>
           Function.apply(Pay$Pal.new, p, _$named(n, const {'a\$b': #a$b})),
+      annotations: [injectable],
     ),
     Sub: StaticReflectedClass(
       'Sub',
       Sub,
       parameters: [
-        ReflectedParameter(
+        StaticReflectedParameter(
           'ids',
-          const [],
           StaticReflectedType('col.HashSet<int>', _$typeOf<col.HashSet<int>>()),
-          true,
-          false,
+          isRequired: true,
+          isNamed: false,
           hasDefaultValue: false,
         ),
       ],
       create: (p, n) => Sub(p[0]),
+      annotations: [injectable],
     ),
     Limits: StaticReflectedClass(
       'Limits',
       Limits,
       parameters: [
-        ReflectedParameter(
+        StaticReflectedParameter(
           'max',
-          const [],
           StaticReflectedType('int', _$typeOf<int>()),
-          false,
-          true,
+          isRequired: false,
+          isNamed: true,
           hasDefaultValue: true,
         ),
       ],
       create: (p, n) =>
           Function.apply(Limits.new, p, _$named(n, const {'max': #max})),
+      annotations: [injectable],
     ),
     Labels: StaticReflectedClass(
       'Labels',
       Labels,
       parameters: [
-        ReflectedParameter(
+        StaticReflectedParameter(
           'labels',
-          const [],
           StaticReflectedType('List<String>', _$typeOf<List<String>>()),
-          false,
-          true,
+          isRequired: false,
+          isNamed: true,
           hasDefaultValue: true,
         ),
       ],
       create: (p, n) =>
           Function.apply(Labels.new, p, _$named(n, const {'labels': #labels})),
+      annotations: [injectable],
     ),
     Retrying: StaticReflectedClass(
       'Retrying',
       Retrying,
       parameters: [
-        ReflectedParameter(
+        StaticReflectedParameter(
           'retries',
-          const [],
           StaticReflectedType('int', _$typeOf<int>()),
-          false,
-          true,
+          isRequired: false,
+          isNamed: true,
           hasDefaultValue: true,
         ),
       ],
@@ -230,6 +230,7 @@ final servicesReflection = ReflectionData(
         p,
         _$named(n, const {'retries': #retries}),
       ),
+      annotations: [injectable],
     ),
   },
 );

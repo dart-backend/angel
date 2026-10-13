@@ -1,11 +1,11 @@
-# Angel3 Container Builder
+# Angel3 Container Generator
 
 ![Pub Version (including pre-releases)](https://img.shields.io/pub/v/angel3_container_generator?include_prereleases)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 [![Discord](https://img.shields.io/discord/1060322353214660698)](https://discord.gg/3X6bxTUdCM)
 [![License](https://img.shields.io/github/license/dart-backend/angel)](https://github.com/dart-backend/angel/tree/master/packages/container/container_generator/LICENSE)
 
-Generates the reflection data that `package:angel3_container` needs to construct classes, so `Container.make` works **without `dart:mirrors`**, including in AOT-compiled apps (`dart compile exe`).
+Generates the reflection data that `package:angel3_container` and Angel3 need, so dependency injection, `@Expose` controllers and `@Hooks`/`@Middleware` annotations work **without `dart:mirrors`**, including in AOT-compiled apps (`dart compile exe`), obfuscated or not.
 
 ## Usage
 
@@ -32,7 +32,10 @@ Generates the reflection data that `package:angel3_container` needs to construct
     var greeter = container.make<Greeter>();
     ```
 
-With Angel3, pass the reflector to the app: `Angel(reflector: StaticReflector.combine([...]))`.
+With Angel3, pass the reflector to the app: `Angel(reflector: StaticReflector.combine([...]))`. Mark with `@injectable`:
+
+* Controllers, so their `@Expose` methods are routed (see `example/controller.dart`), and services with `@Hooks` or `@Middleware`. The generated data lists each class's annotations and the public instance methods it declares, with their parameters (including annotations such as `@Query`) and annotations.
+* Top-level functions used as handlers, so `@Middleware` on them applies and `ioc(handler)` can inject their parameters.
 
 The generated code calls each class's unnamed constructor without `dart:mirrors`. A constructor with optional parameters is called with `Function.apply` and symbol literals (which keep working when the app is obfuscated), passing only the arguments the container resolved, so every other parameter keeps its default value, including a default inherited through `super.x`. `this.x`/`super.x` parameters and import prefixes are supported.
 
@@ -42,7 +45,9 @@ The generated code calls each class's unnamed constructor without `dart:mirrors`
 * Generic and private classes are not supported.
 * The library must import `package:angel3_container/angel3_container.dart` without a prefix, as the generated code uses its names.
 * A parameter type the library cannot name (for example a `super.x` parameter whose type only the superclass's library imports) fails the build with an error; import that type, or declare the parameter's type.
-* This covers `Container.make` only. Request handler injection (`ioc`), `@Expose` controllers and `@Hooks`/`@Middleware` metadata still need `MirrorsReflector`, or an explicit `injection:` for `ioc`.
+* Closures cannot be described, so `ioc((Foo foo) => ...)` needs an explicit `injection:` (or a named, `@injectable` top-level function).
+* Only the methods a class declares are listed (as `MirrorsReflector` lists a controller's), so `@Hooks` or `@Middleware` on a service method that the class inherits without overriding is not seen; `MirrorsReflector` does see it. To use one, override the method in the class and annotate the override.
+* Annotations are copied from the source. One that names a static member of its class without the class name is qualified with it; other names must be in scope in the library, as they are for the annotation itself.
 
 ## Development
 

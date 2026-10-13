@@ -111,11 +111,17 @@ class HookedService<Id, Data, T extends Service<Id, Data>>
     }
 
     void applyListeners(
+      String name,
       Function fn,
       HookedServiceEventDispatcher<Id, Data, T> dispatcher, [
       bool? isAfter,
     ]) {
-      var hooks = getAnnotation<Hooks>(fn, app.container.reflector);
+      var hooks = getMethodAnnotation<Hooks>(
+        inner,
+        name,
+        fn,
+        app.container.reflector,
+      );
       final listeners = <HookedServiceEventListener<Id, Data, T>>[
         ...isAfter == true ? after : before,
       ];
@@ -127,18 +133,18 @@ class HookedService<Id, Data, T extends Service<Id, Data>>
       listeners.forEach(dispatcher.listen);
     }
 
-    applyListeners(inner.index, beforeIndexed);
-    applyListeners(inner.read, beforeRead);
-    applyListeners(inner.create, beforeCreated);
-    applyListeners(inner.modify, beforeModified);
-    applyListeners(inner.update, beforeUpdated);
-    applyListeners(inner.remove, beforeRemoved);
-    applyListeners(inner.index, afterIndexed, true);
-    applyListeners(inner.read, afterRead, true);
-    applyListeners(inner.create, afterCreated, true);
-    applyListeners(inner.modify, afterModified, true);
-    applyListeners(inner.update, afterUpdated, true);
-    applyListeners(inner.remove, afterRemoved, true);
+    applyListeners('index', inner.index, beforeIndexed);
+    applyListeners('read', inner.read, beforeRead);
+    applyListeners('create', inner.create, beforeCreated);
+    applyListeners('modify', inner.modify, beforeModified);
+    applyListeners('update', inner.update, beforeUpdated);
+    applyListeners('remove', inner.remove, beforeRemoved);
+    applyListeners('index', inner.index, afterIndexed, true);
+    applyListeners('read', inner.read, afterRead, true);
+    applyListeners('create', inner.create, afterCreated, true);
+    applyListeners('modify', inner.modify, afterModified, true);
+    applyListeners('update', inner.update, afterUpdated, true);
+    applyListeners('remove', inner.remove, afterRemoved, true);
   }
 
   @override

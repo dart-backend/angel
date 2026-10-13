@@ -259,35 +259,30 @@ class InjectionRequest {
 }
 
 /// Predetermines what needs to be injected for a handler to run.
-InjectionRequest preInject(Function handler, Reflector reflector) {
-  var closureMirror = reflector.reflectFunction(handler)!;
-  if (closureMirror.parameters.isEmpty) return InjectionRequest();
+InjectionRequest preInject(Function handler, Reflector reflector) =>
+    injectionFor(reflector.reflectFunction(handler)!);
 
-  // Only reflected when a parameter has annotations: a reflector without
-  // information about [Parameter] (e.g. a StaticReflector) throws.
-  ReflectedType? parameterType;
-
-  return injectionFromParameters(
-    closureMirror.parameters.map(
-      (parameter) => InjectableParameter(
-        name: parameter.name,
-        type: parameter.type.reflectedType,
-        isRequired: parameter.isRequired,
-        isNamed: parameter.isNamed,
-        hasDefaultValue: parameter.hasDefaultValue,
-        annotation:
-            parameter.annotations
-                    .firstWhereOrNull(
-                      (m) => m.type.isAssignableTo(
-                        parameterType ??= reflector.reflectType(Parameter),
-                      ),
-                    )
-                    ?.reflectee
-                as Parameter?,
+/// Predetermines what needs to be injected to call a reflected [function],
+/// such as a method found through `Reflector.reflectClass`.
+InjectionRequest injectionFor(ReflectedFunction function) =>
+    injectionFromParameters(
+      function.parameters.map(
+        (parameter) => InjectableParameter(
+          name: parameter.name,
+          type: parameter.type.reflectedType,
+          isRequired: parameter.isRequired,
+          isNamed: parameter.isNamed,
+          hasDefaultValue: parameter.hasDefaultValue,
+          // Matched by value, so the reflector needs no information about
+          // the Parameter type itself.
+          annotation:
+              parameter.annotations
+                      .firstWhereOrNull((m) => m.reflectee is Parameter)
+                      ?.reflectee
+                  as Parameter?,
+        ),
       ),
-    ),
-  );
-}
+    );
 
 /// A reflector-independent description of one parameter of a DI-enabled
 /// handler, from which [injectionFromParameters] builds an [InjectionRequest].

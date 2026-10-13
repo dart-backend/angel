@@ -180,7 +180,9 @@ class Controller {
           return;
         }
 
-        var injection = preInject(reflectedMethod!, reflector);
+        // From the reflected method rather than its tear-off, which a
+        // reflector without dart:mirrors cannot reflect upon.
+        var injection = injectionFor(method);
 
         if (exposeDecl.allowNull.isNotEmpty == true) {
           injection.optional.addAll(exposeDecl.allowNull);
@@ -247,7 +249,7 @@ class Controller {
         routeMappings[name ?? ''] = routable.addRoute(
           httpMethod,
           path,
-          handleContained(reflectedMethod, injection),
+          handleContained(reflectedMethod!, injection),
           middleware: middleware,
         );
       }

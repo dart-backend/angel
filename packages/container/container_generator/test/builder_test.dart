@@ -56,9 +56,23 @@ part 'input.g.dart';
     expect(errors.join(), contains('does not support private classes'));
   });
 
-  test('the annotation on a non-class is rejected', () async {
-    var (errors, _) = await build('$header@injectable void f() {}');
-    expect(errors.join(), contains('can only be applied to classes'));
+  test('the annotation on a variable is rejected', () async {
+    var (errors, _) = await build('$header@injectable var x = 1;');
+    expect(
+      errors.join(),
+      contains('can only be applied to classes and top-level functions'),
+    );
+  });
+
+  test('a generic function is rejected', () async {
+    var (errors, _) = await build('$header@injectable void f<T>() {}');
+    expect(errors.join(), contains('does not support generic functions'));
+  });
+
+  test('a top-level function gets output', () async {
+    var (errors, output) = await build('$header@injectable void f(int x) {}');
+    expect(errors, isEmpty);
+    expect(output, isTrue);
   });
 
   test('a type that this library does not import is rejected', () async {

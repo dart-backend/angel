@@ -6,42 +6,40 @@ part of 'main.dart';
 // StaticReflectionGenerator
 // **************************************************************************
 
-/// How to construct the `@injectable` classes of this library; pass it to [StaticReflector.combine].
+/// How to construct, and reflect upon, the `@injectable` classes and functions of this library; pass it to [StaticReflector.combine].
 final mainReflection = ReflectionData(
   types: {
     Config: StaticReflectedClass(
       'Config',
       Config,
       parameters: [
-        ReflectedParameter(
+        StaticReflectedParameter(
           'greeting',
-          const [],
           StaticReflectedType('String', _$typeOf<String>()),
-          false,
-          false,
+          isRequired: false,
+          isNamed: false,
           hasDefaultValue: true,
         ),
       ],
       create: (p, n) => Function.apply(Config.new, p),
+      annotations: [injectable],
     ),
     Greeter: StaticReflectedClass(
       'Greeter',
       Greeter,
       parameters: [
-        ReflectedParameter(
+        StaticReflectedParameter(
           'config',
-          const [],
           StaticReflectedType('Config', _$typeOf<Config>()),
-          true,
-          false,
+          isRequired: true,
+          isNamed: false,
           hasDefaultValue: false,
         ),
-        ReflectedParameter(
+        StaticReflectedParameter(
           'punctuation',
-          const [],
           StaticReflectedType('String', _$typeOf<String>()),
-          false,
-          true,
+          isRequired: false,
+          isNamed: true,
           hasDefaultValue: true,
         ),
       ],
@@ -50,6 +48,22 @@ final mainReflection = ReflectionData(
         p,
         _$named(n, const {'punctuation': #punctuation}),
       ),
+      annotations: [injectable],
+      methods: [
+        StaticReflectedFunction('greet', [
+          StaticReflectedParameter(
+            'name',
+            StaticReflectedType('String', _$typeOf<String>()),
+            isRequired: true,
+            isNamed: false,
+            hasDefaultValue: false,
+          ),
+        ]),
+      ],
+      getMember: (o, name) => switch (name) {
+        'greet' => (o as Greeter).greet,
+        _ => null,
+      },
     ),
   },
 );

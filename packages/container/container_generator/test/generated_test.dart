@@ -91,7 +91,8 @@ void main() {
   });
 
   test('an implicitly const default stays the same const value', () {
-    var a = container.make<Labels>().labels, b = container.make<Labels>().labels;
+    var a = container.make<Labels>().labels,
+        b = container.make<Labels>().labels;
     expect(a, isEmpty);
     expect(a, same(b));
     expect(() => a.add('x'), throwsUnsupportedError);

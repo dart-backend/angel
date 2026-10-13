@@ -52,8 +52,15 @@ class StaticReflector extends Reflector {
     return functions[function];
   }
 
+  /// Describes [object] from [instances], or else from the
+  /// [StaticReflectedClass] of its runtime type in [types], whose
+  /// [StaticReflectedClass.getMember] then reads its members.
   @override
   ReflectedInstance? reflectInstance(Object object) {
+    var clazz = types[object.runtimeType];
+    if (!instances.containsKey(object) && clazz is StaticReflectedClass) {
+      return StaticReflectedInstance(object, clazz);
+    }
     if (!instances.containsKey(object)) {
       throw ArgumentError(
         'There is no reflection information available about $object.',

@@ -37,6 +37,31 @@ T? getAnnotation<T>(Object obj, Reflector? reflector) {
   return annotations == null ? null : matchingAnnotation<T>(annotations);
 }
 
+/// Reads the [T] annotation on the method [name] of [obj], whose tear-off is
+/// [method]: from the tear-off (with `dart:mirrors`), or else from the
+/// declaration of [name] in the class of [obj] (e.g. with generated reflection
+/// data, which cannot describe tear-offs).
+T? getMethodAnnotation<T>(
+  Object obj,
+  String name,
+  Function method,
+  Reflector? reflector,
+) {
+  var annotation = getAnnotation<T>(method, reflector);
+  if (annotation != null || reflector == null || !canReflect(reflector)) {
+    return annotation;
+  }
+  var declarations = tryReflect(() => reflector.reflectClass(obj.runtimeType))
+      ?.declarations;
+  for (var declaration in declarations ?? const <ReflectedDeclaration>[]) {
+    var function = declaration.function;
+    if (declaration.name == name && function != null) {
+      return matchingAnnotation<T>(function.annotations);
+    }
+  }
+  return null;
+}
+
 /// Runs [reflect], or returns `null` when the reflector has no information
 /// about what it reflects upon, as a [StaticReflector] or a generated
 /// reflector may not for every type and function.

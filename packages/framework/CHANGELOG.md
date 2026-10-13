@@ -2,6 +2,7 @@
 
 ## 10.0.0
 
+* feat: `@Expose` controllers, and `@Middleware`/`@Hooks` on services and their methods, work with a reflector that describes classes but not method tear-offs, such as a `StaticReflector` with data from `angel3_container_generator`: a controller's methods are injected from their reflected declarations (the new `injectionFor`), and a method's annotations are read from its class when its tear-off cannot be reflected. `@Query` and other `Parameter` annotations are recognized by value, so the reflector needs no information about `Parameter` itself
 * fix: A `Controller` in an app whose reflector has no information about it (e.g. a `StaticReflector` with data from `angel3_container_generator`) now applies the routes added in `configureRoutes`, as with reflection disabled, instead of failing with an `ArgumentError`. `@Expose` methods are not discovered then
 * fix: Injection works with a `StaticReflector` (or a generated reflector) that has no information about `Parameter`, or about a handler: `preInject` only reflects `Parameter` for a parameter with annotations, and a handler the reflector does not know has no `@Middleware`/`@Expose` annotations instead of failing `addRoute`
 * fix: An optional or named parameter whose type the reflector cannot construct is left out with any reflector, using the new `Container.isUnconstructible`; with a `StaticReflector` it used to fail the request with a 500
