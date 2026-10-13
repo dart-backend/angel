@@ -56,24 +56,19 @@ class AngelShelf
   /// error pipeline, so `app.errorHandler`, finalizers and logging apply as
   /// for any other error.
   ///
-  /// The request's framing headers are dropped first, as its context could not
-  /// be created with them. The error response never reads the body.
+  /// The request context drops the framing headers (see
+  /// [ShelfRequestContext.framingError]); the error response never reads the
+  /// body.
   Future<shelf.Response> _rejectFraming(
     AngelHttpException e,
     StackTrace st,
     shelf.Request request,
   ) async {
     app.logger.warning(e.message, e, st);
-    var stripped = request.change(
-      headers: {
-        HttpHeaders.contentLengthHeader: null,
-        HttpHeaders.transferEncodingHeader: null,
-      },
-    );
     var response = ShelfResponseContext(app);
-    var req = await createRequestContext(stripped, response);
-    var res = await createResponseContext(stripped, response, req);
-    return handleAngelHttpException(e, st, req, res, stripped, response);
+    var req = await createRequestContext(request, response);
+    var res = await createResponseContext(req.rawRequest, response, req);
+    return handleAngelHttpException(e, st, req, res, req.rawRequest, response);
   }
 
   Future<shelf.Response> handler(shelf.Request request) async {

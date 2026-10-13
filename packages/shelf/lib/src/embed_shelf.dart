@@ -11,6 +11,7 @@ RequestHandler embedShelf(
   shelf.Handler handler, {
   String? handlerPath,
   Map<String, Object>? context,
+  @Deprecated('Has no effect, as a shelf.Handler cannot return null.')
   bool throwOnNullResponse = false,
 }) {
   return (RequestContext req, ResponseContext res) async {
@@ -27,8 +28,6 @@ RequestHandler embedShelf(
     } on shelf.HijackException {
       // On hijack, do nothing, because the hijack handlers already call res.detach();
       return null;
-    } catch (e) {
-      rethrow;
     }
   };
 }

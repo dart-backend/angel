@@ -16,20 +16,52 @@ class ShelfRequestContext extends RequestContext {
   @override
   final String path;
 
+  /// Why the request's framing headers were invalid (see
+  /// [checkRequestFraming]), or `null` when they were valid.
+  ///
+  /// When this is set, `Content-Length` and `Transfer-Encoding` were removed
+  /// from [rawRequest] and [headers] (shelf sets `Content-Length` again for a
+  /// body of known length), and the request should be rejected with this
+  /// error; `AngelShelf` does so before the request is handled. The
+  /// constructor never throws for invalid framing.
+  final AngelHttpException? framingError;
+
   List<Cookie>? _cookies;
 
   @override
   final MockHttpHeaders headers = MockHttpHeaders();
 
-  /// Throws [AngelHttpException.badRequest] when [request]'s framing headers
-  /// are invalid; see [checkRequestFraming].
   ShelfRequestContext(
+    Angel angelApp,
+    Container container,
+    shelf.Request request,
+    String path,
+  ) : this._(angelApp, container, path, _checkOrStrip(request));
+
+  ShelfRequestContext._(
     this.angelApp,
     this.container,
-    shelf.Request request,
     this.path,
-  ) : rawRequest = checkRequestFraming(request) {
+    (shelf.Request, AngelHttpException?) framing,
+  ) : rawRequest = framing.$1,
+      framingError = framing.$2 {
     rawRequest.headers.forEach(headers.add);
+  }
+
+  static (shelf.Request, AngelHttpException?) _checkOrStrip(
+    shelf.Request request,
+  ) {
+    try {
+      return (checkRequestFraming(request), null);
+    } on AngelHttpException catch (e) {
+      var stripped = request.change(
+        headers: {
+          HttpHeaders.contentLengthHeader: null,
+          HttpHeaders.transferEncodingHeader: null,
+        },
+      );
+      return (stripped, e);
+    }
   }
 
   @override
@@ -133,7 +165,10 @@ shelf.Request _checkFraming(shelf.Request request) {
 
   if (contentLength == null) return request;
 
-  var lengths = contentLength.split(',').map(_parseContentLength).toSet();
+  var lengths = contentLength
+      .split(',')
+      .map((v) => MockHttpHeaders.tryParseContentLength(v.trim()))
+      .toSet();
   if (lengths.length != 1 || lengths.first == null) {
     throw AngelHttpException.badRequest(
       message: 'Invalid Content-Length: $contentLength',
@@ -143,15 +178,4 @@ shelf.Request _checkFraming(shelf.Request request) {
   var length = '${lengths.first}';
   if (length == contentLength) return request;
   return request.change(headers: {HttpHeaders.contentLengthHeader: length});
-}
-
-final RegExp _digits = RegExp(r'^[0-9]+$');
-
-// As in MockHttpHeaders: digits only, and fewer than 16 significant digits.
-int? _parseContentLength(String value) {
-  value = value.trim();
-  if (!_digits.hasMatch(value)) return null;
-  var significant = value.replaceFirst(RegExp(r'^0+(?=.)'), '');
-  if (significant.length >= 16) return null;
-  return int.parse(significant);
 }

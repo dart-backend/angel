@@ -16,12 +16,38 @@ void main() {
         '/',
       );
 
-  Matcher badRequest = throwsA(
-    isA<AngelHttpException>().having((e) => e.statusCode, 'statusCode', 400),
-  );
+  // The context is still created, with the invalid framing headers removed.
+  // (shelf sets Content-Length again for a body of known length, such as
+  // these empty ones.)
+  Matcher badRequest = predicate<ShelfRequestContext Function()>((create) {
+    var rq = create();
+    return rq.framingError?.statusCode == 400 &&
+        rq.headers.contentLength == (rq.rawRequest.contentLength ?? -1) &&
+        rq.headers.contentLength <= 0 &&
+        !rq.headers.chunkedTransferEncoding &&
+        !rq.rawRequest.headers.containsKey('transfer-encoding');
+  }, 'a request context with a 400 framingError and no framing headers');
+
+  test('invalid framing headers are removed from a streamed request', () {
+    var rq = ShelfRequestContext(
+      app,
+      app.container.createChild(),
+      shelf.Request(
+        'POST',
+        Uri.parse('http://localhost/'),
+        headers: {'content-length': '5,6'},
+        body: Stream.value('hello'.codeUnits),
+      ),
+      '/',
+    );
+    expect(rq.framingError?.statusCode, 400);
+    expect(rq.rawRequest.headers, isNot(contains('content-length')));
+    expect(rq.headers.contentLength, -1);
+  });
 
   test('a valid content-length is kept', () {
     var rq = request({'content-length': '5', 'x-foo': 'bar'});
+    expect(rq.framingError, isNull);
     expect(rq.headers.contentLength, 5);
     expect(rq.rawRequest.contentLength, 5);
     expect(rq.headers.value('x-foo'), 'bar');
@@ -84,6 +110,16 @@ void main() {
     var checked = checkRequestFraming(raw);
     expect(checked, isNot(same(raw)));
     expect(checkRequestFraming(checked), same(checked));
+    expect(
+      () => checkRequestFraming(
+        shelf.Request(
+          'POST',
+          Uri.parse('http://localhost/'),
+          headers: {'content-length': 'abc'},
+        ),
+      ),
+      throwsA(isA<AngelHttpException>()),
+    );
   });
 
   test('AngelShelf.middleware passes the checked request on', () async {

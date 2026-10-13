@@ -39,9 +39,17 @@ Future<shelf.Request> convertRequest(
 
   onHijack = (void Function(StreamChannel<List<int>> channel) hijack) async {
     try {
-      print('a');
-      await res.detach();
-      print('b');
+      var raw = await res.detach();
+      if (raw is HttpResponse) {
+        // As shelf_io does: the handler gets the socket, and writes the whole
+        // HTTP response itself.
+        var socket = await raw.detachSocket(writeHeaders: false);
+        hijack(StreamChannel(socket, socket));
+        return;
+      }
+
+      // Other drivers have no socket to hand over: the channel writes the
+      // response body.
       var ctrl = StreamChannelController<List<int>>();
       if (req.hasParsedBody) {
         req.body!.listen(
