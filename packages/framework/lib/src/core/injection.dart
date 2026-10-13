@@ -122,14 +122,11 @@ Future resolveInjection(
           throwOnUnresolved,
           container,
         );
-      } on ReflectionException {
-        // Only "cannot be constructed"; an error thrown while constructing
-        // it is a real failure, and must reach the client as one.
-        return null;
-      } on Error catch (e) {
-        // dart:mirrors reports an abstract class with a private error type,
-        // so it can only be recognised by its message.
-        if ('$e'.startsWith('Cannot instantiate abstract class')) return null;
+      } catch (e) {
+        // Only "cannot be constructed", whichever reflector reports it; an
+        // error thrown while constructing it is a real failure, and must
+        // reach the client as one.
+        if (Container.isUnconstructible(e)) return null;
         rethrow;
       }
     } else {
@@ -264,7 +261,11 @@ class InjectionRequest {
 /// Predetermines what needs to be injected for a handler to run.
 InjectionRequest preInject(Function handler, Reflector reflector) {
   var closureMirror = reflector.reflectFunction(handler)!;
-  var parameterType = reflector.reflectType(Parameter);
+  if (closureMirror.parameters.isEmpty) return InjectionRequest();
+
+  // Only reflected when a parameter has annotations: a reflector without
+  // information about [Parameter] (e.g. a StaticReflector) throws.
+  ReflectedType? parameterType;
 
   return injectionFromParameters(
     closureMirror.parameters.map(
@@ -277,7 +278,9 @@ InjectionRequest preInject(Function handler, Reflector reflector) {
         annotation:
             parameter.annotations
                     .firstWhereOrNull(
-                      (m) => m.type.isAssignableTo(parameterType),
+                      (m) => m.type.isAssignableTo(
+                        parameterType ??= reflector.reflectType(Parameter),
+                      ),
                     )
                     ?.reflectee
                 as Parameter?,

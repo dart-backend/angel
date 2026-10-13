@@ -175,7 +175,7 @@ class Container {
           try {
             named[param.name] = _make(type, resolving);
           } catch (e) {
-            if (!_isUnconstructible(e)) rethrow;
+            if (!isUnconstructible(e)) rethrow;
             // Left out; a required parameter then fails in newInstance.
           }
           continue;
@@ -208,7 +208,9 @@ class Container {
   /// as opposed to being thrown by a constructor or factory: a
   /// [ReflectionException], a reflector that cannot reflect the type
   /// ([UnsupportedError], [ArgumentError]), or an abstract class.
-  static bool _isUnconstructible(Object error) =>
+  ///
+  /// Use it to leave an optional dependency out when [make] cannot build it.
+  static bool isUnconstructible(Object error) =>
       error is ReflectionException ||
       error is UnsupportedError ||
       error is ArgumentError ||

@@ -101,7 +101,9 @@ class AngelHttp
   }
 
   /// Handles [request], for use with a server created outside of
-  /// [startServer]. Requests that cannot be handled get `400 Bad Request`.
+  /// [startServer]. Like [handleRawRequestSafely], the returned future never
+  /// fails: a malformed request gets `400 Bad Request`, and an error in the
+  /// server `500 Internal Server Error`; both are logged.
   Future handleRequest(HttpRequest request) =>
       handleRawRequestSafely(request, request.response);
 

@@ -2,6 +2,7 @@
 
 ## 10.0.0
 
+* feat: Added `Container.isUnconstructible`, which tells whether an error from `make` means the type cannot be constructed by reflection (rather than an error thrown by its constructor)
 * fix!: `Container.make` no longer fails for constructor parameters with a default value (e.g. `[int retries = 3]`) when nothing is registered for their type; they now keep their default. An optional positional parameter whose type is not registered is now left out (`null` or its default), instead of being constructed by reflection
 * refactor!: Removed `package:angel3_container/mirrors.dart`. `MirrorsReflector` is now in the new `angel3_container_mirrors` package (`package:angel3_container_mirrors/angel3_container_mirrors.dart`), so `angel3_container` no longer depends on `dart:mirrors`
 * feat: Added `ReflectedParameter.hasDefaultValue`, set by `MirrorsReflector`

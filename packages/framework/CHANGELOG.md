@@ -2,6 +2,8 @@
 
 ## 10.0.0
 
+* fix: Injection works with a `StaticReflector` (or a generated reflector) that has no information about `Parameter`, or about a handler: `preInject` only reflects `Parameter` for a parameter with annotations, and a handler the reflector does not know has no `@Middleware`/`@Expose` annotations instead of failing `addRoute`
+* fix: An optional or named parameter whose type the reflector cannot construct is left out with any reflector, using the new `Container.isUnconstructible`; with a `StaticReflector` it used to fail the request with a 500
 * chore: The tests and examples no longer use `MirrorsReflector`, and `angel3_container_mirrors` is no longer a dev dependency. Tests of reflection-based features (dependency injection by reflection, `@Expose` controllers, `@Hooks` and `@Middleware` metadata) moved to the unpublished `framework_mirrors_test` package, with the controller example
 * **Breaking:** `MirrorsReflector` moved from `package:angel3_container/mirrors.dart` to the new `angel3_container_mirrors` package. Apps that use it add `angel3_container_mirrors` to their dependencies and import `package:angel3_container_mirrors/angel3_container_mirrors.dart`
 * feat: Added `injectionFromParameters` and `InjectableParameter`, which build an `InjectionRequest` from parameter descriptions without the app's `Reflector`; `preInject` now uses them
@@ -32,7 +34,7 @@
 * fix: An HTTP/1.1 response with an invalid header that bypasses validation (e.g. via `headers.putIfAbsent`) and no body now fails with 500 error, instead of never being sent
 * fix: An HTTP/1 request that cannot become a `RequestContext` (e.g. repeated `X-HTTP-Method-Override` headers) now returns 400 error, instead of terminating the server process. This also applies to `AngelHttp.handleRequest` on a server created outside of `startServer`
 * fix: An HTTP/1 request with an invalid `Content-Type` (e.g. `foo`) is now treated as `text/plain`, instead of terminating the server process
-* feat: Added `Driver.handleRawRequestSafely`, which answers 400 when a request fails before it reaches the app
+* feat: Added `Driver.handleRawRequestSafely`, which answers a request that fails before it reaches the app instead of letting the error terminate the server: 400 for a malformed request (`FormatException`, or an `HttpException` from parsing it), the status code of an `AngelHttpException`, and 500 for any other error, which is a bug in the server
 * fix: HTTP/2 buffered responses (`res.useBuffer()`) are now sent with their status, headers and body, instead of the stream being reset with no response.
 * fix: HTTP/2 error fallbacks (e.g. the 400 for a request that cannot be handled) now send their status, instead of resetting the stream
 * fix: HTTP/2 server pushes now send their status and headers; previously a pushed response had a body but no headers

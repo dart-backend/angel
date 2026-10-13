@@ -22,17 +22,22 @@ bool canReflect(Reflector? reflector) =>
 
 /// Reads the [T] annotation on [obj], or returns `null` when reflection is
 /// disabled (see [canReflect]), so annotations are simply ignored.
+///
+/// Also `null` when [reflector] has no information about [obj], as a
+/// [StaticReflector] or a generated reflector may not for every handler.
 T? getAnnotation<T>(Object obj, Reflector? reflector) {
   if (reflector == null || !canReflect(reflector)) {
     return null;
-  } else {
-    if (obj is Function) {
-      var methodMirror = reflector.reflectFunction(obj)!;
-      return matchingAnnotation<T>(methodMirror.annotations);
-    } else {
-      var classMirror = reflector.reflectClass(obj.runtimeType)!;
-      return matchingAnnotation<T>(classMirror.annotations);
-    }
+  }
+  try {
+    var annotations = obj is Function
+        ? reflector.reflectFunction(obj)?.annotations
+        : reflector.reflectClass(obj.runtimeType)?.annotations;
+    return annotations == null ? null : matchingAnnotation<T>(annotations);
+  } on ArgumentError {
+    return null;
+  } on UnsupportedError {
+    return null;
   }
 }
 
