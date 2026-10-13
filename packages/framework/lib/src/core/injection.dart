@@ -263,26 +263,69 @@ class InjectionRequest {
 
 /// Predetermines what needs to be injected for a handler to run.
 InjectionRequest preInject(Function handler, Reflector reflector) {
+  var closureMirror = reflector.reflectFunction(handler)!;
+  var parameterType = reflector.reflectType(Parameter);
+
+  return injectionFromParameters(
+    closureMirror.parameters.map(
+      (parameter) => InjectableParameter(
+        name: parameter.name,
+        type: parameter.type.reflectedType,
+        isRequired: parameter.isRequired,
+        isNamed: parameter.isNamed,
+        hasDefaultValue: parameter.hasDefaultValue,
+        annotation:
+            parameter.annotations
+                    .firstWhereOrNull(
+                      (m) => m.type.isAssignableTo(parameterType),
+                    )
+                    ?.reflectee
+                as Parameter?,
+      ),
+    ),
+  );
+}
+
+/// A reflector-independent description of one parameter of a DI-enabled
+/// handler, from which [injectionFromParameters] builds an [InjectionRequest].
+///
+/// This lets code that discovers handlers by other means (e.g. `dart:mirrors`
+/// directly, or generated code) inject them without the app's [Reflector].
+class InjectableParameter {
+  final String name;
+  final Type type;
+
+  /// Whether a positional parameter is required (not in `[...]`).
+  final bool isRequired;
+  final bool isNamed;
+  final bool hasDefaultValue;
+
+  /// The parameter's [Parameter] annotation, if any.
+  final Parameter? annotation;
+
+  const InjectableParameter({
+    required this.name,
+    required this.type,
+    required this.isRequired,
+    required this.isNamed,
+    this.hasDefaultValue = false,
+    this.annotation,
+  });
+}
+
+/// Builds the [InjectionRequest] for a handler with the given [parameters].
+///
+/// [preInject] uses this after reflecting on a handler.
+InjectionRequest injectionFromParameters(
+  Iterable<InjectableParameter> parameters,
+) {
   var injection = InjectionRequest();
 
-  var closureMirror = reflector.reflectFunction(handler)!;
-
-  if (closureMirror.parameters.isEmpty) return injection;
-
-  // Load parameters
-  for (var parameter in closureMirror.parameters) {
+  for (var parameter in parameters) {
     var name = parameter.name;
-    var type = parameter.type.reflectedType;
+    var type = parameter.type;
+    var p = parameter.annotation;
 
-    var p =
-        parameter.annotations
-                .firstWhereOrNull(
-                  (m) =>
-                      m.type.isAssignableTo(reflector.reflectType(Parameter)),
-                )
-                ?.reflectee
-            as Parameter?;
-    //print(p);
     if (p != null) {
       injection.parameters[name] = Parameter(
         cookie: p.cookie,

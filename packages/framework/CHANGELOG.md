@@ -3,6 +3,7 @@
 ## 10.0.0
 
 * **Breaking:** `MirrorsReflector` moved from `package:angel3_container/mirrors.dart` to the new `angel3_container_mirrors` package. Apps that use it add `angel3_container_mirrors` to their dependencies and import `package:angel3_container_mirrors/angel3_container_mirrors.dart`
+* feat: Added `injectionFromParameters` and `InjectableParameter`, which build an `InjectionRequest` from parameter descriptions without the app's `Reflector`; `preInject` now uses them
 * feat: Added `Driver.supportsChunkedEncoding(request)` (true by default; false for HTTP/1.0 requests in `AngelHttp`). Chunked encoding is only asked for when it is supported, and `AngelHttp.setChunkedEncoding` now ignores only the HTTP/1.0 case instead of every `HttpException`
 * fix: An HTTP/2 session first created after the response headers were sent now logs a warning, as its `DARTSESSID` cookie can no longer reach the client, and is not kept in the session store; read `req.session` before writing the body
 * fix: A hostname pattern with an empty label after `*.` (e.g. `*..example.com`) is now rejected, and an empty alternative between two `|`s is reported as such

@@ -2,7 +2,8 @@
 
 ## 10.0.0
 
-* test: The service tests no longer use `MirrorsReflector`. The controller tests still need it, because `WebSocketController` runs its `@ExposeWs` action handlers through `app.runContained`, which uses the container reflector for dependency injection
+* fix: `@ExposeWs` actions on a `WebSocketController` no longer need the app to have a reflector. They used to fail on every call under the default `ThrowingReflector`; they are now injected from the `dart:mirrors` data the controller already reads
+* test: The service and controller tests no longer use `MirrorsReflector`
 * chore: Released with the other Angel3 packages at 10.0.0
 
 ## 9.1.0

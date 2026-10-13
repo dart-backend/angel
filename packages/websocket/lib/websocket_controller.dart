@@ -12,8 +12,9 @@ class WebSocketController extends Controller {
   /// The plug-in instance powering this controller.
   final AngelWebSocket ws;
 
-  final Map<String, MethodMirror> _handlers = {};
-  final Map<String, Symbol> _handlerSymbols = {};
+  /// The `@ExposeWs` handlers, by event name, with what they inject. These are
+  /// found with `dart:mirrors`, so they run without the app's reflector.
+  final Map<String, (Function, InjectionRequest)> _handlers = {};
 
   WebSocketController(this.ws) : super();
 
@@ -57,8 +58,10 @@ class WebSocketController extends Controller {
 
         if (exposeMirror != null) {
           var exposeWs = exposeMirror.reflectee as ExposeWs;
-          _handlers[exposeWs.eventName] = mirror;
-          _handlerSymbols[exposeWs.eventName] = sym;
+          _handlers[exposeWs.eventName] = (
+            instanceMirror.getField(sym).reflectee as Function,
+            injectionFromParameters(mirror.parameters.map(_injectable)),
+          );
         }
       }
     });
@@ -79,14 +82,12 @@ class WebSocketController extends Controller {
         try {
           await onAction(action, socket);
 
-          if (_handlers.containsKey(action.eventName)) {
-            var methodMirror = _handlers[action.eventName!]!;
-            var fn = instanceMirror.getField(methodMirror.simpleName).reflectee;
-            return await app.runContained(
-              fn as Function,
+          var handler = _handlers[action.eventName];
+          if (handler != null) {
+            var (fn, injection) = handler;
+            return await handleContained(fn, injection, container)(
               socket.request,
               socket.response,
-              container,
             );
           }
         } catch (e, st) {
@@ -96,5 +97,22 @@ class WebSocketController extends Controller {
     });
 
     ws.onDisconnection.listen(onDisconnect);
+  }
+
+  static InjectableParameter _injectable(ParameterMirror parameter) {
+    return InjectableParameter(
+      name: MirrorSystem.getName(parameter.simpleName),
+      type: parameter.type.hasReflectedType
+          ? parameter.type.reflectedType
+          : dynamic,
+      isRequired: !parameter.isOptional,
+      isNamed: parameter.isNamed,
+      hasDefaultValue: parameter.hasDefaultValue,
+      annotation:
+          parameter.metadata
+                  .firstWhereOrNull((m) => m.reflectee is Parameter)
+                  ?.reflectee
+              as Parameter?,
+    );
   }
 }
