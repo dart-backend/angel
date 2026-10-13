@@ -3,6 +3,9 @@
 ## 10.0.0
 
 * Released with the other Angel3 packages at 10.0.0
+* Require Dart >= 3.13
+* Updated `dart_twitter_api` to 0.6.0, which uses `intl` 0.20 like the rest of the workspace
+* chore: Back in the workspace, so it is resolved and analyzed with the other packages; removed the stale `pubspec_overrides.yaml`
 
 ## 9.1.0
 

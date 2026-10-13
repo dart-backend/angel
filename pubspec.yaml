@@ -23,7 +23,7 @@ workspace:
   - packages/cors
   - packages/auth
   - packages/auth_oauth2
-#  - packages/auth_twitter
+  - packages/auth_twitter
   - packages/file_service
   - packages/html
   - packages/client
