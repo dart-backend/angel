@@ -4,7 +4,9 @@ export 'package:angel3_model/angel3_model.dart';
 export 'package:collection/collection.dart';
 export 'package:quiver/core.dart' show hashObjects;
 
-/// Excludes a field from being excluded.
+/// Excludes a field from serialization: it is left out of `toMap` and
+/// ignored by `fromMap`, unless [canSerialize] or [canDeserialize] allow one
+/// direction.
 class Exclude extends SerializableField {
   const Exclude({super.canDeserialize, super.canSerialize})
     : super(exclude: true);
@@ -37,10 +39,12 @@ class SerializableField {
   /// A default for this field.
   final dynamic defaultValue;
 
-  /// A custom serializer for this field.
+  /// A custom serializer for this field: the function that converts its value
+  /// for `toMap`.
   final Symbol? serializer;
 
-  /// A custom serializer for this field.
+  /// A custom deserializer for this field: the function that converts the
+  /// value read by `fromMap`.
   final Symbol? deserializer;
 
   /// An error message to be printed when the provided value is invalid.
@@ -52,10 +56,15 @@ class SerializableField {
   /// Whether to exclude this field from serialization. Defaults to `false`.
   final bool exclude;
 
-  /// Whether this field can be serialized, if [exclude] is `true`. Defaults to `false`.
+  /// Whether an excluded field is still read by `fromMap`. Only used when
+  /// [exclude] is `true`. Defaults to `false`.
+  ///
+  /// E.g. a password can be accepted from input but never sent out:
+  /// `@Exclude(canDeserialize: true)`.
   final bool canDeserialize;
 
-  /// Whether this field can be serialized, if [exclude] is `true`. Defaults to `false`.
+  /// Whether an excluded field is still written by `toMap`. Only used when
+  /// [exclude] is `true`. Defaults to `false`.
   final bool canSerialize;
 
   /// May be used with [serializer] and [deserializer].

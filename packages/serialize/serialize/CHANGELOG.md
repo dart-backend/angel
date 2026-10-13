@@ -3,6 +3,8 @@
 ## 10.0.0
 
 * Released with the other Angel3 packages at 10.0.0
+* docs: Fixed the doc comments of `Exclude` (which said it kept fields in), `canDeserialize` (a copy of `canSerialize`'s) and `deserializer` (a copy of `serializer`'s)
+* chore: Removed the unused `meta` dependency
 
 ## 9.1.0
 
