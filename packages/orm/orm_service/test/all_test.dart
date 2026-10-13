@@ -1,7 +1,10 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_framework/http.dart';
+import 'package:angel3_mock_request/angel3_mock_request.dart';
 import 'package:angel3_orm_postgres/angel3_orm_postgres.dart';
 import 'package:angel3_orm_service/angel3_orm_service.dart';
 import 'package:logging/logging.dart';
@@ -18,7 +21,7 @@ void main() {
   setUp(() async {
     var conn = await Connection.open(
       Endpoint(
-      host: Platform.environment['POSTGRES_HOSTNAME'] ?? 'localhost',
+        host: Platform.environment['POSTGRES_HOSTNAME'] ?? 'localhost',
         port: 5432,
         database: Platform.environment['POSTGRES_DB'] ?? 'postgres',
         username: Platform.environment['POSTGRES_USERNAME'] ?? 'postgres',
@@ -89,6 +92,133 @@ void main() {
       pikachu = await pokemonService.create(
         Pokemon(species: 'Pikachu', level: 100, type1: PokemonType.electric),
       );
+    });
+
+    group('a client query parameter', () {
+      Future<List<Pokemon>> clientIndex(Map<String, dynamic> query) =>
+          pokemonService.index({'provider': Providers.rest, 'query': query});
+
+      Matcher badRequest = throwsA(
+        isA<AngelHttpException>().having(
+          (e) => e.statusCode,
+          'statusCode',
+          400,
+        ),
+      );
+
+      test('is converted to the type of an int column', () async {
+        expect(await clientIndex({'level': '100'}), [pikachu]);
+      });
+
+      test('that is not a number is a 400 for an int column', () async {
+        expect(() => clientIndex({'level': 'high'}), badRequest);
+      });
+
+      test('for an enum column is a 400', () async {
+        expect(() => clientIndex({'type1': 'electric'}), badRequest);
+      });
+
+      test('naming no column is a 400', () async {
+        expect(() => clientIndex({'nickname': 'x'}), badRequest);
+      });
+
+      test(
+        'naming no column from the server is still an ArgumentError',
+        () async {
+          expect(
+            () => pokemonService.index({
+              'query': {'nickname': 'x'},
+            }),
+            throwsArgumentError,
+          );
+        },
+      );
+    });
+
+    group('update', () {
+      test("keeps the values a query callback sets", () async {
+        await pokemonService.update(
+          int.parse(pikachu.id!),
+          pikachu.copyWith(level: 5),
+          {'query': (PokemonQuery q) => q.values.name = 'Set by a callback'},
+        );
+        var updated = await pokemonService.read(int.parse(pikachu.id!));
+        expect(updated.level, 5);
+        expect(updated.name, 'Set by a callback');
+      });
+
+      test('changes one record, even if the query matches more', () async {
+        await pokemonService.update(
+          int.parse(pikachu.id!),
+          pikachu.copyWith(level: 7),
+          {
+            'query': (PokemonQuery q) =>
+                q.orWhere((w) => w.species.equals('Giratina')),
+          },
+        );
+        var all = await pokemonService.index();
+        expect(all.where((p) => p.level == 7), hasLength(1));
+      });
+    });
+
+    group('modify', () {
+      Future<Pokemon> stored(Pokemon p) async =>
+          (await pokemonService.read(int.parse(p.id!)));
+
+      test(
+        'called on the server, changes only the fields that are not null',
+        () async {
+          await pokemonService.modify(
+            int.parse(pikachu.id!),
+            Pokemon(species: null, level: null, type1: null, name: 'Sparky'),
+          );
+          var updated = await stored(pikachu);
+          expect(updated.name, 'Sparky');
+          expect(updated.species, 'Pikachu');
+          expect(updated.level, 100);
+          expect(updated.type1, PokemonType.electric);
+        },
+      );
+
+      test('for a PATCH, changes only the fields in its body', () async {
+        var app = Angel();
+        // A readData that fills in the fields a model requires, as an app's
+        // might: they are not in the body, so they must not be stored.
+        app.use(
+          '/api/pokemon',
+          OrmService<int?, Pokemon, PokemonQuery>(
+            executor,
+            () => PokemonQuery(),
+            readData: (req, res) => PokemonSerializer.fromMap({
+              'species': 'Placeholder',
+              'level': 1,
+              'type1': 0,
+              ...req.bodyAsMap,
+            }),
+          ),
+        );
+        var rq =
+            MockHttpRequest('PATCH', Uri.parse('/api/pokemon/${pikachu.id}'))
+              ..headers.contentType = ContentType.json
+              ..write(json.encode({'name': 'Sparky', 'type2': null}));
+        await rq.close();
+        await AngelHttp(app).handleRequest(rq);
+        expect(rq.response.statusCode, 200);
+
+        var updated = await stored(pikachu);
+        expect(updated.name, 'Sparky');
+        expect(updated.species, 'Pikachu');
+        expect(updated.level, 100);
+        expect(updated.type2, isNull);
+      });
+
+      test('with nothing to change returns the record', () async {
+        var same = await pokemonService.modify(
+          int.parse(pikachu.id!),
+          Pokemon(species: null, level: null, type1: null),
+        );
+        expect(same.species, 'Pikachu');
+      });
     });
 
     group('index', () {
@@ -244,17 +374,27 @@ void main() {
       });
     });
 
-    test('readMany', () async {
-      expect(
-        pokemonService.readMany([giratina.idAsInt, pikachu.idAsInt]),
-        completion([giratina, pikachu]),
-      );
-      expect(
-        pokemonService.readMany([giratina.idAsInt]),
-        completion([giratina]),
-      );
-      expect(pokemonService.readMany([pikachu.idAsInt]), completion([pikachu]));
-      expect(() => pokemonService.readMany([]), throwsArgumentError);
+    group('readMany', () {
+      test('returns the records with the ids', () async {
+        // In no particular order: the query has no ORDER BY.
+        expect(
+          await pokemonService.readMany([giratina.idAsInt, pikachu.idAsInt]),
+          unorderedEquals([giratina, pikachu]),
+        );
+        expect(await pokemonService.readMany([giratina.idAsInt]), [giratina]);
+        expect(await pokemonService.readMany([pikachu.idAsInt]), [pikachu]);
+      });
+
+      test('leaves out null ids and ids with no record', () async {
+        expect(await pokemonService.readMany([null, pikachu.idAsInt, 999]), [
+          pikachu,
+        ]);
+        expect(await pokemonService.readMany([null]), isEmpty);
+      });
+
+      test('needs at least one id', () {
+        expect(() => pokemonService.readMany([]), throwsArgumentError);
+      });
     });
 
     group('update', () {
@@ -277,23 +417,48 @@ void main() {
     });
 
     group('remove', () {
-      test('default', () async {
-        expect(pokemonService.read(giratina.idAsInt), completion(giratina));
-        expect(pokemonService.read(pikachu.idAsInt), completion(pikachu));
+      Matcher httpError(int statusCode) => throwsA(
+        isA<AngelHttpException>().having(
+          (e) => e.statusCode,
+          'statusCode',
+          statusCode,
+        ),
+      );
+
+      /// A service that lets clients remove all records.
+      OrmService<int?, Pokemon, PokemonQuery> removeAllService() =>
+          OrmService(executor, () => PokemonQuery(), allowRemoveAll: true);
+
+      test('removes and returns the record with the id', () async {
+        expect(await pokemonService.remove(pikachu.idAsInt), pikachu);
+        expect(await pokemonService.index(), [giratina]);
+        expect(() => pokemonService.read(pikachu.idAsInt), httpError(404));
       });
 
-      test('nonexistent throws 404', () {
-        expect(
-          () => pokemonService.remove(999),
-          throwsA(TypeMatcher<AngelHttpException>()),
-        );
+      test('a nonexistent id is a 404, and removes nothing', () async {
+        expect(() => pokemonService.remove(999), httpError(404));
+        expect(await pokemonService.index(), hasLength(2));
       });
 
-      test('cannot remove all unless explicitly set', () async {
+      test('a client cannot remove all, unless allowed', () async {
         expect(
           () => pokemonService.remove(null, {'provider': Providers.rest}),
-          throwsA(TypeMatcher<AngelHttpException>()),
+          httpError(403),
         );
+        expect(await pokemonService.index(), hasLength(2));
+      });
+
+      test('removes all, when allowed', () async {
+        await removeAllService().remove(null, {'provider': Providers.rest});
+        expect(await pokemonService.index(), isEmpty);
+      });
+
+      test('with no id, removes only the records the query matches', () async {
+        await removeAllService().remove(null, {
+          'provider': Providers.rest,
+          'query': {'species': 'Pikachu'},
+        });
+        expect(await pokemonService.index(), [giratina]);
       });
     });
   });

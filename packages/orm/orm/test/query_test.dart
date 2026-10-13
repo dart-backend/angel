@@ -335,4 +335,22 @@ void main() {
       });
     });
   });
+
+  group('getOne', () {
+    late _RecordingExecutor executor;
+
+    setUp(() => executor = _RecordingExecutor(const PostgreSQLDialect()));
+
+    test('fetches one row, and leaves the query as it was', () async {
+      await query.getOne(executor);
+      expect(executor.queries.single, endsWith(' LIMIT 1'));
+      expect(query.compile({}), isNot(contains('LIMIT')));
+    });
+
+    test("keeps the query's own limit", () async {
+      query.limit(5);
+      await query.getOne(executor);
+      expect(executor.queries.single, endsWith(' LIMIT 5'));
+    });
+  });
 }

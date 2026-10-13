@@ -434,10 +434,18 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
     return b.toString();
   }
 
+  /// The first matching record. Only one row is fetched, unless the query
+  /// has joins: a record with e.g. a has-many relation spans several rows,
+  /// which a `LIMIT` would cut.
   @override
-  Future<Optional<T>> getOne(QueryExecutor executor) {
-    //limit(1);
-    return super.getOne(executor);
+  Future<Optional<T>> getOne(QueryExecutor executor) async {
+    if (_joins.isNotEmpty || _limit != null) return super.getOne(executor);
+    _limit = 1;
+    try {
+      return await super.getOne(executor);
+    } finally {
+      _limit = null;
+    }
   }
 
   Future<List<T>> delete(QueryExecutor executor) {

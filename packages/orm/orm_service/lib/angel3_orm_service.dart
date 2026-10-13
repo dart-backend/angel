@@ -50,14 +50,57 @@ class OrmService<Id, Data, TQuery extends Query<Data, QueryWhere>>
 
   void _apply(TQuery query, String name, dynamic value) {
     var builder = _findBuilder(query, name);
+    var typed = value is String ? _fromString(builder, value) : value;
     try {
-      (builder as dynamic).equals(value);
+      (builder as dynamic).equals(typed);
     } on NoSuchMethodError {
       throw UnsupportedError(
         '${builder.runtimeType} has no `equals` method, so it cannot be given a value from the dynamic query parameter "$name".',
       );
+    } on TypeError {
+      throw AngelHttpException.badRequest(
+        message: 'Invalid value for "$name": $value.',
+      );
     }
   }
+
+  /// [ids] as a list of the type of the id column of [builder], which `isIn`
+  /// requires (e.g. a `List<int>` for an `int` column, even if `Id` is
+  /// `int?`).
+  static List<Object> _idList(SqlExpressionBuilder builder, List<Object> ids) {
+    T convert<T>(Object id, T? Function(String) parse) =>
+        id is T ? id as T : parse('$id') ?? (throw _invalidId(id));
+    return switch (builder) {
+      NumericSqlExpressionBuilder<int>() => <int>[
+        for (var id in ids) convert<int>(id, int.tryParse),
+      ],
+      NumericSqlExpressionBuilder<double>() => <double>[
+        for (var id in ids) convert<double>(id, double.tryParse),
+      ],
+      StringSqlExpressionBuilder() => <String>[for (var id in ids) '$id'],
+      _ => ids,
+    };
+  }
+
+  static AngelHttpException _invalidId(Object id) =>
+      AngelHttpException.badRequest(message: 'Invalid id: $id.');
+
+  /// [value], as a query parameter's string, converted to the type of the
+  /// column of [builder]; unchanged when it cannot be converted.
+  static Object? _fromString(SqlExpressionBuilder builder, String value) =>
+      switch (builder) {
+        NumericSqlExpressionBuilder<int>() => int.tryParse(value) ?? value,
+        NumericSqlExpressionBuilder<double>() =>
+          double.tryParse(value) ?? value,
+        NumericSqlExpressionBuilder() => num.tryParse(value) ?? value,
+        BooleanSqlExpressionBuilder() => switch (value.toLowerCase()) {
+          'true' || '1' => true,
+          'false' || '0' => false,
+          _ => value,
+        },
+        DateTimeSqlExpressionBuilder() => DateTime.tryParse(value) ?? value,
+        _ => value,
+      };
 
   /// Sorts by the column [name], which comes from the client: it is written
   /// into the SQL, so only the query's own columns are accepted.
@@ -97,7 +140,15 @@ class OrmService<Id, Data, TQuery extends Query<Data, QueryWhere>>
           } else if (k is String &&
               v is! RequestContext &&
               v is! ResponseContext) {
-            _apply(query, k, v);
+            try {
+              _apply(query, k, v);
+            } on ArgumentError {
+              // A client's query that names no column is a bad request.
+              if (!params.containsKey('provider')) rethrow;
+              throw AngelHttpException.badRequest(
+                message: 'Cannot filter by "$k": it is not a column.',
+              );
+            }
           }
         });
       }
@@ -115,9 +166,12 @@ class OrmService<Id, Data, TQuery extends Query<Data, QueryWhere>>
 
     var query = await queryCreator();
     var builder = _findBuilder(query, idField);
+    // A null id matches no record.
+    var keys = _idList(builder, [for (var id in ids) ?id]);
+    if (keys.isEmpty) return [];
 
     try {
-      (builder as dynamic).isIn(ids);
+      (builder as dynamic).isIn(keys);
     } on NoSuchMethodError {
       throw UnsupportedError(
         '${builder.runtimeType} `$idField` has no `isIn` method, and therefore does not support `readMany`.',
@@ -170,21 +224,35 @@ class OrmService<Id, Data, TQuery extends Query<Data, QueryWhere>>
     }
 
     var result = await query.insert(executor);
-
-    return result.value;
+    if (result.isPresent) return result.value;
+    throw StateError(
+      'The record was inserted into ${query.tableName}, but could not be '
+      'read back.',
+    );
   }
 
+  /// Updates only the fields that are given: for data [readData] read from a
+  /// request, those in its body (so a field can still be set to `null`);
+  /// otherwise, those that are not `null`. [update] replaces every field.
   @override
   Future<Data> modify(Id id, Data data, [Map<String, dynamic>? params]) {
-    return update(id, data, params);
+    return _update(id, data, params, partial: true);
   }
 
   @override
-  Future<Data> update(Id id, Data data, [Map<String, dynamic>? params]) async {
+  Future<Data> update(Id id, Data data, [Map<String, dynamic>? params]) =>
+      _update(id, data, params);
+
+  Future<Data> _update(
+    Id id,
+    Data data,
+    Map<String, dynamic>? params, {
+    bool partial = false,
+  }) async {
     var query = await queryCreator();
     _apply(query, idField, id);
-    await _applyQuery(query, params);
 
+    // Before the query is applied, so that a query callback can change them.
     try {
       (query.values as dynamic).copyFrom(data);
     } on NoSuchMethodError {
@@ -193,10 +261,53 @@ class OrmService<Id, Data, TQuery extends Query<Data, QueryWhere>>
       );
     }
 
+    var values = query.values;
+    if (partial && values is MapQueryValues) {
+      var given = data is Object && _canRemember(data)
+          ? _bodyFields[data]
+          : null;
+      values.values.removeWhere(
+        (name, value) =>
+            // Still refreshed by the update.
+            name != 'updated_at' &&
+            (given == null ? value == null : !given.contains(name)),
+      );
+      if (values.values.keys.every((name) => name == 'updated_at')) {
+        // Nothing to change.
+        return read(id, params);
+      }
+    }
+
+    await _applyQuery(query, params);
+    // One record, even if the query's conditions match more.
+    query.limit(1);
+
     var result = await query.updateOne(executor);
     if (result.isPresent) return result.value;
     throw AngelHttpException.notFound(message: 'No record found for ID $id');
   }
+
+  // The fields in the body of the request each object was read from.
+  final Expando<Set<String>> _bodyFields = Expando('bodyFields');
+
+  /// Also remembers which fields the request's body contained, so that
+  /// [modify] changes only those.
+  @override
+  FutureOr<Data> Function(RequestContext, ResponseContext)? get readData {
+    var read = super.readData;
+    if (read == null) return null;
+    return (req, res) async {
+      var data = await read(req, res);
+      if (req.hasParsedBody && data is Object && _canRemember(data)) {
+        _bodyFields[data] = req.bodyAsMap.keys.toSet();
+      }
+      return data;
+    };
+  }
+
+  // An Expando cannot be attached to these.
+  static bool _canRemember(Object data) =>
+      data is! num && data is! String && data is! bool && data is! Record;
 
   @override
   Future<Data> remove(Id id, [Map<String, dynamic>? params]) async {
@@ -212,8 +323,9 @@ class OrmService<Id, Data, TQuery extends Query<Data, QueryWhere>>
       }
     } else {
       _apply(query, idField, id);
-      await _applyQuery(query, params);
     }
+    // Also when removing "all": only the items that match the query.
+    await _applyQuery(query, params);
 
     var result = await query.deleteOne(executor);
     if (result.isPresent) return result.value;

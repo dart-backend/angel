@@ -13,6 +13,7 @@
 * fix: `update()` returns the rows it updated, even when the new values no longer match its conditions (e.g. `where.status.equals('new')` with `values.status = 'done'` returned no rows). On PostgreSQL the rows come from `RETURNING` without being filtered again; on MySQL, for a table with an `id`, the matching ids are found first, and exactly those rows are updated and returned (MySQL used to run the follow-up `SELECT` without its parameters, so conditions on strings returned nothing)
 * fix: `update()` with `limit()` works on PostgreSQL, which has no `UPDATE ... LIMIT`: the rows are picked with `WHERE ctid IN (SELECT ctid ... LIMIT n)`. `offset()` applies to updates as well
 * fix: Conditions on parts of a date (`year`, `month`, `day`, `hour`, `minute`, `second`) use the standard `EXTRACT(... FROM column)`, which PostgreSQL supports as well as MySQL/MariaDB; they used MySQL's `YEAR(column)` and so on. With joins, every part is qualified with the table name (it was written as `table.YEAR(column)`)
+* fix: `getOne` fetches one row (`LIMIT 1`) instead of every matching row, when the query has no joins (a record with e.g. a has-many relation spans several rows, which a limit would cut) and no limit of its own; the query's limit is left as it was
 
 ## 9.1.1
 
