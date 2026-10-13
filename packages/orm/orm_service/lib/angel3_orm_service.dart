@@ -59,6 +59,17 @@ class OrmService<Id, Data, TQuery extends Query<Data, QueryWhere>>
     }
   }
 
+  /// Sorts by the column [name], which comes from the client: it is written
+  /// into the SQL, so only the query's own columns are accepted.
+  void _orderBy(TQuery query, String name, {bool descending = false}) {
+    if (!query.fields.contains(name)) {
+      throw AngelHttpException.badRequest(
+        message: 'Cannot sort by "$name": it is not a column.',
+      );
+    }
+    query.orderBy(name, descending: descending);
+  }
+
   Future<void> _applyQuery(TQuery query, Map<String, dynamic>? params) async {
     if (params == null || params.isEmpty) return;
 
@@ -78,10 +89,10 @@ class OrmService<Id, Data, TQuery extends Query<Data, QueryWhere>>
                 } else if (value is num) {
                   descending = value.toInt() == -1;
                 }
-                query.orderBy(key.toString(), descending: descending);
+                _orderBy(query, key.toString(), descending: descending);
               });
             } else if (v is String) {
-              query.orderBy(v);
+              _orderBy(query, v);
             }
           } else if (k is String &&
               v is! RequestContext &&

@@ -146,6 +146,8 @@ Future<OrmBuildContext?> buildOrmContext(
     column = Column(
       isNullable: column.isNullable,
       length: column.length,
+      precision: column.precision,
+      scale: column.scale,
       indexType: column.indexType,
       // The type the annotation declares, if any; otherwise inferred.
       type: columnAnnotation != null &&
@@ -360,6 +362,8 @@ Future<OrmBuildContext?> buildOrmContext(
       column = Column(
         isNullable: column.isNullable,
         length: column.length,
+        precision: column.precision,
+        scale: column.scale,
         type: column.type,
         indexType: column.indexType,
         defaultValue: column.defaultValue,
@@ -501,6 +505,8 @@ Column reviveColumn(ConstantReader cr) {
   return Column(
     isNullable: cr.peek('isNullable')?.boolValue ?? false,
     length: cr.peek('length')?.intValue ?? 255,
+    precision: cr.peek('precision')?.intValue ?? 17,
+    scale: cr.peek('scale')?.intValue ?? 3,
     defaultValue: cr.peek('defaultValue')?.objectValue,
     type: columnType,
     indexType: indexType,

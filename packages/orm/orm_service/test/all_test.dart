@@ -166,6 +166,35 @@ void main() {
             [pikachu, giratina],
           );
         });
+
+        group('only by a column, so a client cannot inject SQL', () {
+          const injection =
+              "(CASE WHEN (SELECT 1)=1 THEN id ELSE name END); DROP TABLE pokemons";
+          Matcher badRequest = throwsA(
+            isA<AngelHttpException>().having(
+              (e) => e.statusCode,
+              'statusCode',
+              400,
+            ),
+          );
+
+          for (var (form, sort) in [
+            ('string', injection),
+            ('map', {injection: 1}),
+          ]) {
+            test('given as a $form', () async {
+              expect(
+                () => pokemonService.index({
+                  'provider': Providers.rest,
+                  'query': {r'$sort': sort},
+                }),
+                badRequest,
+              );
+              // The table is still there, with both pokemons.
+              expect(await pokemonService.index(), hasLength(2));
+            });
+          }
+        });
       });
     });
 

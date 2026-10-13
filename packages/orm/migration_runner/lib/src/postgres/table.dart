@@ -8,6 +8,11 @@ import 'package:logging/logging.dart';
 abstract class PostgresGenerator {
   static String columnType(MigrationColumn column) {
     var str = column.type.name;
+    if (column.type.hasPrecision) {
+      return column.type.hasScale
+          ? '$str(${column.precision}, ${column.scale})'
+          : '$str(${column.precision})';
+    }
     if (column.type.hasLength) {
       return '$str(${column.length})';
     } else {

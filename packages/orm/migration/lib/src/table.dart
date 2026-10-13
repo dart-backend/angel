@@ -17,7 +17,10 @@ abstract class Table {
   MigrationColumn double(String name) => declare(name, ColumnType.double);
 
   MigrationColumn numeric(String name, {int precision = 17, int scale = 3}) {
-    return declare(name, ColumnType.numeric);
+    return declareColumn(
+      name,
+      MigrationColumn(ColumnType.numeric, precision: precision, scale: scale),
+    );
   }
 
   MigrationColumn boolean(String name) => declare(name, ColumnType.boolean);

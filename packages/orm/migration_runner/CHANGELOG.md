@@ -2,7 +2,7 @@
 
 ## 10.0.0
 
-* Released with the other Angel3 packages at 10.0.0
+* fix: A column whose type has a precision (`numeric`, `decimal`) is created with its precision and scale, e.g. `numeric(10, 2)`. They were left out, so MySQL/MariaDB created `DECIMAL(10,0)` and rounded values to whole numbers (1234.56 was stored as 1235), and PostgreSQL an unbounded `numeric`
 
 ## 9.1.0
 

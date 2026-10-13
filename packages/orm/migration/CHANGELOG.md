@@ -2,7 +2,7 @@
 
 ## 10.0.0
 
-* Released with the other Angel3 packages at 10.0.0
+* fix: `Table.numeric` creates the column with its `precision` and `scale` (default 17 and 3), which it ignored, and `MigrationColumn` (including `MigrationColumn.from`) keeps a column's precision and scale
 
 ## 9.1.0
 

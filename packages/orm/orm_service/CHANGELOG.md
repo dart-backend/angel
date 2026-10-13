@@ -2,7 +2,7 @@
 
 ## 10.0.0
 
-* Released with the other Angel3 packages at 10.0.0
+* fix: **Security** `$sort` only accepts the query's own column names, and anything else is a 400 Bad Request. The value was written into the `ORDER BY` clause as it was, and client query parameters are applied by default (`allowQuery`), so any REST client could inject SQL, e.g. `?$sort=(CASE WHEN (SELECT ...) THEN id ELSE name END)`
 
 ## 9.1.0
 

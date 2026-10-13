@@ -183,7 +183,8 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
                     break;
                   case ColumnType.numeric:
                     methodName = 'numeric';
-                    if (col.type.hasPrecision) {}
+                    named['precision'] = literal(col.precision);
+                    named['scale'] = literal(col.scale);
                     break;
                   case ColumnType.boolean:
                     methodName = 'boolean';
@@ -209,11 +210,21 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
                       ]);
                     } else {
                       methodName = 'declareColumn';
+                      var type = col.type;
                       provColumn = colType.newInstance([], {
-                        'type': columnTypeType.newInstance([
-                          literal(col.type.name),
-                        ]),
+                        'type': columnTypeType.newInstance(
+                          [literal(type.name)],
+                          {
+                            if (type.hasLength) 'hasLength': literal(true),
+                            if (type.hasPrecision)
+                              'hasPrecision': literal(true),
+                            if (type.hasScale) 'hasScale': literal(true),
+                          },
+                        ),
                         'length': literal(col.length),
+                        if (type.hasPrecision)
+                          'precision': literal(col.precision),
+                        if (type.hasScale) 'scale': literal(col.scale),
                       });
                     }
 

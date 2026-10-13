@@ -22,6 +22,8 @@ class MigrationColumn extends Column {
     ColumnType type, {
     bool isNullable = true,
     super.length,
+    super.precision,
+    super.scale,
     IndexType indexType = IndexType.none,
     dynamic defaultValue,
   }) : super(type: type, isNullable: isNullable, defaultValue: defaultValue) {
@@ -36,6 +38,8 @@ class MigrationColumn extends Column {
           column.type,
           isNullable: column.isNullable,
           length: column.length,
+          precision: column.precision,
+          scale: column.scale,
           indexType: column.indexType,
         );
 

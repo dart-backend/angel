@@ -15,7 +15,7 @@ class AccountMigration extends Migration {
       table.timeStamp('updated_at');
       table.varChar('description', length: 255);
       table.varChar('name', length: 255);
-      table.numeric('price');
+      table.numeric('price', precision: 17, scale: 3);
     });
   }
 

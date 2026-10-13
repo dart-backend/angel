@@ -43,6 +43,11 @@ abstract class MySqlGenerator {
       }
     }
 
+    if (column.type.hasPrecision) {
+      return column.type.hasScale
+          ? '$str(${column.precision}, ${column.scale})'
+          : '$str(${column.precision})';
+    }
     if (column.type.hasLength) {
       return '$str(${column.length})';
     } else {
