@@ -22,17 +22,56 @@ bool canReflect(Reflector? reflector) =>
 
 /// Reads the [T] annotation on [obj], or returns `null` when reflection is
 /// disabled (see [canReflect]), so annotations are simply ignored.
+///
+/// Also `null` when [reflector] has no information about [obj], as a
+/// [StaticReflector] or a generated reflector may not for every handler.
 T? getAnnotation<T>(Object obj, Reflector? reflector) {
   if (reflector == null || !canReflect(reflector)) {
     return null;
-  } else {
-    if (obj is Function) {
-      var methodMirror = reflector.reflectFunction(obj)!;
-      return matchingAnnotation<T>(methodMirror.annotations);
-    } else {
-      var classMirror = reflector.reflectClass(obj.runtimeType)!;
-      return matchingAnnotation<T>(classMirror.annotations);
+  }
+  var annotations = tryReflect(
+    () => obj is Function
+        ? reflector.reflectFunction(obj)?.annotations
+        : reflector.reflectClass(obj.runtimeType)?.annotations,
+  );
+  return annotations == null ? null : matchingAnnotation<T>(annotations);
+}
+
+/// Reads the [T] annotation on the method [name] of [obj], whose tear-off is
+/// [method]: from the tear-off (with `dart:mirrors`), or else from the
+/// declaration of [name] in the class of [obj] (e.g. with generated reflection
+/// data, which cannot describe tear-offs).
+T? getMethodAnnotation<T>(
+  Object obj,
+  String name,
+  Function method,
+  Reflector? reflector,
+) {
+  var annotation = getAnnotation<T>(method, reflector);
+  if (annotation != null || reflector == null || !canReflect(reflector)) {
+    return annotation;
+  }
+  var declarations = tryReflect(() => reflector.reflectClass(obj.runtimeType))
+      ?.declarations;
+  for (var declaration in declarations ?? const <ReflectedDeclaration>[]) {
+    var function = declaration.function;
+    if (declaration.name == name && function != null) {
+      return matchingAnnotation<T>(function.annotations);
     }
+  }
+  return null;
+}
+
+/// Runs [reflect], or returns `null` when the reflector has no information
+/// about what it reflects upon, as a [StaticReflector] or a generated
+/// reflector may not for every type and function.
+T? tryReflect<T>(T? Function() reflect) {
+  try {
+    return reflect();
+  } on ArgumentError {
+    return null;
+  } on UnsupportedError {
+    return null;
   }
 }
 

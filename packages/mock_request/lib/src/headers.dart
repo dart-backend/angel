@@ -185,18 +185,27 @@ class MockHttpHeaders implements HttpHeaders {
         'Unexpected type for header named ${HttpHeaders.contentLengthHeader}',
       ),
     };
-    if (text.isEmpty || text.codeUnits.any((c) => c < $0 || c > $9)) {
+    if (!_isDigits(text)) {
       throw HttpException('Content-Length must contain only digits');
     }
+    return tryParseContentLength(text) ??
+        (throw HttpException('Content-Length too large'));
+  }
+
+  /// Parses one `Content-Length` value as `dart:io` does: digits only, with
+  /// fewer than 16 significant digits. Returns `null` for any other value.
+  static int? tryParseContentLength(String text) {
+    if (!_isDigits(text)) return null;
     var leadingZeros = 0;
     while (leadingZeros < text.length - 1 && text[leadingZeros] == '0') {
       leadingZeros++;
     }
-    if (text.length - leadingZeros >= 16) {
-      throw HttpException('Content-Length too large');
-    }
+    if (text.length - leadingZeros >= 16) return null;
     return int.parse(text);
   }
+
+  static bool _isDigits(String text) =>
+      text.isNotEmpty && text.codeUnits.every((c) => c >= $0 && c <= $9);
 
   @override
   String? value(String name) => _data[name.toLowerCase()]?.join(',');

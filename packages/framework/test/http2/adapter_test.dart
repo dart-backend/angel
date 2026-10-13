@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'dart:io' hide BytesBuilder;
 import 'dart:typed_data';
 
-import 'package:angel3_container/mirrors.dart';
 import 'package:angel3_framework/angel3_framework.dart' hide Header;
 import 'package:angel3_framework/http2.dart';
 import 'package:collection/collection.dart' show IterableExtension;
@@ -33,7 +32,7 @@ void main() {
   late Uri serverRoot;
 
   setUp(() async {
-    app = Angel(reflector: MirrorsReflector())..encoders['gzip'] = gzip.encoder;
+    app = Angel()..encoders['gzip'] = gzip.encoder;
     hierarchicalLoggingEnabled = true;
     app.logger = Logger.detached('angel.http2')
       ..onRecord.listen((rec) {
@@ -377,6 +376,41 @@ void main() {
         response.bodyBytes.length.toString(),
       );
       expect(utf8.decode(gzip.decode(response.bodyBytes)), 'buffered body');
+    });
+
+    test('warns about a session created after the headers went out', () async {
+      // An app without response finalizers, so the first write sends the
+      // headers at once.
+      var lateApp = Angel()
+        ..get('/', (req, res) {
+          res.write('started:');
+          res.write(req.session!.id); // Too late for the cookie.
+          return res.close();
+        })
+        ..get('/session', (req, res) => req.session!.id);
+      var lateWarnings = <String>[];
+      lateApp.logger = Logger.detached('late-session')
+        ..onRecord
+            .where((r) => r.level == Level.WARNING)
+            .listen((r) => lateWarnings.add(r.message));
+      var ctx = SecurityContext()
+        ..useCertificateChain('dev.pem')
+        ..usePrivateKey('dev.key', password: 'dartdart')
+        ..setAlpnProtocols(['h2'], true);
+      var lateHttp2 = AngelHttp2(lateApp, ctx);
+      var server = await lateHttp2.startServer();
+      addTearDown(lateHttp2.close);
+      var root = Uri.parse('https://127.0.0.1:${server.port}/');
+      var body = (await client.get(root)).body;
+      expect(lateWarnings, contains(contains('DARTSESSID')));
+
+      // Not kept: sending its id back does not find it.
+      var lateId = body.substring('started:'.length);
+      var next = await client.get(
+        root.replace(path: '/session'),
+        headers: {'cookie': 'DARTSESSID=$lateId'},
+      );
+      expect(json.decode(next.body), isNot(lateId));
     });
 
     test('sets the cookie for a session a finalizer created', () async {

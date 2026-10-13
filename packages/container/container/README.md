@@ -7,8 +7,16 @@
 
 A better IoC container for Angel3, ultimately allowing Angel3 to be used with or without `dart:mirrors` package.
 
+This package does not use `dart:mirrors`. Pick a `Reflector` backend:
+
+* `MirrorsReflector`, from [`angel3_container_mirrors`](https://pub.dev/packages/angel3_container_mirrors), for apps run on the Dart VM
+* `StaticReflector.combine([...])`, from this package, with the data that [`angel3_container_generator`](https://pub.dev/packages/angel3_container_generator) generates for `@injectable` classes, for apps compiled ahead of time
+* `EmptyReflector` or `ThrowingReflector`, from this package, when everything is registered explicitly
+
+Before 10.0.0, `MirrorsReflector` was imported from `package:angel3_container/mirrors.dart`. Add `angel3_container_mirrors` to your dependencies and import `package:angel3_container_mirrors/angel3_container_mirrors.dart` instead.
+
 ```dart
-    import 'lib/mirrors.dart';
+    import 'package:angel3_container_mirrors/angel3_container_mirrors.dart';
     import 'package:angel3_framework/angel3_framework.dart';
     import 'package:angel3_framework/http.dart';
 

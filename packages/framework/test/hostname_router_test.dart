@@ -115,7 +115,25 @@ void main() {
       });
     }
 
-    for (var pattern in ['|a.com', 'a.com|', 'a.com||b.com']) {
+    test('says where an empty alternative is', () {
+      expect(
+        () => HostnameSyntaxParser('a.com||b.com').parse(),
+        throwsA(
+          isA<FormatException>().having(
+            (e) => e.message,
+            'message',
+            contains('between'),
+          ),
+        ),
+      );
+    });
+
+    for (var pattern in [
+      '|a.com',
+      'a.com|',
+      'a.com||b.com',
+      '*..example.com',
+    ]) {
       test('rejects "$pattern"', () {
         expect(
           () => HostnameSyntaxParser(pattern).parse(),

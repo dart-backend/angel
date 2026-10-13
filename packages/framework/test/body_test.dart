@@ -215,6 +215,42 @@ void main() {
     });
   }
 
+  test(
+    'multipart fields that fail to decode leave no error unhandled',
+    () async {
+      List<int> field(String name) => [
+        ...utf8.encode(
+          '--XYZ\r\nContent-Disposition: form-data; name="$name"\r\n\r\n',
+        ),
+        0xff, 0xfe, // Not UTF-8.
+        ...utf8.encode('\r\n'),
+      ];
+      var rq = MockHttpRequest('POST', Uri(path: '/'))
+        ..headers.set('content-type', 'multipart/form-data; boundary=XYZ')
+        ..add([...field('a'), ...field('b'), ...utf8.encode('--XYZ--\r\n')]);
+      await rq.close();
+      var req = await http.createRequestContext(rq, rq.response);
+      // The first failure ends parsing; the second must not escape as an
+      // uncaught error, which would fail this test.
+      await expectLater(req.parseBody(), throwsA(anything));
+      await pumpEventQueue();
+    },
+  );
+
+  test('a file part with a malformed Content-Type is still a file', () async {
+    var req = await rawRequest(
+      'multipart/form-data; boundary=XYZ',
+      '--XYZ\r\n'
+          'Content-Disposition: form-data; name="f"; filename="a.bin"\r\n'
+          'Content-Type: application/x; foo="unterminated\r\n\r\n'
+          'data\r\n'
+          '--XYZ--\r\n',
+    );
+    await req.parseBody();
+    expect(req.uploadedFiles, hasLength(1));
+    expect(await req.uploadedFiles!.single.readAsBytes(), utf8.encode('data'));
+  });
+
   test('a multipart part without Content-Disposition is a 400', () async {
     var req = await rawRequest(
       'multipart/form-data; boundary=XYZ',

@@ -85,7 +85,8 @@ class MapService extends Service<String?, Map<String, dynamic>> {
   /// `$limit`) is ignored.
   ///
   /// Like every method here, this returns copies of the stored records, so
-  /// changing a result (e.g. in a hook) does not change [items].
+  /// changing a field of a result (e.g. in a hook) does not change [items].
+  /// The copies are one level deep: nested maps and lists are shared.
   @override
   Future<List<Map<String, dynamic>>> index([Map<String, dynamic>? params]) {
     var query = allowQuery != false && params?['query'] is Map
@@ -110,8 +111,15 @@ class MapService extends Service<String?, Map<String, dynamic>> {
       result = result.sublist(0, limit);
     }
 
-    return Future.value([for (var item in result) Map.of(item)]);
+    return Future.value([for (var item in result) _copy(item)]);
   }
+
+  /// Copies [record] one level deep: changing a field of a record handed
+  /// out (or of the data passed in) does not change what is stored, but
+  /// nested maps and lists are shared. A deeper copy cannot keep the types of
+  /// nested values (e.g. a `Map<String, String>`), which casts rely on.
+  static Map<String, dynamic> _copy(Map record) =>
+      Map<String, dynamic>.from(record);
 
   static bool _valueMatches(Object? value, Object? expected) {
     if (value == expected) return true;
@@ -177,7 +185,7 @@ class MapService extends Service<String?, Map<String, dynamic>> {
   ]) {
     // Future.sync, so a missing id fails the returned future rather than
     // throwing synchronously.
-    return Future.sync(() => Map.of(items[_indexOf(id)]));
+    return Future.sync(() => _copy(items[_indexOf(id)]));
   }
 
   @override
@@ -186,7 +194,7 @@ class MapService extends Service<String?, Map<String, dynamic>> {
     Map<String, dynamic>? params,
   ]) {
     var now = DateTime.now().toIso8601String();
-    var result = Map<String, dynamic>.from(data);
+    var result = _copy(data);
 
     if (autoIdAndDateFields == true) {
       result
@@ -195,7 +203,7 @@ class MapService extends Service<String?, Map<String, dynamic>> {
         ..[updatedAtKey] = now;
     }
     items.add(result);
-    return Future.value(Map.of(result));
+    return Future.value(_copy(result));
   }
 
   // modify, update and remove find and change a record in one synchronous
@@ -216,7 +224,7 @@ class MapService extends Service<String?, Map<String, dynamic>> {
     return Future.sync(() {
       var idx = _indexOf(id);
       var item = items[idx];
-      var result = Map<String, dynamic>.from(item)..addAll(data);
+      var result = _copy(item)..addAll(_copy(data));
 
       if (autoIdAndDateFields == true) {
         // The service manages these, so a patch cannot change them.
@@ -227,7 +235,7 @@ class MapService extends Service<String?, Map<String, dynamic>> {
         result[updatedAtKey] = DateTime.now().toIso8601String();
       }
       items[idx] = result;
-      return Map.of(result);
+      return _copy(result);
     });
   }
 
@@ -244,10 +252,10 @@ class MapService extends Service<String?, Map<String, dynamic>> {
     //}
     return Future.sync(() {
       var idx = items.indexWhere(_matchesId(id));
-      if (idx < 0) return Map.of(_insertAt(id, data));
+      if (idx < 0) return _copy(_insertAt(id, data));
 
       var old = items[idx];
-      var result = Map<String, dynamic>.from(data);
+      var result = _copy(data);
       if (autoIdAndDateFields == true) {
         result['id'] = id?.toString();
         // As in modify: only a created-at the record has.
@@ -261,7 +269,7 @@ class MapService extends Service<String?, Map<String, dynamic>> {
       }
       // In place, as modify does, so the order of records is kept.
       items[idx] = result;
-      return Map.of(result);
+      return _copy(result);
     });
   }
 
@@ -271,7 +279,7 @@ class MapService extends Service<String?, Map<String, dynamic>> {
       throw AngelHttpException.badRequest(message: 'Invalid ID "$id".');
     }
 
-    var result = Map<String, dynamic>.from(data);
+    var result = _copy(data);
     if (autoIdAndDateFields == true) {
       var now = DateTime.now().toIso8601String();
       result

@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'dart:io' hide BytesBuilder;
 import 'dart:typed_data' show BytesBuilder;
 
-import 'package:angel3_container/mirrors.dart';
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_framework/http.dart';
 import 'package:angel3_mock_request/angel3_mock_request.dart';
@@ -20,7 +19,7 @@ void main() {
   late Angel app;
 
   setUp(() {
-    app = Angel(reflector: MirrorsReflector());
+    app = Angel();
     app.encoders.addAll({'deflate': zlib.encoder, 'gzip': gzip.encoder});
 
     app.get('/hello', (req, res) {

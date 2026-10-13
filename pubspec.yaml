@@ -12,8 +12,10 @@ workspace:
   - packages/serialize/serialize_generator
   - packages/container/container
   - packages/container/container_generator
+  - packages/container/container_mirrors
   - packages/mock_request
   - packages/framework
+  - packages/framework_mirrors_test
   - packages/user_agent/user_agent
   - packages/validate
   - packages/redis
@@ -22,7 +24,7 @@ workspace:
   - packages/cors
   - packages/auth
   - packages/auth_oauth2
-#  - packages/auth_twitter
+  - packages/auth_twitter
   - packages/file_service
   - packages/html
   - packages/client
@@ -61,4 +63,7 @@ dependencies:
   melos: ^8.1.0
 
 melos:
-
+  ide:
+    # Do not generate IntelliJ module files (melos_*.iml).
+    intellij:
+      enabled: false

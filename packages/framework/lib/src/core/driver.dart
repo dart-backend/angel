@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'dart:io' show Cookie;
+import 'dart:io' show Cookie, HttpException;
 
 import 'package:angel3_http_exception/angel3_http_exception.dart';
 import 'package:angel3_route/angel3_route.dart';
@@ -125,6 +125,10 @@ abstract class Driver<
 
   void setChunkedEncoding(Response response, bool value);
 
+  /// Whether the client of [request] can receive a chunked response; HTTP/1.0
+  /// clients cannot, so a driver for them overrides this.
+  bool supportsChunkedEncoding(Request request) => true;
+
   void setStatusCode(Response response, int value);
 
   void addCookies(Response response, Iterable<Cookie> cookies);
@@ -138,23 +142,40 @@ abstract class Driver<
   Stream<Response> createResponseStreamFromRawRequest(Request request);
 
   /// Like [handleRawRequest], but never fails: errors that happen outside the
-  /// per-request error zone (e.g. a malformed request that cannot become a
-  /// [RequestContext]) are logged and answered with `400 Bad Request`.
-  /// Left unhandled they would terminate the whole server.
+  /// per-request error zone are logged and answered, since left unhandled
+  /// they would terminate the whole server.
+  ///
+  /// A malformed request that cannot become a [RequestContext] (a
+  /// [FormatException], or an [HttpException] from parsing its headers) is
+  /// answered with `400 Bad Request`, and an [AngelHttpException] with its
+  /// status code. Any other error is a server bug, answered with
+  /// `500 Internal Server Error`.
   Future<void> handleRawRequestSafely(Request request, Response response) {
     return handleRawRequest(request, response).catchError((
       Object e,
       StackTrace st,
     ) {
-      app.logger.warning('Failed to handle request', e, st);
+      var status = _statusCodeForUnhandledError(e);
+      if (status >= 500) {
+        app.logger.severe('Failed to handle request', e, st);
+      } else {
+        app.logger.warning('Failed to handle request', e, st);
+      }
       try {
-        setStatusCode(response, 400);
+        setStatusCode(response, status);
         closeResponse(response);
       } catch (_) {
         // The response may already be unusable.
       }
     });
   }
+
+  /// The status code [handleRawRequestSafely] answers [error] with.
+  static int _statusCodeForUnhandledError(Object error) => switch (error) {
+    AngelHttpException(:var statusCode) => statusCode,
+    FormatException() || HttpException() => 400,
+    _ => 500,
+  };
 
   /// Handles a single request.
   Future handleRawRequest(Request request, Response response) {
@@ -483,7 +504,10 @@ abstract class Driver<
       setContentLength(response, res.buffer?.length ?? 0);
       // The length is known, so Content-Length is used unless chunked
       // encoding is asked for (HTTP/1.0 clients do not support it).
-      setChunkedEncoding(response, res.chunked ?? false);
+      setChunkedEncoding(
+        response,
+        (res.chunked ?? false) && supportsChunkedEncoding(request),
+      );
 
       var outputBuffer = res.buffer?.toBytes() ?? <int>[];
 

@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
 
-import 'package:angel3_container/mirrors.dart';
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_framework/http.dart';
 import 'package:angel3_mock_request/angel3_mock_request.dart';
@@ -13,8 +12,14 @@ void main() {
   }
 
   test('can request the same url twice', () async {
-    var app = Angel(reflector: MirrorsReflector())
-      ..get('/test/:id', ioc((id) => 'Hello $id'));
+    var app = Angel()
+      ..get(
+        '/test/:id',
+        ioc(
+          (id) => 'Hello $id',
+          injection: InjectionRequest.constant(required: ['id']),
+        ),
+      );
     var rq1 = mk(1), rq2 = mk(2), rq3 = mk(1);
     await Future.wait([rq1, rq2, rq3].map(AngelHttp(app).handleRequest));
     var body1 = await rq1.response.transform(utf8.decoder).join(),

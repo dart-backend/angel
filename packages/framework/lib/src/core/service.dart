@@ -239,8 +239,12 @@ class Service<Id, Data> extends Routable {
       return double.parse(id.toString()) as T;
     } else if (_isType<T, num>()) {
       return num.parse(id.toString()) as T;
-    } else {
+    } else if (id is T) {
       return id as T;
+    } else {
+      // E.g. a path segment for a service whose ids are not strings or
+      // numbers: a bad request (400), like the other types, not a TypeError.
+      throw FormatException('Invalid ID "$id".');
     }
   }
 
@@ -270,7 +274,9 @@ class Service<Id, Data> extends Routable {
 
     if (before != null) handlers.addAll(before.handlers);
 
-    var indexMiddleware = getAnnotation<Middleware>(
+    var indexMiddleware = getMethodAnnotation<Middleware>(
+      service,
+      'index',
       service.index,
       app.container.reflector,
     );
@@ -291,7 +297,9 @@ class Service<Id, Data> extends Routable {
       ],
     );
 
-    var createMiddleware = getAnnotation<Middleware>(
+    var createMiddleware = getMethodAnnotation<Middleware>(
+      service,
+      'create',
       service.create,
       app.container.reflector,
     );
@@ -318,7 +326,9 @@ class Service<Id, Data> extends Routable {
       ],
     );
 
-    var readMiddleware = getAnnotation<Middleware>(
+    var readMiddleware = getMethodAnnotation<Middleware>(
+      service,
+      'read',
       service.read,
       app.container.reflector,
     );
@@ -341,7 +351,9 @@ class Service<Id, Data> extends Routable {
       ],
     );
 
-    var modifyMiddleware = getAnnotation<Middleware>(
+    var modifyMiddleware = getMethodAnnotation<Middleware>(
+      service,
+      'modify',
       service.modify,
       app.container.reflector,
     );
@@ -367,7 +379,9 @@ class Service<Id, Data> extends Routable {
       ],
     );
 
-    var updateMiddleware = getAnnotation<Middleware>(
+    var updateMiddleware = getMethodAnnotation<Middleware>(
+      service,
+      'update',
       service.update,
       app.container.reflector,
     );
@@ -413,7 +427,9 @@ class Service<Id, Data> extends Routable {
       ],
     );
 
-    var removeMiddleware = getAnnotation<Middleware>(
+    var removeMiddleware = getMethodAnnotation<Middleware>(
+      service,
+      'remove',
       service.remove,
       app.container.reflector,
     );

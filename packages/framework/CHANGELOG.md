@@ -2,6 +2,17 @@
 
 ## 10.0.0
 
+* feat: `@Expose` controllers, and `@Middleware`/`@Hooks` on services and their methods, work with a reflector that describes classes but not method tear-offs, such as a `StaticReflector` with data from `angel3_container_generator`: a controller's methods are injected from their reflected declarations (the new `injectionFor`), and a method's annotations are read from its class when its tear-off cannot be reflected. `@Query` and other `Parameter` annotations are recognized by value, so the reflector needs no information about `Parameter` itself
+* fix: A `Controller` in an app whose reflector has no information about it (e.g. a `StaticReflector` with data from `angel3_container_generator`) now applies the routes added in `configureRoutes`, as with reflection disabled, instead of failing with an `ArgumentError`. `@Expose` methods are not discovered then
+* fix: Injection works with a `StaticReflector` (or a generated reflector) that has no information about `Parameter`, or about a handler: `preInject` only reflects `Parameter` for a parameter with annotations, and a handler the reflector does not know has no `@Middleware`/`@Expose` annotations instead of failing `addRoute`
+* fix: An optional or named parameter whose type the reflector cannot construct is left out with any reflector, using the new `Container.isUnconstructible`; with a `StaticReflector` it used to fail the request with a 500
+* chore: The tests and examples no longer use `MirrorsReflector`, and `angel3_container_mirrors` is no longer a dev dependency. Tests of reflection-based features (dependency injection by reflection, `@Expose` controllers, `@Hooks` and `@Middleware` metadata) moved to the unpublished `framework_mirrors_test` package, with the controller example
+* **Breaking:** `MirrorsReflector` moved from `package:angel3_container/mirrors.dart` to the new `angel3_container_mirrors` package. Apps that use it add `angel3_container_mirrors` to their dependencies and import `package:angel3_container_mirrors/angel3_container_mirrors.dart`
+* feat: Added `injectionFromParameters` and `InjectableParameter`, which build an `InjectionRequest` from parameter descriptions without the app's `Reflector`; `preInject` now uses them
+* feat: Added `Driver.supportsChunkedEncoding(request)` (true by default; false for HTTP/1.0 requests in `AngelHttp`). Chunked encoding is only asked for when it is supported, and `AngelHttp.setChunkedEncoding` now ignores only the HTTP/1.0 case instead of every `HttpException`
+* fix: An HTTP/2 session first created after the response headers were sent now logs a warning, as its `DARTSESSID` cookie can no longer reach the client, and is not kept in the session store; read `req.session` before writing the body
+* fix: A hostname pattern with an empty label after `*.` (e.g. `*..example.com`) is now rejected, and an empty alternative between two `|`s is reported as such
+* fix: `Service.parseId` now throws `FormatException` for an id it cannot convert to a type other than `String`, `int`, `double`, `num` or `bool` (e.g. a path segment for a service with `DateTime` ids), so the request is a 400 instead of a 500 from a `TypeError`
 * fix: A multipart body cut off before its closing boundary is now a 400; the request used to hang for good, waiting for the last part to end
 * fix: A multipart part with a malformed `Content-Disposition` is now a 400 instead of a 500
 * fix: `MapService.update` no longer adds `created_at: null` to a record that had no created-at field, as `modify` already did
@@ -25,7 +36,7 @@
 * fix: An HTTP/1.1 response with an invalid header that bypasses validation (e.g. via `headers.putIfAbsent`) and no body now fails with 500 error, instead of never being sent
 * fix: An HTTP/1 request that cannot become a `RequestContext` (e.g. repeated `X-HTTP-Method-Override` headers) now returns 400 error, instead of terminating the server process. This also applies to `AngelHttp.handleRequest` on a server created outside of `startServer`
 * fix: An HTTP/1 request with an invalid `Content-Type` (e.g. `foo`) is now treated as `text/plain`, instead of terminating the server process
-* feat: Added `Driver.handleRawRequestSafely`, which answers 400 when a request fails before it reaches the app
+* feat: Added `Driver.handleRawRequestSafely`, which answers a request that fails before it reaches the app instead of letting the error terminate the server: 400 for a malformed request (`FormatException`, or an `HttpException` from parsing it), the status code of an `AngelHttpException`, and 500 for any other error, which is a bug in the server
 * fix: HTTP/2 buffered responses (`res.useBuffer()`) are now sent with their status, headers and body, instead of the stream being reset with no response.
 * fix: HTTP/2 error fallbacks (e.g. the 400 for a request that cannot be handled) now send their status, instead of resetting the stream
 * fix: HTTP/2 server pushes now send their status and headers; previously a pushed response had a body but no headers
@@ -36,12 +47,12 @@
 * fix: `HookedService.fire` now passes its `result` to listeners, instead of `null`
 * fix: Canceling a `remove` in a before hook on a typed `HookedService` now returns the cancel result, instead of failing with a `TypeError`
 * fix: Buffered HTTP/1 responses now work for HTTP/1.0 clients (e.g. nginx's default `proxy_pass`), instead of failing. **Behaviour change:** buffered responses are now sent with `Content-Length` instead of chunked encoding, unless `res.chunked` is set to `true`
-* fix: Named parameters of DI handlers (`ioc`, controllers) that have a default value and cannot be resolved are now left out, so the default applies, instead of being passed `null` (which failed with a `TypeError` for non-nullable parameters). Other unresolved named parameters (e.g. `required String? q`) are still passed `null`. This needs to know which parameters have defaults: `MirrorsReflector` reports it, as does `GeneratedReflector` with `contained`; for an `InjectionRequest` written by hand, list them in `namedWithDefaults`. Otherwise unresolved named parameters are passed `null`, as before
+* fix: Named parameters of DI handlers (`ioc`, controllers) that have a default value and cannot be resolved are now left out, so the default applies, instead of being passed `null` (which failed with a `TypeError` for non-nullable parameters). Other unresolved named parameters (e.g. `required String? q`) are still passed `null`. This needs to know which parameters have defaults: `MirrorsReflector` reports it, as does a `StaticReflector` with data from `angel3_container_generator`; for an `InjectionRequest` written by hand, list them in `namedWithDefaults`. Otherwise unresolved named parameters are passed `null`, as before
 * feat: Added `InjectionRequest.namedWithDefaults`, the named parameters left out when they cannot be resolved
 * fix: `@Header`, `@Query`, `@CookieValue` and `@Session` parameters of any type (not only `String` and numbers) now read their value, instead of being made by the container
 * fix: Optional positional and named DI parameters whose type is not registered in the container, and cannot be constructed (e.g. an abstract class), now receive `null`, instead of failing the request
 * fix: Controllers with getters, setters, static or private methods can now be mounted; those members are no longer treated as routes. Declarations without a function (e.g. fields listed by a reflector) are skipped too
-* fix: `MapService` now returns copies of its records, so changing a result (e.g. removing a field in an after hook) no longer changes the stored record
+* fix: `MapService` now returns copies of its records, so changing a result (e.g. removing a field in an after hook) no longer changes the stored record. The copies are one level deep: nested maps and lists are shared
 * fix: Concurrent `modify`, `update` and `remove` calls on the same `MapService` record no longer fail with a 404
 * fix: `MapService.modify` no longer lets the data change `id` or `created_at` when `autoIdAndDateFields` is on; previously a PATCH could give two records the same id
 * fix: `MapService.update` with `autoIdAndDateFields` off now keeps the record's id when the data has none, instead of making the record unreachable

@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:angel3_container/mirrors.dart';
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_oauth2/angel3_oauth2.dart';
 import 'package:logging/logging.dart';
@@ -19,7 +18,7 @@ void main() {
 
   // Declae the function
   void setUp() async {
-    var app = Angel(reflector: MirrorsReflector());
+    var app = Angel();
     var oauth2 = _AuthorizationServer();
 
     app.group('/oauth2', (router) {

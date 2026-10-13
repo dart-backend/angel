@@ -101,7 +101,9 @@ class AngelHttp
   }
 
   /// Handles [request], for use with a server created outside of
-  /// [startServer]. Requests that cannot be handled get `400 Bad Request`.
+  /// [startServer]. Like [handleRawRequestSafely], the returned future never
+  /// fails: a malformed request gets `400 Bad Request`, and an error in the
+  /// server `500 Internal Server Error`; both are logged.
   Future handleRequest(HttpRequest request) =>
       handleRawRequestSafely(request, request.response);
 
@@ -161,14 +163,23 @@ class AngelHttp
     HttpRequest request,
   ) => Stream.fromIterable([request.response]);
 
+  /// Asking for chunked encoding on an HTTP/1.0 response is ignored, as
+  /// those clients cannot receive it (see [supportsChunkedEncoding]); any
+  /// other failure is thrown.
   @override
   void setChunkedEncoding(HttpResponse response, bool value) {
     try {
       response.headers.chunkedTransferEncoding = value;
-    } on HttpException {
-      // HTTP/1.0 has no chunked encoding; Content-Length is sent instead.
+    } on HttpException catch (e) {
+      // dart:io reports HTTP/1.0 only through this message.
+      if (!value || !e.message.contains('HTTP 1.0')) rethrow;
     }
   }
+
+  /// HTTP/1.0 has no chunked encoding; Content-Length is sent instead.
+  @override
+  bool supportsChunkedEncoding(HttpRequest request) =>
+      request.protocolVersion != '1.0';
 
   @override
   void setContentLength(HttpResponse response, int length) =>

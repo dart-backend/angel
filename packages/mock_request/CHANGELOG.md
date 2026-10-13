@@ -2,6 +2,7 @@
 
 ## 10.0.0
 
+* feat: Added `MockHttpHeaders.tryParseContentLength`, which parses one `Content-Length` value by the same rules as `MockHttpHeaders` (and `dart:io`)
 * fix: `MockHttpRequest.write`, `writeAll`, `writeln` and `writeCharCode` now write in the charset of the request's `content-type` header (UTF-8 if it has none), and `MockHttpResponse`'s use the charset of its `content-type` header (its `encoding` if it has none), instead of writing each UTF-16 code unit as one byte (which corrupted any character outside Latin-1)
 * fix: **Breaking** `MockHttpRequest.write`, `MockHttpResponse.write` and the methods that use them now throw `ArgumentError` for a character their encoding cannot represent (such as `'☺'` with `latin1`), as `dart:io` does, instead of silently truncating it
 * fix: `MockHttpHeaders.contentType` now behaves as in `dart:io`: it is `null` when the header is absent instead of `text/html; charset=utf-8`, setting `null` removes the header instead of setting `text/html`, and setting a value keeps its charset and other parameters instead of storing only the MIME type

@@ -14,7 +14,7 @@ dependencies:
   crypto: ^3.0.1
   collection: ^1.17.0
   logging: ^1.2.0
-dev_dependencies: 
+dev_dependencies:
   angel3_validate: ^10.0.0
   angel3_test: ^10.0.0
   angel3_container: ^10.0.0

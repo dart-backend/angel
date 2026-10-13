@@ -1,4 +1,5 @@
 import '../reflector.dart';
+import 'reflected.dart';
 
 /// A [Reflector] implementation that performs simple [Map] lookups.
 ///
@@ -15,6 +16,15 @@ class StaticReflector extends Reflector {
     this.functions = const {},
     this.instances = const {},
   });
+
+  /// A reflector for the types and functions in all of [data], such as the
+  /// [ReflectionData] that `package:angel3_container_generator` generates for
+  /// each library. Later entries win when two describe the same type.
+  factory StaticReflector.combine(Iterable<ReflectionData> data) =>
+      StaticReflector(
+        types: {for (var d in data) ...d.types},
+        functions: {for (var d in data) ...d.functions},
+      );
 
   @override
   String? getName(Symbol symbol) {
@@ -42,8 +52,15 @@ class StaticReflector extends Reflector {
     return functions[function];
   }
 
+  /// Describes [object] from [instances], or else from the
+  /// [StaticReflectedClass] of its runtime type in [types], whose
+  /// [StaticReflectedClass.getMember] then reads its members.
   @override
   ReflectedInstance? reflectInstance(Object object) {
+    var clazz = types[object.runtimeType];
+    if (!instances.containsKey(object) && clazz is StaticReflectedClass) {
+      return StaticReflectedInstance(object, clazz);
+    }
     if (!instances.containsKey(object)) {
       throw ArgumentError(
         'There is no reflection information available about $object.',

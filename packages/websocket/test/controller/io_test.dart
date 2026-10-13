@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:angel3_container/mirrors.dart';
 import 'package:angel3_framework/angel3_framework.dart' as srv;
 import 'package:angel3_framework/http.dart' as srv;
 import 'package:angel3_websocket/io.dart' as ws;
@@ -19,7 +18,7 @@ void main() {
   late String url;
 
   setUp(() async {
-    app = srv.Angel(reflector: const MirrorsReflector());
+    app = srv.Angel();
     http = srv.AngelHttp(app, useZone: false);
 
     websockets = srv.AngelWebSocket(app)

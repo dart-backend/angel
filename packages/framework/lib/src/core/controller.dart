@@ -65,7 +65,8 @@ class Controller {
 
   /// Applies the routes from this [Controller] to some [router].
   ///
-  /// When reflection is disabled (see [canReflect]), only the routes added in
+  /// When reflection is disabled (see [canReflect]), or the reflector has no
+  /// information about this class, only the routes added in
   /// [configureRoutes] are applied; `@Expose` methods are not discovered.
   Future<String> applyRoutes(
     Router<RequestHandler> router,
@@ -83,10 +84,17 @@ class Controller {
     await configureRoutes(routable);
 
     String name;
-    if (canReflect(reflector)) {
+    // A reflector without information about this class (e.g. a
+    // StaticReflector) is treated like disabled reflection: only the routes
+    // added in configureRoutes are applied.
+    var classMirror = canReflect(reflector)
+        ? tryReflect(() => reflector.reflectClass(runtimeType))
+        : null;
+    var instanceMirror = classMirror == null
+        ? null
+        : tryReflect(() => reflector.reflectInstance(this));
+    if (classMirror != null && instanceMirror != null) {
       // Pre-reflect methods
-      var classMirror = reflector.reflectClass(runtimeType)!;
-      var instanceMirror = reflector.reflectInstance(this);
       final handlers = <RequestHandler>[
         ...exposeDecl.middleware,
         ...middleware,
@@ -94,7 +102,7 @@ class Controller {
       classMirror.declarations.forEach(
         _routeBuilder(reflector, instanceMirror, routable, handlers),
       );
-      name = reflector.reflectType(runtimeType)!.name;
+      name = classMirror.name;
     } else {
       name = runtimeType.toString();
     }
@@ -172,7 +180,9 @@ class Controller {
           return;
         }
 
-        var injection = preInject(reflectedMethod!, reflector);
+        // From the reflected method rather than its tear-off, which a
+        // reflector without dart:mirrors cannot reflect upon.
+        var injection = injectionFor(method);
 
         if (exposeDecl.allowNull.isNotEmpty == true) {
           injection.optional.addAll(exposeDecl.allowNull);
@@ -239,7 +249,7 @@ class Controller {
         routeMappings[name ?? ''] = routable.addRoute(
           httpMethod,
           path,
-          handleContained(reflectedMethod, injection),
+          handleContained(reflectedMethod!, injection),
           middleware: middleware,
         );
       }
@@ -275,9 +285,7 @@ class Controller {
     var existing =
         expose ??
         (canReflect(reflector)
-            ? reflector
-                      .reflectClass(runtimeType)!
-                      .annotations
+            ? tryReflect(() => reflector.reflectClass(runtimeType))?.annotations
                       .map((m) => m.reflectee)
                       .firstWhere((r) => r is Expose, orElse: () => null)
                   as Expose?

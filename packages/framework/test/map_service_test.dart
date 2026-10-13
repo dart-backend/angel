@@ -144,6 +144,22 @@ void main() {
     });
   });
 
+  group('nested values', () {
+    test('keep their types', () async {
+      var created = await service.create({
+        'tags': <String>['a'],
+        'items': <Map<String, String>>[
+          {'a': 'b'},
+        ],
+        'headers': <String, String>{'x': 'y'},
+      });
+      var read = await service.read(created['id']);
+      expect(read['tags'], isA<List<String>>());
+      expect(read['items'], isA<List<Map<String, String>>>());
+      expect(read['headers'], isA<Map<String, String>>());
+    });
+  });
+
   group('returned records', () {
     test('are copies of the stored records', () async {
       (await service.read('0'))['text'] = 'changed';

@@ -378,6 +378,8 @@ abstract class RequestContext<RawRequest> {
           bool isFile;
           HttpMultipartFormData part;
           try {
+            // Decided from Content-Disposition alone, so a file part is read
+            // as bytes without parsing its (client-supplied) Content-Type.
             isFile = _isFilePart(mime);
             part = HttpMultipartFormData.parse(
               isFile ? _BinaryPart(mime) : mime,
@@ -400,7 +402,13 @@ abstract class RequestContext<RawRequest> {
               part.contentDisposition.parameters.containsKey('name')) {
             // If there is no name, then don't parse it.
             var key = part.contentDisposition.parameters['name'];
-            if (key != null) values.add((key, part.join()));
+            if (key != null) {
+              var value = part.join();
+              // Handled now, so a failure is not reported as uncaught when
+              // an earlier one ends parsing first; awaiting it still throws.
+              value.ignore();
+              values.add((key, value));
+            }
           }
         }
       } on MimeMultipartException catch (e) {

@@ -49,7 +49,7 @@ Map<String, dynamic> _filterNoQuery(Map<String, dynamic> data) {
         value is ResponseContext) {
       return map;
     }
-    if (key is! Map) return map..[key] = value;
-    return map..[key] = _filterNoQuery(value as Map<String, dynamic>);
+    if (value is! Map) return map..[key] = value;
+    return map..[key] = _filterNoQuery(Map<String, dynamic>.from(value));
   });
 }

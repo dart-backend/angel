@@ -1,6 +1,7 @@
 import 'dart:async';
+import 'dart:collection';
 import 'dart:convert';
-import 'dart:io';
+
 import 'package:angel3_auth/angel3_auth.dart';
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:http/http.dart' as http;
@@ -8,7 +9,15 @@ import 'package:path/path.dart' as p;
 import 'package:belatuk_oauth1/belatuk_oauth1.dart' as oauth;
 import 'package:dart_twitter_api/twitter_api.dart';
 
-/// Authenticates users by connecting to Twitter's API.
+/// Authenticates users by connecting to Twitter's API, with the OAuth 1.0a
+/// redirect flow ("Sign in with Twitter").
+///
+/// A request without Twitter's callback parameters is redirected to Twitter;
+/// the callback request (with `oauth_token` and `oauth_verifier`, or `denied`)
+/// is exchanged for an access token and passed to [verifier].
+///
+/// Request token secrets are kept in memory between the redirect and the
+/// callback, so the callback must reach the same server instance.
 class TwitterStrategy<TUser> extends AuthStrategy<TUser> {
   /// The options defining how to connect to the third-party.
   final ExternalAuthOptions options;
@@ -17,125 +26,188 @@ class TwitterStrategy<TUser> extends AuthStrategy<TUser> {
   ///
   /// As always, return `null` if authentication fails.
   final FutureOr<TUser> Function(TwitterApi, RequestContext, ResponseContext)
-      verifier;
+  verifier;
 
-  /// A callback that is triggered when an OAuth2 error occurs (i.e. the user declines to login);
+  /// A callback that is triggered when an OAuth error occurs (i.e. the user
+  /// declines to login). Its result is run as a request handler.
   final FutureOr<dynamic> Function(
-      TwitterAuthorizationException, RequestContext, ResponseContext) onError;
+    TwitterAuthorizationException,
+    RequestContext,
+    ResponseContext,
+  )
+  onError;
 
   /// The root of Twitter's API. Defaults to `'https://api.twitter.com'`.
   final Uri baseUrl;
 
-  oauth.Client? _client;
+  /// How long a request token is kept, waiting for its callback.
+  final Duration requestTokenLifetime;
 
-  /// The underlying [oauth.Client] used to query Twitter.
-  oauth.Client get client => _client!;
+  /// The most request tokens kept at once; the oldest are dropped first.
+  final int maxPendingRequestTokens;
 
-  TwitterStrategy(this.options, this.verifier, this.onError,
-      {http.BaseClient? client, Uri? baseUrl})
-      : baseUrl = baseUrl ?? Uri.parse('https://api.twitter.com') {
-    // define platform (server)
-    final oauth.Platform platform = oauth.Platform(
-        '$baseUrl/oauth/request_token', // temporary credentials request
-        '$baseUrl/oauth/authorize', // resource owner authorization
-        '$baseUrl/oauth/access_token', // token credentials request
-        oauth.SignatureMethods.hmacSha1 // signature method
-        );
+  /// Signs the request token and access token requests with the consumer
+  /// credentials from [options].
+  final oauth.Authorization authorization;
 
-    // define client credentials (consumer keys)
-    final oauth.ClientCredentials clientCredentials =
-        oauth.ClientCredentials(options.clientId, options.clientSecret);
+  // Request token -> its secret, oldest first.
+  final LinkedHashMap<String, (String, DateTime)> _pending = LinkedHashMap();
 
-    // create Authorization object with client credentials and platform definition
-    final oauth.Authorization auth =
-        oauth.Authorization(clientCredentials, platform);
+  TwitterStrategy(
+    this.options,
+    this.verifier,
+    this.onError, {
+    http.BaseClient? client,
+    Uri? baseUrl,
+    this.requestTokenLifetime = const Duration(minutes: 15),
+    this.maxPendingRequestTokens = 10000,
+  }) : baseUrl = baseUrl ?? Uri.parse('https://api.twitter.com'),
+       authorization = oauth.Authorization(
+         oauth.ClientCredentials(options.clientId, options.clientSecret),
+         oauth.Platform(
+           _endpoint(baseUrl, 'oauth/request_token'),
+           _endpoint(baseUrl, 'oauth/authorize'),
+           _endpoint(baseUrl, 'oauth/access_token'),
+           oauth.SignatureMethods.hmacSha1,
+         ),
+         client,
+       );
 
-    // request temporary credentials (request tokens)
-    auth.requestTemporaryCredentials('oob').then((res) {
-      // redirect to authorization page
-      print(
-          "Open with your browser: ${auth.getResourceOwnerAuthorizationURI(res.credentials.token)}");
-
-      // get verifier (PIN)
-      stdout.write("PIN: ");
-      String verifier = stdin.readLineSync() ?? '';
-
-      // request token credentials (access tokens)
-      return auth.requestTokenCredentials(res.credentials, verifier);
-    }).then((res) {
-      // create Client object
-      _client = oauth.Client(
-          platform.signatureMethod, clientCredentials, res.credentials);
-    });
+  static String _endpoint(Uri? baseUrl, String path) {
+    var base = baseUrl ?? Uri.parse('https://api.twitter.com');
+    // p.url, not p: the host's separator would be '\' on Windows.
+    return base.replace(path: p.url.join(base.path, path)).toString();
   }
 
-  /// Handle a response from Twitter.
+  /// Handle a url-encoded response from Twitter.
+  ///
+  /// Throws [TwitterAuthorizationException] for an error response, whether
+  /// its body is JSON (`{"errors": [{"message": ...}]}`) or plain text.
   Future<Map<String, String>> handleUrlEncodedResponse(http.Response rs) async {
-    var body = rs.body;
-
     if (rs.statusCode != 200) {
-      var err = json.decode(rs.body) as Map;
-      var errors = err['errors'] as List;
-
-      if (errors.isNotEmpty) {
-        throw TwitterAuthorizationException(
-            errors[0]['message'] as String, false);
-      } else {
-        throw StateError(
-            'Twitter returned an error response without an error message: ${rs.body}');
-      }
+      throw TwitterAuthorizationException(_errorMessage(rs.body), false);
     }
-
-    return Uri.splitQueryString(body);
+    return Uri.splitQueryString(rs.body);
   }
 
-  /// Get an access token.
-  Future<Map<String, String>> getAccessToken(String token, String verifier) {
-    return client.post(
-        baseUrl.replace(path: p.join(baseUrl.path, 'oauth/access_token')),
-        headers: {
-          'accept': 'application/json'
-        },
-        body: {
-          'oauth_token': token,
-          'oauth_verifier': verifier
-        }).then(handleUrlEncodedResponse);
-    // var request = await createRequest("oauth/access_token",
-    //     method: "POST", data: {"verifier": verifier}, accessToken: token);
+  static String _errorMessage(String body) {
+    try {
+      var err = json.decode(body);
+      if (err is Map && err['errors'] is List) {
+        var errors = err['errors'] as List;
+        if (errors.isNotEmpty &&
+            errors.first is Map &&
+            errors.first['message'] is String) {
+          return errors.first['message'] as String;
+        }
+      }
+    } on FormatException {
+      // Not JSON; use the body as it is.
+    }
+    return body.trim().isEmpty
+        ? 'Twitter returned an error response without an error message.'
+        : body.trim();
   }
 
-  /// Get a request token.
-  Future<Map<String, String>> getRequestToken() {
-    return client.post(
-        baseUrl.replace(path: p.join(baseUrl.path, 'oauth/request_token')),
-        headers: {
-          'accept': 'application/json'
-        },
-        body: {
-          'oauth_callback': options.redirectUri.toString()
-        }).then(handleUrlEncodedResponse);
+  /// Runs an [authorization] request, turning Twitter's error responses into
+  /// [TwitterAuthorizationException]s.
+  Future<oauth.AuthorizationResponse> _authorize(
+    Future<oauth.AuthorizationResponse> Function() request,
+  ) async {
+    try {
+      return await request();
+    } on StateError catch (e) {
+      // belatuk_oauth1 throws a StateError with the body of an error response.
+      throw TwitterAuthorizationException(_errorMessage(e.message), false);
+    }
+  }
+
+  /// Get an access token, from the request [token] and [verifier] that Twitter
+  /// sent to the callback.
+  ///
+  /// The request token must have come from [getRequestToken] on this
+  /// strategy, within [requestTokenLifetime], and can be used once.
+  Future<Map<String, String>> getAccessToken(
+    String token,
+    String verifier,
+  ) async {
+    var secret = _takeRequestTokenSecret(token);
+    if (secret == null) {
+      throw TwitterAuthorizationException(
+        'Unknown or expired request token.',
+        false,
+      );
+    }
+    var rs = await _authorize(
+      () => authorization.requestTokenCredentials(
+        oauth.Credentials(token, secret),
+        verifier,
+      ),
+    );
+    return {
+      'oauth_token': rs.credentials.token,
+      'oauth_token_secret': rs.credentials.tokenSecret,
+      ...rs.optionalParameters,
+    };
+  }
+
+  /// Get a request token, signed with the consumer credentials only.
+  Future<Map<String, String>> getRequestToken() async {
+    var rs = await _authorize(
+      () => authorization.requestTemporaryCredentials(
+        options.redirectUri.toString(),
+      ),
+    );
+    _keepRequestTokenSecret(rs.credentials.token, rs.credentials.tokenSecret);
+    return {
+      'oauth_token': rs.credentials.token,
+      'oauth_token_secret': rs.credentials.tokenSecret,
+    };
+  }
+
+  void _keepRequestTokenSecret(String token, String secret) {
+    _dropExpired();
+    while (_pending.length >= maxPendingRequestTokens && _pending.isNotEmpty) {
+      _pending.remove(_pending.keys.first);
+    }
+    _pending[token] = (secret, DateTime.now().add(requestTokenLifetime));
+  }
+
+  String? _takeRequestTokenSecret(String token) {
+    _dropExpired();
+    return _pending.remove(token)?.$1;
+  }
+
+  void _dropExpired() {
+    var now = DateTime.now();
+    while (_pending.isNotEmpty && _pending.values.first.$2.isBefore(now)) {
+      _pending.remove(_pending.keys.first);
+    }
+  }
+
+  static bool _isCallback(RequestContext req) {
+    var query = req.queryParameters;
+    return query.containsKey('oauth_token') ||
+        query.containsKey('oauth_verifier') ||
+        query.containsKey('denied');
   }
 
   @override
-  Future<TUser?> authenticate(RequestContext req, ResponseContext res,
-      [AngelAuthOptions? options]) async {
+  Future<TUser?> authenticate(
+    RequestContext req,
+    ResponseContext res, [
+    AngelAuthOptions? options,
+  ]) async {
     try {
-      if (options != null) {
-        var result = await authenticateCallback(req, res, options);
-        if (result is TUser) {
-          return result;
-        } else {
-          return null;
-        }
-      } else {
-        var result = await getRequestToken();
-        var token = result['oauth_token'];
-        var url = baseUrl.replace(
-            path: p.join(baseUrl.path, 'oauth/authorize'),
-            queryParameters: {'oauth_token': token});
-        await res.redirect(url);
-        return null;
+      // AngelAuth always passes options, so the callback is recognized by
+      // Twitter's parameters instead.
+      if (_isCallback(req)) {
+        return await authenticateCallback(req, res, options);
       }
+
+      var token = (await getRequestToken())['oauth_token']!;
+      await res.redirect(authorization.getResourceOwnerAuthorizationURI(token));
+      return null;
     } on TwitterAuthorizationException catch (e) {
       var result = await onError(e, req, res);
       await req.app?.executeHandler(result, req, res);
@@ -144,28 +216,48 @@ class TwitterStrategy<TUser> extends AuthStrategy<TUser> {
     }
   }
 
-  Future authenticateCallback(
-      RequestContext req, ResponseContext res, AngelAuthOptions options) async {
-    try {
-      if (req.queryParameters.containsKey('denied')) {
-        throw TwitterAuthorizationException(
-            'The user denied the Twitter authorization attempt.', true);
-      }
-
-      var token = req.queryParameters['oauth_token'] as String;
-      var verifier = req.queryParameters['oauth_verifier'] as String;
-      var loginData = await getAccessToken(token, verifier);
-      var twitter = TwitterApi(
-          client: TwitterClient(
-              consumerKey: this.options.clientId,
-              consumerSecret: this.options.clientSecret,
-              token: loginData['oauth_token'] ?? '',
-              secret: loginData['oauth_token_secret'] ?? ''));
-
-      return await this.verifier(twitter, req, res);
-    } on TwitterAuthorizationException catch (e) {
-      return await onError(e, req, res);
+  /// Handles Twitter's callback request.
+  ///
+  /// Throws [TwitterAuthorizationException] when the user denied access, the
+  /// request is missing Twitter's parameters, or Twitter rejects the token;
+  /// [authenticate] passes it to [onError].
+  Future<TUser?> authenticateCallback(
+    RequestContext req,
+    ResponseContext res, [
+    AngelAuthOptions? options,
+  ]) async {
+    var query = req.queryParameters;
+    if (query.containsKey('denied')) {
+      _takeRequestTokenSecret('${query['denied']}');
+      throw TwitterAuthorizationException(
+        'The user denied the Twitter authorization attempt.',
+        true,
+      );
     }
+
+    var token = query['oauth_token'];
+    var verifier = query['oauth_verifier'];
+    if (token is! String ||
+        token.isEmpty ||
+        verifier is! String ||
+        verifier.isEmpty) {
+      throw TwitterAuthorizationException(
+        'The callback is missing oauth_token or oauth_verifier.',
+        false,
+      );
+    }
+
+    var loginData = await getAccessToken(token, verifier);
+    var twitter = TwitterApi(
+      client: TwitterClient(
+        consumerKey: this.options.clientId,
+        consumerSecret: this.options.clientSecret,
+        token: loginData['oauth_token'] ?? '',
+        secret: loginData['oauth_token_secret'] ?? '',
+      ),
+    );
+
+    return await this.verifier(twitter, req, res);
   }
 }
 

@@ -2,12 +2,12 @@
 
 ## 10.0.0
 
-* `ReflectedParameter.hasDefaultValue` is now set (with `contained`, or any `Reflectable` that has a `DeclarationsCapability`), so DI keeps the default of an unresolved parameter, as with `MirrorsReflector`
-* Fixed `GeneratedReflector.getName` returning `"name")` instead of `name`
-* Fixed `ReflectedFunction.invoke` always failing: it threw when a closure was available, and failed with a null error when one was not
-* `ReflectedClass.declarations` now lists only methods (including getters and setters), like `MirrorsReflector`; fields (with no function) and constructors are no longer included
-* `ReflectedInstance.getField` now returns values that `reflectable` cannot reflect (e.g. `null` or a method tear-off), instead of throwing
-* Parameters whose type `reflectable` cannot reflect are now described by their `Type`, instead of making the whole function fail to reflect
+* **Breaking:** Rewritten as a `build_runner` builder that generates reflection data, used through `StaticReflector`, for classes and top-level functions marked `@injectable`: how to construct each class (for `Container.make`), its annotations, and its public instance methods with their parameters and annotations, and each function's parameters and annotations. With it, `@Expose` controllers, `@Hooks`/`@Middleware` annotations and `ioc` on `@injectable` functions work without `dart:mirrors`. It no longer depends on `reflectable`, so it resolves with the rest of the Angel3 packages, and the generated code calls constructors without `dart:mirrors` (directly, or with `Function.apply` and symbol literals so that left-out optional parameters keep their defaults), which works in AOT-compiled apps, obfuscated or not
+* **Breaking:** Removed `GeneratedReflector`, `ContainedReflectable` and `contained`. To migrate:
+  * Replace `@contained` with `@injectable` (from `package:angel3_container`), and add `part '<file>.g.dart';` to each library with such classes
+  * Replace `reflectable_builder` with `angel3_container_generator` and `build_runner` in `dev_dependencies`, and run `dart run build_runner build`
+  * Replace `GeneratedReflector()` with `StaticReflector.combine([...])`, passing each library's generated variable (e.g. `servicesReflection` for `services.dart`)
+* Closures cannot be described: `ioc` on a closure needs an explicit `injection:`, as it did with `GeneratedReflector`
 
 ## 9.1.0
 

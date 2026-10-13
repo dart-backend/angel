@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:angel3_container/mirrors.dart';
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_test/angel3_test.dart';
 import 'package:angel3_validate/angel3_validate.dart';
@@ -14,7 +13,7 @@ void main() {
   late TestClient client;
 
   setUp(() async {
-    app = Angel(reflector: MirrorsReflector())
+    app = Angel()
       ..get('/hello', (req, res) => 'Hello')
       ..get('/buffered', (req, res) {
         res.useBuffer();

@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:angel3_container/mirrors.dart';
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_shelf/angel3_shelf.dart';
 import 'package:logging/logging.dart';
@@ -15,21 +14,24 @@ void main() async {
     ..onRecord.listen(prettyLog);
 
   // Create a basic Angel server, with some routes.
-  var app = Angel(
-    logger: Logger('angel3_shelf_demo'),
-    reflector: MirrorsReflector(),
-  );
+  var app = Angel(logger: Logger('angel3_shelf_demo'));
 
   app.get('/angel', (req, res) {
     res.write('Angel embedded within shelf!');
     return false;
   });
 
+  // Without a reflector, `ioc` is told what to inject instead of reflecting
+  // on the handler.
   app.get(
     '/hello',
-    ioc((@Query('name') String name) {
-      return {'hello': name};
-    }),
+    ioc(
+      (String name) => {'hello': name},
+      injection: InjectionRequest.constant(
+        required: ['name'],
+        parameters: {'name': Query('name')},
+      ),
+    ),
   );
 
   // Next, create an AngelShelf driver.

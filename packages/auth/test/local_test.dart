@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:angel3_auth/angel3_auth.dart';
-import 'package:angel3_container/mirrors.dart';
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_framework/http.dart';
 
@@ -51,7 +50,7 @@ void main() async {
 
   setUp(() async {
     client = http.Client();
-    app = Angel(reflector: MirrorsReflector());
+    app = Angel();
     angelHttp = AngelHttp(app, useZone: false);
     await app.configure(wireAuth);
 

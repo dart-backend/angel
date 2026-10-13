@@ -192,6 +192,7 @@ class AngelHttp2
     var finalizers = ignoreFinalizers ? Future.value() : res.runFinalizers(req);
     return finalizers.then((_) {
       res.addSessionCookie();
+      if (req is Http2RequestContext) req.markHeadersSent();
       return super.sendResponse(
         request,
         response,

@@ -1,4 +1,3 @@
-import 'package:angel3_container/mirrors.dart';
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_framework/http.dart';
 
@@ -24,7 +23,7 @@ void main() {
   late http.Client client;
 
   setUp(() async {
-    app = Angel(reflector: MirrorsReflector())
+    app = Angel()
       ..use('/todos', service = MapService())
       ..errorHandler = (e, req, res) {
         if (e.error != null) print('Whoops: ${e.error}');
