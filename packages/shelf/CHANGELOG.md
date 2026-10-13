@@ -3,7 +3,7 @@
 ## 10.0.0-beta-1
 
 * fix: `embedShelf(..., throwOnNullResponse: true)` no longer turns every response into a 500. The option now has no effect, as a `shelf.Handler` cannot return `null`
-* fix: A request with a malformed `Content-Length`, differing `Content-Length` values, or both `Content-Length` and `Transfer-Encoding` is now rejected with a 400 (it used to be a 500), as RFC 9112 asks, since such requests can be used for request smuggling. Repeated identical values are collapsed into one, so the early `maxBodySize` check still applies. The check is the new `checkRequestFraming`
+* fix: A request with a malformed `Content-Length`, differing `Content-Length` values, a `Transfer-Encoding` that does not end in a single `chunked`, or both `Content-Length` and `Transfer-Encoding` is now rejected with a 400 (it used to be a 500), as RFC 9112 asks, since such requests can be used for request smuggling. Repeated identical values are collapsed into one, so the early `maxBodySize` check still applies. The check is the new `checkRequestFraming`, and `AngelShelf.middleware` passes the checked request on to its inner handler
 * test: The tests no longer use `MirrorsReflector`; the example still does, for its `ioc` handler
 
 ## 9.1.0-beta-4

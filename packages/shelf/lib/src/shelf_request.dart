@@ -89,20 +89,50 @@ class ShelfRequestContext extends RequestContext {
 /// collapsed into one.
 ///
 /// Throws [AngelHttpException.badRequest] when `Content-Length` is malformed
-/// or has differing values, or comes with `Transfer-Encoding`. Two hops that
-/// read such a request's length differently can be used to smuggle requests,
-/// so it is rejected rather than guessed at.
+/// or has differing values, when `Transfer-Encoding` does not end in a single
+/// `chunked`, or when both are sent. Two hops that read such a request's
+/// length differently can be used to smuggle requests, so it is rejected
+/// rather than guessed at.
+///
+/// A request this returned is not checked again, so `AngelShelf` and
+/// [ShelfRequestContext] can both call it.
 shelf.Request checkRequestFraming(shelf.Request request) {
-  var contentLength = request.headers[HttpHeaders.contentLengthHeader];
-  if (contentLength == null) return request;
+  if (_framingChecked[request] == true) return request;
+  var checked = _checkFraming(request);
+  _framingChecked[checked] = true;
+  return checked;
+}
 
-  if (request.headers.containsKey(HttpHeaders.transferEncodingHeader)) {
-    throw AngelHttpException.badRequest(
-      message: 'Content-Length and Transfer-Encoding cannot both be sent.',
-    );
+final Expando<bool> _framingChecked = Expando('framingChecked');
+
+shelf.Request _checkFraming(shelf.Request request) {
+  var contentLength = request.headers[HttpHeaders.contentLengthHeader];
+  var transferEncoding = request.headers[HttpHeaders.transferEncodingHeader];
+
+  if (transferEncoding != null) {
+    if (contentLength != null) {
+      throw AngelHttpException.badRequest(
+        message: 'Content-Length and Transfer-Encoding cannot both be sent.',
+      );
+    }
+    // shelf joins repeated headers with ','. chunked must come last, once.
+    var codings = transferEncoding
+        .split(',')
+        .map((c) => c.trim().toLowerCase())
+        .where((c) => c.isNotEmpty)
+        .toList();
+    if (codings.isEmpty ||
+        codings.last != 'chunked' ||
+        codings.indexOf('chunked') != codings.length - 1) {
+      throw AngelHttpException.badRequest(
+        message: 'Invalid Transfer-Encoding: $transferEncoding',
+      );
+    }
+    return request;
   }
 
-  // shelf joins repeated headers with ','.
+  if (contentLength == null) return request;
+
   var lengths = contentLength.split(',').map(_parseContentLength).toSet();
   if (lengths.length != 1 || lengths.first == null) {
     throw AngelHttpException.badRequest(

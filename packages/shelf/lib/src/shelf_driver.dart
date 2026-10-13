@@ -52,45 +52,47 @@ class AngelShelf
     'AngelShelf cannot mount a standalone server, or return a URI.',
   );
 
-  /// Rejects a request with invalid framing headers (see
-  /// [checkRequestFraming]) with a 400, before there is a request context for
-  /// Angel's error handler to use.
-  static shelf.Response? _rejectFraming(shelf.Request request) {
+  /// Runs [checkRequestFraming] on [request] before there is a request context
+  /// for Angel's error handler to use. Returns the checked request to handle,
+  /// or the 400 to answer with.
+  static (shelf.Request?, shelf.Response?) _checkFraming(
+    shelf.Request request,
+  ) {
     try {
-      checkRequestFraming(request);
-      return null;
+      return (checkRequestFraming(request), null);
     } on AngelHttpException catch (e) {
-      return shelf.Response(e.statusCode, body: e.message);
+      return (null, shelf.Response(e.statusCode, body: e.message));
     }
   }
 
   Future<shelf.Response> handler(shelf.Request request) async {
-    var rejected = _rejectFraming(request);
-    if (rejected != null) return rejected;
+    var (checked, rejected) = _checkFraming(request);
+    if (checked == null) return rejected!;
     var response = ShelfResponseContext(app);
-    var result = await handleRawRequest(request, response);
+    var result = await handleRawRequest(checked, response);
     if (result is shelf.Response) {
       return result;
     } else if (!response.isOpen) {
       return response.shelfResponse;
     } else {
-      // return await handler(request);
+      // return await handler(checked);
       return notFound!();
     }
   }
 
   shelf.Handler middleware(shelf.Handler handler) {
     return (request) async {
-      var rejected = _rejectFraming(request);
-      if (rejected != null) return rejected;
+      var (checked, rejected) = _checkFraming(request);
+      if (checked == null) return rejected!;
       var response = ShelfResponseContext(app);
-      var result = await handleRawRequest(request, response);
+      var result = await handleRawRequest(checked, response);
       if (result is shelf.Response) {
         return result;
       } else if (!response.isOpen) {
         return response.shelfResponse;
       } else {
-        return await handler(request);
+        // The checked request, so the inner handler can read its length.
+        return await handler(checked);
       }
     };
   }

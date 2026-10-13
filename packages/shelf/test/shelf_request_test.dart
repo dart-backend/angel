@@ -10,11 +10,7 @@ void main() {
       ShelfRequestContext(
         app,
         app.container.createChild(),
-        shelf.Request(
-          'POST',
-          Uri.parse('http://localhost/'),
-          headers: headers,
-        ),
+        shelf.Request('POST', Uri.parse('http://localhost/'), headers: headers),
         '/',
       );
 
@@ -56,6 +52,56 @@ void main() {
       () => request({'content-length': '5', 'transfer-encoding': 'chunked'}),
       badRequest,
     );
+  });
+
+  test('transfer-encoding must end in a single chunked', () {
+    expect(
+      request({'transfer-encoding': 'chunked'}).headers.chunkedTransferEncoding,
+      isTrue,
+    );
+    expect(
+      request({'transfer-encoding': 'gzip, chunked'}).rawRequest.headers,
+      containsPair('transfer-encoding', 'gzip, chunked'),
+    );
+    expect(() => request({'transfer-encoding': 'gzip'}), badRequest);
+    expect(() => request({'transfer-encoding': 'chunked, gzip'}), badRequest);
+    expect(
+      () => request({'transfer-encoding': 'chunked, chunked'}),
+      badRequest,
+    );
+    expect(() => request({'transfer-encoding': 'xchunked'}), badRequest);
+    expect(() => request({'transfer-encoding': ''}), badRequest);
+  });
+
+  test('a checked request is not checked again', () {
+    var raw = shelf.Request(
+      'POST',
+      Uri.parse('http://localhost/'),
+      headers: {'content-length': '5, 5'},
+    );
+    var checked = checkRequestFraming(raw);
+    expect(checked, isNot(same(raw)));
+    expect(checkRequestFraming(checked), same(checked));
+  });
+
+  test('AngelShelf.middleware passes the checked request on', () async {
+    var driver = AngelShelf(Angel());
+    int? innerLength;
+    var middleware = driver.middleware((request) {
+      innerLength = request.contentLength;
+      return shelf.Response.ok('inner');
+    });
+
+    var response = await middleware(
+      shelf.Request(
+        'POST',
+        Uri.parse('http://localhost/'),
+        headers: {'content-length': '5, 5'},
+        body: Stream.value('hello'.codeUnits),
+      ),
+    );
+    expect(response.statusCode, 200);
+    expect(innerLength, 5);
   });
 
   test('AngelShelf answers invalid framing with a 400', () async {
