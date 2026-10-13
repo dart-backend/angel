@@ -6,7 +6,7 @@
 
 `MirrorsReflector`, a `dart:mirrors` backend for [`angel3_container`](https://pub.dev/packages/angel3_container). With it, the container can construct classes that are not registered, and Angel3 can use controllers and `ioc()` handlers.
 
-`dart:mirrors` only works on the Dart VM in JIT mode (`dart run`). For apps compiled ahead of time, use `GeneratedReflector` from [`angel3_container_generator`](https://pub.dev/packages/angel3_container_generator), or register everything and use `EmptyReflector`.
+`dart:mirrors` only works on the Dart VM in JIT mode (`dart run`). For apps compiled ahead of time, mark classes `@injectable`, generate their reflection data with [`angel3_container_generator`](https://pub.dev/packages/angel3_container_generator) and use `StaticReflector.combine([...])`, or register everything and use `EmptyReflector`.
 
 ## Usage
 
