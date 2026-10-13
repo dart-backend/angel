@@ -150,9 +150,8 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
         for (var field in ctx.fields) {
           if (!shouldBeConstant(ctx) && isListOrMapType(field.type)) {
             var typeName =
-                const TypeChecker.typeNamed(
-                  List,
-                ).isAssignableFromType(field.type)
+                const TypeChecker.typeNamed(List)
+                    .isAssignableFromType(field.type)
                 ? 'List'
                 : 'Map';
             String? defaultValue = typeName == 'List' ? '[]' : '{}';

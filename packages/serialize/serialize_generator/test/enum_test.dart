@@ -1,6 +1,7 @@
 import 'dart:typed_data';
 
 import 'package:test/test.dart';
+
 import 'models/with_enum.dart';
 
 WithEnum aWithEnum = WithEnum(type: WithEnumType.a);

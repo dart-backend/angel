@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/element/type.dart';
@@ -8,6 +9,7 @@ import 'package:angel3_serialize_generator/angel3_serialize_generator.dart';
 import 'package:build/build.dart';
 import 'package:code_builder/code_builder.dart' hide LibraryBuilder;
 import 'package:source_gen/source_gen.dart';
+
 import 'orm_build_context.dart';
 
 var floatTypes = [
@@ -557,9 +559,8 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
 
               // Add a constructor that initializes _where
               b.addExpression(
-                refer(
-                  '_where',
-                ).assign(queryWhereType.newInstance([refer('this')])),
+                refer('_where')
+                    .assign(queryWhereType.newInstance([refer('this')])),
               );
 
               // Note: this is where subquery fields for relations are added.
@@ -638,29 +639,36 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
 
                     //log.fine('$fieldName query => ${b.toString()}');
 
-                    var throughRelation = relationContext?.relations.values.firstWhere(
-                      (e) {
-                        //log.fine(
-                        //    'ForeignTable(Rel) => ${e.foreignTable}, ${relationForeign.tableName}');
-                        return e.foreignTable == relationForeign.tableName;
-                      },
-                      orElse: () {
-                        // _Role has a many-to-many to _User through _RoleUser, but
-                        // _RoleUser has no relation pointing to _User.
-                        var b = StringBuffer();
-                        b.write(ctx.buildContext.modelClassName);
-                        b.write(' has a many-to-many relationship to ');
-                        b.write(relationForeign.buildContext.modelClassName);
-                        b.write(' through ');
-                        b.write(relationContext.buildContext.modelClassName);
-                        b.write(', but ');
-                        b.write(relationContext.buildContext.modelClassName);
-                        b.write(' has no relation pointing to ');
-                        b.write(ctx.buildContext.modelClassName);
-                        b.write('.');
-                        throw b.toString();
-                      },
-                    );
+                    var throughRelation = relationContext?.relations.values
+                        .firstWhere(
+                          (e) {
+                            //log.fine(
+                            //    'ForeignTable(Rel) => ${e.foreignTable}, ${relationForeign.tableName}');
+                            return e.foreignTable == relationForeign.tableName;
+                          },
+                          orElse: () {
+                            // _Role has a many-to-many to _User through _RoleUser, but
+                            // _RoleUser has no relation pointing to _User.
+                            var b = StringBuffer();
+                            b.write(ctx.buildContext.modelClassName);
+                            b.write(' has a many-to-many relationship to ');
+                            b.write(
+                              relationForeign.buildContext.modelClassName,
+                            );
+                            b.write(' through ');
+                            b.write(
+                              relationContext.buildContext.modelClassName,
+                            );
+                            b.write(', but ');
+                            b.write(
+                              relationContext.buildContext.modelClassName,
+                            );
+                            b.write(' has no relation pointing to ');
+                            b.write(ctx.buildContext.modelClassName);
+                            b.write('.');
+                            throw b.toString();
+                          },
+                        );
 
                     // ON role_users.user_id=users.id)
                     b.write(' ON ');
@@ -826,7 +834,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
 
               var keyName = findPrimaryFieldInList(
                 ctx,
-                ctx.buildContext.fields,
+                ctx.buildContext.fields.map(ClassOrmField.new),
               )?.displayName;
 
               if (keyName == null) {
@@ -929,13 +937,11 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
           builderType = refer('BooleanSqlExpressionBuilder');
         } else if (const TypeChecker.typeNamed(DateTime).isExactlyType(type)) {
           builderType = refer('DateTimeSqlExpressionBuilder');
-        } else if (const TypeChecker.typeNamed(
-          Map,
-        ).isAssignableFromType(type)) {
+        } else if (const TypeChecker.typeNamed(Map)
+            .isAssignableFromType(type)) {
           builderType = refer('MapSqlExpressionBuilder');
-        } else if (const TypeChecker.typeNamed(
-          List,
-        ).isAssignableFromType(type)) {
+        } else if (const TypeChecker.typeNamed(List)
+            .isAssignableFromType(type)) {
           builderType = refer('ListSqlExpressionBuilder');
 
           // Detect relationship
@@ -1047,9 +1053,8 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                 var name = ctx.buildContext.resolveFieldName(field.displayName);
                 var type = ctx.columns[field.displayName]?.type;
                 if (type == null) continue;
-                if (const TypeChecker.typeNamed(
-                  List,
-                ).isAssignableFromType(fType)) {
+                if (const TypeChecker.typeNamed(List)
+                    .isAssignableFromType(fType)) {
                   args[name] = literalString(type.name);
                 }
 
@@ -1075,9 +1080,8 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
 
             if (fType is InterfaceType && fType.element is EnumElement) {
               value = _deserializeEnumExpression(field, value);
-            } else if (const TypeChecker.typeNamed(
-              List,
-            ).isAssignableFromType(fType)) {
+            } else if (const TypeChecker.typeNamed(List)
+                .isAssignableFromType(fType)) {
               value = refer('json')
                   .property('decode')
                   .call([value.asA(refer('String'))])
@@ -1112,9 +1116,8 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
 
             if (fType is InterfaceType && fType.element is EnumElement) {
               value = _serializeEnumExpression(field, value);
-            } else if (const TypeChecker.typeNamed(
-              List,
-            ).isAssignableFromType(fType)) {
+            } else if (const TypeChecker.typeNamed(List)
+                .isAssignableFromType(fType)) {
               value = refer('json').property('encode').call([value]);
             }
 
@@ -1132,9 +1135,10 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                     ..type = type,
                 ),
               )
-              ..body = refer(
-                'values',
-              ).index(literalString(name!)).assign(value).code;
+              ..body = refer('values')
+                  .index(literalString(name!))
+                  .assign(value)
+                  .code;
           }),
         );
       }
@@ -1158,9 +1162,8 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                   continue;
                 }
                 b.addExpression(
-                  refer(
-                    field.displayName,
-                  ).assign(refer('model').property(field.displayName)),
+                  refer(field.displayName)
+                      .assign(refer('model').property(field.displayName)),
                 );
               }
 
@@ -1198,9 +1201,9 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
 
                   if (foreign != null) {
                     if (isSpecialId(foreign, field)) {
-                      parsedId = (refer(
-                        'int',
-                      ).property('tryParse').call([parsedId]));
+                      parsedId = (refer('int')
+                          .property('tryParse')
+                          .call([parsedId]));
                     }
                   }
                   var cond = prop.notEqualTo(literalNull);
@@ -1223,7 +1226,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
   /// Retrieve the [Expression] to parse a serialized enumeration field.
   /// Takes into account the [SerializableField] properties.
   /// Defaults to `enum.values[index as int]`
-  Expression _deserializeEnumExpression(FieldElement field, Expression expr) {
+  Expression _deserializeEnumExpression(OrmField field, Expression expr) {
     Reference enumType = convertTypeReference(
       field.type,
       ignoreNullabilityCheck: true,
@@ -1231,7 +1234,10 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
     const TypeChecker serializableFieldTypeChecker = TypeChecker.typeNamed(
       SerializableField,
     );
-    final annotation = serializableFieldTypeChecker.firstAnnotationOf(field);
+    // A relation's column has no annotations of its own.
+    final annotation = field is ClassOrmField
+        ? serializableFieldTypeChecker.firstAnnotationOf(field.element)
+        : null;
     Expression? parseExpr;
     if (null != annotation) {
       final deserializer = annotation.getField('deserializer')?.toSymbolValue();
@@ -1257,11 +1263,14 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
 
   /// Retrieve the [Expression] to serialize the enumeration field.
   /// Takes into account the [SerializableField] properties.
-  Expression _serializeEnumExpression(FieldElement field, Expression expr) {
+  Expression _serializeEnumExpression(OrmField field, Expression expr) {
     const TypeChecker serializableFieldTypeChecker = TypeChecker.typeNamed(
       SerializableField,
     );
-    final annotation = serializableFieldTypeChecker.firstAnnotationOf(field);
+    // A relation's column has no annotations of its own.
+    final annotation = field is ClassOrmField
+        ? serializableFieldTypeChecker.firstAnnotationOf(field.element)
+        : null;
     Expression? parseExpr;
     if (null != annotation) {
       final serializer = annotation.getField('serializer')?.toSymbolValue();

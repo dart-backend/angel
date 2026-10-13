@@ -211,7 +211,14 @@ class Employee extends _Employee {
 
   @override
   int get hashCode {
-    return Object.hashAll([id, createdAt, updatedAt, firstName, lastName, salary]);
+    return Object.hashAll([
+      id,
+      createdAt,
+      updatedAt,
+      firstName,
+      lastName,
+      salary,
+    ]);
   }
 
   @override

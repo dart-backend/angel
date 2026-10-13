@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:analyzer/dart/constant/value.dart';
 import 'package:analyzer/dart/element/element.dart';
 // ignore: implementation_imports
@@ -15,6 +16,7 @@ import 'package:build/build.dart';
 import 'package:path/path.dart' as p;
 import 'package:recase/recase.dart';
 import 'package:source_gen/source_gen.dart';
+
 import 'context.dart';
 
 // ignore: deprecated_member_use
@@ -261,6 +263,10 @@ Future<BuildContext?> buildContext(
 }
 
 /// A manually-instantiated [FieldElement].
+@Deprecated(
+  'Subclasses analyzer internals, which change between versions; '
+  'angel3_orm_generator no longer uses it.',
+)
 class ShimFieldImpl extends FieldElementImpl {
   //@override
   //final DartType type;
@@ -270,11 +276,25 @@ class ShimFieldImpl extends FieldElementImpl {
     Reference shimFieldRef,
     FieldFragmentImpl firstFragment,
   ) : super(
-        reference: shimFieldRef as MemberReference,
+        reference: _memberReference(shimFieldRef, firstFragment.name ?? 'shim'),
         firstFragment: firstFragment,
       ) {
     type = shimFieldType;
   }
+
+  /// [reference] if it is a member's; otherwise (e.g. a [RootReference]) a
+  /// member reference for [name] in a reference tree of its own.
+  ///
+  /// The analyzer requires a [MemberReference], which only it can create, and
+  /// its constructor points the reference at this element, so a reference
+  /// from the analyzer's own tree must not be used for a shim.
+  static MemberReference _memberReference(Reference reference, String name) =>
+      reference is MemberReference
+      ? reference
+      : RootReference()
+            .getOrCreateLibrary(Uri.parse('angel3-shim:///$name'))
+            .getOrCreateClass('Shim')
+            .declareField(name);
 }
 
 /// The `includeAnnotations` of a `@Serializable` [annotation] on [clazz],

@@ -2,11 +2,11 @@
 
 ## 10.0.0
 
-* Released with the other Angel3 packages at 10.0.0
 * **Breaking:** Generated `hashCode` getters use `Object.hashAll` instead of `hashObjects`, which `angel3_serialize` 10 no longer exports; regenerate existing models
-* Reads `Serializable.serializers` as the `Serializers` enum of `angel3_serialize` 10
+* Reads `Serializable.serializers` as the `Serializers` enum of `angel3_serialize`
 * A value in `includeAnnotations` that is not a constant instance of a class (e.g. a string) now fails the build with an error, instead of producing an invalid annotation on the generated class
-* Require Dart >= 3.13
+* fix: `ShimFieldImpl` creates its own member reference when it is not given one. `angel3_orm_generator` passes a `RootReference`, which `analyzer` 14.5 rejects (`type 'RootReference' is not a subtype of type 'MemberReference'`), so building any ORM model with `@BelongsTo` failed
+* deprecated: `ShimFieldImpl`, which subclasses `analyzer` internals; `angel3_orm_generator` no longer uses it
 
 ## 9.1.0
 

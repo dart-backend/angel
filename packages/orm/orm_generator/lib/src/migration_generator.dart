@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:analyzer/dart/constant/value.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
@@ -10,6 +11,7 @@ import 'package:code_builder/code_builder.dart';
 import 'package:dart_style/dart_style.dart';
 import 'package:logging/logging.dart';
 import 'package:source_gen/source_gen.dart' hide LibraryBuilder;
+
 import 'orm_build_context.dart';
 
 /// Migration Builder
@@ -72,9 +74,8 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
     var lib = generateMigrationLibrary(ctx, element, resolver, buildStep);
 
     //if (lib == null) return null;
-    return DartFormatter(
-      languageVersion: DartFormatter.latestLanguageVersion,
-    ).format(lib.accept(DartEmitter(useNullSafetySyntax: true)).toString());
+    return DartFormatter(languageVersion: DartFormatter.latestLanguageVersion)
+        .format(lib.accept(DartEmitter(useNullSafetySyntax: true)).toString());
   }
 
   Library generateMigrationLibrary(
@@ -103,9 +104,8 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
     return Method((meth) {
       // Check to see if clazz extends Model class
 
-      var autoIdAndDateFields = const TypeChecker.typeNamed(
-        Model,
-      ).isAssignableFromType(ctx.buildContext.clazz.thisType);
+      var autoIdAndDateFields = const TypeChecker.typeNamed(Model)
+          .isAssignableFromType(ctx.buildContext.clazz.thisType);
       meth
         ..name = 'up'
         ..returns = refer('void')
@@ -244,22 +244,20 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
                 var type = defaultValue.type;
                 Expression? defaultExpr;
 
-                if (const TypeChecker.typeNamed(
-                  RawSql,
-                ).isAssignableFromType(defaultValue.type!)) {
-                  var value = ConstantReader(
-                    defaultValue,
-                  ).read('value').stringValue;
-                  defaultExpr = refer(
-                    'RawSql',
-                  ).constInstance([literalString(value)]);
+                if (const TypeChecker.typeNamed(RawSql)
+                    .isAssignableFromType(defaultValue.type!)) {
+                  var value = ConstantReader(defaultValue)
+                      .read('value')
+                      .stringValue;
+                  defaultExpr = refer('RawSql')
+                      .constInstance([literalString(value)]);
                 } else if (type is InterfaceType &&
                     type.element is EnumElement) {
                   // Default to enum index.
                   try {
-                    var index = ConstantReader(
-                      defaultValue,
-                    ).read('index').intValue;
+                    var index = ConstantReader(defaultValue)
+                        .read('index')
+                        .intValue;
                     defaultExpr = literalNum(index);
                   } catch (error) {
                     _logger.warning(error);

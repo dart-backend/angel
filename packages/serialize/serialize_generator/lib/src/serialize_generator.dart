@@ -3,6 +3,7 @@ library;
 import 'dart:async';
 import 'dart:mirrors';
 import 'dart:typed_data';
+
 import 'package:analyzer/dart/constant/value.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
@@ -127,9 +128,9 @@ String? dartObjectToString(DartObject v) {
     }).join(', ')}}';
   }
   if (v.toStringValue() != null) {
-    return literalString(
-      v.toStringValue()!,
-    ).accept(DartEmitter(useNullSafetySyntax: true)).toString();
+    return literalString(v.toStringValue()!)
+        .accept(DartEmitter(useNullSafetySyntax: true))
+        .toString();
   }
   if (type is InterfaceType && type.element is EnumElement) {
     // Find the index of the enum, then find the member.

@@ -39,9 +39,8 @@ class WithEnum implements WithEnumEntity {
   bool operator ==(other) {
     return other is WithEnumEntity &&
         other.type == type &&
-        ListEquality<int>(
-          DefaultEquality<int>(),
-        ).equals(other.finalList, finalList) &&
+        ListEquality<int>(DefaultEquality<int>())
+            .equals(other.finalList, finalList) &&
         ListEquality().equals(other.imageBytes, imageBytes);
   }
 

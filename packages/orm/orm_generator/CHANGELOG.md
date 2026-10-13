@@ -4,6 +4,7 @@
 
 * Released with the other Angel3 packages at 10.0.0
 * Require Dart >= 3.13
+* fix: **Breaking** A relation's column (e.g. `authorId` for a `@BelongsTo Author author`) is described by the plain `RelationFieldImpl` instead of a fake analyzer `FieldElement` (a subclass of `analyzer`'s internal `FieldElementImpl`, which broke with `analyzer` 14.5 and failed every model with `@BelongsTo`). The generator no longer uses `analyzer` internals. `OrmBuildContext.effectiveFields` is now a `List<OrmField>`: a `ClassOrmField` (a field of the class, with its `element`) or a `RelationFieldImpl`; `findPrimaryFieldInList`, `isSpecialId`, `RelationshipReader.findLocalField` and `findForeignField` use `OrmField` as well. The generated code is unchanged
 
 ## 9.1.1
 
