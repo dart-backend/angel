@@ -46,34 +46,44 @@ DateTime? mapToNullableDateTime(dynamic value) {
   return value;
 }
 
-/// Helper method to convert dynamic value to nullable double
+/// Converts a value read from the database to a double.
+///
+/// `null`, and a string that is not a number, give `0.0`. Any number (e.g. an
+/// `int` for a whole value) is converted, as is a value whose `toString` is a
+/// number (e.g. a driver's decimal type); anything else throws a
+/// [FormatException] rather than silently becoming `0.0`.
 double mapToDouble(dynamic value) {
-  if (value == null) {
-    return 0.0;
-  }
-  if (value is String) {
-    return double.tryParse(value) ?? 0.0;
-  }
-
-  if (value is! double) {
-    return 0.0;
-  }
-  return value;
+  if (value == null) return 0.0;
+  if (value is num) return value.toDouble();
+  if (value is BigInt) return value.toDouble();
+  if (value is String) return double.tryParse(value) ?? 0.0;
+  return double.tryParse(value.toString()) ??
+      (throw FormatException(
+        'Cannot convert $value (${value.runtimeType}) to a double.',
+      ));
 }
 
-/// Helper method to convert dynamic value to nullable double
+/// Converts a value read from the database to an int.
+///
+/// `null`, and a string that is not an integer, give `0`. A whole `double`
+/// or a `BigInt` that fits is converted, as is a value whose `toString` is an
+/// integer; anything else (e.g. `2.5`) throws a [FormatException] rather than
+/// silently becoming `0`.
 int mapToInt(dynamic value) {
-  if (value == null) {
-    return 0;
+  if (value == null) return 0;
+  if (value is int) return value;
+  if (value is double && value.isFinite && value == value.truncateToDouble()) {
+    return value.toInt();
   }
-  if (value is String) {
-    return int.tryParse(value) ?? 0;
+  if (value is BigInt && value.isValidInt) return value.toInt();
+  if (value is String) return int.tryParse(value) ?? 0;
+  if (value is! double && value is! BigInt) {
+    var parsed = int.tryParse(value.toString());
+    if (parsed != null) return parsed;
   }
-
-  if (value is! int) {
-    return 0;
-  }
-  return value;
+  throw FormatException(
+    'Cannot convert $value (${value.runtimeType}) to an int.',
+  );
 }
 
 /*

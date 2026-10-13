@@ -5,6 +5,11 @@
 * Released with the other Angel3 packages at 10.0.0
 * fix: **Security** `StringSqlExpressionBuilder.like` now passes its pattern to the executor as a parameter (`LIKE @name`). It used to write the pattern into the SQL inside quotes, so a pattern built from user input allowed SQL injection. `sanitize` is now applied to the pattern before it is passed (e.g. `like(input, sanitize: (s) => '%$s%')`); it used to be given the parameter name, and its result matched that name literally
 * fix: `Query.reserveName` no longer returns the same name twice. The second reservation of a name returned it unchanged, so two values for one column shared a parameter and one overwrote the other: e.g. an `update()` with `where.name.equals('a')` and `values.name = 'b'` changed the rows where `name` was `'b'`. It also no longer returns a numbered name (`name1`) that was already reserved
+* fix: `mapToDouble` and `mapToInt` convert numbers of the other type (e.g. an `int` read for a `double` column), `BigInt`s and values whose `toString` is a number, instead of returning `0`. A value that cannot be converted (e.g. `2.5` for an `int`) now throws a `FormatException` instead of silently becoming `0`; `null` and non-numeric strings still give `0`
+* fix: A `double` in a comparison is written as a plain number; it was written as `CAST ("3.5" as decimal)`, which names a column `3.5`. A non-finite `double` now throws an `ArgumentError`
+* fix: `DateTimeSqlExpressionBuilder.isIn` and `isNotIn` quote the dates, which were written unquoted (a syntax error)
+* fix: Several conditions on one JSON column (e.g. `map['a'].isNotNull` and `map['b'].isNotNull`) are joined with `AND`, instead of written one after another; each names its column, with the table name when there are joins, and `isNull`/`isNotNull` on the column itself name it too
+* fix: `notWhere` conditions are joined with `AND NOT`, and a query with only `andWhere` or `orWhere` conditions no longer starts its `WHERE` with `AND` or `OR`. Nested conditions are qualified with the table name when there are joins
 
 ## 9.1.1
 

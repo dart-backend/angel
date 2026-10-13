@@ -1,6 +1,24 @@
+import 'package:angel3_orm/angel3_orm.dart';
 import 'package:test/test.dart';
 
 import '../example/main.dart';
+
+/// A WHERE clause with a JSON column.
+class _JsonWhere extends QueryWhere {
+  _JsonWhere(Query query) : data = MapSqlExpressionBuilder(query, 'data');
+
+  final MapSqlExpressionBuilder data;
+
+  @override
+  List<SqlExpressionBuilder> get expressionBuilders => [data];
+}
+
+class _Text {
+  final String text;
+  _Text(this.text);
+  @override
+  String toString() => text;
+}
 
 /// Checks the SQL and substitution values queries compile to; no database is
 /// needed.
@@ -50,6 +68,130 @@ void main() {
       expect(whereName, isNot(setName));
       expect(query.substitutionValues[whereName], 'a');
       expect(query.substitutionValues[setName], 'b');
+    });
+  });
+
+  group('mapToDouble and mapToInt', () {
+    test('convert numbers of the other type', () {
+      expect(mapToDouble(5), 5.0);
+      expect(mapToDouble(BigInt.from(7)), 7.0);
+      expect(mapToInt(5.0), 5);
+      expect(mapToInt(BigInt.from(7)), 7);
+    });
+
+    test('convert values whose toString is a number', () {
+      expect(mapToDouble(_Text('2.5')), 2.5);
+      expect(mapToInt(_Text('42')), 42);
+    });
+
+    test('keep giving 0 for null and for strings that are not numbers', () {
+      expect(mapToDouble(null), 0.0);
+      expect(mapToDouble('x'), 0.0);
+      expect(mapToInt(null), 0);
+      expect(mapToInt('x'), 0);
+    });
+
+    test('throw instead of silently giving 0', () {
+      expect(() => mapToInt(2.5), throwsFormatException);
+      expect(() => mapToDouble(_Text('x')), throwsFormatException);
+      expect(() => mapToInt(Object()), throwsFormatException);
+    });
+  });
+
+  group('a double', () {
+    test('is a plain numeric literal', () {
+      query.where!.salary.lessThan(3.5);
+      expect(query.where!.compile(), 'salary < 3.5');
+    });
+
+    test('that is not finite is rejected', () {
+      expect(
+        () => query.where!.salary.lessThan(double.nan),
+        throwsArgumentError,
+      );
+    });
+  });
+
+  test('DateTime isIn and isNotIn quote the dates', () {
+    query.where!.createdAt.isIn([DateTime(2020, 1, 2), DateTime(2021, 3, 4)]);
+    query.where!.updatedAt.isNotIn([DateTime(2020, 1, 2)]);
+    var sql = query.compile({});
+    expect(
+      sql,
+      contains("created_at IN ('2020-01-02 00:00:00', '2021-03-04 00:00:00')"),
+    );
+    expect(sql, contains("updated_at NOT IN ('2020-01-02 00:00:00')"));
+  });
+
+  group('JSON', () {
+    late _JsonWhere where;
+
+    setUp(() => where = _JsonWhere(query));
+
+    test('property null checks are joined with AND', () {
+      where.data['a'].isNotNull;
+      where.data['b'].isNull;
+      expect(
+        where.compile(),
+        "data::jsonb->>'a' IS NOT NULL AND data::jsonb->>'b' IS NULL",
+      );
+    });
+
+    test('typed properties are joined with AND', () {
+      where.data['a'].asString!.equals('x');
+      where.data['b'].isNotNull;
+      expect(
+        where.compile(),
+        matches(
+          r"^data::jsonb->>'a' = @prop\w* AND data::jsonb->>'b' IS NOT NULL$",
+        ),
+      );
+    });
+
+    test('the column itself can be checked', () {
+      where.data.isNull;
+      expect(where.compile(), 'data IS NULL');
+    });
+
+    test('every predicate gets the table name', () {
+      where.data['a'].isNotNull;
+      where.data['b'].isNull;
+      expect(
+        where.compile(tableName: 't'),
+        "t.data::jsonb->>'a' IS NOT NULL AND t.data::jsonb->>'b' IS NULL",
+      );
+    });
+  });
+
+  group('nested clauses', () {
+    test('notWhere is joined with AND', () {
+      query.where!.id.equals(1);
+      query.notWhere((w) => w.firstName.equals('x'));
+      expect(
+        query.compile({}),
+        contains('WHERE id = 1 AND NOT (first_name = @first_name)'),
+      );
+    });
+
+    test('a query with only orWhere has no leading OR', () {
+      query.orWhere((w) => w.firstName.equals('x'));
+      var sql = query.compile({});
+      expect(sql, contains('WHERE (first_name = @first_name)'));
+      expect(sql, isNot(contains('WHERE  OR')));
+    });
+
+    test('a query with only andWhere has no leading AND', () {
+      query.andWhere((w) => w.firstName.equals('x'));
+      expect(query.compile({}), contains('WHERE (first_name = @first_name)'));
+    });
+
+    test('orWhere follows the other conditions', () {
+      query.where!.id.equals(1);
+      query.orWhere((w) => w.firstName.equals('x'));
+      expect(
+        query.compile({}),
+        contains('WHERE id = 1 OR (first_name = @first_name)'),
+      );
     });
   });
 }

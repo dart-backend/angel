@@ -37,6 +37,9 @@ class NumericSqlExpressionBuilder<T extends num>
   bool get hasValue => _hasValue;
 
   bool _change(String op, T value) {
+    if (value is double && !value.isFinite) {
+      throw ArgumentError.value(value, 'value', 'Must be a finite number');
+    }
     _raw = null;
     _op = op;
     _value = value;
@@ -47,8 +50,9 @@ class NumericSqlExpressionBuilder<T extends num>
   String? compile() {
     if (_raw != null) return _raw;
     if (_value == null) return null;
+    // A plain numeric literal: `CAST(... AS decimal)` would round it to an
+    // integer in MySQL, whose DECIMAL defaults to DECIMAL(10,0).
     var v = _value.toString();
-    if (T == double) v = 'CAST ("$v" as decimal)';
     if (_cast != null) v = 'CAST ($v AS $_cast)';
     return '$_op $v';
   }
@@ -401,14 +405,15 @@ class DateTimeSqlExpressionBuilder extends SqlExpressionBuilder<DateTime> {
   }
 
   void isIn(Iterable<DateTime> values) {
-    _raw =
-        '$columnName IN (${values.map(dateYmdHms.format).map((s) => s).join(', ')})';
+    _raw = '$columnName IN (${_quoted(values)})';
   }
 
   void isNotIn(Iterable<DateTime> values) {
-    _raw =
-        '$columnName NOT IN (${values.map(dateYmdHms.format).map((s) => s).join(', ')})';
+    _raw = '$columnName NOT IN (${_quoted(values)})';
   }
+
+  static String _quoted(Iterable<DateTime> values) =>
+      values.map((v) => "'${dateYmdHms.format(v)}'").join(', ');
 
   void isBetween(DateTime lower, DateTime upper) {
     var l = dateYmdHms.format(lower), u = dateYmdHms.format(upper);
@@ -497,41 +502,17 @@ abstract class JsonSqlExpressionBuilder<T, K> extends SqlExpressionBuilder<T> {
     _hasValue = true;
   }
 
+  /// The predicates on this column, each with the column name, joined with
+  /// `AND`.
   @override
-  String compile() {
-    var s = _compile();
-    if (!_properties.any((p) => p.hasValue)) return s;
-    //s ??= '';
+  String compile() => compileFor(columnName);
 
-    for (var p in _properties) {
-      if (p.hasValue) {
-        var c = p.compile();
-
-        if (c != null) {
-          _hasValue = true;
-          //s ??= '';
-
-          if (p.typed is! DateTimeSqlExpressionBuilder) {
-            s += '${p.typed!.columnName} ';
-          }
-
-          s += c;
-        }
-      }
-    }
-
-    return s;
-  }
-
-  String _compile() {
-    if (_raw != null) {
-      return _raw!;
-    }
-    if (_value == null) {
-      return '';
-    }
-    return '::jsonb $_op @$substitution::jsonb';
-  }
+  /// Like [compile], with [column] (e.g. `table.column`) as the column name.
+  String compileFor(String column) => [
+    if (_raw != null) '$column $_raw',
+    if (_value != null) '$column::jsonb $_op @$substitution::jsonb',
+    for (var p in _properties) ...p._predicates(column),
+  ].join(' AND ');
 
   void contains(T value) {
     _change('@>', value);
@@ -579,11 +560,26 @@ class JsonSqlExpressionBuilderProperty {
 
   JsonSqlExpressionBuilderProperty(this.builder, this.name, this.isInt);
 
+  /// `IS NULL` or `IS NOT NULL`, when checked.
+  String? _nullCheck;
+
   SqlExpressionBuilder? get typed => _typed;
 
-  bool get hasValue => _typed?.hasValue == true;
+  bool get hasValue => _nullCheck != null || _typed?.hasValue == true;
 
   String? compile() => _typed?.compile();
+
+  /// This property's predicates, on the JSON in [column].
+  Iterable<String> _predicates(String column) sync* {
+    var name = nameFor(column);
+    if (_nullCheck case var check?) yield '$name $check';
+    var typed = _typed;
+    var c = typed != null && typed.hasValue ? typed.compile() : null;
+    if (c != null) {
+      // A date predicate already names its column.
+      yield typed is DateTimeSqlExpressionBuilder ? c : '$name $c';
+    }
+  }
 
   T? _set<T extends SqlExpressionBuilder?>(T Function() value) {
     if (_typed is T) {
@@ -600,35 +596,18 @@ class JsonSqlExpressionBuilderProperty {
     }
   }
 
-  String get nameString {
-    var n = isInt ? name : "'$name'";
-    return '${builder.columnName}::jsonb->>$n';
-  }
+  String get nameString => nameFor(builder.columnName);
+
+  /// This property of the JSON in [column].
+  String nameFor(String column) =>
+      '$column::jsonb->>${isInt ? name : "'$name'"}';
 
   void get isNotNull {
-    builder
-      .._hasValue = true
-      .._raw ??= '';
-
-    var r = builder._raw;
-    if (r != null) {
-      builder._raw = '$r$nameString IS NOT NULL';
-    } else {
-      builder._raw = '$nameString IS NOT NULL';
-    }
+    _nullCheck = 'IS NOT NULL';
   }
 
   void get isNull {
-    builder
-      .._hasValue = true
-      .._raw ??= '';
-
-    var r = builder._raw;
-    if (r != null) {
-      builder._raw = '$r$nameString IS NULL';
-    } else {
-      builder._raw = '$nameString IS NULL';
-    }
+    _nullCheck = 'IS NULL';
   }
 
   StringSqlExpressionBuilder? get asString {
