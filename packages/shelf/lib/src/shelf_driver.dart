@@ -52,22 +52,37 @@ class AngelShelf
     'AngelShelf cannot mount a standalone server, or return a URI.',
   );
 
-  /// Runs [checkRequestFraming] on [request] before there is a request context
-  /// for Angel's error handler to use. Returns the checked request to handle,
-  /// or the 400 to answer with.
-  static (shelf.Request?, shelf.Response?) _checkFraming(
+  /// Answers a request that failed [checkRequestFraming] through Angel's
+  /// error pipeline, so `app.errorHandler`, finalizers and logging apply as
+  /// for any other error.
+  ///
+  /// The request's framing headers are dropped first, as its context could not
+  /// be created with them. The error response never reads the body.
+  Future<shelf.Response> _rejectFraming(
+    AngelHttpException e,
+    StackTrace st,
     shelf.Request request,
-  ) {
-    try {
-      return (checkRequestFraming(request), null);
-    } on AngelHttpException catch (e) {
-      return (null, shelf.Response(e.statusCode, body: e.message));
-    }
+  ) async {
+    app.logger.warning(e.message, e, st);
+    var stripped = request.change(
+      headers: {
+        HttpHeaders.contentLengthHeader: null,
+        HttpHeaders.transferEncodingHeader: null,
+      },
+    );
+    var response = ShelfResponseContext(app);
+    var req = await createRequestContext(stripped, response);
+    var res = await createResponseContext(stripped, response, req);
+    return handleAngelHttpException(e, st, req, res, stripped, response);
   }
 
   Future<shelf.Response> handler(shelf.Request request) async {
-    var (checked, rejected) = _checkFraming(request);
-    if (checked == null) return rejected!;
+    shelf.Request checked;
+    try {
+      checked = checkRequestFraming(request);
+    } on AngelHttpException catch (e, st) {
+      return _rejectFraming(e, st, request);
+    }
     var response = ShelfResponseContext(app);
     var result = await handleRawRequest(checked, response);
     if (result is shelf.Response) {
@@ -75,15 +90,19 @@ class AngelShelf
     } else if (!response.isOpen) {
       return response.shelfResponse;
     } else {
-      // return await handler(checked);
+      // return await handler(request);
       return notFound!();
     }
   }
 
   shelf.Handler middleware(shelf.Handler handler) {
     return (request) async {
-      var (checked, rejected) = _checkFraming(request);
-      if (checked == null) return rejected!;
+      shelf.Request checked;
+      try {
+        checked = checkRequestFraming(request);
+      } on AngelHttpException catch (e, st) {
+        return _rejectFraming(e, st, request);
+      }
       var response = ShelfResponseContext(app);
       var result = await handleRawRequest(checked, response);
       if (result is shelf.Response) {

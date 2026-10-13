@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_shelf/angel3_shelf.dart';
 import 'package:shelf/shelf.dart' as shelf;
@@ -104,28 +106,41 @@ void main() {
     expect(innerLength, 5);
   });
 
-  test('AngelShelf answers invalid framing with a 400', () async {
-    var app = Angel();
-    app.get('/', (req, res) => 'ok');
-    var driver = AngelShelf(app);
+  test(
+    'AngelShelf answers invalid framing through the error handler',
+    () async {
+      var app = Angel();
+      app.get('/', (req, res) => 'ok');
+      app.errorHandler = (e, req, res) {
+        res.headers['x-error'] = 'custom';
+        return {'status': e.statusCode, 'message': e.message};
+      };
+      var driver = AngelShelf(app);
 
-    var response = await driver.handler(
-      shelf.Request(
-        'GET',
-        Uri.parse('http://localhost/'),
-        headers: {'content-length': 'abc'},
-      ),
-    );
-    expect(response.statusCode, 400);
+      var response = await driver.handler(
+        shelf.Request(
+          'GET',
+          Uri.parse('http://localhost/'),
+          headers: {'content-length': 'abc'},
+        ),
+      );
+      expect(response.statusCode, 400);
+      expect(response.headers['x-error'], 'custom');
+      expect(json.decode(await response.readAsString()), {
+        'status': 400,
+        'message': 'Invalid Content-Length: abc',
+      });
 
-    var middleware = driver.middleware((_) => shelf.Response.ok('inner'));
-    response = await middleware(
-      shelf.Request(
-        'GET',
-        Uri.parse('http://localhost/'),
-        headers: {'content-length': '5,6'},
-      ),
-    );
-    expect(response.statusCode, 400);
-  });
+      var middleware = driver.middleware((_) => shelf.Response.ok('inner'));
+      response = await middleware(
+        shelf.Request(
+          'GET',
+          Uri.parse('http://localhost/'),
+          headers: {'content-length': '5,6'},
+        ),
+      );
+      expect(response.statusCode, 400);
+      expect(response.headers['x-error'], 'custom');
+    },
+  );
 }
