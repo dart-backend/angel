@@ -5,12 +5,8 @@ import 'convert.dart';
 
 /// Simply passes an incoming request to a `shelf` handler.
 ///
-/// If the handler does not return a [shelf.Response], then the
-/// result will be passed down the Angel middleware pipeline, like with
-/// any other request handler.
-///
-/// If [throwOnNullResponse] is `true` (default: `false`), then a 500 error will be thrown
-/// if the [handler] returns `null`.
+/// [throwOnNullResponse] has no effect: a [shelf.Handler] always returns a
+/// [shelf.Response], so there is never a `null` response to throw on.
 RequestHandler embedShelf(
   shelf.Handler handler, {
   String? handlerPath,
@@ -26,9 +22,6 @@ RequestHandler embedShelf(
     );
     try {
       var result = await handler(shelfRequest);
-      if (throwOnNullResponse == true) {
-        throw AngelHttpException(message: 'Internal Server Error');
-      }
       await mergeShelfResponse(result, res);
       return false;
     } on shelf.HijackException {

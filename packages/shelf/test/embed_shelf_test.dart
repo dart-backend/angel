@@ -45,8 +45,6 @@ void main() {
           sink.close();
           print('b');
         });
-        //} else if (request.url.path == 'throw') {
-        //  return null;
       } else {
         return shelf.Response.ok('Request for "${request.url}"');
       }
@@ -56,7 +54,7 @@ void main() {
     var app = Angel(logger: logger);
     var httpDriver = AngelHttp(app);
     app.get('/angel', (req, res) => 'Angel');
-    app.fallback(embedShelf(handler, throwOnNullResponse: true));
+    app.fallback(embedShelf(handler));
 
     server = await httpDriver.startServer(InternetAddress.loopbackIPv4, 0);
   });
@@ -105,10 +103,5 @@ void main() {
   test('shelf can throw error', () async {
     var response = await client.get(path('/error'));
     expect(response, hasStatus(404));
-  });
-
-  test('throw on null', () async {
-    var response = await client.get(path('/throw'));
-    expect(response, hasStatus(500));
   });
 }
