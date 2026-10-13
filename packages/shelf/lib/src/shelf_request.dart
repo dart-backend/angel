@@ -45,6 +45,7 @@ class ShelfRequestContext extends RequestContext {
     (shelf.Request, AngelHttpException?) framing,
   ) : rawRequest = framing.$1,
       framingError = framing.$2 {
+    app = angelApp;
     rawRequest.headers.forEach(headers.add);
   }
 

@@ -6,7 +6,8 @@
 * fix: A request with a malformed `Content-Length`, differing `Content-Length` values, a `Transfer-Encoding` that does not end in a single `chunked`, or both `Content-Length` and `Transfer-Encoding` is now rejected with a 400 through `app.errorHandler` (it used to be a 500), as RFC 9112 asks, since such requests can be used for request smuggling. Repeated identical values are collapsed into one, so the early `maxBodySize` check still applies. The check is the new `checkRequestFraming`, and `AngelShelf.middleware` passes the checked request on to its inner handler. A `ShelfRequestContext` built directly from such a request has its framing headers removed and the error in `framingError`
 * fix: A shelf handler embedded with `embedShelf` in an `AngelHttp` app can hijack the request again. It now gets the socket, as with `shelf_io`; its output used to be sent as the body of a response that was never closed, so the client waited until it timed out
 * chore: Removed debug `print`s from the hijack handler
-* test: The tests no longer use `MirrorsReflector`; the example still does, for its `ioc` handler
+* fix: `ShelfRequestContext` and `ShelfResponseContext` now set `app`. It was `null`, so `ioc` with an explicit `injection:` failed with a null check, and `req.maxBodySize` ignored `app.maxBodySize` (shelf request bodies had no size limit)
+* chore: The tests and example no longer use `MirrorsReflector`, and `angel3_container_mirrors` is no longer a dev dependency; the example's `ioc` handler passes an explicit `injection:`
 
 ## 9.1.0-beta-4
 

@@ -20,7 +20,6 @@ dependencies:
   charcode: ^1.3.0
   http: ^1.0.0
 dev_dependencies:
-  angel3_container_mirrors: ^10.0.0
   angel3_test: ^10.0.0
   belatuk_pretty_logging: ^6.1.0
   shelf_static: ^1.1.0

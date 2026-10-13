@@ -45,6 +45,38 @@ void main() {
     expect(rq.headers.contentLength, -1);
   });
 
+  test('the request and response know their app', () {
+    var app = Angel()..maxBodySize = 1234;
+    var rq = ShelfRequestContext(
+      app,
+      app.container.createChild(),
+      shelf.Request('GET', Uri.parse('http://localhost/')),
+      '/',
+    );
+    expect(rq.app, same(app));
+    expect(rq.maxBodySize, 1234);
+    expect(ShelfResponseContext(app).app, same(app));
+  });
+
+  test('ioc with an explicit injection works without a reflector', () async {
+    var app = Angel();
+    app.get(
+      '/hello',
+      ioc(
+        (String name) => {'hello': name},
+        injection: InjectionRequest.constant(
+          required: ['name'],
+          parameters: {'name': Query('name')},
+        ),
+      ),
+    );
+    var response = await AngelShelf(app).handler(
+      shelf.Request('GET', Uri.parse('http://localhost/hello?name=bob')),
+    );
+    expect(response.statusCode, 200);
+    expect(json.decode(await response.readAsString()), {'hello': 'bob'});
+  });
+
   test('a valid content-length is kept', () {
     var rq = request({'content-length': '5', 'x-foo': 'bar'});
     expect(rq.framingError, isNull);
