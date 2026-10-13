@@ -10,7 +10,7 @@ class UserMigration extends Migration {
   @override
   void up(Schema schema) {
     schema.create('user_acc', (table) {
-      table.integer('id').primaryKey();
+      table.serial('id').primaryKey();
       table.varChar('name', length: 255);
     });
   }
@@ -25,7 +25,7 @@ class UserAddressMigration extends Migration {
   @override
   void up(Schema schema) {
     schema.create('user_addr', (table) {
-      table.integer('id')
+      table.serial('id')
         ..primaryKey()
         ..notNull();
       table.integer('user_id').notNull();
@@ -43,7 +43,7 @@ class UserTodoMigration extends Migration {
   @override
   void up(Schema schema) {
     schema.create('user_todo', (table) {
-      table.integer('id')
+      table.serial('id')
         ..primaryKey()
         ..notNull();
       table.integer('user_id').notNull();
@@ -61,7 +61,7 @@ class TodoValueMigration extends Migration {
   @override
   void up(Schema schema) {
     schema.create('todo_value', (table) {
-      table.integer('id').primaryKey();
+      table.serial('id').primaryKey();
       table.varChar('value', length: 255);
       table.integer('todo_id');
       table.varChar('description', length: 255);
@@ -78,7 +78,7 @@ class TodoNoteMigration extends Migration {
   @override
   void up(Schema schema) {
     schema.create('todo_note', (table) {
-      table.integer('id').primaryKey();
+      table.serial('id').primaryKey();
       table.varChar('note', length: 255);
       table.integer('todo_id');
       table.varChar('description', length: 255);

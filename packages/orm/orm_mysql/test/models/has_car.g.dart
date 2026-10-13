@@ -14,10 +14,7 @@ class HasCarMigration extends Migration {
       table.timeStamp('created_at');
       table.timeStamp('updated_at');
       table.integer('type').defaultsTo(0);
-      table.declareColumn(
-        'color',
-        Column(type: ColumnType('varchar'), length: 1),
-      );
+      table.varChar('color', length: 1);
     });
   }
 

@@ -91,9 +91,9 @@ class BuildContext {
       throw ArgumentError('Model class cannot be null');
     }
 
-    _modelClassNameRecase ??= ReCase(
-      getGeneratedModelClassName(modelClassName!),
-    );
+    // [modelClassName] is already stripped of its prefix or suffix; doing it
+    // again would turn e.g. `UserIdentityEntity` into `UserId`.
+    _modelClassNameRecase ??= ReCase(modelClassName!);
     return _modelClassNameRecase!;
   }
 

@@ -7,6 +7,7 @@
 * A value in `includeAnnotations` that is not a constant instance of a class (e.g. a string) now fails the build with an error, instead of producing an invalid annotation on the generated class
 * fix: `ShimFieldImpl` creates its own member reference when it is not given one. `angel3_orm_generator` passes a `RootReference`, which `analyzer` 14.5 rejects (`type 'RootReference' is not a subtype of type 'MemberReference'`), so building any ORM model with `@BelongsTo` failed
 * deprecated: `ShimFieldImpl`, which subclasses `analyzer` internals; `angel3_orm_generator` no longer uses it
+* fix: A model whose generated name itself ends in `entity` (e.g. `UserIdentityEntity`, generated as `UserIdentity`) no longer has that suffix removed a second time in `modelClassNameRecase`, which named its ORM query class `UserIdQuery` while the model was `UserIdentity`
 
 ## 9.1.0
 

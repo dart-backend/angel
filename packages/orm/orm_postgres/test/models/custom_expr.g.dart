@@ -329,7 +329,7 @@ class AlphabetQueryValues extends MapQueryValues {
     updatedAt = model.updatedAt;
     value = model.value;
     if (model.numbers != null) {
-      values['numbers_id'] = model.numbers?.id;
+      values['numbers_id'] = int.tryParse(model.numbers?.id ?? '');
     }
   }
 }

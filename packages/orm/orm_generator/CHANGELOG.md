@@ -5,6 +5,11 @@
 * Released with the other Angel3 packages at 10.0.0
 * Require Dart >= 3.13
 * fix: **Breaking** A relation's column (e.g. `authorId` for a `@BelongsTo Author author`) is described by the plain `RelationFieldImpl` instead of a fake analyzer `FieldElement` (a subclass of `analyzer`'s internal `FieldElementImpl`, which broke with `analyzer` 14.5 and failed every model with `@BelongsTo`). The generator no longer uses `analyzer` internals. `OrmBuildContext.effectiveFields` is now a `List<OrmField>`: a `ClassOrmField` (a field of the class, with its `element`) or a `RelationFieldImpl`; `findPrimaryFieldInList`, `isSpecialId`, `RelationshipReader.findLocalField` and `findForeignField` use `OrmField` as well. The generated code is unchanged
+* fix: A column type passed to `@Column(type: ...)` or `@PrimaryKey(columnType: ...)` is used, instead of being replaced by one inferred from the field's Dart type (e.g. `ColumnType.numeric` became `double`). Without one, the type is still inferred, also for enums (a bare `@Column` on an enum gave `varchar`). Column types read from annotations are the `ColumnType` constants, so they generate the same code as inferred ones
+* fix: `copyFrom` converts the `String` id of a related `Model` to the `int` its column holds (`int.tryParse(model.author?.id ?? '')`); it was assigned unconverted
+* fix: A many-to-many uses the table name in the `@Orm` of its `through` class; it read the related model's `@Serializable` instead, so a custom table name was ignored
+* fix: A relation with an explicit `foreignTable` no longer fails with a null check: the related model is still read, for its columns and keys, and `foreignTable` names its table (the model's own `@Orm` table name used to replace it)
+* fix: A relation whose name contains `Id` (e.g. `userIdentity`, whose column is `userIdentityId`) gets its where builder; only a trailing `Id` is removed to find the relation
 
 ## 9.1.1
 

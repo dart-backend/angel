@@ -257,10 +257,10 @@ class BookQueryValues extends MapQueryValues {
     updatedAt = model.updatedAt;
     name = model.name;
     if (model.author != null) {
-      values['author_id'] = model.author?.id;
+      values['author_id'] = int.tryParse(model.author?.id ?? '');
     }
     if (model.partnerAuthor != null) {
-      values['partner_author_id'] = model.partnerAuthor?.id;
+      values['partner_author_id'] = int.tryParse(model.partnerAuthor?.id ?? '');
     }
   }
 }

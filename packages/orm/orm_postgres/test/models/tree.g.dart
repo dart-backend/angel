@@ -13,7 +13,12 @@ class TreeMigration extends Migration {
       table.serial('id').primaryKey();
       table.timeStamp('created_at');
       table.timeStamp('updated_at');
-      table.integer('rings').unique();
+      table
+          .declareColumn(
+            'rings',
+            Column(type: ColumnType('smallint'), length: 255),
+          )
+          .unique();
     });
   }
 

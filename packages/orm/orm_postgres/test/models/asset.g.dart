@@ -32,7 +32,7 @@ class AssetMigration extends Migration {
       table.timeStamp('updated_at');
       table.varChar('description', length: 255);
       table.varChar('name', length: 255);
-      table.double('price');
+      table.numeric('price');
     });
   }
 

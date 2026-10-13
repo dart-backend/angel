@@ -143,16 +143,13 @@ Future<OrmBuildContext?> buildOrmContext(
         buildCtx.resolveSerializedFieldType(field.displayName),
       ),
     );
-    var isEnumField =
-        (field.type is InterfaceType && field.type.element is EnumElement);
-    var hasColumnAnnotation =
-        (columnAnnotation?.getField('type')?.hasKnownValue ?? false);
     column = Column(
       isNullable: column.isNullable,
       length: column.length,
       indexType: column.indexType,
-      // Only infer type when not set by the @Column annotation, for enums
-      type: (isEnumField && hasColumnAnnotation)
+      // The type the annotation declares, if any; otherwise inferred.
+      type: columnAnnotation != null &&
+              declaresColumnType(ConstantReader(columnAnnotation))
           ? column.type
           : inferColumnType(field.type),
       defaultValue: column.defaultValue,
@@ -172,19 +169,17 @@ Future<OrmBuildContext?> buildOrmContext(
       var through = cr.peek('through')?.typeValue;
       OrmBuildContext? foreign, throughContext;
 
-      if (foreignTable == null) {
-        // if (!isModelClass(field.type) &&
-        //     !(field.type is InterfaceType &&
-        //         isListOfModelType(field.type as InterfaceType))) {
-        var canUse =
-            (field.type is InterfaceType &&
-                isListOfModelType(field.type as InterfaceType)) ||
-            isModelClass(field.type);
-        if (!canUse) {
-          throw UnsupportedError(
-            'Cannot apply relationship to field "${field.displayName}" - ${field.type} is not assignable to Model.',
-          );
-        } else {
+      var canUse =
+          (field.type is InterfaceType &&
+              isListOfModelType(field.type as InterfaceType)) ||
+          isModelClass(field.type);
+      if (!canUse) {
+        // Even with a foreignTable, the related model is needed for its
+        // columns and keys.
+        throw UnsupportedError(
+          'Cannot apply relationship to field "${field.displayName}" - ${field.type} is not assignable to Model.',
+        );
+      } else {
           try {
             var refType = field.type;
 
@@ -217,8 +212,8 @@ Future<OrmBuildContext?> buildOrmContext(
                   cache,
                   through.element,
                   ConstantReader(
-                    const TypeChecker.typeNamed(Serializable)
-                        .firstAnnotationOf(modelTypeElement),
+                    const TypeChecker.typeNamed(Orm)
+                        .firstAnnotationOf(through.element),
                   ),
                   buildStep,
                   resolver,
@@ -229,8 +224,9 @@ Future<OrmBuildContext?> buildOrmContext(
               var ormAnn = const TypeChecker.typeNamed(Orm)
                   .firstAnnotationOf(modelTypeElement);
 
+              // An explicit foreignTable wins over the model's own.
               if (ormAnn != null) {
-                foreignTable = ConstantReader(ormAnn)
+                foreignTable ??= ConstantReader(ormAnn)
                     .peek('tableName')
                     ?.stringValue;
               }
@@ -250,7 +246,6 @@ Future<OrmBuildContext?> buildOrmContext(
               'There is an infinite cycle between ${clazz.displayName} and ${field.type.getDisplayString()}. This triggered a stack overflow.',
             );
           }
-        }
       }
 
       // Fill in missing keys
@@ -384,6 +379,14 @@ Future<OrmBuildContext?> buildOrmContext(
   return ctx;
 }
 
+/// Whether a `@Column` (or `@PrimaryKey`) annotation passes a column type
+/// itself: `Column`'s `type` always has a value, `ColumnType.varChar` when it
+/// is not given.
+bool declaresColumnType(ConstantReader annotation) {
+  var arguments = annotation.revive().namedArguments;
+  return arguments.containsKey('type') || arguments.containsKey('columnType');
+}
+
 /// Detect and return the correct column type
 ColumnType inferColumnType(DartType type) {
   if (const TypeChecker.typeNamed(String).isAssignableFromType(type)) {
@@ -418,6 +421,51 @@ ColumnType inferColumnType(DartType type) {
   return ColumnType.varChar;
 }
 
+/// The column types `ColumnType` defines.
+const List<ColumnType> _knownColumnTypes = [
+  ColumnType.boolean,
+  ColumnType.smallSerial,
+  ColumnType.serial,
+  ColumnType.bigSerial,
+  ColumnType.bigInt,
+  ColumnType.int,
+  ColumnType.smallInt,
+  ColumnType.tinyInt,
+  ColumnType.bit,
+  ColumnType.decimal,
+  ColumnType.numeric,
+  ColumnType.money,
+  ColumnType.smallMoney,
+  ColumnType.float,
+  ColumnType.real,
+  ColumnType.double,
+  ColumnType.dateTime,
+  ColumnType.smallDateTime,
+  ColumnType.date,
+  ColumnType.time,
+  ColumnType.timeStamp,
+  ColumnType.timeStampWithTimeZone,
+  ColumnType.char,
+  ColumnType.varChar,
+  ColumnType.varCharMax,
+  ColumnType.text,
+  ColumnType.nChar,
+  ColumnType.nVarChar,
+  ColumnType.nVarCharMax,
+  ColumnType.nText,
+  ColumnType.binary,
+  ColumnType.varBinary,
+  ColumnType.varBinaryMax,
+  ColumnType.image,
+  ColumnType.json,
+  ColumnType.jsonb,
+  ColumnType.sqlVariant,
+  ColumnType.uniqueIdentifier,
+  ColumnType.xml,
+  ColumnType.cursor,
+  ColumnType.table,
+];
+
 Column reviveColumn(ConstantReader cr) {
   ColumnType columnType;
 
@@ -439,7 +487,12 @@ Column reviveColumn(ConstantReader cr) {
   }
 
   if (columnObj != null) {
-    columnType = _ColumnType(columnObj);
+    // The ColumnType constant of that name, which the generator compares
+    // types with; ColumnType has no `==` of its own.
+    columnType = _knownColumnTypes.firstWhere(
+      (t) => t.name == columnObj,
+      orElse: () => _ColumnType(columnObj),
+    );
   } else {
     // Default to varchar
     columnType = ColumnType.varChar;

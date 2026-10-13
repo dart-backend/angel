@@ -947,7 +947,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
           // Detect relationship
         } else if (name.endsWith('Id')) {
           log.fine('Foreign Relationship detected = $name');
-          var relation = ctx.relations[name.replaceAll('Id', '')];
+          var relation = ctx.relations[name.substring(0, name.length - 2)];
           if (relation != null) {
             //if (relation?.type != RelationshipType.belongsTo) {
             //  continue;
@@ -1200,10 +1200,11 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                   //}
 
                   if (foreign != null) {
-                    if (isSpecialId(foreign, field)) {
-                      parsedId = (refer('int')
+                    if (isSpecialId(foreign, foreignField)) {
+                      // A Model's id is a String; the column is an int.
+                      parsedId = refer('int')
                           .property('tryParse')
-                          .call([parsedId]));
+                          .call([parsedId.ifNullThen(literalString(''))]);
                     }
                   }
                   var cond = prop.notEqualTo(literalNull);

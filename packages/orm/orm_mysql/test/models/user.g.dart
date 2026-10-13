@@ -439,10 +439,10 @@ class RoleUserQueryValues extends MapQueryValues {
 
   void copyFrom(RoleUser model) {
     if (model.role != null) {
-      values['role_id'] = model.role?.id;
+      values['role_id'] = int.tryParse(model.role?.id ?? '');
     }
     if (model.user != null) {
-      values['user_id'] = model.user?.id;
+      values['user_id'] = int.tryParse(model.user?.id ?? '');
     }
   }
 }

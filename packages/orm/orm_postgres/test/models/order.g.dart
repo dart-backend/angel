@@ -244,7 +244,7 @@ class OrderQueryValues extends MapQueryValues {
     orderDate = model.orderDate;
     shipperId = model.shipperId;
     if (model.customer != null) {
-      values['customer_id'] = model.customer?.id;
+      values['customer_id'] = int.tryParse(model.customer?.id ?? '');
     }
   }
 }

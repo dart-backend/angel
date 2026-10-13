@@ -18,13 +18,15 @@ void main() {
   setUp(() async {
     var conn = await Connection.open(
       Endpoint(
-        host: 'localhost',
+      host: Platform.environment['POSTGRES_HOSTNAME'] ?? 'localhost',
         port: 5432,
-        database: 'angel_orm_service_test',
+        database: Platform.environment['POSTGRES_DB'] ?? 'postgres',
         username: Platform.environment['POSTGRES_USERNAME'] ?? 'postgres',
-        password: Platform.environment['POSTGRES_PASSWORD'] ?? 'password',
+        password: Platform.environment['POSTGRES_PASSWORD'] ?? 'postgres',
       ),
+      settings: ConnectionSettings(sslMode: SslMode.disable),
     );
+
     hierarchicalLoggingEnabled = true;
     logger = Logger.detached('orm_service');
     logger.level = Level.ALL;
