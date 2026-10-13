@@ -1034,7 +1034,7 @@ class Unorthodox implements UnorthodoxEntity {
 
   @override
   int get hashCode {
-    return hashObjects([name]);
+    return Object.hashAll([name]);
   }
 
   @override
@@ -1102,7 +1102,7 @@ class WeirdJoin implements WeirdJoinEntity {
 
   @override
   int get hashCode {
-    return hashObjects([id, unorthodox, song, numbas, foos]);
+    return Object.hashAll([id, unorthodox, song, numbas, foos]);
   }
 
   @override
@@ -1165,7 +1165,7 @@ class Song extends SongEntity {
 
   @override
   int get hashCode {
-    return hashObjects([id, createdAt, updatedAt, weirdJoinId, title]);
+    return Object.hashAll([id, createdAt, updatedAt, weirdJoinId, title]);
   }
 
   @override
@@ -1199,7 +1199,7 @@ class Numba extends NumbaEntity {
 
   @override
   int get hashCode {
-    return hashObjects([i, parent]);
+    return Object.hashAll([i, parent]);
   }
 
   @override
@@ -1236,7 +1236,7 @@ class Foo implements FooEntity {
 
   @override
   int get hashCode {
-    return hashObjects([bar, weirdJoins]);
+    return Object.hashAll([bar, weirdJoins]);
   }
 
   @override
@@ -1275,7 +1275,7 @@ class FooPivot implements FooPivotEntity {
 
   @override
   int get hashCode {
-    return hashObjects([weirdJoin, foo]);
+    return Object.hashAll([weirdJoin, foo]);
   }
 
   @override

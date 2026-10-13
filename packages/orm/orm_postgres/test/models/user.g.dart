@@ -735,7 +735,7 @@ class User extends UserEntity {
 
   @override
   int get hashCode {
-    return hashObjects([
+    return Object.hashAll([
       id,
       createdAt,
       updatedAt,
@@ -777,7 +777,7 @@ class RoleUser implements RoleUserEntity {
 
   @override
   int get hashCode {
-    return hashObjects([role, user]);
+    return Object.hashAll([role, user]);
   }
 
   @override
@@ -847,7 +847,7 @@ class Role extends RoleEntity {
 
   @override
   int get hashCode {
-    return hashObjects([id, createdAt, updatedAt, name, users]);
+    return Object.hashAll([id, createdAt, updatedAt, name, users]);
   }
 
   @override

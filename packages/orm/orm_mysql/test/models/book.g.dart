@@ -473,7 +473,7 @@ class Book extends EntityBook {
 
   @override
   int get hashCode {
-    return hashObjects([id, createdAt, updatedAt, author, partnerAuthor, name]);
+    return Object.hashAll([id, createdAt, updatedAt, author, partnerAuthor, name]);
   }
 
   @override
@@ -542,7 +542,7 @@ class Author extends EntityAuthor {
 
   @override
   int get hashCode {
-    return hashObjects([id, createdAt, updatedAt, name, publisher]);
+    return Object.hashAll([id, createdAt, updatedAt, name, publisher]);
   }
 
   @override

@@ -168,7 +168,7 @@ class HasMap implements HasMapEntity {
 
   @override
   int get hashCode {
-    return hashObjects([value, list]);
+    return Object.hashAll([value, list]);
   }
 
   @override

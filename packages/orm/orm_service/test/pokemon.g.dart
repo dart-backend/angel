@@ -274,7 +274,7 @@ class Pokemon extends _Pokemon {
 
   @override
   int get hashCode {
-    return hashObjects([
+    return Object.hashAll([
       id,
       species,
       name,

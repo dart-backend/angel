@@ -395,7 +395,7 @@ class Leg extends LegEntity {
 
   @override
   int get hashCode {
-    return hashObjects([id, createdAt, updatedAt, foot, name]);
+    return Object.hashAll([id, createdAt, updatedAt, foot, name]);
   }
 
   @override
@@ -458,7 +458,7 @@ class Foot extends FootEntity {
 
   @override
   int get hashCode {
-    return hashObjects([id, createdAt, updatedAt, legId, nToes]);
+    return Object.hashAll([id, createdAt, updatedAt, legId, nToes]);
   }
 
   @override

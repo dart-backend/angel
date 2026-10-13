@@ -29,7 +29,7 @@ class Animal extends AnimalEntity {
 
   @override
   int get hashCode {
-    return hashObjects([genus, species]);
+    return Object.hashAll([genus, species]);
   }
 
   @override
@@ -73,7 +73,7 @@ class Bird extends BirdEntity {
 
   @override
   int get hashCode {
-    return hashObjects([genus, species, isSparrow]);
+    return Object.hashAll([genus, species, isSparrow]);
   }
 
   @override

@@ -235,7 +235,7 @@ class Todo extends TodoEntity {
 
   @override
   int get hashCode {
-    return hashObjects([id, createdAt, updatedAt, text, isComplete]);
+    return Object.hashAll([id, createdAt, updatedAt, text, isComplete]);
   }
 
   @override

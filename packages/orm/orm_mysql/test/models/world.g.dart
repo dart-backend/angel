@@ -160,7 +160,7 @@ class World extends WorldEntity {
 
   @override
   int get hashCode {
-    return hashObjects([id, randomnumber]);
+    return Object.hashAll([id, randomnumber]);
   }
 
   @override

@@ -3,6 +3,7 @@
 ## 10.0.0
 
 * Released with the other Angel3 packages at 10.0.0
+* Require Dart >= 3.13
 
 ## 9.1.1
 

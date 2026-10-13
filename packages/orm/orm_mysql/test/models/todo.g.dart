@@ -943,7 +943,7 @@ class User implements UserEntity {
 
   @override
   int get hashCode {
-    return hashObjects([id, name, todos, address]);
+    return Object.hashAll([id, name, todos, address]);
   }
 
   @override
@@ -987,7 +987,7 @@ class UserAddress implements UserAddressEntity {
 
   @override
   int get hashCode {
-    return hashObjects([id, userId, address]);
+    return Object.hashAll([id, userId, address]);
   }
 
   @override
@@ -1055,7 +1055,7 @@ class UserTodo implements UserTodoEntity {
 
   @override
   int get hashCode {
-    return hashObjects([id, userId, title, todoValues, todoNotes]);
+    return Object.hashAll([id, userId, title, todoValues, todoNotes]);
   }
 
   @override
@@ -1114,7 +1114,7 @@ class TodoValue implements TodoValueEntity {
 
   @override
   int get hashCode {
-    return hashObjects([id, value, todoId, description]);
+    return Object.hashAll([id, value, todoId, description]);
   }
 
   @override
@@ -1168,7 +1168,7 @@ class TodoNote implements TodoNoteEntity {
 
   @override
   int get hashCode {
-    return hashObjects([id, note, todoId, description]);
+    return Object.hashAll([id, note, todoId, description]);
   }
 
   @override

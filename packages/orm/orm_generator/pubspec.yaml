@@ -7,7 +7,7 @@ issue_tracker: https://github.com/dart-backend/angel/issues
 
 resolution: workspace
 environment:
-  sdk: ">=3.11.0 <4.0.0"
+  sdk: ">=3.13.0 <4.0.0"
 dependencies:
   angel3_model: ^10.0.0
   angel3_serialize: ^10.0.0

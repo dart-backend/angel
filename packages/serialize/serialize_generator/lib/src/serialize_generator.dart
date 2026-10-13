@@ -62,6 +62,12 @@ TypeReference convertTypeReference(
   });
 }
 
+/// The [Serializers] enabled by a `@Serializable` [annotation].
+List<Serializers> readSerializers(ConstantReader annotation) => [
+  for (var o in annotation.peek('serializers')?.listValue ?? <DartObject>[])
+    if (o.variable?.name case var name?) Serializers.values.byName(name),
+];
+
 Expression convertObject(DartObject o) {
   if (o.isNull) return literalNull;
   if (o.toBoolValue() != null) return literalBool(o.toBoolValue()!);

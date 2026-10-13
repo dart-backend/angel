@@ -593,7 +593,7 @@ class Role implements RoleEntity {
 
   @override
   int get hashCode {
-    return hashObjects([role, users]);
+    return Object.hashAll([role, users]);
   }
 
   @override
@@ -627,7 +627,7 @@ class RoleUser implements RoleUserEntity {
 
   @override
   int get hashCode {
-    return hashObjects([role, user]);
+    return Object.hashAll([role, user]);
   }
 
   @override
@@ -682,7 +682,7 @@ class User implements UserEntity {
 
   @override
   int get hashCode {
-    return hashObjects([email, name, password, roles]);
+    return Object.hashAll([email, name, password, roles]);
   }
 
   @override

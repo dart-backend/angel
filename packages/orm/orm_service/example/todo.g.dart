@@ -203,7 +203,7 @@ class Todo extends _Todo {
 
   @override
   int get hashCode {
-    return hashObjects([id, isComplete, text, createdAt, updatedAt]);
+    return Object.hashAll([id, isComplete, text, createdAt, updatedAt]);
   }
 
   @override

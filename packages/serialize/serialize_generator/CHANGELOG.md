@@ -3,10 +3,15 @@
 ## 10.0.0
 
 * Released with the other Angel3 packages at 10.0.0
+* **Breaking:** Generated `hashCode` getters use `Object.hashAll` instead of `hashObjects`, which `angel3_serialize` 10 no longer exports; regenerate existing models
+* Reads `Serializable.serializers` as the `Serializers` enum of `angel3_serialize` 10
+* A value in `includeAnnotations` that is not a constant instance of a class (e.g. a string) now fails the build with an error, instead of producing an invalid annotation on the generated class
+* Require Dart >= 3.13
 
 ## 9.1.0
 
 * Require Dart >= 3.13
+* Updated `analyzer` to 14.0.0
 
 ## 9.0.0
 

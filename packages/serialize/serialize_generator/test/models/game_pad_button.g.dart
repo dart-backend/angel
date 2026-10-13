@@ -32,7 +32,7 @@ class GamepadButton implements GamepadButtonEntity {
 
   @override
   int get hashCode {
-    return hashObjects([name, radius]);
+    return Object.hashAll([name, radius]);
   }
 
   @override
@@ -83,7 +83,7 @@ class Gamepad extends GamepadEntity {
 
   @override
   int get hashCode {
-    return hashObjects([buttons, dynamicMap]);
+    return Object.hashAll([buttons, dynamicMap]);
   }
 
   @override

@@ -2,7 +2,6 @@ export 'dart:convert' show json, Codec, Converter;
 
 export 'package:angel3_model/angel3_model.dart';
 export 'package:collection/collection.dart';
-export 'package:quiver/core.dart' show hashObjects;
 
 /// Excludes a field from serialization: it is left out of `toMap` and
 /// ignored by `fromMap`, unless [canSerialize] or [canDeserialize] allow one
@@ -97,16 +96,15 @@ class Serializable {
     this.includeAnnotations = const [],
   });
 
-  /// A list of enabled serialization modes.
-  ///
-  /// See [Serializers].
-  final List<int> serializers;
+  /// The enabled serialization modes.
+  final List<Serializers> serializers;
 
   /// Overrides the setting in `SerializerGenerator`.
   final bool autoSnakeCaseNames;
 
-  /// A list of constant members to affix to the generated class.
-  final List includeAnnotations;
+  /// Annotations to put on the generated class: constant instances of
+  /// classes, such as `const Deprecated('...')`.
+  final List<Object> includeAnnotations;
 }
 
 const Serializable serializable = Serializable();
@@ -119,16 +117,16 @@ class GeneratedSerializable {
 const GeneratedSerializable generatedSerializable = GeneratedSerializable();
 
 /// The supported serialization types.
-abstract class Serializers {
-  /// All supported serialization types.
-  static const List<int> all = [map, json, typescript];
-
+enum Serializers {
   /// Enable `fromMap` and `toMap` methods on the model class.
-  static const int map = 0;
+  map,
 
   /// Enable a `toJson` method on the model class.
-  static const int json = 1;
+  json,
 
   /// Generate a TypeScript definition file (`.d.ts`) for use on the client-side.
-  static const int typescript = 2;
+  typescript;
+
+  /// All supported serialization types.
+  static const List<Serializers> all = [map, json, typescript];
 }

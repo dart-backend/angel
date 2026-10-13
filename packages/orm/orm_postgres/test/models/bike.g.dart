@@ -329,7 +329,7 @@ class Bike extends EntityBike {
 
   @override
   int get hashCode {
-    return hashObjects([
+    return Object.hashAll([
       id,
       createdAt,
       updatedAt,

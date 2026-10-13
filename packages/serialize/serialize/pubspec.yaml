@@ -11,7 +11,6 @@ environment:
 dependencies:
   angel3_model: ^10.0.0
   collection: ^1.17.0
-  quiver: ^3.2.0
 dev_dependencies:
   lints: ^6.0.0
   

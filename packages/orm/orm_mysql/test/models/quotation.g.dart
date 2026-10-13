@@ -177,7 +177,7 @@ class Quotation implements QuotationEntity {
 
   @override
   int get hashCode {
-    return hashObjects([id, name, price]);
+    return Object.hashAll([id, name, price]);
   }
 
   @override

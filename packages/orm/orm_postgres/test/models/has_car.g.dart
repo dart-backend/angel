@@ -244,7 +244,7 @@ class HasCar extends HasCarEntity {
 
   @override
   int get hashCode {
-    return hashObjects([id, createdAt, updatedAt, type, color]);
+    return Object.hashAll([id, createdAt, updatedAt, type, color]);
   }
 
   @override

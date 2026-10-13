@@ -64,8 +64,7 @@ Future<BuildContext?> buildContext(
     originalClassName: clazz.name,
     sourceFilename: p.basename(buildStep.inputId.path),
     autoSnakeCaseNames: autoSnakeCaseNames,
-    includeAnnotations:
-        annotation.peek('includeAnnotations')?.listValue ?? <DartObject>[],
+    includeAnnotations: _includeAnnotations(clazz, annotation),
   );
   // var lib = await resolver.libraryFor(buildStep.inputId);
   var fields = <FieldElement>[];
@@ -276,4 +275,40 @@ class ShimFieldImpl extends FieldElementImpl {
       ) {
     type = shimFieldType;
   }
+}
+
+/// The `includeAnnotations` of a `@Serializable` [annotation] on [clazz],
+/// each of which must be a constant instance of a class (not, e.g., a string),
+/// as the generated class carries it as an annotation.
+List<DartObject> _includeAnnotations(
+  InterfaceElement clazz,
+  ConstantReader annotation,
+) {
+  var values = annotation.peek('includeAnnotations')?.listValue ?? [];
+  for (var value in values) {
+    var type = value.type;
+    var isAnnotation =
+        type is InterfaceType &&
+        !type.isDartCoreBool &&
+        !type.isDartCoreInt &&
+        !type.isDartCoreDouble &&
+        !type.isDartCoreNum &&
+        !type.isDartCoreString &&
+        !type.isDartCoreSymbol &&
+        !type.isDartCoreType &&
+        !type.isDartCoreList &&
+        !type.isDartCoreMap &&
+        !type.isDartCoreSet &&
+        !type.isDartCoreRecord &&
+        !type.isDartCoreFunction;
+    if (!isAnnotation) {
+      throw InvalidGenerationSourceError(
+        'Every value in includeAnnotations must be a constant instance of a '
+        'class, to be used as an annotation on the generated class; '
+        '${value.type?.getDisplayString() ?? 'null'} is not.',
+        element: clazz,
+      );
+    }
+  }
+  return values;
 }

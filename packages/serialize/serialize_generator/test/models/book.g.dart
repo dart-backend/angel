@@ -95,7 +95,7 @@ class Book extends BookEntity {
 
   @override
   int get hashCode {
-    return hashObjects([
+    return Object.hashAll([
       id,
       createdAt,
       updatedAt,
@@ -205,7 +205,7 @@ class Author extends AuthorEntity {
 
   @override
   int get hashCode {
-    return hashObjects([
+    return Object.hashAll([
       id,
       createdAt,
       updatedAt,
@@ -280,7 +280,7 @@ class Library extends LibraryEntity {
 
   @override
   int get hashCode {
-    return hashObjects([id, createdAt, updatedAt, collection]);
+    return Object.hashAll([id, createdAt, updatedAt, collection]);
   }
 
   @override
@@ -362,7 +362,7 @@ class Bookmark extends BookmarkEntity {
 
   @override
   int get hashCode {
-    return hashObjects([id, createdAt, updatedAt, history, page, comment]);
+    return Object.hashAll([id, createdAt, updatedAt, history, page, comment]);
   }
 
   @override

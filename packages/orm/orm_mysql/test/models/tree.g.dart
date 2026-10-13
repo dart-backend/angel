@@ -465,7 +465,7 @@ class Tree extends TreeEntity {
 
   @override
   int get hashCode {
-    return hashObjects([id, createdAt, updatedAt, rings, fruits]);
+    return Object.hashAll([id, createdAt, updatedAt, rings, fruits]);
   }
 
   @override
@@ -534,7 +534,7 @@ class Fruit extends FruitEntity {
 
   @override
   int get hashCode {
-    return hashObjects([id, createdAt, updatedAt, treeId, commonName]);
+    return Object.hashAll([id, createdAt, updatedAt, treeId, commonName]);
   }
 
   @override

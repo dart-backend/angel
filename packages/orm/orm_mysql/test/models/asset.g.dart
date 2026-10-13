@@ -459,7 +459,7 @@ class Item extends ItemEntity {
 
   @override
   int get hashCode {
-    return hashObjects([id, createdAt, updatedAt, description]);
+    return Object.hashAll([id, createdAt, updatedAt, description]);
   }
 
   @override
@@ -543,7 +543,7 @@ class Asset extends AssetEntity {
 
   @override
   int get hashCode {
-    return hashObjects([
+    return Object.hashAll([
       id,
       createdAt,
       updatedAt,

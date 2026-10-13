@@ -32,7 +32,7 @@ class Todo extends TodoEntity {
 
   @override
   int get hashCode {
-    return hashObjects([text, completed]);
+    return Object.hashAll([text, completed]);
   }
 
   @override

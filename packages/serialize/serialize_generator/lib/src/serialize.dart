@@ -30,25 +30,15 @@ class SerializerGenerator extends GeneratorForAnnotation<Serializable> {
       throw 'Invalid builder context';
     }
 
-    var serializers = annotation.peek('serializers')?.listValue ?? [];
+    var serializers = readSerializers(annotation);
 
     if (serializers.isEmpty) {
       log.severe("No Serializers");
       return null;
     }
 
-    // Check if any serializer is recognized
-    if (!serializers.any((s) => Serializers.all.contains(s.toIntValue()))) {
-      log.severe("No recognizable Serializers");
-      return null;
-    }
-
     var lib = Library((b) {
-      generateClass(
-        serializers.map((s) => s.toIntValue() ?? 0).toList(),
-        ctx,
-        b,
-      );
+      generateClass(serializers, ctx, b);
       generateFieldsClass(ctx, b);
     });
 
@@ -58,7 +48,7 @@ class SerializerGenerator extends GeneratorForAnnotation<Serializable> {
 
   /// Generate a serializer class.
   void generateClass(
-    List<int> serializers,
+    List<Serializers> serializers,
     BuildContext ctx,
     LibraryBuilder file,
   ) {

@@ -442,7 +442,7 @@ class Order extends EntityOrder {
 
   @override
   int get hashCode {
-    return hashObjects([
+    return Object.hashAll([
       id,
       createdAt,
       updatedAt,
@@ -497,7 +497,7 @@ class Customer extends EntityCustomer {
 
   @override
   int get hashCode {
-    return hashObjects([id, createdAt, updatedAt]);
+    return Object.hashAll([id, createdAt, updatedAt]);
   }
 
   @override

@@ -382,7 +382,7 @@ class Number extends NumberEntity {
 
   @override
   int get hashCode {
-    return hashObjects([id, createdAt, updatedAt, two]);
+    return Object.hashAll([id, createdAt, updatedAt, two]);
   }
 
   @override
@@ -445,7 +445,7 @@ class Alphabet extends AlphabetEntity {
 
   @override
   int get hashCode {
-    return hashObjects([id, createdAt, updatedAt, value, numbers]);
+    return Object.hashAll([id, createdAt, updatedAt, value, numbers]);
   }
 
   @override
