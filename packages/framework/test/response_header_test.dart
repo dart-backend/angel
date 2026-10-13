@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:angel3_container_mirrors/angel3_container_mirrors.dart';
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_framework/src/http/angel_http.dart';
 import 'package:test/test.dart';
@@ -11,7 +10,7 @@ void main() {
   late HttpClient client;
 
   setUp(() async {
-    app = Angel(reflector: MirrorsReflector());
+    app = Angel();
     http = AngelHttp(app);
 
     await http.startServer();

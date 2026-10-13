@@ -2,6 +2,7 @@
 
 ## 10.0.0
 
+* chore: The tests and examples no longer use `MirrorsReflector`, and `angel3_container_mirrors` is no longer a dev dependency. Tests of reflection-based features (dependency injection by reflection, `@Expose` controllers, `@Hooks` and `@Middleware` metadata) moved to the unpublished `framework_mirrors_test` package, with the controller example
 * **Breaking:** `MirrorsReflector` moved from `package:angel3_container/mirrors.dart` to the new `angel3_container_mirrors` package. Apps that use it add `angel3_container_mirrors` to their dependencies and import `package:angel3_container_mirrors/angel3_container_mirrors.dart`
 * feat: Added `injectionFromParameters` and `InjectableParameter`, which build an `InjectionRequest` from parameter descriptions without the app's `Reflector`; `preInject` now uses them
 * feat: Added `Driver.supportsChunkedEncoding(request)` (true by default; false for HTTP/1.0 requests in `AngelHttp`). Chunked encoding is only asked for when it is supported, and `AngelHttp.setChunkedEncoding` now ignores only the HTTP/1.0 case instead of every `HttpException`

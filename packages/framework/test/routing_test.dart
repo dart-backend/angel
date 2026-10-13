@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:angel3_container_mirrors/angel3_container_mirrors.dart';
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_framework/http.dart';
 import 'package:angel3_mock_request/angel3_mock_request.dart';
@@ -12,30 +11,10 @@ import 'package:test/test.dart';
 
 import 'common.dart';
 
-@Middleware([interceptor])
-Future<String> testMiddlewareMetadata(
-  RequestContext req,
-  ResponseContext res,
-) async {
-  return 'This should not be shown.';
-}
-
-@Middleware([interceptService])
-class QueryService extends Service {
-  @override
-  @Middleware([interceptor])
-  Future<Map?> read(id, [Map? params]) async => params;
-}
-
 void interceptor(RequestContext req, ResponseContext res) {
   res
     ..write('Middleware')
     ..close();
-}
-
-bool interceptService(RequestContext req, ResponseContext res) {
-  res.write('Service with ');
-  return true;
 }
 
 void main() {
@@ -46,9 +25,9 @@ void main() {
   late http.Client client;
 
   setUp(() async {
-    app = Angel(reflector: MirrorsReflector());
-    nested = Angel(reflector: MirrorsReflector());
-    todos = Angel(reflector: MirrorsReflector());
+    app = Angel();
+    nested = Angel();
+    todos = Angel();
 
     for (var app in [app, nested, todos]) {
       app.logger = Logger('routing_test')
@@ -74,7 +53,6 @@ void main() {
     });
 
     app.mount('/nes', nested);
-    app.get('/meta', testMiddlewareMetadata);
     app.get(
       '/intercepted',
       (req, res) => 'This should not be shown',
@@ -108,8 +86,6 @@ void main() {
 
     app.get('/method', (req, res) => 'Only GET');
     app.post('/method', (req, res) => 'Only POST');
-
-    app.use('/query', QueryService());
 
     RequestHandler write(String message) {
       return (req, res) {
@@ -175,12 +151,6 @@ void main() {
     expect(response.body, equals('Middleware'));
   });
 
-  test('Middleware via metadata', () async {
-    // Metadata
-    var response = await client.get(Uri.parse('$url/meta'));
-    expect(response.body, equals('Middleware'));
-  });
-
   test('Can serialize function result as JSON', () async {
     Map headers = <String, String>{'Content-Type': 'application/json'};
     var postData = json.encode({'it': 'works'});
@@ -225,10 +195,6 @@ void main() {
     );
     print(response.body);
     expect(json.decode(response.body), equals('Logged'));
-
-    response = await client.get(Uri.parse('$url/query/foo?bar=baz'));
-    print(response.body);
-    expect(response.body, equals('Service with Middleware'));
   });
 
   test('only match route with matching method', () async {

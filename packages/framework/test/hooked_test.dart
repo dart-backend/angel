@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:angel3_container_mirrors/angel3_container_mirrors.dart';
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_framework/http.dart';
 import 'package:http/http.dart' as http;
@@ -22,7 +21,7 @@ void main() {
   late HookedService todoService;
 
   setUp(() async {
-    app = Angel(reflector: MirrorsReflector());
+    app = Angel();
     client = http.Client();
     app.use('/todos', MapService());
     app.use('/books', BookService());
@@ -105,14 +104,6 @@ void main() {
     var stream = todoService.afterCreated.asStream();
     await todoService.create({'angel': 'framework'});
     expect(await stream.first.then((e) => e.result['angel']), 'framework');
-  });
-
-  test('metadata', () async {
-    final service = HookedService(IncrementService())..addHooks(app);
-    expect(service.inner, isNot(const IsInstanceOf<MapService>()));
-    IncrementService.times = 0;
-    await service.index();
-    expect(IncrementService.times, equals(2));
   });
 
   test('inject request + response', () async {

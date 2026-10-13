@@ -1,13 +1,12 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:angel3_container_mirrors/angel3_container_mirrors.dart';
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_framework/http.dart';
 import 'package:logging/logging.dart';
 
 void main() async {
-  var app = Angel(reflector: MirrorsReflector())
+  var app = Angel()
     ..logger = (Logger('angel')
       ..onRecord.listen((rec) {
         print(rec);

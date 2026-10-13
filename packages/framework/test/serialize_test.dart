@@ -1,6 +1,5 @@
 import 'dart:io';
 
-import 'package:angel3_container_mirrors/angel3_container_mirrors.dart';
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_framework/http.dart';
 import 'package:http/http.dart' as http;
@@ -14,8 +13,11 @@ void main() {
   late String url;
 
   setUp(() async {
-    app = Angel(reflector: MirrorsReflector())
-      ..get('/foo', ioc(() => {'hello': 'world'}))
+    app = Angel()
+      ..get(
+        '/foo',
+        ioc(() => {'hello': 'world'}, injection: InjectionRequest.constant()),
+      )
       ..get('/bar', (req, res) async {
         await res.serialize({
           'hello': 'world',

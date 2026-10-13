@@ -15,6 +15,7 @@ workspace:
   - packages/container/container_mirrors
   - packages/mock_request
   - packages/framework
+  - packages/framework_mirrors_test
   - packages/user_agent/user_agent
   - packages/validate
   - packages/redis

@@ -2,23 +2,11 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:angel3_container_mirrors/angel3_container_mirrors.dart';
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_framework/http.dart';
 import 'package:angel3_mock_request/angel3_mock_request.dart';
 import 'package:logging/logging.dart';
 import 'package:test/test.dart';
-
-@Expose('/items')
-class ItemController extends Controller {
-  String getItem(int id) => 'get $id';
-  String putItem(int id) => 'put $id';
-  String deleteItem(int id) => 'delete $id';
-  // Verb-like prefixes that are not whole words: plain GET routes.
-  String posts() => 'posts';
-  String headers() => 'headers';
-  String getter() => 'getter';
-}
 
 void main() {
   test('no info-level log line per request', () async {
@@ -34,45 +22,6 @@ void main() {
     await rq.response.drain<void>();
 
     expect(records.where((r) => r.level >= Level.INFO), isEmpty);
-  });
-
-  group('controller verb inference', () {
-    late AngelHttp http;
-
-    setUp(() async {
-      var app = Angel(reflector: MirrorsReflector());
-      await app.configure(ItemController().configureServer);
-      http = AngelHttp(app);
-    });
-
-    Future<(int, String)> send(String method, String path) async {
-      var rq = MockHttpRequest(method, Uri(path: path))
-        ..headers.set('accept', 'application/json');
-      await rq.close();
-      await http.handleRequest(rq);
-      var body = await rq.response.transform(utf8.decoder).join();
-      return (rq.response.statusCode, body);
-    }
-
-    for (var (method, path, expected) in [
-      ('GET', '/items/item/5', 'get 5'),
-      ('PUT', '/items/item/5', 'put 5'),
-      ('DELETE', '/items/item/5', 'delete 5'),
-      ('GET', '/items/posts', 'posts'),
-      ('GET', '/items/headers', 'headers'),
-      ('GET', '/items/getter', 'getter'),
-    ]) {
-      test('$method $path', () async {
-        var (status, body) = await send(method, path);
-        expect(status, 200);
-        expect(json.decode(body), expected);
-      });
-    }
-
-    test('putItem is no longer GET /put_item', () async {
-      var (status, _) = await send('GET', '/items/put_item/5');
-      expect(status, 404);
-    });
   });
 
   group('HEAD', () {
