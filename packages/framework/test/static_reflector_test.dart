@@ -35,6 +35,15 @@ class _Function extends ReflectedFunction {
 
 class _Unregistered {}
 
+class _HealthController extends Controller {
+  _HealthController() : super(expose: const Expose('/health'));
+
+  @override
+  void configureRoutes(Routable routable) {
+    routable.get('/', (req, res) => 'ok');
+  }
+}
+
 void main() {
   Future<(int, String)> get(Angel app, String path) async {
     var rq = MockHttpRequest('GET', Uri.parse(path))
@@ -89,4 +98,32 @@ void main() {
       expect(await get(app, '/'), (200, json.encode('dep: null')));
     },
   );
+
+  group('a controller', () {
+    Future<void> expectRoutes(Reflector reflector) async {
+      var app = Angel(reflector: reflector);
+      await app.configure(_HealthController().configureServer);
+      expect(await get(app, '/health'), (200, json.encode('ok')));
+      expect(app.controllers.keys, contains('_HealthController'));
+    }
+
+    test('the reflector knows nothing about uses its configureRoutes', () {
+      return expectRoutes(StaticReflector());
+    });
+
+    test('known to the reflector only as a class (as @injectable data is) '
+        'uses its configureRoutes', () {
+      return expectRoutes(
+        StaticReflector(
+          types: {
+            _HealthController: StaticReflectedClass(
+              '_HealthController',
+              _HealthController,
+              create: (p, n) => _HealthController(),
+            ),
+          },
+        ),
+      );
+    });
+  });
 }

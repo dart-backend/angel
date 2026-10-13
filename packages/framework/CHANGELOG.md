@@ -2,6 +2,7 @@
 
 ## 10.0.0
 
+* fix: A `Controller` in an app whose reflector has no information about it (e.g. a `StaticReflector` with data from `angel3_container_generator`) now applies the routes added in `configureRoutes`, as with reflection disabled, instead of failing with an `ArgumentError`. `@Expose` methods are not discovered then
 * fix: Injection works with a `StaticReflector` (or a generated reflector) that has no information about `Parameter`, or about a handler: `preInject` only reflects `Parameter` for a parameter with annotations, and a handler the reflector does not know has no `@Middleware`/`@Expose` annotations instead of failing `addRoute`
 * fix: An optional or named parameter whose type the reflector cannot construct is left out with any reflector, using the new `Container.isUnconstructible`; with a `StaticReflector` it used to fail the request with a 500
 * chore: The tests and examples no longer use `MirrorsReflector`, and `angel3_container_mirrors` is no longer a dev dependency. Tests of reflection-based features (dependency injection by reflection, `@Expose` controllers, `@Hooks` and `@Middleware` metadata) moved to the unpublished `framework_mirrors_test` package, with the controller example

@@ -29,11 +29,20 @@ T? getAnnotation<T>(Object obj, Reflector? reflector) {
   if (reflector == null || !canReflect(reflector)) {
     return null;
   }
-  try {
-    var annotations = obj is Function
+  var annotations = tryReflect(
+    () => obj is Function
         ? reflector.reflectFunction(obj)?.annotations
-        : reflector.reflectClass(obj.runtimeType)?.annotations;
-    return annotations == null ? null : matchingAnnotation<T>(annotations);
+        : reflector.reflectClass(obj.runtimeType)?.annotations,
+  );
+  return annotations == null ? null : matchingAnnotation<T>(annotations);
+}
+
+/// Runs [reflect], or returns `null` when the reflector has no information
+/// about what it reflects upon, as a [StaticReflector] or a generated
+/// reflector may not for every type and function.
+T? tryReflect<T>(T? Function() reflect) {
+  try {
+    return reflect();
   } on ArgumentError {
     return null;
   } on UnsupportedError {
