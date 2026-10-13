@@ -3,6 +3,8 @@
 ## 10.0.0
 
 * Released with the other Angel3 packages at 10.0.0
+* fix: **Security** `StringSqlExpressionBuilder.like` now passes its pattern to the executor as a parameter (`LIKE @name`). It used to write the pattern into the SQL inside quotes, so a pattern built from user input allowed SQL injection. `sanitize` is now applied to the pattern before it is passed (e.g. `like(input, sanitize: (s) => '%$s%')`); it used to be given the parameter name, and its result matched that name literally
+* fix: `Query.reserveName` no longer returns the same name twice. The second reservation of a name returned it unchanged, so two values for one column shared a parameter and one overwrote the other: e.g. an `update()` with `where.name.equals('a')` and `values.name = 'b'` changed the rows where `name` was `'b'`. It also no longer returns a numbered name (`name1`) that was already reserved
 
 ## 9.1.1
 

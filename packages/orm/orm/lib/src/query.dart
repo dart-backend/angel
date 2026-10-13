@@ -12,6 +12,7 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
 
   final List<JoinBuilder> _joins = [];
   final Map<String, int> _names = {};
+  final Set<String> _reservedNames = {};
   final List<OrderBy> _orderBy = [];
 
   // An optional "parent query". If provided, [reserveName] will operate in
@@ -57,18 +58,16 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
     if (parent != null) {
       return parent!.reserveName(name);
     }
-    // var n = _names[name] ??= 0;
-    // _names[name]++;
-    var n = 0;
-    var nn = _names[name];
-    if (nn != null) {
-      n = nn;
-      nn++;
-      _names[name] = nn;
-    } else {
-      _names[name] = 0; //1;
-    }
-    return n == 0 ? name : '$name$n';
+    // `name`, then `name1`, `name2`, ...; skipping any already reserved
+    // (e.g. `name1` reserved for a column of that name).
+    var n = _names[name] ?? 0;
+    String reserved;
+    do {
+      reserved = n == 0 ? name : '$name$n';
+      n++;
+    } while (!_reservedNames.add(reserved));
+    _names[name] = n;
+    return reserved;
   }
 
   /// Makes a [Where] clause.

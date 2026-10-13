@@ -222,23 +222,21 @@ class StringSqlExpressionBuilder extends SqlExpressionBuilder<String> {
 
   /// Builds a `LIKE` predicate.
   ///
-  /// To prevent injections, an optional [sanitizer] is called with a name that
-  /// will be escaped by the underlying [QueryExecutor]. Use this if the [pattern]
-  /// is not constant, and/or involves user input.
+  /// The [pattern] is passed to the [QueryExecutor] as a parameter, never
+  /// written into the SQL, so it is safe to build from user input. Its `%`
+  /// and `_` are still wildcards; escape them in user input that should match
+  /// literally.
   ///
-  /// Otherwise, you can omit [sanitizer].
+  /// If given, [sanitize] is applied to [pattern] first, e.g. to wrap user
+  /// input in wildcards.
   ///
   /// Example:
   /// ```dart
   /// carNameBuilder.like('%Mazda%');
-  /// carNameBuilder.like((name) => 'Mazda %$name%');
+  /// carNameBuilder.like(userInput, sanitize: (s) => '%$s%');
   /// ```
   void like(String pattern, {String Function(String)? sanitize}) {
-    sanitize ??= (s) => pattern;
-    _raw = 'LIKE \'${sanitize('@$substitution')}\'';
-    //query.substitutionValues[substitution] = pattern;
-    _hasValue = true;
-    _value = null;
+    _change('LIKE', sanitize == null ? pattern : sanitize(pattern));
   }
 
   void isBetween(String lower, String upper) {
