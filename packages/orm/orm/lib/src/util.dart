@@ -86,6 +86,30 @@ int mapToInt(dynamic value) {
   );
 }
 
+/// A `@name` placeholder: `@` and a name of letters (in any script), digits
+/// and underscores.
+final RegExp _placeholder = RegExp(r'@([\p{L}\p{N}_]+)', unicode: true);
+
+/// Replaces each `@name` placeholder in [sql] that has a value in [values]
+/// with what [replace] returns for its name and value, called in the order
+/// the placeholders appear.
+///
+/// Names are matched whole, so `@name` does not replace part of `@name1`. A
+/// placeholder with no value (e.g. a MySQL user variable) is left as it is.
+/// Executors use this to turn the `@name` placeholders the queries are built
+/// with into those of their driver, e.g. positional `?`.
+String replacePlaceholders(
+  String sql,
+  Map<String, dynamic> values,
+  String Function(String name, dynamic value) replace,
+) {
+  return sql.replaceAllMapped(_placeholder, (m) {
+    var name = m[1]!;
+    if (!values.containsKey(name)) return m[0]!;
+    return replace(name, values[name]);
+  });
+}
+
 /*
 final showDebugPrint = true;
 

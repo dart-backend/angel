@@ -72,22 +72,16 @@ class MariaDbExecutor extends QueryExecutor {
     });
   }
 
-  /// A placeholder: `@` and a name of letters (in any script), digits and
-  /// underscores.
-  static final _placeholder = RegExp(r'@([\p{L}\p{N}_]+)', unicode: true);
-
   /// Changes the `@name` placeholders in [sql] to `?`, and adds their
-  /// values to [params] in the order the placeholders appear. Matching
-  /// whole names keeps `@name` from replacing part of `@name1`.
+  /// values to [params] in the order the placeholders appear.
+  ///
+  /// A local [DateTime] is sent as UTC.
   String _toPositional(
     String sql,
     Map<String, dynamic> substitutionValues,
     List<dynamic> params,
   ) {
-    return sql.replaceAllMapped(_placeholder, (m) {
-      var name = m[1]!;
-      if (!substitutionValues.containsKey(name)) return m[0]!;
-      var value = substitutionValues[name];
+    return replacePlaceholders(sql, substitutionValues, (_, value) {
       params.add(value is DateTime && !value.isUtc ? value.toUtc() : value);
       return '?';
     });

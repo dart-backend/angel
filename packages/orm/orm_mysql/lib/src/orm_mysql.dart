@@ -85,30 +85,18 @@ class MySqlExecutor extends QueryExecutor {
     String resultQuery = '',
     List<String> returningFields = const [],
   }) async {
-    // Change @id -> ?
-    for (var name in substitutionValues.keys) {
-      query = query.replaceAll('@$name', ':$name');
-
-      // Convert UTC time to local time
-      var value = substitutionValues[name];
-      if (value is DateTime && value.isUtc) {
-        var t = value.toLocal();
-        //_logger.fine('Datetime deteted: $name');
-        //_logger.fine('Datetime: UTC -> $value, Local -> $t');
-
-        substitutionValues[name] = t;
-      }
-    }
+    var params = <String, dynamic>{};
+    query = _toNamed(query, substitutionValues, params);
 
     //_logger.fine('Query: $query');
-    //_logger.fine('Values: $substitutionValues');
+    //_logger.fine('Values: $params');
     //_logger.fine('Returning Query: $returningQuery');
 
     if (returningQuery.isNotEmpty) {
       // Handle insert, update and delete
       // Retrieve back the inserted record
       if (query.startsWith("INSERT")) {
-        var result = await _connection.execute(query, substitutionValues);
+        var result = await _connection.execute(query, params);
 
         //logger.fine(result.lastInsertID);
 
@@ -117,14 +105,17 @@ class MySqlExecutor extends QueryExecutor {
         // Has primary key
         if (returningQuery.endsWith('.id=?')) {
           query = query.replaceAll("?", ":id");
-          substitutionValues.clear();
-          substitutionValues['id'] = result.lastInsertID;
+          params = {'id': result.lastInsertID};
         } else {
-          query = _convertSQL(query, substitutionValues);
+          // The row is selected by the inserted values, whose `?` keep the
+          // order of the INSERT's placeholders.
+          var i = 0;
+          query = query.replaceAllMapped('?', (_) => ':${_paramName(i++)}');
         }
       } else if (query.startsWith("UPDATE")) {
-        await _connection.execute(query, substitutionValues);
-        query = returningQuery;
+        await _connection.execute(query, params);
+        params = {};
+        query = _toNamed(returningQuery, substitutionValues, params);
       }
     }
 
@@ -135,20 +126,18 @@ class MySqlExecutor extends QueryExecutor {
       var selectQuery = query.replaceFirst("DELETE", "SELECT *");
       //_logger.fine('Select query for delete: $selectQuery');
 
-      deletedResults = await _connection
-          .execute(selectQuery, substitutionValues)
-          .then((results) {
-            return results.rows
-                .map((r) => r.typedAssoc().values.toList())
-                .toList();
-          });
+      deletedResults = await _connection.execute(selectQuery, params).then((
+        results,
+      ) {
+        return results.rows.map((r) => r.typedAssoc().values.toList()).toList();
+      });
     }
 
     //_logger.fine('Query 2: $query');
-    //_logger.fine('Values 2: $substitutionValues');
+    //_logger.fine('Values 2: $params');
 
     // Handle select
-    return _connection.execute(query, substitutionValues).then((results) {
+    return _connection.execute(query, params).then((results) {
       if (isDeleteQuery) {
         return deletedResults;
       } else {
@@ -158,16 +147,25 @@ class MySqlExecutor extends QueryExecutor {
     });
   }
 
-  String _convertSQL(String query, Map<String, dynamic> substitutionValues) {
-    var newQuery = query;
-    for (var k in substitutionValues.keys) {
-      var fromPattern = '.$k = ?';
-      var toPattern = '.$k = :$k';
-      newQuery = newQuery.replaceFirst(fromPattern, toPattern);
-    }
-
-    return newQuery;
+  /// Changes the `@name` placeholders in [sql] to `:p0`, `:p1`, ... in the
+  /// order they appear, and adds their values to [params] by those names.
+  ///
+  /// `mysql_client` only finds `:name` placeholders of ASCII letters, digits
+  /// and underscores, so the names of the columns are not used. A UTC
+  /// [DateTime] is sent as local time.
+  String _toNamed(
+    String sql,
+    Map<String, dynamic> substitutionValues,
+    Map<String, dynamic> params,
+  ) {
+    return replacePlaceholders(sql, substitutionValues, (_, value) {
+      var name = _paramName(params.length);
+      params[name] = value is DateTime && value.isUtc ? value.toLocal() : value;
+      return ':$name';
+    });
   }
+
+  static String _paramName(int i) => 'p$i';
 
   List<List<dynamic>> parseSQLResult(IResultSet res) {
     //var colTypes = res.cols.map((col) => col.type).toList();
