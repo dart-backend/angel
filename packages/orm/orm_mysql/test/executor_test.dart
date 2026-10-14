@@ -100,6 +100,20 @@ void executorTests(
       expect(cars.map((c) => c.make), unorderedEquals(['Mazda', 'Hyundai']));
     });
 
+    test('values are stored as given, even if they look like SQL', () async {
+      // `mysql_client` writes named parameters into the SQL as text.
+      var car =
+          (await (CarQuery()
+                    ..values.make = "it's :description :p1 @make"
+                    ..values.description = ':p0'
+                    ..values.familyFriendly = true)
+                  .insert(executor))
+              .value;
+      expect(car.make, "it's :description :p1 @make");
+      expect(car.description, ':p0');
+      expect(car.familyFriendly, isTrue);
+    });
+
     test('update by id returns the updated row', () async {
       var car = (await (CarQuery()..values.make = 'Ferrari').insert(executor))
           .value;
