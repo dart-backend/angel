@@ -27,7 +27,8 @@ void main() {
     var rows = await executor.query(
       'priceds',
       "SELECT numeric_precision, numeric_scale FROM information_schema.columns "
-          "WHERE table_name = 'priceds' AND column_name = 'amount'",
+          "WHERE table_schema = current_schema() "
+          "AND table_name = 'priceds' AND column_name = 'amount'",
       {},
     );
     expect(rows, hasLength(1));

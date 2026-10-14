@@ -145,12 +145,24 @@ void main() {
         });
 
         test('where on parts of a date', () async {
+          // Fractional seconds must still match the whole second.
+          var withSeconds = DateTime(2000, 1, 1, 0, 0, 7, 500);
+          var insert = CarQuery();
+          insert.values
+            ..make = 'Mazda'
+            ..createdAt = withSeconds
+            ..updatedAt = withSeconds
+            ..description = 'Zoom zoom'
+            ..price = 30000.00
+            ..familyFriendly = true;
+          var mazda = (await insert.insert(executor)).value;
+
           var query = CarQuery();
           query.where!.createdAt
-            ..year.equals(y2k.year)
-            ..second.equals(y2k.second);
+            ..year.equals(withSeconds.year)
+            ..second.equals(withSeconds.second);
           var cars = await query.get(executor);
-          expect(cars.map((c) => c.id), [ferrari!.id]);
+          expect(cars.map((c) => c.id), [mazda.id]);
 
           query = CarQuery();
           query.where!.createdAt.year.equals(y2k.year + 1);

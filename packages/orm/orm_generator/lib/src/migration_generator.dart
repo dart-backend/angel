@@ -199,36 +199,25 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
                     methodName = 'timeStamp';
                     break;
                   default:
-                    Expression provColumn;
-                    var colType = refer('Column');
-                    var columnTypeType = refer('ColumnType');
+                    var type = col.type;
+                    var typeExpr = _columnTypeExpression(type);
+                    var hasLength = type.hasLength && col.length != 0;
 
-                    if (col.length == 0) {
-                      methodName = 'declare';
-                      provColumn = columnTypeType.newInstance([
-                        literal(col.type.name),
-                      ]);
-                    } else {
+                    if (hasLength || type.hasPrecision || type.hasScale) {
                       methodName = 'declareColumn';
-                      var type = col.type;
-                      provColumn = colType.newInstance([], {
-                        'type': columnTypeType.newInstance(
-                          [literal(type.name)],
-                          {
-                            if (type.hasLength) 'hasLength': literal(true),
-                            if (type.hasPrecision)
-                              'hasPrecision': literal(true),
-                            if (type.hasScale) 'hasScale': literal(true),
-                          },
-                        ),
-                        'length': literal(col.length),
-                        if (type.hasPrecision)
-                          'precision': literal(col.precision),
-                        if (type.hasScale) 'scale': literal(col.scale),
-                      });
+                      positional.add(
+                        refer('Column').newInstance([], {
+                          'type': typeExpr,
+                          if (hasLength) 'length': literal(col.length),
+                          if (type.hasPrecision)
+                            'precision': literal(col.precision),
+                          if (type.hasScale) 'scale': literal(col.scale),
+                        }),
+                      );
+                    } else {
+                      methodName = 'declare';
+                      positional.add(typeExpr);
                     }
-
-                    positional.add(provColumn);
                     break;
                 }
               }
@@ -347,24 +336,23 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
                   ).isAssignableFromType(foreignTableType);
                 }
 
-                var columnTypeType = refer('ColumnType');
                 var key = relationship.localKey;
 
                 // Default to `int` if foreign class extends Model with implicit 'id'
                 // as primary key
-                String? keyType;
+                ColumnType keyType;
                 if (foreignAautoIdAndDateFields != false &&
                     relationship.foreignKey == "id") {
-                  keyType = "int";
+                  keyType = ColumnType.int;
                 } else {
-                  var foreigColumnName =
+                  var foreignColumn =
                       relationship.foreign?.columns[relationship.foreignKey!];
-                  keyType = foreigColumnName?.type.name;
+                  keyType = _foreignKeyType(foreignColumn?.type);
                 }
 
                 var field = table.property('declare').call([
                   literal(key),
-                  columnTypeType.newInstance([literal(keyType)]),
+                  _columnTypeExpression(keyType),
                 ]);
 
                 var ref = field.property('references').call([
@@ -394,6 +382,32 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
         );
       });
     });
+  }
+
+  /// The `ColumnType` constant for [type], or a new `ColumnType` when it is
+  /// not one of them. Runners compare column types by identity, so known
+  /// types must stay the constants.
+  Expression _columnTypeExpression(ColumnType type) {
+    var constName = columnTypeConstantName(type);
+    if (constName != null) {
+      return refer('ColumnType').property(constName);
+    }
+
+    return refer('ColumnType').constInstance([literal(type.name)], {
+      if (type.hasLength) 'hasLength': literal(true),
+      if (type.hasPrecision) 'hasPrecision': literal(true),
+      if (type.hasScale) 'hasScale': literal(true),
+    });
+  }
+
+  /// The column type of a foreign key that references a column of [type]:
+  /// serial types become the integer type they auto-increment.
+  ColumnType _foreignKeyType(ColumnType? type) {
+    if (type == null) return ColumnType.int;
+    if (identical(type, ColumnType.serial)) return ColumnType.int;
+    if (identical(type, ColumnType.bigSerial)) return ColumnType.bigInt;
+    if (identical(type, ColumnType.smallSerial)) return ColumnType.smallInt;
+    return type;
   }
 
   /// Generate down() method to drop tables

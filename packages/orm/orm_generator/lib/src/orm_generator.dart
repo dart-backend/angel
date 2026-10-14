@@ -1199,15 +1199,19 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                   //  parsedId = prop.nullSafeProperty(foreignField.name);
                   //}
 
-                  if (foreign != null) {
-                    if (isSpecialId(foreign, foreignField)) {
-                      // A Model's id is a String; the column is an int.
-                      parsedId = refer('int')
-                          .property('tryParse')
-                          .call([parsedId.ifNullThen(literalString(''))]);
-                    }
-                  }
                   var cond = prop.notEqualTo(literalNull);
+
+                  if (foreign != null && isSpecialId(foreign, foreignField)) {
+                    // A Model's id is a String; the column is an int. Leave
+                    // the column unset until the related model has an id,
+                    // and reject an id that is not a number.
+                    cond = parsedId.notEqualTo(literalNull);
+                    parsedId = refer('int').property('parse').call([
+                      prop.nullChecked
+                          .property(foreignField.displayName)
+                          .nullChecked,
+                    ]);
+                  }
                   var condStr = cond.accept(
                     DartEmitter(useNullSafetySyntax: true),
                   );

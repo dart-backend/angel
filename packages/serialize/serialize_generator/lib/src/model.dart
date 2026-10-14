@@ -342,7 +342,16 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
           ..annotations.add(refer('override'))
           ..body = refer('Object')
               .property('hashAll')
-              .call([literalList(ctx!.fields.map((f) => refer(f.name ?? '')))])
+              .call([
+                literalList(
+                  ctx!.fields.map((f) {
+                    // Hash collections by content to stay consistent with ==
+                    var eq = generateEquality(f.type, true);
+                    var name = f.name ?? '';
+                    return eq == null ? refer(name) : CodeExpression(Code('$eq.hash($name)'));
+                  }),
+                ),
+              ])
               .returned
               .statement;
       }),

@@ -550,7 +550,7 @@ class Asset extends AssetEntity {
       description,
       name,
       price,
-      items,
+      ListEquality<ItemEntity>(DefaultEquality<ItemEntity>()).hash(items),
     ]);
   }
 

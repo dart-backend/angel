@@ -32,10 +32,10 @@ class LoginMigration extends Migration {
       table.timeStamp('updated_at');
       table.varChar('name', length: 255);
       table
-          .declare('user_identity_id', ColumnType('int'))
+          .declare('user_identity_id', ColumnType.int)
           .references('identities', 'id');
       table
-          .declare('backup_identity_id', ColumnType('int'))
+          .declare('backup_identity_id', ColumnType.int)
           .references('identities', 'id');
     });
   }
@@ -50,8 +50,8 @@ class LoginGrantMigration extends Migration {
   @override
   void up(Schema schema) {
     schema.create('login_grant_links', (table) {
-      table.declare('login_id', ColumnType('int')).references('logins', 'id');
-      table.declare('grant_id', ColumnType('int')).references('grants', 'id');
+      table.declare('login_id', ColumnType.int).references('logins', 'id');
+      table.declare('grant_id', ColumnType.int).references('grants', 'id');
     });
   }
 
@@ -486,13 +486,11 @@ class LoginQueryValues extends MapQueryValues {
     createdAt = model.createdAt;
     updatedAt = model.updatedAt;
     name = model.name;
-    if (model.userIdentity != null) {
-      values['user_identity_id'] = int.tryParse(model.userIdentity?.id ?? '');
+    if (model.userIdentity?.id != null) {
+      values['user_identity_id'] = int.parse(model.userIdentity!.id!);
     }
-    if (model.backupIdentity != null) {
-      values['backup_identity_id'] = int.tryParse(
-        model.backupIdentity?.id ?? '',
-      );
+    if (model.backupIdentity?.id != null) {
+      values['backup_identity_id'] = int.parse(model.backupIdentity!.id!);
     }
   }
 }
@@ -639,11 +637,11 @@ class LoginGrantQueryValues extends MapQueryValues {
   set grantId(int value) => values['grant_id'] = value;
 
   void copyFrom(LoginGrant model) {
-    if (model.login != null) {
-      values['login_id'] = int.tryParse(model.login?.id ?? '');
+    if (model.login?.id != null) {
+      values['login_id'] = int.parse(model.login!.id!);
     }
-    if (model.grant != null) {
-      values['grant_id'] = int.tryParse(model.grant?.id ?? '');
+    if (model.grant?.id != null) {
+      values['grant_id'] = int.parse(model.grant!.id!);
     }
   }
 }
@@ -1003,7 +1001,7 @@ class Login extends LoginEntity {
       name,
       userIdentity,
       backupIdentity,
-      grants,
+      ListEquality<GrantEntity>(DefaultEquality<GrantEntity>()).hash(grants),
     ]);
   }
 
@@ -1110,7 +1108,13 @@ class Grant extends GrantEntity {
 
   @override
   int get hashCode {
-    return Object.hashAll([id, createdAt, updatedAt, name, logins]);
+    return Object.hashAll([
+      id,
+      createdAt,
+      updatedAt,
+      name,
+      ListEquality<LoginEntity>(DefaultEquality<LoginEntity>()).hash(logins),
+    ]);
   }
 
   @override

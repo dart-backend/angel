@@ -425,50 +425,59 @@ ColumnType inferColumnType(DartType type) {
   return ColumnType.varChar;
 }
 
-/// The column types `ColumnType` defines.
-const List<ColumnType> _knownColumnTypes = [
-  ColumnType.boolean,
-  ColumnType.smallSerial,
-  ColumnType.serial,
-  ColumnType.bigSerial,
-  ColumnType.bigInt,
-  ColumnType.int,
-  ColumnType.smallInt,
-  ColumnType.tinyInt,
-  ColumnType.bit,
-  ColumnType.decimal,
-  ColumnType.numeric,
-  ColumnType.money,
-  ColumnType.smallMoney,
-  ColumnType.float,
-  ColumnType.real,
-  ColumnType.double,
-  ColumnType.dateTime,
-  ColumnType.smallDateTime,
-  ColumnType.date,
-  ColumnType.time,
-  ColumnType.timeStamp,
-  ColumnType.timeStampWithTimeZone,
-  ColumnType.char,
-  ColumnType.varChar,
-  ColumnType.varCharMax,
-  ColumnType.text,
-  ColumnType.nChar,
-  ColumnType.nVarChar,
-  ColumnType.nVarCharMax,
-  ColumnType.nText,
-  ColumnType.binary,
-  ColumnType.varBinary,
-  ColumnType.varBinaryMax,
-  ColumnType.image,
-  ColumnType.json,
-  ColumnType.jsonb,
-  ColumnType.sqlVariant,
-  ColumnType.uniqueIdentifier,
-  ColumnType.xml,
-  ColumnType.cursor,
-  ColumnType.table,
-];
+/// The column types `ColumnType` defines, by the name of their constant.
+const Map<String, ColumnType> _knownColumnTypes = {
+  'boolean': ColumnType.boolean,
+  'smallSerial': ColumnType.smallSerial,
+  'serial': ColumnType.serial,
+  'bigSerial': ColumnType.bigSerial,
+  'bigInt': ColumnType.bigInt,
+  'int': ColumnType.int,
+  'smallInt': ColumnType.smallInt,
+  'tinyInt': ColumnType.tinyInt,
+  'bit': ColumnType.bit,
+  'decimal': ColumnType.decimal,
+  'numeric': ColumnType.numeric,
+  'money': ColumnType.money,
+  'smallMoney': ColumnType.smallMoney,
+  'float': ColumnType.float,
+  'real': ColumnType.real,
+  'double': ColumnType.double,
+  'dateTime': ColumnType.dateTime,
+  'smallDateTime': ColumnType.smallDateTime,
+  'date': ColumnType.date,
+  'time': ColumnType.time,
+  'timeStamp': ColumnType.timeStamp,
+  'timeStampWithTimeZone': ColumnType.timeStampWithTimeZone,
+  'char': ColumnType.char,
+  'varChar': ColumnType.varChar,
+  'varCharMax': ColumnType.varCharMax,
+  'text': ColumnType.text,
+  'nChar': ColumnType.nChar,
+  'nVarChar': ColumnType.nVarChar,
+  'nVarCharMax': ColumnType.nVarCharMax,
+  'nText': ColumnType.nText,
+  'binary': ColumnType.binary,
+  'varBinary': ColumnType.varBinary,
+  'varBinaryMax': ColumnType.varBinaryMax,
+  'image': ColumnType.image,
+  'json': ColumnType.json,
+  'jsonb': ColumnType.jsonb,
+  'sqlVariant': ColumnType.sqlVariant,
+  'uniqueIdentifier': ColumnType.uniqueIdentifier,
+  'xml': ColumnType.xml,
+  'cursor': ColumnType.cursor,
+  'table': ColumnType.table,
+};
+
+/// The name of the `ColumnType` constant that [type] is, or null when it is
+/// not one of them.
+String? columnTypeConstantName(ColumnType type) {
+  for (var entry in _knownColumnTypes.entries) {
+    if (identical(entry.value, type)) return entry.key;
+  }
+  return null;
+}
 
 Column reviveColumn(ConstantReader cr) {
   ColumnType columnType;
@@ -493,7 +502,7 @@ Column reviveColumn(ConstantReader cr) {
   if (columnObj != null) {
     // The ColumnType constant of that name, which the generator compares
     // types with; ColumnType has no `==` of its own.
-    columnType = _knownColumnTypes.firstWhere(
+    columnType = _knownColumnTypes.values.firstWhere(
       (t) => t.name == columnObj,
       orElse: () => _ColumnType(columnObj),
     );
