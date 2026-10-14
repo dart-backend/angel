@@ -943,7 +943,14 @@ class User implements UserEntity {
 
   @override
   int get hashCode {
-    return Object.hashAll([id, name, todos, address]);
+    return Object.hashAll([
+      id,
+      name,
+      ListEquality<UserTodoEntity>(DefaultEquality<UserTodoEntity>())
+          .hash(todos),
+      ListEquality<UserAddressEntity>(DefaultEquality<UserAddressEntity>())
+          .hash(address),
+    ]);
   }
 
   @override
@@ -1055,7 +1062,15 @@ class UserTodo implements UserTodoEntity {
 
   @override
   int get hashCode {
-    return Object.hashAll([id, userId, title, todoValues, todoNotes]);
+    return Object.hashAll([
+      id,
+      userId,
+      title,
+      ListEquality<TodoValueEntity>(DefaultEquality<TodoValueEntity>())
+          .hash(todoValues),
+      ListEquality<TodoNoteEntity>(DefaultEquality<TodoNoteEntity>())
+          .hash(todoNotes),
+    ]);
   }
 
   @override

@@ -30,9 +30,7 @@ class AlphabetMigration extends Migration {
       table.timeStamp('created_at');
       table.timeStamp('updated_at');
       table.varChar('value', length: 255);
-      table
-          .declare('numbers_id', ColumnType('int'))
-          .references('numbers', 'id');
+      table.declare('numbers_id', ColumnType.int).references('numbers', 'id');
     });
   }
 
@@ -328,8 +326,8 @@ class AlphabetQueryValues extends MapQueryValues {
     createdAt = model.createdAt;
     updatedAt = model.updatedAt;
     value = model.value;
-    if (model.numbers != null) {
-      values['numbers_id'] = int.tryParse(model.numbers?.id ?? '');
+    if (model.numbers?.id != null) {
+      values['numbers_id'] = int.parse(model.numbers!.id!);
     }
   }
 }

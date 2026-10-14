@@ -14,9 +14,9 @@ class BookMigration extends Migration {
       table.timeStamp('created_at');
       table.timeStamp('updated_at');
       table.varChar('name', length: 255);
-      table.declare('author_id', ColumnType('int')).references('authors', 'id');
+      table.declare('author_id', ColumnType.int).references('authors', 'id');
       table
-          .declare('partner_author_id', ColumnType('int'))
+          .declare('partner_author_id', ColumnType.int)
           .references('authors', 'id');
     });
   }
@@ -256,11 +256,11 @@ class BookQueryValues extends MapQueryValues {
     createdAt = model.createdAt;
     updatedAt = model.updatedAt;
     name = model.name;
-    if (model.author != null) {
-      values['author_id'] = int.tryParse(model.author?.id ?? '');
+    if (model.author?.id != null) {
+      values['author_id'] = int.parse(model.author!.id!);
     }
-    if (model.partnerAuthor != null) {
-      values['partner_author_id'] = int.tryParse(model.partnerAuthor?.id ?? '');
+    if (model.partnerAuthor?.id != null) {
+      values['partner_author_id'] = int.parse(model.partnerAuthor!.id!);
     }
   }
 }

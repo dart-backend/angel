@@ -13,12 +13,7 @@ class TreeMigration extends Migration {
       table.serial('id').primaryKey();
       table.timeStamp('created_at');
       table.timeStamp('updated_at');
-      table
-          .declareColumn(
-            'rings',
-            Column(type: ColumnType('smallint'), length: 255),
-          )
-          .unique();
+      table.declare('rings', ColumnType.smallInt).unique();
     });
   }
 
@@ -470,7 +465,13 @@ class Tree extends TreeEntity {
 
   @override
   int get hashCode {
-    return Object.hashAll([id, createdAt, updatedAt, rings, fruits]);
+    return Object.hashAll([
+      id,
+      createdAt,
+      updatedAt,
+      rings,
+      ListEquality<FruitEntity>(DefaultEquality<FruitEntity>()).hash(fruits),
+    ]);
   }
 
   @override

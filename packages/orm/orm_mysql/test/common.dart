@@ -7,7 +7,7 @@ import 'package:angel3_migration_runner/mysql.dart';
 import 'package:angel3_orm/angel3_orm.dart';
 import 'package:angel3_orm_mysql/angel3_orm_mysql.dart';
 import 'package:logging/logging.dart';
-//import 'package:mysql1/mysql1.dart';
+import 'package:mysql1/mysql1.dart' as mysql1;
 import 'package:mysql_client/mysql_client.dart';
 
 List tmpTables = [];
@@ -30,6 +30,21 @@ Future<MySQLConnection> openMySqlConnection() async {
   await connection.connect(timeoutMs: 10000);
 
   return connection;
+}
+
+// For MariaDB using `mysql1` driver
+Future<MariaDbExecutor> openMariaDbExecutor() async {
+  var connection = await mysql1.MySqlConnection.connect(
+    mysql1.ConnectionSettings(
+      host: 'localhost',
+      port: 3306,
+      db: 'orm_test',
+      user: Platform.environment['MYSQL_USERNAME'] ?? 'test',
+      password: Platform.environment['MYSQL_PASSWORD'] ?? 'Test123',
+    ),
+  );
+
+  return MariaDbExecutor(connection, logger: Logger('orm_mariadb'));
 }
 
 Future<QueryExecutor> createExecutor(MySQLConnection conn) async {

@@ -10,14 +10,8 @@ class HasMapMigration extends Migration {
   @override
   void up(Schema schema) {
     schema.create('has_maps', (table) {
-      table.declareColumn(
-        'value',
-        Column(type: ColumnType('jsonb'), length: 255),
-      );
-      table.declareColumn(
-        'list',
-        Column(type: ColumnType('jsonb'), length: 255),
-      );
+      table.declare('value', ColumnType.jsonb);
+      table.declare('list', ColumnType.jsonb);
     });
   }
 
@@ -168,7 +162,13 @@ class HasMap implements HasMapEntity {
 
   @override
   int get hashCode {
-    return Object.hashAll([value, list]);
+    return Object.hashAll([
+      MapEquality<dynamic, dynamic>(
+        keys: DefaultEquality(),
+        values: DefaultEquality(),
+      ).hash(value),
+      ListEquality<dynamic>(DefaultEquality()).hash(list),
+    ]);
   }
 
   @override

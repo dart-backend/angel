@@ -29,8 +29,8 @@ class RoleUserMigration extends Migration {
   @override
   void up(Schema schema) {
     schema.create('role_users', (table) {
-      table.declare('role_id', ColumnType('int')).references('roles', 'id');
-      table.declare('user_id', ColumnType('int')).references('users', 'id');
+      table.declare('role_id', ColumnType.int).references('roles', 'id');
+      table.declare('user_id', ColumnType.int).references('users', 'id');
     });
   }
 
@@ -438,11 +438,11 @@ class RoleUserQueryValues extends MapQueryValues {
   set userId(int value) => values['user_id'] = value;
 
   void copyFrom(RoleUser model) {
-    if (model.role != null) {
-      values['role_id'] = int.tryParse(model.role?.id ?? '');
+    if (model.role?.id != null) {
+      values['role_id'] = int.parse(model.role!.id!);
     }
-    if (model.user != null) {
-      values['user_id'] = int.tryParse(model.user?.id ?? '');
+    if (model.user?.id != null) {
+      values['user_id'] = int.parse(model.user!.id!);
     }
   }
 }
@@ -742,7 +742,7 @@ class User extends UserEntity {
       username,
       password,
       email,
-      roles,
+      ListEquality<RoleEntity>(DefaultEquality<RoleEntity>()).hash(roles),
     ]);
   }
 
@@ -847,7 +847,13 @@ class Role extends RoleEntity {
 
   @override
   int get hashCode {
-    return Object.hashAll([id, createdAt, updatedAt, name, users]);
+    return Object.hashAll([
+      id,
+      createdAt,
+      updatedAt,
+      name,
+      ListEquality<UserEntity>(DefaultEquality<UserEntity>()).hash(users),
+    ]);
   }
 
   @override

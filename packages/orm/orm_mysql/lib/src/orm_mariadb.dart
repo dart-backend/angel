@@ -34,25 +34,8 @@ class MariaDbExecutor extends QueryExecutor {
     String resultQuery = '',
     List<String> returningFields = const [],
   }) async {
-    // Change @id -> ?, with the values in the order their placeholders
-    // appear. Matching whole names keeps `@name` from replacing part of
-    // `@name1`.
     var params = <dynamic>[];
-    query = query.replaceAllMapped(RegExp(r'@(\w+)'), (m) {
-      var name = m[1]!;
-      if (!substitutionValues.containsKey(name)) return m[0]!;
-      params.add(substitutionValues[name]);
-      return '?';
-    });
-    for (var i = 0; i < params.length; i++) {
-      var v = params[i];
-
-      if (v is DateTime) {
-        if (!v.isUtc) {
-          params[i] = v.toUtc();
-        }
-      }
-    }
+    query = _toPositional(query, substitutionValues, params);
 
     //logger.warning('Query: $query');
     //logger.warning('Values: $params');
@@ -66,20 +49,47 @@ class MariaDbExecutor extends QueryExecutor {
 
         query = returningQuery;
         // logger?.warning('Result.insertId: ${result.insertId}');
-        // Has primary key
         if (returningQuery.endsWith('.id=?')) {
+          // Has primary key
           params = [result.insertId];
+        } else if (!returningQuery.contains('?')) {
+          // The last row by id: mysql1 rejects parameters it has no
+          // placeholders for.
+          params = [];
         }
+        // Otherwise the row is selected by the inserted values, which
+        // keep the order of the INSERT's placeholders.
       } else if (query.startsWith("UPDATE")) {
         await _connection.query(query, params);
-        query = returningQuery;
         params = [];
+        query = _toPositional(returningQuery, substitutionValues, params);
       }
     }
 
     // Handle select
     return _connection.query(query, params).then((results) {
       return results.map((r) => r.toList()).toList();
+    });
+  }
+
+  /// A placeholder: `@` and a name of letters (in any script), digits and
+  /// underscores.
+  static final _placeholder = RegExp(r'@([\p{L}\p{N}_]+)', unicode: true);
+
+  /// Changes the `@name` placeholders in [sql] to `?`, and adds their
+  /// values to [params] in the order the placeholders appear. Matching
+  /// whole names keeps `@name` from replacing part of `@name1`.
+  String _toPositional(
+    String sql,
+    Map<String, dynamic> substitutionValues,
+    List<dynamic> params,
+  ) {
+    return sql.replaceAllMapped(_placeholder, (m) {
+      var name = m[1]!;
+      if (!substitutionValues.containsKey(name)) return m[0]!;
+      var value = substitutionValues[name];
+      params.add(value is DateTime && !value.isUtc ? value.toUtc() : value);
+      return '?';
     });
   }
 
