@@ -14,6 +14,15 @@ const List<String> sqlReservedWords = [
 
 /// Applies additional attributes to a database column.
 class Column {
+  /// The [length] of a column that does not give one.
+  static const int defaultLength = 255;
+
+  /// The [precision] of a column that does not give one.
+  static const int defaultPrecision = 17;
+
+  /// The [scale] of a column that does not give one.
+  static const int defaultScale = 3;
+
   /// If `true`, a SQL field will be nullable.
   final bool isNullable;
 
@@ -46,9 +55,9 @@ class Column {
 
   const Column({
     this.isNullable = true,
-    this.length = 255,
-    this.precision = 17,
-    this.scale = 3,
+    this.length = defaultLength,
+    this.precision = defaultPrecision,
+    this.scale = defaultScale,
     this.name,
     this.timezone,
     this.type = ColumnType.varChar,

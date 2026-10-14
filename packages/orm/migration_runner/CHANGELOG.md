@@ -3,6 +3,8 @@
 ## 10.0.0
 
 * fix: A column whose type has a precision (`numeric`, `decimal`) is created with its precision and scale, e.g. `numeric(10, 2)`. They were left out, so MySQL/MariaDB created `DECIMAL(10,0)` and rounded values to whole numbers (1234.56 was stored as 1235), and PostgreSQL an unbounded `numeric`
+* fix: `changeColumnType` of the PostgreSQL, MySQL and MariaDB alter tables uses the `precision` and `scale` it is given (e.g. `ALTER COLUMN "price" TYPE numeric(10, 2)`), as `MutableTable` now requires; it used `numeric(17, 3)`. Its default `length` is `Column.defaultLength` (255) for MySQL and MariaDB too, where it was 256
+* test: `precision_test.dart` checks the SQL for numeric and decimal columns, and creates and alters them on PostgreSQL and MariaDB
 
 ## 9.1.0
 

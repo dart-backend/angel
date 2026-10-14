@@ -513,9 +513,9 @@ Column reviveColumn(ConstantReader cr) {
 
   return Column(
     isNullable: cr.peek('isNullable')?.boolValue ?? false,
-    length: cr.peek('length')?.intValue ?? 255,
-    precision: cr.peek('precision')?.intValue ?? 17,
-    scale: cr.peek('scale')?.intValue ?? 3,
+    length: cr.peek('length')?.intValue ?? Column.defaultLength,
+    precision: cr.peek('precision')?.intValue ?? Column.defaultPrecision,
+    scale: cr.peek('scale')?.intValue ?? Column.defaultScale,
     defaultValue: cr.peek('defaultValue')?.objectValue,
     type: columnType,
     indexType: indexType,

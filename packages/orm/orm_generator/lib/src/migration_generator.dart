@@ -186,6 +186,11 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
                     named['precision'] = literal(col.precision);
                     named['scale'] = literal(col.scale);
                     break;
+                  case ColumnType.decimal:
+                    methodName = 'decimal';
+                    named['precision'] = literal(col.precision);
+                    named['scale'] = literal(col.scale);
+                    break;
                   case ColumnType.boolean:
                     methodName = 'boolean';
                     break;

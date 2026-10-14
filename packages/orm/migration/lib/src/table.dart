@@ -16,10 +16,33 @@ abstract class Table {
 
   MigrationColumn double(String name) => declare(name, ColumnType.double);
 
-  MigrationColumn numeric(String name, {int precision = 17, int scale = 3}) {
+  /// A `numeric(precision, scale)` column.
+  ///
+  /// Throws an [ArgumentError] if [precision] is not positive, or [scale] is
+  /// negative or greater than [precision].
+  MigrationColumn numeric(
+    String name, {
+    int precision = Column.defaultPrecision,
+    int scale = Column.defaultScale,
+  }) {
     return declareColumn(
       name,
       MigrationColumn(ColumnType.numeric, precision: precision, scale: scale),
+    );
+  }
+
+  /// A `decimal(precision, scale)` column.
+  ///
+  /// Throws an [ArgumentError] if [precision] is not positive, or [scale] is
+  /// negative or greater than [precision].
+  MigrationColumn decimal(
+    String name, {
+    int precision = Column.defaultPrecision,
+    int scale = Column.defaultScale,
+  }) {
+    return declareColumn(
+      name,
+      MigrationColumn(ColumnType.decimal, precision: precision, scale: scale),
     );
   }
 
@@ -43,7 +66,7 @@ abstract class Table {
     if (length == null) return declare(name, ColumnType.varChar);
     return declareColumn(
       name,
-      Column(type: ColumnType.varChar, length: length),
+      MigrationColumn(ColumnType.varChar, length: length),
     );
   }
 }
@@ -55,7 +78,19 @@ abstract class MutableTable extends Table implements MutableIndexes {
 
   void renameColumn(String name, String newName);
 
-  void changeColumnType(String name, ColumnType type);
+  /// Changes the type of the column [name] to [type], with the [length],
+  /// [precision] and [scale] of a [Column] that does not give them.
+  ///
+  /// Throws an [ArgumentError] if [type] has a precision and [precision] is
+  /// not positive, or has a scale and [scale] is negative or greater than
+  /// [precision].
+  void changeColumnType(
+    String name,
+    ColumnType type, {
+    int length = Column.defaultLength,
+    int precision = Column.defaultPrecision,
+    int scale = Column.defaultScale,
+  });
 
   void dropNotNull(String name);
 
