@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:file/file.dart';
@@ -7,10 +8,13 @@ import 'package:markdown/markdown.dart';
 
 final RegExp _braces = RegExp(r'@?{{(((\\})|([^}]))+)}}');
 
-/// What stands in for the value of the n-th expression while the Markdown is
-/// parsed: `n`, made of private-use characters that Markdown
-/// leaves as they are, or percent-encoded, as in the URL of a link.
-final RegExp _placeholders = RegExp('(?:|%EE%80%80)(\\d+)(?:|%EE%80%81)');
+/// The private-use characters that start and end the placeholder that stands
+/// for a value while the Markdown is parsed. Markdown leaves them as they are,
+/// except in the URL of a link, where they are percent-encoded.
+final String _placeholderStart = String.fromCharCode(0xE000);
+final String _placeholderEnd = String.fromCharCode(0xE001);
+const String _encodedPlaceholderStart = '%EE%80%80';
+const String _encodedPlaceholderEnd = '%EE%80%81';
 
 /// Escapes text for HTML content and for attributes in single or double
 /// quotes.
@@ -18,8 +22,21 @@ const HtmlEscape _htmlEscape = HtmlEscape(
   HtmlEscapeMode(escapeLtGt: true, escapeQuot: true, escapeApos: true),
 );
 
+/// What is percent-encoded in a whole URL: a `%` that does not start an
+/// escape, and any character that cannot appear in a URL.
+final RegExp _unsafeUrlCharacters = RegExp(
+  r"%(?![0-9A-Fa-f]{2})|[^A-Za-z0-9\-._~:/?#\[\]@!$&'()*+,;=%]",
+  unicode: true,
+);
+
+/// What [BlockSyntax.generateAnchorHash] removes from the text of a heading.
+final RegExp _anchorUnsafe = RegExp('[^a-z0-9 _-]');
+final RegExp _whitespace = RegExp(r'\s');
+
 /// Marks a member that [_readGetter] does not know.
 const Object _missing = Object();
+
+final Random _random = Random();
 
 /// Configures an [Angel] instance to render Markdown templates from the specified [viewsDirectory].
 ///
@@ -31,13 +48,19 @@ const Object _missing = Object();
 /// and returns a String, or a `Future<String>`.
 ///
 /// The values of `{{...}}` expressions are put into the rendered HTML,
-/// HTML-escaped, so that they appear exactly as text wherever they are (also
-/// in code, tables and HTML attributes), and HTML or Markdown in them is not
-/// rendered. Set [escape] to `false` to insert them into the Markdown before
-/// it is rendered instead, only for values that are trusted.
+/// HTML-escaped, so that they appear as text in HTML content (also in code
+/// and tables) and in quoted HTML attributes, and HTML or Markdown in them is
+/// not rendered. In the URL of a Markdown link they are also percent-encoded:
+/// a value that starts the URL as a URL, and a value after other text of the
+/// URL (e.g. `/search?q={{q}}`) as a component of it, so that its `/`, `?`,
+/// `&` and `#` are encoded too. Values are not escaped for JavaScript or CSS,
+/// so they must not be put into `<script>` or `<style>` elements or into
+/// event handler attributes such as `onclick`. Set [escape] to `false` to
+/// insert them into the Markdown before it is rendered instead, only for
+/// values that are trusted.
 ///
-/// A view name that resolves outside [viewsDirectory] (e.g. `../secret`)
-/// throws a 404 [AngelHttpException].
+/// A view name that resolves outside [viewsDirectory] (e.g. `../secret`), also
+/// through a symbolic link, throws a 404 [AngelHttpException].
 AngelConfigurer markdown(
   Directory viewsDirectory, {
   String? extension,
@@ -49,9 +72,13 @@ AngelConfigurer markdown(
   extension ??= '.md';
   extensionSet ??= ExtensionSet.gitHubWeb;
 
+  // The views directory with its symbolic links resolved, once it has been.
+  String? resolvedViewsPath;
+
   return (Angel app) async {
     app.viewGenerator = (String name, [Map<String, dynamic>? locals]) async {
-      var path = viewsDirectory.fileSystem.path;
+      var fileSystem = viewsDirectory.fileSystem;
+      var path = fileSystem.path;
       var root = path.normalize(viewsDirectory.absolute.path);
       var filePath = path.normalize(
         path.join(root, path.setExtension(name, extension!)),
@@ -60,9 +87,19 @@ AngelConfigurer markdown(
         throw AngelHttpException.notFound();
       }
 
-      var file = viewsDirectory.fileSystem.file(filePath);
-      var contents = await file.readAsString();
-      var values = <String>[];
+      // Also stay inside the views directory through symbolic links, and read
+      // the file that was checked.
+      resolvedViewsPath ??= await viewsDirectory.resolveSymbolicLinks();
+      var resolvedFilePath = await fileSystem
+          .file(filePath)
+          .resolveSymbolicLinks();
+      if (!path.isWithin(resolvedViewsPath!, resolvedFilePath)) {
+        throw AngelHttpException.notFound();
+      }
+
+      var contents = await fileSystem.file(resolvedFilePath).readAsString();
+      var placeholders = _Placeholders();
+      var jsonCache = Map<Object, dynamic>.identity();
 
       contents = contents.replaceAllMapped(_braces, (m) {
         var text = m[0]!;
@@ -73,26 +110,27 @@ AngelConfigurer markdown(
         } else {
           var expr = m[1]!;
           var split = [for (var part in expr.split('.')) part.trim()];
-          var root = split[0];
+          var localName = split[0];
 
-          if (locals?.containsKey(root) != true) {
+          if (locals?.containsKey(localName) != true) {
             throw UnimplementedError(
-              'Expected a local named "$root", but none was provided. Expression text: "$text"',
+              'Expected a local named "$localName", but none was provided. Expression text: "$text"',
             );
           }
 
           // A null value renders as nothing, not as the text "null".
-          var value = _resolveDotNotation(split, locals![root])?.toString();
+          var value = _resolveDotNotation(
+            split,
+            locals![localName],
+            jsonCache,
+          )?.toString();
           if (value == null) return '';
-          if (!escape) return value;
-
-          values.add(value);
-          return '${values.length - 1}';
+          return escape ? placeholders.add(value) : value;
         }
       });
 
       var nodes = Document(extensionSet: extensionSet).parse(contents);
-      if (values.isNotEmpty) _fillPlaceholders(nodes, values);
+      if (placeholders.isNotEmpty) placeholders.fill(nodes);
 
       var html = '${renderToHtml(nodes)}\n';
       if (template != null) html = await template(html, locals ?? {});
@@ -101,33 +139,101 @@ AngelConfigurer markdown(
   };
 }
 
-/// Replaces the placeholders in the text and attributes of [nodes] with the
-/// [values] they stand for, HTML-escaped, and regenerates the ids of headings
-/// from their text with the values.
-void _fillPlaceholders(List<Node> nodes, List<String> values) {
-  String fill(String text) => text.replaceAllMapped(
-    _placeholders,
-    (m) => _htmlEscape.convert(values[int.parse(m[1]!)]),
+/// The values of the expressions in one render, which the Markdown is parsed
+/// with placeholders for, and which [fill] then puts into the parsed nodes.
+///
+/// The placeholder of the n-th value is U+E000, a key, n, the key again and
+/// U+E001, where the key is random letters, so that no text of the view is
+/// taken for a placeholder, and so that where the private-use characters are
+/// removed (in the ids of headings), the index still has a key on each side.
+class _Placeholders {
+  final List<String> _values = [];
+
+  final String _key = String.fromCharCodes([
+    for (var i = 0; i < 8; i++) 0x61 + _random.nextInt(26),
+  ]);
+
+  late final RegExp _pattern = RegExp(
+    '($_placeholderStart|$_encodedPlaceholderStart)$_key'
+    r'(\d+)'
+    '$_key(?:$_placeholderEnd|$_encodedPlaceholderEnd)',
   );
 
-  for (var i = 0; i < nodes.length; i++) {
-    var node = nodes[i];
-    if (node is Text) {
-      nodes[i] = Text(fill(node.text));
-    } else if (node is Element) {
-      node.attributes.updateAll((_, value) => fill(value));
-      var children = node.children;
-      if (children != null) _fillPlaceholders(children, values);
-      if (node.generatedId != null) {
-        node.generatedId = BlockSyntax.generateAnchorHash(node);
+  /// A placeholder in the id of a heading.
+  late final RegExp _idPattern = RegExp(
+    '$_key'
+    r'(\d+)'
+    '$_key',
+  );
+
+  bool get isNotEmpty => _values.isNotEmpty;
+
+  /// Returns the placeholder for [value].
+  String add(String value) {
+    _values.add(value);
+    return '$_placeholderStart$_key${_values.length - 1}$_key$_placeholderEnd';
+  }
+
+  /// Replaces the placeholders in the text and attributes of [nodes] with
+  /// their values, HTML-escaped, and percent-encoded where Markdown has
+  /// percent-encoded the placeholder, as in the URL of a link.
+  ///
+  /// Markdown has generated the ids of headings from their Markdown with the
+  /// placeholders; the placeholders in them are replaced with what the values
+  /// add to the id, so that it is the id of the heading with the values.
+  void fill(List<Node> nodes) {
+    for (var i = 0; i < nodes.length; i++) {
+      var node = nodes[i];
+      if (node is Text) {
+        nodes[i] = Text(_fillText(node.text));
+      } else if (node is Element) {
+        node.attributes.updateAll((_, value) => _fillText(value));
+        var children = node.children;
+        if (children != null) fill(children);
+        var id = node.generatedId;
+        if (id != null) node.generatedId = _fillId(id);
       }
     }
   }
+
+  String _fillText(String text) => text.replaceAllMapped(_pattern, (m) {
+    var value = _values[int.parse(m[2]!)];
+    if (m[1] == _encodedPlaceholderStart) {
+      value = _withoutLoneSurrogates(value);
+      value = m.start == 0
+          ? value.replaceAllMapped(
+              _unsafeUrlCharacters,
+              (m) => Uri.encodeComponent(m[0]!),
+            )
+          : Uri.encodeComponent(value);
+    }
+    return _htmlEscape.convert(value);
+  });
+
+  /// [BlockSyntax.generateAnchorHash] lowercases the text, trims it, removes
+  /// the characters of [_anchorUnsafe] and replaces whitespace with `-`, so a
+  /// value adds the same to the id, trimmed at its start or end.
+  String _fillId(String id) => id.replaceAllMapped(_idPattern, (m) {
+    var value = _values[int.parse(m[1]!)].toLowerCase();
+    if (m.start == 0) value = value.trimLeft();
+    if (m.end == id.length) value = value.trimRight();
+    return value.replaceAll(_anchorUnsafe, '').replaceAll(_whitespace, '-');
+  });
 }
 
-dynamic _resolveDotNotation(List<String> split, target) {
+/// [text] with each unpaired surrogate replaced by U+FFFD, as
+/// [Uri.encodeComponent] cannot encode one.
+String _withoutLoneSurrogates(String text) => String.fromCharCodes(
+  text.runes.map((r) => r >= 0xD800 && r <= 0xDFFF ? 0xFFFD : r),
+);
+
+dynamic _resolveDotNotation(
+  List<String> split,
+  target,
+  Map<Object, dynamic> jsonCache,
+) {
   for (var i = 1; i < split.length; i++) {
-    target = _readMember(target, split, i);
+    target = _readMember(target, split, i, jsonCache);
   }
 
   return target;
@@ -136,8 +242,14 @@ dynamic _resolveDotNotation(List<String> split, target) {
 /// Reads the [i]-th part of the expression [split] from [target], the value of
 /// the parts before it: a key of a [Map], an index of a [List], a common
 /// getter of a [String], [Iterable] or [Map] (see [_readGetter]), or else a
-/// key of what `toJson()` returns, as for `@serializable` models.
-dynamic _readMember(dynamic target, List<String> split, int i) {
+/// key of what `toJson()` returns, as for `@serializable` models. What
+/// `toJson()` returns is kept in [jsonCache] for the rest of the render.
+dynamic _readMember(
+  dynamic target,
+  List<String> split,
+  int i,
+  Map<Object, dynamic> jsonCache,
+) {
   var name = split[i];
   String path() => split.take(i).join('.');
 
@@ -161,16 +273,26 @@ dynamic _readMember(dynamic target, List<String> split, int i) {
   if (!identical(value, _missing)) return value;
 
   if (target is! Map && target is! Iterable && target is! String) {
-    dynamic json;
-    try {
-      json = (target as dynamic).toJson();
-    } on NoSuchMethodError {
-      throw ArgumentError(
-        'Cannot read "$name" of "${path()}", a ${target.runtimeType}. Locals '
-        'must be Maps, or have a toJson() method that returns one.',
-      );
-    }
-    if (json is Map) return _readMember(json, split, i);
+    var json = jsonCache.putIfAbsent(target, () {
+      try {
+        return (target as dynamic).toJson();
+      } on NoSuchMethodError catch (e) {
+        // Only report that this object has no toJson(), not an error inside
+        // one, such as another object without toJson().
+        if (!'$e'.contains(
+          "Class '${target.runtimeType}' has no instance method 'toJson'",
+        )) {
+          rethrow;
+        }
+        throw ArgumentError(
+          'Cannot read "$name" of "${path()}", a ${target.runtimeType}. '
+          'Locals must be Maps, or have a toJson() method that returns one.',
+        );
+      }
+    });
+    // Only the keys of the JSON are members of the object, not the getters of
+    // the Map.
+    if (json is Map && json.containsKey(name)) return json[name];
   }
 
   throw ArgumentError('"${path()}" has no member named "$name".');

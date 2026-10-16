@@ -15,8 +15,8 @@ In your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  angel3_framework: ^9.0.0
-  angel3_markdown: ^9.0.0
+  angel3_framework: ^10.0.0
+  angel3_markdown: ^10.0.0
 ```
 
 ## Usage
@@ -41,8 +41,7 @@ configureServer(Angel app) async {
 }
 ```
 
-`package:angel3_markdown` by default searches for files with a `.md` extension; however,
-you can easily override this.
+`package:angel3_markdown` by default searches for files with a `.md` extension; however, you can easily override this.
 
 ## Interpolation
 
@@ -70,11 +69,17 @@ Objects other than `Map`s and `List`s must have a `toJson()` method that returns
 
 To disable interpolation for a single bracket, prefix it with an `@`, ex: `@{{raw | not_interpolated | angular}}`.
 
-Interpolated values are put into the rendered HTML, HTML-escaped, so they appear exactly as given wherever they are, including code, tables and HTML attributes: HTML such as `<script>` or Markdown such as `[link](...)` in them is not rendered. For values you trust and want rendered as Markdown, pass `escape: false` to `markdown()`. Escaping does not check URLs, so a value used as a link target can still be a `javascript:` URL.
+Interpolated values are put into the rendered HTML, HTML-escaped, so they appear as given in text (including code and tables) and in quoted HTML attributes, and HTML such as `<script>` or Markdown such as `[link](...)` in them is not rendered. In the URL of a Markdown link they are also percent-encoded: a value that starts the URL, as in `[x]({{url}})`, as a whole URL, and a value after other text of the URL, as in `[x](/search?q={{q}})` or `[x](/users/{{id}})`, as a component, so that its `/`, `?`, `&`, `=` and `#` are encoded too. The ids of headings are generated as for the Markdown with the values. For values you trust and want rendered as Markdown, pass `escape: false` to `markdown()`.
+
+Escaping has these limits:
+
+* Values are not escaped for JavaScript or CSS. Do not put them into `<script>` or `<style>` elements, or into event handler attributes such as `onclick`.
+* URLs are not checked, so a value used as a link target can still be a `javascript:` URL.
+* Markdown does not see the content of a value, so a value cannot form Markdown syntax with the text around it. `<{{url}}>` and a bare `{{url}}` do not become links; write `[{{url}}]({{url}})` instead.
 
 Each part of an expression after the first is read as a key of a `Map`, an index of a `List` (`{{items.0}}`), one of the getters `length`, `isEmpty`, `isNotEmpty` (of a `String`, `List` or `Map`), `first` and `last` (of a `List`), or else a key of what the object's `toJson()` returns.
 
-View names are resolved inside the views directory. A name that points outside it, such as `../secret`, throws a 404 `AngelHttpException`.
+View names are resolved inside the views directory. A name that points outside it, such as `../secret`, also through a symbolic link, throws a 404 `AngelHttpException`.
 
 ## Templates
 
@@ -83,6 +88,8 @@ You might want to wrap the content of pages in a custom template to apply pretty
 CSS and JS, etc:
 
 ```dart
+import 'dart:convert';
+
 configureServer(Angel app) async {
   await app.configure(
     markdown(
