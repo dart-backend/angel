@@ -74,7 +74,8 @@ Interpolated values are put into the rendered HTML, HTML-escaped, so they appear
 Escaping has these limits:
 
 * Values are not escaped for JavaScript or CSS. Do not put them into `<script>` or `<style>` elements, or into event handler attributes such as `onclick`.
-* The URL of a Markdown link or image with values, as in `[x]({{url}})` or `[x]({{proto}}:{{rest}})`, is replaced with `#` when its scheme is not `http`, `https` or `mailto`, so `javascript:` and `data:` URLs do not get through, and when it starts with a value and `//`, which would link to a host the value chooses. A host in the view itself, as in `[x](//cdn.example/{{file}})`, is kept. URLs in HTML attributes, as in `<a href="{{url}}">`, are not checked.
+* The URL of a Markdown link or image is replaced with `#` when values make its scheme, as in `[x]({{url}})` or `[x]({{proto}}:{{rest}})`, and it is not `http`, `https` or `mailto`, so `javascript:` and `data:` URLs do not get through. A scheme in the view itself, as in `[x](tel:{{phone}})`, is kept. URLs in HTML attributes, as in `<a href="{{url}}">`, are not checked.
+* Markdown matches the labels of reference links and footnotes regardless of case, but labels with values only match when the values are equal, also in case.
 * Markdown does not see the content of a value, so a value cannot form Markdown syntax with the text around it. `<{{url}}>` and a bare `{{url}}` do not become links; write `[{{url}}]({{url}})` instead.
 
 Each part of an expression after the first is read as a key of a `Map`, an index of a `List` (`{{items.0}}`), one of the getters `length`, `isEmpty` and `isNotEmpty` (of a `String`, `Iterable` or `Map`) or `first` and `last` (of an `Iterable`, such as a `List` or `Set`), or else a key of what the object's `toJson()` returns.
@@ -88,7 +89,7 @@ Version 10.0.0 changes how views are rendered, which can change the output of ex
 * Interpolated values are escaped. Views that put HTML or Markdown into the page through locals render it as text; pass `escape: false` for trusted values.
 * `<{{url}}>` and a bare `{{url}}` no longer become links; write `[{{url}}]({{url}})`.
 * Expressions no longer read getters through `dart:mirrors`. Pass `Map`s, or objects whose `toJson()` returns one. Use the JSON keys, which can differ from the Dart names (e.g. `full_name` for `fullName`), and add computed getters to `toJson()` or to the locals.
-* The URL of a Markdown link or image with values renders as `#` when its scheme is not `http`, `https` or `mailto`, or when it starts with a value and `//`.
+* The URL of a Markdown link or image renders as `#` when values make its scheme and it is not `http`, `https` or `mailto`.
 * A view that does not exist throws a 404 `AngelHttpException` instead of a `FileSystemException`.
 
 ## Templates

@@ -188,6 +188,33 @@ void main() {
       expect(html, contains('id="fn-1"'));
     });
 
+    test('links footnotes with values to their ids', () async {
+      var html = await render(
+        '''
+Note[^{{n}}]
+
+[^{{n}}]: x''',
+        {'n': 'my note&'},
+      );
+      expect(html, contains('href="#fn-my%20note%26"'));
+      expect(html, contains('id="fn-my%20note%26"'));
+      expect(html, contains('href="#fnref-my%20note%26"'));
+      expect(html, contains('id="fnref-my%20note%26"'));
+    });
+
+    test('lists footnotes with values in the order of references', () async {
+      var html = await render(
+        '''
+A[^{{x}}] B[^{{y}}]
+
+[^{{y}}]: second
+
+[^{{x}}]: first''',
+        {'x': 'p', 'y': 'q'},
+      );
+      expect(html.indexOf('first'), lessThan(html.indexOf('second')));
+    });
+
     test('replaces unsafe schemes made of values and text', () async {
       expect(
         await render('[go]({{proto}}:{{rest}})', {
@@ -202,18 +229,27 @@ void main() {
       );
     });
 
-    test('replaces values that link to another host', () async {
-      for (var url in ['//evil.example/p', '//evil.example']) {
+    test('keeps schemes and hosts in the view itself', () async {
+      for (var (view, href) in [
+        ('[x](tel:{{v}})', 'tel:123'),
+        ('[x](sms:{{v}})', 'sms:123'),
+        ('[x](myapp://open/{{v}})', 'myapp://open/123'),
+        ('[x](//cdn.example/{{v}})', '//cdn.example/123'),
+        ('[x]({{empty}}//cdn.example/a)', '//cdn.example/a'),
+        ('[x]({{empty}}tel:1)', 'tel:1'),
+      ]) {
         expect(
-          await render('[x]({{url}})', {'url': url}),
-          contains('<a href="#">x</a>'),
-          reason: url,
+          await render(view, {'v': '123', 'empty': ''}),
+          contains('<a href="$href">x</a>'),
+          reason: view,
         );
       }
-      // A host in the view itself is kept.
+    });
+
+    test('keeps protocol-relative URLs of values', () async {
       expect(
-        await render('[x](//cdn.example/{{file}})', {'file': 'a.js'}),
-        contains('<a href="//cdn.example/a.js">x</a>'),
+        await render('[x]({{url}})', {'url': '//cdn.example/a'}),
+        contains('<a href="//cdn.example/a">x</a>'),
       );
     });
 
@@ -254,8 +290,10 @@ void main() {
         const PrefixedHeaderSyntax(),
       ], const []);
       expect(
-        await render('# Hello {{v}}', {'v': 'x'}, extensionSet: extensionSet),
-        contains('<h1 id="my-hello-'),
+        await render('# Hello {{v}}', {
+          'v': 'Big World',
+        }, extensionSet: extensionSet),
+        contains('<h1 id="my-hello-big-world">'),
       );
     });
 
@@ -268,14 +306,19 @@ void main() {
     });
 
     test('leaves text that looks like a placeholder', () async {
-      // The characters that placeholders are made of, around an index.
-      var text =
-          '${String.fromCharCode(0xE000)}0${String.fromCharCode(0xE001)}';
-      var html = await render('{{v}} $text [l](%EE%80%805%EE%80%81)', {
+      // Letters around an index, as placeholders are, but not their key.
+      var html = await render('{{v}} abcdefgh5abcdefgh [l](/abc0abc)', {
         'v': 'x',
       });
-      expect(html, contains('x $text'));
-      expect(html, contains('href="%EE%80%805%EE%80%81"'));
+      expect(html, contains('x abcdefgh5abcdefgh'));
+      expect(html, contains('href="/abc0abc"'));
+    });
+
+    test('puts values next to letters and digits', () async {
+      expect(
+        await render('a{{v}}b{{v}}{{w}}9', {'v': 'X', 'w': 'Y'}),
+        contains('<p>aXbXY9</p>'),
+      );
     });
 
     test('percent-encodes values that start the URL of a link', () async {
@@ -377,11 +420,27 @@ void main() {
     });
 
     for (var name in [
-      '../secret',
-      'docs/../../secret',
-      '/srv/secret',
       'missing',
+      'docs/missing',
+      // A directory, not a file.
+      'folder',
     ]) {
+      test('rejects "$name", which is not a view', () {
+        views.fileSystem.directory('/srv/views/folder.md').createSync();
+        expect(
+          app.viewGenerator!(name),
+          throwsA(
+            isA<AngelHttpException>().having(
+              (e) => e.statusCode,
+              'statusCode',
+              404,
+            ),
+          ),
+        );
+      });
+    }
+
+    for (var name in ['../secret', 'docs/../../secret', '/srv/secret']) {
       test('rejects "$name", outside the views directory', () {
         expect(
           app.viewGenerator!(name),
