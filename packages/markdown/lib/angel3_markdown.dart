@@ -10,7 +10,7 @@ final RegExp _braces = RegExp(r'@?{{(((\\})|([^}]))+)}}');
 
 /// The private-use characters that start and end the placeholder that stands
 /// for a value while the Markdown is parsed. Markdown leaves them as they are,
-/// except in the URL of a link, where they are percent-encoded.
+/// or percent-encodes them, as in the URL of a link.
 final String _placeholderStart = String.fromCharCode(0xE000);
 final String _placeholderEnd = String.fromCharCode(0xE001);
 const String _encodedPlaceholderStart = '%EE%80%80';
@@ -33,10 +33,12 @@ final RegExp _unsafeUrlCharacters = RegExp(
 /// The scheme of a URL, such as `https` in `https://...`.
 final RegExp _scheme = RegExp(r'^([A-Za-z][A-Za-z0-9+.\-]*):');
 
-/// The schemes that a value that starts the URL of a link may have. Others,
-/// such as `javascript:` or `data:`, could run script when the link is
-/// followed.
+/// The schemes that a URL with values may have. Others, such as `javascript:`
+/// or `data:`, could run script when the link is followed.
 const Set<String> _safeSchemes = {'http', 'https', 'mailto'};
+
+/// The attributes of Markdown elements that hold a URL.
+const Set<String> _urlAttributes = {'href', 'src'};
 
 /// Marks a member that [_readGetter] does not know.
 const Object _missing = Object();
@@ -55,20 +57,21 @@ final Random _random = Random();
 /// The values of `{{...}}` expressions are put into the rendered HTML,
 /// HTML-escaped, so that they appear as text in HTML content (also in code
 /// and tables) and in quoted HTML attributes, and HTML or Markdown in them is
-/// not rendered. In the URL of a Markdown link they are also percent-encoded:
-/// a value that starts the URL as a URL, and a value after other text of the
-/// URL (e.g. `/search?q={{q}}`) as a component of it, so that its `/`, `?`,
-/// `&` and `#` are encoded too. A value that starts the URL of a Markdown
-/// link with a scheme other than `http`, `https` or `mailto` (such as
-/// `javascript:`) is replaced with `#`. URLs in HTML attributes are not
-/// checked. Values are not escaped for JavaScript or CSS,
+/// not rendered. In the URL of a Markdown link or image they are also
+/// percent-encoded: a value that starts the URL as a URL, and a value after
+/// other text of the URL (e.g. `/search?q={{q}}`) as a component of it, so
+/// that its `/`, `?`, `&` and `#` are encoded too. A URL with values whose
+/// scheme is not `http`, `https` or `mailto` (such as `javascript:`), or that
+/// starts with a value and `//` (another host), is replaced with `#`. URLs in
+/// HTML attributes are not checked. Values are not escaped for JavaScript or
+/// CSS,
 /// so they must not be put into `<script>` or `<style>` elements or into
 /// event handler attributes such as `onclick`. Set [escape] to `false` to
 /// insert them into the Markdown before it is rendered instead, only for
 /// values that are trusted.
 ///
 /// A view name that resolves outside [viewsDirectory] (e.g. `../secret`), also
-/// through a symbolic link, throws a 404 [AngelHttpException].
+/// through a symbolic link, or to no file, throws a 404 [AngelHttpException].
 AngelConfigurer markdown(
   Directory viewsDirectory, {
   String? extension,
@@ -88,7 +91,10 @@ AngelConfigurer markdown(
       var filePath = path.normalize(
         path.join(root, path.setExtension(name, extension!)),
       );
-      if (!path.isWithin(root, filePath)) {
+      // A view that does not exist is not found either, as one outside the
+      // views directory is.
+      if (!path.isWithin(root, filePath) ||
+          !await fileSystem.file(filePath).exists()) {
         throw AngelHttpException.notFound();
       }
 
@@ -154,9 +160,12 @@ AngelConfigurer markdown(
 ///
 /// The placeholder of the n-th value is U+E000, a key, n, the key again and
 /// U+E001, where the key is random letters, so that no text of the view is
-/// taken for a placeholder.
+/// taken for a placeholder. Equal values have the same placeholder, so that
+/// text that Markdown compares, such as the label of a reference link and of
+/// its definition, is still equal.
 class _Placeholders {
   final List<String> _values = [];
+  final Map<String, int> _indexes = {};
 
   final String _key = String.fromCharCodes([
     for (var i = 0; i < 8; i++) 0x61 + _random.nextInt(26),
@@ -172,18 +181,22 @@ class _Placeholders {
 
   /// Returns the placeholder for [value].
   String add(String value) {
-    _values.add(value);
-    return '$_placeholderStart$_key${_values.length - 1}$_key$_placeholderEnd';
+    var index = _indexes.putIfAbsent(value, () {
+      _values.add(value);
+      return _values.length - 1;
+    });
+    return '$_placeholderStart$_key$index$_key$_placeholderEnd';
   }
 
   /// [extensionSet], with its syntaxes that generate the ids of headings
   /// replaced by ones that generate them from the Markdown of the heading with
-  /// the values, as for the Markdown that has them.
+  /// the values, as for the Markdown that has them. Subclasses of them, which
+  /// may generate ids differently, are kept.
   ExtensionSet extensionSetFor(ExtensionSet extensionSet) => ExtensionSet([
     for (var syntax in extensionSet.blockSyntaxes)
-      if (syntax is HeaderWithIdSyntax)
+      if (syntax.runtimeType == HeaderWithIdSyntax)
         _HeaderWithIdSyntax(this)
-      else if (syntax is SetextHeaderWithIdSyntax)
+      else if (syntax.runtimeType == SetextHeaderWithIdSyntax)
         _SetextHeaderWithIdSyntax(this)
       else
         syntax,
@@ -206,63 +219,86 @@ class _Placeholders {
   }
 
   /// Replaces the placeholders in the text and attributes of [nodes] with
-  /// their values, HTML-escaped, and percent-encoded where Markdown has
-  /// percent-encoded the placeholder, as in the URL of a link.
+  /// their values, HTML-escaped, and in the URLs of `href` and `src`
+  /// attributes as [_fillUrl] does.
   void fill(List<Node> nodes) {
     for (var i = 0; i < nodes.length; i++) {
       var node = nodes[i];
       if (node is Text) {
         nodes[i] = Text(_fillText(node.text));
       } else if (node is Element) {
-        node.attributes.updateAll((_, value) => _fillText(value));
+        node.attributes.updateAll(
+          (name, value) => _urlAttributes.contains(name)
+              ? _fillUrl(value)
+              : _fillText(value),
+        );
         var children = node.children;
         if (children != null) fill(children);
       }
     }
   }
 
-  String _fillText(String text) => text.replaceAllMapped(_pattern, (m) {
-    var value = _values[int.parse(m[2]!)];
-    if (m[1] == _encodedPlaceholderStart) {
-      value = _withoutLoneSurrogates(value);
-      if (m.start == 0) {
-        var scheme = _scheme.firstMatch(value)?[1]?.toLowerCase();
-        value = scheme != null && !_safeSchemes.contains(scheme)
-            ? '#'
-            : value.replaceAllMapped(
-                _unsafeUrlCharacters,
-                (m) => Uri.encodeComponent(m[0]!),
-              );
-      } else {
-        value = Uri.encodeComponent(value);
-      }
+  String _fillText(String text) => text.replaceAllMapped(
+    _pattern,
+    (m) => _htmlEscape.convert(_values[int.parse(m[2]!)]),
+  );
+
+  /// Puts the values into [url], percent-encoded: a value that starts it as a
+  /// URL, and other values as a component of it. The URL that results is
+  /// replaced with `#` when its scheme is not one of [_safeSchemes], or when
+  /// it starts with a value and `//`, i.e. links to the host of a value.
+  String _fillUrl(String url) {
+    if (!_pattern.hasMatch(url)) return url;
+
+    String encode(Match m) {
+      var value = _withoutLoneSurrogates(_values[int.parse(m[2]!)]);
+      return m.start == 0
+          ? value.replaceAllMapped(
+              _unsafeUrlCharacters,
+              (m) => Uri.encodeComponent(m[0]!),
+            )
+          : Uri.encodeComponent(value);
     }
-    return _htmlEscape.convert(value);
-  });
+
+    // The text of the URL around the values is already percent-encoded.
+    var filled = url.replaceAllMapped(_pattern, encode);
+    var scheme = _scheme.firstMatch(filled)?[1]?.toLowerCase();
+    if ((scheme != null && !_safeSchemes.contains(scheme)) ||
+        (_pattern.matchAsPrefix(url) != null && filled.startsWith('//'))) {
+      return '#';
+    }
+
+    return url.replaceAllMapped(
+      _pattern,
+      (m) => _htmlEscape.convert(encode(m)),
+    );
+  }
 }
 
-/// A [HeaderWithIdSyntax] that generates the id of a heading as for its
-/// Markdown with the values of [_placeholders].
-class _HeaderWithIdSyntax extends HeaderWithIdSyntax {
+/// Generates the id of a heading as for its Markdown with the values of
+/// [_placeholders].
+mixin _GeneratesIdWithValues on BlockSyntax {
+  _Placeholders get _placeholders;
+
+  @override
+  Node parse(BlockParser parser) =>
+      _placeholders._generateId(super.parse(parser)! as Element);
+}
+
+class _HeaderWithIdSyntax extends HeaderWithIdSyntax
+    with _GeneratesIdWithValues {
+  @override
   final _Placeholders _placeholders;
 
   _HeaderWithIdSyntax(this._placeholders);
-
-  @override
-  Node parse(BlockParser parser) =>
-      _placeholders._generateId(super.parse(parser) as Element);
 }
 
-/// A [SetextHeaderWithIdSyntax] that generates the id of a heading as for its
-/// Markdown with the values of [_placeholders].
-class _SetextHeaderWithIdSyntax extends SetextHeaderWithIdSyntax {
+class _SetextHeaderWithIdSyntax extends SetextHeaderWithIdSyntax
+    with _GeneratesIdWithValues {
+  @override
   final _Placeholders _placeholders;
 
   _SetextHeaderWithIdSyntax(this._placeholders);
-
-  @override
-  Node parse(BlockParser parser) =>
-      _placeholders._generateId(super.parse(parser) as Element);
 }
 
 /// [text] with each unpaired surrogate replaced by U+FFFD, as

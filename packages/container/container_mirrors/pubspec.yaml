@@ -4,6 +4,7 @@ description: A dart:mirrors reflector for pkg:angel3_container, for apps running
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dart-backend/angel/
 issue_tracker: https://github.com/dart-backend/angel/issues
+publish_to: none
 
 resolution: workspace
 

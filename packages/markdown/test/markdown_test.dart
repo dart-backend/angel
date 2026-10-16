@@ -2,6 +2,7 @@ import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_markdown/angel3_markdown.dart';
 import 'package:file/file.dart';
 import 'package:file/memory.dart';
+import 'package:markdown/markdown.dart' as md;
 import 'package:test/test.dart';
 
 class Genus {
@@ -58,6 +59,18 @@ class Counted {
   }
 }
 
+/// Generates ids with a prefix.
+class PrefixedHeaderSyntax extends md.HeaderWithIdSyntax {
+  const PrefixedHeaderSyntax();
+
+  @override
+  md.Node parse(md.BlockParser parser) {
+    var element = super.parse(parser) as md.Element;
+    element.generatedId = 'my-${element.generatedId}';
+    return element;
+  }
+}
+
 class Opaque {
   final String name = 'hidden';
 }
@@ -69,12 +82,15 @@ void main() {
     String template,
     Map<String, dynamic> locals, {
     bool escape = true,
+    md.ExtensionSet? extensionSet,
   }) async {
     var fs = MemoryFileSystem();
     var views = fs.directory('views')..createSync();
     views.childFile('page.md').writeAsStringSync(template);
     app = Angel();
-    await app.configure(markdown(views, escape: escape));
+    await app.configure(
+      markdown(views, escape: escape, extensionSet: extensionSet),
+    );
     return await app.viewGenerator!('page', locals);
   }
 
@@ -162,6 +178,45 @@ void main() {
       expect(await id('{{v}} Title\n===', {'v': 'Setext'}), 'setext-title');
     });
 
+    test('keeps reference links and footnotes with values', () async {
+      var html = await render(
+        '[docs][{{ref}}] Note[^{{n}}]\n\n[{{ref}}]: /docs\n\n[^{{n}}]: note',
+        {'ref': 'r', 'n': '1'},
+      );
+      expect(html, contains('<a href="/docs">docs</a>'));
+      expect(html, contains('href="#fn-1"'));
+      expect(html, contains('id="fn-1"'));
+    });
+
+    test('replaces unsafe schemes made of values and text', () async {
+      expect(
+        await render('[go]({{proto}}:{{rest}})', {
+          'proto': 'javascript',
+          'rest': 'alert(1)',
+        }),
+        contains('<a href="#">go</a>'),
+      );
+      expect(
+        await render('![i]({{url}})', {'url': 'javascript:alert(1)'}),
+        contains('<img src="#" alt="i" />'),
+      );
+    });
+
+    test('replaces values that link to another host', () async {
+      for (var url in ['//evil.example/p', '//evil.example']) {
+        expect(
+          await render('[x]({{url}})', {'url': url}),
+          contains('<a href="#">x</a>'),
+          reason: url,
+        );
+      }
+      // A host in the view itself is kept.
+      expect(
+        await render('[x](//cdn.example/{{file}})', {'file': 'a.js'}),
+        contains('<a href="//cdn.example/a.js">x</a>'),
+      );
+    });
+
     test('replaces unsafe schemes of values that start a link URL', () async {
       for (var url in [
         'javascript:alert(1)',
@@ -191,6 +246,16 @@ void main() {
       expect(
         await render('[x]({{url}})', {'url': ' javascript:x'}),
         contains('<a href="%20javascript:x">x</a>'),
+      );
+    });
+
+    test('keeps subclasses of the heading syntaxes', () async {
+      var extensionSet = md.ExtensionSet([
+        const PrefixedHeaderSyntax(),
+      ], const []);
+      expect(
+        await render('# Hello {{v}}', {'v': 'x'}, extensionSet: extensionSet),
+        contains('<h1 id="my-hello-'),
       );
     });
 
@@ -311,7 +376,12 @@ void main() {
       );
     });
 
-    for (var name in ['../secret', 'docs/../../secret', '/srv/secret']) {
+    for (var name in [
+      '../secret',
+      'docs/../../secret',
+      '/srv/secret',
+      'missing',
+    ]) {
       test('rejects "$name", outside the views directory', () {
         expect(
           app.viewGenerator!(name),
