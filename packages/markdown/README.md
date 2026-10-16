@@ -74,12 +74,21 @@ Interpolated values are put into the rendered HTML, HTML-escaped, so they appear
 Escaping has these limits:
 
 * Values are not escaped for JavaScript or CSS. Do not put them into `<script>` or `<style>` elements, or into event handler attributes such as `onclick`.
-* URLs are not checked, so a value used as a link target can still be a `javascript:` URL.
+* A value that starts the URL of a Markdown link, as in `[x]({{url}})`, is replaced with `#` when its scheme is not `http`, `https` or `mailto`, so `javascript:` and `data:` URLs do not get through. URLs in HTML attributes, as in `<a href="{{url}}">`, are not checked.
 * Markdown does not see the content of a value, so a value cannot form Markdown syntax with the text around it. `<{{url}}>` and a bare `{{url}}` do not become links; write `[{{url}}]({{url}})` instead.
 
-Each part of an expression after the first is read as a key of a `Map`, an index of a `List` (`{{items.0}}`), one of the getters `length`, `isEmpty`, `isNotEmpty` (of a `String`, `List` or `Map`), `first` and `last` (of a `List`), or else a key of what the object's `toJson()` returns.
+Each part of an expression after the first is read as a key of a `Map`, an index of a `List` (`{{items.0}}`), one of the getters `length`, `isEmpty` and `isNotEmpty` (of a `String`, `Iterable` or `Map`) or `first` and `last` (of an `Iterable`, such as a `List` or `Set`), or else a key of what the object's `toJson()` returns.
 
 View names are resolved inside the views directory. A name that points outside it, such as `../secret`, also through a symbolic link, throws a 404 `AngelHttpException`.
+
+## Migrating from 9.x
+
+Version 10.0.0 changes how views are rendered, which can change the output of existing views without an error:
+
+* Interpolated values are escaped. Views that put HTML or Markdown into the page through locals render it as text; pass `escape: false` for trusted values.
+* `<{{url}}>` and a bare `{{url}}` no longer become links; write `[{{url}}]({{url}})`.
+* Expressions no longer read getters through `dart:mirrors`. Pass `Map`s, or objects whose `toJson()` returns one. Use the JSON keys, which can differ from the Dart names (e.g. `full_name` for `fullName`), and add computed getters to `toJson()` or to the locals.
+* A value that starts the URL of a Markdown link with a scheme other than `http`, `https` or `mailto` renders as `#`.
 
 ## Templates
 

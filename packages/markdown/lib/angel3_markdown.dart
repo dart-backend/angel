@@ -17,7 +17,8 @@ const String _encodedPlaceholderStart = '%EE%80%80';
 const String _encodedPlaceholderEnd = '%EE%80%81';
 
 /// Escapes text for HTML content and for attributes in single or double
-/// quotes.
+/// quotes. Unlike [htmlEscape], it leaves `/` as it is, so that URLs stay
+/// readable.
 const HtmlEscape _htmlEscape = HtmlEscape(
   HtmlEscapeMode(escapeLtGt: true, escapeQuot: true, escapeApos: true),
 );
@@ -29,9 +30,13 @@ final RegExp _unsafeUrlCharacters = RegExp(
   unicode: true,
 );
 
-/// What [BlockSyntax.generateAnchorHash] removes from the text of a heading.
-final RegExp _anchorUnsafe = RegExp('[^a-z0-9 _-]');
-final RegExp _whitespace = RegExp(r'\s');
+/// The scheme of a URL, such as `https` in `https://...`.
+final RegExp _scheme = RegExp(r'^([A-Za-z][A-Za-z0-9+.\-]*):');
+
+/// The schemes that a value that starts the URL of a link may have. Others,
+/// such as `javascript:` or `data:`, could run script when the link is
+/// followed.
+const Set<String> _safeSchemes = {'http', 'https', 'mailto'};
 
 /// Marks a member that [_readGetter] does not know.
 const Object _missing = Object();
@@ -53,7 +58,10 @@ final Random _random = Random();
 /// not rendered. In the URL of a Markdown link they are also percent-encoded:
 /// a value that starts the URL as a URL, and a value after other text of the
 /// URL (e.g. `/search?q={{q}}`) as a component of it, so that its `/`, `?`,
-/// `&` and `#` are encoded too. Values are not escaped for JavaScript or CSS,
+/// `&` and `#` are encoded too. A value that starts the URL of a Markdown
+/// link with a scheme other than `http`, `https` or `mailto` (such as
+/// `javascript:`) is replaced with `#`. URLs in HTML attributes are not
+/// checked. Values are not escaped for JavaScript or CSS,
 /// so they must not be put into `<script>` or `<style>` elements or into
 /// event handler attributes such as `onclick`. Set [escape] to `false` to
 /// insert them into the Markdown before it is rendered instead, only for
@@ -72,9 +80,6 @@ AngelConfigurer markdown(
   extension ??= '.md';
   extensionSet ??= ExtensionSet.gitHubWeb;
 
-  // The views directory with its symbolic links resolved, once it has been.
-  String? resolvedViewsPath;
-
   return (Angel app) async {
     app.viewGenerator = (String name, [Map<String, dynamic>? locals]) async {
       var fileSystem = viewsDirectory.fileSystem;
@@ -88,12 +93,13 @@ AngelConfigurer markdown(
       }
 
       // Also stay inside the views directory through symbolic links, and read
-      // the file that was checked.
-      resolvedViewsPath ??= await viewsDirectory.resolveSymbolicLinks();
+      // the file that was checked. The views directory is resolved on every
+      // render, as it may be a link that a deployment points elsewhere.
+      var resolvedViewsPath = await viewsDirectory.resolveSymbolicLinks();
       var resolvedFilePath = await fileSystem
           .file(filePath)
           .resolveSymbolicLinks();
-      if (!path.isWithin(resolvedViewsPath!, resolvedFilePath)) {
+      if (!path.isWithin(resolvedViewsPath, resolvedFilePath)) {
         throw AngelHttpException.notFound();
       }
 
@@ -129,7 +135,11 @@ AngelConfigurer markdown(
         }
       });
 
-      var nodes = Document(extensionSet: extensionSet).parse(contents);
+      var nodes = Document(
+        extensionSet: placeholders.isNotEmpty
+            ? placeholders.extensionSetFor(extensionSet!)
+            : extensionSet,
+      ).parse(contents);
       if (placeholders.isNotEmpty) placeholders.fill(nodes);
 
       var html = '${renderToHtml(nodes)}\n';
@@ -144,8 +154,7 @@ AngelConfigurer markdown(
 ///
 /// The placeholder of the n-th value is U+E000, a key, n, the key again and
 /// U+E001, where the key is random letters, so that no text of the view is
-/// taken for a placeholder, and so that where the private-use characters are
-/// removed (in the ids of headings), the index still has a key on each side.
+/// taken for a placeholder.
 class _Placeholders {
   final List<String> _values = [];
 
@@ -159,13 +168,6 @@ class _Placeholders {
     '$_key(?:$_placeholderEnd|$_encodedPlaceholderEnd)',
   );
 
-  /// A placeholder in the id of a heading.
-  late final RegExp _idPattern = RegExp(
-    '$_key'
-    r'(\d+)'
-    '$_key',
-  );
-
   bool get isNotEmpty => _values.isNotEmpty;
 
   /// Returns the placeholder for [value].
@@ -174,13 +176,38 @@ class _Placeholders {
     return '$_placeholderStart$_key${_values.length - 1}$_key$_placeholderEnd';
   }
 
+  /// [extensionSet], with its syntaxes that generate the ids of headings
+  /// replaced by ones that generate them from the Markdown of the heading with
+  /// the values, as for the Markdown that has them.
+  ExtensionSet extensionSetFor(ExtensionSet extensionSet) => ExtensionSet([
+    for (var syntax in extensionSet.blockSyntaxes)
+      if (syntax is HeaderWithIdSyntax)
+        _HeaderWithIdSyntax(this)
+      else if (syntax is SetextHeaderWithIdSyntax)
+        _SetextHeaderWithIdSyntax(this)
+      else
+        syntax,
+  ], extensionSet.inlineSyntaxes);
+
+  /// Generates the id of [heading] again, as [BlockSyntax.generateAnchorHash]
+  /// does from its Markdown, which it still has, with the values.
+  Element _generateId(Element heading) {
+    var children = heading.children;
+    if (heading.generatedId != null && children != null) {
+      var markdown = children.first.textContent.replaceAllMapped(
+        _pattern,
+        (m) => _values[int.parse(m[2]!)],
+      );
+      heading.generatedId = BlockSyntax.generateAnchorHash(
+        Element('h1', [Text(markdown)]),
+      );
+    }
+    return heading;
+  }
+
   /// Replaces the placeholders in the text and attributes of [nodes] with
   /// their values, HTML-escaped, and percent-encoded where Markdown has
   /// percent-encoded the placeholder, as in the URL of a link.
-  ///
-  /// Markdown has generated the ids of headings from their Markdown with the
-  /// placeholders; the placeholders in them are replaced with what the values
-  /// add to the id, so that it is the id of the heading with the values.
   void fill(List<Node> nodes) {
     for (var i = 0; i < nodes.length; i++) {
       var node = nodes[i];
@@ -190,8 +217,6 @@ class _Placeholders {
         node.attributes.updateAll((_, value) => _fillText(value));
         var children = node.children;
         if (children != null) fill(children);
-        var id = node.generatedId;
-        if (id != null) node.generatedId = _fillId(id);
       }
     }
   }
@@ -200,25 +225,44 @@ class _Placeholders {
     var value = _values[int.parse(m[2]!)];
     if (m[1] == _encodedPlaceholderStart) {
       value = _withoutLoneSurrogates(value);
-      value = m.start == 0
-          ? value.replaceAllMapped(
-              _unsafeUrlCharacters,
-              (m) => Uri.encodeComponent(m[0]!),
-            )
-          : Uri.encodeComponent(value);
+      if (m.start == 0) {
+        var scheme = _scheme.firstMatch(value)?[1]?.toLowerCase();
+        value = scheme != null && !_safeSchemes.contains(scheme)
+            ? '#'
+            : value.replaceAllMapped(
+                _unsafeUrlCharacters,
+                (m) => Uri.encodeComponent(m[0]!),
+              );
+      } else {
+        value = Uri.encodeComponent(value);
+      }
     }
     return _htmlEscape.convert(value);
   });
+}
 
-  /// [BlockSyntax.generateAnchorHash] lowercases the text, trims it, removes
-  /// the characters of [_anchorUnsafe] and replaces whitespace with `-`, so a
-  /// value adds the same to the id, trimmed at its start or end.
-  String _fillId(String id) => id.replaceAllMapped(_idPattern, (m) {
-    var value = _values[int.parse(m[1]!)].toLowerCase();
-    if (m.start == 0) value = value.trimLeft();
-    if (m.end == id.length) value = value.trimRight();
-    return value.replaceAll(_anchorUnsafe, '').replaceAll(_whitespace, '-');
-  });
+/// A [HeaderWithIdSyntax] that generates the id of a heading as for its
+/// Markdown with the values of [_placeholders].
+class _HeaderWithIdSyntax extends HeaderWithIdSyntax {
+  final _Placeholders _placeholders;
+
+  _HeaderWithIdSyntax(this._placeholders);
+
+  @override
+  Node parse(BlockParser parser) =>
+      _placeholders._generateId(super.parse(parser) as Element);
+}
+
+/// A [SetextHeaderWithIdSyntax] that generates the id of a heading as for its
+/// Markdown with the values of [_placeholders].
+class _SetextHeaderWithIdSyntax extends SetextHeaderWithIdSyntax {
+  final _Placeholders _placeholders;
+
+  _SetextHeaderWithIdSyntax(this._placeholders);
+
+  @override
+  Node parse(BlockParser parser) =>
+      _placeholders._generateId(super.parse(parser) as Element);
 }
 
 /// [text] with each unpaired surrogate replaced by U+FFFD, as

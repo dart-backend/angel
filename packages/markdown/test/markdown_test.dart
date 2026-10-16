@@ -156,6 +156,42 @@ void main() {
       expect(await id('# v{{n}}5', {'n': 1}), 'v15');
       expect(await id('# &copy; {{year}}', {'year': 2026}), 'copy-2026');
       expect(await id('#  {{v}}  ', {'v': ' Spaced Out '}), 'spaced-out');
+      // As for "# ! a", which is trimmed before the "!" is removed.
+      expect(await id('# !{{v}}', {'v': ' a'}), '-a');
+      expect(await id('# {{x}}{{y}}', {'x': 'a ', 'y': ' '}), 'a');
+      expect(await id('{{v}} Title\n===', {'v': 'Setext'}), 'setext-title');
+    });
+
+    test('replaces unsafe schemes of values that start a link URL', () async {
+      for (var url in [
+        'javascript:alert(1)',
+        'JavaScript:alert(1)',
+        'data:text/html,<script>alert(1)</script>',
+        'vbscript:x',
+      ]) {
+        expect(
+          await render('[x]({{url}})', {'url': url}),
+          contains('<a href="#">x</a>'),
+          reason: url,
+        );
+      }
+      for (var url in [
+        'https://x.com',
+        'http://x.com',
+        'mailto:a@x.com',
+        '/p',
+      ]) {
+        expect(
+          await render('[x]({{url}})', {'url': url}),
+          contains('<a href="$url">x</a>'),
+          reason: url,
+        );
+      }
+      // Not a scheme once the space is encoded, so a relative URL.
+      expect(
+        await render('[x]({{url}})', {'url': ' javascript:x'}),
+        contains('<a href="%20javascript:x">x</a>'),
+      );
     });
 
     test('keeps the ids of headings without values', () async {
@@ -244,6 +280,21 @@ void main() {
     test('render views through links inside the views directory', () async {
       views.fileSystem.link('/srv/views/alias').createSync('/srv/views/docs');
       expect(await app.viewGenerator!('alias/intro'), contains('intro'));
+    });
+
+    test('follows a views directory link that is pointed elsewhere', () async {
+      var fs = views.fileSystem;
+      fs.directory('/srv/v1').createSync();
+      fs.file('/srv/v1/page.md').writeAsStringSync('one');
+      fs.directory('/srv/v2').createSync();
+      fs.file('/srv/v2/page.md').writeAsStringSync('two');
+      var link = fs.link('/srv/current')..createSync('/srv/v1');
+      app = Angel();
+      await app.configure(markdown(fs.directory('/srv/current')));
+
+      expect(await app.viewGenerator!('page'), contains('one'));
+      link.updateSync('/srv/v2');
+      expect(await app.viewGenerator!('page'), contains('two'));
     });
 
     test('rejects views through links outside the views directory', () {
