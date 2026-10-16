@@ -70,6 +70,10 @@ Each part of a dotted expression after the first is read as a key of a `Map`. An
 
 To disable interpolation for a single bracket, prefix it with an `@`, ex: `@{{raw | not_interpolated | angular}}`.
 
+Interpolated values are escaped, so they appear as plain text: HTML such as `<script>` or Markdown such as `[link](...)` in them is not rendered. For values you trust and want rendered as Markdown, pass `escape: false` to `markdown()`.
+
+View names are resolved inside the views directory. A name that points outside it, such as `../secret`, throws a 404 `AngelHttpException`.
+
 ## Templates
 
 Markdown is frequently used to build the *content* of sites, but not the templates.

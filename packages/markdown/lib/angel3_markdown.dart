@@ -6,6 +6,9 @@ import 'package:markdown/markdown.dart';
 
 final RegExp _braces = RegExp(r'@?{{(((\\})|([^}]))+)}}');
 
+/// ASCII punctuation, which Markdown lets a backslash escape.
+final RegExp _punctuation = RegExp(r'[!-/:-@\[-`{-~]');
+
 /// Configures an [Angel] instance to render Markdown templates from the specified [viewsDirectory].
 ///
 /// The default [extension] is `.md`. To search for a different file extension, provide a new one.
@@ -14,21 +17,36 @@ final RegExp _braces = RegExp(r'@?{{(((\\})|([^}]))+)}}');
 /// In many cases, Markdown content will be rendered within a larger [template] that styles the entire website.
 /// To wrap generated Markdown content in a template, provide a function that accepts a generated HTML String,
 /// and returns a String, or a `Future<String>`.
+///
+/// The values of `{{...}}` expressions are escaped, so that they appear as
+/// text, and HTML or Markdown in them is not rendered. Set [escape] to `false`
+/// to insert them as Markdown instead, only for values that are trusted.
+///
+/// A view name that resolves outside [viewsDirectory] (e.g. `../secret`)
+/// throws a 404 [AngelHttpException].
 AngelConfigurer markdown(
   Directory viewsDirectory, {
   String? extension,
   ExtensionSet? extensionSet,
   FutureOr<String> Function(String content, Map<String, dynamic> locals)?
   template,
+  bool escape = true,
 }) {
   extension ??= '.md';
   extensionSet ??= ExtensionSet.gitHubWeb;
 
   return (Angel app) async {
     app.viewGenerator = (String name, [Map<String, dynamic>? locals]) async {
-      var file = viewsDirectory.childFile(
-        viewsDirectory.fileSystem.path.setExtension(name, extension!),
+      var path = viewsDirectory.fileSystem.path;
+      var root = path.normalize(viewsDirectory.absolute.path);
+      var filePath = path.normalize(
+        path.join(root, path.setExtension(name, extension!)),
       );
+      if (!path.isWithin(root, filePath)) {
+        throw AngelHttpException.notFound();
+      }
+
+      var file = viewsDirectory.fileSystem.file(filePath);
       var contents = await file.readAsString();
 
       contents = contents.replaceAllMapped(_braces, (m) {
@@ -48,7 +66,8 @@ AngelConfigurer markdown(
             );
           }
 
-          return _resolveDotNotation(split, locals![root]).toString();
+          var value = _resolveDotNotation(split, locals![root]).toString();
+          return escape ? _escapeMarkdown(value) : value;
         }
       });
 
@@ -58,6 +77,11 @@ AngelConfigurer markdown(
     };
   };
 }
+
+/// Backslash-escapes the punctuation in [text], so that Markdown renders it as
+/// text: `<` becomes `&lt;` rather than a tag, and `*` or `[` stay as they are.
+String _escapeMarkdown(String text) =>
+    text.replaceAllMapped(_punctuation, (m) => '\\${m[0]}');
 
 dynamic _resolveDotNotation(List<String> split, target) {
   for (var i = 1; i < split.length; i++) {
