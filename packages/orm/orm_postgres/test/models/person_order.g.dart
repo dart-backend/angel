@@ -442,7 +442,7 @@ class PersonOrder extends PersonOrderEntity {
 
   @override
   int get hashCode {
-    return hashObjects([
+    return Object.hashAll([
       id,
       createdAt,
       updatedAt,
@@ -540,7 +540,7 @@ class OrderWithPersonInfo extends OrderWithPersonInfoEntity {
 
   @override
   int get hashCode {
-    return hashObjects([
+    return Object.hashAll([
       id,
       createdAt,
       updatedAt,

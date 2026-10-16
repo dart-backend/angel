@@ -25,45 +25,44 @@ abstract class QueryWhere {
     _raw.add(whereRaw);
   }
 
+  /// The conditions, joined with `AND`, followed by those of [or] clauses
+  /// joined with `OR`; empty when there are none.
   String compile({String? tableName}) {
-    var b = StringBuffer();
-    var i = 0;
+    var conditions = <String>[];
 
     for (var builder in expressionBuilders) {
+      if (!builder.hasValue) continue;
       var key = builder.columnName;
       if (tableName != null) key = '$tableName.$key';
-      if (builder.hasValue) {
-        if (i++ > 0) b.write(' AND ');
-        if (builder is DateTimeSqlExpressionBuilder ||
-            (builder is JsonSqlExpressionBuilder && builder.hasRaw)) {
-          if (tableName != null) b.write('$tableName.');
-          b.write(builder.compile());
-        } else {
-          b.write('$key ${builder.compile()}');
-        }
+      if (builder is JsonSqlExpressionBuilder) {
+        conditions.add(builder.compileFor(key));
+      } else if (builder is DateTimeSqlExpressionBuilder) {
+        conditions.add(builder.compileFor(key) ?? '');
+      } else {
+        conditions.add('$key ${builder.compile()}');
       }
     }
 
     for (var raw in _raw) {
-      if (i++ > 0) b.write(' AND ');
-      b.write(' ($raw)');
+      conditions.add('($raw)');
     }
 
     for (var other in _and) {
-      var sql = other.compile();
-      if (sql.isNotEmpty) b.write(' AND ($sql)');
+      var sql = other.compile(tableName: tableName);
+      if (sql.isNotEmpty) conditions.add('($sql)');
     }
 
     for (var other in _not) {
-      var sql = other.compile();
-      if (sql.isNotEmpty) b.write(' NOT ($sql)');
+      var sql = other.compile(tableName: tableName);
+      if (sql.isNotEmpty) conditions.add('NOT ($sql)');
     }
 
+    var result = conditions.join(' AND ');
     for (var other in _or) {
-      var sql = other.compile();
-      if (sql.isNotEmpty) b.write(' OR ($sql)');
+      var sql = other.compile(tableName: tableName);
+      if (sql.isEmpty) continue;
+      result = result.isEmpty ? '($sql)' : '$result OR ($sql)';
     }
-
-    return b.toString();
+    return result;
   }
 }

@@ -17,7 +17,7 @@ class OrderMigration extends Migration {
       table.timeStamp('order_date');
       table.integer('shipper_id');
       table
-          .declare('customer_id', ColumnType('int'))
+          .declare('customer_id', ColumnType.int)
           .references('customers', 'id');
     });
   }
@@ -243,8 +243,8 @@ class OrderQueryValues extends MapQueryValues {
     employeeId = model.employeeId;
     orderDate = model.orderDate;
     shipperId = model.shipperId;
-    if (model.customer != null) {
-      values['customer_id'] = model.customer?.id;
+    if (model.customer?.id != null) {
+      values['customer_id'] = int.parse(model.customer!.id!);
     }
   }
 }
@@ -442,7 +442,7 @@ class Order extends EntityOrder {
 
   @override
   int get hashCode {
-    return hashObjects([
+    return Object.hashAll([
       id,
       createdAt,
       updatedAt,
@@ -497,7 +497,7 @@ class Customer extends EntityCustomer {
 
   @override
   int get hashCode {
-    return hashObjects([id, createdAt, updatedAt]);
+    return Object.hashAll([id, createdAt, updatedAt]);
   }
 
   @override

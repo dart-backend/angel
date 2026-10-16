@@ -8,6 +8,11 @@ import 'package:logging/logging.dart';
 abstract class PostgresGenerator {
   static String columnType(MigrationColumn column) {
     var str = column.type.name;
+    if (column.type.hasPrecision) {
+      return column.type.hasScale
+          ? '$str(${column.precision}, ${column.scale})'
+          : '$str(${column.precision})';
+    }
     if (column.type.hasLength) {
       return '$str(${column.length})';
     } else {
@@ -153,9 +158,21 @@ class PostgresAlterTable extends Table implements MutableTable {
   }
 
   @override
-  void changeColumnType(String name, ColumnType type, {int length = 255}) {
+  void changeColumnType(
+    String name,
+    ColumnType type, {
+    int length = Column.defaultLength,
+    int precision = Column.defaultPrecision,
+    int scale = Column.defaultScale,
+  }) {
+    var column = MigrationColumn(
+      type,
+      length: length,
+      precision: precision,
+      scale: scale,
+    );
     _stack.add(
-      'ALTER COLUMN "$name" TYPE ${PostgresGenerator.columnType(MigrationColumn(type, length: length))}',
+      'ALTER COLUMN "$name" TYPE ${PostgresGenerator.columnType(column)}',
     );
   }
 

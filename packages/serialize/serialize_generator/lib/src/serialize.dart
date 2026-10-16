@@ -30,25 +30,15 @@ class SerializerGenerator extends GeneratorForAnnotation<Serializable> {
       throw 'Invalid builder context';
     }
 
-    var serializers = annotation.peek('serializers')?.listValue ?? [];
+    var serializers = readSerializers(annotation);
 
     if (serializers.isEmpty) {
       log.severe("No Serializers");
       return null;
     }
 
-    // Check if any serializer is recognized
-    if (!serializers.any((s) => Serializers.all.contains(s.toIntValue()))) {
-      log.severe("No recognizable Serializers");
-      return null;
-    }
-
     var lib = Library((b) {
-      generateClass(
-        serializers.map((s) => s.toIntValue() ?? 0).toList(),
-        ctx,
-        b,
-      );
+      generateClass(serializers, ctx, b);
       generateFieldsClass(ctx, b);
     });
 
@@ -58,7 +48,7 @@ class SerializerGenerator extends GeneratorForAnnotation<Serializable> {
 
   /// Generate a serializer class.
   void generateClass(
-    List<int> serializers,
+    List<Serializers> serializers,
     BuildContext ctx,
     LibraryBuilder file,
   ) {
@@ -266,9 +256,8 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
               ${type.getDisplayString()}.values.indexOf(model.${field.name}$convert)
               : null
             ''';
-            } else if (const TypeChecker.typeNamed(
-              Uint8List,
-            ).isAssignableFromType(type)) {
+            } else if (const TypeChecker.typeNamed(Uint8List)
+                .isAssignableFromType(type)) {
               var convert =
                   (field.type.nullabilitySuffix == NullabilitySuffix.question)
                   ? '!'
@@ -471,32 +460,27 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
             ''';
 
               //log.warning('Code => $deserializedRepresentation');
-            } else if (const TypeChecker.typeNamed(
-                  List,
-                ).isAssignableFromType(type) &&
+            } else if (const TypeChecker.typeNamed(List)
+                    .isAssignableFromType(type) &&
                 type.typeArguments.length == 1) {
               if (defaultValue == 'null') {
                 defaultValue = '[]';
               }
-              var arg = convertTypeReference(
-                type.typeArguments[0],
-              ).accept(DartEmitter(useNullSafetySyntax: true));
+              var arg = convertTypeReference(type.typeArguments[0])
+                  .accept(DartEmitter(useNullSafetySyntax: true));
               deserializedRepresentation =
                   '''
                 map['$alias'] is Iterable
                   ? (map['$alias'] as Iterable).cast<$arg>().toList()
                   : $defaultValue
                 ''';
-            } else if (const TypeChecker.typeNamed(
-                  Map,
-                ).isAssignableFromType(type) &&
+            } else if (const TypeChecker.typeNamed(Map)
+                    .isAssignableFromType(type) &&
                 type.typeArguments.length == 2) {
-              var key = convertTypeReference(
-                type.typeArguments[0],
-              ).accept(DartEmitter(useNullSafetySyntax: true));
-              var value = convertTypeReference(
-                type.typeArguments[1],
-              ).accept(DartEmitter(useNullSafetySyntax: true));
+              var key = convertTypeReference(type.typeArguments[0])
+                  .accept(DartEmitter(useNullSafetySyntax: true));
+              var value = convertTypeReference(type.typeArguments[1])
+                  .accept(DartEmitter(useNullSafetySyntax: true));
 
               if (defaultValue == 'null') {
                 defaultValue = '{}';
@@ -507,9 +491,8 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
                   ? (map['$alias'] as Map).cast<$key, $value>()
                   : $defaultValue
                 ''';
-            } else if (const TypeChecker.typeNamed(
-              Uint8List,
-            ).isAssignableFromType(type)) {
+            } else if (const TypeChecker.typeNamed(Uint8List)
+                .isAssignableFromType(type)) {
               deserializedRepresentation =
                   '''
             map['$alias'] is Uint8List

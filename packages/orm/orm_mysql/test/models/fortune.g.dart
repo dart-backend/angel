@@ -155,7 +155,7 @@ class Fortune extends FortuneEntity {
 
   @override
   int get hashCode {
-    return hashObjects([id, message]);
+    return Object.hashAll([id, message]);
   }
 
   @override

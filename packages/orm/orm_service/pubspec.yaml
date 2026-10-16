@@ -15,6 +15,7 @@ dependencies:
   optional: ^6.0.0
 dev_dependencies:
   angel3_migration: ^10.0.0
+  angel3_mock_request: ^10.0.0
   angel3_migration_runner: ^10.0.0
   angel3_orm_generator: ^10.0.0
   angel3_orm_postgres: ^10.0.0

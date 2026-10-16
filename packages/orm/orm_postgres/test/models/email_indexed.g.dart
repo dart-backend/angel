@@ -25,10 +25,10 @@ class RoleUserMigration extends Migration {
   void up(Schema schema) {
     schema.create('role_users', (table) {
       table
-          .declare('role_role', ColumnType('varchar'))
+          .declare('role_role', ColumnType.varChar)
           .references('roles', 'role');
       table
-          .declare('user_email', ColumnType('varchar'))
+          .declare('user_email', ColumnType.varChar)
           .references('users', 'email');
     });
   }
@@ -593,7 +593,10 @@ class Role implements RoleEntity {
 
   @override
   int get hashCode {
-    return hashObjects([role, users]);
+    return Object.hashAll([
+      role,
+      ListEquality<UserEntity>(DefaultEquality<UserEntity>()).hash(users),
+    ]);
   }
 
   @override
@@ -627,7 +630,7 @@ class RoleUser implements RoleUserEntity {
 
   @override
   int get hashCode {
-    return hashObjects([role, user]);
+    return Object.hashAll([role, user]);
   }
 
   @override
@@ -682,7 +685,12 @@ class User implements UserEntity {
 
   @override
   int get hashCode {
-    return hashObjects([email, name, password, roles]);
+    return Object.hashAll([
+      email,
+      name,
+      password,
+      ListEquality<RoleEntity>(DefaultEquality<RoleEntity>()).hash(roles),
+    ]);
   }
 
   @override

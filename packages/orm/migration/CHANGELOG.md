@@ -2,7 +2,14 @@
 
 ## 10.0.0
 
-* Released with the other Angel3 packages at 10.0.0
+* **Breaking:** Requires `angel3_orm` 10
+* **Breaking:** `MutableTable.changeColumnType` takes the `length`, `precision` and `scale` of the new type (e.g. `changeColumnType('price', ColumnType.numeric, precision: 10, scale: 2)`). Without them, a column changed to `numeric` or `decimal` was always `numeric(17, 3)`. Implementations of `MutableTable` must add these parameters
+* fix: `Table.numeric` creates the column with its `precision` and `scale` (default 17 and 3), which it ignored, and `MigrationColumn` (including `MigrationColumn.from`) keeps a column's precision and scale
+* fix: `MigrationColumn.from` keeps all the attributes of a `Column`: its `defaultValue` (so `declareColumn('fee', Column(..., defaultValue: 0))` creates the column with `DEFAULT 0`, which was left out), `name`, `timezone` and `expression`
+* fix: A `numeric` or `decimal` column whose precision is below 1, or whose scale is negative or greater than its precision, throws an `ArgumentError` when it is declared, instead of failing when the migration is run
+* Added `Table.decimal`, as `Table.numeric` for `decimal` columns
+* `Table.numeric`, `Table.decimal` and `changeColumnType` default to `Column.defaultLength`, `Column.defaultPrecision` and `Column.defaultScale`
+* `Table.varChar` declares a `MigrationColumn`
 
 ## 9.1.0
 

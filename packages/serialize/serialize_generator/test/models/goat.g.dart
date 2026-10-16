@@ -29,7 +29,7 @@ class Goat implements GoatEntity {
 
   @override
   int get hashCode {
-    return hashObjects([integer, list]);
+    return Object.hashAll([integer, list]);
   }
 
   @override

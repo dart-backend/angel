@@ -34,21 +34,8 @@ class MariaDbExecutor extends QueryExecutor {
     String resultQuery = '',
     List<String> returningFields = const [],
   }) async {
-    // Change @id -> ?
-    for (var name in substitutionValues.keys) {
-      query = query.replaceAll('@$name', '?');
-    }
-
-    var params = substitutionValues.values.toList();
-    for (var i = 0; i < params.length; i++) {
-      var v = params[i];
-
-      if (v is DateTime) {
-        if (!v.isUtc) {
-          params[i] = v.toUtc();
-        }
-      }
-    }
+    var params = <dynamic>[];
+    query = _toPositional(query, substitutionValues, params);
 
     //logger.warning('Query: $query');
     //logger.warning('Values: $params');
@@ -62,20 +49,41 @@ class MariaDbExecutor extends QueryExecutor {
 
         query = returningQuery;
         // logger?.warning('Result.insertId: ${result.insertId}');
-        // Has primary key
         if (returningQuery.endsWith('.id=?')) {
+          // Has primary key
           params = [result.insertId];
+        } else if (!returningQuery.contains('?')) {
+          // The last row by id: mysql1 rejects parameters it has no
+          // placeholders for.
+          params = [];
         }
+        // Otherwise the row is selected by the inserted values, which
+        // keep the order of the INSERT's placeholders.
       } else if (query.startsWith("UPDATE")) {
         await _connection.query(query, params);
-        query = returningQuery;
         params = [];
+        query = _toPositional(returningQuery, substitutionValues, params);
       }
     }
 
     // Handle select
     return _connection.query(query, params).then((results) {
       return results.map((r) => r.toList()).toList();
+    });
+  }
+
+  /// Changes the `@name` placeholders in [sql] to `?`, and adds their
+  /// values to [params] in the order the placeholders appear.
+  ///
+  /// A local [DateTime] is sent as UTC.
+  String _toPositional(
+    String sql,
+    Map<String, dynamic> substitutionValues,
+    List<dynamic> params,
+  ) {
+    return replacePlaceholders(sql, substitutionValues, (_, value) {
+      params.add(value is DateTime && !value.isUtc ? value.toUtc() : value);
+      return '?';
     });
   }
 

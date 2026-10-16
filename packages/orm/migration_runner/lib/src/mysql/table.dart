@@ -43,6 +43,11 @@ abstract class MySqlGenerator {
       }
     }
 
+    if (column.type.hasPrecision) {
+      return column.type.hasScale
+          ? '$str(${column.precision}, ${column.scale})'
+          : '$str(${column.precision})';
+    }
     if (column.type.hasLength) {
       return '$str(${column.length})';
     } else {
@@ -219,10 +224,20 @@ class MysqlAlterTable extends Table implements MutableTable {
   }
 
   @override
-  void changeColumnType(String name, ColumnType type, {int length = 256}) {
-    _stack.add(
-      'MODIFY $name ${MySqlGenerator.columnType(MigrationColumn(type, length: length))}',
+  void changeColumnType(
+    String name,
+    ColumnType type, {
+    int length = Column.defaultLength,
+    int precision = Column.defaultPrecision,
+    int scale = Column.defaultScale,
+  }) {
+    var column = MigrationColumn(
+      type,
+      length: length,
+      precision: precision,
+      scale: scale,
     );
+    _stack.add('MODIFY $name ${MySqlGenerator.columnType(column)}');
   }
 
   @override

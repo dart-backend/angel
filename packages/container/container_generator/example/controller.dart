@@ -36,7 +36,9 @@ void main() async {
   var client = HttpClient();
   for (var path in ['/greet/hello/world', '/greet/shout?text=aot']) {
     var rs = await (await client.get('127.0.0.1', server.port, path)).close();
-    print('$path -> ${rs.statusCode} ${await rs.transform(utf8.decoder).join()}');
+    print(
+      '$path -> ${rs.statusCode} ${await rs.transform(utf8.decoder).join()}',
+    );
   }
   client.close();
   await http.close();

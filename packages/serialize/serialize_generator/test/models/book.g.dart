@@ -87,15 +87,14 @@ class Book extends BookEntity {
         other.title == title &&
         other.description == description &&
         other.pageCount == pageCount &&
-        ListEquality<double>(
-          DefaultEquality<double>(),
-        ).equals(other.notModels, notModels) &&
+        ListEquality<double>(DefaultEquality<double>())
+            .equals(other.notModels, notModels) &&
         other.camelCaseString == camelCaseString;
   }
 
   @override
   int get hashCode {
-    return hashObjects([
+    return Object.hashAll([
       id,
       createdAt,
       updatedAt,
@@ -195,9 +194,8 @@ class Author extends AuthorEntity {
         other.updatedAt == updatedAt &&
         other.name == name &&
         other.age == age &&
-        ListEquality<BookEntity>(
-          DefaultEquality<BookEntity>(),
-        ).equals(other.books, books) &&
+        ListEquality<BookEntity>(DefaultEquality<BookEntity>())
+            .equals(other.books, books) &&
         other.newestBook == newestBook &&
         other.secret == secret &&
         other.obscured == obscured;
@@ -205,7 +203,7 @@ class Author extends AuthorEntity {
 
   @override
   int get hashCode {
-    return hashObjects([
+    return Object.hashAll([
       id,
       createdAt,
       updatedAt,
@@ -280,7 +278,7 @@ class Library extends LibraryEntity {
 
   @override
   int get hashCode {
-    return hashObjects([id, createdAt, updatedAt, collection]);
+    return Object.hashAll([id, createdAt, updatedAt, collection]);
   }
 
   @override
@@ -353,16 +351,15 @@ class Bookmark extends BookmarkEntity {
         other.id == id &&
         other.createdAt == createdAt &&
         other.updatedAt == updatedAt &&
-        ListEquality<int>(
-          DefaultEquality<int>(),
-        ).equals(other.history, history) &&
+        ListEquality<int>(DefaultEquality<int>())
+            .equals(other.history, history) &&
         other.page == page &&
         other.comment == comment;
   }
 
   @override
   int get hashCode {
-    return hashObjects([id, createdAt, updatedAt, history, page, comment]);
+    return Object.hashAll([id, createdAt, updatedAt, history, page, comment]);
   }
 
   @override

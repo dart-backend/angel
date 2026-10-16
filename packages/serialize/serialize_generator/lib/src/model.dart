@@ -98,9 +98,7 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
         generateToString(ctx, clazz);
 
         // Generate toJson() method if necessary
-        var serializers = annotation.peek('serializers')?.listValue ?? [];
-
-        if (serializers.any((o) => o.toIntValue() == Serializers.json)) {
+        if (readSerializers(annotation).contains(Serializers.json)) {
           clazz.methods.add(
             Method((method) {
               method
@@ -152,9 +150,8 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
         for (var field in ctx.fields) {
           if (!shouldBeConstant(ctx) && isListOrMapType(field.type)) {
             var typeName =
-                const TypeChecker.typeNamed(
-                  List,
-                ).isAssignableFromType(field.type)
+                const TypeChecker.typeNamed(List)
+                    .isAssignableFromType(field.type)
                 ? 'List'
                 : 'Map';
             String? defaultValue = typeName == 'List' ? '[]' : '{}';
@@ -343,8 +340,18 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
           ..type = MethodType.getter
           ..returns = refer('int')
           ..annotations.add(refer('override'))
-          ..body = refer('hashObjects')
-              .call([literalList(ctx!.fields.map((f) => refer(f.name ?? '')))])
+          ..body = refer('Object')
+              .property('hashAll')
+              .call([
+                literalList(
+                  ctx!.fields.map((f) {
+                    // Hash collections by content to stay consistent with ==
+                    var eq = generateEquality(f.type, true);
+                    var name = f.name ?? '';
+                    return eq == null ? refer(name) : CodeExpression(Code('$eq.hash($name)'));
+                  }),
+                ),
+              ])
               .returned
               .statement;
       }),

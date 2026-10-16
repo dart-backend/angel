@@ -14,10 +14,7 @@ class HasCarMigration extends Migration {
       table.timeStamp('created_at');
       table.timeStamp('updated_at');
       table.integer('type').defaultsTo(0);
-      table.declareColumn(
-        'color',
-        Column(type: ColumnType('varchar'), length: 1),
-      );
+      table.varChar('color', length: 1);
     });
   }
 
@@ -244,7 +241,7 @@ class HasCar extends HasCarEntity {
 
   @override
   int get hashCode {
-    return hashObjects([id, createdAt, updatedAt, type, color]);
+    return Object.hashAll([id, createdAt, updatedAt, type, color]);
   }
 
   @override

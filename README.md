@@ -106,7 +106,7 @@ Branch: `master`
 
 ### (Option 1) Create a new project by cloning from boilerplate templates
 
-1. Download and install [Dart](https://dart.dev/get-dart). Minimum 3.11.0.
+1. Download and install [Dart](https://dart.dev/get-dart). Minimum 3.13.0.
 
 2. Clone one of the following starter projects:
    * [Angel3 Basic Template](https://github.com/dart-backend/boilerplates/tree/master/templates/basic)
@@ -202,15 +202,15 @@ If you are interested in contributing to Angel3 framework please check out the [
    git checkout -b feature/<your_branch_name>
    ```
 
-3. Download and install [Dart 3](https://dart.dev/get-dart)
+3. Download and install [Dart](https://dart.dev/get-dart). Minimum 3.13.0.
 
-4. Install `melos:7.3`
+4. Install `melos` 8.1 or later
 
    ```bash
    dart pub global activate melos
    ```
 
-5. Run `melos exec "dart pub upgrade"` to update all the packages
+5. Run `dart pub get` at the repository root to resolve all the packages in the workspace, or `melos exec "dart pub upgrade"` to upgrade them
 
 6. Contribute changes to the desired packages
 

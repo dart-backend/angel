@@ -26,7 +26,7 @@ class WeirdJoinMigration extends Migration {
     schema.create('weird_joins', (table) {
       table.integer('id').primaryKey();
       table
-          .declare('join_name', ColumnType('varchar'))
+          .declare('join_name', ColumnType.varChar)
           .references('unorthodoxes', 'name');
     });
   }
@@ -89,9 +89,9 @@ class FooPivotMigration extends Migration {
   void up(Schema schema) {
     schema.create('foo_pivots', (table) {
       table
-          .declare('weird_join_id', ColumnType('int'))
+          .declare('weird_join_id', ColumnType.int)
           .references('weird_joins', 'id');
-      table.declare('foo_bar', ColumnType('varchar')).references('foos', 'bar');
+      table.declare('foo_bar', ColumnType.varChar).references('foos', 'bar');
     });
   }
 
@@ -1034,7 +1034,7 @@ class Unorthodox implements UnorthodoxEntity {
 
   @override
   int get hashCode {
-    return hashObjects([name]);
+    return Object.hashAll([name]);
   }
 
   @override
@@ -1102,7 +1102,13 @@ class WeirdJoin implements WeirdJoinEntity {
 
   @override
   int get hashCode {
-    return hashObjects([id, unorthodox, song, numbas, foos]);
+    return Object.hashAll([
+      id,
+      unorthodox,
+      song,
+      ListEquality<NumbaEntity>(DefaultEquality<NumbaEntity>()).hash(numbas),
+      ListEquality<FooEntity>(DefaultEquality<FooEntity>()).hash(foos),
+    ]);
   }
 
   @override
@@ -1165,7 +1171,7 @@ class Song extends SongEntity {
 
   @override
   int get hashCode {
-    return hashObjects([id, createdAt, updatedAt, weirdJoinId, title]);
+    return Object.hashAll([id, createdAt, updatedAt, weirdJoinId, title]);
   }
 
   @override
@@ -1199,7 +1205,7 @@ class Numba extends NumbaEntity {
 
   @override
   int get hashCode {
-    return hashObjects([i, parent]);
+    return Object.hashAll([i, parent]);
   }
 
   @override
@@ -1236,7 +1242,11 @@ class Foo implements FooEntity {
 
   @override
   int get hashCode {
-    return hashObjects([bar, weirdJoins]);
+    return Object.hashAll([
+      bar,
+      ListEquality<WeirdJoinEntity>(DefaultEquality<WeirdJoinEntity>())
+          .hash(weirdJoins),
+    ]);
   }
 
   @override
@@ -1275,7 +1285,7 @@ class FooPivot implements FooPivotEntity {
 
   @override
   int get hashCode {
-    return hashObjects([weirdJoin, foo]);
+    return Object.hashAll([weirdJoin, foo]);
   }
 
   @override

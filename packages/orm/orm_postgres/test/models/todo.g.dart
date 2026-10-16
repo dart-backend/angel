@@ -10,7 +10,7 @@ class UserMigration extends Migration {
   @override
   void up(Schema schema) {
     schema.create('user_acc', (table) {
-      table.integer('id').primaryKey();
+      table.serial('id').primaryKey();
       table.varChar('name', length: 255);
     });
   }
@@ -25,7 +25,7 @@ class UserAddressMigration extends Migration {
   @override
   void up(Schema schema) {
     schema.create('user_addr', (table) {
-      table.integer('id')
+      table.serial('id')
         ..primaryKey()
         ..notNull();
       table.integer('user_id').notNull();
@@ -43,7 +43,7 @@ class UserTodoMigration extends Migration {
   @override
   void up(Schema schema) {
     schema.create('user_todo', (table) {
-      table.integer('id')
+      table.serial('id')
         ..primaryKey()
         ..notNull();
       table.integer('user_id').notNull();
@@ -61,7 +61,7 @@ class TodoValueMigration extends Migration {
   @override
   void up(Schema schema) {
     schema.create('todo_value', (table) {
-      table.integer('id').primaryKey();
+      table.serial('id').primaryKey();
       table.varChar('value', length: 255);
       table.integer('todo_id');
       table.varChar('description', length: 255);
@@ -78,7 +78,7 @@ class TodoNoteMigration extends Migration {
   @override
   void up(Schema schema) {
     schema.create('todo_note', (table) {
-      table.integer('id').primaryKey();
+      table.serial('id').primaryKey();
       table.varChar('note', length: 255);
       table.integer('todo_id');
       table.varChar('description', length: 255);
@@ -943,7 +943,14 @@ class User implements UserEntity {
 
   @override
   int get hashCode {
-    return hashObjects([id, name, todos, address]);
+    return Object.hashAll([
+      id,
+      name,
+      ListEquality<UserTodoEntity>(DefaultEquality<UserTodoEntity>())
+          .hash(todos),
+      ListEquality<UserAddressEntity>(DefaultEquality<UserAddressEntity>())
+          .hash(address),
+    ]);
   }
 
   @override
@@ -987,7 +994,7 @@ class UserAddress implements UserAddressEntity {
 
   @override
   int get hashCode {
-    return hashObjects([id, userId, address]);
+    return Object.hashAll([id, userId, address]);
   }
 
   @override
@@ -1055,7 +1062,15 @@ class UserTodo implements UserTodoEntity {
 
   @override
   int get hashCode {
-    return hashObjects([id, userId, title, todoValues, todoNotes]);
+    return Object.hashAll([
+      id,
+      userId,
+      title,
+      ListEquality<TodoValueEntity>(DefaultEquality<TodoValueEntity>())
+          .hash(todoValues),
+      ListEquality<TodoNoteEntity>(DefaultEquality<TodoNoteEntity>())
+          .hash(todoNotes),
+    ]);
   }
 
   @override
@@ -1114,7 +1129,7 @@ class TodoValue implements TodoValueEntity {
 
   @override
   int get hashCode {
-    return hashObjects([id, value, todoId, description]);
+    return Object.hashAll([id, value, todoId, description]);
   }
 
   @override
@@ -1168,7 +1183,7 @@ class TodoNote implements TodoNoteEntity {
 
   @override
   int get hashCode {
-    return hashObjects([id, note, todoId, description]);
+    return Object.hashAll([id, note, todoId, description]);
   }
 
   @override

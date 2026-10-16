@@ -32,7 +32,7 @@ class AssetMigration extends Migration {
       table.timeStamp('updated_at');
       table.varChar('description', length: 255);
       table.varChar('name', length: 255);
-      table.double('price');
+      table.numeric('price', precision: 17, scale: 3);
     });
   }
 
@@ -459,7 +459,7 @@ class Item extends ItemEntity {
 
   @override
   int get hashCode {
-    return hashObjects([id, createdAt, updatedAt, description]);
+    return Object.hashAll([id, createdAt, updatedAt, description]);
   }
 
   @override
@@ -543,14 +543,14 @@ class Asset extends AssetEntity {
 
   @override
   int get hashCode {
-    return hashObjects([
+    return Object.hashAll([
       id,
       createdAt,
       updatedAt,
       description,
       name,
       price,
-      items,
+      ListEquality<ItemEntity>(DefaultEquality<ItemEntity>()).hash(items),
     ]);
   }
 

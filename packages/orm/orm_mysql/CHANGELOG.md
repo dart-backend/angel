@@ -3,6 +3,14 @@
 ## 10.0.0
 
 * Released with the other Angel3 packages at 10.0.0
+* fix: `MariaDbExecutor` replaces each `@name` placeholder whole, and passes the values in the order the placeholders appear. A placeholder that starts with another's name (`@name1` and `@name`) was partly replaced, and the values were passed in the order they were set, which need not match the SQL. Placeholder names may contain letters of any script (e.g. `@prix_unité`)
+* fix: `MariaDbExecutor` no longer fails an insert without an id with `Length of parameters (n) does not match parameter count in query (0)`: the query that returns the last inserted row is run without the INSERT's values
+* fix: `MariaDbExecutor` returns the updated rows of a table without an `id`: the query that selects them again has its `@name` placeholders bound, where they were sent as MySQL user variables (`NULL`) and nothing was returned
+* fix: `MySqlExecutor` returns the updated rows of a table without an `id`, as `MariaDbExecutor` now does; the query that selects them again was sent with its `@name` placeholders unbound
+* fix: `MySqlExecutor` names its parameters `:p0`, `:p1`, ... instead of after the columns, as `mysql_client` only finds `:name` placeholders in ASCII: a column such as `prix_unité` failed with `There is no parameter with name: prix_unit`. It no longer changes the `DateTime` values in the map it is given to local time
+* Both executors find the `@name` placeholders with `replacePlaceholders` of `angel3_orm`
+* test: `performance_test.dart` has a `main`, so the test runner can load (and skip) it
+* test: `executor_test.dart` runs inserts, updates and selects through both `MySqlExecutor` and `MariaDbExecutor`
 
 ## 9.1.0
 

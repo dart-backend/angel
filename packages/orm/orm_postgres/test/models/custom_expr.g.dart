@@ -30,9 +30,7 @@ class AlphabetMigration extends Migration {
       table.timeStamp('created_at');
       table.timeStamp('updated_at');
       table.varChar('value', length: 255);
-      table
-          .declare('numbers_id', ColumnType('int'))
-          .references('numbers', 'id');
+      table.declare('numbers_id', ColumnType.int).references('numbers', 'id');
     });
   }
 
@@ -328,8 +326,8 @@ class AlphabetQueryValues extends MapQueryValues {
     createdAt = model.createdAt;
     updatedAt = model.updatedAt;
     value = model.value;
-    if (model.numbers != null) {
-      values['numbers_id'] = model.numbers?.id;
+    if (model.numbers?.id != null) {
+      values['numbers_id'] = int.parse(model.numbers!.id!);
     }
   }
 }
@@ -382,7 +380,7 @@ class Number extends NumberEntity {
 
   @override
   int get hashCode {
-    return hashObjects([id, createdAt, updatedAt, two]);
+    return Object.hashAll([id, createdAt, updatedAt, two]);
   }
 
   @override
@@ -445,7 +443,7 @@ class Alphabet extends AlphabetEntity {
 
   @override
   int get hashCode {
-    return hashObjects([id, createdAt, updatedAt, value, numbers]);
+    return Object.hashAll([id, createdAt, updatedAt, value, numbers]);
   }
 
   @override

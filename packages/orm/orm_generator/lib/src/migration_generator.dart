@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:analyzer/dart/constant/value.dart';
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/type.dart';
@@ -10,6 +11,7 @@ import 'package:code_builder/code_builder.dart';
 import 'package:dart_style/dart_style.dart';
 import 'package:logging/logging.dart';
 import 'package:source_gen/source_gen.dart' hide LibraryBuilder;
+
 import 'orm_build_context.dart';
 
 /// Migration Builder
@@ -72,9 +74,8 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
     var lib = generateMigrationLibrary(ctx, element, resolver, buildStep);
 
     //if (lib == null) return null;
-    return DartFormatter(
-      languageVersion: DartFormatter.latestLanguageVersion,
-    ).format(lib.accept(DartEmitter(useNullSafetySyntax: true)).toString());
+    return DartFormatter(languageVersion: DartFormatter.latestLanguageVersion)
+        .format(lib.accept(DartEmitter(useNullSafetySyntax: true)).toString());
   }
 
   Library generateMigrationLibrary(
@@ -103,9 +104,8 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
     return Method((meth) {
       // Check to see if clazz extends Model class
 
-      var autoIdAndDateFields = const TypeChecker.typeNamed(
-        Model,
-      ).isAssignableFromType(ctx.buildContext.clazz.thisType);
+      var autoIdAndDateFields = const TypeChecker.typeNamed(Model)
+          .isAssignableFromType(ctx.buildContext.clazz.thisType);
       meth
         ..name = 'up'
         ..returns = refer('void')
@@ -183,7 +183,13 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
                     break;
                   case ColumnType.numeric:
                     methodName = 'numeric';
-                    if (col.type.hasPrecision) {}
+                    named['precision'] = literal(col.precision);
+                    named['scale'] = literal(col.scale);
+                    break;
+                  case ColumnType.decimal:
+                    methodName = 'decimal';
+                    named['precision'] = literal(col.precision);
+                    named['scale'] = literal(col.scale);
                     break;
                   case ColumnType.boolean:
                     methodName = 'boolean';
@@ -198,26 +204,25 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
                     methodName = 'timeStamp';
                     break;
                   default:
-                    Expression provColumn;
-                    var colType = refer('Column');
-                    var columnTypeType = refer('ColumnType');
+                    var type = col.type;
+                    var typeExpr = _columnTypeExpression(type);
+                    var hasLength = type.hasLength && col.length != 0;
 
-                    if (col.length == 0) {
-                      methodName = 'declare';
-                      provColumn = columnTypeType.newInstance([
-                        literal(col.type.name),
-                      ]);
-                    } else {
+                    if (hasLength || type.hasPrecision || type.hasScale) {
                       methodName = 'declareColumn';
-                      provColumn = colType.newInstance([], {
-                        'type': columnTypeType.newInstance([
-                          literal(col.type.name),
-                        ]),
-                        'length': literal(col.length),
-                      });
+                      positional.add(
+                        refer('Column').newInstance([], {
+                          'type': typeExpr,
+                          if (hasLength) 'length': literal(col.length),
+                          if (type.hasPrecision)
+                            'precision': literal(col.precision),
+                          if (type.hasScale) 'scale': literal(col.scale),
+                        }),
+                      );
+                    } else {
+                      methodName = 'declare';
+                      positional.add(typeExpr);
                     }
-
-                    positional.add(provColumn);
                     break;
                 }
               }
@@ -244,22 +249,20 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
                 var type = defaultValue.type;
                 Expression? defaultExpr;
 
-                if (const TypeChecker.typeNamed(
-                  RawSql,
-                ).isAssignableFromType(defaultValue.type!)) {
-                  var value = ConstantReader(
-                    defaultValue,
-                  ).read('value').stringValue;
-                  defaultExpr = refer(
-                    'RawSql',
-                  ).constInstance([literalString(value)]);
+                if (const TypeChecker.typeNamed(RawSql)
+                    .isAssignableFromType(defaultValue.type!)) {
+                  var value = ConstantReader(defaultValue)
+                      .read('value')
+                      .stringValue;
+                  defaultExpr = refer('RawSql')
+                      .constInstance([literalString(value)]);
                 } else if (type is InterfaceType &&
                     type.element is EnumElement) {
                   // Default to enum index.
                   try {
-                    var index = ConstantReader(
-                      defaultValue,
-                    ).read('index').intValue;
+                    var index = ConstantReader(defaultValue)
+                        .read('index')
+                        .intValue;
                     defaultExpr = literalNum(index);
                   } catch (error) {
                     _logger.warning(error);
@@ -338,24 +341,23 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
                   ).isAssignableFromType(foreignTableType);
                 }
 
-                var columnTypeType = refer('ColumnType');
                 var key = relationship.localKey;
 
                 // Default to `int` if foreign class extends Model with implicit 'id'
                 // as primary key
-                String? keyType;
+                ColumnType keyType;
                 if (foreignAautoIdAndDateFields != false &&
                     relationship.foreignKey == "id") {
-                  keyType = "int";
+                  keyType = ColumnType.int;
                 } else {
-                  var foreigColumnName =
+                  var foreignColumn =
                       relationship.foreign?.columns[relationship.foreignKey!];
-                  keyType = foreigColumnName?.type.name;
+                  keyType = _foreignKeyType(foreignColumn?.type);
                 }
 
                 var field = table.property('declare').call([
                   literal(key),
-                  columnTypeType.newInstance([literal(keyType)]),
+                  _columnTypeExpression(keyType),
                 ]);
 
                 var ref = field.property('references').call([
@@ -385,6 +387,32 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
         );
       });
     });
+  }
+
+  /// The `ColumnType` constant for [type], or a new `ColumnType` when it is
+  /// not one of them. Runners compare column types by identity, so known
+  /// types must stay the constants.
+  Expression _columnTypeExpression(ColumnType type) {
+    var constName = columnTypeConstantName(type);
+    if (constName != null) {
+      return refer('ColumnType').property(constName);
+    }
+
+    return refer('ColumnType').constInstance([literal(type.name)], {
+      if (type.hasLength) 'hasLength': literal(true),
+      if (type.hasPrecision) 'hasPrecision': literal(true),
+      if (type.hasScale) 'hasScale': literal(true),
+    });
+  }
+
+  /// The column type of a foreign key that references a column of [type]:
+  /// serial types become the integer type they auto-increment.
+  ColumnType _foreignKeyType(ColumnType? type) {
+    if (type == null) return ColumnType.int;
+    if (identical(type, ColumnType.serial)) return ColumnType.int;
+    if (identical(type, ColumnType.bigSerial)) return ColumnType.bigInt;
+    if (identical(type, ColumnType.smallSerial)) return ColumnType.smallInt;
+    return type;
   }
 
   /// Generate down() method to drop tables

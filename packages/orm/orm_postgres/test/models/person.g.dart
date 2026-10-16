@@ -327,7 +327,7 @@ class Person extends PersonEntity {
 
   @override
   int get hashCode {
-    return hashObjects([id, createdAt, updatedAt, name, age]);
+    return Object.hashAll([id, createdAt, updatedAt, name, age]);
   }
 
   @override
@@ -375,7 +375,7 @@ class PersonWithLastOrder extends PersonWithLastOrderEntity {
 
   @override
   int get hashCode {
-    return hashObjects([name, lastOrderName, lastOrderPrice]);
+    return Object.hashAll([name, lastOrderName, lastOrderPrice]);
   }
 
   @override

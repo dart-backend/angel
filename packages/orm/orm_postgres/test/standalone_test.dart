@@ -144,6 +144,59 @@ void main() {
           expect(cars.first.make, 'Hyundai');
         });
 
+        test('where on parts of a date', () async {
+          // Fractional seconds must still match the whole second.
+          var withSeconds = DateTime(2000, 1, 1, 0, 0, 7, 500);
+          var insert = CarQuery();
+          insert.values
+            ..make = 'Mazda'
+            ..createdAt = withSeconds
+            ..updatedAt = withSeconds
+            ..description = 'Zoom zoom'
+            ..price = 30000.00
+            ..familyFriendly = true;
+          var mazda = (await insert.insert(executor)).value;
+
+          var query = CarQuery();
+          query.where!.createdAt
+            ..year.equals(withSeconds.year)
+            ..second.equals(withSeconds.second);
+          var cars = await query.get(executor);
+          expect(cars.map((c) => c.id), [mazda.id]);
+
+          query = CarQuery();
+          query.where!.createdAt.year.equals(y2k.year + 1);
+          expect(await query.get(executor), isEmpty);
+        });
+
+        test('update by a column it changes', () async {
+          // The updated rows no longer match the condition, but are returned.
+          var query = CarQuery()
+            ..where!.make.equals('Ferrari東')
+            ..values.make = 'Hyundai';
+          var cars = await query.update(executor);
+          expect(cars, hasLength(1));
+          expect(cars.first.make, 'Hyundai');
+        });
+
+        test('update with a limit', () async {
+          await (CarQuery()
+                ..values.make = 'Ferrari東'
+                ..values.description = 'Second'
+                ..values.familyFriendly = false)
+              .insert(executor);
+          var query = CarQuery()
+            ..where!.make.equals('Ferrari東')
+            ..values.description = 'Limited'
+            ..limit(1);
+          var cars = await query.update(executor);
+          expect(cars, hasLength(1));
+          expect(cars.single.description, 'Limited');
+          var limited = await (CarQuery()..where!.description.equals('Limited'))
+              .get(executor);
+          expect(limited, hasLength(1));
+        });
+
         test('update car', () async {
           var cloned = ferrari!.copyWith(make: 'Angel');
           var query = CarQuery()..values.copyFrom(cloned);

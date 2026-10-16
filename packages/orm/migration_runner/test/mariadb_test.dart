@@ -17,7 +17,7 @@ void main() async {
     var host = Platform.environment['MYSQL_HOST'] ?? 'localhost';
     var database = Platform.environment['MYSQL_DB'] ?? 'orm_test';
     var username = Platform.environment['MYSQL_USERNAME'] ?? 'test';
-    var password = Platform.environment['MYSQL_PASSWORD'] ?? 'test123';
+    var password = Platform.environment['MYSQL_PASSWORD'] ?? 'Test123';
 
     var settings = ConnectionSettings(
       host: host,
