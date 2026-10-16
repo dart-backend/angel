@@ -2,6 +2,10 @@
 
 ## 10.0.0
 
+* **Breaking:** No longer uses `dart:mirrors`, so apps using it can be compiled with `dart compile exe`. In an expression such as `{{user.name}}`, each part after the first is read as a key of a `Map`, or of what the object's `toJson()` returns (as for `@serializable` models). The getters of other objects are no longer read
+* fix: Expressions into `Map` locals, such as `{{user.name}}` with `{'user': {'name': 'Bob'}}`, resolve; they threw `NoSuchMethodError`
+* fix: A missing key, a `null` value or an object without `toJson()` in the middle of an expression throws an `ArgumentError` naming the expression
+* test: Added tests for interpolation
 * Released with the other Angel3 packages at 10.0.0
 
 ## 9.1.0

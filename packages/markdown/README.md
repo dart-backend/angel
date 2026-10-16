@@ -58,10 +58,15 @@ You can render as follows:
 ```dart
 requestHandler(ResponseContext res) {
   return res.render('species', {
-    'species': new Species('sapiens', genius: 'homo')
+    'species': {
+      'name': 'sapiens',
+      'genus': {'name': 'homo'},
+    },
   });
 }
 ```
+
+Each part of a dotted expression after the first is read as a key of a `Map`. Any other object must have a `toJson()` method that returns a `Map`, as `@serializable` models do; its getters are not read.
 
 To disable interpolation for a single bracket, prefix it with an `@`, ex: `@{{raw | not_interpolated | angular}}`.
 

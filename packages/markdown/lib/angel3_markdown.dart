@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:mirrors';
 
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:file/file.dart';
@@ -61,13 +60,34 @@ AngelConfigurer markdown(
 }
 
 dynamic _resolveDotNotation(List<String> split, target) {
-  if (split.length == 1) return target;
-
-  var mirror = reflect(target);
-
   for (var i = 1; i < split.length; i++) {
-    mirror = mirror.getField(Symbol(split[i]));
+    target = _readMember(target, split[i], split.take(i).join('.'));
   }
 
-  return mirror.reflectee;
+  return target;
+}
+
+/// Reads [name] from [target], the value of the expression [path]: a key of a
+/// [Map], or else of what its `toJson()` returns, as `@serializable` models do.
+dynamic _readMember(dynamic target, String name, String path) {
+  if (target == null) {
+    throw ArgumentError('Cannot read "$name" of "$path", which is null.');
+  }
+
+  if (target is! Map) {
+    try {
+      target = (target as dynamic).toJson();
+    } on NoSuchMethodError {
+      throw ArgumentError(
+        'Cannot read "$name" of "$path", a ${target.runtimeType}. Locals must '
+        'be Maps, or have a toJson() method that returns one.',
+      );
+    }
+  }
+
+  if (target is! Map || !target.containsKey(name)) {
+    throw ArgumentError('"$path" has no member named "$name".');
+  }
+
+  return target[name];
 }

@@ -64,7 +64,7 @@ The framework is divided into several categories of packages:
 
 ## Key Technical Debt and Future Roadmap
 
-- Removal of dependency on the `dart:mirrors` library (still used by `framework`, `container`, `client`, `websocket` and `markdown`).
+- Removal of dependency on the `dart:mirrors` library (`framework` and `container` no longer import it; `MirrorsReflector` is opt-in via `container_mirrors`. Still imported by `websocket`, `jael`, `migration_runner` and `serialize_generator`).
 - Performance optimizations to address long-overdue issues.
 - Integration of OpenAPI 3 support.
 - Expanding ORM support for SQLite, SQL Server, Oracle DB, multi-tenant architectures, and SQL schema reverse engineering.
