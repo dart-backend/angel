@@ -66,11 +66,13 @@ requestHandler(ResponseContext res) {
 }
 ```
 
-Each part of a dotted expression after the first is read as a key of a `Map`. Any other object must have a `toJson()` method that returns a `Map`, as `@serializable` models do; its getters are not read.
+Objects other than `Map`s and `List`s must have a `toJson()` method that returns a `Map`, as `@serializable` models do; their getters are not read.
 
 To disable interpolation for a single bracket, prefix it with an `@`, ex: `@{{raw | not_interpolated | angular}}`.
 
-Interpolated values are escaped, so they appear as plain text: HTML such as `<script>` or Markdown such as `[link](...)` in them is not rendered. For values you trust and want rendered as Markdown, pass `escape: false` to `markdown()`.
+Interpolated values are put into the rendered HTML, HTML-escaped, so they appear exactly as given wherever they are, including code, tables and HTML attributes: HTML such as `<script>` or Markdown such as `[link](...)` in them is not rendered. For values you trust and want rendered as Markdown, pass `escape: false` to `markdown()`. Escaping does not check URLs, so a value used as a link target can still be a `javascript:` URL.
+
+Each part of an expression after the first is read as a key of a `Map`, an index of a `List` (`{{items.0}}`), one of the getters `length`, `isEmpty`, `isNotEmpty` (of a `String`, `List` or `Map`), `first` and `last` (of a `List`), or else a key of what the object's `toJson()` returns.
 
 View names are resolved inside the views directory. A name that points outside it, such as `../secret`, throws a 404 `AngelHttpException`.
 
@@ -89,7 +91,7 @@ configureServer(Angel app) async {
       return '''<!DOCTYPE html>
 <html>
     <head>
-        <title>${locals['title']} - My Site</title>
+        <title>${htmlEscape.convert('${locals['title']}')} - My Site</title>
     </head>
     <body>
       $content
@@ -100,6 +102,8 @@ configureServer(Angel app) async {
   );
 }
 ```
+
+The `template` callback receives the raw `locals`, which are not escaped as interpolated values are: escape them yourself, e.g. with `htmlEscape` from `dart:convert`.
 
 The `template` function will have access to whatever values were passed to the renderer, or an empty `Map`.
 
