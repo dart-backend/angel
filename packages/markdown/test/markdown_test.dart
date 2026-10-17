@@ -71,6 +71,10 @@ class PrefixedHeaderSyntax extends md.HeaderWithIdSyntax {
   }
 }
 
+class NeedsArguments {
+  Map<String, dynamic> toJson(int depth) => {'name': 'x'};
+}
+
 class Opaque {
   final String name = 'hidden';
 }
@@ -131,16 +135,37 @@ void main() {
       );
     });
 
-    test('encodes whitespace of values in raw HTML', () async {
+    test('encodes values in raw HTML tags outside quotes', () async {
       var html = await render('<img src={{x}}>', {'x': 'a onerror=alert(1)'});
-      expect(html, contains('<img src=a&#32;onerror=alert(1)>'));
+      expect(html, contains('<img src=a&#32;onerror&#61;alert&#40;1&#41;>'));
       expect(
-        await render('<div title={{x}}>\n{{x}}\n</div>', {'x': 'a\tb c'}),
-        contains('<div title=a&#9;b&#32;c>\na\tb c\n</div>'),
+        await render('<div title={{x}}>\n{{x}}\n</div>', {'x': 'a\tb/c'}),
+        contains('<div title=a&#9;b&#47;c>\na\tb/c\n</div>'),
       );
       expect(
         await render('<a title="x>y" href={{x}}>z</a>', {'x': 'a b'}),
         contains('href=a&#32;b>'),
+      );
+      // In the place of an attribute, in blocks and inline.
+      expect(
+        await render('<div {{x}}>\nhi\n</div>', {'x': 'onclick=alert(1)'}),
+        contains('<div onclick&#61;alert&#40;1&#41;>'),
+      );
+      expect(
+        await render('<a href=x {{x}}>y</a>', {'x': 'a/onclick=alert(1)'}),
+        contains('<p><a href=x a&#47;onclick&#61;alert&#40;1&#41;>y</a></p>'),
+      );
+      // A quote that does not follow `=` does not open a value.
+      expect(
+        await render("<div title=it's {{x}}>\nhi\n</div>", {
+          'x': 'a onclick=b',
+        }),
+        contains("<div title=it's a&#32;onclick&#61;b>"),
+      );
+      // After an empty comment.
+      expect(
+        await render('<!--> <a {{x}}>', {'x': 'a b'}),
+        contains('<a a&#32;b>'),
       );
       // Not in content, quoted attribute values or comments.
       for (var view in [
@@ -484,6 +509,21 @@ A[^{{x}}] B[^{{y}}]
       });
     }
 
+    test('rejects views of a views directory that does not exist', () async {
+      app = Angel();
+      await app.configure(markdown(views.fileSystem.directory('/missing')));
+      expect(
+        app.viewGenerator!('page'),
+        throwsA(
+          isA<AngelHttpException>().having(
+            (e) => e.statusCode,
+            'statusCode',
+            404,
+          ),
+        ),
+      );
+    });
+
     for (var name in ['../secret', 'docs/../../secret', '/srv/secret']) {
       test('rejects "$name", outside the views directory', () {
         expect(
@@ -653,16 +693,23 @@ A[^{{x}}] B[^{{y}}]
     );
   });
 
-  test('throws for an object without toJson()', () async {
-    expect(
-      render('{{thing.name}}', {'thing': Opaque()}),
-      throwsA(
-        isA<ArgumentError>().having(
-          (e) => e.message,
-          'message',
-          contains('toJson()'),
+  for (var (kind, thing) in [
+    ('an object', Opaque()),
+    ('a record', (1, 2)),
+    ('a function', () => 1),
+    ('an object whose toJson() needs arguments', NeedsArguments()),
+  ]) {
+    test('throws for $kind without toJson()', () async {
+      expect(
+        render('{{thing.name}}', {'thing': thing}),
+        throwsA(
+          isA<ArgumentError>().having(
+            (e) => e.message,
+            'message',
+            contains('toJson()'),
+          ),
         ),
-      ),
-    );
-  });
+      );
+    });
+  }
 }

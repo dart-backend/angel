@@ -29,12 +29,18 @@ final RegExp _scheme = RegExp(r'^([A-Za-z][A-Za-z0-9+.\-]*):');
 /// `data:`, could run script when the link is followed.
 const Set<String> _safeSchemes = {'http', 'https', 'mailto'};
 
-/// Whitespace, which ends an unquoted HTML attribute value, and which is
-/// encoded in raw HTML so that a value cannot add attributes to a tag.
-final RegExp _htmlWhitespace = RegExp('[ \t\n\f\r]');
-
-/// What starts an HTML tag after `<`; a digit starts a placeholder.
+/// What starts an HTML tag after `<`, also a placeholder, as a value may be
+/// the name of a tag.
 final RegExp _tagStart = RegExp(r'[A-Za-z0-9/!?]');
+
+/// What a value in an HTML tag outside quotes is not encoded in.
+final RegExp _alphanumeric = RegExp('[A-Za-z0-9]');
+
+/// The HTML whitespace, which separates attributes in a tag.
+final RegExp _htmlSpace = RegExp('[ \t\n\f\r]');
+
+/// Each character of a string.
+final RegExp _character = RegExp('.', dotAll: true, unicode: true);
 
 /// What [AutolinkSyntax] and [EmailAutolinkSyntax] take for the URL of an
 /// autolink, such as `<https://example.com>` or `<a@example.com>`.
@@ -68,8 +74,9 @@ final Random _random = Random();
 /// The values of `{{...}}` expressions are put into the rendered HTML,
 /// HTML-escaped, so that they appear as text in HTML content (also in code
 /// and tables) and in quoted HTML attributes, and HTML or Markdown in them is
-/// not rendered; in unquoted HTML attributes their whitespace is also encoded,
-/// so that they cannot add attributes. `<{{url}}>` is an autolink when the
+/// not rendered; in HTML tags outside quotes, as in `<img src={{x}}>`, each
+/// character but ASCII letters and digits is encoded, so that they cannot add
+/// attributes. `<{{url}}>` is an autolink when the
 /// value is a URL or email address. In the URL of a Markdown link or image they are also
 /// percent-encoded: a value that starts the URL as a URL, and a value after
 /// other text of the URL (e.g. `/search?q={{q}}`) as a component of it, so
@@ -111,9 +118,9 @@ AngelConfigurer markdown(
       // Also stay inside the views directory through symbolic links, and read
       // the file that was checked. The views directory is resolved on every
       // render, as it may be a link that a deployment points elsewhere.
-      var resolvedViewsPath = await viewsDirectory.resolveSymbolicLinks();
       String contents;
       try {
+        var resolvedViewsPath = await viewsDirectory.resolveSymbolicLinks();
         var resolvedFilePath = await fileSystem
             .file(filePath)
             .resolveSymbolicLinks();
@@ -122,7 +129,8 @@ AngelConfigurer markdown(
         }
         contents = await fileSystem.file(resolvedFilePath).readAsString();
       } on FileSystemException {
-        // A view that does not exist (or is not a file) is not found either.
+        // A view (or views directory) that does not exist, or a view that is
+        // not a file, is not found either.
         throw AngelHttpException.notFound();
       }
 
@@ -153,7 +161,16 @@ AngelConfigurer markdown(
             jsonCache,
           )?.toString();
           if (value == null) return '';
-          return escape ? placeholders.add(value) : value;
+          if (!escape) return value;
+          var input = m.input;
+          return placeholders.add(
+            value,
+            autolink:
+                m.start > 0 &&
+                input[m.start - 1] == '<' &&
+                m.end < input.length &&
+                input[m.end] == '>',
+          );
         }
       });
 
@@ -175,9 +192,12 @@ AngelConfigurer markdown(
 /// with placeholders for, and which [fill] then puts into the parsed nodes.
 ///
 /// The placeholder of the n-th value is a key, n and the key again, where the
-/// key is a random digit and lowercase letters, so that no text of the view is
-/// taken for a placeholder, and a placeholder in `<>` is not taken for an HTML
-/// tag, whose name starts with a letter. Markdown leaves letters and digits as they are wherever they
+/// key is random lowercase letters, so that no text of the view is taken for a
+/// placeholder. A value in `<>`, as in `<{{url}}>`, has a key that starts with
+/// a digit instead, so that Markdown does not take it for an HTML tag, whose
+/// name starts with a letter, and [_PlaceholderAutolinkSyntax] renders it.
+/// Elsewhere a placeholder starts with a letter, as a value may be the name of
+/// a tag or attribute. Markdown leaves letters and digits as they are wherever they
 /// are: in text, URLs, labels and ids. Equal values have the same placeholder,
 /// so that text that Markdown compares, such as the label of a reference link
 /// and of its definition, is still equal.
@@ -185,29 +205,34 @@ class _Placeholders {
   final List<String> _values = [];
   final Map<String, int> _indexes = {};
 
-  final String _key = String.fromCharCodes([
-    0x30 + _random.nextInt(10),
-    for (var i = 0; i < 8; i++) 0x61 + _random.nextInt(26),
-  ]);
+  final String _key = _randomLetters();
+  final String _autolinkKey = '${_random.nextInt(10)}${_randomLetters()}';
 
   late final RegExp _pattern = RegExp(
     '$_key'
     r'(\d+)'
-    '$_key',
+    '$_key|$_autolinkKey'
+    r'(\d+)'
+    '$_autolinkKey',
   );
+
+  static String _randomLetters() => String.fromCharCodes([
+    for (var i = 0; i < 8; i++) 0x61 + _random.nextInt(26),
+  ]);
 
   bool get isNotEmpty => _values.isNotEmpty;
 
-  /// Returns the placeholder for [value].
-  String add(String value) {
+  /// Returns the placeholder for [value], for a value in `<>` if [autolink].
+  String add(String value, {bool autolink = false}) {
     var index = _indexes.putIfAbsent(value, () {
       _values.add(value);
       return _values.length - 1;
     });
-    return '$_key$index$_key';
+    var key = autolink ? _autolinkKey : _key;
+    return '$key$index$key';
   }
 
-  String _value(Match m) => _values[int.parse(m[1]!)];
+  String _value(Match m) => _values[int.parse(m[1] ?? m[2]!)];
 
   /// [extensionSet], with its syntaxes that generate the ids of headings
   /// replaced by ones that generate them from the Markdown of the heading with
@@ -291,33 +316,45 @@ class _Placeholders {
 
   /// [_fillText] for the text of a node, which may be raw HTML (Markdown
   /// escapes `<` in other text). A value in a tag but not in a quoted
-  /// attribute value, such as in `<img src={{x}}>`, also has its whitespace
-  /// encoded, so that it cannot end an unquoted attribute value and add
-  /// attributes.
+  /// attribute value, such as in `<img src={{x}}>` or `<div {{x}}>`, has each
+  /// character but ASCII letters and digits encoded as a character reference,
+  /// so that it cannot end an attribute (with whitespace, `/`, `=` or `>`) and
+  /// add others. A quote opens a value only after `=`, as in HTML.
   String _fillHtml(String text) {
     var state = _HtmlState.text;
+    // The last character in a tag that is not whitespace.
+    var last = '';
     var scanned = 0;
     return text.replaceAllMapped(_pattern, (m) {
       for (; scanned < m.start; scanned++) {
         var c = text[scanned];
         switch (state) {
           case _HtmlState.text:
-            if (text.startsWith('<!--', scanned)) {
+            if (text.startsWith('<!-->', scanned)) {
+              // An empty comment.
+              scanned += 4;
+            } else if (text.startsWith('<!--->', scanned)) {
+              scanned += 5;
+            } else if (text.startsWith('<!--', scanned)) {
               state = _HtmlState.comment;
               scanned += 3;
             } else if (c == '<' &&
                 scanned + 1 < text.length &&
                 _tagStart.hasMatch(text[scanned + 1])) {
               state = _HtmlState.tag;
+              last = '<';
             }
           case _HtmlState.tag:
-            if (c == '"') state = _HtmlState.doubleQuoted;
-            if (c == "'") state = _HtmlState.singleQuoted;
+            if (c == '"' && last == '=') state = _HtmlState.doubleQuoted;
+            if (c == "'" && last == '=') state = _HtmlState.singleQuoted;
             if (c == '>') state = _HtmlState.text;
+            if (!_htmlSpace.hasMatch(c)) last = c;
           case _HtmlState.doubleQuoted:
             if (c == '"') state = _HtmlState.tag;
+            last = c;
           case _HtmlState.singleQuoted:
             if (c == "'") state = _HtmlState.tag;
+            last = c;
           case _HtmlState.comment:
             if (text.startsWith('-->', scanned)) {
               state = _HtmlState.text;
@@ -327,11 +364,14 @@ class _Placeholders {
       }
       scanned = m.end;
 
-      var value = _htmlEscape.convert(_value(m));
-      if (state != _HtmlState.tag) return value;
+      var value = _value(m);
+      if (state != _HtmlState.tag) return _htmlEscape.convert(value);
+      // The value is in the tag, but not a quote that opens a value.
+      if (value.isNotEmpty) last = 'a';
       return value.replaceAllMapped(
-        _htmlWhitespace,
-        (m) => '&#${m[0]!.codeUnitAt(0)};',
+        _character,
+        (m) =>
+            _alphanumeric.hasMatch(m[0]!) ? m[0]! : '&#${m[0]!.runes.first};',
       );
     });
   }
@@ -391,9 +431,9 @@ class _PlaceholderAutolinkSyntax extends InlineSyntax {
 
   _PlaceholderAutolinkSyntax(this._placeholders)
     : super(
-        '<(${_placeholders._key}'
+        '<(${_placeholders._autolinkKey}'
         r'(\d+)'
-        '${_placeholders._key})>',
+        '${_placeholders._autolinkKey})>',
         startCharacter: 0x3C,
       );
 
@@ -496,21 +536,22 @@ dynamic _readMember(
 
   if (target is! Map && target is! Iterable && target is! String) {
     var json = jsonCache.putIfAbsent(target, () {
+      // Tears off toJson before calling it, so that a NoSuchMethodError
+      // thrown inside it, such as for another object without toJson(), is
+      // passed on, and is not reported as a missing toJson().
+      Object? toJson;
       try {
-        return (target as dynamic).toJson();
-      } on NoSuchMethodError catch (e) {
-        // Only report that this object has no toJson(), not an error inside
-        // one, such as another object without toJson().
-        if (!'$e'.contains(
-          "Class '${target.runtimeType}' has no instance method 'toJson'",
-        )) {
-          rethrow;
-        }
+        toJson = (target as dynamic).toJson;
+      } on NoSuchMethodError {
+        toJson = null;
+      }
+      if (toJson is! Object? Function()) {
         throw ArgumentError(
           'Cannot read "$name" of "${path()}", a ${target.runtimeType}. '
           'Locals must be Maps, or have a toJson() method that returns one.',
         );
       }
+      return toJson();
     });
     // Only the keys of the JSON are members of the object, not the getters of
     // the Map.
