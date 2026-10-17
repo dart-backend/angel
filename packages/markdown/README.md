@@ -69,14 +69,14 @@ Objects other than `Map`s and `List`s must have a `toJson()` method that returns
 
 To disable interpolation for a single bracket, prefix it with an `@`, ex: `@{{raw | not_interpolated | angular}}`.
 
-Interpolated values are put into the rendered HTML, HTML-escaped, so they appear as given in text (including code and tables) and in quoted HTML attributes, and HTML such as `<script>` or Markdown such as `[link](...)` in them is not rendered. In the URL of a Markdown link they are also percent-encoded: a value that starts the URL, as in `[x]({{url}})`, as a whole URL, and a value after other text of the URL, as in `[x](/search?q={{q}})` or `[x](/users/{{id}})`, as a component, so that its `/`, `?`, `&`, `=` and `#` are encoded too. The ids of headings are generated as for the Markdown with the values. For values you trust and want rendered as Markdown, pass `escape: false` to `markdown()`.
+Interpolated values are put into the rendered HTML, HTML-escaped, so they appear as given in text (including code and tables) and in quoted HTML attributes, and HTML such as `<script>` or Markdown such as `[link](...)` in them is not rendered. In an unquoted HTML attribute, as in `<img src={{x}}>`, their whitespace is also encoded, so that they cannot add attributes. In the URL of a Markdown link they are also percent-encoded: a value that starts the URL, as in `[x]({{url}})`, as a whole URL, and a value after other text of the URL, as in `[x](/search?q={{q}})` or `[x](/users/{{id}})`, as a component, so that its `/`, `?`, `&`, `=` and `#` are encoded too. The ids of headings are generated as for the Markdown with the values. For values you trust and want rendered as Markdown, pass `escape: false` to `markdown()`.
 
 Escaping has these limits:
 
 * Values are not escaped for JavaScript or CSS. Do not put them into `<script>` or `<style>` elements, or into event handler attributes such as `onclick`.
 * The URL of a Markdown link or image is replaced with `#` when values make its scheme, as in `[x]({{url}})` or `[x]({{proto}}:{{rest}})`, and it is not `http`, `https` or `mailto`, so `javascript:` and `data:` URLs do not get through. A scheme in the view itself, as in `[x](tel:{{phone}})`, is kept. URLs in HTML attributes, as in `<a href="{{url}}">`, are not checked.
 * Markdown matches the labels of reference links and footnotes regardless of case, but labels with values only match when the values are equal, also in case.
-* Markdown does not see the content of a value, so a value cannot form Markdown syntax with the text around it. `<{{url}}>` and a bare `{{url}}` do not become links; write `[{{url}}]({{url}})` instead.
+* Markdown does not see the content of a value, so a value cannot form Markdown syntax with the text around it. A bare `{{url}}` does not become a link; write `<{{url}}>` (an autolink when the value is a URL or email address) or `[{{url}}]({{url}})` instead.
 
 Each part of an expression after the first is read as a key of a `Map`, an index of a `List` (`{{items.0}}`), one of the getters `length`, `isEmpty` and `isNotEmpty` (of a `String`, `Iterable` or `Map`) or `first` and `last` (of an `Iterable`, such as a `List` or `Set`), or else a key of what the object's `toJson()` returns.
 
@@ -87,7 +87,7 @@ View names are resolved inside the views directory. A name that points outside i
 Version 10.0.0 changes how views are rendered, which can change the output of existing views without an error:
 
 * Interpolated values are escaped. Views that put HTML or Markdown into the page through locals render it as text; pass `escape: false` for trusted values.
-* `<{{url}}>` and a bare `{{url}}` no longer become links; write `[{{url}}]({{url}})`.
+* A bare `{{url}}` no longer becomes a link; write `<{{url}}>` or `[{{url}}]({{url}})`.
 * Expressions no longer read getters through `dart:mirrors`. Pass `Map`s, or objects whose `toJson()` returns one. Use the JSON keys, which can differ from the Dart names (e.g. `full_name` for `fullName`), and add computed getters to `toJson()` or to the locals.
 * The URL of a Markdown link or image renders as `#` when values make its scheme and it is not `http`, `https` or `mailto`.
 * A view that does not exist throws a 404 `AngelHttpException` instead of a `FileSystemException`.

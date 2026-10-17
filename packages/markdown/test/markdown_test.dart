@@ -131,6 +131,50 @@ void main() {
       );
     });
 
+    test('encodes whitespace of values in raw HTML', () async {
+      var html = await render('<img src={{x}}>', {'x': 'a onerror=alert(1)'});
+      expect(html, contains('<img src=a&#32;onerror=alert(1)>'));
+      expect(
+        await render('<div title={{x}}>\n{{x}}\n</div>', {'x': 'a\tb c'}),
+        contains('<div title=a&#9;b&#32;c>\na\tb c\n</div>'),
+      );
+      expect(
+        await render('<a title="x>y" href={{x}}>z</a>', {'x': 'a b'}),
+        contains('href=a&#32;b>'),
+      );
+      // Not in content, quoted attribute values or comments.
+      for (var view in [
+        '<b>{{x}}</b>',
+        '<a title="{{x}}">',
+        "<a title='{{x}}'>",
+        '<!-- <a {{x}} -->',
+      ]) {
+        expect(await render(view, {'x': 'a b'}), contains('a b'), reason: view);
+      }
+    });
+
+    test('renders values in <> as autolinks', () async {
+      expect(
+        await render('<{{u}}>', {'u': 'https://example.com/a?b=1&c'}),
+        contains(
+          '<a href="https://example.com/a?b=1&amp;c">'
+          'https://example.com/a?b=1&amp;c</a>',
+        ),
+      );
+      expect(
+        await render('<{{e}}>', {'e': 'a@example.com'}),
+        contains('<a href="mailto:a@example.com">a@example.com</a>'),
+      );
+      expect(
+        await render('<{{u}}>', {'u': 'javascript:alert(1)'}),
+        contains('<a href="#">javascript:alert(1)</a>'),
+      );
+      expect(
+        await render('<{{v}}>', {'v': 'not <a> link'}),
+        contains('&lt;not &lt;a&gt; link&gt;'),
+      );
+    });
+
     test('escapes values in HTML attributes', () async {
       var html = await render('<a href="{{url}}" title=\'{{t}}\'>x</a>', {
         'url': 'https://x.com/a?b=1&c=2',

@@ -29,6 +29,21 @@ final RegExp _scheme = RegExp(r'^([A-Za-z][A-Za-z0-9+.\-]*):');
 /// `data:`, could run script when the link is followed.
 const Set<String> _safeSchemes = {'http', 'https', 'mailto'};
 
+/// Whitespace, which ends an unquoted HTML attribute value, and which is
+/// encoded in raw HTML so that a value cannot add attributes to a tag.
+final RegExp _htmlWhitespace = RegExp('[ \t\n\f\r]');
+
+/// What starts an HTML tag after `<`; a digit starts a placeholder.
+final RegExp _tagStart = RegExp(r'[A-Za-z0-9/!?]');
+
+/// What [AutolinkSyntax] and [EmailAutolinkSyntax] take for the URL of an
+/// autolink, such as `<https://example.com>` or `<a@example.com>`.
+final RegExp _autolinkUrl = RegExp(r'^[a-zA-Z][a-zA-Z\-+.]+:(?://)?[^\s<>]*$');
+final RegExp _autolinkEmail = RegExp(
+  r'''^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}'''
+  r'''[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$''',
+);
+
 /// The attributes of Markdown elements that hold a URL.
 const Set<String> _urlAttributes = {'href', 'src'};
 
@@ -53,7 +68,9 @@ final Random _random = Random();
 /// The values of `{{...}}` expressions are put into the rendered HTML,
 /// HTML-escaped, so that they appear as text in HTML content (also in code
 /// and tables) and in quoted HTML attributes, and HTML or Markdown in them is
-/// not rendered. In the URL of a Markdown link or image they are also
+/// not rendered; in unquoted HTML attributes their whitespace is also encoded,
+/// so that they cannot add attributes. `<{{url}}>` is an autolink when the
+/// value is a URL or email address. In the URL of a Markdown link or image they are also
 /// percent-encoded: a value that starts the URL as a URL, and a value after
 /// other text of the URL (e.g. `/search?q={{q}}`) as a component of it, so
 /// that its `/`, `?`, `&` and `#` are encoded too. A URL whose scheme values
@@ -158,8 +175,9 @@ AngelConfigurer markdown(
 /// with placeholders for, and which [fill] then puts into the parsed nodes.
 ///
 /// The placeholder of the n-th value is a key, n and the key again, where the
-/// key is random lowercase letters, so that no text of the view is taken for a
-/// placeholder. Markdown leaves letters and digits as they are wherever they
+/// key is a random digit and lowercase letters, so that no text of the view is
+/// taken for a placeholder, and a placeholder in `<>` is not taken for an HTML
+/// tag, whose name starts with a letter. Markdown leaves letters and digits as they are wherever they
 /// are: in text, URLs, labels and ids. Equal values have the same placeholder,
 /// so that text that Markdown compares, such as the label of a reference link
 /// and of its definition, is still equal.
@@ -168,6 +186,7 @@ class _Placeholders {
   final Map<String, int> _indexes = {};
 
   final String _key = String.fromCharCodes([
+    0x30 + _random.nextInt(10),
     for (var i = 0; i < 8; i++) 0x61 + _random.nextInt(26),
   ]);
 
@@ -195,15 +214,21 @@ class _Placeholders {
   /// the values, as for the Markdown that has them. Subclasses of them, which
   /// may generate ids differently, are kept, and [fill] puts the values into
   /// the ids they generate.
-  ExtensionSet extensionSetFor(ExtensionSet extensionSet) => ExtensionSet([
-    for (var syntax in extensionSet.blockSyntaxes)
-      if (syntax.runtimeType == HeaderWithIdSyntax)
-        _HeaderWithIdSyntax(this)
-      else if (syntax.runtimeType == SetextHeaderWithIdSyntax)
-        _SetextHeaderWithIdSyntax(this)
-      else
-        syntax,
-  ], extensionSet.inlineSyntaxes);
+  ///
+  /// It also has [_PlaceholderAutolinkSyntax] first, which renders a
+  /// placeholder in `<>` as Markdown would render the value in `<>`.
+  ExtensionSet extensionSetFor(ExtensionSet extensionSet) => ExtensionSet(
+    [
+      for (var syntax in extensionSet.blockSyntaxes)
+        if (syntax.runtimeType == HeaderWithIdSyntax)
+          _HeaderWithIdSyntax(this)
+        else if (syntax.runtimeType == SetextHeaderWithIdSyntax)
+          _SetextHeaderWithIdSyntax(this)
+        else
+          syntax,
+    ],
+    [_PlaceholderAutolinkSyntax(this), ...extensionSet.inlineSyntaxes],
+  );
 
   /// Generates the id of [heading] again, as [BlockSyntax.generateAnchorHash]
   /// does from its Markdown, which it still has, with the values.
@@ -222,8 +247,8 @@ class _Placeholders {
   }
 
   /// Replaces the placeholders in the text and attributes of [nodes] with
-  /// their values, HTML-escaped: in the URLs of `href` and `src` attributes as
-  /// [_fillUrl] does, and in `id` attributes, such as those of footnotes,
+  /// their values, HTML-escaped (in raw HTML as [_fillHtml] does): in the URLs
+  /// of `href` and `src` attributes as [_fillUrl] does, and in `id` attributes, such as those of footnotes,
   /// percent-encoded as in the URLs that link to them.
   ///
   /// The ids that other syntaxes generated for headings have the placeholders
@@ -233,7 +258,7 @@ class _Placeholders {
     for (var i = 0; i < nodes.length; i++) {
       var node = nodes[i];
       if (node is Text) {
-        nodes[i] = Text(_fillText(node.text));
+        nodes[i] = Text(_fillHtml(node.text));
       } else if (node is Element) {
         node.attributes.updateAll(
           (name, value) => _urlAttributes.contains(name)
@@ -263,6 +288,53 @@ class _Placeholders {
         if (encode) value = Uri.encodeComponent(_withoutLoneSurrogates(value));
         return _htmlEscape.convert(value);
       });
+
+  /// [_fillText] for the text of a node, which may be raw HTML (Markdown
+  /// escapes `<` in other text). A value in a tag but not in a quoted
+  /// attribute value, such as in `<img src={{x}}>`, also has its whitespace
+  /// encoded, so that it cannot end an unquoted attribute value and add
+  /// attributes.
+  String _fillHtml(String text) {
+    var state = _HtmlState.text;
+    var scanned = 0;
+    return text.replaceAllMapped(_pattern, (m) {
+      for (; scanned < m.start; scanned++) {
+        var c = text[scanned];
+        switch (state) {
+          case _HtmlState.text:
+            if (text.startsWith('<!--', scanned)) {
+              state = _HtmlState.comment;
+              scanned += 3;
+            } else if (c == '<' &&
+                scanned + 1 < text.length &&
+                _tagStart.hasMatch(text[scanned + 1])) {
+              state = _HtmlState.tag;
+            }
+          case _HtmlState.tag:
+            if (c == '"') state = _HtmlState.doubleQuoted;
+            if (c == "'") state = _HtmlState.singleQuoted;
+            if (c == '>') state = _HtmlState.text;
+          case _HtmlState.doubleQuoted:
+            if (c == '"') state = _HtmlState.tag;
+          case _HtmlState.singleQuoted:
+            if (c == "'") state = _HtmlState.tag;
+          case _HtmlState.comment:
+            if (text.startsWith('-->', scanned)) {
+              state = _HtmlState.text;
+              scanned += 2;
+            }
+        }
+      }
+      scanned = m.end;
+
+      var value = _htmlEscape.convert(_value(m));
+      if (state != _HtmlState.tag) return value;
+      return value.replaceAllMapped(
+        _htmlWhitespace,
+        (m) => '&#${m[0]!.codeUnitAt(0)};',
+      );
+    });
+  }
 
   /// Puts the values into [url], percent-encoded: a value that starts it as a
   /// URL, and other values as a component of it. The URL is replaced with `#`
@@ -305,6 +377,43 @@ class _Placeholders {
     }
 
     return escaped.toString();
+  }
+}
+
+/// Where [_Placeholders._fillHtml] is in raw HTML.
+enum _HtmlState { text, tag, doubleQuoted, singleQuoted, comment }
+
+/// Renders a placeholder in `<>` as an autolink when its value is the URL or
+/// email address of one, as for the Markdown with the value, and else as the
+/// value in `<>` as text.
+class _PlaceholderAutolinkSyntax extends InlineSyntax {
+  final _Placeholders _placeholders;
+
+  _PlaceholderAutolinkSyntax(this._placeholders)
+    : super(
+        '<(${_placeholders._key}'
+        r'(\d+)'
+        '${_placeholders._key})>',
+        startCharacter: 0x3C,
+      );
+
+  @override
+  bool onMatch(InlineParser parser, Match match) {
+    var placeholder = match[1]!;
+    var value = _placeholders._values[int.parse(match[2]!)];
+    if (_autolinkUrl.hasMatch(value)) {
+      parser.addNode(
+        Element.text('a', placeholder)..attributes['href'] = placeholder,
+      );
+    } else if (_autolinkEmail.hasMatch(value)) {
+      parser.addNode(
+        Element.text('a', placeholder)
+          ..attributes['href'] = _placeholders.add('mailto:$value'),
+      );
+    } else {
+      parser.addNode(Text('&lt;$placeholder&gt;'));
+    }
+    return true;
   }
 }
 
