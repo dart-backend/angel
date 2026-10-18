@@ -67,6 +67,17 @@ abstract class Table {
   }
 }
 
+/// The `defaultValue` of [MutableTable.changeColumnType] that removes the
+/// default of the column, where `null` keeps it.
+const Object noDefault = _NoDefault();
+
+final class _NoDefault {
+  const _NoDefault();
+
+  @override
+  String toString() => 'noDefault';
+}
+
 abstract class MutableTable extends Table implements MutableIndexes {
   void rename(String newName);
 
@@ -80,9 +91,11 @@ abstract class MutableTable extends Table implements MutableIndexes {
   /// kept, and `numeric(17, 3)` on MySQL and MariaDB.
   ///
   /// The column has the constraints given after the change: it is nullable or
-  /// not as [isNullable], has the default [defaultValue], and on MySQL and
-  /// MariaDB is `AUTO_INCREMENT` or not as [autoIncrement]. Those not given
-  /// (`null`) are kept as they are. MySQL and MariaDB define the whole column
+  /// not as [isNullable], has the default [defaultValue], or none if it is
+  /// [noDefault], and on MySQL and MariaDB is `AUTO_INCREMENT` or not as
+  /// [autoIncrement]. Those not given (`null`) are kept as they are; a default
+  /// that the new type cannot have, such as `'n/a'` of an `int`, is removed
+  /// with [noDefault]. MySQL and MariaDB define the whole column
   /// again, so the migration runner reads them from the database first; they
   /// keep its `NOT NULL`, `DEFAULT`, `AUTO_INCREMENT` and `ON UPDATE`, but not
   /// others, such as its `COMMENT` or `COLLATE`.

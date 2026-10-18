@@ -511,6 +511,39 @@ void main() async {
       },
     );
 
+    test('noDefault removes the default', () {
+      void change(MutableTable t) => t.changeColumnType(
+        'c',
+        ColumnType.int,
+        isNullable: false,
+        defaultValue: noDefault,
+      );
+
+      // Not the existing one, which an int may not have.
+      var modification = ColumnModification(
+        'c',
+        ColumnType.int,
+        length: 255,
+        defaultValue: noDefault,
+      )..existing = ExistingConstraints(isNullable: false, defaultValue: 'n/a');
+      expect(modification.keepsExisting, isTrue);
+      expect(
+        modification.compile(MySqlGenerator.compileColumn),
+        'MODIFY `c` int NOT NULL',
+      );
+      expect(
+        (MySqlSchema()..alter('t', change)).compile(),
+        contains('MODIFY `c` int NOT NULL;'),
+      );
+      expect(
+        (MariaDbSchema()..alter('t', change)).compile(),
+        contains('MODIFY `c` int NOT NULL;'),
+      );
+      var sql = (PostgresSchema()..alter('t', change)).compile();
+      expect(sql, contains('ALTER COLUMN "c" DROP DEFAULT,'));
+      expect(sql, isNot(contains('SET DEFAULT')));
+    });
+
     test('PostgreSQL changes a column to the integer of a serial type', () {
       for (var (serial, integer) in [
         (ColumnType.smallSerial, 'smallint'),
@@ -755,6 +788,31 @@ void main() async {
       expect(rate.first.first, '123456789012345678.123456');
     });
 
+    test('removes a default that the new type cannot have', () async {
+      await conn.execute('DROP TABLE IF EXISTS defaulted');
+      await conn.execute(
+        "CREATE TABLE defaulted (c varchar(9) NOT NULL DEFAULT 'n/a')",
+      );
+      await (PostgresSchema()..alter(
+            'defaulted',
+            (t) => t.changeColumnType(
+              'c',
+              ColumnType.int,
+              defaultValue: noDefault,
+              using: 'c::int',
+            ),
+          ))
+          .run(conn);
+
+      var result = await conn.execute(
+        "SELECT data_type, is_nullable, column_default "
+        "FROM information_schema.columns "
+        "WHERE table_schema = current_schema() AND table_name = 'defaulted'",
+      );
+      expect(result.single.toList(), ['integer', 'NO', null]);
+      await conn.execute('DROP TABLE defaulted');
+    });
+
     test('gives a column changed to serial a sequence', () async {
       await conn.execute('DROP TABLE IF EXISTS counted');
       await conn.execute('CREATE TABLE counted (id int, note text)');
@@ -925,6 +983,33 @@ void main() async {
         "WHERE table_schema = database() AND table_name = 'created'",
       );
       expect(result.rows.map((r) => r.colAt(0)), ['created_c']);
+    });
+
+    test('removes a default that the new type cannot have', () async {
+      await conn.execute('DROP TABLE IF EXISTS defaulted');
+      await conn.execute(
+        "CREATE TABLE defaulted (c varchar(9) NOT NULL DEFAULT 'n/a')",
+      );
+      await (MySqlSchema()..alter(
+            'defaulted',
+            (t) => t.changeColumnType(
+              'c',
+              ColumnType.int,
+              defaultValue: noDefault,
+            ),
+          ))
+          .run(conn);
+
+      var result = await conn.execute(
+        "SELECT data_type, is_nullable, column_default "
+        "FROM information_schema.columns "
+        "WHERE table_schema = database() AND table_name = 'defaulted'",
+      );
+      var row = result.rows.single;
+      // The NOT NULL is kept. MariaDB gives no default as `NULL`.
+      expect([row.colAt(0), row.colAt(1)], ['int', 'NO']);
+      expect(row.colAt(2), anyOf(isNull, 'NULL'));
+      await conn.execute('DROP TABLE defaulted');
     });
 
     test('throws, and does not record a migration that fails', () async {

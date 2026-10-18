@@ -200,9 +200,9 @@ END
       precision: precision,
       scale: scale,
     );
-    // The column keeps its constraints, and gets those given. A new default
-    // replaces the old one, which is dropped first, as it may not be cast to
-    // the new type.
+    // The column keeps its constraints, and gets those given. A new default,
+    // or noDefault, replaces the old one, which is dropped first, as it may
+    // not be cast to the new type.
     if (defaultValue != null) _stack.add('ALTER COLUMN "$name" DROP DEFAULT');
     _stack.add(
       'ALTER COLUMN "$name" TYPE ${PostgresGenerator.columnType(column)}'
@@ -213,7 +213,7 @@ END
         'ALTER COLUMN "$name" ${isNullable ? 'DROP' : 'SET'} NOT NULL',
       );
     }
-    if (defaultValue != null) {
+    if (defaultValue != null && !identical(defaultValue, noDefault)) {
       _stack.add(
         'ALTER COLUMN "$name" SET DEFAULT '
         '${PostgresGenerator.compileDefault(defaultValue)}',

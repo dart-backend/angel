@@ -182,7 +182,8 @@ class ExistingConstraints {
 /// A change of the type of a column on MySQL or MariaDB, which define the
 /// whole column again in a `MODIFY`. The constraints not given (`null`) are
 /// those [existing] in the database, which the schema reads when it is run;
-/// without them, the column is nullable without a default.
+/// without them, the column is nullable without a default. A [defaultValue]
+/// of [noDefault] removes the default.
 ///
 /// The `AUTO_INCREMENT` of the column is kept only for an integer type, and
 /// its `ON UPDATE` and default of the current time only for a date and time
@@ -234,7 +235,9 @@ class ColumnModification {
     precision: precision,
     scale: scale,
     isNullable: isNullable ?? existing?.isNullable,
-    defaultValue: defaultValue ?? _existingDefault,
+    defaultValue: identical(defaultValue, noDefault)
+        ? null
+        : defaultValue ?? _existingDefault,
   );
 
   /// The `MODIFY`, with the column compiled by [compileColumn], and the
