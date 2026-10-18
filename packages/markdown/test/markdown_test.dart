@@ -79,6 +79,9 @@ class Opaque {
   final String name = 'hidden';
 }
 
+/// [text] with each character as a character reference.
+String refs(String text) => text.runes.map((r) => '&#$r;').join();
+
 void main() {
   late Angel app;
 
@@ -136,46 +139,116 @@ void main() {
     });
 
     test('encodes values in raw HTML tags outside quotes', () async {
-      var html = await render('<img src={{x}}>', {'x': 'a onerror=alert(1)'});
-      expect(html, contains('<img src=a&#32;onerror&#61;alert&#40;1&#41;>'));
+      var x = 'a onerror=alert(1)';
+      expect(
+        await render('<img src={{x}}>', {'x': x}),
+        contains('<img src=${refs(x)}>'),
+      );
       expect(
         await render('<div title={{x}}>\n{{x}}\n</div>', {'x': 'a\tb/c'}),
-        contains('<div title=a&#9;b&#47;c>\na\tb/c\n</div>'),
+        contains('<div title=${refs('a\tb/c')}>\na\tb/c\n</div>'),
       );
       expect(
         await render('<a title="x>y" href={{x}}>z</a>', {'x': 'a b'}),
-        contains('href=a&#32;b>'),
+        contains('href=${refs('a b')}>'),
       );
       // In the place of an attribute, in blocks and inline.
       expect(
         await render('<div {{x}}>\nhi\n</div>', {'x': 'onclick=alert(1)'}),
-        contains('<div onclick&#61;alert&#40;1&#41;>'),
+        contains('<div ${refs('onclick=alert(1)')}>'),
       );
       expect(
         await render('<a href=x {{x}}>y</a>', {'x': 'a/onclick=alert(1)'}),
-        contains('<p><a href=x a&#47;onclick&#61;alert&#40;1&#41;>y</a></p>'),
+        contains('<p><a href=x ${refs('a/onclick=alert(1)')}>y</a></p>'),
       );
       // A quote that does not follow `=` does not open a value.
       expect(
         await render("<div title=it's {{x}}>\nhi\n</div>", {
           'x': 'a onclick=b',
         }),
-        contains("<div title=it's a&#32;onclick&#61;b>"),
+        contains("<div title=it's ${refs('a onclick=b')}>"),
       );
       // After an empty comment.
       expect(
         await render('<!--> <a {{x}}>', {'x': 'a b'}),
-        contains('<a a&#32;b>'),
+        contains('<a ${refs('a b')}>'),
       );
       // Not in content, quoted attribute values or comments.
       for (var view in [
         '<b>{{x}}</b>',
         '<a title="{{x}}">',
         "<a title='{{x}}'>",
+        '<a title= "{{x}}">',
         '<!-- <a {{x}} -->',
       ]) {
         expect(await render(view, {'x': 'a b'}), contains('a b'), reason: view);
       }
+    });
+
+    test('encodes values that would name a tag or attribute', () async {
+      // Letters too, so that a value cannot be `script` or `onmouseover`.
+      expect(
+        await render('<a {{n}}="{{v}}">x</a>', {
+          'n': 'onmouseover',
+          'v': 'alert(1)',
+        }),
+        contains('<a ${refs('onmouseover')}="alert(1)">'),
+      );
+      var html = await render('<div>\n<{{t}}>{{v}}</{{t}}>\n</div>', {
+        't': 'script',
+        'v': 'alert(1)',
+      });
+      expect(html, isNot(contains('<script')));
+      expect(html, contains('<${refs('script')}>alert(1)</${refs('script')}>'));
+    });
+
+    test('ends comments where the browser does', () async {
+      var x = 'x onerror=alert(1) y';
+      for (var view in [
+        '<div>\n<!-- c --!> <img src=x alt={{x}}>\n</div>',
+        '<div>\n<!-- c --!-->  <img src=x alt={{x}}>\n</div>',
+      ]) {
+        expect(
+          await render(view, {'x': x}),
+          contains('alt=${refs(x)}>'),
+          reason: view,
+        );
+      }
+      // Still in the comment.
+      expect(
+        await render('<div>\n<!-- c --!-> <img alt={{x}}> -->\n</div>', {
+          'x': x,
+        }),
+        contains('<img alt=$x>'),
+      );
+    });
+
+    test('reads tags as the browser does', () async {
+      var x = 'x onerror=alert(1) y';
+      Future<void> encodes(String view) async => expect(
+        await render(view, {'x': x, 'w': 'w'}),
+        allOf(contains(refs(x)), isNot(contains(x))),
+        reason: view,
+      );
+
+      // `c="` is the unquoted value of `b`.
+      await encodes('<div>\n<img b= c="{{x}}">\n</div>');
+      // Bogus comments end at the first `>`.
+      await encodes('<div>\n</ x="{{w}}> <img src=x alt={{x}}>\n</div>');
+      await encodes('<div>\n<!x "> <img src=x alt={{x}}>\n</div>');
+      await encodes('<div>\n<? "> <img src=x alt={{x}}>\n</div>');
+      // `<textarea>` and `<title>` have text, not tags, up to their end tag.
+      await encodes(
+        '<div>\n<textarea><a b="</textarea> <img src=x alt={{x}}>\n</div>',
+      );
+      await encodes('<div>\n<title><a b="</TITLE > <img alt={{x}}>\n</div>');
+      // And in them values are encoded too.
+      await encodes('<div>\n<textarea>{{x}}</textarea>\n</div>');
+      // After `<script>`, `<svg>` or `<math>`, values are always encoded.
+      await encodes('<div>\n<svg><style><a b="</style> " {{x}}>\n</div>');
+      await encodes('<div>\n<script></script>\n</div>\n\n{{x}}');
+      // The HTML of one block goes on into the next.
+      await encodes('<textarea>\n\n{{x}}');
     });
 
     test('renders values in <> as autolinks', () async {

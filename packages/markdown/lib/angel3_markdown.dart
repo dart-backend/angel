@@ -29,15 +29,17 @@ final RegExp _scheme = RegExp(r'^([A-Za-z][A-Za-z0-9+.\-]*):');
 /// `data:`, could run script when the link is followed.
 const Set<String> _safeSchemes = {'http', 'https', 'mailto'};
 
-/// What starts an HTML tag after `<`, also a placeholder, as a value may be
-/// the name of a tag.
-final RegExp _tagStart = RegExp(r'[A-Za-z0-9/!?]');
+/// Start tags after which the browser reads text up to their end tag, not
+/// tags, and so does [_HtmlScanner].
+const Set<String> _textElements = {
+  'textarea', 'title', // RCDATA
+  'style', 'xmp', 'iframe', 'noembed', 'noframes', 'noscript', // RAWTEXT
+};
 
-/// What a value in an HTML tag outside quotes is not encoded in.
-final RegExp _alphanumeric = RegExp('[A-Za-z0-9]');
-
-/// The HTML whitespace, which separates attributes in a tag.
-final RegExp _htmlSpace = RegExp('[ \t\n\f\r]');
+/// Start tags after which [_HtmlScanner] cannot follow the browser: `<script>`
+/// has escape states of its own, `<plaintext>` never ends, and in `<svg>` and
+/// `<math>` the elements above are not text and `<![CDATA[` is a section.
+const Set<String> _untrackedElements = {'script', 'plaintext', 'svg', 'math'};
 
 /// Each character of a string.
 final RegExp _character = RegExp('.', dotAll: true, unicode: true);
@@ -74,9 +76,12 @@ final Random _random = Random();
 /// The values of `{{...}}` expressions are put into the rendered HTML,
 /// HTML-escaped, so that they appear as text in HTML content (also in code
 /// and tables) and in quoted HTML attributes, and HTML or Markdown in them is
-/// not rendered; in HTML tags outside quotes, as in `<img src={{x}}>`, each
-/// character but ASCII letters and digits is encoded, so that they cannot add
-/// attributes. `<{{url}}>` is an autolink when the
+/// not rendered. Raw HTML is read as the browser reads it: in HTML tags
+/// outside quotes, as in `<img src={{x}}>`, in `<textarea>`, `<title>`,
+/// `<style>` and the like, and anywhere after `<script>`, `<svg>` or `<math>`,
+/// each character of values is encoded as a character reference, so that they
+/// cannot be the name of a tag or attribute or add attributes; such values
+/// still read as text in attribute values. `<{{url}}>` is an autolink when the
 /// value is a URL or email address. In the URL of a Markdown link or image they are also
 /// percent-encoded: a value that starts the URL as a URL, and a value after
 /// other text of the URL (e.g. `/search?q={{q}}`) as a component of it, so
@@ -181,7 +186,9 @@ AngelConfigurer markdown(
       ).parse(contents);
       if (placeholders.isNotEmpty) placeholders.fill(nodes);
 
-      var html = '${renderToHtml(nodes)}\n';
+      var html = renderToHtml(nodes);
+      if (placeholders.isNotEmpty) html = placeholders.fillHtml(html);
+      html = '$html\n';
       if (template != null) html = await template(html, locals ?? {});
       return html;
     };
@@ -196,9 +203,9 @@ AngelConfigurer markdown(
 /// placeholder. A value in `<>`, as in `<{{url}}>`, has a key that starts with
 /// a digit instead, so that Markdown does not take it for an HTML tag, whose
 /// name starts with a letter, and [_PlaceholderAutolinkSyntax] renders it.
-/// Elsewhere a placeholder starts with a letter, as a value may be the name of
-/// a tag or attribute. Markdown leaves letters and digits as they are wherever they
-/// are: in text, URLs, labels and ids. Equal values have the same placeholder,
+/// Elsewhere a placeholder starts with a letter, so that, as for a value in
+/// raw HTML, `<{{x}}>` is an HTML tag for Markdown. Markdown leaves letters and
+/// digits as they are wherever they are: in text, URLs, labels and ids. Equal values have the same placeholder,
 /// so that text that Markdown compares, such as the label of a reference link
 /// and of its definition, is still equal.
 class _Placeholders {
@@ -271,20 +278,18 @@ class _Placeholders {
     return heading;
   }
 
-  /// Replaces the placeholders in the text and attributes of [nodes] with
-  /// their values, HTML-escaped (in raw HTML as [_fillHtml] does): in the URLs
-  /// of `href` and `src` attributes as [_fillUrl] does, and in `id` attributes, such as those of footnotes,
-  /// percent-encoded as in the URLs that link to them.
+  /// Replaces the placeholders in the attributes of [nodes] with their values,
+  /// HTML-escaped: in the URLs of `href` and `src` attributes as [_fillUrl]
+  /// does, and in `id` attributes, such as those of footnotes, percent-encoded
+  /// as in the URLs that link to them.
   ///
   /// The ids that other syntaxes generated for headings have the placeholders
   /// as [BlockSyntax.generateAnchorHash] left them, which are replaced with
   /// what the values would add to the id.
   void fill(List<Node> nodes) {
-    for (var i = 0; i < nodes.length; i++) {
-      var node = nodes[i];
-      if (node is Text) {
-        nodes[i] = Text(_fillHtml(node.text));
-      } else if (node is Element) {
+    for (var node in nodes) {
+      // The text of nodes is filled once it is rendered, by [fillHtml].
+      if (node is Element) {
         node.attributes.updateAll(
           (name, value) => _urlAttributes.contains(name)
               ? _fillUrl(value)
@@ -314,66 +319,39 @@ class _Placeholders {
         return _htmlEscape.convert(value);
       });
 
-  /// [_fillText] for the text of a node, which may be raw HTML (Markdown
-  /// escapes `<` in other text). A value in a tag but not in a quoted
-  /// attribute value, such as in `<img src={{x}}>` or `<div {{x}}>`, has each
-  /// character but ASCII letters and digits encoded as a character reference,
-  /// so that it cannot end an attribute (with whitespace, `/`, `=` or `>`) and
-  /// add others. A quote opens a value only after `=`, as in HTML.
-  String _fillHtml(String text) {
-    var state = _HtmlState.text;
-    // The last character in a tag that is not whitespace.
-    var last = '';
-    var scanned = 0;
-    return text.replaceAllMapped(_pattern, (m) {
-      for (; scanned < m.start; scanned++) {
-        var c = text[scanned];
-        switch (state) {
-          case _HtmlState.text:
-            if (text.startsWith('<!-->', scanned)) {
-              // An empty comment.
-              scanned += 4;
-            } else if (text.startsWith('<!--->', scanned)) {
-              scanned += 5;
-            } else if (text.startsWith('<!--', scanned)) {
-              state = _HtmlState.comment;
-              scanned += 3;
-            } else if (c == '<' &&
-                scanned + 1 < text.length &&
-                _tagStart.hasMatch(text[scanned + 1])) {
-              state = _HtmlState.tag;
-              last = '<';
-            }
-          case _HtmlState.tag:
-            if (c == '"' && last == '=') state = _HtmlState.doubleQuoted;
-            if (c == "'" && last == '=') state = _HtmlState.singleQuoted;
-            if (c == '>') state = _HtmlState.text;
-            if (!_htmlSpace.hasMatch(c)) last = c;
-          case _HtmlState.doubleQuoted:
-            if (c == '"') state = _HtmlState.tag;
-            last = c;
-          case _HtmlState.singleQuoted:
-            if (c == "'") state = _HtmlState.tag;
-            last = c;
-          case _HtmlState.comment:
-            if (text.startsWith('-->', scanned)) {
-              state = _HtmlState.text;
-              scanned += 2;
-            }
-        }
-      }
-      scanned = m.end;
+  /// Replaces the placeholders left in [html], the rendered Markdown, which
+  /// are those of text nodes, some of which are raw HTML. [_HtmlScanner] reads
+  /// it as the browser does, also across nodes (as for a tag that a blank line
+  /// splits) and the values put into it. Values are HTML-escaped in content,
+  /// quoted attribute values and comments. Elsewhere, such as in a tag outside
+  /// quotes (e.g. `<img src={{x}}>`), in `<textarea>` or `<style>`, or after
+  /// `<script>`, `<svg>` or `<math>`, each of their characters, also letters
+  /// and digits, is encoded as a character reference, so that they cannot be
+  /// or end the name of a tag or attribute, an attribute value or a comment.
+  String fillHtml(String html) {
+    var scanner = _HtmlScanner();
+    var filled = StringBuffer();
+    void write(String text) {
+      scanner.scan(text);
+      filled.write(text);
+    }
 
+    var last = 0;
+    for (var m in _pattern.allMatches(html)) {
+      write(html.substring(last, m.start));
       var value = _value(m);
-      if (state != _HtmlState.tag) return _htmlEscape.convert(value);
-      // The value is in the tag, but not a quote that opens a value.
-      if (value.isNotEmpty) last = 'a';
-      return value.replaceAllMapped(
-        _character,
-        (m) =>
-            _alphanumeric.hasMatch(m[0]!) ? m[0]! : '&#${m[0]!.runes.first};',
+      write(
+        scanner.inText
+            ? _htmlEscape.convert(value)
+            : value.replaceAllMapped(
+                _character,
+                (m) => '&#${m[0]!.runes.first};',
+              ),
       );
-    });
+      last = m.end;
+    }
+    write(html.substring(last));
+    return filled.toString();
   }
 
   /// Puts the values into [url], percent-encoded: a value that starts it as a
@@ -420,8 +398,292 @@ class _Placeholders {
   }
 }
 
-/// Where [_Placeholders._fillHtml] is in raw HTML.
-enum _HtmlState { text, tag, doubleQuoted, singleQuoted, comment }
+/// Reads HTML as the tokenizer of the browser does, as far as needed to know
+/// where [_Placeholders.fillHtml] puts each value.
+///
+/// After a start tag in [_untrackedElements], which it cannot follow, it stays
+/// in [_HtmlState.untracked], where values are encoded as in a tag.
+class _HtmlScanner {
+  var _state = _HtmlState.data;
+
+  /// The name of the tag being read, in lowercase, and whether it is an end
+  /// tag.
+  final _tagName = StringBuffer();
+  var _endTag = false;
+
+  /// The element whose text is being read, in [_HtmlState.text].
+  var _textElement = '';
+
+  /// Whether a value is read as text here when it is HTML-escaped.
+  bool get inText => const {
+    _HtmlState.data,
+    _HtmlState.doubleQuoted,
+    _HtmlState.singleQuoted,
+    _HtmlState.comment,
+  }.contains(_state);
+
+  void scan(String html) {
+    for (var c in html.codeUnits) {
+      _consume(c);
+    }
+  }
+
+  void _consume(int c) {
+    switch (_state) {
+      case _HtmlState.data:
+        if (c == _lt) _state = _HtmlState.tagOpen;
+      case _HtmlState.tagOpen:
+        if (c == _bang) {
+          _state = _HtmlState.markupDeclarationOpen;
+        } else if (c == _slash) {
+          _state = _HtmlState.endTagOpen;
+        } else if (_isLetter(c)) {
+          _startTag(c, endTag: false);
+        } else if (c == _question) {
+          _state = _HtmlState.bogusComment;
+        } else {
+          _reconsume(_HtmlState.data, c);
+        }
+      case _HtmlState.endTagOpen:
+        if (_isLetter(c)) {
+          _startTag(c, endTag: true);
+        } else if (c == _gt) {
+          _state = _HtmlState.data;
+        } else {
+          _state = _HtmlState.bogusComment;
+        }
+      case _HtmlState.tagName:
+        if (_isSpace(c)) {
+          _state = _HtmlState.beforeAttributeName;
+        } else if (c == _slash) {
+          _state = _HtmlState.selfClosingStartTag;
+        } else if (c == _gt) {
+          _emitTag();
+        } else {
+          _tagName.writeCharCode(_toLower(c));
+        }
+      case _HtmlState.beforeAttributeName:
+        if (c == _slash || c == _gt) {
+          _reconsume(_HtmlState.afterAttributeName, c);
+        } else if (!_isSpace(c)) {
+          // Also `=`, which then starts the name.
+          _state = _HtmlState.attributeName;
+        }
+      case _HtmlState.attributeName:
+        if (_isSpace(c) || c == _slash || c == _gt) {
+          _reconsume(_HtmlState.afterAttributeName, c);
+        } else if (c == _equals) {
+          _state = _HtmlState.beforeAttributeValue;
+        }
+      case _HtmlState.afterAttributeName:
+        if (c == _slash) {
+          _state = _HtmlState.selfClosingStartTag;
+        } else if (c == _equals) {
+          _state = _HtmlState.beforeAttributeValue;
+        } else if (c == _gt) {
+          _emitTag();
+        } else if (!_isSpace(c)) {
+          _state = _HtmlState.attributeName;
+        }
+      case _HtmlState.beforeAttributeValue:
+        // A quote opens the value also after whitespace, as in `a= "b"`.
+        if (c == _quot) {
+          _state = _HtmlState.doubleQuoted;
+        } else if (c == _apos) {
+          _state = _HtmlState.singleQuoted;
+        } else if (c == _gt) {
+          _emitTag();
+        } else if (!_isSpace(c)) {
+          _state = _HtmlState.unquoted;
+        }
+      case _HtmlState.doubleQuoted:
+        if (c == _quot) _state = _HtmlState.afterAttributeValueQuoted;
+      case _HtmlState.singleQuoted:
+        if (c == _apos) _state = _HtmlState.afterAttributeValueQuoted;
+      case _HtmlState.unquoted:
+        if (_isSpace(c)) {
+          _state = _HtmlState.beforeAttributeName;
+        } else if (c == _gt) {
+          _emitTag();
+        }
+      case _HtmlState.afterAttributeValueQuoted:
+        if (_isSpace(c)) {
+          _state = _HtmlState.beforeAttributeName;
+        } else if (c == _slash) {
+          _state = _HtmlState.selfClosingStartTag;
+        } else if (c == _gt) {
+          _emitTag();
+        } else {
+          _reconsume(_HtmlState.beforeAttributeName, c);
+        }
+      case _HtmlState.selfClosingStartTag:
+        if (c == _gt) {
+          _emitTag();
+        } else {
+          _reconsume(_HtmlState.beforeAttributeName, c);
+        }
+      case _HtmlState.markupDeclarationOpen:
+        // `<!--` starts a comment. Anything else, such as `<!DOCTYPE`, and
+        // `<![CDATA[` outside `<svg>` and `<math>`, ends at the next `>`.
+        if (c == _dash) {
+          _state = _HtmlState.markupDeclarationDash;
+        } else {
+          _reconsume(_HtmlState.bogusComment, c);
+        }
+      case _HtmlState.markupDeclarationDash:
+        if (c == _dash) {
+          _state = _HtmlState.commentStart;
+        } else {
+          _reconsume(_HtmlState.bogusComment, c);
+        }
+      case _HtmlState.bogusComment:
+        if (c == _gt) _state = _HtmlState.data;
+      case _HtmlState.commentStart:
+        if (c == _dash) {
+          _state = _HtmlState.commentStartDash;
+        } else if (c == _gt) {
+          // `<!-->`
+          _state = _HtmlState.data;
+        } else {
+          _reconsume(_HtmlState.comment, c);
+        }
+      case _HtmlState.commentStartDash:
+        if (c == _dash) {
+          _state = _HtmlState.commentEnd;
+        } else if (c == _gt) {
+          // `<!--->`
+          _state = _HtmlState.data;
+        } else {
+          _reconsume(_HtmlState.comment, c);
+        }
+      case _HtmlState.comment:
+        if (c == _dash) _state = _HtmlState.commentEndDash;
+      case _HtmlState.commentEndDash:
+        if (c == _dash) {
+          _state = _HtmlState.commentEnd;
+        } else {
+          _reconsume(_HtmlState.comment, c);
+        }
+      case _HtmlState.commentEnd:
+        // A comment ends at `-->`, and also at `--!>`.
+        if (c == _gt) {
+          _state = _HtmlState.data;
+        } else if (c == _bang) {
+          _state = _HtmlState.commentEndBang;
+        } else if (c != _dash) {
+          _reconsume(_HtmlState.comment, c);
+        }
+      case _HtmlState.commentEndBang:
+        if (c == _dash) {
+          _state = _HtmlState.commentEndDash;
+        } else if (c == _gt) {
+          _state = _HtmlState.data;
+        } else {
+          _reconsume(_HtmlState.comment, c);
+        }
+      case _HtmlState.text:
+        if (c == _lt) _state = _HtmlState.textLessThan;
+      case _HtmlState.textLessThan:
+        if (c == _slash) {
+          _tagName.clear();
+          _state = _HtmlState.textEndTagOpen;
+        } else {
+          _reconsume(_HtmlState.text, c);
+        }
+      case _HtmlState.textEndTagOpen:
+        _reconsume(
+          _isLetter(c) ? _HtmlState.textEndTagName : _HtmlState.text,
+          c,
+        );
+      case _HtmlState.textEndTagName:
+        if (_isLetter(c)) {
+          _tagName.writeCharCode(_toLower(c));
+        } else if ((_isSpace(c) || c == _slash || c == _gt) &&
+            _tagName.toString() == _textElement) {
+          // Only the end tag of the element ends its text.
+          _endTag = true;
+          _reconsume(_HtmlState.tagName, c);
+        } else {
+          _reconsume(_HtmlState.text, c);
+        }
+      case _HtmlState.untracked:
+        break;
+    }
+  }
+
+  void _reconsume(_HtmlState state, int c) {
+    _state = state;
+    _consume(c);
+  }
+
+  void _startTag(int c, {required bool endTag}) {
+    _tagName.clear();
+    _endTag = endTag;
+    _reconsume(_HtmlState.tagName, c);
+  }
+
+  /// Ends the tag at `>`, after which some elements have text, not tags.
+  void _emitTag() {
+    var name = _tagName.toString();
+    if (_endTag) {
+      _state = _HtmlState.data;
+    } else if (_untrackedElements.contains(name)) {
+      _state = _HtmlState.untracked;
+    } else if (_textElements.contains(name)) {
+      _textElement = name;
+      _state = _HtmlState.text;
+    } else {
+      _state = _HtmlState.data;
+    }
+  }
+
+  static const _bang = 0x21, _quot = 0x22, _apos = 0x27, _dash = 0x2D;
+  static const _slash = 0x2F, _lt = 0x3C, _equals = 0x3D, _gt = 0x3E;
+  static const _question = 0x3F;
+
+  static bool _isSpace(int c) =>
+      c == 0x20 || c == 0x09 || c == 0x0A || c == 0x0C || c == 0x0D;
+
+  static bool _isLetter(int c) =>
+      (c >= 0x41 && c <= 0x5A) || (c >= 0x61 && c <= 0x7A);
+
+  static int _toLower(int c) => c >= 0x41 && c <= 0x5A ? c + 0x20 : c;
+}
+
+/// The states of the tokenizer of the browser that [_HtmlScanner] tells apart.
+enum _HtmlState {
+  data,
+  tagOpen,
+  endTagOpen,
+  tagName,
+  beforeAttributeName,
+  attributeName,
+  afterAttributeName,
+  beforeAttributeValue,
+  doubleQuoted,
+  singleQuoted,
+  unquoted,
+  afterAttributeValueQuoted,
+  selfClosingStartTag,
+  markupDeclarationOpen,
+  markupDeclarationDash,
+  bogusComment,
+  commentStart,
+  commentStartDash,
+  comment,
+  commentEndDash,
+  commentEnd,
+  commentEndBang,
+
+  /// The text of an element in [_textElements], up to its end tag.
+  text,
+  textLessThan,
+  textEndTagOpen,
+  textEndTagName,
+
+  /// After a start tag in [_untrackedElements].
+  untracked,
+}
 
 /// Renders a placeholder in `<>` as an autolink when its value is the URL or
 /// email address of one, as for the Markdown with the value, and else as the
