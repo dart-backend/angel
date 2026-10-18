@@ -64,42 +64,59 @@ void main() {
     });
   });
 
-  group('legacyPathRenames', () {
+  group('LegacyPaths', () {
     var migrations = [UserMigration(), RenamedMigration()];
 
-    test('maps a source path to the name of its class', () {
-      expect(
-        legacyPathRenames([
-          r'C:\app\lib\migrations.dart#UserMigration',
-          r'C:\\app\\lib\\migrations.dart#RenamedMigration',
-          '/app/lib/migrations.dart#UserMigration',
-        ], migrations),
-        {
-          r'C:\app\lib\migrations.dart#UserMigration': 'UserMigration',
-          r'C:\\app\\lib\\migrations.dart#RenamedMigration': 'create_todos',
-          '/app/lib/migrations.dart#UserMigration': 'UserMigration',
-        },
-      );
+    test('renames a source path to the name of its class', () {
+      var legacy = LegacyPaths([
+        r'C:\app\lib\migrations.dart#UserMigration',
+        r'C:\\app\\lib\\migrations.dart#RenamedMigration',
+      ], migrations);
+      expect(legacy.renames, {
+        r'C:\app\lib\migrations.dart#UserMigration': 'UserMigration',
+        r'C:\\app\\lib\\migrations.dart#RenamedMigration': 'create_todos',
+      });
+      expect(legacy.deletes, isEmpty);
+      expect(legacy.paths, ['UserMigration', 'create_todos']);
     });
 
-    test('leaves out names and unknown classes', () {
-      expect(
-        legacyPathRenames([
-          'UserMigration',
-          '/app/lib/old.dart#GoneMigration',
-        ], migrations),
-        isEmpty,
-      );
+    test('deletes the later paths of a migration recorded twice', () {
+      var legacy = LegacyPaths([
+        '/old/lib/migrations.dart#UserMigration',
+        '/new/lib/migrations.dart#UserMigration',
+      ], migrations);
+      expect(legacy.renames, {
+        '/old/lib/migrations.dart#UserMigration': 'UserMigration',
+      });
+      expect(legacy.deletes, ['/new/lib/migrations.dart#UserMigration']);
+      expect(legacy.paths, ['UserMigration']);
     });
 
-    test('leaves out a class name shared by two migrations', () {
-      expect(
-        legacyPathRenames(
-          ['/app/a.dart#UserMigration'],
-          [UserMigration(), UserMigration()],
-        ),
-        isEmpty,
+    test('deletes a path whose name is already recorded', () {
+      var legacy = LegacyPaths([
+        '/app/lib/migrations.dart#UserMigration',
+        'UserMigration',
+      ], migrations);
+      expect(legacy.renames, isEmpty);
+      expect(legacy.deletes, ['/app/lib/migrations.dart#UserMigration']);
+      expect(legacy.paths, ['UserMigration']);
+    });
+
+    test('leaves names and unknown classes as they are', () {
+      var paths = ['UserMigration', '/app/lib/old.dart#GoneMigration'];
+      var legacy = LegacyPaths(paths, migrations);
+      expect(legacy.renames, isEmpty);
+      expect(legacy.deletes, isEmpty);
+      expect(legacy.paths, paths);
+    });
+
+    test('leaves a class name shared by two migrations as it is', () {
+      var legacy = LegacyPaths(
+        ['/app/a.dart#UserMigration'],
+        [UserMigration(), UserMigration()],
       );
+      expect(legacy.renames, isEmpty);
+      expect(legacy.paths, ['/app/a.dart#UserMigration']);
     });
   });
 }

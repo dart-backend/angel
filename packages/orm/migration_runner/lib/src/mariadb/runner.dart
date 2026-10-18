@@ -32,7 +32,8 @@ class MariaDbMigrationRunner implements MigrationRunner {
     _migrationQueue.addLast(migration);
   }
 
-  Future _init() async {
+  /// Creates the `migrations` table if needed, and returns its paths.
+  Future<List<String>> _init() async {
     addQueuedMigrations(_migrationQueue, migrations);
 
     await connection
@@ -53,29 +54,30 @@ class MariaDbMigrationRunner implements MigrationRunner {
           _log.severe('Failed to create "migrations" table.', e);
         });
 
-    var result = await connection.query('SELECT path from migrations;');
-    var renames = legacyPathRenames(
-      result.expand((x) => x).cast<String>(),
+    var result = await connection.query(
+      'SELECT path from migrations ORDER BY id;',
+    );
+    var legacy = LegacyPaths(
+      result.expand((x) => x).cast<String>().toList(),
       migrations.values,
     );
-    for (var MapEntry(key: path, value: name) in renames.entries) {
+    for (var MapEntry(key: path, value: name) in legacy.renames.entries) {
       await connection.query('UPDATE migrations SET path = ? WHERE path = ?', [
         name,
         path,
       ]);
       _log.info('Renamed "$path" to "$name" in "migrations" table.');
     }
+    for (var path in legacy.deletes) {
+      await connection.query('DELETE FROM migrations WHERE path = ?', [path]);
+      _log.info('Removed "$path", recorded again, from "migrations" table.');
+    }
+    return legacy.paths;
   }
 
   @override
   Future up() async {
-    await _init();
-    var result = await connection.query('SELECT path from migrations;');
-
-    var existing = <String>[];
-    if (result.isNotEmpty) {
-      existing.addAll(result.expand((x) => x).cast<String>());
-    }
+    var existing = await _init();
 
     var toRun = <String>[];
     migrations.forEach((k, v) {

@@ -69,6 +69,11 @@ void main() async {
           parameters: {'path': 'C:\\\\app\\\\lib\\\\todo.dart#$name'},
         );
       }
+      // Recorded again after the project was moved.
+      await conn.execute(
+        "INSERT INTO migrations (batch, path) "
+        "VALUES (1, '/moved/lib/todo.dart#UserMigration')",
+      );
       try {
         await runner.up();
         var r = await conn.execute('SELECT path FROM migrations;');

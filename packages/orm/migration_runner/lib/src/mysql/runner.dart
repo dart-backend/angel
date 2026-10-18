@@ -34,7 +34,8 @@ class MySqlMigrationRunner implements MigrationRunner {
     _migrationQueue.addLast(migration);
   }
 
-  Future _init() async {
+  /// Creates the `migrations` table if needed, and returns its paths.
+  Future<List<String>> _init() async {
     addQueuedMigrations(_migrationQueue, migrations);
 
     if (!_connected) {
@@ -60,28 +61,31 @@ class MySqlMigrationRunner implements MigrationRunner {
           throw e;
         });
 
-    var result = await connection.execute('SELECT path from migrations;');
-    var renames = legacyPathRenames(
-      result.rows.map((row) => row.colAt(0) ?? ''),
-      migrations.values,
+    var result = await connection.execute(
+      'SELECT path from migrations ORDER BY id;',
     );
-    for (var MapEntry(key: path, value: name) in renames.entries) {
+    var legacy = LegacyPaths([
+      for (var row in result.rows) row.colAt(0) ?? '',
+    ], migrations.values);
+    for (var MapEntry(key: path, value: name) in legacy.renames.entries) {
       await connection.execute(
         'UPDATE migrations SET path = :name WHERE path = :path',
         {'name': name, 'path': path},
       );
       _log.info('Renamed "$path" to "$name" in "migrations" table.');
     }
+    for (var path in legacy.deletes) {
+      await connection.execute('DELETE FROM migrations WHERE path = :path', {
+        'path': path,
+      });
+      _log.info('Removed "$path", recorded again, from "migrations" table.');
+    }
+    return legacy.paths;
   }
 
   @override
   Future up() async {
-    await _init();
-    var result = await connection.execute('SELECT path from migrations;');
-    var existing = <String>[];
-    for (var item in result.rows) {
-      existing.add(item.colAt(0) ?? '');
-    }
+    var existing = await _init();
     var toRun = <String>[];
 
     migrations.forEach((k, v) {

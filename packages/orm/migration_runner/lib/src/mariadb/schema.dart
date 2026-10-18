@@ -4,6 +4,7 @@ import 'package:logging/logging.dart';
 import 'package:mysql1/mysql1.dart';
 
 import '../mysql_family.dart';
+import '../sql.dart';
 import 'table.dart';
 
 /// A MariaDB database schema generator
@@ -29,12 +30,16 @@ class MariaDbSchema extends MySqlFamilySchema {
     var affectedRows = 0;
     await connection.transaction((TransactionContext ctx) async {
       await runWith(
+        // `mysql1` does not enable more than one statement in a query, so
+        // the statements are run one by one.
         execute: (sql) async {
-          Results? result = await ctx.query(sql).catchError((e) {
-            _log.severe('Failed to run query: [ $sql ]', e);
-            throw e;
-          });
-          affectedRows += result.affectedRows ?? 0;
+          for (var statement in splitMySqlStatements(sql)) {
+            Results? result = await ctx.query(statement).catchError((e) {
+              _log.severe('Failed to run query: [ $statement ]', e);
+              throw e;
+            });
+            affectedRows += result.affectedRows ?? 0;
+          }
         },
         // `mysql1` may give text as a `Blob`.
         query: (sql) async => [

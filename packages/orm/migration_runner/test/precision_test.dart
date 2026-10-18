@@ -1381,6 +1381,35 @@ void main() async {
         ['tax', 'decimal', 5, 4, 'NULL', 'YES', ''],
       ]);
     });
+
+    test('runs a migration of more than one statement', () async {
+      // Left by a run that failed.
+      await conn.query('DROP TABLE IF EXISTS created');
+      await conn.query(
+        "DELETE FROM migrations WHERE path = 'CreateAndChangeMigration'",
+      );
+      runner = MariaDbMigrationRunner(
+        conn,
+        migrations: [CreateAndChangeMigration()],
+      );
+      await runner.up();
+
+      var rows = await conn.query(
+        "SELECT column_name, data_type, is_nullable, column_default "
+        "FROM information_schema.columns "
+        "WHERE table_schema = database() AND table_name = 'created' "
+        "ORDER BY column_name",
+      );
+      expect(rows.map((r) => [r[0], r[1], r[2], r[3].toString()]), [
+        ['c', 'bigint', 'NO', '5'],
+        ['note', 'varchar', 'YES', "'x; ''y'''"],
+      ]);
+      rows = await conn.query(
+        "SELECT index_name FROM information_schema.statistics "
+        "WHERE table_schema = database() AND table_name = 'created'",
+      );
+      expect(rows.map((r) => r[0]), ['created_c']);
+    });
   });
 
   // The runner for MySQL, whose client reads the constraints differently,
@@ -1430,7 +1459,7 @@ void main() async {
       // Left by a run that failed.
       await conn.execute('DROP TABLE IF EXISTS created');
       await conn.execute(
-        "DELETE FROM migrations WHERE path LIKE '%#CreateAndChangeMigration'",
+        "DELETE FROM migrations WHERE path = 'CreateAndChangeMigration'",
       );
       runner = MySqlMigrationRunner(
         conn,
