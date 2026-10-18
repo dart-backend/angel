@@ -465,13 +465,7 @@ class Tree extends TreeEntity {
 
   @override
   int get hashCode {
-    return Object.hashAll([
-      id,
-      createdAt,
-      updatedAt,
-      rings,
-      ListEquality<FruitEntity>(DefaultEquality<FruitEntity>()).hash(fruits),
-    ]);
+    return Object.hashAll([id, createdAt, updatedAt, rings, fruits.length]);
   }
 
   @override

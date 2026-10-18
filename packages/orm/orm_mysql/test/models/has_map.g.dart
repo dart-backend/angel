@@ -162,13 +162,7 @@ class HasMap implements HasMapEntity {
 
   @override
   int get hashCode {
-    return Object.hashAll([
-      MapEquality<dynamic, dynamic>(
-        keys: DefaultEquality(),
-        values: DefaultEquality(),
-      ).hash(value),
-      ListEquality<dynamic>(DefaultEquality()).hash(list),
-    ]);
+    return Object.hashAll([value?.length, list?.length]);
   }
 
   @override

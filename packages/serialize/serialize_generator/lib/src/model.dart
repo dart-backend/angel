@@ -48,7 +48,7 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
           ..annotations.add(refer('generatedSerializable'));
 
         for (var ann in ctx.includeAnnotations) {
-          clazz.annotations.add(convertObject(ann));
+          clazz.annotations.add(convertObject(ann, library: ctx.clazz.library));
         }
 
         if (shouldBeConstant(ctx)) {
@@ -303,7 +303,7 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
       if (const TypeChecker.typeNamed(List).isAssignableFromType(type)) {
         if (type.typeArguments.length == 1) {
           var eq = generateEquality(type.typeArguments[0]);
-          return 'ListEquality<${type.typeArguments[0].element!.name}>($eq)';
+          return 'ListEquality<${_typeName(type.typeArguments[0])}>($eq)';
         } else {
           return 'ListEquality()';
         }
@@ -311,17 +311,22 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
         if (type.typeArguments.length == 2) {
           var keq = generateEquality(type.typeArguments[0]),
               veq = generateEquality(type.typeArguments[1]);
-          return 'MapEquality<${type.typeArguments[0].element!.name}, ${type.typeArguments[1].element!.name}>(keys: $keq, values: $veq)';
+          return 'MapEquality<${_typeName(type.typeArguments[0])}, '
+              '${_typeName(type.typeArguments[1])}>(keys: $keq, values: $veq)';
         } else {
           return 'MapEquality()';
         }
       }
 
-      return nullable ? null : 'DefaultEquality<${type.element.name}>()';
+      return nullable ? null : 'DefaultEquality<${_typeName(type)}>()';
     } else {
       return 'DefaultEquality()';
     }
   }
+
+  /// [type] as it is written in Dart, with its nullability and its type
+  /// arguments, such as `int?` or `void Function()`, which has no element.
+  static String _typeName(DartType type) => type.getDisplayString();
 
   static String Function(String, String) generateComparator(DartType type) {
     if (type is! InterfaceType || type.element.displayName == 'dynamic') {
@@ -345,10 +350,19 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
               .call([
                 literalList(
                   ctx!.fields.map((f) {
-                    // Hash collections by content to stay consistent with ==
+                    // A collection, which == compares by its contents, by
+                    // its length, which equal ones have: not by its contents,
+                    // which would recurse forever in a cycle of models, and
+                    // be of every byte of a large list.
                     var eq = generateEquality(f.type, true);
                     var name = f.name ?? '';
-                    return eq == null ? refer(name) : CodeExpression(Code('$eq.hash($name)'));
+                    var nullable =
+                        f.type.nullabilitySuffix == NullabilitySuffix.question;
+                    return eq == null
+                        ? refer(name)
+                        : CodeExpression(
+                            Code('$name${nullable ? '?' : ''}.length'),
+                          );
                   }),
                 ),
               ])

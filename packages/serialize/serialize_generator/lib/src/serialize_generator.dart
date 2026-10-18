@@ -38,6 +38,14 @@ Builder typescriptDefinitionBuilder(_) {
   return TypeScriptDefinitionBuilder();
 }
 
+/// [t] as it is written in Dart, without the `?` of a nullable type.
+String _withoutQuestion(DartType t) {
+  var name = t.getDisplayString();
+  return t.nullabilitySuffix == NullabilitySuffix.question && name.endsWith('?')
+      ? name.substring(0, name.length - 1)
+      : name;
+}
+
 /// Converts a [DartType] to a [TypeReference].
 TypeReference convertTypeReference(
   DartType t, {
@@ -45,7 +53,9 @@ TypeReference convertTypeReference(
   bool ignoreNullabilityCheck = false,
 }) {
   return TypeReference((b) {
-    b.symbol = t.element?.displayName;
+    // A type without an element, as a function type, is as it is written,
+    // but its `?`, which isNullable gives.
+    b.symbol = t.element?.displayName ?? _withoutQuestion(t);
 
     // Generate nullable type
     if (ignoreNullabilityCheck) {
@@ -63,12 +73,34 @@ TypeReference convertTypeReference(
 }
 
 /// The [Serializers] enabled by a `@Serializable` [annotation].
+///
+/// Each value is read by its `index`, not by the name of the variable it is
+/// given by, which may be another constant, as `const js = Serializers.json`.
 List<Serializers> readSerializers(ConstantReader annotation) => [
   for (var o in annotation.peek('serializers')?.listValue ?? <DartObject>[])
-    if (o.variable?.name case var name?) Serializers.values.byName(name),
+    if (o.getField('index')?.toIntValue() case var index?)
+      Serializers.values[index]
+    else
+      ?_unreadSerializer(o),
 ];
 
-Expression convertObject(DartObject o) {
+/// Logs [o], a value of `serializers` that is not one of [Serializers], which
+/// is left out.
+Serializers? _unreadSerializer(DartObject o) {
+  log.severe(
+    'A value of serializers is not one of Serializers, and is left out: '
+    '${o.type?.getDisplayString() ?? o}',
+  );
+  return null;
+}
+
+/// [o] as an expression of the code generated in [library], where a
+/// constant or a class of a library it imports with a prefix, as
+/// `import 'tags.dart' as t;`, has that prefix (`t.Tag.a`).
+Expression convertObject(DartObject o, {LibraryElement? library}) {
+  Expression convert(DartObject value) =>
+      convertObject(value, library: library);
+
   if (o.isNull) return literalNull;
   if (o.toBoolValue() != null) return literalBool(o.toBoolValue()!);
   if (o.toIntValue() != null) return literalNum(o.toIntValue()!);
@@ -79,23 +111,53 @@ Expression convertObject(DartObject o) {
   if (o.toStringValue() != null) return literalString(o.toStringValue()!);
   if (o.toTypeValue() != null) return convertTypeReference(o.toTypeValue()!);
   if (o.toListValue() != null) {
-    return literalList(o.toListValue()!.map(convertObject));
+    return literalList(o.toListValue()!.map(convert));
   }
   if (o.toMapValue() != null) {
     return literalMap(
-      o.toMapValue()!.map(
-        (k, v) => MapEntry(convertObject(k!), convertObject(v!)),
-      ),
+      o.toMapValue()!.map((k, v) => MapEntry(convert(k!), convert(v!))),
     );
   }
 
   var rev = ConstantReader(o).revive();
-  Expression target = convertTypeReference(o.type!);
+  // A constant given by a variable or a static field, such as an enum value
+  // (`Color.red`) or a top-level constant, has no class in its source, and is
+  // that reference, not a call of a constructor.
+  if (rev.source.fragment.isEmpty && rev.accessor.isNotEmpty) {
+    var prefix = _importPrefix(library, rev.accessor.split('.').first);
+    return refer('$prefix${rev.accessor}');
+  }
+  var className = o.type?.element?.name;
+  var prefix = className == null ? '' : _importPrefix(library, className);
+  Expression target = prefix.isEmpty
+      ? convertTypeReference(o.type!)
+      : refer('$prefix$className');
   target = rev.accessor.isEmpty ? target : target.property(rev.accessor);
   return target.call(
-    rev.positionalArguments.map(convertObject),
-    rev.namedArguments.map((k, v) => MapEntry(k, convertObject(v))),
+    rev.positionalArguments.map(convert),
+    rev.namedArguments.map((k, v) => MapEntry(k, convert(v))),
   );
+}
+
+/// The prefix, with its `.`, of the import of [library] by which it has
+/// [name], a class or top-level constant, or `''` if it has it without one.
+String _importPrefix(LibraryElement? library, String name) {
+  if (library == null ||
+      library.firstFragment.scope.lookup(name).getter != null) {
+    return '';
+  }
+  for (var fragment in library.fragments) {
+    for (var import in fragment.libraryImports) {
+      var prefix = import.prefix?.name;
+      // Of the names the imported library exports, as the namespace of a
+      // prefixed import has them by its prefix.
+      if (prefix != null &&
+          import.importedLibrary?.exportNamespace.get2(name) != null) {
+        return '$prefix.';
+      }
+    }
+  }
+  return '';
 }
 
 String? dartObjectToString(DartObject v) {

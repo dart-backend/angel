@@ -1001,7 +1001,7 @@ class Login extends LoginEntity {
       name,
       userIdentity,
       backupIdentity,
-      ListEquality<GrantEntity>(DefaultEquality<GrantEntity>()).hash(grants),
+      grants.length,
     ]);
   }
 
@@ -1108,13 +1108,7 @@ class Grant extends GrantEntity {
 
   @override
   int get hashCode {
-    return Object.hashAll([
-      id,
-      createdAt,
-      updatedAt,
-      name,
-      ListEquality<LoginEntity>(DefaultEquality<LoginEntity>()).hash(logins),
-    ]);
+    return Object.hashAll([id, createdAt, updatedAt, name, logins.length]);
   }
 
   @override

@@ -742,7 +742,7 @@ class User extends UserEntity {
       username,
       password,
       email,
-      ListEquality<RoleEntity>(DefaultEquality<RoleEntity>()).hash(roles),
+      roles.length,
     ]);
   }
 
@@ -847,13 +847,7 @@ class Role extends RoleEntity {
 
   @override
   int get hashCode {
-    return Object.hashAll([
-      id,
-      createdAt,
-      updatedAt,
-      name,
-      ListEquality<UserEntity>(DefaultEquality<UserEntity>()).hash(users),
-    ]);
+    return Object.hashAll([id, createdAt, updatedAt, name, users.length]);
   }
 
   @override

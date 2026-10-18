@@ -593,10 +593,7 @@ class Role implements RoleEntity {
 
   @override
   int get hashCode {
-    return Object.hashAll([
-      role,
-      ListEquality<UserEntity>(DefaultEquality<UserEntity>()).hash(users),
-    ]);
+    return Object.hashAll([role, users.length]);
   }
 
   @override
@@ -685,12 +682,7 @@ class User implements UserEntity {
 
   @override
   int get hashCode {
-    return Object.hashAll([
-      email,
-      name,
-      password,
-      ListEquality<RoleEntity>(DefaultEquality<RoleEntity>()).hash(roles),
-    ]);
+    return Object.hashAll([email, name, password, roles.length]);
   }
 
   @override

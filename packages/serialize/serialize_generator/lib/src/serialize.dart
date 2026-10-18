@@ -38,7 +38,12 @@ class SerializerGenerator extends GeneratorForAnnotation<Serializable> {
     }
 
     var lib = Library((b) {
-      generateClass(serializers, ctx, b);
+      // Its encoder and decoder call toMap and fromMap, which are of map and
+      // json only, as typescript is a builder of its own.
+      if (serializers.contains(Serializers.map) ||
+          serializers.contains(Serializers.json)) {
+        generateClass(serializers, ctx, b);
+      }
       generateFieldsClass(ctx, b);
     });
 

@@ -7,25 +7,30 @@ import 'package:recase/recase.dart';
 import 'package:source_gen/source_gen.dart';
 
 /// Support prefix for base serializable classes.
-final List<String> modelPrefix = ['_', 'entity'];
-final List<String> modelSuffix = ['entity'];
+final List<String> modelPrefix = ['_', 'Entity'];
+final List<String> modelSuffix = ['Entity'];
 
-/// Get the generated model class name
+/// The name of the class generated of the model class [clazz]: [clazz]
+/// without one of [modelPrefix], and then without one of [modelSuffix], so
+/// that `_UserEntity`, `EntityUser`, `UserEntity` and `_User` are all `User`.
+///
+/// A prefix or suffix is matched with its case, so that a name that only ends
+/// with its letters is kept, as `UserIdentity`, not `UserId`.
 String getGeneratedModelClassName(String clazz) {
-  // Check the supported prefix
+  var name = clazz;
   for (var prefix in modelPrefix) {
-    if (clazz.toLowerCase().startsWith(prefix)) {
-      return clazz.substring(prefix.length);
+    if (name.startsWith(prefix) && name.length > prefix.length) {
+      name = name.substring(prefix.length);
+      break;
     }
   }
-
   for (var suffix in modelSuffix) {
-    if (clazz.toLowerCase().endsWith(suffix)) {
-      return clazz.substring(0, clazz.length - suffix.length);
+    if (name.endsWith(suffix) && name.length > suffix.length) {
+      name = name.substring(0, name.length - suffix.length);
+      break;
     }
   }
-
-  return clazz;
+  return name;
 }
 
 /// A base context for building serializable classes.
@@ -91,8 +96,7 @@ class BuildContext {
       throw ArgumentError('Model class cannot be null');
     }
 
-    // [modelClassName] is already stripped of its prefix or suffix; doing it
-    // again would turn e.g. `UserIdentityEntity` into `UserId`.
+    // [modelClassName] is already stripped of its prefix and suffix.
     _modelClassNameRecase ??= ReCase(modelClassName!);
     return _modelClassNameRecase!;
   }

@@ -46,7 +46,7 @@ class WithEnum implements WithEnumEntity {
 
   @override
   int get hashCode {
-    return Object.hashAll([type, finalList, imageBytes]);
+    return Object.hashAll([type, finalList?.length, imageBytes?.length]);
   }
 
   @override
