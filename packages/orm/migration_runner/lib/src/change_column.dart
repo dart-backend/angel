@@ -29,30 +29,29 @@ MigrationColumn changedColumn(
 /// MySQL and MariaDB take parameters differently.
 ///
 /// The table may be quoted, and qualified by its database, such as
-/// `` `shop`.`orders` ``; otherwise it is of the current database.
+/// `` `shop`.`orders` ``; otherwise it is of the current database. The
+/// columns may be quoted too.
 String existingConstraintsQuery(String table, Iterable<String> columns) {
   String literal(String value) =>
       compileDefault(value, escapeBackslashes: true);
-  var names = table.split('.').map(_unquote).toList();
+  var names = table.split('.').map(unquoteIdentifier).toList();
   var database = names.length > 1 ? literal(names.first) : 'DATABASE()';
+  var columnNames = columns.map((c) => literal(unquoteIdentifier(c)));
   return 'SELECT COLUMN_NAME, IS_NULLABLE, COLUMN_DEFAULT, EXTRA, DATA_TYPE, '
       'VERSION() '
       'FROM information_schema.columns '
       'WHERE table_schema = $database '
       'AND table_name = ${literal(names.last)} '
-      'AND column_name IN (${columns.map(literal).join(', ')})';
+      'AND column_name IN (${columnNames.join(', ')})';
 }
 
-/// The [name] without the backticks or double quotes around it.
-String _unquote(String name) {
-  name = name.trim();
-  if (name.length < 2) return name;
-  var quote = name[0];
-  if ((quote == '`' || quote == '"') && name.endsWith(quote)) {
-    return name.substring(1, name.length - 1).replaceAll('$quote$quote', quote);
-  }
-  return name;
-}
+/// The SQL of an expression of MySQL's `COLUMN_DEFAULT`, which escapes the
+/// quotes and backslashes in it with a backslash, as in
+/// `concat(_utf8mb4\'a\',_utf8mb4\'b\')`.
+String _unescapeMySql(String expression) => expression.replaceAllMapped(
+  RegExp(r'''\\(['"\\])'''),
+  (match) => match[1]!,
+);
 
 /// The types that a column may have `AUTO_INCREMENT` with.
 const _integerTypes = {
@@ -125,7 +124,7 @@ class ExistingConstraints {
         defaultValue = RawSql(
           _currentTimestamp.hasMatch(columnDefault)
               ? columnDefault
-              : '($columnDefault)',
+              : '(${_unescapeMySql(columnDefault)})',
         );
       } else if ((type == 'datetime' || type == 'timestamp') &&
           _currentTimestamp.hasMatch(columnDefault)) {

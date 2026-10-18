@@ -4,6 +4,7 @@ import 'package:angel3_migration/angel3_migration.dart';
 import 'package:angel3_orm/angel3_orm.dart';
 
 import 'change_column.dart';
+import 'sql.dart';
 
 /// A table that compiles its columns for a `CREATE TABLE`.
 abstract class CompiledTable extends Table {
@@ -296,7 +297,7 @@ class SchemaAlters {
     // The names of columns are not case sensitive.
     var byName = {for (var row in rows) row[0]?.toLowerCase(): row};
     for (var modification in modifications) {
-      var row = byName[modification.name.toLowerCase()];
+      var row = byName[unquoteIdentifier(modification.name).toLowerCase()];
       // Without them, the MODIFY would drop the constraints.
       if (row == null) {
         throw StateError(

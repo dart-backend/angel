@@ -16,8 +16,22 @@ String compileDefault(Object value, {required bool escapeBackslashes}) {
 }
 
 /// [name] as a MySQL or MariaDB identifier, in backticks, each of which is
-/// doubled, so that it may be a reserved word such as `order`.
-String quoteMySqlIdentifier(String name) => '`${name.replaceAll('`', '``')}`';
+/// doubled, so that it may be a reserved word such as `order`. A name already
+/// in backticks, such as `` `order` ``, is quoted once.
+String quoteMySqlIdentifier(String name) =>
+    '`${unquoteIdentifier(name, '`').replaceAll('`', '``')}`';
+
+/// [name] without the [quotes] around it, of which each doubled one in it is
+/// one, as `` `a``b` `` is `` a`b ``. A name not in one of them is as it is.
+String unquoteIdentifier(String name, [String quotes = '`"']) {
+  name = name.trim();
+  if (name.length < 2) return name;
+  var quote = name[0];
+  if (quotes.contains(quote) && name.endsWith(quote)) {
+    return name.substring(1, name.length - 1).replaceAll('$quote$quote', quote);
+  }
+  return name;
+}
 
 /// [name] as a PostgreSQL identifier, in double quotes, each of which is
 /// doubled, so that it may be a reserved word or have capitals.

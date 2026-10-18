@@ -312,6 +312,20 @@ void main() async {
       );
     });
 
+    test('of MySQL 8 expressions, whose quotes it escapes', () {
+      var e = ExistingConstraints.parse(
+        isNullable: 'YES',
+        columnDefault: r"concat(_utf8mb4\'a\',_utf8mb4\'b\\c\')",
+        extra: 'DEFAULT_GENERATED',
+        dataType: 'varchar',
+        version: '8.4.0',
+      );
+      expect(
+        (e.defaultValue as RawSql).value,
+        r"(concat(_utf8mb4'a',_utf8mb4'b\c'))",
+      );
+    });
+
     test('of older servers, without DEFAULT_GENERATED', () {
       // MySQL before 8.0.13.
       var e = ExistingConstraints.parse(
@@ -544,6 +558,26 @@ void main() async {
           throwsArgumentError,
         );
       }
+    });
+
+    test('quotes a column of MODIFY once', () {
+      expect(quoteMySqlIdentifier('order'), '`order`');
+      expect(quoteMySqlIdentifier('`order`'), '`order`');
+      expect(quoteMySqlIdentifier('a`b'), '`a``b`');
+      expect(quoteMySqlIdentifier('`a``b`'), '`a``b`');
+      expect(
+        (MySqlSchema()..alter(
+              't',
+              (t) => t.changeColumnType('`order`', ColumnType.bigInt),
+            ))
+            .compile(),
+        contains('MODIFY `order` bigint;'),
+      );
+      // And reads the constraints of the column without its quotes.
+      expect(
+        existingConstraintsQuery('t', ['`order`']),
+        endsWith("column_name IN ('order')"),
+      );
     });
 
     test('renames a column of MariaDB as MySQL does', () {
@@ -1097,6 +1131,27 @@ void main() async {
         contains('on update current_timestamp'),
       );
       await conn.execute('DROP TABLE stamped');
+    });
+
+    test('changes a column given in backticks', () async {
+      await conn.execute('DROP TABLE IF EXISTS quoted');
+      await conn.execute(
+        'CREATE TABLE quoted (`order` int NOT NULL DEFAULT 1)',
+      );
+      await (MySqlSchema()..alter(
+            'quoted',
+            (t) => t.changeColumnType('`order`', ColumnType.bigInt),
+          ))
+          .run(conn);
+
+      var result = await conn.execute(
+        "SELECT data_type, is_nullable, column_default "
+        "FROM information_schema.columns "
+        "WHERE table_schema = database() AND table_name = 'quoted'",
+      );
+      var row = result.rows.single;
+      expect([row.colAt(0), row.colAt(1), row.colAt(2)], ['bigint', 'NO', '1']);
+      await conn.execute('DROP TABLE quoted');
     });
 
     test('throws for a column that is not found', () async {
