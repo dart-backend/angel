@@ -130,7 +130,12 @@ class MariaDbTable extends CompiledTable {
 
 class MariaDbAlterTable extends ModifyingAlterTable {
   MariaDbAlterTable(String tableName)
-    : super(tableName, MariaDbGenerator.compileColumn, ifExists: true);
+    : super(
+        tableName,
+        MariaDbGenerator.compileColumn,
+        compileIndex: MariaDbGenerator.compileIndex,
+        ifExists: true,
+      );
 }
 
 class MariaDbIndexes implements CompiledIndexes {

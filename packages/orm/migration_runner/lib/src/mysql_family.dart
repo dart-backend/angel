@@ -28,6 +28,9 @@ abstract class ModifyingAlterTable extends Table implements MutableTable {
   /// Compiles a column, with its type, constraints and references.
   final String Function(MigrationColumn column) compileColumn;
 
+  /// Compiles the index of a column, such as ` INDEX(`a`)`, if it has one.
+  final String? Function(String name, MigrationColumn column) compileIndex;
+
   /// Whether indexes are added with `IF NOT EXISTS` and dropped with
   /// `IF EXISTS`, which MariaDB has and MySQL has not.
   final bool ifExists;
@@ -41,6 +44,7 @@ abstract class ModifyingAlterTable extends Table implements MutableTable {
   ModifyingAlterTable(
     this.tableName,
     this.compileColumn, {
+    required this.compileIndex,
     required this.ifExists,
   }) : _statements = [_AlterStatement(tableName)],
        _currentName = tableName;
@@ -65,16 +69,23 @@ abstract class ModifyingAlterTable extends Table implements MutableTable {
     int indent,
   ) {
     if (statement.entries.isEmpty) return;
-    var clauses = [
-      for (var entry in statement.entries)
-        switch (entry) {
-          ColumnModification() => entry.compile(compileColumn),
-          _AddedColumn(:var name) =>
-            'ADD COLUMN ${quoteMySqlIdentifier(name)} '
-                '${compileColumn(_columns[name]!)}',
-          _ => entry as String,
-        },
-    ];
+    var clauses = <String>[];
+    for (var entry in statement.entries) {
+      switch (entry) {
+        case ColumnModification():
+          clauses.add(entry.compile(compileColumn));
+        case _AddedColumn(:var name):
+          var column = _columns[name]!;
+          clauses.add(
+            'ADD COLUMN ${quoteMySqlIdentifier(name)} ${compileColumn(column)}',
+          );
+          // Its index, as a CREATE TABLE has it.
+          var index = compileIndex(name, column);
+          if (index != null) clauses.add('ADD$index');
+        default:
+          clauses.add(entry as String);
+      }
+    }
     buf.writeln('${'  ' * indent}ALTER TABLE ${statement.tableName}');
     buf.write(
       clauses.map((clause) => '${'  ' * (indent + 1)}$clause').join(',\n'),
@@ -87,10 +98,20 @@ abstract class ModifyingAlterTable extends Table implements MutableTable {
   static String _key(String name) => unquoteIdentifier(name).toLowerCase();
 
   /// Adds [entry], of the columns [columns], to the last statement, or to a
-  /// new one if one of them is renamed or added in it.
-  void _add(Object entry, Iterable<String> columns) {
+  /// new one if one of them is renamed or added in it, or, for an entry
+  /// [afterChanges], changed in it, as a statement renames or drops a column
+  /// by its name before the statement, and changes it by that name too.
+  void _add(
+    Object entry,
+    Iterable<String> columns, {
+    bool afterChanges = false,
+  }) {
     var last = _statements.last;
-    if (columns.any((c) => last.introduced.contains(_key(c)))) {
+    if (columns.any(
+      (c) =>
+          last.introduced.contains(_key(c)) ||
+          (afterChanges && last.modified.contains(_key(c))),
+    )) {
       _statements.add(last = _AlterStatement(_currentName));
     }
     last.entries.add(entry);
@@ -138,6 +159,7 @@ abstract class ModifyingAlterTable extends Table implements MutableTable {
       entries[i] = (entries[i] as ColumnModification).mergedWith(modification);
       entries.removeLast();
     }
+    _statements.last.modified.add(key);
   }
 
   @override
@@ -175,13 +197,16 @@ abstract class ModifyingAlterTable extends Table implements MutableTable {
       'RENAME COLUMN ${quoteMySqlIdentifier(name)} '
       'TO ${quoteMySqlIdentifier(newName)}',
       [name],
+      afterChanges: true,
     );
     _statements.last.introduced.add(_key(newName));
   }
 
   @override
   void dropColumn(String name) {
-    _add('DROP COLUMN ${quoteMySqlIdentifier(name)}', [name]);
+    _add('DROP COLUMN ${quoteMySqlIdentifier(name)}', [
+      name,
+    ], afterChanges: true);
   }
 
   @override
@@ -231,6 +256,9 @@ class _AlterStatement {
 
   /// The columns renamed or added by it, by [ModifyingAlterTable._key].
   final Set<String> introduced = {};
+
+  /// The columns changed by it, by [ModifyingAlterTable._key].
+  final Set<String> modified = {};
 
   _AlterStatement(this.tableName);
 

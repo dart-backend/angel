@@ -140,7 +140,12 @@ class MysqlTable extends CompiledTable {
 
 class MysqlAlterTable extends ModifyingAlterTable {
   MysqlAlterTable(String tableName)
-    : super(tableName, MySqlGenerator.compileColumn, ifExists: false);
+    : super(
+        tableName,
+        MySqlGenerator.compileColumn,
+        compileIndex: MySqlGenerator.compileIndex,
+        ifExists: false,
+      );
 }
 
 class MysqlIndexes implements CompiledIndexes {

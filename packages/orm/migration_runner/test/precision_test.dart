@@ -760,6 +760,72 @@ void main() async {
       expect(schema.compile(), contains('ALTER TABLE u\n  DROP COLUMN `f`;'));
     });
 
+    test('renames or drops a column changed before in another statement', () {
+      for (var schema in [MySqlSchema(), MariaDbSchema()]) {
+        schema.alter('t', (t) {
+          t.changeColumnType('a', ColumnType.bigInt);
+          t.renameColumn('a', 'b');
+          t.setNotNull('c');
+          t.dropColumn('c');
+        });
+        expect(
+          schema.compile(),
+          'ALTER TABLE t\n'
+          '  MODIFY `a` bigint;\n'
+          'ALTER TABLE t\n'
+          '  RENAME COLUMN `a` TO `b`,\n'
+          '  MODIFY `c` /* the type of `c` */ NOT NULL;\n'
+          'ALTER TABLE t\n'
+          '  DROP COLUMN `c`;\n',
+        );
+      }
+    });
+
+    test('adds the index of a column added by MySQL and MariaDB', () {
+      for (var schema in [MySqlSchema(), MariaDbSchema()]) {
+        schema.alter('t', (t) {
+          t.varChar('email', length: 9).unique();
+          t.integer('n');
+        });
+        expect(
+          schema.compile(),
+          'ALTER TABLE t\n'
+          '  ADD COLUMN `email` varchar(9),\n'
+          '  ADD UNIQUE KEY `unique_email` (`email`),\n'
+          '  ADD COLUMN `n` int;\n',
+        );
+      }
+    });
+
+    test('PostgreSQL changes a column added before in another statement', () {
+      var sql =
+          (PostgresSchema()..alter('t', (t) {
+                t.integer('x');
+                t.changeColumnType('x', ColumnType.bigInt, defaultValue: 0);
+                t.integer('y');
+              }))
+              .compile();
+      expect(
+        sql,
+        'ALTER TABLE "t"\n'
+        '  ADD COLUMN "x" int;\n'
+        'ALTER TABLE "t"\n'
+        '  ALTER COLUMN "x" DROP DEFAULT,\n'
+        '  ALTER COLUMN "x" TYPE bigint,\n'
+        '  ALTER COLUMN "x" SET DEFAULT 0,\n'
+        '  ADD COLUMN "y" int;\n',
+      );
+
+      // And the statements of PostgresIndexes end.
+      sql =
+          (PostgresSchema()..indexes('t', (i) {
+                i.dropPrimaryIndex();
+                i.addIndex('ix', ['a'], IndexType.standardIndex);
+              }))
+              .compile();
+      expect(sql, contains('DROP CONSTRAINT "t_pkey";\nCREATE INDEX'));
+    });
+
     test('merges the changes of a column into one MODIFY', () {
       for (var schema in [MySqlSchema(), MariaDbSchema()]) {
         schema.alter('t', (t) {
@@ -1169,6 +1235,30 @@ void main() async {
       },
     );
 
+    test('changes and renames columns added before in one alter', () async {
+      await conn.execute('DROP TABLE IF EXISTS added_pg');
+      await conn.execute('CREATE TABLE added_pg (a int)');
+      await (PostgresSchema()..alter('added_pg', (t) {
+            t.integer('x');
+            t.changeColumnType('x', ColumnType.bigInt, defaultValue: 0);
+            t.integer('y');
+            t.renameColumn('y', 'z');
+          }))
+          .run(conn);
+
+      var result = await conn.execute(
+        "SELECT column_name, data_type, column_default "
+        "FROM information_schema.columns WHERE table_name = 'added_pg' "
+        "ORDER BY column_name",
+      );
+      expect(result.map((r) => r.toList()), [
+        ['a', 'integer', null],
+        ['x', 'bigint', '0'],
+        ['z', 'integer', null],
+      ]);
+      await conn.execute('DROP TABLE added_pg');
+    });
+
     test('renames with other changes', () async {
       await conn.execute('DROP TABLE IF EXISTS renamed_pg, renamed_pg2');
       await conn.execute('CREATE TABLE renamed_pg (a int, x int)');
@@ -1480,6 +1570,36 @@ void main() async {
         ['e', 'varchar(9)', 'NO', anyOf(isNull, 'NULL')],
       ]);
       await conn.execute('DROP TABLE renamed_my');
+    });
+
+    test('renames and drops columns changed before in one alter', () async {
+      await conn.execute('DROP TABLE IF EXISTS changed_my');
+      await conn.execute('CREATE TABLE changed_my (a int, c int)');
+      await (MySqlSchema()..alter('changed_my', (t) {
+            t.changeColumnType('a', ColumnType.bigInt);
+            t.renameColumn('a', 'b');
+            t.setNotNull('c');
+            t.dropColumn('c');
+            t.varChar('email', length: 9).unique();
+          }))
+          .run(conn);
+
+      var result = await conn.execute(
+        "SELECT column_name, column_type FROM information_schema.columns "
+        "WHERE table_schema = database() AND table_name = 'changed_my' "
+        "ORDER BY column_name",
+      );
+      expect(result.rows.map((r) => [r.colAt(0), r.colAt(1)]), [
+        ['b', startsWith('bigint')],
+        ['email', 'varchar(9)'],
+      ]);
+      // The column added has its unique index.
+      await conn.execute("INSERT INTO changed_my (email) VALUES ('x')");
+      await expectLater(
+        conn.execute("INSERT INTO changed_my (email) VALUES ('x')"),
+        throwsA(anything),
+      );
+      await conn.execute('DROP TABLE changed_my');
     });
 
     test('changes a column twice in one alter', () async {

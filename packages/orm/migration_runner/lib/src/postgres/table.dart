@@ -104,7 +104,26 @@ class PostgresAlterTable extends Table implements MutableTable {
   /// sequences.
   final Map<String, String> _sequences = {};
 
+  /// The columns added in the statement so far.
+  final Set<String> _added = {};
+
   PostgresAlterTable(this.tableName) : _currentName = tableName;
+
+  /// Adds [clause], of the columns [columns], after a break if one of them is
+  /// added in the statement so far.
+  void _clause(String clause, Iterable<String> columns) {
+    if (columns.any(_added.contains)) {
+      _stack.add(_Break());
+      _added.clear();
+    }
+    _stack.add(clause);
+  }
+
+  /// Adds [statement], which is a statement of its own.
+  void _statement(_Statement statement) {
+    _stack.add(statement);
+    _added.clear();
+  }
 
   /// Compiles the `ALTER TABLE` statements of the table, indented by
   /// [indent].
@@ -112,7 +131,9 @@ class PostgresAlterTable extends Table implements MutableTable {
   /// PostgreSQL takes `RENAME COLUMN` and `RENAME TO` only as statements of
   /// their own, and `DROP COLUMN` is one too, so the clauses between them are
   /// one statement each, and those after a `RENAME TO` are of the new name.
-  /// The columns added are clauses of the last statement.
+  /// The columns added are clauses in the order they are declared, and a
+  /// clause of a column added before it in its statement starts another, as
+  /// the column does not exist before the statement.
   void compile(StringBuffer buf, int indent) {
     var table = tableName;
     var clauses = <String>[];
@@ -126,20 +147,25 @@ class PostgresAlterTable extends Table implements MutableTable {
     }
 
     for (var entry in _stack) {
-      if (entry is _Statement) {
-        alter(clauses);
-        clauses = [];
-        alter([entry.clause]);
-        table = entry.newTableName ?? table;
-      } else {
-        clauses.add(entry as String);
+      switch (entry) {
+        case _Statement():
+          alter(clauses);
+          clauses = [];
+          alter([entry.clause]);
+          table = entry.newTableName ?? table;
+        case _Break():
+          alter(clauses);
+          clauses = [];
+        case _AddedColumn(:var name):
+          clauses.add(
+            'ADD COLUMN ${sql.quotePostgresIdentifier(name)} '
+            '${PostgresGenerator.compileColumn(_columns[name]!)}',
+          );
+        default:
+          clauses.add(entry as String);
       }
     }
-    alter([
-      ...clauses,
-      for (var MapEntry(key: name, value: column) in _columns.entries)
-        'ADD COLUMN ${sql.quotePostgresIdentifier(name)} ${PostgresGenerator.compileColumn(column)}',
-    ]);
+    alter(clauses);
     _stack.clear();
   }
 
@@ -191,21 +217,23 @@ END
     }
     var col = MigrationColumn.from(column);
     _columns[name] = col;
+    _stack.add(_AddedColumn(name));
+    _added.add(name);
     return col;
   }
 
   @override
   void dropNotNull(String name) {
-    _stack.add(
-      'ALTER COLUMN ${sql.quotePostgresIdentifier(name)} DROP NOT NULL',
-    );
+    _clause('ALTER COLUMN ${sql.quotePostgresIdentifier(name)} DROP NOT NULL', [
+      name,
+    ]);
   }
 
   @override
   void setNotNull(String name) {
-    _stack.add(
-      'ALTER COLUMN ${sql.quotePostgresIdentifier(name)} SET NOT NULL',
-    );
+    _clause('ALTER COLUMN ${sql.quotePostgresIdentifier(name)} SET NOT NULL', [
+      name,
+    ]);
   }
 
   @override
@@ -237,23 +265,27 @@ END
     // or noDefault, replaces the old one, which is dropped first, as it may
     // not be cast to the new type.
     if (defaultValue != null) {
-      _stack.add(
+      _clause(
         'ALTER COLUMN ${sql.quotePostgresIdentifier(name)} DROP DEFAULT',
+        [name],
       );
     }
-    _stack.add(
+    _clause(
       'ALTER COLUMN ${sql.quotePostgresIdentifier(name)} TYPE ${PostgresGenerator.columnType(column)}'
       '${using == null ? '' : ' USING $using'}',
+      [name],
     );
     if (isNullable != null) {
-      _stack.add(
+      _clause(
         'ALTER COLUMN ${sql.quotePostgresIdentifier(name)} ${isNullable ? 'DROP' : 'SET'} NOT NULL',
+        [name],
       );
     }
     if (defaultValue != null && !identical(defaultValue, noDefault)) {
-      _stack.add(
+      _clause(
         'ALTER COLUMN ${sql.quotePostgresIdentifier(name)} SET DEFAULT '
         '${PostgresGenerator.compileDefault(defaultValue)}',
+        [name],
       );
     }
   }
@@ -268,7 +300,7 @@ END
 
   @override
   void renameColumn(String name, String newName) {
-    _stack.add(
+    _statement(
       _Statement(
         'RENAME COLUMN ${sql.quotePostgresIdentifier(name)} '
         'TO ${sql.quotePostgresIdentifier(newName)}',
@@ -284,13 +316,13 @@ END
   void dropColumn(String name) {
     // A statement of its own, as PostgreSQL rejects the changes of a column
     // with its drop in one.
-    _stack.add(_Statement('DROP COLUMN ${sql.quotePostgresIdentifier(name)}'));
+    _statement(_Statement('DROP COLUMN ${sql.quotePostgresIdentifier(name)}'));
     _sequences.remove(name);
   }
 
   @override
   void rename(String newName) {
-    _stack.add(
+    _statement(
       _Statement(
         'RENAME TO ${sql.quotePostgresIdentifier(newName)}',
         newTableName: newName,
@@ -316,8 +348,9 @@ END
         return;
     }
 
-    _stack.add(
+    _clause(
       'ADD $indexType (${columns.map(sql.quotePostgresIdentifier).join(',')})',
+      columns,
     );
   }
 
@@ -342,6 +375,18 @@ class _Statement {
   final String? newTableName;
 
   _Statement(this.clause, {this.newTableName});
+}
+
+/// The end of a statement of a [PostgresAlterTable], before a clause of a
+/// column added in it.
+class _Break {}
+
+/// The `ADD COLUMN` of a column declared by a [PostgresAlterTable], which is
+/// compiled with its constraints when the table is.
+class _AddedColumn {
+  final String name;
+
+  _AddedColumn(this.name);
 }
 
 class PostgresIndexes implements MutableIndexes {
@@ -389,7 +434,7 @@ class PostgresIndexes implements MutableIndexes {
   @override
   void dropPrimaryIndex() {
     _stack.add(
-      'ALTER TABLE ${sql.quotePostgresIdentifier(tableName)} DROP CONSTRAINT ${sql.quotePostgresIdentifier('${tableName}_pkey')}',
+      'ALTER TABLE ${sql.quotePostgresIdentifier(tableName)} DROP CONSTRAINT ${sql.quotePostgresIdentifier('${tableName}_pkey')};',
     );
   }
 }
