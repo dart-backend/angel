@@ -4,6 +4,7 @@ import 'package:angel3_migration/angel3_migration.dart';
 import 'package:logging/logging.dart';
 import 'package:postgres/postgres.dart';
 
+import '../sql.dart';
 import 'table.dart';
 
 /// A PostgreSQL database schema generator
@@ -47,14 +48,14 @@ class PostgresSchema extends Schema {
   @override
   void drop(String tableName, {bool cascade = false}) {
     var c = cascade == true ? ' CASCADE' : '';
-    _writeln('DROP TABLE "$tableName"$c;');
+    _writeln('DROP TABLE ${quotePostgresIdentifier(tableName)}$c;');
   }
 
   @override
   void alter(String tableName, void Function(MutableTable table) callback) {
     var tbl = PostgresAlterTable(tableName);
     callback(tbl);
-    _writeln('ALTER TABLE "$tableName"');
+    _writeln('ALTER TABLE ${quotePostgresIdentifier(tableName)}');
     tbl.compile(_buf, _indent + 1);
     _buf.writeln(';');
     tbl.compileSequences(_buf);
@@ -68,7 +69,7 @@ class PostgresSchema extends Schema {
     var op = ifNotExists ? ' IF NOT EXISTS' : '';
     var tbl = PostgresTable();
     callback(tbl);
-    _writeln('CREATE TABLE$op "$tableName" (');
+    _writeln('CREATE TABLE$op ${quotePostgresIdentifier(tableName)} (');
     tbl.compile(_buf, _indent + 1);
     _buf.writeln();
     _writeln(');');

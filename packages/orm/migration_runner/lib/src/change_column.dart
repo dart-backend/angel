@@ -1,6 +1,5 @@
 import 'package:angel3_migration/angel3_migration.dart';
 import 'package:angel3_orm/angel3_orm.dart';
-import 'package:logging/logging.dart';
 
 import 'sql.dart';
 
@@ -214,9 +213,14 @@ class ColumnModification {
     _column();
   }
 
-  /// Whether some constraint is not given, and so is read from the database.
+  /// Whether some constraint is not given, and so is read from the database:
+  /// one of [isNullable], [defaultValue] and [autoIncrement], or the
+  /// `ON UPDATE` that a date and time type keeps, which cannot be given.
   bool get keepsExisting =>
-      isNullable == null || defaultValue == null || autoIncrement == null;
+      isNullable == null ||
+      defaultValue == null ||
+      autoIncrement == null ||
+      _dateTimeTypes.contains(type);
 
   /// The default [existing], unless [type] cannot have it.
   Object? get _existingDefault {
@@ -254,123 +258,5 @@ class ColumnModification {
       sql += ' ON UPDATE $onUpdate';
     }
     return sql;
-  }
-}
-
-/// An alter table of MySQL or MariaDB, whose changes of column types are
-/// compiled with the constraints read from the database.
-abstract interface class ModifyingAlterTable {
-  String get tableName;
-
-  /// The changes of column types, whose constraints not given are read from
-  /// the database when the schema is run.
-  List<ColumnModification> get modifications;
-
-  /// Compiles the clauses of the table, which may be compiled again.
-  void compile(StringBuffer buf, int indent);
-}
-
-/// The alter tables of a MySQL or MariaDB schema, each with the text compiled
-/// before it and its indent, which are compiled with the constraints that
-/// [run] reads from the database just before them.
-class SchemaAlters {
-  final Logger _log;
-  final List<(String, ModifyingAlterTable, int)> _alters = [];
-
-  SchemaAlters(this._log);
-
-  /// Adds [table], after the text of [buf], which is cleared.
-  void add(StringBuffer buf, ModifyingAlterTable table, int indent) {
-    _alters.add((buf.toString(), table, indent));
-    buf.clear();
-  }
-
-  /// The SQL of the schema, whose text after the last alter table is [rest].
-  /// A change of a column's type keeps the constraints not given only when
-  /// [run] has read them from the database.
-  String compile(StringBuffer rest) {
-    var buf = StringBuffer();
-    for (var (text, table, indent) in _alters) {
-      buf.write(text);
-      _compileAlter(buf, table, indent);
-    }
-    buf.write(rest);
-    return buf.toString();
-  }
-
-  /// Runs the SQL of the schema, whose text after the last alter table is
-  /// [rest], with [execute], and reads the constraints with [query], which
-  /// gives the rows of a query as text.
-  ///
-  /// The statements before an alter table that changes a column's type are
-  /// run before the column's constraints are read, as they may create the
-  /// table or rename the column.
-  Future<void> run(
-    StringBuffer rest, {
-    required Future<void> Function(String sql) execute,
-    required Future<List<List<String?>>> Function(String sql) query,
-  }) async {
-    Future<void> executeText(String sql) async {
-      if (sql.trim().isNotEmpty) await execute(sql);
-    }
-
-    var buf = StringBuffer();
-    for (var (text, table, indent) in _alters) {
-      buf.write(text);
-      if (table.modifications.any((m) => m.keepsExisting)) {
-        await executeText(buf.toString());
-        buf.clear();
-        await _readExisting(table, query);
-      }
-      _compileAlter(buf, table, indent);
-    }
-    buf.write(rest);
-    await executeText(buf.toString());
-  }
-
-  void _compileAlter(StringBuffer buf, ModifyingAlterTable table, int indent) {
-    buf.write('  ' * indent);
-    buf.writeln('ALTER TABLE ${table.tableName}');
-    table.compile(buf, indent + 1);
-    buf.writeln(';');
-  }
-
-  /// Reads the constraints of the columns of [table] whose types are changed,
-  /// which a `MODIFY` keeps only if it gives them again, from the database,
-  /// in one query.
-  Future<void> _readExisting(
-    ModifyingAlterTable table,
-    Future<List<List<String?>>> Function(String sql) query,
-  ) async {
-    var modifications = [
-      for (var m in table.modifications)
-        if (m.keepsExisting) m,
-    ];
-    var rows = await query(
-      existingConstraintsQuery(
-        table.tableName,
-        modifications.map((m) => m.name).toSet(),
-      ),
-    );
-    // The names of columns are not case sensitive.
-    var byName = {for (var row in rows) row[0]?.toLowerCase(): row};
-    for (var modification in modifications) {
-      var row = byName[modification.name.toLowerCase()];
-      if (row == null) {
-        _log.warning(
-          'Column ${modification.name} of table ${table.tableName} '
-          'not found, so the constraints not given to changeColumnType are '
-          'not kept',
-        );
-        continue;
-      }
-      modification.existing = ExistingConstraints.parse(
-        isNullable: row[1] ?? 'YES',
-        columnDefault: row[2],
-        extra: row[3] ?? '',
-        dataType: row[4] ?? '',
-        version: row[5] ?? '',
-      );
-    }
   }
 }

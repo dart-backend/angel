@@ -21,8 +21,9 @@ class Column {
   /// MySQL and MariaDB that have no `NUMERIC` without one.
   static const int defaultPrecision = 17;
 
-  /// The [scale] of a column that gives neither a precision nor a scale, on
-  /// databases such as MySQL and MariaDB that have no `NUMERIC` without one.
+  /// The [scale] of a column that gives a precision but no scale, or the
+  /// precision if smaller, and of a column that gives neither on databases
+  /// such as MySQL and MariaDB that have no `NUMERIC` without them.
   static const int defaultScale = 3;
 
   /// If `true`, a SQL field will be nullable.
@@ -39,10 +40,12 @@ class Column {
   /// for [defaultPrecision].
   final int? precision;
 
-  /// Specifies the scale of a `NUMERIC` or `DECIMAL`, or `null` for none,
-  /// which is 0 with a [precision]. Without a precision, it is [defaultScale]
-  /// where [defaultPrecision] is used, and a scale has the precision
-  /// [defaultPrecision].
+  /// Specifies the scale of a `NUMERIC` or `DECIMAL`, or `null` for none.
+  /// With a [precision], none is [defaultScale], or the precision if smaller,
+  /// not the 0 of SQL's `NUMERIC(precision)`, which would round values to
+  /// whole numbers; give 0 for that. Without a precision, none is
+  /// [defaultScale] where [defaultPrecision] is used, and a scale has the
+  /// precision [defaultPrecision].
   final int? scale;
 
   /// Specifies the timezone for temporal field.

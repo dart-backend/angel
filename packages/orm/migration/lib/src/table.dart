@@ -19,6 +19,9 @@ abstract class Table {
   /// A `numeric(precision, scale)` column. Without a [precision] or [scale], it is
   /// an unbounded `numeric` on PostgreSQL, and `numeric(17, 3)` on MySQL and MariaDB
   /// ([Column.defaultPrecision] and [Column.defaultScale]).
+  /// With a [precision] but no [scale], the scale is [Column.defaultScale], or
+  /// the precision if smaller, e.g. `numeric(10, 3)`; give `scale: 0` for whole
+  /// numbers.
   ///
   /// Throws an [ArgumentError] if [precision] is not positive, or [scale] is
   /// negative or greater than the precision.
@@ -32,6 +35,9 @@ abstract class Table {
   /// A `decimal(precision, scale)` column. Without a [precision] or [scale], it is
   /// an unbounded `decimal` on PostgreSQL, and `decimal(17, 3)` on MySQL and MariaDB
   /// ([Column.defaultPrecision] and [Column.defaultScale]).
+  /// With a [precision] but no [scale], the scale is [Column.defaultScale], or
+  /// the precision if smaller, e.g. `decimal(10, 3)`; give `scale: 0` for whole
+  /// numbers.
   ///
   /// Throws an [ArgumentError] if [precision] is not positive, or [scale] is
   /// negative or greater than the precision.

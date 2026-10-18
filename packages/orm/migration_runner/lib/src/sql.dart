@@ -19,6 +19,11 @@ String compileDefault(Object value, {required bool escapeBackslashes}) {
 /// doubled, so that it may be a reserved word such as `order`.
 String quoteMySqlIdentifier(String name) => '`${name.replaceAll('`', '``')}`';
 
+/// [name] as a PostgreSQL identifier, in double quotes, each of which is
+/// doubled, so that it may be a reserved word or have capitals.
+String quotePostgresIdentifier(String name) =>
+    '"${name.replaceAll('"', '""')}"';
+
 /// The statements of the MySQL or MariaDB [sql], without the `;` that ends
 /// them, and without those that are empty.
 ///

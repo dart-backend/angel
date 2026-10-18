@@ -241,6 +241,18 @@ void main() async {
               autoIncrement: true,
             );
       expect(modification.keepsExisting, isFalse);
+      // But for a date and time type, whose ON UPDATE cannot be given.
+      expect(
+        ColumnModification(
+          'at',
+          ColumnType.dateTime,
+          length: 255,
+          isNullable: false,
+          defaultValue: RawSql('CURRENT_TIMESTAMP'),
+          autoIncrement: false,
+        ).keepsExisting,
+        isTrue,
+      );
       expect(
         modification.compile(MySqlGenerator.compileColumn),
         'MODIFY `n` int DEFAULT 1',
@@ -510,6 +522,52 @@ void main() async {
         );
       },
     );
+
+    test('rejects a precision above the limits when it is declared', () {
+      // Before the schema is compiled or run.
+      for (var schema in <Schema>[MySqlSchema(), MariaDbSchema()]) {
+        expect(
+          () => schema.alter(
+            't',
+            (t) => t.changeColumnType('a', ColumnType.decimal, precision: 70),
+          ),
+          throwsArgumentError,
+        );
+        expect(
+          () => schema.alter(
+            't',
+            (t) => t.declareColumn(
+              'b',
+              Column(type: ColumnType.decimal, precision: 70),
+            ),
+          ),
+          throwsArgumentError,
+        );
+      }
+    });
+
+    test('renames a column of MariaDB as MySQL does', () {
+      void rename(MutableTable t) => t.renameColumn('a', 'b');
+      expect(
+        (MariaDbSchema()..alter('t', rename)).compile(),
+        contains('RENAME COLUMN a TO b;'),
+      );
+      expect(
+        (MySqlSchema()..alter('t', rename)).compile(),
+        contains('RENAME COLUMN a TO b;'),
+      );
+    });
+
+    test('escapes the quotes of PostgreSQL identifiers', () {
+      var sql =
+          (PostgresSchema()..alter('t', (t) {
+                t.changeColumnType('a"b', ColumnType.int);
+                t.renameColumn('a"b', 'c');
+              }))
+              .compile();
+      expect(sql, contains('ALTER COLUMN "a""b" TYPE int,'));
+      expect(sql, contains('RENAME COLUMN "a""b" TO "c";'));
+    });
 
     test('noDefault removes the default', () {
       void change(MutableTable t) => t.changeColumnType(
@@ -1010,6 +1068,44 @@ void main() async {
       expect([row.colAt(0), row.colAt(1)], ['int', 'NO']);
       expect(row.colAt(2), anyOf(isNull, 'NULL'));
       await conn.execute('DROP TABLE defaulted');
+    });
+
+    test('keeps ON UPDATE when the other constraints are given', () async {
+      await conn.execute('DROP TABLE IF EXISTS stamped');
+      await conn.execute(
+        'CREATE TABLE stamped (at datetime NOT NULL '
+        'DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP)',
+      );
+      await (MySqlSchema()..alter(
+            'stamped',
+            (t) => t.changeColumnType(
+              'at',
+              ColumnType.timeStamp,
+              isNullable: false,
+              defaultValue: RawSql('CURRENT_TIMESTAMP'),
+              autoIncrement: false,
+            ),
+          ))
+          .run(conn);
+
+      var result = await conn.execute(
+        "SELECT extra FROM information_schema.columns "
+        "WHERE table_schema = database() AND table_name = 'stamped'",
+      );
+      expect(
+        result.rows.single.colAt(0)!.toLowerCase(),
+        contains('on update current_timestamp'),
+      );
+      await conn.execute('DROP TABLE stamped');
+    });
+
+    test('throws for a column that is not found', () async {
+      await conn.execute('DROP TABLE IF EXISTS missing');
+      await conn.execute('CREATE TABLE missing (a int NOT NULL)');
+      var schema = MySqlSchema()
+        ..alter('missing', (t) => t.changeColumnType('b', ColumnType.bigInt));
+      await expectLater(schema.run(conn), throwsA(isA<StateError>()));
+      await conn.execute('DROP TABLE missing');
     });
 
     test('throws, and does not record a migration that fails', () async {

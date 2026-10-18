@@ -4,7 +4,7 @@ import 'package:angel3_migration/angel3_migration.dart';
 import 'package:angel3_orm/angel3_orm.dart';
 import 'package:logging/logging.dart';
 
-import '../change_column.dart';
+import '../mysql_family.dart';
 import '../sql.dart';
 
 /// MySQL SQL query generator
@@ -92,7 +92,7 @@ abstract class MySqlGenerator {
   }
 }
 
-class MysqlTable extends Table {
+class MysqlTable extends CompiledTable {
   final _log = Logger('MysqlTable');
 
   final Map<String, MigrationColumn> _columns = {};
@@ -107,6 +107,7 @@ class MysqlTable extends Table {
     return col;
   }
 
+  @override
   void compile(StringBuffer buf, int indent) {
     var i = 0;
     List indexBuf = [];
@@ -135,135 +136,18 @@ class MysqlTable extends Table {
   }
 }
 
-class MysqlAlterTable extends Table
-    implements MutableTable, ModifyingAlterTable {
-  final Map<String, MigrationColumn> _columns = {};
-  @override
-  final String tableName;
-  final Queue<Object> _stack = Queue<Object>();
-
-  @override
-  final List<ColumnModification> modifications = [];
-
-  MysqlAlterTable(this.tableName);
-
-  @override
-  void compile(StringBuffer buf, int indent) {
-    // The changes and the columns added are clauses of one statement. The
-    // stack is kept, so that the table can be compiled again.
-    var clauses = [
-      for (var entry in _stack)
-        entry is ColumnModification
-            ? entry.compile(MySqlGenerator.compileColumn)
-            : entry,
-      for (var MapEntry(key: name, value: column) in _columns.entries)
-        'ADD COLUMN $name ${MySqlGenerator.compileColumn(column)}',
-    ];
-    buf.write(clauses.map((clause) => '${'  ' * indent}$clause').join(',\n'));
-  }
-
-  @override
-  MigrationColumn declareColumn(String name, Column column) {
-    if (_columns.containsKey(name)) {
-      throw StateError('Cannot redeclare column $name.');
-    }
-    var col = MigrationColumn.from(column);
-    _columns[name] = col;
-    return col;
-  }
-
-  @override
-  void dropNotNull(String name) {
-    _stack.add('ALTER COLUMN $name DROP NOT NULL');
-  }
-
-  @override
-  void setNotNull(String name) {
-    _stack.add('ALTER COLUMN $name SET NOT NULL');
-  }
-
-  @override
-  void changeColumnType(
-    String name,
-    ColumnType type, {
-    int length = Column.defaultLength,
-    int? precision,
-    int? scale,
-    bool? isNullable,
-    Object? defaultValue,
-    bool? autoIncrement,
-    String? using,
-  }) {
-    // MODIFY converts the values itself, so `using` is not needed.
-    var modification = ColumnModification(
-      name,
-      type,
-      length: length,
-      precision: precision,
-      scale: scale,
-      isNullable: isNullable,
-      defaultValue: defaultValue,
-      autoIncrement: autoIncrement,
-    );
-    modifications.add(modification);
-    _stack.add(modification);
-  }
-
-  @override
-  void renameColumn(String name, String newName) {
-    _stack.add('RENAME COLUMN $name TO $newName');
-  }
-
-  @override
-  void dropColumn(String name) {
-    _stack.add('DROP COLUMN $name');
-  }
-
-  @override
-  void rename(String newName) {
-    _stack.add('RENAME TO $newName');
-  }
-
-  @override
-  void addIndex(String name, List<String> columns, IndexType type) {
-    String indexType = '';
-
-    switch (type) {
-      case IndexType.primaryKey:
-        indexType = 'PRIMARY KEY';
-        break;
-      case IndexType.unique:
-        indexType = 'UNIQUE INDEX `$name`';
-        break;
-      case IndexType.standardIndex:
-      case IndexType.none:
-        indexType = 'INDEX `$name`';
-        break;
-    }
-
-    // mask the column names, is more safety
-    columns.map((column) => '`$column`');
-
-    _stack.add('ADD $indexType (${columns.join(',')})');
-  }
-
-  @override
-  void dropIndex(String name) {
-    _stack.add('DROP INDEX `$name`');
-  }
-
-  @override
-  void dropPrimaryIndex() {
-    _stack.add('DROP PRIMARY KEY');
-  }
+class MysqlAlterTable extends ModifyingAlterTable {
+  MysqlAlterTable(String tableName)
+    : super(tableName, MySqlGenerator.compileColumn, ifExists: false);
 }
 
-class MysqlIndexes implements MutableIndexes {
+class MysqlIndexes implements CompiledIndexes {
   final String tableName;
   final Queue<String> _stack = Queue<String>();
 
   MysqlIndexes(this.tableName);
 
+  @override
   void compile(StringBuffer buf) {
     while (_stack.isNotEmpty) {
       buf.writeln(_stack.removeFirst());

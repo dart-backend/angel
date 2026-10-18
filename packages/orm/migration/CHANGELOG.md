@@ -9,7 +9,6 @@
 * Added `noDefault`, the `defaultValue` of `changeColumnType` that removes the column's default, where `null` keeps it, for a default that the new type cannot have (e.g. `changeColumnType('code', ColumnType.int, defaultValue: noDefault)` of a column with `DEFAULT 'n/a'`)
 * Added `Table.decimal`, as `Table.numeric` for `decimal` columns
 * Added `MigrationColumn.precisionArguments`, the `(precision, scale)` of a column's type in SQL, for the runners of each database, which checks them against the database's limits. A precision without a scale has `Column.defaultScale` (3), or the precision if smaller, as a scale of 0 would round values to whole numbers; give `scale: 0` for that
-* `Table.varChar` declares a `MigrationColumn`
 
 ## 9.1.0
 
