@@ -27,6 +27,17 @@ class RenamedMigration extends Migration {
 
 class ClashingMigration extends RenamedMigration {}
 
+class HashMigration extends Migration {
+  @override
+  String get name => 'users#v2';
+
+  @override
+  void up(Schema schema) {}
+
+  @override
+  void down(Schema schema) {}
+}
+
 class SeedMigration<T> extends Migration {
   @override
   void up(Schema schema) {}
@@ -119,6 +130,13 @@ void main() {
           {},
         ),
         throwsStateError,
+      );
+    });
+
+    test('throws for a name with a #, which tells an earlier path', () {
+      expect(
+        () => addQueuedMigrations(Queue.of([HashMigration()]), {}),
+        throwsArgumentError,
       );
     });
 

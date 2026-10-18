@@ -60,18 +60,27 @@ class MemoryRunner extends SqlMigrationRunner<Schema> {
   String compileSchema(Schema schema) => '';
 
   @override
-  Future<void> runRecorded(Schema schema, String name, {int? batch}) async {
-    if (batch == null) {
-      runs.add('down $name');
-      await deletePath(name);
-    } else {
-      runs.add('up $name');
-      rows.add((rows.length + 1, batch, name));
-    }
+  Future<void> runAndRecord(Schema schema, String name, int batch) async {
+    runs.add('up $name');
+    rows.add((rows.length + 1, batch, name));
   }
 
   @override
-  Future close() async {}
+  Future<void> runAndRemove(Schema schema, String name) async {
+    runs.add('down $name');
+    await deletePath(name);
+  }
+
+  bool closed = false;
+
+  /// Whether [close] throws, as on a connection that was lost.
+  bool closeFails = false;
+
+  @override
+  Future close() async {
+    if (closeFails) throw StateError('closed already');
+    closed = true;
+  }
 }
 
 class _NoSchema implements Schema {
@@ -97,6 +106,22 @@ class NamedMigration extends Migration {
 }
 
 void main() {
+  test('runMigrations closes the runner when a migration fails', () async {
+    var runner = MemoryRunner([NamedMigration('a', fails: true)]);
+    await expectLater(runMigrations(runner, ['up']), throwsStateError);
+    expect(runner.closed, isTrue);
+  });
+
+  test('runMigrations throws the error of a migration, not of close', () async {
+    var runner = MemoryRunner([NamedMigration('a', fails: true)])
+      ..closeFails = true;
+    // The StateError of the migration, not the one of close.
+    await expectLater(
+      runMigrations(runner, ['up']),
+      throwsA(isA<StateError>().having((e) => e.message, 'message', 'fails')),
+    );
+  });
+
   test('runs the migrations not recorded, in a new batch', () async {
     var a = NamedMigration('a'), b = NamedMigration('b');
     var runner = MemoryRunner([a]);

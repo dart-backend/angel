@@ -900,6 +900,120 @@ void main() async {
       expect(pg.compile(), contains('ON "users" (lower(email));'));
     });
 
+    test('quotes each part of a table of PostgreSQL', () {
+      var schema = PostgresSchema()
+        ..create('audit.events', (t) {
+          t.serial('id');
+          t.integer('user_id').references('auth.users', 'id');
+        })
+        ..alter('audit.events', (t) {
+          t.changeColumnType('id', ColumnType.bigSerial);
+          t.rename('logs');
+        })
+        ..drop('"order"');
+      var sql = schema.compile();
+      expect(sql, contains('CREATE TABLE "audit"."events" ('));
+      expect(sql, contains('REFERENCES "auth"."users"("id")'));
+      expect(sql, contains('ALTER TABLE "audit"."events"'));
+      // Renamed in its schema, of which its sequence is.
+      expect(sql, contains('RENAME TO "logs"'));
+      expect(sql, contains('"audit"."logs_id_seq"'));
+      expect(sql, contains('DROP TABLE "order";'));
+      expect(
+        (PostgresSchema()..indexes('audit.events', (t) => t.dropPrimaryIndex()))
+            .compile(),
+        contains('ALTER TABLE "audit"."events" DROP CONSTRAINT "events_pkey";'),
+      );
+    });
+
+    test('names the constraints, indexes and sequences of a schema', () {
+      var sql =
+          (PostgresSchema()
+                ..alter('audit.events', (t) {
+                  t.dropPrimaryIndex();
+                  t.changeColumnType('"Id"', ColumnType.serial);
+                })
+                ..indexes('audit.events', (t) => t.dropIndex('"Ix"')))
+              .compile();
+      expect(sql, contains('DROP CONSTRAINT "events_pkey"'));
+      expect(sql, contains('DROP INDEX "audit"."Ix";'));
+      // The column's own name, without its quotes.
+      expect(sql, contains('"audit"."events_Id_seq"'));
+      expect(
+        sql,
+        contains("pg_get_serial_sequence('\"audit\".\"events\"', 'Id')"),
+      );
+      expect(sql, contains('ALTER COLUMN "Id" SET DEFAULT'));
+    });
+
+    test('renames a table of PostgreSQL only in its schema', () {
+      String renamed(String table, String newName) =>
+          (PostgresSchema()..alter(table, (t) => t.rename(newName))).compile();
+      expect(renamed('audit.events', 'logs'), contains('RENAME TO "logs";'));
+      expect(
+        renamed('audit.events', 'audit.logs'),
+        contains('RENAME TO "logs";'),
+      );
+      for (var (table, newName) in [
+        ('audit.events', 'other.logs'),
+        ('events', 'audit.logs'),
+      ]) {
+        expect(() => renamed(table, newName), throwsArgumentError);
+      }
+    });
+
+    test('quotes a name once, whose quotes may be its own', () {
+      expect(quotePostgresTableName('"""t"""'), '"""t"""');
+      expect(quotePostgresTableName('a."b.c"'), '"a"."b.c"');
+      expect(quoteMySqlTableName('```t```'), '```t```');
+      expect(quoteMySqlTableName('a.`b.c`'), '`a`.`b.c`');
+    });
+
+    test('changes a column to a serial type without its default', () {
+      var sql =
+          (PostgresSchema()..alter(
+                't',
+                (t) => t.changeColumnType(
+                  'id',
+                  ColumnType.serial,
+                  defaultValue: noDefault,
+                ),
+              ))
+              .compile();
+      expect(sql, contains('DROP DEFAULT'));
+      expect(sql, contains('TYPE int;'));
+      expect(sql, isNot(contains('nextval')));
+    });
+
+    test('quotes a default that is not a number of PostgreSQL', () {
+      expect(PostgresGenerator.compileDefault(double.nan), "'NaN'");
+      expect(PostgresGenerator.compileDefault(double.infinity), "'Infinity'");
+      expect(
+        PostgresGenerator.compileDefault(double.negativeInfinity),
+        "'-Infinity'",
+      );
+      // MySQL and MariaDB have none.
+      expect(
+        () =>
+            MySqlSchema()
+              ..create('t', (t) => t.float('x').defaultsTo(double.nan)),
+        throwsArgumentError,
+      );
+    });
+
+    test('compiles an alter table of PostgreSQL again', () {
+      var table = PostgresAlterTable('t')
+        ..changeColumnType('id', ColumnType.bigSerial);
+      var first = StringBuffer(), second = StringBuffer();
+      table
+        ..compile(first, 0)
+        ..compileSequences(first)
+        ..compile(second, 0)
+        ..compileSequences(second);
+      expect(second.toString(), first.toString());
+      expect(first.toString(), contains('nextval'));
+    });
+
     test('quotes the tables of MySQL and MariaDB', () {
       for (var schema in [MySqlSchema(), MariaDbSchema()]) {
         schema
@@ -1717,6 +1831,49 @@ void main() async {
         "SELECT 1 FROM information_schema.tables WHERE table_name = 'atomic'",
       );
       expect(r, isEmpty);
+    });
+
+    test('creates, alters and drops a table of another schema', () async {
+      await conn.execute('DROP SCHEMA IF EXISTS audit CASCADE');
+      await conn.execute('CREATE SCHEMA audit');
+      try {
+        await (PostgresSchema()
+              ..create('audit.events', (t) {
+                t.serial('id').primaryKey();
+                t.float('x').defaultsTo(double.nan);
+                t.integer('"Seq"');
+              })
+              ..indexes(
+                'audit.events',
+                (t) => t.addIndex('ix', ['x'], IndexType.standardIndex),
+              )
+              ..alter('audit.events', (t) {
+                t.rename('audit.logs');
+                t.changeColumnType('id', ColumnType.bigSerial);
+                t.changeColumnType('"Seq"', ColumnType.serial);
+                // Of its name before the rename, which keeps it.
+                t.dropPrimaryIndex();
+              })
+              ..indexes('audit.logs', (t) => t.dropIndex('ix')))
+            .run(conn);
+        await conn.execute('INSERT INTO audit.logs DEFAULT VALUES');
+        var r = await conn.execute(
+          "SELECT id, \"Seq\", x = 'NaN' FROM audit.logs",
+        );
+        expect(r.single.toList(), [1, 1, true]);
+        r = await conn.execute(
+          "SELECT 1 FROM pg_indexes WHERE schemaname = 'audit'",
+        );
+        expect(r, isEmpty);
+        await (PostgresSchema()..drop('audit.logs')).run(conn);
+        r = await conn.execute(
+          "SELECT 1 FROM information_schema.tables "
+          "WHERE table_schema = 'audit'",
+        );
+        expect(r, isEmpty);
+      } finally {
+        await conn.execute('DROP SCHEMA IF EXISTS audit CASCADE');
+      }
     });
 
     test('keeps a UTC DateTime default in UTC', () async {
