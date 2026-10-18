@@ -71,12 +71,54 @@ class PrefixedHeaderSyntax extends md.HeaderWithIdSyntax {
   }
 }
 
+/// A setext heading syntax of its own, which Markdown still takes for one.
+class MySetextHeaderSyntax extends md.SetextHeaderWithIdSyntax {
+  const MySetextHeaderSyntax();
+}
+
 class NeedsArguments {
   Map<String, dynamic> toJson(int depth) => {'name': 'x'};
 }
 
 class Opaque {
   final String name = 'hidden';
+}
+
+/// Links `%%<placeholder>%%` to a URL that is the placeholder of the first
+/// value once the placeholder in it, of an empty value, is filled.
+class KeySplicingSyntax extends md.InlineSyntax {
+  KeySplicingSyntax() : super(r'%%([a-z]+)(\d+)[a-z]+%%', startCharacter: 0x25);
+
+  @override
+  bool onMatch(md.InlineParser parser, Match match) {
+    var key = match[1]!;
+    var empty = '$key${match[2]}$key';
+    parser.addNode(
+      md.Element.text('a', 'x')
+        ..attributes['href'] =
+            '${key.substring(0, 2)}$empty${key.substring(2)}0$key',
+    );
+    return true;
+  }
+}
+
+/// Renders `%%<placeholder>%%` as a `<video>` whose attribute [name] is
+/// [template] with `X` replaced with the placeholder.
+class AttributeSyntax extends md.InlineSyntax {
+  final String name;
+  final String template;
+
+  AttributeSyntax(this.name, this.template)
+    : super(r'%%(\w+)%%', startCharacter: 0x25);
+
+  @override
+  bool onMatch(md.InlineParser parser, Match match) {
+    parser.addNode(
+      md.Element.empty('video')
+        ..attributes[name] = template.replaceAll('X', match[1]!),
+    );
+    return true;
+  }
 }
 
 /// [text] with each character as a character reference.
@@ -173,13 +215,12 @@ void main() {
         await render('<!--> <a {{x}}>', {'x': 'a b'}),
         contains('<a ${refs('a b')}>'),
       );
-      // Not in content, quoted attribute values or comments.
+      // Not in content or quoted attribute values.
       for (var view in [
         '<b>{{x}}</b>',
         '<a title="{{x}}">',
         "<a title='{{x}}'>",
         '<a title= "{{x}}">',
-        '<!-- <a {{x}} -->',
       ]) {
         expect(await render(view, {'x': 'a b'}), contains('a b'), reason: view);
       }
@@ -219,7 +260,21 @@ void main() {
         await render('<div>\n<!-- c --!-> <img alt={{x}}> -->\n</div>', {
           'x': x,
         }),
-        contains('<img alt=$x>'),
+        contains('<img alt=${refs(x)}> -->'),
+      );
+    });
+
+    test('encodes values in comments, so that they cannot end them', () async {
+      for (var d in ['--', '--!']) {
+        expect(
+          await render('<!-- {{d}}> <b>hidden</b> -->', {'d': d}),
+          contains('<!-- ${refs(d)}> <b>hidden</b> -->'),
+          reason: d,
+        );
+      }
+      expect(
+        await render('<!-- <a {{x}} -->', {'x': 'a b'}),
+        contains('<!-- <a ${refs('a b')} -->'),
       );
     });
 
@@ -270,6 +325,125 @@ void main() {
       expect(
         await render('<{{v}}>', {'v': 'not <a> link'}),
         contains('&lt;not &lt;a&gt; link&gt;'),
+      );
+      // As Markdown's own autolink syntax takes it, `<` and all.
+      expect(
+        await render('<{{u}}>', {'u': 'http://a<b'}),
+        contains('<a href="http://a%3Cb">http://a&lt;b</a>'),
+      );
+      expect(
+        await render('<{{u}}>', {'u': 'http://a>b'}),
+        contains('&lt;http://a&gt;b&gt;'),
+      );
+    });
+
+    test('checks URLs in attributes of custom syntaxes', () async {
+      Future<String> renderAttribute(String name, String template, String v) =>
+          render(
+            '%%{{v}}%%',
+            {'v': v},
+            extensionSet: md.ExtensionSet(const [], [
+              AttributeSyntax(name, template),
+            ]),
+          );
+
+      for (var name in ['poster', 'cite', 'action', 'xlink:href']) {
+        expect(
+          await renderAttribute(name, 'X', 'javascript:alert(1)'),
+          contains('$name="#"'),
+          reason: name,
+        );
+      }
+      expect(
+        await renderAttribute('poster', '/p/X', 'a b?c'),
+        contains('poster="/p/a%20b%3Fc"'),
+      );
+      // Each URL of a srcset, without adding candidates.
+      expect(
+        await renderAttribute('srcset', 'X 1x, /b.png 2x', 'javascript:x'),
+        contains('srcset="# 1x, /b.png 2x"'),
+      );
+      expect(
+        await renderAttribute('srcset', '/b.png 1x, X 2x', 'javascript:x'),
+        contains('srcset="/b.png 1x, # 2x"'),
+      );
+      expect(
+        await renderAttribute('srcset', 'X', 'a.png 1x, javascript:x'),
+        contains('srcset="a.png%201x%2C%20javascript:x"'),
+      );
+      expect(
+        await renderAttribute('srcset', '/a.png X', '1x, javascript:x'),
+        contains('srcset="/a.png 1x%2C%20javascript%3Ax"'),
+      );
+      // A comma inside a URL does not start a candidate; one after it does.
+      expect(
+        await renderAttribute('srcset', 'data:image/svg+xml,X 1x', 'a:b c'),
+        contains('srcset="data:image/svg+xml,a%3Ab%20c 1x"'),
+      );
+      expect(
+        await renderAttribute('srcset', 'X, /b.png 2x', 'javascript:x'),
+        contains('srcset="#, /b.png 2x"'),
+      );
+      // HTML in srcdoc, which the browser parses again, is escaped twice.
+      expect(
+        await renderAttribute(
+          'srcdoc',
+          '<p>X</p>',
+          '<script>alert(1)</script>',
+        ),
+        contains(
+          'srcdoc="<p>&amp;lt;script&amp;gt;alert(1)&amp;lt;/script&amp;gt;</p>"',
+        ),
+      );
+    });
+
+    test('keeps a value one class name', () async {
+      expect(
+        await render('```{{lang}}\ncode\n```', {'lang': 'dart hidden'}),
+        contains('<code class="language-dart%20hidden">'),
+      );
+    });
+
+    test('writes empty values after = outside quotes as ""', () async {
+      for (var x in ['', null]) {
+        expect(
+          await render('<img alt={{x}} src=y>', {'x': x}),
+          contains('<img alt="" src=y>'),
+          reason: '$x',
+        );
+        expect(
+          await render('<img src=y alt={{x}}>', {'x': x}),
+          contains('<img src=y alt="">'),
+          reason: '$x',
+        );
+      }
+      // Not when the value goes on after it.
+      expect(
+        await render('<img alt={{x}}b src=y>', {'x': ''}),
+        contains('<img alt=b src=y>'),
+      );
+    });
+
+    test('escapes values in raw srcdoc attributes twice', () async {
+      var x = '<script>alert(1)</script>';
+      var twice = '&amp;lt;script&amp;gt;alert(1)&amp;lt;/script&amp;gt;';
+      expect(
+        await render('<iframe srcdoc="{{x}}"></iframe>', {'x': x}),
+        contains('<iframe srcdoc="$twice">'),
+      );
+      expect(
+        await render("<iframe SrcDoc='{{x}}'></iframe>", {'x': x}),
+        contains("<iframe SrcDoc='$twice'>"),
+      );
+      // Outside quotes, each character of the value escaped once more.
+      expect(
+        await render('<iframe srcdoc={{x}}></iframe>', {'x': '<b>'}),
+        contains('<iframe srcdoc=${refs('&lt;b&gt;')}>'),
+      );
+      // Other attributes, also after srcdoc, are escaped once.
+      expect(
+        await render('<iframe srcdoc="" title="{{x}}"></iframe>', {'x': '<b>'}),
+        contains('title="&lt;b&gt;"'),
       );
     });
 
@@ -437,7 +611,52 @@ A[^{{x}}] B[^{{y}}]
         }, extensionSet: extensionSet),
         contains('<h1 id="my-hello-big-world">'),
       );
+      // Trimmed with the Markdown, as for the Markdown with the value.
+      expect(
+        await render('# {{v}}', {'v': ' Intro '}, extensionSet: extensionSet),
+        contains('<h1 id="my-intro">'),
+      );
+      // Also the values of the URL of a link, which only its Markdown has.
+      expect(
+        await render('# [{{t}}]({{u}})', {
+          't': 'Go Now',
+          'u': 'Path',
+        }, extensionSet: extensionSet),
+        contains('<h1 id="my-go-nowpath">'),
+      );
+      expect(
+        await render('# A{{v}}B', {'v': ' & '}, extensionSet: extensionSet),
+        contains('<h1 id="my-a--b">'),
+      );
     });
+
+    test('keeps setext headings of subclasses with values', () async {
+      var extensionSet = md.ExtensionSet([
+        const MySetextHeaderSyntax(),
+      ], const []);
+      expect(
+        await render('Title {{x}}\n===', {
+          'x': 'X',
+        }, extensionSet: extensionSet),
+        contains('<h1 id="title-x">Title X</h1>'),
+      );
+      expect(
+        await render('Title {{x}}\n---', {
+          'x': 'X',
+        }, extensionSet: extensionSet),
+        contains('<h2 id="title-x">Title X</h2>'),
+      );
+    });
+
+    test(
+      'renders text in <> that looks like an autolink placeholder',
+      () async {
+        expect(
+          await render('{{v}} <1abcdefgh0abcdefgh>', {'v': 'x'}),
+          contains('x &lt;1abcdefgh0abcdefgh&gt;'),
+        );
+      },
+    );
 
     test('keeps the ids of headings without values', () async {
       var html = await render('# Hello *big* world\n\n# Q & A\n\n{{v}}', {
@@ -454,6 +673,18 @@ A[^{{x}}] B[^{{y}}]
       });
       expect(html, contains('x abcdefgh5abcdefgh'));
       expect(html, contains('href="/abc0abc"'));
+    });
+
+    test('does not fill values in attributes again', () async {
+      // A value with the key of the placeholders in it, which is random, is
+      // made by a syntax that splits the key around the empty value of `e`.
+      // Filled, the URL is the placeholder of `u`, which must stay as it is.
+      var html = await render('{{u}} %%{{e}}%%', {
+        'u': 'javascript:alert(1)',
+        'e': '',
+      }, extensionSet: md.ExtensionSet(const [], [KeySplicingSyntax()]));
+      expect(html, isNot(contains('href="javascript')));
+      expect(html, contains('<a href="'));
     });
 
     test('puts values next to letters and digits', () async {
@@ -582,6 +813,19 @@ A[^{{x}}] B[^{{y}}]
       });
     }
 
+    test('passes on errors other than a missing view', () {
+      views.fileSystem
+          .link('/srv/views/loop.md')
+          .createSync('/srv/views/loop.md');
+      expect(app.viewGenerator!('loop'), throwsA(isA<FileSystemException>()));
+    });
+
+    test('passes on errors reading a view that exists', () {
+      // Not UTF-8, which is not a missing view.
+      views.childFile('latin1.md').writeAsBytesSync([0xFF, 0xFE, 0x41]);
+      expect(app.viewGenerator!('latin1'), throwsA(isA<FileSystemException>()));
+    });
+
     test('rejects views of a views directory that does not exist', () async {
       app = Angel();
       await app.configure(markdown(views.fileSystem.directory('/missing')));
@@ -652,7 +896,7 @@ A[^{{x}}] B[^{{y}}]
     expect(await value('name.length'), '<p>5</p>');
     // A key of a Map wins over its getter.
     expect(await value('map.length'), '<p>own key</p>');
-    expect(
+    await expectLater(
       render('{{items.3}}', locals),
       throwsA(
         isA<ArgumentError>().having(
@@ -662,6 +906,20 @@ A[^{{x}}] B[^{{y}}]
         ),
       ),
     );
+    // Only digits are indexes, not other forms that int.parse reads.
+    for (var index in ['0x1', '+0', '-0']) {
+      await expectLater(
+        render('{{items.$index}}', locals),
+        throwsA(
+          isA<ArgumentError>().having(
+            (e) => e.message,
+            'message',
+            contains('"items" has no member named "$index"'),
+          ),
+        ),
+        reason: index,
+      );
+    }
   });
 
   test('reads only the JSON keys of objects with toJson()', () async {

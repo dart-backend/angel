@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io' show PathNotFoundException;
 import 'dart:math';
 
 import 'package:angel3_framework/angel3_framework.dart';
@@ -44,25 +45,71 @@ const Set<String> _untrackedElements = {'script', 'plaintext', 'svg', 'math'};
 /// Each character of a string.
 final RegExp _character = RegExp('.', dotAll: true, unicode: true);
 
-/// What [AutolinkSyntax] and [EmailAutolinkSyntax] take for the URL of an
-/// autolink, such as `<https://example.com>` or `<a@example.com>`.
-final RegExp _autolinkUrl = RegExp(r'^[a-zA-Z][a-zA-Z\-+.]+:(?://)?[^\s<>]*$');
-final RegExp _autolinkEmail = RegExp(
-  r'''^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}'''
-  r'''[a-zA-Z0-9])?(?:\.[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?)*$''',
-);
+/// The syntaxes of Markdown for autolinks such as `<https://example.com>` and
+/// `<a@example.com>`, which [_isAutolink] asks whether a value in `<>` is one.
+final RegExp _autolinkPattern = AutolinkSyntax().pattern;
+final RegExp _emailAutolinkPattern = EmailAutolinkSyntax().pattern;
 
-/// The attributes of Markdown elements that hold a URL.
-const Set<String> _urlAttributes = {'href', 'src'};
+/// Whether [pattern] matches all of [value] in `<>`, as an autolink would be
+/// for the Markdown with the value.
+bool _isAutolink(RegExp pattern, String value) {
+  var text = '<$value>';
+  return pattern.matchAsPrefix(text)?.end == text.length;
+}
 
-/// What [BlockSyntax.generateAnchorHash] removes from the text of a heading.
-final RegExp _anchorUnsafe = RegExp('[^a-z0-9 _-]');
+/// The attributes of HTML elements that hold a URL, which Markdown elements,
+/// also those of custom syntaxes, may have. `srcset`, which holds a list of
+/// them, is filled by [_Placeholders._fillSrcset].
+const Set<String> _urlAttributes = {
+  'href',
+  'src',
+  'action',
+  'formaction',
+  'cite',
+  'poster',
+  'background',
+  'longdesc',
+  'usemap',
+  'codebase',
+  'data',
+  'manifest',
+  'icon',
+  'ping',
+  'lowsrc',
+  'dynsrc',
+  'classid',
+  'archive',
+  'profile',
+  'xlink:href',
+};
+
+/// Whitespace, which separates the names in a `class` attribute.
 final RegExp _whitespace = RegExp(r'\s');
+
+/// Whether [e] is for a path that does not exist, also because a directory of
+/// it is a file.
+bool _isNotFound(FileSystemException e) {
+  if (e is PathNotFoundException) return true;
+  var code = e.osError?.errorCode;
+  return code == ErrorCodes.ENOENT || code == ErrorCodes.ENOTDIR;
+}
+
+/// The index of a [List] in an expression, such as `0` in `{{items.0}}`.
+final RegExp _digits = RegExp(r'^[0-9]+$');
+
+/// The whitespace that separates the URLs and descriptors of a `srcset`.
+const String _srcsetWhitespace = ' \t\n\f\r';
+
+/// Attributes that hold HTML, which the browser decodes and parses again, so
+/// values in them are HTML-escaped twice.
+const Set<String> _htmlAttributes = {'srcdoc'};
 
 /// Marks a member that [_readGetter] does not know.
 const Object _missing = Object();
 
-final Random _random = Random();
+/// Makes the keys of placeholders, which must not be guessed, so that values
+/// cannot be made to look like placeholders.
+final Random _secureRandom = Random.secure();
 
 /// Configures an [Angel] instance to render Markdown templates from the specified [viewsDirectory].
 ///
@@ -77,7 +124,7 @@ final Random _random = Random();
 /// HTML-escaped, so that they appear as text in HTML content (also in code
 /// and tables) and in quoted HTML attributes, and HTML or Markdown in them is
 /// not rendered. Raw HTML is read as the browser reads it: in HTML tags
-/// outside quotes, as in `<img src={{x}}>`, in `<textarea>`, `<title>`,
+/// outside quotes, as in `<img src={{x}}>`, in comments, in `<textarea>`, `<title>`,
 /// `<style>` and the like, and anywhere after `<script>`, `<svg>` or `<math>`,
 /// each character of values is encoded as a character reference, so that they
 /// cannot be the name of a tag or attribute or add attributes; such values
@@ -88,8 +135,12 @@ final Random _random = Random();
 /// that its `/`, `?`, `&` and `#` are encoded too. A URL whose scheme values
 /// make (e.g. `[x]({{url}})` with `javascript:...`) is replaced with `#`
 /// unless the scheme is `http`, `https` or `mailto`; a scheme in the view
-/// itself, as in `[x](tel:{{phone}})`, is kept. URLs in HTML attributes are
-/// not checked. Values are not escaped for JavaScript or CSS, so they must not
+/// itself, as in `[x](tel:{{phone}})`, is kept. This is also done in the
+/// other URL attributes that custom syntaxes give elements, such as `poster`,
+/// `cite` or `action`, and in each URL of a `srcset`, but not in `data-*`
+/// attributes, which are only HTML-escaped. Values in `srcdoc`, whose HTML the
+/// browser parses again, are HTML-escaped twice. URLs in raw HTML attributes
+/// are not checked. Values are not escaped for JavaScript or CSS, so they must not
 /// be put into `<script>` or `<style>` elements or into event handler
 /// attributes such as `onclick`. Set [escape] to `false` to insert them into
 /// the Markdown before it is rendered instead, only for values that are
@@ -122,22 +173,32 @@ AngelConfigurer markdown(
 
       // Also stay inside the views directory through symbolic links, and read
       // the file that was checked. The views directory is resolved on every
-      // render, as it may be a link that a deployment points elsewhere.
-      String contents;
+      // render, as it may be a link that a deployment points elsewhere; both
+      // are resolved at once.
+      //
+      // A directory of the path could still be replaced by a link between the
+      // check and the read, which dart:io cannot open without following, so
+      // the views directory must not be writable by anyone untrusted.
+      String resolvedViewsPath, resolvedFilePath;
       try {
-        var resolvedViewsPath = await viewsDirectory.resolveSymbolicLinks();
-        var resolvedFilePath = await fileSystem
-            .file(filePath)
-            .resolveSymbolicLinks();
-        if (!path.isWithin(resolvedViewsPath, resolvedFilePath)) {
-          throw AngelHttpException.notFound();
-        }
-        contents = await fileSystem.file(resolvedFilePath).readAsString();
-      } on FileSystemException {
-        // A view (or views directory) that does not exist, or a view that is
-        // not a file, is not found either.
+        [resolvedViewsPath, resolvedFilePath] = await Future.wait([
+          viewsDirectory.resolveSymbolicLinks(),
+          fileSystem.file(filePath).resolveSymbolicLinks(),
+        ]);
+      } on FileSystemException catch (e) {
+        // A view (or views directory) that does not exist is not found. Other
+        // errors, such as a lack of permission or a loop of links, are passed
+        // on.
+        if (_isNotFound(e)) throw AngelHttpException.notFound();
+        rethrow;
+      }
+      // Nor is a view that is not a file. Other errors reading the view, such
+      // as one that is not UTF-8, are passed on, not taken for a missing view.
+      if (!path.isWithin(resolvedViewsPath, resolvedFilePath) ||
+          !await fileSystem.isFile(resolvedFilePath)) {
         throw AngelHttpException.notFound();
       }
+      var contents = await fileSystem.file(resolvedFilePath).readAsString();
 
       var placeholders = _Placeholders();
       var jsonCache = Map<Object, dynamic>.identity();
@@ -165,9 +226,15 @@ AngelConfigurer markdown(
             locals![localName],
             jsonCache,
           )?.toString();
-          if (value == null) return '';
-          if (!escape) return value;
           var input = m.input;
+          if (value == null) {
+            // Still a placeholder after `=`, where it may be the value of an
+            // attribute, which [_Placeholders.fillHtml] must not leave empty.
+            var afterEquals = m.start > 0 && input[m.start - 1] == '=';
+            if (!escape || !afterEquals) return '';
+            value = '';
+          }
+          if (!escape) return value;
           return placeholders.add(
             value,
             autolink:
@@ -212,8 +279,12 @@ class _Placeholders {
   final List<String> _values = [];
   final Map<String, int> _indexes = {};
 
-  final String _key = _randomLetters();
-  final String _autolinkKey = '${_random.nextInt(10)}${_randomLetters()}';
+  /// 17 random numbers below 26, for the letters of the keys and the digit
+  /// that starts [_autolinkKey].
+  final List<int> _random = _randomBelow26(17);
+
+  late final String _key = _letters(0);
+  late final String _autolinkKey = '${_random[16] % 10}${_letters(8)}';
 
   late final RegExp _pattern = RegExp(
     '$_key'
@@ -223,9 +294,29 @@ class _Placeholders {
     '$_autolinkKey',
   );
 
-  static String _randomLetters() => String.fromCharCodes([
-    for (var i = 0; i < 8; i++) 0x61 + _random.nextInt(26),
+  late final RegExp _keys = RegExp('$_key|$_autolinkKey');
+
+  /// The 8 letters of [_random] from [start].
+  String _letters(int start) => String.fromCharCodes([
+    for (var i = start; i < start + 8; i++) 0x61 + _random[i],
   ]);
+
+  /// [count] random numbers below 26, six from each 32-bit number of the
+  /// secure source (26^6 < 2^32), which is asked once for each six.
+  static List<int> _randomBelow26(int count) {
+    var numbers = <int>[];
+    while (numbers.length < count) {
+      var bits = _secureRandom.nextInt(1 << 32);
+      for (var i = 0; i < 6 && numbers.length < count; i++) {
+        numbers.add(bits % 26);
+        bits ~/= 26;
+      }
+    }
+    return numbers;
+  }
+
+  /// The headings whose ids have the values already, which [fill] leaves.
+  final Set<Element> _idsFilled = Set.identity();
 
   bool get isNotEmpty => _values.isNotEmpty;
 
@@ -244,8 +335,8 @@ class _Placeholders {
   /// [extensionSet], with its syntaxes that generate the ids of headings
   /// replaced by ones that generate them from the Markdown of the heading with
   /// the values, as for the Markdown that has them. Subclasses of them, which
-  /// may generate ids differently, are kept, and [fill] puts the values into
-  /// the ids they generate.
+  /// may generate ids differently and are kept as they are, have the values
+  /// put into their ids by [_fillGeneratedId].
   ///
   /// It also has [_PlaceholderAutolinkSyntax] first, which renders a
   /// placeholder in `<>` as Markdown would render the value in `<>`.
@@ -271,60 +362,119 @@ class _Placeholders {
         _pattern,
         _value,
       );
-      heading.generatedId = BlockSyntax.generateAnchorHash(
-        Element('h1', [Text(markdown)]),
-      );
+      heading.generatedId = _anchorHash(markdown);
+      _idsFilled.add(heading);
     }
     return heading;
   }
 
+  /// Puts the values into [id], which another syntax, such as a subclass of a
+  /// heading syntax, generated for [element], whose Markdown is parsed by now.
+  /// Where the id has what [BlockSyntax.generateAnchorHash] makes of the text
+  /// of the element, as with a prefix, that is replaced with what it makes of
+  /// the text with the values, which it also trims with the text, as for a
+  /// heading whose Markdown is its text. Elsewhere, as when the Markdown has
+  /// more than the text, such as the URL of a link, each placeholder is
+  /// replaced with what its value adds to an id.
+  String _fillGeneratedId(Element element, String id) {
+    if (!_pattern.hasMatch(id)) return id;
+    var text = element.textContent;
+    var withPlaceholders = _anchorHash(text);
+    var start = withPlaceholders.isEmpty ? -1 : id.indexOf(withPlaceholders);
+    if (start < 0) return _fillIdParts(id);
+    // Placeholders around it, such as one of the URL of a link that the
+    // heading's Markdown has, are filled too.
+    var end = start + withPlaceholders.length;
+    return '${_fillIdParts(id.substring(0, start))}'
+        '${_anchorHash(text.replaceAllMapped(_pattern, _value))}'
+        '${_fillIdParts(id.substring(end))}';
+  }
+
+  /// [id] with each placeholder replaced with what its value adds to an id
+  /// that [BlockSyntax.generateAnchorHash] generates, inside the text, where
+  /// it is not trimmed: generated between two letters, without them.
+  String _fillIdParts(String id) => id.replaceAllMapped(_pattern, (m) {
+    var hash = _anchorHash('x${_value(m)}x');
+    return hash.substring(1, hash.length - 1);
+  });
+
   /// Replaces the placeholders in the attributes of [nodes] with their values,
-  /// HTML-escaped: in the URLs of `href` and `src` attributes as [_fillUrl]
-  /// does, and in `id` attributes, such as those of footnotes, percent-encoded
-  /// as in the URLs that link to them.
+  /// HTML-escaped: in the URLs of [_urlAttributes] as [_fillUrl] does, in
+  /// `srcset` as [_fillSrcset] does, in [_htmlAttributes] twice, and in `id`
+  /// attributes, such as those of footnotes, percent-encoded as in the URLs
+  /// that link to them.
   ///
-  /// The ids that other syntaxes generated for headings have the placeholders
-  /// as [BlockSyntax.generateAnchorHash] left them, which are replaced with
-  /// what the values would add to the id.
+  /// The ids that other syntaxes generated, which [_generateId] did not fill,
+  /// are filled by [_fillGeneratedId].
+  ///
+  /// The keys in what it puts into attributes and ids are broken by
+  /// [_breakKeys], so that [fillHtml] does not fill them again.
   void fill(List<Node> nodes) {
     for (var node in nodes) {
       // The text of nodes is filled once it is rendered, by [fillHtml].
       if (node is Element) {
         node.attributes.updateAll(
-          (name, value) => _urlAttributes.contains(name)
-              ? _fillUrl(value)
-              : _fillText(value, encode: name == 'id'),
+          (name, value) => _breakKeys(switch (name.toLowerCase()) {
+            'srcset' => _fillSrcset(value),
+            var name when _urlAttributes.contains(name) => _fillUrl(value),
+            var name when _htmlAttributes.contains(name) => _fillText(
+              value,
+              escapeTwice: true,
+            ),
+            'class' => _fillText(value, encodeWhitespace: true),
+            var name => _fillText(value, encode: name == 'id'),
+          }),
         );
         var children = node.children;
         if (children != null) fill(children);
         var id = node.generatedId;
-        if (id != null && _pattern.hasMatch(id)) {
-          node.generatedId = id.replaceAllMapped(
-            _pattern,
-            (m) =>
-                _value(m)
-                    .toLowerCase()
-                    .replaceAll(_anchorUnsafe, '')
-                    .replaceAll(_whitespace, '-'),
-          );
+        if (id != null && !_idsFilled.contains(node)) {
+          id = _fillGeneratedId(node, id);
         }
+        if (id != null) node.generatedId = _breakKeys(id);
       }
     }
   }
 
-  String _fillText(String text, {bool encode = false}) =>
-      text.replaceAllMapped(_pattern, (m) {
-        var value = _value(m);
-        if (encode) value = Uri.encodeComponent(_withoutLoneSurrogates(value));
-        return _htmlEscape.convert(value);
-      });
+  /// [html], an attribute value, with each character of each key in it
+  /// encoded as a character reference. The browser reads it as the same text,
+  /// but a value with a key in it, which may make a placeholder, is no longer
+  /// taken for one by [fillHtml]. As every match is encoded, a key that
+  /// overlaps one is broken too.
+  String _breakKeys(String html) => html.replaceAllMapped(
+    _keys,
+    (m) => m[0]!.replaceAllMapped(_character, (c) => '&#${c[0]!.runes.first};'),
+  );
+
+  /// Puts the values into [text], an attribute value, HTML-escaped: also
+  /// percent-encoded if [encode], escaped twice if [escapeTwice], and with
+  /// their whitespace percent-encoded if [encodeWhitespace], as in `class`,
+  /// where a value is then one class name, not several.
+  String _fillText(
+    String text, {
+    bool encode = false,
+    bool escapeTwice = false,
+    bool encodeWhitespace = false,
+  }) => text.replaceAllMapped(_pattern, (m) {
+    var value = _value(m);
+    if (encode) value = Uri.encodeComponent(_withoutLoneSurrogates(value));
+    if (encodeWhitespace) {
+      value = value.replaceAllMapped(
+        _whitespace,
+        (m) => Uri.encodeComponent(m[0]!),
+      );
+    }
+    if (escapeTwice) value = _htmlEscape.convert(value);
+    return _htmlEscape.convert(value);
+  });
 
   /// Replaces the placeholders left in [html], the rendered Markdown, which
   /// are those of text nodes, some of which are raw HTML. [_HtmlScanner] reads
   /// it as the browser does, also across nodes (as for a tag that a blank line
-  /// splits) and the values put into it. Values are HTML-escaped in content,
-  /// quoted attribute values and comments. Elsewhere, such as in a tag outside
-  /// quotes (e.g. `<img src={{x}}>`), in `<textarea>` or `<style>`, or after
+  /// splits) and the values put into it. Values are HTML-escaped in content
+  /// and quoted attribute values. Elsewhere, such as in a tag outside quotes
+  /// (e.g. `<img src={{x}}>`), in a comment, whose `-->` HTML-escaping leaves
+  /// as it is, in `<textarea>` or `<style>`, or after
   /// `<script>`, `<svg>` or `<math>`, each of their characters, also letters
   /// and digits, is encoded as a character reference, so that they cannot be
   /// or end the name of a tag or attribute, an attribute value or a comment.
@@ -340,6 +490,16 @@ class _Placeholders {
     for (var m in _pattern.allMatches(html)) {
       write(html.substring(last, m.start));
       var value = _value(m);
+      if (value.isEmpty &&
+          scanner.needsEmptyValue(
+            m.end < html.length ? html.codeUnitAt(m.end) : null,
+          )) {
+        write('""');
+        last = m.end;
+        continue;
+      }
+      // Escaped once more for the HTML of `srcdoc`, as in [fill].
+      if (scanner.inHtmlAttribute) value = _htmlEscape.convert(value);
       write(
         scanner.inText
             ? _htmlEscape.convert(value)
@@ -350,15 +510,64 @@ class _Placeholders {
       );
       last = m.end;
     }
-    write(html.substring(last));
+    // No value follows, so the rest need not be scanned.
+    filled.write(html.substring(last));
+    return filled.toString();
+  }
+
+  /// Puts the values into each URL of [srcset] as [_fillUrl] does, also
+  /// percent-encoding their `,`, and into the descriptors of the URLs as a
+  /// component, so that values cannot add candidates. [srcset] is split as the
+  /// browser splits it: a URL runs up to whitespace, without the commas that
+  /// end it, so that a comma inside it, as in a `data:` URL, is kept, and its
+  /// descriptors run up to a comma outside parentheses.
+  String _fillSrcset(String srcset) {
+    bool isWhitespace(int i) => _srcsetWhitespace.contains(srcset[i]);
+    var filled = StringBuffer();
+    var i = 0;
+    while (i < srcset.length) {
+      // Whitespace and commas between candidates.
+      var start = i;
+      while (i < srcset.length && (srcset[i] == ',' || isWhitespace(i))) {
+        i++;
+      }
+      filled.write(srcset.substring(start, i));
+
+      // The URL.
+      start = i;
+      while (i < srcset.length && !isWhitespace(i)) {
+        i++;
+      }
+      var urlEnd = i;
+      while (urlEnd > start && srcset[urlEnd - 1] == ',') {
+        urlEnd--;
+      }
+      filled.write(
+        _fillUrl(srcset.substring(start, urlEnd), encodeCommas: true),
+      );
+      // Commas after the URL end the candidate.
+      filled.write(srcset.substring(urlEnd, i));
+      if (urlEnd < i) continue;
+
+      // The descriptors.
+      start = i;
+      var depth = 0;
+      while (i < srcset.length && (srcset[i] != ',' || depth > 0)) {
+        if (srcset[i] == '(') depth++;
+        if (srcset[i] == ')' && depth > 0) depth--;
+        i++;
+      }
+      filled.write(_fillText(srcset.substring(start, i), encode: true));
+    }
     return filled.toString();
   }
 
   /// Puts the values into [url], percent-encoded: a value that starts it as a
-  /// URL, and other values as a component of it. The URL is replaced with `#`
-  /// when values make its scheme, unless it is one of [_safeSchemes]; a scheme
-  /// that only the text of the view makes is kept.
-  String _fillUrl(String url) {
+  /// URL, and other values as a component of it, and also their `,` if
+  /// [encodeCommas]. The URL is replaced with `#` when values make its scheme,
+  /// unless it is one of [_safeSchemes]; a scheme that only the text of the
+  /// view makes is kept.
+  String _fillUrl(String url, {bool encodeCommas = false}) {
     if (!_pattern.hasMatch(url)) return url;
 
     // The URL with the values encoded, which the text of the URL around them
@@ -379,6 +588,7 @@ class _Placeholders {
               (m) => Uri.encodeComponent(m[0]!),
             )
           : Uri.encodeComponent(value);
+      if (encodeCommas) value = value.replaceAll(',', '%2C');
       if (value.isNotEmpty) valueStarts.add(filled.length);
       filled.write(value);
       escaped.write(_htmlEscape.convert(value));
@@ -414,13 +624,33 @@ class _HtmlScanner {
   /// The element whose text is being read, in [_HtmlState.text].
   var _textElement = '';
 
+  /// The name of the attribute being read, in lowercase.
+  final _attributeName = StringBuffer();
+
   /// Whether a value is read as text here when it is HTML-escaped.
   bool get inText => const {
     _HtmlState.data,
     _HtmlState.doubleQuoted,
     _HtmlState.singleQuoted,
-    _HtmlState.comment,
   }.contains(_state);
+
+  /// Whether a value is in the value of one of [_htmlAttributes], whose HTML
+  /// the browser parses again once it decodes it.
+  /// Whether an empty value here, after `=` and before [next] (`null` at the
+  /// end), leaves the attribute without a value, so that the browser would
+  /// take what follows for it, as `src=y` in `<img alt= src=y>`.
+  bool needsEmptyValue(int? next) =>
+      _state == _HtmlState.beforeAttributeValue &&
+      (next == null || _isSpace(next) || next == _gt);
+
+  bool get inHtmlAttribute =>
+      const {
+        _HtmlState.beforeAttributeValue,
+        _HtmlState.doubleQuoted,
+        _HtmlState.singleQuoted,
+        _HtmlState.unquoted,
+      }.contains(_state) &&
+      _htmlAttributes.contains(_attributeName.toString());
 
   void scan(String html) {
     for (var c in html.codeUnits) {
@@ -467,13 +697,15 @@ class _HtmlScanner {
           _reconsume(_HtmlState.afterAttributeName, c);
         } else if (!_isSpace(c)) {
           // Also `=`, which then starts the name.
-          _state = _HtmlState.attributeName;
+          _startAttribute(c);
         }
       case _HtmlState.attributeName:
         if (_isSpace(c) || c == _slash || c == _gt) {
           _reconsume(_HtmlState.afterAttributeName, c);
         } else if (c == _equals) {
           _state = _HtmlState.beforeAttributeValue;
+        } else {
+          _attributeName.writeCharCode(_toLower(c));
         }
       case _HtmlState.afterAttributeName:
         if (c == _slash) {
@@ -483,7 +715,7 @@ class _HtmlScanner {
         } else if (c == _gt) {
           _emitTag();
         } else if (!_isSpace(c)) {
-          _state = _HtmlState.attributeName;
+          _startAttribute(c);
         }
       case _HtmlState.beforeAttributeValue:
         // A quote opens the value also after whitespace, as in `a= "b"`.
@@ -622,6 +854,14 @@ class _HtmlScanner {
     _reconsume(_HtmlState.tagName, c);
   }
 
+  /// Starts the name of an attribute with [c].
+  void _startAttribute(int c) {
+    _attributeName
+      ..clear()
+      ..writeCharCode(_toLower(c));
+    _state = _HtmlState.attributeName;
+  }
+
   /// Ends the tag at `>`, after which some elements have text, not tags.
   void _emitTag() {
     var name = _tagName.toString();
@@ -703,11 +943,11 @@ class _PlaceholderAutolinkSyntax extends InlineSyntax {
   bool onMatch(InlineParser parser, Match match) {
     var placeholder = match[1]!;
     var value = _placeholders._values[int.parse(match[2]!)];
-    if (_autolinkUrl.hasMatch(value)) {
+    if (_isAutolink(_autolinkPattern, value)) {
       parser.addNode(
         Element.text('a', placeholder)..attributes['href'] = placeholder,
       );
-    } else if (_autolinkEmail.hasMatch(value)) {
+    } else if (_isAutolink(_emailAutolinkPattern, value)) {
       parser.addNode(
         Element.text('a', placeholder)
           ..attributes['href'] = _placeholders.add('mailto:$value'),
@@ -744,6 +984,11 @@ class _SetextHeaderWithIdSyntax extends SetextHeaderWithIdSyntax
 
   _SetextHeaderWithIdSyntax(this._placeholders);
 }
+
+/// What [BlockSyntax.generateAnchorHash] generates from the Markdown of a
+/// heading.
+String _anchorHash(String markdown) =>
+    BlockSyntax.generateAnchorHash(Element('h1', [Text(markdown)]));
 
 /// [text] with each unpaired surrogate replaced by U+FFFD, as
 /// [Uri.encodeComponent] cannot encode one.
@@ -784,7 +1029,8 @@ dynamic _readMember(
   if (target is Map && target.containsKey(name)) return target[name];
 
   if (target is List) {
-    var index = int.tryParse(name);
+    // Only digits, not forms such as `0x1` or `+1` that int.parse also reads.
+    var index = _digits.hasMatch(name) ? int.tryParse(name) : null;
     if (index != null) {
       if (index >= 0 && index < target.length) return target[index];
       throw ArgumentError(
