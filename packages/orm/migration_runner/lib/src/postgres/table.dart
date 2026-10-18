@@ -94,37 +94,66 @@ class PostgresAlterTable extends Table implements MutableTable {
   final String tableName;
   final Queue<String> _stack = Queue<String>();
 
+  /// The columns changed to a serial type, or to `autoIncrement`, with the
+  /// integer type of their sequences.
+  final Map<String, String> _sequences = {};
+
   PostgresAlterTable(this.tableName);
 
   void compile(StringBuffer buf, int indent) {
-    var i = 0;
-
-    while (_stack.isNotEmpty) {
-      var str = _stack.removeFirst();
-
-      if (i++ > 0) buf.writeln(',');
-
-      for (var i = 0; i < indent; i++) {
-        buf.write('  ');
-      }
-
-      buf.write(str);
-    }
-
-    if (i > 0) buf.writeln(';');
-
-    i = 0;
-    _columns.forEach((name, column) {
-      var col = PostgresGenerator.compileColumn(column);
-      if (i++ > 0) buf.writeln(',');
-
-      for (var i = 0; i < indent; i++) {
-        buf.write('  ');
-      }
-
-      buf.write('ADD COLUMN "$name" $col');
-    });
+    // The changes and the columns added are clauses of one statement.
+    var clauses = [
+      ..._stack,
+      for (var MapEntry(key: name, value: column) in _columns.entries)
+        'ADD COLUMN "$name" ${PostgresGenerator.compileColumn(column)}',
+    ];
+    _stack.clear();
+    buf.write(clauses.map((clause) => '${'  ' * indent}$clause').join(',\n'));
   }
+
+  /// The statements after the `ALTER TABLE` that give each column changed to
+  /// a serial type, or to `autoIncrement`, a default from a sequence of its
+  /// own, if it has none, as `serial` does: the sequence is created, owned by
+  /// the column, and starts after its greatest value.
+  ///
+  /// A sequence the column has, of a smaller integer than [_sequences] gives
+  /// it, such as of a `serial` changed to `bigserial`, is changed to that
+  /// integer, so that it does not end before the column's values do. Its
+  /// greatest value is that of the integer, if it was that of the old one.
+  void compileSequences(StringBuffer buf) {
+    var table = _quote(tableName);
+    _sequences.forEach((name, integer) {
+      var column = '$table.${_quote(name)}';
+      var sequence = _quote('${tableName}_${name}_seq');
+      buf.writeln('''
+DO \$\$
+DECLARE
+  seq_name text := pg_get_serial_sequence(${_literal(table)}, ${_literal(name)});
+BEGIN
+  IF seq_name IS NULL THEN
+    CREATE SEQUENCE $sequence AS $integer OWNED BY $column;
+    ALTER TABLE $table ALTER COLUMN ${_quote(name)} SET DEFAULT nextval(${_literal(sequence)});
+    PERFORM setval(${_literal(sequence)}, COALESCE((SELECT MAX(${_quote(name)}) FROM $table), 0)::bigint + 1, false);
+  ELSIF (SELECT t.typlen FROM pg_sequence s JOIN pg_type t ON t.oid = s.seqtypid
+      WHERE s.seqrelid = seq_name::regclass) < ${_integerSizes[integer]} THEN
+    EXECUTE format('ALTER SEQUENCE %s AS $integer', seq_name);
+  END IF;
+END
+\$\$;''');
+    });
+    _sequences.clear();
+  }
+
+  /// The size in bytes of each integer type of a sequence.
+  static const Map<String, int> _integerSizes = {
+    'smallint': 2,
+    'integer': 4,
+    'bigint': 8,
+  };
+
+  static String _quote(String name) => '"${name.replaceAll('"', '""')}"';
+
+  static String _literal(String value) => "'${value.replaceAll("'", "''")}'";
 
   @override
   MigrationColumn declareColumn(String name, Column column) {
@@ -159,10 +188,14 @@ class PostgresAlterTable extends Table implements MutableTable {
     String? using,
   }) {
     // A serial type is not a type that a column can be changed to, but an
-    // integer with a default from a sequence, which a serial column keeps, so
-    // autoIncrement is not needed.
+    // integer with a default from a sequence, which a serial column keeps,
+    // and which compileSequences gives a column without one.
+    var integer = _serialIntegers[type];
+    if (integer != null || autoIncrement == true) {
+      _sequences[name] = _sequenceTypes[integer ?? type] ?? 'bigint';
+    }
     var column = changedColumn(
-      _serialIntegers[type] ?? type,
+      integer ?? type,
       length: length,
       precision: precision,
       scale: scale,
@@ -193,6 +226,14 @@ class PostgresAlterTable extends Table implements MutableTable {
     ColumnType.smallSerial: ColumnType.smallInt,
     ColumnType.serial: ColumnType.int,
     ColumnType.bigSerial: ColumnType.bigInt,
+  };
+
+  /// The type of the sequence of each integer type.
+  static const Map<ColumnType, String> _sequenceTypes = {
+    ColumnType.tinyInt: 'smallint',
+    ColumnType.smallInt: 'smallint',
+    ColumnType.int: 'integer',
+    ColumnType.bigInt: 'bigint',
   };
 
   @override

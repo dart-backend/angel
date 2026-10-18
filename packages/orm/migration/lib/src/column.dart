@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:angel3_orm/angel3_orm.dart';
 
 class MigrationColumn extends Column {
@@ -75,7 +77,10 @@ class MigrationColumn extends Column {
 
   /// The precision and scale of [type] in SQL, such as `(10, 2)`, or `''` if
   /// it has none: those given, a scale without a precision with
-  /// [Column.defaultPrecision], and neither as `''` if the database has an
+  /// [Column.defaultPrecision], a precision without a scale with
+  /// [Column.defaultScale] or, if smaller, the precision (not a scale of 0,
+  /// which would round values to whole numbers; give `scale: 0` for that),
+  /// and neither as `''` if the database has an
   /// [unbounded] type without them (PostgreSQL's `numeric`), or else as
   /// [Column.defaultPrecision] and [Column.defaultScale].
   ///
@@ -95,6 +100,7 @@ class MigrationColumn extends Column {
       if (type.hasScale) scale = Column.defaultScale;
     }
     precision ??= Column.defaultPrecision;
+    if (type.hasScale) scale ??= min(Column.defaultScale, precision);
     if (maxPrecision != null && precision > maxPrecision) {
       throw ArgumentError.value(
         precision,

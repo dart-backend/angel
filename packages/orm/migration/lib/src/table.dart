@@ -22,11 +22,7 @@ abstract class Table {
   ///
   /// Throws an [ArgumentError] if [precision] is not positive, or [scale] is
   /// negative or greater than the precision.
-  MigrationColumn numeric(
-    String name, {
-    int? precision,
-    int? scale,
-  }) {
+  MigrationColumn numeric(String name, {int? precision, int? scale}) {
     return declareColumn(
       name,
       MigrationColumn(ColumnType.numeric, precision: precision, scale: scale),
@@ -39,11 +35,7 @@ abstract class Table {
   ///
   /// Throws an [ArgumentError] if [precision] is not positive, or [scale] is
   /// negative or greater than the precision.
-  MigrationColumn decimal(
-    String name, {
-    int? precision,
-    int? scale,
-  }) {
+  MigrationColumn decimal(String name, {int? precision, int? scale}) {
     return declareColumn(
       name,
       MigrationColumn(ColumnType.decimal, precision: precision, scale: scale),

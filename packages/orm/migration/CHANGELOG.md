@@ -7,7 +7,7 @@
 * fix: `MigrationColumn.from` keeps all the attributes of a `Column`: its `defaultValue` (so `declareColumn('fee', Column(..., defaultValue: 0))` creates the column with `DEFAULT 0`, which was left out), `name`, `timezone` and `expression`
 * fix: A `numeric` or `decimal` column whose precision is below 1, or whose scale is negative or greater than its precision (17 without one), throws an `ArgumentError` when it is declared, instead of failing when the migration is run
 * Added `Table.decimal`, as `Table.numeric` for `decimal` columns
-* Added `MigrationColumn.precisionArguments`, the `(precision, scale)` of a column's type in SQL, for the runners of each database, which checks them against the database's limits
+* Added `MigrationColumn.precisionArguments`, the `(precision, scale)` of a column's type in SQL, for the runners of each database, which checks them against the database's limits. A precision without a scale has `Column.defaultScale` (3), or the precision if smaller, as a scale of 0 would round values to whole numbers; give `scale: 0` for that
 * `Table.varChar` declares a `MigrationColumn`
 
 ## 9.1.0

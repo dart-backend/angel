@@ -413,7 +413,9 @@ void main() async {
           t.numeric('p', precision: 8);
           t.numeric('s', scale: 2);
         });
-      expect(postgres.compile(), contains('"p" numeric(8),'));
+      // A precision without a scale has the default scale, not 0, which
+      // would round the values to whole numbers.
+      expect(postgres.compile(), contains('"p" numeric(8, 3),'));
       expect(postgres.compile(), contains('"s" numeric(17, 2)'));
     });
 
@@ -523,6 +525,43 @@ void main() async {
           reason: serial.name,
         );
       }
+    });
+
+    test('PostgreSQL gives a column changed to serial a sequence', () {
+      var sql =
+          (PostgresSchema()..alter(
+                't',
+                (t) => t.changeColumnType('id', ColumnType.bigSerial),
+              ))
+              .compile();
+      expect(sql, contains('ALTER COLUMN "id" TYPE bigint;'));
+      expect(
+        sql,
+        contains("""seq_name text := pg_get_serial_sequence('"t"', 'id');"""),
+      );
+      expect(sql, contains('CREATE SEQUENCE "t_id_seq" AS bigint'));
+      // Or the sequence it has is made a bigint, if smaller.
+      expect(sql, contains('< 8 THEN'));
+      expect(sql, contains("ALTER SEQUENCE %s AS bigint', seq_name)"));
+
+      // Or to autoIncrement.
+      sql =
+          (PostgresSchema()..alter(
+                't',
+                (t) => t.changeColumnType(
+                  'n',
+                  ColumnType.int,
+                  autoIncrement: true,
+                ),
+              ))
+              .compile();
+      expect(sql, contains('CREATE SEQUENCE "t_n_seq" AS integer'));
+      expect(
+        (PostgresSchema()
+              ..alter('t', (t) => t.changeColumnType('n', ColumnType.int)))
+            .compile(),
+        isNot(contains('SEQUENCE')),
+      );
     });
 
     test('compiles an alter table again, with its changes of types', () {
@@ -714,6 +753,58 @@ void main() async {
       );
       var rate = await conn.execute('SELECT rate::text FROM prices');
       expect(rate.first.first, '123456789012345678.123456');
+    });
+
+    test('gives a column changed to serial a sequence', () async {
+      await conn.execute('DROP TABLE IF EXISTS counted');
+      await conn.execute('CREATE TABLE counted (id int, note text)');
+      await conn.execute('INSERT INTO counted (id) VALUES (1), (5)');
+      Future<List<Object?>> insert() async {
+        await conn.execute("INSERT INTO counted (note) VALUES ('n')");
+        var rows = await conn.execute('SELECT id FROM counted ORDER BY id');
+        return [for (var row in rows) row.first];
+      }
+
+      // The sequence starts after the values.
+      await (PostgresSchema()..alter(
+            'counted',
+            (t) => t.changeColumnType('id', ColumnType.serial),
+          ))
+          .run(conn);
+      expect(await insert(), [1, 5, 6]);
+
+      // The column keeps its sequence, which is changed to a bigint, and so
+      // goes on after the greatest integer.
+      await (PostgresSchema()..alter(
+            'counted',
+            (t) => t.changeColumnType('id', ColumnType.bigSerial),
+          ))
+          .run(conn);
+      expect(await insert(), [1, 5, 6, 7]);
+      await conn.execute("SELECT setval('counted_id_seq', 2147483647)");
+      expect(await insert(), [1, 5, 6, 7, 2147483648]);
+      var type = await conn.execute(
+        "SELECT data_type FROM information_schema.sequences "
+        "WHERE sequence_name = 'counted_id_seq'",
+      );
+      expect(type.single.single, 'bigint');
+
+      // A smaller type does not change it.
+      await (PostgresSchema()..alter(
+            'counted',
+            (t) => t.changeColumnType(
+              'id',
+              ColumnType.bigInt,
+              autoIncrement: true,
+            ),
+          ))
+          .run(conn);
+      type = await conn.execute(
+        "SELECT data_type FROM information_schema.sequences "
+        "WHERE sequence_name = 'counted_id_seq'",
+      );
+      expect(type.single.single, 'bigint');
+      await conn.execute('DROP TABLE counted');
     });
   });
 

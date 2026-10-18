@@ -21,10 +21,13 @@ class PostgresSchema extends Schema {
     //return connection.execute(compile());
     var result = await connection.runTx((ctx) async {
       var sql = compile();
-      var result = await ctx.execute(sql).catchError((e) {
-        _log.severe('Failed to run query: [ $sql ]', e);
-        throw Exception(e);
-      });
+      // The simple protocol, as the extended one takes only one statement.
+      var result = await ctx
+          .execute(sql, queryMode: QueryMode.simple)
+          .catchError((e) {
+            _log.severe('Failed to run query: [ $sql ]', e);
+            throw Exception(e);
+          });
       return result.affectedRows;
     });
 
@@ -53,7 +56,8 @@ class PostgresSchema extends Schema {
     callback(tbl);
     _writeln('ALTER TABLE "$tableName"');
     tbl.compile(_buf, _indent + 1);
-    _buf.write(';');
+    _buf.writeln(';');
+    tbl.compileSequences(_buf);
   }
 
   void _create(

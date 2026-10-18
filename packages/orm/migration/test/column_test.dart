@@ -121,8 +121,19 @@ void main() {
         args(const Column(type: type, precision: 10, scale: 2)),
         '(10, 2)',
       );
-      expect(args(const Column(type: type, precision: 8)), '(8)');
       expect(args(const Column(type: type, scale: 2)), '(17, 2)');
+      expect(
+        args(const Column(type: type, precision: 10, scale: 0)),
+        '(10, 0)',
+      );
+    });
+
+    test('gives a precision without a scale the default scale', () {
+      // Not a scale of 0, which would round the values to whole numbers.
+      const type = ColumnType.numeric;
+      expect(args(const Column(type: type, precision: 8)), '(8, 3)');
+      // But at most the precision.
+      expect(args(const Column(type: type, precision: 2)), '(2, 2)');
     });
 
     test('gives none, or the defaults, without them', () {
