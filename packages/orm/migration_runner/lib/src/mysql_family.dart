@@ -271,7 +271,9 @@ class SchemaAlters {
     var buf = StringBuffer();
     for (var (text, table, indent) in _alters) {
       buf.write(text);
-      if (table.modifications.any((m) => m.keepsExisting)) {
+      // The constraints of a column are always read, as some, such as its
+      // UNSIGNED or generation, cannot be given.
+      if (table.modifications.isNotEmpty) {
         await executeText(buf.toString());
         buf.clear();
         await _readExisting(table, query);
@@ -296,10 +298,7 @@ class SchemaAlters {
     ModifyingAlterTable table,
     Future<List<List<String?>>> Function(String sql) query,
   ) async {
-    var modifications = [
-      for (var m in table.modifications)
-        if (m.keepsExisting) m,
-    ];
+    var modifications = table.modifications;
     var rows = await query(
       existingConstraintsQuery(
         table.tableName,
@@ -325,6 +324,7 @@ class SchemaAlters {
         dataType: row[4] ?? '',
         version: row[5] ?? '',
         columnType: row[6],
+        generationExpression: row[7],
       );
     }
   }

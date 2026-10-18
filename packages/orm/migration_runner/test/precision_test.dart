@@ -240,19 +240,6 @@ void main() async {
               defaultValue: RawSql('0'),
               autoIncrement: true,
             );
-      expect(modification.keepsExisting, isFalse);
-      // But for a date and time type, whose ON UPDATE cannot be given.
-      expect(
-        ColumnModification(
-          'at',
-          ColumnType.dateTime,
-          length: 255,
-          isNullable: false,
-          defaultValue: RawSql('CURRENT_TIMESTAMP'),
-          autoIncrement: false,
-        ).keepsExisting,
-        isTrue,
-      );
       expect(
         modification.compile(MySqlGenerator.compileColumn),
         'MODIFY `n` int DEFAULT 1',
@@ -309,6 +296,85 @@ void main() async {
           autoIncrement: true,
         )..existing = counter).compile(MySqlGenerator.compileColumn),
         'MODIFY `id` decimal(17, 3) NOT NULL AUTO_INCREMENT',
+      );
+    });
+
+    test('of generated and unsigned columns', () {
+      var e = ExistingConstraints.parse(
+        isNullable: 'YES',
+        columnDefault: null,
+        extra: 'STORED GENERATED',
+        version: '8.4.0',
+        columnType: 'int unsigned',
+        generationExpression: r"concat(`a`,_utf8mb4\'x\')",
+      );
+      expect(e.unsigned, isTrue);
+      expect(e.generationExpression, "concat(`a`,_utf8mb4'x')");
+      expect(e.stored, isTrue);
+
+      e = ExistingConstraints.parse(
+        isNullable: 'YES',
+        columnDefault: 'NULL',
+        extra: 'VIRTUAL GENERATED',
+        version: '11.4.2-MariaDB',
+        columnType: 'int(11)',
+        generationExpression: '`a` + 1',
+      );
+      expect(e.unsigned, isFalse);
+      expect(e.generationExpression, '`a` + 1');
+      expect(e.stored, isFalse);
+
+      // DEFAULT_GENERATED is a default, not a generated column.
+      e = ExistingConstraints.parse(
+        isNullable: 'YES',
+        columnDefault: 'rand()',
+        extra: 'DEFAULT_GENERATED',
+        version: '8.4.0',
+        generationExpression: '',
+      );
+      expect(e.generationExpression, isNull);
+    });
+
+    test('are kept by MODIFY: UNSIGNED and generation', () {
+      var modification = ColumnModification('n', ColumnType.bigInt, length: 255)
+        ..existing = ExistingConstraints(
+          isNullable: false,
+          columnType: 'int unsigned',
+        );
+      expect(
+        modification.compile(MySqlGenerator.compileColumn),
+        'MODIFY `n` bigint unsigned NOT NULL',
+      );
+      // Not for a type that cannot be.
+      modification = ColumnModification('n', ColumnType.varChar, length: 9)
+        ..existing = ExistingConstraints(
+          isNullable: true,
+          columnType: 'int unsigned',
+        );
+      expect(
+        modification.compile(MySqlGenerator.compileColumn),
+        'MODIFY `n` varchar(9)',
+      );
+
+      modification =
+          ColumnModification(
+              'g',
+              ColumnType.decimal,
+              length: 255,
+              precision: 10,
+              scale: 2,
+              isNullable: false,
+            )
+            ..existing = ExistingConstraints(
+              isNullable: true,
+              columnType: 'int',
+              generationExpression: '`a` * 2',
+              stored: true,
+            );
+      expect(
+        modification.compile(MariaDbGenerator.compileColumn),
+        'MODIFY `g` decimal(10, 2) GENERATED ALWAYS AS (`a` * 2) STORED '
+        'NOT NULL',
       );
     });
 
@@ -601,7 +667,6 @@ void main() async {
           autoIncrement: true,
           columnType: 'int(10) unsigned',
         );
-      expect(modification.keepsExisting, isTrue);
       expect(
         modification.compile(MySqlGenerator.compileColumn),
         "MODIFY `a` int(10) unsigned NOT NULL DEFAULT '3' AUTO_INCREMENT",
@@ -736,7 +801,6 @@ void main() async {
         length: 255,
         defaultValue: noDefault,
       )..existing = ExistingConstraints(isNullable: false, defaultValue: 'n/a');
-      expect(modification.keepsExisting, isTrue);
       expect(
         modification.compile(MySqlGenerator.compileColumn),
         'MODIFY `c` int NOT NULL',
@@ -1273,6 +1337,43 @@ void main() async {
         contains('on update current_timestamp'),
       );
       await conn.execute('DROP TABLE stamped');
+    });
+
+    test('keeps UNSIGNED and generated columns', () async {
+      await conn.execute('DROP TABLE IF EXISTS generated');
+      await conn.execute(
+        'CREATE TABLE generated (a int, u int unsigned NOT NULL DEFAULT 2, '
+        's int AS (a + 1) STORED, v int AS (a * 2) VIRTUAL)',
+      );
+      await conn.execute('INSERT INTO generated (a) VALUES (5)');
+      await (MySqlSchema()..alter('generated', (t) {
+            t.changeColumnType('u', ColumnType.bigInt);
+            t.changeColumnType('s', ColumnType.bigInt);
+            t.changeColumnType('v', ColumnType.bigInt);
+          }))
+          .run(conn);
+
+      var result = await conn.execute(
+        "SELECT column_name, column_type, extra, generation_expression "
+        "FROM information_schema.columns WHERE table_schema = database() "
+        "AND table_name = 'generated' AND column_name <> 'a' "
+        "ORDER BY column_name",
+      );
+      var columns = {
+        for (var row in result.rows)
+          row.colAt(0): [for (var i = 1; i < 4; i++) row.colAt(i)],
+      };
+      expect(columns['u']![0], startsWith('bigint'));
+      expect(columns['u']![0], contains('unsigned'));
+      expect(columns['s']![1], 'STORED GENERATED');
+      expect(columns['s']![2], contains('+ 1'));
+      expect(columns['v']![1], 'VIRTUAL GENERATED');
+      expect(columns['v']![2], contains('* 2'));
+
+      var values = await conn.execute('SELECT u, s, v FROM generated');
+      var row = values.rows.single;
+      expect([row.colAt(0), row.colAt(1), row.colAt(2)], ['2', '6', '10']);
+      await conn.execute('DROP TABLE generated');
     });
 
     test('alters columns named as reserved words', () async {

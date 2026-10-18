@@ -38,7 +38,7 @@ String existingConstraintsQuery(String table, Iterable<String> columns) {
   var database = names.length > 1 ? literal(names.first) : 'DATABASE()';
   var columnNames = columns.map((c) => literal(unquoteIdentifier(c)));
   return 'SELECT COLUMN_NAME, IS_NULLABLE, COLUMN_DEFAULT, EXTRA, DATA_TYPE, '
-      'VERSION(), COLUMN_TYPE '
+      'VERSION(), COLUMN_TYPE, GENERATION_EXPRESSION '
       'FROM information_schema.columns '
       'WHERE table_schema = $database '
       'AND table_name = ${literal(names.last)} '
@@ -62,6 +62,16 @@ const _integerTypes = {
   ColumnType.smallSerial,
   ColumnType.serial,
   ColumnType.bigSerial,
+};
+
+/// The types that a column may be `UNSIGNED` with.
+const _unsignedTypes = {
+  ..._integerTypes,
+  ColumnType.decimal,
+  ColumnType.numeric,
+  ColumnType.float,
+  ColumnType.real,
+  ColumnType.double,
 };
 
 /// The types that a column may have `ON UPDATE`, and a default of the current
@@ -89,13 +99,25 @@ class ExistingConstraints {
   /// The whole type of the column, such as `int(10) unsigned`.
   final String? columnType;
 
+  /// The expression of a generated column, as SQL, such as `a + 1`, or
+  /// `null` for a column that is not generated.
+  final String? generationExpression;
+
+  /// Whether a generated column is stored, rather than virtual.
+  final bool stored;
+
   const ExistingConstraints({
     required this.isNullable,
     this.defaultValue,
     this.autoIncrement = false,
     this.onUpdate,
     this.columnType,
+    this.generationExpression,
+    this.stored = false,
   });
+
+  /// Whether the column is `UNSIGNED`, as its [columnType] says.
+  bool get unsigned => columnType?.toLowerCase().contains('unsigned') ?? false;
 
   /// The constraints of a row of [existingConstraintsQuery], of a column of
   /// the type [dataType], such as `datetime`.
@@ -107,6 +129,10 @@ class ExistingConstraints {
   /// expression; before, the only expression is the current time, of a
   /// `datetime` or `timestamp`. The default of a `bit` is SQL, such as
   /// `b'1'`.
+  ///
+  /// A generated column has `VIRTUAL GENERATED` or `STORED GENERATED`
+  /// (`PERSISTENT` on older MariaDB) in `EXTRA`, and its
+  /// [generationExpression], which MySQL escapes as it does a default.
   factory ExistingConstraints.parse({
     required String isNullable,
     required String? columnDefault,
@@ -114,12 +140,18 @@ class ExistingConstraints {
     required String version,
     String dataType = '',
     String? columnType,
+    String? generationExpression,
   }) {
+    var mariaDb = version.toLowerCase().contains('mariadb');
+    var upperExtra = extra.toUpperCase();
+    var generated =
+        upperExtra.contains('GENERATED') &&
+        !upperExtra.contains('DEFAULT_GENERATED') &&
+        (generationExpression?.isNotEmpty ?? false);
     Object? defaultValue;
     if (columnDefault != null) {
       var type = dataType.toLowerCase();
-      if (version.toLowerCase().contains('mariadb') &&
-          !_isBefore(version, 10, 2, 7)) {
+      if (mariaDb && !_isBefore(version, 10, 2, 7)) {
         if (columnDefault.toUpperCase() != 'NULL') {
           defaultValue = RawSql(columnDefault);
         }
@@ -146,6 +178,14 @@ class ExistingConstraints {
       autoIncrement: extra.toLowerCase().contains('auto_increment'),
       onUpdate: _onUpdate.firstMatch(extra)?[1],
       columnType: columnType,
+      generationExpression: !generated
+          ? null
+          : mariaDb
+          ? generationExpression
+          : _unescapeMySql(generationExpression!),
+      stored:
+          upperExtra.contains('STORED GENERATED') ||
+          upperExtra.contains('PERSISTENT'),
     );
   }
 
@@ -194,6 +234,9 @@ class ExistingConstraints {
 /// type, as the database rejects them for the others. A serial type is its
 /// integer with `AUTO_INCREMENT`, unless [autoIncrement] is `false`.
 ///
+/// A column that is `UNSIGNED` stays so if the new type is numeric, and a
+/// generated column keeps its expression and whether it is stored.
+///
 /// Without a [type], the column keeps its own, which is read from the
 /// database too, as for [ColumnModification.nullability].
 class ColumnModification {
@@ -228,16 +271,6 @@ class ColumnModification {
   ColumnModification.nullability(String name, {required bool isNullable})
     : this(name, null, length: Column.defaultLength, isNullable: isNullable);
 
-  /// Whether some constraint is not given, and so is read from the database:
-  /// one of [isNullable], [defaultValue] and [autoIncrement], or the
-  /// `ON UPDATE` that a date and time type keeps, which cannot be given.
-  bool get keepsExisting =>
-      type == null ||
-      isNullable == null ||
-      defaultValue == null ||
-      autoIncrement == null ||
-      _dateTimeTypes.contains(type);
-
   /// The default [existing], unless [type] cannot have it.
   Object? get _existingDefault {
     var value = existing?.defaultValue;
@@ -271,9 +304,40 @@ class ColumnModification {
   /// The `MODIFY`, with the column compiled by [compileColumn], and the
   /// `ON UPDATE` clause the column has.
   String compile(String Function(MigrationColumn column) compileColumn) {
-    var sql =
-        'MODIFY ${quoteMySqlIdentifier(name)} ${compileColumn(_column())}';
     var type = this.type;
+    var column = _column();
+    var definition = compileColumn(column);
+
+    // Those kept that follow the type, before its NOT NULL and DEFAULT, as
+    // the type a column keeps (without [type]) has its UNSIGNED.
+    var existing = this.existing;
+    var expression = existing?.generationExpression;
+    var afterType = [
+      if (type != null &&
+          _unsignedTypes.contains(type) &&
+          (existing?.unsigned ?? false))
+        'unsigned',
+      if (expression != null)
+        'GENERATED ALWAYS AS ($expression) '
+            '${(existing?.stored ?? false) ? 'STORED' : 'VIRTUAL'}',
+    ];
+    if (afterType.isNotEmpty) {
+      // compileColumn gives the type first, as it gives it for a nullable
+      // column without a default.
+      var typeOnly = compileColumn(
+        changedColumn(
+          column.type,
+          length: length,
+          precision: precision,
+          scale: scale,
+        ),
+      );
+      definition =
+          '$typeOnly ${afterType.join(' ')}'
+          '${definition.substring(typeOnly.length)}';
+    }
+
+    var sql = 'MODIFY ${quoteMySqlIdentifier(name)} $definition';
     if (autoIncrement ??
         (serialIntegers.containsKey(type) ||
             ((type == null || _integerTypes.contains(type)) &&
