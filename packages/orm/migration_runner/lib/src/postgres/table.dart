@@ -219,24 +219,19 @@ class PostgresAlterTable extends Table implements MutableTable {
         case _Break():
           alter(clauses);
           clauses = [];
-        case _CreateIndex(:var name, :var columns):
+        case _CreateIndex(:var name, :var columns, :var unique):
           // After the clauses before it, of the table as it is named then.
           alter(clauses);
           clauses = [];
           buf.writeln(
-            '${'  ' * indent}${compileCreateIndex(name, table, columns)}',
+            '${'  ' * indent}'
+            '${compileCreateIndex(name, table, columns, unique: unique)}',
           );
         case _DropIndex(:var name):
-          // That of a unique constraint, or a standard index, which is not
-          // one, whichever it is.
-          clauses.add(
-            'DROP CONSTRAINT IF EXISTS ${sql.quotePostgresIdentifier(name)}',
-          );
+          // After the clauses before it, of the table as it is named then.
           alter(clauses);
           clauses = [];
-          buf.writeln(
-            '${'  ' * indent}${compileDropIndex(table, name, ifExists: true)}',
-          );
+          buf.writeln(_compileDropIndexOrConstraint(table, name));
         case _AddedColumn(:var name):
           var column = _columns[name]!;
           clauses.add(
@@ -276,12 +271,12 @@ class PostgresAlterTable extends Table implements MutableTable {
       var body =
           '''
 DECLARE
-  seq_name text := pg_get_serial_sequence(${PostgresGenerator.compileDefault(table)}, ${PostgresGenerator.compileDefault(name)});
+  seq_name text := pg_get_serial_sequence(${sql.quoteLiteral(table)}, ${sql.quoteLiteral(name)});
 BEGIN
   IF seq_name IS NULL THEN
     CREATE SEQUENCE $sequence AS $integer OWNED BY $column;
-    ALTER TABLE $table ALTER COLUMN ${sql.quotePostgresPart(name)} SET DEFAULT nextval(${PostgresGenerator.compileDefault(sequence)});
-    PERFORM setval(${PostgresGenerator.compileDefault(sequence)}, COALESCE((SELECT MAX(${sql.quotePostgresPart(name)}) FROM $table), 0)::bigint + 1, false);
+    ALTER TABLE $table ALTER COLUMN ${sql.quotePostgresPart(name)} SET DEFAULT nextval(${sql.quoteLiteral(sequence)});
+    PERFORM setval(${sql.quoteLiteral(sequence)}, COALESCE((SELECT MAX(${sql.quotePostgresPart(name)}) FROM $table), 0)::bigint + 1, false);
   ELSE
     IF (SELECT t.typlen FROM pg_sequence s JOIN pg_type t ON t.oid = s.seqtypid
         WHERE s.seqrelid = seq_name::regclass) < ${_integerSizes[integer]} THEN
@@ -292,24 +287,56 @@ BEGIN
     -- identity, which takes none.
     IF NOT EXISTS (SELECT 1 FROM pg_attrdef d JOIN pg_attribute a
         ON a.attrelid = d.adrelid AND a.attnum = d.adnum
-        WHERE d.adrelid = ${PostgresGenerator.compileDefault(table)}::regclass
-        AND a.attname = ${PostgresGenerator.compileDefault(name)})
+        WHERE d.adrelid = ${sql.quoteLiteral(table)}::regclass
+        AND a.attname = ${sql.quoteLiteral(name)})
       AND NOT EXISTS (SELECT 1 FROM pg_attribute a
-        WHERE a.attrelid = ${PostgresGenerator.compileDefault(table)}::regclass
-        AND a.attname = ${PostgresGenerator.compileDefault(name)}
+        WHERE a.attrelid = ${sql.quoteLiteral(table)}::regclass
+        AND a.attname = ${sql.quoteLiteral(name)}
         AND a.attidentity <> '') THEN
-      EXECUTE format('ALTER TABLE %s ALTER COLUMN %s SET DEFAULT nextval(%L::regclass)', ${PostgresGenerator.compileDefault(table)}, ${PostgresGenerator.compileDefault(sql.quotePostgresPart(name))}, seq_name);
+      EXECUTE format('ALTER TABLE %s ALTER COLUMN %s SET DEFAULT nextval(%L::regclass)', ${sql.quoteLiteral(table)}, ${sql.quoteLiteral(sql.quotePostgresPart(name))}, seq_name);
     END IF;
   END IF;
 END
 ''';
-      // Quoted by a tag that the names in it do not have, which would end it.
-      var tag = r'$sequence$';
-      for (var i = 1; body.contains(tag); i++) {
-        tag = '\$sequence$i\$';
-      }
-      buf.writeln('DO $tag\n$body$tag;');
+      buf.writeln(_doBlock('sequence', body));
     });
+  }
+
+  /// The `DO` block that drops the index [name] of the table [table]: a
+  /// unique constraint, as [addIndex] adds one, or else a standard index,
+  /// which PostgreSQL drops with a `DROP INDEX`. It raises an error if the
+  /// table has neither, as a name with a typo would, so that the migration
+  /// is not recorded as run.
+  static String _compileDropIndexOrConstraint(String table, String name) {
+    var constraint = sql.unquoteIdentifier(name, '"');
+    var index = compileDropIndex(table, name);
+    // The index of the DROP INDEX, without its `DROP INDEX ` and `;`.
+    var indexName = index.substring('DROP INDEX '.length, index.length - 1);
+    return _doBlock('index', '''
+BEGIN
+  IF EXISTS (SELECT 1 FROM pg_constraint
+      WHERE conrelid = ${sql.quoteLiteral(sql.quotePostgresTableName(table))}::regclass
+      AND conname = ${sql.quoteLiteral(constraint)}) THEN
+    ALTER TABLE ${sql.quotePostgresTableName(table)} DROP CONSTRAINT ${sql.quotePostgresPart(constraint)};
+  ELSIF EXISTS (SELECT 1 FROM pg_class
+      WHERE oid = to_regclass(${sql.quoteLiteral(indexName)})
+      AND relkind IN ('i', 'I')) THEN
+    $index
+  ELSE
+    RAISE EXCEPTION 'No index or constraint % of table %', ${sql.quoteLiteral(constraint)}, ${sql.quoteLiteral(sql.quotePostgresTableName(table))};
+  END IF;
+END
+''');
+  }
+
+  /// The `DO` block of [body], quoted by a tag of [name] that the names in it
+  /// do not have, which would end it.
+  static String _doBlock(String name, String body) {
+    var tag = '\$$name\$';
+    for (var i = 1; body.contains(tag); i++) {
+      tag = '\$$name$i\$';
+    }
+    return 'DO $tag\n$body$tag;';
   }
 
   /// The size in bytes of each integer type of a sequence.
@@ -459,9 +486,18 @@ END
 
     switch (type) {
       case IndexType.primaryKey:
+        sql.checkPrimaryKeyColumns(columns);
         indexType = 'PRIMARY KEY';
         break;
       case IndexType.unique:
+        // A constraint is of columns only, so a unique index of an
+        // expression, or with an order, is a unique index, as `indexes`
+        // creates it.
+        if (!columns.every(sql.isIndexColumnName)) {
+          _stack.add(_CreateIndex(name, columns, unique: true));
+          _added.clear();
+          return;
+        }
         indexType = 'CONSTRAINT ${sql.quotePostgresIdentifier(name)} UNIQUE';
         break;
       case IndexType.standardIndex:
@@ -520,8 +556,9 @@ class _DropIndex {
 class _CreateIndex {
   final String name;
   final List<String> columns;
+  final bool unique;
 
-  _CreateIndex(this.name, this.columns);
+  _CreateIndex(this.name, this.columns, {this.unique = false});
 }
 
 /// The `ADD COLUMN` of a column declared by a [PostgresAlterTable], which is
@@ -549,6 +586,7 @@ class PostgresIndexes implements MutableIndexes {
   void addIndex(String name, List<String> columns, IndexType type) {
     switch (type) {
       case IndexType.primaryKey:
+        sql.checkPrimaryKeyColumns(columns);
         _stack.add(
           'ALTER TABLE ${sql.quotePostgresTableName(tableName)} ADD PRIMARY KEY (${columns.map((c) => sql.compileIndexColumn(c, sql.quotePostgresPart)).join(',')});',
         );

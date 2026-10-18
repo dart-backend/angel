@@ -78,8 +78,7 @@ String columnChecksQuery(
   String table,
   Iterable<String> columns,
 ) {
-  String literal(String value) =>
-      compileDefault(value, escapeBackslashes: true);
+  String literal(String value) => quoteLiteral(value, escapeBackslashes: true);
   var names = splitQualifiedName(table);
   return (
     names.length > 1 ? literal(names.first) : 'DATABASE()',
@@ -541,7 +540,7 @@ class ColumnModification {
     if (existing?.invisible ?? false) sql += ' INVISIBLE';
     var comment = existing?.comment;
     if (comment != null) {
-      sql += ' COMMENT ${compileDefault(comment, escapeBackslashes: true)}';
+      sql += ' COMMENT ${quoteLiteral(comment, escapeBackslashes: true)}';
     }
     // MariaDB drops the CHECK of a column that a MODIFY does not give. That
     // of a JSON column is not kept for another type, whose values may not be

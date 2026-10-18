@@ -49,7 +49,18 @@ String compileDefault(
         '${value.toIso8601String().replaceFirst('T', ' ').replaceFirst(RegExp(r'Z$'), '')}'
         '${utc ? '+00' : ''}';
   }
-  var literal = value.toString().replaceAll("'", "''");
+  return quoteLiteral(value.toString(), escapeBackslashes: escapeBackslashes);
+}
+
+/// [value] as a string literal of SQL, in single quotes, each of which is
+/// doubled, which every database reads as a quote, and with
+/// [escapeBackslashes], as MySQL and MariaDB read a backslash as an escape,
+/// each backslash doubled too.
+///
+/// It is the literal of a name or other text of the catalog, such as of a
+/// table in `information_schema`, as well as of a default.
+String quoteLiteral(String value, {bool escapeBackslashes = false}) {
+  var literal = value.replaceAll("'", "''");
   if (escapeBackslashes) literal = literal.replaceAll(r'\', r'\\');
   return "'$literal'";
 }
@@ -134,6 +145,29 @@ String compileIndexColumn(String column, String Function(String) quote) {
   if (_quotedName.hasMatch(name)) return quote(unquoteIdentifier(name));
   if (_plainName.hasMatch(name)) return quote(name);
   return column;
+}
+
+/// Whether [column], a column of an index, is a name, which may be in quotes,
+/// rather than a prefix, an expression or one with an order, as
+/// [compileIndexColumn] reads it.
+bool isIndexColumnName(String column) {
+  var name = column.trim();
+  return _quotedName.hasMatch(name) || _plainName.hasMatch(name);
+}
+
+/// Throws an [ArgumentError] if one of [columns] of a primary key is not a
+/// name, as a primary key is of columns only, on every database.
+void checkPrimaryKeyColumns(List<String> columns) {
+  for (var column in columns) {
+    if (!isIndexColumnName(column)) {
+      throw ArgumentError.value(
+        column,
+        'columns',
+        'A primary key is of columns, not of an expression, a prefix or an '
+            'order',
+      );
+    }
+  }
 }
 
 /// A name in backticks or double quotes, each of which is doubled in it.

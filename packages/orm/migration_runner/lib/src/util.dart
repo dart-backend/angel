@@ -129,11 +129,15 @@ class LegacyPaths {
 
     // By the legacy paths given.
     for (var path in legacy) {
-      var matches = [
+      // Of the case of the path, as on Linux, where `Users.dart` and
+      // `users.dart` are two files, or else of either case, as on Windows.
+      List<Migration> matching({required bool ignoreCase}) => [
         for (var m in migrations)
           if (m.legacyPath case var legacyPath?)
-            if (_endsWithPath(path, legacyPath)) m,
+            if (_endsWithPath(path, legacyPath, ignoreCase: ignoreCase)) m,
       ];
+      var matches = matching(ignoreCase: false);
+      if (matches.isEmpty) matches = matching(ignoreCase: true);
       if (matches.length > 1) {
         unknown.add(path);
       } else if (matches.length == 1) {
@@ -235,10 +239,18 @@ class LegacyPaths {
 
   /// Whether [path] ends with [legacyPath], at the start of a part of it, and
   /// with either separator of Windows or other systems, which a path may
-  /// also have doubled, as an earlier version escaped it for MySQL.
-  static bool _endsWithPath(String path, String legacyPath) {
-    String normalize(String p) =>
-        p.replaceAll(r'\\', '/').replaceAll(r'\', '/').toLowerCase();
+  /// also have doubled, as an earlier version escaped it for MySQL; of either
+  /// case with [ignoreCase].
+  static bool _endsWithPath(
+    String path,
+    String legacyPath, {
+    required bool ignoreCase,
+  }) {
+    String normalize(String p) {
+      var normalized = p.replaceAll(r'\\', '/').replaceAll(r'\', '/');
+      return ignoreCase ? normalized.toLowerCase() : normalized;
+    }
+
     var p = normalize(path);
     var end = normalize(legacyPath);
     return p == end || p.endsWith(end.startsWith('/') ? end : '/$end');

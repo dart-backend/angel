@@ -28,6 +28,23 @@ class RenamedMigration extends Migration {
 
 class ClashingMigration extends RenamedMigration {}
 
+/// A migration of [name], recorded as [legacyPath] by an earlier version.
+class _PathMigration extends Migration {
+  @override
+  final String name;
+
+  @override
+  final String legacyPath;
+
+  _PathMigration(this.name, this.legacyPath);
+
+  @override
+  void up(Schema schema) {}
+
+  @override
+  void down(Schema schema) {}
+}
+
 class HashMigration extends Migration {
   @override
   String get name => 'users#v2';
@@ -309,6 +326,24 @@ void main() {
         [UserMigration(), LegacyMigration()],
       );
       expect(legacy.renames.values, ['UserMigration', 'legacy_users']);
+    });
+
+    test('matches a legacyPath of the case of the path first', () {
+      // Two files on Linux.
+      var legacy = LegacyPaths(
+        ['/app/lib/users.dart#UserMigration'],
+        [
+          _PathMigration('upper', 'lib/Users.dart#UserMigration'),
+          _PathMigration('lower', 'lib/users.dart#UserMigration'),
+        ],
+      );
+      expect(legacy.renames.values, ['lower']);
+      // Of either case, as on Windows, if none is of its case.
+      legacy = LegacyPaths(
+        [r'C:\app\lib\Users.dart#UserMigration'],
+        [_PathMigration('lower', 'lib/users.dart#UserMigration')],
+      );
+      expect(legacy.renames.values, ['lower']);
     });
 
     test('matches a legacyPath at the start of a part of the path', () {

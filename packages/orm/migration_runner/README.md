@@ -51,6 +51,16 @@ String get legacyPath => 'lib/src/migrations/users.dart#UserMigration';
 
 Or set each `path` of the `migrations` table to the `name` of its migration by hand.
 
+## Transactions
+
+On PostgreSQL, each migration runs, and is recorded in the `migrations` table, in one transaction, so a migration that fails or is cut off is neither applied nor recorded.
+
+MySQL and MariaDB commit each change of a table on its own, so a migration is recorded once it has run. If the connection is lost between the two, the migration's changes stay without its row in the `migrations` table, and the next `up` runs it again. Insert its row by hand in that case:
+
+```sql
+INSERT INTO migrations (batch, path) VALUES (<batch>, '<name>');
+```
+
 ## Limitation
 
 * Update schema changes is not supported

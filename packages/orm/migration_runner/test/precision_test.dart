@@ -8,6 +8,7 @@ import 'package:angel3_migration_runner/postgres.dart';
 import 'package:angel3_orm/angel3_orm.dart';
 import 'package:mysql1/mysql1.dart' as mysql1;
 import 'package:mysql_client/mysql_client.dart' as mysql_client;
+import 'package:mysql_client/exception.dart' as mysql_errors;
 import 'package:postgres/postgres.dart';
 import 'package:test/test.dart';
 
@@ -1062,11 +1063,47 @@ void main() async {
     test('drops an index of a PostgreSQL alter table, of either kind', () {
       var sql = (PostgresSchema()..alter('audit.t', (t) => t.dropIndex('t_a')))
           .compile();
+      // The constraint, or else the index, or an error for neither.
+      expect(sql, startsWith('DO \$index\$\n'));
       expect(
         sql,
-        'ALTER TABLE "audit"."t"\n  DROP CONSTRAINT IF EXISTS "t_a";\n'
-        'DROP INDEX IF EXISTS "audit"."t_a";\n',
+        contains(
+          'ALTER TABLE "audit"."t" DROP CONSTRAINT "t_a";\n'
+          '  ELSIF EXISTS',
+        ),
       );
+      expect(sql, contains('to_regclass(\'"audit"."t_a"\')'));
+      expect(sql, contains('    DROP INDEX "audit"."t_a";\n  ELSE\n'));
+      expect(sql, contains('RAISE EXCEPTION'));
+    });
+
+    test('creates a unique index of an expression of an alter table', () {
+      var sql =
+          (PostgresSchema()..alter(
+                't',
+                (t) => t.addIndex('t_e', ['lower(email)'], IndexType.unique),
+              ))
+              .compile();
+      expect(
+        sql,
+        contains(
+          'CREATE UNIQUE INDEX IF NOT EXISTS "t_e" ON "t" (lower(email));',
+        ),
+      );
+      // A primary key is of columns only.
+      for (var add in <void Function()>[
+        () =>
+            PostgresAlterTable('t')
+                .addIndex('p', ['lower(a)'], IndexType.primaryKey),
+        () =>
+            PostgresIndexes('t')
+                .addIndex('p', ['a DESC'], IndexType.primaryKey),
+        () =>
+            MysqlAlterTable('t').addIndex('p', ['a(10)'], IndexType.primaryKey),
+        () => MysqlIndexes('t').addIndex('p', ['a(10)'], IndexType.primaryKey),
+      ]) {
+        expect(add, throwsArgumentError);
+      }
     });
 
     test('creates the standard index of a column of PostgreSQL', () {
@@ -1179,6 +1216,30 @@ void main() async {
         "'2020-01-01 00:00:00.000+00'",
       );
       expect(PostgresGenerator.compileDefault(at), "'2020-01-02 03:04:05.000'");
+    });
+
+    test('reads the constraints again for the typed error 1054', () async {
+      var queries = <String>[];
+      await (MySqlSchema()..alter('t', (t) => t.setNotNull('a'))).runWith(
+        execute: (s) async {},
+        query: (q) async {
+          queries.add(q);
+          if (q.contains('GENERATION_EXPRESSION')) {
+            // Of its code, with no code in its text.
+            throw const mysql_errors.MySQLServerException(
+              'Champ inconnu',
+              1054,
+            );
+          }
+          return [
+            [
+              'a', 'YES', null, '', 'int', '5.6.51', 'int(11)', //
+              null, null, null, '', '',
+            ],
+          ];
+        },
+      );
+      expect(queries, hasLength(2));
     });
 
     test('reads the constraints again for MySQL error 1054', () async {
@@ -2014,16 +2075,20 @@ void main() async {
         'indexed_b_idx',
         'indexed_u',
       ]);
-      // The down of the up above, of an index and of a constraint, which may
-      // run again.
-      for (var i = 0; i < 2; i++) {
-        await (PostgresSchema()..alter('indexed', (t) {
-              t.dropIndex('indexed_ab');
-              t.dropIndex('indexed_u');
-            }))
-            .run(conn);
-      }
+      // The down of the up above, of an index and of a constraint.
+      await (PostgresSchema()..alter('indexed', (t) {
+            t.dropIndex('indexed_ab');
+            t.dropIndex('indexed_u');
+          }))
+          .run(conn);
       expect(await indexes(), ['indexed_a_idx', 'indexed_b_idx']);
+      // A name of neither, as of a typo, fails, rather than being recorded
+      // as run.
+      await expectLater(
+        (PostgresSchema()..alter('indexed', (t) => t.dropIndex('indexed_ab')))
+            .run(conn),
+        throwsA(anything),
+      );
       await conn.execute('DROP TABLE indexed');
     });
 

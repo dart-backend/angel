@@ -1,5 +1,7 @@
 import 'package:angel3_migration/angel3_migration.dart';
 import 'package:angel3_orm/angel3_orm.dart';
+import 'package:mysql1/mysql1.dart' show MySqlException;
+import 'package:mysql_client/exception.dart' show MySQLServerException;
 
 import 'change_column.dart';
 import 'sql.dart';
@@ -155,6 +157,7 @@ class MySqlFamilyIndexes implements CompiledIndexes {
         .join(',');
     var ifNotExists = ifExists ? 'IF NOT EXISTS ' : '';
     var index = quoteMySqlIdentifier(name);
+    if (type == IndexType.primaryKey) checkPrimaryKeyColumns(columns);
     _statements.add(switch (type) {
       IndexType.primaryKey =>
         'ALTER TABLE $table ADD PRIMARY KEY ($columnList);',
@@ -380,6 +383,7 @@ abstract class ModifyingAlterTable extends Table implements MutableTable {
 
   @override
   void addIndex(String name, List<String> columns, IndexType type) {
+    if (type == IndexType.primaryKey) checkPrimaryKeyColumns(columns);
     var ifNotExists = ifExists ? 'IF NOT EXISTS ' : '';
     var indexType = switch (type) {
       IndexType.primaryKey => 'PRIMARY KEY',
@@ -580,18 +584,21 @@ class _ExistingReader {
 
   _ExistingReader(this.query);
 
-  /// Whether [error] is MySQL's error 1054, of an unknown column, which the
-  /// clients give in their messages (`Error 1054 (42S22)` of `mysql1`,
-  /// `[1054]` of `mysql_client`), whatever the language of its text. The only
-  /// column of [existingConstraintsQuery] that a server may not have is
-  /// `GENERATION_EXPRESSION`.
-  static bool _isUnknownColumn(Object error) {
-    // Not by the name of the column, which an error of another kind, such
-    // as of the syntax, may quote from the query.
-    return _unknownColumn.hasMatch('$error');
-  }
+  /// Whether [error] is MySQL's error 1054, of an unknown column, whatever
+  /// the language of its text: by the code of the exception of `mysql1` or
+  /// `mysql_client`, or else, of one that a caller wraps, by the code in its
+  /// message. The only column of [existingConstraintsQuery] that a server may
+  /// not have is `GENERATION_EXPRESSION`.
+  ///
+  /// Not by the name of the column, which an error of another kind, such as
+  /// of the syntax, may quote from the query.
+  static bool _isUnknownColumn(Object error) => switch (error) {
+    MySqlException(:var errorNumber) => errorNumber == 1054,
+    MySQLServerException(:var errorCode) => errorCode == 1054,
+    _ => _unknownColumn.hasMatch('$error'),
+  };
 
-  /// The code of the error as the clients give it: `Error 1054 (` of
+  /// The code of the error in the message of the clients: `Error 1054 (` of
   /// `mysql1`, `[1054]` of `mysql_client`.
   static final RegExp _unknownColumn = RegExp(r'Error 1054 \(|\[1054\]');
 
