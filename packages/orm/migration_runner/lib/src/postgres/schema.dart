@@ -55,9 +55,7 @@ class PostgresSchema extends Schema {
   void alter(String tableName, void Function(MutableTable table) callback) {
     var tbl = PostgresAlterTable(tableName);
     callback(tbl);
-    _writeln('ALTER TABLE ${quotePostgresIdentifier(tableName)}');
-    tbl.compile(_buf, _indent + 1);
-    _buf.writeln(';');
+    tbl.compile(_buf, _indent);
     tbl.compileSequences(_buf);
   }
 

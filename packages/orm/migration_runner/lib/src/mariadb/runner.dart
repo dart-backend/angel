@@ -165,7 +165,7 @@ class MariaDbMigrationRunner implements MigrationRunner {
   Future reset() async {
     await _init();
     var r = await connection.query(
-      'SELECT path from migrations ORDER BY batch DESC;',
+      'SELECT path from migrations ORDER BY batch DESC, id DESC;',
     );
     var existing = <String>[];
     if (r.isNotEmpty) {
@@ -178,7 +178,8 @@ class MariaDbMigrationRunner implements MigrationRunner {
     var toRun = existing.where(migrations.containsKey).toList();
 
     if (toRun.isNotEmpty) {
-      for (var k in toRun.reversed) {
+      // The newest first, as it may depend on those before.
+      for (var k in toRun) {
         var migration = migrations[k]!;
         var schema = MariaDbSchema();
         migration.down(schema);

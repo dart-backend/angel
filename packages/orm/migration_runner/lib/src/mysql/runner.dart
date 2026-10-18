@@ -159,7 +159,7 @@ class MySqlMigrationRunner implements MigrationRunner {
   Future reset() async {
     await _init();
     var result = await connection.execute(
-      'SELECT path from migrations ORDER BY batch DESC;',
+      'SELECT path from migrations ORDER BY batch DESC, id DESC;',
     );
 
     // "mysql_client" driver will auto convert path containing "\\" to "\".
@@ -173,7 +173,8 @@ class MySqlMigrationRunner implements MigrationRunner {
     var toRun = existing.where(migrations.containsKey).toList();
 
     if (toRun.isNotEmpty) {
-      for (var k in toRun.reversed) {
+      // The newest first, as it may depend on those before.
+      for (var k in toRun) {
         var migration = migrations[k]!;
         var schema = MySqlSchema();
         migration.down(schema);

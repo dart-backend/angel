@@ -49,7 +49,7 @@ abstract class ModifyingAlterTable extends Table implements MutableTable {
       for (var entry in _stack)
         entry is ColumnModification ? entry.compile(compileColumn) : entry,
       for (var MapEntry(key: name, value: column) in _columns.entries)
-        'ADD COLUMN $name ${compileColumn(column)}',
+        'ADD COLUMN ${quoteMySqlIdentifier(name)} ${compileColumn(column)}',
     ];
     buf.write(clauses.map((clause) => '${'  ' * indent}$clause').join(',\n'));
   }
@@ -113,12 +113,14 @@ abstract class ModifyingAlterTable extends Table implements MutableTable {
 
   @override
   void renameColumn(String name, String newName) {
-    _stack.add('RENAME COLUMN $name TO $newName');
+    _stack.add(
+      'RENAME COLUMN ${quoteMySqlIdentifier(name)} TO ${quoteMySqlIdentifier(newName)}',
+    );
   }
 
   @override
   void dropColumn(String name) {
-    _stack.add('DROP COLUMN $name');
+    _stack.add('DROP COLUMN ${quoteMySqlIdentifier(name)}');
   }
 
   @override
@@ -131,15 +133,21 @@ abstract class ModifyingAlterTable extends Table implements MutableTable {
     var ifNotExists = ifExists ? 'IF NOT EXISTS ' : '';
     var indexType = switch (type) {
       IndexType.primaryKey => 'PRIMARY KEY',
-      IndexType.unique => 'UNIQUE INDEX $ifNotExists`$name`',
-      IndexType.standardIndex || IndexType.none => 'INDEX $ifNotExists`$name`',
+      IndexType.unique =>
+        'UNIQUE INDEX $ifNotExists${quoteMySqlIdentifier(name)}',
+      IndexType.standardIndex ||
+      IndexType.none => 'INDEX $ifNotExists${quoteMySqlIdentifier(name)}',
     };
-    _stack.add('ADD $indexType (${columns.join(',')})');
+    _stack.add(
+      'ADD $indexType (${columns.map(quoteMySqlIdentifier).join(',')})',
+    );
   }
 
   @override
   void dropIndex(String name) {
-    _stack.add('DROP INDEX ${ifExists ? 'IF EXISTS ' : ''}`$name`');
+    _stack.add(
+      'DROP INDEX ${ifExists ? 'IF EXISTS ' : ''}${quoteMySqlIdentifier(name)}',
+    );
   }
 
   @override

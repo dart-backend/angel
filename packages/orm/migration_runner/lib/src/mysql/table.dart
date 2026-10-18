@@ -77,9 +77,11 @@ abstract class MySqlGenerator {
 
   static String? compileIndex(String name, MigrationColumn column) {
     if (column.indexType == IndexType.standardIndex) {
-      return ' INDEX(`$name`)';
+      return ' INDEX(${quoteMySqlIdentifier(name)})';
     } else if (column.indexType == IndexType.unique) {
-      return ' UNIQUE KEY unique_$name (`$name`)';
+      return ' UNIQUE KEY '
+          '${quoteMySqlIdentifier('unique_${unquoteIdentifier(name, '`')}')} '
+          '(${quoteMySqlIdentifier(name)})';
     }
 
     return null;
@@ -120,7 +122,7 @@ class MysqlTable extends CompiledTable {
         buf.write('  ');
       }
 
-      buf.write('$name $col');
+      buf.write('${quoteMySqlIdentifier(name)} $col');
 
       var index = MySqlGenerator.compileIndex(name, column);
       if (index != null) indexBuf.add(index);
@@ -156,25 +158,24 @@ class MysqlIndexes implements CompiledIndexes {
 
   @override
   void addIndex(String name, List<String> columns, IndexType type) {
-    // mask the column names, is more safety
-    columns.map((column) => '`$column`');
+    columns = columns.map(quoteMySqlIdentifier).toList();
 
     switch (type) {
       case IndexType.primaryKey:
         _stack.add(
-          'ALTER TABLE `$tableName` ADD PRIMARY KEY (${columns.join(',')});',
+          'ALTER TABLE ${quoteMySqlIdentifier(tableName)} ADD PRIMARY KEY (${columns.join(',')});',
         );
         break;
       case IndexType.unique:
         _stack.add(
-          'CREATE UNIQUE INDEX `$name` ON `$tableName` (${columns.join(',')});',
+          'CREATE UNIQUE INDEX ${quoteMySqlIdentifier(name)} ON ${quoteMySqlIdentifier(tableName)} (${columns.join(',')});',
         );
         break;
       //case IndexType.standardIndex:
       //case IndexType.none:
       default:
         _stack.add(
-          'CREATE INDEX `$name` ON `$tableName` (${columns.join(',')});',
+          'CREATE INDEX ${quoteMySqlIdentifier(name)} ON ${quoteMySqlIdentifier(tableName)} (${columns.join(',')});',
         );
         break;
     }
@@ -182,11 +183,13 @@ class MysqlIndexes implements CompiledIndexes {
 
   @override
   void dropIndex(String name) {
-    _stack.add('DROP INDEX `$name` ON `$tableName`;');
+    _stack.add(
+      'DROP INDEX ${quoteMySqlIdentifier(name)} ON ${quoteMySqlIdentifier(tableName)};',
+    );
   }
 
   @override
   void dropPrimaryIndex() {
-    _stack.add('DROP INDEX `PRIMARY` ON `$tableName`;');
+    _stack.add('DROP INDEX `PRIMARY` ON ${quoteMySqlIdentifier(tableName)};');
   }
 }

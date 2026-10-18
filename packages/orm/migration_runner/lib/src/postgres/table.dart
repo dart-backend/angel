@@ -92,23 +92,55 @@ class PostgresTable extends Table {
 class PostgresAlterTable extends Table implements MutableTable {
   final Map<String, MigrationColumn> _columns = {};
   final String tableName;
-  final Queue<String> _stack = Queue<String>();
 
-  /// The columns changed to a serial type, or to `autoIncrement`, with the
-  /// integer type of their sequences.
+  /// The clauses, and the renames, which are statements of their own.
+  final Queue<Object> _stack = Queue<Object>();
+
+  /// The name of the table after the renames so far.
+  String _currentName;
+
+  /// The columns changed to a serial type, or to `autoIncrement`, by their
+  /// names after the renames so far, with the integer type of their
+  /// sequences.
   final Map<String, String> _sequences = {};
 
-  PostgresAlterTable(this.tableName);
+  PostgresAlterTable(this.tableName) : _currentName = tableName;
 
+  /// Compiles the `ALTER TABLE` statements of the table, indented by
+  /// [indent].
+  ///
+  /// PostgreSQL takes `RENAME COLUMN` and `RENAME TO` only as statements of
+  /// their own, so the clauses between them are one statement each, and those
+  /// after a `RENAME TO` are of the new name. The columns added are clauses
+  /// of the last statement.
   void compile(StringBuffer buf, int indent) {
-    // The changes and the columns added are clauses of one statement.
-    var clauses = [
-      ..._stack,
+    var table = tableName;
+    var clauses = <String>[];
+    void alter(Iterable<String> clauses) {
+      if (clauses.isEmpty) return;
+      buf.writeln(
+        '${'  ' * indent}ALTER TABLE ${sql.quotePostgresIdentifier(table)}',
+      );
+      buf.write(clauses.map((c) => '${'  ' * (indent + 1)}$c').join(',\n'));
+      buf.writeln(';');
+    }
+
+    for (var entry in _stack) {
+      if (entry is _Rename) {
+        alter(clauses);
+        clauses = [];
+        alter([entry.clause]);
+        table = entry.newTableName ?? table;
+      } else {
+        clauses.add(entry as String);
+      }
+    }
+    alter([
+      ...clauses,
       for (var MapEntry(key: name, value: column) in _columns.entries)
         'ADD COLUMN ${sql.quotePostgresIdentifier(name)} ${PostgresGenerator.compileColumn(column)}',
-    ];
+    ]);
     _stack.clear();
-    buf.write(clauses.map((clause) => '${'  ' * indent}$clause').join(',\n'));
   }
 
   /// The statements after the `ALTER TABLE` that give each column changed to
@@ -121,10 +153,11 @@ class PostgresAlterTable extends Table implements MutableTable {
   /// integer, so that it does not end before the column's values do. Its
   /// greatest value is that of the integer, if it was that of the old one.
   void compileSequences(StringBuffer buf) {
-    var table = sql.quotePostgresIdentifier(tableName);
+    // The names after the renames, which run before.
+    var table = sql.quotePostgresIdentifier(_currentName);
     _sequences.forEach((name, integer) {
       var column = '$table.${sql.quotePostgresIdentifier(name)}';
-      var sequence = sql.quotePostgresIdentifier('${tableName}_${name}_seq');
+      var sequence = sql.quotePostgresIdentifier('${_currentName}_${name}_seq');
       buf.writeln('''
 DO \$\$
 DECLARE
@@ -236,8 +269,15 @@ END
   @override
   void renameColumn(String name, String newName) {
     _stack.add(
-      'RENAME COLUMN ${sql.quotePostgresIdentifier(name)} TO ${sql.quotePostgresIdentifier(newName)}',
+      _Rename(
+        'RENAME COLUMN ${sql.quotePostgresIdentifier(name)} '
+        'TO ${sql.quotePostgresIdentifier(newName)}',
+      ),
     );
+    // A column changed to a serial type before is given its sequence by its
+    // new name.
+    var integer = _sequences.remove(name);
+    if (integer != null) _sequences[newName] = integer;
   }
 
   @override
@@ -247,7 +287,13 @@ END
 
   @override
   void rename(String newName) {
-    _stack.add('RENAME TO ${sql.quotePostgresIdentifier(newName)}');
+    _stack.add(
+      _Rename(
+        'RENAME TO ${sql.quotePostgresIdentifier(newName)}',
+        newTableName: newName,
+      ),
+    );
+    _currentName = newName;
   }
 
   @override
@@ -281,6 +327,15 @@ END
       'DROP CONSTRAINT ${sql.quotePostgresIdentifier('${tableName}_pkey')}',
     );
   }
+}
+
+/// A `RENAME COLUMN` or `RENAME TO` clause, which PostgreSQL takes only as a
+/// statement of its own, and the new name of the table, if it is renamed.
+class _Rename {
+  final String clause;
+  final String? newTableName;
+
+  _Rename(this.clause, {this.newTableName});
 }
 
 class PostgresIndexes implements MutableIndexes {

@@ -425,10 +425,10 @@ void main() async {
       // numbers without a precision, so (17, 3).
       var mySql = MySqlSchema();
       PricesMigration().up(mySql);
-      expect(mySql.compile(), contains('rate numeric(17, 3)'));
+      expect(mySql.compile(), contains('`rate` numeric(17, 3)'));
       var mariaDb = MariaDbSchema();
       PricesMigration().up(mariaDb);
-      expect(mariaDb.compile(), contains('rate numeric(17, 3)'));
+      expect(mariaDb.compile(), contains('`rate` numeric(17, 3)'));
       var mysql = MySqlSchema()
         ..alter('prices', (t) => t.changeColumnType('a', ColumnType.numeric));
       expect(mysql.compile(), contains('MODIFY `a` numeric(17, 3)'));
@@ -468,7 +468,7 @@ void main() async {
         (MariaDbSchema()
               ..create('t', (t) => t.varChar('s').defaultsTo('active')))
             .compile(),
-        contains("s varchar(255) DEFAULT 'active'"),
+        contains("`s` varchar(255) DEFAULT 'active'"),
       );
       // RawSql as it is.
       expect(
@@ -644,15 +644,34 @@ void main() async {
       }
     });
 
+    test('quotes the columns of every MySQL and MariaDB clause', () {
+      for (var schema in [MySqlSchema(), MariaDbSchema()]) {
+        schema
+          ..create('t', (t) => t.integer('order'))
+          ..alter('t', (t) {
+            t.renameColumn('order', 'key');
+            t.dropColumn('`desc`');
+            t.addIndex('i', ['key'], IndexType.standardIndex);
+            t.integer('group');
+          });
+        var sql = schema.compile();
+        expect(sql, contains('`order` int'));
+        expect(sql, contains('RENAME COLUMN `order` TO `key`,'));
+        expect(sql, contains('DROP COLUMN `desc`,'));
+        expect(sql, contains('`i` (`key`),'));
+        expect(sql, contains('ADD COLUMN `group` int;'));
+      }
+    });
+
     test('renames a column of MariaDB as MySQL does', () {
       void rename(MutableTable t) => t.renameColumn('a', 'b');
       expect(
         (MariaDbSchema()..alter('t', rename)).compile(),
-        contains('RENAME COLUMN a TO b;'),
+        contains('RENAME COLUMN `a` TO `b`;'),
       );
       expect(
         (MySqlSchema()..alter('t', rename)).compile(),
-        contains('RENAME COLUMN a TO b;'),
+        contains('RENAME COLUMN `a` TO `b`;'),
       );
     });
 
@@ -663,8 +682,43 @@ void main() async {
                 t.renameColumn('a"b', 'c');
               }))
               .compile();
-      expect(sql, contains('ALTER COLUMN "a""b" TYPE int,'));
+      expect(sql, contains('ALTER COLUMN "a""b" TYPE int;'));
       expect(sql, contains('RENAME COLUMN "a""b" TO "c";'));
+    });
+
+    test('PostgreSQL renames in statements of their own', () {
+      var sql =
+          (PostgresSchema()..alter('t', (t) {
+                t.dropColumn('x');
+                t.renameColumn('a', 'b');
+                t.rename('u');
+                t.changeColumnType('b', ColumnType.serial);
+                t.integer('c');
+              }))
+              .compile();
+      expect(
+        sql,
+        startsWith(
+          'ALTER TABLE "t"\n  DROP COLUMN "x";\n'
+          'ALTER TABLE "t"\n  RENAME COLUMN "a" TO "b";\n'
+          'ALTER TABLE "t"\n  RENAME TO "u";\n'
+          'ALTER TABLE "u"\n  ALTER COLUMN "b" TYPE int,\n'
+          '  ADD COLUMN "c" int;\n',
+        ),
+      );
+      // The sequence is of the new names.
+      expect(sql, contains('''pg_get_serial_sequence('"u"', 'b')'''));
+      expect(sql, contains('CREATE SEQUENCE "u_b_seq"'));
+
+      // A column changed before it is renamed has its sequence by its new
+      // name.
+      sql =
+          (PostgresSchema()..alter('t', (t) {
+                t.changeColumnType('a', ColumnType.serial);
+                t.renameColumn('a', 'b');
+              }))
+              .compile();
+      expect(sql, contains('CREATE SEQUENCE "t_b_seq"'));
     });
 
     test('noDefault removes the default', () {
@@ -849,11 +903,11 @@ void main() async {
     test('MySQL', () {
       var create = MySqlSchema();
       PricesMigration().up(create);
-      expect(create.compile(), contains('amount numeric(10, 2)'));
-      expect(create.compile(), contains('tax decimal(5, 4)'));
+      expect(create.compile(), contains('`amount` numeric(10, 2)'));
+      expect(create.compile(), contains('`tax` decimal(5, 4)'));
       expect(
         create.compile(),
-        contains('fee decimal(8, 1) NOT NULL DEFAULT 0'),
+        contains('`fee` decimal(8, 1) NOT NULL DEFAULT 0'),
       );
 
       // Without the database, MODIFY has only the constraints given.
@@ -868,11 +922,11 @@ void main() async {
     test('MariaDB', () {
       var create = MariaDbSchema();
       PricesMigration().up(create);
-      expect(create.compile(), contains('amount numeric(10, 2)'));
-      expect(create.compile(), contains('tax decimal(5, 4)'));
+      expect(create.compile(), contains('`amount` numeric(10, 2)'));
+      expect(create.compile(), contains('`tax` decimal(5, 4)'));
       expect(
         create.compile(),
-        contains('fee decimal(8, 1) NOT NULL DEFAULT 0'),
+        contains('`fee` decimal(8, 1) NOT NULL DEFAULT 0'),
       );
 
       // Without the database, MODIFY has only the constraints given.
@@ -967,6 +1021,30 @@ void main() async {
       );
       expect(result.single.toList(), ['integer', 'NO', null]);
       await conn.execute('DROP TABLE defaulted');
+    });
+
+    test('renames with other changes', () async {
+      await conn.execute('DROP TABLE IF EXISTS renamed_pg, renamed_pg2');
+      await conn.execute('CREATE TABLE renamed_pg (a int, x int)');
+      await conn.execute('INSERT INTO renamed_pg (a) VALUES (4)');
+      await (PostgresSchema()..alter('renamed_pg', (t) {
+            t.dropColumn('x');
+            t.renameColumn('a', 'id');
+            t.rename('renamed_pg2');
+            t.changeColumnType('id', ColumnType.bigSerial);
+            t.varChar('note', length: 9);
+          }))
+          .run(conn);
+
+      await conn.execute("INSERT INTO renamed_pg2 (note) VALUES ('n')");
+      var rows = await conn.execute(
+        'SELECT id, note FROM renamed_pg2 ORDER BY id',
+      );
+      expect(rows.map((r) => r.toList()), [
+        [4, null],
+        [5, 'n'],
+      ]);
+      await conn.execute('DROP TABLE renamed_pg2');
     });
 
     test('gives a column changed to serial a sequence', () async {
@@ -1195,6 +1273,32 @@ void main() async {
         contains('on update current_timestamp'),
       );
       await conn.execute('DROP TABLE stamped');
+    });
+
+    test('alters columns named as reserved words', () async {
+      await conn.execute('DROP TABLE IF EXISTS reserved');
+      var schema = MySqlSchema()
+        ..create('reserved', (t) {
+          t.integer('order');
+          t.integer('desc');
+        });
+      await schema.run(conn);
+      schema = MySqlSchema()
+        ..alter('reserved', (t) {
+          t.renameColumn('order', 'key');
+          t.dropColumn('desc');
+          t.addIndex('reserved_key', ['key'], IndexType.standardIndex);
+          t.integer('group');
+        });
+      await schema.run(conn);
+
+      var result = await conn.execute(
+        "SELECT column_name FROM information_schema.columns "
+        "WHERE table_schema = database() AND table_name = 'reserved' "
+        "ORDER BY column_name",
+      );
+      expect(result.rows.map((r) => r.colAt(0)), ['group', 'key']);
+      await conn.execute('DROP TABLE reserved');
     });
 
     test('changes a column given in backticks', () async {
