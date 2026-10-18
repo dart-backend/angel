@@ -12,7 +12,8 @@ import 'package:logging/logging.dart';
 /// the same name, as do two of a class that takes arguments, such as
 /// `TableMigration('users')` and `TableMigration('posts')`, which would be
 /// recorded as one, before any of [queue] is moved, so that none of them is
-/// lost.
+/// lost. A name with a `#` throws an [ArgumentError] too, as the `#` tells a
+/// path written by a version before 10.0.0, as [LegacyPaths] reads it.
 void addQueuedMigrations(
   Queue<Migration> queue,
   Map<String, Migration> migrations, {
@@ -22,6 +23,13 @@ void addQueuedMigrations(
   var added = {...migrations};
   for (var migration in queue) {
     var name = migration.name;
+    if (name.contains('#')) {
+      throw ArgumentError.value(
+        name,
+        '${migration.runtimeType}.name',
+        'may not have a #, which tells a path of an earlier version',
+      );
+    }
     var other = added[name];
     if (other == null) {
       added[name] = migration;

@@ -18,7 +18,9 @@ class PostgresMigrationRunner extends SqlMigrationRunner<PostgresSchema> {
   PostgresMigrationRunner(
     this.connection, {
     Iterable<Migration> migrations = const [],
-    @Deprecated('Not used: the connection is opened and closed by the caller.')
+    @Deprecated(
+      'Not used: the runner uses the connection as it is given, and close() closes it.',
+    )
     bool connected = false,
   }) : super(Logger('PostgresMigrationRunner'), migrations);
 
@@ -63,25 +65,23 @@ class PostgresMigrationRunner extends SqlMigrationRunner<PostgresSchema> {
   String compileSchema(PostgresSchema schema) => schema.compile();
 
   @override
-  Future<void> runRecorded(
-    PostgresSchema schema,
-    String name, {
-    int? batch,
-  }) async {
-    await connection.runTx((ctx) async {
-      await schema.run(ctx);
-      if (batch == null) {
-        await _deletePath(ctx, name);
-      } else {
+  Future<void> runAndRecord(PostgresSchema schema, String name, int batch) =>
+      connection.runTx((ctx) async {
+        await schema.run(ctx);
         await ctx.execute(
           Sql.named(
             'INSERT INTO migrations (batch, path) VALUES (@batch, @path)',
           ),
           parameters: {'batch': batch, 'path': name},
         );
-      }
-    });
-  }
+      });
+
+  @override
+  Future<void> runAndRemove(PostgresSchema schema, String name) =>
+      connection.runTx((ctx) async {
+        await schema.run(ctx);
+        await _deletePath(ctx, name);
+      });
 
   @override
   Future close() {

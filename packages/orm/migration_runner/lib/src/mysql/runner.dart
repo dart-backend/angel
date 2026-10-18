@@ -17,7 +17,9 @@ class MySqlMigrationRunner extends SqlMigrationRunner<MySqlSchema> {
   MySqlMigrationRunner(
     this.connection, {
     Iterable<Migration> migrations = const [],
-    @Deprecated('Not used: the connection is opened and closed by the caller.')
+    @Deprecated(
+      'Not used: the runner uses the connection as it is given, and close() closes it.',
+    )
     bool connected = false,
   }) : super(Logger('MysqlMigrationRunner'), migrations);
 
@@ -57,20 +59,18 @@ class MySqlMigrationRunner extends SqlMigrationRunner<MySqlSchema> {
   String compileSchema(MySqlSchema schema) => schema.compile();
 
   @override
-  Future<void> runRecorded(
-    MySqlSchema schema,
-    String name, {
-    int? batch,
-  }) async {
+  Future<void> runAndRecord(MySqlSchema schema, String name, int batch) async {
     await schema.run(connection);
-    if (batch == null) {
-      await deletePath(name);
-    } else {
-      await connection.execute(
-        'INSERT INTO migrations (batch, path) VALUES (:batch, :path)',
-        {'batch': batch, 'path': name},
-      );
-    }
+    await connection.execute(
+      'INSERT INTO migrations (batch, path) VALUES (:batch, :path)',
+      {'batch': batch, 'path': name},
+    );
+  }
+
+  @override
+  Future<void> runAndRemove(MySqlSchema schema, String name) async {
+    await schema.run(connection);
+    await deletePath(name);
   }
 
   @override

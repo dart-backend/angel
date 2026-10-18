@@ -54,7 +54,7 @@ class PostgresSchema extends Schema {
   @override
   void drop(String tableName, {bool cascade = false}) {
     var c = cascade == true ? ' CASCADE' : '';
-    _writeln('DROP TABLE ${quotePostgresIdentifier(tableName)}$c;');
+    _writeln('DROP TABLE ${quotePostgresTableName(tableName)}$c;');
   }
 
   @override
@@ -73,7 +73,7 @@ class PostgresSchema extends Schema {
     var op = ifNotExists ? ' IF NOT EXISTS' : '';
     var tbl = PostgresTable();
     callback(tbl);
-    _writeln('CREATE TABLE$op ${quotePostgresIdentifier(tableName)} (');
+    _writeln('CREATE TABLE$op ${quotePostgresTableName(tableName)} (');
     tbl.compile(_buf, _indent + 1);
     _buf.writeln();
     _writeln(');');

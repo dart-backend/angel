@@ -15,12 +15,32 @@ import 'package:angel3_orm/angel3_orm.dart';
 /// database reads as a quote. MySQL and MariaDB also read a backslash as an
 /// escape, unless `NO_BACKSLASH_ESCAPES` is set, so with [escapeBackslashes]
 /// each backslash is doubled too. PostgreSQL reads a backslash as itself.
+///
+/// A `double` that is not finite is a string literal, `'NaN'`, `'Infinity'`
+/// or `'-Infinity'`, with [nonFinite], as PostgreSQL takes, and throws an
+/// [ArgumentError] otherwise, as MySQL and MariaDB have no such values.
 String compileDefault(
   Object value, {
   required bool escapeBackslashes,
   bool utcOffset = false,
+  bool nonFinite = false,
 }) {
   if (value is RawSql) return value.value;
+  if (value is double && !value.isFinite) {
+    if (!nonFinite) {
+      throw ArgumentError.value(
+        value,
+        null,
+        'Not a value that MySQL or MariaDB have, which have no NaN or '
+        'infinity',
+      );
+    }
+    return value.isNaN
+        ? "'NaN'"
+        : value.isNegative
+        ? "'-Infinity'"
+        : "'Infinity'";
+  }
   if (value is num || value is bool) return value.toString();
   if (value is DateTime) {
     // Without the `T` and `Z` of ISO 8601, which MariaDB does not take.
@@ -46,7 +66,11 @@ const Map<ColumnType, ColumnType> serialIntegers = {
 /// doubled, so that it may be a reserved word such as `order`. A name already
 /// in backticks, such as `` `order` ``, is quoted once.
 String quoteMySqlIdentifier(String name) =>
-    '`${unquoteIdentifier(name, '`').replaceAll('`', '``')}`';
+    _quoteMySqlPart(unquoteIdentifier(name, '`'));
+
+/// [part], a name without its backticks, in backticks, each of which is
+/// doubled; it is not unquoted again.
+String _quoteMySqlPart(String part) => '`${part.replaceAll('`', '``')}`';
 
 /// [name] without the [quotes] around it, of which each doubled one in it is
 /// one, as `` `a``b` `` is `` a`b ``. A name not in one of them is as it is.
@@ -93,7 +117,7 @@ List<String> splitQualifiedName(String name, [String quotes = '`"']) {
 /// `shop.orders`, as a MySQL or MariaDB identifier, each part in backticks
 /// (`` `shop`.`orders` ``).
 String quoteMySqlTableName(String name) =>
-    splitQualifiedName(name).map(quoteMySqlIdentifier).join('.');
+    splitQualifiedName(name, '`').map(_quoteMySqlPart).join('.');
 
 /// The [column] of an index as SQL: a name, which may be in quotes, quoted
 /// by [quote], and as it is otherwise, as it may be a prefix, such as
@@ -115,9 +139,66 @@ final RegExp _quotedName = RegExp(r'^(`([^`]|``)*`|"([^"]|"")*")$');
 final RegExp _plainName = RegExp(r'''^[^\s()`"',;.]+$''');
 
 /// [name] as a PostgreSQL identifier, in double quotes, each of which is
-/// doubled, so that it may be a reserved word or have capitals.
+/// doubled, so that it may be a reserved word or have capitals. A name
+/// already in double quotes, such as `"order"`, is quoted once.
 String quotePostgresIdentifier(String name) =>
-    '"${name.replaceAll('"', '""')}"';
+    quotePostgresPart(unquoteIdentifier(name, '"'));
+
+/// [part], a name without its quotes, in double quotes, each of which is
+/// doubled; it is not unquoted again, so that a name whose quotes are its own
+/// keeps them.
+String quotePostgresPart(String part) => '"${part.replaceAll('"', '""')}"';
+
+/// The parts of the PostgreSQL table [name], which may be qualified by its
+/// schema, such as `audit.events`, each without its double quotes.
+List<String> postgresNameParts(String name) => splitQualifiedName(name, '"');
+
+/// The table [name], which may be qualified by its schema, such as
+/// `audit.events`, as a PostgreSQL identifier, each part in double quotes
+/// (`"audit"."events"`).
+String quotePostgresTableName(String name) =>
+    postgresNameParts(name).map(quotePostgresPart).join('.');
+
+/// The own name of the PostgreSQL table [name], without its schema and
+/// quotes.
+String unqualifiedPostgresName(String name) => postgresNameParts(name).last;
+
+/// The PostgreSQL object [name], such as an index or a sequence, without its
+/// quotes, in the schema of the table [table], if it is qualified by one,
+/// quoted (`"audit"."events_id_seq"`).
+String quotePostgresInSchemaOf(String table, String name) {
+  var parts = postgresNameParts(table);
+  return [
+    ...parts.sublist(0, parts.length - 1),
+    name,
+  ].map(quotePostgresPart).join('.');
+}
+
+/// The table [table] renamed to [newName], which stays in the schema of
+/// [table], as PostgreSQL keeps a table renamed in its schema.
+///
+/// [newName] may be qualified by that schema only, as a `RENAME TO` does not
+/// move a table to another schema, which `ALTER TABLE ... SET SCHEMA` does;
+/// another throws an [ArgumentError].
+String renamedPostgresTable(String table, String newName) {
+  var parts = postgresNameParts(table);
+  var newParts = postgresNameParts(newName);
+  var schema = parts.sublist(0, parts.length - 1);
+  var newSchema = newParts.sublist(0, newParts.length - 1);
+  if (newSchema.isNotEmpty &&
+      (newSchema.length != schema.length ||
+          [for (var i = 0; i < schema.length; i++) newSchema[i] == schema[i]]
+              .contains(false))) {
+    throw ArgumentError.value(
+      newName,
+      'newName',
+      'A table is renamed in its schema, ${schema.isEmpty ? 'which is not '
+                    'given by $table' : schema.join('.')}; to move it to another, '
+          'use SET SCHEMA',
+    );
+  }
+  return quotePostgresInSchemaOf(table, newParts.last);
+}
 
 /// The statements of the MySQL or MariaDB [sql], without the `;` that ends
 /// them, and without those that are empty.

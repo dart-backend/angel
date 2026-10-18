@@ -17,7 +17,9 @@ class MariaDbMigrationRunner extends SqlMigrationRunner<MariaDbSchema> {
   MariaDbMigrationRunner(
     this.connection, {
     Iterable<Migration> migrations = const [],
-    @Deprecated('Not used: the connection is opened and closed by the caller.')
+    @Deprecated(
+      'Not used: the runner uses the connection as it is given, and close() closes it.',
+    )
     bool connected = true,
   }) : super(Logger('MariaDbMigrationRunner'), migrations);
 
@@ -57,20 +59,22 @@ class MariaDbMigrationRunner extends SqlMigrationRunner<MariaDbSchema> {
   String compileSchema(MariaDbSchema schema) => schema.compile();
 
   @override
-  Future<void> runRecorded(
+  Future<void> runAndRecord(
     MariaDbSchema schema,
-    String name, {
-    int? batch,
-  }) async {
+    String name,
+    int batch,
+  ) async {
     await schema.run(connection);
-    if (batch == null) {
-      await deletePath(name);
-    } else {
-      await connection.query(
-        'INSERT INTO migrations (batch, path) VALUES (?, ?)',
-        [batch, name],
-      );
-    }
+    await connection.query(
+      'INSERT INTO migrations (batch, path) VALUES (?, ?)',
+      [batch, name],
+    );
+  }
+
+  @override
+  Future<void> runAndRemove(MariaDbSchema schema, String name) async {
+    await schema.run(connection);
+    await deletePath(name);
   }
 
   @override

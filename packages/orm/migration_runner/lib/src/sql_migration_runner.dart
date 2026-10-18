@@ -44,23 +44,26 @@ abstract class SqlMigrationRunner<S extends Schema> implements MigrationRunner {
   /// The SQL of [schema].
   String compileSchema(S schema);
 
-  /// Runs [schema], and records [name] in the `migrations` table in [batch],
-  /// or removes it without one: in one transaction, if the database changes
-  /// its tables in one.
-  Future<void> runRecorded(S schema, String name, {int? batch});
+  /// Runs [schema], and records [name] in the `migrations` table in [batch]:
+  /// in one transaction, if the database changes its tables in one.
+  Future<void> runAndRecord(S schema, String name, int batch);
+
+  /// Runs [schema], and removes [name] from the `migrations` table: in one
+  /// transaction, if the database changes its tables in one.
+  Future<void> runAndRemove(S schema, String name);
 
   /// Runs the `up` of [migration], and records it as [name] in [batch].
   Future<void> runUp(String name, Migration migration, int batch) {
     var schema = newSchema();
     migration.up(schema);
-    return runRecorded(schema, name, batch: batch);
+    return runAndRecord(schema, name, batch);
   }
 
   /// Runs the `down` of [migration], and removes [name].
   Future<void> runDown(String name, Migration migration) {
     var schema = newSchema();
     migration.down(schema);
-    return runRecorded(schema, name);
+    return runAndRemove(schema, name);
   }
 
   /// The SQL of the `up` of [migration], by which two migrations of a class

@@ -44,12 +44,16 @@ abstract class PostgresGenerator {
   }
 
   /// The SQL of the default [value] of a column.
-  static String compileDefault(Object value) =>
-      sql.compileDefault(value, escapeBackslashes: false, utcOffset: true);
+  static String compileDefault(Object value) => sql.compileDefault(
+    value,
+    escapeBackslashes: false,
+    utcOffset: true,
+    nonFinite: true,
+  );
 
   static String compileReference(MigrationColumnReference ref) {
     var buf = StringBuffer(
-      'REFERENCES ${sql.quotePostgresIdentifier(ref.foreignTable)}(${sql.quotePostgresIdentifier(ref.foreignKey)})',
+      'REFERENCES ${sql.quotePostgresTableName(ref.foreignTable)}(${sql.quotePostgresIdentifier(ref.foreignKey)})',
     );
     if (ref.behavior != null) buf.write(' ${ref.behavior!}');
     return buf.toString();
@@ -126,7 +130,7 @@ class PostgresAlterTable extends Table implements MutableTable {
   }
 
   /// Compiles the `ALTER TABLE` statements of the table, indented by
-  /// [indent].
+  /// [indent], which may be compiled again, as those of MySQL and MariaDB.
   ///
   /// PostgreSQL takes `RENAME COLUMN` and `RENAME TO` only as statements of
   /// their own, and `DROP COLUMN` is one too, so the clauses between them are
@@ -140,7 +144,7 @@ class PostgresAlterTable extends Table implements MutableTable {
     void alter(Iterable<String> clauses) {
       if (clauses.isEmpty) return;
       buf.writeln(
-        '${'  ' * indent}ALTER TABLE ${sql.quotePostgresIdentifier(table)}',
+        '${'  ' * indent}ALTER TABLE ${sql.quotePostgresTableName(table)}',
       );
       buf.write(clauses.map((c) => '${'  ' * (indent + 1)}$c').join(',\n'));
       buf.writeln(';');
@@ -166,7 +170,6 @@ class PostgresAlterTable extends Table implements MutableTable {
       }
     }
     alter(clauses);
-    _stack.clear();
   }
 
   /// The statements after the `ALTER TABLE` that give each column changed to
@@ -180,10 +183,18 @@ class PostgresAlterTable extends Table implements MutableTable {
   /// greatest value is that of the integer, if it was that of the old one.
   void compileSequences(StringBuffer buf) {
     // The names after the renames, which run before.
-    var table = sql.quotePostgresIdentifier(_currentName);
-    _sequences.forEach((name, integer) {
-      var column = '$table.${sql.quotePostgresIdentifier(name)}';
-      var sequence = sql.quotePostgresIdentifier('${_currentName}_${name}_seq');
+    var table = sql.quotePostgresTableName(_currentName);
+    var tableOwnName = sql.unqualifiedPostgresName(_currentName);
+    _sequences.forEach((quotedName, integer) {
+      // The column's own name, which may be given in quotes, as it is known
+      // to the catalog.
+      var name = sql.unquoteIdentifier(quotedName, '"');
+      var column = '$table.${sql.quotePostgresIdentifier(quotedName)}';
+      // Of the schema of the table, as `serial` gives it.
+      var sequence = sql.quotePostgresInSchemaOf(
+        _currentName,
+        '${tableOwnName}_${name}_seq',
+      );
       buf.writeln('''
 DO \$\$
 DECLARE
@@ -191,8 +202,8 @@ DECLARE
 BEGIN
   IF seq_name IS NULL THEN
     CREATE SEQUENCE $sequence AS $integer OWNED BY $column;
-    ALTER TABLE $table ALTER COLUMN ${sql.quotePostgresIdentifier(name)} SET DEFAULT nextval(${PostgresGenerator.compileDefault(sequence)});
-    PERFORM setval(${PostgresGenerator.compileDefault(sequence)}, COALESCE((SELECT MAX(${sql.quotePostgresIdentifier(name)}) FROM $table), 0)::bigint + 1, false);
+    ALTER TABLE $table ALTER COLUMN ${sql.quotePostgresIdentifier(quotedName)} SET DEFAULT nextval(${PostgresGenerator.compileDefault(sequence)});
+    PERFORM setval(${PostgresGenerator.compileDefault(sequence)}, COALESCE((SELECT MAX(${sql.quotePostgresIdentifier(quotedName)}) FROM $table), 0)::bigint + 1, false);
   ELSE
     IF (SELECT t.typlen FROM pg_sequence s JOIN pg_type t ON t.oid = s.seqtypid
         WHERE s.seqrelid = seq_name::regclass) < ${_integerSizes[integer]} THEN
@@ -209,13 +220,12 @@ BEGIN
         WHERE a.attrelid = ${PostgresGenerator.compileDefault(table)}::regclass
         AND a.attname = ${PostgresGenerator.compileDefault(name)}
         AND a.attidentity <> '') THEN
-      EXECUTE format('ALTER TABLE ${table.replaceAll('%', '%%')} ALTER COLUMN ${sql.quotePostgresIdentifier(name).replaceAll('%', '%%')} SET DEFAULT nextval(%L::regclass)', seq_name);
+      EXECUTE format('ALTER TABLE ${table.replaceAll('%', '%%')} ALTER COLUMN ${sql.quotePostgresIdentifier(quotedName).replaceAll('%', '%%')} SET DEFAULT nextval(%L::regclass)', seq_name);
     END IF;
   END IF;
 END
 \$\$;''');
     });
-    _sequences.clear();
   }
 
   /// The size in bytes of each integer type of a sequence.
@@ -267,9 +277,14 @@ END
     // integer with a default from a sequence, which a serial column keeps,
     // and which compileSequences gives a column without one.
     // With `autoIncrement: false`, a serial type is only its integer, as on
-    // MySQL and MariaDB.
+    // MySQL and MariaDB, and so it is with `noDefault`, the default from its
+    // sequence being one, unless `autoIncrement: true` is given.
     var integer = sql.serialIntegers[type];
-    if ((integer != null && autoIncrement != false) || autoIncrement == true) {
+    var serial =
+        integer != null &&
+        autoIncrement != false &&
+        !identical(defaultValue, noDefault);
+    if (serial || autoIncrement == true) {
       _sequences[name] = _sequenceTypes[integer ?? type] ?? 'bigint';
     }
     var column = changedColumn(
@@ -339,13 +354,18 @@ END
 
   @override
   void rename(String newName) {
+    // Throws for a new name of another schema, which RENAME TO cannot move
+    // the table to, before the clause is added.
+    var renamed = sql.renamedPostgresTable(_currentName, newName);
+    // RENAME TO takes the table's own name, without its schema.
     _statement(
       _Statement(
-        'RENAME TO ${sql.quotePostgresIdentifier(newName)}',
-        newTableName: newName,
+        'RENAME TO '
+        '${sql.quotePostgresPart(sql.unqualifiedPostgresName(newName))}',
+        newTableName: renamed,
       ),
     );
-    _currentName = newName;
+    _currentName = renamed;
   }
 
   @override
@@ -379,7 +399,7 @@ END
   @override
   void dropPrimaryIndex() {
     _stack.add(
-      'DROP CONSTRAINT ${sql.quotePostgresIdentifier('${tableName}_pkey')}',
+      'DROP CONSTRAINT ${sql.quotePostgresPart('${sql.unqualifiedPostgresName(tableName)}_pkey')}',
     );
   }
 }
@@ -423,13 +443,13 @@ class PostgresIndexes implements MutableIndexes {
     switch (type) {
       case IndexType.primaryKey:
         _stack.add(
-          'ALTER TABLE ${sql.quotePostgresIdentifier(tableName)} ADD PRIMARY KEY (${columns.map((c) => sql.compileIndexColumn(c, sql.quotePostgresIdentifier)).join(',')});',
+          'ALTER TABLE ${sql.quotePostgresTableName(tableName)} ADD PRIMARY KEY (${columns.map((c) => sql.compileIndexColumn(c, sql.quotePostgresIdentifier)).join(',')});',
         );
         break;
       case IndexType.unique:
         _stack.add(
           'CREATE UNIQUE INDEX IF NOT EXISTS ${sql.quotePostgresIdentifier(name)} '
-          'ON ${sql.quotePostgresIdentifier(tableName)} (${columns.map((c) => sql.compileIndexColumn(c, sql.quotePostgresIdentifier)).join(',')});',
+          'ON ${sql.quotePostgresTableName(tableName)} (${columns.map((c) => sql.compileIndexColumn(c, sql.quotePostgresIdentifier)).join(',')});',
         );
         break;
       //case IndexType.standardIndex:
@@ -437,7 +457,7 @@ class PostgresIndexes implements MutableIndexes {
       default:
         _stack.add(
           'CREATE INDEX IF NOT EXISTS ${sql.quotePostgresIdentifier(name)} '
-          'ON ${sql.quotePostgresIdentifier(tableName)} (${columns.map((c) => sql.compileIndexColumn(c, sql.quotePostgresIdentifier)).join(',')});',
+          'ON ${sql.quotePostgresTableName(tableName)} (${columns.map((c) => sql.compileIndexColumn(c, sql.quotePostgresIdentifier)).join(',')});',
         );
         break;
     }
@@ -445,13 +465,16 @@ class PostgresIndexes implements MutableIndexes {
 
   @override
   void dropIndex(String name) {
-    _stack.add('DROP INDEX ${sql.quotePostgresIdentifier(name)};');
+    // An index is of the schema of its table.
+    _stack.add(
+      'DROP INDEX ${sql.quotePostgresInSchemaOf(tableName, sql.unquoteIdentifier(name, '"'))};',
+    );
   }
 
   @override
   void dropPrimaryIndex() {
     _stack.add(
-      'ALTER TABLE ${sql.quotePostgresIdentifier(tableName)} DROP CONSTRAINT ${sql.quotePostgresIdentifier('${tableName}_pkey')};',
+      'ALTER TABLE ${sql.quotePostgresTableName(tableName)} DROP CONSTRAINT ${sql.quotePostgresPart('${sql.unqualifiedPostgresName(tableName)}_pkey')};',
     );
   }
 }
