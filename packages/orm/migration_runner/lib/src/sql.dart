@@ -15,6 +15,14 @@ String compileDefault(Object value, {required bool escapeBackslashes}) {
   return "'$literal'";
 }
 
+/// The integer type of each serial type, which is not a type a column can be
+/// changed to on PostgreSQL, nor one MySQL and MariaDB have.
+const Map<ColumnType, ColumnType> serialIntegers = {
+  ColumnType.smallSerial: ColumnType.smallInt,
+  ColumnType.serial: ColumnType.int,
+  ColumnType.bigSerial: ColumnType.bigInt,
+};
+
 /// [name] as a MySQL or MariaDB identifier, in backticks, each of which is
 /// doubled, so that it may be a reserved word such as `order`. A name already
 /// in backticks, such as `` `order` ``, is quoted once.

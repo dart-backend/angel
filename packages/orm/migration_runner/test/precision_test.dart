@@ -580,6 +580,70 @@ void main() async {
       );
     });
 
+    test('sets and drops NOT NULL on MySQL and MariaDB with MODIFY', () {
+      for (var schema in [MySqlSchema(), MariaDbSchema()]) {
+        schema.alter('t', (t) {
+          t.setNotNull('a');
+          t.dropNotNull('b');
+        });
+        var sql = schema.compile();
+        // Without the database, the type is not known.
+        expect(sql, contains('MODIFY `a` /* the type of `a` */ NOT NULL,'));
+        expect(sql, contains('MODIFY `b` /* the type of `b` */;'));
+        expect(sql, isNot(contains('ALTER COLUMN')));
+      }
+
+      // With it, the column keeps its type and its other constraints.
+      var modification = ColumnModification.nullability('a', isNullable: false)
+        ..existing = ExistingConstraints(
+          isNullable: true,
+          defaultValue: '3',
+          autoIncrement: true,
+          columnType: 'int(10) unsigned',
+        );
+      expect(modification.keepsExisting, isTrue);
+      expect(
+        modification.compile(MySqlGenerator.compileColumn),
+        "MODIFY `a` int(10) unsigned NOT NULL DEFAULT '3' AUTO_INCREMENT",
+      );
+    });
+
+    test('a serial type is its integer on MySQL and MariaDB', () {
+      for (var (serial, integer) in [
+        (ColumnType.smallSerial, 'smallint'),
+        (ColumnType.serial, 'int'),
+        (ColumnType.bigSerial, 'bigint'),
+      ]) {
+        for (var compileColumn in [
+          MySqlGenerator.compileColumn,
+          MariaDbGenerator.compileColumn,
+        ]) {
+          // With AUTO_INCREMENT, unless it is not given.
+          expect(
+            ColumnModification(
+              'id',
+              serial,
+              length: 255,
+            ).compile(compileColumn),
+            'MODIFY `id` $integer AUTO_INCREMENT',
+          );
+          expect(
+            ColumnModification(
+              'id',
+              serial,
+              length: 255,
+              autoIncrement: false,
+            ).compile(compileColumn),
+            'MODIFY `id` $integer',
+          );
+          expect(
+            compileColumn(MigrationColumn(serial)..primaryKey()),
+            '$integer PRIMARY KEY NOT NULL AUTO_INCREMENT',
+          );
+        }
+      }
+    });
+
     test('renames a column of MariaDB as MySQL does', () {
       void rename(MutableTable t) => t.renameColumn('a', 'b');
       expect(
@@ -1152,6 +1216,46 @@ void main() async {
       var row = result.rows.single;
       expect([row.colAt(0), row.colAt(1), row.colAt(2)], ['bigint', 'NO', '1']);
       await conn.execute('DROP TABLE quoted');
+    });
+
+    test('sets and drops NOT NULL, keeping the type', () async {
+      await conn.execute('DROP TABLE IF EXISTS nullity');
+      await conn.execute(
+        'CREATE TABLE nullity (a int unsigned DEFAULT 3, '
+        'id int NOT NULL, KEY (id))',
+      );
+      Future<List<String?>> column(String name) async {
+        var result = await conn.execute(
+          "SELECT column_type, is_nullable, column_default, extra "
+          "FROM information_schema.columns WHERE table_schema = database() "
+          "AND table_name = 'nullity' AND column_name = '$name'",
+        );
+        var row = result.rows.single;
+        return [for (var i = 0; i < 4; i++) row.colAt(i)];
+      }
+
+      await (MySqlSchema()..alter('nullity', (t) => t.setNotNull('a'))).run(
+        conn,
+      );
+      var a = await column('a');
+      expect(a[0], contains('unsigned'));
+      expect(a.sublist(1, 3), ['NO', '3']);
+
+      await (MySqlSchema()..alter('nullity', (t) => t.dropNotNull('a'))).run(
+        conn,
+      );
+      expect((await column('a'))[1], 'YES');
+
+      // A serial type is its integer, with AUTO_INCREMENT.
+      await (MySqlSchema()..alter(
+            'nullity',
+            (t) => t.changeColumnType('id', ColumnType.bigSerial),
+          ))
+          .run(conn);
+      var id = await column('id');
+      expect(id[0], startsWith('bigint'));
+      expect(id[3], 'auto_increment');
+      await conn.execute('DROP TABLE nullity');
     });
 
     test('throws for a column that is not found', () async {

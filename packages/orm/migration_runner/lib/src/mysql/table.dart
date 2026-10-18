@@ -22,10 +22,9 @@ abstract class MySqlGenerator {
     }
     */
 
-    // Map serial to int
-    if (str.toLowerCase() == ColumnType.serial.name) {
-      return ColumnType.int.name;
-    }
+    // A serial type is an integer, with AUTO_INCREMENT.
+    var integer = serialIntegers[column.type];
+    if (integer != null) return integer.name;
 
     // Map timestamp time to datetime
     if (column.type == ColumnType.timeStamp) {
@@ -63,7 +62,8 @@ abstract class MySqlGenerator {
 
       // For int based primary key, apply NOT NULL
       // and AUTO_INCREMENT
-      if (column.type == ColumnType.int || column.type == ColumnType.serial) {
+      if (column.type == ColumnType.int ||
+          serialIntegers.containsKey(column.type)) {
         buf.write(' NOT NULL AUTO_INCREMENT');
       }
     }

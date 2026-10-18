@@ -38,7 +38,7 @@ String existingConstraintsQuery(String table, Iterable<String> columns) {
   var database = names.length > 1 ? literal(names.first) : 'DATABASE()';
   var columnNames = columns.map((c) => literal(unquoteIdentifier(c)));
   return 'SELECT COLUMN_NAME, IS_NULLABLE, COLUMN_DEFAULT, EXTRA, DATA_TYPE, '
-      'VERSION() '
+      'VERSION(), COLUMN_TYPE '
       'FROM information_schema.columns '
       'WHERE table_schema = $database '
       'AND table_name = ${literal(names.last)} '
@@ -86,11 +86,15 @@ class ExistingConstraints {
   /// The value of an `ON UPDATE` clause, such as `CURRENT_TIMESTAMP`.
   final String? onUpdate;
 
+  /// The whole type of the column, such as `int(10) unsigned`.
+  final String? columnType;
+
   const ExistingConstraints({
     required this.isNullable,
     this.defaultValue,
     this.autoIncrement = false,
     this.onUpdate,
+    this.columnType,
   });
 
   /// The constraints of a row of [existingConstraintsQuery], of a column of
@@ -109,6 +113,7 @@ class ExistingConstraints {
     required String extra,
     required String version,
     String dataType = '',
+    String? columnType,
   }) {
     Object? defaultValue;
     if (columnDefault != null) {
@@ -140,6 +145,7 @@ class ExistingConstraints {
       defaultValue: defaultValue,
       autoIncrement: extra.toLowerCase().contains('auto_increment'),
       onUpdate: _onUpdate.firstMatch(extra)?[1],
+      columnType: columnType,
     );
   }
 
@@ -185,10 +191,14 @@ class ExistingConstraints {
 ///
 /// The `AUTO_INCREMENT` of the column is kept only for an integer type, and
 /// its `ON UPDATE` and default of the current time only for a date and time
-/// type, as the database rejects them for the others.
+/// type, as the database rejects them for the others. A serial type is its
+/// integer with `AUTO_INCREMENT`, unless [autoIncrement] is `false`.
+///
+/// Without a [type], the column keeps its own, which is read from the
+/// database too, as for [ColumnModification.nullability].
 class ColumnModification {
   final String name;
-  final ColumnType type;
+  final ColumnType? type;
   final int length;
   final int? precision, scale;
   final bool? isNullable;
@@ -212,10 +222,17 @@ class ColumnModification {
     _column();
   }
 
+  /// A change of only whether the column [name] is nullable, as [isNullable],
+  /// which MySQL and MariaDB make with a `MODIFY` too: it keeps the type of
+  /// the column, such as `int(10) unsigned`, and its other constraints.
+  ColumnModification.nullability(String name, {required bool isNullable})
+    : this(name, null, length: Column.defaultLength, isNullable: isNullable);
+
   /// Whether some constraint is not given, and so is read from the database:
   /// one of [isNullable], [defaultValue] and [autoIncrement], or the
   /// `ON UPDATE` that a date and time type keeps, which cannot be given.
   bool get keepsExisting =>
+      type == null ||
       isNullable == null ||
       defaultValue == null ||
       autoIncrement == null ||
@@ -224,7 +241,9 @@ class ColumnModification {
   /// The default [existing], unless [type] cannot have it.
   Object? get _existingDefault {
     var value = existing?.defaultValue;
+    var type = this.type;
     if (value is RawSql &&
+        type != null &&
         !_dateTimeTypes.contains(type) &&
         ExistingConstraints._currentTimestamp.hasMatch(value.value)) {
       return null;
@@ -233,7 +252,13 @@ class ColumnModification {
   }
 
   MigrationColumn _column() => changedColumn(
-    type,
+    // The type read from the database, which [compile] does not have before
+    // the schema is run.
+    type ??
+        ColumnType(
+          existing?.columnType ??
+              '/* the type of ${quoteMySqlIdentifier(name)} */',
+        ),
     length: length,
     precision: precision,
     scale: scale,
@@ -248,12 +273,15 @@ class ColumnModification {
   String compile(String Function(MigrationColumn column) compileColumn) {
     var sql =
         'MODIFY ${quoteMySqlIdentifier(name)} ${compileColumn(_column())}';
+    var type = this.type;
     if (autoIncrement ??
-        (_integerTypes.contains(type) && (existing?.autoIncrement ?? false))) {
+        (serialIntegers.containsKey(type) ||
+            ((type == null || _integerTypes.contains(type)) &&
+                (existing?.autoIncrement ?? false)))) {
       sql += ' AUTO_INCREMENT';
     }
     var onUpdate = existing?.onUpdate;
-    if (onUpdate != null && _dateTimeTypes.contains(type)) {
+    if (onUpdate != null && (type == null || _dateTimeTypes.contains(type))) {
       sql += ' ON UPDATE $onUpdate';
     }
     return sql;

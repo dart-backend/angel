@@ -190,7 +190,7 @@ END
     // A serial type is not a type that a column can be changed to, but an
     // integer with a default from a sequence, which a serial column keeps,
     // and which compileSequences gives a column without one.
-    var integer = _serialIntegers[type];
+    var integer = sql.serialIntegers[type];
     if (integer != null || autoIncrement == true) {
       _sequences[name] = _sequenceTypes[integer ?? type] ?? 'bigint';
     }
@@ -224,13 +224,6 @@ END
       );
     }
   }
-
-  /// The integer type of each serial type.
-  static const Map<ColumnType, ColumnType> _serialIntegers = {
-    ColumnType.smallSerial: ColumnType.smallInt,
-    ColumnType.serial: ColumnType.int,
-    ColumnType.bigSerial: ColumnType.bigInt,
-  };
 
   /// The type of the sequence of each integer type.
   static const Map<ColumnType, String> _sequenceTypes = {

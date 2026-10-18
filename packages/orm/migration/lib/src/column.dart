@@ -120,6 +120,9 @@ class MigrationColumn extends Column {
 
   MigrationColumn notNull() => this.._nullable = false;
 
+  /// Gives the column the default [value]: a [String] as a string literal,
+  /// quoted and escaped, [RawSql] as SQL, such as
+  /// `RawSql('CURRENT_TIMESTAMP')`, and others as their `toString`.
   MigrationColumn defaultsTo(Object? value) => this.._defaultValue = value;
 
   MigrationColumn unique() => this.._index = IndexType.unique;

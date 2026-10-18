@@ -67,14 +67,19 @@ abstract class ModifyingAlterTable extends Table implements MutableTable {
     return col;
   }
 
+  /// MySQL and MariaDB have no `ALTER COLUMN DROP NOT NULL`, so the column
+  /// is defined again by a `MODIFY`, which keeps its type and constraints.
   @override
-  void dropNotNull(String name) {
-    _stack.add('ALTER COLUMN $name DROP NOT NULL');
-  }
+  void dropNotNull(String name) =>
+      _modify(ColumnModification.nullability(name, isNullable: true));
 
   @override
-  void setNotNull(String name) {
-    _stack.add('ALTER COLUMN $name SET NOT NULL');
+  void setNotNull(String name) =>
+      _modify(ColumnModification.nullability(name, isNullable: false));
+
+  void _modify(ColumnModification modification) {
+    modifications.add(modification);
+    _stack.add(modification);
   }
 
   @override
@@ -103,8 +108,7 @@ abstract class ModifyingAlterTable extends Table implements MutableTable {
     // Checks the precision and scale against the database's limits when the
     // change is declared, before any of the schema is run.
     modification.compile(compileColumn);
-    modifications.add(modification);
-    _stack.add(modification);
+    _modify(modification);
   }
 
   @override
@@ -312,6 +316,7 @@ class SchemaAlters {
         extra: row[3] ?? '',
         dataType: row[4] ?? '',
         version: row[5] ?? '',
+        columnType: row[6],
       );
     }
   }

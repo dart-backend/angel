@@ -60,7 +60,9 @@ class Column {
   /// A custom SQL expression to execute, instead of a named column.
   final String? expression;
 
-  /// Specifies the default values.
+  /// Specifies the default value: a [String] is a string literal, which the
+  /// migration runner quotes and escapes, and [RawSql] is SQL, such as
+  /// `RawSql('CURRENT_TIMESTAMP')`.
   final dynamic defaultValue;
 
   const Column({
