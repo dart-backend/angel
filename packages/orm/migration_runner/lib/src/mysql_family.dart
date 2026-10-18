@@ -17,6 +17,11 @@ abstract interface class CompiledIndexes implements MutableIndexes {
 /// An alter table of MySQL or MariaDB, which compile its columns with
 /// [compileColumn], and whose changes of column types are compiled with the
 /// constraints read from the database.
+///
+/// Its clauses are one `ALTER TABLE` statement, but for a clause of a column
+/// renamed or added before it, which starts another, as MySQL and MariaDB
+/// know a column of a statement by its name before it. The constraints of the
+/// columns changed by a statement are read once those before it have run.
 abstract class ModifyingAlterTable extends Table implements MutableTable {
   final String tableName;
 
@@ -27,29 +32,68 @@ abstract class ModifyingAlterTable extends Table implements MutableTable {
   /// `IF EXISTS`, which MariaDB has and MySQL has not.
   final bool ifExists;
 
-  /// The changes of column types, whose constraints not given are read from
-  /// the database when the schema is run.
-  final List<ColumnModification> modifications = [];
-
   final Map<String, MigrationColumn> _columns = {};
-  final List<Object> _stack = [];
+  final List<_AlterStatement> _statements;
+
+  /// The name of the table after the renames so far.
+  String _currentName;
 
   ModifyingAlterTable(
     this.tableName,
     this.compileColumn, {
     required this.ifExists,
-  });
+  }) : _statements = [_AlterStatement(tableName)],
+       _currentName = tableName;
 
-  /// Compiles the clauses of the table, which may be compiled again.
+  /// The changes of column types, whose constraints not given are read from
+  /// the database when the schema is run.
+  List<ColumnModification> get modifications => [
+    for (var statement in _statements) ...statement.modifications,
+  ];
+
+  /// Compiles the `ALTER TABLE` statements of the table, which may be
+  /// compiled again.
   void compile(StringBuffer buf, int indent) {
-    // The changes and the columns added are clauses of one statement.
+    for (var statement in _statements) {
+      _compileStatement(buf, statement, indent);
+    }
+  }
+
+  void _compileStatement(
+    StringBuffer buf,
+    _AlterStatement statement,
+    int indent,
+  ) {
+    if (statement.entries.isEmpty) return;
     var clauses = [
-      for (var entry in _stack)
-        entry is ColumnModification ? entry.compile(compileColumn) : entry,
-      for (var MapEntry(key: name, value: column) in _columns.entries)
-        'ADD COLUMN ${quoteMySqlIdentifier(name)} ${compileColumn(column)}',
+      for (var entry in statement.entries)
+        switch (entry) {
+          ColumnModification() => entry.compile(compileColumn),
+          _AddedColumn(:var name) =>
+            'ADD COLUMN ${quoteMySqlIdentifier(name)} '
+                '${compileColumn(_columns[name]!)}',
+          _ => entry as String,
+        },
     ];
-    buf.write(clauses.map((clause) => '${'  ' * indent}$clause').join(',\n'));
+    buf.writeln('${'  ' * indent}ALTER TABLE ${statement.tableName}');
+    buf.write(
+      clauses.map((clause) => '${'  ' * (indent + 1)}$clause').join(',\n'),
+    );
+    buf.writeln(';');
+  }
+
+  /// The name of a column, as MySQL and MariaDB know it: without quotes, and
+  /// not case sensitive.
+  static String _key(String name) => unquoteIdentifier(name).toLowerCase();
+
+  /// Adds [entry], of the columns [columns], to the last statement, or to a
+  /// new one if one of them is renamed or added in it.
+  void _add(Object entry, Iterable<String> columns) {
+    var last = _statements.last;
+    if (columns.any((c) => last.introduced.contains(_key(c)))) {
+      _statements.add(last = _AlterStatement(_currentName));
+    }
+    last.entries.add(entry);
   }
 
   @override
@@ -62,6 +106,8 @@ abstract class ModifyingAlterTable extends Table implements MutableTable {
     // column is declared, before any of the schema is run.
     compileColumn(col);
     _columns[name] = col;
+    _add(_AddedColumn(name), [name]);
+    _statements.last.introduced.add(_key(name));
     return col;
   }
 
@@ -75,22 +121,23 @@ abstract class ModifyingAlterTable extends Table implements MutableTable {
   void setNotNull(String name) =>
       _modify(ColumnModification.nullability(name, isNullable: false));
 
-  /// Adds [modification], or merges it into the one of its column before,
-  /// as MySQL and MariaDB take one `MODIFY` of a column in a statement.
+  /// Adds [modification], or merges it into the one of its column before in
+  /// the statement, as MySQL and MariaDB take one `MODIFY` of a column in a
+  /// statement.
   void _modify(ColumnModification modification) {
-    var name = unquoteIdentifier(modification.name).toLowerCase();
-    var i = modifications.indexWhere(
-      (m) => unquoteIdentifier(m.name).toLowerCase() == name,
+    _add(modification, [modification.name]);
+    var entries = _statements.last.entries;
+    var key = _key(modification.name);
+    var i = entries.indexWhere(
+      (e) =>
+          e is ColumnModification &&
+          !identical(e, modification) &&
+          _key(e.name) == key,
     );
-    if (i < 0) {
-      modifications.add(modification);
-      _stack.add(modification);
-      return;
+    if (i >= 0) {
+      entries[i] = (entries[i] as ColumnModification).mergedWith(modification);
+      entries.removeLast();
     }
-    var earlier = modifications[i];
-    var merged = earlier.mergedWith(modification);
-    modifications[i] = merged;
-    _stack[_stack.indexOf(earlier)] = merged;
   }
 
   @override
@@ -124,19 +171,23 @@ abstract class ModifyingAlterTable extends Table implements MutableTable {
 
   @override
   void renameColumn(String name, String newName) {
-    _stack.add(
-      'RENAME COLUMN ${quoteMySqlIdentifier(name)} TO ${quoteMySqlIdentifier(newName)}',
+    _add(
+      'RENAME COLUMN ${quoteMySqlIdentifier(name)} '
+      'TO ${quoteMySqlIdentifier(newName)}',
+      [name],
     );
+    _statements.last.introduced.add(_key(newName));
   }
 
   @override
   void dropColumn(String name) {
-    _stack.add('DROP COLUMN ${quoteMySqlIdentifier(name)}');
+    _add('DROP COLUMN ${quoteMySqlIdentifier(name)}', [name]);
   }
 
   @override
   void rename(String newName) {
-    _stack.add('RENAME TO $newName');
+    _add('RENAME TO $newName', const []);
+    _currentName = newName;
   }
 
   @override
@@ -149,22 +200,50 @@ abstract class ModifyingAlterTable extends Table implements MutableTable {
       IndexType.standardIndex ||
       IndexType.none => 'INDEX $ifNotExists${quoteMySqlIdentifier(name)}',
     };
-    _stack.add(
+    _add(
       'ADD $indexType (${columns.map(quoteMySqlIdentifier).join(',')})',
+      columns,
     );
   }
 
   @override
   void dropIndex(String name) {
-    _stack.add(
+    _add(
       'DROP INDEX ${ifExists ? 'IF EXISTS ' : ''}${quoteMySqlIdentifier(name)}',
+      const [],
     );
   }
 
   @override
   void dropPrimaryIndex() {
-    _stack.add('DROP PRIMARY KEY');
+    _add('DROP PRIMARY KEY', const []);
   }
+}
+
+/// An `ALTER TABLE` statement of a [ModifyingAlterTable], of the table named
+/// [tableName] when it runs.
+class _AlterStatement {
+  final String tableName;
+
+  /// Its clauses, a clause being SQL, a [ColumnModification] or an
+  /// [_AddedColumn].
+  final List<Object> entries = [];
+
+  /// The columns renamed or added by it, by [ModifyingAlterTable._key].
+  final Set<String> introduced = {};
+
+  _AlterStatement(this.tableName);
+
+  Iterable<ColumnModification> get modifications =>
+      entries.whereType<ColumnModification>();
+}
+
+/// The `ADD COLUMN` of a column declared by a [ModifyingAlterTable], which is
+/// compiled with its constraints when the table is.
+class _AddedColumn {
+  final String name;
+
+  _AddedColumn(this.name);
 }
 
 /// A MySQL or MariaDB schema, whose tables, alter tables and indexes are
@@ -257,7 +336,7 @@ class SchemaAlters {
     var buf = StringBuffer();
     for (var (text, table, indent) in _alters) {
       buf.write(text);
-      _compileAlter(buf, table, indent);
+      table.compile(buf, indent);
     }
     buf.write(rest);
     return buf.toString();
@@ -267,9 +346,9 @@ class SchemaAlters {
   /// [rest], with [execute], and reads the constraints with [query], which
   /// gives the rows of a query as text.
   ///
-  /// The statements before an alter table that changes a column's type are
-  /// run before the column's constraints are read, as they may create the
-  /// table or rename the column.
+  /// The statements before an `ALTER TABLE` that changes a column are run
+  /// before the column's constraints are read, as they may create the table,
+  /// or add or rename the column.
   Future<void> run(
     StringBuffer rest, {
     required Future<void> Function(String sql) execute,
@@ -282,37 +361,32 @@ class SchemaAlters {
     var buf = StringBuffer();
     for (var (text, table, indent) in _alters) {
       buf.write(text);
-      // The constraints of a column are always read, as some, such as its
-      // UNSIGNED or generation, cannot be given.
-      if (table.modifications.isNotEmpty) {
-        await executeText(buf.toString());
-        buf.clear();
-        await _readExisting(table, query);
+      for (var statement in table._statements) {
+        // The constraints of a column are always read, as some, such as its
+        // UNSIGNED or generation, cannot be given.
+        if (statement.modifications.isNotEmpty) {
+          await executeText(buf.toString());
+          buf.clear();
+          await _readExisting(statement, query);
+        }
+        table._compileStatement(buf, statement, indent);
       }
-      _compileAlter(buf, table, indent);
     }
     buf.write(rest);
     await executeText(buf.toString());
   }
 
-  void _compileAlter(StringBuffer buf, ModifyingAlterTable table, int indent) {
-    buf.write('  ' * indent);
-    buf.writeln('ALTER TABLE ${table.tableName}');
-    table.compile(buf, indent + 1);
-    buf.writeln(';');
-  }
-
-  /// Reads the constraints of the columns of [table] whose types are changed,
-  /// which a `MODIFY` keeps only if it gives them again, from the database,
-  /// in one query.
+  /// Reads the constraints of the columns changed by [statement], which a
+  /// `MODIFY` keeps only if it gives them again, from the database, in one
+  /// query.
   Future<void> _readExisting(
-    ModifyingAlterTable table,
+    _AlterStatement statement,
     Future<List<List<String?>>> Function(String sql) query,
   ) async {
-    var modifications = table.modifications;
+    var modifications = statement.modifications.toList();
     var rows = await query(
       existingConstraintsQuery(
-        table.tableName,
+        statement.tableName,
         modifications.map((m) => m.name).toSet(),
       ),
     );
@@ -323,9 +397,9 @@ class SchemaAlters {
       // Without them, the MODIFY would drop the constraints.
       if (row == null) {
         throw StateError(
-          'Cannot change the type of column ${modification.name} of table '
-          '${table.tableName}: it is not found in information_schema, so its '
-          'constraints not given to changeColumnType cannot be kept',
+          'Cannot change column ${modification.name} of table '
+          '${statement.tableName}: it is not found in information_schema, so '
+          'its constraints not given cannot be kept',
         );
       }
       modification.existing = ExistingConstraints.parse(

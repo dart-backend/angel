@@ -722,10 +722,42 @@ void main() async {
         var sql = schema.compile();
         expect(sql, contains('`order` int'));
         expect(sql, contains('RENAME COLUMN `order` TO `key`,'));
-        expect(sql, contains('DROP COLUMN `desc`,'));
+        expect(sql, contains('DROP COLUMN `desc`;'));
         expect(sql, contains('`i` (`key`),'));
         expect(sql, contains('ADD COLUMN `group` int;'));
       }
+    });
+
+    test('changes a column renamed or added before in another statement', () {
+      for (var schema in [MySqlSchema(), MariaDbSchema()]) {
+        schema.alter('t', (t) {
+          t.changeColumnType('a', ColumnType.bigInt);
+          t.renameColumn('b', 'c');
+          t.changeColumnType('c', ColumnType.varChar, length: 40);
+          t.varChar('e', length: 9);
+          t.setNotNull('e');
+        });
+        expect(
+          schema.compile(),
+          'ALTER TABLE t\n'
+          '  MODIFY `a` bigint,\n'
+          '  RENAME COLUMN `b` TO `c`;\n'
+          'ALTER TABLE t\n'
+          '  MODIFY `c` varchar(40),\n'
+          '  ADD COLUMN `e` varchar(9);\n'
+          'ALTER TABLE t\n'
+          '  MODIFY `e` /* the type of `e` */ NOT NULL;\n',
+        );
+      }
+
+      // And of the table renamed before.
+      var schema = MySqlSchema()
+        ..alter('t', (t) {
+          t.rename('u');
+          t.integer('f');
+          t.dropColumn('f');
+        });
+      expect(schema.compile(), contains('ALTER TABLE u\n  DROP COLUMN `f`;'));
     });
 
     test('merges the changes of a column into one MODIFY', () {
@@ -1424,6 +1456,30 @@ void main() async {
       var row = values.rows.single;
       expect([row.colAt(0), row.colAt(1), row.colAt(2)], ['2', '6', '10']);
       await conn.execute('DROP TABLE generated');
+    });
+
+    test('changes a column renamed or added before in one alter', () async {
+      await conn.execute('DROP TABLE IF EXISTS renamed_my');
+      await conn.execute('CREATE TABLE renamed_my (b int NOT NULL DEFAULT 7)');
+      await (MySqlSchema()..alter('renamed_my', (t) {
+            t.renameColumn('b', 'c');
+            t.changeColumnType('c', ColumnType.bigInt);
+            t.varChar('e', length: 9);
+            t.setNotNull('e');
+          }))
+          .run(conn);
+
+      var result = await conn.execute(
+        "SELECT column_name, column_type, is_nullable, column_default "
+        "FROM information_schema.columns WHERE table_schema = database() "
+        "AND table_name = 'renamed_my' ORDER BY column_name",
+      );
+      expect(result.rows.map((r) => [for (var i = 0; i < 4; i++) r.colAt(i)]), [
+        // The constraints of the column renamed are kept.
+        ['c', startsWith('bigint'), 'NO', '7'],
+        ['e', 'varchar(9)', 'NO', anyOf(isNull, 'NULL')],
+      ]);
+      await conn.execute('DROP TABLE renamed_my');
     });
 
     test('changes a column twice in one alter', () async {
