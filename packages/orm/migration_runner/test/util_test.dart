@@ -27,6 +27,14 @@ class RenamedMigration extends Migration {
 
 class ClashingMigration extends RenamedMigration {}
 
+class SeedMigration<T> extends Migration {
+  @override
+  void up(Schema schema) {}
+
+  @override
+  void down(Schema schema) {}
+}
+
 /// A migration recorded as `lib/b.dart#UserMigration` by an earlier version.
 class LegacyMigration extends Migration {
   @override
@@ -221,6 +229,17 @@ void main() {
       });
       // Only the one told by its class name, which is logged.
       expect(legacy.byClassName, {'/app/lib/a.dart#UserMigration'});
+    });
+
+    test('matches the class name of a generic migration', () {
+      // Recorded by its class name, without its type arguments.
+      var legacy = LegacyPaths(
+        ['/app/lib/seed.dart#SeedMigration'],
+        [SeedMigration<int>()],
+      );
+      expect(legacy.renames, {
+        '/app/lib/seed.dart#SeedMigration': 'SeedMigration<int>',
+      });
     });
 
     test('matches a legacyPath at the start of a part of the path', () {

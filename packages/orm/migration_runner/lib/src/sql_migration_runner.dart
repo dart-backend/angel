@@ -11,9 +11,9 @@ import 'util.dart';
 /// its `migrations` table, by their [Migration.name] and the batch of the
 /// [up] that ran them.
 ///
-/// A database gives how its table is created, and how a migration is run and
-/// recorded, or undone and removed.
-abstract class SqlMigrationRunner implements MigrationRunner {
+/// A database gives how its table is created and queried, its schema [S], and
+/// how one is run and recorded, or undone and removed.
+abstract class SqlMigrationRunner<S extends Schema> implements MigrationRunner {
   final Logger log;
 
   /// The migrations added, by their names, once the runner has started.
@@ -38,15 +38,38 @@ abstract class SqlMigrationRunner implements MigrationRunner {
   /// Removes [path] from the `migrations` table.
   Future<void> deletePath(String path);
 
+  /// A new schema of the database.
+  S newSchema();
+
+  /// The SQL of [schema].
+  String compileSchema(S schema);
+
+  /// Runs [schema], and records [name] in the `migrations` table in [batch],
+  /// or removes it without one: in one transaction, if the database changes
+  /// its tables in one.
+  Future<void> runRecorded(S schema, String name, {int? batch});
+
   /// Runs the `up` of [migration], and records it as [name] in [batch].
-  Future<void> runUp(String name, Migration migration, int batch);
+  Future<void> runUp(String name, Migration migration, int batch) {
+    var schema = newSchema();
+    migration.up(schema);
+    return runRecorded(schema, name, batch: batch);
+  }
 
   /// Runs the `down` of [migration], and removes [name].
-  Future<void> runDown(String name, Migration migration);
+  Future<void> runDown(String name, Migration migration) {
+    var schema = newSchema();
+    migration.down(schema);
+    return runRecorded(schema, name);
+  }
 
   /// The SQL of the `up` of [migration], by which two migrations of a class
   /// are told to be the same, or not.
-  String compileUp(Migration migration);
+  String compileUp(Migration migration) {
+    var schema = newSchema();
+    migration.up(schema);
+    return compileSchema(schema);
+  }
 
   @override
   void addMigration(Migration migration) {

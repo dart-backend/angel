@@ -12,12 +12,13 @@ import 'schema.dart';
 /// Each migration is run, and recorded in the `migrations` table, in one
 /// transaction, as PostgreSQL changes its tables in one, so that a migration
 /// that fails, or is cut off, is neither run nor recorded.
-class PostgresMigrationRunner extends SqlMigrationRunner {
+class PostgresMigrationRunner extends SqlMigrationRunner<PostgresSchema> {
   final Connection connection;
 
   PostgresMigrationRunner(
     this.connection, {
     Iterable<Migration> migrations = const [],
+    @Deprecated('Not used: the connection is opened and closed by the caller.')
     bool connected = false,
   }) : super(Logger('PostgresMigrationRunner'), migrations);
 
@@ -56,43 +57,30 @@ class PostgresMigrationRunner extends SqlMigrationRunner {
   );
 
   @override
-  Future<void> runUp(String name, Migration migration, int batch) async {
-    var schema = PostgresSchema();
-    migration.up(schema);
-    await connection.runTx((ctx) async {
-      await _run(ctx, schema);
-      await ctx.execute(
-        Sql.named(
-          'INSERT INTO migrations (batch, path) VALUES (@batch, @path)',
-        ),
-        parameters: {'batch': batch, 'path': name},
-      );
-    });
-  }
+  PostgresSchema newSchema() => PostgresSchema();
 
   @override
-  Future<void> runDown(String name, Migration migration) async {
-    var schema = PostgresSchema();
-    migration.down(schema);
-    await connection.runTx((ctx) async {
-      await _run(ctx, schema);
-      await _deletePath(ctx, name);
-    });
-  }
-
-  /// Runs the SQL of [schema] with the simple query protocol, as the
-  /// extended one takes only one statement.
-  Future<void> _run(Session session, PostgresSchema schema) async {
-    var sql = schema.compile();
-    if (sql.trim().isEmpty) return;
-    await session.execute(sql, queryMode: QueryMode.simple);
-  }
+  String compileSchema(PostgresSchema schema) => schema.compile();
 
   @override
-  String compileUp(Migration migration) {
-    var schema = PostgresSchema();
-    migration.up(schema);
-    return schema.compile();
+  Future<void> runRecorded(
+    PostgresSchema schema,
+    String name, {
+    int? batch,
+  }) async {
+    await connection.runTx((ctx) async {
+      await schema.run(ctx);
+      if (batch == null) {
+        await _deletePath(ctx, name);
+      } else {
+        await ctx.execute(
+          Sql.named(
+            'INSERT INTO migrations (batch, path) VALUES (@batch, @path)',
+          ),
+          parameters: {'batch': batch, 'path': name},
+        );
+      }
+    });
   }
 
   @override

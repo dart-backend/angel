@@ -18,21 +18,27 @@ class PostgresSchema extends Schema {
 
   factory PostgresSchema() => PostgresSchema._(StringBuffer(), 0);
 
-  Future<int> run(Connection connection) async {
-    //return connection.execute(compile());
-    var result = await connection.runTx((ctx) async {
-      var sql = compile();
-      // The simple protocol, as the extended one takes only one statement.
-      var result = await ctx
-          .execute(sql, queryMode: QueryMode.simple)
-          .catchError((e) {
-            _log.severe('Failed to run query: [ $sql ]', e);
-            throw Exception(e);
-          });
-      return result.affectedRows;
-    });
+  /// Runs the SQL of the schema with [session], and throws if it fails: in a
+  /// transaction of its own, if [session] is a [Connection] or another that
+  /// runs them, or in that of a transaction it is of.
+  Future<int> run(Session session) async {
+    if (session is SessionExecutor) {
+      return (session as SessionExecutor).runTx(_execute);
+    }
+    return _execute(session);
+  }
 
-    return result;
+  Future<int> _execute(Session session) async {
+    var sql = compile();
+    if (sql.trim().isEmpty) return 0;
+    // The simple protocol, as the extended one takes only one statement.
+    var result = await session
+        .execute(sql, queryMode: QueryMode.simple)
+        .catchError((Object e) {
+          _log.severe('Failed to run query: [ $sql ]', e);
+          throw Exception(e);
+        });
+    return result.affectedRows;
   }
 
   String compile() => _buf.toString();

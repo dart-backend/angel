@@ -2,23 +2,32 @@ import 'package:angel3_orm/angel3_orm.dart';
 
 /// The SQL of the default [value] of a column: [RawSql] as it is, a number or
 /// a [bool] as its [Object.toString], a [DateTime] as a string literal of its
-/// date and time, such as `'2020-01-02 03:04:05.000'`, which is of its own
-/// time zone, and other values, such as a [String], as a string literal of
-/// their [Object.toString].
+/// date and time, such as `'2020-01-02 03:04:05.000'`, and other values, such
+/// as a [String], as a string literal of their [Object.toString].
+///
+/// A [DateTime] is of its own time zone. With [utcOffset], as PostgreSQL
+/// takes, a UTC one is given as such (`'2020-01-02 03:04:05.000+00'`), so
+/// that a `timestamp with time zone` is not read in the time zone of the
+/// session. MySQL and MariaDB take no offset, so a UTC one is of the time
+/// zone of their session.
 ///
 /// A string literal is in single quotes, each of which is doubled, which every
 /// database reads as a quote. MySQL and MariaDB also read a backslash as an
 /// escape, unless `NO_BACKSLASH_ESCAPES` is set, so with [escapeBackslashes]
 /// each backslash is doubled too. PostgreSQL reads a backslash as itself.
-String compileDefault(Object value, {required bool escapeBackslashes}) {
+String compileDefault(
+  Object value, {
+  required bool escapeBackslashes,
+  bool utcOffset = false,
+}) {
   if (value is RawSql) return value.value;
   if (value is num || value is bool) return value.toString();
   if (value is DateTime) {
     // Without the `T` and `Z` of ISO 8601, which MariaDB does not take.
-    value = value
-        .toIso8601String()
-        .replaceFirst('T', ' ')
-        .replaceFirst(RegExp(r'Z$'), '');
+    var utc = value.isUtc && utcOffset;
+    value =
+        '${value.toIso8601String().replaceFirst('T', ' ').replaceFirst(RegExp(r'Z$'), '')}'
+        '${utc ? '+00' : ''}';
   }
   var literal = value.toString().replaceAll("'", "''");
   if (escapeBackslashes) literal = literal.replaceAll(r'\', r'\\');
@@ -86,13 +95,15 @@ List<String> splitQualifiedName(String name, [String quotes = '`"']) {
 String quoteMySqlTableName(String name) =>
     splitQualifiedName(name).map(quoteMySqlIdentifier).join('.');
 
-/// The [column] of an index as SQL: a name quoted by [quote], unless it is
-/// in quotes already, and as it is otherwise, as it may be a prefix, such as
+/// The [column] of an index as SQL: a name, which may be in quotes, quoted
+/// by [quote], and as it is otherwise, as it may be a prefix, such as
 /// `body(100)`, an expression, such as `lower(email)`, or have an order, such
 /// as `email DESC`.
 String compileIndexColumn(String column, String Function(String) quote) {
   var name = column.trim();
-  if (_quotedName.hasMatch(name)) return name;
+  // A name in either quotes is quoted again by [quote], as MySQL reads one
+  // in double quotes as a string, and PostgreSQL has no backticks.
+  if (_quotedName.hasMatch(name)) return quote(unquoteIdentifier(name));
   if (_plainName.hasMatch(name)) return quote(name);
   return column;
 }

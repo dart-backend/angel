@@ -11,12 +11,13 @@ import 'schema.dart';
 ///
 /// MariaDB commits each change of a table on its own, so a migration is
 /// recorded in the `migrations` table once it has run.
-class MariaDbMigrationRunner extends SqlMigrationRunner {
+class MariaDbMigrationRunner extends SqlMigrationRunner<MariaDbSchema> {
   final MySqlConnection connection;
 
   MariaDbMigrationRunner(
     this.connection, {
     Iterable<Migration> migrations = const [],
+    @Deprecated('Not used: the connection is opened and closed by the caller.')
     bool connected = true,
   }) : super(Logger('MariaDbMigrationRunner'), migrations);
 
@@ -50,29 +51,26 @@ class MariaDbMigrationRunner extends SqlMigrationRunner {
       connection.query('DELETE FROM migrations WHERE path = ?', [path]);
 
   @override
-  Future<void> runUp(String name, Migration migration, int batch) async {
-    var schema = MariaDbSchema();
-    migration.up(schema);
-    await schema.run(connection);
-    await connection.query(
-      'INSERT INTO migrations (batch, path) VALUES (?, ?)',
-      [batch, name],
-    );
-  }
+  MariaDbSchema newSchema() => MariaDbSchema();
 
   @override
-  Future<void> runDown(String name, Migration migration) async {
-    var schema = MariaDbSchema();
-    migration.down(schema);
-    await schema.run(connection);
-    await deletePath(name);
-  }
+  String compileSchema(MariaDbSchema schema) => schema.compile();
 
   @override
-  String compileUp(Migration migration) {
-    var schema = MariaDbSchema();
-    migration.up(schema);
-    return schema.compile();
+  Future<void> runRecorded(
+    MariaDbSchema schema,
+    String name, {
+    int? batch,
+  }) async {
+    await schema.run(connection);
+    if (batch == null) {
+      await deletePath(name);
+    } else {
+      await connection.query(
+        'INSERT INTO migrations (batch, path) VALUES (?, ?)',
+        [batch, name],
+      );
+    }
   }
 
   @override

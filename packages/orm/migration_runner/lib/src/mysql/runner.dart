@@ -11,12 +11,13 @@ import 'schema.dart';
 ///
 /// MySQL commits each change of a table on its own, so a migration is
 /// recorded in the `migrations` table once it has run.
-class MySqlMigrationRunner extends SqlMigrationRunner {
+class MySqlMigrationRunner extends SqlMigrationRunner<MySqlSchema> {
   final MySQLConnection connection;
 
   MySqlMigrationRunner(
     this.connection, {
     Iterable<Migration> migrations = const [],
+    @Deprecated('Not used: the connection is opened and closed by the caller.')
     bool connected = false,
   }) : super(Logger('MysqlMigrationRunner'), migrations);
 
@@ -50,29 +51,26 @@ class MySqlMigrationRunner extends SqlMigrationRunner {
   );
 
   @override
-  Future<void> runUp(String name, Migration migration, int batch) async {
-    var schema = MySqlSchema();
-    migration.up(schema);
-    await schema.run(connection);
-    await connection.execute(
-      'INSERT INTO migrations (batch, path) VALUES (:batch, :path)',
-      {'batch': batch, 'path': name},
-    );
-  }
+  MySqlSchema newSchema() => MySqlSchema();
 
   @override
-  Future<void> runDown(String name, Migration migration) async {
-    var schema = MySqlSchema();
-    migration.down(schema);
-    await schema.run(connection);
-    await deletePath(name);
-  }
+  String compileSchema(MySqlSchema schema) => schema.compile();
 
   @override
-  String compileUp(Migration migration) {
-    var schema = MySqlSchema();
-    migration.up(schema);
-    return schema.compile();
+  Future<void> runRecorded(
+    MySqlSchema schema,
+    String name, {
+    int? batch,
+  }) async {
+    await schema.run(connection);
+    if (batch == null) {
+      await deletePath(name);
+    } else {
+      await connection.execute(
+        'INSERT INTO migrations (batch, path) VALUES (:batch, :path)',
+        {'batch': batch, 'path': name},
+      );
+    }
   }
 
   @override

@@ -5,7 +5,7 @@ import 'package:test/test.dart';
 
 /// A runner of a `migrations` table in memory, which records the `up` and
 /// `down` it runs in [log].
-class MemoryRunner extends SqlMigrationRunner {
+class MemoryRunner extends SqlMigrationRunner<Schema> {
   /// The rows of the table, as `(id, batch, path)`.
   final List<(int, int, String?)> rows = [];
 
@@ -54,20 +54,21 @@ class MemoryRunner extends SqlMigrationRunner {
       rows.removeWhere((r) => r.$3 == path);
 
   @override
-  Future<void> runUp(String name, Migration migration, int batch) async {
-    migration.up(_NoSchema());
-    runs.add('up $name');
-    rows.add((rows.length + 1, batch, name));
-  }
+  Schema newSchema() => _NoSchema();
 
   @override
-  Future<void> runDown(String name, Migration migration) async {
-    runs.add('down $name');
-    await deletePath(name);
-  }
+  String compileSchema(Schema schema) => '';
 
   @override
-  String compileUp(Migration migration) => migration.name;
+  Future<void> runRecorded(Schema schema, String name, {int? batch}) async {
+    if (batch == null) {
+      runs.add('down $name');
+      await deletePath(name);
+    } else {
+      runs.add('up $name');
+      rows.add((rows.length + 1, batch, name));
+    }
+  }
 
   @override
   Future close() async {}

@@ -45,7 +45,7 @@ abstract class PostgresGenerator {
 
   /// The SQL of the default [value] of a column.
   static String compileDefault(Object value) =>
-      sql.compileDefault(value, escapeBackslashes: false);
+      sql.compileDefault(value, escapeBackslashes: false, utcOffset: true);
 
   static String compileReference(MigrationColumnReference ref) {
     var buf = StringBuffer(

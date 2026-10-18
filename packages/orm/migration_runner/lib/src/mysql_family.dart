@@ -580,6 +580,19 @@ class _ExistingReader {
 
   _ExistingReader(this.query);
 
+  /// Whether [error] is MySQL's error 1054, of an unknown column, which the
+  /// clients give in their messages (`Error 1054 (42S22)` of `mysql1`,
+  /// `[1054]` of `mysql_client`), whatever the language of its text. The only
+  /// column of [existingConstraintsQuery] that a server may not have is
+  /// `GENERATION_EXPRESSION`.
+  static bool _isUnknownColumn(Object error) {
+    var message = '$error';
+    return _unknownColumn.hasMatch(message) ||
+        message.contains('GENERATION_EXPRESSION');
+  }
+
+  static final RegExp _unknownColumn = RegExp(r'\b1054\b');
+
   /// The rows of [existingConstraintsQuery] of [table] and [columns]. A server
   /// without `GENERATION_EXPRESSION`, MySQL before 5.7.6 or MariaDB before
   /// 10.2.5, rejects the query, which is made again without it.
@@ -591,7 +604,7 @@ class _ExistingReader {
       try {
         return await query(existingConstraintsQuery(table, columns));
       } catch (e) {
-        if (!'$e'.contains('GENERATION_EXPRESSION')) rethrow;
+        if (!_isUnknownColumn(e)) rethrow;
         _generationExpressions = false;
       }
     }

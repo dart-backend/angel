@@ -871,8 +871,9 @@ void main() async {
     test('writes an index column that is not a name as it is', () {
       for (var (column, mySql, postgres) in [
         ('order', '`order`', '"order"'),
-        ('`a b`', '`a b`', '`a b`'),
-        ('"a b"', '"a b"', '"a b"'),
+        // In either quotes, quoted for the database.
+        ('`a b`', '`a b`', '"a b"'),
+        ('"a b"', '`a b`', '"a b"'),
         ('body(100)', 'body(100)', 'body(100)'),
         ('email DESC', 'email DESC', 'email DESC'),
         ('lower(email)', 'lower(email)', 'lower(email)'),
@@ -926,6 +927,47 @@ void main() async {
         expect(compileDefault(true, escapeBackslashes: escape), 'true');
         expect(compileDefault(1.5, escapeBackslashes: escape), '1.5');
       }
+      // PostgreSQL keeps a UTC one so, and not of the time zone of the session.
+      expect(
+        PostgresGenerator.compileDefault(DateTime.utc(2020)),
+        "'2020-01-01 00:00:00.000+00'",
+      );
+      expect(PostgresGenerator.compileDefault(at), "'2020-01-02 03:04:05.000'");
+    });
+
+    test('reads the constraints again for MySQL error 1054', () async {
+      var queries = <String>[];
+      var schema = MySqlSchema()..alter('t', (t) => t.setNotNull('a'));
+      var sql = <String>[];
+      await schema.runWith(
+        execute: (s) async => sql.add(s),
+        query: (q) async {
+          queries.add(q);
+          if (q.contains('GENERATION_EXPRESSION')) {
+            // In the language of the server, without the column's name.
+            throw Exception('Error 1054 (42S22): Colonne inconnue');
+          }
+          return [
+            [
+              'a',
+              'YES',
+              null,
+              '',
+              'int',
+              '5.6.51',
+              'int(11)',
+              null,
+              null,
+              null,
+              '',
+              '',
+            ],
+          ];
+        },
+      );
+      expect(queries, hasLength(2));
+      expect(queries.last, isNot(contains('GENERATION_EXPRESSION')));
+      expect(sql.single, contains('MODIFY `a` int(11) NOT NULL'));
     });
 
     test('quotes the table and column of a reference', () {
@@ -1675,6 +1717,24 @@ void main() async {
         "SELECT 1 FROM information_schema.tables WHERE table_name = 'atomic'",
       );
       expect(r, isEmpty);
+    });
+
+    test('keeps a UTC DateTime default in UTC', () async {
+      await conn.execute('DROP TABLE IF EXISTS utc_dated');
+      // Not read in the time zone of the session.
+      await conn.execute("SET TIME ZONE 'America/New_York'");
+      await (PostgresSchema()..create('utc_dated', (t) {
+            t.integer('n');
+            t.timeStamp('at', timezone: true).defaultsTo(DateTime.utc(2020));
+          }))
+          .run(conn);
+      await conn.execute('INSERT INTO utc_dated (n) VALUES (1)');
+      var r = await conn.execute(
+        'SELECT extract(epoch FROM at)::bigint FROM utc_dated',
+      );
+      expect(r.single[0], DateTime.utc(2020).millisecondsSinceEpoch ~/ 1000);
+      await conn.execute('DROP TABLE utc_dated');
+      await conn.execute('SET TIME ZONE DEFAULT');
     });
 
     test('quotes a DateTime default', () async {

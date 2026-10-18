@@ -151,7 +151,7 @@ class LegacyPaths {
     byClass.forEach((className, classPaths) {
       var candidates = [
         for (var m in migrations)
-          if (m.legacyPath == null && m.runtimeType.toString() == className) m,
+          if (m.legacyPath == null && _classNameOf(m) == className) m,
       ];
       if (candidates.isEmpty) return;
       if (candidates.length == 1 && classPaths.length == 1) {
@@ -197,6 +197,12 @@ class LegacyPaths {
 
   static String _className(String path) =>
       path.substring(path.lastIndexOf('#') + 1);
+
+  /// The name of the class of [migration], without its type arguments, as
+  /// the mirrors of an earlier version gave it: `SeedMigration`, not
+  /// `SeedMigration<User>`.
+  static String _classNameOf(Migration migration) =>
+      migration.runtimeType.toString().replaceFirst(RegExp(r'<.*$'), '');
 
   /// Whether [path] ends with [legacyPath], at the start of a part of it, and
   /// with either separator of Windows or other systems, which a path may
