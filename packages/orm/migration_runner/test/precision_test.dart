@@ -138,6 +138,41 @@ class CreateAndChangeMigration extends Migration {
   }
 }
 
+/// A table of MySQL or MariaDB with an integer with a default, a column of
+/// text with a collation and a comment, and one with a literal default.
+const _keptTable =
+    'CREATE TABLE kept ('
+    'id int NOT NULL DEFAULT 0, '
+    "code varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin COMMENT 'sku', "
+    "note varchar(20) DEFAULT 'x', "
+    'PRIMARY KEY (id))';
+
+/// Makes `id` of [_keptTable] AUTO_INCREMENT, `code` NOT NULL, and `note` a
+/// TEXT.
+void _alterKept(MutableTable t) {
+  t.changeColumnType('id', ColumnType.serial);
+  t.setNotNull('code');
+  t.changeColumnType('note', ColumnType.text);
+}
+
+const _keptColumns =
+    'SELECT column_name, column_default, extra, is_nullable, '
+    'collation_name, column_comment FROM information_schema.columns '
+    "WHERE table_schema = database() AND table_name = 'kept' "
+    'ORDER BY column_name';
+
+/// Expects [rows] of [_keptColumns] after [_alterKept].
+void _expectKept(List<List<String?>> rows) {
+  var [code, id, note] = rows;
+  // The default of `id`, which an AUTO_INCREMENT column cannot have, is
+  // dropped. MariaDB gives no default as `NULL`.
+  expect(id[1], anyOf(isNull, 'NULL'));
+  expect(id[2], contains('auto_increment'));
+  expect([code[3], code[4], code[5]], ['NO', 'utf8mb4_bin', 'sku']);
+  // MariaDB keeps the literal; MySQL has it as an expression.
+  expect(note[1], contains('x'));
+}
+
 /// Fails on the database.
 class FailingMigration extends Migration {
   @override
@@ -664,12 +699,233 @@ void main() async {
         ..existing = ExistingConstraints(
           isNullable: true,
           defaultValue: '3',
+          columnType: 'int(10) unsigned',
+        );
+      expect(
+        modification.compile(MySqlGenerator.compileColumn),
+        "MODIFY `a` int(10) unsigned NOT NULL DEFAULT '3'",
+      );
+      modification = ColumnModification.nullability('a', isNullable: false)
+        ..existing = ExistingConstraints(
+          isNullable: true,
           autoIncrement: true,
           columnType: 'int(10) unsigned',
         );
       expect(
         modification.compile(MySqlGenerator.compileColumn),
-        "MODIFY `a` int(10) unsigned NOT NULL DEFAULT '3' AUTO_INCREMENT",
+        'MODIFY `a` int(10) unsigned NOT NULL AUTO_INCREMENT',
+      );
+    });
+
+    test('drops the default of a column made AUTO_INCREMENT', () {
+      for (var (type, autoIncrement) in [
+        (ColumnType.serial, null),
+        (ColumnType.int, true),
+      ]) {
+        var modification = ColumnModification(
+          'id',
+          type,
+          length: 255,
+          autoIncrement: autoIncrement,
+        )..existing = ExistingConstraints(isNullable: false, defaultValue: '0');
+        expect(
+          modification.compile(MySqlGenerator.compileColumn),
+          'MODIFY `id` int NOT NULL AUTO_INCREMENT',
+        );
+      }
+    });
+
+    test('keeps a literal default of a TEXT column where the server can', () {
+      ColumnModification note(String version) =>
+          ColumnModification('note', ColumnType.text, length: 255)
+            ..existing = ExistingConstraints(
+              isNullable: true,
+              defaultValue: "it's",
+              version: version,
+            );
+      // MySQL takes an expression from 8.0.13, and no default before.
+      expect(
+        note('8.4.0').compile(MySqlGenerator.compileColumn),
+        "MODIFY `note` text DEFAULT ('it''s')",
+      );
+      expect(
+        note('8.0.12').compile(MySqlGenerator.compileColumn),
+        'MODIFY `note` text',
+      );
+      // MariaDB takes a literal from 10.2.1.
+      expect(
+        note('11.4.2-MariaDB').compile(MariaDbGenerator.compileColumn),
+        "MODIFY `note` text DEFAULT 'it''s'",
+      );
+      expect(
+        note('10.1.48-MariaDB').compile(MariaDbGenerator.compileColumn),
+        'MODIFY `note` text',
+      );
+    });
+
+    test('keeps the character set, collation and comment of a column', () {
+      var existing = ExistingConstraints(
+        isNullable: true,
+        columnType: 'varchar(10)',
+        characterSet: 'utf8mb4',
+        collation: 'utf8mb4_bin',
+        comment: "the 'sku'",
+      );
+      expect(
+        (ColumnModification.nullability(
+          'code',
+          isNullable: false,
+        )..existing = existing).compile(MySqlGenerator.compileColumn),
+        'MODIFY `code` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin '
+        "NOT NULL COMMENT 'the ''sku'''",
+      );
+      expect(
+        (ColumnModification(
+          'code',
+          ColumnType.varChar,
+          length: 20,
+        )..existing = existing).compile(MySqlGenerator.compileColumn),
+        'MODIFY `code` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_bin '
+        "COMMENT 'the ''sku'''",
+      );
+      // A column of another type has no collation.
+      expect(
+        (ColumnModification(
+          'code',
+          ColumnType.int,
+          length: 255,
+        )..existing = existing).compile(MySqlGenerator.compileColumn),
+        "MODIFY `code` int COMMENT 'the ''sku'''",
+      );
+    });
+
+    test('reads GENERATION_EXPRESSION unless the server has none', () {
+      expect(
+        existingConstraintsQuery('t', ['a']),
+        contains('GENERATION_EXPRESSION'),
+      );
+      expect(
+        existingConstraintsQuery('t', ['a'], generationExpressions: false),
+        isNot(contains('GENERATION_EXPRESSION')),
+      );
+    });
+
+    test('throws for a generated column without its expression', () {
+      for (var extra in [
+        'VIRTUAL GENERATED',
+        'STORED GENERATED',
+        'PERSISTENT',
+      ]) {
+        expect(
+          () => ExistingConstraints.parse(
+            isNullable: 'YES',
+            columnDefault: null,
+            extra: extra,
+            version: '10.1.48-MariaDB',
+          ),
+          throwsStateError,
+          reason: extra,
+        );
+      }
+      // A default of an expression is not a generation.
+      expect(
+        ExistingConstraints.parse(
+          isNullable: 'YES',
+          columnDefault: 'rand()',
+          extra: 'DEFAULT_GENERATED',
+          version: '8.4.0',
+        ).generationExpression,
+        isNull,
+      );
+    });
+
+    test('reads the version of Aurora MySQL, which has no patch', () {
+      var aurora = ExistingConstraints(
+        isNullable: true,
+        version: '8.0.mysql_aurora.3.05.2',
+      );
+      expect((aurora.blobDefault('x') as RawSql).value, "('x')");
+      var old = ExistingConstraints(
+        isNullable: true,
+        version: '5.7.mysql_aurora.2.11.2',
+      );
+      expect(old.blobDefault('x'), isNull);
+    });
+
+    test('puts an expression default of a TEXT in parentheses', () {
+      var existing = ExistingConstraints(isNullable: true, version: '8.4.0');
+      expect(
+        (existing.blobDefault(RawSql('(1)+(2)')) as RawSql).value,
+        '((1)+(2))',
+      );
+    });
+
+    test('drops the default of a column changed to JSON', () {
+      for (var (compileColumn, version) in [
+        (MySqlGenerator.compileColumn, '8.4.0'),
+        (MariaDbGenerator.compileColumn, '11.4.2-MariaDB'),
+      ]) {
+        expect(
+          (ColumnModification('c', ColumnType.json, length: 255)
+                ..existing = ExistingConstraints(
+                  isNullable: true,
+                  defaultValue: 'x',
+                  version: version,
+                ))
+              .compile(compileColumn),
+          'MODIFY `c` json',
+        );
+      }
+    });
+
+    test('keeps no character set of a column changed to nvarchar', () {
+      expect(
+        (ColumnModification('c', ColumnType.nVarChar, length: 20)
+              ..existing = ExistingConstraints(
+                isNullable: true,
+                characterSet: 'utf8mb4',
+                collation: 'utf8mb4_bin',
+              ))
+            .compile(MySqlGenerator.compileColumn),
+        'MODIFY `c` nvarchar(20)',
+      );
+    });
+
+    test('keeps the CHECK of a column of MariaDB', () {
+      expect(hasColumnChecks('11.4.2-MariaDB'), isTrue);
+      expect(hasColumnChecks('10.2.21-MariaDB'), isFalse);
+      expect(hasColumnChecks('8.4.0'), isFalse);
+      expect(
+        columnChecksQuery('`shop`.`t`', ['data']),
+        endsWith(
+          "CONSTRAINT_SCHEMA = 'shop' AND TABLE_NAME = 't' "
+          "AND CONSTRAINT_NAME IN ('data')",
+        ),
+      );
+      expect(
+        (ColumnModification.nullability('data', isNullable: false)
+              ..existing = ExistingConstraints(
+                isNullable: true,
+                columnType: 'longtext',
+                characterSet: 'utf8mb4',
+                collation: 'utf8mb4_bin',
+                check: 'json_valid(`data`)',
+              ))
+            .compile(MariaDbGenerator.compileColumn),
+        'MODIFY `data` longtext CHARACTER SET utf8mb4 COLLATE utf8mb4_bin '
+        'NOT NULL CHECK (json_valid(`data`))',
+      );
+    });
+
+    test('splits a qualified name only at dots out of quotes', () {
+      expect(splitQualifiedName('`shop`.`orders`'), ['shop', 'orders']);
+      expect(splitQualifiedName('shop.orders'), ['shop', 'orders']);
+      expect(splitQualifiedName('`my.table`'), ['my.table']);
+      expect(splitQualifiedName('`a``.b`.`c`'), ['a`.b', 'c']);
+      expect(splitQualifiedName('"x.y"'), ['x.y']);
+      expect(
+        existingConstraintsQuery('`my.table`', ['a']),
+        contains("table_schema = DATABASE() AND table_name = 'my.table'"),
       );
     });
 
@@ -1382,6 +1638,45 @@ void main() async {
       ]);
     });
 
+    test('keeps what the new column can have', () async {
+      await conn.query('DROP TABLE IF EXISTS kept');
+      await conn.query(_keptTable);
+      await (MariaDbSchema()..alter('kept', _alterKept)).run(conn);
+
+      var rows = await conn.query(_keptColumns);
+      // `mysql1` may give text as a `Blob`.
+      _expectKept([
+        for (var row in rows) [for (var value in row) value?.toString()],
+      ]);
+      await conn.query('DROP TABLE kept');
+    });
+
+    test('keeps the CHECK of a column, as that of a JSON', () async {
+      await conn.query('DROP TABLE IF EXISTS checked');
+      await conn.query('CREATE TABLE checked (data JSON, p int CHECK (p > 0))');
+      await (MariaDbSchema()..alter('checked', (t) {
+            t.setNotNull('data');
+            t.changeColumnType('p', ColumnType.bigInt);
+          }))
+          .run(conn);
+
+      var rows = await conn.query(
+        'SELECT CONSTRAINT_NAME, CHECK_CLAUSE '
+        'FROM information_schema.CHECK_CONSTRAINTS '
+        "WHERE CONSTRAINT_SCHEMA = database() AND TABLE_NAME = 'checked' "
+        'ORDER BY CONSTRAINT_NAME',
+      );
+      expect(rows.map((r) => [r[0], r[1].toString()]), [
+        ['data', 'json_valid(`data`)'],
+        ['p', '`p` > 0'],
+      ]);
+      await expectLater(
+        conn.query("INSERT INTO checked (data, p) VALUES ('nope', 1)"),
+        throwsA(anything),
+      );
+      await conn.query('DROP TABLE checked');
+    });
+
     test('runs a migration of more than one statement', () async {
       // Left by a run that failed.
       await conn.query('DROP TABLE IF EXISTS created');
@@ -1509,6 +1804,18 @@ void main() async {
       expect([row.colAt(0), row.colAt(1)], ['int', 'NO']);
       expect(row.colAt(2), anyOf(isNull, 'NULL'));
       await conn.execute('DROP TABLE defaulted');
+    });
+
+    test('keeps what the new column can have', () async {
+      await conn.execute('DROP TABLE IF EXISTS kept');
+      await conn.execute(_keptTable);
+      await (MySqlSchema()..alter('kept', _alterKept)).run(conn);
+
+      var result = await conn.execute(_keptColumns);
+      _expectKept([
+        for (var row in result.rows) [for (var i = 0; i < 6; i++) row.colAt(i)],
+      ]);
+      await conn.execute('DROP TABLE kept');
     });
 
     test('keeps ON UPDATE when the other constraints are given', () async {

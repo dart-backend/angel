@@ -41,6 +41,35 @@ String unquoteIdentifier(String name, [String quotes = '`"']) {
   return name;
 }
 
+/// The parts of the qualified [name], such as `` `shop`.`orders` ``, split at
+/// each `.` that is not in [quotes], and each unquoted as [unquoteIdentifier],
+/// so that `` `my.table` `` is one part.
+List<String> splitQualifiedName(String name, [String quotes = '`"']) {
+  var parts = <String>[];
+  var start = 0;
+  String? quote;
+  for (var i = 0; i < name.length; i++) {
+    var c = name[i];
+    if (quote != null) {
+      // A doubled quote is one in the name.
+      if (c == quote) {
+        if (i + 1 < name.length && name[i + 1] == quote) {
+          i++;
+        } else {
+          quote = null;
+        }
+      }
+    } else if (quotes.contains(c)) {
+      quote = c;
+    } else if (c == '.') {
+      parts.add(unquoteIdentifier(name.substring(start, i), quotes));
+      start = i + 1;
+    }
+  }
+  parts.add(unquoteIdentifier(name.substring(start), quotes));
+  return parts;
+}
+
 /// [name] as a PostgreSQL identifier, in double quotes, each of which is
 /// doubled, so that it may be a reserved word or have capitals.
 String quotePostgresIdentifier(String name) =>

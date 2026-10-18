@@ -14,6 +14,166 @@ abstract interface class CompiledIndexes implements MutableIndexes {
   void compile(StringBuffer buf);
 }
 
+/// Compiles the columns of MySQL or MariaDB, whose `numeric` and `decimal`
+/// have a scale of at most [maxScale] (and a precision of at most 65).
+class MySqlFamilyGenerator {
+  final int maxScale;
+
+  const MySqlFamilyGenerator({required this.maxScale});
+
+  String columnType(MigrationColumn column) {
+    // A serial type is an integer, with AUTO_INCREMENT.
+    var integer = serialIntegers[column.type];
+    if (integer != null) return integer.name;
+
+    // Map timestamp time to datetime
+    var str = column.type == ColumnType.timeStamp
+        ? ColumnType.dateTime.name
+        : column.type.name;
+
+    // MySQL and MariaDB have no numeric without a precision, whose default
+    // rounds values to whole numbers, so a column without one has
+    // Column.defaultPrecision.
+    if (column.type.hasPrecision) {
+      return '$str'
+          '${column.precisionArguments(maxPrecision: 65, maxScale: maxScale)}';
+    }
+    if (column.type.hasLength) return '$str(${column.length})';
+    return str;
+  }
+
+  String compileColumn(MigrationColumn column) {
+    var buf = StringBuffer(columnType(column));
+
+    if (!column.isNullable) buf.write(' NOT NULL');
+    var defaultValue = column.defaultValue;
+    if (defaultValue != null) {
+      buf.write(
+        ' DEFAULT ${compileDefault(defaultValue, escapeBackslashes: true)}',
+      );
+    }
+
+    if (column.indexType == IndexType.primaryKey) {
+      buf.write(' PRIMARY KEY');
+
+      // For int based primary key, apply NOT NULL
+      // and AUTO_INCREMENT
+      if (column.type == ColumnType.int ||
+          serialIntegers.containsKey(column.type)) {
+        buf.write(' NOT NULL AUTO_INCREMENT');
+      }
+    }
+
+    for (var ref in column.externalReferences) {
+      buf.write(' ${compileReference(ref)}');
+    }
+
+    return buf.toString();
+  }
+
+  /// The index of the column [name] in a `CREATE TABLE`, such as
+  /// `` INDEX(`a`) ``, or `null` if it has none.
+  static String? compileIndex(String name, MigrationColumn column) {
+    if (column.indexType == IndexType.standardIndex) {
+      return ' INDEX(${quoteMySqlIdentifier(name)})';
+    } else if (column.indexType == IndexType.unique) {
+      return ' UNIQUE KEY '
+          '${quoteMySqlIdentifier('unique_${unquoteIdentifier(name, '`')}')} '
+          '(${quoteMySqlIdentifier(name)})';
+    }
+    return null;
+  }
+
+  static String compileReference(MigrationColumnReference ref) {
+    var buf = StringBuffer('REFERENCES ${ref.foreignTable}(${ref.foreignKey})');
+    if (ref.behavior != null) buf.write(' ${ref.behavior!}');
+    return buf.toString();
+  }
+}
+
+/// A table of MySQL or MariaDB, whose columns are compiled by [generator].
+class MySqlFamilyTable extends CompiledTable {
+  final MySqlFamilyGenerator generator;
+  final Map<String, MigrationColumn> _columns = {};
+
+  MySqlFamilyTable(this.generator);
+
+  @override
+  MigrationColumn declareColumn(String name, Column column) {
+    if (_columns.containsKey(name)) {
+      throw StateError('Cannot redeclare column "$name".');
+    }
+    var col = MigrationColumn.from(column);
+    _columns[name] = col;
+    return col;
+  }
+
+  @override
+  void compile(StringBuffer buf, int indent) {
+    var definitions = <String>[];
+    var indexes = <String>[];
+    _columns.forEach((name, column) {
+      definitions.add(
+        '${'  ' * indent}${quoteMySqlIdentifier(name)} '
+        '${generator.compileColumn(column)}',
+      );
+      var index = MySqlFamilyGenerator.compileIndex(name, column);
+      if (index != null) indexes.add(index);
+    });
+    buf.write([...definitions, ...indexes].join(',\n'));
+  }
+}
+
+/// The indexes of a table of MySQL or MariaDB, which are created with
+/// `IF NOT EXISTS` and dropped with `IF EXISTS` if [ifExists], as MariaDB
+/// has and MySQL has not.
+class MySqlFamilyIndexes implements CompiledIndexes {
+  final String tableName;
+  final bool ifExists;
+  final List<String> _statements = [];
+
+  MySqlFamilyIndexes(this.tableName, {required this.ifExists});
+
+  @override
+  void compile(StringBuffer buf) {
+    for (var statement in _statements) {
+      buf.writeln(statement);
+    }
+    _statements.clear();
+  }
+
+  @override
+  void addIndex(String name, List<String> columns, IndexType type) {
+    var table = quoteMySqlIdentifier(tableName);
+    var columnList = columns.map(quoteMySqlIdentifier).join(',');
+    var ifNotExists = ifExists ? 'IF NOT EXISTS ' : '';
+    var index = quoteMySqlIdentifier(name);
+    _statements.add(switch (type) {
+      IndexType.primaryKey =>
+        'ALTER TABLE $table ADD PRIMARY KEY ($columnList);',
+      IndexType.unique =>
+        'CREATE UNIQUE INDEX $ifNotExists$index ON $table ($columnList);',
+      IndexType.standardIndex || IndexType.none =>
+        'CREATE INDEX $ifNotExists$index ON $table ($columnList);',
+    });
+  }
+
+  @override
+  void dropIndex(String name) {
+    _statements.add(
+      'DROP INDEX ${ifExists ? 'IF EXISTS ' : ''}${quoteMySqlIdentifier(name)} '
+      'ON ${quoteMySqlIdentifier(tableName)};',
+    );
+  }
+
+  @override
+  void dropPrimaryIndex() {
+    _statements.add(
+      'DROP INDEX `PRIMARY` ON ${quoteMySqlIdentifier(tableName)};',
+    );
+  }
+}
+
 /// An alter table of MySQL or MariaDB, which compile its columns with
 /// [compileColumn], and whose changes of column types are compiled with the
 /// constraints read from the database.
@@ -386,6 +546,7 @@ class SchemaAlters {
       if (sql.trim().isNotEmpty) await execute(sql);
     }
 
+    var reader = _ExistingReader(query);
     var buf = StringBuffer();
     for (var (text, table, indent) in _alters) {
       buf.write(text);
@@ -395,7 +556,7 @@ class SchemaAlters {
         if (statement.modifications.isNotEmpty) {
           await executeText(buf.toString());
           buf.clear();
-          await _readExisting(statement, query);
+          await reader.read(statement);
         }
         table._compileStatement(buf, statement, indent);
       }
@@ -403,23 +564,56 @@ class SchemaAlters {
     buf.write(rest);
     await executeText(buf.toString());
   }
+}
+
+/// Reads the constraints of the columns changed by the statements of a run of
+/// a schema, with the query of the run.
+class _ExistingReader {
+  final Future<List<List<String?>>> Function(String sql) query;
+
+  /// Whether the server has `GENERATION_EXPRESSION`, until a query of it
+  /// fails.
+  bool _generationExpressions = true;
+
+  _ExistingReader(this.query);
+
+  /// The rows of [existingConstraintsQuery] of [table] and [columns]. A server
+  /// without `GENERATION_EXPRESSION`, MySQL before 5.7.6 or MariaDB before
+  /// 10.2.5, rejects the query, which is made again without it.
+  Future<List<List<String?>>> _constraints(
+    String table,
+    Set<String> columns,
+  ) async {
+    if (_generationExpressions) {
+      try {
+        return await query(existingConstraintsQuery(table, columns));
+      } catch (e) {
+        if (!'$e'.contains('GENERATION_EXPRESSION')) rethrow;
+        _generationExpressions = false;
+      }
+    }
+    return query(
+      existingConstraintsQuery(table, columns, generationExpressions: false),
+    );
+  }
 
   /// Reads the constraints of the columns changed by [statement], which a
-  /// `MODIFY` keeps only if it gives them again, from the database, in one
-  /// query.
-  Future<void> _readExisting(
-    _AlterStatement statement,
-    Future<List<List<String?>>> Function(String sql) query,
-  ) async {
+  /// `MODIFY` keeps only if it gives them again, from the database: in one
+  /// query, and one more of their `CHECK` constraints on MariaDB.
+  Future<void> read(_AlterStatement statement) async {
     var modifications = statement.modifications.toList();
-    var rows = await query(
-      existingConstraintsQuery(
-        statement.tableName,
-        modifications.map((m) => m.name).toSet(),
-      ),
-    );
+    var columns = modifications.map((m) => m.name).toSet();
+    var rows = await _constraints(statement.tableName, columns);
     // The names of columns are not case sensitive.
     var byName = {for (var row in rows) row[0]?.toLowerCase(): row};
+    var version = rows.firstOrNull?[5] ?? '';
+    var checks = {
+      if (hasColumnChecks(version))
+        for (var row in await query(
+          columnChecksQuery(statement.tableName, columns),
+        ))
+          row[0]?.toLowerCase(): row[1],
+    };
     for (var modification in modifications) {
       var row = byName[unquoteIdentifier(modification.name).toLowerCase()];
       // Without them, the MODIFY would drop the constraints.
@@ -438,6 +632,10 @@ class SchemaAlters {
         version: row[5] ?? '',
         columnType: row[6],
         generationExpression: row[7],
+        characterSet: row[8],
+        collation: row[9],
+        comment: row[10],
+        check: checks[row[0]?.toLowerCase()],
       );
     }
   }
