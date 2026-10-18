@@ -77,6 +77,7 @@ class PostgresSchema extends Schema {
     tbl.compile(_buf, _indent + 1);
     _buf.writeln();
     _writeln(');');
+    tbl.compileIndexes(_buf, tableName, _indent);
   }
 
   @override

@@ -5,6 +5,7 @@ import 'package:angel3_migration_runner/src/util.dart';
 import 'package:test/test.dart';
 
 import 'models/other_user_migration.dart' as other;
+import 'models/typo_user_migration.dart' as typo;
 
 class UserMigration extends Migration {
   @override
@@ -274,6 +275,40 @@ void main() {
       expect(legacy.renames, {
         '/app/lib/seed.dart#SeedMigration': 'SeedMigration<int>',
       });
+    });
+
+    test('throws for a legacyPath of no path of its class name', () {
+      // As of a typo, which would run the migration again.
+      expect(
+        () => LegacyPaths(
+          ['/app/lib/migrations/b.dart#UserMigration'],
+          [typo.UserMigration()],
+        ),
+        throwsStateError,
+      );
+      // Nor taken to be of another migration of the class name, which it may
+      // not be.
+      expect(
+        () => LegacyPaths(
+          ['/app/lib/migrations/b.dart#UserMigration'],
+          [typo.UserMigration(), other.UserMigration()],
+        ),
+        throwsStateError,
+      );
+      // Not if the migration is recorded by its name, as by an earlier run,
+      // and the path is of one that was deleted.
+      var legacy = LegacyPaths(
+        ['UserMigration', '/old/lib/x.dart#UserMigration'],
+        [typo.UserMigration()],
+      );
+      expect(legacy.renames, isEmpty);
+      expect(legacy.paths, ['UserMigration', '/old/lib/x.dart#UserMigration']);
+      // Not if its legacyPath is of a path.
+      legacy = LegacyPaths(
+        ['/app/lib/a.dart#UserMigration', '/app/lib/b.dart#UserMigration'],
+        [UserMigration(), LegacyMigration()],
+      );
+      expect(legacy.renames.values, ['UserMigration', 'legacy_users']);
     });
 
     test('matches a legacyPath at the start of a part of the path', () {

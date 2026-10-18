@@ -60,6 +60,37 @@ abstract class PostgresGenerator {
   }
 }
 
+/// The `CREATE INDEX` of the index [name] of the [columns] of the table
+/// [table], which may be qualified by its schema, if it does not exist.
+String compileCreateIndex(
+  String name,
+  String table,
+  List<String> columns, {
+  bool unique = false,
+}) =>
+    'CREATE ${unique ? 'UNIQUE ' : ''}INDEX IF NOT EXISTS '
+    '${sql.quotePostgresIdentifier(name)} '
+    'ON ${sql.quotePostgresTableName(table)} '
+    '(${columns.map((c) => sql.compileIndexColumn(c, sql.quotePostgresPart)).join(',')});';
+
+/// The `DROP INDEX` of the index [name] of the table [table], which is of the
+/// schema of the table, unless [name] is qualified by one.
+String compileDropIndex(String table, String name, {bool ifExists = false}) {
+  var parts = sql.postgresNameParts(name);
+  var index = parts.length > 1
+      ? sql.quotePostgresTableName(name)
+      : sql.quotePostgresInSchemaOf(table, parts.single);
+  return 'DROP INDEX ${ifExists ? 'IF EXISTS ' : ''}$index;';
+}
+
+/// The name of the index of the column [column] of the table [table], which is
+/// declared with a standard index, as PostgreSQL names one,
+/// `<table>_<column>_idx`, quoted.
+String columnIndexName(String table, String column) => sql.quotePostgresPart(
+  '${sql.unqualifiedPostgresName(table)}_'
+  '${sql.unquoteIdentifier(column, '"')}_idx',
+);
+
 class PostgresTable extends Table {
   final _log = Logger('PostgresTable');
 
@@ -91,6 +122,20 @@ class PostgresTable extends Table {
 
     _log.fine(buf);
   }
+
+  /// Compiles the `CREATE INDEX` of each column of the table [tableName]
+  /// declared with a standard index, which PostgreSQL has no clause of a
+  /// `CREATE TABLE` for, indented by [indent].
+  void compileIndexes(StringBuffer buf, String tableName, int indent) {
+    _columns.forEach((name, column) {
+      if (column.indexType == IndexType.standardIndex) {
+        buf.writeln(
+          '${'  ' * indent}'
+          '${compileCreateIndex(columnIndexName(tableName, name), tableName, [name])}',
+        );
+      }
+    });
+  }
 }
 
 class PostgresAlterTable extends Table implements MutableTable {
@@ -112,7 +157,7 @@ class PostgresAlterTable extends Table implements MutableTable {
   /// quotes, so that `'"Id"'` and `'Id'` are one column.
   static String _columnKey(String name) => sql.unquoteIdentifier(name, '"');
 
-  /// The columns added in the statement so far.
+  /// The columns added in the statement so far, by [_columnKey].
   final Set<String> _added = {};
 
   PostgresAlterTable(this.tableName) : _currentName = tableName;
@@ -120,7 +165,7 @@ class PostgresAlterTable extends Table implements MutableTable {
   /// Adds [clause], of the columns [columns], after a break if one of them is
   /// added in the statement so far.
   void _clause(String clause, Iterable<String> columns) {
-    if (columns.any(_added.contains)) {
+    if (columns.map(_columnKey).any(_added.contains)) {
       _stack.add(_Break());
       _added.clear();
     }
@@ -145,6 +190,9 @@ class PostgresAlterTable extends Table implements MutableTable {
   void compile(StringBuffer buf, int indent) {
     var table = tableName;
     var clauses = <String>[];
+    // The columns added with a standard index, whose CREATE INDEX follows the
+    // ALTER TABLE that adds them.
+    var indexed = <String>[];
     void alter(Iterable<String> clauses) {
       if (clauses.isEmpty) return;
       buf.writeln(
@@ -152,6 +200,13 @@ class PostgresAlterTable extends Table implements MutableTable {
       );
       buf.write(clauses.map((c) => '${'  ' * (indent + 1)}$c').join(',\n'));
       buf.writeln(';');
+      for (var name in indexed) {
+        buf.writeln(
+          '${'  ' * indent}'
+          '${compileCreateIndex(columnIndexName(table, name), table, [name])}',
+        );
+      }
+      indexed.clear();
     }
 
     for (var entry in _stack) {
@@ -164,11 +219,31 @@ class PostgresAlterTable extends Table implements MutableTable {
         case _Break():
           alter(clauses);
           clauses = [];
+        case _CreateIndex(:var name, :var columns):
+          // After the clauses before it, of the table as it is named then.
+          alter(clauses);
+          clauses = [];
+          buf.writeln(
+            '${'  ' * indent}${compileCreateIndex(name, table, columns)}',
+          );
+        case _DropIndex(:var name):
+          // That of a unique constraint, or a standard index, which is not
+          // one, whichever it is.
+          clauses.add(
+            'DROP CONSTRAINT IF EXISTS ${sql.quotePostgresIdentifier(name)}',
+          );
+          alter(clauses);
+          clauses = [];
+          buf.writeln(
+            '${'  ' * indent}${compileDropIndex(table, name, ifExists: true)}',
+          );
         case _AddedColumn(:var name):
+          var column = _columns[name]!;
           clauses.add(
             'ADD COLUMN ${sql.quotePostgresIdentifier(name)} '
-            '${PostgresGenerator.compileColumn(_columns[name]!)}',
+            '${PostgresGenerator.compileColumn(column)}',
           );
+          if (column.indexType == IndexType.standardIndex) indexed.add(name);
         default:
           clauses.add(entry as String);
       }
@@ -198,8 +273,8 @@ class PostgresAlterTable extends Table implements MutableTable {
         _currentName,
         '${tableOwnName}_${name}_seq',
       );
-      buf.writeln('''
-DO \$\$
+      var body =
+          '''
 DECLARE
   seq_name text := pg_get_serial_sequence(${PostgresGenerator.compileDefault(table)}, ${PostgresGenerator.compileDefault(name)});
 BEGIN
@@ -223,11 +298,17 @@ BEGIN
         WHERE a.attrelid = ${PostgresGenerator.compileDefault(table)}::regclass
         AND a.attname = ${PostgresGenerator.compileDefault(name)}
         AND a.attidentity <> '') THEN
-      EXECUTE format('ALTER TABLE ${table.replaceAll('%', '%%')} ALTER COLUMN ${sql.quotePostgresPart(name).replaceAll('%', '%%')} SET DEFAULT nextval(%L::regclass)', seq_name);
+      EXECUTE format('ALTER TABLE %s ALTER COLUMN %s SET DEFAULT nextval(%L::regclass)', ${PostgresGenerator.compileDefault(table)}, ${PostgresGenerator.compileDefault(sql.quotePostgresPart(name))}, seq_name);
     END IF;
   END IF;
 END
-\$\$;''');
+''';
+      // Quoted by a tag that the names in it do not have, which would end it.
+      var tag = r'$sequence$';
+      for (var i = 1; body.contains(tag); i++) {
+        tag = '\$sequence$i\$';
+      }
+      buf.writeln('DO $tag\n$body$tag;');
     });
   }
 
@@ -246,7 +327,7 @@ END
     var col = MigrationColumn.from(column);
     _columns[name] = col;
     _stack.add(_AddedColumn(name));
-    _added.add(name);
+    _added.add(_columnKey(name));
     return col;
   }
 
@@ -385,7 +466,10 @@ END
         break;
       case IndexType.standardIndex:
       case IndexType.none:
-        // not working with postgres
+        // Not a clause of ALTER TABLE on PostgreSQL, but a statement of its
+        // own, after those before it, so that its columns are added.
+        _stack.add(_CreateIndex(name, columns));
+        _added.clear();
         return;
     }
 
@@ -397,7 +481,8 @@ END
 
   @override
   void dropIndex(String name) {
-    _stack.add('DROP CONSTRAINT ${sql.quotePostgresIdentifier(name)}');
+    _stack.add(_DropIndex(name));
+    _added.clear();
   }
 
   @override
@@ -421,6 +506,23 @@ class _Statement {
 /// The end of a statement of a [PostgresAlterTable], before a clause of a
 /// column added in it.
 class _Break {}
+
+/// An index dropped by a [PostgresAlterTable]: a unique constraint, or a
+/// standard index, which PostgreSQL drops with a `DROP INDEX` of its own.
+class _DropIndex {
+  final String name;
+
+  _DropIndex(this.name);
+}
+
+/// A standard index added by a [PostgresAlterTable], which PostgreSQL creates
+/// with a `CREATE INDEX` of its own, not a clause of `ALTER TABLE`.
+class _CreateIndex {
+  final String name;
+  final List<String> columns;
+
+  _CreateIndex(this.name, this.columns);
+}
 
 /// The `ADD COLUMN` of a column declared by a [PostgresAlterTable], which is
 /// compiled with its constraints when the table is.
@@ -452,18 +554,12 @@ class PostgresIndexes implements MutableIndexes {
         );
         break;
       case IndexType.unique:
-        _stack.add(
-          'CREATE UNIQUE INDEX IF NOT EXISTS ${sql.quotePostgresIdentifier(name)} '
-          'ON ${sql.quotePostgresTableName(tableName)} (${columns.map((c) => sql.compileIndexColumn(c, sql.quotePostgresPart)).join(',')});',
-        );
+        _stack.add(compileCreateIndex(name, tableName, columns, unique: true));
         break;
       //case IndexType.standardIndex:
       //case IndexType.none:
       default:
-        _stack.add(
-          'CREATE INDEX IF NOT EXISTS ${sql.quotePostgresIdentifier(name)} '
-          'ON ${sql.quotePostgresTableName(tableName)} (${columns.map((c) => sql.compileIndexColumn(c, sql.quotePostgresPart)).join(',')});',
-        );
+        _stack.add(compileCreateIndex(name, tableName, columns));
         break;
     }
   }
@@ -471,11 +567,7 @@ class PostgresIndexes implements MutableIndexes {
   @override
   void dropIndex(String name) {
     // An index is of the schema of its table, unless one is given.
-    var parts = sql.postgresNameParts(name);
-    var index = parts.length > 1
-        ? sql.quotePostgresTableName(name)
-        : sql.quotePostgresInSchemaOf(tableName, parts.single);
-    _stack.add('DROP INDEX $index;');
+    _stack.add(compileDropIndex(tableName, name));
   }
 
   @override

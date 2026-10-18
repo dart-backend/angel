@@ -258,7 +258,7 @@ abstract class ModifyingAlterTable extends Table implements MutableTable {
 
   /// The name of a column, as MySQL and MariaDB know it: without quotes, and
   /// not case sensitive.
-  static String _key(String name) => unquoteIdentifier(name).toLowerCase();
+  static String _key(String name) => unquoteIdentifier(name, '`').toLowerCase();
 
   /// Adds [entry], of the columns [columns], to the last statement, or to a
   /// new one if one of them is renamed or added in it, or, for an entry
@@ -586,12 +586,14 @@ class _ExistingReader {
   /// column of [existingConstraintsQuery] that a server may not have is
   /// `GENERATION_EXPRESSION`.
   static bool _isUnknownColumn(Object error) {
-    var message = '$error';
-    return _unknownColumn.hasMatch(message) ||
-        message.contains('GENERATION_EXPRESSION');
+    // Not by the name of the column, which an error of another kind, such
+    // as of the syntax, may quote from the query.
+    return _unknownColumn.hasMatch('$error');
   }
 
-  static final RegExp _unknownColumn = RegExp(r'\b1054\b');
+  /// The code of the error as the clients give it: `Error 1054 (` of
+  /// `mysql1`, `[1054]` of `mysql_client`.
+  static final RegExp _unknownColumn = RegExp(r'Error 1054 \(|\[1054\]');
 
   /// The rows of [existingConstraintsQuery] of [table] and [columns]. A server
   /// without `GENERATION_EXPRESSION`, MySQL before 5.7.6 or MariaDB before
@@ -631,7 +633,7 @@ class _ExistingReader {
           row[0]?.toLowerCase(): row[1],
     };
     for (var modification in modifications) {
-      var row = byName[unquoteIdentifier(modification.name).toLowerCase()];
+      var row = byName[unquoteIdentifier(modification.name, '`').toLowerCase()];
       // Without them, the MODIFY would drop the constraints.
       if (row == null) {
         throw StateError(

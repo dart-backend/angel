@@ -84,7 +84,8 @@ String columnChecksQuery(
   return (
     names.length > 1 ? literal(names.first) : 'DATABASE()',
     literal(names.last),
-    columns.map((c) => literal(unquoteIdentifier(c))),
+    // Of the name of a column only in backticks, as its MODIFY quotes it.
+    columns.map((c) => literal(unquoteIdentifier(c, '`'))),
   );
 }
 

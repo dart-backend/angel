@@ -64,7 +64,9 @@ const Map<ColumnType, ColumnType> serialIntegers = {
 
 /// [name] as a MySQL or MariaDB identifier, in backticks, each of which is
 /// doubled, so that it may be a reserved word such as `order`. A name already
-/// in backticks, such as `` `order` ``, is quoted once.
+/// in backticks, such as `` `order` ``, is quoted once. Double quotes are of
+/// a string on MySQL, so a name in them is that name, with its quotes, as
+/// its columns are known where their constraints are read.
 String quoteMySqlIdentifier(String name) =>
     quoteMySqlPart(unquoteIdentifier(name, '`'));
 
@@ -182,11 +184,12 @@ String quotePostgresInSchemaOf(String table, String name) {
 /// [newName] may be qualified by that schema, as a `RENAME TO` does not move
 /// a table to another schema, which `ALTER TABLE ... SET SCHEMA` does; another
 /// throws an [ArgumentError]. If [table] is not qualified, its schema is not
-/// known, and a qualified [newName] is taken to be of it.
+/// known, and a qualified [newName] is taken to be of it: the table is known
+/// by its new own name, as `RENAME TO` leaves it in the schema it is in.
 String renamedPostgresTable(String table, String newName) {
   var parts = postgresNameParts(table);
   var newParts = postgresNameParts(newName);
-  if (parts.length == 1) return quotePostgresTableName(newName);
+  if (parts.length == 1) return quotePostgresPart(newParts.last);
   // Compared quoted, so that a part with a dot is not read as two.
   String schemaOf(List<String> parts) =>
       parts.sublist(0, parts.length - 1).map(quotePostgresPart).join('.');

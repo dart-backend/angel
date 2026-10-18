@@ -173,6 +173,12 @@ void _expectKept(List<List<String?>> rows) {
   expect(note[1], contains('x'));
 }
 
+/// An integer column with a standard index.
+const _indexedInt = Column(
+  type: ColumnType.int,
+  indexType: IndexType.standardIndex,
+);
+
 /// Creates a table that [ChildMigration] references.
 class ParentMigration extends Migration {
   @override
@@ -989,14 +995,95 @@ void main() async {
                 t.dropColumn('Id');
               }))
               .compile();
-      expect(sql, isNot(contains('DO \$\$')));
+      expect(sql, isNot(contains('CREATE SEQUENCE')));
     });
 
     test('renames an unqualified table to a name of a schema', () {
+      var sql =
+          (PostgresSchema()..alter('users', (t) {
+                t.rename('public.members');
+                t.setNotNull('x');
+              }))
+              .compile();
+      expect(sql, contains('RENAME TO "members";'));
+      // Where RENAME TO leaves it, which is known by its own name.
+      expect(sql, contains('ALTER TABLE "members"\n  ALTER COLUMN "x"'));
+    });
+
+    test('creates a standard index of a PostgreSQL alter table', () {
+      var sql =
+          (PostgresSchema()..alter('t', (t) {
+                t.integer('a');
+                t.addIndex('t_a', ['a'], IndexType.standardIndex);
+                t.setNotNull('a');
+              }))
+              .compile();
       expect(
-        (PostgresSchema()..alter('users', (t) => t.rename('public.members')))
-            .compile(),
-        contains('RENAME TO "members";'),
+        sql,
+        'ALTER TABLE "t"\n  ADD COLUMN "a" int;\n'
+        'CREATE INDEX IF NOT EXISTS "t_a" ON "t" ("a");\n'
+        'ALTER TABLE "t"\n  ALTER COLUMN "a" SET NOT NULL;\n',
+      );
+    });
+
+    test('tells a column added in quotes from one not', () {
+      var sql =
+          (PostgresSchema()..alter('t', (t) {
+                t.integer('"Id"');
+                t.setNotNull('Id');
+              }))
+              .compile();
+      // In another statement, as the column is added by the one before.
+      expect(sql, contains('"Id" int;\nALTER TABLE "t"\n  ALTER COLUMN "Id"'));
+      // On MySQL, a column in double quotes, which MySQL reads as a string, is
+      // that name with its quotes, as where its constraints are read.
+      expect(
+        (ColumnModification(
+          '"a"',
+          ColumnType.bigInt,
+          length: 255,
+        )).compile(MySqlGenerator.compileColumn),
+        'MODIFY `"a"` bigint',
+      );
+      expect(
+        existingConstraintsQuery('t', ['"a"', '`b`']),
+        endsWith("column_name IN ('\"a\"', 'b')"),
+      );
+      // And its unique index is named after it the same way.
+      expect(
+        MySqlGenerator.compileIndex(
+          '"email"',
+          MigrationColumn(ColumnType.varChar)..unique(),
+        ),
+        contains('`unique_"email"`'),
+      );
+    });
+
+    test('drops an index of a PostgreSQL alter table, of either kind', () {
+      var sql = (PostgresSchema()..alter('audit.t', (t) => t.dropIndex('t_a')))
+          .compile();
+      expect(
+        sql,
+        'ALTER TABLE "audit"."t"\n  DROP CONSTRAINT IF EXISTS "t_a";\n'
+        'DROP INDEX IF EXISTS "audit"."t_a";\n',
+      );
+    });
+
+    test('creates the standard index of a column of PostgreSQL', () {
+      var sql =
+          (PostgresSchema()
+                ..create('t', (t) => t.declareColumn('a', _indexedInt))
+                ..alter('t', (t) => t.declareColumn('b', _indexedInt)))
+              .compile();
+      expect(
+        sql,
+        contains(');\nCREATE INDEX IF NOT EXISTS "t_a_idx" ON "t" ("a");'),
+      );
+      expect(
+        sql,
+        contains(
+          'ADD COLUMN "b" int;\nCREATE INDEX IF NOT EXISTS "t_b_idx" ON "t" ("b");',
+        ),
       );
     });
 
@@ -1127,6 +1214,32 @@ void main() async {
       expect(queries, hasLength(2));
       expect(queries.last, isNot(contains('GENERATION_EXPRESSION')));
       expect(sql.single, contains('MODIFY `a` int(11) NOT NULL'));
+
+      // Not another error with 1054 in its text, but not as its code.
+      await expectLater(
+        (MySqlSchema()..alter('t-1054', (t) => t.setNotNull('a'))).runWith(
+          execute: (s) async {},
+          query: (q) async => throw Exception(
+            "Error 1146 (42S02): Table 'orm_test.t-1054' doesn't exist",
+          ),
+        ),
+        throwsA(
+          isA<Exception>().having((e) => '$e', 'message', contains('1146')),
+        ),
+      );
+      // Nor another error, which quotes the query.
+      await expectLater(
+        (MySqlSchema()..alter('t', (t) => t.setNotNull('a'))).runWith(
+          execute: (s) async {},
+          query: (q) async => throw Exception(
+            "Error 1064 (42000): syntax error near 'GENERATION_EXPRESSION, "
+            "CHARACTER_SET_NAME'",
+          ),
+        ),
+        throwsA(
+          isA<Exception>().having((e) => '$e', 'message', contains('1064')),
+        ),
+      );
     });
 
     test('quotes the table and column of a reference', () {
@@ -1876,6 +1989,64 @@ void main() async {
         "SELECT 1 FROM information_schema.tables WHERE table_name = 'atomic'",
       );
       expect(r, isEmpty);
+    });
+
+    test('creates and drops the indexes of an alter table', () async {
+      await conn.execute('DROP TABLE IF EXISTS indexed');
+      Future<List<Object?>> indexes() async => [
+        for (var row in await conn.execute(
+          "SELECT indexname FROM pg_indexes WHERE tablename = 'indexed' "
+          'ORDER BY indexname',
+        ))
+          row[0],
+      ];
+      await (PostgresSchema()
+            ..create('indexed', (t) => t.declareColumn('a', _indexedInt))
+            ..alter('indexed', (t) {
+              t.declareColumn('b', _indexedInt);
+              t.addIndex('indexed_ab', ['a', 'b'], IndexType.standardIndex);
+              t.addIndex('indexed_u', ['b'], IndexType.unique);
+            }))
+          .run(conn);
+      expect(await indexes(), [
+        'indexed_a_idx',
+        'indexed_ab',
+        'indexed_b_idx',
+        'indexed_u',
+      ]);
+      // The down of the up above, of an index and of a constraint, which may
+      // run again.
+      for (var i = 0; i < 2; i++) {
+        await (PostgresSchema()..alter('indexed', (t) {
+              t.dropIndex('indexed_ab');
+              t.dropIndex('indexed_u');
+            }))
+            .run(conn);
+      }
+      expect(await indexes(), ['indexed_a_idx', 'indexed_b_idx']);
+      await conn.execute('DROP TABLE indexed');
+    });
+
+    test('changes a column of a name with quotes to a serial type', () async {
+      await conn.execute('DROP TABLE IF EXISTS "o\'brien"');
+      // A name with a quote, and one with the tag of the DO block.
+      await conn.execute(
+        'CREATE TABLE "o\'brien" (id int, "a\$sequence\$b" int)',
+      );
+      await (PostgresSchema()..alter('"o\'brien"', (t) {
+            t.changeColumnType('id', ColumnType.serial);
+            t.changeColumnType('"a\$sequence\$b"', ColumnType.bigSerial);
+            t.addIndex('obrien_id', ['id'], IndexType.standardIndex);
+          }))
+          .run(conn);
+      await conn.execute('INSERT INTO "o\'brien" DEFAULT VALUES');
+      var r = await conn.execute('SELECT id, "a\$sequence\$b" FROM "o\'brien"');
+      expect(r.single.toList(), [1, 1]);
+      r = await conn.execute(
+        "SELECT indexname FROM pg_indexes WHERE tablename = 'o''brien'",
+      );
+      expect(r.map((row) => row[0]), ['obrien_id']);
+      await conn.execute('DROP TABLE "o\'brien"');
     });
 
     test('creates, alters and drops a table of another schema', () async {

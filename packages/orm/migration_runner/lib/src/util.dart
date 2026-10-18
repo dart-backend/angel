@@ -149,6 +149,27 @@ class LegacyPaths {
       }
     }
     byClass.forEach((className, classPaths) {
+      // A migration of the class name not recorded, whose legacyPath is of no
+      // path, as when it has a typo, may be that of these paths, which would
+      // be run again, or not at all, if they were taken to be of another.
+      var unmatched = [
+        for (var m in migrations)
+          if (m.legacyPath != null &&
+              _classNameOf(m) == className &&
+              !names.contains(m.name) &&
+              !migrationOf.containsValue(m))
+            m,
+      ];
+      if (unmatched.isNotEmpty) {
+        throw StateError(
+          'The legacyPath of ${unmatched.map((m) => '"${m.name}" '
+              '(${m.legacyPath})').join(', ')} is the end of no path of the '
+          '"migrations" table, which has ${classPaths.join(', ')} of its '
+          'class name; give the end of its path as its legacyPath, or set '
+          'its path to its name: UPDATE migrations SET path = \'<name>\' '
+          'WHERE path = \'<path>\'.',
+        );
+      }
       var candidates = [
         for (var m in migrations)
           if (m.legacyPath == null && _classNameOf(m) == className) m,
