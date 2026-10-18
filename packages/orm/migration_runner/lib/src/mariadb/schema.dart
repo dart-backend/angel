@@ -14,73 +14,47 @@ class MariaDbSchema extends Schema {
   final int _indent;
   final StringBuffer _buf;
 
-  /// The text compiled so far, and the alter tables after it, which are
-  /// compiled with the constraints that [run] reads from the database.
-  final List<(String, MariaDbAlterTable, int)> _alters = [];
+  late final _alters = SchemaAlters(_log);
 
   MariaDbSchema._(this._buf, this._indent);
 
   factory MariaDbSchema() => MariaDbSchema._(StringBuffer(), 0);
 
-  /// The changes of column types, with their tables.
-  Iterable<(String, ColumnModification)> get _modifications => _alters.expand(
-    (alter) => alter.$2.modifications.map((m) => (alter.$2.tableName, m)),
-  );
-
+  /// Runs the SQL of the schema in a transaction, and throws if it fails.
+  ///
+  /// The statements before an alter table that changes a column's type are
+  /// run before the column's constraints are read, as they may create the
+  /// table or rename the column.
   Future<int> run(MySqlConnection connection) async {
-    int affectedRows = 0;
-    await _readExisting(connection);
-    await connection.transaction((ctx) async {
-      var sql = compile();
-      Results? result = await ctx.query(sql).catchError((e) {
-        _log.severe('Failed to run query: [ $sql ]', e);
-        throw e;
-      });
-      affectedRows = result.affectedRows ?? 0;
+    // Throws for SQL that cannot be compiled, such as a precision too large,
+    // before any of it is run.
+    compile();
+
+    var affectedRows = 0;
+    await connection.transaction((TransactionContext ctx) async {
+      await _alters.run(
+        _buf,
+        execute: (sql) async {
+          Results? result = await ctx.query(sql).catchError((e) {
+            _log.severe('Failed to run query: [ $sql ]', e);
+            throw e;
+          });
+          affectedRows += result.affectedRows ?? 0;
+        },
+        // `mysql1` may give text as a `Blob`.
+        query: (sql) async => [
+          for (var row in await ctx.query(sql))
+            [for (var value in row) value?.toString()],
+        ],
+      );
     });
 
     return affectedRows;
   }
 
   /// The SQL of the schema. A change of a column's type keeps the constraints
-  /// not given only when [run] has read them from the database first.
-  ///
-  /// The alter tables are compiled into the text once, so that it can be
-  /// compiled again.
-  String compile() {
-    if (_alters.isNotEmpty) {
-      var rest = _buf.toString();
-      _buf.clear();
-      for (var (text, table, indent) in _alters) {
-        _buf.write(text);
-        table.compile(_buf, indent);
-        _buf.write(';');
-      }
-      _buf.write(rest);
-      _alters.clear();
-    }
-    return _buf.toString();
-  }
-
-  /// Reads the constraints of the columns whose types are changed, which a
-  /// `MODIFY` keeps only if it gives them again, from the database.
-  Future<void> _readExisting(MySqlConnection connection) async {
-    for (var (table, modification) in _modifications) {
-      if (!modification.keepsExisting) continue;
-      var result = await connection.query(
-        existingConstraintsQuery(table, modification.name),
-      );
-      if (result.isEmpty) continue;
-      // `mysql1` may give text as a `Blob`.
-      var row = result.first;
-      modification.existing = ExistingConstraints.parse(
-        isNullable: row[0]?.toString() ?? 'YES',
-        columnDefault: row[1]?.toString(),
-        extra: row[2]?.toString() ?? '',
-        version: row[3]?.toString() ?? '',
-      );
-    }
-  }
+  /// not given only when [run] has read them from the database.
+  String compile() => _alters.compile(_buf);
 
   void _writeln(String str) {
     for (var i = 0; i < _indent; i++) {
@@ -100,9 +74,7 @@ class MariaDbSchema extends Schema {
   void alter(String tableName, void Function(MutableTable table) callback) {
     var tbl = MariaDbAlterTable(tableName);
     callback(tbl);
-    _writeln('ALTER TABLE $tableName');
-    _alters.add((_buf.toString(), tbl, _indent + 1));
-    _buf.clear();
+    _alters.add(_buf, tbl, _indent);
   }
 
   void _create(

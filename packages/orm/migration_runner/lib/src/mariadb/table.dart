@@ -125,48 +125,31 @@ class MariaDbTable extends Table {
   }
 }
 
-class MariaDbAlterTable extends Table implements MutableTable {
+class MariaDbAlterTable extends Table
+    implements MutableTable, ModifyingAlterTable {
   final Map<String, MigrationColumn> _columns = {};
+  @override
   final String tableName;
   final Queue<Object> _stack = Queue<Object>();
 
-  /// The changes of column types, whose constraints not given are read from
-  /// the database when the schema is run.
+  @override
   final List<ColumnModification> modifications = [];
 
   MariaDbAlterTable(this.tableName);
 
+  @override
   void compile(StringBuffer buf, int indent) {
-    var i = 0;
-
-    while (_stack.isNotEmpty) {
-      var entry = _stack.removeFirst();
-      var str = entry is ColumnModification
-          ? entry.compile(MariaDbGenerator.compileColumn)
-          : entry;
-
-      if (i++ > 0) buf.writeln(',');
-
-      for (var i = 0; i < indent; i++) {
-        buf.write('  ');
-      }
-
-      buf.write(str);
-    }
-
-    if (i > 0) buf.writeln(';');
-
-    i = 0;
-    _columns.forEach((name, column) {
-      var col = MariaDbGenerator.compileColumn(column);
-      if (i++ > 0) buf.writeln(',');
-
-      for (var i = 0; i < indent; i++) {
-        buf.write('  ');
-      }
-
-      buf.write('ADD COLUMN $name $col');
-    });
+    // The changes and the columns added are clauses of one statement. The
+    // stack is kept, so that the table can be compiled again.
+    var clauses = [
+      for (var entry in _stack)
+        entry is ColumnModification
+            ? entry.compile(MariaDbGenerator.compileColumn)
+            : entry,
+      for (var MapEntry(key: name, value: column) in _columns.entries)
+        'ADD COLUMN $name ${MariaDbGenerator.compileColumn(column)}',
+    ];
+    buf.write(clauses.map((clause) => '${'  ' * indent}$clause').join(',\n'));
   }
 
   @override

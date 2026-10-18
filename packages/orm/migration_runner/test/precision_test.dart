@@ -105,6 +105,40 @@ class AlterPricesMigration extends Migration {
   }
 }
 
+/// Creates a table, and changes the type of a column of it, whose
+/// constraints are read once the table is created.
+class CreateAndChangeMigration extends Migration {
+  @override
+  void up(Schema schema) {
+    schema.create('created', (table) {
+      table.declareColumn(
+        'c',
+        Column(type: ColumnType.int, isNullable: false, defaultValue: 5),
+      );
+    });
+    schema.alter(
+      'created',
+      (table) => table.changeColumnType('c', ColumnType.bigInt),
+    );
+  }
+
+  @override
+  void down(Schema schema) {
+    schema.drop('created');
+  }
+}
+
+/// Fails on the database.
+class FailingMigration extends Migration {
+  @override
+  void up(Schema schema) {
+    schema.drop('no_such_table');
+  }
+
+  @override
+  void down(Schema schema) {}
+}
+
 void main() async {
   group('existing constraints', () {
     test('of MariaDB, which gives defaults as SQL', () {
@@ -201,6 +235,109 @@ void main() async {
         modification.compile(MySqlGenerator.compileColumn),
         'MODIFY `n` int DEFAULT 1',
       );
+    });
+
+    test('are not kept by MODIFY for a type that cannot have them', () {
+      var updated = ExistingConstraints(
+        isNullable: false,
+        defaultValue: RawSql('CURRENT_TIMESTAMP'),
+        onUpdate: 'CURRENT_TIMESTAMP',
+      );
+      expect(
+        (ColumnModification(
+          'at',
+          ColumnType.varChar,
+          length: 20,
+        )..existing = updated).compile(MySqlGenerator.compileColumn),
+        'MODIFY `at` varchar(20) NOT NULL',
+      );
+      expect(
+        (ColumnModification(
+          'at',
+          ColumnType.timeStamp,
+          length: 20,
+        )..existing = updated).compile(MySqlGenerator.compileColumn),
+        'MODIFY `at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP '
+        'ON UPDATE CURRENT_TIMESTAMP',
+      );
+
+      var counter = ExistingConstraints(isNullable: false, autoIncrement: true);
+      expect(
+        (ColumnModification(
+          'id',
+          ColumnType.decimal,
+          length: 255,
+        )..existing = counter).compile(MySqlGenerator.compileColumn),
+        'MODIFY `id` decimal(17, 3) NOT NULL',
+      );
+      expect(
+        (ColumnModification(
+          'id',
+          ColumnType.bigInt,
+          length: 255,
+        )..existing = counter).compile(MySqlGenerator.compileColumn),
+        'MODIFY `id` bigint NOT NULL AUTO_INCREMENT',
+      );
+      // Unless given.
+      expect(
+        (ColumnModification(
+          'id',
+          ColumnType.decimal,
+          length: 255,
+          autoIncrement: true,
+        )..existing = counter).compile(MySqlGenerator.compileColumn),
+        'MODIFY `id` decimal(17, 3) NOT NULL AUTO_INCREMENT',
+      );
+    });
+
+    test('of older servers, without DEFAULT_GENERATED', () {
+      // MySQL before 8.0.13.
+      var e = ExistingConstraints.parse(
+        isNullable: 'YES',
+        columnDefault: 'CURRENT_TIMESTAMP',
+        extra: 'on update CURRENT_TIMESTAMP',
+        dataType: 'timestamp',
+        version: '5.7.44-log',
+      );
+      expect((e.defaultValue as RawSql).value, 'CURRENT_TIMESTAMP');
+
+      // MariaDB before 10.2.7, which gives literals as their values.
+      e = ExistingConstraints.parse(
+        isNullable: 'YES',
+        columnDefault: 'current_timestamp()',
+        extra: '',
+        dataType: 'datetime',
+        version: '5.5.5-10.1.48-MariaDB',
+      );
+      expect((e.defaultValue as RawSql).value, 'current_timestamp()');
+      e = ExistingConstraints.parse(
+        isNullable: 'YES',
+        columnDefault: "it's",
+        extra: '',
+        dataType: 'varchar',
+        version: '10.1.48-MariaDB',
+      );
+      expect(e.defaultValue, "it's");
+
+      // The text of the current time, of a string, is a literal.
+      e = ExistingConstraints.parse(
+        isNullable: 'YES',
+        columnDefault: 'CURRENT_TIMESTAMP',
+        extra: '',
+        dataType: 'varchar',
+        version: '5.7.44',
+      );
+      expect(e.defaultValue, 'CURRENT_TIMESTAMP');
+
+      // A bit is SQL.
+      e = ExistingConstraints.parse(
+        isNullable: 'YES',
+        columnDefault: "b'1'",
+        extra: '',
+        dataType: 'bit',
+        version: '8.4.0',
+      );
+      expect((e.defaultValue as RawSql).value, "b'1'");
     });
   });
 
@@ -376,6 +513,45 @@ void main() async {
           reason: serial.name,
         );
       }
+    });
+
+    test('compiles an alter table again, with its changes of types', () {
+      void change(MutableTable t) =>
+          t.changeColumnType('n', ColumnType.bigInt, isNullable: false);
+
+      var mySql = MySqlSchema()
+        ..drop('a')
+        ..alter('t', change)
+        ..drop('b');
+      var sql = mySql.compile();
+      expect(
+        sql,
+        'DROP TABLE a;\nALTER TABLE t\n  MODIFY `n` bigint NOT NULL;\n'
+        'DROP TABLE b;\n',
+      );
+      expect(mySql.compile(), sql);
+
+      var mariaDb = MariaDbSchema()..alter('t', change);
+      sql = mariaDb.compile();
+      expect(sql, contains('MODIFY `n` bigint NOT NULL'));
+      expect(mariaDb.compile(), sql);
+    });
+
+    test('reads the constraints of a table of another database', () {
+      expect(
+        existingConstraintsQuery('`shop`.`orders`', ['amount']),
+        endsWith(
+          "table_schema = 'shop' AND table_name = 'orders' "
+          "AND column_name IN ('amount')",
+        ),
+      );
+      expect(
+        existingConstraintsQuery('orders', ['amount', 'fee']),
+        endsWith(
+          "table_schema = DATABASE() AND table_name = 'orders' "
+          "AND column_name IN ('amount', 'fee')",
+        ),
+      );
     });
 
     test('rejects a precision or scale above the limits of the database', () {
@@ -597,6 +773,38 @@ void main() async {
         ['id', 'NO', null, 'auto_increment'],
         ['note', 'YES', "'it''s'", ''],
       ]);
+    });
+
+    test('reads the constraints after the statements before', () async {
+      await conn.execute('DROP TABLE IF EXISTS created');
+      runner = MySqlMigrationRunner(
+        conn,
+        migrations: [CreateAndChangeMigration()],
+      );
+      await runner.up();
+
+      var result = await conn.execute(
+        "SELECT column_name, data_type, is_nullable, column_default "
+        "FROM information_schema.columns "
+        "WHERE table_schema = database() AND table_name = 'created'",
+      );
+      expect(result.rows.map((r) => [for (var i = 0; i < 4; i++) r.colAt(i)]), [
+        ['c', 'bigint', 'NO', '5'],
+      ]);
+    });
+
+    test('throws, and does not record a migration that fails', () async {
+      Future<int> count() async => int.parse(
+        (await conn.execute('SELECT COUNT(*) FROM migrations')).rows.first
+            .colAt(0)!,
+      );
+      var failing = MySqlMigrationRunner(
+        conn,
+        migrations: [FailingMigration()],
+      );
+      var before = await count();
+      await expectLater(failing.up(), throwsA(anything));
+      expect(await count(), before);
     });
   });
 }

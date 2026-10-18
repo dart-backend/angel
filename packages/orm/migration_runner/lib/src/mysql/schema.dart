@@ -14,78 +14,55 @@ class MySqlSchema extends Schema {
   final int _indent;
   final StringBuffer _buf;
 
-  /// The text compiled so far, and the alter tables after it, which are
-  /// compiled with the constraints that [run] reads from the database.
-  final List<(String, MysqlAlterTable, int)> _alters = [];
+  late final _alters = SchemaAlters(_log);
 
   MySqlSchema._(this._buf, this._indent);
 
   factory MySqlSchema() => MySqlSchema._(StringBuffer(), 0);
 
-  /// The changes of column types, with their tables.
-  Iterable<(String, ColumnModification)> get _modifications => _alters.expand(
-    (alter) => alter.$2.modifications.map((m) => (alter.$2.tableName, m)),
-  );
-
+  /// Runs the SQL of the schema in a transaction, and throws if it fails.
+  ///
+  /// The statements before an alter table that changes a column's type are
+  /// run before the column's constraints are read, as they may create the
+  /// table or rename the column.
   Future<int> run(MySQLConnection connection) async {
-    //return connection.execute(compile());
-    int affectedRows = 0;
-    await _readExisting(connection);
+    // Throws for SQL that cannot be compiled, such as a precision too large,
+    // before any of it is run.
+    compile();
+
+    var affectedRows = 0;
     await connection
         .transactional((ctx) async {
-          var sql = compile();
-          //print('Query: $sql');
-          var result = await ctx.execute(sql).catchError((e) {
-            _log.severe('Failed to run query: [ $sql ]', e);
-            throw Exception(e);
-          });
-          affectedRows = result.affectedRows.toInt();
+          await _alters.run(
+            _buf,
+            execute: (sql) async {
+              //print('Query: $sql');
+              var result = await ctx.execute(sql).catchError((e) {
+                _log.severe('Failed to run query: [ $sql ]', e);
+                throw Exception(e);
+              });
+              affectedRows += result.affectedRows.toInt();
+            },
+            query: (sql) async {
+              var result = await ctx.execute(sql);
+              return [
+                for (var row in result.rows)
+                  [for (var i = 0; i < result.numOfColumns; i++) row.colAt(i)],
+              ];
+            },
+          );
         })
         .catchError((e) {
           _log.severe('Failed to run query in a transaction', e);
+          throw e;
         });
 
     return affectedRows;
   }
 
   /// The SQL of the schema. A change of a column's type keeps the constraints
-  /// not given only when [run] has read them from the database first.
-  ///
-  /// The alter tables are compiled into the text once, so that it can be
-  /// compiled again.
-  String compile() {
-    if (_alters.isNotEmpty) {
-      var rest = _buf.toString();
-      _buf.clear();
-      for (var (text, table, indent) in _alters) {
-        _buf.write(text);
-        table.compile(_buf, indent);
-        _buf.write(';');
-      }
-      _buf.write(rest);
-      _alters.clear();
-    }
-    return _buf.toString();
-  }
-
-  /// Reads the constraints of the columns whose types are changed, which a
-  /// `MODIFY` keeps only if it gives them again, from the database.
-  Future<void> _readExisting(MySQLConnection connection) async {
-    for (var (table, modification) in _modifications) {
-      if (!modification.keepsExisting) continue;
-      var result = await connection.execute(
-        existingConstraintsQuery(table, modification.name),
-      );
-      if (result.rows.isEmpty) continue;
-      var row = result.rows.first;
-      modification.existing = ExistingConstraints.parse(
-        isNullable: row.colAt(0) ?? 'YES',
-        columnDefault: row.colAt(1),
-        extra: row.colAt(2) ?? '',
-        version: row.colAt(3) ?? '',
-      );
-    }
-  }
+  /// not given only when [run] has read them from the database.
+  String compile() => _alters.compile(_buf);
 
   void _writeln(String str) {
     for (var i = 0; i < _indent; i++) {
@@ -105,9 +82,7 @@ class MySqlSchema extends Schema {
   void alter(String tableName, void Function(MutableTable table) callback) {
     var tbl = MysqlAlterTable(tableName);
     callback(tbl);
-    _writeln('ALTER TABLE $tableName');
-    _alters.add((_buf.toString(), tbl, _indent + 1));
-    _buf.clear();
+    _alters.add(_buf, tbl, _indent);
   }
 
   void _create(
