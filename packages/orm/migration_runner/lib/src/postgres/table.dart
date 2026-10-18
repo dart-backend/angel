@@ -5,13 +5,14 @@ import 'package:angel3_orm/angel3_orm.dart';
 import 'package:charcode/ascii.dart';
 import 'package:logging/logging.dart';
 
+import '../change_column.dart';
+
 abstract class PostgresGenerator {
   static String columnType(MigrationColumn column) {
     var str = column.type.name;
+    // Without a precision or scale, an unbounded numeric.
     if (column.type.hasPrecision) {
-      return column.type.hasScale
-          ? '$str(${column.precision}, ${column.scale})'
-          : '$str(${column.precision})';
+      return '$str${column.precisionArguments(unbounded: true, maxPrecision: 1000)}';
     }
     if (column.type.hasLength) {
       return '$str(${column.length})';
@@ -24,25 +25,9 @@ abstract class PostgresGenerator {
     var buf = StringBuffer(columnType(column));
 
     if (column.isNullable == false) buf.write(' NOT NULL');
-    if (column.defaultValue != null) {
-      String s;
-      var value = column.defaultValue;
-      if (value is RawSql) {
-        s = value.value;
-      } else if (value is String) {
-        var b = StringBuffer();
-        for (var ch in value.codeUnits) {
-          if (ch == $single_quote) {
-            b.write("\\'");
-          } else {
-            b.writeCharCode(ch);
-          }
-        }
-        s = '\'${b.toString()}\'';
-      } else {
-        s = value.toString();
-      }
-      buf.write(' DEFAULT $s');
+    var defaultValue = column.defaultValue;
+    if (defaultValue != null) {
+      buf.write(' DEFAULT ${compileDefault(defaultValue)}');
     }
 
     if (column.indexType == IndexType.unique) {
@@ -56,6 +41,23 @@ abstract class PostgresGenerator {
     }
 
     return buf.toString();
+  }
+
+  /// The SQL of the default [value] of a column.
+  static String compileDefault(Object value) {
+    if (value is RawSql) return value.value;
+    if (value is String) {
+      var b = StringBuffer();
+      for (var ch in value.codeUnits) {
+        if (ch == $single_quote) {
+          b.write("\\'");
+        } else {
+          b.writeCharCode(ch);
+        }
+      }
+      return '\'${b.toString()}\'';
+    }
+    return value.toString();
   }
 
   static String compileReference(MigrationColumnReference ref) {
@@ -162,18 +164,34 @@ class PostgresAlterTable extends Table implements MutableTable {
     String name,
     ColumnType type, {
     int length = Column.defaultLength,
-    int precision = Column.defaultPrecision,
-    int scale = Column.defaultScale,
+    int? precision,
+    int? scale,
+    bool? isNullable,
+    Object? defaultValue,
+    bool autoIncrement = false,
   }) {
-    var column = MigrationColumn(
+    var column = changedColumn(
       type,
       length: length,
       precision: precision,
       scale: scale,
     );
+    // The column keeps its constraints, and gets those given. A serial column
+    // keeps the default that increments it, so autoIncrement is not needed.
     _stack.add(
       'ALTER COLUMN "$name" TYPE ${PostgresGenerator.columnType(column)}',
     );
+    if (isNullable != null) {
+      _stack.add(
+        'ALTER COLUMN "$name" ${isNullable ? 'DROP' : 'SET'} NOT NULL',
+      );
+    }
+    if (defaultValue != null) {
+      _stack.add(
+        'ALTER COLUMN "$name" SET DEFAULT '
+        '${PostgresGenerator.compileDefault(defaultValue)}',
+      );
+    }
   }
 
   @override

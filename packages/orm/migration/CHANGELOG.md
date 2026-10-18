@@ -2,13 +2,12 @@
 
 ## 10.0.0
 
-* **Breaking:** Requires `angel3_orm` 10
-* **Breaking:** `MutableTable.changeColumnType` takes the `length`, `precision` and `scale` of the new type (e.g. `changeColumnType('price', ColumnType.numeric, precision: 10, scale: 2)`). Without them, a column changed to `numeric` or `decimal` was always `numeric(17, 3)`. Implementations of `MutableTable` must add these parameters
-* fix: `Table.numeric` creates the column with its `precision` and `scale` (default 17 and 3), which it ignored, and `MigrationColumn` (including `MigrationColumn.from`) keeps a column's precision and scale
+* **Breaking:** `MutableTable.changeColumnType` takes the `length`, `precision` and `scale` of the new type (e.g. `changeColumnType('price', ColumnType.numeric, precision: 10, scale: 2)`). Without a precision or scale, a column changed to `numeric` or `decimal` is unbounded on PostgreSQL, which keeps its values, where it was `numeric(17, 3)`, which rounded them. It also takes the constraints of the column after the change, `isNullable`, `defaultValue` and `autoIncrement`, which MySQL and MariaDB need to keep them. Implementations of `MutableTable` must add these parameters, with `precision` and `scale` as `int?`
+* fix: `Table.numeric` creates the column with its `precision` and `scale`, which it ignored, and `MigrationColumn` (including `MigrationColumn.from`) keeps a column's precision and scale. Without them, the column is still an unbounded `numeric` on PostgreSQL
 * fix: `MigrationColumn.from` keeps all the attributes of a `Column`: its `defaultValue` (so `declareColumn('fee', Column(..., defaultValue: 0))` creates the column with `DEFAULT 0`, which was left out), `name`, `timezone` and `expression`
-* fix: A `numeric` or `decimal` column whose precision is below 1, or whose scale is negative or greater than its precision, throws an `ArgumentError` when it is declared, instead of failing when the migration is run
+* fix: A `numeric` or `decimal` column whose precision is below 1, or whose scale is negative or greater than its precision (17 without one), throws an `ArgumentError` when it is declared, instead of failing when the migration is run
 * Added `Table.decimal`, as `Table.numeric` for `decimal` columns
-* `Table.numeric`, `Table.decimal` and `changeColumnType` default to `Column.defaultLength`, `Column.defaultPrecision` and `Column.defaultScale`
+* Added `MigrationColumn.precisionArguments`, the `(precision, scale)` of a column's type in SQL, for the runners of each database, which checks them against the database's limits
 * `Table.varChar` declares a `MigrationColumn`
 
 ## 9.1.0

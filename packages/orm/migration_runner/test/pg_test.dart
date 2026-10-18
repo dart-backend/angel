@@ -5,9 +5,11 @@ import 'package:angel3_migration_runner/postgres.dart';
 import 'package:postgres/postgres.dart';
 import 'package:test/test.dart';
 
+import 'common.dart';
 import 'models/pg_todo.dart';
 
 void main() async {
+  var skip = await skipUnlessPostgres();
   late Connection conn;
   late MigrationRunner runner;
 
@@ -43,7 +45,7 @@ void main() async {
     );
   });
 
-  group('PostgreSQL migrate tables', () {
+  group('PostgreSQL migrate tables', skip: skip, () {
     test('up', () async {
       print("Test migration up");
       await runner.up();

@@ -514,8 +514,9 @@ Column reviveColumn(ConstantReader cr) {
   return Column(
     isNullable: cr.peek('isNullable')?.boolValue ?? false,
     length: cr.peek('length')?.intValue ?? Column.defaultLength,
-    precision: cr.peek('precision')?.intValue ?? Column.defaultPrecision,
-    scale: cr.peek('scale')?.intValue ?? Column.defaultScale,
+    // Left out when not given, as an unbounded numeric on PostgreSQL.
+    precision: cr.peek('precision')?.intValue,
+    scale: cr.peek('scale')?.intValue,
     defaultValue: cr.peek('defaultValue')?.objectValue,
     type: columnType,
     indexType: indexType,

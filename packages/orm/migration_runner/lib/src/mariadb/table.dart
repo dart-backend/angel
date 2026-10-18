@@ -4,6 +4,8 @@ import 'package:angel3_migration/angel3_migration.dart';
 import 'package:angel3_orm/angel3_orm.dart';
 import 'package:charcode/ascii.dart';
 
+import '../change_column.dart';
+
 abstract class MariaDbGenerator {
   static String columnType(MigrationColumn column) {
     var str = column.type.name;
@@ -27,10 +29,10 @@ abstract class MariaDbGenerator {
     if (column.type == ColumnType.timeStamp) {
       str = ColumnType.dateTime.name;
     }
+    // MariaDB has no numeric without a precision, whose default rounds values
+    // to whole numbers, so a column without one has Column.defaultPrecision.
     if (column.type.hasPrecision) {
-      return column.type.hasScale
-          ? '$str(${column.precision}, ${column.scale})'
-          : '$str(${column.precision})';
+      return '$str${column.precisionArguments(maxPrecision: 65, maxScale: 38)}';
     }
     if (column.type.hasLength) {
       return '$str(${column.length})';
@@ -200,16 +202,25 @@ class MariaDbAlterTable extends Table implements MutableTable {
     String name,
     ColumnType type, {
     int length = Column.defaultLength,
-    int precision = Column.defaultPrecision,
-    int scale = Column.defaultScale,
+    int? precision,
+    int? scale,
+    bool? isNullable,
+    Object? defaultValue,
+    bool autoIncrement = false,
   }) {
-    var column = MigrationColumn(
-      type,
-      length: length,
-      precision: precision,
-      scale: scale,
+    _stack.add(
+      compileModify(
+        name,
+        type,
+        compileColumn: MariaDbGenerator.compileColumn,
+        length: length,
+        precision: precision,
+        scale: scale,
+        isNullable: isNullable,
+        defaultValue: defaultValue,
+        autoIncrement: autoIncrement,
+      ),
     );
-    _stack.add('MODIFY $name ${MariaDbGenerator.columnType(column)}');
   }
 
   @override

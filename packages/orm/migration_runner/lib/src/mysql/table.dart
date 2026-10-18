@@ -5,13 +5,10 @@ import 'package:angel3_orm/angel3_orm.dart';
 import 'package:charcode/ascii.dart';
 import 'package:logging/logging.dart';
 
+import '../change_column.dart';
+
 /// MySQL SQL query generator
 abstract class MySqlGenerator {
-  static final List<String> _charColumnType = [
-    ColumnType.varChar.name,
-    ColumnType.char.name,
-  ];
-
   static String columnType(MigrationColumn column) {
     var str = column.type.name;
 
@@ -35,18 +32,10 @@ abstract class MySqlGenerator {
       str = ColumnType.dateTime.name;
     }
 
-    if (_charColumnType.contains(str)) {
-      if (column.type.hasLength) {
-        return '$str(${column.length})';
-      } else {
-        return '$str(255)';
-      }
-    }
-
+    // MySQL has no numeric without a precision, whose default rounds values
+    // to whole numbers, so a column without one has Column.defaultPrecision.
     if (column.type.hasPrecision) {
-      return column.type.hasScale
-          ? '$str(${column.precision}, ${column.scale})'
-          : '$str(${column.precision})';
+      return '$str${column.precisionArguments(maxPrecision: 65, maxScale: 30)}';
     }
     if (column.type.hasLength) {
       return '$str(${column.length})';
@@ -228,16 +217,25 @@ class MysqlAlterTable extends Table implements MutableTable {
     String name,
     ColumnType type, {
     int length = Column.defaultLength,
-    int precision = Column.defaultPrecision,
-    int scale = Column.defaultScale,
+    int? precision,
+    int? scale,
+    bool? isNullable,
+    Object? defaultValue,
+    bool autoIncrement = false,
   }) {
-    var column = MigrationColumn(
-      type,
-      length: length,
-      precision: precision,
-      scale: scale,
+    _stack.add(
+      compileModify(
+        name,
+        type,
+        compileColumn: MySqlGenerator.compileColumn,
+        length: length,
+        precision: precision,
+        scale: scale,
+        isNullable: isNullable,
+        defaultValue: defaultValue,
+        autoIncrement: autoIncrement,
+      ),
     );
-    _stack.add('MODIFY $name ${MySqlGenerator.columnType(column)}');
   }
 
   @override

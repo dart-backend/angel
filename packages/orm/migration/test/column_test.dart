@@ -65,10 +65,15 @@ void main() {
       );
     });
 
-    test('default to those of Column', () {
+    test('are null when not given', () {
       var column = (_Table()..decimal('a')).columns['a']!;
-      expect(column.precision, Column.defaultPrecision);
-      expect(column.scale, Column.defaultScale);
+      expect(column.precision, isNull);
+      expect(column.scale, isNull);
+    });
+
+    test('a scale without a precision is checked against the default', () {
+      expect((_Table()..numeric('a', scale: 17)).columns['a']!.scale, 17);
+      expect(() => _Table().numeric('a', scale: 18), throwsArgumentError);
     });
 
     test('a scale greater than the precision is rejected', () {
@@ -93,9 +98,51 @@ void main() {
     });
 
     test('are not checked for a type without them', () {
-      // `Column`'s defaults (17, 3) are always there, and unused.
       var column = MigrationColumn(ColumnType.int, precision: 0, scale: 5);
       expect(column.type, same(ColumnType.int));
+    });
+  });
+
+  group('precisionArguments', () {
+    String args(
+      Column column, {
+      bool unbounded = false,
+      int? maxPrecision,
+      int? maxScale,
+    }) => MigrationColumn.from(column).precisionArguments(
+      unbounded: unbounded,
+      maxPrecision: maxPrecision,
+      maxScale: maxScale,
+    );
+
+    test('gives the precision and scale given', () {
+      const type = ColumnType.numeric;
+      expect(
+        args(const Column(type: type, precision: 10, scale: 2)),
+        '(10, 2)',
+      );
+      expect(args(const Column(type: type, precision: 8)), '(8)');
+      expect(args(const Column(type: type, scale: 2)), '(17, 2)');
+    });
+
+    test('gives none, or the defaults, without them', () {
+      const column = Column(type: ColumnType.numeric);
+      expect(args(column, unbounded: true), '');
+      expect(args(column), '(17, 3)');
+      expect(args(const Column(type: ColumnType.int)), '');
+    });
+
+    test('rejects a precision or scale above the limits', () {
+      const column = Column(type: ColumnType.decimal, precision: 70, scale: 2);
+      expect(() => args(column, maxPrecision: 65), throwsArgumentError);
+      expect(
+        () => args(
+          const Column(type: ColumnType.decimal, precision: 40, scale: 31),
+          maxScale: 30,
+        ),
+        throwsArgumentError,
+      );
+      expect(args(column, maxPrecision: 70, maxScale: 2), '(70, 2)');
     });
   });
 

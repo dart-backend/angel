@@ -16,14 +16,16 @@ abstract class Table {
 
   MigrationColumn double(String name) => declare(name, ColumnType.double);
 
-  /// A `numeric(precision, scale)` column.
+  /// A `numeric(precision, scale)` column. Without a [precision] or [scale], it is
+  /// an unbounded `numeric` on PostgreSQL, and `numeric(17, 3)` on MySQL and MariaDB
+  /// ([Column.defaultPrecision] and [Column.defaultScale]).
   ///
   /// Throws an [ArgumentError] if [precision] is not positive, or [scale] is
-  /// negative or greater than [precision].
+  /// negative or greater than the precision.
   MigrationColumn numeric(
     String name, {
-    int precision = Column.defaultPrecision,
-    int scale = Column.defaultScale,
+    int? precision,
+    int? scale,
   }) {
     return declareColumn(
       name,
@@ -31,14 +33,16 @@ abstract class Table {
     );
   }
 
-  /// A `decimal(precision, scale)` column.
+  /// A `decimal(precision, scale)` column. Without a [precision] or [scale], it is
+  /// an unbounded `decimal` on PostgreSQL, and `decimal(17, 3)` on MySQL and MariaDB
+  /// ([Column.defaultPrecision] and [Column.defaultScale]).
   ///
   /// Throws an [ArgumentError] if [precision] is not positive, or [scale] is
-  /// negative or greater than [precision].
+  /// negative or greater than the precision.
   MigrationColumn decimal(
     String name, {
-    int precision = Column.defaultPrecision,
-    int scale = Column.defaultScale,
+    int? precision,
+    int? scale,
   }) {
     return declareColumn(
       name,
@@ -78,18 +82,30 @@ abstract class MutableTable extends Table implements MutableIndexes {
 
   void renameColumn(String name, String newName);
 
-  /// Changes the type of the column [name] to [type], with the [length],
-  /// [precision] and [scale] of a [Column] that does not give them.
+  /// Changes the type of the column [name] to [type], with its [length],
+  /// [precision] and [scale], which are as for a [Column]: without a precision
+  /// or scale, a `numeric` is unbounded on PostgreSQL, so that its values are
+  /// kept, and `numeric(17, 3)` on MySQL and MariaDB.
+  ///
+  /// The column has the constraints given after the change: it is nullable or
+  /// not as [isNullable], has the default [defaultValue], and on MySQL and
+  /// MariaDB is `AUTO_INCREMENT` if [autoIncrement]. MySQL and MariaDB define
+  /// the whole column again, so the constraints it has must be given to keep
+  /// them; without them it is nullable without a default. PostgreSQL keeps
+  /// the constraints of the column, and sets those given.
   ///
   /// Throws an [ArgumentError] if [type] has a precision and [precision] is
-  /// not positive, or has a scale and [scale] is negative or greater than
-  /// [precision].
+  /// not positive, or has a scale and [scale] is negative or greater than the
+  /// precision.
   void changeColumnType(
     String name,
     ColumnType type, {
     int length = Column.defaultLength,
-    int precision = Column.defaultPrecision,
-    int scale = Column.defaultScale,
+    int? precision,
+    int? scale,
+    bool? isNullable,
+    Object? defaultValue,
+    bool autoIncrement = false,
   });
 
   void dropNotNull(String name);

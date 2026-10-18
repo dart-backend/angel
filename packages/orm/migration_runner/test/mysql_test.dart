@@ -5,9 +5,11 @@ import 'package:angel3_migration_runner/mysql.dart';
 import 'package:mysql_client/mysql_client.dart';
 import 'package:test/test.dart';
 
+import 'common.dart';
 import 'models/mysql_todo.dart';
 
 void main() async {
+  var skip = await skipUnlessMySql();
   late MySQLConnection conn;
   late MigrationRunner runner;
 
@@ -20,7 +22,7 @@ void main() async {
     var password = Platform.environment['MYSQL_PASSWORD'] ?? 'Test123';
     //var secure = !('false' == Platform.environment['MYSQL_SECURE']);
 
-    print("$host $database $username $password");
+    print("$host $database $username");
 
     conn = await MySQLConnection.createConnection(
       databaseName: database,
@@ -44,7 +46,7 @@ void main() async {
     );
   });
 
-  group('Mysql migrate tables', () {
+  group('Mysql migrate tables', skip: skip, () {
     test('up', () async {
       print("Test migration up");
       await runner.up();

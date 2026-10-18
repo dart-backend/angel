@@ -10,7 +10,7 @@
 * fix: A relation with an explicit `foreignTable` no longer fails with a null check: the related model is still read, for its columns and keys, and `foreignTable` names its table (the model's own `@Orm` table name used to replace it)
 * fix: A relation whose name contains `Id` (e.g. `userIdentity`, whose column is `userIdentityId`) gets its where builder; only a trailing `Id` is removed to find the relation
 * A `decimal` column is created with `table.decimal(name, precision: ..., scale: ...)`, as a `numeric` one with `table.numeric`
-* fix: The `precision` and `scale` of a `@Column` are used: the migration creates the column with them (e.g. `table.numeric('price', precision: 10, scale: 2)`), where they were dropped
+* fix: The `precision` and `scale` of a `@Column` are used: the migration creates the column with them (e.g. `table.numeric('price', precision: 10, scale: 2)`), where they were dropped. Those not given are left out, so `@Column(type: ColumnType.numeric)` is still an unbounded `numeric` on PostgreSQL
 
 ## 9.1.1
 

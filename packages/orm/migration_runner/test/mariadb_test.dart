@@ -5,9 +5,11 @@ import 'package:angel3_migration_runner/mariadb.dart';
 import 'package:mysql1/mysql1.dart';
 import 'package:test/test.dart';
 
+import 'common.dart';
 import 'models/mysql_todo.dart';
 
 void main() async {
+  var skip = await skipUnlessMySql();
   late MySqlConnection conn;
   late MigrationRunner runner;
 
@@ -39,7 +41,7 @@ void main() async {
     );
   });
 
-  group('MariaDB migrate tables', () {
+  group('MariaDB migrate tables', skip: skip, () {
     test('up', () async {
       print("Test migration up");
       await runner.up();

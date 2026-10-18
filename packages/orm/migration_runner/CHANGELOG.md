@@ -2,9 +2,11 @@
 
 ## 10.0.0
 
-* fix: A column whose type has a precision (`numeric`, `decimal`) is created with its precision and scale, e.g. `numeric(10, 2)`. They were left out, so MySQL/MariaDB created `DECIMAL(10,0)` and rounded values to whole numbers (1234.56 was stored as 1235), and PostgreSQL an unbounded `numeric`
-* fix: `changeColumnType` of the PostgreSQL, MySQL and MariaDB alter tables uses the `precision` and `scale` it is given (e.g. `ALTER COLUMN "price" TYPE numeric(10, 2)`), as `MutableTable` now requires; it used `numeric(17, 3)`. Its default `length` is `Column.defaultLength` (255) for MySQL and MariaDB too, where it was 256
+* **Breaking:** A column whose type has a precision (`numeric`, `decimal`) is created with its precision and scale, e.g. `numeric(10, 2)`. They were left out, so MySQL/MariaDB created `DECIMAL(10,0)` and rounded values to whole numbers (1234.56 was stored as 1235). A column without them is `numeric(17, 3)` on MySQL and MariaDB, and still an unbounded `numeric` on PostgreSQL. A precision or scale above the database's limits (65 and 30 on MySQL, 65 and 38 on MariaDB, a precision of 1000 on PostgreSQL) throws an `ArgumentError` when the SQL is built, instead of an error from the database
+* **Breaking:** `changeColumnType` of the PostgreSQL, MySQL and MariaDB alter tables takes the `precision` and `scale` of the new type, as `MutableTable` now requires (e.g. `ALTER COLUMN "price" TYPE numeric(10, 2)`); it always used `numeric(17, 3)`, which rounded the values of a column changed to it. Without them, it is an unbounded `numeric` on PostgreSQL and `numeric(17, 3)` on MySQL and MariaDB. Its default `length` is `Column.defaultLength` (255) for MySQL and MariaDB too, where it was 256
+* fix: `changeColumnType` takes the constraints the column has after the change: `isNullable`, `defaultValue` and, on MySQL and MariaDB, `autoIncrement`. MySQL and MariaDB define the whole column again in `MODIFY`, which dropped its `NOT NULL`, `DEFAULT` and `AUTO_INCREMENT`; they are kept when given (e.g. `MODIFY fee decimal(10, 2) NOT NULL DEFAULT 0`). PostgreSQL keeps the constraints of the column, and sets those given (`SET NOT NULL`, `DROP NOT NULL`, `SET DEFAULT`)
 * test: `precision_test.dart` checks the SQL for numeric and decimal columns, and creates and alters them on PostgreSQL and MariaDB
+* test: The tests on a database are skipped, with the reason, when it cannot be reached at `POSTGRES_HOST` or `MYSQL_HOST`, and the test files are run one at a time (`dart_test.yaml`), as they share the tables of `orm_test`
 
 ## 9.1.0
 
