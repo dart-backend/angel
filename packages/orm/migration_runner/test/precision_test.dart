@@ -12,6 +12,7 @@ import 'package:postgres/postgres.dart';
 import 'package:test/test.dart';
 
 import 'package:angel3_migration_runner/src/change_column.dart';
+import 'package:angel3_migration_runner/src/sql.dart';
 
 import 'common.dart';
 
@@ -112,13 +113,22 @@ class CreateAndChangeMigration extends Migration {
   void up(Schema schema) {
     schema.create('created', (table) {
       table.declareColumn(
-        'c',
+        'a',
         Column(type: ColumnType.int, isNullable: false, defaultValue: 5),
       );
+      // A `;` in a string does not end the statement.
+      table.varChar('note', length: 20).defaultsTo("x; 'y'");
     });
+    // Statements run before the constraints are read, in one text.
+    schema.alter('created', (table) => table.renameColumn('a', 'c'));
     schema.alter(
       'created',
       (table) => table.changeColumnType('c', ColumnType.bigInt),
+    );
+    schema.indexes(
+      'created',
+      (indexes) =>
+          indexes.addIndex('created_c', ['c'], IndexType.standardIndex),
     );
   }
 
@@ -537,6 +547,28 @@ void main() async {
       expect(mariaDb.compile(), sql);
     });
 
+    test('splits the statements of MySQL', () {
+      expect(
+        splitMySqlStatements(
+          "CREATE TABLE t (a varchar(9) DEFAULT 'x;''y\\';z');\n"
+          'ALTER TABLE `a;b` MODIFY "c;" int; -- d;\n'
+          '# e;\n'
+          '/* f; */ DROP TABLE u;;  \n',
+        ),
+        [
+          "CREATE TABLE t (a varchar(9) DEFAULT 'x;''y\\';z')",
+          'ALTER TABLE `a;b` MODIFY "c;" int',
+          '-- d;\n# e;\n/* f; */ DROP TABLE u',
+        ],
+      );
+      expect(splitMySqlStatements(' ;\n'), isEmpty);
+      // `--` without a space after it is not a comment.
+      expect(splitMySqlStatements('SELECT 1--1; SELECT 2'), [
+        'SELECT 1--1',
+        'SELECT 2',
+      ]);
+    });
+
     test('reads the constraints of a table of another database', () {
       expect(
         existingConstraintsQuery('`shop`.`orders`', ['amount']),
@@ -776,7 +808,11 @@ void main() async {
     });
 
     test('reads the constraints after the statements before', () async {
+      // Left by a run that failed.
       await conn.execute('DROP TABLE IF EXISTS created');
+      await conn.execute(
+        "DELETE FROM migrations WHERE path LIKE '%#CreateAndChangeMigration'",
+      );
       runner = MySqlMigrationRunner(
         conn,
         migrations: [CreateAndChangeMigration()],
@@ -786,11 +822,18 @@ void main() async {
       var result = await conn.execute(
         "SELECT column_name, data_type, is_nullable, column_default "
         "FROM information_schema.columns "
-        "WHERE table_schema = database() AND table_name = 'created'",
+        "WHERE table_schema = database() AND table_name = 'created' "
+        "ORDER BY column_name",
       );
       expect(result.rows.map((r) => [for (var i = 0; i < 4; i++) r.colAt(i)]), [
         ['c', 'bigint', 'NO', '5'],
+        ['note', 'varchar', 'YES', "'x; ''y'''"],
       ]);
+      result = await conn.execute(
+        "SELECT index_name FROM information_schema.statistics "
+        "WHERE table_schema = database() AND table_name = 'created'",
+      );
+      expect(result.rows.map((r) => r.colAt(0)), ['created_c']);
     });
 
     test('throws, and does not record a migration that fails', () async {

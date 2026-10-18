@@ -5,6 +5,7 @@ import 'package:logging/logging.dart';
 import 'package:mysql_client/mysql_client.dart';
 
 import '../change_column.dart';
+import '../sql.dart';
 import 'table.dart';
 
 /// A MySQL database schema generator
@@ -35,13 +36,18 @@ class MySqlSchema extends Schema {
         .transactional((ctx) async {
           await _alters.run(
             _buf,
+            // `mysql_client` reads the result of only the first statement of
+            // a query, and then the others as those of the next queries, so
+            // the statements are run one by one.
             execute: (sql) async {
-              //print('Query: $sql');
-              var result = await ctx.execute(sql).catchError((e) {
-                _log.severe('Failed to run query: [ $sql ]', e);
-                throw Exception(e);
-              });
-              affectedRows += result.affectedRows.toInt();
+              for (var statement in splitMySqlStatements(sql)) {
+                //print('Query: $statement');
+                var result = await ctx.execute(statement).catchError((e) {
+                  _log.severe('Failed to run query: [ $statement ]', e);
+                  throw Exception(e);
+                });
+                affectedRows += result.affectedRows.toInt();
+              }
             },
             query: (sql) async {
               var result = await ctx.execute(sql);
