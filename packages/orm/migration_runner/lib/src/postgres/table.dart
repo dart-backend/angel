@@ -2,10 +2,10 @@ import 'dart:collection';
 
 import 'package:angel3_migration/angel3_migration.dart';
 import 'package:angel3_orm/angel3_orm.dart';
-import 'package:charcode/ascii.dart';
 import 'package:logging/logging.dart';
 
 import '../change_column.dart';
+import '../sql.dart' as sql;
 
 abstract class PostgresGenerator {
   static String columnType(MigrationColumn column) {
@@ -44,21 +44,8 @@ abstract class PostgresGenerator {
   }
 
   /// The SQL of the default [value] of a column.
-  static String compileDefault(Object value) {
-    if (value is RawSql) return value.value;
-    if (value is String) {
-      var b = StringBuffer();
-      for (var ch in value.codeUnits) {
-        if (ch == $single_quote) {
-          b.write("\\'");
-        } else {
-          b.writeCharCode(ch);
-        }
-      }
-      return '\'${b.toString()}\'';
-    }
-    return value.toString();
-  }
+  static String compileDefault(Object value) =>
+      sql.compileDefault(value, escapeBackslashes: false);
 
   static String compileReference(MigrationColumnReference ref) {
     var buf = StringBuffer(
@@ -168,18 +155,25 @@ class PostgresAlterTable extends Table implements MutableTable {
     int? scale,
     bool? isNullable,
     Object? defaultValue,
-    bool autoIncrement = false,
+    bool? autoIncrement,
+    String? using,
   }) {
+    // A serial type is not a type that a column can be changed to, but an
+    // integer with a default from a sequence, which a serial column keeps, so
+    // autoIncrement is not needed.
     var column = changedColumn(
-      type,
+      _serialIntegers[type] ?? type,
       length: length,
       precision: precision,
       scale: scale,
     );
-    // The column keeps its constraints, and gets those given. A serial column
-    // keeps the default that increments it, so autoIncrement is not needed.
+    // The column keeps its constraints, and gets those given. A new default
+    // replaces the old one, which is dropped first, as it may not be cast to
+    // the new type.
+    if (defaultValue != null) _stack.add('ALTER COLUMN "$name" DROP DEFAULT');
     _stack.add(
-      'ALTER COLUMN "$name" TYPE ${PostgresGenerator.columnType(column)}',
+      'ALTER COLUMN "$name" TYPE ${PostgresGenerator.columnType(column)}'
+      '${using == null ? '' : ' USING $using'}',
     );
     if (isNullable != null) {
       _stack.add(
@@ -193,6 +187,13 @@ class PostgresAlterTable extends Table implements MutableTable {
       );
     }
   }
+
+  /// The integer type of each serial type.
+  static const Map<ColumnType, ColumnType> _serialIntegers = {
+    ColumnType.smallSerial: ColumnType.smallInt,
+    ColumnType.serial: ColumnType.int,
+    ColumnType.bigSerial: ColumnType.bigInt,
+  };
 
   @override
   void renameColumn(String name, String newName) {

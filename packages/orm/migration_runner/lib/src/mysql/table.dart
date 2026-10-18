@@ -2,10 +2,10 @@ import 'dart:collection';
 
 import 'package:angel3_migration/angel3_migration.dart';
 import 'package:angel3_orm/angel3_orm.dart';
-import 'package:charcode/ascii.dart';
 import 'package:logging/logging.dart';
 
 import '../change_column.dart';
+import '../sql.dart';
 
 /// MySQL SQL query generator
 abstract class MySqlGenerator {
@@ -51,31 +51,11 @@ abstract class MySqlGenerator {
       buf.write(' NOT NULL');
     }
 
-    // Default value
-    if (column.defaultValue != null) {
-      String s;
-      var value = column.defaultValue;
-      if (value is RawSql) {
-        s = value.value;
-      } else if (value is String) {
-        var b = StringBuffer();
-        for (var ch in value.codeUnits) {
-          if (ch == $single_quote) {
-            b.write("\\'");
-          } else {
-            b.writeCharCode(ch);
-          }
-        }
-        s = b.toString();
-      } else {
-        s = value.toString();
-      }
-
-      if (column.type == ColumnType.varChar) {
-        buf.write(' DEFAULT \'$s\'');
-      } else {
-        buf.write(' DEFAULT $s');
-      }
+    var defaultValue = column.defaultValue;
+    if (defaultValue != null) {
+      buf.write(
+        ' DEFAULT ${compileDefault(defaultValue, escapeBackslashes: true)}',
+      );
     }
 
     if (column.indexType == IndexType.primaryKey) {
@@ -158,7 +138,11 @@ class MysqlTable extends Table {
 class MysqlAlterTable extends Table implements MutableTable {
   final Map<String, MigrationColumn> _columns = {};
   final String tableName;
-  final Queue<String> _stack = Queue<String>();
+  final Queue<Object> _stack = Queue<Object>();
+
+  /// The changes of column types, whose constraints not given are read from
+  /// the database when the schema is run.
+  final List<ColumnModification> modifications = [];
 
   MysqlAlterTable(this.tableName);
 
@@ -166,7 +150,10 @@ class MysqlAlterTable extends Table implements MutableTable {
     var i = 0;
 
     while (_stack.isNotEmpty) {
-      var str = _stack.removeFirst();
+      var entry = _stack.removeFirst();
+      var str = entry is ColumnModification
+          ? entry.compile(MySqlGenerator.compileColumn)
+          : entry;
 
       if (i++ > 0) buf.writeln(',');
 
@@ -221,21 +208,22 @@ class MysqlAlterTable extends Table implements MutableTable {
     int? scale,
     bool? isNullable,
     Object? defaultValue,
-    bool autoIncrement = false,
+    bool? autoIncrement,
+    String? using,
   }) {
-    _stack.add(
-      compileModify(
-        name,
-        type,
-        compileColumn: MySqlGenerator.compileColumn,
-        length: length,
-        precision: precision,
-        scale: scale,
-        isNullable: isNullable,
-        defaultValue: defaultValue,
-        autoIncrement: autoIncrement,
-      ),
+    // MODIFY converts the values itself, so `using` is not needed.
+    var modification = ColumnModification(
+      name,
+      type,
+      length: length,
+      precision: precision,
+      scale: scale,
+      isNullable: isNullable,
+      defaultValue: defaultValue,
+      autoIncrement: autoIncrement,
     );
+    modifications.add(modification);
+    _stack.add(modification);
   }
 
   @override

@@ -7,8 +7,11 @@ import 'package:angel3_migration_runner/mysql.dart';
 import 'package:angel3_migration_runner/postgres.dart';
 import 'package:angel3_orm/angel3_orm.dart';
 import 'package:mysql1/mysql1.dart' as mysql1;
+import 'package:mysql_client/mysql_client.dart' as mysql_client;
 import 'package:postgres/postgres.dart';
 import 'package:test/test.dart';
+
+import 'package:angel3_migration_runner/src/change_column.dart';
 
 import 'common.dart';
 
@@ -22,6 +25,8 @@ class PricesMigration extends Migration {
       table.decimal('tax', precision: 5, scale: 4);
       // Without a precision: unbounded on PostgreSQL, (17, 3) on MariaDB.
       table.numeric('rate');
+      // A string default with a quote, which must be escaped.
+      table.varChar('note', length: 20).defaultsTo("it's");
       table.declareColumn(
         'fee',
         Column(
@@ -41,9 +46,11 @@ class PricesMigration extends Migration {
   }
 }
 
-/// Changes the precision and scale of `prices.amount` and `prices.fee`, which
-/// keeps its constraints, and makes `prices.id` a `bigint`, which stays
-/// `AUTO_INCREMENT` on MySQL and MariaDB.
+/// Changes the precision and scale of `prices.amount` and `prices.fee`, the
+/// length of `prices.note`, and makes `prices.id` a `bigint`. Going up, the
+/// constraints are not given, so that `fee` keeps its `NOT NULL DEFAULT 0`,
+/// `note` its default and `id` its `AUTO_INCREMENT`, which MySQL and MariaDB
+/// read from the database. Going down, they are given.
 class AlterPricesMigration extends Migration {
   @override
   void up(Schema schema) {
@@ -59,15 +66,9 @@ class AlterPricesMigration extends Migration {
         ColumnType.decimal,
         precision: 10,
         scale: 2,
-        isNullable: false,
-        defaultValue: 0,
       );
-      table.changeColumnType(
-        'id',
-        ColumnType.bigInt,
-        isNullable: false,
-        autoIncrement: true,
-      );
+      table.changeColumnType('note', ColumnType.varChar, length: 30);
+      table.changeColumnType('id', ColumnType.bigInt);
     });
   }
 
@@ -89,6 +90,12 @@ class AlterPricesMigration extends Migration {
         defaultValue: 0,
       );
       table.changeColumnType(
+        'note',
+        ColumnType.varChar,
+        length: 20,
+        defaultValue: "it's",
+      );
+      table.changeColumnType(
         'id',
         ColumnType.int,
         isNullable: false,
@@ -99,6 +106,104 @@ class AlterPricesMigration extends Migration {
 }
 
 void main() async {
+  group('existing constraints', () {
+    test('of MariaDB, which gives defaults as SQL', () {
+      var e = ExistingConstraints.parse(
+        isNullable: 'NO',
+        columnDefault: "'it''s'",
+        extra: 'on update current_timestamp()',
+        version: '11.4.2-MariaDB',
+      );
+      expect(e.isNullable, isFalse);
+      expect((e.defaultValue as RawSql).value, "'it''s'");
+      expect(e.onUpdate, 'current_timestamp()');
+      expect(e.autoIncrement, isFalse);
+
+      // `NULL` is no default.
+      e = ExistingConstraints.parse(
+        isNullable: 'YES',
+        columnDefault: 'NULL',
+        extra: 'auto_increment',
+        version: '11.4.2-MariaDB',
+      );
+      expect(e.defaultValue, isNull);
+      expect(e.autoIncrement, isTrue);
+    });
+
+    test('of MySQL, which gives literals as their values', () {
+      var e = ExistingConstraints.parse(
+        isNullable: 'NO',
+        columnDefault: "it's",
+        extra: '',
+        version: '8.4.0',
+      );
+      expect(e.defaultValue, "it's");
+
+      e = ExistingConstraints.parse(
+        isNullable: 'YES',
+        columnDefault: 'CURRENT_TIMESTAMP',
+        extra: 'DEFAULT_GENERATED on update CURRENT_TIMESTAMP',
+        version: '8.4.0',
+      );
+      expect((e.defaultValue as RawSql).value, 'CURRENT_TIMESTAMP');
+      expect(e.onUpdate, 'CURRENT_TIMESTAMP');
+
+      // Other expressions in parentheses.
+      e = ExistingConstraints.parse(
+        isNullable: 'YES',
+        columnDefault: 'rand()',
+        extra: 'DEFAULT_GENERATED',
+        version: '8.4.0',
+      );
+      expect((e.defaultValue as RawSql).value, '(rand())');
+
+      e = ExistingConstraints.parse(
+        isNullable: 'YES',
+        columnDefault: null,
+        extra: '',
+        version: '8.4.0',
+      );
+      expect(e.defaultValue, isNull);
+    });
+
+    test('are kept by MODIFY where not given', () {
+      var modification =
+          ColumnModification('at', ColumnType.dateTime, length: 255)
+            ..existing = ExistingConstraints(
+              isNullable: false,
+              defaultValue: RawSql('CURRENT_TIMESTAMP'),
+              autoIncrement: false,
+              onUpdate: 'CURRENT_TIMESTAMP',
+            );
+      expect(
+        modification.compile(MySqlGenerator.compileColumn),
+        'MODIFY `at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP '
+        'ON UPDATE CURRENT_TIMESTAMP',
+      );
+
+      // Those given win.
+      modification =
+          ColumnModification(
+              'n',
+              ColumnType.int,
+              length: 255,
+              isNullable: true,
+              defaultValue: 1,
+              autoIncrement: false,
+            )
+            ..existing = ExistingConstraints(
+              isNullable: false,
+              defaultValue: RawSql('0'),
+              autoIncrement: true,
+            );
+      expect(modification.keepsExisting, isFalse);
+      expect(
+        modification.compile(MySqlGenerator.compileColumn),
+        'MODIFY `n` int DEFAULT 1',
+      );
+    });
+  });
+
   var skipPostgres = await skipUnlessPostgres();
   var skipMySql = await skipUnlessMySql();
 
@@ -120,9 +225,16 @@ void main() async {
       expect(sql, contains('ALTER COLUMN "amount" TYPE numeric(12, 4),'));
       expect(sql, isNot(contains('ALTER COLUMN "amount" SET')));
       expect(sql, contains('ALTER COLUMN "fee" TYPE decimal(10, 2),'));
+      expect(sql, contains('ALTER COLUMN "id" TYPE bigint;'));
+      expect(sql, isNot(contains('SET NOT NULL')));
+      expect(sql, isNot(contains('DEFAULT')));
+
+      // Going down, the constraints given are set.
+      var down = PostgresSchema();
+      AlterPricesMigration().down(down);
+      sql = down.compile();
       expect(sql, contains('ALTER COLUMN "fee" SET NOT NULL,'));
       expect(sql, contains('ALTER COLUMN "fee" SET DEFAULT 0,'));
-      expect(sql, contains('ALTER COLUMN "id" TYPE bigint,'));
       expect(sql, isNot(contains('AUTO_INCREMENT')));
     });
 
@@ -146,7 +258,7 @@ void main() async {
       expect(mariaDb.compile(), contains('rate numeric(17, 3)'));
       var mysql = MySqlSchema()
         ..alter('prices', (t) => t.changeColumnType('a', ColumnType.numeric));
-      expect(mysql.compile(), contains('MODIFY a numeric(17, 3)'));
+      expect(mysql.compile(), contains('MODIFY `a` numeric(17, 3)'));
 
       // A precision without a scale, or a scale without a precision.
       postgres = PostgresSchema()
@@ -156,6 +268,114 @@ void main() async {
         });
       expect(postgres.compile(), contains('"p" numeric(8),'));
       expect(postgres.compile(), contains('"s" numeric(17, 2)'));
+    });
+
+    test('string defaults are quoted and escaped', () {
+      void change(MutableTable t) {
+        t.changeColumnType('code', ColumnType.char, defaultValue: r"a'b\c");
+      }
+
+      // A quote doubled, and on MySQL and MariaDB, where it is an escape, a
+      // backslash too, for every string type.
+      expect(
+        (MySqlSchema()..alter('t', change)).compile(),
+        contains(r"MODIFY `code` char(255) DEFAULT 'a''b\\c'"),
+      );
+      expect(
+        (MariaDbSchema()..alter('t', change)).compile(),
+        contains(r"MODIFY `code` char(255) DEFAULT 'a''b\\c'"),
+      );
+      expect(
+        (PostgresSchema()..alter('t', change)).compile(),
+        contains(r"""ALTER COLUMN "code" SET DEFAULT 'a''b\c'"""),
+      );
+      expect(
+        (MariaDbSchema()
+              ..create('t', (t) => t.varChar('s').defaultsTo('active')))
+            .compile(),
+        contains("s varchar(255) DEFAULT 'active'"),
+      );
+      // RawSql as it is.
+      expect(
+        (MySqlSchema()..alter(
+              't',
+              (t) => t.changeColumnType(
+                'at',
+                ColumnType.dateTime,
+                defaultValue: RawSql('CURRENT_TIMESTAMP'),
+              ),
+            ))
+            .compile(),
+        contains('MODIFY `at` datetime DEFAULT CURRENT_TIMESTAMP'),
+      );
+    });
+
+    test('USING converts the values on PostgreSQL', () {
+      void change(MutableTable t) => t.changeColumnType(
+        'price',
+        ColumnType.numeric,
+        precision: 10,
+        scale: 2,
+        using: 'price::numeric',
+      );
+
+      expect(
+        (PostgresSchema()..alter('t', change)).compile(),
+        contains(
+          'ALTER COLUMN "price" TYPE numeric(10, 2) USING price::numeric',
+        ),
+      );
+      // MODIFY converts the values itself.
+      expect(
+        (MySqlSchema()..alter('t', change)).compile(),
+        isNot(contains('USING')),
+      );
+    });
+
+    test('quotes the column of MODIFY', () {
+      expect(
+        (MySqlSchema()
+              ..alter('t', (t) => t.changeColumnType('order', ColumnType.int)))
+            .compile(),
+        contains('MODIFY `order` int'),
+      );
+    });
+
+    test(
+      'PostgreSQL drops a default before the type it may not be cast to',
+      () {
+        var sql =
+            (PostgresSchema()..alter(
+                  't',
+                  (t) =>
+                      t.changeColumnType('x', ColumnType.int, defaultValue: 0),
+                ))
+                .compile();
+        expect(
+          sql,
+          contains(
+            'ALTER COLUMN "x" DROP DEFAULT,\n'
+            '  ALTER COLUMN "x" TYPE int,\n'
+            '  ALTER COLUMN "x" SET DEFAULT 0;',
+          ),
+        );
+      },
+    );
+
+    test('PostgreSQL changes a column to the integer of a serial type', () {
+      for (var (serial, integer) in [
+        (ColumnType.smallSerial, 'smallint'),
+        (ColumnType.serial, 'int'),
+        (ColumnType.bigSerial, 'bigint'),
+      ]) {
+        expect(
+          (PostgresSchema()
+                ..alter('t', (t) => t.changeColumnType('id', serial)))
+              .compile(),
+          contains('ALTER COLUMN "id" TYPE $integer'),
+          reason: serial.name,
+        );
+      }
     });
 
     test('rejects a precision or scale above the limits of the database', () {
@@ -200,13 +420,13 @@ void main() async {
         contains('fee decimal(8, 1) NOT NULL DEFAULT 0'),
       );
 
-      // MODIFY defines the whole column, with the constraints given.
+      // Without the database, MODIFY has only the constraints given.
       var alter = MySqlSchema();
       AlterPricesMigration().up(alter);
       var sql = alter.compile();
-      expect(sql, contains('MODIFY amount numeric(12, 4),'));
-      expect(sql, contains('MODIFY fee decimal(10, 2) NOT NULL DEFAULT 0,'));
-      expect(sql, contains('MODIFY id bigint NOT NULL AUTO_INCREMENT'));
+      expect(sql, contains('MODIFY `amount` numeric(12, 4),'));
+      expect(sql, contains('MODIFY `fee` decimal(10, 2),'));
+      expect(sql, contains('MODIFY `id` bigint;'));
     });
 
     test('MariaDB', () {
@@ -219,13 +439,13 @@ void main() async {
         contains('fee decimal(8, 1) NOT NULL DEFAULT 0'),
       );
 
-      // MODIFY defines the whole column, with the constraints given.
+      // Without the database, MODIFY has only the constraints given.
       var alter = MariaDbSchema();
       AlterPricesMigration().up(alter);
       var sql = alter.compile();
-      expect(sql, contains('MODIFY amount numeric(12, 4),'));
-      expect(sql, contains('MODIFY fee decimal(10, 2) NOT NULL DEFAULT 0,'));
-      expect(sql, contains('MODIFY id bigint NOT NULL AUTO_INCREMENT'));
+      expect(sql, contains('MODIFY `amount` numeric(12, 4),'));
+      expect(sql, contains('MODIFY `fee` decimal(10, 2),'));
+      expect(sql, contains('MODIFY `id` bigint;'));
     });
   });
 
@@ -267,6 +487,14 @@ void main() async {
         ['amount', 'numeric', 12, 4, null, 'YES'],
         ['fee', 'numeric', 10, 2, '0', 'NO'],
         ['id', 'bigint', 64, 0, "nextval('prices_id_seq'::regclass)", 'NO'],
+        [
+          'note',
+          'character varying',
+          null,
+          null,
+          "'it''s'::character varying",
+          'YES',
+        ],
         ['rate', 'numeric', null, null, null, 'YES'],
         ['tax', 'numeric', 5, 4, null, 'YES'],
       ]);
@@ -321,8 +549,53 @@ void main() async {
         ['amount', 'decimal', 12, 4, 'NULL', 'YES', ''],
         ['fee', 'decimal', 10, 2, '0.00', 'NO', ''],
         ['id', 'bigint', 19, 0, 'null', 'NO', 'auto_increment'],
+        ['note', 'varchar', null, null, "'it''s'", 'YES', ''],
         ['rate', 'decimal', 17, 3, 'NULL', 'YES', ''],
         ['tax', 'decimal', 5, 4, 'NULL', 'YES', ''],
+      ]);
+    });
+  });
+
+  // The runner for MySQL, whose client reads the constraints differently,
+  // on the same server.
+  group('MySQL runner', skip: skipMySql, () {
+    late mysql_client.MySQLConnection conn;
+    late MigrationRunner runner;
+
+    setUp(() async {
+      conn = await mysql_client.MySQLConnection.createConnection(
+        host: Platform.environment['MYSQL_HOST'] ?? 'localhost',
+        port: 3306,
+        databaseName: Platform.environment['MYSQL_DB'] ?? 'orm_test',
+        userName: Platform.environment['MYSQL_USERNAME'] ?? 'test',
+        password: Platform.environment['MYSQL_PASSWORD'] ?? 'Test123',
+        secure: true,
+      );
+      await conn.connect();
+      runner = MySqlMigrationRunner(
+        conn,
+        migrations: [PricesMigration(), AlterPricesMigration()],
+      );
+    });
+
+    tearDown(() async {
+      await runner.reset();
+      await conn.close();
+    });
+
+    test('keeps the constraints not given', () async {
+      await runner.up();
+
+      var result = await conn.execute(
+        "SELECT column_name, is_nullable, column_default, extra "
+        "FROM information_schema.columns "
+        "WHERE table_schema = database() AND table_name = 'prices' "
+        "AND column_name IN ('fee', 'id', 'note') ORDER BY column_name",
+      );
+      expect(result.rows.map((r) => [for (var i = 0; i < 4; i++) r.colAt(i)]), [
+        ['fee', 'NO', '0.00', ''],
+        ['id', 'NO', null, 'auto_increment'],
+        ['note', 'YES', "'it''s'", ''],
       ]);
     });
   });

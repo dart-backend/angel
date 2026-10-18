@@ -4,6 +4,7 @@ import 'package:angel3_migration/angel3_migration.dart';
 import 'package:logging/logging.dart';
 import 'package:mysql1/mysql1.dart';
 
+import '../change_column.dart';
 import 'table.dart';
 
 /// A MariaDB database schema generator
@@ -13,12 +14,22 @@ class MariaDbSchema extends Schema {
   final int _indent;
   final StringBuffer _buf;
 
+  /// The text compiled so far, and the alter tables after it, which are
+  /// compiled with the constraints that [run] reads from the database.
+  final List<(String, MariaDbAlterTable, int)> _alters = [];
+
   MariaDbSchema._(this._buf, this._indent);
 
   factory MariaDbSchema() => MariaDbSchema._(StringBuffer(), 0);
 
+  /// The changes of column types, with their tables.
+  Iterable<(String, ColumnModification)> get _modifications => _alters.expand(
+    (alter) => alter.$2.modifications.map((m) => (alter.$2.tableName, m)),
+  );
+
   Future<int> run(MySqlConnection connection) async {
     int affectedRows = 0;
+    await _readExisting(connection);
     await connection.transaction((ctx) async {
       var sql = compile();
       Results? result = await ctx.query(sql).catchError((e) {
@@ -31,7 +42,45 @@ class MariaDbSchema extends Schema {
     return affectedRows;
   }
 
-  String compile() => _buf.toString();
+  /// The SQL of the schema. A change of a column's type keeps the constraints
+  /// not given only when [run] has read them from the database first.
+  ///
+  /// The alter tables are compiled into the text once, so that it can be
+  /// compiled again.
+  String compile() {
+    if (_alters.isNotEmpty) {
+      var rest = _buf.toString();
+      _buf.clear();
+      for (var (text, table, indent) in _alters) {
+        _buf.write(text);
+        table.compile(_buf, indent);
+        _buf.write(';');
+      }
+      _buf.write(rest);
+      _alters.clear();
+    }
+    return _buf.toString();
+  }
+
+  /// Reads the constraints of the columns whose types are changed, which a
+  /// `MODIFY` keeps only if it gives them again, from the database.
+  Future<void> _readExisting(MySqlConnection connection) async {
+    for (var (table, modification) in _modifications) {
+      if (!modification.keepsExisting) continue;
+      var result = await connection.query(
+        existingConstraintsQuery(table, modification.name),
+      );
+      if (result.isEmpty) continue;
+      // `mysql1` may give text as a `Blob`.
+      var row = result.first;
+      modification.existing = ExistingConstraints.parse(
+        isNullable: row[0]?.toString() ?? 'YES',
+        columnDefault: row[1]?.toString(),
+        extra: row[2]?.toString() ?? '',
+        version: row[3]?.toString() ?? '',
+      );
+    }
+  }
 
   void _writeln(String str) {
     for (var i = 0; i < _indent; i++) {
@@ -52,8 +101,8 @@ class MariaDbSchema extends Schema {
     var tbl = MariaDbAlterTable(tableName);
     callback(tbl);
     _writeln('ALTER TABLE $tableName');
-    tbl.compile(_buf, _indent + 1);
-    _buf.write(';');
+    _alters.add((_buf.toString(), tbl, _indent + 1));
+    _buf.clear();
   }
 
   void _create(

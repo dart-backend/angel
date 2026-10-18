@@ -89,10 +89,14 @@ abstract class MutableTable extends Table implements MutableIndexes {
   ///
   /// The column has the constraints given after the change: it is nullable or
   /// not as [isNullable], has the default [defaultValue], and on MySQL and
-  /// MariaDB is `AUTO_INCREMENT` if [autoIncrement]. MySQL and MariaDB define
-  /// the whole column again, so the constraints it has must be given to keep
-  /// them; without them it is nullable without a default. PostgreSQL keeps
-  /// the constraints of the column, and sets those given.
+  /// MariaDB is `AUTO_INCREMENT` or not as [autoIncrement]. Those not given
+  /// (`null`) are kept as they are. MySQL and MariaDB define the whole column
+  /// again, so the migration runner reads them from the database first; they
+  /// keep its `NOT NULL`, `DEFAULT`, `AUTO_INCREMENT` and `ON UPDATE`, but not
+  /// others, such as its `COMMENT` or `COLLATE`.
+  ///
+  /// On PostgreSQL, [using] is the expression that converts the values when
+  /// there is no implicit cast, such as `price::numeric` from `text`.
   ///
   /// Throws an [ArgumentError] if [type] has a precision and [precision] is
   /// not positive, or has a scale and [scale] is negative or greater than the
@@ -105,7 +109,8 @@ abstract class MutableTable extends Table implements MutableIndexes {
     int? scale,
     bool? isNullable,
     Object? defaultValue,
-    bool autoIncrement = false,
+    bool? autoIncrement,
+    String? using,
   });
 
   void dropNotNull(String name);
