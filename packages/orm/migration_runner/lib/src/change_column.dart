@@ -265,6 +265,24 @@ class ColumnModification {
     _column();
   }
 
+  /// This change, and then [later], of the same column, as one: the
+  /// constraints that [later] gives win, and the type is that of the last of
+  /// them that gives one. MySQL and MariaDB take one `MODIFY` of a column in
+  /// a statement.
+  ColumnModification mergedWith(ColumnModification later) {
+    var typed = later.type != null ? later : this;
+    return ColumnModification(
+      name,
+      typed.type,
+      length: typed.length,
+      precision: typed.precision,
+      scale: typed.scale,
+      isNullable: later.isNullable ?? isNullable,
+      defaultValue: later.defaultValue ?? defaultValue,
+      autoIncrement: later.autoIncrement ?? autoIncrement,
+    );
+  }
+
   /// A change of only whether the column [name] is nullable, as [isNullable],
   /// which MySQL and MariaDB make with a `MODIFY` too: it keeps the type of
   /// the column, such as `int(10) unsigned`, and its other constraints.

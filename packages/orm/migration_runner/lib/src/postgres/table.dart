@@ -110,9 +110,9 @@ class PostgresAlterTable extends Table implements MutableTable {
   /// [indent].
   ///
   /// PostgreSQL takes `RENAME COLUMN` and `RENAME TO` only as statements of
-  /// their own, so the clauses between them are one statement each, and those
-  /// after a `RENAME TO` are of the new name. The columns added are clauses
-  /// of the last statement.
+  /// their own, and `DROP COLUMN` is one too, so the clauses between them are
+  /// one statement each, and those after a `RENAME TO` are of the new name.
+  /// The columns added are clauses of the last statement.
   void compile(StringBuffer buf, int indent) {
     var table = tableName;
     var clauses = <String>[];
@@ -126,7 +126,7 @@ class PostgresAlterTable extends Table implements MutableTable {
     }
 
     for (var entry in _stack) {
-      if (entry is _Rename) {
+      if (entry is _Statement) {
         alter(clauses);
         clauses = [];
         alter([entry.clause]);
@@ -269,7 +269,7 @@ END
   @override
   void renameColumn(String name, String newName) {
     _stack.add(
-      _Rename(
+      _Statement(
         'RENAME COLUMN ${sql.quotePostgresIdentifier(name)} '
         'TO ${sql.quotePostgresIdentifier(newName)}',
       ),
@@ -282,13 +282,16 @@ END
 
   @override
   void dropColumn(String name) {
-    _stack.add('DROP COLUMN ${sql.quotePostgresIdentifier(name)}');
+    // A statement of its own, as PostgreSQL rejects the changes of a column
+    // with its drop in one.
+    _stack.add(_Statement('DROP COLUMN ${sql.quotePostgresIdentifier(name)}'));
+    _sequences.remove(name);
   }
 
   @override
   void rename(String newName) {
     _stack.add(
-      _Rename(
+      _Statement(
         'RENAME TO ${sql.quotePostgresIdentifier(newName)}',
         newTableName: newName,
       ),
@@ -313,7 +316,9 @@ END
         return;
     }
 
-    _stack.add('ADD $indexType (${columns.join(',')})');
+    _stack.add(
+      'ADD $indexType (${columns.map(sql.quotePostgresIdentifier).join(',')})',
+    );
   }
 
   @override
@@ -329,13 +334,14 @@ END
   }
 }
 
-/// A `RENAME COLUMN` or `RENAME TO` clause, which PostgreSQL takes only as a
-/// statement of its own, and the new name of the table, if it is renamed.
-class _Rename {
+/// A clause that is a statement of its own: a `RENAME COLUMN` or `RENAME TO`,
+/// which PostgreSQL takes with no other clause, or a `DROP COLUMN`, and the
+/// new name of the table, if it is renamed.
+class _Statement {
   final String clause;
   final String? newTableName;
 
-  _Rename(this.clause, {this.newTableName});
+  _Statement(this.clause, {this.newTableName});
 }
 
 class PostgresIndexes implements MutableIndexes {
@@ -355,13 +361,13 @@ class PostgresIndexes implements MutableIndexes {
     switch (type) {
       case IndexType.primaryKey:
         _stack.add(
-          'ALTER TABLE ${sql.quotePostgresIdentifier(tableName)} ADD PRIMARY KEY (${columns.join(',')});',
+          'ALTER TABLE ${sql.quotePostgresIdentifier(tableName)} ADD PRIMARY KEY (${columns.map(sql.quotePostgresIdentifier).join(',')});',
         );
         break;
       case IndexType.unique:
         _stack.add(
           'CREATE UNIQUE INDEX IF NOT EXISTS ${sql.quotePostgresIdentifier(name)} '
-          'ON ${sql.quotePostgresIdentifier(tableName)} (${columns.join(',')});',
+          'ON ${sql.quotePostgresIdentifier(tableName)} (${columns.map(sql.quotePostgresIdentifier).join(',')});',
         );
         break;
       //case IndexType.standardIndex:
@@ -369,7 +375,7 @@ class PostgresIndexes implements MutableIndexes {
       default:
         _stack.add(
           'CREATE INDEX IF NOT EXISTS ${sql.quotePostgresIdentifier(name)} '
-          'ON ${sql.quotePostgresIdentifier(tableName)} (${columns.join(',')});',
+          'ON ${sql.quotePostgresIdentifier(tableName)} (${columns.map(sql.quotePostgresIdentifier).join(',')});',
         );
         break;
     }

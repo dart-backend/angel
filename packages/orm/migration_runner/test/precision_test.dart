@@ -728,6 +728,21 @@ void main() async {
       }
     });
 
+    test('merges the changes of a column into one MODIFY', () {
+      for (var schema in [MySqlSchema(), MariaDbSchema()]) {
+        schema.alter('t', (t) {
+          t.changeColumnType('a', ColumnType.bigInt, defaultValue: 1);
+          t.setNotNull('`a`');
+          t.dropNotNull('b');
+          t.changeColumnType('b', ColumnType.varChar, length: 9);
+        });
+        var sql = schema.compile();
+        expect(sql, contains('MODIFY `a` bigint NOT NULL DEFAULT 1,'));
+        expect(sql, contains('MODIFY `b` varchar(9);'));
+        expect(RegExp('MODIFY').allMatches(sql), hasLength(2));
+      }
+    });
+
     test('renames a column of MariaDB as MySQL does', () {
       void rename(MutableTable t) => t.renameColumn('a', 'b');
       expect(
@@ -1087,6 +1102,41 @@ void main() async {
       await conn.execute('DROP TABLE defaulted');
     });
 
+    test(
+      'indexes quoted columns, and drops a column changed to serial',
+      () async {
+        await conn.execute('DROP TABLE IF EXISTS "Indexed"');
+        await conn.execute(
+          'CREATE TABLE "Indexed" ("order" int, "Name" text, x int)',
+        );
+        await (PostgresSchema()
+              ..alter('Indexed', (t) {
+                t.addIndex('indexed_order', ['order'], IndexType.unique);
+                t.changeColumnType('x', ColumnType.serial);
+                t.dropColumn('x');
+              })
+              ..indexes(
+                'Indexed',
+                (t) => t.addIndex('indexed_name', [
+                  'Name',
+                ], IndexType.standardIndex),
+              ))
+            .run(conn);
+
+        var indexes = await conn.execute(
+          "SELECT indexname FROM pg_indexes WHERE tablename = 'Indexed' "
+          "ORDER BY indexname",
+        );
+        expect(indexes.map((r) => r.first), ['indexed_name', 'indexed_order']);
+        var columns = await conn.execute(
+          "SELECT column_name FROM information_schema.columns "
+          "WHERE table_name = 'Indexed' ORDER BY column_name",
+        );
+        expect(columns.map((r) => r.first), ['Name', 'order']);
+        await conn.execute('DROP TABLE "Indexed"');
+      },
+    );
+
     test('renames with other changes', () async {
       await conn.execute('DROP TABLE IF EXISTS renamed_pg, renamed_pg2');
       await conn.execute('CREATE TABLE renamed_pg (a int, x int)');
@@ -1374,6 +1424,31 @@ void main() async {
       var row = values.rows.single;
       expect([row.colAt(0), row.colAt(1), row.colAt(2)], ['2', '6', '10']);
       await conn.execute('DROP TABLE generated');
+    });
+
+    test('changes a column twice in one alter', () async {
+      await conn.execute('DROP TABLE IF EXISTS twice');
+      await conn.execute(
+        'CREATE TABLE twice (a int DEFAULT 5, b int NOT NULL)',
+      );
+      await (MySqlSchema()..alter('twice', (t) {
+            t.changeColumnType('a', ColumnType.bigInt);
+            t.setNotNull('a');
+            t.dropNotNull('b');
+            t.changeColumnType('b', ColumnType.varChar, length: 40);
+          }))
+          .run(conn);
+
+      var result = await conn.execute(
+        "SELECT column_name, column_type, is_nullable, column_default "
+        "FROM information_schema.columns WHERE table_schema = database() "
+        "AND table_name = 'twice' ORDER BY column_name",
+      );
+      expect(result.rows.map((r) => [for (var i = 0; i < 4; i++) r.colAt(i)]), [
+        ['a', startsWith('bigint'), 'NO', '5'],
+        ['b', 'varchar(40)', 'YES', anyOf(isNull, 'NULL')],
+      ]);
+      await conn.execute('DROP TABLE twice');
     });
 
     test('alters columns named as reserved words', () async {

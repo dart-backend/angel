@@ -1,5 +1,3 @@
-import 'dart:collection';
-
 import 'package:angel3_migration/angel3_migration.dart';
 import 'package:angel3_orm/angel3_orm.dart';
 
@@ -34,7 +32,7 @@ abstract class ModifyingAlterTable extends Table implements MutableTable {
   final List<ColumnModification> modifications = [];
 
   final Map<String, MigrationColumn> _columns = {};
-  final Queue<Object> _stack = Queue<Object>();
+  final List<Object> _stack = [];
 
   ModifyingAlterTable(
     this.tableName,
@@ -77,9 +75,22 @@ abstract class ModifyingAlterTable extends Table implements MutableTable {
   void setNotNull(String name) =>
       _modify(ColumnModification.nullability(name, isNullable: false));
 
+  /// Adds [modification], or merges it into the one of its column before,
+  /// as MySQL and MariaDB take one `MODIFY` of a column in a statement.
   void _modify(ColumnModification modification) {
-    modifications.add(modification);
-    _stack.add(modification);
+    var name = unquoteIdentifier(modification.name).toLowerCase();
+    var i = modifications.indexWhere(
+      (m) => unquoteIdentifier(m.name).toLowerCase() == name,
+    );
+    if (i < 0) {
+      modifications.add(modification);
+      _stack.add(modification);
+      return;
+    }
+    var earlier = modifications[i];
+    var merged = earlier.mergedWith(modification);
+    modifications[i] = merged;
+    _stack[_stack.indexOf(earlier)] = merged;
   }
 
   @override
