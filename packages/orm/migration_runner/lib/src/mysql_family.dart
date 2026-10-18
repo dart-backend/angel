@@ -84,8 +84,15 @@ class MySqlFamilyGenerator {
     return null;
   }
 
+  /// The `REFERENCES` of [ref], whose table, which may be qualified by its
+  /// database, and column are quoted, as they may be reserved words.
   static String compileReference(MigrationColumnReference ref) {
-    var buf = StringBuffer('REFERENCES ${ref.foreignTable}(${ref.foreignKey})');
+    var table = splitQualifiedName(ref.foreignTable)
+        .map(quoteMySqlIdentifier)
+        .join('.');
+    var buf = StringBuffer(
+      'REFERENCES $table(${quoteMySqlIdentifier(ref.foreignKey)})',
+    );
     if (ref.behavior != null) buf.write(' ${ref.behavior!}');
     return buf.toString();
   }
@@ -208,12 +215,6 @@ abstract class ModifyingAlterTable extends Table implements MutableTable {
     required this.ifExists,
   }) : _statements = [_AlterStatement(tableName)],
        _currentName = tableName;
-
-  /// The changes of column types, whose constraints not given are read from
-  /// the database when the schema is run.
-  List<ColumnModification> get modifications => [
-    for (var statement in _statements) ...statement.modifications,
-  ];
 
   /// Compiles the `ALTER TABLE` statements of the table, which may be
   /// compiled again.
@@ -636,6 +637,7 @@ class _ExistingReader {
         collation: row[9],
         comment: row[10],
         check: checks[row[0]?.toLowerCase()],
+        columnKey: row[11],
       );
     }
   }

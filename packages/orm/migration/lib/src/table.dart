@@ -103,8 +103,10 @@ abstract class MutableTable extends Table implements MutableIndexes {
   /// that the new type cannot have, such as `'n/a'` of an `int`, is removed
   /// with [noDefault]. MySQL and MariaDB define the whole column
   /// again, so the migration runner reads them from the database first; they
-  /// keep its `NOT NULL`, `DEFAULT`, `AUTO_INCREMENT` and `ON UPDATE`, but not
-  /// others, such as its `COMMENT` or `COLLATE`.
+  /// keep its `NOT NULL`, `DEFAULT`, `AUTO_INCREMENT`, `ON UPDATE`, `UNSIGNED`,
+  /// generation, `INVISIBLE` and `COMMENT`, its `CHARACTER SET` and `COLLATE`
+  /// for a type of text, and on MariaDB its `CHECK`, where the new type can
+  /// have them.
   ///
   /// On PostgreSQL, [using] is the expression that converts the values when
   /// there is no implicit cast, such as `price::numeric` from `text`.

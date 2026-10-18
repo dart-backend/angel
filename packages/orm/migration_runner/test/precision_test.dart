@@ -722,15 +722,99 @@ void main() async {
         (ColumnType.serial, null),
         (ColumnType.int, true),
       ]) {
-        var modification = ColumnModification(
-          'id',
-          type,
-          length: 255,
-          autoIncrement: autoIncrement,
-        )..existing = ExistingConstraints(isNullable: false, defaultValue: '0');
+        var modification =
+            ColumnModification(
+                'id',
+                type,
+                length: 255,
+                autoIncrement: autoIncrement,
+              )
+              ..existing = ExistingConstraints(
+                isNullable: false,
+                defaultValue: '0',
+                isKey: true,
+              );
         expect(
           modification.compile(MySqlGenerator.compileColumn),
           'MODIFY `id` int NOT NULL AUTO_INCREMENT',
+        );
+      }
+    });
+
+    test('makes a serial column AUTO_INCREMENT only if it is a key', () {
+      String change({required bool isKey}) =>
+          (ColumnModification('n', ColumnType.serial, length: 255)
+                ..existing = ExistingConstraints(
+                  isNullable: false,
+                  defaultValue: '0',
+                  isKey: isKey,
+                ))
+              .compile(MySqlGenerator.compileColumn);
+      expect(change(isKey: true), 'MODIFY `n` int NOT NULL AUTO_INCREMENT');
+      expect(change(isKey: false), "MODIFY `n` int NOT NULL DEFAULT '0'");
+    });
+
+    test('keeps a column INVISIBLE', () {
+      var e = ExistingConstraints.parse(
+        isNullable: 'YES',
+        columnDefault: null,
+        extra: 'INVISIBLE',
+        version: '8.4.0',
+        columnType: 'int',
+      );
+      expect(e.invisible, isTrue);
+      expect(
+        (ColumnModification.nullability(
+          'secret',
+          isNullable: false,
+        )..existing = e).compile(MySqlGenerator.compileColumn),
+        'MODIFY `secret` int NOT NULL INVISIBLE',
+      );
+    });
+
+    test('drops the json_valid of a JSON column changed to another type', () {
+      var existing = ExistingConstraints(
+        isNullable: true,
+        columnType: 'longtext',
+        check: 'json_valid(`data`)',
+      );
+      expect(
+        (ColumnModification(
+          'data',
+          ColumnType.varChar,
+          length: 20,
+        )..existing = existing).compile(MariaDbGenerator.compileColumn),
+        'MODIFY `data` varchar(20)',
+      );
+      expect(
+        (ColumnModification(
+          'data',
+          ColumnType.json,
+          length: 255,
+        )..existing = existing).compile(MariaDbGenerator.compileColumn),
+        'MODIFY `data` json CHECK (json_valid(`data`))',
+      );
+      // Another CHECK is kept.
+      expect(
+        (ColumnModification('p', ColumnType.bigInt, length: 255)
+              ..existing = ExistingConstraints(
+                isNullable: true,
+                check: '`p` > 0',
+              ))
+            .compile(MariaDbGenerator.compileColumn),
+        'MODIFY `p` bigint CHECK (`p` > 0)',
+      );
+    });
+
+    test('quotes the table and column of a reference', () {
+      for (var schema in [MySqlSchema(), MariaDbSchema()]) {
+        schema.create(
+          't',
+          (t) => t.integer('order_id').references('shop.order', 'id'),
+        );
+        expect(
+          schema.compile(),
+          contains('`order_id` int REFERENCES `shop`.`order`(`id`)'),
         );
       }
     });
@@ -1397,6 +1481,20 @@ void main() async {
       await conn.close();
     });
 
+    test('throws, and does not record a migration that fails', () async {
+      var failing = PostgresMigrationRunner(
+        conn,
+        migrations: [FailingMigration()],
+      );
+      // Creates the migrations table, and rolls back none.
+      await failing.rollback();
+      Future<Object?> count() async =>
+          (await conn.execute('SELECT COUNT(*) FROM migrations')).first[0];
+      var before = await count();
+      await expectLater(failing.up(), throwsA(anything));
+      expect(await count(), before);
+    });
+
     test('creates and alters the columns', () async {
       await runner.up();
 
@@ -1675,6 +1773,49 @@ void main() async {
         throwsA(anything),
       );
       await conn.query('DROP TABLE checked');
+    });
+
+    test('throws, and does not record a migration that fails', () async {
+      var failing = MariaDbMigrationRunner(
+        conn,
+        migrations: [FailingMigration()],
+      );
+      // Creates the migrations table, and rolls back none.
+      await failing.rollback();
+      Future<Object?> count() async =>
+          (await conn.query('SELECT COUNT(*) FROM migrations')).first[0];
+      var before = await count();
+      await expectLater(failing.up(), throwsA(anything));
+      expect(await count(), before);
+    });
+
+    test('keeps a column INVISIBLE, and makes a key serial', () async {
+      await conn.query('DROP TABLE IF EXISTS hidden');
+      await conn.query(
+        // An invisible column that is NOT NULL must have a default.
+        'CREATE TABLE hidden (id int NOT NULL, n int, '
+        'secret int DEFAULT 0 INVISIBLE, PRIMARY KEY (id))',
+      );
+      await (MariaDbSchema()..alter('hidden', (t) {
+            t.changeColumnType('id', ColumnType.serial);
+            // Not a key, so not AUTO_INCREMENT, which the database rejects.
+            t.changeColumnType('n', ColumnType.serial);
+            t.setNotNull('secret');
+          }))
+          .run(conn);
+
+      var rows = await conn.query(
+        'SELECT column_name, is_nullable, extra '
+        'FROM information_schema.columns '
+        "WHERE table_schema = database() AND table_name = 'hidden' "
+        'ORDER BY column_name',
+      );
+      expect(rows.map((r) => [r[0], r[1], r[2].toString().toLowerCase()]), [
+        ['id', 'NO', 'auto_increment'],
+        ['n', 'YES', ''],
+        ['secret', 'NO', 'invisible'],
+      ]);
+      await conn.query('DROP TABLE hidden');
     });
 
     test('runs a migration of more than one statement', () async {

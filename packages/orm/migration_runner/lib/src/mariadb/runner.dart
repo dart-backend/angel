@@ -49,16 +49,16 @@ class MariaDbMigrationRunner implements MigrationRunner {
           //print(result.affectedRows);
           _log.fine('Check and create "migrations" table');
         })
-        .catchError((e) {
-          //print(e);
+        .catchError((Object e) {
           _log.severe('Failed to create "migrations" table.', e);
+          throw e;
         });
 
     var result = await connection.query(
       'SELECT path from migrations ORDER BY id;',
     );
     var legacy = LegacyPaths(
-      result.expand((x) => x).cast<String>().toList(),
+      result.expand((x) => x).whereType<String>().toList(),
       migrations.values,
     );
     for (var MapEntry(key: path, value: name) in legacy.renames.entries) {
@@ -89,11 +89,10 @@ class MariaDbMigrationRunner implements MigrationRunner {
       var curBatch = 0;
       if (result.isNotEmpty) {
         var firstRow = result.toList();
-        var firstBatch = firstRow[0][0] ?? 0;
-        if (firstBatch is! int) {
-          int.tryParse(firstBatch) as int;
-        }
-        curBatch = firstBatch;
+        var firstBatch = firstRow[0][0];
+        curBatch = firstBatch is int
+            ? firstBatch
+            : int.tryParse('${firstBatch ?? 0}') ?? 0;
       }
       var batch = curBatch + 1;
 
@@ -112,7 +111,9 @@ class MariaDbMigrationRunner implements MigrationRunner {
             return result.affectedRows;
           });
         } catch (e) {
-          _log.severe('Failed to insert into "migrations" table.', e);
+          // The migrations after it may depend on it, so none is run.
+          _log.severe('Failed to run migration "$k".', e);
+          rethrow;
         }
       }
     } else {
@@ -130,10 +131,9 @@ class MariaDbMigrationRunner implements MigrationRunner {
     if (result.isNotEmpty) {
       var firstRow = result.toList();
       var firstBatch = firstRow[0][0];
-      if (firstBatch is! int) {
-        int.tryParse(firstBatch) as int;
-      }
-      curBatch = firstBatch;
+      curBatch = firstBatch is int
+          ? firstBatch
+          : int.tryParse('${firstBatch ?? 0}') ?? 0;
     }
 
     result = await connection.query(
@@ -141,7 +141,7 @@ class MariaDbMigrationRunner implements MigrationRunner {
     );
     var existing = <String>[];
     if (result.isNotEmpty) {
-      existing.addAll(result.expand((x) => x).cast<String>());
+      existing.addAll(result.expand((x) => x).whereType<String>());
     }
 
     var toRun = <String>[];
@@ -173,7 +173,7 @@ class MariaDbMigrationRunner implements MigrationRunner {
     );
     var existing = <String>[];
     if (r.isNotEmpty) {
-      existing.addAll(r.expand((x) => x).cast<String>());
+      existing.addAll(r.expand((x) => x).whereType<String>());
     }
 
     var toRun = existing.where(migrations.containsKey).toList();

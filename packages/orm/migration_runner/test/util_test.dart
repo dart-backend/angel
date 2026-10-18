@@ -4,6 +4,8 @@ import 'package:angel3_migration/angel3_migration.dart';
 import 'package:angel3_migration_runner/src/util.dart';
 import 'package:test/test.dart';
 
+import 'models/other_user_migration.dart' as other;
+
 class UserMigration extends Migration {
   @override
   void up(Schema schema) {}
@@ -62,6 +64,18 @@ void main() {
         throwsStateError,
       );
     });
+
+    test('adds none of the queue before it throws', () {
+      var queue = Queue.of(<Migration>[
+        UserMigration(),
+        RenamedMigration(),
+        ClashingMigration(),
+      ]);
+      var migrations = <String, Migration>{};
+      expect(() => addQueuedMigrations(queue, migrations), throwsStateError);
+      expect(migrations, isEmpty);
+      expect(queue, hasLength(3));
+    });
   });
 
   group('LegacyPaths', () {
@@ -110,13 +124,40 @@ void main() {
       expect(legacy.paths, paths);
     });
 
-    test('leaves a class name shared by two migrations as it is', () {
+    test('renames the paths of a class name shared by two migrations', () {
       var legacy = LegacyPaths(
-        ['/app/a.dart#UserMigration'],
-        [UserMigration(), UserMigration()],
+        ['/app/a.dart#UserMigration', '/app/b.dart#UserMigration'],
+        [UserMigration(), other.UserMigration()],
       );
-      expect(legacy.renames, isEmpty);
-      expect(legacy.paths, ['/app/a.dart#UserMigration']);
+      expect(legacy.renames, {
+        '/app/a.dart#UserMigration': 'UserMigration',
+        '/app/b.dart#UserMigration': 'other_users',
+      });
+      expect(legacy.paths, ['UserMigration', 'other_users']);
+
+      // Those recorded by name are not renamed again.
+      legacy = LegacyPaths(
+        ['UserMigration', '/app/b.dart#UserMigration'],
+        [UserMigration(), other.UserMigration()],
+      );
+      expect(legacy.renames, {'/app/b.dart#UserMigration': 'other_users'});
+    });
+
+    test('throws for paths of a shared class name it cannot tell', () {
+      expect(
+        () => LegacyPaths(
+          ['/app/a.dart#UserMigration'],
+          [UserMigration(), other.UserMigration()],
+        ),
+        throwsStateError,
+      );
+    });
+
+    test('renames a path given twice once', () {
+      var path = '/app/a.dart#UserMigration';
+      var legacy = LegacyPaths([path, path], migrations);
+      expect(legacy.renames, {path: 'UserMigration'});
+      expect(legacy.deletes, isEmpty);
     });
   });
 }

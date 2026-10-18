@@ -64,7 +64,7 @@ class PostgresMigrationRunner implements MigrationRunner {
       'SELECT path from migrations ORDER BY id;',
     );
     var legacy = LegacyPaths(
-      r.expand((x) => x).cast<String>().toList(),
+      r.expand((x) => x).whereType<String>().toList(),
       migrations.values,
     );
     for (var MapEntry(key: path, value: name) in legacy.renames.entries) {
@@ -117,9 +117,10 @@ class PostgresMigrationRunner implements MigrationRunner {
                 return result.affectedRows;
               });
             })
-            .catchError((e) {
-              _log.severe('Failed to insert into "migrations" table.');
-              return -1;
+            .catchError((Object e) {
+              // The migrations after it may depend on it, so none is run.
+              _log.severe('Failed to run migration "$k".', e);
+              throw e;
             });
         if (result > 0) {
           _log.info('Inserted "$k" into "migrations" table.');
@@ -139,7 +140,7 @@ class PostgresMigrationRunner implements MigrationRunner {
     r = await connection.execute(
       'SELECT path from migrations WHERE batch = $curBatch;',
     );
-    var existing = r.expand((x) => x).cast<String>();
+    var existing = r.expand((x) => x).whereType<String>();
     var toRun = <String>[];
 
     migrations.forEach((k, v) {
@@ -170,7 +171,7 @@ class PostgresMigrationRunner implements MigrationRunner {
     var r = await connection.execute(
       'SELECT path from migrations ORDER BY batch DESC, id DESC;',
     );
-    var existing = r.expand((x) => x).cast<String>();
+    var existing = r.expand((x) => x).whereType<String>();
     var toRun = existing.where(migrations.containsKey).toList();
 
     if (toRun.isNotEmpty) {

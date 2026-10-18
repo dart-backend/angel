@@ -6,24 +6,27 @@ import 'package:angel3_migration/angel3_migration.dart';
 /// [Migration.name].
 ///
 /// A migration of a class already added is skipped. Throws a [StateError] if
-/// two migrations of different classes have the same name.
+/// two migrations of different classes have the same name, before any of
+/// [queue] is moved, so that none of them is lost.
 void addQueuedMigrations(
   Queue<Migration> queue,
   Map<String, Migration> migrations,
 ) {
-  while (queue.isNotEmpty) {
-    var migration = queue.removeFirst();
+  var added = {...migrations};
+  for (var migration in queue) {
     var name = migration.name;
-    var added = migrations[name];
-    if (added == null) {
-      migrations[name] = migration;
-    } else if (added.runtimeType != migration.runtimeType) {
+    var other = added[name];
+    if (other == null) {
+      added[name] = migration;
+    } else if (other.runtimeType != migration.runtimeType) {
       throw StateError(
-        'Migrations ${added.runtimeType} and ${migration.runtimeType} have '
+        'Migrations ${other.runtimeType} and ${migration.runtimeType} have '
         'the same name "$name"; override `name` in one of them.',
       );
     }
   }
+  queue.clear();
+  migrations.addAll(added);
 }
 
 /// The changes to the paths of the `migrations` table written by a version
@@ -45,18 +48,67 @@ class LegacyPaths {
   /// The changes to [paths], the paths of the table, oldest first, so that
   /// the oldest of the paths of a migration is the one renamed.
   ///
-  /// A path whose class is not that of exactly one of [migrations] is left as
-  /// it is.
+  /// The paths of a class of more than one of [migrations], in different
+  /// files, are those of its migrations not recorded by name, in the order of
+  /// [migrations], if there are as many of them; as a path has no migration
+  /// without its source file, a [StateError] is thrown otherwise, rather than
+  /// running a migration again. A path whose class is not that of one of
+  /// [migrations] is left as it is.
   factory LegacyPaths(List<String> paths, Iterable<Migration> migrations) {
+    var names = paths.where((p) => !p.contains('#')).toSet();
+
+    // The paths of each class, oldest first, each once, as an update or
+    // delete of a path is of all its rows.
+    var byClass = <String, Set<String>>{};
+    for (var path in paths) {
+      var className = _className(path);
+      if (className != null) (byClass[className] ??= {}).add(path);
+    }
+
+    // The new name of each path, or `null` to delete it.
+    var changes = <String, String?>{};
+    for (var MapEntry(key: className, value: classPaths) in byClass.entries) {
+      var classMigrations = migrations
+          .where((m) => m.runtimeType.toString() == className)
+          .toList();
+      if (classMigrations.isEmpty) continue;
+      if (classMigrations.length == 1) {
+        var name = classMigrations.single.name;
+        for (var path in classPaths) {
+          changes[path] = names.add(name) ? name : null;
+        }
+        continue;
+      }
+      var unrecorded = [
+        for (var m in classMigrations)
+          if (!names.contains(m.name)) m.name,
+      ];
+      if (unrecorded.isEmpty) {
+        for (var path in classPaths) {
+          changes[path] = null;
+        }
+      } else if (unrecorded.length == classPaths.length) {
+        for (var (i, path) in classPaths.indexed) {
+          changes[path] = unrecorded[i];
+          names.add(unrecorded[i]);
+        }
+      } else {
+        throw StateError(
+          'Cannot tell which of the migrations ${unrecorded.join(', ')} of '
+          'class $className were run as ${classPaths.join(', ')} in the '
+          '"migrations" table; set the path of each of them that was run to '
+          'its name.',
+        );
+      }
+    }
+
     var renames = <String, String>{};
     var deletes = <String>[];
     var changed = <String>[];
-    var names = paths.where((p) => !p.contains('#')).toSet();
     for (var path in paths) {
-      var name = _legacyName(path, migrations);
-      if (name == null) {
+      if (!changes.containsKey(path)) {
         changed.add(path);
-      } else if (names.add(name)) {
+      } else if (changes[path] case var name?) {
         renames[path] = name;
         changed.add(name);
       } else {
@@ -66,13 +118,8 @@ class LegacyPaths {
     return LegacyPaths._(renames, deletes, changed);
   }
 
-  static String? _legacyName(String path, Iterable<Migration> migrations) {
+  static String? _className(String path) {
     var hash = path.lastIndexOf('#');
-    if (hash < 0) return null;
-    var className = path.substring(hash + 1);
-    var matches = migrations
-        .where((m) => m.runtimeType.toString() == className)
-        .toList();
-    return matches.length == 1 ? matches.single.name : null;
+    return hash < 0 ? null : path.substring(hash + 1);
   }
 }

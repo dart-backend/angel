@@ -43,7 +43,7 @@ String existingConstraintsQuery(
   var generation = generationExpressions ? 'GENERATION_EXPRESSION' : 'NULL';
   return 'SELECT COLUMN_NAME, IS_NULLABLE, COLUMN_DEFAULT, EXTRA, DATA_TYPE, '
       'VERSION(), COLUMN_TYPE, $generation, CHARACTER_SET_NAME, '
-      'COLLATION_NAME, COLUMN_COMMENT '
+      'COLLATION_NAME, COLUMN_COMMENT, COLUMN_KEY '
       'FROM information_schema.columns '
       'WHERE table_schema = $database '
       'AND table_name = $tableName '
@@ -127,6 +127,13 @@ const _blobTypes = {ColumnType.text, ColumnType.nText, ColumnType.image};
 /// rarely JSON.
 const _jsonTypes = {ColumnType.json, ColumnType.jsonb};
 
+/// The `CHECK` that MariaDB gives a `JSON` column, such as
+/// `` json_valid(`data`) ``.
+final RegExp _jsonValid = RegExp(
+  r'^json_valid\([^()]*\)$',
+  caseSensitive: false,
+);
+
 /// The SQL of an expression of MySQL's `COLUMN_DEFAULT`, which escapes the
 /// quotes and backslashes in it with a backslash, as in
 /// `concat(_utf8mb4\'a\',_utf8mb4\'b\')`.
@@ -200,6 +207,13 @@ class ExistingConstraints {
   /// or `null` for none.
   final String? check;
 
+  /// Whether the column is a key, or the first column of one, as a column
+  /// that is `AUTO_INCREMENT` must be.
+  final bool isKey;
+
+  /// Whether the column is `INVISIBLE`, so not in a `SELECT *`.
+  final bool invisible;
+
   /// The version of the server, such as `8.4.0` or `11.4.2-MariaDB`, or
   /// empty if not known.
   final String version;
@@ -216,6 +230,8 @@ class ExistingConstraints {
     this.collation,
     this.comment,
     this.check,
+    this.isKey = false,
+    this.invisible = false,
     this.version = '',
   });
 
@@ -267,6 +283,7 @@ class ExistingConstraints {
     String? collation,
     String? comment,
     String? check,
+    String? columnKey,
   }) {
     var mariaDb = _isMariaDb(version);
     var upperExtra = extra.toUpperCase();
@@ -324,6 +341,8 @@ class ExistingConstraints {
       collation: collation,
       comment: (comment?.isEmpty ?? true) ? null : comment,
       check: check,
+      isKey: columnKey?.isNotEmpty ?? false,
+      invisible: upperExtra.contains('INVISIBLE'),
       version: version,
     );
   }
@@ -405,12 +424,19 @@ class ColumnModification {
   ColumnModification.nullability(String name, {required bool isNullable})
     : this(name, null, length: Column.defaultLength, isNullable: isNullable);
 
-  /// Whether the column is `AUTO_INCREMENT` after the change.
-  bool get _autoIncrement =>
-      autoIncrement ??
-      (serialIntegers.containsKey(type) ||
-          ((type == null || _integerTypes.contains(type)) &&
-              (existing?.autoIncrement ?? false)));
+  /// Whether the column is `AUTO_INCREMENT` after the change: a column of a
+  /// serial type is if it is a key, which MySQL and MariaDB require of it, as
+  /// a `CREATE TABLE` makes only its primary key `AUTO_INCREMENT`. Without
+  /// the constraints [existing], whether it is a key is not known, and it is.
+  bool get _autoIncrement {
+    if (autoIncrement case var given?) return given;
+    var existing = this.existing;
+    if (serialIntegers.containsKey(type)) {
+      return existing == null || existing.isKey || existing.autoIncrement;
+    }
+    return (type == null || _integerTypes.contains(type)) &&
+        (existing?.autoIncrement ?? false);
+  }
 
   /// The default [existing], unless the column cannot have it: of the current
   /// time, but for a date and time type, a literal of a `TEXT` or `BLOB`
@@ -500,13 +526,21 @@ class ColumnModification {
     if (onUpdate != null && (type == null || _dateTimeTypes.contains(type))) {
       sql += ' ON UPDATE $onUpdate';
     }
+    if (existing?.invisible ?? false) sql += ' INVISIBLE';
     var comment = existing?.comment;
     if (comment != null) {
       sql += ' COMMENT ${compileDefault(comment, escapeBackslashes: true)}';
     }
-    // MariaDB drops the CHECK of a column that a MODIFY does not give.
+    // MariaDB drops the CHECK of a column that a MODIFY does not give. That
+    // of a JSON column is not kept for another type, whose values may not be
+    // JSON.
     var check = existing?.check;
-    if (check != null) sql += ' CHECK ($check)';
+    if (check != null &&
+        (type == null ||
+            _jsonTypes.contains(type) ||
+            !_jsonValid.hasMatch(check))) {
+      sql += ' CHECK ($check)';
+    }
     return sql;
   }
 }
