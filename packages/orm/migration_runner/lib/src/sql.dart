@@ -70,6 +70,12 @@ List<String> splitQualifiedName(String name, [String quotes = '`"']) {
   return parts;
 }
 
+/// The table [name], which may be qualified by its database, such as
+/// `shop.orders`, as a MySQL or MariaDB identifier, each part in backticks
+/// (`` `shop`.`orders` ``).
+String quoteMySqlTableName(String name) =>
+    splitQualifiedName(name).map(quoteMySqlIdentifier).join('.');
+
 /// [name] as a PostgreSQL identifier, in double quotes, each of which is
 /// doubled, so that it may be a reserved word or have capitals.
 String quotePostgresIdentifier(String name) =>

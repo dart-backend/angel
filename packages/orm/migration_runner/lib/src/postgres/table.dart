@@ -193,9 +193,19 @@ BEGIN
     CREATE SEQUENCE $sequence AS $integer OWNED BY $column;
     ALTER TABLE $table ALTER COLUMN ${sql.quotePostgresIdentifier(name)} SET DEFAULT nextval(${PostgresGenerator.compileDefault(sequence)});
     PERFORM setval(${PostgresGenerator.compileDefault(sequence)}, COALESCE((SELECT MAX(${sql.quotePostgresIdentifier(name)}) FROM $table), 0)::bigint + 1, false);
-  ELSIF (SELECT t.typlen FROM pg_sequence s JOIN pg_type t ON t.oid = s.seqtypid
-      WHERE s.seqrelid = seq_name::regclass) < ${_integerSizes[integer]} THEN
-    EXECUTE format('ALTER SEQUENCE %s AS $integer', seq_name);
+  ELSE
+    IF (SELECT t.typlen FROM pg_sequence s JOIN pg_type t ON t.oid = s.seqtypid
+        WHERE s.seqrelid = seq_name::regclass) < ${_integerSizes[integer]} THEN
+      EXECUTE format('ALTER SEQUENCE %s AS $integer', seq_name);
+    END IF;
+    -- A column whose default was dropped keeps its sequence, of which it
+    -- gets the default again.
+    IF NOT EXISTS (SELECT 1 FROM pg_attrdef d JOIN pg_attribute a
+        ON a.attrelid = d.adrelid AND a.attnum = d.adnum
+        WHERE d.adrelid = ${PostgresGenerator.compileDefault(table)}::regclass
+        AND a.attname = ${PostgresGenerator.compileDefault(name)}) THEN
+      EXECUTE format('ALTER TABLE ${table.replaceAll('%', '%%')} ALTER COLUMN ${sql.quotePostgresIdentifier(name).replaceAll('%', '%%')} SET DEFAULT nextval(%L::regclass)', seq_name);
+    END IF;
   END IF;
 END
 \$\$;''');
@@ -251,8 +261,10 @@ END
     // A serial type is not a type that a column can be changed to, but an
     // integer with a default from a sequence, which a serial column keeps,
     // and which compileSequences gives a column without one.
+    // With `autoIncrement: false`, a serial type is only its integer, as on
+    // MySQL and MariaDB.
     var integer = sql.serialIntegers[type];
-    if (integer != null || autoIncrement == true) {
+    if ((integer != null && autoIncrement != false) || autoIncrement == true) {
       _sequences[name] = _sequenceTypes[integer ?? type] ?? 'bigint';
     }
     var column = changedColumn(

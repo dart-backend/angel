@@ -23,6 +23,34 @@ This package contains the implementation of the database migration for the follo
 * reset   - Clear out all records in the `migrations` table and drop all the ORM related tables.
 * refresh - Run `reset` follow by `up`
 
+## Migration Names
+
+Each migration is recorded in the `migrations` table by its `Migration.name`, which defaults to the name of its class. Override `name` to keep it stable:
+
+* when the class is renamed, or two migration classes in different files have the same name, and
+* when the program is compiled with `--obfuscate`, which renames classes.
+
+A migration recorded under another name is run again.
+
+```dart
+class CreateUsersMigration extends Migration {
+  @override
+  String get name => 'create_users';
+  ...
+}
+```
+
+### Upgrading from 9.x
+
+Versions before 10.0.0 recorded a migration as `<absolute source file>#<class name>`. On its first run, the runner renames such a row to the migration's `name` when the row's class name belongs to exactly one row and one migration. Otherwise, as when two migrations share a class name, or the project was moved and the migration was recorded at both paths, it throws a `StateError` rather than guess. For those, give the migration a `legacyPath`, the end of the path it was recorded by:
+
+```dart
+@override
+String get legacyPath => 'lib/src/migrations/users.dart#UserMigration';
+```
+
+Or set each `path` of the `migrations` table to the `name` of its migration by hand.
+
 ## Limitation
 
 * Update schema changes is not supported

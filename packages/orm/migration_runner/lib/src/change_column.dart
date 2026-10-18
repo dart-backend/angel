@@ -53,12 +53,23 @@ String existingConstraintsQuery(
 /// Reads the `CHECK` constraints of the columns [columns] of the table
 /// [table] on MariaDB, with the name of each column first, for
 /// [ExistingConstraints.check]. A constraint of a column has its name.
-String columnChecksQuery(String table, Iterable<String> columns) {
+///
+/// MariaDB from 10.5.10, as [version] says, tells a constraint of a column
+/// from one of the table, which may have the name of a column, by its
+/// `LEVEL`; before, a constraint of the table named after a column is read
+/// as that of the column.
+String columnChecksQuery(
+  String table,
+  Iterable<String> columns, {
+  String version = '',
+}) {
   var (database, tableName, columnNames) = _names(table, columns);
+  var level = _isBefore(version, 10, 5, 10) ? '' : "AND LEVEL = 'Column' ";
   return 'SELECT CONSTRAINT_NAME, CHECK_CLAUSE '
       'FROM information_schema.CHECK_CONSTRAINTS '
       'WHERE CONSTRAINT_SCHEMA = $database '
       'AND TABLE_NAME = $tableName '
+      '$level'
       'AND CONSTRAINT_NAME IN (${columnNames.join(', ')})';
 }
 

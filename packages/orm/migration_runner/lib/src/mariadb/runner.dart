@@ -46,34 +46,36 @@ class MariaDbMigrationRunner implements MigrationRunner {
     );
     ''')
         .then((result) {
-          //print(result.affectedRows);
           _log.fine('Check and create "migrations" table');
         })
-        .catchError((Object e) {
-          _log.severe('Failed to create "migrations" table.', e);
-          throw e;
+        .catchError((Object e, StackTrace s) {
+          _log.severe('Failed to create "migrations" table.', e, s);
+          Error.throwWithStackTrace(e, s);
         });
 
-    var result = await connection.query(
-      'SELECT path from migrations ORDER BY id;',
-    );
-    var legacy = LegacyPaths(
-      result.expand((x) => x).whereType<String>().toList(),
+    return applyLegacyPaths(
+      await _paths('SELECT path from migrations ORDER BY id;'),
       migrations.values,
+      rename: (path, name) => connection.query(
+        'UPDATE migrations SET path = ? WHERE path = ?',
+        [name, path],
+      ),
+      delete: _delete,
+      log: _log,
     );
-    for (var MapEntry(key: path, value: name) in legacy.renames.entries) {
-      await connection.query('UPDATE migrations SET path = ? WHERE path = ?', [
-        name,
-        path,
-      ]);
-      _log.info('Renamed "$path" to "$name" in "migrations" table.');
-    }
-    for (var path in legacy.deletes) {
-      await connection.query('DELETE FROM migrations WHERE path = ?', [path]);
-      _log.info('Removed "$path", recorded again, from "migrations" table.');
-    }
-    return legacy.paths;
   }
+
+  /// The paths of [sql], which `mysql1` may give as a `Blob`.
+  Future<List<String>> _paths(String sql) async =>
+      migrationPaths((await connection.query(sql)).expand((x) => x));
+
+  Future<int> _lastBatch() async {
+    var result = await connection.query('SELECT MAX(batch) from migrations;');
+    return batchNumber(result.firstOrNull?[0]);
+  }
+
+  Future<void> _delete(String path) =>
+      connection.query('DELETE FROM migrations WHERE path = ?', [path]);
 
   @override
   Future up() async {
@@ -85,16 +87,7 @@ class MariaDbMigrationRunner implements MigrationRunner {
     });
 
     if (toRun.isNotEmpty) {
-      var result = await connection.query('SELECT MAX(batch) from migrations;');
-      var curBatch = 0;
-      if (result.isNotEmpty) {
-        var firstRow = result.toList();
-        var firstBatch = firstRow[0][0];
-        curBatch = firstBatch is int
-            ? firstBatch
-            : int.tryParse('${firstBatch ?? 0}') ?? 0;
-      }
-      var batch = curBatch + 1;
+      var batch = await _lastBatch() + 1;
 
       for (var k in toRun) {
         var migration = migrations[k]!;
@@ -102,17 +95,14 @@ class MariaDbMigrationRunner implements MigrationRunner {
         migration.up(schema);
         _log.info('Added "$k" into "migrations" table.');
         try {
-          await schema.run(connection).then((_) async {
-            var result = await connection.query(
-              'INSERT INTO migrations (batch, path) VALUES (?, ?)',
-              [batch, k],
-            );
-
-            return result.affectedRows;
-          });
-        } catch (e) {
+          await schema.run(connection);
+          await connection.query(
+            'INSERT INTO migrations (batch, path) VALUES (?, ?)',
+            [batch, k],
+          );
+        } catch (e, s) {
           // The migrations after it may depend on it, so none is run.
-          _log.severe('Failed to run migration "$k".', e);
+          _log.severe('Failed to run migration "$k".', e, s);
           rethrow;
         }
       }
@@ -125,72 +115,37 @@ class MariaDbMigrationRunner implements MigrationRunner {
   Future rollback() async {
     await _init();
 
-    var result = await connection.query('SELECT MAX(batch) from migrations;');
-
-    var curBatch = 0;
-    if (result.isNotEmpty) {
-      var firstRow = result.toList();
-      var firstBatch = firstRow[0][0];
-      curBatch = firstBatch is int
-          ? firstBatch
-          : int.tryParse('${firstBatch ?? 0}') ?? 0;
-    }
-
-    result = await connection.query(
-      'SELECT path from migrations WHERE batch = $curBatch;',
-    );
-    var existing = <String>[];
-    if (result.isNotEmpty) {
-      existing.addAll(result.expand((x) => x).whereType<String>());
-    }
-
-    var toRun = <String>[];
-
-    migrations.forEach((k, v) {
-      if (existing.contains(k)) toRun.add(k);
-    });
-
-    if (toRun.isNotEmpty) {
-      for (var k in toRun.reversed) {
-        var migration = migrations[k]!;
-        var schema = MariaDbSchema();
-        migration.down(schema);
-        _log.info('Removed "$k" from "migrations" table.');
-        await schema.run(connection).then((_) {
-          return connection.query('DELETE FROM migrations WHERE path = ?', [k]);
-        });
-      }
-    } else {
-      _log.warning('Nothing to remove from "migrations" table.');
-    }
+    // The newest first, as it may depend on those before.
+    var toRun = (await _paths(
+      'SELECT path from migrations WHERE batch = ${await _lastBatch()} '
+      'ORDER BY id DESC;',
+    )).where(migrations.containsKey).toList();
+    await _down(toRun);
   }
 
   @override
   Future reset() async {
     await _init();
-    var r = await connection.query(
+    // The newest first, as it may depend on those before.
+    var toRun = (await _paths(
       'SELECT path from migrations ORDER BY batch DESC, id DESC;',
-    );
-    var existing = <String>[];
-    if (r.isNotEmpty) {
-      existing.addAll(r.expand((x) => x).whereType<String>());
-    }
+    )).where(migrations.containsKey).toList();
+    await _down(toRun);
+  }
 
-    var toRun = existing.where(migrations.containsKey).toList();
-
-    if (toRun.isNotEmpty) {
-      // The newest first, as it may depend on those before.
-      for (var k in toRun) {
-        var migration = migrations[k]!;
-        var schema = MariaDbSchema();
-        migration.down(schema);
-        _log.info('Removed "$k" from "migrations" table.');
-        await schema.run(connection).then((_) {
-          return connection.query('DELETE FROM migrations WHERE path = ?', [k]);
-        });
-      }
-    } else {
+  /// Runs the `down` of the migrations [toRun], in order, and removes them
+  /// from the `migrations` table.
+  Future<void> _down(List<String> toRun) async {
+    if (toRun.isEmpty) {
       _log.warning('Nothing to remove from "migrations" table.');
+      return;
+    }
+    for (var k in toRun) {
+      var schema = MariaDbSchema();
+      migrations[k]!.down(schema);
+      _log.info('Removed "$k" from "migrations" table.');
+      await schema.run(connection);
+      await _delete(k);
     }
   }
 

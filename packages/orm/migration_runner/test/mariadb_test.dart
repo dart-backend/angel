@@ -64,12 +64,17 @@ void main() async {
           'C:\\app\\lib\\todo.dart#$name',
         ]);
       }
-      // Recorded again after the project was moved.
+      // Recorded again after the project was moved, so which of them is
+      // that of UserMigration cannot be told, as it has no legacyPath.
       await conn.query(
         "INSERT INTO migrations (batch, path) "
         "VALUES (1, '/moved/lib/todo.dart#UserMigration')",
       );
       try {
+        await expectLater(runner.up(), throwsStateError);
+        await conn.query(
+          "DELETE FROM migrations WHERE path = '/moved/lib/todo.dart#UserMigration'",
+        );
         await runner.up();
         var r = await conn.query('SELECT path FROM migrations;');
         expect(r.map((row) => row[0]), unorderedEquals(names));

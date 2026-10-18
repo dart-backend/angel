@@ -173,6 +173,36 @@ void _expectKept(List<List<String?>> rows) {
   expect(note[1], contains('x'));
 }
 
+/// Creates a table that [ChildMigration] references.
+class ParentMigration extends Migration {
+  @override
+  void up(Schema schema) {
+    schema.create('parents', (t) => t.serial('id').primaryKey());
+  }
+
+  @override
+  void down(Schema schema) {
+    schema.drop('parents');
+  }
+}
+
+/// Creates a table that references that of [ParentMigration], so it must be
+/// rolled back first.
+class ChildMigration extends Migration {
+  @override
+  void up(Schema schema) {
+    schema.create('children', (t) {
+      t.serial('id').primaryKey();
+      t.integer('parent_id').references('parents', 'id');
+    });
+  }
+
+  @override
+  void down(Schema schema) {
+    schema.drop('children');
+  }
+}
+
 /// Fails on the database.
 class FailingMigration extends Migration {
   @override
@@ -806,6 +836,20 @@ void main() async {
       );
     });
 
+    test('quotes each part of the table of an index', () {
+      for (var schema in [MySqlSchema(), MariaDbSchema()]) {
+        schema.indexes('shop.orders', (t) {
+          t.addIndex('i', ['a'], IndexType.standardIndex);
+          t.dropIndex('j');
+          t.dropPrimaryIndex();
+        });
+        var sql = schema.compile();
+        expect(sql, contains('`i` ON `shop`.`orders` (`a`);'));
+        expect(sql, contains('`j` ON `shop`.`orders`;'));
+        expect(sql, contains('DROP INDEX `PRIMARY` ON `shop`.`orders`;'));
+      }
+    });
+
     test('quotes the table and column of a reference', () {
       for (var schema in [MySqlSchema(), MariaDbSchema()]) {
         schema.create(
@@ -980,11 +1024,16 @@ void main() async {
       expect(hasColumnChecks('10.2.21-MariaDB'), isFalse);
       expect(hasColumnChecks('8.4.0'), isFalse);
       expect(
-        columnChecksQuery('`shop`.`t`', ['data']),
+        columnChecksQuery('`shop`.`t`', ['data'], version: '11.4.2-MariaDB'),
         endsWith(
           "CONSTRAINT_SCHEMA = 'shop' AND TABLE_NAME = 't' "
-          "AND CONSTRAINT_NAME IN ('data')",
+          "AND LEVEL = 'Column' AND CONSTRAINT_NAME IN ('data')",
         ),
+      );
+      // MariaDB before 10.5.10 has no LEVEL.
+      expect(
+        columnChecksQuery('t', ['data'], version: '10.5.9-MariaDB'),
+        isNot(contains('LEVEL')),
       );
       expect(
         (ColumnModification.nullability('data', isNullable: false)
@@ -1481,6 +1530,60 @@ void main() async {
       await conn.close();
     });
 
+    test('rolls back the migrations of a batch newest first', () async {
+      await conn.execute('DROP TABLE IF EXISTS children, parents');
+      await PostgresMigrationRunner(
+        conn,
+        migrations: [ParentMigration(), ChildMigration()],
+      ).up();
+      // Given in another order, which is not that they were run in.
+      await PostgresMigrationRunner(
+        conn,
+        migrations: [ChildMigration(), ParentMigration()],
+      ).rollback();
+      var tables = await conn.execute(
+        "SELECT table_name FROM information_schema.tables "
+        "WHERE table_name IN ('parents', 'children')",
+      );
+      expect(tables, isEmpty);
+    });
+
+    test('gives a column that kept its sequence its default again', () async {
+      await conn.execute('DROP TABLE IF EXISTS seq');
+      await conn.execute('CREATE TABLE seq (id serial PRIMARY KEY, n int)');
+      await (PostgresSchema()..alter(
+            'seq',
+            (t) => t.changeColumnType(
+              'id',
+              ColumnType.int,
+              defaultValue: noDefault,
+            ),
+          ))
+          .run(conn);
+      await (PostgresSchema()
+            ..alter('seq', (t) => t.changeColumnType('id', ColumnType.serial)))
+          .run(conn);
+      // Without an id, from the sequence.
+      await conn.execute('INSERT INTO seq (n) VALUES (1)');
+
+      // A serial type with `autoIncrement: false` is only its integer.
+      await (PostgresSchema()..alter(
+            'seq',
+            (t) => t.changeColumnType(
+              'n',
+              ColumnType.bigSerial,
+              autoIncrement: false,
+            ),
+          ))
+          .run(conn);
+      var r = await conn.execute(
+        "SELECT data_type, column_default FROM information_schema.columns "
+        "WHERE table_name = 'seq' AND column_name = 'n'",
+      );
+      expect(r.single.toList(), ['bigint', null]);
+      await conn.execute('DROP TABLE seq');
+    });
+
     test('throws, and does not record a migration that fails', () async {
       var failing = PostgresMigrationRunner(
         conn,
@@ -1816,6 +1919,26 @@ void main() async {
         ['secret', 'NO', 'invisible'],
       ]);
       await conn.query('DROP TABLE hidden');
+    });
+
+    test('rolls back the migrations of a batch newest first', () async {
+      await conn.query('DROP TABLE IF EXISTS children');
+      await conn.query('DROP TABLE IF EXISTS parents');
+      await MariaDbMigrationRunner(
+        conn,
+        migrations: [ParentMigration(), ChildMigration()],
+      ).up();
+      // Given in another order, which is not that they were run in.
+      await MariaDbMigrationRunner(
+        conn,
+        migrations: [ChildMigration(), ParentMigration()],
+      ).rollback();
+      var tables = await conn.query(
+        "SELECT table_name FROM information_schema.tables "
+        "WHERE table_schema = database() "
+        "AND table_name IN ('parents', 'children')",
+      );
+      expect(tables, isEmpty);
     });
 
     test('runs a migration of more than one statement', () async {

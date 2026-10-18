@@ -27,6 +27,21 @@ class RenamedMigration extends Migration {
 
 class ClashingMigration extends RenamedMigration {}
 
+/// A migration recorded as `lib/b.dart#UserMigration` by an earlier version.
+class LegacyMigration extends Migration {
+  @override
+  String get name => 'legacy_users';
+
+  @override
+  String get legacyPath => 'lib/b.dart#UserMigration';
+
+  @override
+  void up(Schema schema) {}
+
+  @override
+  void down(Schema schema) {}
+}
+
 void main() {
   group('Migration.name', () {
     test('defaults to the class name', () {
@@ -78,6 +93,17 @@ void main() {
     });
   });
 
+  test('migrationPaths reads text, and skips NULL', () {
+    expect(migrationPaths(['a', null, StringBuffer('b')]), ['a', 'b']);
+  });
+
+  test('batchNumber reads an int, text and NULL', () {
+    expect(batchNumber(3), 3);
+    expect(batchNumber('4'), 4);
+    expect(batchNumber(null), 0);
+    expect(batchNumber('x'), 0);
+  });
+
   group('LegacyPaths', () {
     var migrations = [UserMigration(), RenamedMigration()];
 
@@ -94,16 +120,29 @@ void main() {
       expect(legacy.paths, ['UserMigration', 'create_todos']);
     });
 
-    test('deletes the later paths of a migration recorded twice', () {
-      var legacy = LegacyPaths([
-        '/old/lib/migrations.dart#UserMigration',
-        '/new/lib/migrations.dart#UserMigration',
-      ], migrations);
+    test('throws for a class name of more than one path', () {
+      // The project was moved, or another migration of the class name was
+      // deleted, which cannot be told.
+      expect(
+        () => LegacyPaths([
+          '/old/lib/migrations.dart#UserMigration',
+          '/new/lib/migrations.dart#UserMigration',
+        ], migrations),
+        throwsStateError,
+      );
+    });
+
+    test('deletes the later paths of a legacyPath recorded twice', () {
+      var legacy = LegacyPaths(
+        [r'C:\old\lib\b.dart#UserMigration', '/new/lib/b.dart#UserMigration'],
+        [LegacyMigration()],
+      );
       expect(legacy.renames, {
-        '/old/lib/migrations.dart#UserMigration': 'UserMigration',
+        r'C:\old\lib\b.dart#UserMigration': 'legacy_users',
       });
-      expect(legacy.deletes, ['/new/lib/migrations.dart#UserMigration']);
-      expect(legacy.paths, ['UserMigration']);
+      expect(legacy.deletes, ['/new/lib/b.dart#UserMigration']);
+      expect(legacy.paths, ['legacy_users']);
+      expect(legacy.byClassName, isEmpty);
     });
 
     test('deletes a path whose name is already recorded', () {
@@ -124,32 +163,39 @@ void main() {
       expect(legacy.paths, paths);
     });
 
-    test('renames the paths of a class name shared by two migrations', () {
-      var legacy = LegacyPaths(
+    test('throws for a class name shared by two migrations', () {
+      // Which of them was run as each path cannot be told.
+      for (var paths in [
+        ['/app/a.dart#UserMigration'],
         ['/app/a.dart#UserMigration', '/app/b.dart#UserMigration'],
-        [UserMigration(), other.UserMigration()],
-      );
-      expect(legacy.renames, {
-        '/app/a.dart#UserMigration': 'UserMigration',
-        '/app/b.dart#UserMigration': 'other_users',
-      });
-      expect(legacy.paths, ['UserMigration', 'other_users']);
-
-      // Those recorded by name are not renamed again.
-      legacy = LegacyPaths(
-        ['UserMigration', '/app/b.dart#UserMigration'],
-        [UserMigration(), other.UserMigration()],
-      );
-      expect(legacy.renames, {'/app/b.dart#UserMigration': 'other_users'});
+      ]) {
+        expect(
+          () => LegacyPaths(paths, [UserMigration(), other.UserMigration()]),
+          throwsStateError,
+        );
+      }
     });
 
-    test('throws for paths of a shared class name it cannot tell', () {
+    test('tells a class name shared by two migrations by a legacyPath', () {
+      var legacy = LegacyPaths(
+        ['/app/lib/a.dart#UserMigration', '/app/lib/b.dart#UserMigration'],
+        [UserMigration(), LegacyMigration()],
+      );
+      expect(legacy.renames, {
+        '/app/lib/a.dart#UserMigration': 'UserMigration',
+        '/app/lib/b.dart#UserMigration': 'legacy_users',
+      });
+      // Only the one told by its class name, which is logged.
+      expect(legacy.byClassName, {'/app/lib/a.dart#UserMigration'});
+    });
+
+    test('matches a legacyPath at the start of a part of the path', () {
       expect(
-        () => LegacyPaths(
-          ['/app/a.dart#UserMigration'],
-          [UserMigration(), other.UserMigration()],
-        ),
-        throwsStateError,
+        LegacyPaths(
+          ['/app/lib/ab.dart#UserMigration'],
+          [LegacyMigration()],
+        ).renames,
+        isEmpty,
       );
     });
 

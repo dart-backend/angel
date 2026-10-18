@@ -87,11 +87,9 @@ class MySqlFamilyGenerator {
   /// The `REFERENCES` of [ref], whose table, which may be qualified by its
   /// database, and column are quoted, as they may be reserved words.
   static String compileReference(MigrationColumnReference ref) {
-    var table = splitQualifiedName(ref.foreignTable)
-        .map(quoteMySqlIdentifier)
-        .join('.');
     var buf = StringBuffer(
-      'REFERENCES $table(${quoteMySqlIdentifier(ref.foreignKey)})',
+      'REFERENCES ${quoteMySqlTableName(ref.foreignTable)}'
+      '(${quoteMySqlIdentifier(ref.foreignKey)})',
     );
     if (ref.behavior != null) buf.write(' ${ref.behavior!}');
     return buf.toString();
@@ -151,7 +149,7 @@ class MySqlFamilyIndexes implements CompiledIndexes {
 
   @override
   void addIndex(String name, List<String> columns, IndexType type) {
-    var table = quoteMySqlIdentifier(tableName);
+    var table = quoteMySqlTableName(tableName);
     var columnList = columns.map(quoteMySqlIdentifier).join(',');
     var ifNotExists = ifExists ? 'IF NOT EXISTS ' : '';
     var index = quoteMySqlIdentifier(name);
@@ -169,14 +167,14 @@ class MySqlFamilyIndexes implements CompiledIndexes {
   void dropIndex(String name) {
     _statements.add(
       'DROP INDEX ${ifExists ? 'IF EXISTS ' : ''}${quoteMySqlIdentifier(name)} '
-      'ON ${quoteMySqlIdentifier(tableName)};',
+      'ON ${quoteMySqlTableName(tableName)};',
     );
   }
 
   @override
   void dropPrimaryIndex() {
     _statements.add(
-      'DROP INDEX `PRIMARY` ON ${quoteMySqlIdentifier(tableName)};',
+      'DROP INDEX `PRIMARY` ON ${quoteMySqlTableName(tableName)};',
     );
   }
 }
@@ -611,7 +609,7 @@ class _ExistingReader {
     var checks = {
       if (hasColumnChecks(version))
         for (var row in await query(
-          columnChecksQuery(statement.tableName, columns),
+          columnChecksQuery(statement.tableName, columns, version: version),
         ))
           row[0]?.toLowerCase(): row[1],
     };

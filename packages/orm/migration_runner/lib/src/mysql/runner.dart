@@ -52,36 +52,38 @@ class MySqlMigrationRunner implements MigrationRunner {
     );
     ''')
         .then((result) {
-          //print(result);
           _log.info('Check and create "migrations" table');
         })
-        .catchError((e) {
-          //print(e);
-          _log.severe('Failed to create "migrations" table.');
-          throw e;
+        .catchError((Object e, StackTrace s) {
+          _log.severe('Failed to create "migrations" table.', e, s);
+          Error.throwWithStackTrace(e, s);
         });
 
-    var result = await connection.execute(
-      'SELECT path from migrations ORDER BY id;',
-    );
-    var legacy = LegacyPaths([
-      for (var row in result.rows) row.colAt(0) ?? '',
-    ], migrations.values);
-    for (var MapEntry(key: path, value: name) in legacy.renames.entries) {
-      await connection.execute(
+    return applyLegacyPaths(
+      await _paths('SELECT path from migrations ORDER BY id;'),
+      migrations.values,
+      rename: (path, name) => connection.execute(
         'UPDATE migrations SET path = :name WHERE path = :path',
         {'name': name, 'path': path},
-      );
-      _log.info('Renamed "$path" to "$name" in "migrations" table.');
-    }
-    for (var path in legacy.deletes) {
-      await connection.execute('DELETE FROM migrations WHERE path = :path', {
-        'path': path,
-      });
-      _log.info('Removed "$path", recorded again, from "migrations" table.');
-    }
-    return legacy.paths;
+      ),
+      delete: _delete,
+      log: _log,
+    );
   }
+
+  Future<List<String>> _paths(String sql) async => migrationPaths([
+    for (var row in (await connection.execute(sql)).rows) row.colAt(0),
+  ]);
+
+  Future<int> _lastBatch() async {
+    var result = await connection.execute('SELECT MAX(batch) from migrations;');
+    return batchNumber(result.rows.firstOrNull?.colAt(0));
+  }
+
+  Future<void> _delete(String path) => connection.execute(
+    'DELETE FROM migrations WHERE path = :path',
+    {'path': path},
+  );
 
   @override
   Future up() async {
@@ -93,34 +95,24 @@ class MySqlMigrationRunner implements MigrationRunner {
     });
 
     if (toRun.isNotEmpty) {
-      var result = await connection.execute(
-        'SELECT MAX(batch) from migrations;',
-      );
-      var curBatch = 0;
-      if (result.rows.isNotEmpty) {
-        var firstRow = result.rows.first;
-        curBatch = int.tryParse(firstRow.colAt(0) ?? "0") ?? 0;
-      }
-      curBatch++;
+      var batch = await _lastBatch() + 1;
 
       for (var k in toRun) {
         var migration = migrations[k]!;
         var schema = MySqlSchema();
         migration.up(schema);
         _log.info('Added "$k" into "migrations" table.');
-        await schema.run(connection).then((_) async {
-          var result = await connection
-              .execute(
-                'INSERT INTO migrations (batch, path) VALUES (:batch, :path)',
-                {'batch': curBatch, 'path': k},
-              )
-              .catchError((e) {
-                _log.severe('Failed to insert into "migrations" table.', e);
-                throw Exception(e);
-              });
-
-          return result.affectedRows.toInt();
-        });
+        // Throws if it fails, as the migrations after it may depend on it.
+        await schema.run(connection);
+        await connection
+            .execute(
+              'INSERT INTO migrations (batch, path) VALUES (:batch, :path)',
+              {'batch': batch, 'path': k},
+            )
+            .catchError((Object e, StackTrace s) {
+              _log.severe('Failed to insert into "migrations" table.', e, s);
+              Error.throwWithStackTrace(e, s);
+            });
       }
     } else {
       _log.warning('Nothing to add into "migrations" table.');
@@ -131,72 +123,37 @@ class MySqlMigrationRunner implements MigrationRunner {
   Future rollback() async {
     await _init();
 
-    var result = await connection.execute('SELECT MAX(batch) from migrations;');
-    var curBatch = 0;
-    if (result.rows.isNotEmpty) {
-      var firstRow = result.rows.first;
-      curBatch = int.tryParse(firstRow.colAt(0) ?? "0") ?? 0;
-    }
-    result = await connection.execute(
-      'SELECT path from migrations WHERE batch = $curBatch;',
-    );
-    var existing = <String>[];
-    for (var item in result.rows) {
-      existing.add(item.colAt(0) ?? '');
-    }
-    var toRun = <String>[];
-
-    migrations.forEach((k, v) {
-      if (existing.contains(k)) toRun.add(k);
-    });
-
-    if (toRun.isNotEmpty) {
-      for (var k in toRun.reversed) {
-        var migration = migrations[k]!;
-        var schema = MySqlSchema();
-        migration.down(schema);
-        _log.info('Removed "$k" from "migrations" table.');
-        await schema.run(connection).then((_) {
-          return connection.execute(
-            'DELETE FROM migrations WHERE path = :path',
-            {'path': k},
-          );
-        });
-      }
-    } else {
-      _log.warning('Nothing to remove from "migrations" table.');
-    }
+    // The newest first, as it may depend on those before.
+    var toRun = (await _paths(
+      'SELECT path from migrations WHERE batch = ${await _lastBatch()} '
+      'ORDER BY id DESC;',
+    )).where(migrations.containsKey).toList();
+    await _down(toRun);
   }
 
   @override
   Future reset() async {
     await _init();
-    var result = await connection.execute(
+    // The newest first, as it may depend on those before.
+    var toRun = (await _paths(
       'SELECT path from migrations ORDER BY batch DESC, id DESC;',
-    );
-    var existing = <String>[];
-    for (var item in result.rows) {
-      existing.add(item.colAt(0) ?? '');
-    }
+    )).where(migrations.containsKey).toList();
+    await _down(toRun);
+  }
 
-    var toRun = existing.where(migrations.containsKey).toList();
-
-    if (toRun.isNotEmpty) {
-      // The newest first, as it may depend on those before.
-      for (var k in toRun) {
-        var migration = migrations[k]!;
-        var schema = MySqlSchema();
-        migration.down(schema);
-        _log.info('Removed "$k" from "migrations" table.');
-        await schema.run(connection).then((_) {
-          return connection.execute(
-            'DELETE FROM migrations WHERE path = :path',
-            {'path': k},
-          );
-        });
-      }
-    } else {
+  /// Runs the `down` of the migrations [toRun], in order, and removes them
+  /// from the `migrations` table.
+  Future<void> _down(List<String> toRun) async {
+    if (toRun.isEmpty) {
       _log.warning('Nothing to remove from "migrations" table.');
+      return;
+    }
+    for (var k in toRun) {
+      var schema = MySqlSchema();
+      migrations[k]!.down(schema);
+      _log.info('Removed "$k" from "migrations" table.');
+      await schema.run(connection);
+      await _delete(k);
     }
   }
 
