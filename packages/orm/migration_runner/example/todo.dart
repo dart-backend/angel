@@ -1,6 +1,6 @@
 import 'package:angel3_migration/angel3_migration.dart';
 
-class UserMigration implements Migration {
+class UserMigration extends Migration {
   @override
   void up(Schema schema) {
     schema.create('users', (table) {
@@ -18,7 +18,7 @@ class UserMigration implements Migration {
   }
 }
 
-class TodoMigration implements Migration {
+class TodoMigration extends Migration {
   @override
   void up(Schema schema) {
     schema.create('todos', (table) {

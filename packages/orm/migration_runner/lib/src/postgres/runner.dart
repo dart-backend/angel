@@ -35,11 +35,7 @@ class PostgresMigrationRunner implements MigrationRunner {
   }
 
   Future<void> _init() async {
-    while (_migrationQueue.isNotEmpty) {
-      var migration = _migrationQueue.removeFirst();
-      var path = await absoluteSourcePath(migration.runtimeType);
-      migrations.putIfAbsent(path.replaceAll('\\', '\\\\'), () => migration);
-    }
+    addQueuedMigrations(_migrationQueue, migrations);
 
     _connected = connection.isOpen;
     if (!_connected) {
@@ -62,6 +58,19 @@ class PostgresMigrationRunner implements MigrationRunner {
           _log.severe('Failed to create "migrations" table.');
           throw e;
         });
+
+    var r = await connection.execute('SELECT path from migrations;');
+    var renames = legacyPathRenames(
+      r.expand((x) => x).cast<String>(),
+      migrations.values,
+    );
+    for (var MapEntry(key: path, value: name) in renames.entries) {
+      await connection.execute(
+        Sql.named('UPDATE migrations SET path = @name WHERE path = @path'),
+        parameters: {'name': name, 'path': path},
+      );
+      _log.info('Renamed "$path" to "$name" in "migrations" table.');
+    }
   }
 
   @override
@@ -90,7 +99,10 @@ class PostgresMigrationRunner implements MigrationRunner {
             .then((_) {
               return connection.runTx((ctx) async {
                 var result = await ctx.execute(
-                  "INSERT INTO MIGRATIONS (batch, path) VALUES ($batch, '$k')",
+                  Sql.named(
+                    'INSERT INTO migrations (batch, path) VALUES (@batch, @path)',
+                  ),
+                  parameters: {'batch': batch, 'path': k},
                 );
 
                 return result.affectedRows;
@@ -133,7 +145,8 @@ class PostgresMigrationRunner implements MigrationRunner {
         _log.info('Removed "$k" from "migrations" table.');
         await schema.run(connection).then((_) {
           return connection.execute(
-            'DELETE FROM migrations WHERE path = \'$k\';',
+            Sql.named('DELETE FROM migrations WHERE path = @path'),
+            parameters: {'path': k},
           );
         });
       }
@@ -160,7 +173,8 @@ class PostgresMigrationRunner implements MigrationRunner {
         _log.info('Removed "$k" from "migrations" table.');
         await schema.run(connection).then((_) {
           return connection.execute(
-            'DELETE FROM migrations WHERE path = \'$k\';',
+            Sql.named('DELETE FROM migrations WHERE path = @path'),
+            parameters: {'path': k},
           );
         });
       }

@@ -35,11 +35,7 @@ class MySqlMigrationRunner implements MigrationRunner {
   }
 
   Future _init() async {
-    while (_migrationQueue.isNotEmpty) {
-      var migration = _migrationQueue.removeFirst();
-      var path = await absoluteSourcePath(migration.runtimeType);
-      migrations.putIfAbsent(path.replaceAll('\\', '\\\\'), () => migration);
-    }
+    addQueuedMigrations(_migrationQueue, migrations);
 
     if (!_connected) {
       _connected = true;
@@ -63,6 +59,19 @@ class MySqlMigrationRunner implements MigrationRunner {
           _log.severe('Failed to create "migrations" table.');
           throw e;
         });
+
+    var result = await connection.execute('SELECT path from migrations;');
+    var renames = legacyPathRenames(
+      result.rows.map((row) => row.colAt(0) ?? ''),
+      migrations.values,
+    );
+    for (var MapEntry(key: path, value: name) in renames.entries) {
+      await connection.execute(
+        'UPDATE migrations SET path = :name WHERE path = :path',
+        {'name': name, 'path': path},
+      );
+      _log.info('Renamed "$path" to "$name" in "migrations" table.');
+    }
   }
 
   @override
@@ -71,8 +80,7 @@ class MySqlMigrationRunner implements MigrationRunner {
     var result = await connection.execute('SELECT path from migrations;');
     var existing = <String>[];
     for (var item in result.rows) {
-      var rec = item.assoc().values.first ?? "";
-      existing.add(rec.replaceAll("\\", "\\\\"));
+      existing.add(item.colAt(0) ?? '');
     }
     var toRun = <String>[];
 
@@ -99,7 +107,8 @@ class MySqlMigrationRunner implements MigrationRunner {
         await schema.run(connection).then((_) async {
           var result = await connection
               .execute(
-                "INSERT INTO migrations (batch, path) VALUES ($curBatch, '$k')",
+                'INSERT INTO migrations (batch, path) VALUES (:batch, :path)',
+                {'batch': curBatch, 'path': k},
               )
               .catchError((e) {
                 _log.severe('Failed to insert into "migrations" table.', e);
@@ -129,8 +138,7 @@ class MySqlMigrationRunner implements MigrationRunner {
     );
     var existing = <String>[];
     for (var item in result.rows) {
-      var rec = item.assoc().values.first ?? "";
-      existing.add(rec.replaceAll("\\", "\\\\"));
+      existing.add(item.colAt(0) ?? '');
     }
     var toRun = <String>[];
 
@@ -146,7 +154,8 @@ class MySqlMigrationRunner implements MigrationRunner {
         _log.info('Removed "$k" from "migrations" table.');
         await schema.run(connection).then((_) {
           return connection.execute(
-            'DELETE FROM migrations WHERE path = \'$k\';',
+            'DELETE FROM migrations WHERE path = :path',
+            {'path': k},
           );
         });
       }
@@ -161,13 +170,9 @@ class MySqlMigrationRunner implements MigrationRunner {
     var result = await connection.execute(
       'SELECT path from migrations ORDER BY batch DESC, id DESC;',
     );
-
-    // "mysql_client" driver will auto convert path containing "\\" to "\".
-    // So need to revert "\" back to "\\" for the migration logic to work
     var existing = <String>[];
     for (var item in result.rows) {
-      var rec = item.assoc().values.first ?? "";
-      existing.add(rec.replaceAll("\\", "\\\\"));
+      existing.add(item.colAt(0) ?? '');
     }
 
     var toRun = existing.where(migrations.containsKey).toList();
@@ -181,7 +186,8 @@ class MySqlMigrationRunner implements MigrationRunner {
         _log.info('Removed "$k" from "migrations" table.');
         await schema.run(connection).then((_) {
           return connection.execute(
-            'DELETE FROM migrations WHERE path = \'$k\';',
+            'DELETE FROM migrations WHERE path = :path',
+            {'path': k},
           );
         });
       }

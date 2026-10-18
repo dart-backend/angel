@@ -55,6 +55,28 @@ void main() async {
       print("Test migration reset");
       await runner.reset();
     });
+
+    test('up renames the paths of earlier versions', () async {
+      var names = [
+        'CarMigration',
+        'UserMigration',
+        'TodoMigration',
+        'ItemMigration',
+      ];
+      for (var name in names) {
+        await conn.execute(
+          Sql.named('INSERT INTO migrations (batch, path) VALUES (1, @path)'),
+          parameters: {'path': 'C:\\\\app\\\\lib\\\\todo.dart#$name'},
+        );
+      }
+      try {
+        await runner.up();
+        var r = await conn.execute('SELECT path FROM migrations;');
+        expect(r.expand((x) => x), unorderedEquals(names));
+      } finally {
+        await conn.execute('DELETE FROM migrations;');
+      }
+    });
   });
 
   tearDown(() async {

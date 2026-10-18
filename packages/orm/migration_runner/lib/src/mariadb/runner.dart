@@ -33,11 +33,7 @@ class MariaDbMigrationRunner implements MigrationRunner {
   }
 
   Future _init() async {
-    while (_migrationQueue.isNotEmpty) {
-      var migration = _migrationQueue.removeFirst();
-      var path = await absoluteSourcePath(migration.runtimeType);
-      migrations.putIfAbsent(path.replaceAll('\\', '\\\\'), () => migration);
-    }
+    addQueuedMigrations(_migrationQueue, migrations);
 
     await connection
         .query('''
@@ -56,6 +52,19 @@ class MariaDbMigrationRunner implements MigrationRunner {
           //print(e);
           _log.severe('Failed to create "migrations" table.', e);
         });
+
+    var result = await connection.query('SELECT path from migrations;');
+    var renames = legacyPathRenames(
+      result.expand((x) => x).cast<String>(),
+      migrations.values,
+    );
+    for (var MapEntry(key: path, value: name) in renames.entries) {
+      await connection.query('UPDATE migrations SET path = ? WHERE path = ?', [
+        name,
+        path,
+      ]);
+      _log.info('Renamed "$path" to "$name" in "migrations" table.');
+    }
   }
 
   @override
@@ -65,10 +74,7 @@ class MariaDbMigrationRunner implements MigrationRunner {
 
     var existing = <String>[];
     if (result.isNotEmpty) {
-      var pathList = result.expand((x) => x).cast<String>().toList();
-      for (var path in pathList) {
-        existing.add(path.replaceAll("\\", "\\\\"));
-      }
+      existing.addAll(result.expand((x) => x).cast<String>());
     }
 
     var toRun = <String>[];
@@ -97,7 +103,8 @@ class MariaDbMigrationRunner implements MigrationRunner {
         try {
           await schema.run(connection).then((_) async {
             var result = await connection.query(
-              "INSERT INTO migrations (batch, path) VALUES ($batch, '$k')",
+              'INSERT INTO migrations (batch, path) VALUES (?, ?)',
+              [batch, k],
             );
 
             return result.affectedRows;
@@ -132,10 +139,7 @@ class MariaDbMigrationRunner implements MigrationRunner {
     );
     var existing = <String>[];
     if (result.isNotEmpty) {
-      var pathList = result.expand((x) => x).cast<String>().toList();
-      for (var path in pathList) {
-        existing.add(path.replaceAll("\\", "\\\\"));
-      }
+      existing.addAll(result.expand((x) => x).cast<String>());
     }
 
     var toRun = <String>[];
@@ -151,9 +155,7 @@ class MariaDbMigrationRunner implements MigrationRunner {
         migration.down(schema);
         _log.info('Removed "$k" from "migrations" table.');
         await schema.run(connection).then((_) {
-          return connection.query(
-            'DELETE FROM migrations WHERE path = \'$k\';',
-          );
+          return connection.query('DELETE FROM migrations WHERE path = ?', [k]);
         });
       }
     } else {
@@ -169,10 +171,7 @@ class MariaDbMigrationRunner implements MigrationRunner {
     );
     var existing = <String>[];
     if (r.isNotEmpty) {
-      var pathList = r.expand((x) => x).cast<String>().toList();
-      for (var path in pathList) {
-        existing.add(path.replaceAll("\\", "\\\\"));
-      }
+      existing.addAll(r.expand((x) => x).cast<String>());
     }
 
     var toRun = existing.where(migrations.containsKey).toList();
@@ -185,9 +184,7 @@ class MariaDbMigrationRunner implements MigrationRunner {
         migration.down(schema);
         _log.info('Removed "$k" from "migrations" table.');
         await schema.run(connection).then((_) {
-          return connection.query(
-            'DELETE FROM migrations WHERE path = \'$k\';',
-          );
+          return connection.query('DELETE FROM migrations WHERE path = ?', [k]);
         });
       }
     } else {
