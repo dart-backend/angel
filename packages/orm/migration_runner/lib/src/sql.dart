@@ -66,11 +66,11 @@ const Map<ColumnType, ColumnType> serialIntegers = {
 /// doubled, so that it may be a reserved word such as `order`. A name already
 /// in backticks, such as `` `order` ``, is quoted once.
 String quoteMySqlIdentifier(String name) =>
-    _quoteMySqlPart(unquoteIdentifier(name, '`'));
+    quoteMySqlPart(unquoteIdentifier(name, '`'));
 
 /// [part], a name without its backticks, in backticks, each of which is
 /// doubled; it is not unquoted again.
-String _quoteMySqlPart(String part) => '`${part.replaceAll('`', '``')}`';
+String quoteMySqlPart(String part) => '`${part.replaceAll('`', '``')}`';
 
 /// [name] without the [quotes] around it, of which each doubled one in it is
 /// one, as `` `a``b` `` is `` a`b ``. A name not in one of them is as it is.
@@ -115,18 +115,20 @@ List<String> splitQualifiedName(String name, [String quotes = '`"']) {
 
 /// The table [name], which may be qualified by its database, such as
 /// `shop.orders`, as a MySQL or MariaDB identifier, each part in backticks
-/// (`` `shop`.`orders` ``).
+/// (`` `shop`.`orders` ``). A part may be given in backticks or in double
+/// quotes, as earlier versions took it.
 String quoteMySqlTableName(String name) =>
-    splitQualifiedName(name, '`').map(_quoteMySqlPart).join('.');
+    splitQualifiedName(name).map(quoteMySqlPart).join('.');
 
 /// The [column] of an index as SQL: a name, which may be in quotes, quoted
-/// by [quote], and as it is otherwise, as it may be a prefix, such as
-/// `body(100)`, an expression, such as `lower(email)`, or have an order, such
-/// as `email DESC`.
+/// by [quote], which takes it without its quotes, such as [quoteMySqlPart] or
+/// [quotePostgresPart], and as it is otherwise, as it may be a prefix, such
+/// as `body(100)`, an expression, such as `lower(email)`, or have an order,
+/// such as `email DESC`.
 String compileIndexColumn(String column, String Function(String) quote) {
   var name = column.trim();
-  // A name in either quotes is quoted again by [quote], as MySQL reads one
-  // in double quotes as a string, and PostgreSQL has no backticks.
+  // A name in either quotes is unquoted once and quoted by [quote], as MySQL
+  // reads one in double quotes as a string, and PostgreSQL has no backticks.
   if (_quotedName.hasMatch(name)) return quote(unquoteIdentifier(name));
   if (_plainName.hasMatch(name)) return quote(name);
   return column;
@@ -177,24 +179,24 @@ String quotePostgresInSchemaOf(String table, String name) {
 /// The table [table] renamed to [newName], which stays in the schema of
 /// [table], as PostgreSQL keeps a table renamed in its schema.
 ///
-/// [newName] may be qualified by that schema only, as a `RENAME TO` does not
-/// move a table to another schema, which `ALTER TABLE ... SET SCHEMA` does;
-/// another throws an [ArgumentError].
+/// [newName] may be qualified by that schema, as a `RENAME TO` does not move
+/// a table to another schema, which `ALTER TABLE ... SET SCHEMA` does; another
+/// throws an [ArgumentError]. If [table] is not qualified, its schema is not
+/// known, and a qualified [newName] is taken to be of it.
 String renamedPostgresTable(String table, String newName) {
   var parts = postgresNameParts(table);
   var newParts = postgresNameParts(newName);
-  var schema = parts.sublist(0, parts.length - 1);
-  var newSchema = newParts.sublist(0, newParts.length - 1);
-  if (newSchema.isNotEmpty &&
-      (newSchema.length != schema.length ||
-          [for (var i = 0; i < schema.length; i++) newSchema[i] == schema[i]]
-              .contains(false))) {
+  if (parts.length == 1) return quotePostgresTableName(newName);
+  // Compared quoted, so that a part with a dot is not read as two.
+  String schemaOf(List<String> parts) =>
+      parts.sublist(0, parts.length - 1).map(quotePostgresPart).join('.');
+  var schema = schemaOf(parts);
+  if (newParts.length > 1 && schemaOf(newParts) != schema) {
     throw ArgumentError.value(
       newName,
       'newName',
-      'A table is renamed in its schema, ${schema.isEmpty ? 'which is not '
-                    'given by $table' : schema.join('.')}; to move it to another, '
-          'use SET SCHEMA',
+      'A table is renamed in its schema, $schema; to move it to another, use '
+          'SET SCHEMA',
     );
   }
   return quotePostgresInSchemaOf(table, newParts.last);

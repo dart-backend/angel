@@ -151,7 +151,7 @@ class MySqlFamilyIndexes implements CompiledIndexes {
   void addIndex(String name, List<String> columns, IndexType type) {
     var table = quoteMySqlTableName(tableName);
     var columnList = columns
-        .map((c) => compileIndexColumn(c, quoteMySqlIdentifier))
+        .map((c) => compileIndexColumn(c, quoteMySqlPart))
         .join(',');
     var ifNotExists = ifExists ? 'IF NOT EXISTS ' : '';
     var index = quoteMySqlIdentifier(name);
@@ -389,7 +389,7 @@ abstract class ModifyingAlterTable extends Table implements MutableTable {
       IndexType.none => 'INDEX $ifNotExists${quoteMySqlIdentifier(name)}',
     };
     _add(
-      'ADD $indexType (${columns.map((c) => compileIndexColumn(c, quoteMySqlIdentifier)).join(',')})',
+      'ADD $indexType (${columns.map((c) => compileIndexColumn(c, quoteMySqlPart)).join(',')})',
       columns,
     );
   }

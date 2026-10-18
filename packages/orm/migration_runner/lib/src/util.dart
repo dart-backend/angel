@@ -12,8 +12,7 @@ import 'package:logging/logging.dart';
 /// the same name, as do two of a class that takes arguments, such as
 /// `TableMigration('users')` and `TableMigration('posts')`, which would be
 /// recorded as one, before any of [queue] is moved, so that none of them is
-/// lost. A name with a `#` throws an [ArgumentError] too, as the `#` tells a
-/// path written by a version before 10.0.0, as [LegacyPaths] reads it.
+/// lost.
 void addQueuedMigrations(
   Queue<Migration> queue,
   Map<String, Migration> migrations, {
@@ -23,13 +22,6 @@ void addQueuedMigrations(
   var added = {...migrations};
   for (var migration in queue) {
     var name = migration.name;
-    if (name.contains('#')) {
-      throw ArgumentError.value(
-        name,
-        '${migration.runtimeType}.name',
-        'may not have a #, which tells a path of an earlier version',
-      );
-    }
     var other = added[name];
     if (other == null) {
       added[name] = migration;
@@ -124,11 +116,11 @@ class LegacyPaths {
   /// the oldest of the paths of a migration is the one renamed. A path whose
   /// class is not that of one of [migrations] is left as it is.
   factory LegacyPaths(List<String> paths, Iterable<Migration> migrations) {
-    var names = paths.where((p) => !p.contains('#')).toSet();
+    var names = paths.where((p) => !isLegacyPath(p)).toSet();
     // Each once, as an update or delete of a path is of all its rows.
     var legacy = {
       for (var path in paths)
-        if (path.contains('#')) path,
+        if (isLegacyPath(path)) path,
     };
 
     var migrationOf = <String, Migration>{};
@@ -202,6 +194,14 @@ class LegacyPaths {
     byClassName.retainAll(renames.keys);
     return LegacyPaths._(renames, byClassName, deletes, changed);
   }
+
+  /// Whether [path] is one written by a version before 10.0.0, of a source
+  /// file and the name of a class, such as `/app/lib/users.dart#UserMigration`,
+  /// rather than a [Migration.name], which may have a `#` too, such as
+  /// `users#v2`.
+  static bool isLegacyPath(String path) => _legacyPath.hasMatch(path);
+
+  static final RegExp _legacyPath = RegExp(r'\.dart#[A-Za-z_$][\w$]*$');
 
   static String _className(String path) =>
       path.substring(path.lastIndexOf('#') + 1);

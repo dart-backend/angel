@@ -878,8 +878,8 @@ void main() async {
         ('email DESC', 'email DESC', 'email DESC'),
         ('lower(email)', 'lower(email)', 'lower(email)'),
       ]) {
-        expect(compileIndexColumn(column, quoteMySqlIdentifier), mySql);
-        expect(compileIndexColumn(column, quotePostgresIdentifier), postgres);
+        expect(compileIndexColumn(column, quoteMySqlPart), mySql);
+        expect(compileIndexColumn(column, quotePostgresPart), postgres);
       }
       var schema = MySqlSchema()
         ..indexes(
@@ -954,12 +954,8 @@ void main() async {
         renamed('audit.events', 'audit.logs'),
         contains('RENAME TO "logs";'),
       );
-      for (var (table, newName) in [
-        ('audit.events', 'other.logs'),
-        ('events', 'audit.logs'),
-      ]) {
-        expect(() => renamed(table, newName), throwsArgumentError);
-      }
+      // Not to another schema.
+      expect(() => renamed('audit.events', 'other.logs'), throwsArgumentError);
     });
 
     test('quotes a name once, whose quotes may be its own', () {
@@ -967,6 +963,55 @@ void main() async {
       expect(quotePostgresTableName('a."b.c"'), '"a"."b.c"');
       expect(quoteMySqlTableName('```t```'), '```t```');
       expect(quoteMySqlTableName('a.`b.c`'), '`a`.`b.c`');
+      // In double quotes too, as earlier versions took them.
+      expect(quoteMySqlTableName('"orders"'), '`orders`');
+      expect(quoteMySqlTableName('"my.table"'), '`my.table`');
+      expect(
+        existingConstraintsQuery('"shop"."t"', ['a']),
+        contains("table_schema = 'shop' AND table_name = 't'"),
+      );
+      // An index column too.
+      expect(compileIndexColumn('"""a"""', quotePostgresPart), '"""a"""');
+      expect(compileIndexColumn('```x```', quoteMySqlPart), '```x```');
+    });
+
+    test('tracks a column given in quotes or not as one', () {
+      var sql =
+          (PostgresSchema()..alter('t', (t) {
+                t.changeColumnType('"Id"', ColumnType.serial);
+                t.renameColumn('Id', 'Key');
+              }))
+              .compile();
+      expect(sql, contains('OWNED BY "t"."Key"'));
+      sql =
+          (PostgresSchema()..alter('t', (t) {
+                t.changeColumnType('"Id"', ColumnType.serial);
+                t.dropColumn('Id');
+              }))
+              .compile();
+      expect(sql, isNot(contains('DO \$\$')));
+    });
+
+    test('renames an unqualified table to a name of a schema', () {
+      expect(
+        (PostgresSchema()..alter('users', (t) => t.rename('public.members')))
+            .compile(),
+        contains('RENAME TO "members";'),
+      );
+    });
+
+    test('drops an index of PostgreSQL given with its schema', () {
+      var indexes = PostgresIndexes('audit.events')
+        ..dropIndex('other.events_idx')
+        ..dropIndex('events_ix');
+      var first = StringBuffer(), second = StringBuffer();
+      indexes
+        ..compile(first)
+        ..compile(second);
+      expect(first.toString(), contains('DROP INDEX "other"."events_idx";'));
+      expect(first.toString(), contains('DROP INDEX "audit"."events_ix";'));
+      // It may be compiled again.
+      expect(second.toString(), first.toString());
     });
 
     test('changes a column to a serial type without its default', () {

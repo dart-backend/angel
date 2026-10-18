@@ -133,12 +133,28 @@ void main() {
       );
     });
 
-    test('throws for a name with a #, which tells an earlier path', () {
-      expect(
-        () => addQueuedMigrations(Queue.of([HashMigration()]), {}),
-        throwsArgumentError,
-      );
-    });
+    test(
+      'takes a name with a #, which is not a path of an earlier version',
+      () {
+        var migrations = <String, Migration>{};
+        addQueuedMigrations(Queue.of([HashMigration()]), migrations);
+        expect(migrations.keys, ['users#v2']);
+        expect(LegacyPaths.isLegacyPath('users#v2'), isFalse);
+        expect(
+          LegacyPaths.isLegacyPath('/app/lib/a.dart#UserMigration'),
+          isTrue,
+        );
+        expect(LegacyPaths.isLegacyPath(r'C:\app\a.dart#User$1'), isTrue);
+        // Recorded by name, it is neither renamed nor deleted.
+        var legacy = LegacyPaths(
+          ['users#v2'],
+          [HashMigration(), UserMigration()],
+        );
+        expect(legacy.renames, isEmpty);
+        expect(legacy.deletes, isEmpty);
+        expect(legacy.paths, ['users#v2']);
+      },
+    );
 
     test('adds none of the queue before it throws', () {
       var queue = Queue.of(<Migration>[

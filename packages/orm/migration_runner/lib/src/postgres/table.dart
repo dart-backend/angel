@@ -108,6 +108,10 @@ class PostgresAlterTable extends Table implements MutableTable {
   /// sequences.
   final Map<String, String> _sequences = {};
 
+  /// The key of the column [name] in [_sequences], its own name, without its
+  /// quotes, so that `'"Id"'` and `'Id'` are one column.
+  static String _columnKey(String name) => sql.unquoteIdentifier(name, '"');
+
   /// The columns added in the statement so far.
   final Set<String> _added = {};
 
@@ -185,11 +189,10 @@ class PostgresAlterTable extends Table implements MutableTable {
     // The names after the renames, which run before.
     var table = sql.quotePostgresTableName(_currentName);
     var tableOwnName = sql.unqualifiedPostgresName(_currentName);
-    _sequences.forEach((quotedName, integer) {
-      // The column's own name, which may be given in quotes, as it is known
-      // to the catalog.
-      var name = sql.unquoteIdentifier(quotedName, '"');
-      var column = '$table.${sql.quotePostgresIdentifier(quotedName)}';
+    // By the columns' own names, without their quotes, as the catalog knows
+    // them.
+    _sequences.forEach((name, integer) {
+      var column = '$table.${sql.quotePostgresPart(name)}';
       // Of the schema of the table, as `serial` gives it.
       var sequence = sql.quotePostgresInSchemaOf(
         _currentName,
@@ -202,8 +205,8 @@ DECLARE
 BEGIN
   IF seq_name IS NULL THEN
     CREATE SEQUENCE $sequence AS $integer OWNED BY $column;
-    ALTER TABLE $table ALTER COLUMN ${sql.quotePostgresIdentifier(quotedName)} SET DEFAULT nextval(${PostgresGenerator.compileDefault(sequence)});
-    PERFORM setval(${PostgresGenerator.compileDefault(sequence)}, COALESCE((SELECT MAX(${sql.quotePostgresIdentifier(quotedName)}) FROM $table), 0)::bigint + 1, false);
+    ALTER TABLE $table ALTER COLUMN ${sql.quotePostgresPart(name)} SET DEFAULT nextval(${PostgresGenerator.compileDefault(sequence)});
+    PERFORM setval(${PostgresGenerator.compileDefault(sequence)}, COALESCE((SELECT MAX(${sql.quotePostgresPart(name)}) FROM $table), 0)::bigint + 1, false);
   ELSE
     IF (SELECT t.typlen FROM pg_sequence s JOIN pg_type t ON t.oid = s.seqtypid
         WHERE s.seqrelid = seq_name::regclass) < ${_integerSizes[integer]} THEN
@@ -220,7 +223,7 @@ BEGIN
         WHERE a.attrelid = ${PostgresGenerator.compileDefault(table)}::regclass
         AND a.attname = ${PostgresGenerator.compileDefault(name)}
         AND a.attidentity <> '') THEN
-      EXECUTE format('ALTER TABLE ${table.replaceAll('%', '%%')} ALTER COLUMN ${sql.quotePostgresIdentifier(quotedName).replaceAll('%', '%%')} SET DEFAULT nextval(%L::regclass)', seq_name);
+      EXECUTE format('ALTER TABLE ${table.replaceAll('%', '%%')} ALTER COLUMN ${sql.quotePostgresPart(name).replaceAll('%', '%%')} SET DEFAULT nextval(%L::regclass)', seq_name);
     END IF;
   END IF;
 END
@@ -285,7 +288,8 @@ END
         autoIncrement != false &&
         !identical(defaultValue, noDefault);
     if (serial || autoIncrement == true) {
-      _sequences[name] = _sequenceTypes[integer ?? type] ?? 'bigint';
+      _sequences[_columnKey(name)] =
+          _sequenceTypes[integer ?? type] ?? 'bigint';
     }
     var column = changedColumn(
       integer ?? type,
@@ -340,8 +344,8 @@ END
     );
     // A column changed to a serial type before is given its sequence by its
     // new name.
-    var integer = _sequences.remove(name);
-    if (integer != null) _sequences[newName] = integer;
+    var integer = _sequences.remove(_columnKey(name));
+    if (integer != null) _sequences[_columnKey(newName)] = integer;
   }
 
   @override
@@ -349,7 +353,7 @@ END
     // A statement of its own, as PostgreSQL rejects the changes of a column
     // with its drop in one.
     _statement(_Statement('DROP COLUMN ${sql.quotePostgresIdentifier(name)}'));
-    _sequences.remove(name);
+    _sequences.remove(_columnKey(name));
   }
 
   @override
@@ -386,7 +390,7 @@ END
     }
 
     _clause(
-      'ADD $indexType (${columns.map((c) => sql.compileIndexColumn(c, sql.quotePostgresIdentifier)).join(',')})',
+      'ADD $indexType (${columns.map((c) => sql.compileIndexColumn(c, sql.quotePostgresPart)).join(',')})',
       columns,
     );
   }
@@ -432,9 +436,10 @@ class PostgresIndexes implements MutableIndexes {
 
   PostgresIndexes(this.tableName);
 
+  /// Compiles the statements of the indexes, which may be compiled again.
   void compile(StringBuffer buf) {
-    while (_stack.isNotEmpty) {
-      buf.writeln(_stack.removeFirst());
+    for (var statement in _stack) {
+      buf.writeln(statement);
     }
   }
 
@@ -443,13 +448,13 @@ class PostgresIndexes implements MutableIndexes {
     switch (type) {
       case IndexType.primaryKey:
         _stack.add(
-          'ALTER TABLE ${sql.quotePostgresTableName(tableName)} ADD PRIMARY KEY (${columns.map((c) => sql.compileIndexColumn(c, sql.quotePostgresIdentifier)).join(',')});',
+          'ALTER TABLE ${sql.quotePostgresTableName(tableName)} ADD PRIMARY KEY (${columns.map((c) => sql.compileIndexColumn(c, sql.quotePostgresPart)).join(',')});',
         );
         break;
       case IndexType.unique:
         _stack.add(
           'CREATE UNIQUE INDEX IF NOT EXISTS ${sql.quotePostgresIdentifier(name)} '
-          'ON ${sql.quotePostgresTableName(tableName)} (${columns.map((c) => sql.compileIndexColumn(c, sql.quotePostgresIdentifier)).join(',')});',
+          'ON ${sql.quotePostgresTableName(tableName)} (${columns.map((c) => sql.compileIndexColumn(c, sql.quotePostgresPart)).join(',')});',
         );
         break;
       //case IndexType.standardIndex:
@@ -457,7 +462,7 @@ class PostgresIndexes implements MutableIndexes {
       default:
         _stack.add(
           'CREATE INDEX IF NOT EXISTS ${sql.quotePostgresIdentifier(name)} '
-          'ON ${sql.quotePostgresTableName(tableName)} (${columns.map((c) => sql.compileIndexColumn(c, sql.quotePostgresIdentifier)).join(',')});',
+          'ON ${sql.quotePostgresTableName(tableName)} (${columns.map((c) => sql.compileIndexColumn(c, sql.quotePostgresPart)).join(',')});',
         );
         break;
     }
@@ -465,10 +470,12 @@ class PostgresIndexes implements MutableIndexes {
 
   @override
   void dropIndex(String name) {
-    // An index is of the schema of its table.
-    _stack.add(
-      'DROP INDEX ${sql.quotePostgresInSchemaOf(tableName, sql.unquoteIdentifier(name, '"'))};',
-    );
+    // An index is of the schema of its table, unless one is given.
+    var parts = sql.postgresNameParts(name);
+    var index = parts.length > 1
+        ? sql.quotePostgresTableName(name)
+        : sql.quotePostgresInSchemaOf(tableName, parts.single);
+    _stack.add('DROP INDEX $index;');
   }
 
   @override

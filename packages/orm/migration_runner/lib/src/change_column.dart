@@ -80,7 +80,7 @@ String columnChecksQuery(
 ) {
   String literal(String value) =>
       compileDefault(value, escapeBackslashes: true);
-  var names = splitQualifiedName(table, '`');
+  var names = splitQualifiedName(table);
   return (
     names.length > 1 ? literal(names.first) : 'DATABASE()',
     literal(names.last),
