@@ -203,6 +203,24 @@ class ChildMigration extends Migration {
   }
 }
 
+/// Creates the table `atomic`, under [name].
+class _AtomicMigration extends Migration {
+  @override
+  final String name;
+
+  _AtomicMigration(this.name);
+
+  @override
+  void up(Schema schema) {
+    schema.create('atomic', (t) => t.integer('a'));
+  }
+
+  @override
+  void down(Schema schema) {
+    schema.drop('atomic');
+  }
+}
+
 /// Fails on the database.
 class FailingMigration extends Migration {
   @override
@@ -850,6 +868,66 @@ void main() async {
       }
     });
 
+    test('writes an index column that is not a name as it is', () {
+      for (var (column, mySql, postgres) in [
+        ('order', '`order`', '"order"'),
+        ('`a b`', '`a b`', '`a b`'),
+        ('"a b"', '"a b"', '"a b"'),
+        ('body(100)', 'body(100)', 'body(100)'),
+        ('email DESC', 'email DESC', 'email DESC'),
+        ('lower(email)', 'lower(email)', 'lower(email)'),
+      ]) {
+        expect(compileIndexColumn(column, quoteMySqlIdentifier), mySql);
+        expect(compileIndexColumn(column, quotePostgresIdentifier), postgres);
+      }
+      var schema = MySqlSchema()
+        ..indexes(
+          'posts',
+          (t) => t.addIndex('i', ['body(100)', 'id'], IndexType.standardIndex),
+        )
+        ..alter(
+          'posts',
+          (t) => t.addIndex('j', ['title DESC'], IndexType.standardIndex),
+        );
+      expect(schema.compile(), contains('`i` ON `posts` (body(100),`id`);'));
+      expect(schema.compile(), contains('ADD INDEX `j` (title DESC)'));
+      var pg = PostgresSchema()
+        ..indexes(
+          'users',
+          (t) => t.addIndex('u', ['lower(email)'], IndexType.unique),
+        );
+      expect(pg.compile(), contains('ON "users" (lower(email));'));
+    });
+
+    test('quotes the tables of MySQL and MariaDB', () {
+      for (var schema in [MySqlSchema(), MariaDbSchema()]) {
+        schema
+          ..create('order', (t) => t.integer('a'))
+          ..drop('shop.group')
+          ..alter('`order`', (t) => t.rename('select'));
+        var sql = schema.compile();
+        expect(sql, contains('CREATE TABLE `order` ('));
+        expect(sql, contains('DROP TABLE `shop`.`group`;'));
+        expect(sql, contains('ALTER TABLE `order`\n  RENAME TO `select`;'));
+      }
+    });
+
+    test('quotes a DateTime default', () {
+      var at = DateTime(2020, 1, 2, 3, 4, 5);
+      for (var escape in [true, false]) {
+        expect(
+          compileDefault(at, escapeBackslashes: escape),
+          "'2020-01-02 03:04:05.000'",
+        );
+        expect(
+          compileDefault(DateTime.utc(2020), escapeBackslashes: escape),
+          "'2020-01-01 00:00:00.000'",
+        );
+        expect(compileDefault(true, escapeBackslashes: escape), 'true');
+        expect(compileDefault(1.5, escapeBackslashes: escape), '1.5');
+      }
+    });
+
     test('quotes the table and column of a reference', () {
       for (var schema in [MySqlSchema(), MariaDbSchema()]) {
         schema.create(
@@ -1128,13 +1206,13 @@ void main() async {
         });
         expect(
           schema.compile(),
-          'ALTER TABLE t\n'
+          'ALTER TABLE `t`\n'
           '  MODIFY `a` bigint,\n'
           '  RENAME COLUMN `b` TO `c`;\n'
-          'ALTER TABLE t\n'
+          'ALTER TABLE `t`\n'
           '  MODIFY `c` varchar(40),\n'
           '  ADD COLUMN `e` varchar(9);\n'
-          'ALTER TABLE t\n'
+          'ALTER TABLE `t`\n'
           '  MODIFY `e` /* the type of `e` */ NOT NULL;\n',
         );
       }
@@ -1146,7 +1224,7 @@ void main() async {
           t.integer('f');
           t.dropColumn('f');
         });
-      expect(schema.compile(), contains('ALTER TABLE u\n  DROP COLUMN `f`;'));
+      expect(schema.compile(), contains('ALTER TABLE `u`\n  DROP COLUMN `f`;'));
     });
 
     test('renames or drops a column changed before in another statement', () {
@@ -1159,12 +1237,12 @@ void main() async {
         });
         expect(
           schema.compile(),
-          'ALTER TABLE t\n'
+          'ALTER TABLE `t`\n'
           '  MODIFY `a` bigint;\n'
-          'ALTER TABLE t\n'
+          'ALTER TABLE `t`\n'
           '  RENAME COLUMN `a` TO `b`,\n'
           '  MODIFY `c` /* the type of `c` */ NOT NULL;\n'
-          'ALTER TABLE t\n'
+          'ALTER TABLE `t`\n'
           '  DROP COLUMN `c`;\n',
         );
       }
@@ -1178,7 +1256,7 @@ void main() async {
         });
         expect(
           schema.compile(),
-          'ALTER TABLE t\n'
+          'ALTER TABLE `t`\n'
           '  ADD COLUMN `email` varchar(9),\n'
           '  ADD UNIQUE KEY `unique_email` (`email`),\n'
           '  ADD COLUMN `n` int;\n',
@@ -1384,8 +1462,8 @@ void main() async {
       var sql = mySql.compile();
       expect(
         sql,
-        'DROP TABLE a;\nALTER TABLE t\n  MODIFY `n` bigint NOT NULL;\n'
-        'DROP TABLE b;\n',
+        'DROP TABLE `a`;\nALTER TABLE `t`\n  MODIFY `n` bigint NOT NULL;\n'
+        'DROP TABLE `b`;\n',
       );
       expect(mySql.compile(), sql);
 
@@ -1546,6 +1624,72 @@ void main() async {
         "WHERE table_name IN ('parents', 'children')",
       );
       expect(tables, isEmpty);
+    });
+
+    test('changes an identity column to a serial type', () async {
+      await conn.execute('DROP TABLE IF EXISTS ident');
+      await conn.execute(
+        'CREATE TABLE ident (id int GENERATED BY DEFAULT AS IDENTITY, n int)',
+      );
+      await (PostgresSchema()..alter(
+            'ident',
+            (t) => t.changeColumnType('id', ColumnType.bigSerial),
+          ))
+          .run(conn);
+      await conn.execute('INSERT INTO ident (n) VALUES (1)');
+      var r = await conn.execute(
+        "SELECT data_type, is_identity FROM information_schema.columns "
+        "WHERE table_name = 'ident' AND column_name = 'id'",
+      );
+      expect(r.single.toList(), ['bigint', 'YES']);
+      await conn.execute('DROP TABLE ident');
+    });
+
+    test('skips a migration added again, but not one of other changes', () {
+      // The same changes.
+      var runner = PostgresMigrationRunner(
+        conn,
+        migrations: [_AtomicMigration('a'), _AtomicMigration('a')],
+      );
+      expect(runner.compileUp(_AtomicMigration('a')), contains('"atomic"'));
+      expect(
+        runner.compileUp(_AtomicMigration('a')),
+        runner.compileUp(_AtomicMigration('b')),
+      );
+      expect(
+        runner.compileUp(_AtomicMigration('a')),
+        isNot(runner.compileUp(ParentMigration())),
+      );
+    });
+
+    test('runs and records a migration in one transaction', () async {
+      await conn.execute('DROP TABLE IF EXISTS atomic');
+      // Its name is too long for the migrations table, so it is not
+      // recorded, and its table is not created either.
+      var runner = PostgresMigrationRunner(
+        conn,
+        migrations: [_AtomicMigration('x' * 600)],
+      );
+      await expectLater(runner.up(), throwsA(anything));
+      var r = await conn.execute(
+        "SELECT 1 FROM information_schema.tables WHERE table_name = 'atomic'",
+      );
+      expect(r, isEmpty);
+    });
+
+    test('quotes a DateTime default', () async {
+      await conn.execute('DROP TABLE IF EXISTS dated');
+      await (PostgresSchema()..create(
+            'dated',
+            (t) => t.timeStamp('at').defaultsTo(DateTime(2020, 1, 2, 3, 4, 5)),
+          ))
+          .run(conn);
+      var r = await conn.execute(
+        "SELECT column_default FROM information_schema.columns "
+        "WHERE table_name = 'dated' AND column_name = 'at'",
+      );
+      expect(r.single[0], contains('2020-01-02 03:04:05'));
+      await conn.execute('DROP TABLE dated');
     });
 
     test('gives a column that kept its sequence its default again', () async {
@@ -1919,6 +2063,34 @@ void main() async {
         ['secret', 'NO', 'invisible'],
       ]);
       await conn.query('DROP TABLE hidden');
+    });
+
+    test('creates a table of a reserved name, with a prefix index', () async {
+      await conn.query('DROP TABLE IF EXISTS `order`');
+      await (MariaDbSchema()
+            ..create('order', (t) {
+              t.text('body');
+              t.timeStamp('at').defaultsTo(DateTime(2020, 1, 2, 3, 4, 5));
+            })
+            ..indexes(
+              'order',
+              (t) => t.addIndex('order_body', [
+                'body(100)',
+              ], IndexType.standardIndex),
+            ))
+          .run(conn);
+      var rows = await conn.query(
+        'SELECT sub_part FROM information_schema.statistics '
+        "WHERE table_schema = database() AND table_name = 'order'",
+      );
+      expect(rows.map((r) => r[0]), [100]);
+      rows = await conn.query(
+        'SELECT column_default FROM information_schema.columns '
+        "WHERE table_schema = database() AND table_name = 'order' "
+        "AND column_name = 'at'",
+      );
+      expect(rows.single[0].toString(), contains('2020-01-02 03:04:05'));
+      await (MariaDbSchema()..drop('order')).run(conn);
     });
 
     test('rolls back the migrations of a batch newest first', () async {

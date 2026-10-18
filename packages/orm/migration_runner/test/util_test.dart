@@ -63,11 +63,45 @@ void main() {
       expect(migrations.keys, ['UserMigration', 'create_todos']);
     });
 
-    test('skips a migration of a class already added', () {
+    test('skips a migration already added', () {
       var first = UserMigration();
       var migrations = <String, Migration>{};
-      addQueuedMigrations(Queue.of([first, UserMigration()]), migrations);
+      addQueuedMigrations(Queue.of([first, first]), migrations);
       expect(migrations, {'UserMigration': same(first)});
+    });
+
+    test('skips another of a class that is the same', () {
+      var first = UserMigration();
+      var duplicates = <Migration>[];
+      var migrations = <String, Migration>{};
+      addQueuedMigrations(
+        Queue.of([first, UserMigration()]),
+        migrations,
+        isDuplicate: (a, b) => true,
+        onDuplicate: duplicates.add,
+      );
+      expect(migrations, {'UserMigration': same(first)});
+      expect(duplicates, hasLength(1));
+      // Not one of another class.
+      expect(
+        () => addQueuedMigrations(
+          Queue.of([RenamedMigration(), ClashingMigration()]),
+          {},
+          isDuplicate: (a, b) => true,
+        ),
+        throwsStateError,
+      );
+    });
+
+    test('throws for two migrations of a class of the same name', () {
+      // As two of a class that takes arguments, which would be one.
+      expect(
+        () => addQueuedMigrations(
+          Queue.of([UserMigration(), UserMigration()]),
+          {},
+        ),
+        throwsStateError,
+      );
     });
 
     test('throws for two classes of the same name', () {

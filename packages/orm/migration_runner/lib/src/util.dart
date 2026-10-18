@@ -6,23 +6,36 @@ import 'package:logging/logging.dart';
 /// Moves the migrations of [queue] into [migrations], under their
 /// [Migration.name].
 ///
-/// A migration of a class already added is skipped. Throws a [StateError] if
-/// two migrations of different classes have the same name, before any of
-/// [queue] is moved, so that none of them is lost.
+/// A migration already added, or another of its class that [isDuplicate]
+/// says is the same, such as one that makes the same changes, is skipped, and
+/// given to [onDuplicate]. Throws a [StateError] if two other migrations have
+/// the same name, as do two of a class that takes arguments, such as
+/// `TableMigration('users')` and `TableMigration('posts')`, which would be
+/// recorded as one, before any of [queue] is moved, so that none of them is
+/// lost.
 void addQueuedMigrations(
   Queue<Migration> queue,
-  Map<String, Migration> migrations,
-) {
+  Map<String, Migration> migrations, {
+  bool Function(Migration added, Migration other) isDuplicate = identical,
+  void Function(Migration duplicate)? onDuplicate,
+}) {
   var added = {...migrations};
   for (var migration in queue) {
     var name = migration.name;
     var other = added[name];
     if (other == null) {
       added[name] = migration;
-    } else if (other.runtimeType != migration.runtimeType) {
+    } else if (identical(other, migration) ||
+        (other.runtimeType == migration.runtimeType &&
+            isDuplicate(other, migration))) {
+      if (!identical(other, migration)) onDuplicate?.call(migration);
+    } else {
+      var classes = other.runtimeType == migration.runtimeType
+          ? 'Two migrations of ${migration.runtimeType}'
+          : 'Migrations ${other.runtimeType} and ${migration.runtimeType}';
       throw StateError(
-        'Migrations ${other.runtimeType} and ${migration.runtimeType} have '
-        'the same name "$name"; override `name` in one of them.',
+        '$classes have the same name "$name"; override `name` so that each '
+        'has its own.',
       );
     }
   }

@@ -199,11 +199,16 @@ BEGIN
       EXECUTE format('ALTER SEQUENCE %s AS $integer', seq_name);
     END IF;
     -- A column whose default was dropped keeps its sequence, of which it
-    -- gets the default again.
+    -- gets the default again. An identity column has no default, but its
+    -- identity, which takes none.
     IF NOT EXISTS (SELECT 1 FROM pg_attrdef d JOIN pg_attribute a
         ON a.attrelid = d.adrelid AND a.attnum = d.adnum
         WHERE d.adrelid = ${PostgresGenerator.compileDefault(table)}::regclass
-        AND a.attname = ${PostgresGenerator.compileDefault(name)}) THEN
+        AND a.attname = ${PostgresGenerator.compileDefault(name)})
+      AND NOT EXISTS (SELECT 1 FROM pg_attribute a
+        WHERE a.attrelid = ${PostgresGenerator.compileDefault(table)}::regclass
+        AND a.attname = ${PostgresGenerator.compileDefault(name)}
+        AND a.attidentity <> '') THEN
       EXECUTE format('ALTER TABLE ${table.replaceAll('%', '%%')} ALTER COLUMN ${sql.quotePostgresIdentifier(name).replaceAll('%', '%%')} SET DEFAULT nextval(%L::regclass)', seq_name);
     END IF;
   END IF;
@@ -361,7 +366,7 @@ END
     }
 
     _clause(
-      'ADD $indexType (${columns.map(sql.quotePostgresIdentifier).join(',')})',
+      'ADD $indexType (${columns.map((c) => sql.compileIndexColumn(c, sql.quotePostgresIdentifier)).join(',')})',
       columns,
     );
   }
@@ -418,13 +423,13 @@ class PostgresIndexes implements MutableIndexes {
     switch (type) {
       case IndexType.primaryKey:
         _stack.add(
-          'ALTER TABLE ${sql.quotePostgresIdentifier(tableName)} ADD PRIMARY KEY (${columns.map(sql.quotePostgresIdentifier).join(',')});',
+          'ALTER TABLE ${sql.quotePostgresIdentifier(tableName)} ADD PRIMARY KEY (${columns.map((c) => sql.compileIndexColumn(c, sql.quotePostgresIdentifier)).join(',')});',
         );
         break;
       case IndexType.unique:
         _stack.add(
           'CREATE UNIQUE INDEX IF NOT EXISTS ${sql.quotePostgresIdentifier(name)} '
-          'ON ${sql.quotePostgresIdentifier(tableName)} (${columns.map(sql.quotePostgresIdentifier).join(',')});',
+          'ON ${sql.quotePostgresIdentifier(tableName)} (${columns.map((c) => sql.compileIndexColumn(c, sql.quotePostgresIdentifier)).join(',')});',
         );
         break;
       //case IndexType.standardIndex:
@@ -432,7 +437,7 @@ class PostgresIndexes implements MutableIndexes {
       default:
         _stack.add(
           'CREATE INDEX IF NOT EXISTS ${sql.quotePostgresIdentifier(name)} '
-          'ON ${sql.quotePostgresIdentifier(tableName)} (${columns.map(sql.quotePostgresIdentifier).join(',')});',
+          'ON ${sql.quotePostgresIdentifier(tableName)} (${columns.map((c) => sql.compileIndexColumn(c, sql.quotePostgresIdentifier)).join(',')});',
         );
         break;
     }

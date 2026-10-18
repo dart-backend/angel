@@ -1,7 +1,10 @@
 import 'package:angel3_orm/angel3_orm.dart';
 
-/// The SQL of the default [value] of a column: [RawSql] as it is, a [String]
-/// as a string literal, and other values as their [Object.toString].
+/// The SQL of the default [value] of a column: [RawSql] as it is, a number or
+/// a [bool] as its [Object.toString], a [DateTime] as a string literal of its
+/// date and time, such as `'2020-01-02 03:04:05.000'`, which is of its own
+/// time zone, and other values, such as a [String], as a string literal of
+/// their [Object.toString].
 ///
 /// A string literal is in single quotes, each of which is doubled, which every
 /// database reads as a quote. MySQL and MariaDB also read a backslash as an
@@ -9,8 +12,15 @@ import 'package:angel3_orm/angel3_orm.dart';
 /// each backslash is doubled too. PostgreSQL reads a backslash as itself.
 String compileDefault(Object value, {required bool escapeBackslashes}) {
   if (value is RawSql) return value.value;
-  if (value is! String) return value.toString();
-  var literal = value.replaceAll("'", "''");
+  if (value is num || value is bool) return value.toString();
+  if (value is DateTime) {
+    // Without the `T` and `Z` of ISO 8601, which MariaDB does not take.
+    value = value
+        .toIso8601String()
+        .replaceFirst('T', ' ')
+        .replaceFirst(RegExp(r'Z$'), '');
+  }
+  var literal = value.toString().replaceAll("'", "''");
   if (escapeBackslashes) literal = literal.replaceAll(r'\', r'\\');
   return "'$literal'";
 }
@@ -75,6 +85,23 @@ List<String> splitQualifiedName(String name, [String quotes = '`"']) {
 /// (`` `shop`.`orders` ``).
 String quoteMySqlTableName(String name) =>
     splitQualifiedName(name).map(quoteMySqlIdentifier).join('.');
+
+/// The [column] of an index as SQL: a name quoted by [quote], unless it is
+/// in quotes already, and as it is otherwise, as it may be a prefix, such as
+/// `body(100)`, an expression, such as `lower(email)`, or have an order, such
+/// as `email DESC`.
+String compileIndexColumn(String column, String Function(String) quote) {
+  var name = column.trim();
+  if (_quotedName.hasMatch(name)) return name;
+  if (_plainName.hasMatch(name)) return quote(name);
+  return column;
+}
+
+/// A name in backticks or double quotes, each of which is doubled in it.
+final RegExp _quotedName = RegExp(r'^(`([^`]|``)*`|"([^"]|"")*")$');
+
+/// A name without spaces, parentheses, quotes or other punctuation of SQL.
+final RegExp _plainName = RegExp(r'''^[^\s()`"',;.]+$''');
 
 /// [name] as a PostgreSQL identifier, in double quotes, each of which is
 /// doubled, so that it may be a reserved word or have capitals.

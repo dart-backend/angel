@@ -150,7 +150,9 @@ class MySqlFamilyIndexes implements CompiledIndexes {
   @override
   void addIndex(String name, List<String> columns, IndexType type) {
     var table = quoteMySqlTableName(tableName);
-    var columnList = columns.map(quoteMySqlIdentifier).join(',');
+    var columnList = columns
+        .map((c) => compileIndexColumn(c, quoteMySqlIdentifier))
+        .join(',');
     var ifNotExists = ifExists ? 'IF NOT EXISTS ' : '';
     var index = quoteMySqlIdentifier(name);
     _statements.add(switch (type) {
@@ -245,7 +247,9 @@ abstract class ModifyingAlterTable extends Table implements MutableTable {
           clauses.add(entry as String);
       }
     }
-    buf.writeln('${'  ' * indent}ALTER TABLE ${statement.tableName}');
+    buf.writeln(
+      '${'  ' * indent}ALTER TABLE ${quoteMySqlTableName(statement.tableName)}',
+    );
     buf.write(
       clauses.map((clause) => '${'  ' * (indent + 1)}$clause').join(',\n'),
     );
@@ -370,7 +374,7 @@ abstract class ModifyingAlterTable extends Table implements MutableTable {
 
   @override
   void rename(String newName) {
-    _add('RENAME TO $newName', const []);
+    _add('RENAME TO ${quoteMySqlTableName(newName)}', const []);
     _currentName = newName;
   }
 
@@ -385,7 +389,7 @@ abstract class ModifyingAlterTable extends Table implements MutableTable {
       IndexType.none => 'INDEX $ifNotExists${quoteMySqlIdentifier(name)}',
     };
     _add(
-      'ADD $indexType (${columns.map(quoteMySqlIdentifier).join(',')})',
+      'ADD $indexType (${columns.map((c) => compileIndexColumn(c, quoteMySqlIdentifier)).join(',')})',
       columns,
     );
   }
@@ -462,7 +466,7 @@ abstract class MySqlFamilySchema extends Schema {
   @override
   void drop(String tableName, {bool cascade = false}) {
     var c = cascade == true ? ' CASCADE' : '';
-    _buf.writeln('DROP TABLE $tableName$c;');
+    _buf.writeln('DROP TABLE ${quoteMySqlTableName(tableName)}$c;');
   }
 
   @override
@@ -480,7 +484,7 @@ abstract class MySqlFamilySchema extends Schema {
     var op = ifNotExists ? ' IF NOT EXISTS' : '';
     var tbl = newTable();
     callback(tbl);
-    _buf.writeln('CREATE TABLE$op $tableName (');
+    _buf.writeln('CREATE TABLE$op ${quoteMySqlTableName(tableName)} (');
     tbl.compile(_buf, 1);
     _buf.writeln();
     _buf.writeln(');');

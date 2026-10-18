@@ -1,170 +1,98 @@
 import 'dart:async';
-import 'dart:collection';
 
 import 'package:angel3_migration/angel3_migration.dart';
 import 'package:postgres/postgres.dart';
 import 'package:logging/logging.dart';
 
-import '../runner.dart';
-import '../util.dart';
+import '../sql_migration_runner.dart';
 import 'schema.dart';
 
 /// A PostgreSQL database migration runner
-class PostgresMigrationRunner implements MigrationRunner {
-  final _log = Logger('PostgresMigrationRunner');
-
-  final Map<String, Migration> migrations = {};
+///
+/// Each migration is run, and recorded in the `migrations` table, in one
+/// transaction, as PostgreSQL changes its tables in one, so that a migration
+/// that fails, or is cut off, is neither run nor recorded.
+class PostgresMigrationRunner extends SqlMigrationRunner {
   final Connection connection;
-  final Queue<Migration> _migrationQueue = Queue();
-  bool _connected = false;
 
   PostgresMigrationRunner(
     this.connection, {
     Iterable<Migration> migrations = const [],
     bool connected = false,
-  }) {
-    if (migrations.isNotEmpty) {
-      migrations.forEach(addMigration);
-    }
-    _connected = connected;
-  }
+  }) : super(Logger('PostgresMigrationRunner'), migrations);
 
   @override
-  void addMigration(Migration migration) {
-    _migrationQueue.addLast(migration);
-  }
-
-  /// Creates the `migrations` table if needed, and returns its paths.
-  Future<List<String>> _init() async {
-    addQueuedMigrations(_migrationQueue, migrations);
-
-    _connected = connection.isOpen;
-    if (!_connected) {
+  Future<void> createMigrationsTable() async {
+    if (!connection.isOpen) {
       throw Exception("PostgreSQL connection is not open");
     }
-
-    await connection
-        .execute('''
+    await connection.execute('''
     CREATE TABLE IF NOT EXISTS "migrations" (
       id serial,
       batch integer,
       path varchar(500),
       PRIMARY KEY(id)
     );
-    ''')
-        .then((result) {
-          _log.info('Created "migrations" table');
-        })
-        .catchError((Object e, StackTrace s) {
-          _log.severe('Failed to create "migrations" table.', e, s);
-          Error.throwWithStackTrace(e, s);
-        });
-
-    return applyLegacyPaths(
-      await _paths('SELECT path from migrations ORDER BY id;'),
-      migrations.values,
-      rename: (path, name) => connection.execute(
-        Sql.named('UPDATE migrations SET path = @name WHERE path = @path'),
-        parameters: {'name': name, 'path': path},
-      ),
-      delete: _delete,
-      log: _log,
-    );
+    ''');
   }
 
-  Future<List<String>> _paths(String sql) async =>
-      migrationPaths((await connection.execute(sql)).expand((x) => x));
+  @override
+  Future<List<Object?>> queryColumn(String sql) async => [
+    for (var row in await connection.execute(sql)) row[0],
+  ];
 
-  Future<int> _lastBatch() async => batchNumber(
-    (await connection.execute('SELECT MAX(batch) from migrations;'))[0][0],
+  @override
+  Future<void> renamePath(String path, String name) => connection.execute(
+    Sql.named('UPDATE migrations SET path = @name WHERE path = @path'),
+    parameters: {'name': name, 'path': path},
   );
 
-  Future<void> _delete(String path) => connection.execute(
+  @override
+  Future<void> deletePath(String path) => _deletePath(connection, path);
+
+  Future<void> _deletePath(Session session, String path) => session.execute(
     Sql.named('DELETE FROM migrations WHERE path = @path'),
     parameters: {'path': path},
   );
 
   @override
-  Future up() async {
-    var existing = await _init();
-    var toRun = <String>[];
-
-    migrations.forEach((k, v) {
-      if (!existing.contains(k)) toRun.add(k);
+  Future<void> runUp(String name, Migration migration, int batch) async {
+    var schema = PostgresSchema();
+    migration.up(schema);
+    await connection.runTx((ctx) async {
+      await _run(ctx, schema);
+      await ctx.execute(
+        Sql.named(
+          'INSERT INTO migrations (batch, path) VALUES (@batch, @path)',
+        ),
+        parameters: {'batch': batch, 'path': name},
+      );
     });
-
-    if (toRun.isNotEmpty) {
-      var batch = await _lastBatch() + 1;
-
-      for (var k in toRun) {
-        var migration = migrations[k]!;
-        var schema = PostgresSchema();
-        migration.up(schema);
-
-        var result = await schema
-            .run(connection)
-            .then((_) {
-              return connection.runTx((ctx) async {
-                var result = await ctx.execute(
-                  Sql.named(
-                    'INSERT INTO migrations (batch, path) VALUES (@batch, @path)',
-                  ),
-                  parameters: {'batch': batch, 'path': k},
-                );
-
-                return result.affectedRows;
-              });
-            })
-            .catchError((Object e, StackTrace s) {
-              // The migrations after it may depend on it, so none is run.
-              _log.severe('Failed to run migration "$k".', e, s);
-              Error.throwWithStackTrace(e, s);
-            });
-        if (result > 0) {
-          _log.info('Inserted "$k" into "migrations" table.');
-        }
-      }
-    } else {
-      _log.warning('Nothing to add into "migrations" table.');
-    }
   }
 
   @override
-  Future rollback() async {
-    await _init();
+  Future<void> runDown(String name, Migration migration) async {
+    var schema = PostgresSchema();
+    migration.down(schema);
+    await connection.runTx((ctx) async {
+      await _run(ctx, schema);
+      await _deletePath(ctx, name);
+    });
+  }
 
-    // The newest first, as it may depend on those before.
-    var toRun = (await _paths(
-      'SELECT path from migrations WHERE batch = ${await _lastBatch()} '
-      'ORDER BY id DESC;',
-    )).where(migrations.containsKey).toList();
-    await _down(toRun);
+  /// Runs the SQL of [schema] with the simple query protocol, as the
+  /// extended one takes only one statement.
+  Future<void> _run(Session session, PostgresSchema schema) async {
+    var sql = schema.compile();
+    if (sql.trim().isEmpty) return;
+    await session.execute(sql, queryMode: QueryMode.simple);
   }
 
   @override
-  Future reset() async {
-    await _init();
-    // The newest first, as it may depend on those before.
-    var toRun = (await _paths(
-      'SELECT path from migrations ORDER BY batch DESC, id DESC;',
-    )).where(migrations.containsKey).toList();
-    await _down(toRun);
-  }
-
-  /// Runs the `down` of the migrations [toRun], in order, and removes them
-  /// from the `migrations` table.
-  Future<void> _down(List<String> toRun) async {
-    if (toRun.isEmpty) {
-      _log.warning('Nothing to remove from "migrations" table.');
-      return;
-    }
-    for (var k in toRun) {
-      var schema = PostgresSchema();
-      migrations[k]!.down(schema);
-      _log.info('Removed "$k" from "migrations" table.');
-      await schema.run(connection);
-      await _delete(k);
-    }
+  String compileUp(Migration migration) {
+    var schema = PostgresSchema();
+    migration.up(schema);
+    return schema.compile();
   }
 
   @override
