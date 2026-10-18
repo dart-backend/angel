@@ -1,7 +1,6 @@
 library;
 
 import 'dart:async';
-import 'dart:mirrors';
 import 'dart:typed_data';
 
 import 'package:analyzer/dart/constant/value.dart';

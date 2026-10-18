@@ -153,8 +153,8 @@ Future<BuildContext?> buildContext(
         var sField = SerializableFieldMirror(
           alias: cr.peek('alias')?.stringValue,
           defaultValue: cr.peek('defaultValue')?.objectValue,
-          serializer: cr.peek('serializer')?.symbolValue,
-          deserializer: cr.peek('deserializer')?.symbolValue,
+          serializer: cr.peek('serializer')?.objectValue.toSymbolValue(),
+          deserializer: cr.peek('deserializer')?.objectValue.toSymbolValue(),
           errorMessage: cr.peek('errorMessage')?.stringValue,
           isNullable: cr.peek('isNullable')?.boolValue ?? !excluded,
           canDeserialize: cr.peek('canDeserialize')?.boolValue ?? false,
@@ -239,8 +239,9 @@ Future<BuildContext?> buildContext(
           var sField = SerializableFieldMirror(
             alias: f.alias,
             defaultValue: null,
-            serializer: f.serializer,
-            deserializer: f.deserializer,
+            // A default SerializableField has neither.
+            serializer: null,
+            deserializer: null,
             errorMessage: f.errorMessage,
             isNullable: f.isNullable,
             canDeserialize: f.canDeserialize,

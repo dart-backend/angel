@@ -203,8 +203,8 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
 
           var fieldNameSerializer = ctx.fieldInfo[field.name]?.serializer;
           if (fieldNameSerializer != null) {
-            var name = MirrorSystem.getName(fieldNameSerializer);
-            serializedRepresentation = '$name(model.${field.name})';
+            serializedRepresentation =
+                '$fieldNameSerializer(model.${field.name})';
           }
           // Serialize dates
           else if (dateTimeTypeChecker.isAssignableFromType(type)) {
@@ -384,8 +384,8 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
 
           var fieldNameDeserializer = ctx.fieldInfo[field.name]?.deserializer;
           if (fieldNameDeserializer != null) {
-            var name = MirrorSystem.getName(fieldNameDeserializer);
-            deserializedRepresentation = "$name(map['$alias'])";
+            deserializedRepresentation =
+                "$fieldNameDeserializer(map['$alias'])";
           } else if (dateTimeTypeChecker.isAssignableFromType(type)) {
             if (field.type.nullabilitySuffix != NullabilitySuffix.question) {
               if (defaultValue.toLowerCase() == 'null') {

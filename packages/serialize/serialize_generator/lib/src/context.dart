@@ -128,7 +128,10 @@ class BuildContext {
 class SerializableFieldMirror {
   final String? alias;
   final DartObject? defaultValue;
-  final Symbol? serializer, deserializer;
+
+  /// The names of the functions that serialize and deserialize the field,
+  /// such as `colorToCode` of `#colorToCode`.
+  final String? serializer, deserializer;
   final String? errorMessage;
   final bool isNullable;
   final bool canDeserialize;
