@@ -75,6 +75,10 @@ abstract class QueryValues {
     return b.toString();
   }
 
+  @Deprecated(
+    'Not used: an insert into a table without an id returns the values it '
+    'inserted, as a row of no key cannot be selected again by its values.',
+  )
   String compileInsertSelect(Query query, String tableName) {
     var data = Map<String, dynamic>.from(toMap());
 

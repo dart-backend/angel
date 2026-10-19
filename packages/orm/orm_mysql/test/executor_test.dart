@@ -6,12 +6,13 @@ import 'package:test/test.dart';
 
 import 'common.dart';
 import 'models/car.dart';
+import 'models/email_indexed.dart';
 import 'models/unorthodox.dart';
 
-/// The same queries through each executor: [MySqlExecutor] (`mysql_dart`,
-/// named `:name` parameters) and [MariaDbExecutor] (`mysql1`, positional `?`
-/// parameters).
+/// The same queries through each executor: [MySqlExecutor], which stores a
+/// `DateTime` as local time, and [MariaDbExecutor], which stores it as UTC.
 void main() {
+  mySqlQueueTests();
   executorTests(
     'MySqlExecutor',
     () async => MySqlExecutor(await openMySqlConnection()),
@@ -22,6 +23,57 @@ void main() {
     openMariaDbExecutor,
     (executor) => (executor as MariaDbExecutor).close(),
   );
+}
+
+/// The queue of the commands of a connection of [MySqlExecutor], of which
+/// `mysql_dart` runs one at a time.
+void mySqlQueueTests() {
+  late MySQLConnection conn;
+  late MigrationRunner runner;
+
+  setUp(() async {
+    conn = await openMySqlConnection();
+    runner = await createTables(conn, [CarMigration()]);
+  });
+
+  tearDown(() async {
+    await dropTables(runner);
+    if (conn.connected) await conn.close();
+  });
+
+  group('MySqlExecutor queue', () {
+    test('close closes once the queries given before have run', () async {
+      var executor = MySqlExecutor(await openMySqlConnection());
+      var inserts = [
+        for (var i = 0; i < 4; i++)
+          (CarQuery()..values.make = 'Make $i').insert(executor),
+      ];
+      await executor.close();
+      var cars = await Future.wait(inserts);
+      expect(
+        [for (var car in cars) car.value.make],
+        [for (var i = 0; i < 4; i++) 'Make $i'],
+      );
+    });
+
+    test('the executor of an ended transaction runs no query', () async {
+      var executor = MySqlExecutor(await openMySqlConnection());
+      try {
+        late QueryExecutor kept;
+        await executor.transaction((tx) async => kept = tx);
+        // As a timer of the transaction would, after it.
+        await expectLater(
+          (CarQuery()..values.make = 'Late').insert(kept),
+          throwsStateError,
+        );
+        // The executor of the connection still runs.
+        var car = await (CarQuery()..values.make = 'After').insert(executor);
+        expect(car.value.make, 'After');
+      } finally {
+        await executor.close();
+      }
+    });
+  });
 }
 
 void executorTests(
@@ -84,6 +136,32 @@ void executorTests(
       expect(car.make, 'Volvo');
     });
 
+    test('queries of a transaction sent at once each run', () async {
+      var makes = await executor.transaction(
+        (tx) => Future.wait([
+          for (var i = 0; i < 6; i++)
+            (CarQuery()..values.make = 'Make $i')
+                .insert(tx)
+                .then((car) => car.value.make),
+        ]),
+      );
+      expect(makes, [for (var i = 0; i < 6; i++) 'Make $i']);
+    });
+
+    test('a transaction in a transaction is of it', () async {
+      var car = await executor.transaction(
+        (tx) => tx.transaction(
+          (inner) => (CarQuery()..values.make = 'Nested').insert(inner),
+        ),
+      );
+      expect(car.value.make, 'Nested');
+      // And a delete in a transaction, which is one itself on MySQL.
+      await executor.transaction(
+        (tx) => (CarQuery()..where!.make.equals('Nested')).delete(tx),
+      );
+      expect(await CarQuery().get(executor), isEmpty);
+    });
+
     test('inserts of two connections each return their own row', () async {
       // Not the last row by id, which may be the other connection's.
       var other = await open();
@@ -110,12 +188,51 @@ void executorTests(
 
     test('update a table without an id returns the updated rows', () async {
       await (UnorthodoxQuery()..values.name = 'a').insert(executor);
+      await (UnorthodoxQuery()..values.name = 'c').insert(executor);
 
+      // Of the new value, which the conditions no longer match.
       var query = UnorthodoxQuery()
         ..where!.name.equals('a')
-        ..values.name = 'a';
+        ..values.name = 'b';
       var rows = await query.update(executor);
-      expect(rows.map((r) => r.name), ['a']);
+      expect(rows.map((r) => r.name), ['b']);
+      var all = await UnorthodoxQuery().get(executor);
+      expect(all.map((r) => r.name).toList()..sort(), ['b', 'c']);
+    });
+
+    test('insert into a table without an id of a null value', () async {
+      // Returned as inserted, as `user_email = NULL` would select none.
+      var tables = await createTables(conn, [
+        RoleMigration(),
+        UserMigration(),
+        RoleUserMigration(),
+      ]);
+      try {
+        await (RoleQuery()..values.role = 'admin').insert(executor);
+        // Of a row of all nulls, the generated parseRow gives none.
+        var row =
+            (await (RoleUserQuery()
+                      ..values.roleRole = 'admin'
+                      ..values.userEmail = null)
+                    .insert(executor))
+                .value;
+        expect(row.user, isNull);
+        expect(await RoleUserQuery().get(executor), hasLength(1));
+      } finally {
+        await dropTables(tables);
+      }
+    });
+
+    test('delete returns the deleted rows', () async {
+      for (var make in ['Kept', 'Gone', 'Gone']) {
+        await (CarQuery()..values.make = make).insert(executor);
+      }
+      var deleted = await (CarQuery()..where!.make.equals('Gone')).delete(
+        executor,
+      );
+      expect(deleted.map((c) => c.make), ['Gone', 'Gone']);
+      var left = await CarQuery().get(executor);
+      expect(left.map((c) => c.make), ['Kept']);
     });
 
     test('placeholders of the same column are each bound', () async {
@@ -143,6 +260,71 @@ void executorTests(
       expect(car.make, "it's :description :p1 @make");
       expect(car.description, ':p0');
       expect(car.familyFriendly, isTrue);
+    });
+
+    test('a DateTime is stored as of the executor, and read back', () async {
+      var at = DateTime.utc(2020, 1, 2, 3, 4, 5);
+      var car =
+          (await (CarQuery()
+                    ..values.make = 'Dated'
+                    ..values.createdAt = at)
+                  .insert(executor))
+              .value;
+      expect(car.createdAt!.isAtSameMomentAs(at), isTrue);
+      // As UTC of a MariaDbExecutor, and as local time of a MySqlExecutor.
+      var utc = executor is MariaDbExecutor;
+      expect(car.createdAt!.isUtc, utc);
+      var stored = await conn.execute(
+        "SELECT created_at FROM cars WHERE make = 'Dated'",
+      );
+      var expected = utc ? at : at.toLocal();
+      expect(
+        stored.rows.single.colAt(0),
+        startsWith(
+          expected.toIso8601String().substring(0, 19).replaceAll('T', ' '),
+        ),
+      );
+    });
+
+    test(
+      'the executor of a transaction is of the type of the executor',
+      () async {
+        await executor.transaction((tx) async {
+          expect(tx.runtimeType, executor.runtimeType);
+          // Which closes neither the transaction nor the connection.
+          await expectLater((tx as MySqlExecutor).close(), throwsStateError);
+        });
+        expect(await CarQuery().get(executor), isEmpty);
+      },
+    );
+
+    test('the executor of a connection runs in its transaction', () async {
+      // Rather than wait for the transaction, which waits for it.
+      await expectLater(
+        executor
+            .transaction((tx) async {
+              await (CarQuery()..values.make = 'Outer').insert(executor);
+              await executor.transaction(
+                (inner) => (CarQuery()..values.make = 'Inner').insert(inner),
+              );
+              expect(await CarQuery().get(tx), hasLength(2));
+              throw StateError('roll back');
+            })
+            .timeout(const Duration(seconds: 10)),
+        throwsStateError,
+      );
+      expect(await CarQuery().get(executor), isEmpty);
+    });
+
+    test('a zero date is null', () async {
+      await conn.execute("SET SESSION sql_mode = ''");
+      await conn.execute(
+        "INSERT INTO cars (make, created_at) VALUES ('Zero', '0000-00-00 00:00:00')",
+      );
+      var car = (await (CarQuery()..where!.make.equals('Zero')).getOne(
+        executor,
+      )).value;
+      expect(car.createdAt, isNull);
     });
 
     test('update by id returns the updated row', () async {

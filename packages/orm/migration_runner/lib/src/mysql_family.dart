@@ -1,6 +1,7 @@
 import 'package:angel3_migration/angel3_migration.dart';
 import 'package:angel3_orm/angel3_orm.dart';
-import 'package:mysql1/mysql1.dart' show MySqlException;
+import 'package:logging/logging.dart';
+import 'package:mysql_dart/mysql_dart.dart' show MySQLConnection;
 import 'package:mysql_dart/exception.dart' show MySQLServerException;
 
 import 'change_column.dart';
@@ -467,6 +468,47 @@ abstract class MySqlFamilySchema extends Schema {
     required Future<List<List<String?>>> Function(String sql) query,
   }) => _alters.run(_buf, execute: execute, query: query);
 
+  /// Runs the SQL of the schema with [connection], in a transaction, and
+  /// throws if it fails.
+  ///
+  /// The statements before an alter table that changes a column's type are
+  /// run before the column's constraints are read, as they may create the
+  /// table or rename the column.
+  Future<int> run(MySQLConnection connection) async {
+    var log = Logger('$runtimeType');
+    var affectedRows = 0;
+    await connection
+        .transactional((ctx) async {
+          await runWith(
+            // `mysql_dart` reads the result of only the first statement of
+            // a query, and then the others as those of the next queries, so
+            // the statements are run one by one.
+            execute: (sql) async {
+              for (var statement in splitMySqlStatements(sql)) {
+                var result = await ctx.execute(statement).catchError((e) {
+                  log.severe('Failed to run query: [ $statement ]', e);
+                  throw Exception(e);
+                });
+                affectedRows += result.affectedRows.toInt();
+              }
+            },
+            query: (sql) async {
+              var result = await ctx.execute(sql);
+              return [
+                for (var row in result.rows)
+                  [for (var i = 0; i < result.numOfColumns; i++) row.colAt(i)],
+              ];
+            },
+          );
+        })
+        .catchError((e) {
+          log.severe('Failed to run query in a transaction', e);
+          throw e;
+        });
+
+    return affectedRows;
+  }
+
   @override
   void drop(String tableName, {bool cascade = false}) {
     var c = cascade == true ? ' CASCADE' : '';
@@ -585,7 +627,7 @@ class _ExistingReader {
   _ExistingReader(this.query);
 
   /// Whether [error] is MySQL's error 1054, of an unknown column, whatever
-  /// the language of its text: by the code of the exception of `mysql1` or
+  /// the language of its text: by the code of the exception of
   /// `mysql_dart`, or else, of one that a caller wraps, by the code in its
   /// message. The only column of [existingConstraintsQuery] that a server may
   /// not have is `GENERATION_EXPRESSION`.
@@ -593,14 +635,12 @@ class _ExistingReader {
   /// Not by the name of the column, which an error of another kind, such as
   /// of the syntax, may quote from the query.
   static bool _isUnknownColumn(Object error) => switch (error) {
-    MySqlException(:var errorNumber) => errorNumber == 1054,
     MySQLServerException(:var errorCode) => errorCode == 1054,
     _ => _unknownColumn.hasMatch('$error'),
   };
 
-  /// The code of the error in the message of the clients: `Error 1054 (` of
-  /// `mysql1`, `[1054]` of `mysql_dart`.
-  static final RegExp _unknownColumn = RegExp(r'Error 1054 \(|\[1054\]');
+  /// The code of the error in the message of `mysql_dart`: `[1054]`.
+  static final RegExp _unknownColumn = RegExp(r'\[1054\]');
 
   /// The rows of [existingConstraintsQuery] of [table] and [columns]. A server
   /// without `GENERATION_EXPRESSION`, MySQL before 5.7.6 or MariaDB before

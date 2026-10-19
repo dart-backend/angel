@@ -1,80 +1,24 @@
-import 'dart:async';
-
 import 'package:angel3_migration/angel3_migration.dart';
 import 'package:logging/logging.dart';
 import 'package:mysql_dart/mysql_dart.dart';
 
-import '../sql_migration_runner.dart';
+import '../mysql_family_runner.dart';
 import 'schema.dart';
 
-/// A MySQL database migration runner.
+/// A MySQL database migration runner, of a connection of `mysql_dart`.
 ///
 /// MySQL commits each change of a table on its own, so a migration is
 /// recorded in the `migrations` table once it has run.
-class MySqlMigrationRunner extends SqlMigrationRunner<MySqlSchema> {
-  final MySQLConnection connection;
-
+class MySqlMigrationRunner extends MySqlFamilyMigrationRunner<MySqlSchema> {
   MySqlMigrationRunner(
-    this.connection, {
+    MySQLConnection connection, {
     Iterable<Migration> migrations = const [],
     @Deprecated(
       'Not used: the runner uses the connection as it is given, and close() closes it.',
     )
     bool connected = false,
-  }) : super(Logger('MysqlMigrationRunner'), migrations);
-
-  @override
-  Future<void> createMigrationsTable() async {
-    await connection.execute('''
-    CREATE TABLE IF NOT EXISTS migrations (
-      id integer NOT NULL AUTO_INCREMENT,
-      batch integer,
-      path varchar(500),
-      PRIMARY KEY(id)
-    );
-    ''');
-  }
-
-  @override
-  Future<List<Object?>> queryColumn(String sql) async => [
-    for (var row in (await connection.execute(sql)).rows) row.colAt(0),
-  ];
-
-  @override
-  Future<void> renamePath(String path, String name) => connection.execute(
-    'UPDATE migrations SET path = :name WHERE path = :path',
-    {'name': name, 'path': path},
-  );
-
-  @override
-  Future<void> deletePath(String path) => connection.execute(
-    'DELETE FROM migrations WHERE path = :path',
-    {'path': path},
-  );
+  }) : super(connection, Logger('MysqlMigrationRunner'), migrations);
 
   @override
   MySqlSchema newSchema() => MySqlSchema();
-
-  @override
-  String compileSchema(MySqlSchema schema) => schema.compile();
-
-  @override
-  Future<void> runAndRecord(MySqlSchema schema, String name, int batch) async {
-    await schema.run(connection);
-    await connection.execute(
-      'INSERT INTO migrations (batch, path) VALUES (:batch, :path)',
-      {'batch': batch, 'path': name},
-    );
-  }
-
-  @override
-  Future<void> runAndRemove(MySqlSchema schema, String name) async {
-    await schema.run(connection);
-    await deletePath(name);
-  }
-
-  @override
-  Future close() {
-    return connection.close();
-  }
 }

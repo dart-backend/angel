@@ -6,7 +6,6 @@ import 'package:angel3_migration_runner/mariadb.dart';
 import 'package:angel3_migration_runner/mysql.dart';
 import 'package:angel3_migration_runner/postgres.dart';
 import 'package:angel3_orm/angel3_orm.dart';
-import 'package:mysql1/mysql1.dart' as mysql1;
 import 'package:mysql_dart/mysql_dart.dart' as mysql_dart;
 import 'package:mysql_dart/exception.dart' as mysql_errors;
 import 'package:postgres/postgres.dart';
@@ -1242,7 +1241,7 @@ void main() async {
       expect(queries, hasLength(2));
     });
 
-    test('reads the constraints again for MySQL error 1054', () async {
+    test('reads the constraints again for the text of error 1054', () async {
       var queries = <String>[];
       var schema = MySqlSchema()..alter('t', (t) => t.setNotNull('a'));
       var sql = <String>[];
@@ -1251,8 +1250,9 @@ void main() async {
         query: (q) async {
           queries.add(q);
           if (q.contains('GENERATION_EXPRESSION')) {
-            // In the language of the server, without the column's name.
-            throw Exception('Error 1054 (42S22): Colonne inconnue');
+            // As wrapped, in the language of the server, without the
+            // column's name.
+            throw Exception('MySQLServerException [1054]: Colonne inconnue');
           }
           return [
             [
@@ -2436,19 +2436,25 @@ void main() async {
   });
 
   group('MariaDB', skip: skipMySql, () {
-    late mysql1.MySqlConnection conn;
+    late mysql_dart.MySQLConnection conn;
     late MigrationRunner runner;
 
+    /// The rows of [sql], of their values as typed.
+    Future<List<List<Object?>>> query(String sql) async => [
+      for (var row in (await conn.execute(sql)).rows)
+        row.typedAssoc().values.toList(),
+    ];
+
     setUp(() async {
-      conn = await mysql1.MySqlConnection.connect(
-        mysql1.ConnectionSettings(
-          host: Platform.environment['MYSQL_HOST'] ?? 'localhost',
-          port: 3306,
-          db: Platform.environment['MYSQL_DB'] ?? 'orm_test',
-          user: Platform.environment['MYSQL_USERNAME'] ?? 'test',
-          password: Platform.environment['MYSQL_PASSWORD'] ?? 'Test123',
-        ),
+      conn = await mysql_dart.MySQLConnection.createConnection(
+        host: Platform.environment['MYSQL_HOST'] ?? 'localhost',
+        port: 3306,
+        databaseName: Platform.environment['MYSQL_DB'] ?? 'orm_test',
+        userName: Platform.environment['MYSQL_USERNAME'] ?? 'test',
+        password: Platform.environment['MYSQL_PASSWORD'] ?? 'Test123',
+        secure: true,
       );
+      await conn.connect();
       runner = MariaDbMigrationRunner(
         conn,
         migrations: [PricesMigration(), AlterPricesMigration()],
@@ -2463,14 +2469,13 @@ void main() async {
     test('creates and alters the columns', () async {
       await runner.up();
 
-      var rows = await conn.query(
+      var rows = await query(
         "SELECT column_name, data_type, numeric_precision, numeric_scale, "
         "column_default, is_nullable, extra FROM information_schema.columns "
         "WHERE table_schema = database() AND table_name = 'prices' "
         "ORDER BY column_name",
       );
-      // `mysql1` gives `column_default` as a `Blob`, and MariaDB a column
-      // without a default as `NULL`.
+      // MariaDB gives a column without a default as `NULL`.
       expect(rows.map((r) => [...r.take(4), r[4].toString(), r[5], r[6]]), [
         ['amount', 'decimal', 12, 4, 'NULL', 'YES', ''],
         ['fee', 'decimal', 10, 2, '0.00', 'NO', ''],
@@ -2482,28 +2487,27 @@ void main() async {
     });
 
     test('keeps what the new column can have', () async {
-      await conn.query('DROP TABLE IF EXISTS kept');
-      await conn.query(_keptTable);
+      await query('DROP TABLE IF EXISTS kept');
+      await query(_keptTable);
       await (MariaDbSchema()..alter('kept', _alterKept)).run(conn);
 
-      var rows = await conn.query(_keptColumns);
-      // `mysql1` may give text as a `Blob`.
+      var rows = await query(_keptColumns);
       _expectKept([
         for (var row in rows) [for (var value in row) value?.toString()],
       ]);
-      await conn.query('DROP TABLE kept');
+      await query('DROP TABLE kept');
     });
 
     test('keeps the CHECK of a column, as that of a JSON', () async {
-      await conn.query('DROP TABLE IF EXISTS checked');
-      await conn.query('CREATE TABLE checked (data JSON, p int CHECK (p > 0))');
+      await query('DROP TABLE IF EXISTS checked');
+      await query('CREATE TABLE checked (data JSON, p int CHECK (p > 0))');
       await (MariaDbSchema()..alter('checked', (t) {
             t.setNotNull('data');
             t.changeColumnType('p', ColumnType.bigInt);
           }))
           .run(conn);
 
-      var rows = await conn.query(
+      var rows = await query(
         'SELECT CONSTRAINT_NAME, CHECK_CLAUSE '
         'FROM information_schema.CHECK_CONSTRAINTS '
         "WHERE CONSTRAINT_SCHEMA = database() AND TABLE_NAME = 'checked' "
@@ -2514,10 +2518,10 @@ void main() async {
         ['p', '`p` > 0'],
       ]);
       await expectLater(
-        conn.query("INSERT INTO checked (data, p) VALUES ('nope', 1)"),
+        query("INSERT INTO checked (data, p) VALUES ('nope', 1)"),
         throwsA(anything),
       );
-      await conn.query('DROP TABLE checked');
+      await query('DROP TABLE checked');
     });
 
     test('throws, and does not record a migration that fails', () async {
@@ -2528,15 +2532,15 @@ void main() async {
       // Creates the migrations table, and rolls back none.
       await failing.rollback();
       Future<Object?> count() async =>
-          (await conn.query('SELECT COUNT(*) FROM migrations')).first[0];
+          (await query('SELECT COUNT(*) FROM migrations')).first[0];
       var before = await count();
       await expectLater(failing.up(), throwsA(anything));
       expect(await count(), before);
     });
 
     test('keeps a column INVISIBLE, and makes a key serial', () async {
-      await conn.query('DROP TABLE IF EXISTS hidden');
-      await conn.query(
+      await query('DROP TABLE IF EXISTS hidden');
+      await query(
         // An invisible column that is NOT NULL must have a default.
         'CREATE TABLE hidden (id int NOT NULL, n int, '
         'secret int DEFAULT 0 INVISIBLE, PRIMARY KEY (id))',
@@ -2549,7 +2553,7 @@ void main() async {
           }))
           .run(conn);
 
-      var rows = await conn.query(
+      var rows = await query(
         'SELECT column_name, is_nullable, extra '
         'FROM information_schema.columns '
         "WHERE table_schema = database() AND table_name = 'hidden' "
@@ -2560,11 +2564,11 @@ void main() async {
         ['n', 'YES', ''],
         ['secret', 'NO', 'invisible'],
       ]);
-      await conn.query('DROP TABLE hidden');
+      await query('DROP TABLE hidden');
     });
 
     test('creates a table of a reserved name, with a prefix index', () async {
-      await conn.query('DROP TABLE IF EXISTS `order`');
+      await query('DROP TABLE IF EXISTS `order`');
       await (MariaDbSchema()
             ..create('order', (t) {
               t.text('body');
@@ -2577,12 +2581,12 @@ void main() async {
               ], IndexType.standardIndex),
             ))
           .run(conn);
-      var rows = await conn.query(
+      var rows = await query(
         'SELECT sub_part FROM information_schema.statistics '
         "WHERE table_schema = database() AND table_name = 'order'",
       );
       expect(rows.map((r) => r[0]), [100]);
-      rows = await conn.query(
+      rows = await query(
         'SELECT column_default FROM information_schema.columns '
         "WHERE table_schema = database() AND table_name = 'order' "
         "AND column_name = 'at'",
@@ -2592,8 +2596,8 @@ void main() async {
     });
 
     test('rolls back the migrations of a batch newest first', () async {
-      await conn.query('DROP TABLE IF EXISTS children');
-      await conn.query('DROP TABLE IF EXISTS parents');
+      await query('DROP TABLE IF EXISTS children');
+      await query('DROP TABLE IF EXISTS parents');
       await MariaDbMigrationRunner(
         conn,
         migrations: [ParentMigration(), ChildMigration()],
@@ -2603,7 +2607,7 @@ void main() async {
         conn,
         migrations: [ChildMigration(), ParentMigration()],
       ).rollback();
-      var tables = await conn.query(
+      var tables = await query(
         "SELECT table_name FROM information_schema.tables "
         "WHERE table_schema = database() "
         "AND table_name IN ('parents', 'children')",
@@ -2613,8 +2617,8 @@ void main() async {
 
     test('runs a migration of more than one statement', () async {
       // Left by a run that failed.
-      await conn.query('DROP TABLE IF EXISTS created');
-      await conn.query(
+      await query('DROP TABLE IF EXISTS created');
+      await query(
         "DELETE FROM migrations WHERE path = 'CreateAndChangeMigration'",
       );
       runner = MariaDbMigrationRunner(
@@ -2623,7 +2627,7 @@ void main() async {
       );
       await runner.up();
 
-      var rows = await conn.query(
+      var rows = await query(
         "SELECT column_name, data_type, is_nullable, column_default "
         "FROM information_schema.columns "
         "WHERE table_schema = database() AND table_name = 'created' "
@@ -2633,7 +2637,7 @@ void main() async {
         ['c', 'bigint', 'NO', '5'],
         ['note', 'varchar', 'YES', "'x; ''y'''"],
       ]);
-      rows = await conn.query(
+      rows = await query(
         "SELECT index_name FROM information_schema.statistics "
         "WHERE table_schema = database() AND table_name = 'created'",
       );

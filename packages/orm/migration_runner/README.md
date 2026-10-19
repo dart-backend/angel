@@ -14,8 +14,8 @@ This package contains the implementation of the database migration for the follo
 ## Usage
 
 * Use `PostgresMigrationRunner` to perform database migration for PostgreSQL.
-* Use `MySqlMigrationRunner` to perform database migration for MySQL and MariaDB. This runner is using [`mysql_dart`](https://pub.dev/packages/mysql_dart) driver.
-* Use `MariaDbMigrationRunner` to perform database migration for MariaDB. This runner is using [`mysql1`](https://pub.dev/packages?q=mysql1) driver.
+* Use `MySqlMigrationRunner` to perform database migration for MySQL. This runner is using [`mysql_dart`](https://pub.dev/packages/mysql_dart) driver.
+* Use `MariaDbMigrationRunner` to perform database migration for MariaDB. This runner is using [`mysql_dart`](https://pub.dev/packages/mysql_dart) driver.
 
 ## Supported Operations
 

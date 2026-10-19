@@ -5,11 +5,11 @@
 [![Discord](https://img.shields.io/discord/1060322353214660698)](https://discord.gg/3X6bxTUdCM)
 [![License](https://img.shields.io/github/license/dart-backend/angel)](https://github.com/dart-backend/angel/tree/master/packages/orm/orm_mysql/LICENSE)
 
-This package contains the SQL executor required by Angel3 ORM to work with MySQL or MariaDB databases. In order to better support both MySQL and MariaDB, two different flavors of drives have been included; `mysql_dart` and `mysql1`. They are implmented as `MySqlExecutor` and `MariaDbExecutor` respectively.
+This package contains the SQL executor required by Angel3 ORM to work with MySQL or MariaDB databases. Both executors, `MySqlExecutor` and `MariaDbExecutor`, use the [`mysql_dart`](https://pub.dev/packages/mysql_dart) driver and work with MySQL and MariaDB; they differ in how a `DateTime` is stored.
 
 ## Supported databases
 
-* MariaDD 10.2.x or later
+* MariaDB 10.2.x or later
 * MySQL 8.x or later
 
 **Note** MySQL below version 8.0 and MariaDB below version 10.2.0 are not supported as Angel3 ORM requires common table expressions (CTE) to work.
@@ -106,40 +106,49 @@ This SQL executor is implemented using [`mysql_dart`](https://pub.dev/packages/m
 
 ### Known Limitation for MySqlExecutor
 
-* `Blob` data type mapping is not support.
-* `timestamp` data type mapping is not supported. Use `datetime` instead.
+* `Blob` data type mapping is not supported.
+* A `timestamp` column, which the server converts from and to the `time_zone` of the session, is read and written as a `datetime` one is. The migration runner creates `timeStamp` columns as `datetime`.
 * A `DateTime` is stored as local time: a UTC one is converted to local time when it is sent, and a `datetime` column is read back as local time. See [Date and time](#date-and-time).
 
-## MariaDBExecutor
+## MariaDbExecutor
 
-This SQL executor is implemented using [`mysql1`](https://pub.dev/packages?q=mysql1) driver. It only works with `MariaDB` 10.2+ database. Do not use this for `MySQL` 8.0+ database.
+This SQL executor is a `MySqlExecutor`, of a connection of the [`mysql_dart`](https://pub.dev/packages/mysql_dart) driver, that stores a `DateTime` as UTC.
 
 ### Connecting to MariaDB
 
 ```dart
-    import 'package:mysql1/mysql1.dart';
+    import 'package:mysql_dart/mysql_dart.dart';
 
-    var settings = ConnectionSettings(
-        host: 'localhost',
+    var connection = await MySQLConnection.createConnection(
+        host: "localhost",
         port: 3306,
-        db: 'orm_test',
-        user: 'test',
-        password: 'test123');
-    var connection = await MySqlConnection.connect(settings);
+        databaseName: "orm_test",
+        userName: "test",
+        password: "test123",
+        secure: true);
+    await connection.connect(timeoutMs: 10000);
 
     var logger = Logger('orm_mariadb');
     var executor = MariaDbExecutor(connection, logger: logger);
 ```
 
-### Known Limitation for MariaDBExecutor
+### Known Limitation for MariaDbExecutor
 
 * `Blob` type mapping is not supported.
-* `timestamp` mapping is not supported. Use `datetime` instead.
+* A `timestamp` column, which the server converts from and to the `time_zone` of the session, is read and written as a `datetime` one is. The migration runner creates `timeStamp` columns as `datetime`.
 * A `DateTime` is stored as UTC: a local one is converted to UTC when it is sent, and a `datetime` column is read back as UTC. See [Date and time](#date-and-time).
 
 ## Date and time
 
 A `datetime` column has no time zone, so the two executors store the same `DateTime` differently: `MySqlExecutor` as local time, and `MariaDbExecutor` as UTC. Each reads back what it wrote as the same moment. Where the application's time zone is not UTC, a time written by one executor is read, or compared, shifted by the offset by the other, so use one executor for a database, or run the application at UTC.
+
+A `DateTime` given for a `date` column is converted too, before the server keeps its date, so a date may be stored as the day before or after: a local `DateTime(2020, 1, 2)` is `2020-01-01 16:00` UTC at UTC+8, which `MariaDbExecutor` stores as `2020-01-01`. Give the date of a `date` column as a `DateTime` of the time zone of the executor: UTC for `MariaDbExecutor` (`DateTime.utc(2020, 1, 2)`), and local time for `MySqlExecutor`.
+
+A zero date or time (`0000-00-00`), which MySQL and MariaDB store where a date is invalid and the SQL mode allows it, is read as `null`.
+
+## Transactions
+
+The queries of a connection run one at a time. A transaction holds the connection until it ends, so a query given in it to another executor of the connection, such as that of the application, runs in the transaction, as a transaction begun in it is of it: MySQL and MariaDB nest none. Use the executor given to the transaction, which runs no query once it has ended and does not `close`.
 
 ## Compatibility Matrix
 
@@ -148,11 +157,11 @@ A `datetime` column has no time zone, so the two executors store the same `DateT
 |                 | Create |  Read  | Update | Delete |
 |-----------------|--------|--------|--------|--------|
 | MySqlExecutor   |    Y   |   Y    |    Y   |    Y   |
-| MariaDBExecutor |    Y   |   Y    |    Y   |    Y   |
+| MariaDbExecutor |    Y   |   Y    |    Y   |    Y   |
 
 ### MySQL 8.0+
 
 |                 | Create |  Read  | Update | Delete |
 |-----------------|--------|--------|--------|--------|
 | MySqlExecutor   |    Y   |   Y    |    Y   |    Y   |
-| MariaDBExecutor |    N   |   N    |    N   |    N   |
+| MariaDbExecutor |    Y   |   Y    |    Y   |    Y   |
