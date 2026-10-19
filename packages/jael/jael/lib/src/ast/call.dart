@@ -6,7 +6,7 @@ import 'expression.dart';
 import 'identifier.dart';
 import 'token.dart';
 
-class Call extends Expression {
+class Call extends ChainExpression {
   final Expression target;
   final Token lParen, rParen;
   final List<Expression> arguments;
@@ -43,8 +43,9 @@ class Call extends Expression {
   }
 
   @override
-  dynamic compute(scope) {
-    var callee = target.compute(scope);
+  Object? computeChain(SymbolTable? scope) {
+    var callee = computeLink(target, scope);
+    if (identical(callee, nullShorted)) return nullShorted;
     var args = computePositional(scope);
     var named = computeNamed(scope);
 

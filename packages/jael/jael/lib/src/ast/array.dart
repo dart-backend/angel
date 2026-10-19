@@ -1,3 +1,4 @@
+import 'package:belatuk_symbol_table/belatuk_symbol_table.dart';
 import 'package:source_span/source_span.dart';
 
 import 'expression.dart';
@@ -20,7 +21,7 @@ class Array extends Expression {
   }
 }
 
-class IndexerExpression extends Expression {
+class IndexerExpression extends ChainExpression {
   final Expression target, indexer;
   final Token lBracket, rBracket;
 
@@ -35,8 +36,9 @@ class IndexerExpression extends Expression {
   }
 
   @override
-  dynamic compute(scope) {
-    var a = target.compute(scope), b = indexer.compute(scope);
-    return a[b];
+  Object? computeChain(SymbolTable? scope) {
+    var a = computeLink(target, scope);
+    if (identical(a, nullShorted)) return nullShorted;
+    return (a as dynamic)[indexer.compute(scope)];
   }
 }

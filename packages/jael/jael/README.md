@@ -75,3 +75,13 @@ const jael.Renderer().render(
   },
 );
 ```
+
+The `toJson()` of a value is called once in a render, for all its members. As in Dart, `first`, `last` and `single` of an empty list throw: test `isEmpty` first, as in `<p if=items.isNotEmpty>{{ items.first }}</p>`.
+
+With `strictResolution: false`, an unknown member, or a member of `null`, is `null`, as an unknown name is; otherwise it throws a `NoSuchMethodError`.
+
+## Expressions
+
+* `?.` makes the rest of a chain `null` if its target is: `{{ user?.name.length }}`, `{{ user?.greet() }}` and `{{ user?.tags[0] }}` are `null` if `user` is.
+* The operators are `*`, `/`, `%`, `+`, `-`, `<`, `<=`, `>`, `>=`, `==`, `!=`, `&&`, `||`, `??`, `!` and `? :`. `&&`, `||` and `??` compute their right side only if needed. With `strictResolution: false`, `!`, `&&` and `||` take only `true` as true.
+* Map literals, `{'a': 1, key: value}`, and calls with named arguments, `{{ pad('x', width: 3) }}`, are supported.

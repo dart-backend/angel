@@ -57,7 +57,8 @@ void main() {
   });
 
   test('none of the default ThrowingReflector', () async {
+    // Each is null, as of `strictResolution: false`, the default of `jael`.
     var body = await render(const ThrowingReflector());
-    expect(body, contains('NoSuchMethodError'));
+    expect(body.replaceAll(' ', ''), '<p></p>');
   });
 }

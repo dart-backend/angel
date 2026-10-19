@@ -101,7 +101,10 @@ class Renderer {
     bool strictResolution = true,
     MemberResolver? memberResolver,
   }) {
-    scope.create('!strict!', value: strictResolution != false);
+    // A scope of its own, so that the same [scope] may be rendered again.
+    scope = scope.createChild()
+      ..create('!strict!', value: strictResolution != false)
+      ..create(jsonCacheKey, value: Expando<Object>('toJson'));
     if (memberResolver != null) {
       scope.create(memberResolverKey, value: memberResolver);
     }

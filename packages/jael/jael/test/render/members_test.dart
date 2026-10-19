@@ -93,9 +93,8 @@ void main() {
 
   test('a getter of a class, without a resolver or JSON, is none', () {
     expect(
-      () => render('<p>{{ p.name }}</p>', {
-        'p': const Pokemon('Mew', 'Psychic'),
-      }),
+      () =>
+          render('<p>{{ p.name }}</p>', {'p': const Pokemon('Mew', 'Psychic')}),
       throwsNoSuchMethodError,
     );
   });

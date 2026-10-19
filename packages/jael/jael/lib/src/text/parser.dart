@@ -40,6 +40,12 @@ class Parser {
 
   Token? maybe(TokenType type) => next(type) ? _current : null;
 
+  /// Whether the next tokens are those of a named argument, `name:`.
+  bool get atNamedArgument =>
+      _index + 2 < scanner.tokens.length &&
+      scanner.tokens[_index + 1].type == TokenType.id &&
+      scanner.tokens[_index + 2].type == TokenType.colon;
+
   void skipExtraneous(TokenType type) {
     while (next(type)) {
       // Skip...
@@ -485,7 +491,7 @@ class Parser {
 
     if (!next(TokenType.colon)) return KeyValuePair(key, null, null);
 
-    var colon = _current, value = parseExpression(0) as Token?;
+    var colon = _current, value = parseExpression(0);
 
     if (value == null) {
       errors.add(
@@ -498,7 +504,7 @@ class Parser {
       return null;
     }
 
-    return KeyValuePair(key, colon, value as Expression);
+    return KeyValuePair(key, colon, value);
   }
 
   NamedArgument? parseNamedArgument() {
@@ -516,7 +522,7 @@ class Parser {
       return null;
     }
 
-    var colon = _current, value = parseExpression(0) as Token?;
+    var colon = _current, value = parseExpression(0);
 
     if (value == null) {
       errors.add(
@@ -529,6 +535,6 @@ class Parser {
       return null;
     }
 
-    return NamedArgument(name, colon, value as Expression);
+    return NamedArgument(name, colon, value);
   }
 }

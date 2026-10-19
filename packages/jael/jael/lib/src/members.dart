@@ -23,10 +23,37 @@ class _NoMember {
 /// 2. the value of the key [name] of a [Map];
 /// 3. a common member of a core type, such as `length` of a [String] or an
 ///    [Iterable], `toInt` of a [num], or `year` of a [DateTime];
-/// 4. the value of the key [name] of the `toJson()` of [target].
+/// 4. the value of the key [name] of the `toJson()` of [target], kept in
+///    [jsonCache], if given, for the other members of [target].
 ///
 /// Throws a [NoSuchMethodError] if none has it.
-Object? readMember(Object? target, String name, [MemberResolver? resolver]) {
+Object? readMember(
+  Object? target,
+  String name, {
+  MemberResolver? resolver,
+  Expando<Object>? jsonCache,
+}) {
+  var value = tryReadMember(
+    target,
+    name,
+    resolver: resolver,
+    jsonCache: jsonCache,
+  );
+  if (!identical(value, noMember)) return value;
+  throw NoSuchMethodError.withInvocation(
+    target,
+    Invocation.getter(Symbol(name)),
+  );
+}
+
+/// The member [name] of [target], as [readMember] reads it, or [noMember]
+/// if it has none.
+Object? tryReadMember(
+  Object? target,
+  String name, {
+  MemberResolver? resolver,
+  Expando<Object>? jsonCache,
+}) {
   if (resolver != null) {
     var value = resolver(target, name);
     if (!identical(value, noMember)) return value;
@@ -38,19 +65,39 @@ Object? readMember(Object? target, String name, [MemberResolver? resolver]) {
   if (!identical(value, noMember)) return value;
 
   if (target != null && target is! Map) {
-    Object? json;
-    try {
-      json = (target as dynamic).toJson();
-    } on NoSuchMethodError {
-      // It has none.
-    }
+    var json = _json(target, jsonCache);
     if (json is Map && json.containsKey(name)) return json[name];
   }
 
-  throw NoSuchMethodError.withInvocation(
-    target,
-    Invocation.getter(Symbol(name)),
-  );
+  return noMember;
+}
+
+/// Kept in a cache of [_json] for a value without `toJson()`.
+const Object _noJson = _NoMember();
+
+/// The `toJson()` of [target], if it has one that takes no argument, kept in
+/// [cache]. An error of `toJson()` itself is thrown, rather than taken for
+/// its absence.
+Object? _json(Object target, Expando<Object>? cache) {
+  if (cache != null) {
+    try {
+      var cached = cache[target];
+      if (cached != null) return identical(cached, _noJson) ? null : cached;
+    } on ArgumentError {
+      // A value an Expando cannot hold, as a number or a string.
+      cache = null;
+    }
+  }
+
+  Object? toJson;
+  try {
+    toJson = (target as dynamic).toJson;
+  } on NoSuchMethodError {
+    // It has none.
+  }
+  var json = toJson is Object? Function() ? toJson() : null;
+  cache?[target] = json ?? _noJson;
+  return json;
 }
 
 /// The member [name] of [target] of a core type, or [noMember].

@@ -49,6 +49,8 @@ enum TokenType {
   minus,
   elvis,
   elvisDot,
+  and,
+  or,
   lte,
   gte,
   equ,
