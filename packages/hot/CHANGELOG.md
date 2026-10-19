@@ -1,6 +1,6 @@
 # Change Log
 
-## 10.0.0-beta.1
+## 10.0.0
 
 * fix: The old server is closed on a reload, once the new one serves: its WebSockets, its shutdown hooks, and its app, where it was never closed, as it was read after being cleared, so every reload kept the last app's connections, timers and listeners
 * fix: A successful hot reload is no longer reported as failed, and a failed one is, with the VM's notices, where the check was of `success != null`

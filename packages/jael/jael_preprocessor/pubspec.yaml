@@ -1,5 +1,5 @@
 name: jael3_preprocessor
-version: 10.0.0-beta.1
+version: 10.0.0
 description: A pre-processor for resolving blocks and includes within Jael templates.
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dart-backend/angel/
@@ -10,7 +10,7 @@ environment:
   sdk: '>=3.13.0 <4.0.0'
 dependencies:
   file: ^7.0.0
-  jael3: ^10.0.0-beta.1
+  jael3: ^10.0.0
   belatuk_symbol_table: ^5.1.0
   collection: ^1.17.0
 dev_dependencies:

@@ -1,6 +1,6 @@
 # Change Log
 
-## 10.0.0-beta.1
+## 10.0.0
 
 * fix!: `modify` of a missing id is now a 404. It used to create a document instead, which over REST could overwrite another one
 * fix!: `remove` of a missing id is now a 404, instead of a 200 with `{"id": null}`. `remove('null')` removes the documents matching the query

@@ -1,5 +1,5 @@
 name: angel3_websocket
-version: 10.0.0-beta.1
+version: 10.0.0
 description: This library provides WebSockets support for Angel3 framework.
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dart-backend/angel/
@@ -9,11 +9,11 @@ resolution: workspace
 environment:
   sdk: '>=3.13.0 <4.0.0'
 dependencies:
-  angel3_auth: ^10.0.0-beta.1
-  angel3_client: ^10.0.0-beta.1
-  angel3_container: ^10.0.0-beta.1
-  angel3_framework: ^10.0.0-beta.1
-  angel3_http_exception: ^10.0.0-beta.1
+  angel3_auth: ^10.0.0
+  angel3_client: ^10.0.0
+  angel3_container: ^10.0.0
+  angel3_framework: ^10.0.0
+  angel3_http_exception: ^10.0.0
   belatuk_merge_map: ^5.1.0
   http: ^1.0.0
   meta: ^1.8.0
@@ -22,8 +22,8 @@ dependencies:
   web_socket_channel: ^3.0.0
   logging: ^1.1.0
 dev_dependencies:
-  angel3_container_generator: ^10.0.0-beta.1
-  angel3_model: ^10.0.0-beta.1
+  angel3_container_generator: ^10.0.0
+  angel3_model: ^10.0.0
   quiver: ^3.2.0
   test: ^1.25.0
   build_runner: ^2.4.0

@@ -1,5 +1,5 @@
 name: angel3_serialize_generator
-version: 10.0.0-beta.1
+version: 10.0.0
 description: Angel3 model serialization generators, designed for use with Angel. Combine with angel_serialize for flexible modeling.
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dart-backend/angel/
@@ -10,8 +10,8 @@ environment:
   sdk: ">=3.13.0 <4.0.0"
 dependencies:
   analyzer: ^14.0.0
-  angel3_model: ^10.0.0-beta.1
-  angel3_serialize: ^10.0.0-beta.1
+  angel3_model: ^10.0.0
+  angel3_serialize: ^10.0.0
   belatuk_code_buffer: ^5.2.0
   build: ^4.0.0
   build_config: ^1.0.0

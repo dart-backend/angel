@@ -1,6 +1,6 @@
 # Change Log
 
-## 10.0.0-beta.1
+## 10.0.0
 
 * fix: A `206 Partial Content` response is not encoded (e.g. gzipped), as its `Content-Range` gives offsets of the unencoded bytes
 * fix: With a reflector that reflects, such as a `StaticReflector`, a service or controller class it has no information about is warned about once, as its `@Middleware`, `@Hooks` and `@Expose` annotations, and those of its methods, are ignored, where they were ignored silently: a service guarded by `@Middleware` was served without it. `MapService` and `AnonymousService`, which carry none, are not warned about

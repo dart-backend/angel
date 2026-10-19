@@ -1,6 +1,6 @@
 # Change Log
 
-## 10.0.0-beta.1
+## 10.0.0
 
 * fix: Authentication over a WebSocket refuses an expired JWT, one issued to another IP address when `AngelAuth.enforceIp`, and one whose user does not exist, as `AngelAuth` does over HTTP, where it took any JWT of a valid signature
 * fix: A connection from an origin `allowedOrigins` does not allow is refused before it is upgraded, with a `403`, where the socket was upgraded and left open. `allowedProtocols` applies to HTTP/1.1: a connection that asks only for other protocols is refused with a `400`, and the first allowed one it asks for is used

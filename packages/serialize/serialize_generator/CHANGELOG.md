@@ -1,6 +1,6 @@
 # Change Log
 
-## 10.0.0-beta.1
+## 10.0.0
 
 * **Breaking:** Removed the dependency on `dart:mirrors`. `SerializableFieldMirror.serializer` and `deserializer` are the names of the functions of `SerializableField.serializer` and `deserializer`, as `String`s (e.g. `colorToCode` of `#colorToCode`), where they were `Symbol`s, which needed `dart:mirrors` to be read. The generated code is the same
 * **Breaking:** Generated `hashCode` getters use `Object.hashAll` instead of `hashObjects`, which `angel3_serialize` 10 no longer exports; regenerate existing models

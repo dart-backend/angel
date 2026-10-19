@@ -1,5 +1,5 @@
 name: angel3_container_mirrors
-version: 10.0.0-beta.1
+version: 10.0.0
 description: A dart:mirrors reflector for pkg:angel3_container, for apps running on the Dart VM.
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dart-backend/angel/
@@ -11,7 +11,7 @@ resolution: workspace
 environment:
   sdk: '>=3.13.0 <4.0.0'
 dependencies:
-  angel3_container: ^10.0.0-beta.1
+  angel3_container: ^10.0.0
   quiver: ^3.2.0
 dev_dependencies:
   test: ^1.24.0

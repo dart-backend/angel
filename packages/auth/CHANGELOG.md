@@ -1,6 +1,6 @@
 # Change Log
 
-## 10.0.0-beta.1
+## 10.0.0
 
 * **Breaking:** `POST /auth/token` (`reviveTokenEndpoint`) no longer revives an expired JWT, which it did for ever by resetting its `iat`, so a JWT stolen once never expired. It exchanges a JWT that is still valid, or expired by no more than the new `reviveGracePeriod` (default: none), for a new one of the configured `jwtLifeSpan`, and refuses one whose user no longer exists
 * **Breaking:** `jwtLifeSpan` defaults to one day (`AngelAuth.defaultJwtLifeSpan`), where JWTs never expired. `-1` keeps them valid for ever, which is warned about with a fixed `jwtKey`

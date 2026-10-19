@@ -13,7 +13,7 @@ Add the following to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  angel3_mongo: ^10.0.0-beta.1
+  angel3_mongo: ^10.0.0
 ```
 
 ## Usage

@@ -1,6 +1,6 @@
 # Change Log
 
-## 10.0.0-beta.1
+## 10.0.0
 
 * Released with the other Angel3 packages at 10.0.0
 * docs: Fixed the doc comments of `Exclude` (which said it kept fields in), `canDeserialize` (a copy of `canSerialize`'s) and `deserializer` (a copy of `serializer`'s)

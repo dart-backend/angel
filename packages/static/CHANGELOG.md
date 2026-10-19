@@ -1,6 +1,6 @@
 # Change Log
 
-## 10.0.0-beta.1
+## 10.0.0
 
 * fix: `CachingVirtualDirectory` answers `If-None-Match` from the file as it is when requested, where it compared the ETag it last sent, so a changed file was answered with `304` until another client fetched it whole. **Breaking:** ETags are quoted, of the file's modification time and size (`"18f3a2b4c10-a"`), as RFC 9110 requires; `If-None-Match` takes precedence over `If-Modified-Since`, and lists of tags and weak tags (`W/`) are compared
 * fix: An `If-Range` that no longer matches the file (a changed ETag or `Last-Modified`) sends the file whole with `200`, where the range of the changed file was sent, corrupting a resumed download

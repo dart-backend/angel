@@ -1,6 +1,6 @@
 # Change Log
 
-## 10.0.0-beta.1
+## 10.0.0
 
 * fix!: `read`, `modify`, `update` and `remove` of one record now ignore the `query` parameter. A query map failed with an error, and a query or callback replaced the record's selection, so the operation reached every record it matched
 * fix!: `modify` and `update` now act on the id in the path. An `id` in the body was looked up instead, which created a new record when it was missing. `modify` of a missing id is a 404, and `update` of one creates it with that id

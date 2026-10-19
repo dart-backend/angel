@@ -1,6 +1,6 @@
 # Change Log
 
-## 10.0.0-beta.1
+## 10.0.0
 
 * Fixed middleware of a mounted router (e.g. `group(path, ..., middleware: [...])`) never running: `routes` now prepends it to the handlers of the router's routes, so `resolve`, `resolveAll` and `flatten` include it. **Security:** apps that guarded a route group with middleware (e.g. authentication) served the group's routes without running it
 * Middleware chained with `chain(...)` now also applies to a router mounted on the chain with `mount`, at that mount only: the mounted router is no longer changed, so the middleware does not follow it to other places it is mounted

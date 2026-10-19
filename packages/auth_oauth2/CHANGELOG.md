@@ -1,6 +1,6 @@
 # Change Log
 
-## 10.0.0-beta.1
+## 10.0.0
 
 * fix: The route that starts a login (`auth.authenticate('github')`) redirects to the provider, where it was a `400`: `AngelAuth.authenticate` always passes options, which the strategy took for its callback. The strategy now tells the callback by its `code` or `error` query parameter
 * fix: Each login has its own PKCE code verifier, kept until the callback, where one authorization URL was made once for every user, and the callback exchanged the code with another verifier, which a provider that checks PKCE (RFC 7636) refuses

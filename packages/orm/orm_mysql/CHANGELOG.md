@@ -1,6 +1,6 @@
 # Change Log
 
-## 10.0.0-beta.1
+## 10.0.0
 
 * **Breaking:** `MySqlExecutor` uses [`mysql_dart`](https://pub.dev/packages/mysql_dart) 3, a maintained fork of `mysql_client`, which supports MySQL 9 and MariaDB 11, instead of `mysql_client`. It takes the `MySQLConnection` of `mysql_dart`: change `import 'package:mysql_client/mysql_client.dart'` to `import 'package:mysql_dart/mysql_dart.dart'`. The commands of a connection, of all its `MySqlExecutor`s, run one at a time, as `mysql_dart` rejects a command sent while another runs, or fails to decode its response, where `mysql_client` queued them; queries sent at once, as by `Future.wait`, still run, in turn, and `close` closes the connection once those given before it have run. A transaction holds one turn of the connection, and its queries run one at a time in a queue of its own; a transaction of its executor is of the one it is in, as MySQL nests none, and the executor runs no query once its transaction has ended, which throws a `StateError`
 * fix: A query given in a transaction to another executor of its connection, such as that of the application, runs in the transaction, as does a transaction begun with it, where it waited for the transaction, which waited for it, forever. The executor given to a transaction of `MariaDbExecutor` is a `MariaDbExecutor`, and that of a transaction throws a `StateError` on `close`, which closed the connection in the transaction
