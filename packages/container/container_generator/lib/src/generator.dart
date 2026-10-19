@@ -76,7 +76,7 @@ class StaticReflectionGenerator extends Generator {
         ..writeln(
           'Map<Symbol, dynamic> _\$named(Map<String, dynamic> n, '
           'Map<String, Symbol> symbols) => '
-          '{for (var e in n.entries) if (symbols[e.key] case var s?) s: e.value};',
+          '{for (var e in n.entries) ?symbols[e.key]: e.value};',
         );
     }
     return out.toString();
@@ -146,19 +146,43 @@ class StaticReflectionGenerator extends Generator {
         for (var method in methods)
           await _function(method, method.formalParameters, buildStep),
       ];
+      fields.add('methods: [${described.join(', ')}]');
+    }
+
+    // The public instance members, declared or inherited, by name: those of
+    // the methods as tear-offs, and the fields and getters as their values,
+    // which e.g. a template reads.
+    var members = _members(clazz);
+    if (members.isNotEmpty) {
       var cases = [
-        for (var method in methods)
-          "'${_escape(method.name!)}' => (o as $name).${method.name}",
+        for (var member in members)
+          "'${_escape(member)}' => (o as $name).$member",
       ];
-      fields
-        ..add('methods: [${described.join(', ')}]')
-        ..add(
-          'getMember: (o, name) => switch (name) '
-          '{${cases.join(', ')}, _ => null}',
-        );
+      fields.add(
+        'getMember: (o, name) => switch (name) '
+        '{${cases.join(', ')}, _ => noStaticMember}',
+      );
     }
 
     return 'StaticReflectedClass(${fields.join(', ')})';
+  }
+
+  /// The names of the public instance fields, getters and methods of
+  /// [clazz], and of its supertypes but `Object`, which `getMember` reads.
+  static List<String> _members(ClassElement clazz) {
+    var names = <String>{};
+    for (var type in [clazz, ...clazz.allSupertypes.map((t) => t.element)]) {
+      if (type is ClassElement && type.isDartCoreObject) continue;
+      for (var getter in type.getters) {
+        if (!getter.isStatic && !getter.isPrivate) names.add(getter.name!);
+      }
+      for (var method in type.methods) {
+        if (!method.isStatic && !method.isPrivate && !method.isOperator) {
+          names.add(method.name!);
+        }
+      }
+    }
+    return [...names];
   }
 
   /// A call to [constructor] of the class [name] with the arguments the

@@ -28,6 +28,7 @@ void main() {
       Limits,
       Labels,
       Retrying,
+      Profile,
     ]);
   });
 
@@ -106,6 +107,38 @@ void main() {
     container.registerSingleton<int>(42);
     expect(container.make<Limits>().max, 42);
     expect(container.make<Retrying>().retries, 42);
+  });
+
+  group('the members of an instance', () {
+    late ReflectedInstance profile;
+
+    setUp(() {
+      profile = container.reflector.reflectInstance(Profile(HashSet.of([1])))!;
+    });
+
+    test('are its fields, getters and methods', () {
+      expect(profile.getField('name').reflectee, 'Ann');
+      expect(profile.getField('greeting').reflectee, 'Hello, Ann');
+      expect((profile.getField('shout').reflectee as Function)(), 'ANN');
+    });
+
+    test('include those it inherits', () {
+      expect(profile.getField('ids').reflectee, {1});
+    });
+
+    test('may be null', () {
+      expect(profile.getField('nickname').reflectee, isNull);
+    });
+
+    test('are not its static or private members, nor unknown ones', () {
+      for (var name in ['kind', '_secret', 'age']) {
+        expect(
+          () => profile.getField(name),
+          throwsA(isA<ReflectionException>()),
+          reason: name,
+        );
+      }
+    });
   });
 
   test('a class without reflection data cannot be made', () {

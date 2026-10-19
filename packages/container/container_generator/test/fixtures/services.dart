@@ -106,3 +106,22 @@ class Retrying extends RetryBase {
 
 /// Not annotated: no reflection data.
 class NotInjectable {}
+
+/// The members of an instance, which `getMember` reads, as a template does.
+@injectable
+class Profile extends Base {
+  final String name = 'Ann';
+  String? nickname;
+
+  Profile(super.ids);
+
+  String get greeting => 'Hello, $name';
+
+  String shout() => name.toUpperCase();
+
+  static String get kind => 'profile';
+
+  String get _secret => 'hidden';
+
+  String revealed() => _secret;
+}

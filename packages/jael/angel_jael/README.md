@@ -78,6 +78,23 @@ void main() async {
 
 To apply additional transforms to parsed documents, provide a set of `patch` functions, like in `package:jael3_preprocessor`.
 
+## Members of values
+
+`{{ repo.name }}` reads `name` of `repo` through the app's reflector, before the ways `jael3` has (a key of a `Map`, a member of a core type, a key of `toJson()`). To read the members of your classes without `dart:mirrors`, as in a program compiled with `dart compile exe`, generate their reflection data with [`angel3_container_generator`](https://pub.dev/packages/angel3_container_generator): mark them `@injectable`, add a `part` directive, run `dart run build_runner build`, and give the app a `StaticReflector` of the data:
+
+```dart
+@injectable
+class Repo extends Model {
+  final String name;
+  Repo(this.name);
+}
+
+var app = Angel(reflector: StaticReflector.combine([modelsReflection]));
+await app.configure(jael(fileSystem.directory('views')));
+```
+
+A `memberResolver` given to `jael` is asked first, for members of values the reflector does not describe.
+
 ## Performance Optimization
 
 For handling large volume of initial requests, consider using `jaelTemplatePreload` to preload all the JAEL templates

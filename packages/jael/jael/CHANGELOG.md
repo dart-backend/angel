@@ -2,6 +2,9 @@
 
 ## 10.0.0
 
+* **Breaking:** `jael3` no longer uses `dart:mirrors`, so a program that renders templates can be compiled with `dart compile exe`. `{{ a.b }}` reads `b` of the `memberResolver` given to `Renderer.render`, if it knows it, or else of a key of a `Map`, a common member of a core type (`length`, `first`, `join`, `toUpperCase`, `toInt`, `year`, ...), or a key of the value's `toJson()`. A getter of another class, which was read through `dart:mirrors`, is read only through `memberResolver` or `toJson()`: give the values of a template as maps, or with `toJson()` (as `@serializable` models have), or a `memberResolver`; `angel3_jael` gives one of the app's reflector. See the README
+* fix: `{{ user.name }}` reads the key `name` of a `Map`, where it threw `NoSuchMethodError: Class '_Map<String, String>' has no instance getter 'name'`
+* **Breaking:** Removed `new` and `NewExpression`, which could not be used: `new` was scanned as a name, so `{{ new Foo() }}` failed with `Missing closing "}}" in interpolation`, and a named constructor could not be called. `TokenType.$new` is removed, and `new` is a name, as any other. Put a function that makes the value in the scope instead
 * Released with the other Angel3 packages at 10.0.0
 
 ## 9.1.0

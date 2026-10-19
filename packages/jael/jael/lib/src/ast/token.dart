@@ -27,7 +27,6 @@ enum TokenType {
   text,
 
   // Keywords
-  $new,
 
   /*
    * Expression

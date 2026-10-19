@@ -35,6 +35,7 @@ Generates the reflection data that `package:angel3_container` and Angel3 need, s
 With Angel3, pass the reflector to the app: `Angel(reflector: StaticReflector.combine([...]))`. Mark with `@injectable`:
 
 * Controllers, so their `@Expose` methods are routed (see `example/controller.dart`), and services with `@Hooks` or `@Middleware`. The generated data lists each class's annotations and the public instance methods it declares, with their parameters (including annotations such as `@Query`) and annotations.
+* Models whose members are read by name, as in a Jael template with `angel3_jael`: the generated data reads each class's public instance fields, getters and methods, declared or inherited, through `StaticReflectedInstance.getField`, which throws a `ReflectionException` for any other name.
 * Top-level functions used as handlers, so `@Middleware` on them applies and `ioc(handler)` can inject their parameters.
 
 The generated code calls each class's unnamed constructor without `dart:mirrors`. A constructor with optional parameters is called with `Function.apply` and symbol literals (which keep working when the app is obfuscated), passing only the arguments the container resolved, so every other parameter keeps its default value, including a default inherited through `super.x`. `this.x`/`super.x` parameters and import prefixes are supported.

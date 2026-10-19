@@ -9,6 +9,7 @@ resolution: workspace
 environment:
   sdk: '>=3.13.0 <4.0.0'
 dependencies:
+  angel3_container: ^10.0.0
   angel3_framework: ^10.0.0
   jael3: ^10.0.0
   jael3_preprocessor: ^10.0.0
@@ -17,7 +18,9 @@ dependencies:
   file: ^7.0.0
   logging: ^1.2.0
 dev_dependencies:
+  angel3_container_generator: ^10.0.0
   angel3_test: ^10.0.0
+  build_runner: ^2.4.0
   html: ^0.15.0
   test: ^1.24.0
   lints: ^6.0.0
