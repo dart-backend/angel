@@ -12,6 +12,11 @@
 * feat: `reload()` reloads on demand; `hotReload: false` makes the server again on changes without reloading the VM. Without the VM service, a change makes the server again, where changes were not watched
 * fix: `sendError` sends the status it is given. A `Glob` also matches files created after the start. File watchers are ready before `startServer` returns
 * feat: `securityContext` serves over HTTPS (HTTP/1.1), with `HttpServer.bindSecure`, and `requestClientCertificate` asks clients for a certificate; the URL printed is `https`
+* fix: A server that a reload replaces answers the requests it is answering before it is closed, for at most the new `shutdownGracePeriod` (default 10 s), where its shutdown hooks ran under them
+* fix: `close()` answers the requests that wait for a reload with `503`, where their timers later answered them on closed connections; a response that cannot be sent is logged
+* fix: `reload()` called during a reload returns once the reload after it, of its changes, has run, where it returned with the one that was running
+* fix: A `Glob` watches only the directory of its leading segments without wildcards, where it watched the whole working directory, including `.dart_tool` and `.git`
+* fix: Paths of another type are refused by the constructor, where `startServer` threw after making the app. A reload logs to the logger of the server it replaces, where it printed
 
 ## 9.1.0
 

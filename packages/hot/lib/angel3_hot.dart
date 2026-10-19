@@ -31,6 +31,15 @@ class HotReloader {
   final List _paths = [];
   final StringRenderer _renderer = StringRenderer(pretty: false);
   final Queue<HttpRequest> _requestQueue = Queue<HttpRequest>();
+
+  /// The timers of the requests in [_requestQueue].
+  final Map<HttpRequest, Timer> _queueTimers = {};
+
+  /// The requests each server is answering.
+  final Expando<_InFlight> _inFlight = Expando('requests in flight');
+
+  /// The logger of the server being replaced, during a reload.
+  Logger? _reloadLogger;
   final List<StreamSubscription> _subscriptions = [];
   HttpServer? _io;
   AngelHttp? _server;
@@ -39,9 +48,11 @@ class HotReloader {
   String? _isolateId;
   bool _started = false, _closed = false;
 
-  /// The reload that runs, and whether another is asked for meanwhile.
+  /// The reload that runs, and the one asked for meanwhile, which runs after
+  /// it, as one of all the reloads asked for meanwhile.
   Future<void>? _reloading;
-  bool _reloadAgain = false, _reloadAgainHot = false;
+  Completer<void>? _followUp;
+  bool _reloadAgainHot = false;
   Timer? _debounceTimer;
 
   /// If `true` (default), then developers can `press 'r' to reload` the application on-the-fly.
@@ -58,6 +69,10 @@ class HotReloader {
   /// How long file changes are gathered before they trigger one reload, as
   /// an editor's save may change several files, or one more than once.
   final Duration debounce;
+
+  /// How long a server that a reload replaces may go on answering the
+  /// requests it is answering, before it is closed anyway.
+  final Duration shutdownGracePeriod;
 
   /// If given, the server is served over HTTPS (HTTP/1.1) with this
   /// context's certificate, as by `HttpServer.bindSecure`.
@@ -107,9 +122,22 @@ class HotReloader {
     this.debounce = const Duration(milliseconds: 200),
     this.securityContext,
     this.requestClientCertificate = false,
+    this.shutdownGracePeriod = const Duration(seconds: 10),
   }) {
     _timeout = timeout ?? Duration(seconds: 5);
-    _paths.addAll(paths);
+    for (var path in paths) {
+      if (path is! String &&
+          path is! Glob &&
+          path is! FileSystemEntity &&
+          path is! Uri) {
+        throw ArgumentError.value(
+          path,
+          'paths',
+          'Hot reload paths must be a FileSystemEntity, a Uri, a String or a Glob',
+        );
+      }
+      _paths.add(path);
+    }
   }
 
   /// Stops watching, closes the server and the current app, and gives the
@@ -128,6 +156,18 @@ class HotReloader {
       } catch (_) {
         // Not a terminal.
       }
+    }
+    // Answered while their connections are open, and before a reload that
+    // runs is done, which they would otherwise wait for.
+    while (_requestQueue.isNotEmpty) {
+      var request = _requestQueue.removeFirst();
+      _queueTimers.remove(request)?.cancel();
+      sendError(
+        request,
+        HttpStatus.serviceUnavailable,
+        '503 Service Unavailable',
+        'The server is shutting down.',
+      );
     }
     await _reloading;
     await _io?.close(force: true);
@@ -177,11 +217,23 @@ class HotReloader {
     } else {
       response.write(_renderer.render(doc));
     }
-    response.close();
+    response.close().catchError((Object e) {
+      // The client has gone.
+      _logWarning('Could not send a $status response: $e');
+    });
   }
 
-  Future _handle(HttpRequest request) {
-    return _server!.handleRequest(request);
+  /// Handles [request] with the current server, counting it as one of its
+  /// requests in flight.
+  Future _handle(HttpRequest request) async {
+    var server = _server!;
+    var inFlight = _inFlight[server] ??= _InFlight();
+    inFlight.count++;
+    try {
+      return await server.handleRequest(request);
+    } finally {
+      if (--inFlight.count == 0) inFlight.idle?.complete();
+    }
   }
 
   /// Handles [request] with the current server, or, while there is none (as
@@ -191,7 +243,8 @@ class HotReloader {
       return await _handle(request);
     }
     _requestQueue.add(request);
-    Timer(timeout, () {
+    _queueTimers[request] = Timer(timeout, () {
+      _queueTimers.remove(request);
       if (_requestQueue.remove(request)) {
         sendError(
           request,
@@ -206,11 +259,13 @@ class HotReloader {
   /// Handles the requests queued while there was no server, all at once.
   void _flushQueue() {
     while (_requestQueue.isNotEmpty && _server != null) {
-      unawaited(_handle(_requestQueue.removeFirst()));
+      var request = _requestQueue.removeFirst();
+      _queueTimers.remove(request)?.cancel();
+      unawaited(_handle(request));
     }
   }
 
-  Logger? get _appLogger => _server?.app.logger;
+  Logger? get _appLogger => _server?.app.logger ?? _reloadLogger;
 
   Future<AngelHttp> _generateServer() async {
     var s = await generator();
@@ -426,15 +481,33 @@ class HotReloader {
     }
   }
 
-  /// Watches the current directory for files that [glob] matches, including
+  /// The directory that holds all that [glob] can match: that of its
+  /// leading segments without wildcards, of [cwd], or [cwd] itself.
+  static String _globRoot(Glob glob, String cwd) {
+    var literal = <String>[];
+    for (var segment in glob.pattern.split('/')) {
+      if (segment.contains(RegExp(r'[*?\[{]'))) break;
+      literal.add(segment);
+    }
+    // The last literal segment may be the name of a file.
+    while (literal.isNotEmpty) {
+      var dir = p.join(cwd, p.joinAll(literal));
+      if (Directory(dir).existsSync()) return dir;
+      literal.removeLast();
+    }
+    return cwd;
+  }
+
+  /// Watches the directory of [glob] for files that it matches, including
   /// files created after the start.
   Future<void> _listenToGlob(Glob glob) async {
-    var root = Directory.current.path;
+    var cwd = Directory.current.path;
+    var root = _globRoot(glob, cwd);
     var watcher = DirectoryWatcher(root);
     _subscriptions.add(
       watcher.events.listen(
         (e) {
-          if (glob.matches(p.relative(e.path, from: root))) _onChange.add(e);
+          if (glob.matches(p.relative(e.path, from: cwd))) _onChange.add(e);
         },
         onError: (Object e) {
           _logWarning('Could not listen to file changes of $glob: $e');
@@ -473,7 +546,8 @@ class HotReloader {
     );
   }
 
-  /// Closes [server]: its WebSockets, its shutdown hooks, and its app.
+  /// Closes [server]: its WebSockets, then, once the requests it is
+  /// answering are done, its shutdown hooks and its app.
   Future<void> _killServer(AngelHttp server) async {
     var app = server.app;
     try {
@@ -488,6 +562,18 @@ class HotReloader {
             );
           }
         }
+      }
+      // The requests it is answering are answered first, for at most the
+      // grace period.
+      var inFlight = _inFlight[server];
+      if (inFlight != null && inFlight.count > 0) {
+        await (inFlight.idle ??= Completer<void>()).future.timeout(
+          shutdownGracePeriod,
+          onTimeout: () => _logWarning(
+            '${inFlight.count} request(s) were still being answered by the '
+            'old server after $shutdownGracePeriod; it is closed anyway.',
+          ),
+        );
       }
       // As a driver closes it: its shutdown hooks, then the app.
       await Future.forEach(app.shutdownHooks, app.configure);
@@ -508,33 +594,48 @@ class HotReloader {
   /// Reloads the VM's sources, if [hot], and makes a new server of
   /// [generator], which replaces the current one, once made.
   ///
-  /// Reloads run one at a time: one asked for while another runs runs once
-  /// it is done, as one reload of all that were asked for meanwhile. Returns
-  /// once the server is replaced, or, if it failed, logged.
-  Future<void> reload({String reason = '[reload]', bool hot = false}) async {
-    if (_closed) return;
-    var running = _reloading;
-    if (running != null) {
-      _reloadAgain = true;
+  /// Reloads run one at a time: those asked for while one runs run once it
+  /// is done, as one reload, which their futures are of. Returns once the
+  /// server is replaced, or, if it failed, logged.
+  Future<void> reload({String reason = '[reload]', bool hot = false}) {
+    if (_closed) return Future.value();
+    if (_reloading != null) {
       _reloadAgainHot = _reloadAgainHot || hot;
-      return running;
+      return (_followUp ??= Completer<void>()).future;
     }
-    var done = _reloading = _reloadNow(reason, hot);
+    return _runReload(reason, hot);
+  }
+
+  Future<void> _runReload(String reason, bool hot) async {
+    var running = _reloading = _reloadNow(reason, hot);
     try {
-      await done;
+      await running;
     } finally {
       _reloading = null;
     }
-    if (_reloadAgain && !_closed) {
-      var again = _reloadAgainHot;
-      _reloadAgain = _reloadAgainHot = false;
-      await reload(reason: '[changes during the reload]', hot: again);
+
+    var followUp = _followUp;
+    if (followUp == null) return;
+    _followUp = null;
+    var again = _reloadAgainHot;
+    _reloadAgainHot = false;
+    if (_closed) {
+      followUp.complete();
+      return;
+    }
+    try {
+      await _runReload('[changes during the reload]', again);
+      followUp.complete();
+    } catch (e, st) {
+      followUp.completeError(e, st);
     }
   }
 
   Future<void> _reloadNow(String reason, bool hot) async {
-    _logInfo('$reason changed. Reloading server...\n');
     var old = _server;
+    // Of the server being replaced, while there is none.
+    _reloadLogger = old?.app.logger;
+    _logInfo('$reason changed. Reloading server...\n');
     // Requests wait for the new server.
     _server = null;
 
@@ -544,6 +645,7 @@ class HotReloader {
       next = await _generateServer();
     } catch (e, st) {
       _server = old;
+      _reloadLogger = null;
       _logWarning(
         'The server could not be reloaded; the last one goes on serving.',
         e,
@@ -554,6 +656,7 @@ class HotReloader {
     }
 
     _server = next;
+    _reloadLogger = null;
     _flushQueue();
     if (old != null) await _killServer(old);
   }
@@ -574,4 +677,11 @@ class HotReloader {
       );
     }
   }
+}
+
+/// The requests a server is answering, and, once asked for, when there are
+/// none.
+class _InFlight {
+  int count = 0;
+  Completer<void>? idle;
 }
