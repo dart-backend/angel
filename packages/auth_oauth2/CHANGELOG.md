@@ -8,8 +8,11 @@
 * fix: A malformed callback goes to `onError` as `invalid_request`, where it was a `400` or `500`, and a provider that cannot be reached is a `502`. A value returned by `onError` is sent as the response, where it was dropped
 * fix: The `oauth2.Client` given to the verifier is closed once it returns, where it was never closed, unless the new `httpClient` was given, with which tokens are exchanged
 * docs: The README tells how the two routes are told apart and how a login is kept, and configures `AngelAuth` with `configureServer`
+* fix: The result of `onError` is never taken for a user, where, for users that are maps (or `dynamic`), a map that `onError` returned signed in a user, as for a login the user declined
+* fix: A callback that is posted (`response_mode=form_post`, as of Sign in with Apple) is read from its form; the new `cookieSameSite` (default `SameSite.lax`) gives its cookie the `SameSite.none` it needs
+* fix: Each login has a cookie of its own, `cookieName` followed by the start of its `state`, so that logins in two tabs do not replace each other's
+* fix: The cookies of a client without a secret are signed with a random key, with a warning to pass a `cookieKey` for more than one instance, where the key was derived from the empty secret, and so that of every app
 * test: `oauth2_strategy_test.dart`
-* Released with the other Angel3 packages at 10.0.0
 
 ## 9.1.0
 

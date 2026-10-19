@@ -10,7 +10,24 @@ import 'package:angel3_framework/angel3_framework.dart';
 import 'package:crypto/crypto.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
+import 'package:logging/logging.dart';
 import 'package:oauth2/oauth2.dart' as oauth2;
+
+final _log = Logger('OAuth2Strategy');
+
+/// The outcome of a callback: the user of [verifier], or the response of
+/// [onError], which must never be taken for a user.
+sealed class _Outcome {}
+
+class _Verified extends _Outcome {
+  final Object? user;
+  _Verified(this.user);
+}
+
+class _Failed extends _Outcome {
+  final Object? response;
+  _Failed(this.response);
+}
 
 /// An Angel [AuthStrategy] that signs users in via a third-party service that speaks OAuth 2.0.
 ///
@@ -64,14 +81,23 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
   /// given to [verifier]; by default, one of each login, closed after it.
   final http.Client? httpClient;
 
-  /// The name of the cookie that keeps a login's `state` and code verifier.
+  /// The name of the cookies that keep the `state` and code verifier of
+  /// logins: each login's is this, followed by `_` and the start of its
+  /// `state`, so that logins in two tabs do not replace each other's.
   final String cookieName;
+
+  /// The `SameSite` of the cookies of logins; default: [SameSite.lax], which
+  /// a provider's redirect back (a GET) carries. A provider that posts its
+  /// callback (`response_mode=form_post`, as Sign in with Apple) needs
+  /// [SameSite.none], which browsers only keep over HTTPS.
+  final SameSite cookieSameSite;
 
   /// How long a login may take between the redirect and the callback.
   final Duration loginTimeout;
 
   /// The key that signs the cookie; by default, derived from the client
-  /// secret, so that every instance of the app signs alike.
+  /// secret, so that every instance of the app signs alike, or random, for
+  /// a client without a secret.
   final List<int> _cookieKey;
 
   final Random _random = Random.secure();
@@ -86,15 +112,29 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
     this.delimiter = ' ',
     this.httpClient,
     this.cookieName = 'angel3_oauth2',
+    this.cookieSameSite = SameSite.lax,
     this.loginTimeout = const Duration(minutes: 10),
     List<int>? cookieKey,
-  }) : _cookieKey =
-           cookieKey ??
-           sha256
-               .convert(
-                 utf8.encode('angel3_auth_oauth2:${options.clientSecret}'),
-               )
-               .bytes;
+  }) : _cookieKey = cookieKey ?? _defaultCookieKey(options.clientSecret);
+
+  /// The key of a client's [secret]: derived from it, or random without one,
+  /// as a key derived from nothing would be that of every app.
+  static List<int> _defaultCookieKey(String secret) {
+    if (secret.isNotEmpty) {
+      return sha256.convert(utf8.encode('angel3_auth_oauth2:$secret')).bytes;
+    }
+    _log.warning(
+      'The OAuth2 client has no secret, so the cookies of logins are signed '
+      'with a random key, which other instances of the app do not share: '
+      'pass a cookieKey to run more than one.',
+    );
+    var random = Random.secure();
+    return [for (var i = 0; i < 32; i++) random.nextInt(256)];
+  }
+
+  /// The name of the cookie of the login of [state].
+  String _cookieNameOf(String state) =>
+      '${cookieName}_${state.substring(0, 12)}';
 
   oauth2.AuthorizationCodeGrant _createGrant(String codeVerifier) =>
       oauth2.AuthorizationCodeGrant(
@@ -108,12 +148,27 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
         codeVerifier: codeVerifier,
       );
 
-  /// Whether [req] is the provider's callback, rather than the start of a
-  /// login.
-  static bool _isCallback(RequestContext req) {
-    var query = req.uri?.queryParameters ?? const {};
-    return query.containsKey('code') || query.containsKey('error');
+  /// The parameters of the provider's response: of the query, and, of a
+  /// callback that is posted (`response_mode=form_post`), of its form.
+  static Future<Map<String, String>> _parametersOf(RequestContext req) async {
+    var parameters = {...?req.uri?.queryParameters};
+    if (req.method == 'POST') {
+      try {
+        await req.parseBody();
+        for (var MapEntry(:key, :value) in req.bodyAsMap.entries) {
+          if (value is String) parameters[key] = value;
+        }
+      } on FormatException {
+        // Not a form: of the query alone.
+      }
+    }
+    return parameters;
   }
+
+  /// Whether [parameters] are those of the provider's callback, rather than
+  /// of the start of a login.
+  static bool _isCallback(Map<String, String> parameters) =>
+      parameters.containsKey('code') || parameters.containsKey('error');
 
   @override
   FutureOr<User?> authenticate(
@@ -121,14 +176,16 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
     ResponseContext res, [
     AngelAuthOptions<User>? options,
   ]) async {
-    if (_isCallback(req)) {
-      var result = await authenticateCallback(req, res, options);
-      if (result is User && result != null) return result;
-      // A response of [onError], if it gave one.
-      if (result != null && res.isOpen) {
-        await res.serialize(result);
+    var parameters = await _parametersOf(req);
+    if (_isCallback(parameters)) {
+      switch (await _callback(req, res, parameters)) {
+        case _Verified(:var user):
+          return user as User?;
+        case _Failed(:var response):
+          // The response of [onError], if it gave one, but never a user.
+          if (response != null && res.isOpen) await res.serialize(response);
+          return null;
       }
-      return null;
     }
 
     await res.redirect(_startLogin(res));
@@ -146,17 +203,16 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
       state: state,
     );
 
-    res.cookies
-      ..removeWhere((c) => c.name == cookieName)
-      ..add(
-        _cookie(
-          _sign({
-            's': state,
-            'v': verifier,
-            't': DateTime.now().millisecondsSinceEpoch,
-          }),
-        )..maxAge = loginTimeout.inSeconds,
-      );
+    res.cookies.add(
+      _cookie(
+        _cookieNameOf(state),
+        _sign({
+          's': state,
+          'v': verifier,
+          't': DateTime.now().millisecondsSinceEpoch,
+        }),
+      )..maxAge = loginTimeout.inSeconds,
+    );
     return url;
   }
 
@@ -170,34 +226,47 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
     RequestContext req,
     ResponseContext res, [
     AngelAuthOptions? options,
-  ]) async {
-    var query = req.uri?.queryParameters ?? const <String, String>{};
-    var login = _readLogin(req);
-    // Used once: a new login needs a new state.
-    res.cookies
-      ..removeWhere((c) => c.name == cookieName)
-      ..add(
-        _cookie('')
+  ]) async => switch (await _callback(req, res, await _parametersOf(req))) {
+    _Verified(:var user) => user,
+    _Failed(:var response) => response,
+  };
+
+  Future<_Outcome> _callback(
+    RequestContext req,
+    ResponseContext res,
+    Map<String, String> query,
+  ) async {
+    var state = query['state'];
+    var login = state == null || state.length < 12
+        ? null
+        : _readLogin(req, state);
+    if (state != null && state.length >= 12) {
+      // Used once: a new login needs a new state.
+      res.cookies.add(
+        _cookie(_cookieNameOf(state), '')
           ..maxAge = 0
           ..expires = DateTime.fromMillisecondsSinceEpoch(0, isUtc: true),
       );
+    }
 
-    if (login == null || query['state'] != login.state) {
-      return await onError(
-        oauth2.AuthorizationException(
-          'invalid_state',
-          'The login expired, or was not started here.',
-          null,
+    if (login == null || state != login.state) {
+      return _Failed(
+        await onError(
+          oauth2.AuthorizationException(
+            'invalid_state',
+            'The login expired, or was not started here.',
+            null,
+          ),
+          req,
+          res,
         ),
-        req,
-        res,
       );
     }
 
     var grant = _createGrant(login.verifier)
       ..getAuthorizationUrl(
-        this.options.redirectUri,
-        scopes: this.options.scopes,
+        options.redirectUri,
+        scopes: options.scopes,
         state: login.state,
       );
 
@@ -205,12 +274,14 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
     try {
       client = await grant.handleAuthorizationResponse(query);
     } on oauth2.AuthorizationException catch (e) {
-      return await onError(e, req, res);
+      return _Failed(await onError(e, req, res));
     } on FormatException catch (e) {
-      return await onError(
-        oauth2.AuthorizationException('invalid_request', e.message, null),
-        req,
-        res,
+      return _Failed(
+        await onError(
+          oauth2.AuthorizationException('invalid_request', e.message, null),
+          req,
+          res,
+        ),
       );
     } on http.ClientException catch (e) {
       throw AngelHttpException(
@@ -221,7 +292,7 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
     }
 
     try {
-      return await verifier(client, req, res);
+      return _Verified(await verifier(client, req, res));
     } finally {
       // Its HTTP client is ours, unless it was given.
       if (httpClient == null) client.close();
@@ -230,9 +301,13 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
 
   /// The `state` and code verifier of the login of [req]'s cookie, if it has
   /// one that this strategy signed, and that has not timed out.
-  ({String state, String verifier})? _readLogin(RequestContext req) {
+  ({String state, String verifier})? _readLogin(
+    RequestContext req,
+    String state,
+  ) {
+    var name = _cookieNameOf(state);
     var value = req.cookies
-        .where((c) => c.name == cookieName)
+        .where((c) => c.name == name)
         .map((c) => c.value)
         .firstOrNull;
     if (value == null) return null;
@@ -271,10 +346,10 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
 
   /// The cookie of a login: sent only to the callback, and only over HTTPS
   /// if the redirect URI is.
-  Cookie _cookie(String value) => Cookie(cookieName, value)
+  Cookie _cookie(String name, String value) => Cookie(name, value)
     ..httpOnly = true
     ..secure = options.redirectUri.scheme == 'https'
-    ..sameSite = SameSite.lax
+    ..sameSite = cookieSameSite
     ..path = options.redirectUri.path.isEmpty ? '/' : options.redirectUri.path;
 
   /// A random string of the characters of a PKCE code verifier (RFC 7636).

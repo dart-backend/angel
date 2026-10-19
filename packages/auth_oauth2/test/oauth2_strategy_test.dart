@@ -1,5 +1,5 @@
 import 'dart:convert';
-import 'dart:io' show Cookie, SameSite;
+import 'dart:io' show ContentType, Cookie, SameSite;
 
 import 'package:angel3_auth/angel3_auth.dart';
 import 'package:angel3_auth_oauth2/angel3_auth_oauth2.dart';
@@ -9,6 +9,7 @@ import 'package:angel3_mock_request/angel3_mock_request.dart';
 import 'package:crypto/crypto.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
+import 'package:logging/logging.dart';
 import 'package:test/test.dart';
 
 final authorizationEndpoint = Uri.parse('https://provider.example/authorize');
@@ -23,6 +24,7 @@ typedef Got = ({
 });
 
 void main() {
+  group('more', moreTests);
   late AngelHttp http_;
   late List<String> errors;
   late List<Map<String, String>> tokenRequests;
@@ -106,7 +108,7 @@ void main() {
     expect(got.status, 302);
     return (
       Uri.parse(got.location!),
-      got.cookies.singleWhere((c) => c.name == 'angel3_oauth2'),
+      got.cookies.singleWhere((c) => c.name.startsWith('angel3_oauth2_')),
     );
   }
 
@@ -153,7 +155,9 @@ void main() {
       expect(url.queryParameters['code_challenge'], challenge);
       expect(tokenRequests.single['code'], 'c0de');
       // The cookie of the login is used once.
-      var cleared = got.cookies.singleWhere((c) => c.name == 'angel3_oauth2');
+      var cleared = got.cookies.singleWhere(
+        (c) => c.name.startsWith('angel3_oauth2_'),
+      );
       expect(cleared.maxAge, 0);
     });
 
@@ -228,5 +232,192 @@ void main() {
       expect(got.status, 400);
       expect(errors, ['invalid_state']);
     });
+  });
+}
+
+/// A login of [strategy], of [app]: started, then called back with
+/// [parameters], in the query, or posted as a form if [post].
+Future<({int status, String body, List<Cookie> cookies})> logIn(
+  Angel app,
+  Map<String, String> Function(String state) parameters, {
+  bool post = false,
+  int starts = 1,
+}) async {
+  var http = AngelHttp(app);
+  var logins = <(String, Cookie)>[];
+  for (var i = 0; i < starts; i++) {
+    var rq = MockHttpRequest('GET', Uri.parse('/start'));
+    await rq.close();
+    await http.handleRequest(rq);
+    var state = Uri.parse(rq.response.headers.value('location')!)
+        .queryParameters['state']!;
+    logins.add((
+      state,
+      rq.response.cookies.singleWhere(
+        (c) => c.name.startsWith('angel3_oauth2_'),
+      ),
+    ));
+  }
+
+  // The first login, with the cookies of all, as a browser of two tabs.
+  var (state, _) = logins.first;
+  var query = parameters(state);
+  var cb = post
+      ? MockHttpRequest('POST', Uri.parse('/cb'))
+      : MockHttpRequest(
+          'GET',
+          Uri.parse('/cb').replace(queryParameters: query),
+        );
+  cb.headers.add('accept', 'application/json');
+  for (var (_, cookie) in logins) {
+    cb.cookies.add(Cookie(cookie.name, cookie.value));
+  }
+  if (post) {
+    cb.headers.contentType = ContentType(
+      'application',
+      'x-www-form-urlencoded',
+    );
+    cb.write(Uri(queryParameters: query).query);
+  }
+  await cb.close();
+  await http.handleRequest(cb);
+  return (
+    status: cb.response.statusCode,
+    body: await cb.response.transform(utf8.decoder).join(),
+    cookies: cb.response.cookies,
+  );
+}
+
+/// An app whose users are maps, of a strategy whose `onError` returns a map.
+Future<Angel> mapApp({
+  String clientSecret = 'secret',
+  http.Client? provider,
+  SameSite cookieSameSite = SameSite.lax,
+  bool post = false,
+}) async {
+  var app = Angel();
+  var auth = AngelAuth<Map<String, dynamic>>(
+    jwtKey: 'key',
+    serializer: (user) => '${user['id']}',
+    deserializer: (id) => {'id': id},
+    enforceIp: false,
+  );
+  auth.strategies['p'] = OAuth2Strategy<Map<String, dynamic>>(
+    ExternalAuthOptions(
+      clientId: 'id',
+      clientSecret: clientSecret,
+      redirectUri: 'https://app.example/cb',
+    ),
+    authorizationEndpoint,
+    tokenEndpoint,
+    (client, req, res) => {'id': 'alice'},
+    (e, req, res) {
+      res.statusCode = 400;
+      return <String, dynamic>{'error': e.error};
+    },
+    httpClient:
+        provider ??
+        MockClient(
+          (request) async => http.Response(
+            json.encode({'access_token': 'at', 'token_type': 'bearer'}),
+            200,
+            headers: {'content-type': 'application/json'},
+          ),
+        ),
+    cookieSameSite: cookieSameSite,
+  );
+  await app.configure(auth.configureServer);
+  app.get('/start', auth.authenticate('p'));
+  var callback = auth.authenticate('p', AngelAuthOptions());
+  if (post) {
+    app.post('/cb', callback);
+  } else {
+    app.get('/cb', callback);
+  }
+  return app;
+}
+
+void moreTests() {
+  test('an error of onError, of map users, is no login', () async {
+    var got = await logIn(
+      await mapApp(),
+      (state) => {'error': 'access_denied', 'state': state},
+    );
+    expect(got.status, 400);
+    expect(json.decode(got.body), {'error': 'access_denied'});
+    expect(got.cookies.where((c) => c.name == 'token'), isEmpty);
+  });
+
+  test('a user of the verifier, of map users, is a login', () async {
+    var got = await logIn(
+      await mapApp(),
+      (state) => {'code': 'c0de', 'state': state},
+    );
+    expect(got.status, 200);
+    expect((json.decode(got.body) as Map)['data'], {'id': 'alice'});
+  });
+
+  test('a posted callback (form_post) is a login', () async {
+    var got = await logIn(
+      await mapApp(cookieSameSite: SameSite.none, post: true),
+      (state) => {'code': 'c0de', 'state': state},
+      post: true,
+    );
+    expect(got.status, 200);
+  });
+
+  test('the cookie of a login is of the SameSite asked for', () async {
+    var app = await mapApp(cookieSameSite: SameSite.none);
+    var rq = MockHttpRequest('GET', Uri.parse('/start'));
+    await rq.close();
+    await AngelHttp(app).handleRequest(rq);
+    var cookie = rq.response.cookies.singleWhere(
+      (c) => c.name.startsWith('angel3_oauth2_'),
+    );
+    expect(cookie.sameSite, SameSite.none);
+    expect(cookie.secure, isTrue);
+  });
+
+  test('two logins at once, as in two tabs, each work', () async {
+    var got = await logIn(
+      await mapApp(),
+      (state) => {'code': 'c0de', 'state': state},
+      starts: 2,
+    );
+    expect(got.status, 200);
+  });
+
+  test('a client without a secret signs with a random key', () async {
+    var warnings = <String>[];
+    var sub = Logger.root.onRecord
+        .where((r) => r.level == Level.WARNING)
+        .listen((r) => warnings.add(r.message));
+    addTearDown(sub.cancel);
+    var app = await mapApp(clientSecret: '');
+    expect(warnings, contains(contains('no secret')));
+    // A cookie signed with the key of the empty secret is refused.
+    var forgedKey = sha256.convert(utf8.encode('angel3_auth_oauth2:')).bytes;
+    var state = 'abcdefghijklmnop';
+    var data = base64Url
+        .encode(
+          utf8.encode(
+            json.encode({
+              's': state,
+              'v': 'v' * 64,
+              't': DateTime.now().millisecondsSinceEpoch,
+            }),
+          ),
+        )
+        .replaceAll('=', '');
+    var signature = base64Url
+        .encode(Hmac(sha256, forgedKey).convert(ascii.encode(data)).bytes)
+        .replaceAll('=', '');
+    var cb = MockHttpRequest('GET', Uri.parse('/cb?code=c0de&state=$state'))
+      ..cookies.add(
+        Cookie('angel3_oauth2_${state.substring(0, 12)}', '$data.$signature'),
+      );
+    await cb.close();
+    await AngelHttp(app).handleRequest(cb);
+    expect(cb.response.statusCode, 400);
   });
 }
