@@ -16,9 +16,9 @@ const targetTestDatabase = 'mariadb';
 // For MySQL/MariaDB using `mysql_dart` driver
 Future<MySQLConnection> openMySqlConnection() async {
   var connection = await MySQLConnection.createConnection(
-    databaseName: 'orm_test',
-    port: 3306,
-    host: "localhost",
+    databaseName: Platform.environment['MYSQL_DB'] ?? 'orm_test',
+    port: int.parse(Platform.environment['MYSQL_PORT'] ?? '3306'),
+    host: Platform.environment['MYSQL_HOST'] ?? 'localhost',
     userName: Platform.environment['MYSQL_USERNAME'] ?? 'test',
     password: Platform.environment['MYSQL_PASSWORD'] ?? 'Test123',
     secure: !('false' == Platform.environment['MYSQL_SECURE']),

@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:angel3_migration/angel3_migration.dart';
+import 'package:angel3_migration_runner/mysql.dart';
 import 'package:angel3_orm/angel3_orm.dart';
 import 'package:angel3_orm_mysql/angel3_orm_mysql.dart';
 import 'package:angel3_serialize/angel3_serialize.dart';
@@ -12,13 +13,13 @@ part 'main.g.dart';
 void main() async {
   //hierarchicalLoggingEnabled = true;
 
-  //await mariaDBExample();
+  //await mariaDbExample();
   await mysqlExample();
 
   exit(0);
 }
 
-Future<void> mariaDBExample() async {
+Future<void> mariaDbExample() async {
   Logger.root
     ..level = Level.ALL
     ..onRecord.listen(print);
@@ -36,6 +37,7 @@ Future<void> mariaDBExample() async {
   print("Connected to MariaDb");
   var logger = Logger('orm_mariadb');
   var executor = MariaDbExecutor(connection, logger: logger);
+  await MySqlMigrationRunner(connection, migrations: [TodoMigration()]).up();
 
   var query = TodoQuery();
   query.values
@@ -70,6 +72,7 @@ Future<void> mysqlExample() async {
   var logger = Logger('orm_mysql');
   await connection.connect(timeoutMs: 10000);
   var executor = MySqlExecutor(connection, logger: logger);
+  await MySqlMigrationRunner(connection, migrations: [TodoMigration()]).up();
 
   var query = TodoQuery();
   query.values

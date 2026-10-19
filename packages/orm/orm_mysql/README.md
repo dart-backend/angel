@@ -24,7 +24,7 @@ This package contains the SQL executor required by Angel3 ORM to work with MySQL
     import 'package:angel3_serialize/angel3_serialize.dart';
     import 'package:optional/optional.dart';
     
-    part '../angel_orm_mysql/car.g.dart';
+    part 'car.g.dart';
 
     @serializable
     @orm
@@ -46,11 +46,11 @@ This package contains the SQL executor required by Angel3 ORM to work with MySQL
 3. Write the query program. i.e. `CarPersistence.dart`
 
     ```dart
-    import 'package:angel3_migration_runner/angel3_migration_runner.dart';
-    import 'package:angel3_orm/angel3_orm.dart';
-    import 'package:logging/logging.dart';
+    import 'package:angel3_migration_runner/mysql.dart';
+    import 'package:angel3_orm_mysql/angel3_orm_mysql.dart';
     import 'package:mysql_dart/mysql_dart.dart';
-    import '../angel_orm_mysql/models/car.dart';
+
+    import 'car.dart';
 
     void main() async {
     
@@ -67,7 +67,7 @@ This package contains the SQL executor required by Angel3 ORM to work with MySQL
         var executor = MySqlExecutor(conn);
 
         // Create the `Car` table
-        var runner = MysqlMigrationRunner(conn, migrations: [CarMigration()]);
+        var runner = MySqlMigrationRunner(conn, migrations: [CarMigration()]);
         await runner.up();
 
         var query = CarQuery();
@@ -84,11 +84,13 @@ This package contains the SQL executor required by Angel3 ORM to work with MySQL
 
 ## MySqlExecutor
 
-This SQL executor is implemented using [`mysql_dart`](https://pub.dev/packages/mysql_dart) driver. It works with both `MySQL` 8.0+ and `MariaDB` 10.2+ database.
+This SQL executor is implemented using [`mysql_dart`](https://pub.dev/packages/mysql_dart) driver. It works with `MySQL` 8.0+.
 
-### Connecting to MySQL or MariaDB
+### Connecting to MySQL
 
 ```dart
+    import 'package:angel3_orm_mysql/angel3_orm_mysql.dart';
+    import 'package:logging/logging.dart';
     import 'package:mysql_dart/mysql_dart.dart';
 
     var connection = await MySQLConnection.createConnection(
@@ -98,9 +100,9 @@ This SQL executor is implemented using [`mysql_dart`](https://pub.dev/packages/m
         userName: "test",
         password: "test123",
         secure: true);
+    await connection.connect(timeoutMs: 10000);
 
     var logger = Logger('orm_mysql');
-    await connection.connect(timeoutMs: 10000);
     var executor = MySqlExecutor(connection, logger: logger);
 ```
 
@@ -112,11 +114,13 @@ This SQL executor is implemented using [`mysql_dart`](https://pub.dev/packages/m
 
 ## MariaDbExecutor
 
-This SQL executor is a `MySqlExecutor`, of a connection of the [`mysql_dart`](https://pub.dev/packages/mysql_dart) driver, that stores a `DateTime` as UTC.
+This SQL executor is implemented using [`mysql_dart`](https://pub.dev/packages/mysql_dart) driver. It works with `MariaDB` 10.2+ database that stores a `DateTime` as UTC.
 
 ### Connecting to MariaDB
 
 ```dart
+    import 'package:angel3_orm_mysql/angel3_orm_mysql.dart';
+    import 'package:logging/logging.dart';
     import 'package:mysql_dart/mysql_dart.dart';
 
     var connection = await MySQLConnection.createConnection(
@@ -148,7 +152,7 @@ A zero date or time (`0000-00-00`), which MySQL and MariaDB store where a date i
 
 ## Transactions
 
-The queries of a connection run one at a time. A transaction holds the connection until it ends, so a query given in it to another executor of the connection, such as that of the application, runs in the transaction, as a transaction begun in it is of it: MySQL and MariaDB nest none. Use the executor given to the transaction, which runs no query once it has ended and does not `close`.
+The queries of a connection run one at a time. A transaction holds the connection until it ends, so a query given in it to another executor of the connection, such as that of the application, runs in the transaction, as a transaction begun in it is of it: MySQL and MariaDB nest none. Use the executor given to the transaction. The queries given to it before the transaction ends, even those not waited for, run in it, before its `COMMIT` or `ROLLBACK`; one given after it has ended throws a `StateError`, as does `close`, of its executor or of another of the connection, in it. Await the queries of a transaction, so that their errors roll it back.
 
 ## Compatibility Matrix
 
@@ -156,7 +160,6 @@ The queries of a connection run one at a time. A transaction holds the connectio
 
 |                 | Create |  Read  | Update | Delete |
 |-----------------|--------|--------|--------|--------|
-| MySqlExecutor   |    Y   |   Y    |    Y   |    Y   |
 | MariaDbExecutor |    Y   |   Y    |    Y   |    Y   |
 
 ### MySQL 8.0+
@@ -164,4 +167,3 @@ The queries of a connection run one at a time. A transaction holds the connectio
 |                 | Create |  Read  | Update | Delete |
 |-----------------|--------|--------|--------|--------|
 | MySqlExecutor   |    Y   |   Y    |    Y   |    Y   |
-| MariaDbExecutor |    Y   |   Y    |    Y   |    Y   |

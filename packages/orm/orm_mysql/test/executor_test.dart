@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:angel3_orm/angel3_orm.dart';
 import 'package:angel3_migration_runner/angel3_migration_runner.dart';
 import 'package:angel3_orm_mysql/angel3_orm_mysql.dart';
@@ -314,6 +316,52 @@ void executorTests(
         throwsStateError,
       );
       expect(await CarQuery().get(executor), isEmpty);
+    });
+
+    test('queries not waited for run in their transaction', () async {
+      var left = Completer<void>();
+      await executor.transaction((tx) async {
+        unawaited(
+          (CarQuery()..values.make = 'Committed')
+              .insert(tx)
+              .then((_) => left.complete(), onError: left.completeError),
+        );
+      });
+      await left.future;
+
+      // Rolled back with it, rather than sent as its ROLLBACK is.
+      var rolledBack = Completer<void>();
+      await expectLater(
+        executor
+            .transaction((tx) async {
+              unawaited(
+                (CarQuery()..values.make = 'Rolled back')
+                    .insert(tx)
+                    .then(
+                      (_) => rolledBack.complete(),
+                      onError: rolledBack.completeError,
+                    ),
+              );
+              throw StateError('roll back');
+            })
+            .timeout(const Duration(seconds: 10)),
+        throwsStateError,
+      );
+      await rolledBack.future;
+
+      var cars = await CarQuery().get(executor);
+      expect(cars.map((c) => c.make), ['Committed']);
+    });
+
+    test('the connection is not closed in its transaction', () async {
+      await executor.transaction((tx) async {
+        await expectLater(
+          (executor as MySqlExecutor).close(),
+          throwsStateError,
+        );
+        await (CarQuery()..values.make = 'Open').insert(tx);
+      });
+      expect(await CarQuery().get(executor), hasLength(1));
     });
 
     test('a zero date is null', () async {

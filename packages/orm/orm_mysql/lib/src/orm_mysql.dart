@@ -74,11 +74,13 @@ class MySqlExecutor extends QueryExecutor {
   /// Closes the connection once the commands given before have run.
   ///
   /// Throws a [StateError] of the executor of a transaction, whose
-  /// connection is that of the transaction, which ends it.
+  /// connection is that of the transaction, which ends it, and in a
+  /// transaction on the connection, which the close would wait for, as the
+  /// transaction for it.
   Future<void> close() {
-    if (_inTransaction) {
+    if (_inTransaction || _zoneTransaction != null) {
       return Future.error(
-        StateError('The executor of a transaction does not close it.'),
+        StateError('The connection of a transaction is not closed in it.'),
       );
     }
     return _queue.run(() => _connection.close());
@@ -245,8 +247,12 @@ class MySqlExecutor extends QueryExecutor {
           logger.severe('Failed to run transaction', e);
           rethrow;
         } finally {
-          // Its turn is the transaction's, which ends with it.
+          // Its turn is the transaction's, which ends with it. The queries
+          // given before, which were not waited for, run in it, before its
+          // COMMIT or ROLLBACK, which `mysql_dart` sends on the connection as
+          // they run: it would fail to decode their responses.
           tx._ended = true;
+          await tx._queue.run(() async {});
         }
       }),
     );
