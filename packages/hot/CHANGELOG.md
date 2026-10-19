@@ -2,7 +2,15 @@
 
 ## 10.0.0-beta.1
 
-* Released with the other Angel3 packages at 10.0.0
+* fix: The old server is closed on a reload, once the new one serves: its WebSockets, its shutdown hooks, and its app, where it was never closed, as it was read after being cleared, so every reload kept the last app's connections, timers and listeners
+* fix: A successful hot reload is no longer reported as failed, and a failed one is, with the VM's notices, where the check was of `success != null`
+* fix: A server that `createServer` fails to make, or a reload that fails, is logged, and the last good server goes on serving, where the error was uncaught, and ended the process, or left requests to time out with `502`
+* fix: Changes are gathered for the new `debounce` (default 200 ms), and reloads run one at a time, as changes during one trigger one more after it, where every file event reloaded at once, and the reloads overlapped. Requests during a reload wait for the new server, and are then handled at once, not one after another
+* fix: Restarting with `R` makes the server again, where it called `startServer` again, which added listeners, file watchers and a connection to the VM service each time, so that a change reloaded once more for each restart. **Breaking:** `startServer` throws a `StateError` if called again
+* fix: The isolate reloaded is the one the HotReloader runs in, where it was the first the VM listed. `vmServiceHost` and `vmServicePort` are used if the VM does not tell the URI of its service, where they were not used
+* fix: `close()` closes the server and the app, the connection to the VM service, the file watchers and the `stdin` subscription, and gives the terminal back its line and echo modes, and may be called before `startServer`
+* feat: `reload()` reloads on demand; `hotReload: false` makes the server again on changes without reloading the VM. Without the VM service, a change makes the server again, where changes were not watched
+* fix: `sendError` sends the status it is given. A `Glob` also matches files created after the start. File watchers are ready before `startServer` returns
 
 ## 9.1.0
 

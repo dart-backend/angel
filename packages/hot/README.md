@@ -17,8 +17,8 @@ In your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  angel3_framework: ^9.0.0
-  angel3_hot: ^9.0.0
+  angel3_framework: ^10.0.0
+  angel3_hot: ^10.0.0
 ```
 
 ## Usage
@@ -77,6 +77,15 @@ Future<Angel> createServer() async {
   return app;
 }
 ```
+
+## How a reload works
+
+* Changes are gathered for `debounce` (default 200 ms), and trigger one reload; reloads run one at a time, and changes during one trigger one more after it.
+* The VM's sources are reloaded (with the VM service, and `hotReload: true`), then `createServer` makes a new server. Requests that come meanwhile wait for it, for at most `timeout`. Once it serves, the old one is closed: its WebSockets, its shutdown hooks, and its app.
+* If `createServer` throws, or the reload fails, the error is logged, and the last good server goes on serving; the next change tries again.
+* Without the VM service, a change makes the server again, of the code already loaded, as for files it reads (templates, configuration).
+* Paths that are relative, and `Glob`s, are of the current working directory. A `Glob` also matches files created after the start.
+* `reload()` reloads on demand; `close()` stops watching, closes the server and the app, and gives the terminal back.
 
 ## Customising Response Header
 
