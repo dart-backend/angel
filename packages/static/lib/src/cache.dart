@@ -80,13 +80,12 @@ class CachingVirtualDirectory extends VirtualDirectory {
     File file,
     FileStat stat,
     RequestContext req,
-    ResponseContext res, {
-    bool ignoreRange = false,
-  }) {
+    ResponseContext res,
+  ) {
     res.headers['accept-ranges'] = 'bytes';
 
     if (onlyInProduction == true && req.app?.environment.isProduction != true) {
-      return super.serveFile(file, stat, req, res, ignoreRange: ignoreRange);
+      return sendFile(file, stat, req, res);
     }
 
     var reqHeaders = req.headers;
@@ -118,12 +117,12 @@ class CachingVirtualDirectory extends VirtualDirectory {
       return Future.value(false);
     }
 
-    return super.serveFile(
+    return sendFile(
       file,
       stat,
       req,
       res,
-      ignoreRange: ignoreRange || !_ifRangeMatches(reqHeaders, modified, etag),
+      ignoreRange: !_ifRangeMatches(reqHeaders, modified, etag),
     );
   }
 

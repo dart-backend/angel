@@ -7,6 +7,7 @@ import 'package:file/file.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:path/path.dart' as p;
 import 'package:logging/logging.dart';
+import 'package:meta/meta.dart';
 import 'package:belatuk_range_header/belatuk_range_header.dart';
 
 final RegExp _param = RegExp(r':([A-Za-z0-9_]+)(\((.+)\))?');
@@ -354,9 +355,19 @@ class VirtualDirectory {
 
   /// Writes the contents of a file to a response.
   ///
-  /// The `Range` header of the request is honored unless [ignoreRange], as
-  /// for an `If-Range` that no longer matches the file.
+  /// Override this to change how a file is served; [sendFile] writes it.
   Future<bool> serveFile(
+    File file,
+    FileStat stat,
+    RequestContext req,
+    ResponseContext res,
+  ) => sendFile(file, stat, req, res);
+
+  /// Writes the contents of a file to a response, as [serveFile] does: of
+  /// the request's `Range`, unless [ignoreRange], as for an `If-Range` that
+  /// no longer matches the file.
+  @protected
+  Future<bool> sendFile(
     File file,
     FileStat stat,
     RequestContext req,

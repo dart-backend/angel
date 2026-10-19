@@ -11,7 +11,7 @@
 * fix: The names in a directory listing are HTML-escaped, where a file named with markup could run script in the listing (XSS); the listing is a `<ul>`
 * **Breaking:** A symbolic link in `source` to a file or directory outside of it is not served, unless the new `followLinksOutsideSource` is `true`. A link that leads nowhere is not found, where the path it resolved to was served as if it were a URL path
 * fix: A `publicPath` is matched by whole segments, so `/static` does not serve `/staticfoo/x`. A path with an encoded backslash is not found, where it was a `500` on Windows
-* `serveFile` takes `ignoreRange`. The `debug` parameter of `CachingVirtualDirectory`, which was not used, is deprecated
+* `serveFile` writes a file with the new, protected `sendFile`, which can ignore the `Range` of the request; `serveFile` keeps its signature, so its overrides still work. The `debug` parameter of `CachingVirtualDirectory`, which was not used, is deprecated
 * test: `http_semantics_test.dart`
 * Released with the other Angel3 packages at 10.0.0
 
