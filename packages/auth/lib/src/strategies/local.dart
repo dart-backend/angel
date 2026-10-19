@@ -49,36 +49,21 @@ class LocalAuthStrategy<User> extends AuthStrategy<User> {
     var localOptions = options ?? AngelAuthOptions();
     User? verificationResult;
 
-    if (allowBasic) {
-      var authHeader = req.headers?.value('authorization') ?? '';
+    // Basic, if allowed and sent; the fields of the body otherwise.
+    var basic = allowBasic
+        ? _rgxBasic.firstMatch(req.headers?.value('authorization') ?? '')
+        : null;
 
-      if (_rgxBasic.hasMatch(authHeader)) {
-        var base64AuthString = _rgxBasic.firstMatch(authHeader)?.group(1);
-        if (base64AuthString == null) {
-          return null;
-        }
-        var authString = String.fromCharCodes(base64.decode(base64AuthString));
-        if (_rgxUsrPass.hasMatch(authString)) {
-          Match usrPassMatch = _rgxUsrPass.firstMatch(authString)!;
-          verificationResult = await verifier(
-            usrPassMatch.group(1),
-            usrPassMatch.group(2),
-          );
-        } else {
-          _log.warning('Bad request: $invalidMessage');
-          throw AngelHttpException.badRequest(errors: [invalidMessage]);
-        }
+    if (basic != null) {
+      var (username, password) = _basicCredentials(basic.group(1)!);
+      verificationResult = await verifier(username, password);
 
-        if (verificationResult == null) {
-          res
-            ..statusCode = 401
-            ..headers['www-authenticate'] = 'Basic realm="$realm"';
-          await res.close();
-          return null;
-        }
-
-        //Allow non-null to pass through
-        //return verificationResult;
+      if (verificationResult == null) {
+        res
+          ..statusCode = 401
+          ..headers['www-authenticate'] = 'Basic realm="$realm"';
+        await res.close();
+        return null;
       }
     } else {
       var body = await req
@@ -105,7 +90,6 @@ class LocalAuthStrategy<User> extends AuthStrategy<User> {
 
     // Force basic if set
     if (forceBasic) {
-      //res.headers['www-authenticate'] = 'Basic realm="$realm"';
       res
         ..statusCode = 401
         ..headers['www-authenticate'] = 'Basic realm="$realm"';
@@ -122,29 +106,31 @@ class LocalAuthStrategy<User> extends AuthStrategy<User> {
 
     _log.info('Not authenticated');
     throw AngelHttpException.notAuthenticated();
+  }
 
-    /*
-    if (verificationResult is Map && verificationResult.isEmpty) {
-      if (localOptions.failureRedirect != null &&
-          localOptions.failureRedirect!.isNotEmpty) {
-        await res.redirect(localOptions.failureRedirect, code: 401);
-        return null;
-      }
-
-      if (forceBasic) {
-        res.headers['www-authenticate'] = 'Basic realm="$realm"';
-        return null;
-      }
-
-      return null;
-    } else if (verificationResult != false ||
-        (verificationResult is Map && verificationResult.isNotEmpty)) {
-      return verificationResult;
-    } else {
-      _log.info('Not authenticated');
-      throw AngelHttpException.notAuthenticated();
+  /// The username and password of the base64 [credentials] of a Basic
+  /// `Authorization` header, as UTF-8 (RFC 7617), or else Latin-1. Throws a
+  /// 400 if they are not base64, or have no `:`.
+  (String, String) _basicCredentials(String credentials) {
+    List<int> bytes;
+    try {
+      bytes = base64.decode(credentials.trim());
+    } on FormatException {
+      _log.warning('Bad request: $invalidMessage');
+      throw AngelHttpException.badRequest(errors: [invalidMessage]);
     }
-    */
+    String decoded;
+    try {
+      decoded = utf8.decode(bytes);
+    } on FormatException {
+      decoded = latin1.decode(bytes);
+    }
+    var match = _rgxUsrPass.firstMatch(decoded);
+    if (match == null) {
+      _log.warning('Bad request: $invalidMessage');
+      throw AngelHttpException.badRequest(errors: [invalidMessage]);
+    }
+    return (match.group(1)!, match.group(2)!);
   }
 
   bool _validateString(String? str) => str != null && str.isNotEmpty;
