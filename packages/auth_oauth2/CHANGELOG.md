@@ -2,6 +2,13 @@
 
 ## 10.0.0-beta.1
 
+* fix: The route that starts a login (`auth.authenticate('github')`) redirects to the provider, where it was a `400`: `AngelAuth.authenticate` always passes options, which the strategy took for its callback. The strategy now tells the callback by its `code` or `error` query parameter
+* fix: Each login has its own PKCE code verifier, kept until the callback, where one authorization URL was made once for every user, and the callback exchanged the code with another verifier, which a provider that checks PKCE (RFC 7636) refuses
+* **Breaking:** Each login has a random `state`, checked on the callback, against login CSRF (RFC 6749 §10.12), where any code was accepted. The `state` and code verifier are kept in a signed, `HttpOnly`, `SameSite=Lax` cookie, scoped to the path of the redirect URI, which expires after the new `loginTimeout`; its name is the new `cookieName`, and its key the new `cookieKey` (by default, derived from the client secret). `authenticateCallback` refuses a callback without it, as `invalid_state` to `onError`
+* fix: A malformed callback goes to `onError` as `invalid_request`, where it was a `400` or `500`, and a provider that cannot be reached is a `502`. A value returned by `onError` is sent as the response, where it was dropped
+* fix: The `oauth2.Client` given to the verifier is closed once it returns, where it was never closed, unless the new `httpClient` was given, with which tokens are exchanged
+* docs: The README tells how the two routes are told apart and how a login is kept, and configures `AngelAuth` with `configureServer`
+* test: `oauth2_strategy_test.dart`
 * Released with the other Angel3 packages at 10.0.0
 
 ## 9.1.0

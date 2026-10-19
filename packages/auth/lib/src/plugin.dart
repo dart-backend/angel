@@ -449,8 +449,10 @@ class AngelAuth<User> {
           return true;
         } else {
           if (i < names.length - 1) continue;
-          // Check if not redirect
-          if (res.statusCode == 301 ||
+          // A strategy that answered the request itself, as with an error
+          // page, or a redirect.
+          if (!res.isOpen ||
+              res.statusCode == 301 ||
               res.statusCode == 302 ||
               res.headers.containsKey('location')) {
             return false;

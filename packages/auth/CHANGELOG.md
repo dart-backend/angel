@@ -12,6 +12,7 @@
 * fix: A JWT's signature is compared in constant time. A malformed JWT (not base64url, not JSON, or without its claims) is a `401`, where it was a server error, and a JWT without an IP address keeps none, where its `aud` was read as `"null"`
 * fix: `LocalAuthStrategy(allowBasic: true)` also reads the username and password of the body when no Basic header is sent, where it read only the header. A malformed Basic header is a `400`, where it was a server error, and its credentials are read as UTF-8 (RFC 7617)
 * fix: The `Bearer` scheme is matched whole and without regard to case. The default `jwtKey` is of random characters, where it was of control characters
+* fix: `authenticate` returns once a strategy has answered the request itself (closed the response, as with an error page), where it threw `401` on the response already sent
 * test: `security_test.dart`
 * test: The tests and examples no longer use `MirrorsReflector`, and the `angel3_container_mirrors` dev dependency is removed; `AngelAuth` does not need reflection
 * chore: Released with the other Angel3 packages at 10.0.0
