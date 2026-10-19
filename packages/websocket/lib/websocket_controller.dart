@@ -79,17 +79,27 @@ class WebSocketController extends Controller {
     _findExposed(app.container.reflector);
     await configureWs();
 
-    ws.onConnection.listen((socket) async {
+    ws.onConnection.listen((socket) {
       if (!socket.request.container!.has<WebSocketContext>()) {
         socket.request.container!.registerSingleton<WebSocketContext>(socket);
       }
 
-      await onConnect(socket);
+      // The streams of the socket are listened to before [onConnect] runs,
+      // as they are broadcast streams, which keep no event for later; what
+      // comes meanwhile is handled once it has run.
+      var connected = Future.sync(() => onConnect(socket))
+          .catchError((Object e, StackTrace st) {
+            ws.catchError(e, st, socket);
+          });
 
-      socket.onData.listen((data) => onData(data, socket));
+      socket.onData.listen((data) async {
+        await connected;
+        return onData(data, socket);
+      });
 
       socket.onAction.listen((WebSocketAction action) async {
         try {
+          await connected;
           await onAction(action, socket);
 
           var handler = _handlers[action.eventName];

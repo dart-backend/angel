@@ -253,8 +253,15 @@ class AngelWebSocket {
   /// wrong, if it has expired, if `AngelAuth.enforceIp` and it was issued to
   /// another IP address, or if it names no user.
   Future handleAuth(WebSocketAction action, WebSocketContext socket) async {
-    if (allowAuth != false &&
-        action.eventName == authenticateAction &&
+    if (allowAuth == false) {
+      socket.sendError(
+        AngelHttpException.forbidden(
+          message: 'Authentication over WebSockets is disabled.',
+        ),
+      );
+      return;
+    }
+    if (action.eventName == authenticateAction &&
         action.params['query'] is Map &&
         action.params['query']['jwt'] is String) {
       try {
@@ -331,6 +338,8 @@ class AngelWebSocket {
 
   /// Handles incoming data from a WebSocket.
   dynamic handleData(WebSocketContext socket, data) async {
+    // Of a socket that has closed, whose streams are closed.
+    if (socket._closed) return;
     try {
       socket._onData.add(data);
       var fromJson = json.decode(data.toString());
@@ -405,7 +414,8 @@ class AngelWebSocket {
 
   /// Configures an [Angel] instance to listen for WebSocket connections.
   Future configureServer(Angel app) async {
-    app.container.registerSingleton(this);
+    // As its own type, and, of a subclass, as AngelWebSocket too.
+    app.container.registerSingleton(this, as: runtimeType);
 
     if (runtimeType != AngelWebSocket) {
       app.container.registerSingleton<AngelWebSocket>(this);

@@ -9,6 +9,7 @@ import 'package:angel3_framework/http.dart';
 import 'package:angel3_websocket/hooks.dart';
 import 'package:angel3_websocket/io.dart' as c;
 import 'package:angel3_websocket/server.dart';
+import 'package:logging/logging.dart';
 import 'package:test/test.dart';
 
 import 'controller/common.dart';
@@ -27,15 +28,20 @@ class Server {
     List<String> allowedOrigins = const [],
     List<String> allowedProtocols = const [],
     WebSocketResponseSerializer? serializer,
+    bool allowAuth = true,
+    AngelWebSocket Function(Angel app)? create,
     FutureOr<void> Function(Angel app, AngelWebSocket sockets)? configure,
   }) async {
     var app = Angel(reflector: reflector);
-    var sockets = AngelWebSocket(
-      app,
-      allowedOrigins: allowedOrigins,
-      allowedProtocols: allowedProtocols,
-      serializer: serializer,
-    );
+    var sockets =
+        create?.call(app) ??
+        AngelWebSocket(
+          app,
+          allowedOrigins: allowedOrigins,
+          allowedProtocols: allowedProtocols,
+          serializer: serializer,
+          allowAuth: allowAuth,
+        );
     await app.configure(sockets.configureServer);
     app.all('/ws', sockets.handleRequest);
     await configure?.call(app, sockets);
@@ -58,6 +64,23 @@ class Server {
   }
 
   Future<void> close() => http.close();
+}
+
+/// Counts the connections to [sockets].
+class Connections {
+  int count = 0;
+  final _changes = StreamController<int>.broadcast();
+
+  Connections(AngelWebSocket sockets) {
+    sockets.onConnection.listen((_) => _changes.add(++count));
+  }
+
+  /// Completes once there have been [n] connections.
+  Future<void> reach(int n) => count >= n
+      ? Future.value()
+      : _changes.stream
+            .firstWhere((c) => c >= n)
+            .timeout(const Duration(seconds: 5));
 }
 
 /// The next event of [name] of [client], or `null` after [timeout].
@@ -112,6 +135,55 @@ void main() {
         issuedAt: DateTime.now().subtract(const Duration(hours: 1)),
       );
       expect(await authenticate(expired), 'Expired JWT.');
+    });
+
+    test('refuses a JWT of another IP address, if enforceIp', () async {
+      var strict = AngelAuth<Map<String, String>?>(
+        jwtKey: 'key',
+        serializer: (_) async => 'foo',
+        deserializer: (id) async => user,
+      );
+      var other = await Server.start(
+        configure: (app, _) => app.configure(strict.configureServer),
+      );
+      var client = await other.client();
+      try {
+        var error = client.onError.first.then((e) => e.message);
+        client.authenticateViaJwt(
+          AuthToken(
+            userId: 'foo',
+            ipAddress: '203.0.113.9',
+          ).serialize(strict.hmac),
+        );
+        expect(
+          await error.timeout(const Duration(seconds: 3)),
+          'JWT cannot be accessed from this IP address.',
+        );
+      } finally {
+        await client.close();
+        await other.close();
+      }
+    });
+
+    test('is refused, as such, when allowAuth is false', () async {
+      var other = await Server.start(
+        allowAuth: false,
+        configure: (app, _) => app.configure(auth.configureServer),
+      );
+      var client = await other.client();
+      try {
+        var error = client.onError.first.then((e) => e.message);
+        client.authenticateViaJwt(
+          AuthToken(userId: 'foo').serialize(auth.hmac),
+        );
+        expect(
+          await error.timeout(const Duration(seconds: 3)),
+          'Authentication over WebSockets is disabled.',
+        );
+      } finally {
+        await client.close();
+        await other.close();
+      }
     });
 
     test('refuses a JWT of a user that does not exist', () async {
@@ -318,27 +390,37 @@ void main() {
       await client.close();
     });
 
+    const interval = Duration(milliseconds: 20);
+
     test('does not reconnect once closed', () async {
-      var connections = 0;
-      server.sockets.onConnection.listen((_) => connections++);
-      var client = await server.client(
-        reconnectInterval: const Duration(milliseconds: 50),
-      );
+      var connections = Connections(server.sockets);
+      var client = await server.client(reconnectInterval: interval);
+      await connections.reach(1);
       await client.close();
-      await Future.delayed(const Duration(milliseconds: 300));
-      expect(connections, 1);
+      // Of many intervals, in which it would have reconnected.
+      await Future.delayed(interval * 10);
+      expect(connections.count, 1);
     });
 
     test('reconnects once when the server closes it', () async {
-      var connections = 0;
-      server.sockets.onConnection.listen((_) => connections++);
-      var client = await server.client(
-        reconnectInterval: const Duration(milliseconds: 50),
-      );
-      await Future.delayed(const Duration(milliseconds: 50));
+      var connections = Connections(server.sockets);
+      var client = await server.client(reconnectInterval: interval);
+      await connections.reach(1);
       await server.sockets.clients.single.close();
-      await Future.delayed(const Duration(milliseconds: 500));
-      expect(connections, 2);
+      await connections.reach(2);
+      // And no more, of the attempts that would overlap.
+      await Future.delayed(interval * 10);
+      expect(connections.count, 2);
+      expect(server.sockets.clients, hasLength(1));
+      await client.close();
+    });
+
+    test('connect of a connected client is its socket', () async {
+      var connections = Connections(server.sockets);
+      var client = await server.client();
+      var socket = client.socket;
+      expect(await client.connect(), same(socket));
+      await connections.reach(1);
       expect(server.sockets.clients, hasLength(1));
       await client.close();
     });
@@ -368,6 +450,65 @@ void main() {
       await closed.timeout(const Duration(seconds: 3));
       await Future.delayed(const Duration(milliseconds: 50));
       expect(server.sockets.clients, isEmpty);
+    });
+
+    test('handles the actions that come during an onConnect', () async {
+      server = await Server.start(
+        configure: (app, sockets) =>
+            app.configure(SlowController(sockets).configureServer),
+      );
+      var client = c.WebSockets(server.ws);
+      var pong = next(client, 'pong');
+      // Sent once it connects, while onConnect runs.
+      client.sendAction(c.WebSocketAction(eventName: 'ping'));
+      await client.connect();
+      expect((await pong)?.data, 1);
+      await client.close();
+    });
+
+    test('ignores the data of a socket that has closed', () async {
+      server = await Server.start();
+      var severe = <String>[];
+      server.app.logger.onRecord
+          .where((r) => r.level >= Level.SEVERE)
+          .listen((r) => severe.add(r.message));
+      var socket = server.sockets.onConnection.first;
+      var client = await server.client();
+      var context = await socket.timeout(const Duration(seconds: 3));
+      await context.close();
+      await server.sockets.handleData(context, '{"eventName": "late"}');
+      expect(severe, isEmpty);
+      await client.close();
+    });
+
+    test('sends the result of a service that does not broadcast', () async {
+      server = await Server.start(create: (app) => _Unwired(app));
+      server.app.use('/api/todos', MapService());
+      var client = await server.client();
+      var created = next(client, 'api/todos::created');
+      await client.service('api/todos').create({'text': 'mine'});
+      expect((await created)?.data, containsPair('text', 'mine'));
+      await client.close();
+    });
+
+    test('batchEvent goes on when a client leaves in a filter', () async {
+      server = await Server.start();
+      var connections = Connections(server.sockets);
+      var a = await server.client(), b = await server.client();
+      await connections.reach(2);
+      var leaving = server.sockets.clients.first;
+      var got = next(b, 'news');
+      await server.sockets.batchEvent(
+        c.WebSocketEvent(eventName: 'news', data: 1),
+        filter: (socket) async {
+          if (identical(socket, leaving)) await socket.close();
+          await Future.delayed(const Duration(milliseconds: 20));
+          return true;
+        },
+      );
+      expect((await got)?.data, 1);
+      await a.close();
+      await b.close();
     });
 
     test('sends with its serializer', () async {
@@ -412,4 +553,26 @@ class Todo {
   final String? text;
 
   Todo({this.text});
+}
+
+/// An [AngelWebSocket] that broadcasts the events of no service.
+class _Unwired extends AngelWebSocket {
+  _Unwired(super.app);
+
+  @override
+  void wireAllServices(Angel app) {}
+}
+
+/// A controller whose [onConnect] takes a while.
+class SlowController extends WebSocketController {
+  SlowController(super.ws);
+
+  @override
+  Future<void> onConnect(WebSocketContext socket) =>
+      Future.delayed(const Duration(milliseconds: 200));
+
+  @override
+  void configureWs() {
+    exposeWs('ping', (action, socket) => socket.send('pong', 1));
+  }
 }

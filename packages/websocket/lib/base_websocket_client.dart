@@ -132,6 +132,8 @@ abstract class BaseWebSocketClient extends BaseAngelClient {
   /// error of the connection, or a [TimeoutException] after [timeout].
   Future<WebSocketChannel?> connect({Duration? timeout}) async {
     if (_closed) throw StateError('The client has been closed.');
+    // Not a second socket, whose events would come twice.
+    if (_socket != null) return _socket;
 
     var connecting = getConnectedWebSocket();
     WebSocketChannel socket;
