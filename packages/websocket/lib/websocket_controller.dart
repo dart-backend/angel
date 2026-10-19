@@ -1,20 +1,36 @@
 part of 'server.dart';
 
 /// Marks a method as available to WebSockets.
+///
+/// The method is found through the app's [Reflector], so it needs one that
+/// can reflect upon the controller, such as `MirrorsReflector`. Without one,
+/// register the handler with [WebSocketController.exposeWs] instead.
 class ExposeWs {
   final String eventName;
 
   const ExposeWs(this.eventName);
 }
 
+/// A handler of a [WebSocketAction], given to [WebSocketController.exposeWs].
+typedef WebSocketActionHandler = FutureOr<dynamic> Function(
+  WebSocketAction action,
+  WebSocketContext socket,
+);
+
 /// A special controller that also supports WebSockets.
+///
+/// Its handlers of actions, by event name, are those registered with
+/// [exposeWs], in [configureWs], and the `@ExposeWs` methods the app's
+/// [Reflector] finds.
 class WebSocketController extends Controller {
   /// The plug-in instance powering this controller.
   final AngelWebSocket ws;
 
-  /// The `@ExposeWs` handlers, by event name, with what they inject. These are
-  /// found with `dart:mirrors`, so they run without the app's reflector.
-  final Map<String, (Function, InjectionRequest)> _handlers = {};
+  /// The handlers of [exposeWs], by event name.
+  final Map<String, WebSocketActionHandler> _handlers = {};
+
+  /// The `@ExposeWs` methods, by event name, with what they inject.
+  final Map<String, (Function, InjectionRequest)> _exposed = {};
 
   WebSocketController(this.ws) : super();
 
@@ -29,6 +45,16 @@ class WebSocketController extends Controller {
       filter: filter,
     );
   }
+
+  /// Handles the actions of [eventName] with [handler], in place of an
+  /// `@ExposeWs` method of that name. Needs no reflection.
+  void exposeWs(String eventName, WebSocketActionHandler handler) {
+    _handlers[eventName] = handler;
+  }
+
+  /// Registers the handlers of actions with [exposeWs]. Runs in
+  /// [configureServer].
+  FutureOr<void> configureWs() {}
 
   /// Fired on new connections.
   dynamic onConnect(WebSocketContext socket) {}
@@ -48,23 +74,8 @@ class WebSocketController extends Controller {
       await super.configureServer(app);
     }
 
-    var instanceMirror = reflect(this);
-    var classMirror = reflectClass(runtimeType);
-    classMirror.instanceMembers.forEach((sym, mirror) {
-      if (mirror.isRegularMethod) {
-        var exposeMirror = mirror.metadata.firstWhereOrNull(
-          (mirror) => mirror.reflectee is ExposeWs,
-        );
-
-        if (exposeMirror != null) {
-          var exposeWs = exposeMirror.reflectee as ExposeWs;
-          _handlers[exposeWs.eventName] = (
-            instanceMirror.getField(sym).reflectee as Function,
-            injectionFromParameters(mirror.parameters.map(_injectable)),
-          );
-        }
-      }
-    });
+    _findExposed(app.container.reflector);
+    await configureWs();
 
     ws.onConnection.listen((socket) async {
       if (!socket.request.container!.has<WebSocketContext>()) {
@@ -76,15 +87,17 @@ class WebSocketController extends Controller {
       socket.onData.listen((data) => onData(data, socket));
 
       socket.onAction.listen((WebSocketAction action) async {
-        var container = socket.request.container!.createChild();
-        container.registerSingleton<WebSocketAction>(action);
-
         try {
           await onAction(action, socket);
 
           var handler = _handlers[action.eventName];
-          if (handler != null) {
-            var (fn, injection) = handler;
+          if (handler != null) return await handler(action, socket);
+
+          var exposed = _exposed[action.eventName];
+          if (exposed != null) {
+            var container = socket.request.container!.createChild();
+            container.registerSingleton<WebSocketAction>(action);
+            var (fn, injection) = exposed;
             return await handleContained(fn, injection, container)(
               socket.request,
               socket.response,
@@ -99,20 +112,38 @@ class WebSocketController extends Controller {
     ws.onDisconnection.listen(onDisconnect);
   }
 
-  static InjectableParameter _injectable(ParameterMirror parameter) {
-    return InjectableParameter(
-      name: MirrorSystem.getName(parameter.simpleName),
-      type: parameter.type.hasReflectedType
-          ? parameter.type.reflectedType
-          : dynamic,
-      isRequired: !parameter.isOptional,
-      isNamed: parameter.isNamed,
-      hasDefaultValue: parameter.hasDefaultValue,
-      annotation:
-          parameter.metadata
-                  .firstWhereOrNull((m) => m.reflectee is Parameter)
-                  ?.reflectee
-              as Parameter?,
-    );
+  /// Finds the `@ExposeWs` methods of this controller with [reflector], or
+  /// none if it cannot reflect upon it, as the default [ThrowingReflector].
+  void _findExposed(Reflector reflector) {
+    if (reflector is ThrowingReflector) return;
+    ReflectedClass? clazz;
+    ReflectedInstance? instance;
+    try {
+      clazz = reflector.reflectClass(runtimeType);
+      instance = reflector.reflectInstance(this);
+    } catch (_) {
+      // A reflector without information about this class.
+      return;
+    }
+    if (clazz == null || instance == null) return;
+
+    for (var decl in clazz.declarations) {
+      var function = decl.function;
+      if (function == null ||
+          decl.isStatic ||
+          function.isGetter ||
+          function.isSetter) {
+        continue;
+      }
+      var expose =
+          function.annotations
+                  .map((a) => a.reflectee)
+                  .firstWhere((r) => r is ExposeWs, orElse: () => null)
+              as ExposeWs?;
+      if (expose == null) continue;
+
+      var method = instance.getField(decl.name).reflectee as Function;
+      _exposed[expose.eventName] = (method, injectionFor(function));
+    }
   }
 }

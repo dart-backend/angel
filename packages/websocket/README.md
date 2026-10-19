@@ -79,6 +79,43 @@ class MyController extends WebSocketController {
 }
 ```
 
+`@ExposeWs` methods are found through the app's reflector, so the app needs one that can reflect upon the controller. Generate its reflection data with [`angel3_container_generator`](https://pub.dev/packages/angel3_container_generator), which works in a program compiled with `dart compile exe`: mark the controller `@injectable`, add a `part` directive, run `dart run build_runner build`, and give the app a `StaticReflector` of the generated data:
+
+```dart
+import 'package:angel3_container/angel3_container.dart';
+
+part 'my_controller.g.dart';
+
+@injectable
+@Expose("/")
+class MyController extends WebSocketController { ... }
+
+var app = Angel(reflector: StaticReflector.combine([myControllerReflection]));
+```
+
+`MirrorsReflector` of `angel3_container_mirrors` finds them too, without generated code, but needs `dart:mirrors`, which `dart compile exe` does not support.
+
+Without a reflector (the default is `ThrowingReflector`), register the handlers with `exposeWs` in `configureWs` instead. A handler is given the action and the socket; other dependencies are made from `socket.request.container`:
+
+```dart
+@Expose("/")
+class MyController extends WebSocketController {
+  MyController(super.ws);
+
+  @override
+  void configureWs() {
+    exposeWs("read_message", (action, socket) async {
+      var db = socket.request.container!.make<Db>();
+      socket.send(
+        "found_message",
+        await db.collection("messages").findOne(where.id(action.data['message_id'])));
+    });
+  }
+}
+```
+
+A handler of `exposeWs` is used in place of an `@ExposeWs` method of the same event name.
+
 ### Client Use
 
 This repo also provides two client libraries `browser` and `io` that extend the base `angel3_client` interface, and allow you to use a very similar API on the client to that of the server.

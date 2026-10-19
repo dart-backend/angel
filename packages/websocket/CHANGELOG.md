@@ -2,9 +2,8 @@
 
 ## 10.0.0
 
-* fix: `@ExposeWs` actions on a `WebSocketController` no longer need the app to have a reflector. They used to fail on every call under the default `ThrowingReflector`; they are now injected from the `dart:mirrors` data the controller already reads
-* test: The service and controller tests no longer use `MirrorsReflector`
-* chore: Released with the other Angel3 packages at 10.0.0
+* **Breaking:** `angel3_websocket` no longer uses `dart:mirrors`, so a server that uses it can be compiled with `dart compile exe`. The `@ExposeWs` methods of a `WebSocketController` are found through the app's reflector, as the `@Expose` routes of a `Controller` are, so they need one that reflects upon the controller: a `StaticReflector` of the data `angel3_container_generator` generates for it (`Angel(reflector: StaticReflector.combine([...]))`), which works with `dart compile exe`, or `MirrorsReflector` of `angel3_container_mirrors`; with the default `ThrowingReflector` none is found. Without reflection, register a handler with the new `exposeWs(eventName, (action, socket) => ...)`, in the new `configureWs`, which is used in place of an `@ExposeWs` method of the same event name. See the README
+* test: The controller tests run an `@ExposeWs` controller with a `StaticReflector` of the reflection data `angel3_container_generator` generates for it (`test/controller/common.g.dart`, regenerated with `dart run build_runner build`), and one of `exposeWs` with the default `ThrowingReflector`. No test uses `dart:mirrors`
 
 ## 9.1.0
 
