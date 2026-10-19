@@ -1,7 +1,7 @@
 import 'package:angel3_migration/angel3_migration.dart';
 import 'package:angel3_orm/angel3_orm.dart';
 import 'package:mysql1/mysql1.dart' show MySqlException;
-import 'package:mysql_client/exception.dart' show MySQLServerException;
+import 'package:mysql_dart/exception.dart' show MySQLServerException;
 
 import 'change_column.dart';
 import 'sql.dart';
@@ -586,7 +586,7 @@ class _ExistingReader {
 
   /// Whether [error] is MySQL's error 1054, of an unknown column, whatever
   /// the language of its text: by the code of the exception of `mysql1` or
-  /// `mysql_client`, or else, of one that a caller wraps, by the code in its
+  /// `mysql_dart`, or else, of one that a caller wraps, by the code in its
   /// message. The only column of [existingConstraintsQuery] that a server may
   /// not have is `GENERATION_EXPRESSION`.
   ///
@@ -599,7 +599,7 @@ class _ExistingReader {
   };
 
   /// The code of the error in the message of the clients: `Error 1054 (` of
-  /// `mysql1`, `[1054]` of `mysql_client`.
+  /// `mysql1`, `[1054]` of `mysql_dart`.
   static final RegExp _unknownColumn = RegExp(r'Error 1054 \(|\[1054\]');
 
   /// The rows of [existingConstraintsQuery] of [table] and [columns]. A server

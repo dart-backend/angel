@@ -1,7 +1,7 @@
 import 'dart:async';
 
 import 'package:logging/logging.dart';
-import 'package:mysql_client/mysql_client.dart';
+import 'package:mysql_dart/mysql_dart.dart';
 
 import '../mysql_family.dart';
 import '../sql.dart';
@@ -30,7 +30,7 @@ class MySqlSchema extends MySqlFamilySchema {
     await connection
         .transactional((ctx) async {
           await runWith(
-            // `mysql_client` reads the result of only the first statement of
+            // `mysql_dart` reads the result of only the first statement of
             // a query, and then the others as those of the next queries, so
             // the statements are run one by one.
             execute: (sql) async {

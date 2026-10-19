@@ -506,12 +506,17 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
         if (fields.contains("id")) {
           var selectSQL = compile({});
 
-          var hasPrimaryField = values?.hasField('id') ?? false;
-          if (hasPrimaryField) {
-            returningSql = '$selectSQL where $tableName.id=?';
-          } else {
-            returningSql = '$selectSQL order by $tableName.id desc limit 1';
-          }
+          // The row of the id given, by its parameter, as the database
+          // gives no insert id of a key it does not generate, such as a
+          // UUID; or else of the id the database gave it, of the `?` the
+          // executor gives its insert id, not the last row by id, which may
+          // be of another connection's insert.
+          var idName = values?.toMap()['id'] == null
+              ? null
+              : values?.parameterNameOf(this, 'id');
+          returningSql = idName == null
+              ? '$selectSQL where $tableName.id=?'
+              : '$selectSQL where $tableName.id=@$idName';
         } else {
           var returningSelect = values?.compileInsertSelect(this, tableName);
           var selectSQL = compile({});

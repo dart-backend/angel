@@ -328,6 +328,9 @@ List<DartObject> _includeAnnotations(
 ) {
   var values = annotation.peek('includeAnnotations')?.listValue ?? [];
   for (var value in values) {
+    // A value of an extension type is of its representation type, as the
+    // analyzer gives it, so `Tag(1)` of `extension type const Tag(int v)` is
+    // an int, which is rejected as one.
     if (!_isAnnotation(value)) {
       throw InvalidGenerationSourceError(
         'Every value in includeAnnotations must be a constant instance of a '

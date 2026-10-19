@@ -312,7 +312,10 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
               Parameter(
                 (b) => b
                   ..name = param.name ?? ''
-                  ..type = convertTypeReference(param.type),
+                  ..type = convertTypeReference(
+                    param.type,
+                    library: ctx.clazz.library,
+                  ),
               ),
             );
           }
@@ -359,7 +362,7 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
           if (i++ > 0) buf.write(', ');
 
           var deserializedRepresentation =
-              "map['$alias'] as ${typeToString(type)}";
+              "map['$alias'] as ${typeToString(type, ctx.clazz.library)}";
 
           if (type.nullabilitySuffix == NullabilitySuffix.question) {
             deserializedRepresentation += '?';
@@ -454,8 +457,10 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
               if (defaultValue == 'null') {
                 defaultValue = '[]';
               }
-              var arg = convertTypeReference(type.typeArguments[0])
-                  .accept(DartEmitter(useNullSafetySyntax: true));
+              var arg = convertTypeReference(
+                type.typeArguments[0],
+                library: ctx.clazz.library,
+              ).accept(DartEmitter(useNullSafetySyntax: true));
               deserializedRepresentation =
                   '''
                 map['$alias'] is Iterable
@@ -465,10 +470,14 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
             } else if (const TypeChecker.typeNamed(Map)
                     .isAssignableFromType(type) &&
                 type.typeArguments.length == 2) {
-              var key = convertTypeReference(type.typeArguments[0])
-                  .accept(DartEmitter(useNullSafetySyntax: true));
-              var value = convertTypeReference(type.typeArguments[1])
-                  .accept(DartEmitter(useNullSafetySyntax: true));
+              var key = convertTypeReference(
+                type.typeArguments[0],
+                library: ctx.clazz.library,
+              ).accept(DartEmitter(useNullSafetySyntax: true));
+              var value = convertTypeReference(
+                type.typeArguments[1],
+                library: ctx.clazz.library,
+              ).accept(DartEmitter(useNullSafetySyntax: true));
 
               if (defaultValue == 'null') {
                 defaultValue = '{}';

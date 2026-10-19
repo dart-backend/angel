@@ -12,7 +12,7 @@ dependencies:
   angel3_orm: ^10.0.0
   logging: ^1.2.0
   mysql1: ^0.20.0
-  mysql_client: ^0.0.27
+  mysql_dart: ^3.0.0
   optional: ^6.1.0
 dev_dependencies:
   belatuk_pretty_logging: ^6.1.0

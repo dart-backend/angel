@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:angel3_migration/angel3_migration.dart';
 import 'package:logging/logging.dart';
-import 'package:mysql_client/mysql_client.dart';
+import 'package:mysql_dart/mysql_dart.dart';
 
 import '../sql_migration_runner.dart';
 import 'schema.dart';

@@ -5,7 +5,7 @@
 [![Discord](https://img.shields.io/discord/1060322353214660698)](https://discord.gg/3X6bxTUdCM)
 [![License](https://img.shields.io/github/license/dart-backend/angel)](https://github.com/dart-backend/angel/tree/master/packages/orm/orm_mysql/LICENSE)
 
-This package contains the SQL executor required by Angel3 ORM to work with MySQL or MariaDB databases. In order to better support both MySQL and MariaDB, two different flavors of drives have been included; `mysql_client` and `mysql1`. They are implmented as `MySqlExecutor` and `MariaDbExecutor` respectively.
+This package contains the SQL executor required by Angel3 ORM to work with MySQL or MariaDB databases. In order to better support both MySQL and MariaDB, two different flavors of drives have been included; `mysql_dart` and `mysql1`. They are implmented as `MySqlExecutor` and `MariaDbExecutor` respectively.
 
 ## Supported databases
 
@@ -49,7 +49,7 @@ This package contains the SQL executor required by Angel3 ORM to work with MySQL
     import 'package:angel3_migration_runner/angel3_migration_runner.dart';
     import 'package:angel3_orm/angel3_orm.dart';
     import 'package:logging/logging.dart';
-    import 'package:mysql_client/mysql_client.dart';
+    import 'package:mysql_dart/mysql_dart.dart';
     import '../angel_orm_mysql/models/car.dart';
 
     void main() async {
@@ -84,12 +84,12 @@ This package contains the SQL executor required by Angel3 ORM to work with MySQL
 
 ## MySqlExecutor
 
-This SQL executor is implemented using [`mysql_client`](https://pub.dev/packages?q=mysql_client) driver. It works with both `MySQL` 8.0+ and `MariaDB` 10.2+ database.
+This SQL executor is implemented using [`mysql_dart`](https://pub.dev/packages/mysql_dart) driver. It works with both `MySQL` 8.0+ and `MariaDB` 10.2+ database.
 
 ### Connecting to MySQL or MariaDB
 
 ```dart
-    import 'package:mysql_client/mysql_client.dart';
+    import 'package:mysql_dart/mysql_dart.dart';
 
     var connection = await MySQLConnection.createConnection(
         host: "localhost",
@@ -108,7 +108,7 @@ This SQL executor is implemented using [`mysql_client`](https://pub.dev/packages
 
 * `Blob` data type mapping is not support.
 * `timestamp` data type mapping is not supported. Use `datetime` instead.
-* UTC datetime is not supported.
+* A `DateTime` is stored as local time: a UTC one is converted to local time when it is sent, and a `datetime` column is read back as local time. See [Date and time](#date-and-time).
 
 ## MariaDBExecutor
 
@@ -135,7 +135,11 @@ This SQL executor is implemented using [`mysql1`](https://pub.dev/packages?q=mys
 
 * `Blob` type mapping is not supported.
 * `timestamp` mapping is not supported. Use `datetime` instead.
-* Only UTC datetime is supported. None UTC datetime will be automatically converted into UTC datetime.
+* A `DateTime` is stored as UTC: a local one is converted to UTC when it is sent, and a `datetime` column is read back as UTC. See [Date and time](#date-and-time).
+
+## Date and time
+
+A `datetime` column has no time zone, so the two executors store the same `DateTime` differently: `MySqlExecutor` as local time, and `MariaDbExecutor` as UTC. Each reads back what it wrote as the same moment. Where the application's time zone is not UTC, a time written by one executor is read, or compared, shifted by the offset by the other, so use one executor for a database, or run the application at UTC.
 
 ## Compatibility Matrix
 

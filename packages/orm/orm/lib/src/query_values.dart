@@ -17,6 +17,12 @@ abstract class QueryValues {
     return _names[column] ??= query.reserveName(column);
   }
 
+  /// The name of the parameter of [column] in the SQL that these values
+  /// last compiled for [query], as by [compileInsert], such as `id` of
+  /// `@id`, or `null` if they compiled none of it for [query].
+  String? parameterNameOf(Query query, String column) =>
+      identical(query, _namesQuery) ? _names[column] : null;
+
   Map<String, dynamic> toMap();
 
   String applyCast(String name, String sub) {

@@ -50,8 +50,13 @@ class MariaDbExecutor extends QueryExecutor {
         query = returningQuery;
         // logger?.warning('Result.insertId: ${result.insertId}');
         if (returningQuery.endsWith('.id=?')) {
-          // Has primary key
+          // Of the id the database gave the row.
           params = [result.insertId];
+        } else if (returningQuery.contains('@')) {
+          // Of the id given, by its parameter, as of a key the database does
+          // not generate, of which it gives no insert id.
+          params = [];
+          query = _toPositional(returningQuery, substitutionValues, params);
         } else if (!returningQuery.contains('?')) {
           // The last row by id: mysql1 rejects parameters it has no
           // placeholders for.

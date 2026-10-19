@@ -2,6 +2,9 @@
 
 ## 10.0.0
 
+* **Breaking:** `MySqlExecutor` uses [`mysql_dart`](https://pub.dev/packages/mysql_dart) 3, a maintained fork of `mysql_client`, which supports MySQL 9 and MariaDB 11, instead of `mysql_client`. It takes the `MySQLConnection` of `mysql_dart`: change `import 'package:mysql_client/mysql_client.dart'` to `import 'package:mysql_dart/mysql_dart.dart'`. The queries of a `MySqlExecutor`, and of its transactions, run one at a time on its connection, as `mysql_dart` rejects a command sent while another runs, or fails to decode its response, where `mysql_client` queued them; queries of one executor sent at once, as by `Future.wait`, still run, in turn
+* docs: The README tells how each executor stores a `DateTime`: `MySqlExecutor` as local time, and `MariaDbExecutor` as UTC, which are shifted by the offset of the time zone if one reads what the other wrote
+* fix: `insert` of `MySqlExecutor` and `MariaDbExecutor` returns the row of the id given, of a key the database does not generate, as a UUID, where it returned none, and of the id the database gave the row, not the last row by id, which may be another connection's insert
 * fix: `MariaDbExecutor` replaces each `@name` placeholder whole, and passes the values in the order the placeholders appear. A placeholder that starts with another's name (`@name1` and `@name`) was partly replaced, and the values were passed in the order they were set, which need not match the SQL. Placeholder names may contain letters of any script (e.g. `@prix_unité`)
 * fix: `MariaDbExecutor` no longer fails an insert without an id with `Length of parameters (n) does not match parameter count in query (0)`: the query that returns the last inserted row is run without the INSERT's values
 * fix: `MariaDbExecutor` returns the updated rows of a table without an `id`: the query that selects them again has its `@name` placeholders bound, where they were sent as MySQL user variables (`NULL`) and nothing was returned

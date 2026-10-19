@@ -4,7 +4,7 @@ import 'package:angel3_migration/angel3_migration.dart';
 import 'package:angel3_orm/angel3_orm.dart';
 import 'package:angel3_orm_mysql/angel3_orm_mysql.dart';
 import 'package:angel3_serialize/angel3_serialize.dart';
-import 'package:mysql_client/mysql_client.dart';
+import 'package:mysql_dart/mysql_dart.dart';
 import 'package:mysql1/mysql1.dart';
 import 'package:logging/logging.dart';
 import 'package:optional/optional.dart';

@@ -7,8 +7,8 @@ import 'package:angel3_migration_runner/mysql.dart';
 import 'package:angel3_migration_runner/postgres.dart';
 import 'package:angel3_orm/angel3_orm.dart';
 import 'package:mysql1/mysql1.dart' as mysql1;
-import 'package:mysql_client/mysql_client.dart' as mysql_client;
-import 'package:mysql_client/exception.dart' as mysql_errors;
+import 'package:mysql_dart/mysql_dart.dart' as mysql_dart;
+import 'package:mysql_dart/exception.dart' as mysql_errors;
 import 'package:postgres/postgres.dart';
 import 'package:test/test.dart';
 
@@ -2644,11 +2644,11 @@ void main() async {
   // The runner for MySQL, whose client reads the constraints differently,
   // on the same server.
   group('MySQL runner', skip: skipMySql, () {
-    late mysql_client.MySQLConnection conn;
+    late mysql_dart.MySQLConnection conn;
     late MigrationRunner runner;
 
     setUp(() async {
-      conn = await mysql_client.MySQLConnection.createConnection(
+      conn = await mysql_dart.MySQLConnection.createConnection(
         host: Platform.environment['MYSQL_HOST'] ?? 'localhost',
         port: 3306,
         databaseName: Platform.environment['MYSQL_DB'] ?? 'orm_test',

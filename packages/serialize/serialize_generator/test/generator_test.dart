@@ -1,3 +1,5 @@
+import 'package:analyzer/dart/analysis/results.dart';
+import 'package:analyzer/diagnostic/diagnostic.dart';
 import 'package:angel3_serialize_generator/angel3_serialize_generator.dart';
 import 'package:build/build.dart';
 import 'package:build_test/build_test.dart';
@@ -48,7 +50,119 @@ $source
   );
 }
 
+/// The errors of compiling the library of [source], with the code that both
+/// the model builder and the serializer builder generate of it as its part,
+/// so that a test fails on generated code that does not compile, not only on
+/// a builder's error.
+Future<List<String>> compileErrors(
+  String source, {
+  String imports = '',
+  Map<String, String> others = const {},
+}) async {
+  var (modelErrors, model) = await generate(
+    source,
+    imports: imports,
+    others: others,
+  );
+  var (serializerErrors, serializer) = await generate(
+    source,
+    imports: imports,
+    others: others,
+    builder: serializerBuilder(BuilderOptions.empty),
+    extension: 'angel3_serialize_serializer',
+  );
+  var errors = [...modelErrors, ...serializerErrors];
+  if (errors.isNotEmpty) return errors;
+  return resolveSources(
+    {
+      'a|lib/model.dart':
+          '''
+import 'package:angel3_serialize/angel3_serialize.dart';
+$imports
+part 'model.g.dart';
+$source
+''',
+      'a|lib/model.g.dart': "part of 'model.dart';\n$model\n$serializer",
+      for (var MapEntry(:key, :value) in others.entries) 'a|lib/$key': value,
+    },
+    (resolver) async {
+      var library = await resolver.libraryFor(AssetId('a', 'lib/model.dart'));
+      var result = await library.session.getResolvedLibraryByElement(library);
+      if (result is! ResolvedLibraryResult) return ['Not resolved: $result'];
+      return [
+        for (var unit in result.units)
+          for (var diagnostic in unit.diagnostics)
+            if (diagnostic.severity == Severity.error)
+              '${unit.uri}: ${diagnostic.message}',
+      ];
+    },
+    readAllSourcesFromFilesystem: true,
+    rootPackage: 'a',
+  );
+}
+
 void main() {
+  test('compiles the types of a library imported with a prefix', () async {
+    var errors = await compileErrors(
+      '''
+@Serializable(includeAnnotations: [t.Ann(t.Tag.a)])
+abstract class _Model {
+  List<t.Tag>? get tags;
+  Map<String, t.Tag>? get byName;
+  t.Tag? get tag;
+  void Function(t.Tag)? get callback;
+  (int, t.Tag)? get pair;
+}
+''',
+      imports: "import 'tags.dart' as t;",
+      others: {
+        'tags.dart':
+            'enum Tag { a }\n'
+            'class Ann<T> { final T value; const Ann(this.value); }\n',
+      },
+    );
+    expect(errors, isEmpty);
+  }, timeout: const Timeout(Duration(minutes: 3)));
+
+  test('compiles models of other names and serializers', () async {
+    // A model that another deserializes has fromMap, which is of map.
+    var errors = await compileErrors('''
+@serializable
+abstract class _URL { String? get href; }
+@Serializable(serializers: [Serializers.json])
+abstract class _Link { String? get text; }
+@serializable
+abstract class _Page {
+  _URL? get url;
+  List<_URL>? get links;
+  Set<void Function()?>? get handlers;
+  (int, String)? get pair;
+  dynamic get data;
+}
+''');
+    expect(errors, isEmpty);
+  }, timeout: const Timeout(Duration(minutes: 3)));
+
+  test('compileErrors finds an error of the library', () async {
+    // So that the tests of it fail on code that does not compile.
+    var errors = await compileErrors('''
+@serializable
+abstract class _Model { String? get name; }
+const int broken = 'not an int';
+''');
+    expect(errors, isNotEmpty);
+  }, timeout: const Timeout(Duration(minutes: 3)));
+
+  test('rejects two models of the same generated class', () async {
+    var (errors, _) = await generate('''
+@serializable
+abstract class _User_Info { String? get name; }
+@serializable
+abstract class _UserInfo { String? get name; }
+''');
+    expect(errors.join(), contains('both generate the class UserInfo'));
+  });
+
   test('reads a Serializers value given by another constant', () async {
     var (errors, output) = await generate('''
 const js = Serializers.json;
@@ -213,6 +327,75 @@ import 'other.dart' as x;
     expect(output, contains('@u.Tag.a'));
     expect(output, contains('@x.Ann()'));
   });
+
+  test('names the serializer of a model as its class is declared', () async {
+    var source = '''
+@serializable
+abstract class _URL { String? get href; }
+@serializable
+abstract class _Page { _URL? get url; List<_URL>? get links; }
+''';
+    var (errors, output) = await generate(
+      source,
+      builder: serializerBuilder(BuilderOptions.empty),
+      extension: 'angel3_serialize_serializer',
+    );
+    expect(errors, isEmpty);
+    expect(output, contains('class UrlSerializer'));
+    expect(output, contains('UrlSerializer.toMap('));
+    expect(output, contains('UrlSerializer.fromMap'));
+    expect(output, isNot(contains('URLSerializer')));
+    // As the model class itself, of copyWith and fromMap.
+    expect(output, contains('return Url('));
+    (errors, output) = await generate(source);
+    expect(errors, isEmpty);
+    expect(output, contains('class Url '));
+    expect(output, contains('Url copyWith('));
+    expect(output, isNot(contains('URL(')));
+  });
+
+  test('writes the types of a library imported with a prefix', () async {
+    var (errors, output) = await generate(
+      '''
+@Serializable(includeAnnotations: [t.Ann<int>(1)])
+abstract class _Model { List<t.Tag>? get tags; }
+''',
+      imports: "import 'tags.dart' as t;",
+      others: {
+        'tags.dart': 'enum Tag { a }\nclass Ann<T> { final T value; const Ann(this.value); }\n',
+      },
+    );
+    expect(errors, isEmpty);
+    expect(output, contains('ListEquality<t.Tag>'));
+    expect(output, contains('@t.Ann<int>(1)'));
+  });
+
+  test('keeps the nullability of a type argument in a cast', () async {
+    var (errors, output) = await generate(
+      '''
+@serializable
+abstract class _Model { Set<void Function()?>? get handlers; }
+''',
+      builder: serializerBuilder(BuilderOptions.empty),
+      extension: 'angel3_serialize_serializer',
+    );
+    expect(errors, isEmpty);
+    expect(output, contains('as Set<void Function()?>?'));
+  });
+
+  test(
+    'rejects a value of an extension type, as of its representation',
+    () async {
+      // The analyzer gives `Tag(1)` the type `int`, as which it would be
+      // generated, so it is rejected, not generated as `@1`.
+      var (errors, _) = await generate('''
+extension type const Tag(int value) {}
+@Serializable(includeAnnotations: [Tag(1)])
+abstract class _Model { String? get name; }
+''');
+      expect(errors.join(), contains('must be a constant instance of a class'));
+    },
+  );
 
   group('getGeneratedModelClassName', () {
     test('strips a prefix, and then a suffix', () {

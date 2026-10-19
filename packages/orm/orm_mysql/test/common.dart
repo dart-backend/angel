@@ -8,7 +8,7 @@ import 'package:angel3_orm/angel3_orm.dart';
 import 'package:angel3_orm_mysql/angel3_orm_mysql.dart';
 import 'package:logging/logging.dart';
 import 'package:mysql1/mysql1.dart' as mysql1;
-import 'package:mysql_client/mysql_client.dart';
+import 'package:mysql_dart/mysql_dart.dart';
 
 List tmpTables = [];
 
@@ -16,7 +16,7 @@ List tmpTables = [];
 // Update this according to either 'mysql' or 'mariadb'
 const targetTestDatabase = 'mariadb';
 
-// For MySQL/MariaDB using `mysql_client` driver
+// For MySQL/MariaDB using `mysql_dart` driver
 Future<MySQLConnection> openMySqlConnection() async {
   var connection = await MySQLConnection.createConnection(
     databaseName: 'orm_test',

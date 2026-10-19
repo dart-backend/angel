@@ -12,9 +12,13 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
     if (element.kind != ElementKind.CLASS) {
       throw 'Only classes can be annotated with a @Serializable() annotation.';
     }
+    _checkGeneratedName(element as ClassElement);
+    // Reported by this builder, which every model runs, of the builders that
+    // read them.
+    readSerializers(annotation, report: true);
 
     var ctx = await buildContext(
-      element as ClassElement,
+      element,
       annotation,
       buildStep,
       buildStep.resolver,
@@ -32,6 +36,26 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
 
     var buf = lib.accept(DartEmitter(useNullSafetySyntax: true));
     return buf.toString();
+  }
+
+  /// Throws an [InvalidGenerationSourceError] if another model class of the
+  /// library of [clazz] has the generated class of the same name, as
+  /// `_User_Info` and `_UserInfo` of `UserInfo`, which would be declared
+  /// twice.
+  static void _checkGeneratedName(ClassElement clazz) {
+    var name = generatedClassNameOf(clazz.name ?? '');
+    for (var other in clazz.library.classes) {
+      if (other == clazz ||
+          !serializableTypeChecker.hasAnnotationOf(other) ||
+          generatedClassNameOf(other.name ?? '') != name) {
+        continue;
+      }
+      throw InvalidGenerationSourceError(
+        'The model classes ${clazz.name} and ${other.name} both generate the '
+        'class $name; rename one of them.',
+        element: clazz,
+      );
+    }
   }
 
   /// Generate an extended model class.
@@ -71,7 +95,10 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
                 //..modifier = FieldModifier.final$
                 //..annotations.add(CodeExpression(Code('override')))
                 ..annotations.add(refer('override'))
-                ..type = convertTypeReference(field.type);
+                ..type = convertTypeReference(
+                  field.type,
+                  library: ctx.clazz.library,
+                );
 
               // Fields should only be forced-final if the original field has no setter.
               //log.fine('Final: ${field.isFinal}');
@@ -141,7 +168,10 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
             Parameter(
               (b) => b
                 ..name = param.name!
-                ..type = convertTypeReference(param.type),
+                ..type = convertTypeReference(
+                  param.type,
+                  library: ctx.clazz.library,
+                ),
             ),
           );
         }
@@ -203,7 +233,10 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
                 b.toThis = true;
               } else if (isListType(field.type)) {
                 if (!b.toThis) {
-                  b.type = convertTypeReference(field.type);
+                  b.type = convertTypeReference(
+                    field.type,
+                    library: ctx.clazz.library,
+                  );
                 }
 
                 // Get the default if presence
@@ -215,7 +248,10 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
                   b.defaultTo = Code('const []');
                 }
               } else if (!b.toThis) {
-                b.type = convertTypeReference(field.type);
+                b.type = convertTypeReference(
+                  field.type,
+                  library: ctx.clazz.library,
+                );
               } else {
                 log.fine('Contructor: ${field.name} pass through');
               }
@@ -264,7 +300,10 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
               Parameter(
                 (b) => b
                   ..name = param.name!
-                  ..type = convertTypeReference(param.type),
+                  ..type = convertTypeReference(
+                    param.type,
+                    library: ctx.clazz.library,
+                  ),
               ),
             );
           }
@@ -284,7 +323,11 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
               b
                 ..name = field.name!
                 ..named = true
-                ..type = convertTypeReference(field.type, forceNullable: true);
+                ..type = convertTypeReference(
+                  field.type,
+                  forceNullable: true,
+                  library: ctx.clazz.library,
+                );
             }),
           );
 
@@ -298,41 +341,47 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
     );
   }
 
-  static String? generateEquality(DartType type, [bool nullable = false]) {
+  /// The equality of [type], in code generated in [library], or `null` of
+  /// a type that [nullable] compares with `==`.
+  static String? generateEquality(
+    DartType type, [
+    bool nullable = false,
+    LibraryElement? library,
+  ]) {
+    String typeName(DartType t) => typeIn(t, library);
     if (type is InterfaceType) {
       if (const TypeChecker.typeNamed(List).isAssignableFromType(type)) {
         if (type.typeArguments.length == 1) {
-          var eq = generateEquality(type.typeArguments[0]);
-          return 'ListEquality<${_typeName(type.typeArguments[0])}>($eq)';
+          var eq = generateEquality(type.typeArguments[0], false, library);
+          return 'ListEquality<${typeName(type.typeArguments[0])}>($eq)';
         } else {
           return 'ListEquality()';
         }
       } else if (const TypeChecker.typeNamed(Map).isAssignableFromType(type)) {
         if (type.typeArguments.length == 2) {
-          var keq = generateEquality(type.typeArguments[0]),
-              veq = generateEquality(type.typeArguments[1]);
-          return 'MapEquality<${_typeName(type.typeArguments[0])}, '
-              '${_typeName(type.typeArguments[1])}>(keys: $keq, values: $veq)';
+          var keq = generateEquality(type.typeArguments[0], false, library),
+              veq = generateEquality(type.typeArguments[1], false, library);
+          return 'MapEquality<${typeName(type.typeArguments[0])}, '
+              '${typeName(type.typeArguments[1])}>(keys: $keq, values: $veq)';
         } else {
           return 'MapEquality()';
         }
       }
 
-      return nullable ? null : 'DefaultEquality<${_typeName(type)}>()';
+      return nullable ? null : 'DefaultEquality<${typeName(type)}>()';
     } else {
       return 'DefaultEquality()';
     }
   }
 
-  /// [type] as it is written in Dart, with its nullability and its type
-  /// arguments, such as `int?` or `void Function()`, which has no element.
-  static String _typeName(DartType type) => type.getDisplayString();
-
-  static String Function(String, String) generateComparator(DartType type) {
+  static String Function(String, String) generateComparator(
+    DartType type, [
+    LibraryElement? library,
+  ]) {
     if (type is! InterfaceType || type.element.displayName == 'dynamic') {
       return (a, b) => '$a == $b';
     }
-    var eq = generateEquality(type, true);
+    var eq = generateEquality(type, true, library);
     if (eq == null) return (a, b) => '$a == $b';
     return (a, b) => '$eq.equals($a, $b)';
   }
@@ -418,7 +467,10 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
 
         buf.addAll(
           ctx.fields.map((f) {
-            return generateComparator(f.type)('other.${f.name}', f.name!);
+            return generateComparator(f.type, ctx.clazz.library)(
+              'other.${f.name}',
+              f.name!,
+            );
           }),
         );
 

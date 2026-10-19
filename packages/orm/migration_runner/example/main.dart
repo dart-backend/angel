@@ -5,7 +5,7 @@ import 'package:angel3_migration_runner/angel3_migration_runner.dart';
 import 'package:angel3_migration_runner/mysql.dart';
 import 'package:angel3_migration_runner/postgres.dart';
 import 'package:angel3_orm/angel3_orm.dart';
-import 'package:mysql_client/mysql_client.dart';
+import 'package:mysql_dart/mysql_dart.dart';
 import 'package:postgres/postgres.dart';
 
 import 'todo.dart';

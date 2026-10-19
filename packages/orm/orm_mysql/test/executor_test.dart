@@ -1,14 +1,14 @@
 import 'package:angel3_orm/angel3_orm.dart';
 import 'package:angel3_migration_runner/angel3_migration_runner.dart';
 import 'package:angel3_orm_mysql/angel3_orm_mysql.dart';
-import 'package:mysql_client/mysql_client.dart';
+import 'package:mysql_dart/mysql_dart.dart';
 import 'package:test/test.dart';
 
 import 'common.dart';
 import 'models/car.dart';
 import 'models/unorthodox.dart';
 
-/// The same queries through each executor: [MySqlExecutor] (`mysql_client`,
+/// The same queries through each executor: [MySqlExecutor] (`mysql_dart`,
 /// named `:name` parameters) and [MariaDbExecutor] (`mysql1`, positional `?`
 /// parameters).
 void main() {
@@ -70,6 +70,37 @@ void executorTests(
       expect(car.make, 'Mazda');
     });
 
+    test('insert with an id the database does not generate', () async {
+      // A key of no AUTO_INCREMENT, as a UUID, of which there is no insert
+      // id, so the row is found by the id given.
+      await conn.execute('ALTER TABLE cars MODIFY id varchar(36) NOT NULL');
+      var car =
+          (await (CarQuery()
+                    ..values.id = '0b9e2c4e-uuid'
+                    ..values.make = 'Volvo')
+                  .insert(executor))
+              .value;
+      expect(car.id, '0b9e2c4e-uuid');
+      expect(car.make, 'Volvo');
+    });
+
+    test('inserts of two connections each return their own row', () async {
+      // Not the last row by id, which may be the other connection's.
+      var other = await open();
+      try {
+        var makes = [for (var i = 0; i < 10; i++) 'Make $i'];
+        var cars = await Future.wait([
+          for (var (i, make) in makes.indexed)
+            (CarQuery()..values.make = make).insert(
+              i.isEven ? executor : other,
+            ),
+        ]);
+        expect([for (var car in cars) car.value.make], makes);
+      } finally {
+        await close(other);
+      }
+    });
+
     test('insert into a table without an id returns the row', () async {
       var row = (await (UnorthodoxQuery()..values.name = 'Ünorthodox').insert(
         executor,
@@ -101,7 +132,7 @@ void executorTests(
     });
 
     test('values are stored as given, even if they look like SQL', () async {
-      // `mysql_client` writes named parameters into the SQL as text.
+      // `mysql_dart` binds named parameters as those of a prepared statement.
       var car =
           (await (CarQuery()
                     ..values.make = "it's :description :p1 @make"

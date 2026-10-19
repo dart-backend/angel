@@ -2,6 +2,7 @@
 
 ## 10.0.0
 
+* fix: On MySQL and MariaDB, `insert` selects the row it inserted by the id given, by its parameter (`where cars.id=@id`), or else by the id the database gave it (`where cars.id=?`, of the executor's insert id), where it was by the database's insert id even of an id given, which there is none of for a key it does not generate, as a UUID, so the row was not found, and else the last row by id (`order by id desc limit 1`), which may be another connection's. Added `QueryValues.parameterNameOf`, the name of the parameter of a column
 * **Breaking:** `Column.precision` and `Column.scale` are `int?`, and `null` unless given, where they were 17 and 3. A `numeric` or `decimal` column without them is unbounded on PostgreSQL, and `numeric(17, 3)` on MySQL and MariaDB, which have no unbounded `numeric`. Code that reads them must handle `null`
 * Added `Column.defaultLength`, `Column.defaultPrecision` and `Column.defaultScale`: the default `length`, and the precision and scale used where a database needs them and a column does not give them (e.g. by `angel3_migration_runner` for MySQL and MariaDB). A column with a precision but no scale has `defaultScale`, or the precision if smaller, not a scale of 0
 * Added `replacePlaceholders`, which replaces the `@name` placeholders of a query with those of a driver (e.g. positional `?`). Names are matched whole (`@name` is not part of `@name1`) and may contain letters of any script; a placeholder with no value is left as it is

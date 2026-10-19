@@ -33,6 +33,13 @@ String getGeneratedModelClassName(String clazz) {
   return name;
 }
 
+/// The name of the class generated of the model class [clazz], as it is
+/// declared: [getGeneratedModelClassName] of it, in pascal case, as `Url` of
+/// `_URL` and `UserInfo` of `_User_Info`. Its serializer is named after it
+/// (`UrlSerializer`), wherever it is referred to.
+String generatedClassNameOf(String clazz) =>
+    ReCase(getGeneratedModelClassName(clazz)).pascalCase;
+
 /// A base context for building serializable classes.
 class BuildContext {
   ReCase? _modelClassNameRecase;
@@ -88,7 +95,7 @@ class BuildContext {
   });
 
   /// The name of the generated class.
-  String? get modelClassName => getGeneratedModelClassName(originalClassName!);
+  String? get modelClassName => generatedClassNameOf(originalClassName!);
 
   /// A [ReCase] instance reflecting on the [modelClassName].
   ReCase get modelClassNameRecase {

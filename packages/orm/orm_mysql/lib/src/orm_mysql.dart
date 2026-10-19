@@ -2,7 +2,7 @@ import 'dart:async';
 
 import 'package:angel3_orm/angel3_orm.dart';
 import 'package:logging/logging.dart';
-import 'package:mysql_client/mysql_client.dart';
+import 'package:mysql_dart/mysql_dart.dart';
 
 class MySqlExecutor extends QueryExecutor {
   /// An optional [Logger] to write to. A default logger will be used if not set
@@ -24,6 +24,28 @@ class MySqlExecutor extends QueryExecutor {
   }
 
   MySQLConnection get rawConnection => _connection;
+
+  /// The end of the commands queued on each connection, of [_serial].
+  static final Expando<Future<void>> _queues = Expando('MySqlExecutor queue');
+
+  /// The key of the zone of the commands that run in the queue of a
+  /// connection, whose value is that connection.
+  static final Object _queueKey = Object();
+
+  /// Runs [command] when the commands queued before it on the connection have
+  /// run, as `mysql_dart` runs one command at a time on a connection: it
+  /// rejects, or fails to decode the response of, one sent while another
+  /// runs. A command of one already in the queue, as a query of a
+  /// transaction, runs as it is, as it would wait for itself.
+  Future<T> _serial<T>(Future<T> Function() command) {
+    if (identical(Zone.current[_queueKey], _connection)) return command();
+    var previous = _queues[_connection] ?? Future<void>.value();
+    var result = previous.then(
+      (_) => runZoned(command, zoneValues: {_queueKey: _connection}),
+    );
+    _queues[_connection] = result.then((_) {}, onError: (_) {});
+    return result;
+  }
 
   /*
   Future<Transaction> _startTransaction() {
@@ -84,6 +106,16 @@ class MySqlExecutor extends QueryExecutor {
     String returningQuery = '',
     String resultQuery = '',
     List<String> returningFields = const [],
+  }) => _serial(
+    () => _query(query, substitutionValues, returningQuery: returningQuery),
+  );
+
+  /// The rows of [query], whose commands, as an insert and the select of its
+  /// row, run in one turn of the queue of the connection.
+  Future<List<List>> _query(
+    String query,
+    Map<String, dynamic> substitutionValues, {
+    String returningQuery = '',
   }) async {
     var params = <String, dynamic>{};
     query = _toNamed(query, substitutionValues, params);
@@ -104,8 +136,15 @@ class MySqlExecutor extends QueryExecutor {
         //logger.fine('Result.insertId: ${result.insertId}');
         // Has primary key
         if (returningQuery.endsWith('.id=?')) {
+          // Of the id the database gave the row.
           query = query.replaceAll("?", ":id");
-          params = {'id': result.lastInsertID};
+          // As an int, as `mysql_dart` binds no BigInt.
+          params = {'id': result.lastInsertID.toInt()};
+        } else if (returningQuery.contains('@')) {
+          // Of the id given, by its parameter, as of a key the database does
+          // not generate, of which it gives no insert id.
+          params = {};
+          query = _toNamed(returningQuery, substitutionValues, params);
         } else {
           // The row is selected by the inserted values, whose `?` keep the
           // order of the INSERT's placeholders.
@@ -150,7 +189,7 @@ class MySqlExecutor extends QueryExecutor {
   /// Changes the `@name` placeholders in [sql] to `:p0`, `:p1`, ... in the
   /// order they appear, and adds their values to [params] by those names.
   ///
-  /// `mysql_client` only finds `:name` placeholders of ASCII letters, digits
+  /// `mysql_dart` only finds `:name` placeholders of ASCII letters, digits
   /// and underscores, so the names of the columns are not used. A UTC
   /// [DateTime] is sent as local time.
   String _toNamed(
@@ -223,16 +262,19 @@ class MySqlExecutor extends QueryExecutor {
   Future<T> transaction<T>(FutureOr<T> Function(QueryExecutor) f) async {
     //logger.warning("Transaction");
 
-    T? returnValue = await _connection.transactional((ctx) async {
-      try {
-        //logger.fine('Entering transaction');
-        var tx = MySqlExecutor(ctx, logger: _logger);
-        return await f(tx);
-      } catch (e) {
-        _logger.severe('Failed to run transaction', e);
-        rethrow;
-      }
-    });
+    // In the queue of the connection, which its queries run in.
+    T? returnValue = await _serial(
+      () => _connection.transactional((ctx) async {
+        try {
+          //logger.fine('Entering transaction');
+          var tx = MySqlExecutor(ctx, logger: _logger);
+          return await f(tx);
+        } catch (e) {
+          _logger.severe('Failed to run transaction', e);
+          rethrow;
+        }
+      }),
+    );
 
     return returnValue!;
   }
