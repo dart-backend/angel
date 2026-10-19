@@ -2,6 +2,7 @@
 
 ## 10.0.0
 
+* feat: The reflection data of a class lists the superclasses the library can name, as its `supertypes`, so that e.g. a `WebSocketController` finds the `@ExposeWs` methods of a base controller
 * feat: The `getMember` of a class reads its public instance fields and getters, as their values, and its methods, as tear-offs, declared or inherited but of `Object`, where it read only the methods it declares; e.g. so that a template reads the members of a model. It returns `noStaticMember` for any other name, where it returned `null`. Regenerate the reflection data with `dart run build_runner build`
 * The generated `_$named` helper uses a null-aware map entry (`?symbols[e.key]: e.value`), which the `use_null_aware_elements` lint asks for
 * **Breaking:** Rewritten as a `build_runner` builder that generates reflection data, used through `StaticReflector`, for classes and top-level functions marked `@injectable`: how to construct each class (for `Container.make`), its annotations, and its public instance methods with their parameters and annotations, and each function's parameters and annotations. With it, `@Expose` controllers, `@Hooks`/`@Middleware` annotations and `ioc` on `@injectable` functions work without `dart:mirrors`. It no longer depends on `reflectable`, so it resolves with the rest of the Angel3 packages, and the generated code calls constructors without `dart:mirrors` (directly, or with `Function.apply` and symbol literals so that left-out optional parameters keep their defaults), which works in AOT-compiled apps, obfuscated or not

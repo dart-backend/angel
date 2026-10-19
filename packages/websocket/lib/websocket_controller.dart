@@ -1,10 +1,12 @@
 part of 'server.dart';
 
-/// Marks a method as available to WebSockets.
+/// Marks a method as available to WebSockets, and not as an HTTP route.
 ///
 /// The method is found through the app's [Reflector], so it needs one that
-/// can reflect upon the controller, such as `MirrorsReflector`. Without one,
-/// register the handler with [WebSocketController.exposeWs] instead.
+/// can reflect upon the controller, such as a `StaticReflector` of the data
+/// `angel3_container_generator` generates for it; one of a base controller is
+/// found if the reflector describes the base class too. Without one, register
+/// the handler with [WebSocketController.exposeWs] instead.
 class ExposeWs {
   final String eventName;
 
@@ -112,8 +114,30 @@ class WebSocketController extends Controller {
     ws.onDisconnection.listen(onDisconnect);
   }
 
+  /// The methods of [WebSocketController] that a subclass overrides, which
+  /// are not routes.
+  static const _hooks = {
+    'broadcast',
+    'exposeWs',
+    'configureWs',
+    'onConnect',
+    'onDisconnect',
+    'onAction',
+    'onData',
+  };
+
+  /// Keeps the `@ExposeWs` methods and the hooks of this controller, as
+  /// [onConnect], off its HTTP routes.
+  @override
+  bool routesMethod(ReflectedDeclaration declaration) =>
+      !_hooks.contains(declaration.name) &&
+      !(declaration.function?.annotations.any((a) => a.reflectee is ExposeWs) ??
+          false);
+
   /// Finds the `@ExposeWs` methods of this controller with [reflector], or
-  /// none if it cannot reflect upon it, as the default [ThrowingReflector].
+  /// none if it cannot reflect upon it, as the default [ThrowingReflector]:
+  /// those it declares, and those it inherits from the superclasses the
+  /// reflector describes, unless it overrides them.
   void _findExposed(Reflector reflector) {
     if (reflector is ThrowingReflector) return;
     ReflectedClass? clazz;
@@ -127,23 +151,38 @@ class WebSocketController extends Controller {
     }
     if (clazz == null || instance == null) return;
 
-    for (var decl in clazz.declarations) {
-      var function = decl.function;
-      if (function == null ||
-          decl.isStatic ||
-          function.isGetter ||
-          function.isSetter) {
-        continue;
+    var classes = <ReflectedClass>[clazz];
+    for (var type in clazz.supertypes) {
+      try {
+        var superclass = reflector.reflectClass(type);
+        if (superclass != null) classes.add(superclass);
+      } catch (_) {
+        // A superclass the reflector does not describe.
       }
-      var expose =
-          function.annotations
-                  .map((a) => a.reflectee)
-                  .firstWhere((r) => r is ExposeWs, orElse: () => null)
-              as ExposeWs?;
-      if (expose == null) continue;
+    }
 
-      var method = instance.getField(decl.name).reflectee as Function;
-      _exposed[expose.eventName] = (method, injectionFor(function));
+    // The names a class nearer this one declares, which hide those further.
+    var declared = <String>{};
+    for (var c in classes) {
+      for (var decl in c.declarations) {
+        var function = decl.function;
+        if (function == null ||
+            decl.isStatic ||
+            function.isGetter ||
+            function.isSetter ||
+            !declared.add(decl.name)) {
+          continue;
+        }
+        var expose =
+            function.annotations
+                    .map((a) => a.reflectee)
+                    .firstWhere((r) => r is ExposeWs, orElse: () => null)
+                as ExposeWs?;
+        if (expose == null || _exposed.containsKey(expose.eventName)) continue;
+
+        var method = instance.getField(decl.name).reflectee as Function;
+        _exposed[expose.eventName] = (method, injectionFor(function));
+      }
     }
   }
 }

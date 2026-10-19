@@ -206,6 +206,7 @@ final servicesReflection = ReflectionData(
       ],
       create: (p, n) => Sub(p[0]),
       annotations: [injectable],
+      supertypes: [Base],
       getMember: (o, name) => switch (name) {
         'ids' => (o as Sub).ids,
         _ => noStaticMember,
@@ -269,6 +270,7 @@ final servicesReflection = ReflectionData(
         _$named(n, const {'retries': #retries}),
       ),
       annotations: [injectable],
+      supertypes: [RetryBase],
       getMember: (o, name) => switch (name) {
         'retries' => (o as Retrying).retries,
         _ => noStaticMember,
@@ -292,6 +294,7 @@ final servicesReflection = ReflectionData(
         StaticReflectedFunction('shout', []),
         StaticReflectedFunction('revealed', []),
       ],
+      supertypes: [Base],
       getMember: (o, name) => switch (name) {
         'name' => (o as Profile).name,
         'nickname' => (o as Profile).nickname,

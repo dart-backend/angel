@@ -62,6 +62,7 @@ final appReflection = ReflectionData(
         ),
         StaticReflectedFunction('hidden', [], annotations: [noExpose]),
       ],
+      supertypes: [Controller],
       getMember: (o, name) => switch (name) {
         'getItem' => (o as ItemController).getItem,
         'putItem' => (o as ItemController).putItem,
@@ -79,6 +80,7 @@ final appReflection = ReflectionData(
         'expose' => (o as ItemController).expose,
         'configureServer' => (o as ItemController).configureServer,
         'applyRoutes' => (o as ItemController).applyRoutes,
+        'routesMethod' => (o as ItemController).routesMethod,
         'configureRoutes' => (o as ItemController).configureRoutes,
         'findExpose' => (o as ItemController).findExpose,
         _ => noStaticMember,
@@ -97,6 +99,7 @@ final appReflection = ReflectionData(
           annotations: [const Expose(LimitsController.maxPath)],
         ),
       ],
+      supertypes: [Controller],
       getMember: (o, name) => switch (name) {
         'max' => (o as LimitsController).max,
         'app' => (o as LimitsController).app,
@@ -107,6 +110,7 @@ final appReflection = ReflectionData(
         'expose' => (o as LimitsController).expose,
         'configureServer' => (o as LimitsController).configureServer,
         'applyRoutes' => (o as LimitsController).applyRoutes,
+        'routesMethod' => (o as LimitsController).routesMethod,
         'configureRoutes' => (o as LimitsController).configureRoutes,
         'findExpose' => (o as LimitsController).findExpose,
         _ => noStaticMember,
@@ -145,6 +149,7 @@ final appReflection = ReflectionData(
           ],
         ),
       ],
+      supertypes: [Routable],
       getMember: (o, name) => switch (name) {
         'read' => (o as QueryService).read,
         'bootstrappers' => (o as QueryService).bootstrappers,
@@ -226,6 +231,7 @@ final appReflection = ReflectionData(
           ],
         ),
       ],
+      supertypes: [Routable],
       getMember: (o, name) => switch (name) {
         'index' => (o as CountedService).index,
         'bootstrappers' => (o as CountedService).bootstrappers,

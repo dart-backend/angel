@@ -38,6 +38,7 @@ final modelsReflection = ReflectionData(
       create: (p, n) =>
           Function.apply(Repo.new, p, _$named(n, const {'id': #id})),
       annotations: [injectable],
+      supertypes: [Model],
       getMember: (o, name) => switch (name) {
         'name' => (o as Repo).name,
         'stars' => (o as Repo).stars,

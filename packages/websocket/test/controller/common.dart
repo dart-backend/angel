@@ -56,3 +56,21 @@ class RegisteredGameController extends WebSocketController {
     exposeWs('search', (action, socket) => socket.send('searched', johnVsBob));
   }
 }
+
+/// Of the `@ExposeWs` methods of [GameController], which it inherits.
+@injectable
+@Expose('/sub')
+class SubGameController extends GameController {
+  SubGameController(super.ws);
+}
+
+/// Another controller of the same sockets as [GameController].
+@Expose('/ping')
+class PingController extends WebSocketController {
+  PingController(super.ws);
+
+  @override
+  void configureWs() {
+    exposeWs('ping', (action, socket) => socket.send('pong', {'ok': true}));
+  }
+}

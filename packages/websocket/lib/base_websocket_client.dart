@@ -4,6 +4,7 @@ import 'dart:convert';
 
 import 'package:angel3_client/angel3_client.dart';
 import 'package:angel3_client/base_angel_client.dart';
+import 'package:meta/meta.dart';
 import 'package:web_socket_channel/web_socket_channel.dart';
 import 'package:web_socket_channel/status.dart' as status;
 
@@ -13,22 +14,33 @@ import 'constants.dart';
 final RegExp _straySlashes = RegExp(r'(^/)|(/+$)');
 
 /// An [Angel] client that operates across WebSockets.
+///
+/// Its streams are broadcast streams: an event is given to those listening
+/// when it comes, and is not kept for those who listen later.
 abstract class BaseWebSocketClient extends BaseAngelClient {
   Duration? _reconnectInterval;
   WebSocketChannel? _socket;
   final Queue<WebSocketAction> _queue = Queue<WebSocketAction>();
+  final List<WebSocketsService> _services = [];
 
-  final StreamController _onData = StreamController();
+  /// Whether [close] was called, after which the client does not reconnect.
+  bool _closed = false;
+
+  /// Whether the client is trying to reconnect, of [_reconnect].
+  bool _reconnecting = false;
+
+  final StreamController _onData = StreamController.broadcast();
   final StreamController<WebSocketEvent> _onAllEvents =
-      StreamController<WebSocketEvent>();
+      StreamController<WebSocketEvent>.broadcast();
   final StreamController<AngelAuthResult> _onAuthenticated =
-      StreamController<AngelAuthResult>();
+      StreamController<AngelAuthResult>.broadcast();
   final StreamController<AngelHttpException> _onError =
-      StreamController<AngelHttpException>();
+      StreamController<AngelHttpException>.broadcast();
   final StreamController<Map<String, WebSocketEvent>> _onServiceEvent =
       StreamController<Map<String, WebSocketEvent>>.broadcast();
   final StreamController<WebSocketChannelException>
-  _onWebSocketChannelException = StreamController<WebSocketChannelException>();
+  _onWebSocketChannelException =
+      StreamController<WebSocketChannelException>.broadcast();
 
   /// Use this to handle events that are not standard.
   final WebSocketExtraneousEventHandler on = WebSocketExtraneousEventHandler();
@@ -60,7 +72,7 @@ abstract class BaseWebSocketClient extends BaseAngelClient {
   WebSocketChannel? get socket => _socket;
 
   /// If `true` (default), then the client will automatically try to reconnect to the server
-  /// if the socket closes.
+  /// if the socket closes, unless it was closed with [close].
   final bool reconnectOnClose;
 
   /// The amount of time to wait between reconnect attempts. Default: 10 seconds.
@@ -94,75 +106,81 @@ abstract class BaseWebSocketClient extends BaseAngelClient {
     _reconnectInterval = reconnectInterval ?? Duration(seconds: 10);
   }
 
+  /// Closes the socket and the services of this client, which does not
+  /// reconnect after it.
   @override
   Future close() async {
+    if (_closed) return;
+    _closed = true;
     on._close();
-    scheduleMicrotask(() async {
-      await _socket!.sink.close(status.normalClosure);
-      await _onData.close();
-      await _onAllEvents.close();
-      await _onAuthenticated.close();
-      await _onError.close();
-      await _onServiceEvent.close();
-      await _onWebSocketChannelException.close();
-    });
+    for (var service in _services) {
+      await service.close();
+    }
+    await _socket?.sink.close(status.normalClosure);
+    _socket = null;
+    await _onData.close();
+    await _onAllEvents.close();
+    await _onAuthenticated.close();
+    await _onError.close();
+    await _onServiceEvent.close();
+    await _onWebSocketChannelException.close();
   }
 
   /// Connects the WebSocket. [timeout] is optional.
+  ///
+  /// The actions sent before it is connected are sent once it is. Throws the
+  /// error of the connection, or a [TimeoutException] after [timeout].
   Future<WebSocketChannel?> connect({Duration? timeout}) async {
-    if (timeout != null) {
-      var c = Completer<WebSocketChannel>();
-      late Timer timer;
+    if (_closed) throw StateError('The client has been closed.');
 
-      timer = Timer(timeout, () {
-        if (!c.isCompleted) {
-          if (timer.isActive) timer.cancel();
-          c.completeError(
-            TimeoutException(
-              'WebSocket connection exceeded timeout of ${timeout.inMilliseconds} ms',
-              timeout,
-            ),
-          );
-        }
-      });
-
-      scheduleMicrotask(() {
-        getConnectedWebSocket()
-            .then((socket) {
-              if (!c.isCompleted) {
-                if (timer.isActive) timer.cancel();
-
-                while (_queue.isNotEmpty) {
-                  var action = _queue.removeFirst();
-                  socket.sink.add(serialize(action));
-                }
-
-                c.complete(socket);
-              }
-            })
-            .catchError((e, StackTrace st) {
-              if (!c.isCompleted) {
-                if (timer.isActive) {
-                  timer.cancel();
-                }
-
-                // TODO: Re-evaluate this error
-                var obj = 'Error';
-                c.completeError(obj, st);
-              }
-            });
-      });
-
-      return await c.future.then((socket) {
-        _socket = socket;
-        listen();
-
-        return _socket;
-      });
+    var connecting = getConnectedWebSocket();
+    WebSocketChannel socket;
+    if (timeout == null) {
+      socket = await connecting;
     } else {
-      _socket = await getConnectedWebSocket();
-      listen();
-      return _socket;
+      socket = await connecting.timeout(
+        timeout,
+        onTimeout: () {
+          // Closed if it connects after all.
+          connecting.then((s) => s.sink.close(), onError: (_) {});
+          throw TimeoutException(
+            'WebSocket connection exceeded timeout of ${timeout.inMilliseconds} ms',
+            timeout,
+          );
+        },
+      );
+    }
+
+    if (_closed) {
+      await socket.sink.close(status.normalClosure);
+      throw StateError('The client has been closed.');
+    }
+
+    _socket = socket;
+    listen();
+    while (_queue.isNotEmpty) {
+      socket.sink.add(serialize(_queue.removeFirst()));
+    }
+    return socket;
+  }
+
+  /// Tries to connect again, one attempt at a time, every
+  /// [reconnectInterval], until it connects or the client is closed.
+  Future<void> _reconnect() async {
+    if (_reconnecting) return;
+    _reconnecting = true;
+    try {
+      while (!_closed && _socket == null) {
+        await Future.delayed(reconnectInterval!);
+        if (_closed) return;
+        try {
+          await connect(timeout: reconnectInterval);
+        } catch (_) {
+          // Again, after the interval.
+        }
+      }
+    } finally {
+      _reconnecting = false;
     }
   }
 
@@ -171,6 +189,24 @@ abstract class BaseWebSocketClient extends BaseAngelClient {
   /// This should be overriden by child classes, **NOT** [connect].
   Future<WebSocketChannel> getConnectedWebSocket();
 
+  /// Keeps [service], which [close] closes, as a [Service] of [Id] and
+  /// [Data].
+  ///
+  /// Throws an [ArgumentError] if [Data] is not nullable: the methods of a
+  /// [WebSocketsService] return `null`, as their results come as events.
+  @protected
+  Service<Id, Data> addService<Id, Data>(WebSocketsService service) {
+    if (service is! Service<Id, Data>) {
+      throw ArgumentError(
+        'The data of a WebSocket service is given as events, and its methods '
+        'return null, so its type must be nullable: use '
+        'service<$Id, $Data?>(...), not service<$Id, $Data>(...).',
+      );
+    }
+    _services.add(service);
+    return service as Service<Id, Data>;
+  }
+
   @override
   Service<Id, Data> service<Id, Data>(
     String path, {
@@ -178,50 +214,66 @@ abstract class BaseWebSocketClient extends BaseAngelClient {
     AngelDeserializer<Data>? deserializer,
   }) {
     var uri = path.toString().replaceAll(_straySlashes, '');
-    var wsService = WebSocketsService<Id, Data>(
-      socket,
-      this,
-      uri,
-      deserializer: deserializer,
+    return addService<Id, Data>(
+      WebSocketsService<Id, Data>(
+        socket,
+        this,
+        uri,
+        deserializer: deserializer,
+      ),
     );
-    return wsService as Service<Id, Data>;
   }
 
   /// Starts listening for data.
   void listen() {
-    _socket?.stream.listen(
+    var socket = _socket;
+    socket?.stream.listen(
       (data) {
+        if (_closed) return;
         _onData.add(data);
 
         if (data is WebSocketChannelException) {
           _onWebSocketChannelException.add(data);
         } else if (data is String) {
-          var jsons = json.decode(data);
+          Object? jsons;
+          try {
+            jsons = json.decode(data);
+          } on FormatException {
+            // Not an event.
+            return;
+          }
 
           if (jsons is Map) {
             var event = WebSocketEvent.fromJson(jsons);
+            var name = event.eventName;
 
-            if (event.eventName?.isNotEmpty == true) {
+            if (name != null && name.isNotEmpty) {
               _onAllEvents.add(event);
-              on._getStream(event.eventName)!.add(event);
+              on._add(name, event);
             }
 
-            if (event.eventName == errorEvent) {
-              var error = AngelHttpException.fromMap((event.data ?? {}) as Map);
-              _onError.add(error);
-            } else if (event.eventName == authenticatedEvent) {
+            if (name == errorEvent) {
+              var data = event.data;
+              _onError.add(
+                AngelHttpException.fromMap(data is Map ? data : const {}),
+              );
+            } else if (name == authenticatedEvent) {
               var authResult = AngelAuthResult.fromMap(event.data as Map?);
               _onAuthenticated.add(authResult);
-            } else if (event.eventName?.isNotEmpty == true) {
-              var split = event.eventName!
+            } else if (name != null && name.isNotEmpty) {
+              var split = name
                   .split('::')
                   .where((str) => str.isNotEmpty)
                   .toList();
 
               if (split.length >= 2) {
                 var serviceName = split[0], eventName = split[1];
+                // A new event, as [event] has gone to the other streams.
                 _onServiceEvent.add({
-                  serviceName: event..eventName = eventName,
+                  serviceName: WebSocketEvent(
+                    eventName: eventName,
+                    data: event.data,
+                  ),
                 });
               }
             }
@@ -230,20 +282,9 @@ abstract class BaseWebSocketClient extends BaseAngelClient {
       },
       cancelOnError: true,
       onDone: () {
+        if (!identical(_socket, socket)) return;
         _socket = null;
-        if (reconnectOnClose == true) {
-          Timer.periodic(reconnectInterval!, (Timer timer) async {
-            WebSocketChannel? result;
-
-            try {
-              result = await connect(timeout: reconnectInterval);
-            } catch (e) {
-              //
-            }
-
-            if (result != null) timer.cancel();
-          });
-        }
+        if (reconnectOnClose == true && !_closed) _reconnect();
       },
     );
   }
@@ -251,12 +292,13 @@ abstract class BaseWebSocketClient extends BaseAngelClient {
   /// Serializes data to JSON.
   dynamic serialize(dynamic x) => json.encode(x);
 
-  /// Sends the given [action] on the [socket].
+  /// Sends the given [action] on the [socket], or once it is connected.
   void sendAction(WebSocketAction action) {
-    if (_socket == null) {
+    var socket = _socket;
+    if (socket == null) {
       _queue.addLast(action);
     } else {
-      socket?.sink.add(serialize(action));
+      socket.sink.add(serialize(action));
     }
   }
 
@@ -274,6 +316,8 @@ abstract class BaseWebSocketClient extends BaseAngelClient {
 }
 
 /// A [Service] that asynchronously interacts with the server.
+///
+/// Its streams are broadcast streams, as those of [BaseWebSocketClient].
 class WebSocketsService<Id, Data> extends Service<Id, Data?> {
   /// The [BaseWebSocketClient] that spawned this service.
   @override
@@ -289,13 +333,19 @@ class WebSocketsService<Id, Data> extends Service<Id, Data?> {
   final String path;
 
   final StreamController<WebSocketEvent> _onAllEvents =
-      StreamController<WebSocketEvent>();
-  final StreamController<List<Data?>> _onIndexed = StreamController();
-  final StreamController<Data?> _onRead = StreamController<Data>();
-  final StreamController<Data?> _onCreated = StreamController<Data>();
-  final StreamController<Data?> _onModified = StreamController<Data>();
-  final StreamController<Data?> _onUpdated = StreamController<Data>();
-  final StreamController<Data?> _onRemoved = StreamController<Data>();
+      StreamController<WebSocketEvent>.broadcast();
+  final StreamController<List<Data?>> _onIndexed = StreamController.broadcast();
+  final StreamController<Data?> _onRead = StreamController<Data?>.broadcast();
+  final StreamController<Data?> _onCreated =
+      StreamController<Data?>.broadcast();
+  final StreamController<Data?> _onModified =
+      StreamController<Data?>.broadcast();
+  final StreamController<Data?> _onUpdated =
+      StreamController<Data?>.broadcast();
+  final StreamController<Data?> _onRemoved =
+      StreamController<Data?>.broadcast();
+
+  StreamSubscription<Map<String, WebSocketEvent>>? _subscription;
 
   /// Fired on all events.
   Stream<WebSocketEvent> get onAllEvents => _onAllEvents.stream;
@@ -328,8 +378,11 @@ class WebSocketsService<Id, Data> extends Service<Id, Data?> {
     listen();
   }
 
+  /// Stops listening for the events of the service, and closes its streams.
   @override
   Future close() async {
+    await _subscription?.cancel();
+    _subscription = null;
     await _onAllEvents.close();
     await _onCreated.close();
     await _onIndexed.close();
@@ -357,7 +410,7 @@ class WebSocketsService<Id, Data> extends Service<Id, Data?> {
 
   /// Starts listening for events.
   void listen() {
-    app.onServiceEvent.listen((map) {
+    _subscription ??= app.onServiceEvent.listen((map) {
       if (map.containsKey(path)) {
         var event = map[path]!;
 
@@ -475,24 +528,19 @@ class WebSocketsService<Id, Data> extends Service<Id, Data?> {
 }
 
 /// Contains a dynamic Map of [WebSocketEvent] streams.
+///
+/// Only the events of a name listened to are given.
 class WebSocketExtraneousEventHandler {
   final Map<String?, StreamController<WebSocketEvent>> _events = {};
 
-  StreamController<WebSocketEvent>? _getStream(String? index) {
-    if (_events[index] == null) {
-      _events[index] = StreamController<WebSocketEvent>();
-    }
-
-    return _events[index];
+  /// Gives [event] to the stream of [name], if one listens to it.
+  void _add(String name, WebSocketEvent event) {
+    var controller = _events[name];
+    if (controller != null && !controller.isClosed) controller.add(event);
   }
 
-  Stream<WebSocketEvent> operator [](String index) {
-    if (_events[index] == null) {
-      _events[index] = StreamController<WebSocketEvent>();
-    }
-
-    return _events[index]!.stream;
-  }
+  Stream<WebSocketEvent> operator [](String index) =>
+      (_events[index] ??= StreamController<WebSocketEvent>.broadcast()).stream;
 
   void _close() {
     for (var s in _events.values) {

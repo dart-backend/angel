@@ -14,12 +14,8 @@ export 'package:angel3_client/angel3_client.dart';
 
 export 'angel3_websocket.dart';
 
-// final RegExp _straySlashes = RegExp(r"(^/)|(/+$)");
-
 /// Queries an Angel server via WebSockets.
 class WebSockets extends BaseWebSocketClient {
-  final List<WebSocketsService> _services = [];
-
   WebSockets(String baseUrl, {super.reconnectOnClose, super.reconnectInterval})
     : super(http.IOClient(), baseUrl);
 
@@ -31,15 +27,6 @@ class WebSockets extends BaseWebSocketClient {
     throw UnimplementedError(
       'Opening popup windows is not supported in the `dart:io` client.',
     );
-  }
-
-  @override
-  Future close() {
-    for (var service in _services) {
-      service.close();
-    }
-
-    return super.close();
   }
 
   @override

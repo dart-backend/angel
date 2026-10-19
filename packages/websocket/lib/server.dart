@@ -14,7 +14,6 @@ import 'package:belatuk_merge_map/belatuk_merge_map.dart';
 import 'package:logging/logging.dart';
 import 'package:stream_channel/stream_channel.dart';
 import 'package:web_socket_channel/io.dart';
-import 'package:web_socket_channel/web_socket_channel.dart';
 
 import 'angel3_websocket.dart';
 import 'constants.dart';
@@ -26,14 +25,17 @@ part 'websocket_controller.dart';
 
 typedef WebSocketResponseSerializer = String Function(dynamic data);
 
+final RegExp _straySlashes = RegExp(r'(^/+)|(/+$)');
+
 /// Broadcasts events from [HookedService]s, and handles incoming [WebSocketAction]s.
 class AngelWebSocket {
   final List<WebSocketContext> _clients = <WebSocketContext>[];
   final List<String> _servicesAlreadyWired = [];
 
+  // Broadcast, so that what no one listens to is not kept.
   final StreamController<WebSocketAction> _onAction =
-      StreamController<WebSocketAction>();
-  final StreamController _onData = StreamController();
+      StreamController<WebSocketAction>.broadcast();
+  final StreamController _onData = StreamController.broadcast();
   final StreamController<WebSocketContext> _onConnection =
       StreamController<WebSocketContext>.broadcast();
   final StreamController<WebSocketContext> _onDisconnect =
@@ -46,9 +48,16 @@ class AngelWebSocket {
   final bool allowClientParams;
 
   /// An optional whitelist of allowed client origins, or [:null:].
+  ///
+  /// A connection from another origin is refused before it is upgraded, with
+  /// a `403 Forbidden`.
   final List<String> allowedOrigins;
 
   /// An optional whitelist of allowed client protocols, or [:null:].
+  ///
+  /// A connection that asks only for other protocols is refused before it is
+  /// upgraded, with a `400 Bad Request`; of those it asks for, the first that
+  /// is allowed is used.
   final List<String> allowedProtocols;
 
   /// If `true`, then clients can authenticate their WebSockets by sending a valid JWT.
@@ -69,10 +78,10 @@ class AngelWebSocket {
   /// Used to notify other nodes of an event's firing. Good for scaled applications.
   final StreamChannel<WebSocketEvent>? synchronizationChannel;
 
-  /// Fired on any [WebSocketAction].
+  /// Fired on any [WebSocketAction], to those listening when it comes.
   Stream<WebSocketAction> get onAction => _onAction.stream;
 
-  /// Fired whenever a WebSocket sends data.
+  /// Fired whenever a WebSocket sends data, to those listening when it comes.
   Stream get onData => _onData.stream;
 
   /// Fired on incoming connections.
@@ -102,56 +111,6 @@ class AngelWebSocket {
     deserializer ??= (params) => params;
   }
 
-  /*
-  * Deprecated. Original code that failed to compile after upgrading
-  */
-  /*
-  HookedServiceEventListener serviceHookOriginal(String path) {
-    return (HookedServiceEvent e) async {
-      if (e.params != null && e.params['broadcast'] == false) {
-        return;
-      }
-      var event = await transformEvent(e);
-      event.eventName = '$path::${event.eventName}';
-
-      dynamic _filter(WebSocketContext socket) {
-        if (e.service.configuration.containsKey('ws:filter')) {
-          return e.service.configuration['ws:filter'](e, socket);
-        } else if (e.params != null && e.params.containsKey('ws:filter')) {
-          return e.params['ws:filter'](e, socket);
-        } else {
-          return true;
-        }
-      }
-
-      await batchEvent(event, filter: _filter);
-    };
-  }
-
-  FutureOr<dynamic> Function(HookedServiceEvent<dynamic, dynamic, Service> e)
-      serviceHook(String path) {
-    return (HookedServiceEvent e) async {
-      if (e.params != null && e.params['broadcast'] == false) {
-        return;
-      }
-      var event = await transformEvent(e);
-      event.eventName = '$path::${event.eventName}';
-
-      dynamic _filter(WebSocketContext socket) {
-        if (e.service.configuration.containsKey('ws:filter')) {
-          return e.service.configuration['ws:filter'](e, socket);
-        } else if (e.params != null && e.params.containsKey('ws:filter')) {
-          return e.params['ws:filter'](e, socket);
-        } else {
-          return true;
-        }
-      }
-
-      await batchEvent(event, filter: _filter);
-    };
-  }
-  */
-
   FutureOr<dynamic> Function(HookedServiceEvent<dynamic, dynamic, Service> e)
   serviceHook(String path) {
     return (HookedServiceEvent e) async {
@@ -180,13 +139,14 @@ class AngelWebSocket {
     Function(WebSocketContext socket)? filter,
     bool notify = true,
   }) async {
-    // Default implementation will just immediately fire events
-    for (var client in _clients) {
+    // Default implementation will just immediately fire events. Of a copy of
+    // the clients, as one may disconnect while a filter runs.
+    for (var client in List.of(_clients)) {
       dynamic result = true;
       if (filter != null) {
         result = await filter(client);
       }
-      if (result == true) {
+      if (result == true && !client._closed) {
         client.channel.sink.add((serializer ?? json.encode)(event.toJson()));
       }
     }
@@ -200,6 +160,10 @@ class AngelWebSocket {
   Future<List<WebSocketEvent>> getBatchedEvents() async => [];
 
   /// Responds to an incoming action on a WebSocket.
+  ///
+  /// Returns the event of a `create`, `modify`, `update` or `remove`, which
+  /// [handleData] sends to the socket, unless the service broadcasts it, as
+  /// a [HookedService] wired by [hookupService] does.
   Future handleAction(WebSocketAction action, WebSocketContext socket) async {
     var split = action.eventName!.split('::');
 
@@ -220,8 +184,6 @@ class AngelWebSocket {
     }
 
     var actionName = split[1];
-
-    //if (action.params is! Map) action.params = <String, dynamic>{};
 
     if (allowClientParams != true) {
       if (action.params['query'] is Map) {
@@ -280,12 +242,16 @@ class AngelWebSocket {
         return null;
       }
     } catch (e, st) {
-      _log.severe('Unable to handle unknown action');
+      _log.severe('Failed to handle the action "${action.eventName}"');
       catchError(e, st, socket);
     }
   }
 
   /// Authenticates a [WebSocketContext].
+  ///
+  /// The JWT is refused, as by `AngelAuth` over HTTP, if its signature is
+  /// wrong, if it has expired, if `AngelAuth.enforceIp` and it was issued to
+  /// another IP address, or if it names no user.
   Future handleAuth(WebSocketAction action, WebSocketContext socket) async {
     if (allowAuth != false &&
         action.eventName == authenticateAction &&
@@ -294,10 +260,30 @@ class AngelWebSocket {
       try {
         var auth = socket.request.container!.make<AngelAuth>();
         var jwt = action.params['query']['jwt'] as String;
-        AuthToken token;
+        var token = AuthToken.validate(jwt, auth.hmac);
 
-        token = AuthToken.validate(jwt, auth.hmac);
-        var user = await auth.deserializer(token.userId);
+        if (auth.enforceIp && socket.request.ip != token.ipAddress) {
+          throw AngelHttpException.forbidden(
+            message: 'JWT cannot be accessed from this IP address.',
+          );
+        }
+
+        if (token.lifeSpan > -1) {
+          var expiry = token.issuedAt.add(
+            Duration(milliseconds: token.lifeSpan.toInt()),
+          );
+          if (!expiry.isAfter(DateTime.now())) {
+            throw AngelHttpException.forbidden(message: 'Expired JWT.');
+          }
+        }
+
+        Object? user = await auth.deserializer(token.userId);
+        if (user == null) {
+          throw AngelHttpException.notAuthenticated(
+            message: 'The user of the JWT does not exist.',
+          );
+        }
+
         socket.request
           ..container!.registerSingleton<AuthToken>(token)
           ..container!.registerSingleton(user, as: user.runtimeType);
@@ -332,6 +318,14 @@ class AngelWebSocket {
     _servicesAlreadyWired.add(localPath);
   }
 
+  /// Whether the service at [path] broadcasts its events, of [hookupService].
+  bool _broadcasts(String path) {
+    var key = path.replaceAll(_straySlashes, '');
+    return _servicesAlreadyWired.any(
+      (p) => p.replaceAll(_straySlashes, '') == key,
+    );
+  }
+
   /// Runs before firing [onConnection].
   Future handleConnect(WebSocketContext socket) async {}
 
@@ -340,34 +334,32 @@ class AngelWebSocket {
     try {
       socket._onData.add(data);
       var fromJson = json.decode(data.toString());
-      var action = WebSocketAction.fromJson(fromJson as Map);
-      _onAction.add(action);
+      if (fromJson is! Map) {
+        throw AngelHttpException.badRequest(
+          message: 'An action must be a JSON object.',
+        );
+      }
+      var action = WebSocketAction.fromJson(fromJson);
+      var eventName = action.eventName;
 
-      if (action.eventName == null ||
-          action.eventName is! String ||
-          action.eventName!.isEmpty) {
+      if (eventName == null || eventName.isEmpty) {
         throw AngelHttpException.badRequest();
       }
 
-      if (fromJson.containsKey('eventName')) {
-        socket._onAction.add(WebSocketAction.fromJson(fromJson));
-        socket.on
-            ._getStreamForEvent(fromJson['eventName'].toString())!
-            .add(fromJson['data'] as Map?);
-      }
+      _onAction.add(action);
+      socket._onAction.add(action);
+      socket.on._add(eventName, fromJson['data']);
 
-      if (action.eventName == authenticateAction) {
+      if (eventName == authenticateAction) {
         await handleAuth(action, socket);
       }
 
-      if (action.eventName!.contains('::')) {
-        var split = action.eventName!.split('::');
-
-        if (split.length >= 2) {
-          if (actions.contains(split[1])) {
-            var event = await handleAction(action, socket);
-            if (event is Future) event = await event;
-          }
+      var split = eventName.split('::');
+      if (split.length >= 2 && actions.contains(split[1])) {
+        var event = await handleAction(action, socket);
+        // Sent to the socket, as no hook broadcasts it.
+        if (event is WebSocketEvent && !_broadcasts(split[0])) {
+          socket.send(event.eventName!, event.data);
         }
       }
     } catch (e, st) {
@@ -435,16 +427,9 @@ class AngelWebSocket {
     app.shutdownHooks.add((_) => synchronizationChannel?.sink.close());
   }
 
-  /// Handles an incoming [WebSocketContext].
+  /// Handles an incoming [WebSocketContext], whose origin and protocol
+  /// [handleRequest] has checked.
   Future<void> handleClient(WebSocketContext socket) async {
-    var origin = socket.request.headers?.value('origin');
-    if (allowedOrigins.isNotEmpty && !allowedOrigins.contains(origin)) {
-      throw AngelHttpException.forbidden(
-        message:
-            'WebSocket connections are not allowed from the origin "$origin".',
-      );
-    }
-
     _clients.add(socket);
     await handleConnect(socket);
 
@@ -452,104 +437,86 @@ class AngelWebSocket {
 
     socket.request.container?.registerSingleton<WebSocketContext>(socket);
 
+    void disconnected() {
+      if (!_clients.remove(socket)) return;
+      socket._markClosed();
+      _onDisconnect.add(socket);
+    }
+
     socket.channel.stream.listen(
       (data) {
         _onData.add(data);
         handleData(socket, data);
       },
-      onDone: () {
-        _onDisconnect.add(socket);
-        _clients.remove(socket);
-      },
-      onError: (e) {
-        _onDisconnect.add(socket);
-        _clients.remove(socket);
-      },
+      onDone: disconnected,
+      onError: (e) => disconnected(),
       cancelOnError: true,
     );
   }
 
+  /// Throws a `403 Forbidden` if [allowedOrigins] does not allow the origin
+  /// of [req].
+  void _checkOrigin(RequestContext req) {
+    var origin = req.headers?.value('origin');
+    if (allowedOrigins.isNotEmpty && !allowedOrigins.contains(origin)) {
+      throw AngelHttpException.forbidden(
+        message:
+            'WebSocket connections are not allowed from the origin "$origin".',
+      );
+    }
+  }
+
+  /// The first of the protocols [req] asks for that [allowedProtocols]
+  /// allows, or `null` if it asks for none; throws a `400 Bad Request` if it
+  /// asks only for others.
+  String? _protocolOf(RequestContext req) {
+    var requested = [
+      for (var value in req.headers?['sec-websocket-protocol'] ?? <String>[])
+        for (var protocol in value.split(','))
+          if (protocol.trim().isNotEmpty) protocol.trim(),
+    ];
+    if (requested.isEmpty) return null;
+    if (allowedProtocols.isEmpty) return requested.first;
+    for (var protocol in requested) {
+      if (allowedProtocols.contains(protocol)) return protocol;
+    }
+    throw AngelHttpException.badRequest(
+      message:
+          'Disallowed `sec-websocket-protocol` header "${requested.join(', ')}".',
+    );
+  }
+
   /// Handles an incoming HTTP request.
+  ///
+  /// Refuses, before it is upgraded, a connection from an origin that
+  /// [allowedOrigins] does not allow, or that asks only for protocols that
+  /// [allowedProtocols] does not allow. WebSockets over HTTP/2 are not
+  /// supported; such a request is refused with a `501 Not Implemented`.
   Future<bool> handleRequest(RequestContext req, ResponseContext res) async {
     if (req is HttpRequestContext && res is HttpResponseContext) {
       if (!WebSocketTransformer.isUpgradeRequest(req.rawRequest!)) {
         throw AngelHttpException.badRequest();
       }
+      _checkOrigin(req);
+      var protocol = _protocolOf(req);
+
       res.detach();
-      var ws = await WebSocketTransformer.upgrade(req.rawRequest!);
+      var ws = await WebSocketTransformer.upgrade(
+        req.rawRequest!,
+        protocolSelector: protocol == null ? null : (_) => protocol,
+      );
       var channel = IOWebSocketChannel(ws);
-      var socket = WebSocketContext(channel, req, res);
+      var socket = WebSocketContext(channel, req, res, serializer: serializer);
       scheduleMicrotask(() => handleClient(socket));
       return false;
     } else if (req is Http2RequestContext && res is Http2ResponseContext) {
-      var connection = req.headers?['connection']?.map(
-        (s) => s.toLowerCase().trim(),
+      // HTTP/2 has no `Connection: upgrade`; WebSockets over it use an
+      // extended CONNECT (RFC 8441), which this does not support.
+      throw AngelHttpException(
+        statusCode: 501,
+        message:
+            'WebSockets over HTTP/2 are not supported. Connect over HTTP/1.1.',
       );
-      var upgrade = req.headers?.value('upgrade')?.toLowerCase();
-      var version = req.headers?.value('sec-websocket-version');
-      var key = req.headers?.value('sec-websocket-key');
-      var protocol = req.headers?.value('sec-websocket-protocol');
-
-      if (connection == null) {
-        throw AngelHttpException.badRequest(
-          message: 'Missing `connection` header.',
-        );
-      } else if (!connection.contains('upgrade')) {
-        throw AngelHttpException.badRequest(
-          message: 'Missing "upgrade" in `connection` header.',
-        );
-      } else if (upgrade != 'websocket') {
-        throw AngelHttpException.badRequest(
-          message: 'The `upgrade` header must equal "websocket".',
-        );
-      } else if (version != '13') {
-        throw AngelHttpException.badRequest(
-          message: 'The `sec-websocket-version` header must equal "13".',
-        );
-      } else if (key == null) {
-        throw AngelHttpException.badRequest(
-          message: 'Missing `sec-websocket-key` header.',
-        );
-      } else if (protocol != null &&
-          allowedProtocols.isNotEmpty &&
-          !allowedProtocols.contains(protocol)) {
-        throw AngelHttpException.badRequest(
-          message: 'Disallowed `sec-websocket-protocol` header "$protocol".',
-        );
-      } else {
-        var stream = res.detach();
-        var ctrl = StreamChannelController<List<int>>();
-
-        ctrl.local.stream.listen(
-          (buf) {
-            stream.sendData(buf);
-          },
-          onDone: () {
-            stream.outgoingMessages.close();
-          },
-        );
-
-        if (req.hasParsedBody) {
-          await ctrl.local.sink.close();
-        } else {
-          await req.body.pipe(ctrl.local.sink);
-        }
-
-        var sink = utf8.encoder.startChunkedConversion(ctrl.foreign.sink);
-        sink.add(
-          'HTTP/1.1 101 Switching Protocols\r\n'
-          'Upgrade: websocket\r\n'
-          'Connection: Upgrade\r\n'
-          'Sec-WebSocket-Accept: ${WebSocketChannel.signKey(key)}\r\n',
-        );
-        if (protocol != null) sink.add('Sec-WebSocket-Protocol: $protocol\r\n');
-        sink.add('\r\n');
-
-        //var ws = IOWebSocketChannel.connect(ctrl.foreign);
-        var socket = WebSocketContext(ctrl.foreign, req, res);
-        scheduleMicrotask(() => handleClient(socket));
-        return false;
-      }
     } else {
       throw ArgumentError(
         'Not an HTTP/1.1 or HTTP/2 RequestContext+ResponseContext pair: $req, $res',

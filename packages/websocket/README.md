@@ -116,6 +116,12 @@ class MyController extends WebSocketController {
 
 A handler of `exposeWs` is used in place of an `@ExposeWs` method of the same event name.
 
+The `@ExposeWs` methods and the hooks of a `WebSocketController` (`onConnect`, `configureWs`, ...) are not HTTP routes; its other public methods are, as those of a `Controller`, unless annotated `@noExpose`. An `@ExposeWs` method a controller inherits is found if the reflector describes the base class too: mark it `@injectable` as well.
+
+The streams of the server, of a socket and of the clients are broadcast streams: an event is given to those listening when it comes, and is not kept for later. Listen before the event can come, as to `client.on['searched']` before sending the action.
+
+WebSockets are served over HTTP/1.1; a request over HTTP/2 is refused with a `501 Not Implemented`.
+
 ### Client Use
 
 This repo also provides two client libraries `browser` and `io` that extend the base `angel3_client` interface, and allow you to use a very similar API on the client to that of the server.

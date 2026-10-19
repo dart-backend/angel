@@ -40,6 +40,7 @@ final controllerReflection = ReflectionData(
           annotations: [const Expose('/shout')],
         ),
       ],
+      supertypes: [Controller],
       getMember: (o, name) => switch (name) {
         'getHello' => (o as GreetController).getHello,
         'shout' => (o as GreetController).shout,
@@ -51,6 +52,7 @@ final controllerReflection = ReflectionData(
         'expose' => (o as GreetController).expose,
         'configureServer' => (o as GreetController).configureServer,
         'applyRoutes' => (o as GreetController).applyRoutes,
+        'routesMethod' => (o as GreetController).routesMethod,
         'configureRoutes' => (o as GreetController).configureRoutes,
         'findExpose' => (o as GreetController).findExpose,
         _ => noStaticMember,

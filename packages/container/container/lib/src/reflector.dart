@@ -80,6 +80,11 @@ abstract class ReflectedClass extends ReflectedType {
     Type reflectedType,
   ) : super(name, typeParameters, reflectedType);
 
+  /// The superclasses of the class, nearest first, without `Object`, as far
+  /// as the reflector knows them, whose [declarations] the class inherits;
+  /// none by default.
+  List<Type> get supertypes => const [];
+
   @override
   int get hashCode =>
       hash4(super.hashCode, annotations, constructors, declarations);

@@ -76,6 +76,9 @@ class StaticReflectedClass extends ReflectedClass {
   /// [noStaticMember] if it has none of that name.
   final StaticMemberReader? getMember;
 
+  @override
+  final List<Type> supertypes;
+
   /// [annotations] are the class's, as values; [methods] its public instance
   /// methods, as [declarations].
   StaticReflectedClass(
@@ -84,6 +87,7 @@ class StaticReflectedClass extends ReflectedClass {
     List<ReflectedParameter>? parameters,
     this.create,
     this.getMember,
+    this.supertypes = const [],
     List<Object> annotations = const [],
     List<StaticReflectedFunction> methods = const [],
   }) : super(

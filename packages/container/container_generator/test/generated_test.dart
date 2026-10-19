@@ -3,6 +3,7 @@ import 'dart:collection';
 import 'package:angel3_container/angel3_container.dart';
 import 'package:test/test.dart';
 
+import 'fixtures/base.dart';
 import 'fixtures/services.dart';
 
 /// `Container.make` with the reflection data generated for
@@ -107,6 +108,13 @@ void main() {
     container.registerSingleton<int>(42);
     expect(container.make<Limits>().max, 42);
     expect(container.make<Retrying>().retries, 42);
+  });
+
+  test('the supertypes of a class are the superclasses it can name', () {
+    var sub = servicesReflection.types[Sub] as ReflectedClass;
+    expect(sub.supertypes, [Base]);
+    var config = servicesReflection.types[Config] as ReflectedClass;
+    expect(config.supertypes, isEmpty);
   });
 
   group('the members of an instance', () {

@@ -149,6 +149,21 @@ class StaticReflectionGenerator extends Generator {
       fields.add('methods: [${described.join(', ')}]');
     }
 
+    // The superclasses the library can name, whose declarations it inherits,
+    // such as the `@ExposeWs` methods of a base controller.
+    var supertypes = [
+      for (
+        var s = clazz.supertype;
+        s != null && !s.isDartCoreObject;
+        s = s.element.supertype
+      )
+        if (s.element.typeParameters.isEmpty && !s.element.isPrivate)
+          ?_nameable(s.element, clazz.library),
+    ];
+    if (supertypes.isNotEmpty) {
+      fields.add('supertypes: [${supertypes.join(', ')}]');
+    }
+
     // The public instance members, declared or inherited, by name: those of
     // the methods as tear-offs, and the fields and getters as their values,
     // which e.g. a template reads.
@@ -421,6 +436,16 @@ class StaticReflectionGenerator extends Generator {
       );
     }
     return '$prefix.$name';
+  }
+
+  /// [element]'s name as [library] can write it, or `null` if it is not in
+  /// scope there.
+  static String? _nameable(Element element, LibraryElement library) {
+    try {
+      return _qualified(element, library, element);
+    } on InvalidGenerationSourceError {
+      return null;
+    }
   }
 
   static String _escape(String s) =>
