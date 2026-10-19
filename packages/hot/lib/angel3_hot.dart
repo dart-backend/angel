@@ -59,6 +59,15 @@ class HotReloader {
   /// an editor's save may change several files, or one more than once.
   final Duration debounce;
 
+  /// If given, the server is served over HTTPS (HTTP/1.1) with this
+  /// context's certificate, as by `HttpServer.bindSecure`.
+  final SecurityContext? securityContext;
+
+  /// If `true` (default: `false`), and [securityContext] is given, clients
+  /// are asked for a certificate, which a handler reads from
+  /// `HttpRequest.certificate`.
+  final bool requestClientCertificate;
+
   /// Invoked to load a new instance of [Angel] on file changes.
   final FutureOr<Angel> Function() generator;
 
@@ -96,6 +105,8 @@ class HotReloader {
     this.enableHotkeys = true,
     this.hotReload = true,
     this.debounce = const Duration(milliseconds: 200),
+    this.securityContext,
+    this.requestClientCertificate = false,
   }) {
     _timeout = timeout ?? Duration(seconds: 5);
     _paths.addAll(paths);
@@ -262,7 +273,15 @@ class HotReloader {
     );
     await _listenToFilesystem();
 
-    var server = _io = await HttpServer.bind(address, port);
+    var context = securityContext;
+    var server = _io = context == null
+        ? await HttpServer.bind(address, port)
+        : await HttpServer.bindSecure(
+            address,
+            port,
+            context,
+            requestClientCertificate: requestClientCertificate,
+          );
     _subscriptions.add(server.listen(handleRequest));
     _flushQueue();
 
@@ -304,7 +323,7 @@ class HotReloader {
 
   Future<void> _listenToHotkeys(HttpServer server, bool isHot) async {
     var serverUri = Uri(
-      scheme: 'http',
+      scheme: securityContext == null ? 'http' : 'https',
       host: server.address.address,
       port: server.port,
     );

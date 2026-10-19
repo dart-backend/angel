@@ -78,6 +78,23 @@ Future<Angel> createServer() async {
 }
 ```
 
+## HTTPS
+
+Pass a `SecurityContext` to serve over HTTPS (HTTP/1.1); the app made by `createServer` is unchanged:
+
+```dart
+var hot = HotReloader(
+  createServer,
+  [Directory('lib')],
+  securityContext: SecurityContext()
+    ..useCertificateChain('dev.pem')
+    ..usePrivateKey('dev.key', password: 'dartdart'),
+);
+await hot.startServer('127.0.0.1', 8443);
+```
+
+For a certificate your browser trusts, use e.g. `mkcert localhost 127.0.0.1`. With `requestClientCertificate: true`, clients are asked for a certificate, which handlers read from `HttpRequest.certificate`. Plain HTTP is then not served on that port, and HTTP/2 is not supported.
+
 ## How a reload works
 
 * Changes are gathered for `debounce` (default 200 ms), and trigger one reload; reloads run one at a time, and changes during one trigger one more after it.

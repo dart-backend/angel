@@ -11,6 +11,7 @@
 * fix: `close()` closes the server and the app, the connection to the VM service, the file watchers and the `stdin` subscription, and gives the terminal back its line and echo modes, and may be called before `startServer`
 * feat: `reload()` reloads on demand; `hotReload: false` makes the server again on changes without reloading the VM. Without the VM service, a change makes the server again, where changes were not watched
 * fix: `sendError` sends the status it is given. A `Glob` also matches files created after the start. File watchers are ready before `startServer` returns
+* feat: `securityContext` serves over HTTPS (HTTP/1.1), with `HttpServer.bindSecure`, and `requestClientCertificate` asks clients for a certificate; the URL printed is `https`
 
 ## 9.1.0
 
