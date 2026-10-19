@@ -131,7 +131,8 @@ abstract class ResponseContext<RawResponse>
   /// Chosen once, on first access (normally when output starts), so handlers
   /// can still change [encoders] before writing. A body that is already
   /// encoded (a `content-encoding` header is set, e.g. for a precompressed
-  /// file) or a 204 or 304 response, which has no body, is not encoded.
+  /// file), a 204 or 304 response, which has no body, or a 206, whose
+  /// `Content-Range` gives offsets of the unencoded bytes, is not encoded.
   ///
   /// When [encoders] is not empty, choosing also adds `Vary: Accept-Encoding`
   /// to [headers], so shared caches keep encoded and plain responses apart.
@@ -142,6 +143,7 @@ abstract class ResponseContext<RawResponse>
       if (encoders.isNotEmpty) _varyByAcceptEncoding();
       if (!headers.containsKey('content-encoding') &&
           statusCode != 204 &&
+          statusCode != 206 &&
           statusCode != 304) {
         _selectedEncoder = selectEncoder(
           encoders,

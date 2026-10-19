@@ -1,6 +1,6 @@
 # Change Log
 
-## 10.0.0-beta-1
+## 10.0.0-beta.1
 
 * fix: `embedShelf(..., throwOnNullResponse: true)` no longer turns every response into a 500. The option now has no effect, as a `shelf.Handler` cannot return `null`, and is deprecated
 * fix: A request with a malformed `Content-Length`, differing `Content-Length` values, a `Transfer-Encoding` that does not end in a single `chunked`, or both `Content-Length` and `Transfer-Encoding` is now rejected with a 400 through `app.errorHandler` (it used to be a 500), as RFC 9112 asks, since such requests can be used for request smuggling. Repeated identical values are collapsed into one, so the early `maxBodySize` check still applies. The check is the new `checkRequestFraming`, and `AngelShelf.middleware` passes the checked request on to its inner handler. A `ShelfRequestContext` built directly from such a request has its framing headers removed and the error in `framingError`

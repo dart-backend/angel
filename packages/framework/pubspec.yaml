@@ -1,5 +1,5 @@
 name: angel3_framework
-version: 10.0.0
+version: 10.0.0-beta.1
 description: A high-powered HTTP server extensible framework with dependency injection, routing and much more.
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dart-backend/angel/
@@ -9,11 +9,11 @@ resolution: workspace
 environment:
   sdk: '>=3.13.0 <4.0.0'
 dependencies:
-  angel3_container: ^10.0.0
-  angel3_http_exception: ^10.0.0
-  angel3_model: ^10.0.0
-  angel3_route: ^10.0.0
-  angel3_mock_request: ^10.0.0
+  angel3_container: ^10.0.0-beta.1
+  angel3_http_exception: ^10.0.0-beta.1
+  angel3_model: ^10.0.0-beta.1
+  angel3_route: ^10.0.0-beta.1
+  angel3_mock_request: ^10.0.0-beta.1
   belatuk_merge_map: ^5.1.0
   belatuk_combinator: ^5.1.0
   belatuk_http_server: ^4.1.0

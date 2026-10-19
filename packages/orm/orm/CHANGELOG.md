@@ -1,6 +1,6 @@
 # Change Log
 
-## 10.0.0
+## 10.0.0-beta.1
 
 * **Breaking:** On MySQL and MariaDB, the `returningQuery` of an insert selects the row it inserted by the id given, by its parameter (`where cars.id=@id`), or else by `@angel3_insert_id` ([insertIdParameter]), which the executor binds to the insert id of its driver, where it was by the insert id even of an id given, which there is none of for a key the database does not generate, as a UUID, and else the last row by id (`order by id desc limit 1`), which may be another connection's. An executor of MySQL binds `insertIdParameter`, and needs not read the SQL of the `returningQuery`. Added `QueryValues.parameterNameOf`, the name of the parameter of a column
 * fix: On MySQL and MariaDB, an insert into a table without an id returns the row of the values it inserted, as a row of no key cannot be selected again by its values: a `DATETIME` drops the fraction of a second of one, and `NULL` equals none, so the row was not found, and the values were matched to the placeholders by their position, which could differ. A column not given is null, not its default, and its relations are not loaded. Deprecated `QueryValues.compileInsertSelect`

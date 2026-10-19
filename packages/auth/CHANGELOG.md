@@ -1,6 +1,6 @@
 # Change Log
 
-## 10.0.0
+## 10.0.0-beta.1
 
 * test: The tests and examples no longer use `MirrorsReflector`, and the `angel3_container_mirrors` dev dependency is removed; `AngelAuth` does not need reflection
 * chore: Released with the other Angel3 packages at 10.0.0

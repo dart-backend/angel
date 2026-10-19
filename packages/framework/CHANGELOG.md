@@ -1,7 +1,8 @@
 # Change Log
 
-## 10.0.0
+## 10.0.0-beta.1
 
+* fix: A `206 Partial Content` response is not encoded (e.g. gzipped), as its `Content-Range` gives offsets of the unencoded bytes
 * fix: With a reflector that reflects, such as a `StaticReflector`, a service or controller class it has no information about is warned about once, as its `@Middleware`, `@Hooks` and `@Expose` annotations, and those of its methods, are ignored, where they were ignored silently: a service guarded by `@Middleware` was served without it. `MapService` and `AnonymousService`, which carry none, are not warned about
 * fix: A handler that fails after an unbuffered response has sent its headers aborts the response, closing the connection (HTTP/1) or resetting the stream (HTTP/2), where the error page was appended to the body sent under the status already sent. Adds `ResponseContext.headersSent` and `ResponseContext.abort`
 * fix: `res.done` fails with the error of `res.addError` for a handler awaiting it, where the error never reached the request's zone and was reported as uncaught; an error is reported as uncaught only when nothing reads `done`. `HttpResponseContext.addError` closes the response, as `dart:io` closes its connection. Servers of `startServer` serve in a zone that logs an error escaping a connection, where it reached the root zone

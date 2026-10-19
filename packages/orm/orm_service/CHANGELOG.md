@@ -1,6 +1,6 @@
 # Change Log
 
-## 10.0.0
+## 10.0.0-beta.1
 
 * fix: **Security** `$sort` only accepts the query's own column names, and anything else is a 400 Bad Request. The value was written into the `ORDER BY` clause as it was, and client query parameters are applied by default (`allowQuery`), so any REST client could inject SQL, e.g. `?$sort=(CASE WHEN (SELECT ...) THEN id ELSE name END)`
 * fix: `remove` with a `null` id ("remove all") removes only the records that match the query in its `params`; the query was ignored, so `remove(null, {'query': {...}})` deleted every record in the table

@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:convert' show HtmlEscape, HtmlEscapeMode;
+import 'dart:math' show max, min;
 
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:file/file.dart';
@@ -9,6 +11,9 @@ import 'package:belatuk_range_header/belatuk_range_header.dart';
 
 final RegExp _param = RegExp(r':([A-Za-z0-9_]+)(\((.+)\))?');
 final RegExp _straySlashes = RegExp(r'(^/+)|(/+$)');
+
+const HtmlEscape _escapeText = HtmlEscape(HtmlEscapeMode.element);
+const HtmlEscape _escapeAttribute = HtmlEscape(HtmlEscapeMode.attribute);
 
 String _pathify(String path) {
   var p = path.replaceAll(_straySlashes, '');
@@ -58,6 +63,11 @@ class VirtualDirectory {
   /// If not, the response buffer will be used instead.
   final bool useBuffer;
 
+  /// If `true` (default: `false`), a symbolic link in [source] to a file or
+  /// directory outside of it is followed. Otherwise such a path is not
+  /// served, as if it did not exist.
+  final bool followLinksOutsideSource;
+
   VirtualDirectory(
     this.app,
     this.fileSystem, {
@@ -67,6 +77,7 @@ class VirtualDirectory {
     this.callback,
     this.allowDirectoryListing = false,
     this.useBuffer = false,
+    this.followLinksOutsideSource = false,
   }) {
     _prefix = publicPath.replaceAll(_straySlashes, '');
     if (source != null) {
@@ -77,6 +88,11 @@ class VirtualDirectory {
     }
   }
 
+  /// Whether [path], without its leading and trailing slashes, is in the
+  /// [publicPath]: the same path, or one under it, segment by segment.
+  bool _isUnderPrefix(String path) =>
+      _prefix.isEmpty || path == _prefix || path.startsWith('$_prefix/');
+
   /// Responds to incoming HTTP requests.
   Future<bool> handleRequest(RequestContext req, ResponseContext res) {
     if (req.method != 'GET' && req.method != 'HEAD') {
@@ -84,7 +100,7 @@ class VirtualDirectory {
     }
     var path = req.uri!.path.replaceAll(_straySlashes, '');
 
-    if (_prefix.isNotEmpty == true && !path.startsWith(_prefix)) {
+    if (!_isUnderPrefix(path)) {
       return Future<bool>.value(true);
     }
 
@@ -115,22 +131,33 @@ class VirtualDirectory {
   }
 
   /// Writes the file at the given virtual [path] to a response.
+  ///
+  /// A path that is not in [source], including through a symbolic link
+  /// unless [followLinksOutsideSource], is not served: the request goes on,
+  /// as for a path that does not exist.
   Future<bool> servePath(
     String path,
     RequestContext req,
     ResponseContext res,
   ) async {
     if (_prefix.isNotEmpty) {
-      // Only replace the *first* incidence
+      // Only replace the *first* incidence, of a whole segment.
       // Resolve: https://github.com/angel-dart/angel/issues/41
-      path = path.replaceFirst(RegExp('^${_pathify(_prefix)}'), '');
+      path = path.replaceFirst(RegExp('^${_pathify(_prefix)}(?=/|\$)'), '');
     }
 
     if (path.isEmpty) path = '.';
     path = path.replaceAll(_straySlashes, '');
 
-    var absolute = source.absolute.uri.resolve(path).toFilePath();
-    var parent = source.absolute.uri.toFilePath();
+    String absolute, parent;
+    try {
+      absolute = source.absolute.uri.resolve(path).toFilePath();
+      parent = source.absolute.uri.toFilePath();
+    } on UnsupportedError {
+      // A path that cannot be a file path here, e.g. with an (encoded)
+      // backslash on Windows.
+      return true;
+    }
 
     if (!p.isWithin(parent, absolute) && !p.equals(parent, absolute)) {
       return true;
@@ -149,8 +176,34 @@ class VirtualDirectory {
       );
     }
 
+    // `stat` follows symbolic links: one may lead out of the source.
+    if (!followLinksOutsideSource && !await _resolvesInSource(absolute)) {
+      return true;
+    }
+
     var stat = await fileSystem.stat(absolute);
     return await serveStat(absolute, path, stat, req, res);
+  }
+
+  /// The [source], with its symbolic links resolved.
+  Future<String>? _realSource;
+
+  /// Whether [absolute], with its symbolic links resolved, is in [source],
+  /// or does not exist.
+  Future<bool> _resolvesInSource(String absolute) async {
+    String real, root;
+    try {
+      real = await fileSystem.file(absolute).resolveSymbolicLinks();
+    } on FileSystemException {
+      // It does not exist, which serveStat handles.
+      return true;
+    }
+    try {
+      root = await (_realSource ??= source.resolveSymbolicLinks());
+    } on FileSystemException {
+      return false;
+    }
+    return p.equals(root, real) || p.isWithin(root, real);
   }
 
   /// Writes the file at the path given by the [stat] to a response.
@@ -171,10 +224,8 @@ class VirtualDirectory {
       );
     } else if (stat.type == FileSystemEntityType.file) {
       return await serveFile(fileSystem.file(absolute), stat, req, res);
-    } else if (stat.type == FileSystemEntityType.link) {
-      var link = fileSystem.link(absolute);
-      return await servePath(await link.resolveSymbolicLinks(), req, res);
     } else {
+      // Not found, or a link that leads nowhere (`stat` follows links).
       return true;
     }
   }
@@ -192,12 +243,14 @@ class VirtualDirectory {
         directory.absolute.uri.resolve(indexFileName),
       );
       if (await index.exists()) {
-        return await serveFile(index, stat, req, res);
+        // Of the index file itself, whose changes its directory's
+        // modification time does not show.
+        return await serveFile(index, await index.stat(), req, res);
       }
     }
 
     if (allowDirectoryListing == true) {
-      res.contentType = MediaType('text', 'html');
+      res.contentType = MediaType('text', 'html', {'charset': 'utf-8'});
       res
         ..write('<!DOCTYPE html>')
         ..write('<html>')
@@ -205,7 +258,7 @@ class VirtualDirectory {
           '<head><meta name="viewport" content="width=device-width,initial-scale=1">',
         )
         ..write('<style>ul { list-style-type: none; }</style>')
-        ..write('</head><body>');
+        ..write('</head><body><ul>');
 
       res.write('<li><a href="..">..</a></li>');
 
@@ -269,12 +322,16 @@ class VirtualDirectory {
             href += '/';
           }
         }
-        href = Uri.encodeFull(href);
+        // A name may hold markup, so it is escaped, as text and as an
+        // attribute.
+        href = _escapeAttribute.convert(Uri.encodeFull(href));
 
-        res.write('<li><a href="$href">$type $stub</a></li>');
+        res.write(
+          '<li><a href="$href">$type ${_escapeText.convert(stub)}</a></li>',
+        );
       }
 
-      res.write('</body></html>');
+      res.write('</ul></body></html>');
       return false;
     }
 
@@ -282,17 +339,10 @@ class VirtualDirectory {
   }
 
   void _ensureContentTypeAllowed(String mimeType, RequestContext req) {
-    var value = req.headers?.value('accept');
-    var acceptable =
-        value == null ||
-        value.isNotEmpty != true ||
-        (mimeType.isNotEmpty == true && value.contains(mimeType) == true) ||
-        value.contains('*/*') == true;
-    if (!acceptable) {
-      _log.severe('Mime type [$value] is not supported');
+    if (!req.accepts(mimeType)) {
+      var value = req.headers?.value('accept');
+      _log.fine('Accept [$value] does not allow $mimeType');
       throw AngelHttpException(
-        //UnsupportedError(
-        //    'Client requested $value, but server wanted to send $mimeType.'),
         errors: [
           'Client requested $value, but server wanted to send $mimeType.',
         ],
@@ -303,12 +353,16 @@ class VirtualDirectory {
   }
 
   /// Writes the contents of a file to a response.
+  ///
+  /// The `Range` header of the request is honored unless [ignoreRange], as
+  /// for an `If-Range` that no longer matches the file.
   Future<bool> serveFile(
     File file,
     FileStat stat,
     RequestContext req,
-    ResponseContext res,
-  ) async {
+    ResponseContext res, {
+    bool ignoreRange = false,
+  }) async {
     res.headers['accept-ranges'] = 'bytes';
 
     if (callback != null) {
@@ -323,9 +377,7 @@ class VirtualDirectory {
 
     var type =
         app.mimeTypeResolver.lookup(file.path) ?? 'application/octet-stream';
-    res.headers['accept-ranges'] = 'bytes';
     _ensureContentTypeAllowed(type, req);
-    res.headers['accept-ranges'] = 'bytes';
     res.contentType = MediaType.parse(type);
     if (useBuffer == true) res.useBuffer();
 
@@ -333,106 +385,92 @@ class VirtualDirectory {
       _log.severe('Missing headers in the RequestContext');
       throw ArgumentError('Missing headers in the RequestContext');
     }
-    var reqHeaders = req.headers!;
+    var range = req.headers!.value('range');
 
-    if (reqHeaders.value('range')?.startsWith('bytes=') != true) {
+    if (ignoreRange || range?.startsWith('bytes=') != true) {
       await res.streamFile(file);
-    } else {
-      var header = RangeHeader.parse(reqHeaders.value('range')!);
-      var items = RangeHeader.foldItems(header.items);
-      header = RangeHeader(items);
+      return false;
+    }
 
-      var totalFileSize = await file.length();
+    var totalFileSize = await file.length();
+    var items = _satisfiable(RangeHeader.parse(range!), totalFileSize);
 
-      for (var item in header.items) {
-        var invalid = false;
+    if (items.isEmpty) {
+      res.headers['content-range'] = 'bytes */$totalFileSize';
+      throw AngelHttpException(
+        statusCode: 416,
+        message: 'No range of `$range` is in the $totalFileSize bytes.',
+      );
+    }
 
-        if (item.start != -1) {
-          invalid = item.end != -1 && item.end < item.start;
-        } else {
-          invalid = item.end == -1;
-        }
+    // The framework does not encode a 206, whose ranges are of these bytes.
+    res.statusCode = 206;
 
-        if (invalid) {
-          throw AngelHttpException(
-            //Exception('Semantically invalid, or unbounded range.'),
-            errors: ['Semantically invalid, or unbounded range.'],
-            statusCode: 416,
-            message: 'Semantically invalid, or unbounded range.',
-          );
-        }
+    if (items.length == 1) {
+      var (from, to) = items.single;
+      res.headers['content-length'] = (to - from + 1).toString();
+      res.headers['content-range'] = 'bytes $from-$to/$totalFileSize';
+      await file.openRead(from, to + 1).cast<List<int>>().pipe(res);
+      return false;
+    }
 
-        // Ensure it's within range.
-        if (item.start >= totalFileSize || item.end >= totalFileSize) {
-          throw AngelHttpException(
-            //Exception('Given range $item is out of bounds.'),
-            errors: ['Given range $item is out of bounds.'],
-            statusCode: 416,
-            message: 'Given range $item is out of bounds.',
-          );
-        }
-      }
+    var transformer = RangeHeaderTransformer(
+      RangeHeader([for (var (from, to) in items) RangeHeaderItem(from, to)]),
+      type,
+      totalFileSize,
+    );
+    res.headers['content-length'] = transformer
+        .computeContentLength(totalFileSize)
+        .toString();
+    res.contentType = MediaType('multipart', 'byteranges', {
+      'boundary': transformer.boundary,
+    });
+    await file.openRead().cast<List<int>>().transform(transformer).pipe(res);
+    return false;
+  }
 
-      if (header.items.isEmpty) {
-        throw AngelHttpException(
-          statusCode: 416,
-          message: '`Range` header may not be empty.',
-        );
-      } else if (header.items.length == 1) {
-        var item = header.items[0];
-        Stream<List<int>> stream;
-        var len = 0;
-
-        var total = totalFileSize;
-
-        if (item.start == -1) {
-          if (item.end == -1) {
-            len = total;
-            stream = file.openRead();
-          } else {
-            len = item.end + 1;
-            stream = file.openRead(0, item.end + 1);
-          }
-        } else {
-          if (item.end == -1) {
-            len = total - item.start;
-            stream = file.openRead(item.start);
-          } else {
-            len = item.end - item.start + 1;
-            stream = file.openRead(item.start, item.end + 1);
-          }
-        }
-
-        res.contentType = MediaType.parse(
-          app.mimeTypeResolver.lookup(file.path) ?? 'application/octet-stream',
-        );
-        res.statusCode = 206;
-        res.headers['content-length'] = len.toString();
-        res.headers['content-range'] = 'bytes ${item.toContentRange(total)}';
-        await stream.cast<List<int>>().pipe(res);
-        return false;
+  /// The ranges of [header] in a file of [size] bytes, as inclusive
+  /// `(from, to)` byte indices, in order and merged where they overlap or
+  /// touch (RFC 9110).
+  ///
+  /// An end past the file is the file's end, and a suffix range (`-500`) is
+  /// the last bytes of the file. A range that starts past the file, or a
+  /// suffix of no bytes, is left out. Throws a 416 for a range that is
+  /// invalid (an end before its start).
+  static List<(int, int)> _satisfiable(RangeHeader header, int size) {
+    var ranges = <(int, int)>[];
+    for (var item in header.items) {
+      if (item.start == -1) {
+        if (item.end == -1) throw _invalidRange();
+        // A suffix of item.end bytes.
+        if (item.end == 0 || size == 0) continue;
+        ranges.add((max(0, size - item.end), size - 1));
       } else {
-        var transformer = RangeHeaderTransformer(
-          header,
-          app.mimeTypeResolver.lookup(file.path) ?? 'application/octet-stream',
-          await file.length(),
-        );
-        res.statusCode = 206;
-        res.headers['content-length'] = transformer
-            .computeContentLength(totalFileSize)
-            .toString();
-        res.contentType = MediaType('multipart', 'byteranges', {
-          'boundary': transformer.boundary,
-        });
-        await file
-            .openRead()
-            .cast<List<int>>()
-            .transform(transformer)
-            .pipe(res);
-        return false;
+        if (item.end != -1 && item.end < item.start) throw _invalidRange();
+        if (item.start >= size) continue;
+        ranges.add((
+          item.start,
+          item.end == -1 ? size - 1 : min(item.end, size - 1),
+        ));
       }
     }
 
-    return false;
+    ranges.sort((a, b) => a.$1.compareTo(b.$1));
+    var merged = <(int, int)>[];
+    for (var range in ranges) {
+      if (merged.isNotEmpty && range.$1 <= merged.last.$2 + 1) {
+        var last = merged.removeLast();
+        merged.add((last.$1, max(last.$2, range.$2)));
+      } else {
+        merged.add(range);
+      }
+    }
+    return merged;
   }
+
+  static AngelHttpException _invalidRange() => AngelHttpException(
+    errors: ['Semantically invalid, or unbounded range.'],
+    statusCode: 416,
+    message: 'Semantically invalid, or unbounded range.',
+  );
 }

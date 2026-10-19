@@ -1,6 +1,6 @@
 # Change Log
 
-## 10.0.0
+## 10.0.0-beta.1
 
 * feat: The reflection data of a class lists the superclasses the library can name, as its `supertypes`, so that e.g. a `WebSocketController` finds the `@ExposeWs` methods of a base controller
 * feat: The `getMember` of a class reads its public instance fields and getters, as their values, and its methods, as tear-offs, declared or inherited but of `Object`, where it read only the methods it declares; e.g. so that a template reads the members of a model. It returns `noStaticMember` for any other name, where it returned `null`. Regenerate the reflection data with `dart run build_runner build`

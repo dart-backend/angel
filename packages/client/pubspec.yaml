@@ -1,5 +1,5 @@
 name: angel3_client
-version: 10.0.0
+version: 10.0.0-beta.1
 description: A browser, mobile and command line based client that supports querying Angel3 servers
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dart-backend/angel/
@@ -9,7 +9,7 @@ resolution: workspace
 environment:
   sdk: '>=3.13.0 <4.0.0'
 dependencies:
-  angel3_http_exception: ^10.0.0
+  angel3_http_exception: ^10.0.0-beta.1
   belatuk_json_serializer: ^7.0.0
   collection: ^1.17.0
   web: ^1.1.0
@@ -18,11 +18,11 @@ dependencies:
   path: ^1.8.0
   logging: ^1.1.0
 dev_dependencies:
-  angel3_framework: ^10.0.0
-  angel3_model: ^10.0.0
-  angel3_mock_request: ^10.0.0
-  angel3_container: ^10.0.0
-  angel3_auth: ^10.0.0
+  angel3_framework: ^10.0.0-beta.1
+  angel3_model: ^10.0.0-beta.1
+  angel3_mock_request: ^10.0.0-beta.1
+  angel3_container: ^10.0.0-beta.1
+  angel3_auth: ^10.0.0-beta.1
   async: ^2.11.0
   quiver: ^3.2.0
   build_runner: ^2.4.0

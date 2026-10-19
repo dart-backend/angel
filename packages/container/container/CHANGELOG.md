@@ -1,6 +1,6 @@
 # Change Log
 
-## 10.0.0
+## 10.0.0-beta.1
 
 * feat: `ReflectedClass.supertypes`, the superclasses of a class, nearest first, without `Object`, as far as the reflector knows them; none by default. `StaticReflectedClass` takes them
 * **Breaking:** A `StaticMemberReader` returns the new `noStaticMember` for a name that is no member of the instance, as a member may itself be `null`, and `StaticReflectedInstance.getField` throws a `ReflectionException` for it, where it gave `null`

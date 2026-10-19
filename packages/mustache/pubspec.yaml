@@ -1,5 +1,5 @@
 name: angel3_mustache
-version: 10.0.0
+version: 10.0.0-beta.1
 description: A service that renders Mustache template into HTML view for Angel3
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dart-backend/angel/
@@ -9,7 +9,7 @@ resolution: workspace
 environment:
   sdk: '>=3.13.0 <4.0.0'
 dependencies:
-  angel3_framework: ^10.0.0
+  angel3_framework: ^10.0.0-beta.1
   file: ^7.0.0
   mustache_template: ^2.0.0
   path: ^1.8.0

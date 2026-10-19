@@ -15,8 +15,8 @@ In your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  angel3_framework: ^10.0.0
-  angel3_markdown: ^10.0.0
+  angel3_framework: ^10.0.0-beta.1
+  angel3_markdown: ^10.0.0-beta.1
 ```
 
 ## Usage

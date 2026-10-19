@@ -70,3 +70,4 @@ The `VirtualDirectory` API accepts a few named parameters:
     angel3_static is serving your files. If you are not serving static files at the site root,
     please include this.
 - **callback**: Runs before sending a file to a client. Use this to set headers, etc. If it returns anything other than `null` or `true`, then the callback's result will be sent to the user, instead of the file contents.
+- **followLinksOutsideSource**: If `true` (default: `false`), a symbolic link in `source` to a file or directory outside of it is followed. Otherwise such a path is not served, as if it did not exist.

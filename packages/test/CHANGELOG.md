@@ -1,6 +1,6 @@
 # Change Log
 
-## 10.0.0
+## 10.0.0-beta.1
 
 * fix: `isAngelHttpException()` now recognises error responses written by `AngelHttpException.toJson`, which use the key `is_error`; it only checked `isError`, so it never matched
 * fix: `isAngelHttpException()` now falls back to the response's HTTP status when the error body has no valid status code, instead of 500

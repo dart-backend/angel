@@ -1,6 +1,6 @@
 # Change Log
 
-## 10.0.0
+## 10.0.0-beta.1
 
 * Names a model's table, the foreign tables and keys inferred of it, and its migration class, as earlier versions did (`legacyModelName`), so that those of an existing database, and the code that runs the migration, are kept, though `angel3_serialize_generator` names the generated class otherwise: the table of `_UserEntity` is still `user_entities`, its migration `UserEntityMigration`, and the table of `UserIdentity` `user_ids`
 * fix: **Breaking** A relation's column (e.g. `authorId` for a `@BelongsTo Author author`) is described by the plain `RelationFieldImpl` instead of a fake analyzer `FieldElement` (a subclass of `analyzer`'s internal `FieldElementImpl`, which broke with `analyzer` 14.5 and failed every model with `@BelongsTo`). The generator no longer uses `analyzer` internals. `OrmBuildContext.effectiveFields` is now a `List<OrmField>`: a `ClassOrmField` (a field of the class, with its `element`) or a `RelationFieldImpl`; `findPrimaryFieldInList`, `isSpecialId`, `RelationshipReader.findLocalField` and `findForeignField` use `OrmField` as well. The generated code is unchanged

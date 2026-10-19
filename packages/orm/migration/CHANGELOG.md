@@ -1,6 +1,6 @@
 # Change Log
 
-## 10.0.0
+## 10.0.0-beta.1
 
 * **Breaking:** Added `Migration.name`, which identifies the migration in the `migrations` table, and defaults to its class name. Override it to keep it when the class is renamed, or with `--obfuscate`. A class that `implements Migration` must add it, or `extends Migration` instead
 * Added `Migration.legacyPath`, the end of the path by which a migration runner before 10.0.0 recorded the migration (`<source file>#<class name>`), so that the runner can rename it to its `name`

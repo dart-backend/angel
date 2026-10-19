@@ -13,7 +13,7 @@ Add the following to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  angel3_rethinkdb: ^10.0.0
+  angel3_rethinkdb: ^10.0.0-beta.1
 ```
 
 `belatuk-rethinkdb` driver will be used for connecting to RethinkDB.

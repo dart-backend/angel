@@ -1,6 +1,6 @@
 # Change Log
 
-## 10.0.0
+## 10.0.0-beta.1
 
 * **Breaking:** `MySqlMigrationRunner` uses [`mysql_dart`](https://pub.dev/packages/mysql_dart) 3, a maintained fork of `mysql_client`, instead of `mysql_client`. It takes the `MySQLConnection` of `mysql_dart`: change `import 'package:mysql_client/mysql_client.dart'` to `import 'package:mysql_dart/mysql_dart.dart'`
 * **Breaking:** `MariaDbMigrationRunner` and `MariaDbSchema.run` use `mysql_dart`, instead of [`mysql1`](https://pub.dev/packages/mysql1), which is no longer a dependency. They take the `MySQLConnection` of `mysql_dart`, as those of MySQL do. The two runners share `MySqlFamilyMigrationRunner`, and the two schemas the `run` of `MySqlFamilySchema`

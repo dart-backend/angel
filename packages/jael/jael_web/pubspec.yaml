@@ -1,5 +1,5 @@
 name: jael3_web
-version: 10.0.0
+version: 10.0.0-beta.1
 description: Experimental virtual DOM/SPA engine built on Jael3. Supports SSR.
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dart-backend/angel/
@@ -16,8 +16,8 @@ dependencies:
   code_builder: ^4.0.0
   file: ^7.0.0
   path: ^1.8.0
-  jael3: ^10.0.0
-  jael3_preprocessor: ^10.0.0
+  jael3: ^10.0.0-beta.1
+  jael3_preprocessor: ^10.0.0-beta.1
   source_gen: ^4.0.0
 dev_dependencies:
   build_runner: ^2.6.0

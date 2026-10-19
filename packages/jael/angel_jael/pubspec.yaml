@@ -1,5 +1,5 @@
 name: angel3_jael
-version: 10.0.0
+version: 10.0.0-beta.1
 description: Angel support for the Jael templating engine, similar to Blade or Liquid.
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dart-backend/angel/
@@ -9,17 +9,17 @@ resolution: workspace
 environment:
   sdk: '>=3.13.0 <4.0.0'
 dependencies:
-  angel3_container: ^10.0.0
-  angel3_framework: ^10.0.0
-  jael3: ^10.0.0
-  jael3_preprocessor: ^10.0.0
+  angel3_container: ^10.0.0-beta.1
+  angel3_framework: ^10.0.0-beta.1
+  jael3: ^10.0.0-beta.1
+  jael3_preprocessor: ^10.0.0-beta.1
   belatuk_code_buffer: ^5.1.0
   belatuk_symbol_table: ^5.1.0
   file: ^7.0.0
   logging: ^1.2.0
 dev_dependencies:
-  angel3_container_generator: ^10.0.0
-  angel3_test: ^10.0.0
+  angel3_container_generator: ^10.0.0-beta.1
+  angel3_test: ^10.0.0-beta.1
   build_runner: ^2.4.0
   html: ^0.15.0
   test: ^1.24.0

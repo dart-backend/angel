@@ -1,5 +1,5 @@
 name: angel3_migration
-version: 10.0.0
+version: 10.0.0-beta.1
 description: The abstract classes for implementing database migration in Angel3 framework. Designed to work with Angel3 ORM.
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dart-backend/angel/
@@ -9,7 +9,7 @@ resolution: workspace
 environment:
   sdk: '>=3.13.0 <4.0.0'
 dependencies:
-  angel3_orm: ^10.0.0
+  angel3_orm: ^10.0.0-beta.1
 dev_dependencies:
   lints: ^6.0.0
   test: ^1.25.0

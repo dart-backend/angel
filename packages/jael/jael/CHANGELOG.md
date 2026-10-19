@@ -1,6 +1,6 @@
 # Change Log
 
-## 10.0.0
+## 10.0.0-beta.1
 
 * **Breaking:** `jael3` no longer uses `dart:mirrors`, so a program that renders templates can be compiled with `dart compile exe`. `{{ a.b }}` reads `b` of the `memberResolver` given to `Renderer.render`, if it knows it, or else of a key of a `Map`, a common member of a core type (`length`, `first`, `join`, `toUpperCase`, `toInt`, `year`, ...), or a key of the value's `toJson()`. A getter of another class, which was read through `dart:mirrors`, is read only through `memberResolver` or `toJson()`: give the values of a template as maps, or with `toJson()` (as `@serializable` models have), or a `memberResolver`; `angel3_jael` gives one of the app's reflector. See the README
 * fix: `{{ user.name }}` reads the key `name` of a `Map`, where it threw `NoSuchMethodError: Class '_Map<String, String>' has no instance getter 'name'`
