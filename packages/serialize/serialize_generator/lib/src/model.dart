@@ -354,11 +354,19 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
                     // its length, which equal ones have: not by its contents,
                     // which would recurse forever in a cycle of models, and
                     // be of every byte of a large list.
-                    var eq = generateEquality(f.type, true);
+                    // Only a List or a Map, which has a length, as a
+                    // `dynamic`, a function or a record field, which == also
+                    // compares with an equality, has none.
                     var name = f.name ?? '';
+                    var collection =
+                        f.type is InterfaceType &&
+                        (const TypeChecker.typeNamed(List)
+                                .isAssignableFromType(f.type) ||
+                            const TypeChecker.typeNamed(Map)
+                                .isAssignableFromType(f.type));
                     var nullable =
                         f.type.nullabilitySuffix == NullabilitySuffix.question;
-                    return eq == null
+                    return !collection
                         ? refer(name)
                         : CodeExpression(
                             Code('$name${nullable ? '?' : ''}.length'),

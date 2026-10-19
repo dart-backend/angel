@@ -88,7 +88,10 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
       lib.body.add(
         Class((clazz) {
           clazz
-            ..name = '${ctx.buildContext.modelClassName}Migration'
+            // As earlier versions named it, as code that runs it names it,
+            // though the generated class of the model may be named otherwise.
+            ..name =
+                '${legacyModelName(ctx.buildContext.originalClassName!)}Migration'
             ..extend = refer('Migration')
             ..methods.addAll([
               buildUpMigration(ctx, lib),

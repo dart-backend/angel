@@ -78,11 +78,25 @@ TypeReference convertTypeReference(
 /// given by, which may be another constant, as `const js = Serializers.json`.
 List<Serializers> readSerializers(ConstantReader annotation) => [
   for (var o in annotation.peek('serializers')?.listValue ?? <DartObject>[])
-    if (o.getField('index')?.toIntValue() case var index?)
-      Serializers.values[index]
+    if (_serializerOf(o) case var serializer?)
+      serializer
     else
       ?_unreadSerializer(o),
 ];
+
+/// The [Serializers] value of [o], by its name, as the generator may be of
+/// another version of `angel3_serialize`, whose values are in another order,
+/// or by its index if it has no name, if [Serializers] has one of it.
+Serializers? _serializerOf(DartObject o) {
+  var name = o.getField('_name')?.toStringValue();
+  if (name != null) {
+    return Serializers.values.where((s) => s.name == name).firstOrNull;
+  }
+  var index = o.getField('index')?.toIntValue();
+  return index != null && index >= 0 && index < Serializers.values.length
+      ? Serializers.values[index]
+      : null;
+}
 
 /// Logs [o], a value of `serializers` that is not one of [Serializers], which
 /// is left out.
@@ -124,11 +138,20 @@ Expression convertObject(DartObject o, {LibraryElement? library}) {
   // (`Color.red`) or a top-level constant, has no class in its source, and is
   // that reference, not a call of a constructor.
   if (rev.source.fragment.isEmpty && rev.accessor.isNotEmpty) {
-    var prefix = _importPrefix(library, rev.accessor.split('.').first);
+    var first = rev.accessor.split('.').first;
+    // Of the class of the value, as `Tag` of `Tag.a`, which the name is of.
+    var element = o.type?.element;
+    var prefix = _importPrefix(
+      library,
+      first,
+      element?.name == first ? element : null,
+    );
     return refer('$prefix${rev.accessor}');
   }
   var className = o.type?.element?.name;
-  var prefix = className == null ? '' : _importPrefix(library, className);
+  var prefix = className == null
+      ? ''
+      : _importPrefix(library, className, o.type?.element);
   Expression target = prefix.isEmpty
       ? convertTypeReference(o.type!)
       : refer('$prefix$className');
@@ -140,19 +163,22 @@ Expression convertObject(DartObject o, {LibraryElement? library}) {
 }
 
 /// The prefix, with its `.`, of the import of [library] by which it has
-/// [name], a class or top-level constant, or `''` if it has it without one.
-String _importPrefix(LibraryElement? library, String name) {
-  if (library == null ||
-      library.firstFragment.scope.lookup(name).getter != null) {
-    return '';
-  }
+/// [name], a class or top-level constant, as [element] if it is given, or
+/// `''` if it has it without one.
+///
+/// An import's names are those its `show` and `hide` leave, and a name of
+/// [library] itself, or of an import without a prefix, is the one it has
+/// without a prefix only if it is [element], not another of the same name.
+String _importPrefix(LibraryElement? library, String name, [Element? element]) {
+  if (library == null) return '';
+  bool isElement(Element? found) =>
+      found != null &&
+      (element == null || found == element || found.baseElement == element);
+  if (isElement(library.firstFragment.scope.lookup(name).getter)) return '';
   for (var fragment in library.fragments) {
     for (var import in fragment.libraryImports) {
       var prefix = import.prefix?.name;
-      // Of the names the imported library exports, as the namespace of a
-      // prefixed import has them by its prefix.
-      if (prefix != null &&
-          import.importedLibrary?.exportNamespace.get2(name) != null) {
+      if (prefix != null && isElement(import.namespace.definedNames2[name])) {
         return '$prefix.';
       }
     }
@@ -217,9 +243,22 @@ String? dartObjectToString(DartObject v) {
   throw ArgumentError(v.toString());
 }
 
+/// The name of the class generated of the model of [type], as the model
+/// class itself is named: a class generated already (`@generatedSerializable`)
+/// is its own, and a model class is [getGeneratedModelClassName] of its name,
+/// once, as `User` of `_UserEntity` and `EntityType` of `_EntityType`.
+String modelClassNameOf(DartType type) {
+  var element = type.element!;
+  var name = element.name!;
+  return generatedSerializableTypeChecker.hasAnnotationOf(element)
+      ? name
+      : getGeneratedModelClassName(name);
+}
+
 /// Determines if a type supports `package:angel3_serialize`.
 bool isModelClass(DartType? t) {
-  if (t == null) return false;
+  // A type without an element, as a function type, is no model.
+  if (t == null || t.element == null) return false;
 
   if (serializableTypeChecker.hasAnnotationOf(t.element!)) {
     return true;
@@ -298,6 +337,8 @@ String? typeToString(DartType type) {
 
     return '$name<${type.typeArguments.map(typeToString).join(', ')}>';
   } else {
-    return type.element?.displayName;
+    // A type without an element, as a function type or a record, as it is
+    // written, but its `?`, which the caller gives.
+    return type.element?.displayName ?? _withoutQuestion(type);
   }
 }

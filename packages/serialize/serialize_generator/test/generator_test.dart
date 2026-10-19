@@ -126,6 +126,94 @@ abstract class _Model { String? get name; }
     expect(output, contains('ModelFields'));
   });
 
+  test('hashes only a List or a Map by its length', () async {
+    var (errors, output) = await generate('''
+@serializable
+abstract class _Model {
+  void Function()? get callback;
+  (int, int) get pair;
+  dynamic get data;
+  List<int> get counts;
+}
+''');
+    expect(errors, isEmpty);
+    expect(output, contains('callback,'));
+    expect(output, contains('pair,'));
+    expect(output, contains('data,'));
+    expect(output, contains('counts.length'));
+    for (var name in ['callback', 'pair', 'data']) {
+      expect(output, isNot(contains('$name?.length')), reason: name);
+      expect(output, isNot(contains('$name.length')), reason: name);
+    }
+  });
+
+  test('refers to another model by the name of its class', () async {
+    var (errors, output) = await generate(
+      '''
+@serializable
+abstract class _EntityType { String? get name; }
+@serializable
+abstract class _Holder {
+  _EntityType? get type;
+  List<_EntityType>? get types;
+  Map<String, _EntityType>? get byName;
+  void Function()? get callback;
+}
+''',
+      builder: serializerBuilder(BuilderOptions.empty),
+      extension: 'angel3_serialize_serializer',
+    );
+    expect(errors, isEmpty);
+    expect(output, contains('class EntityTypeSerializer'));
+    // Of the class, `EntityType`, not `Type` of its name stripped again.
+    expect(output, isNot(contains(RegExp(r'(?<!Entity)TypeSerializer\.'))));
+    expect(
+      'EntityTypeSerializer.toMap('.allMatches(output).length,
+      greaterThanOrEqualTo(3),
+    );
+    expect(output, contains('EntityTypeSerializer.fromMap'));
+  });
+
+  test('generates no codec of a model of json only', () async {
+    // Its decoder would call a fromMap, which is of map only.
+    var (errors, output) = await generate(
+      '''
+@Serializable(serializers: [Serializers.json])
+abstract class _Model { String? get name; }
+''',
+      builder: serializerBuilder(BuilderOptions.empty),
+      extension: 'angel3_serialize_serializer',
+    );
+    expect(errors, isEmpty);
+    expect(output, contains('abstract class ModelSerializer'));
+    expect(output, contains('static Map<String, dynamic> toMap('));
+    expect(output, isNot(contains('ModelDecoder')));
+    expect(output, isNot(contains('fromMap(')));
+  });
+
+  test('prefixes a constant by the import it is visible by', () async {
+    var (errors, output) = await generate(
+      '''
+class Ann { const Ann(); }
+@Serializable(includeAnnotations: [u.Tag.a, x.Ann()])
+abstract class _Model { String? get name; }
+''',
+      // `t` does not show Tag, and the library has an Ann of its own.
+      imports: """
+import 'tags.dart' as t show Other;
+import 'tags.dart' as u;
+import 'other.dart' as x;
+""",
+      others: {
+        'tags.dart': 'enum Tag { a }\nclass Other {}\n',
+        'other.dart': 'class Ann { const Ann(); }\n',
+      },
+    );
+    expect(errors, isEmpty);
+    expect(output, contains('@u.Tag.a'));
+    expect(output, contains('@x.Ann()'));
+  });
+
   group('getGeneratedModelClassName', () {
     test('strips a prefix, and then a suffix', () {
       for (var (clazz, name) in [
