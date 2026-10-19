@@ -257,6 +257,18 @@ class Http2ResponseContext extends ResponseContext<ServerTransportStream> {
     await super.close();
   }
 
+  @override
+  bool get headersSent => _streamInitialized;
+
+  /// Resets the stream, so the client sees it fail.
+  @override
+  Future<void> abort(Object error, [StackTrace? stackTrace]) async {
+    if (_isDetached || _isClosed) return;
+    _isClosed = true;
+    stream.terminate();
+    await super.close();
+  }
+
   /// Pushes a resource to the client.
   Http2ResponseContext push(
     String path, {

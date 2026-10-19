@@ -11,6 +11,7 @@ import 'package:angel3_route/angel3_route.dart';
 import 'package:collection/collection.dart' show IterableExtension;
 import 'package:file/file.dart';
 import 'package:http_parser/http_parser.dart';
+import 'package:meta/meta.dart';
 import 'package:mime/mime.dart';
 
 import 'controller.dart';
@@ -32,9 +33,16 @@ abstract class ResponseContext<RawResponse>
 
   //final log = Logger('ResponseContext');
 
-  // Errors are also reported to the zone (see [addError]), so the error
-  // completing [done] must not count as unhandled when nobody awaits it.
-  final Completer<void> _done = Completer<void>()..future.ignore();
+  /// The completer of [done], made in the zone that first reads it: a
+  /// future's error is not delivered across error zones, so one made here, in
+  /// the zone the response is created in, would never fail for a handler
+  /// awaiting it in the request's error zone.
+  Completer<void>? _done;
+
+  /// Whether [done] has completed, and with what error, if any.
+  bool _doneCompleted = false;
+  Object? _doneError;
+  StackTrace? _doneStackTrace;
   int _statusCode = 200;
 
   /// The [Angel] instance that is sending a response.
@@ -191,7 +199,32 @@ abstract class ResponseContext<RawResponse>
   /// Completes once the response is closed (see [close]), or with the first
   /// error passed to [addError]. Never completes for a [detach]ed response.
   @override
-  Future get done => _done.future;
+  Future get done {
+    var done = _done;
+    if (done != null) return done.future;
+    if (_doneCompleted) {
+      var error = _doneError;
+      return error == null
+          ? Future.value()
+          : Future.error(error, _doneStackTrace);
+    }
+    return (_done = Completer<void>()).future;
+  }
+
+  /// Completes [done], once.
+  void _completeDone([Object? error, StackTrace? stackTrace]) {
+    if (_doneCompleted) return;
+    _doneCompleted = true;
+    _doneError = error;
+    _doneStackTrace = stackTrace;
+    var done = _done;
+    if (done == null) return;
+    if (error == null) {
+      done.complete();
+    } else {
+      done.completeError(error, stackTrace);
+    }
+  }
 
   /// Headers that will be sent to the user.
   ///
@@ -230,6 +263,16 @@ abstract class ResponseContext<RawResponse>
 
   /// Returns `true` if response data is being written to a buffer, rather than to the underlying stream.
   bool get isBuffered;
+
+  /// Whether the status and headers have been sent, as by an unbuffered
+  /// response that has started its body. After that, an error can no longer
+  /// be answered with an error response: the response is [abort]ed instead.
+  bool get headersSent => false;
+
+  /// Ends a response whose [headersSent] after a failure, so that the client
+  /// sees it fail rather than a complete response: the connection (HTTP/1)
+  /// or stream (HTTP/2) is closed abruptly. By default, [close]s it.
+  Future<void> abort(Object error, [StackTrace? stackTrace]) => close();
 
   /// A set of UTF-8 encoded bytes that will be written to the response.
   BytesBuilder? get buffer;
@@ -340,7 +383,7 @@ abstract class ResponseContext<RawResponse>
       (buffer as LockableBytesBuilder).lock();
     }
 
-    if (!_done.isCompleted) _done.complete();
+    _completeDone();
     return Future.value();
   }
 
@@ -562,9 +605,14 @@ abstract class ResponseContext<RawResponse>
   @override
   Future addStream(Stream<List<int>> stream);
 
+  /// Fails [done] with [error]. Unless something listens to [done], the
+  /// error is also reported to the current zone (the request's error zone),
+  /// as nothing else would see it.
   @override
   void addError(Object error, [StackTrace? stackTrace]) {
-    if (!_done.isCompleted) _done.completeError(error, stackTrace);
+    var handled = _done != null && !_doneCompleted;
+    _completeDone(error, stackTrace);
+    if (handled) return;
     if (stackTrace != null) {
       Zone.current.handleUncaughtError(error, stackTrace);
     } else {
@@ -683,4 +731,48 @@ class _ValidatingHeaders extends CaseInsensitiveMap<String> {
     }
     super[key] = value;
   }
+}
+
+/// The errors added to raw responses to close them abruptly; see
+/// [abortErrorOf].
+final Expando<bool> _abortErrors = Expando('abort errors');
+
+/// The error to add to a raw response (e.g. an `HttpResponse`) to close it
+/// abruptly because of [error]: [error] itself, marked so that
+/// [isAbortError] knows it, or a [ResponseAborted] of it if it cannot be
+/// marked (a string or a number).
+///
+/// `dart:io` reports such an error as uncaught in the zone that serves the
+/// connection, even when the response's `done` is awaited, so
+/// `Driver.startServer` serves in a zone that ignores them.
+@internal
+Object abortErrorOf(Object error) {
+  try {
+    _abortErrors[error] = true;
+    return error;
+  } on ArgumentError {
+    return ResponseAborted(error);
+  }
+}
+
+/// Whether [error] was added to a raw response by [abortErrorOf].
+@internal
+bool isAbortError(Object error) {
+  if (error is ResponseAborted) return true;
+  try {
+    return _abortErrors[error] ?? false;
+  } on ArgumentError {
+    return false;
+  }
+}
+
+/// The error with which a response is closed abruptly, of an [error] that
+/// [abortErrorOf] cannot mark.
+class ResponseAborted implements Exception {
+  final Object error;
+
+  const ResponseAborted(this.error);
+
+  @override
+  String toString() => 'The response was aborted: $error';
 }

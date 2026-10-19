@@ -53,6 +53,12 @@ void main() {
 
     app.get('/stream', (req, res) => jfkStream().pipe(res));
 
+    app.get('/stream-error', (req, res) async {
+      res.write('partial');
+      await Future.delayed(const Duration(milliseconds: 20));
+      throw StateError('boom');
+    });
+
     app.get('/headers', (req, res) async {
       res.headers.addAll({'foo': 'bar', 'x-angel': 'http2'});
       await res.close();
@@ -621,6 +627,21 @@ void main() {
   test('allowHttp1', () async {
     var response = await h1c.get(serverRoot);
     expect(response.body, 'Hello world');
+  });
+
+  test('a failure after the headers are sent resets the stream', () async {
+    // Rather than an error page appended to the body sent under its status.
+    Object? result;
+    try {
+      var response = await client.get(
+        serverRoot.replace(path: '/stream-error'),
+      );
+      result = response.body;
+    } catch (e) {
+      result = e;
+    }
+    expect(result, isNot(contains('<!DOCTYPE html>')));
+    expect(result, isNot(isA<String>()));
   });
 
   test('streamed response', () async {

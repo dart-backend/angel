@@ -1,5 +1,6 @@
 import 'package:angel3_container/angel3_container.dart';
 import 'package:angel3_route/angel3_route.dart';
+import 'package:logging/logging.dart';
 
 final RegExp straySlashes = RegExp(r'(^/+)|(/+$)');
 
@@ -60,6 +61,39 @@ T? getMethodAnnotation<T>(
     }
   }
   return null;
+}
+
+/// The classes [warnIfUndescribed] has warned about, by reflector.
+final Expando<Set<Type>> _warnedUndescribed = Expando('undescribed');
+
+/// Logs a warning to [logger], once per [reflector] and [type], when
+/// [reflector] reflects (see [canReflect]) but has no information about
+/// [type], as a [StaticReflector] has none about a class that is not
+/// `@injectable`: then the [annotations] of [type] and of its methods (e.g.
+/// `@Middleware`, which may guard it) are ignored without it.
+///
+/// Not for [skip], classes known to carry none, nor for an [EmptyReflector],
+/// which describes nothing by design.
+void warnIfUndescribed(
+  Reflector reflector,
+  Type type,
+  Logger logger,
+  String annotations, {
+  Set<Type> skip = const {},
+}) {
+  if (!canReflect(reflector) ||
+      reflector is EmptyReflector ||
+      skip.contains(type)) {
+    return;
+  }
+  if (tryReflect(() => reflector.reflectClass(type)) != null) return;
+  var warned = _warnedUndescribed[reflector] ??= {};
+  if (!warned.add(type)) return;
+  logger.warning(
+    'The reflector has no information about $type, so its $annotations, and '
+    'those of its methods, are ignored. With a StaticReflector, mark $type '
+    '@injectable and pass its reflection data to StaticReflector.combine.',
+  );
 }
 
 /// Runs [reflect], or returns `null` when the reflector has no information

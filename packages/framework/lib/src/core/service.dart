@@ -9,6 +9,7 @@ import 'package:quiver/core.dart';
 import '../util.dart';
 import 'anonymous_service.dart';
 import 'hooked_service.dart' show HookedService;
+import 'map_service.dart' show MapService;
 import 'metadata.dart';
 import 'request_context.dart';
 import 'response_context.dart';
@@ -266,6 +267,13 @@ class Service<Id, Data> extends Routable {
   }
 
   void _addRoutesInner(Service service, Iterable<RequestHandler> handlerss) {
+    warnIfUndescribed(
+      app.container.reflector,
+      service.runtimeType,
+      app.logger,
+      '@Middleware and @Hooks annotations',
+      skip: const {Service, MapService, AnonymousService},
+    );
     var restProvider = {'provider': Providers.rest};
     var handlers = List<RequestHandler>.from(handlerss);
 

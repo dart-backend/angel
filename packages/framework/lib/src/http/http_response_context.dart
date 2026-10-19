@@ -33,6 +33,20 @@ class HttpResponseContext extends ResponseContext<HttpResponse> {
   }
 
   @override
+  bool get headersSent => _streamInitialized;
+
+  /// Closes the connection abruptly, which `dart:io` does for an error added
+  /// to the [HttpResponse].
+  @override
+  Future<void> abort(Object error, [StackTrace? stackTrace]) async {
+    if (_isDetached || _isClosed) return;
+    _isClosed = true;
+    rawResponse.addError(abortErrorOf(error), stackTrace);
+    await rawResponse.done.then((_) {}, onError: (_) {});
+    await super.close();
+  }
+
+  @override
   RequestContext? get correspondingRequest {
     return _correspondingRequest;
   }
@@ -48,9 +62,17 @@ class HttpResponseContext extends ResponseContext<HttpResponse> {
   @override
   BytesBuilder? get buffer => _buffer;
 
+  /// Fails the response: `dart:io` closes the connection abruptly for an
+  /// error added to the [HttpResponse], so the response is closed, and the
+  /// error is reported as [ResponseContext.addError] does.
   @override
   void addError(Object error, [StackTrace? stackTrace]) {
-    rawResponse.addError(error, stackTrace);
+    if (!_isDetached && !_isClosed) {
+      _isClosed = true;
+      rawResponse.addError(abortErrorOf(error), stackTrace);
+      // Its failure is this error, reported below, not another.
+      rawResponse.done.then((_) {}, onError: (_) {});
+    }
     super.addError(error, stackTrace);
   }
 

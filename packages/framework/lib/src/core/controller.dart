@@ -90,6 +90,15 @@ class Controller {
     var classMirror = canReflect(reflector)
         ? tryReflect(() => reflector.reflectClass(runtimeType))
         : null;
+    var logger = _app?.logger ?? (router is Angel ? router.logger : null);
+    if (logger != null) {
+      warnIfUndescribed(
+        reflector,
+        runtimeType,
+        logger,
+        '@Expose routes and @Middleware annotations',
+      );
+    }
     var instanceMirror = classMirror == null
         ? null
         : tryReflect(() => reflector.reflectInstance(this));

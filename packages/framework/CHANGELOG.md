@@ -2,6 +2,9 @@
 
 ## 10.0.0
 
+* fix: With a reflector that reflects, such as a `StaticReflector`, a service or controller class it has no information about is warned about once, as its `@Middleware`, `@Hooks` and `@Expose` annotations, and those of its methods, are ignored, where they were ignored silently: a service guarded by `@Middleware` was served without it. `MapService` and `AnonymousService`, which carry none, are not warned about
+* fix: A handler that fails after an unbuffered response has sent its headers aborts the response, closing the connection (HTTP/1) or resetting the stream (HTTP/2), where the error page was appended to the body sent under the status already sent. Adds `ResponseContext.headersSent` and `ResponseContext.abort`
+* fix: `res.done` fails with the error of `res.addError` for a handler awaiting it, where the error never reached the request's zone and was reported as uncaught; an error is reported as uncaught only when nothing reads `done`. `HttpResponseContext.addError` closes the response, as `dart:io` closes its connection. Servers of `startServer` serve in a zone that logs an error escaping a connection, where it reached the root zone
 * feat: `Controller.routesMethod`, which a subclass overrides to keep public methods off its routes, as `WebSocketController` does with its `@ExposeWs` methods and hooks
 * feat: `@Expose` controllers, and `@Middleware`/`@Hooks` on services and their methods, work with a reflector that describes classes but not method tear-offs, such as a `StaticReflector` with data from `angel3_container_generator`: a controller's methods are injected from their reflected declarations (the new `injectionFor`), and a method's annotations are read from its class when its tear-off cannot be reflected. `@Query` and other `Parameter` annotations are recognized by value, so the reflector needs no information about `Parameter` itself
 * fix: A `Controller` in an app whose reflector has no information about it (e.g. a `StaticReflector` with data from `angel3_container_generator`) now applies the routes added in `configureRoutes`, as with reflection disabled, instead of failing with an `ArgumentError`. `@Expose` methods are not discovered then
@@ -28,7 +31,7 @@
 * fix: The default error page now labels its UTF-8 body `charset=utf-8` instead of `charset=utf8`, which is not a registered charset name, so Dart clients such as `package:http` decoded the page as Latin-1
 * fix: A typed route parameter (e.g. `/n/int:id`) given text that is not a number no longer matches the route (404, or the next matching route), instead of failing with 400 error.
 * fix: Middleware passed to `app.group(...)` now runs; previously it was ignored, so a group guarded by middleware (e.g. authentication) was served without it.
-* fix: HTTP/2 sessions are now created only when `req.session` is first read, instead of for every request without a `DARTSESSID` cookie, which let any client fill the session store. **Behaviour change:** responses that never use the session no longer set a `DARTSESSID` cookie
+* **Breaking:** HTTP/2 sessions are now created only when `req.session` is first read, instead of for every request without a `DARTSESSID` cookie, which let any client fill the session store. Responses that never use the session no longer set a `DARTSESSID` cookie
 * feat: Added `Http2RequestContext.hasSession` to check for a session without creating one
 * fix: `ResponseContext.done` now completes when the response is closed (or with the first error passed to `addError`), instead of never completing
 * fix: `res.redirectTo()` without `params` no longer fails with a null check error
@@ -47,7 +50,7 @@
 * fix: After-modify hook listeners now receive a `modified` event, instead of `created`; WebSocket clients were sent `::created` for every modify
 * fix: `HookedService.fire` now passes its `result` to listeners, instead of `null`
 * fix: Canceling a `remove` in a before hook on a typed `HookedService` now returns the cancel result, instead of failing with a `TypeError`
-* fix: Buffered HTTP/1 responses now work for HTTP/1.0 clients (e.g. nginx's default `proxy_pass`), instead of failing. **Behaviour change:** buffered responses are now sent with `Content-Length` instead of chunked encoding, unless `res.chunked` is set to `true`
+* **Breaking:** Buffered HTTP/1 responses now work for HTTP/1.0 clients (e.g. nginx's default `proxy_pass`), instead of failing. Buffered responses are now sent with `Content-Length` instead of chunked encoding, unless `res.chunked` is set to `true`
 * fix: Named parameters of DI handlers (`ioc`, controllers) that have a default value and cannot be resolved are now left out, so the default applies, instead of being passed `null` (which failed with a `TypeError` for non-nullable parameters). Other unresolved named parameters (e.g. `required String? q`) are still passed `null`. This needs to know which parameters have defaults: `MirrorsReflector` reports it, as does a `StaticReflector` with data from `angel3_container_generator`; for an `InjectionRequest` written by hand, list them in `namedWithDefaults`. Otherwise unresolved named parameters are passed `null`, as before
 * feat: Added `InjectionRequest.namedWithDefaults`, the named parameters left out when they cannot be resolved
 * fix: `@Header`, `@Query`, `@CookieValue` and `@Session` parameters of any type (not only `String` and numbers) now read their value, instead of being made by the container
@@ -63,10 +66,10 @@
 * fix: `MapService` with `autoIdAndDateFields` off now matches non-string ids by their string form, so a record with `id: 1` is found by `'1'` (as REST requests send it)
 * fix: `res.jsonp` now rejects a callback name that is not a plain (optionally dotted) identifier with 400 error, instead of writing it into the script, and awaits an async `serializer`
 * fix: Responses from an app with `encoders` now send `Vary: Accept-Encoding`. A body that already has a `content-encoding` header (e.g. a precompressed file) is no longer compressed again, and 204 and 304 responses are no longer compressed
-* fix: `chain` now stops at a handler that does not return `true`, like a route's own handlers, instead of running the remaining handlers. **Behaviour change:** a handler in a `chain` that returns nothing now ends the chain
+* **Breaking:** `chain` now stops at a handler that does not return `true`, like a route's own handlers, instead of running the remaining handlers. A handler in a `chain` that returns nothing now ends the chain
 * fix: Hostname patterns with `|` (e.g. `example.com|api.example.com`) now match any of the whole hostnames, instead of throwing a `FormatException`
 * fix: `findService` now finds a service mounted after an earlier lookup of the same path failed
-* fix: `Service.parseId<bool>` now throws a `FormatException` (400 over REST) for ids other than `true` and `false`, instead of returning `false`. **Behaviour change**
+* **Breaking:** `Service.parseId<bool>` now throws a `FormatException` (400 over REST) for ids other than `true` and `false`, instead of returning `false`.
 * fix: When a before hook cancels a call without a result, `HookedService.index` now returns an empty list, and other methods of a service whose `Data` is not nullable throw a `StateError` explaining the problem, instead of a `TypeError`. A canceled `index` may return a list of any element type
 * fix: `MapService` now sorts missing values last for descending `$sort` too
 * fix: `res.writeCharCode` now writes the character as UTF-8, instead of a single (truncated) byte

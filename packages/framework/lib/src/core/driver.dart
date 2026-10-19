@@ -72,18 +72,26 @@ abstract class Driver<
     }
 
     app.optimizeForProduction();
-    _sub = server.listen((request) {
-      var stream = createResponseStreamFromRawRequest(request);
-      // A broken connection (e.g. HTTP/2) errors outside the per-request
-      // error zone. Left unhandled it would terminate the whole server.
-      stream.listen(
-        (response) => handleRawRequestSafely(request, response),
-        onError: (Object e, StackTrace st) {
-          app.logger.warning('Connection error', e, st);
-        },
-      );
+    // Served in a zone of its own: an error of a connection that escapes its
+    // request (as `dart:io` reports a response's abort) is logged, rather
+    // than reaching the root zone, where it would terminate the server.
+    _sub = runZonedGuarded(() => server.listen(_serve), (e, st) {
+      if (isAbortError(e)) return;
+      app.logger.severe('Uncaught error of a connection', e, st);
     });
     return server;
+  }
+
+  void _serve(Request request) {
+    var stream = createResponseStreamFromRawRequest(request);
+    // A broken connection (e.g. HTTP/2) errors outside the per-request
+    // error zone. Left unhandled it would terminate the whole server.
+    stream.listen(
+      (response) => handleRawRequestSafely(request, response),
+      onError: (Object e, StackTrace st) {
+        app.logger.warning('Connection error', e, st);
+      },
+    );
   }
 
   /// Closes a [server] created by [generateServer] that never started
@@ -425,6 +433,18 @@ abstract class Driver<
         app.logger.severe('500 Internal Server Error', e);
       }
       return Future.value();
+    }
+
+    // The status and headers are sent, so an error page would only be
+    // appended to the body, under the status already sent.
+    if (res.isOpen && res.headersSent) {
+      app.logger.severe(
+        'Failed after the response headers were sent; the response is '
+        'aborted.',
+        e.error ?? e,
+        st,
+      );
+      return res.abort(e.error ?? e, st).then((_) => req.close());
     }
 
     Future handleError;
