@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 import 'dart:isolate';
+import 'dart:math';
 
 import 'package:angel3_container/angel3_container.dart';
 import 'package:belatuk_pub_sub/belatuk_pub_sub.dart';
@@ -21,6 +22,11 @@ import 'options.dart';
 ///
 /// Makes it easy to do things like configure SSL, log messages, and send messages between
 /// all running instances.
+///
+/// An instance that fails to start ends [run] with a non-zero exit code; one
+/// that crashes once started is respawned (with `--respawn`), after a delay
+/// that grows while it keeps crashing. `SIGINT` and `SIGTERM` close every
+/// instance, running its shutdown hooks, before the process ends.
 class Runner {
   final String name;
   final AngelConfigurer configureServer;
@@ -29,65 +35,49 @@ class Runner {
   final Map<String, Object> removeResponseHeaders;
   final Map<String, Object> responseHeaders;
 
+  /// How long the instances may take to close on a shutdown signal, before
+  /// they are killed.
+  final Duration shutdownTimeout;
+
   Runner(
     this.name,
     this.configureServer, {
     this.reflector = const EmptyReflector(),
     this.removeResponseHeaders = const {},
     this.responseHeaders = const {},
+    this.shutdownTimeout = const Duration(seconds: 10),
   });
 
   static const String _asciiArt = '''
 
-     _    _   _  ____ _____ _     _____ 
-    / \\  | \\ | |/ ___| ____| |   |___ / 
-   / _ \\ |  \\| | |  _|  _| | |     |_ \\ 
+     _    _   _  ____ _____ _     _____
+    / \\  | \\ | |/ ___| ____| |   |___ /
+   / _ \\ |  \\| | |  _|  _| | |     |_ \\
   / ___ \\| |\\  | |_| | |___| |___ ___) |
- /_/   \\_\\_| \\_|\\____|_____|_____|____/                                                                                 
+ /_/   \\_\\_| \\_|\\____|_____|_____|____/
 ''';
 
   static final DateFormat _defaultDateFormat = DateFormat(
     'yyyy-MM-dd HH:mm:ss',
   );
 
-  /// LogRecord handler
+  /// Prints [record], unless [RunnerOptions.quiet]. A record of an
+  /// [AngelHttpException] that is not a 500 is printed without its error.
   static void handleLogRecord(LogRecord? record, RunnerOptions options) {
     if (options.quiet || record == null) return;
     var code = chooseLogColor(record.level);
+    var now = _defaultDateFormat.format(record.time);
+    var prefix = '$now ${record.level.name} [${record.loggerName}]';
 
-    var now = _defaultDateFormat.format(DateTime.now());
+    print(code.wrap('$prefix: ${record.message}'));
 
-    if (record.error == null) {
-      //print(code.wrap(record.message));
-      print(
-        code.wrap(
-          '$now ${record.level.name} [${record.loggerName}]: ${record.message}',
-        ),
-      );
+    var err = record.error;
+    if (err == null || (err is AngelHttpException && err.statusCode != 500)) {
+      return;
     }
-
-    if (record.error != null) {
-      var err = record.error;
-      if (err is AngelHttpException && err.statusCode != 500) return;
-      //print(code.wrap(record.message + '\n'));
-      print(
-        code.wrap(
-          '$now ${record.level.name} [${record.loggerName}]: ${record.message} \n',
-        ),
-      );
-      print(
-        code.wrap(
-          '$now ${record.level.name} [${record.loggerName}]: ${err.toString()}',
-        ),
-      );
-
-      if (record.stackTrace != null) {
-        print(
-          code.wrap(
-            '$now ${record.level.name} [${record.loggerName}]: ${record.stackTrace.toString()}',
-          ),
-        );
-      }
+    print(code.wrap('$prefix: $err'));
+    if (record.stackTrace != null) {
+      print(code.wrap('$prefix: ${record.stackTrace}'));
     }
   }
 
@@ -111,89 +101,46 @@ class Runner {
   ///
   /// If the command-line arguments permit, then the instance will be respawned on crashes.
   ///
-  /// The returned [Future] completes when the application instance exits.
-  ///
-  /// If respawning is enabled, the [Future] will *never* complete.
+  /// The returned [Future] completes when the application instance exits,
+  /// or with a [StartupException] if it failed to start. If respawning is
+  /// enabled, it completes only once the instance is stopped.
   Future spawnIsolate(int id, RunnerOptions options, SendPort pubSubSendPort) {
-    return _spawnIsolate(id, Completer(), options, pubSubSendPort);
+    var instance = _Instance(this, id, options, pubSubSendPort);
+    instance.spawn();
+    return instance.done.future;
   }
 
-  Future _spawnIsolate(
-    int id,
-    Completer c,
-    RunnerOptions options,
-    SendPort pubSubSendPort,
-  ) {
-    var onLogRecord = ReceivePort();
-    var onExit = ReceivePort();
-    var onError = ReceivePort();
-    var runnerArgs = RunnerArgs(
-      name,
-      configureServer,
-      options,
-      reflector,
-      onLogRecord.sendPort,
-      pubSubSendPort,
-    );
-    var argsWithId = RunnerArgsWithId(id, runnerArgs);
+  /// The instances that [run] runs.
+  final List<_Instance> _instances = [];
+  bool _stopping = false;
 
-    Isolate.spawn(
-      isolateMain,
-      argsWithId,
-      onExit: onExit.sendPort,
-      onError: onError.sendPort,
-      errorsAreFatal: true && false,
-    ).then((isolate) {}).catchError((e) {
-      c.completeError(e as Object);
-      return null;
-    });
-
-    onLogRecord.listen((msg) => handleLogRecord(msg as LogRecord?, options));
-
-    onError.listen((msg) {
-      if (msg is List) {
-        dynamic e = msg[0];
-        var st = StackTrace.fromString(msg[1].toString());
-        handleLogRecord(
-          LogRecord(Level.SEVERE, 'Fatal error', runnerArgs.loggerName, e, st),
-          options,
-        );
-      } else {
-        handleLogRecord(
-          LogRecord(Level.SEVERE, 'Fatal error', runnerArgs.loggerName, msg),
-          options,
-        );
-      }
-    });
-
-    onExit.listen((_) {
-      if (options.respawn) {
-        handleLogRecord(
-          LogRecord(
-            Level.WARNING,
-            'Instance #$id at ${DateTime.now()} crashed. Respawning immediately...',
-            runnerArgs.loggerName,
-          ),
-          options,
-        );
-        _spawnIsolate(id, c, options, pubSubSendPort);
-      } else {
-        c.complete();
-      }
-    });
-
-    return c.future
-        .whenComplete(onExit.close)
-        .whenComplete(onError.close)
-        .whenComplete(onLogRecord.close);
+  /// Closes every instance, running its shutdown hooks (or kills it after
+  /// [shutdownTimeout]), so that [run] returns; as `SIGINT` and `SIGTERM` do.
+  void stop() {
+    if (_stopping) return;
+    _stopping = true;
+    for (var instance in _instances) {
+      instance.stop(shutdownTimeout);
+    }
   }
 
   /// Starts a number of isolates, running identical instances of an Angel application.
   Future run(List<String> args) async {
     Server? server;
+    var instances = _instances..clear();
+    _stopping = false;
+    var signals = <StreamSubscription>[];
 
     try {
       var argResults = RunnerOptions.argParser.parse(args);
+
+      if (argResults['help'] == true) {
+        print(darkGray.wrap(_banner));
+        stdout
+          ..writeln('Options:')
+          ..writeln(RunnerOptions.argParser.usage);
+        return;
+      }
 
       var options = RunnerOptions.fromArgResults(argResults);
       options.responseHeaders.addAll(responseHeaders);
@@ -207,38 +154,46 @@ class Runner {
         }
       }
 
-      print(
-        darkGray.wrap(
-          '$_asciiArt\n\nA batteries-included, full-featured, full-stack framework in Dart.\n\nhttps://angel3-framework.web.app\n',
-        ),
-      );
-
-      if (argResults['help'] == true) {
-        stdout
-          ..writeln('Options:')
-          ..writeln(RunnerOptions.argParser.usage);
-        return;
-      }
-
+      print(darkGray.wrap(_banner));
       print('Starting `$name` application...');
 
       var adapter = IsolateAdapter();
       server = Server([adapter]);
-
-      // Register clients
-      // for (var i = 0; i < Platform.numberOfProcessors; i++) {
       for (var i = 0; i < options.concurrency; i++) {
         server.registerClient(ClientInfo('client$i'));
       }
-
       server.start();
 
-      await Future.wait(
-        List.generate(
-          options.concurrency,
-          (id) => spawnIsolate(id, options, adapter.receivePort.sendPort),
-        ),
-      );
+      for (var id = 0; id < options.concurrency; id++) {
+        instances.add(
+          _Instance(this, id, options, adapter.receivePort.sendPort)..spawn(),
+        );
+      }
+
+      // Closes every instance on a signal; a second one ends at once.
+      void onSignal(ProcessSignal signal) {
+        if (_stopping) exit(ExitCode.software.code);
+        print('Received $signal. Shutting down...');
+        stop();
+      }
+
+      for (var signal in [
+        ProcessSignal.sigint,
+        // Windows has no SIGTERM.
+        if (!Platform.isWindows) ProcessSignal.sigterm,
+      ]) {
+        signals.add(
+          signal.watch().listen(
+            onSignal,
+            // Not to be watched on this platform.
+            onError: (Object e) {},
+          ),
+        );
+      }
+
+      await Future.wait([
+        for (var instance in instances) instance.done.future,
+      ], eagerError: true);
     } on ArgParserException catch (e) {
       stderr
         ..writeln(red.wrap(e.message))
@@ -246,111 +201,357 @@ class Runner {
         ..writeln(red.wrap('Options:'))
         ..writeln(red.wrap(RunnerOptions.argParser.usage));
       exitCode = ExitCode.usage.code;
+    } on StartupException catch (e) {
+      stderr.writeln(red.wrap('$e'));
+      exitCode = ExitCode.software.code;
+      stop();
+      await Future.wait([
+        for (var instance in instances)
+          instance.done.future.then((_) {}, onError: (_) {}),
+      ]);
     } catch (e, st) {
       stderr
         ..writeln(red.wrap('fatal error: $e'))
         ..writeln(red.wrap(st.toString()));
       exitCode = 1;
     } finally {
+      for (var sub in signals) {
+        await sub.cancel();
+      }
       await server?.close();
     }
   }
 
+  static const String _banner =
+      '$_asciiArt\n\nA batteries-included, full-featured, full-stack framework in Dart.\n\nhttps://angel3-framework.web.app\n';
+
   /// Run with main isolate
   static void isolateMain(RunnerArgsWithId argsWithId) {
     var args = argsWithId.args;
+    var toMain = args.loggingSendPort;
     hierarchicalLoggingEnabled = false;
 
     var zone = Zone.current.fork(
       specification: ZoneSpecification(
         print: (self, parent, zone, msg) {
-          args.loggingSendPort.send(
-            LogRecord(Level.INFO, msg, args.loggerName),
-          );
+          toMain.send(_Log(Level.INFO, msg, args.loggerName));
         },
       ),
     );
 
     zone.run(() async {
-      var client = IsolateClient('client${argsWithId.id}', args.pubSubSendPort);
-
-      var app = Angel(reflector: args.reflector)
-        ..container.registerSingleton<Client>(client)
-        ..container.registerSingleton(InstanceInfo(id: argsWithId.id));
-
-      app.shutdownHooks.add((_) => client.close());
-
-      await app.configure(args.configureServer);
-
-      app.logger = Logger(args.loggerName)
-        ..onRecord.listen((rec) => Runner.handleLogRecord(rec, args.options));
-
-      AngelHttp http;
-      late SecurityContext securityContext;
-      Uri serverUrl;
-
-      if (args.options.ssl || args.options.http2) {
-        securityContext = SecurityContext();
-        var certificateFile = args.options.certificateFile;
-        if (certificateFile != null) {
-          securityContext.useCertificateChain(
-            certificateFile,
-            password: args.options.certificatePassword,
-          );
-        }
-
-        var keyFile = args.options.keyFile;
-        if (keyFile != null) {
-          securityContext.usePrivateKey(
-            keyFile,
-            password: args.options.keyPassword,
-          );
-        }
-      }
-
-      if (args.options.ssl) {
-        http = AngelHttp.custom(
-          app,
-          startSharedSecure(securityContext),
-          useZone: args.options.useZone,
-        );
-      } else {
-        http = AngelHttp.custom(
-          app,
-          startShared,
-          useZone: args.options.useZone,
-        );
-      }
-
+      var control = ReceivePort();
       Driver driver;
+      try {
+        driver = await _startInstance(argsWithId);
+      } catch (e, st) {
+        // The main isolate ends the runner, rather than respawn the same
+        // failure.
+        toMain.send(_StartFailed('$e', '$st'));
+        control.close();
+        Isolate.exit();
+      }
 
-      if (args.options.http2) {
-        securityContext.setAlpnProtocols(['h2'], true);
-        var http2 = AngelHttp2.custom(
-          app,
-          securityContext,
-          startSharedHttp2,
-          useZone: args.options.useZone,
+      control.listen((message) async {
+        if (message != _stop) return;
+        try {
+          await driver.close();
+        } catch (e, st) {
+          toMain.send(
+            _Log(Level.SEVERE, 'Failed to close', args.loggerName, '$e', '$st'),
+          );
+        }
+        control.close();
+        Isolate.exit();
+      });
+      toMain.send(_Started(control.sendPort));
+    });
+  }
+
+  /// Makes and starts the server of an instance, logging to the main
+  /// isolate.
+  static Future<Driver> _startInstance(RunnerArgsWithId argsWithId) async {
+    var args = argsWithId.args;
+    var options = args.options;
+    var client = IsolateClient('client${argsWithId.id}', args.pubSubSendPort);
+
+    var app = Angel(reflector: args.reflector)
+      ..container.registerSingleton<Client>(client)
+      ..container.registerSingleton(InstanceInfo(id: argsWithId.id));
+
+    // Before configureServer, which may log, or set a logger of its own.
+    app.logger = Logger(args.loggerName)
+      ..onRecord.listen((rec) => args.loggingSendPort.send(_Log.of(rec)));
+
+    app.shutdownHooks.add((_) => client.close());
+
+    await app.configure(args.configureServer);
+
+    SecurityContext? securityContext;
+    if (options.ssl || options.http2) {
+      securityContext = SecurityContext()
+        ..useCertificateChain(
+          options.certificateFile!,
+          password: options.certificatePassword,
+        )
+        ..usePrivateKey(options.keyFile!, password: options.keyPassword);
+    }
+
+    var http = options.ssl
+        ? AngelHttp.custom(
+            app,
+            startSharedSecure(securityContext!),
+            useZone: options.useZone,
+          )
+        : AngelHttp.custom(app, startShared, useZone: options.useZone);
+
+    Driver driver;
+    if (options.http2) {
+      securityContext!.setAlpnProtocols(['h2'], true);
+      var http2 = AngelHttp2.custom(
+        app,
+        securityContext,
+        startSharedHttp2,
+        useZone: options.useZone,
+      );
+      http2.onHttp1.listen(http.handleRequest);
+      // As there are no default headers of dart:io to change.
+      if (options.responseHeaders.isNotEmpty ||
+          options.removeResponseHeaders.isNotEmpty) {
+        app.responseFinalizers.add((req, res) {
+          options.removeResponseHeaders.keys.forEach(res.headers.remove);
+          options.responseHeaders.forEach((k, v) => res.headers[k] = '$v');
+        });
+      }
+      driver = http2;
+    } else {
+      driver = http;
+    }
+
+    await driver.startServer(options.hostname, options.port);
+
+    if (driver is AngelHttp) {
+      driver.addResponseHeader(options.responseHeaders);
+      driver.removeResponseHeader(options.removeResponseHeaders);
+    }
+
+    var serverUrl = driver.uri;
+    if (options.ssl || options.http2) {
+      serverUrl = serverUrl.replace(scheme: 'https');
+    }
+    print('Instance #${argsWithId.id} listening at $serverUrl');
+    return driver;
+  }
+}
+
+/// An instance that failed to start, which ends [Runner.run].
+class StartupException implements Exception {
+  final int id;
+  final String error, stackTrace;
+
+  const StartupException(this.id, this.error, this.stackTrace);
+
+  @override
+  String toString() => 'Instance #$id failed to start: $error\n$stackTrace';
+}
+
+/// The message to an instance's control port that stops it.
+const String _stop = 'stop';
+
+/// A log record of an instance, sent to the main isolate to be printed.
+class _Log {
+  final Level level;
+  final String message, loggerName;
+  final String? error, stackTrace;
+  final DateTime time;
+
+  _Log(this.level, this.message, this.loggerName, [this.error, this.stackTrace])
+    : time = DateTime.now();
+
+  _Log.of(LogRecord record)
+    : level = record.level,
+      message = record.message,
+      loggerName = record.loggerName,
+      // As text, which every error can be sent as.
+      error =
+          record.error is AngelHttpException &&
+              (record.error as AngelHttpException).statusCode != 500
+          ? null
+          : record.error?.toString(),
+      stackTrace = record.stackTrace?.toString(),
+      time = record.time;
+
+  LogRecord toRecord() => LogRecord(
+    level,
+    message,
+    loggerName,
+    error,
+    stackTrace == null ? null : StackTrace.fromString(stackTrace!),
+  );
+}
+
+/// An instance that started, with the port that stops it.
+class _Started {
+  final SendPort control;
+  _Started(this.control);
+}
+
+/// An instance that failed to start.
+class _StartFailed {
+  final String error, stackTrace;
+  _StartFailed(this.error, this.stackTrace);
+}
+
+/// An instance of the application, which runs in an isolate, respawned on
+/// crashes with a delay that grows while it keeps crashing.
+class _Instance {
+  final Runner runner;
+  final int id;
+  final RunnerOptions options;
+  final SendPort pubSubSendPort;
+  final Completer<void> done = Completer<void>();
+
+  SendPort? _control;
+  Isolate? _isolate;
+  bool _stopping = false;
+  DateTime? _startedAt;
+  Duration _backoff = Duration.zero;
+  Timer? _respawnTimer;
+
+  static const _maxBackoff = Duration(seconds: 30);
+
+  /// How long an instance must run for its next crash to be respawned at
+  /// once again.
+  static const _stableUptime = Duration(minutes: 1);
+
+  _Instance(this.runner, this.id, this.options, this.pubSubSendPort);
+
+  String get _loggerName => runner.name;
+
+  void _log(Level level, String message, [Object? error, StackTrace? st]) =>
+      Runner.handleLogRecord(
+        LogRecord(level, message, _loggerName, error, st),
+        options,
+      );
+
+  void spawn() {
+    if (_stopping) return;
+    // Its exit too, so that it comes after the messages it sent before.
+    var fromIsolate = ReceivePort();
+    var onError = ReceivePort();
+    _StartFailed? startFailure;
+    _startedAt = null;
+
+    fromIsolate.listen((message) {
+      if (message == null) {
+        // Its exit.
+        fromIsolate.close();
+        onError.close();
+        _control = null;
+        _isolate = null;
+        _exited(startFailure);
+      } else if (message is _Log) {
+        Runner.handleLogRecord(message.toRecord(), options);
+      } else if (message is _Started) {
+        _control = message.control;
+        _startedAt = DateTime.now();
+        if (_stopping) message.control.send(_stop);
+      } else if (message is _StartFailed) {
+        startFailure = message;
+      }
+    });
+
+    onError.listen((msg) {
+      if (msg is List && msg.length == 2) {
+        _log(
+          Level.SEVERE,
+          'Uncaught error',
+          msg[0],
+          StackTrace.fromString('${msg[1]}'),
         );
-        http2.onHttp1.listen(http.handleRequest);
-        driver = http2;
       } else {
-        driver = http;
+        _log(Level.SEVERE, 'Uncaught error', msg);
       }
+    });
 
-      await driver.startServer(args.options.hostname, args.options.port);
-
-      // Only apply the headers to AngelHttp instance
-      if (driver is AngelHttp) {
-        driver.addResponseHeader(args.options.responseHeaders);
-        driver.removeResponseHeader(args.options.removeResponseHeaders);
+    Isolate.spawn(
+      Runner.isolateMain,
+      RunnerArgsWithId(
+        id,
+        RunnerArgs(
+          runner.name,
+          runner.configureServer,
+          options,
+          runner.reflector,
+          fromIsolate.sendPort,
+          pubSubSendPort,
+        ),
+      ),
+      onExit: fromIsolate.sendPort,
+      onError: onError.sendPort,
+      errorsAreFatal: false,
+    ).then((isolate) => _isolate = isolate).catchError((
+      Object e,
+      StackTrace st,
+    ) {
+      fromIsolate.close();
+      onError.close();
+      if (!done.isCompleted) {
+        done.completeError(StartupException(id, '$e', '$st'));
       }
+      return Isolate.current;
+    });
+  }
 
-      serverUrl = driver.uri;
-      if (args.options.ssl || args.options.http2) {
-        serverUrl = serverUrl.replace(scheme: 'https');
-      }
-      print('Instance #${argsWithId.id} listening at $serverUrl');
+  void _exited(_StartFailed? startFailure) {
+    if (done.isCompleted) return;
+    if (_stopping) {
+      done.complete();
+    } else if (startFailure != null) {
+      done.completeError(
+        StartupException(id, startFailure.error, startFailure.stackTrace),
+      );
+    } else if (!options.respawn) {
+      done.complete();
+    } else {
+      var started = _startedAt;
+      var uptime = started == null
+          ? Duration.zero
+          : DateTime.now().difference(started);
+      _backoff = uptime >= _stableUptime
+          ? Duration.zero
+          : Duration(
+              milliseconds: min(
+                _maxBackoff.inMilliseconds,
+                max(1000, _backoff.inMilliseconds * 2),
+              ),
+            );
+      _log(
+        Level.WARNING,
+        'Instance #$id crashed. Respawning'
+        '${_backoff == Duration.zero ? ' immediately' : ' in ${_backoff.inSeconds}s'}...',
+      );
+      _respawnTimer = Timer(_backoff, spawn);
+    }
+  }
+
+  /// Closes the instance, which runs its shutdown hooks, or kills it after
+  /// [timeout].
+  void stop(Duration timeout) {
+    if (_stopping) return;
+    _stopping = true;
+    _respawnTimer?.cancel();
+    var control = _control, isolate = _isolate;
+    if (control != null) {
+      control.send(_stop);
+    } else if (isolate == null) {
+      if (!done.isCompleted) done.complete();
+      return;
+    }
+    Timer(timeout, () {
+      if (done.isCompleted) return;
+      _log(Level.WARNING, 'Instance #$id did not close in time; killed.');
+      _isolate?.kill(priority: Isolate.immediate);
     });
   }
 }
@@ -371,6 +572,8 @@ class RunnerArgs {
 
   final Reflector reflector;
 
+  /// The port of the messages of an instance to the main isolate: its log
+  /// records, and whether it started.
   final SendPort loggingSendPort, pubSubSendPort;
 
   RunnerArgs(

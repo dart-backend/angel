@@ -2,7 +2,22 @@
 
 ## 10.0.0
 
-* Released with the other Angel3 packages at 10.0.0
+### Breaking changes
+
+* **Breaking:** An instance that fails to start ends `run` with exit code 70 (after closing the others), instead of staying alive and serving nothing
+* **Breaking:** `InstanceInfo.id` is a non-nullable `int`
+
+### New
+
+* Graceful shutdown on `SIGINT` and `SIGTERM`, and with `Runner.stop()`: each instance's server is closed and its shutdown hooks run, within the new `shutdownTimeout`
+* The key and certificate passwords may be given in the `ANGEL_KEY_PASSWORD` and `ANGEL_CERTIFICATE_PASSWORD` environment variables, which other users cannot see
+
+### Fixes
+
+* **Logs:** Each record is printed once, with its own level, where every line was formatted twice and shown as `INFO`. The app's logger is set before `configureServer`, so records logged while configuring are printed, and a logger the app sets is kept
+* **Respawn:** A crashing instance is respawned after a delay that doubles from 1 s to 30 s, and the ports of each instance are closed when it exits, where they piled up with every respawn
+* **Arguments:** An invalid `--port` or `--concurrency` (or one of 0) is a usage error; `--help` is shown before other checks
+* **HTTP/2:** `responseHeaders` and `removeResponseHeaders` apply with `--http2` too
 
 ## 9.1.0
 

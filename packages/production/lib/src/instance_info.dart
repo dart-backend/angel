@@ -1,6 +1,7 @@
 /// Information about the currently-running instance.
 class InstanceInfo {
-  final int? id;
+  /// The number of the instance, from 0.
+  final int id;
 
-  const InstanceInfo({this.id});
+  const InstanceInfo({required this.id});
 }
