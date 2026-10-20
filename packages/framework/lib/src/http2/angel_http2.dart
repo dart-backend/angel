@@ -40,6 +40,9 @@ class AngelHttp2
   final Uuid _uuid = Uuid();
   _AngelHttp2ServerSocket? _artificial;
 
+  /// The open HTTP/2 connections, which [drain] lets finish.
+  final Set<ServerTransportConnection> _connections = {};
+
   /// The status, headers and cookies the driver sets on a stream (for a
   /// buffered response, or an error fallback). HTTP/2 needs them in one
   /// HEADERS frame that starts with `:status`, so they are collected here and
@@ -131,11 +134,12 @@ class AngelHttp2
     return _artificial = _AngelHttp2ServerSocket(s, this);
   }
 
+  /// Drains HTTP/1 requests too, which [allowHttp1] serves.
   @override
-  Future<void> close() async {
+  Future<void> drain() async {
     await _artificial?.close();
-    await _http?.close();
-    return await super.close();
+    var http = _http?..closeTimeout = closeTimeout;
+    await Future.wait([super.drain(), ?http?.drain()]);
   }
 
   _PendingHeaders _pendingFor(ServerTransportStream response) =>
@@ -146,9 +150,32 @@ class AngelHttp2
     _pendingFor(response).cookies.addAll(cookies);
   }
 
+  /// Also closes the connections still open, HTTP/2 and HTTP/1.
   @override
   Future<void> closeServer(SecureServerSocket server) async {
     await server.close();
+    await _artificial?.http1.close(force: true);
+    await Future.wait([
+      for (var connection in _connections.toList())
+        connection.terminate().catchError((_) {}),
+    ]);
+  }
+
+  /// Ends each HTTP/2 connection once its streams are done (with a GOAWAY),
+  /// and waits for the HTTP/1 connections to close too.
+  @override
+  Future<void> connectionsClosed() async {
+    var http1 = _artificial?.http1;
+    await Future.wait([
+      for (var connection in _connections.toList())
+        connection.finish().catchError((_) {}),
+      if (http1 != null)
+        Future(() async {
+          while (http1.connectionsInfo().total > 0) {
+            await Future.delayed(const Duration(milliseconds: 10));
+          }
+        }),
+    ]);
   }
 
   /// Ends a stream the driver wrote to (see [_pending]). A stream it never
@@ -258,6 +285,10 @@ class AngelHttp2
       request,
       settings: settings,
     );
+    _connections.add(connection);
+    request.done
+        .then((_) {}, onError: (_) {})
+        .whenComplete(() => _connections.remove(connection));
     return connection.incomingStreams;
   }
 
@@ -360,9 +391,13 @@ class _AngelHttp2ServerSocket extends Stream<SecureSocket>
   late _FakeServerSocket _fake;
   StreamSubscription? _sub;
 
+  /// The server of the HTTP/1 connections.
+  late final HttpServer http1;
+
   _AngelHttp2ServerSocket(this.socket, this.driver) {
     _fake = _FakeServerSocket(this);
-    HttpServer.listenOn(_fake).pipe(driver._onHttp1);
+    http1 = HttpServer.listenOn(_fake);
+    http1.pipe(driver._onHttp1);
     _sub = socket.listen(
       (socket) {
         if (socket.selectedProtocol == null ||

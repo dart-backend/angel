@@ -38,9 +38,9 @@ Future configureServer(Angel app) async {
 
 `Runner` will automatically re-spawn crashed instances, unless `--no-respawn` is passed. This can prevent your server from entirely going down at the first error, and adds a layer of fault tolerance to your infrastructure. An instance that keeps crashing is respawned after a delay that doubles from 1 s to 30 s, and is reset once it has run for a minute.
 
-An instance that fails to *start* (a port in use, a bad certificate, an error in `configureServer`) is not respawned: `run` ends with exit code 70, after closing the other instances, so that a supervisor such as `systemd` or Docker sees the failure.
+An instance that fails to *start* the first time (a port in use, a bad certificate, an error in `configureServer`) is not respawned: `run` ends with exit code 70, after closing the other instances, so that a supervisor such as `systemd` or Docker sees the failure. Once it has started, a failure to start again (say, a database that is briefly down) is respawned like a crash.
 
-`SIGINT` (Ctrl+C) and `SIGTERM` (`docker stop`, `systemctl stop`; not on Windows) close every instance gracefully: its server is closed and its shutdown hooks run, within `shutdownTimeout` (default 10 s), after which it is killed. A second signal exits at once. `Runner.stop()` does the same from code.
+`SIGINT` (Ctrl+C) and `SIGTERM` (`docker stop`, `systemctl stop`; not on Windows) close every instance gracefully: it stops accepting requests, lets those in progress finish (for up to half of `shutdownTimeout`), and runs its shutdown hooks, all within `shutdownTimeout` (default 10 s), after which it is killed. A second signal exits at once. `Runner.stop()` does the same from code.
 
 When combined with `systemd`, deploying Angel3 applications on Linux can be very simple.
 

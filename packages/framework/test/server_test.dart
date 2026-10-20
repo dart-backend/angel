@@ -47,6 +47,48 @@ void main() {
     expect(events, ['hook', 'service closed']);
   });
 
+  test('close lets requests in progress finish, before the hooks', () async {
+    var app = Angel();
+    var events = <String>[];
+    app.shutdownHooks.add((app) => events.add('hook'));
+    app.get('/slow', (req, res) async {
+      await Future.delayed(const Duration(milliseconds: 300));
+      events.add('responded');
+      return 'done';
+    });
+    var http = AngelHttp(app);
+    await http.startServer('127.0.0.1', 0);
+    var client = HttpClient();
+    addTearDown(() => client.close(force: true));
+    var response = client
+        .getUrl(http.uri.replace(path: '/slow'))
+        .then((rq) => rq.close())
+        .then((rs) => rs.transform(utf8.decoder).join());
+    await Future.delayed(const Duration(milliseconds: 100));
+    await http.close();
+    expect(await response, '"done"');
+    expect(events, ['responded', 'hook']);
+  });
+
+  test('close does not wait past closeTimeout', () async {
+    var app = Angel();
+    var hung = Completer<void>();
+    app.get('/hang', (req, res) => hung.future);
+    var http = AngelHttp(app)..closeTimeout = const Duration(milliseconds: 200);
+    await http.startServer('127.0.0.1', 0);
+    var client = HttpClient();
+    addTearDown(() => client.close(force: true));
+    var response = client
+        .getUrl(http.uri.replace(path: '/hang'))
+        .then((rq) => rq.close())
+        .then((rs) => rs.drain<void>())
+        .then<Object?>((_) => null, onError: (Object e) => e);
+    await Future.delayed(const Duration(milliseconds: 100));
+    await http.close().timeout(const Duration(seconds: 5));
+    // Its connection was closed, rather than kept open.
+    expect(await response.timeout(const Duration(seconds: 5)), isNotNull);
+  });
+
   test('uri is https for a secure server', () async {
     var ctx = SecurityContext()
       ..useCertificateChain('dev.pem')

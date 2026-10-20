@@ -15,6 +15,7 @@
 * Works without `dart:mirrors`: `@Expose` controllers and `@Middleware`/`@Hooks` work with a `StaticReflector` of data from `angel3_container_generator`. A service or controller the reflector does not describe is warned about once, as its annotations are ignored
 * `injectionFor`, `injectionFromParameters`, `InjectableParameter` and `InjectionRequest.namedWithDefaults`, to build injections without the app's reflector
 * `Controller.routesMethod`, to keep public methods off a controller's routes
+* `Driver.close` lets the requests in progress finish and their connections close, for up to the new `Driver.closeTimeout` (10 s), before the shutdown hooks run; it closes the connections still open after that. `Driver.drain` does this without running the hooks. `AngelHttp2` drains its HTTP/1 requests too, and ends HTTP/2 connections with a GOAWAY
 * `ResponseContext.headersSent` and `abort`: a handler that fails after the headers are sent aborts the response, instead of appending an error page to it
 * `Driver.handleRawRequestSafely` and `Driver.supportsChunkedEncoding`, `Http2RequestContext.hasSession`, and `UploadedFile(contentType:)`
 
@@ -35,7 +36,7 @@
 * **MapService:** Returns copies of its records. `update` keeps the record's order, id and created-at; `modify` cannot change the id or created-at. Concurrent writes work, `1` matches the id `'1'`, and missing values sort last
 * **HTTP/2:** Buffered responses, error fallbacks and server pushes send their status and headers. A session first used in a response finalizer gets its cookie, and one created after the headers were sent is warned about
 * **HTTP/2:** Request bodies use flow control instead of being buffered, trailers do not change the request, and a request without `:method` or `:path` is a 400. `app.serializer` is used, and with `allowHttp1: false` HTTP/1 connections are closed
-* **Server:** `app.shutdownHooks` run on close, before services are closed. Subclasses of `Angel` can be constructed. `AngelHttp.uri` is `https` for secure servers
+* **Server:** `app.shutdownHooks` run on close, before services are closed, and once: `AngelHttp2` with `allowHttp1` ran them (and closed the app) before its HTTP/2 requests were done. Subclasses of `Angel` can be constructed. `AngelHttp.uri` is `https` for secure servers
 * **Tests:** The tests and examples no longer use `MirrorsReflector`; the tests of reflection moved to the unpublished `framework_mirrors_test` package
 
 ## 9.2.0

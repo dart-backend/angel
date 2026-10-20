@@ -4,19 +4,41 @@ import 'dart:isolate';
 
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_production/angel3_production.dart';
+import 'package:belatuk_pub_sub/belatuk_pub_sub.dart';
+import 'package:belatuk_pub_sub/isolate.dart';
 import 'package:logging/logging.dart';
 import 'package:test/test.dart';
 
-/// The lines [body] prints, and its result.
-Future<(List<String>, T)> capture<T>(Future<T> Function() body) async {
-  var lines = <String>[];
+/// The lines [body] prints (into [lines], if given), and its result.
+Future<(List<String>, T)> capture<T>(
+  Future<T> Function() body, [
+  List<String>? lines,
+]) async {
+  lines ??= <String>[];
   var result = await runZoned(
     body,
     zoneSpecification: ZoneSpecification(
-      print: (self, parent, zone, line) => lines.add(line),
+      print: (self, parent, zone, line) => lines!.add(line),
     ),
   );
   return (lines, result);
+}
+
+/// Waits until a line of [lines] that contains [text] has been printed
+/// [count] times.
+Future<void> printed(
+  List<String> lines,
+  String text, {
+  int count = 1,
+  Duration timeout = const Duration(seconds: 20),
+}) async {
+  var deadline = DateTime.now().add(timeout);
+  while (lines.where((l) => l.contains(text)).length < count) {
+    if (DateTime.now().isAfter(deadline)) {
+      fail('"$text" was not printed $count times in:\n${lines.join('\n')}');
+    }
+    await Future.delayed(const Duration(milliseconds: 50));
+  }
 }
 
 /// [lines] without their ANSI colours.
@@ -40,6 +62,30 @@ Future<void> crashingApp(Angel app) async {
   Timer(const Duration(milliseconds: 200), () => Isolate.current.kill());
 }
 
+const slowPort = 3921;
+
+Future<void> slowApp(Angel app) async {
+  var open = true;
+  app.shutdownHooks.add((_) => open = false);
+  app.get('/slow', (req, res) async {
+    print('handling');
+    await Future.delayed(const Duration(milliseconds: 500));
+    return open ? 'open' : 'closed';
+  });
+}
+
+/// Marks that [flakyApp] has started once, as isolates share no memory.
+final flakyMarker = File(
+  '${Directory.systemTemp.path}/angel3_production_flaky_$pid',
+);
+
+/// Starts once, then crashes, and fails to start again.
+Future<void> flakyApp(Angel app) async {
+  if (flakyMarker.existsSync()) throw StateError('no database');
+  flakyMarker.createSync();
+  Timer(const Duration(milliseconds: 200), () => Isolate.current.kill());
+}
+
 void main() {
   tearDown(() => exitCode = 0);
 
@@ -57,12 +103,13 @@ void main() {
 
   test('stop closes the instances, running their shutdown hooks', () async {
     var runner = Runner('app', closingApp);
-    var (lines, _) = await capture(() async {
+    var lines = <String>[];
+    await capture(() async {
       var running = runner.run(['-j', '2', '-p', '0']);
-      await Future.delayed(const Duration(seconds: 3));
+      await printed(lines, 'listening at', count: 2);
       runner.stop();
       await running.timeout(const Duration(seconds: 15));
-    });
+    }, lines);
     var text = plain(lines);
     expect(text.where((l) => l.contains('listening at')), hasLength(2));
     expect(text.where((l) => l.contains('closed the database')), hasLength(2));
@@ -71,16 +118,114 @@ void main() {
 
   test('a crashing instance is respawned after a growing delay', () async {
     var runner = Runner('app', crashingApp);
-    var (lines, _) = await capture(() async {
+    var lines = <String>[];
+    await capture(() async {
       var running = runner.run(['-j', '1', '-p', '0']);
-      await Future.delayed(const Duration(milliseconds: 4500));
+      await printed(lines, 'Respawning', count: 2);
       runner.stop();
       await running.timeout(const Duration(seconds: 15));
-    });
+    }, lines);
     var respawns = plain(lines).where((l) => l.contains('Respawning')).toList();
-    expect(respawns.length, greaterThanOrEqualTo(2));
     expect(respawns[0], contains('in 1s'));
     expect(respawns[1], contains('in 2s'));
+    expect(exitCode, 0);
+  });
+
+  test('a failure to start again after a crash is respawned', () async {
+    addTearDown(() {
+      if (flakyMarker.existsSync()) flakyMarker.deleteSync();
+    });
+    var runner = Runner('app', flakyApp);
+    var lines = <String>[];
+    await capture(() async {
+      var running = runner.run(['-j', '1', '-p', '0']);
+      await printed(lines, 'failed to start again', count: 2);
+      runner.stop();
+      await running.timeout(const Duration(seconds: 15));
+    }, lines);
+    expect(lines.where((l) => l.contains('no database')), isNotEmpty);
+    expect(exitCode, 0);
+  });
+
+  test('stop lets requests in progress finish, before the hooks', () async {
+    var runner = Runner('app', slowApp);
+    var lines = <String>[];
+    var client = HttpClient();
+    addTearDown(() => client.close(force: true));
+    late String body;
+    await capture(() async {
+      var running = runner.run(['-j', '1', '-p', '$slowPort']);
+      await printed(lines, 'listening at');
+      var response = client
+          .get('127.0.0.1', slowPort, '/slow')
+          .then((rq) => rq.close())
+          .then((rs) => rs.transform(const SystemEncoding().decoder).join());
+      await printed(lines, 'handling');
+      runner.stop();
+      body = await response.timeout(const Duration(seconds: 10));
+      await running.timeout(const Duration(seconds: 15));
+    }, lines);
+    expect(body, '"open"');
+  });
+
+  test('with --http2, stop lets HTTP/1 requests finish', () async {
+    var runner = Runner('app', slowApp);
+    var lines = <String>[];
+    var client = HttpClient()..badCertificateCallback = (_, _, _) => true;
+    addTearDown(() => client.close(force: true));
+    late String body;
+    await capture(() async {
+      var running = runner.run([
+        '-j', '1', '-p', '0', '--http2', //
+        '--certificate-file', 'test/dev.pem',
+        '--key-file', 'test/dev.key', '--key-password', 'dartdart',
+      ]);
+      await printed(lines, 'listening at');
+      var url = RegExp(r'listening at (\S+)')
+          .firstMatch(plain(lines).join('\n'))![1]!;
+      // Without ALPN, so it is served by the HTTP/1 fallback.
+      var response = client
+          .getUrl(Uri.parse(url).replace(path: '/slow'))
+          .then((rq) => rq.close())
+          .then((rs) => rs.transform(const SystemEncoding().decoder).join());
+      await printed(lines, 'handling');
+      runner.stop();
+      body = await response.timeout(const Duration(seconds: 10));
+      await running.timeout(const Duration(seconds: 15));
+    }, lines);
+    expect(body, '"open"');
+  });
+
+  test('stop before run starts no instances', () async {
+    var runner = Runner('app', closingApp)..stop();
+    var (lines, _) = await capture(
+      () => runner
+          .run(['-j', '1', '-p', '0'])
+          .timeout(const Duration(seconds: 5)),
+    );
+    expect(lines.where((l) => l.contains('listening at')), isEmpty);
+  });
+
+  test('spawnIsolate instances are closed by stop', () async {
+    var runner = Runner('app', closingApp);
+    var lines = <String>[];
+    var adapter = IsolateAdapter();
+    var server = Server([adapter]);
+    await capture(() async {
+      server
+        ..registerClient(const ClientInfo('client0'))
+        ..start();
+      var done = runner.spawnIsolate(
+        0,
+        RunnerOptions(port: 0),
+        adapter.receivePort.sendPort,
+      );
+      await printed(lines, 'listening at');
+      runner.stop();
+      await done.timeout(const Duration(seconds: 15));
+    }, lines);
+    await server.close();
+    expect(lines.where((l) => l.contains('closed the database')), hasLength(1));
   });
 
   group('arguments', () {

@@ -24,9 +24,10 @@ import 'options.dart';
 /// all running instances.
 ///
 /// An instance that fails to start ends [run] with a non-zero exit code; one
-/// that crashes once started is respawned (with `--respawn`), after a delay
-/// that grows while it keeps crashing. `SIGINT` and `SIGTERM` close every
-/// instance, running its shutdown hooks, before the process ends.
+/// that crashes once started, or then fails to start again, is respawned
+/// (with `--respawn`), after a delay that grows while it keeps failing.
+/// `SIGINT` and `SIGTERM` close every instance, letting its requests in
+/// progress finish and running its shutdown hooks, before the process ends.
 class Runner {
   final String name;
   final AngelConfigurer configureServer;
@@ -36,7 +37,9 @@ class Runner {
   final Map<String, Object> responseHeaders;
 
   /// How long the instances may take to close on a shutdown signal, before
-  /// they are killed.
+  /// they are killed: up to half of it lets their requests in progress
+  /// finish (see [Driver.closeTimeout]), and the rest is for their shutdown
+  /// hooks.
   final Duration shutdownTimeout;
 
   Runner(
@@ -104,9 +107,16 @@ class Runner {
   /// The returned [Future] completes when the application instance exits,
   /// or with a [StartupException] if it failed to start. If respawning is
   /// enabled, it completes only once the instance is stopped.
+  ///
+  /// Like those of [run], it is closed by [stop].
   Future spawnIsolate(int id, RunnerOptions options, SendPort pubSubSendPort) {
     var instance = _Instance(this, id, options, pubSubSendPort);
-    instance.spawn();
+    _instances.add(instance);
+    if (_stopping) {
+      instance.stop(shutdownTimeout);
+    } else {
+      instance.spawn();
+    }
     return instance.done.future;
   }
 
@@ -114,8 +124,10 @@ class Runner {
   final List<_Instance> _instances = [];
   bool _stopping = false;
 
-  /// Closes every instance, running its shutdown hooks (or kills it after
-  /// [shutdownTimeout]), so that [run] returns; as `SIGINT` and `SIGTERM` do.
+  /// Closes every instance, letting its requests in progress finish and
+  /// running its shutdown hooks (or kills it after [shutdownTimeout]), so
+  /// that [run] returns; as `SIGINT` and `SIGTERM` do. Called before [run]
+  /// starts its instances, it makes [run] return without starting them.
   void stop() {
     if (_stopping) return;
     _stopping = true;
@@ -128,7 +140,6 @@ class Runner {
   Future run(List<String> args) async {
     Server? server;
     var instances = _instances..clear();
-    _stopping = false;
     var signals = <StreamSubscription>[];
 
     try {
@@ -156,6 +167,8 @@ class Runner {
 
       print(darkGray.wrap(_banner));
       print('Starting `$name` application...');
+
+      if (_stopping) return;
 
       var adapter = IsolateAdapter();
       server = Server([adapter]);
@@ -204,22 +217,30 @@ class Runner {
     } on StartupException catch (e) {
       stderr.writeln(red.wrap('$e'));
       exitCode = ExitCode.software.code;
-      stop();
-      await Future.wait([
-        for (var instance in instances)
-          instance.done.future.then((_) {}, onError: (_) {}),
-      ]);
+      await _stopAll(instances);
     } catch (e, st) {
       stderr
         ..writeln(red.wrap('fatal error: $e'))
         ..writeln(red.wrap(st.toString()));
       exitCode = 1;
+      await _stopAll(instances);
     } finally {
       for (var sub in signals) {
         await sub.cancel();
       }
       await server?.close();
+      // So that the runner can run again.
+      _stopping = false;
     }
+  }
+
+  /// Stops [instances], and waits until each has exited.
+  Future<void> _stopAll(List<_Instance> instances) {
+    stop();
+    return Future.wait([
+      for (var instance in instances)
+        instance.done.future.then((_) {}, onError: (_) {}),
+    ]);
   }
 
   static const String _banner =
@@ -261,6 +282,10 @@ class Runner {
             _Log(Level.SEVERE, 'Failed to close', args.loggerName, '$e', '$st'),
           );
         }
+        // The driver waited for its connections to close, but a TLS socket
+        // still writes its last bytes after that, which exiting the isolate
+        // would cut off.
+        await Future.delayed(_exitGrace);
         control.close();
         Isolate.exit();
       });
@@ -297,24 +322,18 @@ class Runner {
         ..usePrivateKey(options.keyFile!, password: options.keyPassword);
     }
 
-    var http = options.ssl
-        ? AngelHttp.custom(
-            app,
-            startSharedSecure(securityContext!),
-            useZone: options.useZone,
-          )
-        : AngelHttp.custom(app, startShared, useZone: options.useZone);
-
     Driver driver;
     if (options.http2) {
       securityContext!.setAlpnProtocols(['h2'], true);
+      // Its own HTTP/1 fallback, which it drains with its HTTP/2 requests
+      // when it is closed.
       var http2 = AngelHttp2.custom(
         app,
         securityContext,
         startSharedHttp2,
         useZone: options.useZone,
+        allowHttp1: true,
       );
-      http2.onHttp1.listen(http.handleRequest);
       // As there are no default headers of dart:io to change.
       if (options.responseHeaders.isNotEmpty ||
           options.removeResponseHeaders.isNotEmpty) {
@@ -324,10 +343,17 @@ class Runner {
         });
       }
       driver = http2;
+    } else if (options.ssl) {
+      driver = AngelHttp.custom(
+        app,
+        startSharedSecure(securityContext!),
+        useZone: options.useZone,
+      );
     } else {
-      driver = http;
+      driver = AngelHttp.custom(app, startShared, useZone: options.useZone);
     }
 
+    driver.closeTimeout = args.closeTimeout;
     await driver.startServer(options.hostname, options.port);
 
     if (driver is AngelHttp) {
@@ -357,6 +383,9 @@ class StartupException implements Exception {
 
 /// The message to an instance's control port that stops it.
 const String _stop = 'stop';
+
+/// How long a closed instance waits before its isolate exits.
+const Duration _exitGrace = Duration(milliseconds: 100);
 
 /// A log record of an instance, sent to the main isolate to be printed.
 class _Log {
@@ -414,6 +443,14 @@ class _Instance {
   SendPort? _control;
   Isolate? _isolate;
   bool _stopping = false;
+
+  /// Whether an isolate is being spawned, or runs: its exit is still to
+  /// come.
+  bool _running = false;
+
+  /// Whether the instance has started once, after which a failure to start
+  /// again is respawned, like a crash.
+  bool _hasStarted = false;
   DateTime? _startedAt;
   Duration _backoff = Duration.zero;
   Timer? _respawnTimer;
@@ -441,6 +478,7 @@ class _Instance {
     var onError = ReceivePort();
     _StartFailed? startFailure;
     _startedAt = null;
+    _running = true;
 
     fromIsolate.listen((message) {
       if (message == null) {
@@ -449,12 +487,14 @@ class _Instance {
         onError.close();
         _control = null;
         _isolate = null;
+        _running = false;
         _exited(startFailure);
       } else if (message is _Log) {
         Runner.handleLogRecord(message.toRecord(), options);
       } else if (message is _Started) {
         _control = message.control;
         _startedAt = DateTime.now();
+        _hasStarted = true;
         if (_stopping) message.control.send(_stop);
       } else if (message is _StartFailed) {
         startFailure = message;
@@ -485,6 +525,7 @@ class _Instance {
           runner.reflector,
           fromIsolate.sendPort,
           pubSubSendPort,
+          closeTimeout: runner.shutdownTimeout ~/ 2,
         ),
       ),
       onExit: fromIsolate.sendPort,
@@ -496,7 +537,10 @@ class _Instance {
     ) {
       fromIsolate.close();
       onError.close();
-      if (!done.isCompleted) {
+      _running = false;
+      if (_stopping) {
+        if (!done.isCompleted) done.complete();
+      } else if (!done.isCompleted) {
         done.completeError(StartupException(id, '$e', '$st'));
       }
       return Isolate.current;
@@ -507,7 +551,7 @@ class _Instance {
     if (done.isCompleted) return;
     if (_stopping) {
       done.complete();
-    } else if (startFailure != null) {
+    } else if (startFailure != null && !_hasStarted) {
       done.completeError(
         StartupException(id, startFailure.error, startFailure.stackTrace),
       );
@@ -526,11 +570,19 @@ class _Instance {
                 max(1000, _backoff.inMilliseconds * 2),
               ),
             );
-      _log(
-        Level.WARNING,
-        'Instance #$id crashed. Respawning'
-        '${_backoff == Duration.zero ? ' immediately' : ' in ${_backoff.inSeconds}s'}...',
-      );
+      var when = _backoff == Duration.zero
+          ? 'immediately'
+          : 'in ${_backoff.inSeconds}s';
+      if (startFailure != null) {
+        _log(
+          Level.SEVERE,
+          'Instance #$id failed to start again. Respawning $when...',
+          startFailure.error,
+          StackTrace.fromString(startFailure.stackTrace),
+        );
+      } else {
+        _log(Level.WARNING, 'Instance #$id crashed. Respawning $when...');
+      }
       _respawnTimer = Timer(_backoff, spawn);
     }
   }
@@ -541,13 +593,16 @@ class _Instance {
     if (_stopping) return;
     _stopping = true;
     _respawnTimer?.cancel();
-    var control = _control, isolate = _isolate;
+    var control = _control;
     if (control != null) {
       control.send(_stop);
-    } else if (isolate == null) {
+    } else if (!_running) {
+      // Waiting to be respawned.
       if (!done.isCompleted) done.complete();
       return;
     }
+    // Otherwise still starting: it is stopped once it has started, unless
+    // it exits first.
     Timer(timeout, () {
       if (done.isCompleted) return;
       _log(Level.WARNING, 'Instance #$id did not close in time; killed.');
@@ -576,14 +631,19 @@ class RunnerArgs {
   /// records, and whether it started.
   final SendPort loggingSendPort, pubSubSendPort;
 
+  /// How long the instance waits for its requests in progress when it is
+  /// stopped (see [Driver.closeTimeout]).
+  final Duration closeTimeout;
+
   RunnerArgs(
     this.name,
     this.configureServer,
     this.options,
     this.reflector,
     this.loggingSendPort,
-    this.pubSubSendPort,
-  );
+    this.pubSubSendPort, {
+    this.closeTimeout = const Duration(seconds: 5),
+  });
 
   String get loggerName => name;
 }

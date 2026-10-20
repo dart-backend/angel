@@ -133,6 +133,16 @@ class AngelHttp
   @override
   Future<void> closeServer(HttpServer server) => server.close(force: true);
 
+  /// Waits until `dart:io` has closed every connection, as it does once its
+  /// response is sent.
+  @override
+  Future<void> connectionsClosed() async {
+    var server = this.server;
+    while (server != null && server.connectionsInfo().total > 0) {
+      await Future.delayed(const Duration(milliseconds: 10));
+    }
+  }
+
   @override
   Future closeResponse(HttpResponse response) => response.close();
 

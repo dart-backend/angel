@@ -348,6 +348,35 @@ void main() {
     expect(closes, 1);
   });
 
+  test(
+    'close lets HTTP/2 and HTTP/1 requests finish, before the hooks',
+    () async {
+      var events = <String>[];
+      var slow = Angel()
+        ..shutdownHooks.add((_) => events.add('hook'))
+        ..get('/slow/:name', (req, res) async {
+          await Future.delayed(const Duration(milliseconds: 300));
+          events.add('${req.params['name']} responded');
+          return 'done';
+        });
+      var ctx = SecurityContext()
+        ..useCertificateChain('dev.pem')
+        ..usePrivateKey('dev.key', password: 'dartdart')
+        ..setAlpnProtocols(['h2', 'http/1.1'], true);
+      var h2 = AngelHttp2(slow, ctx, allowHttp1: true);
+      var server = await h2.startServer();
+      var root = Uri.parse('https://127.0.0.1:${server.port}');
+      var h2Response = client.get(root.replace(path: '/slow/h2'));
+      var h1Response = h1c.get(root.replace(path: '/slow/h1'));
+      await Future.delayed(const Duration(milliseconds: 100));
+      await h2.close();
+      expect((await h2Response).body, '"done"');
+      expect((await h1Response).body, '"done"');
+      expect(events.last, 'hook');
+      expect(events, containsAll(['h2 responded', 'h1 responded']));
+    },
+  );
+
   group('res.useBuffer()', () {
     test('sends one HEADERS frame, starting with :status', () async {
       var messages = await rawGet('/buffered');
