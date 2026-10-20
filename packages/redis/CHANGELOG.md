@@ -2,7 +2,16 @@
 
 ## 10.0.0
 
-* Released with the other Angel3 packages at 10.0.0
+* **Breaking:** `create` throws 409 if the ID already exists
+* **Breaking:** `modify` and `remove` throw 409 if the record keeps changing during writes
+* **Breaking:** `read`, `modify` and `remove` throw 404 for keys that are not JSON objects
+* **Breaking:** The ID counter moved to `angel_redis:id:<prefix>`, so numbering restarts at 1
+* `index` uses `SCAN` instead of `KEYS`
+* Fixed `index` errors and stray results
+* Fixed concurrent `modify` and `remove` corrupting data
+* Fixed `create` with non-string IDs and auto-IDs overwriting records
+* Fixed `update` ignoring write errors
+* Added `batchSize` and `maxWriteAttempts` options
 
 ## 9.1.0
 

@@ -3,7 +3,7 @@ services:
     image: docker.io/redis:latest
     restart: "no"
     ports:
-      - "5432:5432"
+      - "6379:6379"
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
