@@ -2,88 +2,68 @@
 
 ## 10.0.0
 
-### Breaking changes
+### Breaking changes in 10.0.0
 
-* **Breaking:** `MirrorsReflector` moved to the new `angel3_container_mirrors` package; add it to your dependencies and import `package:angel3_container_mirrors/angel3_container_mirrors.dart`
-* **Breaking:** `chain` stops at the first handler that does not return `true`, as a route's handlers do
-* **Breaking:** Buffered responses are sent with `Content-Length` instead of chunked encoding (unless `res.chunked` is `true`), so they work for HTTP/1.0 clients
-* **Breaking:** `Service.parseId<bool>` throws a `FormatException` (a 400) for ids other than `true` and `false`
-* **Breaking:** HTTP/2 sessions, and their `DARTSESSID` cookie, are created only when `req.session` is first read
+* **Breaking:** `MirrorsReflector` moved to the new `angel3_container_mirrors` package
+* **Breaking:** `chain` stops at the first handler that does not return `true`, like a route's handlers
+* **Breaking:** Buffered responses use `Content-Length` instead of chunked encoding, unless `res.chunked` is `true`
+* **Breaking:** `Service.parseId<bool>` rejects ids other than `true` and `false` with a 400
+* **Breaking:** HTTP/2 sessions and their cookie are created only when `req.session` is first read
 
-### New
+### New in 10.0.0
 
-* Works without `dart:mirrors`: `@Expose` controllers and `@Middleware`/`@Hooks` work with a `StaticReflector` of data from `angel3_container_generator`. A service or controller the reflector does not describe is warned about once, as its annotations are ignored
-* `injectionFor`, `injectionFromParameters`, `InjectableParameter` and `InjectionRequest.namedWithDefaults`, to build injections without the app's reflector
-* `Controller.routesMethod`, to keep public methods off a controller's routes
-* `Driver.close` lets the requests in progress finish and their connections close, for up to the new `Driver.closeTimeout` (10 s), before the shutdown hooks run; it closes the connections still open after that. `Driver.drain` does this without running the hooks. `AngelHttp2` drains its HTTP/1 requests too, and ends HTTP/2 connections with a GOAWAY
-* `ResponseContext.headersSent` and `abort`: a handler that fails after the headers are sent aborts the response, instead of appending an error page to it
-* `Driver.handleRawRequestSafely` and `Driver.supportsChunkedEncoding`, `Http2RequestContext.hasSession`, and `UploadedFile(contentType:)`
+* Works without `dart:mirrors`: `@Expose`, `@Middleware` and `@Hooks` work with a `StaticReflector` from `angel3_container_generator`
+* Graceful shutdown: `Driver.close` lets requests in progress finish, within the new `closeTimeout`, before the shutdown hooks run; `Driver.drain` does so without the hooks
+* `ResponseContext.headersSent` and `abort`: a handler that fails after the headers are sent aborts the response
+* `injectionFor`, `injectionFromParameters` and `InjectableParameter`, to build injections without a reflector
+* `Controller.routesMethod`, `Driver.handleRawRequestSafely`, `Driver.supportsChunkedEncoding`, `Http2RequestContext.hasSession` and `UploadedFile(contentType:)`
 
-### Fixes
+### Fixes in 10.0.0
 
-* **Injection:** An unresolved named parameter with a default keeps its default; an optional parameter whose type cannot be constructed is `null`, and an error while constructing one fails the request. `@Header`, `@Query`, `@CookieValue` and `@Session` parameters of any type read their value
-* **Controllers:** Controllers with getters, setters, static or private members can be mounted, and one the reflector does not describe still applies `configureRoutes`
-* **Routing:** Middleware of `app.group(...)` runs. A typed route parameter (`int:id`) given text does not match. `findService` finds a service mounted after a failed lookup
-* **Hostnames:** `|` alternatives work, a trailing dot (`example.com.`) matches, and empty labels are rejected
-* **Malformed requests:** A bad header, `Content-Type`, form or multipart body is a 400, instead of a 500 or a crash of the server; a multipart body cut off before its end is a 400 instead of hanging
-* **Bodies:** Concurrent `parseBody` calls wait for one parse, and a failed parse fails every call. File parts with a text `Content-Type` are uploads, not fields
-* **Content negotiation:** `accepts` and `Accept-Encoding` honour `q=0` with any case, tabs, wildcards and variants
-* **Responses:** `res.done` completes on close, and fails for a handler awaiting it with the error of `res.addError`; an error escaping a connection is logged, not uncaught. A response with an invalid header and no body fails with a 500, instead of never being sent
-* **Compression:** `Vary: Accept-Encoding` is sent; responses already encoded, and 204, 206 and 304 responses, are not compressed
-* **Helpers:** `res.jsonp` rejects callback names that are not identifiers, and awaits an async serializer. `res.redirectTo()` works without `params`, `writeCharCode` writes UTF-8, and the error page is labelled `charset=utf-8`
-* **Services:** A service with non-String ids mounted with `app.use` gets parsed ids, and an id that cannot be parsed is a 400. Nullable id types parse like their non-nullable form
-* **HookedService:** After-modify listeners get a `modified` event, `fire` passes its result, and a canceled call returns its cancel result, or an error that explains why it cannot
-* **MapService:** Returns copies of its records. `update` keeps the record's order, id and created-at; `modify` cannot change the id or created-at. Concurrent writes work, `1` matches the id `'1'`, and missing values sort last
-* **HTTP/2:** Buffered responses, error fallbacks and server pushes send their status and headers. A session first used in a response finalizer gets its cookie, and one created after the headers were sent is warned about
-* **HTTP/2:** Request bodies use flow control instead of being buffered, trailers do not change the request, and a request without `:method` or `:path` is a 400. `app.serializer` is used, and with `allowHttp1: false` HTTP/1 connections are closed
-* **Server:** `app.shutdownHooks` run on close, before services are closed, and once: `AngelHttp2` with `allowHttp1` ran them (and closed the app) before its HTTP/2 requests were done. Subclasses of `Angel` can be constructed. `AngelHttp.uri` is `https` for secure servers
-* **Tests:** The tests and examples no longer use `MirrorsReflector`; the tests of reflection moved to the unpublished `framework_mirrors_test` package
+* **Injection:** Named parameters keep their defaults, and `@Header`, `@Query`, `@CookieValue` and `@Session` work for any type
+* **Controllers:** Controllers with getters, setters, static or private members can be mounted
+* **Routing:** `app.group` middleware runs, and typed parameters such as `int:id` do not match text
+* **Hostnames:** `|` alternatives and trailing dots work
+* **Malformed requests:** Bad headers and bodies are a 400 instead of a 500, a crash or a hang
+* **Bodies:** Concurrent `parseBody` calls share one parse
+* **Content negotiation:** `accepts` and `Accept-Encoding` honour `q=0` and wildcards
+* **Responses:** `res.done` completes on close, and errors escaping a connection are logged instead of uncaught
+* **Compression:** `Vary: Accept-Encoding` is sent, and encoded, 204, 206 and 304 responses are not compressed
+* **Helpers:** Fixes to `res.jsonp`, `res.redirectTo`, `writeCharCode` and the error page's charset
+* **Services:** `app.use` services parse their ids, and an invalid id is a 400
+* **HookedService:** After-modify listeners fire, and canceled calls return their result
+* **MapService:** Returns copies of records, keeps ids and created-at on update, and handles concurrent writes
+* **HTTP/2:** Status and headers are sent for every response, request bodies use flow control, and malformed requests are a 400
+* **Server:** Shutdown hooks run once on close, before services close, and subclasses of `Angel` can be constructed
+* **Tests:** The tests and examples no longer use `MirrorsReflector`
 
 ## 9.2.0
 
-* feat: Services, hooked services and `@Middleware` lookups now work without reflection; annotations are ignored when no reflector is configured instead of throwing an errror. This enabled support for `dart compile exe` to be used to build applications without reflection.
-* feat: Added `Controller(expose: ...)` to set the mount path without using reflection through `@Expose` annotation
-* feat: Added `ioc(..., injection: InjectionRequest)` for dependency injection without using reflection
-* feat: Added session timeout (default 20 minutes), idle HTTP/2 sessions are now discarded instead of being kept forever
-* feat: Added max size to the content body and rejects larger body with 413 error. The default limit is 10 MB
-* feat: Finalizers now run at most once per response
-* feat: Added max route cache size (default 1024); the production route cache now evicts least recently used entries.
-* feat: Added `ResponseContext.attachmentDisposition()` and `Driver.closeServer()`
-* fix: An empty JSON array (`[]`) in the POST request body no longer causing a 500 errer
-* fix: `_http` is now nullable and only closed if it was created.
-* fix: The default error handler now HTML-escapes the exception message and errors (XSS)
-* fix: `res.redirect()` now escapes the URL in the HTML fallback page and no longer emits `javascript:`, `vbscript:` or `data:` (XSS)
-* fix: `HookedService.afterAllStream()` now emits after-events instead of before-events
-* fix: A missing `@CookieValue` now uses its `defaultValue` or returns 400, instead of a 500 error
-* fix: `DELETE /` on a service now requests "remove all" (id `'null'`), subject to `allowRemoveAll`; services with non-String ids return 405 instead of a 500 error
-* fix: An HTTP/2 request with a malformed header value (e.g. a bare `%`) no longer crashes the server process
-* fix: HTTP/2 header values are no longer percent-decoded or split on commas
-* fix: `req.hostname` over HTTP/2 now comes from the `:authority` header instead of always being `localhost`
-* fix: HTTP/2 sessions are now reused across multiple requests via the `DARTSESSID` cookie. Unknown session ids get a new session instead of being adopted
-* fix: Errors raised while creating a request context, or on an HTTP/2 connection, are now logged instead of terminating the server
-* fix: `HostnameRouter` now passes route parameters (e.g. `:id`) to the sub-app's handlers
-* fix: `HostnameRouter` creates each lazily-built app once, even when several requests arrive before creation finishes
-* fix: `res.streamFile()` with a response encoder (e.g. gzip) no longer sends the uncompressed `Content-Length`, which crashed the server process
-* fix: Unbuffered responses with several `write()` calls are now compressed as one gzip/deflate stream instead of one per write
-* fix: Response encoders now skip encodings the client marks `q=0` in `Accept-Encoding`
-* fix: HTTP/2 server pushes are no longer compressed without a `content-encoding` header
-* fix: A failure while closing an HTTP/1.1 response is now logged instead of terminating the server
-* fix: `responseFinalizers` now run on unbuffered responses, just before headers are sent, so they can set headers, status and cookies. They still run after the handler, with the full body, on buffered responses. **Behaviour change:** finalizers that read `res.buffer` should check `res.isBuffered`
-* fix: An invalid response header (e.g. a non-ASCII value) now fails with 500 error, thrown where the header is set
-* fix: The HTTP/2 `DARTSESSID` session cookie is now `Secure` and `HttpOnly`
-* fix: The future returned by `handleRequest`/`handleRawRequest` now completes after the error response is sent when a handler throws an error, instead of never completing
-* fix: The `no reflector` startup message is now logged at `info` instead of `warning` as it is not longer a mandatory requirement to use Angel3
-* fix: When nothing matches, the driver now returns 404 instead of 500
-* fix: The application and default logger now prints their record only once. Creating an app with a custom logger, or setting `app.logger`, no longer removes the application's own `Logger.root` listeners
-* fix: `res.download()` no longer sends the file's server path as the download name, encodes any filename safely (RFC 6266), uses `application/octet-stream` for unknown types instead of crashing, reads the file asynchronously, and returns 404 for a missing file. `res.streamFile()` also returns 404 for a missing file instead of an error that revealed its path
-* fix: `startServer` now rethrows the original error (e.g. a `SocketException` when the port is in use) instead of a generic `ArgumentError`, and closes the bound server if a startup hook fails
-* fix: `res.addStream()` (and so `res.streamFile()`) on a buffered response now writes into the buffer, instead of sending directly and leaving the buffer empty
-* fix: `HEAD` requests are now answered by the matching `GET` route, without a body, when no explicit `HEAD` route exists (RFC 9110), including in `HostnameRouter` sub-apps. **Behaviour change:** such requests previously returned 404 or reached a fallback route
-* fix: `req.accepts()` now parses the `Accept` header instead of matching substrings: `application/json` no longer matches `application/json-patch+json`, type wildcards such as `text/*` are honoured, and types marked `q=0` are not accepted
-* fix: Controller methods named `put…` and `head…` now map to `PUT` and `HEAD` routes. The verb must be a whole word, so `posts()` or `getter()` are now `GET /posts` and `GET /getter`, not `POST /s` and `GET /ter`
-* refactor: With no container passed, it now falls back to the request's container
-* refactor: Resolved various issues with `MapService`
-* refactor: Consolidated multiple copies of the encoder selection logic
+### Behaviour changes in 9.2.0
+
+* `responseFinalizers` also run on unbuffered responses, before the headers are sent; finalizers that read `res.buffer` should check `res.isBuffered`
+* `HEAD` requests are answered by the matching `GET` route, without a body, instead of a 404 or a fallback route
+* Controller methods named `put…` and `head…` map to `PUT` and `HEAD`, and the verb must be a whole word (`posts()` is `GET /posts`)
+
+### New in 9.2.0
+
+* Services, hooked services and `@Middleware` work without reflection, so apps can be built with `dart compile exe`
+* `Controller(expose: ...)` and `ioc(..., injection: ...)`, to mount controllers and inject without reflection
+* Limits: request bodies up to 10 MB (larger ones are a 413), HTTP/2 sessions expire after 20 minutes idle, and the route cache holds 1024 entries
+* `ResponseContext.attachmentDisposition()` and `Driver.closeServer()`
+
+### Fixes in 9.2.0
+
+* **Security:** The error page and `res.redirect()` escape their content, and `res.redirect()` refuses `javascript:`, `vbscript:` and `data:` URLs (XSS). The HTTP/2 session cookie is `Secure` and `HttpOnly`, and `res.download()` no longer reveals the file's path
+* **Stability:** Malformed HTTP/2 headers, request-context errors and failed response closes are logged instead of crashing the server
+* **HTTP/2:** Header values are kept as sent, `req.hostname` comes from `:authority`, sessions are reused across requests, and pushes are not compressed
+* **Compression:** Streamed files and multi-write responses compress correctly, and `q=0` encodings are skipped
+* **Responses:** Finalizers run once, invalid headers fail with a 500, `res.addStream()` writes into a buffered response, and `res.download()`/`res.streamFile()` return 404 for missing files
+* **Requests:** `req.accepts()` parses `Accept` properly, an empty JSON array body works, and a missing `@CookieValue` uses its default or is a 400
+* **Routing:** No match is a 404 instead of a 500, and `HostnameRouter` passes route parameters and builds each app once
+* **Services:** `DELETE /` means "remove all" (subject to `allowRemoveAll`), `afterAllStream()` emits after-events, and `MapService` issues are fixed
+* **Server:** `startServer` rethrows the original error and closes the server if a startup hook fails. `handleRequest` completes after an error response
+* **Logging:** Records are printed once, a custom logger keeps the app's listeners, and the "no reflector" message is `info`
 
 ## 9.1.1
 
