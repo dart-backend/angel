@@ -2,9 +2,10 @@
 
 ## 10.0.0
 
-* fix: A response body that is JSON but not an object no longer replaces the server's error with a generic one; an operator-precedence mistake read `isError` from it before checking that it was a map
-* fix: An error response without a valid status code in its body now reports the response's HTTP status, instead of 500
-* test: The tests no longer use `MirrorsReflector`, and the `angel3_container_mirrors` dev dependency is removed; the server they start only needs a `MapService`
+### Fixes
+
+* **Errors:** A JSON body that is not an object no longer hides the server's error, and an error without a valid status code reports the response's status
+* **Tests:** No longer use `MirrorsReflector`
 
 ## 9.1.0
 

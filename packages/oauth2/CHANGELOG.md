@@ -2,8 +2,7 @@
 
 ## 10.0.0
 
-* test: The tests and example no longer use `MirrorsReflector`, and the `angel3_container_mirrors` dev dependency is removed; `AuthorizationServer` does not need reflection
-* chore: Released with the other Angel3 packages at 10.0.0
+* The tests and example no longer use `MirrorsReflector`; `AuthorizationServer` needs no reflection
 
 ## 9.1.0
 

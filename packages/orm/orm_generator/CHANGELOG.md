@@ -2,16 +2,16 @@
 
 ## 10.0.0
 
-* Names a model's table, the foreign tables and keys inferred of it, and its migration class, as earlier versions did (`legacyModelName`), so that those of an existing database, and the code that runs the migration, are kept, though `angel3_serialize_generator` names the generated class otherwise: the table of `_UserEntity` is still `user_entities`, its migration `UserEntityMigration`, and the table of `UserIdentity` `user_ids`
-* fix: **Breaking** A relation's column (e.g. `authorId` for a `@BelongsTo Author author`) is described by the plain `RelationFieldImpl` instead of a fake analyzer `FieldElement` (a subclass of `analyzer`'s internal `FieldElementImpl`, which broke with `analyzer` 14.5 and failed every model with `@BelongsTo`). The generator no longer uses `analyzer` internals. `OrmBuildContext.effectiveFields` is now a `List<OrmField>`: a `ClassOrmField` (a field of the class, with its `element`) or a `RelationFieldImpl`; `findPrimaryFieldInList`, `isSpecialId`, `RelationshipReader.findLocalField` and `findForeignField` use `OrmField` as well. The generated code is unchanged
-* fix: A column type passed to `@Column(type: ...)` or `@PrimaryKey(columnType: ...)` is used, instead of being replaced by one inferred from the field's Dart type (e.g. `ColumnType.numeric` became `double`). Without one, the type is still inferred, also for enums (a bare `@Column` on an enum gave `varchar`). Column types read from annotations are the `ColumnType` constants, so they generate the same code as inferred ones
-* fix: `copyFrom` converts the `String` id of a related `Model` to the `int` its column holds; it was assigned unconverted. The column is set only once the related model has an id (`if (model.author?.id != null) { values['author_id'] = int.parse(model.author!.id!); }`), so it is never `null` for a non-nullable getter, and an id that is not a number throws instead of silently becoming a `NULL` foreign key
-* fix: Migrations use the `ColumnType` constants (e.g. `table.declare('rings', ColumnType.smallInt)`, `table.declare('author_id', ColumnType.int)`) instead of new `ColumnType('smallint')` instances, which the MySQL and MariaDB runners did not recognise as they compare types by identity. `length` is only given to types that have one (a `smallint` got `length: 255`), and a foreign key to a `serial` column is an `int` (`bigserial` a `bigint`, `smallserial` a `smallint`)
-* fix: A many-to-many uses the table name in the `@Orm` of its `through` class; it read the related model's `@Serializable` instead, so a custom table name was ignored
-* fix: A relation with an explicit `foreignTable` no longer fails with a null check: the related model is still read, for its columns and keys, and `foreignTable` names its table (the model's own `@Orm` table name used to replace it)
-* fix: A relation whose name contains `Id` (e.g. `userIdentity`, whose column is `userIdentityId`) gets its where builder; only a trailing `Id` is removed to find the relation
-* A `decimal` column is created with `table.decimal(name, precision: ..., scale: ...)`, as a `numeric` one with `table.numeric`
-* fix: The `precision` and `scale` of a `@Column` are used: the migration creates the column with them (e.g. `table.numeric('price', precision: 10, scale: 2)`), where they were dropped. Those not given are left out, so `@Column(type: ColumnType.numeric)` is still an unbounded `numeric` on PostgreSQL
+### Breaking changes
+
+* **Breaking:** The generator no longer uses `analyzer` internals, which broke every model with `@BelongsTo` on `analyzer` 14.5. `OrmBuildContext.effectiveFields` is a `List<OrmField>` (`ClassOrmField` or `RelationFieldImpl`), as are the arguments of `findPrimaryFieldInList`, `isSpecialId`, `findLocalField` and `findForeignField`. The generated code is unchanged
+
+### Fixes
+
+* **Names:** Tables, foreign keys and migration classes keep their earlier names (`legacyModelName`), though `angel3_serialize_generator` now names generated classes otherwise: `_UserEntity` is still `user_entities`
+* **Column types:** A type given in `@Column` or `@PrimaryKey` is used, instead of one inferred from the Dart type; enums are inferred too. Migrations use the `ColumnType` constants, which the MySQL and MariaDB runners need, give `length` only to types that have one, and type a foreign key to a serial column as its integer
+* **Precision:** The `precision` and `scale` of a `@Column` are used; `decimal` columns are created with `table.decimal`
+* **Relations:** `copyFrom` converts a related model's `String` id to its `int` column, and sets it only once the model has an id. A many-to-many uses its `through` class's table name, an explicit `foreignTable` works, and a relation whose name contains `Id` gets its where builder
 
 ## 9.1.1
 

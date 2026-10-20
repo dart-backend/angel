@@ -2,14 +2,13 @@
 
 ## 10.0.0
 
-* fix: An asset is a file of the asset directory: a leading `/` is its root, where `/site.css` was read from the root of the file system and so never inlined, and a path out of it is not inlined, where `../` or an absolute path inlined any file of the server into the page (e.g. of HTML that includes user content). A reference with a host (`//cdn.example/x.css`) is left as it is
-* fix: Assets are inlined as text, with `</script` and `</style` escaped, where a script or stylesheet holding its end tag ended its element early, and the rest of it was read as markup
-* fix: A stylesheet keeps its `media` and `nonce`, where a print stylesheet applied to the screen; a script that is `async`, or `defer` but not a module, stays external, where it ran at once, before the document it was deferred for. A `link` or `script` without a valid `href` or `src` is left as it is, where it failed the response. A stylesheet's `rel` is read as a list of words, of any case, and stylesheets in the body are inlined too
-* fix: `inlineAssetsFromVirtualDirectory` serves the inlined page with the directory it wraps, so the caching headers and `304`s of a `CachingVirtualDirectory`, `Range` requests and its `callback` apply, where the page was written as it was; its `Last-Modified` and ETag are of the latest of the page and its assets. It keeps `useBuffer` and `followLinksOutsideSource`, and inlines `.htm` files and extensions of any case. It compiles with the `serveFile` of `angel3_static` 10.0.0
-* fix: `inlineAssets` decodes a page of its declared charset, and sends it as UTF-8, with a `<meta charset>` to match, where it decoded every page as UTF-8
-* docs: The README examples use `app.fallback` and `inlineAssetsFromVirtualDirectory`, and no longer `lazyParseBodies`
-* test: `inlining_test.dart`
-* Released with the other Angel3 packages at 10.0.0
+### Fixes
+
+* **Security:** An asset is a file of the asset directory, with a leading `/` its root; `../` and absolute paths could inline any file of the server into a page. `/site.css` was looked up at the root of the file system, and so never inlined. References with a host are left as they are
+* **Inlining:** Content is inlined as text, with `</script` and `</style` escaped. Stylesheets keep `media` and `nonce`; `async` and non-module `defer` scripts stay external; elements without a valid `href`/`src` are skipped; `rel` is read as a list of words, and stylesheets in the body are inlined too
+* **`inlineAssetsFromVirtualDirectory`:** Serves the inlined page through the directory it wraps, so caching, `Range` and `callback` apply, with an ETag of the page and its assets. It keeps `useBuffer` and `followLinksOutsideSource`, and inlines `.htm` and extensions of any case
+* **Charset:** `inlineAssets` decodes the page's declared charset and sends UTF-8, with a matching `<meta charset>`
+* **Docs:** The README examples are up to date
 
 ## 9.1.0
 

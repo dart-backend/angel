@@ -2,15 +2,21 @@
 
 ## 10.0.0
 
-* **Breaking:** Added `Migration.name`, which identifies the migration in the `migrations` table, and defaults to its class name. Override it to keep it when the class is renamed, or with `--obfuscate`. A class that `implements Migration` must add it, or `extends Migration` instead
-* Added `Migration.legacyPath`, the end of the path by which a migration runner before 10.0.0 recorded the migration (`<source file>#<class name>`), so that the runner can rename it to its `name`
-* **Breaking:** `MutableTable.changeColumnType` takes the `length`, `precision` and `scale` of the new type (e.g. `changeColumnType('price', ColumnType.numeric, precision: 10, scale: 2)`). Without a precision or scale, a column changed to `numeric` or `decimal` is unbounded on PostgreSQL, which keeps its values, where it was `numeric(17, 3)`, which rounded them. It also takes the constraints of the column after the change, `isNullable`, `defaultValue` and `autoIncrement`, which are kept as they are when not given, and on PostgreSQL `using`, the expression that converts the values when there is no implicit cast (e.g. `using: 'price::numeric'`). Implementations of `MutableTable` must add these parameters, with `precision`, `scale`, `isNullable`, `defaultValue`, `autoIncrement` and `using` nullable
-* fix: `Table.numeric` creates the column with its `precision` and `scale`, which it ignored, and `MigrationColumn` (including `MigrationColumn.from`) keeps a column's precision and scale. Without them, the column is still an unbounded `numeric` on PostgreSQL
-* fix: `MigrationColumn.from` keeps all the attributes of a `Column`: its `defaultValue` (so `declareColumn('fee', Column(..., defaultValue: 0))` creates the column with `DEFAULT 0`, which was left out), `name`, `timezone` and `expression`
-* fix: A `numeric` or `decimal` column whose precision is below 1, or whose scale is negative or greater than its precision (17 without one), throws an `ArgumentError` when it is declared, instead of failing when the migration is run
-* Added `noDefault`, the `defaultValue` of `changeColumnType` that removes the column's default, where `null` keeps it, for a default that the new type cannot have (e.g. `changeColumnType('code', ColumnType.int, defaultValue: noDefault)` of a column with `DEFAULT 'n/a'`)
-* Added `Table.decimal`, as `Table.numeric` for `decimal` columns
-* Added `MigrationColumn.precisionArguments`, the `(precision, scale)` of a column's type in SQL, for the runners of each database, which checks them against the database's limits. A precision without a scale has `Column.defaultScale` (3), or the precision if smaller, as a scale of 0 would round values to whole numbers; give `scale: 0` for that
+### Breaking changes
+
+* **Breaking:** Added `Migration.name`, which identifies a migration in the `migrations` table (default: its class name); override it to survive a rename or `--obfuscate`. A class that `implements Migration` must add it
+* **Breaking:** `MutableTable.changeColumnType` takes `length`, `precision` and `scale`, the column's constraints after the change (`isNullable`, `defaultValue`, `autoIncrement`, kept when not given), and on PostgreSQL `using`. Without a precision, a `numeric` or `decimal` is unbounded on PostgreSQL, where it was `numeric(17, 3)`, which rounded values. Implementations must add these parameters
+
+### New
+
+* `Migration.legacyPath`, so a runner can rename a migration recorded by an earlier version
+* `noDefault`, to remove a column's default in `changeColumnType`
+* `Table.decimal`, and `MigrationColumn.precisionArguments` for the runners
+
+### Fixes
+
+* **Precision:** `Table.numeric` and `MigrationColumn` keep a column's precision and scale; an invalid precision or scale throws when the column is declared
+* **`MigrationColumn.from`:** Keeps every attribute of a `Column`, including its `defaultValue`
 
 ## 9.1.0
 

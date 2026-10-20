@@ -2,16 +2,17 @@
 
 ## 10.0.0
 
-* Fixed middleware of a mounted router (e.g. `group(path, ..., middleware: [...])`) never running: `routes` now prepends it to the handlers of the router's routes, so `resolve`, `resolveAll` and `flatten` include it. **Security:** apps that guarded a route group with middleware (e.g. authentication) served the group's routes without running it
-* Middleware chained with `chain(...)` now also applies to a router mounted on the chain with `mount`, at that mount only: the mounted router is no longer changed, so the middleware does not follow it to other places it is mounted
-* Added `SymlinkRoute.middleware`, middleware that applies to one mount of a router
-* Fixed parameters restricted by a RegExp (e.g. `:id([0-9]+)`) or with text around them (e.g. `file-:id`, `:id.json`) having the value `Instance of '_RegExpMatch'` instead of the matched text
-* Fixed optional parameters (`:id?`, `:id?([0-9]+)`): `/x/:id?` now matches both `/x` and `/x/5`. Previously the `?` was read as part of the parameter, and the parameter could not be left out. An optional parameter must be the last segment of its route (e.g. `/x/:id?/edit` does not match `/x/edit`), and typed parameters cannot be optional
-* An inline RegExp may now contain groups (nested up to two levels), e.g. `:color(red|gr(ee)n)`
-* Text before and after a parameter is now matched literally (e.g. the `.` in `v1.:id`), and the text after it may be longer than one character
-* Fixed the resolve cache (`enableCache`, enabled by `flatten`) growing with every distinct path. It now holds at most `maxSize` results (default 1024), evicting the least recently used. Its key now includes the relative path and `strip`, so `resolveAll` with the same absolute path but a different relative path no longer returns another path's results
-* Added `enableCache(maxSize: ...)` and `Router.cacheLength`
-* A path whose parameter cannot be read (malformed percent-encoding, e.g. `%zz`, or text that is not a number for an `int`, `double` or `num` parameter) no longer matches that route, instead of throwing from `resolve`
+### New
+
+* `SymlinkRoute.middleware`, `enableCache(maxSize: ...)` and `Router.cacheLength`
+
+### Fixes
+
+* **Security:** Middleware of a mounted router (e.g. `group(path, ..., middleware: [...])`) runs; route groups guarded by middleware (e.g. authentication) were served without it
+* **Middleware:** Middleware of `chain(...)` applies to a router mounted on the chain at that mount only, without changing the router
+* **Parameters:** A parameter with a RegExp or with text around it (`:id([0-9]+)`, `file-:id`) has the matched text. An optional last parameter (`/x/:id?`) can be left out. Inline RegExps may contain groups, and text around a parameter is matched literally
+* **Bad input:** A parameter that cannot be read (malformed percent-encoding, a non-number for an `int`) makes the route not match, instead of throwing
+* **Cache:** The resolve cache holds at most `maxSize` results (default 1024), and its key includes the relative path, so results of other paths are not returned
 
 ## 9.1.0
 

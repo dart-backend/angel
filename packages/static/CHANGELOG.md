@@ -2,18 +2,24 @@
 
 ## 10.0.0
 
-* fix: `CachingVirtualDirectory` answers `If-None-Match` from the file as it is when requested, where it compared the ETag it last sent, so a changed file was answered with `304` until another client fetched it whole. **Breaking:** ETags are quoted, of the file's modification time and size (`"18f3a2b4c10-a"`), as RFC 9110 requires; `If-None-Match` takes precedence over `If-Modified-Since`, and lists of tags and weak tags (`W/`) are compared
-* fix: An `If-Range` that no longer matches the file (a changed ETag or `Last-Modified`) sends the file whole with `200`, where the range of the changed file was sent, corrupting a resumed download
-* fix: `If-Modified-Since` matches to the second, as HTTP dates are, where the milliseconds of the file's time made it never match its own `Last-Modified`. An invalid date is ignored, where it was a `400`. A request's `Cache-Control: no-cache` gets the file rather than a `304`, without changing the response's caching headers
-* fix: A suffix range (`bytes=-500`) is the last bytes of the file, where it was the first; an end past the file is its end, where it was a `416`; a range that starts past the file is left out, and a `416` has `Content-Range: bytes */size`. Overlapping ranges are merged
-* fix: The index file of a directory is served with its own modification time, where it had the directory's, which does not change when the file does
-* fix: The `Accept` header is matched with `RequestContext.accepts`, so `text/*` and `q=0` are honored, where `text/*` was refused with `406`
-* fix: The names in a directory listing are HTML-escaped, where a file named with markup could run script in the listing (XSS); the listing is a `<ul>`
-* **Breaking:** A symbolic link in `source` to a file or directory outside of it is not served, unless the new `followLinksOutsideSource` is `true`. A link that leads nowhere is not found, where the path it resolved to was served as if it were a URL path
-* fix: A `publicPath` is matched by whole segments, so `/static` does not serve `/staticfoo/x`. A path with an encoded backslash is not found, where it was a `500` on Windows
-* `serveFile` writes a file with the new, protected `sendFile`, which can ignore the `Range` of the request; `serveFile` keeps its signature, so its overrides still work. The `debug` parameter of `CachingVirtualDirectory`, which was not used, is deprecated
-* test: `http_semantics_test.dart`
-* Released with the other Angel3 packages at 10.0.0
+### Breaking changes
+
+* **Breaking:** ETags are quoted and of the file's modification time and size (`"18f3a2b4c10-a"`), as RFC 9110 requires
+* **Breaking:** A symbolic link in `source` to a path outside it is not served, unless the new `followLinksOutsideSource` is `true`
+
+### New
+
+* `sendFile`, the protected method that `serveFile` uses to write a file, which can ignore `Range`; `serveFile`'s overrides still work
+
+### Fixes
+
+* **Caching:** `If-None-Match` is checked against the file as it is now, and takes precedence over `If-Modified-Since`, which matches to the second; a changed file was answered with `304`. An invalid date is ignored, and a request's `Cache-Control: no-cache` gets the file
+* **Ranges:** A suffix range (`bytes=-500`) is the end of the file, an end past the file is clamped, an `If-Range` that no longer matches sends the whole file, overlapping ranges are merged, and a `416` has `Content-Range: bytes */size`
+* **Index files:** Served with their own modification time, not the directory's
+* **`Accept`:** Matched with `RequestContext.accepts`, so `text/*` and `q=0` work
+* **Listing:** Names are HTML-escaped (XSS), in a `<ul>`
+* **Paths:** `publicPath` matches whole segments, and an encoded backslash is a 404 instead of a 500 on Windows
+* **Deprecated:** The unused `debug` parameter of `CachingVirtualDirectory`
 
 ## 9.1.0
 

@@ -2,19 +2,19 @@
 
 ## 10.0.0
 
-* **Breaking:** `jael3` no longer uses `dart:mirrors`, so a program that renders templates can be compiled with `dart compile exe`. `{{ a.b }}` reads `b` of the `memberResolver` given to `Renderer.render`, if it knows it, or else of a key of a `Map`, a common member of a core type (`length`, `first`, `join`, `toUpperCase`, `toInt`, `year`, ...), or a key of the value's `toJson()`. A getter of another class, which was read through `dart:mirrors`, is read only through `memberResolver` or `toJson()`: give the values of a template as maps, or with `toJson()` (as `@serializable` models have), or a `memberResolver`; `angel3_jael` gives one of the app's reflector. See the README
-* fix: `{{ user.name }}` reads the key `name` of a `Map`, where it threw `NoSuchMethodError: Class '_Map<String, String>' has no instance getter 'name'`
-* **Breaking:** Removed `new` and `NewExpression`, which could not be used: `new` was scanned as a name, so `{{ new Foo() }}` failed with `Missing closing "}}" in interpolation`, and a named constructor could not be called. `TokenType.$new` is removed, and `new` is a name, as any other. Put a function that makes the value in the scope instead
-* fix: A `SymbolTable` may be rendered again: `Renderer.render` renders in a child of it, where it threw `A symbol named "!strict!" already exists`
-* fix: The `toJson()` of a value is called once in a render for all its members, where it was called for each. A `NoSuchMethodError` thrown in `toJson()` is thrown, where it was taken for a value without `toJson()`, and a `toJson` that takes an argument is not called
-* fix: `?.` makes the rest of the chain `null`, as in Dart: `{{ user?.name.length }}`, `{{ user?.greet() }}` and `{{ user?.tags[0] }}` of a null `user`, where they threw
-* fix: `%` computes the remainder, where it threw `Unsupported binary operator`. Added `&&` and `||`, which compute their right side only if needed, as does `??`. `=`, which always threw, is no longer an operator
-* fix: Map literals of key-value pairs (`{'a': 1}`) and calls with named arguments (`f(x: 1)`) are parsed, where they threw `type 'NumberLiteral' is not a subtype of type 'Token?'`, and a named argument after a positional one was reported as `Missing ")"`
-* fix: The span of a key-value pair of a map literal starts at its key
-* **Breaking:** With `strictResolution: false`, an unknown member, or a member of `null`, is `null`, as an unknown name is, where it threw. `readMember` takes its `resolver` as a named parameter, and the new `tryReadMember` returns `noMember` where `readMember` throws
-* `SyntheticIdentifier.span` is a span of its name, where it threw `UnsupportedError`
-* test: `expressions_test.dart`
-* Released with the other Angel3 packages at 10.0.0
+### Breaking changes
+
+* **Breaking:** No longer uses `dart:mirrors`, so a program that renders templates can be compiled with `dart compile exe`. `{{ a.b }}` reads `b` from the `memberResolver` given to `Renderer.render`, a `Map` key, a common member of a core type, or the value's `toJson()`; other getters need a `memberResolver` or `toJson()`. `angel3_jael` gives one from the app's reflector. See the README
+* **Breaking:** Removed `new`, `NewExpression` and `TokenType.$new`, which could never be parsed; put a function that makes the value in the scope instead
+* **Breaking:** With `strictResolution: false`, an unknown member, or a member of `null`, is `null`. `readMember` takes `resolver` as a named parameter, and the new `tryReadMember` returns `noMember`
+
+### Fixes
+
+* **Members:** `{{ user.name }}` reads the key of a `Map`. `toJson()` is called once per value in a render, its own errors are thrown, and one that takes an argument is not called
+* **Null safety:** `?.` makes the rest of the chain `null`, as in Dart
+* **Operators:** `%` works; `&&` and `||` are added, and like `??` compute their right side only if needed; `=` is no longer an operator
+* **Parsing:** Map literals with keys (`{'a': 1}`) and calls with named arguments (`f(x: 1)`) are parsed; a key-value pair's span starts at its key, and `SyntheticIdentifier.span` works
+* **Rendering:** The same `SymbolTable` can be rendered again
 
 ## 9.1.0
 

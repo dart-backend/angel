@@ -2,20 +2,23 @@
 
 ## 10.0.0
 
-* **Breaking:** `POST /auth/token` (`reviveTokenEndpoint`) no longer revives an expired JWT, which it did for ever by resetting its `iat`, so a JWT stolen once never expired. It exchanges a JWT that is still valid, or expired by no more than the new `reviveGracePeriod` (default: none), for a new one of the configured `jwtLifeSpan`, and refuses one whose user no longer exists
-* **Breaking:** `jwtLifeSpan` defaults to one day (`AngelAuth.defaultJwtLifeSpan`), where JWTs never expired. `-1` keeps them valid for ever, which is warned about with a fixed `jwtKey`
-* **Breaking:** The `token` cookie is `SameSite=Lax` by default (the new `cookieSameSite`), so other sites' requests do not carry it (CSRF). It is set when a user logs in or a JWT is revived, no longer for every request authenticated with an `Authorization: Bearer` header
-* **Breaking:** `allowTokenInQuery` defaults to `false`: a JWT in the query string, which ends up in logs, history and `Referer` headers, is ignored unless enabled. Enable it for the browser WebSocket client of `angel3_websocket`, which sends its JWT as `?token=`
-* **Breaking:** JWTs have standard `iat` and `exp` claims, in seconds since the epoch, where `iat` was an ISO 8601 string and `exp` the lifespan in milliseconds; those issued before are still read
-* fix: `logout` expires the `token` cookie, where it set it to `""`, which every later request sent as an invalid JWT. An empty `token` cookie or query parameter is no JWT
-* fix: `onLogin` and `onLogout` are broadcast streams, where every login and logout was kept in memory until someone listened; both are closed on shutdown
-* fix: A JWT's signature is compared in constant time. A malformed JWT (not base64url, not JSON, or without its claims) is a `401`, where it was a server error, and a JWT without an IP address keeps none, where its `aud` was read as `"null"`
-* fix: `LocalAuthStrategy(allowBasic: true)` also reads the username and password of the body when no Basic header is sent, where it read only the header. A malformed Basic header is a `400`, where it was a server error, and its credentials are read as UTF-8 (RFC 7617)
-* fix: The `Bearer` scheme is matched whole and without regard to case. The default `jwtKey` is of random characters, where it was of control characters
-* fix: `authenticate` returns once a strategy has answered the request itself (closed the response, as with an error page), where it threw `401` on the response already sent
-* test: `security_test.dart`
-* test: The tests and examples no longer use `MirrorsReflector`, and the `angel3_container_mirrors` dev dependency is removed; `AngelAuth` does not need reflection
-* chore: Released with the other Angel3 packages at 10.0.0
+### Breaking changes
+
+* **Breaking:** `POST /auth/token` no longer revives expired JWTs, which made a stolen JWT valid for ever. It renews a valid one, or one expired within the new `reviveGracePeriod` (default: none), whose user still exists
+* **Breaking:** `jwtLifeSpan` defaults to one day (`AngelAuth.defaultJwtLifeSpan`); `-1` (never expire) is warned about with a fixed `jwtKey`
+* **Breaking:** The `token` cookie is `SameSite=Lax` (the new `cookieSameSite`), against CSRF, and is set only when a user logs in or a JWT is revived, not for `Bearer` requests
+* **Breaking:** `allowTokenInQuery` defaults to `false`; enable it for the browser WebSocket client of `angel3_websocket`
+* **Breaking:** JWTs have standard `iat` and `exp` claims, in seconds; JWTs issued before are still read
+
+### Fixes
+
+* **Logout:** Expires the `token` cookie, instead of setting it to `""`
+* **JWTs:** Signatures are compared in constant time, a malformed JWT is a 401 instead of a server error, and a JWT without an IP keeps none. `Bearer` is matched whole and in any case
+* **Local strategy:** With `allowBasic`, form logins work too; a malformed Basic header is a 400, and credentials are read as UTF-8
+* **Streams:** `onLogin` and `onLogout` are broadcast streams, so logins are not kept in memory, and both close on shutdown
+* **`authenticate`:** Returns once a strategy has answered the request itself, instead of throwing 401
+* **Key:** The default `jwtKey` is of random characters, not control characters
+* **Tests:** No longer use `MirrorsReflector`; `AngelAuth` needs no reflection
 
 ## 9.1.0
 

@@ -2,21 +2,24 @@
 
 ## 10.0.0
 
-* **Breaking:** `MySqlExecutor` uses [`mysql_dart`](https://pub.dev/packages/mysql_dart) 3, a maintained fork of `mysql_client`, which supports MySQL 9 and MariaDB 11, instead of `mysql_client`. It takes the `MySQLConnection` of `mysql_dart`: change `import 'package:mysql_client/mysql_client.dart'` to `import 'package:mysql_dart/mysql_dart.dart'`. The commands of a connection, of all its `MySqlExecutor`s, run one at a time, as `mysql_dart` rejects a command sent while another runs, or fails to decode its response, where `mysql_client` queued them; queries sent at once, as by `Future.wait`, still run, in turn, and `close` closes the connection once those given before it have run. A transaction holds one turn of the connection, and its queries run one at a time in a queue of its own; a transaction of its executor is of the one it is in, as MySQL nests none, and the executor runs no query once its transaction has ended, which throws a `StateError`
-* fix: A query given in a transaction to another executor of its connection, such as that of the application, runs in the transaction, as does a transaction begun with it, where it waited for the transaction, which waited for it, forever. The executor given to a transaction of `MariaDbExecutor` is a `MariaDbExecutor`, and that of a transaction throws a `StateError` on `close`, which closed the connection in the transaction
-* fix: The queries of a transaction that were not waited for run in it before its `COMMIT` or `ROLLBACK`, where they were sent on the connection as `mysql_dart` sent those, which it failed to decode (`RangeError (byteOffset)`), so that the connection hung, or ran after a `ROLLBACK`, outside the transaction. `close` throws a `StateError` in a transaction on the connection, where it waited for the transaction, which waited for it
-* `MySqlExecutor` has the public `logger` of `MariaDbExecutor`. A zero date or time (`0000-00-00`) is read as `null`, and an insert is found whatever the case of its `INSERT`
-* docs: The README tells how a `date` column may be stored as the day before or after, and how the queries of a transaction run
-* **Breaking:** `MariaDbExecutor` uses `mysql_dart`, instead of [`mysql1`](https://pub.dev/packages/mysql1), which is no longer a dependency. It takes the `MySQLConnection` of `mysql_dart`, as `MySqlExecutor` does, of which it is now a subclass, and works with MySQL as well as MariaDB; it still stores a `DateTime` as UTC, and reads a date or time column back as a UTC `DateTime`. Its queries, inserts, updates, deletes and transactions are those of `MySqlExecutor`, which fixes, of `mysql1`, the `@name` placeholders that start with another's name, the values passed in the order they were set rather than that of the SQL, the insert without an id that failed with `Length of parameters (n) does not match parameter count in query (0)`, the updated rows of a table without an `id` that were not returned, and the rows of a `delete` that were not returned. `src/orm_mariadb.dart` is a part of `src/orm_mysql.dart`, so import `package:angel3_orm_mysql/angel3_orm_mysql.dart`
-* docs: The README tells how each executor stores a `DateTime`: `MySqlExecutor` as local time, and `MariaDbExecutor` as UTC, which are shifted by the offset of the time zone if one reads what the other wrote
-* fix: `insert` of `MySqlExecutor` and `MariaDbExecutor` returns the row of the id given, of a key the database does not generate, as a UUID, where it returned none, and of the id the database gave the row, not the last row by id, which may be another connection's insert. The executors bind the `@angel3_insert_id` of `angel3_orm` to the insert id, and no longer tell what a query is by its SQL (`.id=?`, `@`), which picked the wrong way of a select of a `@` in it
-* fix: `MySqlExecutor` passes its parameters to `mysql_dart` as a list of positional `?`, found by `replacePlaceholders` of `angel3_orm`, where it named them after the columns as `:name`, which `mysql_client` only found in ASCII: a column such as `prix_unité` failed with `There is no parameter with name: prix_unit`. It no longer changes the `DateTime` values in the map it is given to local time
-* fix: `MySqlExecutor` returns the updated rows of a table without an `id`; the query that selects them again was sent with its `@name` placeholders unbound
-* Both executors find the `@name` placeholders with `replacePlaceholders` of `angel3_orm`
-* test: The tests connect to the server of `MYSQL_HOST`, `MYSQL_PORT` and `MYSQL_DB`, as those of `angel3_migration_runner` do
-* test: `dart_test.yaml` runs the test files one at a time, as they create and drop the same tables in the same database
-* test: `performance_test.dart` has a `main`, so the test runner can load (and skip) it
-* test: `executor_test.dart` runs inserts, updates and selects through both `MySqlExecutor` and `MariaDbExecutor`
+### Breaking changes
+
+* **Breaking:** `MySqlExecutor` uses [`mysql_dart`](https://pub.dev/packages/mysql_dart) 3 (supports MySQL 9 and MariaDB 11) instead of `mysql_client`: pass its `MySQLConnection`, and import `package:mysql_dart/mysql_dart.dart`
+* **Breaking:** `MariaDbExecutor` uses `mysql_dart` instead of `mysql1`, as a subclass of `MySqlExecutor`, and works with MySQL too; it still stores a `DateTime` as UTC. Import `package:angel3_orm_mysql/angel3_orm_mysql.dart`, not `src/orm_mariadb.dart`
+
+### Connections and transactions
+
+* The commands of a connection run one at a time, in turn, as `mysql_dart` needs; `close` waits for those given before it
+* A transaction holds the connection: its queries run in their own queue, including those not awaited, before its `COMMIT` or `ROLLBACK`. A transaction within one is part of it, and its executor refuses queries once it has ended
+* A query given in a transaction to another executor of its connection runs in the transaction, instead of waiting for ever; `close` in a transaction throws a `StateError`
+
+### Fixes
+
+* **Inserts:** Return the row of the id given (e.g. a UUID) or of the insert id, not the last row by id, which may be another connection's
+* **Parameters:** Passed as positional `?` with `replacePlaceholders` of `angel3_orm`, so non-ASCII column names work and `DateTime`s in the given map are not changed
+* **Updates:** Return the updated rows of a table without an `id`
+* **Values:** A zero date (`0000-00-00`) is read as `null`, and `INSERT` is matched in any case. `MySqlExecutor` has a public `logger`
+* **Docs:** The README tells how each executor stores a `DateTime` (local time or UTC), why a `date` may shift by a day, and how transactions run
 
 ## 9.1.0
 

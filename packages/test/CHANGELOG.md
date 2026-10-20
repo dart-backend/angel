@@ -2,10 +2,11 @@
 
 ## 10.0.0
 
-* fix: `isAngelHttpException()` now recognises error responses written by `AngelHttpException.toJson`, which use the key `is_error`; it only checked `isError`, so it never matched
-* fix: `isAngelHttpException()` now falls back to the response's HTTP status when the error body has no valid status code, instead of 500
-* fix: `TestClient` responses now report the `contentLength` the handler set, or `null` when none was set (a streamed body), instead of always `0`
-* test: The tests no longer use `MirrorsReflector`, and the `angel3_container_mirrors` dev dependency is removed
+### Fixes
+
+* **`isAngelHttpException()`:** Recognises the `is_error` key that `AngelHttpException.toJson` writes, and falls back to the response's status when the body has none
+* **`TestClient`:** Responses report the `contentLength` the handler set, or `null`, instead of `0`
+* **Tests:** No longer use `MirrorsReflector`
 
 ## 9.1.1
 

@@ -2,8 +2,9 @@
 
 ## 10.0.0
 
-* feat: `jael` reads the members of values in templates through the app's reflector, of the new `reflectorMemberResolver`: with a `StaticReflector` of the data `angel3_container_generator` generates for `@injectable` classes, their fields, getters and methods, declared or inherited, without `dart:mirrors`, so the app can be compiled with `dart compile exe`; with a `MirrorsReflector`, those of any class, as `jael3` read them before. It takes a `memberResolver`, which is asked first
-* test: `reflector_test.dart` renders the members of a model through a `StaticReflector` of its generated data (`test/models.g.dart`, regenerated with `dart run build_runner build`)
+### New
+
+* `jael` reads the members of values through the app's reflector (`reflectorMemberResolver`): with a `StaticReflector` of `angel3_container_generator` data, the fields, getters and methods of `@injectable` classes, without `dart:mirrors`; with a `MirrorsReflector`, those of any class. A `memberResolver` it is given is asked first
 
 ## 9.1.0
 

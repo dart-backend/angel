@@ -2,22 +2,22 @@
 
 ## 10.0.0
 
-* **Breaking:** Removed the dependency on `dart:mirrors`. `SerializableFieldMirror.serializer` and `deserializer` are the names of the functions of `SerializableField.serializer` and `deserializer`, as `String`s (e.g. `colorToCode` of `#colorToCode`), where they were `Symbol`s, which needed `dart:mirrors` to be read. The generated code is the same
-* **Breaking:** Generated `hashCode` getters use `Object.hashAll` instead of `hashObjects`, which `angel3_serialize` 10 no longer exports; regenerate existing models
-* fix: Generated `hashCode` getters hash `List` and `Map` fields by their length (e.g. `fruits.length`), which equal ones have, as `==` compares them by their contents. Equal models with different list instances had different hash codes, which broke `Set` and `Map` lookups. Not by their contents, which would recurse forever in a cycle of models, and hash every byte of a large `Uint8List`. Other fields, including `dynamic`, function and record fields, are hashed as they are
-* Reads `Serializable.serializers` as the `Serializers` enum of `angel3_serialize`, each value by its name, so that one given by another constant (`const js = Serializers.json`) is read, where the build failed, and one of another version of `angel3_serialize`, of other values or of another order, is not taken for another. A value that is not one of `Serializers` is logged as an error, where it was left out without one. It is logged by the model builder, which every model runs, once
-* A model class whose generated class is that of another of the library (`_User_Info` and `_UserInfo`, both of `UserInfo`) fails the build with an error, where the class was declared twice
-* fix: The serializer class is generated only with `Serializers.map` or `Serializers.json`, as `toJson` calls its `toMap`, so that a model of `Serializers.typescript` only compiles; and it is a `Codec`, of an encoder and a decoder, only with `Serializers.map`, which has `fromMap`, which the decoder calls, so that a model of `Serializers.json` only compiles
-* **Breaking:** The generated class of a model class is the class without one of `modelPrefix` (`_`, `Entity`), and then without one of `modelSuffix` (`Entity`), matched with their case: `_UserEntity` is `User`, as before, but `UserIdentity` keeps its name, where it was `UserId`, and `entityUser` is not stripped. `modelPrefix` and `modelSuffix` are capitalized (`Entity`, where they were `entity`), and an entry added to them is matched with its case. The tables and keys of `angel3_orm_generator` keep their names
-* fix: The equality and hash of a `List` or `Map` field name its element types as they are written, with their nullability and type arguments (`ListEquality<int?>`), where `List<int?>` gave `ListEquality<int>`, which did not compile, and a type without an element, as `void Function()`, failed the build. A field of such a type is generated, where it failed the build
-* fix: A model refers to another by the name of its generated class, as the class itself is named (`EntityTypeSerializer` of a field of `_EntityType`), where the name was stripped again (`TypeSerializer`), which did not compile. A field of a type without an element, as a function type or a record, is serialized and compared, where the serializer cast it `as null` and failed the build
-* fix: The generated class of a model, and its serializer, are named as the class is declared, in pascal case, everywhere: in `copyWith`, `fromMap`, `toString`, its codec, and the references of other models (`UrlSerializer` of `_URL`), where they were of its name not in pascal case (`URL`), which did not compile
-* fix: Every type in the generated code, as of a field, a parameter, `copyWith`, a cast, an equality or the type arguments of an annotation, is written by one writer, with the prefix of the import of its class (`List<t.Tag>`, `@t.Ann<t.Tag>(t.Tag.a)`), the types of a function type or a record (`void Function(t.Tag)?`, `(int, t.Tag)`), and the nullability of its type arguments (`Set<void Function()?>?`), where a model of a type of a library imported with a prefix did not compile. A generic function type is as the analyzer writes it
-* Removed the dependency on `quiver`, which the generated code no longer uses
-* fix: A constant given by a reference, as an enum value (`Tag.a`) or a top-level constant, is generated as that reference, as in `includeAnnotations`, where it was generated as a call (`@Tag.Tag.a()`), which did not compile
-* **Breaking:** A value in `includeAnnotations` that is not a constant instance of a class or an enum, such as a string, a list or `null`, fails the build with an error, instead of producing an invalid annotation on the generated class. A constant of a library imported with a prefix (`t.Tag.a`, `t.Ann()`) has the prefix of the import it is visible by, as its `show` and `hide` leave it, which was left out, and one of the library's own name is that of the library only if it is that constant
-* fix: `ShimFieldImpl` creates its own member reference when it is not given one. `angel3_orm_generator` passes a `RootReference`, which `analyzer` 14.5 rejects (`type 'RootReference' is not a subtype of type 'MemberReference'`), so building any ORM model with `@BelongsTo` failed
-* deprecated: `ShimFieldImpl`, which subclasses `analyzer` internals; `angel3_orm_generator` no longer uses it
+### Breaking changes
+
+* **Breaking:** No longer uses `dart:mirrors`: `SerializableFieldMirror.serializer` and `deserializer` are function names as `String`s, where they were `Symbol`s. The generated code is the same
+* **Breaking:** Generated `hashCode` getters use `Object.hashAll` instead of `hashObjects`; regenerate existing models
+* **Breaking:** A generated class is named by removing a `modelPrefix` (`_`, `Entity`), then a `modelSuffix` (`Entity`), matched by case: `UserIdentity` keeps its name, where it became `UserId`. The prefixes and suffixes are capitalised
+* **Breaking:** A value in `includeAnnotations` that is not a constant instance of a class or enum fails the build
+
+### Fixes
+
+* **Hash codes:** `List` and `Map` fields are hashed by their length, so equal models have equal hash codes
+* **Serializers:** `Serializable.serializers` is read by enum value name, including from other constants; an unknown value is logged. The serializer class is generated only for `map` or `json`, and is a `Codec` only for `map`
+* **Names:** Generated classes and their serializers are named in pascal case everywhere (`UrlSerializer` of `_URL`), models refer to each other by their generated names, and two models of the same generated name fail the build
+* **Types:** Types are written with their import prefixes, nullability and type arguments, and fields of function or record types are generated, where any of these could fail the build or not compile
+* **Annotations:** Enum values and constants are generated as references, and keep their import prefixes
+* **ORM:** `ShimFieldImpl` makes its own member reference, so ORM models with `@BelongsTo` build with `analyzer` 14.5; `ShimFieldImpl` is deprecated
+* **Dependencies:** Removed `quiver`
 
 ## 9.1.0
 
