@@ -58,21 +58,18 @@ RequestHandler validate(
 }) {
   return (RequestContext req, res) async {
     await req.parseBody();
-    var app = req.app;
-    if (app != null) {
-      var result = await asyncApplyValidator(validator, req.bodyAsMap, app);
+    var result = await asyncApplyValidator(validator, req.bodyAsMap, req.app);
 
-      if (result.errors.isNotEmpty) {
-        throw AngelHttpException.badRequest(
-          message: errorMessage,
-          errors: result.errors,
-        );
-      }
-
-      req.bodyAsMap
-        ..clear()
-        ..addAll(result.data);
+    if (result.errors.isNotEmpty) {
+      throw AngelHttpException.badRequest(
+        message: errorMessage,
+        errors: result.errors,
+      );
     }
+
+    req.bodyAsMap
+      ..clear()
+      ..addAll(result.data);
     return true;
   };
 }
@@ -84,38 +81,11 @@ RequestHandler validateQuery(
   String errorMessage = 'Invalid data.',
 }) {
   return (RequestContext req, res) async {
-    var app = req.app;
-    if (app != null) {
-      var result = await asyncApplyValidator(
-        validator,
-        req.queryParameters,
-        app,
-      );
-
-      if (result.errors.isNotEmpty) {
-        throw AngelHttpException.badRequest(
-          message: errorMessage,
-          errors: result.errors,
-        );
-      }
-
-      req.queryParameters
-        ..clear()
-        ..addAll(result.data);
-    }
-    return true;
-  };
-}
-
-/// Validates the data in `e.data`, and sets the data to
-/// filtered data before continuing the service event.
-HookedServiceEventListener validateEvent(
-  Validator validator, {
-  String errorMessage = 'Invalid data.',
-}) {
-  return (HookedServiceEvent e) async {
-    var app = e.request?.app ?? e.service.app;
-    var result = await asyncApplyValidator(validator, e.data as Map, app);
+    var result = await asyncApplyValidator(
+      validator,
+      req.queryParameters,
+      req.app,
+    );
 
     if (result.errors.isNotEmpty) {
       throw AngelHttpException.badRequest(
@@ -124,44 +94,124 @@ HookedServiceEventListener validateEvent(
       );
     }
 
-    e.data
+    req.queryParameters
+      ..clear()
+      ..addAll(result.data);
+    return true;
+  };
+}
+
+/// Validates the data in `e.data`, and sets the data to
+/// filtered data before continuing the service event.
+///
+/// Data that is not a [Map], such as that of a `read` or `remove`, is a 400.
+HookedServiceEventListener<Id, Data, T> validateEvent<
+  Id,
+  Data,
+  T extends Service<Id, Data>
+>(Validator validator, {String errorMessage = 'Invalid data.'}) {
+  return (HookedServiceEvent<Id, Data, T> e) async {
+    var data = e.data;
+    if (data is! Map) {
+      throw AngelHttpException.badRequest(
+        message: errorMessage,
+        errors: ['The data must be an object.'],
+      );
+    }
+
+    var app = e.request?.app ?? e.service.app;
+    var result = await asyncApplyValidator(validator, data, app);
+
+    if (result.errors.isNotEmpty) {
+      throw AngelHttpException.badRequest(
+        message: errorMessage,
+        errors: result.errors,
+      );
+    }
+
+    data
       ..clear()
       ..addAll(result.data);
   };
 }
 
-/// Asynchronously apply a [validator], running any [AngelMatcher]s.
+/// Asynchronously apply a [validator], running any [AngelMatcher]s, also those
+/// of nested [Validator]s.
+///
+/// Like [Validator.check], matchers are given the input, not the filtered
+/// data, as their context, and an [AngelMatcher] does not match `null`.
+/// Throws a [StateError] if [app] is `null` and the [validator] has an
+/// [AngelMatcher].
 Future<ValidationResult> asyncApplyValidator(
   Validator validator,
   Map data,
-  Angel app,
+  Angel? app,
 ) async {
+  if (app == null && _hasAngelMatcher(validator)) {
+    throw StateError(
+      'The validator has an AngelMatcher, which needs an Angel app, but none '
+      'was given.',
+    );
+  }
+
   var result = validator.check(data);
   if (result.errors.isNotEmpty) return result;
 
-  var errantKeys = <String>[], errors = <String>[];
+  // The input, with the default values that [Validator.check] added.
+  var context = {...result.data, ...data};
+  var errors = <String>[];
+  var m = Map<String, dynamic>.from(result.data);
 
   for (var key in result.data.keys) {
     var value = result.data[key];
+    var input = context[key];
     var description = StringDescription("'$key': expected ");
+    var valid = true;
 
     for (var rule in validator.rules[key]!) {
-      if (rule is AngelMatcher) {
-        var r = await rule.matchesWithAngel(value, key, result.data, {}, app);
+      if (rule is Validator && input is Map && _hasAngelMatcher(rule)) {
+        var nested = await asyncApplyValidator(rule, input, app);
 
-        if (!r) {
-          errors.add(rule.describe(description).toString().trim());
-          errantKeys.add(key);
+        if (nested.errors.isNotEmpty) {
+          errors.addAll(nested.errors);
+          valid = false;
+          break;
+        }
+
+        // Several validators of one key keep the data of each.
+        m[key] = {...m[key] as Map, ...nested.data};
+      } else if (rule is AngelMatcher) {
+        // [Validator.check] has refused `null` for an [AngelMatcher].
+        if (!await rule.matchesWithAngel(
+          value as Object,
+          key,
+          context,
+          {},
+          app!,
+        )) {
+          if (!validator.customErrorMessages.containsKey(key)) {
+            errors.add(rule.describe(description).toString().trim());
+          }
+          valid = false;
           break;
         }
       }
     }
-  }
 
-  var m = Map<String, dynamic>.from(result.data);
-  for (var key in errantKeys) {
-    m.remove(key);
+    if (!valid) {
+      m.remove(key);
+      if (validator.customErrorMessages.containsKey(key)) {
+        errors.add(validator.customError(key, value));
+      }
+    }
   }
 
   return result.withData(m).withErrors(errors);
 }
+
+bool _hasAngelMatcher(Validator validator) => validator.rules.values.any(
+  (rules) => rules.any(
+    (rule) =>
+        rule is AngelMatcher || (rule is Validator && _hasAngelMatcher(rule)),
+  ),
+);

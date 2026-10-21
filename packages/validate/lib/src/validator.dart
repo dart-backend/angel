@@ -170,6 +170,9 @@ class Validator extends Matcher {
         var description = StringDescription("'$key': expected ");
 
         var rulesList = rules[key] ?? [];
+        // The data of nested validators, filtered; several validators of one
+        // key keep the data of each.
+        Map<String, dynamic>? nestedData;
         for (var matcher in rulesList) {
           if (matcher is ContextValidator) {
             if (!matcher.validate(key, input)) {
@@ -193,11 +196,16 @@ class Validator extends Matcher {
                   valid = false;
                   break;
                 }
+
+                nestedData = {...?nestedData, ...result.data};
               } else {
                 bool result;
 
                 if (matcher is ContextAwareMatcher) {
-                  result = matcher.matchesWithContext(value, key, input, {});
+                  // It takes an [Object], so it does not match `null`.
+                  result =
+                      value != null &&
+                      matcher.matchesWithContext(value, key, input, {});
                 } else {
                   result = matcher.matches(value, {});
                 }
@@ -224,7 +232,7 @@ class Validator extends Matcher {
         }
 
         if (valid) {
-          data[key] = value;
+          data[key] = nestedData ?? value;
         } else if (customErrorMessages.containsKey(key)) {
           errors.add(customError(key, input[key]));
         }
