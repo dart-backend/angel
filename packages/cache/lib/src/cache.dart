@@ -9,9 +9,15 @@ import 'package:logging/logging.dart';
 /// Use this to improve real and perceived response of Web applications,
 /// as well as to memorize expensive responses.
 ///
-/// Only responses that are safe to share are stored: status 200, no
-/// `Set-Cookie`, no `Cache-Control: no-store` or `private`, and not for a
-/// request carrying `Authorization` (such requests also bypass the cache).
+/// Only responses that are safe to share are stored: responses to `GET`
+/// requests, with status 200, no `Set-Cookie`, no `Cache-Control: no-store`
+/// or `private`, no `Vary` other than `Accept-Encoding`, and at most
+/// [maxEntryBytes] long. Requests carrying `Authorization`, or cookies
+/// (unless [cacheRequestsWithCookies]), bypass the cache: their responses may
+/// be specific to a user.
+///
+/// A response of a matching path is buffered to be stored, so it is not
+/// streamed: match only paths whose responses are small and shared.
 class ResponseCache {
   /// A set of [Patterns] for which responses will be cached.
   ///
@@ -31,6 +37,17 @@ class ResponseCache {
   /// Cached responses by effective path, least recently used first.
   final Map<String, _CachedResponse> _cache = {};
 
+  /// The size of the largest response stored, in bytes. A larger one is
+  /// sent, but not stored, so the cache holds at most [maxEntries] times this.
+  /// It is checked once the response is buffered, so it does not limit the
+  /// memory a request uses.
+  final int maxEntryBytes;
+
+  /// If `true` (default: `false`), requests with cookies use the cache too.
+  /// Only set it if no response of a matching path depends on the cookies
+  /// (e.g. a session), or one user's page would be served to others.
+  final bool cacheRequestsWithCookies;
+
   /// If `true` (default: `false`), then caching of results will discard URI query parameters and fragments.
   final bool ignoreQueryAndFragment;
 
@@ -40,6 +57,8 @@ class ResponseCache {
     this.timeout = const Duration(minutes: 10),
     this.ignoreQueryAndFragment = false,
     this.maxEntries = 1024,
+    this.maxEntryBytes = 1024 * 1024,
+    this.cacheRequestsWithCookies = false,
   });
 
   /// Closes the cache, discarding all entries.
@@ -95,11 +114,18 @@ class ResponseCache {
   bool _matches(String path) =>
       patterns.any((pattern) => pattern.allMatches(path).isNotEmpty);
 
+  /// Only `GET` responses are stored (and served to `HEAD` too): a `HEAD`
+  /// response has no body.
+  bool _isStorableRequest(RequestContext req) =>
+      req.method == 'GET' && _isCacheableRequest(req) && maxEntries > 0;
+
   /// Only `GET`/`HEAD` requests without credentials use the cache: a
   /// response to an authenticated request may be specific to that user.
-  static bool _isCacheableRequest(RequestContext req) =>
+  bool _isCacheableRequest(RequestContext req) =>
       (req.method == 'GET' || req.method == 'HEAD') &&
-      (req.headers?['authorization'] ?? const []).isEmpty;
+      (req.headers?['authorization'] ?? const []).isEmpty &&
+      (cacheRequestsWithCookies ||
+          (req.headers?['cookie'] ?? const []).isEmpty);
 
   /// Whether [res] may be stored and replayed to other clients.
   static bool _isCacheableResponse(ResponseContext res) {
@@ -111,7 +137,23 @@ class ResponseCache {
         .toLowerCase()
         .split(',')
         .map((d) => d.trim().split('=').first);
-    return !directives.contains('no-store') && !directives.contains('private');
+    // `no-cache` asks to revalidate each time, which a stored copy is not.
+    if (directives.contains('no-store') ||
+        directives.contains('private') ||
+        directives.contains('no-cache')) {
+      return false;
+    }
+    // Encoded by the handler (e.g. a precompressed file): not for clients
+    // that did not accept that encoding.
+    if (res.headers.containsKey('content-encoding')) return false;
+    // The cache keeps one response per path; one that varies by other
+    // request headers (e.g. `Vary: Cookie` or `Accept-Language`) would be
+    // served to every client. The encoding is applied when it is sent.
+    return (res.headers['vary'] ?? '')
+        .toLowerCase()
+        .split(',')
+        .map((v) => v.trim())
+        .every((v) => v.isEmpty || v == 'accept-encoding');
   }
 
   /// Returns the fresh entry for [path], dropping it if it has expired.
@@ -171,7 +213,7 @@ class ResponseCache {
       return false;
     }
 
-    if (maxEntries > 0 && !res.isBuffered) res.useBuffer();
+    if (_isStorableRequest(req) && !res.isBuffered) res.useBuffer();
     return true;
   }
 
@@ -184,7 +226,7 @@ class ResponseCache {
     RequestContext req,
     ResponseContext res,
   ) async {
-    if (!_isCacheableRequest(req) || !_isCacheableResponse(res)) return true;
+    if (!_isStorableRequest(req) || !_isCacheableResponse(res)) return true;
 
     var reqPath = _getEffectivePath(req);
     if (!_matches(reqPath)) return true;
@@ -194,23 +236,27 @@ class ResponseCache {
     // Keep a fresh entry; replace an expired one.
     if (_lookup(reqPath, now) != null) return true;
 
-    if (res.buffer != null) {
-      _store(
-        reqPath,
-        _CachedResponse(
-          res.statusCode,
-          Map.from(res.headers),
-          res.buffer!.toBytes(),
-          now,
-        ),
-        now,
-      );
+    var buffer = res.buffer;
+    if (buffer == null || buffer.length > maxEntryBytes) {
+      // Not stored, so not marked as cacheable either.
+      return true;
     }
-
+    _store(
+      reqPath,
+      _CachedResponse(
+        res.statusCode,
+        Map.from(res.headers),
+        buffer.toBytes(),
+        now,
+      ),
+      now,
+    );
     _setCachedHeaders(_wholeSeconds(now), req, res);
     return true;
   }
 
+  /// Adds the headers of a cached response; a `Cache-Control` the handler
+  /// set is kept, and sent with the stored copy too.
   void _setCachedHeaders(
     DateTime modified,
     RequestContext req,
@@ -219,7 +265,10 @@ class ResponseCache {
     var privacy = 'public';
 
     res.headers
-      ..['cache-control'] = '$privacy, max-age=${timeout.inSeconds}'
+      ..putIfAbsent(
+        'cache-control',
+        () => '$privacy, max-age=${timeout.inSeconds}',
+      )
       ..['last-modified'] = HttpDate.format(modified);
 
     var expiry = DateTime.now().add(timeout);

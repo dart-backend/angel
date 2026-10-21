@@ -18,8 +18,9 @@ void main() async {
   app.use(
     '/api/todos',
     CacheService(
-      // Any fast service works; a MapService keeps the cache in memory.
-      cache: MapService(),
+      // Any fast service that stores records as given works; a MapService
+      // keeps the cache in memory, without ids and dates of its own.
+      cache: MapService(autoIdAndDateFields: false),
       database: AnonymousService(
         index: ([params]) async {
           print('Fetched directly from the underlying service at ${DateTime.now()}!');
@@ -61,7 +62,7 @@ Use this to improve real and perceived response of Web applications, as well as 
 
 Supports the `If-Modified-Since` header, as well as storing the contents of responses in memory.
 
-`handleRequest` buffers responses for matching paths, so handlers need no changes. Clients whose copy is still current get `304 Not Modified`. Only responses that are safe to share are stored: status 200, no cookies, and not marked `Cache-Control: no-store` or `private`. Requests carrying an `Authorization` header bypass the cache entirely. At most `maxEntries` responses (1024 by default) are kept; when full, expired entries are dropped first, then the least recently used.
+`handleRequest` buffers responses for matching paths, so handlers need no changes. Clients whose copy is still current get `304 Not Modified`. Only responses that are safe to share are stored: responses to `GET`, with status 200, no cookies, not marked `Cache-Control: no-store` or `private`, no `Vary` other than `Accept-Encoding`, and at most `maxEntryBytes` (1 MB by default) long. Requests carrying an `Authorization` header or cookies bypass the cache entirely; set `cacheRequestsWithCookies` only if no response of a cached path depends on cookies. At most `maxEntries` responses (1024 by default) are kept; when full, expired entries are dropped first, then the least recently used. Responses of cached paths are buffered, not streamed, so match only small, shared ones.
 
 To initialize a simple cache:
 
