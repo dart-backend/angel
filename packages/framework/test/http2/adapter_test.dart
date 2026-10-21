@@ -348,6 +348,41 @@ void main() {
     expect(closes, 1);
   });
 
+  test('close does not wait for idle HTTP/1 keep-alive connections', () async {
+    var app = Angel()..get('/', (req, res) => 'ok');
+    var ctx = SecurityContext()
+      ..useCertificateChain('dev.pem')
+      ..usePrivateKey('dev.key', password: 'dartdart')
+      ..setAlpnProtocols(['h2', 'http/1.1'], true);
+    var h2 = AngelHttp2(app, ctx, allowHttp1: true)
+      ..closeTimeout = const Duration(seconds: 5);
+    var server = await h2.startServer();
+    var keepAlive = IOClient(
+      HttpClient()..badCertificateCallback = (_, _, _) => true,
+    );
+    addTearDown(keepAlive.close);
+    var response = await keepAlive.get(
+      Uri.parse('https://127.0.0.1:${server.port}/'),
+    );
+    expect(response.body, '"ok"');
+
+    // The client keeps its connection open; close must not wait for it.
+    var elapsed = Stopwatch()..start();
+    await h2.close();
+    expect(elapsed.elapsed, lessThan(const Duration(seconds: 2)));
+  });
+
+  test('drain returns the same future when called again', () async {
+    var ctx = SecurityContext()
+      ..useCertificateChain('dev.pem')
+      ..usePrivateKey('dev.key', password: 'dartdart')
+      ..setAlpnProtocols(['h2', 'http/1.1'], true);
+    var h2 = AngelHttp2(Angel(), ctx, allowHttp1: true);
+    await h2.startServer();
+    addTearDown(h2.close);
+    expect(identical(h2.drain(), h2.drain()), isTrue);
+  });
+
   test(
     'close lets HTTP/2 and HTTP/1 requests finish, before the hooks',
     () async {

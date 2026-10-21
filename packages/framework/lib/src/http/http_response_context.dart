@@ -4,6 +4,7 @@ import 'dart:typed_data' show BytesBuilder;
 
 import 'package:http_parser/http_parser.dart';
 
+import '../core/abort.dart';
 import '../core/core.dart';
 import 'http_request_context.dart';
 

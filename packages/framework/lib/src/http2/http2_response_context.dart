@@ -113,8 +113,17 @@ class Http2ResponseContext extends ResponseContext<ServerTransportStream> {
     }
 
     stream.sendHeaders(headers);
+    _sentHeaders[stream] = true;
     return _streamInitialized = true;
   }
+
+  /// The streams whose headers a context sent itself, not the driver.
+  static final Expando<bool> _sentHeaders = Expando('sent headers');
+
+  /// Whether an [Http2ResponseContext] sent the headers of [stream] itself.
+  @internal
+  static bool sentHeaders(ServerTransportStream stream) =>
+      _sentHeaders[stream] ?? false;
 
   /// Adds the session ID cookie, if the request has a session and it has not
   /// been added yet. HTTP/2 here always runs over TLS, so the cookie is

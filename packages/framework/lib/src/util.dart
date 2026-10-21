@@ -48,10 +48,9 @@ T? getMethodAnnotation<T>(
   Function method,
   Reflector? reflector,
 ) {
-  var annotation = getAnnotation<T>(method, reflector);
-  if (annotation != null || reflector == null || !canReflect(reflector)) {
-    return annotation;
-  }
+  if (reflector == null || !canReflect(reflector)) return null;
+  var function = tryReflect(() => reflector.reflectFunction(method));
+  if (function != null) return matchingAnnotation<T>(function.annotations);
   var declarations = tryReflect(() => reflector.reflectClass(obj.runtimeType))
       ?.declarations;
   for (var declaration in declarations ?? const <ReflectedDeclaration>[]) {

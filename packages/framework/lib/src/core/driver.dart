@@ -8,6 +8,7 @@ import 'package:stack_trace/stack_trace.dart';
 import 'package:tuple/tuple.dart';
 
 import '../util.dart';
+import 'abort.dart';
 import 'core.dart';
 
 /// Base driver class for Angel implementations.
@@ -118,6 +119,10 @@ abstract class Driver<
 
   /// Shuts down the underlying server: it is [drain]ed, then the shutdown
   /// hooks run, and the app is closed.
+  ///
+  /// A handler still running after [closeTimeout] cannot be stopped: its
+  /// connection is closed, but it runs on while the hooks run and the app is
+  /// closed, so it may find services and resources gone.
   Future<void> close() async {
     if (_closed) return;
     _closed = true;

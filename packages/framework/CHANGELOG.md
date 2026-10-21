@@ -25,7 +25,7 @@
 * **Routing:** `app.group` middleware runs, and typed parameters such as `int:id` do not match text
 * **Hostnames:** `|` alternatives and trailing dots work
 * **Malformed requests:** Bad headers and bodies are a 400 instead of a 500, a crash or a hang
-* **Bodies:** Concurrent `parseBody` calls share one parse
+* **Bodies:** Concurrent `parseBody` calls share one parse. After a failed parse, `bodyAsMap` and the other body getters are empty, where they threw a `StateError` that made an error handler reading them answer a 500 instead of a 400
 * **Content negotiation:** `accepts` and `Accept-Encoding` honour `q=0` and wildcards
 * **Responses:** `res.done` completes on close, and errors escaping a connection are logged instead of uncaught
 * **Compression:** `Vary: Accept-Encoding` is sent, and encoded, 204, 206 and 304 responses are not compressed
@@ -33,7 +33,7 @@
 * **Services:** `app.use` services parse their ids, and an invalid id is a 400
 * **HookedService:** After-modify listeners fire, and canceled calls return their result
 * **MapService:** Returns copies of records, keeps ids and created-at on update, and handles concurrent writes
-* **HTTP/2:** Status and headers are sent for every response, request bodies use flow control, and malformed requests are a 400
+* **HTTP/2:** Status and headers are sent for every response, request bodies use flow control, and malformed requests are a 400. A failure after a streamed response sent its headers resets the stream, where a second HEADERS frame broke the protocol, and `AngelHttp2.drain` returns the same future when called again
 * **Server:** Shutdown hooks run once on close, before services close, and subclasses of `Angel` can be constructed
 * **Tests:** The tests and examples no longer use `MirrorsReflector`
 

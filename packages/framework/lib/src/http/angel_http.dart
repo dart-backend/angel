@@ -13,6 +13,7 @@ import 'dart:io'
 import 'package:angel3_framework/angel3_framework.dart';
 
 import '../core/core.dart';
+import 'connections.dart';
 import 'http_request_context.dart';
 import 'http_response_context.dart';
 
@@ -138,9 +139,7 @@ class AngelHttp
   @override
   Future<void> connectionsClosed() async {
     var server = this.server;
-    while (server != null && server.connectionsInfo().total > 0) {
-      await Future.delayed(const Duration(milliseconds: 10));
-    }
+    if (server != null) await allConnectionsClosed(server);
   }
 
   @override

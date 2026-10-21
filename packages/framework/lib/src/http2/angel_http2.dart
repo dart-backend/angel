@@ -7,6 +7,7 @@ import 'package:angel3_framework/http.dart';
 import 'package:http2/transport.dart';
 import 'package:angel3_mock_request/angel3_mock_request.dart';
 
+import '../http/connections.dart';
 import 'http2_request_context.dart';
 import 'http2_response_context.dart';
 
@@ -134,9 +135,14 @@ class AngelHttp2
     return _artificial = _AngelHttp2ServerSocket(s, this);
   }
 
-  /// Drains HTTP/1 requests too, which [allowHttp1] serves.
+  Future<void>? _drainingHttp2;
+
+  /// Drains HTTP/1 requests too, which [allowHttp1] serves. Calling it again
+  /// returns the same future.
   @override
-  Future<void> drain() async {
+  Future<void> drain() => _drainingHttp2 ??= _drainHttp2();
+
+  Future<void> _drainHttp2() async {
     await _artificial?.close();
     var http = _http?..closeTimeout = closeTimeout;
     await Future.wait([super.drain(), ?http?.drain()]);
@@ -169,21 +175,19 @@ class AngelHttp2
     await Future.wait([
       for (var connection in _connections.toList())
         connection.finish().catchError((_) {}),
-      if (http1 != null)
-        Future(() async {
-          while (http1.connectionsInfo().total > 0) {
-            await Future.delayed(const Duration(milliseconds: 10));
-          }
-        }),
+      if (http1 != null) allConnectionsClosed(http1),
     ]);
   }
 
   /// Ends a stream the driver wrote to (see [_pending]). A stream it never
-  /// wrote to is reset instead, since no valid response can be sent on it.
+  /// wrote to is reset instead, since no valid response can be sent on it, as
+  /// is one whose [Http2ResponseContext] sent its own headers but not those of
+  /// the driver (e.g. an error fallback after a response started streaming).
   @override
   Future closeResponse(ServerTransportStream response) {
     var pending = _pending[response];
-    if (pending == null) {
+    if (pending == null ||
+        (!pending.sent && Http2ResponseContext.sentHeaders(response))) {
       response.terminate();
     } else if (!pending.closed) {
       pending.closed = true;
