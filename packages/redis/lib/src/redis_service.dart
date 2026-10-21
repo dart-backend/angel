@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:resp_client/resp_client.dart';
@@ -23,6 +24,18 @@ end
 return 0
 ''';
 
+/// Increments the counter KEYS[1], first seeding it from the pre-10.0.0
+/// counter KEYS[2] if KEYS[1] does not exist yet and KEYS[2] holds an integer.
+const String _seededIncrScript = '''
+if redis.call('EXISTS', KEYS[1]) == 0 then
+  local old = redis.pcall('GET', KEYS[2])
+  if type(old) == 'string' and string.match(old, '^%-?%d+\$') then
+    redis.call('SET', KEYS[1], old)
+  end
+end
+return redis.call('INCR', KEYS[1])
+''';
+
 /// An Angel service that reads and writes JSON within a Redis store.
 class RedisService extends Service<String, Map<String, dynamic>> {
   final RespCommandsTier2 respCommands;
@@ -44,6 +57,8 @@ class RedisService extends Service<String, Map<String, dynamic>> {
   /// between reading and writing it.
   final int maxWriteAttempts;
 
+  final Random _random = Random();
+
   RedisService(
     this.respCommands, {
     this.prefix,
@@ -62,15 +77,24 @@ class RedisService extends Service<String, Map<String, dynamic>> {
 
   String _applyPrefix(String id) => prefix == null ? id : '$prefix:$id';
 
-  /// Kept outside the `<prefix>:` namespace so that no record ID can collide
-  /// with it. Without a prefix every key is a possible record, so [index]
-  /// skips it explicitly.
+  /// Kept outside the `<prefix>:` namespace, so records of this service cannot
+  /// collide with it. Records of a service with no prefix, or with the prefix
+  /// `angel_redis`, still can. Without a prefix every key is a possible
+  /// record, so [index] skips it explicitly.
   String get _idCounterKey =>
       prefix == null ? 'angel_redis:id' : 'angel_redis:id:$prefix';
+
+  /// The counter key used before 10.0.0.
+  String get _legacyIdCounterKey => _applyPrefix('angel_redis:id');
 
   /// Escapes glob metacharacters so the prefix only matches itself.
   static String _escapeGlob(String s) =>
       s.replaceAllMapped(RegExp(r'[\\*?\[\]]'), (m) => '\\${m[0]}');
+
+  /// Whether [reply] is the error Redis returns for a key holding a hash,
+  /// list or other non-string type.
+  static bool _isWrongType(RespType reply) =>
+      reply.isError && (reply.payload as String).startsWith('WRONGTYPE');
 
   Future<RespType> _execute(List<Object?> command) async {
     var result = await _tier0.execute(command);
@@ -87,6 +111,17 @@ class RedisService extends Service<String, Map<String, dynamic>> {
     return result.payload != null;
   }
 
+  Future<String> _nextId() async {
+    var result = await _execute([
+      'EVAL',
+      _seededIncrScript,
+      2,
+      _idCounterKey,
+      _legacyIdCounterKey,
+    ]);
+    return result.payload.toString();
+  }
+
   Map<String, dynamic>? _tryDecode(String? value) {
     if (value == null) return null;
     try {
@@ -100,12 +135,64 @@ class RedisService extends Service<String, Map<String, dynamic>> {
   /// Returns the raw value and decoded record for [id]. Throws a 404 if the
   /// key is missing or does not hold a JSON object.
   Future<(String, Map<String, dynamic>)> _readRecord(String id) async {
-    var raw = await respCommands.get(_applyPrefix(id));
+    var reply = await _tier0.execute(['GET', _applyPrefix(id)]);
+    if (reply.isError && !_isWrongType(reply)) {
+      throw StateError('Redis GET failed: ${reply.payload}');
+    }
+
+    var raw = reply.isError ? null : reply.payload as String?;
     var record = _tryDecode(raw);
     if (record == null) {
       throw AngelHttpException.notFound(message: 'No record found for ID $id');
     }
     return (raw!, record);
+  }
+
+  /// Reads the record for [id] and runs [script] with the key, the value that
+  /// was read, and the extra arguments returned by [build]. Returns the output
+  /// from [build], or tries again after a randomized delay if the record
+  /// changed in between.
+  Future<T> _compareAndWrite<T>(
+    String id,
+    String script,
+    (List<Object>, T) Function(Map<String, dynamic> record) build,
+    String action,
+  ) async {
+    var key = _applyPrefix(id);
+
+    for (var attempt = 0; attempt < maxWriteAttempts; attempt++) {
+      if (attempt > 0) {
+        var maxDelay = min(1 << min(attempt, 7), 100);
+        await Future.delayed(
+          Duration(milliseconds: _random.nextInt(maxDelay) + 1),
+        );
+      }
+
+      var (current, record) = await _readRecord(id);
+      var (extraArgs, output) = build(record);
+      var result = await _tier0.execute([
+        'EVAL',
+        script,
+        1,
+        key,
+        current,
+        ...extraArgs,
+      ]);
+      // The key changed to a non-string type after it was read.
+      if (_isWrongType(result)) {
+        throw AngelHttpException.notFound(
+          message: 'No record found for ID $id',
+        );
+      }
+      if (result.isError) {
+        throw StateError('Redis EVAL failed: ${result.payload}');
+      }
+      if (result.payload == 1) return output;
+    }
+
+    throw AngelHttpException.conflict(
+      message: 'Record $id changed during $action; try again',
+    );
   }
 
   @override
@@ -134,7 +221,7 @@ class RedisService extends Service<String, Map<String, dynamic>> {
     var keyList = keys.toList();
 
     for (var i = 0; i < keyList.length; i += batchSize) {
-      var end = i + batchSize < keyList.length ? i + batchSize : keyList.length;
+      var end = min(i + batchSize, keyList.length);
       var result = await _execute(['MGET', ...keyList.sublist(i, end)]);
 
       // MGET returns nil for keys that were deleted after the scan or that
@@ -163,9 +250,15 @@ class RedisService extends Service<String, Map<String, dynamic>> {
     Map<String, dynamic>? params,
   ]) async {
     data = Map<String, dynamic>.from(data!);
+    var givenId = data['id'];
 
-    if (data['id'] != null) {
-      var id = data['id'].toString();
+    if (givenId != null) {
+      if (!(givenId is String && givenId.isNotEmpty || givenId is int)) {
+        throw AngelHttpException.badRequest(
+          message: 'ID must be a non-empty string or an integer',
+        );
+      }
+      var id = givenId.toString();
       data['id'] = id;
       if (!await _setIfAbsent(_applyPrefix(id), json.encode(data))) {
         throw AngelHttpException.conflict(
@@ -178,8 +271,7 @@ class RedisService extends Service<String, Map<String, dynamic>> {
     // Generated IDs can collide with client-supplied ones, so skip any that
     // are already taken.
     while (true) {
-      var counter = await _execute(['INCR', _idCounterKey]);
-      var id = counter.payload.toString();
+      var id = await _nextId();
       data['id'] = id;
       if (await _setIfAbsent(_applyPrefix(id), json.encode(data))) {
         return data;
@@ -192,29 +284,13 @@ class RedisService extends Service<String, Map<String, dynamic>> {
     String id,
     Map<String, dynamic>? data, [
     Map<String, dynamic>? params,
-  ]) async {
-    var key = _applyPrefix(id);
-
-    for (var attempt = 0; attempt < maxWriteAttempts; attempt++) {
-      var (current, record) = await _readRecord(id);
+  ]) {
+    return _compareAndWrite(id, _compareAndSetScript, (record) {
       var merged = record
         ..addAll(data!)
         ..['id'] = id;
-
-      var result = await _execute([
-        'EVAL',
-        _compareAndSetScript,
-        1,
-        key,
-        current,
-        json.encode(merged),
-      ]);
-      if (result.payload == 1) return merged;
-    }
-
-    throw AngelHttpException.conflict(
-      message: 'Record $id changed during modification; try again',
-    );
+      return ([json.encode(merged)], merged);
+    }, 'modification');
   }
 
   @override
@@ -232,23 +308,12 @@ class RedisService extends Service<String, Map<String, dynamic>> {
   Future<Map<String, dynamic>> remove(
     String id, [
     Map<String, dynamic>? params,
-  ]) async {
-    var key = _applyPrefix(id);
-
-    for (var attempt = 0; attempt < maxWriteAttempts; attempt++) {
-      var (current, record) = await _readRecord(id);
-      var result = await _execute([
-        'EVAL',
-        _compareAndDeleteScript,
-        1,
-        key,
-        current,
-      ]);
-      if (result.payload == 1) return record;
-    }
-
-    throw AngelHttpException.conflict(
-      message: 'Record $id changed during removal; try again',
+  ]) {
+    return _compareAndWrite(
+      id,
+      _compareAndDeleteScript,
+      (record) => (const [], record),
+      'removal',
     );
   }
 }

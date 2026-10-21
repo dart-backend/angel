@@ -102,6 +102,61 @@ void main() async {
     expect(await service.respCommands.get('angel_redis_test:raw'), '42');
   });
 
+  test('non-string keys are not records', () async {
+    await service.respCommands.flushDb();
+    await service.respCommands.hset('angel_redis_test:hash', 'f', 'v');
+    await expectLater(
+      () => service.read('hash'),
+      throwsA(
+        isA<AngelHttpException>().having((e) => e.statusCode, 'status', 404),
+      ),
+    );
+    expect(await service.index(), isEmpty);
+  });
+
+  test('id counter continues from the pre-10.0.0 key', () async {
+    await service.respCommands.flushDb();
+    await service.respCommands.set('angel_redis_test:angel_redis:id', '41');
+    var output = await service.create({'name': 'after upgrade'});
+    expect(output['id'], '42');
+    output = await service.create({'name': 'next'});
+    expect(output['id'], '43');
+  });
+
+  test('id counter ignores a corrupt pre-10.0.0 key', () async {
+    await service.respCommands.flushDb();
+    await service.respCommands.set('angel_redis_test:angel_redis:id', '1e3');
+    var output = await service.create({'name': 'after upgrade'});
+    expect(output['id'], '1');
+  });
+
+  test('id counter reseeds after the new key is deleted', () async {
+    await service.respCommands.flushDb();
+    await service.respCommands.set('angel_redis_test:angel_redis:id', '10');
+    expect((await service.create({}))['id'], '11');
+    await service.respCommands.del(['angel_redis:id:angel_redis_test']);
+    // Reseeded from 10, so 11 is taken and skipped rather than restarting at 1.
+    expect((await service.create({}))['id'], '12');
+  });
+
+  test('many write attempts do not overflow the retry delay', () {
+    expect(
+      RedisService(service.respCommands, maxWriteAttempts: 1000),
+      isA<RedisService>(),
+    );
+  });
+
+  test('create rejects invalid ids', () async {
+    for (var id in ['', false, 1.5, <String, dynamic>{}, <dynamic>[]]) {
+      await expectLater(
+        () => service.create({'id': id}),
+        throwsA(
+          isA<AngelHttpException>().having((e) => e.statusCode, 'status', 400),
+        ),
+      );
+    }
+  });
+
   test('rejects invalid options', () {
     expect(
       () => RedisService(service.respCommands, batchSize: 0),

@@ -2,16 +2,24 @@
 
 ## 10.0.0
 
-* **Breaking:** `create` throws 409 if the ID already exists
-* **Breaking:** `modify` and `remove` throw 409 if the record keeps changing during writes
-* **Breaking:** `read`, `modify` and `remove` throw 404 for keys that are not JSON objects
-* **Breaking:** The ID counter moved to `angel_redis:id:<prefix>`, so numbering restarts at 1
+### Breaking changes in 10.0.0
+
+* **Breaking:** `create` throws a 409 if the id already exists
+* **Breaking:** `create` throws a 400 unless the id is a non-empty string or an integer
+* **Breaking:** `modify` and `remove` throw a 409 if the record keeps changing during writes
+* **Breaking:** `read`, `modify` and `remove` throw a 404 for keys that are not JSON objects
+
+### New in 10.0.0
+
+* `batchSize` and `maxWriteAttempts` options
 * `index` uses `SCAN` instead of `KEYS`
-* Fixed `index` errors and stray results
-* Fixed concurrent `modify` and `remove` corrupting data
-* Fixed `create` with non-string IDs and auto-IDs overwriting records
-* Fixed `update` ignoring write errors
-* Added `batchSize` and `maxWriteAttempts` options
+
+### Fixes in 10.0.0
+
+* **Index:** No more errors or stray results
+* **Modify and remove:** Concurrent writes no longer corrupt data
+* **Create:** Integer ids are accepted, and auto-ids no longer overwrite records. The id counter moved to `angel_redis:id:<prefix>`, continuing from the old counter
+* **Update:** Write errors are reported
 
 ## 9.1.0
 
