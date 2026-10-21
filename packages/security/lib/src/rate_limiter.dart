@@ -1,7 +1,6 @@
 import 'dart:async';
 
 import 'package:angel3_framework/angel3_framework.dart';
-import 'package:angel3_security/angel3_security.dart';
 
 import 'rate_limiting_window.dart';
 
@@ -11,6 +10,12 @@ import 'rate_limiting_window.dart';
 /// The rate limiter operates under the assumption that a [User] object
 /// can be computed from each request, as well as information about
 /// the current rate-limiting window.
+///
+/// A window is read, checked and written back in separate steps, so requests
+/// of one user that run at the same time (or on several instances sharing a
+/// store) may together exceed [maxPointsPerWindow]. A store that can update a
+/// window atomically avoids this in [getCurrentWindow] and
+/// [updateCurrentWindow].
 abstract class RateLimiter<User> {
   /// The maximum number of points that may be consumed
   /// within the given [windowDuration].
@@ -92,12 +97,14 @@ abstract class RateLimiter<User> {
   /// Signals to a user that they have exceeded the rate limit for the
   /// current window, and terminates execution of the current [RequestContext].
   ///
-  /// The default implementation is throw an [AngelHttpException] with
-  /// status code `429` and the given `errorMessage`, as well as sending
-  /// a [`Retry-After`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/429)
-  /// header, and then returning `false`.
+  /// The default implementation sends a
+  /// [`Retry-After`](https://developer.mozilla.org/en-US/docs/Web/HTTP/Status/429)
+  /// header, and throws an [AngelHttpException] with status code `429` and
+  /// the given `errorMessage`.
   ///
-  /// Whatever is returned here will be returned in [handleRequest].
+  /// Whatever is returned here will be returned in [handleRequest]: return
+  /// `false` to end the request (e.g. after writing a response), or `true`
+  /// to let it through.
   FutureOr<Object> rejectRequest(
     RequestContext req,
     ResponseContext res,
@@ -105,7 +112,9 @@ abstract class RateLimiter<User> {
     DateTime currentTime,
   ) {
     var retryAfter = window.resetTime!.difference(currentTime);
-    res.headers['retry-after'] = retryAfter.inSeconds.toString();
+    // Rounded up, so a client is not told to retry while the window lasts.
+    var seconds = (retryAfter.inMilliseconds / 1000).ceil();
+    res.headers['retry-after'] = (seconds < 1 ? 1 : seconds).toString();
     throw AngelHttpException(message: errorMessage, statusCode: 429);
   }
 
@@ -154,10 +163,7 @@ abstract class RateLimiter<User> {
     // user over the rate limit.
     else if (currentWindow.pointsConsumed >= maxPointsPerWindow) {
       await sendWindowInformation(req, res, currentWindow);
-      await rejectRequest(req, res, currentWindow, now);
-      //var result = await rejectRequest(req, res, currentWindow, now);
-      //if (result != null) return result;
-      return false;
+      return await rejectRequest(req, res, currentWindow, now);
     } else {
       // Add the cost of the current endpoint, and update the window.
       var cost = await getEndpointCost(req, res, currentWindow);

@@ -139,6 +139,12 @@ class TestClient extends client.BaseAngelClient {
       extractedHeaders[k] = v.join(',');
     });
 
+    // The cookies a server would send, joined as `package:http` joins
+    // headers.
+    if (rs.cookies.isNotEmpty) {
+      extractedHeaders['set-cookie'] = rs.cookies.join(',');
+    }
+
     Stream<List<int>> stream = rs;
     // -1 means no length was set, as in dart:io.
     int? contentLength = rs.contentLength < 0 ? null : rs.contentLength;

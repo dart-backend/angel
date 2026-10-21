@@ -4,6 +4,8 @@ import 'dart:io';
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:crypto/crypto.dart';
 
+import 'constant_time.dart';
+
 /// A utility that signs, and verifies, cookies using an [Hmac].
 ///
 /// It aims to mitigate so-called "cookie poisoning" attacks by
@@ -38,14 +40,14 @@ class CookieSigner {
     void Function(Cookie)? onInvalidCookie,
   }) {
     return req.cookies.fold([], (out, cookie) {
-      var data = getCookiePayloadAndSignature(cookie.value);
-      if (data == null || (data[1] != computeCookieSignature(data[0]))) {
+      var payload = readPayload(cookie);
+      if (payload == null) {
         if (onInvalidCookie != null) {
           onInvalidCookie(cookie);
         }
         return out;
       } else {
-        return out..add(cookieWithNewValue(cookie, data[0]));
+        return out..add(cookieWithNewValue(cookie, payload));
       }
     });
   }
@@ -57,9 +59,16 @@ class CookieSigner {
   /// If the provided signature does not match the payload
   /// provided, returns `false`.
   /// Otherwise, returns true.
-  bool verify(Cookie cookie) {
+  bool verify(Cookie cookie) => readPayload(cookie) != null;
+
+  /// The payload of a [cookie], if it is properly signed; otherwise `null`.
+  String? readPayload(Cookie cookie) {
     var data = getCookiePayloadAndSignature(cookie.value);
-    return (data != null && (data[1] == computeCookieSignature(data[0])));
+    if (data == null ||
+        !equalsInConstantTime(data[1], computeCookieSignature(data[0]))) {
+      return null;
+    }
+    return data[0];
   }
 
   /// Gets the payload and signature of a given [cookie], WITHOUT
@@ -69,8 +78,10 @@ class CookieSigner {
   /// Otherwise, returns a list with a length of 2, where
   /// the item at index `0` is the payload, and the item at
   /// index `1` is the signature.
+  ///
+  /// The signature follows the last `.`, as the payload may contain dots.
   List<String>? getCookiePayloadAndSignature(String cookieValue) {
-    var dot = cookieValue.indexOf('.');
+    var dot = cookieValue.lastIndexOf('.');
     if (dot <= 0) {
       return null;
     } else if (dot >= cookieValue.length - 1) {
@@ -123,17 +134,14 @@ class CookieSigner {
       ..httpOnly = cookie.httpOnly
       ..maxAge = cookie.maxAge
       ..path = cookie.path
-      ..secure = cookie.secure;
+      ..secure = cookie.secure
+      ..sameSite = cookie.sameSite;
   }
 
   /// Computes the *signature* of a [cookieValue], either for
   /// signing an outgoing cookie, or verifying an incoming cookie.
   String computeCookieSignature(String cookieValue) {
-    // base64Url(cookie) + "." + base64Url(sig)
-    // var encodedCookie = base64Url.encode(cookieValue.codeUnits);
-    var sigBytes = hmac.convert(cookieValue.codeUnits).bytes;
+    var sigBytes = hmac.convert(utf8.encode(cookieValue)).bytes;
     return base64Url.encode(sigBytes);
-    // var sig = base64Url.encode(sigBytes);
-    // return encodedCookie + '.' + sig;
   }
 }
