@@ -29,6 +29,13 @@ void main() {
           (req, res) => req.headers!['origin'],
         ]),
       )
+      ..options(
+        '/originl',
+        chain([
+          cors(CorsOptions(origin: ['foo.bar', 'baz.quux'])),
+          (req, res) => 'app options',
+        ]),
+      )
       ..get(
         '/origins',
         chain([
@@ -51,6 +58,36 @@ void main() {
         ]),
       )
       ..options('/status', cors(CorsOptions(successStatus: 418)))
+      ..get(
+        '/disabled',
+        chain([cors(CorsOptions(origin: false)), (req, res) => 'ok']),
+      )
+      ..get(
+        '/async',
+        chain([
+          cors(CorsOptions(origin: (String s) async => s == 'foo.bar')),
+          (req, res) => 'ok',
+        ]),
+      )
+      ..get(
+        '/vary',
+        chain([
+          (req, res) {
+            res.headers['vary'] = 'accept-encoding';
+            return true;
+          },
+          cors(CorsOptions(origin: ['foo.bar'])),
+          (req, res) => 'ok',
+        ]),
+      )
+      ..options(
+        '/continue',
+        chain([
+          cors(CorsOptions(preflightContinue: true)),
+          (req, res) => 'continued',
+        ]),
+      )
+      ..options('/plain', chain([cors(), (req, res) => 'app options']))
       ..fallback(cors(CorsOptions()))
       ..post('/', (req, res) async {
         res.write('hello world');
@@ -68,54 +105,50 @@ void main() {
     client = null;
   });
 
+  Future<http.Response> preflight(String path) => client!
+      .send(
+        http.Request('OPTIONS', server.uri.replace(path: path))
+          ..headers['access-control-request-method'] = 'POST',
+      )
+      .then(http.Response.fromStream);
+
   test('status 204 by default', () async {
-    var rq = http.Request('OPTIONS', server.uri.replace(path: '/max_age'));
-    var response = await client!.send(rq).then(http.Response.fromStream);
+    var response = await preflight('/max_age');
     expect(response.statusCode, 204);
   });
 
   test('content length 0 by default', () async {
-    var rq = http.Request('OPTIONS', server.uri.replace(path: '/max_age'));
-    var response = await client!.send(rq).then(http.Response.fromStream);
+    var response = await preflight('/max_age');
     expect(response.contentLength, 0);
   });
 
   test('custom successStatus', () async {
-    var rq = http.Request('OPTIONS', server.uri.replace(path: '/status'));
-    var response = await client!.send(rq).then(http.Response.fromStream);
+    var response = await preflight('/status');
     expect(response.statusCode, 418);
   });
 
   test('max age', () async {
-    var rq = http.Request('OPTIONS', server.uri.replace(path: '/max_age'));
-    var response = await client!.send(rq).then(http.Response.fromStream);
+    var response = await preflight('/max_age');
     expect(response.headers['access-control-max-age'], '250');
   });
 
   test('methods', () async {
-    var rq = http.Request('OPTIONS', server.uri.replace(path: '/methods'));
-    var response = await client!.send(rq).then(http.Response.fromStream);
+    var response = await preflight('/methods');
     expect(response.headers['access-control-allow-methods'], 'GET,POST');
   });
 
   test('dynamicCors.credentials', () async {
-    var rq = http.Request(
-      'OPTIONS',
-      server.uri.replace(path: '/credentials_d'),
-    );
-    var response = await client!.send(rq).then(http.Response.fromStream);
+    var response = await preflight('/credentials_d');
     expect(response.headers['access-control-allow-credentials'], 'true');
   });
 
   test('credentials', () async {
-    var rq = http.Request('OPTIONS', server.uri.replace(path: '/credentials'));
-    var response = await client!.send(rq).then(http.Response.fromStream);
+    var response = await preflight('/credentials');
     expect(response.headers['access-control-allow-credentials'], 'true');
   });
 
   test('exposed headers', () async {
-    var rq = http.Request('OPTIONS', server.uri.replace(path: '/headers'));
-    var response = await client!.send(rq).then(http.Response.fromStream);
+    var response = await preflight('/headers');
     expect(response.headers['access-control-expose-headers'], 'x-foo,x-bar');
   });
 
@@ -124,7 +157,8 @@ void main() {
       server.uri.replace(path: '/originl'),
       headers: {'origin': 'foreign'},
     );
-    expect(response.headers['access-control-allow-origin'], 'false');
+    expect(response.headers['access-control-allow-origin'], isNull);
+    expect(response.headers['vary'], 'origin');
   });
 
   test('list origin', () async {
@@ -148,7 +182,8 @@ void main() {
       headers: {'origin': 'foo.bar'},
     );
     expect(response.headers['access-control-allow-origin'], 'foo.bar');
-    expect(response.headers['vary'], 'origin');
+    // The same for every origin, so caches need not keep them apart.
+    expect(response.headers['vary'], isNull);
   });
 
   test('regex origin', () async {
@@ -177,14 +212,103 @@ void main() {
     expect(response.headers['access-control-allow-origin'], equals('*'));
   });
 
-  test('mirror headers', () async {
-    final response = await client!.post(
+  test('mirror headers on a preflight only', () async {
+    var response = await client!
+        .send(
+          http.Request('OPTIONS', server.uri)
+            ..headers['access-control-request-method'] = 'POST'
+            ..headers['access-control-request-headers'] = 'foo',
+        )
+        .then(http.Response.fromStream);
+    expect(response.headers['access-control-allow-headers'], 'foo');
+
+    response = await client!.post(
       server.uri,
       headers: {'access-control-request-headers': 'foo'},
     );
-    expect(response.statusCode, equals(200));
-    print('Response: ${response.body}');
-    print('Headers: ${response.headers}');
-    expect(response.headers['access-control-allow-headers'], equals('foo'));
+    expect(response.statusCode, 200);
+    expect(response.headers['access-control-allow-headers'], isNull);
+  });
+
+  test('a request without an origin is not refused', () async {
+    var response = await client!.get(server.uri.replace(path: '/originp'));
+    expect(response.statusCode, 200);
+    expect(response.headers['access-control-allow-origin'], isNull);
+  });
+
+  test('origin: false disables CORS', () async {
+    var response = await client!.get(
+      server.uri.replace(path: '/disabled'),
+      headers: {'origin': 'foo.bar'},
+    );
+    expect(response.headers['access-control-allow-origin'], isNull);
+  });
+
+  test('an origin of an unknown type is an ArgumentError', () {
+    for (var origin in [
+      Uri.parse('https://foo.bar'),
+      ['foo.bar', 1],
+      (String s) => null,
+    ]) {
+      expect(() => CorsOptions(origin: origin), throwsArgumentError);
+    }
+  });
+
+  test('an async predicate is awaited', () async {
+    var allowed = await client!.get(
+      server.uri.replace(path: '/async'),
+      headers: {'origin': 'foo.bar'},
+    );
+    expect(allowed.headers['access-control-allow-origin'], 'foo.bar');
+    var refused = await client!.get(
+      server.uri.replace(path: '/async'),
+      headers: {'origin': 'evil.com'},
+    );
+    expect(refused.headers['access-control-allow-origin'], isNull);
+  });
+
+  test('Vary is added to, not replaced', () async {
+    var response = await client!.get(
+      server.uri.replace(path: '/vary'),
+      headers: {'origin': 'foo.bar'},
+    );
+    expect(response.headers['vary'], 'accept-encoding, origin');
+  });
+
+  test('preflightContinue leaves the response to later handlers', () async {
+    var response = await preflight('/continue');
+    expect(response.statusCode, 200);
+    expect(response.body, '"continued"');
+    expect(response.headers['access-control-allow-methods'], isNotNull);
+  });
+
+  test('an OPTIONS request that is not a preflight continues', () async {
+    var rq = http.Request('OPTIONS', server.uri.replace(path: '/plain'));
+    var response = await client!.send(rq).then(http.Response.fromStream);
+    expect(response.body, '"app options"');
+  });
+
+  test('a preflight from a refused origin is answered without CORS', () async {
+    var response = await client!
+        .send(
+          http.Request('OPTIONS', server.uri.replace(path: '/originl'))
+            ..headers['origin'] = 'evil.com'
+            ..headers['access-control-request-method'] = 'GET',
+        )
+        .then(http.Response.fromStream);
+    expect(response.statusCode, 204);
+    expect(response.headers['access-control-allow-origin'], isNull);
+  });
+
+  test('a method override does not make a preflight', () async {
+    var response = await client!.post(
+      server.uri.replace(path: '/plain'),
+      headers: {
+        'x-http-method-override': 'OPTIONS',
+        'access-control-request-method': 'POST',
+      },
+    );
+    // Routed as OPTIONS, but sent as a POST, so not answered by cors.
+    expect(response.body, '"app options"');
   });
 }
