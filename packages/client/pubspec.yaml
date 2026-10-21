@@ -20,8 +20,6 @@ dependencies:
 dev_dependencies:
   angel3_framework: ^10.0.0
   angel3_model: ^10.0.0
-  angel3_mock_request: ^10.0.0
-  angel3_container: ^10.0.0
   angel3_auth: ^10.0.0
   async: ^2.11.0
   quiver: ^3.2.0

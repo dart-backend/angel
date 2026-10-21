@@ -303,7 +303,8 @@ class ServiceList<Id, Data> extends DelegatingList<Data> {
 
   final Service<Id, Data> service;
 
-  final StreamController<ServiceList<Id, Data>> _onChange = StreamController();
+  final StreamController<ServiceList<Id, Data>> _onChange =
+      StreamController.broadcast();
 
   final List<StreamSubscription> _subs = [];
 
@@ -326,7 +327,7 @@ class ServiceList<Id, Data> extends DelegatingList<Data> {
           ..clear()
           ..addAll(data);
         _onChange.add(this);
-      }),
+      }, onError: _onChange.addError),
     );
 
     // Created
@@ -334,7 +335,7 @@ class ServiceList<Id, Data> extends DelegatingList<Data> {
       service.onCreated.where(_notNull).listen((item) {
         add(item);
         _onChange.add(this);
-      }),
+      }, onError: _onChange.addError),
     );
 
     // Modified/Updated
@@ -355,8 +356,12 @@ class ServiceList<Id, Data> extends DelegatingList<Data> {
     }
 
     _subs.addAll([
-      service.onModified.where(_notNull).listen(handleModified),
-      service.onUpdated.where(_notNull).listen(handleModified),
+      service.onModified
+          .where(_notNull)
+          .listen(handleModified, onError: _onChange.addError),
+      service.onUpdated
+          .where(_notNull)
+          .listen(handleModified, onError: _onChange.addError),
     ]);
 
     // Removed
@@ -364,16 +369,19 @@ class ServiceList<Id, Data> extends DelegatingList<Data> {
       service.onRemoved.where(_notNull).listen((item) {
         removeWhere((x) => _equality!.equals(item, x));
         _onChange.add(this);
-      }),
+      }, onError: _onChange.addError),
     );
   }
 
   static bool _notNull(dynamic x) => x != null;
 
-  /// Fires whenever the underlying [service] fires a change event.
+  /// Fires whenever the underlying [service] fires a change event, and has the
+  /// errors of its streams.
   Stream<ServiceList<Id, Data>> get onChange => _onChange.stream;
 
   Future close() async {
+    await Future.wait(_subs.map((s) => s.cancel()));
+    _subs.clear();
     await _onChange.close();
   }
 }

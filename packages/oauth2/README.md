@@ -5,7 +5,7 @@
 [![Discord](https://img.shields.io/discord/1060322353214660698)](https://discord.gg/3X6bxTUdCM)
 [![License](https://img.shields.io/github/license/dart-backend/angel)](https://github.com/dart-backend/angel/tree/master/packages/oauth2/LICENSE)
 
-A class containing handlers that can be used within [Angel](https://angel3-framework.web.app/) to build a spec-compliant OAuth 2.0 server, including PKCE support.
+A class containing handlers that can be used within [Angel3](https://angel3-framework.web.app/) to build a spec-compliant OAuth 2.0 server, including PKCE support.
 
 - [Angel3 OAuth2 Server](#angel3-oauth2-server)
   - [Installation](#installation)
@@ -19,8 +19,8 @@ In your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  angel3_framework: ^9.0.0
-  angel3_oauth2: ^9.0.0
+  angel3_framework: ^10.0.0
+  angel3_oauth2: ^10.0.0
 ```
 
 ## Usage

@@ -2,9 +2,18 @@
 
 ## 10.0.0
 
+### Breaking changes in 10.0.0
+
+* **Breaking:** The streams of the client, its services and `ServiceList` are broadcast streams: events are not kept for later listeners, so memory no longer grows without bound, and `close()` completes without listeners, where it never returned
+* **Breaking:** A REST service is a `Service<Id, Data>`, so `service<String, Todo>()` works, where only a nullable type such as `Todo?` did. Its methods return `Data` and throw an `AngelHttpException` on an error, also when its stream has a listener, where they returned `null`
+
 ### Fixes in 10.0.0
 
 * **Errors:** A JSON body that is not an object no longer hides the server's error, and an error without a valid status code reports the response's status
+* **Failures after a successful response:** A failure such as a deserializer error is a 500 instead of the response's 2xx, and the `AngelHttpException` carries the original error as `error`
+* **Error responses:** Reported once: a listener of `onIndexed`, `onRead` and the other streams gets only the `AngelHttpException`, without a second error from reading the body
+* **`Rest.service`:** Uses the `deserializer` it is given
+* **`ServiceList`:** Passes the errors of the service's streams on to `onChange`, where they were uncaught, and `close` cancels its subscriptions to the service
 * **Tests:** No longer use `MirrorsReflector`
 
 ## 9.1.0

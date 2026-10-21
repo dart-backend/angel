@@ -81,3 +81,36 @@ class Spec {
     }.toString();
   }
 }
+
+/// Answers every request with [statusCode] and [body].
+class FixedClient extends http.BaseClient {
+  int statusCode = 200;
+  String body = '';
+  http.BaseRequest? lastRequest;
+
+  @override
+  Future<http.StreamedResponse> send(http.BaseRequest request) {
+    lastRequest = request;
+    return Future<http.StreamedResponse>.value(
+      http.StreamedResponse(
+        Stream<List<int>>.fromIterable([utf8.encode(body)]),
+        statusCode,
+        headers: {'content-type': 'application/json'},
+      ),
+    );
+  }
+}
+
+class FixedAngel extends BaseAngelClient {
+  final FixedClient fixedClient;
+
+  FixedAngel(this.fixedClient) : super(fixedClient, 'http://localhost:3000');
+
+  @override
+  Stream<String> authenticateViaPopup(
+    String url, {
+    String eventName = 'token',
+  }) {
+    throw UnsupportedError('Nope');
+  }
+}
