@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:isolate';
 
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_framework/http.dart';
@@ -107,4 +108,75 @@ void main() {
       throwsA(isNot(isA<TimeoutException>())),
     );
   });
+
+  test('close does not hang when the server is gone', () async {
+    var sync = PubSubSynchronizationChannel(
+      pub_sub.IsolateClient('angel_sync1', adapter.receivePort.sendPort),
+      closeTimeout: const Duration(milliseconds: 200),
+    );
+    // Subscribed, then the server goes away without telling the client.
+    await Future<void>.delayed(const Duration(milliseconds: 200));
+    await server.close();
+    await sync.close().timeout(const Duration(seconds: 5));
+  });
+
+  test('close does not hang when the server never answers', () async {
+    var nobody = ReceivePort();
+    addTearDown(nobody.close);
+    var sync = PubSubSynchronizationChannel(
+      pub_sub.IsolateClient('angel_sync1', nobody.sendPort),
+      closeTimeout: const Duration(milliseconds: 200),
+    );
+    await sync.close().timeout(const Duration(seconds: 5));
+  });
+
+  test('an event without a name is an error of the stream', () async {
+    var sync = channel('angel_sync1');
+    addTearDown(sync.close);
+    var error = expectLater(
+      sync.stream.first.timeout(const Duration(seconds: 5)),
+      throwsA(isA<FormatException>()),
+    );
+    // Let the channel subscribe, then publish what no instance sends.
+    await Future<void>.delayed(const Duration(milliseconds: 200));
+    var other = pub_sub.IsolateClient(
+      'angel_sync2',
+      adapter.receivePort.sendPort,
+    );
+    addTearDown(other.close);
+    await other.publish(PubSubSynchronizationChannel.eventName, {'data': 42});
+    await error;
+  });
+
+  test('closing the sink waits for the channel to close', () async {
+    var closed = false;
+    var client = _NotifyingClient(
+      pub_sub.IsolateClient('angel_sync1', adapter.receivePort.sendPort),
+      () => closed = true,
+    );
+    var sync = PubSubSynchronizationChannel(client);
+    await sync.sink.close();
+    expect(closed, isTrue);
+  });
+}
+
+/// Tells when it is closed.
+class _NotifyingClient implements pub_sub.Client {
+  final pub_sub.Client inner;
+  final void Function() onClose;
+
+  _NotifyingClient(this.inner, this.onClose);
+
+  @override
+  Future publish(String eventName, value) => inner.publish(eventName, value);
+
+  @override
+  Future<pub_sub.ClientSubscription> subscribe(String eventName) =>
+      inner.subscribe(eventName);
+
+  @override
+  Future close() async {
+    await inner.close();
+    onClose();
+  }
 }
