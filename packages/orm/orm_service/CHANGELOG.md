@@ -2,7 +2,7 @@
 
 ## 10.0.0
 
-### Fixes
+### Fixes in 10.0.0
 
 * **Security:** `$sort` accepts only the query's own column names (a 400 otherwise), where any REST client could inject SQL into `ORDER BY`
 * **`remove(null)`:** Removes only the records matching the query, where it deleted every record of the table

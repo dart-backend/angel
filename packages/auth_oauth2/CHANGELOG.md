@@ -2,15 +2,15 @@
 
 ## 10.0.0
 
-### Breaking changes
+### Breaking changes in 10.0.0
 
 * **Breaking:** Each login has a random `state`, checked on the callback (against login CSRF), kept with its PKCE code verifier in a signed, `HttpOnly` cookie of its own, scoped to the redirect URI's path, which expires after the new `loginTimeout`. `authenticateCallback` refuses a callback without it, as `invalid_state` to `onError`
 
-### New
+### New in 10.0.0
 
 * `cookieName`, `cookieKey`, `cookieSameSite`, `loginTimeout` and `httpClient`
 
-### Fixes
+### Fixes in 10.0.0
 
 * **Starting a login:** Redirects to the provider, where it answered `400`: a request with `code` or `error` is now the callback
 * **PKCE:** Each login uses its own code verifier for the token exchange, which providers that check PKCE refused

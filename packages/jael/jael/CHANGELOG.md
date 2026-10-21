@@ -2,13 +2,13 @@
 
 ## 10.0.0
 
-### Breaking changes
+### Breaking changes in 10.0.0
 
 * **Breaking:** No longer uses `dart:mirrors`, so a program that renders templates can be compiled with `dart compile exe`. `{{ a.b }}` reads `b` from the `memberResolver` given to `Renderer.render`, a `Map` key, a common member of a core type, or the value's `toJson()`; other getters need a `memberResolver` or `toJson()`. `angel3_jael` gives one from the app's reflector. See the README
 * **Breaking:** Removed `new`, `NewExpression` and `TokenType.$new`, which could never be parsed; put a function that makes the value in the scope instead
 * **Breaking:** With `strictResolution: false`, an unknown member, or a member of `null`, is `null`. `readMember` takes `resolver` as a named parameter, and the new `tryReadMember` returns `noMember`
 
-### Fixes
+### Fixes in 10.0.0
 
 * **Members:** `{{ user.name }}` reads the key of a `Map`. `toJson()` is called once per value in a render, its own errors are thrown, and one that takes an argument is not called
 * **Null safety:** `?.` makes the rest of the chain `null`, as in Dart

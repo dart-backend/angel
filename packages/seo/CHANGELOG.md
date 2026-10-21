@@ -2,7 +2,7 @@
 
 ## 10.0.0
 
-### Fixes
+### Fixes in 10.0.0
 
 * **Security:** An asset is a file of the asset directory, with a leading `/` its root; `../` and absolute paths could inline any file of the server into a page. `/site.css` was looked up at the root of the file system, and so never inlined. References with a host are left as they are
 * **Inlining:** Content is inlined as text, with `</script` and `</style` escaped. Stylesheets keep `media` and `nonce`; `async` and non-module `defer` scripts stay external; elements without a valid `href`/`src` are skipped; `rel` is read as a list of words, and stylesheets in the body are inlined too

@@ -2,7 +2,7 @@
 
 ## 10.0.0
 
-### Breaking changes
+### Breaking changes in 10.0.0
 
 * **Breaking:** `POST /auth/token` no longer revives expired JWTs, which made a stolen JWT valid for ever. It renews a valid one, or one expired within the new `reviveGracePeriod` (default: none), whose user still exists
 * **Breaking:** `jwtLifeSpan` defaults to one day (`AngelAuth.defaultJwtLifeSpan`); `-1` (never expire) is warned about with a fixed `jwtKey`
@@ -10,7 +10,7 @@
 * **Breaking:** `allowTokenInQuery` defaults to `false`; enable it for the browser WebSocket client of `angel3_websocket`
 * **Breaking:** JWTs have standard `iat` and `exp` claims, in seconds; JWTs issued before are still read
 
-### Fixes
+### Fixes in 10.0.0
 
 * **Logout:** Expires the `token` cookie, instead of setting it to `""`
 * **JWTs:** Signatures are compared in constant time, a malformed JWT is a 401 instead of a server error, and a JWT without an IP keeps none. `Bearer` is matched whole and in any case

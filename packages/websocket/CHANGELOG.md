@@ -2,13 +2,13 @@
 
 ## 10.0.0
 
-### Breaking changes
+### Breaking changes in 10.0.0
 
 * **Breaking:** No longer uses `dart:mirrors`, so a server can be compiled with `dart compile exe`. `@ExposeWs` methods are found through the app's reflector, such as a `StaticReflector` of data from `angel3_container_generator`; without one, register handlers with the new `exposeWs` in `configureWs`
 * **Breaking:** The streams of `AngelWebSocket`, `WebSocketContext`, the clients and their services are broadcast streams: events are not kept for later listeners, so memory no longer grows without bound, and several `WebSocketController`s can share sockets
 * **Breaking:** WebSockets over HTTP/2 are refused with `501 Not Implemented`
 
-### Fixes
+### Fixes in 10.0.0
 
 * **Authentication:** Refuses an expired JWT, one of another IP address (with `enforceIp`), and one whose user does not exist, as over HTTP. With `allowAuth: false` it answers `403 Authentication over WebSockets is disabled.`
 * **Handshake:** A disallowed origin is refused with `403` before the upgrade, and `allowedProtocols` applies to HTTP/1.1

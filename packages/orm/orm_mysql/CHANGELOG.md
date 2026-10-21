@@ -2,19 +2,15 @@
 
 ## 10.0.0
 
-### Breaking changes
+### Breaking changes in 10.0.0
 
 * **Breaking:** `MySqlExecutor` uses [`mysql_dart`](https://pub.dev/packages/mysql_dart) 3 (supports MySQL 9 and MariaDB 11) instead of `mysql_client`: pass its `MySQLConnection`, and import `package:mysql_dart/mysql_dart.dart`
 * **Breaking:** `MariaDbExecutor` uses `mysql_dart` instead of `mysql1`, as a subclass of `MySqlExecutor`, and works with MySQL too; it still stores a `DateTime` as UTC. Import `package:angel3_orm_mysql/angel3_orm_mysql.dart`, not `src/orm_mariadb.dart`
 
-### Connections and transactions
+### Fixes in 10.0.0
 
-* The commands of a connection run one at a time, in turn, as `mysql_dart` needs; `close` waits for those given before it
-* A transaction holds the connection: its queries run in their own queue, including those not awaited, before its `COMMIT` or `ROLLBACK`. A transaction within one is part of it, and its executor refuses queries once it has ended
-* A query given in a transaction to another executor of its connection runs in the transaction, instead of waiting for ever; `close` in a transaction throws a `StateError`
-
-### Fixes
-
+* **Connections:** The commands of a connection run one at a time, in turn, as `mysql_dart` needs; `close` waits for those given before it
+* **Transactions:** A transaction holds the connection: its queries run in their own queue, including those not awaited, before its `COMMIT` or `ROLLBACK`. A transaction within one is part of it, and its executor refuses queries once it has ended. A query given in a transaction to another executor of its connection runs in the transaction, instead of waiting for ever; `close` in a transaction throws a `StateError`
 * **Inserts:** Return the row of the id given (e.g. a UUID) or of the insert id, not the last row by id, which may be another connection's
 * **Parameters:** Passed as positional `?` with `replacePlaceholders` of `angel3_orm`, so non-ASCII column names work and `DateTime`s in the given map are not changed
 * **Updates:** Return the updated rows of a table without an `id`

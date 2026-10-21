@@ -2,16 +2,16 @@
 
 ## 10.0.0
 
-### Breaking changes
+### Breaking changes in 10.0.0
 
 * **Breaking:** Rewritten as a `build_runner` builder of reflection data for `@injectable` classes and top-level functions, used through `StaticReflector`, so that `Container.make`, `@Expose` controllers, `@Hooks`/`@Middleware` and `ioc` work without `dart:mirrors`, also in AOT and obfuscated apps. It no longer depends on `reflectable`
 * **Breaking:** Removed `GeneratedReflector`, `ContainedReflectable` and `contained`. To migrate:
   * Replace `@contained` with `@injectable` (from `package:angel3_container`), and add `part '<file>.g.dart';` to each library with such classes
   * Replace `reflectable_builder` with `angel3_container_generator` and `build_runner` in `dev_dependencies`, and run `dart run build_runner build`
   * Replace `GeneratedReflector()` with `StaticReflector.combine([...])`, passing each library's generated variable (e.g. `servicesReflection` for `services.dart`)
-* Closures cannot be described: `ioc` on a closure needs an explicit `injection:`
+* **Breaking:** Closures cannot be described: `ioc` on a closure needs an explicit `injection:`
 
-### New
+### New in 10.0.0
 
 * The data of a class lists its `supertypes` (e.g. so a `WebSocketController` finds inherited `@ExposeWs` methods)
 * `getMember` reads public fields, getters and methods, declared or inherited, and returns `noStaticMember` for other names. Regenerate the data with `dart run build_runner build`

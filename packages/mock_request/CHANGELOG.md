@@ -4,16 +4,16 @@
 
 The mocks now behave as `dart:io`'s `HttpRequest`, `HttpResponse` and `HttpHeaders` do.
 
-### Breaking changes
+### Breaking changes in 10.0.0
 
 * **Breaking:** `MockHttpRequest` extends `Stream<Uint8List>`, so its stream methods have the signatures of `dart:io`'s `HttpRequest`
 * **Breaking:** `write` throws `ArgumentError` for a character its encoding cannot represent, instead of truncating it
 
-### New
+### New in 10.0.0
 
 * `MockHttpHeaders.tryParseContentLength`
 
-### Fixes
+### Fixes in 10.0.0
 
 * **Encoding:** `write` and its relatives use the charset of the `content-type` header (or UTF-8, or the response's `encoding`), chosen at the first write, instead of writing each UTF-16 code unit as a byte. `write('')` adds nothing, `write(null)` writes `null`, and `writeln` ends lines with `\n`
 * **Headers:** `contentType`, `contentLength`, `chunkedTransferEncoding`, `date`, `expires` and `ifModifiedSince` are backed by their headers, with `dart:io`'s defaults, parsing and `null` handling. `content-length` holds one validated value. A header is removed with its last value, a `preserveHeaderCase` name is stored lowercase, and locked headers also reject `persistentConnection`, `host` and `port`

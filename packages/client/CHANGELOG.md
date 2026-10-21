@@ -2,7 +2,7 @@
 
 ## 10.0.0
 
-### Fixes
+### Fixes in 10.0.0
 
 * **Errors:** A JSON body that is not an object no longer hides the server's error, and an error without a valid status code reports the response's status
 * **Tests:** No longer use `MirrorsReflector`

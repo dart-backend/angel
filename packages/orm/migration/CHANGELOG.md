@@ -2,18 +2,18 @@
 
 ## 10.0.0
 
-### Breaking changes
+### Breaking changes in 10.0.0
 
 * **Breaking:** Added `Migration.name`, which identifies a migration in the `migrations` table (default: its class name); override it to survive a rename or `--obfuscate`. A class that `implements Migration` must add it
 * **Breaking:** `MutableTable.changeColumnType` takes `length`, `precision` and `scale`, the column's constraints after the change (`isNullable`, `defaultValue`, `autoIncrement`, kept when not given), and on PostgreSQL `using`. Without a precision, a `numeric` or `decimal` is unbounded on PostgreSQL, where it was `numeric(17, 3)`, which rounded values. Implementations must add these parameters
 
-### New
+### New in 10.0.0
 
 * `Migration.legacyPath`, so a runner can rename a migration recorded by an earlier version
 * `noDefault`, to remove a column's default in `changeColumnType`
 * `Table.decimal`, and `MigrationColumn.precisionArguments` for the runners
 
-### Fixes
+### Fixes in 10.0.0
 
 * **Precision:** `Table.numeric` and `MigrationColumn` keep a column's precision and scale; an invalid precision or scale throws when the column is declared
 * **`MigrationColumn.from`:** Keeps every attribute of a `Column`, including its `defaultValue`

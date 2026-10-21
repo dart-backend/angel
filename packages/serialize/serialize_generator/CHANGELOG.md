@@ -2,14 +2,14 @@
 
 ## 10.0.0
 
-### Breaking changes
+### Breaking changes in 10.0.0
 
 * **Breaking:** No longer uses `dart:mirrors`: `SerializableFieldMirror.serializer` and `deserializer` are function names as `String`s, where they were `Symbol`s. The generated code is the same
 * **Breaking:** Generated `hashCode` getters use `Object.hashAll` instead of `hashObjects`; regenerate existing models
 * **Breaking:** A generated class is named by removing a `modelPrefix` (`_`, `Entity`), then a `modelSuffix` (`Entity`), matched by case: `UserIdentity` keeps its name, where it became `UserId`. The prefixes and suffixes are capitalised
 * **Breaking:** A value in `includeAnnotations` that is not a constant instance of a class or enum fails the build
 
-### Fixes
+### Fixes in 10.0.0
 
 * **Hash codes:** `List` and `Map` fields are hashed by their length, so equal models have equal hash codes
 * **Serializers:** `Serializable.serializers` is read by enum value name, including from other constants; an unknown value is logged. The serializer class is generated only for `map` or `json`, and is a `Codec` only for `map`

@@ -2,16 +2,16 @@
 
 ## 10.0.0
 
-### Breaking changes
+### Breaking changes in 10.0.0
 
 * **Breaking:** `modify` and `remove` of a missing id are a 404, instead of creating a document, or answering `{"id": null}`
 
-### New
+### New in 10.0.0
 
 * `create` sets `createdAt` and `updatedAt`, and `update` keeps `createdAt`
 * Clients can sort and limit with `$sort` and `$limit` (e.g. `?$sort=-createdAt&$limit=10`)
 
-### Fixes
+### Fixes in 10.0.0
 
 * **`create`:** Always inserts a new document (each `POST` after the first replaced one), and ignores client-set `_id`, `id`, `createdAt` and `updatedAt`
 * **Queries:** `readMany` returns only the given ids, `allowQuery: false` is applied, the framework's `page` and `token` keys are not filters, and request-context keys are removed from nested queries

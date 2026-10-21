@@ -2,25 +2,25 @@
 
 ## 10.0.0
 
-### Breaking changes
+### Breaking changes in 10.0.0
 
 * **Breaking:** The runners no longer use `dart:mirrors`, so they run in programs compiled with `dart compile exe`. A migration is recorded by its `Migration.name` (default: its class name), where it was its absolute source path and class name, which changed when the project moved. Paths recorded by earlier versions are renamed on start (by `legacyPath`, or the only migration of the class name); an ambiguous path throws a `StateError` rather than guess. See the README
 * **Breaking:** `MySqlMigrationRunner` uses [`mysql_dart`](https://pub.dev/packages/mysql_dart) 3 instead of `mysql_client`, and `MariaDbMigrationRunner` and `MariaDbSchema.run` use it instead of `mysql1`: pass its `MySQLConnection`, and import `package:mysql_dart/mysql_dart.dart`
 * **Breaking:** `up` of every runner throws when a migration fails, and runs none after it, where the PostgreSQL and MariaDB runners only logged it. `MySqlSchema.run` throws when its SQL fails
 * **Breaking:** Two migrations of the same name throw a `StateError`, including two of a class that takes arguments without their own `name`
-* **Breaking:** **Security** String defaults are quoted and escaped alike on every database, where some were unquoted or badly escaped (an SQL injection with a crafted default). A `String` default is always a literal: give SQL as `RawSql` (`defaultsTo(RawSql('CURRENT_TIMESTAMP'))`), and give `defaultsTo('active')`, not `"'active'"`. Other defaults are literals of their `toString()`; a `DateTime` is a date literal, with its offset on PostgreSQL when UTC
+* **Breaking:** For security, string defaults are quoted and escaped alike on every database, where some were unquoted or badly escaped (an SQL injection with a crafted default). A `String` default is always a literal: give SQL as `RawSql` (`defaultsTo(RawSql('CURRENT_TIMESTAMP'))`), and give `defaultsTo('active')`, not `"'active'"`. Other defaults are literals of their `toString()`; a `DateTime` is a date literal, with its offset on PostgreSQL when UTC
 * **Breaking:** `numeric` and `decimal` columns are created with their precision and scale, where MySQL and MariaDB rounded values to whole numbers; without them, `numeric(17, 3)` on MySQL and MariaDB, unbounded on PostgreSQL. A precision without a scale has a scale of 3. Values above a database's limits throw an `ArgumentError`
 * **Breaking:** `changeColumnType` takes the `precision`, `scale` and `length` of the new type (default length 255), the constraints after the change, and `using` (PostgreSQL)
 * **Breaking:** Table names are quoted per part: MySQL and MariaDB in backticks (`` `shop`.`orders` ``), PostgreSQL by schema (`"audit"."events"`); a name already quoted is quoted once. A PostgreSQL table with a `.` in its own name is given in double quotes. `rename` keeps a table in its schema
 
-### New
+### New in 10.0.0
 
 * `SqlMigrationRunner<S>`, which all the runners extend, and `MySqlFamilyMigrationRunner`, `MySqlFamilySchema`, `MySqlFamilyGenerator`, `MySqlFamilyTable` and `MySqlFamilyIndexes`, which those of MySQL and MariaDB share
 * `PostgresSchema.run` also takes a `Session`, such as a transaction
 * `changeColumnType(..., defaultValue: noDefault)` removes a column's default
 * Deprecated the unused `connected` parameter of the runners. Removed `ModifyingAlterTable.modifications` and the `charcode` dependency
 
-### Fixes
+### Fixes in 10.0.0
 
 * **`changeColumnType` on MySQL and MariaDB:** The column's `NOT NULL`, default, `AUTO_INCREMENT`, `ON UPDATE`, `UNSIGNED`, `COMMENT`, character set, collation, generation expression and (MariaDB) `CHECK` constraints are kept, read from `information_schema` when the schema runs, where `MODIFY` dropped them. It reads servers without `GENERATION_EXPRESSION` and Aurora's versions, drops defaults a type cannot have, and makes a serial column `AUTO_INCREMENT` only when it is a key
 * **`changeColumnType` on PostgreSQL:** Keeps the column's constraints, changes to a serial type's integer with a sequence of its own (resized as needed), and handles identity columns

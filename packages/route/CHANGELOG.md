@@ -2,11 +2,11 @@
 
 ## 10.0.0
 
-### New
+### New in 10.0.0
 
 * `SymlinkRoute.middleware`, `enableCache(maxSize: ...)` and `Router.cacheLength`
 
-### Fixes
+### Fixes in 10.0.0
 
 * **Security:** Middleware of a mounted router (e.g. `group(path, ..., middleware: [...])`) runs; route groups guarded by middleware (e.g. authentication) were served without it
 * **Middleware:** Middleware of `chain(...)` applies to a router mounted on the chain at that mount only, without changing the router

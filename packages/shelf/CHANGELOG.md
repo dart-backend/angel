@@ -2,7 +2,7 @@
 
 ## 10.0.0
 
-### Fixes
+### Fixes in 10.0.0
 
 * **Security:** A request with malformed or conflicting `Content-Length` or `Transfer-Encoding` headers is a 400 (RFC 9112, against request smuggling), where it was a 500. The new `checkRequestFraming` does the check, and `ShelfRequestContext.framingError` holds its error
 * **Hijacking:** An embedded shelf handler can hijack the request, with the socket, as with `shelf_io`; the client used to wait until it timed out

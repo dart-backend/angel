@@ -2,7 +2,9 @@
 
 ## 10.0.0
 
-* fix: `Proxy` now leaves out `Content-Length` when the upstream length is unknown, instead of sending `-1`, which `dart:io` rejects with an `HttpException` (and which left proxied responses empty)
+### Fixes in 10.0.0
+
+* **`Content-Length`:** Left out when the upstream length is unknown, instead of sending `-1`, which `dart:io` rejects with an `HttpException` (and which left proxied responses empty)
 
 ## 9.1.0
 

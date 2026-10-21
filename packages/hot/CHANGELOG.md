@@ -2,17 +2,17 @@
 
 ## 10.0.0
 
-### Breaking changes
+### Breaking changes in 10.0.0
 
 * **Breaking:** `startServer` throws a `StateError` if called again
 
-### New
+### New in 10.0.0
 
 * `reload()` reloads on demand, and `hotReload: false` makes the server again without reloading the VM
 * `debounce` (default 200 ms) and `shutdownGracePeriod` (default 10 s)
 * HTTPS: `securityContext` serves over HTTP/1.1 with `HttpServer.bindSecure`, and `requestClientCertificate` asks clients for a certificate
 
-### Fixes
+### Fixes in 10.0.0
 
 * **Reloads:** The old server is closed once the new one serves, after the requests it is answering (at most `shutdownGracePeriod`); it used to be never closed, leaking every reload's connections and timers
 * **Errors:** A failing `createServer` or reload is logged, and the last good server goes on serving, instead of ending the process. A successful hot reload is no longer reported as failed

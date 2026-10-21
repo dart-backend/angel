@@ -2,12 +2,12 @@
 
 ## 10.0.0
 
-### Breaking changes
+### Breaking changes in 10.0.0
 
 * **Breaking:** `TwitterStrategy` uses the OAuth 1.0a redirect flow, instead of an interactive PIN flow on `stdin` in its constructor. The `client` getter is removed; the new `authorization` holds the consumer credentials
 * **Breaking:** `authenticateCallback` throws `TwitterAuthorizationException` instead of returning `onError`'s result, so `authenticate` runs that result as a handler
 
-### Fixes
+### Fixes in 10.0.0
 
 * **Flow:** A request with Twitter's callback parameters is the callback; every other request is redirected to Twitter, where none ever was
 * **Request tokens:** Each is kept between the redirect and the callback (`requestTokenLifetime`, `maxPendingRequestTokens`), used once, and signs the access token request

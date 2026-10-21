@@ -2,11 +2,11 @@
 
 ## 10.0.0
 
-### Breaking changes
+### Breaking changes in 10.0.0
 
 * **Breaking:** The generator no longer uses `analyzer` internals, which broke every model with `@BelongsTo` on `analyzer` 14.5. `OrmBuildContext.effectiveFields` is a `List<OrmField>` (`ClassOrmField` or `RelationFieldImpl`), as are the arguments of `findPrimaryFieldInList`, `isSpecialId`, `findLocalField` and `findForeignField`. The generated code is unchanged
 
-### Fixes
+### Fixes in 10.0.0
 
 * **Names:** Tables, foreign keys and migration classes keep their earlier names (`legacyModelName`), though `angel3_serialize_generator` now names generated classes otherwise: `_UserEntity` is still `user_entities`
 * **Column types:** A type given in `@Column` or `@PrimaryKey` is used, instead of one inferred from the Dart type; enums are inferred too. Migrations use the `ColumnType` constants, which the MySQL and MariaDB runners need, give `length` only to types that have one, and type a foreign key to a serial column as its integer

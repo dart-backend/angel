@@ -2,17 +2,17 @@
 
 ## 10.0.0
 
-### Breaking changes
+### Breaking changes in 10.0.0
 
 * **Breaking:** An instance that fails to start ends `run` with exit code 70, instead of leaving the runner up with nothing serving
 * **Breaking:** `InstanceInfo.id` is a non-nullable `int`
 
-### New
+### New in 10.0.0
 
 * Graceful shutdown on `SIGINT`, `SIGTERM` and `Runner.stop()`: requests in progress finish and shutdown hooks run, within `shutdownTimeout`
 * Key and certificate passwords can come from the `ANGEL_KEY_PASSWORD` and `ANGEL_CERTIFICATE_PASSWORD` environment variables
 
-### Fixes
+### Fixes in 10.0.0
 
 * **Logs:** Each record is printed once, at its own level, including records logged during `configureServer`
 * **Respawn:** Crashed instances are respawned with a backoff from 1 s to 30 s, and no longer leak ports

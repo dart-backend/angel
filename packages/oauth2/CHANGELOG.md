@@ -2,7 +2,9 @@
 
 ## 10.0.0
 
-* The tests and example no longer use `MirrorsReflector`; `AuthorizationServer` needs no reflection
+### Fixes in 10.0.0
+
+* **Tests:** The tests and example no longer use `MirrorsReflector`; `AuthorizationServer` needs no reflection
 
 ## 9.1.0
 

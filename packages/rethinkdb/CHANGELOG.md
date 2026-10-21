@@ -2,16 +2,16 @@
 
 ## 10.0.0
 
-### Breaking changes
+### Breaking changes in 10.0.0
 
 * **Breaking:** `read`, `modify`, `update` and `remove` of one record ignore `query`, which could make them reach every record it matched
 * **Breaking:** `modify` and `update` act on the id in the path, not an `id` in the body: `modify` of a missing id is a 404, and `update` creates it
 
-### New
+### New in 10.0.0
 
 * A service over a query that is not a table (e.g. a `filter`) can read, modify, update and remove by id
 
-### Fixes
+### Fixes in 10.0.0
 
 * **`index`:** No longer always fails with a `TypeError`
 * **Changefeed:** Updates and removals fire `afterUpdated` and `afterRemoved`, not `afterCreated`, and work on a typed `HookedService`; errors are logged, and `close` cancels the feed

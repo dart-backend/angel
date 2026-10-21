@@ -2,7 +2,7 @@
 
 ## 10.0.0
 
-### New
+### New in 10.0.0
 
 * `jael` reads the members of values through the app's reflector (`reflectorMemberResolver`): with a `StaticReflector` of `angel3_container_generator` data, the fields, getters and methods of `@injectable` classes, without `dart:mirrors`; with a `MirrorsReflector`, those of any class. A `memberResolver` it is given is asked first
 

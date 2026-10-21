@@ -2,7 +2,7 @@
 
 ## 10.0.0
 
-### Breaking changes
+### Breaking changes in 10.0.0
 
 * **Breaking:** `none` is an instance of `None` (`const None()`), as documented, so `none is None` is true; compare types with `None` (`T == None`), as `T == none` is now false
 * **Breaking:** `None` is a `final class` with a `const` constructor; every `None` equals `none`, which can no longer be in constant sets or a constant map key

@@ -2,7 +2,7 @@
 
 ## 10.0.0
 
-### Fixes
+### Fixes in 10.0.0
 
 * **`isAngelHttpException()`:** Recognises the `is_error` key that `AngelHttpException.toJson` writes, and falls back to the response's status when the body has none
 * **`TestClient`:** Responses report the `contentLength` the handler set, or `null`, instead of `0`

@@ -2,17 +2,17 @@
 
 ## 10.0.0
 
-### Breaking changes
+### Breaking changes in 10.0.0
 
 * **Breaking:** On MySQL and MariaDB, an insert's `returningQuery` selects the inserted row by the id given, or by `@angel3_insert_id` (`insertIdParameter`), which the executor binds to the driver's insert id, instead of the last row by id, which may be another connection's
 * **Breaking:** `Column.precision` and `Column.scale` are `int?`, and `null` unless given (were 17 and 3). A `numeric` or `decimal` without them is unbounded on PostgreSQL
 
-### New
+### New in 10.0.0
 
 * `replacePlaceholders`, which swaps `@name` placeholders for a driver's (e.g. `?`)
 * `QueryValues.parameterNameOf`, and `Column.defaultLength`, `defaultPrecision` and `defaultScale`
 
-### Fixes
+### Fixes in 10.0.0
 
 * **Security:** `StringSqlExpressionBuilder.like` passes its pattern as a parameter, where a pattern from user input allowed SQL injection; `sanitize` is applied to the pattern
 * **Parameters:** `Query.reserveName` never returns the same name twice, so two values of one column no longer overwrite each other (an `update` with a condition and a new value on one column changed the wrong rows). `replacePlaceholders` leaves `@` in string literals, quoted identifiers and `@@variables`

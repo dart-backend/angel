@@ -2,18 +2,18 @@
 
 ## 10.0.0
 
-### Breaking changes
+### Breaking changes in 10.0.0
 
 * **Breaking:** `package:angel3_container/mirrors.dart` is removed: `MirrorsReflector` is in the new `angel3_container_mirrors` package, so `angel3_container` no longer depends on `dart:mirrors`
 * **Breaking:** `Container.make` leaves out an optional positional parameter whose type is not registered (it is `null`, or keeps its default), instead of constructing it by reflection
 * **Breaking:** `StaticReflectedInstance.getField` throws a `ReflectionException` for a name that is no member, instead of returning `null`; a `StaticMemberReader` returns the new `noStaticMember` for it
 
-### New
+### New in 10.0.0
 
 * Static reflection, without `dart:mirrors`: `@injectable`, `ReflectionData`, `StaticReflector.combine` and the `StaticReflected*` classes, for the data `angel3_container_generator` generates
 * `ReflectedClass.supertypes`, `ReflectedParameter.hasDefaultValue` and `Container.isUnconstructible` (whether an error of `make` means a type cannot be constructed)
 
-### Fixes
+### Fixes in 10.0.0
 
 * **Parameters:** `Container.make` keeps the default of a constructor parameter whose type is not registered, and leaves out an optional named one whose type cannot be constructed; an error thrown by a constructor is no longer swallowed
 * **MirrorsReflector:** Named constructor parameters are passed, where required ones failed and optional ones were `null`
