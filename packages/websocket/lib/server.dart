@@ -431,6 +431,9 @@ class AngelWebSocket {
     if (synchronizationChannel != null) {
       synchronizationChannel?.stream.listen(
         (e) => batchEvent(e, notify: false),
+        // E.g. a refused publish: logged, rather than uncaught.
+        onError: (Object e, StackTrace st) =>
+            app.logger.warning('WebSocket synchronization failed', e, st),
       );
     }
 

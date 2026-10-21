@@ -2,7 +2,12 @@
 
 ## 10.0.0
 
-* Released with the other Angel3 packages at 10.0.0
+### Fixes in 10.0.0
+
+* **Closing:** Closing the channel's `sink`, as `AngelWebSocket` does on shutdown, closes the channel, which unsubscribes and closes the `pub_sub` client, where they were left open. `close` waits for them, also for a subscription still being made, and may be called more than once
+* **After closing:** Events and errors that come late are dropped, where they failed with a `StateError`
+* **Dependencies:** `angel3_framework` is a dev dependency, as only the tests and example use it
+* **Docs:** The README example compiles, and serves the WebSocket. `example/main.dart` runs two synchronized instances, where it was a copy of the tests
 
 ## 9.1.0
 
