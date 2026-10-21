@@ -61,6 +61,22 @@ void main() {
           secret: pseudoApplication.secret,
         );
 
+    test('an unknown client is unauthorized_client, not a 500', () async {
+      var url = authorizationEndpoint.replace(
+        queryParameters: {
+          'response_type': 'code',
+          'client_id': 'unknown',
+          'redirect_uri': redirectUri.toString(),
+        },
+      );
+      var response = await testClient.client.get(
+        url,
+        headers: {'accept': 'application/json'},
+      );
+      expect(response.statusCode, isNot(500));
+      expect(response.body, contains('unauthorized_client'));
+    });
+
     test('show authorization form', () async {
       var grant = createGrant();
       var url = grant.getAuthorizationUrl(redirectUri, state: 'hello');

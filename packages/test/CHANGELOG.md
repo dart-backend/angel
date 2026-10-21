@@ -12,6 +12,7 @@
 * **JSON matchers:** `isJson`, `hasValidBody` and `isAngelHttpException` do not match a body that is not JSON, where they threw a `FormatException`
 * **Mismatches:** `isJson`, `hasValidBody` and `isAngelHttpException` describe the response they got: its body, its validation errors (only those of that response), or its status, message and errors
 * **`hasValidBody`:** An error other than a `ValidationException` is a mismatch, where it threw a `TypeError`
+* **Basic auth:** A malformed `Basic` authorization header is sent as it is, where `TestClient` threw a `FormatException`
 * **Gzip:** A `content-encoding` of several encodings or in another case (`GZIP, identity`) is decompressed
 * **Dependencies:** Removed the unused `angel3_container`
 * **Tests:** No longer use `MirrorsReflector`

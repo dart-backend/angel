@@ -100,11 +100,21 @@ class TestClient extends client.BaseAngelClient {
     } else if (rq.headers.value('authorization')?.startsWith('Basic ') ==
         true) {
       var encoded = rq.headers.value('authorization')!.substring(6);
-      var decoded = utf8.decode(base64Url.decode(encoded));
-      var oldRq = rq;
-      var newRq = MockHttpRequest(rq.method, rq.uri.replace(userInfo: decoded));
-      oldRq.headers.forEach(newRq.headers.add);
-      rq = newRq;
+      String? decoded;
+      try {
+        decoded = utf8.decode(base64.decode(encoded));
+      } on FormatException {
+        // Sent as it is, for the server to refuse.
+      }
+      if (decoded != null) {
+        var oldRq = rq;
+        var newRq = MockHttpRequest(
+          rq.method,
+          rq.uri.replace(userInfo: decoded),
+        );
+        oldRq.headers.forEach(newRq.headers.add);
+        rq = newRq;
+      }
     }
 
     if (authToken?.isNotEmpty == true) {

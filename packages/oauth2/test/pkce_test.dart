@@ -14,6 +14,7 @@ void main() {
   Angel app;
   late Uri authorizationEndpoint, tokenEndpoint;
   late TestClient testClient;
+  late AngelHttp http;
 
   setUp(() async {
     app = Angel();
@@ -34,7 +35,7 @@ void main() {
         if (rec.stackTrace != null) print(rec.stackTrace);
       });
 
-    var http = AngelHttp(app);
+    http = AngelHttp(app);
     var s = await http.startServer();
     var url = 'http://${s.address.address}:${s.port}';
     authorizationEndpoint = Uri.parse('$url/oauth2/authorize');
@@ -45,6 +46,7 @@ void main() {
 
   tearDown(() async {
     await testClient.close();
+    await http.close();
   });
 
   group('get auth code', () {
@@ -122,7 +124,7 @@ void main() {
           hasStatus(400),
           isJson({
             'error': 'invalid_request',
-            'error_description': "The `code_challenge_method` parameter must be either 'plain' or 's256'.",
+            'error_description': "The `code_challenge_method` parameter must be either 'plain' or 'S256'.",
           }),
         ),
       );

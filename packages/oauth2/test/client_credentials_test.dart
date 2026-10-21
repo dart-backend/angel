@@ -56,6 +56,25 @@ void main() {
         */
   });
 
+  test('accepts the standard base64 alphabet', () async {
+    var response = await client.post(
+      Uri.parse('/oauth2/token'),
+      headers: {'Authorization': 'Basic ${base64.encode('foo:bar'.codeUnits)}'},
+      body: {'grant_type': 'client_credentials'},
+    );
+    expect(response, hasStatus(200));
+  });
+
+  test('a malformed Basic header is a 400, not a 500', () async {
+    var response = await client.post(
+      Uri.parse('/oauth2/token'),
+      headers: {'Authorization': 'Basic !!!'},
+      body: {'grant_type': 'client_credentials'},
+    );
+    expect(response, hasStatus(400));
+    expect(response.body, contains('unauthorized_client'));
+  });
+
   test('force correct id', () async {
     var response = await client.post(
       Uri.parse('/oauth2/token'),
