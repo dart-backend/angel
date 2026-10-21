@@ -2,10 +2,18 @@
 
 ## 10.0.0
 
+### Breaking changes in 10.0.0
+
+* **Breaking:** `TestClient` responses report the `contentLength` the handler set, or `null` when none was set or the body was decompressed, instead of `0`. A decompressed body has no `content-length` header
+
 ### Fixes in 10.0.0
 
-* **`isAngelHttpException()`:** Recognises the `is_error` key that `AngelHttpException.toJson` writes, and falls back to the response's status when the body has none
-* **`TestClient`:** Responses report the `contentLength` the handler set, or `null`, instead of `0`
+* **`isAngelHttpException()`:** Recognises the `is_error` key that `AngelHttpException.toJson` writes, and falls back to the response's status when the body has none. The exception is no longer printed
+* **JSON matchers:** `isJson`, `hasValidBody` and `isAngelHttpException` do not match a body that is not JSON, where they threw a `FormatException`
+* **Mismatches:** `isJson`, `hasValidBody` and `isAngelHttpException` describe the response they got: its body, its validation errors (only those of that response), or its status, message and errors
+* **`hasValidBody`:** An error other than a `ValidationException` is a mismatch, where it threw a `TypeError`
+* **Gzip:** A `content-encoding` of several encodings or in another case (`GZIP, identity`) is decompressed
+* **Dependencies:** Removed the unused `angel3_container`
 * **Tests:** No longer use `MirrorsReflector`
 
 ## 9.1.1

@@ -130,10 +130,21 @@ class TestClient extends client.BaseAngelClient {
     });
 
     Stream<List<int>> stream = rs;
+    // -1 means no length was set, as in dart:io.
+    int? contentLength = rs.contentLength < 0 ? null : rs.contentLength;
 
-    if (autoDecodeGzip != false &&
-        rs.headers['content-encoding']?.contains('gzip') == true) {
+    // `Content-Encoding` is a list of encodings, in any case.
+    var isGzip =
+        rs.headers['content-encoding']?.any(
+          (v) => v.split(',').any((e) => e.trim().toLowerCase() == 'gzip'),
+        ) ==
+        true;
+
+    if (autoDecodeGzip != false && isGzip) {
       stream = stream.transform(gzip.decoder);
+      // The length, and the header, are those of the compressed body.
+      contentLength = null;
+      extractedHeaders.remove('content-length');
     }
 
     // Calling persistentConnection causes LateInitialization Exception
@@ -145,8 +156,7 @@ class TestClient extends client.BaseAngelClient {
     return StreamedResponse(
       stream,
       rs.statusCode,
-      // -1 means no length was set, as in dart:io.
-      contentLength: rs.contentLength < 0 ? null : rs.contentLength,
+      contentLength: contentLength,
       isRedirect: rs.headers['location'] != null,
       headers: extractedHeaders,
       persistentConnection:

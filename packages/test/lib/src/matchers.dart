@@ -47,6 +47,29 @@ Matcher hasValidBody(Validator validator) => _HasValidBody(validator);
 
 String notHttpResponse = "expected http.Response but got none\n";
 
+/// Stands for a body that is not JSON, which no matcher matches.
+const _notJson = Object();
+
+/// The JSON of [body], or [_notJson].
+Object? _decode(String body) {
+  try {
+    return json.decode(body);
+  } on FormatException {
+    return _notJson;
+  }
+}
+
+/// Describes the body of [item], for a mismatch.
+Description _describeBody(Object? item, Description description) {
+  if (item is! http.Response) return description.add(notHttpResponse);
+
+  var body = item.body;
+  if (body.length > 200) body = '${body.substring(0, 200)}...';
+  return identical(_decode(item.body), _notJson)
+      ? description.add('has a body that is not JSON: $body')
+      : description.add('has the body $body');
+}
+
 class _IsJson extends Matcher {
   dynamic value;
 
@@ -60,7 +83,15 @@ class _IsJson extends Matcher {
   @override
   bool matches(item, Map matchState) =>
       item is http.Response &&
-      equals(value).matches(json.decode(item.body), matchState);
+      equals(value).matches(_decode(item.body), matchState);
+
+  @override
+  Description describeMismatch(
+    Object? item,
+    Description mismatchDescription,
+    Map matchState,
+    bool verbose,
+  ) => _describeBody(item, mismatchDescription);
 }
 
 class _HasBody extends Matcher {
@@ -222,8 +253,6 @@ class _HasStatus extends Matcher {
 class _HasValidBody extends Matcher {
   final Validator validator;
 
-  final _errors = <String>[];
-
   _HasValidBody(this.validator);
 
   @override
@@ -233,12 +262,15 @@ class _HasValidBody extends Matcher {
   @override
   bool matches(item, Map matchState) {
     if (item is http.Response) {
-      final jsons = json.decode(item.body);
+      final jsons = _decode(item.body);
       if (jsons is Map) {
         try {
           return validator.matches(jsons, matchState);
+        } on ValidationException catch (e) {
+          // In [matchState], so a matcher used twice keeps the errors of each.
+          matchState['errors'] = e.errors;
         } catch (e) {
-          _errors.addAll((e as ValidationException).errors);
+          matchState['errors'] = ['$e'];
         }
       }
     }
@@ -252,16 +284,13 @@ class _HasValidBody extends Matcher {
     Map matchState,
     bool verbose,
   ) {
-    if (item is http.Response) {
-      if (_errors.isEmpty) {
-        mismatchDescription.add("expected JSON but got invalid JSON\n");
-      } else {
-        for (var err in _errors) {
-          mismatchDescription.add("$err\n");
-        }
-      }
-    } else {
-      mismatchDescription.add(notHttpResponse);
+    var errors = matchState['errors'];
+    if (item is! http.Response || errors is! List) {
+      return _describeBody(item, mismatchDescription);
+    }
+
+    for (var err in errors) {
+      mismatchDescription.add('$err\n');
     }
     return mismatchDescription;
   }
@@ -313,7 +342,7 @@ class _IsAngelHttpException extends Matcher {
   @override
   bool matches(item, Map matchState) {
     if (item is http.Response) {
-      final jsons = json.decode(item.body);
+      final jsons = _decode(item.body);
 
       // AngelHttpException.toJson writes is_error; isError is the old key.
       if (jsons is Map &&
@@ -322,7 +351,7 @@ class _IsAngelHttpException extends Matcher {
           jsons,
           fallbackStatusCode: item.statusCode,
         );
-        print(exc.toJson());
+        matchState['exception'] = exc;
 
         if (message?.isNotEmpty != true &&
             statusCode == null &&
@@ -357,5 +386,27 @@ class _IsAngelHttpException extends Matcher {
     } else {
       return false;
     }
+  }
+
+  @override
+  Description describeMismatch(
+    Object? item,
+    Description mismatchDescription,
+    Map matchState,
+    bool verbose,
+  ) {
+    var exc = matchState['exception'];
+    if (exc is! AngelHttpException) {
+      return _describeBody(item, mismatchDescription);
+    }
+
+    mismatchDescription.add(
+      'is an Angel HTTP Exception with status code ${exc.statusCode} and '
+      'message "${exc.message}"',
+    );
+    if (exc.errors.isNotEmpty) {
+      mismatchDescription.add(' and errors ${exc.errors}');
+    }
+    return mismatchDescription;
   }
 }

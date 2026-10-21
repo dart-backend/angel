@@ -15,7 +15,6 @@ dependencies:
   angel3_validate: ^10.0.0
   angel3_websocket: ^10.0.0
   angel3_mock_request: ^10.0.0
-  angel3_container: ^10.0.0
   http: ^1.0.0
   matcher: ^0.12.0
   web_socket_channel: ^3.0.0

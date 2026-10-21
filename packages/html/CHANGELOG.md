@@ -2,7 +2,16 @@
 
 ## 10.0.0
 
-* Released with the other Angel3 packages at 10.0.0
+### Breaking changes in 10.0.0
+
+* **Breaking:** Pages are sent as `text/html; charset=utf-8`, where they were `text/html` without a charset, which browsers could decode as another encoding
+* **Breaking:** `enforceAcceptHeader` is a `bool` that defaults to `false`, not a `bool?`
+
+### Fixes in 10.0.0
+
+* **Responses:** Once a page is sent, the request ends, where the handlers after it ran on the closed response (e.g. a fallback that throws a 404). The response is closed and its errors handled by the framework
+* **Docs:** The README installs version 10.0.0, tells that a request without an `Accept` header accepts any type, and its example reads the route's `name` parameter
+* **Tests:** Expect the doctype the renderer writes, and that a request without an `Accept` header is answered
 
 ## 9.1.0
 
