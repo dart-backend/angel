@@ -4,9 +4,7 @@ library;
 import 'dart:async';
 
 import 'package:http/http.dart' as http;
-import 'package:belatuk_json_serializer/belatuk_json_serializer.dart' as god;
 import 'package:path/path.dart' as p;
-import 'package:logging/logging.dart';
 
 import 'angel3_client.dart';
 import 'base_angel_client.dart';
@@ -22,7 +20,6 @@ class Rest extends BaseAngelClient {
   @override
   Service<Id, Data> service<Id, Data>(
     String path, {
-    Type? type,
     AngelDeserializer<Data>? deserializer,
   }) {
     var url = baseUrl.replace(path: p.join(baseUrl.path, path));
@@ -30,7 +27,6 @@ class Rest extends BaseAngelClient {
       client,
       this,
       url,
-      type,
       deserializer: deserializer,
     );
     _services.add(s);
@@ -58,37 +54,5 @@ class Rest extends BaseAngelClient {
 
 /// Queries an Angel service via REST.
 class RestService<Id, Data> extends BaseAngelService<Id, Data> {
-  final _log = Logger('RestService');
-
-  final Type? type;
-
-  RestService(
-    super.client,
-    super.app,
-    super.url,
-    this.type, {
-    super.deserializer,
-  });
-
-  @override
-  Data? deserialize(x) {
-    _log.info(x);
-    if (type != null && deserializer == null) {
-      return x.runtimeType == type
-          ? x as Data?
-          : god.deserializeDatum(x, outputType: type) as Data?;
-    }
-
-    return super.deserialize(x);
-  }
-
-  @override
-  String makeBody(x) {
-    _log.info(x);
-    if (type != null) {
-      return super.makeBody(god.serializeObject(x));
-    }
-
-    return super.makeBody(x);
-  }
+  RestService(super.client, super.app, super.url, {super.deserializer});
 }

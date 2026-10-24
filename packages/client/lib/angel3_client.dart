@@ -86,8 +86,8 @@ abstract class Angel extends http.BaseClient {
   /// In other words, all endpoints will return [Data], except for the root of
   /// [path], which returns a [List<Data>].
   ///
-  /// You can pass a custom [deserializer], which is typically necessary in cases where
-  /// `dart:mirrors` does not exist.
+  /// Pass a [deserializer] to turn the decoded JSON into [Data], such as a
+  /// generated `fromMap`. Without one, the decoded JSON is returned as is.
   Service<Id, Data> service<Id, Data>(
     String path, {
     AngelDeserializer<Data>? deserializer,

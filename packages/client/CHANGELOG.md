@@ -6,6 +6,7 @@
 
 * **Breaking:** The streams of the client, its services and `ServiceList` are broadcast streams: events are not kept for later listeners, so memory no longer grows without bound, and `close()` completes without listeners, where it never returned
 * **Breaking:** A REST service is a `Service<Id, Data>`, so `service<String, Todo>()` works, where only a nullable type such as `Todo?` did. Its methods return `Data` and throw an `AngelHttpException` on an error, also when its stream has a listener, where they returned `null`
+* **Breaking:** Removed `belatuk_json_serializer` and the `type` parameter of `service()`, which needed `dart:mirrors`. Pass a `deserializer` instead, such as `deserializer: (x) => TodoSerializer.fromMap(x as Map)`; without one, a service returns the decoded JSON. Objects sent to the server are encoded with `jsonEncode`, which calls their `toJson()`
 
 ### Fixes in 10.0.0
 

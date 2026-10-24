@@ -189,7 +189,6 @@ abstract class BaseAngelClient extends Angel {
   @override
   Service<Id, Data> service<Id, Data>(
     String path, {
-    Type? type,
     AngelDeserializer<Data>? deserializer,
   }) {
     var url = baseUrl.replace(path: _p.join(baseUrl.path, path));
