@@ -48,7 +48,7 @@ Future<TestClient> connectTo(
 
 /// An `angel_client` that sends mock requests to a server, rather than actual HTTP transactions.
 class TestClient extends client.BaseAngelClient {
-  final Map<String, client.Service> _services = {};
+  final List<client.Service> _services = [];
 
   /// Session info to be sent to the server on every request.
   final HttpSession session = MockHttpSession(id: 'angel-test-client');
@@ -70,9 +70,11 @@ class TestClient extends client.BaseAngelClient {
   }
 
   @override
-  Future close() {
-    this.client.close();
-    return server.close();
+  Future close() async {
+    await super.close();
+    await Future.wait(_services.map((s) => s.close()));
+    _services.clear();
+    await server.close();
   }
 
   /// Opens a WebSockets connection to the server. This will automatically bind the server
@@ -202,14 +204,12 @@ class TestClient extends client.BaseAngelClient {
   @override
   client.Service<Id, Data> service<Id, Data>(
     String path, {
-    Type? type,
     client.AngelDeserializer<Data>? deserializer,
   }) {
     var uri = path.toString().replaceAll(_straySlashes, '');
-    return _services.putIfAbsent(
-      uri,
-      () => _MockService<Id, Data>(this, uri, deserializer: deserializer),
-    ) as client.Service<Id, Data>;
+    var s = _MockService<Id, Data>(this, uri, deserializer: deserializer);
+    _services.add(s);
+    return s;
   }
 }
 

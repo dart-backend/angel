@@ -241,6 +241,15 @@ void main() {
     });
 
     group('service', () {
+      test('can be typed after an untyped one on the same path', () async {
+        client.service('foo');
+        var foo = client.service<String, String>(
+          'foo',
+          deserializer: (x) => (x as Map)['michael'] as String,
+        );
+        expect(await foo.index(), ['jackson']);
+      });
+
       test('index', () async {
         var foo = client.service('foo');
         var result = await foo.index();

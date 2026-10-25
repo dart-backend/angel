@@ -152,6 +152,8 @@ try {
 }
 ```
 
+Data that cannot be encoded as JSON, such as an object without a `toJson()`, is thrown as an `ArgumentError` before the request is sent. An error thrown by a `toJson()`, and a failure to send the request, such as a `ClientException`, are thrown as they are. None of these is added to the stream, since they are not events of the service.
+
 When the response is a success but cannot be read, for example because the `deserializer` throws, the `AngelHttpException` has status code 500 and the original error is in `error`:
 
 ```dart
@@ -162,6 +164,18 @@ try {
   print(e.error); // The error thrown by the deserializer
 }
 ```
+
+### Query params: lists are sent as repeated params
+
+A list param is sent as one param per value, and an empty list throws an `ArgumentError`, since leaving it out would drop the filter:
+
+```dart
+await todos.index({'tag': ['a', 'b']});
+// 9.x:    ?tag=%5Ba%2C+b%5D (the text "[a, b]")
+// 10.0.0: ?tag=a&tag=b
+```
+
+If the server expects the old text, pass it yourself: `{'tag': '[a, b]'}`. The query of the client's base URL, such as `?key=x`, is now kept when params are passed.
 
 ### Streams: listen before the event happens
 

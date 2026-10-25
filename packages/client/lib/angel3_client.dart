@@ -241,12 +241,12 @@ class _MappedService<Id, Data, U> extends Service<Id, U> {
 
   @override
   Future<U> create(U data, [Map<String, dynamic>? params]) {
-    return inner.create(decoder(data)).then(encoder);
+    return inner.create(decoder(data), params).then(encoder);
   }
 
   @override
-  Future<List<U>> index([Map<String, dynamic>? params]) {
-    return inner.index(params).then((l) => l!.map(encoder).toList());
+  Future<List<U>?> index([Map<String, dynamic>? params]) {
+    return inner.index(params).then((l) => l?.map(encoder).toList());
   }
 
   @override

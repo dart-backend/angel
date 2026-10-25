@@ -82,15 +82,17 @@ class Spec {
   }
 }
 
-/// Answers every request with [statusCode] and [body].
+/// Answers every request with [statusCode] and [body], or throws [error].
 class FixedClient extends http.BaseClient {
   int statusCode = 200;
   String body = '';
+  Object? error;
   http.BaseRequest? lastRequest;
 
   @override
   Future<http.StreamedResponse> send(http.BaseRequest request) {
     lastRequest = request;
+    if (error != null) return Future.error(error!);
     return Future<http.StreamedResponse>.value(
       http.StreamedResponse(
         Stream<List<int>>.fromIterable([utf8.encode(body)]),
@@ -104,7 +106,8 @@ class FixedClient extends http.BaseClient {
 class FixedAngel extends BaseAngelClient {
   final FixedClient fixedClient;
 
-  FixedAngel(this.fixedClient) : super(fixedClient, 'http://localhost:3000');
+  FixedAngel(this.fixedClient, [String baseUrl = 'http://localhost:3000'])
+    : super(fixedClient, baseUrl);
 
   @override
   Stream<String> authenticateViaPopup(

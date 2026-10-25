@@ -13,8 +13,32 @@ const Map<String, String> _writeHeaders = {
   'Content-Type': 'application/json',
 };
 
-Map<String, String> _buildQuery(Map<String, dynamic>? params) {
-  return params?.map((k, v) => MapEntry(k, v.toString())) ?? {};
+/// Adds [params] to the query of [url], keeping the query it has as it is, so
+/// that a URL without params does not end in `?`. An [Iterable] param is sent
+/// as one param per value, and a `null` param or value as `null`.
+///
+/// An empty [Iterable] cannot be sent, and leaving it out would drop a filter
+/// and widen the query, so it throws an [ArgumentError].
+///
+/// The params are appended, not merged, so a param with the name of a param of
+/// [url] is sent twice: `?key=x` with `{'key': 'y'}` is `?key=x&key=y`.
+Uri _withQuery(Uri url, Map<String, dynamic>? params) {
+  if (params == null || params.isEmpty) return url;
+  var query = Uri(
+    queryParameters: {
+      for (var MapEntry(:key, :value) in params.entries)
+        key: value is Iterable
+            ? (value.isEmpty
+                  ? throw ArgumentError.value(
+                      params,
+                      'params',
+                      'the list "$key" is empty, and cannot be sent',
+                    )
+                  : [for (var v in value) '$v'])
+            : '$value',
+    },
+  ).query;
+  return url.replace(query: url.query.isEmpty ? query : '${url.query}&$query');
 }
 
 bool _invalid(Response response) =>
@@ -26,30 +50,57 @@ AngelHttpException failure(
   String? message,
   StackTrace? stack,
 }) {
-  // A failure after a successful response (e.g. of the deserializer) is a 500,
-  // not the response's 2xx.
-  var statusCode = response.statusCode >= 200 && response.statusCode < 300
-      ? 500
-      : response.statusCode;
-  dynamic v;
+  dynamic body;
 
   try {
-    v = json.decode(response.body);
-  } catch (e, st) {
+    body = json.decode(response.body);
+  } catch (_) {
+    body = _notJson;
+  }
+
+  return _failure(response, body, error: error, message: message, stack: stack);
+}
+
+/// Stands for a body that is not JSON.
+const _notJson = Object();
+
+/// Returns the [AngelHttpException] for [response], whose decoded body is
+/// [body], or [_notJson].
+AngelHttpException _failure(
+  Response response,
+  dynamic body, {
+  error,
+  String? message,
+  StackTrace? stack,
+}) {
+  // A failure after a successful response (e.g. of the deserializer) is a 500,
+  // not the response's 2xx.
+  var statusCode = _invalid(response) ? response.statusCode : 500;
+
+  if (identical(body, _notJson)) {
     return AngelHttpException(
       message:
           message ??
           'Angel backend did not return JSON - an error likely occurred.',
       statusCode: statusCode,
-      error: error ?? e,
-      stackTrace: stack ?? st,
+      error: error,
+      stackTrace: stack,
     );
   }
 
-  if (v is Map && (v['is_error'] == true || v['isError'] == true)) {
-    return AngelHttpException.fromMap(v, fallbackStatusCode: statusCode)
+  if (body is Map && (body['is_error'] == true || body['isError'] == true)) {
+    // fromMap prefers the status code of the body, but the status of the
+    // response is the one the request failed with.
+    var data = {...body}
+      ..remove('status_code')
+      ..remove('statusCode');
+    var e = AngelHttpException.fromMap(data, fallbackStatusCode: statusCode)
       ..error = error
       ..stackTrace = stack;
+    // The server's own message explains the error better than the failure
+    // to read it.
+    if (message != null && body['message'] == null) e.message = message;
+    return e;
   }
 
   return AngelHttpException(
@@ -257,7 +308,10 @@ abstract class BaseAngelClient extends Angel {
 /// Queries a service over REST.
 ///
 /// An error response, or one that cannot be read, is thrown as an
-/// [AngelHttpException], and also added to the stream of the method.
+/// [AngelHttpException], and also added to the stream of the method, unless
+/// the service is closed. Data that cannot be encoded is thrown as an
+/// [ArgumentError], and a failure to send the request, such as a
+/// `ClientException`, as it is; neither is added to the stream.
 class BaseAngelService<Id, Data> extends Service<Id, Data> {
   final _log = Logger('BaseAngelService');
 
@@ -295,25 +349,38 @@ class BaseAngelService<Id, Data> extends Service<Id, Data> {
   Stream<Data> get onRemoved => _onRemoved.stream;
 
   @override
-  Future close() async {
-    await _onIndexed.close();
-    await _onRead.close();
-    await _onCreated.close();
-    await _onModified.close();
-    await _onUpdated.close();
-    await _onRemoved.close();
-  }
+  Future close() => Future.wait([
+    _onIndexed.close(),
+    _onRead.close(),
+    _onCreated.close(),
+    _onModified.close(),
+    _onUpdated.close(),
+    _onRemoved.close(),
+  ]);
 
   BaseAngelService(this.client, this.app, baseUrl, {this.deserializer})
     : baseUrl = baseUrl is Uri ? baseUrl : Uri.parse(baseUrl.toString());
 
   Data? deserialize(dynamic x) {
-    return deserializer != null ? deserializer!(x) : x as Data?;
+    if (deserializer != null) return deserializer!(x);
+    if (x is Data?) return x;
+    throw FormatException(
+      'The server returned a ${x.runtimeType}, not a $Data. '
+      'Pass a deserializer to service() to turn the JSON into a $Data.',
+    );
   }
 
   /// Deserializes a single result, which must not be `null` unless [Data] is
   /// nullable.
-  Data _deserializeOne(dynamic x) => deserialize(x) as Data;
+  Data _deserializeOne(dynamic x) {
+    var data = deserialize(x);
+    if (data is Data) return data;
+    throw FormatException(
+      deserializer == null
+          ? 'The server returned null, not a $Data.'
+          : 'The deserializer returned null, not a $Data.',
+    );
+  }
 
   String makeBody(dynamic x) {
     //return json.encode(x);
@@ -328,15 +395,69 @@ class BaseAngelService<Id, Data> extends Service<Id, Data> {
     return client.send(request);
   }
 
-  Uri _url(Map<String, dynamic>? params) {
-    return baseUrl.replace(queryParameters: _buildQuery(params));
+  Uri _url(Map<String, dynamic>? params) => _withQuery(baseUrl, params);
+
+  Uri _idUrl(Id id, Map<String, dynamic>? params) => _withQuery(
+    baseUrl.replace(path: _p.join(baseUrl.path, id.toString())),
+    params,
+  );
+
+  void _emit<T>(StreamController<T> events, T value) {
+    if (!events.isClosed) events.add(value);
   }
 
-  Uri _idUrl(Id id, Map<String, dynamic>? params) {
-    return baseUrl.replace(
-      path: _p.join(baseUrl.path, id.toString()),
-      queryParameters: _buildQuery(params),
+  void _emitError(StreamController events, Object error, StackTrace? stack) {
+    if (!events.isClosed) events.addError(error, stack);
+  }
+
+  /// Encodes [data] with [makeBody], throwing an [ArgumentError] if it cannot
+  /// be encoded as JSON, such as an object without a `toJson()`. An error
+  /// thrown by a `toJson()`, and any other error, is thrown as it is.
+  String _encode(dynamic data) {
+    try {
+      return makeBody(data);
+    } on JsonUnsupportedObjectError catch (e, st) {
+      // A value that a toJson() returns and that cannot be encoded is the
+      // cause of the error of the object whose toJson() it is.
+      var inner = e;
+      while (inner.cause is JsonUnsupportedObjectError) {
+        inner = inner.cause as JsonUnsupportedObjectError;
+      }
+      var cause = inner.cause;
+      // jsonEncode reports a missing toJson() as a NoSuchMethodError.
+      Error.throwWithStackTrace(
+        cause != null && cause is! NoSuchMethodError
+            ? cause
+            : ArgumentError.value(
+                data,
+                'data',
+                'cannot be encoded as JSON: $inner',
+              ),
+        st,
+      );
+    }
+  }
+
+  /// Sends a request, with [body], from [_encode], as its JSON body, and reads
+  /// its response with [_handle].
+  ///
+  /// Errors from sending the request, like those from encoding the body, are
+  /// only thrown, not added to [events], since they are not events of the
+  /// service.
+  Future<T> _request<T>(
+    String method,
+    Uri url,
+    StreamController<T> events,
+    T Function(dynamic body) read, [
+    String? body,
+  ]) async {
+    var response = await app.sendUnstreamed(
+      method,
+      url,
+      body == null ? _readHeaders : _writeHeaders,
+      body,
     );
+    return _handle(response, events, read);
   }
 
   /// Reads the result of [response] with [read], and adds it to [events].
@@ -346,90 +467,108 @@ class BaseAngelService<Id, Data> extends Service<Id, Data> {
     T Function(dynamic body) read,
   ) async {
     if (_invalid(response)) {
-      var e = failure(response);
-      events.addError(e);
+      var e = failure(response, stack: StackTrace.current);
+      _emitError(events, e, e.stackTrace);
       throw e;
     }
 
+    dynamic body;
     T result;
 
     try {
-      result = read(json.decode(response.body));
+      body = json.decode(response.body);
     } catch (e, st) {
-      _log.severe(
-        'Could not read the response of ${response.request?.url}',
-        e,
-        st,
-      );
-      var f = failure(response, error: e, stack: st);
-      events.addError(f, st);
-      throw f;
+      throw _readFailure(response, _notJson, events, e, st);
     }
 
-    events.add(result);
+    try {
+      result = read(body);
+    } catch (e, st) {
+      throw _readFailure(
+        response,
+        body,
+        events,
+        e,
+        st,
+        e is FormatException && e.message.isNotEmpty
+            ? e.message
+            : 'Could not read the response: $e',
+      );
+    }
+
+    _emit(events, result);
     return result;
   }
 
-  @override
-  Future<List<Data>> index([Map<String, dynamic>? params]) async {
-    var response = await app.sendUnstreamed('GET', _url(params), _readHeaders);
-    return _handle(
+  /// Logs [error], which happened while reading [response], whose decoded body
+  /// is [body], and returns it as an [AngelHttpException], also added to
+  /// [events].
+  AngelHttpException _readFailure(
+    Response response,
+    dynamic body,
+    StreamController events,
+    Object error,
+    StackTrace stack, [
+    String? message,
+  ]) {
+    _log.severe(
+      'Could not read the response of ${response.request?.url}',
+      error,
+      stack,
+    );
+    var f = _failure(
       response,
-      _onIndexed,
-      (v) => [for (var x in v as List) ?deserialize(x)],
+      body,
+      error: error,
+      message: message,
+      stack: stack,
     );
+    _emitError(events, f, stack);
+    return f;
   }
 
   @override
-  Future<Data> read(id, [Map<String, dynamic>? params]) async {
-    var response = await app.sendUnstreamed(
-      'GET',
-      _idUrl(id, params),
-      _readHeaders,
-    );
-    return _handle(response, _onRead, _deserializeOne);
-  }
+  Future<List<Data>> index([Map<String, dynamic>? params]) async => _request(
+    'GET',
+    _url(params),
+    _onIndexed,
+    (v) => [for (var x in v as List) ?deserialize(x)],
+  );
 
   @override
-  Future<Data> create(data, [Map<String, dynamic>? params]) async {
-    var response = await app.sendUnstreamed(
-      'POST',
-      _url(params),
-      _writeHeaders,
-      makeBody(data),
-    );
-    return _handle(response, _onCreated, _deserializeOne);
-  }
+  Future<Data> read(id, [Map<String, dynamic>? params]) async =>
+      _request('GET', _idUrl(id, params), _onRead, _deserializeOne);
 
   @override
-  Future<Data> modify(id, data, [Map<String, dynamic>? params]) async {
-    var response = await app.sendUnstreamed(
-      'PATCH',
-      _idUrl(id, params),
-      _writeHeaders,
-      makeBody(data),
-    );
-    return _handle(response, _onModified, _deserializeOne);
-  }
+  Future<Data> create(data, [Map<String, dynamic>? params]) async => _request(
+    'POST',
+    _url(params),
+    _onCreated,
+    _deserializeOne,
+    _encode(data),
+  );
 
   @override
-  Future<Data> update(id, data, [Map<String, dynamic>? params]) async {
-    var response = await app.sendUnstreamed(
-      'POST',
-      _idUrl(id, params),
-      _writeHeaders,
-      makeBody(data),
-    );
-    return _handle(response, _onUpdated, _deserializeOne);
-  }
+  Future<Data> modify(id, data, [Map<String, dynamic>? params]) async =>
+      _request(
+        'PATCH',
+        _idUrl(id, params),
+        _onModified,
+        _deserializeOne,
+        _encode(data),
+      );
 
   @override
-  Future<Data> remove(id, [Map<String, dynamic>? params]) async {
-    var response = await app.sendUnstreamed(
-      'DELETE',
-      _idUrl(id, params),
-      _readHeaders,
-    );
-    return _handle(response, _onRemoved, _deserializeOne);
-  }
+  Future<Data> update(id, data, [Map<String, dynamic>? params]) async =>
+      _request(
+        'POST',
+        _idUrl(id, params),
+        _onUpdated,
+        _deserializeOne,
+        _encode(data),
+      );
+
+  @override
+  Future<Data> remove(id, [Map<String, dynamic>? params]) async =>
+      _request('DELETE', _idUrl(id, params), _onRemoved, _deserializeOne);
 }
