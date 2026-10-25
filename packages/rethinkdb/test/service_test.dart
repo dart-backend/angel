@@ -77,8 +77,8 @@ void main() {
     expect(found['title'], 'a');
   });
 
-  test('read of a missing id is a 404', () {
-    expect(() => service.read('missing'), throwsStatus(404));
+  test('read of a missing id is a 404', () async {
+    await expectLater(service.read('missing'), throwsStatus(404));
   });
 
   test('modify changes the record in the path, not the body id', () async {
@@ -136,28 +136,130 @@ void main() {
     expect((await service.index()).map((t) => t['title']), ['b']);
   });
 
-  test('changefeed fires afterUpdated and afterRemoved', () async {
-    var id = await insert({'title': 'a'});
-    // Let the changefeed start.
-    await Future.delayed(const Duration(milliseconds: 500));
+  group('an untyped callback', () {
+    // (t) => ... is a dynamic Function(dynamic), not a QueryCallback.
+    test('as query filters index', () async {
+      await insert({'title': 'a', 'completed': true});
+      await insert({'title': 'b', 'completed': false});
+      var done = await service.index({
+        'query': (t) => t.filter({'completed': true}),
+      });
+      expect(done.map((t) => t['title']), ['a']);
+    });
 
-    var created = <HookedServiceEvent>[];
+    test('as reql extends the query', () async {
+      // Inserted out of order, so that only the sort orders them.
+      await insert({'title': 'b'});
+      await insert({'title': 'c'});
+      await insert({'title': 'a'});
+      var sorted = await service.index({'reql': (q) => q.orderBy('title')});
+      expect(sorted.map((t) => t['title']), ['a', 'b', 'c']);
+    });
+
+    test('as query makes server-side remove(null) remove only matching '
+        'records', () async {
+      await insert({'title': 'a', 'completed': true});
+      await insert({'title': 'b', 'completed': false});
+      var result = await service.inner.remove(null, {
+        'query': (t) => t.filter({'completed': true}),
+      });
+      expect(result['deleted'], 1);
+      expect((await service.index()).map((t) => t['title']), ['b']);
+    });
+
+    test('that does not return a query is an ArgumentError', () async {
+      await expectLater(
+        service.index({'query': (t) => 'not a query'}),
+        throwsA(isA<ArgumentError>()),
+      );
+    });
+  });
+
+  test(
+    'changefeed fires afterCreated, afterUpdated and afterRemoved',
+    () async {
+      await service.inner.changefeedStarted;
+
+      var created = <HookedServiceEvent>[];
+      var updated = Completer<HookedServiceEvent>();
+      var removed = Completer<HookedServiceEvent>();
+      service.afterCreated.listen(created.add);
+      service.afterUpdated.listen(updated.complete);
+      service.afterRemoved.listen(removed.complete);
+
+      // Written to RethinkDB directly, so the events come from the changefeed.
+      var id = 'feed';
+      await r.table('todos').insert({'id': id, 'title': 'a'}).run(conn);
+      await r.table('todos').get(id).update({'title': 'b'}).run(conn);
+      var u = await updated.future.timeout(const Duration(seconds: 5));
+      expect(u.id, id);
+      expect(u.result['title'], 'b');
+
+      await r.table('todos').get(id).delete().run(conn);
+      var d = await removed.future.timeout(const Duration(seconds: 5));
+      expect(d.id, id);
+
+      // The update and the removal are not reported as creations.
+      expect(created.map((e) => e.id), [id]);
+    },
+  );
+
+  test('a changefeed starting when the service closes is stopped', () async {
+    // Its own connection, whose changefeeds the server lists as jobs.
+    var own = await r.connect(
+      db: 'testDB',
+      host: rethinkHost,
+      port: 28015,
+      user: "admin",
+      password: "",
+    );
+    addTearDown(own.close);
+    Future<int> changefeeds() async {
+      var jobs =
+          await (await r.db('rethinkdb').table('jobs').run(own) as Cursor)
+              .toList();
+      // The server sees the port of the connection as the one this query of
+      // the jobs comes from; forwarding to a container can change it.
+      var port = jobs.firstWhere(
+        (j) => '${j['info']['query']}'.contains('"jobs"'),
+      )['info']['client_port'];
+      return jobs
+          .where(
+            (j) =>
+                j['info']['client_port'] == port &&
+                '${j['info']['query']}'.contains('changes'),
+          )
+          .length;
+    }
+
+    var closing = Angel();
+    var hooked = closing.use<String, Map<String, dynamic>, RethinkService>(
+      '/todos',
+      RethinkService(own, r.table('todos')),
+    );
+    addTearDown(closing.close);
+    // Closed at once, before the changefeed has started.
+    hooked.inner.close();
+    await hooked.inner.changefeedStarted;
+    await Future.delayed(const Duration(milliseconds: 300));
+    expect(await changefeeds(), 0);
+  });
+
+  test('a changefeed over a single record fires its changes', () async {
+    var id = await insert({'title': 'a'});
+    var single = Angel();
+    addTearDown(single.close);
+    var hooked = single.use<String, Map<String, dynamic>, RethinkService>(
+      '/todo',
+      RethinkService(conn, r.table('todos').get(id)),
+    );
+    await hooked.inner.changefeedStarted;
     var updated = Completer<HookedServiceEvent>();
-    var removed = Completer<HookedServiceEvent>();
-    service.afterCreated.listen(created.add);
-    service.afterUpdated.listen(updated.complete);
-    service.afterRemoved.listen(removed.complete);
+    hooked.afterUpdated.listen(updated.complete);
 
     await r.table('todos').get(id).update({'title': 'b'}).run(conn);
     var u = await updated.future.timeout(const Duration(seconds: 5));
-    expect(u.id, id);
     expect(u.result['title'], 'b');
-
-    await r.table('todos').get(id).delete().run(conn);
-    var d = await removed.future.timeout(const Duration(seconds: 5));
-    expect(d.id, id);
-
-    expect(created, isEmpty);
   });
 
   group('over a query that is not a table', () {
@@ -181,7 +283,26 @@ void main() {
 
     test('does not find records outside the query', () async {
       var id = await insert({'title': 'a', 'completed': true});
-      expect(() => pending.read(id), throwsStatus(404));
+      await expectLater(pending.read(id), throwsStatus(404));
+    });
+
+    test('modify that moves a record out of the query returns it', () async {
+      var id = await insert({'title': 'a', 'completed': false});
+      var result = await pending.modify(id, {'completed': true});
+      expect(result['id'], id);
+      expect(result['completed'], isTrue);
+    });
+
+    test('update that moves a record out of the query returns it', () async {
+      var id = await insert({'title': 'a', 'completed': false});
+      var result = await pending.update(id, {'title': 'b'});
+      expect(result, {'id': id, 'title': 'b'});
+    });
+
+    test('modify that changes nothing returns the record', () async {
+      var id = await insert({'title': 'a', 'completed': false});
+      var result = await pending.modify(id, {'title': 'a'});
+      expect(result['title'], 'a');
     });
   });
 
