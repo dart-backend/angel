@@ -404,6 +404,33 @@ void main() {
     expect(app.service('todos').read('1'), throwsA(isHttpException(304)));
   });
 
+  test('an id is one segment of the path', () async {
+    client.body = json.encode({'text': 'Sleep'});
+    var service = app.service('api/todos');
+    for (var id in ['a/b', '/admin/users', 'a b', '%2E']) {
+      await service.remove(id);
+      expect(client.lastRequest!.url.pathSegments, ['api', 'todos', id]);
+    }
+  });
+
+  test('an id that cannot be a path segment is an ArgumentError', () async {
+    var service = app.service('todos');
+    for (var id in ['', '.', '..']) {
+      await expectLater(
+        service.remove(id),
+        throwsA(isA<ArgumentError>().having((e) => e.name, 'name', 'id')),
+      );
+    }
+    expect(client.lastRequest, isNull);
+  });
+
+  test('authenticate after close returns its result', () async {
+    client.body = json.encode({'token': 'jwt', 'data': {}});
+    var result = app.authenticate(type: 'local');
+    await app.close();
+    expect((await result).token, 'jwt');
+  });
+
   test('a null id is part of the path', () async {
     client.body = json.encode({'text': 'Sleep'});
     await app.service('todos').remove(null);

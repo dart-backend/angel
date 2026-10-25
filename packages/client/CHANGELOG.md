@@ -8,6 +8,7 @@
 * **Breaking:** A REST service is a `Service<Id, Data>`, so `service<String, Todo>()` works, where only a nullable type such as `Todo?` did. Its methods return `Data` and throw an `AngelHttpException` on an error, also when its stream has a listener, where they returned `null`
 * **Breaking:** Removed `belatuk_json_serializer` and the `type` parameter of `service()`, which needed `dart:mirrors`. Pass a `deserializer` instead, such as `deserializer: (x) => TodoSerializer.fromMap(x as Map)`; without one, a service returns the decoded JSON. Objects sent to the server are encoded with `jsonEncode`, which calls their `toJson()`
 * **Breaking:** Removed `RestService`: `Rest.service()` returns a `BaseAngelService`, like the other clients
+* **Breaking:** An id is encoded as one segment of the URL path, so `read('a/b')` requests `/todos/a%2Fb`, where it requested `/todos/a/b`, and an id starting with `/` no longer replaces the path of the service. An id is encoded as it is, so pass ids unencoded: an id the caller encoded, such as `a%20b`, is sent as `a%2520b` and is the id `a%20b` on the server. An empty id, `.` and `..` throw an `ArgumentError`, since they would be the URL of the service or be resolved away
 * **Breaking:** A list param is sent as one param per value, such as `?tag=a&tag=b`, where it was sent as `?tag=[a, b]`. An empty list throws an `ArgumentError`, since leaving it out would drop a filter. The query of the client's base URL, such as `?key=x`, is kept as it is when params are passed, where it was dropped
 
 ### Fixes in 10.0.0
@@ -17,6 +18,7 @@
 * **Error responses:** Reported once: a listener of `onIndexed`, `onRead` and the other streams gets only the `AngelHttpException`, without a second error from reading the body
 * **`Rest.service`:** Uses the `deserializer` it is given
 * **Data that cannot be encoded:** `create`, `modify` and `update` throw an `ArgumentError` naming the `jsonEncode` error, with its stack trace, for an object without a `toJson()`, where they threw a `JsonUnsupportedObjectError`. An error thrown by a `toJson()` is thrown as it is, and a value a `toJson()` returns that cannot be encoded is also an `ArgumentError`
+* **Closed clients:** An `authenticate` response that arrives after `close()` is returned, where adding it to the closed `onAuthenticated` threw a `StateError`. A request still being sent when `close()` closes the HTTP client fails as before
 * **Closed services:** A response that arrives after the service is closed is returned or thrown, where adding it to the closed stream threw a `StateError`
 * **Typed services without a deserializer:** The error says to pass a `deserializer` when the JSON is not a `Data`, and says so when the body of `read`, `create`, `modify`, `update` or `remove` is `null`, where it was an unhandled exception. `index` still skips items deserialized to `null`
 * **Error responses that are not JSON:** The `AngelHttpException` has no `error` or stack trace of the internal `FormatException`, and an error response added to a stream has a stack trace

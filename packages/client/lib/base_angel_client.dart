@@ -170,7 +170,7 @@ abstract class BaseAngelClient extends Angel {
       }
 
       var r = AngelAuthResult.fromMap(v);
-      _onAuthenticated.add(r);
+      if (!_onAuthenticated.isClosed) _onAuthenticated.add(r);
       return r;
     } on AngelHttpException {
       rethrow;
@@ -397,10 +397,23 @@ class BaseAngelService<Id, Data> extends Service<Id, Data> {
 
   Uri _url(Map<String, dynamic>? params) => _withQuery(baseUrl, params);
 
-  Uri _idUrl(Id id, Map<String, dynamic>? params) => _withQuery(
-    baseUrl.replace(path: _p.join(baseUrl.path, id.toString())),
-    params,
-  );
+  /// The URL of [id], encoded as one path segment, so that an id such as
+  /// `a/b` or `/admin` cannot leave the path of the service.
+  ///
+  /// An empty id would be the URL of the service itself, and `.` or `..` would
+  /// be resolved away even when encoded, so they throw an [ArgumentError].
+  Uri _idUrl(Id id, Map<String, dynamic>? params) {
+    var segment = id.toString();
+    if (segment.isEmpty || segment == '.' || segment == '..') {
+      throw ArgumentError.value(id, 'id', 'cannot be a path segment');
+    }
+    return _withQuery(
+      baseUrl.replace(
+        path: _p.join(baseUrl.path, Uri.encodeComponent(segment)),
+      ),
+      params,
+    );
+  }
 
   void _emit<T>(StreamController<T> events, T value) {
     if (!events.isClosed) events.add(value);

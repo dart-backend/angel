@@ -16,8 +16,9 @@ typedef AngelConfigurer = FutureOr<void> Function(Angel app);
 
 /// A function that deserializes data received from the server.
 ///
-/// This is only really necessary in the browser, where `json_god`
-/// doesn't work.
+/// A service needs one to return your own classes instead of the decoded
+/// JSON, such as `(x) => TodoSerializer.fromMap(x as Map)` with
+/// `angel3_serialize`.
 typedef AngelDeserializer<T> = T? Function(dynamic x);
 
 /// Represents an Angel server that we are querying.
