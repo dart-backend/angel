@@ -88,20 +88,30 @@ Future<void> firstFailsApp(Angel app) async {
 const testResponseHeaders = <String, Object>{
   'vary': ['accept', 'origin'],
   'cache-control': 'no-store',
-  'set-cookie': ['a=1', 'b=2'],
+  // With attributes, which an HTTP/2 response's copy of it keeps.
+  'set-cookie': ['a=1', 'b=2', 'c=3; Path=/x; HttpOnly'],
   'x-list': ['a', 'b'],
   // Names that differ in case, merged as HttpHeaders.add merges them.
   'X-Case': 'a',
   'x-case': 'b',
+  'x-gone': 'a',
 };
-const testRemovedHeaders = <String, Object>{
-  'x-frame-options': 'SAMEORIGIN',
+const testRemovedHeaders = <String, Object?>{
+  // Matched ignoring case, as dart:io stores SAMEORIGIN.
+  'x-frame-options': 'sameorigin',
   'x-list': ['b'],
+  // Whatever their values: a default of dart:io, and a configured one.
+  'x-xss-protection': null,
+  'x-gone': null,
 };
 
 /// Responds on `/` without headers of its own, and on `/own` with some.
 Future<void> headersApp(Angel app) async {
   app.get('/', (req, res) => 'ok');
+  app.get('/cookie', (req, res) {
+    res.cookies.add(Cookie('a', '5'));
+    return 'ok';
+  });
   app.get('/own', (req, res) {
     res.headers
       ..['cache-control'] = 'public'
@@ -109,6 +119,9 @@ Future<void> headersApp(Angel app) async {
     return 'ok';
   });
 }
+
+/// The name of the cookie of a `set-cookie` value.
+String cookieName(String setCookie) => setCookie.split('=').first;
 
 /// The headers of an HTTP/2 GET of [path] at [url], with each value of a
 /// header that is sent several times.
@@ -291,7 +304,7 @@ void main() {
       var url = Uri.parse(
         RegExp(r'listening at (\S+)').firstMatch(plain(lines).join('\n'))![1]!,
       );
-      for (var path in ['/', '/own']) {
+      for (var path in ['/', '/own', '/cookie']) {
         // Without ALPN, so it is served by the HTTP/1 fallback.
         var response = await (await client.getUrl(url.replace(path: path)))
             .close();
@@ -308,20 +321,39 @@ void main() {
     // As one line, which dart:io sends for each header but set-cookie.
     expect(http1['/']!.value('vary'), 'accept, origin');
     expect(http1['/']!.value('cache-control'), 'no-store');
-    expect(http1['/']!['set-cookie'], ['a=1', 'b=2']);
+    expect(http1['/']!['set-cookie'], ['a=1', 'b=2', 'c=3; Path=/x; HttpOnly']);
     expect(http1['/']!.value('x-list'), 'a');
     expect(http1['/']!.value('x-case'), 'a, b');
+    expect(http1['/']!.value('x-xss-protection'), isNull);
+    expect(http1['/']!.value('x-gone'), isNull);
     expect(http2['/'], isNot(contains('x-frame-options')));
+    expect(http2['/'], isNot(contains('x-gone')));
     expect(http2['/']!['vary'], ['accept, origin']);
     expect(http2['/']!['cache-control'], ['no-store']);
     // One header per cookie, as a browser needs.
-    expect(http2['/']!['set-cookie'], ['a=1', 'b=2']);
+    expect(http2['/']!['set-cookie'], ['a=1', 'b=2', 'c=3; Path=/x; HttpOnly']);
     expect(http2['/']!['x-list'], ['a']);
     expect(http2['/']!['x-case'], ['a, b']);
 
     // The handler's own headers replace them, and are not removed.
     expect(http1['/own']!.value('cache-control'), 'public');
     expect(http1['/own']!.value('x-frame-options'), 'DENY');
+    // A cookie of the handler comes after the default one of its name, so
+    // that it wins.
+    expect(http1['/cookie']!['set-cookie']!.map(cookieName), [
+      'a',
+      'b',
+      'c',
+      'a',
+    ]);
+    expect(http1['/cookie']!['set-cookie']!.last, startsWith('a=5'));
+    expect(http2['/cookie']!['set-cookie']!.map(cookieName), [
+      'a',
+      'b',
+      'c',
+      'a',
+    ]);
+    expect(http2['/cookie']!['set-cookie']!.last, startsWith('a=5'));
     expect(http2['/own']!['cache-control'], ['public']);
     expect(http2['/own']!['x-frame-options'], ['DENY']);
   });
@@ -344,7 +376,7 @@ void main() {
       var url = Uri.parse(
         RegExp(r'listening at (\S+)').firstMatch(plain(lines).join('\n'))![1]!,
       );
-      for (var path in ['/', '/own']) {
+      for (var path in ['/', '/own', '/cookie']) {
         var response = await (await client.getUrl(url.replace(path: path)))
             .close();
         await response.drain<void>();
@@ -357,9 +389,20 @@ void main() {
     expect(http1['/']!.value('x-frame-options'), isNull);
     expect(http1['/']!.value('vary'), 'accept, origin');
     expect(http1['/']!.value('cache-control'), 'no-store');
-    expect(http1['/']!['set-cookie'], ['a=1', 'b=2']);
+    expect(http1['/']!['set-cookie'], ['a=1', 'b=2', 'c=3; Path=/x; HttpOnly']);
     expect(http1['/']!.value('x-list'), 'a');
     expect(http1['/']!.value('x-case'), 'a, b');
+    expect(http1['/']!.value('x-xss-protection'), isNull);
+    expect(http1['/']!.value('x-gone'), isNull);
+    // A cookie of the handler comes after the default one of its name, so
+    // that it wins.
+    expect(http1['/cookie']!['set-cookie']!.map(cookieName), [
+      'a',
+      'b',
+      'c',
+      'a',
+    ]);
+    expect(http1['/cookie']!['set-cookie']!.last, startsWith('a=5'));
     expect(http1['/own']!.value('cache-control'), 'public');
     expect(http1['/own']!.value('x-frame-options'), 'DENY');
   });
@@ -672,6 +715,35 @@ void main() {
     // was not cancelled made it wait for.
     expect(stopwatch.elapsed, lessThan(const Duration(seconds: 10)));
     expect(code, 0);
+  }, timeout: const Timeout(Duration(minutes: 2)));
+
+  test('one signal closes two runs in progress gracefully', () async {
+    var process = await Process.start(Platform.resolvedExecutable, [
+      'test/two_runs_app.dart',
+      '-j',
+      '1',
+      '-p',
+      '0',
+    ]);
+    addTearDown(process.kill);
+    var out = <String>[];
+    process.stdout
+        .transform(const SystemEncoding().decoder)
+        .transform(const LineSplitter())
+        .listen((text) => out.add(text));
+    process.stderr.drain<void>();
+    await printed(
+      out,
+      'listening at',
+      count: 2,
+      timeout: const Duration(seconds: 60),
+    );
+
+    process.kill(ProcessSignal.sigint);
+    var code = await process.exitCode.timeout(const Duration(seconds: 30));
+    // Not 70, as when the second handler took it for a second signal.
+    expect(code, 0);
+    expect(out.where((l) => l.contains('closed instance')), hasLength(2));
   }, timeout: const Timeout(Duration(minutes: 2)));
 
   test(

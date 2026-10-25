@@ -8,6 +8,8 @@ import 'package:http2/transport.dart';
 import 'package:angel3_mock_request/angel3_mock_request.dart';
 
 import '../http/connections.dart';
+import '../http/headers.dart';
+import 'default_headers.dart';
 import 'http2_request_context.dart';
 import 'http2_response_context.dart';
 
@@ -126,13 +128,59 @@ class AngelHttp2
   /// Fires when an HTTP/1.x request is received.
   Stream<HttpRequest> get onHttp1 => _onHttp1.stream;
 
+  /// The default headers of HTTP/2 responses.
+  final DefaultResponseHeaders _http2Defaults = DefaultResponseHeaders();
+
+  /// The changes to the default headers, which the server of the HTTP/1
+  /// requests that [allowHttp1] serves gets as it starts.
+  final List<void Function(HttpHeaders)> _http1Defaults = [];
+
+  /// Adds default headers to the responses, HTTP/2 ones and those of the
+  /// HTTP/1 requests that [allowHttp1] serves, by the rules of
+  /// [AngelHttp.addResponseHeader]: a header that a handler sets replaces one
+  /// of the same name. Unlike that one, it may be called before
+  /// [startServer] too.
+  ///
+  /// A header that cannot be sent throws an [ArgumentError], and none of
+  /// [headers] is added.
+  void addResponseHeader(Map<String, Object?> headers) {
+    var copy = copyHeaders(headers);
+    checkHeaders(copy);
+    _changeHttp1Defaults((d) => d.addValues(copy));
+    _http2Defaults.add(copy);
+  }
+
+  /// Removes default headers of the responses, by the rules of
+  /// [AngelHttp.removeResponseHeader], including those that `dart:io` adds
+  /// to the HTTP/1 ones. Like [addResponseHeader], it may be called before
+  /// [startServer] too.
+  void removeResponseHeader(Map<String, Object?> headers) {
+    var copy = copyHeaders(headers);
+    copy.keys.forEach(checkHeaderName);
+    _changeHttp1Defaults((d) => d.removeValues(copy));
+    _http2Defaults.remove(copy);
+  }
+
+  /// Applies [change] to the HTTP/1 server running, if any, and keeps it for
+  /// the server started next. The running server changes first, so that a
+  /// change it does not take changes nothing.
+  void _changeHttp1Defaults(void Function(HttpHeaders) change) {
+    var defaults = _artificial?.http1.defaultResponseHeaders;
+    if (defaults != null) change(defaults);
+    _http1Defaults.add(change);
+  }
+
   @override
   Future<SecureServerSocket> generateServer([
     Object? address,
     int? port,
   ]) async {
     var s = await serverGenerator(address ?? '127.0.0.1', port ?? 0);
-    return _artificial = _AngelHttp2ServerSocket(s, this);
+    var artificial = _artificial = _AngelHttp2ServerSocket(s, this);
+    for (var change in _http1Defaults) {
+      change(artificial.http1.defaultResponseHeaders);
+    }
+    return artificial;
   }
 
   Future<void>? _drainingHttp2;
@@ -147,6 +195,10 @@ class AngelHttp2
     var http = _http?..closeTimeout = closeTimeout;
     await Future.wait([super.drain(), ?http?.drain()]);
   }
+
+  /// The headers of [pending], with the defaults it has none of.
+  List<Header> _headersOf(_PendingHeaders pending) =>
+      pending.toHeaders(_http2Defaults);
 
   _PendingHeaders _pendingFor(ServerTransportStream response) =>
       _pending[response] ??= _PendingHeaders();
@@ -195,7 +247,7 @@ class AngelHttp2
         return response.outgoingMessages.close();
       }
       pending.sent = true;
-      response.sendHeaders(pending.toHeaders(), endStream: true);
+      response.sendHeaders(_headersOf(pending), endStream: true);
     }
     return Future.value();
   }
@@ -276,7 +328,12 @@ class AngelHttp2
     ServerTransportStream response, [
     Http2RequestContext? correspondingRequest,
   ]) async {
-    return Http2ResponseContext(app, response, correspondingRequest)
+    return Http2ResponseContext(
+        app,
+        response,
+        correspondingRequest,
+        defaultHeaders: _http2Defaults,
+      )
       ..serializer = (app.serializer ?? json.encode)
       ..encoders.addAll(app.encoders);
   }
@@ -334,7 +391,7 @@ class AngelHttp2
     var pending = _pendingFor(response);
     if (!pending.sent) {
       pending.sent = true;
-      response.sendHeaders(pending.toHeaders());
+      response.sendHeaders(_headersOf(pending));
     }
     response.sendData(data);
   }
@@ -346,9 +403,10 @@ class _PendingHeaders {
   final List<Cookie> cookies = [];
   bool sent = false, closed = false;
 
-  List<Header> toHeaders() => [
+  List<Header> toHeaders(DefaultResponseHeaders defaults) => [
     Header.ascii(':status', statusCode.toString()),
     for (var entry in headers.entries) Header.ascii(entry.key, entry.value),
+    ...defaults.headersFor({for (var name in headers.keys) name.toLowerCase()}),
     for (var cookie in cookies) Header.ascii('set-cookie', cookie.toString()),
   ];
 }

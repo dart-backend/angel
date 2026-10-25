@@ -372,6 +372,43 @@ void main() {
     expect(elapsed.elapsed, lessThan(const Duration(seconds: 2)));
   });
 
+  test('response headers apply to the HTTP/1 requests it serves', () async {
+    var app = Angel()
+      ..get('/', (req, res) => 'ok')
+      ..get('/own', (req, res) {
+        res.headers['x-added'] = 'own';
+        return 'ok';
+      });
+    var ctx = SecurityContext()
+      ..useCertificateChain('dev.pem')
+      ..usePrivateKey('dev.key', password: 'dartdart')
+      ..setAlpnProtocols(['h2', 'http/1.1'], true);
+    var h2 = AngelHttp2(app, ctx, allowHttp1: true);
+    var server = await h2.startServer();
+    addTearDown(h2.close);
+    h2
+      ..addResponseHeader({
+        'x-added': ['a', 'b'],
+      })
+      ..removeResponseHeader({'x-frame-options': 'sameorigin'});
+
+    var client = HttpClient()..badCertificateCallback = (_, _, _) => true;
+    addTearDown(() => client.close(force: true));
+    Future<HttpHeaders> headersOf(String path) async {
+      var response = await (await client.getUrl(
+        Uri.parse('https://127.0.0.1:${server.port}$path'),
+      )).close();
+      await response.drain<void>();
+      return response.headers;
+    }
+
+    var defaults = await headersOf('/');
+    expect(defaults.value('x-added'), 'a, b');
+    expect(defaults.value('x-frame-options'), isNull);
+    // A header of the handler replaces the default.
+    expect((await headersOf('/own')).value('x-added'), 'own');
+  });
+
   test('drain returns the same future when called again', () async {
     var ctx = SecurityContext()
       ..useCertificateChain('dev.pem')

@@ -10,7 +10,7 @@
 
 ### New in 10.0.0
 
-* Graceful shutdown on `SIGINT`, `SIGTERM` and `Runner.stop()`: requests in progress finish and shutdown hooks run, within `shutdownTimeout`, and the process exits as soon as the instances have closed. It closes the instances of `run` and of `spawnIsolate` alike, and `spawnIsolate` can start instances again afterwards. Called while nothing runs, it makes the next `run` return without starting instances, unless `spawnIsolate` starts one before
+* Graceful shutdown on `SIGINT`, `SIGTERM` and `Runner.stop()`: requests in progress finish and shutdown hooks run, within `shutdownTimeout`, and the process exits as soon as the instances have closed. It closes the instances of `run` and of `spawnIsolate` alike, and `spawnIsolate` can start instances again afterwards. Called while no instance runs, it makes the next `run` return without starting instances, unless `spawnIsolate` starts one before. One signal closes every `run` in progress gracefully
 * Key and certificate passwords can come from the `ANGEL_KEY_PASSWORD` and `ANGEL_CERTIFICATE_PASSWORD` environment variables
 
 ### Fixes in 10.0.0
@@ -18,8 +18,8 @@
 * **Logs:** Each record is printed once, at its own level and with the time it was logged at, including records logged during `configureServer`. The runner prints the records of every logger, so a listener that `configureServer` adds to print them prints each one twice
 * **Respawn:** Crashed instances are respawned with a backoff from 1 s to 30 s, also when their isolate fails to spawn again, and no longer leak ports
 * **Arguments:** An invalid `--port` or `--concurrency` is a usage error; `--help` comes before other checks
-* **HTTP/2:** `responseHeaders` and `removeResponseHeaders` apply with `--http2` as without it, to HTTP/2 requests and to the HTTP/1 requests it also serves: the added headers are defaults that a handler's own headers replace, and the removed values are removed from the defaults only. A list value is one header of its values, except `Set-Cookie`, whose values are sent one header each. Its HTTP/1 requests finish on shutdown
-* **`removeResponseHeaders`:** A list value removes each of its values, where it removed nothing
+* **HTTP/2:** `responseHeaders` and `removeResponseHeaders` apply with `--http2` as without it, to HTTP/2 requests and to the HTTP/1 requests it also serves: the added headers are defaults that a handler's own headers replace, and the removed values are removed from the defaults only. A list value is one header of its values, except `Set-Cookie`, whose values are sent one header each, before the cookies of the handler, so that one of these wins. Its HTTP/1 requests finish on shutdown
+* **`removeResponseHeaders`:** A list value removes each of its values, where it removed nothing; a value matches exactly, or ignoring case if nothing matches exactly, such as `sameorigin` for the `SAMEORIGIN` of `dart:io`, and a `null` value removes a header whatever its values, as with `AngelHttp.removeResponseHeader`
 
 ## 9.1.0
 

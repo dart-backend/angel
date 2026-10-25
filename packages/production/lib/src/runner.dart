@@ -33,7 +33,10 @@ class Runner {
   final AngelConfigurer configureServer;
   final Reflector reflector;
 
-  final Map<String, Object> removeResponseHeaders;
+  /// The default headers to remove, with the values to remove, as
+  /// [AngelHttp.removeResponseHeader] takes them: a `null` value removes a
+  /// header whatever its values.
+  final Map<String, Object?> removeResponseHeaders;
   final Map<String, Object> responseHeaders;
 
   /// How long the instances may take to close on a shutdown signal, before
@@ -126,16 +129,9 @@ class Runner {
   /// The instances that [run] and [spawnIsolate] run, until they are done.
   final List<_Instance> _instances = [];
 
-  /// The calls of [stop] that had something to stop, by which a [run] knows
-  /// that it was stopped while it started.
-  int _stops = 0;
-
-  /// Whether [stop] came while nothing ran, which makes the next [run]
+  /// Whether [stop] came while no instance ran, which makes the next [run]
   /// return without starting instances.
   bool _pendingStop = false;
-
-  /// The calls of [run] in progress.
-  int _runs = 0;
 
   /// Adds [instance] to [_instances] until it is done.
   _Instance _track(_Instance instance) {
@@ -146,17 +142,20 @@ class Runner {
     return instance;
   }
 
-  /// Closes every instance, letting its requests in progress finish and
-  /// running its shutdown hooks (or kills it after [shutdownTimeout]), so
-  /// that [run] returns; as `SIGINT` and `SIGTERM` do. Called before [run]
-  /// starts its instances, it makes [run] return without starting them.
+  /// Closes every instance of [run] and [spawnIsolate], letting its requests
+  /// in progress finish and running its shutdown hooks (or kills it after
+  /// [shutdownTimeout]), so that [run] returns; as `SIGINT` and `SIGTERM` do.
+  ///
+  /// Called while no instance runs, it makes the next [run] return without
+  /// starting instances, unless [spawnIsolate] starts one before. A [run]
+  /// starts its instances as soon as it is called, so it cannot be stopped
+  /// in between.
   void stop() {
-    if (_instances.isEmpty && _runs == 0) {
+    if (_instances.isEmpty) {
       // Nothing to close: only the next run returns without starting.
       _pendingStop = true;
       return;
     }
-    _stops++;
     for (var instance in _instances.toList()) {
       instance.stop(shutdownTimeout);
     }
@@ -167,10 +166,6 @@ class Runner {
     Server? server;
     var instances = <_Instance>[];
     var signals = <StreamSubscription>[];
-    _runs++;
-    var stops = _stops;
-    // Whether stop() came since this run began.
-    bool stopped() => _stops != stops;
 
     try {
       var argResults = RunnerOptions.argParser.parse(args);
@@ -198,7 +193,7 @@ class Runner {
       print(darkGray.wrap(_banner));
       print('Starting `$name` application...');
 
-      if (_pendingStop || stopped()) {
+      if (_pendingStop) {
         _pendingStop = false;
         return;
       }
@@ -217,9 +212,12 @@ class Runner {
         );
       }
 
-      // Closes every instance on a signal; a second one ends at once.
+      // Closes every instance on a signal; a second one ends at once. Each
+      // run has its own handler, so it counts the signals it got itself.
+      var signalled = false;
       void onSignal(ProcessSignal signal) {
-        if (stopped()) exit(ExitCode.software.code);
+        if (signalled) exit(ExitCode.software.code);
+        signalled = true;
         print('Received $signal. Shutting down...');
         stop();
       }
@@ -263,7 +261,6 @@ class Runner {
         await sub.cancel();
       }
       await server?.close();
-      _runs--;
     }
   }
 
@@ -372,25 +369,6 @@ class Runner {
         useZone: options.useZone,
         allowHttp1: true,
       );
-      // As each response, not the server, has the headers, they apply as
-      // with AngelHttp: the configured headers are defaults, which the
-      // headers a handler sets replace, and the removed ones are removed
-      // from the defaults only.
-      if (options.responseHeaders.isNotEmpty ||
-          options.removeResponseHeaders.isNotEmpty) {
-        var http2Defaults = _Http2Defaults(options);
-        app.responseFinalizers.add((req, res) {
-          if (res is HttpResponseContext) {
-            // An HTTP/1 request, whose response has the defaults of dart:io,
-            // and gets the headers of the handler after: as AngelHttp.
-            var headers = res.rawResponse.headers;
-            options.responseHeaders.forEach(headers.add);
-            _eachRemoved(options, headers.remove);
-          } else {
-            http2Defaults.applyTo(res);
-          }
-        });
-      }
       driver = http2;
     } else if (options.ssl) {
       driver = AngelHttp.custom(
@@ -405,7 +383,12 @@ class Runner {
     driver.closeTimeout = args.closeTimeout;
     await driver.startServer(options.hostname, options.port);
 
+    // As defaults of the server, which a handler's headers replace.
     if (driver is AngelHttp) {
+      driver.addResponseHeader(options.responseHeaders);
+      driver.removeResponseHeader(options.removeResponseHeaders);
+    } else if (driver is AngelHttp2) {
+      // Its HTTP/2 responses, and those of the HTTP/1 requests it serves.
       driver.addResponseHeader(options.responseHeaders);
       driver.removeResponseHeader(options.removeResponseHeaders);
     }
@@ -416,60 +399,6 @@ class Runner {
     }
     print('Instance #${argsWithId.id} listening at $serverUrl');
     return driver;
-  }
-}
-
-/// Calls [remove] with each removed header and value of [options]: one call
-/// per value of a list, as [HttpHeaders.remove] takes one value.
-void _eachRemoved(RunnerOptions options, void Function(String, Object) remove) {
-  options.removeResponseHeaders.forEach((name, value) {
-    for (var v in value is Iterable ? value : [value]) {
-      remove(name, v as Object);
-    }
-  });
-}
-
-/// The defaults of HTTP/2 responses: [RunnerOptions.responseHeaders], less
-/// [RunnerOptions.removeResponseHeaders], as AngelHttp adds and then removes
-/// them, which a handler's own headers replace.
-class _Http2Defaults {
-  /// The headers, by lowercase name: one of the values of a list, as an
-  /// HTTP/2 response has one value per header.
-  final Map<String, String> headers = {};
-
-  /// The `set-cookie` values, which are sent as cookies, one header each.
-  final List<String> cookies = [];
-
-  _Http2Defaults(RunnerOptions options) {
-    List<String> valuesOf(Object value) => [
-      for (var v in value is Iterable ? value : [value]) '$v',
-    ];
-    // Merged, as HttpHeaders.add merges names that differ in case.
-    var values = <String, List<String>>{};
-    options.responseHeaders.forEach((name, value) {
-      values.putIfAbsent(name.toLowerCase(), () => []).addAll(valuesOf(value));
-    });
-    _eachRemoved(options, (name, value) {
-      values[name.toLowerCase()]?.remove('$value');
-    });
-    values.forEach((name, list) {
-      if (list.isEmpty) return;
-      if (name == 'set-cookie') {
-        // Checked now, rather than on each response.
-        list.forEach(Cookie.fromSetCookieValue);
-        cookies.addAll(list);
-      } else {
-        headers[name] = list.join(', ');
-      }
-    });
-  }
-
-  void applyTo(ResponseContext res) {
-    headers.forEach((k, v) => res.headers.putIfAbsent(k, () => v));
-    if (cookies.isNotEmpty && !res.headers.containsKey('set-cookie')) {
-      // New ones for each response, as a handler may change its cookies.
-      res.cookies.addAll(cookies.map(Cookie.fromSetCookieValue));
-    }
   }
 }
 

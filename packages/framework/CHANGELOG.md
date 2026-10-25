@@ -4,6 +4,8 @@
 
 ### Breaking changes in 10.0.0
 
+* **Breaking:** `AngelHttp.addResponseHeader` throws an `ArgumentError`, before adding any of the call's headers, for a header that cannot be sent, where `dart:io` threw an `HttpException` or a `FormatException` once it had added those before it, and `removeResponseHeader` throws one for a name that is not a header name
+* **Breaking:** `AngelHttp.removeResponseHeader` removes more of the default headers: each value of a list, every value equal to a given one, and, if none matches exactly, those that match ignoring case. It took a list as one value, which matched nothing, and removed only the first exact match
 * **Breaking:** `MirrorsReflector` moved to the new `angel3_container_mirrors` package
 * **Breaking:** `chain` stops at the first handler that does not return `true`, like a route's handlers
 * **Breaking:** Buffered responses use `Content-Length` instead of chunked encoding, unless `res.chunked` is `true`
@@ -12,6 +14,8 @@
 
 ### New in 10.0.0
 
+* `AngelHttp2.addResponseHeader` and `AngelHttp2.removeResponseHeader` set default headers of the responses, HTTP/2 ones and those of the HTTP/1 requests that `allowHttp1` serves, by the rules of those of `AngelHttp`, and, unlike those, also before `startServer`. HTTP/2 responses get them as they send their headers, also an error response that is not finalized, but not the headers HTTP/2 forbids, such as `connection`, nor `content-length`, which only a response knows; a header `dart:io` keeps one value of, such as `expires`, keeps the last one added, and a default `set-cookie` is sent as given, before the response's own cookies. A response's own headers and cookies do not get the defaults. A header that cannot be sent, on HTTP/2 or by the rules `dart:io` has for headers such as `expires`, throws an `ArgumentError`, and adds none of the call's headers
+* `AngelHttp.removeResponseHeader` removes a header whatever its values when given `null`, and the `HttpHeadersValues` extension (`addValues` and `removeValues`) applies the same rules to any `HttpHeaders`
 * Works without `dart:mirrors`: `@Expose`, `@Middleware` and `@Hooks` work with a `StaticReflector` from `angel3_container_generator`
 * Graceful shutdown: `Driver.close` lets requests in progress finish, within the new `closeTimeout`, before the shutdown hooks run; `Driver.drain` does so without the hooks
 * `ResponseContext.headersSent` and `abort`: a handler that fails after the headers are sent aborts the response
@@ -20,6 +24,7 @@
 
 ### Fixes in 10.0.0
 
+* **Default headers of `AngelHttp`:** `removeResponseHeader` matches a `DateTime` in the HTTP-date form `dart:io` stores it in, and `addResponseHeader` and `removeResponseHeader` skip a `null` in a list, where it threw
 * **Injection:** Named parameters keep their defaults, and `@Header`, `@Query`, `@CookieValue` and `@Session` work for any type
 * **Controllers:** Controllers with getters, setters, static or private members can be mounted
 * **Routing:** `app.group` middleware runs, and typed parameters such as `int:id` do not match text

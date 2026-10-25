@@ -91,7 +91,7 @@ class RunnerOptions {
   final String? certificateFile, keyFile, certificatePassword, keyPassword;
   final int concurrency, port;
   final bool useZone, respawn, quiet, ssl, http2;
-  final Map<String, Object> removeResponseHeaders = {};
+  final Map<String, Object?> removeResponseHeaders = {};
   final Map<String, Object> responseHeaders = {};
 
   RunnerOptions({
