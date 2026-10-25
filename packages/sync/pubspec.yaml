@@ -10,7 +10,7 @@ environment:
   sdk: '>=3.13.0 <4.0.0'
 dependencies:
   angel3_websocket: ^10.0.0
-  belatuk_pub_sub: ^6.1.0
+  belatuk_pub_sub: ^7.0.0
   stream_channel: ^2.1.0
 dev_dependencies:
   angel3_framework: ^10.0.0
