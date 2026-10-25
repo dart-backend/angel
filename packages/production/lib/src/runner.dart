@@ -64,6 +64,11 @@ class Runner {
     'yyyy-MM-dd HH:mm:ss',
   );
 
+  /// Whether the error of a record is not printed: that of an
+  /// [AngelHttpException] that is not a 500, i.e. of a request.
+  static bool _hidesError(Object? error) =>
+      error is AngelHttpException && error.statusCode != 500;
+
   /// Prints [record], unless [RunnerOptions.quiet]. A record of an
   /// [AngelHttpException] that is not a 500 is printed without its error.
   static void handleLogRecord(LogRecord? record, RunnerOptions options) {
@@ -75,7 +80,7 @@ class Runner {
     print(code.wrap('$prefix: ${record.message}'));
 
     var err = record.error;
-    if (err == null || (err is AngelHttpException && err.statusCode != 500)) {
+    if (err == null || _hidesError(err)) {
       return;
     }
     print(code.wrap('$prefix: $err'));
@@ -108,30 +113,51 @@ class Runner {
   /// or with a [StartupException] if it failed to start. If respawning is
   /// enabled, it completes only once the instance is stopped.
   ///
-  /// Like those of [run], it is closed by [stop].
+  /// Like those of [run], it is closed by [stop]; a [stop] before it does
+  /// not apply to it.
   Future spawnIsolate(int id, RunnerOptions options, SendPort pubSubSendPort) {
-    var instance = _Instance(this, id, options, pubSubSendPort);
-    _instances.add(instance);
-    if (_stopping) {
-      instance.stop(shutdownTimeout);
-    } else {
-      instance.spawn();
-    }
+    // Started after the stop, which applied to what ran then.
+    _pendingStop = false;
+    var instance = _track(_Instance(this, id, options, pubSubSendPort))
+      ..spawn();
     return instance.done.future;
   }
 
-  /// The instances that [run] runs.
+  /// The instances that [run] and [spawnIsolate] run, until they are done.
   final List<_Instance> _instances = [];
-  bool _stopping = false;
+
+  /// The calls of [stop] that had something to stop, by which a [run] knows
+  /// that it was stopped while it started.
+  int _stops = 0;
+
+  /// Whether [stop] came while nothing ran, which makes the next [run]
+  /// return without starting instances.
+  bool _pendingStop = false;
+
+  /// The calls of [run] in progress.
+  int _runs = 0;
+
+  /// Adds [instance] to [_instances] until it is done.
+  _Instance _track(_Instance instance) {
+    _instances.add(instance);
+    instance.done.future
+        .then((_) {}, onError: (_) {})
+        .whenComplete(() => _instances.remove(instance));
+    return instance;
+  }
 
   /// Closes every instance, letting its requests in progress finish and
   /// running its shutdown hooks (or kills it after [shutdownTimeout]), so
   /// that [run] returns; as `SIGINT` and `SIGTERM` do. Called before [run]
   /// starts its instances, it makes [run] return without starting them.
   void stop() {
-    if (_stopping) return;
-    _stopping = true;
-    for (var instance in _instances) {
+    if (_instances.isEmpty && _runs == 0) {
+      // Nothing to close: only the next run returns without starting.
+      _pendingStop = true;
+      return;
+    }
+    _stops++;
+    for (var instance in _instances.toList()) {
       instance.stop(shutdownTimeout);
     }
   }
@@ -139,8 +165,12 @@ class Runner {
   /// Starts a number of isolates, running identical instances of an Angel application.
   Future run(List<String> args) async {
     Server? server;
-    var instances = _instances..clear();
+    var instances = <_Instance>[];
     var signals = <StreamSubscription>[];
+    _runs++;
+    var stops = _stops;
+    // Whether stop() came since this run began.
+    bool stopped() => _stops != stops;
 
     try {
       var argResults = RunnerOptions.argParser.parse(args);
@@ -168,7 +198,10 @@ class Runner {
       print(darkGray.wrap(_banner));
       print('Starting `$name` application...');
 
-      if (_stopping) return;
+      if (_pendingStop || stopped()) {
+        _pendingStop = false;
+        return;
+      }
 
       var adapter = IsolateAdapter();
       server = Server([adapter]);
@@ -179,13 +212,14 @@ class Runner {
 
       for (var id = 0; id < options.concurrency; id++) {
         instances.add(
-          _Instance(this, id, options, adapter.receivePort.sendPort)..spawn(),
+          _track(_Instance(this, id, options, adapter.receivePort.sendPort))
+            ..spawn(),
         );
       }
 
       // Closes every instance on a signal; a second one ends at once.
       void onSignal(ProcessSignal signal) {
-        if (_stopping) exit(ExitCode.software.code);
+        if (stopped()) exit(ExitCode.software.code);
         print('Received $signal. Shutting down...');
         stop();
       }
@@ -229,14 +263,15 @@ class Runner {
         await sub.cancel();
       }
       await server?.close();
-      // So that the runner can run again.
-      _stopping = false;
+      _runs--;
     }
   }
 
-  /// Stops [instances], and waits until each has exited.
+  /// Stops [instances], those of one [run], and waits until each has exited.
   Future<void> _stopAll(List<_Instance> instances) {
-    stop();
+    for (var instance in instances) {
+      instance.stop(shutdownTimeout);
+    }
     return Future.wait([
       for (var instance in instances)
         instance.done.future.then((_) {}, onError: (_) {}),
@@ -305,6 +340,9 @@ class Runner {
       ..container.registerSingleton(InstanceInfo(id: argsWithId.id));
 
     // Before configureServer, which may log, or set a logger of its own.
+    // With hierarchical logging off, this gets the records of every logger,
+    // which it prints: a listener of configureServer that prints them too
+    // prints each record twice.
     app.logger = Logger(args.loggerName)
       ..onRecord.listen((rec) => args.loggingSendPort.send(_Log.of(rec)));
 
@@ -334,12 +372,23 @@ class Runner {
         useZone: options.useZone,
         allowHttp1: true,
       );
-      // As there are no default headers of dart:io to change.
+      // As each response, not the server, has the headers, they apply as
+      // with AngelHttp: the configured headers are defaults, which the
+      // headers a handler sets replace, and the removed ones are removed
+      // from the defaults only.
       if (options.responseHeaders.isNotEmpty ||
           options.removeResponseHeaders.isNotEmpty) {
+        var http2Defaults = _Http2Defaults(options);
         app.responseFinalizers.add((req, res) {
-          options.removeResponseHeaders.keys.forEach(res.headers.remove);
-          options.responseHeaders.forEach((k, v) => res.headers[k] = '$v');
+          if (res is HttpResponseContext) {
+            // An HTTP/1 request, whose response has the defaults of dart:io,
+            // and gets the headers of the handler after: as AngelHttp.
+            var headers = res.rawResponse.headers;
+            options.responseHeaders.forEach(headers.add);
+            _eachRemoved(options, headers.remove);
+          } else {
+            http2Defaults.applyTo(res);
+          }
         });
       }
       driver = http2;
@@ -367,6 +416,60 @@ class Runner {
     }
     print('Instance #${argsWithId.id} listening at $serverUrl');
     return driver;
+  }
+}
+
+/// Calls [remove] with each removed header and value of [options]: one call
+/// per value of a list, as [HttpHeaders.remove] takes one value.
+void _eachRemoved(RunnerOptions options, void Function(String, Object) remove) {
+  options.removeResponseHeaders.forEach((name, value) {
+    for (var v in value is Iterable ? value : [value]) {
+      remove(name, v as Object);
+    }
+  });
+}
+
+/// The defaults of HTTP/2 responses: [RunnerOptions.responseHeaders], less
+/// [RunnerOptions.removeResponseHeaders], as AngelHttp adds and then removes
+/// them, which a handler's own headers replace.
+class _Http2Defaults {
+  /// The headers, by lowercase name: one of the values of a list, as an
+  /// HTTP/2 response has one value per header.
+  final Map<String, String> headers = {};
+
+  /// The `set-cookie` values, which are sent as cookies, one header each.
+  final List<String> cookies = [];
+
+  _Http2Defaults(RunnerOptions options) {
+    List<String> valuesOf(Object value) => [
+      for (var v in value is Iterable ? value : [value]) '$v',
+    ];
+    // Merged, as HttpHeaders.add merges names that differ in case.
+    var values = <String, List<String>>{};
+    options.responseHeaders.forEach((name, value) {
+      values.putIfAbsent(name.toLowerCase(), () => []).addAll(valuesOf(value));
+    });
+    _eachRemoved(options, (name, value) {
+      values[name.toLowerCase()]?.remove('$value');
+    });
+    values.forEach((name, list) {
+      if (list.isEmpty) return;
+      if (name == 'set-cookie') {
+        // Checked now, rather than on each response.
+        list.forEach(Cookie.fromSetCookieValue);
+        cookies.addAll(list);
+      } else {
+        headers[name] = list.join(', ');
+      }
+    });
+  }
+
+  void applyTo(ResponseContext res) {
+    headers.forEach((k, v) => res.headers.putIfAbsent(k, () => v));
+    if (cookies.isNotEmpty && !res.headers.containsKey('set-cookie')) {
+      // New ones for each response, as a handler may change its cookies.
+      res.cookies.addAll(cookies.map(Cookie.fromSetCookieValue));
+    }
   }
 }
 
@@ -402,21 +505,38 @@ class _Log {
       message = record.message,
       loggerName = record.loggerName,
       // As text, which every error can be sent as.
-      error =
-          record.error is AngelHttpException &&
-              (record.error as AngelHttpException).statusCode != 500
+      error = Runner._hidesError(record.error)
           ? null
           : record.error?.toString(),
       stackTrace = record.stackTrace?.toString(),
       time = record.time;
 
-  LogRecord toRecord() => LogRecord(
+  LogRecord toRecord() => _SentLogRecord(
     level,
     message,
     loggerName,
     error,
     stackTrace == null ? null : StackTrace.fromString(stackTrace!),
+    time,
   );
+}
+
+/// A record of an instance, with the time it was logged at, not the time
+/// the main isolate received it.
+class _SentLogRecord extends LogRecord {
+  final DateTime _time;
+
+  _SentLogRecord(
+    super.level,
+    super.message,
+    super.loggerName,
+    super.error,
+    super.stackTrace,
+    this._time,
+  );
+
+  @override
+  DateTime get time => _time;
 }
 
 /// An instance that started, with the port that stops it.
@@ -538,11 +658,9 @@ class _Instance {
       fromIsolate.close();
       onError.close();
       _running = false;
-      if (_stopping) {
-        if (!done.isCompleted) done.complete();
-      } else if (!done.isCompleted) {
-        done.completeError(StartupException(id, '$e', '$st'));
-      }
+      // As a failure of the instance to start: it ends the runner unless
+      // the instance has started before, when it is respawned.
+      _exited(_StartFailed('$e', '$st'));
       return Isolate.current;
     });
   }
@@ -603,11 +721,13 @@ class _Instance {
     }
     // Otherwise still starting: it is stopped once it has started, unless
     // it exits first.
-    Timer(timeout, () {
+    var kill = Timer(timeout, () {
       if (done.isCompleted) return;
       _log(Level.WARNING, 'Instance #$id did not close in time; killed.');
       _isolate?.kill(priority: Isolate.immediate);
     });
+    // A pending timer would keep the process alive after run() returns.
+    done.future.then((_) => kill.cancel(), onError: (_) => kill.cancel());
   }
 }
 

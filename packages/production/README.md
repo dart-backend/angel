@@ -92,6 +92,8 @@ void main(List<String> args) {
 
 ```
 
+The added headers are defaults: a header that a handler sets replaces one of the same name. `removeResponseHeaders` removes the given values from those defaults (including the ones `dart:io` adds, such as `X-FRAME-OPTIONS: SAMEORIGIN`), not a header a handler sets. Both apply the same way with `--http2`. A list value is sent as one header of its values, except `Set-Cookie`, which is sent once per value. A list in `removeResponseHeaders` removes each of its values.
+
 ## Run-time Metadata
 
 At run-time, you may want to know information about the currently-running instance, for example, which number instance. For this, the `InstanceInfo` class is injected into each instance:
