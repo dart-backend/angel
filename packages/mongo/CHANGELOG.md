@@ -17,7 +17,7 @@
 * **Queries:** `readMany` returns only the given ids, `allowQuery: false` is applied, the framework's `page` and `token` keys are not filters, and request-context keys are removed from nested queries
 * **Ids:** A malformed id in `update` or `remove` is a 400; `modify` no longer stores an `id` field
 * **Docs:** The example starts a server and needs no reflector, and the README example compiles
-* **Dependencies:** Removed the unused `angel3_container`; `belatuk_json_serializer` is a dev dependency
+* **Dependencies:** Removed the unused `angel3_container`, and the dev dependency `belatuk_json_serializer`: the tests use `dart:convert`, so they no longer need `dart:mirrors`
 
 ## 9.1.0
 
