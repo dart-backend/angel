@@ -2,7 +2,18 @@
 
 ## 10.0.0
 
-* Released with the other Angel3 packages at 10.0.0
+### Breaking changes in 10.0.0
+
+* **Breaking:** A view or included template that resolves outside the views directory (`../secret.html`, an absolute path, a symbolic link out of it), or has none of the extensions in `ext`, is not found, instead of being read. A view that is not found throws a 404 `AngelHttpException` instead of `TemplateNotFound`, also with a custom `createLoader`
+* **Breaking:** With `followLinks: false`, a symbolic link within the views directory is not followed; it was only used when listing templates
+* **Breaking:** In production, templates are kept parsed, so changes to them are not seen until the app restarts
+* **Breaking:** Requires `angel3_framework` 10
+
+### Fixes in 10.0.0
+
+* **Options:** `defaultValue` is what an undefined variable renders as, where it was ignored
+* **Views:** The templates a view names with string literals in `extends`, `include`, `import` and `from` tags are read without blocking
+* **Docs:** The README example imports `angel3_framework` and `angel3_jinja`, and the README and example escape values from the request with `| e`
 
 ## 9.1.0
 

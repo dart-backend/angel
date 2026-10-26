@@ -11,9 +11,9 @@ A service that renders Jinja2 view template into HTML for [Angel3](https://angel
 
 ```dart
 import 'dart:io';
-import 'package:angel_framework/angel_framework.dart';
-import 'package:angel_framework/http.dart';
-import 'package:angel_jinja/angel_jinja.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_framework/http.dart';
+import 'package:angel3_jinja/angel3_jinja.dart';
 import 'package:path/path.dart' as p;
 
 void main() async {
@@ -48,3 +48,15 @@ void main() async {
   print('Listening at ${http.uri}');
 }
 ```
+
+## Escaping
+
+Values are not HTML-escaped. Escape every value that is not trusted HTML, such as one from the request, with the `e` (or `escape`) filter:
+
+```html
+<p>hello {{ name | e }}!</p>
+```
+
+## Views
+
+A view name that resolves outside the views directory (`../secret.html`, an absolute path, a symbolic link out of it), that has none of the extensions in `ext`, or that does not exist, is a 404. In production, templates are kept parsed; otherwise they are read again on every render.
