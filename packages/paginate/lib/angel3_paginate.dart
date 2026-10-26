@@ -4,8 +4,9 @@ class Paginator<T> {
   PaginationResult<T>? _current;
   int _page = 0;
 
-  /// The collection of items to be paginated.
-  final Iterable<T> _items;
+  /// The collection of items to be paginated, copied when the paginator is
+  /// created.
+  final List<T> _items;
 
   /// The maximum number of items to be shown per page.
   final int itemsPerPage;
@@ -15,13 +16,25 @@ class Paginator<T> {
   /// For example, you would only have to paginate page 1 once. Future calls would return a cached version.
   final bool useCache;
 
-  Paginator(this._items, {this.itemsPerPage = 5, this.useCache = true});
+  /// Paginates a copy of [items], so that later changes to them are not seen.
+  ///
+  /// Throws an [ArgumentError] if [itemsPerPage] is less than `1`.
+  Paginator(Iterable<T> items, {this.itemsPerPage = 5, this.useCache = true})
+    : _items = List<T>.unmodifiable(items) {
+    if (itemsPerPage < 1) {
+      throw ArgumentError.value(
+        itemsPerPage,
+        'itemsPerPage',
+        'Must be at least 1',
+      );
+    }
+  }
 
   /// Returns `true` if there are more items at lesser page indices than the current one.
   bool get canGoBack => _page > 0;
 
   /// Returns `true` if there are more items at greater page indices than the current one.
-  bool get canGoForward => _page < _lastPage();
+  bool get canGoForward => _page < _lastPage() - 1;
 
   /// The current page index.
   int get index => _page;
@@ -32,56 +45,42 @@ class Paginator<T> {
   /// The current page number. This is not the same as [index].
   ///
   /// This getter will return user-friendly numbers. The lowest value it will ever return is `1`.
-  int get pageNumber => _page < 1 ? 1 : (_page + 1);
+  int get pageNumber => _page + 1;
 
   /// Fetches the current page. This will be cached until [back] or [next] is called.
   ///
   /// If [useCache] is `true` (default), then computations will be cached even after the page changes.
-  PaginationResult<T>? get current {
-    if (_current != null) {
-      return _current;
-    } else {
-      return _current = _getPage();
-    }
-  }
+  PaginationResult<T> get current => _current ??= _getPage();
 
   PaginationResult<T> _computePage() {
     var len = _items.length;
-    //var it = _items.skip(_page * (itemsPerPage ?? 5));
-    var it = _items.skip(_page * (itemsPerPage));
-    var offset = len - it.length;
-    it = it.take(itemsPerPage);
+    var offset = _page * itemsPerPage;
+    if (offset > len) offset = len;
+    var end = offset + itemsPerPage;
+    if (end > len) end = len;
+    var it = _items.sublist(offset, end);
     var last = _lastPage();
-    // print('cur: $_page, last: $last');
     return _PaginationResultImpl(
       it,
       currentPage: _page + 1,
       previousPage: _page <= 0 ? -1 : _page,
       nextPage: _page >= last - 1 ? -1 : _page + 2,
       startIndex: it.isEmpty ? -1 : offset,
-      endIndex: offset + it.length - 1,
-      itemsPerPage: itemsPerPage < _items.length ? itemsPerPage : _items.length,
+      endIndex: it.isEmpty ? -1 : end - 1,
+      itemsPerPage: itemsPerPage < len ? itemsPerPage : len,
       total: len,
     );
   }
 
   PaginationResult<T> _getPage() {
-    if (useCache != false) {
+    if (useCache) {
       return _cache.putIfAbsent(_page, () => _computePage());
     } else {
       return _computePage();
     }
   }
 
-  int _lastPage() {
-    var n = (_items.length / itemsPerPage).round();
-    // print('items: ${_items.length}');
-    // print('per page: $itemsPerPage');
-    // print('quotient: $n');
-    var remainder = _items.length - (n * itemsPerPage);
-    // print('remainder: $remainder');
-    return (remainder <= 0) ? n : n + 1;
-  }
+  int _lastPage() => (_items.length + itemsPerPage - 1) ~/ itemsPerPage;
 
   /// Attempts to go the specified page. If it fails, then it will remain on the current page.
   ///
@@ -104,7 +103,7 @@ class Paginator<T> {
 
   /// Advances the paginator one page, if possible.
   void next() {
-    if (_page < _lastPage()) {
+    if (canGoForward) {
       _page++;
       _current = null;
     }
@@ -145,14 +144,13 @@ abstract class PaginationResult<T> {
 }
 
 class _PaginationResultImpl<T> implements PaginationResult<T> {
-  final Iterable<T> _data;
-  Iterable<T>? _cachedData;
+  final List<T> _data;
 
   @override
   final int? currentPage;
 
   _PaginationResultImpl(
-    this._data, {
+    Iterable<T> data, {
     this.currentPage,
     this.endIndex,
     this.itemsPerPage,
@@ -160,10 +158,10 @@ class _PaginationResultImpl<T> implements PaginationResult<T> {
     this.previousPage,
     this.startIndex,
     this.total,
-  });
+  }) : _data = List<T>.unmodifiable(data);
 
   @override
-  Iterable<T> get data => _cachedData ?? (_cachedData = List<T>.from(_data));
+  Iterable<T> get data => _data;
 
   @override
   final int? endIndex;
