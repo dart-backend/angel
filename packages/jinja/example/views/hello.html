@@ -1,5 +1,5 @@
 {% extends "layout.html" %}
-{% block title %}hello {{ name }}!{% endblock %}
+{% block title %}hello {{ name | e }}!{% endblock %}
 {% block body %}
-  <p>hello {{ name }}!</p>
+  <p>hello {{ name | e }}!</p>
 {% endblock %}

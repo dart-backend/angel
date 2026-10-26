@@ -21,7 +21,9 @@ A [response finalizer](https://angel3-docs.dukefirehawk.com/guides/request-lifec
 
 In any `text/html` response sent down, `link` and `script` elements that point to internal resources will have the contents of said file read, and inlined into the HTML page itself.
 
-In this case, "internal resources" refers to a URI *without* a scheme, i.e. `/site.css` or `foo/bar/baz.js`.
+In this case, "internal resources" refers to a URI *without* a scheme or host, i.e. `/site.css` or `foo/bar/baz.js`, of a file in the asset directory: a leading `/` is its root, and a path out of it (`../secret`) is never inlined.
+
+The content of a file is inlined as text, so it cannot end its `<style>` or `<script>` early (`</script` is written `<\/script`). A stylesheet keeps its `media`. A script that is `async`, or `defer` but not a module, stays external, as an inline script runs at once. An element marked `data-no-inline`, or without a valid `href` or `src`, is left as it is. The page is sent as UTF-8.
 
 ```dart
 import 'package:angel3_framework/angel3_framework.dart';
@@ -30,13 +32,13 @@ import 'package:angel3_static/angel3_static.dart';
 import 'package:file/local.dart';
 
 void main() async {
-  var app = Angel()..lazyParseBodies = true;
+  var app = Angel();
   var fs = const LocalFileSystem();
   var http = AngelHttp(app);
 
   app.responseFinalizers.add(inlineAssets(fs.directory('web')));
 
-  app.use(() => throw AngelHttpException.notFound());
+  app.fallback((req, res) => throw AngelHttpException.notFound());
 
   var server = await http.startServer('127.0.0.1', 3000);
   print('Listening at http://${server.address.address}:${server.port}');
@@ -45,7 +47,7 @@ void main() async {
 
 ## `inlineAssetsFromVirtualDirectory`
 
-This function is a simple one; it wraps a `VirtualDirectory` to patch the way it sends `.html` files. Produces the same functionality as `inlineAssets`.
+This function wraps a `VirtualDirectory` to patch the way it sends `.html` and `.htm` files. Produces the same functionality as `inlineAssets`. The inlined page is then served by the wrapped directory, so the caching of a `CachingVirtualDirectory`, `Range` requests and its `callback` apply to it; its `Last-Modified` and ETag are of the latest of the page and its assets.
 
 ```dart
 import 'package:angel3_framework/angel3_framework.dart';
@@ -54,21 +56,21 @@ import 'package:angel3_static/angel3_static.dart';
 import 'package:file/local.dart';
 
 void main() async {
-  var app = Angel()..lazyParseBodies = true;
+  var app = Angel();
   var fs = const LocalFileSystem();
   var http = AngelHttp(app);
 
-  var vDir = inlineAssets(
-    VirtualDirectory(
+  var vDir = inlineAssetsFromVirtualDirectory(
+    CachingVirtualDirectory(
       app,
       fs,
       source: fs.directory('web'),
     ),
   );
 
-  app.use(vDir.handleRequest);
+  app.fallback(vDir.handleRequest);
 
-  app.use(() => throw AngelHttpException.notFound());
+  app.fallback((req, res) => throw AngelHttpException.notFound());
 
   var server = await http.startServer('127.0.0.1', 3000);
   print('Listening at http://${server.address.address}:${server.port}');

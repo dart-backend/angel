@@ -990,11 +990,11 @@ class FooPivotQueryValues extends MapQueryValues {
     return {};
   }
 
-  int get weirdJoinId {
-    return (values['weird_join_id'] as int);
+  int? get weirdJoinId {
+    return (values['weird_join_id'] as int?);
   }
 
-  set weirdJoinId(int value) => values['weird_join_id'] = value;
+  set weirdJoinId(int? value) => values['weird_join_id'] = value;
 
   String? get fooBar {
     return (values['foo_bar'] as String?);
@@ -1102,13 +1102,7 @@ class WeirdJoin implements WeirdJoinEntity {
 
   @override
   int get hashCode {
-    return Object.hashAll([
-      id,
-      unorthodox,
-      song,
-      ListEquality<NumbaEntity>(DefaultEquality<NumbaEntity>()).hash(numbas),
-      ListEquality<FooEntity>(DefaultEquality<FooEntity>()).hash(foos),
-    ]);
+    return Object.hashAll([id, unorthodox, song, numbas.length, foos.length]);
   }
 
   @override
@@ -1242,11 +1236,7 @@ class Foo implements FooEntity {
 
   @override
   int get hashCode {
-    return Object.hashAll([
-      bar,
-      ListEquality<WeirdJoinEntity>(DefaultEquality<WeirdJoinEntity>())
-          .hash(weirdJoins),
-    ]);
+    return Object.hashAll([bar, weirdJoins.length]);
   }
 
   @override

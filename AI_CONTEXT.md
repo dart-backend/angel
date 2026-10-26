@@ -60,11 +60,11 @@ The framework is divided into several categories of packages:
 - **Master Branch**: Stable production branch (currently the `9.x` releases). Use this branch for all standard PR submissions.
 - **Feature Branches**: Work is done on `feature/<name>` branches. The upcoming `10.0.0` release (all packages bumped to `10.0.0`, with breaking changes recorded in each package's `CHANGELOG.md`) is being prepared on feature branches.
 - **Tooling**: Run `dart pub get` at the root, or use `melos` to execute tasks across the monorepo (e.g., `melos exec "dart pub upgrade"`). Regenerate code with `dart run build_runner build --delete-conflicting-outputs` in the affected package.
-- **Changelog**: Every user-facing change gets an entry in the affected package's `CHANGELOG.md`; breaking changes are marked `**Breaking:**`.
+- **Changelog**: Every user-facing change gets an entry in the affected package's `CHANGELOG.md`, written as plain-English statements about the package (not commit messages). Group a release's entries under `### Breaking changes in X.Y.Z` (each entry prefixed `**Breaking:**`), `### New in X.Y.Z` and `### Fixes in X.Y.Z`, in that order, omitting empty sections. Prefix each fix with a bold area label, e.g. `* **Services:** An invalid id is a 400`. See `packages/framework/CHANGELOG.md` (10.0.0) for the reference style. Commit messages use [Conventional Commits](https://www.conventionalcommits.org/) (`type(scope): description`, `!` for breaking changes).
 
 ## Key Technical Debt and Future Roadmap
 
-- Removal of dependency on the `dart:mirrors` library (still used by `framework`, `container`, `client`, `websocket` and `markdown`).
+- Removal of dependency on the `dart:mirrors` library (`framework` and `container` no longer import it; `MirrorsReflector` is opt-in via `container_mirrors`. Still imported by `websocket` and `jael`).
 - Performance optimizations to address long-overdue issues.
 - Integration of OpenAPI 3 support.
 - Expanding ORM support for SQLite, SQL Server, Oracle DB, multi-tenant architectures, and SQL schema reverse engineering.

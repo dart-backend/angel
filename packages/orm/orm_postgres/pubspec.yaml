@@ -14,9 +14,9 @@ dependencies:
   logging: ^1.2.0
   optional: ^6.1.0+1
   pool: ^1.5.0
-  postgres: ^3.2.0
+  postgres: ^3.5.20
 dev_dependencies:
-  belatuk_pretty_logging: ^6.1.0
+  belatuk_pretty_logging: ^7.0.0
   angel3_serialize: ^10.0.0
   angel3_orm_generator: ^10.0.0
   angel3_migration: ^10.0.0

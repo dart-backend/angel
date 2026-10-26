@@ -50,6 +50,13 @@ configureServer(Angel app) async {
 }
 ```
 
+## Security defaults
+
+* A JWT expires after a day (`jwtLifeSpan`, in milliseconds; `-1` for never, which is warned about with a fixed `jwtKey`).
+* `POST /auth/token` exchanges a JWT that is still valid for a new one; an expired one only within `reviveGracePeriod` (default: none). The user must still exist.
+* The `token` cookie is `HttpOnly`, `Secure` and `SameSite=Lax` (`cookieSameSite`), and is set when a user logs in, not for requests authenticated with an `Authorization: Bearer` header. `logout` expires it.
+* A JWT in the query string (`?token=`) is ignored unless `allowTokenInQuery` is `true`, as query strings end up in logs, history and `Referer` headers.
+
 ## Default Authentication Callback
 
 A frequent use case within SPA's is opening OAuth login endpoints in a separate window. [`angel3_client`](https://pub.dev/packages/angel3_client) provides a facility for this, which works perfectly with the default callback provided in this package.

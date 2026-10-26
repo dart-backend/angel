@@ -2,9 +2,30 @@
 
 ## 10.0.0
 
-* fix: A response body that is JSON but not an object no longer replaces the server's error with a generic one; an operator-precedence mistake read `isError` from it before checking that it was a map
-* fix: An error response without a valid status code in its body now reports the response's HTTP status, instead of 500
-* test: The tests no longer use `MirrorsReflector`, and the `angel3_container_mirrors` dev dependency is removed; the server they start only needs a `MapService`
+### Breaking changes in 10.0.0
+
+* **Breaking:** The streams of the client, its services and `ServiceList` are broadcast streams: events are not kept for later listeners, so memory no longer grows without bound, and `close()` completes without listeners, where it never returned
+* **Breaking:** A REST service is a `Service<Id, Data>`, so `service<String, Todo>()` works, where only a nullable type such as `Todo?` did. Its methods return `Data` and throw an `AngelHttpException` on an error, also when its stream has a listener, where they returned `null`
+* **Breaking:** Removed `belatuk_json_serializer` and the `type` parameter of `service()`, which needed `dart:mirrors`. Pass a `deserializer` instead, such as `deserializer: (x) => TodoSerializer.fromMap(x as Map)`; without one, a service returns the decoded JSON. Objects sent to the server are encoded with `jsonEncode`, which calls their `toJson()`
+* **Breaking:** Removed `RestService`: `Rest.service()` returns a `BaseAngelService`, like the other clients
+* **Breaking:** An id is encoded as one segment of the URL path, so `read('a/b')` requests `/todos/a%2Fb`, where it requested `/todos/a/b`, and an id starting with `/` no longer replaces the path of the service. An id is encoded as it is, so pass ids unencoded: an id the caller encoded, such as `a%20b`, is sent as `a%2520b` and is the id `a%20b` on the server. An empty id, `.` and `..` throw an `ArgumentError`, since they would be the URL of the service or be resolved away
+* **Breaking:** A list param is sent as one param per value, such as `?tag=a&tag=b`, where it was sent as `?tag=[a, b]`. An empty list throws an `ArgumentError`, since leaving it out would drop a filter. The query of the client's base URL, such as `?key=x`, is kept as it is when params are passed, where it was dropped
+
+### Fixes in 10.0.0
+
+* **Errors:** A JSON body that is not an object no longer hides the server's error, and an error reports the response's status, also when the body has another `status_code`
+* **Failures after a successful response:** A failure such as a deserializer error is a 500 instead of the response's 2xx, also when the body is an error with a 2xx `status_code`, and the `AngelHttpException` carries the original error as `error`. The message is that of a `FormatException` the deserializer throws, unless it is empty, or says the response could not be read. When the body is an error, its own message is kept
+* **Error responses:** Reported once: a listener of `onIndexed`, `onRead` and the other streams gets only the `AngelHttpException`, without a second error from reading the body
+* **`Rest.service`:** Uses the `deserializer` it is given
+* **Data that cannot be encoded:** `create`, `modify` and `update` throw an `ArgumentError` naming the `jsonEncode` error, with its stack trace, for an object without a `toJson()`, where they threw a `JsonUnsupportedObjectError`. An error thrown by a `toJson()` is thrown as it is, and a value a `toJson()` returns that cannot be encoded is also an `ArgumentError`
+* **Closed clients:** An `authenticate` response that arrives after `close()` is returned, where adding it to the closed `onAuthenticated` threw a `StateError`. A request still being sent when `close()` closes the HTTP client fails as before
+* **Closed services:** A response that arrives after the service is closed is returned or thrown, where adding it to the closed stream threw a `StateError`
+* **Typed services without a deserializer:** The error says to pass a `deserializer` when the JSON is not a `Data`, and says so when the body of `read`, `create`, `modify`, `update` or `remove` is `null`, where it was an unhandled exception. `index` still skips items deserialized to `null`
+* **Error responses that are not JSON:** The `AngelHttpException` has no `error` or stack trace of the internal `FormatException`, and an error response added to a stream has a stack trace
+* **Mapped services:** `create` passes on its `params`, and `index` passes on a `null` result, such as from a WebSocket service, where it threw
+* **URLs:** No longer end in `?` without params
+* **`ServiceList`:** Passes the errors of the service's streams on to `onChange`, where they were uncaught, and `close` cancels its subscriptions to the service
+* **Tests:** No longer use `MirrorsReflector`
 
 ## 9.1.0
 

@@ -2,14 +2,21 @@
 
 ## 10.0.0
 
-* **Breaking:** Requires `angel3_orm` 10
-* **Breaking:** `MutableTable.changeColumnType` takes the `length`, `precision` and `scale` of the new type (e.g. `changeColumnType('price', ColumnType.numeric, precision: 10, scale: 2)`). Without them, a column changed to `numeric` or `decimal` was always `numeric(17, 3)`. Implementations of `MutableTable` must add these parameters
-* fix: `Table.numeric` creates the column with its `precision` and `scale` (default 17 and 3), which it ignored, and `MigrationColumn` (including `MigrationColumn.from`) keeps a column's precision and scale
-* fix: `MigrationColumn.from` keeps all the attributes of a `Column`: its `defaultValue` (so `declareColumn('fee', Column(..., defaultValue: 0))` creates the column with `DEFAULT 0`, which was left out), `name`, `timezone` and `expression`
-* fix: A `numeric` or `decimal` column whose precision is below 1, or whose scale is negative or greater than its precision, throws an `ArgumentError` when it is declared, instead of failing when the migration is run
-* Added `Table.decimal`, as `Table.numeric` for `decimal` columns
-* `Table.numeric`, `Table.decimal` and `changeColumnType` default to `Column.defaultLength`, `Column.defaultPrecision` and `Column.defaultScale`
-* `Table.varChar` declares a `MigrationColumn`
+### Breaking changes in 10.0.0
+
+* **Breaking:** Added `Migration.name`, which identifies a migration in the `migrations` table (default: its class name); override it to survive a rename or `--obfuscate`. A class that `implements Migration` must add it
+* **Breaking:** `MutableTable.changeColumnType` takes `length`, `precision` and `scale`, the column's constraints after the change (`isNullable`, `defaultValue`, `autoIncrement`, kept when not given), and on PostgreSQL `using`. Without a precision, a `numeric` or `decimal` is unbounded on PostgreSQL, where it was `numeric(17, 3)`, which rounded values. Implementations must add these parameters
+
+### New in 10.0.0
+
+* `Migration.legacyPath`, so a runner can rename a migration recorded by an earlier version
+* `noDefault`, to remove a column's default in `changeColumnType`
+* `Table.decimal`, and `MigrationColumn.precisionArguments` for the runners
+
+### Fixes in 10.0.0
+
+* **Precision:** `Table.numeric` and `MigrationColumn` keep a column's precision and scale; an invalid precision or scale throws when the column is declared
+* **`MigrationColumn.from`:** Keeps every attribute of a `Column`, including its `defaultValue`
 
 ## 9.1.0
 

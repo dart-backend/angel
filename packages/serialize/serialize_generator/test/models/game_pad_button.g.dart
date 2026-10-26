@@ -83,7 +83,7 @@ class Gamepad extends GamepadEntity {
 
   @override
   int get hashCode {
-    return Object.hashAll([buttons, dynamicMap]);
+    return Object.hashAll([buttons?.length, dynamicMap?.length]);
   }
 
   @override

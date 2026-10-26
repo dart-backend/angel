@@ -2,8 +2,14 @@
 
 ## 10.0.0
 
-* test: The tests and example no longer use `MirrorsReflector`, and the `angel3_container_mirrors` dev dependency is removed; `AuthorizationServer` does not need reflection
-* chore: Released with the other Angel3 packages at 10.0.0
+### Fixes in 10.0.0
+
+* **PKCE:** `code_challenge_method=S256`, as RFC 7636 spells it, is accepted, and an S256 challenge is compared without its `=` padding, so standard clients are no longer refused with `invalid_grant`; `s256` and padded challenges still work. The challenge is compared in constant time
+* **Client authentication:** The `Basic` header is decoded as UTF-8, where non-ASCII credentials were garbled, and a malformed one is `unauthorized_client` instead of a 500
+* **Authorization endpoint:** An unknown `client_id` is `unauthorized_client`, where it was a 500
+* **Example:** `example1.dart` starts a server, without importing from `test/`
+* **Dependencies:** Removed the unused `angel3_container` and `angel3_validate`
+* **Tests:** The tests and example no longer use `MirrorsReflector`; `AuthorizationServer` needs no reflection
 
 ## 9.1.0
 

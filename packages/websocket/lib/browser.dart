@@ -17,19 +17,8 @@ final RegExp _straySlashes = RegExp(r'(^/)|(/+$)');
 
 /// Queries an Angel server via WebSockets.
 class WebSockets extends BaseWebSocketClient {
-  final List<BrowserWebSocketsService> _services = [];
-
   WebSockets(String baseUrl, {super.reconnectOnClose, super.reconnectInterval})
     : super(http.BrowserClient(), baseUrl);
-
-  @override
-  Future close() {
-    for (var service in _services) {
-      service.close();
-    }
-
-    return super.close();
-  }
 
   @override
   Stream<String> authenticateViaPopup(
@@ -39,51 +28,34 @@ class WebSockets extends BaseWebSocketClient {
   }) {
     var ctrl = StreamController<String>();
     var wnd = window.open(url, 'angel_client_auth_popup');
+    Timer? timer;
+    late JSFunction listener;
 
-    //Timer t;
-    //StreamSubscription<Event>? sub;
-    Timer.periodic(Duration(milliseconds: 500), (timer) {
-      if (!ctrl.isClosed) {
-        if (wnd != null && wnd.closed) {
-          ctrl.addError(
-            AngelHttpException.notAuthenticated(
-              message:
-                  errorMessage ?? 'Authentication via popup window failed.',
-            ),
-          );
-          ctrl.close();
-          timer.cancel();
-          //sub?.cancel();
-        }
-      } else {
-        timer.cancel();
+    void done() {
+      timer?.cancel();
+      window.removeEventListener(eventName, listener);
+      ctrl.close();
+    }
+
+    // The token, of the event the popup fires on this window.
+    listener = ((Event e) {
+      if (ctrl.isClosed) return;
+      ctrl.add((e as CustomEvent).detail.toString());
+      done();
+    }).toJS;
+    window.addEventListener(eventName, listener);
+
+    timer = Timer.periodic(Duration(milliseconds: 500), (_) {
+      if (ctrl.isClosed) return;
+      if (wnd != null && wnd.closed) {
+        ctrl.addError(
+          AngelHttpException.notAuthenticated(
+            message: errorMessage ?? 'Authentication via popup window failed.',
+          ),
+        );
+        done();
       }
     });
-
-    // TODO: This need to be fixed
-    EventListener? sub;
-    window.addEventListener(
-      eventName,
-      (e) {
-        if (!ctrl.isClosed) {
-          ctrl.add((e as CustomEvent).detail.toString());
-          //t.cancel();
-          ctrl.close();
-          //sub?.cancel();
-          window.removeEventListener(eventName, sub);
-        }
-      }.toJS,
-    );
-    /* With dart:html
-    sub = window.on[eventName].listen((e) {
-      if (!ctrl.isClosed) {
-        ctrl.add((e as CustomEvent).detail.toString());
-        t.cancel();
-        ctrl.close();
-        sub?.cancel();
-      }
-    });
-    */
 
     return ctrl.stream;
   }
@@ -126,12 +98,15 @@ class WebSockets extends BaseWebSocketClient {
     AngelDeserializer<Data>? deserializer,
   }) {
     var uri = path.replaceAll(_straySlashes, '');
-    return BrowserWebSocketsService<Id, Data>(
-      socket,
-      this,
-      uri,
-      deserializer: deserializer,
-    ) as Service<Id, Data>;
+    return addService<Id, Data>(
+      BrowserWebSocketsService<Id, Data>(
+        socket,
+        this,
+        uri,
+        type: type,
+        deserializer: deserializer,
+      ),
+    );
   }
 }
 

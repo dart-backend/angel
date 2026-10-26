@@ -213,11 +213,11 @@ class OrderQueryValues extends MapQueryValues {
 
   set updatedAt(DateTime? value) => values['updated_at'] = value;
 
-  int get customerId {
-    return (values['customer_id'] as int);
+  int? get customerId {
+    return (values['customer_id'] as int?);
   }
 
-  set customerId(int value) => values['customer_id'] = value;
+  set customerId(int? value) => values['customer_id'] = value;
 
   int? get employeeId {
     return (values['employee_id'] as int?);

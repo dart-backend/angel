@@ -9,6 +9,14 @@ import 'common.dart';
 void main() {
   testReflector(const MirrorsReflector());
 
+  test('supertypes are the superclasses, nearest first, without Object', () {
+    expect(const MirrorsReflector().reflectClass(_Leaf).supertypes, [
+      _Middle,
+      _Root,
+    ]);
+    expect(const MirrorsReflector().reflectClass(_Root).supertypes, isEmpty);
+  });
+
   test('futureOf', () {
     var r = MirrorsReflector();
     var fStr = r.reflectFutureOf(String);
@@ -26,3 +34,9 @@ void main() {
     expect(s1, s2);
   });
 }
+
+class _Root {}
+
+class _Middle extends _Root {}
+
+class _Leaf extends _Middle {}

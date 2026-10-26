@@ -88,7 +88,10 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
       lib.body.add(
         Class((clazz) {
           clazz
-            ..name = '${ctx.buildContext.modelClassName}Migration'
+            // As earlier versions named it, as code that runs it names it,
+            // though the generated class of the model may be named otherwise.
+            ..name =
+                '${legacyModelName(ctx.buildContext.originalClassName!)}Migration'
             ..extend = refer('Migration')
             ..methods.addAll([
               buildUpMigration(ctx, lib),
@@ -183,13 +186,17 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
                     break;
                   case ColumnType.numeric:
                     methodName = 'numeric';
-                    named['precision'] = literal(col.precision);
-                    named['scale'] = literal(col.scale);
+                    if (col.precision != null) {
+                      named['precision'] = literal(col.precision);
+                    }
+                    if (col.scale != null) named['scale'] = literal(col.scale);
                     break;
                   case ColumnType.decimal:
                     methodName = 'decimal';
-                    named['precision'] = literal(col.precision);
-                    named['scale'] = literal(col.scale);
+                    if (col.precision != null) {
+                      named['precision'] = literal(col.precision);
+                    }
+                    if (col.scale != null) named['scale'] = literal(col.scale);
                     break;
                   case ColumnType.boolean:
                     methodName = 'boolean';
@@ -208,15 +215,18 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
                     var typeExpr = _columnTypeExpression(type);
                     var hasLength = type.hasLength && col.length != 0;
 
-                    if (hasLength || type.hasPrecision || type.hasScale) {
+                    var hasPrecision =
+                        type.hasPrecision && col.precision != null;
+                    var hasScale = type.hasScale && col.scale != null;
+
+                    if (hasLength || hasPrecision || hasScale) {
                       methodName = 'declareColumn';
                       positional.add(
                         refer('Column').newInstance([], {
                           'type': typeExpr,
                           if (hasLength) 'length': literal(col.length),
-                          if (type.hasPrecision)
-                            'precision': literal(col.precision),
-                          if (type.hasScale) 'scale': literal(col.scale),
+                          if (hasPrecision) 'precision': literal(col.precision),
+                          if (hasScale) 'scale': literal(col.scale),
                         }),
                       );
                     } else {

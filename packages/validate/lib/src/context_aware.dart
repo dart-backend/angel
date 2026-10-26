@@ -19,6 +19,8 @@ ContextAwareMatcher wrapContextAwareMatcher(Object x) {
 }
 
 /// A special [Matcher] that is aware of the context in which it is being executed.
+///
+/// It does not match `null`.
 abstract class ContextAwareMatcher extends Matcher {
   bool matchesWithContext(Object item, String key, Map context, Map matchState);
 

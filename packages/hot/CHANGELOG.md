@@ -2,7 +2,26 @@
 
 ## 10.0.0
 
-* Released with the other Angel3 packages at 10.0.0
+### Breaking changes in 10.0.0
+
+* **Breaking:** `startServer` throws a `StateError` if called again
+
+### New in 10.0.0
+
+* `reload()` reloads on demand, and `hotReload: false` makes the server again without reloading the VM
+* `debounce` (default 200 ms) and `shutdownGracePeriod` (default 10 s)
+* HTTPS: `securityContext` serves over HTTP/1.1 with `HttpServer.bindSecure`, and `requestClientCertificate` asks clients for a certificate
+
+### Fixes in 10.0.0
+
+* **Reloads:** The old server is closed once the new one serves, after the requests it is answering (at most `shutdownGracePeriod`); it used to be never closed, leaking every reload's connections and timers
+* **Errors:** A failing `createServer` or reload is logged, and the last good server goes on serving, instead of ending the process. A successful hot reload is no longer reported as failed
+* **Concurrency:** File changes are debounced, and reloads run one at a time, with changes during one gathered into the next; `reload()` called meanwhile returns once its reload has run. Requests during a reload wait for it
+* **Restart:** `R` makes the server again, instead of adding listeners, watchers and VM connections each time
+* **VM service:** The isolate reloaded is this one, and `vmServiceHost` and `vmServicePort` are used when the VM does not tell its URI. Without the VM service, a change still makes the server again
+* **`close()`:** Closes the server, the app, the VM connection, the watchers and `stdin`, restores the terminal, answers waiting requests with `503`, and may be called before `startServer`
+* **Paths:** A `Glob` watches only its leading directory and matches files created later; watchers are ready before `startServer` returns, and paths of another type are refused by the constructor
+* **Logging:** A reload logs to the logger of the server it replaces, and `sendError` sends the status it is given
 
 ## 9.1.0
 

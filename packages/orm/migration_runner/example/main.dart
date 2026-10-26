@@ -5,7 +5,7 @@ import 'package:angel3_migration_runner/angel3_migration_runner.dart';
 import 'package:angel3_migration_runner/mysql.dart';
 import 'package:angel3_migration_runner/postgres.dart';
 import 'package:angel3_orm/angel3_orm.dart';
-import 'package:mysql_client/mysql_client.dart';
+import 'package:mysql_dart/mysql_dart.dart';
 import 'package:postgres/postgres.dart';
 
 import 'todo.dart';
@@ -49,7 +49,7 @@ void mysqlMigration(List<String> args) async {
   var host = Platform.environment['MYSQL_HOST'] ?? 'localhost';
   var database = Platform.environment['MYSQL_DB'] ?? 'orm_test';
   var username = Platform.environment['MYSQL_USERNAME'] ?? 'test';
-  var password = Platform.environment['MYSQL_PASSWORD'] ?? 'test123';
+  var password = Platform.environment['MYSQL_PASSWORD'] ?? 'Test123';
 
   var mySQLConn = await MySQLConnection.createConnection(
     host: host,

@@ -35,7 +35,7 @@ In your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  angel3_html: ^6.0.0
+  angel3_html: ^10.0.0
 ```
 
 ## Usage
@@ -60,7 +60,7 @@ configureServer(Angel app) async {
      ]),
      body(c: [
        h1(c: [
-         text('Hello, ${req.params['id']}!'),
+         text('Hello, ${req.params['name']}!'),
        ]),
      ]),
    ]);
@@ -68,7 +68,7 @@ configureServer(Angel app) async {
 }
 ```
 
-By default, `renderHtml` will ignore the client's `Accept` header. However, if you pass `enforceAcceptHeader` as `true`, then a `406 Not Acceptable` error will be thrown if the client doesn't accept `*/*` or `text/html`.
+By default, `renderHtml` will ignore the client's `Accept` header. However, if you pass `enforceAcceptHeader` as `true`, then a `406 Not Acceptable` error will be thrown if the client doesn't accept `*/*` or `text/html`. A request without an `Accept` header accepts any type.
 
 ```dart
 configureServer(Angel app) async {

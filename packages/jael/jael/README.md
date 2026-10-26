@@ -15,7 +15,7 @@ In your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  jael3: ^9.0.0
+  jael3: ^10.0.0
 ```
 
 ## API
@@ -51,3 +51,37 @@ void myFunction() {
 ```
 
 Pre-processing (i.e. handling of blocks and includes) is handled by `package:jael3_preprocessor.`.
+
+## Members of values
+
+`{{ user.name }}` reads the member `name` of `user`, of the first of these that has it:
+
+1. the `memberResolver` given to `Renderer.render` (`angel3_jael` gives one that reads the members through the app's reflector);
+2. a key of a `Map` (a key wins over a member of `Map`: `{{ m.length }}` of `{'length': 1}` is `1`);
+3. a common member of a core type: of `String`, `Iterable` and `List`, `Map`, `MapEntry`, `num` and `int`, `DateTime` and `Duration`, such as `length`, `first`, `join`, `toUpperCase`, `toInt`, `toStringAsFixed` or `year`;
+4. a key of the value's `toJson()`, as of an `@serializable` model.
+
+`jael3` does not use `dart:mirrors`, so a getter of another class is read only through a `memberResolver`, which returns `noMember` for those it does not know, or `toJson()`:
+
+```dart
+const jael.Renderer().render(
+  document,
+  buf,
+  scope,
+  memberResolver: (target, name) => switch ((target, name)) {
+    (User u, 'name') => u.name,
+    (User u, 'isAdmin') => u.isAdmin,
+    _ => jael.noMember,
+  },
+);
+```
+
+The `toJson()` of a value is called once in a render, for all its members. As in Dart, `first`, `last` and `single` of an empty list throw: test `isEmpty` first, as in `<p if=items.isNotEmpty>{{ items.first }}</p>`.
+
+With `strictResolution: false`, an unknown member, or a member of `null`, is `null`, as an unknown name is; otherwise it throws a `NoSuchMethodError`.
+
+## Expressions
+
+* `?.` makes the rest of a chain `null` if its target is: `{{ user?.name.length }}`, `{{ user?.greet() }}` and `{{ user?.tags[0] }}` are `null` if `user` is.
+* The operators are `*`, `/`, `%`, `+`, `-`, `<`, `<=`, `>`, `>=`, `==`, `!=`, `&&`, `||`, `??`, `!` and `? :`. `&&`, `||` and `??` compute their right side only if needed. With `strictResolution: false`, `!`, `&&` and `||` take only `true` as true.
+* Map literals, `{'a': 1, key: value}`, and calls with named arguments, `{{ pad('x', width: 3) }}`, are supported.

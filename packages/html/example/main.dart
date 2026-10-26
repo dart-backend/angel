@@ -33,10 +33,7 @@ void main() async {
     chain([
       renderHtml(
         enforceAcceptHeader: true,
-        renderer: StringRenderer(
-          //doctype: null,
-          pretty: false,
-        ),
+        renderer: StringRenderer(pretty: false),
       ),
       (req, res) {
         return div(c: [text('strict')]);

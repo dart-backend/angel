@@ -2,7 +2,18 @@
 
 ## 10.0.0
 
-* Released with the other Angel3 packages at 10.0.0
+### Breaking changes in 10.0.0
+
+* **Breaking:** `Paginator.current` is a `PaginationResult<T>`, where it was nullable, so `current!` is not needed
+* **Breaking:** A `Paginator` paginates a copy of its items, taken when it is created, so later changes to them are not seen, where pages showed them in `data` but not in their indices and `total`
+* **Breaking:** A `Paginator` with an `itemsPerPage` less than `1` throws an `ArgumentError`, where it threw an `UnsupportedError` or `ArgumentError` when its pages were read
+* **Breaking:** `angel3_framework` is no longer a dependency, as the library does not use it
+
+### Fixes in 10.0.0
+
+* **Paginator:** `canGoForward` is `false` on the last page, and `next` does not go past it, where both went one page beyond it
+* **Paginator:** The `endIndex` of a page with no items is `-1`, as its `startIndex` is
+* **Paginator:** A lazy `Iterable` is read once, where it was read several times for each page
 
 ## 9.1.0
 

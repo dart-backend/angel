@@ -17,6 +17,12 @@ abstract class QueryValues {
     return _names[column] ??= query.reserveName(column);
   }
 
+  /// The name of the parameter of [column] in the SQL that these values
+  /// last compiled for [query], as by [compileInsert], such as `id` of
+  /// `@id`, or `null` if they compiled none of it for [query].
+  String? parameterNameOf(Query query, String column) =>
+      identical(query, _namesQuery) ? _names[column] : null;
+
   Map<String, dynamic> toMap();
 
   String applyCast(String name, String sub) {
@@ -69,6 +75,10 @@ abstract class QueryValues {
     return b.toString();
   }
 
+  @Deprecated(
+    'Not used: an insert into a table without an id returns the values it '
+    'inserted, as a row of no key cannot be selected again by its values.',
+  )
   String compileInsertSelect(Query query, String tableName) {
     var data = Map<String, dynamic>.from(toMap());
 

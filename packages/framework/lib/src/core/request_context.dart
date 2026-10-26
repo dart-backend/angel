@@ -44,6 +44,13 @@ abstract class RequestContext<RawRequest> {
   Map<String, dynamic>? _queryParameters;
   Object? _bodyObject;
   bool _hasParsedBody = false, _closed = false;
+
+  /// Whether [parseBody] failed, after which the body getters return an empty
+  /// body (e.g. to an error handler), and [parseBody] fails again.
+  bool _bodyParseFailed = false;
+
+  /// Whether the body getters can be read.
+  bool get _bodyReadable => _hasParsedBody || _bodyParseFailed;
   Map<String, dynamic> _bodyFields = {};
   List _bodyList = [];
   List<UploadedFile> _uploadedFiles = <UploadedFile>[];
@@ -137,7 +144,7 @@ abstract class RequestContext<RawRequest> {
   ///
   /// Note that [parseBody] must be called first.
   Map<String, dynamic> get bodyAsMap {
-    if (!hasParsedBody) {
+    if (!_bodyReadable) {
       throw StateError('The request body has not been parsed yet.');
     }
     // else if (_bodyFields == null) {
@@ -156,7 +163,7 @@ abstract class RequestContext<RawRequest> {
   ///
   /// Note that [parseBody] must be called first.
   List? get bodyAsList {
-    if (!hasParsedBody) {
+    if (!_bodyReadable) {
       throw StateError('The request body has not been parsed yet.');
     } else if (_bodyObject is! List) {
       throw StateError('The request body, $_bodyObject, is not a List.');
@@ -174,7 +181,7 @@ abstract class RequestContext<RawRequest> {
   ///
   /// Note that [parseBody] must be called first.
   Object? get bodyAsObject {
-    if (!hasParsedBody) {
+    if (!_bodyReadable) {
       throw StateError('The request body has not been parsed yet.');
     }
 
@@ -201,7 +208,7 @@ abstract class RequestContext<RawRequest> {
   ///
   /// Note that [parseBody] must be called first.
   List<UploadedFile>? get uploadedFiles {
-    if (!hasParsedBody) {
+    if (!_bodyReadable) {
       throw StateError('The request body has not been parsed yet.');
     }
 
@@ -314,9 +321,20 @@ abstract class RequestContext<RawRequest> {
     if (_hasParsedBody) return Future.value();
     // The body can only be read once, so calls made while it is being parsed
     // wait for that parse, and after a failure every call fails the same way.
-    return _parsing ??= _parseBody(encoding).then((_) {
-      _hasParsedBody = true;
-    });
+    return _parsing ??= _parseBody(encoding).then(
+      (_) {
+        _hasParsedBody = true;
+      },
+      onError: (Object e, StackTrace st) {
+        // What was read before the failure is not kept.
+        _bodyParseFailed = true;
+        _bodyObject = null;
+        _bodyFields = {};
+        _bodyList = [];
+        _uploadedFiles = [];
+        Error.throwWithStackTrace(e, st);
+      },
+    );
   }
 
   Future<void>? _parsing;

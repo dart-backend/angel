@@ -41,7 +41,7 @@ To create a paginator:
 import 'package:angel3_paginate/angel3_paginate.dart';
 
 void main() {
-  var p = new Paginator(iterable);
+  var p = Paginator(iterable);
   
   // Get the current page (default: page 1)
   var page = p.current;

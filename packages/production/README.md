@@ -36,7 +36,11 @@ Future configureServer(Angel app) async {
 }
 ```
 
-`Runner` will automatically re-spawn crashed instances, unless `--no-respawn` is passed. This can prevent your server from entirely going down at the first error, and adds a layer of fault tolerance to your infrastructure.
+`Runner` will automatically re-spawn crashed instances, unless `--no-respawn` is passed. This can prevent your server from entirely going down at the first error, and adds a layer of fault tolerance to your infrastructure. An instance that keeps crashing is respawned after a delay that doubles from 1 s to 30 s, and is reset once it has run for a minute.
+
+An instance that fails to *start* the first time (a port in use, a bad certificate, an error in `configureServer`) is not respawned: `run` ends with exit code 70, after closing the other instances, so that a supervisor such as `systemd` or Docker sees the failure. Once it has started, a failure to start again (say, a database that is briefly down) is respawned like a crash.
+
+`SIGINT` (Ctrl+C) and `SIGTERM` (`docker stop`, `systemctl stop`; not on Windows) close every instance gracefully: it stops accepting requests, lets those in progress finish (for up to half of `shutdownTimeout`), and runs its shutdown hooks, all within `shutdownTimeout` (default 10 s), after which it is killed. A second signal exits at once. `Runner.stop()` does the same from code.
 
 When combined with `systemd`, deploying Angel3 applications on Linux can be very simple.
 
@@ -88,6 +92,8 @@ void main(List<String> args) {
 
 ```
 
+The added headers are defaults: a header that a handler sets replaces one of the same name. `removeResponseHeaders` removes the given values from those defaults (including the ones `dart:io` adds, such as `X-FRAME-OPTIONS: SAMEORIGIN`), not a header a handler sets. Both apply the same way with `--http2`. A list value is sent as one header of its values, except `Set-Cookie`, which is sent once per value. A list in `removeResponseHeaders` removes each of its values, a value matches exactly, or ignoring case if nothing matches exactly, such as `sameorigin` for the `SAMEORIGIN` of `dart:io`, and a `null` value removes a header whatever its values, e.g. `{'X-XSS-PROTECTION': null}`.
+
 ## Run-time Metadata
 
 At run-time, you may want to know information about the currently-running instance, for example, which number instance. For this, the `InstanceInfo` class is injected into each instance:
@@ -136,3 +142,5 @@ Options:
     --key-file                The PEM key file to read.
     --key-password            The PEM key file password.
 ```
+
+Command-line arguments are visible to other users of the machine (`ps`), and end up in shell history, so give the passwords in the `ANGEL_CERTIFICATE_PASSWORD` and `ANGEL_KEY_PASSWORD` environment variables instead; an option given on the command line takes precedence.

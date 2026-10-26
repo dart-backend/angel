@@ -79,6 +79,49 @@ class MyController extends WebSocketController {
 }
 ```
 
+`@ExposeWs` methods are found through the app's reflector, so the app needs one that can reflect upon the controller. Generate its reflection data with [`angel3_container_generator`](https://pub.dev/packages/angel3_container_generator), which works in a program compiled with `dart compile exe`: mark the controller `@injectable`, add a `part` directive, run `dart run build_runner build`, and give the app a `StaticReflector` of the generated data:
+
+```dart
+import 'package:angel3_container/angel3_container.dart';
+
+part 'my_controller.g.dart';
+
+@injectable
+@Expose("/")
+class MyController extends WebSocketController { ... }
+
+var app = Angel(reflector: StaticReflector.combine([myControllerReflection]));
+```
+
+`MirrorsReflector` of `angel3_container_mirrors` finds them too, without generated code, but needs `dart:mirrors`, which `dart compile exe` does not support.
+
+Without a reflector (the default is `ThrowingReflector`), register the handlers with `exposeWs` in `configureWs` instead. A handler is given the action and the socket; other dependencies are made from `socket.request.container`:
+
+```dart
+@Expose("/")
+class MyController extends WebSocketController {
+  MyController(super.ws);
+
+  @override
+  void configureWs() {
+    exposeWs("read_message", (action, socket) async {
+      var db = socket.request.container!.make<Db>();
+      socket.send(
+        "found_message",
+        await db.collection("messages").findOne(where.id(action.data['message_id'])));
+    });
+  }
+}
+```
+
+A handler of `exposeWs` is used in place of an `@ExposeWs` method of the same event name.
+
+The `@ExposeWs` methods and the hooks of a `WebSocketController` (`onConnect`, `configureWs`, ...) are not HTTP routes; its other public methods are, as those of a `Controller`, unless annotated `@noExpose`. An `@ExposeWs` method a controller inherits is found if the reflector describes the base class too: mark it `@injectable` as well.
+
+The streams of the server, of a socket and of the clients are broadcast streams: an event is given to those listening when it comes, and is not kept for later. Listen before the event can come, as to `client.on['searched']` before sending the action. On the server, listen to a socket's `onAction` or `onData` in the `onConnection` listener before awaiting anything, as `WebSocketController` does: it listens to them before `onConnect` runs, and handles what comes meanwhile once it has run.
+
+WebSockets are served over HTTP/1.1; a request over HTTP/2 is refused with a `501 Not Implemented`.
+
 ### Client Use
 
 This repo also provides two client libraries `browser` and `io` that extend the base `angel3_client` interface, and allow you to use a very similar API on the client to that of the server.

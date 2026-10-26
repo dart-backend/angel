@@ -425,17 +425,17 @@ class RoleUserQueryValues extends MapQueryValues {
     return {};
   }
 
-  int get roleId {
-    return (values['role_id'] as int);
+  int? get roleId {
+    return (values['role_id'] as int?);
   }
 
-  set roleId(int value) => values['role_id'] = value;
+  set roleId(int? value) => values['role_id'] = value;
 
-  int get userId {
-    return (values['user_id'] as int);
+  int? get userId {
+    return (values['user_id'] as int?);
   }
 
-  set userId(int value) => values['user_id'] = value;
+  set userId(int? value) => values['user_id'] = value;
 
   void copyFrom(RoleUser model) {
     if (model.role?.id != null) {
@@ -742,7 +742,7 @@ class User extends UserEntity {
       username,
       password,
       email,
-      ListEquality<RoleEntity>(DefaultEquality<RoleEntity>()).hash(roles),
+      roles.length,
     ]);
   }
 
@@ -847,13 +847,7 @@ class Role extends RoleEntity {
 
   @override
   int get hashCode {
-    return Object.hashAll([
-      id,
-      createdAt,
-      updatedAt,
-      name,
-      ListEquality<UserEntity>(DefaultEquality<UserEntity>()).hash(users),
-    ]);
+    return Object.hashAll([id, createdAt, updatedAt, name, users.length]);
   }
 
   @override

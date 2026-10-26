@@ -102,7 +102,7 @@ class Book extends BookEntity {
       title,
       description,
       pageCount,
-      notModels,
+      notModels?.length,
       camelCaseString,
     ]);
   }
@@ -209,7 +209,7 @@ class Author extends AuthorEntity {
       updatedAt,
       name,
       age,
-      books,
+      books.length,
       newestBook,
       secret,
       obscured,
@@ -278,7 +278,7 @@ class Library extends LibraryEntity {
 
   @override
   int get hashCode {
-    return Object.hashAll([id, createdAt, updatedAt, collection]);
+    return Object.hashAll([id, createdAt, updatedAt, collection.length]);
   }
 
   @override
@@ -359,7 +359,14 @@ class Bookmark extends BookmarkEntity {
 
   @override
   int get hashCode {
-    return Object.hashAll([id, createdAt, updatedAt, history, page, comment]);
+    return Object.hashAll([
+      id,
+      createdAt,
+      updatedAt,
+      history.length,
+      page,
+      comment,
+    ]);
   }
 
   @override

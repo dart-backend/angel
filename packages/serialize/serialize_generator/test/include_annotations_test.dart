@@ -33,9 +33,12 @@ abstract class _Model { String? get name; }
   });
 
   test('a value that is not an annotation is rejected', () async {
-    expect(
-      (await errorsFor("'not an annotation'")).join(),
-      contains('must be a constant instance of a class'),
-    );
+    for (var value in ["'not an annotation'", 'null', '1', '[pragma("x")]']) {
+      expect(
+        (await errorsFor(value)).join(),
+        contains('must be a constant instance of a class'),
+        reason: value,
+      );
+    }
   });
 }

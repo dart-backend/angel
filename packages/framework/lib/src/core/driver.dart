@@ -8,6 +8,7 @@ import 'package:stack_trace/stack_trace.dart';
 import 'package:tuple/tuple.dart';
 
 import '../util.dart';
+import 'abort.dart';
 import 'core.dart';
 
 /// Base driver class for Angel implementations.
@@ -25,6 +26,15 @@ abstract class Driver<
   bool _closed = false;
 
   StreamSubscription<Request>? _sub;
+
+  /// The requests in progress, which [drain] lets finish.
+  final Set<Future<void>> _inFlight = {};
+
+  Future<void>? _draining;
+
+  /// How long [drain] waits for the requests in progress to finish, before
+  /// it closes their connections.
+  Duration closeTimeout = const Duration(seconds: 10);
   //final log = Logger('Driver');
 
   /// The function used to bind this instance to a server..
@@ -72,40 +82,100 @@ abstract class Driver<
     }
 
     app.optimizeForProduction();
-    _sub = server.listen((request) {
-      var stream = createResponseStreamFromRawRequest(request);
-      // A broken connection (e.g. HTTP/2) errors outside the per-request
-      // error zone. Left unhandled it would terminate the whole server.
-      stream.listen(
-        (response) => handleRawRequestSafely(request, response),
-        onError: (Object e, StackTrace st) {
-          app.logger.warning('Connection error', e, st);
-        },
-      );
+    // Served in a zone of its own: an error of a connection that escapes its
+    // request (as `dart:io` reports a response's abort) is logged, rather
+    // than reaching the root zone, where it would terminate the server.
+    _sub = runZonedGuarded(() => server.listen(_serve), (e, st) {
+      if (isAbortError(e)) return;
+      app.logger.severe('Uncaught error of a connection', e, st);
     });
     return server;
   }
 
-  /// Closes a [server] created by [generateServer] that never started
-  /// serving (see [startServer]). Drivers whose server can be closed should
+  void _serve(Request request) {
+    var stream = createResponseStreamFromRawRequest(request);
+    // A broken connection (e.g. HTTP/2) errors outside the per-request
+    // error zone. Left unhandled it would terminate the whole server.
+    stream.listen(
+      (response) => handleRawRequestSafely(request, response),
+      onError: (Object e, StackTrace st) {
+        app.logger.warning('Connection error', e, st);
+      },
+    );
+  }
+
+  /// Closes a [server] created by [generateServer], with its connections:
+  /// one that never started serving (see [startServer]), or one whose
+  /// requests did not finish within [closeTimeout] (see [drain]). Drivers whose server can be closed should
   /// override this; the default does nothing.
   Future<void> closeServer(Server server) async {}
 
-  /// Shuts down the underlying server.
-  Future<void> close() {
-    if (_closed) {
-      //return Future.value(_server);
-      return Future.value();
-    }
+  /// Completes once the connections of the server are closed, after [drain]
+  /// stopped accepting requests and those in progress finished: a response
+  /// that has been sent may still be being written to its socket, which
+  /// ending the process (or isolate) right away would cut off. [drain] waits
+  /// for it within [closeTimeout]. The default completes at once.
+  Future<void> connectionsClosed() async {}
+
+  /// Shuts down the underlying server: it is [drain]ed, then the shutdown
+  /// hooks run, and the app is closed.
+  ///
+  /// A handler still running after [closeTimeout] cannot be stopped: its
+  /// connection is closed, but it runs on while the hooks run and the app is
+  /// closed, so it may find services and resources gone.
+  Future<void> close() async {
+    if (_closed) return;
     _closed = true;
 
-    _sub?.cancel();
+    await drain();
 
     // Hooks run first, while services and configuration are still
     // available; app.close() tears those down and clears the hooks. It runs
     // even if a hook fails, and the hook's error is then rethrown.
-    return Future.wait(app.shutdownHooks.map(app.configure))
-        .whenComplete(app.close);
+    try {
+      await Future.wait(app.shutdownHooks.map(app.configure));
+    } finally {
+      await app.close();
+    }
+  }
+
+  /// Stops accepting requests, and waits up to [closeTimeout] for those in
+  /// progress to finish, and their connections to close (see
+  /// [connectionsClosed]); any still open then are closed (see
+  /// [closeServer]). Unlike [close], it neither runs the
+  /// shutdown hooks nor closes the app, so that a driver that shares its app
+  /// with another (as [AngelHttp2] does for HTTP/1) can be drained alongside
+  /// it. Calling it again returns the same future.
+  Future<void> drain() => _draining ??= _drain();
+
+  Future<void> _drain() async {
+    // Cancelling stops accepting requests; a dart:io server then closes
+    // each connection once its response is sent.
+    await _sub?.cancel();
+    var elapsed = Stopwatch()..start();
+    Duration remaining() {
+      var left = closeTimeout - elapsed.elapsed;
+      return left.isNegative ? Duration.zero : left;
+    }
+
+    var timedOut = false;
+    void onTimeout() => timedOut = true;
+    if (_inFlight.isNotEmpty) {
+      await Future.wait(_inFlight.toList())
+          .then<void>((_) {})
+          .timeout(remaining(), onTimeout: onTimeout);
+    }
+    if (!timedOut) {
+      await connectionsClosed().timeout(remaining(), onTimeout: onTimeout);
+    }
+    var server = this.server;
+    if (timedOut && server != null) {
+      try {
+        await closeServer(server);
+      } catch (e, st) {
+        app.logger.warning('Failed to close the server', e, st);
+      }
+    }
   }
 
   Future<RequestContextType> createRequestContext(
@@ -151,6 +221,16 @@ abstract class Driver<
   /// status code. Any other error is a server bug, answered with
   /// `500 Internal Server Error`.
   Future<void> handleRawRequestSafely(Request request, Response response) {
+    late Future<void> handled;
+    handled = _handleRawRequestSafely(
+      request,
+      response,
+    ).whenComplete(() => _inFlight.remove(handled));
+    _inFlight.add(handled);
+    return handled;
+  }
+
+  Future<void> _handleRawRequestSafely(Request request, Response response) {
     return handleRawRequest(request, response).catchError((
       Object e,
       StackTrace st,
@@ -425,6 +505,18 @@ abstract class Driver<
         app.logger.severe('500 Internal Server Error', e);
       }
       return Future.value();
+    }
+
+    // The status and headers are sent, so an error page would only be
+    // appended to the body, under the status already sent.
+    if (res.isOpen && res.headersSent) {
+      app.logger.severe(
+        'Failed after the response headers were sent; the response is '
+        'aborted.',
+        e.error ?? e,
+        st,
+      );
+      return res.abort(e.error ?? e, st).then((_) => req.close());
     }
 
     Future handleError;

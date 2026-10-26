@@ -1,0 +1,10 @@
+targets:
+  $default:
+    builders:
+      # The reflection data of the model of the tests.
+      angel3_container_generator:static_reflection:
+        generate_for:
+          - test/models.dart
+      source_gen:combining_builder:
+        generate_for:
+          - test/models.dart

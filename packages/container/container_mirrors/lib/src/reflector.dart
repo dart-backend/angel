@@ -112,6 +112,16 @@ class _ReflectedTypeMirror extends ReflectedType {
 class _ReflectedClassMirror extends ReflectedClass {
   final dart.ClassMirror mirror;
 
+  @override
+  List<Type> get supertypes => [
+    for (
+      var s = mirror.superclass;
+      s != null && s.reflectedType != Object;
+      s = s.superclass
+    )
+      if (s.hasReflectedType) s.reflectedType,
+  ];
+
   _ReflectedClassMirror(this.mirror)
     : super(
         dart.MirrorSystem.getName(mirror.simpleName),

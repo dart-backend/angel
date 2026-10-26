@@ -353,7 +353,7 @@ class Account extends AccountEntity {
       description,
       name,
       price,
-      ListEquality<AssetEntity>(DefaultEquality<AssetEntity>()).hash(assets),
+      assets.length,
     ]);
   }
 

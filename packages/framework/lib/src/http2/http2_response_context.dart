@@ -6,6 +6,7 @@ import 'package:angel3_framework/angel3_framework.dart' hide Header;
 import 'package:http2/transport.dart';
 import 'package:meta/meta.dart';
 
+import 'default_headers.dart';
 import 'http2_request_context.dart';
 
 class Http2ResponseContext extends ResponseContext<ServerTransportStream> {
@@ -28,7 +29,17 @@ class Http2ResponseContext extends ResponseContext<ServerTransportStream> {
   /// The method of a pushed request; see [push].
   String? _pushMethod;
 
-  Http2ResponseContext(Angel? app, this.stream, this._req) {
+  /// The default headers of the driver, which a response sends with its own
+  /// headers; set by the driver.
+  @internal
+  final DefaultResponseHeaders? defaultHeaders;
+
+  Http2ResponseContext(
+    Angel? app,
+    this.stream,
+    this._req, {
+    @internal this.defaultHeaders,
+  }) {
     this.app = app;
     _targetUri = _req?.uri;
   }
@@ -101,6 +112,16 @@ class Http2ResponseContext extends ResponseContext<ServerTransportStream> {
       headers.add(Header.ascii(key.toLowerCase(), this.headers[key]!));
     }
 
+    // The defaults of the driver that the response has none of, kept out of
+    // its own headers and cookies. They go before its cookies, so that one
+    // of those, such as its session cookie, comes last and wins.
+    headers.addAll(
+      defaultHeaders?.headersFor({
+            for (var key in this.headers.keys) key.toLowerCase(),
+          }) ??
+          const [],
+    );
+
     // A pushed response belongs to the request that pushed it.
     if (!_isPush) {
       addSessionCookie();
@@ -113,8 +134,17 @@ class Http2ResponseContext extends ResponseContext<ServerTransportStream> {
     }
 
     stream.sendHeaders(headers);
+    _sentHeaders[stream] = true;
     return _streamInitialized = true;
   }
+
+  /// The streams whose headers a context sent itself, not the driver.
+  static final Expando<bool> _sentHeaders = Expando('sent headers');
+
+  /// Whether an [Http2ResponseContext] sent the headers of [stream] itself.
+  @internal
+  static bool sentHeaders(ServerTransportStream stream) =>
+      _sentHeaders[stream] ?? false;
 
   /// Adds the session ID cookie, if the request has a session and it has not
   /// been added yet. HTTP/2 here always runs over TLS, so the cookie is
@@ -257,6 +287,18 @@ class Http2ResponseContext extends ResponseContext<ServerTransportStream> {
     await super.close();
   }
 
+  @override
+  bool get headersSent => _streamInitialized;
+
+  /// Resets the stream, so the client sees it fail.
+  @override
+  Future<void> abort(Object error, [StackTrace? stackTrace]) async {
+    if (_isDetached || _isClosed) return;
+    _isClosed = true;
+    stream.terminate();
+    await super.close();
+  }
+
   /// Pushes a resource to the client.
   Http2ResponseContext push(
     String path, {
@@ -282,7 +324,7 @@ class Http2ResponseContext extends ResponseContext<ServerTransportStream> {
     }
 
     var s = stream.push(h);
-    var r = Http2ResponseContext(app, s, _req)
+    var r = Http2ResponseContext(app, s, _req, defaultHeaders: defaultHeaders)
       .._isPush = true
       .._pushMethod = method
       .._targetUri = targetUri;

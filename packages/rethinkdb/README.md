@@ -52,7 +52,50 @@ void main() async {
 
 Wrap the service in a `TypedService` from `angel3_framework` to serialize to and from a class.
 
-`read`, `modify`, `update` and `remove` act on the record whose id is in the path; an `id` in the body cannot change it. `update` of a missing id creates the record, and `modify` of one is a 404. A write that RethinkDB rejects is a 409 for a duplicate id, and a 400 otherwise.
+## CRUD
+
+On the server, call the service directly:
+
+```dart
+var todos = RethinkService(conn, r.table('todos'));
+app.use('/todos', todos);
+
+// Create: RethinkDB generates the id unless the data has one.
+var todo = await todos.create({'title': 'Clean your room', 'completed': false});
+var id = todo['id'] as String;
+
+// Read one record, or all of them.
+todo = await todos.read(id);
+var all = await todos.index();
+var open = await todos.index({
+  'query': {'completed': false},
+});
+
+// Modify (a patch): changes only the given fields.
+todo = await todos.modify(id, {'completed': true});
+
+// Update (a replace): the record becomes the given data.
+todo = await todos.update(id, {'title': 'Clean the kitchen', 'completed': false});
+
+// Remove one record, which is returned.
+var removed = await todos.remove(id);
+```
+
+Over HTTP, the same calls are:
+
+| Request | Call |
+| --- | --- |
+| `GET /todos` | `index()`, with the query string as the `query` (see [Querying](#querying)) |
+| `GET /todos/:id` | `read(id)` |
+| `POST /todos` | `create(body)` |
+| `PATCH /todos/:id` | `modify(id, body)` |
+| `PUT /todos/:id` or `POST /todos/:id` | `update(id, body)` |
+| `DELETE /todos/:id` | `remove(id)` |
+| `DELETE /todos` | `remove(null)`, which removes every matching record; a 403 unless `allowRemoveAll` is `true` |
+
+`read`, `modify`, `update` and `remove` act on the record whose id is in the path; an `id` in the body cannot change it. `read`, `modify` and `remove` of a missing id are a 404, and `update` of one creates the record. A write that RethinkDB rejects is a 409 for a duplicate id, and a 400 otherwise.
+
+`create` needs a service over a table; on a service over another query, it is a 405.
 
 ## Querying
 
@@ -62,7 +105,9 @@ You can query these services as follows:
     /path/to/service?foo=bar
 ```
 
-The above will query the database to find records where `foo` equals `bar`. The former will sort result in ascending order of creation, and so will the latter.
+The above will query the database to find records where `foo` equals `bar`. Pass `allowQuery: false` to ignore a `query` Map, such as the query string.
+
+The values of a query string are strings: `?completed=false` matches records whose `completed` is the string `'false'`, not the boolean. To filter on another type, pass a `query` Map with that value on the server.
 
 You can use advanced queries:
 
@@ -79,10 +124,10 @@ service.index({'query': {'foo': 'bar', 'baz': 'quux'}});
 
 The query applies to `index`, and to `remove` with a `null` id, which removes every matching record (clients may only do that if `allowRemoveAll` is `true`). It is ignored by `read`, `modify`, `update` and `remove` of one record, so it cannot make them reach other records.
 
-You can also apply sorting by adding a `reql` parameter on the server-side.
+You can also extend the query, e.g. to sort it, by adding a `reql` parameter on the server-side. It is applied after `query`.
 
 ```dart
-service.index({'reql': (query) => query.sort(...)});
+service.index({'reql': (query) => query.orderBy('title')});
 ```
 
 See the tests for more usage examples.

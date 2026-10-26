@@ -2,7 +2,17 @@
 
 ## 10.0.0
 
-* Released with the other Angel3 packages at 10.0.0
+### New in 10.0.0
+
+* `PubSubSynchronizationChannel(closeTimeout: ...)`, how long `close` waits for the `pub_sub` server
+
+### Fixes in 10.0.0
+
+* **Closing:** Closing the channel's `sink`, as `AngelWebSocket` does on shutdown, closes the channel, which unsubscribes and closes the `pub_sub` client, where they were left open, and completes once they are closed. `close` waits for the server at most the new `closeTimeout` (default 5 s), so a server that is gone does not stop it, and may be called more than once
+* **After closing:** Events are no longer published, and events and errors that come late are dropped, where they failed with a `StateError`
+* **Errors:** An event without a name is an error of the stream, and the end of the subscription is told on the stream, which then ends
+* **Dependencies:** `angel3_framework` is a dev dependency, as only the tests and example use it
+* **Docs:** The README example compiles, and serves the WebSocket. `example/main.dart` runs two synchronized instances, where it was a copy of the tests
 
 ## 9.1.0
 

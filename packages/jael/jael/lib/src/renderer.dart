@@ -6,6 +6,7 @@ import 'package:collection/collection.dart' show IterableExtension;
 import 'package:belatuk_symbol_table/belatuk_symbol_table.dart';
 
 import 'ast/ast.dart';
+import 'members.dart';
 import 'text/parser.dart';
 import 'text/scanner.dart';
 
@@ -89,13 +90,24 @@ class Renderer {
   ///
   /// If [strictResolution] is `false` (default: `true`), then undefined identifiers will return `null`
   /// instead of throwing.
+  ///
+  /// A member of a value, `{{ user.name }}`, is read by [memberResolver], if
+  /// it knows it, or else as [readMember] reads it: a key of a `Map`, a
+  /// common member of a core type, or a key of the value's `toJson()`.
   void render(
     Document document,
     CodeBuffer buffer,
     SymbolTable scope, {
     bool strictResolution = true,
+    MemberResolver? memberResolver,
   }) {
-    scope.create('!strict!', value: strictResolution != false);
+    // A scope of its own, so that the same [scope] may be rendered again.
+    scope = scope.createChild()
+      ..create('!strict!', value: strictResolution != false)
+      ..create(jsonCacheKey, value: Expando<Object>('toJson'));
+    if (memberResolver != null) {
+      scope.create(memberResolverKey, value: memberResolver);
+    }
 
     if (document.doctype != null) buffer.writeln(document.doctype!.span.text);
     renderElement(

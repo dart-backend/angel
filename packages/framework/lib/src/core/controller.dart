@@ -90,6 +90,15 @@ class Controller {
     var classMirror = canReflect(reflector)
         ? tryReflect(() => reflector.reflectClass(runtimeType))
         : null;
+    var logger = _app?.logger ?? (router is Angel ? router.logger : null);
+    if (logger != null) {
+      warnIfUndescribed(
+        reflector,
+        runtimeType,
+        logger,
+        '@Expose routes and @Middleware annotations',
+      );
+    }
     var instanceMirror = classMirror == null
         ? null
         : tryReflect(() => reflector.reflectInstance(this));
@@ -111,6 +120,13 @@ class Controller {
     return exposeDecl.as?.isNotEmpty == true ? exposeDecl.as! : name;
   }
 
+  /// Whether the public method [declaration], found through the reflector,
+  /// is a route of this controller. All are, but those annotated
+  /// `@noExpose`; a subclass may keep others off its routes, such as those of
+  /// another protocol.
+  @protected
+  bool routesMethod(ReflectedDeclaration declaration) => true;
+
   void Function(ReflectedDeclaration) _routeBuilder(
     Reflector reflector,
     ReflectedInstance? instanceMirror,
@@ -129,6 +145,9 @@ class Controller {
           decl.function!.isSetter) {
         return;
       }
+
+      // Those the controller keeps off its routes.
+      if (!routesMethod(decl)) return;
 
       // Ignore built-in methods.
       if (methodName != 'toString' &&

@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:angel3_orm/angel3_orm.dart';
 
 class MigrationColumn extends Column {
@@ -20,7 +22,8 @@ class MigrationColumn extends Column {
 
   /// Throws an [ArgumentError] if [type] has a precision and [precision] is
   /// not positive, or has a scale and [scale] is negative or greater than
-  /// [precision], which databases reject only when the migration is run.
+  /// the precision ([Column.defaultPrecision] if [precision] is `null`),
+  /// which databases reject only when the migration is run.
   MigrationColumn(
     ColumnType type, {
     bool isNullable = true,
@@ -33,19 +36,21 @@ class MigrationColumn extends Column {
     IndexType indexType = IndexType.none,
     dynamic defaultValue,
   }) : super(type: type, isNullable: isNullable, defaultValue: defaultValue) {
-    if (type.hasPrecision && precision < 1) {
+    var precision = this.precision, scale = this.scale;
+    if (type.hasPrecision && precision != null && precision < 1) {
       throw ArgumentError.value(
         precision,
         'precision',
         'The precision of a ${type.name} column must be at least 1',
       );
     }
-    if (type.hasScale && (scale < 0 || scale > precision)) {
+    var maxScale = precision ?? Column.defaultPrecision;
+    if (type.hasScale && scale != null && (scale < 0 || scale > maxScale)) {
       throw ArgumentError.value(
         scale,
         'scale',
         'The scale of a ${type.name} column must be from 0 to its precision '
-            '($precision)',
+            '($maxScale)',
       );
     }
     _nullable = isNullable;
@@ -70,8 +75,54 @@ class MigrationColumn extends Column {
           defaultValue: column.defaultValue,
         );
 
+  /// The precision and scale of [type] in SQL, such as `(10, 2)`, or `''` if
+  /// it has none: those given, a scale without a precision with
+  /// [Column.defaultPrecision], a precision without a scale with
+  /// [Column.defaultScale] or, if smaller, the precision (not a scale of 0,
+  /// which would round values to whole numbers; give `scale: 0` for that),
+  /// and neither as `''` if the database has an
+  /// [unbounded] type without them (PostgreSQL's `numeric`), or else as
+  /// [Column.defaultPrecision] and [Column.defaultScale].
+  ///
+  /// Throws an [ArgumentError] if the precision is greater than
+  /// [maxPrecision] or the scale greater than [maxScale], the limits of the
+  /// database, which it would reject only when the migration is run.
+  String precisionArguments({
+    bool unbounded = false,
+    int? maxPrecision,
+    int? maxScale,
+  }) {
+    if (!type.hasPrecision) return '';
+    var precision = this.precision, scale = type.hasScale ? this.scale : null;
+    if (precision == null && scale == null) {
+      if (unbounded) return '';
+      precision = Column.defaultPrecision;
+      if (type.hasScale) scale = Column.defaultScale;
+    }
+    precision ??= Column.defaultPrecision;
+    if (type.hasScale) scale ??= min(Column.defaultScale, precision);
+    if (maxPrecision != null && precision > maxPrecision) {
+      throw ArgumentError.value(
+        precision,
+        'precision',
+        'The precision of a ${type.name} column can be at most $maxPrecision',
+      );
+    }
+    if (maxScale != null && scale != null && scale > maxScale) {
+      throw ArgumentError.value(
+        scale,
+        'scale',
+        'The scale of a ${type.name} column can be at most $maxScale',
+      );
+    }
+    return scale == null ? '($precision)' : '($precision, $scale)';
+  }
+
   MigrationColumn notNull() => this.._nullable = false;
 
+  /// Gives the column the default [value]: a [String] as a string literal,
+  /// quoted and escaped, [RawSql] as SQL, such as
+  /// `RawSql('CURRENT_TIMESTAMP')`, and others as their `toString`.
   MigrationColumn defaultsTo(Object? value) => this.._defaultValue = value;
 
   MigrationColumn unique() => this.._index = IndexType.unique;

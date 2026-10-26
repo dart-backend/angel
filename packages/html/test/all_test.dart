@@ -7,6 +7,7 @@ import 'package:test/test.dart';
 void main() {
   Angel app;
   late TestClient client;
+  late bool laterHandlerRan;
 
   setUp(() async {
     app = Angel();
@@ -30,20 +31,33 @@ void main() {
       chain([
         renderHtml(
           enforceAcceptHeader: true,
-          renderer: StringRenderer(
-            //doctype: null,
-            pretty: false,
-          ),
+          renderer: StringRenderer(pretty: false),
         ),
         (req, res) {
           return div(c: [text('strict')]);
         },
       ]),
     );
+    laterHandlerRan = false;
+    app.fallback((req, res) {
+      laterHandlerRan = true;
+      throw AngelHttpException.notFound();
+    });
     client = await connectTo(app);
   });
 
   tearDown(() => client.close());
+
+  test('later handlers do not run', () async {
+    var response = await client.get(Uri.parse('/html'));
+    expect(response, hasStatus(200));
+    expect(laterHandlerRan, isFalse);
+  });
+
+  test('sends the charset', () async {
+    var response = await client.get(Uri.parse('/html'));
+    expect(response.headers['content-type'], 'text/html; charset=utf-8');
+  });
 
   test('sets content type and body', () async {
     var response = await client.get(Uri.parse('/html'));
@@ -52,7 +66,7 @@ void main() {
     expect(
       response,
       allOf(
-        hasContentType('text/html'),
+        hasContentType('text/html; charset=utf-8'),
         hasBody('<!DOCTYPE html><html><head><title>ok</title></head></html>'),
       ),
     );
@@ -67,7 +81,10 @@ void main() {
       print('Response: ${response.body}');
       expect(
         response,
-        allOf(hasContentType('text/html'), hasBody('<div>strict</div>')),
+        allOf(
+          hasContentType('text/html; charset=utf-8'),
+          hasBody('<!DOCTYPE html><div>strict</div>'),
+        ),
       );
 
       response = await client.get(
@@ -77,16 +94,20 @@ void main() {
       print('Response: ${response.body}');
       expect(
         response,
-        allOf(hasContentType('text/html'), hasBody('<div>strict</div>')),
+        allOf(
+          hasContentType('text/html; charset=utf-8'),
+          hasBody('<!DOCTYPE html><div>strict</div>'),
+        ),
       );
     });
 
-    test('throws if incorrect or no accept', () async {
+    test('sends without an accept header, which accepts any type', () async {
       var response = await client.get(Uri.parse('/strict'));
-      print('Response: ${response.statusCode} ${response.body}');
-      expect(response, hasStatus(406));
+      expect(response, hasStatus(200));
+    });
 
-      response = await client.get(
+    test('throws if incorrect accept', () async {
+      var response = await client.get(
         Uri.parse('/strict'),
         headers: {'accept': 'application/json,text/xml'},
       );

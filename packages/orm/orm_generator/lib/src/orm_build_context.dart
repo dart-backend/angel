@@ -60,6 +60,36 @@ OrmField? findPrimaryFieldInList(
 }
 
 /// Create ORM Context
+/// The name of the model class [clazz] as versions before 10.0.0 gave the
+/// generated class, by which the ORM names its tables and keys, so that the
+/// tables and columns of an existing database are kept: [clazz] without one
+/// prefix (`_` or `entity`) or, if it has none, one suffix (`entity`), of any
+/// case.
+///
+/// The generated class itself is named by [getGeneratedModelClassName], which
+/// strips both, matched with their case, so that `_UserEntity` is `User` and
+/// `UserIdentity` keeps its name; the table of `_UserEntity` is still
+/// `user_entities`, and that of `UserIdentity` `user_ids`.
+String legacyModelName(String clazz) {
+  for (var prefix in const ['_', 'entity']) {
+    if (clazz.toLowerCase().startsWith(prefix)) {
+      return clazz.substring(prefix.length);
+    }
+  }
+  for (var suffix in const ['entity']) {
+    if (clazz.toLowerCase().endsWith(suffix)) {
+      return clazz.substring(0, clazz.length - suffix.length);
+    }
+  }
+  return clazz;
+}
+
+/// The name that earlier versions gave the model of [ctx] in the names of
+/// foreign tables and keys: [legacyModelName] of it, twice, as they stripped
+/// it again.
+String _legacyClassName(BuildContext ctx) =>
+    legacyModelName(legacyModelName(ctx.originalClassName!));
+
 Future<OrmBuildContext?> buildOrmContext(
   Map<String, OrmBuildContext> cache,
   InterfaceElement clazz,
@@ -110,9 +140,7 @@ Future<OrmBuildContext?> buildOrmContext(
     ormAnnotation,
     (ormAnnotation.tableName?.isNotEmpty == true)
         ? ormAnnotation.tableName!
-        : pluralize(
-            ReCase(getGeneratedModelClassName(clazz.displayName)).snakeCase,
-          ),
+        : pluralize(ReCase(legacyModelName(clazz.displayName)).snakeCase),
   );
   cache[id] = ctx;
 
@@ -150,7 +178,8 @@ Future<OrmBuildContext?> buildOrmContext(
       scale: column.scale,
       indexType: column.indexType,
       // The type the annotation declares, if any; otherwise inferred.
-      type: columnAnnotation != null &&
+      type:
+          columnAnnotation != null &&
               declaresColumnType(ConstantReader(columnAnnotation))
           ? column.type
           : inferColumnType(field.type),
@@ -162,7 +191,9 @@ Future<OrmBuildContext?> buildOrmContext(
 
     if (ann != null) {
       var cr = ConstantReader(ann);
-      var rc = ctx.buildContext.modelClassNameRecase;
+      // Of the name that earlier versions gave the model, as the foreign
+      // key's column is named after it.
+      var rc = ReCase(_legacyClassName(ctx.buildContext));
       var type = cr.read('type').intValue;
       var localKey = cr.peek('localKey')?.stringValue;
       var foreignKey = cr.peek('foreignKey')?.stringValue;
@@ -182,72 +213,71 @@ Future<OrmBuildContext?> buildOrmContext(
           'Cannot apply relationship to field "${field.displayName}" - ${field.type} is not assignable to Model.',
         );
       } else {
-          try {
-            var refType = field.type;
+        try {
+          var refType = field.type;
 
-            if (refType is InterfaceType &&
-                const TypeChecker.typeNamed(List)
-                    .isAssignableFromType(refType) &&
-                refType.typeArguments.length == 1) {
-              refType = refType.typeArguments[0];
-            }
+          if (refType is InterfaceType &&
+              const TypeChecker.typeNamed(List).isAssignableFromType(refType) &&
+              refType.typeArguments.length == 1) {
+            refType = refType.typeArguments[0];
+          }
 
-            var modelType = firstModelAncestor(refType) ?? refType;
-            var modelTypeElement = modelType.element;
+          var modelType = firstModelAncestor(refType) ?? refType;
+          var modelTypeElement = modelType.element;
 
-            if (modelTypeElement != null) {
-              foreign = await buildOrmContext(
+          if (modelTypeElement != null) {
+            foreign = await buildOrmContext(
+              cache,
+              modelTypeElement as ClassElement,
+              ConstantReader(
+                const TypeChecker.typeNamed(Orm)
+                    .firstAnnotationOf(modelTypeElement),
+              ),
+              buildStep,
+              resolver,
+              autoSnakeCaseNames,
+            );
+
+            // Resolve throughType as well
+            if (through != null && through is InterfaceType) {
+              throughContext = await buildOrmContext(
                 cache,
-                modelTypeElement as ClassElement,
+                through.element,
                 ConstantReader(
                   const TypeChecker.typeNamed(Orm)
-                      .firstAnnotationOf(modelTypeElement),
+                      .firstAnnotationOf(through.element),
                 ),
                 buildStep,
                 resolver,
                 autoSnakeCaseNames,
               );
+            }
 
-              // Resolve throughType as well
-              if (through != null && through is InterfaceType) {
-                throughContext = await buildOrmContext(
-                  cache,
-                  through.element,
-                  ConstantReader(
-                    const TypeChecker.typeNamed(Orm)
-                        .firstAnnotationOf(through.element),
-                  ),
-                  buildStep,
-                  resolver,
-                  autoSnakeCaseNames,
-                );
-              }
+            var ormAnn = const TypeChecker.typeNamed(Orm)
+                .firstAnnotationOf(modelTypeElement);
 
-              var ormAnn = const TypeChecker.typeNamed(Orm)
-                  .firstAnnotationOf(modelTypeElement);
+            // An explicit foreignTable wins over the model's own.
+            if (ormAnn != null) {
+              foreignTable ??= ConstantReader(ormAnn)
+                  .peek('tableName')
+                  ?.stringValue;
+            }
 
-              // An explicit foreignTable wins over the model's own.
-              if (ormAnn != null) {
-                foreignTable ??= ConstantReader(ormAnn)
-                    .peek('tableName')
-                    ?.stringValue;
-              }
-
-              if (foreign != null) {
-                foreignTable ??= pluralize(
-                  foreign.buildContext.modelClassNameRecase.snakeCase,
-                );
-              }
-            } else {
-              log.warning(
-                'Ancestor model type for [${field.displayName}] is null',
+            if (foreign != null) {
+              foreignTable ??= pluralize(
+                ReCase(_legacyClassName(foreign.buildContext)).snakeCase,
               );
             }
-          } on StackOverflowError {
-            throw UnsupportedError(
-              'There is an infinite cycle between ${clazz.displayName} and ${field.type.getDisplayString()}. This triggered a stack overflow.',
+          } else {
+            log.warning(
+              'Ancestor model type for [${field.displayName}] is null',
             );
           }
+        } on StackOverflowError {
+          throw UnsupportedError(
+            'There is an infinite cycle between ${clazz.displayName} and ${field.type.getDisplayString()}. This triggered a stack overflow.',
+          );
+        }
       }
 
       // Fill in missing keys
@@ -514,8 +544,9 @@ Column reviveColumn(ConstantReader cr) {
   return Column(
     isNullable: cr.peek('isNullable')?.boolValue ?? false,
     length: cr.peek('length')?.intValue ?? Column.defaultLength,
-    precision: cr.peek('precision')?.intValue ?? Column.defaultPrecision,
-    scale: cr.peek('scale')?.intValue ?? Column.defaultScale,
+    // Left out when not given, as an unbounded numeric on PostgreSQL.
+    precision: cr.peek('precision')?.intValue,
+    scale: cr.peek('scale')?.intValue,
     defaultValue: cr.peek('defaultValue')?.objectValue,
     type: columnType,
     indexType: indexType,

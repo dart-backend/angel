@@ -23,6 +23,10 @@ final mainReflection = ReflectionData(
       ],
       create: (p, n) => Function.apply(Config.new, p),
       annotations: [injectable],
+      getMember: (o, name) => switch (name) {
+        'greeting' => (o as Config).greeting,
+        _ => noStaticMember,
+      },
     ),
     Greeter: StaticReflectedClass(
       'Greeter',
@@ -61,8 +65,10 @@ final mainReflection = ReflectionData(
         ]),
       ],
       getMember: (o, name) => switch (name) {
+        'config' => (o as Greeter).config,
+        'punctuation' => (o as Greeter).punctuation,
         'greet' => (o as Greeter).greet,
-        _ => null,
+        _ => noStaticMember,
       },
     ),
   },
@@ -74,7 +80,4 @@ Type _$typeOf<T>() => T;
 Map<Symbol, dynamic> _$named(
   Map<String, dynamic> n,
   Map<String, Symbol> symbols,
-) => {
-  for (var e in n.entries)
-    if (symbols[e.key] case var s?) s: e.value,
-};
+) => {for (var e in n.entries) ?symbols[e.key]: e.value};

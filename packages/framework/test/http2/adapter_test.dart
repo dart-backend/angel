@@ -53,6 +53,12 @@ void main() {
 
     app.get('/stream', (req, res) => jfkStream().pipe(res));
 
+    app.get('/stream-error', (req, res) async {
+      res.write('partial');
+      await Future.delayed(const Duration(milliseconds: 20));
+      throw StateError('boom');
+    });
+
     app.get('/headers', (req, res) async {
       res.headers.addAll({'foo': 'bar', 'x-angel': 'http2'});
       await res.close();
@@ -342,6 +348,107 @@ void main() {
     expect(closes, 1);
   });
 
+  test('close does not wait for idle HTTP/1 keep-alive connections', () async {
+    var app = Angel()..get('/', (req, res) => 'ok');
+    var ctx = SecurityContext()
+      ..useCertificateChain('dev.pem')
+      ..usePrivateKey('dev.key', password: 'dartdart')
+      ..setAlpnProtocols(['h2', 'http/1.1'], true);
+    var h2 = AngelHttp2(app, ctx, allowHttp1: true)
+      ..closeTimeout = const Duration(seconds: 5);
+    var server = await h2.startServer();
+    var keepAlive = IOClient(
+      HttpClient()..badCertificateCallback = (_, _, _) => true,
+    );
+    addTearDown(keepAlive.close);
+    var response = await keepAlive.get(
+      Uri.parse('https://127.0.0.1:${server.port}/'),
+    );
+    expect(response.body, '"ok"');
+
+    // The client keeps its connection open; close must not wait for it.
+    var elapsed = Stopwatch()..start();
+    await h2.close();
+    expect(elapsed.elapsed, lessThan(const Duration(seconds: 2)));
+  });
+
+  test('response headers apply to the HTTP/1 requests it serves', () async {
+    var app = Angel()
+      ..get('/', (req, res) => 'ok')
+      ..get('/own', (req, res) {
+        res.headers['x-added'] = 'own';
+        return 'ok';
+      });
+    var ctx = SecurityContext()
+      ..useCertificateChain('dev.pem')
+      ..usePrivateKey('dev.key', password: 'dartdart')
+      ..setAlpnProtocols(['h2', 'http/1.1'], true);
+    var h2 = AngelHttp2(app, ctx, allowHttp1: true);
+    var server = await h2.startServer();
+    addTearDown(h2.close);
+    h2
+      ..addResponseHeader({
+        'x-added': ['a', 'b'],
+      })
+      ..removeResponseHeader({'x-frame-options': 'sameorigin'});
+
+    var client = HttpClient()..badCertificateCallback = (_, _, _) => true;
+    addTearDown(() => client.close(force: true));
+    Future<HttpHeaders> headersOf(String path) async {
+      var response = await (await client.getUrl(
+        Uri.parse('https://127.0.0.1:${server.port}$path'),
+      )).close();
+      await response.drain<void>();
+      return response.headers;
+    }
+
+    var defaults = await headersOf('/');
+    expect(defaults.value('x-added'), 'a, b');
+    expect(defaults.value('x-frame-options'), isNull);
+    // A header of the handler replaces the default.
+    expect((await headersOf('/own')).value('x-added'), 'own');
+  });
+
+  test('drain returns the same future when called again', () async {
+    var ctx = SecurityContext()
+      ..useCertificateChain('dev.pem')
+      ..usePrivateKey('dev.key', password: 'dartdart')
+      ..setAlpnProtocols(['h2', 'http/1.1'], true);
+    var h2 = AngelHttp2(Angel(), ctx, allowHttp1: true);
+    await h2.startServer();
+    addTearDown(h2.close);
+    expect(identical(h2.drain(), h2.drain()), isTrue);
+  });
+
+  test(
+    'close lets HTTP/2 and HTTP/1 requests finish, before the hooks',
+    () async {
+      var events = <String>[];
+      var slow = Angel()
+        ..shutdownHooks.add((_) => events.add('hook'))
+        ..get('/slow/:name', (req, res) async {
+          await Future.delayed(const Duration(milliseconds: 300));
+          events.add('${req.params['name']} responded');
+          return 'done';
+        });
+      var ctx = SecurityContext()
+        ..useCertificateChain('dev.pem')
+        ..usePrivateKey('dev.key', password: 'dartdart')
+        ..setAlpnProtocols(['h2', 'http/1.1'], true);
+      var h2 = AngelHttp2(slow, ctx, allowHttp1: true);
+      var server = await h2.startServer();
+      var root = Uri.parse('https://127.0.0.1:${server.port}');
+      var h2Response = client.get(root.replace(path: '/slow/h2'));
+      var h1Response = h1c.get(root.replace(path: '/slow/h1'));
+      await Future.delayed(const Duration(milliseconds: 100));
+      await h2.close();
+      expect((await h2Response).body, '"done"');
+      expect((await h1Response).body, '"done"');
+      expect(events.last, 'hook');
+      expect(events, containsAll(['h2 responded', 'h1 responded']));
+    },
+  );
+
   group('res.useBuffer()', () {
     test('sends one HEADERS frame, starting with :status', () async {
       var messages = await rawGet('/buffered');
@@ -621,6 +728,21 @@ void main() {
   test('allowHttp1', () async {
     var response = await h1c.get(serverRoot);
     expect(response.body, 'Hello world');
+  });
+
+  test('a failure after the headers are sent resets the stream', () async {
+    // Rather than an error page appended to the body sent under its status.
+    Object? result;
+    try {
+      var response = await client.get(
+        serverRoot.replace(path: '/stream-error'),
+      );
+      result = response.body;
+    } catch (e) {
+      result = e;
+    }
+    expect(result, isNot(contains('<!DOCTYPE html>')));
+    expect(result, isNot(isA<String>()));
   });
 
   test('streamed response', () async {

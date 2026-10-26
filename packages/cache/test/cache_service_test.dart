@@ -17,6 +17,43 @@ class CountingService extends MapService {
   }
 }
 
+/// A database whose next read, index or write waits to be released.
+class SlowService extends MapService {
+  Completer<void>? hold, holdIndex, holdWrite;
+
+  SlowService() : super(autoIdAndDateFields: false);
+
+  @override
+  Future<List<Map<String, dynamic>>> index([Map<String, dynamic>? p]) {
+    var result = super.index(p);
+    var wait = holdIndex?.future ?? Future.value();
+    holdIndex = null;
+    return wait.then((_) => result);
+  }
+
+  @override
+  Future<Map<String, dynamic>> modify(
+    String? id,
+    Map<String, dynamic> data, [
+    Map<String, dynamic>? p,
+  ]) async {
+    // Not written until released.
+    var wait = holdWrite?.future;
+    holdWrite = null;
+    if (wait != null) await wait;
+    return super.modify(id, data, p);
+  }
+
+  @override
+  Future<Map<String, dynamic>> read(String? id, [Map<String, dynamic>? p]) {
+    // Read now, returned once released: the version before a later write.
+    var result = super.read(id, p);
+    var wait = hold?.future ?? Future.value();
+    hold = null;
+    return wait.then((_) => result);
+  }
+}
+
 /// A cache layer that is down.
 class BrokenCache extends Service<String?, Map<String, dynamic>> {
   @override
@@ -150,5 +187,75 @@ void main() {
       expect((await service.update('1', {'id': '1'}))['id'], '1');
       expect((await service.remove('1'))['id'], '1');
     });
+  });
+
+  test('a read overlapping a write does not store the old version', () async {
+    var slow = SlowService();
+    await slow.create({'id': '1', 'text': 'v1'});
+    var shared = MapService(autoIdAndDateFields: false);
+    var service = CacheService<String?, Map<String, dynamic>>(
+      database: slow,
+      cache: shared,
+      ignoreParams: true,
+    );
+
+    var release = slow.hold = Completer<void>();
+    var read = service.read('1');
+    await service.modify('1', {'text': 'v2'});
+    release.complete();
+    expect((await read)['text'], 'v1');
+
+    // The shared cache keeps the version of the write.
+    expect((await shared.read('1'))['text'], 'v2');
+    expect((await service.read('1'))['text'], 'v2');
+  });
+
+  test('index returns a list the caller may change', () async {
+    var service = cached();
+    (await service.index()).clear();
+    expect(await service.index(), hasLength(2));
+  });
+
+  test('a read during a write does not store the old version', () async {
+    var slow = SlowService();
+    await slow.create({'id': '1', 'text': 'v1'});
+    var shared = MapService(autoIdAndDateFields: false);
+    var service = CacheService<String?, Map<String, dynamic>>(
+      database: slow,
+      cache: shared,
+      ignoreParams: true,
+    );
+
+    // The write starts, then a read gets v1 from the database, which the
+    // write has not changed yet; the read is held until the write is done.
+    var releaseWrite = slow.holdWrite = Completer<void>();
+    var write = service.modify('1', {'text': 'v2'});
+    var releaseRead = slow.hold = Completer<void>();
+    var read = service.read('1');
+    releaseWrite.complete();
+    await write;
+    releaseRead.complete();
+    expect((await read)['text'], 'v1');
+
+    expect((await shared.read('1'))['text'], 'v2');
+    expect((await service.read('1'))['text'], 'v2');
+  });
+
+  test('an index overlapping a write is not stored', () async {
+    var slow = SlowService();
+    await slow.create({'id': '1', 'text': 'v1'});
+    var service = CacheService<String?, Map<String, dynamic>>(
+      database: slow,
+      cache: MapService(autoIdAndDateFields: false),
+      ignoreParams: true,
+    );
+
+    var release = slow.holdIndex = Completer<void>();
+    var index = service.index();
+    await service.create({'id': '2', 'text': 'new'});
+    release.complete();
+    expect(await index, hasLength(1));
+
+    expect(await service.index(), hasLength(2));
   });
 }

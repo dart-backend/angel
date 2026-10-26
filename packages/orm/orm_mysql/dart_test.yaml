@@ -1,0 +1,3 @@
+# The test files create and drop the same tables in the same database, so
+# they are run one at a time.
+concurrency: 1

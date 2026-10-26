@@ -17,10 +17,13 @@ class Column {
   /// The [length] of a column that does not give one.
   static const int defaultLength = 255;
 
-  /// The [precision] of a column that does not give one.
+  /// The [precision] of a column that does not give one, on databases such as
+  /// MySQL and MariaDB that have no `NUMERIC` without one.
   static const int defaultPrecision = 17;
 
-  /// The [scale] of a column that does not give one.
+  /// The [scale] of a column that gives a precision but no scale, or the
+  /// precision if smaller, and of a column that gives neither on databases
+  /// such as MySQL and MariaDB that have no `NUMERIC` without them.
   static const int defaultScale = 3;
 
   /// If `true`, a SQL field will be nullable.
@@ -32,11 +35,18 @@ class Column {
   /// Specifies the length of a `VARCHAR`.
   final int length;
 
-  /// Specifies the precision of a `NUMERIC` or `DECIMAL`.
-  final int precision;
+  /// Specifies the precision of a `NUMERIC` or `DECIMAL`, or `null` for none,
+  /// which PostgreSQL takes for an unbounded `NUMERIC`, and MySQL and MariaDB
+  /// for [defaultPrecision].
+  final int? precision;
 
-  /// Specifies the scale of a `NUMERIC` or `DECIMAL`.
-  final int scale;
+  /// Specifies the scale of a `NUMERIC` or `DECIMAL`, or `null` for none.
+  /// With a [precision], none is [defaultScale], or the precision if smaller,
+  /// not the 0 of SQL's `NUMERIC(precision)`, which would round values to
+  /// whole numbers; give 0 for that. Without a precision, none is
+  /// [defaultScale] where [defaultPrecision] is used, and a scale has the
+  /// precision [defaultPrecision].
+  final int? scale;
 
   /// Specifies the timezone for temporal field.
   final String? timezone;
@@ -50,14 +60,16 @@ class Column {
   /// A custom SQL expression to execute, instead of a named column.
   final String? expression;
 
-  /// Specifies the default values.
+  /// Specifies the default value: a [String] is a string literal, which the
+  /// migration runner quotes and escapes, and [RawSql] is SQL, such as
+  /// `RawSql('CURRENT_TIMESTAMP')`.
   final dynamic defaultValue;
 
   const Column({
     this.isNullable = true,
     this.length = defaultLength,
-    this.precision = defaultPrecision,
-    this.scale = defaultScale,
+    this.precision,
+    this.scale,
     this.name,
     this.timezone,
     this.type = ColumnType.varChar,

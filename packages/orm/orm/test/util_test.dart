@@ -37,6 +37,18 @@ void main() {
       expect(positional('@a @@version @b', {'b': 1}), '@a @@version ? [1]');
     });
 
+    test('leaves a @ in quotes as it is', () {
+      expect(
+        positional(
+          "email = 'x@name.com' AND `@name` = @name AND n = \"@name\" "
+          "AND s = 'it''s @name' AND v = @@session.time_zone",
+          {'name': 1, 'session': 2},
+        ),
+        "email = 'x@name.com' AND `@name` = ? AND n = \"@name\" "
+        "AND s = 'it''s @name' AND v = @@session.time_zone [1]",
+      );
+    });
+
     test('passes the name to replace', () {
       var sql = replacePlaceholders('@a, @b', {
         'a': 1,

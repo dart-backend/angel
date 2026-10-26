@@ -2,23 +2,22 @@
 
 ## 10.0.0
 
-* fix!: `modify` of a missing id is now a 404. It used to create a document instead, which over REST could overwrite another one
-* fix!: `remove` of a missing id is now a 404, instead of a 200 with `{"id": null}`. `remove('null')` removes the documents matching the query
-* feat: `create` now sets `createdAt` and `updatedAt`, and `update` keeps `createdAt`
-* feat: Clients can sort and limit with `$sort` and `$limit` in the query string, e.g. `?$sort=-createdAt,to&$limit=10`. They were used as filters, so the query matched nothing
-* fix: `create` now always inserts a new document. With any params, as every REST request has, it upserted on a query matching every document, so each `POST` after the first replaced an existing document
-* fix: `create` no longer stores a client-set `_id`, `id`, `createdAt` or `updatedAt`
-* fix: `readMany` now returns only the given ids, instead of every document
-* fix: `allowQuery: false` now ignores queries from clients; it was never applied
-* fix: A malformed id in `update` or `remove` is now a 400, instead of a 500
-* fix: Request-context keys are now removed from query maps nested more than one level deep
-* fix: `modify` no longer stores an `id` field in the document, and removes one stored by older versions
-* fix: The query-string keys the framework reserves (`page`, `token`) are no longer used as filters
-* docs: `MongoService` does not need reflection: the example and tests now create the app without a reflector, so they no longer use `MirrorsReflector` (which moved from `package:angel3_container/mirrors.dart` to the `angel3_container_mirrors` package)
-* docs: The example now starts a server, and the README example compiles
-* test: The tests use the server in `MONGO_HOST` (default `localhost`)
-* chore: Released with the other Angel3 packages at 10.0.0
-* chore: Removed the unused `angel3_container` dependency, and moved `belatuk_json_serializer`, used only by the tests, to `dev_dependencies`
+### Breaking changes in 10.0.0
+
+* **Breaking:** `modify` and `remove` of a missing id are a 404, instead of creating a document, or answering `{"id": null}`
+
+### New in 10.0.0
+
+* `create` sets `createdAt` and `updatedAt`, and `update` keeps `createdAt`
+* Clients can sort and limit with `$sort` and `$limit` (e.g. `?$sort=-createdAt&$limit=10`)
+
+### Fixes in 10.0.0
+
+* **`create`:** Always inserts a new document (each `POST` after the first replaced one), and ignores client-set `_id`, `id`, `createdAt` and `updatedAt`
+* **Queries:** `readMany` returns only the given ids, `allowQuery: false` is applied, the framework's `page` and `token` keys are not filters, and request-context keys are removed from nested queries
+* **Ids:** A malformed id in `update` or `remove` is a 400; `modify` no longer stores an `id` field
+* **Docs:** The example starts a server and needs no reflector, and the README example compiles
+* **Dependencies:** Removed the unused `angel3_container`, and the dev dependency `belatuk_json_serializer`: the tests use `dart:convert`, so they no longer need `dart:mirrors`
 
 ## 9.1.0
 

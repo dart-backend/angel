@@ -50,8 +50,20 @@ typedef StaticConstructor = Object? Function(
 );
 
 /// Reads a public member of an instance by name, through generated code
-/// instead of reflection; e.g. a method, as a tear-off.
+/// instead of reflection: a field or getter, as its value, or a method, as a
+/// tear-off; or returns [noStaticMember] if the instance has none of [name].
 typedef StaticMemberReader = Object? Function(Object instance, String name);
+
+/// Returned by a [StaticMemberReader] for a name that is no member of the
+/// instance, as a member may itself be `null`.
+const Object noStaticMember = _NoStaticMember();
+
+class _NoStaticMember {
+  const _NoStaticMember();
+
+  @override
+  String toString() => 'noStaticMember';
+}
 
 /// A [ReflectedClass] whose default constructor is called, and whose methods
 /// are read, through generated code instead of reflection.
@@ -60,9 +72,12 @@ class StaticReflectedClass extends ReflectedClass {
   /// can be called (e.g. it is abstract).
   final StaticConstructor? create;
 
-  /// Reads a member of an instance of this class by name, or `null` when
-  /// none can be read.
+  /// Reads a member of an instance of this class by name, or returns
+  /// [noStaticMember] if it has none of that name.
   final StaticMemberReader? getMember;
+
+  @override
+  final List<Type> supertypes;
 
   /// [annotations] are the class's, as values; [methods] its public instance
   /// methods, as [declarations].
@@ -72,6 +87,7 @@ class StaticReflectedClass extends ReflectedClass {
     List<ReflectedParameter>? parameters,
     this.create,
     this.getMember,
+    this.supertypes = const [],
     List<Object> annotations = const [],
     List<StaticReflectedFunction> methods = const [],
   }) : super(
@@ -165,6 +181,8 @@ class StaticReflectedInstance extends ReflectedInstance {
   );
 
   /// Reads a member through the [StaticReflectedClass.getMember] of [clazz].
+  ///
+  /// Throws a [ReflectionException] if it has none of [name].
   @override
   ReflectedInstance getField(String name) {
     var clazz = this.clazz;
@@ -175,6 +193,10 @@ class StaticReflectedInstance extends ReflectedInstance {
         'Members of ${clazz.name} cannot be read without reflection.',
       );
     }
-    return StaticReflectedInstance.of(getMember(reflectee, name));
+    var value = getMember(reflectee, name);
+    if (identical(value, noStaticMember)) {
+      throw ReflectionException('${clazz.name} has no member named "$name".');
+    }
+    return StaticReflectedInstance.of(value);
   }
 }

@@ -2,20 +2,25 @@
 
 ## 10.0.0
 
-* Released with the other Angel3 packages at 10.0.0
-* Added `Column.defaultLength`, `Column.defaultPrecision` and `Column.defaultScale`, the defaults of `Column`, for the code that needs them (e.g. `Table.numeric` of `angel3_migration`)
-* Added `replacePlaceholders`, which replaces the `@name` placeholders of a query with those of a driver (e.g. positional `?`). Names are matched whole (`@name` is not part of `@name1`) and may contain letters of any script; a placeholder with no value is left as it is
-* fix: **Security** `StringSqlExpressionBuilder.like` now passes its pattern to the executor as a parameter (`LIKE @name`). It used to write the pattern into the SQL inside quotes, so a pattern built from user input allowed SQL injection. `sanitize` is now applied to the pattern before it is passed (e.g. `like(input, sanitize: (s) => '%$s%')`); it used to be given the parameter name, and its result matched that name literally
-* fix: `Query.reserveName` no longer returns the same name twice. The second reservation of a name returned it unchanged, so two values for one column shared a parameter and one overwrote the other: e.g. an `update()` with `where.name.equals('a')` and `values.name = 'b'` changed the rows where `name` was `'b'`. It also no longer returns a numbered name (`name1`) that was already reserved. The values of a query compiled more than once (e.g. one query inserted twice) reuse their parameter for each column, so a new value replaces the old one instead of leaving it unused (which PostgreSQL rejects as a superfluous variable)
-* fix: `mapToDouble` and `mapToInt` convert numbers of the other type (e.g. an `int` read for a `double` column), `BigInt`s and values whose `toString` is a number, instead of returning `0`. A value that cannot be converted (e.g. `2.5` for an `int`) now throws a `FormatException` instead of silently becoming `0`; `null` and non-numeric strings still give `0`
-* fix: A `double` in a comparison is written as a plain number; it was written as `CAST ("3.5" as decimal)`, which names a column `3.5`. A non-finite `double` now throws an `ArgumentError`
-* fix: `DateTimeSqlExpressionBuilder.isIn` and `isNotIn` quote the dates, which were written unquoted (a syntax error)
-* fix: Several conditions on one JSON column (e.g. `map['a'].isNotNull` and `map['b'].isNotNull`) are joined with `AND`, instead of written one after another; each names its column, with the table name when there are joins, and `isNull`/`isNotNull` on the column itself name it too
-* fix: `notWhere` conditions are joined with `AND NOT`, and a query with only `andWhere` or `orWhere` conditions no longer starts its `WHERE` with `AND` or `OR`. Nested conditions are qualified with the table name when there are joins
-* fix: `update()` returns the rows it updated, even when the new values no longer match its conditions (e.g. `where.status.equals('new')` with `values.status = 'done'` returned no rows). On PostgreSQL the rows come from `RETURNING` without being filtered again; on MySQL, for a table with an `id`, the matching ids are found first, and exactly those rows are updated and returned (MySQL used to run the follow-up `SELECT` without its parameters, so conditions on strings returned nothing)
-* fix: `update()` with `limit()` works on PostgreSQL, which has no `UPDATE ... LIMIT`: the rows are picked with `WHERE ctid IN (SELECT ctid ... LIMIT n)`. `offset()` applies to updates as well
-* fix: Conditions on parts of a date (`year`, `month`, `day`, `hour`, `minute`, `second`) use the standard `EXTRACT(... FROM column)`, which PostgreSQL supports as well as MySQL/MariaDB; they used MySQL's `YEAR(column)` and so on. With joins, every part is qualified with the table name (it was written as `table.YEAR(column)`)
-* fix: `getOne` fetches one row (`LIMIT 1`) instead of every matching row, when the query has no joins (a record with e.g. a has-many relation spans several rows, which a limit would cut) and no limit of its own; the query's limit is left as it was
+### Breaking changes in 10.0.0
+
+* **Breaking:** On MySQL and MariaDB, an insert's `returningQuery` selects the inserted row by the id given, or by `@angel3_insert_id` (`insertIdParameter`), which the executor binds to the driver's insert id, instead of the last row by id, which may be another connection's
+* **Breaking:** `Column.precision` and `Column.scale` are `int?`, and `null` unless given (were 17 and 3). A `numeric` or `decimal` without them is unbounded on PostgreSQL
+
+### New in 10.0.0
+
+* `replacePlaceholders`, which swaps `@name` placeholders for a driver's (e.g. `?`)
+* `QueryValues.parameterNameOf`, and `Column.defaultLength`, `defaultPrecision` and `defaultScale`
+
+### Fixes in 10.0.0
+
+* **Security:** `StringSqlExpressionBuilder.like` passes its pattern as a parameter, where a pattern from user input allowed SQL injection; `sanitize` is applied to the pattern
+* **Parameters:** `Query.reserveName` never returns the same name twice, so two values of one column no longer overwrite each other (an `update` with a condition and a new value on one column changed the wrong rows). `replacePlaceholders` leaves `@` in string literals, quoted identifiers and `@@variables`
+* **MySQL and MariaDB:** An insert into a table without an id returns the values it inserted; `update` and `delete` select their rows first, in a transaction, and return them. `QueryValues.compileInsertSelect` is deprecated
+* **`update()`:** Returns the rows it updated even when their new values no longer match its conditions, and supports `limit()` and `offset()` on PostgreSQL
+* **Conditions:** `notWhere` is joined with `AND NOT`, a `WHERE` no longer starts with `AND`/`OR`, and nested and JSON conditions are joined and qualified correctly. Date parts use `EXTRACT`; `DateTime` `isIn`/`isNotIn` quote the dates; a `double` is written as a plain number
+* **Values:** `mapToDouble` and `mapToInt` convert numbers of the other type, `BigInt`s and numeric strings, and throw `FormatException` for a value that cannot be converted
+* **`getOne`:** Fetches one row (`LIMIT 1`) when the query has no joins and no limit of its own
 
 ## 9.1.1
 

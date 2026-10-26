@@ -316,11 +316,11 @@ class AlphabetQueryValues extends MapQueryValues {
 
   set value(String? value) => values['value'] = value;
 
-  int get numbersId {
-    return (values['numbers_id'] as int);
+  int? get numbersId {
+    return (values['numbers_id'] as int?);
   }
 
-  set numbersId(int value) => values['numbers_id'] = value;
+  set numbersId(int? value) => values['numbers_id'] = value;
 
   void copyFrom(Alphabet model) {
     createdAt = model.createdAt;

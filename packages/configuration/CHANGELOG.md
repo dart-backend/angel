@@ -2,7 +2,12 @@
 
 ## 10.0.0
 
-* Released with the other Angel3 packages at 10.0.0
+### Fixes in 10.0.0
+
+* **Null values:** A key without a value (`key:` or `key: ~`), and a `null` in a list or map, are loaded as `null`, where loading failed with a `TypeError`
+* **Includes:** A file that includes itself, directly or through other files, is not loaded again, with a warning, where loading never ended
+* **`.env`:** Read from the `FileSystem` given, where it was read from the disk, so it was ignored on other file systems (e.g. `MemoryFileSystem`)
+* **Docs:** `loadStandaloneConfiguration` documents that an undefined `$VARIABLE` throws without `onWarning`, and the README installs version 10.0.0
 
 ## 9.1.0
 

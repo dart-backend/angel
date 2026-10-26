@@ -460,7 +460,8 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
     _log.fine("Delete Query = $sql");
     _log.fine("Substritution Values = $substitutionValues");
 
-    if (_joins.isEmpty) {
+    // MySQL has no RETURNING: the rows are selected first, in a transaction.
+    if (_joins.isEmpty && executor.dialect is PostgreSQLDialect) {
       return executor
           .query(
             tableName,
@@ -488,6 +489,29 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
     );
   }
 
+  /// Inserts into a table without an id on MySQL or MariaDB with [sql], and
+  /// returns the row of the values inserted, as MySQL returns no row, and one
+  /// of no key cannot be selected again by its values: a `DATETIME` drops
+  /// the fraction of a second of one, and a `NULL` equals none. A column not
+  /// given is null, not the default of the database.
+  Future<Optional<T>> _insertWithoutId(
+    QueryExecutor executor,
+    String sql,
+  ) async {
+    _log.fine("Insert Query = $sql");
+    await executor.query(tableName, sql, substitutionValues);
+    return deserialize([for (var field in fields) _boundValue(field)]);
+  }
+
+  /// The value bound to [column] by the values of the query, as an insert or
+  /// an update binds it, or `null` if none is.
+  Object? _boundValue(String column, [Object? otherwise]) {
+    var name = values?.parameterNameOf(this, column);
+    return name != null && substitutionValues.containsKey(name)
+        ? substitutionValues[name]
+        : otherwise;
+  }
+
   Future<Optional<T>> insert(QueryExecutor executor) {
     var insertion = values?.compileInsert(this, tableName);
 
@@ -506,16 +530,18 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
         if (fields.contains("id")) {
           var selectSQL = compile({});
 
-          var hasPrimaryField = values?.hasField('id') ?? false;
-          if (hasPrimaryField) {
-            returningSql = '$selectSQL where $tableName.id=?';
-          } else {
-            returningSql = '$selectSQL order by $tableName.id desc limit 1';
-          }
+          // The row of the id given, by its parameter, as the database
+          // gives no insert id of a key it does not generate, such as a
+          // UUID; or else of the id the database gave it, of the placeholder
+          // [insertIdParameter] that the executor binds to its insert id, not
+          // the last row by id, which may be of another connection's insert.
+          var idName = values?.toMap()['id'] == null
+              ? null
+              : values?.parameterNameOf(this, 'id');
+          returningSql =
+              '$selectSQL where $tableName.id=@${idName ?? insertIdParameter}';
         } else {
-          var returningSelect = values?.compileInsertSelect(this, tableName);
-          var selectSQL = compile({});
-          returningSql = '$selectSQL where $returningSelect';
+          return _insertWithoutId(executor, sql);
         }
       } else {
         throw ArgumentError("Unsupported database dialect.");
@@ -579,18 +605,23 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
     }
 
     if (!fields.contains('id')) {
-      // Without a primary key, the updated rows are selected again by the
-      // conditions, which their new values may no longer match.
+      // Without a primary key, the rows that match are selected first, in a
+      // transaction, and returned with the values they are updated to, as
+      // their new values may no longer match the conditions.
+      var select = compile({});
       var sql = 'UPDATE $tableName $valuesClause$conditions$limits';
       _log.fine("Update Query = $sql");
-      return deserializeList(
-        await executor.query(
-          tableName,
-          sql,
-          substitutionValues,
-          returningQuery: compile({}),
-        ),
-      );
+      return executor.transaction((tx) async {
+        var rows = await tx.query(tableName, select, substitutionValues);
+        await tx.query(tableName, sql, substitutionValues);
+        return deserializeList([
+          for (var row in rows)
+            [
+              for (var (i, field) in fields.indexed)
+                _boundValue(field, i < row.length ? row[i] : null),
+            ],
+        ]);
+      });
     }
 
     // MySQL has no RETURNING: find the rows first, then update and select

@@ -2,12 +2,19 @@
 
 ## 10.0.0
 
-* **Breaking:** Rewritten as a `build_runner` builder that generates reflection data, used through `StaticReflector`, for classes and top-level functions marked `@injectable`: how to construct each class (for `Container.make`), its annotations, and its public instance methods with their parameters and annotations, and each function's parameters and annotations. With it, `@Expose` controllers, `@Hooks`/`@Middleware` annotations and `ioc` on `@injectable` functions work without `dart:mirrors`. It no longer depends on `reflectable`, so it resolves with the rest of the Angel3 packages, and the generated code calls constructors without `dart:mirrors` (directly, or with `Function.apply` and symbol literals so that left-out optional parameters keep their defaults), which works in AOT-compiled apps, obfuscated or not
+### Breaking changes in 10.0.0
+
+* **Breaking:** Rewritten as a `build_runner` builder of reflection data for `@injectable` classes and top-level functions, used through `StaticReflector`, so that `Container.make`, `@Expose` controllers, `@Hooks`/`@Middleware` and `ioc` work without `dart:mirrors`, also in AOT and obfuscated apps. It no longer depends on `reflectable`
 * **Breaking:** Removed `GeneratedReflector`, `ContainedReflectable` and `contained`. To migrate:
   * Replace `@contained` with `@injectable` (from `package:angel3_container`), and add `part '<file>.g.dart';` to each library with such classes
   * Replace `reflectable_builder` with `angel3_container_generator` and `build_runner` in `dev_dependencies`, and run `dart run build_runner build`
   * Replace `GeneratedReflector()` with `StaticReflector.combine([...])`, passing each library's generated variable (e.g. `servicesReflection` for `services.dart`)
-* Closures cannot be described: `ioc` on a closure needs an explicit `injection:`, as it did with `GeneratedReflector`
+* **Breaking:** Closures cannot be described: `ioc` on a closure needs an explicit `injection:`
+
+### New in 10.0.0
+
+* The data of a class lists its `supertypes` (e.g. so a `WebSocketController` finds inherited `@ExposeWs` methods)
+* `getMember` reads public fields, getters and methods, declared or inherited, and returns `noStaticMember` for other names. Regenerate the data with `dart run build_runner build`
 
 ## 9.1.0
 

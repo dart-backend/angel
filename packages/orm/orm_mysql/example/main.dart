@@ -1,11 +1,11 @@
 import 'dart:io';
 
 import 'package:angel3_migration/angel3_migration.dart';
+import 'package:angel3_migration_runner/mysql.dart';
 import 'package:angel3_orm/angel3_orm.dart';
 import 'package:angel3_orm_mysql/angel3_orm_mysql.dart';
 import 'package:angel3_serialize/angel3_serialize.dart';
-import 'package:mysql_client/mysql_client.dart';
-import 'package:mysql1/mysql1.dart';
+import 'package:mysql_dart/mysql_dart.dart';
 import 'package:logging/logging.dart';
 import 'package:optional/optional.dart';
 part 'main.g.dart';
@@ -13,29 +13,31 @@ part 'main.g.dart';
 void main() async {
   //hierarchicalLoggingEnabled = true;
 
-  //await mariaDBExample();
+  //await mariaDbExample();
   await mysqlExample();
 
   exit(0);
 }
 
-Future<void> mariaDBExample() async {
+Future<void> mariaDbExample() async {
   Logger.root
     ..level = Level.ALL
     ..onRecord.listen(print);
 
-  var settings = ConnectionSettings(
-    host: 'localhost',
+  var connection = await MySQLConnection.createConnection(
+    host: "localhost",
     port: 3306,
-    db: 'orm_test',
-    user: 'test',
-    password: 'test123',
+    databaseName: "orm_test",
+    userName: "test",
+    password: "test123",
+    secure: true,
   );
-  var connection = await MySqlConnection.connect(settings);
+  await connection.connect(timeoutMs: 10000);
 
   print("Connected to MariaDb");
-  var logger = Logger('orm_mysql');
+  var logger = Logger('orm_mariadb');
   var executor = MariaDbExecutor(connection, logger: logger);
+  await MySqlMigrationRunner(connection, migrations: [TodoMigration()]).up();
 
   var query = TodoQuery();
   query.values
@@ -70,6 +72,7 @@ Future<void> mysqlExample() async {
   var logger = Logger('orm_mysql');
   await connection.connect(timeoutMs: 10000);
   var executor = MySqlExecutor(connection, logger: logger);
+  await MySqlMigrationRunner(connection, migrations: [TodoMigration()]).up();
 
   var query = TodoQuery();
   query.values

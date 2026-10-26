@@ -46,6 +46,18 @@ void main() {
         var body = await req.parseBody().then((_) => req.bodyAsMap);
         return {'bar': body['foo']};
       })
+      ..get('/gzip-buffered', (req, res) {
+        res
+          ..useBuffer()
+          ..headers['content-encoding'] = 'gzip'
+          ..add(gzip.encode('Poop'.codeUnits));
+      })
+      ..get('/gzip-list', (req, res) {
+        res
+          ..useBuffer()
+          ..headers['content-encoding'] = 'GZIP, identity'
+          ..add(gzip.encode('Poop'.codeUnits));
+      })
       ..get('/gzip', (req, res) async {
         res
           ..headers['content-encoding'] = 'gzip'
@@ -182,7 +194,62 @@ void main() {
       expect(res, hasBody('Poop'));
     });
 
+    test('contentLength is null when the body is decompressed', () async {
+      var res = await client.send(
+        http.Request('GET', Uri.parse('/gzip-buffered')),
+      );
+      expect(utf8.decode(await res.stream.toBytes()), 'Poop');
+      expect(res.contentLength, isNull);
+      expect(res.headers, isNot(contains('content-length')));
+    });
+
+    test('gzip is found in a list of encodings, in any case', () async {
+      var res = await client.get(Uri.parse('/gzip-list'));
+      expect(res.body, 'Poop');
+    });
+
+    test('mismatches describe the response', () async {
+      String mismatch(Matcher matcher, Object item) {
+        var state = {};
+        expect(matcher.matches(item, state), isFalse);
+        return matcher
+            .describeMismatch(item, StringDescription(), state, false)
+            .toString();
+      }
+
+      var text = await client.get(Uri.parse('/body'));
+      expect(mismatch(isJson('OK'), text), contains('not JSON: OK'));
+
+      var error = await client.get(Uri.parse('/error'));
+      expect(
+        mismatch(isAngelHttpException(statusCode: 404), error),
+        allOf(contains('403'), contains('Test'), contains('foo')),
+      );
+
+      var valid = await client.get(Uri.parse('/valid'));
+      var matcher = hasValidBody(Validator({'michael*': isInt}));
+      expect(mismatch(matcher, valid), contains('michael'));
+      expect(mismatch(matcher, text), contains('not JSON'));
+    });
+
+    test('JSON matchers do not match a body that is not JSON', () async {
+      var res = await client.get(Uri.parse('/body'));
+      expect(res.body, 'OK');
+      expect(res, isNot(isJson('OK')));
+      expect(res, isNot(isAngelHttpException()));
+      expect(res, isNot(hasValidBody(Validator({'foo': isString}))));
+    });
+
     group('service', () {
+      test('can be typed after an untyped one on the same path', () async {
+        client.service('foo');
+        var foo = client.service<String, String>(
+          'foo',
+          deserializer: (x) => (x as Map)['michael'] as String,
+        );
+        expect(await foo.index(), ['jackson']);
+      });
+
       test('index', () async {
         var foo = client.service('foo');
         var result = await foo.index();

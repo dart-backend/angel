@@ -2,17 +2,27 @@
 
 ## 10.0.0
 
-* fix!: `read`, `modify`, `update` and `remove` of one record now ignore the `query` parameter. A query map failed with an error, and a query or callback replaced the record's selection, so the operation reached every record it matched
-* fix!: `modify` and `update` now act on the id in the path. An `id` in the body was looked up instead, which created a new record when it was missing. `modify` of a missing id is a 404, and `update` of one creates it with that id
-* feat: A service over a query that is not a table (e.g. a `filter`) can now read, modify, update and remove by id
-* fix: `index` no longer always fails with a `TypeError`
-* fix: Changefeed updates and removals no longer fire `afterCreated`; they now fire `afterUpdated` and `afterRemoved`. Changefeed events are now `HookedServiceEvent<String, Map<String, dynamic>, RethinkService>`, so they also work on a typed `HookedService`. A failing changefeed, or an error in a listener, is now logged instead of being an uncaught error, and `close` cancels the changefeed
-* fix: `remove(null)` no longer removes every record when `allowRemoveAll` is `false` and the call comes from a client; it now removes only the records matching the query
-* fix: `create` of data with an `id` now returns the created record instead of RethinkDB's write result. A write RethinkDB rejects is a 409 for a duplicate id, and a 400 otherwise
-* fix: Inserts generating several keys now return the records, instead of a lazy list of reads that were never awaited
-* test: The tests use the server in `RETHINKDB_HOST` (default `localhost`), and `test/bootstrap.dart` creates `testDB` as well as the `todos` table, waiting for both
-* chore: Released with the other Angel3 packages at 10.0.0
-* chore: Removed the unused `angel3_container` dependency; the tests no longer use `MirrorsReflector`
+### Breaking changes in 10.0.0
+
+* **Breaking:** `read`, `modify`, `update` and `remove` of one record ignore `query`, which could make them reach every record it matched
+* **Breaking:** `modify` and `update` act on the id in the path, not an `id` in the body: `modify` of a missing id is a 404, and `update` creates it
+* **Breaking:** Requires `belatuk_rethinkdb` 2.0.0, where it allowed 1.x. A query on a closed connection throws an `RqlDriverError`, and when the server or the network closes the connection, the queries waiting for a reply fail; see its changelog
+
+### New in 10.0.0
+
+* A service over a query that is not a table (e.g. a `filter`) can read, modify, update and remove by id
+* `changefeedStarted` completes when the changefeed listens for changes, so that a change made afterwards fires its event
+
+### Fixes in 10.0.0
+
+* **`index`:** No longer always fails with a `TypeError`
+* **Changefeed:** Updates and removals fire `afterUpdated` and `afterRemoved`, not `afterCreated`, and work on a typed `HookedService`; errors are logged, and `close` stops the feed on the server, also one that is still starting
+* **Changefeed over a single record or a limited query:** A service over, e.g., `get(id)` or `orderBy(...).limit(n)` fires the events of its changefeed, where it failed with a `TypeError` and fired none
+* **`remove(null)`:** Removes only the records matching the query when `allowRemoveAll` is `false`
+* **`create`:** Returns the created record, also when its id is generated; a duplicate id is a 409, and another rejected write a 400
+* **`query` and `reql` callbacks:** Any function is applied, such as `(q) => q.filter(...)`, where only one typed as a `QueryCallback` was, and any other was ignored: `index` returned every record, and a server-side `remove(null)` removed them all. A callback that does not return a query is an `ArgumentError`
+* **Writes on a service over a query that is not a table:** `modify` and `update` return the record also when the write moves it out of the query, where they wrote it and then failed with a 404
+* **Dependencies:** Removed the unused `angel3_container`, and `belatuk_json_serializer`, which needed `dart:mirrors` and was only reached for data that is not a `Map`, which the service does not accept; the tests no longer use `MirrorsReflector`
 
 ## 9.1.0
 

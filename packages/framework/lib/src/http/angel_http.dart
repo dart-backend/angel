@@ -13,6 +13,8 @@ import 'dart:io'
 import 'package:angel3_framework/angel3_framework.dart';
 
 import '../core/core.dart';
+import 'connections.dart';
+import 'headers.dart';
 import 'http_request_context.dart';
 import 'http_response_context.dart';
 
@@ -116,22 +118,36 @@ class AngelHttp
     return await super.close();
   }
 
-  /// Remove headers from HTTP Response
-  void removeResponseHeader(Map<String, Object> headers) {
-    headers.forEach((key, value) {
-      server?.defaultResponseHeaders.remove(key, value);
-    });
+  /// Removes the given default headers of the server's responses, as
+  /// [HttpHeadersValues.removeValues] does: a list removes each of its
+  /// values, a value matches exactly, or ignoring case if nothing matches
+  /// exactly, and a `null` value removes the header, whatever its values.
+  void removeResponseHeader(Map<String, Object?> headers) {
+    headers.keys.forEach(checkHeaderName);
+    server?.defaultResponseHeaders.removeValues(headers);
   }
 
-  /// Add headers to HTTP Response
-  void addResponseHeader(Map<String, Object> headers) {
-    headers.forEach((key, value) {
-      server?.defaultResponseHeaders.add(key, value);
-    });
+  /// Adds default headers to the server's responses, as
+  /// [HttpHeadersValues.addValues] does: each value of a list, skipping a
+  /// `null`. A header that a handler sets replaces one of the same name.
+  ///
+  /// A header that cannot be sent throws an [ArgumentError], and none of
+  /// [headers] is added.
+  void addResponseHeader(Map<String, Object?> headers) {
+    checkHeaders(headers);
+    server?.defaultResponseHeaders.addValues(headers);
   }
 
   @override
   Future<void> closeServer(HttpServer server) => server.close(force: true);
+
+  /// Waits until `dart:io` has closed every connection, as it does once its
+  /// response is sent.
+  @override
+  Future<void> connectionsClosed() async {
+    var server = this.server;
+    if (server != null) await allConnectionsClosed(server);
+  }
 
   @override
   Future closeResponse(HttpResponse response) => response.close();

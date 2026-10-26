@@ -2,13 +2,22 @@
 
 ## 10.0.0
 
-* **Breaking:** Generated `hashCode` getters use `Object.hashAll` instead of `hashObjects`, which `angel3_serialize` 10 no longer exports; regenerate existing models
-* fix: Generated `hashCode` getters hash `List` and `Map` fields by their contents (e.g. `ListEquality<Fruit>(DefaultEquality<Fruit>()).hash(fruits)`), as `==` compares them. Equal models with different list instances had different hash codes, which broke `Set` and `Map` lookups
-* Reads `Serializable.serializers` as the `Serializers` enum of `angel3_serialize`
-* A value in `includeAnnotations` that is not a constant instance of a class (e.g. a string) now fails the build with an error, instead of producing an invalid annotation on the generated class
-* fix: `ShimFieldImpl` creates its own member reference when it is not given one. `angel3_orm_generator` passes a `RootReference`, which `analyzer` 14.5 rejects (`type 'RootReference' is not a subtype of type 'MemberReference'`), so building any ORM model with `@BelongsTo` failed
-* deprecated: `ShimFieldImpl`, which subclasses `analyzer` internals; `angel3_orm_generator` no longer uses it
-* fix: A model whose generated name itself ends in `entity` (e.g. `UserIdentityEntity`, generated as `UserIdentity`) no longer has that suffix removed a second time in `modelClassNameRecase`, which named its ORM query class `UserIdQuery` while the model was `UserIdentity`
+### Breaking changes in 10.0.0
+
+* **Breaking:** No longer uses `dart:mirrors`: `SerializableFieldMirror.serializer` and `deserializer` are function names as `String`s, where they were `Symbol`s. The generated code is the same
+* **Breaking:** Generated `hashCode` getters use `Object.hashAll` instead of `hashObjects`; regenerate existing models
+* **Breaking:** A generated class is named by removing a `modelPrefix` (`_`, `Entity`), then a `modelSuffix` (`Entity`), matched by case: `UserIdentity` keeps its name, where it became `UserId`. The prefixes and suffixes are capitalised
+* **Breaking:** A value in `includeAnnotations` that is not a constant instance of a class or enum fails the build
+
+### Fixes in 10.0.0
+
+* **Hash codes:** `List` and `Map` fields are hashed by their length, so equal models have equal hash codes
+* **Serializers:** `Serializable.serializers` is read by enum value name, including from other constants; an unknown value is logged. The serializer class is generated only for `map` or `json`, and is a `Codec` only for `map`
+* **Names:** Generated classes and their serializers are named in pascal case everywhere (`UrlSerializer` of `_URL`), models refer to each other by their generated names, and two models of the same generated name fail the build
+* **Types:** Types are written with their import prefixes, nullability and type arguments, and fields of function or record types are generated, where any of these could fail the build or not compile
+* **Annotations:** Enum values and constants are generated as references, and keep their import prefixes
+* **ORM:** `ShimFieldImpl` makes its own member reference, so ORM models with `@BelongsTo` build with `analyzer` 14.5; `ShimFieldImpl` is deprecated
+* **Dependencies:** Removed `quiver`
 
 ## 9.1.0
 
