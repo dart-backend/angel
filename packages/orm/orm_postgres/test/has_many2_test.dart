@@ -61,14 +61,12 @@ void main() {
       var userTodo = (await userTodoQuery.insert(executor)).value;
       print(userTodo);
 
-      /*
       var todoValueQuery = TodoValueQuery();
       todoValueQuery.values
         ..todoId = userTodo.id
         ..value = 'Purchase Laptop';
       await todoValueQuery.insert(executor);
 
-      
       todoValueQuery = TodoValueQuery();
       todoValueQuery.values
         ..todoId = userTodo.id
@@ -80,7 +78,6 @@ void main() {
         ..todoId = userTodo.id
         ..value = 'Purchase Paper';
       await todoValueQuery.insert(executor);
-      */
 
       userTodoQuery = UserTodoQuery();
       userTodoQuery.values
