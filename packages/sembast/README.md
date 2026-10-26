@@ -13,7 +13,7 @@ Add the following to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  angel3_sembast: ^9.0.0
+  angel3_sembast: ^10.0.0
 ```
 
 ## Usage
@@ -32,9 +32,19 @@ You can query these services as follows:
 /path/to/service?foo=bar
 ```
 
-The above will query the database to find records where 'foo' equals 'bar'.
+The above will query the database to find records where 'foo' equals 'bar'. A record must match every field of the query, and `id` matches the key of the record.
 
-The former will sort result in ascending order of creation, and so will the latter.
+Sort with `$sort`: a field name sorts by it in ascending order, and a map of field names to `1` (ascending) or `-1` (descending) sorts by each of them:
+
+```curl
+/path/to/service?$sort=name
+```
+
+```dart
+await service.index({r'$sort': {'name': -1}});
+```
+
+Removing all records (with `allowRemoveAll`, or on the server side) removes only those that match the query, if there is one.
 
 ```dart
 List queried = await MyService.index({r"query": where.id(Finder(filter: Filter(...))));
