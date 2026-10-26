@@ -4,20 +4,23 @@ import 'dart:async';
 
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:file/file.dart';
-import 'package:mustache_template/mustache_template.dart' as viewer;
-import 'package:path/path.dart' as p;
 
 import 'src/cache.dart';
 import 'src/mustache_context.dart';
 
+/// Renders the Mustache views in [viewsDirectory], with the partials in
+/// [partialsPath] within it.
+///
+/// A view name that resolves outside [viewsDirectory] (e.g. `../secret`), also
+/// through a symbolic link, or to no file, throws a 404 [AngelHttpException].
+/// A partial outside the partials directory, or that does not exist, renders
+/// as nothing.
 Future Function(Angel app) mustache(
   Directory viewsDirectory, {
   String fileExtension = '.mustache',
   String partialsPath = './partials',
 }) {
-  var partialsDirectory = viewsDirectory.fileSystem.directory(
-    p.join(p.fromUri(viewsDirectory.uri), partialsPath),
-  );
+  var partialsDirectory = viewsDirectory.childDirectory(partialsPath);
 
   var context = MustacheContext(
     viewsDirectory,
@@ -28,21 +31,7 @@ Future Function(Angel app) mustache(
   var cache = MustacheViewCache(context);
 
   return (Angel app) async {
-    app.viewGenerator = (String name, [Map? data]) async {
-      //var partialsProvider;
-      partialsProvider(String name) {
-        var template = cache.getPartialSync(name, app)!;
-        //return render(template, data ?? {}, partial: partialsProvider);
-        return viewer.Template(template, name: name);
-      }
-
-      var viewTemplate = await (cache.getView(name, app));
-      //return await render(viewTemplate, data ?? {}, partial: partialsProvider);
-      var t = viewer.Template(
-        viewTemplate ?? '',
-        partialResolver: partialsProvider,
-      );
-      return t.renderString(data ?? {});
-    };
+    app.viewGenerator = (String name, [Map? data]) =>
+        cache.render(name, data, app);
   };
 }

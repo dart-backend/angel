@@ -2,7 +2,15 @@
 
 ## 10.0.0
 
-* Released with the other Angel3 packages at 10.0.0
+### Breaking changes in 10.0.0
+
+* **Breaking:** A view name that resolves outside the views directory (`../secret`, an absolute path, a symbolic link out of it), and a missing view, throw a 404 `AngelHttpException` instead of reading the file or throwing `FileSystemException`
+* **Breaking:** A partial that resolves outside the partials directory, or does not exist, renders as nothing, as Mustache specifies, instead of reading the file or throwing `FileSystemException`
+
+### Fixes in 10.0.0
+
+* **Partials:** Read without blocking, and found with the paths of the views directory's own file system
+* **Production:** Views and partials are kept parsed, so they are not parsed again on each render
 
 ## 9.1.0
 
