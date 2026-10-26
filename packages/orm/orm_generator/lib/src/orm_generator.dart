@@ -824,8 +824,21 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                       .accept(DartEmitter(useNullSafetySyntax: true))
                       .toString()
                       .replaceAll('?', '');
+                  // A child comes once per row of the other joins, such as
+                  // another hasMany, so it is added once, by its key.
+                  var foreign = relation.foreign;
+                  var childKey = foreign == null
+                      ? null
+                      : findPrimaryFieldInList(
+                          foreign,
+                          foreign.buildContext.fields.map(ClassOrmField.new),
+                        )?.displayName;
+                  var isNew = childKey == null
+                      ? '!l.$name.contains(c)'
+                      : '!l.$name.any((e) => e.$childKey == c.$childKey)';
                   merge.add('''
-                      $name: $typeLiteral.from(l.$name)..addAll(model.$name)
+                      $name: $typeLiteral.from(l.$name)
+                        ..addAll(model.$name.where((c) => $isNew))
                     ''');
                 }
               });

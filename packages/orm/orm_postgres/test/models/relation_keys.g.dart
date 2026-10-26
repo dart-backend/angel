@@ -361,7 +361,10 @@ class LoginQuery extends Query<Login, LoginQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-              grants: List<GrantEntity>.from(l.grants)..addAll(model.grants),
+              grants: List<GrantEntity>.from(l.grants)
+                ..addAll(
+                  model.grants.where((c) => !l.grants.any((e) => e.id == c.id)),
+                ),
             );
         }
       });
@@ -380,7 +383,10 @@ class LoginQuery extends Query<Login, LoginQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-              grants: List<GrantEntity>.from(l.grants)..addAll(model.grants),
+              grants: List<GrantEntity>.from(l.grants)
+                ..addAll(
+                  model.grants.where((c) => !l.grants.any((e) => e.id == c.id)),
+                ),
             );
         }
       });
@@ -399,7 +405,10 @@ class LoginQuery extends Query<Login, LoginQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-              grants: List<GrantEntity>.from(l.grants)..addAll(model.grants),
+              grants: List<GrantEntity>.from(l.grants)
+                ..addAll(
+                  model.grants.where((c) => !l.grants.any((e) => e.id == c.id)),
+                ),
             );
         }
       });
@@ -755,7 +764,10 @@ class GrantQuery extends Query<Grant, GrantQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-              logins: List<LoginEntity>.from(l.logins)..addAll(model.logins),
+              logins: List<LoginEntity>.from(l.logins)
+                ..addAll(
+                  model.logins.where((c) => !l.logins.any((e) => e.id == c.id)),
+                ),
             );
         }
       });
@@ -774,7 +786,10 @@ class GrantQuery extends Query<Grant, GrantQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-              logins: List<LoginEntity>.from(l.logins)..addAll(model.logins),
+              logins: List<LoginEntity>.from(l.logins)
+                ..addAll(
+                  model.logins.where((c) => !l.logins.any((e) => e.id == c.id)),
+                ),
             );
         }
       });
@@ -793,7 +808,10 @@ class GrantQuery extends Query<Grant, GrantQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-              logins: List<LoginEntity>.from(l.logins)..addAll(model.logins),
+              logins: List<LoginEntity>.from(l.logins)
+                ..addAll(
+                  model.logins.where((c) => !l.logins.any((e) => e.id == c.id)),
+                ),
             );
         }
       });

@@ -154,7 +154,12 @@ class RoleQuery extends Query<Role, RoleQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-              users: List<UserEntity>.from(l.users)..addAll(model.users),
+              users: List<UserEntity>.from(l.users)
+                ..addAll(
+                  model.users.where(
+                    (c) => !l.users.any((e) => e.email == c.email),
+                  ),
+                ),
             );
         }
       });
@@ -173,7 +178,12 @@ class RoleQuery extends Query<Role, RoleQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-              users: List<UserEntity>.from(l.users)..addAll(model.users),
+              users: List<UserEntity>.from(l.users)
+                ..addAll(
+                  model.users.where(
+                    (c) => !l.users.any((e) => e.email == c.email),
+                  ),
+                ),
             );
         }
       });
@@ -192,7 +202,12 @@ class RoleQuery extends Query<Role, RoleQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-              users: List<UserEntity>.from(l.users)..addAll(model.users),
+              users: List<UserEntity>.from(l.users)
+                ..addAll(
+                  model.users.where(
+                    (c) => !l.users.any((e) => e.email == c.email),
+                  ),
+                ),
             );
         }
       });
@@ -470,7 +485,12 @@ class UserQuery extends Query<User, UserQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-              roles: List<RoleEntity>.from(l.roles)..addAll(model.roles),
+              roles: List<RoleEntity>.from(l.roles)
+                ..addAll(
+                  model.roles.where(
+                    (c) => !l.roles.any((e) => e.role == c.role),
+                  ),
+                ),
             );
         }
       });
@@ -489,7 +509,12 @@ class UserQuery extends Query<User, UserQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-              roles: List<RoleEntity>.from(l.roles)..addAll(model.roles),
+              roles: List<RoleEntity>.from(l.roles)
+                ..addAll(
+                  model.roles.where(
+                    (c) => !l.roles.any((e) => e.role == c.role),
+                  ),
+                ),
             );
         }
       });
@@ -508,7 +533,12 @@ class UserQuery extends Query<User, UserQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-              roles: List<RoleEntity>.from(l.roles)..addAll(model.roles),
+              roles: List<RoleEntity>.from(l.roles)
+                ..addAll(
+                  model.roles.where(
+                    (c) => !l.roles.any((e) => e.role == c.role),
+                  ),
+                ),
             );
         }
       });

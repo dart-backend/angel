@@ -147,7 +147,10 @@ class AccountQuery extends Query<Account, AccountQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-              assets: List<AssetEntity>.from(l.assets)..addAll(model.assets),
+              assets: List<AssetEntity>.from(l.assets)
+                ..addAll(
+                  model.assets.where((c) => !l.assets.any((e) => e.id == c.id)),
+                ),
             );
         }
       });
@@ -166,7 +169,10 @@ class AccountQuery extends Query<Account, AccountQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-              assets: List<AssetEntity>.from(l.assets)..addAll(model.assets),
+              assets: List<AssetEntity>.from(l.assets)
+                ..addAll(
+                  model.assets.where((c) => !l.assets.any((e) => e.id == c.id)),
+                ),
             );
         }
       });
@@ -185,7 +191,10 @@ class AccountQuery extends Query<Account, AccountQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-              assets: List<AssetEntity>.from(l.assets)..addAll(model.assets),
+              assets: List<AssetEntity>.from(l.assets)
+                ..addAll(
+                  model.assets.where((c) => !l.assets.any((e) => e.id == c.id)),
+                ),
             );
         }
       });

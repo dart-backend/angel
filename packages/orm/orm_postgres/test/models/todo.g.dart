@@ -210,9 +210,16 @@ class UserQuery extends Query<User, UserQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-              todos: List<UserTodoEntity>.from(l.todos)..addAll(model.todos),
+              todos: List<UserTodoEntity>.from(l.todos)
+                ..addAll(
+                  model.todos.where((c) => !l.todos.any((e) => e.id == c.id)),
+                ),
               address: List<UserAddressEntity>.from(l.address)
-                ..addAll(model.address),
+                ..addAll(
+                  model.address.where(
+                    (c) => !l.address.any((e) => e.id == c.id),
+                  ),
+                ),
             );
         }
       });
@@ -231,9 +238,16 @@ class UserQuery extends Query<User, UserQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-              todos: List<UserTodoEntity>.from(l.todos)..addAll(model.todos),
+              todos: List<UserTodoEntity>.from(l.todos)
+                ..addAll(
+                  model.todos.where((c) => !l.todos.any((e) => e.id == c.id)),
+                ),
               address: List<UserAddressEntity>.from(l.address)
-                ..addAll(model.address),
+                ..addAll(
+                  model.address.where(
+                    (c) => !l.address.any((e) => e.id == c.id),
+                  ),
+                ),
             );
         }
       });
@@ -252,9 +266,16 @@ class UserQuery extends Query<User, UserQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-              todos: List<UserTodoEntity>.from(l.todos)..addAll(model.todos),
+              todos: List<UserTodoEntity>.from(l.todos)
+                ..addAll(
+                  model.todos.where((c) => !l.todos.any((e) => e.id == c.id)),
+                ),
               address: List<UserAddressEntity>.from(l.address)
-                ..addAll(model.address),
+                ..addAll(
+                  model.address.where(
+                    (c) => !l.address.any((e) => e.id == c.id),
+                  ),
+                ),
             );
         }
       });
@@ -425,14 +446,14 @@ class UserTodoQuery extends Query<UserTodo, UserTodoQueryWhere> {
     leftJoin(
       _todoValues = TodoValueQuery(trampoline: trampoline, parent: this),
       'id',
-      'todo_value_id',
+      'todo_id',
       additionalFields: const ['id', 'value', 'todo_id', 'description'],
       trampoline: trampoline,
     );
     leftJoin(
       _todoNotes = TodoNoteQuery(trampoline: trampoline, parent: this),
       'id',
-      'todo_note_id',
+      'todo_id',
       additionalFields: const ['id', 'note', 'todo_id', 'description'],
       trampoline: trampoline,
     );
@@ -534,9 +555,17 @@ class UserTodoQuery extends Query<UserTodo, UserTodoQueryWhere> {
           return out
             ..[idx] = l.copyWith(
               todoValues: List<TodoValueEntity>.from(l.todoValues)
-                ..addAll(model.todoValues),
+                ..addAll(
+                  model.todoValues.where(
+                    (c) => !l.todoValues.any((e) => e.id == c.id),
+                  ),
+                ),
               todoNotes: List<TodoNoteEntity>.from(l.todoNotes)
-                ..addAll(model.todoNotes),
+                ..addAll(
+                  model.todoNotes.where(
+                    (c) => !l.todoNotes.any((e) => e.id == c.id),
+                  ),
+                ),
             );
         }
       });
@@ -556,9 +585,17 @@ class UserTodoQuery extends Query<UserTodo, UserTodoQueryWhere> {
           return out
             ..[idx] = l.copyWith(
               todoValues: List<TodoValueEntity>.from(l.todoValues)
-                ..addAll(model.todoValues),
+                ..addAll(
+                  model.todoValues.where(
+                    (c) => !l.todoValues.any((e) => e.id == c.id),
+                  ),
+                ),
               todoNotes: List<TodoNoteEntity>.from(l.todoNotes)
-                ..addAll(model.todoNotes),
+                ..addAll(
+                  model.todoNotes.where(
+                    (c) => !l.todoNotes.any((e) => e.id == c.id),
+                  ),
+                ),
             );
         }
       });
@@ -578,9 +615,17 @@ class UserTodoQuery extends Query<UserTodo, UserTodoQueryWhere> {
           return out
             ..[idx] = l.copyWith(
               todoValues: List<TodoValueEntity>.from(l.todoValues)
-                ..addAll(model.todoValues),
+                ..addAll(
+                  model.todoValues.where(
+                    (c) => !l.todoValues.any((e) => e.id == c.id),
+                  ),
+                ),
               todoNotes: List<TodoNoteEntity>.from(l.todoNotes)
-                ..addAll(model.todoNotes),
+                ..addAll(
+                  model.todoNotes.where(
+                    (c) => !l.todoNotes.any((e) => e.id == c.id),
+                  ),
+                ),
             );
         }
       });

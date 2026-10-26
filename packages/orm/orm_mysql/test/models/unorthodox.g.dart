@@ -355,8 +355,12 @@ class WeirdJoinQuery extends Query<WeirdJoin, WeirdJoinQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-              numbas: List<NumbaEntity>.from(l.numbas)..addAll(model.numbas),
-              foos: List<FooEntity>.from(l.foos)..addAll(model.foos),
+              numbas: List<NumbaEntity>.from(l.numbas)
+                ..addAll(model.numbas.where((c) => !l.numbas.contains(c))),
+              foos: List<FooEntity>.from(l.foos)
+                ..addAll(
+                  model.foos.where((c) => !l.foos.any((e) => e.bar == c.bar)),
+                ),
             );
         }
       });
@@ -375,8 +379,12 @@ class WeirdJoinQuery extends Query<WeirdJoin, WeirdJoinQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-              numbas: List<NumbaEntity>.from(l.numbas)..addAll(model.numbas),
-              foos: List<FooEntity>.from(l.foos)..addAll(model.foos),
+              numbas: List<NumbaEntity>.from(l.numbas)
+                ..addAll(model.numbas.where((c) => !l.numbas.contains(c))),
+              foos: List<FooEntity>.from(l.foos)
+                ..addAll(
+                  model.foos.where((c) => !l.foos.any((e) => e.bar == c.bar)),
+                ),
             );
         }
       });
@@ -395,8 +403,12 @@ class WeirdJoinQuery extends Query<WeirdJoin, WeirdJoinQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-              numbas: List<NumbaEntity>.from(l.numbas)..addAll(model.numbas),
-              foos: List<FooEntity>.from(l.foos)..addAll(model.foos),
+              numbas: List<NumbaEntity>.from(l.numbas)
+                ..addAll(model.numbas.where((c) => !l.numbas.contains(c))),
+              foos: List<FooEntity>.from(l.foos)
+                ..addAll(
+                  model.foos.where((c) => !l.foos.any((e) => e.bar == c.bar)),
+                ),
             );
         }
       });
@@ -791,7 +803,11 @@ class FooQuery extends Query<Foo, FooQueryWhere> {
           return out
             ..[idx] = l.copyWith(
               weirdJoins: List<WeirdJoinEntity>.from(l.weirdJoins)
-                ..addAll(model.weirdJoins),
+                ..addAll(
+                  model.weirdJoins.where(
+                    (c) => !l.weirdJoins.any((e) => e.id == c.id),
+                  ),
+                ),
             );
         }
       });
@@ -811,7 +827,11 @@ class FooQuery extends Query<Foo, FooQueryWhere> {
           return out
             ..[idx] = l.copyWith(
               weirdJoins: List<WeirdJoinEntity>.from(l.weirdJoins)
-                ..addAll(model.weirdJoins),
+                ..addAll(
+                  model.weirdJoins.where(
+                    (c) => !l.weirdJoins.any((e) => e.id == c.id),
+                  ),
+                ),
             );
         }
       });
@@ -831,7 +851,11 @@ class FooQuery extends Query<Foo, FooQueryWhere> {
           return out
             ..[idx] = l.copyWith(
               weirdJoins: List<WeirdJoinEntity>.from(l.weirdJoins)
-                ..addAll(model.weirdJoins),
+                ..addAll(
+                  model.weirdJoins.where(
+                    (c) => !l.weirdJoins.any((e) => e.id == c.id),
+                  ),
+                ),
             );
         }
       });

@@ -287,7 +287,10 @@ class AssetQuery extends Query<Asset, AssetQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-              items: List<ItemEntity>.from(l.items)..addAll(model.items),
+              items: List<ItemEntity>.from(l.items)
+                ..addAll(
+                  model.items.where((c) => !l.items.any((e) => e.id == c.id)),
+                ),
             );
         }
       });
@@ -306,7 +309,10 @@ class AssetQuery extends Query<Asset, AssetQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-              items: List<ItemEntity>.from(l.items)..addAll(model.items),
+              items: List<ItemEntity>.from(l.items)
+                ..addAll(
+                  model.items.where((c) => !l.items.any((e) => e.id == c.id)),
+                ),
             );
         }
       });
@@ -325,7 +331,10 @@ class AssetQuery extends Query<Asset, AssetQueryWhere> {
           var l = out[idx];
           return out
             ..[idx] = l.copyWith(
-              items: List<ItemEntity>.from(l.items)..addAll(model.items),
+              items: List<ItemEntity>.from(l.items)
+                ..addAll(
+                  model.items.where((c) => !l.items.any((e) => e.id == c.id)),
+                ),
             );
         }
       });

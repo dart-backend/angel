@@ -9,6 +9,7 @@
 
 ### Fixes in 10.0.0
 
+* **HasMany:** A child of a `@HasMany` is listed once, by its primary key (or by `==` without one), where it was listed once per row of the other joins, such as a second `@HasMany` or one nested in it
 * **Names:** Tables, foreign keys and migration classes keep their earlier names (`legacyModelName`), though `angel3_serialize_generator` now names generated classes otherwise: `_UserEntity` is still `user_entities`
 * **Column types:** A type given in `@Column` or `@PrimaryKey` is used, instead of one inferred from the Dart type; enums are inferred too. Migrations use the `ColumnType` constants, which the MySQL and MariaDB runners need, give `length` only to types that have one, and type a foreign key to a serial column as its integer
 * **Precision:** The `precision` and `scale` of a `@Column` are used; `decimal` columns are created with `table.decimal`
