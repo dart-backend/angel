@@ -193,7 +193,7 @@ Future<Document?> _loadViewTemplate(
   try {
     processed = await (resolve(
       doc,
-      viewsDirectory,
+      file.parent,
       patch: patch,
       onError: errors.add,
     ));
