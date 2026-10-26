@@ -470,17 +470,17 @@ class LoginQueryValues extends MapQueryValues {
 
   set name(String? value) => values['name'] = value;
 
-  int get userIdentityId {
-    return (values['user_identity_id'] as int);
+  int? get userIdentityId {
+    return (values['user_identity_id'] as int?);
   }
 
-  set userIdentityId(int value) => values['user_identity_id'] = value;
+  set userIdentityId(int? value) => values['user_identity_id'] = value;
 
-  int get backupIdentityId {
-    return (values['backup_identity_id'] as int);
+  int? get backupIdentityId {
+    return (values['backup_identity_id'] as int?);
   }
 
-  set backupIdentityId(int value) => values['backup_identity_id'] = value;
+  set backupIdentityId(int? value) => values['backup_identity_id'] = value;
 
   void copyFrom(Login model) {
     createdAt = model.createdAt;
@@ -624,17 +624,17 @@ class LoginGrantQueryValues extends MapQueryValues {
     return {};
   }
 
-  int get loginId {
-    return (values['login_id'] as int);
+  int? get loginId {
+    return (values['login_id'] as int?);
   }
 
-  set loginId(int value) => values['login_id'] = value;
+  set loginId(int? value) => values['login_id'] = value;
 
-  int get grantId {
-    return (values['grant_id'] as int);
+  int? get grantId {
+    return (values['grant_id'] as int?);
   }
 
-  set grantId(int value) => values['grant_id'] = value;
+  set grantId(int? value) => values['grant_id'] = value;
 
   void copyFrom(LoginGrant model) {
     if (model.login?.id != null) {

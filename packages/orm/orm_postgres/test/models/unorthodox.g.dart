@@ -990,11 +990,11 @@ class FooPivotQueryValues extends MapQueryValues {
     return {};
   }
 
-  int get weirdJoinId {
-    return (values['weird_join_id'] as int);
+  int? get weirdJoinId {
+    return (values['weird_join_id'] as int?);
   }
 
-  set weirdJoinId(int value) => values['weird_join_id'] = value;
+  set weirdJoinId(int? value) => values['weird_join_id'] = value;
 
   String? get fooBar {
     return (values['foo_bar'] as String?);

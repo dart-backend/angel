@@ -425,17 +425,17 @@ class RoleUserQueryValues extends MapQueryValues {
     return {};
   }
 
-  int get roleId {
-    return (values['role_id'] as int);
+  int? get roleId {
+    return (values['role_id'] as int?);
   }
 
-  set roleId(int value) => values['role_id'] = value;
+  set roleId(int? value) => values['role_id'] = value;
 
-  int get userId {
-    return (values['user_id'] as int);
+  int? get userId {
+    return (values['user_id'] as int?);
   }
 
-  set userId(int value) => values['user_id'] = value;
+  set userId(int? value) => values['user_id'] = value;
 
   void copyFrom(RoleUser model) {
     if (model.role?.id != null) {

@@ -234,17 +234,17 @@ class BookQueryValues extends MapQueryValues {
 
   set updatedAt(DateTime? value) => values['updated_at'] = value;
 
-  int get authorId {
-    return (values['author_id'] as int);
+  int? get authorId {
+    return (values['author_id'] as int?);
   }
 
-  set authorId(int value) => values['author_id'] = value;
+  set authorId(int? value) => values['author_id'] = value;
 
-  int get partnerAuthorId {
-    return (values['partner_author_id'] as int);
+  int? get partnerAuthorId {
+    return (values['partner_author_id'] as int?);
   }
 
-  set partnerAuthorId(int value) => values['partner_author_id'] = value;
+  set partnerAuthorId(int? value) => values['partner_author_id'] = value;
 
   String? get name {
     return (values['name'] as String?);

@@ -1,5 +1,9 @@
+import 'dart:async';
+import 'dart:io';
+
 import 'package:angel3_migration_runner/angel3_migration_runner.dart';
 import 'package:angel3_orm/angel3_orm.dart';
+import 'package:angel3_orm_postgres/angel3_orm_postgres.dart';
 import 'package:logging/logging.dart';
 import 'package:postgres/postgres.dart';
 import 'package:test/test.dart';
@@ -301,5 +305,250 @@ void main() {
         expect(car.price, 80000.00);
       });
     });
+  });
+
+  // In this file, as it shares the cars table with the tests above, which
+  // test files that run at the same time cannot.
+  group('transaction', () {
+    Future<Car> insertCar(QueryExecutor executor, String make) async {
+      var insert = CarQuery();
+      insert.values
+        ..make = make
+        ..description = 'A car'
+        ..familyFriendly = true
+        ..price = 1
+        ..createdAt = DateTime.now()
+        ..updatedAt = DateTime.now();
+      return (await insert.insert(executor)).value;
+    }
+
+    Future<List<String?>> makes() async =>
+        (await CarQuery().get(executor)).map((c) => c.make).toList();
+
+    test('commits what its callback does', () async {
+      await executor.transaction((tx) => insertCar(tx, 'Committed'));
+      expect(await makes(), ['Committed']);
+    });
+
+    group('an error of its callback', () {
+      test('of its own is thrown as it is, and rolls back', () async {
+        await expectLater(
+          executor.transaction((tx) async {
+            await insertCar(tx, 'Rolled back');
+            throw ArgumentError('of the callback');
+          }),
+          throwsA(
+            isA<ArgumentError>().having(
+              (e) => e.message,
+              'message',
+              'of the callback',
+            ),
+          ),
+        );
+        expect(await makes(), isEmpty);
+      });
+
+      test('of the database is thrown as it is, and rolls back', () async {
+        await expectLater(
+          executor.transaction((tx) async {
+            await insertCar(tx, 'Rolled back');
+            await tx.query('cars', 'SELECT 1/0', {});
+          }),
+          throwsA(isA<PgException>()),
+        );
+        expect(await makes(), isEmpty);
+      });
+    });
+
+    test(
+      'in its callback is committed with the transaction it is in',
+      () async {
+        await expectLater(
+          executor.transaction((tx) async {
+            await tx.transaction((inner) => insertCar(inner, 'Inner'));
+            throw StateError('after the inner one');
+          }),
+          throwsStateError,
+        );
+        // Rolled back with the outer one, as it is part of it.
+        expect(await makes(), isEmpty);
+
+        await executor.transaction(
+          (tx) => tx.transaction((inner) => insertCar(inner, 'Inner')),
+        );
+        expect(await makes(), ['Inner']);
+      },
+    );
+
+    group('in its callback is rolled back on its own', () {
+      test('when it throws an error of its own', () async {
+        await executor.transaction((tx) async {
+          await insertCar(tx, 'Outer');
+          try {
+            await tx.transaction((inner) async {
+              await insertCar(inner, 'Inner');
+              throw ArgumentError('of the inner one');
+            });
+          } on ArgumentError {
+            // Caught, so the outer one goes on.
+          }
+        });
+        expect(await makes(), ['Outer']);
+      });
+
+      test(
+        'when the database fails, which the outer one goes on after',
+        () async {
+          await executor.transaction((tx) async {
+            await insertCar(tx, 'Outer');
+            try {
+              await tx.transaction((inner) async {
+                await insertCar(inner, 'Inner');
+                await inner.query('cars', 'SELECT 1/0', {});
+              });
+            } on PgException {
+              // Caught, so the outer one goes on.
+            }
+            await insertCar(tx, 'After');
+          });
+          expect(await makes(), unorderedEquals(['Outer', 'After']));
+        },
+      );
+    });
+
+    test('in a savepoint, on the executor around it, does not hang', () async {
+      await executor
+          .transaction(
+            (tx) => tx.transaction(
+              (inner) => tx.transaction((deep) => insertCar(deep, 'Deep')),
+            ),
+          )
+          .timeout(const Duration(seconds: 10));
+      expect(await makes(), ['Deep']);
+    });
+
+    test(
+      'in its callback that catches an error of the database is rolled back',
+      () async {
+        await executor.transaction((tx) async {
+          await insertCar(tx, 'Outer');
+          await expectLater(
+            tx.transaction((inner) async {
+              await insertCar(inner, 'Inner');
+              try {
+                await inner.query('cars', 'SELECT 1/0', {});
+              } on PgException {
+                // Caught here, which leaves the transaction aborted.
+              }
+            }),
+            throwsA(isA<PgException>()),
+          );
+          await insertCar(tx, 'After');
+        });
+        expect(await makes(), unorderedEquals(['Outer', 'After']));
+      },
+    );
+
+    test('of a pool executor behaves as that of a connection', () async {
+      var pool = Pool.withEndpoints([
+        Endpoint(
+          host: Platform.environment['POSTGRES_HOSTNAME'] ?? 'localhost',
+          database: Platform.environment['POSTGRES_DB'] ?? 'postgres',
+          username: Platform.environment['POSTGRES_USERNAME'] ?? 'postgres',
+          password: Platform.environment['POSTGRES_PASSWORD'] ?? 'postgres',
+        ),
+      ], settings: PoolSettings(sslMode: SslMode.disable));
+      addTearDown(pool.close);
+      var poolExecutor = PostgreSqlPoolExecutor(pool);
+
+      await poolExecutor.transaction((tx) => insertCar(tx, 'Committed'));
+      await expectLater(
+        poolExecutor.transaction((tx) async {
+          await insertCar(tx, 'Rolled back');
+          throw ArgumentError('of the callback');
+        }),
+        throwsArgumentError,
+      );
+      await poolExecutor.transaction((tx) async {
+        try {
+          await tx.transaction((inner) async {
+            await insertCar(inner, 'Savepoint');
+            throw ArgumentError('of the savepoint');
+          });
+        } on ArgumentError {
+          // Caught, so the transaction goes on.
+        }
+        await insertCar(tx, 'After');
+      });
+      expect(await makes(), unorderedEquals(['Committed', 'After']));
+    });
+
+    group('in a savepoint, two at a time, keep apart', () {
+      // The first one throws while the second one would run, if they ran at
+      // the same time; only the second one's work is kept.
+      Future<List<String>> two(QueryExecutor first, QueryExecutor second) =>
+          Future.wait([
+            first
+                .transaction((x) async {
+                  await insertCar(x, 'Failed');
+                  await Future.delayed(const Duration(milliseconds: 100));
+                  throw ArgumentError('of the first one');
+                })
+                .then((_) => 'committed', onError: (_) => 'rolled back'),
+            second
+                .transaction((x) => insertCar(x, 'Kept'))
+                .then((_) => 'committed', onError: (_) => 'rolled back'),
+          ]);
+
+      test('on the executor around it', () async {
+        await executor.transaction(
+          (tx) => tx.transaction((inner) async {
+            expect(await two(tx, tx), ['rolled back', 'committed']);
+          }),
+        );
+        expect(await makes(), ['Kept']);
+      });
+
+      test('on the executors around it and of it', () async {
+        await executor.transaction(
+          (tx) => tx.transaction((inner) async {
+            expect(await two(inner, tx), ['rolled back', 'committed']);
+          }),
+        );
+        expect(await makes(), ['Kept']);
+      });
+    });
+
+    test('in its callback, two at a time, keep apart', () async {
+      await executor.transaction((tx) async {
+        var results = await Future.wait([
+          tx
+              .transaction((inner) async {
+                await insertCar(inner, 'Failed');
+                // While the other one runs, if they ran at the same time.
+                await Future.delayed(const Duration(milliseconds: 100));
+                throw ArgumentError('of the first one');
+              })
+              .then((_) => 'committed', onError: (_) => 'rolled back'),
+          tx
+              .transaction((inner) => insertCar(inner, 'Kept'))
+              .then((_) => 'committed', onError: (_) => 'rolled back'),
+        ]);
+        expect(results, ['rolled back', 'committed']);
+      });
+      expect(await makes(), ['Kept']);
+    });
+
+    test(
+      'on the connection from inside its callback throws, not hangs',
+      () async {
+        await expectLater(
+          executor
+              .transaction((tx) => executor.transaction((_) async => null))
+              .timeout(const Duration(seconds: 10)),
+          throwsA(isNot(isA<TimeoutException>())),
+        );
+      },
+    );
   });
 }

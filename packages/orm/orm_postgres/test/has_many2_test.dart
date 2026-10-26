@@ -1,5 +1,8 @@
 // ignore: library_annotations
-@Skip('Temporarily skip until issue 143 is fixed')
+@Skip(
+  'Issue 143: the joins of a hasMany nested in a hasMany refer to a column '
+  'that does not exist (a0.a0_todo_value_id)',
+)
 import 'package:angel3_migration_runner/angel3_migration_runner.dart';
 import 'package:angel3_orm/angel3_orm.dart';
 import 'package:logging/logging.dart';

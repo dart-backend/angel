@@ -1072,7 +1072,12 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
       for (var field in ctx.effectiveNormalFields) {
         var fType = field.type;
         var name = ctx.buildContext.resolveFieldName(field.displayName);
-        var type = convertTypeReference(field.type);
+        // The key of a relation is null until it is set, and its column, as
+        // the relation may be null.
+        var type = convertTypeReference(
+          field.type,
+          forceNullable: field is RelationFieldImpl,
+        );
 
         clazz.methods.add(
           Method((b) {

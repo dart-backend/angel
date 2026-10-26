@@ -4,7 +4,8 @@
 
 ### Breaking changes in 10.0.0
 
-* **Breaking:** The generator no longer uses `analyzer` internals, which broke every model with `@BelongsTo` on `analyzer` 14.5. `OrmBuildContext.effectiveFields` is a `List<OrmField>` (`ClassOrmField` or `RelationFieldImpl`), as are the arguments of `findPrimaryFieldInList`, `isSpecialId`, `findLocalField` and `findForeignField`. The generated code is unchanged
+* **Breaking:** The key of a relation in `QueryValues`, such as `authorId` of a `@BelongsTo Author author`, is nullable (`int?`), as the relation and its column may be null, where reading it before it was set threw a `TypeError`, and it could not be cleared
+* **Breaking:** The generator no longer uses `analyzer` internals, which broke every model with `@BelongsTo` on `analyzer` 14.5. `OrmBuildContext.effectiveFields` is a `List<OrmField>` (`ClassOrmField` or `RelationFieldImpl`), as are the arguments of `findPrimaryFieldInList`, `isSpecialId`, `findLocalField` and `findForeignField`. The generated code is unchanged by this
 
 ### Fixes in 10.0.0
 
