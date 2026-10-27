@@ -15,6 +15,7 @@ Documentation for migrations can be found here:
   - [Models](#models)
   - [Example](#example)
   - [Relations](#relations)
+    - [Loading Relations](#loading-relations)
     - [Many to Many Relations](#many-to-many-relations)
   - [Columns](#columns)
     - [Column Types](#column-types)
@@ -27,10 +28,10 @@ You'll need these dependencies in your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  angel3_orm: ^9.0.0
+  angel3_orm: ^10.0.0
 dev_dependencies:
-  angel3_orm_generator: ^9.0.0
-  build_runner: ^2.0.0
+  angel3_orm_generator: ^10.0.0
+  build_runner: ^2.4.0
 ```
 
 `package:angel3_orm_generator` exports a class that you can include in a `package:build` flow:
@@ -176,10 +177,31 @@ abstract class _Author extends Model {
 
 The relationships will "just work" out-of-the-box, following any operation. For example, after fetching an `Author` from the database in the above example, the `books` field would be populated with a set of deserialized `Book` objects, also fetched from the database.
 
-Relationships use joins when possible, but in the case of `@HasMany()`, two queries are used:
+### Loading Relations
 
-- One to fetch the object itself
-- One to fetch a list of related objects
+Relations are loaded with every query that returns records: `get`, `getOne`, `insert`, `update` and `delete`.
+
+- `@HasOne()` and `@BelongsTo()` are joined, as each record is still one row.
+- `@HasMany()` is loaded after the records, with one query for all of them (`WHERE author_id IN (...)`), rather than joined, which would return a row per item.
+- `@ManyToMany()` is loaded with a query of the pivot table, then one of the other model.
+
+The items loaded have their own relations loaded in turn, such as a `@HasMany()` of a `@HasMany()`, so the number of queries depends on the relations, not on the number of records. Fetching authors with their books and the books' reviews takes three queries, however many authors there are.
+
+As a record is one row, `limit` and `offset` count records, and `getOne` fetches one row.
+
+A relation back to a table that is being loaded is not loaded again, and is left empty: the `roles` of a `User` are loaded, but not the `users` of those roles, which would load the user again.
+
+The query of a `@HasMany()` is the one its items are loaded with, so its conditions and order apply to them:
+
+```dart
+var query = AuthorQuery()..where!.name.equals('Jane');
+query.books
+  ..where!.published.isTrue
+  ..orderBy('title');
+
+// Jane, with only her published books, by title.
+var author = await query.getOne(executor);
+```
 
 ### Many to Many Relations
 
