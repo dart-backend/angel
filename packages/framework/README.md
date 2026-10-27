@@ -117,6 +117,64 @@ app.post('/upload', uploadHandler, middleware: [
 
 Set `app.maxBodySize = null` to remove the limit. In production, resolved routes are cached per request path; the cache holds at most `app.maxHandlerCacheSize` entries (1024 by default, `0` disables it).
 
+## Migrating from 9.x to 10.0.0
+
+The breaking changes of each release are listed in the [CHANGELOG](CHANGELOG.md). Those of 10.0.0 that need changes in an app:
+
+### `MirrorsReflector` moved to `angel3_container_mirrors`
+
+Add `angel3_container_mirrors` to your dependencies, and change the import:
+
+```dart
+// 9.x
+import 'package:angel3_container/mirrors.dart';
+
+// 10.0.0
+import 'package:angel3_container_mirrors/angel3_container_mirrors.dart';
+
+var app = Angel(reflector: MirrorsReflector());
+```
+
+To compile the app with `dart compile exe`, use generated reflection data instead, or no reflector, as [Running without `dart:mirrors`](#running-without-dartmirrors-aot) describes.
+
+### `chain` stops at the first handler that does not return `true`
+
+Like the handlers of a route, each handler given to `chain` must return `true` for the next one to run. A handler that returns nothing, such as a middleware that only sets a value, now stops the chain:
+
+```dart
+// 9.x: `handler` ran after it
+chain([(req, res) { req.params['user'] = 'me'; }, handler]);
+
+// 10.0.0
+chain([(req, res) { req.params['user'] = 'me'; return true; }, handler]);
+```
+
+### Buffered responses send `Content-Length`
+
+A buffered response is sent with a `Content-Length` header instead of chunked transfer encoding. Set `res.chunked = true` to send it chunked.
+
+### Default response headers
+
+`AngelHttp.addResponseHeader` and `removeResponseHeader` take a `Map` of headers:
+
+* `addResponseHeader` throws an `ArgumentError` for a header that cannot be sent, before it adds any of the call's headers.
+* `removeResponseHeader` removes each value of a list, every value equal to a given one, and, if none matches exactly, those that match ignoring case, such as `sameorigin` for the `SAMEORIGIN` that `dart:io` adds. A `null` value removes the header whatever its values.
+
+```dart
+var http = AngelHttp(app);
+http.removeResponseHeader({'X-FRAME-OPTIONS': 'SAMEORIGIN'});
+http.removeResponseHeader({'X-XSS-PROTECTION': null});
+http.addResponseHeader({'X-XSRF-TOKEN': 'a591a6d4...'});
+```
+
+### `bool` ids
+
+`Service.parseId<bool>` answers ids other than `true` and `false` with a `400 Bad Request`.
+
+### HTTP/2 sessions
+
+An HTTP/2 request gets a session, and the session cookie, only when `req.session` is first read. Code that expects the cookie on every response must read `req.session`.
+
 ## Performance Benchmark
 
 The performance benchmark can be found at

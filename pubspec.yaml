@@ -60,7 +60,7 @@ workspace:
   - packages/shelf
 
 dependencies:
-  melos: ^8.1.0
+  melos: ^8.9.0
 
 melos:
   ide:

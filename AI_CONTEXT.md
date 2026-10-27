@@ -53,6 +53,7 @@ The framework is divided into several categories of packages:
 - **Minimum SDK Version**: `>=3.13.0 <4.0.0`
 - **Monorepo Management**: Dart pub workspace + `melos` (`^8.9.0`)
 - **Code Generation**: `build_runner` with `source_gen`-based generators
+- **Shared utilities**: The `belatuk_*` packages (e.g. `belatuk_code_buffer`, `belatuk_combinator`, `belatuk_html_builder`, `belatuk_merge_map`, `belatuk_range_header`, `belatuk_symbol_table`) are published from a separate repository. The workspace resolves one version of each dependency for every package, so bump a shared dependency in all the packages that use it at once; one may also require another's new major (`belatuk_combinator` 6 needs `belatuk_code_buffer` 6). Since `belatuk_html_builder` 6, text and attribute values are HTML-escaped when rendered; since `belatuk_code_buffer` 6, `writeln()` with no line open adds a blank line, which renderers that end lines conditionally must allow for (see `jael3`'s `Renderer`).
 - **CI**: GitHub Actions (`.github/workflows/dart.yml`) checks only some packages: format, `dart analyze` and `dart test` for `container` and `framework`; format and `dart analyze` for `orm` and `orm_generator`; and the same plus `dart test` for `orm_postgres`, against a PostgreSQL service container. Other packages are not checked by CI, so run their tests locally.
 
 ## Development Workflow
@@ -60,7 +61,15 @@ The framework is divided into several categories of packages:
 - **Master Branch**: Stable production branch (currently the `9.x` releases). Use this branch for all standard PR submissions.
 - **Feature Branches**: Work is done on `feature/<name>` branches. The upcoming `10.0.0` release (all packages bumped to `10.0.0`, with breaking changes recorded in each package's `CHANGELOG.md`) is being prepared on feature branches.
 - **Tooling**: Run `dart pub get` at the root, or use `melos` to execute tasks across the monorepo (e.g., `melos exec "dart pub upgrade"`). Regenerate code with `dart run build_runner build --delete-conflicting-outputs` in the affected package.
-- **Database tests**: The ORM tests need running databases, configured by environment variables: PostgreSQL for `orm_postgres` (`POSTGRES_HOSTNAME`, `POSTGRES_DB`, `POSTGRES_USERNAME`, `POSTGRES_PASSWORD`; default `localhost`, `postgres`/`postgres`), and MySQL or MariaDB for `orm_mysql` (`MYSQL_HOST`, `MYSQL_PORT`, `MYSQL_DB`, `MYSQL_USERNAME`, `MYSQL_PASSWORD`, `MYSQL_SECURE`; default `localhost:3306`, database `orm_test`, user `test`). Run them with `dart test -j1`, as test files share tables.
+- **Running tests**: Run `dart test` from the package's directory, as some tests read fixtures relative to it (e.g. the `dev.pem` and `dev.key` of `framework`'s HTTP/2 tests). To tell whether a failure is new, run the test with your changes stashed (`git stash push -- packages`, then `dart pub get`); `pubspec.lock` is not tracked, so do not name it in the stash.
+- **Database tests**: The tests of these packages need running servers, configured by environment variables:
+  - `orm_postgres`: PostgreSQL (`POSTGRES_HOSTNAME`, `POSTGRES_DB`, `POSTGRES_USERNAME`, `POSTGRES_PASSWORD`; default `localhost`, `postgres`/`postgres`).
+  - `orm_mysql`: MySQL or MariaDB (`MYSQL_HOST`, `MYSQL_PORT`, `MYSQL_DB`, `MYSQL_USERNAME`, `MYSQL_PASSWORD`, `MYSQL_SECURE`; default `localhost:3306`, database `orm_test`, user `test`).
+  - `mongo`: MongoDB on port 27017 with a `root` user whose password is `Qwerty` (authentication database `admin`); host `MONGO_HOST`, default `localhost`.
+  - `rethinkdb`: RethinkDB on port 28015, user `admin` without a password; host `RETHINKDB_HOST`, default `localhost`. Create its `testDB.todos` table with `dart test/bootstrap.dart`.
+  - `redis`: Redis (`REDIS_HOST`, `REDIS_PORT`; default `localhost:6379`).
+
+  Run the ORM tests with `dart test -j1`, as test files share tables.
 - **READMEs**: Code samples in a README must compile against the current API (e.g. route handlers take `(req, res)`, `AngelHttp` comes from `package:angel3_framework/http.dart`), and dependency snippets use the current version.
 - **Changelog**: Every user-facing change gets an entry in the affected package's `CHANGELOG.md`, written as plain-English statements about the package (not commit messages). Group a release's entries under `### Breaking changes in X.Y.Z` (each entry prefixed `**Breaking:**`), `### New in X.Y.Z` and `### Fixes in X.Y.Z`, in that order, omitting empty sections. Prefix each fix with a bold area label, e.g. `* **Services:** An invalid id is a 400`. See `packages/framework/CHANGELOG.md` (10.0.0) for the reference style. Commit messages use [Conventional Commits](https://www.conventionalcommits.org/) (`type(scope): description`, `!` for breaking changes).
 
