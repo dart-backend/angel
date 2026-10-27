@@ -58,6 +58,16 @@ void main() {
           ferrari = (await query.insert(executor)).value;
         });
 
+        test('select of some fields reads each in its column', () async {
+          var cars = await (CarQuery()..select(['make', 'price'])).get(
+            executor,
+          );
+          expect(cars, hasLength(1));
+          expect(cars.first.make, 'Ferrari東');
+          expect(cars.first.price, 120000.00);
+          expect(cars.first.description, isNull);
+        });
+
         test('where clause is applied', () async {
           var query = CarQuery()..where!.familyFriendly.isTrue;
           var cars = await query.get(executor);

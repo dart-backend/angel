@@ -120,10 +120,12 @@ class RoleQuery extends Query<Role, RoleQueryWhere> {
       return Optional.empty();
     }
     var model = Role(
-      role: fields.contains('role') ? (row[0] as String?) : null,
+      role: fields.contains('role')
+          ? (row[fields.indexOf('role')] as String?)
+          : null,
     );
-    if (row.length > 1) {
-      var modelOpt = UserQuery().parseRow(row.skip(1).take(3).toList());
+    {
+      var modelOpt = UserQuery().parseRow(joinedRow(0, row));
       modelOpt.ifPresent((m) {
         model = model.copyWith(users: [m]);
       });
@@ -142,6 +144,16 @@ class RoleQuery extends Query<Role, RoleQueryWhere> {
         trampoline.contains('role_users')));
   }
 
+  /// [l] with the items of the relations of [r], another row of the same record.
+  static Role mergeRows(Role l, Role r) {
+    return l.copyWith(
+      users: mergeJoined(l.users, r.users, key: (c) => c.email),
+    );
+  }
+
+  @override
+  bool get recordsSpanRows => true;
+
   @override
   Future<List<Role>> get(QueryExecutor executor) {
     return super.get(executor).then((result) {
@@ -151,16 +163,7 @@ class RoleQuery extends Query<Role, RoleQueryWhere> {
         if (idx == -1) {
           return out..add(model);
         } else {
-          var l = out[idx];
-          return out
-            ..[idx] = l.copyWith(
-              users: List<UserEntity>.from(l.users)
-                ..addAll(
-                  model.users.where(
-                    (c) => !l.users.any((e) => e.email == c.email),
-                  ),
-                ),
-            );
+          return out..[idx] = mergeRows(out[idx], model);
         }
       });
     });
@@ -175,16 +178,7 @@ class RoleQuery extends Query<Role, RoleQueryWhere> {
         if (idx == -1) {
           return out..add(model);
         } else {
-          var l = out[idx];
-          return out
-            ..[idx] = l.copyWith(
-              users: List<UserEntity>.from(l.users)
-                ..addAll(
-                  model.users.where(
-                    (c) => !l.users.any((e) => e.email == c.email),
-                  ),
-                ),
-            );
+          return out..[idx] = mergeRows(out[idx], model);
         }
       });
     });
@@ -199,16 +193,7 @@ class RoleQuery extends Query<Role, RoleQueryWhere> {
         if (idx == -1) {
           return out..add(model);
         } else {
-          var l = out[idx];
-          return out
-            ..[idx] = l.copyWith(
-              users: List<UserEntity>.from(l.users)
-                ..addAll(
-                  model.users.where(
-                    (c) => !l.users.any((e) => e.email == c.email),
-                  ),
-                ),
-            );
+          return out..[idx] = mergeRows(out[idx], model);
         }
       });
     });
@@ -316,14 +301,14 @@ class RoleUserQuery extends Query<RoleUser, RoleUserQueryWhere> {
       return Optional.empty();
     }
     var model = RoleUser();
-    if (row.length > 2) {
-      var modelOpt = RoleQuery().parseRow(row.skip(2).take(1).toList());
+    {
+      var modelOpt = _role.parseRow(joinedRow(0, row));
       modelOpt.ifPresent((m) {
         model = model.copyWith(role: m);
       });
     }
-    if (row.length > 3) {
-      var modelOpt = UserQuery().parseRow(row.skip(3).take(3).toList());
+    {
+      var modelOpt = _user.parseRow(joinedRow(1, row));
       modelOpt.ifPresent((m) {
         model = model.copyWith(user: m);
       });
@@ -342,6 +327,18 @@ class RoleUserQuery extends Query<RoleUser, RoleUserQueryWhere> {
 
   UserQuery get user {
     return _user;
+  }
+
+  /// [l] with the items of the relations of [r], another row of the same record.
+  static RoleUser mergeRows(RoleUser l, RoleUser r) {
+    return l.copyWith(
+      role: l.role == null || r.role == null
+          ? l.role ?? r.role
+          : RoleQuery.mergeRows(l.role as Role, r.role as Role),
+      user: l.user == null || r.user == null
+          ? l.user ?? r.user
+          : UserQuery.mergeRows(l.user as User, r.user as User),
+    );
   }
 }
 
@@ -449,12 +446,18 @@ class UserQuery extends Query<User, UserQueryWhere> {
       return Optional.empty();
     }
     var model = User(
-      email: fields.contains('email') ? (row[0] as String?) : null,
-      name: fields.contains('name') ? (row[1] as String?) : null,
-      password: fields.contains('password') ? (row[2] as String?) : null,
+      email: fields.contains('email')
+          ? (row[fields.indexOf('email')] as String?)
+          : null,
+      name: fields.contains('name')
+          ? (row[fields.indexOf('name')] as String?)
+          : null,
+      password: fields.contains('password')
+          ? (row[fields.indexOf('password')] as String?)
+          : null,
     );
-    if (row.length > 3) {
-      var modelOpt = RoleQuery().parseRow(row.skip(3).take(1).toList());
+    {
+      var modelOpt = RoleQuery().parseRow(joinedRow(0, row));
       modelOpt.ifPresent((m) {
         model = model.copyWith(roles: [m]);
       });
@@ -473,6 +476,14 @@ class UserQuery extends Query<User, UserQueryWhere> {
         trampoline.contains('role_users')));
   }
 
+  /// [l] with the items of the relations of [r], another row of the same record.
+  static User mergeRows(User l, User r) {
+    return l.copyWith(roles: mergeJoined(l.roles, r.roles, key: (c) => c.role));
+  }
+
+  @override
+  bool get recordsSpanRows => true;
+
   @override
   Future<List<User>> get(QueryExecutor executor) {
     return super.get(executor).then((result) {
@@ -482,16 +493,7 @@ class UserQuery extends Query<User, UserQueryWhere> {
         if (idx == -1) {
           return out..add(model);
         } else {
-          var l = out[idx];
-          return out
-            ..[idx] = l.copyWith(
-              roles: List<RoleEntity>.from(l.roles)
-                ..addAll(
-                  model.roles.where(
-                    (c) => !l.roles.any((e) => e.role == c.role),
-                  ),
-                ),
-            );
+          return out..[idx] = mergeRows(out[idx], model);
         }
       });
     });
@@ -506,16 +508,7 @@ class UserQuery extends Query<User, UserQueryWhere> {
         if (idx == -1) {
           return out..add(model);
         } else {
-          var l = out[idx];
-          return out
-            ..[idx] = l.copyWith(
-              roles: List<RoleEntity>.from(l.roles)
-                ..addAll(
-                  model.roles.where(
-                    (c) => !l.roles.any((e) => e.role == c.role),
-                  ),
-                ),
-            );
+          return out..[idx] = mergeRows(out[idx], model);
         }
       });
     });
@@ -530,16 +523,7 @@ class UserQuery extends Query<User, UserQueryWhere> {
         if (idx == -1) {
           return out..add(model);
         } else {
-          var l = out[idx];
-          return out
-            ..[idx] = l.copyWith(
-              roles: List<RoleEntity>.from(l.roles)
-                ..addAll(
-                  model.roles.where(
-                    (c) => !l.roles.any((e) => e.role == c.role),
-                  ),
-                ),
-            );
+          return out..[idx] = mergeRows(out[idx], model);
         }
       });
     });

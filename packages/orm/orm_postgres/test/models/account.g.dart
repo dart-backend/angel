@@ -106,19 +106,25 @@ class AccountQuery extends Query<Account, AccountQueryWhere> {
       return Optional.empty();
     }
     var model = Account(
-      id: fields.contains('id') ? row[0].toString() : null,
+      id: fields.contains('id') ? row[fields.indexOf('id')].toString() : null,
       createdAt: fields.contains('created_at')
-          ? mapToNullableDateTime(row[1])
+          ? mapToNullableDateTime(row[fields.indexOf('created_at')])
           : null,
       updatedAt: fields.contains('updated_at')
-          ? mapToNullableDateTime(row[2])
+          ? mapToNullableDateTime(row[fields.indexOf('updated_at')])
           : null,
-      description: fields.contains('description') ? (row[3] as String) : '',
-      name: fields.contains('name') ? (row[4] as String) : '',
-      price: fields.contains('price') ? mapToDouble(row[5]) : 0.0,
+      description: fields.contains('description')
+          ? (row[fields.indexOf('description')] as String)
+          : '',
+      name: fields.contains('name')
+          ? (row[fields.indexOf('name')] as String)
+          : '',
+      price: fields.contains('price')
+          ? mapToDouble(row[fields.indexOf('price')])
+          : 0.0,
     );
-    if (row.length > 6) {
-      var modelOpt = AssetQuery().parseRow(row.skip(6).take(6).toList());
+    {
+      var modelOpt = _assets.parseRow(joinedRow(0, row));
       modelOpt.ifPresent((m) {
         model = model.copyWith(assets: [m]);
       });
@@ -135,6 +141,21 @@ class AccountQuery extends Query<Account, AccountQueryWhere> {
     return _assets;
   }
 
+  /// [l] with the items of the relations of [r], another row of the same record.
+  static Account mergeRows(Account l, Account r) {
+    return l.copyWith(
+      assets: mergeJoined(
+        l.assets,
+        r.assets,
+        key: (c) => c.id,
+        merge: (a, b) => AssetQuery.mergeRows(a as Asset, b as Asset),
+      ),
+    );
+  }
+
+  @override
+  bool get recordsSpanRows => true;
+
   @override
   Future<List<Account>> get(QueryExecutor executor) {
     return super.get(executor).then((result) {
@@ -144,14 +165,7 @@ class AccountQuery extends Query<Account, AccountQueryWhere> {
         if (idx == -1) {
           return out..add(model);
         } else {
-          var l = out[idx];
-          return out
-            ..[idx] = l.copyWith(
-              assets: List<AssetEntity>.from(l.assets)
-                ..addAll(
-                  model.assets.where((c) => !l.assets.any((e) => e.id == c.id)),
-                ),
-            );
+          return out..[idx] = mergeRows(out[idx], model);
         }
       });
     });
@@ -166,14 +180,7 @@ class AccountQuery extends Query<Account, AccountQueryWhere> {
         if (idx == -1) {
           return out..add(model);
         } else {
-          var l = out[idx];
-          return out
-            ..[idx] = l.copyWith(
-              assets: List<AssetEntity>.from(l.assets)
-                ..addAll(
-                  model.assets.where((c) => !l.assets.any((e) => e.id == c.id)),
-                ),
-            );
+          return out..[idx] = mergeRows(out[idx], model);
         }
       });
     });
@@ -188,14 +195,7 @@ class AccountQuery extends Query<Account, AccountQueryWhere> {
         if (idx == -1) {
           return out..add(model);
         } else {
-          var l = out[idx];
-          return out
-            ..[idx] = l.copyWith(
-              assets: List<AssetEntity>.from(l.assets)
-                ..addAll(
-                  model.assets.where((c) => !l.assets.any((e) => e.id == c.id)),
-                ),
-            );
+          return out..[idx] = mergeRows(out[idx], model);
         }
       });
     });

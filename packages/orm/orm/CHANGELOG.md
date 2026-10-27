@@ -11,9 +11,12 @@
 
 * `replacePlaceholders`, which swaps `@name` placeholders for a driver's (e.g. `?`)
 * `QueryValues.parameterNameOf`, and `Column.defaultLength`, `defaultPrecision` and `defaultScale`
+* `Query.joinedRow`, the columns of a row a join adds, with those of the joins of its query, and `mergeJoined`, which merges the items of a relation from two rows of one record; `JoinBuilder.query` and `JoinBuilder.columnNameFor`
 
 ### Fixes in 10.0.0
 
+* **Limits:** A `limit` or `offset` of a query whose records span rows (`Query.recordsSpanRows`, set by generated queries with a `@HasMany`) counts records, not the rows of their joins: it applies to the table before the joins, with the conditions and the order, which cannot refer to the joins then; `getOne` fetches one record, with all its rows, where a query with joins fetched every row
+* **Joins:** A query selects the columns of the joins of a query it joins, so a relation of a relation, such as a `@HasMany` nested in a `@HasMany`, is no longer dropped; a join that cannot be compiled selects `NULL`s named as its columns, including those of its own joins, so the columns after it keep their place
 * **Security:** `StringSqlExpressionBuilder.like` passes its pattern as a parameter, where a pattern from user input allowed SQL injection; `sanitize` is applied to the pattern
 * **Parameters:** `Query.reserveName` never returns the same name twice, so two values of one column no longer overwrite each other (an `update` with a condition and a new value on one column changed the wrong rows). `replacePlaceholders` leaves `@` in string literals, quoted identifiers and `@@variables`
 * **MySQL and MariaDB:** An insert into a table without an id returns the values it inserted; `update` and `delete` select their rows first, in a transaction, and return them. `QueryValues.compileInsertSelect` is deprecated

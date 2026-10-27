@@ -130,3 +130,27 @@ void debugPrint(Object obj) {
   }
 }
 */
+
+/// The items of a relation joined to a row, [a], with those of another row of
+/// the same record, [b], that it does not have: by [key], or by `==` without
+/// one. An item of both is combined by [merge], when given, for the relations
+/// joined to it in turn, which also come once per row.
+List<T> mergeJoined<T>(
+  List<T> a,
+  List<T> b, {
+  Object? Function(T)? key,
+  T Function(T, T)? merge,
+}) {
+  var out = List<T>.of(a);
+  for (var item in b) {
+    var idx = key == null
+        ? out.indexOf(item)
+        : out.indexWhere((e) => key(e) == key(item));
+    if (idx == -1) {
+      out.add(item);
+    } else if (merge != null) {
+      out[idx] = merge(out[idx], item);
+    }
+  }
+  return out;
+}

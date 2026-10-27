@@ -114,17 +114,19 @@ class TreeQuery extends Query<Tree, TreeQueryWhere> {
       return Optional.empty();
     }
     var model = Tree(
-      id: fields.contains('id') ? row[0].toString() : null,
+      id: fields.contains('id') ? row[fields.indexOf('id')].toString() : null,
       createdAt: fields.contains('created_at')
-          ? mapToNullableDateTime(row[1])
+          ? mapToNullableDateTime(row[fields.indexOf('created_at')])
           : null,
       updatedAt: fields.contains('updated_at')
-          ? mapToNullableDateTime(row[2])
+          ? mapToNullableDateTime(row[fields.indexOf('updated_at')])
           : null,
-      rings: fields.contains('rings') ? mapToInt(row[3]) : null,
+      rings: fields.contains('rings')
+          ? mapToInt(row[fields.indexOf('rings')])
+          : null,
     );
-    if (row.length > 4) {
-      var modelOpt = FruitQuery().parseRow(row.skip(4).take(5).toList());
+    {
+      var modelOpt = _fruits.parseRow(joinedRow(0, row));
       modelOpt.ifPresent((m) {
         model = model.copyWith(fruits: [m]);
       });
@@ -141,6 +143,16 @@ class TreeQuery extends Query<Tree, TreeQueryWhere> {
     return _fruits;
   }
 
+  /// [l] with the items of the relations of [r], another row of the same record.
+  static Tree mergeRows(Tree l, Tree r) {
+    return l.copyWith(
+      fruits: mergeJoined(l.fruits, r.fruits, key: (c) => c.id),
+    );
+  }
+
+  @override
+  bool get recordsSpanRows => true;
+
   @override
   Future<List<Tree>> get(QueryExecutor executor) {
     return super.get(executor).then((result) {
@@ -150,14 +162,7 @@ class TreeQuery extends Query<Tree, TreeQueryWhere> {
         if (idx == -1) {
           return out..add(model);
         } else {
-          var l = out[idx];
-          return out
-            ..[idx] = l.copyWith(
-              fruits: List<FruitEntity>.from(l.fruits)
-                ..addAll(
-                  model.fruits.where((c) => !l.fruits.any((e) => e.id == c.id)),
-                ),
-            );
+          return out..[idx] = mergeRows(out[idx], model);
         }
       });
     });
@@ -172,14 +177,7 @@ class TreeQuery extends Query<Tree, TreeQueryWhere> {
         if (idx == -1) {
           return out..add(model);
         } else {
-          var l = out[idx];
-          return out
-            ..[idx] = l.copyWith(
-              fruits: List<FruitEntity>.from(l.fruits)
-                ..addAll(
-                  model.fruits.where((c) => !l.fruits.any((e) => e.id == c.id)),
-                ),
-            );
+          return out..[idx] = mergeRows(out[idx], model);
         }
       });
     });
@@ -194,14 +192,7 @@ class TreeQuery extends Query<Tree, TreeQueryWhere> {
         if (idx == -1) {
           return out..add(model);
         } else {
-          var l = out[idx];
-          return out
-            ..[idx] = l.copyWith(
-              fruits: List<FruitEntity>.from(l.fruits)
-                ..addAll(
-                  model.fruits.where((c) => !l.fruits.any((e) => e.id == c.id)),
-                ),
-            );
+          return out..[idx] = mergeRows(out[idx], model);
         }
       });
     });
@@ -326,15 +317,19 @@ class FruitQuery extends Query<Fruit, FruitQueryWhere> {
       return Optional.empty();
     }
     var model = Fruit(
-      id: fields.contains('id') ? row[0].toString() : null,
+      id: fields.contains('id') ? row[fields.indexOf('id')].toString() : null,
       createdAt: fields.contains('created_at')
-          ? mapToNullableDateTime(row[1])
+          ? mapToNullableDateTime(row[fields.indexOf('created_at')])
           : null,
       updatedAt: fields.contains('updated_at')
-          ? mapToNullableDateTime(row[2])
+          ? mapToNullableDateTime(row[fields.indexOf('updated_at')])
           : null,
-      treeId: fields.contains('tree_id') ? mapToInt(row[3]) : null,
-      commonName: fields.contains('common_name') ? (row[4] as String?) : null,
+      treeId: fields.contains('tree_id')
+          ? mapToInt(row[fields.indexOf('tree_id')])
+          : null,
+      commonName: fields.contains('common_name')
+          ? (row[fields.indexOf('common_name')] as String?)
+          : null,
     );
     return Optional.of(model);
   }

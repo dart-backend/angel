@@ -77,6 +77,12 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
     );
   }
 
+  /// Whether a record spans rows, one per item of a join such as a has-many
+  /// relation, which a generated query merges into one. A LIMIT or OFFSET
+  /// then counts records: it applies to the table before the joins, with
+  /// the conditions and the order, which cannot refer to the joins then.
+  bool get recordsSpanRows => false;
+
   /// Determines whether this query can be compiled.
   ///
   /// Used to prevent ambiguities in joins.
@@ -200,8 +206,37 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
         alias: alias,
         additionalFields: additionalFields,
         aliasAllFields: tableName is Query,
+        query: tableName is Query ? tableName : null,
       ),
     );
+  }
+
+  /// The names of the columns that the joins of this query add to its rows,
+  /// in order: those of each join, then those of the joins of its query.
+  List<String> get _joinedColumns => [
+    for (var j in _joins) ...[
+      ...j.additionalFields.map(j.columnNameFor),
+      ...?j.query?._joinedColumns,
+    ],
+  ];
+
+  /// The columns of [row] that the join at [index], in the order the joins
+  /// were made, adds to it, and those of the joins of its query, for that
+  /// query to parse; empty if [row] has none.
+  List joinedRow(int index, List row) {
+    // A SELECT * has no columns of the joins.
+    if (fields.isEmpty || index >= _joins.length) return const [];
+    var offset = fields.length;
+    for (var j in _joins.take(index)) {
+      offset +=
+          j.additionalFields.length + (j.query?._joinedColumns.length ?? 0);
+    }
+    var j = _joins[index];
+    var end =
+        offset +
+        j.additionalFields.length +
+        (j.query?._joinedColumns.length ?? 0);
+    return end <= row.length ? row.sublist(offset, end) : const [];
   }
 
   /// Execute an `INNER JOIN` against another table.
@@ -390,13 +425,20 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
       for (var j in _joins) {
         var c = compiledJoins[j] = j.compile(trampoline);
         //if (c != null) {
+        var nested = j.query?._joinedColumns ?? const <String>[];
         if (c != '') {
           var additional = j.additionalFields.map(j.nameFor).toList();
           f.addAll(additional);
+          // Those of the joins of its query, which its subquery selects.
+          f.addAll(nested.map((name) => '${j.alias}.$name'));
         } else {
-          // If compilation failed, fill in NULL placeholders.
-          for (var i = 0; i < j.additionalFields.length; i++) {
-            f.add('NULL');
+          // If compilation failed, fill in NULL placeholders, named as the
+          // columns, which a query this one is a subquery of selects.
+          for (var name in [
+            ...j.additionalFields.map(j.columnNameFor),
+            ...nested,
+          ]) {
+            f.add('NULL AS $name');
           }
         }
       }
@@ -404,8 +446,35 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
     if (withFields) {
       b.write(f.join(', '));
     }
-    fromQuery ??= tableName;
-    b.write(' FROM $fromQuery');
+    var whereClause =
+        rowsWhere ??
+        where?.compile(tableName: includeTableName ? tableName : null);
+    var orderByClause = _orderBy.map((order) => order.compile()).join(', ');
+    var limits = rowsWhere != null
+        ? ''
+        : [
+            if (_limit != null) ' LIMIT $_limit',
+            if (_offset != null) ' OFFSET $_offset',
+          ].join();
+
+    // A LIMIT or OFFSET of records that span rows counts records.
+    if (recordsSpanRows &&
+        limits.isNotEmpty &&
+        preamble == null &&
+        fromQuery == null &&
+        _groupBy == null) {
+      var records = StringBuffer('SELECT * FROM $tableName');
+      if (whereClause?.isNotEmpty == true) {
+        records.write(' WHERE $whereClause');
+      }
+      if (orderByClause.isNotEmpty) records.write(' ORDER BY $orderByClause');
+      records.write(limits);
+      whereClause = null;
+      limits = '';
+      fromQuery = '($records) $tableName';
+    }
+
+    b.write(' FROM ${fromQuery ?? tableName}');
 
     // No joins if it's not a select.
     if (preamble == null) {
@@ -416,30 +485,22 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
       }
     }
 
-    var whereClause =
-        rowsWhere ??
-        where?.compile(tableName: includeTableName ? tableName : null);
     if (whereClause?.isNotEmpty == true) {
       b.write(' WHERE $whereClause');
     }
     if (_groupBy != null) b.write(' GROUP BY $_groupBy');
-    var orderByClause = _orderBy.map((order) => order.compile()).join(', ');
     if (orderByClause.isNotEmpty) {
       b.write(' ORDER BY $orderByClause');
     }
-    if (rowsWhere == null) {
-      if (_limit != null) b.write(' LIMIT $_limit');
-      if (_offset != null) b.write(' OFFSET $_offset');
-    }
+    b.write(limits);
     return b.toString();
   }
 
-  /// The first matching record. Only one row is fetched, unless the query
-  /// has joins: a record with e.g. a has-many relation spans several rows,
-  /// which a `LIMIT` would cut.
+  /// The first matching record. Only one is fetched, with all its rows when
+  /// it spans several ([recordsSpanRows]).
   @override
   Future<Optional<T>> getOne(QueryExecutor executor) async {
-    if (_joins.isNotEmpty || _limit != null) return super.getOne(executor);
+    if (_limit != null) return super.getOne(executor);
     _limit = 1;
     try {
       return await super.getOne(executor);

@@ -136,14 +136,16 @@ class UserIdentityQuery extends Query<UserIdentity, UserIdentityQueryWhere> {
       return Optional.empty();
     }
     var model = UserIdentity(
-      id: fields.contains('id') ? row[0].toString() : null,
+      id: fields.contains('id') ? row[fields.indexOf('id')].toString() : null,
       createdAt: fields.contains('created_at')
-          ? mapToNullableDateTime(row[1])
+          ? mapToNullableDateTime(row[fields.indexOf('created_at')])
           : null,
       updatedAt: fields.contains('updated_at')
-          ? mapToNullableDateTime(row[2])
+          ? mapToNullableDateTime(row[fields.indexOf('updated_at')])
           : null,
-      handle: fields.contains('handle') ? (row[3] as String?) : null,
+      handle: fields.contains('handle')
+          ? (row[fields.indexOf('handle')] as String?)
+          : null,
     );
     return Optional.of(model);
   }
@@ -298,31 +300,31 @@ class LoginQuery extends Query<Login, LoginQueryWhere> {
       return Optional.empty();
     }
     var model = Login(
-      id: fields.contains('id') ? row[0].toString() : null,
+      id: fields.contains('id') ? row[fields.indexOf('id')].toString() : null,
       createdAt: fields.contains('created_at')
-          ? mapToNullableDateTime(row[1])
+          ? mapToNullableDateTime(row[fields.indexOf('created_at')])
           : null,
       updatedAt: fields.contains('updated_at')
-          ? mapToNullableDateTime(row[2])
+          ? mapToNullableDateTime(row[fields.indexOf('updated_at')])
           : null,
-      name: fields.contains('name') ? (row[3] as String?) : null,
+      name: fields.contains('name')
+          ? (row[fields.indexOf('name')] as String?)
+          : null,
     );
-    if (row.length > 6) {
-      var modelOpt = UserIdentityQuery().parseRow(row.skip(6).take(4).toList());
+    {
+      var modelOpt = _userIdentity.parseRow(joinedRow(0, row));
       modelOpt.ifPresent((m) {
         model = model.copyWith(userIdentity: m);
       });
     }
-    if (row.length > 10) {
-      var modelOpt = UserIdentityQuery().parseRow(
-        row.skip(10).take(4).toList(),
-      );
+    {
+      var modelOpt = _backupIdentity.parseRow(joinedRow(1, row));
       modelOpt.ifPresent((m) {
         model = model.copyWith(backupIdentity: m);
       });
     }
-    if (row.length > 14) {
-      var modelOpt = GrantQuery().parseRow(row.skip(14).take(4).toList());
+    {
+      var modelOpt = GrantQuery().parseRow(joinedRow(2, row));
       modelOpt.ifPresent((m) {
         model = model.copyWith(grants: [m]);
       });
@@ -349,6 +351,16 @@ class LoginQuery extends Query<Login, LoginQueryWhere> {
         trampoline.contains('login_grant_links')));
   }
 
+  /// [l] with the items of the relations of [r], another row of the same record.
+  static Login mergeRows(Login l, Login r) {
+    return l.copyWith(
+      grants: mergeJoined(l.grants, r.grants, key: (c) => c.id),
+    );
+  }
+
+  @override
+  bool get recordsSpanRows => true;
+
   @override
   Future<List<Login>> get(QueryExecutor executor) {
     return super.get(executor).then((result) {
@@ -358,14 +370,7 @@ class LoginQuery extends Query<Login, LoginQueryWhere> {
         if (idx == -1) {
           return out..add(model);
         } else {
-          var l = out[idx];
-          return out
-            ..[idx] = l.copyWith(
-              grants: List<GrantEntity>.from(l.grants)
-                ..addAll(
-                  model.grants.where((c) => !l.grants.any((e) => e.id == c.id)),
-                ),
-            );
+          return out..[idx] = mergeRows(out[idx], model);
         }
       });
     });
@@ -380,14 +385,7 @@ class LoginQuery extends Query<Login, LoginQueryWhere> {
         if (idx == -1) {
           return out..add(model);
         } else {
-          var l = out[idx];
-          return out
-            ..[idx] = l.copyWith(
-              grants: List<GrantEntity>.from(l.grants)
-                ..addAll(
-                  model.grants.where((c) => !l.grants.any((e) => e.id == c.id)),
-                ),
-            );
+          return out..[idx] = mergeRows(out[idx], model);
         }
       });
     });
@@ -402,14 +400,7 @@ class LoginQuery extends Query<Login, LoginQueryWhere> {
         if (idx == -1) {
           return out..add(model);
         } else {
-          var l = out[idx];
-          return out
-            ..[idx] = l.copyWith(
-              grants: List<GrantEntity>.from(l.grants)
-                ..addAll(
-                  model.grants.where((c) => !l.grants.any((e) => e.id == c.id)),
-                ),
-            );
+          return out..[idx] = mergeRows(out[idx], model);
         }
       });
     });
@@ -583,14 +574,14 @@ class LoginGrantQuery extends Query<LoginGrant, LoginGrantQueryWhere> {
       return Optional.empty();
     }
     var model = LoginGrant();
-    if (row.length > 2) {
-      var modelOpt = LoginQuery().parseRow(row.skip(2).take(6).toList());
+    {
+      var modelOpt = _login.parseRow(joinedRow(0, row));
       modelOpt.ifPresent((m) {
         model = model.copyWith(login: m);
       });
     }
-    if (row.length > 8) {
-      var modelOpt = GrantQuery().parseRow(row.skip(8).take(4).toList());
+    {
+      var modelOpt = _grant.parseRow(joinedRow(1, row));
       modelOpt.ifPresent((m) {
         model = model.copyWith(grant: m);
       });
@@ -609,6 +600,18 @@ class LoginGrantQuery extends Query<LoginGrant, LoginGrantQueryWhere> {
 
   GrantQuery get grant {
     return _grant;
+  }
+
+  /// [l] with the items of the relations of [r], another row of the same record.
+  static LoginGrant mergeRows(LoginGrant l, LoginGrant r) {
+    return l.copyWith(
+      login: l.login == null || r.login == null
+          ? l.login ?? r.login
+          : LoginQuery.mergeRows(l.login as Login, r.login as Login),
+      grant: l.grant == null || r.grant == null
+          ? l.grant ?? r.grant
+          : GrantQuery.mergeRows(l.grant as Grant, r.grant as Grant),
+    );
   }
 }
 
@@ -723,17 +726,19 @@ class GrantQuery extends Query<Grant, GrantQueryWhere> {
       return Optional.empty();
     }
     var model = Grant(
-      id: fields.contains('id') ? row[0].toString() : null,
+      id: fields.contains('id') ? row[fields.indexOf('id')].toString() : null,
       createdAt: fields.contains('created_at')
-          ? mapToNullableDateTime(row[1])
+          ? mapToNullableDateTime(row[fields.indexOf('created_at')])
           : null,
       updatedAt: fields.contains('updated_at')
-          ? mapToNullableDateTime(row[2])
+          ? mapToNullableDateTime(row[fields.indexOf('updated_at')])
           : null,
-      name: fields.contains('name') ? (row[3] as String?) : null,
+      name: fields.contains('name')
+          ? (row[fields.indexOf('name')] as String?)
+          : null,
     );
-    if (row.length > 4) {
-      var modelOpt = LoginQuery().parseRow(row.skip(4).take(6).toList());
+    {
+      var modelOpt = LoginQuery().parseRow(joinedRow(0, row));
       modelOpt.ifPresent((m) {
         model = model.copyWith(logins: [m]);
       });
@@ -752,6 +757,16 @@ class GrantQuery extends Query<Grant, GrantQueryWhere> {
         trampoline.contains('login_grant_links')));
   }
 
+  /// [l] with the items of the relations of [r], another row of the same record.
+  static Grant mergeRows(Grant l, Grant r) {
+    return l.copyWith(
+      logins: mergeJoined(l.logins, r.logins, key: (c) => c.id),
+    );
+  }
+
+  @override
+  bool get recordsSpanRows => true;
+
   @override
   Future<List<Grant>> get(QueryExecutor executor) {
     return super.get(executor).then((result) {
@@ -761,14 +776,7 @@ class GrantQuery extends Query<Grant, GrantQueryWhere> {
         if (idx == -1) {
           return out..add(model);
         } else {
-          var l = out[idx];
-          return out
-            ..[idx] = l.copyWith(
-              logins: List<LoginEntity>.from(l.logins)
-                ..addAll(
-                  model.logins.where((c) => !l.logins.any((e) => e.id == c.id)),
-                ),
-            );
+          return out..[idx] = mergeRows(out[idx], model);
         }
       });
     });
@@ -783,14 +791,7 @@ class GrantQuery extends Query<Grant, GrantQueryWhere> {
         if (idx == -1) {
           return out..add(model);
         } else {
-          var l = out[idx];
-          return out
-            ..[idx] = l.copyWith(
-              logins: List<LoginEntity>.from(l.logins)
-                ..addAll(
-                  model.logins.where((c) => !l.logins.any((e) => e.id == c.id)),
-                ),
-            );
+          return out..[idx] = mergeRows(out[idx], model);
         }
       });
     });
@@ -805,14 +806,7 @@ class GrantQuery extends Query<Grant, GrantQueryWhere> {
         if (idx == -1) {
           return out..add(model);
         } else {
-          var l = out[idx];
-          return out
-            ..[idx] = l.copyWith(
-              logins: List<LoginEntity>.from(l.logins)
-                ..addAll(
-                  model.logins.where((c) => !l.logins.any((e) => e.id == c.id)),
-                ),
-            );
+          return out..[idx] = mergeRows(out[idx], model);
         }
       });
     });

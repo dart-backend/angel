@@ -92,17 +92,25 @@ class PersonOrderQuery extends Query<PersonOrder, PersonOrderQueryWhere> {
       return Optional.empty();
     }
     var model = PersonOrder(
-      id: fields.contains('id') ? row[0].toString() : null,
+      id: fields.contains('id') ? row[fields.indexOf('id')].toString() : null,
       createdAt: fields.contains('created_at')
-          ? mapToNullableDateTime(row[1])
+          ? mapToNullableDateTime(row[fields.indexOf('created_at')])
           : null,
       updatedAt: fields.contains('updated_at')
-          ? mapToNullableDateTime(row[2])
+          ? mapToNullableDateTime(row[fields.indexOf('updated_at')])
           : null,
-      personId: fields.contains('person_id') ? mapToInt(row[3]) : null,
-      name: fields.contains('name') ? (row[4] as String?) : null,
-      price: fields.contains('price') ? mapToDouble(row[5]) : null,
-      deleted: fields.contains('deleted') ? mapToBool(row[6]) : null,
+      personId: fields.contains('person_id')
+          ? mapToInt(row[fields.indexOf('person_id')])
+          : null,
+      name: fields.contains('name')
+          ? (row[fields.indexOf('name')] as String?)
+          : null,
+      price: fields.contains('price')
+          ? mapToDouble(row[fields.indexOf('price')])
+          : null,
+      deleted: fields.contains('deleted')
+          ? mapToBool(row[fields.indexOf('deleted')])
+          : null,
     );
     return Optional.of(model);
   }
@@ -268,18 +276,28 @@ class OrderWithPersonInfoQuery
       return Optional.empty();
     }
     var model = OrderWithPersonInfo(
-      id: fields.contains('id') ? row[0].toString() : null,
+      id: fields.contains('id') ? row[fields.indexOf('id')].toString() : null,
       createdAt: fields.contains('created_at')
-          ? mapToNullableDateTime(row[1])
+          ? mapToNullableDateTime(row[fields.indexOf('created_at')])
           : null,
       updatedAt: fields.contains('updated_at')
-          ? mapToNullableDateTime(row[2])
+          ? mapToNullableDateTime(row[fields.indexOf('updated_at')])
           : null,
-      name: fields.contains('name') ? (row[3] as String?) : null,
-      price: fields.contains('price') ? mapToDouble(row[4]) : null,
-      deleted: fields.contains('deleted') ? mapToBool(row[5]) : null,
-      personName: fields.contains('person_name') ? (row[6] as String?) : null,
-      personAge: fields.contains('person_age') ? mapToInt(row[7]) : null,
+      name: fields.contains('name')
+          ? (row[fields.indexOf('name')] as String?)
+          : null,
+      price: fields.contains('price')
+          ? mapToDouble(row[fields.indexOf('price')])
+          : null,
+      deleted: fields.contains('deleted')
+          ? mapToBool(row[fields.indexOf('deleted')])
+          : null,
+      personName: fields.contains('person_name')
+          ? (row[fields.indexOf('person_name')] as String?)
+          : null,
+      personAge: fields.contains('person_age')
+          ? mapToInt(row[fields.indexOf('person_age')])
+          : null,
     );
     return Optional.of(model);
   }

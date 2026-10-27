@@ -167,17 +167,19 @@ class UserQuery extends Query<User, UserQueryWhere> {
       return Optional.empty();
     }
     var model = User(
-      id: fields.contains('id') ? mapToInt(row[0]) : 0,
-      name: fields.contains('name') ? (row[1] as String) : '',
+      id: fields.contains('id') ? mapToInt(row[fields.indexOf('id')]) : 0,
+      name: fields.contains('name')
+          ? (row[fields.indexOf('name')] as String)
+          : '',
     );
-    if (row.length > 2) {
-      var modelOpt = UserTodoQuery().parseRow(row.skip(2).take(3).toList());
+    {
+      var modelOpt = _todos.parseRow(joinedRow(0, row));
       modelOpt.ifPresent((m) {
         model = model.copyWith(todos: [m]);
       });
     }
-    if (row.length > 5) {
-      var modelOpt = UserAddressQuery().parseRow(row.skip(5).take(3).toList());
+    {
+      var modelOpt = _address.parseRow(joinedRow(1, row));
       modelOpt.ifPresent((m) {
         model = model.copyWith(address: [m]);
       });
@@ -198,6 +200,22 @@ class UserQuery extends Query<User, UserQueryWhere> {
     return _address;
   }
 
+  /// [l] with the items of the relations of [r], another row of the same record.
+  static User mergeRows(User l, User r) {
+    return l.copyWith(
+      todos: mergeJoined(
+        l.todos,
+        r.todos,
+        key: (c) => c.id,
+        merge: (a, b) => UserTodoQuery.mergeRows(a as UserTodo, b as UserTodo),
+      ),
+      address: mergeJoined(l.address, r.address, key: (c) => c.id),
+    );
+  }
+
+  @override
+  bool get recordsSpanRows => true;
+
   @override
   Future<List<User>> get(QueryExecutor executor) {
     return super.get(executor).then((result) {
@@ -207,20 +225,7 @@ class UserQuery extends Query<User, UserQueryWhere> {
         if (idx == -1) {
           return out..add(model);
         } else {
-          var l = out[idx];
-          return out
-            ..[idx] = l.copyWith(
-              todos: List<UserTodoEntity>.from(l.todos)
-                ..addAll(
-                  model.todos.where((c) => !l.todos.any((e) => e.id == c.id)),
-                ),
-              address: List<UserAddressEntity>.from(l.address)
-                ..addAll(
-                  model.address.where(
-                    (c) => !l.address.any((e) => e.id == c.id),
-                  ),
-                ),
-            );
+          return out..[idx] = mergeRows(out[idx], model);
         }
       });
     });
@@ -235,20 +240,7 @@ class UserQuery extends Query<User, UserQueryWhere> {
         if (idx == -1) {
           return out..add(model);
         } else {
-          var l = out[idx];
-          return out
-            ..[idx] = l.copyWith(
-              todos: List<UserTodoEntity>.from(l.todos)
-                ..addAll(
-                  model.todos.where((c) => !l.todos.any((e) => e.id == c.id)),
-                ),
-              address: List<UserAddressEntity>.from(l.address)
-                ..addAll(
-                  model.address.where(
-                    (c) => !l.address.any((e) => e.id == c.id),
-                  ),
-                ),
-            );
+          return out..[idx] = mergeRows(out[idx], model);
         }
       });
     });
@@ -263,20 +255,7 @@ class UserQuery extends Query<User, UserQueryWhere> {
         if (idx == -1) {
           return out..add(model);
         } else {
-          var l = out[idx];
-          return out
-            ..[idx] = l.copyWith(
-              todos: List<UserTodoEntity>.from(l.todos)
-                ..addAll(
-                  model.todos.where((c) => !l.todos.any((e) => e.id == c.id)),
-                ),
-              address: List<UserAddressEntity>.from(l.address)
-                ..addAll(
-                  model.address.where(
-                    (c) => !l.address.any((e) => e.id == c.id),
-                  ),
-                ),
-            );
+          return out..[idx] = mergeRows(out[idx], model);
         }
       });
     });
@@ -376,9 +355,13 @@ class UserAddressQuery extends Query<UserAddress, UserAddressQueryWhere> {
       return Optional.empty();
     }
     var model = UserAddress(
-      id: fields.contains('id') ? mapToInt(row[0]) : 0,
-      userId: fields.contains('user_id') ? mapToInt(row[1]) : 0,
-      address: fields.contains('address') ? (row[2] as String) : '',
+      id: fields.contains('id') ? mapToInt(row[fields.indexOf('id')]) : 0,
+      userId: fields.contains('user_id')
+          ? mapToInt(row[fields.indexOf('user_id')])
+          : 0,
+      address: fields.contains('address')
+          ? (row[fields.indexOf('address')] as String)
+          : '',
     );
     return Optional.of(model);
   }
@@ -510,18 +493,22 @@ class UserTodoQuery extends Query<UserTodo, UserTodoQueryWhere> {
       return Optional.empty();
     }
     var model = UserTodo(
-      id: fields.contains('id') ? mapToInt(row[0]) : 0,
-      userId: fields.contains('user_id') ? mapToInt(row[1]) : 0,
-      title: fields.contains('title') ? (row[2] as String) : '',
+      id: fields.contains('id') ? mapToInt(row[fields.indexOf('id')]) : 0,
+      userId: fields.contains('user_id')
+          ? mapToInt(row[fields.indexOf('user_id')])
+          : 0,
+      title: fields.contains('title')
+          ? (row[fields.indexOf('title')] as String)
+          : '',
     );
-    if (row.length > 3) {
-      var modelOpt = TodoValueQuery().parseRow(row.skip(3).take(4).toList());
+    {
+      var modelOpt = _todoValues.parseRow(joinedRow(0, row));
       modelOpt.ifPresent((m) {
         model = model.copyWith(todoValues: [m]);
       });
     }
-    if (row.length > 7) {
-      var modelOpt = TodoNoteQuery().parseRow(row.skip(7).take(4).toList());
+    {
+      var modelOpt = _todoNotes.parseRow(joinedRow(1, row));
       modelOpt.ifPresent((m) {
         model = model.copyWith(todoNotes: [m]);
       });
@@ -542,6 +529,17 @@ class UserTodoQuery extends Query<UserTodo, UserTodoQueryWhere> {
     return _todoNotes;
   }
 
+  /// [l] with the items of the relations of [r], another row of the same record.
+  static UserTodo mergeRows(UserTodo l, UserTodo r) {
+    return l.copyWith(
+      todoValues: mergeJoined(l.todoValues, r.todoValues, key: (c) => c.id),
+      todoNotes: mergeJoined(l.todoNotes, r.todoNotes, key: (c) => c.id),
+    );
+  }
+
+  @override
+  bool get recordsSpanRows => true;
+
   @override
   Future<List<UserTodo>> get(QueryExecutor executor) {
     return super.get(executor).then((result) {
@@ -551,22 +549,7 @@ class UserTodoQuery extends Query<UserTodo, UserTodoQueryWhere> {
         if (idx == -1) {
           return out..add(model);
         } else {
-          var l = out[idx];
-          return out
-            ..[idx] = l.copyWith(
-              todoValues: List<TodoValueEntity>.from(l.todoValues)
-                ..addAll(
-                  model.todoValues.where(
-                    (c) => !l.todoValues.any((e) => e.id == c.id),
-                  ),
-                ),
-              todoNotes: List<TodoNoteEntity>.from(l.todoNotes)
-                ..addAll(
-                  model.todoNotes.where(
-                    (c) => !l.todoNotes.any((e) => e.id == c.id),
-                  ),
-                ),
-            );
+          return out..[idx] = mergeRows(out[idx], model);
         }
       });
     });
@@ -581,22 +564,7 @@ class UserTodoQuery extends Query<UserTodo, UserTodoQueryWhere> {
         if (idx == -1) {
           return out..add(model);
         } else {
-          var l = out[idx];
-          return out
-            ..[idx] = l.copyWith(
-              todoValues: List<TodoValueEntity>.from(l.todoValues)
-                ..addAll(
-                  model.todoValues.where(
-                    (c) => !l.todoValues.any((e) => e.id == c.id),
-                  ),
-                ),
-              todoNotes: List<TodoNoteEntity>.from(l.todoNotes)
-                ..addAll(
-                  model.todoNotes.where(
-                    (c) => !l.todoNotes.any((e) => e.id == c.id),
-                  ),
-                ),
-            );
+          return out..[idx] = mergeRows(out[idx], model);
         }
       });
     });
@@ -611,22 +579,7 @@ class UserTodoQuery extends Query<UserTodo, UserTodoQueryWhere> {
         if (idx == -1) {
           return out..add(model);
         } else {
-          var l = out[idx];
-          return out
-            ..[idx] = l.copyWith(
-              todoValues: List<TodoValueEntity>.from(l.todoValues)
-                ..addAll(
-                  model.todoValues.where(
-                    (c) => !l.todoValues.any((e) => e.id == c.id),
-                  ),
-                ),
-              todoNotes: List<TodoNoteEntity>.from(l.todoNotes)
-                ..addAll(
-                  model.todoNotes.where(
-                    (c) => !l.todoNotes.any((e) => e.id == c.id),
-                  ),
-                ),
-            );
+          return out..[idx] = mergeRows(out[idx], model);
         }
       });
     });
@@ -736,10 +689,16 @@ class TodoValueQuery extends Query<TodoValue, TodoValueQueryWhere> {
       return Optional.empty();
     }
     var model = TodoValue(
-      id: fields.contains('id') ? mapToInt(row[0]) : 0,
-      value: fields.contains('value') ? (row[1] as String) : '',
-      todoId: fields.contains('todo_id') ? mapToInt(row[2]) : 0,
-      description: fields.contains('description') ? (row[3] as String?) : null,
+      id: fields.contains('id') ? mapToInt(row[fields.indexOf('id')]) : 0,
+      value: fields.contains('value')
+          ? (row[fields.indexOf('value')] as String)
+          : '',
+      todoId: fields.contains('todo_id')
+          ? mapToInt(row[fields.indexOf('todo_id')])
+          : 0,
+      description: fields.contains('description')
+          ? (row[fields.indexOf('description')] as String?)
+          : null,
     );
     return Optional.of(model);
   }
@@ -863,10 +822,16 @@ class TodoNoteQuery extends Query<TodoNote, TodoNoteQueryWhere> {
       return Optional.empty();
     }
     var model = TodoNote(
-      id: fields.contains('id') ? mapToInt(row[0]) : 0,
-      note: fields.contains('note') ? (row[1] as String) : '',
-      todoId: fields.contains('todo_id') ? mapToInt(row[2]) : 0,
-      description: fields.contains('description') ? (row[3] as String?) : null,
+      id: fields.contains('id') ? mapToInt(row[fields.indexOf('id')]) : 0,
+      note: fields.contains('note')
+          ? (row[fields.indexOf('note')] as String)
+          : '',
+      todoId: fields.contains('todo_id')
+          ? mapToInt(row[fields.indexOf('todo_id')])
+          : 0,
+      description: fields.contains('description')
+          ? (row[fields.indexOf('description')] as String?)
+          : null,
     );
     return Optional.of(model);
   }

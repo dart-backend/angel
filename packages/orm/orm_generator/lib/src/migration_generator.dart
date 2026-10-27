@@ -408,11 +408,14 @@ class MigrationGenerator extends GeneratorForAnnotation<Orm> {
       return refer('ColumnType').property(constName);
     }
 
-    return refer('ColumnType').constInstance([literal(type.name)], {
-      if (type.hasLength) 'hasLength': literal(true),
-      if (type.hasPrecision) 'hasPrecision': literal(true),
-      if (type.hasScale) 'hasScale': literal(true),
-    });
+    return refer('ColumnType').constInstance(
+      [literal(type.name)],
+      {
+        if (type.hasLength) 'hasLength': literal(true),
+        if (type.hasPrecision) 'hasPrecision': literal(true),
+        if (type.hasScale) 'hasScale': literal(true),
+      },
+    );
   }
 
   /// The column type of a foreign key that references a column of [type]:

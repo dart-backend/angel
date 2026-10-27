@@ -102,6 +102,55 @@ void main() {
       userOpt.ifPresent((user) {
         logger.fine(user);
         expect(user.todos, hasLength(3));
+        var office = user.todos.firstWhere((t) => t.title == 'Office');
+        // In the order of the rows, which the query does not set.
+        expect(
+          office.todoValues.map((v) => v.value),
+          unorderedEquals([
+            'Purchase Laptop',
+            'Purchase Monitor',
+            'Purchase Paper',
+          ]),
+        );
+        expect(user.address.map((a) => a.address), ['Office Address']);
+      });
+    });
+
+    group('a limit counts records, not the rows of their joins', () {
+      setUp(() async {
+        var other = UserQuery();
+        other.values.name = 'Ann';
+        await other.insert(executor);
+      });
+
+      test('with limit', () async {
+        var users =
+            await (UserQuery()
+                  ..orderBy('id')
+                  ..limit(1))
+                .get(executor);
+        expect(users.map((u) => u.name), ['Tim']);
+        expect(users.first.todos, hasLength(3));
+        var office = users.first.todos.firstWhere((t) => t.title == 'Office');
+        expect(office.todoValues, hasLength(3));
+      });
+
+      test('with offset', () async {
+        var users =
+            await (UserQuery()
+                  ..orderBy('id')
+                  ..limit(1)
+                  ..offset(1))
+                .get(executor);
+        expect(users.map((u) => u.name), ['Ann']);
+        expect(users.first.todos, isEmpty);
+      });
+
+      test('with getOne', () async {
+        var user = await (UserQuery()..where!.id.equals(userId)).getOne(
+          executor,
+        );
+        expect(user.value.todos, hasLength(3));
       });
     });
   });

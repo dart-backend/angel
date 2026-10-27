@@ -114,17 +114,19 @@ class LegQuery extends Query<Leg, LegQueryWhere> {
       return Optional.empty();
     }
     var model = Leg(
-      id: fields.contains('id') ? row[0].toString() : null,
+      id: fields.contains('id') ? row[fields.indexOf('id')].toString() : null,
       createdAt: fields.contains('created_at')
-          ? mapToNullableDateTime(row[1])
+          ? mapToNullableDateTime(row[fields.indexOf('created_at')])
           : null,
       updatedAt: fields.contains('updated_at')
-          ? mapToNullableDateTime(row[2])
+          ? mapToNullableDateTime(row[fields.indexOf('updated_at')])
           : null,
-      name: fields.contains('name') ? (row[3] as String?) : null,
+      name: fields.contains('name')
+          ? (row[fields.indexOf('name')] as String?)
+          : null,
     );
-    if (row.length > 4) {
-      var modelOpt = FootQuery().parseRow(row.skip(4).take(5).toList());
+    {
+      var modelOpt = _foot.parseRow(joinedRow(0, row));
       modelOpt.ifPresent((m) {
         model = model.copyWith(foot: m);
       });
@@ -254,15 +256,19 @@ class FootQuery extends Query<Foot, FootQueryWhere> {
       return Optional.empty();
     }
     var model = Foot(
-      id: fields.contains('id') ? row[0].toString() : null,
+      id: fields.contains('id') ? row[fields.indexOf('id')].toString() : null,
       createdAt: fields.contains('created_at')
-          ? mapToNullableDateTime(row[1])
+          ? mapToNullableDateTime(row[fields.indexOf('created_at')])
           : null,
       updatedAt: fields.contains('updated_at')
-          ? mapToNullableDateTime(row[2])
+          ? mapToNullableDateTime(row[fields.indexOf('updated_at')])
           : null,
-      legId: fields.contains('leg_id') ? mapToInt(row[3]) : null,
-      nToes: fields.contains('n_toes') ? mapToDouble(row[4]) : null,
+      legId: fields.contains('leg_id')
+          ? mapToInt(row[fields.indexOf('leg_id')])
+          : null,
+      nToes: fields.contains('n_toes')
+          ? mapToDouble(row[fields.indexOf('n_toes')])
+          : null,
     );
     return Optional.of(model);
   }

@@ -303,8 +303,6 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
               ),
             )
             ..body = Block((b) {
-              var i = 0;
-
               // Build the arguments for model
               var args = <String, Expression>{};
               for (var field in ctx.effectiveFields) {
@@ -317,8 +315,15 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                   type = refer('int');
                 }
 
-                // Generated Code: row[i]
-                var expr = (refer('row').index(literalNum(i++)));
+                // Generated Code: row[fields.indexOf('column')], as fields
+                // may be a selection of them, in the order of the SELECT.
+                var expr = refer('row').index(
+                  refer('fields').property('indexOf').call([
+                    literalString(
+                      ctx.buildContext.resolveFieldName(fieldName) ?? fieldName,
+                    ),
+                  ]),
+                );
                 if (isSpecialId(ctx, field)) {
                   // Generated Code: row[i].toString()
 
@@ -416,6 +421,8 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                 ).assign(ctx.buildContext.modelClassType.newInstance([], args)),
               );
 
+              // The joins, in the order the constructor makes them.
+              var joinIndex = 0;
               ctx.relations.forEach((name, relation) {
                 if (!const [
                   RelationshipType.hasOne,
@@ -434,17 +441,21 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                 }
                 //log.fine('Detected relationship ${RelationshipType.belongsTo}');
 
-                var skipToList = refer('row')
-                    .property('skip')
-                    .call([literalNum(i)])
-                    .property('take')
-                    .call([literalNum(foreign.effectiveFields.length)])
-                    .property('toList')
-                    .call([]);
+                // Its columns, and those of its own joins, which are only
+                // known at runtime, as a join of a cycle selects NULLs.
+                var joined = refer('joinedRow')
+                    .call([literalNum(joinIndex++), refer('row')]);
 
-                var parsed = refer(
-                  '${foreign.buildContext.modelClassNameRecase.pascalCase}Query',
-                ).newInstance([]).property('parseRow').call([skipToList]);
+                // The query joined, whose joins are those of the row; a
+                // many-to-many joins SQL, so its own joins are not selected.
+                var parsed =
+                    (relation.isManyToMany
+                            ? refer(
+                                '${foreign.buildContext.modelClassNameRecase.pascalCase}Query',
+                              ).newInstance([])
+                            : refer('_$name'))
+                        .property('parseRow')
+                        .call([joined]);
 
                 //var baseClass = '${foreign.buildContext.originalClassName}';
                 //var modelClass =
@@ -487,10 +498,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                   DartEmitter(useNullSafetySyntax: true),
                 );
 
-                var ifStr = 'if (row.length > $i) { $blockStr }';
-                b.statements.add(Code(ifStr));
-
-                i += foreign.effectiveFields.length;
+                b.statements.add(Code('{ $blockStr }'));
               });
 
               b.addExpression(
@@ -773,9 +781,64 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
         );
       }
 
-      // Also, if there is a @HasMany, generate overrides for query methods that
-      // execute in a transaction, and invoke fetchLinked.
-      if (ctx.relations.values.any((r) => r.type == RelationshipType.hasMany)) {
+      // A record spans a row per item of each @HasMany joined to it, or to a
+      // relation of it: its rows are merged into one.
+      var mergeBody = _mergeRowsBody(ctx);
+      if (mergeBody != null) {
+        var type = ctx.buildContext.modelClassType.accept(
+          DartEmitter(useNullSafetySyntax: true),
+        );
+        clazz.methods.add(
+          Method(
+            (b) => b
+              ..name = 'mergeRows'
+              ..static = true
+              ..docs.add(
+                '/// [l] with the items of the relations of [r], another row '
+                'of the same record.',
+              )
+              ..returns = refer('$type')
+              ..requiredParameters.addAll([
+                Parameter(
+                  (b) => b
+                    ..name = 'l'
+                    ..type = refer('$type'),
+                ),
+                Parameter(
+                  (b) => b
+                    ..name = 'r'
+                    ..type = refer('$type'),
+                ),
+              ])
+              ..body = Code(mergeBody),
+          ),
+        );
+      }
+
+      // Also, if a record spans rows, generate overrides for query methods
+      // that merge them, by its key: one of a @HasMany must have one, and
+      // one of a relation that has one is merged only if it has.
+      var hasMany = ctx.relations.values.any(
+        (r) => r.type == RelationshipType.hasMany,
+      );
+      var hasKey =
+          findPrimaryFieldInList(
+            ctx,
+            ctx.buildContext.fields.map(ClassOrmField.new),
+          ) !=
+          null;
+      if (hasMany || (mergeBody != null && hasKey)) {
+        clazz.methods.add(
+          Method(
+            (b) => b
+              ..name = 'recordsSpanRows'
+              ..type = MethodType.getter
+              ..annotations.add(refer('override'))
+              ..returns = refer('bool')
+              ..lambda = true
+              ..body = literalTrue.code,
+          ),
+        );
         for (var methodName in const ['get', 'update', 'delete']) {
           clazz.methods.add(
             Method((b) {
@@ -810,41 +873,6 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                   ),
                 );
 
-              // Collect hasMany options, and ultimately merge them
-              var merge = <String>[];
-
-              ctx.relations.forEach((name, relation) {
-                if (relation.type == RelationshipType.hasMany) {
-                  // This is only allowed with lists.
-                  var field = ctx.buildContext.fields.firstWhere(
-                    (f) => f.displayName == name,
-                  );
-
-                  var typeLiteral = convertTypeReference(field.type)
-                      .accept(DartEmitter(useNullSafetySyntax: true))
-                      .toString()
-                      .replaceAll('?', '');
-                  // A child comes once per row of the other joins, such as
-                  // another hasMany, so it is added once, by its key.
-                  var foreign = relation.foreign;
-                  var childKey = foreign == null
-                      ? null
-                      : findPrimaryFieldInList(
-                          foreign,
-                          foreign.buildContext.fields.map(ClassOrmField.new),
-                        )?.displayName;
-                  var isNew = childKey == null
-                      ? '!l.$name.contains(c)'
-                      : '!l.$name.any((e) => e.$childKey == c.$childKey)';
-                  merge.add('''
-                      $name: $typeLiteral.from(l.$name)
-                        ..addAll(model.$name.where((c) => $isNew))
-                    ''');
-                }
-              });
-
-              var merged = merge.join(', ');
-
               var keyName = findPrimaryFieldInList(
                 ctx,
                 ctx.buildContext.fields.map(ClassOrmField.new),
@@ -863,8 +891,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                         if (idx == -1) {
                           return out..add(model);
                         } else {
-                          var l = out[idx];
-                          return out..[idx] = l.copyWith($merged);
+                          return out..[idx] = mergeRows(out[idx], model);
                         }
                       });
                     });
@@ -1303,4 +1330,70 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
     }
     return parseExpr ?? CodeExpression(Code('value?.index'));
   }
+}
+
+/// The relations a record of [ctx] spans rows of: a @HasMany, or a @HasOne
+/// or @BelongsTo of a model that does, but not [seen], which a cycle of
+/// relations leads back to.
+bool _needsMerge(OrmBuildContext ctx, [Set<String>? seen]) {
+  seen ??= {};
+  if (!seen.add(ctx.tableName)) return false;
+  return ctx.relations.values.any((relation) {
+    var foreign = relation.foreign;
+    if (foreign == null) return false;
+    return switch (relation.type) {
+      RelationshipType.hasMany => true,
+      RelationshipType.hasOne ||
+      RelationshipType.belongsTo => _needsMerge(foreign, seen),
+      _ => false,
+    };
+  });
+}
+
+/// The body of `mergeRows` of the query of [ctx], or `null` if its records
+/// span one row each.
+String? _mergeRowsBody(OrmBuildContext ctx) {
+  if (!_needsMerge(ctx)) return null;
+  var merged = <String>[];
+  ctx.relations.forEach((name, relation) {
+    var foreign = relation.foreign;
+    if (foreign == null) return;
+    var field = ctx.buildContext.fields.firstWhere(
+      (f) => f.displayName == name,
+    );
+    var isNullable = field.type.nullabilitySuffix == NullabilitySuffix.question;
+    var model = foreign.buildContext.modelClassNameRecase.pascalCase;
+    // A many-to-many joins SQL, so none of its own relations are joined.
+    var mergeChild = !relation.isManyToMany && _needsMerge(foreign)
+        ? '${model}Query.mergeRows(a as $model, b as $model)'
+        : null;
+
+    if (relation.type == RelationshipType.hasMany) {
+      // An item comes once per row of the other joins, so it is added once,
+      // by its key.
+      var key = findPrimaryFieldInList(
+        foreign,
+        foreign.buildContext.fields.map(ClassOrmField.new),
+      )?.displayName;
+      var l = isNullable ? '(l.$name ?? [])' : 'l.$name';
+      var r = isNullable ? '(r.$name ?? [])' : 'r.$name';
+      merged.add(
+        '$name: mergeJoined($l, $r'
+        '${key == null ? '' : ', key: (c) => c.$key'}'
+        '${mergeChild == null ? '' : ', merge: (a, b) => $mergeChild'})',
+      );
+    } else if ((relation.type == RelationshipType.hasOne ||
+            relation.type == RelationshipType.belongsTo) &&
+        mergeChild != null) {
+      var both =
+          '${model}Query.mergeRows(l.$name as $model, r.$name as $model)';
+      merged.add(
+        isNullable
+            ? '$name: l.$name == null || r.$name == null '
+                  '? l.$name ?? r.$name : $both'
+            : '$name: $both',
+      );
+    }
+  });
+  return 'return l.copyWith(${merged.join(', ')});';
 }

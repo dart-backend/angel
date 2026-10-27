@@ -100,14 +100,16 @@ class ItemQuery extends Query<Item, ItemQueryWhere> {
       return Optional.empty();
     }
     var model = Item(
-      id: fields.contains('id') ? row[0].toString() : null,
+      id: fields.contains('id') ? row[fields.indexOf('id')].toString() : null,
       createdAt: fields.contains('created_at')
-          ? mapToNullableDateTime(row[1])
+          ? mapToNullableDateTime(row[fields.indexOf('created_at')])
           : null,
       updatedAt: fields.contains('updated_at')
-          ? mapToNullableDateTime(row[2])
+          ? mapToNullableDateTime(row[fields.indexOf('updated_at')])
           : null,
-      description: fields.contains('description') ? (row[3] as String) : '',
+      description: fields.contains('description')
+          ? (row[fields.indexOf('description')] as String)
+          : '',
     );
     return Optional.of(model);
   }
@@ -246,19 +248,25 @@ class AssetQuery extends Query<Asset, AssetQueryWhere> {
       return Optional.empty();
     }
     var model = Asset(
-      id: fields.contains('id') ? row[0].toString() : null,
+      id: fields.contains('id') ? row[fields.indexOf('id')].toString() : null,
       createdAt: fields.contains('created_at')
-          ? mapToNullableDateTime(row[1])
+          ? mapToNullableDateTime(row[fields.indexOf('created_at')])
           : null,
       updatedAt: fields.contains('updated_at')
-          ? mapToNullableDateTime(row[2])
+          ? mapToNullableDateTime(row[fields.indexOf('updated_at')])
           : null,
-      description: fields.contains('description') ? (row[3] as String) : '',
-      name: fields.contains('name') ? (row[4] as String) : '',
-      price: fields.contains('price') ? mapToDouble(row[5]) : 0.0,
+      description: fields.contains('description')
+          ? (row[fields.indexOf('description')] as String)
+          : '',
+      name: fields.contains('name')
+          ? (row[fields.indexOf('name')] as String)
+          : '',
+      price: fields.contains('price')
+          ? mapToDouble(row[fields.indexOf('price')])
+          : 0.0,
     );
-    if (row.length > 6) {
-      var modelOpt = ItemQuery().parseRow(row.skip(6).take(4).toList());
+    {
+      var modelOpt = _items.parseRow(joinedRow(0, row));
       modelOpt.ifPresent((m) {
         model = model.copyWith(items: [m]);
       });
@@ -275,6 +283,14 @@ class AssetQuery extends Query<Asset, AssetQueryWhere> {
     return _items;
   }
 
+  /// [l] with the items of the relations of [r], another row of the same record.
+  static Asset mergeRows(Asset l, Asset r) {
+    return l.copyWith(items: mergeJoined(l.items, r.items, key: (c) => c.id));
+  }
+
+  @override
+  bool get recordsSpanRows => true;
+
   @override
   Future<List<Asset>> get(QueryExecutor executor) {
     return super.get(executor).then((result) {
@@ -284,14 +300,7 @@ class AssetQuery extends Query<Asset, AssetQueryWhere> {
         if (idx == -1) {
           return out..add(model);
         } else {
-          var l = out[idx];
-          return out
-            ..[idx] = l.copyWith(
-              items: List<ItemEntity>.from(l.items)
-                ..addAll(
-                  model.items.where((c) => !l.items.any((e) => e.id == c.id)),
-                ),
-            );
+          return out..[idx] = mergeRows(out[idx], model);
         }
       });
     });
@@ -306,14 +315,7 @@ class AssetQuery extends Query<Asset, AssetQueryWhere> {
         if (idx == -1) {
           return out..add(model);
         } else {
-          var l = out[idx];
-          return out
-            ..[idx] = l.copyWith(
-              items: List<ItemEntity>.from(l.items)
-                ..addAll(
-                  model.items.where((c) => !l.items.any((e) => e.id == c.id)),
-                ),
-            );
+          return out..[idx] = mergeRows(out[idx], model);
         }
       });
     });
@@ -328,14 +330,7 @@ class AssetQuery extends Query<Asset, AssetQueryWhere> {
         if (idx == -1) {
           return out..add(model);
         } else {
-          var l = out[idx];
-          return out
-            ..[idx] = l.copyWith(
-              items: List<ItemEntity>.from(l.items)
-                ..addAll(
-                  model.items.where((c) => !l.items.any((e) => e.id == c.id)),
-                ),
-            );
+          return out..[idx] = mergeRows(out[idx], model);
         }
       });
     });

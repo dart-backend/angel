@@ -80,9 +80,11 @@ class HasMapQuery extends Query<HasMap, HasMapQueryWhere> {
     }
     var model = HasMap(
       value: fields.contains('value')
-          ? (row[0] as Map<dynamic, dynamic>?)
+          ? (row[fields.indexOf('value')] as Map<dynamic, dynamic>?)
           : null,
-      list: fields.contains('list') ? (row[1] as List<dynamic>?) : null,
+      list: fields.contains('list')
+          ? (row[fields.indexOf('list')] as List<dynamic>?)
+          : null,
     );
     return Optional.of(model);
   }
