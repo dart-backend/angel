@@ -100,20 +100,6 @@ class UserQuery extends Query<User, UserQueryWhere> {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = UserQueryWhere(this);
-    leftJoin(
-      _todos = UserTodoQuery(trampoline: trampoline, parent: this),
-      'id',
-      'user_id',
-      additionalFields: const ['id', 'user_id', 'title'],
-      trampoline: trampoline,
-    );
-    leftJoin(
-      _address = UserAddressQuery(trampoline: trampoline, parent: this),
-      'id',
-      'user_id',
-      additionalFields: const ['id', 'user_id', 'address'],
-      trampoline: trampoline,
-    );
   }
 
   @override
@@ -123,9 +109,9 @@ class UserQuery extends Query<User, UserQueryWhere> {
 
   UserQueryWhere? _where;
 
-  late UserTodoQuery _todos;
+  late final UserTodoQuery _todos = UserTodoQuery();
 
-  late UserAddressQuery _address;
+  late final UserAddressQuery _address = UserAddressQuery();
 
   @override
   Map<String, String> get casts {
@@ -172,18 +158,6 @@ class UserQuery extends Query<User, UserQueryWhere> {
           ? (row[fields.indexOf('name')] as String)
           : '',
     );
-    {
-      var modelOpt = _todos.parseRow(joinedRow(0, row));
-      modelOpt.ifPresent((m) {
-        model = model.copyWith(todos: [m]);
-      });
-    }
-    {
-      var modelOpt = _address.parseRow(joinedRow(1, row));
-      modelOpt.ifPresent((m) {
-        model = model.copyWith(address: [m]);
-      });
-    }
     return Optional.of(model);
   }
 
@@ -192,73 +166,48 @@ class UserQuery extends Query<User, UserQueryWhere> {
     return parseRow(row);
   }
 
+  /// The query [todos] are loaded with, whose conditions and order apply.
   UserTodoQuery get todos {
     return _todos;
   }
 
+  /// The query [address] are loaded with, whose conditions and order apply.
   UserAddressQuery get address {
     return _address;
   }
 
-  /// [l] with the items of the relations of [r], another row of the same record.
-  static User mergeRows(User l, User r) {
-    return l.copyWith(
-      todos: mergeJoined(
-        l.todos,
-        r.todos,
-        key: (c) => c.id,
-        merge: (a, b) => UserTodoQuery.mergeRows(a as UserTodo, b as UserTodo),
-      ),
-      address: mergeJoined(l.address, r.address, key: (c) => c.id),
-    );
-  }
+  @override
+  bool get loadsRelations => true;
 
   @override
-  bool get recordsSpanRows => true;
-
-  @override
-  Future<List<User>> get(QueryExecutor executor) {
-    return super.get(executor).then((result) {
-      return result.fold<List<User>>([], (out, model) {
-        var idx = out.indexWhere((m) => m.id == model.id);
-
-        if (idx == -1) {
-          return out..add(model);
-        } else {
-          return out..[idx] = mergeRows(out[idx], model);
-        }
-      });
-    });
-  }
-
-  @override
-  Future<List<User>> update(QueryExecutor executor) {
-    return super.update(executor).then((result) {
-      return result.fold<List<User>>([], (out, model) {
-        var idx = out.indexWhere((m) => m.id == model.id);
-
-        if (idx == -1) {
-          return out..add(model);
-        } else {
-          return out..[idx] = mergeRows(out[idx], model);
-        }
-      });
-    });
-  }
-
-  @override
-  Future<List<User>> delete(QueryExecutor executor) {
-    return super.delete(executor).then((result) {
-      return result.fold<List<User>>([], (out, model) {
-        var idx = out.indexWhere((m) => m.id == model.id);
-
-        if (idx == -1) {
-          return out..add(model);
-        } else {
-          return out..[idx] = mergeRows(out[idx], model);
-        }
-      });
-    });
+  Future<List<User>> loadRelations(
+    QueryExecutor executor,
+    List<List> rows,
+    List<User> records,
+    Set<String> loading,
+  ) async {
+    if (records.isEmpty) return records;
+    var todosByKey = loading.contains('user_todo')
+        ? null
+        : await _todos.getByKeys(executor, 'user_id', [
+            for (var row in rows) valueOf('id', row),
+          ], loading);
+    var addressByKey = loading.contains('user_addr')
+        ? null
+        : await _address.getByKeys(executor, 'user_id', [
+            for (var row in rows) valueOf('id', row),
+          ], loading);
+    return [
+      for (var (i, r) in records.indexed)
+        r.copyWith(
+          todos: todosByKey == null
+              ? r.todos
+              : [...?todosByKey['${valueOf('id', rows[i])}']],
+          address: addressByKey == null
+              ? r.address
+              : [...?addressByKey['${valueOf('id', rows[i])}']],
+        ),
+    ];
   }
 }
 
@@ -426,20 +375,6 @@ class UserTodoQuery extends Query<UserTodo, UserTodoQueryWhere> {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = UserTodoQueryWhere(this);
-    leftJoin(
-      _todoValues = TodoValueQuery(trampoline: trampoline, parent: this),
-      'id',
-      'todo_id',
-      additionalFields: const ['id', 'value', 'todo_id', 'description'],
-      trampoline: trampoline,
-    );
-    leftJoin(
-      _todoNotes = TodoNoteQuery(trampoline: trampoline, parent: this),
-      'id',
-      'todo_id',
-      additionalFields: const ['id', 'note', 'todo_id', 'description'],
-      trampoline: trampoline,
-    );
   }
 
   @override
@@ -449,9 +384,9 @@ class UserTodoQuery extends Query<UserTodo, UserTodoQueryWhere> {
 
   UserTodoQueryWhere? _where;
 
-  late TodoValueQuery _todoValues;
+  late final TodoValueQuery _todoValues = TodoValueQuery();
 
-  late TodoNoteQuery _todoNotes;
+  late final TodoNoteQuery _todoNotes = TodoNoteQuery();
 
   @override
   Map<String, String> get casts {
@@ -501,18 +436,6 @@ class UserTodoQuery extends Query<UserTodo, UserTodoQueryWhere> {
           ? (row[fields.indexOf('title')] as String)
           : '',
     );
-    {
-      var modelOpt = _todoValues.parseRow(joinedRow(0, row));
-      modelOpt.ifPresent((m) {
-        model = model.copyWith(todoValues: [m]);
-      });
-    }
-    {
-      var modelOpt = _todoNotes.parseRow(joinedRow(1, row));
-      modelOpt.ifPresent((m) {
-        model = model.copyWith(todoNotes: [m]);
-      });
-    }
     return Optional.of(model);
   }
 
@@ -521,68 +444,48 @@ class UserTodoQuery extends Query<UserTodo, UserTodoQueryWhere> {
     return parseRow(row);
   }
 
+  /// The query [todoValues] are loaded with, whose conditions and order apply.
   TodoValueQuery get todoValues {
     return _todoValues;
   }
 
+  /// The query [todoNotes] are loaded with, whose conditions and order apply.
   TodoNoteQuery get todoNotes {
     return _todoNotes;
   }
 
-  /// [l] with the items of the relations of [r], another row of the same record.
-  static UserTodo mergeRows(UserTodo l, UserTodo r) {
-    return l.copyWith(
-      todoValues: mergeJoined(l.todoValues, r.todoValues, key: (c) => c.id),
-      todoNotes: mergeJoined(l.todoNotes, r.todoNotes, key: (c) => c.id),
-    );
-  }
+  @override
+  bool get loadsRelations => true;
 
   @override
-  bool get recordsSpanRows => true;
-
-  @override
-  Future<List<UserTodo>> get(QueryExecutor executor) {
-    return super.get(executor).then((result) {
-      return result.fold<List<UserTodo>>([], (out, model) {
-        var idx = out.indexWhere((m) => m.id == model.id);
-
-        if (idx == -1) {
-          return out..add(model);
-        } else {
-          return out..[idx] = mergeRows(out[idx], model);
-        }
-      });
-    });
-  }
-
-  @override
-  Future<List<UserTodo>> update(QueryExecutor executor) {
-    return super.update(executor).then((result) {
-      return result.fold<List<UserTodo>>([], (out, model) {
-        var idx = out.indexWhere((m) => m.id == model.id);
-
-        if (idx == -1) {
-          return out..add(model);
-        } else {
-          return out..[idx] = mergeRows(out[idx], model);
-        }
-      });
-    });
-  }
-
-  @override
-  Future<List<UserTodo>> delete(QueryExecutor executor) {
-    return super.delete(executor).then((result) {
-      return result.fold<List<UserTodo>>([], (out, model) {
-        var idx = out.indexWhere((m) => m.id == model.id);
-
-        if (idx == -1) {
-          return out..add(model);
-        } else {
-          return out..[idx] = mergeRows(out[idx], model);
-        }
-      });
-    });
+  Future<List<UserTodo>> loadRelations(
+    QueryExecutor executor,
+    List<List> rows,
+    List<UserTodo> records,
+    Set<String> loading,
+  ) async {
+    if (records.isEmpty) return records;
+    var todoValuesByKey = loading.contains('todo_value')
+        ? null
+        : await _todoValues.getByKeys(executor, 'todo_id', [
+            for (var row in rows) valueOf('id', row),
+          ], loading);
+    var todoNotesByKey = loading.contains('todo_note')
+        ? null
+        : await _todoNotes.getByKeys(executor, 'todo_id', [
+            for (var row in rows) valueOf('id', row),
+          ], loading);
+    return [
+      for (var (i, r) in records.indexed)
+        r.copyWith(
+          todoValues: todoValuesByKey == null
+              ? r.todoValues
+              : [...?todoValuesByKey['${valueOf('id', rows[i])}']],
+          todoNotes: todoNotesByKey == null
+              ? r.todoNotes
+              : [...?todoNotesByKey['${valueOf('id', rows[i])}']],
+        ),
+    ];
   }
 }
 

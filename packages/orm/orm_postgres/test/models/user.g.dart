@@ -66,13 +66,6 @@ class UserQuery extends Query<User, UserQueryWhere> {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = UserQueryWhere(this);
-    leftJoin(
-      '(SELECT role_users.user_id, roles.id, roles.created_at, roles.updated_at, roles.name FROM roles LEFT JOIN role_users ON role_users.role_id=roles.id)',
-      'id',
-      'user_id',
-      additionalFields: const ['id', 'created_at', 'updated_at', 'name'],
-      trampoline: trampoline,
-    );
   }
 
   @override
@@ -146,12 +139,6 @@ class UserQuery extends Query<User, UserQueryWhere> {
           ? (row[fields.indexOf('email')] as String?)
           : null,
     );
-    {
-      var modelOpt = RoleQuery().parseRow(joinedRow(0, row));
-      modelOpt.ifPresent((m) {
-        model = model.copyWith(roles: [m]);
-      });
-    }
     return Optional.of(model);
   }
 
@@ -161,62 +148,42 @@ class UserQuery extends Query<User, UserQueryWhere> {
   }
 
   @override
-  bool canCompile(trampoline) {
-    return (!(trampoline.contains('users') &&
-        trampoline.contains('role_users')));
-  }
-
-  /// [l] with the items of the relations of [r], another row of the same record.
-  static User mergeRows(User l, User r) {
-    return l.copyWith(roles: mergeJoined(l.roles, r.roles, key: (c) => c.id));
-  }
+  bool get loadsRelations => true;
 
   @override
-  bool get recordsSpanRows => true;
-
-  @override
-  Future<List<User>> get(QueryExecutor executor) {
-    return super.get(executor).then((result) {
-      return result.fold<List<User>>([], (out, model) {
-        var idx = out.indexWhere((m) => m.id == model.id);
-
-        if (idx == -1) {
-          return out..add(model);
-        } else {
-          return out..[idx] = mergeRows(out[idx], model);
-        }
-      });
-    });
-  }
-
-  @override
-  Future<List<User>> update(QueryExecutor executor) {
-    return super.update(executor).then((result) {
-      return result.fold<List<User>>([], (out, model) {
-        var idx = out.indexWhere((m) => m.id == model.id);
-
-        if (idx == -1) {
-          return out..add(model);
-        } else {
-          return out..[idx] = mergeRows(out[idx], model);
-        }
-      });
-    });
-  }
-
-  @override
-  Future<List<User>> delete(QueryExecutor executor) {
-    return super.delete(executor).then((result) {
-      return result.fold<List<User>>([], (out, model) {
-        var idx = out.indexWhere((m) => m.id == model.id);
-
-        if (idx == -1) {
-          return out..add(model);
-        } else {
-          return out..[idx] = mergeRows(out[idx], model);
-        }
-      });
-    });
+  Future<List<User>> loadRelations(
+    QueryExecutor executor,
+    List<List> rows,
+    List<User> records,
+    Set<String> loading,
+  ) async {
+    if (records.isEmpty) return records;
+    // The other ends of the many-to-many, then their records.
+    var rolesPivot = loading.contains('roles')
+        ? null
+        : await Query.pivotKeys(executor, 'role_users', 'user_id', 'role_id', [
+            for (var row in rows) valueOf('id', row),
+          ]);
+    var rolesByKey = rolesPivot == null
+        ? null
+        : await RoleQuery().getByKeys(
+            executor,
+            'id',
+            rolesPivot.values.expand((k) => k),
+            loading,
+          );
+    return [
+      for (var (i, r) in records.indexed)
+        r.copyWith(
+          roles: rolesByKey == null
+              ? r.roles
+              : [
+                  for (var k
+                      in rolesPivot!['${valueOf('id', rows[i])}'] ?? const [])
+                    ...?rolesByKey['$k'],
+                ],
+        ),
+    ];
   }
 }
 
@@ -405,16 +372,56 @@ class RoleUserQuery extends Query<RoleUser, RoleUserQueryWhere> {
     return _user;
   }
 
-  /// [l] with the items of the relations of [r], another row of the same record.
-  static RoleUser mergeRows(RoleUser l, RoleUser r) {
-    return l.copyWith(
-      role: l.role == null || r.role == null
-          ? l.role ?? r.role
-          : RoleQuery.mergeRows(l.role as Role, r.role as Role),
-      user: l.user == null || r.user == null
-          ? l.user ?? r.user
-          : UserQuery.mergeRows(l.user as User, r.user as User),
-    );
+  @override
+  bool get loadsRelations => true;
+
+  @override
+  Future<List<RoleUser>> loadRelations(
+    QueryExecutor executor,
+    List<List> rows,
+    List<RoleUser> records,
+    Set<String> loading,
+  ) async {
+    if (records.isEmpty) return records;
+    var roleLoaded = loading.contains('roles')
+        ? null
+        : (await _role.loadRelations(
+            executor,
+            [
+              for (var (i, r) in records.indexed)
+                if (r.role != null) joinedRow(0, rows[i]),
+            ],
+            [
+              for (var r in records)
+                if (r.role != null) r.role as Role,
+            ],
+            {...loading, 'roles'},
+          )).iterator;
+    var userLoaded = loading.contains('users')
+        ? null
+        : (await _user.loadRelations(
+            executor,
+            [
+              for (var (i, r) in records.indexed)
+                if (r.user != null) joinedRow(1, rows[i]),
+            ],
+            [
+              for (var r in records)
+                if (r.user != null) r.user as User,
+            ],
+            {...loading, 'users'},
+          )).iterator;
+    return [
+      for (var r in records)
+        r.copyWith(
+          role: roleLoaded == null || r.role == null
+              ? r.role
+              : (roleLoaded..moveNext()).current,
+          user: userLoaded == null || r.user == null
+              ? r.user
+              : (userLoaded..moveNext()).current,
+        ),
+    ];
   }
 }
 
@@ -466,20 +473,6 @@ class RoleQuery extends Query<Role, RoleQueryWhere> {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = RoleQueryWhere(this);
-    leftJoin(
-      '(SELECT role_users.role_id, users.id, users.created_at, users.updated_at, users.username, users.password, users.email FROM users LEFT JOIN role_users ON role_users.user_id=users.id)',
-      'id',
-      'role_id',
-      additionalFields: const [
-        'id',
-        'created_at',
-        'updated_at',
-        'username',
-        'password',
-        'email',
-      ],
-      trampoline: trampoline,
-    );
   }
 
   @override
@@ -540,12 +533,6 @@ class RoleQuery extends Query<Role, RoleQueryWhere> {
           ? (row[fields.indexOf('name')] as String?)
           : null,
     );
-    {
-      var modelOpt = UserQuery().parseRow(joinedRow(0, row));
-      modelOpt.ifPresent((m) {
-        model = model.copyWith(users: [m]);
-      });
-    }
     return Optional.of(model);
   }
 
@@ -555,62 +542,42 @@ class RoleQuery extends Query<Role, RoleQueryWhere> {
   }
 
   @override
-  bool canCompile(trampoline) {
-    return (!(trampoline.contains('roles') &&
-        trampoline.contains('role_users')));
-  }
-
-  /// [l] with the items of the relations of [r], another row of the same record.
-  static Role mergeRows(Role l, Role r) {
-    return l.copyWith(users: mergeJoined(l.users, r.users, key: (c) => c.id));
-  }
+  bool get loadsRelations => true;
 
   @override
-  bool get recordsSpanRows => true;
-
-  @override
-  Future<List<Role>> get(QueryExecutor executor) {
-    return super.get(executor).then((result) {
-      return result.fold<List<Role>>([], (out, model) {
-        var idx = out.indexWhere((m) => m.id == model.id);
-
-        if (idx == -1) {
-          return out..add(model);
-        } else {
-          return out..[idx] = mergeRows(out[idx], model);
-        }
-      });
-    });
-  }
-
-  @override
-  Future<List<Role>> update(QueryExecutor executor) {
-    return super.update(executor).then((result) {
-      return result.fold<List<Role>>([], (out, model) {
-        var idx = out.indexWhere((m) => m.id == model.id);
-
-        if (idx == -1) {
-          return out..add(model);
-        } else {
-          return out..[idx] = mergeRows(out[idx], model);
-        }
-      });
-    });
-  }
-
-  @override
-  Future<List<Role>> delete(QueryExecutor executor) {
-    return super.delete(executor).then((result) {
-      return result.fold<List<Role>>([], (out, model) {
-        var idx = out.indexWhere((m) => m.id == model.id);
-
-        if (idx == -1) {
-          return out..add(model);
-        } else {
-          return out..[idx] = mergeRows(out[idx], model);
-        }
-      });
-    });
+  Future<List<Role>> loadRelations(
+    QueryExecutor executor,
+    List<List> rows,
+    List<Role> records,
+    Set<String> loading,
+  ) async {
+    if (records.isEmpty) return records;
+    // The other ends of the many-to-many, then their records.
+    var usersPivot = loading.contains('users')
+        ? null
+        : await Query.pivotKeys(executor, 'role_users', 'role_id', 'user_id', [
+            for (var row in rows) valueOf('id', row),
+          ]);
+    var usersByKey = usersPivot == null
+        ? null
+        : await UserQuery().getByKeys(
+            executor,
+            'id',
+            usersPivot.values.expand((k) => k),
+            loading,
+          );
+    return [
+      for (var (i, r) in records.indexed)
+        r.copyWith(
+          users: usersByKey == null
+              ? r.users
+              : [
+                  for (var k
+                      in usersPivot!['${valueOf('id', rows[i])}'] ?? const [])
+                    ...?usersByKey['$k'],
+                ],
+        ),
+    ];
   }
 }
 

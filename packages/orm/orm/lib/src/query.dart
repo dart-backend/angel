@@ -77,11 +77,137 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
     );
   }
 
-  /// Whether a record spans rows, one per item of a join such as a has-many
-  /// relation, which a generated query merges into one. A LIMIT or OFFSET
-  /// then counts records: it applies to the table before the joins, with
-  /// the conditions and the order, which cannot refer to the joins then.
-  bool get recordsSpanRows => false;
+  /// Whether [loadRelations] loads relations of the records, such as a
+  /// has-many, which are not joined, as they span several rows each.
+  bool get loadsRelations => false;
+
+  /// The relations of [records] that are not joined, such as a has-many,
+  /// each loaded with a query of its own, for all of [records] at once.
+  /// [rows] are those [records] were parsed from, by which they are keyed.
+  ///
+  /// [loading] are the tables whose records are being loaded, this one's
+  /// among them: a relation to one of them is not loaded, as it would load
+  /// them again, such as a many-to-many back to this table.
+  ///
+  /// This is usually generated.
+  Future<List<T>> loadRelations(
+    QueryExecutor executor,
+    List<List> rows,
+    List<T> records,
+    Set<String> loading,
+  ) async => records;
+
+  /// The records of [rows], and the rows they were parsed from.
+  (List<List>, List<T>) _parse(List<List> rows) {
+    var parsed = <List>[];
+    var records = <T>[];
+    for (var row in rows) {
+      deserialize(row).ifPresent((record) {
+        parsed.add(row);
+        records.add(record);
+      });
+    }
+    return (parsed, records);
+  }
+
+  /// The records of [rows], with their relations ([loadRelations]).
+  Future<List<T>> _withRelations(
+    QueryExecutor executor,
+    List<List> rows, [
+    Set<String> loading = const {},
+  ]) async {
+    var (parsed, records) = _parse(rows);
+    if (!loadsRelations || records.isEmpty) return records;
+    return loadRelations(executor, parsed, records, {...loading, tableName});
+  }
+
+  /// The value of [column] in [row], a row of this query.
+  Object? valueOf(String column, List row) {
+    var i = fields.indexOf(column);
+    if (i == -1 || i >= row.length) {
+      throw StateError('$tableName.$column is not selected, so cannot key.');
+    }
+    return row[i];
+  }
+
+  /// A condition that only [getByKeys] sets, as [where] may be the user's.
+  String? _keysCondition;
+
+  /// The records of this query whose [column] is one of [keys], with their
+  /// relations, by the value of [column], as text, so that a key of a
+  /// [Model], a `String`, matches that of the column, an `int`: for a
+  /// relation of records being loaded ([loadRelations]).
+  Future<Map<String, List<T>>> getByKeys(
+    QueryExecutor executor,
+    String column,
+    Iterable<Object?> keys,
+    Set<String> loading,
+  ) async {
+    var distinct = keys.where((k) => k != null).toSet().toList();
+    var byKey = <String, List<T>>{};
+    // In parts, as a database binds a limited number of parameters.
+    for (var start = 0; start < distinct.length; start += _keysPerQuery) {
+      var names = <String>[];
+      for (var key in distinct.skip(start).take(_keysPerQuery)) {
+        var name = reserveName('${column}_key');
+        substitutionValues[name] = key;
+        names.add('@$name');
+      }
+      List<List> rows;
+      try {
+        _keysCondition =
+            '${adornWithTableName(column)} IN (${names.join(', ')})';
+        var sql = compile({});
+        _log.fine('sql = $sql');
+        rows = await executor.query(tableName, sql, substitutionValues);
+      } finally {
+        _keysCondition = null;
+        for (var name in names) {
+          substitutionValues.remove(name.substring(1));
+        }
+      }
+      var (parsed, records) = _parse(rows);
+      if (loadsRelations && records.isNotEmpty) {
+        records = await loadRelations(executor, parsed, records, {
+          ...loading,
+          tableName,
+        });
+      }
+      for (var (i, record) in records.indexed) {
+        var key = '${valueOf(column, parsed[i])}';
+        (byKey[key] ??= []).add(record);
+      }
+    }
+    return byKey;
+  }
+
+  static const _keysPerQuery = 1000;
+
+  /// For each of [keys], the values of [to] of the rows of [table] whose
+  /// [from] is it, by [from], as text: the other ends of a many-to-many.
+  static Future<Map<String, List<Object?>>> pivotKeys(
+    QueryExecutor executor,
+    String table,
+    String from,
+    String to,
+    Iterable<Object?> keys,
+  ) async {
+    var distinct = keys.where((k) => k != null).toSet().toList();
+    var byKey = <String, List<Object?>>{};
+    for (var start = 0; start < distinct.length; start += _keysPerQuery) {
+      var values = <String, dynamic>{};
+      for (var key in distinct.skip(start).take(_keysPerQuery)) {
+        values['${from}_key${values.length}'] = key;
+      }
+      var sql =
+          'SELECT $table.$from, $table.$to FROM $table '
+          'WHERE $table.$from IN (${values.keys.map((n) => '@$n').join(', ')})';
+      for (var row in await executor.query(table, sql, values)) {
+        (byKey['${row[0]}'] ??= []).add(row[1]);
+      }
+    }
+    return byKey;
+  }
 
   /// Determines whether this query can be compiled.
   ///
@@ -457,21 +583,11 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
             if (_offset != null) ' OFFSET $_offset',
           ].join();
 
-    // A LIMIT or OFFSET of records that span rows counts records.
-    if (recordsSpanRows &&
-        limits.isNotEmpty &&
-        preamble == null &&
-        fromQuery == null &&
-        _groupBy == null) {
-      var records = StringBuffer('SELECT * FROM $tableName');
-      if (whereClause?.isNotEmpty == true) {
-        records.write(' WHERE $whereClause');
-      }
-      if (orderByClause.isNotEmpty) records.write(' ORDER BY $orderByClause');
-      records.write(limits);
-      whereClause = null;
-      limits = '';
-      fromQuery = '($records) $tableName';
+    var keys = _keysCondition;
+    if (keys != null && rowsWhere == null) {
+      whereClause = whereClause?.isNotEmpty == true
+          ? '($whereClause) AND $keys'
+          : keys;
     }
 
     b.write(' FROM ${fromQuery ?? tableName}');
@@ -496,8 +612,20 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
     return b.toString();
   }
 
-  /// The first matching record. Only one is fetched, with all its rows when
-  /// it spans several ([recordsSpanRows]).
+  /// The matching records, with their relations ([loadRelations]).
+  @override
+  Future<List<T>> get(QueryExecutor executor) async {
+    var sql = compile({});
+    _log.fine('sql = $sql');
+    _log.fine('values = $substitutionValues');
+    return _withRelations(
+      executor,
+      await executor.query(tableName, sql, substitutionValues),
+    );
+  }
+
+  /// The first matching record. Only one row is fetched, as a record spans
+  /// one: the relations of several rows each are loaded on their own.
   @override
   Future<Optional<T>> getOne(QueryExecutor executor) async {
     if (_limit != null) return super.getOne(executor);
@@ -522,7 +650,10 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
     _log.fine("Substritution Values = $substitutionValues");
 
     // MySQL has no RETURNING: the rows are selected first, in a transaction.
-    if (_joins.isEmpty && executor.dialect is PostgreSQLDialect) {
+    // Its relations are loaded before it is deleted, as they may be with it.
+    if (_joins.isEmpty &&
+        !loadsRelations &&
+        executor.dialect is PostgreSQLDialect) {
       return executor
           .query(
             tableName,
@@ -561,7 +692,11 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
   ) async {
     _log.fine("Insert Query = $sql");
     await executor.query(tableName, sql, substitutionValues);
-    return deserialize([for (var field in fields) _boundValue(field)]);
+    return _first(
+      _withRelations(executor, [
+        [for (var field in fields) _boundValue(field)],
+      ]),
+    );
   }
 
   /// The value bound to [column] by the values of the query, as an insert or
@@ -619,12 +754,10 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
             returningFields: fields,
             returningQuery: returningSql,
           )
-          .then((result) {
-            //_log.fine("Result Values: $result");
-            return result.isEmpty
-                ? Optional.empty()
-                : deserialize(result.first);
-          });
+          .then(
+            (result) =>
+                _first(_withRelations(executor, result.take(1).toList())),
+          );
     }
   }
 
@@ -656,7 +789,8 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
           'RETURNING $returning) $select';
       _log.fine("Update Query = $sql");
       _log.fine("Substitution Values = $substitutionValues");
-      return deserializeList(
+      return _withRelations(
+        executor,
         await executor.query(tableName, sql, substitutionValues),
       );
     }
@@ -675,7 +809,7 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
       return executor.transaction((tx) async {
         var rows = await tx.query(tableName, select, substitutionValues);
         await tx.query(tableName, sql, substitutionValues);
-        return deserializeList([
+        return _withRelations(tx, [
           for (var row in rows)
             [
               for (var (i, field) in fields.indexed)
@@ -702,7 +836,8 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
     _log.fine("Update Query = $sql");
     _log.fine("Substitution Values = $substitutionValues");
     await executor.query(tableName, sql, substitutionValues);
-    return deserializeList(
+    return _withRelations(
+      executor,
       await executor.query(
         tableName,
         _compile({}, rowsWhere: '${adornWithTableName('id')} IN ($ids)'),
@@ -710,6 +845,10 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
       ),
     );
   }
+
+  Future<Optional<T>> _first(Future<List<T>> records) => records.then(
+    (it) => it.isEmpty ? Optional.empty() : Optional.of(it.first),
+  );
 
   /// Binds a primary key that is not an int (e.g. a UUID) as a parameter.
   String _bindId(Object? id) {

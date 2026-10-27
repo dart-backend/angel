@@ -34,20 +34,6 @@ class AccountQuery extends Query<Account, AccountQueryWhere> {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = AccountQueryWhere(this);
-    leftJoin(
-      _assets = AssetQuery(trampoline: trampoline, parent: this),
-      'id',
-      'account_id',
-      additionalFields: const [
-        'id',
-        'created_at',
-        'updated_at',
-        'description',
-        'name',
-        'price',
-      ],
-      trampoline: trampoline,
-    );
   }
 
   @override
@@ -57,7 +43,7 @@ class AccountQuery extends Query<Account, AccountQueryWhere> {
 
   AccountQueryWhere? _where;
 
-  late AssetQuery _assets;
+  late final AssetQuery _assets = AssetQuery();
 
   @override
   Map<String, String> get casts {
@@ -123,12 +109,6 @@ class AccountQuery extends Query<Account, AccountQueryWhere> {
           ? mapToDouble(row[fields.indexOf('price')])
           : 0.0,
     );
-    {
-      var modelOpt = _assets.parseRow(joinedRow(0, row));
-      modelOpt.ifPresent((m) {
-        model = model.copyWith(assets: [m]);
-      });
-    }
     return Optional.of(model);
   }
 
@@ -137,68 +117,35 @@ class AccountQuery extends Query<Account, AccountQueryWhere> {
     return parseRow(row);
   }
 
+  /// The query [assets] are loaded with, whose conditions and order apply.
   AssetQuery get assets {
     return _assets;
   }
 
-  /// [l] with the items of the relations of [r], another row of the same record.
-  static Account mergeRows(Account l, Account r) {
-    return l.copyWith(
-      assets: mergeJoined(
-        l.assets,
-        r.assets,
-        key: (c) => c.id,
-        merge: (a, b) => AssetQuery.mergeRows(a as Asset, b as Asset),
-      ),
-    );
-  }
+  @override
+  bool get loadsRelations => true;
 
   @override
-  bool get recordsSpanRows => true;
-
-  @override
-  Future<List<Account>> get(QueryExecutor executor) {
-    return super.get(executor).then((result) {
-      return result.fold<List<Account>>([], (out, model) {
-        var idx = out.indexWhere((m) => m.id == model.id);
-
-        if (idx == -1) {
-          return out..add(model);
-        } else {
-          return out..[idx] = mergeRows(out[idx], model);
-        }
-      });
-    });
-  }
-
-  @override
-  Future<List<Account>> update(QueryExecutor executor) {
-    return super.update(executor).then((result) {
-      return result.fold<List<Account>>([], (out, model) {
-        var idx = out.indexWhere((m) => m.id == model.id);
-
-        if (idx == -1) {
-          return out..add(model);
-        } else {
-          return out..[idx] = mergeRows(out[idx], model);
-        }
-      });
-    });
-  }
-
-  @override
-  Future<List<Account>> delete(QueryExecutor executor) {
-    return super.delete(executor).then((result) {
-      return result.fold<List<Account>>([], (out, model) {
-        var idx = out.indexWhere((m) => m.id == model.id);
-
-        if (idx == -1) {
-          return out..add(model);
-        } else {
-          return out..[idx] = mergeRows(out[idx], model);
-        }
-      });
-    });
+  Future<List<Account>> loadRelations(
+    QueryExecutor executor,
+    List<List> rows,
+    List<Account> records,
+    Set<String> loading,
+  ) async {
+    if (records.isEmpty) return records;
+    var assetsByKey = loading.contains('assets')
+        ? null
+        : await _assets.getByKeys(executor, 'account_id', [
+            for (var row in rows) valueOf('id', row),
+          ], loading);
+    return [
+      for (var (i, r) in records.indexed)
+        r.copyWith(
+          assets: assetsByKey == null
+              ? r.assets
+              : [...?assetsByKey['${valueOf('id', rows[i])}']],
+        ),
+    ];
   }
 }
 

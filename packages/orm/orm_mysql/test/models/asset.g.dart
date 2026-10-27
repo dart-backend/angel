@@ -183,13 +183,6 @@ class AssetQuery extends Query<Asset, AssetQueryWhere> {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = AssetQueryWhere(this);
-    leftJoin(
-      _items = ItemQuery(trampoline: trampoline, parent: this),
-      'id',
-      'asset_id',
-      additionalFields: const ['id', 'created_at', 'updated_at', 'description'],
-      trampoline: trampoline,
-    );
   }
 
   @override
@@ -199,7 +192,7 @@ class AssetQuery extends Query<Asset, AssetQueryWhere> {
 
   AssetQueryWhere? _where;
 
-  late ItemQuery _items;
+  late final ItemQuery _items = ItemQuery();
 
   @override
   Map<String, String> get casts {
@@ -265,12 +258,6 @@ class AssetQuery extends Query<Asset, AssetQueryWhere> {
           ? mapToDouble(row[fields.indexOf('price')])
           : 0.0,
     );
-    {
-      var modelOpt = _items.parseRow(joinedRow(0, row));
-      modelOpt.ifPresent((m) {
-        model = model.copyWith(items: [m]);
-      });
-    }
     return Optional.of(model);
   }
 
@@ -279,61 +266,35 @@ class AssetQuery extends Query<Asset, AssetQueryWhere> {
     return parseRow(row);
   }
 
+  /// The query [items] are loaded with, whose conditions and order apply.
   ItemQuery get items {
     return _items;
   }
 
-  /// [l] with the items of the relations of [r], another row of the same record.
-  static Asset mergeRows(Asset l, Asset r) {
-    return l.copyWith(items: mergeJoined(l.items, r.items, key: (c) => c.id));
-  }
+  @override
+  bool get loadsRelations => true;
 
   @override
-  bool get recordsSpanRows => true;
-
-  @override
-  Future<List<Asset>> get(QueryExecutor executor) {
-    return super.get(executor).then((result) {
-      return result.fold<List<Asset>>([], (out, model) {
-        var idx = out.indexWhere((m) => m.id == model.id);
-
-        if (idx == -1) {
-          return out..add(model);
-        } else {
-          return out..[idx] = mergeRows(out[idx], model);
-        }
-      });
-    });
-  }
-
-  @override
-  Future<List<Asset>> update(QueryExecutor executor) {
-    return super.update(executor).then((result) {
-      return result.fold<List<Asset>>([], (out, model) {
-        var idx = out.indexWhere((m) => m.id == model.id);
-
-        if (idx == -1) {
-          return out..add(model);
-        } else {
-          return out..[idx] = mergeRows(out[idx], model);
-        }
-      });
-    });
-  }
-
-  @override
-  Future<List<Asset>> delete(QueryExecutor executor) {
-    return super.delete(executor).then((result) {
-      return result.fold<List<Asset>>([], (out, model) {
-        var idx = out.indexWhere((m) => m.id == model.id);
-
-        if (idx == -1) {
-          return out..add(model);
-        } else {
-          return out..[idx] = mergeRows(out[idx], model);
-        }
-      });
-    });
+  Future<List<Asset>> loadRelations(
+    QueryExecutor executor,
+    List<List> rows,
+    List<Asset> records,
+    Set<String> loading,
+  ) async {
+    if (records.isEmpty) return records;
+    var itemsByKey = loading.contains('items')
+        ? null
+        : await _items.getByKeys(executor, 'asset_id', [
+            for (var row in rows) valueOf('id', row),
+          ], loading);
+    return [
+      for (var (i, r) in records.indexed)
+        r.copyWith(
+          items: itemsByKey == null
+              ? r.items
+              : [...?itemsByKey['${valueOf('id', rows[i])}']],
+        ),
+    ];
   }
 }
 

@@ -116,6 +116,22 @@ void main() {
       });
     });
 
+    test(
+      'loads children with the conditions and order of their query',
+      () async {
+        var query = UserQuery()..where!.id.equals(userId);
+        query.todos
+          ..where!.title.notEquals('Online')
+          ..orderBy('title');
+        var user = (await query.getOne(executor)).value;
+        expect(user.todos.map((t) => t.title), ['Home', 'Office']);
+
+        // Again, with the same query: its conditions are not added twice.
+        user = (await query.getOne(executor)).value;
+        expect(user.todos.map((t) => t.title), ['Home', 'Office']);
+      },
+    );
+
     group('a limit counts records, not the rows of their joins', () {
       setUp(() async {
         var other = UserQuery();

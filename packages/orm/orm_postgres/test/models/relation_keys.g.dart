@@ -233,13 +233,6 @@ class LoginQuery extends Query<Login, LoginQueryWhere> {
       additionalFields: const ['id', 'created_at', 'updated_at', 'handle'],
       trampoline: trampoline,
     );
-    leftJoin(
-      '(SELECT login_grant_links.login_id, grants.id, grants.created_at, grants.updated_at, grants.name FROM grants LEFT JOIN login_grant_links ON login_grant_links.grant_id=grants.id)',
-      'id',
-      'login_id',
-      additionalFields: const ['id', 'created_at', 'updated_at', 'name'],
-      trampoline: trampoline,
-    );
   }
 
   @override
@@ -323,12 +316,6 @@ class LoginQuery extends Query<Login, LoginQueryWhere> {
         model = model.copyWith(backupIdentity: m);
       });
     }
-    {
-      var modelOpt = GrantQuery().parseRow(joinedRow(2, row));
-      modelOpt.ifPresent((m) {
-        model = model.copyWith(grants: [m]);
-      });
-    }
     return Optional.of(model);
   }
 
@@ -346,64 +333,46 @@ class LoginQuery extends Query<Login, LoginQueryWhere> {
   }
 
   @override
-  bool canCompile(trampoline) {
-    return (!(trampoline.contains('logins') &&
-        trampoline.contains('login_grant_links')));
-  }
-
-  /// [l] with the items of the relations of [r], another row of the same record.
-  static Login mergeRows(Login l, Login r) {
-    return l.copyWith(
-      grants: mergeJoined(l.grants, r.grants, key: (c) => c.id),
-    );
-  }
+  bool get loadsRelations => true;
 
   @override
-  bool get recordsSpanRows => true;
-
-  @override
-  Future<List<Login>> get(QueryExecutor executor) {
-    return super.get(executor).then((result) {
-      return result.fold<List<Login>>([], (out, model) {
-        var idx = out.indexWhere((m) => m.id == model.id);
-
-        if (idx == -1) {
-          return out..add(model);
-        } else {
-          return out..[idx] = mergeRows(out[idx], model);
-        }
-      });
-    });
-  }
-
-  @override
-  Future<List<Login>> update(QueryExecutor executor) {
-    return super.update(executor).then((result) {
-      return result.fold<List<Login>>([], (out, model) {
-        var idx = out.indexWhere((m) => m.id == model.id);
-
-        if (idx == -1) {
-          return out..add(model);
-        } else {
-          return out..[idx] = mergeRows(out[idx], model);
-        }
-      });
-    });
-  }
-
-  @override
-  Future<List<Login>> delete(QueryExecutor executor) {
-    return super.delete(executor).then((result) {
-      return result.fold<List<Login>>([], (out, model) {
-        var idx = out.indexWhere((m) => m.id == model.id);
-
-        if (idx == -1) {
-          return out..add(model);
-        } else {
-          return out..[idx] = mergeRows(out[idx], model);
-        }
-      });
-    });
+  Future<List<Login>> loadRelations(
+    QueryExecutor executor,
+    List<List> rows,
+    List<Login> records,
+    Set<String> loading,
+  ) async {
+    if (records.isEmpty) return records;
+    // The other ends of the many-to-many, then their records.
+    var grantsPivot = loading.contains('grants')
+        ? null
+        : await Query.pivotKeys(
+            executor,
+            'login_grant_links',
+            'login_id',
+            'grant_id',
+            [for (var row in rows) valueOf('id', row)],
+          );
+    var grantsByKey = grantsPivot == null
+        ? null
+        : await GrantQuery().getByKeys(
+            executor,
+            'id',
+            grantsPivot.values.expand((k) => k),
+            loading,
+          );
+    return [
+      for (var (i, r) in records.indexed)
+        r.copyWith(
+          grants: grantsByKey == null
+              ? r.grants
+              : [
+                  for (var k
+                      in grantsPivot!['${valueOf('id', rows[i])}'] ?? const [])
+                    ...?grantsByKey['$k'],
+                ],
+        ),
+    ];
   }
 }
 
@@ -602,16 +571,56 @@ class LoginGrantQuery extends Query<LoginGrant, LoginGrantQueryWhere> {
     return _grant;
   }
 
-  /// [l] with the items of the relations of [r], another row of the same record.
-  static LoginGrant mergeRows(LoginGrant l, LoginGrant r) {
-    return l.copyWith(
-      login: l.login == null || r.login == null
-          ? l.login ?? r.login
-          : LoginQuery.mergeRows(l.login as Login, r.login as Login),
-      grant: l.grant == null || r.grant == null
-          ? l.grant ?? r.grant
-          : GrantQuery.mergeRows(l.grant as Grant, r.grant as Grant),
-    );
+  @override
+  bool get loadsRelations => true;
+
+  @override
+  Future<List<LoginGrant>> loadRelations(
+    QueryExecutor executor,
+    List<List> rows,
+    List<LoginGrant> records,
+    Set<String> loading,
+  ) async {
+    if (records.isEmpty) return records;
+    var loginLoaded = loading.contains('logins')
+        ? null
+        : (await _login.loadRelations(
+            executor,
+            [
+              for (var (i, r) in records.indexed)
+                if (r.login != null) joinedRow(0, rows[i]),
+            ],
+            [
+              for (var r in records)
+                if (r.login != null) r.login as Login,
+            ],
+            {...loading, 'logins'},
+          )).iterator;
+    var grantLoaded = loading.contains('grants')
+        ? null
+        : (await _grant.loadRelations(
+            executor,
+            [
+              for (var (i, r) in records.indexed)
+                if (r.grant != null) joinedRow(1, rows[i]),
+            ],
+            [
+              for (var r in records)
+                if (r.grant != null) r.grant as Grant,
+            ],
+            {...loading, 'grants'},
+          )).iterator;
+    return [
+      for (var r in records)
+        r.copyWith(
+          login: loginLoaded == null || r.login == null
+              ? r.login
+              : (loginLoaded..moveNext()).current,
+          grant: grantLoaded == null || r.grant == null
+              ? r.grant
+              : (grantLoaded..moveNext()).current,
+        ),
+    ];
   }
 }
 
@@ -663,20 +672,6 @@ class GrantQuery extends Query<Grant, GrantQueryWhere> {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = GrantQueryWhere(this);
-    leftJoin(
-      '(SELECT login_grant_links.grant_id, logins.id, logins.created_at, logins.updated_at, logins.name, logins.user_identity_id, logins.backup_identity_id FROM logins LEFT JOIN login_grant_links ON login_grant_links.login_id=logins.id)',
-      'id',
-      'grant_id',
-      additionalFields: const [
-        'id',
-        'created_at',
-        'updated_at',
-        'name',
-        'user_identity_id',
-        'backup_identity_id',
-      ],
-      trampoline: trampoline,
-    );
   }
 
   @override
@@ -737,12 +732,6 @@ class GrantQuery extends Query<Grant, GrantQueryWhere> {
           ? (row[fields.indexOf('name')] as String?)
           : null,
     );
-    {
-      var modelOpt = LoginQuery().parseRow(joinedRow(0, row));
-      modelOpt.ifPresent((m) {
-        model = model.copyWith(logins: [m]);
-      });
-    }
     return Optional.of(model);
   }
 
@@ -752,64 +741,46 @@ class GrantQuery extends Query<Grant, GrantQueryWhere> {
   }
 
   @override
-  bool canCompile(trampoline) {
-    return (!(trampoline.contains('grants') &&
-        trampoline.contains('login_grant_links')));
-  }
-
-  /// [l] with the items of the relations of [r], another row of the same record.
-  static Grant mergeRows(Grant l, Grant r) {
-    return l.copyWith(
-      logins: mergeJoined(l.logins, r.logins, key: (c) => c.id),
-    );
-  }
+  bool get loadsRelations => true;
 
   @override
-  bool get recordsSpanRows => true;
-
-  @override
-  Future<List<Grant>> get(QueryExecutor executor) {
-    return super.get(executor).then((result) {
-      return result.fold<List<Grant>>([], (out, model) {
-        var idx = out.indexWhere((m) => m.id == model.id);
-
-        if (idx == -1) {
-          return out..add(model);
-        } else {
-          return out..[idx] = mergeRows(out[idx], model);
-        }
-      });
-    });
-  }
-
-  @override
-  Future<List<Grant>> update(QueryExecutor executor) {
-    return super.update(executor).then((result) {
-      return result.fold<List<Grant>>([], (out, model) {
-        var idx = out.indexWhere((m) => m.id == model.id);
-
-        if (idx == -1) {
-          return out..add(model);
-        } else {
-          return out..[idx] = mergeRows(out[idx], model);
-        }
-      });
-    });
-  }
-
-  @override
-  Future<List<Grant>> delete(QueryExecutor executor) {
-    return super.delete(executor).then((result) {
-      return result.fold<List<Grant>>([], (out, model) {
-        var idx = out.indexWhere((m) => m.id == model.id);
-
-        if (idx == -1) {
-          return out..add(model);
-        } else {
-          return out..[idx] = mergeRows(out[idx], model);
-        }
-      });
-    });
+  Future<List<Grant>> loadRelations(
+    QueryExecutor executor,
+    List<List> rows,
+    List<Grant> records,
+    Set<String> loading,
+  ) async {
+    if (records.isEmpty) return records;
+    // The other ends of the many-to-many, then their records.
+    var loginsPivot = loading.contains('logins')
+        ? null
+        : await Query.pivotKeys(
+            executor,
+            'login_grant_links',
+            'grant_id',
+            'login_id',
+            [for (var row in rows) valueOf('id', row)],
+          );
+    var loginsByKey = loginsPivot == null
+        ? null
+        : await LoginQuery().getByKeys(
+            executor,
+            'id',
+            loginsPivot.values.expand((k) => k),
+            loading,
+          );
+    return [
+      for (var (i, r) in records.indexed)
+        r.copyWith(
+          logins: loginsByKey == null
+              ? r.logins
+              : [
+                  for (var k
+                      in loginsPivot!['${valueOf('id', rows[i])}'] ?? const [])
+                    ...?loginsByKey['$k'],
+                ],
+        ),
+    ];
   }
 }
 

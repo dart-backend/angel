@@ -4,6 +4,7 @@
 
 ### Breaking changes in 10.0.0
 
+* **Breaking:** `get`, `update`, `delete` and `insert` return records with the relations `loadRelations` loads, each with a query of its own after the records: a record is one row, so a `limit` or `offset` counts records, and `getOne` fetches one row
 * **Breaking:** On MySQL and MariaDB, an insert's `returningQuery` selects the inserted row by the id given, or by `@angel3_insert_id` (`insertIdParameter`), which the executor binds to the driver's insert id, instead of the last row by id, which may be another connection's
 * **Breaking:** `Column.precision` and `Column.scale` are `int?`, and `null` unless given (were 17 and 3). A `numeric` or `decimal` without them is unbounded on PostgreSQL
 
@@ -11,11 +12,10 @@
 
 * `replacePlaceholders`, which swaps `@name` placeholders for a driver's (e.g. `?`)
 * `QueryValues.parameterNameOf`, and `Column.defaultLength`, `defaultPrecision` and `defaultScale`
-* `Query.joinedRow`, the columns of a row a join adds, with those of the joins of its query, and `mergeJoined`, which merges the items of a relation from two rows of one record; `JoinBuilder.query` and `JoinBuilder.columnNameFor`
+* `Query.loadRelations`, which loads the relations of records that are not joined, such as a has-many, with a query each for all the records, and `loadsRelations`, `getByKeys`, `pivotKeys`, `valueOf` and `joinedRow` for it; `JoinBuilder.query` and `JoinBuilder.columnNameFor`
 
 ### Fixes in 10.0.0
 
-* **Limits:** A `limit` or `offset` of a query whose records span rows (`Query.recordsSpanRows`, set by generated queries with a `@HasMany`) counts records, not the rows of their joins: it applies to the table before the joins, with the conditions and the order, which cannot refer to the joins then; `getOne` fetches one record, with all its rows, where a query with joins fetched every row
 * **Joins:** A query selects the columns of the joins of a query it joins, so a relation of a relation, such as a `@HasMany` nested in a `@HasMany`, is no longer dropped; a join that cannot be compiled selects `NULL`s named as its columns, including those of its own joins, so the columns after it keep their place
 * **Security:** `StringSqlExpressionBuilder.like` passes its pattern as a parameter, where a pattern from user input allowed SQL injection; `sanitize` is applied to the pattern
 * **Parameters:** `Query.reserveName` never returns the same name twice, so two values of one column no longer overwrite each other (an `update` with a condition and a new value on one column changed the wrong rows). `replacePlaceholders` leaves `@` in string literals, quoted identifiers and `@@variables`
