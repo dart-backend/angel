@@ -23,6 +23,8 @@
 * **`query` and `reql` callbacks:** Any function is applied, such as `(q) => q.filter(...)`, where only one typed as a `QueryCallback` was, and any other was ignored: `index` returned every record, and a server-side `remove(null)` removed them all. A callback that does not return a query is an `ArgumentError`
 * **Writes on a service over a query that is not a table:** `modify` and `update` return the record also when the write moves it out of the query, where they wrote it and then failed with a 404
 * **Dependencies:** Removed the unused `angel3_container`, and `belatuk_json_serializer`, which needed `dart:mirrors` and was only reached for data that is not a `Map`, which the service does not accept; the tests no longer use `MirrorsReflector`
+* **Docs:** The README tells how to migrate from 9.x
+
 
 ## 9.1.0
 

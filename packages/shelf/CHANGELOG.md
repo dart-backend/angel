@@ -9,6 +9,8 @@
 * **`app`:** `ShelfRequestContext` and `ShelfResponseContext` set `app`, so `ioc` works and `app.maxBodySize` applies to shelf bodies
 * **Deprecated:** `throwOnNullResponse` of `embedShelf`, which turned every response into a 500, has no effect
 * **Tests:** The tests and example no longer use `MirrorsReflector`
+* **Docs:** The README tells how to install and use the package
+
 
 ## 9.1.0-beta-4
 

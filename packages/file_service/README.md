@@ -21,6 +21,15 @@ Values are kept as JSON has them: a `DateTime` is stored, and returned, as its I
 
 While not necessarily *slow*, this package makes no promises about performance.
 
+## Installation
+
+In your `pubspec.yaml`:
+
+```yaml
+dependencies:
+  angel3_file_service: ^10.0.0
+```
+
 ## Usage
 
 ```dart
@@ -34,3 +43,21 @@ configureServer(Angel app) async {
   );
 }
 ```
+
+## Migrating from 9.x to 10.0.0
+
+The breaking changes of each release are listed in the [CHANGELOG](CHANGELOG.md). Those of 10.0.0 that may need changes in an app:
+
+* **Dates**: strings are no longer turned into `DateTime`s as the file is read, so a string such as the id `20240101` stays a string. A `DateTime` given to `create`, `modify` or `update` is stored, and returned, as its ISO 8601 string. Convert dates where you know a field is one, e.g. with a `TypedService` or a model's `fromMap`.
+* **Values**: values are turned into JSON by `json.encode`. A value without a `toJson()`, such as a `Uri`, a map key that is not a string, and a cycle throw, and store nothing, where they were stored as their `toString()`.
+* **A `store` of your own**: `allowRemoveAll` and `allowQuery` are set on the store, so passing other values than the store's throws an `ArgumentError`; and `close` no longer closes a store you give:
+
+  ```dart
+  var store = MapService(allowRemoveAll: true);
+  var service = JsonFileService(file, store: store);
+  // ...
+  await service.close();
+  await store.close();
+  ```
+
+* Requires `angel3_framework` 10.

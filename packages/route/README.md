@@ -15,14 +15,24 @@ A powerful, isomorphic routing library for Dart.
 
 - [Angel3 Route](#angel3-route)
   - [Contents](#contents)
-  - [Examples](#examples)
+  - [Installation](#installation)
+  - [Usage](#usage)
     - [Routing](#routing)
     - [Hierarchy](#hierarchy)
   - [In the Browser](#in-the-browser)
   - [Route State](#route-state)
   - [Route Parameters](#route-parameters)
 
-## Examples
+## Installation
+
+In your `pubspec.yaml`:
+
+```yaml
+dependencies:
+  angel3_route: ^10.0.0
+```
+
+## Usage
 
 ### Routing
 

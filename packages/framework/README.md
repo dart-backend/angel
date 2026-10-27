@@ -69,6 +69,41 @@ This package is the core package of [Angel3](https://github.com/dart-backend/ang
 
 6. Run as docker. Edit and build the image with the provided `Dockerfile` file.
 
+### (Option 3) Add Angel3 to an existing project
+
+In your `pubspec.yaml`:
+
+```yaml
+dependencies:
+  angel3_framework: ^10.0.0
+```
+
+## Usage
+
+```dart
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_framework/http.dart';
+
+void main() async {
+  var app = Angel();
+
+  // Index route. Returns JSON.
+  app.get('/', (req, res) => 'Welcome to Angel!');
+
+  // Accepts a URL like /greet/foo or /greet/bob.
+  app.get('/greet/:name', (req, res) => 'Hello, ${req.params['name']}!');
+
+  // Simple fallback to throw a 404 on unknown paths.
+  app.fallback((req, res) => throw AngelHttpException.notFound());
+
+  var http = AngelHttp(app);
+  await http.startServer('127.0.0.1', 3000);
+  print('Listening at ${http.uri}');
+}
+```
+
+See the [example](example/) directory for services, views, error handling and more.
+
 ## Running without `dart:mirrors` (AOT)
 
 `dart compile exe` and Flutter do not support `dart:mirrors`. Create the app without a `reflector` and it runs with reflection disabled:
@@ -180,10 +215,6 @@ An HTTP/2 request gets a session, and the session cookie, only when `req.session
 The performance benchmark can be found at
 
 [TechEmpower Framework Benchmarks Round 21](https://www.techempower.com/benchmarks/#section=data-r21&test=composite)
-
-### Migrating from Angel to Angel3
-
-Check out [Migrating to Angel3](https://angel3-docs.dukefirehawk.com/migration/angel-2.x.x-to-angel3/migration-guide-3)
 
 ## Donation & Support
 

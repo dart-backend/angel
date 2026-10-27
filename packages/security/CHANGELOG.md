@@ -17,8 +17,9 @@
 * **`CookieSigner`:** A value containing `.` is verified, where it was always refused, and a signed cookie keeps its `SameSite`, where signing dropped it
 * **`InMemoryRateLimiter`:** Ended windows are removed, and after the clock is set back, those that start later too, where one was kept for every user (e.g. every IP) ever seen
 * **`Retry-After`:** Rounded up, and at least 1, where a client could be told to retry after 0 seconds while the window lasted
-* **Docs:** `RateLimiter` tells that requests of one user at the same time may together exceed the limit, unless the store updates windows atomically
+* **Docs:** The README tells how to install and use the package, and how to migrate from 9.x, and `RateLimiter` tells that requests of one user at the same time may together exceed the limit, unless the store updates windows atomically
 * **Tests:** Cover `CookieSigner` and the rate limiters
+
 
 ## 9.1.0
 

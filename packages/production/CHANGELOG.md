@@ -20,6 +20,8 @@
 * **Arguments:** An invalid `--port` or `--concurrency` is a usage error; `--help` comes before other checks
 * **HTTP/2:** `responseHeaders` and `removeResponseHeaders` apply with `--http2` as without it, to HTTP/2 requests and to the HTTP/1 requests it also serves: the added headers are defaults that a handler's own headers replace, and the removed values are removed from the defaults only. A list value is one header of its values, except `Set-Cookie`, whose values are sent one header each, before the cookies of the handler, so that one of these wins. Its HTTP/1 requests finish on shutdown
 * **`removeResponseHeaders`:** A list value removes each of its values, where it removed nothing; a value matches exactly, or ignoring case if nothing matches exactly, such as `sameorigin` for the `SAMEORIGIN` of `dart:io`, and a `null` value removes a header whatever its values, as with `AngelHttp.removeResponseHeader`
+* **Docs:** The README tells how to install and use the package, and how to migrate from 9.x
+
 
 ## 9.1.0
 

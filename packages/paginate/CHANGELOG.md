@@ -14,6 +14,8 @@
 * **Paginator:** `canGoForward` is `false` on the last page, and `next` does not go past it, where both went one page beyond it
 * **Paginator:** The `endIndex` of a page with no items is `-1`, as its `startIndex` is
 * **Paginator:** A lazy `Iterable` is read once, where it was read several times for each page
+* **Docs:** The README tells how to migrate from 9.x
+
 
 ## 9.1.0
 

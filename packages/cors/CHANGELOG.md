@@ -20,7 +20,8 @@
 * **`preflightContinue`:** Leaves the preflight response open for the handlers after `cors`, where it was closed
 * **`Vary`:** `origin` is added to the `Vary` header, where it replaced it, when the origin is reflected (a refused one's response too), so caches keep the responses of each origin apart; a fixed `origin` does not vary
 * **Example:** Allows headers, not a method, in `allowedHeaders`, and its `dynamicCors` no longer allows every origin
-* **Docs:** `CorsOptions.credentials` tells that browsers refuse credentials with the default `origin` of `'*'`
+* **Docs:** The README tells how to install and use the package, and how to migrate from 9.x, and `CorsOptions.credentials` tells that browsers refuse credentials with the default `origin` of `'*'`
+
 
 ## 9.1.0
 

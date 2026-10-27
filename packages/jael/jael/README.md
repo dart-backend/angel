@@ -18,7 +18,7 @@ dependencies:
   jael3: ^10.0.0
 ```
 
-## API
+## Usage
 
 The core `jael3` package exports classes for parsing Jael templates, an AST library, and a `Renderer` class that generates HTML on-the-fly.
 
@@ -85,3 +85,12 @@ With `strictResolution: false`, an unknown member, or a member of `null`, is `nu
 * `?.` makes the rest of a chain `null` if its target is: `{{ user?.name.length }}`, `{{ user?.greet() }}` and `{{ user?.tags[0] }}` are `null` if `user` is.
 * The operators are `*`, `/`, `%`, `+`, `-`, `<`, `<=`, `>`, `>=`, `==`, `!=`, `&&`, `||`, `??`, `!` and `? :`. `&&`, `||` and `??` compute their right side only if needed. With `strictResolution: false`, `!`, `&&` and `||` take only `true` as true.
 * Map literals, `{'a': 1, key: value}`, and calls with named arguments, `{{ pad('x', width: 3) }}`, are supported.
+
+## Migrating from 9.x to 10.0.0
+
+The breaking changes of each release are listed in the [CHANGELOG](CHANGELOG.md). Those of 10.0.0 that may need changes in an app:
+
+* **No `dart:mirrors`**: `{{ a.b }}` reads `b` from the `memberResolver` given to `Renderer.render`, a key of a `Map`, a common member of a core type, or a key of the value's `toJson()`. Getters of other classes need a `memberResolver` or a `toJson()`; see [Members of values](#members-of-values). `angel3_jael` gives a resolver of the app's reflector.
+* **`new`** is removed (`NewExpression`, `TokenType.$new`), as it could never be parsed. Put a function that makes the value in the scope instead.
+* **`strictResolution: false`** makes an unknown member, or a member of `null`, `null`.
+* **`readMember`** takes `resolver` as a named parameter, and the new `tryReadMember` returns `noMember` for a member it does not know.

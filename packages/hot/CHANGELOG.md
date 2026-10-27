@@ -22,6 +22,8 @@
 * **`close()`:** Closes the server, the app, the VM connection, the watchers and `stdin`, restores the terminal, answers waiting requests with `503`, and may be called before `startServer`
 * **Paths:** A `Glob` watches only its leading directory and matches files created later; watchers are ready before `startServer` returns, and paths of another type are refused by the constructor
 * **Logging:** A reload logs to the logger of the server it replaces, and `sendError` sends the status it is given
+* **Docs:** The README tells how to migrate from 9.x
+
 
 ## 9.1.0
 

@@ -11,11 +11,52 @@ This package contains the implementation of the database migration for the follo
 * MariaDB 10.2.x or greater
 * MySQL 8.x or greater
 
+## Installation
+
+In your `pubspec.yaml`:
+
+```yaml
+dependencies:
+  angel3_migration_runner: ^10.0.0
+```
+
 ## Usage
 
 * Use `PostgresMigrationRunner` to perform database migration for PostgreSQL.
 * Use `MySqlMigrationRunner` to perform database migration for MySQL. This runner is using [`mysql_dart`](https://pub.dev/packages/mysql_dart) driver.
 * Use `MariaDbMigrationRunner` to perform database migration for MariaDB. This runner is using [`mysql_dart`](https://pub.dev/packages/mysql_dart) driver.
+
+Run the migrations from a command-line program, such as `bin/migrate.dart`, with `runMigrations`:
+
+```dart
+import 'package:angel3_migration_runner/angel3_migration_runner.dart';
+import 'package:angel3_migration_runner/postgres.dart';
+import 'package:postgres/postgres.dart';
+
+import 'todo.dart';
+
+void main(List<String> args) async {
+  var connection = await Connection.open(
+    Endpoint(
+      host: 'localhost',
+      database: 'demo',
+      username: 'demouser',
+      password: 'demo123',
+    ),
+    settings: ConnectionSettings(sslMode: SslMode.disable),
+  );
+
+  var runner = PostgresMigrationRunner(
+    connection,
+    migrations: [UserMigration(), TodoMigration()],
+  );
+
+  // `dart bin/migrate.dart up`, `rollback`, `reset` or `refresh`
+  await runMigrations(runner, args);
+}
+```
+
+See [example/main.dart](example/main.dart) for MySQL too.
 
 ## Supported Operations
 
@@ -67,3 +108,16 @@ INSERT INTO migrations (batch, path) VALUES (<batch>, '<name>');
 ## Limitation
 
 * Update schema changes is not supported
+
+## Migrating from 9.x to 10.0.0
+
+The breaking changes of each release are listed in the [CHANGELOG](CHANGELOG.md). Those of 10.0.0 that may need changes in an app:
+
+* **Migration names**: a migration is recorded by its `Migration.name`, where it was its source path and class name. Rows recorded by 9.x are renamed on the first run; see [Upgrading from 9.x](#upgrading-from-9x).
+* **MySQL and MariaDB**: `MySqlMigrationRunner`, `MariaDbMigrationRunner` and `MariaDbSchema.run` use [`mysql_dart`](https://pub.dev/packages/mysql_dart), instead of `mysql_client` and `mysql1`. Pass its `MySQLConnection`, and import `package:mysql_dart/mysql_dart.dart`.
+* **Failures**: `up` of every runner throws when a migration fails, and runs none after it, where the PostgreSQL and MariaDB runners only logged it. `MySqlSchema.run` throws when its SQL fails.
+* **Duplicate names**: two migrations of the same name throw a `StateError`, including two of one class that takes arguments; give each its own `name`.
+* **String defaults** are quoted and escaped alike on every database: give `defaultsTo('active')`, not `"'active'"`, and SQL as `RawSql`, e.g. `defaultsTo(RawSql('CURRENT_TIMESTAMP'))`.
+* **`numeric` and `decimal`** columns are created with their precision and scale, where MySQL and MariaDB rounded values to whole numbers. Without them they are `numeric(17, 3)` on MySQL and MariaDB, and unbounded on PostgreSQL.
+* **`changeColumnType`** takes the `precision`, `scale` and `length` of the new type (default length 255), the constraints after the change, and `using` on PostgreSQL.
+* **Table names** are quoted per part: `` `shop`.`orders` `` on MySQL and MariaDB, `"audit"."events"` on PostgreSQL. A PostgreSQL table with a `.` in its own name must be given in double quotes.

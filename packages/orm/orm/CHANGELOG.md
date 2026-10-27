@@ -24,6 +24,8 @@
 * **Conditions:** `notWhere` is joined with `AND NOT`, a `WHERE` no longer starts with `AND`/`OR`, and nested and JSON conditions are joined and qualified correctly. Date parts use `EXTRACT`; `DateTime` `isIn`/`isNotIn` quote the dates; a `double` is written as a plain number
 * **Values:** `mapToDouble` and `mapToInt` convert numbers of the other type, `BigInt`s and numeric strings, and throw `FormatException` for a value that cannot be converted
 * **`getOne`:** Fetches one row (`LIMIT 1`) when the query has no joins and no limit of its own
+* **Docs:** The README tells how to install and use the package, and how to migrate from 9.x
+
 
 ## 9.1.1
 

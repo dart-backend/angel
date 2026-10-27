@@ -14,6 +14,8 @@
 * **Errors:** Without an `onError`, an error is thrown as a `JaelError`, and a warning is ignored, where it was a null-check error; a parent template that cannot be read, or has syntax errors, resolves to null, where it threw a null-check error after reporting it; an include that cannot be read, or has syntax errors, is reported to `onError`, where a `FileSystemException` or a null-check error was thrown; and a parent that cannot be read is reported at the template that extends it
 * **Cycles:** A template that extends itself, and a file that includes itself, directly or through others, including through both, are reported to `onError`, where they looped or recursed forever
 * **Paths:** Parents and includes are read with `Directory.childFile`, so that a file system whose directory URIs have no trailing slash, as `jael_web`'s, finds them
+* **Docs:** The README tells how to migrate from 9.x
+
 
 ## 9.1.0
 

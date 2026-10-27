@@ -19,6 +19,8 @@
 * **MirrorsReflector:** Named constructor parameters are passed, where required ones failed and optional ones were `null`
 * **Cycles:** A circular dependency throws a `ReflectionException`, instead of overflowing the stack
 * **Lazy singletons:** A child container gets its own `registerLazySingleton` instance, and `registerLazySingleton` returns `f`, as documented
+* **Docs:** The README tells how to install and use the package, and how to migrate from 9.x
+
 
 ## 9.1.0
 

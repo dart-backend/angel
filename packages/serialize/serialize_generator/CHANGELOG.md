@@ -18,6 +18,8 @@
 * **Annotations:** Enum values and constants are generated as references, and keep their import prefixes
 * **ORM:** `ShimFieldImpl` makes its own member reference, so ORM models with `@BelongsTo` build with `analyzer` 14.5; `ShimFieldImpl` is deprecated
 * **Dependencies:** Removed `quiver`
+* **Docs:** The README tells how to install and use the package, and how to migrate from 9.x
+
 
 ## 9.1.0
 

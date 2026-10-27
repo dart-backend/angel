@@ -19,6 +19,8 @@
 * **Server:** `batchEvent` survives clients leaving, `onClose` fires, non-map data and missing `id`/`eventName` no longer fail an action, `send` uses the `serializer`, and results of services that do not broadcast are sent back. Subclasses of `AngelWebSocket` can be configured
 * **Browser:** `authenticateViaPopup` removes its window listener
 * **Synchronization:** Errors of the `synchronizationChannel` are logged, where they were uncaught
+* **Docs:** The README tells how to install and use the package, and how to migrate from 9.x
+
 
 ## 9.1.0
 

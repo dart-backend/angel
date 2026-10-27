@@ -7,7 +7,18 @@
 
 A service that provides HTTP caching to the response data for [Angel3 framework](https://pub.dev/packages/angel3).
 
-## `CacheService`
+## Installation
+
+In your `pubspec.yaml`:
+
+```yaml
+dependencies:
+  angel3_cache: ^10.0.0
+```
+
+## Usage
+
+### `CacheService`
 
 A `Service` class that caches data from one service (`database`), storing it in another (`cache`). An imaginable use case is storing results from MongoDB or another database in Memcache/Redis.
 
@@ -41,7 +52,7 @@ void main() async {
 - `modify` and `update` write the new record through to `cache`, and `remove` evicts it, so several instances can share one cache.
 - If `cache` fails, reads fall back to `database`.
 
-## `cacheSerializationResults`
+### `cacheSerializationResults`
 
 A middleware that enables the caching of response serialization.
 
@@ -54,7 +65,7 @@ app.fallback(cacheSerializationResults(
 ));
 ```
 
-## `ResponseCache`
+### `ResponseCache`
 
 A flexible response cache for Angel3.
 
@@ -92,7 +103,7 @@ Future configureServer(Angel app) async {
 
 The cache key is the request URI including its query string. Pass `ignoreQueryAndFragment: true` to cache by path only.
 
-### Purging the Cache
+#### Purging the Cache
 
 Call `purge` with a cache key to remove a resource from a `ResponseCache`.
 
@@ -109,3 +120,14 @@ Future configureServer(Angel app, ResponseCache cache) async {
   });
 }
 ```
+
+## Migrating from 9.x to 10.0.0
+
+The breaking changes of each release are listed in the [CHANGELOG](CHANGELOG.md). Those of 10.0.0 that may need changes in an app:
+
+* **Cookies**: `ResponseCache` no longer caches requests with cookies, as it does not those with an `Authorization` header, so that a page of a session is not served to others. Set `cacheRequestsWithCookies: true` only if no cached response depends on cookies.
+* **Responses not stored**: a response with a `Vary` other than `Accept-Encoding`, a `Content-Encoding` set by the handler, `Cache-Control: no-cache`, a response to `HEAD`, and one longer than `maxEntryBytes` (default 1 MB) are not stored. Raise `maxEntryBytes` for larger responses:
+
+  ```dart
+  var cache = ResponseCache(maxEntryBytes: 4 * 1024 * 1024);
+  ```

@@ -15,6 +15,8 @@
 
 * **Pool:** `PostgreSqlPoolExecutor.transaction` behaves as that of `PostgreSqlExecutor`, with savepoints for a transaction nested through the executor its callback is given
 * **Transactions:** A failed transaction is rolled back once, by the driver, where a second rollback that was not awaited could fail as an uncaught error, and the transaction logs its failure at `fine` rather than as a warning, as its error is thrown to the caller; `query` still logs an error of the database as a warning
+* **Docs:** The README tells how to install and use the package, and how to migrate from 9.x
+
 
 ## 9.1.0
 

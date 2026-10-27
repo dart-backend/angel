@@ -131,3 +131,11 @@ service.index({'reql': (query) => query.orderBy('title')});
 ```
 
 See the tests for more usage examples.
+
+## Migrating from 9.x to 10.0.0
+
+The breaking changes of each release are listed in the [CHANGELOG](CHANGELOG.md). Those of 10.0.0 that may need changes in an app:
+
+* **One record**: `read`, `modify`, `update` and `remove` of one record ignore `query`, which could make them reach every record it matched.
+* **Ids**: `modify` and `update` act on the id in the path, not an `id` in the body. `modify` of a missing id is a `404`, and `update` creates it.
+* **Driver**: requires `belatuk_rethinkdb` 2.0.0. A query on a closed connection throws an `RqlDriverError`, and the queries waiting for a reply fail when the connection closes; see its changelog.

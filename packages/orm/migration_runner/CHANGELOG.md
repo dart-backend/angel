@@ -32,6 +32,8 @@
 * **Legacy paths:** Generic migrations, case-sensitive paths, and names with `#` are matched correctly; a migration whose `legacyPath` matches no path throws a `StateError`
 * **Defaults:** Non-finite `double`s are `'NaN'`/`'Infinity'` on PostgreSQL and throw on MySQL and MariaDB; MySQL 8 expression defaults and `bit` defaults are kept
 * **`runMigrations`:** Closes the runner when a migration fails, and throws that migration's error
+* **Docs:** The README tells how to install and use the package, and how to migrate from 9.x
+
 
 ## 9.1.0
 

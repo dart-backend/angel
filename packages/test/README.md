@@ -7,7 +7,42 @@
 
 Testing utility library for Angel3 framework.
 
-## TestClient
+## Installation
+
+In your `pubspec.yaml`:
+
+```yaml
+dev_dependencies:
+  angel3_test: ^10.0.0
+```
+
+## Usage
+
+Connect a `TestClient` to your app with `connectTo`, and send requests to it, without binding to a port:
+
+```dart
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_test/angel3_test.dart';
+import 'package:test/test.dart';
+
+void main() {
+  late TestClient client;
+
+  setUp(() async {
+    var app = Angel()..get('/hello', (req, res) => {'hello': 'world'});
+    client = await connectTo(app);
+  });
+
+  tearDown(() => client.close());
+
+  test('hello', () async {
+    var res = await client.get(Uri.parse('/hello'));
+    expect(res, allOf(hasStatus(200), isJson({'hello': 'world'})));
+  });
+}
+```
+
+### TestClient
 
 The `TestClient` class is a custom `angel3_client` that sends mock requests to your server. This means that you will not have to bind your server to HTTP to run. Plus, it is an `angel3_client`, and thus supports services and other goodies. The `TestClient` also supports WebSockets. WebSockets cannot be mocked (yet!) within this library, so calling the `websocket()` function will also bind your server to HTTP, if it is not already listening. The return value is a `WebSockets` client instance (from [`package:angel3_websocket`](<https://pub.dev/packages/angel3_websocket>));
 
@@ -19,7 +54,7 @@ ws.service('api/users').onCreated.listen(...);
 ws.onData.listen(...);
 ```
 
-## Matchers
+### Matchers
 
 Several `Matcher`s are bundled with this package, and run on any `package:http` `Response`, not just those returned by Angel.
 
@@ -59,3 +94,17 @@ test('validate response', () async {
     })));
 });
 ```
+
+## Migrating from 9.x to 10.0.0
+
+The breaking changes of each release are listed in the [CHANGELOG](CHANGELOG.md). Those of 10.0.0 that may need changes in an app:
+
+* **`contentLength`**: a `TestClient` response reports the `contentLength` the handler set, or `null` when none was set or the body was decompressed, instead of `0`.
+* **`TestClient.service()`** no longer takes `type`. Pass a `deserializer` instead:
+
+  ```dart
+  var todos = client.service<String, Todo>(
+    'api/todos',
+    deserializer: (x) => TodoSerializer.fromMap(x as Map),
+  );
+  ```

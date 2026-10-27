@@ -13,7 +13,8 @@
 
 * **Options:** `defaultValue` is what an undefined variable renders as, where it was ignored
 * **Views:** The templates a view names with string literals in `extends`, `include`, `import` and `from` tags are read without blocking
-* **Docs:** The README example imports `angel3_framework` and `angel3_jinja`, and the README and example escape values from the request with `| e`
+* **Docs:** The README tells how to install and use the package, and how to migrate from 9.x, its example imports `angel3_framework` and `angel3_jinja`, and the README and example escape values from the request with `| e`
+
 
 ## 9.1.0
 

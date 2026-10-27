@@ -16,6 +16,8 @@
 
 * **Query:** `$sort` in the query of a request sorts the records, where it was taken for a field and matched none
 * **`findOne`:** The record it returns has its `id`
+* **Docs:** The README tells how to migrate from 9.x
+
 
 ## 9.1.0
 

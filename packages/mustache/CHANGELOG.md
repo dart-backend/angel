@@ -11,6 +11,8 @@
 
 * **Partials:** Read without blocking, and found with the paths of the views directory's own file system
 * **Production:** Views and partials are kept parsed, so they are not parsed again on each render
+* **Docs:** The README tells how to migrate from 9.x
+
 
 ## 9.1.0
 

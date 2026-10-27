@@ -91,3 +91,9 @@ Where
 
 * `<username>` is MongoDB username
 * `<password>` is MongoDB password
+
+## Migrating from 9.x to 10.0.0
+
+The breaking changes of each release are listed in the [CHANGELOG](CHANGELOG.md). Those of 10.0.0 that may need changes in an app:
+
+* **Missing ids**: `modify` and `remove` of a missing id are a `404`, instead of creating a document, or answering `{"id": null}`. Use `update` to create a document of a given id.

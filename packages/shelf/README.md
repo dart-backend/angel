@@ -10,10 +10,23 @@
 Shelf interop with Angel3. This package lets you run `package:shelf` handlers via a custom adapter. Use the code in this repo to embed existing Angel/shelf apps into other Angel/shelf applications. This way, you can migrate legacy applications without having to rewrite your business logic. This will make it easy to layer your API over a production application, rather than having to port code.
 
 - [Angel3 Shelf](#angel3-shelf)
+  - [Installation](#installation)
   - [Usage](#usage)
     - [embedShelf](#embedshelf)
     - [Communicating with Angel with embedShelf](#communicating-with-angel-with-embedshelf)
     - [AngelShelf](#angelshelf)
+
+## Installation
+
+This package is not published on pub.dev. Depend on it from the repository, adding a `ref:` for a branch or a tag:
+
+```yaml
+dependencies:
+  angel3_shelf:
+    git:
+      url: https://github.com/dart-backend/angel.git
+      path: packages/shelf
+```
 
 ## Usage
 

@@ -7,6 +7,11 @@
 * **Breaking:** `none` is an instance of `None` (`const None()`), as documented, so `none is None` is true; compare types with `None` (`T == None`), as `T == none` is now false
 * **Breaking:** `None` is a `final class` with a `const` constructor; every `None` equals `none`, which can no longer be in constant sets or a constant map key
 
+### Fixes in 10.0.0
+
+* **Docs:** The README tells how to install and use the package, and how to migrate from 9.x
+
+
 ## 9.1.0
 
 * Require Dart >= 3.13

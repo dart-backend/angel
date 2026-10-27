@@ -7,6 +7,15 @@
 
 A browser, mobile and command line based client that supports querying Angel3 backend.
 
+## Installation
+
+In your `pubspec.yaml`:
+
+```yaml
+dependencies:
+  angel3_client: ^10.0.0
+```
+
 ## Usage
 
 ```dart

@@ -16,6 +16,11 @@
 * The data of a class lists its `supertypes` (e.g. so a `WebSocketController` finds inherited `@ExposeWs` methods)
 * `getMember` reads public fields, getters and methods, declared or inherited, and returns `noStaticMember` for other names. Regenerate the data with `dart run build_runner build`
 
+### Fixes in 10.0.0
+
+* **Docs:** The README tells how to install and use the package, and how to migrate from 9.x
+
+
 ## 9.1.0
 
 * Require Dart >= 3.13

@@ -7,6 +7,15 @@
 
 Easily synchronize and scale WebSockets using [belatuk_pub_sub](<https://pub.dev/packages/belatuk_pub_sub>).
 
+## Installation
+
+In your `pubspec.yaml`:
+
+```yaml
+dependencies:
+  angel3_sync: ^10.0.0
+```
+
 ## Usage
 
 This package exposes `PubSubSynchronizationChannel`, which can simply be dropped into any `AngelWebSocket` constructor. Once you've set that up, instances of your application will automatically fire events in-sync. That's all you have to do to scale a real-time application with Angel3!

@@ -10,7 +10,8 @@ This validator library is based on the `matcher` library and comes with build in
 For convenience's sake, this library also exports `matcher`.
 
 - [Angel3 Validate](#angel3-validate)
-  - [Examples](#examples)
+  - [Installation](#installation)
+  - [Usage](#usage)
     - [Creating a Validator](#creating-a-validator)
     - [Validating data](#validating-data)
     - [Required Fields](#required-fields)
@@ -25,7 +26,16 @@ For convenience's sake, this library also exports `matcher`.
     - [Nested Validators](#nested-validators)
     - [Use with Angel3](#use-with-angel3)
 
-## Examples
+## Installation
+
+In your `pubspec.yaml`:
+
+```yaml
+dependencies:
+  angel3_validate: ^10.0.0
+```
+
+## Usage
 
 ### Creating a Validator
 
@@ -298,3 +308,10 @@ void main() async {
     await AngelHttp(app).startServer();
 }
 ```
+
+## Migrating from 9.x to 10.0.0
+
+The breaking changes of each release are listed in the [CHANGELOG](CHANGELOG.md). Those of 10.0.0 that may need changes in an app:
+
+* **Nested validators** filter their data: keys a nested `Validator` does not know are dropped, as at the top level. Add the keys you want kept to the nested `Validator`.
+* **Requests without an `app`**: `validate` and `validateQuery` validate them too, where they let them through unvalidated. A validator with an `AngelMatcher` then throws a `StateError`.

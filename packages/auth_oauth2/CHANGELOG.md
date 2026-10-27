@@ -18,7 +18,8 @@
 * **`form_post`:** A posted callback (e.g. Sign in with Apple) is read from its form, with `cookieSameSite: SameSite.none`
 * **Cookies:** Logins in two tabs no longer replace each other's, and a client without a secret signs with a random key
 * **Client:** The `oauth2.Client` given to the verifier is closed once it returns, unless `httpClient` was given
-* **Docs:** The README tells how the routes are told apart and how a login is kept
+* **Docs:** The README tells how to install and use the package, and how to migrate from 9.x, how the routes are told apart and how a login is kept
+
 
 ## 9.1.0
 

@@ -7,6 +7,17 @@
 
 Angel3 middleware to forward requests to another server (i.e. `webdev serve`). Also supports WebSockets.
 
+## Installation
+
+In your `pubspec.yaml`:
+
+```yaml
+dependencies:
+  angel3_proxy: ^10.0.0
+```
+
+## Usage
+
 ```dart
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_proxy/angel3_proxy.dart';

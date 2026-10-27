@@ -19,6 +19,8 @@
 * **`authenticate`:** Returns once a strategy has answered the request itself, instead of throwing 401
 * **Key:** The default `jwtKey` is of random characters, not control characters
 * **Tests:** No longer use `MirrorsReflector`; `AngelAuth` needs no reflection
+* **Docs:** The README tells how to install and use the package, and how to migrate from 9.x
+
 
 ## 9.1.0
 

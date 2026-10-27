@@ -17,7 +17,7 @@
 * **`CacheService` reads:** A read or index that overlaps a write, even one still in progress, no longer stores what it read over the written version, so instances no longer serve it (or a removed record) until the timeout. Ended entries are removed, where one was kept for every record ever read
 * **`CacheService.index`:** Returns a copy of the cached list, so a caller changing it does not change it for others
 * **`cacheSerializationResults`:** `shouldCache` is asked before a cached result is reused, so a request it refuses gets a fresh one; the timeout counts from after an async `shouldCache`
-* **Docs:** A `MapService` used as the cache needs `autoIdAndDateFields: false`, or cached records get ids and dates of their own; responses of cached paths are buffered, not streamed
+* **Docs:** The README tells how to install and use the package, and how to migrate from 9.x, and a `MapService` used as the cache needs `autoIdAndDateFields: false`, or cached records get ids and dates of their own; responses of cached paths are buffered, not streamed
 
 
 ## 9.2.0

@@ -12,7 +12,8 @@
 * **After closing:** Events are no longer published, and events and errors that come late are dropped, where they failed with a `StateError`
 * **Errors:** An event without a name is an error of the stream, and the end of the subscription is told on the stream, which then ends
 * **Dependencies:** `angel3_framework` is a dev dependency, as only the tests and example use it
-* **Docs:** The README example compiles, and serves the WebSocket. `example/main.dart` runs two synchronized instances, where it was a copy of the tests
+* **Docs:** The README tells how to install and use the package, and its example compiles, and serves the WebSocket. `example/main.dart` runs two synchronized instances, where it was a copy of the tests
+
 
 ## 9.1.0
 

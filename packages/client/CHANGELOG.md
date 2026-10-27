@@ -26,6 +26,8 @@
 * **URLs:** No longer end in `?` without params
 * **`ServiceList`:** Passes the errors of the service's streams on to `onChange`, where they were uncaught, and `close` cancels its subscriptions to the service
 * **Tests:** No longer use `MirrorsReflector`
+* **Docs:** The README tells how to install and use the package
+
 
 ## 9.1.0
 

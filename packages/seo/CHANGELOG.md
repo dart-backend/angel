@@ -8,7 +8,8 @@
 * **Inlining:** Content is inlined as text, with `</script` and `</style` escaped. Stylesheets keep `media` and `nonce`; `async` and non-module `defer` scripts stay external; elements without a valid `href`/`src` are skipped; `rel` is read as a list of words, and stylesheets in the body are inlined too
 * **`inlineAssetsFromVirtualDirectory`:** Serves the inlined page through the directory it wraps, so caching, `Range` and `callback` apply, with an ETag of the page and its assets. It keeps `useBuffer` and `followLinksOutsideSource`, and inlines `.htm` and extensions of any case
 * **Charset:** `inlineAssets` decodes the page's declared charset and sends UTF-8, with a matching `<meta charset>`
-* **Docs:** The README examples are up to date
+* **Docs:** The README tells how to install and use the package, and its examples are up to date
+
 
 ## 9.1.0
 

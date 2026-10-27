@@ -11,6 +11,8 @@
 * **`parseUserAgent`:** Can be used twice on a request, where the second use failed with a 500. The user agent is parsed once per request, also when made from a child container, and a `UserAgent` of the app's container no longer stands in for the request's. The header is trimmed, and a request without headers is a 400 instead of a null check error
 * **Example:** Serves, where all of it was commented out
 * **Dependencies:** `lints` is a dev dependency, where apps got it as a runtime one
+* **Docs:** The README tells how to install and use the package
+
 
 ## 9.1.0
 

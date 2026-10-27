@@ -116,3 +116,10 @@ into an external cache.
   );
 
 ```
+
+## Migrating from 9.x to 10.0.0
+
+The breaking changes of each release are listed in the [CHANGELOG](CHANGELOG.md). Those of 10.0.0 that may need changes in an app:
+
+* **Relative paths**: a view is resolved relative to its own directory, where it was the views directory, so the `extend` and `include` tags of a view in a subdirectory are read relative to that subdirectory, as those of its parents are. Change paths such as `<extend src="layouts/main.jael">` in `views/admin/page.jael` to be relative to `views/admin`, e.g. `<extend src="../layouts/main.jael">`.
+* **Members of values**: `{{ repo.name }}` reads `name` through the app's reflector, as `jael3` no longer uses `dart:mirrors`. See [Members of values](#members-of-values).

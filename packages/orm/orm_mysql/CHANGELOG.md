@@ -18,7 +18,8 @@
 * **Inserts:** Return the row of the id given (e.g. a UUID) or of the insert id, not the last row by id, which may be another connection's, including an insert id of a `BIGINT UNSIGNED` above that of an `int`
 * **Parameters:** Passed as positional `?` with `replacePlaceholders` of `angel3_orm`, so non-ASCII column names work and `DateTime`s in the given map are not changed
 * **Values:** A zero date (`0000-00-00`), or an invalid one (`2024-02-30`), is read as `null`, rather than as another day, and `INSERT` is matched in any case. A date or time is read as a `DateTime` of its fields as stored, where one of `MariaDbExecutor` in the gap of a change to daylight saving time of the local time zone was an hour off
-* **Docs:** The README tells how each executor stores a `DateTime` (local time or UTC), why a `date` may shift by a day, and how transactions run
+* **Docs:** The README tells how to install and use the package, and how to migrate from 9.x, tells how each executor stores a `DateTime` (local time or UTC), why a `date` may shift by a day, and how transactions run
+
 
 ## 9.1.0
 

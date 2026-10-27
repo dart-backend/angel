@@ -5,6 +5,8 @@
 ### Fixes in 10.0.0
 
 * **`Content-Length`:** Left out when the upstream length is unknown, instead of sending `-1`, which `dart:io` rejects with an `HttpException` (and which left proxied responses empty)
+* **Docs:** The README tells how to install and use the package
+
 
 ## 9.1.0
 

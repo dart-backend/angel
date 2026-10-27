@@ -10,8 +10,9 @@
 
 ### Fixes in 10.0.0
 
-* **Docs:** The doc comments of `Exclude`, `canDeserialize` and `deserializer` are corrected
+* **Docs:** The README tells how to install and use the package, and how to migrate from 9.x, and the doc comments of `Exclude`, `canDeserialize` and `deserializer` are corrected
 * **Dependencies:** Removed the unused `meta`
+
 
 ## 9.1.0
 

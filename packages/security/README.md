@@ -7,7 +7,18 @@
 
 Angel3 middleware designed to enhance application security by patching common Web security holes.
 
-## CSRF protection
+## Installation
+
+In your `pubspec.yaml`:
+
+```yaml
+dependencies:
+  angel3_security: ^10.0.0
+```
+
+## Usage
+
+### CSRF protection
 
 `CsrfFilter` refuses cross-site requests that change state (all but `GET`, `HEAD`, `OPTIONS` and `TRACE`) with a `403`. Such a request must:
 
@@ -29,3 +40,23 @@ app.get('/form', (req, res) {
 ```
 
 Requests that do not use cookies to authenticate, such as those with a bearer token, can be exempted with `skip`. See `example/csrf.dart`.
+
+### Rate limiting
+
+`InMemoryRateLimiter` limits each user, here by IP address, to a number of requests in a window, and answers the others with a `429 Too Many Requests`. See `example/rate_limit_redis.dart` for a limiter whose windows several instances share.
+
+```dart
+var rateLimiter = InMemoryRateLimiter(
+  5,
+  const Duration(seconds: 30),
+  (req, res) => req.ip,
+);
+
+app.fallback(rateLimiter.handleRequest);
+```
+
+## Migrating from 9.x to 10.0.0
+
+The breaking changes of each release are listed in the [CHANGELOG](CHANGELOG.md). Those of 10.0.0 that may need changes in an app:
+
+* **`RateLimiter.handleRequest`** returns what `rejectRequest` returns, as documented, where it always returned `false`. The default `rejectRequest` still throws a `429`; a `rejectRequest` of your own that returns `true` lets the request go on.

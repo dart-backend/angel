@@ -11,6 +11,15 @@ Manufacture dart:io HttpRequests, HttpResponses, HttpHeaders, etc. This makes it
 
 This package was originally designed to make testing [Angel3](https://angel3-framework.web.app/) applications smoother, but works with any Dart-based server.
 
+## Installation
+
+In your `pubspec.yaml`:
+
+```yaml
+dev_dependencies:
+  angel3_mock_request: ^10.0.0
+```
+
 ## Usage
 
 ```dart
@@ -24,3 +33,10 @@ expect(await rs.transform(utf8.decoder).join(),
 ```
 
 More examples can be found in the included test cases.
+
+## Migrating from 9.x to 10.0.0
+
+The breaking changes of each release are listed in the [CHANGELOG](CHANGELOG.md). Those of 10.0.0 that may need changes in an app:
+
+* **Streams**: `MockHttpRequest` extends `Stream<Uint8List>`, so its stream methods have the signatures of `dart:io`'s `HttpRequest`; code that treated it as a `Stream<List<int>>` may need `.cast<List<int>>()`.
+* **Encoding**: `write` throws an `ArgumentError` for a character its encoding cannot represent, instead of truncating it. Set the `content-type` charset, or `encoding`, to one that can represent it.

@@ -55,3 +55,15 @@ var queried = await service.index({
 ```
 
 See the tests for more usage examples.
+
+## Migrating from 9.x to 10.0.0
+
+The breaking changes of each release are listed in the [CHANGELOG](CHANGELOG.md). Those of 10.0.0 that may need changes in an app:
+
+* **Queries**: a record matches a query only if it matches every field of it, where matching any field was enough.
+* **`$sort`**: `-1` sorts in descending order and `1` in ascending order, where they were the other way round. Swap them in your queries.
+* **Removing all records** removes only those that match the query, if there is one.
+* **`findOne`** throws a 404 `AngelHttpException` when no record matches, where it returned `{}`.
+* **`modify` and `update`** of an id with no record throw a 404 `AngelHttpException`, where they created the record. Use `create` to add one.
+* **Ids**: the `id` of the data given to `create`, `modify` and `update` is not stored, as it is the key of the record; `id` in a query matches the key.
+* Requires `angel3_framework` 10.

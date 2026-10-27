@@ -7,6 +7,15 @@
 
 Angel3 library for authenticating users with remote identity providers via OAuth2, i.e. Facebook, Google, Azure AD, etc.
 
+## Installation
+
+In your `pubspec.yaml`:
+
+```yaml
+dependencies:
+  angel3_auth_oauth2: ^10.0.0
+```
+
 ## Usage
 
 First, create an options object:
@@ -131,3 +140,10 @@ OAuth2Strategy(
     }
 );
 ```
+
+## Migrating from 9.x to 10.0.0
+
+The breaking changes of each release are listed in the [CHANGELOG](CHANGELOG.md). Those of 10.0.0 that may need changes in an app:
+
+* **State and PKCE**: each login has a random `state` and a PKCE code verifier, kept until the callback in a signed, `HttpOnly` cookie of its own, which expires after `loginTimeout` (default 10 minutes). A callback without it, or of another `state`, goes to `onError` as `invalid_state`. Start every login at the redirect route of the strategy, so that the cookie is set; a provider that posts its callback (`response_mode=form_post`) needs `cookieSameSite: SameSite.none`, over HTTPS.
+* **Several instances**: the cookie is signed with a key derived from the client secret. A client without a secret signs with a random key, so give it a `cookieKey` when it runs as more than one instance.

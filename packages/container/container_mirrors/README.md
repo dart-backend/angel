@@ -8,6 +8,15 @@
 
 `dart:mirrors` only works on the Dart VM in JIT mode (`dart run`). For apps compiled ahead of time, mark classes `@injectable`, generate their reflection data with [`angel3_container_generator`](https://pub.dev/packages/angel3_container_generator) and use `StaticReflector.combine([...])`, or register everything and use `EmptyReflector`.
 
+## Installation
+
+In your `pubspec.yaml`:
+
+```yaml
+dependencies:
+  angel3_container_mirrors: ^10.0.0
+```
+
 ## Usage
 
 ```dart

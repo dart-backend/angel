@@ -7,6 +7,18 @@
 
 The builder for generating JSON serialization code for Angel3 framework.
 
+## Installation
+
+In your `pubspec.yaml`:
+
+```yaml
+dependencies:
+  angel3_serialize: ^10.0.0
+dev_dependencies:
+  angel3_serialize_generator: ^10.0.0
+  build_runner: ^2.4.0
+```
+
 ## Usage
 
 1. Create a model class in `todo.dart` and annotate it with `@serializable` and append `Entity` suffix to the class name.
@@ -29,3 +41,12 @@ The builder for generating JSON serialization code for Angel3 framework.
     ```
 
     The generated class is named without the `Entity` suffix (or a `_` prefix): `Todo`, with `TodoSerializer`, `TodoFields` and a `todoSerializer` codec. A class whose name only ends with the letters of the suffix, such as `UserIdentity`, keeps its name.
+
+## Migrating from 9.x to 10.0.0
+
+The breaking changes of each release are listed in the [CHANGELOG](CHANGELOG.md). Those of 10.0.0 that may need changes in an app:
+
+* **Regenerate** your models with `dart run build_runner build --delete-conflicting-outputs`: generated `hashCode` getters use `Object.hashAll` instead of `hashObjects`.
+* **Class names**: a generated class is named by removing a prefix (`_`, `Entity`), then a suffix (`Entity`), matched by case, so `UserIdentity` keeps its name, where it became `UserId`.
+* **`includeAnnotations`**: a value that is not a constant instance of a class or enum fails the build.
+* **Code that uses the generator's API**: `SerializableFieldMirror.serializer` and `deserializer` are the names of functions, as `String`s, where they were `Symbol`s.

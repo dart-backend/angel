@@ -9,6 +9,15 @@ WebSocket plugin for Angel3 framework. This plugin broadcasts events from hooked
 
 WebSocket contexts are add to `req.properties` as `'socket'`.
 
+## Installation
+
+In your `pubspec.yaml`:
+
+```yaml
+dependencies:
+  angel3_websocket: ^10.0.0
+```
+
 ## Usage
 
 ### Server-side
@@ -209,3 +218,11 @@ void main() async {
   app.authenticateViaJwt('<some-jwt>');
 }
 ```
+
+## Migrating from 9.x to 10.0.0
+
+The breaking changes of each release are listed in the [CHANGELOG](CHANGELOG.md). Those of 10.0.0 that may need changes in an app:
+
+* **No `dart:mirrors`**: `@ExposeWs` methods are found through the app's reflector. Give the app a `StaticReflector` of data from `angel3_container_generator`, or a `MirrorsReflector`; without one, register the handlers with `exposeWs` in `configureWs`. See [Adding Handlers within a Controller](#adding-handlers-within-a-controller).
+* **Broadcast streams**: the streams of `AngelWebSocket`, `WebSocketContext`, the clients and their services do not keep events for later listeners. Listen before the event can come.
+* **HTTP/2**: WebSockets over HTTP/2 are refused with `501 Not Implemented`; serve them over HTTP/1.1.

@@ -7,7 +7,18 @@
 
 Helpers for building SEO-friendly Web pages in Angel. The goal of `package:angel3_seo` is to speed up perceived client page loads, prevent the infamous [flash of unstyled content](https://en.wikipedia.org/wiki/Flash_of_unstyled_content), and other SEO optimizations that can easily become tedious to perform by hand.
 
-## Disabling inlining per-element
+## Installation
+
+In your `pubspec.yaml`:
+
+```yaml
+dependencies:
+  angel3_seo: ^10.0.0
+```
+
+## Usage
+
+### Disabling inlining per-element
 
 Add a `data-no-inline` attribute to a `link` or `script` to prevent inlining it:
 
@@ -15,7 +26,7 @@ Add a `data-no-inline` attribute to a `link` or `script` to prevent inlining it:
 <script src="main.dart.js" data-no-inline></script>
 ```
 
-## `inlineAssets`
+### `inlineAssets`
 
 A [response finalizer](https://angel3-docs.dukefirehawk.com/guides/request-lifecycle) that can be used in any application to patch HTML responses, including those sent with a templating engine like Jael3.
 
@@ -46,7 +57,7 @@ void main() async {
 }
 ```
 
-## `inlineAssetsFromVirtualDirectory`
+### `inlineAssetsFromVirtualDirectory`
 
 This function wraps a `VirtualDirectory` to patch the way it sends `.html` and `.htm` files. Produces the same functionality as `inlineAssets`. The inlined page is then served by the wrapped directory, so the caching of a `CachingVirtualDirectory`, `Range` requests and its `callback` apply to it; its `Last-Modified` and ETag are of the latest of the page and its assets.
 

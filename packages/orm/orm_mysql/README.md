@@ -14,6 +14,15 @@ This package contains the SQL executor required by Angel3 ORM to work with MySQL
 
 **Note** MySQL below version 8.0 and MariaDB below version 10.2.0 are not supported as Angel3 ORM requires common table expressions (CTE) to work.
 
+## Installation
+
+In your `pubspec.yaml`:
+
+```yaml
+dependencies:
+  angel3_orm_mysql: ^10.0.0
+```
+
 ## Usage
 
 1. Create a model with `Entity` suffix, i.e. `CarEntity` in a `car.dart`
@@ -153,3 +162,26 @@ A zero date or time (`0000-00-00`), which MySQL and MariaDB store where a date i
 ## Transactions
 
 The queries of a connection run one at a time. A transaction holds the connection until it ends, so a query given in it to another executor of the connection, such as that of the application, runs in the transaction, as a transaction begun in it is of it: MySQL and MariaDB nest none. Use the executor given to the transaction. The queries given to it before the transaction ends, even those not waited for, and the later queries of an operation of the ORM they start, such as the update of an `update`, run in it, before its `COMMIT` or `ROLLBACK`; one given after it has ended throws a `StateError`, as does `close`, of its executor or of another of the connection, in it. Await the queries of a transaction, so that their errors roll it back.
+
+## Migrating from 9.x to 10.0.0
+
+The breaking changes of each release are listed in the [CHANGELOG](CHANGELOG.md). Those of 10.0.0 that may need changes in an app:
+
+* **Driver**: `MySqlExecutor` and `MariaDbExecutor` use [`mysql_dart`](https://pub.dev/packages/mysql_dart) 3.0.3 or later, instead of `mysql_client` and `mysql1`. Pass its `MySQLConnection`, as in [Usage](#usage):
+
+  ```dart
+  import 'package:angel3_orm_mysql/angel3_orm_mysql.dart';
+  import 'package:mysql_dart/mysql_dart.dart';
+
+  var connection = await MySQLConnection.createConnection(
+      host: 'localhost',
+      port: 3306,
+      databaseName: 'orm_test',
+      userName: 'test',
+      password: 'test123',
+      secure: true);
+  await connection.connect(timeoutMs: 10000);
+  var executor = MariaDbExecutor(connection);
+  ```
+
+* **Imports**: import `package:angel3_orm_mysql/angel3_orm_mysql.dart`, not `src/orm_mariadb.dart`. `MariaDbExecutor` is a subclass of `MySqlExecutor`, works with MySQL too, and still stores a `DateTime` as UTC.

@@ -131,3 +131,9 @@ void main() async {
       'a591a6d40bf420404a011733cfb7b190d62c65bf0bcda32b57b277d9ad9f146e');
 }
 ```
+
+## Migrating from 9.x to 10.0.0
+
+The breaking changes of each release are listed in the [CHANGELOG](CHANGELOG.md). Those of 10.0.0 that may need changes in an app:
+
+* **`startServer`** throws a `StateError` if called again on the same `HotReloader`. Call `reload()` to reload on demand.

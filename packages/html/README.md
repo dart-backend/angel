@@ -78,3 +78,10 @@ configureServer(Angel app) async {
   // ...
 }
 ```
+
+## Migrating from 9.x to 10.0.0
+
+The breaking changes of each release are listed in the [CHANGELOG](CHANGELOG.md). Those of 10.0.0 that may need changes in an app:
+
+* **Charset**: pages are sent as `text/html; charset=utf-8`, where they had no charset.
+* **`enforceAcceptHeader`** is a `bool` that defaults to `false`, not a `bool?`: pass `true` or `false`, not `null`.

@@ -20,6 +20,8 @@
 * **`TestClient.service`:** Returns a new service for each call, like `angel3_client`, so a typed service or one with a `deserializer` can follow another on the same path, where the first service was returned and the cast threw a `TypeError`
 * **`TestClient.close`:** Closes the services it created and the client's `onAuthenticated` stream, where they were left open
 * **Tests:** No longer use `MirrorsReflector`
+* **Docs:** The README tells how to install and use the package, and how to migrate from 9.x
+
 
 ## 9.1.1
 

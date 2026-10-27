@@ -12,6 +12,8 @@
 * **Null values:** An `AngelMatcher` or `ContextAwareMatcher` does not match `null`, where it failed with a `TypeError` (a 500, or a 400 with the error as its message)
 * **`asyncApplyValidator`:** Uses the validator's `customErrorMessages`, runs the `AngelMatcher`s of nested `Validator`s, gives `AngelMatcher`s the input as their context, as `check` does, where keys without rules were missing, and takes an optional `app`
 * **`validateEvent`:** Is generic, so it can be listened to on a typed service such as `MapService`; data that is not a `Map` is a 400 instead of a cast error
+* **Docs:** The README tells how to install and use the package, and how to migrate from 9.x
+
 
 ## 9.1.0
 

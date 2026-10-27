@@ -15,6 +15,8 @@
 * **Operators:** `%` works; `&&` and `||` are added, and like `??` compute their right side only if needed; `=` is no longer an operator
 * **Parsing:** Map literals with keys (`{'a': 1}`) and calls with named arguments (`f(x: 1)`) are parsed; a key-value pair's span starts at its key, and `SyntheticIdentifier.span` works
 * **Rendering:** The same `SymbolTable` can be rendered again
+* **Docs:** The README tells how to install and use the package, and how to migrate from 9.x
+
 
 ## 9.1.0
 

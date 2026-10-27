@@ -7,6 +7,18 @@
 
 Generates the reflection data that `package:angel3_container` and Angel3 need, so dependency injection, `@Expose` controllers and `@Hooks`/`@Middleware` annotations work **without `dart:mirrors`**, including in AOT-compiled apps (`dart compile exe`), obfuscated or not.
 
+## Installation
+
+In your `pubspec.yaml`:
+
+```yaml
+dependencies:
+  angel3_container: ^10.0.0
+dev_dependencies:
+  angel3_container_generator: ^10.0.0
+  build_runner: ^2.4.0
+```
+
 ## Usage
 
 1. Add `angel3_container` to `dependencies`, and `angel3_container_generator` and `build_runner` to `dev_dependencies`.
@@ -53,3 +65,25 @@ The generated code calls each class's unnamed constructor without `dart:mirrors`
 ## Development
 
 The output for `test/fixtures` and `example` is checked in. Regenerate it with `dart run build_runner build` after changing them or the generator.
+
+## Migrating from 9.x to 10.0.0
+
+The breaking changes of each release are listed in the [CHANGELOG](CHANGELOG.md). Those of 10.0.0 that may need changes in an app:
+
+The generator is rewritten: it generates reflection data for `@injectable` classes and top-level functions, used through `StaticReflector`, and no longer depends on `reflectable`. `GeneratedReflector`, `ContainedReflectable` and `contained` are removed. To migrate:
+
+1. Replace `@contained` with `@injectable`, from `package:angel3_container/angel3_container.dart`, and add `part '<file>.g.dart';` to each library with such classes.
+2. Replace `reflectable_builder` with `angel3_container_generator` and `build_runner` in `dev_dependencies`, and run `dart run build_runner build`.
+3. Replace `GeneratedReflector()` with `StaticReflector.combine([...])`, passing each library's generated variable:
+
+   ```dart
+   // 9.x
+   var app = Angel(reflector: GeneratedReflector());
+
+   // 10.0.0, with the data of services.dart and controllers.dart
+   var app = Angel(
+     reflector: StaticReflector.combine([servicesReflection, controllersReflection]),
+   );
+   ```
+
+Closures cannot be described, so `ioc` on a closure needs an explicit `injection:`, or a named, `@injectable` top-level function.

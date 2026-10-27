@@ -17,6 +17,8 @@
 * **Column types:** A type given in `@Column` or `@PrimaryKey` is used, instead of one inferred from the Dart type; enums are inferred too. Migrations use the `ColumnType` constants, which the MySQL and MariaDB runners need, give `length` only to types that have one, and type a foreign key to a serial column as its integer
 * **Precision:** The `precision` and `scale` of a `@Column` are used; `decimal` columns are created with `table.decimal`
 * **Relations:** `copyFrom` converts a related model's `String` id to its `int` column, and sets it only once the model has an id. A many-to-many uses its `through` class's table name, an explicit `foreignTable` works, and a relation whose name contains `Id` gets its where builder
+* **Docs:** The README tells how to install and use the package, and how to migrate from 9.x
+
 
 ## 9.1.1
 

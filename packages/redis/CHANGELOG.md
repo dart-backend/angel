@@ -20,6 +20,8 @@
 * **Modify and remove:** Concurrent writes no longer corrupt data
 * **Create:** Integer ids are accepted, and auto-ids no longer overwrite records. The id counter moved to `angel_redis:id:<prefix>`, continuing from the old counter
 * **Update:** Write errors are reported
+* **Docs:** The README tells how to install and use the package, and how to migrate from 9.x
+
 
 ## 9.1.0
 

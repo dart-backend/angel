@@ -9,9 +9,26 @@ Angel3 ORM for working with PostgreSQL database 14 or later.
 
 For documentation about the ORM, see [Developer Guide](https://angel3-docs.dukefirehawk.com/guides/orm)
 
+## Migrating from 9.x to 10.0.0
+
+The breaking changes of each release are listed in the [CHANGELOG](CHANGELOG.md). Those of 10.0.0 that may need changes in an app:
+
+* **Errors of transactions**: the error of a `transaction`, such as a `PgException` of the database or one its callback throws, is thrown as it is, where it was a `StateError('The transaction was cancelled.')`. Catch the error you expect instead of the `StateError`.
+* **Nested transactions**: `transaction` on the executor its callback is given runs in a savepoint; see [Transactions](#transactions).
+* Requires `angel3_orm` 10 and `postgres` 3.5.20.
+
 ## Migrating to 8.1.0 and above
 
 `postgres` has been upgraded from 2.x.x to 3.x.x since version 8.1.0. This is a breaking change as `postgres` 3.x.x has revamped its API. Therefore when upgrading to 8.1.0 and beyond, the PostgreSQL connection settings need to be migrated. The rest should remain the same. Please see the example for the new PostgreSQL connection settings.
+
+## Installation
+
+In your `pubspec.yaml`:
+
+```yaml
+dependencies:
+  angel3_orm_postgres: ^10.0.0
+```
 
 ## Usage
 

@@ -21,6 +21,8 @@ The mocks now behave as `dart:io`'s `HttpRequest`, `HttpResponse` and `HttpHeade
 * **Streams:** Errors come after the bytes added before them, no empty chunk is emitted on `close` or `flush`, `add([])` does nothing, and `firstWhere`, `lastWhere` and `singleWhere` throw `StateError` when nothing matches
 * **`close` and `addStream`:** `close` may be called more than once and returns `done`; during `addStream`, other writes throw `StateError`, and `addStream` completes with the source's first error
 * **Responses:** `MockHttpResponse` keeps the `statusCode` it is given, and `bufferOutput` takes effect
+* **Docs:** The README tells how to install and use the package, and how to migrate from 9.x
+
 
 ## 9.2.0
 

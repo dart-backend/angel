@@ -37,3 +37,10 @@ configureServer(Angel app) async {
 - **partialsPath**: A path within the viewsDirectory to search for partials in.
     Default is `./partials`.
 - **fileExtension**: The file extension to search for. Default is `.mustache`.
+
+## Migrating from 9.x to 10.0.0
+
+The breaking changes of each release are listed in the [CHANGELOG](CHANGELOG.md). Those of 10.0.0 that may need changes in an app:
+
+* **Views**: a view name that resolves outside the views directory (`../secret`, an absolute path, a symbolic link out of it), and a missing view, throw a 404 `AngelHttpException`, instead of reading the file or throwing a `FileSystemException`.
+* **Partials**: a partial that resolves outside the partials directory, or does not exist, renders as nothing, as Mustache specifies.

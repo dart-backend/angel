@@ -20,6 +20,8 @@
 * **Listing:** Names are HTML-escaped (XSS), in a `<ul>`
 * **Paths:** `publicPath` matches whole segments, and an encoded backslash is a 404 instead of a 500 on Windows
 * **Deprecated:** The unused `debug` parameter of `CachingVirtualDirectory`
+* **Docs:** The README tells how to migrate from 9.x
+
 
 ## 9.1.0
 

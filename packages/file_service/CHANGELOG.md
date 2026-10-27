@@ -20,6 +20,8 @@
 * **A failed save:** A save writes a whole copy of the data next to the file, `<file>.tmp`, before it writes the file in place, so that a save cut off as the file is written is restored from the copy by the next call, and a mount, a symlink and the file's permissions stay as they are. Its change is not served, as the file is read again by the next call; so is a change of a store that throws, but not one a 404 or another `AngelHttpException` of the request leaves unchanged
 * **Values with a `toJson`:** Are stored as its JSON, as `json.encode` does, where they were stored as their `toString()`
 * **`close`:** Waits for the reads and writes in progress, and a call after it fails with a `StateError`; calling it again does nothing more
+* **Docs:** The README tells how to install and use the package, and how to migrate from 9.x
+
 
 ## 9.1.0
 
