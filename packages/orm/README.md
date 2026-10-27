@@ -56,7 +56,7 @@ part 'car.g.dart';
 
 @serializable
 @orm
-abstract class _Car extends Model {
+abstract class CarEntity extends Model {
   String get make;
 
   String get description;
@@ -68,7 +68,7 @@ abstract class _Car extends Model {
 
 // You can disable migration generation.
 @Orm(generateMigrations: false)
-abstract class _NoMigrations extends Model {}
+abstract class NoMigrationsEntity extends Model {}
 ```
 
 Models can use the `@SerializableField()` annotation; `package:angel3_orm` obeys it.
@@ -81,7 +81,7 @@ simply just not extend `Model`:
 
 ```dart
 @Serializable
-abstract class _ThisIsNotAnAngelModel {
+abstract class ThisIsNotAnAngelModelEntity {
   @primaryKey
   String get username;
 }
@@ -161,17 +161,17 @@ with custom parameters (ex. `@HasOne(foreignKey: 'foreign_id')`).
 ```dart
 @serializable
 @orm
-abstract class _Author extends Model {
+abstract class AuthorEntity extends Model {
   @HasMany // Use the defaults, and auto-compute `foreignKey`
-  List<_Book> books;
+  List<BookEntity> books;
   
   // Also supports parameters...
   @HasMany(localKey: 'id', foreignKey: 'author_id', cascadeOnDelete: true)
-  List<_Book> books;
+  List<BookEntity> books;
   
   @SerializableField(alias: 'writing_utensil')
   @hasOne
-  _Pen pen;
+  PenEntity pen;
 }
 ```
 
@@ -207,37 +207,37 @@ var author = await query.getOne(executor);
 
 A many-to-many relationship can now be modeled like so. `RoleUser` in this case is a pivot table joining `User` and `Role`.
 
-Note that in this case, the models must reference the private classes (`_User`, etc.), because the canonical versions (`User`, etc.) are not-yet-generated:
+Note that in this case, the models must reference the entity classes (`UserEntity`, etc.), because the generated versions (`User`, etc.) do not exist yet:
 
 ```dart
 @serializable
 @orm
-abstract class _User extends Model {
+abstract class UserEntity extends Model {
   String get username;
   String get password;
   String get email;
 
-  @ManyToMany(_RoleUser)
-  List<_Role> get roles;
+  @ManyToMany(RoleUserEntity)
+  List<RoleEntity> get roles;
 }
 
 @serializable
 @orm
-abstract class _RoleUser {
+abstract class RoleUserEntity {
   @belongsTo
-  _Role get role;
+  RoleEntity get role;
 
   @belongsTo
-  _User get user;
+  UserEntity get user;
 }
 
 @serializable
 @orm
-abstract class _Role extends Model {
+abstract class RoleEntity extends Model {
   String name;
 
-  @ManyToMany(_RoleUser)
-  List<_User> get users;
+  @ManyToMany(RoleUserEntity)
+  List<UserEntity> get users;
 }
 ```
 
@@ -245,8 +245,8 @@ TLDR:
 
 1. Make a pivot table, C, between two tables, table A and B
 2. C should `@belongsTo` both A and B. C *should not* extend `Model`.
-3. A should have a field: `@ManyToMany(_C) List<_B> get b;`
-4. B should have a field: `@ManyToMany(_C) List<_A> get a;`
+3. A should have a field: `@ManyToMany(CEntity) List<BEntity> get b;`
+4. B should have a field: `@ManyToMany(CEntity) List<AEntity> get a;`
 
 Test: <https://raw.githubusercontent.com/angel-dart/orm/master/angel_orm_generator/test/many_to_many_test.dart>
 
@@ -261,7 +261,7 @@ Using the `@Column()` annotation, it is possible to explicitly declare the data 
 ```dart
 @serializable
 @orm
-abstract class _Foo extends Model {
+abstract class FooEntity extends Model {
   @Column(type: ColumnType.bigInt)
   int bar;
 }
@@ -274,7 +274,7 @@ Columns can also have an `index`:
 ```dart
 @serializable
 @orm
-abstract class _Foo extends Model {
+abstract class FooEntity extends Model {
   @Column(index: IndexType.primaryKey)
   String bar;
 }
@@ -290,7 +290,7 @@ If a default value is supplied, the `SqlMigrationBuilder` will include it in the
 ```dart
 @serializable
 @orm
-abstract class _Foo extends Model {
+abstract class FooEntity extends Model {
   @Column(defaultValue: 'baz')
   String bar;
 }
