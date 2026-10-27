@@ -148,22 +148,8 @@ A `datetime` column has no time zone, so the two executors store the same `DateT
 
 A `DateTime` given for a `date` column is converted too, before the server keeps its date, so a date may be stored as the day before or after: a local `DateTime(2020, 1, 2)` is `2020-01-01 16:00` UTC at UTC+8, which `MariaDbExecutor` stores as `2020-01-01`. Give the date of a `date` column as a `DateTime` of the time zone of the executor: UTC for `MariaDbExecutor` (`DateTime.utc(2020, 1, 2)`), and local time for `MySqlExecutor`.
 
-A zero date or time (`0000-00-00`), which MySQL and MariaDB store where a date is invalid and the SQL mode allows it, is read as `null`.
+A zero date or time (`0000-00-00`), which MySQL and MariaDB store where a date is invalid and the SQL mode allows it, is read as `null`, as is an invalid date stored under `ALLOW_INVALID_DATES`, such as `2024-02-30`, rather than as another day.
 
 ## Transactions
 
-The queries of a connection run one at a time. A transaction holds the connection until it ends, so a query given in it to another executor of the connection, such as that of the application, runs in the transaction, as a transaction begun in it is of it: MySQL and MariaDB nest none. Use the executor given to the transaction. The queries given to it before the transaction ends, even those not waited for, run in it, before its `COMMIT` or `ROLLBACK`; one given after it has ended throws a `StateError`, as does `close`, of its executor or of another of the connection, in it. Await the queries of a transaction, so that their errors roll it back.
-
-## Compatibility Matrix
-
-### MariaDB 10.2+
-
-|                 | Create |  Read  | Update | Delete |
-|-----------------|--------|--------|--------|--------|
-| MariaDbExecutor |    Y   |   Y    |    Y   |    Y   |
-
-### MySQL 8.0+
-
-|                 | Create |  Read  | Update | Delete |
-|-----------------|--------|--------|--------|--------|
-| MySqlExecutor   |    Y   |   Y    |    Y   |    Y   |
+The queries of a connection run one at a time. A transaction holds the connection until it ends, so a query given in it to another executor of the connection, such as that of the application, runs in the transaction, as a transaction begun in it is of it: MySQL and MariaDB nest none. Use the executor given to the transaction. The queries given to it before the transaction ends, even those not waited for, and the later queries of an operation of the ORM they start, such as the update of an `update`, run in it, before its `COMMIT` or `ROLLBACK`; one given after it has ended throws a `StateError`, as does `close`, of its executor or of another of the connection, in it. Await the queries of a transaction, so that their errors roll it back.

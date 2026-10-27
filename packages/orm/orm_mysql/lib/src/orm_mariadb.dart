@@ -9,10 +9,10 @@ class MariaDbExecutor extends MySqlExecutor {
   MariaDbExecutor(MySQLConnection connection, {Logger? logger})
     : super._(connection, logger ?? Logger('MariaDbExecutor'), utc: true);
 
-  MariaDbExecutor._transaction(MySQLConnection connection, Logger logger)
-    : super._transaction(connection, logger, true);
+  MariaDbExecutor._of(super._connection, super.logger, _Transaction transaction)
+    : super._(utc: true, transaction: transaction);
 
   @override
-  MariaDbExecutor _newTransaction(MySQLConnection connection) =>
-      MariaDbExecutor._transaction(connection, logger);
+  MariaDbExecutor _of(_Transaction transaction) =>
+      MariaDbExecutor._of(_connection, logger, transaction);
 }
