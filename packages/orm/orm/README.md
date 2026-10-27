@@ -14,7 +14,7 @@ See [Loading Relations](https://github.com/dart-backend/angel/tree/master/packag
 
 ## Supported database
 
-* PostgreSQL version 10 or later
+* PostgreSQL version 14 or later
 * MariaDB 10.2.x or later
 * MySQL 8.x or later
 

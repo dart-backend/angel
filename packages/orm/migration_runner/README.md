@@ -7,7 +7,7 @@
 
 This package contains the implementation of the database migration for the following databases. It is designed to work with Angel3 ORM.
 
-* PostgreSQL 10.x or greater
+* PostgreSQL 14.x or greater
 * MariaDB 10.2.x or greater
 * MySQL 8.x or greater
 
