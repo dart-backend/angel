@@ -136,7 +136,7 @@ jobs:
 
       - name: angel3_orm_postgres; Run tests
         working-directory: packages/orm/orm_postgres
-        run: dart test
+        run: dart test -j1
         env:
           # The hostname used to communicate with the PostgreSQL service container
           POSTGRES_HOST: localhost
