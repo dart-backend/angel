@@ -37,3 +37,16 @@ app.use<int, Todo, OrmService<int, Todo, TodoQuery>>(
   todoService,
 );
 ```
+
+## Querying
+
+A REST client can filter and sort the records of `index` and the other methods with query parameters:
+
+* `?level=100` matches the records whose `level` column is `100`. The value is converted to the column's type (a number, a boolean or a date). A parameter that names no column, or a value that cannot be converted, is a `400 Bad Request`.
+* `?$sort=name` sorts by a column. Only the query's own columns are accepted, as the name is written into the SQL; any other is a `400 Bad Request`. On the server, `$sort` can also be a map of columns to `1` or `-1`, such as `{'name': -1}` for descending order.
+
+On the server, `params['query']` can also be a callback that is given the query, such as `(TodoQuery q) => q.where!.isComplete.isFalse`.
+
+## Updates
+
+`modify` (`PATCH`) changes only the fields it is given, and `update` (`PUT`) replaces every field of the record. Both change one record, by its id.

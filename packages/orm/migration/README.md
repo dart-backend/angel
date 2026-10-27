@@ -13,6 +13,15 @@ This package contains the abstract classes for implementing database migration i
 * Drop tables based on ORM models
 * Add new tables based on ORM models
 
+## Default Values
+
+`defaultsTo` takes the default of a column as a value, which is written as a literal: a `String` is quoted and escaped, so it is never run as SQL. For SQL, such as the current time, give a `RawSql` of `package:angel3_orm`:
+
+```dart
+table.varChar('status').defaultsTo('active');
+table.timeStamp('created_at').defaultsTo(currentTimestamp);
+```
+
 ## Limitation
 
 * Alter table/fields based on updated ORM models is not supported
