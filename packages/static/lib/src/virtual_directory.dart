@@ -404,7 +404,14 @@ class VirtualDirectory {
     }
 
     var totalFileSize = await file.length();
-    var items = _satisfiable(RangeHeader.parse(range!), totalFileSize);
+    RangeHeader header;
+    try {
+      header = RangeHeader.parse(range!);
+    } on RangeHeaderParseException {
+      // Such as an end before its start, which the parser refuses.
+      throw _invalidRange();
+    }
+    var items = _satisfiable(header, totalFileSize);
 
     if (items.isEmpty) {
       res.headers['content-range'] = 'bytes */$totalFileSize';

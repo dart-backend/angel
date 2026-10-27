@@ -109,7 +109,7 @@ class Renderer {
       scope.create(memberResolverKey, value: memberResolver);
     }
 
-    if (document.doctype != null) buffer.writeln(document.doctype!.span.text);
+    if (document.doctype != null) _writeln(buffer, document.doctype!.span.text);
     renderElement(
       document.root,
       buffer,
@@ -189,12 +189,12 @@ class Renderer {
 
     if (element is SelfClosingElement) {
       if (html5) {
-        buffer.writeln('>');
+        _writeln(buffer, '>');
       } else {
-        buffer.writeln('/>');
+        _writeln(buffer, '/>');
       }
     } else {
-      buffer.writeln('>');
+      _writeln(buffer, '>');
       buffer.indent();
 
       for (var i = 0; i < element.children.length; i++) {
@@ -210,9 +210,9 @@ class Renderer {
         );
       }
 
-      buffer.writeln();
+      _endLine(buffer);
       buffer.outdent();
-      buffer.writeln('</${element.tagName.name}>');
+      _writeln(buffer, '</${element.tagName.name}>');
     }
   }
 
@@ -426,12 +426,33 @@ class Renderer {
         }
       }
     } else if (child is Element) {
-      if (buffer.lastLine?.text.isNotEmpty == true) buffer.writeln();
+      _endLine(buffer);
       renderElement(child, buffer, scope, html5);
     }
   }
 
   static String customElementName(String name) => 'elements@$name';
+
+  /// The line of each buffer that the renderer ended last, by which
+  /// [_endLine] tells whether a line is open: [CodeBuffer.writeln] adds a
+  /// blank line when none is, and the buffer does not tell.
+  static final Expando<CodeBufferLine> _endedLines = Expando();
+
+  /// Writes [text] to the current line, and ends it.
+  static void _writeln(CodeBuffer buffer, Object text) {
+    buffer.writeln(text);
+    _endedLines[buffer] = buffer.lastLine;
+  }
+
+  /// Ends the current line, if one is open: if text was written to the
+  /// buffer after the line the renderer ended last.
+  static void _endLine(CodeBuffer buffer) {
+    var last = buffer.lastLine;
+    if (last != null && !identical(last, _endedLines[buffer])) {
+      buffer.writeln();
+      _endedLines[buffer] = buffer.lastLine;
+    }
+  }
 
   void registerCustomElement(
     Element element,

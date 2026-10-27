@@ -13,7 +13,7 @@
 * **Request tokens:** Each is kept between the redirect and the callback (`requestTokenLifetime`, `maxPendingRequestTokens`), used once, and signs the access token request
 * **Errors:** A callback missing parameters, and an error page from Twitter, reach `onError` instead of a 500
 * **Client:** The `client` argument is used for requests to Twitter, and URLs are built with `/` on Windows too
-* **Dependencies:** Requires Dart >= 3.13 and `dart_twitter_api` 0.6.0, and is back in the workspace
+* **Dependencies:** Requires Dart >= 3.13 and `dart_twitter_api` 0.6.0, and is back in the workspace, and `belatuk_oauth1` 3.0.1
 
 ## 9.1.0
 

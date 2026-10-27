@@ -16,7 +16,7 @@ dependencies:
   io: ^1.0.0
   jael3: ^10.0.0
   jael3_preprocessor: ^10.0.0
-  belatuk_symbol_table: ^5.0.0
+  belatuk_symbol_table: ^6.0.0
   json_rpc_2: ^4.0.0
   logging: ^1.2.0
   path: ^1.8.0

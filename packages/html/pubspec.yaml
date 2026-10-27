@@ -10,7 +10,7 @@ environment:
   sdk: '>=3.13.0 <4.0.0'
 dependencies:
   angel3_framework: ^10.0.0
-  belatuk_html_builder: ^5.0.0
+  belatuk_html_builder: ^6.0.0
 dev_dependencies:
   angel3_test: ^10.0.0
   html: ^0.15.0

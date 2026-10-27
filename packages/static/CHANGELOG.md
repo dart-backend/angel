@@ -20,6 +20,7 @@
 * **Listing:** Names are HTML-escaped (XSS), in a `<ul>`
 * **Paths:** `publicPath` matches whole segments, and an encoded backslash is a 404 instead of a 500 on Windows
 * **Deprecated:** The unused `debug` parameter of `CachingVirtualDirectory`
+* **Dependencies:** Requires `belatuk_range_header` 7. A range that ends before it starts (`bytes=5-2`), which it refuses to parse, is still a 416
 
 ## 9.1.0
 

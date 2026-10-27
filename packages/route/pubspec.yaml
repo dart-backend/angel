@@ -9,7 +9,7 @@ resolution: workspace
 environment:
   sdk: '>=3.13.0 <4.0.0'
 dependencies:
-  belatuk_combinator: ^5.1.0
+  belatuk_combinator: ^6.0.0
   string_scanner: ^1.2.0
   path: ^1.8.0
   web: ^1.1.0
