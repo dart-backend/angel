@@ -41,7 +41,7 @@
 * **HTTP/2:** Status and headers are sent for every response, request bodies use flow control, and malformed requests are a 400. A failure after a streamed response sent its headers resets the stream, where a second HEADERS frame broke the protocol, and `AngelHttp2.drain` returns the same future when called again
 * **Server:** Shutdown hooks run once on close, before services close, and subclasses of `Angel` can be constructed
 * **Tests:** The tests and examples no longer use `MirrorsReflector`
-* **Docs:** The README tells how to install and use the package, and how to migrate from 9.x
+* **Docs:** The README lists the available packages, tells how to install and use the package, and how to migrate from 9.x
 
 
 ## 9.2.0
