@@ -22,14 +22,18 @@ Brief snippet (check `example/main.dart` for setup, etc.):
 
 ```dart
 // Create an ORM-backed service.
-  var todoService = OrmService<int, Todo, TodoQuery>(
-      executor, () => TodoQuery(),
-      readData: (req, res) => todoSerializer.decode(req.bodyAsMap));
+var todoService = OrmService<int, Todo, TodoQuery>(
+  executor,
+  () => TodoQuery(),
+  readData: (req, res) => todoSerializer.decode(req.bodyAsMap),
+);
 
-  // Because we provided `readData`, the todoService can face the Web.
-  // **IMPORTANT: Providing the type arguments is an ABSOLUTE MUST, if your
-  // model has `int` ID's (this is the case when using `angel_orm_generator` and `Model`).
-  // **
-  app.use<int, Todo, OrmService<int, Todo, TodoQuery>>(
-      '/api/todos', todoService);
+// Because we provided `readData`, the todoService can face the Web.
+// **IMPORTANT:** Providing the type arguments is an ABSOLUTE MUST if your
+// model has `int` IDs (this is the case when using `angel3_orm_generator`
+// and `Model`).
+app.use<int, Todo, OrmService<int, Todo, TodoQuery>>(
+  '/api/todos',
+  todoService,
+);
 ```

@@ -15,7 +15,7 @@ For documentation about the ORM, see [Developer Guide](https://angel3-docs.dukef
 
 ## Usage
 
-1. Create a model with `Entity` suffix, i.e. `CarEntity` in car.dart`
+1. Create a model with `Entity` suffix, i.e. `CarEntity` in `car.dart`
 
    ```dart
     import 'package:angel3_migration/angel3_migration.dart';
@@ -23,7 +23,7 @@ For documentation about the ORM, see [Developer Guide](https://angel3-docs.dukef
     import 'package:angel3_serialize/angel3_serialize.dart';
     import 'package:optional/optional.dart';
     
-    part '../angel_orm_postgres/car.g.dart';
+    part 'car.g.dart';
 
     @serializable
     @orm
@@ -45,11 +45,11 @@ For documentation about the ORM, see [Developer Guide](https://angel3-docs.dukef
 3. Write the query program. i.e. `CarPersistence.dart`
 
     ```dart
-    import 'package:angel3_migration_runner/angel3_migration_runner.dart';
-    import 'package:angel3_orm/angel3_orm.dart';
-    import 'package:logging/logging.dart';
+    import 'package:angel3_migration_runner/postgres.dart';
+    import 'package:angel3_orm_postgres/angel3_orm_postgres.dart';
     import 'package:postgres/postgres.dart';
-    import '../angel_orm_postgres/models/car.dart';
+
+    import 'car.dart';
 
     void main() async {
     
@@ -80,3 +80,32 @@ For documentation about the ORM, see [Developer Guide](https://angel3-docs.dukef
         var ferrari = (await query.insert(executor)).value;
     }
     ```
+
+## Transactions
+
+`transaction` runs its callback in a transaction, which is committed if the callback completes, and rolled back if it throws. The error is thrown as it is.
+
+```dart
+var car = await executor.transaction((tx) async {
+  var query = CarQuery()..values.make = 'Ferrari';
+  return (await query.insert(tx)).value;
+});
+```
+
+PostgreSQL does not nest transactions, so `transaction` on the executor the callback is given runs in a savepoint instead. What it does is rolled back if it throws, even when the outer callback catches the error, and committed with the outer transaction otherwise.
+
+```dart
+await executor.transaction((tx) async {
+  await insertOrder(tx);
+  try {
+    await tx.transaction((inner) => sendInvoice(inner));
+  } on InvoiceException {
+    // Only the savepoint is rolled back; the order is kept.
+  }
+});
+```
+
+* Use the executor given to the callback. Calling `transaction` on the executor of the connection from inside the callback throws, as the connection is in use.
+* Savepoints at one level of nesting run one at a time. A transaction or savepoint waits for the savepoints started inside it, even those not awaited, before it is committed, released or rolled back.
+* A query on the executor of the transaction made while a savepoint is open, rather than on the executor of the savepoint, is part of that savepoint, and rolled back with it.
+* `PostgreSqlPoolExecutor.transaction` runs the transaction on a connection of the pool, and nests savepoints the same way.
