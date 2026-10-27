@@ -17,7 +17,7 @@
 * **Types:** Types are written with their import prefixes, nullability and type arguments, and fields of function or record types are generated, where any of these could fail the build or not compile
 * **Annotations:** Enum values and constants are generated as references, and keep their import prefixes
 * **ORM:** `ShimFieldImpl` makes its own member reference, so ORM models with `@BelongsTo` build with `analyzer` 14.5; `ShimFieldImpl` is deprecated
-* **Dependencies:** Removed `quiver`
+* **Dependencies:** Removed `quiver`; requires `belatuk_code_buffer` 6
 
 ## 9.1.0
 

@@ -6,6 +6,7 @@
 
 * **Breaking:** The parent of an `extend` is read relative to the directory of the template that extends it, and its includes relative to its own directory, as includes are, where they were read relative to the directory the first template was resolved in
 * **Breaking:** Requires `jael3` 10
+* **Breaking:** Requires `belatuk_code_buffer` 6 and `belatuk_symbol_table` 6
 
 ### Fixes in 10.0.0
 

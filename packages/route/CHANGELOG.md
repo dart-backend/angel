@@ -13,6 +13,7 @@
 * **Parameters:** A parameter with a RegExp or with text around it (`:id([0-9]+)`, `file-:id`) has the matched text. An optional last parameter (`/x/:id?`) can be left out. Inline RegExps may contain groups, and text around a parameter is matched literally
 * **Bad input:** A parameter that cannot be read (malformed percent-encoding, a non-number for an `int`) makes the route not match, instead of throwing
 * **Cache:** The resolve cache holds at most `maxSize` results (default 1024), and its key includes the relative path, so results of other paths are not returned
+* **Dependencies:** Requires `belatuk_combinator` 6
 
 ## 9.1.0
 

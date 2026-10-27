@@ -110,6 +110,11 @@ void main() {
       expect(got.headers['content-range'], 'bytes */10');
     });
 
+    test('a range that ends before it starts is invalid', () async {
+      var got = await plain().get('/a.txt', {'range': 'bytes=5-2'});
+      expect(got.status, 416);
+    });
+
     test('overlapping ranges are merged', () async {
       var got = await plain().get('/a.txt', {'range': 'bytes=0-3,2-5'});
       expect((got.status, got.body), (206, '012345'));

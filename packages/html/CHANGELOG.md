@@ -6,6 +6,7 @@
 
 * **Breaking:** Pages are sent as `text/html; charset=utf-8`, where they were `text/html` without a charset, which browsers could decode as another encoding
 * **Breaking:** `enforceAcceptHeader` is a `bool` that defaults to `false`, not a `bool?`
+* **Breaking:** Requires `belatuk_html_builder` 6, which HTML-escapes text and attribute values when a page is rendered: a value escaped by hand is escaped twice, and HTML that must be written as it is takes `raw`
 
 ### Fixes in 10.0.0
 

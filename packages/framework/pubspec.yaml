@@ -14,8 +14,8 @@ dependencies:
   angel3_model: ^10.0.0
   angel3_route: ^10.0.0
   angel3_mock_request: ^10.0.0
-  belatuk_merge_map: ^5.1.0
-  belatuk_combinator: ^5.1.0
+  belatuk_merge_map: ^6.0.0
+  belatuk_combinator: ^6.0.0
   belatuk_http_server: ^5.0.0
   charcode: ^1.3.0
   file: ^7.0.0

@@ -41,6 +41,8 @@
 * **HTTP/2:** Status and headers are sent for every response, request bodies use flow control, and malformed requests are a 400. A failure after a streamed response sent its headers resets the stream, where a second HEADERS frame broke the protocol, and `AngelHttp2.drain` returns the same future when called again
 * **Server:** Shutdown hooks run once on close, before services close, and subclasses of `Angel` can be constructed
 * **Tests:** The tests and examples no longer use `MirrorsReflector`
+* **Dependencies:** Requires `belatuk_combinator` 6 and `belatuk_merge_map` 6
+* **Docs:** The message about an app without a `reflector` links to the Angel3 documentation, where it linked to the old Angel site
 
 ## 9.2.0
 

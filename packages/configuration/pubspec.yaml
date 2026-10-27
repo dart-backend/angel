@@ -10,7 +10,7 @@ environment:
   sdk: '>=3.13.0 <4.0.0'
 dependencies:
   angel3_framework: ^10.0.0
-  belatuk_merge_map: ^5.0.0
+  belatuk_merge_map: ^6.0.0
   dotenv: ^4.1.0
   file: ^7.0.0
   yaml: ^3.1.0

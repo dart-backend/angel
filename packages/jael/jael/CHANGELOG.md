@@ -7,6 +7,7 @@
 * **Breaking:** No longer uses `dart:mirrors`, so a program that renders templates can be compiled with `dart compile exe`. `{{ a.b }}` reads `b` from the `memberResolver` given to `Renderer.render`, a `Map` key, a common member of a core type, or the value's `toJson()`; other getters need a `memberResolver` or `toJson()`. `angel3_jael` gives one from the app's reflector. See the README
 * **Breaking:** Removed `new`, `NewExpression` and `TokenType.$new`, which could never be parsed; put a function that makes the value in the scope instead
 * **Breaking:** With `strictResolution: false`, an unknown member, or a member of `null`, is `null`. `readMember` takes `resolver` as a named parameter, and the new `tryReadMember` returns `noMember`
+* **Breaking:** Requires `belatuk_code_buffer` 6 and `belatuk_symbol_table` 6, whose `CodeBuffer` and `SymbolTable` `Renderer.render` takes; the HTML it renders is unchanged
 
 ### Fixes in 10.0.0
 

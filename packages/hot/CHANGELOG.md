@@ -22,6 +22,7 @@
 * **`close()`:** Closes the server, the app, the VM connection, the watchers and `stdin`, restores the terminal, answers waiting requests with `503`, and may be called before `startServer`
 * **Paths:** A `Glob` watches only its leading directory and matches files created later; watchers are ready before `startServer` returns, and paths of another type are refused by the constructor
 * **Logging:** A reload logs to the logger of the server it replaces, and `sendError` sends the status it is given
+* **Error page:** The message of an error is HTML-escaped, as `belatuk_html_builder` 6, now required, escapes text, where it was written as HTML
 
 ## 9.1.0
 
