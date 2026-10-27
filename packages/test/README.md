@@ -24,12 +24,12 @@ ws.onData.listen(...);
 Several `Matcher`s are bundled with this package, and run on any `package:http` `Response`, not just those returned by Angel.
 
 ```dart
-void test('foo', () async {
-    var res = await client.get('/foo');
+test('foo', () async {
+    var res = await client.get(Uri.parse('/foo'));
     expect(res, allOf([
         isJson({'foo': 'bar'}),
         hasStatus(200),
-        hasContentType(ContentType.JSON),
+        hasContentType(ContentType.json),
         hasContentType('application/json'),
         hasHeader('server'), // Assert header present
         hasHeader('server', 'angel'), // Assert header present with value
@@ -39,10 +39,10 @@ void test('foo', () async {
     ]));
 });
 
-void test('error', () async {
-    var res = await client.get('/error');
+test('error', () async {
+    var res = await client.get(Uri.parse('/error'));
     expect(res, isAngelHttpException());
-    expect(res, isAngelHttpException(statusCode: 404, message: ..., errors: [...])) // Optional
+    expect(res, isAngelHttpException(statusCode: 404, message: ..., errors: [...])); // Optional
 });
 ```
 
@@ -50,7 +50,7 @@ void test('error', () async {
 
 ```dart
 test('validate response', () async {
-    var res = await client.get('/bar');
+    var res = await client.get(Uri.parse('/bar'));
     expect(res, hasValidBody(Validator({
         'foo': isBoolean,
         'bar': [isString, equals('baz')],

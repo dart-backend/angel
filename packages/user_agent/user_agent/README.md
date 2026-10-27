@@ -7,4 +7,4 @@
 
 **Replacement of `package:angel_user_agent` with breaking changes to support NNBD.**
 
-Middleware to inject a User Agent object into requests. For convenience's sake, it also exports the `user_agent` library.
+Middleware to inject a User Agent object into requests. For convenience's sake, it also exports [`package:user_agent_analyzer`](https://pub.dev/packages/user_agent_analyzer), so `UserAgent` needs no other import.

@@ -8,14 +8,16 @@
 Angel3 middleware to forward requests to another server (i.e. `webdev serve`). Also supports WebSockets.
 
 ```dart
+import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_proxy/angel3_proxy.dart';
-import 'package:http/http.dart' as http;
 
 void main() async {
+  var app = Angel();
+
   // Forward requests instead of serving statically.
   // You can also pass a URI, instead of a string.
-  var proxy1 = Proxy('http://localhost:3000');
-  
+  var proxy = Proxy('http://localhost:3000');
+
   // handle all methods (GET, POST, ...)
   app.fallback(proxy.handleRequest);
 }

@@ -15,8 +15,8 @@ import 'package:angel3_client/io.dart';
 import 'package:angel3_client/browser.dart';
 import 'package:angel3_client/flutter.dart';
 
-main() async {
-  Angel app = Rest("http://localhost:3000");
+void main() async {
+  var app = Rest('http://localhost:3000');
 }
 ```
 
@@ -24,8 +24,7 @@ You can call `service` to receive an instance of `Service`, which acts as a clie
 
 ```dart
 foo() async {
-  Service Todos = app.service("todos");
-  List<Map> todos = await Todos.index();
+  var todos = await app.service('todos').index();
 
   print(todos.length);
 }
@@ -35,8 +34,8 @@ To work with your own classes instead of Maps, pass a `deserializer`. With `ange
 
 ```dart
 @serializable
-abstract class _Todo extends Model {
-  String? text;
+abstract class TodoEntity extends Model {
+  String? get text;
 }
 
 bar() async {
@@ -60,7 +59,10 @@ Just like on the server, services support `index`, `read`, `create`, `modify`, `
 Local auth:
 
 ```dart
-var auth = await app.authenticate(type: 'local', credentials: {username: ..., password: ...});
+var auth = await app.authenticate(
+  type: 'local',
+  credentials: {'username': ..., 'password': ...},
+);
 print(auth.token);
 print(auth.data); // User object
 ```
@@ -68,9 +70,7 @@ print(auth.data); // User object
 Revive an existing jwt:
 
 ```dart
-Future<AngelAuthResult> reviveJwt(String jwt) {
-  return app.authenticate(credentials: {'token': jwt});
-}
+var auth = await app.reviveJwt(jwt);
 ```
 
 Via Popup:
@@ -81,7 +81,7 @@ app.authenticateViaPopup('/auth/google').listen((jwt) {
 });
 ```
 
-Resume a session from localStorage (browser only):
+Resume a session from localStorage (browser only, with the `Rest` of `package:angel3_client/browser.dart`, whose `type` is optional):
 
 ```dart
 // Automatically checks for JSON-encoded 'token' in localStorage,
@@ -100,7 +100,7 @@ await app.logout();
 Oftentimes, you will want to update a collection based on updates from a service. Use `ServiceList` for this case:
 
 ```dart
-build(BuildContext context) async {
+Widget build(BuildContext context) {
   var list = ServiceList(app.service('api/todos'));
   
   return StreamBuilder(

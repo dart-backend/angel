@@ -1,4 +1,4 @@
-# Jael Ppreprocessor
+# Jael Preprocessor
 
 ![Pub Version (including pre-releases)](https://img.shields.io/pub/v/jael3_preprocessor?include_prereleases)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
@@ -13,7 +13,7 @@ In your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  jael3_prepreprocessor: ^9.0.0
+  jael3_preprocessor: ^10.0.0
 ```
 
 ## Usage

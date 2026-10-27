@@ -97,6 +97,8 @@ class HealthController extends Controller {
 
 Without reflection, these features are unavailable: `@Expose` on controller methods, the `@Middleware` and `@Hooks` annotations (they are ignored), automatic constructor injection in `container.make`, and `ioc` without `injection:`. See [example/no_mirrors.dart](example/no_mirrors.dart) for a complete app.
 
+To keep them in an AOT-compiled app, mark the classes `@injectable`, generate their reflection data with [`angel3_container_generator`](https://pub.dev/packages/angel3_container_generator), and pass it to the app: `Angel(reflector: StaticReflector.combine([...]))`. On the Dart VM, `MirrorsReflector` of [`angel3_container_mirrors`](https://pub.dev/packages/angel3_container_mirrors) does the same with `dart:mirrors`.
+
 ## Request limits
 
 `req.parseBody()` (also used by services) reads at most `app.maxBodySize` bytes, 10 MB by default, and answers larger requests with `413 Payload Too Large`:

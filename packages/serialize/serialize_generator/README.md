@@ -27,3 +27,5 @@ The builder for generating JSON serialization code for Angel3 framework.
     ```bash
         dart run build_runner build
     ```
+
+    The generated class is named without the `Entity` suffix (or a `_` prefix): `Todo`, with `TodoSerializer`, `TodoFields` and a `todoSerializer` codec. A class whose name only ends with the letters of the suffix, such as `UserIdentity`, keeps its name.

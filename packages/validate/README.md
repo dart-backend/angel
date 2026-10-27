@@ -224,7 +224,7 @@ The remaining functionality is [effectively implemented by the `matcher` package
 
 ### Nested Validators
 
-Very often, the data we validate contains other data within. You can pass a `Validator` instance to the constructor, because it extends the `Matcher` class.
+Very often, the data we validate contains other data within. You can pass a `Validator` instance to the constructor, because it extends the `Matcher` class. A nested `Validator` filters its data as the outer one does: keys it does not know are dropped. With several `Validator`s on one key, the keys of each are kept.
 
 ```dart
 main() {
@@ -260,16 +260,17 @@ main() {
 
 `server.dart` exposes seven helper middleware:
 
-- `validate(validator)`: Validates and filters `req.bodyAsMap`, and throws an `AngelHttpException.BadRequest` if data is invalid.
-- `validateEvent(validator)`: Sets `e.data` to the result of validation on a service event.
-- `validateQuery(validator)`: Same as `validate`, but operates on `req.query`.
+- `validate(validator)`: Validates and filters `req.bodyAsMap`, and throws an `AngelHttpException.badRequest` if data is invalid.
+- `validateEvent(validator)`: Sets `e.data` to the result of validation on a service event; data that is not a `Map` is a 400.
+- `validateQuery(validator)`: Same as `validate`, but operates on `req.queryParameters`.
 - `autoParseBody(fields)`: Auto-parses numbers in `req.bodyAsMap`.
-- `autoParseQuery(fields)`: Same as `autoParseBody`, but operates on `req.query`.
+- `autoParseQuery(fields)`: Same as `autoParseBody`, but operates on `req.queryParameters`.
 - `filterBody(only)`: Filters unwanted data out of `req.bodyAsMap`.
-- `filterQuery(only)`: Same as `filterBody`, but operates on `req.query`.
+- `filterQuery(only)`: Same as `filterBody`, but operates on `req.queryParameters`.
 
 ```dart
 import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_framework/http.dart';
 import 'package:angel3_validate/server.dart';
 
 final Validator echo = Validator({
@@ -290,10 +291,10 @@ void main() async {
         res.write('You said: "${req.bodyAsMap["message"]}"');
     });
 
-    app.service('api/todos')
+    app.use('api/todos', MapService())
         ..beforeCreated.listen(validateEvent(todo))
         ..beforeUpdated.listen(validateEvent(todo));
 
-    await app.startServer();
+    await AngelHttp(app).startServer();
 }
 ```

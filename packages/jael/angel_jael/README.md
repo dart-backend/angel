@@ -13,7 +13,7 @@ In your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  angel3_jael: ^9.0.0
+  angel3_jael: ^10.0.0
 ```
 
 ## Usage
@@ -47,6 +47,7 @@ The following is a basic example of a server setup that can render Jael template
 
 ```dart
 import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_framework/http.dart';
 import 'package:angel3_jael/angel3_jael.dart';
 import 'package:file/local.dart';
 import 'package:logging/logging.dart';
@@ -60,9 +61,9 @@ void main() async {
   );
 
   // Render the contents of views/index.jael
-  app.get('/', (res) => res.render('index', {'title': 'ESKETTIT'}));
+  app.get('/', (req, res) => res.render('index', {'title': 'ESKETTIT'}));
 
-  app.use(() => throw AngelHttpException.notFound());
+  app.fallback((req, res) => throw AngelHttpException.notFound());
 
   app.logger = Logger('angel')
     ..onRecord.listen((rec) {
@@ -71,8 +72,9 @@ void main() async {
       if (rec.stackTrace != null) print(rec.stackTrace);
     });
 
-  var server = await app.startServer(null, 3000);
-  print('Listening at http://${server.address.address}:${server.port}');
+  var http = AngelHttp(app);
+  await http.startServer('127.0.0.1', 3000);
+  print('Listening at ${http.uri}');
 }
 ```
 
@@ -106,7 +108,7 @@ into an external cache.
 
   // Preload JAEL view templates into cache
   var viewCache = <String, Document>{};
-  jaelTemplatePreload(templateDir, viewCache);
+  await jaelTemplatePreload(templateDir, viewCache);
 
   // Inject cache into JAEL renderer
   await app.configure(
