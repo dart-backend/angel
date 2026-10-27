@@ -52,6 +52,6 @@ class KeyValuePair extends AstNode {
   @override
   FileSpan get span {
     if (colon == null || value == null) return key.span;
-    return colon!.span.expand(colon!.span).expand(value!.span);
+    return key.span.expand(colon!.span).expand(value!.span);
   }
 }

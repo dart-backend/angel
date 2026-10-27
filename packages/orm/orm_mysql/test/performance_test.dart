@@ -4,10 +4,20 @@ import 'dart:async';
 import 'dart:math';
 
 import 'package:angel3_orm/angel3_orm.dart';
+import 'package:angel3_orm_mysql/angel3_orm_mysql.dart';
 import 'package:test/test.dart';
 
+import 'common.dart';
 import 'models/fortune.dart';
 import 'models/world.dart';
+
+// The test runner needs a `main` to load the file, even to skip it.
+void main() {
+  performanceTests(
+    () async => createExecutor(await openMySqlConnection()),
+    close: (executor) => (executor as MySqlExecutor).close(),
+  );
+}
 
 void performanceTests(
   FutureOr<QueryExecutor> Function() createExecutor, {

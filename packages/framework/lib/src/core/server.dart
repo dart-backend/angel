@@ -50,7 +50,7 @@ Future<bool> _defaultErrorHandler(
     await res.json(e.toJson());
     return Future.value(false);
   } else {
-    res.contentType = MediaType('text', 'html', {'charset': 'utf8'});
+    res.contentType = MediaType('text', 'html', {'charset': 'utf-8'});
     res.statusCode = e.statusCode;
     // Messages may echo user input (e.g. a FormatException), so escape them.
     var message = htmlEscape.convert(e.message);
@@ -272,7 +272,8 @@ class Angel extends Routable {
   /// Loads some base dependencies into the service container.
   void bootstrapContainer() {
     if (runtimeType != Angel) {
-      container.registerSingleton(this);
+      // Without `as`, this would register under Angel (the static type).
+      container.registerSingleton(this, as: runtimeType);
     }
 
     container.registerSingleton<Angel>(this);
@@ -491,7 +492,7 @@ class Angel extends Routable {
       'automatic constructor injection, and `ioc` without an explicit `injection:` are unavailable. '
       'Routes, services, `Controller.configureRoutes` and container-registered types still work.\n\n'
       'For more, see the documentation:\n'
-      'https://docs.angel-dart.dev/guides/dependency-injection#enabling-dart-mirrors-or-other-reflection';
+      'https://angel3-docs.dukefirehawk.com/guides/dependency-injection#enabling-dart-mirrors-or-other-reflection';
 
   Angel({
     Reflector reflector = const ThrowingReflector(

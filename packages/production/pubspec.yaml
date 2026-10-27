@@ -1,5 +1,5 @@
 name: angel3_production
-version: 9.1.0
+version: 10.0.0
 description: Helpers for concurrency, message-passing, rotating loggers, and other production functionality in Angel3.
 homepage: https://angel3-framework.web.app
 repository: https://github.com/dart-backend/angel/
@@ -9,14 +9,16 @@ resolution: workspace
 environment:
   sdk: '>=3.13.0 <4.0.0'
 dependencies:
-  angel3_container: ^9.0.0
-  angel3_framework: ^9.0.0
-  belatuk_pub_sub: ^6.1.0
+  angel3_container: ^10.0.0
+  angel3_framework: ^10.0.0
+  belatuk_pub_sub: ^7.0.0
   args: ^2.4.0
   io: ^1.0.0
   logging: ^1.2.0
   intl: ^0.20.0
 dev_dependencies:
+  http2: ^3.0.0
   lints: ^6.0.0
+  test: ^1.24.0
 
 

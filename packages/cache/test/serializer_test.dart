@@ -28,6 +28,7 @@ void main() {
         cacheSerializationResults(timeout: timeout, shouldCache: shouldCache),
       )
       ..get('/shared', (req, res) => shared)
+      ..get('/admin', (req, res) => shared)
       ..get('/fresh', (req, res) => {'new': 'object'})
       ..get('/text', (req, res) => 'plain')
       ..get('/number', (req, res) => 42)
@@ -131,5 +132,15 @@ void main() {
     expect(await fetch('/other'), 'other');
     expect(await fetch('/shared'), json.encode(shared));
     expect(jsonCalls, 2);
+  });
+
+  test('shouldCache refusing a request does not reuse a result', () async {
+    setUpApp(shouldCache: (req, res, value) => req.uri?.path != '/admin');
+    await get('/shared');
+    expect(serialized, 1);
+    await get('/admin');
+    expect(serialized, 2);
+    await get('/shared');
+    expect(serialized, 2);
   });
 }

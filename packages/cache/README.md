@@ -7,7 +7,18 @@
 
 A service that provides HTTP caching to the response data for [Angel3 framework](https://pub.dev/packages/angel3).
 
-## `CacheService`
+## Installation
+
+In your `pubspec.yaml`:
+
+```yaml
+dependencies:
+  angel3_cache: ^10.0.0
+```
+
+## Usage
+
+### `CacheService`
 
 A `Service` class that caches data from one service (`database`), storing it in another (`cache`). An imaginable use case is storing results from MongoDB or another database in Memcache/Redis.
 
@@ -18,8 +29,9 @@ void main() async {
   app.use(
     '/api/todos',
     CacheService(
-      // Any fast service works; a MapService keeps the cache in memory.
-      cache: MapService(),
+      // Any fast service that stores records as given works; a MapService
+      // keeps the cache in memory, without ids and dates of its own.
+      cache: MapService(autoIdAndDateFields: false),
       database: AnonymousService(
         index: ([params]) async {
           print('Fetched directly from the underlying service at ${DateTime.now()}!');
@@ -40,7 +52,7 @@ void main() async {
 - `modify` and `update` write the new record through to `cache`, and `remove` evicts it, so several instances can share one cache.
 - If `cache` fails, reads fall back to `database`.
 
-## `cacheSerializationResults`
+### `cacheSerializationResults`
 
 A middleware that enables the caching of response serialization.
 
@@ -53,7 +65,7 @@ app.fallback(cacheSerializationResults(
 ));
 ```
 
-## `ResponseCache`
+### `ResponseCache`
 
 A flexible response cache for Angel3.
 
@@ -61,7 +73,7 @@ Use this to improve real and perceived response of Web applications, as well as 
 
 Supports the `If-Modified-Since` header, as well as storing the contents of responses in memory.
 
-`handleRequest` buffers responses for matching paths, so handlers need no changes. Clients whose copy is still current get `304 Not Modified`. Only responses that are safe to share are stored: status 200, no cookies, and not marked `Cache-Control: no-store` or `private`. Requests carrying an `Authorization` header bypass the cache entirely. At most `maxEntries` responses (1024 by default) are kept; when full, expired entries are dropped first, then the least recently used.
+`handleRequest` buffers responses for matching paths, so handlers need no changes. Clients whose copy is still current get `304 Not Modified`. Only responses that are safe to share are stored: responses to `GET`, with status 200, no cookies, not marked `Cache-Control: no-store` or `private`, no `Vary` other than `Accept-Encoding`, and at most `maxEntryBytes` (1 MB by default) long. Requests carrying an `Authorization` header or cookies bypass the cache entirely; set `cacheRequestsWithCookies` only if no response of a cached path depends on cookies. At most `maxEntries` responses (1024 by default) are kept; when full, expired entries are dropped first, then the least recently used. Responses of cached paths are buffered, not streamed, so match only small, shared ones.
 
 To initialize a simple cache:
 
@@ -91,7 +103,7 @@ Future configureServer(Angel app) async {
 
 The cache key is the request URI including its query string. Pass `ignoreQueryAndFragment: true` to cache by path only.
 
-### Purging the Cache
+#### Purging the Cache
 
 Call `purge` with a cache key to remove a resource from a `ResponseCache`.
 
@@ -108,3 +120,14 @@ Future configureServer(Angel app, ResponseCache cache) async {
   });
 }
 ```
+
+## Migrating from 9.x to 10.0.0
+
+The breaking changes of each release are listed in the [CHANGELOG](CHANGELOG.md). Those of 10.0.0 that may need changes in an app:
+
+* **Cookies**: `ResponseCache` no longer caches requests with cookies, as it does not those with an `Authorization` header, so that a page of a session is not served to others. Set `cacheRequestsWithCookies: true` only if no cached response depends on cookies.
+* **Responses not stored**: a response with a `Vary` other than `Accept-Encoding`, a `Content-Encoding` set by the handler, `Cache-Control: no-cache`, a response to `HEAD`, and one longer than `maxEntryBytes` (default 1 MB) are not stored. Raise `maxEntryBytes` for larger responses:
+
+  ```dart
+  var cache = ResponseCache(maxEntryBytes: 4 * 1024 * 1024);
+  ```

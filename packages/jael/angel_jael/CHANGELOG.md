@@ -1,5 +1,21 @@
 # Change Log
 
+## 10.0.0
+
+### Breaking changes in 10.0.0
+
+* **Breaking:** A view is resolved relative to its own directory, where it was the views directory, so that the `extend` and `include` tags of a view in a subdirectory are read relative to it, as those of its parents are, with `jael3_preprocessor` 10
+* **Breaking:** Requires `belatuk_code_buffer` 6 and `belatuk_symbol_table` 6, whose `CodeBuffer` a `createBuffer` returns
+
+### New in 10.0.0
+
+* `jael` reads the members of values through the app's reflector (`reflectorMemberResolver`): with a `StaticReflector` of `angel3_container_generator` data, the fields, getters and methods of `@injectable` classes, without `dart:mirrors`; with a `MirrorsReflector`, those of any class. A `memberResolver` it is given is asked first
+
+### Fixes in 10.0.0
+
+* **Docs:** The README tells how to migrate from 9.x
+
+
 ## 9.1.0
 
 * Require Dart >= 3.13

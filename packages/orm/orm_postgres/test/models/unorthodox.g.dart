@@ -26,7 +26,7 @@ class WeirdJoinMigration extends Migration {
     schema.create('weird_joins', (table) {
       table.integer('id').primaryKey();
       table
-          .declare('join_name', ColumnType('varchar'))
+          .declare('join_name', ColumnType.varChar)
           .references('unorthodoxes', 'name');
     });
   }
@@ -89,9 +89,9 @@ class FooPivotMigration extends Migration {
   void up(Schema schema) {
     schema.create('foo_pivots', (table) {
       table
-          .declare('weird_join_id', ColumnType('int'))
+          .declare('weird_join_id', ColumnType.int)
           .references('weird_joins', 'id');
-      table.declare('foo_bar', ColumnType('varchar')).references('foos', 'bar');
+      table.declare('foo_bar', ColumnType.varChar).references('foos', 'bar');
     });
   }
 
@@ -159,7 +159,9 @@ class UnorthodoxQuery extends Query<Unorthodox, UnorthodoxQueryWhere> {
       return Optional.empty();
     }
     var model = Unorthodox(
-      name: fields.contains('name') ? (row[0] as String?) : null,
+      name: fields.contains('name')
+          ? (row[fields.indexOf('name')] as String?)
+          : null,
     );
     return Optional.of(model);
   }
@@ -224,20 +226,6 @@ class WeirdJoinQuery extends Query<WeirdJoin, WeirdJoinQueryWhere> {
       ],
       trampoline: trampoline,
     );
-    leftJoin(
-      _numbas = NumbaQuery(trampoline: trampoline, parent: this),
-      'id',
-      'parent',
-      additionalFields: const ['i', 'parent'],
-      trampoline: trampoline,
-    );
-    leftJoin(
-      '(SELECT foo_pivots.weird_join_id, foos.bar FROM foos LEFT JOIN foo_pivots ON foo_pivots.foo_bar=foos.bar)',
-      'id',
-      'weird_join_id',
-      additionalFields: const ['bar'],
-      trampoline: trampoline,
-    );
   }
 
   @override
@@ -251,7 +239,7 @@ class WeirdJoinQuery extends Query<WeirdJoin, WeirdJoinQueryWhere> {
 
   late SongQuery _song;
 
-  late NumbaQuery _numbas;
+  late final NumbaQuery _numbas = NumbaQuery();
 
   @override
   Map<String, String> get casts {
@@ -292,29 +280,19 @@ class WeirdJoinQuery extends Query<WeirdJoin, WeirdJoinQueryWhere> {
     if (row.every((x) => x == null)) {
       return Optional.empty();
     }
-    var model = WeirdJoin(id: fields.contains('id') ? mapToInt(row[0]) : 0);
-    if (row.length > 2) {
-      var modelOpt = UnorthodoxQuery().parseRow(row.skip(2).take(1).toList());
+    var model = WeirdJoin(
+      id: fields.contains('id') ? mapToInt(row[fields.indexOf('id')]) : 0,
+    );
+    {
+      var modelOpt = _unorthodox.parseRow(joinedRow(0, row));
       modelOpt.ifPresent((m) {
         model = model.copyWith(unorthodox: m);
       });
     }
-    if (row.length > 3) {
-      var modelOpt = SongQuery().parseRow(row.skip(3).take(5).toList());
+    {
+      var modelOpt = _song.parseRow(joinedRow(1, row));
       modelOpt.ifPresent((m) {
         model = model.copyWith(song: m);
-      });
-    }
-    if (row.length > 8) {
-      var modelOpt = NumbaQuery().parseRow(row.skip(8).take(2).toList());
-      modelOpt.ifPresent((m) {
-        model = model.copyWith(numbas: [m]);
-      });
-    }
-    if (row.length > 10) {
-      var modelOpt = FooQuery().parseRow(row.skip(10).take(1).toList());
-      modelOpt.ifPresent((m) {
-        model = model.copyWith(foos: [m]);
       });
     }
     return Optional.of(model);
@@ -333,74 +311,60 @@ class WeirdJoinQuery extends Query<WeirdJoin, WeirdJoinQueryWhere> {
     return _song;
   }
 
+  /// The query [numbas] are loaded with, whose conditions and order apply.
   NumbaQuery get numbas {
     return _numbas;
   }
 
   @override
-  bool canCompile(trampoline) {
-    return (!(trampoline.contains('weird_joins') &&
-        trampoline.contains('foo_pivots')));
-  }
+  bool get loadsRelations => true;
 
   @override
-  Future<List<WeirdJoin>> get(QueryExecutor executor) {
-    return super.get(executor).then((result) {
-      return result.fold<List<WeirdJoin>>([], (out, model) {
-        var idx = out.indexWhere((m) => m.id == model.id);
-
-        if (idx == -1) {
-          return out..add(model);
-        } else {
-          var l = out[idx];
-          return out
-            ..[idx] = l.copyWith(
-              numbas: List<NumbaEntity>.from(l.numbas)..addAll(model.numbas),
-              foos: List<FooEntity>.from(l.foos)..addAll(model.foos),
-            );
-        }
-      });
-    });
-  }
-
-  @override
-  Future<List<WeirdJoin>> update(QueryExecutor executor) {
-    return super.update(executor).then((result) {
-      return result.fold<List<WeirdJoin>>([], (out, model) {
-        var idx = out.indexWhere((m) => m.id == model.id);
-
-        if (idx == -1) {
-          return out..add(model);
-        } else {
-          var l = out[idx];
-          return out
-            ..[idx] = l.copyWith(
-              numbas: List<NumbaEntity>.from(l.numbas)..addAll(model.numbas),
-              foos: List<FooEntity>.from(l.foos)..addAll(model.foos),
-            );
-        }
-      });
-    });
-  }
-
-  @override
-  Future<List<WeirdJoin>> delete(QueryExecutor executor) {
-    return super.delete(executor).then((result) {
-      return result.fold<List<WeirdJoin>>([], (out, model) {
-        var idx = out.indexWhere((m) => m.id == model.id);
-
-        if (idx == -1) {
-          return out..add(model);
-        } else {
-          var l = out[idx];
-          return out
-            ..[idx] = l.copyWith(
-              numbas: List<NumbaEntity>.from(l.numbas)..addAll(model.numbas),
-              foos: List<FooEntity>.from(l.foos)..addAll(model.foos),
-            );
-        }
-      });
-    });
+  Future<List<WeirdJoin>> loadRelations(
+    QueryExecutor executor,
+    List<List> rows,
+    List<WeirdJoin> records,
+    Set<String> loading,
+  ) async {
+    if (records.isEmpty) return records;
+    var numbasByKey = loading.contains('numbas')
+        ? null
+        : await _numbas.getByKeys(executor, 'parent', [
+            for (var row in rows) valueOf('id', row),
+          ], loading);
+    // The other ends of the many-to-many, then their records.
+    var foosPivot = loading.contains('foos')
+        ? null
+        : await Query.pivotKeys(
+            executor,
+            'foo_pivots',
+            'weird_join_id',
+            'foo_bar',
+            [for (var row in rows) valueOf('id', row)],
+          );
+    var foosByKey = foosPivot == null
+        ? null
+        : await FooQuery().getByKeys(
+            executor,
+            'bar',
+            foosPivot.values.expand((k) => k),
+            loading,
+          );
+    return [
+      for (var (i, r) in records.indexed)
+        r.copyWith(
+          numbas: numbasByKey == null
+              ? r.numbas
+              : [...?numbasByKey['${valueOf('id', rows[i])}']],
+          foos: foosByKey == null
+              ? r.foos
+              : [
+                  for (var k
+                      in foosPivot!['${valueOf('id', rows[i])}'] ?? const [])
+                    ...?foosByKey['$k'],
+                ],
+        ),
+    ];
   }
 }
 
@@ -505,15 +469,19 @@ class SongQuery extends Query<Song, SongQueryWhere> {
       return Optional.empty();
     }
     var model = Song(
-      id: fields.contains('id') ? row[0].toString() : null,
+      id: fields.contains('id') ? row[fields.indexOf('id')].toString() : null,
       createdAt: fields.contains('created_at')
-          ? mapToNullableDateTime(row[1])
+          ? mapToNullableDateTime(row[fields.indexOf('created_at')])
           : null,
       updatedAt: fields.contains('updated_at')
-          ? mapToNullableDateTime(row[2])
+          ? mapToNullableDateTime(row[fields.indexOf('updated_at')])
           : null,
-      weirdJoinId: fields.contains('weird_join_id') ? mapToInt(row[3]) : null,
-      title: fields.contains('title') ? (row[4] as String?) : null,
+      weirdJoinId: fields.contains('weird_join_id')
+          ? mapToInt(row[fields.indexOf('weird_join_id')])
+          : null,
+      title: fields.contains('title')
+          ? (row[fields.indexOf('title')] as String?)
+          : null,
     );
     return Optional.of(model);
   }
@@ -646,8 +614,10 @@ class NumbaQuery extends Query<Numba, NumbaQueryWhere> {
       return Optional.empty();
     }
     var model = Numba(
-      i: fields.contains('i') ? mapToInt(row[0]) : null,
-      parent: fields.contains('parent') ? mapToInt(row[1]) : null,
+      i: fields.contains('i') ? mapToInt(row[fields.indexOf('i')]) : null,
+      parent: fields.contains('parent')
+          ? mapToInt(row[fields.indexOf('parent')])
+          : null,
     );
     return Optional.of(model);
   }
@@ -702,13 +672,6 @@ class FooQuery extends Query<Foo, FooQueryWhere> {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = FooQueryWhere(this);
-    leftJoin(
-      '(SELECT foo_pivots.foo_bar, weird_joins.id, weird_joins.join_name FROM weird_joins LEFT JOIN foo_pivots ON foo_pivots.weird_join_id=weird_joins.id)',
-      'bar',
-      'foo_bar',
-      additionalFields: const ['id', 'join_name'],
-      trampoline: trampoline,
-    );
   }
 
   @override
@@ -757,13 +720,11 @@ class FooQuery extends Query<Foo, FooQueryWhere> {
     if (row.every((x) => x == null)) {
       return Optional.empty();
     }
-    var model = Foo(bar: fields.contains('bar') ? (row[0] as String?) : null);
-    if (row.length > 1) {
-      var modelOpt = WeirdJoinQuery().parseRow(row.skip(1).take(2).toList());
-      modelOpt.ifPresent((m) {
-        model = model.copyWith(weirdJoins: [m]);
-      });
-    }
+    var model = Foo(
+      bar: fields.contains('bar')
+          ? (row[fields.indexOf('bar')] as String?)
+          : null,
+    );
     return Optional.of(model);
   }
 
@@ -773,69 +734,47 @@ class FooQuery extends Query<Foo, FooQueryWhere> {
   }
 
   @override
-  bool canCompile(trampoline) {
-    return (!(trampoline.contains('foos') &&
-        trampoline.contains('foo_pivots')));
-  }
+  bool get loadsRelations => true;
 
   @override
-  Future<List<Foo>> get(QueryExecutor executor) {
-    return super.get(executor).then((result) {
-      return result.fold<List<Foo>>([], (out, model) {
-        var idx = out.indexWhere((m) => m.bar == model.bar);
-
-        if (idx == -1) {
-          return out..add(model);
-        } else {
-          var l = out[idx];
-          return out
-            ..[idx] = l.copyWith(
-              weirdJoins: List<WeirdJoinEntity>.from(l.weirdJoins)
-                ..addAll(model.weirdJoins),
-            );
-        }
-      });
-    });
-  }
-
-  @override
-  Future<List<Foo>> update(QueryExecutor executor) {
-    return super.update(executor).then((result) {
-      return result.fold<List<Foo>>([], (out, model) {
-        var idx = out.indexWhere((m) => m.bar == model.bar);
-
-        if (idx == -1) {
-          return out..add(model);
-        } else {
-          var l = out[idx];
-          return out
-            ..[idx] = l.copyWith(
-              weirdJoins: List<WeirdJoinEntity>.from(l.weirdJoins)
-                ..addAll(model.weirdJoins),
-            );
-        }
-      });
-    });
-  }
-
-  @override
-  Future<List<Foo>> delete(QueryExecutor executor) {
-    return super.delete(executor).then((result) {
-      return result.fold<List<Foo>>([], (out, model) {
-        var idx = out.indexWhere((m) => m.bar == model.bar);
-
-        if (idx == -1) {
-          return out..add(model);
-        } else {
-          var l = out[idx];
-          return out
-            ..[idx] = l.copyWith(
-              weirdJoins: List<WeirdJoinEntity>.from(l.weirdJoins)
-                ..addAll(model.weirdJoins),
-            );
-        }
-      });
-    });
+  Future<List<Foo>> loadRelations(
+    QueryExecutor executor,
+    List<List> rows,
+    List<Foo> records,
+    Set<String> loading,
+  ) async {
+    if (records.isEmpty) return records;
+    // The other ends of the many-to-many, then their records.
+    var weirdJoinsPivot = loading.contains('weird_joins')
+        ? null
+        : await Query.pivotKeys(
+            executor,
+            'foo_pivots',
+            'foo_bar',
+            'weird_join_id',
+            [for (var row in rows) valueOf('bar', row)],
+          );
+    var weirdJoinsByKey = weirdJoinsPivot == null
+        ? null
+        : await WeirdJoinQuery().getByKeys(
+            executor,
+            'id',
+            weirdJoinsPivot.values.expand((k) => k),
+            loading,
+          );
+    return [
+      for (var (i, r) in records.indexed)
+        r.copyWith(
+          weirdJoins: weirdJoinsByKey == null
+              ? r.weirdJoins
+              : [
+                  for (var k
+                      in weirdJoinsPivot!['${valueOf('bar', rows[i])}'] ??
+                          const [])
+                    ...?weirdJoinsByKey['$k'],
+                ],
+        ),
+    ];
   }
 }
 
@@ -940,14 +879,14 @@ class FooPivotQuery extends Query<FooPivot, FooPivotQueryWhere> {
       return Optional.empty();
     }
     var model = FooPivot();
-    if (row.length > 2) {
-      var modelOpt = WeirdJoinQuery().parseRow(row.skip(2).take(2).toList());
+    {
+      var modelOpt = _weirdJoin.parseRow(joinedRow(0, row));
       modelOpt.ifPresent((m) {
         model = model.copyWith(weirdJoin: m);
       });
     }
-    if (row.length > 4) {
-      var modelOpt = FooQuery().parseRow(row.skip(4).take(1).toList());
+    {
+      var modelOpt = _foo.parseRow(joinedRow(1, row));
       modelOpt.ifPresent((m) {
         model = model.copyWith(foo: m);
       });
@@ -966,6 +905,58 @@ class FooPivotQuery extends Query<FooPivot, FooPivotQueryWhere> {
 
   FooQuery get foo {
     return _foo;
+  }
+
+  @override
+  bool get loadsRelations => true;
+
+  @override
+  Future<List<FooPivot>> loadRelations(
+    QueryExecutor executor,
+    List<List> rows,
+    List<FooPivot> records,
+    Set<String> loading,
+  ) async {
+    if (records.isEmpty) return records;
+    var weirdJoinLoaded = loading.contains('weird_joins')
+        ? null
+        : (await _weirdJoin.loadRelations(
+            executor,
+            [
+              for (var (i, r) in records.indexed)
+                if (r.weirdJoin != null) joinedRow(0, rows[i]),
+            ],
+            [
+              for (var r in records)
+                if (r.weirdJoin != null) r.weirdJoin as WeirdJoin,
+            ],
+            {...loading, 'weird_joins'},
+          )).iterator;
+    var fooLoaded = loading.contains('foos')
+        ? null
+        : (await _foo.loadRelations(
+            executor,
+            [
+              for (var (i, r) in records.indexed)
+                if (r.foo != null) joinedRow(1, rows[i]),
+            ],
+            [
+              for (var r in records)
+                if (r.foo != null) r.foo as Foo,
+            ],
+            {...loading, 'foos'},
+          )).iterator;
+    return [
+      for (var r in records)
+        r.copyWith(
+          weirdJoin: weirdJoinLoaded == null || r.weirdJoin == null
+              ? r.weirdJoin
+              : (weirdJoinLoaded..moveNext()).current,
+          foo: fooLoaded == null || r.foo == null
+              ? r.foo
+              : (fooLoaded..moveNext()).current,
+        ),
+    ];
   }
 }
 
@@ -990,11 +981,11 @@ class FooPivotQueryValues extends MapQueryValues {
     return {};
   }
 
-  int get weirdJoinId {
-    return (values['weird_join_id'] as int);
+  int? get weirdJoinId {
+    return (values['weird_join_id'] as int?);
   }
 
-  set weirdJoinId(int value) => values['weird_join_id'] = value;
+  set weirdJoinId(int? value) => values['weird_join_id'] = value;
 
   String? get fooBar {
     return (values['foo_bar'] as String?);
@@ -1034,7 +1025,7 @@ class Unorthodox implements UnorthodoxEntity {
 
   @override
   int get hashCode {
-    return hashObjects([name]);
+    return Object.hashAll([name]);
   }
 
   @override
@@ -1102,7 +1093,7 @@ class WeirdJoin implements WeirdJoinEntity {
 
   @override
   int get hashCode {
-    return hashObjects([id, unorthodox, song, numbas, foos]);
+    return Object.hashAll([id, unorthodox, song, numbas.length, foos.length]);
   }
 
   @override
@@ -1165,7 +1156,7 @@ class Song extends SongEntity {
 
   @override
   int get hashCode {
-    return hashObjects([id, createdAt, updatedAt, weirdJoinId, title]);
+    return Object.hashAll([id, createdAt, updatedAt, weirdJoinId, title]);
   }
 
   @override
@@ -1199,7 +1190,7 @@ class Numba extends NumbaEntity {
 
   @override
   int get hashCode {
-    return hashObjects([i, parent]);
+    return Object.hashAll([i, parent]);
   }
 
   @override
@@ -1236,7 +1227,7 @@ class Foo implements FooEntity {
 
   @override
   int get hashCode {
-    return hashObjects([bar, weirdJoins]);
+    return Object.hashAll([bar, weirdJoins.length]);
   }
 
   @override
@@ -1275,7 +1266,7 @@ class FooPivot implements FooPivotEntity {
 
   @override
   int get hashCode {
-    return hashObjects([weirdJoin, foo]);
+    return Object.hashAll([weirdJoin, foo]);
   }
 
   @override

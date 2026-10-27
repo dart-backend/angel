@@ -10,7 +10,8 @@ This validator library is based on the `matcher` library and comes with build in
 For convenience's sake, this library also exports `matcher`.
 
 - [Angel3 Validate](#angel3-validate)
-  - [Examples](#examples)
+  - [Installation](#installation)
+  - [Usage](#usage)
     - [Creating a Validator](#creating-a-validator)
     - [Validating data](#validating-data)
     - [Required Fields](#required-fields)
@@ -25,7 +26,16 @@ For convenience's sake, this library also exports `matcher`.
     - [Nested Validators](#nested-validators)
     - [Use with Angel3](#use-with-angel3)
 
-## Examples
+## Installation
+
+In your `pubspec.yaml`:
+
+```yaml
+dependencies:
+  angel3_validate: ^10.0.0
+```
+
+## Usage
 
 ### Creating a Validator
 
@@ -224,7 +234,7 @@ The remaining functionality is [effectively implemented by the `matcher` package
 
 ### Nested Validators
 
-Very often, the data we validate contains other data within. You can pass a `Validator` instance to the constructor, because it extends the `Matcher` class.
+Very often, the data we validate contains other data within. You can pass a `Validator` instance to the constructor, because it extends the `Matcher` class. A nested `Validator` filters its data as the outer one does: keys it does not know are dropped. With several `Validator`s on one key, the keys of each are kept.
 
 ```dart
 main() {
@@ -260,16 +270,17 @@ main() {
 
 `server.dart` exposes seven helper middleware:
 
-- `validate(validator)`: Validates and filters `req.bodyAsMap`, and throws an `AngelHttpException.BadRequest` if data is invalid.
-- `validateEvent(validator)`: Sets `e.data` to the result of validation on a service event.
-- `validateQuery(validator)`: Same as `validate`, but operates on `req.query`.
+- `validate(validator)`: Validates and filters `req.bodyAsMap`, and throws an `AngelHttpException.badRequest` if data is invalid.
+- `validateEvent(validator)`: Sets `e.data` to the result of validation on a service event; data that is not a `Map` is a 400.
+- `validateQuery(validator)`: Same as `validate`, but operates on `req.queryParameters`.
 - `autoParseBody(fields)`: Auto-parses numbers in `req.bodyAsMap`.
-- `autoParseQuery(fields)`: Same as `autoParseBody`, but operates on `req.query`.
+- `autoParseQuery(fields)`: Same as `autoParseBody`, but operates on `req.queryParameters`.
 - `filterBody(only)`: Filters unwanted data out of `req.bodyAsMap`.
-- `filterQuery(only)`: Same as `filterBody`, but operates on `req.query`.
+- `filterQuery(only)`: Same as `filterBody`, but operates on `req.queryParameters`.
 
 ```dart
 import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_framework/http.dart';
 import 'package:angel3_validate/server.dart';
 
 final Validator echo = Validator({
@@ -290,10 +301,17 @@ void main() async {
         res.write('You said: "${req.bodyAsMap["message"]}"');
     });
 
-    app.service('api/todos')
+    app.use('api/todos', MapService())
         ..beforeCreated.listen(validateEvent(todo))
         ..beforeUpdated.listen(validateEvent(todo));
 
-    await app.startServer();
+    await AngelHttp(app).startServer();
 }
 ```
+
+## Migrating from 9.x to 10.0.0
+
+The breaking changes of each release are listed in the [CHANGELOG](CHANGELOG.md). Those of 10.0.0 that may need changes in an app:
+
+* **Nested validators** filter their data: keys a nested `Validator` does not know are dropped, as at the top level. Add the keys you want kept to the nested `Validator`.
+* **Requests without an `app`**: `validate` and `validateQuery` validate them too, where they let them through unvalidated. A validator with an `AngelMatcher` then throws a `StateError`.

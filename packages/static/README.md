@@ -13,7 +13,7 @@ In `pubspec.yaml`:
 
 ```yaml
 dependencies:
-    angel3_static: ^9.0.0
+    angel3_static: ^10.0.0
 ```
 
 ## Usage
@@ -31,10 +31,10 @@ void main() async {
   var fs = const LocalFileSystem();
 
   // Normal static server
-  var vDir = VirtualDirectory(app, fs, source: Directory('./public'));
+  var vDir = VirtualDirectory(app, fs, source: fs.directory('./public'));
 
-  // Send Cache-Control, ETag, etc. as well
-  var vDir = CachingVirtualDirectory(app, fs, source: Directory('./public'));
+  // Or, send Cache-Control, ETag, etc. as well
+  vDir = CachingVirtualDirectory(app, fs, source: fs.directory('./public'));
 
   // Mount the VirtualDirectory's request handler
   app.fallback(vDir.handleRequest);
@@ -70,3 +70,11 @@ The `VirtualDirectory` API accepts a few named parameters:
     angel3_static is serving your files. If you are not serving static files at the site root,
     please include this.
 - **callback**: Runs before sending a file to a client. Use this to set headers, etc. If it returns anything other than `null` or `true`, then the callback's result will be sent to the user, instead of the file contents.
+- **followLinksOutsideSource**: If `true` (default: `false`), a symbolic link in `source` to a file or directory outside of it is followed. Otherwise such a path is not served, as if it did not exist.
+
+## Migrating from 9.x to 10.0.0
+
+The breaking changes of each release are listed in the [CHANGELOG](CHANGELOG.md). Those of 10.0.0 that may need changes in an app:
+
+* **ETags** are quoted, and made of the file's modification time and size (`"18f3a2b4c10-a"`), as RFC 9110 requires, so the ETags clients kept from 9.x no longer match, and the files are sent again once.
+* **Symbolic links**: a symbolic link in `source` to a path outside it is not served, unless `followLinksOutsideSource` is `true`.

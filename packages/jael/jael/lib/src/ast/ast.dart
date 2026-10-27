@@ -12,7 +12,6 @@ export 'identifier.dart';
 export 'interpolation.dart';
 export 'map.dart';
 export 'member.dart';
-export 'new.dart';
 export 'number.dart';
 export 'string.dart';
 export 'token.dart';

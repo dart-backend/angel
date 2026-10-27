@@ -1,5 +1,28 @@
 # Change Log
 
+## 10.0.0
+
+### Breaking changes in 10.0.0
+
+* **Breaking:** ETags are quoted and of the file's modification time and size (`"18f3a2b4c10-a"`), as RFC 9110 requires
+* **Breaking:** A symbolic link in `source` to a path outside it is not served, unless the new `followLinksOutsideSource` is `true`
+
+### New in 10.0.0
+
+* `sendFile`, the protected method that `serveFile` uses to write a file, which can ignore `Range`; `serveFile`'s overrides still work
+
+### Fixes in 10.0.0
+
+* **Caching:** `If-None-Match` is checked against the file as it is now, and takes precedence over `If-Modified-Since`, which matches to the second; a changed file was answered with `304`. An invalid date is ignored, and a request's `Cache-Control: no-cache` gets the file
+* **Ranges:** A suffix range (`bytes=-500`) is the end of the file, an end past the file is clamped, an `If-Range` that no longer matches sends the whole file, overlapping ranges are merged, and a `416` has `Content-Range: bytes */size`
+* **Index files:** Served with their own modification time, not the directory's
+* **`Accept`:** Matched with `RequestContext.accepts`, so `text/*` and `q=0` work
+* **Listing:** Names are HTML-escaped (XSS), in a `<ul>`
+* **Paths:** `publicPath` matches whole segments, and an encoded backslash is a 404 instead of a 500 on Windows
+* **Deprecated:** The unused `debug` parameter of `CachingVirtualDirectory`
+* **Docs:** The README tells how to migrate from 9.x
+
+
 ## 9.1.0
 
 * Require Dart >= 3.13

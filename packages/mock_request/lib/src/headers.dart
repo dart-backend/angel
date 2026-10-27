@@ -1,4 +1,7 @@
+import 'dart:convert';
 import 'dart:io';
+
+import 'package:charcode/ascii.dart';
 
 class MockHttpHeaders implements HttpHeaders {
   final Map<String, List<String>> _data = {};
@@ -9,18 +12,17 @@ class MockHttpHeaders implements HttpHeaders {
 
   List<String> get doNotFold => List<String>.unmodifiable(_noFolding);
 
+  // Null when absent, and setting null removes it, as in dart:io.
   @override
-  ContentType get contentType {
-    if (_data.containsKey(HttpHeaders.contentTypeHeader)) {
-      return ContentType.parse(_data[HttpHeaders.contentTypeHeader]!.join(','));
-    } else {
-      return ContentType.html;
-    }
-  }
+  ContentType? get contentType =>
+      _data.containsKey(HttpHeaders.contentTypeHeader)
+      ? ContentType.parse(_data[HttpHeaders.contentTypeHeader]!.join(','))
+      : null;
 
   @override
-  set contentType(ContentType? value) =>
-      set(HttpHeaders.contentTypeHeader, value?.value ?? ContentType.html);
+  set contentType(ContentType? value) => value == null
+      ? removeAll(HttpHeaders.contentTypeHeader)
+      : set(HttpHeaders.contentTypeHeader, value.toString());
 
   // Absent headers are null, as in dart:io; not the current time.
   @override
@@ -29,8 +31,7 @@ class MockHttpHeaders implements HttpHeaders {
       : null;
 
   @override
-  set date(DateTime? value) =>
-      set(HttpHeaders.dateHeader, HttpDate.format(value ?? DateTime.now()));
+  set date(DateTime? value) => _setDate(HttpHeaders.dateHeader, value);
 
   // Absent headers are null, as in dart:io; not the current time.
   @override
@@ -39,8 +40,7 @@ class MockHttpHeaders implements HttpHeaders {
       : null;
 
   @override
-  set expires(DateTime? value) =>
-      set(HttpHeaders.expiresHeader, HttpDate.format(value ?? DateTime.now()));
+  set expires(DateTime? value) => _setDate(HttpHeaders.expiresHeader, value);
 
   // Absent headers are null, as in dart:io; not the current time.
   @override
@@ -50,10 +50,12 @@ class MockHttpHeaders implements HttpHeaders {
       : null;
 
   @override
-  set ifModifiedSince(DateTime? value) => set(
-    HttpHeaders.ifModifiedSinceHeader,
-    HttpDate.format(value ?? DateTime.now()),
-  );
+  set ifModifiedSince(DateTime? value) =>
+      _setDate(HttpHeaders.ifModifiedSinceHeader, value);
+
+  // Setting null removes the header, as in dart:io.
+  void _setDate(String name, DateTime? value) =>
+      value == null ? removeAll(name) : set(name, HttpDate.format(value));
 
   @override
   String? get host {
@@ -80,7 +82,11 @@ class MockHttpHeaders implements HttpHeaders {
 
   @override
   void add(String name, Object value, {bool preserveHeaderCase = false}) {
-    var lower = preserveHeaderCase ? name : name.toLowerCase();
+    if (name.toLowerCase() == HttpHeaders.contentLengthHeader) {
+      return _setContentLength(value);
+    }
+    // Stored lowercase, as in dart:io, so lookups find it.
+    var lower = name.toLowerCase();
 
     if (_data.containsKey(lower)) {
       if (value is Iterable) {
@@ -95,6 +101,7 @@ class MockHttpHeaders implements HttpHeaders {
         _data[lower] = [value.toString()];
       }
     }
+    if (lower == HttpHeaders.transferEncodingHeader) _onTransferEncoding();
   }
 
   @override
@@ -124,6 +131,8 @@ class MockHttpHeaders implements HttpHeaders {
       } else {
         _data[lower]!.remove(value.toString());
       }
+      // As in dart:io, a header with no values left is gone.
+      if (_data[lower]!.isEmpty) _data.remove(lower);
     }
   }
 
@@ -134,7 +143,11 @@ class MockHttpHeaders implements HttpHeaders {
 
   @override
   void set(String name, Object value, {bool preserveHeaderCase = false}) {
-    var lower = preserveHeaderCase ? name : name.toLowerCase();
+    if (name.toLowerCase() == HttpHeaders.contentLengthHeader) {
+      return _setContentLength(value, replace: true);
+    }
+    // Stored lowercase, as in dart:io, so lookups find it.
+    var lower = name.toLowerCase();
     _data.remove(lower);
 
     if (value is Iterable) {
@@ -142,7 +155,57 @@ class MockHttpHeaders implements HttpHeaders {
     } else {
       _data[lower] = [value.toString()];
     }
+    if (lower == HttpHeaders.transferEncodingHeader) _onTransferEncoding();
   }
+
+  // As in dart:io: content-length holds one value of digits, and a later value
+  // replaces an earlier one. All values are checked before any is stored.
+  void _setContentLength(Object? value, {bool replace = false}) {
+    var values = value is Iterable ? value.toList() : [value];
+    var lengths = values.map(_parseContentLength).toList();
+    if (lengths.isNotEmpty) {
+      _data[HttpHeaders.contentLengthHeader] = ['${lengths.last}'];
+      var encodings = _data[HttpHeaders.transferEncodingHeader];
+      encodings?.removeWhere((e) => e == 'chunked');
+      if (encodings?.isEmpty ?? false) {
+        _data.remove(HttpHeaders.transferEncodingHeader);
+      }
+    } else if (replace) {
+      _data.remove(HttpHeaders.contentLengthHeader);
+    }
+  }
+
+  static int _parseContentLength(Object? value) {
+    // As in dart:io, the size limit is only for text.
+    if (value is int && value >= 0) return value;
+    var text = switch (value) {
+      int() => '$value',
+      String() => value,
+      _ => throw HttpException(
+        'Unexpected type for header named ${HttpHeaders.contentLengthHeader}',
+      ),
+    };
+    if (!_isDigits(text)) {
+      throw HttpException('Content-Length must contain only digits');
+    }
+    return tryParseContentLength(text) ??
+        (throw HttpException('Content-Length too large'));
+  }
+
+  /// Parses one `Content-Length` value as `dart:io` does: digits only, with
+  /// fewer than 16 significant digits. Returns `null` for any other value.
+  static int? tryParseContentLength(String text) {
+    if (!_isDigits(text)) return null;
+    var leadingZeros = 0;
+    while (leadingZeros < text.length - 1 && text[leadingZeros] == '0') {
+      leadingZeros++;
+    }
+    if (text.length - leadingZeros >= 16) return null;
+    return int.parse(text);
+  }
+
+  static bool _isDigits(String text) =>
+      text.isNotEmpty && text.codeUnits.every((c) => c >= $0 && c <= $9);
 
   @override
   String? value(String name) => _data[name.toLowerCase()]?.join(',');
@@ -158,11 +221,39 @@ class MockHttpHeaders implements HttpHeaders {
     return b.toString();
   }
 
+  // Backed by the transfer-encoding header, as in dart:io: turning it on
+  // removes content-length, and setting a content-length turns it off.
   @override
-  bool chunkedTransferEncoding = false;
+  bool get chunkedTransferEncoding =>
+      _data[HttpHeaders.transferEncodingHeader]?.contains('chunked') ?? false;
 
   @override
-  int contentLength = 0;
+  set chunkedTransferEncoding(bool value) {
+    if (value == chunkedTransferEncoding) return;
+    if (value) {
+      add(HttpHeaders.transferEncodingHeader, 'chunked');
+    } else {
+      // remove takes one value at a time, and add may have stored it twice.
+      while (chunkedTransferEncoding) {
+        remove(HttpHeaders.transferEncodingHeader, 'chunked');
+      }
+    }
+  }
+
+  // After transfer-encoding was added to or set.
+  void _onTransferEncoding() {
+    if (chunkedTransferEncoding) _data.remove(HttpHeaders.contentLengthHeader);
+  }
+
+  // Backed by the content-length header, as in dart:io; -1 when it is absent.
+  @override
+  int get contentLength =>
+      int.tryParse(value(HttpHeaders.contentLengthHeader) ?? '') ?? -1;
+
+  @override
+  set contentLength(int value) => value < 0
+      ? removeAll(HttpHeaders.contentLengthHeader)
+      : set(HttpHeaders.contentLengthHeader, value);
 
   @override
   bool persistentConnection = true;
@@ -176,4 +267,11 @@ class MockHttpHeaders implements HttpHeaders {
   set port(int? port) {
     _port = port ?? 80;
   }
+}
+
+/// The [Encoding] named by the charset in the content-type header of
+/// [headers], or null. Hidden from the package's exports.
+Encoding? charsetEncoding(HttpHeaders headers) {
+  var charset = headers.contentType?.charset;
+  return charset == null ? null : Encoding.getByName(charset);
 }

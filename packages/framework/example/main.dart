@@ -1,4 +1,3 @@
-import 'package:angel3_container/mirrors.dart';
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_framework/http.dart';
 import 'package:logging/logging.dart';
@@ -8,7 +7,7 @@ void main() async {
   //Logger.root.onRecord.listen(prettyLog);
 
   // Create our server.
-  var app = Angel(logger: Logger('angel'), reflector: MirrorsReflector());
+  var app = Angel(logger: Logger('angel'));
 
   // Index route. Returns JSON.
   app.get('/', (req, res) => 'Welcome to Angel!');
@@ -21,14 +20,32 @@ void main() async {
       ..close();
   });
 
+  // Without a reflector, `ioc` is told what to inject instead of reading
+  // annotations on the handler.
+  //
   // Pattern matching - only call this handler if the query value of `name` equals 'emoji'.
   app.get(
     '/greet',
-    ioc((@Query('name', match: 'emoji') String name) => '😇🔥🔥🔥'),
+    ioc(
+      (String name) => '😇🔥🔥🔥',
+      injection: InjectionRequest.constant(
+        required: ['name'],
+        parameters: {'name': Query('name', match: 'emoji')},
+      ),
+    ),
   );
 
   // Handle any other query value of `name`.
-  app.get('/greet', ioc((@Query('name') String name) => 'Hello, $name!'));
+  app.get(
+    '/greet',
+    ioc(
+      (String name) => 'Hello, $name!',
+      injection: InjectionRequest.constant(
+        required: ['name'],
+        parameters: {'name': Query('name')},
+      ),
+    ),
+  );
 
   // Simple fallback to throw a 404 on unknown paths.
   app.fallback((req, res) {

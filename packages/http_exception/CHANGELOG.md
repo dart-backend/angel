@@ -1,6 +1,20 @@
 
 # Change Log
 
+## 10.0.0
+
+### New in 10.0.0
+
+* `fromMap` and `fromJson` take an optional `fallbackStatusCode`, used when the map has no valid status code
+
+### Fixes in 10.0.0
+
+* **`fromMap`:** Accepts a status code as digits (`"404"`) or a whole double (`404.0`), uses only codes 100–599 (else 500), and defaults the message by status (e.g. `404`)
+* **`fromJson`:** Throws `FormatException` for JSON that is not an object
+* **`toJson`:** Returns a copy of `errors`
+* **Docs:** The README tells how to install and use the package
+
+
 ## 9.1.0
 
 * Require Dart >= 3.13

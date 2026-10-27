@@ -4,6 +4,9 @@ import 'dart:async';
 
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:dotenv/dotenv.dart';
+// Not exported, but needed to read a .env file from any [FileSystem].
+// ignore: implementation_imports
+import 'package:dotenv/src/parser.dart';
 import 'package:file/file.dart';
 import 'package:belatuk_merge_map/belatuk_merge_map.dart';
 import 'package:yaml/yaml.dart';
@@ -12,8 +15,14 @@ Future<void> _loadYamlFile(
   Map map,
   File yamlFile,
   DotEnv env,
-  void Function(String msg) warn,
-) async {
+  void Function(String msg) warn, [
+  Set<String> loading = const {},
+]) async {
+  // The files being loaded, from the outermost, so a file that includes itself
+  // is not loaded for ever. A file may still be included more than once.
+  var path = yamlFile.fileSystem.path.normalize(yamlFile.absolute.path);
+  loading = {...loading, path};
+
   if (await yamlFile.exists()) {
     var config = loadYaml(await yamlFile.readAsString());
 
@@ -39,12 +48,17 @@ Future<void> _loadYamlFile(
           var p = yamlFile.fileSystem.path;
           var includeFilePath = p.join(yamlFile.parent.path, inc);
           var includeFile = yamlFile.fileSystem.file(includeFilePath);
+          var includePath = p.normalize(includeFile.absolute.path);
           if (!await includeFile.exists()) {
             warn(
               'Included configuration file "$includeFilePath" does not exist.',
             );
+          } else if (loading.contains(includePath)) {
+            warn(
+              'Configuration file "$includePath" includes itself. Refusing to load it again.',
+            );
           } else {
-            await _loadYamlFile(out, includeFile, env, warn);
+            await _loadYamlFile(out, includeFile, env, warn, loading);
           }
         }
       }
@@ -58,15 +72,17 @@ Future<void> _loadYamlFile(
   }
 }
 
-Object? _applyEnv(Object v, DotEnv env, void Function(String msg) warn) {
+Object? _applyEnv(Object? v, DotEnv env, void Function(String msg) warn) {
   if (v is String) {
     if (v.startsWith(r'$') && v.length > 1) {
       var key = v.substring(1);
       if (env.isDefined(key)) {
         return env[key];
       } else {
+        // The value is `null`, unless [warn] throws, as the default
+        // `onWarning` of [loadStandaloneConfiguration] does.
         warn(
-          'Your configuration calls for loading the value of "$key" from the system environment, but it is not defined. Defaulting to `null`.',
+          'Your configuration calls for loading the value of "$key" from the system environment, but it is not defined.',
         );
         return null;
       }
@@ -87,7 +103,9 @@ Object? _applyEnv(Object v, DotEnv env, void Function(String msg) warn) {
 
 /// Loads [configuration], and returns a [Map].
 ///
-/// You can override [onWarning]; otherwise, configuration errors will throw.
+/// Configuration errors, such as a `$VARIABLE` that is not defined, are passed
+/// to [onWarning], and the value is `null`. Without [onWarning], they throw a
+/// [StateError].
 Future<Map> loadStandaloneConfiguration(
   FileSystem fileSystem, {
   String directoryPath = './config',
@@ -100,7 +118,7 @@ Future<Map> loadStandaloneConfiguration(
   var envFile = sourceDirectory.childFile(envPath ?? '.env');
 
   if (await envFile.exists()) {
-    env.load([envFile.absolute.uri.toFilePath()]);
+    env.addAll(const Parser().parse(await envFile.readAsLines()));
   }
 
   var environmentName = env['ANGEL_ENV'] ?? 'development';

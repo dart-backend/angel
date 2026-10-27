@@ -9,7 +9,7 @@ class WebSocketEvent<Data> {
   WebSocketEvent({this.eventName, this.data});
 
   factory WebSocketEvent.fromJson(Map data) => WebSocketEvent(
-    eventName: data['eventName'].toString(),
+    eventName: data['eventName']?.toString(),
     data: data['data'] as Data?,
   );
 
@@ -35,11 +35,18 @@ class WebSocketAction {
 
   WebSocketAction({this.id, this.eventName, this.data, this.params = const {}});
 
+  /// A missing `id` or `eventName` is `null`, and `params` that are not a
+  /// map are none.
   factory WebSocketAction.fromJson(Map data) => WebSocketAction(
-    id: data['id'].toString(),
-    eventName: data['eventName'].toString(),
+    id: data['id']?.toString(),
+    eventName: data['eventName']?.toString(),
     data: data['data'],
-    params: data['params'] as Map<String, dynamic>? ?? {},
+    params: switch (data['params']) {
+      Map params => {
+        for (var MapEntry(:key, :value) in params.entries) '$key': value,
+      },
+      _ => {},
+    },
   );
 
   Map<String, dynamic> toJson() {

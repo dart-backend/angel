@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:analyzer/dart/element/element.dart';
 import 'package:build/build.dart';
 import 'package:code_builder/code_builder.dart';
@@ -7,6 +8,7 @@ import 'package:jael3_preprocessor/jael3_preprocessor.dart' as jael;
 import 'package:jael3_web/jael3_web.dart';
 import 'package:path/path.dart' as p;
 import 'package:source_gen/source_gen.dart';
+
 import 'util.dart';
 
 var _upper = RegExp(r'^[A-Z]');

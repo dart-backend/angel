@@ -1,5 +1,28 @@
 # Change Log
 
+## 10.0.0
+
+### Breaking changes in 10.0.0
+
+* **Breaking:** `TestClient` responses report the `contentLength` the handler set, or `null` when none was set or the body was decompressed, instead of `0`. A decompressed body has no `content-length` header
+* **Breaking:** `TestClient.service()` no longer takes `type`, which `angel3_client` removed. Pass a `deserializer` instead
+
+### Fixes in 10.0.0
+
+* **`isAngelHttpException()`:** Recognises the `is_error` key that `AngelHttpException.toJson` writes, and falls back to the response's status when the body has none. The exception is no longer printed
+* **JSON matchers:** `isJson`, `hasValidBody` and `isAngelHttpException` do not match a body that is not JSON, where they threw a `FormatException`
+* **Mismatches:** `isJson`, `hasValidBody` and `isAngelHttpException` describe the response they got: its body, its validation errors (only those of that response), or its status, message and errors
+* **`hasValidBody`:** An error other than a `ValidationException` is a mismatch, where it threw a `TypeError`
+* **Cookies:** The cookies a handler sets are in the response's `set-cookie` header, where `TestClient` left them out
+* **Basic auth:** A malformed `Basic` authorization header is sent as it is, where `TestClient` threw a `FormatException`
+* **Gzip:** A `content-encoding` of several encodings or in another case (`GZIP, identity`) is decompressed
+* **Dependencies:** Removed the unused `angel3_container`
+* **`TestClient.service`:** Returns a new service for each call, like `angel3_client`, so a typed service or one with a `deserializer` can follow another on the same path, where the first service was returned and the cast threw a `TypeError`
+* **`TestClient.close`:** Closes the services it created and the client's `onAuthenticated` stream, where they were left open
+* **Tests:** No longer use `MirrorsReflector`
+* **Docs:** The README tells how to install and use the package, and how to migrate from 9.x
+
+
 ## 9.1.1
 
 * Fix analyzer warnings and errors

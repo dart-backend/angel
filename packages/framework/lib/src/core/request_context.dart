@@ -4,7 +4,13 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:typed_data' show BytesBuilder;
 import 'dart:io'
-    show Cookie, HeaderValue, HttpHeaders, HttpSession, InternetAddress;
+    show
+        Cookie,
+        HeaderValue,
+        HttpException,
+        HttpHeaders,
+        HttpSession,
+        InternetAddress;
 
 import 'package:angel3_container/angel3_container.dart';
 import 'package:angel3_http_exception/angel3_http_exception.dart';
@@ -20,6 +26,7 @@ import 'metadata.dart';
 import 'response_context.dart';
 import 'routable.dart';
 import 'server.dart' show Angel;
+import 'quality_list.dart';
 
 part 'injection.dart';
 
@@ -37,6 +44,13 @@ abstract class RequestContext<RawRequest> {
   Map<String, dynamic>? _queryParameters;
   Object? _bodyObject;
   bool _hasParsedBody = false, _closed = false;
+
+  /// Whether [parseBody] failed, after which the body getters return an empty
+  /// body (e.g. to an error handler), and [parseBody] fails again.
+  bool _bodyParseFailed = false;
+
+  /// Whether the body getters can be read.
+  bool get _bodyReadable => _hasParsedBody || _bodyParseFailed;
   Map<String, dynamic> _bodyFields = {};
   List _bodyList = [];
   List<UploadedFile> _uploadedFiles = <UploadedFile>[];
@@ -130,7 +144,7 @@ abstract class RequestContext<RawRequest> {
   ///
   /// Note that [parseBody] must be called first.
   Map<String, dynamic> get bodyAsMap {
-    if (!hasParsedBody) {
+    if (!_bodyReadable) {
       throw StateError('The request body has not been parsed yet.');
     }
     // else if (_bodyFields == null) {
@@ -149,7 +163,7 @@ abstract class RequestContext<RawRequest> {
   ///
   /// Note that [parseBody] must be called first.
   List? get bodyAsList {
-    if (!hasParsedBody) {
+    if (!_bodyReadable) {
       throw StateError('The request body has not been parsed yet.');
     } else if (_bodyObject is! List) {
       throw StateError('The request body, $_bodyObject, is not a List.');
@@ -167,7 +181,7 @@ abstract class RequestContext<RawRequest> {
   ///
   /// Note that [parseBody] must be called first.
   Object? get bodyAsObject {
-    if (!hasParsedBody) {
+    if (!_bodyReadable) {
       throw StateError('The request body has not been parsed yet.');
     }
 
@@ -194,7 +208,7 @@ abstract class RequestContext<RawRequest> {
   ///
   /// Note that [parseBody] must be called first.
   List<UploadedFile>? get uploadedFiles {
-    if (!hasParsedBody) {
+    if (!_bodyReadable) {
       throw StateError('The request body has not been parsed yet.');
     }
 
@@ -245,6 +259,13 @@ abstract class RequestContext<RawRequest> {
     var slash = wanted.indexOf('/');
     var type = slash == -1 ? wanted : wanted.substring(0, slash);
 
+    // A more specific range rejected with q=0 beats a wildcard (RFC 9110).
+    var rejected = _rejectedRanges!;
+    if (rejected.contains(wanted)) return false;
+    if (rejected.contains('$type/*') && !accepted.contains(wanted)) {
+      return false;
+    }
+
     for (var range in accepted) {
       if (range == '*/*') {
         if (!strict) return true;
@@ -267,24 +288,14 @@ abstract class RequestContext<RawRequest> {
     var values = headers?['accept'];
     if (values == null || values.isEmpty) return null;
 
-    return _acceptRanges = [
-      for (var item in values.join(',').split(',')) ?_parseAcceptRange(item),
-    ];
+    var (:accepted, :rejected) = parseQualityList(values.join(','));
+    _rejectedRanges = rejected;
+    return _acceptRanges = accepted;
   }
 
-  static final RegExp _qZero = RegExp(r'^q=0(\.0*)?$');
-
-  static String? _parseAcceptRange(String item) {
-    var parts = item.split(';');
-    var range = parts.first.trim().toLowerCase();
-    if (range.isEmpty) return null;
-    for (var param in parts.skip(1)) {
-      if (_qZero.hasMatch(param.replaceAll(' ', '').toLowerCase())) {
-        return null;
-      }
-    }
-    return range;
-  }
+  /// The ranges of the `Accept` header rejected with `q=0`; set with
+  /// [_acceptedRanges].
+  Set<String>? _rejectedRanges;
 
   /// Returns as `true` if the client's `Accept` header indicates that it will accept any response content type.
   bool get acceptsAll => _acceptsAllCache ??= accepts('*/*');
@@ -306,77 +317,140 @@ abstract class RequestContext<RawRequest> {
   ///
   /// Throws a 413 [AngelHttpException] if the body is larger than
   /// [maxBodySize].
-  Future<void> parseBody({Encoding encoding = utf8}) async {
-    //if (contentType == null) {
-    //  throw FormatException('Missing "content-type" header.');
-    //}
-
-    if (!_hasParsedBody) {
-      _hasParsedBody = true;
-
-      var contentBody = body ?? Stream.empty();
-      var limit = maxBodySize;
-      if (limit != null) {
-        // Reject early when the client declares an oversized body, and
-        // also count the bytes, since Content-Length may be absent or wrong.
-        var declared = headers?.contentLength ?? -1;
-        if (declared > limit) throw _bodyTooLarge(limit);
-        contentBody = _limitBody(contentBody, limit);
-      }
-
-      if (contentType.type == 'application' && contentType.subtype == 'json') {
-        _uploadedFiles = [];
-
-        var parsed = (_bodyObject = await encoding.decoder
-            .bind(contentBody)
-            .join()
-            .then(json.decode));
-
-        if (parsed is Map) {
-          _bodyFields = Map<String, dynamic>.from(parsed);
-        } else if (parsed is List) {
-          _bodyList = parsed;
-        }
-      } else if (contentType.type == 'application' &&
-          contentType.subtype == 'x-www-form-urlencoded') {
-        _uploadedFiles = [];
-        var parsed = await encoding.decoder
-            .bind(contentBody)
-            .join()
-            .then((s) => Uri.splitQueryString(s, encoding: encoding));
-        _bodyFields = Map<String, dynamic>.from(parsed);
-      } else if (contentType.type == 'multipart' &&
-          contentType.subtype == 'form-data' &&
-          contentType.parameters.containsKey('boundary')) {
-        var boundary = contentType.parameters['boundary'] ?? '';
-        var transformer = MimeMultipartTransformer(boundary);
-        var parts = transformer
-            .bind(contentBody)
-            .map(
-              (part) =>
-                  HttpMultipartFormData.parse(part, defaultEncoding: encoding),
-            );
+  Future<void> parseBody({Encoding encoding = utf8}) {
+    if (_hasParsedBody) return Future.value();
+    // The body can only be read once, so calls made while it is being parsed
+    // wait for that parse, and after a failure every call fails the same way.
+    return _parsing ??= _parseBody(encoding).then(
+      (_) {
+        _hasParsedBody = true;
+      },
+      onError: (Object e, StackTrace st) {
+        // What was read before the failure is not kept.
+        _bodyParseFailed = true;
+        _bodyObject = null;
         _bodyFields = {};
+        _bodyList = [];
         _uploadedFiles = [];
+        Error.throwWithStackTrace(e, st);
+      },
+    );
+  }
 
-        await for (var part in parts) {
+  Future<void>? _parsing;
+
+  Future<void> _parseBody(Encoding encoding) async {
+    var contentBody = body ?? Stream.empty();
+    var limit = maxBodySize;
+    if (limit != null) {
+      // Reject early when the client declares an oversized body, and
+      // also count the bytes, since Content-Length may be absent or wrong.
+      var declared = headers?.contentLength ?? -1;
+      if (declared > limit) throw _bodyTooLarge(limit);
+      contentBody = _limitBody(contentBody, limit);
+    }
+
+    if (contentType.type == 'application' && contentType.subtype == 'json') {
+      _uploadedFiles = [];
+
+      var parsed = (_bodyObject = await encoding.decoder
+          .bind(contentBody)
+          .join()
+          .then(json.decode));
+
+      if (parsed is Map) {
+        _bodyFields = Map<String, dynamic>.from(parsed);
+      } else if (parsed is List) {
+        _bodyList = parsed;
+      }
+    } else if (contentType.type == 'application' &&
+        contentType.subtype == 'x-www-form-urlencoded') {
+      _uploadedFiles = [];
+      var parsed = await encoding.decoder.bind(contentBody).join().then((s) {
+        try {
+          return Uri.splitQueryString(s, encoding: encoding);
+        } on ArgumentError catch (e) {
+          // e.g. invalid percent-encoding
+          throw AngelHttpException.badRequest(
+            message: 'Invalid form body: ${e.message}',
+          );
+        }
+      });
+      _bodyFields = Map<String, dynamic>.from(parsed);
+    } else if (contentType.type == 'multipart' &&
+        contentType.subtype == 'form-data' &&
+        contentType.parameters.containsKey('boundary')) {
+      var boundary = contentType.parameters['boundary'] ?? '';
+      var transformer = MimeMultipartTransformer(boundary);
+      _bodyFields = {};
+      _uploadedFiles = [];
+
+      // Text values are read here but awaited after the loop: awaiting one
+      // inside it would hang on a truncated body, whose error arrives on the
+      // stream of parts while the part being read never ends.
+      var values = <(String, Future<String>)>[];
+      try {
+        await for (var mime in transformer.bind(contentBody)) {
+          // A part with a filename is a file, even with a text Content-Type
+          // (e.g. text/csv), so keep its bytes rather than decoding them.
+          bool isFile;
+          HttpMultipartFormData part;
+          try {
+            // Decided from Content-Disposition alone, so a file part is read
+            // as bytes without parsing its (client-supplied) Content-Type.
+            isFile = _isFilePart(mime);
+            part = HttpMultipartFormData.parse(
+              isFile ? _BinaryPart(mime) : mime,
+              defaultEncoding: encoding,
+            );
+          } on HttpException catch (e) {
+            // e.g. a part without, or with a malformed, Content-Disposition
+            throw AngelHttpException.badRequest(
+              message: 'Invalid multipart body: ${e.message}',
+            );
+          }
           if (part.isBinary) {
-            _uploadedFiles.add(UploadedFile(part));
+            _uploadedFiles.add(
+              UploadedFile(
+                part,
+                contentType: isFile ? mime.headers['content-type'] : null,
+              ),
+            );
           } else if (part.isText &&
               part.contentDisposition.parameters.containsKey('name')) {
             // If there is no name, then don't parse it.
             var key = part.contentDisposition.parameters['name'];
             if (key != null) {
-              var value = await part.join();
-              _bodyFields[key] = value;
+              var value = part.join();
+              // Handled now, so a failure is not reported as uncaught when
+              // an earlier one ends parsing first; awaiting it still throws.
+              value.ignore();
+              values.add((key, value));
             }
           }
         }
-      } else {
-        _bodyFields = {};
-        _uploadedFiles = [];
+      } on MimeMultipartException catch (e) {
+        // e.g. a body cut off before its closing boundary
+        throw AngelHttpException.badRequest(
+          message: 'Invalid multipart body: ${e.message}',
+        );
       }
+      for (var (key, value) in values) {
+        _bodyFields[key] = await value;
+      }
+    } else {
+      _bodyFields = {};
+      _uploadedFiles = [];
     }
+  }
+
+  static bool _isFilePart(MimeMultipart part) {
+    var disposition = part.headers['content-disposition'];
+    return disposition != null &&
+        HeaderValue.parse(
+          disposition,
+          preserveBackslash: true,
+        ).parameters.containsKey('filename');
   }
 
   static AngelHttpException _bodyTooLarge(int limit) => AngelHttpException(
@@ -418,7 +492,13 @@ class UploadedFile {
 
   MediaType _contentType = MediaType('multipart', 'form-data');
 
-  UploadedFile(this.formData);
+  /// The part's own `Content-Type`, when [formData] was parsed as binary
+  /// regardless of it.
+  final String? _rawContentType;
+
+  /// Pass [contentType] to report it instead of [formData]'s.
+  UploadedFile(this.formData, {String? contentType})
+    : _rawContentType = contentType;
 
   /// Returns the binary stream from [formData].
   Stream<List<int>> get data => formData.cast<List<int>>();
@@ -438,14 +518,12 @@ class UploadedFile {
   //    : MediaType.parse(formData.contentType.toString()));
 
   MediaType get contentType {
-    if (formData.contentType != null) {
+    var raw = _rawContentType ?? formData.contentType?.toString();
+    if (raw != null) {
       try {
-        _contentType = MediaType.parse(formData.contentType.toString());
+        _contentType = MediaType.parse(raw);
       } catch (e) {
-        log.warning(
-          'Invalue media type [${formData.contentType.toString()}]',
-          e,
-        );
+        log.warning('Invalue media type [$raw]', e);
       }
     }
 
@@ -471,4 +549,29 @@ class UploadedFile {
   Future<String> readAsString({Encoding encoding = utf8}) {
     return encoding.decoder.bind(data).join();
   }
+}
+
+/// A multipart part presented as `application/octet-stream`, so
+/// [HttpMultipartFormData.parse] keeps its bytes.
+class _BinaryPart extends Stream<List<int>> implements MimeMultipart {
+  final MimeMultipart _part;
+
+  @override
+  final Map<String, String> headers;
+
+  _BinaryPart(this._part)
+    : headers = {..._part.headers, 'content-type': 'application/octet-stream'};
+
+  @override
+  StreamSubscription<List<int>> listen(
+    void Function(List<int> event)? onData, {
+    Function? onError,
+    void Function()? onDone,
+    bool? cancelOnError,
+  }) => _part.listen(
+    onData,
+    onError: onError,
+    onDone: onDone,
+    cancelOnError: cancelOnError,
+  );
 }

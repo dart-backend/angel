@@ -40,6 +40,11 @@ void main() {
         res.headers.putIfAbsent('x-name', () => 'café');
         return 'body';
       })
+      ..get('/bypass-no-body', (req, res) {
+        // Nothing is written, so the check happens when the response closes.
+        res.headers.putIfAbsent('x-name', () => 'café');
+        return res.close();
+      })
       ..get('/good', (req, res) {
         res.headers['x-name'] = 'plain value\twith tab';
         return 'body';
@@ -69,9 +74,15 @@ void main() {
     expect(json.decode(body), 'body');
   });
 
-  for (var path in ['/bad-value', '/bad-name', '/bad-buffered', '/bypass']) {
+  for (var path in [
+    '/bad-value',
+    '/bad-name',
+    '/bad-buffered',
+    '/bypass',
+    '/bypass-no-body',
+  ]) {
     test('$path fails with a 500 naming the header', () async {
-      var (rs, body) = await get(path);
+      var (rs, body) = await get(path).timeout(const Duration(seconds: 5));
       expect(rs.statusCode, 500);
       expect(json.decode(body)['message'], contains('Invalid response header'));
     });

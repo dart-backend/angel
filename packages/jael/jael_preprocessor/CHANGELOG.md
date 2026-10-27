@@ -1,5 +1,23 @@
 # Change Log
 
+## 10.0.0
+
+### Breaking changes in 10.0.0
+
+* **Breaking:** The parent of an `extend` is read relative to the directory of the template that extends it, and its includes relative to its own directory, as includes are, where they were read relative to the directory the first template was resolved in
+* **Breaking:** Requires `jael3` 10
+* **Breaking:** Requires `belatuk_code_buffer` 6 and `belatuk_symbol_table` 6
+
+### Fixes in 10.0.0
+
+* **Blocks:** A block nested deeper than the root of a layout, or within the default content of another block, which no template overrides, gets its default content, where it was left as a `<block>` tag in the output
+* **Blocks:** A block within an override that has the name of the block it overrides gets its default content, where it recursed forever
+* **Errors:** Without an `onError`, an error is thrown as a `JaelError`, and a warning is ignored, where it was a null-check error; a parent template that cannot be read, or has syntax errors, resolves to null, where it threw a null-check error after reporting it; an include that cannot be read, or has syntax errors, is reported to `onError`, where a `FileSystemException` or a null-check error was thrown; and a parent that cannot be read is reported at the template that extends it
+* **Cycles:** A template that extends itself, and a file that includes itself, directly or through others, including through both, are reported to `onError`, where they looped or recursed forever
+* **Paths:** Parents and includes are read with `Directory.childFile`, so that a file system whose directory URIs have no trailing slash, as `jael_web`'s, finds them
+* **Docs:** The README tells how to migrate from 9.x
+
+
 ## 9.1.0
 
 * Require Dart >= 3.13

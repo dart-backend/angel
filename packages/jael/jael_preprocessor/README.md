@@ -1,4 +1,4 @@
-# Jael Ppreprocessor
+# Jael Preprocessor
 
 ![Pub Version (including pre-releases)](https://img.shields.io/pub/v/jael3_preprocessor?include_prereleases)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
@@ -13,7 +13,7 @@ In your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  jael3_prepreprocessor: ^9.0.0
+  jael3_preprocessor: ^10.0.0
 ```
 
 ## Usage
@@ -44,3 +44,10 @@ myOtherFunction(jael.Document doc) {
 ```
 
 **This package uses `package:file`, rather than `dart:io`.**
+
+## Migrating from 9.x to 10.0.0
+
+The breaking changes of each release are listed in the [CHANGELOG](CHANGELOG.md). Those of 10.0.0 that may need changes in an app:
+
+* **Relative paths**: the parent of an `extend` is read relative to the directory of the template that extends it, and its includes relative to its own directory, as includes are, where they were read relative to the directory of the first template. Check the `src` of `extend` and `include` tags in templates in subdirectories.
+* Requires `jael3` 10.

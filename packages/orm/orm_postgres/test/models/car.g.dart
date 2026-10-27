@@ -94,22 +94,28 @@ class CarQuery extends Query<Car, CarQueryWhere> {
       return Optional.empty();
     }
     var model = Car(
-      id: fields.contains('id') ? row[0].toString() : null,
+      id: fields.contains('id') ? row[fields.indexOf('id')].toString() : null,
       createdAt: fields.contains('created_at')
-          ? mapToNullableDateTime(row[1])
+          ? mapToNullableDateTime(row[fields.indexOf('created_at')])
           : null,
       updatedAt: fields.contains('updated_at')
-          ? mapToNullableDateTime(row[2])
+          ? mapToNullableDateTime(row[fields.indexOf('updated_at')])
           : null,
-      make: fields.contains('make') ? (row[3] as String?) : null,
-      description: fields.contains('description') ? (row[4] as String?) : null,
+      make: fields.contains('make')
+          ? (row[fields.indexOf('make')] as String?)
+          : null,
+      description: fields.contains('description')
+          ? (row[fields.indexOf('description')] as String?)
+          : null,
       familyFriendly: fields.contains('family_friendly')
-          ? mapToBool(row[5])
+          ? mapToBool(row[fields.indexOf('family_friendly')])
           : null,
       recalledAt: fields.contains('recalled_at')
-          ? mapToNullableDateTime(row[6])
+          ? mapToNullableDateTime(row[fields.indexOf('recalled_at')])
           : null,
-      price: fields.contains('price') ? mapToDouble(row[7]) : null,
+      price: fields.contains('price')
+          ? mapToDouble(row[fields.indexOf('price')])
+          : null,
     );
     return Optional.of(model);
   }
@@ -308,7 +314,7 @@ class Car extends CarEntity {
 
   @override
   int get hashCode {
-    return hashObjects([
+    return Object.hashAll([
       id,
       createdAt,
       updatedAt,

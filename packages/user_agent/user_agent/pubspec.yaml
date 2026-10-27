@@ -1,5 +1,5 @@
 name: angel3_user_agent
-version: 9.1.0
+version: 10.0.0
 description: Angel3 middleware to parse and inject a User Agent object into requests.
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dart-backend/angel/
@@ -9,6 +9,9 @@ resolution: workspace
 environment:
   sdk: '>=3.13.0 <4.0.0'
 dependencies:
-  angel3_framework: ^9.0.0
+  angel3_framework: ^10.0.0
   user_agent_analyzer: ^5.0.0
+dev_dependencies:
+  angel3_test: ^10.0.0
   lints: ^6.0.0
+  test: ^1.24.0

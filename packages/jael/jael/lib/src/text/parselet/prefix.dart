@@ -2,7 +2,6 @@ part of 'parselet.dart';
 
 const Map<TokenType, PrefixParselet> prefixParselets = {
   TokenType.exclamation: NotParselet(),
-  TokenType.$new: NewParselet(),
   TokenType.number: NumberParselet(),
   TokenType.hex: HexParselet(),
   TokenType.string: StringParselet(),
@@ -30,37 +29,6 @@ class NotParselet implements PrefixParselet {
     }
 
     return Negation(token, expression!);
-  }
-}
-
-class NewParselet implements PrefixParselet {
-  const NewParselet();
-
-  @override
-  Expression? parse(Parser parser, Token token) {
-    var call = parser.parseExpression(0);
-
-    if (call == null) {
-      parser.errors.add(
-        JaelError(
-          JaelErrorSeverity.error,
-          '"new" must precede a call expression. Nothing was found.',
-          call!.span,
-        ),
-      );
-      return null;
-    } else if (call is Call) {
-      return NewExpression(token, call);
-    } else {
-      parser.errors.add(
-        JaelError(
-          JaelErrorSeverity.error,
-          '"new" must precede a call expression, not a(n) ${call.runtimeType}.',
-          call.span,
-        ),
-      );
-      return null;
-    }
   }
 }
 

@@ -1,5 +1,19 @@
 # Change Log
 
+## 10.0.0
+
+### Breaking changes in 10.0.0
+
+* **Breaking:** `Serializers` is an `enum`, and `Serializable.serializers` a `List<Serializers>`, so an unknown serializer is a compile-time error; replace integer values (e.g. `[0]`) with the enum's
+* **Breaking:** `Serializable.includeAnnotations` is a `List<Object>`
+* **Breaking:** No longer exports `hashObjects` or depends on `quiver`: regenerate models (they use `Object.hashAll`), and use `Object.hashAll` in your own code
+
+### Fixes in 10.0.0
+
+* **Docs:** The README tells how to install and use the package, and how to migrate from 9.x, and the doc comments of `Exclude`, `canDeserialize` and `deserializer` are corrected
+* **Dependencies:** Removed the unused `meta`
+
+
 ## 9.1.0
 
 * Require Dart >= 3.13

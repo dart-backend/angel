@@ -28,10 +28,10 @@ class Identifier extends Expression {
       default:
         var symbol = scope?.resolve(name);
         if (symbol == null) {
-          if (scope?.resolve('!strict!')?.value == false) return null;
+          if (isLenient(scope)) return null;
           throw ArgumentError('The name "$name" does not exist in this scope.');
         }
-        return scope?.resolve(name)!.value;
+        return symbol.value;
     }
   }
 
@@ -45,11 +45,16 @@ class SyntheticIdentifier extends Identifier {
   @override
   final String name;
 
-  SyntheticIdentifier(this.name, [Token? token]) : super.noToken(token);
+  final Token? _token;
 
+  SyntheticIdentifier(this.name, [Token? token])
+    : _token = token,
+      super.noToken(token);
+
+  /// That of its token, if it has one, or else of its [name], in a file of
+  /// its own, as it is not in the template.
   @override
-  FileSpan get span {
-    //return id.span;
-    throw UnsupportedError('Cannot get the span of a SyntheticIdentifier.');
-  }
+  FileSpan get span =>
+      _token?.span ??
+      SourceFile.fromString(name, url: 'synthetic').span(0, name.length);
 }

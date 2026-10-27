@@ -6,6 +6,7 @@ import 'package:collection/collection.dart' show IterableExtension;
 import 'package:belatuk_symbol_table/belatuk_symbol_table.dart';
 
 import 'ast/ast.dart';
+import 'members.dart';
 import 'text/parser.dart';
 import 'text/scanner.dart';
 
@@ -89,15 +90,26 @@ class Renderer {
   ///
   /// If [strictResolution] is `false` (default: `true`), then undefined identifiers will return `null`
   /// instead of throwing.
+  ///
+  /// A member of a value, `{{ user.name }}`, is read by [memberResolver], if
+  /// it knows it, or else as [readMember] reads it: a key of a `Map`, a
+  /// common member of a core type, or a key of the value's `toJson()`.
   void render(
     Document document,
     CodeBuffer buffer,
     SymbolTable scope, {
     bool strictResolution = true,
+    MemberResolver? memberResolver,
   }) {
-    scope.create('!strict!', value: strictResolution != false);
+    // A scope of its own, so that the same [scope] may be rendered again.
+    scope = scope.createChild()
+      ..create('!strict!', value: strictResolution != false)
+      ..create(jsonCacheKey, value: Expando<Object>('toJson'));
+    if (memberResolver != null) {
+      scope.create(memberResolverKey, value: memberResolver);
+    }
 
-    if (document.doctype != null) buffer.writeln(document.doctype!.span.text);
+    if (document.doctype != null) _writeln(buffer, document.doctype!.span.text);
     renderElement(
       document.root,
       buffer,
@@ -177,12 +189,12 @@ class Renderer {
 
     if (element is SelfClosingElement) {
       if (html5) {
-        buffer.writeln('>');
+        _writeln(buffer, '>');
       } else {
-        buffer.writeln('/>');
+        _writeln(buffer, '/>');
       }
     } else {
-      buffer.writeln('>');
+      _writeln(buffer, '>');
       buffer.indent();
 
       for (var i = 0; i < element.children.length; i++) {
@@ -198,9 +210,9 @@ class Renderer {
         );
       }
 
-      buffer.writeln();
+      _endLine(buffer);
       buffer.outdent();
-      buffer.writeln('</${element.tagName.name}>');
+      _writeln(buffer, '</${element.tagName.name}>');
     }
   }
 
@@ -414,12 +426,33 @@ class Renderer {
         }
       }
     } else if (child is Element) {
-      if (buffer.lastLine?.text.isNotEmpty == true) buffer.writeln();
+      _endLine(buffer);
       renderElement(child, buffer, scope, html5);
     }
   }
 
   static String customElementName(String name) => 'elements@$name';
+
+  /// The line of each buffer that the renderer ended last, by which
+  /// [_endLine] tells whether a line is open: [CodeBuffer.writeln] adds a
+  /// blank line when none is, and the buffer does not tell.
+  static final Expando<CodeBufferLine> _endedLines = Expando();
+
+  /// Writes [text] to the current line, and ends it.
+  static void _writeln(CodeBuffer buffer, Object text) {
+    buffer.writeln(text);
+    _endedLines[buffer] = buffer.lastLine;
+  }
+
+  /// Ends the current line, if one is open: if text was written to the
+  /// buffer after the line the renderer ended last.
+  static void _endLine(CodeBuffer buffer) {
+    var last = buffer.lastLine;
+    if (last != null && !identical(last, _endedLines[buffer])) {
+      buffer.writeln();
+      _endedLines[buffer] = buffer.lastLine;
+    }
+  }
 
   void registerCustomElement(
     Element element,

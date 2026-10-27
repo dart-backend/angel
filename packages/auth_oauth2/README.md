@@ -7,6 +7,15 @@
 
 Angel3 library for authenticating users with remote identity providers via OAuth2, i.e. Facebook, Google, Azure AD, etc.
 
+## Installation
+
+In your `pubspec.yaml`:
+
+```yaml
+dependencies:
+  angel3_auth_oauth2: ^10.0.0
+```
+
 ## Usage
 
 First, create an options object:
@@ -27,28 +36,27 @@ configureServer(Angel app) async {
 After getting authenticated against the remote server, we need to be able to identify users within our own application.
 
 ```dart
-typedef OAuth2Verifier = FutureOr<User> Function(oauth2.Client, RequestContext, ResponseContext);
-
 /// You might use a pure function to create a verifier that queries a
 /// given service.
-OAuth2Verifier oauth2verifier(Service<User> userService) {
-  return (client) async {
-     var response = await client.get('https://api.github.com/user');
-      var ghUser = json.decode(response.body);
-      var id = ghUser['id'] as int;
+FutureOr<User> Function(oauth2.Client, RequestContext, ResponseContext)
+    oauth2verifier(Service<String, User> userService) {
+  return (client, req, res) async {
+    var response = await client.get(Uri.parse('https://api.github.com/user'));
+    var ghUser = json.decode(response.body) as Map;
+    var id = ghUser['id'] as int;
 
-      var matchingUsers = await mappedUserService.index({
-        'query': {'github_id': id}
-      });
+    var matchingUsers = await userService.index({
+      'query': {'github_id': id}
+    });
 
-      if (matchingUsers.isNotEmpty) {
-        // Return the corresponding user, if it exists.
-        return matchingUsers.first;
-      } else {
-        // Otherwise,create a user
-        return await mappedUserService.create(User(githubId: id));
-      }
-   };
+    if (matchingUsers.isNotEmpty) {
+      // Return the corresponding user, if it exists.
+      return matchingUsers.first;
+    } else {
+      // Otherwise, create a user
+      return await userService.create(User(githubId: id));
+    }
+  };
 }
 ```
 
@@ -76,6 +84,8 @@ Lastly, connect it to an `AngelAuth` instance, and wire it up to an `Angel` serv
   1. Redirect users to the external provider
   2. Acts as a callback and handles an access code
   
+The strategy tells the two apart by the request: one with a `code` or `error` query parameter is the provider's callback. Each login gets its own random `state`, against login CSRF, and PKCE code verifier. Both are kept until the callback in a signed, `HttpOnly` cookie of each login (`cookieName`, default `angel3_oauth2`, followed by the start of its `state`), scoped to the path of the redirect URI, which expires after `loginTimeout` (default 10 minutes). The cookie is signed with a key derived from the client secret, so every instance of the app accepts it; pass `cookieKey` to use another, as a client without a secret must for more than one instance. It is `SameSite=Lax` (`cookieSameSite`), which a provider's redirect back carries; a provider that posts its callback (`response_mode=form_post`) needs `SameSite.none`, over HTTPS, and a `post` route for the callback. Only the result of the verifier signs a user in, never that of `onError`. A callback of no login started here, or of another `state`, goes to `onError` as `invalid_state`, and a malformed one as `invalid_request`. A provider that cannot be reached is a `502`. `onError` should write a response, or redirect; a value it returns is sent as the response. The `oauth2.Client` given to the verifier is closed once it returns, unless you passed an `httpClient`.
+
 In the case of the callback route, you may want to display an HTML page that closes a popup window. In this case, use `confirmPopupAuthentication`, which is bundled with `package:angel3_auth`, as a `callback` function:
 
 ```dart
@@ -94,7 +104,7 @@ configureServer(Angel app) async {
   ));
   
   // Connect the plug-in!!!
-  await app.configure(auth);
+  await app.configure(auth.configureServer);
 }
 ```
 
@@ -104,7 +114,7 @@ This package should work out-of-the-box for most OAuth2 providers, such as Githu
 
 ```dart
 configureServer(Angel app) async {
-  OAuth2Strategy(..., delimiter: ' ');
+  OAuth2Strategy(..., delimiter: ',');
 }
 ```
 
@@ -118,13 +128,22 @@ You can add a `getParameters` callback to parse the contents of any arbitrary re
 OAuth2Strategy(
     // ...
     getParameters: (contentType, body) {
-      if (contentType.type == 'application') {
-        if (contentType.subtype == 'x-www-form-urlencoded')
+      if (contentType?.type == 'application') {
+        if (contentType!.subtype == 'x-www-form-urlencoded') {
           return Uri.splitQueryString(body);
-        else if (contentType.subtype == 'json') return JSON.decode(body);
+        } else if (contentType.subtype == 'json') {
+          return json.decode(body) as Map<String, dynamic>;
+        }
       }
 
       throw FormatException('Invalid content-type $contentType; expected application/x-www-form-urlencoded or application/json.');
     }
 );
 ```
+
+## Migrating from 9.x to 10.0.0
+
+The breaking changes of each release are listed in the [CHANGELOG](CHANGELOG.md). Those of 10.0.0 that may need changes in an app:
+
+* **State and PKCE**: each login has a random `state` and a PKCE code verifier, kept until the callback in a signed, `HttpOnly` cookie of its own, which expires after `loginTimeout` (default 10 minutes). A callback without it, or of another `state`, goes to `onError` as `invalid_state`. Start every login at the redirect route of the strategy, so that the cookie is set; a provider that posts its callback (`response_mode=form_post`) needs `cookieSameSite: SameSite.none`, over HTTPS.
+* **Several instances**: the cookie is signed with a key derived from the client secret. A client without a secret signs with a random key, so give it a `cookieKey` when it runs as more than one instance.

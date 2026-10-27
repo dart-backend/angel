@@ -2,6 +2,12 @@ import 'dart:async';
 
 import '../angel3_orm.dart';
 
+/// The name of the placeholder, `@angel3_insert_id`, that the `returningQuery`
+/// of an insert on MySQL or MariaDB has for the id the database gave the row
+/// inserted, as of an `AUTO_INCREMENT` column, which the executor binds to the
+/// insert id of its driver.
+const String insertIdParameter = 'angel3_insert_id';
+
 /// An abstract interface that performs queries.
 ///
 /// This class should be implemented.

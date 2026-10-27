@@ -5,17 +5,34 @@
 [![Discord](https://img.shields.io/discord/1060322353214660698)](https://discord.gg/3X6bxTUdCM)
 [![License](https://img.shields.io/github/license/dart-backend/angel)](https://github.com/dart-backend/angel/tree/master/packages/orm/orm_postgres/LICENSE)
 
-Angel3 ORM for working with PostgreSQL database 12 or later.
+Angel3 ORM for working with PostgreSQL database 14 or later.
 
 For documentation about the ORM, see [Developer Guide](https://angel3-docs.dukefirehawk.com/guides/orm)
+
+## Migrating from 9.x to 10.0.0
+
+The breaking changes of each release are listed in the [CHANGELOG](CHANGELOG.md). Those of 10.0.0 that may need changes in an app:
+
+* **Errors of transactions**: the error of a `transaction`, such as a `PgException` of the database or one its callback throws, is thrown as it is, where it was a `StateError('The transaction was cancelled.')`. Catch the error you expect instead of the `StateError`.
+* **Nested transactions**: `transaction` on the executor its callback is given runs in a savepoint; see [Transactions](#transactions).
+* Requires `angel3_orm` 10 and `postgres` 3.5.20.
 
 ## Migrating to 8.1.0 and above
 
 `postgres` has been upgraded from 2.x.x to 3.x.x since version 8.1.0. This is a breaking change as `postgres` 3.x.x has revamped its API. Therefore when upgrading to 8.1.0 and beyond, the PostgreSQL connection settings need to be migrated. The rest should remain the same. Please see the example for the new PostgreSQL connection settings.
 
+## Installation
+
+In your `pubspec.yaml`:
+
+```yaml
+dependencies:
+  angel3_orm_postgres: ^10.0.0
+```
+
 ## Usage
 
-1. Create a model with `Entity` suffix, i.e. `CarEntity` in car.dart`
+1. Create a model with `Entity` suffix, i.e. `CarEntity` in `car.dart`
 
    ```dart
     import 'package:angel3_migration/angel3_migration.dart';
@@ -23,7 +40,7 @@ For documentation about the ORM, see [Developer Guide](https://angel3-docs.dukef
     import 'package:angel3_serialize/angel3_serialize.dart';
     import 'package:optional/optional.dart';
     
-    part '../angel_orm_postgres/car.g.dart';
+    part 'car.g.dart';
 
     @serializable
     @orm
@@ -45,11 +62,11 @@ For documentation about the ORM, see [Developer Guide](https://angel3-docs.dukef
 3. Write the query program. i.e. `CarPersistence.dart`
 
     ```dart
-    import 'package:angel3_migration_runner/angel3_migration_runner.dart';
-    import 'package:angel3_orm/angel3_orm.dart';
-    import 'package:logging/logging.dart';
+    import 'package:angel3_migration_runner/postgres.dart';
+    import 'package:angel3_orm_postgres/angel3_orm_postgres.dart';
     import 'package:postgres/postgres.dart';
-    import '../angel_orm_postgres/models/car.dart';
+
+    import 'car.dart';
 
     void main() async {
     
@@ -80,3 +97,32 @@ For documentation about the ORM, see [Developer Guide](https://angel3-docs.dukef
         var ferrari = (await query.insert(executor)).value;
     }
     ```
+
+## Transactions
+
+`transaction` runs its callback in a transaction, which is committed if the callback completes, and rolled back if it throws. The error is thrown as it is.
+
+```dart
+var car = await executor.transaction((tx) async {
+  var query = CarQuery()..values.make = 'Ferrari';
+  return (await query.insert(tx)).value;
+});
+```
+
+PostgreSQL does not nest transactions, so `transaction` on the executor the callback is given runs in a savepoint instead. What it does is rolled back if it throws, even when the outer callback catches the error, and committed with the outer transaction otherwise.
+
+```dart
+await executor.transaction((tx) async {
+  await insertOrder(tx);
+  try {
+    await tx.transaction((inner) => sendInvoice(inner));
+  } on InvoiceException {
+    // Only the savepoint is rolled back; the order is kept.
+  }
+});
+```
+
+* Use the executor given to the callback. Calling `transaction` on the executor of the connection from inside the callback throws, as the connection is in use.
+* Savepoints at one level of nesting run one at a time. A transaction or savepoint waits for the savepoints started inside it, even those not awaited, before it is committed, released or rolled back.
+* A query on the executor of the transaction made while a savepoint is open, rather than on the executor of the savepoint, is part of that savepoint, and rolled back with it.
+* `PostgreSqlPoolExecutor.transaction` runs the transaction on a connection of the pool, and nests savepoints the same way.

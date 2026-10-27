@@ -4,6 +4,7 @@ import 'package:angel3_migration/angel3_migration.dart';
 import 'package:logging/logging.dart';
 import 'package:postgres/postgres.dart';
 
+import '../sql.dart';
 import 'table.dart';
 
 /// A PostgreSQL database schema generator
@@ -17,18 +18,27 @@ class PostgresSchema extends Schema {
 
   factory PostgresSchema() => PostgresSchema._(StringBuffer(), 0);
 
-  Future<int> run(Connection connection) async {
-    //return connection.execute(compile());
-    var result = await connection.runTx((ctx) async {
-      var sql = compile();
-      var result = await ctx.execute(sql).catchError((e) {
-        _log.severe('Failed to run query: [ $sql ]', e);
-        throw Exception(e);
-      });
-      return result.affectedRows;
-    });
+  /// Runs the SQL of the schema with [session], and throws if it fails: in a
+  /// transaction of its own, if [session] is a [Connection] or another that
+  /// runs them, or in that of a transaction it is of.
+  Future<int> run(Session session) async {
+    if (session is SessionExecutor) {
+      return (session as SessionExecutor).runTx(_execute);
+    }
+    return _execute(session);
+  }
 
-    return result;
+  Future<int> _execute(Session session) async {
+    var sql = compile();
+    if (sql.trim().isEmpty) return 0;
+    // The simple protocol, as the extended one takes only one statement.
+    var result = await session
+        .execute(sql, queryMode: QueryMode.simple)
+        .catchError((Object e) {
+          _log.severe('Failed to run query: [ $sql ]', e);
+          throw Exception(e);
+        });
+    return result.affectedRows;
   }
 
   String compile() => _buf.toString();
@@ -44,16 +54,15 @@ class PostgresSchema extends Schema {
   @override
   void drop(String tableName, {bool cascade = false}) {
     var c = cascade == true ? ' CASCADE' : '';
-    _writeln('DROP TABLE "$tableName"$c;');
+    _writeln('DROP TABLE ${quotePostgresTableName(tableName)}$c;');
   }
 
   @override
   void alter(String tableName, void Function(MutableTable table) callback) {
     var tbl = PostgresAlterTable(tableName);
     callback(tbl);
-    _writeln('ALTER TABLE "$tableName"');
-    tbl.compile(_buf, _indent + 1);
-    _buf.write(';');
+    tbl.compile(_buf, _indent);
+    tbl.compileSequences(_buf);
   }
 
   void _create(
@@ -64,10 +73,11 @@ class PostgresSchema extends Schema {
     var op = ifNotExists ? ' IF NOT EXISTS' : '';
     var tbl = PostgresTable();
     callback(tbl);
-    _writeln('CREATE TABLE$op "$tableName" (');
+    _writeln('CREATE TABLE$op ${quotePostgresTableName(tableName)} (');
     tbl.compile(_buf, _indent + 1);
     _buf.writeln();
     _writeln(');');
+    tbl.compileIndexes(_buf, tableName, _indent);
   }
 
   @override

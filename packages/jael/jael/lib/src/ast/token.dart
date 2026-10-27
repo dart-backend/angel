@@ -27,7 +27,6 @@ enum TokenType {
   text,
 
   // Keywords
-  $new,
 
   /*
    * Expression
@@ -50,6 +49,8 @@ enum TokenType {
   minus,
   elvis,
   elvisDot,
+  and,
+  or,
   lte,
   gte,
   equ,

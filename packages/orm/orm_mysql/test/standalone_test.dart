@@ -1,7 +1,7 @@
 import 'package:angel3_migration_runner/angel3_migration_runner.dart';
 import 'package:angel3_orm/angel3_orm.dart';
 import 'package:logging/logging.dart';
-import 'package:mysql_client/mysql_client.dart';
+import 'package:mysql_dart/mysql_dart.dart';
 import 'package:test/test.dart';
 
 import 'common.dart';
@@ -142,6 +142,47 @@ void main() {
           var cars = await query.update(executor);
           expect(cars, hasLength(1));
           expect(cars.first.make, 'Hyundai');
+        });
+
+        test('where on parts of a date', () async {
+          var query = CarQuery();
+          query.where!.createdAt
+            ..year.equals(y2k.year)
+            ..second.equals(y2k.second);
+          var cars = await query.get(executor);
+          expect(cars.map((c) => c.id), [ferrari!.id]);
+
+          query = CarQuery();
+          query.where!.createdAt.year.equals(y2k.year + 1);
+          expect(await query.get(executor), isEmpty);
+        });
+
+        test('update by a column it changes', () async {
+          // The updated rows no longer match the condition, but are returned.
+          var query = CarQuery()
+            ..where!.make.equals('Ferrari東')
+            ..values.make = 'Hyundai';
+          var cars = await query.update(executor);
+          expect(cars, hasLength(1));
+          expect(cars.first.make, 'Hyundai');
+        });
+
+        test('update with a limit', () async {
+          await (CarQuery()
+                ..values.make = 'Ferrari東'
+                ..values.description = 'Second'
+                ..values.familyFriendly = false)
+              .insert(executor);
+          var query = CarQuery()
+            ..where!.make.equals('Ferrari東')
+            ..values.description = 'Limited'
+            ..limit(1);
+          var cars = await query.update(executor);
+          expect(cars, hasLength(1));
+          expect(cars.single.description, 'Limited');
+          var limited = await (CarQuery()..where!.description.equals('Limited'))
+              .get(executor);
+          expect(limited, hasLength(1));
         });
 
         test('update car', () async {

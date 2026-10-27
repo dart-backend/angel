@@ -10,10 +10,23 @@
 Shelf interop with Angel3. This package lets you run `package:shelf` handlers via a custom adapter. Use the code in this repo to embed existing Angel/shelf apps into other Angel/shelf applications. This way, you can migrate legacy applications without having to rewrite your business logic. This will make it easy to layer your API over a production application, rather than having to port code.
 
 - [Angel3 Shelf](#angel3-shelf)
+  - [Installation](#installation)
   - [Usage](#usage)
     - [embedShelf](#embedshelf)
     - [Communicating with Angel with embedShelf](#communicating-with-angel-with-embedshelf)
     - [AngelShelf](#angelshelf)
+
+## Installation
+
+This package is not published on pub.dev. Depend on it from the repository, adding a `ref:` for a branch or a tag:
+
+```yaml
+dependencies:
+  angel3_shelf:
+    git:
+      url: https://github.com/dart-backend/angel.git
+      path: packages/shelf
+```
 
 ## Usage
 
@@ -25,18 +38,24 @@ or attach it to individual routes.
 ```dart
 import 'dart:io';
 import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_framework/http.dart';
 import 'package:angel3_shelf/angel3_shelf.dart';
 import 'package:shelf/shelf.dart' as shelf;
-import 'api/api.dart';
+
+shelf.Response _echoRequest(shelf.Request request) =>
+    shelf.Response.ok('Request for "${request.url}"');
 
 void main() async {
   var app = Angel();
   var http = AngelHttp(app);
 
   // Angel routes on top
-  await app.mountController<ApiController>();
+  app.get('/api/hello', (req, res) => {'hello': 'world'});
 
-  // Re-route all other traffic to an
+  // Only on a specific route:
+  app.get('/shelf', embedShelf(_echoRequest));
+
+  // Or, re-route all other traffic to an
   // existing application.
   app.fallback(embedShelf(
     shelf.Pipeline()
@@ -44,10 +63,7 @@ void main() async {
       .addHandler(_echoRequest)
   ));
 
-  // Or, only on a specific route:
-  app.get('/shelf', wrappedShelfHandler);
-
-  await http.startServer(InternetAddress.loopbackIPV4, 3000);
+  await http.startServer(InternetAddress.loopbackIPv4, 3000);
   print(http.uri);
 }
 ```
@@ -59,20 +75,20 @@ You can communicate with Angel3:
 ```dart
 handleRequest(shelf.Request request) {
   // Access original Angel request...
-  var req = request.context['angel_shelf.request'] as RequestContext;
+  var req = request.context['angel3_shelf.request'] as RequestContext;
 
   // ... And then interact with it.
-  req.container.registerNamedSingleton<Foo>('from_shelf', Foo());
+  req.container!.registerNamedSingleton<Foo>('from_shelf', Foo());
 
   // `req.container` is also available.
-  var container = request.context['angel_shelf.container'] as Container;
+  var container = request.context['angel3_shelf.container'] as Container;
   container.make<Truck>().drive();
 }
 ```
 
 ### AngelShelf
 
-Angel3 brought about the generic `Driver` class, which is implemented by `AngelHttp`, `AngelHttp2`, `AngelGopher`, etc., and provides the core infrastructure for request handling in Angel. `AngelShelf` is an implementation that wraps shelf requests and responses in their Angel equivalents. Using it is as simple using as using `AngelHttp`, or any other driver:
+Angel3 brought about the generic `Driver` class, which is implemented by `AngelHttp`, `AngelHttp2`, etc., and provides the core infrastructure for request handling in Angel. `AngelShelf` is an implementation that wraps shelf requests and responses in their Angel equivalents. Using it is as simple using as using `AngelHttp`, or any other driver:
 
 ```dart
 // Create an AngelShelf driver.

@@ -1,5 +1,24 @@
 # Change Log
 
+## 10.0.0
+
+### Breaking changes in 10.0.0
+
+* **Breaking:** No longer uses `dart:mirrors`, so a program that renders templates can be compiled with `dart compile exe`. `{{ a.b }}` reads `b` from the `memberResolver` given to `Renderer.render`, a `Map` key, a common member of a core type, or the value's `toJson()`; other getters need a `memberResolver` or `toJson()`. `angel3_jael` gives one from the app's reflector. See the README
+* **Breaking:** Removed `new`, `NewExpression` and `TokenType.$new`, which could never be parsed; put a function that makes the value in the scope instead
+* **Breaking:** With `strictResolution: false`, an unknown member, or a member of `null`, is `null`. `readMember` takes `resolver` as a named parameter, and the new `tryReadMember` returns `noMember`
+* **Breaking:** Requires `belatuk_code_buffer` 6 and `belatuk_symbol_table` 6, whose `CodeBuffer` and `SymbolTable` `Renderer.render` takes; the HTML it renders is unchanged
+
+### Fixes in 10.0.0
+
+* **Members:** `{{ user.name }}` reads the key of a `Map`. `toJson()` is called once per value in a render, its own errors are thrown, and one that takes an argument is not called
+* **Null safety:** `?.` makes the rest of the chain `null`, as in Dart
+* **Operators:** `%` works; `&&` and `||` are added, and like `??` compute their right side only if needed; `=` is no longer an operator
+* **Parsing:** Map literals with keys (`{'a': 1}`) and calls with named arguments (`f(x: 1)`) are parsed; a key-value pair's span starts at its key, and `SyntheticIdentifier.span` works
+* **Rendering:** The same `SymbolTable` can be rendered again
+* **Docs:** The README tells how to install and use the package, and how to migrate from 9.x
+
+
 ## 9.1.0
 
 * Require Dart >= 3.13

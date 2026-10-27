@@ -67,11 +67,11 @@ The required applications by the framework can be run using the Docker compose f
     create database orm_test;
     
     -- Granting localhost access only
-    create user 'test'@'localhost' identified by 'test123';
+    create user 'test'@'localhost' identified by 'Test123';
     grant all privileges on orm_test.* to 'test'@'localhost';
 
     -- Granting localhost and remote access
-    create user 'test'@'%' identified by 'test123';
+    create user 'test'@'%' identified by 'Test123';
     grant all privileges on orm_test.* to 'test'@'%';
     ```
 
@@ -102,11 +102,11 @@ The required applications by the framework can be run using the Docker compose f
     create database orm_test;
     
     -- Granting localhost access only
-    create user 'test'@'localhost' identified by 'test123';
+    create user 'test'@'localhost' identified by 'Test123';
     grant all privileges on orm_test.* to 'test'@'localhost';
 
     -- Granting localhost and remote access
-    create user 'test'@'%' identified by 'test123';
+    create user 'test'@'%' identified by 'Test123';
     grant all privileges on orm_test.* to 'test'@'%';
     ```
 

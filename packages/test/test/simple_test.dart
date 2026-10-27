@@ -1,11 +1,11 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:angel3_container/mirrors.dart';
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_test/angel3_test.dart';
 import 'package:angel3_validate/angel3_validate.dart';
 import 'package:angel3_websocket/server.dart';
+import 'package:http/http.dart' as http;
 import 'package:test/test.dart';
 
 void main() {
@@ -13,8 +13,12 @@ void main() {
   late TestClient client;
 
   setUp(() async {
-    app = Angel(reflector: MirrorsReflector())
+    app = Angel()
       ..get('/hello', (req, res) => 'Hello')
+      ..get('/buffered', (req, res) {
+        res.useBuffer();
+        return 'Hello';
+      })
       ..get('/user_info', (req, res) => {'u': req.uri?.userInfo})
       ..get(
         '/error',
@@ -22,6 +26,10 @@ void main() {
             throw AngelHttpException.forbidden(message: 'Test')
               ..errors.addAll(['foo', 'bar']),
       )
+      ..get('/bare-error', (req, res) {
+        res.statusCode = 404;
+        return {'is_error': true};
+      })
       ..get('/body', (req, res) {
         res
           ..write('OK')
@@ -37,6 +45,18 @@ void main() {
       ..post('/hello', (req, res) async {
         var body = await req.parseBody().then((_) => req.bodyAsMap);
         return {'bar': body['foo']};
+      })
+      ..get('/gzip-buffered', (req, res) {
+        res
+          ..useBuffer()
+          ..headers['content-encoding'] = 'gzip'
+          ..add(gzip.encode('Poop'.codeUnits));
+      })
+      ..get('/gzip-list', (req, res) {
+        res
+          ..useBuffer()
+          ..headers['content-encoding'] = 'GZIP, identity'
+          ..add(gzip.encode('Poop'.codeUnits));
       })
       ..get('/gzip', (req, res) async {
         res
@@ -95,7 +115,22 @@ void main() {
           errors: ['foo', 'bar'],
         ),
       );
-    }, skip: 'This is a bug to be fixed, skip for now');
+    });
+
+    test('contentLength is the buffered body length', () async {
+      var res = await client.send(http.Request('GET', Uri.parse('/buffered')));
+      expect(res.contentLength, (await res.stream.toBytes()).length);
+    });
+
+    test('contentLength is null when the body is streamed', () async {
+      var res = await client.send(http.Request('GET', Uri.parse('/hello')));
+      expect(res.contentLength, isNull);
+    });
+
+    test('isAngelHttpException uses the HTTP status as a fallback', () async {
+      var res = await client.get(Uri.parse('/bare-error'));
+      expect(res, isAngelHttpException(statusCode: 404));
+    });
 
     test('userInfo from Uri', () async {
       var url = Uri(userInfo: 'foo:bar', path: '/user_info');
@@ -159,7 +194,62 @@ void main() {
       expect(res, hasBody('Poop'));
     });
 
+    test('contentLength is null when the body is decompressed', () async {
+      var res = await client.send(
+        http.Request('GET', Uri.parse('/gzip-buffered')),
+      );
+      expect(utf8.decode(await res.stream.toBytes()), 'Poop');
+      expect(res.contentLength, isNull);
+      expect(res.headers, isNot(contains('content-length')));
+    });
+
+    test('gzip is found in a list of encodings, in any case', () async {
+      var res = await client.get(Uri.parse('/gzip-list'));
+      expect(res.body, 'Poop');
+    });
+
+    test('mismatches describe the response', () async {
+      String mismatch(Matcher matcher, Object item) {
+        var state = {};
+        expect(matcher.matches(item, state), isFalse);
+        return matcher
+            .describeMismatch(item, StringDescription(), state, false)
+            .toString();
+      }
+
+      var text = await client.get(Uri.parse('/body'));
+      expect(mismatch(isJson('OK'), text), contains('not JSON: OK'));
+
+      var error = await client.get(Uri.parse('/error'));
+      expect(
+        mismatch(isAngelHttpException(statusCode: 404), error),
+        allOf(contains('403'), contains('Test'), contains('foo')),
+      );
+
+      var valid = await client.get(Uri.parse('/valid'));
+      var matcher = hasValidBody(Validator({'michael*': isInt}));
+      expect(mismatch(matcher, valid), contains('michael'));
+      expect(mismatch(matcher, text), contains('not JSON'));
+    });
+
+    test('JSON matchers do not match a body that is not JSON', () async {
+      var res = await client.get(Uri.parse('/body'));
+      expect(res.body, 'OK');
+      expect(res, isNot(isJson('OK')));
+      expect(res, isNot(isAngelHttpException()));
+      expect(res, isNot(hasValidBody(Validator({'foo': isString}))));
+    });
+
     group('service', () {
+      test('can be typed after an untyped one on the same path', () async {
+        client.service('foo');
+        var foo = client.service<String, String>(
+          'foo',
+          deserializer: (x) => (x as Map)['michael'] as String,
+        );
+        expect(await foo.index(), ['jackson']);
+      });
+
       test('index', () async {
         var foo = client.service('foo');
         var result = await foo.index();

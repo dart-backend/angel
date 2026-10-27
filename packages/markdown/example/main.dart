@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:angel3_framework/angel3_framework.dart';
@@ -21,12 +22,14 @@ Future<Angel> createServer() async {
     markdown(
       fs.directory('views'),
       template: (content, locals) {
+        // Locals are not escaped here, as they are in the Markdown.
+        var title = htmlEscape.convert('${locals['title'] ?? 'Example Site'}');
         return '''
 <!DOCTYPE html>
 <html>
   <head>
     <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
-    <title>${locals['title'] ?? 'Example Site'} - Example Site</title>
+    <title>$title - Example Site</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/semantic-ui/2.2.13/semantic.min.css">
   </head>
   <body>

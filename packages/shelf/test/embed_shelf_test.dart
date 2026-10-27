@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:angel3_container/mirrors.dart';
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_framework/http.dart';
 import 'package:angel3_shelf/angel3_shelf.dart';
@@ -46,18 +45,16 @@ void main() {
           sink.close();
           print('b');
         });
-        //} else if (request.url.path == 'throw') {
-        //  return null;
       } else {
         return shelf.Response.ok('Request for "${request.url}"');
       }
     });
 
     var logger = Logger.detached('angel3_shelf')..onRecord.listen(prettyLog);
-    var app = Angel(logger: logger, reflector: MirrorsReflector());
+    var app = Angel(logger: logger);
     var httpDriver = AngelHttp(app);
     app.get('/angel', (req, res) => 'Angel');
-    app.fallback(embedShelf(handler, throwOnNullResponse: true));
+    app.fallback(embedShelf(handler));
 
     server = await httpDriver.startServer(InternetAddress.loopbackIPv4, 0);
   });
@@ -106,10 +103,5 @@ void main() {
   test('shelf can throw error', () async {
     var response = await client.get(path('/error'));
     expect(response, hasStatus(404));
-  });
-
-  test('throw on null', () async {
-    var response = await client.get(path('/throw'));
-    expect(response, hasStatus(500));
   });
 }

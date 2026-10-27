@@ -13,7 +13,7 @@ In your `pubspec.yaml` file:
 
 ```yaml
 dependencies:
-  angel3_paginate: ^6.0.0
+  angel3_paginate: ^10.0.0
 ```
 
 ## Usage
@@ -41,7 +41,7 @@ To create a paginator:
 import 'package:angel3_paginate/angel3_paginate.dart';
 
 void main() {
-  var p = new Paginator(iterable);
+  var p = Paginator(List.generate(75, (i) => i), itemsPerPage: 10);
   
   // Get the current page (default: page 1)
   var page = p.current;
@@ -57,3 +57,12 @@ void main() {
 The entire Paginator API is documented, so check out the DartDocs.
 
 Paginators by default cache paginations, to improve performance as you shift through pages. This can be especially helpful in a client-side application where your UX involves a fast response time, i.e. a search page.
+
+## Migrating from 9.x to 10.0.0
+
+The breaking changes of each release are listed in the [CHANGELOG](CHANGELOG.md). Those of 10.0.0 that may need changes in an app:
+
+* **`Paginator.current`** is a `PaginationResult<T>`, not nullable, so `current!` is not needed.
+* **Items**: a `Paginator` paginates a copy of its items, taken when it is created, so later changes to them are not seen. Create a new `Paginator` when they change.
+* **`itemsPerPage`** less than `1` throws an `ArgumentError` when the `Paginator` is created.
+* **Dependencies**: `angel3_framework` is no longer a dependency; add it to your own if you use it.

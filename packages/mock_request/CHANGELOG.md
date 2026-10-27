@@ -1,5 +1,29 @@
 # Change Log
 
+## 10.0.0
+
+The mocks now behave as `dart:io`'s `HttpRequest`, `HttpResponse` and `HttpHeaders` do.
+
+### Breaking changes in 10.0.0
+
+* **Breaking:** `MockHttpRequest` extends `Stream<Uint8List>`, so its stream methods have the signatures of `dart:io`'s `HttpRequest`
+* **Breaking:** `write` throws `ArgumentError` for a character its encoding cannot represent, instead of truncating it
+
+### New in 10.0.0
+
+* `MockHttpHeaders.tryParseContentLength`
+
+### Fixes in 10.0.0
+
+* **Encoding:** `write` and its relatives use the charset of the `content-type` header (or UTF-8, or the response's `encoding`), chosen at the first write, instead of writing each UTF-16 code unit as a byte. `write('')` adds nothing, `write(null)` writes `null`, and `writeln` ends lines with `\n`
+* **Headers:** `contentType`, `contentLength`, `chunkedTransferEncoding`, `date`, `expires` and `ifModifiedSince` are backed by their headers, with `dart:io`'s defaults, parsing and `null` handling. `content-length` holds one validated value. A header is removed with its last value, a `preserveHeaderCase` name is stored lowercase, and locked headers also reject `persistentConnection`, `host` and `port`
+* **Content length:** `MockHttpRequest.close` sets `content-length` to the bytes written (unless set, empty or chunked); a response's length starts at `-1`, and the constructor's `contentLength` is optional
+* **Streams:** Errors come after the bytes added before them, no empty chunk is emitted on `close` or `flush`, `add([])` does nothing, and `firstWhere`, `lastWhere` and `singleWhere` throw `StateError` when nothing matches
+* **`close` and `addStream`:** `close` may be called more than once and returns `done`; during `addStream`, other writes throw `StateError`, and `addStream` completes with the source's first error
+* **Responses:** `MockHttpResponse` keeps the `statusCode` it is given, and `bufferOutput` takes effect
+* **Docs:** The README tells how to install and use the package, and how to migrate from 9.x
+
+
 ## 9.2.0
 
 * fix: `MockHttpHeaders.date`, `expires` and `ifModifiedSince` now return `null` when the header is absent, as in `dart:io`, instead of the current time (which made every mock request look like a conditional request)

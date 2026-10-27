@@ -111,11 +111,17 @@ class HookedService<Id, Data, T extends Service<Id, Data>>
     }
 
     void applyListeners(
+      String name,
       Function fn,
       HookedServiceEventDispatcher<Id, Data, T> dispatcher, [
       bool? isAfter,
     ]) {
-      var hooks = getAnnotation<Hooks>(fn, app.container.reflector);
+      var hooks = getMethodAnnotation<Hooks>(
+        inner,
+        name,
+        fn,
+        app.container.reflector,
+      );
       final listeners = <HookedServiceEventListener<Id, Data, T>>[
         ...isAfter == true ? after : before,
       ];
@@ -127,18 +133,18 @@ class HookedService<Id, Data, T extends Service<Id, Data>>
       listeners.forEach(dispatcher.listen);
     }
 
-    applyListeners(inner.index, beforeIndexed);
-    applyListeners(inner.read, beforeRead);
-    applyListeners(inner.create, beforeCreated);
-    applyListeners(inner.modify, beforeModified);
-    applyListeners(inner.update, beforeUpdated);
-    applyListeners(inner.remove, beforeRemoved);
-    applyListeners(inner.index, afterIndexed, true);
-    applyListeners(inner.read, afterRead, true);
-    applyListeners(inner.create, afterCreated, true);
-    applyListeners(inner.modify, afterModified, true);
-    applyListeners(inner.update, afterUpdated, true);
-    applyListeners(inner.remove, afterRemoved, true);
+    applyListeners('index', inner.index, beforeIndexed);
+    applyListeners('read', inner.read, beforeRead);
+    applyListeners('create', inner.create, beforeCreated);
+    applyListeners('modify', inner.modify, beforeModified);
+    applyListeners('update', inner.update, beforeUpdated);
+    applyListeners('remove', inner.remove, beforeRemoved);
+    applyListeners('index', inner.index, afterIndexed, true);
+    applyListeners('read', inner.read, afterRead, true);
+    applyListeners('create', inner.create, afterCreated, true);
+    applyListeners('modify', inner.modify, afterModified, true);
+    applyListeners('update', inner.update, afterUpdated, true);
+    applyListeners('remove', inner.remove, afterRemoved, true);
   }
 
   @override
@@ -323,7 +329,7 @@ class HookedService<Id, Data, T extends Service<Id, Data>>
                     result: before.result,
                   ),
                 )
-                .then((after) => after.result as List<Data>);
+                .then((after) => _canceledList(after.result));
           }
 
           return inner.index(localParams).then((result) {
@@ -374,7 +380,7 @@ class HookedService<Id, Data, T extends Service<Id, Data>>
                     result: before.result,
                   ),
                 )
-                .then((after) => after.result as Data);
+                .then((after) => _canceledResult(after));
           }
 
           return inner.read(id, localParams).then((result) {
@@ -426,7 +432,7 @@ class HookedService<Id, Data, T extends Service<Id, Data>>
                     result: before.result,
                   ),
                 )
-                .then((after) => after.result as Data);
+                .then((after) => _canceledResult(after));
           }
 
           return inner.create(before.data as Data, localParams).then((result) {
@@ -480,7 +486,7 @@ class HookedService<Id, Data, T extends Service<Id, Data>>
                     result: before.result,
                   ),
                 )
-                .then((after) => after.result as Data);
+                .then((after) => _canceledResult(after));
           }
 
           return inner.modify(id, before.data as Data, localParams).then((
@@ -493,7 +499,7 @@ class HookedService<Id, Data, T extends Service<Id, Data>>
                     _getRequest(params),
                     _getResponse(params),
                     inner,
-                    HookedServiceEvent.created,
+                    HookedServiceEvent.modified,
                     id: id,
                     data: before.data,
                     params: localParams,
@@ -537,7 +543,7 @@ class HookedService<Id, Data, T extends Service<Id, Data>>
                     result: before.result,
                   ),
                 )
-                .then((after) => after.result as Data);
+                .then((after) => _canceledResult(after));
           }
 
           return inner.update(id, before.data as Data, localParams).then((
@@ -580,20 +586,19 @@ class HookedService<Id, Data, T extends Service<Id, Data>>
         .then((before) {
           if (before._canceled) {
             return afterRemoved
-                    ._emit(
-                      HookedServiceEvent(
-                        true,
-                        _getRequest(params),
-                        _getResponse(params),
-                        inner,
-                        HookedServiceEvent.removed,
-                        id: id,
-                        params: localParams,
-                        result: before.result,
-                      ),
-                    )
-                    .then((after) => after.result)
-                as Data;
+                ._emit(
+                  HookedServiceEvent(
+                    true,
+                    _getRequest(params),
+                    _getResponse(params),
+                    inner,
+                    HookedServiceEvent.removed,
+                    id: id,
+                    params: localParams,
+                    result: before.result,
+                  ),
+                )
+                .then((after) => _canceledResult(after));
           }
 
           return inner.remove(id, localParams).then((result) {
@@ -613,6 +618,25 @@ class HookedService<Id, Data, T extends Service<Id, Data>>
                 .then((after) => after.result as Data);
           });
         });
+  }
+
+  /// The result of a call canceled by a before hook, from `e.cancel(result)`.
+  Data _canceledResult(HookedServiceEvent after) {
+    var result = after.result;
+    if (result is Data) return result;
+    throw StateError(
+      'A hook canceled ${after.eventName} without a result of type $Data; '
+      'pass one to cancel().',
+    );
+  }
+
+  /// Like [_canceledResult], for `index`; no result means no items.
+  List<Data> _canceledList(Object? result) {
+    if (result == null) return <Data>[];
+    if (result is List) return List<Data>.from(result);
+    throw StateError(
+      'A hook canceled indexed with a result that is not a List.',
+    );
   }
 
   /// Fires an `after` event. This will not be propagated to clients,
@@ -653,6 +677,7 @@ class HookedService<Id, Data, T extends Service<Id, Data>>
       null,
       inner,
       eventName,
+      result: result,
     );
     return fireEvent(dispatcher, ev, callback);
   }

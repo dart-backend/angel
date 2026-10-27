@@ -1,4 +1,3 @@
-import 'package:angel3_container/mirrors.dart';
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_framework/http.dart';
 
@@ -24,7 +23,7 @@ void main() {
   late http.Client client;
 
   setUp(() async {
-    app = Angel(reflector: MirrorsReflector())
+    app = Angel()
       ..use('/todos', service = MapService())
       ..errorHandler = (e, req, res) {
         if (e.error != null) print('Whoops: ${e.error}');
@@ -186,6 +185,48 @@ void main() {
       service.items.add({'id': '0', 'text': 'seeded'});
       var created = await service.create({'text': 'new'});
       expect(created['id'], isNot('0'));
+    });
+  });
+
+  group('int ids', () {
+    setUp(() {
+      app.use(
+        '/ints',
+        AnonymousService<int, Map<String, dynamic>>(
+          read: (id, [params]) async => {'id': id},
+        ),
+      );
+    });
+
+    test('are parsed with the wrapped service Id type', () async {
+      var response = await client.get(Uri.parse('$url/ints/5'));
+      expect(response.statusCode, 200);
+      expect(json.decode(response.body), {'id': 5});
+    });
+
+    for (var id in ['null', 'abc']) {
+      test('"$id" is a 400', () async {
+        var response = await client.get(
+          Uri.parse('$url/ints/$id'),
+          headers: {'accept': 'application/json'},
+        );
+        expect(response.statusCode, 400);
+      });
+    }
+  });
+
+  group('parseId', () {
+    test('parses nullable types like their non-nullable form', () {
+      expect(Service.parseId<int?>('5'), 5);
+      expect(Service.parseId<double?>('1.5'), 1.5);
+      expect(Service.parseId<String?>(5), '5');
+    });
+
+    test('passes "null" only to types that accept a String', () {
+      expect(Service.parseId<String>(null), 'null');
+      expect(Service.parseId<dynamic>('null'), 'null');
+      expect(() => Service.parseId<int>('null'), throwsFormatException);
+      expect(() => Service.parseId<int?>(null), throwsFormatException);
     });
   });
 

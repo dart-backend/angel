@@ -16,7 +16,9 @@ class ShelfResponseContext extends ResponseContext<ShelfResponseContext> {
   final bool _wasClosedByHandler = false;
   bool _handlersAreDone = false;
 
-  ShelfResponseContext(this.angelApp);
+  ShelfResponseContext(this.angelApp) {
+    app = angelApp;
+  }
 
   ShelfRequestContext? _correspondingRequest;
 

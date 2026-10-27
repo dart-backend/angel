@@ -1,8 +1,30 @@
 # Change Log
 
+## 10.0.0
+
+### Breaking changes in 10.0.0
+
+* **Breaking:** No longer uses `dart:mirrors`: `SerializableFieldMirror.serializer` and `deserializer` are function names as `String`s, where they were `Symbol`s. The generated code is the same
+* **Breaking:** Generated `hashCode` getters use `Object.hashAll` instead of `hashObjects`; regenerate existing models
+* **Breaking:** A generated class is named by removing a `modelPrefix` (`_`, `Entity`), then a `modelSuffix` (`Entity`), matched by case: `UserIdentity` keeps its name, where it became `UserId`. The prefixes and suffixes are capitalised
+* **Breaking:** A value in `includeAnnotations` that is not a constant instance of a class or enum fails the build
+
+### Fixes in 10.0.0
+
+* **Hash codes:** `List` and `Map` fields are hashed by their length, so equal models have equal hash codes
+* **Serializers:** `Serializable.serializers` is read by enum value name, including from other constants; an unknown value is logged. The serializer class is generated only for `map` or `json`, and is a `Codec` only for `map`
+* **Names:** Generated classes and their serializers are named in pascal case everywhere (`UrlSerializer` of `_URL`), models refer to each other by their generated names, and two models of the same generated name fail the build
+* **Types:** Types are written with their import prefixes, nullability and type arguments, and fields of function or record types are generated, where any of these could fail the build or not compile
+* **Annotations:** Enum values and constants are generated as references, and keep their import prefixes
+* **ORM:** `ShimFieldImpl` makes its own member reference, so ORM models with `@BelongsTo` build with `analyzer` 14.5; `ShimFieldImpl` is deprecated
+* **Dependencies:** Removed `quiver`
+* **Docs:** The README tells how to install and use the package, and how to migrate from 9.x
+
+
 ## 9.1.0
 
 * Require Dart >= 3.13
+* Updated `analyzer` to 14.0.0
 
 ## 9.0.0
 

@@ -1,18 +1,35 @@
 import 'dart:async';
 
 import 'package:args/command_runner.dart';
+import 'package:logging/logging.dart';
 
 import 'runner.dart';
 
-/// Runs the Angel Migration CLI.
-Future runMigrations(MigrationRunner migrationRunner, List<String> args) {
+/// Runs the Angel Migration CLI, and then closes [migrationRunner], whether
+/// the command succeeds or throws, as when a migration fails.
+///
+/// The error of a command that throws is thrown, rather than one of closing
+/// the runner, as on a connection that was lost, which is logged.
+Future runMigrations(MigrationRunner migrationRunner, List<String> args) async {
   var cmd = CommandRunner('migration_runner', 'Executes Angel3 migrations.')
     ..addCommand(_UpCommand(migrationRunner))
     ..addCommand(_RefreshCommand(migrationRunner))
     ..addCommand(_ResetCommand(migrationRunner))
     ..addCommand(_RollbackCommand(migrationRunner));
-  return cmd.run(args).then((_) => migrationRunner.close());
+  try {
+    await cmd.run(args);
+  } catch (e) {
+    try {
+      await migrationRunner.close();
+    } catch (closeError, closeStack) {
+      _log.warning('Failed to close the runner.', closeError, closeStack);
+    }
+    rethrow;
+  }
+  await migrationRunner.close();
 }
+
+final _log = Logger('runMigrations');
 
 class _UpCommand extends Command {
   _UpCommand(this.migrationRunner);

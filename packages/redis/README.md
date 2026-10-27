@@ -17,8 +17,8 @@ In your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-    angel3_framework: ^9.0.0
-    angel3_redis: ^9.0.0
+    angel3_framework: ^10.0.0
+    angel3_redis: ^10.0.0
 ```
 
 ## Usage
@@ -27,19 +27,7 @@ Pass an instance of `RespCommandsTier2` (from `package:resp_client`) to the `Red
 
 Without a prefix, there's a chance that different collections can overwrite one another's data.
 
-## Notes
-
-* Neither `index`, nor `modify` is atomic; each performs two separate queries.`angel3_redis` stores data as JSON strings, rather than as Redis hashes, so an update-in-place is impossible.
-* `index` uses Redis' `KEYS` functionality, so use it sparingly in production, if at all. In a larger database, it can quickly
-become a bottleneck.
-* `remove` uses `MULTI`+`EXEC` in a transaction.
-* Prefer using `update`, rather than `modify`. The former only performs one query, though it does overwrite the current
-contents for a given key.
-* When calling `create`, it's possible that you may already have an `id` in mind to insert into the store. For example,
-when caching another database, you'll preserve the ID or primary key of an item. `angel3_redis` heeds this. If no
-`id` is present, then an ID will be created via an `INCR` call.
-
-## Example
+### Example
 
 Also present at `example/main.dart`:
 
@@ -68,3 +56,21 @@ main() async {
   await connection.close();
 }
 ```
+
+## Notes
+
+* `angel3_redis` stores each record as a JSON string, not as a Redis hash. Keys that hold anything other than a JSON object are not records: `index` skips them, and `read`, `modify` and `remove` return 404 for them.
+* Prefixes must not nest. `index` on prefix `app` also returns the records of a service with prefix `app:users`. Without a prefix, `index` scans the whole database.
+* `index` uses `SCAN` and `MGET` in batches of `batchSize` keys (default 1000), so it does not block the Redis server, but it still reads every record in the collection.
+* `modify` and `remove` are atomic. They read the record, then write only if it has not changed in the meantime, trying up to `maxWriteAttempts` times (default 10). If the record keeps changing, they return 409.
+* Prefer `update` to `modify` when you have the whole record. It performs one query and overwrites the stored record.
+* `create` keeps an `id` you supply, for example the primary key of a row you are caching from another database. The `id` must be a non-empty string or an integer, otherwise `create` returns 400. If a record with that `id` already exists, `create` returns 409 instead of overwriting it.
+* Without an `id`, `create` generates one by incrementing the counter `angel_redis:id:<prefix>` (`angel_redis:id` without a prefix), skipping IDs that are already taken. On a database used with 9.x, the counter continues from the old `<prefix>:angel_redis:id` key, which is left in place.
+
+## Migrating from 9.x to 10.0.0
+
+The breaking changes of each release are listed in the [CHANGELOG](CHANGELOG.md). Those of 10.0.0 that may need changes in an app:
+
+* **`create`** throws a `409` if a record of the id already exists, and a `400` unless the id is a non-empty string or an integer. Use `update` to replace a record.
+* **`modify` and `remove`** throw a `409` if the record keeps changing during their writes (`maxWriteAttempts`).
+* **`read`, `modify` and `remove`** throw a `404` for keys that do not hold a JSON object.

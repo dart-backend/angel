@@ -7,6 +7,8 @@ class Container {
   final Reflector reflector;
   final Map<Type, dynamic> _singletons = {};
   final Map<Type, dynamic Function(Container)> _factories = {};
+  // Types registered here with registerLazySingleton.
+  final Set<Type> _lazyTypes = {};
   final Map<String, dynamic> _namedSingletons = {};
   final Container? _parent;
 
@@ -98,29 +100,44 @@ class Container {
   ///
   /// In contexts where a static generic type cannot be used, use
   /// the [type] argument, instead of [T].
-  T make<T>([Type? type]) {
-    Type t2 = T;
-    if (type != null) {
-      t2 = type;
-    }
+  T make<T>([Type? type]) => _make(type ?? T, {}) as T;
 
+  /// [resolving] holds the types whose constructors are being resolved in
+  /// this call, to detect circular dependencies.
+  dynamic _make(Type t2, Set<Type> resolving) {
     Container? search = this;
 
     while (search != null) {
-      if (search._singletons.containsKey(t2)) {
+      // A lazy singleton made by another container belongs to that one: a
+      // child calls the factory again, to get its own.
+      if (search._singletons.containsKey(t2) &&
+          (identical(search, this) || !search._lazyTypes.contains(t2))) {
         // Find a singleton, if any.
-        return search._singletons[t2] as T;
+        return search._singletons[t2];
       } else if (search._factories.containsKey(t2)) {
         // Find a factory, if any.
-        return search._factories[t2]!(this) as T;
+        return search._factories[t2]!(this);
       } else {
         search = search._parent;
       }
     }
 
+    if (!resolving.add(t2)) {
+      throw ReflectionException(
+        'Circular dependency: $t2 depends on itself, and therefore cannot be instantiated.',
+      );
+    }
+    try {
+      return _construct(t2, resolving);
+    } finally {
+      resolving.remove(t2);
+    }
+  }
+
+  dynamic _construct(Type t2, Set<Type> resolving) {
     var reflectedType = reflector.reflectType(t2);
     var positional = [];
-    var named = <String, Object>{};
+    var named = <String, dynamic>{};
 
     if (reflectedType is ReflectedClass) {
       bool isDefault(String name) {
@@ -134,9 +151,37 @@ class Container {
         )),
       );
 
+      // Once an optional positional parameter is left out, the ones after it
+      // cannot be passed either.
+      var positionalOmitted = false;
       for (var param in constructor.parameters) {
-        var value = make(param.type.reflectedType);
+        var type = param.type.reflectedType;
+        // A parameter with a default (an optional positional one defaults to
+        // null) keeps it unless something is registered for its type.
+        var canOmit =
+            param.hasDefaultValue || (!param.isNamed && !param.isRequired);
+        if (!param.isNamed && positionalOmitted) continue;
+        var registered = has(type);
+        if (canOmit && !registered) {
+          if (!param.isNamed) positionalOmitted = true;
+          continue;
+        }
 
+        if (param.isNamed && !param.isRequired && !registered) {
+          // Reflectors may not tell `{Logger? log}` from `{required Dep dep}`:
+          // construct the value if possible, and leave it out otherwise.
+          // Only failures to construct the type are caught; errors thrown
+          // while running constructors or factories are not.
+          try {
+            named[param.name] = _make(type, resolving);
+          } catch (e) {
+            if (!isUnconstructible(e)) rethrow;
+            // Left out; a required parameter then fails in newInstance.
+          }
+          continue;
+        }
+
+        var value = _make(type, resolving);
         if (param.isNamed) {
           named[param.name] = value;
         } else {
@@ -145,14 +190,13 @@ class Container {
       }
 
       return reflectedType
-              .newInstance(
-                isDefault(constructor.name) ? '' : constructor.name,
-                positional,
-                named,
-                [],
-              )
-              .reflectee
-          as T;
+          .newInstance(
+            isDefault(constructor.name) ? '' : constructor.name,
+            positional,
+            named,
+            [],
+          )
+          .reflectee;
     } else {
       throw ReflectionException(
         '$t2 is not a class, and therefore cannot be instantiated.',
@@ -160,7 +204,28 @@ class Container {
     }
   }
 
+  /// Whether [error] says that a type cannot be constructed by reflection,
+  /// as opposed to being thrown by a constructor or factory: a
+  /// [ReflectionException], a reflector that cannot reflect the type
+  /// ([UnsupportedError], [ArgumentError]), or an abstract class.
+  ///
+  /// Use it to leave an optional dependency out when [make] cannot build it.
+  static bool isUnconstructible(Object error) =>
+      error is ReflectionException ||
+      error is UnsupportedError ||
+      error is ArgumentError ||
+      (error is Error &&
+          '$error'.startsWith('Cannot instantiate abstract class'));
+
   /// Shorthand for registering a factory that injects a singleton when it runs.
+  ///
+  /// The singleton belongs to the container that resolves it: [f] runs with
+  /// that container, and its result is registered there. A child container
+  /// (e.g. one per request) therefore gets its own instance, which lets [f]
+  /// depend on what that child provides, such as the current request, even
+  /// if this container has made one for itself. Children of that child share
+  /// the child's instance.
+  /// Register a plain [registerSingleton] for one instance shared everywhere.
   ///
   /// In many cases, you might prefer this to [registerFactory].
   ///
@@ -169,11 +234,13 @@ class Container {
     T Function(Container) f, {
     Type? as,
   }) {
-    return registerFactory<T>((container) {
+    registerFactory<T>((container) {
       var r = f(container);
       container.registerSingleton<T>(r, as: as);
       return r;
     }, as: as);
+    _lazyTypes.add(as ?? T);
+    return f;
   }
 
   /// Registers a factory. Any attempt to resolve the

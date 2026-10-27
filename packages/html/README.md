@@ -35,7 +35,7 @@ In your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  angel3_html: ^6.0.0
+  angel3_html: ^10.0.0
 ```
 
 ## Usage
@@ -48,9 +48,9 @@ configureServer(Angel app) async {
   app.fallback(renderHtml());
   
   // You can pass a custom StringRenderer if you need more control over the output.
-  app.fallback(renderHtml(renderer: new StringRenderer(html5: false)));
+  app.fallback(renderHtml(renderer: StringRenderer(html5: false)));
   
-  app.get('/greet/:name', (RequestContext req) {
+  app.get('/greet/:name', (req, res) {
     return html(lang: 'en', c: [
      head(c: [
        meta(name: 'viewport', content: 'width=device-width, initial-scale=1'),
@@ -60,7 +60,7 @@ configureServer(Angel app) async {
      ]),
      body(c: [
        h1(c: [
-         text('Hello, ${req.params['id']}!'),
+         text('Hello, ${req.params['name']}!'),
        ]),
      ]),
    ]);
@@ -68,7 +68,7 @@ configureServer(Angel app) async {
 }
 ```
 
-By default, `renderHtml` will ignore the client's `Accept` header. However, if you pass `enforceAcceptHeader` as `true`, then a `406 Not Acceptable` error will be thrown if the client doesn't accept `*/*` or `text/html`.
+By default, `renderHtml` will ignore the client's `Accept` header. However, if you pass `enforceAcceptHeader` as `true`, then a `406 Not Acceptable` error will be thrown if the client doesn't accept `*/*` or `text/html`. A request without an `Accept` header accepts any type.
 
 ```dart
 configureServer(Angel app) async {
@@ -78,3 +78,10 @@ configureServer(Angel app) async {
   // ...
 }
 ```
+
+## Migrating from 9.x to 10.0.0
+
+The breaking changes of each release are listed in the [CHANGELOG](CHANGELOG.md). Those of 10.0.0 that may need changes in an app:
+
+* **Charset**: pages are sent as `text/html; charset=utf-8`, where they had no charset.
+* **`enforceAcceptHeader`** is a `bool` that defaults to `false`, not a `bool?`: pass `true` or `false`, not `null`.

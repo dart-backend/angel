@@ -1,5 +1,24 @@
 # Change Log
 
+## 10.0.0
+
+### Breaking changes in 10.0.0
+
+* **Breaking:** A record matches a query only if it matches every field of it, where matching any field was enough
+* **Breaking:** A `$sort` of `-1` sorts in descending order and `1` in ascending order, where they were the other way round
+* **Breaking:** Removing all records removes only those that match the query, if there is one, where it removed every record
+* **Breaking:** `findOne` throws a 404 `AngelHttpException` when no record matches, where it returned `{}`
+* **Breaking:** `modify` and `update` of an id with no record throw a 404 `AngelHttpException`, where they created the record
+* **Breaking:** The `id` of the data given to `create`, `modify` and `update` is not stored, as it is the key of the record; `id` in a query matches the key
+* **Breaking:** Requires `angel3_framework` 10
+
+### Fixes in 10.0.0
+
+* **Query:** `$sort` in the query of a request sorts the records, where it was taken for a field and matched none
+* **`findOne`:** The record it returns has its `id`
+* **Docs:** The README tells how to migrate from 9.x
+
+
 ## 9.1.0
 
 * Require Dart >= 3.13

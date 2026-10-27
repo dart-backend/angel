@@ -50,15 +50,14 @@ final Map<Pattern, TokenType> _expressionPatterns = {
   //final Map<Pattern, TokenType> _expressionPatterns = {
   '}}': TokenType.rDoubleCurly,
 
-  // Keywords
-  'new': TokenType.$new,
-
   // Misc.
   '*': TokenType.asterisk,
   ':': TokenType.colon,
   ',': TokenType.comma,
   '.': TokenType.dot,
   '??': TokenType.elvis,
+  '&&': TokenType.and,
+  '||': TokenType.or,
   '?.': TokenType.elvisDot,
   //'=': TokenType.equals,
   '!': TokenType.exclamation,

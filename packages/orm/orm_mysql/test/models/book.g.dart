@@ -14,9 +14,9 @@ class BookMigration extends Migration {
       table.timeStamp('created_at');
       table.timeStamp('updated_at');
       table.varChar('name', length: 255);
-      table.declare('author_id', ColumnType('int')).references('authors', 'id');
+      table.declare('author_id', ColumnType.int).references('authors', 'id');
       table
-          .declare('partner_author_id', ColumnType('int'))
+          .declare('partner_author_id', ColumnType.int)
           .references('authors', 'id');
     });
   }
@@ -142,23 +142,25 @@ class BookQuery extends Query<Book, BookQueryWhere> {
       return Optional.empty();
     }
     var model = Book(
-      id: fields.contains('id') ? row[0].toString() : null,
+      id: fields.contains('id') ? row[fields.indexOf('id')].toString() : null,
       createdAt: fields.contains('created_at')
-          ? mapToNullableDateTime(row[1])
+          ? mapToNullableDateTime(row[fields.indexOf('created_at')])
           : null,
       updatedAt: fields.contains('updated_at')
-          ? mapToNullableDateTime(row[2])
+          ? mapToNullableDateTime(row[fields.indexOf('updated_at')])
           : null,
-      name: fields.contains('name') ? (row[5] as String?) : null,
+      name: fields.contains('name')
+          ? (row[fields.indexOf('name')] as String?)
+          : null,
     );
-    if (row.length > 6) {
-      var modelOpt = AuthorQuery().parseRow(row.skip(6).take(5).toList());
+    {
+      var modelOpt = _author.parseRow(joinedRow(0, row));
       modelOpt.ifPresent((m) {
         model = model.copyWith(author: m);
       });
     }
-    if (row.length > 11) {
-      var modelOpt = AuthorQuery().parseRow(row.skip(11).take(5).toList());
+    {
+      var modelOpt = _partnerAuthor.parseRow(joinedRow(1, row));
       modelOpt.ifPresent((m) {
         model = model.copyWith(partnerAuthor: m);
       });
@@ -234,17 +236,17 @@ class BookQueryValues extends MapQueryValues {
 
   set updatedAt(DateTime? value) => values['updated_at'] = value;
 
-  int get authorId {
-    return (values['author_id'] as int);
+  int? get authorId {
+    return (values['author_id'] as int?);
   }
 
-  set authorId(int value) => values['author_id'] = value;
+  set authorId(int? value) => values['author_id'] = value;
 
-  int get partnerAuthorId {
-    return (values['partner_author_id'] as int);
+  int? get partnerAuthorId {
+    return (values['partner_author_id'] as int?);
   }
 
-  set partnerAuthorId(int value) => values['partner_author_id'] = value;
+  set partnerAuthorId(int? value) => values['partner_author_id'] = value;
 
   String? get name {
     return (values['name'] as String?);
@@ -256,11 +258,11 @@ class BookQueryValues extends MapQueryValues {
     createdAt = model.createdAt;
     updatedAt = model.updatedAt;
     name = model.name;
-    if (model.author != null) {
-      values['author_id'] = model.author?.id;
+    if (model.author?.id != null) {
+      values['author_id'] = int.parse(model.author!.id!);
     }
-    if (model.partnerAuthor != null) {
-      values['partner_author_id'] = model.partnerAuthor?.id;
+    if (model.partnerAuthor?.id != null) {
+      values['partner_author_id'] = int.parse(model.partnerAuthor!.id!);
     }
   }
 }
@@ -319,15 +321,19 @@ class AuthorQuery extends Query<Author, AuthorQueryWhere> {
       return Optional.empty();
     }
     var model = Author(
-      id: fields.contains('id') ? row[0].toString() : null,
+      id: fields.contains('id') ? row[fields.indexOf('id')].toString() : null,
       createdAt: fields.contains('created_at')
-          ? mapToNullableDateTime(row[1])
+          ? mapToNullableDateTime(row[fields.indexOf('created_at')])
           : null,
       updatedAt: fields.contains('updated_at')
-          ? mapToNullableDateTime(row[2])
+          ? mapToNullableDateTime(row[fields.indexOf('updated_at')])
           : null,
-      name: fields.contains('name') ? (row[3] as String?) : null,
-      publisher: fields.contains('publisher') ? (row[4] as String?) : null,
+      name: fields.contains('name')
+          ? (row[fields.indexOf('name')] as String?)
+          : null,
+      publisher: fields.contains('publisher')
+          ? (row[fields.indexOf('publisher')] as String?)
+          : null,
     );
     return Optional.of(model);
   }
@@ -473,7 +479,14 @@ class Book extends EntityBook {
 
   @override
   int get hashCode {
-    return hashObjects([id, createdAt, updatedAt, author, partnerAuthor, name]);
+    return Object.hashAll([
+      id,
+      createdAt,
+      updatedAt,
+      author,
+      partnerAuthor,
+      name,
+    ]);
   }
 
   @override
@@ -542,7 +555,7 @@ class Author extends EntityAuthor {
 
   @override
   int get hashCode {
-    return hashObjects([id, createdAt, updatedAt, name, publisher]);
+    return Object.hashAll([id, createdAt, updatedAt, name, publisher]);
   }
 
   @override

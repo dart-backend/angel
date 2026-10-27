@@ -4,7 +4,7 @@ import 'package:args/args.dart';
 
 /// Options for executing Runner.
 class RunnerOptions {
-  /// Command line arguements
+  /// Command line arguments
   static final ArgParser argParser = ArgParser()
     ..addFlag(
       'help',
@@ -55,16 +55,43 @@ class RunnerOptions {
     ..addOption('certificate-file', help: 'The PEM certificate file to read.')
     ..addOption(
       'certificate-password',
-      help: 'The PEM certificate file password.',
+      help:
+          'The PEM certificate file password; prefer $certificatePasswordVariable, as arguments are seen by other users.',
     )
     ..addOption('key-file', help: 'The PEM key file to read.')
-    ..addOption('key-password', help: 'The PEM key file password.');
+    ..addOption(
+      'key-password',
+      help:
+          'The PEM key file password; prefer $keyPasswordVariable, as arguments are seen by other users.',
+    );
+
+  /// The environment variable of the certificate's password, used if
+  /// `--certificate-password` is not given.
+  static const String certificatePasswordVariable =
+      'ANGEL_CERTIFICATE_PASSWORD';
+
+  /// The environment variable of the key's password, used if
+  /// `--key-password` is not given.
+  static const String keyPasswordVariable = 'ANGEL_KEY_PASSWORD';
+
+  /// The integer of the option [name], at least [min] and at most [max];
+  /// throws an [ArgParserException] otherwise.
+  static int _intOption(ArgResults results, String name, int min, int max) {
+    var text = results[name] as String;
+    var value = int.tryParse(text);
+    if (value == null || value < min || value > max) {
+      throw ArgParserException(
+        'Invalid --$name "$text": expected a whole number from $min to $max.',
+      );
+    }
+    return value;
+  }
 
   final String hostname;
   final String? certificateFile, keyFile, certificatePassword, keyPassword;
   final int concurrency, port;
   final bool useZone, respawn, quiet, ssl, http2;
-  final Map<String, Object> removeResponseHeaders = {};
+  final Map<String, Object?> removeResponseHeaders = {};
   final Map<String, Object> responseHeaders = {};
 
   RunnerOptions({
@@ -85,8 +112,8 @@ class RunnerOptions {
   factory RunnerOptions.fromArgResults(ArgResults argResults) {
     return RunnerOptions(
       hostname: argResults['address'] as String,
-      port: int.parse(argResults['port'] as String),
-      concurrency: int.parse(argResults['concurrency'] as String),
+      port: _intOption(argResults, 'port', 0, 65535),
+      concurrency: _intOption(argResults, 'concurrency', 1, 1024),
       useZone: argResults['use-zone'] as bool? ?? false,
       respawn: argResults['respawn'] as bool? ?? true,
       quiet: argResults['quiet'] as bool? ?? false,
@@ -94,8 +121,12 @@ class RunnerOptions {
       keyFile: argResults['key-file'] as String?,
       ssl: argResults['ssl'] as bool? ?? false,
       http2: argResults['http2'] as bool? ?? false,
-      certificatePassword: argResults['certificate-password'] as String?,
-      keyPassword: argResults['key-password'] as String?,
+      certificatePassword:
+          argResults['certificate-password'] as String? ??
+          Platform.environment[certificatePasswordVariable],
+      keyPassword:
+          argResults['key-password'] as String? ??
+          Platform.environment[keyPasswordVariable],
     );
   }
 }

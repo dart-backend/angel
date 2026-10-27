@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:analyzer/dart/constant/value.dart';
 import 'package:analyzer/dart/element/element.dart';
 // ignore: implementation_imports
@@ -15,6 +16,7 @@ import 'package:build/build.dart';
 import 'package:path/path.dart' as p;
 import 'package:recase/recase.dart';
 import 'package:source_gen/source_gen.dart';
+
 import 'context.dart';
 
 // ignore: deprecated_member_use
@@ -64,8 +66,7 @@ Future<BuildContext?> buildContext(
     originalClassName: clazz.name,
     sourceFilename: p.basename(buildStep.inputId.path),
     autoSnakeCaseNames: autoSnakeCaseNames,
-    includeAnnotations:
-        annotation.peek('includeAnnotations')?.listValue ?? <DartObject>[],
+    includeAnnotations: _includeAnnotations(clazz, annotation),
   );
   // var lib = await resolver.libraryFor(buildStep.inputId);
   var fields = <FieldElement>[];
@@ -152,8 +153,8 @@ Future<BuildContext?> buildContext(
         var sField = SerializableFieldMirror(
           alias: cr.peek('alias')?.stringValue,
           defaultValue: cr.peek('defaultValue')?.objectValue,
-          serializer: cr.peek('serializer')?.symbolValue,
-          deserializer: cr.peek('deserializer')?.symbolValue,
+          serializer: cr.peek('serializer')?.objectValue.toSymbolValue(),
+          deserializer: cr.peek('deserializer')?.objectValue.toSymbolValue(),
           errorMessage: cr.peek('errorMessage')?.stringValue,
           isNullable: cr.peek('isNullable')?.boolValue ?? !excluded,
           canDeserialize: cr.peek('canDeserialize')?.boolValue ?? false,
@@ -238,8 +239,9 @@ Future<BuildContext?> buildContext(
           var sField = SerializableFieldMirror(
             alias: f.alias,
             defaultValue: null,
-            serializer: f.serializer,
-            deserializer: f.deserializer,
+            // A default SerializableField has neither.
+            serializer: null,
+            deserializer: null,
             errorMessage: f.errorMessage,
             isNullable: f.isNullable,
             canDeserialize: f.canDeserialize,
@@ -262,6 +264,10 @@ Future<BuildContext?> buildContext(
 }
 
 /// A manually-instantiated [FieldElement].
+@Deprecated(
+  'Subclasses analyzer internals, which change between versions; '
+  'angel3_orm_generator no longer uses it.',
+)
 class ShimFieldImpl extends FieldElementImpl {
   //@override
   //final DartType type;
@@ -271,9 +277,68 @@ class ShimFieldImpl extends FieldElementImpl {
     Reference shimFieldRef,
     FieldFragmentImpl firstFragment,
   ) : super(
-        reference: shimFieldRef as MemberReference,
+        reference: _memberReference(shimFieldRef, firstFragment.name ?? 'shim'),
         firstFragment: firstFragment,
       ) {
     type = shimFieldType;
   }
+
+  /// [reference] if it is a member's; otherwise (e.g. a [RootReference]) a
+  /// member reference for [name] in a reference tree of its own.
+  ///
+  /// The analyzer requires a [MemberReference], which only it can create, and
+  /// its constructor points the reference at this element, so a reference
+  /// from the analyzer's own tree must not be used for a shim.
+  static MemberReference _memberReference(Reference reference, String name) =>
+      reference is MemberReference
+      ? reference
+      : RootReference()
+            .getOrCreateLibrary(Uri.parse('angel3-shim:///$name'))
+            .getOrCreateClass('Shim')
+            .declareField(name);
+}
+
+/// Whether [value] is an instance of a class or an enum, which may be an
+/// annotation: not `null`, nor a literal, such as a string, a list or a
+/// function, which no annotation is.
+bool _isAnnotation(DartObject value) {
+  if (value.isNull) return false;
+  var element = value.type?.element;
+  if (element is! ClassElement && element is! EnumElement) return false;
+  return value.toBoolValue() == null &&
+      value.toIntValue() == null &&
+      value.toDoubleValue() == null &&
+      value.toStringValue() == null &&
+      value.toSymbolValue() == null &&
+      value.toTypeValue() == null &&
+      value.toListValue() == null &&
+      value.toMapValue() == null &&
+      value.toSetValue() == null &&
+      value.toFunctionValue() == null &&
+      value.toRecordValue() == null;
+}
+
+/// The `includeAnnotations` of a `@Serializable` [annotation] on [clazz],
+/// each of which must be a constant instance of a class (not, e.g., a string),
+/// as the generated class carries it as an annotation: a call of a const
+/// constructor, or a reference to a constant, such as an enum value.
+List<DartObject> _includeAnnotations(
+  InterfaceElement clazz,
+  ConstantReader annotation,
+) {
+  var values = annotation.peek('includeAnnotations')?.listValue ?? [];
+  for (var value in values) {
+    // A value of an extension type is of its representation type, as the
+    // analyzer gives it, so `Tag(1)` of `extension type const Tag(int v)` is
+    // an int, which is rejected as one.
+    if (!_isAnnotation(value)) {
+      throw InvalidGenerationSourceError(
+        'Every value in includeAnnotations must be a constant instance of a '
+        'class, to be used as an annotation on the generated class; '
+        '${value.type?.getDisplayString() ?? 'null'} is not.',
+        element: clazz,
+      );
+    }
+  }
+  return values;
 }

@@ -1,11 +1,12 @@
 import 'dart:async';
 
 import 'package:angel3_container/angel3_container.dart';
-import 'package:angel3_container/mirrors.dart';
 
 Future<void> main() async {
-  // Create a container instance.
-  var container = Container(const MirrorsReflector());
+  // Create a container instance. Everything here is registered, so it needs
+  // no reflection; see angel3_container_mirrors to construct classes by
+  // reflection instead.
+  var container = Container(const EmptyReflector());
 
   // Register a singleton.
   container.registerSingleton<Engine>(Engine(40));

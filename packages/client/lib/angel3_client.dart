@@ -16,8 +16,9 @@ typedef AngelConfigurer = FutureOr<void> Function(Angel app);
 
 /// A function that deserializes data received from the server.
 ///
-/// This is only really necessary in the browser, where `json_god`
-/// doesn't work.
+/// A service needs one to return your own classes instead of the decoded
+/// JSON, such as `(x) => TodoSerializer.fromMap(x as Map)` with
+/// `angel3_serialize`.
 typedef AngelDeserializer<T> = T? Function(dynamic x);
 
 /// Represents an Angel server that we are querying.
@@ -86,8 +87,8 @@ abstract class Angel extends http.BaseClient {
   /// In other words, all endpoints will return [Data], except for the root of
   /// [path], which returns a [List<Data>].
   ///
-  /// You can pass a custom [deserializer], which is typically necessary in cases where
-  /// `dart:mirrors` does not exist.
+  /// Pass a [deserializer] to turn the decoded JSON into [Data], such as a
+  /// generated `fromMap`. Without one, the decoded JSON is returned as is.
   Service<Id, Data> service<Id, Data>(
     String path, {
     AngelDeserializer<Data>? deserializer,
@@ -241,12 +242,12 @@ class _MappedService<Id, Data, U> extends Service<Id, U> {
 
   @override
   Future<U> create(U data, [Map<String, dynamic>? params]) {
-    return inner.create(decoder(data)).then(encoder);
+    return inner.create(decoder(data), params).then(encoder);
   }
 
   @override
-  Future<List<U>> index([Map<String, dynamic>? params]) {
-    return inner.index(params).then((l) => l!.map(encoder).toList());
+  Future<List<U>?> index([Map<String, dynamic>? params]) {
+    return inner.index(params).then((l) => l?.map(encoder).toList());
   }
 
   @override
@@ -303,7 +304,8 @@ class ServiceList<Id, Data> extends DelegatingList<Data> {
 
   final Service<Id, Data> service;
 
-  final StreamController<ServiceList<Id, Data>> _onChange = StreamController();
+  final StreamController<ServiceList<Id, Data>> _onChange =
+      StreamController.broadcast();
 
   final List<StreamSubscription> _subs = [];
 
@@ -326,7 +328,7 @@ class ServiceList<Id, Data> extends DelegatingList<Data> {
           ..clear()
           ..addAll(data);
         _onChange.add(this);
-      }),
+      }, onError: _onChange.addError),
     );
 
     // Created
@@ -334,7 +336,7 @@ class ServiceList<Id, Data> extends DelegatingList<Data> {
       service.onCreated.where(_notNull).listen((item) {
         add(item);
         _onChange.add(this);
-      }),
+      }, onError: _onChange.addError),
     );
 
     // Modified/Updated
@@ -355,8 +357,12 @@ class ServiceList<Id, Data> extends DelegatingList<Data> {
     }
 
     _subs.addAll([
-      service.onModified.where(_notNull).listen(handleModified),
-      service.onUpdated.where(_notNull).listen(handleModified),
+      service.onModified
+          .where(_notNull)
+          .listen(handleModified, onError: _onChange.addError),
+      service.onUpdated
+          .where(_notNull)
+          .listen(handleModified, onError: _onChange.addError),
     ]);
 
     // Removed
@@ -364,16 +370,19 @@ class ServiceList<Id, Data> extends DelegatingList<Data> {
       service.onRemoved.where(_notNull).listen((item) {
         removeWhere((x) => _equality!.equals(item, x));
         _onChange.add(this);
-      }),
+      }, onError: _onChange.addError),
     );
   }
 
   static bool _notNull(dynamic x) => x != null;
 
-  /// Fires whenever the underlying [service] fires a change event.
+  /// Fires whenever the underlying [service] fires a change event, and has the
+  /// errors of its streams.
   Stream<ServiceList<Id, Data>> get onChange => _onChange.stream;
 
   Future close() async {
+    await Future.wait(_subs.map((s) => s.cancel()));
+    _subs.clear();
     await _onChange.close();
   }
 }

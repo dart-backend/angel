@@ -1,13 +1,12 @@
 import 'dart:async';
 
-import 'package:angel3_container/mirrors.dart';
 import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_framework/http.dart';
 import 'package:angel3_oauth2/angel3_oauth2.dart';
 import 'package:logging/logging.dart';
 
-import '../test/common.dart';
-
-void main() {
+/// Serves the device code flow on http://localhost:3000/oauth2.
+Future<void> main() async {
   Logger.root.level = Level.ALL;
   Logger.root.onRecord.listen((record) {
     print(
@@ -17,31 +16,30 @@ void main() {
     if (record.stackTrace != null) print(record.stackTrace);
   });
 
-  // Declae the function
-  void setUp() async {
-    var app = Angel(reflector: MirrorsReflector());
-    var oauth2 = _AuthorizationServer();
+  var app = Angel();
+  var oauth2 = _AuthorizationServer();
 
-    app.group('/oauth2', (router) {
-      router
-        ..get('/authorize', oauth2.authorizationEndpoint)
-        ..post('/token', oauth2.tokenEndpoint);
+  app.group('/oauth2', (router) {
+    router
+      ..get('/authorize', oauth2.authorizationEndpoint)
+      ..post('/token', oauth2.tokenEndpoint);
+  });
+
+  //app.logger.level = Level.ALL;
+  app.logger = Logger("oauth2")
+    ..onRecord.listen((rec) {
+      print(rec);
+      if (rec.error != null) print(rec.error);
+      if (rec.stackTrace != null) print(rec.stackTrace);
     });
 
-    //app.logger.level = Level.ALL;
-    app.logger = Logger("oauth2")
-      ..onRecord.listen((rec) {
-        print(rec);
-        if (rec.error != null) print(rec.error);
-        if (rec.stackTrace != null) print(rec.stackTrace);
-      });
+  app.errorHandler = (e, req, res) async {
+    res.json(e.toJson());
+  };
 
-    app.errorHandler = (e, req, res) async {
-      res.json(e.toJson());
-    };
-  }
-
-  setUp();
+  var http = AngelHttp(app);
+  await http.startServer('localhost', 3000);
+  print('Listening at ${http.uri}');
 }
 
 class _AuthorizationServer
@@ -103,4 +101,28 @@ class _AuthorizationServer
 
     return AuthorizationTokenResponse('foo');
   }
+}
+
+const PseudoApplication pseudoApplication = PseudoApplication(
+  'foo',
+  'bar',
+  'http://foo.bar/baz',
+);
+
+class PseudoApplication {
+  final String id, secret, redirectUri;
+
+  const PseudoApplication(this.id, this.secret, this.redirectUri);
+}
+
+const List<PseudoUser> pseudoUsers = [
+  PseudoUser(username: 'foo', password: 'bar'),
+  PseudoUser(username: 'michael', password: 'jackson'),
+  PseudoUser(username: 'jon', password: 'skeet'),
+];
+
+class PseudoUser {
+  final String? username, password;
+
+  const PseudoUser({this.username, this.password});
 }

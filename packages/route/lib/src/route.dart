@@ -54,6 +54,10 @@ class Route<T> {
     return '$method $path => $handlers';
   }
 
+  /// A copy of this route with [handlers] instead of its own.
+  Route<T> _withHandlers(List<T> handlers) =>
+      Route<T>(path, method: method, handlers: handlers)..name = name;
+
   Route<T> clone() {
     return Route<T>(path, method: method, handlers: handlers)
       .._cache.addAll(_cache);

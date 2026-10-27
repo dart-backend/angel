@@ -9,6 +9,15 @@ WebSocket plugin for Angel3 framework. This plugin broadcasts events from hooked
 
 WebSocket contexts are add to `req.properties` as `'socket'`.
 
+## Installation
+
+In your `pubspec.yaml`:
+
+```yaml
+dependencies:
+  angel3_websocket: ^10.0.0
+```
+
 ## Usage
 
 ### Server-side
@@ -18,9 +27,9 @@ import "package:angel3_framework/angel3_framework.dart";
 import "package:angel3_websocket/server.dart";
 
 void main() async {
-  var app =  Angel();
+  var app = Angel();
 
-  var ws =  AngelWebSocket();
+  var ws = AngelWebSocket(app);
   
   // This is a plug-in. It hooks all your services,
   // to automatically broadcast events.
@@ -79,6 +88,49 @@ class MyController extends WebSocketController {
 }
 ```
 
+`@ExposeWs` methods are found through the app's reflector, so the app needs one that can reflect upon the controller. Generate its reflection data with [`angel3_container_generator`](https://pub.dev/packages/angel3_container_generator), which works in a program compiled with `dart compile exe`: mark the controller `@injectable`, add a `part` directive, run `dart run build_runner build`, and give the app a `StaticReflector` of the generated data:
+
+```dart
+import 'package:angel3_container/angel3_container.dart';
+
+part 'my_controller.g.dart';
+
+@injectable
+@Expose("/")
+class MyController extends WebSocketController { ... }
+
+var app = Angel(reflector: StaticReflector.combine([myControllerReflection]));
+```
+
+`MirrorsReflector` of `angel3_container_mirrors` finds them too, without generated code, but needs `dart:mirrors`, which `dart compile exe` does not support.
+
+Without a reflector (the default is `ThrowingReflector`), register the handlers with `exposeWs` in `configureWs` instead. A handler is given the action and the socket; other dependencies are made from `socket.request.container`:
+
+```dart
+@Expose("/")
+class MyController extends WebSocketController {
+  MyController(super.ws);
+
+  @override
+  void configureWs() {
+    exposeWs("read_message", (action, socket) async {
+      var db = socket.request.container!.make<Db>();
+      socket.send(
+        "found_message",
+        await db.collection("messages").findOne(where.id(action.data['message_id'])));
+    });
+  }
+}
+```
+
+A handler of `exposeWs` is used in place of an `@ExposeWs` method of the same event name.
+
+The `@ExposeWs` methods and the hooks of a `WebSocketController` (`onConnect`, `configureWs`, ...) are not HTTP routes; its other public methods are, as those of a `Controller`, unless annotated `@noExpose`. An `@ExposeWs` method a controller inherits is found if the reflector describes the base class too: mark it `@injectable` as well.
+
+The streams of the server, of a socket and of the clients are broadcast streams: an event is given to those listening when it comes, and is not kept for later. Listen before the event can come, as to `client.on['searched']` before sending the action. On the server, listen to a socket's `onAction` or `onData` in the `onConnection` listener before awaiting anything, as `WebSocketController` does: it listens to them before `onConnect` runs, and handles what comes meanwhile once it has run.
+
+WebSockets are served over HTTP/1.1; a request over HTTP/2 is refused with a `501 Not Implemented`.
+
 ### Client Use
 
 This repo also provides two client libraries `browser` and `io` that extend the base `angel3_client` interface, and allow you to use a very similar API on the client to that of the server.
@@ -95,7 +147,7 @@ Clients can even perform authentication over WebSockets.
 import "package:angel3_websocket/browser.dart";
 
 void main() async {
-  Angel app =  WebSockets("/ws");
+  var app = WebSockets("/ws");
   await app.connect();
 
   var Cars = app.service("api/cars");
@@ -120,38 +172,57 @@ void main() async {
 #### CLI Client
 
 ```dart
-import "package:angel3_framework/common.dart";
 import "package:angel3_websocket/io.dart";
 
 // You can include these in a shared file and access on both client and server
-class Car extends Model {
-  int year;
-  String brand, make;
+class Car {
+  final int? year;
+  final String? brand, make;
 
   Car({this.year, this.brand, this.make});
+
+  factory Car.fromMap(Map map) => Car(
+      year: map["year"] as int?,
+      brand: map["brand"] as String?,
+      make: map["make"] as String?);
+
+  Map<String, dynamic> toJson() => {"year": year, "brand": brand, "make": make};
 
   @override String toString() => "$year $brand $make";
 }
 
 void main() async {
-  Angel app =  WebSockets("/ws");
+  var app = WebSockets("ws://localhost:3000/ws");
 
   // Wait for WebSocket connection...
   await app.connect();
 
-  var Cars = app.service("api/cars", type: Car);
+  // The data of a WebSocket service comes as events, and its methods return
+  // `null`, so its type is nullable.
+  var Cars = app.service<String, Car?>(
+    "api/cars",
+    deserializer: (x) => Car.fromMap(x as Map),
+  );
 
-  Cars.onCreated.listen((Car car) {
-      // Automatically deserialized into a car :)
+  Cars.onCreated.listen((car) {
+      // Deserialized into a car :)
       //
       // I just bought a new 2016 Toyota Camry!
       print("I just bought a new $car!");
   });
 
   // Happens asynchronously
-  Cars.create({"year": 2016, "brand": "Toyota", "make": "Camry"});
+  Cars.create(Car(year: 2016, brand: "Toyota", make: "Camry"));
 
   // Authenticate a WebSocket, if you were not already authenticated...
   app.authenticateViaJwt('<some-jwt>');
 }
 ```
+
+## Migrating from 9.x to 10.0.0
+
+The breaking changes of each release are listed in the [CHANGELOG](CHANGELOG.md). Those of 10.0.0 that may need changes in an app:
+
+* **No `dart:mirrors`**: `@ExposeWs` methods are found through the app's reflector. Give the app a `StaticReflector` of data from `angel3_container_generator`, or a `MirrorsReflector`; without one, register the handlers with `exposeWs` in `configureWs`. See [Adding Handlers within a Controller](#adding-handlers-within-a-controller).
+* **Broadcast streams**: the streams of `AngelWebSocket`, `WebSocketContext`, the clients and their services do not keep events for later listeners. Listen before the event can come.
+* **HTTP/2**: WebSockets over HTTP/2 are refused with `501 Not Implemented`; serve them over HTTP/1.1.

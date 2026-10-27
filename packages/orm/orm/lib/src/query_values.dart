@@ -1,7 +1,27 @@
 import 'query.dart';
 
 abstract class QueryValues {
+  // The parameter name reserved for each column, in [_namesQuery]; reused when
+  // the values are compiled again (e.g. a query inserted twice), so a value
+  // replaces the previous one instead of leaving it as an unused parameter.
+  final Map<String, String> _names = {};
+  Query? _namesQuery;
+
   Map<String, String> get casts => {};
+
+  String _nameFor(Query query, String column) {
+    if (!identical(query, _namesQuery)) {
+      _names.clear();
+      _namesQuery = query;
+    }
+    return _names[column] ??= query.reserveName(column);
+  }
+
+  /// The name of the parameter of [column] in the SQL that these values
+  /// last compiled for [query], as by [compileInsert], such as `id` of
+  /// `@id`, or `null` if they compiled none of it for [query].
+  String? parameterNameOf(Query query, String column) =>
+      identical(query, _namesQuery) ? _names[column] : null;
 
   Map<String, dynamic> toMap();
 
@@ -44,7 +64,7 @@ abstract class QueryValues {
     for (var entry in data.entries) {
       if (i++ > 0) b.write(', ');
 
-      var name = query.reserveName(entry.key);
+      var name = _nameFor(query, entry.key);
 
       var s = applyCast(entry.key, '@$name');
       query.substitutionValues[name] = entry.value;
@@ -55,6 +75,10 @@ abstract class QueryValues {
     return b.toString();
   }
 
+  @Deprecated(
+    'Not used: an insert into a table without an id returns the values it '
+    'inserted, as a row of no key cannot be selected again by its values.',
+  )
   String compileInsertSelect(Query query, String tableName) {
     var data = Map<String, dynamic>.from(toMap());
 
@@ -96,7 +120,7 @@ abstract class QueryValues {
       b.write(entry.key);
       b.write('=');
 
-      var name = query.reserveName(entry.key);
+      var name = _nameFor(query, entry.key);
       var s = applyCast(entry.key, '@$name');
       query.substitutionValues[name] = entry.value;
       b.write(s);

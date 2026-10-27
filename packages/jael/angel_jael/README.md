@@ -13,7 +13,7 @@ In your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  angel3_jael: ^9.0.0
+  angel3_jael: ^10.0.0
 ```
 
 ## Usage
@@ -47,6 +47,7 @@ The following is a basic example of a server setup that can render Jael template
 
 ```dart
 import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_framework/http.dart';
 import 'package:angel3_jael/angel3_jael.dart';
 import 'package:file/local.dart';
 import 'package:logging/logging.dart';
@@ -60,9 +61,9 @@ void main() async {
   );
 
   // Render the contents of views/index.jael
-  app.get('/', (res) => res.render('index', {'title': 'ESKETTIT'}));
+  app.get('/', (req, res) => res.render('index', {'title': 'ESKETTIT'}));
 
-  app.use(() => throw AngelHttpException.notFound());
+  app.fallback((req, res) => throw AngelHttpException.notFound());
 
   app.logger = Logger('angel')
     ..onRecord.listen((rec) {
@@ -71,12 +72,30 @@ void main() async {
       if (rec.stackTrace != null) print(rec.stackTrace);
     });
 
-  var server = await app.startServer(null, 3000);
-  print('Listening at http://${server.address.address}:${server.port}');
+  var http = AngelHttp(app);
+  await http.startServer('127.0.0.1', 3000);
+  print('Listening at ${http.uri}');
 }
 ```
 
 To apply additional transforms to parsed documents, provide a set of `patch` functions, like in `package:jael3_preprocessor`.
+
+## Members of values
+
+`{{ repo.name }}` reads `name` of `repo` through the app's reflector, before the ways `jael3` has (a key of a `Map`, a member of a core type, a key of `toJson()`). To read the members of your classes without `dart:mirrors`, as in a program compiled with `dart compile exe`, generate their reflection data with [`angel3_container_generator`](https://pub.dev/packages/angel3_container_generator): mark them `@injectable`, add a `part` directive, run `dart run build_runner build`, and give the app a `StaticReflector` of the data:
+
+```dart
+@injectable
+class Repo extends Model {
+  final String name;
+  Repo(this.name);
+}
+
+var app = Angel(reflector: StaticReflector.combine([modelsReflection]));
+await app.configure(jael(fileSystem.directory('views')));
+```
+
+A `memberResolver` given to `jael` is asked first, for members of values the reflector does not describe.
 
 ## Performance Optimization
 
@@ -89,7 +108,7 @@ into an external cache.
 
   // Preload JAEL view templates into cache
   var viewCache = <String, Document>{};
-  jaelTemplatePreload(templateDir, viewCache);
+  await jaelTemplatePreload(templateDir, viewCache);
 
   // Inject cache into JAEL renderer
   await app.configure(
@@ -97,3 +116,10 @@ into an external cache.
   );
 
 ```
+
+## Migrating from 9.x to 10.0.0
+
+The breaking changes of each release are listed in the [CHANGELOG](CHANGELOG.md). Those of 10.0.0 that may need changes in an app:
+
+* **Relative paths**: a view is resolved relative to its own directory, where it was the views directory, so the `extend` and `include` tags of a view in a subdirectory are read relative to that subdirectory, as those of its parents are. Change paths such as `<extend src="layouts/main.jael">` in `views/admin/page.jael` to be relative to `views/admin`, e.g. `<extend src="../layouts/main.jael">`.
+* **Members of values**: `{{ repo.name }}` reads `name` through the app's reflector, as `jael3` no longer uses `dart:mirrors`. See [Members of values](#members-of-values).

@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
+
 import 'package:angel3_auth/angel3_auth.dart';
 import 'package:angel3_auth_twitter/angel3_auth_twitter.dart';
 import 'package:angel3_framework/angel3_framework.dart';
@@ -30,16 +31,22 @@ void main() async {
 
   auth.strategies['twitter'] = TwitterStrategy(
     ExternalAuthOptions(
-      clientId: Platform.environment['TWITTER_CLIENT_ID'] ??
+      clientId:
+          Platform.environment['TWITTER_CLIENT_ID'] ??
           'qlrBWXneoSYZKS2bT4TGHaNaV',
-      clientSecret: Platform.environment['TWITTER_CLIENT_SECRET'] ??
+      clientSecret:
+          Platform.environment['TWITTER_CLIENT_SECRET'] ??
           'n2oA0ZtR7TzYincpMYElRpyYovAQlhYizTkTm2x5QxjH6mLVyE',
-      redirectUri: Platform.environment['TWITTER_REDIRECT_URI'] ??
+      redirectUri:
+          Platform.environment['TWITTER_REDIRECT_URI'] ??
           'http://localhost:3000/auth/twitter/callback',
     ),
     (twit, req, res) async {
-      var response = await twit.client.get(Uri.parse(
-          'https://api.twitter.com/1.1/account/verify_credentials.json'));
+      var response = await twit.client.get(
+        Uri.parse(
+          'https://api.twitter.com/1.1/account/verify_credentials.json',
+        ),
+      );
       var userData = json.decode(response.body) as Map;
       return _User(userData['screen_name'] as String);
     },

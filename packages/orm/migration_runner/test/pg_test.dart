@@ -5,9 +5,11 @@ import 'package:angel3_migration_runner/postgres.dart';
 import 'package:postgres/postgres.dart';
 import 'package:test/test.dart';
 
+import 'common.dart';
 import 'models/pg_todo.dart';
 
 void main() async {
+  var skip = await skipUnlessPostgres();
   late Connection conn;
   late MigrationRunner runner;
 
@@ -43,7 +45,7 @@ void main() async {
     );
   });
 
-  group('PostgreSQL migrate tables', () {
+  group('PostgreSQL migrate tables', skip: skip, () {
     test('up', () async {
       print("Test migration up");
       await runner.up();
@@ -52,6 +54,38 @@ void main() async {
     test('reset', () async {
       print("Test migration reset");
       await runner.reset();
+    });
+
+    test('up renames the paths of earlier versions', () async {
+      var names = [
+        'CarMigration',
+        'UserMigration',
+        'TodoMigration',
+        'ItemMigration',
+      ];
+      for (var name in names) {
+        await conn.execute(
+          Sql.named('INSERT INTO migrations (batch, path) VALUES (1, @path)'),
+          parameters: {'path': 'C:\\\\app\\\\lib\\\\todo.dart#$name'},
+        );
+      }
+      // Recorded again after the project was moved, so which of them is
+      // that of UserMigration cannot be told, as it has no legacyPath.
+      await conn.execute(
+        "INSERT INTO migrations (batch, path) "
+        "VALUES (1, '/moved/lib/todo.dart#UserMigration')",
+      );
+      try {
+        await expectLater(runner.up(), throwsStateError);
+        await conn.execute(
+          "DELETE FROM migrations WHERE path = '/moved/lib/todo.dart#UserMigration'",
+        );
+        await runner.up();
+        var r = await conn.execute('SELECT path FROM migrations;');
+        expect(r.expand((x) => x), unorderedEquals(names));
+      } finally {
+        await conn.execute('DELETE FROM migrations;');
+      }
     });
   });
 

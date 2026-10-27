@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:angel3_container/mirrors.dart';
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_framework/http.dart';
 import 'package:http/http.dart' as http;
@@ -22,7 +21,7 @@ void main() {
   late HookedService todoService;
 
   setUp(() async {
-    app = Angel(reflector: MirrorsReflector());
+    app = Angel();
     client = http.Client();
     app.use('/todos', MapService());
     app.use('/books', BookService());
@@ -107,14 +106,6 @@ void main() {
     expect(await stream.first.then((e) => e.result['angel']), 'framework');
   });
 
-  test('metadata', () async {
-    final service = HookedService(IncrementService())..addHooks(app);
-    expect(service.inner, isNot(const IsInstanceOf<MapService>()));
-    IncrementService.times = 0;
-    await service.index();
-    expect(IncrementService.times, equals(2));
-  });
-
   test('inject request + response', () async {
     var books = app.findService(
       'books',
@@ -161,5 +152,62 @@ void main() {
       ..afterAll(ensureProviderIsPresent);
 
     await svc.index({'provider': const Providers('testing')});
+  });
+
+  test('after-modify listeners see a modified event', () async {
+    var created = await todoService.create({'text': 'a'});
+    String? name;
+    todoService.afterModified.listen((e) => name = e.eventName);
+    await todoService.modify(created['id'], {'text': 'b'});
+    expect(name, HookedServiceEvent.modified);
+  });
+
+  test('fire passes the result to listeners', () async {
+    Object? result;
+    todoService.afterCreated.listen((e) => result = e.result);
+    await todoService.fire(HookedServiceEvent.created, {'id': '1'});
+    expect(result, {'id': '1'});
+  });
+
+  test(
+    'a canceled remove on a typed service returns the cancel result',
+    () async {
+      var typed = HookedService<String?, Map<String, dynamic>, MapService>(
+        MapService(),
+      );
+      typed.beforeRemoved.listen((e) => e.cancel(<String, dynamic>{'x': 1}));
+      expect(await typed.remove('1'), {'x': 1});
+    },
+  );
+
+  group('a before hook that cancels without a result', () {
+    late HookedService<String?, Map<String, dynamic>, MapService> typed;
+
+    setUp(() {
+      typed = HookedService(MapService());
+      typed.beforeAll((e) => e.cancel());
+    });
+
+    test('makes index return an empty list', () async {
+      expect(await typed.index(), isEmpty);
+    });
+
+    test('makes read fail with a StateError', () async {
+      await expectLater(typed.read('1'), throwsStateError);
+    });
+  });
+
+  test('a canceled index may return a list of any element type', () async {
+    var typed = HookedService<String?, Map<String, dynamic>, MapService>(
+      MapService(),
+    );
+    typed.beforeIndexed.listen(
+      (e) => e.cancel(<Object>[
+        <String, dynamic>{'id': '1'},
+      ]),
+    );
+    expect(await typed.index(), [
+      {'id': '1'},
+    ]);
   });
 }

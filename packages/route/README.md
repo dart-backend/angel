@@ -15,21 +15,31 @@ A powerful, isomorphic routing library for Dart.
 
 - [Angel3 Route](#angel3-route)
   - [Contents](#contents)
-  - [Examples](#examples)
+  - [Installation](#installation)
+  - [Usage](#usage)
     - [Routing](#routing)
     - [Hierarchy](#hierarchy)
   - [In the Browser](#in-the-browser)
   - [Route State](#route-state)
   - [Route Parameters](#route-parameters)
 
-## Examples
+## Installation
+
+In your `pubspec.yaml`:
+
+```yaml
+dependencies:
+  angel3_route: ^10.0.0
+```
+
+## Usage
 
 ### Routing
 
 If you use [Angel3](https://pub.dev/packages/angel3_framework), every `Angel` instance is a `Router` in itself.
 
 ```dart
-void main() {
+void main() async {
   final router = Router();
   
   router.get('/users', () {});
@@ -91,7 +101,7 @@ void main() {
 }
 ```
 
-See [the tests](test/route/no_params.dart) for good examples.
+See [the tests](test/) for good examples.
 
 ## In the Browser
 
@@ -131,6 +141,6 @@ Routes can have parameters, as seen in the above examples. Use `allParams` in a 
 var router = Router();
 router.get('/book/:id/authors', () => ...);
 
-var result = router.resolve('/book/foo/authors');
+var result = router.resolveAbsolute('/book/foo/authors').first;
 var params = result.allParams; // {'id': 'foo'};
 ```

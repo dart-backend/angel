@@ -56,10 +56,10 @@ abstract class UserTodoEntity {
   @Column(type: ColumnType.varChar, length: 255, isNullable: false)
   String get title;
 
-  @HasMany(localKey: 'id', foreignKey: 'todo_value_id')
+  @HasMany(localKey: 'id', foreignKey: 'todo_id')
   List<TodoValueEntity> get todoValues;
 
-  @HasMany(localKey: 'id', foreignKey: 'todo_note_id')
+  @HasMany(localKey: 'id', foreignKey: 'todo_id')
   List<TodoNoteEntity> get todoNotes;
 }
 

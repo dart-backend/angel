@@ -46,34 +46,79 @@ DateTime? mapToNullableDateTime(dynamic value) {
   return value;
 }
 
-/// Helper method to convert dynamic value to nullable double
+/// Converts a value read from the database to a double.
+///
+/// `null`, and a string that is not a number, give `0.0`. Any number (e.g. an
+/// `int` for a whole value) is converted, as is a value whose `toString` is a
+/// number (e.g. a driver's decimal type); anything else throws a
+/// [FormatException] rather than silently becoming `0.0`.
 double mapToDouble(dynamic value) {
-  if (value == null) {
-    return 0.0;
-  }
-  if (value is String) {
-    return double.tryParse(value) ?? 0.0;
-  }
-
-  if (value is! double) {
-    return 0.0;
-  }
-  return value;
+  if (value == null) return 0.0;
+  if (value is num) return value.toDouble();
+  if (value is BigInt) return value.toDouble();
+  if (value is String) return double.tryParse(value) ?? 0.0;
+  return double.tryParse(value.toString()) ??
+      (throw FormatException(
+        'Cannot convert $value (${value.runtimeType}) to a double.',
+      ));
 }
 
-/// Helper method to convert dynamic value to nullable double
+/// Converts a value read from the database to an int.
+///
+/// `null`, and a string that is not an integer, give `0`. A whole `double`
+/// or a `BigInt` that fits is converted, as is a value whose `toString` is an
+/// integer; anything else (e.g. `2.5`) throws a [FormatException] rather than
+/// silently becoming `0`.
 int mapToInt(dynamic value) {
-  if (value == null) {
-    return 0;
+  if (value == null) return 0;
+  if (value is int) return value;
+  if (value is double && value.isFinite && value == value.truncateToDouble()) {
+    return value.toInt();
   }
-  if (value is String) {
-    return int.tryParse(value) ?? 0;
+  if (value is BigInt && value.isValidInt) return value.toInt();
+  if (value is String) return int.tryParse(value) ?? 0;
+  if (value is! double && value is! BigInt) {
+    var parsed = int.tryParse(value.toString());
+    if (parsed != null) return parsed;
   }
+  throw FormatException(
+    'Cannot convert $value (${value.runtimeType}) to an int.',
+  );
+}
 
-  if (value is! int) {
-    return 0;
-  }
-  return value;
+/// A `@name` placeholder: `@` and a name of letters (in any script), digits
+/// and underscores, in group 1; or else, in no group, a string literal, a
+/// quoted identifier or a system variable (`@@session`), which are left as
+/// they are, as a `@` in them is no placeholder.
+final RegExp _placeholder = RegExp(
+  r"'(?:[^'\\]|\\.|'')*'|"
+  r'"(?:[^"\\]|\\.|"")*"|'
+  r'`(?:[^`]|``)*`|'
+  r'@@[\p{L}\p{N}_$.]+|'
+  r'@([\p{L}\p{N}_]+)',
+  unicode: true,
+);
+
+/// Replaces each `@name` placeholder in [sql] that has a value in [values]
+/// with what [replace] returns for its name and value, called in the order
+/// the placeholders appear.
+///
+/// Names are matched whole, so `@name` does not replace part of `@name1`. A
+/// placeholder with no value (e.g. a MySQL user variable) is left as it is,
+/// as is a `@` in a string literal (`'x@name.com'`), a quoted identifier, or
+/// a system variable (`@@session`).
+/// Executors use this to turn the `@name` placeholders the queries are built
+/// with into those of their driver, e.g. positional `?`.
+String replacePlaceholders(
+  String sql,
+  Map<String, dynamic> values,
+  String Function(String name, dynamic value) replace,
+) {
+  return sql.replaceAllMapped(_placeholder, (m) {
+    var name = m[1];
+    if (name == null || !values.containsKey(name)) return m[0]!;
+    return replace(name, values[name]);
+  });
 }
 
 /*

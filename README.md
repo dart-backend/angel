@@ -3,9 +3,8 @@
 [![Angel3 Framework](assets/branding/angel3_logo.png)](https://github.com/dart-backend/angel)
 
 ![Pub Version (including pre-releases)](https://img.shields.io/pub/v/angel3_framework?include_prereleases)
-[![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 [![Discord](https://img.shields.io/discord/1060322353214660698)](https://discord.gg/3X6bxTUdCM)
-[![License](https://img.shields.io/github/license/dart-backend/angel)](https://github.com/dart-backend/angel/LICENSE)
+[![License](https://img.shields.io/github/license/dart-backend/angel)](https://github.com/dart-backend/angel/blob/master/LICENSE)
 [![melos](https://img.shields.io/badge/maintained%20with-melos-f700ff.svg?style=flat-square)](https://github.com/invertase/melos)
 
 **A production-ready dart backend framework.**
@@ -14,19 +13,20 @@
 
 ## About
 
-Angel3 originated from a fork of the archived Angel framework in support of Dart SDK 2.12.x or later. It is a full-stack backend framework in Dart that aims to streamline development by providing many common features out-of-the-box in a consistent manner. The codebase has been completely migrated and refactored to support null safety. One of the main goal is to enable developers to build both frontend and backend in dart language. Angel3 is designed as a collection of plugins that enable developers to pick and choose the parts needed for their projects. A series of starter templates are also provided for quick start and trial run with Angel3. Visit our [website](<https://angel3-framework.web.app/>) to learn more.
+Angel3 originated from a fork of the archived Angel framework in support of Dart SDK 2.12.x or later. It is a full-stack backend framework in Dart that aims to streamline development by providing many common features out-of-the-box in a consistent manner. The codebase has been completely migrated and refactored to support null safety. One of the main goals is to enable developers to build both frontend and backend in dart language. Angel3 is designed as a collection of plugins that enable developers to pick and choose the parts needed for their projects. A series of starter templates are also provided for quick start and trial run with Angel3. Visit our [website](<https://angel3-framework.web.app/>) to learn more.
 
-The available features in Angel3 includes:
+The available features in Angel3 include:
 
 * OAuth2 Authentication
 * WebSocket
 * HTTP/2
 * HTTP Streaming
-* GraphQL
+* GraphQL, with [graphql_dart](https://github.com/dart-backend/graphql_dart)
 * Markdown, Mustache, Jinja and JAEL as Server-Side HTML Rendering
-* ORM support for PostgreSQL and MySQL
+* ORM support for PostgreSQL, MySQL and MariaDB
 * MongoDB, Sembast and RethinkDB as storage
 * Redis as cache
+* Dependency injection with or without `dart:mirrors`, so apps can be compiled with `dart compile exe`
 
 ## The Core Framework
 
@@ -35,42 +35,45 @@ The `packages` directory contains specialized sub-packages that act as individua
 They can broadly be categorized as follows:
 
 1. Core Framework & Request Handling
-   * framework: The foundational package (angel3_framework). It provides the base HTTP server, request/response contexts, dependency injection container, and middleware pipelines.
+   * framework: The foundational package (angel3_framework). It provides the base HTTP and HTTP/2 server, request/response contexts, services, controllers and middleware pipelines.
    * route: The routing engine handling URL matching and route parameters.
-   * container: Dependency Injection (DI) system for resolving services.
-   * configuration: Utilities for loading configuration files (YAML, JSON, .env).
+   * container: Dependency Injection (DI) system for resolving services, without `dart:mirrors`. `container_mirrors` provides the opt-in `MirrorsReflector` for the Dart VM, and `container_generator` generates reflection data for `@injectable` classes, so apps can be compiled with `dart compile exe`.
+   * configuration: Utilities for loading YAML configuration files and `.env` files.
 2. Data Modeling & Persistence (ORM)
    The framework provides an extensive ORM (angel3_orm) ecosystem with generators and database drivers:
 
-   * orm: Houses the main ORM library, code generator (angel_orm_generator), and SQL dialects for MySQL and PostgreSQL.
+   * orm: Houses the ORM runtime, its code generator (angel3_orm_generator), the migration DSL and runner, the executors for PostgreSQL and MySQL/MariaDB, and a service adapter (angel3_orm_service).
    * model: Base model abstractions for data entities.
-   * serialize: Libraries to serialize/deserialize data to and from JSON using code generation (angel_serialize_generator).
-   * mongo, rethinkdb, sembast: Specialized drivers for interacting with MongoDB, RethinkDB, and Sembast (a NoSQL local database).
+   * serialize: Libraries to serialize/deserialize data to and from JSON using code generation (angel3_serialize_generator).
+   * mongo, rethinkdb, sembast: Specialized services for MongoDB, RethinkDB, and Sembast (a NoSQL local database).
+   * file_service: A service that persists data to a JSON file, for development.
 3. Authentication & Security
    * auth: Core authentication abstractions and strategies (local, token-based).
-   * auth_oauth2 & oauth2: Out-of-the-box support for OAuth2 authentication flows.
-   * security: Security middleware (rate limiting, standard headers, etc.).
+   * auth_oauth2 & oauth2: Out-of-the-box support for OAuth2 authentication flows, as a client and as a server.
+   * auth_twitter: Authentication with Twitter OAuth 1.0a.
+   * security: Security middleware: CSRF protection, signed cookies and rate limiting.
    * cors: Middleware to handle Cross-Origin Resource Sharing effortlessly.
 4. Frontend & Template Rendering
    Support for processing and returning HTML views to the client:
 
-   * jael: The Jael template engine specifically built for Angel, capable of HTML manipulation. It is split into language servers, preprocessors, and web renderers.
+   * jael: The Jael template engine specifically built for Angel. It is split into the parser and renderer (jael3), template inheritance (jael3_preprocessor), the Angel3 integration (angel3_jael) and an experimental virtual DOM (jael3_web).
    * mustache, jinja, markdown: Wrappers/integrations for rendering Mustache templates, Jinja templates, or parsing Markdown into HTML.
    * html & seo: Utilities for building out HTML responses and optimizing for search engines.
 5. Additional Utilities and APIs
-   * websocket: Integration for real-time bidirectional communication.
+   * websocket: Integration for real-time bidirectional communication, and sync to scale it across instances.
    * client: A client-side library designed to interface seamlessly with Angel3 backends directly from Dart/Flutter.
    * cache & redis: Caching interfaces with Redis integration to improve response times.
    * hot & production: Tooling for hot-reloading the server during development, and managing clustering/multi-threading under production loads.
    * test & mock_request: Testing utilities for mocking HTTP requests without spinning up a real server.
-   * file_service & static: For serving static assets (images, CSS, JS) efficiently.
+   * static: For serving static assets (images, CSS, JS) efficiently.
+   * shelf, proxy, paginate, validate, user_agent, http_exception: Shelf interop, request forwarding, pagination, validation, user agent parsing and HTTP errors.
 
 ## Important Notes
 
-Angel3 packages are published under `angel3_` prefix on pub.dev. These packages have passed all of their respective test suites before going live. The development work are currently focused on:
+Angel3 packages are published under `angel3_` prefix on pub.dev. Each package has its own test suite. The development work is currently focused on:
 
 * Keeping the packages with `angel3_` prefix in sync with Dart SDK releases
-  * Remove and replace deprecated classes and methods while keeping it backward compatible
+  * Remove and replace deprecated classes and methods while keeping them backward compatible
   * Refactor the code to use new language features
 * Fix and resolve reported issues
 * Performance optimization
@@ -79,21 +82,34 @@ Angel3 packages are published under `angel3_` prefix on pub.dev. These packages 
 
 ## Status
 
-### Release Notes (version: 9.1.0)
-
-* Updated `angel3_` packages to Require Dart >= 3.13.0
-* Updated code geneator to use `analyzer` 14.x.x
-
 Branch: `master`
 
 * Dart version : 3.13.0 or later.
-* Publish      : Refer to all packages with`angel3_` prefix on [pub.dev](https://pub.dev/publishers/dukefirehawk.com/packages).
+* Publish      : Refer to all packages with `angel3_` prefix on [pub.dev](https://pub.dev/publishers/dukefirehawk.com/packages).
 * Status       : Production
 * Notes        : Use this branch for all PR submission
 
+### Release Notes (version: 9.1.0)
+
+* Updated `angel3_` packages to Require Dart >= 3.13.0
+* Updated code generator to use `analyzer` 14.x.x
+
+### Release Notes (version: 10.0.0)
+
+In progress on `feature/` branches; not yet on `master` or published on pub.dev.
+
+* Updated all packages to 10.0.0. Each package's `CHANGELOG.md` lists its breaking changes, new features and fixes
+* Removed the use of `dart:mirrors`, so apps can be compiled with `dart compile exe`. `MirrorsReflector` moved to the new `angel3_container_mirrors` package, and `angel3_container_generator` generates reflection data for `@injectable` classes, used through `StaticReflector`. `angel3_websocket`, `jael3` and `angel3_markdown` no longer use mirrors either
+* Framework: graceful shutdown, in which requests in progress finish before the shutdown hooks run; malformed requests are a 400 instead of a 500
+* ORM: `@HasMany` and `@ManyToMany` are loaded with a query each instead of joins, so a `limit` counts records; nested transactions use savepoints on PostgreSQL; MySQL and MariaDB use the `mysql_dart` driver; migrations are recorded by `Migration.name` instead of their source path
+* Security: CSRF protection (`CsrfFilter`) in `angel3_security`; JWTs expire after a day by default and expired ones are no longer revived (`angel3_auth`); a random `state` and PKCE verifier for each OAuth2 login (`angel3_auth_oauth2`); SQL injection fixes in `like` (`angel3_orm`), `$sort` (`angel3_orm_service`) and string defaults (`angel3_migration_runner`)
+* Templates: Markdown values are HTML-escaped, and views outside the views directory are not read (`angel3_jinja`, `angel3_markdown`, `angel3_mustache`)
+* Requires PostgreSQL 14 or later, MySQL 8 or later, or MariaDB 10.2 or later
+* Updated the `belatuk_` dependencies to their latest releases (`belatuk_code_buffer`, `belatuk_combinator`, `belatuk_html_builder`, `belatuk_merge_map` and `belatuk_symbol_table` 6, `belatuk_range_header` 7). `angel3_html` pages are HTML-escaped by `belatuk_html_builder` 6: HTML written as it is needs `raw`
+* The repository is managed with `melos` 8.9 or later
+
 ### What is in the pipeline?
 
-* Remove the use of Mirror
 * Performance optimization
 * Out of the box OIDC and SAML2 support
 * Integrated Open API 3 support
@@ -101,12 +117,14 @@ Branch: `master`
   * SQL Server
   * Oracle DB
   * SQLite
+  * Multi-tenant architectures and SQL schema reverse engineering
+* ORM caching with Redis
 
 ## Installation and Setup
 
 ### (Option 1) Create a new project by cloning from boilerplate templates
 
-1. Download and install [Dart](https://dart.dev/get-dart). Minimum 3.11.0.
+1. Download and install [Dart](https://dart.dev/get-dart). Minimum 3.13.0.
 
 2. Clone one of the following starter projects:
    * [Angel3 Basic Template](https://github.com/dart-backend/boilerplates/tree/master/templates/basic)
@@ -114,13 +132,13 @@ Branch: `master`
    * [Angel3 MySQL ORM Template](https://github.com/dart-backend/boilerplates/tree/master/templates/basic_mysql_orm)
    * [Angel3 GraphQL Template](https://github.com/dart-backend/boilerplates/tree/master/templates/basic_graphql)
 
-3. Run the project in development mode (*hot-reloaded* is enabled on file changes).
+3. Run the project in development mode (hot reload is enabled on file changes).
 
    ```bash
    dart --observe bin/dev.dart
    ```
 
-4. Run the project in production mode (*hot-reloaded* is disabled).
+4. Run the project in production mode (hot reload is disabled).
 
    ```bash
    dart bin/prod.dart
@@ -128,11 +146,11 @@ Branch: `master`
 
 5. Run as docker. Edit and build the image with the provided `Dockerfile` file.
 
-6. Next, refer to the [developer guide](https://angel3-docs.dukefirehawk.com/) to learn more about Angel3 framework.
+6. Next, refer to the [User Guide](https://angel3-docs.dukefirehawk.com/) to learn more about Angel3 framework.
 
 ### (Option 2) Create a new project with Angel3 CLI
 
-1. Download and install [Dart](https://dart.dev/get-dart)
+1. Download and install [Dart](https://dart.dev/get-dart). Minimum 3.13.0.
 
 2. Install the [Angel3 CLI](https://pub.dev/packages/angel3_cli):
 
@@ -146,13 +164,15 @@ Branch: `master`
    angel3 init hello
    ```
 
-4. Run the project in development mode (*hot-reloaded* is enabled on file changes).
+   The latest `angel3_cli` is 9.0.0, which predates the 10.0.0 packages: check the versions in the generated `pubspec.yaml`.
+
+4. Run the project in development mode (hot reload is enabled on file changes).
 
    ```bash
    dart --observe bin/dev.dart
    ```
 
-5. Run the project in production mode (*hot-reloaded* is disabled).
+5. Run the project in production mode (hot reload is disabled).
 
    ```bash
    dart bin/prod.dart
@@ -168,9 +188,9 @@ Refer to [Angel3 Performance Test Suite](https://github.com/dart-backend/angel3-
 
 ## Performance Benchmark
 
-An offical performance benchmark can be found at [TechEmpower Framework Benchmarks](https://www.techempower.com/benchmarks/#section=data-r23)
+An official performance benchmark can be found at [TechEmpower Framework Benchmarks](https://www.techempower.com/benchmarks/#section=data-r23)
 
-The test cases are build using standard `Angel3 ORM` template for PostgreSQL and MySQL databases. The result are used for improving Angel3 framework with respect to other frameworks. The following test cases will be added in the subsequent update to this benchmark.
+The test cases are built using the standard `Angel3 ORM` template for PostgreSQL and MySQL databases. The results are used for improving Angel3 framework with respect to other frameworks. The following test cases will be added in the subsequent update to this benchmark.
 
 1. Cache with Redis
 2. Angel3 with MongoDB
@@ -181,7 +201,7 @@ Refer to [User Guide](https://angel3-docs.dukefirehawk.com/) for more detailed i
 
 ## Examples
 
-Take various applications at [Examples](https://github.com/dart-backend/angel3-examples) for a spin to get a feel of what Angel3 framework can do.
+Take various applications at [Examples](https://github.com/dart-backend/belatuk-examples) for a spin to get a feel of what Angel3 framework can do.
 
 ## Community
 
@@ -202,21 +222,29 @@ If you are interested in contributing to Angel3 framework please check out the [
    git checkout -b feature/<your_branch_name>
    ```
 
-3. Download and install [Dart 3](https://dart.dev/get-dart)
+3. Download and install [Dart](https://dart.dev/get-dart). Minimum 3.13.0.
 
-4. Install `melos:7.3`
+4. Install `melos` 8.9 or later
 
    ```bash
    dart pub global activate melos
    ```
 
-5. Run `melos exec "dart pub upgrade"` to update all the packages
+5. Run `dart pub get` at the repository root to resolve all the packages in the workspace, or `melos exec "dart pub upgrade"` to upgrade them
 
-6. Contribute changes to the desired packages
+6. Contribute changes to the desired packages. After changing a model or a code generator, regenerate the code in the affected packages:
+
+   ```bash
+   dart run build_runner build --delete-conflicting-outputs
+   ```
+
+7. Run `dart format`, `dart analyze` and `dart test` in each package you changed, from its directory. The tests of some packages need a running server, which their test setup describes: PostgreSQL (`orm_postgres`), MySQL or MariaDB (`orm_mysql`), MongoDB (`mongo`), RethinkDB (`rethinkdb`) and Redis (`redis`). Run the ORM tests with `dart test -j1`, as their test files share tables
+
+8. Add an entry for each user-facing change to the `CHANGELOG.md` of its package, under `### Breaking changes in X.Y.Z`, `### New in X.Y.Z` or `### Fixes in X.Y.Z`, and use [Conventional Commits](https://www.conventionalcommits.org/) for commit messages
 
 ## Donation & Support
 
-If you like this project and interested in supporting its development work, you are welcome to make a donation via the following links.
+If you like this project and are interested in supporting its development work, you are welcome to make a donation via the following links.
 
 * [![GitHub Sponsor](https://img.shields.io/static/v1?label=Sponsor&message=%E2%9D%A4&logo=GitHub&color=%23fe8e86)](https://github.com/sponsors/dukefirehawk)
 * [Paypal Donation](https://paypal.me/dukefirehawk?country.x=MY&locale.x=en_US)
@@ -238,7 +266,7 @@ We offer professional paid support for teams and developers using `Angel3` frame
 
 * Teams using or planning to use `Angel3` in production
 * Developers who want expert guidance from people who maintain the framework
-* Migration from other dart or none dart framework
+* Migration from other Dart or non-Dart frameworks
 
 #### Support options
 
@@ -256,4 +284,4 @@ Paid support ensures you get reliable, professional assistance when it matters m
 
 #### Get in touch
 
-If you’re interested in paid support, contact us at [dukefirehawk.apps@gmail.com] with your contact and use cases. We will get back within 24 hours.
+If you’re interested in paid support, contact us at <dukefirehawk.apps@gmail.com> with your contact and use cases. We will get back within 24 hours.

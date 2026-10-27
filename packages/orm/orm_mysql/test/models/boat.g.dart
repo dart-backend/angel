@@ -96,23 +96,31 @@ class BoatQuery extends Query<Boat, BoatQueryWhere> {
       return Optional.empty();
     }
     var model = Boat(
-      id: fields.contains('id') ? row[0].toString() : null,
+      id: fields.contains('id') ? row[fields.indexOf('id')].toString() : null,
       createdAt: fields.contains('created_at')
-          ? mapToNullableDateTime(row[1])
+          ? mapToNullableDateTime(row[fields.indexOf('created_at')])
           : null,
       updatedAt: fields.contains('updated_at')
-          ? mapToNullableDateTime(row[2])
+          ? mapToNullableDateTime(row[fields.indexOf('updated_at')])
           : null,
-      make: fields.contains('make') ? (row[3] as String) : '',
-      description: fields.contains('description') ? (row[4] as String) : '',
+      make: fields.contains('make')
+          ? (row[fields.indexOf('make')] as String)
+          : '',
+      description: fields.contains('description')
+          ? (row[fields.indexOf('description')] as String)
+          : '',
       familyFriendly: fields.contains('family_friendly')
-          ? mapToBool(row[5])
+          ? mapToBool(row[fields.indexOf('family_friendly')])
           : false,
       recalledAt: fields.contains('recalled_at')
-          ? mapToDateTime(row[6])
+          ? mapToDateTime(row[fields.indexOf('recalled_at')])
           : DateTime.parse("1970-01-01 00:00:00"),
-      price: fields.contains('price') ? mapToDouble(row[7]) : 0.0,
-      width: fields.contains('width') ? mapToInt(row[8]) : 0,
+      price: fields.contains('price')
+          ? mapToDouble(row[fields.indexOf('price')])
+          : 0.0,
+      width: fields.contains('width')
+          ? mapToInt(row[fields.indexOf('width')])
+          : 0,
     );
     return Optional.of(model);
   }
@@ -329,7 +337,7 @@ class Boat extends BoatEntity {
 
   @override
   int get hashCode {
-    return hashObjects([
+    return Object.hashAll([
       id,
       createdAt,
       updatedAt,

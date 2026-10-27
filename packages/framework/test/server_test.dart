@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:angel3_container/mirrors.dart';
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_framework/http.dart';
 import 'package:angel3_mock_request/angel3_mock_request.dart';
@@ -14,8 +13,8 @@ final Uri $foo = Uri.parse('http://localhost:3000/foo');
 /// Additional tests to improve coverage of server.dart
 void main() {
   group('scoping', () {
-    var parent = Angel(reflector: MirrorsReflector())..configuration['two'] = 2;
-    var child = Angel(reflector: MirrorsReflector());
+    var parent = Angel()..configuration['two'] = 2;
+    var child = Angel();
     parent.mount('/child', child);
 
     test('sets children', () {
@@ -31,14 +30,94 @@ void main() {
     });
   });
 
+  test('subclasses of Angel can be constructed', () {
+    var app = _MyApp();
+    expect(app.container.make<_MyApp>(), same(app));
+    expect(app.container.make<Angel>(), same(app));
+  });
+
+  test('shutdown hooks run on close, before services close', () async {
+    var app = Angel();
+    var events = <String>[];
+    app.use('/todos', _ClosingService(events));
+    app.shutdownHooks.add((app) => events.add('hook'));
+    var http = AngelHttp(app);
+    await http.startServer();
+    await http.close();
+    expect(events, ['hook', 'service closed']);
+  });
+
+  test('close lets requests in progress finish, before the hooks', () async {
+    var app = Angel();
+    var events = <String>[];
+    app.shutdownHooks.add((app) => events.add('hook'));
+    app.get('/slow', (req, res) async {
+      await Future.delayed(const Duration(milliseconds: 300));
+      events.add('responded');
+      return 'done';
+    });
+    var http = AngelHttp(app);
+    await http.startServer('127.0.0.1', 0);
+    var client = HttpClient();
+    addTearDown(() => client.close(force: true));
+    var response = client
+        .getUrl(http.uri.replace(path: '/slow'))
+        .then((rq) => rq.close())
+        .then((rs) => rs.transform(utf8.decoder).join());
+    await Future.delayed(const Duration(milliseconds: 100));
+    await http.close();
+    expect(await response, '"done"');
+    expect(events, ['responded', 'hook']);
+  });
+
+  test('close does not wait past closeTimeout', () async {
+    var app = Angel();
+    var hung = Completer<void>();
+    app.get('/hang', (req, res) => hung.future);
+    var http = AngelHttp(app)..closeTimeout = const Duration(milliseconds: 200);
+    await http.startServer('127.0.0.1', 0);
+    var client = HttpClient();
+    addTearDown(() => client.close(force: true));
+    var response = client
+        .getUrl(http.uri.replace(path: '/hang'))
+        .then((rq) => rq.close())
+        .then((rs) => rs.drain<void>())
+        .then<Object?>((_) => null, onError: (Object e) => e);
+    await Future.delayed(const Duration(milliseconds: 100));
+    await http.close().timeout(const Duration(seconds: 5));
+    // Its connection was closed, rather than kept open.
+    expect(await response.timeout(const Duration(seconds: 5)), isNotNull);
+  });
+
+  test('uri is https for a secure server', () async {
+    var ctx = SecurityContext()
+      ..useCertificateChain('dev.pem')
+      ..usePrivateKey('dev.key', password: 'dartdart');
+    var http = AngelHttp.fromSecurityContext(Angel(), ctx);
+    await http.startServer('127.0.0.1', 0);
+    addTearDown(http.close);
+    expect(http.uri.scheme, 'https');
+  });
+
+  test('services still close when a shutdown hook fails', () async {
+    var app = Angel();
+    var events = <String>[];
+    app.use('/todos', _ClosingService(events));
+    app.shutdownHooks.add((app) => throw StateError('hook failed'));
+    var http = AngelHttp(app);
+    await http.startServer();
+    await expectLater(http.close(), throwsStateError);
+    expect(events, ['service closed']);
+  });
+
   test('custom server generator', () {
-    var app = Angel(reflector: MirrorsReflector());
+    var app = Angel();
     var http = AngelHttp.custom(app, HttpServer.bind);
     expect(http.serverGenerator, HttpServer.bind);
   });
 
   test('default error handler', () async {
-    var app = Angel(reflector: MirrorsReflector());
+    var app = Angel();
     var http = AngelHttp(app);
     var rq = MockHttpRequest('GET', $foo);
     await (rq.close());
@@ -64,7 +143,7 @@ void main() {
   });
 
   test('default error handler escapes HTML', () async {
-    var app = Angel(reflector: MirrorsReflector());
+    var app = Angel();
     var http = AngelHttp(app);
     var rq = MockHttpRequest('GET', $foo);
     await (rq.close());
@@ -116,7 +195,7 @@ void main() {
   });
 
   test('plug-ins run on startup', () async {
-    var app = Angel(reflector: MirrorsReflector());
+    var app = Angel();
     app.startupHooks.add((app) => app.configuration['two'] = 2);
 
     var http = AngelHttp(app);
@@ -127,15 +206,14 @@ void main() {
   });
 
   test('warning when adding routes to flattened router', () {
-    var app = Angel(reflector: MirrorsReflector())
-      ..optimizeForProduction(force: true);
+    var app = Angel()..optimizeForProduction(force: true);
     app.dumpTree();
     app.get('/', (req, res) => 2);
     app.mount('/foo', Router()..get('/', (req, res) => 3));
   });
 
   test('services close on close call', () async {
-    var app = Angel(reflector: MirrorsReflector());
+    var app = Angel();
     var svc = CustomCloseService();
     expect(svc.value, 2);
     app.use('/', svc);
@@ -144,9 +222,19 @@ void main() {
   });
 
   test('global injection added to injection map', () async {
-    var app = Angel(reflector: MirrorsReflector())..configuration['a'] = 'b';
+    var app = Angel()..configuration['a'] = 'b';
     var http = AngelHttp(app);
-    app.get('/', ioc((String a) => a));
+    app.get(
+      '/',
+      ioc(
+        (String a) => a,
+        injection: InjectionRequest.constant(
+          required: [
+            ['a', String],
+          ],
+        ),
+      ),
+    );
     var rq = MockHttpRequest('GET', Uri.parse('/'));
     await (rq.close());
     await http.handleRequest(rq);
@@ -155,7 +243,7 @@ void main() {
   });
 
   test('global injected serializer', () async {
-    var app = Angel(reflector: MirrorsReflector())..serializer = (_) => 'x';
+    var app = Angel()..serializer = (_) => 'x';
     var http = AngelHttp(app);
     app.get($foo.path, (req, ResponseContext res) => res.serialize(null));
     var rq = MockHttpRequest('GET', $foo);
@@ -166,7 +254,7 @@ void main() {
   });
 
   group('handler results', () {
-    var app = Angel(reflector: MirrorsReflector());
+    var app = Angel();
     var http = AngelHttp(app);
     app.responseFinalizers.add(
       (req, res) => throw AngelHttpException.forbidden(),
@@ -214,7 +302,7 @@ void main() {
     late AngelHttp http;
 
     setUp(() async {
-      app = Angel(reflector: MirrorsReflector());
+      app = Angel();
       app.get('/wtf', (req, res) => throw AngelHttpException.forbidden());
       app.get('/wtf2', (req, res) => throw AngelHttpException.forbidden());
       http = AngelHttp(app);
@@ -258,6 +346,9 @@ void main() {
       await rq.response.toList();
       expect(rq.response.statusCode, 403);
       expect(rq.response.headers.contentType?.mimeType, 'text/html');
+      // A charset name dart:io knows; 'utf8' is not one.
+      var charset = rq.response.headers.contentType?.charset;
+      expect(Encoding.getByName(charset), utf8);
     });
   });
 }
@@ -270,6 +361,18 @@ class CustomCloseService extends Service {
     value = 3;
     super.close();
   }
+}
+
+class _MyApp extends Angel {
+  _MyApp() : super();
+}
+
+class _ClosingService extends Service {
+  final List<String> events;
+  _ClosingService(this.events);
+
+  @override
+  Future<void> close() async => events.add('service closed');
 }
 
 @Expose('/foo')

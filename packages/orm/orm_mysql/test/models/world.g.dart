@@ -79,8 +79,10 @@ class WorldQuery extends Query<World, WorldQueryWhere> {
       return Optional.empty();
     }
     var model = World(
-      id: fields.contains('id') ? mapToInt(row[0]) : null,
-      randomnumber: fields.contains('randomnumber') ? mapToInt(row[1]) : null,
+      id: fields.contains('id') ? mapToInt(row[fields.indexOf('id')]) : null,
+      randomnumber: fields.contains('randomnumber')
+          ? mapToInt(row[fields.indexOf('randomnumber')])
+          : null,
     );
     return Optional.of(model);
   }
@@ -160,7 +162,7 @@ class World extends WorldEntity {
 
   @override
   int get hashCode {
-    return hashObjects([id, randomnumber]);
+    return Object.hashAll([id, randomnumber]);
   }
 
   @override

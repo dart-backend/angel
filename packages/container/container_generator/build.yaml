@@ -1,0 +1,20 @@
+builders:
+  static_reflection:
+    import: "package:angel3_container_generator/angel3_container_generator.dart"
+    builder_factories: ["staticReflectionBuilder"]
+    build_extensions: {".dart": [".static_reflection.g.part"]}
+    auto_apply: dependents
+    build_to: cache
+    applies_builders: ["source_gen|combining_builder"]
+
+targets:
+  $default:
+    builders:
+      angel3_container_generator:static_reflection:
+        generate_for:
+          - test/fixtures/**.dart
+          - example/**.dart
+      source_gen:combining_builder:
+        generate_for:
+          - test/fixtures/**.dart
+          - example/**.dart

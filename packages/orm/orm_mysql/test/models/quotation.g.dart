@@ -80,9 +80,13 @@ class QuotationQuery extends Query<Quotation, QuotationQueryWhere> {
       return Optional.empty();
     }
     var model = Quotation(
-      id: fields.contains('id') ? (row[0] as String?) : null,
-      name: fields.contains('name') ? (row[1] as String?) : null,
-      price: fields.contains('price') ? mapToDouble(row[2]) : null,
+      id: fields.contains('id') ? (row[fields.indexOf('id')] as String?) : null,
+      name: fields.contains('name')
+          ? (row[fields.indexOf('name')] as String?)
+          : null,
+      price: fields.contains('price')
+          ? mapToDouble(row[fields.indexOf('price')])
+          : null,
     );
     return Optional.of(model);
   }
@@ -177,7 +181,7 @@ class Quotation implements QuotationEntity {
 
   @override
   int get hashCode {
-    return hashObjects([id, name, price]);
+    return Object.hashAll([id, name, price]);
   }
 
   @override

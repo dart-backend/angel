@@ -10,7 +10,7 @@ class UserMigration extends Migration {
   @override
   void up(Schema schema) {
     schema.create('user_acc', (table) {
-      table.integer('id').primaryKey();
+      table.serial('id').primaryKey();
       table.varChar('name', length: 255);
     });
   }
@@ -25,7 +25,7 @@ class UserAddressMigration extends Migration {
   @override
   void up(Schema schema) {
     schema.create('user_addr', (table) {
-      table.integer('id')
+      table.serial('id')
         ..primaryKey()
         ..notNull();
       table.integer('user_id').notNull();
@@ -43,7 +43,7 @@ class UserTodoMigration extends Migration {
   @override
   void up(Schema schema) {
     schema.create('user_todo', (table) {
-      table.integer('id')
+      table.serial('id')
         ..primaryKey()
         ..notNull();
       table.integer('user_id').notNull();
@@ -61,7 +61,7 @@ class TodoValueMigration extends Migration {
   @override
   void up(Schema schema) {
     schema.create('todo_value', (table) {
-      table.integer('id').primaryKey();
+      table.serial('id').primaryKey();
       table.varChar('value', length: 255);
       table.integer('todo_id');
       table.varChar('description', length: 255);
@@ -78,7 +78,7 @@ class TodoNoteMigration extends Migration {
   @override
   void up(Schema schema) {
     schema.create('todo_note', (table) {
-      table.integer('id').primaryKey();
+      table.serial('id').primaryKey();
       table.varChar('note', length: 255);
       table.integer('todo_id');
       table.varChar('description', length: 255);
@@ -100,20 +100,6 @@ class UserQuery extends Query<User, UserQueryWhere> {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = UserQueryWhere(this);
-    leftJoin(
-      _todos = UserTodoQuery(trampoline: trampoline, parent: this),
-      'id',
-      'user_id',
-      additionalFields: const ['id', 'user_id', 'title'],
-      trampoline: trampoline,
-    );
-    leftJoin(
-      _address = UserAddressQuery(trampoline: trampoline, parent: this),
-      'id',
-      'user_id',
-      additionalFields: const ['id', 'user_id', 'address'],
-      trampoline: trampoline,
-    );
   }
 
   @override
@@ -123,9 +109,9 @@ class UserQuery extends Query<User, UserQueryWhere> {
 
   UserQueryWhere? _where;
 
-  late UserTodoQuery _todos;
+  late final UserTodoQuery _todos = UserTodoQuery();
 
-  late UserAddressQuery _address;
+  late final UserAddressQuery _address = UserAddressQuery();
 
   @override
   Map<String, String> get casts {
@@ -167,21 +153,11 @@ class UserQuery extends Query<User, UserQueryWhere> {
       return Optional.empty();
     }
     var model = User(
-      id: fields.contains('id') ? mapToInt(row[0]) : 0,
-      name: fields.contains('name') ? (row[1] as String) : '',
+      id: fields.contains('id') ? mapToInt(row[fields.indexOf('id')]) : 0,
+      name: fields.contains('name')
+          ? (row[fields.indexOf('name')] as String)
+          : '',
     );
-    if (row.length > 2) {
-      var modelOpt = UserTodoQuery().parseRow(row.skip(2).take(3).toList());
-      modelOpt.ifPresent((m) {
-        model = model.copyWith(todos: [m]);
-      });
-    }
-    if (row.length > 5) {
-      var modelOpt = UserAddressQuery().parseRow(row.skip(5).take(3).toList());
-      modelOpt.ifPresent((m) {
-        model = model.copyWith(address: [m]);
-      });
-    }
     return Optional.of(model);
   }
 
@@ -190,75 +166,48 @@ class UserQuery extends Query<User, UserQueryWhere> {
     return parseRow(row);
   }
 
+  /// The query [todos] are loaded with, whose conditions and order apply.
   UserTodoQuery get todos {
     return _todos;
   }
 
+  /// The query [address] are loaded with, whose conditions and order apply.
   UserAddressQuery get address {
     return _address;
   }
 
   @override
-  Future<List<User>> get(QueryExecutor executor) {
-    return super.get(executor).then((result) {
-      return result.fold<List<User>>([], (out, model) {
-        var idx = out.indexWhere((m) => m.id == model.id);
-
-        if (idx == -1) {
-          return out..add(model);
-        } else {
-          var l = out[idx];
-          return out
-            ..[idx] = l.copyWith(
-              todos: List<UserTodoEntity>.from(l.todos)..addAll(model.todos),
-              address: List<UserAddressEntity>.from(l.address)
-                ..addAll(model.address),
-            );
-        }
-      });
-    });
-  }
+  bool get loadsRelations => true;
 
   @override
-  Future<List<User>> update(QueryExecutor executor) {
-    return super.update(executor).then((result) {
-      return result.fold<List<User>>([], (out, model) {
-        var idx = out.indexWhere((m) => m.id == model.id);
-
-        if (idx == -1) {
-          return out..add(model);
-        } else {
-          var l = out[idx];
-          return out
-            ..[idx] = l.copyWith(
-              todos: List<UserTodoEntity>.from(l.todos)..addAll(model.todos),
-              address: List<UserAddressEntity>.from(l.address)
-                ..addAll(model.address),
-            );
-        }
-      });
-    });
-  }
-
-  @override
-  Future<List<User>> delete(QueryExecutor executor) {
-    return super.delete(executor).then((result) {
-      return result.fold<List<User>>([], (out, model) {
-        var idx = out.indexWhere((m) => m.id == model.id);
-
-        if (idx == -1) {
-          return out..add(model);
-        } else {
-          var l = out[idx];
-          return out
-            ..[idx] = l.copyWith(
-              todos: List<UserTodoEntity>.from(l.todos)..addAll(model.todos),
-              address: List<UserAddressEntity>.from(l.address)
-                ..addAll(model.address),
-            );
-        }
-      });
-    });
+  Future<List<User>> loadRelations(
+    QueryExecutor executor,
+    List<List> rows,
+    List<User> records,
+    Set<String> loading,
+  ) async {
+    if (records.isEmpty) return records;
+    var todosByKey = loading.contains('user_todo')
+        ? null
+        : await _todos.getByKeys(executor, 'user_id', [
+            for (var row in rows) valueOf('id', row),
+          ], loading);
+    var addressByKey = loading.contains('user_addr')
+        ? null
+        : await _address.getByKeys(executor, 'user_id', [
+            for (var row in rows) valueOf('id', row),
+          ], loading);
+    return [
+      for (var (i, r) in records.indexed)
+        r.copyWith(
+          todos: todosByKey == null
+              ? r.todos
+              : [...?todosByKey['${valueOf('id', rows[i])}']],
+          address: addressByKey == null
+              ? r.address
+              : [...?addressByKey['${valueOf('id', rows[i])}']],
+        ),
+    ];
   }
 }
 
@@ -355,9 +304,13 @@ class UserAddressQuery extends Query<UserAddress, UserAddressQueryWhere> {
       return Optional.empty();
     }
     var model = UserAddress(
-      id: fields.contains('id') ? mapToInt(row[0]) : 0,
-      userId: fields.contains('user_id') ? mapToInt(row[1]) : 0,
-      address: fields.contains('address') ? (row[2] as String) : '',
+      id: fields.contains('id') ? mapToInt(row[fields.indexOf('id')]) : 0,
+      userId: fields.contains('user_id')
+          ? mapToInt(row[fields.indexOf('user_id')])
+          : 0,
+      address: fields.contains('address')
+          ? (row[fields.indexOf('address')] as String)
+          : '',
     );
     return Optional.of(model);
   }
@@ -422,20 +375,6 @@ class UserTodoQuery extends Query<UserTodo, UserTodoQueryWhere> {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = UserTodoQueryWhere(this);
-    leftJoin(
-      _todoValues = TodoValueQuery(trampoline: trampoline, parent: this),
-      'id',
-      'todo_value_id',
-      additionalFields: const ['id', 'value', 'todo_id', 'description'],
-      trampoline: trampoline,
-    );
-    leftJoin(
-      _todoNotes = TodoNoteQuery(trampoline: trampoline, parent: this),
-      'id',
-      'todo_note_id',
-      additionalFields: const ['id', 'note', 'todo_id', 'description'],
-      trampoline: trampoline,
-    );
   }
 
   @override
@@ -445,9 +384,9 @@ class UserTodoQuery extends Query<UserTodo, UserTodoQueryWhere> {
 
   UserTodoQueryWhere? _where;
 
-  late TodoValueQuery _todoValues;
+  late final TodoValueQuery _todoValues = TodoValueQuery();
 
-  late TodoNoteQuery _todoNotes;
+  late final TodoNoteQuery _todoNotes = TodoNoteQuery();
 
   @override
   Map<String, String> get casts {
@@ -489,22 +428,14 @@ class UserTodoQuery extends Query<UserTodo, UserTodoQueryWhere> {
       return Optional.empty();
     }
     var model = UserTodo(
-      id: fields.contains('id') ? mapToInt(row[0]) : 0,
-      userId: fields.contains('user_id') ? mapToInt(row[1]) : 0,
-      title: fields.contains('title') ? (row[2] as String) : '',
+      id: fields.contains('id') ? mapToInt(row[fields.indexOf('id')]) : 0,
+      userId: fields.contains('user_id')
+          ? mapToInt(row[fields.indexOf('user_id')])
+          : 0,
+      title: fields.contains('title')
+          ? (row[fields.indexOf('title')] as String)
+          : '',
     );
-    if (row.length > 3) {
-      var modelOpt = TodoValueQuery().parseRow(row.skip(3).take(4).toList());
-      modelOpt.ifPresent((m) {
-        model = model.copyWith(todoValues: [m]);
-      });
-    }
-    if (row.length > 7) {
-      var modelOpt = TodoNoteQuery().parseRow(row.skip(7).take(4).toList());
-      modelOpt.ifPresent((m) {
-        model = model.copyWith(todoNotes: [m]);
-      });
-    }
     return Optional.of(model);
   }
 
@@ -513,78 +444,48 @@ class UserTodoQuery extends Query<UserTodo, UserTodoQueryWhere> {
     return parseRow(row);
   }
 
+  /// The query [todoValues] are loaded with, whose conditions and order apply.
   TodoValueQuery get todoValues {
     return _todoValues;
   }
 
+  /// The query [todoNotes] are loaded with, whose conditions and order apply.
   TodoNoteQuery get todoNotes {
     return _todoNotes;
   }
 
   @override
-  Future<List<UserTodo>> get(QueryExecutor executor) {
-    return super.get(executor).then((result) {
-      return result.fold<List<UserTodo>>([], (out, model) {
-        var idx = out.indexWhere((m) => m.id == model.id);
-
-        if (idx == -1) {
-          return out..add(model);
-        } else {
-          var l = out[idx];
-          return out
-            ..[idx] = l.copyWith(
-              todoValues: List<TodoValueEntity>.from(l.todoValues)
-                ..addAll(model.todoValues),
-              todoNotes: List<TodoNoteEntity>.from(l.todoNotes)
-                ..addAll(model.todoNotes),
-            );
-        }
-      });
-    });
-  }
+  bool get loadsRelations => true;
 
   @override
-  Future<List<UserTodo>> update(QueryExecutor executor) {
-    return super.update(executor).then((result) {
-      return result.fold<List<UserTodo>>([], (out, model) {
-        var idx = out.indexWhere((m) => m.id == model.id);
-
-        if (idx == -1) {
-          return out..add(model);
-        } else {
-          var l = out[idx];
-          return out
-            ..[idx] = l.copyWith(
-              todoValues: List<TodoValueEntity>.from(l.todoValues)
-                ..addAll(model.todoValues),
-              todoNotes: List<TodoNoteEntity>.from(l.todoNotes)
-                ..addAll(model.todoNotes),
-            );
-        }
-      });
-    });
-  }
-
-  @override
-  Future<List<UserTodo>> delete(QueryExecutor executor) {
-    return super.delete(executor).then((result) {
-      return result.fold<List<UserTodo>>([], (out, model) {
-        var idx = out.indexWhere((m) => m.id == model.id);
-
-        if (idx == -1) {
-          return out..add(model);
-        } else {
-          var l = out[idx];
-          return out
-            ..[idx] = l.copyWith(
-              todoValues: List<TodoValueEntity>.from(l.todoValues)
-                ..addAll(model.todoValues),
-              todoNotes: List<TodoNoteEntity>.from(l.todoNotes)
-                ..addAll(model.todoNotes),
-            );
-        }
-      });
-    });
+  Future<List<UserTodo>> loadRelations(
+    QueryExecutor executor,
+    List<List> rows,
+    List<UserTodo> records,
+    Set<String> loading,
+  ) async {
+    if (records.isEmpty) return records;
+    var todoValuesByKey = loading.contains('todo_value')
+        ? null
+        : await _todoValues.getByKeys(executor, 'todo_id', [
+            for (var row in rows) valueOf('id', row),
+          ], loading);
+    var todoNotesByKey = loading.contains('todo_note')
+        ? null
+        : await _todoNotes.getByKeys(executor, 'todo_id', [
+            for (var row in rows) valueOf('id', row),
+          ], loading);
+    return [
+      for (var (i, r) in records.indexed)
+        r.copyWith(
+          todoValues: todoValuesByKey == null
+              ? r.todoValues
+              : [...?todoValuesByKey['${valueOf('id', rows[i])}']],
+          todoNotes: todoNotesByKey == null
+              ? r.todoNotes
+              : [...?todoNotesByKey['${valueOf('id', rows[i])}']],
+        ),
+    ];
   }
 }
 
@@ -691,10 +592,16 @@ class TodoValueQuery extends Query<TodoValue, TodoValueQueryWhere> {
       return Optional.empty();
     }
     var model = TodoValue(
-      id: fields.contains('id') ? mapToInt(row[0]) : 0,
-      value: fields.contains('value') ? (row[1] as String) : '',
-      todoId: fields.contains('todo_id') ? mapToInt(row[2]) : 0,
-      description: fields.contains('description') ? (row[3] as String?) : null,
+      id: fields.contains('id') ? mapToInt(row[fields.indexOf('id')]) : 0,
+      value: fields.contains('value')
+          ? (row[fields.indexOf('value')] as String)
+          : '',
+      todoId: fields.contains('todo_id')
+          ? mapToInt(row[fields.indexOf('todo_id')])
+          : 0,
+      description: fields.contains('description')
+          ? (row[fields.indexOf('description')] as String?)
+          : null,
     );
     return Optional.of(model);
   }
@@ -818,10 +725,16 @@ class TodoNoteQuery extends Query<TodoNote, TodoNoteQueryWhere> {
       return Optional.empty();
     }
     var model = TodoNote(
-      id: fields.contains('id') ? mapToInt(row[0]) : 0,
-      note: fields.contains('note') ? (row[1] as String) : '',
-      todoId: fields.contains('todo_id') ? mapToInt(row[2]) : 0,
-      description: fields.contains('description') ? (row[3] as String?) : null,
+      id: fields.contains('id') ? mapToInt(row[fields.indexOf('id')]) : 0,
+      note: fields.contains('note')
+          ? (row[fields.indexOf('note')] as String)
+          : '',
+      todoId: fields.contains('todo_id')
+          ? mapToInt(row[fields.indexOf('todo_id')])
+          : 0,
+      description: fields.contains('description')
+          ? (row[fields.indexOf('description')] as String?)
+          : null,
     );
     return Optional.of(model);
   }
@@ -943,7 +856,7 @@ class User implements UserEntity {
 
   @override
   int get hashCode {
-    return hashObjects([id, name, todos, address]);
+    return Object.hashAll([id, name, todos.length, address.length]);
   }
 
   @override
@@ -987,7 +900,7 @@ class UserAddress implements UserAddressEntity {
 
   @override
   int get hashCode {
-    return hashObjects([id, userId, address]);
+    return Object.hashAll([id, userId, address]);
   }
 
   @override
@@ -1055,7 +968,13 @@ class UserTodo implements UserTodoEntity {
 
   @override
   int get hashCode {
-    return hashObjects([id, userId, title, todoValues, todoNotes]);
+    return Object.hashAll([
+      id,
+      userId,
+      title,
+      todoValues.length,
+      todoNotes.length,
+    ]);
   }
 
   @override
@@ -1114,7 +1033,7 @@ class TodoValue implements TodoValueEntity {
 
   @override
   int get hashCode {
-    return hashObjects([id, value, todoId, description]);
+    return Object.hashAll([id, value, todoId, description]);
   }
 
   @override
@@ -1168,7 +1087,7 @@ class TodoNote implements TodoNoteEntity {
 
   @override
   int get hashCode {
-    return hashObjects([id, note, todoId, description]);
+    return Object.hashAll([id, note, todoId, description]);
   }
 
   @override

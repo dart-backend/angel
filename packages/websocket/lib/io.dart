@@ -19,8 +19,6 @@ final RegExp _straySlashes = RegExp(r'(^/)|(/+$)');
 
 /// Queries an Angel server via WebSockets.
 class WebSockets extends BaseWebSocketClient {
-  final List<IoWebSocketsService> _services = [];
-
   WebSockets(String baseUrl, {super.reconnectOnClose, super.reconnectInterval})
     : super(http.IOClient(), baseUrl);
 
@@ -32,15 +30,6 @@ class WebSockets extends BaseWebSocketClient {
     throw UnimplementedError(
       'Opening popup windows is not supported in the `dart:io` client.',
     );
-  }
-
-  @override
-  Future close() {
-    for (var service in _services) {
-      service.close();
-    }
-
-    return super.close();
   }
 
   @override
@@ -61,13 +50,26 @@ class WebSockets extends BaseWebSocketClient {
     AngelDeserializer<Data>? deserializer,
   }) {
     var uri = path.replaceAll(_straySlashes, '');
-    return IoWebSocketsService<Id, Data>(socket, this, uri, type)
-        as Service<Id, Data>;
+    return addService<Id, Data>(
+      IoWebSocketsService<Id, Data>(
+        socket,
+        this,
+        uri,
+        type,
+        deserializer: deserializer,
+      ),
+    );
   }
 }
 
 class IoWebSocketsService<Id, Data> extends WebSocketsService<Id, Data> {
   final Type? type;
 
-  IoWebSocketsService(super.socket, WebSockets super.app, super.uri, this.type);
+  IoWebSocketsService(
+    super.socket,
+    WebSockets super.app,
+    super.uri,
+    this.type, {
+    super.deserializer,
+  });
 }

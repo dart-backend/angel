@@ -6,6 +6,11 @@ import 'package:file/file.dart';
 import 'package:jael3/jael3.dart';
 import 'package:belatuk_symbol_table/belatuk_symbol_table.dart';
 
+/// The default of `onError`: an error is thrown, and a warning ignored.
+void _throwError(JaelError error) {
+  if (error.severity == JaelErrorSeverity.error) throw error;
+}
+
 /// Modifies a Jael document.
 typedef Patcher = FutureOr<Document>? Function(
   Document? document,
@@ -22,21 +27,32 @@ Future<Document?> resolve(
   Directory currentDirectory, {
   void Function(JaelError error)? onError,
   Iterable<Patcher>? patch,
-}) async {
-  onError ?? (e) => throw e;
+}) => _resolve(document, currentDirectory, onError ?? _throwError, patch, []);
+
+/// [resolve], with [including] the files being included, outermost first, so
+/// that one that includes itself is found.
+Future<Document?> _resolve(
+  Document document,
+  Directory currentDirectory,
+  void Function(JaelError error) onError,
+  Iterable<Patcher>? patch,
+  List<String> including,
+) async {
+  including = _withSource(document, currentDirectory, including);
 
   // Resolve all includes...
-  var includesResolved = await resolveIncludes(
+  var includesResolved = await _resolveIncludes(
     document,
     currentDirectory,
     onError,
+    including,
   );
 
-  var patched = await applyInheritance(
+  var patched = await _applyInheritance(
     includesResolved,
     currentDirectory,
     onError,
-    patch,
+    including,
   );
 
   if (patch?.isNotEmpty != true) {
@@ -56,6 +72,13 @@ Future<Document?> applyInheritance(
   Directory currentDirectory,
   void Function(JaelError error)? onError,
   Iterable<Patcher>? patch,
+) => _applyInheritance(document, currentDirectory, onError ?? _throwError, []);
+
+Future<Document?> _applyInheritance(
+  Document? document,
+  Directory currentDirectory,
+  void Function(JaelError error) onError,
+  List<String> including,
 ) async {
   if (document == null) {
     return null;
@@ -75,7 +98,7 @@ Future<Document?> applyInheritance(
   var element = document.root;
   var attr = element.attributes.firstWhereOrNull((a) => a.name == 'src');
   if (attr == null) {
-    onError!(
+    onError(
       JaelError(
         JaelErrorSeverity.warning,
         'Missing "src" attribute in "extend" tag.',
@@ -84,7 +107,7 @@ Future<Document?> applyInheritance(
     );
     return null;
   } else if (attr.value is! StringLiteral) {
-    onError!(
+    onError(
       JaelError(
         JaelErrorSeverity.warning,
         'The "src" attribute in an "extend" tag must be a string literal.',
@@ -103,18 +126,26 @@ Future<Document?> applyInheritance(
     //  a. Enumerate the block overrides it defines
     //  b. Replace matching blocks in the current document
     //  c. If there is no block, and this is the LAST <extend>, fill in the default block content.
-    var hierarchy = await resolveHierarchy(document, currentDirectory, onError);
+    var hierarchy = await _resolveHierarchy(
+      document,
+      currentDirectory,
+      onError,
+      including,
+    );
     var out = hierarchy?.root;
 
+    // The parent could not be read, which is reported to onError.
+    if (hierarchy == null) return null;
     if (out is! RegularElement) {
-      return hierarchy!.rootDocument;
+      return hierarchy.rootDocument;
     }
 
     Element setOut(
       Element out,
       Map<String?, RegularElement> definedOverrides,
-      bool anyTemplatesRemain,
-    ) {
+      bool anyTemplatesRemain, {
+      bool replaceWithDefault = false,
+    }) {
       var children = <ElementChild>[];
 
       // Replace matching blocks, etc.
@@ -125,7 +156,7 @@ Future<Document?> applyInheritance(
               c,
               definedOverrides,
               onError,
-              false,
+              replaceWithDefault,
               anyTemplatesRemain,
             ),
           );
@@ -134,7 +165,7 @@ Future<Document?> applyInheritance(
         }
       }
 
-      var root = hierarchy!.root as RegularElement;
+      var root = hierarchy.root as RegularElement;
       return RegularElement(
         root.lt,
         root.tagName,
@@ -149,7 +180,7 @@ Future<Document?> applyInheritance(
     }
 
     // Loop through all extends, filling in blocks.
-    while (hierarchy!.extendsTemplates.isNotEmpty) {
+    while (hierarchy.extendsTemplates.isNotEmpty) {
       var tmpl = hierarchy.extendsTemplates.removeFirst();
       var definedOverrides = findBlockOverrides(tmpl, onError);
       //if (definedOverrides == null) break;
@@ -160,9 +191,9 @@ Future<Document?> applyInheritance(
       );
     }
 
-    // Lastly, just default-fill any remaining blocks.
-    var definedOverrides = findBlockOverrides(out!, onError);
-    out = setOut(out, definedOverrides, false);
+    // Lastly, fill in every block that is left, at any depth, with its
+    // default content.
+    out = setOut(out!, {}, false, replaceWithDefault: true);
 
     // Return our processed document.
     return Document(document.doctype, out);
@@ -173,6 +204,7 @@ Map<String, RegularElement> findBlockOverrides(
   Element tmpl,
   void Function(JaelError e)? onError,
 ) {
+  onError ??= _throwError;
   var out = <String, RegularElement>{};
 
   for (var child in tmpl.children) {
@@ -193,29 +225,65 @@ Map<String, RegularElement> findBlockOverrides(
 }
 
 /// Resolves the document hierarchy at a given node in the tree.
+///
+/// Each parent is read relative to the directory of the template that
+/// extends it, and its includes relative to its own. A template that extends
+/// itself, directly or through others, is reported to [onError].
 Future<DocumentHierarchy?> resolveHierarchy(
   Document document,
   Directory currentDirectory,
   void Function(JaelError e)? onError,
+) => _resolveHierarchy(
+  document,
+  currentDirectory,
+  onError ?? _throwError,
+  _withSource(document, currentDirectory, []),
+);
+
+Future<DocumentHierarchy?> _resolveHierarchy(
+  Document document,
+  Directory currentDirectory,
+  void Function(JaelError e) onError,
+  List<String> including,
 ) async {
   var extendsTemplates = Queue<Element>();
+  var visited = {..._withSource(document, currentDirectory, [])};
+  var directory = currentDirectory;
   String? parent;
 
   Document? doc = document;
   while (doc != null && (parent = getParent(doc, onError)) != null) {
+    var file = directory.childFile(parent!);
+    var path = _pathOf(file);
+    if (!visited.add(path)) {
+      onError(
+        JaelError(
+          JaelErrorSeverity.error,
+          'The template "$parent" extends itself, through "extend" tags.',
+          doc.root.span,
+        ),
+      );
+      return null;
+    }
+    var extending = doc;
     try {
-      extendsTemplates.addFirst(doc.root);
-      var file = currentDirectory.childFile(parent!);
+      extendsTemplates.addFirst(extending.root);
       var parsed = parseDocument(
         await file.readAsString(),
         sourceUrl: file.uri,
         onError: onError,
-      )!;
+      );
+      // Its syntax errors are reported to onError.
+      if (parsed == null) return null;
 
-      doc = await resolveIncludes(parsed, currentDirectory, onError);
+      directory = directory.fileSystem.directory(file.dirname);
+      doc = await _resolveIncludes(parsed, directory, onError, [
+        ...including,
+        path,
+      ]);
     } on FileSystemException catch (e) {
-      onError!(
-        JaelError(JaelErrorSeverity.error, e.message, document.root.span),
+      onError(
+        JaelError(JaelErrorSeverity.error, e.message, extending.root.span),
       );
       return null;
     }
@@ -243,12 +311,13 @@ Iterable<ElementChild> replaceBlocks(
   bool replaceWithDefault,
   bool anyTemplatesRemain,
 ) {
+  onError ??= _throwError;
   if (element.tagName.name == 'block') {
     var nameAttr = element.attributes.firstWhereOrNull((a) => a.name == 'name');
     var name = nameAttr?.value?.compute(SymbolTable());
 
     if (name?.trim()?.isNotEmpty != true) {
-      onError!(
+      onError(
         JaelError(
           JaelErrorSeverity.warning,
           'This <block> has no `name` attribute, and will be outputted as-is.',
@@ -285,16 +354,23 @@ Iterable<ElementChild> replaceBlocks(
             ),
           ];
         } else {
-          // Otherwise, just return the default contents.
-          return element.children;
+          // Otherwise, return the default contents, with their blocks filled in.
+          return allChildrenOfRegularElement(
+            element,
+            definedOverrides,
+            onError,
+            replaceWithDefault,
+            anyTemplatesRemain,
+          );
         }
       } else {
         return [element];
       }
     } else {
+      // A block of the same name within the override gets its default.
       return allChildrenOfRegularElement(
         definedOverrides[name]!,
-        definedOverrides,
+        {...definedOverrides}..remove(name),
         onError,
         replaceWithDefault,
         anyTemplatesRemain,
@@ -392,12 +468,13 @@ List<ElementChild> allChildrenOfRegularElement(
 
 /// Finds the name of the parent template.
 String? getParent(Document document, void Function(JaelError error)? onError) {
+  onError ??= _throwError;
   var element = document.root;
   if (element.tagName.name != 'extend') return null;
 
   var attr = element.attributes.firstWhereOrNull((a) => a.name == 'src');
   if (attr == null) {
-    onError!(
+    onError(
       JaelError(
         JaelErrorSeverity.warning,
         'Missing "src" attribute in "extend" tag.',
@@ -406,7 +483,7 @@ String? getParent(Document document, void Function(JaelError error)? onError) {
     );
     return null;
   } else if (attr.value is! StringLiteral) {
-    onError!(
+    onError(
       JaelError(
         JaelErrorSeverity.warning,
         'The "src" attribute in an "extend" tag must be a string literal.',
@@ -420,10 +497,42 @@ String? getParent(Document document, void Function(JaelError error)? onError) {
 }
 
 /// Expands all `include[src]` tags within the template, and fills in the content of referenced files.
+///
+/// A file that includes itself, directly or through others, and one that
+/// cannot be read, are reported to [onError].
 Future<Document?> resolveIncludes(
   Document? document,
   Directory currentDirectory,
   void Function(JaelError error)? onError,
+) => _resolveIncludes(
+  document,
+  currentDirectory,
+  onError ?? _throwError,
+  document == null ? [] : _withSource(document, currentDirectory, []),
+);
+
+/// The normalized absolute path of [file], by which files are compared.
+String _pathOf(File file) => file.fileSystem.path.normalize(file.absolute.path);
+
+/// [including], with the file [document] was parsed from, if it is known.
+List<String> _withSource(
+  Document document,
+  Directory directory,
+  List<String> including,
+) {
+  var url = document.root.span.sourceUrl;
+  if (url == null || (url.scheme != 'file' && url.scheme.isNotEmpty)) {
+    return including;
+  }
+  var path = _pathOf(directory.fileSystem.file(url));
+  return including.contains(path) ? including : [...including, path];
+}
+
+Future<Document?> _resolveIncludes(
+  Document? document,
+  Directory currentDirectory,
+  void Function(JaelError error) onError,
+  List<String> including,
 ) async {
   if (document == null) {
     return null;
@@ -432,6 +541,7 @@ Future<Document?> resolveIncludes(
     document.root,
     currentDirectory,
     onError,
+    including,
   );
   if (rootElement != null) {
     return Document(document.doctype, rootElement);
@@ -443,7 +553,8 @@ Future<Document?> resolveIncludes(
 Future<Element?> _expandIncludes(
   Element element,
   Directory currentDirectory,
-  void Function(JaelError error)? onError,
+  void Function(JaelError error) onError,
+  List<String> including,
 ) async {
   if (element.tagName.name != 'include') {
     if (element is SelfClosingElement) {
@@ -457,6 +568,7 @@ Future<Element?> _expandIncludes(
             child,
             currentDirectory,
             onError,
+            including,
           );
           if (includeElement != null) {
             expanded.add(includeElement);
@@ -486,7 +598,7 @@ Future<Element?> _expandIncludes(
 
   var attr = element.attributes.firstWhereOrNull((a) => a.name == 'src');
   if (attr == null) {
-    onError!(
+    onError(
       JaelError(
         JaelErrorSeverity.warning,
         'Missing "src" attribute in "include" tag.',
@@ -495,7 +607,7 @@ Future<Element?> _expandIncludes(
     );
     return null;
   } else if (attr.value is! StringLiteral) {
-    onError!(
+    onError(
       JaelError(
         JaelErrorSeverity.warning,
         'The "src" attribute in an "include" tag must be a string literal.',
@@ -505,16 +617,36 @@ Future<Element?> _expandIncludes(
     return null;
   } else {
     var src = (attr.value as StringLiteral).value;
-    var file = currentDirectory.fileSystem.file(
-      currentDirectory.uri.resolve(src),
-    );
-    var contents = await file.readAsString();
-    var doc = parseDocument(contents, sourceUrl: file.uri, onError: onError)!;
-    var processed = await (resolve(
+    var file = currentDirectory.childFile(src);
+    var path = _pathOf(file);
+    if (including.contains(path)) {
+      onError(
+        JaelError(
+          JaelErrorSeverity.error,
+          'The file "$src" includes itself, through "include" tags.',
+          element.span,
+        ),
+      );
+      return null;
+    }
+    String contents;
+    try {
+      contents = await file.readAsString();
+    } on FileSystemException catch (e) {
+      onError(JaelError(JaelErrorSeverity.error, e.message, element.span));
+      return null;
+    }
+    var doc = parseDocument(contents, sourceUrl: file.uri, onError: onError);
+    // Its syntax errors are reported to onError.
+    if (doc == null) return null;
+    // As a template of its own, with this file in the chain of includes.
+    var processed = await _resolve(
       doc,
       currentDirectory.fileSystem.directory(file.dirname),
-      onError: onError,
-    ));
+      onError,
+      null,
+      [...including, path],
+    );
     if (processed == null) {
       return null;
     }

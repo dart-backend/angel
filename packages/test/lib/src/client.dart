@@ -48,7 +48,7 @@ Future<TestClient> connectTo(
 
 /// An `angel_client` that sends mock requests to a server, rather than actual HTTP transactions.
 class TestClient extends client.BaseAngelClient {
-  final Map<String, client.Service> _services = {};
+  final List<client.Service> _services = [];
 
   /// Session info to be sent to the server on every request.
   final HttpSession session = MockHttpSession(id: 'angel-test-client');
@@ -70,9 +70,11 @@ class TestClient extends client.BaseAngelClient {
   }
 
   @override
-  Future close() {
-    this.client.close();
-    return server.close();
+  Future close() async {
+    await super.close();
+    await Future.wait(_services.map((s) => s.close()));
+    _services.clear();
+    await server.close();
   }
 
   /// Opens a WebSockets connection to the server. This will automatically bind the server
@@ -100,11 +102,21 @@ class TestClient extends client.BaseAngelClient {
     } else if (rq.headers.value('authorization')?.startsWith('Basic ') ==
         true) {
       var encoded = rq.headers.value('authorization')!.substring(6);
-      var decoded = utf8.decode(base64Url.decode(encoded));
-      var oldRq = rq;
-      var newRq = MockHttpRequest(rq.method, rq.uri.replace(userInfo: decoded));
-      oldRq.headers.forEach(newRq.headers.add);
-      rq = newRq;
+      String? decoded;
+      try {
+        decoded = utf8.decode(base64.decode(encoded));
+      } on FormatException {
+        // Sent as it is, for the server to refuse.
+      }
+      if (decoded != null) {
+        var oldRq = rq;
+        var newRq = MockHttpRequest(
+          rq.method,
+          rq.uri.replace(userInfo: decoded),
+        );
+        oldRq.headers.forEach(newRq.headers.add);
+        rq = newRq;
+      }
     }
 
     if (authToken?.isNotEmpty == true) {
@@ -129,11 +141,28 @@ class TestClient extends client.BaseAngelClient {
       extractedHeaders[k] = v.join(',');
     });
 
-    Stream<List<int>> stream = rs;
+    // The cookies a server would send, joined as `package:http` joins
+    // headers.
+    if (rs.cookies.isNotEmpty) {
+      extractedHeaders['set-cookie'] = rs.cookies.join(',');
+    }
 
-    if (autoDecodeGzip != false &&
-        rs.headers['content-encoding']?.contains('gzip') == true) {
+    Stream<List<int>> stream = rs;
+    // -1 means no length was set, as in dart:io.
+    int? contentLength = rs.contentLength < 0 ? null : rs.contentLength;
+
+    // `Content-Encoding` is a list of encodings, in any case.
+    var isGzip =
+        rs.headers['content-encoding']?.any(
+          (v) => v.split(',').any((e) => e.trim().toLowerCase() == 'gzip'),
+        ) ==
+        true;
+
+    if (autoDecodeGzip != false && isGzip) {
       stream = stream.transform(gzip.decoder);
+      // The length, and the header, are those of the compressed body.
+      contentLength = null;
+      extractedHeaders.remove('content-length');
     }
 
     // Calling persistentConnection causes LateInitialization Exception
@@ -145,7 +174,7 @@ class TestClient extends client.BaseAngelClient {
     return StreamedResponse(
       stream,
       rs.statusCode,
-      contentLength: rs.contentLength,
+      contentLength: contentLength,
       isRedirect: rs.headers['location'] != null,
       headers: extractedHeaders,
       persistentConnection:
@@ -175,25 +204,20 @@ class TestClient extends client.BaseAngelClient {
   @override
   client.Service<Id, Data> service<Id, Data>(
     String path, {
-    Type? type,
     client.AngelDeserializer<Data>? deserializer,
   }) {
     var uri = path.toString().replaceAll(_straySlashes, '');
-    return _services.putIfAbsent(
-      uri,
-      () => _MockService<Id, Data>(this, uri, deserializer: deserializer),
-    ) as client.Service<Id, Data>;
+    var s = _MockService<Id, Data>(this, uri, deserializer: deserializer);
+    _services.add(s);
+    return s;
   }
 }
 
 class _MockService<Id, Data> extends client.BaseAngelService<Id, Data> {
   final TestClient _app;
 
-  _MockService(
-    this._app,
-    String basePath, {
-    super.deserializer,
-  }) : super(_app, _app, basePath);
+  _MockService(this._app, String basePath, {super.deserializer})
+    : super(_app, _app, basePath);
 
   @override
   Future<StreamedResponse> send(http.BaseRequest request) {

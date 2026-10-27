@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'dart:io' hide BytesBuilder;
 import 'dart:typed_data';
 
-import 'package:angel3_container/mirrors.dart';
 import 'package:angel3_framework/angel3_framework.dart' hide Header;
 import 'package:angel3_framework/http2.dart';
 import 'package:collection/collection.dart' show IterableExtension;
@@ -33,7 +32,7 @@ void main() {
   late Uri serverRoot;
 
   setUp(() async {
-    app = Angel(reflector: MirrorsReflector())..encoders['gzip'] = gzip.encoder;
+    app = Angel()..encoders['gzip'] = gzip.encoder;
     hierarchicalLoggingEnabled = true;
     app.logger = Logger.detached('angel.http2')
       ..onRecord.listen((rec) {
@@ -53,6 +52,12 @@ void main() {
     app.get('/json', (_, _) => {'foo': 'bar'});
 
     app.get('/stream', (req, res) => jfkStream().pipe(res));
+
+    app.get('/stream-error', (req, res) async {
+      res.write('partial');
+      await Future.delayed(const Duration(milliseconds: 20));
+      throw StateError('boom');
+    });
 
     app.get('/headers', (req, res) async {
       res.headers.addAll({'foo': 'bar', 'x-angel': 'http2'});
@@ -91,6 +96,51 @@ void main() {
       }
 
       await res.close();
+    });
+
+    app.get('/buffered', (req, res) {
+      res
+        ..useBuffer()
+        ..statusCode = 201
+        ..headers['X-Mixed-Case'] = 'yes'
+        ..cookies.add(Cookie('a', 'b'))
+        ..write('buffered body');
+      return res.close();
+    });
+
+    app.post('/trailers', (req, res) async {
+      await req.parseBody();
+      return {'path': req.path, 'trailer': req.headers!.value('x-trailer')};
+    });
+
+    app.post('/slow-body', (req, res) async {
+      await Future<void>.delayed(const Duration(milliseconds: 200));
+      var length = 0;
+      await req.body!.forEach((chunk) => length += chunk.length);
+      return length;
+    });
+
+    app.post('/ignore-body', (req, res) => 'ignored');
+
+    app.get('/buffered-session', (req, res) {
+      res
+        ..useBuffer()
+        ..write(req.session!.id);
+      return res.close();
+    });
+
+    app.get('/finalizer-session', (req, res) {
+      res
+        ..useBuffer()
+        ..write('ok');
+      return res.close();
+    });
+    app.responseFinalizers.add((req, res) {
+      // The first to read the session, after the handler.
+      if (req.uri?.path == '/finalizer-session') {
+        res.headers['x-session'] = req.session!.id;
+      }
+      return true;
     });
 
     app.get('/param/:name', (req, res) => req.params);
@@ -148,6 +198,349 @@ void main() {
     expect(response.body, 'Hello world');
   });
 
+  /// Sends a GET and returns every message of the response, so tests can
+  /// check how it is framed (Http2Client merges all HEADERS frames).
+  Future<List<StreamMessage>> rawGet(String path) async {
+    var socket = await SecureSocket.connect(
+      serverRoot.host,
+      serverRoot.port,
+      onBadCertificate: (_) => true,
+      supportedProtocols: ['h2'],
+    );
+    var connection = ClientTransportConnection.viaSocket(socket);
+    var stream = connection.makeRequest([
+      Header.ascii(':authority', serverRoot.authority),
+      Header.ascii(':method', 'GET'),
+      Header.ascii(':path', path),
+      Header.ascii(':scheme', serverRoot.scheme),
+    ], endStream: true);
+    // Fails if the server resets the stream instead of ending it.
+    var messages = await stream.incomingMessages.toList();
+    await connection.finish();
+    return messages;
+  }
+
+  /// Sends [headers] (and [body], then [trailers], if given) on a new
+  /// connection, and returns the response's status and body.
+  Future<(String?, String)> rawRequest(
+    List<Header> headers, {
+    List<int>? body,
+    List<Header>? trailers,
+  }) async {
+    var socket = await SecureSocket.connect(
+      serverRoot.host,
+      serverRoot.port,
+      onBadCertificate: (_) => true,
+      supportedProtocols: ['h2'],
+    );
+    var connection = ClientTransportConnection.viaSocket(socket);
+    var stream = connection.makeRequest(
+      headers,
+      endStream: body == null && trailers == null,
+    );
+    if (body != null) stream.sendData(body, endStream: trailers == null);
+    if (trailers != null) stream.sendHeaders(trailers, endStream: true);
+
+    String? status;
+    var out = BytesBuilder();
+    await for (var msg in stream.incomingMessages) {
+      if (msg is HeadersStreamMessage) {
+        for (var h in msg.headers) {
+          if (ascii.decode(h.name) == ':status') status = ascii.decode(h.value);
+        }
+      } else if (msg is DataStreamMessage) {
+        out.add(msg.bytes);
+      }
+    }
+    await connection.finish();
+    return (status, utf8.decode(out.takeBytes()));
+  }
+
+  List<Header> requestHeaders(String method, String path) => [
+    Header.ascii(':authority', serverRoot.authority),
+    Header.ascii(':method', method),
+    Header.ascii(':path', path),
+    Header.ascii(':scheme', serverRoot.scheme),
+  ];
+
+  test('trailers do not change the request', () async {
+    var (status, body) = await rawRequest(
+      [
+        ...requestHeaders('POST', '/trailers'),
+        Header.ascii('content-type', 'application/json'),
+      ],
+      body: utf8.encode('{}'),
+      trailers: [
+        Header.ascii(':path', '/elsewhere'),
+        Header.ascii('x-trailer', 'yes'),
+      ],
+    );
+    expect(status, '200');
+    expect(json.decode(body), {'path': 'trailers', 'trailer': null});
+  });
+
+  test('a request without :path is a 400', () async {
+    var (status, _) = await rawRequest([
+      Header.ascii(':authority', serverRoot.authority),
+      Header.ascii(':method', 'GET'),
+      Header.ascii(':scheme', serverRoot.scheme),
+    ]);
+    expect(status, '400');
+  });
+
+  test('a malformed content-length is a 400', () async {
+    var (status, _) = await rawRequest([
+      ...requestHeaders('POST', '/trailers'),
+      Header.ascii('content-length', 'abc'),
+    ], body: utf8.encode('{}'));
+    expect(status, '400');
+  });
+
+  group('request bodies', () {
+    final big = List<int>.filled(1024 * 1024, 120);
+
+    test('are complete when read late', () async {
+      var (status, body) = await rawRequest(
+        requestHeaders('POST', '/slow-body'),
+        body: big,
+      );
+      expect(status, '200');
+      expect(body, '${big.length}');
+    });
+
+    test('do not stop a handler that ignores them', () async {
+      var (status, body) = await rawRequest(
+        requestHeaders('POST', '/ignore-body'),
+        body: big,
+      );
+      expect(status, '200');
+      expect(body, '"ignored"');
+    });
+  });
+
+  test('app.serializer is used', () async {
+    var custom = Angel()
+      ..serializer = ((_) => 'custom')
+      ..get('/', (req, res) => {'a': 1});
+    var ctx = SecurityContext()
+      ..useCertificateChain('dev.pem')
+      ..usePrivateKey('dev.key', password: 'dartdart')
+      ..setAlpnProtocols(['h2'], true);
+    var h2 = AngelHttp2(custom, ctx);
+    var server = await h2.startServer();
+    addTearDown(h2.close);
+    var response = await client.get(
+      Uri.parse('https://127.0.0.1:${server.port}/'),
+    );
+    expect(response.body, 'custom');
+  });
+
+  test('close closes services once, with allowHttp1', () async {
+    var closes = 0;
+    var closing = Angel()..use('/s', _CountingService(() => closes++));
+    var ctx = SecurityContext()
+      ..useCertificateChain('dev.pem')
+      ..usePrivateKey('dev.key', password: 'dartdart')
+      ..setAlpnProtocols(['h2', 'http/1.1'], true);
+    var h2 = AngelHttp2(closing, ctx, allowHttp1: true);
+    await h2.startServer();
+    await h2.close();
+    expect(closes, 1);
+  });
+
+  test('close does not wait for idle HTTP/1 keep-alive connections', () async {
+    var app = Angel()..get('/', (req, res) => 'ok');
+    var ctx = SecurityContext()
+      ..useCertificateChain('dev.pem')
+      ..usePrivateKey('dev.key', password: 'dartdart')
+      ..setAlpnProtocols(['h2', 'http/1.1'], true);
+    var h2 = AngelHttp2(app, ctx, allowHttp1: true)
+      ..closeTimeout = const Duration(seconds: 5);
+    var server = await h2.startServer();
+    var keepAlive = IOClient(
+      HttpClient()..badCertificateCallback = (_, _, _) => true,
+    );
+    addTearDown(keepAlive.close);
+    var response = await keepAlive.get(
+      Uri.parse('https://127.0.0.1:${server.port}/'),
+    );
+    expect(response.body, '"ok"');
+
+    // The client keeps its connection open; close must not wait for it.
+    var elapsed = Stopwatch()..start();
+    await h2.close();
+    expect(elapsed.elapsed, lessThan(const Duration(seconds: 2)));
+  });
+
+  test('response headers apply to the HTTP/1 requests it serves', () async {
+    var app = Angel()
+      ..get('/', (req, res) => 'ok')
+      ..get('/own', (req, res) {
+        res.headers['x-added'] = 'own';
+        return 'ok';
+      });
+    var ctx = SecurityContext()
+      ..useCertificateChain('dev.pem')
+      ..usePrivateKey('dev.key', password: 'dartdart')
+      ..setAlpnProtocols(['h2', 'http/1.1'], true);
+    var h2 = AngelHttp2(app, ctx, allowHttp1: true);
+    var server = await h2.startServer();
+    addTearDown(h2.close);
+    h2
+      ..addResponseHeader({
+        'x-added': ['a', 'b'],
+      })
+      ..removeResponseHeader({'x-frame-options': 'sameorigin'});
+
+    var client = HttpClient()..badCertificateCallback = (_, _, _) => true;
+    addTearDown(() => client.close(force: true));
+    Future<HttpHeaders> headersOf(String path) async {
+      var response = await (await client.getUrl(
+        Uri.parse('https://127.0.0.1:${server.port}$path'),
+      )).close();
+      await response.drain<void>();
+      return response.headers;
+    }
+
+    var defaults = await headersOf('/');
+    expect(defaults.value('x-added'), 'a, b');
+    expect(defaults.value('x-frame-options'), isNull);
+    // A header of the handler replaces the default.
+    expect((await headersOf('/own')).value('x-added'), 'own');
+  });
+
+  test('drain returns the same future when called again', () async {
+    var ctx = SecurityContext()
+      ..useCertificateChain('dev.pem')
+      ..usePrivateKey('dev.key', password: 'dartdart')
+      ..setAlpnProtocols(['h2', 'http/1.1'], true);
+    var h2 = AngelHttp2(Angel(), ctx, allowHttp1: true);
+    await h2.startServer();
+    addTearDown(h2.close);
+    expect(identical(h2.drain(), h2.drain()), isTrue);
+  });
+
+  test(
+    'close lets HTTP/2 and HTTP/1 requests finish, before the hooks',
+    () async {
+      var events = <String>[];
+      var slow = Angel()
+        ..shutdownHooks.add((_) => events.add('hook'))
+        ..get('/slow/:name', (req, res) async {
+          await Future.delayed(const Duration(milliseconds: 300));
+          events.add('${req.params['name']} responded');
+          return 'done';
+        });
+      var ctx = SecurityContext()
+        ..useCertificateChain('dev.pem')
+        ..usePrivateKey('dev.key', password: 'dartdart')
+        ..setAlpnProtocols(['h2', 'http/1.1'], true);
+      var h2 = AngelHttp2(slow, ctx, allowHttp1: true);
+      var server = await h2.startServer();
+      var root = Uri.parse('https://127.0.0.1:${server.port}');
+      var h2Response = client.get(root.replace(path: '/slow/h2'));
+      var h1Response = h1c.get(root.replace(path: '/slow/h1'));
+      await Future.delayed(const Duration(milliseconds: 100));
+      await h2.close();
+      expect((await h2Response).body, '"done"');
+      expect((await h1Response).body, '"done"');
+      expect(events.last, 'hook');
+      expect(events, containsAll(['h2 responded', 'h1 responded']));
+    },
+  );
+
+  group('res.useBuffer()', () {
+    test('sends one HEADERS frame, starting with :status', () async {
+      var messages = await rawGet('/buffered');
+      var frames = messages.whereType<HeadersStreamMessage>().toList();
+      expect(frames, hasLength(1));
+      var names = [for (var h in frames.single.headers) ascii.decode(h.name)];
+      expect(names.first, ':status');
+      expect(
+        names,
+        everyElement(predicate<String>((n) => n == n.toLowerCase())),
+      );
+      expect(names.where((n) => n == 'content-length'), hasLength(1));
+    });
+
+    test('sends status, headers, cookies and body', () async {
+      var response = await client.get(serverRoot.replace(path: '/buffered'));
+      expect(response.statusCode, 201);
+      expect(response.headers['x-mixed-case'], 'yes');
+      expect(response.headers['set-cookie'], startsWith('a=b'));
+      expect(response.headers['content-length'], '13');
+      expect(response.body, 'buffered body');
+    });
+
+    test('compresses the body', () async {
+      var response = await client.get(
+        serverRoot.replace(path: '/buffered'),
+        headers: {'accept-encoding': 'gzip'},
+      );
+      expect(response.headers['content-encoding'], 'gzip');
+      expect(
+        response.headers['content-length'],
+        response.bodyBytes.length.toString(),
+      );
+      expect(utf8.decode(gzip.decode(response.bodyBytes)), 'buffered body');
+    });
+
+    test('warns about a session created after the headers went out', () async {
+      // An app without response finalizers, so the first write sends the
+      // headers at once.
+      var lateApp = Angel()
+        ..get('/', (req, res) {
+          res.write('started:');
+          res.write(req.session!.id); // Too late for the cookie.
+          return res.close();
+        })
+        ..get('/session', (req, res) => req.session!.id);
+      var lateWarnings = <String>[];
+      lateApp.logger = Logger.detached('late-session')
+        ..onRecord
+            .where((r) => r.level == Level.WARNING)
+            .listen((r) => lateWarnings.add(r.message));
+      var ctx = SecurityContext()
+        ..useCertificateChain('dev.pem')
+        ..usePrivateKey('dev.key', password: 'dartdart')
+        ..setAlpnProtocols(['h2'], true);
+      var lateHttp2 = AngelHttp2(lateApp, ctx);
+      var server = await lateHttp2.startServer();
+      addTearDown(lateHttp2.close);
+      var root = Uri.parse('https://127.0.0.1:${server.port}/');
+      var body = (await client.get(root)).body;
+      expect(lateWarnings, contains(contains('DARTSESSID')));
+
+      // Not kept: sending its id back does not find it.
+      var lateId = body.substring('started:'.length);
+      var next = await client.get(
+        root.replace(path: '/session'),
+        headers: {'cookie': 'DARTSESSID=$lateId'},
+      );
+      expect(json.decode(next.body), isNot(lateId));
+    });
+
+    test('sets the cookie for a session a finalizer created', () async {
+      var response = await client.get(
+        serverRoot.replace(path: '/finalizer-session'),
+      );
+      expect(
+        response.headers['set-cookie'],
+        'DARTSESSID=${response.headers['x-session']}; Secure; HttpOnly',
+      );
+    });
+
+    test('sets the session cookie', () async {
+      var response = await client.get(
+        serverRoot.replace(path: '/buffered-session'),
+      );
+      expect(
+        response.headers['set-cookie'],
+        'DARTSESSID=${response.body}; Secure; HttpOnly',
+      );
+    });
+  });
+
   group('headers', () {
     // A bare '%' used to throw outside the error zone and kill the server.
     for (var value in ['100%', 'a%20b', 'x, y', '%zz']) {
@@ -189,6 +582,11 @@ void main() {
       var first = await sessionId();
       var second = await sessionId(cookie: 'DARTSESSID=$first');
       expect(second, first);
+    });
+
+    test('are not created for requests that do not use them', () async {
+      var response = await client.get(serverRoot);
+      expect(response.headers['set-cookie'], isNull);
     });
 
     test('do not adopt an unknown client-chosen id', () async {
@@ -258,7 +656,7 @@ void main() {
   });
 
   test('the session cookie is Secure and HttpOnly', () async {
-    var response = await client.get(serverRoot);
+    var response = await client.get(serverRoot.replace(path: '/session'));
     var cookie = response.headers['set-cookie']!;
     expect(cookie, startsWith('DARTSESSID='));
     expect(cookie, contains('Secure'));
@@ -303,9 +701,59 @@ void main() {
     await expectLater(h2Only.close(), completes);
   });
 
+  test('without allowHttp1, HTTP/1 connections are closed, not left '
+      'hanging', () async {
+    var ctx = SecurityContext()
+      ..useCertificateChain('dev.pem')
+      ..usePrivateKey('dev.key', password: 'dartdart')
+      ..setAlpnProtocols(['h2', 'http/1.1'], true);
+    var h2Only = AngelHttp2(Angel(), ctx);
+    addTearDown(h2Only.close);
+    var server = await h2Only.startServer();
+
+    // The server closes the connection as soon as the handshake picks
+    // HTTP/1.1, which can be before the client has finished its part of it,
+    // or while the request is written: each of these is a close.
+    Future<void> closed() async {
+      try {
+        var socket = await SecureSocket.connect(
+          '127.0.0.1',
+          server.port,
+          onBadCertificate: (_) => true,
+          supportedProtocols: ['http/1.1'],
+        );
+        socket.done.ignore();
+        socket.write('GET / HTTP/1.1\r\nHost: localhost\r\n\r\n');
+        await socket.drain<void>();
+        socket.destroy();
+      } on SocketException {
+        // Closed during the handshake, or under the request.
+      } on HandshakeException {
+        // Closed during the handshake.
+      }
+    }
+
+    await expectLater(closed().timeout(const Duration(seconds: 5)), completes);
+  });
+
   test('allowHttp1', () async {
     var response = await h1c.get(serverRoot);
     expect(response.body, 'Hello world');
+  });
+
+  test('a failure after the headers are sent resets the stream', () async {
+    // Rather than an error page appended to the body sent under its status.
+    Object? result;
+    try {
+      var response = await client.get(
+        serverRoot.replace(path: '/stream-error'),
+      );
+      result = response.body;
+    } catch (e) {
+      result = e;
+    }
+    expect(result, isNot(contains('<!DOCTYPE html>')));
+    expect(result, isNot(isA<String>()));
   });
 
   test('streamed response', () async {
@@ -445,35 +893,27 @@ void main() {
       p.requestHeaders.firstWhere((h) => ascii.decode(h.name) == ':path').value,
     );
 
-    /*
-    Future<String> getBody(ClientTransportStream stream) async {
-      await stream.outgoingMessages.close();
-      var bb = await stream.incomingMessages
-          .map((s) {
-            if (s is HeadersStreamMessage) {
-              for (var h in s.headers) {
-                print('${ASCII.decode(h.name)}: ${ASCII.decode(h.value)}');
-              }
-            } else if (s is DataStreamMessage) {
-              print(UTF8.decode(s.bytes));
+    Future<(String?, String)> getResponse(TransportStreamPush p) async {
+      String? status;
+      var body = BytesBuilder();
+      await for (var msg in p.stream.incomingMessages) {
+        if (msg is HeadersStreamMessage) {
+          for (var h in msg.headers) {
+            if (ascii.decode(h.name) == ':status') {
+              status = ascii.decode(h.value);
             }
-
-            return s;
-          })
-          .where((s) => s is DataStreamMessage)
-          .cast<DataStreamMessage>()
-          .fold<BytesBuilder>(
-              BytesBuilder(), (out, msg) => out..add(msg.bytes));
-      return UTF8.decode(bb.takeBytes());
+          }
+        } else if (msg is DataStreamMessage) {
+          body.add(msg.bytes);
+        }
+      }
+      return (status, utf8.decode(body.takeBytes()));
     }
-    */
 
     expect(getPath(pushA), '/a');
     expect(getPath(pushB), '/b');
-
-    // However, Chrome, Firefox, Edge all can
-    //expect(await getBody(pushA.stream), 'a');
-    //expect(await getBody(pushB.stream), 'b');
+    expect(await getResponse(pushA), ('200', 'a'));
+    expect(await getResponse(pushB), ('200', 'b'));
   });
 
   group('body parsing', () {
@@ -531,4 +971,12 @@ void main() {
       );
     });
   });
+}
+
+class _CountingService extends Service {
+  final void Function() onClose;
+  _CountingService(this.onClose);
+
+  @override
+  Future<void> close() async => onClose();
 }

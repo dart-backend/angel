@@ -38,6 +38,22 @@ void main() {
       ..get('/file', (req, res) {
         return res.streamFile(const LocalFileSystem().file(file.path));
       })
+      ..get('/pre-encoded', (req, res) async {
+        res.headers['content-encoding'] = 'gzip';
+        res.add(gzip.encode(utf8.encode('pre')));
+        await res.close();
+      })
+      ..get('/pre-encoded-buffered', (req, res) {
+        res
+          ..useBuffer()
+          ..headers['content-encoding'] = 'gzip'
+          ..add(gzip.encode(utf8.encode('pre')));
+        return res.close();
+      })
+      ..get('/no-content', (req, res) {
+        res.statusCode = 204;
+        return res.close();
+      })
       ..get('/writes', (req, res) async {
         res
           ..write('Hello, ')
@@ -155,6 +171,31 @@ void main() {
         ResponseContext.selectEncoder(encoders, 'gzip;q=0.5')?.name,
         'gzip',
       );
+    });
+  });
+
+  group('caching and pre-encoded bodies', () {
+    test('responses vary by Accept-Encoding', () async {
+      for (var acceptEncoding in ['gzip', 'identity']) {
+        var rs = await get('/writes', acceptEncoding);
+        await rs.drain<void>();
+        expect(rs.headers.value('vary'), contains('Accept-Encoding'));
+      }
+    });
+
+    for (var path in ['/pre-encoded', '/pre-encoded-buffered']) {
+      test('$path is not compressed again', () async {
+        var rs = await get(path, 'gzip');
+        expect(rs.headers.value('content-encoding'), 'gzip');
+        expect(utf8.decode(gzip.decode(await bytesOf(rs))), 'pre');
+      });
+    }
+
+    test('a 204 response gets no compressed body', () async {
+      var rs = await get('/no-content', 'gzip');
+      expect(rs.statusCode, 204);
+      expect(rs.headers.value('content-encoding'), isNull);
+      expect(await bytesOf(rs), isEmpty);
     });
   });
 }

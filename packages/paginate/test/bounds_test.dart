@@ -19,8 +19,10 @@ void main() {
     var app = Angel();
 
     app.get('/api/songs', (req, res) {
-      var p = Paginator(mjAlbums, itemsPerPage: mjAlbums.length);
-      p.goToPage(int.parse(req.queryParameters['page'] as String? ?? '1'));
+      var query = req.queryParameters;
+      var limit = int.tryParse(query[r'$limit'] as String? ?? '');
+      var p = Paginator(mjAlbums, itemsPerPage: limit ?? mjAlbums.length);
+      p.goToPage(int.tryParse(query['page'] as String? ?? '') ?? 1);
       return p.current;
     });
 
@@ -58,5 +60,16 @@ void main() {
     expect(page.startIndex, 0);
     expect(page.endIndex, mjAlbums.length - 1);
     expect(page.data, mjAlbums);
+  });
+
+  test('a page that is not a number is the first', () async {
+    var response = await client.get(
+      Uri(path: '/api/songs', queryParameters: {'page': 'x'}),
+    );
+    expect(response.statusCode, 200);
+    var page = PaginationResult<Map<String, dynamic>>.fromMap(
+      json.decode(response.body) as Map<String, dynamic>,
+    );
+    expect(page.currentPage, 1);
   });
 }

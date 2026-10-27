@@ -1,5 +1,28 @@
 # Change Log
 
+## 10.0.0
+
+### Breaking changes in 10.0.0
+
+* **Breaking:** `origin: false` disables CORS, as documented, where it allowed every origin with `Access-Control-Allow-Origin: *`
+* **Breaking:** A refused origin, or a request without one, gets no `Access-Control-Allow-Origin` header, where it got `false`; its preflight is still answered
+* **Breaking:** Only a preflight request (`OPTIONS`, as sent, with an `Access-Control-Request-Method` header) is answered by `cors`; another `OPTIONS` request, or one made `OPTIONS` by a method override, continues to the app's handlers, where it was answered with `successStatus`
+* **Breaking:** `Access-Control-Allow-Headers` is sent on preflights only, where the request's `Access-Control-Request-Headers` were also echoed on other responses
+* **Breaking:** An `origin` of a type `CorsOptions` does not describe is an `ArgumentError` of the constructor, where it allowed every origin
+
+### New in 10.0.0
+
+* `origin` may be an async predicate, `Future<bool> Function(String)`
+
+### Fixes in 10.0.0
+
+* **No origin:** A request without an `Origin` header, with a predicate or `origin: true`, is answered, where it failed with a 500
+* **`preflightContinue`:** Leaves the preflight response open for the handlers after `cors`, where it was closed
+* **`Vary`:** `origin` is added to the `Vary` header, where it replaced it, when the origin is reflected (a refused one's response too), so caches keep the responses of each origin apart; a fixed `origin` does not vary
+* **Example:** Allows headers, not a method, in `allowedHeaders`, and its `dynamicCors` no longer allows every origin
+* **Docs:** The README tells how to install and use the package, and how to migrate from 9.x, and `CorsOptions.credentials` tells that browsers refuse credentials with the default `origin` of `'*'`
+
+
 ## 9.1.0
 
 * Require Dart >= 3.13

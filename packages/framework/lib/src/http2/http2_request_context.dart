@@ -8,6 +8,7 @@ import 'package:collection/collection.dart' show IterableExtension;
 import 'package:http2/transport.dart';
 import 'package:angel3_mock_request/angel3_mock_request.dart';
 import 'package:uuid/uuid.dart';
+import 'package:meta/meta.dart';
 
 final RegExp _straySlashes = RegExp(r'(^/+)|(/+$)');
 
@@ -22,6 +23,8 @@ class Http2RequestContext extends RequestContext<ServerTransportStream?> {
   ServerTransportStream? _stream;
   Uri? _uri;
   HttpSession? _session;
+  HttpSession Function({bool store})? _createSession;
+  void Function()? _onClose;
 
   Http2RequestContext._(this.container);
 
@@ -33,8 +36,9 @@ class Http2RequestContext extends RequestContext<ServerTransportStream?> {
     Socket socket,
     Angel app,
     Map<String, MockHttpSession> sessions,
-    Uuid uuid,
-  ) {
+    Uuid uuid, {
+    void Function(MockHttpSession session)? onSessionCreated,
+  }) {
     var c = Completer<Http2RequestContext>();
     var req = Http2RequestContext._(app.container.createChild())
       ..app = app
@@ -52,6 +56,11 @@ class Http2RequestContext extends RequestContext<ServerTransportStream?> {
 
     void finalize() {
       if (c.isCompleted) return;
+      if (req._method == null || req._path == null) {
+        throw AngelHttpException.badRequest(
+          message: 'Missing :method or :path pseudo-header.',
+        );
+      }
       req
         .._cookies = List.unmodifiable(cookies)
         .._uri = uri;
@@ -62,22 +71,21 @@ class Http2RequestContext extends RequestContext<ServerTransportStream?> {
       var sessionId = cookies
           .firstWhereOrNull((c) => c.name == 'DARTSESSID')
           ?.value;
-      var session = sessionId == null ? null : sessions[sessionId];
-      if (session == null) {
+      req._session = sessionId == null ? null : sessions[sessionId];
+      // A new session is only created once `session` is read, like dart:io:
+      // creating one per cookie-less request would let any client fill the
+      // session store until the sessions expire.
+      req._createSession = ({bool store = true}) {
         var id = uuid.v4();
-        session = sessions[id] = MockHttpSession(id: id);
-      }
-      req._session = session;
+        var session = MockHttpSession(id: id);
+        if (store) {
+          sessions[id] = session;
+          onSessionCreated?.call(session);
+        }
+        return session;
+      };
 
       c.complete(req);
-    }
-
-    void fail(Object error, StackTrace stackTrace) {
-      if (!c.isCompleted) {
-        c.completeError(error, stackTrace);
-      } else if (!req._body.isClosed) {
-        req._body.addError(error, stackTrace);
-      }
     }
 
     void parseHost(String value) {
@@ -140,7 +148,57 @@ class Http2RequestContext extends RequestContext<ServerTransportStream?> {
       }
     }
 
-    stream.incomingMessages.listen(
+    // Body data is read only as fast as the handler consumes it, so an
+    // unread or slowly read body is held back by HTTP/2 flow control rather
+    // than buffered in memory. Once nobody can read it any more, it is
+    // drained and discarded.
+    late StreamSubscription<StreamMessage> sub;
+    var waitingForReader = false, pausedByReader = false;
+    void stopWaiting() {
+      if (waitingForReader) {
+        waitingForReader = false;
+        sub.resume();
+      }
+    }
+
+    void readerResumed() {
+      if (pausedByReader) {
+        pausedByReader = false;
+        sub.resume();
+      }
+    }
+
+    // A reader that cancels while paused (e.g. a body rejected mid-parse)
+    // never resumes, so cancelling and closing release its pause too.
+    void stopReading() {
+      stopWaiting();
+      readerResumed();
+    }
+
+    req._body
+      ..onListen = stopWaiting
+      ..onPause = () {
+        if (!pausedByReader) {
+          pausedByReader = true;
+          sub.pause();
+        }
+      }
+      ..onResume = readerResumed
+      ..onCancel = stopReading;
+
+    void fail(Object error, StackTrace stackTrace) {
+      if (!c.isCompleted) {
+        c.completeError(error, stackTrace);
+        // No request context will read or close the body, so discard the
+        // rest of it; holding it back would stall the stream's flow control.
+        req._body.close();
+        stopReading();
+      } else if (!req._body.isClosed) {
+        req._body.addError(error, stackTrace);
+      }
+    }
+
+    sub = stream.incomingMessages.listen(
       (msg) {
         // Nothing may throw out of this listener: it runs outside the
         // request's error zone, so an exception here would be unhandled
@@ -148,8 +206,21 @@ class Http2RequestContext extends RequestContext<ServerTransportStream?> {
         try {
           if (msg is DataStreamMessage) {
             finalize();
-            req._body.add(msg.bytes);
+            if (!req._body.isClosed) {
+              // Kept even while waiting, so no body bytes are ever lost.
+              req._body.add(msg.bytes);
+              if (!req._body.hasListener && !waitingForReader) {
+                // Wait for the handler to read the body (or close the request).
+                waitingForReader = true;
+                sub.pause();
+              }
+            }
           } else if (msg is HeadersStreamMessage) {
+            if (c.isCompleted) {
+              // Trailers: they must not change the request, which is already
+              // being handled, and are not exposed.
+              return;
+            }
             msg.headers.forEach(handleHeader);
             if (msg.endStream) finalize();
           }
@@ -158,12 +229,17 @@ class Http2RequestContext extends RequestContext<ServerTransportStream?> {
         }
       },
       onDone: () {
-        finalize();
+        try {
+          finalize();
+        } catch (e, st) {
+          fail(e, st);
+        }
         req._body.close();
       },
       cancelOnError: true,
       onError: fail,
     );
+    req._onClose = stopReading;
 
     return c.future;
   }
@@ -177,10 +253,36 @@ class Http2RequestContext extends RequestContext<ServerTransportStream?> {
   @override
   Uri? get uri => _uri;
 
+  /// The user's HTTP session, created on first access if the client did not
+  /// send the id of an existing one.
+  ///
+  /// A new session's id reaches the client in a `DARTSESSID` cookie, which
+  /// can only go out with the response headers: read this before an
+  /// unbuffered response starts its body, or the session is lost.
   @override
   HttpSession? get session {
-    return _session;
+    if (_session == null && _createSession != null && _headersSent) {
+      app?.logger.warning(
+        'A session was created after the response headers were sent, so the '
+        'client will not get its DARTSESSID cookie. Read req.session before '
+        'writing the response body.',
+      );
+      // Usable for the rest of this request, but not kept: no client can
+      // send its id back, so storing it would only fill the session store.
+      return _session = _createSession!(store: false);
+    }
+    return _session ??= _createSession?.call();
   }
+
+  bool _headersSent = false;
+
+  /// Called when the response's headers are sent (or, for a buffered
+  /// response, once its session cookie has been decided).
+  @internal
+  void markHeadersSent() => _headersSent = true;
+
+  /// Whether this request has a session, without creating one.
+  bool get hasSession => _session != null;
 
   @override
   InternetAddress get remoteAddress => _socket.remoteAddress;
@@ -209,6 +311,7 @@ class Http2RequestContext extends RequestContext<ServerTransportStream?> {
   @override
   Future close() {
     _body.close();
+    _onClose?.call();
     return super.close();
   }
 

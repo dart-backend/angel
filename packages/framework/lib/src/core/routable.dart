@@ -23,26 +23,16 @@ typedef RequestHandler = FutureOr<dynamic> Function(
 /// Sequentially runs a list of [handlers] of middleware, and returns early if any does not
 /// return `true`. Works well with [Router].chain.
 RequestHandler chain(Iterable<RequestHandler> handlers) {
-  return (req, res) {
-    Future Function()? runPipeline;
-
+  return (req, res) async {
+    // Like a route's own handlers: each must return `true` for the next to
+    // run, and results other than `bool` are serialized.
     for (var handler in handlers) {
-      //if (handler == null) break;
-
-      if (runPipeline == null) {
-        runPipeline = () => Future.sync(() => handler(req, res));
-      } else {
-        var current = runPipeline;
-        runPipeline = () => current().then(
-          (result) => !res.isOpen
-              ? Future.value(result)
-              : req.app!.executeHandler(handler, req, res),
-        );
+      if (!res.isOpen) return false;
+      if (await req.app!.executeHandler(handler, req, res) != true) {
+        return false;
       }
     }
-
-    runPipeline ??= () => Future.value();
-    return runPipeline();
+    return true;
   };
 }
 
@@ -86,10 +76,13 @@ class Routable extends Router<RequestHandler> {
 
   /// Retrieves the service assigned to the given path.
   T? findService<T extends Service>(Pattern path) {
-    return _serviceLookups.putIfAbsent(path, () {
-      return _services[path] ??
-          _services[path.toString().replaceAll(_straySlashes, '')];
-    }) as T?;
+    var found =
+        _serviceLookups[path] ??
+        _services[path] ??
+        _services[path.toString().replaceAll(_straySlashes, '')];
+    // Misses are not cached, so a service mounted later is still found.
+    if (found != null) _serviceLookups[path] = found;
+    return found as T?;
   }
 
   /// Shorthand for finding a [Service] in a statically-typed manner.
@@ -142,6 +135,8 @@ class Routable extends Router<RequestHandler> {
     T service,
   ) {
     var hooked = HookedService<Id, Data, T>(service);
+    // A lookup cached for this path may name a replaced service.
+    _serviceLookups.clear();
     _services[path.toString().trim().replaceAll(RegExp(r'(^/+)|(/+$)'), '')] =
         hooked;
     hooked.addRoutes();

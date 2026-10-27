@@ -8,6 +8,10 @@ class JoinBuilder {
   final String? key, value, op, alias;
   final bool aliasAllFields;
 
+  /// The query joined, when it is one rather than a table or SQL: its own
+  /// joins add columns to the rows too.
+  final Query? query;
+
   /// A callback to produces the expression to join against, i.e.
   /// a table name, or the result of compiling a query.
   final String Function() to;
@@ -23,6 +27,7 @@ class JoinBuilder {
     this.alias,
     this.additionalFields = const [],
     this.aliasAllFields = false,
+    this.query,
   }) {
     //assert(to != null,
     //    'computation of this join threw an error, and returned null.');
@@ -37,6 +42,9 @@ class JoinBuilder {
     if (alias != null) right = '$alias.$v';
     return right;
   }
+
+  /// The name of the column of [name], in the rows of the query it joins.
+  String columnNameFor(String name) => aliasAllFields ? '${alias}_$name' : name;
 
   String nameFor(String name) {
     if (aliasAllFields) name = '${alias}_$name';

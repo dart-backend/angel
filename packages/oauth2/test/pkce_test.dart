@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:collection';
 
-import 'package:angel3_container/mirrors.dart';
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_framework/http.dart';
 import 'package:angel3_oauth2/angel3_oauth2.dart';
@@ -15,9 +14,10 @@ void main() {
   Angel app;
   late Uri authorizationEndpoint, tokenEndpoint;
   late TestClient testClient;
+  late AngelHttp http;
 
   setUp(() async {
-    app = Angel(reflector: MirrorsReflector());
+    app = Angel();
     app.container.registerSingleton(AuthCodes());
 
     var server = _Server();
@@ -35,7 +35,7 @@ void main() {
         if (rec.stackTrace != null) print(rec.stackTrace);
       });
 
-    var http = AngelHttp(app);
+    http = AngelHttp(app);
     var s = await http.startServer();
     var url = 'http://${s.address.address}:${s.port}';
     authorizationEndpoint = Uri.parse('$url/oauth2/authorize');
@@ -46,6 +46,7 @@ void main() {
 
   tearDown(() async {
     await testClient.close();
+    await http.close();
   });
 
   group('get auth code', () {
@@ -123,7 +124,7 @@ void main() {
           hasStatus(400),
           isJson({
             'error': 'invalid_request',
-            'error_description': "The `code_challenge_method` parameter must be either 'plain' or 's256'.",
+            'error_description': "The `code_challenge_method` parameter must be either 'plain' or 'S256'.",
           }),
         ),
       );

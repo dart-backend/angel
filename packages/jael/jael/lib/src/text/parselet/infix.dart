@@ -16,8 +16,9 @@ const Map<TokenType, InfixParselet> infixParselets = {
   TokenType.gte: BinaryParselet(11),
   TokenType.equ: BinaryParselet(10),
   TokenType.nequ: BinaryParselet(10),
+  TokenType.and: BinaryParselet(6),
+  TokenType.or: BinaryParselet(5),
   TokenType.question: ConditionalParselet(),
-  TokenType.equals: BinaryParselet(3),
   TokenType.elvis: BinaryParselet(3),
 };
 
@@ -108,13 +109,14 @@ class CallParselet implements InfixParselet {
   Expression? parse(Parser parser, Expression left, Token token) {
     var arguments = <Expression>[];
     var namedArguments = <NamedArgument>[];
-    var argument = parser.parseExpression(0);
+    // The positional arguments, up to the first named one, `name:`.
+    var argument = parser.atNamedArgument ? null : parser.parseExpression(0);
 
     while (argument != null) {
       arguments.add(argument);
       if (!parser.next(TokenType.comma)) break;
       parser.skipExtraneous(TokenType.comma);
-      argument = parser.parseExpression(0);
+      argument = parser.atNamedArgument ? null : parser.parseExpression(0);
     }
 
     var namedArgument = parser.parseNamedArgument();

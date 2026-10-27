@@ -65,12 +65,15 @@ class PostgreSqlPoolExecutor extends QueryExecutor {
     });
   }
 
-  /// Run query in a transaction.
+  /// Runs [f] in a transaction, on a connection of the pool, as
+  /// [PostgreSqlExecutor.transaction] does. To nest a transaction, call
+  /// `transaction` on the executor [f] is given, which runs in a savepoint.
+  ///
+  /// Calling it on this executor from inside [f] runs an independent
+  /// transaction on another connection, committed or rolled back on its own,
+  /// once the pool has a connection free: with none, as with a pool of one
+  /// connection, it waits forever, as [f] waits for it.
   @override
-  Future<T> transaction<T>(FutureOr<T> Function(QueryExecutor) f) async {
-    return _pool.runTx((session) async {
-      var exec = PostgreSqlExecutor(session, logger: logger);
-      return await f(exec);
-    });
-  }
+  Future<T> transaction<T>(FutureOr<T> Function(QueryExecutor) f) =>
+      PostgreSqlExecutor(_pool, logger: logger).transaction(f);
 }

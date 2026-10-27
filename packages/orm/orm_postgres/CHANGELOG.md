@@ -1,5 +1,23 @@
 # Change Log
 
+## 10.0.0
+
+### Breaking changes in 10.0.0
+
+* **Breaking:** An error of a `transaction`, such as a `PgException` of the database or one its callback throws, is thrown as it is, where it was a `StateError('The transaction was cancelled.')` without the error or its stack trace
+* **Breaking:** Requires `angel3_orm` 10, and `postgres` 3.5.20, which throws the error of a transaction rather than that of its rollback, recovers a transaction after a rollback to a savepoint, returns the rows of the statement after a failed one, and fails a transaction started from inside its own callback rather than deadlock
+
+### New in 10.0.0
+
+* `transaction` on the executor its callback is given runs in a savepoint of that transaction, as PostgreSQL does not nest transactions: what it does is rolled back if it throws, even when the outer callback catches its error, and committed with the outer transaction otherwise. Savepoints at one level of nesting run one at a time, as they form a stack, whichever executor of the transaction they are made with, and one made inside another runs at the next level, so it does not wait for it; a savepoint that waits for another at its level that it did not start inside itself waits forever; a savepoint whose callback leaves the transaction aborted, by catching an error of the database, is rolled back to as if the callback threw; and one that cannot be rolled back to throws the error of its rollback. Each savepoint has a name of its own, and a transaction or savepoint waits for the savepoints started inside it, even ones its callback does not await, before it is committed, released or rolled back, as that would end them too; a call made after its savepoint ended, such as from a timer, runs in the one around it. A query on the transaction's executor while a savepoint of it is open is part of that savepoint. It threw a `TypeError`. Calling `transaction` on the executor of the connection from inside the callback still throws, as the connection is in use
+
+### Fixes in 10.0.0
+
+* **Pool:** `PostgreSqlPoolExecutor.transaction` behaves as that of `PostgreSqlExecutor`, with savepoints for a transaction nested through the executor its callback is given
+* **Transactions:** A failed transaction is rolled back once, by the driver, where a second rollback that was not awaited could fail as an uncaught error, and the transaction logs its failure at `fine` rather than as a warning, as its error is thrown to the caller; `query` still logs an error of the database as a warning
+* **Docs:** The README tells how to install and use the package, and how to migrate from 9.x
+
+
 ## 9.1.0
 
 * Require Dart >= 3.13

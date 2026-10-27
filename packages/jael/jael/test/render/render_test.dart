@@ -33,7 +33,12 @@ void main() {
     }
 
     expect(document, isNotNull);
-    const jael.Renderer().render(document!, buf, scope);
+    const jael.Renderer().render(
+      document!,
+      buf,
+      scope,
+      memberResolver: _members,
+    );
     print(buf);
 
     expect(
@@ -72,7 +77,12 @@ void main() {
       values: {'pokemon': const _Pokemon('Darkrai', 'Dark')},
     );
 
-    const jael.Renderer().render(document, buf, scope);
+    const jael.Renderer().render(
+      document,
+      buf,
+      scope,
+      memberResolver: _members,
+    );
     print(buf);
 
     expect(
@@ -111,7 +121,12 @@ void main() {
     var document = jael.parseDocument(template, sourceUrl: 'test.jael')!;
     var scope = SymbolTable<dynamic>(values: {'starters': _starters});
 
-    const jael.Renderer().render(document, buf, scope);
+    const jael.Renderer().render(
+      document,
+      buf,
+      scope,
+      memberResolver: _members,
+    );
     print(buf);
 
     expect(
@@ -155,7 +170,12 @@ void main() {
     var document = jael.parseDocument(template, sourceUrl: 'test.jael')!;
     var scope = SymbolTable<dynamic>(values: {'starters': _starters});
 
-    const jael.Renderer().render(document, buf, scope);
+    const jael.Renderer().render(
+      document,
+      buf,
+      scope,
+      memberResolver: _members,
+    );
     print(buf);
 
     expect(
@@ -200,7 +220,12 @@ void main() {
     var document = jael.parseDocument(template, sourceUrl: 'test.jael')!;
     var scope = SymbolTable();
 
-    const jael.Renderer().render(document, buf, scope);
+    const jael.Renderer().render(
+      document,
+      buf,
+      scope,
+      memberResolver: _members,
+    );
     print(buf);
 
     expect(
@@ -247,7 +272,12 @@ void main() {
     var document = jael.parseDocument(template, sourceUrl: 'test.jael')!;
     var scope = SymbolTable();
 
-    const jael.Renderer().render(document, buf, scope);
+    const jael.Renderer().render(
+      document,
+      buf,
+      scope,
+      memberResolver: _members,
+    );
     print(buf);
 
     expect(
@@ -273,7 +303,12 @@ void main() {
     var document = jael.parseDocument(template, sourceUrl: 'test.jael')!;
     var scope = SymbolTable();
 
-    const jael.Renderer().render(document, buf, scope);
+    const jael.Renderer().render(
+      document,
+      buf,
+      scope,
+      memberResolver: _members,
+    );
     print(buf);
 
     expect(
@@ -307,7 +342,12 @@ void main() {
       values: {'account': _Account(isDisabled: true)},
     );
 
-    const jael.Renderer().render(document, buf, scope);
+    const jael.Renderer().render(
+      document,
+      buf,
+      scope,
+      memberResolver: _members,
+    );
     print(buf);
 
     expect(buf.toString().trim(), 'BAN HAMMER LOLOL');
@@ -334,7 +374,12 @@ void main() {
       values: {'account': _Account(isDisabled: null)},
     );
 
-    const jael.Renderer().render(document, buf, scope);
+    const jael.Renderer().render(
+      document,
+      buf,
+      scope,
+      memberResolver: _members,
+    );
     print(buf);
 
     expect(buf.toString().trim(), 'Weird...');
@@ -346,6 +391,15 @@ const List<_Pokemon> _starters = [
   _Pokemon('Charmander', 'Fire'),
   _Pokemon('Squirtle', 'Water'),
 ];
+
+/// The members of the classes of the tests, which are read without
+/// reflection.
+Object? _members(Object? target, String name) => switch ((target, name)) {
+  (_Pokemon p, 'name') => p.name,
+  (_Pokemon p, 'type') => p.type,
+  (_Account a, 'isDisabled') => a.isDisabled,
+  _ => jael.noMember,
+};
 
 class _Pokemon {
   final String name, type;

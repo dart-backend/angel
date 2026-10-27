@@ -1,5 +1,27 @@
 # Change Log
 
+## 10.0.0
+
+### Breaking changes in 10.0.0
+
+* **Breaking:** `POST /auth/token` no longer revives expired JWTs, which made a stolen JWT valid for ever. It renews a valid one, or one expired within the new `reviveGracePeriod` (default: none), whose user still exists
+* **Breaking:** `jwtLifeSpan` defaults to one day (`AngelAuth.defaultJwtLifeSpan`); `-1` (never expire) is warned about with a fixed `jwtKey`
+* **Breaking:** The `token` cookie is `SameSite=Lax` (the new `cookieSameSite`), against CSRF, and is set only when a user logs in or a JWT is revived, not for `Bearer` requests
+* **Breaking:** `allowTokenInQuery` defaults to `false`; enable it for the browser WebSocket client of `angel3_websocket`
+* **Breaking:** JWTs have standard `iat` and `exp` claims, in seconds; JWTs issued before are still read
+
+### Fixes in 10.0.0
+
+* **Logout:** Expires the `token` cookie, instead of setting it to `""`
+* **JWTs:** Signatures are compared in constant time, a malformed JWT is a 401 instead of a server error, and a JWT without an IP keeps none. `Bearer` is matched whole and in any case
+* **Local strategy:** With `allowBasic`, form logins work too; a malformed Basic header is a 400, and credentials are read as UTF-8
+* **Streams:** `onLogin` and `onLogout` are broadcast streams, so logins are not kept in memory, and both close on shutdown
+* **`authenticate`:** Returns once a strategy has answered the request itself, instead of throwing 401
+* **Key:** The default `jwtKey` is of random characters, not control characters
+* **Tests:** No longer use `MirrorsReflector`; `AngelAuth` needs no reflection
+* **Docs:** The README tells how to install and use the package, and how to migrate from 9.x
+
+
 ## 9.1.0
 
 * Require Dart >= 3.13

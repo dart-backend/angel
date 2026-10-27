@@ -53,7 +53,7 @@ void main() {
     test('first page', () {
       var paginator = Paginator<int>(data);
       expect(paginator.pageNumber, 1);
-      var r = paginator.current!;
+      var r = paginator.current;
       print(r.toJson());
       expect(r.total, data.length);
       expect(r.itemsPerPage, 5);
@@ -62,14 +62,17 @@ void main() {
       expect(r.nextPage, 2);
       expect(r.startIndex, 0);
       expect(r.endIndex, 4);
-      expect(r.data, data.skip(r.startIndex!).take(r.itemsPerPage!).toList());
+      expect(
+        r.data,
+        data.skip(r.startIndex as int).take(r.itemsPerPage as int).toList(),
+      );
     });
   });
 
   test('third page', () {
     var paginator = Paginator<int>(data)..goToPage(3);
     expect(paginator.pageNumber, 3);
-    var r = paginator.current!;
+    var r = paginator.current;
     print(r.toJson());
     expect(r.total, data.length);
     expect(r.itemsPerPage, 5);
@@ -78,7 +81,10 @@ void main() {
     expect(r.nextPage, 4);
     expect(r.startIndex, 10);
     expect(r.endIndex, 14);
-    expect(r.data, data.skip(r.startIndex!).take(r.itemsPerPage!).toList());
+    expect(
+      r.data,
+      data.skip(r.startIndex as int).take(r.itemsPerPage as int).toList(),
+    );
 
     paginator.back();
     expect(paginator.pageNumber, 2);
@@ -87,7 +93,7 @@ void main() {
   test('last page', () {
     var paginator = Paginator<int>(data);
     paginator.goToPage(paginator.lastPageNumber);
-    var r = paginator.current!;
+    var r = paginator.current;
     expect(r.total, data.length);
     expect(r.itemsPerPage, 5);
     expect(r.previousPage, paginator.lastPageNumber - 1);
@@ -96,22 +102,72 @@ void main() {
     expect(r.startIndex, (paginator.lastPageNumber - 1) * 5);
     expect(r.endIndex, r.startIndex);
     expect(r.data, [data.last]);
-    expect(r.data, data.skip(r.startIndex!).take(r.itemsPerPage!).toList());
+    expect(
+      r.data,
+      data.skip(r.startIndex as int).take(r.itemsPerPage as int).toList(),
+    );
   });
 
   test('dump pages', () {
     var paginator = Paginator<int>(data);
     print('${paginator.lastPageNumber} page(s) of data:');
 
-    do {
-      print('  * Page #${paginator.pageNumber}: ${paginator.current!.data}');
+    var pages = 0;
+    while (true) {
+      print('  * Page #${paginator.pageNumber}: ${paginator.current.data}');
+      pages++;
+      if (!paginator.canGoForward) break;
       paginator.next();
-    } while (paginator.canGoForward);
+    }
+    expect(pages, paginator.lastPageNumber);
+  });
+
+  test('cannot go forward from the last page', () {
+    var paginator = Paginator<int>(data)..goToPage(21);
+    expect(paginator.canGoForward, isFalse);
+    paginator.next();
+    expect(paginator.pageNumber, 21);
+  });
+
+  test('next stops at the last page of a single page', () {
+    var paginator = Paginator([1, 2, 3, 4])..next();
+    var page = paginator.current;
+    expect(paginator.pageNumber, 1);
+    expect(page.startIndex, 0);
+    expect(page.endIndex, 3);
+  });
+
+  test('itemsPerPage less than 1 is an ArgumentError', () {
+    expect(() => Paginator(data, itemsPerPage: 0), throwsArgumentError);
+    expect(() => Paginator(data, itemsPerPage: -1), throwsArgumentError);
+  });
+
+  test('later changes to the items are not seen', () {
+    var items = [1, 2, 3];
+    var paginator = Paginator(items);
+    expect(paginator.current.total, 3);
+    items.insert(0, 0);
+    expect(paginator.current.data, [1, 2, 3]);
+    expect(paginator.lastPageNumber, 1);
+  });
+
+  test('a lazy iterable is read once', () {
+    var reads = 0;
+    var items = Iterable.generate(12, (i) {
+      reads++;
+      return i;
+    });
+    var paginator = Paginator(items)
+      ..next()
+      ..next();
+    expect(paginator.current.data, [10, 11]);
+    expect(paginator.canGoForward, isFalse);
+    expect(reads, 12);
   });
 
   test('empty collection', () {
     var paginator = Paginator([]);
-    var page = paginator.current!;
+    var page = paginator.current;
     print(page.toJson());
 
     expect(page.total, 0);

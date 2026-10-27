@@ -2,7 +2,7 @@ services:
 
   mongo:
     image: docker.io/mongo:latest
-    restart: no
+    restart: "no"
     ports:
       - 27017:27017
     environment:
@@ -14,7 +14,7 @@ services:
 
   mongo-express:
     image: docker.io/mongo-express:latest
-    restart: no
+    restart: "no"
     depends_on:
       - mongo
     ports:

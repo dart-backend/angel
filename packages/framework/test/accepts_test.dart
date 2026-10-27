@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:angel3_container/mirrors.dart';
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_framework/http.dart';
 import 'package:angel3_mock_request/angel3_mock_request.dart';
@@ -98,6 +97,58 @@ void main() {
       expect(() => req.accepts(null), throwsArgumentError);
     });
   });
+
+  test('a q=0 type beats a wildcard', () async {
+    var req = await acceptContentTypes(['text/html;q=0', '*/*']);
+    expect(req.accepts('text/html'), isFalse);
+    expect(req.accepts('application/json'), isTrue);
+
+    req = await acceptContentTypes(['text/*;q=0', '*/*']);
+    expect(req.accepts('text/plain'), isFalse);
+    expect(req.accepts('application/json'), isTrue);
+
+    req = await acceptContentTypes(['text/*;q=0', 'text/html']);
+    expect(req.accepts('text/html'), isTrue);
+  });
+
+  test('q=0 on a variant with parameters does not reject the type', () async {
+    var req = await acceptContentTypes(['text/html;level=1;q=0', 'text/html']);
+    expect(req.accepts('text/html'), isTrue);
+  });
+
+  test('Q=0 rejects too, as parameter names ignore case', () async {
+    var req = await acceptContentTypes(['text/html;Q=0', '*/*']);
+    expect(req.accepts('text/html'), isFalse);
+  });
+
+  group('selectEncoder', () {
+    final encoders = {'gzip': gzip.encoder, 'deflate': zlib.encoder};
+
+    test('* does not pick an encoding rejected with q=0', () {
+      expect(
+        ResponseContext.selectEncoder(encoders, 'gzip;q=0, *')?.name,
+        'deflate',
+      );
+    });
+
+    test('q=0 after a tab rejects too', () {
+      expect(
+        ResponseContext.selectEncoder(encoders, 'gzip;\tq=0, deflate')?.name,
+        'deflate',
+      );
+    });
+
+    test('Q=0 rejects too, as parameter names ignore case', () {
+      expect(
+        ResponseContext.selectEncoder(encoders, 'gzip;Q=0, deflate')?.name,
+        'deflate',
+      );
+    });
+
+    test('ignores case', () {
+      expect(ResponseContext.selectEncoder(encoders, 'GZIP')?.name, 'gzip');
+    });
+  });
 }
 
 Future<RequestContext> acceptContentTypes([
@@ -109,7 +160,7 @@ Future<RequestContext> acceptContentTypes([
   var rq = MockHttpRequest('GET', endpoint, persistentConnection: false);
   rq.headers.set('accept', headerString);
   rq.close();
-  var app = Angel(reflector: MirrorsReflector());
+  var app = Angel();
   var http = AngelHttp(app);
   return http.createRequestContext(rq, rq.response);
 }

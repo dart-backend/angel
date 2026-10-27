@@ -5,14 +5,23 @@
 [![Discord](https://img.shields.io/discord/1060322353214660698)](https://discord.gg/3X6bxTUdCM)
 [![License](https://img.shields.io/github/license/dart-backend/angel)](https://github.com/dart-backend/angel/tree/master/packages/orm/orm_mysql/LICENSE)
 
-This package contains the SQL executor required by Angel3 ORM to work with MySQL or MariaDB databases. In order to better support both MySQL and MariaDB, two different flavors of drives have been included; `mysql_client` and `mysql1`. They are implmented as `MySqlExecutor` and `MariaDbExecutor` respectively.
+This package contains the SQL executor required by Angel3 ORM to work with MySQL or MariaDB databases. Both executors, `MySqlExecutor` and `MariaDbExecutor`, use the [`mysql_dart`](https://pub.dev/packages/mysql_dart) driver and work with MySQL and MariaDB; they differ in how a `DateTime` is stored.
 
 ## Supported databases
 
-* MariaDD 10.2.x or later
+* MariaDB 10.2.x or later
 * MySQL 8.x or later
 
 **Note** MySQL below version 8.0 and MariaDB below version 10.2.0 are not supported as Angel3 ORM requires common table expressions (CTE) to work.
+
+## Installation
+
+In your `pubspec.yaml`:
+
+```yaml
+dependencies:
+  angel3_orm_mysql: ^10.0.0
+```
 
 ## Usage
 
@@ -24,7 +33,7 @@ This package contains the SQL executor required by Angel3 ORM to work with MySQL
     import 'package:angel3_serialize/angel3_serialize.dart';
     import 'package:optional/optional.dart';
     
-    part '../angel_orm_mysql/car.g.dart';
+    part 'car.g.dart';
 
     @serializable
     @orm
@@ -46,11 +55,11 @@ This package contains the SQL executor required by Angel3 ORM to work with MySQL
 3. Write the query program. i.e. `CarPersistence.dart`
 
     ```dart
-    import 'package:angel3_migration_runner/angel3_migration_runner.dart';
-    import 'package:angel3_orm/angel3_orm.dart';
-    import 'package:logging/logging.dart';
-    import 'package:mysql_client/mysql_client.dart';
-    import '../angel_orm_mysql/models/car.dart';
+    import 'package:angel3_migration_runner/mysql.dart';
+    import 'package:angel3_orm_mysql/angel3_orm_mysql.dart';
+    import 'package:mysql_dart/mysql_dart.dart';
+
+    import 'car.dart';
 
     void main() async {
     
@@ -67,7 +76,7 @@ This package contains the SQL executor required by Angel3 ORM to work with MySQL
         var executor = MySqlExecutor(conn);
 
         // Create the `Car` table
-        var runner = MysqlMigrationRunner(conn, migrations: [CarMigration()]);
+        var runner = MySqlMigrationRunner(conn, migrations: [CarMigration()]);
         await runner.up();
 
         var query = CarQuery();
@@ -84,12 +93,14 @@ This package contains the SQL executor required by Angel3 ORM to work with MySQL
 
 ## MySqlExecutor
 
-This SQL executor is implemented using [`mysql_client`](https://pub.dev/packages?q=mysql_client) driver. It works with both `MySQL` 8.0+ and `MariaDB` 10.2+ database.
+This SQL executor is implemented using [`mysql_dart`](https://pub.dev/packages/mysql_dart) driver. It works with `MySQL` 8.0+.
 
-### Connecting to MySQL or MariaDB
+### Connecting to MySQL
 
 ```dart
-    import 'package:mysql_client/mysql_client.dart';
+    import 'package:angel3_orm_mysql/angel3_orm_mysql.dart';
+    import 'package:logging/logging.dart';
+    import 'package:mysql_dart/mysql_dart.dart';
 
     var connection = await MySQLConnection.createConnection(
         host: "localhost",
@@ -98,57 +109,79 @@ This SQL executor is implemented using [`mysql_client`](https://pub.dev/packages
         userName: "test",
         password: "test123",
         secure: true);
+    await connection.connect(timeoutMs: 10000);
 
     var logger = Logger('orm_mysql');
-    await connection.connect(timeoutMs: 10000);
     var executor = MySqlExecutor(connection, logger: logger);
 ```
 
 ### Known Limitation for MySqlExecutor
 
-* `Blob` data type mapping is not support.
-* `timestamp` data type mapping is not supported. Use `datetime` instead.
-* UTC datetime is not supported.
+* `Blob` data type mapping is not supported.
+* A `timestamp` column, which the server converts from and to the `time_zone` of the session, is read and written as a `datetime` one is. The migration runner creates `timeStamp` columns as `datetime`.
+* A `DateTime` is stored as local time: a UTC one is converted to local time when it is sent, and a `datetime` column is read back as local time. See [Date and time](#date-and-time).
 
-## MariaDBExecutor
+## MariaDbExecutor
 
-This SQL executor is implemented using [`mysql1`](https://pub.dev/packages?q=mysql1) driver. It only works with `MariaDB` 10.2+ database. Do not use this for `MySQL` 8.0+ database.
+This SQL executor is implemented using [`mysql_dart`](https://pub.dev/packages/mysql_dart) driver. It works with `MariaDB` 10.2+ database that stores a `DateTime` as UTC.
 
 ### Connecting to MariaDB
 
 ```dart
-    import 'package:mysql1/mysql1.dart';
+    import 'package:angel3_orm_mysql/angel3_orm_mysql.dart';
+    import 'package:logging/logging.dart';
+    import 'package:mysql_dart/mysql_dart.dart';
 
-    var settings = ConnectionSettings(
-        host: 'localhost',
+    var connection = await MySQLConnection.createConnection(
+        host: "localhost",
         port: 3306,
-        db: 'orm_test',
-        user: 'test',
-        password: 'test123');
-    var connection = await MySqlConnection.connect(settings);
+        databaseName: "orm_test",
+        userName: "test",
+        password: "test123",
+        secure: true);
+    await connection.connect(timeoutMs: 10000);
 
     var logger = Logger('orm_mariadb');
     var executor = MariaDbExecutor(connection, logger: logger);
 ```
 
-### Known Limitation for MariaDBExecutor
+### Known Limitation for MariaDbExecutor
 
 * `Blob` type mapping is not supported.
-* `timestamp` mapping is not supported. Use `datetime` instead.
-* Only UTC datetime is supported. None UTC datetime will be automatically converted into UTC datetime.
+* A `timestamp` column, which the server converts from and to the `time_zone` of the session, is read and written as a `datetime` one is. The migration runner creates `timeStamp` columns as `datetime`.
+* A `DateTime` is stored as UTC: a local one is converted to UTC when it is sent, and a `datetime` column is read back as UTC. See [Date and time](#date-and-time).
 
-## Compatibility Matrix
+## Date and time
 
-### MariaDB 10.2+
+A `datetime` column has no time zone, so the two executors store the same `DateTime` differently: `MySqlExecutor` as local time, and `MariaDbExecutor` as UTC. Each reads back what it wrote as the same moment. Where the application's time zone is not UTC, a time written by one executor is read, or compared, shifted by the offset by the other, so use one executor for a database, or run the application at UTC.
 
-|                 | Create |  Read  | Update | Delete |
-|-----------------|--------|--------|--------|--------|
-| MySqlExecutor   |    Y   |   Y    |    Y   |    Y   |
-| MariaDBExecutor |    Y   |   Y    |    Y   |    Y   |
+A `DateTime` given for a `date` column is converted too, before the server keeps its date, so a date may be stored as the day before or after: a local `DateTime(2020, 1, 2)` is `2020-01-01 16:00` UTC at UTC+8, which `MariaDbExecutor` stores as `2020-01-01`. Give the date of a `date` column as a `DateTime` of the time zone of the executor: UTC for `MariaDbExecutor` (`DateTime.utc(2020, 1, 2)`), and local time for `MySqlExecutor`.
 
-### MySQL 8.0+
+A zero date or time (`0000-00-00`), which MySQL and MariaDB store where a date is invalid and the SQL mode allows it, is read as `null`, as is an invalid date stored under `ALLOW_INVALID_DATES`, such as `2024-02-30`, rather than as another day.
 
-|                 | Create |  Read  | Update | Delete |
-|-----------------|--------|--------|--------|--------|
-| MySqlExecutor   |    Y   |   Y    |    Y   |    Y   |
-| MariaDBExecutor |    N   |   N    |    N   |    N   |
+## Transactions
+
+The queries of a connection run one at a time. A transaction holds the connection until it ends, so a query given in it to another executor of the connection, such as that of the application, runs in the transaction, as a transaction begun in it is of it: MySQL and MariaDB nest none. Use the executor given to the transaction. The queries given to it before the transaction ends, even those not waited for, and the later queries of an operation of the ORM they start, such as the update of an `update`, run in it, before its `COMMIT` or `ROLLBACK`; one given after it has ended throws a `StateError`, as does `close`, of its executor or of another of the connection, in it. Await the queries of a transaction, so that their errors roll it back.
+
+## Migrating from 9.x to 10.0.0
+
+The breaking changes of each release are listed in the [CHANGELOG](CHANGELOG.md). Those of 10.0.0 that may need changes in an app:
+
+* **Driver**: `MySqlExecutor` and `MariaDbExecutor` use [`mysql_dart`](https://pub.dev/packages/mysql_dart) 3.0.3 or later, instead of `mysql_client` and `mysql1`. Pass its `MySQLConnection`, as in [Usage](#usage):
+
+  ```dart
+  import 'package:angel3_orm_mysql/angel3_orm_mysql.dart';
+  import 'package:mysql_dart/mysql_dart.dart';
+
+  var connection = await MySQLConnection.createConnection(
+      host: 'localhost',
+      port: 3306,
+      databaseName: 'orm_test',
+      userName: 'test',
+      password: 'test123',
+      secure: true);
+  await connection.connect(timeoutMs: 10000);
+  var executor = MariaDbExecutor(connection);
+  ```
+
+* **Imports**: import `package:angel3_orm_mysql/angel3_orm_mysql.dart`, not `src/orm_mariadb.dart`. `MariaDbExecutor` is a subclass of `MySqlExecutor`, works with MySQL too, and still stores a `DateTime` as UTC.

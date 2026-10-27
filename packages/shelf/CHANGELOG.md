@@ -1,10 +1,22 @@
 # Change Log
 
-## 9.1.0
+## 10.0.0
+
+### Fixes in 10.0.0
+
+* **Security:** A request with malformed or conflicting `Content-Length` or `Transfer-Encoding` headers is a 400 (RFC 9112, against request smuggling), where it was a 500. The new `checkRequestFraming` does the check, and `ShelfRequestContext.framingError` holds its error
+* **Hijacking:** An embedded shelf handler can hijack the request, with the socket, as with `shelf_io`; the client used to wait until it timed out
+* **`app`:** `ShelfRequestContext` and `ShelfResponseContext` set `app`, so `ioc` works and `app.maxBodySize` applies to shelf bodies
+* **Deprecated:** `throwOnNullResponse` of `embedShelf`, which turned every response into a 500, has no effect
+* **Tests:** The tests and example no longer use `MirrorsReflector`
+* **Docs:** The README tells how to install and use the package
+
+
+## 9.1.0-beta-4
 
 * Require Dart >= 3.13
 
-## 9.0.0-beta-1
+## 9.0.0-beta-4
 
 * Require Dart >= 3.12
 

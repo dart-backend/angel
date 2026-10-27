@@ -1,6 +1,6 @@
 import 'dart:io';
 
-import 'package:angel3_container/mirrors.dart';
+import 'package:angel3_container/angel3_container.dart';
 import 'package:angel3_framework/angel3_framework.dart' as srv;
 import 'package:angel3_framework/http.dart' as srv;
 import 'package:angel3_websocket/io.dart' as ws;
@@ -11,6 +11,25 @@ import 'package:test/test.dart';
 import 'common.dart';
 
 void main() {
+  // The `@ExposeWs` methods, which the reflector finds.
+  controllerTests(
+    'controller.io @ExposeWs',
+    StaticReflector.combine([commonReflection]),
+    GameController.new,
+  );
+  // Those of `exposeWs`, without reflection.
+  controllerTests(
+    'controller.io exposeWs',
+    const ThrowingReflector(),
+    RegisteredGameController.new,
+  );
+}
+
+void controllerTests(
+  String name,
+  Reflector reflector,
+  srv.WebSocketController Function(srv.AngelWebSocket) controller,
+) {
   srv.Angel app;
   late srv.AngelHttp http;
   late ws.WebSockets client;
@@ -19,7 +38,7 @@ void main() {
   late String url;
 
   setUp(() async {
-    app = srv.Angel(reflector: const MirrorsReflector());
+    app = srv.Angel(reflector: reflector);
     http = srv.AngelHttp(app, useZone: false);
 
     websockets = srv.AngelWebSocket(app)
@@ -29,7 +48,7 @@ void main() {
 
     await app.configure(websockets.configureServer);
     app.all('/ws', websockets.handleRequest);
-    await app.configure(GameController(websockets).configureServer);
+    await app.configure(controller(websockets).configureServer);
     app.logger = Logger('angel_auth')..onRecord.listen(print);
 
     server = await http.startServer();
@@ -60,7 +79,7 @@ void main() {
     //url = null;
   });
 
-  group('controller.io', () {
+  group(name, () {
     test('search', () async {
       client.sendAction(ws.WebSocketAction(eventName: 'search'));
       var search = await client.on['searched'].first;

@@ -8,6 +8,7 @@ import 'dart:typed_data';
 
 import 'package:angel3_http_exception/angel3_http_exception.dart';
 import 'package:angel3_route/angel3_route.dart';
+import 'package:collection/collection.dart' show IterableExtension;
 import 'package:file/file.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:mime/mime.dart';
@@ -15,9 +16,9 @@ import 'package:mime/mime.dart';
 import 'controller.dart';
 import 'request_context.dart';
 import 'server.dart' show Angel;
+import 'quality_list.dart';
 
 final RegExp _straySlashes = RegExp(r'(^/+)|(/+$)');
-final RegExp _qZero = RegExp(r'^q=0(\.0*)?$');
 final RegExp _headerToken = RegExp(r"^[!#$%&'*+\-.^_`|~0-9A-Za-z]+$");
 
 /// A convenience wrapper around an outgoing HTTP request.
@@ -31,7 +32,16 @@ abstract class ResponseContext<RawResponse>
 
   //final log = Logger('ResponseContext');
 
-  Completer? _done;
+  /// The completer of [done], made in the zone that first reads it: a
+  /// future's error is not delivered across error zones, so one made here, in
+  /// the zone the response is created in, would never fail for a handler
+  /// awaiting it in the request's error zone.
+  Completer<void>? _done;
+
+  /// Whether [done] has completed, and with what error, if any.
+  bool _doneCompleted = false;
+  Object? _doneError;
+  StackTrace? _doneStackTrace;
   int _statusCode = 200;
 
   /// The [Angel] instance that is sending a response.
@@ -118,21 +128,46 @@ abstract class ResponseContext<RawResponse>
   /// request's `Accept-Encoding` header, or `null` for none.
   ///
   /// Chosen once, on first access (normally when output starts), so handlers
-  /// can still change [encoders] before writing.
+  /// can still change [encoders] before writing. A body that is already
+  /// encoded (a `content-encoding` header is set, e.g. for a precompressed
+  /// file), a 204 or 304 response, which has no body, or a 206, whose
+  /// `Content-Range` gives offsets of the unencoded bytes, is not encoded.
+  ///
+  /// When [encoders] is not empty, choosing also adds `Vary: Accept-Encoding`
+  /// to [headers], so shared caches keep encoded and plain responses apart.
   ({String name, Converter<List<int>, List<int>> encoder})?
   get selectedEncoder {
     if (!_encoderSelected) {
       _encoderSelected = true;
-      _selectedEncoder = selectEncoder(
-        encoders,
-        correspondingRequest?.headers?.value('accept-encoding'),
-      );
+      if (encoders.isNotEmpty) _varyByAcceptEncoding();
+      if (!headers.containsKey('content-encoding') &&
+          statusCode != 204 &&
+          statusCode != 206 &&
+          statusCode != 304) {
+        _selectedEncoder = selectEncoder(
+          encoders,
+          correspondingRequest?.headers?.value('accept-encoding'),
+        );
+      }
     }
     return _selectedEncoder;
   }
 
+  void _varyByAcceptEncoding() {
+    var vary = headers['vary'];
+    if (vary == null || vary.trim().isEmpty) {
+      headers['vary'] = 'Accept-Encoding';
+    } else if (vary.trim() != '*' &&
+        !vary
+            .split(',')
+            .any((v) => v.trim().toLowerCase() == 'accept-encoding')) {
+      headers['vary'] = '$vary, Accept-Encoding';
+    }
+  }
+
   /// Picks the first encoder in [encoders] named by [acceptEncoding], in the
-  /// client's order. `*` picks any encoder; entries with `q=0` are skipped.
+  /// client's order, ignoring case. `*` picks any encoder not rejected with
+  /// `q=0`; entries with `q=0` are skipped.
   static ({String name, Converter<List<int>, List<int>> encoder})?
   selectEncoder(
     Map<String, Converter<List<int>, List<int>>> encoders,
@@ -140,19 +175,15 @@ abstract class ResponseContext<RawResponse>
   ) {
     if (encoders.isEmpty || acceptEncoding == null) return null;
 
-    for (var item in acceptEncoding.split(',')) {
-      var parts = item.split(';');
-      var name = parts.first.trim();
-      if (name.isEmpty) continue;
+    var (:accepted, :rejected) = parseQualityList(acceptEncoding);
 
-      var rejected = parts
-          .skip(1)
-          .any((p) => _qZero.hasMatch(p.replaceAll(' ', '')));
-      if (rejected) continue;
-
-      if (name == '*') name = encoders.keys.first;
-      var encoder = encoders[name];
-      if (encoder != null) return (name: name, encoder: encoder);
+    for (var name in accepted) {
+      var key = name == '*'
+          ? encoders.keys.firstWhereOrNull(
+              (k) => !rejected.contains(k.toLowerCase()),
+            )
+          : encoders.keys.firstWhereOrNull((k) => k.toLowerCase() == name);
+      if (key != null) return (name: key, encoder: encoders[key]!);
     }
 
     return null;
@@ -166,8 +197,35 @@ abstract class ResponseContext<RawResponse>
   /// Points to the [RequestContext] corresponding to this response.
   RequestContext? get correspondingRequest;
 
+  /// Completes once the response is closed (see [close]), or with the first
+  /// error passed to [addError]. Never completes for a [detach]ed response.
   @override
-  Future get done => (_done ?? Completer()).future;
+  Future get done {
+    var done = _done;
+    if (done != null) return done.future;
+    if (_doneCompleted) {
+      var error = _doneError;
+      return error == null
+          ? Future.value()
+          : Future.error(error, _doneStackTrace);
+    }
+    return (_done = Completer<void>()).future;
+  }
+
+  /// Completes [done], once.
+  void _completeDone([Object? error, StackTrace? stackTrace]) {
+    if (_doneCompleted) return;
+    _doneCompleted = true;
+    _doneError = error;
+    _doneStackTrace = stackTrace;
+    var done = _done;
+    if (done == null) return;
+    if (error == null) {
+      done.complete();
+    } else {
+      done.completeError(error, stackTrace);
+    }
+  }
 
   /// Headers that will be sent to the user.
   ///
@@ -206,6 +264,16 @@ abstract class ResponseContext<RawResponse>
 
   /// Returns `true` if response data is being written to a buffer, rather than to the underlying stream.
   bool get isBuffered;
+
+  /// Whether the status and headers have been sent, as by an unbuffered
+  /// response that has started its body. After that, an error can no longer
+  /// be answered with an error response: the response is [abort]ed instead.
+  bool get headersSent => false;
+
+  /// Ends a response whose [headersSent] after a failure, so that the client
+  /// sees it fail rather than a complete response: the connection (HTTP/1)
+  /// or stream (HTTP/2) is closed abruptly. By default, [close]s it.
+  Future<void> abort(Object error, [StackTrace? stackTrace]) => close();
 
   /// A set of UTF-8 encoded bytes that will be written to the response.
   BytesBuilder? get buffer;
@@ -316,7 +384,7 @@ abstract class ResponseContext<RawResponse>
       (buffer as LockableBytesBuilder).lock();
     }
 
-    if (_done?.isCompleted == false) _done!.complete();
+    _completeDone();
     return Future.value();
   }
 
@@ -333,10 +401,24 @@ abstract class ResponseContext<RawResponse>
     MediaType? contentType,
   }) {
     if (!isOpen) throw closed();
+    // The name is written into a script and is often taken from the query
+    // string (`?callback=`), so only a plain, optionally dotted, identifier
+    // is allowed.
+    if (!_jsIdentifierPath.hasMatch(callbackName)) {
+      throw AngelHttpException.badRequest(
+        message: 'Invalid JSONP callback name.',
+      );
+    }
     this.contentType = contentType ?? MediaType('application', 'javascript');
-    write('$callbackName(${serializer(value)})');
-    return close();
+    return Future.sync(() => serializer(value)).then((json) {
+      write('$callbackName($json)');
+      return close();
+    });
   }
+
+  static final RegExp _jsIdentifierPath = RegExp(
+    r'^[A-Za-z_$][\w$]*(\.[A-Za-z_$][\w$]*)*$',
+  );
 
   /// Renders a view to the response stream, and closes the response.
   Future<void> render(String view, [Map<String, dynamic>? data]) {
@@ -428,11 +510,10 @@ abstract class ResponseContext<RawResponse>
 
     if (matched != null) {
       await redirect(
-        matched.makeUri(
-          params!.keys.fold<Map<String, dynamic>>({}, (out, k) {
-            return out..[k.toString()] = params[k];
-          }),
-        ),
+        matched.makeUri({
+          for (var MapEntry(:key, :value) in (params ?? const {}).entries)
+            key.toString(): value,
+        }),
         code: code,
       );
       return;
@@ -525,16 +606,18 @@ abstract class ResponseContext<RawResponse>
   @override
   Future addStream(Stream<List<int>> stream);
 
+  /// Fails [done] with [error]. Unless something listens to [done], the
+  /// error is also reported to the current zone (the request's error zone),
+  /// as nothing else would see it.
   @override
   void addError(Object error, [StackTrace? stackTrace]) {
-    if (_done?.isCompleted == false) {
-      _done!.completeError(error, stackTrace);
-    } else if (_done == null) {
-      if (stackTrace != null) {
-        Zone.current.handleUncaughtError(error, stackTrace);
-      } else {
-        app?.logger.warning('[ResponseContext] stackTrace is null');
-      }
+    var handled = _done != null && !_doneCompleted;
+    _completeDone(error, stackTrace);
+    if (handled) return;
+    if (stackTrace != null) {
+      Zone.current.handleUncaughtError(error, stackTrace);
+    } else {
+      app?.logger.warning('[ResponseContext] stackTrace is null');
     }
   }
 
@@ -553,15 +636,7 @@ abstract class ResponseContext<RawResponse>
   }
 
   @override
-  void writeCharCode(int charCode) {
-    if (!isOpen && isBuffered) {
-      throw closed();
-    } else if (!isBuffered) {
-      add([charCode]);
-    } else {
-      buffer!.addByte(charCode);
-    }
-  }
+  void writeCharCode(int charCode) => write(String.fromCharCode(charCode));
 
   @override
   void writeln([Object? obj = '']) {
@@ -657,4 +732,15 @@ class _ValidatingHeaders extends CaseInsensitiveMap<String> {
     }
     super[key] = value;
   }
+}
+
+/// The error with which a response is closed abruptly, of an [error] that
+/// `abortErrorOf` cannot mark.
+class ResponseAborted implements Exception {
+  final Object error;
+
+  const ResponseAborted(this.error);
+
+  @override
+  String toString() => 'The response was aborted: $error';
 }

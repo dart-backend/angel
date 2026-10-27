@@ -1,0 +1,3 @@
+# The test files share the `todos` table of `testDB`, and service_test.dart
+# empties it before each test, so they must not run at the same time.
+concurrency: 1

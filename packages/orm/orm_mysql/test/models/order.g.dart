@@ -17,7 +17,7 @@ class OrderMigration extends Migration {
       table.timeStamp('order_date');
       table.integer('shipper_id');
       table
-          .declare('customer_id', ColumnType('int'))
+          .declare('customer_id', ColumnType.int)
           .references('customers', 'id');
     });
   }
@@ -119,21 +119,25 @@ class OrderQuery extends Query<Order, OrderQueryWhere> {
       return Optional.empty();
     }
     var model = Order(
-      id: fields.contains('id') ? row[0].toString() : null,
+      id: fields.contains('id') ? row[fields.indexOf('id')].toString() : null,
       createdAt: fields.contains('created_at')
-          ? mapToNullableDateTime(row[1])
+          ? mapToNullableDateTime(row[fields.indexOf('created_at')])
           : null,
       updatedAt: fields.contains('updated_at')
-          ? mapToNullableDateTime(row[2])
+          ? mapToNullableDateTime(row[fields.indexOf('updated_at')])
           : null,
-      employeeId: fields.contains('employee_id') ? mapToInt(row[4]) : null,
+      employeeId: fields.contains('employee_id')
+          ? mapToInt(row[fields.indexOf('employee_id')])
+          : null,
       orderDate: fields.contains('order_date')
-          ? mapToNullableDateTime(row[5])
+          ? mapToNullableDateTime(row[fields.indexOf('order_date')])
           : null,
-      shipperId: fields.contains('shipper_id') ? mapToInt(row[6]) : null,
+      shipperId: fields.contains('shipper_id')
+          ? mapToInt(row[fields.indexOf('shipper_id')])
+          : null,
     );
-    if (row.length > 7) {
-      var modelOpt = CustomerQuery().parseRow(row.skip(7).take(3).toList());
+    {
+      var modelOpt = _customer.parseRow(joinedRow(0, row));
       modelOpt.ifPresent((m) {
         model = model.copyWith(customer: m);
       });
@@ -213,11 +217,11 @@ class OrderQueryValues extends MapQueryValues {
 
   set updatedAt(DateTime? value) => values['updated_at'] = value;
 
-  int get customerId {
-    return (values['customer_id'] as int);
+  int? get customerId {
+    return (values['customer_id'] as int?);
   }
 
-  set customerId(int value) => values['customer_id'] = value;
+  set customerId(int? value) => values['customer_id'] = value;
 
   int? get employeeId {
     return (values['employee_id'] as int?);
@@ -243,8 +247,8 @@ class OrderQueryValues extends MapQueryValues {
     employeeId = model.employeeId;
     orderDate = model.orderDate;
     shipperId = model.shipperId;
-    if (model.customer != null) {
-      values['customer_id'] = model.customer?.id;
+    if (model.customer?.id != null) {
+      values['customer_id'] = int.parse(model.customer!.id!);
     }
   }
 }
@@ -303,12 +307,12 @@ class CustomerQuery extends Query<Customer, CustomerQueryWhere> {
       return Optional.empty();
     }
     var model = Customer(
-      id: fields.contains('id') ? row[0].toString() : null,
+      id: fields.contains('id') ? row[fields.indexOf('id')].toString() : null,
       createdAt: fields.contains('created_at')
-          ? mapToNullableDateTime(row[1])
+          ? mapToNullableDateTime(row[fields.indexOf('created_at')])
           : null,
       updatedAt: fields.contains('updated_at')
-          ? mapToNullableDateTime(row[2])
+          ? mapToNullableDateTime(row[fields.indexOf('updated_at')])
           : null,
     );
     return Optional.of(model);
@@ -442,7 +446,7 @@ class Order extends EntityOrder {
 
   @override
   int get hashCode {
-    return hashObjects([
+    return Object.hashAll([
       id,
       createdAt,
       updatedAt,
@@ -497,7 +501,7 @@ class Customer extends EntityCustomer {
 
   @override
   int get hashCode {
-    return hashObjects([id, createdAt, updatedAt]);
+    return Object.hashAll([id, createdAt, updatedAt]);
   }
 
   @override

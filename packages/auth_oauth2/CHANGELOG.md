@@ -1,5 +1,26 @@
 # Change Log
 
+## 10.0.0
+
+### Breaking changes in 10.0.0
+
+* **Breaking:** Each login has a random `state`, checked on the callback (against login CSRF), kept with its PKCE code verifier in a signed, `HttpOnly` cookie of its own, scoped to the redirect URI's path, which expires after the new `loginTimeout`. `authenticateCallback` refuses a callback without it, as `invalid_state` to `onError`
+
+### New in 10.0.0
+
+* `cookieName`, `cookieKey`, `cookieSameSite`, `loginTimeout` and `httpClient`
+
+### Fixes in 10.0.0
+
+* **Starting a login:** Redirects to the provider, where it answered `400`: a request with `code` or `error` is now the callback
+* **PKCE:** Each login uses its own code verifier for the token exchange, which providers that check PKCE refused
+* **`onError`:** Its result is never taken for a user (a declined login signed users in when users are maps), and is sent as the response. A malformed callback is `invalid_request`, and an unreachable provider is a `502`
+* **`form_post`:** A posted callback (e.g. Sign in with Apple) is read from its form, with `cookieSameSite: SameSite.none`
+* **Cookies:** Logins in two tabs no longer replace each other's, and a client without a secret signs with a random key
+* **Client:** The `oauth2.Client` given to the verifier is closed once it returns, unless `httpClient` was given
+* **Docs:** The README tells how to install and use the package, and how to migrate from 9.x, how the routes are told apart and how a login is kept
+
+
 ## 9.1.0
 
 * Require Dart >= 3.13

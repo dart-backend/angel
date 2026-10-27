@@ -1,5 +1,25 @@
 # Change Log
 
+## 10.0.0
+
+### Breaking changes in 10.0.0
+
+* **Breaking:** `modify` and `remove` of a missing id are a 404, instead of creating a document, or answering `{"id": null}`
+
+### New in 10.0.0
+
+* `create` sets `createdAt` and `updatedAt`, and `update` keeps `createdAt`
+* Clients can sort and limit with `$sort` and `$limit` (e.g. `?$sort=-createdAt&$limit=10`)
+
+### Fixes in 10.0.0
+
+* **`create`:** Always inserts a new document (each `POST` after the first replaced one), and ignores client-set `_id`, `id`, `createdAt` and `updatedAt`
+* **Queries:** `readMany` returns only the given ids, `allowQuery: false` is applied, the framework's `page` and `token` keys are not filters, and request-context keys are removed from nested queries
+* **Ids:** A malformed id in `update` or `remove` is a 400; `modify` no longer stores an `id` field
+* **Docs:** The README tells how to migrate from 9.x, and the example starts a server and needs no reflector, and the README example compiles
+* **Dependencies:** Removed the unused `angel3_container`, and the dev dependency `belatuk_json_serializer`: the tests use `dart:convert`, so they no longer need `dart:mirrors`
+
+
 ## 9.1.0
 
 * Require Dart >= 3.13

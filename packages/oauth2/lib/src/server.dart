@@ -305,7 +305,7 @@ abstract class AuthorizationServer<Client, User> {
         var clientId = await _getParam(req, 'client_id', state);
 
         // Find client
-        var client = await findClient(clientId)!;
+        var client = await findClient(clientId);
 
         if (client == null) {
           throw AuthorizationException(
@@ -388,9 +388,14 @@ abstract class AuthorizationServer<Client, User> {
         );
 
         if (match != null) {
-          match = _rgxBasicAuth.firstMatch(
-            String.fromCharCodes(base64Url.decode(match[1]!)),
-          );
+          String credentials;
+          try {
+            // Either base64 alphabet; the credentials are UTF-8 (RFC 7617).
+            credentials = utf8.decode(base64.decode(match[1]!));
+          } on FormatException {
+            credentials = '';
+          }
+          match = _rgxBasicAuth.firstMatch(credentials);
         }
 
         if (match == null) {

@@ -82,15 +82,17 @@ class PersonQuery extends Query<Person, PersonQueryWhere> {
       return Optional.empty();
     }
     var model = Person(
-      id: fields.contains('id') ? row[0].toString() : null,
+      id: fields.contains('id') ? row[fields.indexOf('id')].toString() : null,
       createdAt: fields.contains('created_at')
-          ? mapToNullableDateTime(row[1])
+          ? mapToNullableDateTime(row[fields.indexOf('created_at')])
           : null,
       updatedAt: fields.contains('updated_at')
-          ? mapToNullableDateTime(row[2])
+          ? mapToNullableDateTime(row[fields.indexOf('updated_at')])
           : null,
-      name: fields.contains('name') ? (row[3] as String?) : null,
-      age: fields.contains('age') ? mapToInt(row[4]) : null,
+      name: fields.contains('name')
+          ? (row[fields.indexOf('name')] as String?)
+          : null,
+      age: fields.contains('age') ? mapToInt(row[fields.indexOf('age')]) : null,
     );
     return Optional.of(model);
   }
@@ -227,12 +229,14 @@ class PersonWithLastOrderQuery
       return Optional.empty();
     }
     var model = PersonWithLastOrder(
-      name: fields.contains('name') ? (row[0] as String?) : null,
+      name: fields.contains('name')
+          ? (row[fields.indexOf('name')] as String?)
+          : null,
       lastOrderName: fields.contains('last_order_name')
-          ? (row[1] as String?)
+          ? (row[fields.indexOf('last_order_name')] as String?)
           : null,
       lastOrderPrice: fields.contains('last_order_price')
-          ? mapToDouble(row[2])
+          ? mapToDouble(row[fields.indexOf('last_order_price')])
           : null,
     );
     return Optional.of(model);
@@ -327,7 +331,7 @@ class Person extends PersonEntity {
 
   @override
   int get hashCode {
-    return hashObjects([id, createdAt, updatedAt, name, age]);
+    return Object.hashAll([id, createdAt, updatedAt, name, age]);
   }
 
   @override
@@ -375,7 +379,7 @@ class PersonWithLastOrder extends PersonWithLastOrderEntity {
 
   @override
   int get hashCode {
-    return hashObjects([name, lastOrderName, lastOrderPrice]);
+    return Object.hashAll([name, lastOrderName, lastOrderPrice]);
   }
 
   @override

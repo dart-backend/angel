@@ -86,4 +86,60 @@ void main() {
     expect(results, everyElement('api'));
     expect(apiCreations, 1);
   });
+
+  group('| alternatives', () {
+    for (var (pattern, matches, misses) in [
+      (
+        'example.com|api.example.com',
+        ['example.com', 'api.example.com'],
+        ['www.example.com', 'example.org'],
+      ),
+      ('a|b.com', ['a', 'b.com'], ['a.com']),
+      (
+        '*.example.com|example.org',
+        ['x.example.com', 'example.org'],
+        ['x.org'],
+      ),
+      // A trailing dot (FQDN form) is ignored.
+      ('example.com.', ['example.com'], ['example.com.x']),
+      ('a.com.|b.com', ['a.com', 'b.com'], ['a.comb.com']),
+    ]) {
+      test(pattern, () {
+        var regex = HostnameSyntaxParser(pattern).parse();
+        for (var host in matches) {
+          expect(regex.hasMatch(host), isTrue, reason: host);
+        }
+        for (var host in misses) {
+          expect(regex.hasMatch(host), isFalse, reason: host);
+        }
+      });
+    }
+
+    test('says where an empty alternative is', () {
+      expect(
+        () => HostnameSyntaxParser('a.com||b.com').parse(),
+        throwsA(
+          isA<FormatException>().having(
+            (e) => e.message,
+            'message',
+            contains('between'),
+          ),
+        ),
+      );
+    });
+
+    for (var pattern in [
+      '|a.com',
+      'a.com|',
+      'a.com||b.com',
+      '*..example.com',
+    ]) {
+      test('rejects "$pattern"', () {
+        expect(
+          () => HostnameSyntaxParser(pattern).parse(),
+          throwsFormatException,
+        );
+      });
+    }
+  });
 }

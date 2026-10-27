@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:analyzer/dart/element/element.dart';
 import 'package:analyzer/dart/element/nullability_suffix.dart';
 import 'package:analyzer/dart/element/type.dart';
@@ -8,7 +9,9 @@ import 'package:angel3_serialize_generator/angel3_serialize_generator.dart';
 import 'package:build/build.dart';
 import 'package:code_builder/code_builder.dart' hide LibraryBuilder;
 import 'package:source_gen/source_gen.dart';
+
 import 'orm_build_context.dart';
+import 'readers.dart';
 
 var floatTypes = [
   ColumnType.decimal,
@@ -301,8 +304,6 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
               ),
             )
             ..body = Block((b) {
-              var i = 0;
-
               // Build the arguments for model
               var args = <String, Expression>{};
               for (var field in ctx.effectiveFields) {
@@ -315,8 +316,15 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                   type = refer('int');
                 }
 
-                // Generated Code: row[i]
-                var expr = (refer('row').index(literalNum(i++)));
+                // Generated Code: row[fields.indexOf('column')], as fields
+                // may be a selection of them, in the order of the SELECT.
+                var expr = refer('row').index(
+                  refer('fields').property('indexOf').call([
+                    literalString(
+                      ctx.buildContext.resolveFieldName(fieldName) ?? fieldName,
+                    ),
+                  ]),
+                );
                 if (isSpecialId(ctx, field)) {
                   // Generated Code: row[i].toString()
 
@@ -414,11 +422,13 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                 ).assign(ctx.buildContext.modelClassType.newInstance([], args)),
               );
 
+              // The joins, in the order the constructor makes them; a
+              // @HasMany is loaded on its own ([loadRelations]).
+              var joinIndex = 0;
               ctx.relations.forEach((name, relation) {
                 if (!const [
                   RelationshipType.hasOne,
                   RelationshipType.belongsTo,
-                  RelationshipType.hasMany,
                 ].contains(relation.type)) {
                   //log.warning('Unsupported relationship for field $name');
                   return;
@@ -432,17 +442,15 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                 }
                 //log.fine('Detected relationship ${RelationshipType.belongsTo}');
 
-                var skipToList = refer('row')
-                    .property('skip')
-                    .call([literalNum(i)])
-                    .property('take')
-                    .call([literalNum(foreign.effectiveFields.length)])
-                    .property('toList')
-                    .call([]);
+                // Its columns, and those of its own joins, which are only
+                // known at runtime, as a join of a cycle selects NULLs.
+                var joined = refer('joinedRow')
+                    .call([literalNum(joinIndex++), refer('row')]);
 
-                var parsed = refer(
-                  '${foreign.buildContext.modelClassNameRecase.pascalCase}Query',
-                ).newInstance([]).property('parseRow').call([skipToList]);
+                // The query joined, whose joins are those of the row.
+                var parsed = refer('_$name')
+                    .property('parseRow')
+                    .call([joined]);
 
                 //var baseClass = '${foreign.buildContext.originalClassName}';
                 //var modelClass =
@@ -467,12 +475,9 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                 //parsed.assignVar('modelOpt');
                 //var e = refer('Optional').property('ifPresent').call([]);
 
-                var val = (relation.type == RelationshipType.hasMany)
-                    ? '[m]'
-                    : 'm';
                 var code = Code('''
                      modelOpt.ifPresent((m) {
-                      model = model.copyWith($name: $val);
+                      model = model.copyWith($name: m);
                   })
               ''');
 
@@ -485,10 +490,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                   DartEmitter(useNullSafetySyntax: true),
                 );
 
-                var ifStr = 'if (row.length > $i) { $blockStr }';
-                b.statements.add(Code(ifStr));
-
-                i += foreign.effectiveFields.length;
+                b.statements.add(Code('{ $blockStr }'));
               });
 
               b.addExpression(
@@ -557,9 +559,8 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
 
               // Add a constructor that initializes _where
               b.addExpression(
-                refer(
-                  '_where',
-                ).assign(queryWhereType.newInstance([refer('this')])),
+                refer('_where')
+                    .assign(queryWhereType.newInstance([refer('this')])),
               );
 
               // Note: this is where subquery fields for relations are added.
@@ -579,12 +580,46 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                     );
                     return;
                   }
-                  var relationContext =
-                      relation.throughContext ?? relation.foreign;
+                  var foreignQueryType = refer(
+                    '${relationForeign.buildContext.modelClassNameRecase.pascalCase}Query',
+                  );
 
-                  //log.fine(
-                  //    '$fieldName relation.throughContext => ${relation.throughContext?.tableName} relation.foreign => ${relation.foreign?.tableName}');
-                  // If this is a many-to-many, add the fields from the other object.
+                  // A @HasMany is loaded with a query of its own, after the
+                  // records ([loadRelations]), as a join would give a row
+                  // per item. A many-to-many has none to customize.
+                  if (relation.type == RelationshipType.hasMany) {
+                    if (!relation.isManyToMany) {
+                      clazz
+                        ..fields.add(
+                          Field(
+                            (b) => b
+                              ..name = '_$fieldName'
+                              ..late = true
+                              ..modifier = FieldModifier.final$
+                              ..type = foreignQueryType
+                              // Lazily, so a cycle of relations ends.
+                              ..assignment = foreignQueryType
+                                  .newInstance([])
+                                  .code,
+                          ),
+                        )
+                        ..methods.add(
+                          Method(
+                            (b) => b
+                              ..name = fieldName
+                              ..type = MethodType.getter
+                              ..returns = foreignQueryType
+                              ..docs.add(
+                                '/// The query [$fieldName] are loaded '
+                                'with, whose conditions and order apply.',
+                              )
+                              ..body = refer('_$fieldName').returned.statement,
+                          ),
+                        );
+                    }
+                    return;
+                  }
+
                   var additionalStrs = relationForeign.effectiveFields.map(
                     (f) => relationForeign.buildContext.resolveFieldName(
                       f.displayName,
@@ -608,115 +643,37 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                     }
                   }
 
-                  // In the case of a many-to-many, we don't generate a subquery field,
-                  // as it easily leads to stack overflows.
-                  if (relation.isManyToMany) {
-                    // We can't simply join against the "through" table; this itself must
-                    // be a join.
-                    // (SELECT role_users.role_id, <user_fields>
-                    // FROM users
-                    // LEFT JOIN role_users ON role_users.user_id=users.id)
-                    var foreignFields = additionalStrs.map(
-                      (f) => '${relationForeign.tableName}.$f',
-                    );
-                    var b = StringBuffer('(SELECT ');
-                    // role_users.role_id
-                    b.write('${relationContext?.tableName}');
-                    b.write('.${relation.foreignKey}');
-                    // , <user_fields>
-                    b.write(
-                      foreignFields.isEmpty
-                          ? ''
-                          : ', ${foreignFields.join(', ')}',
-                    );
-                    // FROM users
-                    b.write(' FROM ');
-                    b.write(relationForeign.tableName);
-                    // LEFT JOIN role_users
-                    b.write(' LEFT JOIN ${relationContext?.tableName}');
-                    // Figure out which field on the "through" table points to users (foreign)
-
-                    //log.fine('$fieldName query => ${b.toString()}');
-
-                    var throughRelation = relationContext?.relations.values.firstWhere(
-                      (e) {
-                        //log.fine(
-                        //    'ForeignTable(Rel) => ${e.foreignTable}, ${relationForeign.tableName}');
-                        return e.foreignTable == relationForeign.tableName;
-                      },
-                      orElse: () {
-                        // _Role has a many-to-many to _User through _RoleUser, but
-                        // _RoleUser has no relation pointing to _User.
-                        var b = StringBuffer();
-                        b.write(ctx.buildContext.modelClassName);
-                        b.write(' has a many-to-many relationship to ');
-                        b.write(relationForeign.buildContext.modelClassName);
-                        b.write(' through ');
-                        b.write(relationContext.buildContext.modelClassName);
-                        b.write(', but ');
-                        b.write(relationContext.buildContext.modelClassName);
-                        b.write(' has no relation pointing to ');
-                        b.write(ctx.buildContext.modelClassName);
-                        b.write('.');
-                        throw b.toString();
-                      },
+                  // A field for each join, `_field`, and a getter, `field`,
+                  // that returns the subquery object, so that users can
+                  // customize the generated query.
+                  clazz
+                    ..fields.add(
+                      Field(
+                        (b) => b
+                          ..name = '_$fieldName'
+                          ..late = true
+                          ..type = foreignQueryType,
+                      ),
+                    )
+                    ..methods.add(
+                      Method(
+                        (b) => b
+                          ..name = fieldName
+                          ..type = MethodType.getter
+                          ..returns = foreignQueryType
+                          ..body = refer('_$fieldName').returned.statement,
+                      ),
                     );
 
-                    // ON role_users.user_id=users.id)
-                    b.write(' ON ');
-                    b.write(relation.throughContext!.tableName);
-                    b.write('.');
-                    b.write(throughRelation?.localKey);
-                    b.write('=');
-                    b.write(relationForeign.tableName);
-                    b.write('.');
-                    b.write(throughRelation?.foreignKey);
-                    b.write(')');
-
-                    joinArgs.insert(0, literalString(b.toString()));
-                  } else {
-                    // In the past, we would either do a join on the table name
-                    // itself, or create an instance of a query.
-                    //
-                    // From this point on, however, we will create a field for each
-                    // join, so that users can customize the generated query.
-                    //
-                    // There'll be a private `_field`, and then a getter, named `field`,
-                    // that returns the subquery object.
-
-                    var foreignQueryType = refer(
-                      '${relationForeign.buildContext.modelClassNameRecase.pascalCase}Query',
-                    );
-
-                    clazz
-                      ..fields.add(
-                        Field(
-                          (b) => b
-                            ..name = '_$fieldName'
-                            ..late = true
-                            ..type = foreignQueryType,
-                        ),
-                      )
-                      ..methods.add(
-                        Method(
-                          (b) => b
-                            ..name = fieldName
-                            ..type = MethodType.getter
-                            ..returns = foreignQueryType
-                            ..body = refer('_$fieldName').returned.statement,
-                        ),
-                      );
-
-                    // Assign a value to `_field`.
-                    var queryInstantiation = foreignQueryType.newInstance([], {
-                      'trampoline': refer('trampoline'),
-                      'parent': refer('this'),
-                    });
-                    joinArgs.insert(
-                      0,
-                      refer('_$fieldName').assign(queryInstantiation),
-                    );
-                  }
+                  // Assign a value to `_field`.
+                  var queryInstantiation = foreignQueryType.newInstance([], {
+                    'trampoline': refer('trampoline'),
+                    'parent': refer('this'),
+                  });
+                  joinArgs.insert(
+                    0,
+                    refer('_$fieldName').assign(queryInstantiation),
+                  );
 
                   var joinType = relation.joinTypeString;
                   b.addExpression(
@@ -733,124 +690,57 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
         }),
       );
 
-      // If we have any many-to-many relations, we need to prevent
-      // fetching this table within their joins.
-      var manyToMany = ctx.relations.entries.where((e) => e.value.isManyToMany);
-
-      if (manyToMany.isNotEmpty) {
-        var outExprs = manyToMany.map<Expression>((e) {
-          var foreignTableName = e.value.throughContext!.tableName;
-          return CodeExpression(
-            Code('''
-          (!(
-            trampoline.contains('${ctx.tableName}')
-            && trampoline.contains('$foreignTableName')
-          ))
-          '''),
-          );
-        });
-        var out = outExprs.reduce((a, b) => a.and(b));
-
-        clazz.methods.add(
-          Method((b) {
-            b
-              ..name = 'canCompile'
-              ..annotations.add(refer('override'))
-              ..requiredParameters.add(Parameter((b) => b..name = 'trampoline'))
-              ..returns = refer('bool')
-              ..body = Block((b) {
-                b.addExpression(out.returned);
-              });
-          }),
+      // The relations that are not joined, each loaded with a query of its
+      // own, for all the records at once.
+      var loadBody = _loadRelationsBody(ctx);
+      if (loadBody != null) {
+        var type = ctx.buildContext.modelClassType.accept(
+          DartEmitter(useNullSafetySyntax: true),
         );
-      }
-
-      // Also, if there is a @HasMany, generate overrides for query methods that
-      // execute in a transaction, and invoke fetchLinked.
-      if (ctx.relations.values.any((r) => r.type == RelationshipType.hasMany)) {
-        for (var methodName in const ['get', 'update', 'delete']) {
-          clazz.methods.add(
-            Method((b) {
-              var type = ctx.buildContext.modelClassType.accept(
-                DartEmitter(useNullSafetySyntax: true),
-              );
-              b
-                ..name = methodName
-                ..returns = TypeReference(
-                  (b) => b
-                    ..symbol = 'Future'
-                    ..types.add(
-                      TypeReference(
-                        (b) => b
-                          ..symbol = 'List'
-                          ..types.add(
-                            TypeReference(
-                              (b) => b
-                                ..symbol = '$type'
-                                ..isNullable = false,
-                            ),
-                          ),
-                      ),
-                    ),
-                )
+        clazz.methods
+          ..add(
+            Method(
+              (b) => b
+                ..name = 'loadsRelations'
+                ..type = MethodType.getter
                 ..annotations.add(refer('override'))
-                ..requiredParameters.add(
+                ..returns = refer('bool')
+                ..lambda = true
+                ..body = literalTrue.code,
+            ),
+          )
+          ..add(
+            Method(
+              (b) => b
+                ..name = 'loadRelations'
+                ..annotations.add(refer('override'))
+                ..modifier = MethodModifier.async
+                ..returns = refer('Future<List<$type>>')
+                ..requiredParameters.addAll([
                   Parameter(
                     (b) => b
                       ..name = 'executor'
                       ..type = refer('QueryExecutor'),
                   ),
-                );
-
-              // Collect hasMany options, and ultimately merge them
-              var merge = <String>[];
-
-              ctx.relations.forEach((name, relation) {
-                if (relation.type == RelationshipType.hasMany) {
-                  // This is only allowed with lists.
-                  var field = ctx.buildContext.fields.firstWhere(
-                    (f) => f.displayName == name,
-                  );
-
-                  var typeLiteral = convertTypeReference(field.type)
-                      .accept(DartEmitter(useNullSafetySyntax: true))
-                      .toString()
-                      .replaceAll('?', '');
-                  merge.add('''
-                      $name: $typeLiteral.from(l.$name)..addAll(model.$name)
-                    ''');
-                }
-              });
-
-              var merged = merge.join(', ');
-
-              var keyName = findPrimaryFieldInList(
-                ctx,
-                ctx.buildContext.fields,
-              )?.displayName;
-
-              if (keyName == null) {
-                throw '${ctx.buildContext.originalClassName} has no defined primary key.\n'
-                    '@HasMany and @ManyToMany relations require a primary key to be defined on the model.';
-              }
-
-              b.body = Code('''
-                    return super.$methodName(executor).then((result) {
-                      return result.fold<List<$type>>([], (out, model) {
-                        var idx = out.indexWhere((m) => m.$keyName == model.$keyName);
-
-                        if (idx == -1) {
-                          return out..add(model);
-                        } else {
-                          var l = out[idx];
-                          return out..[idx] = l.copyWith($merged);
-                        }
-                      });
-                    });
-                    ''');
-            }),
+                  Parameter(
+                    (b) => b
+                      ..name = 'rows'
+                      ..type = refer('List<List>'),
+                  ),
+                  Parameter(
+                    (b) => b
+                      ..name = 'records'
+                      ..type = refer('List<$type>'),
+                  ),
+                  Parameter(
+                    (b) => b
+                      ..name = 'loading'
+                      ..type = refer('Set<String>'),
+                  ),
+                ])
+                ..body = Code(loadBody),
+            ),
           );
-        }
       }
     });
   }
@@ -929,19 +819,17 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
           builderType = refer('BooleanSqlExpressionBuilder');
         } else if (const TypeChecker.typeNamed(DateTime).isExactlyType(type)) {
           builderType = refer('DateTimeSqlExpressionBuilder');
-        } else if (const TypeChecker.typeNamed(
-          Map,
-        ).isAssignableFromType(type)) {
+        } else if (const TypeChecker.typeNamed(Map)
+            .isAssignableFromType(type)) {
           builderType = refer('MapSqlExpressionBuilder');
-        } else if (const TypeChecker.typeNamed(
-          List,
-        ).isAssignableFromType(type)) {
+        } else if (const TypeChecker.typeNamed(List)
+            .isAssignableFromType(type)) {
           builderType = refer('ListSqlExpressionBuilder');
 
           // Detect relationship
         } else if (name.endsWith('Id')) {
           log.fine('Foreign Relationship detected = $name');
-          var relation = ctx.relations[name.replaceAll('Id', '')];
+          var relation = ctx.relations[name.substring(0, name.length - 2)];
           if (relation != null) {
             //if (relation?.type != RelationshipType.belongsTo) {
             //  continue;
@@ -1047,9 +935,8 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                 var name = ctx.buildContext.resolveFieldName(field.displayName);
                 var type = ctx.columns[field.displayName]?.type;
                 if (type == null) continue;
-                if (const TypeChecker.typeNamed(
-                  List,
-                ).isAssignableFromType(fType)) {
+                if (const TypeChecker.typeNamed(List)
+                    .isAssignableFromType(fType)) {
                   args[name] = literalString(type.name);
                 }
 
@@ -1067,7 +954,12 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
       for (var field in ctx.effectiveNormalFields) {
         var fType = field.type;
         var name = ctx.buildContext.resolveFieldName(field.displayName);
-        var type = convertTypeReference(field.type);
+        // The key of a relation is null until it is set, and its column, as
+        // the relation may be null.
+        var type = convertTypeReference(
+          field.type,
+          forceNullable: field is RelationFieldImpl,
+        );
 
         clazz.methods.add(
           Method((b) {
@@ -1075,9 +967,8 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
 
             if (fType is InterfaceType && fType.element is EnumElement) {
               value = _deserializeEnumExpression(field, value);
-            } else if (const TypeChecker.typeNamed(
-              List,
-            ).isAssignableFromType(fType)) {
+            } else if (const TypeChecker.typeNamed(List)
+                .isAssignableFromType(fType)) {
               value = refer('json')
                   .property('decode')
                   .call([value.asA(refer('String'))])
@@ -1112,9 +1003,8 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
 
             if (fType is InterfaceType && fType.element is EnumElement) {
               value = _serializeEnumExpression(field, value);
-            } else if (const TypeChecker.typeNamed(
-              List,
-            ).isAssignableFromType(fType)) {
+            } else if (const TypeChecker.typeNamed(List)
+                .isAssignableFromType(fType)) {
               value = refer('json').property('encode').call([value]);
             }
 
@@ -1132,9 +1022,10 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                     ..type = type,
                 ),
               )
-              ..body = refer(
-                'values',
-              ).index(literalString(name!)).assign(value).code;
+              ..body = refer('values')
+                  .index(literalString(name!))
+                  .assign(value)
+                  .code;
           }),
         );
       }
@@ -1158,9 +1049,8 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                   continue;
                 }
                 b.addExpression(
-                  refer(
-                    field.displayName,
-                  ).assign(refer('model').property(field.displayName)),
+                  refer(field.displayName)
+                      .assign(refer('model').property(field.displayName)),
                 );
               }
 
@@ -1196,14 +1086,19 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
                   //  parsedId = prop.nullSafeProperty(foreignField.name);
                   //}
 
-                  if (foreign != null) {
-                    if (isSpecialId(foreign, field)) {
-                      parsedId = (refer(
-                        'int',
-                      ).property('tryParse').call([parsedId]));
-                    }
-                  }
                   var cond = prop.notEqualTo(literalNull);
+
+                  if (foreign != null && isSpecialId(foreign, foreignField)) {
+                    // A Model's id is a String; the column is an int. Leave
+                    // the column unset until the related model has an id,
+                    // and reject an id that is not a number.
+                    cond = parsedId.notEqualTo(literalNull);
+                    parsedId = refer('int').property('parse').call([
+                      prop.nullChecked
+                          .property(foreignField.displayName)
+                          .nullChecked,
+                    ]);
+                  }
                   var condStr = cond.accept(
                     DartEmitter(useNullSafetySyntax: true),
                   );
@@ -1223,7 +1118,7 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
   /// Retrieve the [Expression] to parse a serialized enumeration field.
   /// Takes into account the [SerializableField] properties.
   /// Defaults to `enum.values[index as int]`
-  Expression _deserializeEnumExpression(FieldElement field, Expression expr) {
+  Expression _deserializeEnumExpression(OrmField field, Expression expr) {
     Reference enumType = convertTypeReference(
       field.type,
       ignoreNullabilityCheck: true,
@@ -1231,7 +1126,10 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
     const TypeChecker serializableFieldTypeChecker = TypeChecker.typeNamed(
       SerializableField,
     );
-    final annotation = serializableFieldTypeChecker.firstAnnotationOf(field);
+    // A relation's column has no annotations of its own.
+    final annotation = field is ClassOrmField
+        ? serializableFieldTypeChecker.firstAnnotationOf(field.element)
+        : null;
     Expression? parseExpr;
     if (null != annotation) {
       final deserializer = annotation.getField('deserializer')?.toSymbolValue();
@@ -1257,11 +1155,14 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
 
   /// Retrieve the [Expression] to serialize the enumeration field.
   /// Takes into account the [SerializableField] properties.
-  Expression _serializeEnumExpression(FieldElement field, Expression expr) {
+  Expression _serializeEnumExpression(OrmField field, Expression expr) {
     const TypeChecker serializableFieldTypeChecker = TypeChecker.typeNamed(
       SerializableField,
     );
-    final annotation = serializableFieldTypeChecker.firstAnnotationOf(field);
+    // A relation's column has no annotations of its own.
+    final annotation = field is ClassOrmField
+        ? serializableFieldTypeChecker.firstAnnotationOf(field.element)
+        : null;
     Expression? parseExpr;
     if (null != annotation) {
       final serializer = annotation.getField('serializer')?.toSymbolValue();
@@ -1271,4 +1172,135 @@ class OrmGenerator extends GeneratorForAnnotation<Orm> {
     }
     return parseExpr ?? CodeExpression(Code('value?.index'));
   }
+}
+
+/// Whether a record of [ctx] has relations that are not joined: a
+/// @HasMany, or a @HasOne or @BelongsTo of a model that has, but not of
+/// [seen], which a cycle of relations leads back to.
+bool _loadsRelations(OrmBuildContext ctx, [Set<String>? seen]) {
+  seen ??= {};
+  if (!seen.add(ctx.tableName)) return false;
+  return ctx.relations.values.any((relation) {
+    var foreign = relation.foreign;
+    if (foreign == null) return false;
+    return switch (relation.type) {
+      RelationshipType.hasMany => true,
+      RelationshipType.hasOne ||
+      RelationshipType.belongsTo => _loadsRelations(foreign, seen),
+      _ => false,
+    };
+  });
+}
+
+/// The relation of the "through" model of a many-to-many [relation] of
+/// [ctx] that points to its other model.
+RelationshipReader _throughRelation(
+  OrmBuildContext ctx,
+  RelationshipReader relation,
+) {
+  var through = relation.throughContext!;
+  var foreign = relation.foreign!;
+  return through.relations.values.firstWhere(
+    (e) => e.foreignTable == foreign.tableName,
+    orElse: () =>
+        throw '${ctx.buildContext.modelClassName} has a many-to-many '
+            'relationship to ${foreign.buildContext.modelClassName} through '
+            '${through.buildContext.modelClassName}, but '
+            '${through.buildContext.modelClassName} has no relation pointing '
+            'to ${foreign.buildContext.modelClassName}.',
+  );
+}
+
+/// The body of `loadRelations` of the query of [ctx], or `null` if all its
+/// relations are joined.
+String? _loadRelationsBody(OrmBuildContext ctx) {
+  if (!_loadsRelations(ctx)) return null;
+  var b = StringBuffer('if (records.isEmpty) return records;\n');
+  var copies = <String>[];
+  var usesIndex = false;
+  // The joins, in the order the constructor makes them.
+  var joinIndex = 0;
+  ctx.relations.forEach((name, relation) {
+    var foreign = relation.foreign;
+    if (foreign == null) return;
+    var field = ctx.buildContext.fields.firstWhere(
+      (f) => f.displayName == name,
+    );
+    var isNullable = field.type.nullabilitySuffix == NullabilitySuffix.question;
+    var model = foreign.buildContext.modelClassNameRecase.pascalCase;
+    var table = foreign.tableName;
+
+    if (relation.type == RelationshipType.hasMany) {
+      usesIndex = true;
+      var localKey = relation.localKey ?? 'id';
+      var keys = "[for (var row in rows) valueOf('$localKey', row)]";
+      var keyOfRow = "'\${valueOf('$localKey', rows[i])}'";
+      if (relation.isManyToMany) {
+        var through = _throughRelation(ctx, relation);
+        b.writeln('''
+          // The other ends of the many-to-many, then their records.
+          var ${name}Pivot = loading.contains('$table')
+              ? null
+              : await Query.pivotKeys(
+                  executor,
+                  '${relation.throughContext!.tableName}',
+                  '${relation.foreignKey}',
+                  '${through.localKey}',
+                  $keys,
+                );
+          var ${name}ByKey = ${name}Pivot == null
+              ? null
+              : await ${model}Query().getByKeys(
+                  executor,
+                  '${through.foreignKey}',
+                  ${name}Pivot.values.expand((k) => k),
+                  loading,
+                );''');
+        copies.add(
+          '$name: ${name}ByKey == null ? r.$name : '
+          '[for (var k in ${name}Pivot![$keyOfRow] ?? const []) '
+          "...?${name}ByKey['\$k']]",
+        );
+      } else {
+        b.writeln('''
+          var ${name}ByKey = loading.contains('$table')
+              ? null
+              : await _$name.getByKeys(
+                  executor,
+                  '${relation.foreignKey}',
+                  $keys,
+                  loading,
+                );''');
+        copies.add(
+          '$name: ${name}ByKey == null ? r.$name : '
+          '[...?${name}ByKey[$keyOfRow]]',
+        );
+      }
+    } else if (relation.type == RelationshipType.hasOne ||
+        relation.type == RelationshipType.belongsTo) {
+      var index = joinIndex++;
+      if (!_loadsRelations(foreign)) return;
+      // The relations of the records joined, from their columns.
+      var present = isNullable ? 'if (r.$name != null) ' : '';
+      b.writeln('''
+          var ${name}Loaded = loading.contains('$table')
+              ? null
+              : (await _$name.loadRelations(
+                  executor,
+                  [for (var (i, r) in records.indexed) ${present}joinedRow($index, rows[i])],
+                  [for (var r in records) $present r.$name as $model],
+                  {...loading, '$table'},
+                )).iterator;''');
+      var absent = isNullable ? ' || r.$name == null' : '';
+      copies.add(
+        '$name: ${name}Loaded == null$absent '
+        '? r.$name : (${name}Loaded..moveNext()).current',
+      );
+    }
+  });
+  var loop = usesIndex
+      ? 'for (var (i, r) in records.indexed)'
+      : 'for (var r in records)';
+  b.writeln('return [$loop r.copyWith(${copies.join(', ')})];');
+  return b.toString();
 }

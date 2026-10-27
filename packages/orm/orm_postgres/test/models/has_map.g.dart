@@ -10,14 +10,8 @@ class HasMapMigration extends Migration {
   @override
   void up(Schema schema) {
     schema.create('has_maps', (table) {
-      table.declareColumn(
-        'value',
-        Column(type: ColumnType('jsonb'), length: 255),
-      );
-      table.declareColumn(
-        'list',
-        Column(type: ColumnType('jsonb'), length: 255),
-      );
+      table.declare('value', ColumnType.jsonb);
+      table.declare('list', ColumnType.jsonb);
     });
   }
 
@@ -86,9 +80,11 @@ class HasMapQuery extends Query<HasMap, HasMapQueryWhere> {
     }
     var model = HasMap(
       value: fields.contains('value')
-          ? (row[0] as Map<dynamic, dynamic>?)
+          ? (row[fields.indexOf('value')] as Map<dynamic, dynamic>?)
           : null,
-      list: fields.contains('list') ? (row[1] as List<dynamic>?) : null,
+      list: fields.contains('list')
+          ? (row[fields.indexOf('list')] as List<dynamic>?)
+          : null,
     );
     return Optional.of(model);
   }
@@ -168,7 +164,7 @@ class HasMap implements HasMapEntity {
 
   @override
   int get hashCode {
-    return hashObjects([value, list]);
+    return Object.hashAll([value?.length, list?.length]);
   }
 
   @override

@@ -1,5 +1,4 @@
 import 'package:angel3_client/angel3_client.dart' as c;
-import 'package:angel3_container/mirrors.dart';
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_rethinkdb/angel3_rethinkdb.dart';
 import 'package:angel3_test/angel3_test.dart';
@@ -12,20 +11,23 @@ import 'common.dart';
 void main() {
   Angel app;
   late TestClient client;
-  RethinkDb r;
+  late RethinkDb r;
+  late Connection conn;
   late c.Service todoService;
 
   setUp(() async {
     r = RethinkDb();
-    var conn = await r.connect(
+    conn = await r.connect(
       db: 'testDB',
-      host: "localhost",
+      host: rethinkHost,
       port: 28015,
       user: "admin",
       password: "",
     );
 
-    app = Angel(reflector: MirrorsReflector());
+    app = Angel();
+    // Only the records of this test.
+    await r.table('todos').delete().run(conn);
     app.use('/todos', RethinkService(conn, r.table('todos')));
 
     app.errorHandler = (e, req, res) async {
@@ -38,7 +40,10 @@ void main() {
     todoService = client.service('todos');
   });
 
-  tearDown(() => client.close());
+  tearDown(() async {
+    await client.close();
+    conn.close();
+  });
 
   test('index', () async {
     var result = await todoService.index();

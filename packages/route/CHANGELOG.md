@@ -1,5 +1,21 @@
 # Change Log
 
+## 10.0.0
+
+### New in 10.0.0
+
+* `SymlinkRoute.middleware`, `enableCache(maxSize: ...)` and `Router.cacheLength`
+
+### Fixes in 10.0.0
+
+* **Security:** Middleware of a mounted router (e.g. `group(path, ..., middleware: [...])`) runs; route groups guarded by middleware (e.g. authentication) were served without it
+* **Middleware:** Middleware of `chain(...)` applies to a router mounted on the chain at that mount only, without changing the router
+* **Parameters:** A parameter with a RegExp or with text around it (`:id([0-9]+)`, `file-:id`) has the matched text. An optional last parameter (`/x/:id?`) can be left out. Inline RegExps may contain groups, and text around a parameter is matched literally
+* **Bad input:** A parameter that cannot be read (malformed percent-encoding, a non-number for an `int`) makes the route not match, instead of throwing
+* **Cache:** The resolve cache holds at most `maxSize` results (default 1024), and its key includes the relative path, so results of other paths are not returned
+* **Docs:** The README tells how to install and use the package
+
+
 ## 9.1.0
 
 * Require Dart >= 3.13

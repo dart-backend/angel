@@ -1,5 +1,32 @@
 # Change Log
 
+## 10.0.0
+
+### Breaking changes in 10.0.0
+
+* **Breaking:** `get`, `update`, `delete` and `insert` return records with the relations `loadRelations` loads, each with a query of its own after the records: a record is one row, so a `limit` or `offset` counts records, and `getOne` fetches one row
+* **Breaking:** On MySQL and MariaDB, an insert's `returningQuery` selects the inserted row by the id given, or by `@angel3_insert_id` (`insertIdParameter`), which the executor binds to the driver's insert id, instead of the last row by id, which may be another connection's
+* **Breaking:** `Column.precision` and `Column.scale` are `int?`, and `null` unless given (were 17 and 3). A `numeric` or `decimal` without them is unbounded on PostgreSQL
+
+### New in 10.0.0
+
+* `replacePlaceholders`, which swaps `@name` placeholders for a driver's (e.g. `?`)
+* `QueryValues.parameterNameOf`, and `Column.defaultLength`, `defaultPrecision` and `defaultScale`
+* `Query.loadRelations`, which loads the relations of records that are not joined, such as a has-many, with a query each for all the records, and `loadsRelations`, `getByKeys`, `pivotKeys`, `valueOf` and `joinedRow` for it; `JoinBuilder.query` and `JoinBuilder.columnNameFor`
+
+### Fixes in 10.0.0
+
+* **Joins:** A query selects the columns of the joins of a query it joins, so a relation of a relation, such as a `@HasMany` nested in a `@HasMany`, is no longer dropped; a join that cannot be compiled selects `NULL`s named as its columns, including those of its own joins, so the columns after it keep their place
+* **Security:** `StringSqlExpressionBuilder.like` passes its pattern as a parameter, where a pattern from user input allowed SQL injection; `sanitize` is applied to the pattern
+* **Parameters:** `Query.reserveName` never returns the same name twice, so two values of one column no longer overwrite each other (an `update` with a condition and a new value on one column changed the wrong rows). `replacePlaceholders` leaves `@` in string literals, quoted identifiers and `@@variables`
+* **MySQL and MariaDB:** An insert into a table without an id returns the values it inserted; `update` and `delete` select their rows first, in a transaction, and return them. `QueryValues.compileInsertSelect` is deprecated
+* **`update()`:** Returns the rows it updated even when their new values no longer match its conditions, and supports `limit()` and `offset()` on PostgreSQL
+* **Conditions:** `notWhere` is joined with `AND NOT`, a `WHERE` no longer starts with `AND`/`OR`, and nested and JSON conditions are joined and qualified correctly. Date parts use `EXTRACT`; `DateTime` `isIn`/`isNotIn` quote the dates; a `double` is written as a plain number
+* **Values:** `mapToDouble` and `mapToInt` convert numbers of the other type, `BigInt`s and numeric strings, and throw `FormatException` for a value that cannot be converted
+* **`getOne`:** Fetches one row (`LIMIT 1`) when the query has no joins and no limit of its own
+* **Docs:** The README tells how to install and use the package, and how to migrate from 9.x
+
+
 ## 9.1.1
 
 * Fix analyzer warnings and errors

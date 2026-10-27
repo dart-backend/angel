@@ -17,8 +17,8 @@ import 'package:angel3_framework/angel3_framework.dart';
 /// the cache cannot see changes inside an object, use [timeout] (or avoid
 /// this middleware) for objects that are mutated after being served.
 ///
-/// [shouldCache], if given, decides per value whether its result may be
-/// cached. [timeout], if given, is how long a cached result stays valid.
+/// [shouldCache], if given, decides per request and value whether a result
+/// may be cached, or reused. [timeout], if given, is how long a cached result stays valid.
 RequestHandler cacheSerializationResults({
   Duration? timeout,
   FutureOr<bool> Function(RequestContext, ResponseContext, Object)? shouldCache,
@@ -31,34 +31,35 @@ RequestHandler cacheSerializationResults({
     res.serializer = (value) {
       if (!_canCache(value)) return inner(value);
       var key = value as Object;
-      var now = DateTime.now();
-
-      var cached = cache[key];
-      if (cached != null &&
-          identical(cached.serializer, inner) &&
-          (timeout == null || now.difference(cached.time) < timeout)) {
-        return cached.text;
-      }
 
       String save(String text) {
-        cache[key] = _SerializedResult(text, inner, now);
+        cache[key] = _SerializedResult(text, inner, DateTime.now());
         return text;
       }
 
       // Stay synchronous when the serializer is, since some callers (such
       // as `res.jsonp`) do not await the result.
-      FutureOr<String> serializeAndSave() {
+      FutureOr<String> cachedOrSerialized() {
+        // Now, after an async [shouldCache].
+        var now = DateTime.now();
+        var cached = cache[key];
+        if (cached != null &&
+            identical(cached.serializer, inner) &&
+            (timeout == null || now.difference(cached.time) < timeout)) {
+          return cached.text;
+        }
         var text = inner(value);
         return text is Future<String> ? text.then(save) : save(text);
       }
 
-      if (shouldCache == null) return serializeAndSave();
+      // Asked first, so a request it refuses neither reuses nor stores.
+      if (shouldCache == null) return cachedOrSerialized();
 
       var decision = shouldCache(req, res, key);
       if (decision is Future<bool>) {
-        return decision.then((ok) => ok ? serializeAndSave() : inner(value));
+        return decision.then((ok) => ok ? cachedOrSerialized() : inner(value));
       }
-      return decision ? serializeAndSave() : inner(value);
+      return decision ? cachedOrSerialized() : inner(value);
     };
 
     return true;

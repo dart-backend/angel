@@ -1,5 +1,27 @@
 # Change Log
 
+## 10.0.0
+
+### Breaking changes in 10.0.0
+
+* **Breaking:** No longer uses `dart:mirrors`, so a server can be compiled with `dart compile exe`. `@ExposeWs` methods are found through the app's reflector, such as a `StaticReflector` of data from `angel3_container_generator`; without one, register handlers with the new `exposeWs` in `configureWs`
+* **Breaking:** The streams of `AngelWebSocket`, `WebSocketContext`, the clients and their services are broadcast streams: events are not kept for later listeners, so memory no longer grows without bound, and several `WebSocketController`s can share sockets
+* **Breaking:** WebSockets over HTTP/2 are refused with `501 Not Implemented`
+
+### Fixes in 10.0.0
+
+* **Authentication:** Refuses an expired JWT, one of another IP address (with `enforceIp`), and one whose user does not exist, as over HTTP. With `allowAuth: false` it answers `403 Authentication over WebSockets is disabled.`
+* **Handshake:** A disallowed origin is refused with `403` before the upgrade, and `allowedProtocols` applies to HTTP/1.1
+* **Controllers:** `@ExposeWs` methods and hooks are not HTTP routes; inherited `@ExposeWs` methods are found; actions that come during `onConnect` are handled once it is done
+* **`doNotBroadcast`:** Blocks only the providers it is given, and can be passed to `HookedService.before`
+* **Client:** Does not reconnect after `close()`, reconnects one attempt at a time, and `connect` reports the real error, sends queued actions, and returns the socket of a connected client. Event names are kept (`todos::created`)
+* **Client services:** The `dart:io` client uses the `deserializer`, services close with the client, and `service<Id, Data>` asks for a nullable `Data`
+* **Server:** `batchEvent` survives clients leaving, `onClose` fires, non-map data and missing `id`/`eventName` no longer fail an action, `send` uses the `serializer`, and results of services that do not broadcast are sent back. Subclasses of `AngelWebSocket` can be configured
+* **Browser:** `authenticateViaPopup` removes its window listener
+* **Synchronization:** Errors of the `synchronizationChannel` are logged, where they were uncaught
+* **Docs:** The README tells how to install and use the package, and how to migrate from 9.x
+
+
 ## 9.1.0
 
 * Require Dart >= 3.13

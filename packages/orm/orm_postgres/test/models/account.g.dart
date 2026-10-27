@@ -15,7 +15,7 @@ class AccountMigration extends Migration {
       table.timeStamp('updated_at');
       table.varChar('description', length: 255);
       table.varChar('name', length: 255);
-      table.double('price');
+      table.numeric('price', precision: 17, scale: 3);
     });
   }
 
@@ -34,20 +34,6 @@ class AccountQuery extends Query<Account, AccountQueryWhere> {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = AccountQueryWhere(this);
-    leftJoin(
-      _assets = AssetQuery(trampoline: trampoline, parent: this),
-      'id',
-      'account_id',
-      additionalFields: const [
-        'id',
-        'created_at',
-        'updated_at',
-        'description',
-        'name',
-        'price',
-      ],
-      trampoline: trampoline,
-    );
   }
 
   @override
@@ -57,7 +43,7 @@ class AccountQuery extends Query<Account, AccountQueryWhere> {
 
   AccountQueryWhere? _where;
 
-  late AssetQuery _assets;
+  late final AssetQuery _assets = AssetQuery();
 
   @override
   Map<String, String> get casts {
@@ -106,23 +92,23 @@ class AccountQuery extends Query<Account, AccountQueryWhere> {
       return Optional.empty();
     }
     var model = Account(
-      id: fields.contains('id') ? row[0].toString() : null,
+      id: fields.contains('id') ? row[fields.indexOf('id')].toString() : null,
       createdAt: fields.contains('created_at')
-          ? mapToNullableDateTime(row[1])
+          ? mapToNullableDateTime(row[fields.indexOf('created_at')])
           : null,
       updatedAt: fields.contains('updated_at')
-          ? mapToNullableDateTime(row[2])
+          ? mapToNullableDateTime(row[fields.indexOf('updated_at')])
           : null,
-      description: fields.contains('description') ? (row[3] as String) : '',
-      name: fields.contains('name') ? (row[4] as String) : '',
-      price: fields.contains('price') ? mapToDouble(row[5]) : 0.0,
+      description: fields.contains('description')
+          ? (row[fields.indexOf('description')] as String)
+          : '',
+      name: fields.contains('name')
+          ? (row[fields.indexOf('name')] as String)
+          : '',
+      price: fields.contains('price')
+          ? mapToDouble(row[fields.indexOf('price')])
+          : 0.0,
     );
-    if (row.length > 6) {
-      var modelOpt = AssetQuery().parseRow(row.skip(6).take(6).toList());
-      modelOpt.ifPresent((m) {
-        model = model.copyWith(assets: [m]);
-      });
-    }
     return Optional.of(model);
   }
 
@@ -131,65 +117,35 @@ class AccountQuery extends Query<Account, AccountQueryWhere> {
     return parseRow(row);
   }
 
+  /// The query [assets] are loaded with, whose conditions and order apply.
   AssetQuery get assets {
     return _assets;
   }
 
   @override
-  Future<List<Account>> get(QueryExecutor executor) {
-    return super.get(executor).then((result) {
-      return result.fold<List<Account>>([], (out, model) {
-        var idx = out.indexWhere((m) => m.id == model.id);
-
-        if (idx == -1) {
-          return out..add(model);
-        } else {
-          var l = out[idx];
-          return out
-            ..[idx] = l.copyWith(
-              assets: List<AssetEntity>.from(l.assets)..addAll(model.assets),
-            );
-        }
-      });
-    });
-  }
+  bool get loadsRelations => true;
 
   @override
-  Future<List<Account>> update(QueryExecutor executor) {
-    return super.update(executor).then((result) {
-      return result.fold<List<Account>>([], (out, model) {
-        var idx = out.indexWhere((m) => m.id == model.id);
-
-        if (idx == -1) {
-          return out..add(model);
-        } else {
-          var l = out[idx];
-          return out
-            ..[idx] = l.copyWith(
-              assets: List<AssetEntity>.from(l.assets)..addAll(model.assets),
-            );
-        }
-      });
-    });
-  }
-
-  @override
-  Future<List<Account>> delete(QueryExecutor executor) {
-    return super.delete(executor).then((result) {
-      return result.fold<List<Account>>([], (out, model) {
-        var idx = out.indexWhere((m) => m.id == model.id);
-
-        if (idx == -1) {
-          return out..add(model);
-        } else {
-          var l = out[idx];
-          return out
-            ..[idx] = l.copyWith(
-              assets: List<AssetEntity>.from(l.assets)..addAll(model.assets),
-            );
-        }
-      });
-    });
+  Future<List<Account>> loadRelations(
+    QueryExecutor executor,
+    List<List> rows,
+    List<Account> records,
+    Set<String> loading,
+  ) async {
+    if (records.isEmpty) return records;
+    var assetsByKey = loading.contains('assets')
+        ? null
+        : await _assets.getByKeys(executor, 'account_id', [
+            for (var row in rows) valueOf('id', row),
+          ], loading);
+    return [
+      for (var (i, r) in records.indexed)
+        r.copyWith(
+          assets: assetsByKey == null
+              ? r.assets
+              : [...?assetsByKey['${valueOf('id', rows[i])}']],
+        ),
+    ];
   }
 }
 
@@ -346,14 +302,14 @@ class Account extends AccountEntity {
 
   @override
   int get hashCode {
-    return hashObjects([
+    return Object.hashAll([
       id,
       createdAt,
       updatedAt,
       description,
       name,
       price,
-      assets,
+      assets.length,
     ]);
   }
 

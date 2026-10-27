@@ -24,6 +24,18 @@ void main() {
         res.jsonp({'foo': 'bar'}, contentType: MediaType('foo', 'bar')),
   );
 
+  app.get(
+    '/fromQuery',
+    (req, res) => res.jsonp({
+      'foo': 'bar',
+    }, callbackName: req.queryParameters['callback'] ?? 'callback'),
+  );
+
+  app.get('/asyncSerializer', (req, res) {
+    res.serializer = (value) async => json.encode(value);
+    return res.jsonp({'foo': 'bar'});
+  });
+
   Future<MediaType> getContentType(String path) async {
     var rq = MockHttpRequest('GET', Uri(path: '/$path'));
     await rq.close();
@@ -32,7 +44,7 @@ void main() {
   }
 
   Future<String> getText(String path) async {
-    var rq = MockHttpRequest('GET', Uri(path: '/$path'));
+    var rq = MockHttpRequest('GET', Uri.parse('/$path'));
     await rq.close();
     await http.handleRequest(rq);
     return await rq.response.transform(utf8.decoder).join();
@@ -57,5 +69,28 @@ void main() {
     var contentType = await getContentType('contentType');
     expect(response, r'callback({"foo":"bar"})');
     expect(contentType.mimeType, 'foo/bar');
+  });
+
+  test('accepts a dotted callback name', () async {
+    expect(
+      await getText('fromQuery?callback=app.cb_1'),
+      r'app.cb_1({"foo":"bar"})',
+    );
+  });
+
+  test('rejects a callback name that is not an identifier', () async {
+    var rq = MockHttpRequest(
+      'GET',
+      Uri(path: '/fromQuery', queryParameters: {'callback': 'alert(1);x'}),
+    );
+    await rq.close();
+    await http.handleRequest(rq);
+    var body = await rq.response.transform(utf8.decoder).join();
+    expect(rq.response.statusCode, 400);
+    expect(body, isNot(contains('alert')));
+  });
+
+  test('awaits an async serializer', () async {
+    expect(await getText('asyncSerializer'), r'callback({"foo":"bar"})');
   });
 }

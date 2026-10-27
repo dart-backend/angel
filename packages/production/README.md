@@ -11,7 +11,18 @@ Helpers for concurrency, message-passing, rotating loggers, and other production
 
 This will become the de-facto way to run Angel3 applications in deployed environments, as it takes care of inter-isolate communication, respawning dead processes, and other housekeeping for you automatically. Most users will want to use the `Runner` class.
 
-## `Runner`
+## Installation
+
+In your `pubspec.yaml`:
+
+```yaml
+dependencies:
+  angel3_production: ^10.0.0
+```
+
+## Usage
+
+### `Runner`
 
 `Runner` is a utility, powered by `package:args`, that is intended to be the entry point of your application.
 
@@ -36,11 +47,15 @@ Future configureServer(Angel app) async {
 }
 ```
 
-`Runner` will automatically re-spawn crashed instances, unless `--no-respawn` is passed. This can prevent your server from entirely going down at the first error, and adds a layer of fault tolerance to your infrastructure.
+`Runner` will automatically re-spawn crashed instances, unless `--no-respawn` is passed. This can prevent your server from entirely going down at the first error, and adds a layer of fault tolerance to your infrastructure. An instance that keeps crashing is respawned after a delay that doubles from 1 s to 30 s, and is reset once it has run for a minute.
+
+An instance that fails to *start* the first time (a port in use, a bad certificate, an error in `configureServer`) is not respawned: `run` ends with exit code 70, after closing the other instances, so that a supervisor such as `systemd` or Docker sees the failure. Once it has started, a failure to start again (say, a database that is briefly down) is respawned like a crash.
+
+`SIGINT` (Ctrl+C) and `SIGTERM` (`docker stop`, `systemctl stop`; not on Windows) close every instance gracefully: it stops accepting requests, lets those in progress finish (for up to half of `shutdownTimeout`), and runs its shutdown hooks, all within `shutdownTimeout` (default 10 s), after which it is killed. A second signal exits at once. `Runner.stop()` does the same from code.
 
 When combined with `systemd`, deploying Angel3 applications on Linux can be very simple.
 
-## Message Passing
+### Message Passing
 
 The `Runner` class uses [`belatuk_pub_sub`](<https://pub.dev/packages/belatuk_pub_sub>) to coordinate
 message passing between isolates. When one isolate sends a message, all other isolates will receive the same message, except for the isolate that sent it. It is injected into your application's `Container` as `pub_sub.Client`, so you can use it as follows:
@@ -60,7 +75,7 @@ onGreetingChanged
     });
 ```
 
-## Customising Response Header
+### Customising Response Header
 
 Additional parameters can be passed to the `Runner` class to:
 
@@ -88,7 +103,9 @@ void main(List<String> args) {
 
 ```
 
-## Run-time Metadata
+The added headers are defaults: a header that a handler sets replaces one of the same name. `removeResponseHeaders` removes the given values from those defaults (including the ones `dart:io` adds, such as `X-FRAME-OPTIONS: SAMEORIGIN`), not a header a handler sets. Both apply the same way with `--http2`. A list value is sent as one header of its values, except `Set-Cookie`, which is sent once per value. A list in `removeResponseHeaders` removes each of its values, a value matches exactly, or ignoring case if nothing matches exactly, such as `sameorigin` for the `SAMEORIGIN` of `dart:io`, and a `null` value removes a header whatever its values, e.g. `{'X-XSS-PROTECTION': null}`.
+
+### Run-time Metadata
 
 At run-time, you may want to know information about the currently-running instance, for example, which number instance. For this, the `InstanceInfo` class is injected into each instance:
 
@@ -97,7 +114,7 @@ var instanceInfo = app.container.make<InstanceInfo>();
 print('This is instance #${instanceInfo.id}');
 ```
 
-## Command-line Options
+### Command-line Options
 
 The `Runner` class supplies options like the following:
 
@@ -136,3 +153,13 @@ Options:
     --key-file                The PEM key file to read.
     --key-password            The PEM key file password.
 ```
+
+Command-line arguments are visible to other users of the machine (`ps`), and end up in shell history, so give the passwords in the `ANGEL_CERTIFICATE_PASSWORD` and `ANGEL_KEY_PASSWORD` environment variables instead; an option given on the command line takes precedence.
+
+## Migrating from 9.x to 10.0.0
+
+The breaking changes of each release are listed in the [CHANGELOG](CHANGELOG.md). Those of 10.0.0 that may need changes in an app:
+
+* **Failing to start**: an instance that fails to start the first time ends `run` with exit code 70, instead of leaving the runner up with nothing serving, so a supervisor such as `systemd` or Docker sees the failure.
+* **`InstanceInfo.id`** is a non-nullable `int`.
+* **`Runner.isolateMain`** sends the runner's own messages on `RunnerArgs.loggingSendPort`, not `LogRecord`s, and the instance it starts runs until the runner stops it. Start instances with `run`, or `spawnIsolate`, instead of spawning `isolateMain` with a port of your own.

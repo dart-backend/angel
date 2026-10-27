@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:angel3_container/mirrors.dart';
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_framework/http.dart';
 import 'package:logging/logging.dart';
@@ -17,7 +16,7 @@ void main() {
   late AngelHttp http;
 
   setUp(() {
-    app = Angel(reflector: MirrorsReflector());
+    app = Angel();
     http = AngelHttp(app, useZone: true);
 
     app.logger = Logger('streaming_test')
@@ -113,4 +112,21 @@ void main() {
   });
 
   encodingTests(() => app);
+
+  for (var buffered in [false, true]) {
+    test('writeCharCode encodes as UTF-8 (buffered: $buffered)', () async {
+      var app = Angel()
+        ..get('/', (req, res) {
+          if (buffered) res.useBuffer();
+          res
+            ..writeCharCode(0x263A)
+            ..writeCharCode(0x41);
+          return res.close();
+        });
+      var rq = MockHttpRequest('GET', Uri(path: '/'));
+      await rq.close();
+      await AngelHttp(app).handleRequest(rq);
+      expect(await rq.response.transform(utf8.decoder).join(), '☺A');
+    });
+  }
 }

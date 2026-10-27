@@ -52,9 +52,34 @@ class AngelShelf
     'AngelShelf cannot mount a standalone server, or return a URI.',
   );
 
-  Future<shelf.Response> handler(shelf.Request request) async {
+  /// Answers a request that failed [checkRequestFraming] through Angel's
+  /// error pipeline, so `app.errorHandler`, finalizers and logging apply as
+  /// for any other error.
+  ///
+  /// The request context drops the framing headers (see
+  /// [ShelfRequestContext.framingError]); the error response never reads the
+  /// body.
+  Future<shelf.Response> _rejectFraming(
+    AngelHttpException e,
+    StackTrace st,
+    shelf.Request request,
+  ) async {
+    app.logger.warning(e.message, e, st);
     var response = ShelfResponseContext(app);
-    var result = await handleRawRequest(request, response);
+    var req = await createRequestContext(request, response);
+    var res = await createResponseContext(req.rawRequest, response, req);
+    return handleAngelHttpException(e, st, req, res, req.rawRequest, response);
+  }
+
+  Future<shelf.Response> handler(shelf.Request request) async {
+    shelf.Request checked;
+    try {
+      checked = checkRequestFraming(request);
+    } on AngelHttpException catch (e, st) {
+      return _rejectFraming(e, st, request);
+    }
+    var response = ShelfResponseContext(app);
+    var result = await handleRawRequest(checked, response);
     if (result is shelf.Response) {
       return result;
     } else if (!response.isOpen) {
@@ -67,14 +92,21 @@ class AngelShelf
 
   shelf.Handler middleware(shelf.Handler handler) {
     return (request) async {
+      shelf.Request checked;
+      try {
+        checked = checkRequestFraming(request);
+      } on AngelHttpException catch (e, st) {
+        return _rejectFraming(e, st, request);
+      }
       var response = ShelfResponseContext(app);
-      var result = await handleRawRequest(request, response);
+      var result = await handleRawRequest(checked, response);
       if (result is shelf.Response) {
         return result;
       } else if (!response.isOpen) {
         return response.shelfResponse;
       } else {
-        return await handler(request);
+        // The checked request, so the inner handler can read its length.
+        return await handler(checked);
       }
     };
   }

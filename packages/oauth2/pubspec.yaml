@@ -1,6 +1,6 @@
 name: angel3_oauth2
-version: 9.1.0
-description: A class containing handlers that can be used within Angel to build a spec-compliant OAuth 2.0 server.
+version: 10.0.0
+description: A class containing handlers that can be used within Angel3 to build a spec-compliant OAuth 2.0 server.
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dart-backend/angel/
 issue_tracker: https://github.com/dart-backend/angel/issues
@@ -9,15 +9,13 @@ resolution: workspace
 environment:
   sdk: '>=3.13.0 <4.0.0'
 dependencies: 
-  angel3_framework: ^9.0.0
-  angel3_http_exception: ^9.0.0
+  angel3_framework: ^10.0.0
+  angel3_http_exception: ^10.0.0
   crypto: ^3.0.1
   collection: ^1.17.0
   logging: ^1.2.0
-dev_dependencies: 
-  angel3_validate: ^9.0.0
-  angel3_test: ^9.0.0
-  angel3_container: ^9.0.0
+dev_dependencies:
+  angel3_test: ^10.0.0
   oauth2: ^2.0.0
   lints: ^6.0.0
   test: ^1.24.0

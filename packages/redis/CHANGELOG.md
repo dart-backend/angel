@@ -1,5 +1,28 @@
 # Change Log
 
+## 10.0.0
+
+### Breaking changes in 10.0.0
+
+* **Breaking:** `create` throws a 409 if the id already exists
+* **Breaking:** `create` throws a 400 unless the id is a non-empty string or an integer
+* **Breaking:** `modify` and `remove` throw a 409 if the record keeps changing during writes
+* **Breaking:** `read`, `modify` and `remove` throw a 404 for keys that are not JSON objects
+
+### New in 10.0.0
+
+* `batchSize` and `maxWriteAttempts` options
+* `index` uses `SCAN` instead of `KEYS`
+
+### Fixes in 10.0.0
+
+* **Index:** No more errors or stray results
+* **Modify and remove:** Concurrent writes no longer corrupt data
+* **Create:** Integer ids are accepted, and auto-ids no longer overwrite records. The id counter moved to `angel_redis:id:<prefix>`, continuing from the old counter
+* **Update:** Write errors are reported
+* **Docs:** The README tells how to install and use the package, and how to migrate from 9.x
+
+
 ## 9.1.0
 
 * Require Dart >= 3.13

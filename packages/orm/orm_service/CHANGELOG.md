@@ -1,5 +1,18 @@
 # Change Log
 
+## 10.0.0
+
+### Fixes in 10.0.0
+
+* **Security:** `$sort` accepts only the query's own column names (a 400 otherwise), where any REST client could inject SQL into `ORDER BY`
+* **`remove(null)`:** Removes only the records matching the query, where it deleted every record of the table
+* **`modify` (PATCH):** Changes only the fields it is given, where the others were set to `null`; `update` (PUT) still replaces every field
+* **Queries:** A query parameter is converted to its column's type (`?level=100` on an `int`), where it failed with a 500; one that cannot be converted, or names no column, is a 400
+* **One record:** `update` and `modify` change one record even if a query callback matches more, and keep the values the callback sets; `findOne` and `read` fetch one row
+* **`readMany`:** Works with a nullable `Id`, and a non-numeric id of a numeric column is a 400
+* **`create`:** Names the table when the inserted record cannot be read back
+* **Example:** Connects with the same settings as the tests
+
 ## 9.1.0
 
 * Require Dart >= 3.13

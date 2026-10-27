@@ -47,6 +47,7 @@ pubspec.lock
 
 # IntelliJ
 .idea/
+*.iml
 /out/
 .idea_modules/
 

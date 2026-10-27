@@ -88,15 +88,19 @@ class TodoQuery extends Query<Todo, TodoQueryWhere> {
       return Optional.empty();
     }
     var model = Todo(
-      id: fields.contains('id') ? row[0].toString() : null,
+      id: fields.contains('id') ? row[fields.indexOf('id')].toString() : null,
       createdAt: fields.contains('created_at')
-          ? mapToNullableDateTime(row[1])
+          ? mapToNullableDateTime(row[fields.indexOf('created_at')])
           : null,
       updatedAt: fields.contains('updated_at')
-          ? mapToNullableDateTime(row[2])
+          ? mapToNullableDateTime(row[fields.indexOf('updated_at')])
           : null,
-      text: fields.contains('text') ? (row[3] as String?) : null,
-      isComplete: fields.contains('is_complete') ? mapToBool(row[4]) : null,
+      text: fields.contains('text')
+          ? (row[fields.indexOf('text')] as String?)
+          : null,
+      isComplete: fields.contains('is_complete')
+          ? mapToBool(row[fields.indexOf('is_complete')])
+          : null,
     );
     return Optional.of(model);
   }
@@ -235,7 +239,7 @@ class Todo extends TodoEntity {
 
   @override
   int get hashCode {
-    return hashObjects([id, createdAt, updatedAt, text, isComplete]);
+    return Object.hashAll([id, createdAt, updatedAt, text, isComplete]);
   }
 
   @override

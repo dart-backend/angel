@@ -65,7 +65,8 @@ class Controller {
 
   /// Applies the routes from this [Controller] to some [router].
   ///
-  /// When reflection is disabled (see [canReflect]), only the routes added in
+  /// When reflection is disabled (see [canReflect]), or the reflector has no
+  /// information about this class, only the routes added in
   /// [configureRoutes] are applied; `@Expose` methods are not discovered.
   Future<String> applyRoutes(
     Router<RequestHandler> router,
@@ -83,10 +84,26 @@ class Controller {
     await configureRoutes(routable);
 
     String name;
-    if (canReflect(reflector)) {
+    // A reflector without information about this class (e.g. a
+    // StaticReflector) is treated like disabled reflection: only the routes
+    // added in configureRoutes are applied.
+    var classMirror = canReflect(reflector)
+        ? tryReflect(() => reflector.reflectClass(runtimeType))
+        : null;
+    var logger = _app?.logger ?? (router is Angel ? router.logger : null);
+    if (logger != null) {
+      warnIfUndescribed(
+        reflector,
+        runtimeType,
+        logger,
+        '@Expose routes and @Middleware annotations',
+      );
+    }
+    var instanceMirror = classMirror == null
+        ? null
+        : tryReflect(() => reflector.reflectInstance(this));
+    if (classMirror != null && instanceMirror != null) {
       // Pre-reflect methods
-      var classMirror = reflector.reflectClass(runtimeType)!;
-      var instanceMirror = reflector.reflectInstance(this);
       final handlers = <RequestHandler>[
         ...exposeDecl.middleware,
         ...middleware,
@@ -94,7 +111,7 @@ class Controller {
       classMirror.declarations.forEach(
         _routeBuilder(reflector, instanceMirror, routable, handlers),
       );
-      name = reflector.reflectType(runtimeType)!.name;
+      name = classMirror.name;
     } else {
       name = runtimeType.toString();
     }
@@ -102,6 +119,13 @@ class Controller {
     // Return the name.
     return exposeDecl.as?.isNotEmpty == true ? exposeDecl.as! : name;
   }
+
+  /// Whether the public method [declaration], found through the reflector,
+  /// is a route of this controller. All are, but those annotated
+  /// `@noExpose`; a subclass may keep others off its routes, such as those of
+  /// another protocol.
+  @protected
+  bool routesMethod(ReflectedDeclaration declaration) => true;
 
   void Function(ReflectedDeclaration) _routeBuilder(
     Reflector reflector,
@@ -111,6 +135,19 @@ class Controller {
   ) {
     return (ReflectedDeclaration decl) {
       var methodName = decl.name;
+
+      // Only public instance methods can be routes. (Some reflectors also
+      // list declarations without a function, such as fields.)
+      if (decl.function == null ||
+          decl.isStatic ||
+          methodName.startsWith('_') ||
+          decl.function!.isGetter ||
+          decl.function!.isSetter) {
+        return;
+      }
+
+      // Those the controller keeps off its routes.
+      if (!routesMethod(decl)) return;
 
       // Ignore built-in methods.
       if (methodName != 'toString' &&
@@ -162,7 +199,9 @@ class Controller {
           return;
         }
 
-        var injection = preInject(reflectedMethod!, reflector);
+        // From the reflected method rather than its tear-off, which a
+        // reflector without dart:mirrors cannot reflect upon.
+        var injection = injectionFor(method);
 
         if (exposeDecl.allowNull.isNotEmpty == true) {
           injection.optional.addAll(exposeDecl.allowNull);
@@ -229,7 +268,7 @@ class Controller {
         routeMappings[name ?? ''] = routable.addRoute(
           httpMethod,
           path,
-          handleContained(reflectedMethod, injection),
+          handleContained(reflectedMethod!, injection),
           middleware: middleware,
         );
       }
@@ -265,9 +304,7 @@ class Controller {
     var existing =
         expose ??
         (canReflect(reflector)
-            ? reflector
-                      .reflectClass(runtimeType)!
-                      .annotations
+            ? tryReflect(() => reflector.reflectClass(runtimeType))?.annotations
                       .map((m) => m.reflectee)
                       .firstWhere((r) => r is Expose, orElse: () => null)
                   as Expose?

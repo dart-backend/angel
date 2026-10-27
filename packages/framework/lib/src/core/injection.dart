@@ -29,6 +29,7 @@ RequestHandler ioc(
       // Copy, since a const InjectionRequest has unmodifiable lists.
       explicit = InjectionRequest.constant(
         named: injection.named,
+        namedWithDefaults: injection.namedWithDefaults,
         required: injection.required,
         optional: [...injection.optional, ...optional],
         parameters: injection.parameters,
@@ -95,7 +96,8 @@ Future resolveInjection(
       requirement.last is Type) {
     var key = requirement.first;
     var type = requirement.last;
-    if (req.params.containsKey(key) ||
+    if (injection.parameters.containsKey(key) ||
+        req.params.containsKey(key) ||
         req.app!.configuration.containsKey(key) ||
         _primitiveTypes.contains(type)) {
       return await resolveInjection(
@@ -106,6 +108,27 @@ Future resolveInjection(
         throwOnUnresolved,
         container,
       );
+    } else if ((!throwOnUnresolved || injection.optional.contains(key)) &&
+        !container.has(type)) {
+      // An optional (or named) parameter of a type nothing is registered
+      // for: construct one if possible, but leave it unresolved otherwise
+      // (e.g. an abstract class) instead of failing the request.
+      try {
+        return await resolveInjection(
+          type,
+          injection,
+          req,
+          res,
+          throwOnUnresolved,
+          container,
+        );
+      } catch (e) {
+        // Only "cannot be constructed", whichever reflector reports it; an
+        // error thrown while constructing it is a real failure, and must
+        // reach the client as one.
+        if (Container.isUnconstructible(e)) return null;
+        rethrow;
+      }
     } else {
       return await resolveInjection(
         type,
@@ -169,8 +192,7 @@ RequestHandler handleContained(
     }
 
     for (var entry in injection.named.entries) {
-      var name = Symbol(entry.key);
-      named[name] = await resolveInjection(
+      var value = await resolveInjection(
         [entry.key, entry.value],
         injection,
         req,
@@ -178,6 +200,11 @@ RequestHandler handleContained(
         false,
         container,
       );
+      // Leave unresolved parameters with a default out, so it applies; others
+      // (e.g. `required String? q`) are passed null.
+      if (value != null || !injection.namedWithDefaults.contains(entry.key)) {
+        named[Symbol(entry.key)] = value;
+      }
     }
 
     return Function.apply(handler, args, named);
@@ -195,6 +222,17 @@ class InjectionRequest {
   /// Optional, typed data that can be passed to a DI-enabled method.
   final Map<String, Type> named;
 
+  /// The names in [named] of parameters with a default value, which are left
+  /// out (so the default applies) when they cannot be resolved, instead of
+  /// being passed `null`.
+  ///
+  /// [preInject] fills this from the reflector (`MirrorsReflector` reports
+  /// default values; some reflectors cannot). When writing an
+  /// [InjectionRequest] by hand, list such parameters here, e.g.
+  /// `named: {'page': int}, namedWithDefaults: {'page'}` for
+  /// `({int page = 1})`.
+  final Set<String> namedWithDefaults;
+
   /// A list of the arguments required for a DI-enabled method to run.
   final List required;
 
@@ -206,6 +244,7 @@ class InjectionRequest {
 
   const InjectionRequest.constant({
     this.named = const {},
+    this.namedWithDefaults = const {},
     this.required = const [],
     this.optional = const [],
     this.parameters = const {},
@@ -213,33 +252,78 @@ class InjectionRequest {
 
   InjectionRequest()
     : named = {},
+      namedWithDefaults = {},
       required = [],
       optional = [],
       parameters = {};
 }
 
 /// Predetermines what needs to be injected for a handler to run.
-InjectionRequest preInject(Function handler, Reflector reflector) {
+InjectionRequest preInject(Function handler, Reflector reflector) =>
+    injectionFor(reflector.reflectFunction(handler)!);
+
+/// Predetermines what needs to be injected to call a reflected [function],
+/// such as a method found through `Reflector.reflectClass`.
+InjectionRequest injectionFor(ReflectedFunction function) =>
+    injectionFromParameters(
+      function.parameters.map(
+        (parameter) => InjectableParameter(
+          name: parameter.name,
+          type: parameter.type.reflectedType,
+          isRequired: parameter.isRequired,
+          isNamed: parameter.isNamed,
+          hasDefaultValue: parameter.hasDefaultValue,
+          // Matched by value, so the reflector needs no information about
+          // the Parameter type itself.
+          annotation:
+              parameter.annotations
+                      .firstWhereOrNull((m) => m.reflectee is Parameter)
+                      ?.reflectee
+                  as Parameter?,
+        ),
+      ),
+    );
+
+/// A reflector-independent description of one parameter of a DI-enabled
+/// handler, from which [injectionFromParameters] builds an [InjectionRequest].
+///
+/// This lets code that discovers handlers by other means (e.g. `dart:mirrors`
+/// directly, or generated code) inject them without the app's [Reflector].
+class InjectableParameter {
+  final String name;
+  final Type type;
+
+  /// Whether a positional parameter is required (not in `[...]`).
+  final bool isRequired;
+  final bool isNamed;
+  final bool hasDefaultValue;
+
+  /// The parameter's [Parameter] annotation, if any.
+  final Parameter? annotation;
+
+  const InjectableParameter({
+    required this.name,
+    required this.type,
+    required this.isRequired,
+    required this.isNamed,
+    this.hasDefaultValue = false,
+    this.annotation,
+  });
+}
+
+/// Builds the [InjectionRequest] for a handler with the given [parameters].
+///
+/// [preInject] uses this after reflecting on a handler.
+InjectionRequest injectionFromParameters(
+  Iterable<InjectableParameter> parameters,
+) {
   var injection = InjectionRequest();
 
-  var closureMirror = reflector.reflectFunction(handler)!;
-
-  if (closureMirror.parameters.isEmpty) return injection;
-
-  // Load parameters
-  for (var parameter in closureMirror.parameters) {
+  for (var parameter in parameters) {
     var name = parameter.name;
-    var type = parameter.type.reflectedType;
+    var type = parameter.type;
+    var p = parameter.annotation;
 
-    var p =
-        parameter.annotations
-                .firstWhereOrNull(
-                  (m) =>
-                      m.type.isAssignableTo(reflector.reflectType(Parameter)),
-                )
-                ?.reflectee
-            as Parameter?;
-    //print(p);
     if (p != null) {
       injection.parameters[name] = Parameter(
         cookie: p.cookie,
@@ -268,6 +352,7 @@ InjectionRequest preInject(Function handler, Reflector reflector) {
       }
     } else {
       injection.named[name] = type;
+      if (parameter.hasDefaultValue) injection.namedWithDefaults.add(name);
     }
   }
   return injection;

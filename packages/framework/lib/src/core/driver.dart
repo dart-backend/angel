@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'dart:io' show Cookie;
+import 'dart:io' show Cookie, HttpException;
 
 import 'package:angel3_http_exception/angel3_http_exception.dart';
 import 'package:angel3_route/angel3_route.dart';
@@ -8,6 +8,7 @@ import 'package:stack_trace/stack_trace.dart';
 import 'package:tuple/tuple.dart';
 
 import '../util.dart';
+import 'abort.dart';
 import 'core.dart';
 
 /// Base driver class for Angel implementations.
@@ -25,6 +26,15 @@ abstract class Driver<
   bool _closed = false;
 
   StreamSubscription<Request>? _sub;
+
+  /// The requests in progress, which [drain] lets finish.
+  final Set<Future<void>> _inFlight = {};
+
+  Future<void>? _draining;
+
+  /// How long [drain] waits for the requests in progress to finish, before
+  /// it closes their connections.
+  Duration closeTimeout = const Duration(seconds: 10);
   //final log = Logger('Driver');
 
   /// The function used to bind this instance to a server..
@@ -72,60 +82,100 @@ abstract class Driver<
     }
 
     app.optimizeForProduction();
-    _sub = server.listen((request) {
-      var stream = createResponseStreamFromRawRequest(request);
-      // Errors here happen outside the per-request error zone (e.g. a
-      // malformed request that cannot become a RequestContext, or a
-      // broken HTTP/2 connection). Left unhandled they would
-      // terminate the whole server, so log them and drop the request.
-      stream.listen(
-        (response) {
-          handleRawRequest(request, response).catchError((
-            Object e,
-            StackTrace st,
-          ) {
-            app.logger.warning('Failed to handle request', e, st);
-            try {
-              setStatusCode(response, 400);
-              closeResponse(response);
-            } catch (_) {
-              // The response may already be unusable.
-            }
-          });
-        },
-        onError: (Object e, StackTrace st) {
-          app.logger.warning('Connection error', e, st);
-        },
-      );
+    // Served in a zone of its own: an error of a connection that escapes its
+    // request (as `dart:io` reports a response's abort) is logged, rather
+    // than reaching the root zone, where it would terminate the server.
+    _sub = runZonedGuarded(() => server.listen(_serve), (e, st) {
+      if (isAbortError(e)) return;
+      app.logger.severe('Uncaught error of a connection', e, st);
     });
     return server;
   }
 
-  /// Closes a [server] created by [generateServer] that never started
-  /// serving (see [startServer]). Drivers whose server can be closed should
+  void _serve(Request request) {
+    var stream = createResponseStreamFromRawRequest(request);
+    // A broken connection (e.g. HTTP/2) errors outside the per-request
+    // error zone. Left unhandled it would terminate the whole server.
+    stream.listen(
+      (response) => handleRawRequestSafely(request, response),
+      onError: (Object e, StackTrace st) {
+        app.logger.warning('Connection error', e, st);
+      },
+    );
+  }
+
+  /// Closes a [server] created by [generateServer], with its connections:
+  /// one that never started serving (see [startServer]), or one whose
+  /// requests did not finish within [closeTimeout] (see [drain]). Drivers whose server can be closed should
   /// override this; the default does nothing.
   Future<void> closeServer(Server server) async {}
 
-  /// Shuts down the underlying server.
-  Future<void> close() {
-    if (_closed) {
-      //return Future.value(_server);
-      return Future.value();
-    }
+  /// Completes once the connections of the server are closed, after [drain]
+  /// stopped accepting requests and those in progress finished: a response
+  /// that has been sent may still be being written to its socket, which
+  /// ending the process (or isolate) right away would cut off. [drain] waits
+  /// for it within [closeTimeout]. The default completes at once.
+  Future<void> connectionsClosed() async {}
+
+  /// Shuts down the underlying server: it is [drain]ed, then the shutdown
+  /// hooks run, and the app is closed.
+  ///
+  /// A handler still running after [closeTimeout] cannot be stopped: its
+  /// connection is closed, but it runs on while the hooks run and the app is
+  /// closed, so it may find services and resources gone.
+  Future<void> close() async {
+    if (_closed) return;
     _closed = true;
 
-    _sub?.cancel();
+    await drain();
 
-    return app.close().then(
-      (_) =>
-          Future.wait(app.shutdownHooks.map(app.configure))
-              .then((_) => Future.value()),
-    );
-    /*
-    return app.close().then((_) =>
-        Future.wait(app.shutdownHooks.map(app.configure))
-            .then((_) => Future.value(_server)));
-    */
+    // Hooks run first, while services and configuration are still
+    // available; app.close() tears those down and clears the hooks. It runs
+    // even if a hook fails, and the hook's error is then rethrown.
+    try {
+      await Future.wait(app.shutdownHooks.map(app.configure));
+    } finally {
+      await app.close();
+    }
+  }
+
+  /// Stops accepting requests, and waits up to [closeTimeout] for those in
+  /// progress to finish, and their connections to close (see
+  /// [connectionsClosed]); any still open then are closed (see
+  /// [closeServer]). Unlike [close], it neither runs the
+  /// shutdown hooks nor closes the app, so that a driver that shares its app
+  /// with another (as [AngelHttp2] does for HTTP/1) can be drained alongside
+  /// it. Calling it again returns the same future.
+  Future<void> drain() => _draining ??= _drain();
+
+  Future<void> _drain() async {
+    // Cancelling stops accepting requests; a dart:io server then closes
+    // each connection once its response is sent.
+    await _sub?.cancel();
+    var elapsed = Stopwatch()..start();
+    Duration remaining() {
+      var left = closeTimeout - elapsed.elapsed;
+      return left.isNegative ? Duration.zero : left;
+    }
+
+    var timedOut = false;
+    void onTimeout() => timedOut = true;
+    if (_inFlight.isNotEmpty) {
+      await Future.wait(_inFlight.toList())
+          .then<void>((_) {})
+          .timeout(remaining(), onTimeout: onTimeout);
+    }
+    if (!timedOut) {
+      await connectionsClosed().timeout(remaining(), onTimeout: onTimeout);
+    }
+    var server = this.server;
+    if (timedOut && server != null) {
+      try {
+        await closeServer(server);
+      } catch (e, st) {
+        app.logger.warning('Failed to close the server', e, st);
+      }
+    }
   }
 
   Future<RequestContextType> createRequestContext(
@@ -145,6 +195,10 @@ abstract class Driver<
 
   void setChunkedEncoding(Response response, bool value);
 
+  /// Whether the client of [request] can receive a chunked response; HTTP/1.0
+  /// clients cannot, so a driver for them overrides this.
+  bool supportsChunkedEncoding(Request request) => true;
+
   void setStatusCode(Response response, int value);
 
   void addCookies(Response response, Iterable<Cookie> cookies);
@@ -157,9 +211,59 @@ abstract class Driver<
 
   Stream<Response> createResponseStreamFromRawRequest(Request request);
 
+  /// Like [handleRawRequest], but never fails: errors that happen outside the
+  /// per-request error zone are logged and answered, since left unhandled
+  /// they would terminate the whole server.
+  ///
+  /// A malformed request that cannot become a [RequestContext] (a
+  /// [FormatException], or an [HttpException] from parsing its headers) is
+  /// answered with `400 Bad Request`, and an [AngelHttpException] with its
+  /// status code. Any other error is a server bug, answered with
+  /// `500 Internal Server Error`.
+  Future<void> handleRawRequestSafely(Request request, Response response) {
+    late Future<void> handled;
+    handled = _handleRawRequestSafely(
+      request,
+      response,
+    ).whenComplete(() => _inFlight.remove(handled));
+    _inFlight.add(handled);
+    return handled;
+  }
+
+  Future<void> _handleRawRequestSafely(Request request, Response response) {
+    return handleRawRequest(request, response).catchError((
+      Object e,
+      StackTrace st,
+    ) {
+      var status = _statusCodeForUnhandledError(e);
+      if (status >= 500) {
+        app.logger.severe('Failed to handle request', e, st);
+      } else {
+        app.logger.warning('Failed to handle request', e, st);
+      }
+      try {
+        setStatusCode(response, status);
+        closeResponse(response);
+      } catch (_) {
+        // The response may already be unusable.
+      }
+    });
+  }
+
+  /// The status code [handleRawRequestSafely] answers [error] with.
+  static int _statusCodeForUnhandledError(Object error) => switch (error) {
+    AngelHttpException(:var statusCode) => statusCode,
+    FormatException() || HttpException() => 400,
+    _ => 500,
+  };
+
   /// Handles a single request.
   Future handleRawRequest(Request request, Response response) {
-    return createRequestContext(request, response).then((req) {
+    // Future.sync turns a synchronous throw into a failed Future, so callers'
+    // error handlers see it.
+    return Future.sync(() => createRequestContext(request, response)).then((
+      req,
+    ) {
       return createResponseContext(request, response, req).then((res) {
         Future handle() {
           var path = req.path;
@@ -403,6 +507,18 @@ abstract class Driver<
       return Future.value();
     }
 
+    // The status and headers are sent, so an error page would only be
+    // appended to the body, under the status already sent.
+    if (res.isOpen && res.headersSent) {
+      app.logger.severe(
+        'Failed after the response headers were sent; the response is '
+        'aborted.',
+        e.error ?? e,
+        st,
+      );
+      return res.abort(e.error ?? e, st).then((_) => req.close());
+    }
+
     Future handleError;
 
     if (!res.isOpen) {
@@ -469,6 +585,8 @@ abstract class Driver<
     return finalizers.then((_) {
       //if (res.isOpen) res.close();
 
+      // Chosen before headers are sent, since choosing can add a header.
+      var encoding = res.selectedEncoder;
       res.validateHeaders();
       for (var key in res.headers.keys) {
         app.logger.fine("Response header key: $key");
@@ -476,14 +594,15 @@ abstract class Driver<
       }
 
       setContentLength(response, res.buffer?.length ?? 0);
-      setChunkedEncoding(response, res.chunked ?? true);
+      // The length is known, so Content-Length is used unless chunked
+      // encoding is asked for (HTTP/1.0 clients do not support it).
+      setChunkedEncoding(
+        response,
+        (res.chunked ?? false) && supportsChunkedEncoding(request),
+      );
 
       var outputBuffer = res.buffer?.toBytes() ?? <int>[];
 
-      var encoding = ResponseContext.selectEncoder(
-        res.encoders,
-        req.headers?.value('accept-encoding'),
-      );
       if (encoding != null) {
         setHeader(response, 'content-encoding', encoding.name);
         outputBuffer = encoding.encoder.convert(outputBuffer);

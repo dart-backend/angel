@@ -1,5 +1,14 @@
 # Change Log
 
+## 10.0.0
+
+* Released with the other Angel3 packages at 10.0.0
+
+### Fixes in 10.0.0
+
+* **Docs:** The README tells how to install and use the package
+
+
 ## 9.1.0
 
 * Require Dart >= 3.13

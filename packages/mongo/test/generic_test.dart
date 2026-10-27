@@ -1,11 +1,15 @@
-import 'package:angel3_container/mirrors.dart';
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_framework/http.dart';
 import 'package:angel3_mongo/angel3_mongo.dart';
 import 'package:http/http.dart' as http;
-import 'package:belatuk_json_serializer/belatuk_json_serializer.dart' as god;
 import 'package:mongo_dart/mongo_dart.dart';
 import 'package:test/test.dart';
+
+/// The MongoDB server the tests use: `MONGO_HOST`, or `localhost`.
+final String mongoHost = Platform.environment['MONGO_HOST'] ?? 'localhost';
 
 final headers = {
   'accept': 'application/json',
@@ -26,7 +30,7 @@ void main() {
     Angel app;
     late AngelHttp transport;
     late http.Client client;
-    var db = Db('mongodb://localhost:27017/testDB');
+    var db = Db('mongodb://$mongoHost:27017/testDB');
 
     late DbCollection testData;
     String? url;
@@ -34,7 +38,7 @@ void main() {
     greetingService;
 
     setUp(() async {
-      app = Angel(reflector: MirrorsReflector());
+      app = Angel();
       transport = AngelHttp(app);
       client = http.Client();
       await db.open();
@@ -75,32 +79,29 @@ void main() {
     test('insert items', () async {
       var response = await client.post(
         Uri.parse('$url/api'),
-        body: god.serialize(testGreeting),
+        body: jsonEncode(testGreeting),
         headers: headers,
       );
       expect(response.statusCode, isIn([200, 201]));
 
       response = await client.get(Uri.parse('$url/api'));
       expect(response.statusCode, isIn([200, 201]));
-      var users = god.deserialize(
-        response.body,
-        outputType: <Map>[].runtimeType,
-      ) as List<Map>;
+      var users = (jsonDecode(response.body) as List).cast<Map>();
       expect(users.length, equals(1));
     });
 
     test('read item', () async {
       var response = await client.post(
         Uri.parse('$url/api'),
-        body: god.serialize(testGreeting),
+        body: jsonEncode(testGreeting),
         headers: headers,
       );
       expect(response.statusCode, isIn([200, 201]));
-      var created = god.deserialize(response.body) as Map;
+      var created = jsonDecode(response.body) as Map;
 
       response = await client.get(Uri.parse("$url/api/${created['id']}"));
       expect(response.statusCode, isIn([200, 201]));
-      var read = god.deserialize(response.body) as Map;
+      var read = jsonDecode(response.body) as Map;
       expect(read['id'], equals(created['id']));
       expect(read['to'], equals('world'));
       //expect(read['createdAt'], isNot(null));
@@ -109,11 +110,11 @@ void main() {
     test('findOne', () async {
       var response = await client.post(
         Uri.parse('$url/api'),
-        body: god.serialize(testGreeting),
+        body: jsonEncode(testGreeting),
         headers: headers,
       );
       expect(response.statusCode, isIn([200, 201]));
-      var created = god.deserialize(response.body) as Map;
+      var created = jsonDecode(response.body) as Map;
 
       var id = ObjectId.fromHexString(created['id'] as String);
       var read = await greetingService.findOne({'query': where.id(id)});
@@ -125,11 +126,11 @@ void main() {
     test('readMany', () async {
       var response = await client.post(
         Uri.parse('$url/api'),
-        body: god.serialize(testGreeting),
+        body: jsonEncode(testGreeting),
         headers: headers,
       );
       expect(response.statusCode, isIn([200, 201]));
-      var created = god.deserialize(response.body) as Map;
+      var created = jsonDecode(response.body) as Map;
 
       var id = ObjectId.fromHexString(created['id'] as String);
       var read = await greetingService.readMany([id.oid]);
@@ -140,18 +141,18 @@ void main() {
     test('modify item', () async {
       var response = await client.post(
         Uri.parse('$url/api'),
-        body: god.serialize(testGreeting),
+        body: jsonEncode(testGreeting),
         headers: headers,
       );
       expect(response.statusCode, isIn([200, 201]));
-      var createdDoc = god.deserialize(response.body) as Map;
+      var createdDoc = jsonDecode(response.body) as Map;
 
       response = await client.patch(
         Uri.parse("$url/api/${createdDoc['id']}"),
-        body: god.serialize({'to': 'Mom'}),
+        body: jsonEncode({'to': 'Mom'}),
         headers: headers,
       );
-      var modifiedDoc = god.deserialize(response.body) as Map;
+      var modifiedDoc = jsonDecode(response.body) as Map;
       expect(response.statusCode, isIn([200, 201]));
       expect(modifiedDoc['id'], equals(createdDoc['id']));
       expect(modifiedDoc['to'], equals('Mom'));
@@ -161,18 +162,18 @@ void main() {
     test('update item', () async {
       var response = await client.post(
         Uri.parse('$url/api'),
-        body: god.serialize(testGreeting),
+        body: jsonEncode(testGreeting),
         headers: headers,
       );
       expect(response.statusCode, isIn([200, 201]));
-      var createdDoc = god.deserialize(response.body) as Map;
+      var createdDoc = jsonDecode(response.body) as Map;
 
       response = await client.post(
         Uri.parse("$url/api/${createdDoc['id']}"),
-        body: god.serialize({'to': 'Updated'}),
+        body: jsonEncode({'to': 'Updated'}),
         headers: headers,
       );
-      var modifiedDoc = god.deserialize(response.body) as Map;
+      var modifiedDoc = jsonDecode(response.body) as Map;
       expect(response.statusCode, isIn([200, 201]));
       expect(modifiedDoc['id'], equals(createdDoc['id']));
       expect(modifiedDoc['to'], equals('Updated'));
@@ -182,10 +183,10 @@ void main() {
     test('remove item', () async {
       var response = await client.post(
         Uri.parse('$url/api'),
-        body: god.serialize(testGreeting),
+        body: jsonEncode(testGreeting),
         headers: headers,
       );
-      var created = god.deserialize(response.body) as Map;
+      var created = jsonDecode(response.body) as Map;
 
       var lastCount = (await greetingService.index()).length;
 
@@ -206,19 +207,19 @@ void main() {
 
       var response = await client.get(Uri.parse('$url/api?to=world'));
       print(response.body);
-      var queried = god.deserialize(
-        response.body,
-        outputType: <Map>[].runtimeType,
-      ) as List<Map>;
+      var queried = (jsonDecode(response.body) as List).cast<Map>();
       expect(queried.length, equals(1));
-      expect(queried[0].keys.length, equals(2));
+      expect(
+        queried[0].keys,
+        unorderedEquals(['id', 'to', 'createdAt', 'updatedAt']),
+      );
       expect(queried[0]['id'], equals(world['id']));
       expect(queried[0]['to'], equals(world['to']));
-      //expect(queried[0]["createdAt"], equals(world["createdAt"]));
+      expect(queried[0]['createdAt'], equals(world['createdAt']));
 
       /*response = await client.get(Uri.parse("$url/api?\$sort.createdAt=-1"));
       print(response.body);
-      queried = god.deserialize(response.body);
+      queried = jsonDecode(response.body);
       expect(queried[0]["id"], equals(Updated["id"]));
       expect(queried[1]["id"], equals(Mom["id"]));
       expect(queried[2]["id"], equals(world["id"]));*/

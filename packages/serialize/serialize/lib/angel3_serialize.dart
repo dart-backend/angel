@@ -2,9 +2,10 @@ export 'dart:convert' show json, Codec, Converter;
 
 export 'package:angel3_model/angel3_model.dart';
 export 'package:collection/collection.dart';
-export 'package:quiver/core.dart' show hashObjects;
 
-/// Excludes a field from being excluded.
+/// Excludes a field from serialization: it is left out of `toMap` and
+/// ignored by `fromMap`, unless [canSerialize] or [canDeserialize] allow one
+/// direction.
 class Exclude extends SerializableField {
   const Exclude({super.canDeserialize, super.canSerialize})
     : super(exclude: true);
@@ -37,10 +38,12 @@ class SerializableField {
   /// A default for this field.
   final dynamic defaultValue;
 
-  /// A custom serializer for this field.
+  /// A custom serializer for this field: the function that converts its value
+  /// for `toMap`.
   final Symbol? serializer;
 
-  /// A custom serializer for this field.
+  /// A custom deserializer for this field: the function that converts the
+  /// value read by `fromMap`.
   final Symbol? deserializer;
 
   /// An error message to be printed when the provided value is invalid.
@@ -52,10 +55,15 @@ class SerializableField {
   /// Whether to exclude this field from serialization. Defaults to `false`.
   final bool exclude;
 
-  /// Whether this field can be serialized, if [exclude] is `true`. Defaults to `false`.
+  /// Whether an excluded field is still read by `fromMap`. Only used when
+  /// [exclude] is `true`. Defaults to `false`.
+  ///
+  /// E.g. a password can be accepted from input but never sent out:
+  /// `@Exclude(canDeserialize: true)`.
   final bool canDeserialize;
 
-  /// Whether this field can be serialized, if [exclude] is `true`. Defaults to `false`.
+  /// Whether an excluded field is still written by `toMap`. Only used when
+  /// [exclude] is `true`. Defaults to `false`.
   final bool canSerialize;
 
   /// May be used with [serializer] and [deserializer].
@@ -88,16 +96,15 @@ class Serializable {
     this.includeAnnotations = const [],
   });
 
-  /// A list of enabled serialization modes.
-  ///
-  /// See [Serializers].
-  final List<int> serializers;
+  /// The enabled serialization modes.
+  final List<Serializers> serializers;
 
   /// Overrides the setting in `SerializerGenerator`.
   final bool autoSnakeCaseNames;
 
-  /// A list of constant members to affix to the generated class.
-  final List includeAnnotations;
+  /// Annotations to put on the generated class: constant instances of
+  /// classes, such as `const Deprecated('...')`.
+  final List<Object> includeAnnotations;
 }
 
 const Serializable serializable = Serializable();
@@ -110,16 +117,16 @@ class GeneratedSerializable {
 const GeneratedSerializable generatedSerializable = GeneratedSerializable();
 
 /// The supported serialization types.
-abstract class Serializers {
-  /// All supported serialization types.
-  static const List<int> all = [map, json, typescript];
-
+enum Serializers {
   /// Enable `fromMap` and `toMap` methods on the model class.
-  static const int map = 0;
+  map,
 
   /// Enable a `toJson` method on the model class.
-  static const int json = 1;
+  json,
 
   /// Generate a TypeScript definition file (`.d.ts`) for use on the client-side.
-  static const int typescript = 2;
+  typescript;
+
+  /// All supported serialization types.
+  static const List<Serializers> all = [map, json, typescript];
 }

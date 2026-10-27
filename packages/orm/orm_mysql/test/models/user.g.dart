@@ -29,8 +29,8 @@ class RoleUserMigration extends Migration {
   @override
   void up(Schema schema) {
     schema.create('role_users', (table) {
-      table.declare('role_id', ColumnType('int')).references('roles', 'id');
-      table.declare('user_id', ColumnType('int')).references('users', 'id');
+      table.declare('role_id', ColumnType.int).references('roles', 'id');
+      table.declare('user_id', ColumnType.int).references('users', 'id');
     });
   }
 
@@ -66,13 +66,6 @@ class UserQuery extends Query<User, UserQueryWhere> {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = UserQueryWhere(this);
-    leftJoin(
-      '(SELECT role_users.user_id, roles.id, roles.created_at, roles.updated_at, roles.name FROM roles LEFT JOIN role_users ON role_users.role_id=roles.id)',
-      'id',
-      'user_id',
-      additionalFields: const ['id', 'created_at', 'updated_at', 'name'],
-      trampoline: trampoline,
-    );
   }
 
   @override
@@ -129,23 +122,23 @@ class UserQuery extends Query<User, UserQueryWhere> {
       return Optional.empty();
     }
     var model = User(
-      id: fields.contains('id') ? row[0].toString() : null,
+      id: fields.contains('id') ? row[fields.indexOf('id')].toString() : null,
       createdAt: fields.contains('created_at')
-          ? mapToNullableDateTime(row[1])
+          ? mapToNullableDateTime(row[fields.indexOf('created_at')])
           : null,
       updatedAt: fields.contains('updated_at')
-          ? mapToNullableDateTime(row[2])
+          ? mapToNullableDateTime(row[fields.indexOf('updated_at')])
           : null,
-      username: fields.contains('username') ? (row[3] as String?) : null,
-      password: fields.contains('password') ? (row[4] as String?) : null,
-      email: fields.contains('email') ? (row[5] as String?) : null,
+      username: fields.contains('username')
+          ? (row[fields.indexOf('username')] as String?)
+          : null,
+      password: fields.contains('password')
+          ? (row[fields.indexOf('password')] as String?)
+          : null,
+      email: fields.contains('email')
+          ? (row[fields.indexOf('email')] as String?)
+          : null,
     );
-    if (row.length > 6) {
-      var modelOpt = RoleQuery().parseRow(row.skip(6).take(4).toList());
-      modelOpt.ifPresent((m) {
-        model = model.copyWith(roles: [m]);
-      });
-    }
     return Optional.of(model);
   }
 
@@ -155,66 +148,42 @@ class UserQuery extends Query<User, UserQueryWhere> {
   }
 
   @override
-  bool canCompile(trampoline) {
-    return (!(trampoline.contains('users') &&
-        trampoline.contains('role_users')));
-  }
+  bool get loadsRelations => true;
 
   @override
-  Future<List<User>> get(QueryExecutor executor) {
-    return super.get(executor).then((result) {
-      return result.fold<List<User>>([], (out, model) {
-        var idx = out.indexWhere((m) => m.id == model.id);
-
-        if (idx == -1) {
-          return out..add(model);
-        } else {
-          var l = out[idx];
-          return out
-            ..[idx] = l.copyWith(
-              roles: List<RoleEntity>.from(l.roles)..addAll(model.roles),
-            );
-        }
-      });
-    });
-  }
-
-  @override
-  Future<List<User>> update(QueryExecutor executor) {
-    return super.update(executor).then((result) {
-      return result.fold<List<User>>([], (out, model) {
-        var idx = out.indexWhere((m) => m.id == model.id);
-
-        if (idx == -1) {
-          return out..add(model);
-        } else {
-          var l = out[idx];
-          return out
-            ..[idx] = l.copyWith(
-              roles: List<RoleEntity>.from(l.roles)..addAll(model.roles),
-            );
-        }
-      });
-    });
-  }
-
-  @override
-  Future<List<User>> delete(QueryExecutor executor) {
-    return super.delete(executor).then((result) {
-      return result.fold<List<User>>([], (out, model) {
-        var idx = out.indexWhere((m) => m.id == model.id);
-
-        if (idx == -1) {
-          return out..add(model);
-        } else {
-          var l = out[idx];
-          return out
-            ..[idx] = l.copyWith(
-              roles: List<RoleEntity>.from(l.roles)..addAll(model.roles),
-            );
-        }
-      });
-    });
+  Future<List<User>> loadRelations(
+    QueryExecutor executor,
+    List<List> rows,
+    List<User> records,
+    Set<String> loading,
+  ) async {
+    if (records.isEmpty) return records;
+    // The other ends of the many-to-many, then their records.
+    var rolesPivot = loading.contains('roles')
+        ? null
+        : await Query.pivotKeys(executor, 'role_users', 'user_id', 'role_id', [
+            for (var row in rows) valueOf('id', row),
+          ]);
+    var rolesByKey = rolesPivot == null
+        ? null
+        : await RoleQuery().getByKeys(
+            executor,
+            'id',
+            rolesPivot.values.expand((k) => k),
+            loading,
+          );
+    return [
+      for (var (i, r) in records.indexed)
+        r.copyWith(
+          roles: rolesByKey == null
+              ? r.roles
+              : [
+                  for (var k
+                      in rolesPivot!['${valueOf('id', rows[i])}'] ?? const [])
+                    ...?rolesByKey['$k'],
+                ],
+        ),
+    ];
   }
 }
 
@@ -375,14 +344,14 @@ class RoleUserQuery extends Query<RoleUser, RoleUserQueryWhere> {
       return Optional.empty();
     }
     var model = RoleUser();
-    if (row.length > 2) {
-      var modelOpt = RoleQuery().parseRow(row.skip(2).take(4).toList());
+    {
+      var modelOpt = _role.parseRow(joinedRow(0, row));
       modelOpt.ifPresent((m) {
         model = model.copyWith(role: m);
       });
     }
-    if (row.length > 6) {
-      var modelOpt = UserQuery().parseRow(row.skip(6).take(6).toList());
+    {
+      var modelOpt = _user.parseRow(joinedRow(1, row));
       modelOpt.ifPresent((m) {
         model = model.copyWith(user: m);
       });
@@ -401,6 +370,58 @@ class RoleUserQuery extends Query<RoleUser, RoleUserQueryWhere> {
 
   UserQuery get user {
     return _user;
+  }
+
+  @override
+  bool get loadsRelations => true;
+
+  @override
+  Future<List<RoleUser>> loadRelations(
+    QueryExecutor executor,
+    List<List> rows,
+    List<RoleUser> records,
+    Set<String> loading,
+  ) async {
+    if (records.isEmpty) return records;
+    var roleLoaded = loading.contains('roles')
+        ? null
+        : (await _role.loadRelations(
+            executor,
+            [
+              for (var (i, r) in records.indexed)
+                if (r.role != null) joinedRow(0, rows[i]),
+            ],
+            [
+              for (var r in records)
+                if (r.role != null) r.role as Role,
+            ],
+            {...loading, 'roles'},
+          )).iterator;
+    var userLoaded = loading.contains('users')
+        ? null
+        : (await _user.loadRelations(
+            executor,
+            [
+              for (var (i, r) in records.indexed)
+                if (r.user != null) joinedRow(1, rows[i]),
+            ],
+            [
+              for (var r in records)
+                if (r.user != null) r.user as User,
+            ],
+            {...loading, 'users'},
+          )).iterator;
+    return [
+      for (var r in records)
+        r.copyWith(
+          role: roleLoaded == null || r.role == null
+              ? r.role
+              : (roleLoaded..moveNext()).current,
+          user: userLoaded == null || r.user == null
+              ? r.user
+              : (userLoaded..moveNext()).current,
+        ),
+    ];
   }
 }
 
@@ -425,24 +446,24 @@ class RoleUserQueryValues extends MapQueryValues {
     return {};
   }
 
-  int get roleId {
-    return (values['role_id'] as int);
+  int? get roleId {
+    return (values['role_id'] as int?);
   }
 
-  set roleId(int value) => values['role_id'] = value;
+  set roleId(int? value) => values['role_id'] = value;
 
-  int get userId {
-    return (values['user_id'] as int);
+  int? get userId {
+    return (values['user_id'] as int?);
   }
 
-  set userId(int value) => values['user_id'] = value;
+  set userId(int? value) => values['user_id'] = value;
 
   void copyFrom(RoleUser model) {
-    if (model.role != null) {
-      values['role_id'] = model.role?.id;
+    if (model.role?.id != null) {
+      values['role_id'] = int.parse(model.role!.id!);
     }
-    if (model.user != null) {
-      values['user_id'] = model.user?.id;
+    if (model.user?.id != null) {
+      values['user_id'] = int.parse(model.user!.id!);
     }
   }
 }
@@ -452,20 +473,6 @@ class RoleQuery extends Query<Role, RoleQueryWhere> {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = RoleQueryWhere(this);
-    leftJoin(
-      '(SELECT role_users.role_id, users.id, users.created_at, users.updated_at, users.username, users.password, users.email FROM users LEFT JOIN role_users ON role_users.user_id=users.id)',
-      'id',
-      'role_id',
-      additionalFields: const [
-        'id',
-        'created_at',
-        'updated_at',
-        'username',
-        'password',
-        'email',
-      ],
-      trampoline: trampoline,
-    );
   }
 
   @override
@@ -515,21 +522,17 @@ class RoleQuery extends Query<Role, RoleQueryWhere> {
       return Optional.empty();
     }
     var model = Role(
-      id: fields.contains('id') ? row[0].toString() : null,
+      id: fields.contains('id') ? row[fields.indexOf('id')].toString() : null,
       createdAt: fields.contains('created_at')
-          ? mapToNullableDateTime(row[1])
+          ? mapToNullableDateTime(row[fields.indexOf('created_at')])
           : null,
       updatedAt: fields.contains('updated_at')
-          ? mapToNullableDateTime(row[2])
+          ? mapToNullableDateTime(row[fields.indexOf('updated_at')])
           : null,
-      name: fields.contains('name') ? (row[3] as String?) : null,
+      name: fields.contains('name')
+          ? (row[fields.indexOf('name')] as String?)
+          : null,
     );
-    if (row.length > 4) {
-      var modelOpt = UserQuery().parseRow(row.skip(4).take(6).toList());
-      modelOpt.ifPresent((m) {
-        model = model.copyWith(users: [m]);
-      });
-    }
     return Optional.of(model);
   }
 
@@ -539,66 +542,42 @@ class RoleQuery extends Query<Role, RoleQueryWhere> {
   }
 
   @override
-  bool canCompile(trampoline) {
-    return (!(trampoline.contains('roles') &&
-        trampoline.contains('role_users')));
-  }
+  bool get loadsRelations => true;
 
   @override
-  Future<List<Role>> get(QueryExecutor executor) {
-    return super.get(executor).then((result) {
-      return result.fold<List<Role>>([], (out, model) {
-        var idx = out.indexWhere((m) => m.id == model.id);
-
-        if (idx == -1) {
-          return out..add(model);
-        } else {
-          var l = out[idx];
-          return out
-            ..[idx] = l.copyWith(
-              users: List<UserEntity>.from(l.users)..addAll(model.users),
-            );
-        }
-      });
-    });
-  }
-
-  @override
-  Future<List<Role>> update(QueryExecutor executor) {
-    return super.update(executor).then((result) {
-      return result.fold<List<Role>>([], (out, model) {
-        var idx = out.indexWhere((m) => m.id == model.id);
-
-        if (idx == -1) {
-          return out..add(model);
-        } else {
-          var l = out[idx];
-          return out
-            ..[idx] = l.copyWith(
-              users: List<UserEntity>.from(l.users)..addAll(model.users),
-            );
-        }
-      });
-    });
-  }
-
-  @override
-  Future<List<Role>> delete(QueryExecutor executor) {
-    return super.delete(executor).then((result) {
-      return result.fold<List<Role>>([], (out, model) {
-        var idx = out.indexWhere((m) => m.id == model.id);
-
-        if (idx == -1) {
-          return out..add(model);
-        } else {
-          var l = out[idx];
-          return out
-            ..[idx] = l.copyWith(
-              users: List<UserEntity>.from(l.users)..addAll(model.users),
-            );
-        }
-      });
-    });
+  Future<List<Role>> loadRelations(
+    QueryExecutor executor,
+    List<List> rows,
+    List<Role> records,
+    Set<String> loading,
+  ) async {
+    if (records.isEmpty) return records;
+    // The other ends of the many-to-many, then their records.
+    var usersPivot = loading.contains('users')
+        ? null
+        : await Query.pivotKeys(executor, 'role_users', 'role_id', 'user_id', [
+            for (var row in rows) valueOf('id', row),
+          ]);
+    var usersByKey = usersPivot == null
+        ? null
+        : await UserQuery().getByKeys(
+            executor,
+            'id',
+            usersPivot.values.expand((k) => k),
+            loading,
+          );
+    return [
+      for (var (i, r) in records.indexed)
+        r.copyWith(
+          users: usersByKey == null
+              ? r.users
+              : [
+                  for (var k
+                      in usersPivot!['${valueOf('id', rows[i])}'] ?? const [])
+                    ...?usersByKey['$k'],
+                ],
+        ),
+    ];
   }
 }
 
@@ -735,14 +714,14 @@ class User extends UserEntity {
 
   @override
   int get hashCode {
-    return hashObjects([
+    return Object.hashAll([
       id,
       createdAt,
       updatedAt,
       username,
       password,
       email,
-      roles,
+      roles.length,
     ]);
   }
 
@@ -777,7 +756,7 @@ class RoleUser implements RoleUserEntity {
 
   @override
   int get hashCode {
-    return hashObjects([role, user]);
+    return Object.hashAll([role, user]);
   }
 
   @override
@@ -847,7 +826,7 @@ class Role extends RoleEntity {
 
   @override
   int get hashCode {
-    return hashObjects([id, createdAt, updatedAt, name, users]);
+    return Object.hashAll([id, createdAt, updatedAt, name, users.length]);
   }
 
   @override

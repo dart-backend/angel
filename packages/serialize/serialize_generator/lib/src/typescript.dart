@@ -177,12 +177,8 @@ class TypeScriptDefinitionBuilder implements Builder {
 
       var annotation = element.annotation;
 
-      var serializers = annotation.peek('serializers')?.listValue ?? [];
-
-      if (serializers.isEmpty) continue;
-
       // Check if TypeScript serializer is supported
-      if (!serializers.any((s) => s.toIntValue() == Serializers.typescript)) {
+      if (!readSerializers(annotation).contains(Serializers.typescript)) {
         continue;
       }
 
