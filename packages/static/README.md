@@ -13,7 +13,7 @@ In `pubspec.yaml`:
 
 ```yaml
 dependencies:
-    angel3_static: ^9.0.0
+    angel3_static: ^10.0.0
 ```
 
 ## Usage
@@ -31,10 +31,10 @@ void main() async {
   var fs = const LocalFileSystem();
 
   // Normal static server
-  var vDir = VirtualDirectory(app, fs, source: Directory('./public'));
+  var vDir = VirtualDirectory(app, fs, source: fs.directory('./public'));
 
-  // Send Cache-Control, ETag, etc. as well
-  var vDir = CachingVirtualDirectory(app, fs, source: Directory('./public'));
+  // Or, send Cache-Control, ETag, etc. as well
+  vDir = CachingVirtualDirectory(app, fs, source: fs.directory('./public'));
 
   // Mount the VirtualDirectory's request handler
   app.fallback(vDir.handleRequest);

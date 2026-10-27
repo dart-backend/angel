@@ -7,10 +7,16 @@
 
 The builder for generating the following code for Angel3 ORM:
 
-* A strongly-typed ORM classes
+* Strongly-typed ORM classes
 * SQL migration classes
 
 For documentation about the ORM, see [Developer Guide](https://angel3-docs.dukefirehawk.com/guides/orm)
+
+## Models
+
+Name a model class with the `Entity` suffix, such as `CarEntity`. The generated classes are named without it: `Car`, `CarQuery`, `CarQueryWhere`, `CarQueryValues` and `CarMigration`, and the table is `cars`.
+
+A class with the `_` prefix, such as `_Car`, generates the same classes. A class with both, such as `_CarEntity`, also generates `Car`, but keeps the table, `car_entities`, that versions before 10.0.0 gave it.
 
 ## Usage
 
@@ -22,6 +28,6 @@ Run the following command to generate the required `.g.dart` files for Angel3 OR
 
 ## Supported database
 
-* PostgreSQL version 10 or later
+* PostgreSQL version 14 or later
 * MariaDB 10.2.x or later
 * MySQL 8.x or later

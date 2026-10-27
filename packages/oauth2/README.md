@@ -45,30 +45,31 @@ class _Server extends AuthorizationServer<PseudoApplication, Map> {
   final Uuid _uuid = Uuid();
 
   @override
-  FutureOr<PseudoApplication> findClient(String clientId) {
+  FutureOr<PseudoApplication>? findClient(String? clientId) {
     return clientId == pseudoApplication.id ? pseudoApplication : null;
   }
 
   @override
   Future<bool> verifyClient(
-      PseudoApplication client, String clientSecret) async {
+      PseudoApplication client, String? clientSecret) async {
     return client.secret == clientSecret;
   }
 }
 ```
 
-Next, write some logic to be executed whenever a user visits the authorization endpoint. In many cases, you will want to show a dialog:
+Next, write some logic to be executed whenever a user visits the authorization endpoint. In many cases, you will want to show a dialog. `implicit` is `true` when the client asks for an implicit grant:
 
 ```dart
 @override
-Future requestAuthorizationCode(
+Future<void> requestAuthorizationCode(
   PseudoApplication client,
-  String redirectUri,
+  String? redirectUri,
   Iterable<String> scopes,
   String state,
   RequestContext req,
-  ResponseContext res) async {
-  res.render('dialog');
+  ResponseContext res,
+  bool implicit) async {
+  await res.render('dialog');
 }
 ```
 
@@ -76,12 +77,13 @@ Now, write logic that exchanges an authorization code for an access token, and o
 
 ```dart
 @override
-Future<AuthorizationCodeResponse> exchangeAuthCodeForAccessToken(
-  String authCode,
-  String redirectUri,
+Future<AuthorizationTokenResponse> exchangeAuthorizationCodeForToken(
+  PseudoApplication? client,
+  String? authCode,
+  String? redirectUri,
   RequestContext req,
   ResponseContext res) async {
-    return AuthorizationCodeResponse('foo', refreshToken: 'bar');
+    return AuthorizationTokenResponse('foo', refreshToken: 'bar');
 }
 ```
 
@@ -101,12 +103,14 @@ The `authorizationEndpoint` and `tokenEndpoint` handle all OAuth2 grant types.
 
 ## Other Grants
 
-By default, all OAuth2 grant methods will throw a `405 Method Not Allowed` error. To support any specific grant type, all you need to do is implement the method. The following are available, not including authorization code grant support (mentioned above):
+By default, all OAuth2 grant methods will throw a `400 Bad Request` error (an `unsupported_response_type` OAuth2 error). To support any specific grant type, all you need to do is implement the method. The following are available, not including authorization code grant support (mentioned above):
 
-- `implicitGrant`
+- `refreshAuthorizationToken`
 - `resourceOwnerPasswordCredentialsGrant`
 - `clientCredentialsGrant`
-- `deviceCodeGrant`
+- `requestDeviceCode` and `exchangeDeviceCodeForToken`
+
+An implicit grant is requested through `requestAuthorizationCode`, with `implicit` set to `true`.
 
 Read the [OAuth2 specification](https://tools.ietf.org/html/rfc6749) for in-depth information on each grant type.
 
@@ -123,27 +127,29 @@ can be used as follows:
 
 ```dart
 @override
-Future requestAuthorizationCode(
+Future<void> requestAuthorizationCode(
     PseudoApplication client,
-    String redirectUri,
+    String? redirectUri,
     Iterable<String> scopes,
     String state,
     RequestContext req,
-    ResponseContext res) async {
+    ResponseContext res,
+    bool implicit) async {
   // Automatically throws an error if the request doesn't contain the
   // necessary information.
-  var pkce = req.container.make<Pkce>();
+  var pkce = req.container!.make<Pkce>();
 
   // At this point, store `pkce.codeChallenge` and `pkce.codeChallengeMethod`,
   // so that when it's time to exchange the auth code for a token, we can
   // create a [Pkce] object, and verify the client.
-  return await getAuthCodeSomehow(client, pkce.codeChallenge, pkce.codeChallengeMethod); 
+  await storeChallengeSomehow(client, pkce.codeChallenge, pkce.codeChallengeMethod);
 }
 
 @override
 Future<AuthorizationTokenResponse> exchangeAuthorizationCodeForToken(
-    String authCode,
-    String redirectUri,
+    PseudoApplication? client,
+    String? authCode,
+    String? redirectUri,
     RequestContext req,
     ResponseContext res) async {
   // When exchanging the authorization code for a token, we'll need

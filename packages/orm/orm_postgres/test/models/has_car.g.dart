@@ -82,22 +82,22 @@ class HasCarQuery extends Query<HasCar, HasCarQueryWhere> {
       return Optional.empty();
     }
     var model = HasCar(
-      id: fields.contains('id') ? row[0].toString() : null,
+      id: fields.contains('id') ? row[fields.indexOf('id')].toString() : null,
       createdAt: fields.contains('created_at')
-          ? mapToNullableDateTime(row[1])
+          ? mapToNullableDateTime(row[fields.indexOf('created_at')])
           : null,
       updatedAt: fields.contains('updated_at')
-          ? mapToNullableDateTime(row[2])
+          ? mapToNullableDateTime(row[fields.indexOf('updated_at')])
           : null,
       type: fields.contains('type')
-          ? row[3] == null
+          ? row[fields.indexOf('type')] == null
                 ? null
-                : CarType.values[mapToInt(row[3])]
+                : CarType.values[mapToInt(row[fields.indexOf('type')])]
           : null,
       color: fields.contains('color')
-          ? row[4] == null
+          ? row[fields.indexOf('color')] == null
                 ? null
-                : codeToColor((row[4] as String))
+                : codeToColor((row[fields.indexOf('color')] as String))
           : null,
     );
     return Optional.of(model);

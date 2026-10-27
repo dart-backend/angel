@@ -50,19 +50,6 @@ class TreeQuery extends Query<Tree, TreeQueryWhere> {
     trampoline ??= <String>{};
     trampoline.add(tableName);
     _where = TreeQueryWhere(this);
-    leftJoin(
-      _fruits = FruitQuery(trampoline: trampoline, parent: this),
-      'id',
-      'tree_id',
-      additionalFields: const [
-        'id',
-        'created_at',
-        'updated_at',
-        'tree_id',
-        'common_name',
-      ],
-      trampoline: trampoline,
-    );
   }
 
   @override
@@ -72,7 +59,7 @@ class TreeQuery extends Query<Tree, TreeQueryWhere> {
 
   TreeQueryWhere? _where;
 
-  late FruitQuery _fruits;
+  late final FruitQuery _fruits = FruitQuery();
 
   @override
   Map<String, String> get casts {
@@ -114,21 +101,17 @@ class TreeQuery extends Query<Tree, TreeQueryWhere> {
       return Optional.empty();
     }
     var model = Tree(
-      id: fields.contains('id') ? row[0].toString() : null,
+      id: fields.contains('id') ? row[fields.indexOf('id')].toString() : null,
       createdAt: fields.contains('created_at')
-          ? mapToNullableDateTime(row[1])
+          ? mapToNullableDateTime(row[fields.indexOf('created_at')])
           : null,
       updatedAt: fields.contains('updated_at')
-          ? mapToNullableDateTime(row[2])
+          ? mapToNullableDateTime(row[fields.indexOf('updated_at')])
           : null,
-      rings: fields.contains('rings') ? mapToInt(row[3]) : null,
+      rings: fields.contains('rings')
+          ? mapToInt(row[fields.indexOf('rings')])
+          : null,
     );
-    if (row.length > 4) {
-      var modelOpt = FruitQuery().parseRow(row.skip(4).take(5).toList());
-      modelOpt.ifPresent((m) {
-        model = model.copyWith(fruits: [m]);
-      });
-    }
     return Optional.of(model);
   }
 
@@ -137,65 +120,35 @@ class TreeQuery extends Query<Tree, TreeQueryWhere> {
     return parseRow(row);
   }
 
+  /// The query [fruits] are loaded with, whose conditions and order apply.
   FruitQuery get fruits {
     return _fruits;
   }
 
   @override
-  Future<List<Tree>> get(QueryExecutor executor) {
-    return super.get(executor).then((result) {
-      return result.fold<List<Tree>>([], (out, model) {
-        var idx = out.indexWhere((m) => m.id == model.id);
-
-        if (idx == -1) {
-          return out..add(model);
-        } else {
-          var l = out[idx];
-          return out
-            ..[idx] = l.copyWith(
-              fruits: List<FruitEntity>.from(l.fruits)..addAll(model.fruits),
-            );
-        }
-      });
-    });
-  }
+  bool get loadsRelations => true;
 
   @override
-  Future<List<Tree>> update(QueryExecutor executor) {
-    return super.update(executor).then((result) {
-      return result.fold<List<Tree>>([], (out, model) {
-        var idx = out.indexWhere((m) => m.id == model.id);
-
-        if (idx == -1) {
-          return out..add(model);
-        } else {
-          var l = out[idx];
-          return out
-            ..[idx] = l.copyWith(
-              fruits: List<FruitEntity>.from(l.fruits)..addAll(model.fruits),
-            );
-        }
-      });
-    });
-  }
-
-  @override
-  Future<List<Tree>> delete(QueryExecutor executor) {
-    return super.delete(executor).then((result) {
-      return result.fold<List<Tree>>([], (out, model) {
-        var idx = out.indexWhere((m) => m.id == model.id);
-
-        if (idx == -1) {
-          return out..add(model);
-        } else {
-          var l = out[idx];
-          return out
-            ..[idx] = l.copyWith(
-              fruits: List<FruitEntity>.from(l.fruits)..addAll(model.fruits),
-            );
-        }
-      });
-    });
+  Future<List<Tree>> loadRelations(
+    QueryExecutor executor,
+    List<List> rows,
+    List<Tree> records,
+    Set<String> loading,
+  ) async {
+    if (records.isEmpty) return records;
+    var fruitsByKey = loading.contains('fruits')
+        ? null
+        : await _fruits.getByKeys(executor, 'tree_id', [
+            for (var row in rows) valueOf('id', row),
+          ], loading);
+    return [
+      for (var (i, r) in records.indexed)
+        r.copyWith(
+          fruits: fruitsByKey == null
+              ? r.fruits
+              : [...?fruitsByKey['${valueOf('id', rows[i])}']],
+        ),
+    ];
   }
 }
 
@@ -317,15 +270,19 @@ class FruitQuery extends Query<Fruit, FruitQueryWhere> {
       return Optional.empty();
     }
     var model = Fruit(
-      id: fields.contains('id') ? row[0].toString() : null,
+      id: fields.contains('id') ? row[fields.indexOf('id')].toString() : null,
       createdAt: fields.contains('created_at')
-          ? mapToNullableDateTime(row[1])
+          ? mapToNullableDateTime(row[fields.indexOf('created_at')])
           : null,
       updatedAt: fields.contains('updated_at')
-          ? mapToNullableDateTime(row[2])
+          ? mapToNullableDateTime(row[fields.indexOf('updated_at')])
           : null,
-      treeId: fields.contains('tree_id') ? mapToInt(row[3]) : null,
-      commonName: fields.contains('common_name') ? (row[4] as String?) : null,
+      treeId: fields.contains('tree_id')
+          ? mapToInt(row[fields.indexOf('tree_id')])
+          : null,
+      commonName: fields.contains('common_name')
+          ? (row[fields.indexOf('common_name')] as String?)
+          : null,
     );
     return Optional.of(model);
   }

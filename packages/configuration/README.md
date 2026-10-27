@@ -57,13 +57,25 @@ _include: "just-one-file.yaml"
 ```
 
 **Server-side**
-Call `configuration()`. The loaded configuration will be available in your application's `configuration` map.
+Call `configuration()` with the `FileSystem` to read the files from. The loaded configuration will be available in your application's `configuration` map.
 
-`configuration` also accepts a `sourceDirectory` or `overrideEnvironmentName` parameter.
-The former will allow you to search in a directory other than `config`, and the latter lets you
-override `$ANGEL_ENV` by specifying a specific configuration name to look for (i.e. `production`).
+```dart
+import 'package:angel3_configuration/angel3_configuration.dart';
+import 'package:angel3_framework/angel3_framework.dart';
+import 'package:file/local.dart';
 
-This package uses [`package:angel3_merge_map`](https://pub.dev/packages/angel3_merge_map)
+void main() async {
+  var app = Angel();
+  await app.configure(configuration(const LocalFileSystem()));
+}
+```
+
+`configuration` also accepts a `directoryPath`, `overrideEnvironmentName` or `envPath` parameter.
+The first will allow you to search in a directory other than `./config`, the second lets you
+override `$ANGEL_ENV` by specifying a specific configuration name to look for (i.e. `production`),
+and the last reads the `.env` file from another path.
+
+This package uses [`package:belatuk_merge_map`](https://pub.dev/packages/belatuk_merge_map)
 internally, so existing configurations can be deeply merged.
 
 Example:

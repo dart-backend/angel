@@ -48,9 +48,9 @@ configureServer(Angel app) async {
   app.fallback(renderHtml());
   
   // You can pass a custom StringRenderer if you need more control over the output.
-  app.fallback(renderHtml(renderer: new StringRenderer(html5: false)));
+  app.fallback(renderHtml(renderer: StringRenderer(html5: false)));
   
-  app.get('/greet/:name', (RequestContext req) {
+  app.get('/greet/:name', (req, res) {
     return html(lang: 'en', c: [
      head(c: [
        meta(name: 'viewport', content: 'width=device-width, initial-scale=1'),

@@ -46,10 +46,12 @@ await service.index({r'$sort': {'name': -1}});
 
 Removing all records (with `allowRemoveAll`, or on the server side) removes only those that match the query, if there is one.
 
-```dart
-List queried = await MyService.index({r"query": where.id(Finder(filter: Filter(...))));
-```
+Of course, you can use `package:sembast` queries. Just pass a `Finder` as `query` within `params`:
 
-Of course, you can use `package:sembast` queries. Just pass it as `query` within `params`.
+```dart
+var queried = await service.index({
+  'query': Finder(filter: Filter.equals('foo', 'bar')),
+});
+```
 
 See the tests for more usage examples.

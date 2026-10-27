@@ -142,23 +142,25 @@ class BookQuery extends Query<Book, BookQueryWhere> {
       return Optional.empty();
     }
     var model = Book(
-      id: fields.contains('id') ? row[0].toString() : null,
+      id: fields.contains('id') ? row[fields.indexOf('id')].toString() : null,
       createdAt: fields.contains('created_at')
-          ? mapToNullableDateTime(row[1])
+          ? mapToNullableDateTime(row[fields.indexOf('created_at')])
           : null,
       updatedAt: fields.contains('updated_at')
-          ? mapToNullableDateTime(row[2])
+          ? mapToNullableDateTime(row[fields.indexOf('updated_at')])
           : null,
-      name: fields.contains('name') ? (row[5] as String?) : null,
+      name: fields.contains('name')
+          ? (row[fields.indexOf('name')] as String?)
+          : null,
     );
-    if (row.length > 6) {
-      var modelOpt = AuthorQuery().parseRow(row.skip(6).take(5).toList());
+    {
+      var modelOpt = _author.parseRow(joinedRow(0, row));
       modelOpt.ifPresent((m) {
         model = model.copyWith(author: m);
       });
     }
-    if (row.length > 11) {
-      var modelOpt = AuthorQuery().parseRow(row.skip(11).take(5).toList());
+    {
+      var modelOpt = _partnerAuthor.parseRow(joinedRow(1, row));
       modelOpt.ifPresent((m) {
         model = model.copyWith(partnerAuthor: m);
       });
@@ -319,15 +321,19 @@ class AuthorQuery extends Query<Author, AuthorQueryWhere> {
       return Optional.empty();
     }
     var model = Author(
-      id: fields.contains('id') ? row[0].toString() : null,
+      id: fields.contains('id') ? row[fields.indexOf('id')].toString() : null,
       createdAt: fields.contains('created_at')
-          ? mapToNullableDateTime(row[1])
+          ? mapToNullableDateTime(row[fields.indexOf('created_at')])
           : null,
       updatedAt: fields.contains('updated_at')
-          ? mapToNullableDateTime(row[2])
+          ? mapToNullableDateTime(row[fields.indexOf('updated_at')])
           : null,
-      name: fields.contains('name') ? (row[3] as String?) : null,
-      publisher: fields.contains('publisher') ? (row[4] as String?) : null,
+      name: fields.contains('name')
+          ? (row[fields.indexOf('name')] as String?)
+          : null,
+      publisher: fields.contains('publisher')
+          ? (row[fields.indexOf('publisher')] as String?)
+          : null,
     );
     return Optional.of(model);
   }

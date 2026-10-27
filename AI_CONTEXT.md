@@ -8,9 +8,9 @@
 
 This repository is a **monorepo** organised as a [Dart pub workspace](https://dart.dev/tools/pub/workspaces) and managed with [Melos](https://pub.dev/packages/melos).
 
-- **Packages**: Located in the `packages/` directory. Each package is published to `pub.dev` under the `angel3_` prefix. Some are grouped one level deeper (e.g. `packages/orm/orm_postgres`, `packages/serialize/serialize_generator`, `packages/jael/jael`).
+- **Packages**: Located in the `packages/` directory. Each package is published to `pub.dev` under the `angel3_` prefix, except the Jael packages (`jael3`, `jael3_preprocessor`, `jael3_web`). Some are grouped one level deeper (e.g. `packages/orm/orm_postgres`, `packages/serialize/serialize_generator`, `packages/jael/jael`). `packages/framework_mirrors_test` is not published (`publish_to: none`): it tests the framework with `MirrorsReflector`.
 - **Workspace**: The root `pubspec.yaml` lists every package under `workspace:` and each package declares `resolution: workspace`, so a single `dart pub get` resolves all packages together. New packages must be added to the root `pubspec.yaml` and to `melos.yaml`.
-- **Generated code**: `*.g.dart` files produced by `build_runner` (serialization, ORM, migrations) are committed and must not be edited by hand.
+- **Generated code**: `*.g.dart` files produced by `build_runner` (serialization, ORM, migrations, reflection data) are committed and must not be edited by hand. After changing a generator, regenerate the packages whose tests use it (for `orm_generator`: `orm_postgres` and `orm_mysql`). The generated files of `orm_service` predate the current generator, so regenerating them brings in unrelated changes.
 
 ## Core Architecture and Packages
 
@@ -19,23 +19,23 @@ The framework is divided into several categories of packages:
 1. **Core Framework & Request Handling**:
    - `framework`: Base HTTP and HTTP/2 server, request/response contexts, services, controllers and middleware pipelines.
    - `route`: URL matching and route parameters.
-   - `container`: Dependency Injection (DI) system, with mirrors-based and generated (`container_generator`) reflectors.
-   - `configuration`: Utilities for loading config files (YAML, JSON, .env).
+   - `container`: Dependency Injection (DI) system, without `dart:mirrors`. Reflection is pluggable: `container_mirrors` provides the opt-in `MirrorsReflector` (Dart VM only), and `container_generator` generates static reflection data for `@injectable` classes, used through `StaticReflector`, so apps can be compiled with `dart compile exe`. Without a reflector, `@Expose` controller methods, `@Hooks`/`@Middleware` and `ioc` without an explicit `injection:` are unavailable.
+   - `configuration`: Loads YAML configuration files and `.env` files.
 
 2. **Data Modeling & Persistence (ORM)**:
    - `model`: Base model abstractions for data entities.
-   - `serialize`: JSON serialization and deserialization using code generation (`serialize_generator`).
-   - `orm`: Dialect-agnostic ORM runtime (`orm`), code generator (`orm_generator`), schema DSL (`migration`), migration runner (`migration_runner`), database executors for PostgreSQL (`orm_postgres`) and MySQL/MariaDB (`orm_mysql`), and an Angel service adapter (`orm_service`).
+   - `serialize`: JSON serialization and deserialization using code generation (`serialize_generator`). Model classes are named with the `Entity` suffix (`TodoEntity` generates `Todo`); the `_` prefix is still supported.
+   - `orm`: Dialect-agnostic ORM runtime (`orm`), code generator (`orm_generator`), schema DSL (`migration`), migration runner (`migration_runner`), database executors for PostgreSQL 14+ (`orm_postgres`) and MySQL 8+/MariaDB 10.2+ (`orm_mysql`, on the `mysql_dart` driver), and an Angel service adapter (`orm_service`). `@HasOne` and `@BelongsTo` are joined; `@HasMany` and `@ManyToMany` are loaded after the records with one query each (`Query.loadRelations`), so a record is one row.
    - `mongo`, `rethinkdb`, `sembast`: Specialized NoSQL database drivers.
 
 3. **Authentication & Security**:
    - `auth`: Core authentication abstractions and strategies.
    - `auth_oauth2`, `oauth2`: OAuth2 authentication flows.
-   - `security`: Security middleware (rate limiting, standard headers).
+   - `security`: Security middleware: CSRF protection (`CsrfFilter`), signed cookies (`CookieSigner`) and rate limiting.
    - `cors`: Cross-Origin Resource Sharing handling.
 
 4. **Frontend & Template Rendering**:
-   - `jael`: Jael template engine built specifically for Angel.
+   - `jael`: Jael template engine built specifically for Angel: parser and renderer (`jael3`), template inheritance (`jael3_preprocessor`), Angel integration (`angel3_jael`) and an experimental virtual DOM (`jael3_web`).
    - `mustache`, `jinja`, `markdown`: Template integrations.
    - `html`, `seo`: Utilities for HTML responses and search engine optimization.
 
@@ -51,20 +51,22 @@ The framework is divided into several categories of packages:
 
 - **Language**: Dart
 - **Minimum SDK Version**: `>=3.13.0 <4.0.0`
-- **Monorepo Management**: Dart pub workspace + `melos` (`^8.1.0`)
+- **Monorepo Management**: Dart pub workspace + `melos` (`^8.9.0`)
 - **Code Generation**: `build_runner` with `source_gen`-based generators
-- **CI**: GitHub Actions (`.github/workflows/dart.yml`) runs format check, `dart analyze` and `dart test` per package; ORM tests run against a PostgreSQL service container
+- **CI**: GitHub Actions (`.github/workflows/dart.yml`) checks only some packages: format, `dart analyze` and `dart test` for `container` and `framework`; format and `dart analyze` for `orm` and `orm_generator`; and the same plus `dart test` for `orm_postgres`, against a PostgreSQL service container. Other packages are not checked by CI, so run their tests locally.
 
 ## Development Workflow
 
 - **Master Branch**: Stable production branch (currently the `9.x` releases). Use this branch for all standard PR submissions.
 - **Feature Branches**: Work is done on `feature/<name>` branches. The upcoming `10.0.0` release (all packages bumped to `10.0.0`, with breaking changes recorded in each package's `CHANGELOG.md`) is being prepared on feature branches.
 - **Tooling**: Run `dart pub get` at the root, or use `melos` to execute tasks across the monorepo (e.g., `melos exec "dart pub upgrade"`). Regenerate code with `dart run build_runner build --delete-conflicting-outputs` in the affected package.
+- **Database tests**: The ORM tests need running databases, configured by environment variables: PostgreSQL for `orm_postgres` (`POSTGRES_HOSTNAME`, `POSTGRES_DB`, `POSTGRES_USERNAME`, `POSTGRES_PASSWORD`; default `localhost`, `postgres`/`postgres`), and MySQL or MariaDB for `orm_mysql` (`MYSQL_HOST`, `MYSQL_PORT`, `MYSQL_DB`, `MYSQL_USERNAME`, `MYSQL_PASSWORD`, `MYSQL_SECURE`; default `localhost:3306`, database `orm_test`, user `test`). Run them with `dart test -j1`, as test files share tables.
+- **READMEs**: Code samples in a README must compile against the current API (e.g. route handlers take `(req, res)`, `AngelHttp` comes from `package:angel3_framework/http.dart`), and dependency snippets use the current version.
 - **Changelog**: Every user-facing change gets an entry in the affected package's `CHANGELOG.md`, written as plain-English statements about the package (not commit messages). Group a release's entries under `### Breaking changes in X.Y.Z` (each entry prefixed `**Breaking:**`), `### New in X.Y.Z` and `### Fixes in X.Y.Z`, in that order, omitting empty sections. Prefix each fix with a bold area label, e.g. `* **Services:** An invalid id is a 400`. See `packages/framework/CHANGELOG.md` (10.0.0) for the reference style. Commit messages use [Conventional Commits](https://www.conventionalcommits.org/) (`type(scope): description`, `!` for breaking changes).
 
 ## Key Technical Debt and Future Roadmap
 
-- Removal of dependency on the `dart:mirrors` library (`framework` and `container` no longer import it; `MirrorsReflector` is opt-in via `container_mirrors`. Still imported by `websocket` and `jael`).
+- Removal of dependency on the `dart:mirrors` library: done for 10.0.0. Only `container_mirrors` imports it, as an opt-in `MirrorsReflector`; `framework`, `container`, `websocket`, `jael` and `markdown` no longer use it.
 - Performance optimizations to address long-overdue issues.
 - Integration of OpenAPI 3 support.
 - Expanding ORM support for SQLite, SQL Server, Oracle DB, multi-tenant architectures, and SQL schema reverse engineering.

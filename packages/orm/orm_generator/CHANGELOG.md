@@ -4,11 +4,15 @@
 
 ### Breaking changes in 10.0.0
 
+* **Breaking:** A many-to-many is loaded with a query of its pivot table and one of its other model, whose own relations are loaded too, except one back to a table being loaded, where it was joined through SQL, without them. A generated query no longer overrides `get`, `update`, `delete` or `canCompile` for its relations, and overrides `loadRelations` and `loadsRelations` instead
 * **Breaking:** The key of a relation in `QueryValues`, such as `authorId` of a `@BelongsTo Author author`, is nullable (`int?`), as the relation and its column may be null, where reading it before it was set threw a `TypeError`, and it could not be cleared
 * **Breaking:** The generator no longer uses `analyzer` internals, which broke every model with `@BelongsTo` on `analyzer` 14.5. `OrmBuildContext.effectiveFields` is a `List<OrmField>` (`ClassOrmField` or `RelationFieldImpl`), as are the arguments of `findPrimaryFieldInList`, `isSpecialId`, `findLocalField` and `findForeignField`. The generated code is unchanged by this
 
 ### Fixes in 10.0.0
 
+* **HasMany:** A `@HasMany` is loaded with one query for all the records (`WHERE key IN (...)`), after them, rather than joined, which gave a row per item, of every `@HasMany` multiplied together, and listed an item once per row of the others; a `@HasMany` of an item, or of a `@HasOne` or `@BelongsTo`, is loaded in turn, where one nested in a `@HasMany` was always empty. The query of a `@HasMany` (e.g. `query.todos`) is the one its items are loaded with, so its conditions and order apply to them
+* **Select:** `parseRow` reads each column at its place in `fields`, so a query of some of them (`select`) no longer reads them from the wrong columns or past the end of the row
+* **Relations:** `parseRow` parses a `@HasOne` or `@BelongsTo` with the query joined, from the columns `Query.joinedRow` finds at runtime, where fixed offsets ignored the columns of nested joins
 * **Names:** Tables, foreign keys and migration classes keep their earlier names (`legacyModelName`), though `angel3_serialize_generator` now names generated classes otherwise: `_UserEntity` is still `user_entities`
 * **Column types:** A type given in `@Column` or `@PrimaryKey` is used, instead of one inferred from the Dart type; enums are inferred too. Migrations use the `ColumnType` constants, which the MySQL and MariaDB runners need, give `length` only to types that have one, and type a foreign key to a serial column as its integer
 * **Precision:** The `precision` and `scale` of a `@Column` are used; `decimal` columns are created with `table.decimal`

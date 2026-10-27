@@ -7,7 +7,7 @@
 
 This package contains the implementation of the database migration for the following databases. It is designed to work with Angel3 ORM.
 
-* PostgreSQL 10.x or greater
+* PostgreSQL 14.x or greater
 * MariaDB 10.2.x or greater
 * MySQL 8.x or greater
 
@@ -19,9 +19,12 @@ This package contains the implementation of the database migration for the follo
 
 ## Supported Operations
 
-* up      - Generate all the tables based on the ORM models.
-* reset   - Clear out all records in the `migrations` table and drop all the ORM related tables.
-* refresh - Run `reset` follow by `up`
+* up       - Run the migrations not recorded in the `migrations` table yet, in a new batch, to generate the tables based on the ORM models. A migration that fails throws, and none after it is run, as they may depend on it.
+* rollback - Undo the migrations of the last batch, newest first.
+* reset    - Undo every migration, newest first, and clear out its records in the `migrations` table, which drops all the ORM related tables.
+* refresh  - Run `reset` followed by `up`.
+
+`runMigrations(runner, args)` runs these as the commands of a command-line program, and closes the runner, even when a migration fails.
 
 ## Migration Names
 

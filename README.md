@@ -5,7 +5,7 @@
 ![Pub Version (including pre-releases)](https://img.shields.io/pub/v/angel3_framework?include_prereleases)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 [![Discord](https://img.shields.io/discord/1060322353214660698)](https://discord.gg/3X6bxTUdCM)
-[![License](https://img.shields.io/github/license/dart-backend/angel)](https://github.com/dart-backend/angel/LICENSE)
+[![License](https://img.shields.io/github/license/dart-backend/angel)](https://github.com/dart-backend/angel/blob/master/LICENSE)
 [![melos](https://img.shields.io/badge/maintained%20with-melos-f700ff.svg?style=flat-square)](https://github.com/invertase/melos)
 
 **A production-ready dart backend framework.**
@@ -24,9 +24,10 @@ The available features in Angel3 includes:
 * HTTP Streaming
 * GraphQL
 * Markdown, Mustache, Jinja and JAEL as Server-Side HTML Rendering
-* ORM support for PostgreSQL and MySQL
+* ORM support for PostgreSQL, MySQL and MariaDB
 * MongoDB, Sembast and RethinkDB as storage
 * Redis as cache
+* Dependency injection with or without `dart:mirrors`, so apps can be compiled with `dart compile exe`
 
 ## The Core Framework
 
@@ -35,35 +36,38 @@ The `packages` directory contains specialized sub-packages that act as individua
 They can broadly be categorized as follows:
 
 1. Core Framework & Request Handling
-   * framework: The foundational package (angel3_framework). It provides the base HTTP server, request/response contexts, dependency injection container, and middleware pipelines.
+   * framework: The foundational package (angel3_framework). It provides the base HTTP and HTTP/2 server, request/response contexts, services, controllers and middleware pipelines.
    * route: The routing engine handling URL matching and route parameters.
-   * container: Dependency Injection (DI) system for resolving services.
-   * configuration: Utilities for loading configuration files (YAML, JSON, .env).
+   * container: Dependency Injection (DI) system for resolving services, without `dart:mirrors`. `container_mirrors` provides the opt-in `MirrorsReflector` for the Dart VM, and `container_generator` generates reflection data for `@injectable` classes, so apps can be compiled with `dart compile exe`.
+   * configuration: Utilities for loading YAML configuration files and `.env` files.
 2. Data Modeling & Persistence (ORM)
    The framework provides an extensive ORM (angel3_orm) ecosystem with generators and database drivers:
 
-   * orm: Houses the main ORM library, code generator (angel_orm_generator), and SQL dialects for MySQL and PostgreSQL.
+   * orm: Houses the ORM runtime, its code generator (angel3_orm_generator), the migration DSL and runner, the executors for PostgreSQL and MySQL/MariaDB, and a service adapter (angel3_orm_service).
    * model: Base model abstractions for data entities.
-   * serialize: Libraries to serialize/deserialize data to and from JSON using code generation (angel_serialize_generator).
-   * mongo, rethinkdb, sembast: Specialized drivers for interacting with MongoDB, RethinkDB, and Sembast (a NoSQL local database).
+   * serialize: Libraries to serialize/deserialize data to and from JSON using code generation (angel3_serialize_generator).
+   * mongo, rethinkdb, sembast: Specialized services for MongoDB, RethinkDB, and Sembast (a NoSQL local database).
+   * file_service: A service that persists data to a JSON file, for development.
 3. Authentication & Security
    * auth: Core authentication abstractions and strategies (local, token-based).
-   * auth_oauth2 & oauth2: Out-of-the-box support for OAuth2 authentication flows.
-   * security: Security middleware (rate limiting, standard headers, etc.).
+   * auth_oauth2 & oauth2: Out-of-the-box support for OAuth2 authentication flows, as a client and as a server.
+   * auth_twitter: Authentication with Twitter OAuth 1.0a.
+   * security: Security middleware: CSRF protection, signed cookies and rate limiting.
    * cors: Middleware to handle Cross-Origin Resource Sharing effortlessly.
 4. Frontend & Template Rendering
    Support for processing and returning HTML views to the client:
 
-   * jael: The Jael template engine specifically built for Angel, capable of HTML manipulation. It is split into language servers, preprocessors, and web renderers.
+   * jael: The Jael template engine specifically built for Angel. It is split into the parser and renderer (jael3), template inheritance (jael3_preprocessor), the Angel3 integration (angel3_jael) and an experimental virtual DOM (jael3_web).
    * mustache, jinja, markdown: Wrappers/integrations for rendering Mustache templates, Jinja templates, or parsing Markdown into HTML.
    * html & seo: Utilities for building out HTML responses and optimizing for search engines.
 5. Additional Utilities and APIs
-   * websocket: Integration for real-time bidirectional communication.
+   * websocket: Integration for real-time bidirectional communication, and sync to scale it across instances.
    * client: A client-side library designed to interface seamlessly with Angel3 backends directly from Dart/Flutter.
    * cache & redis: Caching interfaces with Redis integration to improve response times.
    * hot & production: Tooling for hot-reloading the server during development, and managing clustering/multi-threading under production loads.
    * test & mock_request: Testing utilities for mocking HTTP requests without spinning up a real server.
-   * file_service & static: For serving static assets (images, CSS, JS) efficiently.
+   * static: For serving static assets (images, CSS, JS) efficiently.
+   * shelf, proxy, paginate, validate, user_agent, http_exception: Shelf interop, request forwarding, pagination, validation, user agent parsing and HTTP errors.
 
 ## Important Notes
 
@@ -79,6 +83,16 @@ Angel3 packages are published under `angel3_` prefix on pub.dev. These packages 
 
 ## Status
 
+### Release Notes (version: 10.0.0)
+
+* Updated all packages to 10.0.0. Each package's `CHANGELOG.md` lists its breaking changes, new features and fixes
+* Removed the use of `dart:mirrors`, so apps can be compiled with `dart compile exe`. `MirrorsReflector` moved to the new `angel3_container_mirrors` package, and `angel3_container_generator` generates reflection data for `@injectable` classes, used through `StaticReflector`. `angel3_websocket`, `jael3` and `angel3_markdown` no longer use mirrors either
+* Framework: graceful shutdown, in which requests in progress finish before the shutdown hooks run; malformed requests are a 400 instead of a 500
+* ORM: `@HasMany` and `@ManyToMany` are loaded with a query each instead of joins, so a `limit` counts records; nested transactions use savepoints on PostgreSQL; MySQL and MariaDB use the `mysql_dart` driver; migrations are recorded by `Migration.name` instead of their source path
+* Security: CSRF protection (`CsrfFilter`) in `angel3_security`; JWTs expire after a day by default and expired ones are no longer revived (`angel3_auth`); a random `state` and PKCE verifier for each OAuth2 login (`angel3_auth_oauth2`); SQL injection fixes in `like` (`angel3_orm`), `$sort` (`angel3_orm_service`) and string defaults (`angel3_migration_runner`)
+* Templates: Markdown values are HTML-escaped, and views outside the views directory are not read (`angel3_jinja`, `angel3_markdown`, `angel3_mustache`)
+* Requires PostgreSQL 14 or later, MySQL 8 or later, or MariaDB 10.2 or later
+
 ### Release Notes (version: 9.1.0)
 
 * Updated `angel3_` packages to Require Dart >= 3.13.0
@@ -93,7 +107,6 @@ Branch: `master`
 
 ### What is in the pipeline?
 
-* Remove the use of Mirror
 * Performance optimization
 * Out of the box OIDC and SAML2 support
 * Integrated Open API 3 support
@@ -101,6 +114,8 @@ Branch: `master`
   * SQL Server
   * Oracle DB
   * SQLite
+  * Multi-tenant architectures and SQL schema reverse engineering
+* ORM caching with Redis
 
 ## Installation and Setup
 
@@ -204,7 +219,7 @@ If you are interested in contributing to Angel3 framework please check out the [
 
 3. Download and install [Dart](https://dart.dev/get-dart). Minimum 3.13.0.
 
-4. Install `melos` 8.1 or later
+4. Install `melos` 8.9 or later
 
    ```bash
    dart pub global activate melos

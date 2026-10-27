@@ -58,6 +58,34 @@ void mySqlQueueTests() {
       );
     });
 
+    test(
+      'a transaction in one of another executor stores a DateTime as its own',
+      () async {
+        var connection = await openMySqlConnection();
+        var mySql = MySqlExecutor(connection);
+        var mariaDb = MariaDbExecutor(connection);
+        // Local, as MySqlExecutor stores it, of the time zone of the host.
+        var at = DateTime(2020, 1, 2, 3, 4, 5);
+        try {
+          await mariaDb.transaction((_) async {
+            await mySql.transaction((tx) async {
+              expect(tx, isNot(isA<MariaDbExecutor>()));
+              await (CarQuery()
+                    ..values.make = 'Local'
+                    ..values.createdAt = at)
+                  .insert(tx);
+            });
+          });
+          var stored = await conn.execute(
+            "SELECT created_at FROM cars WHERE make = 'Local'",
+          );
+          expect(stored.rows.single.colAt(0), '2020-01-02 03:04:05');
+        } finally {
+          await mySql.close();
+        }
+      },
+    );
+
     test('the executor of an ended transaction runs no query', () async {
       var executor = MySqlExecutor(await openMySqlConnection());
       try {
@@ -384,6 +412,78 @@ void executorTests(
         ..values.make = 'Hyundai';
       var cars = await query.update(executor);
       expect(cars.map((c) => c.make), ['Hyundai']);
+    });
+
+    test('an invalid date is null, not another day', () async {
+      await conn.execute("SET SESSION sql_mode = 'ALLOW_INVALID_DATES'");
+      await conn.execute(
+        "INSERT INTO cars (make, created_at) VALUES ('Invalid', '2024-02-30 00:00:00')",
+      );
+      var car = (await (CarQuery()..where!.make.equals('Invalid')).getOne(
+        executor,
+      )).value;
+      expect(car.createdAt, isNull);
+    });
+
+    test('a date and time is read with its fields as stored', () async {
+      // In the gap of a change to daylight saving time in America/New_York,
+      // which a time read as local time there would move by an hour.
+      await conn.execute(
+        "INSERT INTO cars (make, created_at) VALUES ('Gap', '2024-03-10 02:30:00')",
+      );
+      var car = (await (CarQuery()..where!.make.equals('Gap')).getOne(executor))
+          .value;
+      var fields = executor is MariaDbExecutor
+          ? DateTime.utc(2024, 3, 10, 2, 30)
+          : DateTime(2024, 3, 10, 2, 30);
+      expect(car.createdAt, fields);
+    });
+
+    test('operations not waited for run whole in their transaction', () async {
+      for (var make in ['Deleted', 'Updated']) {
+        await (CarQuery()..values.make = make).insert(executor);
+      }
+      var done = <Future>[];
+      await executor.transaction((tx) async {
+        // Each selects its rows first, then changes them, and selects them
+        // again, after the callback has returned.
+        done
+          ..add((CarQuery()..where!.make.equals('Deleted')).delete(tx))
+          ..add(
+            (CarQuery()
+                  ..where!.make.equals('Updated')
+                  ..values.description = 'Changed')
+                .update(tx),
+          );
+      });
+      var results = await Future.wait(done);
+      expect(results.map((cars) => cars.length), [1, 1]);
+      var cars = await CarQuery().get(executor);
+      expect(cars.map((c) => (c.make, c.description)), [
+        ('Updated', 'Changed'),
+      ]);
+    });
+
+    test('an insert id above the range of an int returns the row', () async {
+      await conn.execute(
+        'CREATE TABLE big_ids (id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY, '
+        'name VARCHAR(16)) AUTO_INCREMENT = 9223372036854775808',
+      );
+      try {
+        var rows = await executor.query(
+          'big_ids',
+          'INSERT INTO big_ids (name) VALUES (@name)',
+          {'name': 'Big'},
+          returningQuery:
+              'SELECT id, name FROM big_ids WHERE id = @$insertIdParameter',
+        );
+        // The row of that id, which the driver gives as text.
+        expect(rows.map((row) => row.map((v) => '$v')), [
+          ['9223372036854775808', 'Big'],
+        ]);
+      } finally {
+        await conn.execute('DROP TABLE big_ids');
+      }
     });
   });
 }

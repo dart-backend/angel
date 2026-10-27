@@ -25,7 +25,7 @@ It's very straightforward to configure an Angel server to use Markdown. Keep in 
 
 ```dart
 configureServer(Angel app) async {
-  var fs = LocalFileSystem();
+  var fs = const LocalFileSystem();
   await app.configure(markdown(
     // The directory where your views are located.
     fs.directory('views'),
@@ -37,7 +37,7 @@ You can then generate HTML on-the-fly in a request handler. Assuming your view d
 
 ```dart
 configureServer(Angel app) async {
-  app.get('/hello', (res) => res.render('hello'));
+  app.get('/hello', (req, res) => res.render('hello'));
 }
 ```
 
@@ -55,7 +55,7 @@ The species *{{species.genus.name}} {{species.name}}* is fascinating...
 You can render as follows:
 
 ```dart
-requestHandler(ResponseContext res) {
+requestHandler(RequestContext req, ResponseContext res) {
   return res.render('species', {
     'species': {
       'name': 'sapiens',
@@ -104,6 +104,7 @@ CSS and JS, etc:
 import 'dart:convert';
 
 configureServer(Angel app) async {
+  var fs = const LocalFileSystem();
   await app.configure(
     markdown(
         // The directory where your views are located.

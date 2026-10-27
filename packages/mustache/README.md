@@ -21,18 +21,18 @@ dependencies:
 ## Usage
 
 ```dart
-const FileSystem fs = const LocalFileSystem();
+const FileSystem fs = LocalFileSystem();
 
 configureServer(Angel app) async {
   // Run the plug-in
   await app.configure(mustache(fs.directory('views')));
-  
+
   // Render `hello.mustache`
-  await res.render('hello', {'name': 'world'});
+  app.get('/hello', (req, res) => res.render('hello', {'name': 'world'}));
 }
 ```
 
-@# Options
+## Options
 
 - **partialsPath**: A path within the viewsDirectory to search for partials in.
     Default is `./partials`.

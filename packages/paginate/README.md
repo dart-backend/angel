@@ -13,7 +13,7 @@ In your `pubspec.yaml` file:
 
 ```yaml
 dependencies:
-  angel3_paginate: ^6.0.0
+  angel3_paginate: ^10.0.0
 ```
 
 ## Usage
@@ -41,7 +41,7 @@ To create a paginator:
 import 'package:angel3_paginate/angel3_paginate.dart';
 
 void main() {
-  var p = Paginator(iterable);
+  var p = Paginator(List.generate(75, (i) => i), itemsPerPage: 10);
   
   // Get the current page (default: page 1)
   var page = p.current;

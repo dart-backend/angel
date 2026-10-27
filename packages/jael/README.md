@@ -24,8 +24,9 @@ Documentation for Jael syntax and directives has been **moved** to the [Angel3 f
 
 ## This Repository
 
-Within this repository are three packages:
+Within this repository are four packages:
 
 * `package:jael3` - Contains the Jael parser, AST, and HTML renderer.
 * `package:jael3_preprocessor` - Handles template inheritance, and facilitates the use of "compile-time" constructs.
 * `package:angel3_jael` - [Angel3](https://angel3-framework.web.app/) support for Jael.
+* `package:jael3_web` - An experimental virtual DOM/SPA engine built on Jael, not ready for production use.

@@ -20,7 +20,7 @@ Ensure you have read the [User Guide](https://angel3-docs.dukefirehawk.com/guide
 configureServer(Angel app) async {
   var auth = AngelAuth<User>(
     serializer: (user) => user.id ?? '',
-    deserializer: (id) => fetchAUserByIdSomehow(id
+    deserializer: (id) => fetchAUserByIdSomehow(id),
   );
   auth.strategies['local'] = LocalAuthStrategy(...);
   
@@ -28,10 +28,11 @@ configureServer(Angel app) async {
   app.post('/local', auth.authenticate('local'));
 
   // Using Angel's asynchronous injections, we can parse the JWT
-  // on demand. It won't be parsed until we check.
+  // on demand. It won't be parsed until we check. The explicit `injection`
+  // needs no reflector.
   app.get('/profile', ioc((User user) {
     print(user.description);
-  }));
+  }, injection: InjectionRequest.constant(required: [User])));
   
   // Use a comma to try multiple strategies!!!
   //

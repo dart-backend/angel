@@ -18,9 +18,9 @@ import "package:angel3_framework/angel3_framework.dart";
 import "package:angel3_websocket/server.dart";
 
 void main() async {
-  var app =  Angel();
+  var app = Angel();
 
-  var ws =  AngelWebSocket();
+  var ws = AngelWebSocket(app);
   
   // This is a plug-in. It hooks all your services,
   // to automatically broadcast events.
@@ -138,7 +138,7 @@ Clients can even perform authentication over WebSockets.
 import "package:angel3_websocket/browser.dart";
 
 void main() async {
-  Angel app =  WebSockets("/ws");
+  var app = WebSockets("/ws");
   await app.connect();
 
   var Cars = app.service("api/cars");
@@ -163,36 +163,47 @@ void main() async {
 #### CLI Client
 
 ```dart
-import "package:angel3_framework/common.dart";
 import "package:angel3_websocket/io.dart";
 
 // You can include these in a shared file and access on both client and server
-class Car extends Model {
-  int year;
-  String brand, make;
+class Car {
+  final int? year;
+  final String? brand, make;
 
   Car({this.year, this.brand, this.make});
+
+  factory Car.fromMap(Map map) => Car(
+      year: map["year"] as int?,
+      brand: map["brand"] as String?,
+      make: map["make"] as String?);
+
+  Map<String, dynamic> toJson() => {"year": year, "brand": brand, "make": make};
 
   @override String toString() => "$year $brand $make";
 }
 
 void main() async {
-  Angel app =  WebSockets("/ws");
+  var app = WebSockets("ws://localhost:3000/ws");
 
   // Wait for WebSocket connection...
   await app.connect();
 
-  var Cars = app.service("api/cars", type: Car);
+  // The data of a WebSocket service comes as events, and its methods return
+  // `null`, so its type is nullable.
+  var Cars = app.service<String, Car?>(
+    "api/cars",
+    deserializer: (x) => Car.fromMap(x as Map),
+  );
 
-  Cars.onCreated.listen((Car car) {
-      // Automatically deserialized into a car :)
+  Cars.onCreated.listen((car) {
+      // Deserialized into a car :)
       //
       // I just bought a new 2016 Toyota Camry!
       print("I just bought a new $car!");
   });
 
   // Happens asynchronously
-  Cars.create({"year": 2016, "brand": "Toyota", "make": "Camry"});
+  Cars.create(Car(year: 2016, brand: "Toyota", make: "Camry"));
 
   // Authenticate a WebSocket, if you were not already authenticated...
   app.authenticateViaJwt('<some-jwt>');

@@ -27,6 +27,7 @@ The content of a file is inlined as text, so it cannot end its `<style>` or `<sc
 
 ```dart
 import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_framework/http.dart';
 import 'package:angel3_seo/angel3_seo.dart';
 import 'package:angel3_static/angel3_static.dart';
 import 'package:file/local.dart';
@@ -51,6 +52,7 @@ This function wraps a `VirtualDirectory` to patch the way it sends `.html` and `
 
 ```dart
 import 'package:angel3_framework/angel3_framework.dart';
+import 'package:angel3_framework/http.dart';
 import 'package:angel3_seo/angel3_seo.dart';
 import 'package:angel3_static/angel3_static.dart';
 import 'package:file/local.dart';

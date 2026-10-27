@@ -24,6 +24,10 @@ class PostgreSqlExecutor extends QueryExecutor {
   /// it does not wait for the one it is in.
   static final Expando<Map<int, Future<void>>> _lastSavepointsOf = Expando();
 
+  /// For each transaction, how many savepoints it has started, which names
+  /// each one apart from the others.
+  static final Expando<int> _savepointCountOf = Expando();
+
   /// An optional [Logger] to print information to. A default logger will be used
   /// if not set
   late Logger logger;
@@ -134,6 +138,11 @@ class PostgreSqlExecutor extends QueryExecutor {
   /// for another one at its level that it did not start inside itself, such
   /// as one started before it, waits forever, as that one waits for it.
   ///
+  /// A transaction or savepoint waits for the savepoints started inside it,
+  /// even ones its callback does not await, before it is committed,
+  /// released or rolled back, as that would end them too. A call made after
+  /// its savepoint ended, such as from a timer, runs in the one around it.
+  ///
   /// A savepoint applies to the whole transaction, so a query on the
   /// executor of the transaction that runs while a savepoint of it is open,
   /// rather than on the executor its callback is given, is part of that
@@ -155,7 +164,15 @@ class PostgreSqlExecutor extends QueryExecutor {
       // runTx rolls the transaction back if f throws, then throws its error.
       return await executor.runTx((tx) async {
         try {
-          return await f(PostgreSqlExecutor(tx, logger: logger));
+          var level = _SavepointLevel(tx, 0, null);
+          try {
+            return await runZoned(
+              () async => await f(PostgreSqlExecutor(tx, logger: logger)),
+              zoneValues: {_savepointLevel: level},
+            );
+          } finally {
+            await level.close();
+          }
         } catch (e, st) {
           // Fine, as the error is thrown to the caller, who handles it.
           logger.fine('The transaction failed, and is rolled back', e, st);
@@ -171,33 +188,47 @@ class PostgreSqlExecutor extends QueryExecutor {
   /// call is made in, if any, after any other savepoint at that level.
   Future<T> _savepoint<T>(TxSession tx, FutureOr<T> Function(QueryExecutor) f) {
     var around = Zone.current[_savepointLevel] as _SavepointLevel?;
-    var depth = around != null && identical(around.tx, tx)
-        ? around.depth + 1
-        : 1;
+    if (around != null && !identical(around.tx, tx)) around = null;
+    // A call made after its savepoint ended runs in the one around it.
+    while (around != null && !around.isOpen) {
+      around = around.parent;
+    }
+    var depth = (around?.depth ?? 0) + 1;
 
     var last = _lastSavepointsOf[tx] ??= {};
     var previous = last[depth] ?? Future<void>.value();
     var done = Completer<void>();
     last[depth] = done.future;
+    // Completes without an error, so that the error stays with the caller.
+    around?.started.add(done.future);
     return previous
-        .then((_) => _runSavepoint(tx, depth, f))
+        .then((_) => _runSavepoint(tx, depth, around, f))
         .whenComplete(done.complete);
   }
 
   Future<T> _runSavepoint<T>(
     TxSession tx,
     int depth,
+    _SavepointLevel? around,
     FutureOr<T> Function(QueryExecutor) f,
   ) async {
-    // Unique among the savepoints that are open, one per level.
-    var name = 'angel3_savepoint_$depth';
+    // Unique in the transaction, so that releasing or rolling back to it
+    // never ends another savepoint of the same name.
+    var count = (_savepointCountOf[tx] ?? 0) + 1;
+    _savepointCountOf[tx] = count;
+    var name = 'angel3_savepoint_$count';
+    var level = _SavepointLevel(tx, depth, around);
     await tx.execute('SAVEPOINT $name');
     T result;
     try {
-      result = await runZoned(
-        () async => await f(PostgreSqlExecutor(tx, logger: logger)),
-        zoneValues: {_savepointLevel: _SavepointLevel(tx, depth)},
-      );
+      try {
+        result = await runZoned(
+          () async => await f(PostgreSqlExecutor(tx, logger: logger)),
+          zoneValues: {_savepointLevel: level},
+        );
+      } finally {
+        await level.close();
+      }
       // Fails if f left the transaction aborted, by catching an error of
       // the database itself: then it is rolled back to, as if f threw. The
       // error is then that of the transaction being aborted, as f kept the
@@ -224,10 +255,28 @@ class PostgreSqlExecutor extends QueryExecutor {
   }
 }
 
-/// The savepoint a zone runs in: its transaction, and its level of nesting.
+/// The savepoint a zone runs in: its transaction, its level of nesting, 0
+/// for the transaction itself, and the one it is in.
 class _SavepointLevel {
   final TxSession tx;
   final int depth;
+  final _SavepointLevel? parent;
 
-  const _SavepointLevel(this.tx, this.depth);
+  /// The ends of the savepoints started inside this one.
+  final List<Future<void>> started = [];
+
+  bool isOpen = true;
+
+  _SavepointLevel(this.tx, this.depth, this.parent);
+
+  /// Waits for the savepoints started inside this one, including those they
+  /// start while it waits, then marks it as ended.
+  Future<void> close() async {
+    while (started.isNotEmpty) {
+      var waiting = List.of(started);
+      started.clear();
+      await Future.wait(waiting);
+    }
+    isOpen = false;
+  }
 }

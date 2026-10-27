@@ -58,6 +58,16 @@ void main() {
           ferrari = (await query.insert(executor)).value;
         });
 
+        test('select of some fields reads each in its column', () async {
+          var cars = await (CarQuery()..select(['make', 'price'])).get(
+            executor,
+          );
+          expect(cars, hasLength(1));
+          expect(cars.first.make, 'Ferrari東');
+          expect(cars.first.price, 120000.00);
+          expect(cars.first.description, isNull);
+        });
+
         test('where clause is applied', () async {
           var query = CarQuery()..where!.familyFriendly.isTrue;
           var cars = await query.get(executor);
@@ -150,7 +160,8 @@ void main() {
 
         test('where on parts of a date', () async {
           // Fractional seconds must still match the whole second.
-          var withSeconds = DateTime(2000, 1, 1, 0, 0, 7, 500);
+          // In UTC, as the driver stores it, so the year is that in any zone.
+          var withSeconds = DateTime.utc(2000, 1, 1, 0, 0, 7, 500);
           var insert = CarQuery();
           insert.values
             ..make = 'Mazda'
@@ -537,6 +548,60 @@ void main() {
         expect(results, ['rolled back', 'committed']);
       });
       expect(await makes(), ['Kept']);
+    });
+
+    group('waits for a savepoint its callback does not await', () {
+      test('in a savepoint', () async {
+        await executor
+            .transaction(
+              (tx) => tx.transaction((outer) async {
+                unawaited(
+                  outer.transaction((inner) async {
+                    await Future.delayed(const Duration(milliseconds: 100));
+                    await insertCar(inner, 'Inner');
+                  }),
+                );
+              }),
+            )
+            .timeout(const Duration(seconds: 10));
+        expect(await makes(), ['Inner']);
+      });
+
+      test('in the transaction', () async {
+        await executor
+            .transaction((tx) async {
+              unawaited(
+                tx.transaction((inner) async {
+                  await Future.delayed(const Duration(milliseconds: 100));
+                  await insertCar(inner, 'Inner');
+                }),
+              );
+            })
+            .timeout(const Duration(seconds: 10));
+        expect(await makes(), ['Inner']);
+      });
+    });
+
+    test('in a savepoint after it ended runs in the one around it', () async {
+      await executor
+          .transaction((tx) async {
+            await tx.transaction((first) async {
+              // Fires while the second one runs.
+              Timer(const Duration(milliseconds: 50), () {
+                unawaited(tx.transaction((x) => insertCar(x, 'Late')));
+              });
+            });
+            await expectLater(
+              tx.transaction((second) async {
+                await Future.delayed(const Duration(milliseconds: 100));
+                throw ArgumentError('of the second one');
+              }),
+              throwsArgumentError,
+            );
+          })
+          .timeout(const Duration(seconds: 10));
+      // Not rolled back with the second one, which it is not part of.
+      expect(await makes(), ['Late']);
     });
 
     test(

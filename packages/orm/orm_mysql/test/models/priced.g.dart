@@ -81,14 +81,16 @@ class PricedQuery extends Query<Priced, PricedQueryWhere> {
       return Optional.empty();
     }
     var model = Priced(
-      id: fields.contains('id') ? row[0].toString() : null,
+      id: fields.contains('id') ? row[fields.indexOf('id')].toString() : null,
       createdAt: fields.contains('created_at')
-          ? mapToNullableDateTime(row[1])
+          ? mapToNullableDateTime(row[fields.indexOf('created_at')])
           : null,
       updatedAt: fields.contains('updated_at')
-          ? mapToNullableDateTime(row[2])
+          ? mapToNullableDateTime(row[fields.indexOf('updated_at')])
           : null,
-      amount: fields.contains('amount') ? mapToDouble(row[3]) : 0.0,
+      amount: fields.contains('amount')
+          ? mapToDouble(row[fields.indexOf('amount')])
+          : 0.0,
     );
     return Optional.of(model);
   }

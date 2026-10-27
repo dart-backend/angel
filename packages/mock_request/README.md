@@ -16,11 +16,11 @@ This package was originally designed to make testing [Angel3](https://angel3-fra
 ```dart
 var rq = MockHttpRequest('GET', Uri.parse('/foo'));
 await rq.close();
-await app.handleRequest(rq); // Run within your server-side application
+await AngelHttp(app).handleRequest(rq); // Run within your server-side application
 var rs = rq.response;
 expect(rs.statusCode, equals(200));
-expect(await rs.transform(UTF8.decoder).join(),
-    equals(JSON.encode('Hello, world!')));
+expect(await rs.transform(utf8.decoder).join(),
+    equals(json.encode('Hello, world!')));
 ```
 
 More examples can be found in the included test cases.

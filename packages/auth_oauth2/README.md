@@ -27,28 +27,27 @@ configureServer(Angel app) async {
 After getting authenticated against the remote server, we need to be able to identify users within our own application.
 
 ```dart
-typedef OAuth2Verifier = FutureOr<User> Function(oauth2.Client, RequestContext, ResponseContext);
-
 /// You might use a pure function to create a verifier that queries a
 /// given service.
-OAuth2Verifier oauth2verifier(Service<User> userService) {
-  return (client) async {
-     var response = await client.get('https://api.github.com/user');
-      var ghUser = json.decode(response.body);
-      var id = ghUser['id'] as int;
+FutureOr<User> Function(oauth2.Client, RequestContext, ResponseContext)
+    oauth2verifier(Service<String, User> userService) {
+  return (client, req, res) async {
+    var response = await client.get(Uri.parse('https://api.github.com/user'));
+    var ghUser = json.decode(response.body) as Map;
+    var id = ghUser['id'] as int;
 
-      var matchingUsers = await mappedUserService.index({
-        'query': {'github_id': id}
-      });
+    var matchingUsers = await userService.index({
+      'query': {'github_id': id}
+    });
 
-      if (matchingUsers.isNotEmpty) {
-        // Return the corresponding user, if it exists.
-        return matchingUsers.first;
-      } else {
-        // Otherwise,create a user
-        return await mappedUserService.create(User(githubId: id));
-      }
-   };
+    if (matchingUsers.isNotEmpty) {
+      // Return the corresponding user, if it exists.
+      return matchingUsers.first;
+    } else {
+      // Otherwise, create a user
+      return await userService.create(User(githubId: id));
+    }
+  };
 }
 ```
 
@@ -106,7 +105,7 @@ This package should work out-of-the-box for most OAuth2 providers, such as Githu
 
 ```dart
 configureServer(Angel app) async {
-  OAuth2Strategy(..., delimiter: ' ');
+  OAuth2Strategy(..., delimiter: ',');
 }
 ```
 
@@ -120,10 +119,12 @@ You can add a `getParameters` callback to parse the contents of any arbitrary re
 OAuth2Strategy(
     // ...
     getParameters: (contentType, body) {
-      if (contentType.type == 'application') {
-        if (contentType.subtype == 'x-www-form-urlencoded')
+      if (contentType?.type == 'application') {
+        if (contentType!.subtype == 'x-www-form-urlencoded') {
           return Uri.splitQueryString(body);
-        else if (contentType.subtype == 'json') return JSON.decode(body);
+        } else if (contentType.subtype == 'json') {
+          return json.decode(body) as Map<String, dynamic>;
+        }
       }
 
       throw FormatException('Invalid content-type $contentType; expected application/x-www-form-urlencoded or application/json.');
