@@ -30,7 +30,7 @@ The available features in Angel3 include:
 
 ## The Core Framework
 
-The `packages` directory contains specialized sub-packages that act as individual plugins or modules. Depending on the needs of a project, a developer can plug in specific packages.
+The `packages` directory contains specialized sub-packages that act as individual plugins or modules. Depending on the needs of a project, a developer can plug in specific packages. The [Available Packages](packages/framework/README.md#available-packages) table of the framework's README describes each of them.
 
 They can broadly be categorized as follows:
 
@@ -84,21 +84,15 @@ Angel3 packages are published under `angel3_` prefix on pub.dev. Each package ha
 
 Branch: `master`
 
+* Version      : 10.0.0
 * Dart version : 3.13.0 or later.
 * Publish      : Refer to all packages with `angel3_` prefix on [pub.dev](https://pub.dev/publishers/dukefirehawk.com/packages).
 * Status       : Production
 * Notes        : Use this branch for all PR submission
 
-### Release Notes (version: 9.1.0)
-
-* Updated `angel3_` packages to Require Dart >= 3.13.0
-* Updated code generator to use `analyzer` 14.x.x
-
 ### Release Notes (version: 10.0.0)
 
-In progress on `feature/` branches; not yet on `master` or published on pub.dev.
-
-* Updated all packages to 10.0.0. Each package's `CHANGELOG.md` lists its breaking changes, new features and fixes
+* Updated all packages to 10.0.0. Each package's `CHANGELOG.md` lists its breaking changes, new features and fixes, and its README tells how to upgrade, under *Migrating from 9.x to 10.0.0*
 * Removed the use of `dart:mirrors`, so apps can be compiled with `dart compile exe`. `MirrorsReflector` moved to the new `angel3_container_mirrors` package, and `angel3_container_generator` generates reflection data for `@injectable` classes, used through `StaticReflector`. `angel3_websocket`, `jael3` and `angel3_markdown` no longer use mirrors either
 * Framework: graceful shutdown, in which requests in progress finish before the shutdown hooks run; malformed requests are a 400 instead of a 500
 * ORM: `@HasMany` and `@ManyToMany` are loaded with a query each instead of joins, so a `limit` counts records; nested transactions use savepoints on PostgreSQL; MySQL and MariaDB use the `mysql_dart` driver; migrations are recorded by `Migration.name` instead of their source path
