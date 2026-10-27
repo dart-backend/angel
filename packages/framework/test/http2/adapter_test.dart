@@ -711,18 +711,29 @@ void main() {
     addTearDown(h2Only.close);
     var server = await h2Only.startServer();
 
-    var socket = await SecureSocket.connect(
-      '127.0.0.1',
-      server.port,
-      onBadCertificate: (_) => true,
-      supportedProtocols: ['http/1.1'],
-    );
-    socket.write('GET / HTTP/1.1\r\nHost: localhost\r\n\r\n');
-    await expectLater(
-      socket.drain<void>().timeout(const Duration(seconds: 5)),
-      completes,
-    );
-    socket.destroy();
+    // The server closes the connection as soon as the handshake picks
+    // HTTP/1.1, which can be before the client has finished its part of it,
+    // or while the request is written: each of these is a close.
+    Future<void> closed() async {
+      try {
+        var socket = await SecureSocket.connect(
+          '127.0.0.1',
+          server.port,
+          onBadCertificate: (_) => true,
+          supportedProtocols: ['http/1.1'],
+        );
+        socket.done.ignore();
+        socket.write('GET / HTTP/1.1\r\nHost: localhost\r\n\r\n');
+        await socket.drain<void>();
+        socket.destroy();
+      } on SocketException {
+        // Closed during the handshake, or under the request.
+      } on HandshakeException {
+        // Closed during the handshake.
+      }
+    }
+
+    await expectLater(closed().timeout(const Duration(seconds: 5)), completes);
   });
 
   test('allowHttp1', () async {

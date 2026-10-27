@@ -492,7 +492,7 @@ class Angel extends Routable {
       'automatic constructor injection, and `ioc` without an explicit `injection:` are unavailable. '
       'Routes, services, `Controller.configureRoutes` and container-registered types still work.\n\n'
       'For more, see the documentation:\n'
-      'https://docs.angel-dart.dev/guides/dependency-injection#enabling-dart-mirrors-or-other-reflection';
+      'https://angel3-docs.dukefirehawk.com/guides/dependency-injection#enabling-dart-mirrors-or-other-reflection';
 
   Angel({
     Reflector reflector = const ThrowingReflector(

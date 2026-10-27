@@ -11,7 +11,7 @@ environment:
 
 dependencies:
   angel3_framework: ^10.0.0
-  belatuk_merge_map: ^5.1.0
+  belatuk_merge_map: ^6.0.0
   mongo_dart: ^0.10.3
 
 dev_dependencies:

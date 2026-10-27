@@ -16,9 +16,6 @@
 * **Dependencies:** Requires Dart >= 3.13 and `dart_twitter_api` 0.6.0, and is back in the workspace
 * **Docs:** The README tells how to install and use the package, and how to migrate from 9.x
 
-
-## 9.1.0
-
 * Require Dart >= 3.13
 
 ## 9.0.0

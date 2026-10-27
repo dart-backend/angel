@@ -12,7 +12,7 @@ dependencies:
   analyzer: ^14.0.0
   angel3_model: ^10.0.0
   angel3_serialize: ^10.0.0
-  belatuk_code_buffer: ^5.2.0
+  belatuk_code_buffer: ^6.0.0
   build: ^4.0.0
   build_config: ^1.0.0
   code_builder: ^4.0.0

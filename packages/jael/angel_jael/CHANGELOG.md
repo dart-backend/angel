@@ -5,6 +5,7 @@
 ### Breaking changes in 10.0.0
 
 * **Breaking:** A view is resolved relative to its own directory, where it was the views directory, so that the `extend` and `include` tags of a view in a subdirectory are read relative to it, as those of its parents are, with `jael3_preprocessor` 10
+* **Breaking:** Requires `belatuk_code_buffer` 6 and `belatuk_symbol_table` 6, whose `CodeBuffer` a `createBuffer` returns
 
 ### New in 10.0.0
 

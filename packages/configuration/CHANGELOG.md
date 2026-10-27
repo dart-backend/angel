@@ -8,6 +8,7 @@
 * **Includes:** A file that includes itself, directly or through other files, is not loaded again, with a warning, where loading never ended
 * **`.env`:** Read from the `FileSystem` given, where it was read from the disk, so it was ignored on other file systems (e.g. `MemoryFileSystem`)
 * **Docs:** `loadStandaloneConfiguration` documents that an undefined `$VARIABLE` throws without `onWarning`, and the README installs version 10.0.0
+* **Dependencies:** Requires `belatuk_merge_map` 6, so a nested map of another key or value type is merged into the one it extends, where it replaced it
 
 ## 9.1.0
 
