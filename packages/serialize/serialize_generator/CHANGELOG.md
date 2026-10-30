@@ -1,5 +1,12 @@
 # Change Log
 
+## 10.0.1
+
+### Fixes in 10.0.1
+
+* **Constructors:** `buildContext` accepts a class without an unnamed constructor, instead of failing with "Null check operator used on a null value", so `graphql_generator2` can generate a `@graphQLClass` with only named constructors
+* **Constructors:** A model class without an unnamed constructor, which the generated class extends, fails the build with an error telling to add one. A model of only abstract fields, which the generated class implements, needs none
+
 ## 10.0.0
 
 ### Breaking changes in 10.0.0

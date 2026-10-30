@@ -163,6 +163,33 @@ abstract class _UserInfo { String? get name; }
     expect(errors.join(), contains('both generate the class UserInfo'));
   });
 
+  test('generates a model without an unnamed constructor', () async {
+    // The generated class implements a model of abstract fields, so it does
+    // not call its constructor.
+    var errors = await compileErrors('''
+@serializable
+abstract class _Point {
+  _Point.origin();
+  int? get x;
+}
+''');
+    expect(errors, isEmpty);
+  }, timeout: const Timeout(Duration(minutes: 3)));
+
+  test('rejects a model it extends without an unnamed constructor', () async {
+    var (errors, _) = await generate('''
+@serializable
+abstract class _Todo extends Model {
+  _Todo.named();
+  String? get text;
+}
+''', imports: "import 'package:angel3_model/angel3_model.dart';");
+    expect(
+      errors.join(),
+      contains('The model class _Todo needs an unnamed constructor'),
+    );
+  });
+
   test('reads a Serializers value given by another constant', () async {
     var (errors, output) = await generate('''
 const js = Serializers.json;
