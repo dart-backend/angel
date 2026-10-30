@@ -38,6 +38,23 @@ void main() {
     expect(w.type, WithEnumType.c);
   });
 
+  test('enum deserializes from its name', () {
+    var w = WithEnumSerializer.fromMap({WithEnumFields.type: 'c'});
+    expect(w.type, WithEnumType.c);
+  });
+
+  test('enum deserializes from its index', () {
+    var w = WithEnumSerializer.fromMap({WithEnumFields.type: 2});
+    expect(w.type, WithEnumType.c);
+  });
+
+  test('enum rejects an unknown name', () {
+    expect(
+      () => WithEnumSerializer.fromMap({WithEnumFields.type: 'z'}),
+      throwsArgumentError,
+    );
+  });
+
   test('equality', () {
     expect(WithEnum(type: WithEnumType.a), WithEnum(type: WithEnumType.a));
     expect(
