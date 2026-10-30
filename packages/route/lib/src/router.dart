@@ -31,6 +31,27 @@ class Router<T> {
   final List<Route<T>> _routes = [];
   bool _useCache = false;
 
+  /// The number of changes to [_routes], so that [routes] knows when to
+  /// expand them again.
+  int _changes = 0;
+  List<Route<T>>? _expanded;
+  int _expandedStamp = -1;
+
+  /// The changes to this router and the routers mounted in it. Each only
+  /// grows, so the sum changes whenever any router of the tree changes.
+  int get _stamp {
+    var stamp = _changes;
+    for (var route in _routes) {
+      if (route is SymlinkRoute<T>) stamp += route.router._stamp;
+    }
+    return stamp;
+  }
+
+  void _add(Route<T> route) {
+    _routes.add(route);
+    _changes++;
+  }
+
   List<T> get middleware => List<T>.unmodifiable(_middleware);
 
   Map<Pattern, Router<T>> get mounted =>
@@ -42,7 +63,20 @@ class Router<T> {
   /// [SymlinkRoute.middleware]) and the router's own (e.g. from [group]) are
   /// prepended to the handlers of each of its routes, since only this
   /// router's [middleware] is applied separately when resolving.
+  ///
+  /// The list is kept until a route is added to this router or to one
+  /// mounted in it, so its routes keep their compiled parsers between
+  /// resolutions.
   List<Route<T>> get routes {
+    var stamp = _stamp;
+    if (_expanded == null || stamp != _expandedStamp) {
+      _expanded = List.unmodifiable(_expand());
+      _expandedStamp = stamp;
+    }
+    return _expanded!;
+  }
+
+  List<Route<T>> _expand() {
     return _routes.fold<List<Route<T>>>([], (out, route) {
       if (route is SymlinkRoute<T>) {
         var middleware = [...route.middleware, ...route.router._middleware];
@@ -100,7 +134,7 @@ class Router<T> {
     handlers.insertAll(0, middleware);
 
     final route = Route<T>(path, method: method, handlers: handlers);
-    _routes.add(route);
+    _add(route);
     return route;
   }
 
@@ -111,7 +145,7 @@ class Router<T> {
   ChainedRouter<T> chain(Iterable<T> middleware) {
     var piped = ChainedRouter<T>(this, middleware);
     var route = SymlinkRoute<T>('/', piped);
-    _routes.add(route);
+    _add(route);
     return piped;
   }
 
@@ -122,12 +156,12 @@ class Router<T> {
 
     for (var route in routes) {
       if (route is! SymlinkRoute<T>) {
-        router._routes.add(route.clone());
+        router._add(route.clone());
       } else {
         final newRouter = route.router.clone();
         newMounted[route.path] = newRouter;
         final symlink = SymlinkRoute<T>(route.path, newRouter);
-        router._routes.add(symlink);
+        router._add(symlink);
       }
     }
 
@@ -435,7 +469,7 @@ class Router<T> {
 
   SymlinkRoute<T> _mount(SymlinkRoute<T> route) {
     _mounted[route.path] = route.router;
-    _routes.add(route);
+    _add(route);
     return route;
   }
 
@@ -548,7 +582,7 @@ class ChainedRouter<T> extends Router<T> {
     final piped = ChainedRouter<T>.empty().._root = _root;
     piped._handlers.addAll([..._handlers, ...middleware]);
     var route = SymlinkRoute<T>('/', piped);
-    _routes.add(route);
+    _add(route);
     return piped;
   }
 }

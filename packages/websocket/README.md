@@ -53,6 +53,25 @@ myService.index({
 });
 ```
 
+#### Without a Controller
+
+Clients send actions as JSON objects, of an `eventName` and its `data`, such as `{"eventName": "echo", "data": "Hello"}`; anything else is answered with an `error` event of a `400 Bad Request`. The clients of this package (see [Client Use](#client-use)) send them for you.
+
+Handle the actions of each socket in an `onConnection` listener, and reply with `socket.send`:
+
+```dart
+ws.onConnection.listen((socket) {
+  socket.onAction.listen((action) {
+    if (action.eventName == 'echo') {
+      // Sent as {"eventName": "echo", "data": "Echo: Hello"}.
+      socket.send('echo', 'Echo: ${action.data}');
+    }
+  });
+});
+```
+
+`ws.onAction` gives the actions of all sockets, but not the socket to reply to. `socket.on['echo']` gives only the `data` of actions that is a JSON object (or `null`); other data is logged as a warning, so use `socket.onAction` for strings, numbers and lists.
+
 #### Adding Handlers within a Controller
 
 `WebSocketController` extends a normal `Controller`, but also listens to WebSockets.

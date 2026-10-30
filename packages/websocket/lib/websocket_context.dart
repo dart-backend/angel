@@ -95,6 +95,10 @@ class WebSocketEventTable {
   StreamController<Map?>? _getStreamForEvent(String eventName) =>
       _handlers[eventName] ??= StreamController<Map?>.broadcast();
 
+  /// Whether the stream of [eventName] has a listener.
+  bool _hasListener(String eventName) =>
+      _handlers[eventName]?.hasListener ?? false;
+
   /// Gives [data] to the stream of [eventName], if one listens to it.
   void _add(String eventName, Object? data) {
     var controller = _handlers[eventName];
@@ -109,5 +113,7 @@ class WebSocketEventTable {
     }
   }
 
+  /// The data of the actions named [key] that are JSON objects (or `null`);
+  /// others are only given to [WebSocketContext.onAction].
   Stream<Map?> operator [](String key) => _getStreamForEvent(key)!.stream;
 }
