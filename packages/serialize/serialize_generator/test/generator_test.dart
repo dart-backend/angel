@@ -190,6 +190,20 @@ abstract class _Todo extends Model {
     );
   });
 
+  test('compiles enum fields with and without a default', () async {
+    var errors = await compileErrors('''
+enum Color { red, green }
+@serializable
+abstract class _Paint {
+  Color get color;
+  Color? get maybe;
+  @DefaultsTo(Color.green)
+  Color? get withDefault;
+}
+''');
+    expect(errors, isEmpty);
+  }, timeout: const Timeout(Duration(minutes: 3)));
+
   test('reads a Serializers value given by another constant', () async {
     var (errors, output) = await generate('''
 const js = Serializers.json;

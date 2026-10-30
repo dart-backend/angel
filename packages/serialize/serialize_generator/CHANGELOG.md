@@ -6,6 +6,7 @@
 
 * **Constructors:** `buildContext` accepts a class without an unnamed constructor, instead of failing with "Null check operator used on a null value", so `graphql_generator2` can generate a `@graphQLClass` with only named constructors
 * **Constructors:** A model class without an unnamed constructor, which the generated class extends, fails the build with an error telling to add one. A model of only abstract fields, which the generated class implements, needs none
+* **Enums:** `fromMap` reads an enum field from its value, its name or its index, so a map from JSON, or from a service that stores enums as text, can be deserialized. Before, only the enum value itself was read, and a name or an index failed with a cast error. `toMap` still writes the enum value
 
 ## 10.0.0
 
