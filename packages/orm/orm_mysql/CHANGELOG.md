@@ -1,5 +1,11 @@
 # Change Log
 
+## 10.0.1
+
+### Fixes in 10.0.1
+
+* **Time zones:** With `MariaDbExecutor`, a `where` clause on a local `DateTime` matches the rows written with it, as `angel3_orm` 10.0.1 binds it as a parameter, which is sent as UTC. With `MySqlExecutor`, which stores local time, it matches the same rows as before. Requires `angel3_orm` 10.0.1
+
 ## 10.0.0
 
 ### Breaking changes in 10.0.0

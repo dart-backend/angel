@@ -159,15 +159,81 @@ void main() {
     });
   });
 
-  test('DateTime isIn and isNotIn quote the dates', () {
-    query.where!.createdAt.isIn([DateTime(2020, 1, 2), DateTime(2021, 3, 4)]);
-    query.where!.updatedAt.isNotIn([DateTime(2020, 1, 2)]);
+  test('DateTime isIn and isNotIn bind the dates', () {
+    var a = DateTime(2020, 1, 2), b = DateTime(2021, 3, 4);
+    query.where!.createdAt.isIn([a, b]);
+    query.where!.updatedAt.isNotIn([a]);
     var sql = query.compile({});
-    expect(
-      sql,
-      contains("created_at IN ('2020-01-02 00:00:00', '2021-03-04 00:00:00')"),
+    expect(sql, contains('created_at IN (@created_at, @created_at1)'));
+    expect(sql, contains('updated_at NOT IN (@updated_at)'));
+    expect(query.substitutionValues, {
+      'created_at': a,
+      'created_at1': b,
+      'updated_at': a,
+    });
+  });
+
+  test('DateTime isIn and isNotIn of no dates are FALSE and TRUE', () {
+    query.where!.createdAt.isIn([]);
+    query.where!.updatedAt.isNotIn([]);
+    var sql = query.compile({});
+    expect(sql, contains('FALSE'));
+    expect(sql, contains('TRUE'));
+    expect(sql, isNot(contains('IN ()')));
+  });
+
+  test('a DateTime comparison binds the DateTime, which is sent as the '
+      'executor stores a DateTime', () {
+    var dt = DateTime(2020, 1, 2, 3, 4, 5);
+    query.where!.createdAt.lessThan(dt);
+    expect(query.compile({}), contains('created_at < @created_at'));
+    expect(query.substitutionValues, {'created_at': dt});
+  });
+
+  test('a DateTime comparison without the time compares the date as given', () {
+    query.where!.updatedAt.equals(
+      DateTime(2020, 1, 2, 23, 59),
+      includeTime: false,
     );
-    expect(sql, contains("updated_at NOT IN ('2020-01-02 00:00:00')"));
+    expect(query.compile({}), contains("updated_at = '2020-01-02'"));
+    expect(query.substitutionValues, isEmpty);
+  });
+
+  test('DateTime values are named apart from those of other columns', () {
+    // A name that a DateTime predicate would make from `created_at`.
+    query.reserveName('created_at1');
+    query.substitutionValues['created_at1'] = 'other';
+    query.where!.createdAt.isBetween(DateTime(2020), DateTime(2021));
+    query.where!.createdAt.isNull;
+    expect(query.substitutionValues, {'created_at1': 'other'});
+  });
+
+  test('a new DateTime predicate drops the values of the previous one', () {
+    query.where!.createdAt.isBetween(DateTime(2020), DateTime(2021));
+    query.where!.createdAt.isNull;
+    expect(query.compile({}), contains('created_at IS NULL'));
+    expect(query.substitutionValues, isEmpty);
+  });
+
+  test('a union keeps the values of both queries apart', () {
+    var a = DateTime(2020), b = DateTime(2021);
+    var left = EmployeeQuery()..where!.createdAt.lessThan(a);
+    var right = EmployeeQuery()
+      ..where!.createdAt.greaterThan(b)
+      ..where!.updatedAt.equals(a);
+    // A name the right query uses, which renaming must not take.
+    right.substitutionValues['created_at_1'] = 'other';
+
+    var union = left.union(right);
+    var sql = union.compile({});
+    expect(sql, contains('created_at < @created_at)'));
+    expect(sql, contains('created_at > @created_at_2'));
+    expect(union.substitutionValues, {
+      'created_at': a,
+      'created_at_2': b,
+      'updated_at': a,
+      'created_at_1': 'other',
+    });
   });
 
   group('JSON', () {
