@@ -1,5 +1,11 @@
 # Change Log
 
+## 10.0.1
+
+### Fixes in 10.0.1
+
+* **Performance:** `Router.routes` keeps the routes of mounted routers, such as those of a `group`, until a route is added to the router or to one mounted in it, where it made new ones, so their path parsers were compiled again, on every resolution. Resolving a request in a router of route groups is about 20 times faster outside production mode, as fast as with the same routes added without a group. The list it returns is unmodifiable
+
 ## 10.0.0
 
 ### New in 10.0.0
