@@ -1,9 +1,10 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:angel3_orm/angel3_orm.dart';
 import 'package:logging/logging.dart';
 import 'package:postgres/postgres.dart';
+
+import 'parameters.dart';
 
 /// A [QueryExecutor] that queries a PostgreSQL database.
 class PostgreSqlExecutor extends QueryExecutor {
@@ -78,15 +79,7 @@ class PostgreSqlExecutor extends QueryExecutor {
     logger.fine('Values: $substitutionValues');
     logger.fine('Returning Query: $returningQuery');
 
-    // Convert List into String
-    var param = <String, dynamic>{};
-    substitutionValues.forEach((key, value) {
-      if (value is List) {
-        param[key] = jsonEncode(value);
-      } else {
-        param[key] = value;
-      }
-    });
+    var param = encodeParameters(substitutionValues);
 
     return _session.execute(Sql.named(query), parameters: param).catchError((
       err,

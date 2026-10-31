@@ -1,5 +1,17 @@
 # Change Log
 
+## 10.0.1
+
+### Breaking changes in 10.0.1
+
+* **Breaking:** A `DateTime` in a `where` clause with its time, such as of `lessThan`, `equals`, `isBetween` or `isIn`, is bound as a parameter, so the executor sends it as it stores a `DateTime`, where it was written into the SQL as its wall-clock time, whatever its time zone. A local `DateTime` now matches the rows written with it on PostgreSQL and with `MariaDbExecutor`, which store a `DateTime` as UTC, and no longer matches rows they stored as local time before. A `QueryExecutor` of your own must accept a `DateTime` parameter
+
+### Fixes in 10.0.1
+
+* **Queries:** A `DateTime` comparison without its time (`includeTime: false`) compares the date of the `DateTime` as given, as before
+* **Queries:** `isIn` and `isNotIn` of a `DateTime` column with no values are `FALSE` and `TRUE`, where they were `IN ()`, which is not valid SQL
+* **Queries:** A `Union` gives the right query's values names of their own where both queries use one, where the right query used the left one's value. It takes the values of its queries when it is compiled, so it also has those given after it was made
+
 ## 10.0.0
 
 ### Breaking changes in 10.0.0

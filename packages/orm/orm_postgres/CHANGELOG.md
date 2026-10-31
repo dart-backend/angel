@@ -1,5 +1,16 @@
 # Change Log
 
+## 10.0.1
+
+### Breaking changes in 10.0.1
+
+* **Breaking:** A local `DateTime` is stored as UTC, and read back as the same moment, as UTC. It was read back shifted by its time-zone offset, as a `timestamp` column kept its wall-clock time and dropped its offset. Rows written by an app outside UTC before this release hold its local time: they are still read back shifted, and a `where` clause on them no longer matches. To fix them, run an `UPDATE` such as `SET created_at = created_at AT TIME ZONE '<the app's time zone>' AT TIME ZONE 'UTC'` on each `timestamp` column
+* **Breaking:** A `DateTime` written to a `date` column is the date of its UTC time, so a local midnight east of UTC is the day before. Write a date as `DateTime.utc(year, month, day)`
+
+### Fixes in 10.0.1
+
+* **Time zones:** A `where` clause on a local `DateTime` matches the rows written with it. Requires `angel3_orm` 10.0.1
+
 ## 10.0.0
 
 ### Breaking changes in 10.0.0

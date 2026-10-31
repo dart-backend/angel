@@ -249,7 +249,10 @@ void main() {
           dateYmdHms.format(car.recalledAt!),
           dateYmdHms.format(recalledAt),
         );
-        expect(dateYmdHms.format(car.createdAt!), dateYmdHms.format(now));
+        expect(
+          dateYmdHms.format(car.createdAt!.toUtc()),
+          dateYmdHms.format(now.toUtc()),
+        );
       });
     });
 
@@ -270,8 +273,8 @@ void main() {
         expect(car.description, beetle.description);
         expect(car.familyFriendly, beetle.familyFriendly);
         expect(
-          dateYmdHms.format(car.recalledAt!),
-          dateYmdHms.format(beetle.recalledAt!),
+          dateYmdHms.format(car.recalledAt!.toUtc()),
+          dateYmdHms.format(beetle.recalledAt!.toUtc()),
         );
       });
     });
