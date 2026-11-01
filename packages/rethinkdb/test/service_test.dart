@@ -204,6 +204,214 @@ void main() {
     },
   );
 
+  /// The `after` events of [hooked], as `<event name> <broadcast>`, where
+  /// `broadcast` is whether `AngelWebSocket` broadcasts the event.
+  List<String> listenToWrites(HookedService hooked) {
+    var events = <String>[];
+    hooked.after([
+      HookedServiceEvent.created,
+      HookedServiceEvent.modified,
+      HookedServiceEvent.updated,
+      HookedServiceEvent.removed,
+    ], (e) => events.add('${e.eventName} ${e.params['broadcast'] != false}'));
+    return events;
+  }
+
+  /// Completes when the changefeed of [hooked] tells the change of [type]
+  /// (`created`, `updated` or `removed`) to the record with [id].
+  Future<HookedServiceEvent> feedEvent(
+    HookedService hooked,
+    String type,
+    String id,
+  ) {
+    var told = Completer<HookedServiceEvent>();
+    hooked.after([type], (e) {
+      // The changefeed's events, not the service's.
+      if (e is RethinkDbHookedServiceEvent && e.id == id && !told.isCompleted) {
+        told.complete(e);
+      }
+    });
+    return told.future.timeout(const Duration(seconds: 5));
+  }
+
+  test('while the changefeed listens, each write is broadcast once, by the '
+      'service', () async {
+    await service.inner.changefeedStarted;
+    var events = listenToWrites(service);
+
+    var id = 'once';
+    // The changefeed tells the changes in order, so its removal is the last.
+    var feedRemoved = feedEvent(service, HookedServiceEvent.removed, id);
+    await insert({'id': id, 'title': 'a'});
+    await service.modify(id, {'title': 'b'});
+    await service.update(id, {'title': 'c'});
+    await service.remove(id);
+    await feedRemoved;
+
+    // Fired by the service, broadcast, with the names of its methods, and by
+    // the changefeed, which tells a modify as an update, not broadcast.
+    expect(events.where((e) => e.endsWith(' true')), [
+      'created true',
+      'modified true',
+      'updated true',
+      'removed true',
+    ]);
+    expect(events.where((e) => e.endsWith(' false')), [
+      'created false',
+      'updated false',
+      'updated false',
+      'removed false',
+    ]);
+  });
+
+  test('a record created without an id is given a UUID', () async {
+    var id = await insert({'title': 'a'});
+    expect(
+      id,
+      matches(
+        RegExp(
+          r'^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$',
+        ),
+      ),
+    );
+    expect((await service.read(id))['title'], 'a');
+  });
+
+  test('a write that changes nothing is broadcast by the service, and a '
+      'change made outside the service after it by the changefeed', () async {
+    await service.inner.changefeedStarted;
+    var id = 'unchanged';
+    // Its event from the changefeed is waited for, so that it is not listened
+    // to.
+    var inserted = feedEvent(service, HookedServiceEvent.created, id);
+    await insert({'id': id, 'title': 'a'});
+    await inserted;
+    var events = listenToWrites(service);
+
+    // Unchanged, so the changefeed tells nothing of it.
+    await service.modify(id, {'title': 'a'});
+    // Fails, so the changefeed tells nothing of it either.
+    await expectLater(service.create({'id': id}), throwsStatus(409));
+
+    var outside = feedEvent(service, HookedServiceEvent.updated, id);
+    await r.table('todos').get(id).update({'title': 'b'}).run(conn);
+    await outside;
+
+    expect(events, ['modified true', 'updated true']);
+  });
+
+  test('a change made outside the service to a record it writes is '
+      'broadcast', () async {
+    await service.inner.changefeedStarted;
+    var id = 'raced';
+    var inserted = feedEvent(service, HookedServiceEvent.created, id);
+    await insert({'id': id, 'title': 'a'});
+    await inserted;
+
+    // The titles of the changefeed's events that are broadcast.
+    var told = <String>[];
+    service.afterUpdated.listen((e) {
+      if (e is RethinkDbHookedServiceEvent && e.params['broadcast'] != false) {
+        told.add(e.result['title'] as String);
+      }
+    });
+
+    for (var i = 0; i < 50; i++) {
+      // The service sets the title it already has, so its write changes the
+      // record only if the outside one comes first, while the outside one
+      // always changes it: either way, only the outside change is the
+      // changefeed's to tell.
+      var current = (await service.read(id))['title'] as String;
+      await Future.wait<Object?>([
+        service.modify(id, {'title': current}),
+        r.table('todos').get(id).update({'title': 'outside $i'}).run(conn)!,
+      ]);
+    }
+    // The changefeed tells the changes in order, so this one is the last.
+    var last = feedEvent(service, HookedServiceEvent.updated, id);
+    await r.table('todos').get(id).update({'title': 'last'}).run(conn);
+    await last;
+
+    expect(told, [for (var i = 0; i < 50; i++) 'outside $i', 'last']);
+  });
+
+  test('create returns a record whose key is not a string', () async {
+    var created = await service.create({'id': 5, 'title': 'a'});
+    expect(created['id'], 5);
+    expect(created['title'], 'a');
+  });
+
+  group('over a table whose primary key is not id', () {
+    late HookedService<String, Map<String, dynamic>, RethinkService> keyed;
+
+    setUp(() async {
+      var tables = await r.db('testDB').tableList().run(conn) as List;
+      if (!tables.contains('keyed_todos')) {
+        await r
+            .db('testDB')
+            .tableCreate('keyed_todos', {'primary_key': 'uid'})
+            .run(conn);
+      }
+      await r.table('keyed_todos').delete().run(conn);
+      keyed = app.use<String, Map<String, dynamic>, RethinkService>(
+        '/keyed',
+        RethinkService(conn, r.table('keyed_todos')),
+      );
+      await keyed.inner.changefeedStarted;
+    });
+
+    test('creates, modifies, updates and removes by that key', () async {
+      var created = await keyed.create({'title': 'a'});
+      var uid = created['uid'] as String;
+      expect(created.containsKey('id'), isFalse);
+      expect((await keyed.read(uid))['title'], 'a');
+      expect((await keyed.modify(uid, {'title': 'b'}))['title'], 'b');
+      expect((await keyed.update(uid, {'title': 'c'}))['uid'], uid);
+      expect((await keyed.remove(uid))['title'], 'c');
+      expect(keyed.read(uid), throwsStatus(404));
+    });
+
+    test('each write is broadcast once, by the service', () async {
+      var events = listenToWrites(keyed);
+      var uid = 'k';
+      var feedRemoved = feedEvent(keyed, HookedServiceEvent.removed, uid);
+      await keyed.create({'uid': uid, 'title': 'a'});
+      await keyed.modify(uid, {'title': 'b'});
+      await keyed.remove(uid);
+      await feedRemoved;
+
+      expect(events.where((e) => e.endsWith(' true')), [
+        'created true',
+        'modified true',
+        'removed true',
+      ]);
+      expect(events.where((e) => e.endsWith(' false')), [
+        'created false',
+        'updated false',
+        'removed false',
+      ]);
+    });
+  });
+
+  test(
+    'without a changefeed, the writes of the service are broadcast',
+    () async {
+      var quiet = Angel();
+      addTearDown(quiet.close);
+      var hooked = quiet.use<String, Map<String, dynamic>, RethinkService>(
+        '/todos',
+        RethinkService(conn, r.table('todos'), listenForChanges: false),
+      );
+      var events = listenToWrites(hooked);
+
+      var id = (await hooked.create({'title': 'a'}))['id'] as String;
+      await hooked.modify(id, {'title': 'b'});
+      await hooked.remove(id);
+
+      expect(events, ['created true', 'modified true', 'removed true']);
+    },
+  );
+
   test('a changefeed starting when the service closes is stopped', () async {
     // Its own connection, whose changefeeds the server lists as jobs.
     var own = await r.connect(
