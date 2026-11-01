@@ -2446,15 +2446,7 @@ void main() async {
     ];
 
     setUp(() async {
-      conn = await mysql_dart.MySQLConnection.createConnection(
-        host: Platform.environment['MYSQL_HOST'] ?? 'localhost',
-        port: 3306,
-        databaseName: Platform.environment['MYSQL_DB'] ?? 'orm_test',
-        userName: Platform.environment['MYSQL_USERNAME'] ?? 'test',
-        password: Platform.environment['MYSQL_PASSWORD'] ?? 'Test123',
-        secure: true,
-      );
-      await conn.connect();
+      conn = await openMySqlConnection();
       runner = MariaDbMigrationRunner(
         conn,
         migrations: [PricesMigration(), AlterPricesMigration()],
@@ -2652,15 +2644,7 @@ void main() async {
     late MigrationRunner runner;
 
     setUp(() async {
-      conn = await mysql_dart.MySQLConnection.createConnection(
-        host: Platform.environment['MYSQL_HOST'] ?? 'localhost',
-        port: 3306,
-        databaseName: Platform.environment['MYSQL_DB'] ?? 'orm_test',
-        userName: Platform.environment['MYSQL_USERNAME'] ?? 'test',
-        password: Platform.environment['MYSQL_PASSWORD'] ?? 'Test123',
-        secure: true,
-      );
-      await conn.connect();
+      conn = await openMySqlConnection();
       runner = MySqlMigrationRunner(
         conn,
         migrations: [PricesMigration(), AlterPricesMigration()],
