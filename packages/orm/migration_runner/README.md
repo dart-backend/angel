@@ -109,6 +109,13 @@ INSERT INTO migrations (batch, path) VALUES (<batch>, '<name>');
 
 * Update schema changes is not supported
 
+## Migrating from 10.0.0 to 10.0.1
+
+* **MySQL and MariaDB**: the runners use [`mysql_dart`](https://pub.dev/packages/mysql_dart) 4, which verifies the server's TLS certificate when `secure` is `true` (its default). `connect()` fails with a `HandshakeException` if the certificate does not chain to a trusted root and name the host:
+  * A server in Docker or on the same host, with the self-signed certificate MySQL and MariaDB generate: pass `verifyServerCertificate: false` to `MySQLConnection.createConnection`. The traffic is still encrypted.
+  * A server with a certificate from your own CA: keep verifying, and trust the CA with `securityContext: SecurityContext(withTrustedRoots: true)..setTrustedCertificates('ca.pem')`.
+  * A server with a certificate from a public CA, naming the host you connect to: nothing to change.
+
 ## Migrating from 9.x to 10.0.0
 
 The breaking changes of each release are listed in the [CHANGELOG](CHANGELOG.md). Those of 10.0.0 that may need changes in an app:

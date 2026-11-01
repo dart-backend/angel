@@ -58,7 +58,13 @@ void mysqlMigration(List<String> args) async {
     userName: username,
     password: password,
     secure: true,
+    // `mysql_dart` 4 verifies the server's TLS certificate. A server in Docker
+    // or on the same host has a self-signed one, so accept it here; for a
+    // server with a certificate from your own CA, keep verifying and trust the
+    // CA in `securityContext` instead.
+    verifyServerCertificate: false,
   );
+  await mySQLConn.connect();
 
   // ignore: unused_local_variable
   var runner = MySqlMigrationRunner(

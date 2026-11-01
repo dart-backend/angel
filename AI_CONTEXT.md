@@ -65,6 +65,7 @@ The framework is divided into several categories of packages:
 - **Database tests**: The tests of these packages need running servers, configured by environment variables:
   - `orm_postgres`: PostgreSQL (`POSTGRES_HOSTNAME`, `POSTGRES_DB`, `POSTGRES_USERNAME`, `POSTGRES_PASSWORD`; default `localhost`, `postgres`/`postgres`).
   - `orm_mysql`: MySQL or MariaDB (`MYSQL_HOST`, `MYSQL_PORT`, `MYSQL_DB`, `MYSQL_USERNAME`, `MYSQL_PASSWORD`, `MYSQL_SECURE`; default `localhost:3306`, database `orm_test`, user `test`).
+  - `migration_runner`: PostgreSQL (`POSTGRES_HOST`, `POSTGRES_DB`, `POSTGRES_USERNAME`, `POSTGRES_PASSWORD`; default `localhost`, database `orm_test`, `test`/`test123`), and MySQL or MariaDB on port 3306 (`MYSQL_HOST`, `MYSQL_DB`, `MYSQL_USERNAME`, `MYSQL_PASSWORD`, `MYSQL_SECURE`, and `MYSQL_VERIFY_CERTIFICATE`, default `false`, as a local server's certificate is self-signed). A database that cannot be reached is skipped.
   - `mongo`: MongoDB on port 27017 with a `root` user whose password is `Qwerty` (authentication database `admin`); host `MONGO_HOST`, default `localhost`.
   - `rethinkdb`: RethinkDB on port 28015, user `admin` without a password; host `RETHINKDB_HOST`, default `localhost`. Create its `testDB.todos` table with `dart test/bootstrap.dart`.
   - `redis`: Redis (`REDIS_HOST`, `REDIS_PORT`; default `localhost:6379`).

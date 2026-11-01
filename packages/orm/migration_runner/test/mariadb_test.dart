@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'package:angel3_migration_runner/angel3_migration_runner.dart';
 import 'package:angel3_migration_runner/mariadb.dart';
 import 'package:mysql_dart/mysql_dart.dart';
@@ -16,20 +14,7 @@ void main() async {
   setUp(() async {
     print("Setup...");
 
-    var host = Platform.environment['MYSQL_HOST'] ?? 'localhost';
-    var database = Platform.environment['MYSQL_DB'] ?? 'orm_test';
-    var username = Platform.environment['MYSQL_USERNAME'] ?? 'test';
-    var password = Platform.environment['MYSQL_PASSWORD'] ?? 'Test123';
-
-    conn = await MySQLConnection.createConnection(
-      databaseName: database,
-      port: 3306,
-      host: host,
-      userName: username,
-      password: password,
-      secure: true,
-    );
-    await conn.connect();
+    conn = await openMySqlConnection();
 
     runner = MariaDbMigrationRunner(
       conn,
