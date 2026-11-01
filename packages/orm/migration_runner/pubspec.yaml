@@ -13,7 +13,7 @@ dependencies:
   angel3_orm: ^10.0.0
   args: ^2.4.0
   postgres: ^3.0.0
-  mysql_dart: ^3.0.0
+  mysql_dart: ^4.0.0
   logging: ^1.2.0
 dev_dependencies:
   lints: ^6.0.0

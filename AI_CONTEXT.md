@@ -59,7 +59,7 @@ The framework is divided into several categories of packages:
 ## Development Workflow
 
 - **Master Branch**: Stable production branch (currently the `9.x` releases). Use this branch for all standard PR submissions.
-- **Feature Branches**: Work is done on `feature/<name>` branches. The upcoming `10.0.0` release (all packages bumped to `10.0.0`, with breaking changes recorded in each package's `CHANGELOG.md`) is being prepared on feature branches.
+- **Feature Branches**: Work is done on `feature/<name>` branches. `10.0.0` (all packages bumped to `10.0.0`, with breaking changes recorded in each package's `CHANGELOG.md`) has been released; later changes go into new versions of the packages they touch.
 - **Tooling**: Run `dart pub get` at the root, or use `melos` to execute tasks across the monorepo (e.g., `melos exec "dart pub upgrade"`). Regenerate code with `dart run build_runner build --delete-conflicting-outputs` in the affected package.
 - **Running tests**: Run `dart test` from the package's directory, as some tests read fixtures relative to it (e.g. the `dev.pem` and `dev.key` of `framework`'s HTTP/2 tests). To tell whether a failure is new, run the test with your changes stashed (`git stash push -- packages`, then `dart pub get`); `pubspec.lock` is not tracked, so do not name it in the stash.
 - **Database tests**: The tests of these packages need running servers, configured by environment variables:
