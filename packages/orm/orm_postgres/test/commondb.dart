@@ -29,7 +29,7 @@ Future<PostgreSqlExecutor> connectToPostgres(Iterable<String> schemas) async {
   var conn = await Connection.open(
     Endpoint(
       host: host,
-      port: 5432,
+      port: int.parse(Platform.environment['POSTGRES_PORT'] ?? '5432'),
       database: database,
       username: username,
       password: password,
@@ -87,7 +87,7 @@ Future<PostgreSqlPoolExecutor> connectToPostgresPool(
     [
       Endpoint(
         host: 'localhost',
-        port: 5432,
+        port: int.parse(Platform.environment['POSTGRES_PORT'] ?? '5432'),
         database: Platform.environment['POSTGRES_DB'] ?? 'orm_test',
         username: Platform.environment['POSTGRES_USERNAME'] ?? 'test',
         password: Platform.environment['POSTGRES_PASSWORD'] ?? 'test123',

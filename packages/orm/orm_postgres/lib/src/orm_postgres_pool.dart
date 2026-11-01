@@ -42,12 +42,9 @@ class PostgreSqlPoolExecutor extends QueryExecutor {
     String resultQuery = '',
     List<String> returningFields = const [],
   }) {
-    if (returningFields.isNotEmpty) {
-      var fields = returningFields.join(', ');
-      var returning = 'RETURNING $fields';
-      query = '$query $returning';
-    }
-
+    // [query] is complete, as for [PostgreSqlExecutor]: an insert of
+    // `angel3_orm` has its `RETURNING` in a `WITH` clause, which one added
+    // after it would break.
     //logger.fine('Query: $query');
     //logger.fine('Values: $substitutionValues');
 

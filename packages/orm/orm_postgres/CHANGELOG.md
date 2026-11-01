@@ -1,5 +1,11 @@
 # Change Log
 
+## 10.0.2
+
+### Fixes in 10.0.2
+
+* **`PostgreSqlPoolExecutor`:** An insert works, where it failed with `syntax error at or near "RETURNING"`, as the executor added a `RETURNING` clause after the one `angel3_orm` 10 puts in the insert's `WITH` clause. Its queries are run as given, as by `PostgreSqlExecutor`
+
 ## 10.0.1
 
 ### Breaking changes in 10.0.1

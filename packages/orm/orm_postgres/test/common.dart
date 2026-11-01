@@ -16,7 +16,7 @@ Future<Connection> openPgConnection() async {
   final connection = await Connection.open(
     Endpoint(
       host: Platform.environment['POSTGRES_HOSTNAME'] ?? 'localhost',
-      port: 5432,
+      port: int.parse(Platform.environment['POSTGRES_PORT'] ?? '5432'),
       database: Platform.environment['POSTGRES_DB'] ?? 'postgres',
       username: Platform.environment['POSTGRES_USERNAME'] ?? 'postgres',
       password: Platform.environment['POSTGRES_PASSWORD'] ?? 'postgres',
