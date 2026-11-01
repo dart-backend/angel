@@ -1,5 +1,5 @@
 name: angel3_rethinkdb
-version: 10.0.0
+version: 10.0.1
 description: This is RethinkDB service for Angel3 framework. RethinkDB is an open-source database for the realtime web.
 homepage: https://angel3-framework.web.app/
 repository: https://github.com/dart-backend/angel/
@@ -12,6 +12,8 @@ environment:
 dependencies:
   angel3_framework: ^10.0.0
   belatuk_rethinkdb: ^2.0.0
+  collection: ^1.17.0
+  uuid: ^4.0.0
   
 dev_dependencies:
   angel3_client: ^10.0.0
