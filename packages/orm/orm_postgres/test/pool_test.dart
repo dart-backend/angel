@@ -1,6 +1,3 @@
-import 'dart:io';
-
-import 'package:angel3_migration_runner/angel3_migration_runner.dart';
 import 'package:angel3_orm_postgres/angel3_orm_postgres.dart';
 import 'package:postgres/postgres.dart';
 import 'package:test/test.dart';
@@ -8,34 +5,27 @@ import 'package:test/test.dart';
 import 'common.dart';
 import 'models/car.dart';
 
+/// The queries of `angel3_orm` that return rows, run through a
+/// `PostgreSqlPoolExecutor`, which ran them with a `RETURNING` too many.
 void main() {
-  late Connection conn;
-  late MigrationRunner runner;
-  late Pool pool;
   late PostgreSqlPoolExecutor executor;
 
+  // Each resource is released by its own tear-down, registered once it is
+  // made, so that a setUp that fails part-way, or a release that fails,
+  // leaves the others released.
   setUp(() async {
-    conn = await openPgConnection();
-    runner = await createTables(conn, [CarMigration()]);
-    pool = Pool.withEndpoints([
-      Endpoint(
-        host: Platform.environment['POSTGRES_HOSTNAME'] ?? 'localhost',
-        port: int.parse(Platform.environment['POSTGRES_PORT'] ?? '5432'),
-        database: Platform.environment['POSTGRES_DB'] ?? 'postgres',
-        username: Platform.environment['POSTGRES_USERNAME'] ?? 'postgres',
-        password: Platform.environment['POSTGRES_PASSWORD'] ?? 'postgres',
-      ),
+    var conn = await openPgConnection();
+    addTearDown(conn.close);
+    var runner = await createTables(conn, [CarMigration()]);
+    addTearDown(() => dropTables(runner));
+    var pool = Pool.withEndpoints([
+      pgEndpoint(),
     ], settings: PoolSettings(sslMode: SslMode.disable));
+    addTearDown(pool.close);
     executor = PostgreSqlPoolExecutor(pool);
   });
 
-  tearDown(() async {
-    await pool.close();
-    await dropTables(runner);
-    await conn.close();
-  });
-
-  test('inserts, reads and updates through the pool', () async {
+  Future<Car> insertFerrari() async {
     var now = DateTime.now();
     var insert = CarQuery()
       ..values.make = 'Ferrari'
@@ -44,7 +34,11 @@ void main() {
       ..values.recalledAt = now
       ..values.createdAt = now
       ..values.updatedAt = now;
-    var ferrari = (await insert.insert(executor)).value;
+    return (await insert.insert(executor)).value;
+  }
+
+  test('inserts, reads and updates', () async {
+    var ferrari = await insertFerrari();
     expect(ferrari.id, isNotNull);
     expect(ferrari.make, 'Ferrari');
 
@@ -55,5 +49,17 @@ void main() {
       ..where!.id.equals(ferrari.idAsInt)
       ..values.make = 'Mazda';
     expect((await update.update(executor)).single.make, 'Mazda');
+  });
+
+  test('deletes', () async {
+    var ferrari = await insertFerrari();
+
+    var delete = CarQuery()..where!.id.equals(ferrari.idAsInt);
+    expect((await delete.delete(executor)).single.make, 'Ferrari');
+    expect(await CarQuery().get(executor), isEmpty);
+
+    var deleteOne = CarQuery()
+      ..where!.id.equals((await insertFerrari()).idAsInt);
+    expect((await deleteOne.deleteOne(executor)).value.make, 'Ferrari');
   });
 }

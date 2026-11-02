@@ -158,7 +158,7 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
         _keysCondition =
             '${adornWithTableName(column)} IN (${names.join(', ')})';
         var sql = compile({});
-        _log.fine('sql = $sql');
+        _log.fine(() => 'sql = $sql');
         rows = await executor.query(tableName, sql, substitutionValues);
       } finally {
         _keysCondition = null;
@@ -616,8 +616,8 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
   @override
   Future<List<T>> get(QueryExecutor executor) async {
     var sql = compile({});
-    _log.fine('sql = $sql');
-    _log.fine('values = $substitutionValues');
+    _log.fine(() => 'sql = $sql');
+    logValues(_log, substitutionValues);
     return _withRelations(
       executor,
       await executor.query(tableName, sql, substitutionValues),
@@ -646,21 +646,17 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
       sql = 'WITH $tableName as ($sql RETURNING $returning) $selectSQL';
     }
 
-    _log.fine("Delete Query = $sql");
-    _log.fine("Substritution Values = $substitutionValues");
+    _log.fine(() => "Delete Query = $sql");
+    logValues(_log, substitutionValues);
 
     // MySQL has no RETURNING: the rows are selected first, in a transaction.
     // Its relations are loaded before it is deleted, as they may be with it.
     if (_joins.isEmpty &&
         !loadsRelations &&
         executor.dialect is PostgreSQLDialect) {
+      // [sql] has its RETURNING, in its WITH clause.
       return executor
-          .query(
-            tableName,
-            sql,
-            substitutionValues,
-            returningFields: fields.map(adornWithTableName).toList(),
-          )
+          .query(tableName, sql, substitutionValues)
           .then((it) => deserializeList(it));
     } else {
       return executor.transaction((tx) async {
@@ -690,7 +686,8 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
     QueryExecutor executor,
     String sql,
   ) async {
-    _log.fine("Insert Query = $sql");
+    _log.fine(() => "Insert Query = $sql");
+    logValues(_log, substitutionValues);
     await executor.query(tableName, sql, substitutionValues);
     return _first(
       _withRelations(executor, [
@@ -743,16 +740,19 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
         throw ArgumentError("Unsupported database dialect.");
       }
 
-      _log.fine("Insert Query = $sql");
-      _log.fine("Substritution Values = $substitutionValues");
+      _log.fine(() => "Insert Query = $sql");
+      logValues(_log, substitutionValues);
 
       return executor
           .query(
             tableName,
             sql,
             substitutionValues,
-            returningFields: fields,
             returningQuery: returningSql,
+            // Not on PostgreSQL, whose insert has its RETURNING already.
+            returningFields: executor.dialect is PostgreSQLDialect
+                ? const []
+                : fields,
           )
           .then(
             (result) =>
@@ -787,8 +787,8 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
       var sql =
           'WITH $tableName as (UPDATE $tableName $valuesClause$rows '
           'RETURNING $returning) $select';
-      _log.fine("Update Query = $sql");
-      _log.fine("Substitution Values = $substitutionValues");
+      _log.fine(() => "Update Query = $sql");
+      logValues(_log, substitutionValues);
       return _withRelations(
         executor,
         await executor.query(tableName, sql, substitutionValues),
@@ -805,7 +805,8 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
       // their new values may no longer match the conditions.
       var select = compile({});
       var sql = 'UPDATE $tableName $valuesClause$conditions$limits';
-      _log.fine("Update Query = $sql");
+      _log.fine(() => "Update Query = $sql");
+      logValues(_log, substitutionValues);
       return executor.transaction((tx) async {
         var rows = await tx.query(tableName, select, substitutionValues);
         await tx.query(tableName, sql, substitutionValues);
@@ -833,8 +834,8 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
     ].join(', ');
 
     var sql = 'UPDATE $tableName $valuesClause WHERE id IN ($ids)';
-    _log.fine("Update Query = $sql");
-    _log.fine("Substitution Values = $substitutionValues");
+    _log.fine(() => "Update Query = $sql");
+    logValues(_log, substitutionValues);
     await executor.query(tableName, sql, substitutionValues);
     return _withRelations(
       executor,

@@ -2,6 +2,7 @@ export 'src/annotations.dart';
 export 'src/builder.dart';
 export 'src/join_builder.dart';
 export 'src/join_on.dart';
+export 'src/logging.dart';
 export 'src/map_query_values.dart';
 export 'src/migration.dart';
 export 'src/order_by.dart';

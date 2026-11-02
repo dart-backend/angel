@@ -1,5 +1,19 @@
 # Change Log
 
+## 10.0.3
+
+### New in 10.0.3
+
+* **`PostgreSqlPoolExecutor`:** Runs its queries as `PostgreSqlExecutor` does, so it logs them at `FINE`, and the errors of the database at `WARNING`
+
+### Fixes in 10.0.3
+
+* **Logging:** `PostgreSqlExecutor` and `PostgreSqlPoolExecutor` log the values of a query, which may be passwords or personal data, in debug mode only, with assertions enabled, as `angel3_orm` does, where `PostgreSqlExecutor` logged them at `FINE` whenever it was logged. It no longer logs the returning query, which only MySQL uses. Their log messages are built only when `FINE` is logged. Requires `angel3_orm` 10.0.2
+* **Logging:** An error of the database is logged without its detail and hint, which may hold the values of a row (as `Key (email)=(alice@example.com) already exists`), but with its code, message, and the schema, table, column and constraint it concerns; in debug mode, it is logged in full
+* **`PostgreSqlExecutor`:** Queries that fail on a broken connection at the same time share one new session, where each opened one, and all but one were left open; the broken connection is closed, forced, and a failure to close it is logged, where it was an unhandled error
+* **`PostgreSqlExecutor`:** Without an endpoint, a query on a broken connection throws the error of the connection, where it tried to open a new connection, logged that it was doing so, and threw `Unable to create new connection`. The constructor tells that its `endpoint` and `settings` are what lets it replace a broken connection
+* **Docs:** The fix of `PostgreSqlPoolExecutor` in 10.0.2 made a delete work too, which failed with the same `syntax error at or near "RETURNING"` as an insert; its entry names inserts only
+
 ## 10.0.2
 
 ### Fixes in 10.0.2

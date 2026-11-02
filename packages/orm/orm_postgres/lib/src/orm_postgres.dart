@@ -4,6 +4,8 @@ import 'package:angel3_orm/angel3_orm.dart';
 import 'package:logging/logging.dart';
 import 'package:postgres/postgres.dart';
 
+import 'logging.dart';
+
 import 'parameters.dart';
 
 /// A [QueryExecutor] that queries a PostgreSQL database.
@@ -39,6 +41,10 @@ class PostgreSqlExecutor extends QueryExecutor {
   /// The underlying database session.
   Session get session => _session;
 
+  /// Runs queries on [_session]. With the [endpoint] and [settings] it was
+  /// opened with, a [Connection] that breaks, as when the database restarts,
+  /// is replaced by a new one; without them, its queries fail until the
+  /// executor is replaced.
   PostgreSqlExecutor(
     this._session, {
     Endpoint? endpoint,
@@ -69,42 +75,70 @@ class PostgreSqlExecutor extends QueryExecutor {
     String resultQuery = '',
     List<String> returningFields = const [],
   }) {
-    //if (returningFields.isNotEmpty) {
-    //  var fields = returningFields.join(', ');
-    //  var returning = 'SELECT $fields from $tableName';
-    //  query = '$query $returning';
-    //}
-
-    logger.fine('Query: $query');
-    logger.fine('Values: $substitutionValues');
-    logger.fine('Returning Query: $returningQuery');
+    logger.fine(() => 'Query: $query');
+    // In debug mode only, as they may be passwords or personal data.
+    logValues(logger, substitutionValues);
 
     var param = encodeParameters(substitutionValues);
 
-    return _session.execute(Sql.named(query), parameters: param).catchError((
+    // The session the query runs on, which another query may replace.
+    var session = _session;
+    return session.execute(Sql.named(query), parameters: param).catchError((
       err,
     ) async {
-      logger.warning(err);
-      if (err is PgException) {
-        // This is a hack to detect broken db connection
-        bool brokenConnection = err.message.contains("connection is not open");
-        if (brokenConnection) {
-          // Open a new db session
-          if (_session is Connection) {
-            (_session as Connection).close();
-
-            logger.warning(
-              "A broken database connection is detected. Creating a new database connection.",
-            );
-            _session = await _createNewSession();
-
-            // Retry the query with the new db connection
-            return _session.execute(Sql.named(query), parameters: param);
-          }
+      logger.warning(loggableError(err));
+      // This is a hack to detect broken db connection
+      if (err is PgException &&
+          err.message.contains("connection is not open") &&
+          session is Connection) {
+        // Without an endpoint, there is nothing to open a new connection
+        // with: the error is thrown as it is.
+        if (_endpoint == null) {
+          logger.warning(
+            'The database connection is broken, and cannot be replaced, as the '
+            'executor was given no endpoint.',
+          );
+          throw err;
         }
+        // Retry the query on a new session: the one that replaced the broken
+        // one, or one opened now, which the queries that fail on the broken
+        // one at the same time share, so that none is opened in vain.
+        var retry = identical(_session, session)
+            ? await (_reconnecting ??= _reconnect(session))
+            : _session;
+        return retry.execute(Sql.named(query), parameters: param);
       }
       throw err;
     });
+  }
+
+  /// The new session that replaces a broken connection, while it is opened.
+  Future<Session>? _reconnecting;
+
+  /// Replaces the [broken] connection with a new session, and closes it.
+  Future<Session> _reconnect(Connection broken) async {
+    // Forced, as queries queued on the dead connection would never let it
+    // close, and not awaited; its failure is logged rather than left
+    // unhandled.
+    unawaited(
+      broken
+          .close(force: true)
+          .catchError(
+            (Object e, StackTrace st) => logger.fine(
+              'Closing the broken connection failed',
+              loggableError(e),
+              st,
+            ),
+          ),
+    );
+    logger.warning(
+      "A broken database connection is detected. Creating a new database connection.",
+    );
+    try {
+      return _session = await _createNewSession();
+    } finally {
+      _reconnecting = null;
+    }
   }
 
   // Create a new database connection
@@ -168,7 +202,11 @@ class PostgreSqlExecutor extends QueryExecutor {
           }
         } catch (e, st) {
           // Fine, as the error is thrown to the caller, who handles it.
-          logger.fine('The transaction failed, and is rolled back', e, st);
+          logger.fine(
+            'The transaction failed, and is rolled back',
+            loggableError(e),
+            st,
+          );
           rethrow;
         }
       });
@@ -233,15 +271,19 @@ class PostgreSqlExecutor extends QueryExecutor {
       } catch (rollbackError, rollbackStack) {
         // What f did is not undone, so the transaction cannot go on as if
         // it were: the error of the rollback is thrown instead of that of f.
-        logger.warning('The savepoint $name failed', e, st);
+        logger.warning('The savepoint $name failed', loggableError(e), st);
         logger.warning(
           'The savepoint $name could not be rolled back',
-          rollbackError,
+          loggableError(rollbackError),
           rollbackStack,
         );
         rethrow;
       }
-      logger.fine('The savepoint $name failed, and is rolled back', e, st);
+      logger.fine(
+        'The savepoint $name failed, and is rolled back',
+        loggableError(e),
+        st,
+      );
       rethrow;
     }
     return result;

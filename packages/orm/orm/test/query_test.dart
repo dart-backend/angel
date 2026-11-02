@@ -24,6 +24,9 @@ class _RecordingExecutor extends QueryExecutor {
   final List<int> ids;
   final queries = <String>[];
 
+  /// The `returningFields` each query was given.
+  final returningFields = <List<String>>[];
+
   @override
   Future<List<List>> query(
     String tableName,
@@ -34,6 +37,7 @@ class _RecordingExecutor extends QueryExecutor {
     List<String> returningFields = const [],
   }) async {
     queries.add(query);
+    this.returningFields.add(returningFields);
     return query.startsWith('SELECT id ')
         ? [
             for (var id in ids) [id],
@@ -333,6 +337,52 @@ void main() {
         'EXTRACT(DAY FROM e.created_at) = 1 AND e.updated_at IS NULL',
       );
     });
+  });
+
+  group('on PostgreSQL, a query that returns rows is complete', () {
+    late _RecordingExecutor executor;
+
+    setUp(() => executor = _RecordingExecutor(const PostgreSQLDialect()));
+
+    // Its RETURNING is in its WITH clause, so an executor must add none: one
+    // after the SELECT is a syntax error.
+    void expectComplete() {
+      var sql = executor.queries.single;
+      expect(sql, startsWith('WITH employees as ('));
+      expect(sql, contains(') SELECT '));
+      expect(
+        sql.substring(sql.indexOf(') SELECT ')),
+        isNot(contains('RETURNING')),
+      );
+      expect(executor.returningFields.single, isEmpty);
+    }
+
+    test('of an insert', () async {
+      query.values.lastName = 'new';
+      try {
+        await query.insert(executor);
+      } on StateError {
+        // No row is returned by the recording executor.
+      }
+      expectComplete();
+    });
+
+    test('of a delete', () async {
+      query.where!.lastName.equals('old');
+      await query.delete(executor);
+      expectComplete();
+    });
+  });
+
+  test('an insert on MySQL gives the executor its returning fields', () async {
+    var executor = _RecordingExecutor(const MySQLDialect());
+    query.values.lastName = 'new';
+    try {
+      await query.insert(executor);
+    } on StateError {
+      // No row is returned by the recording executor.
+    }
+    expect(executor.returningFields.first, query.fields);
   });
 
   group('update', () {

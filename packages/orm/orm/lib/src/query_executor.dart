@@ -16,7 +16,13 @@ abstract class QueryExecutor {
 
   Dialect get dialect;
 
-  /// Executes a single query.
+  /// Executes a single query, [query], which is complete: an insert, update
+  /// or delete of `angel3_orm` on PostgreSQL has its `RETURNING` in a `WITH`
+  /// clause, so an executor must not add one.
+  ///
+  /// [returningQuery] is the query of the row an insert on MySQL or MariaDB
+  /// inserted, run after it, and [returningFields] its fields. Neither is
+  /// given for PostgreSQL (since 10.0.2).
   Future<List<List>> query(
     String tableName,
     String query,
