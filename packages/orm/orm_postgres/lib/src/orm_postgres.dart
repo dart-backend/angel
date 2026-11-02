@@ -60,6 +60,10 @@ class PostgreSqlExecutor extends QueryExecutor {
   /// Whether [close] was called: the executor then opens no new connection.
   bool _closed = false;
 
+  /// The broken connection the executor warned of, as it has no endpoint to
+  /// replace it with.
+  Connection? _warnedBroken;
+
   /// Closes the connection. The executor opens no new one after it, and one
   /// it is opening, to replace a broken connection, is closed once opened.
   Future<void> close() async {
@@ -92,7 +96,7 @@ class PostgreSqlExecutor extends QueryExecutor {
     } catch (err, st) {
       // Fine, as the error is thrown to the caller, who may expect it, as a
       // unique violation, and decides whether it is one to warn of.
-      logger.fine('The query failed', loggableError(err), st);
+      logError(logger, Level.FINE, 'The query failed', err, st);
       // The query was not sent, as the connection was found closed on
       // sending it: it is sent again, on a new connection. A query that was
       // sent is not, as it may have run; the next one replaces the connection.
@@ -100,10 +104,14 @@ class PostgreSqlExecutor extends QueryExecutor {
           err.message.contains("connection is not open") &&
           session is Connection) {
         if (_endpoint == null) {
-          logger.warning(
-            'The database connection is broken, and cannot be replaced, as the '
-            'executor was given no endpoint.',
-          );
+          // Once for the connection, not for each query that fails on it.
+          if (!identical(_warnedBroken, session)) {
+            _warnedBroken = session;
+            logger.warning(
+              'The database connection is broken, and cannot be replaced, as '
+              'the executor was given no endpoint.',
+            );
+          }
         } else if (!_closed) {
           var retry = identical(_session, session)
               ? await (_reconnecting ??= _reconnect(session))
@@ -143,9 +151,11 @@ class PostgreSqlExecutor extends QueryExecutor {
       broken
           .close(force: true)
           .catchError(
-            (Object e, StackTrace st) => logger.fine(
+            (Object e, StackTrace st) => logError(
+              logger,
+              Level.FINE,
               'Closing the broken connection failed',
-              loggableError(e),
+              e,
               st,
             ),
           ),
@@ -218,9 +228,11 @@ class PostgreSqlExecutor extends QueryExecutor {
           }
         } catch (e, st) {
           // Fine, as the error is thrown to the caller, who handles it.
-          logger.fine(
+          logError(
+            logger,
+            Level.FINE,
             'The transaction failed, and is rolled back',
-            loggableError(e),
+            e,
             st,
           );
           rethrow;
@@ -287,17 +299,21 @@ class PostgreSqlExecutor extends QueryExecutor {
       } catch (rollbackError, rollbackStack) {
         // What f did is not undone, so the transaction cannot go on as if
         // it were: the error of the rollback is thrown instead of that of f.
-        logger.warning('The savepoint $name failed', loggableError(e), st);
-        logger.warning(
+        logError(logger, Level.WARNING, 'The savepoint $name failed', e, st);
+        logError(
+          logger,
+          Level.WARNING,
           'The savepoint $name could not be rolled back',
-          loggableError(rollbackError),
+          rollbackError,
           rollbackStack,
         );
         rethrow;
       }
-      logger.fine(
+      logError(
+        logger,
+        Level.FINE,
         'The savepoint $name failed, and is rolled back',
-        loggableError(e),
+        e,
         st,
       );
       rethrow;

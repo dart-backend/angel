@@ -1,4 +1,5 @@
 import 'package:angel3_orm_postgres/angel3_orm_postgres.dart';
+import 'package:logging/logging.dart';
 import 'package:postgres/postgres.dart';
 import 'package:test/test.dart';
 
@@ -153,4 +154,29 @@ void main() {
       expect(executor.session, same(connection));
     },
   );
+
+  test('without an endpoint, warns once of the broken connection', () async {
+    var logger = Logger.detached('PostgreSqlExecutor')..level = Level.ALL;
+    var warnings = <String>[];
+    logger.onRecord
+        .where((r) => r.level == Level.WARNING)
+        .listen((r) => warnings.add(r.message));
+    var executor = PostgreSqlExecutor(
+      await Connection.open(pgEndpoint(), settings: settings),
+      logger: logger,
+    );
+    addTearDown(executor.close);
+    await breakConnection(executor);
+
+    for (var i = 0; i < 3; i++) {
+      await expectLater(
+        executor.query('x', 'SELECT 1', {}),
+        throwsA(isA<PgException>()),
+      );
+    }
+    expect(
+      warnings.where((w) => w.contains('cannot be replaced')),
+      hasLength(1),
+    );
+  });
 }
