@@ -12,20 +12,47 @@ import 'package:postgres/postgres.dart';
 List tmpTables = [];
 
 // For PostgreSQL
-Future<Connection> openPgConnection() async {
-  final connection = await Connection.open(
-    Endpoint(
-      host: Platform.environment['POSTGRES_HOSTNAME'] ?? 'localhost',
-      port: int.parse(Platform.environment['POSTGRES_PORT'] ?? '5432'),
-      database: Platform.environment['POSTGRES_DB'] ?? 'postgres',
-      username: Platform.environment['POSTGRES_USERNAME'] ?? 'postgres',
-      password: Platform.environment['POSTGRES_PASSWORD'] ?? 'postgres',
-    ),
-    settings: ConnectionSettings(sslMode: SslMode.disable),
-  );
+/// The PostgreSQL server of the tests, of the environment variables
+/// `POSTGRES_HOST` (or `POSTGRES_HOSTNAME`), `POSTGRES_PORT`, `POSTGRES_DB`,
+/// `POSTGRES_USERNAME` and `POSTGRES_PASSWORD`, as CI sets them; by default,
+/// `localhost:5432`, database `postgres`, user `postgres`/`postgres`. An empty
+/// variable is taken as unset.
+///
+/// A setting that cannot be right throws, rather than fall back to the
+/// default server, whose tables the tests would create and drop.
+Endpoint pgEndpoint() {
+  String? env(String name) {
+    var value = Platform.environment[name];
+    return value == null || value.isEmpty ? null : value;
+  }
 
-  return connection;
+  var host = env('POSTGRES_HOST');
+  var hostname = env('POSTGRES_HOSTNAME');
+  if (host != null && hostname != null && host != hostname) {
+    throw StateError(
+      'POSTGRES_HOST ($host) and POSTGRES_HOSTNAME ($hostname) differ.',
+    );
+  }
+
+  var port = env('POSTGRES_PORT');
+  return Endpoint(
+    host: host ?? hostname ?? 'localhost',
+    port: port == null
+        ? 5432
+        : switch (int.tryParse(port)) {
+            var number? when number > 0 && number < 65536 => number,
+            _ => throw StateError('POSTGRES_PORT ($port) is not a port.'),
+          },
+    database: env('POSTGRES_DB') ?? 'postgres',
+    username: env('POSTGRES_USERNAME') ?? 'postgres',
+    password: env('POSTGRES_PASSWORD') ?? 'postgres',
+  );
 }
+
+Future<Connection> openPgConnection() => Connection.open(
+  pgEndpoint(),
+  settings: ConnectionSettings(sslMode: SslMode.disable),
+);
 
 Future<QueryExecutor> createExecutor(Connection conn) async {
   var logger = Logger('orm_postgres');

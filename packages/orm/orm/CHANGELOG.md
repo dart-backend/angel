@@ -1,5 +1,16 @@
 # Change Log
 
+## 10.0.2
+
+### New in 10.0.2
+
+* **Logging:** `debugMode`, whether assertions are enabled, and `logValues`, which logs the values of a query in debug mode only, for executors to log as `Query` does
+
+### Fixes in 10.0.2
+
+* **Logging:** The values of a query, which may be passwords or personal data, are logged in debug mode only, with assertions enabled (as with `dart test` or `dart run --enable-asserts`), where they were logged at `FINE` whenever it was logged; those of an insert without an id and of an update on MySQL are logged too. Log messages are built only when `FINE` is logged
+* **Executors:** An insert or a delete on PostgreSQL no longer gives the executor `returningFields`, as its SQL has its `RETURNING` already, in a `WITH` clause: an executor that added one, as `PostgreSqlPoolExecutor` of `angel3_orm_postgres` 10.0.1 does, failed with a syntax error. `QueryExecutor.query` documents that its query is complete
+
 ## 10.0.1
 
 ### Breaking changes in 10.0.1

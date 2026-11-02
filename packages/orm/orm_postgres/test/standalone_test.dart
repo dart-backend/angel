@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:angel3_migration_runner/angel3_migration_runner.dart';
 import 'package:angel3_orm/angel3_orm.dart';
@@ -465,12 +464,7 @@ void main() {
 
     test('of a pool executor behaves as that of a connection', () async {
       var pool = Pool.withEndpoints([
-        Endpoint(
-          host: Platform.environment['POSTGRES_HOSTNAME'] ?? 'localhost',
-          database: Platform.environment['POSTGRES_DB'] ?? 'postgres',
-          username: Platform.environment['POSTGRES_USERNAME'] ?? 'postgres',
-          password: Platform.environment['POSTGRES_PASSWORD'] ?? 'postgres',
-        ),
+        pgEndpoint(),
       ], settings: PoolSettings(sslMode: SslMode.disable));
       addTearDown(pool.close);
       var poolExecutor = PostgreSqlPoolExecutor(pool);

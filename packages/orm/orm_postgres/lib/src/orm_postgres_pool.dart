@@ -4,8 +4,6 @@ import 'package:angel3_orm/angel3_orm.dart';
 import 'package:logging/logging.dart';
 import 'package:postgres/postgres.dart';
 
-import 'parameters.dart';
-
 import '../angel3_orm_postgres.dart';
 
 /// A [QueryExecutor] that uses `package:postgres_pool` for connetions pooling.
@@ -32,7 +30,8 @@ class PostgreSqlPoolExecutor extends QueryExecutor {
     return _pool.close();
   }
 
-  /// Run query.
+  /// Runs [query] on a connection of the pool, as [PostgreSqlExecutor.query]
+  /// does, which logs it the same way and runs it as given.
   @override
   Future<Result> query(
     String tableName,
@@ -41,19 +40,14 @@ class PostgreSqlPoolExecutor extends QueryExecutor {
     String returningQuery = '',
     String resultQuery = '',
     List<String> returningFields = const [],
-  }) {
-    // [query] is complete, as for [PostgreSqlExecutor]: an insert of
-    // `angel3_orm` has its `RETURNING` in a `WITH` clause, which one added
-    // after it would break.
-    //logger.fine('Query: $query');
-    //logger.fine('Values: $substitutionValues');
-
-    var param = encodeParameters(substitutionValues);
-
-    return _pool.run<Result>((Session session) async {
-      return await session.execute(Sql.named(query), parameters: param);
-    });
-  }
+  }) => PostgreSqlExecutor(_pool, logger: logger).query(
+    tableName,
+    query,
+    substitutionValues,
+    returningQuery: returningQuery,
+    resultQuery: resultQuery,
+    returningFields: returningFields,
+  );
 
   /// Runs [f] in a transaction, on a connection of the pool, as
   /// [PostgreSqlExecutor.transaction] does. To nest a transaction, call
