@@ -57,13 +57,16 @@ class PostgreSqlExecutor extends QueryExecutor {
     _endpoint = endpoint;
   }
 
-  /// Closes the connection.
+  /// Whether [close] was called: the executor then opens no new connection.
+  bool _closed = false;
+
+  /// Closes the connection. The executor opens no new one after it, and one
+  /// it is opening, to replace a broken connection, is closed once opened.
   Future<void> close() async {
+    _closed = true;
     if (_session is Connection) {
       await (_session as Connection).close();
     }
-
-    return Future.value();
   }
 
   @override
@@ -74,48 +77,64 @@ class PostgreSqlExecutor extends QueryExecutor {
     String returningQuery = '',
     String resultQuery = '',
     List<String> returningFields = const [],
-  }) {
+  }) async {
     logger.fine(() => 'Query: $query');
     // In debug mode only, as they may be passwords or personal data.
     logValues(logger, substitutionValues);
 
     var param = encodeParameters(substitutionValues);
 
-    // The session the query runs on, which another query may replace.
-    var session = _session;
-    return session.execute(Sql.named(query), parameters: param).catchError((
-      err,
-    ) async {
-      logger.warning(loggableError(err));
-      // This is a hack to detect broken db connection
+    // The session the query runs on, which another query may replace: a
+    // connection that broke, as during an earlier query, is replaced first.
+    var session = await _openSession();
+    try {
+      return await session.execute(Sql.named(query), parameters: param);
+    } catch (err, st) {
+      // Fine, as the error is thrown to the caller, who may expect it, as a
+      // unique violation, and decides whether it is one to warn of.
+      logger.fine('The query failed', loggableError(err), st);
+      // The query was not sent, as the connection was found closed on
+      // sending it: it is sent again, on a new connection. A query that was
+      // sent is not, as it may have run; the next one replaces the connection.
       if (err is PgException &&
           err.message.contains("connection is not open") &&
           session is Connection) {
-        // Without an endpoint, there is nothing to open a new connection
-        // with: the error is thrown as it is.
         if (_endpoint == null) {
           logger.warning(
             'The database connection is broken, and cannot be replaced, as the '
             'executor was given no endpoint.',
           );
-          throw err;
+        } else if (!_closed) {
+          var retry = identical(_session, session)
+              ? await (_reconnecting ??= _reconnect(session))
+              : _session;
+          return await retry.execute(Sql.named(query), parameters: param);
         }
-        // Retry the query on a new session: the one that replaced the broken
-        // one, or one opened now, which the queries that fail on the broken
-        // one at the same time share, so that none is opened in vain.
-        var retry = identical(_session, session)
-            ? await (_reconnecting ??= _reconnect(session))
-            : _session;
-        return retry.execute(Sql.named(query), parameters: param);
       }
-      throw err;
-    });
+      rethrow;
+    }
+  }
+
+  /// The session to run on: the current one or, when it is a connection that
+  /// broke, as when the database restarted, and an endpoint was given, a new
+  /// one that replaces it, shared by the queries and transactions that need
+  /// one at the same time, so that none is opened in vain.
+  Future<Session> _openSession() async {
+    var session = _session;
+    if (session is Connection &&
+        !session.isOpen &&
+        _endpoint != null &&
+        !_closed) {
+      return await (_reconnecting ??= _reconnect(session));
+    }
+    return session;
   }
 
   /// The new session that replaces a broken connection, while it is opened.
   Future<Session>? _reconnecting;
 
-  /// Replaces the [broken] connection with a new session, and closes it.
+  /// Replaces the [broken] connection with a new one of the endpoint, and
+  /// closes it.
   Future<Session> _reconnect(Connection broken) async {
     // Forced, as queries queued on the dead connection would never let it
     // close, and not awaited; its failure is logged rather than left
@@ -135,19 +154,16 @@ class PostgreSqlExecutor extends QueryExecutor {
       "A broken database connection is detected. Creating a new database connection.",
     );
     try {
-      return _session = await _createNewSession();
+      var connection = await Connection.open(_endpoint!, settings: _settings);
+      if (_closed) {
+        // close() came while it was opening.
+        await connection.close();
+        throw StateError('The executor is closed.');
+      }
+      return _session = connection;
     } finally {
       _reconnecting = null;
     }
-  }
-
-  // Create a new database connection
-  Future<Session> _createNewSession() async {
-    if (_endpoint != null) {
-      return await Connection.open(_endpoint!, settings: _settings);
-    }
-
-    throw PgException("Unable to create new connection");
   }
 
   /// Runs [f] in a transaction, which is committed if it completes and
@@ -184,7 +200,7 @@ class PostgreSqlExecutor extends QueryExecutor {
   /// throws a [StateError].
   @override
   Future<T> transaction<T>(FutureOr<T> Function(QueryExecutor) f) async {
-    var session = _session;
+    var session = await _openSession();
     if (session is TxSession) return await _savepoint(session, f);
     // A pattern, as a Session and a SessionExecutor are not related types.
     if (session case SessionExecutor executor) {
