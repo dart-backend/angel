@@ -1,5 +1,11 @@
 # Change Log
 
+## 10.0.1
+
+### Fixes in 10.0.1
+
+* **Docs:** Update supported templates on the README
+
 ## 10.0.0
 
 ### Breaking changes in 10.0.0
@@ -42,7 +48,6 @@
 * **Server:** Shutdown hooks run once on close, before services close, and subclasses of `Angel` can be constructed
 * **Tests:** The tests and examples no longer use `MirrorsReflector`
 * **Docs:** The README lists the available packages, tells how to install and use the package, and how to migrate from 9.x
-
 
 ## 9.2.0
 
