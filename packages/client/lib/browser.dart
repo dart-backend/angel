@@ -78,16 +78,16 @@ class Rest extends BaseAngelClient {
     EventListener? sub;
     window.addEventListener(
       eventName,
-      sub = (ev) {
+      // A typed parameter, as a function converted with `toJS` may not take
+      // `dynamic`, which dart2js rejects.
+      sub = ((Event ev) {
         var e = ev as CustomEvent;
         if (!ctrl.isClosed) {
           ctrl.add(e.detail.toString());
-          //t.cancel();
           ctrl.close();
-          //sub!.cancel();
           window.removeEventListener(eventName, sub);
         }
-      }.toJS,
+      }).toJS,
     );
 
     /* With dart:html
