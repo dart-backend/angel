@@ -24,6 +24,10 @@ This package is the core package of [Angel3](https://github.com/dart-backend/ang
    * [Angel3 PostgreSQL ORM Template](https://github.com/dart-backend/boilerplates/tree/master/templates/basic_postgres_orm)
    * [Angel3 MySQL ORM Template](https://github.com/dart-backend/boilerplates/tree/master/templates/basic_mysql_orm)
    * [Angel3 GraphQL Template](https://github.com/dart-backend/boilerplates/tree/master/templates/basic_graphql)
+   * [Angel3 MongoDB Template](https://github.com/dart-backend/boilerplates/tree/master/templates/basic_mongo)
+   * [Angel3 RethinkDB Template](https://github.com/dart-backend/boilerplates/tree/master/templates/basic_rethinkdb)
+   * [Angel3 Sembast Template](https://github.com/dart-backend/boilerplates/tree/master/templates/basic_sembast)
+   * [Angel3 Kelicap Template](https://github.com/dart-backend/boilerplates/tree/master/templates/basic_kelicap): a full-stack application with a [Kelicap](https://github.com/dukefirehawk/kelicap) web client, which calls the server with `angel3_client`. In development, also serve the client, as its `README.md` describes
 
 3. Run the project in development mode (*hot-reloaded* is enabled on file changes).
 
@@ -37,7 +41,7 @@ This package is the core package of [Angel3](https://github.com/dart-backend/ang
    dart bin/prod.dart
    ```
 
-5. Run as docker. Edit and build the image with the provided `Dockerfile` file.
+5. Run it in a container with [Podman](https://podman.io/): build and run the provided `Containerfile`, or use Podman Compose with `contrib/deployment/compose.yaml`, as the project's `README.md` describes.
 
 ### (Option 2) Create a new project with Angel3 CLI
 
@@ -67,7 +71,7 @@ This package is the core package of [Angel3](https://github.com/dart-backend/ang
    dart bin/prod.dart
    ```
 
-6. Run as docker. Edit and build the image with the provided `Dockerfile` file.
+6. Run it in a container with [Podman](https://podman.io/): build and run the provided `Containerfile`, or use Podman Compose with `contrib/deployment/compose.yaml`, as the project's `README.md` describes.
 
 ### (Option 3) Add Angel3 to an existing project
 
