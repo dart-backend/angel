@@ -125,6 +125,10 @@ Branch: `master`
    * [Angel3 PostgreSQL ORM Template](https://github.com/dart-backend/boilerplates/tree/master/templates/basic_postgres_orm)
    * [Angel3 MySQL ORM Template](https://github.com/dart-backend/boilerplates/tree/master/templates/basic_mysql_orm)
    * [Angel3 GraphQL Template](https://github.com/dart-backend/boilerplates/tree/master/templates/basic_graphql)
+   * [Angel3 MongoDB Template](https://github.com/dart-backend/boilerplates/tree/master/templates/basic_mongo)
+   * [Angel3 RethinkDB Template](https://github.com/dart-backend/boilerplates/tree/master/templates/basic_rethinkdb)
+   * [Angel3 Sembast Template](https://github.com/dart-backend/boilerplates/tree/master/templates/basic_sembast)
+   * [Angel3 Kelicap Template](https://github.com/dart-backend/boilerplates/tree/master/templates/basic_kelicap): a full-stack application with a [Kelicap](https://github.com/dukefirehawk/kelicap) web client, which calls the server with `angel3_client`. In development, also serve the client, as its `README.md` describes
 
 3. Run the project in development mode (hot reload is enabled on file changes).
 
@@ -138,7 +142,7 @@ Branch: `master`
    dart bin/prod.dart
    ```
 
-5. Run as docker. Edit and build the image with the provided `Dockerfile` file.
+5. Run it in a container with [Podman](https://podman.io/): build and run the provided `Containerfile`, or use Podman Compose with `contrib/deployment/compose.yaml`, as the project's `README.md` describes.
 
 6. Next, refer to the [User Guide](https://angel3-docs.dukefirehawk.com/) to learn more about Angel3 framework.
 
@@ -158,7 +162,7 @@ Branch: `master`
    angel3 init hello
    ```
 
-   The latest `angel3_cli` is 9.0.0, which predates the 10.0.0 packages: check the versions in the generated `pubspec.yaml`.
+   Use `angel3_cli` 10.1.0 or later, whose templates use the 10.x packages. `angel3 init` asks which template to start from.
 
 4. Run the project in development mode (hot reload is enabled on file changes).
 
@@ -172,7 +176,7 @@ Branch: `master`
    dart bin/prod.dart
    ```
 
-6. Run as docker. Edit and build the image with the provided `Dockerfile` file.
+6. Run it in a container with [Podman](https://podman.io/): build and run the provided `Containerfile`, or use Podman Compose with `contrib/deployment/compose.yaml`, as the project's `README.md` describes.
 
 7. Next, refer to the [User Guide](https://angel3-docs.dukefirehawk.com/) to learn more about Angel3 framework.
 
