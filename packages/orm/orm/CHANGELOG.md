@@ -1,5 +1,28 @@
 # Change Log
 
+## 10.0.2
+
+### New in 10.0.2
+
+* **Logging:** `debugMode`, whether assertions are enabled, and `logValues`, which logs the values of a query in debug mode only, for executors to log as `Query` does
+
+### Fixes in 10.0.2
+
+* **Logging:** The values of a query, which may be passwords or personal data, are logged in debug mode only, with assertions enabled (as with `dart test` or `dart run --enable-asserts`), where they were logged at `FINE` whenever it was logged; those of an insert without an id and of an update on MySQL are logged too. Log messages are built only when `FINE` is logged
+* **Executors:** An insert or a delete on PostgreSQL no longer gives the executor `returningFields`, as its SQL has its `RETURNING` already, in a `WITH` clause: an executor that added one, as `PostgreSqlPoolExecutor` of `angel3_orm_postgres` 10.0.1 does, failed with a syntax error. `QueryExecutor.query` documents that its query is complete
+
+## 10.0.1
+
+### Breaking changes in 10.0.1
+
+* **Breaking:** A `DateTime` in a `where` clause with its time, such as of `lessThan`, `equals`, `isBetween` or `isIn`, is bound as a parameter, so the executor sends it as it stores a `DateTime`, where it was written into the SQL as its wall-clock time, whatever its time zone. A local `DateTime` now matches the rows written with it on PostgreSQL and with `MariaDbExecutor`, which store a `DateTime` as UTC, and no longer matches rows they stored as local time before. A `QueryExecutor` of your own must accept a `DateTime` parameter
+
+### Fixes in 10.0.1
+
+* **Queries:** A `DateTime` comparison without its time (`includeTime: false`) compares the date of the `DateTime` as given, as before
+* **Queries:** `isIn` and `isNotIn` of a `DateTime` column with no values are `FALSE` and `TRUE`, where they were `IN ()`, which is not valid SQL
+* **Queries:** A `Union` gives the right query's values names of their own where both queries use one, where the right query used the left one's value. It takes the values of its queries when it is compiled, so it also has those given after it was made
+
 ## 10.0.0
 
 ### Breaking changes in 10.0.0

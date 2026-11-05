@@ -437,17 +437,24 @@ class ${pascal}Decoder extends Converter<Map, $pascal> {
                     }))
                   : $defaultValue
             ''';
-            } else if (type.element is Enum) {
+            } else if (type.element is EnumElement) {
+              // An enum value, or its name or index, as a map from JSON or
+              // from a service that stores enums as text has them.
+              var enumType = typeToString(type, ctx.clazz.library);
+              var fallback =
+                  defaultValue == 'null' &&
+                      type.nullabilitySuffix != NullabilitySuffix.question
+                  ? "map['$alias'] as $enumType"
+                  : defaultValue;
               deserializedRepresentation =
                   '''
-            map['$alias'] is ${type.getDisplayString()}
-              ? (map['$alias'] as ${type.getDisplayString()}) ?? $defaultValue
-              :
-              (
-                map['$alias'] is int
-                ? ${type.getDisplayString()}.values[map['$alias'] as int]
-                : $defaultValue
-              )
+            map['$alias'] is $enumType
+              ? map['$alias'] as $enumType
+              : map['$alias'] is String
+              ? $enumType.values.byName(map['$alias'] as String)
+              : map['$alias'] is int
+              ? $enumType.values[map['$alias'] as int]
+              : $fallback
             ''';
 
               //log.warning('Code => $deserializedRepresentation');

@@ -346,6 +346,9 @@ class DateTimeSqlExpressionBuilder extends SqlExpressionBuilder<DateTime> {
   /// A predicate for the column it is given, when one was set directly.
   String Function(String column)? _raw;
 
+  /// The names of the substitution values [_raw] uses.
+  final List<String> _bound = [];
+
   DateTimeSqlExpressionBuilder(super.query, super.columnName);
 
   NumericSqlExpressionBuilder<int> get year =>
@@ -371,9 +374,36 @@ class DateTimeSqlExpressionBuilder extends SqlExpressionBuilder<DateTime> {
       _minute?.hasValue == true ||
       _second?.hasValue == true;
 
+  /// Removes the substitution values of the previous predicate, which the
+  /// executor would otherwise be given as unused parameters.
+  void _unbind() {
+    _bound.forEach(query.substitutionValues.remove);
+    _bound.clear();
+  }
+
+  /// Binds [dt] as a substitution value, under a name of its own in the
+  /// query, and returns its placeholder.
+  ///
+  /// The executor sends it as it stores a [DateTime], e.g. as UTC, where a
+  /// literal would be the wall-clock time of [dt], whatever its time zone.
+  String _bind(DateTime dt) {
+    var name = query.reserveName(columnName);
+    query.substitutionValues[name] = dt;
+    _bound.add(name);
+    return '@$name';
+  }
+
   bool _change(String op, DateTime dt, bool time) {
-    var dateString = time ? dateYmdHms.format(dt) : dateYmd.format(dt);
-    _raw = (column) => "$column $op '$dateString'";
+    _unbind();
+    if (time) {
+      var placeholder = _bind(dt);
+      _raw = (column) => '$column $op $placeholder';
+    } else {
+      // A date has no time zone, so it is the date of [dt] as it is given,
+      // which also matches a `date` column.
+      var date = dateYmd.format(dt);
+      _raw = (column) => "$column $op '$date'";
+    }
     return true;
   }
 
@@ -405,34 +435,44 @@ class DateTimeSqlExpressionBuilder extends SqlExpressionBuilder<DateTime> {
     _change('>=', value, includeTime != false);
   }
 
+  /// No value is in an empty list, which `IN ()` cannot say, as it is not
+  /// valid SQL.
   void isIn(Iterable<DateTime> values) {
-    var quoted = _quoted(values);
-    _raw = (column) => '$column IN ($quoted)';
+    var placeholders = _bindAll(values);
+    _raw = (column) =>
+        placeholders.isEmpty ? 'FALSE' : '$column IN ($placeholders)';
   }
 
   void isNotIn(Iterable<DateTime> values) {
-    var quoted = _quoted(values);
-    _raw = (column) => '$column NOT IN ($quoted)';
+    var placeholders = _bindAll(values);
+    _raw = (column) =>
+        placeholders.isEmpty ? 'TRUE' : '$column NOT IN ($placeholders)';
   }
 
-  static String _quoted(Iterable<DateTime> values) =>
-      values.map((v) => "'${dateYmdHms.format(v)}'").join(', ');
+  String _bindAll(Iterable<DateTime> values) {
+    _unbind();
+    return values.map(_bind).join(', ');
+  }
 
   void isBetween(DateTime lower, DateTime upper) {
-    var l = dateYmdHms.format(lower), u = dateYmdHms.format(upper);
-    _raw = (column) => "$column BETWEEN '$l' and '$u'";
+    _unbind();
+    var l = _bind(lower), u = _bind(upper);
+    _raw = (column) => '$column BETWEEN $l AND $u';
   }
 
   void isNotBetween(DateTime lower, DateTime upper) {
-    var l = dateYmdHms.format(lower), u = dateYmdHms.format(upper);
-    _raw = (column) => "$column NOT BETWEEN '$l' and '$u'";
+    _unbind();
+    var l = _bind(lower), u = _bind(upper);
+    _raw = (column) => '$column NOT BETWEEN $l AND $u';
   }
 
   void get isNull {
+    _unbind();
     _raw = (column) => '$column IS NULL';
   }
 
   void get isNotNull {
+    _unbind();
     _raw = (column) => '$column IS NOT NULL';
   }
 

@@ -1,5 +1,13 @@
 # Change Log
 
+## 10.0.1
+
+### Fixes in 10.0.1
+
+* **Changefeed:** With `AngelWebSocket`, a client is told of a change made through the service once, where it was told twice: by the service, and by the changefeed. The changefeed's events of the changes that `create`, `modify`, `update` and `remove` make have `broadcast: false` in their params, so clients are told of them by the service's events, with their names, request and params. The changefeed's event of such a change is the one with the values the write reports, so a change made outside the service, also to the same record at the same time, is still told by the changefeed. `create` gives a record without a primary key a random UUID itself, as RethinkDB did, so that its changefeed event is known
+* **`create`:** Returns the record, where it failed with a 404 when its key was not a string, as with `{'id': 5}`, which it looked up as `'5'`
+* **Primary key:** `update` and `modify` use the table's primary key (from `info`), where they took it to be `id`: on a table with another one, `update` failed with a 400, as the record it wrote had no primary key, and a `modify` whose body had the key failed with a 400, where the key is ignored as `id` is
+
 ## 10.0.0
 
 ### Breaking changes in 10.0.0

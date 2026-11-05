@@ -1,5 +1,22 @@
 # Change Log
 
+## 10.0.1
+
+### Breaking changes in 10.0.1
+
+* **Breaking:** Uses `user_agent_analyzer` ^6.0.0, whose `UserAgent` this package exports, so some of its checks give other results. See the [`user_agent_analyzer` 6.0.0 changelog](https://pub.dev/packages/user_agent_analyzer/changelog) for all of them
+* **Breaking:** `isChrome` is `false` for Edge, Opera and Samsung Internet, and `true` for Chrome on iOS, so a Chrome-only check turns away Edge, Opera and Samsung Internet. The example also accepts Edge and Opera, with `isEdge` and `isOpera`
+* **Breaking:** `isOpera` is `true` for Opera 15 and later, and `cssPrefix` and `propertyPrefix` only give the Opera prefix for Opera 12 and earlier
+* **Breaking:** `isMobile` also checks the first four characters against `knownMobileUserAgentPrefixes`, and the keywords `mmp`, `palm`, `psp` and `wap` only match at the start of a word
+* **Breaking:** `isBlackberry` no longer matches `rim` inside other words, and matches `RIM Tablet` instead
+* **Breaking:** `isIE` is `true` for Internet Explorer 7 and earlier, and `isFirefox` for Firefox on iOS
+* **Breaking:** `isSafari` is `false` for Chrome, Edge, Opera, Firefox on iOS and Android browsers, which also send `Safari`
+* **Breaking:** iPhones, iPads and iPods are no longer reported as macOS or as desktops, and Android and BlackBerry tablets are reported as tablets, not desktops
+
+### New in 10.0.1
+
+* `UserAgent` has `isIOS` and `isEdge`, from `user_agent_analyzer` 6.0.0
+
 ## 10.0.0
 
 ### New in 10.0.0
@@ -12,7 +29,6 @@
 * **Example:** Serves, where all of it was commented out
 * **Dependencies:** `lints` is a dev dependency, where apps got it as a runtime one
 * **Docs:** The README tells how to install and use the package
-
 
 ## 9.1.0
 

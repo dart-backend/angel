@@ -1,5 +1,12 @@
 # Change Log
 
+## 10.0.1
+
+### Fixes in 10.0.1
+
+* **Events:** An action whose `data` is not a JSON object, which `socket.on[...]` does not give to its listeners, is logged as a warning when one listens to it, where it was dropped without a word
+* **Docs:** The README tells how to handle actions without a controller, with `onConnection`, `socket.onAction` and `socket.send`, and the format of an action
+
 ## 10.0.0
 
 ### Breaking changes in 10.0.0

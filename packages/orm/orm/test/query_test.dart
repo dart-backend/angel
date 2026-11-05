@@ -24,6 +24,9 @@ class _RecordingExecutor extends QueryExecutor {
   final List<int> ids;
   final queries = <String>[];
 
+  /// The `returningFields` each query was given.
+  final returningFields = <List<String>>[];
+
   @override
   Future<List<List>> query(
     String tableName,
@@ -34,6 +37,7 @@ class _RecordingExecutor extends QueryExecutor {
     List<String> returningFields = const [],
   }) async {
     queries.add(query);
+    this.returningFields.add(returningFields);
     return query.startsWith('SELECT id ')
         ? [
             for (var id in ids) [id],
@@ -159,15 +163,81 @@ void main() {
     });
   });
 
-  test('DateTime isIn and isNotIn quote the dates', () {
-    query.where!.createdAt.isIn([DateTime(2020, 1, 2), DateTime(2021, 3, 4)]);
-    query.where!.updatedAt.isNotIn([DateTime(2020, 1, 2)]);
+  test('DateTime isIn and isNotIn bind the dates', () {
+    var a = DateTime(2020, 1, 2), b = DateTime(2021, 3, 4);
+    query.where!.createdAt.isIn([a, b]);
+    query.where!.updatedAt.isNotIn([a]);
     var sql = query.compile({});
-    expect(
-      sql,
-      contains("created_at IN ('2020-01-02 00:00:00', '2021-03-04 00:00:00')"),
+    expect(sql, contains('created_at IN (@created_at, @created_at1)'));
+    expect(sql, contains('updated_at NOT IN (@updated_at)'));
+    expect(query.substitutionValues, {
+      'created_at': a,
+      'created_at1': b,
+      'updated_at': a,
+    });
+  });
+
+  test('DateTime isIn and isNotIn of no dates are FALSE and TRUE', () {
+    query.where!.createdAt.isIn([]);
+    query.where!.updatedAt.isNotIn([]);
+    var sql = query.compile({});
+    expect(sql, contains('FALSE'));
+    expect(sql, contains('TRUE'));
+    expect(sql, isNot(contains('IN ()')));
+  });
+
+  test('a DateTime comparison binds the DateTime, which is sent as the '
+      'executor stores a DateTime', () {
+    var dt = DateTime(2020, 1, 2, 3, 4, 5);
+    query.where!.createdAt.lessThan(dt);
+    expect(query.compile({}), contains('created_at < @created_at'));
+    expect(query.substitutionValues, {'created_at': dt});
+  });
+
+  test('a DateTime comparison without the time compares the date as given', () {
+    query.where!.updatedAt.equals(
+      DateTime(2020, 1, 2, 23, 59),
+      includeTime: false,
     );
-    expect(sql, contains("updated_at NOT IN ('2020-01-02 00:00:00')"));
+    expect(query.compile({}), contains("updated_at = '2020-01-02'"));
+    expect(query.substitutionValues, isEmpty);
+  });
+
+  test('DateTime values are named apart from those of other columns', () {
+    // A name that a DateTime predicate would make from `created_at`.
+    query.reserveName('created_at1');
+    query.substitutionValues['created_at1'] = 'other';
+    query.where!.createdAt.isBetween(DateTime(2020), DateTime(2021));
+    query.where!.createdAt.isNull;
+    expect(query.substitutionValues, {'created_at1': 'other'});
+  });
+
+  test('a new DateTime predicate drops the values of the previous one', () {
+    query.where!.createdAt.isBetween(DateTime(2020), DateTime(2021));
+    query.where!.createdAt.isNull;
+    expect(query.compile({}), contains('created_at IS NULL'));
+    expect(query.substitutionValues, isEmpty);
+  });
+
+  test('a union keeps the values of both queries apart', () {
+    var a = DateTime(2020), b = DateTime(2021);
+    var left = EmployeeQuery()..where!.createdAt.lessThan(a);
+    var right = EmployeeQuery()
+      ..where!.createdAt.greaterThan(b)
+      ..where!.updatedAt.equals(a);
+    // A name the right query uses, which renaming must not take.
+    right.substitutionValues['created_at_1'] = 'other';
+
+    var union = left.union(right);
+    var sql = union.compile({});
+    expect(sql, contains('created_at < @created_at)'));
+    expect(sql, contains('created_at > @created_at_2'));
+    expect(union.substitutionValues, {
+      'created_at': a,
+      'created_at_2': b,
+      'updated_at': a,
+      'created_at_1': 'other',
+    });
   });
 
   group('JSON', () {
@@ -267,6 +337,52 @@ void main() {
         'EXTRACT(DAY FROM e.created_at) = 1 AND e.updated_at IS NULL',
       );
     });
+  });
+
+  group('on PostgreSQL, a query that returns rows is complete', () {
+    late _RecordingExecutor executor;
+
+    setUp(() => executor = _RecordingExecutor(const PostgreSQLDialect()));
+
+    // Its RETURNING is in its WITH clause, so an executor must add none: one
+    // after the SELECT is a syntax error.
+    void expectComplete() {
+      var sql = executor.queries.single;
+      expect(sql, startsWith('WITH employees as ('));
+      expect(sql, contains(') SELECT '));
+      expect(
+        sql.substring(sql.indexOf(') SELECT ')),
+        isNot(contains('RETURNING')),
+      );
+      expect(executor.returningFields.single, isEmpty);
+    }
+
+    test('of an insert', () async {
+      query.values.lastName = 'new';
+      try {
+        await query.insert(executor);
+      } on StateError {
+        // No row is returned by the recording executor.
+      }
+      expectComplete();
+    });
+
+    test('of a delete', () async {
+      query.where!.lastName.equals('old');
+      await query.delete(executor);
+      expectComplete();
+    });
+  });
+
+  test('an insert on MySQL gives the executor its returning fields', () async {
+    var executor = _RecordingExecutor(const MySQLDialect());
+    query.values.lastName = 'new';
+    try {
+      await query.insert(executor);
+    } on StateError {
+      // No row is returned by the recording executor.
+    }
+    expect(executor.returningFields.first, query.fields);
   });
 
   group('update', () {

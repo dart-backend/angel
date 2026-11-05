@@ -1,9 +1,12 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:angel3_orm/angel3_orm.dart';
 import 'package:logging/logging.dart';
 import 'package:postgres/postgres.dart';
+
+import 'logging.dart';
+
+import 'parameters.dart';
 
 /// A [QueryExecutor] that queries a PostgreSQL database.
 class PostgreSqlExecutor extends QueryExecutor {
@@ -38,6 +41,10 @@ class PostgreSqlExecutor extends QueryExecutor {
   /// The underlying database session.
   Session get session => _session;
 
+  /// Runs queries on [_session]. With the [endpoint] and [settings] it was
+  /// opened with, a [Connection] that breaks, as when the database restarts,
+  /// is replaced by a new one; without them, its queries fail until the
+  /// executor is replaced.
   PostgreSqlExecutor(
     this._session, {
     Endpoint? endpoint,
@@ -50,13 +57,20 @@ class PostgreSqlExecutor extends QueryExecutor {
     _endpoint = endpoint;
   }
 
-  /// Closes the connection.
+  /// Whether [close] was called: the executor then opens no new connection.
+  bool _closed = false;
+
+  /// The broken connection the executor warned of, as it has no endpoint to
+  /// replace it with.
+  Connection? _warnedBroken;
+
+  /// Closes the connection. The executor opens no new one after it, and one
+  /// it is opening, to replace a broken connection, is closed once opened.
   Future<void> close() async {
+    _closed = true;
     if (_session is Connection) {
       await (_session as Connection).close();
     }
-
-    return Future.value();
   }
 
   @override
@@ -67,60 +81,99 @@ class PostgreSqlExecutor extends QueryExecutor {
     String returningQuery = '',
     String resultQuery = '',
     List<String> returningFields = const [],
-  }) {
-    //if (returningFields.isNotEmpty) {
-    //  var fields = returningFields.join(', ');
-    //  var returning = 'SELECT $fields from $tableName';
-    //  query = '$query $returning';
-    //}
+  }) async {
+    logger.fine(() => 'Query: $query');
+    // In debug mode only, as they may be passwords or personal data.
+    logValues(logger, substitutionValues);
 
-    logger.fine('Query: $query');
-    logger.fine('Values: $substitutionValues');
-    logger.fine('Returning Query: $returningQuery');
+    var param = encodeParameters(substitutionValues);
 
-    // Convert List into String
-    var param = <String, dynamic>{};
-    substitutionValues.forEach((key, value) {
-      if (value is List) {
-        param[key] = jsonEncode(value);
-      } else {
-        param[key] = value;
-      }
-    });
-
-    return _session.execute(Sql.named(query), parameters: param).catchError((
-      err,
-    ) async {
-      logger.warning(err);
-      if (err is PgException) {
-        // This is a hack to detect broken db connection
-        bool brokenConnection = err.message.contains("connection is not open");
-        if (brokenConnection) {
-          // Open a new db session
-          if (_session is Connection) {
-            (_session as Connection).close();
-
+    // The session the query runs on, which another query may replace: a
+    // connection that broke, as during an earlier query, is replaced first.
+    var session = await _openSession();
+    try {
+      return await session.execute(Sql.named(query), parameters: param);
+    } catch (err, st) {
+      // Fine, as the error is thrown to the caller, who may expect it, as a
+      // unique violation, and decides whether it is one to warn of.
+      logError(logger, Level.FINE, 'The query failed', err, st);
+      // The query was not sent, as the connection was found closed on
+      // sending it: it is sent again, on a new connection. A query that was
+      // sent is not, as it may have run; the next one replaces the connection.
+      if (err is PgException &&
+          err.message.contains("connection is not open") &&
+          session is Connection) {
+        if (_endpoint == null) {
+          // Once for the connection, not for each query that fails on it.
+          if (!identical(_warnedBroken, session)) {
+            _warnedBroken = session;
             logger.warning(
-              "A broken database connection is detected. Creating a new database connection.",
+              'The database connection is broken, and cannot be replaced, as '
+              'the executor was given no endpoint.',
             );
-            _session = await _createNewSession();
-
-            // Retry the query with the new db connection
-            return _session.execute(Sql.named(query), parameters: param);
           }
+        } else if (!_closed) {
+          var retry = identical(_session, session)
+              ? await (_reconnecting ??= _reconnect(session))
+              : _session;
+          return await retry.execute(Sql.named(query), parameters: param);
         }
       }
-      throw err;
-    });
+      rethrow;
+    }
   }
 
-  // Create a new database connection
-  Future<Session> _createNewSession() async {
-    if (_endpoint != null) {
-      return await Connection.open(_endpoint!, settings: _settings);
+  /// The session to run on: the current one or, when it is a connection that
+  /// broke, as when the database restarted, and an endpoint was given, a new
+  /// one that replaces it, shared by the queries and transactions that need
+  /// one at the same time, so that none is opened in vain.
+  Future<Session> _openSession() async {
+    var session = _session;
+    if (session is Connection &&
+        !session.isOpen &&
+        _endpoint != null &&
+        !_closed) {
+      return await (_reconnecting ??= _reconnect(session));
     }
+    return session;
+  }
 
-    throw PgException("Unable to create new connection");
+  /// The new session that replaces a broken connection, while it is opened.
+  Future<Session>? _reconnecting;
+
+  /// Replaces the [broken] connection with a new one of the endpoint, and
+  /// closes it.
+  Future<Session> _reconnect(Connection broken) async {
+    // Forced, as queries queued on the dead connection would never let it
+    // close, and not awaited; its failure is logged rather than left
+    // unhandled.
+    unawaited(
+      broken
+          .close(force: true)
+          .catchError(
+            (Object e, StackTrace st) => logError(
+              logger,
+              Level.FINE,
+              'Closing the broken connection failed',
+              e,
+              st,
+            ),
+          ),
+    );
+    logger.warning(
+      "A broken database connection is detected. Creating a new database connection.",
+    );
+    try {
+      var connection = await Connection.open(_endpoint!, settings: _settings);
+      if (_closed) {
+        // close() came while it was opening.
+        await connection.close();
+        throw StateError('The executor is closed.');
+      }
+      return _session = connection;
+    } finally {
+      _reconnecting = null;
+    }
   }
 
   /// Runs [f] in a transaction, which is committed if it completes and
@@ -157,7 +210,7 @@ class PostgreSqlExecutor extends QueryExecutor {
   /// throws a [StateError].
   @override
   Future<T> transaction<T>(FutureOr<T> Function(QueryExecutor) f) async {
-    var session = _session;
+    var session = await _openSession();
     if (session is TxSession) return await _savepoint(session, f);
     // A pattern, as a Session and a SessionExecutor are not related types.
     if (session case SessionExecutor executor) {
@@ -175,7 +228,13 @@ class PostgreSqlExecutor extends QueryExecutor {
           }
         } catch (e, st) {
           // Fine, as the error is thrown to the caller, who handles it.
-          logger.fine('The transaction failed, and is rolled back', e, st);
+          logError(
+            logger,
+            Level.FINE,
+            'The transaction failed, and is rolled back',
+            e,
+            st,
+          );
           rethrow;
         }
       });
@@ -240,15 +299,23 @@ class PostgreSqlExecutor extends QueryExecutor {
       } catch (rollbackError, rollbackStack) {
         // What f did is not undone, so the transaction cannot go on as if
         // it were: the error of the rollback is thrown instead of that of f.
-        logger.warning('The savepoint $name failed', e, st);
-        logger.warning(
+        logError(logger, Level.WARNING, 'The savepoint $name failed', e, st);
+        logError(
+          logger,
+          Level.WARNING,
           'The savepoint $name could not be rolled back',
           rollbackError,
           rollbackStack,
         );
         rethrow;
       }
-      logger.fine('The savepoint $name failed, and is rolled back', e, st);
+      logError(
+        logger,
+        Level.FINE,
+        'The savepoint $name failed, and is rolled back',
+        e,
+        st,
+      );
       rethrow;
     }
     return result;

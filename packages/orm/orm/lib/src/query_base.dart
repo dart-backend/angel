@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:logging/logging.dart';
 
+import 'logging.dart';
+
 import 'query_executor.dart';
 import 'union.dart';
 
@@ -66,8 +68,8 @@ abstract class QueryBase<T> {
   Future<List<T>> get(QueryExecutor executor) async {
     var sql = compile({});
 
-    _log.fine('sql = $sql');
-    _log.fine('values = $substitutionValues');
+    _log.fine(() => 'sql = $sql');
+    logValues(_log, substitutionValues);
 
     return executor.query(tableName, sql, substitutionValues).then((it) {
       return deserializeList(it);

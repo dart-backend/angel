@@ -481,6 +481,39 @@ void main() {
       await client.close();
     });
 
+    test('warns when socket.on cannot take the data of an action', () async {
+      server = await Server.start();
+      var warnings = <String>[];
+      server.app.logger.onRecord
+          .where((r) => r.level == Level.WARNING)
+          .listen((r) => warnings.add(r.message));
+      var socket = server.sockets.onConnection.first;
+      var client = await server.client();
+      var context = await socket.timeout(const Duration(seconds: 3));
+      var actions = [];
+      var onEcho = [];
+      context.onAction.listen((a) => actions.add(a.data));
+      context.on['echo'].listen(onEcho.add);
+
+      await server.sockets.handleData(
+        context,
+        '{"eventName": "echo", "data": "Hello"}',
+      );
+      expect(actions, ['Hello']);
+      expect(onEcho, isEmpty);
+      expect(warnings.single, contains('socket.on["echo"]'));
+
+      await server.sockets.handleData(
+        context,
+        '{"eventName": "echo", "data": {"text": "Hello"}}',
+      );
+      expect(onEcho, [
+        {'text': 'Hello'},
+      ]);
+      expect(warnings, hasLength(1));
+      await client.close();
+    });
+
     test('sends the result of a service that does not broadcast', () async {
       server = await Server.start(create: (app) => _Unwired(app));
       server.app.use('/api/todos', MapService());

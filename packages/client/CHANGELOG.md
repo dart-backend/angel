@@ -1,5 +1,11 @@
 # Change Log
 
+## 10.0.1
+
+### Fixes in 10.0.1
+
+* **Browser:** An app that imports `package:angel3_client/browser.dart` compiles to JavaScript, where dart2js failed with `Function converted via 'toJS' contains invalid types in its function signature` (in `authenticateViaPopup`)
+
 ## 10.0.0
 
 ### Breaking changes in 10.0.0

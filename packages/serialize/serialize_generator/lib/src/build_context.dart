@@ -257,8 +257,11 @@ Future<BuildContext?> buildContext(
     }
   }
 
-  // Get constructor params, if any
-  ctx.constructorParameters.addAll(clazz.unnamedConstructor!.formalParameters);
+  // Get constructor params, if any. A class may have only named constructors,
+  // as a `@graphQLClass` that is not a model.
+  ctx.constructorParameters.addAll(
+    clazz.unnamedConstructor?.formalParameters ?? const [],
+  );
 
   return ctx;
 }

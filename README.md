@@ -13,7 +13,7 @@
 
 ## About
 
-Angel3 originated from a fork of the archived Angel framework in support of Dart SDK 2.12.x or later. It is a full-stack backend framework in Dart that aims to streamline development by providing many common features out-of-the-box in a consistent manner. The codebase has been completely migrated and refactored to support null safety. One of the main goals is to enable developers to build both frontend and backend in dart language. Angel3 is designed as a collection of plugins that enable developers to pick and choose the parts needed for their projects. A series of starter templates are also provided for quick start and trial run with Angel3. Visit our [website](<https://angel3-framework.web.app/>) to learn more.
+Angel3 originated from a fork of the archived Angel framework in support of Dart SDK 2.13.x or later. It is a full-stack backend framework in Dart that aims to streamline development by providing many common features out-of-the-box in a consistent manner. The codebase has been completely migrated and refactored to support null safety. One of the main goals is to enable developers to build both frontend and backend in dart language. Angel3 is designed as a collection of plugins that enable developers to pick and choose the parts needed for their projects. A series of starter templates are also provided for quick start and trial run with Angel3. Visit our [website](<https://angel3-framework.web.app/>) to learn more.
 
 The available features in Angel3 include:
 
@@ -22,11 +22,14 @@ The available features in Angel3 include:
 * HTTP/2
 * HTTP Streaming
 * GraphQL, with [graphql_dart](https://github.com/dart-backend/graphql_dart)
-* Markdown, Mustache, Jinja and JAEL as Server-Side HTML Rendering
+* Server-Side HTML Rendering with JAEL, Markdown, Mustache and Jinja
+* SPA with [Kelicap](https://github.com/dukefirehawk/kelicap)
 * ORM support for PostgreSQL, MySQL and MariaDB
 * MongoDB, Sembast and RethinkDB as storage
-* Redis as cache
-* Dependency injection with or without `dart:mirrors`, so apps can be compiled with `dart compile exe`
+* Cache with Redis
+* Dependency injection with or without `dart:mirrors`
+* Compiled into executable binary with `dart compile exe`
+* Support rootless container deployment via `podman` and `podman compose`
 
 ## The Core Framework
 
@@ -55,7 +58,6 @@ They can broadly be categorized as follows:
    * cors: Middleware to handle Cross-Origin Resource Sharing effortlessly.
 4. Frontend & Template Rendering
    Support for processing and returning HTML views to the client:
-
    * jael: The Jael template engine specifically built for Angel. It is split into the parser and renderer (jael3), template inheritance (jael3_preprocessor), the Angel3 integration (angel3_jael) and an experimental virtual DOM (jael3_web).
    * mustache, jinja, markdown: Wrappers/integrations for rendering Mustache templates, Jinja templates, or parsing Markdown into HTML.
    * html & seo: Utilities for building out HTML responses and optimizing for search engines.
@@ -125,6 +127,10 @@ Branch: `master`
    * [Angel3 PostgreSQL ORM Template](https://github.com/dart-backend/boilerplates/tree/master/templates/basic_postgres_orm)
    * [Angel3 MySQL ORM Template](https://github.com/dart-backend/boilerplates/tree/master/templates/basic_mysql_orm)
    * [Angel3 GraphQL Template](https://github.com/dart-backend/boilerplates/tree/master/templates/basic_graphql)
+   * [Angel3 MongoDB Template](https://github.com/dart-backend/boilerplates/tree/master/templates/basic_mongo)
+   * [Angel3 RethinkDB Template](https://github.com/dart-backend/boilerplates/tree/master/templates/basic_rethinkdb)
+   * [Angel3 Sembast Template](https://github.com/dart-backend/boilerplates/tree/master/templates/basic_sembast)
+   * [Angel3 Kelicap Template](https://github.com/dart-backend/boilerplates/tree/master/templates/basic_kelicap): a full-stack application with a [Kelicap](https://github.com/dukefirehawk/kelicap) web client, which calls the server with `angel3_client`. In development, also serve the client, as its `README.md` describes
 
 3. Run the project in development mode (hot reload is enabled on file changes).
 
@@ -138,7 +144,7 @@ Branch: `master`
    dart bin/prod.dart
    ```
 
-5. Run as docker. Edit and build the image with the provided `Dockerfile` file.
+5. Run it in a container with [Podman](https://podman.io/): build and run the provided `Containerfile`, or use Podman Compose with `contrib/deployment/compose.yaml`, as the project's `README.md` describes.
 
 6. Next, refer to the [User Guide](https://angel3-docs.dukefirehawk.com/) to learn more about Angel3 framework.
 
@@ -158,7 +164,7 @@ Branch: `master`
    angel3 init hello
    ```
 
-   The latest `angel3_cli` is 9.0.0, which predates the 10.0.0 packages: check the versions in the generated `pubspec.yaml`.
+   Use `angel3_cli` 10.1.0 or later, whose templates use the 10.x packages. `angel3 init` asks which template to start from.
 
 4. Run the project in development mode (hot reload is enabled on file changes).
 
@@ -172,7 +178,7 @@ Branch: `master`
    dart bin/prod.dart
    ```
 
-6. Run as docker. Edit and build the image with the provided `Dockerfile` file.
+6. Run it in a container with [Podman](https://podman.io/): build and run the provided `Containerfile`, or use Podman Compose with `contrib/deployment/compose.yaml`, as the project's `README.md` describes.
 
 7. Next, refer to the [User Guide](https://angel3-docs.dukefirehawk.com/) to learn more about Angel3 framework.
 

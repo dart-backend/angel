@@ -300,7 +300,13 @@ class HasCarSerializer extends Codec<HasCar, Map> {
                 ? (map['updated_at'] as DateTime)
                 : DateTime.parse(map['updated_at'].toString()))
           : null,
-      type: map['type'] as CarType? ?? CarType.sedan,
+      type: map['type'] is CarType
+          ? map['type'] as CarType
+          : map['type'] is String
+          ? CarType.values.byName(map['type'] as String)
+          : map['type'] is int
+          ? CarType.values[map['type'] as int]
+          : CarType.sedan,
       color: codeToColor(map['color']),
     );
   }

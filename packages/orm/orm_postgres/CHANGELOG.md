@@ -1,5 +1,40 @@
 # Change Log
 
+## 10.0.3
+
+### New in 10.0.3
+
+* **`PostgreSqlPoolExecutor`:** Runs its queries as `PostgreSqlExecutor` does, so it logs them, and the errors of the database, at `FINE`
+
+### Fixes in 10.0.3
+
+* **Logging:** `PostgreSqlExecutor` and `PostgreSqlPoolExecutor` log the values of a query, which may be passwords or personal data, in debug mode only, with assertions enabled, as `angel3_orm` does, where `PostgreSqlExecutor` logged them at `FINE` whenever it was logged. It no longer logs the returning query, which only MySQL uses. Their log messages, and the errors they log, are built only when they are logged. Requires `angel3_orm` 10.0.2
+* **Logging:** An error of the database is logged without its detail and hint, which may hold the values of a row (as `Key (email)=(alice@example.com) already exists`), and with the quoted text of its message left out (as the value of `invalid input syntax for type uuid: "alice@example.com"`), but with its code, message, and the schema, table, column and constraint it concerns; in debug mode, it is logged in full
+* **Logging:** An error of a query is logged at `FINE`, with its stack trace, where it was logged at `WARNING` without it, as it is thrown to the caller, who may expect it, as a unique violation. A broken connection is still logged at `WARNING`
+* **`PostgreSqlExecutor`:** Queries that fail on a broken connection at the same time share one new session, where each opened one, and all but one were left open; the broken connection is closed, forced, and a failure to close it is logged, where it was an unhandled error
+* **`PostgreSqlExecutor`:** With an endpoint, a connection that broke, as during a query, is replaced before the next query runs; a query that was sent when it broke is thrown, not sent again, as it may have run, and only one that was not sent is sent again, on the new connection
+* **`PostgreSqlExecutor`:** After `close`, no new connection is opened, and one being opened to replace a broken connection is closed once opened, where it was left open
+* **`PostgreSqlExecutor`:** With an endpoint, `transaction` runs on a new connection when the one it has broke, as when the database restarted, where it failed until a query replaced it; it shares the new connection with the queries that replace it at the same time
+* **`PostgreSqlExecutor`:** Without an endpoint, a query on a broken connection throws the error of the connection, where it tried to open a new connection, logged that it was doing so, and threw `Unable to create new connection`. It warns once that the connection cannot be replaced, not for each query The constructor tells that its `endpoint` and `settings` are what lets it replace a broken connection
+* **Docs:** The fix of `PostgreSqlPoolExecutor` in 10.0.2 made a delete work too, which failed with the same `syntax error at or near "RETURNING"` as an insert; its entry names inserts only
+
+## 10.0.2
+
+### Fixes in 10.0.2
+
+* **`PostgreSqlPoolExecutor`:** An insert works, where it failed with `syntax error at or near "RETURNING"`, as the executor added a `RETURNING` clause after the one `angel3_orm` 10 puts in the insert's `WITH` clause. Its queries are run as given, as by `PostgreSqlExecutor`
+
+## 10.0.1
+
+### Breaking changes in 10.0.1
+
+* **Breaking:** A local `DateTime` is stored as UTC, and read back as the same moment, as UTC. It was read back shifted by its time-zone offset, as a `timestamp` column kept its wall-clock time and dropped its offset. Rows written by an app outside UTC before this release hold its local time: they are still read back shifted, and a `where` clause on them no longer matches. To fix them, run an `UPDATE` such as `SET created_at = created_at AT TIME ZONE '<the app's time zone>' AT TIME ZONE 'UTC'` on each `timestamp` column
+* **Breaking:** A `DateTime` written to a `date` column is the date of its UTC time, so a local midnight east of UTC is the day before. Write a date as `DateTime.utc(year, month, day)`
+
+### Fixes in 10.0.1
+
+* **Time zones:** A `where` clause on a local `DateTime` matches the rows written with it. Requires `angel3_orm` 10.0.1
+
 ## 10.0.0
 
 ### Breaking changes in 10.0.0
@@ -16,7 +51,6 @@
 * **Pool:** `PostgreSqlPoolExecutor.transaction` behaves as that of `PostgreSqlExecutor`, with savepoints for a transaction nested through the executor its callback is given
 * **Transactions:** A failed transaction is rolled back once, by the driver, where a second rollback that was not awaited could fail as an uncaught error, and the transaction logs its failure at `fine` rather than as a warning, as its error is thrown to the caller; `query` still logs an error of the database as a warning
 * **Docs:** The README tells how to install and use the package, and how to migrate from 9.x
-
 
 ## 9.1.0
 

@@ -14,11 +14,7 @@ class Union<T> extends QueryBase<T> {
   final String tableName;
 
   Union(this.left, this.right, {this.all = false, String? tableName})
-    : tableName = tableName ?? left.tableName {
-    substitutionValues
-      ..addAll(left.substitutionValues)
-      ..addAll(right.substitutionValues);
-  }
+    : tableName = tableName ?? left.tableName;
 
   @override
   List<String> get fields => left.fields;
@@ -36,6 +32,35 @@ class Union<T> extends QueryBase<T> {
     var selector = all == true ? 'UNION ALL' : 'UNION';
     var t1 = Set<String>.from(trampoline);
     var t2 = Set<String>.from(trampoline);
-    return '(${left.compile(t1, includeTableName: includeTableName)}) $selector (${right.compile(t2, includeTableName: includeTableName)})';
+    var l = left.compile(t1, includeTableName: includeTableName);
+    var r = right.compile(t2, includeTableName: includeTableName);
+
+    // The two queries name their values apart from each other's only, so a
+    // name both use is renamed in [r], which would otherwise be given the
+    // value of [l].
+    substitutionValues
+      ..clear()
+      ..addAll(left.substitutionValues);
+    right.substitutionValues.forEach((name, value) {
+      var newName = name;
+      // Neither query's name, so that no other placeholder is renamed too.
+      for (
+        var n = 1;
+        substitutionValues.containsKey(newName) ||
+            (newName != name && right.substitutionValues.containsKey(newName));
+        n++
+      ) {
+        newName = '${name}_$n';
+      }
+      if (newName != name) {
+        r = r.replaceAll(
+          RegExp('@${RegExp.escape(name)}(?![A-Za-z0-9_])'),
+          '@$newName',
+        );
+      }
+      substitutionValues[newName] = value;
+    });
+
+    return '($l) $selector ($r)';
   }
 }

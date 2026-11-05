@@ -357,7 +357,15 @@ class AngelWebSocket {
 
       _onAction.add(action);
       socket._onAction.add(action);
-      socket.on._add(eventName, fromJson['data']);
+      var actionData = fromJson['data'];
+      if (actionData is! Map? && socket.on._hasListener(eventName)) {
+        _log.warning(
+          'The data of "$eventName" is not a JSON object, so '
+          'socket.on["$eventName"] does not get it; listen to '
+          'socket.onAction instead.',
+        );
+      }
+      socket.on._add(eventName, actionData);
 
       if (eventName == authenticateAction) {
         await handleAuth(action, socket);

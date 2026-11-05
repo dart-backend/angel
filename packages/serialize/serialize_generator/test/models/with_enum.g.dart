@@ -90,7 +90,13 @@ class WithEnumSerializer extends Codec<WithEnum, Map> {
 
   static WithEnum fromMap(Map map) {
     return WithEnum(
-      type: map['type'] as WithEnumType? ?? WithEnumType.b,
+      type: map['type'] is WithEnumType
+          ? map['type'] as WithEnumType
+          : map['type'] is String
+          ? WithEnumType.values.byName(map['type'] as String)
+          : map['type'] is int
+          ? WithEnumType.values[map['type'] as int]
+          : WithEnumType.b,
       finalList: map['final_list'] is Iterable
           ? (map['final_list'] as Iterable).cast<int>().toList()
           : [],

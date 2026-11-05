@@ -59,12 +59,13 @@ The framework is divided into several categories of packages:
 ## Development Workflow
 
 - **Master Branch**: Stable production branch (currently the `9.x` releases). Use this branch for all standard PR submissions.
-- **Feature Branches**: Work is done on `feature/<name>` branches. The upcoming `10.0.0` release (all packages bumped to `10.0.0`, with breaking changes recorded in each package's `CHANGELOG.md`) is being prepared on feature branches.
+- **Feature Branches**: Work is done on `feature/<name>` branches. `10.0.0` (all packages bumped to `10.0.0`, with breaking changes recorded in each package's `CHANGELOG.md`) has been released; later changes go into new versions of the packages they touch.
 - **Tooling**: Run `dart pub get` at the root, or use `melos` to execute tasks across the monorepo (e.g., `melos exec "dart pub upgrade"`). Regenerate code with `dart run build_runner build --delete-conflicting-outputs` in the affected package.
 - **Running tests**: Run `dart test` from the package's directory, as some tests read fixtures relative to it (e.g. the `dev.pem` and `dev.key` of `framework`'s HTTP/2 tests). To tell whether a failure is new, run the test with your changes stashed (`git stash push -- packages`, then `dart pub get`); `pubspec.lock` is not tracked, so do not name it in the stash.
 - **Database tests**: The tests of these packages need running servers, configured by environment variables:
-  - `orm_postgres`: PostgreSQL (`POSTGRES_HOSTNAME`, `POSTGRES_DB`, `POSTGRES_USERNAME`, `POSTGRES_PASSWORD`; default `localhost`, `postgres`/`postgres`).
+  - `orm_postgres`: PostgreSQL (`POSTGRES_HOST`, or `POSTGRES_HOSTNAME`, `POSTGRES_PORT`, `POSTGRES_DB`, `POSTGRES_USERNAME`, `POSTGRES_PASSWORD`; default `localhost:5432`, database `postgres`, `postgres`/`postgres`, as CI sets them). Every test connects through `pgEndpoint()` in `test/common.dart`.
   - `orm_mysql`: MySQL or MariaDB (`MYSQL_HOST`, `MYSQL_PORT`, `MYSQL_DB`, `MYSQL_USERNAME`, `MYSQL_PASSWORD`, `MYSQL_SECURE`; default `localhost:3306`, database `orm_test`, user `test`).
+  - `migration_runner`: PostgreSQL (`POSTGRES_HOST`, `POSTGRES_DB`, `POSTGRES_USERNAME`, `POSTGRES_PASSWORD`; default `localhost`, database `orm_test`, `test`/`test123`), and MySQL or MariaDB on port 3306 (`MYSQL_HOST`, `MYSQL_DB`, `MYSQL_USERNAME`, `MYSQL_PASSWORD`, `MYSQL_SECURE`, and `MYSQL_VERIFY_CERTIFICATE`, default `false`, as a local server's certificate is self-signed). A database that cannot be reached is skipped.
   - `mongo`: MongoDB on port 27017 with a `root` user whose password is `Qwerty` (authentication database `admin`); host `MONGO_HOST`, default `localhost`.
   - `rethinkdb`: RethinkDB on port 28015, user `admin` without a password; host `RETHINKDB_HOST`, default `localhost`. Create its `testDB.todos` table with `dart test/bootstrap.dart`.
   - `redis`: Redis (`REDIS_HOST`, `REDIS_PORT`; default `localhost:6379`).

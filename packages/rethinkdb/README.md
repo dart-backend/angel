@@ -52,6 +52,18 @@ void main() async {
 
 Wrap the service in a `TypedService` from `angel3_framework` to serialize to and from a class.
 
+### Changefeeds and WebSockets
+
+A change made through the service fires its event twice: once by the service, and once by the changefeed. The changefeed's event of it has `broadcast: false` in its `params`, so that `AngelWebSocket` (`angel3_websocket`) tells clients of the change once, by the service's event: with the name of the method (`modified` for a `modify`), the request, its `params` and hooks, such as a `ws:filter`, and also for a write that changed nothing. A change made outside the service, as by another server or directly in the database, is told by the changefeed's event only, which is broadcast.
+
+The changefeed's event of a change is told from others by the record's primary key and its values: while the service writes a record, the changefeed's events of it wait for the write, and only the one with the values the write reports (`return_changes`) is not broadcast. So a change made outside the service to the same record at the same time is still broadcast.
+
+A listener on the server that should run once per change can skip the events whose `params['broadcast']` is `false`. The changefeed tells a `modify` as an update, as RethinkDB does not tell the two apart.
+
+`remove(null)`, which removes every record matching the query, is told by the changefeed's events of each record, which are broadcast, and not by its own event, which has `broadcast: false`: a `ws:filter` in its `params` does not apply to them.
+
+`create` gives a record without a primary key a random UUID under it, as RethinkDB does, so that the changefeed's event of it is known for the service's change. The primary key is the table's (from `info`), `id` unless it was created with another. If `info` fails, as for a user not allowed it, the service takes it to be `id`, logs a warning, and looks it up again on its next write.
+
 ## CRUD
 
 On the server, call the service directly:

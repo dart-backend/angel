@@ -138,6 +138,8 @@ jobs:
         working-directory: packages/orm/orm_postgres
         run: dart test -j1
         env:
+          # A time zone other than UTC, which time_zone_test.dart needs
+          TZ: Asia/Kuala_Lumpur
           # The hostname used to communicate with the PostgreSQL service container
           POSTGRES_HOST: localhost
           # The default PostgreSQL port

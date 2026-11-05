@@ -1,5 +1,11 @@
 # Change Log
 
+## 10.0.1
+
+### Breaking changes in 10.0.1
+
+* **Breaking:** `MySqlMigrationRunner`, `MariaDbMigrationRunner` and `MariaDbSchema.run` use `mysql_dart` 4, so pass a `MySQLConnection` of `mysql_dart` 4. With TLS (`secure: true`, its default), it verifies the server's certificate, and `connect()` fails with a `HandshakeException` for the self-signed certificate that MySQL and MariaDB generate, as in Docker. Pass `verifyServerCertificate: false` for such a server, or trust your own CA with `securityContext`. See the README
+
 ## 10.0.0
 
 ### Breaking changes in 10.0.0

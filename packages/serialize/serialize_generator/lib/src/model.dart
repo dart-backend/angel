@@ -30,6 +30,17 @@ class JsonModelGenerator extends GeneratorForAnnotation<Serializable> {
       throw 'Invalid builder context';
     }
 
+    // The generated class extends the model class, so it calls the model's
+    // unnamed constructor.
+    if (element.unnamedConstructor == null && !shouldBeConstant(ctx)) {
+      throw InvalidGenerationSourceError(
+        'The model class ${element.name} needs an unnamed constructor, as the '
+        'generated class ${ctx.modelClassNameRecase.pascalCase} extends it; '
+        'add `${element.name}();`.',
+        element: element,
+      );
+    }
+
     var lib = Library((b) {
       generateClass(ctx, b, annotation);
     });
