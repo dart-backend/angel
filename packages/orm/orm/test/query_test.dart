@@ -50,6 +50,12 @@ class _RecordingExecutor extends QueryExecutor {
       f(this);
 }
 
+/// A query with no fields, which selects `*`.
+class _NoFieldsQuery extends EmployeeQuery {
+  @override
+  List<String> get fields => const [];
+}
+
 class _Text {
   final String text;
   _Text(this.text);
@@ -449,6 +455,108 @@ void main() {
         expect(await query.update(executor), isEmpty);
         expect(executor.queries, hasLength(1));
       });
+    });
+  });
+
+  group('names written into the SQL', () {
+    const injection = 'id; DROP TABLE users; --';
+
+    test('groupBy accepts columns, qualified and several', () {
+      query.groupBy('employees.salary, last_name');
+      expect(
+        query.compile({}),
+        endsWith(' GROUP BY employees.salary, last_name'),
+      );
+    });
+
+    test('groupBy rejects anything else', () {
+      for (var key in [injection, '', 'a,', 'COUNT(*)', '"a"']) {
+        expect(() => query.groupBy(key), throwsArgumentError, reason: key);
+      }
+      expect(query.compile({}), isNot(contains('GROUP BY')));
+    });
+
+    test('crossJoin accepts a table, and rejects anything else', () {
+      query.crossJoin('public.companies');
+      expect(query.compile({}), contains(' CROSS JOIN public.companies'));
+      expect(() => query.crossJoin(injection), throwsArgumentError);
+    });
+
+    test('a join accepts names and a comparison', () {
+      query.leftJoin(
+        'public.companies',
+        'company_id',
+        'id',
+        op: '<=',
+        alias: 'c',
+        additionalFields: const ['name'],
+      );
+      var sql = query.compile({});
+      expect(sql, contains('c.name FROM employees'));
+      expect(
+        sql,
+        contains('LEFT JOIN public.companies c ON employees.company_id<=c.id'),
+      );
+    });
+
+    for (var (name, join) in <(String, void Function(Query, String))>[
+      ('table', (q, s) => q.join(s, 'a', 'b')),
+      ('local key', (q, s) => q.join('t', s, 'b')),
+      ('foreign key', (q, s) => q.join('t', 'a', s)),
+      ('alias', (q, s) => q.join('t', 'a', 'b', alias: s)),
+      (
+        'additional field',
+        (q, s) => q.join('t', 'a', 'b', additionalFields: [s]),
+      ),
+      ('operator', (q, s) => q.join('t', 'a', 'b', op: s)),
+    ]) {
+      test('a join rejects such a $name', () {
+        expect(() => join(query, injection), throwsArgumentError);
+      });
+    }
+
+    test('every kind of join checks its names', () {
+      for (var join in [
+        query.join,
+        query.leftJoin,
+        query.rightJoin,
+        query.fullOuterJoin,
+        query.selfJoin,
+      ]) {
+        expect(() => join(injection, 'a', 'b'), throwsArgumentError);
+      }
+    });
+
+    test('a join of a query is still accepted', () {
+      query.join(EmployeeQuery(), 'id', 'id');
+      expect(query.compile({}), contains('INNER JOIN (SELECT '));
+    });
+  });
+
+  group('a query with no fields', () {
+    late _NoFieldsQuery noFields;
+
+    setUp(() => noFields = _NoFieldsQuery());
+
+    test('selects * without joins', () {
+      expect(noFields.compile({}), 'SELECT * FROM employees');
+    });
+
+    test('keeps its joins, selecting only its own columns', () {
+      noFields.join(
+        'companies',
+        'company_id',
+        'id',
+        alias: 'c',
+        additionalFields: const ['name'],
+      );
+      var sql = noFields.compile({});
+      expect(sql, startsWith('SELECT employees.* FROM employees '));
+      expect(
+        sql,
+        contains('INNER JOIN companies c ON employees.company_id=c.id'),
+      );
+      expect(noFields.joinedRow(0, [1, 2]), isEmpty);
     });
   });
 

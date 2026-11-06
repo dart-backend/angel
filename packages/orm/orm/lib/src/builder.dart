@@ -14,15 +14,31 @@ abstract class SqlExpressionBuilder<T> {
 
   SqlExpressionBuilder(this.query, this.columnName);
 
-  String get substitution {
-    var c = _isProperty ? 'prop' : columnName;
-    return _substitution ??= query.reserveName(c);
-  }
+  /// What the names of the parameters of this builder start with: not the
+  /// name of a JSON property, which is an expression.
+  String get _parameterName => _isProperty ? 'prop' : columnName;
+
+  String get substitution =>
+      _substitution ??= query.reserveName(_parameterName);
 
   bool get hasValue;
 
   String? compile();
+
+  /// The predicate on [column] (e.g. `table.column`), or `null` if it has
+  /// none.
+  String? compileFor(String column) {
+    var c = compile();
+    if (c == null) return null;
+    return c == _noRow || c == _everyRow ? c : '$column $c';
+  }
 }
+
+/// `IN` no values, which `IN ()` cannot say, as it is not valid SQL.
+const _noRow = 'FALSE';
+
+/// `NOT IN` no values, which is true of every row, even of a `NULL`.
+const _everyRow = 'TRUE';
 
 class NumericSqlExpressionBuilder<T extends num>
     extends SqlExpressionBuilder<T> {
@@ -110,12 +126,12 @@ class NumericSqlExpressionBuilder<T extends num>
   }
 
   void isIn(Iterable<T> values) {
-    _raw = 'IN (${values.join(', ')})';
+    _raw = values.isEmpty ? _noRow : 'IN (${values.join(', ')})';
     _hasValue = true;
   }
 
   void isNotIn(Iterable<T> values) {
-    _raw = 'NOT IN (${values.join(', ')})';
+    _raw = values.isEmpty ? _everyRow : 'NOT IN (${values.join(', ')})';
     _hasValue = true;
   }
 }
@@ -176,12 +192,14 @@ class EnumSqlExpressionBuilder<T> extends SqlExpressionBuilder<T> {
   void isNotBetween(T lower, T upper) => throw _unsupported();
 
   void isIn(Iterable<T> values) {
-    _raw = 'IN (${values.map(_getValue).join(', ')})';
+    _raw = values.isEmpty ? _noRow : 'IN (${values.map(_getValue).join(', ')})';
     _hasValue = true;
   }
 
   void isNotIn(Iterable<T> values) {
-    _raw = 'NOT IN (${values.map(_getValue).join(', ')})';
+    _raw = values.isEmpty
+        ? _everyRow
+        : 'NOT IN (${values.map(_getValue).join(', ')})';
     _hasValue = true;
   }
 }
@@ -269,19 +287,19 @@ class StringSqlExpressionBuilder extends SqlExpressionBuilder<String> {
 
   String _in(Iterable<String> values) {
     return 'IN (${values.map((v) {
-      var name = query.reserveName('${columnName}_in_value');
+      var name = query.reserveName('${_parameterName}_in_value');
       query.substitutionValues[name] = v;
       return '@$name';
     }).join(', ')})';
   }
 
   void isIn(Iterable<String> values) {
-    _raw = _in(values);
+    _raw = values.isEmpty ? _noRow : _in(values);
     _hasValue = true;
   }
 
   void isNotIn(Iterable<String> values) {
-    _raw = 'NOT ${_in(values)}';
+    _raw = values.isEmpty ? _everyRow : 'NOT ${_in(values)}';
     _hasValue = true;
   }
 }
@@ -387,7 +405,7 @@ class DateTimeSqlExpressionBuilder extends SqlExpressionBuilder<DateTime> {
   /// The executor sends it as it stores a [DateTime], e.g. as UTC, where a
   /// literal would be the wall-clock time of [dt], whatever its time zone.
   String _bind(DateTime dt) {
-    var name = query.reserveName(columnName);
+    var name = query.reserveName(_parameterName);
     query.substitutionValues[name] = dt;
     _bound.add(name);
     return '@$name';
@@ -486,10 +504,11 @@ class DateTimeSqlExpressionBuilder extends SqlExpressionBuilder<DateTime> {
   /// The parts of a date ([year], [month], ...) use the standard
   /// `EXTRACT(... FROM column)`, which PostgreSQL and MySQL/MariaDB both
   /// support; the second is rounded down, as PostgreSQL's has a fraction.
+  @override
   String? compileFor(String column) {
     var raw = _raw;
-    if (raw != null) return raw(column);
     var parts = <String>[
+      if (raw != null) raw(column),
       for (var (field, builder) in [
         ('YEAR', _year),
         ('MONTH', _month),
@@ -554,6 +573,7 @@ abstract class JsonSqlExpressionBuilder<T, K> extends SqlExpressionBuilder<T> {
   String compile() => compileFor(columnName);
 
   /// Like [compile], with [column] (e.g. `table.column`) as the column name.
+  @override
   String compileFor(String column) => [
     if (_raw != null) '$column $_raw',
     if (_value != null) '$column::jsonb $_op @$substitution::jsonb',
@@ -620,11 +640,19 @@ class JsonSqlExpressionBuilderProperty {
     var name = nameFor(column);
     if (_nullCheck case var check?) yield '$name $check';
     var typed = _typed;
-    var c = typed != null && typed.hasValue ? typed.compile() : null;
-    if (c != null) {
-      // A date predicate already names its column.
-      yield typed is DateTimeSqlExpressionBuilder ? c : '$name $c';
-    }
+    if (typed == null || !typed.hasValue) return;
+    var predicate = typed.compileFor(switch (typed) {
+      // `->>` gives text: a number is compared as one, and a property that is
+      // no number, which cannot be cast, is `NULL`, as in no comparison.
+      NumericSqlExpressionBuilder() =>
+        "CASE WHEN jsonb_typeof($column::jsonb->$_key) = 'number' "
+            'THEN ($name)::numeric END',
+      DateTimeSqlExpressionBuilder() => 'CAST ($name AS timestamptz)',
+      // In parentheses, as `::` binds more tightly than `->>`.
+      JsonSqlExpressionBuilder() => '($name)',
+      _ => name,
+    });
+    if (predicate != null) yield predicate;
   }
 
   T? _set<T extends SqlExpressionBuilder?>(T Function() value) {
@@ -635,18 +663,23 @@ class JsonSqlExpressionBuilderProperty {
         '$nameString is already typed as $_typed, and cannot be changed.',
       );
     } else {
-      _typed = value()
-        ?.._cast = 'text'
+      var typed = value();
+      typed
+        ?.._cast = typed is NumericSqlExpressionBuilder ? null : 'text'
         .._isProperty = true;
-      return _typed as T?;
+      _typed = typed;
+      return typed;
     }
   }
 
   String get nameString => nameFor(builder.columnName);
 
+  /// The index or the key of this property, as SQL: a `'` in a key is
+  /// escaped, as a key may come from a request.
+  String get _key => isInt ? name : "'${name.replaceAll("'", "''")}'";
+
   /// This property of the JSON in [column].
-  String nameFor(String column) =>
-      '$column::jsonb->>${isInt ? name : "'$name'"}';
+  String nameFor(String column) => '$column::jsonb->>$_key';
 
   void get isNotNull {
     _nullCheck = 'IS NOT NULL';

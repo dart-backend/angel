@@ -1,5 +1,33 @@
 # Change Log
 
+## 10.0.3
+
+### Breaking changes in 10.0.3
+
+* **Breaking:** `groupBy`, `crossJoin`, `join`, `leftJoin`, `rightJoin`, `fullOuterJoin` and `selfJoin` throw an `ArgumentError` for a name that is not a plain identifier, which may be qualified (`table.column`), as `orderBy` does when compiled, where it was written into the SQL as given, so a value from a request could add SQL to a query. This covers table names, keys, aliases and `additionalFields`; `groupBy` also accepts several columns separated by commas. An expression, a quoted identifier or SQL given as a table name is no longer accepted: join a `Query` in place of a subquery
+* **Breaking:** The `op` of a join must be one of `=`, `!=`, `<>`, `<`, `<=`, `>` and `>=`
+
+### Fixes in 10.0.3
+
+* **Queries:** A query with no `fields` keeps its joins, which were dropped without an error, so an `INNER JOIN` filtered nothing. It selects `table.*`, only the columns of its own table
+* **Queries:** `isIn` and `isNotIn` of a number, an enum or a string with no values are `FALSE` and `TRUE`, where they were `IN ()`, which is not valid SQL
+* **Queries:** A self join is an `INNER JOIN` of the table by an alias, where it was `SELF JOIN`, which is not valid SQL
+* **Queries:** A date predicate set directly is joined with `AND` to those of its parts (`year`, `month`, ...), which it discarded
+* **Queries:** An expression column is valid SQL in `getByKeys`, and is left out of a `RETURNING`, where it may name a join that is not in scope, as the select around it computes it
+* **Updates:** The rows of a `limit` are the first in the order of `orderBy`, which was ignored, so that other rows could be updated
+* **Updates:** An update on MySQL of a table without an id throws a `StateError` for an `offset`, which it cannot apply, where it was a syntax error
+* **Updates:** `compileForUpdate` leaves the values it is given as they are, is empty where it was a bare `SET` with only a null `created_at`, and throws an `ArgumentError` for a key that is not a plain column name, as a key of `MapQueryValues` was written into the SQL as given
+* **Deletes:** A `limit` and an `offset` apply, in the order of `orderBy`, where they were a syntax error on PostgreSQL, and on MySQL with both. An `orderBy` without a `limit` orders the rows returned
+* **Deletes:** A `groupBy` throws a `StateError` where it was a syntax error, as does an `offset` on MySQL of a table without an id
+* **Inserts:** An insert ignores the conditions, `limit` and `offset` of its query, where its row was filtered out on PostgreSQL, and its row was not selected on MySQL
+* **JSON:** A property `asInt` or `asDouble` is compared as a number, where `greaterThan` compared text, so that `10` was less than `5`, and `isBetween` and `isIn` were an error. A property that is no number matches no comparison
+* **JSON:** A property `asDateTime` is compared as a date, with a parameter of a valid name and the table name of the query, where its parameter was invalid
+* **JSON:** A property `asMap` or `asList` has predicates of its own, where they named the column twice, and `isIn` of a property `asString` has a parameter of a valid name
+* **JSON:** A `'` in the key of a property is escaped, where it was written into the SQL as given, so a key from a request could add SQL to a query
+* **Unions:** `get` and `getOne` load the relations of the rows with those of the left query, as `Query` does; `parseRows` of a `QueryBase` gives them. A value's name that is renamed is not replaced in a string literal or a quoted identifier
+* **Values:** `mapToBool` reads the strings `f` and `false`, in any case, as false
+* **Values:** `defaultDate`, and the `mapToDateTime` of a null, is 1970-01-01 in UTC as documented, where it was in the local time zone
+
 ## 10.0.2
 
 ### New in 10.0.2

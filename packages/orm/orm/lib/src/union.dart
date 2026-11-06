@@ -1,4 +1,6 @@
 import 'query_base.dart';
+import 'query_executor.dart';
+import 'util.dart';
 
 import 'package:optional/optional.dart';
 
@@ -53,14 +55,16 @@ class Union<T> extends QueryBase<T> {
         newName = '${name}_$n';
       }
       if (newName != name) {
-        r = r.replaceAll(
-          RegExp('@${RegExp.escape(name)}(?![A-Za-z0-9_])'),
-          '@$newName',
-        );
+        r = replacePlaceholders(r, {name: value}, (_, _) => '@$newName');
       }
       substitutionValues[newName] = value;
     });
 
     return '($l) $selector ($r)';
   }
+
+  /// The rows are those of [left], as [deserialize] takes them.
+  @override
+  Future<List<T>> parseRows(QueryExecutor executor, List<List> rows) =>
+      left.parseRows(executor, rows);
 }

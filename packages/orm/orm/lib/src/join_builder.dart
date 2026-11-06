@@ -63,7 +63,9 @@ class JoinBuilder {
     var left = '${from.tableName}.$key';
     var right = fieldName;
     switch (type) {
+      // SQL has no `SELF JOIN`: it is an `INNER JOIN` of the table, by an alias.
       case JoinType.inner:
+      case JoinType.self:
         b.write(' INNER JOIN');
         break;
       case JoinType.left:
@@ -74,9 +76,6 @@ class JoinBuilder {
         break;
       case JoinType.full:
         b.write(' FULL OUTER JOIN');
-        break;
-      case JoinType.self:
-        b.write(' SELF JOIN');
         break;
     }
 

@@ -34,13 +34,8 @@ abstract class QueryWhere {
       if (!builder.hasValue) continue;
       var key = builder.columnName;
       if (tableName != null) key = '$tableName.$key';
-      if (builder is JsonSqlExpressionBuilder) {
-        conditions.add(builder.compileFor(key));
-      } else if (builder is DateTimeSqlExpressionBuilder) {
-        conditions.add(builder.compileFor(key) ?? '');
-      } else {
-        conditions.add('$key ${builder.compile()}');
-      }
+      var predicate = builder.compileFor(key);
+      if (predicate != null) conditions.add(predicate);
     }
 
     for (var raw in _raw) {

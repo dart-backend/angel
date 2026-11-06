@@ -2,6 +2,28 @@ import 'package:angel3_orm/angel3_orm.dart';
 import 'package:test/test.dart';
 
 void main() {
+  group('mapToBool', () {
+    test('reads the strings of a false boolean as false', () {
+      for (var value in ['0', 'f', 'F', 'false', 'FALSE']) {
+        expect(mapToBool(value), isFalse, reason: value);
+      }
+    });
+
+    test('reads anything else as before', () {
+      for (var value in ['1', 't', 'true', 1, true]) {
+        expect(mapToBool(value), isTrue, reason: '$value');
+      }
+      for (var value in [0, false, null]) {
+        expect(mapToBool(value), isFalse, reason: '$value');
+      }
+    });
+  });
+
+  test('defaultDate is the start of 1970 in UTC', () {
+    expect(defaultDate.isUtc, isTrue);
+    expect(defaultDate.millisecondsSinceEpoch, 0);
+  });
+
   group('replacePlaceholders', () {
     String positional(String sql, Map<String, dynamic> values) {
       var params = [];
