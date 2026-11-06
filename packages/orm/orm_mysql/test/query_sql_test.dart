@@ -68,6 +68,58 @@ void main() {
       expect(await descriptions(), ['a', 'c']);
     });
 
+    test('of an inner join deletes only the rows it returns', () async {
+      await (FruitQuery()..values.commonName = 'c').insert(executor);
+      var deleted =
+          await (CarQuery()
+                ..join('fruits', 'description', 'common_name')
+                ..limit(1))
+              .delete(executor);
+      expect(deleted.map((c) => c.description), ['c']);
+      expect(await descriptions(), ['a', 'b']);
+    });
+
+    test('of an inner join, without a limit, too', () async {
+      await (FruitQuery()..values.commonName = 'b').insert(executor);
+      var deleted =
+          await (CarQuery()..join('fruits', 'description', 'common_name'))
+              .delete(executor);
+      expect(deleted.map((c) => c.description), ['b']);
+      expect(await descriptions(), ['a', 'c']);
+    });
+
+    test('of a left join that repeats a row deletes it once', () async {
+      for (var i = 0; i < 2; i++) {
+        await (FruitQuery()..values.commonName = 'b').insert(executor);
+      }
+      var deleted =
+          await (CarQuery()
+                ..where!.description.equals('b')
+                ..leftJoin('fruits', 'description', 'common_name'))
+              .delete(executor);
+      expect(deleted, isNotEmpty);
+      expect(await descriptions(), ['a', 'c']);
+    });
+
+    test('of a relation, with a limit, returns the row it deletes', () async {
+      for (var rings in [1, 2]) {
+        var tree = await (TreeQuery()..values.rings = rings).insert(executor);
+        await (FruitQuery()
+              ..values.treeId = int.parse(tree.value.id!)
+              ..values.commonName = 'fig$rings')
+            .insert(executor);
+      }
+      var deleted =
+          await (TreeQuery()
+                ..orderBy('rings', descending: true)
+                ..limit(1))
+              .delete(executor);
+      expect(deleted.single.rings, 2);
+      expect(deleted.single.fruits.map((f) => f.commonName), ['fig2']);
+      var left = await TreeQuery().get(executor);
+      expect(left.map((t) => t.rings), [1]);
+    });
+
     test('with an order and no limit returns every row in order', () async {
       var deleted = await (CarQuery()..orderBy('description', descending: true))
           .delete(executor);

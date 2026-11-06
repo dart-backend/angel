@@ -24,6 +24,7 @@ class _Executor extends QueryExecutor {
   final List<List> rows;
   final queries = <String>[];
   final returningQueries = <String>[];
+  final values = <Map<String, dynamic>>[];
 
   @override
   Future<List<List>> query(
@@ -36,6 +37,7 @@ class _Executor extends QueryExecutor {
   }) async {
     queries.add(query);
     returningQueries.add(returningQuery);
+    values.add(substitutionValues);
     return query.startsWith('SELECT') || query.startsWith('(') ? rows : [];
   }
 
@@ -237,20 +239,85 @@ void main() {
       expect(executor.queries[1], 'DELETE FROM employees');
     });
 
-    test('on MySQL without an id has a limit, but no offset', () async {
-      var executor = _Executor(const MySQLDialect());
-      var q = _NoIdQuery()
-        ..orderBy('salary')
-        ..limit(1);
-      await q.delete(executor);
+    test('on PostgreSQL of a join deletes the rows it selected, by id, and '
+        'gives only the values it uses', () async {
+      var executor = _Executor(const PostgreSQLDialect(), rows: [_row]);
+      query.join('companies', 'company_id', 'id');
+      expect(await query.delete(executor), hasLength(1));
+      expect(executor.queries, hasLength(2));
+      expect(executor.queries[0], startsWith('SELECT '));
+      expect(executor.queries[1], 'DELETE FROM employees WHERE id IN (3)');
+      expect(executor.values[1], isEmpty);
+    });
+
+    test('of a relation deletes the rows it selected, by id', () async {
+      var executor = _Executor(const PostgreSQLDialect(), rows: [_row]);
+      var q = _RelationsQuery()..limit(1);
+      expect((await q.delete(executor)).single.lastName, 'loaded');
+      expect(executor.queries[1], 'DELETE FROM employees WHERE id IN (3)');
+    });
+
+    test('of a join, without a limit, is by id too', () async {
+      var executor = _Executor(const MySQLDialect(), rows: [_row]);
+      await (EmployeeQuery()..join('companies', 'company_id', 'id')).delete(
+        executor,
+      );
+      expect(executor.queries[1], 'DELETE FROM employees WHERE id IN (3)');
+    });
+
+    test('binds an id that is not an int, and deletes each once', () async {
+      var row = ['a-uuid', ..._row.skip(1)];
+      var executor = _Executor(const MySQLDialect(), rows: [row, row]);
+      await (EmployeeQuery()..limit(2)).delete(executor);
       expect(
         executor.queries[1],
-        'DELETE FROM employees ORDER BY salary ASC LIMIT 1',
+        'DELETE FROM employees WHERE id IN (@id_key0)',
       );
-      expect(
-        (q..offset(1)).delete(_Executor(const MySQLDialect())),
-        throwsStateError,
+      expect(executor.values[1], {'id_key0': 'a-uuid'});
+    });
+
+    test('deletes many ids in parts', () async {
+      var executor = _Executor(
+        const MySQLDialect(),
+        rows: [
+          for (var i = 1; i <= 1500; i++) [i, ..._row.skip(1)],
+        ],
       );
+      await (EmployeeQuery()..limit(1500)).delete(executor);
+      expect(executor.queries, hasLength(3));
+    });
+
+    group('of a query that selects no id', () {
+      test('on PostgreSQL has a limit, in one statement', () async {
+        var executor = _Executor(const PostgreSQLDialect());
+        await (_NoIdQuery()..limit(1)).delete(executor);
+        expect(executor.queries.single, startsWith('WITH '));
+      });
+
+      test('on MySQL has no limit or offset', () {
+        for (var q in [_NoIdQuery()..limit(1), _NoIdQuery()..offset(1)]) {
+          expect(q.delete(_Executor(const MySQLDialect())), throwsStateError);
+        }
+      });
+
+      test('has no join that can leave a row out', () {
+        for (var dialect in const [PostgreSQLDialect(), MySQLDialect()]) {
+          var q = _NoIdQuery()..join('companies', 'company_id', 'id');
+          expect(q.delete(_Executor(dialect)), throwsStateError);
+        }
+      });
+
+      test('has a left join, by its conditions', () async {
+        var executor = _Executor(const PostgreSQLDialect());
+        var q = _NoIdQuery()..leftJoin('companies', 'company_id', 'id');
+        q.where!.lastName.equals('x');
+        await q.delete(executor);
+        expect(
+          executor.queries[1],
+          'DELETE FROM employees WHERE employees.last_name = @last_name',
+        );
+        expect(executor.values[1], {'last_name': 'x'});
+      });
     });
 
     test('with a GROUP BY is an error, on either database', () {
@@ -291,23 +358,14 @@ void main() {
     });
 
     test(
-      'on MySQL without an id has a limit in order, but no offset',
+      'on MySQL without an id has no limit or offset, updating no row',
       () async {
-        var q = _NoIdQuery()
-          ..values.lastName = 'new'
-          ..orderBy('salary')
-          ..limit(1);
-        var executor = _Executor(const MySQLDialect());
-        await q.update(executor);
-        expect(
-          executor.queries.last,
-          'UPDATE employees SET last_name=@last_name '
-          'ORDER BY salary ASC LIMIT 1',
-        );
-        expect(
-          (q..offset(1)).update(_Executor(const MySQLDialect())),
-          throwsStateError,
-        );
+        for (var q in [_NoIdQuery()..limit(1), _NoIdQuery()..offset(1)]) {
+          q.values.lastName = 'new';
+          var executor = _Executor(const MySQLDialect());
+          await expectLater(q.update(executor), throwsStateError);
+          expect(executor.queries, isEmpty);
+        }
       },
     );
   });

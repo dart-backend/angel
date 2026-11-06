@@ -4,12 +4,12 @@
 
 ### Breaking changes in 10.0.3
 
-* **Breaking:** `groupBy`, `crossJoin`, `join`, `leftJoin`, `rightJoin`, `fullOuterJoin` and `selfJoin` throw an `ArgumentError` for a name that is not an identifier, which may be quoted (`"order"`, `` `order` ``) and qualified (`table.column`), as `orderBy` does when compiled, where it was written into the SQL as given, so a value from a request could add SQL to a query. This covers table names, keys, aliases and `additionalFields`; `groupBy` also accepts several columns separated by commas. An expression, or SQL given as a table name, is no longer accepted, nor a backslash or a quote of its own kind in a quoted name: join a `Query` in place of a subquery
+* **Breaking:** `groupBy`, `crossJoin`, `join`, `leftJoin`, `rightJoin`, `fullOuterJoin` and `selfJoin` throw an `ArgumentError` for a name that is not an identifier, which may be quoted (`"order"`, `` `order` ``) and qualified (`table.column`), as `orderBy` does when compiled, where it was written into the SQL as given, so a value from a request could add SQL to a query. This covers table names, keys, aliases and `additionalFields`; `groupBy` also accepts several columns separated by commas. An expression, or SQL given as a table name, is no longer accepted, and a quoted name has only letters, digits, `_` and `$`: join a `Query` in place of a subquery
 * **Breaking:** The `op` of a join must be one of `=`, `!=`, `<>`, `<`, `<=`, `>` and `>=`
 
 ### New in 10.0.3
 
-* **Queries:** `orderBy` accepts a quoted name, as a reserved word must be
+* **Queries:** `orderBy` accepts a quoted name, as a reserved word must be. Use the quote of the database: on MySQL and MariaDB, by default, `"order"` is a string, so sorting or grouping by it does nothing
 
 ### Fixes in 10.0.3
 
@@ -19,10 +19,11 @@
 * **Queries:** A date predicate set directly is joined with `AND` to those of its parts (`year`, `month`, ...), which it discarded
 * **Queries:** An expression column is valid SQL in `getByKeys`, and is left out of a `RETURNING`, where it may name a join that is not in scope, as the select around it computes it
 * **Updates:** The rows of a `limit` are the first in the order of `orderBy`, which was ignored, so that other rows could be updated
-* **Updates:** An update on MySQL of a table without an id throws a `StateError` for an `offset`, which it cannot apply, where it was a syntax error
+* **Updates:** An update on MySQL of a query that selects no id throws a `StateError` for a `limit` or an `offset`, as it could not tell the rows it selected, where a `limit` could update other rows than those it returned, and an `offset` was a syntax error
 * **Updates:** `compileForUpdate` leaves the values it is given as they are, is empty where it was a bare `SET` with only a null `created_at`, and throws an `ArgumentError` for a key that is not a plain column name, as a key of `MapQueryValues` was written into the SQL as given
 * **Deletes:** A `limit` and an `offset` apply, in the order of `orderBy`, where they were a syntax error on PostgreSQL, and on MySQL with both. An `orderBy` without a `limit` orders the rows returned
-* **Deletes:** A `groupBy` throws a `StateError` where it was a syntax error, as does an `offset` on MySQL of a table without an id
+* **Deletes:** The rows returned are those deleted. A delete of a query with a join or a `limit`, which it selects first, deletes the rows it selected by id, where an `INNER JOIN` left rows out of those returned but not of those deleted
+* **Deletes:** A `groupBy` throws a `StateError` where it was a syntax error. So does a delete of a query that selects no id with a `limit` or an `offset` on MySQL, or on PostgreSQL with a join or a relation, or with a join other than a `LEFT JOIN`, as it could not tell the rows it selected
 * **Inserts:** An insert ignores the conditions, `limit` and `offset` of its query, where its row was filtered out on PostgreSQL, and its row was not selected on MySQL
 * **JSON:** A property `asInt` or `asDouble` is compared as a number, where `greaterThan` compared text, so that `10` was less than `5`, and `isBetween` and `isIn` were an error. A property that is no number matches no comparison
 * **JSON:** A property `asDateTime` is compared as a date, with a parameter of a valid name and the table name of the query, where its parameter was invalid

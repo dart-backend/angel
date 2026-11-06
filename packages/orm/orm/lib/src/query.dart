@@ -683,9 +683,13 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
   /// Deletes the rows that match [where] (at most [limit] of them, after
   /// [offset], in the order of [orderBy]), and returns them.
   ///
+  /// The rows returned are those deleted: where a delete selects them first,
+  /// it deletes the rows it selected.
+  ///
   /// Throws a [StateError] for a [groupBy], which a delete cannot have, and
-  /// for an [offset] on MySQL or MariaDB of a table without an id, as the
-  /// rows after it cannot be picked.
+  /// where it cannot tell the rows it selected, as the query selects no id:
+  /// for a [limit] or an [offset] on MySQL or MariaDB, or on PostgreSQL with
+  /// a join or a relation, and for a join that can leave a row out.
   Future<List<T>> delete(QueryExecutor executor) async {
     if (_groupBy != null) {
       throw StateError('A delete cannot have a GROUP BY.');
@@ -695,7 +699,10 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
     var conditions = whereClause.isEmpty ? '' : ' WHERE $whereClause';
     var limits = _limits;
 
-    if (executor.dialect is PostgreSQLDialect) {
+    // One statement, of which RETURNING gives exactly the rows deleted.
+    if (executor.dialect is PostgreSQLDialect &&
+        _joins.isEmpty &&
+        !loadsRelations) {
       // PostgreSQL has no DELETE ... LIMIT: the rows are picked by ctid.
       var rows = limits.isEmpty
           ? conditions
@@ -708,48 +715,78 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
           'RETURNING $_returning) $select';
       _log.fine(() => "Delete Query = $sql");
       logValues(_log, substitutionValues);
+      var deleted = await executor.query(tableName, sql, substitutionValues);
+      return deserializeList(deleted);
+    }
 
-      if (_joins.isEmpty && !loadsRelations) {
-        // [sql] has its RETURNING, in its WITH clause.
-        var deleted = await executor.query(tableName, sql, substitutionValues);
-        return deserializeList(deleted);
+    // The rows are selected first, in a transaction, as MySQL has no RETURNING
+    // and relations may be deleted with them. A limit or a join decides which
+    // rows those are, as the conditions alone do not: they are deleted by id.
+    var byId = limits.isNotEmpty || _joins.isNotEmpty;
+    if (byId && !fields.contains('id')) {
+      if (limits.isNotEmpty || _joins.any((j) => j.type != JoinType.left)) {
+        throw StateError(
+          'A delete of a query that does not select an id cannot have a '
+          'LIMIT, an OFFSET or a join that leaves rows out, as it could not '
+          'tell which rows it selected.',
+        );
       }
-      // Its relations are loaded before it is deleted, as they may be with it.
-      return executor.transaction((tx) async {
-        var existing = await get(tx);
-        await tx.query(tableName, sql, substitutionValues);
-        return existing;
-      });
+      // A LEFT JOIN leaves no row out: the conditions decide.
+      byId = false;
     }
 
-    var byId = limits.isNotEmpty && fields.contains('id');
-    if (limits.isNotEmpty && !byId && _offset != null) {
-      throw StateError(
-        'A delete of a table without an id cannot have an '
-        'OFFSET on this database.',
-      );
-    }
-
-    // MySQL has no RETURNING: the rows are selected first, in a transaction.
-    // Its relations are loaded before it is deleted, as they may be with it.
     return executor.transaction((tx) async {
       // TODO: Can this be done with just *one* query?
       var rows = await tx.query(tableName, compile({}), substitutionValues);
       var existing = await _withRelations(tx, rows);
-      if (byId && rows.isEmpty) return existing;
-
-      // Those rows, by id, as MySQL has no DELETE ... OFFSET.
-      var sql = byId
-          ? 'DELETE FROM $tableName WHERE id IN '
-                '(${_idList(rows.map((row) => valueOf('id', row)))})'
-          : limits.isEmpty
-          ? 'DELETE FROM $tableName$conditions'
-          : 'DELETE FROM $tableName$conditions$_orderByClause$limits';
-      _log.fine(() => "Delete Query = $sql");
-      logValues(_log, substitutionValues);
-      await tx.query(tableName, sql, substitutionValues);
+      if (byId) {
+        await _deleteByIds(tx, rows.map((row) => valueOf('id', row)));
+      } else {
+        var sql = 'DELETE FROM $tableName$conditions';
+        _log.fine(() => "Delete Query = $sql");
+        logValues(_log, substitutionValues);
+        await tx.query(tableName, sql, _valuesUsedBy(sql));
+      }
       return existing;
     });
+  }
+
+  /// Deletes the rows of [ids], in parts, as a database binds a limited number
+  /// of parameters. A join may give the id of a row more than once.
+  Future<void> _deleteByIds(
+    QueryExecutor executor,
+    Iterable<Object?> ids,
+  ) async {
+    var distinct = ids.where((id) => id != null).toSet().toList();
+    for (var start = 0; start < distinct.length; start += _keysPerQuery) {
+      var values = <String, dynamic>{};
+      var list = [
+        for (var id in distinct.skip(start).take(_keysPerQuery))
+          if (id is int) '$id' else '@${_bindKey(values, id)}',
+      ].join(', ');
+      var sql = 'DELETE FROM $tableName WHERE id IN ($list)';
+      _log.fine(() => "Delete Query = $sql");
+      logValues(_log, values);
+      await executor.query(tableName, sql, values);
+    }
+  }
+
+  /// Binds [key] in [values], and returns the name of its parameter.
+  String _bindKey(Map<String, dynamic> values, Object? key) {
+    var name = 'id_key${values.length}';
+    values[name] = key;
+    return name;
+  }
+
+  /// The substitution values that [sql] uses: PostgreSQL's driver rejects any
+  /// other, such as of conditions that it leaves out.
+  Map<String, dynamic> _valuesUsedBy(String sql) {
+    var used = <String, dynamic>{};
+    replacePlaceholders(sql, substitutionValues, (name, value) {
+      used[name] = value;
+      return '';
+    });
+    return used;
   }
 
   Future<Optional<T>> deleteOne(QueryExecutor executor) {
@@ -825,22 +862,14 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
       _log.fine(() => "Insert Query = $sql");
       logValues(_log, substitutionValues);
 
-      // Only those it uses: PostgreSQL's driver rejects any other, such as of
-      // the conditions of the query. MySQL's returning query uses them too.
-      var boundValues = substitutionValues;
-      if (executor.dialect is PostgreSQLDialect) {
-        boundValues = {};
-        replacePlaceholders(sql, substitutionValues, (name, value) {
-          boundValues[name] = value;
-          return '';
-        });
-      }
-
       return executor
           .query(
             tableName,
             sql,
-            boundValues,
+            // All on MySQL, whose returning query uses them too.
+            executor.dialect is PostgreSQLDialect
+                ? _valuesUsedBy(sql)
+                : substitutionValues,
             returningQuery: returningSql,
             // Not on PostgreSQL, whose insert has its RETURNING already.
             returningFields: executor.dialect is PostgreSQLDialect
@@ -856,6 +885,9 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
 
   /// Updates the rows that match [where] (at most [limit] of them, after
   /// [offset]) with [values], and returns them as updated.
+  ///
+  /// Throws a [StateError] for a [limit] or an [offset] on MySQL or MariaDB of
+  /// a query that selects no id, as it could not tell the rows it selected.
   Future<List<T>> update(QueryExecutor executor) async {
     var valuesClause = values?.compileForUpdate(this);
     if (valuesClause == null || valuesClause == '') {
@@ -891,18 +923,21 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
     }
 
     if (!fields.contains('id')) {
-      // MySQL has no UPDATE ... OFFSET, and no key to pick the rows after it.
-      if (_offset != null) {
+      // Nothing tells the rows it selected, so that a separate UPDATE ... LIMIT
+      // could update other rows than those it returned, and MySQL has no
+      // UPDATE ... OFFSET.
+      if (limits.isNotEmpty) {
         throw StateError(
-          'An update of a table without an id cannot have an '
-          'OFFSET on this database.',
+          'An update of a query that does not select an id cannot have a '
+          'LIMIT or an OFFSET on this database, as it could not tell which '
+          'rows it selected.',
         );
       }
       // Without a primary key, the rows that match are selected first, in a
       // transaction, and returned with the values they are updated to, as
       // their new values may no longer match the conditions.
       var select = compile({});
-      var sql = 'UPDATE $tableName $valuesClause$conditions$picked';
+      var sql = 'UPDATE $tableName $valuesClause$conditions';
       _log.fine(() => "Update Query = $sql");
       logValues(_log, substitutionValues);
       return executor.transaction((tx) async {

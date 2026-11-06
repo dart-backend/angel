@@ -501,6 +501,13 @@ void main() {
         '"a\nb"',
         '"a".',
         '"a"b',
+        // What a backtick encloses is SQL on PostgreSQL, where it is an operator.
+        '`x, (SELECT secret FROM users) -- `',
+        '"x, (SELECT secret FROM users) -- "',
+        '`a b`',
+        '"a;b"',
+        "`a'b`",
+        '`a--`',
       ]) {
         expect(() => query.crossJoin(name), throwsArgumentError, reason: name);
       }
