@@ -71,6 +71,49 @@ void main() {
       );
     });
 
+    group('without backslash escapes, as for PostgreSQL', () {
+      String names(String sql, Map<String, dynamic> values) {
+        var names = [];
+        replacePlaceholders(sql, values, (name, _) {
+          names.add(name);
+          return '?';
+        }, backslashEscapes: false);
+        return names.join(',');
+      }
+
+      test('a backslash does not hide the end of a string', () {
+        var sql = r"x = 'a\' AND y = @b AND z = 'c'";
+        expect(names(sql, {'b': 1}), 'b');
+      });
+
+      test('a backslash escapes in an escape string', () {
+        expect(names(r"x = E'a\' @b' AND y = @c", {'b': 1, 'c': 2}), 'c');
+        expect(names(r"x = E'a\\' AND y = @c AND z = 'd'", {'c': 2}), 'c');
+      });
+
+      test('a name ending in e is no escape string', () {
+        expect(names(r"type'a\' = @b", {'b': 1}), 'b');
+      });
+
+      test('a quote is doubled', () {
+        expect(names("x = 'it''s @b' AND y = @c", {'b': 1, 'c': 2}), 'c');
+      });
+
+      test('a backtick is no quote', () {
+        expect(names('x ` @b `', {'b': 1}), 'b');
+      });
+    });
+
+    test('with backslash escapes, a backslash hides a quote', () {
+      var values = {'b': 1};
+      var names = [];
+      replacePlaceholders(r"x = 'a\' @b' AND c = @b", values, (name, _) {
+        names.add(name);
+        return '?';
+      });
+      expect(names, ['b']);
+    });
+
     test('passes the name to replace', () {
       var sql = replacePlaceholders('@a, @b', {
         'a': 1,

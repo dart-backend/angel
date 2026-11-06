@@ -96,7 +96,7 @@ abstract class QueryValues {
 
   /// The `SET` clause of an update, or an empty string if it has no values.
   ///
-  /// Throws an [ArgumentError] for a key that is no column name, as a
+  /// Throws an [ArgumentError] for a key that is no plain column name, as a
   /// key is written into the SQL. Unlike an insert, a key not in the fields
   /// of [query] is kept, as they are those it selects.
   String compileForUpdate(Query query) {
@@ -113,7 +113,7 @@ abstract class QueryValues {
       return '';
     }
     for (var key in data.keys) {
-      checkIdentifier(key, 'key', 'column');
+      checkPlainName(key, 'key', 'column');
     }
     if (data.containsKey('updated_at') && data['updated_at'] == null) {
       data['updated_at'] = now;

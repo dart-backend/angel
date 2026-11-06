@@ -67,6 +67,30 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
     return ' ORDER BY ${_orderBy.map((order) => order.compile()).join(', ')}';
   }
 
+  /// The `ORDER BY` clause of [_selectOf], with a leading space, if it has one:
+  /// with the SQL of an expression, as it selects no alias of it.
+  String get _orderByOfRows {
+    if (_orderBy.isEmpty) return '';
+    var orders = [
+      for (var order in _orderBy)
+        if (expressions[order.key] case var expression?)
+          '($expression) ${order.descending ? 'DESC' : 'ASC'}'
+        else
+          order.compile(),
+    ];
+    return ' ORDER BY ${orders.join(', ')}';
+  }
+
+  /// A select of [columns] of this table, of the rows a [limit] picks: with
+  /// the joins, conditions and order of this query, as in [compile], by which
+  /// an order may name a join.
+  String _selectOf(List<String> columns) => _compile(
+    {},
+    selecting: columns
+        .map((column) => _joins.isEmpty ? column : '$tableName.$column')
+        .join(', '),
+  );
+
   /// The `LIMIT` and `OFFSET` clauses, with a leading space, if it has them.
   String get _limits => [
     if (_limit != null) ' LIMIT $_limit',
@@ -336,11 +360,13 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
     if (tableName is String) {
       checkIdentifier(tableName, 'tableName', 'JOIN table');
     }
-    checkIdentifier(localKey, 'localKey', 'JOIN column');
-    checkIdentifier(foreignKey, 'foreignKey', 'JOIN column');
-    if (alias != null) checkIdentifier(alias, 'alias', 'JOIN alias');
+    checkName(localKey, 'localKey', 'JOIN column');
+    // The columns of a query joined are named after its alias (`a0_name`).
+    var checkJoined = tableName is Query ? checkPlainName : checkName;
+    checkJoined(foreignKey, 'foreignKey', 'JOIN column');
+    if (alias != null) checkJoined(alias, 'alias', 'JOIN alias');
     for (var field in additionalFields) {
-      checkIdentifier(field, 'additionalFields', 'JOIN column');
+      checkJoined(field, 'additionalFields', 'JOIN column');
     }
     if (!_joinOperators.contains(op)) {
       throw ArgumentError.value(
@@ -544,6 +570,7 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
     bool withFields = true,
     String? fromQuery,
     String? rowsWhere,
+    String? selecting,
   }) {
     // One table MAY appear multiple times in a query.
     if (!canCompile(trampoline)) {
@@ -617,7 +644,7 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
       }
     }
     if (withFields) {
-      b.write(f.join(', '));
+      b.write(selecting ?? f.join(', '));
     }
     var whereClause =
         rowsWhere ??
@@ -645,8 +672,10 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
     if (whereClause?.isNotEmpty == true) {
       b.write(' WHERE $whereClause');
     }
-    if (_groupBy != null) b.write(' GROUP BY $_groupBy');
-    b.write(_orderByClause);
+    if (_groupBy != null && selecting == null) {
+      b.write(' GROUP BY $_groupBy');
+    }
+    b.write(selecting == null ? _orderByClause : _orderByOfRows);
     b.write(limits);
     return b.toString();
   }
@@ -703,11 +732,11 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
     if (executor.dialect is PostgreSQLDialect &&
         _joins.isEmpty &&
         !loadsRelations) {
-      // PostgreSQL has no DELETE ... LIMIT: the rows are picked by ctid.
+      // PostgreSQL has no DELETE ... LIMIT: the rows are picked by ctid, and
+      // the table of each, as a ctid is unique only within a partition.
       var rows = limits.isEmpty
           ? conditions
-          : ' WHERE ctid IN (SELECT ctid FROM $tableName$conditions'
-                '$_orderByClause$limits)';
+          : ' WHERE (tableoid, ctid) IN (${_selectOf(['tableoid', 'ctid'])})';
       // The deleted rows, as RETURNING gives them: not limited again.
       var select = _compile({}, rowsWhere: '');
       var sql =
@@ -745,7 +774,7 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
         var sql = 'DELETE FROM $tableName$conditions';
         _log.fine(() => "Delete Query = $sql");
         logValues(_log, substitutionValues);
-        await tx.query(tableName, sql, _valuesUsedBy(sql));
+        await tx.query(tableName, sql, substitutionValues);
       }
       return existing;
     });
@@ -776,17 +805,6 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
     var name = 'id_key${values.length}';
     values[name] = key;
     return name;
-  }
-
-  /// The substitution values that [sql] uses: PostgreSQL's driver rejects any
-  /// other, such as of conditions that it leaves out.
-  Map<String, dynamic> _valuesUsedBy(String sql) {
-    var used = <String, dynamic>{};
-    replacePlaceholders(sql, substitutionValues, (name, value) {
-      used[name] = value;
-      return '';
-    });
-    return used;
   }
 
   Future<Optional<T>> deleteOne(QueryExecutor executor) {
@@ -866,10 +884,7 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
           .query(
             tableName,
             sql,
-            // All on MySQL, whose returning query uses them too.
-            executor.dialect is PostgreSQLDialect
-                ? _valuesUsedBy(sql)
-                : substitutionValues,
+            substitutionValues,
             returningQuery: returningSql,
             // Not on PostgreSQL, whose insert has its RETURNING already.
             returningFields: executor.dialect is PostgreSQLDialect
@@ -896,14 +911,13 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
     var whereClause = where?.compile() ?? '';
     var conditions = whereClause.isEmpty ? '' : ' WHERE $whereClause';
     var limits = _limits;
-    // The rows of a limit are the first in the order given.
-    var picked = limits.isEmpty ? '' : '$_orderByClause$limits';
 
     if (executor.dialect is PostgreSQLDialect) {
-      // PostgreSQL has no UPDATE ... LIMIT: the rows are picked by ctid.
+      // PostgreSQL has no UPDATE ... LIMIT: the rows are picked by ctid, and
+      // the table of each, as a ctid is unique only within a partition.
       var rows = limits.isEmpty
           ? conditions
-          : ' WHERE ctid IN (SELECT ctid FROM $tableName$conditions$picked)';
+          : ' WHERE (tableoid, ctid) IN (${_selectOf(['tableoid', 'ctid'])})';
       // The updated rows, as RETURNING gives them: not filtered by the
       // conditions again, which their new values may no longer match.
       var select = _compile({}, rowsWhere: '');
@@ -957,7 +971,9 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
     // exactly those, by id.
     var found = await executor.query(
       tableName,
-      'SELECT id FROM $tableName$conditions$picked',
+      limits.isEmpty
+          ? 'SELECT id FROM $tableName$conditions'
+          : _selectOf(['id']),
       substitutionValues,
     );
     if (found.isEmpty) return [];

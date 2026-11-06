@@ -9,6 +9,18 @@ import 'logging.dart';
 import 'parameters.dart';
 
 /// A [QueryExecutor] that queries a PostgreSQL database.
+/// The values of [values] that [sql] uses, as the driver rejects any other,
+/// such as of a predicate that was replaced, or of conditions an insert leaves
+/// out.
+Map<String, dynamic> _valuesUsedBy(String sql, Map<String, dynamic> values) {
+  var used = <String, dynamic>{};
+  replacePlaceholders(sql, values, (name, value) {
+    used[name] = value;
+    return '';
+  }, backslashEscapes: false);
+  return used;
+}
+
 class PostgreSqlExecutor extends QueryExecutor {
   final Dialect _dialect = const PostgreSQLDialect();
 
@@ -86,7 +98,7 @@ class PostgreSqlExecutor extends QueryExecutor {
     // In debug mode only, as they may be passwords or personal data.
     logValues(logger, substitutionValues);
 
-    var param = encodeParameters(substitutionValues);
+    var param = encodeParameters(_valuesUsedBy(query, substitutionValues));
 
     // The session the query runs on, which another query may replace: a
     // connection that broke, as during an earlier query, is replaced first.

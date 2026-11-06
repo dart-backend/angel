@@ -103,9 +103,24 @@ final RegExp _placeholder = RegExp(
   unicode: true,
 );
 
+/// [_placeholder], for the SQL of PostgreSQL: a backslash is a character like
+/// any other, but in an escape string (`E'...'`), and a backtick is no quote.
+final RegExp _postgresPlaceholder = RegExp(
+  r"(?<![\p{L}\p{N}_$])[eE]'(?:[^'\\]|\\.|'')*'|"
+  r"'(?:[^']|'')*'|"
+  r'"(?:[^"]|"")*"|'
+  r'@@[\p{L}\p{N}_$.]+|'
+  r'@([\p{L}\p{N}_]+)',
+  unicode: true,
+  dotAll: true,
+);
+
 /// Replaces each `@name` placeholder in [sql] that has a value in [values]
 /// with what [replace] returns for its name and value, called in the order
 /// the placeholders appear.
+///
+/// A backslash in a string literal escapes the next character, as on MySQL and
+/// MariaDB, unless [backslashEscapes] is `false`, as for PostgreSQL.
 ///
 /// Names are matched whole, so `@name` does not replace part of `@name1`. A
 /// placeholder with no value (e.g. a MySQL user variable) is left as it is,
@@ -116,9 +131,11 @@ final RegExp _placeholder = RegExp(
 String replacePlaceholders(
   String sql,
   Map<String, dynamic> values,
-  String Function(String name, dynamic value) replace,
-) {
-  return sql.replaceAllMapped(_placeholder, (m) {
+  String Function(String name, dynamic value) replace, {
+  bool backslashEscapes = true,
+}) {
+  var placeholder = backslashEscapes ? _placeholder : _postgresPlaceholder;
+  return sql.replaceAllMapped(placeholder, (m) {
     var name = m[1];
     if (name == null || !values.containsKey(name)) return m[0]!;
     return replace(name, values[name]);

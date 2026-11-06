@@ -423,7 +423,7 @@ void main() {
         expect(
           sql,
           contains(
-            'WHERE ctid IN (SELECT ctid FROM employees '
+            'WHERE (tableoid, ctid) IN (SELECT tableoid, ctid FROM employees '
             'WHERE last_name = @last_name LIMIT 2) RETURNING ',
           ),
         );

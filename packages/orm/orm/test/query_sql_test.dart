@@ -148,10 +148,56 @@ void main() {
       expect(query.substitutionValues, {'prop_in_value': 'x'});
     });
 
+    test('with a backslash in its key is an escape string', () {
+      json.data[r"a\'b"].isNotNull;
+      expect(json.compile(), r"data::jsonb->>E'a\\''b' IS NOT NULL");
+    });
+
+    test('with a backslash keeps the placeholders after it apart', () {
+      // A second key gives a later quote to take as the end of the first.
+      json.data[r'a\'].asString!.equals('x');
+      json.data['b'].asString!.equals('y');
+      var names = <String>[];
+      replacePlaceholders(json.compile(), query.substitutionValues, (name, _) {
+        names.add(name);
+        return '?';
+      });
+      expect(names, ['prop', 'prop1']);
+    });
+
+    test('with a backslash is renamed in a union', () {
+      var right = EmployeeQuery();
+      var rightJson = _JsonWhere(right);
+      rightJson.data[r'a\'].asString!.equals('x');
+      rightJson.data['b'].asString!.equals('y');
+      right.where!.raw(rightJson.compile());
+      var left = EmployeeQuery()..where!.firstName.equals('z');
+      left.substitutionValues['prop'] = 'left';
+      var sql = left.union(right).compile({});
+      expect(sql, contains('= @prop_1'));
+      expect(sql, isNot(contains('= @prop ')));
+    });
+
     test("has a ' in its key escaped", () {
       json.data["x' OR '1'='1"].isNotNull;
       expect(json.compile(), "data::jsonb->>'x'' OR ''1''=''1' IS NOT NULL");
     });
+  });
+
+  test('isIn and isNotIn of no values on a part of a date', () {
+    query.where!.createdAt
+      ..year.isIn(const [])
+      ..second.isNotIn(const []);
+    expect(query.where!.compile(), 'FALSE AND TRUE');
+    query = EmployeeQuery();
+    query.where!.createdAt
+      ..year.isIn(const [2020])
+      ..second.equals(5);
+    expect(
+      query.where!.compile(tableName: 'e'),
+      'EXTRACT(YEAR FROM e.created_at) IN (2020) AND '
+      'FLOOR(EXTRACT(SECOND FROM e.created_at)) = 5',
+    );
   });
 
   test('a date predicate is joined with those of its parts', () {
@@ -208,8 +254,8 @@ void main() {
       expect(
         sql,
         startsWith(
-          'WITH employees as (DELETE FROM employees WHERE ctid IN '
-          '(SELECT ctid FROM employees WHERE last_name = @last_name '
+          'WITH employees as (DELETE FROM employees WHERE (tableoid, ctid) IN '
+          '(SELECT tableoid, ctid FROM employees WHERE last_name = @last_name '
           'ORDER BY salary DESC LIMIT 1 OFFSET 2) RETURNING ',
         ),
       );
@@ -336,13 +382,60 @@ void main() {
         ..limit(1);
     });
 
+    test('picks the rows with the joins of the query', () async {
+      var executor = _Executor(const PostgreSQLDialect());
+      var q = EmployeeQuery()
+        ..values.lastName = 'new'
+        ..join('companies', 'company_id', 'id', alias: 'c')
+        ..orderBy('c.name')
+        ..limit(1);
+      await q.update(executor);
+      expect(
+        executor.queries.single,
+        contains(
+          'WHERE (tableoid, ctid) IN (SELECT employees.tableoid, '
+          'employees.ctid FROM employees  INNER JOIN companies c ON '
+          'employees.company_id=c.id ORDER BY c.name ASC LIMIT 1) RETURNING ',
+        ),
+      );
+    });
+
+    test('on MySQL picks the rows with the joins of the query', () async {
+      var executor = _Executor(const MySQLDialect());
+      var q = EmployeeQuery()
+        ..values.lastName = 'new'
+        ..join('companies', 'company_id', 'id', alias: 'c')
+        ..orderBy('c.name')
+        ..limit(1);
+      await q.update(executor);
+      expect(
+        executor.queries.first,
+        'SELECT employees.id FROM employees  INNER JOIN companies c ON '
+        'employees.company_id=c.id ORDER BY c.name ASC LIMIT 1',
+      );
+    });
+
+    test('orders the rows by the SQL of an expression', () async {
+      var executor = _Executor(const PostgreSQLDialect());
+      var q = EmployeeQuery()
+        ..values.firstName = 'new'
+        ..expressions['last_name'] = 'UPPER(first_name)'
+        ..orderBy('last_name', descending: true)
+        ..limit(1);
+      await q.update(executor);
+      expect(
+        executor.queries.single,
+        contains('ORDER BY (UPPER(first_name)) DESC LIMIT 1) RETURNING '),
+      );
+    });
+
     test('on PostgreSQL picks the first rows in order', () async {
       var executor = _Executor(const PostgreSQLDialect());
       await query.update(executor);
       expect(
         executor.queries.single,
         contains(
-          'WHERE ctid IN (SELECT ctid FROM employees '
+          'WHERE (tableoid, ctid) IN (SELECT tableoid, ctid FROM employees '
           'ORDER BY salary DESC LIMIT 1) RETURNING ',
         ),
       );
@@ -396,6 +489,40 @@ void main() {
     });
   });
 
+  group('the names of a join', () {
+    test('of a table may be quoted, but not qualified', () {
+      query.join('"order"', '"key"', '"id"', alias: '"o"');
+      expect(
+        query.compile({}),
+        contains('INNER JOIN "order" "o" ON employees."key"="o"."id"'),
+      );
+      for (var join in <void Function()>[
+        () => query.join('t', 'employees.id', 'id'),
+        () => query.join('t', 'id', 'a0.id'),
+        () => query.join('t', 'id', 'id', alias: 'a.b'),
+        () => query.join('t', 'id', 'id', additionalFields: ['a.b']),
+      ]) {
+        expect(join, throwsArgumentError);
+      }
+    });
+
+    test('of a query are plain, as they name its columns', () {
+      for (var join in <void Function()>[
+        () => query.join(EmployeeQuery(), 'id', '"id"'),
+        () => query.join(EmployeeQuery(), 'id', 'id', alias: '"o"'),
+        () =>
+            query.join(EmployeeQuery(), 'id', 'id', additionalFields: ['"id"']),
+      ]) {
+        expect(join, throwsArgumentError);
+      }
+    });
+
+    test('of a query may have a quoted key of this table', () {
+      query.join(EmployeeQuery(), '"key"', 'id', alias: 'o');
+      expect(query.compile({}), contains('ON employees."key"=o.o_id'));
+    });
+  });
+
   group('compileForUpdate', () {
     test('leaves the values given as they are', () {
       var values = MapQueryValues()
@@ -417,6 +544,17 @@ void main() {
     test('rejects a key that is no column name', () {
       var values = MapQueryValues()..values['a=1; DROP TABLE users; --'] = 1;
       expect(() => values.compileForUpdate(query), throwsArgumentError);
+    });
+
+    test('rejects a key that would not make a parameter', () {
+      for (var key in ['"order"', '`order`', 't.col', r'a$b', '1a', '']) {
+        var values = MapQueryValues()..values[key] = 1;
+        expect(
+          () => values.compileForUpdate(query),
+          throwsArgumentError,
+          reason: key,
+        );
+      }
     });
 
     test('keeps a column the query does not select', () {

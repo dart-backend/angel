@@ -1,5 +1,11 @@
 # Change Log
 
+## 10.0.4
+
+### Fixes in 10.0.4
+
+* **Queries:** `PostgreSqlExecutor` and `PostgreSqlPoolExecutor` give the driver only the values a query uses, as it rejects any other: a value of a predicate that was replaced, as by `isIn` of no values, or of the conditions an insert leaves out, failed the query
+
 ## 10.0.3
 
 ### New in 10.0.3

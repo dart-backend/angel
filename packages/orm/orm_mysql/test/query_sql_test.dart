@@ -128,6 +128,48 @@ void main() {
     });
   });
 
+  group('a limit in the order of a join', () {
+    setUp(() async {
+      await insertCars(['a', 'b', 'c']);
+      for (var name in ['b', 'c']) {
+        await (FruitQuery()..values.commonName = name).insert(executor);
+      }
+    });
+
+    test('updates the first rows of the join', () async {
+      var updated =
+          await (CarQuery()
+                ..values.make = 'y'
+                ..join('fruits', 'description', 'common_name', alias: 'j')
+                ..orderBy('j.common_name')
+                ..limit(1))
+              .update(executor);
+      expect(updated.map((c) => c.description), ['b']);
+      var made = await (CarQuery()..where!.make.equals('y')).get(executor);
+      expect(made.map((c) => c.description), ['b']);
+    });
+
+    test('deletes the first rows of the join', () async {
+      var deleted =
+          await (CarQuery()
+                ..join('fruits', 'description', 'common_name', alias: 'j')
+                ..orderBy('j.common_name', descending: true)
+                ..limit(1))
+              .delete(executor);
+      expect(deleted.map((c) => c.description), ['c']);
+      expect(await descriptions(), ['a', 'b']);
+    });
+  });
+
+  test('a part of a date with isIn of no values', () async {
+    await insertCars(['a']);
+    await (CarQuery()..values.make = 'dated').update(executor);
+    var none = CarQuery()..where!.createdAt.year.isIn([]);
+    expect(await none.get(executor), isEmpty);
+    var all = CarQuery()..where!.createdAt.year.isNotIn([]);
+    expect(await all.get(executor), hasLength(1));
+  });
+
   test('update of a limit takes the first rows in order', () async {
     await insertCars(['a', 'b', 'c']);
     var updated =
@@ -183,6 +225,16 @@ void main() {
         '`description`, id, created_at, updated_at, make, family_friendly, recalled_at, price',
       );
     expect(await grouped.get(executor), hasLength(2));
+  });
+
+  test('a join by quoted names is accepted', () async {
+    await insertCars(['a', 'b']);
+    await (FruitQuery()..values.commonName = 'b').insert(executor);
+    var cars =
+        await (CarQuery()
+              ..join('fruits', '`description`', '`common_name`', alias: '`f`'))
+            .get(executor);
+    expect(cars.map((c) => c.description), ['b']);
   });
 
   test('a self join is accepted, and joins', () async {

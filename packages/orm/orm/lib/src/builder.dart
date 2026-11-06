@@ -517,9 +517,9 @@ class DateTimeSqlExpressionBuilder extends SqlExpressionBuilder<DateTime> {
         ('MINUTE', _minute),
       ])
         if (builder != null && builder.hasValue)
-          'EXTRACT($field FROM $column) ${builder.compile()}',
+          ?builder.compileFor('EXTRACT($field FROM $column)'),
       if (_second case var second? when second.hasValue)
-        'FLOOR(EXTRACT(SECOND FROM $column)) ${second.compile()}',
+        ?second.compileFor('FLOOR(EXTRACT(SECOND FROM $column))'),
     ];
     return parts.isEmpty ? null : parts.join(' AND ');
   }
@@ -675,8 +675,16 @@ class JsonSqlExpressionBuilderProperty {
   String get nameString => nameFor(builder.columnName);
 
   /// The index or the key of this property, as SQL: a `'` in a key is
-  /// escaped, as a key may come from a request.
-  String get _key => isInt ? name : "'${name.replaceAll("'", "''")}'";
+  /// escaped, as a key may come from a request. A key with a backslash is an
+  /// escape string, of which every reader of the SQL knows where it ends,
+  /// whether or not it takes a backslash as an escape.
+  String get _key {
+    if (isInt) return name;
+    var quoted = name.replaceAll("'", "''");
+    return name.contains(r'\')
+        ? "E'${quoted.replaceAll(r'\', r'\\')}'"
+        : "'$quoted'";
+  }
 
   /// This property of the JSON in [column].
   String nameFor(String column) => '$column::jsonb->>$_key';
