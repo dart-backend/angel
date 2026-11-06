@@ -470,10 +470,40 @@ void main() {
     });
 
     test('groupBy rejects anything else', () {
-      for (var key in [injection, '', 'a,', 'COUNT(*)', '"a"']) {
+      for (var key in [injection, '', 'a,', 'COUNT(*)']) {
         expect(() => query.groupBy(key), throwsArgumentError, reason: key);
       }
       expect(query.compile({}), isNot(contains('GROUP BY')));
+    });
+
+    test('a quoted name is accepted, as a reserved word must be', () {
+      query
+        ..groupBy('"order".id, `group`')
+        ..crossJoin('public."order"')
+        ..orderBy('"order".id');
+      var sql = query.compile({});
+      expect(sql, contains(' CROSS JOIN public."order"'));
+      expect(sql, contains(' GROUP BY "order".id, `group`'));
+      expect(sql, contains(' ORDER BY "order".id ASC'));
+    });
+
+    test('a quoted name cannot end early', () {
+      for (var name in [
+        '"a" OR 1=1 --',
+        '"a""; DROP TABLE users; --"',
+        '`a`; DROP TABLE users; --',
+        '"a`',
+        '"a',
+        '""',
+        // MySQL takes the backslash as escaping the closing quote.
+        r'"a\"',
+        r'`a\`',
+        '"a\nb"',
+        '"a".',
+        '"a"b',
+      ]) {
+        expect(() => query.crossJoin(name), throwsArgumentError, reason: name);
+      }
     });
 
     test('crossJoin accepts a table, and rejects anything else', () {

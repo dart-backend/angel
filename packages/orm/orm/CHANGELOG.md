@@ -4,8 +4,12 @@
 
 ### Breaking changes in 10.0.3
 
-* **Breaking:** `groupBy`, `crossJoin`, `join`, `leftJoin`, `rightJoin`, `fullOuterJoin` and `selfJoin` throw an `ArgumentError` for a name that is not a plain identifier, which may be qualified (`table.column`), as `orderBy` does when compiled, where it was written into the SQL as given, so a value from a request could add SQL to a query. This covers table names, keys, aliases and `additionalFields`; `groupBy` also accepts several columns separated by commas. An expression, a quoted identifier or SQL given as a table name is no longer accepted: join a `Query` in place of a subquery
+* **Breaking:** `groupBy`, `crossJoin`, `join`, `leftJoin`, `rightJoin`, `fullOuterJoin` and `selfJoin` throw an `ArgumentError` for a name that is not an identifier, which may be quoted (`"order"`, `` `order` ``) and qualified (`table.column`), as `orderBy` does when compiled, where it was written into the SQL as given, so a value from a request could add SQL to a query. This covers table names, keys, aliases and `additionalFields`; `groupBy` also accepts several columns separated by commas. An expression, or SQL given as a table name, is no longer accepted, nor a backslash or a quote of its own kind in a quoted name: join a `Query` in place of a subquery
 * **Breaking:** The `op` of a join must be one of `=`, `!=`, `<>`, `<`, `<=`, `>` and `>=`
+
+### New in 10.0.3
+
+* **Queries:** `orderBy` accepts a quoted name, as a reserved word must be
 
 ### Fixes in 10.0.3
 

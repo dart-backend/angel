@@ -123,6 +123,18 @@ void main() {
     });
   });
 
+  test('a quoted name is accepted', () async {
+    await insertCars(['a', 'b']);
+    var cars = await (CarQuery()..orderBy('"description"', descending: true))
+        .get(executor);
+    expect(cars.map((c) => c.description), ['b', 'a']);
+    var grouped = CarQuery()
+      ..groupBy(
+        '"description", id, created_at, updated_at, make, family_friendly, recalled_at, price',
+      );
+    expect(await grouped.get(executor), hasLength(2));
+  });
+
   test('a self join is accepted, and joins', () async {
     await insertCars(['a']);
     var cars = await (CarQuery()..selfJoin('cars', 'id', 'id')).get(executor);
