@@ -100,7 +100,7 @@ Branch: `master`
 * ORM: `@HasMany` and `@ManyToMany` are loaded with a query each instead of joins, so a `limit` counts records; nested transactions use savepoints on PostgreSQL; MySQL and MariaDB use the `mysql_dart` driver; migrations are recorded by `Migration.name` instead of their source path
 * Security: CSRF protection (`CsrfFilter`) in `angel3_security`; JWTs expire after a day by default and expired ones are no longer revived (`angel3_auth`); a random `state` and PKCE verifier for each OAuth2 login (`angel3_auth_oauth2`); SQL injection fixes in `like` (`angel3_orm`), `$sort` (`angel3_orm_service`) and string defaults (`angel3_migration_runner`)
 * Templates: Markdown values are HTML-escaped, and views outside the views directory are not read (`angel3_jinja`, `angel3_markdown`, `angel3_mustache`)
-* Requires PostgreSQL 14 or later, MySQL 8 or later, or MariaDB 10.2 or later
+* Requires PostgreSQL 16 or later, MySQL 8 or later, or MariaDB 10.2 or later
 * Updated the `belatuk_` dependencies to their latest releases (`belatuk_code_buffer`, `belatuk_combinator`, `belatuk_html_builder`, `belatuk_merge_map` and `belatuk_symbol_table` 6, `belatuk_range_header` 7). `angel3_html` pages are HTML-escaped by `belatuk_html_builder` 6: HTML written as it is needs `raw`
 * The repository is managed with `melos` 8.9 or later
 

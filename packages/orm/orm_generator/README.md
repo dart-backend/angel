@@ -61,7 +61,7 @@ Run the following command to generate the required `.g.dart` files for Angel3 OR
 
 ## Supported database
 
-* PostgreSQL version 14 or later
+* PostgreSQL version 16 or later
 * MariaDB 10.2.x or later
 * MySQL 8.x or later
 

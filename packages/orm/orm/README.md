@@ -56,7 +56,7 @@ See [Angel3 ORM](https://github.com/dart-backend/angel/tree/master/packages/orm)
 
 ## Supported database
 
-* PostgreSQL version 14 or later
+* PostgreSQL version 16 or later
 * MariaDB 10.2.x or later
 * MySQL 8.x or later
 

@@ -647,9 +647,13 @@ class JsonSqlExpressionBuilderProperty {
       NumericSqlExpressionBuilder() =>
         "CASE WHEN jsonb_typeof($column::jsonb->$_key) = 'number' "
             'THEN ($name)::numeric END',
-      DateTimeSqlExpressionBuilder() => 'CAST ($name AS timestamptz)',
-      // In parentheses, as `::` binds more tightly than `->>`.
-      JsonSqlExpressionBuilder() => '($name)',
+      // Nor is one that is no date, which cannot be cast either.
+      DateTimeSqlExpressionBuilder() =>
+        "CASE WHEN pg_input_is_valid($name, 'timestamptz') "
+            'THEN ($name)::timestamptz END',
+      // As JSON, not as text to cast, which may be no JSON. A JSON `null` is
+      // `NULL`, as it is of `->>`.
+      JsonSqlExpressionBuilder() => "NULLIF($column::jsonb->$_key, 'null')",
       _ => name,
     });
     if (predicate != null) yield predicate;

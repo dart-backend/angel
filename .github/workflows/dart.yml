@@ -67,8 +67,8 @@ jobs:
     services:
       # Label used to access the service container
       postgres:
-        # Docker Hub image
-        image: postgres
+        # Docker Hub image: the oldest version supported
+        image: postgres:16
         # Provide the password for postgres
         env:
           POSTGRES_PASSWORD: postgres

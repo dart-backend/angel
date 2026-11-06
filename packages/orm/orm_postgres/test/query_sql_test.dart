@@ -445,6 +445,63 @@ void main() {
       expect((await query.insert(executor)).isPresent, isTrue);
     });
 
+    group('of a value it cannot be read as', () {
+      setUp(() async {
+        await (HasMapQuery()
+              ..values.value = {'at': 'soon', 'nested': 'no json', 'none': null}
+              ..values.list = [])
+            .insert(executor);
+      });
+
+      test('as a date matches no comparison, without an error', () async {
+        // The row of the setUp of the group above still matches.
+        expect(
+          await count(
+            (w) => w.value['at'].asDateTime!.greaterThan(DateTime.utc(2020)),
+          ),
+          1,
+        );
+        expect(
+          await count((w) => w.value['at'].asDateTime!.year.equals(2020)),
+          1,
+        );
+        expect(
+          await count(
+            (w) => w.value['text'].asDateTime!.greaterThan(DateTime.utc(2020)),
+          ),
+          0,
+        );
+      });
+
+      test('as a date, of a number, matches no comparison', () async {
+        expect(
+          await count(
+            (w) => w.value['n'].asDateTime!.greaterThan(DateTime.utc(2020)),
+          ),
+          0,
+        );
+      });
+
+      test('as a map matches nothing, without an error', () async {
+        expect(
+          await count((w) => w.value['nested'].asMap!.contains({'k': 'v'})),
+          1,
+        );
+        expect(
+          await count(
+            (w) => w.value['nested'].asMap!['k'].asString!.equals('v'),
+          ),
+          1,
+        );
+      });
+
+      test('as a map is null for a JSON null, as for a missing key', () async {
+        expect(await count((w) => w.value['none'].asMap!.isNull), 2);
+        expect(await count((w) => w.value['missing'].asMap!.isNull), 2);
+        expect(await count((w) => w.value['nested'].asMap!.isNotNull), 2);
+      });
+    });
+
     test("with a ' in its key", () async {
       expect(await count((w) => w.value["it's"].asString!.equals('quoted')), 1);
       expect(await count((w) => w.value["x' OR '1'='1"].isNotNull), 0);

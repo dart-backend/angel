@@ -127,19 +127,26 @@ void main() {
       json.data['at'].asDateTime!.lessThan(dt);
       expect(
         json.compile(tableName: 't'),
-        "CAST (t.data::jsonb->>'at' AS timestamptz) < @prop",
+        "CASE WHEN pg_input_is_valid(t.data::jsonb->>'at', 'timestamptz') "
+        "THEN (t.data::jsonb->>'at')::timestamptz END < @prop",
       );
       expect(query.substitutionValues, {'prop': dt});
     });
 
     test('as a map or a list names its column once', () {
       json.data['a'].asMap!.contains({'x': 1});
-      expect(json.compile(), "(data::jsonb->>'a')::jsonb @> @prop::jsonb");
+      expect(
+        json.compile(),
+        "NULLIF(data::jsonb->'a', 'null')::jsonb @> @prop::jsonb",
+      );
     });
 
     test('nested, is a property of the property', () {
       json.data['a'].asMap!['b'].asString!.equals('x');
-      expect(json.compile(), "(data::jsonb->>'a')::jsonb->>'b' = @prop");
+      expect(
+        json.compile(),
+        "NULLIF(data::jsonb->'a', 'null')::jsonb->>'b' = @prop",
+      );
     });
 
     test('as a string names the values of isIn apart from its name', () {

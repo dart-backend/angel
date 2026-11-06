@@ -15,7 +15,7 @@ The breaking changes of each release are listed in the [CHANGELOG](CHANGELOG.md)
 
 * **Errors of transactions**: the error of a `transaction`, such as a `PgException` of the database or one its callback throws, is thrown as it is, where it was a `StateError('The transaction was cancelled.')`. Catch the error you expect instead of the `StateError`.
 * **Nested transactions**: `transaction` on the executor its callback is given runs in a savepoint; see [Transactions](#transactions).
-* Requires `angel3_orm` 10 and `postgres` 3.5.20.
+* Requires PostgreSQL 16 or later, `angel3_orm` 10 and `postgres` 3.5.20.
 
 ## Migrating to 8.1.0 and above
 

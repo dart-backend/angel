@@ -4,6 +4,7 @@
 
 ### Breaking changes in 10.0.3
 
+* **Breaking:** On PostgreSQL, 16 or later is required, of which a JSON property `asDateTime` uses `pg_input_is_valid`: it fails with an error on an earlier version
 * **Breaking:** `groupBy`, `crossJoin`, `join`, `leftJoin`, `rightJoin`, `fullOuterJoin` and `selfJoin` throw an `ArgumentError` for a name that is not an identifier, which may be quoted (`"order"`, `` `order` ``) and qualified (`table.column`), as `orderBy` does when compiled, where it was written into the SQL as given, so a value from a request could add SQL to a query. This covers table names, keys, aliases and `additionalFields`. The keys, aliases and `additionalFields` of a join have one part, as the SQL adds their table, and those of a join of a `Query` are not quoted, as they name its columns (`a0_name`); `groupBy` also accepts several columns separated by commas. An expression, or SQL given as a table name, is no longer accepted, and a quoted name has only letters, digits, `_` and `$`: join a `Query` in place of a subquery
 * **Breaking:** The `op` of a join must be one of `=`, `!=`, `<>`, `<`, `<=`, `>` and `>=`
 
@@ -32,6 +33,7 @@
 * **Executors:** The values a `QueryExecutor` is given may hold some that its query does not use, such as those of the conditions an insert leaves out. An executor whose driver rejects them must leave them out, as `angel3_orm_postgres` 10.0.4 does
 * **JSON:** A property `asInt` or `asDouble` is compared as a number, where `greaterThan` compared text, so that `10` was less than `5`, and `isBetween` and `isIn` were an error. A property that is no number matches no comparison
 * **JSON:** A property `asDateTime` is compared as a date, with a parameter of a valid name and the table name of the query, where its parameter was invalid
+* **JSON:** A property `asDateTime` that is no date, or `asMap` or `asList` that is no JSON, matches no comparison, so that one such value does not fail the query for every row
 * **JSON:** A property `asMap` or `asList` has predicates of its own, where they named the column twice, and `isIn` of a property `asString` has a parameter of a valid name
 * **JSON:** A `'` in the key of a property is escaped, where it was written into the SQL as given, so a key from a request could add SQL to a query
 * **JSON:** A key of a property with a backslash is an escape string, as the SQL around it was misread where a later `'` followed: its parameters could keep the value of another query in a union, or be left out of an insert

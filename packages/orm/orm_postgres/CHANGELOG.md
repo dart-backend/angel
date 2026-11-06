@@ -2,6 +2,10 @@
 
 ## 10.0.4
 
+### Breaking changes in 10.0.4
+
+* **Breaking:** PostgreSQL 16 or later is required, where it was 14
+
 ### Fixes in 10.0.4
 
 * **Queries:** `PostgreSqlExecutor` and `PostgreSqlPoolExecutor` give the driver only the values a query uses, as it rejects any other: a value of a predicate that was replaced, as by `isIn` of no values, or of the conditions an insert leaves out, failed the query

@@ -25,7 +25,7 @@ The framework is divided into several categories of packages:
 2. **Data Modeling & Persistence (ORM)**:
    - `model`: Base model abstractions for data entities.
    - `serialize`: JSON serialization and deserialization using code generation (`serialize_generator`). Model classes are named with the `Entity` suffix (`TodoEntity` generates `Todo`); the `_` prefix is still supported.
-   - `orm`: Dialect-agnostic ORM runtime (`orm`), code generator (`orm_generator`), schema DSL (`migration`), migration runner (`migration_runner`), database executors for PostgreSQL 14+ (`orm_postgres`) and MySQL 8+/MariaDB 10.2+ (`orm_mysql`, on the `mysql_dart` driver), and an Angel service adapter (`orm_service`). `@HasOne` and `@BelongsTo` are joined; `@HasMany` and `@ManyToMany` are loaded after the records with one query each (`Query.loadRelations`), so a record is one row.
+   - `orm`: Dialect-agnostic ORM runtime (`orm`), code generator (`orm_generator`), schema DSL (`migration`), migration runner (`migration_runner`), database executors for PostgreSQL 16+ (`orm_postgres`) and MySQL 8+/MariaDB 10.2+ (`orm_mysql`, on the `mysql_dart` driver), and an Angel service adapter (`orm_service`). `@HasOne` and `@BelongsTo` are joined; `@HasMany` and `@ManyToMany` are loaded after the records with one query each (`Query.loadRelations`), so a record is one row.
    - `mongo`, `rethinkdb`, `sembast`: Specialized NoSQL database drivers.
 
 3. **Authentication & Security**:
