@@ -901,8 +901,12 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
   /// Updates the rows that match [where] (at most [limit] of them, after
   /// [offset]) with [values], and returns them as updated.
   ///
-  /// Throws a [StateError] for a [limit] or an [offset] on MySQL or MariaDB of
-  /// a query that selects no id, as it could not tell the rows it selected.
+  /// A join that can leave a row out, unlike a `LEFT JOIN`, decides which rows
+  /// are updated, as it does which are selected.
+  ///
+  /// Throws a [StateError] for a [limit], an [offset] or such a join on MySQL
+  /// or MariaDB of a query that selects no id, as it could not tell the rows
+  /// it selected.
   Future<List<T>> update(QueryExecutor executor) async {
     var valuesClause = values?.compileForUpdate(this);
     if (valuesClause == null || valuesClause == '') {
@@ -911,11 +915,14 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
     var whereClause = where?.compile() ?? '';
     var conditions = whereClause.isEmpty ? '' : ' WHERE $whereClause';
     var limits = _limits;
+    // A limit or a join that can leave a row out decide which rows are updated,
+    // as in a select of this query: not the conditions alone.
+    var picks = limits.isNotEmpty || _joins.any((j) => j.type != JoinType.left);
 
     if (executor.dialect is PostgreSQLDialect) {
       // PostgreSQL has no UPDATE ... LIMIT: the rows are picked by ctid, and
       // the table of each, as a ctid is unique only within a partition.
-      var rows = limits.isEmpty
+      var rows = !picks
           ? conditions
           : ' WHERE (tableoid, ctid) IN (${_selectOf(['tableoid', 'ctid'])})';
       // The updated rows, as RETURNING gives them: not filtered by the
@@ -940,11 +947,11 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
       // Nothing tells the rows it selected, so that a separate UPDATE ... LIMIT
       // could update other rows than those it returned, and MySQL has no
       // UPDATE ... OFFSET.
-      if (limits.isNotEmpty) {
+      if (picks) {
         throw StateError(
           'An update of a query that does not select an id cannot have a '
-          'LIMIT or an OFFSET on this database, as it could not tell which '
-          'rows it selected.',
+          'LIMIT, an OFFSET or a join that leaves rows out on this database, '
+          'as it could not tell which rows it selected.',
         );
       }
       // Without a primary key, the rows that match are selected first, in a
@@ -971,13 +978,11 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
     // exactly those, by id.
     var found = await executor.query(
       tableName,
-      limits.isEmpty
-          ? 'SELECT id FROM $tableName$conditions'
-          : _selectOf(['id']),
+      picks ? _selectOf(['id']) : 'SELECT id FROM $tableName$conditions',
       substitutionValues,
     );
     if (found.isEmpty) return [];
-    var ids = _idList(found.map((row) => row.first));
+    var ids = _idList(found.map((row) => row.first).toSet());
 
     var sql = 'UPDATE $tableName $valuesClause WHERE id IN ($ids)';
     _log.fine(() => "Update Query = $sql");

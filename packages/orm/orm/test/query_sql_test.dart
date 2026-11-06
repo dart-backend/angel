@@ -436,6 +436,66 @@ void main() {
       );
     });
 
+    group('without a limit', () {
+      EmployeeQuery joined() => EmployeeQuery()
+        ..values.lastName = 'new'
+        ..where!.firstName.equals('x')
+        ..join('companies', 'company_id', 'id', alias: 'c');
+
+      test('on PostgreSQL updates only the rows of a join', () async {
+        var executor = _Executor(const PostgreSQLDialect());
+        await joined().update(executor);
+        expect(
+          executor.queries.single,
+          contains(
+            'WHERE (tableoid, ctid) IN (SELECT employees.tableoid, '
+            'employees.ctid FROM employees  INNER JOIN companies c ON '
+            'employees.company_id=c.id WHERE employees.first_name = ',
+          ),
+        );
+      });
+
+      test('on MySQL updates only the rows of a join, each once', () async {
+        var executor = _Executor(const MySQLDialect(), rows: [_row, _row]);
+        await joined().update(executor);
+        expect(
+          executor.queries[0],
+          startsWith('SELECT employees.id FROM employees  INNER JOIN '),
+        );
+        expect(executor.queries[1], endsWith(' WHERE id IN (3)'));
+      });
+
+      test('a left join leaves no row out, so the conditions decide', () async {
+        var executor = _Executor(const PostgreSQLDialect());
+        var q = EmployeeQuery()
+          ..values.lastName = 'new'
+          ..where!.firstName.equals('x')
+          ..leftJoin('companies', 'company_id', 'id');
+        await q.update(executor);
+        expect(executor.queries.single, isNot(contains('tableoid')));
+        expect(executor.queries.single, contains('WHERE first_name = '));
+      });
+
+      test('on MySQL, selecting no id, has no join that leaves a row out', () {
+        var q = _NoIdQuery()
+          ..values.lastName = 'new'
+          ..join('companies', 'company_id', 'id');
+        expect(q.update(_Executor(const MySQLDialect())), throwsStateError);
+      });
+
+      test('on MySQL, selecting no id, has a left join', () async {
+        var executor = _Executor(const MySQLDialect());
+        var q = _NoIdQuery()
+          ..values.lastName = 'new'
+          ..leftJoin('companies', 'company_id', 'id');
+        await q.update(executor);
+        expect(
+          executor.queries.last,
+          'UPDATE employees SET last_name=@last_name',
+        );
+      });
+    });
+
     test('on PostgreSQL picks the first rows in order', () async {
       var executor = _Executor(const PostgreSQLDialect());
       await query.update(executor);

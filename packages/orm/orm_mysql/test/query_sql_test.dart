@@ -170,6 +170,51 @@ void main() {
     expect(await all.get(executor), hasLength(1));
   });
 
+  group('update of a join, without a limit', () {
+    setUp(() async {
+      await insertCars(['a', 'b']);
+      await (FruitQuery()..values.commonName = 'b').insert(executor);
+    });
+
+    Future<List<String?>> made() async => [
+      for (var car
+          in await (CarQuery()
+                ..where!.make.equals('y')
+                ..orderBy('description'))
+              .get(executor))
+        car.description,
+    ];
+
+    test('of an inner join updates only the rows it returns', () async {
+      var updated =
+          await (CarQuery()
+                ..values.make = 'y'
+                ..join('fruits', 'description', 'common_name'))
+              .update(executor);
+      expect(updated.map((c) => c.description), ['b']);
+      expect(await made(), ['b']);
+    });
+
+    test('of an inner join that repeats a row updates it once', () async {
+      await (FruitQuery()..values.commonName = 'b').insert(executor);
+      await (CarQuery()
+            ..values.make = 'y'
+            ..join('fruits', 'description', 'common_name'))
+          .update(executor);
+      expect(await made(), ['b']);
+    });
+
+    test('of a left join updates every row', () async {
+      var updated =
+          await (CarQuery()
+                ..values.make = 'y'
+                ..leftJoin('fruits', 'description', 'common_name'))
+              .update(executor);
+      expect(updated, hasLength(2));
+      expect(await made(), ['a', 'b']);
+    });
+  });
+
   test('update of a limit takes the first rows in order', () async {
     await insertCars(['a', 'b', 'c']);
     var updated =

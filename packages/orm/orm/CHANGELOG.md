@@ -4,6 +4,7 @@
 
 ### Breaking changes in 10.0.3
 
+* **Breaking:** An update of a query with a join other than a `LEFT JOIN` updates only the rows of the join, which are those it returns, where it updated every row that matched `where`, and returned only those. A row without a match is no longer updated. On MySQL, a query that selects no id throws a `StateError` for such a join
 * **Breaking:** On PostgreSQL, 16 or later is required, of which a JSON property `asDateTime` uses `pg_input_is_valid`: it fails with an error on an earlier version
 * **Breaking:** `groupBy`, `crossJoin`, `join`, `leftJoin`, `rightJoin`, `fullOuterJoin` and `selfJoin` throw an `ArgumentError` for a name that is not an identifier, which may be quoted (`"order"`, `` `order` ``) and qualified (`table.column`), as `orderBy` does when compiled, where it was written into the SQL as given, so a value from a request could add SQL to a query. This covers table names, keys, aliases and `additionalFields`. The keys, aliases and `additionalFields` of a join have one part, as the SQL adds their table, and those of a join of a `Query` are not quoted, as they name its columns (`a0_name`); `groupBy` also accepts several columns separated by commas. An expression, or SQL given as a table name, is no longer accepted, and a quoted name has only letters, digits, `_` and `$`: join a `Query` in place of a subquery
 * **Breaking:** The `op` of a join must be one of `=`, `!=`, `<>`, `<`, `<=`, `>` and `>=`
