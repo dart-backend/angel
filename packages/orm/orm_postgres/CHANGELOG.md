@@ -1,5 +1,15 @@
 # Change Log
 
+## 10.1.0
+
+### Breaking changes in 10.1.0
+
+* **Breaking:** PostgreSQL 16 or later is required, where it was 14
+
+### Fixes in 10.1.0
+
+* **Queries:** `PostgreSqlExecutor` and `PostgreSqlPoolExecutor` leave out a value a query does not use, which the driver names as it rejects it, so that one set by hand and named only in a comment of `where.raw` does not fail the query
+
 ## 10.0.3
 
 ### New in 10.0.3

@@ -50,6 +50,12 @@ class _RecordingExecutor extends QueryExecutor {
       f(this);
 }
 
+/// A query with no fields, which selects `*`.
+class _NoFieldsQuery extends EmployeeQuery {
+  @override
+  List<String> get fields => const [];
+}
+
 class _Text {
   final String text;
   _Text(this.text);
@@ -348,7 +354,7 @@ void main() {
     // after the SELECT is a syntax error.
     void expectComplete() {
       var sql = executor.queries.single;
-      expect(sql, startsWith('WITH employees as ('));
+      expect(sql, startsWith('WITH angel3_written as ('));
       expect(sql, contains(') SELECT '));
       expect(
         sql.substring(sql.indexOf(') SELECT ')),
@@ -402,7 +408,7 @@ void main() {
         expect(
           sql,
           startsWith(
-            'WITH employees as (UPDATE employees SET last_name=@last_name1 '
+            'WITH angel3_written as (UPDATE employees SET last_name=@last_name1 '
             'WHERE last_name = @last_name RETURNING ',
           ),
         );
@@ -417,8 +423,9 @@ void main() {
         expect(
           sql,
           contains(
-            'WHERE ctid IN (SELECT ctid FROM employees '
-            'WHERE last_name = @last_name LIMIT 2) RETURNING ',
+            'WHERE (tableoid, ctid) IN (WITH angel3_picked AS MATERIALIZED (SELECT '
+            'tableoid, ctid FROM employees WHERE last_name = @last_name LIMIT 2 '
+            'FOR UPDATE OF employees) SELECT * FROM angel3_picked) RETURNING ',
           ),
         );
         var select = sql.substring(sql.indexOf(') SELECT ') + 2);
@@ -434,7 +441,8 @@ void main() {
         expect(executor.queries, hasLength(3));
         expect(
           executor.queries[0],
-          'SELECT id FROM employees WHERE last_name = @last_name LIMIT 2',
+          'SELECT id FROM employees WHERE last_name = @last_name LIMIT 2 '
+          'FOR UPDATE',
         );
         expect(
           executor.queries[1],
@@ -449,6 +457,159 @@ void main() {
         expect(await query.update(executor), isEmpty);
         expect(executor.queries, hasLength(1));
       });
+    });
+  });
+
+  group('names written into the SQL', () {
+    const injection = 'id; DROP TABLE users; --';
+
+    test('groupBy accepts columns, qualified and several', () {
+      query.groupBy('employees.salary, last_name');
+      expect(
+        query.compile({}),
+        endsWith(' GROUP BY employees.salary, last_name'),
+      );
+    });
+
+    test('groupBy rejects anything else', () {
+      for (var key in [injection, '', 'a,', 'COUNT(*)']) {
+        expect(() => query.groupBy(key), throwsArgumentError, reason: key);
+      }
+      expect(query.compile({}), isNot(contains('GROUP BY')));
+    });
+
+    test('a quoted name is accepted, as a reserved word must be', () {
+      query
+        ..groupBy('"order".id, `group`')
+        ..crossJoin('public."order"')
+        ..orderBy('"order".id');
+      var sql = query.compile({});
+      expect(sql, contains(' CROSS JOIN public."order"'));
+      expect(sql, contains(' GROUP BY "order".id, `group`'));
+      expect(sql, contains(' ORDER BY "order".id ASC'));
+    });
+
+    test(r'a name has a $ only within it', () {
+      for (var name in [r'$$', r'$1', r'$tag$', r'a.$$', r'$a']) {
+        expect(() => query.groupBy(name), throwsArgumentError, reason: name);
+        expect(() => query.crossJoin(name), throwsArgumentError, reason: name);
+      }
+      // After a backtick, which is no quote on PostgreSQL, `1$$` would read as
+      // a number and the start of a string.
+      for (var name in [r'"$$"', r'`$$`', r'`1$$`', r'"$1"']) {
+        expect(() => query.crossJoin(name), throwsArgumentError, reason: name);
+      }
+      query.groupBy(r'a$b, "a$b", `1a`');
+      expect(query.compile({}), contains(r' GROUP BY a$b, "a$b", `1a`'));
+    });
+
+    test('a quoted name cannot end early', () {
+      for (var name in [
+        '"a" OR 1=1 --',
+        '"a""; DROP TABLE users; --"',
+        '`a`; DROP TABLE users; --',
+        '"a`',
+        '"a',
+        '""',
+        // MySQL takes the backslash as escaping the closing quote.
+        r'"a\"',
+        r'`a\`',
+        '"a\nb"',
+        '"a".',
+        '"a"b',
+        // What a backtick encloses is SQL on PostgreSQL, where it is an operator.
+        '`x, (SELECT secret FROM users) -- `',
+        '"x, (SELECT secret FROM users) -- "',
+        '`a b`',
+        '"a;b"',
+        "`a'b`",
+        '`a--`',
+      ]) {
+        expect(() => query.crossJoin(name), throwsArgumentError, reason: name);
+      }
+    });
+
+    test('crossJoin accepts a table, and rejects anything else', () {
+      query.crossJoin('public.companies');
+      expect(query.compile({}), contains(' CROSS JOIN public.companies'));
+      expect(() => query.crossJoin(injection), throwsArgumentError);
+    });
+
+    test('a join accepts names and a comparison', () {
+      query.leftJoin(
+        'public.companies',
+        'company_id',
+        'id',
+        op: '<=',
+        alias: 'c',
+        additionalFields: const ['name'],
+      );
+      var sql = query.compile({});
+      expect(sql, contains('c.name FROM employees'));
+      expect(
+        sql,
+        contains('LEFT JOIN public.companies c ON employees.company_id<=c.id'),
+      );
+    });
+
+    for (var (name, join) in <(String, void Function(Query, String))>[
+      ('table', (q, s) => q.join(s, 'a', 'b')),
+      ('local key', (q, s) => q.join('t', s, 'b')),
+      ('foreign key', (q, s) => q.join('t', 'a', s)),
+      ('alias', (q, s) => q.join('t', 'a', 'b', alias: s)),
+      (
+        'additional field',
+        (q, s) => q.join('t', 'a', 'b', additionalFields: [s]),
+      ),
+      ('operator', (q, s) => q.join('t', 'a', 'b', op: s)),
+    ]) {
+      test('a join rejects such a $name', () {
+        expect(() => join(query, injection), throwsArgumentError);
+      });
+    }
+
+    test('every kind of join checks its names', () {
+      for (var join in [
+        query.join,
+        query.leftJoin,
+        query.rightJoin,
+        query.fullOuterJoin,
+        query.selfJoin,
+      ]) {
+        expect(() => join(injection, 'a', 'b'), throwsArgumentError);
+      }
+    });
+
+    test('a join of a query is still accepted', () {
+      query.join(EmployeeQuery(), 'id', 'id');
+      expect(query.compile({}), contains('INNER JOIN (SELECT '));
+    });
+  });
+
+  group('a query with no fields', () {
+    late _NoFieldsQuery noFields;
+
+    setUp(() => noFields = _NoFieldsQuery());
+
+    test('selects * without joins', () {
+      expect(noFields.compile({}), 'SELECT * FROM employees');
+    });
+
+    test('keeps its joins, selecting only its own columns', () {
+      noFields.join(
+        'companies',
+        'company_id',
+        'id',
+        alias: 'c',
+        additionalFields: const ['name'],
+      );
+      var sql = noFields.compile({});
+      expect(sql, startsWith('SELECT employees.* FROM employees '));
+      expect(
+        sql,
+        contains('INNER JOIN companies c ON employees.company_id=c.id'),
+      );
+      expect(noFields.joinedRow(0, [1, 2]), isEmpty);
     });
   });
 

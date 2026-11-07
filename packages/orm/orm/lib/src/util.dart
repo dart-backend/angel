@@ -2,15 +2,19 @@ import 'package:charcode/ascii.dart';
 
 bool isAscii(int ch) => ch >= $nul && ch <= $del;
 
-final DateTime defaultDate = DateTime.parse("1970-01-01 00:00:00");
+final DateTime defaultDate = DateTime.utc(1970);
 
+/// Converts a value read from the database to a bool.
+///
+/// `null` and `0` are false, as are the strings `0`, `f` and `false`, in any
+/// case, as a driver may give a boolean as one.
 bool mapToBool(dynamic value) {
   if (value is int) {
     return value != 0;
   }
 
   if (value is String) {
-    return value != "0";
+    return !const {'0', 'f', 'false'}.contains(value.toLowerCase());
   }
 
   return value != null ? value as bool : false;

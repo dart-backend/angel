@@ -8,6 +8,42 @@ import 'logging.dart';
 
 import 'parameters.dart';
 
+/// What the driver throws for values that its query does not use, before it
+/// sends the query, with their names.
+final RegExp _superfluousValues = RegExp(
+  r'^Contains superfluous variables: (.+)$',
+);
+
+/// Runs [query] on [session], with the values of [parameters] it uses.
+///
+/// The driver rejects any other. The ORM gives none of its own, so these are of
+/// a [QueryWhere.raw] or set by hand, such as one named only in a comment. The
+/// driver knows which those are, as it reads
+/// the SQL as it sends it, so they are left out by what it says: not by
+/// reading the SQL a second time, which may differ, such as in a comment or a
+/// dollar-quoted string. It sends nothing before it rejects them, so that this
+/// is safe in a transaction.
+Future<Result> _execute(
+  Session session,
+  String query,
+  Map<String, dynamic> parameters,
+) async {
+  try {
+    return await session.execute(Sql.named(query), parameters: parameters);
+  } on ArgumentError catch (err) {
+    var superfluous = _superfluousValues.firstMatch('${err.message}');
+    if (superfluous == null) rethrow;
+    var unused = superfluous[1]!.split(', ').toSet();
+    return session.execute(
+      Sql.named(query),
+      parameters: {
+        for (var MapEntry(:key, :value) in parameters.entries)
+          if (!unused.contains(key)) key: value,
+      },
+    );
+  }
+}
+
 /// A [QueryExecutor] that queries a PostgreSQL database.
 class PostgreSqlExecutor extends QueryExecutor {
   final Dialect _dialect = const PostgreSQLDialect();
@@ -92,7 +128,7 @@ class PostgreSqlExecutor extends QueryExecutor {
     // connection that broke, as during an earlier query, is replaced first.
     var session = await _openSession();
     try {
-      return await session.execute(Sql.named(query), parameters: param);
+      return await _execute(session, query, param);
     } catch (err, st) {
       // Fine, as the error is thrown to the caller, who may expect it, as a
       // unique violation, and decides whether it is one to warn of.
@@ -116,7 +152,7 @@ class PostgreSqlExecutor extends QueryExecutor {
           var retry = identical(_session, session)
               ? await (_reconnecting ??= _reconnect(session))
               : _session;
-          return await retry.execute(Sql.named(query), parameters: param);
+          return await _execute(retry, query, param);
         }
       }
       rethrow;

@@ -1,5 +1,61 @@
 # Change Log
 
+## 10.1.0
+
+### Breaking changes in 10.1.0
+
+* **Breaking:** An update or an insert returns each row it wrote, whatever it joins: with the columns of a join that does not match as `NULL`, where it returned no row. A row is returned once with a `crossJoin`, where it was once for each row of that table, but once for each match of a join
+* **Breaking:** An update of a query with a join other than a `LEFT JOIN` updates only the rows of the join, which are those it returns, where it updated every row that matched `where`, and returned only those. A row without a match is no longer updated. On MySQL, a query that selects no id throws a `StateError` for such a join
+* **Breaking:** On PostgreSQL, 16 or later is required, of which a JSON property `asDateTime` uses `pg_input_is_valid`: it fails with an error on an earlier version
+* **Breaking:** `groupBy`, `crossJoin`, `join`, `leftJoin`, `rightJoin`, `fullOuterJoin` and `selfJoin` throw an `ArgumentError` for a name that is not an identifier, which may be quoted (`"order"`, `` `order` ``) and qualified (`table.column`), and has no leading `$`, as `$$` starts a string and `$1` is a parameter on PostgreSQL, as `orderBy` does when compiled, where it was written into the SQL as given, so a value from a request could add SQL to a query. This covers table names, keys, aliases and `additionalFields`. The keys, aliases and `additionalFields` of a join have one part, as the SQL adds their table, and those of a join of a `Query` are not quoted, as they name its columns (`a0_name`); `groupBy` also accepts several columns separated by commas. An expression, or SQL given as a table name, is no longer accepted, and a quoted name has only letters, digits, `_` and `$`: join a `Query` in place of a subquery
+* **Breaking:** The `op` of a join must be one of `=`, `!=`, `<>`, `<`, `<=`, `>` and `>=`
+
+### New in 10.1.0
+
+* **Queries:** `skipLocked` makes an update or a delete skip the rows that another transaction has locked, rather than wait for them, as for a queue that several workers take from at once. It needs a query that selects an id on MySQL 8 or MariaDB 10.6 or later, and an index on its conditions and order there
+* **Queries:** `orderBy` accepts a quoted name, as a reserved word must be. Use the quote of the database: on MySQL and MariaDB, by default, `"order"` is a string, so sorting or grouping by it does nothing
+
+### Fixes in 10.1.0
+
+* **Queries:** A query with no `fields` keeps its joins, which were dropped without an error, so an `INNER JOIN` filtered nothing. It selects `table.*`, only the columns of its own table
+* **Queries:** `isIn` and `isNotIn` of a number, an enum or a string with no values are `FALSE` and `TRUE`, where they were `IN ()`, which is not valid SQL
+* **Queries:** An `offset` without a `limit` has a `LIMIT` of the greatest value, as MySQL and MariaDB have no `OFFSET` without one, where it was a syntax error
+* **Queries:** `isIn` and `isNotIn` of no values on a part of a date (`year`, `month`, ...) are `FALSE` and `TRUE`, where they were a syntax error
+* **Queries:** A self join is an `INNER JOIN` of the table by an alias, where it was `SELF JOIN`, which is not valid SQL
+* **Queries:** A date predicate set directly is joined with `AND` to those of its parts (`year`, `month`, ...), which it discarded
+* **Queries:** An expression column is valid SQL in `getByKeys`, and is left out of a `RETURNING`, where it may name a join that is not in scope, as the select around it computes it. A `RETURNING` has every column of the table, as that select may name any of them, in its order, joins or expressions, as `select` left out some that it named
+* **Updates:** The rows of a `limit` are the first in the order of `orderBy`, which was ignored, so that other rows could be updated
+* **Updates:** The rows of a `limit` on PostgreSQL are picked by table and `ctid`, which is unique only within a table, where a partitioned or inherited table had a row of each table updated
+* **Updates:** The rows of a `limit` on PostgreSQL, of an update or a delete, are locked and read once, as their subquery could otherwise run again and pick others, which would write more than the limit. A connection that waited for a row may still return none: use `skipLocked` for a queue
+* **Updates:** The rows of a `limit` or a join are picked with the joins of the query, so that an `orderBy` or a `where.raw` may name a join, and an `orderBy` an expression, an alias or a column that a join has too, as in a select
+* **Updates:** An insert or an update with a `RIGHT JOIN` or a `FULL OUTER JOIN` returns only the rows it wrote, as does a delete, where they returned others of `NULL` columns, and a `limit` counts only the rows of its table
+* **Updates:** An insert or an update on PostgreSQL with a join of its own table, as `selfJoin`, reads the table, where it read only the rows it wrote, so that it returned no row. A join sees the table as it was before the statement
+* **Updates:** A `crossJoin` counts as a join in an update and a delete, which an empty table leaves no row of: they updated or deleted every row that matched `where`, and returned none. A select qualifies its columns with it, as they may be ambiguous
+* **Updates:** An update on MySQL of a query that selects no id throws a `StateError` for a `limit` or an `offset`, as it could not tell the rows it selected, where a `limit` could update other rows than those it returned, and an `offset` was a syntax error
+* **Updates:** An update on MySQL with an id runs in a transaction, with the rows it finds locked, where it found, updated and selected them separately, so that two connections could pick the same rows, as of a queue, and a row could be overwritten after it stopped matching `where`. It updates many rows in parts, as a database binds a limited number of parameters
+* **Updates:** An update on MySQL that sets the id returns the row by its new id, where it wrote the row and returned none. One of a query that selects no id locks the rows it selects, so that they are those it updates
+* **Updates:** An update on MySQL of a query that selects no id returns the columns of its joins, where it dropped them, so that a relation that is joined came back empty, and a row with no `fields`, where each was empty
+* **Updates:** An update or an insert with a `groupBy` throws a `StateError`, where it was written and then failed or returned too few rows
+* **Updates:** `compileForUpdate` leaves the values it is given as they are, is empty where it was a bare `SET` with only a null `created_at`, and throws an `ArgumentError` for a key that is not a plain column name, as a key of `MapQueryValues` was written into the SQL as given
+* **Deletes:** A `limit` and an `offset` apply, in the order of `orderBy`, where they were a syntax error on PostgreSQL, and on MySQL with both. An `orderBy` without a `limit` orders the rows returned
+* **Deletes:** The rows returned are those deleted. A delete of a query with a join or a `limit`, which it selects first, deletes the rows it selected by id, where an `INNER JOIN` left rows out of those returned but not of those deleted
+* **Deletes:** A delete of a query that selects an id deletes the rows it selected by id, where a query with relations and no `limit` or join deleted by its conditions, and a row another connection added was deleted but not returned. It returns a row that a join repeats once, where a `crossJoin` returned it once for each row of that table
+* **Deletes:** A delete that selects its rows first locks them, so that two connections cannot return the same rows, as of a queue. On PostgreSQL, a `RIGHT JOIN` or a `FULL OUTER JOIN` cannot be locked
+* **Deletes:** A `groupBy` throws a `StateError` where it was a syntax error. So does a delete of a query that selects no id with a `limit` or an `offset` on MySQL, or on PostgreSQL with a join or a relation, or with a join other than a `LEFT JOIN`, as it could not tell the rows it selected
+* **Inserts:** An insert ignores the conditions, `limit` and `offset` of its query, where its row was filtered out on PostgreSQL, and its row was not selected on MySQL
+* **Executors:** A predicate of a string that replaces another drops the values of that one, and an insert is not given those of the conditions it ignores, so that a query is given no unused value but one set by hand or of `where.raw`. An executor whose driver rejects those must leave them out, as `angel3_orm_postgres` 10.1.0 does
+* **JSON:** A property `asInt` or `asDouble` is compared as a number, where `greaterThan` compared text, so that `10` was less than `5`, and `isBetween` and `isIn` were an error. A property that is no number matches no comparison
+* **JSON:** A property `asDateTime` is compared as a date, with a parameter of a valid name and the table name of the query, where its parameter was invalid
+* **JSON:** A property `asDateTime` that is no date, or `asMap` or `asList` that is no JSON, matches no comparison, so that one such value does not fail the query for every row
+* **JSON:** `isNull` and `isNotNull` of a property `asInt`, `asDouble` or `asDateTime` check the value, so that a value of another type is not null
+* **JSON:** A property `asMap` or `asList` has predicates of its own, where they named the column twice, and `isIn` of a property `asString` has a parameter of a valid name
+* **JSON:** A `'` in the key of a property is escaped, where it was written into the SQL as given, so a key from a request could add SQL to a query
+* **JSON:** A key of a property with a backslash is an escape string, as the SQL around it was misread where a later `'` followed: its parameters could keep the value of another query in a union, or be left out of an insert
+* **Unions:** `get` and `getOne` load the relations of the rows with those of the left query, as `Query` does; `parseRows` of a `QueryBase` gives them.
+* **Unions:** A union throws a `StateError` where a value of its right query that it renamed is still named in its SQL, as it misread a string or a comment of `where.raw`, or it is in a string, where it would have run with the value of its left query, without an error
+* **Values:** `mapToBool` reads the strings `f` and `false`, in any case, as false
+* **Values:** `defaultDate`, and the `mapToDateTime` of a null, is 1970-01-01 in UTC as documented, where it was in the local time zone
+
 ## 10.0.2
 
 ### New in 10.0.2

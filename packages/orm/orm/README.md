@@ -18,7 +18,7 @@ In your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  angel3_orm: ^10.0.0
+  angel3_orm: ^10.1.0
 ```
 
 ## Usage
@@ -56,11 +56,16 @@ See [Angel3 ORM](https://github.com/dart-backend/angel/tree/master/packages/orm)
 
 ## Supported database
 
-* PostgreSQL version 14 or later
+* PostgreSQL version 16 or later
 * MariaDB 10.2.x or later
 * MySQL 8.x or later
 
 For documentation about the ORM, see [Developer Guide](https://angel3-docs.dukefirehawk.com/guides/orm)
+
+## Known limitations
+
+* **`limit` on an update or a delete under concurrency on PostgreSQL:** a connection that waits for a row that another one is writing may return no rows, even though others are free. For a queue that several workers take from at once, use `query..limit(1)..skipLocked()`, so that each takes the next free row. On those databases, it needs MySQL 8 or MariaDB 10.6 or later, a query that selects an id, and an index on the conditions and the order of the query, as they lock every row that they scan, so that one worker would hold them all
+* **Raw SQL in a union:** a `Union` renames the values that both of its queries name alike, by reading the SQL of its right query, which can misread `where.raw`: a string such as `$$it's$$` or, on PostgreSQL, `'a\'`, or a comment such as `-- don't`, can hide a placeholder after it. A placeholder that is left would bind the value of the left query, so the union throws a `StateError` instead. So does most of a `@name` in a string of the right query, which is not a placeholder. Give the value another name in either query. One in a string it misreads, such as `$$@name$$`, is renamed instead, without an error, which changes the string
 
 ## Migrating from 9.x to 10.0.0
 

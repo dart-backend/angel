@@ -1,4 +1,5 @@
 import 'builder.dart';
+import 'union.dart';
 
 /// Builds a SQL `WHERE` clause.
 abstract class QueryWhere {
@@ -21,9 +22,21 @@ abstract class QueryWhere {
     _or.add(other);
   }
 
+  /// Adds [whereRaw] to the conditions, as SQL, as it is: it must not hold
+  /// values from a request. Bind them as substitution values of the query.
+  ///
+  /// In a [Union], a value of a name that both of its queries use may be
+  /// rejected if it follows a string or a comment here: see [Union].
   void raw(String whereRaw) {
     _raw.add(whereRaw);
   }
+
+  /// The names of the substitution values of these conditions, but those of a
+  /// [raw] condition, which are not known.
+  Iterable<String> get boundParameterNames => [
+    for (var builder in expressionBuilders) ...builder.boundParameterNames,
+    for (var other in [..._and, ..._not, ..._or]) ...other.boundParameterNames,
+  ];
 
   /// The conditions, joined with `AND`, followed by those of [or] clauses
   /// joined with `OR`; empty when there are none.
@@ -34,13 +47,8 @@ abstract class QueryWhere {
       if (!builder.hasValue) continue;
       var key = builder.columnName;
       if (tableName != null) key = '$tableName.$key';
-      if (builder is JsonSqlExpressionBuilder) {
-        conditions.add(builder.compileFor(key));
-      } else if (builder is DateTimeSqlExpressionBuilder) {
-        conditions.add(builder.compileFor(key) ?? '');
-      } else {
-        conditions.add('$key ${builder.compile()}');
-      }
+      var predicate = builder.compileFor(key);
+      if (predicate != null) conditions.add(predicate);
     }
 
     for (var raw in _raw) {

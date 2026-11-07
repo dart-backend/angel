@@ -2,6 +2,28 @@ import 'package:angel3_orm/angel3_orm.dart';
 import 'package:test/test.dart';
 
 void main() {
+  group('mapToBool', () {
+    test('reads the strings of a false boolean as false', () {
+      for (var value in ['0', 'f', 'F', 'false', 'FALSE']) {
+        expect(mapToBool(value), isFalse, reason: value);
+      }
+    });
+
+    test('reads anything else as before', () {
+      for (var value in ['1', 't', 'true', 1, true]) {
+        expect(mapToBool(value), isTrue, reason: '$value');
+      }
+      for (var value in [0, false, null]) {
+        expect(mapToBool(value), isFalse, reason: '$value');
+      }
+    });
+  });
+
+  test('defaultDate is the start of 1970 in UTC', () {
+    expect(defaultDate.isUtc, isTrue);
+    expect(defaultDate.millisecondsSinceEpoch, 0);
+  });
+
   group('replacePlaceholders', () {
     String positional(String sql, Map<String, dynamic> values) {
       var params = [];
@@ -47,6 +69,16 @@ void main() {
         "email = 'x@name.com' AND `@name` = ? AND n = \"@name\" "
         "AND s = 'it''s @name' AND v = @@session.time_zone [1]",
       );
+    });
+
+    test('a backslash hides a quote, as on MySQL and MariaDB', () {
+      var values = {'b': 1};
+      var names = [];
+      replacePlaceholders(r"x = 'a\' @b' AND c = @b", values, (name, _) {
+        names.add(name);
+        return '?';
+      });
+      expect(names, ['b']);
     });
 
     test('passes the name to replace', () {

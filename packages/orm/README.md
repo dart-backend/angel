@@ -28,7 +28,7 @@ You'll need these dependencies in your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  angel3_orm: ^10.0.0
+  angel3_orm: ^10.1.0
 dev_dependencies:
   angel3_orm_generator: ^10.0.0
   build_runner: ^2.4.0

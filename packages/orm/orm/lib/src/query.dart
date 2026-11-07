@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import '../angel3_orm.dart';
+import 'identifier.dart';
 
 import 'package:logging/logging.dart';
 
@@ -45,12 +46,103 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
   /// Preprends the [tableName] to the [String], [s].
   String adornWithTableName(String s) {
     if (expressions.containsKey(s)) {
-      //return '${expressions[s]} AS $s';
-      return '(${expressions[s]} AS $s)';
+      return '(${expressions[s]})';
     } else {
       return '$tableName.$s';
     }
   }
+
+  /// What a `RETURNING` clause returns: every column of the table, as the
+  /// select around it computes [fields], and may name any of them, in its
+  /// order, joins or [expressions].
+  String get _returning => '$tableName.*';
+
+  /// The `ORDER BY` clause, with a leading space, if it has one.
+  String get _orderByClause {
+    if (_orderBy.isEmpty) return '';
+    return ' ORDER BY ${_orderBy.map((order) => order.compile()).join(', ')}';
+  }
+
+  /// The `ORDER BY` clause of [_selectOf], with a leading space, if it has one:
+  /// with the SQL of an expression, as it selects no alias of it.
+  String get _orderByOfRows {
+    if (_orderBy.isEmpty) return '';
+    var orders = [
+      for (var order in _orderBy)
+        if (_columnOfOrder(order.key) case var column?)
+          '$column ${order.descending ? 'DESC' : 'ASC'}'
+        else
+          order.compile(),
+    ];
+    return ' ORDER BY ${orders.join(', ')}';
+  }
+
+  /// The SQL that an order by [key] sorts by in [compile], where it names a
+  /// column that the query selects, which [_selectOf] does not, or else `null`:
+  /// of an alias, an expression, or a column that a join may have too.
+  String? _columnOfOrder(String key) {
+    var field = key;
+    for (var entry in aliases.entries) {
+      if (entry.value == key) field = entry.key;
+    }
+    if (expressions[field] case var expression?) return '($expression)';
+    if (field == key && (!_isJoined || !fields.contains(field))) {
+      return null;
+    }
+    return _isJoined ? '$tableName.$field' : field;
+  }
+
+  /// A select of [columns] of this table, of the rows a [limit] picks: with
+  /// the joins, conditions and order of this query, as in [compile], by which
+  /// an order may name a join.
+  String _selectOf(List<String> columns, {String lock = ''}) {
+    var selected = [
+      for (var column in columns) _isJoined ? '$tableName.$column' : column,
+    ];
+    return _compile(
+      {},
+      selecting: selected.join(', '),
+      existing: selected.first,
+      lock: lock,
+    );
+  }
+
+  /// Whether this query joins another table, of any kind.
+  bool get _isJoined => _joins.isNotEmpty || _crossJoin != null;
+
+  /// Whether a join can leave a row of this table out: all but a `LEFT JOIN`.
+  bool get _leavesRowsOut =>
+      _crossJoin != null || _joins.any((j) => j.type != JoinType.left);
+
+  /// Whether a join can give rows of no row of this table, of `NULL` columns.
+  bool get _addsRows =>
+      _joins.any((j) => j.type == JoinType.right || j.type == JoinType.full);
+
+  /// The name of the `WITH` clause of a statement that writes, which is not of
+  /// the table, as it would hide the table from the select around it, such as
+  /// from a join of the table with itself.
+  static const _written = 'angel3_written';
+
+  /// The select of the rows that a statement in the `WITH` clause [_written]
+  /// wrote, as its `RETURNING` gives them: not filtered by the conditions
+  /// again, which their new values may no longer match, nor limited again.
+  String get _writtenRows => _compile(
+    {},
+    rowsWhere: '',
+    fromQuery: '$_written AS $tableName',
+    written: true,
+  );
+
+  /// The `LIMIT` and `OFFSET` clauses, with a leading space, if it has them.
+  String get _limits => [
+    if (_limit != null)
+      ' LIMIT $_limit'
+    // MySQL and MariaDB have no OFFSET without a LIMIT. This one is valid on
+    // PostgreSQL too, the greatest it takes.
+    else if (_offset != null)
+      ' LIMIT 9223372036854775807',
+    if (_offset != null) ' OFFSET $_offset',
+  ].join();
 
   /// Returns a unique version of [name], which will not produce a collision within
   /// the context of this [query].
@@ -245,9 +337,59 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
     _offset = n;
   }
 
-  /// Groups the results by a given key.
+  /// Groups the results by a given key: a column, or several separated by
+  /// commas. An expression is not accepted, as the key is written into the SQL.
   void groupBy(String key) {
+    for (var column in key.split(',')) {
+      checkIdentifier(column.trim(), 'key', 'GROUP BY column');
+    }
     _groupBy = key;
+  }
+
+  /// Makes an [update] or a [delete] skip the rows that another transaction has
+  /// locked, rather than wait for them, as for a queue that several workers
+  /// take from at once: `query..limit(1)..skipLocked()`. Each takes the next
+  /// free row, which may not be the first in the order of [orderBy]. It has no
+  /// effect on a [get] or an [insert].
+  ///
+  /// On MySQL and MariaDB, give the query an index on its conditions and its
+  /// order: they lock every row that they scan, so that one worker would hold
+  /// them all, and the others find none free. It needs a query that selects an
+  /// id on MySQL 8 or MariaDB 10.6 or later, and throws a [StateError] for a `RIGHT JOIN` or a `FULL OUTER JOIN` on
+  /// PostgreSQL, which cannot lock them.
+  void skipLocked() {
+    _skipLocked = true;
+  }
+
+  bool _skipLocked = false;
+
+  /// What follows `FOR UPDATE`, as of [skipLocked].
+  String get _lockOption => _skipLocked ? ' SKIP LOCKED' : '';
+
+  /// The condition of a statement on PostgreSQL that has no `LIMIT`, by which
+  /// it writes the rows that [_selectOf] picks: by their ctid, and the table of
+  /// each, as a ctid is unique only within a partition.
+  ///
+  /// The rows of a limit are locked, and read once, as a subquery may otherwise
+  /// run again and pick others, which would write more than the limit.
+  String get _pickedRows {
+    var columns = ['tableoid', 'ctid'];
+    if (_limits.isEmpty && !_skipLocked) {
+      return ' WHERE (tableoid, ctid) IN (${_selectOf(columns)})';
+    }
+    // PostgreSQL cannot lock the side of a join that may be `NULL`.
+    var lock = _addsRows ? '' : ' FOR UPDATE OF $tableName$_lockOption';
+    return ' WHERE (tableoid, ctid) IN (WITH angel3_picked AS MATERIALIZED '
+        '(${_selectOf(columns, lock: lock)}) SELECT * FROM angel3_picked)';
+  }
+
+  void _checkSkipLocked(QueryExecutor executor) {
+    if (_skipLocked && _addsRows && executor.dialect is PostgreSQLDialect) {
+      throw StateError(
+        'PostgreSQL cannot lock the rows of a RIGHT JOIN or a FULL OUTER JOIN, '
+        'so it cannot skip those that are locked.',
+      );
+    }
   }
 
   /// Sorts the results by a key.
@@ -257,7 +399,7 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
 
   /// Execute a `CROSS JOIN` (Cartesian product) against another table.
   void crossJoin(String tableName) {
-    _crossJoin = tableName;
+    _crossJoin = checkIdentifier(tableName, 'tableName', 'CROSS JOIN table');
   }
 
   String _joinAlias(Set<String> trampoline) {
@@ -272,6 +414,8 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
       }
     }
   }
+
+  static const _joinOperators = {'=', '!=', '<>', '<', '<=', '>', '>='};
 
   String Function() _compileJoin(Object tableName, Set<String> trampoline) {
     if (tableName is String) {
@@ -305,6 +449,26 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
     String op,
     List<String> additionalFields,
   ) {
+    // All of these are written into the SQL as they are.
+    if (tableName is String) {
+      checkIdentifier(tableName, 'tableName', 'JOIN table');
+    }
+    checkName(localKey, 'localKey', 'JOIN column');
+    // The columns of a query joined are named after its alias (`a0_name`).
+    var checkJoined = tableName is Query ? checkPlainName : checkName;
+    checkJoined(foreignKey, 'foreignKey', 'JOIN column');
+    if (alias != null) checkJoined(alias, 'alias', 'JOIN alias');
+    for (var field in additionalFields) {
+      checkJoined(field, 'additionalFields', 'JOIN column');
+    }
+    if (!_joinOperators.contains(op)) {
+      throw ArgumentError.value(
+        op,
+        'op',
+        'must be one of ${_joinOperators.join(' ')}',
+      );
+    }
+
     trampoline ??= <String>{};
 
     // Pivot tables guard against ambiguous fields by excluding tables
@@ -499,6 +663,10 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
     bool withFields = true,
     String? fromQuery,
     String? rowsWhere,
+    String? selecting,
+    String? existing,
+    String lock = '',
+    bool written = false,
   }) {
     // One table MAY appear multiple times in a query.
     if (!canCompile(trampoline)) {
@@ -507,7 +675,7 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
       return '';
     }
 
-    includeTableName = includeTableName || _joins.isNotEmpty;
+    includeTableName = includeTableName || _isJoined;
     var b = StringBuffer(preamble ?? 'SELECT');
     b.write(' ');
     List<String> f;
@@ -516,7 +684,8 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
 
     //if (fields == null) {
     if (fields.isEmpty) {
-      f = ['*'];
+      // Only the columns of this table, as [joinedRow] expects of a SELECT *.
+      f = [_isJoined ? '$tableName.*' : '*'];
     } else {
       f = List<String>.from(
         fields.map((s) {
@@ -548,40 +717,36 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
           return ss;
         }),
       );
-      for (var j in _joins) {
-        var c = compiledJoins[j] = j.compile(trampoline);
-        //if (c != null) {
-        var nested = j.query?._joinedColumns ?? const <String>[];
-        if (c != '') {
-          var additional = j.additionalFields.map(j.nameFor).toList();
-          f.addAll(additional);
-          // Those of the joins of its query, which its subquery selects.
-          f.addAll(nested.map((name) => '${j.alias}.$name'));
-        } else {
-          // If compilation failed, fill in NULL placeholders, named as the
-          // columns, which a query this one is a subquery of selects.
-          for (var name in [
-            ...j.additionalFields.map(j.columnNameFor),
-            ...nested,
-          ]) {
-            f.add('NULL AS $name');
-          }
+    }
+    for (var j in _joins) {
+      // Of rows that were written, each is returned, whatever it now joins.
+      var c = compiledJoins[j] = j.compile(trampoline, leftJoin: written);
+      if (fields.isEmpty) continue;
+      //if (c != null) {
+      var nested = j.query?._joinedColumns ?? const <String>[];
+      if (c != '') {
+        var additional = j.additionalFields.map(j.nameFor).toList();
+        f.addAll(additional);
+        // Those of the joins of its query, which its subquery selects.
+        f.addAll(nested.map((name) => '${j.alias}.$name'));
+      } else {
+        // If compilation failed, fill in NULL placeholders, named as the
+        // columns, which a query this one is a subquery of selects.
+        for (var name in [
+          ...j.additionalFields.map(j.columnNameFor),
+          ...nested,
+        ]) {
+          f.add('NULL AS $name');
         }
       }
     }
     if (withFields) {
-      b.write(f.join(', '));
+      b.write(selecting ?? f.join(', '));
     }
     var whereClause =
         rowsWhere ??
         where?.compile(tableName: includeTableName ? tableName : null);
-    var orderByClause = _orderBy.map((order) => order.compile()).join(', ');
-    var limits = rowsWhere != null
-        ? ''
-        : [
-            if (_limit != null) ' LIMIT $_limit',
-            if (_offset != null) ' OFFSET $_offset',
-          ].join();
+    var limits = rowsWhere != null ? '' : _limits;
 
     var keys = _keysCondition;
     if (keys != null && rowsWhere == null) {
@@ -589,12 +754,21 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
           ? '($whereClause) AND $keys'
           : keys;
     }
+    // Only rows of this table, which [existing] is never `NULL` in, as a join
+    // adds others, which a limit would count.
+    if (existing != null && _addsRows) {
+      whereClause = whereClause?.isNotEmpty == true
+          ? '($whereClause) AND $existing IS NOT NULL'
+          : '$existing IS NOT NULL';
+    }
 
     b.write(' FROM ${fromQuery ?? tableName}');
 
     // No joins if it's not a select.
     if (preamble == null) {
-      if (_crossJoin != null) b.write(' CROSS JOIN $_crossJoin');
+      if (_crossJoin != null && !written) {
+        b.write(' CROSS JOIN $_crossJoin');
+      }
       for (var join in _joins) {
         var c = compiledJoins[join];
         if (c != null) b.write(' $c');
@@ -604,13 +778,18 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
     if (whereClause?.isNotEmpty == true) {
       b.write(' WHERE $whereClause');
     }
-    if (_groupBy != null) b.write(' GROUP BY $_groupBy');
-    if (orderByClause.isNotEmpty) {
-      b.write(' ORDER BY $orderByClause');
+    if (_groupBy != null && selecting == null) {
+      b.write(' GROUP BY $_groupBy');
     }
+    b.write(selecting == null ? _orderByClause : _orderByOfRows);
     b.write(limits);
+    b.write(lock);
     return b.toString();
   }
+
+  @override
+  Future<List<T>> parseRows(QueryExecutor executor, List<List> rows) =>
+      _withRelations(executor, rows);
 
   /// The matching records, with their relations ([loadRelations]).
   @override
@@ -637,36 +816,131 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
     }
   }
 
-  Future<List<T>> delete(QueryExecutor executor) {
-    var sql = compile({}, preamble: 'DELETE', withFields: false);
+  /// Deletes the rows that match [where] (at most [limit] of them, after
+  /// [offset], in the order of [orderBy]), and returns them.
+  ///
+  /// The rows returned are those deleted: where a delete selects them first,
+  /// it deletes the rows it selected.
+  ///
+  /// Throws a [StateError] for a [groupBy], which a delete cannot have, and
+  /// where it cannot tell the rows it selected, as the query selects no id:
+  /// for a [limit] or an [offset] on MySQL or MariaDB, or on PostgreSQL with
+  /// a join or a relation, and for a join that can leave a row out.
+  Future<List<T>> delete(QueryExecutor executor) async {
+    if (_groupBy != null) {
+      throw StateError('A delete cannot have a GROUP BY.');
+    }
+    _checkSkipLocked(executor);
+    var whereClause =
+        where?.compile(tableName: _isJoined ? tableName : null) ?? '';
+    var conditions = whereClause.isEmpty ? '' : ' WHERE $whereClause';
+    var limits = _limits;
 
-    if (executor.dialect is PostgreSQLDialect) {
-      var returning = fields.map(adornWithTableName).join(', ');
-      var selectSQL = compile({});
-      sql = 'WITH $tableName as ($sql RETURNING $returning) $selectSQL';
+    // One statement, of which RETURNING gives exactly the rows deleted.
+    if (executor.dialect is PostgreSQLDialect &&
+        !_isJoined &&
+        !loadsRelations) {
+      // PostgreSQL has no DELETE ... LIMIT.
+      var rows = limits.isEmpty && !_skipLocked ? conditions : _pickedRows;
+      var sql =
+          'WITH $_written as (DELETE FROM $tableName$rows '
+          'RETURNING $_returning) $_writtenRows';
+      _log.fine(() => "Delete Query = $sql");
+      logValues(_log, substitutionValues);
+      var deleted = await executor.query(tableName, sql, substitutionValues);
+      return deserializeList(deleted);
     }
 
-    _log.fine(() => "Delete Query = $sql");
-    logValues(_log, substitutionValues);
+    // The rows are selected first, in a transaction, as MySQL has no RETURNING
+    // and relations may be deleted with them. A limit or a join decides which
+    // rows those are, as the conditions alone do not, and another connection
+    // may add a row that they match: they are deleted by id, if it has one.
+    var byId = fields.contains('id');
+    if (!byId) {
+      if (limits.isNotEmpty || _leavesRowsOut || _skipLocked) {
+        throw StateError(
+          'A delete of a query that does not select an id cannot have a '
+          'LIMIT, an OFFSET, a join that leaves rows out or skipLocked, as it could not '
+          'tell which rows it selected.',
+        );
+      }
+      // A LEFT JOIN leaves no row out: the conditions decide.
+    }
 
-    // MySQL has no RETURNING: the rows are selected first, in a transaction.
-    // Its relations are loaded before it is deleted, as they may be with it.
-    if (_joins.isEmpty &&
-        !loadsRelations &&
-        executor.dialect is PostgreSQLDialect) {
-      // [sql] has its RETURNING, in its WITH clause.
-      return executor
-          .query(tableName, sql, substitutionValues)
-          .then((it) => deserializeList(it));
-    } else {
-      return executor.transaction((tx) async {
-        // TODO: Can this be done with just *one* query?
-        var existing = await get(tx);
+    return executor.transaction((tx) async {
+      // TODO: Can this be done with just *one* query?
+      // Locked, so that another connection cannot select them too, and return
+      // the rows that this one deleted.
+      var rows = await tx.query(
+        tableName,
+        _compile(
+          {},
+          existing: byId ? '$tableName.id' : null,
+          lock: executor.dialect is! PostgreSQLDialect
+              ? ' FOR UPDATE$_lockOption'
+              // PostgreSQL cannot lock the side of a join that may be `NULL`.
+              : _addsRows
+              ? ''
+              : ' FOR UPDATE OF $tableName$_lockOption',
+        ),
+        substitutionValues,
+      );
+      // Once each, as a join may give a row more than once.
+      if (byId) {
+        var ids = <Object?>{};
+        rows = rows.where((row) => ids.add(valueOf('id', row))).toList();
+      }
+      var existing = await _withRelations(tx, rows);
+      if (byId) {
+        await _deleteByIds(tx, rows.map((row) => valueOf('id', row)));
+      } else {
+        // The conditions may name a join, which only PostgreSQL can pick by.
+        var rows = executor.dialect is PostgreSQLDialect && _isJoined
+            ? ' WHERE (tableoid, ctid) IN (${_selectOf(['tableoid', 'ctid'])})'
+            : conditions;
+        var sql = 'DELETE FROM $tableName$rows';
+        _log.fine(() => "Delete Query = $sql");
+        logValues(_log, substitutionValues);
+        await tx.query(tableName, sql, substitutionValues);
+      }
+      return existing;
+    });
+  }
 
-        return tx
-            .query(tableName, sql, substitutionValues)
-            .then((_) => existing);
-      });
+  /// Deletes the rows of [ids], in parts, as a database binds a limited number
+  /// of parameters. A join may give the id of a row more than once.
+  Future<void> _deleteByIds(
+    QueryExecutor executor,
+    Iterable<Object?> ids,
+  ) async {
+    for (var (list, values) in _idLists(ids)) {
+      var sql = 'DELETE FROM $tableName WHERE id IN ($list)';
+      _log.fine(() => "Delete Query = $sql");
+      logValues(_log, values);
+      await executor.query(tableName, sql, values);
+    }
+  }
+
+  /// [ids], without repeats, as `IN` lists of the values they bind, in parts,
+  /// as a database binds a limited number of parameters: an int as it is, and
+  /// any other, such as a UUID, as a value.
+  Iterable<(String, Map<String, dynamic>)> _idLists(
+    Iterable<Object?> ids,
+  ) sync* {
+    var distinct = ids.where((id) => id != null).toSet().toList();
+    for (var start = 0; start < distinct.length; start += _keysPerQuery) {
+      var values = <String, dynamic>{};
+      var list = <String>[];
+      for (var id in distinct.skip(start).take(_keysPerQuery)) {
+        if (id is int) {
+          list.add('$id');
+        } else {
+          var name = 'id_key${values.length}';
+          values[name] = id;
+          list.add('@$name');
+        }
+      }
+      yield (list.join(', '), values);
     }
   }
 
@@ -705,7 +979,20 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
         : otherwise;
   }
 
+  /// The substitution values of an insert: not those of the conditions of this
+  /// query, which it ignores, and PostgreSQL's driver rejects as unused.
+  Map<String, dynamic> get _valuesOfInsert {
+    var conditions = where?.boundParameterNames.toSet() ?? const <String>{};
+    return {
+      for (var MapEntry(:key, :value) in substitutionValues.entries)
+        if (!conditions.contains(key)) key: value,
+    };
+  }
+
   Future<Optional<T>> insert(QueryExecutor executor) {
+    if (_groupBy != null) {
+      throw StateError('An insert cannot have a GROUP BY.');
+    }
     var insertion = values?.compileInsert(this, tableName);
 
     if (insertion == '') {
@@ -714,15 +1001,14 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
       var returningSql = '';
       var sql = '$insertion';
       if (executor.dialect is PostgreSQLDialect) {
-        var returning = fields.map(adornWithTableName).join(', ');
-        var selectSQL = compile({});
-        sql = 'WITH $tableName as ($insertion RETURNING $returning) $selectSQL';
-        //sql = 'WITH $tableName as ($insertion RETURNING $returning)';
+        // The row inserted, as RETURNING gives it: not filtered by any
+        // conditions set on the query, which are not those of an insert.
+        sql =
+            'WITH $_written as ($insertion RETURNING $_returning) '
+            '$_writtenRows';
       } else if (executor.dialect is MySQLDialect) {
         // Default to using 'id' as primary key in model
         if (fields.contains("id")) {
-          var selectSQL = compile({});
-
           // The row of the id given, by its parameter, as the database
           // gives no insert id of a key it does not generate, such as a
           // UUID; or else of the id the database gave it, of the placeholder
@@ -731,8 +1017,11 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
           var idName = values?.toMap()['id'] == null
               ? null
               : values?.parameterNameOf(this, 'id');
-          returningSql =
-              '$selectSQL where $tableName.id=@${idName ?? insertIdParameter}';
+          returningSql = _compile(
+            {},
+            rowsWhere: '$tableName.id=@${idName ?? insertIdParameter}',
+            written: true,
+          );
         } else {
           return _insertWithoutId(executor, sql);
         }
@@ -747,7 +1036,7 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
           .query(
             tableName,
             sql,
-            substitutionValues,
+            _valuesOfInsert,
             returningQuery: returningSql,
             // Not on PostgreSQL, whose insert has its RETURNING already.
             returningFields: executor.dialect is PostgreSQLDialect
@@ -763,30 +1052,40 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
 
   /// Updates the rows that match [where] (at most [limit] of them, after
   /// [offset]) with [values], and returns them as updated.
+  ///
+  /// A join that can leave a row out, unlike a `LEFT JOIN`, decides which rows
+  /// are updated, as it does which are selected.
+  ///
+  /// Each row updated is returned, whatever its new values join: with the
+  /// columns of a join that no longer matches as `NULL`.
+  ///
+  /// Throws a [StateError] for a [limit], an [offset] or such a join on MySQL
+  /// or MariaDB of a query that selects no id, as it could not tell the rows
+  /// it selected.
   Future<List<T>> update(QueryExecutor executor) async {
+    if (_groupBy != null) {
+      throw StateError('An update cannot have a GROUP BY.');
+    }
+    _checkSkipLocked(executor);
     var valuesClause = values?.compileForUpdate(this);
     if (valuesClause == null || valuesClause == '') {
       throw StateError('No values have been specified for update.');
     }
     var whereClause = where?.compile() ?? '';
     var conditions = whereClause.isEmpty ? '' : ' WHERE $whereClause';
-    var limits = [
-      if (_limit != null) ' LIMIT $_limit',
-      if (_offset != null) ' OFFSET $_offset',
-    ].join();
+    var limits = _limits;
+    // A limit or a join decide which rows are updated, as in a select of this
+    // query: not the conditions alone, which may name a join.
+    var picks = limits.isNotEmpty || _isJoined || _skipLocked;
 
     if (executor.dialect is PostgreSQLDialect) {
-      // PostgreSQL has no UPDATE ... LIMIT: the rows are picked by ctid.
-      var rows = limits.isEmpty
-          ? conditions
-          : ' WHERE ctid IN (SELECT ctid FROM $tableName$conditions$limits)';
-      var returning = fields.map(adornWithTableName).join(', ');
+      // PostgreSQL has no UPDATE ... LIMIT.
+      var rows = picks ? _pickedRows : conditions;
       // The updated rows, as RETURNING gives them: not filtered by the
       // conditions again, which their new values may no longer match.
-      var select = _compile({}, rowsWhere: '');
       var sql =
-          'WITH $tableName as (UPDATE $tableName $valuesClause$rows '
-          'RETURNING $returning) $select';
+          'WITH $_written as (UPDATE $tableName $valuesClause$rows '
+          'RETURNING $_returning) $_writtenRows';
       _log.fine(() => "Update Query = $sql");
       logValues(_log, substitutionValues);
       return _withRelations(
@@ -800,63 +1099,81 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
     }
 
     if (!fields.contains('id')) {
+      // Nothing tells the rows it selected, so that a separate UPDATE ... LIMIT
+      // could update other rows than those it returned, and MySQL has no
+      // UPDATE ... OFFSET.
+      if (limits.isNotEmpty || _leavesRowsOut || _skipLocked) {
+        throw StateError(
+          'An update of a query that does not select an id cannot have a '
+          'LIMIT, an OFFSET, a join that leaves rows out or skipLocked on this '
+          'database, '
+          'as it could not tell which rows it selected.',
+        );
+      }
       // Without a primary key, the rows that match are selected first, in a
       // transaction, and returned with the values they are updated to, as
       // their new values may no longer match the conditions.
-      var select = compile({});
-      var sql = 'UPDATE $tableName $valuesClause$conditions$limits';
+      var select = '${compile({})} FOR UPDATE';
+      var sql = 'UPDATE $tableName $valuesClause$conditions';
       _log.fine(() => "Update Query = $sql");
       logValues(_log, substitutionValues);
       return executor.transaction((tx) async {
         var rows = await tx.query(tableName, select, substitutionValues);
         await tx.query(tableName, sql, substitutionValues);
+        // With the values they were updated to, and the columns of their joins,
+        // which follow those of [fields]. A SELECT * has no names to know them by.
         return _withRelations(tx, [
           for (var row in rows)
             [
-              for (var (i, field) in fields.indexed)
-                _boundValue(field, i < row.length ? row[i] : null),
+              for (var (i, value) in row.indexed)
+                i < fields.length ? _boundValue(fields[i], value) : value,
             ],
         ]);
       });
     }
 
     // MySQL has no RETURNING: find the rows first, then update and select
-    // exactly those, by id.
-    var found = await executor.query(
-      tableName,
-      'SELECT id FROM $tableName$conditions$limits',
-      substitutionValues,
-    );
-    if (found.isEmpty) return [];
-    var ids = [
-      for (var row in found)
-        if (row.first is int) '${row.first}' else '@${_bindId(row.first)}',
-    ].join(', ');
-
-    var sql = 'UPDATE $tableName $valuesClause WHERE id IN ($ids)';
-    _log.fine(() => "Update Query = $sql");
-    logValues(_log, substitutionValues);
-    await executor.query(tableName, sql, substitutionValues);
-    return _withRelations(
-      executor,
-      await executor.query(
+    // exactly those, by id. In a transaction, and locked, so that another
+    // connection can neither pick them too, as of a queue, nor change them
+    // before they are updated.
+    return executor.transaction((tx) async {
+      var select = picks
+          ? _selectOf(['id'])
+          : 'SELECT id FROM $tableName$conditions';
+      var found = await tx.query(
         tableName,
-        _compile({}, rowsWhere: '${adornWithTableName('id')} IN ($ids)'),
+        '$select FOR UPDATE$_lockOption',
         substitutionValues,
-      ),
-    );
+      );
+      var rows = <List>[];
+      for (var (list, ids) in _idLists(found.map((row) => row.first))) {
+        var sql = 'UPDATE $tableName $valuesClause WHERE id IN ($list)';
+        _log.fine(() => "Update Query = $sql");
+        logValues(_log, substitutionValues);
+        var values = {...substitutionValues, ...ids};
+        await tx.query(tableName, sql, values);
+        // By the id they now have, where this update sets it.
+        var newId = _boundValue('id') == null
+            ? null
+            : this.values?.parameterNameOf(this, 'id');
+        var updatedRows = newId != null
+            ? '${adornWithTableName('id')} = @$newId'
+            : '${adornWithTableName('id')} IN ($list)';
+        rows.addAll(
+          await tx.query(
+            tableName,
+            _compile({}, rowsWhere: updatedRows, written: true),
+            values,
+          ),
+        );
+      }
+      return _withRelations(tx, rows);
+    });
   }
 
   Future<Optional<T>> _first(Future<List<T>> records) => records.then(
     (it) => it.isEmpty ? Optional.empty() : Optional.of(it.first),
   );
-
-  /// Binds a primary key that is not an int (e.g. a UUID) as a parameter.
-  String _bindId(Object? id) {
-    var name = reserveName('id');
-    substitutionValues[name] = id;
-    return name;
-  }
 
   Future<Optional<T>> updateOne(QueryExecutor executor) {
     return update(executor).then(

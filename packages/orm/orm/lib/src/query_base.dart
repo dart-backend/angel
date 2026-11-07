@@ -71,10 +71,15 @@ abstract class QueryBase<T> {
     _log.fine(() => 'sql = $sql');
     logValues(_log, substitutionValues);
 
-    return executor.query(tableName, sql, substitutionValues).then((it) {
-      return deserializeList(it);
-    });
+    return parseRows(
+      executor,
+      await executor.query(tableName, sql, substitutionValues),
+    );
   }
+
+  /// The records of [rows], rows of this query, with any relations it loads.
+  Future<List<T>> parseRows(QueryExecutor executor, List<List> rows) async =>
+      deserializeList(rows);
 
   Future<Optional<T>> getOne(QueryExecutor executor) {
     //return get(executor).then((it) => it.isEmpty ?  : it.first);
