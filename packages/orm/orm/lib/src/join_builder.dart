@@ -53,7 +53,8 @@ class JoinBuilder {
     return right;
   }
 
-  String compile(Set<String>? trampoline) {
+  /// The `JOIN` clause, as a `LEFT JOIN` if [leftJoin], whatever its [type].
+  String compile(Set<String>? trampoline, {bool leftJoin = false}) {
     var compiledTo = to();
     //if (compiledTo == null) return null;
     if (compiledTo == '') {
@@ -62,7 +63,7 @@ class JoinBuilder {
     var b = StringBuffer();
     var left = '${from.tableName}.$key';
     var right = fieldName;
-    switch (type) {
+    switch (leftJoin ? JoinType.left : type) {
       // SQL has no `SELF JOIN`: it is an `INNER JOIN` of the table, by an alias.
       case JoinType.inner:
       case JoinType.self:

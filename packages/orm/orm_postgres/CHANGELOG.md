@@ -8,7 +8,7 @@
 
 ### Fixes in 10.0.4
 
-* **Queries:** `PostgreSqlExecutor` and `PostgreSqlPoolExecutor` give the driver only the values a query uses, as it rejects any other: a value of a predicate that was replaced, as by `isIn` of no values, or of the conditions an insert leaves out, failed the query
+* **Queries:** `PostgreSqlExecutor` and `PostgreSqlPoolExecutor` leave out a value a query does not use, which the driver names as it rejects it, so that one set by hand and named only in a comment of `where.raw` does not fail the query
 
 ## 10.0.3
 

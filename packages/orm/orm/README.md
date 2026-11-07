@@ -64,7 +64,7 @@ For documentation about the ORM, see [Developer Guide](https://angel3-docs.dukef
 
 ## Known limitations
 
-* **Raw SQL in a union on PostgreSQL:** a `Union` renames the values that both of its queries name alike, reading the SQL as MySQL does, as it does not know its database. In `where.raw` of its right query, a backslash just before the closing quote of a string (`x = 'a\'`) can stop a placeholder after it from being renamed, so that it binds the value of the left query, with no error. Write such a string as an escape string (`x = E'a\\'`), or bind it as a value. The keys of JSON properties are not affected
+* **Raw SQL in a union:** a `Union` renames the values that both of its queries name alike, by reading the SQL of its right query, which can misread `where.raw`: a string such as `$$it's$$` or, on PostgreSQL, `'a\'`, or a comment such as `-- don't`, can hide a placeholder after it. A placeholder that is left would bind the value of the left query, so the union throws a `StateError` instead. So does most of a `@name` in a string of the right query, which is not a placeholder. Give the value another name in either query. One in a string it misreads, such as `$$@name$$`, is renamed instead, without an error, which changes the string
 
 ## Migrating from 9.x to 10.0.0
 

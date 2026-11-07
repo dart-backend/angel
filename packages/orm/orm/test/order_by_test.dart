@@ -21,6 +21,12 @@ void main() {
       );
     });
 
+    test('rejects what PostgreSQL does not read as a name', () {
+      for (var key in [r'$$', r'$1', r'$tag$']) {
+        expect(() => OrderBy(key).compile(), throwsArgumentError, reason: key);
+      }
+    });
+
     test('rejects a stacked-statement sort key', () {
       expect(
         () => OrderBy('name; DROP TABLE users --').compile(),

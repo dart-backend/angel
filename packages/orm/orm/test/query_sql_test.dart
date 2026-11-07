@@ -185,6 +185,29 @@ void main() {
       expect(sql, isNot(contains('= @prop ')));
     });
 
+    test('checks null of the value, not of the type it is read as', () {
+      json.data['n'].asInt!.isNull;
+      json.data['d'].asDouble!.isNotNull;
+      json.data['at'].asDateTime!.isNull;
+      expect(
+        json.compile(tableName: 't'),
+        "t.data::jsonb->>'n' IS NULL AND t.data::jsonb->>'d' IS NOT NULL "
+        "AND t.data::jsonb->>'at' IS NULL",
+      );
+    });
+
+    test('as a date with its parts checks null of the value alone', () {
+      json.data['at'].asDateTime!
+        ..isNotNull
+        ..year.equals(2020);
+      expect(
+        json.compile(),
+        "data::jsonb->>'at' IS NOT NULL AND EXTRACT(YEAR FROM CASE WHEN "
+        "pg_input_is_valid(data::jsonb->>'at', 'timestamptz') THEN "
+        "(data::jsonb->>'at')::timestamptz END) = 2020",
+      );
+    });
+
     test("has a ' in its key escaped", () {
       json.data["x' OR '1'='1"].isNotNull;
       expect(json.compile(), "data::jsonb->>'x'' OR ''1''=''1' IS NOT NULL");
@@ -232,7 +255,7 @@ void main() {
       var executor = _Executor(const PostgreSQLDialect());
       await query.delete(executor);
       var sql = executor.queries.single;
-      expect(sql, contains('RETURNING employees.id,'));
+      expect(sql, contains('RETURNING employees.*) SELECT '));
       expect(
         sql.substring(0, sql.indexOf(') SELECT ')),
         isNot(contains('po.')),
@@ -261,7 +284,7 @@ void main() {
       expect(
         sql,
         startsWith(
-          'WITH employees as (DELETE FROM employees WHERE (tableoid, ctid) IN '
+          'WITH angel3_written as (DELETE FROM employees WHERE (tableoid, ctid) IN '
           '(SELECT tableoid, ctid FROM employees WHERE last_name = @last_name '
           'ORDER BY salary DESC LIMIT 1 OFFSET 2) RETURNING ',
         ),
@@ -275,7 +298,7 @@ void main() {
     test('on MySQL deletes the rows it selected, by id', () async {
       var executor = _Executor(const MySQLDialect(), rows: [_row]);
       expect(await query.delete(executor), hasLength(1));
-      expect(executor.queries[0], endsWith(' LIMIT 1 OFFSET 2'));
+      expect(executor.queries[0], endsWith(' LIMIT 1 OFFSET 2 FOR UPDATE'));
       expect(executor.queries[1], 'DELETE FROM employees WHERE id IN (3)');
     });
 
@@ -367,9 +390,11 @@ void main() {
         await q.delete(executor);
         expect(
           executor.queries[1],
-          'DELETE FROM employees WHERE employees.last_name = @last_name',
+          'DELETE FROM employees WHERE (tableoid, ctid) IN (SELECT '
+          'employees.tableoid, employees.ctid FROM employees  LEFT JOIN '
+          'companies a0 ON employees.company_id=a0.id WHERE '
+          'employees.last_name = @last_name)',
         );
-        expect(executor.values[1], {'last_name': 'x'});
       });
     });
 
@@ -378,6 +403,307 @@ void main() {
       for (var dialect in const [PostgreSQLDialect(), MySQLDialect()]) {
         expect(query.delete(_Executor(dialect)), throwsStateError);
       }
+    });
+  });
+
+  group('a predicate that replaces another', () {
+    test('drops its value, for any predicate', () {
+      for (var replace in <void Function()>[
+        () => query.where!.firstName.equals('y'),
+        () => query.where!.firstName.like('y%'),
+        () => query.where!.firstName.isBetween('a', 'b'),
+        () => query.where!.firstName.isNotBetween('a', 'b'),
+        () => query.where!.firstName.isIn(['y', 'z']),
+        () => query.where!.firstName.isNotIn(['y']),
+        () => query.where!.firstName.isIn(const []),
+        () => query.where!.firstName.isNotIn(const []),
+        () => query.where!.firstName.isNull,
+        () => query.where!.firstName.isNotNull,
+      ]) {
+        query = EmployeeQuery();
+        // Each from each of the others, as they bind differently.
+        for (var first in <void Function()>[
+          () => query.where!.firstName.equals('x'),
+          () => query.where!.firstName.isBetween('c', 'd'),
+          () => query.where!.firstName.isIn(['v', 'w']),
+        ]) {
+          query = EmployeeQuery();
+          first();
+          replace();
+          var sql = query.compile({});
+          for (var name in query.substitutionValues.keys) {
+            expect(sql, contains('@$name'));
+          }
+          expect(
+            RegExp(r'@(\w+)').allMatches(sql).map((m) => m[1]),
+            unorderedEquals(query.substitutionValues.keys),
+          );
+        }
+      }
+    });
+
+    test('of a JSON property as a string too', () {
+      json.data['a'].asString!
+        ..equals('x')
+        ..isIn(const []);
+      expect(json.compile(), 'FALSE');
+      expect(query.substitutionValues, isEmpty);
+    });
+
+    test('leaves those of other builders', () {
+      query.where!.lastName.equals('kept');
+      query.where!.firstName
+        ..equals('x')
+        ..isNull;
+      expect(query.substitutionValues, {'last_name': 'kept'});
+    });
+  });
+
+  group('an insert of a query with conditions', () {
+    test('is given only the values it uses', () async {
+      for (var dialect in const [PostgreSQLDialect(), MySQLDialect()]) {
+        var executor = _Executor(dialect);
+        var q = EmployeeQuery()
+          ..where!.firstName.equals('other')
+          ..where!.createdAt.lessThan(DateTime(2020))
+          ..orWhere((w) => w.lastName.isIn(['a', 'b']))
+          ..values.lastName = 'new';
+        await q.insert(executor);
+        expect(executor.values.single.keys, [
+          q.values.parameterNameOf(q, 'last_name'),
+        ]);
+      }
+    });
+
+    test('keeps the values of a join', () async {
+      var executor = _Executor(const PostgreSQLDialect());
+      var joined = EmployeeQuery(parent: query)..where!.firstName.equals('j');
+      query
+        ..where!.lastName.equals('dropped')
+        ..join(joined, 'id', 'id')
+        ..values.salary = 1.0;
+      await query.insert(executor);
+      expect(executor.values.single.values, contains('j'));
+      expect(executor.values.single.values, isNot(contains('dropped')));
+    });
+
+    test('keeps a value set by hand, for the driver to name', () async {
+      var executor = _Executor(const PostgreSQLDialect());
+      query.substitutionValues['by_hand'] = 1;
+      query.values.lastName = 'new';
+      await query.insert(executor);
+      expect(executor.values.single, contains('by_hand'));
+    });
+
+    test('leaves the query as it was', () async {
+      var q = EmployeeQuery()
+        ..where!.firstName.equals('other')
+        ..values.lastName = 'new';
+      await q.insert(_Executor(const PostgreSQLDialect()));
+      expect(q.substitutionValues.values, contains('other'));
+    });
+  });
+
+  group('the rows a statement wrote', () {
+    test(
+      'are read from another name, so that the table is not hidden',
+      () async {
+        var executor = _Executor(const PostgreSQLDialect());
+        var q = EmployeeQuery()
+          ..values.lastName = 'new'
+          ..selfJoin('employees', 'id', 'id', alias: 'm');
+        await q.update(executor);
+        var sql = executor.queries.single;
+        expect(
+          sql,
+          startsWith('WITH angel3_written as (UPDATE employees SET '),
+        );
+        expect(
+          sql,
+          contains(
+            ' FROM angel3_written AS employees  LEFT JOIN employees m ON '
+            'employees.id=m.id',
+          ),
+        );
+      },
+    );
+
+    test('have no cross join, on either database', () async {
+      var pg = _Executor(const PostgreSQLDialect());
+      await (EmployeeQuery()
+            ..values.lastName = 'new'
+            ..crossJoin('other'))
+          .update(pg);
+      var select = pg.queries.single.split(') RETURNING ').last;
+      expect(select, isNot(contains('CROSS JOIN')));
+
+      var my = _Executor(const MySQLDialect(), rows: [_row]);
+      await (EmployeeQuery()
+            ..values.lastName = 'new'
+            ..crossJoin('other'))
+          .update(my);
+      expect(my.queries[0], contains('CROSS JOIN other'));
+      expect(my.queries.last, isNot(contains('CROSS JOIN')));
+    });
+
+    test('on MySQL have a left join of any type', () async {
+      var my = _Executor(const MySQLDialect(), rows: [_row]);
+      await (EmployeeQuery()
+            ..values.lastName = 'new'
+            ..join('other', 'id', 'id'))
+          .update(my);
+      expect(my.queries[0], contains(' INNER JOIN other '));
+      expect(my.queries.last, contains(' LEFT JOIN other '));
+    });
+  });
+
+  group('a query with a group by', () {
+    setUp(() {
+      query.groupBy('salary');
+      query.values.lastName = 'new';
+    });
+
+    test('cannot be updated', () {
+      for (var dialect in const [PostgreSQLDialect(), MySQLDialect()]) {
+        expect(query.update(_Executor(dialect)), throwsStateError);
+      }
+    });
+
+    test('cannot be inserted', () {
+      expect(
+        () => query.insert(_Executor(const PostgreSQLDialect())),
+        throwsStateError,
+      );
+    });
+  });
+
+  group('the rows selected first are locked', () {
+    test('by an update on MySQL', () async {
+      var executor = _Executor(const MySQLDialect());
+      await (EmployeeQuery()..values.lastName = 'new').update(executor);
+      expect(executor.queries.single, 'SELECT id FROM employees FOR UPDATE');
+    });
+
+    test('by a delete on PostgreSQL, of this table alone', () async {
+      var executor = _Executor(const PostgreSQLDialect());
+      await (EmployeeQuery()..leftJoin('other', 'id', 'id')).delete(executor);
+      expect(executor.queries.first, endsWith(' FOR UPDATE OF employees'));
+    });
+
+    test('not by a delete on PostgreSQL of a join that adds rows', () async {
+      var executor = _Executor(const PostgreSQLDialect());
+      await (EmployeeQuery()..rightJoin('other', 'id', 'id')).delete(executor);
+      expect(executor.queries.first, isNot(contains('FOR UPDATE')));
+    });
+  });
+
+  group('an update on MySQL of many rows', () {
+    test('runs in parts', () async {
+      var executor = _Executor(
+        const MySQLDialect(),
+        rows: [
+          for (var i = 1; i <= 1500; i++) [i, ..._row.skip(1)],
+        ],
+      );
+      await (EmployeeQuery()..values.lastName = 'new').update(executor);
+      expect(
+        executor.queries.where((q) => q.startsWith('UPDATE')),
+        hasLength(2),
+      );
+    });
+
+    test('binds an id that is not an int, each once', () async {
+      var row = ['a-uuid', ..._row.skip(1)];
+      var executor = _Executor(const MySQLDialect(), rows: [row, row]);
+      var q = EmployeeQuery()..values.lastName = 'new';
+      await q.update(executor);
+      expect(executor.queries[1], endsWith(' WHERE id IN (@id_key0)'));
+      expect(executor.values[1], containsPair('id_key0', 'a-uuid'));
+      expect(q.substitutionValues, isNot(contains('id_key0')));
+    });
+  });
+
+  group('a cross join', () {
+    test('qualifies the columns of a select', () {
+      var sql = (EmployeeQuery()..crossJoin('other')).compile({});
+      expect(sql, startsWith('SELECT employees.id, '));
+      expect(sql, endsWith(' FROM employees CROSS JOIN other'));
+    });
+
+    test('picks the rows of an update', () async {
+      var executor = _Executor(const PostgreSQLDialect());
+      var q = EmployeeQuery()
+        ..values.lastName = 'new'
+        ..crossJoin('other');
+      await q.update(executor);
+      expect(
+        executor.queries.single,
+        contains(
+          'WHERE (tableoid, ctid) IN (SELECT employees.tableoid, '
+          'employees.ctid FROM employees CROSS JOIN other) RETURNING ',
+        ),
+      );
+    });
+
+    test('deletes the rows it selected, by id', () async {
+      var executor = _Executor(const PostgreSQLDialect(), rows: [_row, _row]);
+      await (EmployeeQuery()..crossJoin('other')).delete(executor);
+      expect(executor.queries.last, 'DELETE FROM employees WHERE id IN (3)');
+    });
+
+    test('of a query that selects no id is an error', () {
+      for (var dialect in const [PostgreSQLDialect(), MySQLDialect()]) {
+        var q = _NoIdQuery()..crossJoin('other');
+        expect(q.delete(_Executor(dialect)), throwsStateError);
+      }
+      var q = _NoIdQuery()
+        ..values.lastName = 'new'
+        ..crossJoin('other');
+      expect(q.update(_Executor(const MySQLDialect())), throwsStateError);
+    });
+  });
+
+  group('a join that adds rows', () {
+    test('has only the rows of this table when it picks rows', () async {
+      var executor = _Executor(const PostgreSQLDialect());
+      var q = EmployeeQuery()
+        ..values.lastName = 'new'
+        ..rightJoin('other', 'id', 'id', alias: 'o')
+        ..where!.firstName.equals('x');
+      await q.update(executor);
+      var sql = executor.queries.single;
+      expect(
+        sql,
+        contains(
+          'WHERE (employees.first_name = @first_name) AND '
+          'employees.tableoid IS NOT NULL) RETURNING ',
+        ),
+      );
+      expect(
+        sql,
+        contains(' FROM angel3_written AS employees  LEFT JOIN other o '),
+      );
+    });
+
+    test('has only the rows of this table when it deletes', () async {
+      var executor = _Executor(const MySQLDialect());
+      await (EmployeeQuery()..rightJoin('other', 'id', 'id')).delete(executor);
+      expect(
+        executor.queries.first,
+        endsWith(' WHERE employees.id IS NOT NULL FOR UPDATE'),
+      );
+    });
+
+    test('has only the rows it wrote on an insert', () async {
+      var executor = _Executor(const PostgreSQLDialect());
+      var q = EmployeeQuery()
+        ..values.lastName = 'new'
+        ..fullOuterJoin('other', 'id', 'id');
+      await q.insert(executor);
+      expect(
+        executor.queries.single,
+        contains(' FROM angel3_written AS employees  LEFT JOIN other a0 '),
+      );
     });
   });
 
@@ -418,7 +744,7 @@ void main() {
       expect(
         executor.queries.first,
         'SELECT employees.id FROM employees  INNER JOIN companies c ON '
-        'employees.company_id=c.id ORDER BY c.name ASC LIMIT 1',
+        'employees.company_id=c.id ORDER BY c.name ASC LIMIT 1 FOR UPDATE',
       );
     });
 
@@ -465,15 +791,54 @@ void main() {
         expect(executor.queries[1], endsWith(' WHERE id IN (3)'));
       });
 
-      test('a left join leaves no row out, so the conditions decide', () async {
+      test('a left join picks the rows, as its alias may be named', () async {
         var executor = _Executor(const PostgreSQLDialect());
         var q = EmployeeQuery()
           ..values.lastName = 'new'
-          ..where!.firstName.equals('x')
-          ..leftJoin('companies', 'company_id', 'id');
+          ..leftJoin('companies', 'company_id', 'id', alias: 'c')
+          ..where!.raw('c.deleted = false');
         await q.update(executor);
-        expect(executor.queries.single, isNot(contains('tableoid')));
-        expect(executor.queries.single, contains('WHERE first_name = '));
+        expect(
+          executor.queries.single,
+          contains(
+            'WHERE (tableoid, ctid) IN (SELECT employees.tableoid, '
+            'employees.ctid FROM employees  LEFT JOIN companies c ON '
+            'employees.company_id=c.id WHERE (c.deleted = false)) RETURNING ',
+          ),
+        );
+      });
+
+      test('with an order by a column a join may have too', () async {
+        var executor = _Executor(const MySQLDialect());
+        var q = EmployeeQuery()
+          ..values.lastName = 'new'
+          ..join('companies', 'company_id', 'id', alias: 'c')
+          ..orderBy('first_name', descending: true)
+          ..orderBy('c.name')
+          ..orderBy('other')
+          ..limit(1);
+        await q.update(executor);
+        expect(
+          executor.queries.first,
+          endsWith(
+            ' ORDER BY employees.first_name DESC, c.name ASC, other ASC LIMIT 1 '
+            'FOR UPDATE',
+          ),
+        );
+      });
+
+      test('with an order by an alias', () async {
+        var executor = _Executor(const MySQLDialect());
+        var q = EmployeeQuery()
+          ..values.lastName = 'new'
+          ..aliases['first_name'] = 'given'
+          ..orderBy('given')
+          ..limit(1);
+        await q.update(executor);
+        expect(
+          executor.queries.first,
+          endsWith(' ORDER BY first_name ASC LIMIT 1 FOR UPDATE'),
+        );
       });
 
       test('on MySQL, selecting no id, has no join that leaves a row out', () {
@@ -513,7 +878,7 @@ void main() {
       await query.update(executor);
       expect(
         executor.queries.first,
-        'SELECT id FROM employees ORDER BY salary DESC LIMIT 1',
+        'SELECT id FROM employees ORDER BY salary DESC LIMIT 1 FOR UPDATE',
       );
     });
 
@@ -633,13 +998,47 @@ void main() {
   });
 
   group('a union', () {
-    test('renames the values of the right query, not text in quotes', () {
-      var left = EmployeeQuery()..where!.firstName.equals('a');
-      var right = EmployeeQuery()..where!.firstName.equals('b');
-      right.where!.raw("note = '@first_name'");
-      var sql = left.union(right).compile({});
-      expect(sql, contains('first_name = @first_name_1'));
-      expect(sql, contains("note = '@first_name'"));
+    group('with a value of the same name in its right query', () {
+      late EmployeeQuery left, right;
+
+      setUp(() {
+        left = EmployeeQuery()..where!.firstName.equals('a');
+        right = EmployeeQuery();
+        right.substitutionValues['first_name'] = 'b';
+      });
+
+      test('renames it', () {
+        right.where!.raw('first_name = @first_name');
+        var sql = left.union(right).compile({});
+        expect(sql, contains('first_name = @first_name_1'));
+      });
+
+      for (var raw in [
+        r"note <> $$it's$$ AND first_name = @first_name AND c <> 'd'",
+        "note <> 'x' -- don't\n AND first_name = @first_name AND c <> 'd'",
+        "note <> 'x' /* don't */ AND first_name = @first_name AND c <> 'd'",
+      ]) {
+        test('rejects one it cannot rename: $raw', () {
+          right.where!.raw(raw);
+          expect(() => left.union(right).compile({}), throwsStateError);
+        });
+      }
+
+      test('rejects one in a string, which it cannot tell apart', () {
+        right.where!.raw("note = '@first_name'");
+        expect(() => left.union(right).compile({}), throwsStateError);
+      });
+
+      test('accepts another name, a longer one and a system variable', () {
+        right.where!.raw(
+          'a = @first_name AND b = @first_name1 AND c = @@first_name',
+        );
+        right.substitutionValues['first_name1'] = 'c';
+        var sql = left.union(right).compile({});
+        expect(sql, contains('a = @first_name_1'));
+        expect(sql, contains('b = @first_name1'));
+        expect(sql, contains('c = @@first_name'));
+      });
     });
 
     test('renames a value after an escape string in a raw condition', () {

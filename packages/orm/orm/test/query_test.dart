@@ -354,7 +354,7 @@ void main() {
     // after the SELECT is a syntax error.
     void expectComplete() {
       var sql = executor.queries.single;
-      expect(sql, startsWith('WITH employees as ('));
+      expect(sql, startsWith('WITH angel3_written as ('));
       expect(sql, contains(') SELECT '));
       expect(
         sql.substring(sql.indexOf(') SELECT ')),
@@ -408,7 +408,7 @@ void main() {
         expect(
           sql,
           startsWith(
-            'WITH employees as (UPDATE employees SET last_name=@last_name1 '
+            'WITH angel3_written as (UPDATE employees SET last_name=@last_name1 '
             'WHERE last_name = @last_name RETURNING ',
           ),
         );
@@ -440,7 +440,8 @@ void main() {
         expect(executor.queries, hasLength(3));
         expect(
           executor.queries[0],
-          'SELECT id FROM employees WHERE last_name = @last_name LIMIT 2',
+          'SELECT id FROM employees WHERE last_name = @last_name LIMIT 2 '
+          'FOR UPDATE',
         );
         expect(
           executor.queries[1],
@@ -485,6 +486,20 @@ void main() {
       expect(sql, contains(' CROSS JOIN public."order"'));
       expect(sql, contains(' GROUP BY "order".id, `group`'));
       expect(sql, contains(' ORDER BY "order".id ASC'));
+    });
+
+    test(r'a name has a $ only within it', () {
+      for (var name in [r'$$', r'$1', r'$tag$', r'a.$$', r'$a']) {
+        expect(() => query.groupBy(name), throwsArgumentError, reason: name);
+        expect(() => query.crossJoin(name), throwsArgumentError, reason: name);
+      }
+      // After a backtick, which is no quote on PostgreSQL, `1$$` would read as
+      // a number and the start of a string.
+      for (var name in [r'"$$"', r'`$$`', r'`1$$`', r'"$1"']) {
+        expect(() => query.crossJoin(name), throwsArgumentError, reason: name);
+      }
+      query.groupBy(r'a$b, "a$b", `1a`');
+      expect(query.compile({}), contains(r' GROUP BY a$b, "a$b", `1a`'));
     });
 
     test('a quoted name cannot end early', () {

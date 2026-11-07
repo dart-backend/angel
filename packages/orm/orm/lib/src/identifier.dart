@@ -3,7 +3,13 @@
 /// A quoted part has only letters, digits, `_` and `$`, as whether a quote is
 /// one depends on the database, which is not known here: a backtick is an
 /// operator on PostgreSQL, so that what it encloses would be read as SQL.
-const _part = r'(?:[A-Za-z_$][A-Za-z0-9_$]*|"[A-Za-z0-9_$]+"|`[A-Za-z0-9_$]+`)';
+///
+/// A `$` is only within a name that starts with a letter or `_`, of which it
+/// is part: elsewhere, PostgreSQL reads `$$` as the start of a string, and `$1`
+/// as a parameter. A quoted name may start with a digit, but then has no `$`.
+const _word = r'[A-Za-z_][A-Za-z0-9_$]*';
+const _quoted = '(?:$_word|[0-9][A-Za-z0-9_]*)';
+const _part = '(?:$_word|"$_quoted"|`$_quoted`)';
 
 final RegExp _identifier = RegExp('^$_part(?:\\.$_part)*\$');
 final RegExp _name = RegExp('^$_part\$');

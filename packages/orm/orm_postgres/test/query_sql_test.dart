@@ -254,6 +254,282 @@ void main() {
     });
   });
 
+  group('the rows picked', () {
+    setUp(() async {
+      await insertCars(['a', 'b', 'c']);
+      for (var name in ['a', 'b', 'c']) {
+        await (FruitQuery()..values.commonName = name).insert(executor);
+      }
+    });
+
+    test('by an order of a column it does not select, on delete', () async {
+      var deleted =
+          await (CarQuery()
+                ..select(['id', 'make'])
+                ..orderBy('description', descending: true)
+                ..limit(1))
+              .delete(executor);
+      expect(deleted, hasLength(1));
+      expect(await descriptions(), ['a', 'b']);
+    });
+
+    test('by an order of a column it does not select, on update', () async {
+      var updated =
+          await (CarQuery()
+                ..select(['id', 'make'])
+                ..values.make = 'y'
+                ..orderBy('description', descending: true)
+                ..limit(1))
+              .update(executor);
+      expect(updated, hasLength(1));
+      var made = await (CarQuery()..where!.make.equals('y')).get(executor);
+      expect(made.map((c) => c.description), ['c']);
+    });
+
+    test('by an order of a column a join has too', () async {
+      var updated =
+          await (CarQuery()
+                ..values.make = 'y'
+                ..join('fruits', 'description', 'common_name')
+                ..orderBy('id', descending: true)
+                ..limit(1))
+              .update(executor);
+      expect(updated.map((c) => c.description), ['c']);
+      var made = await (CarQuery()..where!.make.equals('y')).get(executor);
+      expect(made.map((c) => c.description), ['c']);
+    });
+
+    test('by a raw condition on a left join, on update', () async {
+      await (FruitQuery()..where!.commonName.equals('a')).delete(executor);
+      var query = CarQuery()
+        ..values.make = 'y'
+        ..leftJoin('fruits', 'description', 'common_name', alias: 'f');
+      query.where!.raw('f.common_name IS NULL');
+      var updated = await query.update(executor);
+      expect(updated.map((c) => c.description), ['a']);
+      var made = await (CarQuery()..where!.make.equals('y')).get(executor);
+      expect(made.map((c) => c.description), ['a']);
+    });
+
+    test('by a raw condition on a left join, on delete', () async {
+      await (FruitQuery()..where!.commonName.equals('a')).delete(executor);
+      var query = CarQuery()
+        ..leftJoin('fruits', 'description', 'common_name', alias: 'f');
+      query.where!.raw('f.common_name IS NULL');
+      var deleted = await query.delete(executor);
+      expect(deleted.map((c) => c.description), ['a']);
+      expect(await descriptions(), ['b', 'c']);
+    });
+  });
+
+  group('a join that adds rows', () {
+    setUp(() async {
+      await insertCars(['a']);
+      for (var name in ['a', 'z']) {
+        await (FruitQuery()..values.commonName = name).insert(executor);
+      }
+    });
+
+    CarQuery rightJoined() => CarQuery()
+      ..rightJoin(
+        'fruits',
+        'description',
+        'common_name',
+        alias: 'f',
+        additionalFields: const ['common_name'],
+      );
+
+    test('returns only the rows an update wrote', () async {
+      var updated = await (rightJoined()..values.make = 'y').update(executor);
+      expect(updated.map((c) => c.description), ['a']);
+    });
+
+    test('counts only the rows of the table in a limit', () async {
+      var updated =
+          await (rightJoined()
+                ..values.make = 'y'
+                ..orderBy('f.common_name', descending: true)
+                ..limit(1))
+              .update(executor);
+      expect(updated.map((c) => c.description), ['a']);
+    });
+
+    test('returns only the rows a delete removed', () async {
+      var deleted = await rightJoined().delete(executor);
+      expect(deleted.map((c) => c.description), ['a']);
+      expect(await descriptions(), isEmpty);
+    });
+  });
+
+  test('a full join returns only the rows an update wrote', () async {
+    await insertCars(['a']);
+    await (FruitQuery()..values.commonName = 'z').insert(executor);
+    var updated =
+        await (CarQuery()
+              ..values.make = 'y'
+              ..fullOuterJoin(
+                'fruits',
+                'description',
+                'common_name',
+                additionalFields: const ['common_name'],
+              ))
+            .update(executor);
+    expect(updated.map((c) => c.description), ['a']);
+  });
+
+  group('a cross join', () {
+    setUp(() => insertCars(['a', 'b']));
+
+    test('of an empty table updates nothing', () async {
+      var updated =
+          await (CarQuery()
+                ..values.make = 'y'
+                ..crossJoin('fruits'))
+              .update(executor);
+      expect(updated, isEmpty);
+      expect(
+        await (CarQuery()..where!.make.equals('y')).get(executor),
+        isEmpty,
+      );
+    });
+
+    test('of an empty table deletes nothing', () async {
+      expect(await (CarQuery()..crossJoin('fruits')).delete(executor), isEmpty);
+      expect(await descriptions(), ['a', 'b']);
+    });
+
+    group('of a table with rows', () {
+      setUp(() => (FruitQuery()..values.commonName = 'f').insert(executor));
+
+      test('updates each row', () async {
+        var updated =
+            await (CarQuery()
+                  ..values.make = 'y'
+                  ..crossJoin('fruits'))
+                .update(executor);
+        expect(updated, hasLength(2));
+      });
+
+      test('with a limit, in an order of a column it has too', () async {
+        var updated =
+            await (CarQuery()
+                  ..values.make = 'y'
+                  ..crossJoin('fruits')
+                  ..orderBy('id', descending: true)
+                  ..limit(1))
+                .update(executor);
+        expect(updated.map((c) => c.description), ['b']);
+      });
+
+      test('deletes each row', () async {
+        var deleted = await (CarQuery()..crossJoin('fruits')).delete(executor);
+        expect(deleted, hasLength(2));
+        expect(await descriptions(), isEmpty);
+      });
+    });
+  });
+
+  test('a read of a delete locks only its own table', () async {
+    await insertCars(['a']);
+    await (FruitQuery()..values.commonName = 'a').insert(executor);
+    var deleted =
+        await (CarQuery()..leftJoin('fruits', 'description', 'common_name'))
+            .delete(executor);
+    expect(deleted, hasLength(1));
+  });
+
+  test(
+    'two connections deleting rows with relations return different rows',
+    () async {
+      var other = await openPgConnection();
+      addTearDown(other.close);
+      var otherExecutor = await createExecutor(other);
+      for (var rings in [1, 2]) {
+        await (TreeQuery()..values.rings = rings).insert(executor);
+      }
+      TreeQuery next() => TreeQuery()
+        ..orderBy('rings')
+        ..limit(1);
+      var claimed = await Future.wait([
+        next().delete(executor),
+        next().delete(otherExecutor),
+      ]);
+      var rings = [for (var trees in claimed) ...trees.map((t) => t.rings)];
+      // The second reads the first's row after it was deleted, so it finds
+      // another or none: never the same one.
+      expect(rings.toSet(), hasLength(rings.length));
+    },
+  );
+
+  test('a join with a column named as the table keeps a row of NULL', () async {
+    await conn.execute('CREATE TABLE car_notes (cars text, common_name text)');
+    addTearDown(() => conn.execute('DROP TABLE car_notes'));
+    await conn.execute("INSERT INTO car_notes (common_name) VALUES ('a')");
+    await insertCars(['a']);
+    var updated =
+        await (CarQuery()
+              ..values.make = 'y'
+              ..rightJoin('car_notes', 'description', 'common_name'))
+            .update(executor);
+    expect(updated.map((c) => c.description), ['a']);
+  });
+
+  group('the rows a statement returns', () {
+    test('of an update that breaks its join has the row', () async {
+      await insertCars(['a']);
+      await (FruitQuery()..values.commonName = 'a').insert(executor);
+      var updated =
+          await (CarQuery()
+                ..values.description = 'gone'
+                ..join('fruits', 'description', 'common_name'))
+              .update(executor);
+      expect(updated.map((c) => c.description), ['gone']);
+      expect(await descriptions(), ['gone']);
+    });
+
+    test('of a cross join has each row once', () async {
+      await insertCars(['a']);
+      for (var name in ['f', 'g', 'h']) {
+        await (FruitQuery()..values.commonName = name).insert(executor);
+      }
+      var updated =
+          await (CarQuery()
+                ..values.make = 'y'
+                ..crossJoin('fruits'))
+              .update(executor);
+      expect(updated.map((c) => c.description), ['a']);
+    });
+
+    test('of a join of its own table has the row', () async {
+      await (CarQuery()
+            ..values.make = 'b'
+            ..values.description = 'a'
+            ..values.familyFriendly = false)
+          .insert(executor);
+      await (CarQuery()
+            ..values.make = 'x'
+            ..values.description = 'b'
+            ..values.familyFriendly = false)
+          .insert(executor);
+      var query = CarQuery()
+        ..values.familyFriendly = true
+        ..selfJoin('cars', 'make', 'description', alias: 'm')
+        ..limit(1);
+      var updated = await query.update(executor);
+      expect(updated.map((c) => c.description), ['a']);
+    });
+
+    test('of an insert that joins nothing has the row', () async {
+      var query = CarQuery()
+        ..values.make = 'x'
+        ..values.description = 'new'
+        ..values.familyFriendly = false
+        ..join('fruits', 'description', 'common_name');
+      var inserted = await query.insert(executor);
+      expect(inserted.value.description, 'new');
+    });
+  });
+
   test('update of a limit takes the first rows in order', () async {
     await insertCars(['a', 'b', 'c']);
     var updated =
@@ -352,6 +628,88 @@ void main() {
               ..join('fruits', '"description"', '"common_name"', alias: '"f"'))
             .get(executor);
     expect(cars.map((c) => c.description), ['b']);
+  });
+
+  group('values, as the driver reads the SQL', () {
+    setUp(() => insertCars(['a']));
+
+    // `make` is bound to `x`, so each matches the one car.
+    Future<void> expectMatch(String raw) async {
+      var query = CarQuery();
+      query.substitutionValues['m'] = 'x';
+      query.where!.raw(raw);
+      expect(await query.get(executor), hasLength(1), reason: raw);
+    }
+
+    test('after a dollar-quoted string with a quote', () async {
+      // A later quote, which reading `'` as opening a string would pair it with.
+      await expectMatch(
+        r"description <> $$it's$$ AND make = @m AND description <> 'b'",
+      );
+    });
+
+    test('after a comment with a quote', () async {
+      await expectMatch(
+        "description <> 'b' -- don't\n AND make = @m AND description <> 'c'",
+      );
+      await expectMatch(
+        "description <> 'b' /* don't */ AND make = @m AND description <> 'c'",
+      );
+    });
+
+    test('after a string that ends in a backslash', () async {
+      await expectMatch(
+        r"description <> 'b\' AND make = @m AND description <> 'c'",
+      );
+    });
+
+    test('left out when only a comment names them', () async {
+      var query = CarQuery();
+      query.substitutionValues['m'] = 'x';
+      query.where!.raw("make = 'x' /* @m */");
+      expect(await query.get(executor), hasLength(1));
+    });
+
+    test('left out in a transaction, which goes on', () async {
+      var cars = await executor.transaction((tx) async {
+        var stale = CarQuery()
+          ..where!.make.equals('x')
+          ..where!.make.isIn([]);
+        expect(await stale.get(tx), isEmpty);
+        return CarQuery().get(tx);
+      });
+      expect(cars, hasLength(1));
+    });
+
+    test('a value that is missing is still an error', () async {
+      var query = CarQuery()..where!.raw('make = @nothing');
+      expect(query.get(executor), throwsArgumentError);
+    });
+  });
+
+  group('a union of a value it cannot rename', () {
+    setUp(() => insertCars(['a']));
+
+    test('is an error, not the value of its left query', () async {
+      var left = CarQuery()..where!.make.equals('x');
+      var right = CarQuery();
+      right.substitutionValues['make'] = 'none';
+      right.where!.raw(
+        r"description <> $$it's$$ AND make = @make AND description <> 'b'",
+      );
+      expect(left.unionAll(right).get(executor), throwsStateError);
+    });
+
+    test('runs with a value of another name', () async {
+      var left = CarQuery()..where!.make.equals('x');
+      var right = CarQuery();
+      right.substitutionValues['right_make'] = 'none';
+      right.where!.raw(
+        r"description <> $$it's$$ AND make = @right_make AND description <> 'b'",
+      );
+      var cars = await left.unionAll(right).get(executor);
+      expect(cars, hasLength(1));
+    });
   });
 
   test('a self join is accepted, and joins', () async {
@@ -538,6 +896,14 @@ void main() {
           ),
           1,
         );
+      });
+
+      test('of another type is not null', () async {
+        expect(await count((w) => w.value['nested'].asInt!.isNotNull), 2);
+        expect(await count((w) => w.value['nested'].asInt!.isNull), 0);
+        expect(await count((w) => w.value['at'].asDateTime!.isNotNull), 2);
+        expect(await count((w) => w.value['at'].asDateTime!.isNull), 0);
+        expect(await count((w) => w.value['none'].asInt!.isNull), 2);
       });
 
       test('as a map is null for a JSON null, as for a missing key', () async {

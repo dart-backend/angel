@@ -18,8 +18,26 @@ abstract class SqlExpressionBuilder<T> {
   /// name of a JSON property, which is an expression.
   String get _parameterName => _isProperty ? 'prop' : columnName;
 
+  /// What `IS NULL` and `IS NOT NULL` test, when not the column given to
+  /// [compileFor]: a JSON property as it is, not as the type it is read as,
+  /// which is `NULL` of a value of another type.
+  String? _nullColumn;
+
   String get substitution =>
       _substitution ??= query.reserveName(_parameterName);
+
+  /// The names of the substitution values of the predicate of this builder.
+  final List<String> _bound = [];
+
+  /// The names of the substitution values of this builder.
+  Iterable<String> get boundParameterNames => _bound;
+
+  /// Removes the substitution values of the previous predicate, which the
+  /// executor would otherwise be given as unused parameters.
+  void _unbind() {
+    _bound.forEach(query.substitutionValues.remove);
+    _bound.clear();
+  }
 
   bool get hasValue;
 
@@ -30,7 +48,9 @@ abstract class SqlExpressionBuilder<T> {
   String? compileFor(String column) {
     var c = compile();
     if (c == null) return null;
-    return c == _noRow || c == _everyRow ? c : '$column $c';
+    if (c == _noRow || c == _everyRow) return c;
+    var isNullCheck = c == 'IS NULL' || c == 'IS NOT NULL';
+    return '${isNullCheck ? _nullColumn ?? column : column} $c';
   }
 }
 
@@ -218,10 +238,12 @@ class StringSqlExpressionBuilder extends SqlExpressionBuilder<String> {
   String get upperName => '${substitution}_upper';
 
   bool _change(String op, String value) {
+    _unbind();
     _raw = null;
     _op = op;
     _value = value;
     query.substitutionValues[substitution] = _value;
+    _bound.add(substitution);
     return _hasValue = true;
   }
 
@@ -262,43 +284,53 @@ class StringSqlExpressionBuilder extends SqlExpressionBuilder<String> {
   }
 
   void isBetween(String lower, String upper) {
-    query.substitutionValues[lowerName] = lower;
-    query.substitutionValues[upperName] = upper;
+    _bindBounds(lower, upper);
     _raw = 'BETWEEN @$lowerName AND @$upperName';
     _hasValue = true;
   }
 
   void isNotBetween(String lower, String upper) {
-    query.substitutionValues[lowerName] = lower;
-    query.substitutionValues[upperName] = upper;
+    _bindBounds(lower, upper);
     _raw = 'NOT BETWEEN @$lowerName AND @$upperName';
     _hasValue = true;
   }
 
   void get isNull {
+    _unbind();
     _raw = 'IS NULL';
     _hasValue = true;
   }
 
   void get isNotNull {
+    _unbind();
     _raw = 'IS NOT NULL';
     _hasValue = true;
+  }
+
+  void _bindBounds(String lower, String upper) {
+    _unbind();
+    query.substitutionValues[lowerName] = lower;
+    query.substitutionValues[upperName] = upper;
+    _bound.addAll([lowerName, upperName]);
   }
 
   String _in(Iterable<String> values) {
     return 'IN (${values.map((v) {
       var name = query.reserveName('${_parameterName}_in_value');
       query.substitutionValues[name] = v;
+      _bound.add(name);
       return '@$name';
     }).join(', ')})';
   }
 
   void isIn(Iterable<String> values) {
+    _unbind();
     _raw = values.isEmpty ? _noRow : _in(values);
     _hasValue = true;
   }
 
   void isNotIn(Iterable<String> values) {
+    _unbind();
     _raw = values.isEmpty ? _everyRow : 'NOT ${_in(values)}';
     _hasValue = true;
   }
@@ -364,9 +396,6 @@ class DateTimeSqlExpressionBuilder extends SqlExpressionBuilder<DateTime> {
   /// A predicate for the column it is given, when one was set directly.
   String Function(String column)? _raw;
 
-  /// The names of the substitution values [_raw] uses.
-  final List<String> _bound = [];
-
   DateTimeSqlExpressionBuilder(super.query, super.columnName);
 
   NumericSqlExpressionBuilder<int> get year =>
@@ -391,13 +420,6 @@ class DateTimeSqlExpressionBuilder extends SqlExpressionBuilder<DateTime> {
       _hour?.hasValue == true ||
       _minute?.hasValue == true ||
       _second?.hasValue == true;
-
-  /// Removes the substitution values of the previous predicate, which the
-  /// executor would otherwise be given as unused parameters.
-  void _unbind() {
-    _bound.forEach(query.substitutionValues.remove);
-    _bound.clear();
-  }
 
   /// Binds [dt] as a substitution value, under a name of its own in the
   /// query, and returns its placeholder.
@@ -486,12 +508,12 @@ class DateTimeSqlExpressionBuilder extends SqlExpressionBuilder<DateTime> {
 
   void get isNull {
     _unbind();
-    _raw = (column) => '$column IS NULL';
+    _raw = (column) => '${_nullColumn ?? column} IS NULL';
   }
 
   void get isNotNull {
     _unbind();
-    _raw = (column) => '$column IS NOT NULL';
+    _raw = (column) => '${_nullColumn ?? column} IS NOT NULL';
   }
 
   /// The predicates on this column, each with the column name, joined with
@@ -541,6 +563,12 @@ abstract class JsonSqlExpressionBuilder<T, K> extends SqlExpressionBuilder<T> {
   }
 
   JsonSqlExpressionBuilderProperty _property(K name);
+
+  @override
+  Iterable<String> get boundParameterNames => [
+    if (_value != null) substitution,
+    for (var p in _properties) ...?p.typed?.boundParameterNames,
+  ];
 
   bool get hasRaw => _raw != null || _properties.any((p) => p.hasValue);
 
@@ -641,6 +669,7 @@ class JsonSqlExpressionBuilderProperty {
     if (_nullCheck case var check?) yield '$name $check';
     var typed = _typed;
     if (typed == null || !typed.hasValue) return;
+    typed._nullColumn = name;
     var predicate = typed.compileFor(switch (typed) {
       // `->>` gives text: a number is compared as one, and a property that is
       // no number, which cannot be cast, is `NULL`, as in no comparison.

@@ -25,11 +25,18 @@ abstract class QueryWhere {
   /// Adds [whereRaw] to the conditions, as SQL, as it is: it must not hold
   /// values from a request. Bind them as substitution values of the query.
   ///
-  /// In a [Union] on PostgreSQL, write a string that ends in a backslash as an
-  /// escape string (`E'a\\'`): see [Union].
+  /// In a [Union], a value of a name that both of its queries use may be
+  /// rejected if it follows a string or a comment here: see [Union].
   void raw(String whereRaw) {
     _raw.add(whereRaw);
   }
+
+  /// The names of the substitution values of these conditions, but those of a
+  /// [raw] condition, which are not known.
+  Iterable<String> get boundParameterNames => [
+    for (var builder in expressionBuilders) ...builder.boundParameterNames,
+    for (var other in [..._and, ..._not, ..._or]) ...other.boundParameterNames,
+  ];
 
   /// The conditions, joined with `AND`, followed by those of [or] clauses
   /// joined with `OR`; empty when there are none.
