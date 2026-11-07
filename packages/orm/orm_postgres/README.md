@@ -27,7 +27,7 @@ In your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  angel3_orm_postgres: ^10.0.0
+  angel3_orm_postgres: ^10.1.0
 ```
 
 ## Usage

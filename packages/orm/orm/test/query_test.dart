@@ -423,8 +423,9 @@ void main() {
         expect(
           sql,
           contains(
-            'WHERE (tableoid, ctid) IN (SELECT tableoid, ctid FROM employees '
-            'WHERE last_name = @last_name LIMIT 2) RETURNING ',
+            'WHERE (tableoid, ctid) IN (WITH angel3_picked AS MATERIALIZED (SELECT '
+            'tableoid, ctid FROM employees WHERE last_name = @last_name LIMIT 2 '
+            'FOR UPDATE OF employees) SELECT * FROM angel3_picked) RETURNING ',
           ),
         );
         var select = sql.substring(sql.indexOf(') SELECT ') + 2);

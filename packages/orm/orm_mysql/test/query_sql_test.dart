@@ -5,6 +5,7 @@ import 'package:test/test.dart';
 
 import 'common.dart';
 import 'models/car.dart';
+import 'models/leg.dart';
 import 'models/tree.dart';
 
 /// That the SQL of a query is accepted by the database, and does what it says.
@@ -20,6 +21,8 @@ void main() {
       CarMigration(),
       TreeMigration(),
       FruitMigration(),
+      LegMigration(),
+      FootMigration(),
     ]);
   });
 
@@ -469,6 +472,175 @@ void main() {
         ..join('fruits', 'description', 'common_name');
       var inserted = await query.insert(executor);
       expect(inserted.value.description, 'new');
+    });
+  });
+
+  group('an offset without a limit', () {
+    setUp(() => insertCars(['a', 'b', 'c']));
+
+    test('on a get', () async {
+      var cars =
+          await (CarQuery()
+                ..orderBy('description')
+                ..offset(1))
+              .get(executor);
+      expect(cars.map((c) => c.description), ['b', 'c']);
+    });
+
+    test('on an update', () async {
+      var updated =
+          await (CarQuery()
+                ..values.make = 'y'
+                ..orderBy('description')
+                ..offset(2))
+              .update(executor);
+      expect(updated.map((c) => c.description), ['c']);
+    });
+
+    test('on a delete', () async {
+      var deleted =
+          await (CarQuery()
+                ..orderBy('description')
+                ..offset(2))
+              .delete(executor);
+      expect(deleted.map((c) => c.description), ['c']);
+      expect(await descriptions(), ['a', 'b']);
+    });
+  });
+
+  test('an update of the id returns the row', () async {
+    await insertCars(['a']);
+    var car = (await CarQuery().get(executor)).single;
+    var updated =
+        await (CarQuery()
+              ..where!.id.equals(int.parse(car.id!))
+              ..values.id = '777')
+            .update(executor);
+    expect(updated.map((c) => c.id), ['777']);
+  });
+
+  test('a delete returns a row a join repeats once', () async {
+    await insertCars(['a']);
+    for (var name in ['f', 'g', 'h']) {
+      await (FruitQuery()..values.commonName = name).insert(executor);
+    }
+    var deleted = await (CarQuery()..crossJoin('fruits')).delete(executor);
+    expect(deleted.map((c) => c.description), ['a']);
+    expect(await descriptions(), isEmpty);
+  });
+
+  test('an update that selects no id returns its joined relation', () async {
+    var leg = await (LegQuery()..values.name = 'old').insert(executor);
+    await (FootQuery()
+          ..values.legId = int.parse(leg.value.id!)
+          ..values.nToes = 5)
+        .insert(executor);
+    var updated =
+        await (LegQuery()
+              ..select(['name'])
+              ..values.name = 'new')
+            .update(executor);
+    expect(updated.single.name, 'new');
+    expect(updated.single.foot?.nToes, 5);
+  });
+
+  group('skipLocked, with a row another transaction holds', () {
+    late MySQLConnection other;
+    late QueryExecutor otherExecutor;
+
+    setUp(() async {
+      other = await openMySqlConnection();
+      otherExecutor = await createExecutor(other);
+      await insertCars(['a', 'b']);
+    });
+
+    tearDown(() => other.close());
+
+    // Runs [f] while a transaction on the other connection has locked `a`, by
+    // its key, as MySQL locks every row that it scans without an index.
+    Future<void> whileLocked(Future<void> Function() f) async {
+      var a = await (CarQuery()..where!.description.equals('a')).get(executor);
+      await otherExecutor.transaction((tx) async {
+        await (CarQuery()
+              ..where!.id.equals(int.parse(a.single.id!))
+              ..values.make = 'held')
+            .update(tx);
+        await f();
+      });
+    }
+
+    test('updates the next free row', () async {
+      await whileLocked(() async {
+        var updated =
+            await (CarQuery()
+                  ..where!.make.equals('x')
+                  ..values.make = 'y'
+                  ..orderBy('description')
+                  ..limit(1)
+                  ..skipLocked())
+                .update(executor);
+        expect(updated.map((c) => c.description), ['b']);
+      });
+    });
+
+    test('deletes the next free row', () async {
+      await whileLocked(() async {
+        var deleted =
+            await (CarQuery()
+                  ..orderBy('description')
+                  ..limit(1)
+                  ..skipLocked())
+                .delete(executor);
+        expect(deleted.map((c) => c.description), ['b']);
+      });
+      expect(await descriptions(), ['a']);
+    });
+
+    test('of every row locked returns none', () async {
+      await otherExecutor.transaction((tx) async {
+        await (CarQuery()..values.make = 'held').update(tx);
+        var updated =
+            await (CarQuery()
+                  ..values.make = 'y'
+                  ..limit(1)
+                  ..skipLocked())
+                .update(executor);
+        expect(updated, isEmpty);
+      });
+    });
+
+    test('takes a row each from two workers, with an index', () async {
+      await conn.execute('CREATE INDEX cars_queue ON cars (make, description)');
+      CarQuery next() => CarQuery()
+        ..where!.make.equals('x')
+        ..values.make = 'y'
+        ..orderBy('make')
+        ..orderBy('description')
+        ..limit(1)
+        ..skipLocked();
+      var claimed = await Future.wait([
+        next().update(executor),
+        next().update(otherExecutor),
+      ]);
+      expect([
+        for (var cars in claimed) ...cars.map((c) => c.description),
+      ], unorderedEquals(['a', 'b']));
+    });
+
+    test('takes different rows from two workers', () async {
+      CarQuery next() => CarQuery()
+        ..where!.make.equals('x')
+        ..values.make = 'y'
+        ..orderBy('description')
+        ..limit(1)
+        ..skipLocked();
+      var claimed = await Future.wait([
+        next().update(executor),
+        next().update(otherExecutor),
+      ]);
+      var taken = [for (var cars in claimed) ...cars.map((c) => c.description)];
+      expect(taken.toSet(), hasLength(taken.length));
+      expect(taken, isNotEmpty);
     });
   });
 

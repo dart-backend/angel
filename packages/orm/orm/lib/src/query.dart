@@ -95,7 +95,7 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
   /// A select of [columns] of this table, of the rows a [limit] picks: with
   /// the joins, conditions and order of this query, as in [compile], by which
   /// an order may name a join.
-  String _selectOf(List<String> columns) {
+  String _selectOf(List<String> columns, {String lock = ''}) {
     var selected = [
       for (var column in columns) _isJoined ? '$tableName.$column' : column,
     ];
@@ -103,6 +103,7 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
       {},
       selecting: selected.join(', '),
       existing: selected.first,
+      lock: lock,
     );
   }
 
@@ -134,7 +135,12 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
 
   /// The `LIMIT` and `OFFSET` clauses, with a leading space, if it has them.
   String get _limits => [
-    if (_limit != null) ' LIMIT $_limit',
+    if (_limit != null)
+      ' LIMIT $_limit'
+    // MySQL and MariaDB have no OFFSET without a LIMIT. This one is valid on
+    // PostgreSQL too, the greatest it takes.
+    else if (_offset != null)
+      ' LIMIT 9223372036854775807',
     if (_offset != null) ' OFFSET $_offset',
   ].join();
 
@@ -338,6 +344,52 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
       checkIdentifier(column.trim(), 'key', 'GROUP BY column');
     }
     _groupBy = key;
+  }
+
+  /// Makes an [update] or a [delete] skip the rows that another transaction has
+  /// locked, rather than wait for them, as for a queue that several workers
+  /// take from at once: `query..limit(1)..skipLocked()`. Each takes the next
+  /// free row, which may not be the first in the order of [orderBy]. It has no
+  /// effect on a [get] or an [insert].
+  ///
+  /// On MySQL and MariaDB, give the query an index on its conditions and its
+  /// order: they lock every row that they scan, so that one worker would hold
+  /// them all, and the others find none free. It needs a query that selects an
+  /// id on MySQL 8 or MariaDB 10.6 or later, and throws a [StateError] for a `RIGHT JOIN` or a `FULL OUTER JOIN` on
+  /// PostgreSQL, which cannot lock them.
+  void skipLocked() {
+    _skipLocked = true;
+  }
+
+  bool _skipLocked = false;
+
+  /// What follows `FOR UPDATE`, as of [skipLocked].
+  String get _lockOption => _skipLocked ? ' SKIP LOCKED' : '';
+
+  /// The condition of a statement on PostgreSQL that has no `LIMIT`, by which
+  /// it writes the rows that [_selectOf] picks: by their ctid, and the table of
+  /// each, as a ctid is unique only within a partition.
+  ///
+  /// The rows of a limit are locked, and read once, as a subquery may otherwise
+  /// run again and pick others, which would write more than the limit.
+  String get _pickedRows {
+    var columns = ['tableoid', 'ctid'];
+    if (_limits.isEmpty && !_skipLocked) {
+      return ' WHERE (tableoid, ctid) IN (${_selectOf(columns)})';
+    }
+    // PostgreSQL cannot lock the side of a join that may be `NULL`.
+    var lock = _addsRows ? '' : ' FOR UPDATE OF $tableName$_lockOption';
+    return ' WHERE (tableoid, ctid) IN (WITH angel3_picked AS MATERIALIZED '
+        '(${_selectOf(columns, lock: lock)}) SELECT * FROM angel3_picked)';
+  }
+
+  void _checkSkipLocked(QueryExecutor executor) {
+    if (_skipLocked && _addsRows && executor.dialect is PostgreSQLDialect) {
+      throw StateError(
+        'PostgreSQL cannot lock the rows of a RIGHT JOIN or a FULL OUTER JOIN, '
+        'so it cannot skip those that are locked.',
+      );
+    }
   }
 
   /// Sorts the results by a key.
@@ -778,6 +830,7 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
     if (_groupBy != null) {
       throw StateError('A delete cannot have a GROUP BY.');
     }
+    _checkSkipLocked(executor);
     var whereClause =
         where?.compile(tableName: _isJoined ? tableName : null) ?? '';
     var conditions = whereClause.isEmpty ? '' : ' WHERE $whereClause';
@@ -787,11 +840,8 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
     if (executor.dialect is PostgreSQLDialect &&
         !_isJoined &&
         !loadsRelations) {
-      // PostgreSQL has no DELETE ... LIMIT: the rows are picked by ctid, and
-      // the table of each, as a ctid is unique only within a partition.
-      var rows = limits.isEmpty
-          ? conditions
-          : ' WHERE (tableoid, ctid) IN (${_selectOf(['tableoid', 'ctid'])})';
+      // PostgreSQL has no DELETE ... LIMIT.
+      var rows = limits.isEmpty && !_skipLocked ? conditions : _pickedRows;
       var sql =
           'WITH $_written as (DELETE FROM $tableName$rows '
           'RETURNING $_returning) $_writtenRows';
@@ -803,18 +853,18 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
 
     // The rows are selected first, in a transaction, as MySQL has no RETURNING
     // and relations may be deleted with them. A limit or a join decides which
-    // rows those are, as the conditions alone do not: they are deleted by id.
-    var byId = limits.isNotEmpty || _isJoined;
-    if (byId && !fields.contains('id')) {
-      if (limits.isNotEmpty || _leavesRowsOut) {
+    // rows those are, as the conditions alone do not, and another connection
+    // may add a row that they match: they are deleted by id, if it has one.
+    var byId = fields.contains('id');
+    if (!byId) {
+      if (limits.isNotEmpty || _leavesRowsOut || _skipLocked) {
         throw StateError(
           'A delete of a query that does not select an id cannot have a '
-          'LIMIT, an OFFSET or a join that leaves rows out, as it could not '
+          'LIMIT, an OFFSET, a join that leaves rows out or skipLocked, as it could not '
           'tell which rows it selected.',
         );
       }
       // A LEFT JOIN leaves no row out: the conditions decide.
-      byId = false;
     }
 
     return executor.transaction((tx) async {
@@ -827,14 +877,19 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
           {},
           existing: byId ? '$tableName.id' : null,
           lock: executor.dialect is! PostgreSQLDialect
-              ? ' FOR UPDATE'
+              ? ' FOR UPDATE$_lockOption'
               // PostgreSQL cannot lock the side of a join that may be `NULL`.
               : _addsRows
               ? ''
-              : ' FOR UPDATE OF $tableName',
+              : ' FOR UPDATE OF $tableName$_lockOption',
         ),
         substitutionValues,
       );
+      // Once each, as a join may give a row more than once.
+      if (byId) {
+        var ids = <Object?>{};
+        rows = rows.where((row) => ids.add(valueOf('id', row))).toList();
+      }
       var existing = await _withRelations(tx, rows);
       if (byId) {
         await _deleteByIds(tx, rows.map((row) => valueOf('id', row)));
@@ -1011,6 +1066,7 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
     if (_groupBy != null) {
       throw StateError('An update cannot have a GROUP BY.');
     }
+    _checkSkipLocked(executor);
     var valuesClause = values?.compileForUpdate(this);
     if (valuesClause == null || valuesClause == '') {
       throw StateError('No values have been specified for update.');
@@ -1020,14 +1076,11 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
     var limits = _limits;
     // A limit or a join decide which rows are updated, as in a select of this
     // query: not the conditions alone, which may name a join.
-    var picks = limits.isNotEmpty || _isJoined;
+    var picks = limits.isNotEmpty || _isJoined || _skipLocked;
 
     if (executor.dialect is PostgreSQLDialect) {
-      // PostgreSQL has no UPDATE ... LIMIT: the rows are picked by ctid, and
-      // the table of each, as a ctid is unique only within a partition.
-      var rows = !picks
-          ? conditions
-          : ' WHERE (tableoid, ctid) IN (${_selectOf(['tableoid', 'ctid'])})';
+      // PostgreSQL has no UPDATE ... LIMIT.
+      var rows = picks ? _pickedRows : conditions;
       // The updated rows, as RETURNING gives them: not filtered by the
       // conditions again, which their new values may no longer match.
       var sql =
@@ -1049,28 +1102,31 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
       // Nothing tells the rows it selected, so that a separate UPDATE ... LIMIT
       // could update other rows than those it returned, and MySQL has no
       // UPDATE ... OFFSET.
-      if (limits.isNotEmpty || _leavesRowsOut) {
+      if (limits.isNotEmpty || _leavesRowsOut || _skipLocked) {
         throw StateError(
           'An update of a query that does not select an id cannot have a '
-          'LIMIT, an OFFSET or a join that leaves rows out on this database, '
+          'LIMIT, an OFFSET, a join that leaves rows out or skipLocked on this '
+          'database, '
           'as it could not tell which rows it selected.',
         );
       }
       // Without a primary key, the rows that match are selected first, in a
       // transaction, and returned with the values they are updated to, as
       // their new values may no longer match the conditions.
-      var select = compile({});
+      var select = '${compile({})} FOR UPDATE';
       var sql = 'UPDATE $tableName $valuesClause$conditions';
       _log.fine(() => "Update Query = $sql");
       logValues(_log, substitutionValues);
       return executor.transaction((tx) async {
         var rows = await tx.query(tableName, select, substitutionValues);
         await tx.query(tableName, sql, substitutionValues);
+        // With the values they were updated to, and the columns of their joins,
+        // which follow those of [fields]. A SELECT * has no names to know them by.
         return _withRelations(tx, [
           for (var row in rows)
             [
-              for (var (i, field) in fields.indexed)
-                _boundValue(field, i < row.length ? row[i] : null),
+              for (var (i, value) in row.indexed)
+                i < fields.length ? _boundValue(fields[i], value) : value,
             ],
         ]);
       });
@@ -1086,7 +1142,7 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
           : 'SELECT id FROM $tableName$conditions';
       var found = await tx.query(
         tableName,
-        '$select FOR UPDATE',
+        '$select FOR UPDATE$_lockOption',
         substitutionValues,
       );
       var rows = <List>[];
@@ -1096,14 +1152,17 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
         logValues(_log, substitutionValues);
         var values = {...substitutionValues, ...ids};
         await tx.query(tableName, sql, values);
+        // By the id they now have, where this update sets it.
+        var newId = _boundValue('id') == null
+            ? null
+            : this.values?.parameterNameOf(this, 'id');
+        var updatedRows = newId != null
+            ? '${adornWithTableName('id')} = @$newId'
+            : '${adornWithTableName('id')} IN ($list)';
         rows.addAll(
           await tx.query(
             tableName,
-            _compile(
-              {},
-              rowsWhere: '${adornWithTableName('id')} IN ($list)',
-              written: true,
-            ),
+            _compile({}, rowsWhere: updatedRows, written: true),
             values,
           ),
         );

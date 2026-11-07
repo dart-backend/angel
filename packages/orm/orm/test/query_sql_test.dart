@@ -47,6 +47,22 @@ class _Executor extends QueryExecutor {
 }
 
 /// A table without an id.
+/// Records the rows it is given to parse.
+class _RowsQuery extends EmployeeQuery {
+  _RowsQuery(this.fields);
+
+  @override
+  final List<String> fields;
+
+  final parsed = <List>[];
+
+  @override
+  Optional<Employee> deserialize(List row) {
+    parsed.add(row);
+    return Optional.empty();
+  }
+}
+
 class _NoIdQuery extends EmployeeQuery {
   @override
   List<String> get fields => const ['last_name'];
@@ -285,8 +301,10 @@ void main() {
         sql,
         startsWith(
           'WITH angel3_written as (DELETE FROM employees WHERE (tableoid, ctid) IN '
-          '(SELECT tableoid, ctid FROM employees WHERE last_name = @last_name '
-          'ORDER BY salary DESC LIMIT 1 OFFSET 2) RETURNING ',
+          '(WITH angel3_picked AS MATERIALIZED (SELECT tableoid, ctid FROM '
+          'employees WHERE last_name = @last_name ORDER BY salary DESC LIMIT 1 '
+          'OFFSET 2 FOR UPDATE OF employees) SELECT * FROM angel3_picked) '
+          'RETURNING ',
         ),
       );
       var select = sql.substring(sql.indexOf(') SELECT ') + 2);
@@ -309,10 +327,28 @@ void main() {
     });
 
     test('without a limit has no ORDER BY', () async {
-      var executor = _Executor(const MySQLDialect());
+      var executor = _Executor(const MySQLDialect(), rows: [_row]);
       var q = EmployeeQuery()..orderBy('salary');
       await q.delete(executor);
-      expect(executor.queries[1], 'DELETE FROM employees');
+      expect(executor.queries[1], 'DELETE FROM employees WHERE id IN (3)');
+    });
+
+    test(
+      'of relations deletes the rows it selected, not by conditions',
+      () async {
+        var executor = _Executor(const PostgreSQLDialect(), rows: [_row]);
+        var q = _RelationsQuery()..where!.firstName.equals('x');
+        await q.delete(executor);
+        expect(executor.queries.last, 'DELETE FROM employees WHERE id IN (3)');
+      },
+    );
+
+    test('returns a row a join repeats once', () async {
+      var executor = _Executor(const MySQLDialect(), rows: [_row, _row, _row]);
+      var deleted = await (EmployeeQuery()..crossJoin('other')).delete(
+        executor,
+      );
+      expect(deleted, hasLength(1));
     });
 
     test('on PostgreSQL of a join deletes the rows it selected, by id, and '
@@ -557,6 +593,155 @@ void main() {
     });
   });
 
+  group('an offset without a limit', () {
+    test('has a limit, which MySQL and MariaDB require', () {
+      expect(
+        (EmployeeQuery()..offset(2)).compile({}),
+        endsWith(' LIMIT 9223372036854775807 OFFSET 2'),
+      );
+    });
+
+    test('with a limit is as it was', () {
+      var q = EmployeeQuery()
+        ..limit(1)
+        ..offset(2);
+      expect(q.compile({}), endsWith(' LIMIT 1 OFFSET 2'));
+    });
+  });
+
+  group('an update on MySQL', () {
+    test('of an id selects the row by its new id', () async {
+      var executor = _Executor(const MySQLDialect(), rows: [_row]);
+      var q = EmployeeQuery()
+        ..where!.id.equals(3)
+        ..values.id = '7';
+      await q.update(executor);
+      var name = q.values.parameterNameOf(q, 'id');
+      expect(executor.queries[1], endsWith(' WHERE id IN (3)'));
+      expect(executor.queries[2], endsWith(' WHERE employees.id = @$name'));
+    });
+
+    test('of no id keeps the columns of its joins', () async {
+      var q = _RowsQuery(const ['first_name', 'last_name'])
+        ..values.lastName = 'new'
+        ..leftJoin('other', 'id', 'id', additionalFields: const ['name']);
+      await q.update(
+        _Executor(
+          const MySQLDialect(),
+          rows: [
+            ['first', 'old', 'joined'],
+          ],
+        ),
+      );
+      expect(q.parsed.single, ['first', 'new', 'joined']);
+    });
+
+    test('of no id and no fields keeps each row', () async {
+      var q = _RowsQuery(const [])..values.lastName = 'new';
+      await q.update(
+        _Executor(
+          const MySQLDialect(),
+          rows: [
+            [1, 'a'],
+          ],
+        ),
+      );
+      expect(q.parsed.single, [1, 'a']);
+    });
+
+    test('of no id locks the rows it selects', () async {
+      var executor = _Executor(const MySQLDialect());
+      var q = _NoIdQuery()..values.lastName = 'new';
+      await q.update(executor);
+      expect(executor.queries.first, endsWith(' FOR UPDATE'));
+    });
+  });
+
+  group('skipLocked', () {
+    test('on PostgreSQL skips locked rows of the limit', () async {
+      var executor = _Executor(const PostgreSQLDialect());
+      var q = EmployeeQuery()
+        ..values.lastName = 'new'
+        ..limit(1)
+        ..skipLocked();
+      await q.update(executor);
+      expect(
+        executor.queries.single,
+        contains(' LIMIT 1 FOR UPDATE OF employees SKIP LOCKED) SELECT * '),
+      );
+    });
+
+    test('on MySQL skips locked rows', () async {
+      var executor = _Executor(const MySQLDialect());
+      var q = EmployeeQuery()
+        ..values.lastName = 'new'
+        ..limit(1)
+        ..skipLocked();
+      await q.update(executor);
+      expect(executor.queries.single, endsWith(' FOR UPDATE SKIP LOCKED'));
+    });
+
+    test('on a delete skips locked rows, on either database', () async {
+      var pg = _Executor(const PostgreSQLDialect());
+      await (EmployeeQuery()
+            ..limit(1)
+            ..skipLocked())
+          .delete(pg);
+      expect(
+        pg.queries.single,
+        contains(' FOR UPDATE OF employees SKIP LOCKED)'),
+      );
+      var my = _Executor(const MySQLDialect());
+      await (EmployeeQuery()
+            ..limit(1)
+            ..skipLocked())
+          .delete(my);
+      expect(my.queries.first, endsWith(' FOR UPDATE SKIP LOCKED'));
+    });
+
+    test('applies without a limit', () async {
+      var executor = _Executor(const PostgreSQLDialect());
+      await (EmployeeQuery()..skipLocked()).delete(executor);
+      expect(executor.queries.single, contains(' SKIP LOCKED)'));
+    });
+
+    test('is an error of a join PostgreSQL cannot lock', () {
+      var q = EmployeeQuery()
+        ..values.lastName = 'new'
+        ..rightJoin('other', 'id', 'id')
+        ..skipLocked();
+      var executor = _Executor(const PostgreSQLDialect());
+      expect(q.update(executor), throwsStateError);
+      expect(q.delete(executor), throwsStateError);
+    });
+
+    test('on MySQL is an error of a query that selects no id', () {
+      var executor = _Executor(const MySQLDialect());
+      var q = _NoIdQuery()
+        ..values.lastName = 'new'
+        ..skipLocked();
+      expect(q.update(executor), throwsStateError);
+      expect(q.delete(executor), throwsStateError);
+    });
+
+    test('has no effect on a select', () {
+      var q = EmployeeQuery()..skipLocked();
+      expect(q.compile({}), isNot(contains('LOCKED')));
+    });
+  });
+
+  test('a limit on PostgreSQL locks its rows, and reads them once', () async {
+    var executor = _Executor(const PostgreSQLDialect());
+    await (EmployeeQuery()..limit(1)).delete(executor);
+    expect(
+      executor.queries.single,
+      contains(
+        'IN (WITH angel3_picked AS MATERIALIZED (SELECT tableoid, ctid FROM '
+        'employees LIMIT 1 FOR UPDATE OF employees) SELECT * FROM angel3_picked)',
+      ),
+    );
+  });
+
   group('a query with a group by', () {
     setUp(() {
       query.groupBy('salary');
@@ -726,9 +911,10 @@ void main() {
       expect(
         executor.queries.single,
         contains(
-          'WHERE (tableoid, ctid) IN (SELECT employees.tableoid, '
-          'employees.ctid FROM employees  INNER JOIN companies c ON '
-          'employees.company_id=c.id ORDER BY c.name ASC LIMIT 1) RETURNING ',
+          'WHERE (tableoid, ctid) IN (WITH angel3_picked AS MATERIALIZED (SELECT '
+          'employees.tableoid, employees.ctid FROM employees  INNER JOIN '
+          'companies c ON employees.company_id=c.id ORDER BY c.name ASC LIMIT 1 '
+          'FOR UPDATE OF employees) SELECT * FROM angel3_picked) RETURNING ',
         ),
       );
     });
@@ -758,7 +944,9 @@ void main() {
       await q.update(executor);
       expect(
         executor.queries.single,
-        contains('ORDER BY (UPPER(first_name)) DESC LIMIT 1) RETURNING '),
+        contains(
+          'ORDER BY (UPPER(first_name)) DESC LIMIT 1 FOR UPDATE OF employees)',
+        ),
       );
     });
 
@@ -867,8 +1055,9 @@ void main() {
       expect(
         executor.queries.single,
         contains(
-          'WHERE (tableoid, ctid) IN (SELECT tableoid, ctid FROM employees '
-          'ORDER BY salary DESC LIMIT 1) RETURNING ',
+          'WHERE (tableoid, ctid) IN (WITH angel3_picked AS MATERIALIZED (SELECT '
+          'tableoid, ctid FROM employees ORDER BY salary DESC LIMIT 1 FOR UPDATE '
+          'OF employees) SELECT * FROM angel3_picked) RETURNING ',
         ),
       );
     });

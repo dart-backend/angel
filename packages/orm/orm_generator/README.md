@@ -18,7 +18,7 @@ In your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  angel3_orm: ^10.0.0
+  angel3_orm: ^10.1.0
   angel3_serialize: ^10.0.0
   angel3_migration: ^10.0.0
 dev_dependencies:

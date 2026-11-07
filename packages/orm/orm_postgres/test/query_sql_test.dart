@@ -530,6 +530,165 @@ void main() {
     });
   });
 
+  group('an offset without a limit', () {
+    setUp(() => insertCars(['a', 'b', 'c']));
+
+    test('on a get', () async {
+      var cars =
+          await (CarQuery()
+                ..orderBy('description')
+                ..offset(1))
+              .get(executor);
+      expect(cars.map((c) => c.description), ['b', 'c']);
+    });
+
+    test('on an update', () async {
+      var updated =
+          await (CarQuery()
+                ..values.make = 'y'
+                ..orderBy('description')
+                ..offset(2))
+              .update(executor);
+      expect(updated.map((c) => c.description), ['c']);
+    });
+
+    test('on a delete', () async {
+      var deleted =
+          await (CarQuery()
+                ..orderBy('description')
+                ..offset(2))
+              .delete(executor);
+      expect(deleted.map((c) => c.description), ['c']);
+      expect(await descriptions(), ['a', 'b']);
+    });
+  });
+
+  test('an update of the id returns the row', () async {
+    await insertCars(['a']);
+    var car = (await CarQuery().get(executor)).single;
+    var updated =
+        await (CarQuery()
+              ..where!.id.equals(int.parse(car.id!))
+              ..values.id = '777')
+            .update(executor);
+    expect(updated.map((c) => c.id), ['777']);
+  });
+
+  test('a delete returns a row a join repeats once', () async {
+    await insertCars(['a']);
+    for (var name in ['f', 'g', 'h']) {
+      await (FruitQuery()..values.commonName = name).insert(executor);
+    }
+    var deleted = await (CarQuery()..crossJoin('fruits')).delete(executor);
+    expect(deleted.map((c) => c.description), ['a']);
+    expect(await descriptions(), isEmpty);
+  });
+
+  group('skipLocked, with a row another transaction holds', () {
+    late Connection other;
+    late QueryExecutor otherExecutor;
+
+    setUp(() async {
+      other = await openPgConnection();
+      otherExecutor = await createExecutor(other);
+      await insertCars(['a', 'b']);
+    });
+
+    tearDown(() => other.close());
+
+    // Runs [f] while a transaction on the other connection has locked `a`, by
+    // its key, as MySQL locks every row that it scans without an index.
+    Future<void> whileLocked(Future<void> Function() f) async {
+      var a = await (CarQuery()..where!.description.equals('a')).get(executor);
+      await otherExecutor.transaction((tx) async {
+        await (CarQuery()
+              ..where!.id.equals(int.parse(a.single.id!))
+              ..values.make = 'held')
+            .update(tx);
+        await f();
+      });
+    }
+
+    test('updates the next free row', () async {
+      await whileLocked(() async {
+        var updated =
+            await (CarQuery()
+                  ..where!.make.equals('x')
+                  ..values.make = 'y'
+                  ..orderBy('description')
+                  ..limit(1)
+                  ..skipLocked())
+                .update(executor);
+        expect(updated.map((c) => c.description), ['b']);
+      });
+    });
+
+    test('deletes the next free row', () async {
+      await whileLocked(() async {
+        var deleted =
+            await (CarQuery()
+                  ..orderBy('description')
+                  ..limit(1)
+                  ..skipLocked())
+                .delete(executor);
+        expect(deleted.map((c) => c.description), ['b']);
+      });
+      expect(await descriptions(), ['a']);
+    });
+
+    test('of every row locked returns none', () async {
+      await otherExecutor.transaction((tx) async {
+        await (CarQuery()..values.make = 'held').update(tx);
+        var updated =
+            await (CarQuery()
+                  ..values.make = 'y'
+                  ..limit(1)
+                  ..skipLocked())
+                .update(executor);
+        expect(updated, isEmpty);
+      });
+    });
+
+    test('takes different rows from two workers', () async {
+      CarQuery next() => CarQuery()
+        ..where!.make.equals('x')
+        ..values.make = 'y'
+        ..orderBy('description')
+        ..limit(1)
+        ..skipLocked();
+      var claimed = await Future.wait([
+        next().update(executor),
+        next().update(otherExecutor),
+      ]);
+      var taken = [for (var cars in claimed) ...cars.map((c) => c.description)];
+      expect(taken.toSet(), hasLength(taken.length));
+      expect(taken, isNotEmpty);
+    });
+  });
+
+  test('a limit never writes more rows than it has, under a race', () async {
+    var other = await openPgConnection();
+    addTearDown(other.close);
+    var otherExecutor = await createExecutor(other);
+    await insertCars(['a', 'b', 'c', 'd', 'e', 'f']);
+    for (var round = 0; round < 3; round++) {
+      CarQuery next() => CarQuery()
+        ..where!.make.equals('x')
+        ..values.make = 'y'
+        ..orderBy('description')
+        ..limit(1);
+      var claimed = await Future.wait([
+        next().update(executor),
+        next().update(otherExecutor),
+      ]);
+      expect(claimed.every((cars) => cars.length <= 1), isTrue);
+      var taken = [for (var cars in claimed) ...cars.map((c) => c.description)];
+      expect(taken.toSet(), hasLength(taken.length));
+    }
+    var made = await (CarQuery()..where!.make.equals('y')).get(executor);
+    expect(made.length, lessThanOrEqualTo(6));
+  });
+
   test('update of a limit takes the first rows in order', () async {
     await insertCars(['a', 'b', 'c']);
     var updated =
