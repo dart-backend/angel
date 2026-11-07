@@ -62,6 +62,10 @@ See [Angel3 ORM](https://github.com/dart-backend/angel/tree/master/packages/orm)
 
 For documentation about the ORM, see [Developer Guide](https://angel3-docs.dukefirehawk.com/guides/orm)
 
+## Known limitations
+
+* **Raw SQL in a union on PostgreSQL:** a `Union` renames the values that both of its queries name alike, reading the SQL as MySQL does, as it does not know its database. In `where.raw` of its right query, a backslash just before the closing quote of a string (`x = 'a\'`) can stop a placeholder after it from being renamed, so that it binds the value of the left query, with no error. Write such a string as an escape string (`x = E'a\\'`), or bind it as a value. The keys of JSON properties are not affected
+
 ## Migrating from 9.x to 10.0.0
 
 The breaking changes of each release are listed in the [CHANGELOG](CHANGELOG.md). Those of 10.0.0 that need changes in an app:

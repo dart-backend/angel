@@ -642,6 +642,16 @@ void main() {
       expect(sql, contains("note = '@first_name'"));
     });
 
+    test('renames a value after an escape string in a raw condition', () {
+      var left = EmployeeQuery()..where!.firstName.equals('a');
+      var right = EmployeeQuery()..where!.firstName.equals('b');
+      right.where!.raw(
+        r"note = E'a\\' AND first_name <> @first_name AND c = 'd'",
+      );
+      var sql = left.union(right).compile({});
+      expect(sql, contains('first_name <> @first_name_1'));
+    });
+
     test('loads the relations of its rows', () async {
       var union = _RelationsQuery().union(EmployeeQuery());
       var records = await union.get(

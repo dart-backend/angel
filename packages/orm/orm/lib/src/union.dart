@@ -1,10 +1,19 @@
 import 'query_base.dart';
 import 'query_executor.dart';
+import 'query_where.dart';
 import 'util.dart';
 
 import 'package:optional/optional.dart';
 
 /// Represents the `UNION` of two subqueries.
+///
+/// Values that both queries name alike are renamed in the right query. This
+/// reads its SQL as MySQL does, as a union does not know its database. So on
+/// PostgreSQL, in a [QueryWhere.raw] of the right query, a backslash just before
+/// the closing quote of a string (`x = 'a\'`) hides the end of it, and a
+/// placeholder after it may not be renamed, so that it binds the value of the
+/// left query, with no error. Write such a string as an escape string
+/// (`x = E'a\\'`), or bind it as a value.
 class Union<T> extends QueryBase<T> {
   /// The subject(s) of this binary operation.
   final QueryBase<T> left, right;

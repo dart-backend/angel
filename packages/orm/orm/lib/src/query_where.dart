@@ -1,4 +1,5 @@
 import 'builder.dart';
+import 'union.dart';
 
 /// Builds a SQL `WHERE` clause.
 abstract class QueryWhere {
@@ -21,6 +22,11 @@ abstract class QueryWhere {
     _or.add(other);
   }
 
+  /// Adds [whereRaw] to the conditions, as SQL, as it is: it must not hold
+  /// values from a request. Bind them as substitution values of the query.
+  ///
+  /// In a [Union] on PostgreSQL, write a string that ends in a backslash as an
+  /// escape string (`E'a\\'`): see [Union].
   void raw(String whereRaw) {
     _raw.add(whereRaw);
   }
