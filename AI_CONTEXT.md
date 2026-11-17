@@ -10,7 +10,7 @@ This repository is a **monorepo** organised as a [Dart pub workspace](https://da
 
 - **Packages**: Located in the `packages/` directory. Each package is published to `pub.dev` under the `angel3_` prefix, except the Jael packages (`jael3`, `jael3_preprocessor`, `jael3_web`). Some are grouped one level deeper (e.g. `packages/orm/orm_postgres`, `packages/serialize/serialize_generator`, `packages/jael/jael`). `packages/framework_mirrors_test` is not published (`publish_to: none`): it tests the framework with `MirrorsReflector`.
 - **Workspace**: The root `pubspec.yaml` lists every package under `workspace:` and each package declares `resolution: workspace`, so a single `dart pub get` resolves all packages together. New packages must be added to the root `pubspec.yaml` and to `melos.yaml`.
-- **Generated code**: `*.g.dart` files produced by `build_runner` (serialization, ORM, migrations, reflection data) are committed and must not be edited by hand. After changing a generator, regenerate the packages whose tests use it (for `orm_generator`: `orm_postgres` and `orm_mysql`). The generated files of `orm_service` predate the current generator, so regenerating them brings in unrelated changes.
+- **Generated code**: `*.g.dart` files produced by `build_runner` (serialization, ORM, migrations, reflection data) are committed and must not be edited by hand. After changing a generator, regenerate the packages whose tests use it (for `orm_generator`: `orm_postgres`, `orm_mysql` and `orm_sqlite`). The generated files of `orm_service` predate the current generator, so regenerating them brings in unrelated changes.
 
 ## Core Architecture and Packages
 
@@ -25,7 +25,7 @@ The framework is divided into several categories of packages:
 2. **Data Modeling & Persistence (ORM)**:
    - `model`: Base model abstractions for data entities.
    - `serialize`: JSON serialization and deserialization using code generation (`serialize_generator`). Model classes are named with the `Entity` suffix (`TodoEntity` generates `Todo`); the `_` prefix is still supported.
-   - `orm`: Dialect-agnostic ORM runtime (`orm`), code generator (`orm_generator`), schema DSL (`migration`), migration runner (`migration_runner`), database executors for PostgreSQL 16+ (`orm_postgres`) and MySQL 8+/MariaDB 10.2+ (`orm_mysql`, on the `mysql_dart` driver), and an Angel service adapter (`orm_service`). `@HasOne` and `@BelongsTo` are joined; `@HasMany` and `@ManyToMany` are loaded after the records with one query each (`Query.loadRelations`), so a record is one row.
+   - `orm`: Dialect-agnostic ORM runtime (`orm`), code generator (`orm_generator`), schema DSL (`migration`), migration runner (`migration_runner`), database executors for PostgreSQL 16+ (`orm_postgres`) MySQL 8+/MariaDB 10.2+ (`orm_mysql`, on the `mysql_dart` driver) and SQLite 3.35+ (`orm_sqlite`: `SqliteAsyncExecutor` on `sqlite_async`, for servers, and `SqliteExecutor` on `sqlite3`), and an Angel service adapter (`orm_service`). `@HasOne` and `@BelongsTo` are joined; `@HasMany` and `@ManyToMany` are loaded after the records with one query each (`Query.loadRelations`), so a record is one row.
    - `mongo`, `rethinkdb`, `sembast`: Specialized NoSQL database drivers.
 
 3. **Authentication & Security**:
@@ -69,6 +69,8 @@ The framework is divided into several categories of packages:
   - `mongo`: MongoDB on port 27017 with a `root` user whose password is `Qwerty` (authentication database `admin`); host `MONGO_HOST`, default `localhost`.
   - `rethinkdb`: RethinkDB on port 28015, user `admin` without a password; host `RETHINKDB_HOST`, default `localhost`. Create its `testDB.todos` table with `dart test/bootstrap.dart`.
   - `redis`: Redis (`REDIS_HOST`, `REDIS_PORT`; default `localhost:6379`).
+
+  The tests of `orm_sqlite` need no server: each runs on `sqlite3`, on `sqlite_async` with one connection in memory, and on `sqlite_async` with a pool of a temporary file.
 
   Run the ORM tests with `dart test -j1`, as test files share tables.
 - **READMEs**: Code samples in a README must compile against the current API (e.g. route handlers take `(req, res)`, `AngelHttp` comes from `package:angel3_framework/http.dart`), and dependency snippets use the current version.

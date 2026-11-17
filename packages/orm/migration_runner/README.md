@@ -10,6 +10,7 @@ This package contains the implementation of the database migration for the follo
 * PostgreSQL 16.x or greater
 * MariaDB 10.2.x or greater
 * MySQL 8.x or greater
+* SQLite 3.35 or greater
 
 ## Installation
 
@@ -17,7 +18,7 @@ In your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  angel3_migration_runner: ^10.0.0
+  angel3_migration_runner: ^10.1.0
 ```
 
 ## Usage
@@ -25,6 +26,7 @@ dependencies:
 * Use `PostgresMigrationRunner` to perform database migration for PostgreSQL.
 * Use `MySqlMigrationRunner` to perform database migration for MySQL. This runner is using [`mysql_dart`](https://pub.dev/packages/mysql_dart) driver.
 * Use `MariaDbMigrationRunner` to perform database migration for MariaDB. This runner is using [`mysql_dart`](https://pub.dev/packages/mysql_dart) driver.
+* Use `SqliteMigrationRunner` to perform database migration for SQLite, with a database of the [`sqlite3`](https://pub.dev/packages/sqlite3) package. Import `package:angel3_migration_runner/sqlite.dart`.
 
 Run the migrations from a command-line program, such as `bin/migrate.dart`, with `runMigrations`:
 
@@ -97,13 +99,33 @@ Or set each `path` of the `migrations` table to the `name` of its migration by h
 
 ## Transactions
 
-On PostgreSQL, each migration runs, and is recorded in the `migrations` table, in one transaction, so a migration that fails or is cut off is neither applied nor recorded.
+On PostgreSQL and SQLite, each migration runs, and is recorded in the `migrations` table, in one transaction, so a migration that fails or is cut off is neither applied nor recorded.
 
 MySQL and MariaDB commit each change of a table on its own, so a migration is recorded once it has run. If the connection is lost between the two, the migration's changes stay without its row in the `migrations` table, and the next `up` runs it again. Insert its row by hand in that case:
 
 ```sql
 INSERT INTO migrations (batch, path) VALUES (<batch>, '<name>');
 ```
+
+## SQLite
+
+`SqliteMigrationRunner` takes a database of `sqlite3`, as `angel3_orm_sqlite` does:
+
+```dart
+import 'package:angel3_migration_runner/sqlite.dart';
+import 'package:sqlite3/sqlite3.dart';
+
+var runner = SqliteMigrationRunner(
+  sqlite3.open('app.db'),
+  migrations: [UserMigration(), TodoMigration()],
+);
+await runner.up();
+```
+
+* **Types**: a column is of the SQLite type of its values: an integer is `INTEGER`, a `serial` primary key `INTEGER PRIMARY KEY AUTOINCREMENT`, a floating-point number `REAL`, a date or time `TEXT`, and a binary type `BLOB`. A `serial` column must be the primary key, as SQLite generates no other value.
+* **Defaults**: a `DateTime`, and `currentTimestamp`, are UTC text, `2024-03-10 12:34:56.000000Z`, as `angel3_orm_sqlite` stores a `DateTime`.
+* **Foreign keys**: SQLite enforces them only with `PRAGMA foreign_keys = ON`. `drop` ignores `cascade`, which SQLite does not have.
+* **Changes of a table**: `alter` can add, rename and drop a column, rename the table, and add and drop an index. A unique column added gets a unique index, `<table>_<column>_key`. SQLite cannot change a column's type, its `NOT NULL` or a primary key with `ALTER TABLE`, so `changeColumnType`, `setNotNull`, `dropNotNull`, `dropPrimaryIndex` and a primary key added throw an `UnsupportedError`: create a table with the new definition, copy the rows into it, drop the old table and rename the new one, as [SQLite describes](https://www.sqlite.org/lang_altertable.html#otheralter).
 
 ## Limitation
 

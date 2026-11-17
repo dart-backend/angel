@@ -1,5 +1,15 @@
 # Change Log
 
+## 10.2.0
+
+### Breaking changes in 10.2.0
+
+* **Breaking:** `Dialect` has `rowLockSupport`, whether a `SELECT` may have `FOR UPDATE`, which a class that implements it must give. A dialect without `writableCteSupport` is written for as MySQL is, where only `MySQLDialect` was, and one without `rowLockSupport` gets no `FOR UPDATE`
+
+### New in 10.2.0
+
+* **Dialects:** `SqliteDialect`, for SQLite 3.35 or later, which `angel3_orm_sqlite` uses. Queries are written for it as for MySQL, without `FOR UPDATE`, as SQLite has none. `SqliteDialect.formatDateTime` gives a `DateTime` as SQLite stores it, UTC text that sorts in time order
+
 ## 10.1.0
 
 ### Breaking changes in 10.1.0

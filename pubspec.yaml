@@ -56,6 +56,7 @@ workspace:
   - packages/orm/orm_generator
   - packages/orm/orm_postgres
   - packages/orm/orm_mysql
+  - packages/orm/orm_sqlite
   - packages/orm/orm_service
   - packages/shelf
 
