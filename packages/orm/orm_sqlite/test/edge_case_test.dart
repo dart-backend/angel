@@ -52,6 +52,17 @@ void _tests(Backend backend) {
       expect(type, 'blob');
     });
 
+    test('a List<int> is JSON text, not bytes', () async {
+      expect(await storeAndRead(<int>[1, 300]), ('[1,300]', 'text'));
+    });
+
+    test('a placeholder with no value throws', () {
+      expect(
+        executor.query('things', 'SELECT @nope', {}),
+        throwsA(isA<ArgumentError>()),
+      );
+    });
+
     test('a List of no ints is JSON text', () async {
       expect(await storeAndRead(<dynamic>[1, 'a']), ('[1,"a"]', 'text'));
     });
@@ -98,6 +109,64 @@ void _tests(Backend backend) {
   });
 
   group('transaction', () {
+    /// A transaction of [make] that waits between its statements, given
+    /// outside the zone of any other, as by another request of a server.
+    Future<void> slowTransaction(String make, {bool fail = false}) => runZoned(
+      () => executor.transaction((tx) async {
+        var car = await insertCar(tx, make);
+        await Future<void>.delayed(const Duration(milliseconds: 20));
+        await (CarQuery()
+              ..where!.id.equals(int.parse(car.id!))
+              ..values.price = 2)
+            .update(tx);
+        if (fail) {
+          await insertCar(tx, 'X');
+        }
+      }),
+    );
+
+    test('two at the same time both commit, one after the other', () async {
+      await Future.wait([slowTransaction('A'), slowTransaction('B')])
+          .timeout(const Duration(seconds: 5));
+      expect(await makes(), unorderedEquals(['A', 'B']));
+      var prices = await CarQuery().get(executor);
+      expect(prices.map((c) => c.price), [2, 2]);
+    });
+
+    test('rolled back by SQLite fails alone, not another', () async {
+      await db.execute('''
+        CREATE TRIGGER no_x BEFORE INSERT ON cars WHEN NEW.make = 'X'
+        BEGIN SELECT RAISE(ROLLBACK, 'no X'); END''');
+      Object? error;
+      await Future.wait([
+        slowTransaction('A'),
+        slowTransaction('B', fail: true).catchError((Object e) => error = e),
+      ]).timeout(const Duration(seconds: 5));
+      expect(error, isA<SqliteException>());
+      expect(await makes(), ['A']);
+    });
+
+    test(
+      'rolled back by SQLite runs no statement given with the failing one',
+      () async {
+        await db.execute('''
+        CREATE TRIGGER no_b BEFORE INSERT ON cars WHEN NEW.make = 'B'
+        BEGIN SELECT RAISE(ROLLBACK, 'no B'); END''');
+        await expectLater(
+          executor.transaction(
+            (tx) => Future.wait([
+              insertCar(tx, 'A'),
+              insertCar(tx, 'B'),
+              insertCar(tx, 'C'),
+            ], eagerError: false),
+          ),
+          throwsA(anything),
+        );
+        expect(await makes(), isEmpty);
+        expect(await db.autocommit(), isTrue);
+      },
+    );
+
     test('runs the savepoints of concurrent writes one at a time', () async {
       for (var make in ['A', 'B', 'C']) {
         await insertCar(executor, make);
@@ -153,6 +222,27 @@ void _tests(Backend backend) {
         await tx.transaction((_) => insertCar(tx, 'A'));
       });
       expect(await makes(), ['A']);
+    });
+
+    test('runs a query given later in the zone of an ended savepoint in its parent', () async {
+      await expectLater(
+        executor
+            .transaction((tx) async {
+              var later = Completer<void>();
+              await tx.transaction((_) async {
+                // Runs after the savepoint has ended, in its zone.
+                Timer(Duration.zero, () {
+                  later.complete(insertCar(executor, 'A').then((_) {}));
+                });
+              });
+              await later.future;
+              expect(await makes(), ['A']);
+              throw StateError('roll back');
+            })
+            .timeout(const Duration(seconds: 5)),
+        throwsStateError,
+      );
+      expect(await makes(), isEmpty);
     });
 
     test('waits for the queries given in it that were not awaited', () async {

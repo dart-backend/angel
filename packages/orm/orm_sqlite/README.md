@@ -76,6 +76,7 @@ var executor = SqliteAsyncExecutor(SqliteDatabase(path: 'app.db'));
 
 * Give the queries of a transaction to the executor its callback gets. They run in the transaction from anywhere, such as a stream listener made before it. A query given to another executor of the database runs in it only from the code of the callback; from elsewhere it is outside it, and one that waits for it to end must not be awaited by it. With `SqliteAsyncExecutor`, do not give statements to the `SqliteDatabase` itself in a transaction: `sqlite_async` throws a `LockError` for them.
 * A transaction in a transaction is a `SAVEPOINT`, rolled back alone if its callback fails. An update or a delete of the ORM makes one. Savepoints run one at a time: a statement of the transaction given while one runs, as of `Future.wait` of several updates, waits for it to end.
+* With `SqliteAsyncExecutor`, the statements of a transaction run one at a time, so that none runs after one that SQLite rolled the transaction back for. Transactions of separate requests run one after the other, as SQLite writes one at a time; the reads outside them do not wait.
 * The transaction waits for the queries given in it that were not awaited before it commits.
 * If SQLite rolls back the whole transaction after an error, as `RAISE(ROLLBACK)` of a trigger does, the transaction runs no more statements and throws a `StateError`, rather than running the rest outside it.
 
@@ -85,8 +86,12 @@ var executor = SqliteAsyncExecutor(SqliteDatabase(path: 'app.db'));
 |---|---|
 | `DateTime` | UTC text, `2024-03-10 12:34:56.000000Z`, which sorts in time order; a year before 0 or after 9999 throws an `ArgumentError` |
 | `bool` | `0` or `1` |
-| `List<int>`, such as a `Uint8List` | BLOB |
-| `Map`, another `List` | JSON text, in which a `DateTime` is text as above |
+| `Uint8List` | BLOB |
+| `Map`, `List` (a `List<int>` too) | JSON text, in which a `DateTime` is text as above |
+
+A field of a `binary`, `varBinary` or `varBinaryMax` column must be a `Uint8List` to be stored as a BLOB: the executor does not know the type of a column, so it stores any other `List<int>` as JSON text.
+
+A query's `@name` placeholders are bound by position; one with no value throws an `ArgumentError`, as SQLite would read it as a parameter of its own. This includes an `@word` in an SQL comment of raw SQL, such as `-- @todo`; one in a quoted string is not a placeholder.
 
 ## Known limitations
 

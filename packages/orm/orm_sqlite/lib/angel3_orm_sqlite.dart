@@ -1,2 +1,1 @@
-export 'src/orm_sqlite.dart';
-export 'src/orm_sqlite_async.dart';
+export 'src/executors.dart' show SqliteExecutor, SqliteAsyncExecutor;

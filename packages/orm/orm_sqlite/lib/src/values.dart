@@ -1,4 +1,6 @@
+import 'dart:collection';
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:angel3_orm/angel3_orm.dart';
 
@@ -29,24 +31,60 @@ final RegExp _select = RegExp(r'^\s*SELECT\b', caseSensitive: false);
 
 /// [sql] with its `@name` placeholders as positional `?`, and their values,
 /// as SQLite stores them.
+///
+/// Throws an [ArgumentError] for a placeholder with no value, which SQLite
+/// would read as a parameter of its own, unlike MySQL, which reads it as a
+/// user variable, so that the values would not match the parameters.
 (String, List<Object?>) toPositional(
   String sql,
   Map<String, dynamic> substitutionValues,
 ) {
   var params = <Object?>[];
-  var positional = replacePlaceholders(sql, substitutionValues, (_, value) {
+  var positional = replacePlaceholders(sql, _EveryName(substitutionValues), (
+    name,
+    value,
+  ) {
+    if (identical(value, _noValue)) {
+      throw ArgumentError.value(
+        sql,
+        'sql',
+        'No value is given for the placeholder @$name',
+      );
+    }
     params.add(encodeValue(value));
     return '?';
   });
   return (positional, params);
 }
 
-/// [value] as SQLite stores it: a [DateTime] as UTC text, a `List<int>` as a
-/// BLOB, and another [List] or a [Map] as JSON text.
+/// The value of a placeholder that has none in [_EveryName].
+const Object _noValue = Object();
+
+/// [_values], which has every name, so that [replacePlaceholders] gives
+/// each placeholder, with [_noValue] if it has no value.
+class _EveryName extends UnmodifiableMapBase<String, dynamic> {
+  final Map<String, dynamic> _values;
+
+  _EveryName(this._values);
+
+  @override
+  bool containsKey(Object? key) => true;
+
+  @override
+  dynamic operator [](Object? key) =>
+      _values.containsKey(key) ? _values[key] : _noValue;
+
+  @override
+  Iterable<String> get keys => _values.keys;
+}
+
+/// [value] as SQLite stores it: a [DateTime] as UTC text, a [Uint8List] as a
+/// BLOB, and a [List], such as a `List<int>` of JSON, or a [Map] as JSON
+/// text.
 Object? encodeValue(Object? value) => switch (value) {
   DateTime() => SqliteDialect.formatDateTime(value),
   // Bound as a BLOB.
-  List<int>() => value,
+  Uint8List() => value,
   Map() || List() => json.encode(value, toEncodable: _toEncodable),
   _ => value,
 };

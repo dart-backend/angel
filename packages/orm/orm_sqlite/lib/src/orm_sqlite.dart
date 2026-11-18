@@ -1,80 +1,38 @@
-import 'dart:async';
-
-import 'package:angel3_orm/angel3_orm.dart';
-import 'package:logging/logging.dart';
-import 'package:sqlite3/common.dart';
-
-import 'scope.dart';
-import 'values.dart';
+part of 'executors.dart';
 
 /// A [QueryExecutor] of a SQLite database of the `sqlite3` package, on SQLite
 /// 3.35 or later, which runs its statements synchronously, on the isolate
-/// that gives them. For a server, see `SqliteAsyncExecutor`, which does not
+/// that gives them. For a server, see [SqliteAsyncExecutor], which does not
 /// block it.
 ///
 /// `sqlite3` runs a statement on one connection. While a transaction runs, a
-/// query given outside it waits for it to end; one given in it, to the
-/// executor of its callback, or to any executor of the database by the code
-/// of its callback, runs in it.
+/// query given outside it, or another transaction, waits for it to end; one
+/// given in it, to the executor of its callback, or to any executor of the
+/// database by the code of its callback, runs in it.
 ///
 /// Values are stored as SQLite stores them: a `bool` as `0` or `1`, a
 /// [DateTime] as UTC text (`2024-03-10 12:34:56.000000Z`), which sorts and
-/// compares in time order, a `List<int>`, such as a `Uint8List`, as a BLOB,
-/// and another [List] or a [Map] as JSON text, in which a [DateTime] is text
-/// as it is stored.
-class SqliteExecutor extends QueryExecutor {
-  /// The [Logger] written to.
-  final Logger logger;
-
-  final CommonDatabase _database;
-
-  /// The transaction and savepoints of [_database], which all its executors
-  /// share.
-  final Scopes _scopes;
-
-  /// The transaction or savepoint of this executor, if it is of one, of
-  /// [transaction].
-  final Scope? _bound;
-
-  static final Expando<Scopes> _databases = Expando('SqliteExecutor database');
-
+/// compares in time order, a `Uint8List` as a BLOB, and a [List] or a [Map]
+/// as JSON text, in which a [DateTime] is text as it is stored.
+class SqliteExecutor extends _SqliteExecutorBase<CommonDatabase> {
   SqliteExecutor(CommonDatabase database, {Logger? logger})
-    : _database = database,
-      logger = logger ?? Logger('SqliteExecutor'),
-      _scopes = _databases[database] ??= Scopes(outsideWaits: true),
-      _bound = null;
+    : super(database, logger ?? Logger('SqliteExecutor'), outsideWaits: true);
 
-  SqliteExecutor._of(SqliteExecutor executor, Scope this._bound)
-    : _database = executor._database,
-      logger = executor.logger,
-      _scopes = executor._scopes;
-
-  @override
-  Dialect get dialect => const SqliteDialect();
+  SqliteExecutor._of(super.executor, super.bound) : super._of();
 
   /// The database of `sqlite3`.
   CommonDatabase get database => _database;
 
-  /// Closes the database once the transaction that holds it has ended.
-  ///
-  /// Throws a [StateError] in a transaction, which the close would wait for.
-  Future<void> close() async {
-    if (_scopes.current(_bound) != null) {
-      throw StateError('The database of a transaction is not closed in it.');
-    }
-    for (var b = _scopes.blocker(null); b != null; b = _scopes.blocker(null)) {
-      await b;
-    }
-    _database.close();
-  }
+  @override
+  Future<void> _closeDatabase() async => _database.close();
 
-  /// Runs [f], a statement, and marks the transaction as rolled back if it
-  /// fails with an error after which SQLite rolled it back.
-  R _run<R>(R Function() f) {
+  /// Runs [f], a statement of [scope], and marks its transaction as rolled
+  /// back if it fails with an error after which SQLite rolled it back.
+  R _run<R>(_Scope? scope, R Function() f) {
     try {
       return f();
     } catch (_) {
-      if (!_scopes.isEmpty && _database.autocommit) _scopes.markRolledBack();
+      if (scope != null && _database.autocommit) scope.root.rolledBack = true;
       rethrow;
     }
   }
@@ -88,27 +46,24 @@ class SqliteExecutor extends QueryExecutor {
     String resultQuery = '',
     List<String> returningFields = const [],
   }) async {
-    var scope = _scopes.current(_bound);
-    return _scopes.track(scope, () async {
-      for (
-        var b = _scopes.blocker(scope);
-        b != null;
-        b = _scopes.blocker(scope)
-      ) {
-        await b;
-      }
-      return _run(() {
-        if (!selectsInsertedRow(query, returningQuery)) {
-          return _select(query, substitutionValues);
-        }
-        var ids = _select(returningId(query), substitutionValues);
-        if (ids.isEmpty) return <List>[];
-        return _select(
-          returningQuery,
-          withInsertId(substitutionValues, ids.first.first),
-        );
-      });
-    });
+    var scope = _scope;
+    return _scopes.track(
+      scope,
+      () => _scopes.whenReady(
+        scope,
+        () => _run(scope, () {
+          if (!selectsInsertedRow(query, returningQuery)) {
+            return _select(query, substitutionValues);
+          }
+          var ids = _select(returningId(query), substitutionValues);
+          if (ids.isEmpty) return <List>[];
+          return _select(
+            returningQuery,
+            withInsertId(substitutionValues, ids.first.first),
+          );
+        }),
+      ),
+    );
   }
 
   /// The rows of [sql], with its `@name` placeholders bound to
@@ -120,7 +75,7 @@ class SqliteExecutor extends QueryExecutor {
   }
 
   /// Runs [f] in a transaction, which holds the database: a query given
-  /// outside it waits for it to end.
+  /// outside it, or another transaction, waits for it to end.
   ///
   /// It begins with `BEGIN IMMEDIATE`, which takes the write lock of the
   /// database at once, so that another connection to the database file cannot
@@ -137,81 +92,84 @@ class SqliteExecutor extends QueryExecutor {
   /// database runs in it only in the zone of [f], and waits for it to end
   /// otherwise, as one outside it does.
   @override
-  Future<T> transaction<T>(FutureOr<T> Function(QueryExecutor) f) async {
-    var parent = _scopes.current(_bound);
-    return _scopes.track(parent, () async {
-      for (
-        var b = _scopes.blocker(parent);
-        b != null;
-        b = _scopes.blocker(parent)
-      ) {
-        await b;
-      }
-      var scope = Scope(parent);
-      // Named by its depth, as one savepoint of each depth runs at a time.
-      var savepoint = parent == null
-          ? null
-          : 'angel3_savepoint_${_depth(scope)}';
-      _scopes.push(scope);
-      try {
-        return await _runIn(scope, savepoint, f);
-      } finally {
-        _scopes.end(scope);
-      }
-    });
+  Future<T> transaction<T>(FutureOr<T> Function(QueryExecutor) f) {
+    var parent = _scope;
+    return _scopes.track(
+      parent,
+      () => _scopes.whenReady(parent, () async {
+        var scope = _Scope(parent);
+        _scopes.push(scope);
+        try {
+          return await _transaction(scope, f);
+        } catch (e, st) {
+          _logFailed(e, st);
+          rethrow;
+        } finally {
+          _scopes.end(scope);
+        }
+      }),
+    );
   }
 
-  /// The number of transactions and savepoints that [scope] is in.
-  static int _depth(Scope scope) {
-    var depth = 0;
-    for (var s = scope.parent; s != null; s = s.parent) {
-      depth++;
-    }
-    return depth;
-  }
-
-  Future<T> _runIn<T>(
-    Scope scope,
-    String? savepoint,
+  Future<T> _transaction<T>(
+    _Scope scope,
     FutureOr<T> Function(QueryExecutor) f,
   ) async {
+    // Named by its depth, as one savepoint of each depth runs at a time.
+    var savepoint = scope.parent == null
+        ? null
+        : 'angel3_savepoint_${scope.depth}';
     _run(
+      scope,
       () => _database.execute(
         savepoint == null ? 'BEGIN IMMEDIATE' : 'SAVEPOINT $savepoint',
       ),
     );
     try {
-      var result = await _scopes.runIn(
+      var result = await _runCallback(
         scope,
-        () => Future.sync(() => f(SqliteExecutor._of(this, scope))),
+        f,
+        SqliteExecutor._of(this, scope),
       );
-      await _scopes.drain(scope);
-      if (scope.root.rolledBack) {
-        throw StateError(
-          'SQLite rolled back the transaction after an error, so it is not '
-          'committed.',
-        );
-      }
       _run(
+        scope,
         () => _database.execute(
           savepoint == null ? 'COMMIT' : 'RELEASE $savepoint',
         ),
       );
       return result;
-    } catch (e, st) {
-      // Fine, as the error is thrown to the caller, who handles it.
-      logger.fine('The transaction failed, and is rolled back', e, st);
-      await _scopes.drain(scope);
+    } catch (_) {
       // Not if SQLite has rolled it back already, as of some errors, and its
       // savepoints with it.
       if (!scope.root.rolledBack && !_database.autocommit) {
-        _database.execute(
-          savepoint == null
-              ? 'ROLLBACK'
-              : 'ROLLBACK TO $savepoint; RELEASE $savepoint',
-        );
+        _rollBack(scope, savepoint);
       }
       rethrow;
+    }
+  }
+
+  /// Rolls back [scope]: its savepoint, or its transaction. If that fails,
+  /// the whole transaction is rolled back, as the connection would otherwise
+  /// stay in it, or keep the writes of the savepoint, and it is marked as
+  /// rolled back, so that it fails.
+  void _rollBack(_Scope scope, String? savepoint) {
+    try {
+      _database.execute(
+        savepoint == null
+            ? 'ROLLBACK'
+            : 'ROLLBACK TO $savepoint; RELEASE $savepoint',
+      );
+      return;
+    } catch (e, st) {
+      // The error of the transaction is thrown, not this one.
+      logger.warning('The transaction could not be rolled back', e, st);
+    }
+    scope.root.rolledBack = true;
+    if (_database.autocommit) return;
+    try {
+      _database.execute('ROLLBACK');
+    } catch (e, st) {
+      logger.severe('The connection is left in a transaction', e, st);
     }
   }
 }
