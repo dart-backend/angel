@@ -61,13 +61,16 @@ Future<void> _setUp(Database raw, String? schema) async {
   ).up();
 }
 
-TestDatabase _ofAsync(SqliteDatabase db) => TestDatabase(
-  SqliteAsyncExecutor(db, logger: Logger('orm_sqlite_async')),
-  execute: (sql) => db.execute(sql),
-  select: (sql) async => [for (var row in await db.getAll(sql)) row],
-  autocommit: db.getAutoCommit,
-  close: () => db.close(),
-);
+TestDatabase _ofAsync(SqliteDatabase db) {
+  var executor = SqliteAsyncExecutor(db, logger: Logger('orm_sqlite_async'));
+  return TestDatabase(
+    executor,
+    execute: (sql) => db.execute(sql),
+    select: (sql) async => [for (var row in await db.getAll(sql)) row],
+    autocommit: db.getAutoCommit,
+    close: executor.close,
+  );
+}
 
 final List<Backend> backends = [
   Backend('sqlite3', readsWait: true, (schema) async {
@@ -106,7 +109,7 @@ final List<Backend> backends = [
       select: test.select,
       autocommit: test.autocommit,
       close: () async {
-        await db.close();
+        await test.close();
         dir.deleteSync(recursive: true);
       },
     );

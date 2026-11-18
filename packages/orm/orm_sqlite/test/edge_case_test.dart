@@ -3,6 +3,7 @@ import 'dart:typed_data';
 
 import 'package:angel3_orm/angel3_orm.dart';
 import 'package:angel3_orm_sqlite/angel3_orm_sqlite.dart';
+import 'package:angel3_orm_sqlite/src/values.dart' show isSelect;
 import 'package:sqlite3/common.dart' show SqliteException;
 import 'package:test/test.dart';
 
@@ -142,7 +143,75 @@ void _tests(Backend backend) {
     });
   });
 
+  test('a union reads, and a WITH does not', () {
+    expect(isSelect('(SELECT 1) UNION (SELECT 2)'), isTrue);
+    expect(isSelect('  select 1'), isTrue);
+    expect(isSelect('WITH t AS (SELECT 1) SELECT * FROM t'), isFalse);
+    expect(isSelect('INSERT INTO t SELECT 1'), isFalse);
+  });
+
   group('transaction', () {
+    test('runs no statement given once its callback has returned', () async {
+      // Given after more and more steps, so that one is given as it ends.
+      for (var steps = 0; steps < 30; steps++) {
+        var given = Completer<Object?>();
+        await expectLater(
+          executor.transaction((tx) {
+            void step(int left) => left == 0
+                ? given.complete(
+                    insertCar(
+                      tx,
+                      'B',
+                    ).then<Object?>((_) => null, onError: (Object e) => e),
+                  )
+                : scheduleMicrotask(() => step(left - 1));
+            step(steps);
+            throw StateError('roll back');
+          }),
+          throwsStateError,
+        );
+        var error = await given.future;
+        expect(error, anyOf(isNull, isStateError), reason: 'after $steps');
+        expect(await makes(), isEmpty, reason: 'after $steps');
+      }
+    });
+
+    test('its executor fails, rather than throws, once it has ended', () async {
+      late QueryExecutor ended;
+      await executor.transaction((tx) => ended = tx);
+      late Future<List<List>> query;
+      expect(
+        () => query = ended.query('cars', 'SELECT 1', {}),
+        returnsNormally,
+      );
+      await expectLater(query, throwsStateError);
+      late Future<void> nested;
+      expect(() => nested = ended.transaction((_) {}), returnsNormally);
+      await expectLater(nested, throwsStateError);
+    });
+
+    test('ended by a statement given to the database itself fails', () async {
+      if (executor is! SqliteExecutor) return;
+      var database = (executor as SqliteExecutor).database;
+      await db.execute('''
+        CREATE TRIGGER no_b BEFORE INSERT ON cars WHEN NEW.make = 'B'
+        BEGIN SELECT RAISE(ROLLBACK, 'no B'); END''');
+      await expectLater(
+        executor.transaction((tx) async {
+          await insertCar(tx, 'A');
+          try {
+            await tx.transaction((_) async {
+              database.execute("INSERT INTO cars (make) VALUES ('B')");
+            });
+          } catch (_) {}
+          // Not run outside the transaction, which has ended.
+          await insertCar(tx, 'C');
+        }),
+        throwsStateError,
+      );
+      expect(await makes(), isEmpty);
+    });
+
     /// A transaction of [make] that waits between its statements, given
     /// outside the zone of any other, as by another request of a server.
     Future<void> slowTransaction(String make, {bool fail = false}) => runZoned(

@@ -47,39 +47,44 @@ class SqliteAsyncExecutor extends _SqliteExecutorBase<SqliteConnection> {
     String resultQuery = '',
     List<String> returningFields = const [],
   }) {
-    var scope = _scope;
-    return _whenReady(scope, () {
-      var context = scope?.context as SqliteWriteContext?;
-      // The statements are given to `sqlite_async` in this microtask, so
-      // that a savepoint cannot begin on [context] before them, and as the
-      // one statement of the transaction that runs: no other of it runs
-      // until the executor knows whether SQLite rolled it back.
-      return _scopes.hold(scope, () async {
-        try {
-          if (!selectsInsertedRow(query, returningQuery)) {
-            return (await _statement(context, query, substitutionValues)).rows;
+    return _inScope(
+      (scope) => _whenReady(scope, () {
+        var context = scope?.context as SqliteWriteContext?;
+        // The statements are given to `sqlite_async` in this microtask, so
+        // that a savepoint cannot begin on [context] before them, and as the
+        // one statement of the transaction that runs: no other of it runs
+        // until the executor knows whether SQLite rolled it back.
+        return _scopes.hold(scope, () async {
+          try {
+            if (!selectsInsertedRow(query, returningQuery)) {
+              return (await _statement(
+                context,
+                query,
+                substitutionValues,
+              )).rows;
+            }
+            // The insert and the select of its row, on one connection,
+            // outside a transaction as in one.
+            return context != null
+                ? await _insert(
+                    context,
+                    query,
+                    returningQuery,
+                    substitutionValues,
+                  )
+                : await _database.writeLock(
+                    (tx) =>
+                        _insert(tx, query, returningQuery, substitutionValues),
+                  );
+          } catch (_) {
+            if (scope != null && context != null) {
+              await _checkRolledBack(scope, context);
+            }
+            rethrow;
           }
-          // The insert and the select of its row, on one connection,
-          // outside a transaction as in one.
-          return context != null
-              ? await _insert(
-                  context,
-                  query,
-                  returningQuery,
-                  substitutionValues,
-                )
-              : await _database.writeLock(
-                  (tx) =>
-                      _insert(tx, query, returningQuery, substitutionValues),
-                );
-        } catch (_) {
-          if (scope != null && context != null) {
-            await _checkRolledBack(scope, context);
-          }
-          rethrow;
-        }
-      });
-    });
+        });
+      }),
+    );
   }
 
   /// Marks the transaction of [scope] as rolled back if SQLite rolled it

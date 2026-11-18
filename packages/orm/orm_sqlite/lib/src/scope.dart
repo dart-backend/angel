@@ -31,6 +31,14 @@ class _Scope {
 
   bool ended = false;
 
+  /// Whether its callback has returned, or failed, and what was given in it
+  /// has completed, so that it commits or rolls back: it runs no more
+  /// statements, as one given now would run after it.
+  bool finishing = false;
+
+  /// Whether it runs no more statements: it is [finishing], or has [ended].
+  bool get isOver => finishing || ended;
+
   /// Whether SQLite rolled back the transaction, of [root], after an error,
   /// so that it runs no more statements, as they would run outside it.
   bool rolledBack = false;
@@ -83,11 +91,11 @@ class _Scopes {
     // A savepoint that has ended, of a callback that runs later, as of a
     // timer, runs in the nearest that has not.
     var zoneScope = zone is _Scope ? zone : null;
-    while (zoneScope != null && zoneScope.ended) {
+    while (zoneScope != null && zoneScope.isOver) {
       zoneScope = zoneScope.parent;
     }
     if (bound == null) return zoneScope;
-    if (bound.ended) {
+    if (bound.isOver) {
       throw StateError('The transaction of this executor has ended.');
     }
     return zoneScope != null && zoneScope.isWithin(bound) ? zoneScope : bound;
@@ -103,7 +111,7 @@ class _Scopes {
           ? _roots.first.done.future
           : null;
     }
-    if (scope.ended) {
+    if (scope.isOver) {
       throw StateError('The transaction of this query has ended.');
     }
     var active = scope.stack.last;
@@ -184,7 +192,9 @@ class _Scopes {
       runZoned(f, zoneValues: {_key: scope});
 
   /// Waits for the operations given in [scope], and those they lead to, as
-  /// the later steps of an operation of the ORM that was not awaited.
+  /// the later steps of an operation of the ORM that was not awaited, and
+  /// then marks it [_Scope.finishing], in the microtask in which none runs,
+  /// so that no statement given after it runs.
   ///
   /// It returns at once if none is running, as when the callback of the
   /// scope awaited them, as the ORM does.
@@ -194,6 +204,7 @@ class _Scopes {
       // The steps that follow those, which their callbacks give.
       await Future<void>.delayed(Duration.zero);
     }
+    scope.finishing = true;
   }
 }
 

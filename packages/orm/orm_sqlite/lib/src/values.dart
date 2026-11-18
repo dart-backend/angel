@@ -23,11 +23,12 @@ Map<String, dynamic> withInsertId(Map<String, dynamic> values, Object? id) => {
   insertIdParameter: id,
 };
 
-/// Whether [sql] only reads, so that it may run on a connection that reads.
-/// A `WITH` may write, so it is not one.
+/// Whether [sql] only reads, so that it may run on a connection that reads:
+/// a `SELECT`, or a union of them, which begins with `(`. A `WITH` may write,
+/// so it is not one.
 bool isSelect(String sql) => _select.hasMatch(sql);
 
-final RegExp _select = RegExp(r'^\s*SELECT\b', caseSensitive: false);
+final RegExp _select = RegExp(r'^[\s(]*SELECT\b', caseSensitive: false);
 
 /// [sql] with its `@name` placeholders as positional `?`, and their values,
 /// as SQLite stores them.

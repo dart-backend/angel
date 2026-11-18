@@ -46,20 +46,21 @@ class SqliteExecutor extends _SqliteExecutorBase<CommonDatabase> {
     String resultQuery = '',
     List<String> returningFields = const [],
   }) {
-    var scope = _scope;
-    return _whenReady(
-      scope,
-      () => _run(scope, () {
-        if (!selectsInsertedRow(query, returningQuery)) {
-          return _select(query, substitutionValues);
-        }
-        var ids = _select(returningId(query), substitutionValues);
-        if (ids.isEmpty) return <List>[];
-        return _select(
-          returningQuery,
-          withInsertId(substitutionValues, ids.first.first),
-        );
-      }),
+    return _inScope(
+      (scope) => _whenReady(
+        scope,
+        () => _run(scope, () {
+          if (!selectsInsertedRow(query, returningQuery)) {
+            return _select(query, substitutionValues);
+          }
+          var ids = _select(returningId(query), substitutionValues);
+          if (ids.isEmpty) return <List>[];
+          return _select(
+            returningQuery,
+            withInsertId(substitutionValues, ids.first.first),
+          );
+        }),
+      ),
     );
   }
 
@@ -123,7 +124,12 @@ class SqliteExecutor extends _SqliteExecutorBase<CommonDatabase> {
     } catch (_) {
       // Not if SQLite has rolled it back already, as of some errors, and its
       // savepoints with it.
-      if (!scope.root.rolledBack && !_database.autocommit) {
+      if (_database.autocommit) {
+        // SQLite has ended the transaction, as of a statement given to the
+        // database itself, so that the statements of its parent would run
+        // outside it.
+        scope.root.rolledBack = true;
+      } else if (!scope.root.rolledBack) {
         _rollBack(scope, savepoint);
       }
       rethrow;

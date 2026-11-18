@@ -47,6 +47,19 @@ abstract class _SqliteExecutorBase<D extends Object> extends QueryExecutor {
   /// The scope that a statement given now runs in.
   _Scope? get _scope => _scopes.current(_bound);
 
+  /// The result of [f], given the scope that a statement given now runs in,
+  /// [_scope]; or a failed future if it has none, as of an executor of a
+  /// transaction that has ended, rather than an error thrown by the call.
+  Future<R> _inScope<R>(Future<R> Function(_Scope? scope) f) {
+    _Scope? scope;
+    try {
+      scope = _scope;
+    } catch (e, st) {
+      return Future.error(e, st);
+    }
+    return f(scope);
+  }
+
   /// Closes the database once the transactions on it, and the queries given
   /// outside them, have ended. Called again, it returns the same close.
   ///
@@ -56,14 +69,14 @@ abstract class _SqliteExecutorBase<D extends Object> extends QueryExecutor {
   /// throws a [StateError] at once, rather than running on the closed
   /// database; one given before it runs. If the database fails to close, the
   /// executor runs them again.
-  Future<void> close() {
-    if (_scope != null) {
+  Future<void> close() => _inScope((scope) {
+    if (scope != null) {
       return Future.error(
         StateError('The database of a transaction is not closed in it.'),
       );
     }
     return _scopes.closed ??= _close();
-  }
+  });
 
   Future<void> _close() async {
     _scopes.closing = true;
@@ -87,19 +100,20 @@ abstract class _SqliteExecutorBase<D extends Object> extends QueryExecutor {
 
   @override
   Future<T> transaction<T>(FutureOr<T> Function(QueryExecutor) f) {
-    var parent = _scope;
-    return _whenReady(parent, () async {
-      var scope = _Scope(parent);
-      _scopes.push(scope);
-      try {
-        return await _transaction(scope, f);
-      } catch (e, st) {
-        _logFailed(e, st);
-        rethrow;
-      } finally {
-        _scopes.end(scope);
-      }
-    });
+    return _inScope(
+      (parent) => _whenReady(parent, () async {
+        var scope = _Scope(parent);
+        _scopes.push(scope);
+        try {
+          return await _transaction(scope, f);
+        } catch (e, st) {
+          _logFailed(e, st);
+          rethrow;
+        } finally {
+          _scopes.end(scope);
+        }
+      }),
+    );
   }
 
   /// Runs [f] in [scope], which [transaction] has pushed: begins it, as a
