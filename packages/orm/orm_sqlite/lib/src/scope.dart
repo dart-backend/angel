@@ -60,6 +60,17 @@ class _Scopes {
   /// connection of its own.
   final bool outsideWaits;
 
+  /// Whether the database is closing, or closed, so that no statement or
+  /// transaction given outside a transaction runs.
+  bool closing = false;
+
+  /// The close of the database, once it is called.
+  Future<void>? closed;
+
+  /// The operations given outside a transaction that have not completed,
+  /// which the close of the database waits for.
+  final Set<Future<void>> _outside = {};
+
   _Scopes({required this.outsideWaits});
 
   /// The scope that a statement given now runs in: that of the zone, if it is
@@ -125,21 +136,31 @@ class _Scopes {
     }
   }
 
-  /// Waits until no transaction runs.
+  /// Waits until no transaction, nor operation given outside one, runs.
   Future<void> whenIdle() async {
-    while (_roots.isNotEmpty) {
-      await _roots.first.done.future;
+    while (_roots.isNotEmpty || _outside.isNotEmpty) {
+      await Future.wait([
+        for (var root in _roots) root.done.future,
+        ..._outside,
+      ]);
     }
   }
 
   /// Runs [f] as one of the operations of [scope], which it waits for before
-  /// it ends.
+  /// it ends, or, outside a transaction, which the close of the database
+  /// waits for. Outside a transaction, once the database is [closing], it
+  /// fails at once with a [StateError].
   Future<T> track<T>(_Scope? scope, Future<T> Function() f) {
-    if (scope == null) return f();
+    if (scope == null && closing) {
+      return Future.error(
+        StateError('The database of this executor is closed.'),
+      );
+    }
+    var running = scope?.running ?? _outside;
     var result = f();
     var done = result.then<void>((_) {}, onError: (_) {});
-    scope.running.add(done);
-    done.whenComplete(() => scope.running.remove(done));
+    running.add(done);
+    done.whenComplete(() => running.remove(done));
     return result;
   }
 

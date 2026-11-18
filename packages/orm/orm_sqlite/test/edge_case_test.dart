@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:angel3_orm/angel3_orm.dart';
+import 'package:angel3_orm_sqlite/angel3_orm_sqlite.dart';
 import 'package:sqlite3/common.dart' show SqliteException;
 import 'package:test/test.dart';
 
@@ -105,6 +106,39 @@ void _tests(Backend backend) {
         BEGIN SELECT RAISE(IGNORE); END''');
       var result = await (CarQuery()..values.make = 'B').insert(executor);
       expect(result.isPresent, isFalse);
+    });
+  });
+
+  group('close', () {
+    Future<void> close() => switch (executor) {
+      SqliteExecutor e => e.close(),
+      SqliteAsyncExecutor e => e.close(),
+      _ => throw UnsupportedError('$executor'),
+    };
+
+    test('runs what is given before it, and refuses what is given after it, '
+        'at once', () async {
+      var release = Completer<void>();
+      var transaction = executor.transaction((tx) async {
+        await insertCar(tx, 'A');
+        await release.future;
+      });
+      await Future<void>.delayed(Duration.zero);
+      // Given outside the transaction before the close, which it may wait for.
+      var before = insertCar(executor, 'B');
+      var closed = close();
+      expect(close(), same(closed));
+      // Refused while the transaction still runs.
+      await expectLater(CarQuery().get(executor), throwsStateError);
+      await expectLater(
+        executor.transaction((tx) => insertCar(tx, 'C')),
+        throwsStateError,
+      );
+      expect(release.isCompleted, isFalse);
+      release.complete();
+      await transaction; // Committed.
+      expect((await before).make, 'B');
+      await closed.timeout(const Duration(seconds: 5));
     });
   });
 

@@ -12,6 +12,10 @@ part of 'executors.dart';
 /// another transaction, waits for the transaction, as `sqlite_async` writes
 /// one at a time.
 ///
+/// On one connection, as of [SqliteDatabase.singleConnection], such as one in
+/// memory, there is no connection that reads: a query that reads waits for a
+/// transaction too, as one that writes does.
+///
 /// A query given in a transaction, to the executor of its callback, or to any
 /// executor of the database by the code of its callback, runs in it. The
 /// statements of a transaction run one at a time. Values are stored as
@@ -44,45 +48,38 @@ class SqliteAsyncExecutor extends _SqliteExecutorBase<SqliteConnection> {
     List<String> returningFields = const [],
   }) {
     var scope = _scope;
-    return _scopes.track(
-      scope,
-      () => _scopes.whenReady(scope, () {
-        var context = scope?.context as SqliteWriteContext?;
-        // The statements are given to `sqlite_async` in this microtask, so
-        // that a savepoint cannot begin on [context] before them, and as the
-        // one statement of the transaction that runs: no other of it runs
-        // until the executor knows whether SQLite rolled it back.
-        return _scopes.hold(scope, () async {
-          try {
-            if (!selectsInsertedRow(query, returningQuery)) {
-              return (await _statement(
-                context,
-                query,
-                substitutionValues,
-              )).rows;
-            }
-            // The insert and the select of its row, on one connection,
-            // outside a transaction as in one.
-            return context != null
-                ? await _insert(
-                    context,
-                    query,
-                    returningQuery,
-                    substitutionValues,
-                  )
-                : await _database.writeLock(
-                    (tx) =>
-                        _insert(tx, query, returningQuery, substitutionValues),
-                  );
-          } catch (_) {
-            if (scope != null && context != null) {
-              await _checkRolledBack(scope, context);
-            }
-            rethrow;
+    return _whenReady(scope, () {
+      var context = scope?.context as SqliteWriteContext?;
+      // The statements are given to `sqlite_async` in this microtask, so
+      // that a savepoint cannot begin on [context] before them, and as the
+      // one statement of the transaction that runs: no other of it runs
+      // until the executor knows whether SQLite rolled it back.
+      return _scopes.hold(scope, () async {
+        try {
+          if (!selectsInsertedRow(query, returningQuery)) {
+            return (await _statement(context, query, substitutionValues)).rows;
           }
-        });
-      }),
-    );
+          // The insert and the select of its row, on one connection,
+          // outside a transaction as in one.
+          return context != null
+              ? await _insert(
+                  context,
+                  query,
+                  returningQuery,
+                  substitutionValues,
+                )
+              : await _database.writeLock(
+                  (tx) =>
+                      _insert(tx, query, returningQuery, substitutionValues),
+                );
+        } catch (_) {
+          if (scope != null && context != null) {
+            await _checkRolledBack(scope, context);
+          }
+          rethrow;
+        }
+      });
+    });
   }
 
   /// Marks the transaction of [scope] as rolled back if SQLite rolled it
@@ -134,7 +131,8 @@ class SqliteAsyncExecutor extends _SqliteExecutorBase<SqliteConnection> {
 
   /// Runs [f] in a transaction of `sqlite_async`'s `writeTransaction`, which
   /// begins with `BEGIN IMMEDIATE`. A query outside it that writes, and
-  /// another transaction, waits for it to end; one that reads does not.
+  /// another transaction, waits for it to end; one that reads does not,
+  /// unless the database has one connection.
   ///
   /// A transaction in a transaction, as of an update or a delete of the ORM,
   /// is a savepoint of it, which is rolled back alone if [f] fails. The
@@ -145,34 +143,31 @@ class SqliteAsyncExecutor extends _SqliteExecutorBase<SqliteConnection> {
   /// [f] is given an executor of the transaction, whose queries run in it from
   /// any zone; a query that the code of [f] gives to another executor of the
   /// database runs in it only in the zone of [f]. One that writes, given
-  /// elsewhere, waits for it to end, so [f] must not wait for it.
+  /// elsewhere, waits for it to end, so [f] must not wait for it; nor for
+  /// one that reads, on a database of one connection.
+  ///
+  /// If a savepoint fails and its rollback fails too, which is rare,
+  /// `sqlite_async` ignores the error of the rollback, so that its writes may
+  /// be committed with the transaction, unlike with [SqliteExecutor].
   @override
-  Future<T> transaction<T>(FutureOr<T> Function(QueryExecutor) f) {
-    var parent = _scope;
-    return _scopes.track(
-      parent,
-      () => _scopes.whenReady(parent, () async {
-        var scope = _Scope(parent);
-        _scopes.push(scope);
-        try {
-          Future<T> body(SqliteWriteContext tx) {
-            scope.context = tx;
-            return _runCallback(scope, f, SqliteAsyncExecutor._of(this, scope));
-          }
+  Future<T> transaction<T>(FutureOr<T> Function(QueryExecutor) f) =>
+      super.transaction(f);
 
-          var parentContext = parent?.context as SqliteWriteContext?;
-          // Called in this microtask, so that `sqlite_async` locks the
-          // context of the parent before a statement of it is given.
-          return await (parentContext == null
-              ? _database.writeTransaction(body)
-              : parentContext.writeTransaction(body));
-        } catch (e, st) {
-          _logFailed(e, st);
-          rethrow;
-        } finally {
-          _scopes.end(scope);
-        }
-      }),
-    );
+  @override
+  Future<T> _transaction<T>(
+    _Scope scope,
+    FutureOr<T> Function(QueryExecutor) f,
+  ) {
+    Future<T> body(SqliteWriteContext tx) {
+      scope.context = tx;
+      return _runCallback(scope, f, SqliteAsyncExecutor._of(this, scope));
+    }
+
+    var parentContext = scope.parent?.context as SqliteWriteContext?;
+    // Called in this microtask, so that `sqlite_async` locks the context of
+    // the parent before a statement of it is given.
+    return parentContext == null
+        ? _database.writeTransaction(body)
+        : parentContext.writeTransaction(body);
   }
 }

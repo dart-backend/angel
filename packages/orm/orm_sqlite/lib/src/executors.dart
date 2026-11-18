@@ -47,18 +47,68 @@ abstract class _SqliteExecutorBase<D extends Object> extends QueryExecutor {
   /// The scope that a statement given now runs in.
   _Scope? get _scope => _scopes.current(_bound);
 
-  /// Closes the database once the transactions on it have ended.
+  /// Closes the database once the transactions on it, and the queries given
+  /// outside them, have ended. Called again, it returns the same close.
   ///
   /// Throws a [StateError] in a transaction, which the close would wait for.
-  Future<void> close() async {
+  ///
+  /// A query or a transaction given outside a transaction once it is called
+  /// throws a [StateError] at once, rather than running on the closed
+  /// database; one given before it runs. If the database fails to close, the
+  /// executor runs them again.
+  Future<void> close() {
     if (_scope != null) {
-      throw StateError('The database of a transaction is not closed in it.');
+      return Future.error(
+        StateError('The database of a transaction is not closed in it.'),
+      );
     }
-    await _scopes.whenIdle();
-    await _closeDatabase();
+    return _scopes.closed ??= _close();
+  }
+
+  Future<void> _close() async {
+    _scopes.closing = true;
+    try {
+      await _scopes.whenIdle();
+      await _closeDatabase();
+    } catch (_) {
+      _scopes
+        ..closing = false
+        ..closed = null;
+      rethrow;
+    }
   }
 
   Future<void> _closeDatabase();
+
+  /// Runs [start], an operation of [scope], once [scope] may run a statement,
+  /// as [_Scopes.whenReady], tracked by [scope], as [_Scopes.track].
+  Future<R> _whenReady<R>(_Scope? scope, FutureOr<R> Function() start) =>
+      _scopes.track(scope, () => _scopes.whenReady(scope, start));
+
+  @override
+  Future<T> transaction<T>(FutureOr<T> Function(QueryExecutor) f) {
+    var parent = _scope;
+    return _whenReady(parent, () async {
+      var scope = _Scope(parent);
+      _scopes.push(scope);
+      try {
+        return await _transaction(scope, f);
+      } catch (e, st) {
+        _logFailed(e, st);
+        rethrow;
+      } finally {
+        _scopes.end(scope);
+      }
+    });
+  }
+
+  /// Runs [f] in [scope], which [transaction] has pushed: begins it, as a
+  /// transaction or a savepoint of its parent, in the microtask of its call,
+  /// and commits it, or rolls it back if [f] fails.
+  Future<T> _transaction<T>(
+    _Scope scope,
+    FutureOr<T> Function(QueryExecutor) f,
+  );
 
   /// Logs the error of a transaction: of its callback, or of its begin or
   /// commit. Fine, as the error is thrown to the caller, who handles it.

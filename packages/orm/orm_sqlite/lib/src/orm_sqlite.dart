@@ -45,24 +45,21 @@ class SqliteExecutor extends _SqliteExecutorBase<CommonDatabase> {
     String returningQuery = '',
     String resultQuery = '',
     List<String> returningFields = const [],
-  }) async {
+  }) {
     var scope = _scope;
-    return _scopes.track(
+    return _whenReady(
       scope,
-      () => _scopes.whenReady(
-        scope,
-        () => _run(scope, () {
-          if (!selectsInsertedRow(query, returningQuery)) {
-            return _select(query, substitutionValues);
-          }
-          var ids = _select(returningId(query), substitutionValues);
-          if (ids.isEmpty) return <List>[];
-          return _select(
-            returningQuery,
-            withInsertId(substitutionValues, ids.first.first),
-          );
-        }),
-      ),
+      () => _run(scope, () {
+        if (!selectsInsertedRow(query, returningQuery)) {
+          return _select(query, substitutionValues);
+        }
+        var ids = _select(returningId(query), substitutionValues);
+        if (ids.isEmpty) return <List>[];
+        return _select(
+          returningQuery,
+          withInsertId(substitutionValues, ids.first.first),
+        );
+      }),
     );
   }
 
@@ -92,25 +89,10 @@ class SqliteExecutor extends _SqliteExecutorBase<CommonDatabase> {
   /// database runs in it only in the zone of [f], and waits for it to end
   /// otherwise, as one outside it does.
   @override
-  Future<T> transaction<T>(FutureOr<T> Function(QueryExecutor) f) {
-    var parent = _scope;
-    return _scopes.track(
-      parent,
-      () => _scopes.whenReady(parent, () async {
-        var scope = _Scope(parent);
-        _scopes.push(scope);
-        try {
-          return await _transaction(scope, f);
-        } catch (e, st) {
-          _logFailed(e, st);
-          rethrow;
-        } finally {
-          _scopes.end(scope);
-        }
-      }),
-    );
-  }
+  Future<T> transaction<T>(FutureOr<T> Function(QueryExecutor) f) =>
+      super.transaction(f);
 
+  @override
   Future<T> _transaction<T>(
     _Scope scope,
     FutureOr<T> Function(QueryExecutor) f,
