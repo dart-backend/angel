@@ -15,7 +15,7 @@ SQLite support for Angel3 ORM. SQLite 3.35 or later is required. It has two exec
 | In-memory database | only on one connection (see below) | yes |
 | Use it for | a server | tests, command-line programs, scripts |
 
-Both store values the same way, so a database written by one can be read by the other.
+Both store values the same way, so a database written by one can be read by the other. Do not open the same connection with both at once: each executor tracks the transactions of the database object it is given, so transactions of the two would not wait for each other.
 
 ## Usage
 
@@ -67,7 +67,7 @@ var executor = SqliteAsyncExecutor(
 );
 ```
 
-`close()` closes the database once its transactions, and the queries given before it, have ended; calling it again returns the same close. A query or a transaction given outside a transaction after it is called throws a `StateError` at once.
+`close()` closes the database once its transactions, and the queries given before it, have ended; calling it again returns the same close. A query or a transaction given outside a transaction after it is called fails at once: it returns a `Future` that fails with a `StateError`.
 
 ### Migrations
 
@@ -108,7 +108,7 @@ Future<SqliteAsyncExecutor> open() async {
 
 A field of a `binary`, `varBinary` or `varBinaryMax` column must be a `Uint8List` to be stored as a BLOB: the executor does not know the type of a column, so it stores any other `List<int>` as JSON text.
 
-A query's `@name` placeholders are bound by position; one with no value throws an `ArgumentError`, as SQLite would read it as a parameter of its own. This includes an `@word` in an SQL comment of raw SQL, such as `-- @todo`; one in a quoted string is not a placeholder.
+A query's `@name` placeholders are bound by position; a query with one that has no value fails with an `ArgumentError`, as SQLite would read it as a parameter of its own. This includes an `@word` in an SQL comment of raw SQL, such as `-- @todo`, or in a name in square brackets, such as `[col@x]`; quote such a name with double quotes instead. One in a quoted string is not a placeholder.
 
 ## Known limitations
 

@@ -156,7 +156,9 @@ class SqliteExecutor extends _SqliteExecutorBase<CommonDatabase> {
       logger.warning('The transaction could not be rolled back', e, st);
     }
     scope.root.rolledBack = true;
-    if (_database.autocommit) return;
+    // The whole transaction, of a savepoint, unless SQLite has ended it, or
+    // it is the one whose rollback failed.
+    if (savepoint == null || _database.autocommit) return;
     try {
       _database.execute('ROLLBACK');
     } catch (e, st) {
