@@ -50,15 +50,8 @@ abstract class _SqliteExecutorBase<D extends Object> extends QueryExecutor {
   /// The result of [f], given the scope that a statement given now runs in,
   /// [_scope]; or a failed future if it has none, as of an executor of a
   /// transaction that has ended, rather than an error thrown by the call.
-  Future<R> _inScope<R>(Future<R> Function(_Scope? scope) f) {
-    _Scope? scope;
-    try {
-      scope = _scope;
-    } catch (e, st) {
-      return Future.error(e, st);
-    }
-    return f(scope);
-  }
+  Future<R> _inScope<R>(Future<R> Function(_Scope? scope) f) =>
+      Future.sync(() => f(_scope));
 
   /// Closes the database once the transactions on it, and the queries given
   /// outside them, have ended. Called again, it returns the same close.

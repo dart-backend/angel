@@ -129,7 +129,10 @@ class SqliteExecutor extends _SqliteExecutorBase<CommonDatabase> {
         // database itself, so that the statements of its parent would run
         // outside it.
         scope.root.rolledBack = true;
-      } else if (!scope.root.rolledBack) {
+      } else if (savepoint == null || !scope.root.rolledBack) {
+        // A transaction is rolled back even if it is marked as rolled back,
+        // as of a savepoint whose rollback failed, as the connection is still
+        // in it.
         _rollBack(scope, savepoint);
       }
       rethrow;
