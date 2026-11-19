@@ -53,15 +53,53 @@ class SqliteExecutor extends _SqliteExecutorBase<CommonDatabase> {
           if (!selectsInsertedRow(query, returningQuery)) {
             return _select(query, substitutionValues);
           }
-          var ids = _select(returningId(query), substitutionValues);
-          if (ids.isEmpty) return <List>[];
-          return _select(
-            returningQuery,
-            withInsertId(substitutionValues, ids.first.first),
-          );
+          return _atomically(scope, () {
+            var ids = _select(returningId(query), substitutionValues);
+            if (ids.isEmpty) return <List>[];
+            return _select(
+              returningQuery,
+              withInsertId(substitutionValues, ids.first.first),
+            );
+          });
         }),
       ),
     );
+  }
+
+  /// The result of [f], whose statements are rolled back if it fails: as an
+  /// insert and the select of its row, so that the row is not inserted if
+  /// the select fails. In a savepoint, which nests in a transaction of
+  /// [scope], or in one that the connection is in, as of a `BEGIN` given to
+  /// the database itself, and is a transaction of its own outside them.
+  ///
+  /// If the rollback fails, the transaction of [scope] is marked as rolled
+  /// back, so that it fails rather than commits the row; outside one, the
+  /// transaction that the savepoint began is rolled back whole.
+  R _atomically<R>(_Scope? scope, R Function() f) {
+    // Whether the savepoint begins a transaction, which is its own.
+    var begins = _database.autocommit;
+    _database.execute('SAVEPOINT angel3_insert');
+    try {
+      var result = f();
+      _database.execute('RELEASE angel3_insert');
+      return result;
+    } catch (_) {
+      // Not if SQLite has rolled back the transaction, and the savepoint.
+      if (!_database.autocommit) {
+        try {
+          _database.execute('ROLLBACK TO angel3_insert; RELEASE angel3_insert');
+        } catch (e, st) {
+          if (scope != null) {
+            // Rolled back whole by [_transaction], as it fails.
+            logger.warning('The insert could not be rolled back', e, st);
+            scope.root.rolledBack = true;
+          } else {
+            _afterFailedRollback('The insert', e, st, rollBackAll: begins);
+          }
+        }
+      }
+      rethrow;
+    }
   }
 
   /// The rows of [sql], with its `@name` placeholders bound to
@@ -140,9 +178,9 @@ class SqliteExecutor extends _SqliteExecutorBase<CommonDatabase> {
   }
 
   /// Rolls back [scope]: its savepoint, or its transaction. If that fails,
-  /// the whole transaction is rolled back, as the connection would otherwise
-  /// stay in it, or keep the writes of the savepoint, and it is marked as
-  /// rolled back, so that it fails.
+  /// it is marked as rolled back, so that it fails, and the whole
+  /// transaction is rolled back, as the connection would otherwise stay in
+  /// it, or keep the writes of the savepoint.
   void _rollBack(_Scope scope, String? savepoint) {
     try {
       _database.execute(
@@ -150,19 +188,49 @@ class SqliteExecutor extends _SqliteExecutorBase<CommonDatabase> {
             ? 'ROLLBACK'
             : 'ROLLBACK TO $savepoint; RELEASE $savepoint',
       );
-      return;
     } catch (e, st) {
       // The error of the transaction is thrown, not this one.
-      logger.warning('The transaction could not be rolled back', e, st);
+      scope.root.rolledBack = true;
+      _afterFailedRollback(
+        savepoint == null ? 'The transaction' : 'The savepoint',
+        e,
+        st,
+        // A whole transaction that failed to roll back would fail again.
+        rollBackAll: savepoint != null,
+      );
     }
-    scope.root.rolledBack = true;
-    // The whole transaction, of a savepoint, unless SQLite has ended it, or
-    // it is the one whose rollback failed.
-    if (savepoint == null || _database.autocommit) return;
-    try {
-      _database.execute('ROLLBACK');
-    } catch (e, st) {
-      logger.severe('The connection is left in a transaction', e, st);
+  }
+
+  /// Logs that the rollback of [what] failed with [error]: as a warning if
+  /// the connection is no longer in a transaction, once [rollBackAll] has
+  /// rolled back the one it is in; or else as severe, as it is left in it.
+  void _afterFailedRollback(
+    String what,
+    Object error,
+    StackTrace stackTrace, {
+    required bool rollBackAll,
+  }) {
+    if (rollBackAll && !_database.autocommit) {
+      try {
+        _database.execute('ROLLBACK');
+      } catch (e, st) {
+        (error, stackTrace) = (e, st);
+      }
+    }
+    if (_database.autocommit) {
+      logger.warning(
+        '$what could not be rolled back; the connection is no longer in a '
+        'transaction',
+        error,
+        stackTrace,
+      );
+    } else {
+      logger.severe(
+        '$what could not be rolled back, and the connection is left in a '
+        'transaction',
+        error,
+        stackTrace,
+      );
     }
   }
 }

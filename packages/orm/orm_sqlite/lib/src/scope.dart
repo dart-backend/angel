@@ -31,6 +31,10 @@ class _Scope {
 
   bool ended = false;
 
+  /// The error that one of its savepoints, or theirs, has logged as failing
+  /// it, so that it does not log it again.
+  Object? loggedError;
+
   /// Whether its callback has returned, or failed, and what was given in it
   /// has completed, so that it commits or rolls back: it runs no more
   /// statements, as one given now would run after it.
@@ -92,6 +96,19 @@ class _Scopes {
     // timer, runs in the nearest that has not.
     var zoneScope = zone is _Scope ? zone : null;
     while (zoneScope != null && zoneScope.isOver) {
+      if (zoneScope.parent == null && !zoneScope.ended) {
+        // A transaction that commits or rolls back: the statement, or the
+        // transaction or close, would run after it, as one given before it
+        // ends; unless it is given to the executor of another transaction.
+        if (bound == null) {
+          throw StateError(
+            'The transaction of the code that gives this is committing or '
+            'rolling back.',
+          );
+        }
+        zoneScope = null;
+        break;
+      }
       zoneScope = zoneScope.parent;
     }
     if (bound == null) return zoneScope;

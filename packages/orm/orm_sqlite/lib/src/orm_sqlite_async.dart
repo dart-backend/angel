@@ -63,16 +63,15 @@ class SqliteAsyncExecutor extends _SqliteExecutorBase<SqliteConnection> {
                 substitutionValues,
               )).rows;
             }
-            // The insert and the select of its row, on one connection,
-            // outside a transaction as in one.
+            // The insert and the select of its row, on one connection, in a
+            // transaction, or a savepoint of one, so that the row is not
+            // inserted if the select fails.
             return context != null
-                ? await _insert(
-                    context,
-                    query,
-                    returningQuery,
-                    substitutionValues,
+                ? await context.writeTransaction(
+                    (tx) =>
+                        _insert(tx, query, returningQuery, substitutionValues),
                   )
-                : await _database.writeLock(
+                : await _database.writeTransaction(
                     (tx) =>
                         _insert(tx, query, returningQuery, substitutionValues),
                   );

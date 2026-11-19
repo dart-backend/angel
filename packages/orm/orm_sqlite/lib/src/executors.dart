@@ -100,7 +100,7 @@ abstract class _SqliteExecutorBase<D extends Object> extends QueryExecutor {
         try {
           return await _transaction(scope, f);
         } catch (e, st) {
-          _logFailed(e, st);
+          _logFailed(scope, e, st);
           rethrow;
         } finally {
           _scopes.end(scope);
@@ -117,13 +117,21 @@ abstract class _SqliteExecutorBase<D extends Object> extends QueryExecutor {
     FutureOr<T> Function(QueryExecutor) f,
   );
 
-  /// Logs the error of a transaction: of its callback, or of its begin or
-  /// commit. Fine, as the error is thrown to the caller, who handles it.
-  void _logFailed(Object error, StackTrace stackTrace) => logger.fine(
-    'The transaction failed, and is rolled back',
-    error,
-    stackTrace,
-  );
+  /// Logs the error of [scope]: of its callback, or of its begin or commit.
+  /// Fine, as the error is thrown to the caller, who handles it.
+  ///
+  /// It is logged once, by the savepoint that it fails first, and not again by
+  /// each of its transactions that it fails as it is thrown on; a savepoint
+  /// beside it that fails with it logs it too.
+  void _logFailed(_Scope scope, Object error, StackTrace stackTrace) {
+    scope.parent?.loggedError = error;
+    if (identical(scope.loggedError, error)) return;
+    logger.fine(
+      'The transaction failed, and is rolled back',
+      error,
+      stackTrace,
+    );
+  }
 
   /// Runs [f] in [scope], and then waits for what was given in it and not
   /// awaited, as [_Scopes.drain]; and throws if SQLite rolled back the

@@ -4,6 +4,7 @@ import 'dart:typed_data';
 import 'package:angel3_orm/angel3_orm.dart';
 import 'package:angel3_orm_sqlite/angel3_orm_sqlite.dart';
 import 'package:angel3_orm_sqlite/src/values.dart' show isSelect;
+import 'package:logging/logging.dart';
 import 'package:sqlite3/common.dart' show SqliteException;
 import 'package:test/test.dart';
 
@@ -100,6 +101,83 @@ void _tests(Backend backend) {
       await uuids.close();
     });
 
+    Future<List<List>> insertSelecting(String returningQuery) => executor.query(
+      'cars',
+      'INSERT INTO cars (make) VALUES (@make)',
+      {'make': 'A'},
+      returningQuery: returningQuery,
+    );
+
+    test('of a select with a placeholder of no value inserts nothing', () async {
+      await expectLater(
+        insertSelecting(
+          'SELECT * FROM cars WHERE id = @$insertIdParameter AND make = @nope',
+        ),
+        throwsA(isA<ArgumentError>()),
+      );
+      expect(await makes(), isEmpty);
+    });
+
+    test('of a select that fails inserts nothing', () async {
+      await expectLater(
+        insertSelecting('SELECT * FROM no_such WHERE id = @$insertIdParameter'),
+        throwsA(isA<SqliteException>()),
+      );
+      expect(await makes(), isEmpty);
+    });
+
+    test('of a select that fails in a transaction inserts nothing', () async {
+      await executor.transaction((tx) async {
+        await insertCar(tx, 'Z');
+        await expectLater(
+          tx.query(
+            'cars',
+            'INSERT INTO cars (make) VALUES (@make)',
+            {'make': 'A'},
+            returningQuery:
+                'SELECT * FROM no_such WHERE id = @$insertIdParameter',
+          ),
+          throwsA(isA<SqliteException>()),
+        );
+      });
+      expect(await makes(), ['Z']);
+    });
+
+    test('of a select that fails in a savepoint inserts nothing', () async {
+      await executor.transaction((tx) async {
+        await insertCar(tx, 'Z');
+        await tx.transaction((tx) async {
+          await insertCar(tx, 'Y');
+          await expectLater(
+            tx.query(
+              'cars',
+              'INSERT INTO cars (make) VALUES (@make)',
+              {'make': 'A'},
+              returningQuery:
+                  'SELECT * FROM no_such WHERE id = @$insertIdParameter',
+            ),
+            throwsA(isA<SqliteException>()),
+          );
+        });
+      });
+      expect(await makes(), ['Z', 'Y']);
+    });
+
+    test('in a transaction begun on the database itself nests in it', () async {
+      if (executor is! SqliteExecutor) return;
+      var database = (executor as SqliteExecutor).database;
+      database.execute('BEGIN');
+      await insertCar(executor, 'A');
+      await expectLater(
+        insertSelecting('SELECT * FROM no_such WHERE id = @$insertIdParameter'),
+        throwsA(isA<SqliteException>()),
+      );
+      // Still in the transaction, which has the first row only.
+      expect(database.autocommit, isFalse);
+      database.execute('ROLLBACK');
+      expect(await makes(), isEmpty);
+    });
+
     test('of no row, as a trigger ignores it, returns none', () async {
       await insertCar(executor, 'A');
       await db.execute('''
@@ -174,6 +252,51 @@ void _tests(Backend backend) {
         expect(error, anyOf(isNull, isStateError), reason: 'after $steps');
         expect(await makes(), isEmpty, reason: 'after $steps');
       }
+    });
+
+    test('logs a failure once, not by each transaction it fails', () async {
+      var previous = Logger.root.level;
+      Logger.root.level = Level.ALL;
+      var failures = <LogRecord>[];
+      var listening = Logger.root.onRecord
+          .where((r) => r.message.startsWith('The transaction failed'))
+          .listen(failures.add);
+      addTearDown(() {
+        Logger.root.level = previous;
+        return listening.cancel();
+      });
+      await expectLater(
+        executor.transaction(
+          (tx) => tx.transaction(
+            (tx) => tx.transaction((_) => throw StateError('fail')),
+          ),
+        ),
+        throwsStateError,
+      );
+      expect(failures, hasLength(1));
+      // The same error, of another transaction, is logged by it too.
+      var error = StateError('again');
+      for (var i = 0; i < 2; i++) {
+        await expectLater(
+          executor.transaction((tx) => tx.transaction((_) => throw error)),
+          throwsStateError,
+        );
+      }
+      expect(failures, hasLength(3));
+      // Each of two savepoints that fail with the same error logs it; their
+      // transaction, which it fails too, does not.
+      await expectLater(
+        executor.transaction((tx) async {
+          for (var i = 0; i < 2; i++) {
+            try {
+              await tx.transaction((_) => throw error);
+            } on StateError catch (_) {}
+          }
+          throw error;
+        }),
+        throwsStateError,
+      );
+      expect(failures, hasLength(5));
     });
 
     test('its executor fails, rather than throws, once it has ended', () async {
