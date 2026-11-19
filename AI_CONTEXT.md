@@ -8,7 +8,7 @@
 
 This repository is a **monorepo** organised as a [Dart pub workspace](https://dart.dev/tools/pub/workspaces) and managed with [Melos](https://pub.dev/packages/melos).
 
-- **Packages**: Located in the `packages/` directory. Each package is published to `pub.dev` under the `angel3_` prefix, except the Jael packages (`jael3`, `jael3_preprocessor`, `jael3_web`). Some are grouped one level deeper (e.g. `packages/orm/orm_postgres`, `packages/serialize/serialize_generator`, `packages/jael/jael`). `packages/framework_mirrors_test` is not published (`publish_to: none`): it tests the framework with `MirrorsReflector`.
+- **Packages**: Located in the `packages/` directory. Each package is published to `pub.dev` under the `angel3_` prefix, except the Jael packages (`jael3`, `jael3_preprocessor`, `jael3_web`). Some are grouped one level deeper (e.g. `packages/orm/orm_postgres`, `packages/security/auth`, `packages/serialize/serialize_generator`, `packages/jael/jael`). `packages/framework_mirrors_test` is not published (`publish_to: none`): it tests the framework with `MirrorsReflector`.
 - **Workspace**: The root `pubspec.yaml` lists every package under `workspace:` and each package declares `resolution: workspace`, so a single `dart pub get` resolves all packages together. New packages must be added to the root `pubspec.yaml` and to `melos.yaml`.
 - **Generated code**: `*.g.dart` files produced by `build_runner` (serialization, ORM, migrations, reflection data) are committed and must not be edited by hand. After changing a generator, regenerate the packages whose tests use it (for `orm_generator`: `orm_postgres`, `orm_mysql` and `orm_sqlite`). The generated files of `orm_service` predate the current generator, so regenerating them brings in unrelated changes.
 

@@ -16,7 +16,7 @@ packages:
   - packages/cache
   - packages/configuration
   - packages/cors
-  - packages/auth
+  - packages/security/auth
   - packages/security/oauth2_client
 #  - packages/auth_twitter
   - packages/file_service
