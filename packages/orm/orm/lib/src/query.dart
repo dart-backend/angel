@@ -366,6 +366,19 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
   /// What follows `FOR UPDATE`, as of [skipLocked].
   String get _lockOption => _skipLocked ? ' SKIP LOCKED' : '';
 
+  /// The lock of the rows that an update or a delete selects before it
+  /// writes them, on a database other than PostgreSQL: none on one without
+  /// [Dialect.rowLockSupport], such as SQLite, whose transaction holds the
+  /// whole database, so that no other can lock a row for [skipLocked] to skip.
+  String _forUpdate(QueryExecutor executor) =>
+      executor.dialect.rowLockSupport ? ' FOR UPDATE$_lockOption' : '';
+
+  /// Whether [executor] writes as MySQL does: without a [Dialect.
+  /// writableCteSupport], so that an insert selects its row after it, and an
+  /// update or a delete selects the rows first.
+  static bool _writesAsMySql(QueryExecutor executor) =>
+      !executor.dialect.writableCteSupport;
+
   /// The condition of a statement on PostgreSQL that has no `LIMIT`, by which
   /// it writes the rows that [_selectOf] picks: by their ctid, and the table of
   /// each, as a ctid is unique only within a partition.
@@ -877,7 +890,7 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
           {},
           existing: byId ? '$tableName.id' : null,
           lock: executor.dialect is! PostgreSQLDialect
-              ? ' FOR UPDATE$_lockOption'
+              ? _forUpdate(executor)
               // PostgreSQL cannot lock the side of a join that may be `NULL`.
               : _addsRows
               ? ''
@@ -1006,7 +1019,7 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
         sql =
             'WITH $_written as ($insertion RETURNING $_returning) '
             '$_writtenRows';
-      } else if (executor.dialect is MySQLDialect) {
+      } else if (_writesAsMySql(executor)) {
         // Default to using 'id' as primary key in model
         if (fields.contains("id")) {
           // The row of the id given, by its parameter, as the database
@@ -1094,7 +1107,7 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
       );
     }
 
-    if (executor.dialect is! MySQLDialect) {
+    if (!_writesAsMySql(executor)) {
       throw ArgumentError("Unsupported database dialect.");
     }
 
@@ -1113,7 +1126,7 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
       // Without a primary key, the rows that match are selected first, in a
       // transaction, and returned with the values they are updated to, as
       // their new values may no longer match the conditions.
-      var select = '${compile({})} FOR UPDATE';
+      var select = '${compile({})}${_forUpdate(executor)}';
       var sql = 'UPDATE $tableName $valuesClause$conditions';
       _log.fine(() => "Update Query = $sql");
       logValues(_log, substitutionValues);
@@ -1142,7 +1155,7 @@ abstract class Query<T, Where extends QueryWhere> extends QueryBase<T> {
           : 'SELECT id FROM $tableName$conditions';
       var found = await tx.query(
         tableName,
-        '$select FOR UPDATE$_lockOption',
+        '$select${_forUpdate(executor)}',
         substitutionValues,
       );
       var rows = <List>[];

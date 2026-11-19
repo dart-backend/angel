@@ -1,5 +1,11 @@
 # Change Log
 
+## 10.1.0
+
+### New in 10.1.0
+
+* **SQLite:** `SqliteMigrationRunner`, of `package:angel3_migration_runner/sqlite.dart`, runs migrations on SQLite 3.35 or later, with a database of the `sqlite3` package. Each migration runs and is recorded in one savepoint, so one that fails is neither applied nor recorded. A `DateTime` default and `currentTimestamp` are UTC text, as `angel3_orm_sqlite` stores a `DateTime`. `changeColumnType`, `setNotNull`, `dropNotNull` and the changes of a primary key throw an `UnsupportedError`, as SQLite makes them only by creating the table again
+
 ## 10.0.1
 
 ### Breaking changes in 10.0.1
