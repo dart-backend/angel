@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:io' show ContentType, Cookie, SameSite;
 
 import 'package:angel3_auth/angel3_auth.dart';
-import 'package:angel3_auth_oauth2/angel3_auth_oauth2.dart';
+import 'package:angel3_oauth2_client/angel3_oauth2_client.dart';
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_framework/http.dart';
 import 'package:angel3_mock_request/angel3_mock_request.dart';
@@ -294,6 +294,8 @@ Future<Angel> mapApp({
   http.Client? provider,
   SameSite cookieSameSite = SameSite.lax,
   bool post = false,
+  bool basicAuth = true,
+  Map<String, String> authorizationParameters = const {},
 }) async {
   var app = Angel();
   var auth = AngelAuth<Map<String, dynamic>>(
@@ -325,6 +327,8 @@ Future<Angel> mapApp({
           ),
         ),
     cookieSameSite: cookieSameSite,
+    basicAuth: basicAuth,
+    authorizationParameters: authorizationParameters,
   );
   await app.configure(auth.configureServer);
   app.get('/start', auth.authenticate('p'));
@@ -378,6 +382,89 @@ void moreTests() {
     expect(cookie.secure, isTrue);
   });
 
+  test('the authorization URL has the parameters asked for, but not in '
+      'place of its own', () async {
+    var app = await mapApp(
+      authorizationParameters: {
+        'response_mode': 'form_post',
+        'prompt': 'consent',
+        'state': 'mine',
+        'client_id': 'other',
+        'scope': 'admin',
+      },
+    );
+    var rq = MockHttpRequest('GET', Uri.parse('/start'));
+    await rq.close();
+    await AngelHttp(app).handleRequest(rq);
+    var url = Uri.parse(rq.response.headers.value('location')!);
+    expect(url.queryParameters, containsPair('response_mode', 'form_post'));
+    expect(url.queryParameters, containsPair('prompt', 'consent'));
+    expect(url.queryParameters['state'], hasLength(32));
+    expect(url.queryParameters['client_id'], 'id');
+    // Of no scopes, which the grant leaves out.
+    expect(url.queryParameters, isNot(contains('scope')));
+  });
+
+  for (var basicAuth in [true, false]) {
+    test('the client secret is sent to the token endpoint '
+        '${basicAuth ? 'with Basic authentication' : 'in the form'}', () async {
+      late http.Request exchange;
+      var provider = MockClient((request) async {
+        exchange = request;
+        return http.Response(
+          json.encode({'access_token': 'at', 'token_type': 'bearer'}),
+          200,
+          headers: {'content-type': 'application/json'},
+        );
+      });
+      var got = await logIn(
+        await mapApp(provider: provider, basicAuth: basicAuth),
+        (state) => {'code': 'c0de', 'state': state},
+      );
+      expect(got.status, 200);
+      var form = Uri.splitQueryString(exchange.body);
+      if (basicAuth) {
+        expect(
+          exchange.headers['authorization'],
+          'Basic ${base64.encode(utf8.encode('id:secret'))}',
+        );
+        expect(form, isNot(contains('client_secret')));
+      } else {
+        expect(exchange.headers, isNot(contains('authorization')));
+        expect(form, containsPair('client_id', 'id'));
+        expect(form, containsPair('client_secret', 'secret'));
+      }
+    });
+  }
+
+  for (var basicAuth in [true, false]) {
+    test('a client without a secret sends its id alone '
+        '${basicAuth ? 'by default' : 'in the form'}', () async {
+      late http.Request exchange;
+      var provider = MockClient((request) async {
+        exchange = request;
+        return http.Response(
+          json.encode({'access_token': 'at', 'token_type': 'bearer'}),
+          200,
+          headers: {'content-type': 'application/json'},
+        );
+      });
+      var got = await logIn(
+        await mapApp(
+          clientSecret: '',
+          provider: provider,
+          basicAuth: basicAuth,
+        ),
+        (state) => {'code': 'c0de', 'state': state},
+      );
+      expect(got.status, 200);
+      var form = Uri.splitQueryString(exchange.body);
+      expect(exchange.headers, isNot(contains('authorization')));
+      expect(form, containsPair('client_id', 'id'));
+      expect(form, isNot(contains('client_secret')));
+    });
+  }
+
   test('two logins at once, as in two tabs, each work', () async {
     var got = await logIn(
       await mapApp(),
@@ -396,6 +483,7 @@ void moreTests() {
     var app = await mapApp(clientSecret: '');
     expect(warnings, contains(contains('no secret')));
     // A cookie signed with the key of the empty secret is refused.
+    // The prefix of the default key, of the former name of the package.
     var forgedKey = sha256.convert(utf8.encode('angel3_auth_oauth2:')).bytes;
     var state = 'abcdefghijklmnop';
     var data = base64Url

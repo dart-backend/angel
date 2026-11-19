@@ -4,14 +4,18 @@
 
 ### Breaking changes in 10.0.0
 
+* **Breaking:** Renamed from `angel3_auth_oauth2`: depend on `angel3_oauth2_client`, and import `package:angel3_oauth2_client/angel3_oauth2_client.dart`
 * **Breaking:** Each login has a random `state`, checked on the callback (against login CSRF), kept with its PKCE code verifier in a signed, `HttpOnly` cookie of its own, scoped to the redirect URI's path, which expires after the new `loginTimeout`. `authenticateCallback` refuses a callback without it, as `invalid_state` to `onError`
 
 ### New in 10.0.0
 
 * `cookieName`, `cookieKey`, `cookieSameSite`, `loginTimeout` and `httpClient`
+* `authorizationParameters`, more query parameters of the authorization URL, such as `access_type`, `prompt` or `response_mode`
+* `basicAuth`, `false` to send the client secret to the token endpoint in the form (`client_secret_post`)
 
 ### Fixes in 10.0.0
 
+* **Client without a secret:** Sends its `client_id` alone to the token endpoint, rather than an empty secret, by HTTP Basic or in the form
 * **Starting a login:** Redirects to the provider, where it answered `400`: a request with `code` or `error` is now the callback
 * **PKCE:** Each login uses its own code verifier for the token exchange, which providers that check PKCE refused
 * **`onError`:** Its result is never taken for a user (a declined login signed users in when users are maps), and is sent as the response. A malformed callback is `invalid_request`, and an unreachable provider is a `502`

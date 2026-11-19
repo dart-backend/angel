@@ -17,7 +17,7 @@ packages:
   - packages/configuration
   - packages/cors
   - packages/auth
-  - packages/auth_oauth2
+  - packages/security/oauth2_client
 #  - packages/auth_twitter
   - packages/file_service
   - packages/html
@@ -28,7 +28,7 @@ packages:
   - packages/test
   - packages/sync
   - packages/oauth2
-  - packages/security
+  - packages/security/security
   - packages/proxy
   - packages/paginate
   - packages/static

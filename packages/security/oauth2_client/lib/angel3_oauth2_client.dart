@@ -15,6 +15,12 @@ import 'package:oauth2/oauth2.dart' as oauth2;
 
 final _log = Logger('OAuth2Strategy');
 
+/// What the default key of the cookies of logins is derived from, before
+/// the client secret. Of the package's former name, `angel3_auth_oauth2`,
+/// and kept so: another would refuse the cookies of logins in progress, as
+/// during a deploy.
+const _cookieKeyPrefix = 'angel3_auth_oauth2:';
+
 /// The outcome of a callback: the user of [verifier], or the response of
 /// [onError], which must never be taken for a user.
 sealed class _Outcome {}
@@ -77,6 +83,21 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
   /// An optional delimiter used to send requests to server who does not follow the OAuth 2.0 spec.
   final String delimiter;
 
+  /// Whether the client ID and secret are sent to the token endpoint with
+  /// HTTP Basic authentication (`client_secret_basic`), as by default; or,
+  /// if `false`, as `client_id` and `client_secret` in the form of the
+  /// request (`client_secret_post`), as some providers require.
+  final bool basicAuth;
+
+  /// More query parameters of the authorization URL, such as
+  /// `access_type: 'offline'` (for a refresh token of Google), `prompt`, or
+  /// `response_mode: 'form_post'` (of Sign in with Apple, with
+  /// [cookieSameSite] of [SameSite.none]).
+  ///
+  /// They do not replace the parameters of the strategy: `response_type`,
+  /// `client_id`, `redirect_uri`, `scope`, `state` and those of PKCE.
+  final Map<String, String> authorizationParameters;
+
   /// The HTTP client to exchange codes for tokens with, and of the clients
   /// given to [verifier]; by default, one of each login, closed after it.
   final http.Client? httpClient;
@@ -110,6 +131,8 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
     this.onError, {
     this.getParameters,
     this.delimiter = ' ',
+    this.basicAuth = true,
+    this.authorizationParameters = const {},
     this.httpClient,
     this.cookieName = 'angel3_oauth2',
     this.cookieSameSite = SameSite.lax,
@@ -121,7 +144,7 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
   /// as a key derived from nothing would be that of every app.
   static List<int> _defaultCookieKey(String secret) {
     if (secret.isNotEmpty) {
-      return sha256.convert(utf8.encode('angel3_auth_oauth2:$secret')).bytes;
+      return sha256.convert(utf8.encode('$_cookieKeyPrefix$secret')).bytes;
     }
     _log.warning(
       'The OAuth2 client has no secret, so the cookies of logins are signed '
@@ -139,14 +162,42 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
   oauth2.AuthorizationCodeGrant _createGrant(String codeVerifier) =>
       oauth2.AuthorizationCodeGrant(
         options.clientId,
-        authorizationEndpoint,
+        _authorizationUrl,
         tokenEndpoint,
-        secret: options.clientSecret,
+        // None for a client without one, as of PKCE alone, which sends
+        // only its id, rather than an empty secret.
+        secret: options.clientSecret.isEmpty ? null : options.clientSecret,
+        basicAuth: basicAuth,
         delimiter: delimiter,
         getParameters: getParameters,
         httpClient: httpClient,
         codeVerifier: codeVerifier,
       );
+
+  /// [authorizationEndpoint], with [authorizationParameters] but those of
+  /// the strategy, which the grant adds.
+  late final Uri _authorizationUrl = authorizationParameters.isEmpty
+      ? authorizationEndpoint
+      : authorizationEndpoint.replace(
+          queryParameters: {
+            ...authorizationEndpoint.queryParameters,
+            for (var MapEntry(:key, :value) in authorizationParameters.entries)
+              if (!_ownParameters.contains(key)) key: value,
+          },
+        );
+
+  /// The parameters of the authorization URL that the strategy gives, which
+  /// [authorizationParameters] do not replace: `scope` too, which it leaves
+  /// out without scopes.
+  static const _ownParameters = {
+    'response_type',
+    'client_id',
+    'redirect_uri',
+    'scope',
+    'state',
+    'code_challenge',
+    'code_challenge_method',
+  };
 
   /// The parameters of the provider's response: of the query, and, of a
   /// callback that is posted (`response_mode=form_post`), of its form.

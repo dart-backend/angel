@@ -3,12 +3,12 @@ import 'dart:convert';
 import 'package:angel3_auth/angel3_auth.dart';
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_framework/http.dart';
-import 'package:angel3_auth_oauth2/angel3_auth_oauth2.dart';
+import 'package:angel3_oauth2_client/angel3_oauth2_client.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:logging/logging.dart';
 
 var authorizationEndpoint = Uri.parse(
-  'http://github.com/login/oauth/authorize',
+  'https://github.com/login/oauth/authorize',
 );
 
 var tokenEndpoint = Uri.parse('https://github.com/login/oauth/access_token');
