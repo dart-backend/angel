@@ -1,4 +1,4 @@
-name: angel3_oauth2_server
+name: angel3_auth_server
 version: 10.0.0
 description: A class containing handlers that can be used within Angel3 to build a spec-compliant OAuth 2.0 server.
 homepage: https://angel3-framework.web.app/

@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:angel3_framework/angel3_framework.dart';
-import 'package:angel3_oauth2_server/angel3_oauth2_server.dart';
+import 'package:angel3_auth_server/angel3_auth_server.dart';
 import 'package:angel3_test/angel3_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:test/test.dart';

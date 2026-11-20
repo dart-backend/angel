@@ -18,6 +18,6 @@ dependencies:
   oauth2: ^2.0.0
 dev_dependencies:
   angel3_mock_request: ^10.0.0
-  angel3_oauth2_server: ^10.0.0
+  angel3_auth_server: ^10.0.0
   lints: ^6.0.0
   test: ^1.24.0

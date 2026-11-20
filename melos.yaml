@@ -27,7 +27,7 @@ packages:
   - packages/production
   - packages/test
   - packages/sync
-  - packages/security/oauth2_server
+  - packages/security/auth_server
   - packages/security/security
   - packages/proxy
   - packages/paginate

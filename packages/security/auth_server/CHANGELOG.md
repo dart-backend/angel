@@ -4,7 +4,7 @@
 
 ### Breaking changes in 10.0.0
 
-* **Breaking:** Renamed from `angel3_oauth2`: depend on `angel3_oauth2_server`, and import `package:angel3_oauth2_server/angel3_oauth2_server.dart`
+* **Breaking:** Renamed from `angel3_oauth2`: depend on `angel3_auth_server`, and import `package:angel3_auth_server/angel3_auth_server.dart`
 * **Breaking:** A client that cannot be authenticated at the token endpoint, of no credentials, a malformed `Authorization: Basic` header, an unknown id or a wrong secret, is `invalid_client`, a 401, as RFC 6749 requires, where it was `unauthorized_client`, a 400; with `WWW-Authenticate: Basic realm="oauth2"` if it used the `Authorization` header, or gave no credentials. So is an unknown `client_id` of a device code request or grant
 * **Breaking:** A grant type that the server does not support, unknown or not implemented, is `unsupported_grant_type`, where it was `invalid_request` or `unsupported_response_type`. An unknown grant type is refused before the client is authenticated; a known one that the server does not implement is refused once the request is well-formed, so one without its `code`, `code_verifier` or `username` is still `invalid_request`
 * **Breaking:** A device code request is no longer taken at the token endpoint, without a `grant_type`: route a `deviceAuthorizationEndpoint` (RFC 8628 §3.1), and point device clients at it. A request to the token endpoint without a `grant_type`, or with an empty `grant_type=`, is `invalid_request`, before the client is authenticated. Without `requestDeviceCode`, a device authorization request is `unsupported_grant_type`, where it was `invalid_request`

@@ -1,4 +1,4 @@
-/// Logins of [OAuth2Strategy] against a provider of `angel3_oauth2_server`,
+/// Logins of [OAuth2Strategy] against a provider of `angel3_auth_server`,
 /// over HTTP, as a browser would make them.
 library;
 
@@ -11,7 +11,7 @@ import 'package:angel3_auth/angel3_auth.dart';
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_framework/http.dart';
 import 'package:angel3_oauth2_client/angel3_oauth2_client.dart';
-import 'package:angel3_oauth2_server/angel3_oauth2_server.dart';
+import 'package:angel3_auth_server/angel3_auth_server.dart';
 import 'package:test/test.dart';
 
 void main() {
@@ -132,7 +132,7 @@ Future<_Got> _get(
   }
 }
 
-/// The provider, of `angel3_oauth2_server`, and the app that signs users in
+/// The provider, of `angel3_auth_server`, and the app that signs users in
 /// with it, of [OAuth2Strategy], each on a port of its own.
 class _Sites {
   final _Provider provider;
