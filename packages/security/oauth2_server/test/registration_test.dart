@@ -206,6 +206,9 @@ void main() {
         'https://app.example/cb#fragment',
         '/relative',
         'javascript:alert(1)',
+        'vbscript:msgbox(1)',
+        'blob:https://app.example/1',
+        'myapp:/cb',
         'https:///cb',
       ]) {
         expectRefused(

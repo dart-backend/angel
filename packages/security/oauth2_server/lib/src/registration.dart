@@ -70,6 +70,35 @@ class ClientRegistration {
     this.registrationClientUri,
   });
 
+  /// This registration, of the values given in place of its own.
+  ClientRegistration copyWith({
+    String? clientId,
+    String? clientSecret,
+    DateTime? issuedAt,
+    List<Uri>? redirectUris,
+    List<String>? grantTypes,
+    List<String>? responseTypes,
+    String? tokenEndpointAuthMethod,
+    List<String>? scopes,
+    Map<String, dynamic>? metadata,
+    String? registrationAccessToken,
+    Uri? registrationClientUri,
+  }) => ClientRegistration(
+    clientId: clientId ?? this.clientId,
+    clientSecret: clientSecret ?? this.clientSecret,
+    issuedAt: issuedAt ?? this.issuedAt,
+    redirectUris: redirectUris ?? this.redirectUris,
+    grantTypes: grantTypes ?? this.grantTypes,
+    responseTypes: responseTypes ?? this.responseTypes,
+    tokenEndpointAuthMethod:
+        tokenEndpointAuthMethod ?? this.tokenEndpointAuthMethod,
+    scopes: scopes ?? this.scopes,
+    metadata: metadata ?? this.metadata,
+    registrationAccessToken:
+        registrationAccessToken ?? this.registrationAccessToken,
+    registrationClientUri: registrationClientUri ?? this.registrationClientUri,
+  );
+
   /// The response of the registration (RFC 7591 §3.2.1, RFC 7592 §3): the
   /// id and secret of the client, when they were issued and when the secret
   /// expires, which it does not, the token and URL with which it manages

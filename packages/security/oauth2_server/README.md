@@ -190,7 +190,7 @@ bool requiresPkce(PseudoApplication client) => client.id != 'legacy-app';
 bool get allowsPlainPkce => true;
 ```
 
-The `authorizationEndpoint` injects a `Pkce` of the `code_challenge` and `code_challenge_method` of the request into its container. At the token endpoint, whose request has a `code_verifier` and no challenge, build a `Pkce` of the stored challenge instead, as below:
+The `authorizationEndpoint` injects a `Pkce` of the `code_challenge` and `code_challenge_method` of the request into its container, for a code request: an implicit one has no PKCE, and making it throws `invalid_request` without a challenge, as of a client that `requiresPkce` exempts and that sent none. At the token endpoint, whose request has a `code_verifier` and no challenge, build a `Pkce` of the stored challenge instead, as below:
 
 ```dart
 @override
@@ -202,8 +202,11 @@ Future<void> requestAuthorizationCode(
     RequestContext req,
     ResponseContext res,
     bool implicit) async {
-  // Automatically throws an error if the request doesn't contain the
-  // necessary information.
+  // An implicit grant has no PKCE.
+  if (implicit) return handleImplicitGrantSomehow(client, redirectUri, state);
+
+  // Of a code request, checked by the server. A client exempted by
+  // `requiresPkce` may send no challenge, which this throws for.
   var pkce = req.container!.make<Pkce>();
 
   // At this point, store `pkce.codeChallenge` and `pkce.codeChallengeMethod`,
@@ -399,7 +402,7 @@ The metadata is checked before `registerClient` is called; a refusal is a 400 of
 
 - `grant_types`, `response_types`, `token_endpoint_auth_method` and `scope` must be of those of the server: of its `grantTypes`, with its device code and extension grants, of its `responseTypes`, `clientAuthMethods` and `scopes`. Their defaults are `authorization_code`, the response types of the grant types, `client_secret_basic`, and none.
 - The grant types and response types must be of each other: `authorization_code` of `code`, and `implicit` of `token` (RFC 7591 §2.1). A public client, of `none`, may not use `client_credentials`.
-- A client of a response type must register its `redirect_uris`: absolute, of no fragment, `https`, `http` only for `localhost`, or of the scheme of a native app, such as `com.example.app:/cb` (RFC 8252 §7.1).
+- A client of a response type must register its `redirect_uris`: absolute, of no fragment, `https`, `http` only for `localhost`, or of the private-use scheme of a native app, a reverse domain name, such as `com.example.app:/cb` (RFC 8252 §7.1); any other scheme, as `myapp:` or `javascript:`, is refused.
 - The other metadata of RFC 7591 must be of its types; other metadata is kept. What the server issues, such as a `client_id`, and a `software_statement`, which it does not verify, are dropped.
 
 `registerClient` may throw `invalid_client_metadata` or `invalid_redirect_uri` itself, or change `registration.metadata` to register other values. The response is a 201 of the metadata, the `client_id`, the `client_secret`, which does not expire, and when they were issued. 

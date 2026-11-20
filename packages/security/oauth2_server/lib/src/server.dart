@@ -281,7 +281,7 @@ abstract class AuthorizationServer<Client, User> {
       if (allowFormParameter && req.method.toUpperCase() != 'GET') {
         var contentType = req.headers!.contentType?.mimeType;
         if (contentType == 'application/x-www-form-urlencoded') {
-          var body = await req.parseBody().then((_) => req.bodyAsMap);
+          var body = await _paramsOf(req, body: true);
           var token = _formValue(body, 'access_token');
           if (token != null) tokens.add(token);
         }
@@ -553,15 +553,10 @@ abstract class AuthorizationServer<Client, User> {
 
     if (token.scope != null) queryParameters['scope'] = token.scope!.join(' ');
 
-    var fragment = queryParameters.keys.fold<StringBuffer>(StringBuffer(), (
-      buf,
-      k,
-    ) {
-      if (buf.isNotEmpty) buf.write('&');
-      return buf..write('$k=${Uri.encodeComponent(queryParameters[k]!)}');
-    }).toString();
-
-    return redirectUri.replace(fragment: fragment);
+    // Form-encoded, as its errors are (RFC 6749 Appendix B).
+    return redirectUri.replace(
+      fragment: Uri(queryParameters: queryParameters).query,
+    );
   }
 
   /// A request handler that invokes the correct logic, depending on which type
@@ -1006,7 +1001,7 @@ abstract class AuthorizationServer<Client, User> {
       ..['pragma'] = 'no-cache';
 
     try {
-      var body = await req.parseBody().then((_) => req.bodyAsMap);
+      var body = await _paramsOf(req, body: true);
       state = body['state']?.toString() ?? '';
       var (client, _) = await _authenticateClient(req, res, body, state);
       var token = _formValue(body, 'token');
@@ -1105,7 +1100,7 @@ abstract class AuthorizationServer<Client, User> {
       ..['pragma'] = 'no-cache';
 
     try {
-      var body = await req.parseBody().then((_) => req.bodyAsMap);
+      var body = await _paramsOf(req, body: true);
       state = body['state']?.toString() ?? '';
       var (caller, confidential) = await _authenticateClient(
         req,
@@ -1545,19 +1540,8 @@ abstract class AuthorizationServer<Client, User> {
     required bool newToken,
   }) {
     var endpoint = metadata.registrationEndpoint!;
-    return ClientRegistration(
-      clientId: registration.clientId,
-      clientSecret: registration.clientSecret,
-      issuedAt: registration.issuedAt,
-      redirectUris: registration.redirectUris,
-      grantTypes: registration.grantTypes,
-      responseTypes: registration.responseTypes,
-      tokenEndpointAuthMethod: registration.tokenEndpointAuthMethod,
-      scopes: registration.scopes,
-      metadata: registration.metadata,
-      registrationAccessToken: newToken
-          ? _randomString(32)
-          : registration.registrationAccessToken,
+    return registration.copyWith(
+      registrationAccessToken: newToken ? _randomString(32) : null,
       registrationClientUri: endpoint.replace(
         pathSegments: [
           for (var segment in endpoint.pathSegments)
@@ -1694,8 +1678,14 @@ abstract class AuthorizationServer<Client, User> {
       } else if ((uri.isScheme('https') || uri.isScheme('http')) &&
           uri.host.isEmpty) {
         problem = 'must have a host';
-      } else if (const {'javascript', 'data', 'file'}.contains(uri.scheme)) {
-        problem = 'must not be of the "${uri.scheme}" scheme';
+      } else if (!uri.isScheme('https') &&
+          !uri.isScheme('http') &&
+          !uri.scheme.contains('.')) {
+        // A native app's private-use scheme is a reverse domain name
+        // (RFC 8252 §7.1); any other, as `javascript:`, is refused.
+        problem =
+            'must be https, http of localhost, or of a reverse domain '
+            'name scheme, such as "com.example.app:"';
       }
       if (problem != null) {
         throw _invalidMetadata(
@@ -1850,7 +1840,7 @@ abstract class AuthorizationServer<Client, User> {
       ..['pragma'] = 'no-cache';
 
     try {
-      var body = await req.parseBody().then((_) => req.bodyAsMap);
+      var body = await _paramsOf(req, body: true);
       state = body['state']?.toString() ?? '';
       var (client, _) = await _authenticateClient(req, res, body, state);
       var scopes = await _getScopes(req, body: true);
@@ -1878,7 +1868,7 @@ abstract class AuthorizationServer<Client, User> {
       ..['pragma'] = 'no-cache';
 
     try {
-      var body = await req.parseBody().then((_) => req.bodyAsMap);
+      var body = await _paramsOf(req, body: true);
 
       state = body['state']?.toString() ?? '';
 

@@ -47,6 +47,18 @@ void main() {
     );
   });
 
+  test('the fragment is form-encoded, as of an error', () {
+    var uri = _AuthorizationServer().completeImplicitGrant(
+      AuthorizationTokenResponse('a b', scope: ['read', 'write']),
+      Uri.parse('http://foo.com'),
+      state: 'x&y',
+    );
+    expect(
+      uri.fragment,
+      'access_token=a+b&token_type=bearer&state=x%26y&scope=read+write',
+    );
+  });
+
   test('authenticate via implicit grant', () async {
     var response = await client.get(
       Uri.parse(
