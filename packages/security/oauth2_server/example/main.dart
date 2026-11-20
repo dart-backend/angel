@@ -13,8 +13,21 @@ void main() async {
       ..get('/authorize', oauth2.authorizationEndpoint)
       ..post('/authorize', oauth2.authorizationEndpoint)
       ..post('/token', oauth2.tokenEndpoint)
-      ..post('/revoke', oauth2.revocationEndpoint);
+      ..post('/revoke', oauth2.revocationEndpoint)
+      ..post('/introspect', oauth2.introspectionEndpoint);
   });
+
+  // The metadata of the server, from which clients find its endpoints.
+  var issuer = Uri.parse('https://example.com');
+  var metadata = ServerMetadata(
+    issuer: issuer,
+    authorizationEndpoint: issuer.resolve('/auth/authorize'),
+    tokenEndpoint: issuer.resolve('/auth/token'),
+    revocationEndpoint: issuer.resolve('/auth/revoke'),
+    introspectionEndpoint: issuer.resolve('/auth/introspect'),
+    grantTypes: ['authorization_code', 'refresh_token'],
+  );
+  app.get(metadata.wellKnownPath, oauth2.metadataEndpoint(metadata));
 
   // Assume that all other requests must be authenticated, by an access
   // token of the `Authorization: Bearer` header, which `findAccessToken`

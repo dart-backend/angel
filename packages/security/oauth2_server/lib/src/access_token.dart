@@ -19,11 +19,15 @@ class AccessToken<Client, User> {
   /// When the token expires, if it does; it is refused from then on.
   final DateTime? expiresAt;
 
+  /// When the token was issued, if known, which introspection gives.
+  final DateTime? issuedAt;
+
   const AccessToken({
     this.client,
     this.user,
     this.scopes = const [],
     this.expiresAt,
+    this.issuedAt,
   });
 
   /// Whether the token has expired, as of [now].

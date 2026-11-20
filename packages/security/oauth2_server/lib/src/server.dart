@@ -6,6 +6,7 @@ import 'package:logging/logging.dart';
 
 import 'access_token.dart';
 import 'exception.dart';
+import 'metadata.dart';
 import 'pkce.dart';
 import 'response.dart';
 import 'token_type.dart';
@@ -984,6 +985,181 @@ abstract class AuthorizationServer<Client, User> {
         stackTrace: st,
       );
     }
+  }
+
+  /// The token of the server that [token] is, of an introspection request
+  /// whose `token_type_hint` is [tokenTypeHint], `access_token`,
+  /// `refresh_token` or `null`; or `null` if the server issued none, or has
+  /// revoked it. An expired one is inactive.
+  ///
+  /// By default, the access token of [findAccessToken], whatever the hint;
+  /// override it to find refresh tokens too.
+  FutureOr<AccessToken<Client, User>?> introspectToken(
+    String token,
+    String? tokenTypeHint,
+    RequestContext req,
+  ) => findAccessToken(token, req);
+
+  /// What an introspection response of the active [token] gives [caller],
+  /// besides `active`, `scope`, `exp` and `iat`, which the server adds: such
+  /// as `client_id`, `username`, `sub`, `aud`, `iss`, `token_type` or `jti`
+  /// (RFC 7662 §2.2); or `null` if [caller] may not learn of the token, as
+  /// one of a resource server that it is not for, which is then inactive.
+  ///
+  /// By default, nothing more, to any caller with a secret.
+  FutureOr<Map<String, dynamic>?> introspectionClaims(
+    Client caller,
+    AccessToken<Client, User> token,
+  ) => const {};
+
+  /// A request handler of token introspection requests (RFC 7662), of a
+  /// resource server that asks whether a token of a request it is given is
+  /// active, and of what. Route a POST to it:
+  ///
+  /// ```dart
+  /// router.post('/introspect', server.introspectionEndpoint);
+  /// ```
+  ///
+  /// Its caller is authenticated as a client, as at the [tokenEndpoint],
+  /// and must give a secret, as anyone may give the id of a public client:
+  /// one without is `invalid_client`. It gives the `token` of the form, and
+  /// its `token_type_hint`, to [introspectToken], and answers `{"active":
+  /// false}` for one that is unknown, revoked or expired, or that
+  /// [introspectionClaims] does not give to the caller; or else `active`,
+  /// the `scope`, `exp` and `iat` of the token, and its
+  /// [introspectionClaims]. A request without a `token` is
+  /// `invalid_request`.
+  Future<Map<String, dynamic>> introspectionEndpoint(
+    RequestContext req,
+    ResponseContext res,
+  ) async {
+    var state = '';
+    res.headers
+      ..['cache-control'] = 'no-store'
+      ..['pragma'] = 'no-cache';
+
+    try {
+      var body = await req.parseBody().then((_) => req.bodyAsMap);
+      state = body['state']?.toString() ?? '';
+      var (caller, confidential) = await _authenticateClient(
+        req,
+        res,
+        body,
+        state,
+      );
+      if (!confidential) {
+        // Against the scanning of tokens (RFC 7662 §4).
+        throw _invalidClient(
+          res,
+          'A client without a secret may not introspect tokens.',
+          state,
+          challenge: true,
+        );
+      }
+      var tokenString = _formValue(body, 'token');
+      if (tokenString == null) {
+        throw AuthorizationException(
+          ErrorResponse(
+            ErrorResponse.invalidRequest,
+            'Missing required parameter "token".',
+            state,
+          ),
+          statusCode: 400,
+        );
+      }
+
+      const inactive = <String, dynamic>{'active': false};
+      var token = await introspectToken(
+        tokenString,
+        _formValue(body, 'token_type_hint'),
+        req,
+      );
+      if (token == null || token.isExpiredAt(DateTime.now())) return inactive;
+      var claims = await introspectionClaims(caller, token);
+      if (claims == null) return inactive;
+
+      int seconds(DateTime time) => time.millisecondsSinceEpoch ~/ 1000;
+      return {
+        if (token.scopes.isNotEmpty) 'scope': token.scopes.join(' '),
+        if (token.expiresAt case var expiresAt?) 'exp': seconds(expiresAt),
+        if (token.issuedAt case var issuedAt?) 'iat': seconds(issuedAt),
+        ...claims,
+        // Last, as the claims may not make it otherwise.
+        'active': true,
+      };
+    } on AngelHttpException {
+      rethrow;
+    } catch (e, st) {
+      throw AuthorizationException(
+        ErrorResponse(ErrorResponse.serverError, _internalServerError, state),
+        error: e,
+        statusCode: 500,
+        stackTrace: st,
+      );
+    }
+  }
+
+  /// The metadata of the server (RFC 8414 §2) of [metadata], as JSON: its
+  /// endpoints, and what it supports, of [metadata] and of itself.
+  Map<String, dynamic> metadataOf(ServerMetadata metadata) {
+    String? url(Uri? uri) => uri?.toString();
+    var grantTypes = {
+      ...metadata.grantTypes,
+      if (metadata.deviceAuthorizationEndpoint != null) _deviceCodeGrantType,
+      ...extensionGrants.keys,
+    };
+    var authMethods = metadata.clientAuthMethods.toList();
+    return {
+      'issuer': metadata.issuer.toString(),
+      'authorization_endpoint': ?url(metadata.authorizationEndpoint),
+      'token_endpoint': ?url(metadata.tokenEndpoint),
+      'device_authorization_endpoint': ?url(
+        metadata.deviceAuthorizationEndpoint,
+      ),
+      'revocation_endpoint': ?url(metadata.revocationEndpoint),
+      'introspection_endpoint': ?url(metadata.introspectionEndpoint),
+      'response_types_supported': metadata.responseTypes.toList(),
+      'response_modes_supported': [
+        if (metadata.responseTypes.contains('code')) 'query',
+        if (metadata.responseTypes.contains('token')) 'fragment',
+      ],
+      'grant_types_supported': grantTypes.toList(),
+      'code_challenge_methods_supported': [
+        'S256',
+        if (allowsPlainPkce) 'plain',
+      ],
+      if (metadata.tokenEndpoint != null)
+        'token_endpoint_auth_methods_supported': authMethods,
+      if (metadata.revocationEndpoint != null)
+        'revocation_endpoint_auth_methods_supported': authMethods,
+      if (metadata.introspectionEndpoint != null)
+        'introspection_endpoint_auth_methods_supported': [
+          for (var method in authMethods)
+            if (method != 'none') method,
+        ],
+      if (metadata.scopes != null)
+        'scopes_supported': metadata.scopes!.toList(),
+      'service_documentation': ?url(metadata.serviceDocumentation),
+      ...metadata.extra,
+    };
+  }
+
+  /// A request handler of the metadata of the server (RFC 8414), of
+  /// [metadataOf], which clients read to find its endpoints. Route a GET of
+  /// [ServerMetadata.wellKnownPath] to it:
+  ///
+  /// ```dart
+  /// var metadata = ServerMetadata(
+  ///   issuer: Uri.parse('https://example.com'),
+  ///   authorizationEndpoint: Uri.parse('https://example.com/oauth2/authorize'),
+  ///   tokenEndpoint: Uri.parse('https://example.com/oauth2/token'),
+  ///   grantTypes: ['authorization_code', 'refresh_token'],
+  /// );
+  /// app.get(metadata.wellKnownPath, server.metadataEndpoint(metadata));
+  /// ```
+  RequestHandler metadataEndpoint(ServerMetadata metadata) {
+    var json = metadataOf(metadata);
+    return (req, res) => json;
   }
 
   /// A request handler of device authorization requests (RFC 8628 §3.1),

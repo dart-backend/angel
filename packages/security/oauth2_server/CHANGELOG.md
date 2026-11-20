@@ -31,6 +31,10 @@
 
 * **Token revocation:** `revocationEndpoint` revokes a token of a client, as when its user logs out (RFC 7009): it authenticates the client as the token endpoint does, gives the `token` and its `token_type_hint` to `revokeToken`, and answers a 200 without a body, whether the token was revoked or not; without `revokeToken`, it is `unsupported_token_type`, which `ErrorResponse` adds as `unsupportedTokenType`
 
+* **Server metadata:** `metadataEndpoint` serves the metadata of the server (RFC 8414), from which clients find its endpoints: `ServerMetadata` gives its issuer, the URLs of its endpoints and the grants it implements, and the server adds its device code and extension grants and PKCE methods; `wellKnownPath` is the path to route it at, and `metadataOf` gives it as a `Map`
+
+* **Token introspection:** `introspectionEndpoint` tells a resource server whether a token is active, and of what (RFC 7662): its caller must authenticate as a client with a secret; it finds the token by `introspectToken`, which is `findAccessToken` by default, and answers `{"active": false}` for one that is unknown, revoked or expired, or else its `scope`, `exp` and `iat`, and what `introspectionClaims` gives the caller, which may also make it inactive to it. `AccessToken` adds `issuedAt`, and `ServerMetadata` an `introspectionEndpoint`
+
 ### Fixes in 10.0.0
 
 * **Token responses:** The responses of the token endpoint have `Cache-Control: no-store` and `Pragma: no-cache`, as RFC 6749 §5.1 requires, so that tokens are not cached

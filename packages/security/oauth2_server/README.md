@@ -16,6 +16,8 @@ A class containing handlers that can be used within [Angel3](https://angel3-fram
   - [PKCE](#pkce)
   - [Protecting Resources](#protecting-resources)
   - [Revoking Tokens](#revoking-tokens)
+  - [Introspecting Tokens](#introspecting-tokens)
+  - [Server Metadata](#server-metadata)
 
 ## Installation
 
@@ -304,4 +306,51 @@ Future<void> revokeToken(
 ```
 
 It authenticates the client as the `tokenEndpoint` does, a public client by its `client_id` alone, and answers a 200 without a body, whether the token was revoked or not, so that the caller learns nothing of tokens that are not its own. A request without a `token` is `invalid_request`. Look the token up by its `token_type_hint` first, and by the other type if it is not found; revoke the tokens of the same grant too, such as the access tokens of a refresh token. Throw `unsupported_token_type` (`ErrorResponse.unsupportedTokenType`) for a type of token that the server cannot revoke; without `revokeToken`, every request is.
+
+## Introspecting Tokens
+
+A resource server that runs apart from the authorization server, and is given opaque tokens, asks the `introspectionEndpoint` whether a token is active, and of what (RFC 7662). Route a POST to it:
+
+```dart
+router.post('/introspect', server.introspectionEndpoint);
+```
+
+Its caller authenticates as a client, as at the `tokenEndpoint`, and must give a secret, as anyone may give the id of a public client: register each resource server as a confidential client. It looks the `token` up by `introspectToken`, which, by default, is `findAccessToken`; override it to find refresh tokens too, by the `token_type_hint`. A token that is unknown, revoked or expired is `{"active": false}`, of nothing more. An active one gives `active`, its `scope`, its `exp` and `iat`, of the `expiresAt` and `issuedAt` of its `AccessToken`, and what `introspectionClaims` adds:
+
+```dart
+@override
+Map<String, dynamic>? introspectionClaims(
+    PseudoApplication caller, AccessToken<PseudoApplication, PseudoUser> token) {
+  // A token that is not for the caller is inactive to it.
+  if (!isAudienceSomehow(caller, token)) return null;
+  return {
+    'client_id': token.client?.id,
+    'username': ?token.user?.username,
+    'token_type': 'Bearer',
+  };
+}
+```
+
+## Server Metadata
+
+Clients and SDKs find the endpoints of the server, and what it supports, from its metadata at `/.well-known/oauth-authorization-server` (RFC 8414). Give `ServerMetadata` the URLs at which you route the endpoints, and the grants that you implement, and route `metadataEndpoint`:
+
+```dart
+var issuer = Uri.parse('https://example.com');
+var metadata = ServerMetadata(
+  issuer: issuer,
+  authorizationEndpoint: issuer.resolve('/oauth2/authorize'),
+  tokenEndpoint: issuer.resolve('/oauth2/token'),
+  deviceAuthorizationEndpoint: issuer.resolve('/oauth2/device'),
+  revocationEndpoint: issuer.resolve('/oauth2/revoke'),
+  introspectionEndpoint: issuer.resolve('/oauth2/introspect'),
+  grantTypes: ['authorization_code', 'refresh_token'],
+  // `none`, if the server has public clients.
+  clientAuthMethods: ['client_secret_basic', 'client_secret_post', 'none'],
+  scopes: ['read', 'write'],
+);
+app.get(metadata.wellKnownPath, server.metadataEndpoint(metadata));
+```
+
+The server adds what it knows of itself: the device code grant, if a `deviceAuthorizationEndpoint` is given, its `extensionGrants`, and its PKCE methods, `S256`, and `plain` if `allowsPlainPkce`. `extra` adds other metadata, last, so that it may replace any. The `issuer` must be an `https` URL, or an `http` one of `localhost`, of no query nor fragment; of a path, as of one server of several on a host, `wellKnownPath` follows the well-known path with it, as `/.well-known/oauth-authorization-server/tenant1`. `metadataOf` gives the metadata as a `Map`, as to sign it, or to serve it otherwise.
 
