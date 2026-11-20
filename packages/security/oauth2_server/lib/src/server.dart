@@ -1196,7 +1196,9 @@ abstract class AuthorizationServer<Client, User> {
   ///
   /// Throw an [AuthorizationException] of `invalid_client_metadata` or
   /// `invalid_redirect_uri` to refuse a value that the server does not
-  /// accept; or change [ClientRegistration.metadata] to register another.
+  /// accept; or change [ClientRegistration.metadata] to register another,
+  /// but not one that the server checks, such as its `grant_types`, which
+  /// the response gives of the fields of the registration.
   FutureOr<void> registerClient(
     ClientRegistration registration,
     RequestContext req,

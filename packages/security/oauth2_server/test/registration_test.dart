@@ -148,6 +148,13 @@ void main() {
     );
   });
 
+  test('the response gives what is checked of the fields, not the metadata '
+      'that registerClient changes', () async {
+    var json = await registered({...web, 'client_name': 'widen me'});
+    expect(json, containsPair('grant_types', ['authorization_code']));
+    expect(json, containsPair('redirect_uris', ['https://app.example/cb']));
+  });
+
   group('the initial access token', () {
     test('is required, of a challenge', () async {
       var response = await register(web, token: null);
@@ -373,6 +380,10 @@ class _Server extends _DefaultServer {
     switch (registration.metadata['client_name']) {
       case 'rename me':
         registration.metadata['client_name'] = 'renamed';
+      case 'widen me':
+        registration.metadata
+          ..['grant_types'] = ['client_credentials']
+          ..['redirect_uris'] = ['https://elsewhere.example/cb'];
       case 'refuse me':
         throw AuthorizationException(
           ErrorResponse(

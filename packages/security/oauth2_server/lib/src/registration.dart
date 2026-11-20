@@ -52,8 +52,15 @@ class ClientRegistration {
 
   /// The metadata of the client, as JSON: what it gave, which the server
   /// has checked, of the defaults of what it did not give. Change it in
-  /// [AuthorizationServer.registerClient] to register other values, which
-  /// the response then gives (RFC 7591 §3.2.1).
+  /// [AuthorizationServer.registerClient] to register other values, such as
+  /// a `client_name`, which the response then gives (RFC 7591 §3.2.1).
+  ///
+  /// The `redirect_uris`, `grant_types`, `response_types`,
+  /// `token_endpoint_auth_method` and `scope` of the response are of
+  /// [redirectUris], [grantTypes], [responseTypes],
+  /// [tokenEndpointAuthMethod] and [scopes], which the server checked, not
+  /// of this: refuse one of them, of `invalid_client_metadata`, rather than
+  /// change it here.
   final Map<String, dynamic> metadata;
 
   ClientRegistration({
@@ -104,9 +111,16 @@ class ClientRegistration {
   /// The response of the registration (RFC 7591 §3.2.1, RFC 7592 §3): the
   /// id and secret of the client, when they were issued and when the secret
   /// expires, which it does not, the token and URL with which it manages
-  /// the registration, if any, and its [metadata].
+  /// the registration, if any, and its [metadata], of the values of its
+  /// fields in place of those of [metadata].
   Map<String, dynamic> toJson() => {
-    ...metadata,
+    for (var MapEntry(:key, :value) in metadata.entries)
+      if (!_fieldMetadata.contains(key)) key: value,
+    'redirect_uris': [for (var uri in redirectUris) uri.toString()],
+    'grant_types': grantTypes,
+    'response_types': responseTypes,
+    'token_endpoint_auth_method': tokenEndpointAuthMethod,
+    if (scopes case var scopes?) 'scope': scopes.join(' '),
     'client_id': clientId,
     'client_id_issued_at': issuedAt.millisecondsSinceEpoch ~/ 1000,
     if (clientSecret != null) ...{
@@ -118,3 +132,12 @@ class ClientRegistration {
       'registration_client_uri': registrationClientUri.toString(),
   };
 }
+
+/// The metadata of the fields of a [ClientRegistration].
+const _fieldMetadata = {
+  'redirect_uris',
+  'grant_types',
+  'response_types',
+  'token_endpoint_auth_method',
+  'scope',
+};

@@ -40,9 +40,18 @@ Your server needs to have definitions of at least two types:
 Define a server class as such:
 
 ```dart
+import 'dart:async';
+
 import 'package:angel3_oauth2_server/angel3_oauth2_server.dart' as oauth2;
 
-class MyServer extends oauth2.AuthorizationServer<Client, User> {}
+class MyServer extends oauth2.AuthorizationServer<Client, User> {
+  @override
+  FutureOr<Client>? findClient(String? clientId) => findClientSomehow(clientId);
+
+  @override
+  FutureOr<bool> verifyClient(Client client, String? clientSecret) =>
+      verifySecretSomehow(client, clientSecret);
+}
 ```
 
 Then, implement the `findClient` and `verifyClient` to ensure that the server class can not only identify a client application via a `client_id`, but that it can also verify its identity via a `client_secret`.
@@ -92,7 +101,7 @@ await res.redirect(
 );
 ```
 
-Now, write logic that exchanges an authorization code for an access token, and optionally, a refresh token. `redirectUri` is `null` if the token request gives none: if the authorization request of the code gave one, the token request must give the same (RFC 6749 §4.1.3), so check it against the one stored with the code. The server checks only that the request gives a `code_verifier`: compare it with the challenge stored with the code, or PKCE protects nothing (see [PKCE](#pkce)).
+Now, write logic that exchanges an authorization code for an access token, and optionally, a refresh token. `redirectUri` is `null` if the token request gives none: if the authorization request of the code gave one, the token request must give the same (RFC 6749 §4.1.3), so check it against the one stored with the code. The server checks only that the request gives a `code_verifier`: compare it with the challenge stored with the code, or PKCE protects nothing, and refuse a verifier for a code that was issued without a challenge, as the challenge may have been stripped from its request (see [PKCE](#pkce)).
 
 ```dart
 @override
@@ -108,6 +117,16 @@ Future<AuthorizationTokenResponse> exchangeAuthorizationCodeForToken(
   if (stored.codeChallenge != null) {
     Pkce(stored.codeChallengeMethod, stored.codeChallenge)
         .validate(await getPkceCodeVerifier(req));
+  } else if (req.bodyAsMap['code_verifier'] != null) {
+    // A verifier of a code of no challenge: the challenge may have been
+    // stripped from its request (RFC 9700 §4.8.2).
+    throw AuthorizationException(
+      ErrorResponse(
+        ErrorResponse.invalidGrant,
+        'The code was not issued of a "code_challenge".',
+        '',
+      ),
+    );
   }
   return AuthorizationTokenResponse('foo', refreshToken: 'bar');
 }
@@ -163,6 +182,8 @@ By default, all OAuth2 grant methods will throw a `400 Bad Request` error: an `u
 - `requestDeviceCode` and `exchangeDeviceCodeForToken`, of the [device authorization grant](#device-authorization)
 
 An implicit grant is requested through `requestAuthorizationCode`, with `implicit` set to `true`.
+
+The `extensionGrants` map other grant types to their handlers. A handler runs once the client is authenticated, as for the other grants, by `Authorization: Basic` or by `client_id` and `client_secret` in the form, so a grant that authenticates the client another way, such as by a `client_assertion` (RFC 7523), is refused before it runs; it is given the request and the response, not the client, which it finds again by `findClient` if it needs it.
 
 Read the [OAuth2 specification](https://tools.ietf.org/html/rfc6749) for in-depth information on each grant type.
 
@@ -414,7 +435,7 @@ The metadata is checked before `registerClient` is called; a refusal is a 400 of
 
 The server checks the metadata only when the client registers: it does not know which registration a `Client` is of, so the token and authorization endpoints do not enforce it. Check the stored `grantTypes`, `responseTypes` and `tokenEndpointAuthMethod` of the client in the grant methods, such as `clientCredentialsGrant`, and `requestAuthorizationCode`, and throw `unauthorized_client` (`ErrorResponse.unauthorizedClient`) for one it did not register.
 
-`registerClient` may throw `invalid_client_metadata` or `invalid_redirect_uri` itself, or change `registration.metadata` to register other values. The response is a 201 of the metadata, the `client_id`, the `client_secret`, which does not expire, and when they were issued. 
+`registerClient` may throw `invalid_client_metadata` or `invalid_redirect_uri` itself, or change `registration.metadata` to register other values, such as a `client_name`. Refuse a value that the server checks, such as a grant type, instead of changing it in `metadata`: the response gives those of the fields of the registration, `grantTypes` and so on, which are what is stored. The response is a 201 of the metadata, the `client_id`, the `client_secret`, which does not expire, and when they were issued. 
 ### Managing Registrations
 
 A client may then read, update and delete its registration (RFC 7592, which is Experimental), if `managesClientRegistrations` is `true`. The `registrationEndpoint` then also issues it a `registration_access_token`, and its `registration_client_uri`, the `registrationEndpoint` of the `ServerMetadata`, followed by its `client_id`, which `registrationManagementEndpoint` serves:
