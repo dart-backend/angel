@@ -23,7 +23,8 @@ class AuthorizationTokenResponse {
     var map = <String, dynamic>{'access_token': accessToken};
     if (refreshToken?.isNotEmpty == true) map['refresh_token'] = refreshToken;
     if (expiresIn != null) map['expires_in'] = expiresIn;
-    if (scope != null) map['scope'] = scope!.toList();
+    // Space-delimited (RFC 6749 §5.1, §3.3).
+    if (scope != null) map['scope'] = scope!.join(' ');
     return map;
   }
 }

@@ -63,6 +63,8 @@ void main() {
     );
     client.close();
     expect(_AuthorizationServer.lastScopes, ['read', 'write']);
+    // The response's `scope`, a string, as package:oauth2 requires.
+    expect(client.credentials.scopes, ['read', 'write']);
   });
 
   test('force correct username+password', () async {
@@ -156,6 +158,10 @@ class _AuthorizationServer
       );
     }
 
-    return AuthorizationTokenResponse('foo', refreshToken: 'bar');
+    return AuthorizationTokenResponse(
+      'foo',
+      refreshToken: 'bar',
+      scope: scopes.isEmpty ? null : scopes,
+    );
   }
 }

@@ -61,7 +61,7 @@ void main() {
           secret: pseudoApplication.secret,
         );
 
-    test('an unknown client is unauthorized_client, not a 500', () async {
+    test('an unknown client is invalid_request, not a 500', () async {
       var url = authorizationEndpoint.replace(
         queryParameters: {
           'response_type': 'code',
@@ -73,8 +73,8 @@ void main() {
         url,
         headers: {'accept': 'application/json'},
       );
-      expect(response.statusCode, isNot(500));
-      expect(response.body, contains('unauthorized_client'));
+      expect(response.statusCode, 400);
+      expect(response.body, contains('invalid_request'));
     });
 
     test('show authorization form', () async {
@@ -123,6 +123,20 @@ void main() {
       expect(client.credentials.accessToken, '${authCode}_access');
     });
 
+    test('the redirect_uri of the token request may be left out', () async {
+      var response = await testClient.post(
+        tokenEndpoint,
+        headers: {
+          'Authorization':
+              'Basic ${base64.encode('${pseudoApplication.id}:'
+                  '${pseudoApplication.secret}'.codeUnits)}',
+        },
+        body: {'grant_type': 'authorization_code', 'code': 'c'},
+      );
+      expect(response, hasStatus(200));
+      expect(_Server.lastRedirectUri, isNull);
+    });
+
     test('can send refresh token', () async {
       var grant = createGrant();
       var url = grant.getAuthorizationUrl(redirectUri, state: 'can_refresh');
@@ -140,6 +154,9 @@ void main() {
 
 class _Server extends AuthorizationServer<PseudoApplication, Map> {
   final Uuid _uuid = Uuid();
+
+  /// The `redirect_uri` of the last token request.
+  static String? lastRedirectUri;
 
   @override
   FutureOr<PseudoApplication>? findClient(String? clientId) {
@@ -199,6 +216,7 @@ class _Server extends AuthorizationServer<PseudoApplication, Map> {
     RequestContext req,
     ResponseContext res,
   ) async {
+    lastRedirectUri = redirectUri;
     var authCodes = req.container!.make<AuthCodes>();
     var state = authCodes[authCode!];
     var refreshToken = state == 'can_refresh' ? '${authCode}_refresh' : null;

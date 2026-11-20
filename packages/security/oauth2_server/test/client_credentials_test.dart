@@ -21,6 +21,7 @@ void main() {
     app.group('/oauth2', (router) {
       router
         ..get('/authorize', oauth2.authorizationEndpoint)
+        ..post('/device', oauth2.deviceAuthorizationEndpoint)
         ..post('/token', oauth2.tokenEndpoint);
     });
 
@@ -57,6 +58,30 @@ void main() {
           })),
         ));
         */
+  });
+
+  test('the grant is given the scopes of the request', () async {
+    var response = await client.post(
+      Uri.parse('/oauth2/token'),
+      headers: {'Authorization': 'Basic ${base64.encode('foo:bar'.codeUnits)}'},
+      body: {'grant_type': 'client_credentials', 'scope': 'read  write'},
+    );
+    expect(response, hasStatus(200));
+    expect(json.decode(response.body), containsPair('scope', 'read write'));
+  });
+
+  test('a token response, or an error, is not cached', () async {
+    for (var secret in ['bar', 'wrong']) {
+      var response = await client.post(
+        Uri.parse('/oauth2/token'),
+        headers: {
+          'Authorization': 'Basic ${base64.encode('foo:$secret'.codeUnits)}',
+        },
+        body: {'grant_type': 'client_credentials'},
+      );
+      expect(response.headers['cache-control'], 'no-store');
+      expect(response.headers['pragma'], 'no-cache');
+    }
   });
 
   test('accepts the standard base64 alphabet', () async {
@@ -318,6 +343,19 @@ void main() {
       );
     });
 
+    test('the device authorization endpoint of a server that does not '
+        'implement device codes is unsupported_grant_type', () async {
+      var response = await client.post(
+        Uri.parse('/oauth2/device'),
+        body: {'client_id': 'foo', 'client_secret': 'bar'},
+      );
+      expect(response, hasStatus(400));
+      expect(
+        json.decode(response.body),
+        containsPair('error', 'unsupported_grant_type'),
+      );
+    });
+
     test('a device code request the server does not implement is '
         'invalid_request, of a missing grant type', () async {
       for (var body in [
@@ -438,10 +476,14 @@ class _AuthorizationServer
   @override
   Future<AuthorizationTokenResponse> clientCredentialsGrant(
     PseudoApplication? client,
+    Iterable<String> scopes,
     RequestContext req,
     ResponseContext res,
   ) async {
-    return AuthorizationTokenResponse('foo');
+    return AuthorizationTokenResponse(
+      'foo',
+      scope: scopes.isEmpty ? null : scopes,
+    );
   }
 
   @override

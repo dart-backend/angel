@@ -60,16 +60,16 @@ Future<Iterable<String>> _getScopes(
 }
 
 /// Throws the error of a grant that the server does not support, as the
-/// default of each grant method does: [error], `unsupported_grant_type` by
-/// default, with the `state` of the form of [req].
-Future<Never> _unsupportedGrant(
-  RequestContext req,
-  String description, {
-  String error = ErrorResponse.unsupportedGrantType,
-}) async {
+/// default of each grant method does: `unsupported_grant_type`, with the
+/// `state` of the form of [req].
+Future<Never> _unsupportedGrant(RequestContext req, String description) async {
   var body = await _paramsOf(req, body: true);
   throw AuthorizationException(
-    ErrorResponse(error, description, body['state']?.toString() ?? ''),
+    ErrorResponse(
+      ErrorResponse.unsupportedGrantType,
+      description,
+      body['state']?.toString() ?? '',
+    ),
     statusCode: 400,
   );
 }
@@ -127,6 +127,23 @@ abstract class AuthorizationServer<Client, User> {
     }
   }
 
+  /// The redirect URI registered for [client] that an authorization request
+  /// gives as [redirectUri], or, if it gives none, the one registered for
+  /// the client (RFC 6749 §3.1.2.3). Throw an [AuthorizationException] if
+  /// [redirectUri] is not one of the client's: it is not redirected.
+  ///
+  /// Once it returns one, the request may leave out its `redirect_uri`, and
+  /// its errors, those of [requestAuthorizationCode] among them, are
+  /// redirected to the URI, with the `state` of the request (RFC 6749
+  /// §4.1.2.1, §4.2.2.1).
+  ///
+  /// By default, `null`: the server does not know the redirect URIs of its
+  /// clients, so that the request must give a `redirect_uri`, which
+  /// [requestAuthorizationCode] is to check, and its errors are not
+  /// redirected, as the URI may be an attacker's.
+  FutureOr<Uri?> registeredRedirectUri(Client client, String? redirectUri) =>
+      null;
+
   /// Prompt the currently logged-in user to grant or deny access to the [client].
   ///
   /// In many applications, this will entail showing a dialog to the user in question.
@@ -134,6 +151,10 @@ abstract class AuthorizationServer<Client, User> {
   /// If [implicit] is `true`, then the client is requesting an *implicit grant*.
   /// Be aware of the security implications of this - do not handle them exactly
   /// the same.
+  ///
+  /// [redirectUri] is that of [registeredRedirectUri], if it gives one, or
+  /// else the `redirect_uri` of the request, which must then be checked
+  /// against those of the [client].
   FutureOr<void> requestAuthorizationCode(
     Client client,
     String? redirectUri,
@@ -154,6 +175,10 @@ abstract class AuthorizationServer<Client, User> {
   }
 
   /// Exchanges an authorization code for an authorization token.
+  ///
+  /// [redirectUri] is `null` if the request gives none, which it must if
+  /// the authorization request of the code gave one, and must be the same
+  /// (RFC 6749 §4.1.3): check it against the one stored with the code.
   FutureOr<AuthorizationTokenResponse> exchangeAuthorizationCodeForToken(
     Client? client,
     String? authCode,
@@ -187,27 +212,28 @@ abstract class AuthorizationServer<Client, User> {
     'Resource owner password credentials grants are not supported.',
   );
 
-  /// Performs a client credentials grant. Only use this in situations where the client is 100% trusted.
+  /// Performs a client credentials grant, of the [scopes] the client asks
+  /// for. Only use this in situations where the client is 100% trusted.
   FutureOr<AuthorizationTokenResponse> clientCredentialsGrant(
     Client? client,
+    Iterable<String> scopes,
     RequestContext req,
     ResponseContext res,
   ) => _unsupportedGrant(req, 'Client credentials grants are not supported.');
 
-  /// Performs a device code request, a request to the token endpoint
+  /// Performs a device authorization request (RFC 8628 §3.1), of the
+  /// [deviceAuthorizationEndpoint], or, deprecated, of the [tokenEndpoint]
   /// without a `grant_type`.
   ///
-  /// By default, it is `invalid_request`, as the `grant_type` is missing.
+  /// By default, device codes are not supported: `unsupported_grant_type`
+  /// at the [deviceAuthorizationEndpoint], and `invalid_request` at the
+  /// [tokenEndpoint], as its `grant_type` is missing.
   FutureOr<DeviceCodeResponse> requestDeviceCode(
     Client client,
     Iterable<String> scopes,
     RequestContext req,
     ResponseContext res,
-  ) => _unsupportedGrant(
-    req,
-    'Missing "grant_type" parameter; device code requests are not supported.',
-    error: ErrorResponse.invalidRequest,
-  );
+  ) => throw const _DeviceCodesUnsupported();
 
   /// Produces an authorization token from a given device code.
   FutureOr<AuthorizationTokenResponse> exchangeDeviceCodeForToken(
@@ -252,6 +278,10 @@ abstract class AuthorizationServer<Client, User> {
 
   /// A request handler that invokes the correct logic, depending on which type
   /// of grant the client is requesting.
+  ///
+  /// Its errors are redirected to the redirect URI of the client, once
+  /// [registeredRedirectUri] has given one; before, or without one, as of
+  /// an unknown client, they are thrown.
   Future<void> authorizationEndpoint(
     RequestContext req,
     ResponseContext res,
@@ -259,36 +289,72 @@ abstract class AuthorizationServer<Client, User> {
     var state = '';
 
     try {
-      var query = req.queryParameters;
-      state = query['state']?.toString() ?? '';
-      var responseType = await _getParam(req, 'response_type', state);
+      // Of the query, or of the form of a POST (RFC 6749 §3.1).
+      var post = req.method.toUpperCase() == 'POST';
+      var params = await _paramsOf(req, body: post);
+      state = params['state']?.toString() ?? '';
 
       req.container!.registerLazySingleton<Pkce>((_) {
-        return Pkce.fromJson(req.queryParameters, state: state);
+        return Pkce.fromJson(params, state: state);
       });
 
-      if (responseType == 'code' || responseType == 'token') {
-        // Ensure client ID
-        var clientId = await _getParam(req, 'client_id', state);
+      // Ensure client ID
+      var clientId = await _getParam(req, 'client_id', state, body: post);
 
-        // Find client
-        var client = await findClient(clientId);
+      // Find client
+      var client = await findClient(clientId);
 
-        if (client == null) {
+      if (client == null) {
+        throw AuthorizationException(
+          ErrorResponse(
+            ErrorResponse.invalidRequest,
+            'Unknown client "$clientId".',
+            state,
+          ),
+        );
+      }
+
+      var given = await _getParam(
+        req,
+        'redirect_uri',
+        state,
+        body: post,
+        throwIfEmpty: false,
+      );
+      var registered = await registeredRedirectUri(
+        client,
+        given == null || given.isEmpty ? null : given,
+      );
+      var responseType = params['response_type']?.toString();
+
+      Future<void> authorize() async {
+        var redirectUri =
+            registered?.toString() ??
+            await _getParam(req, 'redirect_uri', state, body: post);
+
+        if (responseType == null || responseType.isEmpty) {
           throw AuthorizationException(
             ErrorResponse(
-              ErrorResponse.unauthorizedClient,
-              'Unknown client "$clientId".',
+              ErrorResponse.invalidRequest,
+              'Missing required parameter "response_type".',
               state,
             ),
+            statusCode: 400,
+          );
+        }
+        if (responseType != 'code' && responseType != 'token') {
+          throw AuthorizationException(
+            ErrorResponse(
+              ErrorResponse.unsupportedResponseType,
+              'Unsupported "response_type" parameter: "$responseType".',
+              state,
+            ),
+            statusCode: 400,
           );
         }
 
-        // Grab redirect URI
-        var redirectUri = await _getParam(req, 'redirect_uri', state);
-
         // Grab scopes
-        var scopes = await _getScopes(req);
+        var scopes = await _getScopes(req, body: post);
 
         return await requestAuthorizationCode(
           client,
@@ -301,14 +367,33 @@ abstract class AuthorizationServer<Client, User> {
         );
       }
 
-      throw AuthorizationException(
-        ErrorResponse(
-          ErrorResponse.invalidRequest,
-          'Invalid or no "response_type" parameter provided',
+      if (registered == null) return await authorize();
+
+      Future<void> redirectError(ErrorResponse error) => res.redirect(
+        _errorRedirect(
+          registered,
+          error,
           state,
+          fragment: responseType == 'token',
         ),
-        statusCode: 400,
       );
+
+      try {
+        return await authorize();
+      } on AuthorizationException catch (e) {
+        if (!res.isOpen) rethrow;
+        return await redirectError(e.errorResponse);
+      } on AngelHttpException {
+        rethrow;
+      } catch (e, st) {
+        // `server_error`, which a client cannot learn of otherwise, as the
+        // user is not on its page (RFC 6749 §4.1.2.1).
+        if (!res.isOpen) rethrow;
+        logger.severe('The authorization request failed', e, st);
+        return await redirectError(
+          ErrorResponse(ErrorResponse.serverError, _internalServerError, state),
+        );
+      }
     } on AngelHttpException {
       rethrow;
     } catch (e, st) {
@@ -319,6 +404,44 @@ abstract class AuthorizationServer<Client, User> {
         stackTrace: st,
       );
     }
+  }
+
+  /// [redirectUri] with the authorization [code] of an authorization code
+  /// grant, and the [state] of its request, if any, in its query, to which
+  /// the user is redirected once they grant access (RFC 6749 §4.1.2); the
+  /// query of [redirectUri] is kept.
+  Uri completeAuthorizationCode(
+    String code,
+    Uri redirectUri, {
+    String? state,
+  }) => redirectUri.replace(
+    queryParameters: {
+      ...redirectUri.queryParametersAll,
+      'code': code,
+      if (state != null && state.isNotEmpty) 'state': state,
+    },
+  );
+
+  /// [redirectUri] with the parameters of [error], and [state] if any: in
+  /// its query, or in its [fragment], as of an implicit grant (RFC 6749
+  /// §4.1.2.1, §4.2.2.1).
+  static Uri _errorRedirect(
+    Uri redirectUri,
+    ErrorResponse error,
+    String state, {
+    required bool fragment,
+  }) {
+    var parameters = {
+      'error': error.code,
+      if (error.description.isNotEmpty) 'error_description': error.description,
+      if (error.uri != null) 'error_uri': error.uri.toString(),
+      if (state.isNotEmpty) 'state': state,
+    };
+    return fragment
+        ? redirectUri.replace(fragment: Uri(queryParameters: parameters).query)
+        : redirectUri.replace(
+            queryParameters: {...redirectUri.queryParametersAll, ...parameters},
+          );
   }
 
   /// The grant types that [tokenEndpoint] handles, besides
@@ -540,10 +663,86 @@ abstract class AuthorizationServer<Client, User> {
     }
   }
 
+  /// Whether a device authorization request has been given to the token
+  /// endpoint, as is deprecated, so that it is logged once.
+  static bool _warnedOfDeviceRequest = false;
+
+  /// The [DeviceCodeResponse] of [requestDeviceCode], as JSON; or, if the
+  /// server does not support device codes, the error of [unsupported].
+  Future<Map<String, dynamic>> _deviceCode(
+    Client client,
+    RequestContext req,
+    ResponseContext res,
+    String state, {
+    required ErrorResponse Function(String state) unsupported,
+  }) async {
+    var scopes = await _getScopes(req, body: true);
+    try {
+      var response = await requestDeviceCode(client, scopes, req, res);
+      return response.toJson();
+    } on _DeviceCodesUnsupported {
+      throw AuthorizationException(unsupported(state), statusCode: 400);
+    }
+  }
+
+  /// A request handler of device authorization requests (RFC 8628 §3.1),
+  /// of a device that the user authorizes on another, which then polls the
+  /// [tokenEndpoint] with the `device_code` of its response, by
+  /// [exchangeDeviceCodeForToken]. Route a POST to it:
+  ///
+  /// ```dart
+  /// router.post('/device', server.deviceAuthorizationEndpoint);
+  /// ```
+  ///
+  /// Its client is authenticated as at the [tokenEndpoint]: a public one by
+  /// its `client_id` alone, for which [verifyClient] is given `null`. It
+  /// gives the [DeviceCodeResponse] of [requestDeviceCode], of the `scope` of
+  /// the request, and errors as the [tokenEndpoint] does (RFC 8628 §3.2).
+  Future deviceAuthorizationEndpoint(
+    RequestContext req,
+    ResponseContext res,
+  ) async {
+    var state = '';
+    // Of its device code (RFC 8628 §3.2).
+    res.headers
+      ..['cache-control'] = 'no-store'
+      ..['pragma'] = 'no-cache';
+
+    try {
+      var body = await req.parseBody().then((_) => req.bodyAsMap);
+      state = body['state']?.toString() ?? '';
+      var (client, _) = await _authenticateClient(req, res, body, state);
+      return await _deviceCode(
+        client,
+        req,
+        res,
+        state,
+        unsupported: (state) => ErrorResponse(
+          ErrorResponse.unsupportedGrantType,
+          'Device code grants are not supported.',
+          state,
+        ),
+      );
+    } on AngelHttpException {
+      rethrow;
+    } catch (e, st) {
+      throw AuthorizationException(
+        ErrorResponse(ErrorResponse.serverError, _internalServerError, state),
+        error: e,
+        statusCode: 500,
+        stackTrace: st,
+      );
+    }
+  }
+
   /// A request handler that either exchanges authorization codes for authorization tokens,
   /// or refreshes authorization tokens.
   Future tokenEndpoint(RequestContext req, ResponseContext res) async {
     var state = '';
+    // Of its tokens, and of its errors (RFC 6749 §5.1).
+    res.headers
+      ..['cache-control'] = 'no-store'
+      ..['pragma'] = 'no-cache';
 
     try {
       var body = await req.parseBody().then((_) => req.bodyAsMap);
@@ -590,15 +789,28 @@ abstract class AuthorizationServer<Client, User> {
       );
 
       if (grantType == null) {
-        // A device code request.
-        var scopes = await _getScopes(req, body: true);
-        var deviceCodeResponse = await requestDeviceCode(
+        // A device authorization request, of the token endpoint, which is
+        // deprecated for the [deviceAuthorizationEndpoint].
+        if (!_warnedOfDeviceRequest) {
+          _warnedOfDeviceRequest = true;
+          logger.warning(
+            'A device authorization request was given to the token endpoint, '
+            'without a "grant_type", which is deprecated: route a '
+            'deviceAuthorizationEndpoint, and give it the client.',
+          );
+        }
+        return await _deviceCode(
           client,
-          scopes,
           req,
           res,
+          state,
+          unsupported: (state) => ErrorResponse(
+            ErrorResponse.invalidRequest,
+            'Missing "grant_type" parameter; device code requests are not '
+            'supported.',
+            state,
+          ),
         );
-        return deviceCodeResponse.toJson();
       }
 
       AuthorizationTokenResponse response;
@@ -614,12 +826,16 @@ abstract class AuthorizationServer<Client, User> {
       } else {
         if (grantType == 'authorization_code') {
           var code = await _getParam(req, 'code', state, body: true);
+          // Required only if the authorization request gave one (RFC 6749
+          // §4.1.3), which [exchangeAuthorizationCodeForToken] checks.
           var redirectUri = await _getParam(
             req,
             'redirect_uri',
             state,
             body: true,
+            throwIfEmpty: false,
           );
+          if (redirectUri != null && redirectUri.isEmpty) redirectUri = null;
           response = await exchangeAuthorizationCodeForToken(
             client,
             code,
@@ -668,7 +884,8 @@ abstract class AuthorizationServer<Client, User> {
               statusCode: 400,
             );
           }
-          response = await clientCredentialsGrant(client, req, res);
+          var scopes = await _getScopes(req, body: true);
+          response = await clientCredentialsGrant(client, scopes, req, res);
 
           if (response.refreshToken != null) {
             // Remove refresh token
@@ -697,4 +914,11 @@ abstract class AuthorizationServer<Client, User> {
       );
     }
   }
+}
+
+/// Thrown by the default [AuthorizationServer.requestDeviceCode], of a
+/// server that does not support device codes, as which each endpoint gives
+/// its error.
+class _DeviceCodesUnsupported implements Exception {
+  const _DeviceCodesUnsupported();
 }

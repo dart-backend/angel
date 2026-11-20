@@ -20,6 +20,7 @@ void main() {
     app.group('/oauth2', (router) {
       router
         ..get('/authorize', oauth2.authorizationEndpoint)
+        ..post('/device', oauth2.deviceAuthorizationEndpoint)
         ..post('/token', oauth2.tokenEndpoint);
     });
 
@@ -39,6 +40,58 @@ void main() {
   });
 
   tearDown(() => client.close());
+
+  group('device authorization endpoint', () {
+    Future<http.Response> request(
+      Map<String, String> body, {
+      Map<String, String>? headers,
+    }) =>
+        client.post(Uri.parse('/oauth2/device'), headers: headers, body: body);
+
+    test('a public client gets a device code, of its scopes', () async {
+      var response = await request({
+        'client_id': 'device',
+        'scope': 'bar baz quux',
+      });
+      expect(
+        response,
+        allOf(
+          hasStatus(200),
+          isJson({
+            'device_code': 'foo',
+            'user_code': 'bar',
+            'verification_uri': Uri.parse('https://regiostech.com')
+                .replace(queryParameters: {'scopes': 'bar,baz,quux'})
+                .toString(),
+            'expires_in': 3600,
+          }),
+        ),
+      );
+      expect(response.headers['cache-control'], 'no-store');
+    });
+
+    test('a confidential client is authenticated', () async {
+      var basic = 'Basic ${base64.encode('foo:bar'.codeUnits)}';
+      expect(
+        await request({}, headers: {'Authorization': basic}),
+        hasStatus(200),
+      );
+      for (var body in [
+        {'client_id': 'foo'},
+        {'client_id': 'foo', 'client_secret': 'wrong'},
+      ]) {
+        var response = await request(body);
+        expect(response, hasStatus(401));
+        expect(response.body, contains('invalid_client'));
+      }
+    });
+
+    test('an unknown client is invalid_client', () async {
+      var response = await request({'client_id': 'nobody'});
+      expect(response, hasStatus(401));
+      expect(response.body, contains('invalid_client'));
+    });
+  });
 
   group('get initial code', () {
     test('invalid client id', () async {

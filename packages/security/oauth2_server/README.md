@@ -10,7 +10,9 @@ A class containing handlers that can be used within [Angel3](https://angel3-fram
 - [Angel3 OAuth2 Server](#angel3-oauth2-server)
   - [Installation](#installation)
   - [Usage](#usage)
+  - [Redirect URIs](#redirect-uris)
   - [Other Grants](#other-grants)
+  - [Device Authorization](#device-authorization)
   - [PKCE](#pkce)
 
 ## Installation
@@ -77,7 +79,15 @@ Future<void> requestAuthorizationCode(
 }
 ```
 
-Now, write logic that exchanges an authorization code for an access token, and optionally, a refresh token.
+Once the user grants access, issue a code, store it with the client, the `redirect_uri` and the scopes, and redirect the user with `completeAuthorizationCode`, which adds the `code` and `state` to the redirect URI (RFC 6749 §4.1.2); for an implicit grant, `completeImplicitGrant` does the same with a token:
+
+```dart
+await res.redirect(
+  completeAuthorizationCode(code, Uri.parse(redirectUri!), state: state),
+);
+```
+
+Now, write logic that exchanges an authorization code for an access token, and optionally, a refresh token. `redirectUri` is `null` if the token request gives none: if the authorization request of the code gave one, the token request must give the same (RFC 6749 §4.1.3), so check it against the one stored with the code.
 
 ```dart
 @override
@@ -98,25 +108,63 @@ void pseudoCode() {
   app.group('/oauth2', (router) {
     router
       ..get('/authorize', server.authorizationEndpoint)
+      ..post('/authorize', server.authorizationEndpoint)
       ..post('/token', server.tokenEndpoint);
   });
 }
 ```
 
-The `authorizationEndpoint` and `tokenEndpoint` handle all OAuth2 grant types.
+The `authorizationEndpoint` reads its parameters from the query, or from the form of a POST (RFC 6749 §3.1).
+
+The `authorizationEndpoint` and `tokenEndpoint` handle all OAuth2 grant types. The responses of the `tokenEndpoint` have `Cache-Control: no-store` and `Pragma: no-cache`, and the `scope` of a token is a string, of space-separated scopes (RFC 6749 §5.1).
+
+## Redirect URIs
+
+By default, the server does not know the redirect URIs of its clients: an authorization request must give a `redirect_uri`, which `requestAuthorizationCode` is to check, and its errors are thrown, not redirected, as the URI may be an attacker's.
+
+Implement `registeredRedirectUri` to check it instead. Return the registered URI that the request gives, or, if it gives none, the client's registered one; throw an `AuthorizationException` if it is not registered, which is not redirected. Once it returns one, the request may leave out its `redirect_uri`, and its errors, such as an `access_denied` thrown by `requestAuthorizationCode` or an unsupported `response_type`, are redirected to the URI, and any other error as `server_error`, which is logged, with their `error`, `error_description` and the request's `state`: in the query, or, for an implicit grant, in the fragment (RFC 6749 §4.1.2.1, §4.2.2.1).
+
+```dart
+@override
+Uri? registeredRedirectUri(PseudoApplication client, String? redirectUri) {
+  var registered = Uri.parse(client.redirectUri);
+  if (redirectUri == null || redirectUri == client.redirectUri) {
+    return registered;
+  }
+  throw AuthorizationException(
+    ErrorResponse(
+      ErrorResponse.invalidRequest,
+      'The "redirect_uri" is not registered.',
+      '',
+    ),
+  );
+}
+```
 
 ## Other Grants
 
-By default, all OAuth2 grant methods will throw a `400 Bad Request` error: an `unsupported_grant_type` OAuth2 error at the token endpoint, or `unsupported_response_type` for an authorization request. A request to the token endpoint without a `grant_type` is a device code request, which is `invalid_request` unless `requestDeviceCode` is implemented. Device code requests and grants authenticate their client as the other grants do: a public client, as of a device, gives its `client_id` alone, and `verifyClient` is given a `null` secret. To support any specific grant type, all you need to do is implement the method. The following are available, not including authorization code grant support (mentioned above):
+By default, all OAuth2 grant methods will throw a `400 Bad Request` error: an `unsupported_grant_type` OAuth2 error at the token endpoint, or `unsupported_response_type` for an authorization request. To support any specific grant type, all you need to do is implement the method. The following are available, not including authorization code grant support (mentioned above):
 
 - `refreshAuthorizationToken`
 - `resourceOwnerPasswordCredentialsGrant`
-- `clientCredentialsGrant`
-- `requestDeviceCode` and `exchangeDeviceCodeForToken`
+- `clientCredentialsGrant`, given the `scope` of the request
+- `requestDeviceCode` and `exchangeDeviceCodeForToken`, of the [device authorization grant](#device-authorization)
 
 An implicit grant is requested through `requestAuthorizationCode`, with `implicit` set to `true`.
 
 Read the [OAuth2 specification](https://tools.ietf.org/html/rfc6749) for in-depth information on each grant type.
+
+## Device Authorization
+
+A device without a browser, such as a TV or a command line tool, asks the `deviceAuthorizationEndpoint` for a device code (RFC 8628). Route a POST to it:
+
+```dart
+router.post('/device', server.deviceAuthorizationEndpoint);
+```
+
+It authenticates the client as the `tokenEndpoint` does: a public client, as a device usually is, gives its `client_id` alone, and `verifyClient` is given a `null` secret. It gives the `DeviceCodeResponse` of `requestDeviceCode`, of the `scope` of the request: show the user its `userCode`, and the `verificationUri`, on which they authorize the device on another one. The device then polls the `tokenEndpoint` with `grant_type=urn:ietf:params:oauth:grant-type:device_code` and its `device_code`, which `exchangeDeviceCodeForToken` answers with a token, once the user has authorized it, or with `authorization_pending`, `slow_down`, `access_denied` or `expired_token` (`ErrorResponse.authorizationPending`, and so on). Without `requestDeviceCode`, it is `unsupported_grant_type`.
+
+A device code request to the `tokenEndpoint`, without a `grant_type`, as earlier versions required, still works, but is deprecated, and logged once: it will be removed in a later major version. Without `requestDeviceCode`, it is `invalid_request`, as the `grant_type` is missing.
 
 ## PKCE
 

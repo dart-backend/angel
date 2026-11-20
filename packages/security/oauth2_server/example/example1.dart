@@ -10,7 +10,7 @@ import 'package:logging/logging.dart';
 /// A device, a public client, gives its `client_id` alone:
 ///
 /// ```sh
-/// curl -d client_id=device http://localhost:3000/oauth2/token
+/// curl -d client_id=device http://localhost:3000/oauth2/device
 /// curl -d grant_type=urn:ietf:params:oauth:grant-type:device_code \
 ///   -d client_id=device -d device_code=foo http://localhost:3000/oauth2/token
 /// ```
@@ -30,6 +30,7 @@ Future<void> main() async {
   app.group('/oauth2', (router) {
     router
       ..get('/authorize', oauth2.authorizationEndpoint)
+      ..post('/device', oauth2.deviceAuthorizationEndpoint)
       ..post('/token', oauth2.tokenEndpoint);
   });
 
