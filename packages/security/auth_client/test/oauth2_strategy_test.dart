@@ -80,11 +80,17 @@ void main() {
     http_ = AngelHttp(app);
   });
 
-  Future<Got> get(String path, {Cookie? cookie}) async {
+  Future<Got> get(
+    String path, {
+    Cookie? cookie,
+    List<Cookie> cookies = const [],
+  }) async {
     var rq = MockHttpRequest('GET', Uri.parse(path))
       ..headers.add('accept', 'application/json');
-    // As a browser sends it back.
-    if (cookie != null) rq.cookies.add(Cookie(cookie.name, cookie.value));
+    // As a browser sends them back.
+    for (var c in [?cookie, ...cookies]) {
+      rq.cookies.add(Cookie(c.name, c.value));
+    }
     await rq.close();
     await http_.handleRequest(rq);
     var text = await rq.response.transform(utf8.decoder).join();
@@ -111,6 +117,43 @@ void main() {
       got.cookies.singleWhere((c) => c.name.startsWith('angel3_oauth2_')),
     );
   }
+
+  test('a callback of a state no strategy gives, as of a crafted link, is '
+      'invalid_state, not a 500', () async {
+    for (var state in ['aaaaaaaaaaaa;b', 'a b/c=d' * 5, 'é' * 32]) {
+      var got = await get(
+        Uri(
+          path: '/auth/callback',
+          queryParameters: {'code': 'c', 'state': state},
+        ).toString(),
+      );
+      expect(got.status, 400, reason: state);
+      // Of onError, not of an error of the framework.
+      expect(got.body, {'error': 'invalid_state'}, reason: state);
+    }
+    expect(errors, ['invalid_state', 'invalid_state', 'invalid_state']);
+  });
+
+  test('starting a login keeps only the newest logins of a browser', () async {
+    var cookies = <Cookie>[];
+    for (var i = 0; i < 6; i++) {
+      var got = await get('/auth/start', cookies: cookies);
+      cookies.add(
+        got.cookies.singleWhere(
+          (c) => c.name.startsWith('angel3_oauth2_') && c.value.isNotEmpty,
+        ),
+      );
+      // So that the logins are of distinct times.
+      await Future<void>.delayed(const Duration(milliseconds: 2));
+    }
+    var got = await get('/auth/start', cookies: cookies);
+    var expired = [
+      for (var c in got.cookies)
+        if (c.value.isEmpty && c.maxAge == 0) c.name,
+    ];
+    // Six kept, and a seventh: the two oldest go, of five at most.
+    expect(expired, unorderedEquals([cookies[0].name, cookies[1].name]));
+  });
 
   group('the start of a login', () {
     test('redirects to the provider, with state and PKCE', () async {
@@ -296,6 +339,7 @@ Future<Angel> mapApp({
   bool post = false,
   bool basicAuth = true,
   Map<String, String> authorizationParameters = const {},
+  String redirectUri = 'https://app.example/cb',
 }) async {
   var app = Angel();
   var auth = AngelAuth<Map<String, dynamic>>(
@@ -308,7 +352,7 @@ Future<Angel> mapApp({
     ExternalAuthOptions(
       clientId: 'id',
       clientSecret: clientSecret,
-      redirectUri: 'https://app.example/cb',
+      redirectUri: redirectUri,
     ),
     authorizationEndpoint,
     tokenEndpoint,
@@ -342,6 +386,60 @@ Future<Angel> mapApp({
 }
 
 void moreTests() {
+  group('warns of settings', () {
+    late List<String> warnings;
+
+    setUp(() {
+      warnings = [];
+      var sub = Logger.root.onRecord
+          .where((r) => r.level == Level.WARNING)
+          .listen((r) => warnings.add(r.message));
+      addTearDown(sub.cancel);
+    });
+
+    test('of form_post, of a cookie of SameSite.lax', () async {
+      await mapApp(authorizationParameters: {'response_mode': 'form_post'});
+      expect(warnings, contains(contains('form_post')));
+    });
+
+    test('of SameSite.none, of an http redirect URI', () async {
+      await mapApp(
+        cookieSameSite: SameSite.none,
+        redirectUri: 'http://app.example/cb',
+      );
+      expect(warnings, contains(contains('must be Secure')));
+    });
+
+    test('of authorizationParameters that are dropped', () async {
+      await mapApp(authorizationParameters: {'scope': 'openid', 'x': 'y'});
+      expect(warnings, contains(contains('authorizationParameters scope')));
+    });
+
+    test('of none, by default', () async {
+      await mapApp();
+      expect(warnings, isEmpty);
+    });
+  });
+
+  test('a posted callback whose body cannot be read goes to onError', () async {
+    var http = AngelHttp(
+      await mapApp(cookieSameSite: SameSite.none, post: true),
+    );
+    var cb = MockHttpRequest('POST', Uri.parse('/cb'))
+      ..headers.add('accept', 'application/json')
+      ..headers.contentType = ContentType(
+        'application',
+        'x-www-form-urlencoded',
+      );
+    cb.write('code=%E0%A4%A');
+    await cb.close();
+    await http.handleRequest(cb);
+    expect(cb.response.statusCode, 400);
+    expect(json.decode(await cb.response.transform(utf8.decoder).join()), {
+      'error': 'invalid_request',
+    });
+  });
+
   test('an error of onError, of map users, is no login', () async {
     var got = await logIn(
       await mapApp(),
@@ -485,7 +583,9 @@ void moreTests() {
     // A cookie signed with the key of the empty secret is refused.
     // The prefix of the default key, of the former name of the package.
     var forgedKey = sha256.convert(utf8.encode('angel3_auth_oauth2:')).bytes;
-    var state = 'abcdefghijklmnop';
+    // Of the form of a state of the strategy, so that only its signature
+    // can refuse it.
+    var state = 'abcdefghijklmnop' * 2;
     var data = base64Url
         .encode(
           utf8.encode(

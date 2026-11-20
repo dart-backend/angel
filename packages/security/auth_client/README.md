@@ -21,16 +21,15 @@ dependencies:
 First, create an options object:
 
 ```dart
-configureServer(Angel app) async {
-  // Load from a Map, i.e. app config:
-  var opts = ExternalAuthOptions.fromMap(app.configuration['auth0'] as Map);
-  
-  // Create in-place:
-  var opts = ExternalAuthOptions(
-      clientId: '<client-id>',
-      clientSecret: '<client-secret>',
-      redirectUri: Uri.parse('<callback>'));
-}
+// Load from a Map, i.e. app config:
+ExternalAuthOptions optionsOf(Angel app) => ExternalAuthOptions.fromMap(
+    app.configuration['auth0'] as Map<String, dynamic>);
+
+// Or create in-place:
+var options = ExternalAuthOptions(
+    clientId: '<client-id>',
+    clientSecret: '<client-secret>',
+    redirectUri: Uri.parse('<callback>'));
 ```
 
 After getting authenticated against the remote server, we need to be able to identify users within our own application.
@@ -84,14 +83,16 @@ Lastly, connect it to an `AngelAuth` instance, and wire it up to an `Angel` serv
   1. Redirect users to the external provider
   2. Acts as a callback and handles an access code
   
-The strategy tells the two apart by the request: one with a `code` or `error` query parameter is the provider's callback. Each login gets its own random `state`, against login CSRF, and PKCE code verifier. Both are kept until the callback in a signed, `HttpOnly` cookie of each login (`cookieName`, default `angel3_oauth2`, followed by the start of its `state`), scoped to the path of the redirect URI, which expires after `loginTimeout` (default 10 minutes). The cookie is signed with a key derived from the client secret, so every instance of the app accepts it; pass `cookieKey` to use another, as a client without a secret must for more than one instance. It is `SameSite=Lax` (`cookieSameSite`), which a provider's redirect back carries; a provider that posts its callback (`response_mode=form_post`, asked for with `authorizationParameters`, below) needs `SameSite.none`, over HTTPS, and a `post` route for the callback. Only the result of the verifier signs a user in, never that of `onError`. A callback of no login started here, or of another `state`, goes to `onError` as `invalid_state`, and a malformed one as `invalid_request`. A provider that cannot be reached is a `502`. `onError` should write a response, or redirect; a value it returns is sent as the response. The `oauth2.Client` given to the verifier is closed once it returns, unless you passed an `httpClient`.
+The strategy tells the two apart by the request: one with a `code` or `error` query parameter is the provider's callback. Each login gets its own random `state`, against login CSRF, and PKCE code verifier. Both are kept until the callback in a signed, `HttpOnly` cookie of each login (`cookieName`, default `angel3_oauth2`, followed by the start of its `state`), scoped to the path of the redirect URI, which expires after `loginTimeout` (default 10 minutes). The cookie is signed with a key derived from the client secret, so every instance of the app accepts it; pass `cookieKey` to use another, as a client without a secret must for more than one instance. It is `SameSite=Lax` (`cookieSameSite`), which a provider's redirect back carries; a provider that posts its callback (`response_mode=form_post`, asked for with `authorizationParameters`, below) needs `SameSite.none`, over HTTPS, and a `post` route for the callback. Only the result of the verifier signs a user in, never that of `onError`. A callback of no login started here, or of another `state`, goes to `onError` as `invalid_state`, and a malformed one, as of a posted body that cannot be read, as `invalid_request`. A browser may have `maxLogins` logins in progress at once (default 5), as of several tabs; starting another expires the cookies of the oldest, so that those the callback is sent stay few. The strategy warns of settings with which every login fails: `response_mode=form_post` without `SameSite.none`, and `SameSite.none` of an `http` redirect URI, whose cookie browsers drop. A provider that cannot be reached is a `502`. `onError` should write a response, or redirect; a value it returns is sent as the response. The `oauth2.Client` given to the verifier is closed once it returns, unless you passed an `httpClient`.
 
 In the case of the callback route, you may want to display an HTML page that closes a popup window. In this case, use `confirmPopupAuthentication`, which is bundled with `package:angel3_auth`, as a `callback` function:
 
 ```dart
 configureServer(Angel app) async {
-  // ...
-  var auth = AngelAuth<User>();
+  var auth = AngelAuth<User>(
+    serializer: (user) => user.id!,
+    deserializer: (id) => userService.read(id),
+  );
   auth.strategies['github'] = oauth2Strategy;
   
   // Redirect
@@ -113,9 +114,14 @@ configureServer(Angel app) async {
 This package should work out-of-the-box for most OAuth2 providers, such as Github or Dropbox. However, if your OAuth2 scopes are separated by a delimiter other than the default (`' '`), you can add it in the `OAuth2Strategy` constructor:
 
 ```dart
-configureServer(Angel app) async {
-  OAuth2Strategy(..., delimiter: ',');
-}
+var strategy = OAuth2Strategy(
+  options,
+  authorizationEndpoint,
+  tokenEndpoint,
+  yourVerifier,
+  yourErrorHandler,
+  delimiter: ',',
+);
 ```
 
 ## Handling non-JSON responses
@@ -125,8 +131,12 @@ Many OAuth2 providers do not follow the specification, and do not return `applic
 You can add a `getParameters` callback to parse the contents of any arbitrary response:
 
 ```dart
-OAuth2Strategy(
-    // ...
+var strategy = OAuth2Strategy(
+    options,
+    authorizationEndpoint,
+    tokenEndpoint,
+    yourVerifier,
+    yourErrorHandler,
     getParameters: (contentType, body) {
       if (contentType?.type == 'application') {
         if (contentType!.subtype == 'x-www-form-urlencoded') {
@@ -188,11 +198,15 @@ oauth2.Client clientOf(OAuth2Strategy strategy, String userId) => oauth2.Client(
 
 ## More parameters of the authorization URL
 
-Some providers take more query parameters, such as `access_type=offline` for a refresh token of Google, `prompt`, or `response_mode=form_post` of Sign in with Apple. Pass them as `authorizationParameters`; they do not replace those of the strategy (`client_id`, `redirect_uri`, `scope`, `state`, and those of PKCE):
+Some providers take more query parameters, such as `access_type=offline` for a refresh token of Google, `prompt`, or `response_mode=form_post` of Sign in with Apple. Pass them as `authorizationParameters`; they do not replace those of the strategy (`client_id`, `redirect_uri`, `scope`, `state`, and those of PKCE), which are dropped, with a warning; give scopes in the `ExternalAuthOptions` instead:
 
 ```dart
-OAuth2Strategy(
-  // ...
+var strategy = OAuth2Strategy(
+  options,
+  authorizationEndpoint,
+  tokenEndpoint,
+  yourVerifier,
+  yourErrorHandler,
   authorizationParameters: {'access_type': 'offline', 'prompt': 'consent'},
 );
 ```

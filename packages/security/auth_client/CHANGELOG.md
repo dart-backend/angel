@@ -9,12 +9,17 @@
 
 ### New in 10.0.0
 
-* `cookieName`, `cookieKey`, `cookieSameSite`, `loginTimeout` and `httpClient`
+* `cookieName`, `cookieKey`, `cookieSameSite`, `loginTimeout`, `maxLogins` and `httpClient`
 * `authorizationParameters`, more query parameters of the authorization URL, such as `access_type`, `prompt` or `response_mode`
 * `basicAuth`, `false` to send the client secret to the token endpoint in the form (`client_secret_post`)
 
 ### Fixes in 10.0.0
 
+* **Callback:** A `state` that is not of the form of one the strategy gives, as of a crafted link, goes to `onError` as `invalid_state`, where one of a character a cookie name may not have, such as `;` or a space, was an error of the framework. A posted callback whose body cannot be read, as a malformed or too large form, goes to `onError` as `invalid_request`, where it was the framework's own 400
+* **HTTP clients:** Without an `httpClient`, the client of the grant that starts a login, and that of a token exchange that fails, are closed, where they were left open
+* **Login cookies:** Starting a login expires the cookies of the oldest logins of the browser beyond the new `maxLogins` (default 5), so that a user who starts many cannot make the `Cookie` header of the callback too large for the server
+* **Settings:** The strategy warns of `response_mode=form_post` without `SameSite.none`, and of `SameSite.none` of an `http` redirect URI, with which every login fails, and of `authorizationParameters` that it drops, as `scope`
+* **Docs:** The README samples compile, and the example's `parseParamsFromGithub`, of the type of `getParameters` and of JSON values as they are, is passed, as GitHub answers the token request as a form
 * **Example:** Reads the credentials of a GitHub OAuth app from `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET`, where it had an app's id and secret in its source, and its `jwtKey` from `JWT_KEY`, or a random one
 * **Client without a secret:** Sends its `client_id` alone to the token endpoint, rather than an empty secret, by HTTP Basic or in the form
 * **Starting a login:** Redirects to the provider, where it answered `400`: a request with `code` or `error` is now the callback

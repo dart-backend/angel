@@ -41,12 +41,18 @@ String _requiredEnv(String name) {
 }
 
 /// Github doesn't properly follow the OAuth2 spec, so here's logic to parse their response.
-Map<String, dynamic> parseParamsFromGithub(MediaType contentType, String body) {
-  if (contentType.type == 'application') {
-    if (contentType.subtype == 'x-www-form-urlencoded') {
+///
+/// Of the type of `getParameters`; the values of JSON are kept as they are,
+/// as `expires_in` is a number.
+Map<String, dynamic> parseParamsFromGithub(
+  MediaType? contentType,
+  String body,
+) {
+  if (contentType?.type == 'application') {
+    if (contentType!.subtype == 'x-www-form-urlencoded') {
       return Uri.splitQueryString(body);
     } else if (contentType.subtype == 'json') {
-      return (json.decode(body) as Map).cast<String, String>();
+      return (json.decode(body) as Map).cast<String, dynamic>();
     }
   }
 
@@ -115,7 +121,7 @@ void main() async {
     },
 
     // We have to pass this parser function when working with Github.
-    //getParameters: parseParamsFromGithub,
+    getParameters: parseParamsFromGithub,
   );
 
   // Mount some routes
