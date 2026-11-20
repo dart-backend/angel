@@ -93,7 +93,7 @@ void main() {
     );
   });
 
-  test('a GET reads the registration, of no secret nor token', () async {
+  test('a GET reads the registration, of its token, not its secret', () async {
     var json = await register({..._web, 'client_name': 'App'});
     var response = await read(
       json['client_id'],
@@ -109,7 +109,14 @@ void main() {
       containsPair('registration_client_uri', json['registration_client_uri']),
     );
     expect(readBack, isNot(contains('client_secret')));
-    expect(readBack, isNot(contains('registration_access_token')));
+    // Required (RFC 7592 §3).
+    expect(
+      readBack,
+      containsPair(
+        'registration_access_token',
+        json['registration_access_token'],
+      ),
+    );
   });
 
   group('the registration access token', () {
@@ -159,7 +166,7 @@ void main() {
       // Of the same id, time and secret, which it does not give again.
       expect(updated['client_id_issued_at'], json['client_id_issued_at']);
       expect(updated, isNot(contains('client_secret')));
-      expect(updated, isNot(contains('registration_access_token')));
+      expect(updated, containsPair('registration_access_token', token));
       expect(
         jsonDecode((await read(id, token)).body),
         containsPair('client_name', 'Renamed'),

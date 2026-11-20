@@ -70,6 +70,18 @@ void main() {
     expect(json.decode(response.body), containsPair('scope', 'read write'));
   });
 
+  test('a refresh token is left out, but not what else it gives', () async {
+    var response = await client.post(
+      Uri.parse('/oauth2/token'),
+      headers: {'Authorization': 'Basic ${base64.encode('foo:bar'.codeUnits)}'},
+      body: {'grant_type': 'client_credentials', 'scope': 'extra'},
+    );
+    expect(response, hasStatus(200));
+    var body = json.decode(response.body) as Map;
+    expect(body, containsPair('custom', 'kept'));
+    expect(body, isNot(contains('refresh_token')));
+  });
+
   test('a token response, or an error, is not cached', () async {
     for (var secret in ['bar', 'wrong']) {
       var response = await client.post(
@@ -476,6 +488,7 @@ class _AuthorizationServer
     RequestContext req,
     ResponseContext res,
   ) async {
+    if (scopes.contains('extra')) return _CustomResponse();
     return AuthorizationTokenResponse(
       'foo',
       scope: scopes.isEmpty ? null : scopes,
@@ -493,4 +506,12 @@ class _AuthorizationServer
   ) async {
     return AuthorizationTokenResponse('bar');
   }
+}
+
+/// A response of a field of its own, and a refresh token.
+class _CustomResponse extends AuthorizationTokenResponse {
+  _CustomResponse() : super('foo', refreshToken: 'r');
+
+  @override
+  Map<String, dynamic> toJson() => {...super.toJson(), 'custom': 'kept'};
 }

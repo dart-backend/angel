@@ -221,6 +221,54 @@ void main() {
     });
   });
 
+  test('an implicit client registers, of a server of the token response '
+      'type', () async {
+    var implicitServer = _Server();
+    var app = Angel()
+      ..post(
+        '/oauth2/register',
+        implicitServer.registrationEndpoint(
+          ServerMetadata(
+            issuer: _issuer,
+            registrationEndpoint: _issuer.resolve('/oauth2/register'),
+            responseTypes: ['code', 'token'],
+            clientAuthMethods: ['none'],
+          ),
+        ),
+      );
+    app.errorHandler = (e, req, res) async {
+      res.statusCode = e.statusCode;
+      res.json(e.toJson());
+    };
+    var other = await connectTo(app);
+    try {
+      for (var body in [
+        {
+          'grant_types': ['implicit'],
+        },
+        {
+          'response_types': ['token'],
+        },
+      ]) {
+        var response = await other.post(
+          Uri.parse('/oauth2/register'),
+          headers: {
+            'content-type': 'application/json',
+            'authorization': 'Bearer initial',
+          },
+          body: json.encode({
+            ...web,
+            ...body,
+            'token_endpoint_auth_method': 'none',
+          }),
+        );
+        expect(response, hasStatus(201), reason: response.body);
+      }
+    } finally {
+      await other.close();
+    }
+  });
+
   group('the metadata', () {
     test('must be a JSON object', () async {
       expectRefused(await register('[]'), 'invalid_client_metadata');

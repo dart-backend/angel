@@ -66,6 +66,13 @@ void main() {
     });
   });
 
+  test('implicit, of the token response type', () {
+    var json = _Server().metadataOf(
+      ServerMetadata(issuer: _issuer, responseTypes: ['code', 'token']),
+    );
+    expect(json['grant_types_supported'], contains('implicit'));
+  });
+
   test('plain PKCE, if the server allows it', () {
     var json = _Server(allowsPlain: true)
         .metadataOf(ServerMetadata(issuer: _issuer));

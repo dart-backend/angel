@@ -400,7 +400,7 @@ Future<void> registerClient(
 
 The metadata is checked before `registerClient` is called; a refusal is a 400 of `invalid_client_metadata` or `invalid_redirect_uri`:
 
-- `grant_types`, `response_types`, `token_endpoint_auth_method` and `scope` must be of those of the server: of its `grantTypes`, with its device code and extension grants, of its `responseTypes`, `clientAuthMethods` and `scopes`. Their defaults are `authorization_code`, the response types of the grant types, `client_secret_basic`, and none.
+- `grant_types`, `response_types`, `token_endpoint_auth_method` and `scope` must be of those of the server: of its `grantTypes`, with its device code and extension grants, of its `responseTypes`, `clientAuthMethods` and `scopes`. Their defaults are `authorization_code`, or, of the `token` response type, `implicit` (and `authorization_code` of `code` too), the response types of the grant types, `client_secret_basic`, and none. A server of the `token` response type supports the `implicit` grant type.
 - The grant types and response types must be of each other: `authorization_code` of `code`, and `implicit` of `token` (RFC 7591 §2.1). A public client, of `none`, may not use `client_credentials`.
 - A client of a response type must register its `redirect_uris`: absolute, of no fragment, `https`, `http` only for `localhost`, or of the private-use scheme of a native app, a reverse domain name, such as `com.example.app:/cb` (RFC 8252 §7.1); any other scheme, as `myapp:` or `javascript:`, is refused.
 - The other metadata of RFC 7591 must be of its types; other metadata is kept. What the server issues, such as a `client_id`, and a `software_statement`, which it does not verify, are dropped.
@@ -420,8 +420,8 @@ router
 
 Store the `registrationAccessToken` of each registration hashed, as its secret, in `registerClient`, and implement `findRegistration`, which gives the stored registration of a client if the token, of the `Authorization: Bearer` header, is its, compared in constant time; or `null`, which is `invalid_token`, a 401, whether the client exists or not, so that it tells nothing of other clients. Its `clientSecret` and `registrationAccessToken` are `null`, as only their hashes are kept.
 
-- A GET gives the registration, without its secret nor its token.
-- A PUT replaces it, of all its metadata, as a registration is checked: what it does not give is no longer registered. It must give the `client_id` of the client, and may give its `client_secret`, which `verifyClient` verifies, but not what the server issues, such as the `registration_access_token`; or it is `invalid_client_metadata`. `updateClient` stores the update, whose secret and token are `null` unless they are new: of a client that is no longer public, or of `rotatesClientSecretOnUpdate` and `rotatesRegistrationAccessToken`, which issue new ones on each update.
+- A GET gives the registration, of its token, which the response must give (RFC 7592 §3), but not its secret, as only its hash is kept.
+- A PUT replaces it, of all its metadata, as a registration is checked: what it does not give is no longer registered. It must give the `client_id` of the client, and may give its `client_secret`, which `verifyClient` verifies, but not what the server issues, such as the `registration_access_token`; or it is `invalid_client_metadata`. `updateClient` stores the update, whose secret and token are `null` unless they are new: of a client that is no longer public, or of `rotatesClientSecretOnUpdate` and `rotatesRegistrationAccessToken`, which issue new ones on each update. The response gives the token, new or not.
 - A DELETE gives the registration to `deleteClient`, which deletes the client and revokes its tokens, and answers a 204.
 
 By default, `updateClient` and `deleteClient` refuse, `access_denied`, a 403, so that a server may give only reads.

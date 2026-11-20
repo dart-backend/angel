@@ -70,7 +70,9 @@ class ClientRegistration {
     this.registrationClientUri,
   });
 
-  /// This registration, of the values given in place of its own.
+  /// This registration, of the values given in place of its own. A `null`
+  /// keeps its value, so a field, such as [clientSecret], cannot be cleared
+  /// by it: build a [ClientRegistration] for that.
   ClientRegistration copyWith({
     String? clientId,
     String? clientSecret,

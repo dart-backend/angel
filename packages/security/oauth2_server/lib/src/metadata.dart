@@ -41,8 +41,9 @@ class ServerMetadata {
 
   /// The grant types that the server implements, such as `refresh_token`,
   /// `password` or `client_credentials`; the server adds those of its
-  /// [AuthorizationServer.extensionGrants], and the device code grant, if
-  /// [deviceAuthorizationEndpoint] is given.
+  /// [AuthorizationServer.extensionGrants], the device code grant, if
+  /// [deviceAuthorizationEndpoint] is given, and `implicit`, if
+  /// [responseTypes] has `token`.
   final Iterable<String> grantTypes;
 
   /// The client authentication methods of the token endpoint, and of the

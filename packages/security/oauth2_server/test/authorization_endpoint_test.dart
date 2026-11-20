@@ -160,6 +160,15 @@ void main() {
       });
     });
 
+    test('the query of the redirect URI is kept as it is', () {
+      var server = _Server(registers: true);
+      var uri = Uri.parse('https://app.example/cb?flag&x=a%20b');
+      expect(
+        server.completeAuthorizationCode('c', uri, state: 's').toString(),
+        'https://app.example/cb?flag&x=a%20b&code=c&state=s',
+      );
+    });
+
     test('the request may be a POST of a form', () async {
       var response = await client.post(
         Uri.parse('/oauth2/authorize'),

@@ -701,13 +701,19 @@ abstract class AuthorizationServer<Client, User> {
     String code,
     Uri redirectUri, {
     String? state,
-  }) => redirectUri.replace(
-    queryParameters: {
-      ...redirectUri.queryParametersAll,
-      'code': code,
-      if (state != null && state.isNotEmpty) 'state': state,
-    },
-  );
+  }) => _withParameters(redirectUri, {
+    'code': code,
+    if (state != null && state.isNotEmpty) 'state': state,
+  });
+
+  /// [uri] with [parameters] after its query, which is kept as it is
+  /// (RFC 6749 §3.1.2).
+  static Uri _withParameters(Uri uri, Map<String, String> parameters) {
+    var added = Uri(queryParameters: parameters).query;
+    return uri.replace(
+      query: uri.query.isEmpty ? added : '${uri.query}&$added',
+    );
+  }
 
   /// [redirectUri] with the parameters of [error], and [state] if any: in
   /// its query, or in its [fragment], as of an implicit grant (RFC 6749
@@ -726,9 +732,7 @@ abstract class AuthorizationServer<Client, User> {
     };
     return fragment
         ? redirectUri.replace(fragment: Uri(queryParameters: parameters).query)
-        : redirectUri.replace(
-            queryParameters: {...redirectUri.queryParametersAll, ...parameters},
-          );
+        : _withParameters(redirectUri, parameters);
   }
 
   /// The grant types that [tokenEndpoint] handles, besides
@@ -1453,7 +1457,8 @@ abstract class AuthorizationServer<Client, User> {
 
         switch (req.method.toUpperCase()) {
           case 'GET':
-            return current.toJson();
+            // Of its token, which the response must give (RFC 7592 §3).
+            return current.copyWith(registrationAccessToken: token).toJson();
           case 'PUT':
             var body = await _jsonObjectOf(req);
             if (body['client_id'] != clientId) {
@@ -1490,7 +1495,12 @@ abstract class AuthorizationServer<Client, User> {
               newToken: rotatesRegistrationAccessToken,
             );
             await updateClient(current, updated, req);
-            return updated.toJson();
+            return updated
+                .copyWith(
+                  registrationAccessToken:
+                      updated.registrationAccessToken ?? token,
+                )
+                .toJson();
           case 'DELETE':
             await deleteClient(current, req);
             if (res.isOpen) {
@@ -1618,13 +1628,23 @@ abstract class AuthorizationServer<Client, User> {
       }
     }
 
-    var grantTypes = strings('grant_types') ?? ['authorization_code'];
+    // Each, if not given, of the other, as they go together (RFC 7591
+    // §2.1): a client of no redirect grant need not give empty response
+    // types, nor one of the `token` response type the `implicit` grant.
+    var givenResponseTypes = strings('response_types');
+    var grantTypes =
+        strings('grant_types') ??
+        switch (givenResponseTypes) {
+          var types? when types.contains('token') => [
+            if (types.contains('code')) 'authorization_code',
+            'implicit',
+          ],
+          _ => ['authorization_code'],
+        };
     subset('grant_types', grantTypes, server['grant_types_supported'] as List);
 
-    // Of the grant types, if not given, so that a client of no redirect
-    // grant need not give an empty one.
     var responseTypes =
-        strings('response_types') ??
+        givenResponseTypes ??
         [
           if (grantTypes.contains('authorization_code')) 'code',
           if (grantTypes.contains('implicit')) 'token',
@@ -1758,6 +1778,8 @@ abstract class AuthorizationServer<Client, User> {
     String? url(Uri? uri) => uri?.toString();
     var grantTypes = {
       ...metadata.grantTypes,
+      // The grant type of the `token` response type (RFC 7591 §2.1).
+      if (metadata.responseTypes.contains('token')) 'implicit',
       if (metadata.deviceAuthorizationEndpoint != null) _deviceCodeGrantType,
       ...extensionGrants.keys,
     };
@@ -1992,23 +2014,17 @@ abstract class AuthorizationServer<Client, User> {
           }
           var scopes = await _getScopes(req, body: true);
           response = await clientCredentialsGrant(client, scopes, req, res);
-
-          if (response.refreshToken != null) {
-            // Remove refresh token
-            response = AuthorizationTokenResponse(
-              response.accessToken,
-              expiresIn: response.expiresIn,
-              scope: response.scope,
-            );
-          }
         } else {
           // Not of [_grantTypes], so of [extensionGrants].
           response = await extensionGrant!(req, res);
         }
       }
 
-      return <String, dynamic>{'token_type': AuthorizationTokenType.bearer}
+      var json = <String, dynamic>{'token_type': AuthorizationTokenType.bearer}
         ..addAll(response.toJson());
+      // Of no refresh token (RFC 6749 §4.4.3), but of all else it gives.
+      if (grantType == 'client_credentials') json.remove('refresh_token');
+      return json;
     } on AngelHttpException {
       rethrow;
     } catch (e, st) {
