@@ -30,14 +30,24 @@ void main() {
   late List<Map<String, String>> tokenRequests;
   late http.Client provider;
   var unreachable = false;
+  // Of a token endpoint that answers with an error page of its own.
+  var errorPage = false;
   var loginTimeout = const Duration(minutes: 10);
 
   setUp(() async {
     errors = [];
     tokenRequests = [];
     unreachable = false;
+    errorPage = false;
     provider = MockClient((request) async {
       if (unreachable) throw http.ClientException('down', request.url);
+      if (errorPage) {
+        return http.Response(
+          '<html>Down for maintenance</html>',
+          503,
+          headers: {'content-type': 'text/html'},
+        );
+      }
       tokenRequests.add(Uri.splitQueryString(request.body));
       return http.Response(
         json.encode({'access_token': 'at', 'token_type': 'bearer'}),
@@ -433,13 +443,69 @@ void main() {
     });
   });
 
+  test('a callback of no code is invalid_request', () async {
+    var (url, cookie) = await start();
+    var state = url.queryParameters['state'];
+    var got = await get('/auth/callback?code=&state=$state', cookie: cookie);
+    expect(got.status, 400);
+    expect(errors, ['invalid_request']);
+  });
+
+  test('a token response that cannot be read, as an error page of the '
+      'provider, is a 502', () async {
+    errorPage = true;
+    var (url, cookie) = await start();
+    var state = url.queryParameters['state'];
+    var got = await get(
+      '/auth/callback?code=c0de&state=$state',
+      cookie: cookie,
+    );
+    expect(got.status, 502);
+    expect(errors, isEmpty);
+  });
+
+  test('a callback of another state of the same start ends no login', () async {
+    var (url, cookie) = await start();
+    var state = url.queryParameters['state']!;
+    // The same first 12 characters, so the same cookie, but another state.
+    var other = '${state.substring(0, 12)}${'x' * 20}';
+    var got = await get(
+      '/auth/callback?code=c0de&state=$other',
+      cookie: cookie,
+    );
+    expect(errors, ['invalid_state']);
+    expect(got.cookies.where((c) => c.name == cookie.name), isEmpty);
+    // The login goes on.
+    got = await get('/auth/callback?code=c0de&state=$state', cookie: cookie);
+    expect(got.status, 200);
+  });
+
+  test('loginTimeout must be at least a second', () {
+    expect(
+      () => OAuth2Strategy<String>(
+        ExternalAuthOptions(
+          clientId: 'id',
+          clientSecret: 'secret',
+          redirectUri: 'https://app.example/cb',
+        ),
+        authorizationEndpoint,
+        tokenEndpoint,
+        (client, req, res) => 'alice',
+        (e, req, res) => null,
+        loginTimeout: const Duration(milliseconds: 900),
+      ),
+      throwsArgumentError,
+    );
+  });
+
   group('a login that timed out', () {
-    setUpAll(() => loginTimeout = Duration.zero);
+    // The shortest that is allowed.
+    setUpAll(() => loginTimeout = const Duration(seconds: 1));
     tearDownAll(() => loginTimeout = const Duration(minutes: 10));
 
     test('is refused', () async {
       var (url, cookie) = await start();
-      await Future.delayed(const Duration(milliseconds: 5));
+      await Future.delayed(const Duration(milliseconds: 1100));
       var state = url.queryParameters['state'];
       var got = await get(
         '/auth/callback?code=c0de&state=$state',

@@ -146,7 +146,9 @@ void main() async {
   );
 
   // Start listening.
-  await http.startServer('127.0.0.1', 3000);
+  // Of the host of the redirect URI, so that the browser sends the cookie
+  // of the login, which is of the host it was set of, to the callback.
+  await http.startServer('localhost', 3000);
   print('Listening on ${http.uri}');
   print('View user listing: ${http.uri}/users');
   print('Sign in via Github: ${http.uri}/auth/github');

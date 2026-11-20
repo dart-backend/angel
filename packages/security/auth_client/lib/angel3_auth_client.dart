@@ -149,6 +149,14 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
     if (maxLogins < 1) {
       throw ArgumentError.value(maxLogins, 'maxLogins', 'must be at least 1');
     }
+    // Of the whole seconds of the cookie's Max-Age, of which 0 is dropped.
+    if (loginTimeout < const Duration(seconds: 1)) {
+      throw ArgumentError.value(
+        loginTimeout,
+        'loginTimeout',
+        'must be at least a second',
+      );
+    }
     // Of settings with which every login fails, or which are dropped.
     if (_postsCallbacks && cookieSameSite != SameSite.none) {
       _log.warning(
@@ -286,7 +294,7 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
   ///
   /// Of [authorizationParameters], or of the query of
   /// [authorizationEndpoint], as it was asked for before them.
-  bool get _postsCallbacks =>
+  late final bool _postsCallbacks =
       (authorizationParameters['response_mode'] ??
           authorizationEndpoint.queryParameters['response_mode']) ==
       'form_post';
@@ -461,7 +469,10 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
         ? null
         : req.cookies.where((c) => c.name == name).firstOrNull?.value;
     // The login of the cookie, if this strategy signed it, timed out or not.
-    var stored = value == null ? null : _decodeLogin(value);
+    var decoded = value == null ? null : _decodeLogin(value);
+    // Of this state alone: the cookie is found by its start, which another
+    // state may share, whose callback must not end this login.
+    var stored = decoded?.state == state ? decoded : null;
     if (stored != null) {
       // Used once, or refused: a new login needs a new state.
       res.cookies.add(_expired(name!, stored.path));
@@ -477,12 +488,28 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
       except: name,
     );
 
-    if (login == null || state != login.state) {
+    if (login == null) {
       return _Failed(
         await onError(
           oauth2.AuthorizationException(
             'invalid_state',
             'The login expired, or was not started here.',
+            null,
+          ),
+          req,
+          res,
+        ),
+      );
+    }
+
+    // Of a provider that gave no error, a code is required: else, the
+    // callback is malformed, which is the client's.
+    if (!query.containsKey('error') && (query['code'] ?? '').isEmpty) {
+      return _Failed(
+        await onError(
+          oauth2.AuthorizationException(
+            'invalid_request',
+            'The callback has no "code" parameter.',
             null,
           ),
           req,
@@ -508,12 +535,12 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
         case oauth2.AuthorizationException():
           return _Failed(await onError(e, req, res));
         case FormatException():
-          return _Failed(
-            await onError(
-              oauth2.AuthorizationException('invalid_request', e.message, null),
-              req,
-              res,
-            ),
+          // Of the provider's token response, as the callback was checked:
+          // an error page of its own, as of an outage, is the provider's.
+          throw AngelHttpException(
+            statusCode: 502,
+            message: "The OAuth2 provider's token response cannot be read.",
+            error: e,
           );
         case http.ClientException():
           throw AngelHttpException(
