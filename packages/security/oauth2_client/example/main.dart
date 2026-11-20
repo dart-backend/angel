@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:angel3_auth/angel3_auth.dart';
 import 'package:angel3_framework/angel3_framework.dart';
@@ -13,11 +14,31 @@ var authorizationEndpoint = Uri.parse(
 
 var tokenEndpoint = Uri.parse('https://github.com/login/oauth/access_token');
 
-var options = ExternalAuthOptions(
-  clientId: '6caeaf5d4c04936ec34f',
-  clientSecret: '178360518cf9de4802e2346a4b6ebec525dc4427',
+/// The credentials of your own GitHub OAuth app, of the environment.
+///
+/// Register one at https://github.com/settings/developers, with the
+/// callback URL `http://localhost:3000/auth/github/callback`, and run:
+///
+/// ```sh
+/// GITHUB_CLIENT_ID=... GITHUB_CLIENT_SECRET=... dart run example/main.dart
+/// ```
+ExternalAuthOptions githubOptions() => ExternalAuthOptions(
+  clientId: _requiredEnv('GITHUB_CLIENT_ID'),
+  clientSecret: _requiredEnv('GITHUB_CLIENT_SECRET'),
   redirectUri: Uri.parse('http://localhost:3000/auth/github/callback'),
 );
+
+String _requiredEnv(String name) {
+  var value = Platform.environment[name];
+  if (value == null || value.isEmpty) {
+    stderr.writeln(
+      'Set $name to that of your GitHub OAuth app; see the comment of '
+      '`githubOptions` in example/main.dart.',
+    );
+    exit(64);
+  }
+  return value;
+}
 
 /// Github doesn't properly follow the OAuth2 spec, so here's logic to parse their response.
 Map<String, dynamic> parseParamsFromGithub(MediaType contentType, String body) {
@@ -35,6 +56,8 @@ Map<String, dynamic> parseParamsFromGithub(MediaType contentType, String body) {
 }
 
 void main() async {
+  var options = githubOptions();
+
   // Create the server instance.
   var app = Angel();
   var http = AngelHttp(app);
@@ -53,7 +76,9 @@ void main() async {
   var auth = AngelAuth<User>(
     serializer: (user) async => user.id ?? '',
     deserializer: (id) => mappedUserService.read(id),
-    jwtKey: 'oauth2 example secret',
+    // Of the environment, so that JWTs stay valid across restarts; or, by
+    // default, a random key of each run.
+    jwtKey: Platform.environment['JWT_KEY'],
     allowCookie: false,
   );
   await app.configure(auth.configureServer);

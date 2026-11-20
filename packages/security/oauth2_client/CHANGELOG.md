@@ -15,6 +15,7 @@
 
 ### Fixes in 10.0.0
 
+* **Example:** Reads the credentials of a GitHub OAuth app from `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET`, where it had an app's id and secret in its source, and its `jwtKey` from `JWT_KEY`, or a random one
 * **Client without a secret:** Sends its `client_id` alone to the token endpoint, rather than an empty secret, by HTTP Basic or in the form
 * **Starting a login:** Redirects to the provider, where it answered `400`: a request with `code` or `error` is now the callback
 * **PKCE:** Each login uses its own code verifier for the token exchange, which providers that check PKCE refused
