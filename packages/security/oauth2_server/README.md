@@ -92,7 +92,7 @@ await res.redirect(
 );
 ```
 
-Now, write logic that exchanges an authorization code for an access token, and optionally, a refresh token. `redirectUri` is `null` if the token request gives none: if the authorization request of the code gave one, the token request must give the same (RFC 6749 §4.1.3), so check it against the one stored with the code.
+Now, write logic that exchanges an authorization code for an access token, and optionally, a refresh token. `redirectUri` is `null` if the token request gives none: if the authorization request of the code gave one, the token request must give the same (RFC 6749 §4.1.3), so check it against the one stored with the code. The server checks only that the request gives a `code_verifier`: compare it with the challenge stored with the code, or PKCE protects nothing (see [PKCE](#pkce)).
 
 ```dart
 @override
@@ -102,7 +102,14 @@ Future<AuthorizationTokenResponse> exchangeAuthorizationCodeForToken(
   String? redirectUri,
   RequestContext req,
   ResponseContext res) async {
-    return AuthorizationTokenResponse('foo', refreshToken: 'bar');
+  var stored = await findCodeSomehow(authCode);
+  // Stored for every code, unless `requiresPkce` exempts its client and it
+  // sent no challenge.
+  if (stored.codeChallenge != null) {
+    Pkce(stored.codeChallengeMethod, stored.codeChallenge)
+        .validate(await getPkceCodeVerifier(req));
+  }
+  return AuthorizationTokenResponse('foo', refreshToken: 'bar');
 }
 ```
 
@@ -175,7 +182,7 @@ Earlier versions took a device code request at the `tokenEndpoint`, without a `g
 
 An authorization code grant must use [PKCE](https://tools.ietf.org/html/rfc7636) with the `S256` method, by default, as OAuth 2.1 and RFC 9700 have it, so that an intercepted authorization code cannot be redeemed:
 
-- The authorization request must give a `code_challenge`, of 43 to 128 characters, and `code_challenge_method=S256`, or it is `invalid_request`: one without a method is `plain`, which is refused.
+- The authorization request must give a `code_challenge`, of 43 characters, the base64url of a SHA-256 hash, and `code_challenge_method=S256`, or it is `invalid_request`: one without a method is `plain`, which is refused.
 - The token request must give a `code_verifier`, of 43 to 128 characters, or it is `invalid_request`.
 
 `package:oauth2` and other standard clients do so. A public client, such as a mobile app, which has no secret, sends its `client_id` in the form of its token request, which `verifyClient` receives as `null`.
@@ -404,6 +411,8 @@ The metadata is checked before `registerClient` is called; a refusal is a 400 of
 - The grant types and response types must be of each other: `authorization_code` of `code`, and `implicit` of `token` (RFC 7591 §2.1). A public client, of `none`, may not use `client_credentials`.
 - A client of a response type must register its `redirect_uris`: absolute, of no fragment, `https`, `http` only for `localhost`, or of the private-use scheme of a native app, a reverse domain name, such as `com.example.app:/cb` (RFC 8252 §7.1); any other scheme, as `myapp:` or `javascript:`, is refused.
 - The other metadata of RFC 7591 must be of its types; other metadata is kept. What the server issues, such as a `client_id`, and a `software_statement`, which it does not verify, are dropped.
+
+The server checks the metadata only when the client registers: it does not know which registration a `Client` is of, so the token and authorization endpoints do not enforce it. Check the stored `grantTypes`, `responseTypes` and `tokenEndpointAuthMethod` of the client in the grant methods, such as `clientCredentialsGrant`, and `requestAuthorizationCode`, and throw `unauthorized_client` (`ErrorResponse.unauthorizedClient`) for one it did not register.
 
 `registerClient` may throw `invalid_client_metadata` or `invalid_redirect_uri` itself, or change `registration.metadata` to register other values. The response is a 201 of the metadata, the `client_id`, the `client_secret`, which does not expire, and when they were issued. 
 ### Managing Registrations

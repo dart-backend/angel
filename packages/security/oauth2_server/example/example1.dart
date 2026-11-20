@@ -43,6 +43,9 @@ Future<void> main() async {
     });
 
   app.errorHandler = (e, req, res) async {
+    // Of the status of the error, such as 400, or 401 of `invalid_client`
+    // (RFC 6749 §5.2).
+    res.statusCode = e.statusCode;
     res.json(e.toJson());
   };
 

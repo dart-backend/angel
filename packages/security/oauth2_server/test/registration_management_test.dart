@@ -224,6 +224,24 @@ void main() {
       );
     });
 
+    test('an empty client_secret is none, as at the token endpoint', () async {
+      var json = await register({
+        ..._web,
+        'token_endpoint_auth_method': 'none',
+      });
+      var id = json['client_id'] as String;
+      var body = {
+        ..._web,
+        'client_id': id,
+        'token_endpoint_auth_method': 'none',
+        'client_secret': '',
+      };
+      expect(
+        await update(id, json['registration_access_token'], body),
+        hasStatus(200),
+      );
+    });
+
     test('is checked as a registration is', () async {
       var json = await register(_web);
       var id = json['client_id'] as String;

@@ -141,7 +141,23 @@ void main() {
           'code_challenge_method': 'S256',
         });
         expect(response, hasStatus(400));
-        expect(response.body, contains('43 to 128 characters'));
+        expect(response.body, contains('43 characters'));
+      });
+
+      test('an S256 challenge of more than 43 characters', () async {
+        for (var challenge in [
+          'a' * 44,
+          '${'a' * 42}.~',
+          'a' * 128,
+          '$_challenge==',
+        ]) {
+          var response = await authorize({
+            'code_challenge': challenge,
+            'code_challenge_method': 'S256',
+          });
+          expect(response, hasStatus(400), reason: challenge);
+          expect(response.body, contains('of an S256 challenge'));
+        }
       });
 
       test('an implicit grant has no PKCE', () async {

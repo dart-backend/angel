@@ -178,6 +178,10 @@ abstract class AuthorizationServer<Client, User> {
   /// `S256` challenge is the base64url of 32 bytes, of 43 characters.
   static final RegExp _rgxPkce = RegExp(r'^[A-Za-z0-9\-._~]{43,128}$');
 
+  /// An S256 challenge: the BASE64URL of a SHA-256 hash, of the one `=` of
+  /// padding that earlier clients gave it, or none (RFC 7636 §4.2).
+  static final RegExp _rgxS256Challenge = RegExp(r'^[A-Za-z0-9_-]{43}=?$');
+
   /// Throws `invalid_request` unless the authorization code request of
   /// [client] gives a `code_challenge` of [params] as [requiresPkce] and
   /// [allowsPlainPkce] have it.
@@ -210,13 +214,15 @@ abstract class AuthorizationServer<Client, User> {
             : 'The "code_challenge_method" parameter must be "S256".',
       );
     }
-    // Of the padding that earlier clients gave an S256 challenge; a plain
-    // one is the verifier, which has none.
-    var unpadded = s256 ? unpaddedChallenge(challenge) : challenge;
-    if (required && !_rgxPkce.hasMatch(unpadded)) {
+    // A plain challenge is the verifier.
+    if (required &&
+        !(s256 ? _rgxS256Challenge : _rgxPkce).hasMatch(challenge)) {
       throw invalid(
-        'The "code_challenge" parameter must be of 43 to 128 characters of '
-        'A-Z, a-z, 0-9, "-", ".", "_" and "~".',
+        s256
+            ? 'The "code_challenge" parameter must be of 43 characters of '
+                  'A-Z, a-z, 0-9, "-" and "_", of an S256 challenge.'
+            : 'The "code_challenge" parameter must be of 43 to 128 characters '
+                  'of A-Z, a-z, 0-9, "-", ".", "_" and "~".',
       );
     }
   }
@@ -900,16 +906,12 @@ abstract class AuthorizationServer<Client, User> {
       clientSecret = _formValue(body, 'client_secret');
     }
 
+    // Of one description, of an unknown client or a wrong secret, so that
+    // a guess of a secret does not confirm the client id. Ids are not
+    // secret (RFC 6749 §2.2), and the authorization endpoint names an
+    // unknown one.
     var client = await findClient(clientId);
-    if (client == null) {
-      throw _invalidClient(
-        res,
-        'Unknown client "$clientId".',
-        state,
-        challenge: challenge,
-      );
-    }
-    if (!await verifyClient(client, clientSecret)) {
+    if (client == null || !await verifyClient(client, clientSecret)) {
       throw _invalidClient(
         res,
         'Invalid client credentials.',
@@ -1475,9 +1477,10 @@ abstract class AuthorizationServer<Client, User> {
             }
             if (body['client_secret'] case var secret?) {
               var client = await findClient(clientId);
+              // An empty secret is none, as at the token endpoint.
               if (secret is! String ||
                   client == null ||
-                  !await verifyClient(client, secret)) {
+                  !await verifyClient(client, secret.isEmpty ? null : secret)) {
                 throw _invalidMetadata(
                   'The "client_secret" must be that of the client.',
                 );

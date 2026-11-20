@@ -121,6 +121,36 @@ void main() {
     body: {'grant_type': grantType},
   );
 
+  test('an unknown client and a wrong secret are alike', () async {
+    var unknown = await withBasic(
+      'Basic ${base64.encode('nobody:bar'.codeUnits)}',
+    );
+    var wrong = await withBasic(
+      'Basic ${base64.encode('foo:wrong'.codeUnits)}',
+    );
+    expectInvalidClient(unknown);
+    expectInvalidClient(wrong);
+    expect(unknown.body, wrong.body);
+
+    // Of the form, too.
+    Future<http.Response> withForm(String id, String secret) => client.post(
+      Uri.parse('/oauth2/token'),
+      body: {
+        'grant_type': 'client_credentials',
+        'client_id': id,
+        'client_secret': secret,
+      },
+    );
+    var unknownForm = await withForm('nobody', 'bar');
+    var wrongForm = await withForm('foo', 'wrong');
+    expect(unknownForm, hasStatus(401));
+    expect(unknownForm.body, wrongForm.body);
+    expect(
+      json.decode(wrongForm.body),
+      containsPair('error', 'invalid_client'),
+    );
+  });
+
   test('a malformed Basic header is invalid_client, not a 500', () async {
     expectInvalidClient(await withBasic('Basic !!!'));
   });
