@@ -1,257 +1,227 @@
 import 'dart:async';
 import 'dart:collection';
+import 'dart:convert';
 
 import 'package:angel3_framework/angel3_framework.dart';
-import 'package:angel3_framework/http.dart';
 import 'package:angel3_oauth2_server/angel3_oauth2_server.dart';
 import 'package:angel3_test/angel3_test.dart';
-import 'package:logging/logging.dart';
+import 'package:http/http.dart' as http;
 import 'package:test/test.dart';
 
 import 'common.dart';
 
+/// A verifier of 43 `a`s, and its S256 challenge.
+final _verifier = 'a' * 43;
+const _challenge = 'ZtNPunH49FD35FWYhT5Tv8I7vRKQJ8uxMaL0_9eHjNA';
+
 void main() {
-  Angel app;
-  late Uri authorizationEndpoint, tokenEndpoint;
   late TestClient testClient;
-  late AngelHttp http;
 
-  setUp(() async {
-    app = Angel();
+  /// Connects to a server, [lenient] of PKCE, as of 9.x, or by default.
+  Future<void> connect({required bool lenient}) async {
+    var app = Angel();
     app.container.registerSingleton(AuthCodes());
-
-    var server = _Server();
-
+    var server = _Server(lenient: lenient);
     app.group('/oauth2', (router) {
       router
         ..get('/authorize', server.authorizationEndpoint)
         ..post('/token', server.tokenEndpoint);
     });
+    app.errorHandler = (e, req, res) async {
+      res.statusCode = e.statusCode;
+      res.json(e.toJson());
+    };
+    testClient = await connectTo(app);
+  }
 
-    app.logger = Logger('angel')
-      ..onRecord.listen((rec) {
-        print(rec);
-        if (rec.error != null) print(rec.error);
-        if (rec.stackTrace != null) print(rec.stackTrace);
+  tearDown(() => testClient.close());
+
+  Future<http.Response> authorize(Map<String, String> query) => testClient.get(
+    Uri(
+      path: '/oauth2/authorize',
+      queryParameters: {
+        'response_type': 'code',
+        'client_id': 'foo',
+        'redirect_uri': 'https://freddie.mercu.ry',
+        ...query,
+      },
+    ),
+  );
+
+  Future<http.Response> token(Map<String, String> body) => testClient.post(
+    Uri.parse('/oauth2/token'),
+    headers: {
+      'authorization':
+          'Basic ${base64.encode('${pseudoApplication.id}:'
+              '${pseudoApplication.secret}'.codeUnits)}',
+    },
+    body: {
+      'grant_type': 'authorization_code',
+      'redirect_uri': 'https://freddie.mercu.ry',
+      'code': 'ok',
+      ...body,
+    },
+  );
+
+  void expectInvalidRequest(http.Response response, String description) {
+    expect(
+      response,
+      allOf(
+        hasStatus(400),
+        isJson({'error': 'invalid_request', 'error_description': description}),
+      ),
+    );
+  }
+
+  const mustBeS256 = 'The "code_challenge_method" parameter must be "S256".';
+
+  group('by default, S256 is required', () {
+    setUp(() => connect(lenient: false));
+
+    group('get auth code', () {
+      test('with an S256 challenge', () async {
+        for (var method in ['S256', 's256']) {
+          var response = await authorize({
+            'code_challenge': _challenge,
+            'code_challenge_method': method,
+          });
+          expect(response, allOf(hasStatus(200), isJson({'code': 'ok'})));
+        }
       });
 
-    http = AngelHttp(app);
-    var s = await http.startServer();
-    var url = 'http://${s.address.address}:${s.port}';
-    authorizationEndpoint = Uri.parse('$url/oauth2/authorize');
-    tokenEndpoint = Uri.parse('$url/oauth2/token');
+      test('with a padded S256 challenge, as earlier clients gave', () async {
+        var response = await authorize({
+          'code_challenge': '$_challenge=',
+          'code_challenge_method': 'S256',
+        });
+        expect(response, hasStatus(200));
+      });
 
-    testClient = await connectTo(app);
-  });
+      test('with challenge + implied plain', () async {
+        expectInvalidRequest(
+          await authorize({'code_challenge': _challenge}),
+          mustBeS256,
+        );
+      });
 
-  tearDown(() async {
-    await testClient.close();
-    await http.close();
-  });
-
-  group('get auth code', () {
-    test('with challenge + implied plain', () async {
-      var url = authorizationEndpoint.replace(
-        queryParameters: {
-          'response_type': 'code',
-          'client_id': 'freddie mercury',
-          'redirect_uri': 'https://freddie.mercu.ry',
-          'code_challenge': 'foo',
-        },
-      );
-      var response = await testClient.get(
-        url,
-        headers: {'accept': 'application/json'},
-      );
-      print(response.body);
-      expect(response, allOf(hasStatus(200), isJson({'code': 'ok'})));
-    });
-
-    test('with challenge + plain', () async {
-      var url = authorizationEndpoint.replace(
-        queryParameters: {
-          'response_type': 'code',
-          'client_id': 'freddie mercury',
-          'redirect_uri': 'https://freddie.mercu.ry',
-          'code_challenge': 'foo',
-          'code_challenge_method': 'plain',
-        },
-      );
-      var response = await testClient.get(
-        url,
-        headers: {'accept': 'application/json'},
-      );
-      print(response.body);
-      expect(response, allOf(hasStatus(200), isJson({'code': 'ok'})));
-    });
-
-    test('with challenge + s256', () async {
-      var url = authorizationEndpoint.replace(
-        queryParameters: {
-          'response_type': 'code',
-          'client_id': 'freddie mercury',
-          'redirect_uri': 'https://freddie.mercu.ry',
-          'code_challenge': 'foo',
-          'code_challenge_method': 's256',
-        },
-      );
-      var response = await testClient.get(
-        url,
-        headers: {'accept': 'application/json'},
-      );
-      print(response.body);
-      expect(response, allOf(hasStatus(200), isJson({'code': 'ok'})));
-    });
-
-    test('with challenge + wrong method', () async {
-      var url = authorizationEndpoint.replace(
-        queryParameters: {
-          'response_type': 'code',
-          'client_id': 'freddie mercury',
-          'redirect_uri': 'https://freddie.mercu.ry',
-          'code_challenge': 'foo',
-          'code_challenge_method': 'bar',
-        },
-      );
-      var response = await testClient.get(
-        url,
-        headers: {'accept': 'application/json'},
-      );
-      print(response.body);
-      expect(
-        response,
-        allOf(
-          hasStatus(400),
-          isJson({
-            'error': 'invalid_request',
-            'error_description': "The `code_challenge_method` parameter must be either 'plain' or 'S256'.",
+      test('with challenge + plain', () async {
+        expectInvalidRequest(
+          await authorize({
+            'code_challenge': _challenge,
+            'code_challenge_method': 'plain',
           }),
-        ),
-      );
+          mustBeS256,
+        );
+      });
+
+      test('with challenge + wrong method', () async {
+        expectInvalidRequest(
+          await authorize({
+            'code_challenge': _challenge,
+            'code_challenge_method': 'bar',
+          }),
+          mustBeS256,
+        );
+      });
+
+      test('with no challenge', () async {
+        expectInvalidRequest(
+          await authorize({}),
+          'Missing "code_challenge" parameter; PKCE is required.',
+        );
+      });
+
+      test('with a challenge that is too short', () async {
+        var response = await authorize({
+          'code_challenge': 'foo',
+          'code_challenge_method': 'S256',
+        });
+        expect(response, hasStatus(400));
+        expect(response.body, contains('43 to 128 characters'));
+      });
+
+      test('an implicit grant has no PKCE', () async {
+        var response = await authorize({'response_type': 'token'});
+        expect(response, hasStatus(200));
+      });
     });
 
-    test('with no challenge', () async {
-      var url = authorizationEndpoint.replace(
-        queryParameters: {
-          'response_type': 'code',
-          'client_id': 'freddie mercury',
-          'redirect_uri': 'https://freddie.mercu.ry',
-        },
-      );
-      var response = await testClient.get(
-        url,
-        headers: {'accept': 'application/json'},
-      );
-      print(response.body);
-      expect(
-        response,
-        allOf(
-          hasStatus(400),
-          isJson({
-            'error': 'invalid_request',
-            'error_description': 'Missing `code_challenge` parameter.',
-          }),
-        ),
-      );
+    group('get token', () {
+      test('with correct verifier', () async {
+        expect(
+          await token({'code_verifier': _verifier}),
+          allOf(
+            hasStatus(200),
+            isJson({'token_type': 'bearer', 'access_token': 'yes'}),
+          ),
+        );
+      });
+
+      test('with incorrect verifier', () async {
+        expect(
+          await token({'code_verifier': 'b' * 43}),
+          allOf(
+            hasStatus(400),
+            isJson({
+              'error': 'invalid_grant',
+              'error_description':
+                  'The given `code_verifier` parameter is invalid.',
+            }),
+          ),
+        );
+      });
+
+      test('with missing verifier', () async {
+        expectInvalidRequest(
+          await token({}),
+          'Missing "code_verifier" parameter; PKCE is required.',
+        );
+      });
+
+      test('with a verifier that is too short', () async {
+        var response = await token({'code_verifier': 'hello'});
+        expect(response, hasStatus(400));
+        expect(response.body, contains('43 to 128 characters'));
+      });
     });
   });
 
-  group('get token', () {
-    test('with correct verifier', () async {
-      var url = tokenEndpoint.replace(
-        userInfo: '${pseudoApplication.id}:${pseudoApplication.secret}',
-      );
-      var response = await testClient.post(
-        url,
-        headers: {
-          'accept': 'application/json',
-          // 'authorization': 'Basic ' + base64Url.encode(ascii.encode(url.userInfo))
-        },
-        body: {
-          'grant_type': 'authorization_code',
-          'client_id': 'foo',
-          'redirect_uri': 'https://freddie.mercu.ry',
-          'code': 'ok',
-          'code_verifier': 'hello',
-        },
-      );
+  group('lenient, as of requiresPkce and allowsPlainPkce', () {
+    setUp(() => connect(lenient: true));
 
-      print(response.body);
-      expect(
-        response,
-        allOf(
-          hasStatus(200),
-          isJson({'token_type': 'bearer', 'access_token': 'yes'}),
-        ),
-      );
+    test('plain, or no method, is accepted', () async {
+      for (var query in [
+        {'code_challenge': 'foo'},
+        {'code_challenge': 'foo', 'code_challenge_method': 'plain'},
+      ]) {
+        var response = await authorize(query);
+        expect(response, allOf(hasStatus(200), isJson({'code': 'ok'})));
+      }
     });
-    test('with incorrect verifier', () async {
-      var url = tokenEndpoint.replace(
-        userInfo: '${pseudoApplication.id}:${pseudoApplication.secret}',
-      );
-      var response = await testClient.post(
-        url,
-        headers: {
-          'accept': 'application/json',
-          // 'authorization': 'Basic ' + base64Url.encode(ascii.encode(url.userInfo))
-        },
-        body: {
-          'grant_type': 'authorization_code',
-          'client_id': 'foo',
-          'redirect_uri': 'https://freddie.mercu.ry',
-          'code': 'ok',
-          'code_verifier': 'foo',
-        },
-      );
 
-      print(response.body);
-      expect(
-        response,
-        allOf(
-          hasStatus(400),
-          isJson({
-            'error': 'invalid_grant',
-            'error_description':
-                'The given `code_verifier` parameter is invalid.',
-          }),
-        ),
+    test('no challenge is left to the server', () async {
+      // Of `req.container!.make<Pkce>()`, of requestAuthorizationCode.
+      expectInvalidRequest(
+        await authorize({}),
+        'Missing `code_challenge` parameter.',
       );
     });
 
-    test('with missing verifier', () async {
-      var url = tokenEndpoint.replace(
-        userInfo: '${pseudoApplication.id}:${pseudoApplication.secret}',
-      );
-      var response = await testClient.post(
-        url,
-        headers: {
-          'accept': 'application/json',
-          // 'authorization': 'Basic ' + base64Url.encode(ascii.encode(url.userInfo))
-        },
-        body: {
-          'grant_type': 'authorization_code',
-          'client_id': 'foo',
-          'redirect_uri': 'https://freddie.mercu.ry',
-          'code': 'ok',
-        },
-      );
-
-      print(response.body);
-      expect(
-        response,
-        allOf(
-          hasStatus(400),
-          isJson({
-            'error': 'invalid_request',
-            'error_description': 'Missing `code_verifier` parameter.',
-          }),
-        ),
+    test('a short plain verifier is left to the server', () async {
+      expect(await token({'code_verifier': 'hello'}), hasStatus(200));
+      expectInvalidRequest(
+        await token({}),
+        'Missing `code_verifier` parameter.',
       );
     });
   });
 }
 
 class _Server extends AuthorizationServer<PseudoApplication, Map> {
+  final bool lenient;
+
+  _Server({required this.lenient});
+
   @override
   FutureOr<PseudoApplication> findClient(String? clientId) {
     return pseudoApplication;
@@ -266,6 +236,12 @@ class _Server extends AuthorizationServer<PseudoApplication, Map> {
   }
 
   @override
+  bool requiresPkce(PseudoApplication client) => !lenient;
+
+  @override
+  bool get allowsPlainPkce => lenient;
+
+  @override
   Future requestAuthorizationCode(
     PseudoApplication client,
     String? redirectUri,
@@ -275,7 +251,7 @@ class _Server extends AuthorizationServer<PseudoApplication, Map> {
     ResponseContext res,
     bool implicit,
   ) async {
-    req.container!.make<Pkce>();
+    if (!implicit) req.container!.make<Pkce>();
     return {'code': 'ok'};
   }
 
@@ -288,7 +264,8 @@ class _Server extends AuthorizationServer<PseudoApplication, Map> {
     ResponseContext res,
   ) async {
     var codeVerifier = await getPkceCodeVerifier(req);
-    var pkce = Pkce('plain', 'hello');
+    // The challenge stored with the code.
+    var pkce = lenient ? Pkce('plain', 'hello') : Pkce('S256', _challenge);
     pkce.validate(codeVerifier);
     return AuthorizationTokenResponse('yes');
   }

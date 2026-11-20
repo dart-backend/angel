@@ -9,6 +9,12 @@ import 'package:test/test.dart';
 
 import 'common.dart';
 
+/// The PKCE of an authorization request, of a verifier of 43 `a`s.
+const _pkce = {
+  'code_challenge': 'ZtNPunH49FD35FWYhT5Tv8I7vRKQJ8uxMaL0_9eHjNA',
+  'code_challenge_method': 'S256',
+};
+
 /// The redirect URI registered for [pseudoApplication].
 final _registered = Uri.parse('http://foo.bar/cb?x=1');
 
@@ -31,8 +37,10 @@ void main() {
 
   tearDown(() => client.close());
 
-  Future<http.Response> authorize(Map<String, String> query) =>
-      client.get(Uri(path: '/oauth2/authorize', queryParameters: query));
+  /// An authorization request of [query], with PKCE, which is required.
+  Future<http.Response> authorize(Map<String, String> query) => client.get(
+    Uri(path: '/oauth2/authorize', queryParameters: {..._pkce, ...query}),
+  );
 
   group('with registered redirect URIs', () {
     setUp(() => connect(registers: true));
@@ -155,7 +163,12 @@ void main() {
     test('the request may be a POST of a form', () async {
       var response = await client.post(
         Uri.parse('/oauth2/authorize'),
-        body: {'response_type': 'code', 'client_id': 'foo', 'state': 's'},
+        body: {
+          ..._pkce,
+          'response_type': 'code',
+          'client_id': 'foo',
+          'state': 's',
+        },
       );
       expect(response, hasStatus(200));
       expect(json.decode(response.body), {'redirect_uri': '$_registered'});

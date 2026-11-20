@@ -131,7 +131,11 @@ void main() {
               'Basic ${base64.encode('${pseudoApplication.id}:'
                   '${pseudoApplication.secret}'.codeUnits)}',
         },
-        body: {'grant_type': 'authorization_code', 'code': 'c'},
+        body: {
+          'grant_type': 'authorization_code',
+          'code': 'c',
+          'code_verifier': 'a' * 43,
+        },
       );
       expect(response, hasStatus(200));
       expect(_Server.lastRedirectUri, isNull);

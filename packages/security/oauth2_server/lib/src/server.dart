@@ -144,6 +144,64 @@ abstract class AuthorizationServer<Client, User> {
   FutureOr<Uri?> registeredRedirectUri(Client client, String? redirectUri) =>
       null;
 
+  /// Whether an authorization code grant of [client] must use PKCE (RFC
+  /// 7636): its authorization request must give a `code_challenge`, and its
+  /// token request a `code_verifier`, each of 43 to 128 characters, or it is
+  /// `invalid_request`.
+  ///
+  /// By default, `true` for every client, as OAuth 2.1 and RFC 9700 have
+  /// it. Return `false` for clients that cannot use PKCE yet. Either way,
+  /// [exchangeAuthorizationCodeForToken] must still compare the verifier
+  /// with the challenge stored with the code, by [Pkce.validate].
+  FutureOr<bool> requiresPkce(Client client) => true;
+
+  /// Whether a `code_challenge_method` of `plain`, which is the challenge
+  /// itself, or none, which is `plain`, is accepted.
+  ///
+  /// By default, `false`: only `S256` is, as OAuth 2.1 and RFC 9700 have
+  /// it, as anyone who sees the authorization request can redeem its code
+  /// otherwise.
+  bool get allowsPlainPkce => false;
+
+  /// A `code_challenge` or a `code_verifier` (RFC 7636 §4.1, §4.2): an
+  /// `S256` challenge is the base64url of 32 bytes, of 43 characters.
+  static final RegExp _rgxPkce = RegExp(r'^[A-Za-z0-9\-._~]{43,128}$');
+
+  /// Throws `invalid_request` unless the authorization code request of
+  /// [client] gives a `code_challenge` of [params] as [requiresPkce] and
+  /// [allowsPlainPkce] have it.
+  Future<void> _checkPkceChallenge(
+    Client client,
+    Map<String, dynamic> params,
+    String state,
+  ) async {
+    AuthorizationException invalid(String description) =>
+        AuthorizationException(
+          ErrorResponse(ErrorResponse.invalidRequest, description, state),
+          statusCode: 400,
+        );
+
+    var required = await requiresPkce(client);
+    var challenge = params['code_challenge']?.toString() ?? '';
+    if (challenge.isEmpty) {
+      if (required) {
+        throw invalid('Missing "code_challenge" parameter; PKCE is required.');
+      }
+      return;
+    }
+    var method = params['code_challenge_method']?.toString() ?? 'plain';
+    if (!allowsPlainPkce && method != 'S256' && method != 's256') {
+      throw invalid('The "code_challenge_method" parameter must be "S256".');
+    }
+    // Of the padding that earlier clients gave an S256 challenge.
+    if (required && !_rgxPkce.hasMatch(challenge.replaceAll('=', ''))) {
+      throw invalid(
+        'The "code_challenge" parameter must be of 43 to 128 characters of '
+        'A-Z, a-z, 0-9, "-", ".", "_" and "~".',
+      );
+    }
+  }
+
   /// Prompt the currently logged-in user to grant or deny access to the [client].
   ///
   /// In many applications, this will entail showing a dialog to the user in question.
@@ -351,6 +409,10 @@ abstract class AuthorizationServer<Client, User> {
             ),
             statusCode: 400,
           );
+        }
+
+        if (responseType == 'code') {
+          await _checkPkceChallenge(client, params, state);
         }
 
         // Grab scopes
@@ -836,6 +898,23 @@ abstract class AuthorizationServer<Client, User> {
             throwIfEmpty: false,
           );
           if (redirectUri != null && redirectUri.isEmpty) redirectUri = null;
+          if (await requiresPkce(client)) {
+            var verifier = _formValue(body, 'code_verifier');
+            if (verifier == null || !_rgxPkce.hasMatch(verifier)) {
+              throw AuthorizationException(
+                ErrorResponse(
+                  ErrorResponse.invalidRequest,
+                  verifier == null
+                      ? 'Missing "code_verifier" parameter; PKCE is required.'
+                      : 'The "code_verifier" parameter must be of 43 to 128 '
+                            'characters of A-Z, a-z, 0-9, "-", ".", "_" and '
+                            '"~".',
+                  state,
+                ),
+                statusCode: 400,
+              );
+            }
+          }
           response = await exchangeAuthorizationCodeForToken(
             client,
             code,

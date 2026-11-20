@@ -168,11 +168,22 @@ A device code request to the `tokenEndpoint`, without a `grant_type`, as earlier
 
 ## PKCE
 
-In some cases, you will be using OAuth2 on a mobile device, or on some other
-public client, where the client cannot have a client
-secret.
+An authorization code grant must use [PKCE](https://tools.ietf.org/html/rfc7636) with the `S256` method, by default, as OAuth 2.1 and RFC 9700 have it, so that an intercepted authorization code cannot be redeemed:
 
-In such a case, you may consider using [PKCE](https://tools.ietf.org/html/rfc7636). Such a client sends its `client_id` in the form of its token request, with no secret, which `verifyClient` receives as `null`.
+- The authorization request must give a `code_challenge`, of 43 to 128 characters, and `code_challenge_method=S256`, or it is `invalid_request`: one without a method is `plain`, which is refused.
+- The token request must give a `code_verifier`, of 43 to 128 characters, or it is `invalid_request`.
+
+`package:oauth2` and other standard clients do so. A public client, such as a mobile app, which has no secret, sends its `client_id` in the form of its token request, which `verifyClient` receives as `null`.
+
+The server checks that PKCE is given; compare the verifier with the challenge stored with the code in `exchangeAuthorizationCodeForToken`, as below. For clients that cannot use PKCE, or `S256`, yet, relax it:
+
+```dart
+@override
+bool requiresPkce(PseudoApplication client) => client.id != 'legacy-app';
+
+@override
+bool get allowsPlainPkce => true;
+```
 
 The `authorizationEndpoint` injects a `Pkce` of the `code_challenge` and `code_challenge_method` of the request into its container. At the token endpoint, whose request has a `code_verifier` and no challenge, build a `Pkce` of the stored challenge instead, as below:
 
