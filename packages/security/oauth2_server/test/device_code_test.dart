@@ -45,7 +45,8 @@ void main() {
         body: {'client_id': 'barr'},
       );
       print(response.body);
-      expect(response, hasStatus(400));
+      expect(response, hasStatus(401));
+      expect(response.body, contains('invalid_client'));
     });
 
     test('valid client id, no scopes', () async {

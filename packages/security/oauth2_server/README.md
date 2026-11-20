@@ -40,6 +40,8 @@ class MyServer extends oauth2.AuthorizationServer<Client, User> {}
 
 Then, implement the `findClient` and `verifyClient` to ensure that the server class can not only identify a client application via a `client_id`, but that it can also verify its identity via a `client_secret`.
 
+At the token endpoint, a client authenticates with an `Authorization: Basic` header, or, without one, with `client_id` and `client_secret` in the form of the request (RFC 6749 §2.3.1). A public client, such as a mobile app with PKCE, gives its `client_id` alone, and `verifyClient` is given a `null` secret: return `true` for it only for clients that may have none. A client that is not authenticated gets `invalid_client`, a 401.
+
 ```dart
 class _Server extends AuthorizationServer<PseudoApplication, Map> {
   final Uuid _uuid = Uuid();
@@ -120,7 +122,7 @@ In some cases, you will be using OAuth2 on a mobile device, or on some other
 public client, where the client cannot have a client
 secret.
 
-In such a case, you may consider using [PKCE](https://tools.ietf.org/html/rfc7636).
+In such a case, you may consider using [PKCE](https://tools.ietf.org/html/rfc7636). Such a client sends its `client_id` in the form of its token request, with no secret, which `verifyClient` receives as `null`.
 
 Both the `authorizationEndpoint` and `tokenEndpoint` inject a `Pkce` factory into the request, so it
 can be used as follows:

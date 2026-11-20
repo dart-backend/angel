@@ -69,7 +69,7 @@ void main() {
   /// Expects [response] to be of a client that could not be authenticated.
   void expectInvalidClient(http.Response response) {
     expect(response, hasStatus(401));
-    expect(response.headers['www-authenticate'], 'Basic');
+    expect(response.headers['www-authenticate'], 'Basic realm="oauth2"');
     expect(json.decode(response.body), containsPair('error', 'invalid_client'));
   }
 
@@ -97,6 +97,78 @@ void main() {
       'Basic ${base64.encode(utf8.encode('dollar:a\$b:c'))}',
     );
     expect(response, hasStatus(200));
+  });
+
+  test('the credentials are percent-decoded, as package:oauth2 encodes '
+      'them', () async {
+    var response = await withBasic(
+      'Basic ${base64.encode(utf8.encode('space:p%40ss%20w%C3%B6rd+'))}',
+    );
+    expect(response, hasStatus(200));
+  });
+
+  test('the scheme is of any case, and the base64 may be unpadded', () async {
+    var unpadded = base64.encode('foo:bar'.codeUnits).replaceAll('=', '');
+    expect(await withBasic('basic $unpadded'), hasStatus(200));
+    expect(await withBasic('BASIC $unpadded'), hasStatus(200));
+  });
+
+  group('without an Authorization header', () {
+    Future<http.Response> withForm(Map<String, String> body) => client.post(
+      Uri.parse('/oauth2/token'),
+      body: {'grant_type': 'client_credentials', ...body},
+    );
+
+    test('a client is authenticated by the form', () async {
+      expect(
+        await withForm({'client_id': 'foo', 'client_secret': 'bar'}),
+        hasStatus(200),
+      );
+    });
+
+    test('a public client gives its id alone', () async {
+      expect(await withForm({'client_id': 'public'}), hasStatus(200));
+    });
+
+    test('a client with a secret must give it', () async {
+      var response = await withForm({'client_id': 'foo'});
+      expect(response, hasStatus(401));
+      expect(response.headers, isNot(contains('www-authenticate')));
+      expect(
+        json.decode(response.body),
+        containsPair('error', 'invalid_client'),
+      );
+    });
+
+    test('no credentials at all are a challenge of Basic', () async {
+      expectInvalidClient(await withForm({}));
+    });
+
+    test('an unknown grant type is unsupported_grant_type, before the client '
+        'is authenticated', () async {
+      var response = await client.post(
+        Uri.parse('/oauth2/token'),
+        body: {'grant_type': 'nope'},
+      );
+      expect(response, hasStatus(400));
+      expect(
+        json.decode(response.body),
+        containsPair('error', 'unsupported_grant_type'),
+      );
+    });
+
+    test('a device code request the server does not implement is '
+        'unsupported_grant_type', () async {
+      var response = await client.post(
+        Uri.parse('/oauth2/token'),
+        body: {'client_id': 'foo', 'state': 'xyz'},
+      );
+      expect(response, hasStatus(400));
+      expect(
+        json.decode(response.body),
+        containsPair('error', 'unsupported_grant_type'),
+      );
+    });
   });
 
   test('an unknown grant type is unsupported_grant_type', () async {
@@ -158,6 +230,10 @@ void main() {
 }
 
 const _dollarClient = PseudoApplication('dollar', r'a$b:c', 'http://foo.bar');
+const _spaceClient = PseudoApplication('space', 'p@ss wörd+', 'http://foo.bar');
+
+/// A client without a secret.
+const _publicClient = PseudoApplication('public', '', 'http://foo.bar');
 
 class _AuthorizationServer
     extends AuthorizationServer<PseudoApplication, PseudoUser> {
@@ -166,6 +242,8 @@ class _AuthorizationServer
     return switch (clientId) {
       'foo' => pseudoApplication,
       'dollar' => _dollarClient,
+      'space' => _spaceClient,
+      'public' => _publicClient,
       _ => null,
     };
   }
@@ -175,7 +253,10 @@ class _AuthorizationServer
     PseudoApplication client,
     String? clientSecret,
   ) async {
-    return client.secret == clientSecret;
+    // A public client gives no secret.
+    return identical(client, _publicClient)
+        ? clientSecret == null
+        : client.secret == clientSecret;
   }
 
   @override
