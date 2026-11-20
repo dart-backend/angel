@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_auth_server/angel3_auth_server.dart';
 import 'package:angel3_test/angel3_test.dart';
+import 'package:logging/logging.dart';
 import 'package:test/test.dart';
 
 import 'common.dart';
@@ -71,6 +72,19 @@ void main() {
       ServerMetadata(issuer: _issuer, responseTypes: ['code', 'token']),
     );
     expect(json['grant_types_supported'], contains('implicit'));
+  });
+
+  test('an extension grant of a built-in grant type is warned of, once', () {
+    var warnings = <String>[];
+    var sub = AuthorizationServer.logger.onRecord
+        .where((r) => r.level == Level.WARNING)
+        .listen((r) => warnings.add(r.message));
+    var server = _Clashing();
+    server.metadataOf(ServerMetadata(issuer: _issuer));
+    server.metadataOf(ServerMetadata(issuer: _issuer));
+    sub.cancel();
+    expect(warnings, hasLength(1));
+    expect(warnings.single, contains('"password"'));
   });
 
   test('plain PKCE, if the server allows it', () {
@@ -175,4 +189,12 @@ class _Server extends AuthorizationServer<PseudoApplication, PseudoUser> {
 
   @override
   bool verifyClient(PseudoApplication client, String? clientSecret) => true;
+}
+
+/// A server of an extension grant of `password`, which it implements itself.
+class _Clashing extends _Server {
+  @override
+  Map<String, ExtensionGrant> get extensionGrants => {
+    'password': (req, res) => AuthorizationTokenResponse('t'),
+  };
 }

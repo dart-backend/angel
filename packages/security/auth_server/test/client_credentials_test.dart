@@ -351,11 +351,31 @@ void main() {
     test('a client with a secret must give it', () async {
       var response = await withForm({'client_id': 'foo'});
       expect(response, hasStatus(401));
-      expect(response.headers, isNot(contains('www-authenticate')));
+      // As every 401 has (RFC 7235 §3.1), of the form's credentials too.
+      expect(response.headers['www-authenticate'], 'Basic realm="oauth2"');
       expect(
         json.decode(response.body),
         containsPair('error', 'invalid_client'),
       );
+    });
+
+    test('a body that cannot be read is invalid_request, not a 500', () async {
+      for (var (type, body) in [
+        ('application/json', '{"grant_type":'),
+        ('application/x-www-form-urlencoded', 'a=%E0%A4%A'),
+      ]) {
+        var response = await client.post(
+          Uri.parse('/oauth2/token'),
+          headers: {'content-type': type},
+          body: body,
+        );
+        expect(response, hasStatus(400), reason: type);
+        expect(
+          json.decode(response.body),
+          containsPair('error', 'invalid_request'),
+          reason: type,
+        );
+      }
     });
 
     test('no credentials at all are a challenge of Basic', () async {

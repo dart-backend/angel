@@ -5,7 +5,7 @@
 ### Breaking changes in 10.0.0
 
 * **Breaking:** Renamed from `angel3_oauth2`: depend on `angel3_auth_server`, and import `package:angel3_auth_server/angel3_auth_server.dart`
-* **Breaking:** A client that cannot be authenticated at the token endpoint, of no credentials, a malformed `Authorization: Basic` header, an unknown id or a wrong secret, is `invalid_client`, a 401, as RFC 6749 requires, where it was `unauthorized_client`, a 400; with `WWW-Authenticate: Basic realm="oauth2"` if it used the `Authorization` header, or gave no credentials. So is an unknown `client_id` of a device code request or grant
+* **Breaking:** A client that cannot be authenticated at the token endpoint, of no credentials, a malformed `Authorization: Basic` header, an unknown id or a wrong secret, is `invalid_client`, a 401, as RFC 6749 requires, where it was `unauthorized_client`, a 400; with `WWW-Authenticate: Basic realm="oauth2"`, as every 401 has (RFC 7235 §3.1), of credentials of the header or of the form alike. So is an unknown `client_id` of a device code request or grant
 * **Breaking:** A grant type that the server does not support, unknown or not implemented, is `unsupported_grant_type`, where it was `invalid_request` or `unsupported_response_type`. An unknown grant type is refused before the client is authenticated; a known one that the server does not implement is refused once the request is well-formed, so one without its `code`, `code_verifier` or `username` is still `invalid_request`
 * **Breaking:** A device code request is no longer taken at the token endpoint, without a `grant_type`: route a `deviceAuthorizationEndpoint` (RFC 8628 §3.1), and point device clients at it. A request to the token endpoint without a `grant_type`, or with an empty `grant_type=`, is `invalid_request`, before the client is authenticated. Without `requestDeviceCode`, a device authorization request is `unsupported_grant_type`, where it was `invalid_request`
 * **Breaking:** An empty client secret, of `Basic id:` or `client_secret=`, is given to `verifyClient` as `null`, as no secret is, where it was `''`: a `verifyClient` that compares it with a stored `''` must accept `null`
@@ -46,6 +46,8 @@
 * **PKCE verifier:** `getPkceCodeVerifier` throws `invalid_request` of an empty `code_verifier=`, as of a missing one, where it gave `''`
 * **Client credentials:** A refresh token is left out of the JSON of the response, where the response was rebuilt without it, and lost what a subclass of `AuthorizationTokenResponse` adds
 * **Token responses:** The responses of the token endpoint have `Cache-Control: no-store` and `Pragma: no-cache`, as RFC 6749 §5.1 requires, so that tokens are not cached
+* **Request bodies:** A body that cannot be read, as of malformed JSON or a truncated form, is `invalid_request`, a 400, at the token, device, revocation and introspection endpoints, and of a POST to the authorization endpoint, where malformed JSON was a 500 `server_error`, and a malformed form an error of the framework's own form
+* **Extension grants:** One of `extensionGrants` that names a grant type the server implements itself, such as `password`, which is never called, is warned about once: override the grant's method instead
 
 * **Scopes:** The password and refresh token grants read `scope` from the form of the request, where they read the query and got none. Scopes are separated by any spaces, and empty ones are dropped
 * **Authorization code:** The default `exchangeAuthorizationCodeForToken` reads `state` from the form, as the other grants do

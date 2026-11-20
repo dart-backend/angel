@@ -20,12 +20,37 @@ typedef ExtensionGrant = FutureOr<AuthorizationTokenResponse> Function(
 );
 
 /// The parameters of [req]: of its form if [body], or else of its query.
+///
+/// A body that cannot be read, as of malformed JSON or a truncated form, is
+/// `invalid_request` (RFC 6749 §5.2), not a 500, nor an error of the
+/// framework's own form.
 Future<Map<String, dynamic>> _paramsOf(
   RequestContext req, {
   bool body = false,
-}) async => body
-    ? await req.parseBody().then((_) => req.bodyAsMap)
-    : req.queryParameters;
+}) async {
+  if (!body) return req.queryParameters;
+  try {
+    await req.parseBody();
+  } on FormatException catch (e) {
+    throw _malformedBody(e.message);
+  } on AuthorizationException {
+    rethrow;
+  } on AngelHttpException catch (e) {
+    // The framework's 400 of a body it cannot read.
+    if (e.statusCode != 400) rethrow;
+    throw _malformedBody(e.message);
+  }
+  return req.bodyAsMap;
+}
+
+AuthorizationException _malformedBody(String reason) => AuthorizationException(
+  ErrorResponse(
+    ErrorResponse.invalidRequest,
+    'The body of the request cannot be read: $reason',
+    '',
+  ),
+  statusCode: 400,
+);
 
 Future<String?> _getParam(
   RequestContext req,
@@ -90,7 +115,33 @@ abstract class AuthorizationServer<Client, User> {
       'An internal server error occurred.';
 
   /// A [Map] of custom authorization token grants. Use this to handle custom grant types, perhaps even your own.
+  ///
+  /// Its keys are grant types other than those that the server implements
+  /// itself: `authorization_code`, `refresh_token`, `password`,
+  /// `client_credentials` and the device code grant. One of those is never
+  /// called, as the method of the grant is, which is warned about once:
+  /// override that method, such as [resourceOwnerPasswordCredentialsGrant],
+  /// instead.
   Map<String, ExtensionGrant> get extensionGrants => {};
+
+  /// The servers and grant types of which [extensionGrants] was warned to
+  /// name a grant that the server implements itself, once each.
+  static final Set<(Type, String)> _warnedClashes = {};
+
+  /// Warns of a key of [extensionGrants] that is a grant type of the server
+  /// itself, which is never called.
+  void _warnOfClashingGrants() {
+    for (var grantType in extensionGrants.keys) {
+      if (_grantTypes.contains(grantType) &&
+          _warnedClashes.add((runtimeType, grantType))) {
+        logger.warning(
+          'The extension grant "$grantType" of $runtimeType is never called, '
+          'as the server implements that grant itself: override its method '
+          'instead.',
+        );
+      }
+    }
+  }
 
   /// Finds the [Client] application associated with the given [clientId].
   FutureOr<Client>? findClient(String? clientId);
@@ -864,15 +915,14 @@ abstract class AuthorizationServer<Client, User> {
 
   /// The error of a client that could not be authenticated:
   /// `invalid_client`, a 401 (RFC 6749 §5.2), with the `WWW-Authenticate` of
-  /// Basic authentication if [challenge], as when the client used it, or
-  /// gave no credentials.
+  /// Basic authentication, which every 401 must have (RFC 7235 §3.1), of
+  /// credentials of the header or of the form alike.
   static AuthorizationException _invalidClient(
     ResponseContext res,
     String description,
-    String state, {
-    required bool challenge,
-  }) {
-    if (challenge) res.headers['www-authenticate'] = 'Basic realm="oauth2"';
+    String state,
+  ) {
+    res.headers['www-authenticate'] = 'Basic realm="oauth2"';
     return AuthorizationException(
       ErrorResponse(ErrorResponse.invalidClient, description, state),
       statusCode: 401,
@@ -896,19 +946,12 @@ abstract class AuthorizationServer<Client, User> {
     String state,
   ) async {
     var header = _basicHeader(req, state);
-    // Whether the client used Basic authentication, as of a challenge.
-    var challenge = header != null;
     String clientId;
     String? clientSecret;
     if (header != null) {
       var credentials = _basicCredentials(header);
       if (credentials == null) {
-        throw _invalidClient(
-          res,
-          'Invalid "Authorization" header.',
-          state,
-          challenge: true,
-        );
+        throw _invalidClient(res, 'Invalid "Authorization" header.', state);
       }
       (clientId, clientSecret) = credentials;
       // As of `Basic id:`, as of none.
@@ -921,8 +964,6 @@ abstract class AuthorizationServer<Client, User> {
           'No client credentials: no Basic "Authorization" header, nor '
           '"client_id" parameter.',
           state,
-          // Of no credentials, which Basic would give.
-          challenge: true,
         );
       }
       clientId = id;
@@ -935,12 +976,7 @@ abstract class AuthorizationServer<Client, User> {
     // unknown one.
     var client = await findClient(clientId);
     if (client == null || !await verifyClient(client, clientSecret)) {
-      throw _invalidClient(
-        res,
-        'Invalid client credentials.',
-        state,
-        challenge: challenge,
-      );
+      throw _invalidClient(res, 'Invalid client credentials.', state);
     }
     if (header != null) _checkFormOfHeader(body, clientId, clientSecret, state);
     return (client, clientSecret != null);
@@ -1143,7 +1179,6 @@ abstract class AuthorizationServer<Client, User> {
           res,
           'A client without a secret may not introspect tokens.',
           state,
-          challenge: true,
         );
       }
       if (!await mayIntrospect(caller, req)) {
@@ -1803,6 +1838,7 @@ abstract class AuthorizationServer<Client, User> {
   /// The metadata of the server (RFC 8414 §2) of [metadata], as JSON: its
   /// endpoints, and what it supports, of [metadata] and of itself.
   Map<String, dynamic> metadataOf(ServerMetadata metadata) {
+    _warnOfClashingGrants();
     String? url(Uri? uri) => uri?.toString();
     var grantTypes = {
       ...metadata.grantTypes,
@@ -1927,6 +1963,7 @@ abstract class AuthorizationServer<Client, User> {
       // not be to learn of either.
       var grantType = (await _getParam(req, 'grant_type', state, body: true))!;
 
+      _warnOfClashingGrants();
       ExtensionGrant? extensionGrant;
       if (!_grantTypes.contains(grantType)) {
         extensionGrant =

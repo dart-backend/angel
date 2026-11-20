@@ -19,6 +19,7 @@ A class containing handlers that can be used within [Angel3](https://angel3-fram
   - [Introspecting Tokens](#introspecting-tokens)
   - [Server Metadata](#server-metadata)
   - [Client Registration](#client-registration)
+    - [Managing Registrations](#managing-registrations)
 
 ## Installation
 
@@ -440,7 +441,8 @@ The metadata is checked before `registerClient` is called; a refusal is a 400 of
 
 The server checks the metadata only when the client registers: it does not know which registration a `Client` is of, so the token and authorization endpoints do not enforce it. Check the stored `grantTypes`, `responseTypes` and `tokenEndpointAuthMethod` of the client in the grant methods, such as `clientCredentialsGrant`, and `requestAuthorizationCode`, and throw `unauthorized_client` (`ErrorResponse.unauthorizedClient`) for one it did not register.
 
-`registerClient` may throw `invalid_client_metadata` or `invalid_redirect_uri` itself, or change `registration.metadata` to register other values, such as a `client_name`. Refuse a value that the server checks, such as a grant type, instead of changing it in `metadata`: the response gives those of the fields of the registration, `grantTypes` and so on, which are what is stored. The response is a 201 of the metadata, the `client_id`, the `client_secret`, which does not expire, and when they were issued. 
+`registerClient` may throw `invalid_client_metadata` or `invalid_redirect_uri` itself, or change `registration.metadata` to register other values, such as a `client_name`. Refuse a value that the server checks, such as a grant type, instead of changing it in `metadata`: the response gives those of the fields of the registration, `grantTypes` and so on, which are what is stored. The response is a 201 of the metadata, the `client_id`, the `client_secret`, which does not expire, and when they were issued.
+
 ### Managing Registrations
 
 A client may then read, update and delete its registration (RFC 7592, which is Experimental), if `managesClientRegistrations` is `true`. The `registrationEndpoint` then also issues it a `registration_access_token`, and its `registration_client_uri`, the `registrationEndpoint` of the `ServerMetadata`, followed by its `client_id`, which `registrationManagementEndpoint` serves:
@@ -460,4 +462,3 @@ Store the `registrationAccessToken` of each registration hashed, as its secret, 
 - A DELETE gives the registration to `deleteClient`, which deletes the client and revokes its tokens, and answers a 204.
 
 By default, `updateClient` and `deleteClient` refuse, `access_denied`, a 403, so that a server may give only reads.
-
