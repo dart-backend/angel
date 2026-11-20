@@ -68,7 +68,7 @@ class Pkce {
       // BASE64URL without padding (RFC 7636); a padded challenge, which
       // earlier versions required, is accepted too.
       foreignChallenge = base64Url
-          .encode(sha256.convert(ascii.encode(codeVerifier)).bytes)
+          .encode(sha256.convert(utf8.encode(codeVerifier)).bytes)
           .replaceAll('=', '');
       challenge = challenge.replaceAll('=', '');
     } else {

@@ -58,8 +58,14 @@ Future<Iterable<String>> _getScopes(
     data = req.queryParameters;
   }
 
-  return data['scope']?.toString().split(' ') ?? [];
+  // Separated by spaces (RFC 6749 §3.3), of which there may be several.
+  return [
+    for (var scope in data['scope']?.toString().split(_whitespace) ?? [])
+      if (scope.isNotEmpty) scope,
+  ];
 }
+
+final _whitespace = RegExp(r'\s+');
 
 /// An OAuth2 authorization server, which issues access tokens to third parties.
 abstract class AuthorizationServer<Client, User> {
@@ -147,12 +153,13 @@ abstract class AuthorizationServer<Client, User> {
     String? redirectUri,
     RequestContext req,
     ResponseContext res,
-  ) {
+  ) async {
+    var body = await req.parseBody().then((_) => req.bodyAsMap);
     throw AuthorizationException(
       ErrorResponse(
-        ErrorResponse.unsupportedResponseType,
+        ErrorResponse.unsupportedGrantType,
         'Authorization code grants are not supported.',
-        req.uri!.queryParameters['state'] ?? '',
+        body['state']?.toString() ?? '',
       ),
       statusCode: 400,
     );
@@ -169,7 +176,7 @@ abstract class AuthorizationServer<Client, User> {
     var body = await req.parseBody().then((_) => req.bodyAsMap);
     throw AuthorizationException(
       ErrorResponse(
-        ErrorResponse.unsupportedResponseType,
+        ErrorResponse.unsupportedGrantType,
         'Refreshing authorization tokens is not supported.',
         body['state']?.toString() ?? '',
       ),
@@ -189,7 +196,7 @@ abstract class AuthorizationServer<Client, User> {
     var body = await req.parseBody().then((_) => req.bodyAsMap);
     throw AuthorizationException(
       ErrorResponse(
-        ErrorResponse.unsupportedResponseType,
+        ErrorResponse.unsupportedGrantType,
         'Resource owner password credentials grants are not supported.',
         body['state']?.toString() ?? '',
       ),
@@ -206,7 +213,7 @@ abstract class AuthorizationServer<Client, User> {
     var body = await req.parseBody().then((_) => req.bodyAsMap);
     throw AuthorizationException(
       ErrorResponse(
-        ErrorResponse.unsupportedResponseType,
+        ErrorResponse.unsupportedGrantType,
         'Client credentials grants are not supported.',
         body['state']?.toString() ?? '',
       ),
@@ -243,7 +250,7 @@ abstract class AuthorizationServer<Client, User> {
     var body = await req.parseBody().then((_) => req.bodyAsMap);
     throw AuthorizationException(
       ErrorResponse(
-        ErrorResponse.unsupportedResponseType,
+        ErrorResponse.unsupportedGrantType,
         'Device code grants are not supported.',
         body['state']?.toString() ?? '',
       ),
@@ -354,8 +361,40 @@ abstract class AuthorizationServer<Client, User> {
     }
   }
 
-  static final RegExp _rgxBasic = RegExp(r'Basic ([^$]+)');
-  static final RegExp _rgxBasicAuth = RegExp(r'([^:]*):([^$]*)');
+  static final RegExp _rgxBasic = RegExp(r'^Basic\s+(\S+)\s*$');
+
+  /// The client id and secret of an `Authorization: Basic` [header], split
+  /// at the first `:`, as an id has none, but a secret may; or `null` if it
+  /// has none or is malformed.
+  static (String, String)? _basicCredentials(String? header) {
+    var match = _rgxBasic.firstMatch(header ?? '');
+    if (match == null) return null;
+    String credentials;
+    try {
+      // Either base64 alphabet; the credentials are UTF-8 (RFC 7617).
+      credentials = utf8.decode(base64.decode(match[1]!));
+    } on FormatException {
+      return null;
+    }
+    var colon = credentials.indexOf(':');
+    if (colon < 0) return null;
+    return (credentials.substring(0, colon), credentials.substring(colon + 1));
+  }
+
+  /// The error of a client that could not be authenticated by its
+  /// `Authorization` header: `invalid_client`, a 401 with the
+  /// `WWW-Authenticate` of Basic authentication (RFC 6749 §5.2).
+  static AuthorizationException _invalidClient(
+    ResponseContext res,
+    String description,
+    String state,
+  ) {
+    res.headers['www-authenticate'] = 'Basic';
+    return AuthorizationException(
+      ErrorResponse(ErrorResponse.invalidClient, description, state),
+      statusCode: 401,
+    );
+  }
 
   /// A request handler that either exchanges authorization codes for authorization tokens,
   /// or refreshes authorization tokens.
@@ -383,55 +422,23 @@ abstract class AuthorizationServer<Client, User> {
 
       if (grantType != 'urn:ietf:params:oauth:grant-type:device_code' &&
           grantType != null) {
-        var match = _rgxBasic.firstMatch(
-          req.headers!.value('authorization') ?? '',
+        var credentials = _basicCredentials(
+          req.headers!.value('authorization'),
         );
-
-        if (match != null) {
-          String credentials;
-          try {
-            // Either base64 alphabet; the credentials are UTF-8 (RFC 7617).
-            credentials = utf8.decode(base64.decode(match[1]!));
-          } on FormatException {
-            credentials = '';
-          }
-          match = _rgxBasicAuth.firstMatch(credentials);
-        }
-
-        if (match == null) {
-          throw AuthorizationException(
-            ErrorResponse(
-              ErrorResponse.unauthorizedClient,
-              'Invalid or no "Authorization" header.',
-              state,
-            ),
-            statusCode: 400,
+        if (credentials == null) {
+          throw _invalidClient(
+            res,
+            'Invalid or no "Authorization" header.',
+            state,
           );
-        } else {
-          var clientId = match[1], clientSecret = match[2];
-          client = await findClient(clientId);
-
-          if (client == null) {
-            throw AuthorizationException(
-              ErrorResponse(
-                ErrorResponse.unauthorizedClient,
-                'Invalid "client_id" parameter.',
-                state,
-              ),
-              statusCode: 400,
-            );
-          }
-
-          if (!await verifyClient(client, clientSecret)) {
-            throw AuthorizationException(
-              ErrorResponse(
-                ErrorResponse.unauthorizedClient,
-                'Invalid "client_secret" parameter.',
-                state,
-              ),
-              statusCode: 400,
-            );
-          }
+        }
+        var (clientId, clientSecret) = credentials;
+        client = await findClient(clientId);
+        if (client == null) {
+          throw _invalidClient(res, 'Unknown client "$clientId".', state);
+        }
+        if (!await verifyClient(client, clientSecret)) {
+          throw _invalidClient(res, 'Invalid client secret.', state);
         }
       }
 
@@ -457,7 +464,7 @@ abstract class AuthorizationServer<Client, User> {
           state,
           body: true,
         );
-        var scopes = await _getScopes(req);
+        var scopes = await _getScopes(req, body: true);
         response = await refreshAuthorizationToken(
           client,
           refreshToken,
@@ -468,7 +475,7 @@ abstract class AuthorizationServer<Client, User> {
       } else if (grantType == 'password') {
         var username = await _getParam(req, 'username', state, body: true);
         var password = await _getParam(req, 'password', state, body: true);
-        var scopes = await _getScopes(req);
+        var scopes = await _getScopes(req, body: true);
         response = await resourceOwnerPasswordCredentialsGrant(
           client,
           username,
@@ -488,8 +495,8 @@ abstract class AuthorizationServer<Client, User> {
             scope: response.scope,
           );
         }
-      } else if (extensionGrants.containsKey(grantType)) {
-        response = await extensionGrants[grantType!]!(req, res);
+      } else if (extensionGrants[grantType] case var grant?) {
+        response = await grant(req, res);
       } else if (grantType == null) {
         // This is a device code grant.
         var clientId = await _getParam(req, 'client_id', state, body: true);
@@ -546,8 +553,8 @@ abstract class AuthorizationServer<Client, User> {
 
       throw AuthorizationException(
         ErrorResponse(
-          ErrorResponse.invalidRequest,
-          'Invalid or no "grant_type" parameter provided',
+          ErrorResponse.unsupportedGrantType,
+          'Unsupported "grant_type" parameter: "$grantType".',
           state,
         ),
         statusCode: 400,

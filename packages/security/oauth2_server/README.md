@@ -103,7 +103,7 @@ The `authorizationEndpoint` and `tokenEndpoint` handle all OAuth2 grant types.
 
 ## Other Grants
 
-By default, all OAuth2 grant methods will throw a `400 Bad Request` error (an `unsupported_response_type` OAuth2 error). To support any specific grant type, all you need to do is implement the method. The following are available, not including authorization code grant support (mentioned above):
+By default, all OAuth2 grant methods will throw a `400 Bad Request` error: an `unsupported_grant_type` OAuth2 error at the token endpoint, or `unsupported_response_type` for an authorization request. To support any specific grant type, all you need to do is implement the method. The following are available, not including authorization code grant support (mentioned above):
 
 - `refreshAuthorizationToken`
 - `resourceOwnerPasswordCredentialsGrant`

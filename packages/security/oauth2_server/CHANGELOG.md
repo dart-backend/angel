@@ -5,11 +5,15 @@
 ### Breaking changes in 10.0.0
 
 * **Breaking:** Renamed from `angel3_oauth2`: depend on `angel3_oauth2_server`, and import `package:angel3_oauth2_server/angel3_oauth2_server.dart`
+* **Breaking:** A client that cannot be authenticated at the token endpoint, of no or a malformed `Authorization` header, an unknown id or a wrong secret, is `invalid_client`, a 401 with `WWW-Authenticate: Basic`, as RFC 6749 requires, where it was `unauthorized_client`, a 400
+* **Breaking:** A grant type that the server does not support, unknown or not implemented, is `unsupported_grant_type`, where it was `invalid_request` or `unsupported_response_type`
 
 ### Fixes in 10.0.0
 
-* **PKCE:** `code_challenge_method=S256`, as RFC 7636 spells it, is accepted, and an S256 challenge is compared without its `=` padding, so standard clients are no longer refused with `invalid_grant`; `s256` and padded challenges still work. The challenge is compared in constant time
-* **Client authentication:** The `Basic` header is decoded as UTF-8, where non-ASCII credentials were garbled, and a malformed one is `unauthorized_client` instead of a 500
+* **Scopes:** The password and refresh token grants read `scope` from the form of the request, where they read the query and got none. Scopes are separated by any spaces, and empty ones are dropped
+* **Authorization code:** The default `exchangeAuthorizationCodeForToken` reads `state` from the form, as the other grants do
+* **PKCE:** `code_challenge_method=S256`, as RFC 7636 spells it, is accepted, and an S256 challenge is compared without its `=` padding, so standard clients are no longer refused with `invalid_grant`; `s256` and padded challenges still work. The challenge is compared in constant time. A `code_verifier` of non-ASCII characters is `invalid_grant`, where it was a 500
+* **Client authentication:** The `Basic` header is decoded as UTF-8, where non-ASCII credentials were garbled, and a malformed one is `invalid_client` instead of a 500. A client secret may have a `$`, which cut it short, and only a header of the `Basic` scheme is read
 * **Authorization endpoint:** An unknown `client_id` is `unauthorized_client`, where it was a 500
 * **Example:** `example1.dart` starts a server, without importing from `test/`
 * **Dependencies:** Removed the unused `angel3_container` and `angel3_validate`

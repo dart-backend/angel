@@ -52,6 +52,19 @@ void main() {
     expect(client.credentials.refreshToken, 'bar');
   });
 
+  test('reads the scopes from the form, without empty ones', () async {
+    var client = await oauth2.resourceOwnerPasswordGrant(
+      tokenEndpoint,
+      'michael',
+      'jackson',
+      identifier: 'foo',
+      secret: 'bar',
+      scopes: ['read', '', 'write'],
+    );
+    client.close();
+    expect(_AuthorizationServer.lastScopes, ['read', 'write']);
+  });
+
   test('force correct username+password', () async {
     oauth2.Client? client;
 
@@ -90,6 +103,9 @@ void main() {
 
 class _AuthorizationServer
     extends AuthorizationServer<PseudoApplication, PseudoUser> {
+  /// The scopes of the last password grant.
+  static Iterable<String>? lastScopes;
+
   @override
   PseudoApplication? findClient(String? clientId) {
     return clientId == pseudoApplication.id ? pseudoApplication : null;
@@ -123,6 +139,7 @@ class _AuthorizationServer
     RequestContext req,
     ResponseContext res,
   ) async {
+    lastScopes = scopes;
     var user = pseudoUsers.firstWhereOrNull(
       (u) => u.username == username && u.password == password,
     );

@@ -37,6 +37,15 @@ class ErrorResponse {
   /// The client is not authorized to request an authorization code using this method.
   static const String unauthorizedClient = 'unauthorized_client';
 
+  /// The client could not be authenticated at the token endpoint: it is
+  /// unknown, gave no or a malformed `Authorization` header, or the wrong
+  /// secret (RFC 6749 §5.2).
+  static const String invalidClient = 'invalid_client';
+
+  /// The authorization server does not support the grant type of a request
+  /// to the token endpoint (RFC 6749 §5.2).
+  static const String unsupportedGrantType = 'unsupported_grant_type';
+
   /// The resource owner or authorization server denied the request.
   static const String accessDenied = 'access_denied';
 

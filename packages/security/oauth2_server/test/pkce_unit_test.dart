@@ -34,6 +34,19 @@ void main() {
     );
   });
 
+  test('a verifier of non-ASCII characters is refused, not an error', () {
+    expect(
+      () => Pkce('S256', unpadded).validate('caf\u00e9$verifier'),
+      throwsA(
+        isA<AuthorizationException>().having(
+          (e) => e.errorResponse.code,
+          'code',
+          ErrorResponse.invalidGrant,
+        ),
+      ),
+    );
+  });
+
   test('an unknown method is refused', () {
     expect(
       () => Pkce.fromJson({
