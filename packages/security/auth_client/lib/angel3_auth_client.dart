@@ -146,9 +146,11 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
     this.maxLogins = 5,
     List<int>? cookieKey,
   }) : _cookieKey = cookieKey ?? _defaultCookieKey(options.clientSecret) {
+    if (maxLogins < 1) {
+      throw ArgumentError.value(maxLogins, 'maxLogins', 'must be at least 1');
+    }
     // Of settings with which every login fails, or which are dropped.
-    if (authorizationParameters['response_mode'] == 'form_post' &&
-        cookieSameSite != SameSite.none) {
+    if (_postsCallbacks && cookieSameSite != SameSite.none) {
       _log.warning(
         'With response_mode=form_post, the provider posts its callback '
         'across sites, which a cookie of SameSite.$cookieSameSite is not '
@@ -231,11 +233,14 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
         );
 
   /// The parameters that [authorizationEndpoint] repeats, but those of the
-  /// strategy.
+  /// strategy, and those that [authorizationParameters] replace.
   late final Map<String, List<String>> _repeatedParameters = {
     for (var MapEntry(:key, :value)
         in authorizationEndpoint.queryParametersAll.entries)
-      if (value.length > 1 && !_ownParameters.contains(key)) key: value,
+      if (value.length > 1 &&
+          !_ownParameters.contains(key) &&
+          !authorizationParameters.containsKey(key))
+        key: value,
   };
 
   /// The parameters of the authorization URL that the strategy gives, which
@@ -278,8 +283,13 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
 
   /// Whether the provider posts its callback, of `response_mode=form_post`,
   /// so that a body that cannot be read is of a callback.
+  ///
+  /// Of [authorizationParameters], or of the query of
+  /// [authorizationEndpoint], as it was asked for before them.
   bool get _postsCallbacks =>
-      authorizationParameters['response_mode'] == 'form_post';
+      (authorizationParameters['response_mode'] ??
+          authorizationEndpoint.queryParameters['response_mode']) ==
+      'form_post';
 
   /// The failure of a request whose body cannot be read, for [unreadable].
   Future<_Outcome> _unreadable(
@@ -372,6 +382,7 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
           'v': verifier,
           't': DateTime.now().millisecondsSinceEpoch,
           'p': path,
+          'c': options.clientId,
         }),
         path,
       )..maxAge = loginTimeout.inSeconds,
@@ -446,14 +457,25 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
     // other, as of a crafted link, the name of its cookie may not be valid.
     var ours = state != null && _rgxState.hasMatch(state);
     var name = ours ? _cookieNameOf(state) : null;
-    var login = ours ? _readLogin(req, state) : null;
-    if (login != null) {
-      // Used once: a new login needs a new state.
-      res.cookies.add(_expired(name!, login.path));
+    var value = name == null
+        ? null
+        : req.cookies.where((c) => c.name == name).firstOrNull?.value;
+    // The login of the cookie, if this strategy signed it, timed out or not.
+    var stored = value == null ? null : _decodeLogin(value);
+    if (stored != null) {
+      // Used once, or refused: a new login needs a new state.
+      res.cookies.add(_expired(name!, stored.path));
     }
-    // Of the logins that were started, and are kept, but the newest, as
-    // when they were started.
-    _expireOlderLogins(req, res, keep: maxLogins - 1, except: name);
+    var login = stored != null && !_timedOut(stored.started) ? stored : null;
+    // Of the logins that are kept: of one that is done, as when they were
+    // started, but the newest; else, as of a callback of no login of this
+    // browser, which must not expire those in progress, at most maxLogins.
+    _expireOlderLogins(
+      req,
+      res,
+      keep: login != null ? maxLogins - 1 : maxLogins,
+      except: name,
+    );
 
     if (login == null || state != login.state) {
       return _Failed(
@@ -511,23 +533,11 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
     }
   }
 
-  /// The `state` and code verifier of the login of [req]'s cookie, if it has
-  /// one that this strategy signed, and that has not timed out.
-  ({String state, String verifier, String path})? _readLogin(
-    RequestContext req,
-    String state,
-  ) {
-    var name = _cookieNameOf(state);
-    var value = req.cookies
-        .where((c) => c.name == name)
-        .map((c) => c.value)
-        .firstOrNull;
-    var login = value == null ? null : _decodeLogin(value);
-    if (login == null) return null;
-    var started = DateTime.fromMillisecondsSinceEpoch(login.started);
-    if (DateTime.now().difference(started) > loginTimeout) return null;
-    return (state: login.state, verifier: login.verifier, path: login.path);
-  }
+  /// Whether a login that was [started], in milliseconds since the epoch,
+  /// has taken longer than [loginTimeout].
+  bool _timedOut(int started) =>
+      DateTime.now().difference(DateTime.fromMillisecondsSinceEpoch(started)) >
+      loginTimeout;
 
   /// The login of a cookie's [value], if this strategy signed it: its
   /// `state`, code verifier, when it was started, in milliseconds, and the
@@ -547,6 +557,10 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
       if (claims is! Map) return null;
       var (state, verifier, time) = (claims['s'], claims['v'], claims['t']);
       if (state is! String || verifier is! String || time is! int) return null;
+      // Of a strategy of another client, of the same cookie name and key;
+      // of none, of a cookie of 10.0.0, which had not it.
+      var client = claims['c'];
+      if (client != null && client != options.clientId) return null;
       var path = claims['p'];
       return (
         state: state,

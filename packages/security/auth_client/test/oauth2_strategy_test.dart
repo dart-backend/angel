@@ -227,6 +227,66 @@ void main() {
       },
     );
 
+    test('are not expired by a callback of no login of the browser', () async {
+      for (var i = 0; i < 5; i++) {
+        await browse('/auth/start');
+        await Future<void>.delayed(const Duration(milliseconds: 2));
+      }
+      for (var query in [
+        {'code': 'c'},
+        {'code': 'c', 'state': 'x' * 32},
+      ]) {
+        var got = await browse(
+          Uri(path: '/auth/callback', queryParameters: query).toString(),
+        );
+        expect(got.status, 400);
+      }
+      expect(logins(), hasLength(5));
+      expect(expiredNames, isEmpty);
+    });
+
+    test('of a login that timed out is cleared, as it is refused', () async {
+      var state = 'abcdefghijklmnop' * 2;
+      var name = 'angel3_oauth2_${state.substring(0, 12)}';
+      jar[name] = Cookie(
+        name,
+        signed({
+          's': state,
+          'v': 'v' * 64,
+          't': DateTime.now()
+              .subtract(const Duration(hours: 1))
+              .millisecondsSinceEpoch,
+          'p': '/auth',
+          'c': 'id',
+        }),
+      )..path = '/auth';
+      var got = await browse('/auth/callback?code=c&state=$state');
+      expect(got.body, {'error': 'invalid_state'});
+      expect(jar, isNot(contains(name)));
+    });
+
+    test('expire no cookie of another client, signed alike', () async {
+      var state = 'zyxwvutsrqponmlk' * 2;
+      var name = 'angel3_oauth2_${state.substring(0, 12)}';
+      jar[name] = Cookie(
+        name,
+        signed({
+          's': state,
+          'v': 'v' * 64,
+          // The oldest, so the first to go, if it were of this strategy.
+          't': DateTime.now()
+              .subtract(const Duration(minutes: 1))
+              .millisecondsSinceEpoch,
+          'p': '/auth',
+          'c': 'another client',
+        }),
+      )..path = '/auth';
+      for (var i = 0; i < 7; i++) {
+        await browse('/auth/start');
+      }
+      expect(expiredNames, isNot(contains(name)));
+    });
+
     test('expire no cookie of another strategy, of the same name', () async {
       jar['angel3_oauth2_foreignlogin1'] = Cookie(
         'angel3_oauth2_foreignlogin1',
@@ -247,7 +307,10 @@ void main() {
         clientSecret: 'secret',
         redirectUri: 'https://app.example/cb',
       ),
-      Uri.parse('https://provider.example/authorize?resource=a&resource=b'),
+      Uri.parse(
+        'https://provider.example/authorize?resource=a&resource=b'
+        '&prompt=login&prompt=select_account',
+      ),
       tokenEndpoint,
       (client, req, res) => 'alice',
       (e, req, res) => null,
@@ -260,7 +323,8 @@ void main() {
     await AngelHttp(app).handleRequest(rq);
     var url = Uri.parse(rq.response.headers.value('location')!);
     expect(url.queryParametersAll['resource'], ['a', 'b']);
-    expect(url.queryParameters['prompt'], 'consent');
+    // Of authorizationParameters, which replace those of the endpoint.
+    expect(url.queryParametersAll['prompt'], ['consent']);
   });
 
   group('the start of a login', () {
@@ -497,6 +561,24 @@ Future<Angel> mapApp({
 }
 
 void moreTests() {
+  test('maxLogins must be at least 1', () {
+    expect(
+      () => OAuth2Strategy<String>(
+        ExternalAuthOptions(
+          clientId: 'id',
+          clientSecret: 'secret',
+          redirectUri: 'https://app.example/cb',
+        ),
+        authorizationEndpoint,
+        tokenEndpoint,
+        (client, req, res) => 'alice',
+        (e, req, res) => null,
+        maxLogins: 0,
+      ),
+      throwsArgumentError,
+    );
+  });
+
   group('warns of settings', () {
     late List<String> warnings;
 
@@ -524,6 +606,21 @@ void moreTests() {
     test('of authorizationParameters that are dropped', () async {
       await mapApp(authorizationParameters: {'scope': 'openid', 'x': 'y'});
       expect(warnings, contains(contains('authorizationParameters scope')));
+    });
+
+    test('of form_post of the endpoint, of a cookie of SameSite.lax', () {
+      OAuth2Strategy<String>(
+        ExternalAuthOptions(
+          clientId: 'id',
+          clientSecret: 'secret',
+          redirectUri: 'https://app.example/cb',
+        ),
+        Uri.parse('https://appleid.example/authorize?response_mode=form_post'),
+        tokenEndpoint,
+        (client, req, res) => 'alice',
+        (e, req, res) => null,
+      );
+      expect(warnings, contains(contains('form_post')));
     });
 
     test('of none, by default', () async {
@@ -768,4 +865,17 @@ void moreTests() {
     await AngelHttp(app).handleRequest(cb);
     expect(cb.response.statusCode, 400);
   });
+}
+
+/// [claims], signed as the strategy of the tests, of the client secret
+/// `secret`, signs the cookie of a login.
+String signed(Map<String, Object> claims) {
+  var key = sha256.convert(utf8.encode('angel3_auth_oauth2:secret')).bytes;
+  var data = base64Url
+      .encode(utf8.encode(json.encode(claims)))
+      .replaceAll('=', '');
+  var signature = base64Url
+      .encode(Hmac(sha256, key).convert(ascii.encode(data)).bytes)
+      .replaceAll('=', '');
+  return '$data.$signature';
 }
