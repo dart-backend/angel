@@ -12,7 +12,24 @@ class ClientRegistration {
   /// client, of the [tokenEndpointAuthMethod] `none`. Store it as a
   /// password, hashed, and compare with it in
   /// [AuthorizationServer.verifyClient].
+  ///
+  /// Of a registration that [AuthorizationServer.findRegistration] reads
+  /// back, `null`, as the server keeps only its hash; and of one that
+  /// [AuthorizationServer.updateClient] is given, `null` unless it is new,
+  /// so that the secret is kept.
   final String? clientSecret;
+
+  /// The token with which the client manages its registration at its
+  /// [registrationClientUri] (RFC 7592), if the server manages them, of
+  /// [AuthorizationServer.managesClientRegistrations]: store it hashed, as
+  /// the secret. As [clientSecret], `null` once it is stored, and of an
+  /// update, unless it is new.
+  final String? registrationAccessToken;
+
+  /// The URL at which the client manages its registration, of
+  /// [AuthorizationServer.registrationManagementEndpoint], if the server
+  /// manages them.
+  final Uri? registrationClientUri;
 
   /// When the id was issued.
   final DateTime issuedAt;
@@ -49,11 +66,14 @@ class ClientRegistration {
     required this.tokenEndpointAuthMethod,
     required this.scopes,
     required this.metadata,
+    this.registrationAccessToken,
+    this.registrationClientUri,
   });
 
-  /// The response of the registration (RFC 7591 §3.2.1): the id and secret
-  /// of the client, when they were issued and when the secret expires,
-  /// which it does not, and its [metadata].
+  /// The response of the registration (RFC 7591 §3.2.1, RFC 7592 §3): the
+  /// id and secret of the client, when they were issued and when the secret
+  /// expires, which it does not, the token and URL with which it manages
+  /// the registration, if any, and its [metadata].
   Map<String, dynamic> toJson() => {
     ...metadata,
     'client_id': clientId,
@@ -62,5 +82,8 @@ class ClientRegistration {
       'client_secret': clientSecret,
       'client_secret_expires_at': 0,
     },
+    'registration_access_token': ?registrationAccessToken,
+    if (registrationClientUri != null)
+      'registration_client_uri': registrationClientUri.toString(),
   };
 }

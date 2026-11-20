@@ -74,6 +74,9 @@ void main() {
     expect(json['client_secret_expires_at'], 0);
     expect(json['client_id_issued_at'], isA<int>());
     expect(json, containsPair('client_name', 'App'));
+    // Of a server that does not manage registrations.
+    expect(json, isNot(contains('registration_access_token')));
+    expect(json, isNot(contains('registration_client_uri')));
     expect(json, containsPair('grant_types', ['authorization_code']));
     expect(json, containsPair('response_types', ['code']));
     expect(

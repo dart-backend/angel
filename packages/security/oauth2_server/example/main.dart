@@ -31,6 +31,12 @@ void main() async {
   app.get(metadata.wellKnownPath, oauth2.metadataEndpoint(metadata));
   // Clients that register themselves, of the metadata that they may.
   app.post('/auth/register', oauth2.registrationEndpoint(metadata));
+  // Which they may then read, update and delete.
+  var manage = oauth2.registrationManagementEndpoint(metadata);
+  app
+    ..get('/auth/register/:client_id', manage)
+    ..put('/auth/register/:client_id', manage)
+    ..delete('/auth/register/:client_id', manage);
 
   // Assume that all other requests must be authenticated, by an access
   // token of the `Authorization: Bearer` header, which `findAccessToken`
@@ -66,6 +72,40 @@ class _ExampleAuthorizationServer
   ) {
     // TODO: Store the client, with its secret hashed, so that findClient and
     // verifyClient find it.
+    throw UnimplementedError();
+  }
+
+  @override
+  bool get managesClientRegistrations => true;
+
+  @override
+  FutureOr<ClientRegistration?> findRegistration(
+    String clientId,
+    String registrationAccessToken,
+    RequestContext req,
+  ) {
+    // TODO: Find the registration of the client, if the token, compared with
+    // its stored hash in constant time, is its; or return null.
+    throw UnimplementedError();
+  }
+
+  @override
+  FutureOr<void> updateClient(
+    ClientRegistration current,
+    ClientRegistration updated,
+    RequestContext req,
+  ) {
+    // TODO: Store the updated registration, and its secret and registration
+    // access token, hashed, only if they are new.
+    throw UnimplementedError();
+  }
+
+  @override
+  FutureOr<void> deleteClient(
+    ClientRegistration registration,
+    RequestContext req,
+  ) {
+    // TODO: Delete the client, and revoke its tokens.
     throw UnimplementedError();
   }
 

@@ -1222,24 +1222,15 @@ abstract class AuthorizationServer<Client, User> {
           );
         }
 
-        Object? body;
-        if (req.headers!.contentType?.mimeType == 'application/json') {
-          try {
-            await req.parseBody();
-            body = req.bodyAsObject;
-          } on FormatException {
-            body = null;
-          }
+        var body = await _jsonObjectOf(req);
+        var registration = _registrationOf(body, server, metadata);
+        if (managesClientRegistrations) {
+          registration = _withRegistrationAccess(
+            registration,
+            metadata,
+            newToken: true,
+          );
         }
-        if (body is! Map) {
-          throw _invalidMetadata('The request must be a JSON object.');
-        }
-
-        var registration = _registrationOf(
-          Map<String, dynamic>.from(body),
-          server,
-          metadata,
-        );
         await registerClient(registration, req);
         res.statusCode = 201;
         return registration.toJson();
@@ -1254,6 +1245,284 @@ abstract class AuthorizationServer<Client, User> {
         );
       }
     };
+  }
+
+  /// Whether a client that registers itself may then read, update and
+  /// delete its registration, at its `registration_client_uri`, of the
+  /// [registrationManagementEndpoint], with the `registration_access_token`
+  /// that the [registrationEndpoint] then issues it (RFC 7592).
+  ///
+  /// By default, `false`. If `true`, the [ServerMetadata] of the endpoints
+  /// must give their `registrationEndpoint`, of which the URL of each
+  /// registration is a path.
+  bool get managesClientRegistrations => false;
+
+  /// Whether an update of a registration issues its client a new
+  /// registration access token, which [updateClient] stores; the client
+  /// must then use it. By default, `false`.
+  bool get rotatesRegistrationAccessToken => false;
+
+  /// Whether an update of a registration issues its confidential client a
+  /// new secret, which [updateClient] stores. By default, `false`.
+  bool get rotatesClientSecretOnUpdate => false;
+
+  /// The registration of the client of [clientId], as [registerClient] or
+  /// [updateClient] stored it, if [registrationAccessToken] is its token, of
+  /// a request to the [registrationManagementEndpoint]; or `null` if there
+  /// is none, or the token is not its, which is `invalid_token`, of either,
+  /// so that it tells nothing of other clients (RFC 7592 §2).
+  ///
+  /// Compare the token with its hash in constant time. Its
+  /// [ClientRegistration.clientSecret] and
+  /// [ClientRegistration.registrationAccessToken] are `null`, as only their
+  /// hashes are kept.
+  ///
+  /// By default, `null`.
+  FutureOr<ClientRegistration?> findRegistration(
+    String clientId,
+    String registrationAccessToken,
+    RequestContext req,
+  ) => null;
+
+  /// Stores [updated], the registration that replaces [current], of a PUT to
+  /// the [registrationManagementEndpoint]: of its secret and registration
+  /// access token only if they are new, not `null`, as of a rotation, or of
+  /// a client that is no longer public; a public one has no secret.
+  ///
+  /// Throw `invalid_client_metadata` or `invalid_redirect_uri` to refuse a
+  /// value, or change [ClientRegistration.metadata] to register another.
+  ///
+  /// By default, it refuses updates, `access_denied`, a 403.
+  FutureOr<void> updateClient(
+    ClientRegistration current,
+    ClientRegistration updated,
+    RequestContext req,
+  ) => throw AuthorizationException(
+    ErrorResponse(
+      ErrorResponse.accessDenied,
+      'Updating client registrations is not supported.',
+      null,
+    ),
+    statusCode: 403,
+  );
+
+  /// Deletes the client of [registration], of a DELETE to the
+  /// [registrationManagementEndpoint], and revokes its tokens and grants,
+  /// and its registration access token, so that it is unknown from then on.
+  ///
+  /// By default, it refuses deletion, `access_denied`, a 403.
+  FutureOr<void> deleteClient(
+    ClientRegistration registration,
+    RequestContext req,
+  ) => throw AuthorizationException(
+    ErrorResponse(
+      ErrorResponse.accessDenied,
+      'Deleting client registrations is not supported.',
+      null,
+    ),
+    statusCode: 403,
+  );
+
+  /// The metadata that a client may not give in an update of its
+  /// registration, which the server issues (RFC 7592 §2.2).
+  static const _issuedOnUpdate = {
+    'registration_access_token',
+    'registration_client_uri',
+    'client_id_issued_at',
+    'client_secret_expires_at',
+  };
+
+  /// A request handler of the registrations of clients (RFC 7592), at the
+  /// `registration_client_uri` that the [registrationEndpoint] gives each,
+  /// of [managesClientRegistrations]: its `registrationEndpoint` of
+  /// [metadata], followed by the id of the client, `:client_id`. Route a
+  /// GET, a PUT and a DELETE to it:
+  ///
+  /// ```dart
+  /// var manage = server.registrationManagementEndpoint(metadata);
+  /// router
+  ///   ..get('/register/:client_id', manage)
+  ///   ..put('/register/:client_id', manage)
+  ///   ..delete('/register/:client_id', manage);
+  /// ```
+  ///
+  /// Each is authenticated by the `registration_access_token` of the client,
+  /// of an `Authorization: Bearer` header, by [findRegistration]: one that
+  /// is missing is a 401 challenge, and one that is not of the client, or
+  /// of a client that does not exist, `invalid_token`, a 401.
+  ///
+  /// - A GET gives the registration, a 200.
+  /// - A PUT replaces it, of the JSON of all its metadata, of which it
+  ///   checks what the [registrationEndpoint] checks, and of the `client_id`
+  ///   of the client, and its `client_secret`, if given, which [verifyClient]
+  ///   verifies, and not what the server issues; it gives the [updateClient]
+  ///   the registration, and answers it, a 200.
+  /// - A DELETE gives the registration to [deleteClient], and answers a 204.
+  ///
+  /// Throws an [ArgumentError] unless [managesClientRegistrations], and
+  /// [metadata] gives its `registrationEndpoint`.
+  RequestHandler registrationManagementEndpoint(ServerMetadata metadata) {
+    if (!managesClientRegistrations) {
+      throw ArgumentError(
+        'The server does not manage client registrations: override '
+        'managesClientRegistrations.',
+      );
+    }
+    if (metadata.registrationEndpoint == null) {
+      throw ArgumentError.value(
+        metadata,
+        'metadata',
+        'Must give the registrationEndpoint',
+      );
+    }
+    var server = metadataOf(metadata);
+    return (req, res) async {
+      res.headers
+        ..['cache-control'] = 'no-store'
+        ..['pragma'] = 'no-cache';
+      try {
+        const realm = 'oauth2';
+        var tokens = _bearerHeaderTokens(req, res, realm);
+        if (tokens.isEmpty) {
+          res.headers['www-authenticate'] = 'Bearer realm="$realm"';
+          throw AngelHttpException.notAuthenticated(
+            message: 'A registration access token is required.',
+          );
+        }
+        if (tokens.length > 1) {
+          throw _bearerError(
+            res,
+            realm,
+            ErrorResponse.invalidRequest,
+            'More than one access token.',
+            400,
+          );
+        }
+        var clientId = req.params['client_id']?.toString() ?? '';
+        var found = clientId.isEmpty
+            ? null
+            : await findRegistration(clientId, tokens.single, req);
+        if (found == null || found.clientId != clientId) {
+          throw _bearerError(
+            res,
+            realm,
+            ErrorResponse.invalidToken,
+            'The registration access token is not valid.',
+            401,
+          );
+        }
+        var current = _withRegistrationAccess(found, metadata, newToken: false);
+
+        switch (req.method.toUpperCase()) {
+          case 'GET':
+            return current.toJson();
+          case 'PUT':
+            var body = await _jsonObjectOf(req);
+            if (body['client_id'] != clientId) {
+              throw _invalidMetadata(
+                'The "client_id" must be that of the registration.',
+              );
+            }
+            for (var name in _issuedOnUpdate) {
+              if (body.containsKey(name)) {
+                throw _invalidMetadata(
+                  '"$name" is issued by the server, and may not be given.',
+                );
+              }
+            }
+            if (body['client_secret'] case var secret?) {
+              var client = await findClient(clientId);
+              if (secret is! String ||
+                  client == null ||
+                  !await verifyClient(client, secret)) {
+                throw _invalidMetadata(
+                  'The "client_secret" must be that of the client.',
+                );
+              }
+            }
+            var updated = _withRegistrationAccess(
+              _registrationOf(
+                body,
+                server,
+                metadata,
+                current: current,
+                newSecret: rotatesClientSecretOnUpdate,
+              ),
+              metadata,
+              newToken: rotatesRegistrationAccessToken,
+            );
+            await updateClient(current, updated, req);
+            return updated.toJson();
+          case 'DELETE':
+            await deleteClient(current, req);
+            if (res.isOpen) {
+              res.statusCode = 204;
+              await res.close();
+            }
+            return null;
+          default:
+            throw AngelHttpException.methodNotAllowed();
+        }
+      } on AngelHttpException {
+        rethrow;
+      } catch (e, st) {
+        throw AuthorizationException(
+          ErrorResponse(ErrorResponse.serverError, _internalServerError, ''),
+          error: e,
+          statusCode: 500,
+          stackTrace: st,
+        );
+      }
+    };
+  }
+
+  /// The JSON object of the body of [req]; throws `invalid_client_metadata`
+  /// if it is none.
+  static Future<Map<String, dynamic>> _jsonObjectOf(RequestContext req) async {
+    Object? body;
+    if (req.headers!.contentType?.mimeType == 'application/json') {
+      try {
+        await req.parseBody();
+        body = req.bodyAsObject;
+      } on FormatException {
+        body = null;
+      }
+    }
+    if (body is! Map) {
+      throw _invalidMetadata('The request must be a JSON object.');
+    }
+    return Map<String, dynamic>.from(body);
+  }
+
+  /// [registration] of the URL at which its client manages it, of
+  /// [metadata], and of a new registration access token if [newToken].
+  static ClientRegistration _withRegistrationAccess(
+    ClientRegistration registration,
+    ServerMetadata metadata, {
+    required bool newToken,
+  }) {
+    var endpoint = metadata.registrationEndpoint!;
+    return ClientRegistration(
+      clientId: registration.clientId,
+      clientSecret: registration.clientSecret,
+      issuedAt: registration.issuedAt,
+      redirectUris: registration.redirectUris,
+      grantTypes: registration.grantTypes,
+      responseTypes: registration.responseTypes,
+      tokenEndpointAuthMethod: registration.tokenEndpointAuthMethod,
+      scopes: registration.scopes,
+      metadata: registration.metadata,
+      registrationAccessToken: newToken
+          ? _randomString(32)
+          : registration.registrationAccessToken,
+      registrationClientUri: endpoint.replace(
+        pathSegments: [
+          for (var segment in endpoint.pathSegments)
+            if (segment.isNotEmpty) segment,
+          registration.clientId,
+        ],
+      ),
+    );
   }
 
   static AuthorizationException _invalidMetadata(
@@ -1286,11 +1555,17 @@ abstract class AuthorizationServer<Client, User> {
 
   /// The registration of the client metadata [body], checked against the
   /// metadata of the server, [server], of [metadataOf], of [metadata].
+  ///
+  /// Of an update of [current], it keeps its id, when it was issued, and its
+  /// secret, which is `null` but if it is new, as of a client that was
+  /// public, or if [newSecret].
   ClientRegistration _registrationOf(
     Map<String, dynamic> body,
     Map<String, dynamic> server,
-    ServerMetadata metadata,
-  ) {
+    ServerMetadata metadata, {
+    ClientRegistration? current,
+    bool newSecret = false,
+  }) {
     List<String>? strings(String name) {
       var value = body[name];
       if (value == null) return null;
@@ -1424,10 +1699,13 @@ abstract class AuthorizationServer<Client, User> {
       throw _invalidMetadata('"jwks_uri" and "jwks" may not both be given.');
     }
 
+    var wasPublic = current?.tokenEndpointAuthMethod == 'none';
     return ClientRegistration(
-      clientId: _randomString(16),
-      clientSecret: public ? null : _randomString(32),
-      issuedAt: DateTime.now(),
+      clientId: current?.clientId ?? _randomString(16),
+      clientSecret: public || (current != null && !wasPublic && !newSecret)
+          ? null
+          : _randomString(32),
+      issuedAt: current?.issuedAt ?? DateTime.now(),
       redirectUris: redirectUris,
       grantTypes: grantTypes,
       responseTypes: responseTypes,

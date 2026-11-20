@@ -391,5 +391,24 @@ The metadata is checked before `registerClient` is called; a refusal is a 400 of
 - A client of a response type must register its `redirect_uris`: absolute, of no fragment, `https`, `http` only for `localhost`, or of the scheme of a native app, such as `com.example.app:/cb` (RFC 8252 §7.1).
 - The other metadata of RFC 7591 must be of its types; other metadata is kept. What the server issues, such as a `client_id`, and a `software_statement`, which it does not verify, are dropped.
 
-`registerClient` may throw `invalid_client_metadata` or `invalid_redirect_uri` itself, or change `registration.metadata` to register other values. The response is a 201 of the metadata, the `client_id`, the `client_secret`, which does not expire, and when they were issued. Reading, updating and deleting a registration (RFC 7592) are not supported.
+`registerClient` may throw `invalid_client_metadata` or `invalid_redirect_uri` itself, or change `registration.metadata` to register other values. The response is a 201 of the metadata, the `client_id`, the `client_secret`, which does not expire, and when they were issued. 
+### Managing Registrations
+
+A client may then read, update and delete its registration (RFC 7592, which is Experimental), if `managesClientRegistrations` is `true`. The `registrationEndpoint` then also issues it a `registration_access_token`, and its `registration_client_uri`, the `registrationEndpoint` of the `ServerMetadata`, followed by its `client_id`, which `registrationManagementEndpoint` serves:
+
+```dart
+var manage = server.registrationManagementEndpoint(metadata);
+router
+  ..get('/register/:client_id', manage)
+  ..put('/register/:client_id', manage)
+  ..delete('/register/:client_id', manage);
+```
+
+Store the `registrationAccessToken` of each registration hashed, as its secret, in `registerClient`, and implement `findRegistration`, which gives the stored registration of a client if the token, of the `Authorization: Bearer` header, is its, compared in constant time; or `null`, which is `invalid_token`, a 401, whether the client exists or not, so that it tells nothing of other clients. Its `clientSecret` and `registrationAccessToken` are `null`, as only their hashes are kept.
+
+- A GET gives the registration, without its secret nor its token.
+- A PUT replaces it, of all its metadata, as a registration is checked: what it does not give is no longer registered. It must give the `client_id` of the client, and may give its `client_secret`, which `verifyClient` verifies, but not what the server issues, such as the `registration_access_token`; or it is `invalid_client_metadata`. `updateClient` stores the update, whose secret and token are `null` unless they are new: of a client that is no longer public, or of `rotatesClientSecretOnUpdate` and `rotatesRegistrationAccessToken`, which issue new ones on each update.
+- A DELETE gives the registration to `deleteClient`, which deletes the client and revokes its tokens, and answers a 204.
+
+By default, `updateClient` and `deleteClient` refuse, `access_denied`, a 403, so that a server may give only reads.
 
