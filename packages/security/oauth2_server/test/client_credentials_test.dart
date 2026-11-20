@@ -119,6 +119,20 @@ void main() {
       body: {'grant_type': 'client_credentials', ...body},
     );
 
+    Future<http.Response> withPassword(
+      Map<String, String> body, {
+      Map<String, String>? headers,
+    }) => client.post(
+      Uri.parse('/oauth2/token'),
+      headers: headers,
+      body: {
+        'grant_type': 'password',
+        'username': 'u',
+        'password': 'p',
+        ...body,
+      },
+    );
+
     test('a client is authenticated by the form', () async {
       expect(
         await withForm({'client_id': 'foo', 'client_secret': 'bar'}),
@@ -127,7 +141,37 @@ void main() {
     });
 
     test('a public client gives its id alone', () async {
-      expect(await withForm({'client_id': 'public'}), hasStatus(200));
+      expect(await withPassword({'client_id': 'public'}), hasStatus(200));
+    });
+
+    test('an empty secret is no secret', () async {
+      expect(
+        await withPassword({'client_id': 'public', 'client_secret': ''}),
+        hasStatus(200),
+      );
+      expect(
+        await withPassword(
+          {},
+          headers: {
+            'Authorization': 'Basic ${base64.encode('public:'.codeUnits)}',
+          },
+        ),
+        hasStatus(200),
+      );
+    });
+
+    test('a public client may not use the client credentials grant', () async {
+      for (var body in [
+        {'client_id': 'public'},
+        {'client_id': 'public', 'client_secret': ''},
+      ]) {
+        var response = await withForm(body);
+        expect(response, hasStatus(400));
+        expect(
+          json.decode(response.body),
+          containsPair('error', 'unauthorized_client'),
+        );
+      }
     });
 
     test('a client with a secret must give it', () async {
@@ -158,16 +202,21 @@ void main() {
     });
 
     test('a device code request the server does not implement is '
-        'unsupported_grant_type', () async {
-      var response = await client.post(
-        Uri.parse('/oauth2/token'),
-        body: {'client_id': 'foo', 'state': 'xyz'},
-      );
-      expect(response, hasStatus(400));
-      expect(
-        json.decode(response.body),
-        containsPair('error', 'unsupported_grant_type'),
-      );
+        'invalid_request, of a missing grant type', () async {
+      for (var body in [
+        {'client_id': 'foo', 'state': 'xyz'},
+        {'client_id': 'foo', 'grant_type': '', 'state': 'xyz'},
+      ]) {
+        var response = await client.post(
+          Uri.parse('/oauth2/token'),
+          body: body,
+        );
+        expect(response, hasStatus(400));
+        expect(
+          json.decode(response.body),
+          containsPair('error', 'invalid_request'),
+        );
+      }
     });
   });
 
@@ -189,9 +238,8 @@ void main() {
       Uri.parse('/oauth2/token'),
       headers: {'Authorization': 'Basic ${base64.encode('foo:bar'.codeUnits)}'},
       body: {
-        'grant_type': 'password',
-        'username': 'u',
-        'password': 'p',
+        'grant_type': 'refresh_token',
+        'refresh_token': 'r',
         'state': 'xyz',
       },
     );
@@ -266,5 +314,17 @@ class _AuthorizationServer
     ResponseContext res,
   ) async {
     return AuthorizationTokenResponse('foo');
+  }
+
+  @override
+  Future<AuthorizationTokenResponse> resourceOwnerPasswordCredentialsGrant(
+    PseudoApplication? client,
+    String? username,
+    String? password,
+    Iterable<String> scopes,
+    RequestContext req,
+    ResponseContext res,
+  ) async {
+    return AuthorizationTokenResponse('bar');
   }
 }

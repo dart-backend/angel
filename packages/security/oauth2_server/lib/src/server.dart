@@ -60,16 +60,16 @@ Future<Iterable<String>> _getScopes(
 }
 
 /// Throws the error of a grant that the server does not support, as the
-/// default of each grant method does: `unsupported_grant_type`, with the
-/// `state` of the form of [req].
-Future<Never> _unsupportedGrant(RequestContext req, String description) async {
+/// default of each grant method does: [error], `unsupported_grant_type` by
+/// default, with the `state` of the form of [req].
+Future<Never> _unsupportedGrant(
+  RequestContext req,
+  String description, {
+  String error = ErrorResponse.unsupportedGrantType,
+}) async {
   var body = await _paramsOf(req, body: true);
   throw AuthorizationException(
-    ErrorResponse(
-      ErrorResponse.unsupportedGrantType,
-      description,
-      body['state']?.toString() ?? '',
-    ),
+    ErrorResponse(error, description, body['state']?.toString() ?? ''),
     statusCode: 400,
   );
 }
@@ -194,13 +194,20 @@ abstract class AuthorizationServer<Client, User> {
     ResponseContext res,
   ) => _unsupportedGrant(req, 'Client credentials grants are not supported.');
 
-  /// Performs a device code grant.
+  /// Performs a device code request, a request to the token endpoint
+  /// without a `grant_type`.
+  ///
+  /// By default, it is `invalid_request`, as the `grant_type` is missing.
   FutureOr<DeviceCodeResponse> requestDeviceCode(
     Client client,
     Iterable<String> scopes,
     RequestContext req,
     ResponseContext res,
-  ) => _unsupportedGrant(req, 'Device code grants are not supported.');
+  ) => _unsupportedGrant(
+    req,
+    'Missing "grant_type" parameter; device code requests are not supported.',
+    error: ErrorResponse.invalidRequest,
+  );
 
   /// Produces an authorization token from a given device code.
   FutureOr<AuthorizationTokenResponse> exchangeDeviceCodeForToken(
@@ -388,8 +395,11 @@ abstract class AuthorizationServer<Client, User> {
   /// `Authorization: Basic` header, or, without one, by the `client_id` and
   /// `client_secret` of its form (RFC 6749 §2.3.1), of which a public
   /// client, as of PKCE alone, gives no secret: [verifyClient] is given
-  /// `null`, and decides whether the client may have none.
-  Future<Client> _authenticateClient(
+  /// `null`, as for an empty one, and decides whether the client may have
+  /// none.
+  ///
+  /// Also whether the client gave a secret, as a confidential client does.
+  Future<(Client, bool)> _authenticateClient(
     RequestContext req,
     ResponseContext res,
     Map<String, dynamic> body,
@@ -426,6 +436,8 @@ abstract class AuthorizationServer<Client, User> {
       clientSecret = body['client_secret']?.toString();
       challenge = false;
     }
+    // As of `Basic id:` or `client_secret=`, as of none.
+    if (clientSecret != null && clientSecret.isEmpty) clientSecret = null;
 
     var client = await findClient(clientId);
     if (client == null) {
@@ -444,6 +456,26 @@ abstract class AuthorizationServer<Client, User> {
         challenge: challenge,
       );
     }
+    return (client, clientSecret != null);
+  }
+
+  /// The client of the `client_id` of the form of a device code request or
+  /// grant, which is not authenticated otherwise.
+  Future<Client> _deviceCodeClient(
+    RequestContext req,
+    ResponseContext res,
+    String state,
+  ) async {
+    var clientId = await _getParam(req, 'client_id', state, body: true);
+    var client = await findClient(clientId);
+    if (client == null) {
+      throw _invalidClient(
+        res,
+        'Unknown client "$clientId".',
+        state,
+        challenge: false,
+      );
+    }
     return client;
   }
 
@@ -451,10 +483,8 @@ abstract class AuthorizationServer<Client, User> {
   /// or refreshes authorization tokens.
   Future tokenEndpoint(RequestContext req, ResponseContext res) async {
     var state = '';
-    Client? client;
 
     try {
-      AuthorizationTokenResponse? response;
       var body = await req.parseBody().then((_) => req.bodyAsMap);
 
       state = body['state']?.toString() ?? '';
@@ -470,15 +500,28 @@ abstract class AuthorizationServer<Client, User> {
         body: true,
         throwIfEmpty: false,
       );
+      // `grant_type=` is no grant type.
+      if (grantType != null && grantType.isEmpty) grantType = null;
+
+      if (grantType == null) {
+        // A device code request.
+        var client = await _deviceCodeClient(req, res, state);
+        var scopes = await _getScopes(req, body: true);
+        var deviceCodeResponse = await requestDeviceCode(
+          client,
+          scopes,
+          req,
+          res,
+        );
+        return deviceCodeResponse.toJson();
+      }
 
       // Before the client is authenticated, which it need not be to learn
       // that its grant is not supported.
-      var extensionGrant = _grantTypes.contains(grantType) || grantType == null
+      var extensionGrant = _grantTypes.contains(grantType)
           ? null
           : extensionGrants[grantType];
-      if (grantType != null &&
-          !_grantTypes.contains(grantType) &&
-          extensionGrant == null) {
+      if (!_grantTypes.contains(grantType) && extensionGrant == null) {
         throw AuthorizationException(
           ErrorResponse(
             ErrorResponse.unsupportedGrantType,
@@ -489,100 +532,9 @@ abstract class AuthorizationServer<Client, User> {
         );
       }
 
-      if (grantType != _deviceCodeGrantType && grantType != null) {
-        client = await _authenticateClient(req, res, body, state);
-      }
-
-      if (grantType == 'authorization_code') {
-        var code = await _getParam(req, 'code', state, body: true);
-        var redirectUri = await _getParam(
-          req,
-          'redirect_uri',
-          state,
-          body: true,
-        );
-        response = await exchangeAuthorizationCodeForToken(
-          client,
-          code,
-          redirectUri,
-          req,
-          res,
-        );
-      } else if (grantType == 'refresh_token') {
-        var refreshToken = await _getParam(
-          req,
-          'refresh_token',
-          state,
-          body: true,
-        );
-        var scopes = await _getScopes(req, body: true);
-        response = await refreshAuthorizationToken(
-          client,
-          refreshToken,
-          scopes,
-          req,
-          res,
-        );
-      } else if (grantType == 'password') {
-        var username = await _getParam(req, 'username', state, body: true);
-        var password = await _getParam(req, 'password', state, body: true);
-        var scopes = await _getScopes(req, body: true);
-        response = await resourceOwnerPasswordCredentialsGrant(
-          client,
-          username,
-          password,
-          scopes,
-          req,
-          res,
-        );
-      } else if (grantType == 'client_credentials') {
-        response = await clientCredentialsGrant(client, req, res);
-
-        if (response.refreshToken != null) {
-          // Remove refresh token
-          response = AuthorizationTokenResponse(
-            response.accessToken,
-            expiresIn: response.expiresIn,
-            scope: response.scope,
-          );
-        }
-      } else if (extensionGrant != null) {
-        response = await extensionGrant(req, res);
-      } else if (grantType == null) {
-        // This is a device code grant.
-        var clientId = await _getParam(req, 'client_id', state, body: true);
-        client = await findClient(clientId);
-
-        if (client == null) {
-          throw _invalidClient(
-            res,
-            'Unknown client "$clientId".',
-            state,
-            challenge: false,
-          );
-        }
-
-        var scopes = await _getScopes(req, body: true);
-        var deviceCodeResponse = await requestDeviceCode(
-          client,
-          scopes,
-          req,
-          res,
-        );
-        return deviceCodeResponse.toJson();
-      } else if (grantType == _deviceCodeGrantType) {
-        var clientId = await _getParam(req, 'client_id', state, body: true);
-        client = await findClient(clientId);
-
-        if (client == null) {
-          throw _invalidClient(
-            res,
-            'Unknown client "$clientId".',
-            state,
-            challenge: false,
-          );
-        }
-
+      AuthorizationTokenResponse response;
+      if (grantType == _deviceCodeGrantType) {
+        var client = await _deviceCodeClient(req, res, state);
         var deviceCode = await _getParam(req, 'device_code', state, body: true);
         response = await exchangeDeviceCodeForToken(
           client,
@@ -591,21 +543,88 @@ abstract class AuthorizationServer<Client, User> {
           req,
           res,
         );
-      }
-
-      if (response != null) {
-        return <String, dynamic>{'token_type': AuthorizationTokenType.bearer}
-          ..addAll(response.toJson());
-      }
-
-      throw AuthorizationException(
-        ErrorResponse(
-          ErrorResponse.unsupportedGrantType,
-          'Unsupported "grant_type" parameter: "$grantType".',
+      } else {
+        var (client, confidential) = await _authenticateClient(
+          req,
+          res,
+          body,
           state,
-        ),
-        statusCode: 400,
-      );
+        );
+
+        if (grantType == 'authorization_code') {
+          var code = await _getParam(req, 'code', state, body: true);
+          var redirectUri = await _getParam(
+            req,
+            'redirect_uri',
+            state,
+            body: true,
+          );
+          response = await exchangeAuthorizationCodeForToken(
+            client,
+            code,
+            redirectUri,
+            req,
+            res,
+          );
+        } else if (grantType == 'refresh_token') {
+          var refreshToken = await _getParam(
+            req,
+            'refresh_token',
+            state,
+            body: true,
+          );
+          var scopes = await _getScopes(req, body: true);
+          response = await refreshAuthorizationToken(
+            client,
+            refreshToken,
+            scopes,
+            req,
+            res,
+          );
+        } else if (grantType == 'password') {
+          var username = await _getParam(req, 'username', state, body: true);
+          var password = await _getParam(req, 'password', state, body: true);
+          var scopes = await _getScopes(req, body: true);
+          response = await resourceOwnerPasswordCredentialsGrant(
+            client,
+            username,
+            password,
+            scopes,
+            req,
+            res,
+          );
+        } else if (grantType == 'client_credentials') {
+          // For confidential clients only (RFC 6749 §4.4): anyone may give
+          // the id of a public client.
+          if (!confidential) {
+            throw AuthorizationException(
+              ErrorResponse(
+                ErrorResponse.unauthorizedClient,
+                'A client without a secret may not use the client '
+                'credentials grant.',
+                state,
+              ),
+              statusCode: 400,
+            );
+          }
+          response = await clientCredentialsGrant(client, req, res);
+
+          if (response.refreshToken != null) {
+            // Remove refresh token
+            response = AuthorizationTokenResponse(
+              response.accessToken,
+              expiresIn: response.expiresIn,
+              scope: response.scope,
+            );
+          }
+        } else {
+          // Not of [_grantTypes], so of [extensionGrants].
+          response = await extensionGrant!(req, res);
+        }
+      }
+
+      return <String, dynamic>{'token_type': AuthorizationTokenType.bearer}
+        ..addAll(response.toJson());
     } on AngelHttpException {
       rethrow;
     } catch (e, st) {
