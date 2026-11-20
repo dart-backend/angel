@@ -15,6 +15,7 @@ A class containing handlers that can be used within [Angel3](https://angel3-fram
   - [Device Authorization](#device-authorization)
   - [PKCE](#pkce)
   - [Protecting Resources](#protecting-resources)
+  - [Revoking Tokens](#revoking-tokens)
 
 ## Installation
 
@@ -277,4 +278,30 @@ A request that it refuses gets a `WWW-Authenticate: Bearer realm="oauth2"` chall
 - A malformed token, or more than one: `invalid_request`, a 400.
 
 The token is read from the header only, unless `allowFormParameter` is `true`, which reads the `access_token` of a form, of a request that is not a GET. A token in the query is never read, as it may be logged, and a warning is logged. Several `requireToken`, of a group and of its routes, may check one request, each for its own scopes.
+
+## Revoking Tokens
+
+A client revokes an access or refresh token, as when its user logs out, at the `revocationEndpoint` (RFC 7009). Route a POST to it, and implement `revokeToken`:
+
+```dart
+router.post('/revoke', server.revocationEndpoint);
+```
+
+```dart
+@override
+Future<void> revokeToken(
+    PseudoApplication client,
+    String token,
+    String? tokenTypeHint, // `access_token`, `refresh_token`, or `null`
+    RequestContext req,
+    ResponseContext res) async {
+  var stored = await lookUpTokenSomehow(token, tokenTypeHint);
+  // Only a token of the client; nothing for an unknown one.
+  if (stored != null && stored.clientId == client.id) {
+    await revokeTokenAndItsGrantSomehow(stored);
+  }
+}
+```
+
+It authenticates the client as the `tokenEndpoint` does, a public client by its `client_id` alone, and answers a 200 without a body, whether the token was revoked or not, so that the caller learns nothing of tokens that are not its own. A request without a `token` is `invalid_request`. Look the token up by its `token_type_hint` first, and by the other type if it is not found; revoke the tokens of the same grant too, such as the access tokens of a refresh token. Throw `unsupported_token_type` (`ErrorResponse.unsupportedTokenType`) for a type of token that the server cannot revoke; without `revokeToken`, every request is.
 

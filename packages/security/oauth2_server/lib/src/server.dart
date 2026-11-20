@@ -898,6 +898,94 @@ abstract class AuthorizationServer<Client, User> {
     }
   }
 
+  /// Revokes [token], which [client] gives to a [revocationEndpoint], an
+  /// access token or a refresh token, which [tokenTypeHint] may name:
+  /// `access_token` or `refresh_token`, or `null`. Look it up by the hint
+  /// first, and by the other type if it is not found (RFC 7009 §2.1).
+  ///
+  /// Revoke it only if it was issued to [client]. Do nothing for a token
+  /// that is unknown, already revoked, or of another client: the response
+  /// is a 200 either way, which tells the caller nothing of it (§2.2). Also
+  /// revoke the tokens of the same grant, such as the access tokens of a
+  /// refresh token, as the server can.
+  ///
+  /// Throw `unsupported_token_type` for a type of token that the server
+  /// cannot revoke, as it does by default, of a server that does not
+  /// support revocation.
+  FutureOr<void> revokeToken(
+    Client client,
+    String token,
+    String? tokenTypeHint,
+    RequestContext req,
+    ResponseContext res,
+  ) => throw AuthorizationException(
+    ErrorResponse(
+      ErrorResponse.unsupportedTokenType,
+      'Token revocation is not supported.',
+      null,
+    ),
+    statusCode: 400,
+  );
+
+  /// A request handler of token revocation requests (RFC 7009), as of a
+  /// client that logs its user out. Route a POST to it:
+  ///
+  /// ```dart
+  /// router.post('/revoke', server.revocationEndpoint);
+  /// ```
+  ///
+  /// Its client is authenticated as at the [tokenEndpoint]: a public one by
+  /// its `client_id` alone. It gives the `token` of the form, and its
+  /// `token_type_hint`, to [revokeToken], and answers a 200, without a
+  /// body, whether the token was revoked or not; or errors as the
+  /// [tokenEndpoint] does: `invalid_request` without a `token`.
+  Future<void> revocationEndpoint(
+    RequestContext req,
+    ResponseContext res,
+  ) async {
+    var state = '';
+    res.headers
+      ..['cache-control'] = 'no-store'
+      ..['pragma'] = 'no-cache';
+
+    try {
+      var body = await req.parseBody().then((_) => req.bodyAsMap);
+      state = body['state']?.toString() ?? '';
+      var (client, _) = await _authenticateClient(req, res, body, state);
+      var token = _formValue(body, 'token');
+      if (token == null) {
+        throw AuthorizationException(
+          ErrorResponse(
+            ErrorResponse.invalidRequest,
+            'Missing required parameter "token".',
+            state,
+          ),
+          statusCode: 400,
+        );
+      }
+      await revokeToken(
+        client,
+        token,
+        _formValue(body, 'token_type_hint'),
+        req,
+        res,
+      );
+      if (res.isOpen) {
+        res.statusCode = 200;
+        await res.close();
+      }
+    } on AngelHttpException {
+      rethrow;
+    } catch (e, st) {
+      throw AuthorizationException(
+        ErrorResponse(ErrorResponse.serverError, _internalServerError, state),
+        error: e,
+        statusCode: 500,
+        stackTrace: st,
+      );
+    }
+  }
+
   /// A request handler of device authorization requests (RFC 8628 §3.1),
   /// of a device that the user authorizes on another, which then polls the
   /// [tokenEndpoint] with the `device_code` of its response, by

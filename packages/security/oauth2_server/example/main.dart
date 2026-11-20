@@ -12,7 +12,8 @@ void main() async {
     router
       ..get('/authorize', oauth2.authorizationEndpoint)
       ..post('/authorize', oauth2.authorizationEndpoint)
-      ..post('/token', oauth2.tokenEndpoint);
+      ..post('/token', oauth2.tokenEndpoint)
+      ..post('/revoke', oauth2.revocationEndpoint);
   });
 
   // Assume that all other requests must be authenticated, by an access
@@ -32,6 +33,19 @@ class User {}
 /// A [ThirdPartyApp] can act on behalf of a [User].
 class _ExampleAuthorizationServer
     extends AuthorizationServer<ThirdPartyApp, User> {
+  @override
+  FutureOr<void> revokeToken(
+    ThirdPartyApp client,
+    String token,
+    String? tokenTypeHint,
+    RequestContext req,
+    ResponseContext res,
+  ) {
+    // TODO: Revoke the token, if it was issued to the client, and the tokens
+    // of its grant; do nothing for an unknown one.
+    throw UnimplementedError();
+  }
+
   @override
   FutureOr<AccessToken<ThirdPartyApp, User>?> findAccessToken(
     String token,

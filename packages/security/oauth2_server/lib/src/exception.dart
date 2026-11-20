@@ -91,6 +91,10 @@ class ErrorResponse {
   /// the scopes that it requires (RFC 6750 §3.1).
   static const String insufficientScope = 'insufficient_scope';
 
+  /// The server does not support the revocation of the type of the token
+  /// of a revocation request (RFC 7009 §2.2.1).
+  static const String unsupportedTokenType = 'unsupported_token_type';
+
   /// A short string representing the error.
   final String code;
 

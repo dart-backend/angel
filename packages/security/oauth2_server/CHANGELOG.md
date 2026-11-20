@@ -29,6 +29,8 @@
 
 * **Protecting resources:** `requireToken` protects the handlers after it with the access tokens of the server (RFC 6750): it reads the `Authorization: Bearer` header, or, if allowed, the `access_token` of a form, finds the token by `findAccessToken`, which gives an `AccessToken` of its client, user, scopes and expiry, and refuses a request without a token, or of an unknown, expired or malformed one, or of one without the scopes required, with the `WWW-Authenticate: Bearer` challenge and error of RFC 6750 §3 (`invalid_token`, `insufficient_scope`, `invalid_request`). The handlers after it get the `AccessToken` from `req.container`. `ErrorResponse` adds `invalidToken` and `insufficientScope`
 
+* **Token revocation:** `revocationEndpoint` revokes a token of a client, as when its user logs out (RFC 7009): it authenticates the client as the token endpoint does, gives the `token` and its `token_type_hint` to `revokeToken`, and answers a 200 without a body, whether the token was revoked or not; without `revokeToken`, it is `unsupported_token_type`, which `ErrorResponse` adds as `unsupportedTokenType`
+
 ### Fixes in 10.0.0
 
 * **Token responses:** The responses of the token endpoint have `Cache-Control: no-store` and `Pragma: no-cache`, as RFC 6749 §5.1 requires, so that tokens are not cached
