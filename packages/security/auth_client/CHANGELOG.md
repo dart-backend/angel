@@ -5,7 +5,7 @@
 ### Breaking changes in 10.0.0
 
 * **Breaking:** Renamed from `angel3_auth_oauth2`: depend on `angel3_auth_client`, and import `package:angel3_auth_client/angel3_auth_client.dart`
-* **Breaking:** Each login has a random `state`, checked on the callback (against login CSRF), kept with its PKCE code verifier in a signed, `HttpOnly` cookie of its own, scoped to the redirect URI's path, which expires after the new `loginTimeout`. `authenticateCallback` refuses a callback without it, as `invalid_state` to `onError`
+* **Breaking:** Each login has a random `state`, checked on the callback (against login CSRF), kept with its PKCE code verifier in a signed, `HttpOnly` cookie of its own, scoped to the path that the route that starts the login shares with the redirect URI, which expires after the new `loginTimeout`. `authenticateCallback` refuses a callback without it, as `invalid_state` to `onError`
 
 ### New in 10.0.0
 
@@ -15,9 +15,9 @@
 
 ### Fixes in 10.0.0
 
-* **Callback:** A `state` that is not of the form of one the strategy gives, as of a crafted link, goes to `onError` as `invalid_state`, where one of a character a cookie name may not have, such as `;` or a space, was an error of the framework. A posted callback whose body cannot be read, as a malformed or too large form, goes to `onError` as `invalid_request`, where it was the framework's own 400
-* **HTTP clients:** Without an `httpClient`, the client of the grant that starts a login, and that of a token exchange that fails, are closed, where they were left open
-* **Login cookies:** Starting a login expires the cookies of the oldest logins of the browser beyond the new `maxLogins` (default 5), so that a user who starts many cannot make the `Cookie` header of the callback too large for the server
+* **Callback:** A `state` that is not of the form of one the strategy gives, as of a crafted link, goes to `onError` as `invalid_state`, where one of a character a cookie name may not have, such as `;` or a space, was an error of the framework. Of a strategy of `response_mode=form_post`, a posted callback whose body cannot be read, as a malformed, too large or not UTF-8 form, goes to `onError` as `invalid_request`, where it was the framework's own 400, or the start of another login; a posted form that starts a login is of its query alone, as before. Repeated query parameters of the authorization endpoint, such as `resource`, are kept, of which one was
+* **HTTP clients:** Without an `httpClient`, the client of a token exchange that fails, of any error, is closed, where it was left open; the start of a login creates none
+* **Login cookies:** Starting a login, or finishing one, expires the cookies of the oldest logins of the browser beyond the new `maxLogins` (default 5), so that a user who starts many cannot make the `Cookie` header of the callback too large for the server; only cookies that the strategy signed are expired, not those of another strategy of the same `cookieName`. The cookies are of the path the start of the login shares with the redirect URI, so that the start is sent them
 * **Settings:** The strategy warns of `response_mode=form_post` without `SameSite.none`, and of `SameSite.none` of an `http` redirect URI, with which every login fails, and of `authorizationParameters` that it drops, as `scope`
 * **Docs:** The README samples compile, and the example's `parseParamsFromGithub`, of the type of `getParameters` and of JSON values as they are, is passed, as GitHub answers the token request as a form
 * **Example:** Reads the credentials of a GitHub OAuth app from `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET`, where it had an app's id and secret in its source, and its `jwtKey` from `JWT_KEY`, or a random one

@@ -45,7 +45,8 @@ class _Failed extends _Outcome {
 /// Each login has its own random `state` (against login CSRF, RFC 6749
 /// §10.12) and PKCE code verifier (RFC 7636), kept between the redirect and
 /// the callback in a short-lived, signed, `HttpOnly`, `SameSite=Lax` cookie
-/// scoped to the path of the redirect URI.
+/// scoped to the path that the start of the login and the redirect URI
+/// share.
 class OAuth2Strategy<User> implements AuthStrategy<User> {
   /// A callback that uses the third-party service to authenticate a [User].
   ///
@@ -194,20 +195,28 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
   String _cookieNameOf(String state) =>
       '${cookieName}_${state.substring(0, 12)}';
 
-  oauth2.AuthorizationCodeGrant _createGrant(String codeVerifier) =>
-      oauth2.AuthorizationCodeGrant(
-        options.clientId,
-        _authorizationUrl,
-        tokenEndpoint,
-        // None for a client without one, as of PKCE alone, which sends
-        // only its id, rather than an empty secret.
-        secret: options.clientSecret.isEmpty ? null : options.clientSecret,
-        basicAuth: basicAuth,
-        delimiter: delimiter,
-        getParameters: getParameters,
-        httpClient: httpClient,
-        codeVerifier: codeVerifier,
-      );
+  /// An HTTP client that is never used, of the grants that only build an
+  /// authorization URL, so that none is created, and closed, for each.
+  static final http.Client _idleClient = http.Client();
+
+  /// The grant of a login of [codeVerifier], of [client] if given, as of
+  /// one that makes no request, else of [httpClient], or one of its own.
+  oauth2.AuthorizationCodeGrant _createGrant(
+    String codeVerifier, {
+    http.Client? client,
+  }) => oauth2.AuthorizationCodeGrant(
+    options.clientId,
+    _authorizationUrl,
+    tokenEndpoint,
+    // None for a client without one, as of PKCE alone, which sends
+    // only its id, rather than an empty secret.
+    secret: options.clientSecret.isEmpty ? null : options.clientSecret,
+    basicAuth: basicAuth,
+    delimiter: delimiter,
+    getParameters: getParameters,
+    httpClient: client ?? httpClient,
+    codeVerifier: codeVerifier,
+  );
 
   /// [authorizationEndpoint], with [authorizationParameters] but those of
   /// the strategy, which the grant adds.
@@ -220,6 +229,14 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
               if (!_ownParameters.contains(key)) key: value,
           },
         );
+
+  /// The parameters that [authorizationEndpoint] repeats, but those of the
+  /// strategy.
+  late final Map<String, List<String>> _repeatedParameters = {
+    for (var MapEntry(:key, :value)
+        in authorizationEndpoint.queryParametersAll.entries)
+      if (value.length > 1 && !_ownParameters.contains(key)) key: value,
+  };
 
   /// The parameters of the authorization URL that the strategy gives, which
   /// [authorizationParameters] do not replace: `scope` too, which it leaves
@@ -236,8 +253,8 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
 
   /// The parameters of the provider's response: of the query, and, of a
   /// callback that is posted (`response_mode=form_post`), of its form; and
-  /// why a posted body cannot be read, as of a malformed or too large form,
-  /// if it cannot.
+  /// why a posted body cannot be read, as of a malformed, too large, or not
+  /// UTF-8 form, if it cannot, of which the parameters are of the query.
   static Future<(Map<String, String>, String?)> _parametersOf(
     RequestContext req,
   ) async {
@@ -248,8 +265,8 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
         for (var MapEntry(:key, :value) in req.bodyAsMap.entries) {
           if (value is String) parameters[key] = value;
         }
-      } on FormatException {
-        // Not a form: of the query alone.
+      } on FormatException catch (e) {
+        return (parameters, e.message);
       } on AngelHttpException catch (e) {
         // The framework's 400 or 413 of a body it cannot read.
         if (e.statusCode < 400 || e.statusCode >= 500) rethrow;
@@ -259,29 +276,38 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
     return (parameters, null);
   }
 
-  /// The outcome of [req]: of its callback, or of a body that cannot be
-  /// read, which [onError] is given as `invalid_request`; `null` of the start
-  /// of a login, unless [callback], as of [authenticateCallback].
-  Future<_Outcome?> _outcomeOf(
+  /// Whether the provider posts its callback, of `response_mode=form_post`,
+  /// so that a body that cannot be read is of a callback.
+  bool get _postsCallbacks =>
+      authorizationParameters['response_mode'] == 'form_post';
+
+  /// The failure of a request whose body cannot be read, for [unreadable].
+  Future<_Outcome> _unreadable(
     RequestContext req,
-    ResponseContext res, {
-    bool callback = false,
-  }) async {
+    ResponseContext res,
+    String unreadable,
+  ) async => _Failed(
+    await onError(
+      oauth2.AuthorizationException(
+        'invalid_request',
+        'The body of the request cannot be read: $unreadable',
+        null,
+      ),
+      req,
+      res,
+    ),
+  );
+
+  /// The outcome of [req], of [authenticate]: of its callback, or `null` of
+  /// the start of a login. A body that cannot be read is of a callback, to
+  /// [onError] as `invalid_request`, only if [_postsCallbacks]: else, as of
+  /// a form that starts a login, it is of the query alone.
+  Future<_Outcome?> _outcomeOf(RequestContext req, ResponseContext res) async {
     var (parameters, unreadable) = await _parametersOf(req);
-    if (unreadable != null) {
-      return _Failed(
-        await onError(
-          oauth2.AuthorizationException(
-            'invalid_request',
-            'The body of the callback cannot be read: $unreadable',
-            null,
-          ),
-          req,
-          res,
-        ),
-      );
+    if (unreadable != null && _postsCallbacks) {
+      return _unreadable(req, res, unreadable);
     }
-    if (!callback && !_isCallback(parameters)) return null;
+    if (!_isCallback(parameters)) return null;
     return _callback(req, res, parameters);
   }
 
@@ -316,29 +342,28 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
   Uri _startLogin(RequestContext req, ResponseContext res) {
     var state = _randomString(32);
     var verifier = _randomString(64);
-    var grant = _createGrant(verifier);
-    Uri url;
-    try {
-      url = grant.getAuthorizationUrl(
-        options.redirectUri,
-        scopes: options.scopes,
-        state: state,
+    // Of no request, so of a client that is never used.
+    var url = _createGrant(verifier, client: _idleClient).getAuthorizationUrl(
+      options.redirectUri,
+      scopes: options.scopes,
+      state: state,
+    );
+    // Of all values of a parameter that the endpoint repeats, of which
+    // `package:oauth2` keeps only the last.
+    if (_repeatedParameters.isNotEmpty) {
+      url = url.replace(
+        queryParameters: <String, Object>{
+          ...url.queryParametersAll,
+          ..._repeatedParameters,
+        },
       );
-    } finally {
-      // Of no request: its HTTP client is ours, unless it was given.
-      if (httpClient == null) grant.close();
     }
 
-    var started = [
-      for (var cookie in req.cookies)
-        if (cookie.name.startsWith('${cookieName}_'))
-          (name: cookie.name, login: _decodeLogin(cookie.value)),
-    ]..sort((a, b) => (b.login?.started ?? 0).compareTo(a.login?.started ?? 0));
-    for (var (:name, :login) in started.skip(max(0, maxLogins - 1))) {
-      _log.fine('Expiring the cookie of an older login, of ${login?.started}');
-      res.cookies.add(_expired(name));
-    }
+    // Of the newest logins but this one, which the start of a login is sent
+    // too, as its cookie is of the path it shares with the callback.
+    _expireOlderLogins(req, res, keep: maxLogins - 1);
 
+    var path = _sharedPath(req.uri?.path ?? '/', options.redirectUri.path);
     res.cookies.add(
       _cookie(
         _cookieNameOf(state),
@@ -346,10 +371,48 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
           's': state,
           'v': verifier,
           't': DateTime.now().millisecondsSinceEpoch,
+          'p': path,
         }),
+        path,
       )..maxAge = loginTimeout.inSeconds,
     );
     return url;
+  }
+
+  /// Expires the cookies of the logins of [req] that this strategy signed,
+  /// but the [keep] newest, and that of [except].
+  void _expireOlderLogins(
+    RequestContext req,
+    ResponseContext res, {
+    required int keep,
+    String? except,
+  }) {
+    var logins = [
+      for (var cookie in req.cookies)
+        if (cookie.name.startsWith('${cookieName}_') && cookie.name != except)
+          if (_decodeLogin(cookie.value) case var login?)
+            (name: cookie.name, login: login),
+    ]..sort((a, b) => b.login.started.compareTo(a.login.started));
+    for (var (:name, :login) in logins.skip(max(0, keep))) {
+      _log.fine('Expiring the cookie of an older login, of ${login.started}');
+      res.cookies.add(_expired(name, login.path));
+    }
+  }
+
+  /// The longest path of whole segments that [a] and [b] share, so that a
+  /// cookie of it is sent to both: `/auth/github`, of `/auth/github` and
+  /// `/auth/github/callback`; or `/`.
+  static String _sharedPath(String a, String b) {
+    List<String> segments(String path) => [
+      for (var segment in path.split('/'))
+        if (segment.isNotEmpty) segment,
+    ];
+    var (x, y) = (segments(a), segments(b));
+    var shared = <String>[];
+    for (var i = 0; i < min(x.length, y.length) && x[i] == y[i]; i++) {
+      shared.add(x[i]);
+    }
+    return '/${shared.join('/')}';
   }
 
   /// The endpoint that is invoked by the third-party after successful authentication.
@@ -362,11 +425,16 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
     RequestContext req,
     ResponseContext res, [
     AngelAuthOptions? options,
-  ]) async => switch (await _outcomeOf(req, res, callback: true)) {
-    _Verified(:var user) => user,
-    _Failed(:var response) => response,
-    null => null,
-  };
+  ]) async {
+    var (parameters, unreadable) = await _parametersOf(req);
+    var outcome = unreadable != null
+        ? await _unreadable(req, res, unreadable)
+        : await _callback(req, res, parameters);
+    return switch (outcome) {
+      _Verified(:var user) => user,
+      _Failed(:var response) => response,
+    };
+  }
 
   Future<_Outcome> _callback(
     RequestContext req,
@@ -377,11 +445,15 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
     // Of the form of a state of this strategy, else of no login: of any
     // other, as of a crafted link, the name of its cookie may not be valid.
     var ours = state != null && _rgxState.hasMatch(state);
+    var name = ours ? _cookieNameOf(state) : null;
     var login = ours ? _readLogin(req, state) : null;
-    if (ours) {
+    if (login != null) {
       // Used once: a new login needs a new state.
-      res.cookies.add(_expired(_cookieNameOf(state)));
+      res.cookies.add(_expired(name!, login.path));
     }
+    // Of the logins that were started, and are kept, but the newest, as
+    // when they were started.
+    _expireOlderLogins(req, res, keep: maxLogins - 1, except: name);
 
     if (login == null || state != login.state) {
       return _Failed(
@@ -407,38 +479,41 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
     oauth2.Client client;
     try {
       client = await grant.handleAuthorizationResponse(query);
-    } on oauth2.AuthorizationException catch (e) {
+    } catch (e) {
+      // Of any failure, its HTTP client is ours, unless it was given.
       _closeGrant(grant);
-      return _Failed(await onError(e, req, res));
-    } on FormatException catch (e) {
-      _closeGrant(grant);
-      return _Failed(
-        await onError(
-          oauth2.AuthorizationException('invalid_request', e.message, null),
-          req,
-          res,
-        ),
-      );
-    } on http.ClientException catch (e) {
-      _closeGrant(grant);
-      throw AngelHttpException(
-        statusCode: 502,
-        message: 'The OAuth2 provider could not be reached.',
-        error: e,
-      );
+      switch (e) {
+        case oauth2.AuthorizationException():
+          return _Failed(await onError(e, req, res));
+        case FormatException():
+          return _Failed(
+            await onError(
+              oauth2.AuthorizationException('invalid_request', e.message, null),
+              req,
+              res,
+            ),
+          );
+        case http.ClientException():
+          throw AngelHttpException(
+            statusCode: 502,
+            message: 'The OAuth2 provider could not be reached.',
+            error: e,
+          );
+      }
+      rethrow;
     }
 
     try {
       return _Verified(await verifier(client, req, res));
     } finally {
-      // Its HTTP client is ours, unless it was given.
-      if (httpClient == null) client.close();
+      // The grant's client, which is the client's.
+      _closeGrant(grant);
     }
   }
 
   /// The `state` and code verifier of the login of [req]'s cookie, if it has
   /// one that this strategy signed, and that has not timed out.
-  ({String state, String verifier})? _readLogin(
+  ({String state, String verifier, String path})? _readLogin(
     RequestContext req,
     String state,
   ) {
@@ -451,12 +526,16 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
     if (login == null) return null;
     var started = DateTime.fromMillisecondsSinceEpoch(login.started);
     if (DateTime.now().difference(started) > loginTimeout) return null;
-    return (state: login.state, verifier: login.verifier);
+    return (state: login.state, verifier: login.verifier, path: login.path);
   }
 
   /// The login of a cookie's [value], if this strategy signed it: its
-  /// `state`, code verifier, and when it was started, in milliseconds.
-  ({String state, String verifier, int started})? _decodeLogin(String value) {
+  /// `state`, code verifier, when it was started, in milliseconds, and the
+  /// path of its cookie, which one of before 10.0.0's release had not, of
+  /// the redirect URI.
+  ({String state, String verifier, int started, String path})? _decodeLogin(
+    String value,
+  ) {
     var dot = value.lastIndexOf('.');
     if (dot < 0) return null;
     var data = value.substring(0, dot), signature = value.substring(dot + 1);
@@ -468,7 +547,13 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
       if (claims is! Map) return null;
       var (state, verifier, time) = (claims['s'], claims['v'], claims['t']);
       if (state is! String || verifier is! String || time is! int) return null;
-      return (state: state, verifier: verifier, started: time);
+      var path = claims['p'];
+      return (
+        state: state,
+        verifier: verifier,
+        started: time,
+        path: path is String ? path : _redirectPath,
+      );
     } on FormatException {
       return null;
     }
@@ -488,8 +573,9 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
   /// [base64] without its `=` padding, which a cookie value may not keep.
   static String _unpadded(String base64) => base64.replaceAll('=', '');
 
-  /// The cookie that expires that of [name].
-  Cookie _expired(String name) => _cookie(name, '')
+  /// The cookie that expires that of [name], of [path], which it must be
+  /// of to replace it.
+  Cookie _expired(String name, String path) => _cookie(name, '', path)
     ..maxAge = 0
     ..expires = DateTime.fromMillisecondsSinceEpoch(0, isUtc: true);
 
@@ -502,13 +588,18 @@ class OAuth2Strategy<User> implements AuthStrategy<User> {
   /// A `state` of this strategy, of [_randomString].
   static final _rgxState = RegExp(r'^[A-Za-z0-9\-._~]{32}$');
 
-  /// The cookie of a login: sent only to the callback, and only over HTTPS
-  /// if the redirect URI is.
-  Cookie _cookie(String name, String value) => Cookie(name, value)
+  /// The cookie of a login, of [path]: only over HTTPS if the redirect URI
+  /// is.
+  Cookie _cookie(String name, String value, String path) => Cookie(name, value)
     ..httpOnly = true
     ..secure = options.redirectUri.scheme == 'https'
     ..sameSite = cookieSameSite
-    ..path = options.redirectUri.path.isEmpty ? '/' : options.redirectUri.path;
+    ..path = path;
+
+  /// The path of the redirect URI, of the cookies of logins before it was
+  /// that which the start of a login shares with it.
+  String get _redirectPath =>
+      options.redirectUri.path.isEmpty ? '/' : options.redirectUri.path;
 
   /// A random string of the characters of a PKCE code verifier (RFC 7636).
   String _randomString(int length) {

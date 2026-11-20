@@ -134,25 +134,133 @@ void main() {
     expect(errors, ['invalid_state', 'invalid_state', 'invalid_state']);
   });
 
-  test('starting a login keeps only the newest logins of a browser', () async {
-    var cookies = <Cookie>[];
-    for (var i = 0; i < 6; i++) {
-      var got = await get('/auth/start', cookies: cookies);
-      cookies.add(
-        got.cookies.singleWhere(
-          (c) => c.name.startsWith('angel3_oauth2_') && c.value.isNotEmpty,
-        ),
-      );
-      // So that the logins are of distinct times.
-      await Future<void>.delayed(const Duration(milliseconds: 2));
+  group('the logins of a browser', () {
+    /// The cookies of a browser, by name: each sent only to the paths of
+    /// its own (RFC 6265 §5.1.4), and replaced or removed as the responses
+    /// set them.
+    late Map<String, Cookie> jar;
+
+    /// The names of the cookies that responses expired.
+    late List<String> expiredNames;
+
+    setUp(() {
+      jar = {};
+      expiredNames = [];
+    });
+
+    bool sentTo(Cookie cookie, String path) {
+      var scope = cookie.path ?? '/';
+      return path == scope ||
+          (path.startsWith(scope) &&
+              (scope.endsWith('/') || path[scope.length] == '/'));
     }
-    var got = await get('/auth/start', cookies: cookies);
-    var expired = [
-      for (var c in got.cookies)
-        if (c.value.isEmpty && c.maxAge == 0) c.name,
-    ];
-    // Six kept, and a seventh: the two oldest go, of five at most.
-    expect(expired, unorderedEquals([cookies[0].name, cookies[1].name]));
+
+    Future<Got> browse(String url) async {
+      var path = Uri.parse(url).path;
+      var got = await get(
+        url,
+        cookies: [
+          for (var c in jar.values)
+            if (sentTo(c, path)) c,
+        ],
+      );
+      for (var c in got.cookies) {
+        if (c.maxAge == 0 && c.value.isEmpty) {
+          expiredNames.add(c.name);
+          // Removed only of the path it was set of.
+          if (jar[c.name]?.path == c.path) jar.remove(c.name);
+        } else {
+          jar[c.name] = c;
+        }
+      }
+      return got;
+    }
+
+    Iterable<String> logins() =>
+        jar.keys.where((name) => name.startsWith('angel3_oauth2_'));
+
+    test('are of a cookie of the path the start shares with the callback, '
+        'which the start is sent', () async {
+      await browse('/auth/start');
+      expect(jar.values.single.path, '/auth');
+      expect(sentTo(jar.values.single, '/auth/start'), isTrue);
+      expect(sentTo(jar.values.single, '/auth/callback'), isTrue);
+    });
+
+    test('are at most maxLogins, the oldest expired as more start', () async {
+      var started = <String>[];
+      for (var i = 0; i < 7; i++) {
+        var got = await browse('/auth/start');
+        started.add(got.cookies.singleWhere((c) => c.value.isNotEmpty).name);
+        // So that the logins are of distinct times.
+        await Future<void>.delayed(const Duration(milliseconds: 2));
+      }
+      expect(logins(), unorderedEquals(started.skip(2)));
+    });
+
+    test(
+      'are fewer once one is done: it, and the oldest beyond, expire',
+      () async {
+        // Seven, as of a start that is not sent them, so that only the
+        // callback can expire them.
+        var states = <String>[];
+        for (var i = 0; i < 7; i++) {
+          var got = await get('/auth/start');
+          var cookie = got.cookies.single;
+          jar[cookie.name] = cookie;
+          states.add(Uri.parse(got.location!).queryParameters['state']!);
+          await Future<void>.delayed(const Duration(milliseconds: 2));
+        }
+        var got = await browse(
+          Uri(
+            path: '/auth/callback',
+            queryParameters: {'code': 'c', 'state': states.last},
+          ).toString(),
+        );
+        expect(got.status, 200);
+        // The newest is done, and four are kept, of at most maxLogins - 1.
+        expect(logins(), hasLength(4));
+        expect(
+          logins(),
+          isNot(contains('angel3_oauth2_${states.last.substring(0, 12)}')),
+        );
+      },
+    );
+
+    test('expire no cookie of another strategy, of the same name', () async {
+      jar['angel3_oauth2_foreignlogin1'] = Cookie(
+        'angel3_oauth2_foreignlogin1',
+        'not-of-this-strategy',
+      )..path = '/auth';
+      for (var i = 0; i < 7; i++) {
+        await browse('/auth/start');
+      }
+      expect(jar, contains('angel3_oauth2_foreignlogin1'));
+      expect(expiredNames, isNot(contains('angel3_oauth2_foreignlogin1')));
+    });
+  });
+
+  test('repeated query parameters of the endpoint are kept', () async {
+    var strategy = OAuth2Strategy<String>(
+      ExternalAuthOptions(
+        clientId: 'id',
+        clientSecret: 'secret',
+        redirectUri: 'https://app.example/cb',
+      ),
+      Uri.parse('https://provider.example/authorize?resource=a&resource=b'),
+      tokenEndpoint,
+      (client, req, res) => 'alice',
+      (e, req, res) => null,
+      authorizationParameters: {'prompt': 'consent'},
+    );
+    var app = Angel();
+    app.get('/start', (req, res) => strategy.authenticate(req, res));
+    var rq = MockHttpRequest('GET', Uri.parse('/start'));
+    await rq.close();
+    await AngelHttp(app).handleRequest(rq);
+    var url = Uri.parse(rq.response.headers.value('location')!);
+    expect(url.queryParametersAll['resource'], ['a', 'b']);
+    expect(url.queryParameters['prompt'], 'consent');
   });
 
   group('the start of a login', () {
@@ -166,7 +274,8 @@ void main() {
       expect(cookie.httpOnly, isTrue);
       expect(cookie.secure, isTrue);
       expect(cookie.sameSite, SameSite.lax);
-      expect(cookie.path, '/auth/callback');
+      // Of /auth/start and /auth/callback, which it is sent both.
+      expect(cookie.path, '/auth');
     });
 
     test('of each user has its own state and code challenge', () async {
@@ -375,7 +484,9 @@ Future<Angel> mapApp({
     authorizationParameters: authorizationParameters,
   );
   await app.configure(auth.configureServer);
-  app.get('/start', auth.authenticate('p'));
+  app
+    ..get('/start', auth.authenticate('p'))
+    ..post('/start', auth.authenticate('p'));
   var callback = auth.authenticate('p', AngelAuthOptions());
   if (post) {
     app.post('/cb', callback);
@@ -421,9 +532,14 @@ void moreTests() {
     });
   });
 
-  test('a posted callback whose body cannot be read goes to onError', () async {
+  test('a posted callback whose body cannot be read goes to onError, of '
+      'form_post', () async {
     var http = AngelHttp(
-      await mapApp(cookieSameSite: SameSite.none, post: true),
+      await mapApp(
+        cookieSameSite: SameSite.none,
+        post: true,
+        authorizationParameters: {'response_mode': 'form_post'},
+      ),
     );
     var cb = MockHttpRequest('POST', Uri.parse('/cb'))
       ..headers.add('accept', 'application/json')
@@ -466,6 +582,50 @@ void moreTests() {
       post: true,
     );
     expect(got.status, 200);
+  });
+
+  test(
+    'a posted body that is not UTF-8 goes to onError too, of form_post',
+    () async {
+      var http = AngelHttp(
+        await mapApp(
+          cookieSameSite: SameSite.none,
+          post: true,
+          authorizationParameters: {'response_mode': 'form_post'},
+        ),
+      );
+      var cb = MockHttpRequest('POST', Uri.parse('/cb'))
+        ..headers.add('accept', 'application/json')
+        ..headers.contentType = ContentType(
+          'application',
+          'x-www-form-urlencoded',
+        );
+      cb.add([0x63, 0x6f, 0x64, 0x65, 0x3d, 0xff, 0xfe]);
+      await cb.close();
+      await http.handleRequest(cb);
+      expect(cb.response.statusCode, 400);
+      expect(json.decode(await cb.response.transform(utf8.decoder).join()), {
+        'error': 'invalid_request',
+      });
+    },
+  );
+
+  test('a posted form that starts a login, whose body cannot be read, starts '
+      'it, without form_post', () async {
+    var http = AngelHttp(await mapApp());
+    var rq = MockHttpRequest('POST', Uri.parse('/start'))
+      ..headers.contentType = ContentType(
+        'application',
+        'x-www-form-urlencoded',
+      );
+    rq.write('a=%E0%A4%A');
+    await rq.close();
+    await http.handleRequest(rq);
+    expect(rq.response.statusCode, 302);
+    expect(
+      rq.response.headers.value('location'),
+      startsWith('$authorizationEndpoint'),
+    );
   });
 
   test('the cookie of a login is of the SameSite asked for', () async {
