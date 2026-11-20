@@ -30,7 +30,7 @@ The framework is divided into several categories of packages:
 
 3. **Authentication & Security**:
    - `auth`: Core authentication abstractions and strategies.
-   - `oauth2_client`, `oauth2`: OAuth2 authentication flows.
+   - `oauth2_client`, `oauth2_server`: OAuth2 authentication flows.
    - `security`: Security middleware: CSRF protection (`CsrfFilter`), signed cookies (`CookieSigner`) and rate limiting.
    - `cors`: Cross-Origin Resource Sharing handling.
 

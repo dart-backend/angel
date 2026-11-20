@@ -33,7 +33,7 @@ workspace:
   - packages/production
   - packages/test
   - packages/sync
-  - packages/oauth2
+  - packages/security/oauth2_server
   - packages/security/security
   - packages/proxy
   - packages/paginate

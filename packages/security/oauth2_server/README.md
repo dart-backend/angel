@@ -1,9 +1,9 @@
 # Angel3 OAuth2 Server
 
-![Pub Version (including pre-releases)](https://img.shields.io/pub/v/angel3_oauth2?include_prereleases)
+![Pub Version (including pre-releases)](https://img.shields.io/pub/v/angel3_oauth2_server?include_prereleases)
 [![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)](https://dart.dev/null-safety)
 [![Discord](https://img.shields.io/discord/1060322353214660698)](https://discord.gg/3X6bxTUdCM)
-[![License](https://img.shields.io/github/license/dart-backend/angel)](https://github.com/dart-backend/angel/tree/master/packages/oauth2/LICENSE)
+[![License](https://img.shields.io/github/license/dart-backend/angel)](https://github.com/dart-backend/angel/tree/master/packages/security/oauth2_server/LICENSE)
 
 A class containing handlers that can be used within [Angel3](https://angel3-framework.web.app/) to build a spec-compliant OAuth 2.0 server, including PKCE support.
 
@@ -20,7 +20,7 @@ In your `pubspec.yaml`:
 ```yaml
 dependencies:
   angel3_framework: ^10.0.0
-  angel3_oauth2: ^10.0.0
+  angel3_oauth2_server: ^10.0.0
 ```
 
 ## Usage
@@ -33,7 +33,7 @@ Your server needs to have definitions of at least two types:
 Define a server class as such:
 
 ```dart
-import 'package:angel3_oauth2/angel3_oauth2.dart' as oauth2;
+import 'package:angel3_oauth2_server/angel3_oauth2_server.dart' as oauth2;
 
 class MyServer extends oauth2.AuthorizationServer<Client, User> {}
 ```

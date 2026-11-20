@@ -1,6 +1,6 @@
 import 'dart:convert';
 
-import 'package:angel3_oauth2/angel3_oauth2.dart';
+import 'package:angel3_oauth2_server/angel3_oauth2_server.dart';
 import 'package:crypto/crypto.dart';
 import 'package:test/test.dart';
 

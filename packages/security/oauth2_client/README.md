@@ -5,7 +5,7 @@
 [![Discord](https://img.shields.io/discord/1060322353214660698)](https://discord.gg/3X6bxTUdCM)
 [![License](https://img.shields.io/github/license/dart-backend/angel)](https://github.com/dart-backend/angel/tree/master/packages/security/oauth2_client/LICENSE)
 
-Angel3 library for authenticating users with remote identity providers via OAuth2, i.e. Facebook, Google, Azure AD, etc. Your server is the OAuth2 client: it redirects users to the provider, and exchanges the code of the callback for a token, with the authorization code grant and PKCE. For an OAuth2 authorization server, see [`angel3_oauth2`](https://pub.dev/packages/angel3_oauth2).
+Angel3 library for authenticating users with remote identity providers via OAuth2, i.e. Facebook, Google, Azure AD, etc. Your server is the OAuth2 client: it redirects users to the provider, and exchanges the code of the callback for a token, with the authorization code grant and PKCE. For an OAuth2 authorization server, see [`angel3_oauth2_server`](https://pub.dev/packages/angel3_oauth2_server).
 
 ## Installation
 

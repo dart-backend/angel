@@ -2,6 +2,10 @@
 
 ## 10.0.0
 
+### Breaking changes in 10.0.0
+
+* **Breaking:** Renamed from `angel3_oauth2`: depend on `angel3_oauth2_server`, and import `package:angel3_oauth2_server/angel3_oauth2_server.dart`
+
 ### Fixes in 10.0.0
 
 * **PKCE:** `code_challenge_method=S256`, as RFC 7636 spells it, is accepted, and an S256 challenge is compared without its `=` padding, so standard clients are no longer refused with `invalid_grant`; `s256` and padded challenges still work. The challenge is compared in constant time

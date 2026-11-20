@@ -52,7 +52,7 @@ They can broadly be categorized as follows:
    * file_service: A service that persists data to a JSON file, for development.
 3. Authentication & Security
    * auth: Core authentication abstractions and strategies (local, token-based).
-   * oauth2_client & oauth2: Out-of-the-box support for OAuth2 authentication flows, as a client and as a server.
+   * oauth2_client & oauth2_server: Out-of-the-box support for OAuth2 authentication flows, as a client and as a server.
    * auth_twitter: Authentication with Twitter OAuth 1.0a.
    * security: Security middleware: CSRF protection, signed cookies and rate limiting.
    * cors: Middleware to handle Cross-Origin Resource Sharing effortlessly.
