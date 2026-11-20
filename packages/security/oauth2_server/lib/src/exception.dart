@@ -83,6 +83,14 @@ class ErrorResponse {
   /// restarting to avoid unnecessary polling.
   static const String expiredToken = 'expired_token';
 
+  /// The access token of a request to a protected resource is unknown,
+  /// expired, revoked or malformed (RFC 6750 §3.1).
+  static const String invalidToken = 'invalid_token';
+
+  /// The access token of a request to a protected resource does not grant
+  /// the scopes that it requires (RFC 6750 §3.1).
+  static const String insufficientScope = 'insufficient_scope';
+
   /// A short string representing the error.
   final String code;
 

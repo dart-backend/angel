@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:logging/logging.dart';
 
+import 'access_token.dart';
 import 'exception.dart';
 import 'pkce.dart';
 import 'response.dart';
@@ -201,6 +202,156 @@ abstract class AuthorizationServer<Client, User> {
       );
     }
   }
+
+  /// The [AccessToken] that the server issued as [token], of a request to a
+  /// resource that [requireToken] protects, or `null` if it issued none, or
+  /// has revoked it. [requireToken] refuses one that has expired.
+  ///
+  /// By default, `null`: implement it to look up the tokens that the grant
+  /// methods issue.
+  FutureOr<AccessToken<Client, User>?> findAccessToken(
+    String token,
+    RequestContext req,
+  ) => null;
+
+  /// A request handler that protects the resources of the handlers after it
+  /// (RFC 6750): it refuses a request without an access token of the server
+  /// that grants [scopes], and gives the handlers after it its
+  /// [AccessToken], of [findAccessToken], in `req.container`:
+  ///
+  /// ```dart
+  /// app.get('/me', chain([
+  ///   server.requireToken(scopes: ['profile']),
+  ///   (req, res) {
+  ///     var token = req.container!.make<AccessToken<Client, User>>();
+  ///     return token.user;
+  ///   },
+  /// ]));
+  /// ```
+  ///
+  /// The token is of the `Authorization: Bearer` header, or, if
+  /// [allowFormParameter], of the `access_token` of the form of a request
+  /// that is not a GET (RFC 6750 §2.2); never of the query, which is logged.
+  ///
+  /// A request without a token is a 401 with `WWW-Authenticate: Bearer
+  /// realm="[realm]"`; one of an unknown, revoked or expired token is
+  /// `invalid_token`, a 401, and one of a token that does not grant
+  /// [scopes] is `insufficient_scope`, a 403, with the scopes it requires;
+  /// one of a malformed token, or of several, is `invalid_request`, a 400
+  /// (RFC 6750 §3).
+  RequestHandler requireToken({
+    Iterable<String> scopes = const [],
+    String realm = 'oauth2',
+    bool allowFormParameter = false,
+  }) {
+    var required = List<String>.of(scopes);
+    return (req, res) async {
+      AuthorizationException refuse(
+        String error,
+        String description,
+        int statusCode,
+      ) {
+        res.headers['www-authenticate'] = [
+          'Bearer realm="$realm"',
+          'error="$error"',
+          'error_description="$description"',
+          if (error == ErrorResponse.insufficientScope)
+            'scope="${required.join(' ')}"',
+        ].join(', ');
+        return AuthorizationException(
+          ErrorResponse(error, description, null),
+          statusCode: statusCode,
+        );
+      }
+
+      var tokens = <String>[];
+      for (var value in req.headers!['authorization'] ?? const <String>[]) {
+        // Of headers joined by commas, as of the shelf driver: a token has
+        // none.
+        for (var part in value.split(',')) {
+          if (!_rgxBearerScheme.hasMatch(part)) continue;
+          var match = _rgxBearer.firstMatch(part);
+          if (match == null) {
+            throw refuse(
+              ErrorResponse.invalidRequest,
+              'Malformed "Authorization" header.',
+              400,
+            );
+          }
+          tokens.add(match[1]!);
+        }
+      }
+      if (allowFormParameter && req.method.toUpperCase() != 'GET') {
+        var contentType = req.headers!.contentType?.mimeType;
+        if (contentType == 'application/x-www-form-urlencoded') {
+          var body = await req.parseBody().then((_) => req.bodyAsMap);
+          var token = _formValue(body, 'access_token');
+          if (token != null) tokens.add(token);
+        }
+      }
+      if (req.uri?.queryParameters.containsKey('access_token') == true) {
+        logger.warning(
+          'An access token was given in the query of a request, where it '
+          'may be logged; it is not read (RFC 6750 §2.3).',
+        );
+      }
+
+      if (tokens.isEmpty) {
+        // No error, as of a request that did not authenticate (RFC 6750
+        // §3.1).
+        res.headers['www-authenticate'] = 'Bearer realm="$realm"';
+        throw AngelHttpException.notAuthenticated(
+          message: 'An access token is required.',
+        );
+      }
+      if (tokens.length > 1) {
+        throw refuse(
+          ErrorResponse.invalidRequest,
+          'More than one access token.',
+          400,
+        );
+      }
+
+      var token = await findAccessToken(tokens.single, req);
+      if (token == null || token.isExpiredAt(DateTime.now())) {
+        throw refuse(
+          ErrorResponse.invalidToken,
+          token == null
+              ? 'The access token is not valid.'
+              : 'The access token has expired.',
+          401,
+        );
+      }
+      var granted = token.scopes.toSet();
+      if (!required.every(granted.contains)) {
+        throw refuse(
+          ErrorResponse.insufficientScope,
+          'The access token does not grant the scopes this requires.',
+          403,
+        );
+      }
+
+      // Once, as of several [requireToken] of a request, of its group and
+      // of its route, of the same token.
+      var container = req.container!;
+      if (!container.has<AccessToken<Client, User>>()) {
+        container.registerSingleton<AccessToken<Client, User>>(token);
+      }
+      return true;
+    };
+  }
+
+  /// Of any case (RFC 7235 §2.1).
+  static final RegExp _rgxBearerScheme = RegExp(
+    r'^\s*Bearer(\s|$)',
+    caseSensitive: false,
+  );
+
+  /// The `b64token` of a Bearer header (RFC 6750 §2.1).
+  static final RegExp _rgxBearer = RegExp(
+    r'^\s*Bearer\s+([A-Za-z0-9\-._~+/]+=*)\s*$',
+    caseSensitive: false,
+  );
 
   /// Prompt the currently logged-in user to grant or deny access to the [client].
   ///

@@ -1,3 +1,4 @@
+export 'src/access_token.dart';
 export 'src/exception.dart';
 export 'src/pkce.dart';
 export 'src/response.dart';

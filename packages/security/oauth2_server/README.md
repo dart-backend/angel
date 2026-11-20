@@ -14,6 +14,7 @@ A class containing handlers that can be used within [Angel3](https://angel3-fram
   - [Other Grants](#other-grants)
   - [Device Authorization](#device-authorization)
   - [PKCE](#pkce)
+  - [Protecting Resources](#protecting-resources)
 
 ## Installation
 
@@ -237,3 +238,43 @@ Future<AuthorizationTokenResponse> exchangeAuthorizationCodeForToken(
   return AuthorizationTokenResponse('...');
 }
 ```
+
+## Protecting Resources
+
+Once a client has an access token, it sends it to your API in an `Authorization: Bearer` header (RFC 6750). `requireToken` protects the handlers after it: implement `findAccessToken` to look up the tokens that your grant methods issue, with their client, user, scopes and expiry, or to return `null` for one that is unknown or revoked.
+
+```dart
+@override
+Future<AccessToken<PseudoApplication, PseudoUser>?> findAccessToken(
+    String token, RequestContext req) async {
+  var stored = await lookUpTokenSomehow(token);
+  if (stored == null) return null;
+  return AccessToken(
+    client: stored.client,
+    user: stored.user, // `null` for a client credentials grant
+    scopes: stored.scopes,
+    expiresAt: stored.expiresAt,
+  );
+}
+```
+
+```dart
+app.get('/me', chain([
+  server.requireToken(scopes: ['profile']),
+  (req, res) {
+    var token =
+        req.container!.make<AccessToken<PseudoApplication, PseudoUser>>();
+    return token.user;
+  },
+]));
+```
+
+A request that it refuses gets a `WWW-Authenticate: Bearer realm="oauth2"` challenge:
+
+- No token: a 401, without an error, as the client did not try to authenticate.
+- An unknown, revoked or expired token: `invalid_token`, a 401.
+- A token that does not grant the `scopes`: `insufficient_scope`, a 403, with the scopes required.
+- A malformed token, or more than one: `invalid_request`, a 400.
+
+The token is read from the header only, unless `allowFormParameter` is `true`, which reads the `access_token` of a form, of a request that is not a GET. A token in the query is never read, as it may be logged, and a warning is logged. Several `requireToken`, of a group and of its routes, may check one request, each for its own scopes.
+

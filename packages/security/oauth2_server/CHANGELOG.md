@@ -27,6 +27,8 @@
 * **Device authorization:** `deviceAuthorizationEndpoint` handles device authorization requests at an endpoint of their own, as RFC 8628 §3.1 has them, which standard device clients use: route a POST to it. It authenticates the client as the token endpoint does, and gives the `DeviceCodeResponse` of `requestDeviceCode`, with `Cache-Control: no-store`, or, without `requestDeviceCode`, `unsupported_grant_type`
 * **Deprecated:** A device code request to the token endpoint without a `grant_type` still works, and is logged once as deprecated; it will be removed in a later major version. Route a `deviceAuthorizationEndpoint` instead
 
+* **Protecting resources:** `requireToken` protects the handlers after it with the access tokens of the server (RFC 6750): it reads the `Authorization: Bearer` header, or, if allowed, the `access_token` of a form, finds the token by `findAccessToken`, which gives an `AccessToken` of its client, user, scopes and expiry, and refuses a request without a token, or of an unknown, expired or malformed one, or of one without the scopes required, with the `WWW-Authenticate: Bearer` challenge and error of RFC 6750 §3 (`invalid_token`, `insufficient_scope`, `invalid_request`). The handlers after it get the `AccessToken` from `req.container`. `ErrorResponse` adds `invalidToken` and `insufficientScope`
+
 ### Fixes in 10.0.0
 
 * **Token responses:** The responses of the token endpoint have `Cache-Control: no-store` and `Pragma: no-cache`, as RFC 6749 §5.1 requires, so that tokens are not cached
