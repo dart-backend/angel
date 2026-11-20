@@ -5,7 +5,7 @@
 ### Fixes in 10.0.1
 
 * **Logout:** Once `logout` redirects to `successRedirect`, no handler after it runs
-* **Local strategy:** Its `failureRedirect` is a 302, which browsers follow, where it was a 401
+* **Local strategy:** Without valid credentials, of the form, it returns `null`, where it threw a 401 or redirected to `failureRedirect` itself, so that `authenticate` tries the next strategy of a list, as documented; of the last, `authenticate` answers the 401, or redirects to its `failureRedirect` with a 302, which browsers follow, where it was a 401. Invalid Basic credentials, and `forceBasic`, still answer a 401 with a Basic challenge
 * **`authenticate`:** No strategy runs after one that has answered the request, which wrote to the closed response. The JSON answer of a login no longer serializes the user twice
 * **`onLogin`:** Told of every new login once it is accepted, however it is answered, as by a redirect or a callback, where it was only of one answered with JSON; not of a login that `tokenCallback` refuses, nor of a user who is signed in already. A login or logout of an instance whose app has shut down is not an error
 * **Basic authentication:** `forceBasicAuth` sends its `WWW-Authenticate: Basic` challenge, a 401, to a request of no JWT, where it was a 403 once `AngelAuth` was configured; a JWT that is not valid, as one that has expired, is still a 403

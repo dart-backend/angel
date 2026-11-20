@@ -348,6 +348,7 @@ void main() {
       otherRan = false;
       site = Site();
       site.auth.strategies['other'] = _Recording(() => otherRan = true);
+      site.auth.strategies['key'] = _ApiKey();
       await site.start();
       site.app
         ..get(
@@ -356,6 +357,7 @@ void main() {
           middleware: [forceBasicAuth<String?>()],
         )
         ..post('/chain', site.auth.authenticate(['local', 'other']))
+        ..post('/keyed', site.auth.authenticate(['local', 'key']))
         ..post(
           '/login-redirect',
           site.auth.authenticate(
@@ -462,6 +464,27 @@ void main() {
       expect(got.status, 200);
     });
 
+    test(
+      'the strategy after local is tried, of no or wrong credentials',
+      () async {
+        for (var body in [
+          null,
+          {'username': 'alice', 'password': 'wrong'},
+        ]) {
+          var got = await site.send(
+            'POST',
+            '/keyed',
+            headers: {'x-api-key': 'k'},
+            body: body,
+          );
+          expect(got.status, 200, reason: '$body');
+          expect((got.body as Map)['data'], 'Alice');
+        }
+        // Of no key either, a 401, of the last strategy.
+        expect((await site.send('POST', '/keyed')).status, 401);
+      },
+    );
+
     test('no strategy runs after one that answered the request', () async {
       var got = await site.send(
         'POST',
@@ -539,4 +562,14 @@ class _Recording extends AuthStrategy<String?> {
     ran();
     return null;
   }
+}
+
+/// A strategy of the `x-api-key` header, of Alice's key, `k`.
+class _ApiKey extends AuthStrategy<String?> {
+  @override
+  String? authenticate(
+    RequestContext req,
+    ResponseContext res, [
+    AngelAuthOptions<String?>? options,
+  ]) => req.headers?.value('x-api-key') == 'k' ? 'Alice' : null;
 }

@@ -14,6 +14,14 @@ typedef LocalAuthVerifier<User> = FutureOr<User?> Function(
   String? password,
 );
 
+/// Authenticates a user of a username and password, of the form of the
+/// request, or, if [allowBasic], of an `Authorization: Basic` header.
+///
+/// Of no user, it returns `null`, so that [AngelAuth.authenticate] tries
+/// its next strategy, or, of the last, answers a 401, or redirects to its
+/// `failureRedirect`. Of Basic credentials that are not valid, or if
+/// [forceBasic], it answers the request itself, of a 401 and a Basic
+/// challenge, and no other strategy is tried.
 class LocalAuthStrategy<User> extends AuthStrategy<User> {
   final _log = Logger('LocalAuthStrategy');
 
@@ -46,7 +54,6 @@ class LocalAuthStrategy<User> extends AuthStrategy<User> {
     ResponseContext res, [
     AngelAuthOptions? options,
   ]) async {
-    var localOptions = options ?? AngelAuthOptions();
     User? verificationResult;
 
     // Basic, if allowed and sent; the fields of the body otherwise.
@@ -97,16 +104,10 @@ class LocalAuthStrategy<User> extends AuthStrategy<User> {
       return null;
     }
 
-    // Redirect failed authentication
-    if (localOptions.failureRedirect != null &&
-        localOptions.failureRedirect!.isNotEmpty) {
-      // A 302, as browsers follow no `Location` of a 401.
-      await res.redirect(localOptions.failureRedirect);
-      return null;
-    }
-
+    // Of no user, so that [AngelAuth.authenticate] tries its next strategy,
+    // or, of the last, answers a 401, or redirects to its `failureRedirect`.
     _log.info('Not authenticated');
-    throw AngelHttpException.notAuthenticated();
+    return null;
   }
 
   /// The username and password of the base64 [credentials] of a Basic
