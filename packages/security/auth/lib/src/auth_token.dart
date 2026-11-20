@@ -191,7 +191,7 @@ class AuthToken {
   Map<String, dynamic> toJson() {
     var iat = issuedAt.millisecondsSinceEpoch / 1000;
     return _splayify({
-      'iss': 'angel_auth',
+      'iss': 'angel3_auth',
       'aud': ipAddress,
       if (lifeSpan > -1) 'exp': iat + lifeSpan / 1000,
       'iat': iat,

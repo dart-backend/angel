@@ -2,6 +2,11 @@
 
 ## 10.0.1
 
+### Breaking changes in 10.0.1
+
+* **Breaking:** JWTs are issued with `"iss": "angel3_auth"`, where it was `"angel_auth"`. JWTs issued before are still accepted, as `iss` is not checked; update code of your own that checks it
+* **Breaking:** The default realm of `forceBasicAuth` is `angel3_auth`, as documented, where it sent `angel_auth`; browsers that remembered Basic credentials for the old realm ask for them once more. Pass `realm: 'angel_auth'` to keep it
+
 ### Fixes in 10.0.1
 
 * **Logout:** Once `logout` redirects to `successRedirect`, no handler after it runs

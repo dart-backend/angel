@@ -12,7 +12,12 @@ import 'package:test/test.dart';
 final users = <String, String>{'alice': 'Alice', 'bob': 'Bob'};
 
 /// A response to a test request.
-typedef Got = ({int status, Object? body, List<Cookie> cookies});
+typedef Got = ({
+  int status,
+  Object? body,
+  List<Cookie> cookies,
+  HttpHeaders headers,
+});
 
 class Site {
   final Angel app = Angel();
@@ -79,6 +84,7 @@ class Site {
       status: rq.response.statusCode,
       body: decoded,
       cookies: rq.response.cookies,
+      headers: rq.response.headers,
     );
   }
 }
@@ -291,6 +297,39 @@ void main() {
       expect(read.issuedAt.isAtSameMomentAs(issued), isTrue);
     });
 
+    test(
+      'are issued by angel3_auth; a JWT of angel_auth is still read',
+      () async {
+        expect(AuthToken(userId: 'a').toJson()['iss'], 'angel3_auth');
+
+        var site = Site();
+        await site.start();
+        // A JWT that 10.0.0 issued, of the old `iss`, signed as it was.
+        var header = base64Url.encode(
+          utf8.encode('{"alg":"HS256","typ":"JWT"}'),
+        );
+        var payload = base64Url.encode(
+          utf8.encode(
+            json.encode({
+              ...AuthToken(userId: 'alice').toJson(),
+              'iss': 'angel_auth',
+            }),
+          ),
+        );
+        var data = '$header.$payload';
+        var signature = base64Url.encode(
+          site.auth.hmac.convert(data.codeUnits).bytes,
+        );
+        var got = await site.send(
+          'GET',
+          '/me',
+          headers: {'authorization': 'Bearer $data.$signature'},
+        );
+        expect(got.status, 200);
+        expect(got.body, 'Alice');
+      },
+    );
+
     test('of a JWT before 10.0.0 are read', () {
       var read = AuthToken.fromMap({
         'sub': 'a',
@@ -455,6 +494,10 @@ void main() {
     test('forceBasicAuth challenges a request of no JWT', () async {
       var got = await site.send('GET', '/basic');
       expect(got.status, 401);
+      expect(
+        got.headers.value('www-authenticate'),
+        'Basic realm="angel3_auth"',
+      );
       var jwt = site.jwt(AuthToken(userId: 'alice'));
       got = await site.send(
         'GET',
