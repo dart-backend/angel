@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:logging/logging.dart';
@@ -8,6 +9,7 @@ import 'access_token.dart';
 import 'exception.dart';
 import 'metadata.dart';
 import 'pkce.dart';
+import 'registration.dart';
 import 'response.dart';
 import 'token_type.dart';
 
@@ -251,37 +253,16 @@ abstract class AuthorizationServer<Client, User> {
         String error,
         String description,
         int statusCode,
-      ) {
-        res.headers['www-authenticate'] = [
-          'Bearer realm="$realm"',
-          'error="$error"',
-          'error_description="$description"',
-          if (error == ErrorResponse.insufficientScope)
-            'scope="${required.join(' ')}"',
-        ].join(', ');
-        return AuthorizationException(
-          ErrorResponse(error, description, null),
-          statusCode: statusCode,
-        );
-      }
+      ) => _bearerError(
+        res,
+        realm,
+        error,
+        description,
+        statusCode,
+        scope: error == ErrorResponse.insufficientScope ? required : null,
+      );
 
-      var tokens = <String>[];
-      for (var value in req.headers!['authorization'] ?? const <String>[]) {
-        // Of headers joined by commas, as of the shelf driver: a token has
-        // none.
-        for (var part in value.split(',')) {
-          if (!_rgxBearerScheme.hasMatch(part)) continue;
-          var match = _rgxBearer.firstMatch(part);
-          if (match == null) {
-            throw refuse(
-              ErrorResponse.invalidRequest,
-              'Malformed "Authorization" header.',
-              400,
-            );
-          }
-          tokens.add(match[1]!);
-        }
-      }
+      var tokens = _bearerHeaderTokens(req, res, realm);
       if (allowFormParameter && req.method.toUpperCase() != 'GET') {
         var contentType = req.headers!.contentType?.mimeType;
         if (contentType == 'application/x-www-form-urlencoded') {
@@ -340,6 +321,58 @@ abstract class AuthorizationServer<Client, User> {
       }
       return true;
     };
+  }
+
+  /// The error [error] of a request to a resource that a Bearer token
+  /// protects, of the `WWW-Authenticate` of RFC 6750 §3, with the [scope]
+  /// that it requires, if any.
+  static AuthorizationException _bearerError(
+    ResponseContext res,
+    String realm,
+    String error,
+    String description,
+    int statusCode, {
+    Iterable<String>? scope,
+  }) {
+    res.headers['www-authenticate'] = [
+      'Bearer realm="$realm"',
+      'error="$error"',
+      'error_description="$description"',
+      if (scope != null) 'scope="${scope.join(' ')}"',
+    ].join(', ');
+    return AuthorizationException(
+      ErrorResponse(error, description, null),
+      statusCode: statusCode,
+    );
+  }
+
+  /// The tokens of the `Authorization: Bearer` headers of [req]; throws
+  /// `invalid_request` if one is malformed.
+  static List<String> _bearerHeaderTokens(
+    RequestContext req,
+    ResponseContext res,
+    String realm,
+  ) {
+    var tokens = <String>[];
+    for (var value in req.headers!['authorization'] ?? const <String>[]) {
+      // Of headers joined by commas, as of the shelf driver: a token has
+      // none.
+      for (var part in value.split(',')) {
+        if (!_rgxBearerScheme.hasMatch(part)) continue;
+        var match = _rgxBearer.firstMatch(part);
+        if (match == null) {
+          throw _bearerError(
+            res,
+            realm,
+            ErrorResponse.invalidRequest,
+            'Malformed "Authorization" header.',
+            400,
+          );
+        }
+        tokens.add(match[1]!);
+      }
+    }
+    return tokens;
   }
 
   /// Of any case (RFC 7235 §2.1).
@@ -1099,6 +1132,321 @@ abstract class AuthorizationServer<Client, User> {
     }
   }
 
+  /// Whether a client may register itself at the [registrationEndpoint]:
+  /// of the initial access token of its `Authorization: Bearer` header,
+  /// [initialAccessToken], which the server gave its developer, or `null`
+  /// (RFC 7591 §3).
+  ///
+  /// By default, `false`: no client may. Return `true` of a token that the
+  /// server issued for registration; or for any, of open registration,
+  /// which anyone may use, with limits on how often.
+  FutureOr<bool> mayRegisterClient(
+    String? initialAccessToken,
+    RequestContext req,
+  ) => false;
+
+  /// Stores the client of [registration], of its id, its secret, hashed,
+  /// and its [ClientRegistration.metadata], so that [findClient] finds it,
+  /// and [verifyClient] verifies its secret, and
+  /// [registeredRedirectUri] its redirect URIs.
+  ///
+  /// Throw an [AuthorizationException] of `invalid_client_metadata` or
+  /// `invalid_redirect_uri` to refuse a value that the server does not
+  /// accept; or change [ClientRegistration.metadata] to register another.
+  FutureOr<void> registerClient(
+    ClientRegistration registration,
+    RequestContext req,
+  ) => throw AuthorizationException(
+    ErrorResponse(
+      ErrorResponse.accessDenied,
+      'Client registration is not supported.',
+      null,
+    ),
+    statusCode: 403,
+  );
+
+  /// A request handler of client registration requests (RFC 7591), of a
+  /// client that registers itself, of the JSON of its metadata, and is
+  /// given an id, and a secret unless it is public. Route a POST to it:
+  ///
+  /// ```dart
+  /// router.post('/register', server.registrationEndpoint(metadata));
+  /// ```
+  ///
+  /// A client may register only if [mayRegisterClient] gives it. Its
+  /// metadata is checked against [metadata]: its `grant_types`,
+  /// `response_types`, `token_endpoint_auth_method` and `scope` must be of
+  /// those of the server, its grant and response types of each other, and
+  /// its `redirect_uris`, which its redirect grants require, absolute, of no
+  /// fragment, and of `https`, of `http` only for `localhost`, or of a
+  /// scheme of a native app (RFC 8252 §7.1). A public client may not use the
+  /// client credentials grant. A `software_statement` is not verified, and
+  /// is dropped.
+  ///
+  /// The client is given to [registerClient], and the response is a 201 of
+  /// its [ClientRegistration.toJson]; or an error, a 400 of
+  /// `invalid_client_metadata` or `invalid_redirect_uri`, or a 401 of a
+  /// missing or refused initial access token.
+  RequestHandler registrationEndpoint(ServerMetadata metadata) {
+    var server = metadataOf(metadata);
+    return (req, res) async {
+      res.headers
+        ..['cache-control'] = 'no-store'
+        ..['pragma'] = 'no-cache';
+      try {
+        const realm = 'oauth2';
+        var tokens = _bearerHeaderTokens(req, res, realm);
+        if (tokens.length > 1) {
+          throw _bearerError(
+            res,
+            realm,
+            ErrorResponse.invalidRequest,
+            'More than one access token.',
+            400,
+          );
+        }
+        var token = tokens.firstOrNull;
+        if (!await mayRegisterClient(token, req)) {
+          if (token == null) {
+            res.headers['www-authenticate'] = 'Bearer realm="$realm"';
+            throw AngelHttpException.notAuthenticated(
+              message: 'An initial access token is required.',
+            );
+          }
+          throw _bearerError(
+            res,
+            realm,
+            ErrorResponse.invalidToken,
+            'The initial access token is not valid.',
+            401,
+          );
+        }
+
+        Object? body;
+        if (req.headers!.contentType?.mimeType == 'application/json') {
+          try {
+            await req.parseBody();
+            body = req.bodyAsObject;
+          } on FormatException {
+            body = null;
+          }
+        }
+        if (body is! Map) {
+          throw _invalidMetadata('The request must be a JSON object.');
+        }
+
+        var registration = _registrationOf(
+          Map<String, dynamic>.from(body),
+          server,
+          metadata,
+        );
+        await registerClient(registration, req);
+        res.statusCode = 201;
+        return registration.toJson();
+      } on AngelHttpException {
+        rethrow;
+      } catch (e, st) {
+        throw AuthorizationException(
+          ErrorResponse(ErrorResponse.serverError, _internalServerError, ''),
+          error: e,
+          statusCode: 500,
+          stackTrace: st,
+        );
+      }
+    };
+  }
+
+  static AuthorizationException _invalidMetadata(
+    String description, {
+    String error = ErrorResponse.invalidClientMetadata,
+  }) => AuthorizationException(
+    ErrorResponse(error, description, null),
+    statusCode: 400,
+  );
+
+  /// The metadata that the server issues, or does not verify, which a
+  /// client may not register.
+  static const _issuedMetadata = {
+    'client_id',
+    'client_secret',
+    'client_id_issued_at',
+    'client_secret_expires_at',
+    'registration_access_token',
+    'registration_client_uri',
+    'software_statement',
+  };
+
+  /// Of the ids and secrets that the server issues.
+  static final Random _random = Random.secure();
+
+  /// [bytes] random bytes, as base64url, without padding.
+  static String _randomString(int bytes) => base64Url
+      .encode([for (var i = 0; i < bytes; i++) _random.nextInt(256)])
+      .replaceAll('=', '');
+
+  /// The registration of the client metadata [body], checked against the
+  /// metadata of the server, [server], of [metadataOf], of [metadata].
+  ClientRegistration _registrationOf(
+    Map<String, dynamic> body,
+    Map<String, dynamic> server,
+    ServerMetadata metadata,
+  ) {
+    List<String>? strings(String name) {
+      var value = body[name];
+      if (value == null) return null;
+      if (value is! List || value.any((v) => v is! String)) {
+        throw _invalidMetadata('"$name" must be an array of strings.');
+      }
+      return List<String>.of(value.cast<String>());
+    }
+
+    String? string(String name) {
+      var value = body[name];
+      if (value == null || value is String) return value as String?;
+      throw _invalidMetadata('"$name" must be a string.');
+    }
+
+    void subset(String name, List<String> values, Iterable supported) {
+      for (var value in values) {
+        if (!supported.contains(value)) {
+          throw _invalidMetadata(
+            'The "$name" value "$value" is not supported.',
+          );
+        }
+      }
+    }
+
+    var grantTypes = strings('grant_types') ?? ['authorization_code'];
+    subset('grant_types', grantTypes, server['grant_types_supported'] as List);
+
+    // Of the grant types, if not given, so that a client of no redirect
+    // grant need not give an empty one.
+    var responseTypes =
+        strings('response_types') ??
+        [
+          if (grantTypes.contains('authorization_code')) 'code',
+          if (grantTypes.contains('implicit')) 'token',
+        ];
+    subset('response_types', responseTypes, metadata.responseTypes);
+    // Of each other (RFC 7591 §2.1).
+    for (var (grant, response) in [
+      ('authorization_code', 'code'),
+      ('implicit', 'token'),
+    ]) {
+      if (grantTypes.contains(grant) != responseTypes.contains(response)) {
+        throw _invalidMetadata(
+          'The grant type "$grant" and the response type "$response" must be '
+          'registered together.',
+        );
+      }
+    }
+
+    var authMethod =
+        string('token_endpoint_auth_method') ?? 'client_secret_basic';
+    subset('token_endpoint_auth_method', [
+      authMethod,
+    ], metadata.clientAuthMethods);
+    var public = authMethod == 'none';
+    if (public && grantTypes.contains('client_credentials')) {
+      throw _invalidMetadata(
+        'A client without a secret may not use the client credentials grant.',
+      );
+    }
+
+    var scope = string('scope');
+    List<String>? scopes;
+    if (scope != null) {
+      scopes = [
+        for (var s in scope.split(_whitespace))
+          if (s.isNotEmpty) s,
+      ];
+      if (metadata.scopes case var supported?) {
+        subset('scope', scopes, supported);
+      }
+    }
+
+    var redirectUris = <Uri>[];
+    for (var value in strings('redirect_uris') ?? const <String>[]) {
+      var uri = Uri.tryParse(value);
+      String? problem;
+      if (uri == null || !uri.isAbsolute || uri.hasFragment) {
+        problem = 'must be absolute, of no fragment';
+      } else if (uri.isScheme('http') &&
+          !const {
+            'localhost',
+            '127.0.0.1',
+            '[::1]',
+            '::1',
+          }.contains(uri.host)) {
+        problem = 'must be https, or http of localhost';
+      } else if ((uri.isScheme('https') || uri.isScheme('http')) &&
+          uri.host.isEmpty) {
+        problem = 'must have a host';
+      } else if (const {'javascript', 'data', 'file'}.contains(uri.scheme)) {
+        problem = 'must not be of the "${uri.scheme}" scheme';
+      }
+      if (problem != null) {
+        throw _invalidMetadata(
+          'The redirect URI "$value" $problem.',
+          error: ErrorResponse.invalidRedirectUri,
+        );
+      }
+      redirectUris.add(uri!);
+    }
+    if (redirectUris.isEmpty && responseTypes.isNotEmpty) {
+      throw _invalidMetadata(
+        'A client of the authorization endpoint must register its '
+        '"redirect_uris".',
+        error: ErrorResponse.invalidRedirectUri,
+      );
+    }
+
+    for (var name in [
+      'client_name',
+      'client_uri',
+      'logo_uri',
+      'tos_uri',
+      'policy_uri',
+      'jwks_uri',
+      'software_id',
+      'software_version',
+    ]) {
+      var value = string(name);
+      if (value != null && name.endsWith('_uri')) {
+        var uri = Uri.tryParse(value);
+        if (uri == null || !(uri.isScheme('https') || uri.isScheme('http'))) {
+          throw _invalidMetadata('"$name" must be an http or https URL.');
+        }
+      }
+    }
+    strings('contacts');
+    if (body['jwks_uri'] != null && body['jwks'] != null) {
+      throw _invalidMetadata('"jwks_uri" and "jwks" may not both be given.');
+    }
+
+    return ClientRegistration(
+      clientId: _randomString(16),
+      clientSecret: public ? null : _randomString(32),
+      issuedAt: DateTime.now(),
+      redirectUris: redirectUris,
+      grantTypes: grantTypes,
+      responseTypes: responseTypes,
+      tokenEndpointAuthMethod: authMethod,
+      scopes: scopes,
+      metadata: {
+        // Not of what the server issues, nor of a statement it does not
+        // verify.
+        for (var MapEntry(:key, :value) in body.entries)
+          if (!_issuedMetadata.contains(key)) key: value,
+        'redirect_uris': [for (var uri in redirectUris) uri.toString()],
+        'grant_types': grantTypes,
+        'response_types': responseTypes,
+        'token_endpoint_auth_method': authMethod,
+        if (scopes != null) 'scope': scopes.join(' '),
+      },
+    );
+  }
+
   /// The metadata of the server (RFC 8414 §2) of [metadata], as JSON: its
   /// endpoints, and what it supports, of [metadata] and of itself.
   Map<String, dynamic> metadataOf(ServerMetadata metadata) {
@@ -1118,6 +1466,7 @@ abstract class AuthorizationServer<Client, User> {
       ),
       'revocation_endpoint': ?url(metadata.revocationEndpoint),
       'introspection_endpoint': ?url(metadata.introspectionEndpoint),
+      'registration_endpoint': ?url(metadata.registrationEndpoint),
       'response_types_supported': metadata.responseTypes.toList(),
       'response_modes_supported': [
         if (metadata.responseTypes.contains('code')) 'query',

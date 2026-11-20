@@ -27,6 +27,9 @@ class ServerMetadata {
   /// The URL of [AuthorizationServer.introspectionEndpoint].
   final Uri? introspectionEndpoint;
 
+  /// The URL of [AuthorizationServer.registrationEndpoint].
+  final Uri? registrationEndpoint;
+
   /// The `response_type`s that the authorization endpoint supports: `code`,
   /// and `token`, if the server implements implicit grants.
   final Iterable<String> responseTypes;
@@ -44,7 +47,8 @@ class ServerMetadata {
   /// are these, but `none`, as its callers must have a secret.
   final Iterable<String> clientAuthMethods;
 
-  /// The scopes that the server supports, if it publishes them.
+  /// The scopes that the server supports, if it publishes them; a client
+  /// may register no other.
   final Iterable<String>? scopes;
 
   /// A page of the documentation of the server, for developers.
@@ -61,6 +65,7 @@ class ServerMetadata {
     this.deviceAuthorizationEndpoint,
     this.revocationEndpoint,
     this.introspectionEndpoint,
+    this.registrationEndpoint,
     this.responseTypes = const ['code'],
     this.grantTypes = const ['authorization_code'],
     this.clientAuthMethods = const [

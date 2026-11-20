@@ -95,6 +95,14 @@ class ErrorResponse {
   /// of a revocation request (RFC 7009 §2.2.1).
   static const String unsupportedTokenType = 'unsupported_token_type';
 
+  /// A redirect URI of a client registration is not valid (RFC 7591
+  /// §3.2.2).
+  static const String invalidRedirectUri = 'invalid_redirect_uri';
+
+  /// A value of the metadata of a client registration is not valid (RFC
+  /// 7591 §3.2.2).
+  static const String invalidClientMetadata = 'invalid_client_metadata';
+
   /// A short string representing the error.
   final String code;
 

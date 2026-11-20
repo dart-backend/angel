@@ -35,6 +35,8 @@
 
 * **Token introspection:** `introspectionEndpoint` tells a resource server whether a token is active, and of what (RFC 7662): its caller must authenticate as a client with a secret; it finds the token by `introspectToken`, which is `findAccessToken` by default, and answers `{"active": false}` for one that is unknown, revoked or expired, or else its `scope`, `exp` and `iat`, and what `introspectionClaims` gives the caller, which may also make it inactive to it. `AccessToken` adds `issuedAt`, and `ServerMetadata` an `introspectionEndpoint`
 
+* **Client registration:** `registrationEndpoint` lets a client register itself (RFC 7591), if `mayRegisterClient` accepts its initial access token: it checks its metadata against the `ServerMetadata` of the server, as its grant, response types, client authentication methods, scopes and redirect URIs, issues it an id, and a secret unless it is public, and gives the `ClientRegistration` to `registerClient` to store, and answers a 201 of it, or `invalid_client_metadata` or `invalid_redirect_uri`, which `ErrorResponse` adds. `ServerMetadata` adds a `registrationEndpoint`
+
 ### Fixes in 10.0.0
 
 * **Token responses:** The responses of the token endpoint have `Cache-Control: no-store` and `Pragma: no-cache`, as RFC 6749 §5.1 requires, so that tokens are not cached

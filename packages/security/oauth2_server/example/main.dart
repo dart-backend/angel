@@ -25,9 +25,12 @@ void main() async {
     tokenEndpoint: issuer.resolve('/auth/token'),
     revocationEndpoint: issuer.resolve('/auth/revoke'),
     introspectionEndpoint: issuer.resolve('/auth/introspect'),
+    registrationEndpoint: issuer.resolve('/auth/register'),
     grantTypes: ['authorization_code', 'refresh_token'],
   );
   app.get(metadata.wellKnownPath, oauth2.metadataEndpoint(metadata));
+  // Clients that register themselves, of the metadata that they may.
+  app.post('/auth/register', oauth2.registrationEndpoint(metadata));
 
   // Assume that all other requests must be authenticated, by an access
   // token of the `Authorization: Bearer` header, which `findAccessToken`
@@ -46,6 +49,26 @@ class User {}
 /// A [ThirdPartyApp] can act on behalf of a [User].
 class _ExampleAuthorizationServer
     extends AuthorizationServer<ThirdPartyApp, User> {
+  @override
+  FutureOr<bool> mayRegisterClient(
+    String? initialAccessToken,
+    RequestContext req,
+  ) {
+    // TODO: Accept the initial access tokens that you give developers, or
+    // return true for open registration.
+    return false;
+  }
+
+  @override
+  FutureOr<void> registerClient(
+    ClientRegistration registration,
+    RequestContext req,
+  ) {
+    // TODO: Store the client, with its secret hashed, so that findClient and
+    // verifyClient find it.
+    throw UnimplementedError();
+  }
+
   @override
   FutureOr<void> revokeToken(
     ThirdPartyApp client,

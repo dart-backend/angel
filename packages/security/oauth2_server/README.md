@@ -18,6 +18,7 @@ A class containing handlers that can be used within [Angel3](https://angel3-fram
   - [Revoking Tokens](#revoking-tokens)
   - [Introspecting Tokens](#introspecting-tokens)
   - [Server Metadata](#server-metadata)
+  - [Client Registration](#client-registration)
 
 ## Installation
 
@@ -344,6 +345,7 @@ var metadata = ServerMetadata(
   deviceAuthorizationEndpoint: issuer.resolve('/oauth2/device'),
   revocationEndpoint: issuer.resolve('/oauth2/revoke'),
   introspectionEndpoint: issuer.resolve('/oauth2/introspect'),
+  registrationEndpoint: issuer.resolve('/oauth2/register'),
   grantTypes: ['authorization_code', 'refresh_token'],
   // `none`, if the server has public clients.
   clientAuthMethods: ['client_secret_basic', 'client_secret_post', 'none'],
@@ -353,4 +355,41 @@ app.get(metadata.wellKnownPath, server.metadataEndpoint(metadata));
 ```
 
 The server adds what it knows of itself: the device code grant, if a `deviceAuthorizationEndpoint` is given, its `extensionGrants`, and its PKCE methods, `S256`, and `plain` if `allowsPlainPkce`. `extra` adds other metadata, last, so that it may replace any. The `issuer` must be an `https` URL, or an `http` one of `localhost`, of no query nor fragment; of a path, as of one server of several on a host, `wellKnownPath` follows the well-known path with it, as `/.well-known/oauth-authorization-server/tenant1`. `metadataOf` gives the metadata as a `Map`, as to sign it, or to serve it otherwise.
+
+## Client Registration
+
+A client may register itself, and be given its id, and a secret unless it is public, at the `registrationEndpoint` (RFC 7591), as clients that are not known in advance do. It checks the metadata of the client against the `ServerMetadata` of the server, which the server metadata gives too:
+
+```dart
+router.post('/register', server.registrationEndpoint(metadata));
+```
+
+No client may register unless `mayRegisterClient` accepts the initial access token of its `Authorization: Bearer` header, which you give its developer; return `true` of any, or of none, for open registration, which anyone may use, so limit how often. Implement `registerClient` to store the client, so that `findClient`, `verifyClient` and `registeredRedirectUri` find it:
+
+```dart
+@override
+bool mayRegisterClient(String? initialAccessToken, RequestContext req) =>
+    initialAccessToken != null && isInitialAccessTokenSomehow(initialAccessToken);
+
+@override
+Future<void> registerClient(
+    ClientRegistration registration, RequestContext req) async {
+  await storeClientSomehow(
+    id: registration.clientId,
+    // `null` of a public client; store it hashed, as a password.
+    secretHash: hashSomehow(registration.clientSecret),
+    redirectUris: registration.redirectUris,
+    metadata: registration.metadata,
+  );
+}
+```
+
+The metadata is checked before `registerClient` is called; a refusal is a 400 of `invalid_client_metadata` or `invalid_redirect_uri`:
+
+- `grant_types`, `response_types`, `token_endpoint_auth_method` and `scope` must be of those of the server: of its `grantTypes`, with its device code and extension grants, of its `responseTypes`, `clientAuthMethods` and `scopes`. Their defaults are `authorization_code`, the response types of the grant types, `client_secret_basic`, and none.
+- The grant types and response types must be of each other: `authorization_code` of `code`, and `implicit` of `token` (RFC 7591 §2.1). A public client, of `none`, may not use `client_credentials`.
+- A client of a response type must register its `redirect_uris`: absolute, of no fragment, `https`, `http` only for `localhost`, or of the scheme of a native app, such as `com.example.app:/cb` (RFC 8252 §7.1).
+- The other metadata of RFC 7591 must be of its types; other metadata is kept. What the server issues, such as a `client_id`, and a `software_statement`, which it does not verify, are dropped.
+
+`registerClient` may throw `invalid_client_metadata` or `invalid_redirect_uri` itself, or change `registration.metadata` to register other values. The response is a 201 of the metadata, the `client_id`, the `client_secret`, which does not expire, and when they were issued. Reading, updating and deleting a registration (RFC 7592) are not supported.
 
