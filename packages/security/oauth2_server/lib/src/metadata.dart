@@ -36,7 +36,8 @@ class ServerMetadata {
   final Uri? registrationEndpoint;
 
   /// The `response_type`s that the authorization endpoint supports: `code`,
-  /// and `token`, if the server implements implicit grants.
+  /// and `token`, if the server implements implicit grants, which
+  /// [AuthorizationServer.allowsImplicitGrant] must then allow.
   final Iterable<String> responseTypes;
 
   /// The grant types that the server implements, such as `refresh_token`,

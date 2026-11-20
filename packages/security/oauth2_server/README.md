@@ -77,7 +77,7 @@ class _Server extends AuthorizationServer<PseudoApplication, Map> {
 }
 ```
 
-Next, write some logic to be executed whenever a user visits the authorization endpoint. In many cases, you will want to show a dialog. `implicit` is `true` when the client asks for an implicit grant:
+Next, write some logic to be executed whenever a user visits the authorization endpoint. In many cases, you will want to show a dialog. `implicit` is `true` when the client asks for an implicit grant, which it may only if `allowsImplicitGrant` allows it (see [Other Grants](#other-grants)):
 
 ```dart
 @override
@@ -181,7 +181,12 @@ By default, all OAuth2 grant methods will throw a `400 Bad Request` error: an `u
 - `clientCredentialsGrant`, given the `scope` of the request
 - `requestDeviceCode` and `exchangeDeviceCodeForToken`, of the [device authorization grant](#device-authorization)
 
-An implicit grant is requested through `requestAuthorizationCode`, with `implicit` set to `true`.
+An implicit grant, of `response_type=token`, is refused by default, as `unsupported_response_type`: OAuth 2.1 removes it, and RFC 9700 advises against it, as its access token is given in the fragment of the redirect URI, where it may leak, as by the browser history. Clients use the authorization code grant with PKCE instead. For clients that still use it, override `allowsImplicitGrant`; it is then requested through `requestAuthorizationCode`, with `implicit` set to `true`, and list `token` in the `responseTypes` of the `ServerMetadata`:
+
+```dart
+@override
+bool allowsImplicitGrant(PseudoApplication client) => client.id == 'legacy-spa';
+```
 
 The `extensionGrants` map other grant types to their handlers. A handler runs once the client is authenticated, as for the other grants, by `Authorization: Basic` or by `client_id` and `client_secret` in the form, so a grant that authenticates the client another way, such as by a `client_assertion` (RFC 7523), is refused before it runs; it is given the request and the response, not the client, which it finds again by `findClient` if it needs it.
 

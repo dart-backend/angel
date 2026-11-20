@@ -59,6 +59,28 @@ void main() {
     );
   });
 
+  test('is refused by default, as unsupported_response_type', () async {
+    var app = Angel();
+    app.get('/authorize', _Default().authorizationEndpoint);
+    app.errorHandler = (e, req, res) async {
+      res.statusCode = e.statusCode;
+      res.json(e.toJson());
+    };
+    var other = await connectTo(app);
+    try {
+      var response = await other.get(
+        Uri.parse(
+          '/authorize?response_type=token&client_id=foo'
+          '&redirect_uri=http://foo.com',
+        ),
+      );
+      expect(response, hasStatus(400));
+      expect(response.body, contains('unsupported_response_type'));
+    } finally {
+      await other.close();
+    }
+  });
+
   test('authenticate via implicit grant', () async {
     var response = await client.get(
       Uri.parse(
@@ -82,6 +104,9 @@ void main() {
 
 class _AuthorizationServer
     extends AuthorizationServer<PseudoApplication, PseudoUser> {
+  @override
+  bool allowsImplicitGrant(PseudoApplication client) => true;
+
   @override
   PseudoApplication? findClient(String? clientId) {
     return clientId == pseudoApplication.id ? pseudoApplication : null;
@@ -109,4 +134,10 @@ class _AuthorizationServer
     var uri = completeImplicitGrant(tok, Uri.parse(redirectUri!), state: state);
     return res.redirect(uri);
   }
+}
+
+/// A server of the defaults, which does not allow the implicit grant.
+class _Default extends _AuthorizationServer {
+  @override
+  bool allowsImplicitGrant(PseudoApplication client) => false;
 }

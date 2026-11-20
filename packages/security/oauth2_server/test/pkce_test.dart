@@ -306,6 +306,9 @@ class _Server extends AuthorizationServer<PseudoApplication, Map> {
   bool get allowsPlainPkce => allowsPlain;
 
   @override
+  bool allowsImplicitGrant(PseudoApplication client) => true;
+
+  @override
   Future requestAuthorizationCode(
     PseudoApplication client,
     String? redirectUri,

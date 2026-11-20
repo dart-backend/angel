@@ -166,6 +166,17 @@ abstract class AuthorizationServer<Client, User> {
   /// with the challenge stored with the code, by [Pkce.validate].
   FutureOr<bool> requiresPkce(Client client) => true;
 
+  /// Whether [client] may use the implicit grant, of `response_type=token`,
+  /// which gives the access token in the fragment of the redirect URI.
+  ///
+  /// By default, `false` for every client: OAuth 2.1 removes the implicit
+  /// grant, and RFC 9700 advises against it, as its token may leak, as by
+  /// the browser history; a client uses the authorization code grant with
+  /// PKCE instead. A refused request is `unsupported_response_type`. Return
+  /// `true` for clients that still use it, and list `token` in the
+  /// `responseTypes` of the [ServerMetadata] only then.
+  FutureOr<bool> allowsImplicitGrant(Client client) => false;
+
   /// Whether a `code_challenge_method` of `plain`, which is the challenge
   /// itself, or none, which is `plain`, is accepted.
   ///
@@ -636,6 +647,18 @@ abstract class AuthorizationServer<Client, User> {
             ErrorResponse(
               ErrorResponse.unsupportedResponseType,
               'Unsupported "response_type" parameter: "$responseType".',
+              state,
+            ),
+            statusCode: 400,
+          );
+        }
+
+        if (responseType == 'token' && !await allowsImplicitGrant(client)) {
+          throw AuthorizationException(
+            ErrorResponse(
+              ErrorResponse.unsupportedResponseType,
+              'The implicit grant, of "response_type" "token", is not '
+              'allowed; use the authorization code grant, with PKCE.',
               state,
             ),
             statusCode: 400,

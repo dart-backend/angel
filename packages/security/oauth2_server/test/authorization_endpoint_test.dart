@@ -22,9 +22,12 @@ void main() {
   late TestClient client;
 
   /// Connects to a server of [registers], whose redirect URIs are known.
-  Future<void> connect({required bool registers}) async {
+  Future<void> connect({
+    required bool registers,
+    bool allowsImplicit = true,
+  }) async {
     var app = Angel();
-    var server = _Server(registers: registers);
+    var server = _Server(registers: registers, allowsImplicit: allowsImplicit);
     app
       ..get('/oauth2/authorize', server.authorizationEndpoint)
       ..post('/oauth2/authorize', server.authorizationEndpoint);
@@ -102,6 +105,26 @@ void main() {
         'error_description': 'The user denied access.',
         'state': 's',
       });
+    });
+
+    test('an implicit grant is refused by default, in the fragment', () async {
+      await client.close();
+      await connect(registers: true, allowsImplicit: false);
+      var response = await authorize({
+        'response_type': 'token',
+        'client_id': 'foo',
+        'state': 's',
+        'scope': 'grant',
+      });
+      expect(response, hasStatus(302));
+      var location = Uri.parse(response.headers['location']!);
+      expect(
+        Uri.splitQueryString(location.fragment),
+        allOf(
+          containsPair('error', 'unsupported_response_type'),
+          containsPair('state', 's'),
+        ),
+      );
     });
 
     test('an unsupported response_type is redirected', () async {
@@ -241,9 +264,12 @@ void main() {
 }
 
 class _Server extends AuthorizationServer<PseudoApplication, PseudoUser> {
-  final bool registers;
+  final bool registers, allowsImplicit;
 
-  _Server({required this.registers});
+  _Server({required this.registers, this.allowsImplicit = true});
+
+  @override
+  bool allowsImplicitGrant(PseudoApplication client) => allowsImplicit;
 
   @override
   PseudoApplication? findClient(String? clientId) =>
