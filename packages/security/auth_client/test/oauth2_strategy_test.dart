@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'dart:io' show ContentType, Cookie, SameSite;
 
 import 'package:angel3_auth/angel3_auth.dart';
-import 'package:angel3_oauth2_client/angel3_oauth2_client.dart';
+import 'package:angel3_auth_client/angel3_auth_client.dart';
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_framework/http.dart';
 import 'package:angel3_mock_request/angel3_mock_request.dart';

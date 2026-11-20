@@ -4,7 +4,7 @@
 
 ### Breaking changes in 10.0.0
 
-* **Breaking:** Renamed from `angel3_auth_oauth2`: depend on `angel3_oauth2_client`, and import `package:angel3_oauth2_client/angel3_oauth2_client.dart`
+* **Breaking:** Renamed from `angel3_auth_oauth2`: depend on `angel3_auth_client`, and import `package:angel3_auth_client/angel3_auth_client.dart`
 * **Breaking:** Each login has a random `state`, checked on the callback (against login CSRF), kept with its PKCE code verifier in a signed, `HttpOnly` cookie of its own, scoped to the redirect URI's path, which expires after the new `loginTimeout`. `authenticateCallback` refuses a callback without it, as `invalid_state` to `onError`
 
 ### New in 10.0.0

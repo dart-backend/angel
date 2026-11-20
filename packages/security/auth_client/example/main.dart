@@ -4,7 +4,7 @@ import 'dart:io';
 import 'package:angel3_auth/angel3_auth.dart';
 import 'package:angel3_framework/angel3_framework.dart';
 import 'package:angel3_framework/http.dart';
-import 'package:angel3_oauth2_client/angel3_oauth2_client.dart';
+import 'package:angel3_auth_client/angel3_auth_client.dart';
 import 'package:http_parser/http_parser.dart';
 import 'package:logging/logging.dart';
 

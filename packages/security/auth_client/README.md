@@ -1,9 +1,9 @@
-# Angel3 OAuth2 Client
+# Angel3 Auth Client
 
-![Pub Version (including pre-releases)](https://img.shields.io/pub/v/angel3_oauth2_client?include_prereleases)
+![Pub Version (including pre-releases)](https://img.shields.io/pub/v/angel3_auth_client?include_prereleases)
 ![Null Safety](https://img.shields.io/badge/null-safety-brightgreen)(<https://dart.dev/null-safety>)
 [![Discord](https://img.shields.io/discord/1060322353214660698)](https://discord.gg/3X6bxTUdCM)
-[![License](https://img.shields.io/github/license/dart-backend/angel)](https://github.com/dart-backend/angel/tree/master/packages/security/oauth2_client/LICENSE)
+[![License](https://img.shields.io/github/license/dart-backend/angel)](https://github.com/dart-backend/angel/tree/master/packages/security/auth_client/LICENSE)
 
 Angel3 library for authenticating users with remote identity providers via OAuth2, i.e. Facebook, Google, Azure AD, etc. Your server is the OAuth2 client: it redirects users to the provider, and exchanges the code of the callback for a token, with the authorization code grant and PKCE. For an OAuth2 authorization server, see [`angel3_auth_server`](https://pub.dev/packages/angel3_auth_server).
 
@@ -13,7 +13,7 @@ In your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  angel3_oauth2_client: ^10.0.0
+  angel3_auth_client: ^10.0.0
 ```
 
 ## Usage
@@ -149,7 +149,7 @@ The `oauth2.Client` given to the verifier is closed once it returns. To call the
 import 'dart:convert';
 
 import 'package:angel3_auth/angel3_auth.dart';
-import 'package:angel3_oauth2_client/angel3_oauth2_client.dart';
+import 'package:angel3_auth_client/angel3_auth_client.dart';
 import 'package:oauth2/oauth2.dart' as oauth2;
 
 /// The credentials of each user, by id: a table of a database in an app.

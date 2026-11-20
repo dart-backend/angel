@@ -208,7 +208,7 @@ Angel3 is a collection of packages: pick the ones a project needs. Each is descr
 | [angel3_paginate](https://pub.dev/packages/angel3_paginate) | Platform-agnostic pagination of lists |
 | **Authentication and security** | |
 | [angel3_auth](https://pub.dev/packages/angel3_auth) | Authentication with JWTs, local and Basic strategies |
-| [angel3_oauth2_client](https://pub.dev/packages/angel3_oauth2_client) | Sign in users with OAuth2 providers, such as Google or GitHub |
+| [angel3_auth_client](https://pub.dev/packages/angel3_auth_client) | Sign in users with OAuth2 providers, such as Google or GitHub |
 | [angel3_auth_twitter](https://github.com/dart-backend/angel/tree/master/packages/security/auth_twitter) | Sign in users with Twitter OAuth 1.0a (not published) |
 | [angel3_auth_server](https://pub.dev/packages/angel3_auth_server) | Building blocks of an OAuth 2.0 authorization server, with PKCE |
 | [angel3_security](https://pub.dev/packages/angel3_security) | CSRF protection, signed cookies and rate limiting |
