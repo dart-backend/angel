@@ -465,18 +465,15 @@ abstract class AuthorizationServer<Client, User> {
   ) => _unsupportedGrant(req, 'Client credentials grants are not supported.');
 
   /// Performs a device authorization request (RFC 8628 §3.1), of the
-  /// [deviceAuthorizationEndpoint], or, deprecated, of the [tokenEndpoint]
-  /// without a `grant_type`.
+  /// [deviceAuthorizationEndpoint].
   ///
-  /// By default, device codes are not supported: `unsupported_grant_type`
-  /// at the [deviceAuthorizationEndpoint], and `invalid_request` at the
-  /// [tokenEndpoint], as its `grant_type` is missing.
+  /// By default, device codes are not supported: `unsupported_grant_type`.
   FutureOr<DeviceCodeResponse> requestDeviceCode(
     Client client,
     Iterable<String> scopes,
     RequestContext req,
     ResponseContext res,
-  ) => throw const _DeviceCodesUnsupported();
+  ) => _unsupportedGrant(req, 'Device code grants are not supported.');
 
   /// Produces an authorization token from a given device code.
   FutureOr<AuthorizationTokenResponse> exchangeDeviceCodeForToken(
@@ -907,28 +904,6 @@ abstract class AuthorizationServer<Client, User> {
         ),
         statusCode: 400,
       );
-    }
-  }
-
-  /// Whether a device authorization request has been given to the token
-  /// endpoint, as is deprecated, so that it is logged once.
-  static bool _warnedOfDeviceRequest = false;
-
-  /// The [DeviceCodeResponse] of [requestDeviceCode], as JSON; or, if the
-  /// server does not support device codes, the error of [unsupported].
-  Future<Map<String, dynamic>> _deviceCode(
-    Client client,
-    RequestContext req,
-    ResponseContext res,
-    String state, {
-    required ErrorResponse Function(String state) unsupported,
-  }) async {
-    var scopes = await _getScopes(req, body: true);
-    try {
-      var response = await requestDeviceCode(client, scopes, req, res);
-      return response.toJson();
-    } on _DeviceCodesUnsupported {
-      throw AuthorizationException(unsupported(state), statusCode: 400);
     }
   }
 
@@ -1816,17 +1791,9 @@ abstract class AuthorizationServer<Client, User> {
       var body = await req.parseBody().then((_) => req.bodyAsMap);
       state = body['state']?.toString() ?? '';
       var (client, _) = await _authenticateClient(req, res, body, state);
-      return await _deviceCode(
-        client,
-        req,
-        res,
-        state,
-        unsupported: (state) => ErrorResponse(
-          ErrorResponse.unsupportedGrantType,
-          'Device code grants are not supported.',
-          state,
-        ),
-      );
+      var scopes = await _getScopes(req, body: true);
+      var response = await requestDeviceCode(client, scopes, req, res);
+      return response.toJson();
     } on AngelHttpException {
       rethrow;
     } catch (e, st) {
@@ -1857,32 +1824,23 @@ abstract class AuthorizationServer<Client, User> {
         return Pkce.fromJson(req.bodyAsMap, state: state);
       });
 
-      var grantType = await _getParam(
-        req,
-        'grant_type',
-        state,
-        body: true,
-        throwIfEmpty: false,
-      );
-      // `grant_type=` is no grant type.
-      if (grantType != null && grantType.isEmpty) grantType = null;
+      // Missing, or empty, is `invalid_request`; before the client is
+      // authenticated, as is a grant that is not supported, which it need
+      // not be to learn of either.
+      var grantType = (await _getParam(req, 'grant_type', state, body: true))!;
 
       ExtensionGrant? extensionGrant;
-      if (grantType != null) {
-        // Before the client is authenticated, which it need not be to learn
-        // that its grant is not supported.
-        if (!_grantTypes.contains(grantType)) {
-          extensionGrant =
-              extensionGrants[grantType] ??
-              (throw AuthorizationException(
-                ErrorResponse(
-                  ErrorResponse.unsupportedGrantType,
-                  'Unsupported "grant_type" parameter: "$grantType".',
-                  state,
-                ),
-                statusCode: 400,
-              ));
-        }
+      if (!_grantTypes.contains(grantType)) {
+        extensionGrant =
+            extensionGrants[grantType] ??
+            (throw AuthorizationException(
+              ErrorResponse(
+                ErrorResponse.unsupportedGrantType,
+                'Unsupported "grant_type" parameter: "$grantType".',
+                state,
+              ),
+              statusCode: 400,
+            ));
       }
 
       var (client, confidential) = await _authenticateClient(
@@ -1891,31 +1849,6 @@ abstract class AuthorizationServer<Client, User> {
         body,
         state,
       );
-
-      if (grantType == null) {
-        // A device authorization request, of the token endpoint, which is
-        // deprecated for the [deviceAuthorizationEndpoint].
-        if (!_warnedOfDeviceRequest) {
-          _warnedOfDeviceRequest = true;
-          logger.warning(
-            'A device authorization request was given to the token endpoint, '
-            'without a "grant_type", which is deprecated: route a '
-            'deviceAuthorizationEndpoint, and give it the client.',
-          );
-        }
-        return await _deviceCode(
-          client,
-          req,
-          res,
-          state,
-          unsupported: (state) => ErrorResponse(
-            ErrorResponse.invalidRequest,
-            'Missing "grant_type" parameter; device code requests are not '
-            'supported.',
-            state,
-          ),
-        );
-      }
 
       AuthorizationTokenResponse response;
       if (grantType == _deviceCodeGrantType) {
@@ -2035,11 +1968,4 @@ abstract class AuthorizationServer<Client, User> {
       );
     }
   }
-}
-
-/// Thrown by the default [AuthorizationServer.requestDeviceCode], of a
-/// server that does not support device codes, as which each endpoint gives
-/// its error.
-class _DeviceCodesUnsupported implements Exception {
-  const _DeviceCodesUnsupported();
 }

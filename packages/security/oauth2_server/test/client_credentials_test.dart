@@ -356,16 +356,12 @@ void main() {
       );
     });
 
-    test('a device code request the server does not implement is '
-        'invalid_request, of a missing grant type', () async {
+    test('a missing or empty grant_type is invalid_request, before the '
+        'client is authenticated', () async {
       for (var body in [
-        {'client_id': 'foo', 'client_secret': 'bar', 'state': 'xyz'},
-        {
-          'client_id': 'foo',
-          'client_secret': 'bar',
-          'grant_type': '',
-          'state': 'xyz',
-        },
+        {'client_id': 'foo', 'client_secret': 'wrong', 'state': 'xyz'},
+        {'client_id': 'nobody', 'grant_type': '', 'state': 'xyz'},
+        {'state': 'xyz'},
       ]) {
         var response = await client.post(
           Uri.parse('/oauth2/token'),

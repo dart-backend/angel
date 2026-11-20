@@ -169,7 +169,7 @@ router.post('/device', server.deviceAuthorizationEndpoint);
 
 It authenticates the client as the `tokenEndpoint` does: a public client, as a device usually is, gives its `client_id` alone, and `verifyClient` is given a `null` secret. It gives the `DeviceCodeResponse` of `requestDeviceCode`, of the `scope` of the request: show the user its `userCode`, and the `verificationUri`, on which they authorize the device on another one. The device then polls the `tokenEndpoint` with `grant_type=urn:ietf:params:oauth:grant-type:device_code` and its `device_code`, which `exchangeDeviceCodeForToken` answers with a token, once the user has authorized it, or with `authorization_pending`, `slow_down`, `access_denied` or `expired_token` (`ErrorResponse.authorizationPending`, and so on). Without `requestDeviceCode`, it is `unsupported_grant_type`.
 
-A device code request to the `tokenEndpoint`, without a `grant_type`, as earlier versions required, still works, but is deprecated, and logged once: it will be removed in a later major version. Without `requestDeviceCode`, it is `invalid_request`, as the `grant_type` is missing.
+Earlier versions took a device code request at the `tokenEndpoint`, without a `grant_type`; it is now `invalid_request`, as is any request there without one: route a `deviceAuthorizationEndpoint`, and point device clients at it.
 
 ## PKCE
 

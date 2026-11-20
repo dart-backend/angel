@@ -93,60 +93,6 @@ void main() {
     });
   });
 
-  group('get initial code', () {
-    test('invalid client id', () async {
-      var response = await client.post(
-        Uri.parse('/oauth2/token'),
-        body: {'client_id': 'barr'},
-      );
-      print(response.body);
-      expect(response, hasStatus(401));
-      expect(response.body, contains('invalid_client'));
-    });
-
-    test('valid client id, no scopes', () async {
-      var response = await client.post(
-        Uri.parse('/oauth2/token'),
-        body: {'client_id': 'device'},
-      );
-      print(response.body);
-      expect(
-        response,
-        allOf(
-          hasStatus(200),
-          isJson({
-            'device_code': 'foo',
-            'user_code': 'bar',
-            'verification_uri': 'https://regiostech.com?scopes',
-            'expires_in': 3600,
-          }),
-        ),
-      );
-    });
-
-    test('valid client id, with scopes', () async {
-      var response = await client.post(
-        Uri.parse('/oauth2/token'),
-        body: {'client_id': 'device', 'scope': 'bar baz quux'},
-      );
-      print(response.body);
-      expect(
-        response,
-        allOf(
-          hasStatus(200),
-          isJson({
-            'device_code': 'foo',
-            'user_code': 'bar',
-            'verification_uri': Uri.parse('https://regiostech.com')
-                .replace(queryParameters: {'scopes': 'bar,baz,quux'})
-                .toString(),
-            'expires_in': 3600,
-          }),
-        ),
-      );
-    });
-  });
-
   group('get token', () {
     test('valid device code + timing', () async {
       var response = await client.post(
@@ -202,7 +148,10 @@ void main() {
         var response = await exchange(body);
         expect(response, hasStatus(401));
         expect(response.body, contains('invalid_client'));
-        var request = await client.post(Uri.parse('/oauth2/token'), body: body);
+        var request = await client.post(
+          Uri.parse('/oauth2/device'),
+          body: body,
+        );
         expect(request, hasStatus(401));
       }
     });
@@ -266,7 +215,7 @@ void main() {
       'a device code request with a wrong secret is invalid_client',
       () async {
         var response = await client.post(
-          Uri.parse('/oauth2/token'),
+          Uri.parse('/oauth2/device'),
           body: {'client_id': 'foo', 'client_secret': 'wrong'},
         );
         expect(response, hasStatus(401));
